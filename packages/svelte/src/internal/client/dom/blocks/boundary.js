@@ -55,6 +55,9 @@ export class Boundary {
 	/** @type {TemplateNode} */
 	#anchor;
 
+	/** @type {TemplateNode} */
+	#hydrate_open;
+
 	/** @type {BoundaryProps} */
 	#props;
 
@@ -105,92 +108,12 @@ export class Boundary {
 			var boundary_effect = /** @type {Effect} */ (active_effect);
 			boundary_effect.b = this;
 
-			var hydrate_open = hydrate_node;
-
-			const reset = () => {
-				this.#pending_count = 0;
-				this.suspended = false;
-
-				if (this.#failed_effect !== null) {
-					pause_effect(this.#failed_effect, () => {
-						this.#failed_effect = null;
-					});
-				}
-
-				this.#main_effect = this.#run(() => {
-					this.#is_creating_fallback = false;
-
-					try {
-						return branch(() => this.#children(this.#anchor));
-					} finally {
-						reset_is_throwing_error();
-					}
-				});
-
-				if (this.#pending_count > 0) {
-					this.suspended = true;
-					this.#show_pending_snippet(true);
-				}
-			};
+			this.#hydrate_open = hydrate_node;
 
 			// @ts-ignore We re-use the effect's fn property to avoid allocation of an additional field
 			boundary_effect.fn = (/** @type {unknown} */ input) => {
 				var error = input;
-				var onerror = this.#props.onerror;
-				let failed = this.#props.failed;
-
-				// If we have nothing to capture the error, or if we hit an error while
-				// rendering the fallback, re-throw for another boundary to handle
-				if (this.#is_creating_fallback || (!onerror && !failed)) {
-					throw error;
-				}
-
-				onerror?.(error, reset);
-
-				if (this.#main_effect) {
-					destroy_effect(this.#main_effect);
-					this.#main_effect = null;
-				}
-
-				if (this.#pending_effect) {
-					destroy_effect(this.#pending_effect);
-					this.#pending_effect = null;
-				}
-
-				if (this.#failed_effect) {
-					destroy_effect(this.#failed_effect);
-					this.#failed_effect = null;
-				}
-
-				if (hydrating) {
-					set_hydrate_node(hydrate_open);
-					next();
-					set_hydrate_node(remove_nodes());
-				}
-
-				if (failed) {
-					queue_boundary_micro_task(() => {
-						this.#failed_effect = this.#run(() => {
-							this.#is_creating_fallback = true;
-
-							try {
-								return branch(() => {
-									failed(
-										this.#anchor,
-										() => error,
-										() => reset
-									);
-								});
-							} catch (error) {
-								handle_error(error, boundary_effect, null, boundary_effect.ctx);
-								return null;
-							} finally {
-								reset_is_throwing_error();
-								this.#is_creating_fallback = false;
-							}
-						});
-					});
-				}
+				this.error(input);
 			};
 
 			if (hydrating) {
@@ -380,6 +303,91 @@ export class Boundary {
 				// TODO do we also need to `resume_effect` here?
 				schedule_effect(this.#main_effect);
 			}
+		}
+	}
+
+	/** @param {unknown} error */
+	error(error) {
+		var onerror = this.#props.onerror;
+		let failed = this.#props.failed;
+
+		const reset = () => {
+			this.#pending_count = 0;
+			this.suspended = false;
+
+			if (this.#failed_effect !== null) {
+				pause_effect(this.#failed_effect, () => {
+					this.#failed_effect = null;
+				});
+			}
+
+			this.#main_effect = this.#run(() => {
+				this.#is_creating_fallback = false;
+
+				try {
+					return branch(() => this.#children(this.#anchor));
+				} finally {
+					reset_is_throwing_error();
+				}
+			});
+
+			if (this.#pending_count > 0) {
+				this.suspended = true;
+				this.#show_pending_snippet(true);
+			}
+		};
+
+		// If we have nothing to capture the error, or if we hit an error while
+		// rendering the fallback, re-throw for another boundary to handle
+		if (this.#is_creating_fallback || (!onerror && !failed)) {
+			throw error;
+		}
+
+		onerror?.(error, reset);
+
+		if (this.#main_effect) {
+			destroy_effect(this.#main_effect);
+			this.#main_effect = null;
+		}
+
+		if (this.#pending_effect) {
+			destroy_effect(this.#pending_effect);
+			this.#pending_effect = null;
+		}
+
+		if (this.#failed_effect) {
+			destroy_effect(this.#failed_effect);
+			this.#failed_effect = null;
+		}
+
+		if (hydrating) {
+			set_hydrate_node(this.#hydrate_open);
+			next();
+			set_hydrate_node(remove_nodes());
+		}
+
+		if (failed) {
+			queue_boundary_micro_task(() => {
+				this.#failed_effect = this.#run(() => {
+					this.#is_creating_fallback = true;
+
+					try {
+						return branch(() => {
+							failed(
+								this.#anchor,
+								() => error,
+								() => reset
+							);
+						});
+					} catch (error) {
+						handle_error(error, this.#effect, null, this.#effect.ctx);
+						return null;
+					} finally {
+						reset_is_throwing_error();
+						this.#is_creating_fallback = false;
+					}
+				});
+			});
 		}
 	}
 }
