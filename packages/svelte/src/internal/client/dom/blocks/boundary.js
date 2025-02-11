@@ -269,16 +269,6 @@ export class Boundary {
 					return;
 				}
 
-				if (input === ADD_RENDER_EFFECT) {
-					this.#render_effects.push(payload);
-					return;
-				}
-
-				if (input === ADD_EFFECT) {
-					this.#effects.push(payload);
-					return;
-				}
-
 				if (input === COMMIT) {
 					unsuspend();
 					return;
@@ -417,8 +407,6 @@ export class Boundary {
 
 const ASYNC_INCREMENT = Symbol();
 const ASYNC_DECREMENT = Symbol();
-const ADD_RENDER_EFFECT = Symbol();
-const ADD_EFFECT = Symbol();
 const COMMIT = Symbol();
 
 var flags = EFFECT_TRANSPARENT | EFFECT_PRESERVED | BOUNDARY_EFFECT;
