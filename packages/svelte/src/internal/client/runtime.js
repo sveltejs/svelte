@@ -31,7 +31,7 @@ import {
 	flush_boundary_micro_tasks,
 	flush_post_micro_tasks
 } from './dom/task.js';
-import { internal_set } from './reactivity/sources.js';
+import { changeset, internal_set } from './reactivity/sources.js';
 import {
 	destroy_derived_effects,
 	from_async_derived,
@@ -705,6 +705,7 @@ function flush_queued_root_effects(root_effects) {
 		}
 	} finally {
 		is_flushing_effect = previously_flushing_effect;
+		changeset.clear();
 	}
 }
 
@@ -824,6 +825,8 @@ function process_effects(effect, collected_effects, boundary) {
 				boundary.add_effect(current_effect);
 			} else if ((flags & BOUNDARY_EFFECT) !== 0) {
 				var b = /** @type {Boundary} */ (current_effect.b);
+
+				console.log([...changeset].map((s) => s.v));
 
 				process_effects(current_effect, collected_effects, b);
 

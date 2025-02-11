@@ -44,6 +44,9 @@ export function set_inspect_effects(v) {
 	inspect_effects = v;
 }
 
+/** @type {Set<Source>} */
+export const changeset = new Set();
+
 /**
  * @template V
  * @param {V} v
@@ -179,6 +182,10 @@ export function internal_set(source, value) {
 				source.trace_need_increase = true;
 				source.trace_v ??= old_value;
 			}
+		}
+
+		if (!changeset.has(source)) {
+			changeset.add(source);
 		}
 
 		mark_reactions(source, DIRTY);
