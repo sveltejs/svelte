@@ -171,7 +171,7 @@ export function boundary(node, props, children) {
 			for (var [signal, entry] of forks) {
 				if (signal.v !== entry.v) {
 					if ((signal.f & (DERIVED | ASYNC_DERIVED)) === 0) {
-						mark_reactions(signal, DIRTY, true);
+						mark_reactions(signal, DIRTY, undefined, true);
 						signal.wv = increment_write_version();
 					}
 				}

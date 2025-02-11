@@ -30,6 +30,7 @@ export default test({
 		await tick();
 		assert.htmlEqual(target.innerHTML, '<p>42</p>');
 
+		// This runs fine locally, but fails in CI by overfiring some effects?
 		component.num = 2;
 		await Promise.resolve();
 		await Promise.resolve();
