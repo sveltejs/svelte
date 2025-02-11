@@ -102,17 +102,16 @@ export class Boundary {
 		this.#props = props;
 		this.#children = children;
 
+		this.#hydrate_open = hydrate_node;
+
 		this.parent = /** @type {Effect} */ (active_effect).b;
 
 		this.#effect = block(() => {
 			var boundary_effect = /** @type {Effect} */ (active_effect);
 			boundary_effect.b = this;
 
-			this.#hydrate_open = hydrate_node;
-
 			// @ts-ignore We re-use the effect's fn property to avoid allocation of an additional field
 			boundary_effect.fn = (/** @type {unknown} */ input) => {
-				var error = input;
 				this.error(input);
 			};
 
