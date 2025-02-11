@@ -236,11 +236,6 @@ export class Boundary {
 					return;
 				}
 
-				if (input === COMMIT) {
-					this.commit();
-					return;
-				}
-
 				var error = input;
 				var onerror = this.#props.onerror;
 				let failed = this.#props.failed;
@@ -418,7 +413,6 @@ export class Boundary {
 
 const ASYNC_INCREMENT = Symbol();
 const ASYNC_DECREMENT = Symbol();
-const COMMIT = Symbol();
 
 var flags = EFFECT_TRANSPARENT | EFFECT_PRESERVED | BOUNDARY_EFFECT;
 
