@@ -77,6 +77,15 @@ export class Boundary {
 	/** @type {Effect[]} */
 	#effects = [];
 
+	/** @type {Effect | null} */
+	#main_effect = null;
+
+	/** @type {Effect | null} */
+	#pending_effect = null;
+
+	/** @type {Effect | null} */
+	#failed_effect = null;
+
 	/**
 	 * @param {TemplateNode} node
 	 * @param {BoundaryProps} props
@@ -90,15 +99,6 @@ export class Boundary {
 		active_boundary = this;
 
 		this.#effect = block(() => {
-			/** @type {Effect | null} */
-			var main_effect = null;
-
-			/** @type {Effect | null} */
-			var pending_effect = null;
-
-			/** @type {Effect | null} */
-			var failed_effect = null;
-
 			/** @type {DocumentFragment | null} */
 			var offscreen_fragment = null;
 
@@ -136,13 +136,13 @@ export class Boundary {
 					boundary_effect.f ^= BOUNDARY_SUSPENDED;
 				}
 
-				if (failed_effect !== null) {
-					pause_effect(failed_effect, () => {
-						failed_effect = null;
+				if (this.#failed_effect !== null) {
+					pause_effect(this.#failed_effect, () => {
+						this.#failed_effect = null;
 					});
 				}
 
-				main_effect = this.#run(() => {
+				this.#main_effect = this.#run(() => {
 					is_creating_fallback = false;
 
 					try {
@@ -180,9 +180,9 @@ export class Boundary {
 				for (const fn of this.#callbacks) fn();
 				this.#callbacks.clear();
 
-				if (pending_effect) {
-					pause_effect(pending_effect, () => {
-						pending_effect = null;
+				if (this.#pending_effect) {
+					pause_effect(this.#pending_effect, () => {
+						this.#pending_effect = null;
 					});
 				}
 
@@ -210,13 +210,13 @@ export class Boundary {
 
 				if (pending !== undefined) {
 					// TODO can this be false?
-					if (main_effect !== null) {
+					if (this.#main_effect !== null) {
 						offscreen_fragment = document.createDocumentFragment();
-						move_effect(main_effect, offscreen_fragment);
+						move_effect(this.#main_effect, offscreen_fragment);
 					}
 
-					if (pending_effect === null) {
-						pending_effect = branch(() => pending(this.#anchor));
+					if (this.#pending_effect === null) {
+						this.#pending_effect = branch(() => pending(this.#anchor));
 					}
 
 					// TODO do we want to differentiate between initial render and updates here?
@@ -271,9 +271,9 @@ export class Boundary {
 					if (--async_count === 0 && !keep_pending_snippet) {
 						unsuspend();
 
-						if (main_effect !== null) {
+						if (this.#main_effect !== null) {
 							// TODO do we also need to `resume_effect` here?
-							schedule_effect(main_effect);
+							schedule_effect(this.#main_effect);
 						}
 					}
 
@@ -297,19 +297,19 @@ export class Boundary {
 
 				onerror?.(error, reset);
 
-				if (main_effect) {
-					destroy_effect(main_effect);
-					main_effect = null;
+				if (this.#main_effect) {
+					destroy_effect(this.#main_effect);
+					this.#main_effect = null;
 				}
 
-				if (pending_effect) {
-					destroy_effect(pending_effect);
-					pending_effect = null;
+				if (this.#pending_effect) {
+					destroy_effect(this.#pending_effect);
+					this.#pending_effect = null;
 				}
 
-				if (failed_effect) {
-					destroy_effect(failed_effect);
-					failed_effect = null;
+				if (this.#failed_effect) {
+					destroy_effect(this.#failed_effect);
+					this.#failed_effect = null;
 				}
 
 				if (hydrating) {
@@ -320,7 +320,7 @@ export class Boundary {
 
 				if (failed) {
 					queue_boundary_micro_task(() => {
-						failed_effect = render_snippet(() => {
+						this.#failed_effect = render_snippet(() => {
 							failed(
 								this.#anchor,
 								() => error,
@@ -341,7 +341,7 @@ export class Boundary {
 			const pending = this.#props.pending;
 
 			if (hydrating && pending) {
-				pending_effect = branch(() => pending(this.#anchor));
+				this.#pending_effect = branch(() => pending(this.#anchor));
 
 				// ...now what? we need to start rendering `boundary_fn` offscreen,
 				// and either insert the resulting fragment (if nothing suspends)
@@ -353,14 +353,14 @@ export class Boundary {
 				// the pending or main block was rendered for a given
 				// boundary, and hydrate accordingly
 				queueMicrotask(() => {
-					destroy_effect(/** @type {Effect} */ (pending_effect));
+					destroy_effect(/** @type {Effect} */ (this.#pending_effect));
 
-					main_effect = this.#run(() => {
+					this.#main_effect = this.#run(() => {
 						return branch(() => children(this.#anchor));
 					});
 				});
 			} else {
-				main_effect = branch(() => children(this.#anchor));
+				this.#main_effect = branch(() => children(this.#anchor));
 
 				if (async_count > 0) {
 					boundary_effect.f |= BOUNDARY_SUSPENDED;
