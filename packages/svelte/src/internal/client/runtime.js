@@ -24,8 +24,7 @@ import {
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
 	BOUNDARY_EFFECT,
-	REACTION_IS_UPDATING,
-	BOUNDARY_SUSPENDED
+	REACTION_IS_UPDATING
 } from './constants.js';
 import {
 	flush_idle_tasks,
@@ -835,7 +834,7 @@ function process_effects(effect, collected_effects, boundary) {
 
 				process_effects(current_effect, collected_effects, b);
 
-				if ((current_effect.f & BOUNDARY_SUSPENDED) === 0) {
+				if (!b.suspended) {
 					// no more async work to happen
 					b.commit();
 				}

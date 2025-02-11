@@ -2,7 +2,6 @@
 
 import {
 	BOUNDARY_EFFECT,
-	BOUNDARY_SUSPENDED,
 	EFFECT_PRESERVED,
 	EFFECT_RAN,
 	EFFECT_TRANSPARENT,
@@ -56,6 +55,8 @@ export function set_active_boundary(boundary) {
  */
 
 export class Boundary {
+	suspended = false;
+
 	/** @type {TemplateNode} */
 	#anchor;
 
@@ -111,10 +112,7 @@ export class Boundary {
 
 			const reset = () => {
 				this.#pending_count = 0;
-
-				if ((this.#effect.f & BOUNDARY_SUSPENDED) !== 0) {
-					this.#effect.f ^= BOUNDARY_SUSPENDED;
-				}
+				this.suspended = false;
 
 				if (this.#failed_effect !== null) {
 					pause_effect(this.#failed_effect, () => {
@@ -133,7 +131,7 @@ export class Boundary {
 				});
 
 				if (this.#pending_count > 0) {
-					this.#effect.f |= BOUNDARY_SUSPENDED;
+					this.suspended = true;
 					this.#show_pending_snippet(true);
 				}
 			};
@@ -142,10 +140,7 @@ export class Boundary {
 			boundary_effect.fn = (/** @type {unknown} */ input, /** @type {any} */ payload) => {
 				if (input === ASYNC_INCREMENT) {
 					// post-init, show the pending snippet after a timeout
-					if (
-						(boundary_effect.f & BOUNDARY_SUSPENDED) === 0 &&
-						(boundary_effect.f & EFFECT_RAN) !== 0
-					) {
+					if (!this.suspended && (boundary_effect.f & EFFECT_RAN) !== 0) {
 						var start = raf.now();
 						var end = start + (this.#props.showPendingAfter ?? 500);
 
@@ -157,7 +152,7 @@ export class Boundary {
 						});
 					}
 
-					boundary_effect.f |= BOUNDARY_SUSPENDED;
+					this.suspended = true;
 					this.#pending_count++;
 
 					return;
@@ -266,7 +261,7 @@ export class Boundary {
 				this.#main_effect = branch(() => children(this.#anchor));
 
 				if (this.#pending_count > 0) {
-					boundary_effect.f |= BOUNDARY_SUSPENDED;
+					this.suspended = true;
 					this.#show_pending_snippet(true);
 				}
 			}
@@ -363,9 +358,7 @@ export class Boundary {
 			return;
 		}
 
-		if ((this.#effect.f & BOUNDARY_SUSPENDED) !== 0) {
-			this.#effect.f ^= BOUNDARY_SUSPENDED;
-		}
+		this.suspended = false;
 
 		for (const e of this.#render_effects) {
 			try {
