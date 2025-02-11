@@ -1,4 +1,5 @@
 import type { ComponentContext, Dom, Equals, TemplateNode, TransitionManager } from '#client';
+import type { Boundary } from '../dom/blocks/boundary';
 
 export interface Signal {
 	/** Flags bitmask */
@@ -67,6 +68,8 @@ export interface Effect extends Reaction {
 	last: null | Effect;
 	/** Parent effect */
 	parent: Effect | null;
+	/** THe boundary this effect belongs to */
+	b: Boundary | null;
 	/** Dev only */
 	component_function?: any;
 }

@@ -43,7 +43,7 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { async_derived, derived } from './deriveds.js';
-import { capture, suspend } from '../dom/blocks/boundary.js';
+import { active_boundary, capture, suspend } from '../dom/blocks/boundary.js';
 import { component_context, dev_current_component_function } from '../context.js';
 
 /**
@@ -112,6 +112,7 @@ function create_effect(type, fn, sync, push = true) {
 		last: null,
 		next: null,
 		parent: is_root ? null : parent_effect,
+		b: parent_effect && parent_effect.b,
 		prev: null,
 		teardown: null,
 		transitions: null,

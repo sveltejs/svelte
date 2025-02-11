@@ -57,14 +57,14 @@ export function set_active_boundary(boundary) {
 export class Boundary {
 	suspended = false;
 
+	/** @type {Boundary | null} */
+	parent;
+
 	/** @type {TemplateNode} */
 	#anchor;
 
 	/** @type {BoundaryProps} */
 	#props;
-
-	/** @type {Boundary | null} */
-	#parent;
 
 	/** @type {Effect} */
 	#effect;
@@ -102,12 +102,14 @@ export class Boundary {
 	constructor(node, props, children) {
 		this.#anchor = node;
 		this.#props = props;
-		this.#parent = active_boundary;
+		this.parent = active_boundary;
 
 		active_boundary = this;
 
 		this.#effect = block(() => {
 			var boundary_effect = /** @type {Effect} */ (active_effect);
+			boundary_effect.b = this;
+
 			var hydrate_open = hydrate_node;
 
 			const reset = () => {
@@ -138,39 +140,6 @@ export class Boundary {
 
 			// @ts-ignore We re-use the effect's fn property to avoid allocation of an additional field
 			boundary_effect.fn = (/** @type {unknown} */ input, /** @type {any} */ payload) => {
-				if (input === ASYNC_INCREMENT) {
-					// post-init, show the pending snippet after a timeout
-					if (!this.suspended && (boundary_effect.f & EFFECT_RAN) !== 0) {
-						var start = raf.now();
-						var end = start + (this.#props.showPendingAfter ?? 500);
-
-						loop((now) => {
-							if (this.#pending_count === 0) return false;
-							if (now < end) return true;
-
-							this.#show_pending_snippet(false);
-						});
-					}
-
-					this.suspended = true;
-					this.#pending_count++;
-
-					return;
-				}
-
-				if (input === ASYNC_DECREMENT) {
-					if (--this.#pending_count === 0 && !this.#keep_pending_snippet) {
-						this.commit();
-
-						if (this.#main_effect !== null) {
-							// TODO do we also need to `resume_effect` here?
-							schedule_effect(this.#main_effect);
-						}
-					}
-
-					return;
-				}
-
 				var error = input;
 				var onerror = this.#props.onerror;
 				let failed = this.#props.failed;
@@ -269,6 +238,8 @@ export class Boundary {
 			reset_is_throwing_error();
 		}, flags);
 
+		this.ran = true;
+
 		// @ts-expect-error
 		this.#effect.fn.boundary = this;
 
@@ -276,7 +247,11 @@ export class Boundary {
 			this.#anchor = hydrate_node;
 		}
 
-		active_boundary = this.#parent;
+		active_boundary = this.parent;
+	}
+
+	has_pending_snippet() {
+		return !!this.#props.pending;
 	}
 
 	/**
@@ -336,7 +311,7 @@ export class Boundary {
 					return true;
 				});
 			}
-		} else if (this.#parent) {
+		} else if (this.parent) {
 			throw new Error('TODO show pending snippet on parent');
 		} else {
 			throw new Error('no pending snippet to show');
@@ -394,10 +369,36 @@ export class Boundary {
 			}
 		}
 	}
-}
 
-const ASYNC_INCREMENT = Symbol();
-const ASYNC_DECREMENT = Symbol();
+	increment() {
+		// post-init, show the pending snippet after a timeout
+		if (!this.suspended && this.ran) {
+			var start = raf.now();
+			var end = start + (this.#props.showPendingAfter ?? 500);
+
+			loop((now) => {
+				if (this.#pending_count === 0) return false;
+				if (now < end) return true;
+
+				this.#show_pending_snippet(false);
+			});
+		}
+
+		this.suspended = true;
+		this.#pending_count++;
+	}
+
+	decrement() {
+		if (--this.#pending_count === 0 && !this.#keep_pending_snippet) {
+			this.commit();
+
+			if (this.#main_effect !== null) {
+				// TODO do we also need to `resume_effect` here?
+				schedule_effect(this.#main_effect);
+			}
+		}
+	}
+}
 
 var flags = EFFECT_TRANSPARENT | EFFECT_PRESERVED | BOUNDARY_EFFECT;
 
@@ -458,19 +459,12 @@ export function capture(track = true) {
 	};
 }
 
-/**
- * @param {Effect} boundary
- */
-export function is_pending_boundary(boundary) {
-	// @ts-ignore
-	return boundary.fn.is_pending();
-}
-
 export function suspend() {
-	var boundary = active_effect;
+	let boundary = /** @type {Effect} */ (active_effect).b;
 
 	while (boundary !== null) {
-		if ((boundary.f & BOUNDARY_EFFECT) !== 0 && is_pending_boundary(boundary)) {
+		// TODO pretty sure this is wrong
+		if (boundary.has_pending_snippet()) {
 			break;
 		}
 
@@ -481,12 +475,10 @@ export function suspend() {
 		e.await_outside_boundary();
 	}
 
-	// @ts-ignore
-	boundary?.fn(ASYNC_INCREMENT);
+	boundary.increment();
 
 	return function unsuspend() {
-		// @ts-ignore
-		boundary?.fn?.(ASYNC_DECREMENT);
+		boundary.decrement();
 	};
 }
 
