@@ -44,7 +44,7 @@ export let active_boundary = null;
 export function set_active_boundary(boundary) {
 	active_boundary = boundary;
 }
-class Boundary {
+export class Boundary {
 	/** @type {Boundary | null} */
 	#parent;
 
@@ -53,6 +53,12 @@ class Boundary {
 
 	/** @type {Set<() => void>} */
 	#callbacks = new Set();
+
+	/** @type {Effect[]} */
+	#render_effects = [];
+
+	/** @type {Effect[]} */
+	#effects = [];
 
 	/**
 	 * @param {TemplateNode} node
@@ -89,12 +95,6 @@ class Boundary {
 			var boundary_effect = /** @type {Effect} */ (active_effect);
 			var hydrate_open = hydrate_node;
 			var is_creating_fallback = false;
-
-			/** @type {Effect[]} */
-			var render_effects = [];
-
-			/** @type {Effect[]} */
-			var effects = [];
 
 			var keep_pending_snippet = false;
 
@@ -156,7 +156,7 @@ class Boundary {
 					boundary_effect.f ^= BOUNDARY_SUSPENDED;
 				}
 
-				for (const e of render_effects) {
+				for (const e of this.#render_effects) {
 					try {
 						if (check_dirtiness(e)) {
 							update_effect(e);
@@ -180,7 +180,7 @@ class Boundary {
 					offscreen_fragment = null;
 				}
 
-				for (const e of effects) {
+				for (const e of this.#effects) {
 					try {
 						if (check_dirtiness(e)) {
 							update_effect(e);
@@ -270,12 +270,12 @@ class Boundary {
 				}
 
 				if (input === ADD_RENDER_EFFECT) {
-					render_effects.push(payload);
+					this.#render_effects.push(payload);
 					return;
 				}
 
 				if (input === ADD_EFFECT) {
-					effects.push(payload);
+					this.#effects.push(payload);
 					return;
 				}
 
@@ -370,6 +370,9 @@ class Boundary {
 			reset_is_throwing_error();
 		}, flags);
 
+		// @ts-expect-error
+		this.#effect.fn.boundary = this;
+
 		if (hydrating) {
 			anchor = hydrate_node;
 		}
@@ -404,6 +407,11 @@ class Boundary {
 	/** @param {() => void} fn */
 	add_callback(fn) {
 		this.#callbacks.add(fn);
+	}
+
+	/** @param {Effect} effect */
+	add_effect(effect) {
+		((effect.f & RENDER_EFFECT) !== 0 ? this.#render_effects : this.#effects).push(effect);
 	}
 }
 
@@ -524,15 +532,6 @@ function exit() {
 	set_active_effect(null);
 	set_active_reaction(null);
 	set_component_context(null);
-}
-
-/**
- * @param {Effect} boundary
- * @param {Effect} effect
- */
-export function add_boundary_effect(boundary, effect) {
-	// @ts-ignore
-	boundary.fn((effect.f & RENDER_EFFECT) !== 0 ? ADD_RENDER_EFFECT : ADD_EFFECT, effect);
 }
 
 /**

@@ -50,7 +50,7 @@ import {
 	set_component_context,
 	set_dev_current_component_function
 } from './context.js';
-import { add_boundary_effect, commit_boundary } from './dom/blocks/boundary.js';
+import { Boundary, commit_boundary } from './dom/blocks/boundary.js';
 import * as w from './warnings.js';
 
 const FLUSH_MICROTASK = 0;
@@ -812,7 +812,7 @@ export function schedule_effect(signal) {
  *
  * @param {Effect} effect
  * @param {Effect[]} collected_effects
- * @param {Effect} [boundary]
+ * @param {Boundary} [boundary]
  * @returns {void}
  */
 function process_effects(effect, collected_effects, boundary) {
@@ -828,9 +828,10 @@ function process_effects(effect, collected_effects, boundary) {
 		if (!is_skippable_branch && (flags & INERT) === 0) {
 			if (boundary !== undefined && (flags & (BLOCK_EFFECT | BRANCH_EFFECT)) === 0) {
 				// Inside a boundary, defer everything except block/branch effects
-				add_boundary_effect(/** @type {Effect} */ (boundary), current_effect);
+				boundary.add_effect(current_effect);
 			} else if ((flags & BOUNDARY_EFFECT) !== 0) {
-				process_effects(current_effect, collected_effects, current_effect);
+				// @ts-expect-error
+				process_effects(current_effect, collected_effects, current_effect.fn.boundary);
 
 				if ((current_effect.f & BOUNDARY_SUSPENDED) === 0) {
 					// no more async work to happen
