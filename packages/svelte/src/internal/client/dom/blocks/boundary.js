@@ -532,11 +532,3 @@ function exit() {
 	set_active_reaction(null);
 	set_component_context(null);
 }
-
-/**
- * @param {Effect} boundary
- */
-export function commit_boundary(boundary) {
-	// @ts-ignore
-	boundary.fn?.(COMMIT);
-}

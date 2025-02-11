@@ -50,7 +50,7 @@ import {
 	set_component_context,
 	set_dev_current_component_function
 } from './context.js';
-import { Boundary, commit_boundary } from './dom/blocks/boundary.js';
+import { Boundary } from './dom/blocks/boundary.js';
 import * as w from './warnings.js';
 
 const FLUSH_MICROTASK = 0;
@@ -831,11 +831,13 @@ function process_effects(effect, collected_effects, boundary) {
 				boundary.add_effect(current_effect);
 			} else if ((flags & BOUNDARY_EFFECT) !== 0) {
 				// @ts-expect-error
-				process_effects(current_effect, collected_effects, current_effect.fn.boundary);
+				var b = /** @type {Boundary} */ (current_effect.fn.boundary);
+
+				process_effects(current_effect, collected_effects, b);
 
 				if ((current_effect.f & BOUNDARY_SUSPENDED) === 0) {
 					// no more async work to happen
-					commit_boundary(current_effect);
+					b.commit();
 				}
 			} else if ((flags & RENDER_EFFECT) !== 0) {
 				if (is_branch) {
