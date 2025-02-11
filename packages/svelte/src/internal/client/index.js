@@ -35,7 +35,6 @@ export {
 	set_attributes,
 	set_custom_element_data,
 	set_xlink_attribute,
-	handle_lazy_img,
 	set_value,
 	set_checked,
 	set_selected,

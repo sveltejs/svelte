@@ -39,6 +39,7 @@ import {
 	set_component_context,
 	set_dev_current_component_function
 } from './context.js';
+import { is_firefox } from './dom/operations.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -333,7 +334,7 @@ export function handle_error(error, effect, previous_effect, component_context) 
 		current_context = current_context.p;
 	}
 
-	const indent = /Firefox/.test(navigator.userAgent) ? '  ' : '\t';
+	const indent = is_firefox ? '  ' : '\t';
 	define_property(error, 'message', {
 		value: error.message + `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`
 	});
