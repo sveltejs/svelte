@@ -679,10 +679,7 @@ function flush_queued_root_effects(root_effects) {
 				effect.f ^= CLEAN;
 			}
 
-			/** @type {Effect[]} */
-			var collected_effects = [];
-
-			process_effects(effect, collected_effects);
+			var collected_effects = process_effects(effect);
 			flush_queued_effects(collected_effects);
 		}
 	} finally {
@@ -783,10 +780,12 @@ export function schedule_effect(signal) {
  * effects to be flushed.
  *
  * @param {Effect} effect
- * @param {Effect[]} collected_effects
- * @returns {void}
+ * @returns {Effect[]}
  */
-function process_effects(effect, collected_effects) {
+function process_effects(effect) {
+	/** @type {Effect[]} */
+	var effects = [];
+
 	var current_effect = effect.first;
 
 	main_loop: while (current_effect !== null) {
@@ -797,7 +796,7 @@ function process_effects(effect, collected_effects) {
 
 		if (!is_skippable_branch && (flags & INERT) === 0) {
 			if ((flags & EFFECT) !== 0) {
-				collected_effects.push(current_effect);
+				effects.push(current_effect);
 			} else if (is_branch) {
 				current_effect.f ^= CLEAN;
 			} else {
@@ -843,6 +842,8 @@ function process_effects(effect, collected_effects) {
 
 		current_effect = sibling;
 	}
+
+	return effects;
 }
 
 /**
