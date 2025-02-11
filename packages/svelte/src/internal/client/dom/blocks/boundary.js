@@ -134,7 +134,7 @@ export class Boundary {
 			};
 
 			// @ts-ignore We re-use the effect's fn property to avoid allocation of an additional field
-			boundary_effect.fn = (/** @type {unknown} */ input, /** @type {any} */ payload) => {
+			boundary_effect.fn = (/** @type {unknown} */ input) => {
 				var error = input;
 				var onerror = this.#props.onerror;
 				let failed = this.#props.failed;
