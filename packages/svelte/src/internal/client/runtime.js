@@ -829,8 +829,7 @@ function process_effects(effect, collected_effects, boundary) {
 				// Inside a boundary, defer everything except block/branch effects
 				boundary.add_effect(current_effect);
 			} else if ((flags & BOUNDARY_EFFECT) !== 0) {
-				// @ts-expect-error
-				var b = /** @type {Boundary} */ (current_effect.fn.boundary);
+				var b = /** @type {Boundary} */ (current_effect.b);
 
 				process_effects(current_effect, collected_effects, b);
 

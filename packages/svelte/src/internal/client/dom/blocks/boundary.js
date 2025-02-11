@@ -242,9 +242,6 @@ export class Boundary {
 
 		this.ran = true;
 
-		// @ts-expect-error
-		this.#effect.fn.boundary = this;
-
 		if (hydrating) {
 			this.#anchor = hydrate_node;
 		}
