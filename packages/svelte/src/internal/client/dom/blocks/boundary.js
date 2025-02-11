@@ -378,7 +378,12 @@ export function boundary(node, props, children) {
 				});
 			});
 		} else {
-			reset();
+			main_effect = branch(() => children(anchor));
+
+			if (async_count > 0) {
+				boundary.f |= BOUNDARY_SUSPENDED;
+				show_pending_snippet(true);
+			}
 		}
 
 		reset_is_throwing_error();
