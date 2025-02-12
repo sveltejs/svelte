@@ -11,6 +11,9 @@ export var $window;
 /** @type {Document} */
 export var $document;
 
+/** @type {boolean} */
+export var is_firefox;
+
 /** @type {() => Node | null} */
 var first_child_getter;
 /** @type {() => Node | null} */
@@ -27,6 +30,7 @@ export function init_operations() {
 
 	$window = window;
 	$document = document;
+	is_firefox = /Firefox/.test(navigator.userAgent);
 
 	var element_prototype = Element.prototype;
 	var node_prototype = Node.prototype;
