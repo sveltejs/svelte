@@ -375,7 +375,7 @@ export function client_component(analysis, options) {
 				...component_block.body,
 				b.if(b.call('$.aborted'), b.return()),
 				.../** @type {ESTree.Statement[]} */ (template.body),
-				b.stmt(b.call('$$unsuspend'))
+				b.stmt(b.call('$$unsuspend.unsuspend')) // TODO messy
 			])
 		);
 		body.async = true;
