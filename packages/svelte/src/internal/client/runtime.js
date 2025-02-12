@@ -9,7 +9,6 @@ import {
 } from './reactivity/effects.js';
 import {
 	EFFECT,
-	RENDER_EFFECT,
 	DIRTY,
 	MAYBE_DIRTY,
 	CLEAN,
@@ -51,7 +50,6 @@ import {
 } from './context.js';
 import { active_fork, Boundary, Fork } from './dom/blocks/boundary.js';
 import * as w from './warnings.js';
-import { log_effect_tree } from './dev/debug.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
