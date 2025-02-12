@@ -1060,13 +1060,17 @@ export function get(signal) {
 		recent_async_deriveds.delete(signal);
 	}
 
-	if (active_fork) {
-		return active_fork.get(signal);
-	}
+	if ((signal.f & DERIVED) === 0) {
+		if (active_fork) {
+			// console.log('get from fork', (signal.f & DERIVED) !== 0 ? 'derived' : 'source', signal.v);
+			return active_fork.get(signal);
+		}
 
-	var boundary = active_effect?.b;
-	if (boundary) {
-		return boundary.get(signal);
+		var boundary = active_effect?.b;
+		if (boundary) {
+			// console.log('get from boundary', (signal.f & DERIVED) !== 0 ? 'derived' : 'source', signal.v);
+			return boundary.get(signal);
+		}
 	}
 
 	return signal.v;

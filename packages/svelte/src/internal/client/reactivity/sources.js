@@ -185,7 +185,9 @@ export function internal_set(source, value) {
 			}
 		}
 
-		if (!active_fork && !changeset.has(source)) {
+		if (active_fork !== null) {
+			active_fork.changeset.add(source);
+		} else {
 			changeset.add(source);
 		}
 

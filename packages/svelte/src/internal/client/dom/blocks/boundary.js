@@ -406,13 +406,6 @@ export class Fork {
 	 * @param {Source} source
 	 */
 	get(source) {
-		// console.log(
-		// 	'fork#get',
-		// 	[...this.changeset].map((s) => s.v),
-		// 	this.changeset.has(source),
-		// 	source.v
-		// );
-
 		if (this.changeset.has(source)) {
 			return source.v;
 		}

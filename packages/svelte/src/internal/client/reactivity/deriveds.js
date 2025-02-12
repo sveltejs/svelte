@@ -139,8 +139,6 @@ export function async_derived(fn, location) {
 						internal_set(signal, v);
 					}
 
-					active_fork?.changeset.add(signal);
-
 					if (DEV && location !== undefined) {
 						recent_async_deriveds.add(signal);
 
