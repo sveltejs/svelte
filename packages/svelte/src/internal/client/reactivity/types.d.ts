@@ -7,6 +7,10 @@ export interface Signal {
 	wv: number;
 }
 
+export interface ValueOptions {
+	onchange?: () => unknown;
+}
+
 export interface Value<V = unknown> extends Signal {
 	/** Equality function */
 	equals: Equals;
@@ -16,6 +20,8 @@ export interface Value<V = unknown> extends Signal {
 	rv: number;
 	/** The latest value for this signal */
 	v: V;
+	/** Options for the source */
+	o?: ValueOptions;
 	/** Dev only */
 	created?: Error | null;
 	updated?: Error | null;

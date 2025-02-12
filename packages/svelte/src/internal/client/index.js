@@ -111,7 +111,16 @@ export {
 	user_effect,
 	user_pre_effect
 } from './reactivity/effects.js';
-export { mutable_state, mutate, set, state, update, update_pre } from './reactivity/sources.js';
+export {
+	mutable_state,
+	mutate,
+	set,
+	simple_set,
+	state,
+	update,
+	update_pre,
+	get_options
+} from './reactivity/sources.js';
 export {
 	prop,
 	rest_props,
@@ -146,7 +155,7 @@ export {
 } from './runtime.js';
 export { validate_binding, validate_each_keys } from './validate.js';
 export { raf } from './timing.js';
-export { proxy } from './proxy.js';
+export { proxy, assignable_proxy } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';
 export {
 	child,

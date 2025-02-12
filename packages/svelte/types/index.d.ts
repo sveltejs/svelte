@@ -412,6 +412,12 @@ declare module 'svelte' {
 	 * Synchronously flushes any pending state changes and those that result from it.
 	 * */
 	export function flushSync(fn?: (() => void) | undefined): void;
+	type Getters<T> = {
+		[K in keyof T]: () => T[K];
+	};
+	export interface StateOptions {
+		onchange?: () => unknown;
+	}
 	/**
 	 * Create a snippet programmatically
 	 * */
@@ -512,9 +518,6 @@ declare module 'svelte' {
 	 * ```
 	 * */
 	export function untrack<T>(fn: () => T): T;
-	type Getters<T> = {
-		[K in keyof T]: () => T[K];
-	};
 
 	export {};
 }
@@ -2676,6 +2679,11 @@ declare module 'svelte/types/compiler/interfaces' {
  *
  * @param initial The initial value
  */
+declare function $state<T>(
+	initial: undefined,
+	options?: import('svelte').StateOptions
+): T | undefined;
+declare function $state<T>(initial: T, options?: import('svelte').StateOptions): T;
 declare function $state<T>(initial: T): T;
 declare function $state<T>(): T | undefined;
 
@@ -2772,6 +2780,11 @@ declare namespace $state {
 	 *
 	 * @param initial The initial value
 	 */
+	export function raw<T>(
+		initial: undefined,
+		options?: import('svelte').StateOptions
+	): T | undefined;
+	export function raw<T>(initial?: T, options?: import('svelte').StateOptions): T;
 	export function raw<T>(initial: T): T;
 	export function raw<T>(): T | undefined;
 	/**
