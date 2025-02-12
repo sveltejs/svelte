@@ -369,33 +369,18 @@ export function handle_error(error, effect, previous_effect, component_context) 
 /**
  * @param {Value} signal
  * @param {Effect} effect
- * @param {number} [depth]
+ * @param {boolean} [root]
  */
-function schedule_possible_effect_self_invalidation(
-	signal,
-	effect,
-	depth = 0,
-	visited = new Set()
-) {
+function schedule_possible_effect_self_invalidation(signal, effect, root = true) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
 	for (var i = 0; i < reactions.length; i++) {
 		var reaction = reactions[i];
-		if (visited.has(reaction)) {
-			continue;
-		}
-		visited.add(reaction);
-
 		if ((reaction.f & DERIVED) !== 0) {
-			schedule_possible_effect_self_invalidation(
-				/** @type {Derived} */ (reaction),
-				effect,
-				depth + 1,
-				visited
-			);
+			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
 		} else if (effect === reaction) {
-			if (depth === 0) {
+			if (root) {
 				set_signal_status(reaction, DIRTY);
 			} else if ((reaction.f & CLEAN) !== 0) {
 				set_signal_status(reaction, MAYBE_DIRTY);
