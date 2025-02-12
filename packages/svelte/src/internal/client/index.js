@@ -1,4 +1,5 @@
 export { FILENAME, HMR, NAMESPACE_SVG } from '../../constants.js';
+export { push, pop } from './context.js';
 export { assign, assign_and, assign_or, assign_nullish } from './dev/assign.js';
 export { cleanup_styles } from './dev/css.js';
 export { add_locations } from './dev/elements.js';
@@ -9,6 +10,7 @@ export {
 	mark_module_start,
 	mark_module_end,
 	add_owner_effect,
+	add_owner_to_class,
 	skip_ownership_validation
 } from './dev/ownership.js';
 export { check_target, legacy_api } from './dev/legacy.js';
@@ -33,7 +35,6 @@ export {
 	set_attributes,
 	set_custom_element_data,
 	set_xlink_attribute,
-	handle_lazy_img,
 	set_value,
 	set_checked,
 	set_selected,
@@ -95,7 +96,8 @@ export {
 	mathml_template,
 	template,
 	template_with_script,
-	text
+	text,
+	props_id
 } from './dom/template.js';
 export { derived, derived_safe_equal } from './reactivity/deriveds.js';
 export {
@@ -115,6 +117,8 @@ export {
 	set,
 	simple_set,
 	state,
+	update,
+	update_pre,
 	get_options
 } from './reactivity/sources.js';
 export {
@@ -145,17 +149,9 @@ export {
 	flush_sync,
 	tick,
 	untrack,
-	update,
-	update_pre,
 	exclude_from_object,
-	pop,
-	push,
 	deep_read,
-	deep_read_state,
-	getAllContexts,
-	getContext,
-	setContext,
-	hasContext
+	deep_read_state
 } from './runtime.js';
 export { validate_binding, validate_each_keys } from './validate.js';
 export { raf } from './timing.js';

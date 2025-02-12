@@ -9,7 +9,8 @@ import {
 	init_operations
 } from './dom/operations.js';
 import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
-import { push, pop, component_context, active_effect } from './runtime.js';
+import { active_effect } from './runtime.js';
+import { push, pop, component_context } from './context.js';
 import { component_root, branch } from './reactivity/effects.js';
 import {
 	hydrate_next,
@@ -54,7 +55,7 @@ export function set_text(text, value) {
 	if (str !== (text.__t ??= text.nodeValue)) {
 		// @ts-expect-error
 		text.__t = str;
-		text.nodeValue = str == null ? '' : str + '';
+		text.nodeValue = str + '';
 	}
 }
 

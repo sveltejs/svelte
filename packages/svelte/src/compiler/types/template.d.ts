@@ -166,7 +166,7 @@ export namespace AST {
 		/** @internal */
 		metadata: {
 			dynamic: boolean;
-			args_with_call_expression: Set<number>;
+			arguments: ExpressionMetadata[];
 			path: SvelteNode[];
 			/** The set of locally-defined snippets that this render tag could correspond to,
 			 * used for CSS pruning purposes */
@@ -414,8 +414,6 @@ export namespace AST {
 			expression: ExpressionMetadata;
 			keyed: boolean;
 			contains_group_binding: boolean;
-			/** Set if something in the array expression is shadowed within the each block */
-			array_name: Identifier | null;
 			index: Identifier;
 			declarations: Map<string, Binding>;
 			/**

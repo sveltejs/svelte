@@ -1,12 +1,10 @@
 /** @import { Derived, Effect, Reaction, Source, Value, ValueOptions } from '#client' */
 import { DEV } from 'esm-env';
 import {
-	component_context,
 	active_reaction,
 	active_effect,
 	untracked_writes,
 	get,
-	is_runes,
 	schedule_effect,
 	set_untracked_writes,
 	set_signal_status,
@@ -36,6 +34,7 @@ import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack } from '../dev/tracing.js';
 import { proxy } from '../proxy.js';
+import { component_context, is_runes } from '../context.js';
 
 export let inspect_effects = new Set();
 
@@ -154,7 +153,7 @@ export function mutable_state(v, immutable = false) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 function push_derived_source(source) {
-	if (active_reaction !== null && (active_reaction.f & DERIVED) !== 0) {
+	if (active_reaction !== null && !untracking && (active_reaction.f & DERIVED) !== 0) {
 		if (derived_sources === null) {
 			set_derived_sources([source]);
 		} else {
@@ -301,6 +300,35 @@ export function internal_set(source, value) {
 	}
 
 	return value;
+}
+
+/**
+ * @template {number | bigint} T
+ * @param {Source<T>} source
+ * @param {1 | -1} [d]
+ * @returns {T}
+ */
+export function update(source, d = 1) {
+	var value = get(source);
+	var result = d === 1 ? value++ : value--;
+
+	set(source, value);
+
+	// @ts-expect-error
+	return result;
+}
+
+/**
+ * @template {number | bigint} T
+ * @param {Source<T>} source
+ * @param {1 | -1} [d]
+ * @returns {T}
+ */
+export function update_pre(source, d = 1) {
+	var value = get(source);
+
+	// @ts-expect-error
+	return set(source, d === 1 ? ++value : --value);
 }
 
 /**

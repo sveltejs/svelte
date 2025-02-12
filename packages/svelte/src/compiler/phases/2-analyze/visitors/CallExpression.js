@@ -55,7 +55,7 @@ export function CallExpression(node, context) {
 
 		case '$props':
 			if (context.state.has_props_rune) {
-				e.props_duplicate(node);
+				e.props_duplicate(node, rune);
 			}
 
 			context.state.has_props_rune = true;
@@ -74,12 +74,39 @@ export function CallExpression(node, context) {
 
 			break;
 
+		case '$props.id': {
+			const grand_parent = get_parent(context.path, -2);
+
+			if (context.state.analysis.props_id) {
+				e.props_duplicate(node, rune);
+			}
+
+			if (
+				parent.type !== 'VariableDeclarator' ||
+				parent.id.type !== 'Identifier' ||
+				context.state.ast_type !== 'instance' ||
+				context.state.scope !== context.state.analysis.instance.scope ||
+				grand_parent.type !== 'VariableDeclaration'
+			) {
+				e.props_id_invalid_placement(node);
+			}
+
+			if (node.arguments.length > 0) {
+				e.rune_invalid_arguments(node, rune);
+			}
+
+			context.state.analysis.props_id = parent.id;
+
+			break;
+		}
+
 		case '$state':
 		case '$state.raw':
 		case '$derived':
 		case '$derived.by':
 			if (
-				parent.type !== 'VariableDeclarator' &&
+				(parent.type !== 'VariableDeclarator' ||
+					get_parent(context.path, -3).type === 'ConstTag') &&
 				!(parent.type === 'PropertyDefinition' && !parent.static && !parent.computed)
 			) {
 				e.state_invalid_placement(node, rune);
@@ -189,18 +216,6 @@ export function CallExpression(node, context) {
 			}
 
 			break;
-	}
-
-	if (context.state.render_tag) {
-		// Find out which of the render tag arguments contains this call expression
-		const arg_idx = unwrap_optional(context.state.render_tag.expression).arguments.findIndex(
-			(arg) => arg === node || context.path.includes(arg)
-		);
-
-		// -1 if this is the call expression of the render tag itself
-		if (arg_idx !== -1) {
-			context.state.render_tag.metadata.args_with_call_expression.add(arg_idx);
-		}
 	}
 
 	if (node.callee.type === 'Identifier') {

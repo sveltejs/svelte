@@ -4,8 +4,6 @@ import { define_property, get_descriptors, get_prototype_of, index_of } from '..
 import {
 	destroy_block_effect_children,
 	destroy_effect_children,
-	destroy_effect_deriveds,
-	effect,
 	execute_effect_teardown,
 	unlink_effect
 } from './reactivity/effects.js';
@@ -28,14 +26,20 @@ import {
 	BOUNDARY_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
-import { add_owner } from './dev/ownership.js';
-import { internal_set, set, source } from './reactivity/sources.js';
-import { destroy_derived, execute_derived, update_derived } from './reactivity/deriveds.js';
+import { internal_set } from './reactivity/sources.js';
+import { destroy_derived_effects, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
-import { lifecycle_outside_component } from '../shared/errors.js';
 import { FILENAME } from '../../constants.js';
-import { legacy_mode_flag, tracing_mode_flag } from '../flags/index.js';
+import { tracing_mode_flag } from '../flags/index.js';
 import { tracing_expressions, get_stack } from './dev/tracing.js';
+import {
+	component_context,
+	dev_current_component_function,
+	is_runes,
+	set_component_context,
+	set_dev_current_component_function
+} from './context.js';
+import { is_firefox } from './dom/operations.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -150,39 +154,8 @@ export function set_captured_signals(value) {
 	captured_signals = value;
 }
 
-// Handling runtime component context
-/** @type {ComponentContext | null} */
-export let component_context = null;
-
-/** @param {ComponentContext | null} context */
-export function set_component_context(context) {
-	component_context = context;
-}
-
-/**
- * The current component function. Different from current component context:
- * ```html
- * <!-- App.svelte -->
- * <Foo>
- *   <Bar /> <!-- context == Foo.svelte, function == App.svelte -->
- * </Foo>
- * ```
- * @type {ComponentContext['function']}
- */
-export let dev_current_component_function = null;
-
-/** @param {ComponentContext['function']} fn */
-export function set_dev_current_component_function(fn) {
-	dev_current_component_function = fn;
-}
-
 export function increment_write_version() {
 	return ++write_version;
-}
-
-/** @returns {boolean} */
-export function is_runes() {
-	return !legacy_mode_flag || (component_context !== null && component_context.l === null);
 }
 
 /**
@@ -212,18 +185,28 @@ export function check_dirtiness(reaction) {
 			// If we are working with a disconnected or an unowned signal that is now connected (due to an active effect)
 			// then we need to re-connect the reaction to the dependency
 			if (is_disconnected || is_unowned_connected) {
+				var derived = /** @type {Derived} */ (reaction);
+				var parent = derived.parent;
+
 				for (i = 0; i < length; i++) {
 					dependency = dependencies[i];
 
 					// We always re-add all reactions (even duplicates) if the derived was
-					// previously disconnected
-					if (is_disconnected || !dependency?.reactions?.includes(reaction)) {
-						(dependency.reactions ??= []).push(reaction);
+					// previously disconnected, however we don't if it was unowned as we
+					// de-duplicate dependencies in that case
+					if (is_disconnected || !dependency?.reactions?.includes(derived)) {
+						(dependency.reactions ??= []).push(derived);
 					}
 				}
 
 				if (is_disconnected) {
-					reaction.f ^= DISCONNECTED;
+					derived.f ^= DISCONNECTED;
+				}
+				// If the unowned derived is now fully connected to the graph again (it's unowned and reconnected, has a parent
+				// and the parent is not unowned), then we can mark it as connected again, removing the need for the unowned
+				// flag
+				if (is_unowned_connected && parent !== null && (parent.f & UNOWNED) === 0) {
+					derived.f ^= UNOWNED;
 				}
 			}
 
@@ -351,7 +334,7 @@ export function handle_error(error, effect, previous_effect, component_context) 
 		current_context = current_context.p;
 	}
 
-	const indent = /Firefox/.test(navigator.userAgent) ? '  ' : '\t';
+	const indent = is_firefox ? '  ' : '\t';
 	define_property(error, 'message', {
 		value: error.message + `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`
 	});
@@ -432,9 +415,12 @@ export function update_reaction(reaction) {
 	skipped_deps = 0;
 	untracked_writes = null;
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
-	skip_reaction = !is_flushing_effect && (flags & UNOWNED) !== 0;
+	skip_reaction =
+		(flags & UNOWNED) !== 0 &&
+		(!is_flushing_effect || previous_reaction === null || previous_untracking);
+
 	derived_sources = null;
-	component_context = reaction.ctx;
+	set_component_context(reaction.ctx);
 	untracking = false;
 	read_version++;
 
@@ -498,7 +484,7 @@ export function update_reaction(reaction) {
 		active_reaction = previous_reaction;
 		skip_reaction = previous_skip_reaction;
 		derived_sources = prev_derived_sources;
-		component_context = previous_component_context;
+		set_component_context(previous_component_context);
 		untracking = previous_untracking;
 	}
 }
@@ -540,6 +526,8 @@ function remove_reaction(signal, dependency) {
 		if ((dependency.f & (UNOWNED | DISCONNECTED)) === 0) {
 			dependency.f ^= DISCONNECTED;
 		}
+		// Disconnect any reactions owned by this reaction
+		destroy_derived_effects(/** @type {Derived} **/ (dependency));
 		remove_reactions(/** @type {Derived} **/ (dependency), 0);
 	}
 }
@@ -578,7 +566,7 @@ export function update_effect(effect) {
 
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
-		dev_current_component_function = effect.component_function;
+		set_dev_current_component_function(effect.component_function);
 	}
 
 	try {
@@ -587,7 +575,6 @@ export function update_effect(effect) {
 		} else {
 			destroy_effect_children(effect);
 		}
-		destroy_effect_deriveds(effect);
 
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
@@ -620,7 +607,7 @@ export function update_effect(effect) {
 		active_effect = previous_effect;
 
 		if (DEV) {
-			dev_current_component_function = previous_component_fn;
+			set_dev_current_component_function(previous_component_fn);
 		}
 	}
 }
@@ -693,10 +680,7 @@ function flush_queued_root_effects(root_effects) {
 				effect.f ^= CLEAN;
 			}
 
-			/** @type {Effect[]} */
-			var collected_effects = [];
-
-			process_effects(effect, collected_effects);
+			var collected_effects = process_effects(effect);
 			flush_queued_effects(collected_effects);
 		}
 	} finally {
@@ -797,12 +781,13 @@ export function schedule_effect(signal) {
  * effects to be flushed.
  *
  * @param {Effect} effect
- * @param {Effect[]} collected_effects
- * @returns {void}
+ * @returns {Effect[]}
  */
-function process_effects(effect, collected_effects) {
-	var current_effect = effect.first;
+function process_effects(effect) {
+	/** @type {Effect[]} */
 	var effects = [];
+
+	var current_effect = effect.first;
 
 	main_loop: while (current_effect !== null) {
 		var flags = current_effect.f;
@@ -811,27 +796,32 @@ function process_effects(effect, collected_effects) {
 		var sibling = current_effect.next;
 
 		if (!is_skippable_branch && (flags & INERT) === 0) {
-			if ((flags & RENDER_EFFECT) !== 0) {
-				if (is_branch) {
-					current_effect.f ^= CLEAN;
-				} else {
-					try {
-						if (check_dirtiness(current_effect)) {
-							update_effect(current_effect);
-						}
-					} catch (error) {
-						handle_error(error, current_effect, null, current_effect.ctx);
-					}
-				}
-
-				var child = current_effect.first;
-
-				if (child !== null) {
-					current_effect = child;
-					continue;
-				}
-			} else if ((flags & EFFECT) !== 0) {
+			if ((flags & EFFECT) !== 0) {
 				effects.push(current_effect);
+			} else if (is_branch) {
+				current_effect.f ^= CLEAN;
+			} else {
+				// Ensure we set the effect to be the active reaction
+				// to ensure that unowned deriveds are correctly tracked
+				// because we're flushing the current effect
+				var previous_active_reaction = active_reaction;
+				try {
+					active_reaction = current_effect;
+					if (check_dirtiness(current_effect)) {
+						update_effect(current_effect);
+					}
+				} catch (error) {
+					handle_error(error, current_effect, null, current_effect.ctx);
+				} finally {
+					active_reaction = previous_active_reaction;
+				}
+			}
+
+			var child = current_effect.first;
+
+			if (child !== null) {
+				current_effect = child;
+				continue;
 			}
 		}
 
@@ -854,13 +844,7 @@ function process_effects(effect, collected_effects) {
 		current_effect = sibling;
 	}
 
-	// We might be dealing with many effects here, far more than can be spread into
-	// an array push call (callstack overflow). So let's deal with each effect in a loop.
-	for (var i = 0; i < effects.length; i++) {
-		child = effects[i];
-		collected_effects.push(child);
-		process_effects(child, collected_effects);
-	}
+	return effects;
 }
 
 /**
@@ -925,15 +909,6 @@ export function get(signal) {
 	var flags = signal.f;
 	var is_derived = (flags & DERIVED) !== 0;
 
-	// If the derived is destroyed, just execute it again without retaining
-	// its memoisation properties as the derived is stale
-	if (is_derived && (flags & DESTROYED) !== 0) {
-		var value = execute_derived(/** @type {Derived} */ (signal));
-		// Ensure the derived remains destroyed
-		destroy_derived(/** @type {Derived} */ (signal));
-		return value;
-	}
-
 	if (captured_signals !== null) {
 		captured_signals.add(signal);
 	}
@@ -953,31 +928,26 @@ export function get(signal) {
 				skipped_deps++;
 			} else if (new_deps === null) {
 				new_deps = [signal];
-			} else {
+			} else if (!skip_reaction || !new_deps.includes(signal)) {
+				// Normally we can push duplicated dependencies to `new_deps`, but if we're inside
+				// an unowned derived because skip_reaction is true, then we need to ensure that
+				// we don't have duplicates
 				new_deps.push(signal);
 			}
 		}
-	} else if (is_derived && /** @type {Derived} */ (signal).deps === null) {
+	} else if (
+		is_derived &&
+		/** @type {Derived} */ (signal).deps === null &&
+		/** @type {Derived} */ (signal).effects === null
+	) {
 		var derived = /** @type {Derived} */ (signal);
 		var parent = derived.parent;
-		var target = derived;
 
-		while (parent !== null) {
-			// Attach the derived to the nearest parent effect, if there are deriveds
-			// in between then we also need to attach them too
-			if ((parent.f & DERIVED) !== 0) {
-				var parent_derived = /** @type {Derived} */ (parent);
-
-				target = parent_derived;
-				parent = parent_derived.parent;
-			} else {
-				var parent_effect = /** @type {Effect} */ (parent);
-
-				if (!parent_effect.deriveds?.includes(target)) {
-					(parent_effect.deriveds ??= []).push(target);
-				}
-				break;
-			}
+		if (parent !== null && (parent.f & UNOWNED) === 0) {
+			// If the derived is owned by another derived then mark it as unowned
+			// as the derived value might have been referenced in a different context
+			// since and thus its parent might not be its true owner anymore
+			derived.f ^= UNOWNED;
 		}
 	}
 
@@ -1111,138 +1081,6 @@ export function set_signal_status(signal, status) {
 }
 
 /**
- * Retrieves the context that belongs to the closest parent component with the specified `key`.
- * Must be called during component initialisation.
- *
- * @template T
- * @param {any} key
- * @returns {T}
- */
-export function getContext(key) {
-	const context_map = get_or_init_context_map('getContext');
-	const result = /** @type {T} */ (context_map.get(key));
-
-	if (DEV) {
-		const fn = /** @type {ComponentContext} */ (component_context).function;
-		if (fn) {
-			add_owner(result, fn, true);
-		}
-	}
-
-	return result;
-}
-
-/**
- * Associates an arbitrary `context` object with the current component and the specified `key`
- * and returns that object. The context is then available to children of the component
- * (including slotted content) with `getContext`.
- *
- * Like lifecycle functions, this must be called during component initialisation.
- *
- * @template T
- * @param {any} key
- * @param {T} context
- * @returns {T}
- */
-export function setContext(key, context) {
-	const context_map = get_or_init_context_map('setContext');
-	context_map.set(key, context);
-	return context;
-}
-
-/**
- * Checks whether a given `key` has been set in the context of a parent component.
- * Must be called during component initialisation.
- *
- * @param {any} key
- * @returns {boolean}
- */
-export function hasContext(key) {
-	const context_map = get_or_init_context_map('hasContext');
-	return context_map.has(key);
-}
-
-/**
- * Retrieves the whole context map that belongs to the closest parent component.
- * Must be called during component initialisation. Useful, for example, if you
- * programmatically create a component and want to pass the existing context to it.
- *
- * @template {Map<any, any>} [T=Map<any, any>]
- * @returns {T}
- */
-export function getAllContexts() {
-	const context_map = get_or_init_context_map('getAllContexts');
-
-	if (DEV) {
-		const fn = component_context?.function;
-		if (fn) {
-			for (const value of context_map.values()) {
-				add_owner(value, fn, true);
-			}
-		}
-	}
-
-	return /** @type {T} */ (context_map);
-}
-
-/**
- * @param {string} name
- * @returns {Map<unknown, unknown>}
- */
-function get_or_init_context_map(name) {
-	if (component_context === null) {
-		lifecycle_outside_component(name);
-	}
-
-	return (component_context.c ??= new Map(get_parent_context(component_context) || undefined));
-}
-
-/**
- * @param {ComponentContext} component_context
- * @returns {Map<unknown, unknown> | null}
- */
-function get_parent_context(component_context) {
-	let parent = component_context.p;
-	while (parent !== null) {
-		const context_map = parent.c;
-		if (context_map !== null) {
-			return context_map;
-		}
-		parent = parent.p;
-	}
-	return null;
-}
-
-/**
- * @template {number | bigint} T
- * @param {Value<T>} signal
- * @param {1 | -1} [d]
- * @returns {T}
- */
-export function update(signal, d = 1) {
-	var value = get(signal);
-	var result = d === 1 ? value++ : value--;
-
-	set(signal, value);
-
-	// @ts-expect-error
-	return result;
-}
-
-/**
- * @template {number | bigint} T
- * @param {Value<T>} signal
- * @param {1 | -1} [d]
- * @returns {T}
- */
-export function update_pre(signal, d = 1) {
-	var value = get(signal);
-
-	// @ts-expect-error
-	return set(signal, d === 1 ? ++value : --value);
-}
-
-/**
  * @param {Record<string, unknown>} obj
  * @param {string[]} keys
  * @returns {Record<string, unknown>}
@@ -1258,78 +1096,6 @@ export function exclude_from_object(obj, keys) {
 	}
 
 	return result;
-}
-
-/**
- * @param {Record<string, unknown>} props
- * @param {any} runes
- * @param {Function} [fn]
- * @returns {void}
- */
-export function push(props, runes = false, fn) {
-	component_context = {
-		p: component_context,
-		c: null,
-		e: null,
-		m: false,
-		s: props,
-		x: null,
-		l: null
-	};
-
-	if (legacy_mode_flag && !runes) {
-		component_context.l = {
-			s: null,
-			u: null,
-			r1: [],
-			r2: source(false)
-		};
-	}
-
-	if (DEV) {
-		// component function
-		component_context.function = fn;
-		dev_current_component_function = fn;
-	}
-}
-
-/**
- * @template {Record<string, any>} T
- * @param {T} [component]
- * @returns {T}
- */
-export function pop(component) {
-	const context_stack_item = component_context;
-	if (context_stack_item !== null) {
-		if (component !== undefined) {
-			context_stack_item.x = component;
-		}
-		const component_effects = context_stack_item.e;
-		if (component_effects !== null) {
-			var previous_effect = active_effect;
-			var previous_reaction = active_reaction;
-			context_stack_item.e = null;
-			try {
-				for (var i = 0; i < component_effects.length; i++) {
-					var component_effect = component_effects[i];
-					set_active_effect(component_effect.effect);
-					set_active_reaction(component_effect.reaction);
-					effect(component_effect.fn);
-				}
-			} finally {
-				set_active_effect(previous_effect);
-				set_active_reaction(previous_reaction);
-			}
-		}
-		component_context = context_stack_item.p;
-		if (DEV) {
-			dev_current_component_function = context_stack_item.p?.function ?? null;
-		}
-		context_stack_item.m = true;
-	}
-	// Micro-optimization: Don't set .a above to the empty object
-	// so it can be garbage-collected when the return here is unused
-	return component || /** @type {T} */ ({});
 }
 
 /**
@@ -1404,38 +1170,4 @@ export function deep_read(value, visited = new Set()) {
 			}
 		}
 	}
-}
-
-if (DEV) {
-	/**
-	 * @param {string} rune
-	 */
-	function throw_rune_error(rune) {
-		if (!(rune in globalThis)) {
-			// TODO if people start adjusting the "this can contain runes" config through v-p-s more, adjust this message
-			/** @type {any} */
-			let value; // let's hope noone modifies this global, but belts and braces
-			Object.defineProperty(globalThis, rune, {
-				configurable: true,
-				// eslint-disable-next-line getter-return
-				get: () => {
-					if (value !== undefined) {
-						return value;
-					}
-
-					e.rune_outside_svelte(rune);
-				},
-				set: (v) => {
-					value = v;
-				}
-			});
-		}
-	}
-
-	throw_rune_error('$state');
-	throw_rune_error('$effect');
-	throw_rune_error('$derived');
-	throw_rune_error('$inspect');
-	throw_rune_error('$props');
-	throw_rune_error('$bindable');
 }

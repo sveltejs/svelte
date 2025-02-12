@@ -219,11 +219,10 @@ You can give the `<select>` a default value by adding a `selected` attribute to 
 - [`volume`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/volume)
 - [`muted`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/muted)
 
-...and seven readonly ones:
+...and six readonly ones:
 
 - [`duration`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/duration)
 - [`buffered`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/buffered)
-- [`paused`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/paused)
 - [`seekable`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/seekable)
 - [`seeking`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/seeking_event)
 - [`ended`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/ended)
@@ -235,7 +234,7 @@ You can give the `<select>` a default value by adding a `selected` attribute to 
 
 ## `<video>`
 
-`<video>` elements have all the same bindings as [#audio] elements, plus readonly [`videoWidth`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/videoWidth) and [`videoHeight`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/videoHeight) bindings.
+`<video>` elements have all the same bindings as [`<audio>`](#audio) elements, plus readonly [`videoWidth`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/videoWidth) and [`videoHeight`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/videoHeight) bindings.
 
 ## `<img>`
 

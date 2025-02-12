@@ -4,7 +4,6 @@
 import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { create_derived } from '../../utils.js';
 import { build_bind_this, memoize_expression, validate_binding } from '../shared/utils.js';
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
@@ -134,9 +133,9 @@ export function build_component(node, component_name, context, anchor = context.
 				custom_css_props.push(
 					b.init(
 						attribute.name,
-						build_attribute_value(attribute.value, context, (value) =>
+						build_attribute_value(attribute.value, context, (value, metadata) =>
 							// TODO put the derived in the local block
-							memoize_expression(context.state, value)
+							metadata.has_call ? memoize_expression(context.state, value) : value
 						).value
 					)
 				);
@@ -151,31 +150,29 @@ export function build_component(node, component_name, context, anchor = context.
 				has_children_prop = true;
 			}
 
-			const { value, has_state } = build_attribute_value(attribute.value, context, (value) =>
-				memoize_expression(context.state, value)
+			const { value, has_state } = build_attribute_value(
+				attribute.value,
+				context,
+				(value, metadata) => {
+					if (!metadata.has_state) return value;
+
+					// When we have a non-simple computation, anything other than an Identifier or Member expression,
+					// then there's a good chance it needs to be memoized to avoid over-firing when read within the
+					// child component (e.g. `active={i === index}`)
+					const should_wrap_in_derived = get_attribute_chunks(attribute.value).some((n) => {
+						return (
+							n.type === 'ExpressionTag' &&
+							n.expression.type !== 'Identifier' &&
+							n.expression.type !== 'MemberExpression'
+						);
+					});
+
+					return should_wrap_in_derived ? memoize_expression(context.state, value) : value;
+				}
 			);
 
 			if (has_state) {
-				let arg = value;
-
-				// When we have a non-simple computation, anything other than an Identifier or Member expression,
-				// then there's a good chance it needs to be memoized to avoid over-firing when read within the
-				// child component.
-				const should_wrap_in_derived = get_attribute_chunks(attribute.value).some((n) => {
-					return (
-						n.type === 'ExpressionTag' &&
-						n.expression.type !== 'Identifier' &&
-						n.expression.type !== 'MemberExpression'
-					);
-				});
-
-				if (should_wrap_in_derived) {
-					const id = b.id(context.state.scope.generate(attribute.name));
-					context.state.init.push(b.var(id, create_derived(context.state, b.thunk(value))));
-					arg = b.call('$.get', id);
-				}
-
-				push_prop(b.get(attribute.name, [b.return(arg)]));
+				push_prop(b.get(attribute.name, [b.return(value)]));
 			} else {
 				push_prop(b.init(attribute.name, value));
 			}
@@ -183,37 +180,18 @@ export function build_component(node, component_name, context, anchor = context.
 			const expression = /** @type {Expression} */ (context.visit(attribute.expression));
 
 			if (dev && attribute.name !== 'this') {
-				let should_add_owner = true;
-
-				if (attribute.expression.type !== 'SequenceExpression') {
-					const left = object(attribute.expression);
-
-					if (left?.type === 'Identifier') {
-						const binding = context.state.scope.get(left.name);
-
-						// Only run ownership addition on $state fields.
-						// Theoretically someone could create a `$state` while creating `$state.raw` or inside a `$derived.by`,
-						// but that feels so much of an edge case that it doesn't warrant a perf hit for the common case.
-						if (binding?.kind === 'derived' || binding?.kind === 'raw_state') {
-							should_add_owner = false;
-						}
-					}
-				}
-
-				if (should_add_owner) {
-					binding_initializers.push(
-						b.stmt(
-							b.call(
-								b.id('$.add_owner_effect'),
-								expression.type === 'SequenceExpression'
-									? expression.expressions[0]
-									: b.thunk(expression),
-								b.id(component_name),
-								is_ignored(node, 'ownership_invalid_binding') && b.true
-							)
+				binding_initializers.push(
+					b.stmt(
+						b.call(
+							b.id('$.add_owner_effect'),
+							expression.type === 'SequenceExpression'
+								? expression.expressions[0]
+								: b.thunk(expression),
+							b.id(component_name),
+							is_ignored(node, 'ownership_invalid_binding') && b.true
 						)
-					);
-				}
+					)
+				);
 			}
 
 			if (expression.type === 'SequenceExpression') {

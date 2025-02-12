@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import polka from 'polka';
 import { render } from 'svelte/server';
-import App from './src/main.svelte';
+import App from './src/App.svelte';
 
 const { head, body } = render(App);
 

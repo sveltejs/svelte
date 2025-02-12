@@ -1,7 +1,8 @@
-/** @import { ProxyMetadata, ProxyStateObject, Source, ValueOptions } from '#client' */
+/** @import { ProxyMetadata, Source, ValueOptions } from '#client' */
 import { DEV } from 'esm-env';
 import { UNINITIALIZED } from '../../constants.js';
 import { tracing_mode_flag } from '../flags/index.js';
+import { component_context } from './context.js';
 import {
 	array_prototype,
 	get_descriptor,
@@ -14,7 +15,7 @@ import { check_ownership, widen_ownership } from './dev/ownership.js';
 import { get_stack } from './dev/tracing.js';
 import * as e from './errors.js';
 import { batch_onchange, set, source, state } from './reactivity/sources.js';
-import { active_effect, component_context, get } from './runtime.js';
+import { active_effect, get } from './runtime.js';
 
 const array_methods = ['push', 'pop', 'shift', 'unshift', 'splice', 'reverse', 'sort'];
 

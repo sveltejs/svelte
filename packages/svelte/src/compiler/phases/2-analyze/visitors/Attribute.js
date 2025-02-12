@@ -23,11 +23,6 @@ export function Attribute(node, context) {
 		if (node.name === 'value' && parent.name === 'option') {
 			mark_subtree_dynamic(context.path);
 		}
-
-		// special case <img loading="lazy" />
-		if (node.name === 'loading' && parent.name === 'img') {
-			mark_subtree_dynamic(context.path);
-		}
 	}
 
 	if (is_event_attribute(node)) {

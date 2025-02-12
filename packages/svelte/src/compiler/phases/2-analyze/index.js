@@ -243,7 +243,15 @@ export function analyze_module(ast, options) {
 		}
 	}
 
-	const analysis = { runes: true, tracing: false };
+	/** @type {Analysis} */
+	const analysis = {
+		module: { ast, scope, scopes },
+		name: options.filename,
+		accessors: false,
+		runes: true,
+		immutable: true,
+		tracing: false
+	};
 
 	walk(
 		/** @type {Node} */ (ast),
@@ -256,14 +264,7 @@ export function analyze_module(ast, options) {
 		visitors
 	);
 
-	return {
-		module: { ast, scope, scopes },
-		name: options.filename,
-		accessors: false,
-		runes: true,
-		immutable: true,
-		tracing: analysis.tracing
-	};
+	return analysis;
 }
 
 /**
@@ -415,6 +416,7 @@ export function analyze_component(root, source, options) {
 		immutable: runes || options.immutable,
 		exports: [],
 		uses_props: false,
+		props_id: null,
 		uses_rest_props: false,
 		uses_slots: false,
 		uses_component_bindings: false,
@@ -604,8 +606,7 @@ export function analyze_component(root, source, options) {
 				has_props_rune: false,
 				component_slots: new Set(),
 				expression: null,
-				render_tag: null,
-				private_derived_state: [],
+				derived_state: [],
 				function_depth: scope.function_depth,
 				instance_scope: instance.scope,
 				reactive_statement: null,
@@ -676,8 +677,7 @@ export function analyze_component(root, source, options) {
 				reactive_statements: analysis.reactive_statements,
 				component_slots: new Set(),
 				expression: null,
-				render_tag: null,
-				private_derived_state: [],
+				derived_state: [],
 				function_depth: scope.function_depth
 			};
 

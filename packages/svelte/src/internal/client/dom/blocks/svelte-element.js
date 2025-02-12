@@ -17,7 +17,8 @@ import {
 } from '../../reactivity/effects.js';
 import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
-import { component_context, active_effect } from '../../runtime.js';
+import { active_effect } from '../../runtime.js';
+import { component_context } from '../../context.js';
 import { DEV } from 'esm-env';
 import { EFFECT_TRANSPARENT } from '../../constants.js';
 import { assign_nodes } from '../template.js';

@@ -227,7 +227,7 @@ export function RegularElement(node, context) {
 			node_id,
 			attributes_id,
 			(node.metadata.svg || node.metadata.mathml || is_custom_element_node(node)) && b.true,
-			node.name.includes('-') && b.true,
+			is_custom_element_node(node) && b.true,
 			context.state
 		);
 
@@ -299,11 +299,6 @@ export function RegularElement(node, context) {
 	// class/style directives must be applied last since they could override class/style attributes
 	build_class_directives(class_directives, node_id, context, is_attributes_reactive);
 	build_style_directives(style_directives, node_id, context, is_attributes_reactive);
-
-	// Apply the src and loading attributes for <img> elements after the element is appended to the document
-	if (node.name === 'img' && (has_spread || lookup.has('loading'))) {
-		context.state.after_update.push(b.stmt(b.call('$.handle_lazy_img', node_id)));
-	}
 
 	if (
 		is_load_error_element(node.name) &&
@@ -537,8 +532,8 @@ function build_element_attribute_update_assignment(
 	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
 	const is_mathml = context.state.metadata.namespace === 'mathml';
 
-	let { value, has_state } = build_attribute_value(attribute.value, context, (value) =>
-		get_expression_id(state, value)
+	let { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
+		metadata.has_call ? get_expression_id(state, value) : value
 	);
 
 	if (name === 'autofocus') {
@@ -665,8 +660,8 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
  */
 function build_element_special_value_attribute(element, node_id, attribute, context) {
 	const state = context.state;
-	const { value, has_state } = build_attribute_value(attribute.value, context, (value) =>
-		get_expression_id(state, value)
+	const { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
+		metadata.has_call ? get_expression_id(state, value) : value
 	);
 
 	const inner_assignment = b.assignment(

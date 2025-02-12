@@ -575,21 +575,10 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			}
 			if (node.fallback) visit(node.fallback, { scope });
 
-			// Check if inner scope shadows something from outer scope.
-			// This is necessary because we need access to the array expression of the each block
-			// in the inner scope if bindings are used, in order to invalidate the array.
-			let needs_array_deduplication = false;
-			for (const [name] of scope.declarations) {
-				if (state.scope.get(name) !== null) {
-					needs_array_deduplication = true;
-				}
-			}
-
 			node.metadata = {
 				expression: create_expression_metadata(),
 				keyed: false,
 				contains_group_binding: false,
-				array_name: needs_array_deduplication ? state.scope.root.unique('$$array') : null,
 				index: scope.root.unique('$$index'),
 				declarations: scope.declarations,
 				is_controlled: false

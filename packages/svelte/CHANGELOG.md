@@ -1,5 +1,97 @@
 # svelte
 
+## 5.19.10
+
+### Patch Changes
+
+- fix: when re-connecting unowned deriveds, remove their unowned flag ([#15255](https://github.com/sveltejs/svelte/pull/15255))
+
+- fix: allow mutation of private derived state ([#15228](https://github.com/sveltejs/svelte/pull/15228))
+
+## 5.19.9
+
+### Patch Changes
+
+- fix: ensure unowned derived dependencies are not duplicated when reactions are skipped ([#15232](https://github.com/sveltejs/svelte/pull/15232))
+
+- fix: hydrate `href` that is part of spread attributes ([#15226](https://github.com/sveltejs/svelte/pull/15226))
+
+## 5.19.8
+
+### Patch Changes
+
+- fix: properly set `value` property of custom elements ([#15206](https://github.com/sveltejs/svelte/pull/15206))
+
+- fix: ensure custom element updates don't run in hydration mode ([#15217](https://github.com/sveltejs/svelte/pull/15217))
+
+- fix: ensure tracking returns true, even if in unowned ([#15214](https://github.com/sveltejs/svelte/pull/15214))
+
+## 5.19.7
+
+### Patch Changes
+
+- chore: remove unused code from signal logic ([#15195](https://github.com/sveltejs/svelte/pull/15195))
+
+- fix: encounter svelte:element in blocks as sibling during pruning css ([#15165](https://github.com/sveltejs/svelte/pull/15165))
+
+## 5.19.6
+
+### Patch Changes
+
+- fix: do not prune selectors like `:global(.foo):has(.scoped)` ([#15140](https://github.com/sveltejs/svelte/pull/15140))
+
+- fix: don't error on slot prop inside block inside other component ([#15148](https://github.com/sveltejs/svelte/pull/15148))
+
+- fix: ensure reactions are correctly attached for unowned deriveds ([#15158](https://github.com/sveltejs/svelte/pull/15158))
+
+- fix: silence a11y attribute warnings when spread attributes present ([#15150](https://github.com/sveltejs/svelte/pull/15150))
+
+- fix: prevent false-positive ownership validations due to hot reload ([#15154](https://github.com/sveltejs/svelte/pull/15154))
+
+- fix: widen ownership when calling setContext ([#15153](https://github.com/sveltejs/svelte/pull/15153))
+
+## 5.19.5
+
+### Patch Changes
+
+- fix: improve derived connection to ownership graph ([#15137](https://github.com/sveltejs/svelte/pull/15137))
+
+- fix: correctly look for sibling elements inside blocks and components when pruning CSS ([#15106](https://github.com/sveltejs/svelte/pull/15106))
+
+## 5.19.4
+
+### Patch Changes
+
+- fix: Add `bind:focused` property to `HTMLAttributes` type ([#15122](https://github.com/sveltejs/svelte/pull/15122))
+
+- fix: lazily connect derievds (in deriveds) to their parent ([#15129](https://github.com/sveltejs/svelte/pull/15129))
+
+- fix: disallow $state/$derived in const tags ([#15115](https://github.com/sveltejs/svelte/pull/15115))
+
+## 5.19.3
+
+### Patch Changes
+
+- fix: don't throw for `undefined` non delegated event handlers ([#15087](https://github.com/sveltejs/svelte/pull/15087))
+
+- fix: consistently set value to blank string when value attribute is undefined ([#15057](https://github.com/sveltejs/svelte/pull/15057))
+
+- fix: optimise || expressions in template ([#15092](https://github.com/sveltejs/svelte/pull/15092))
+
+- fix: correctly handle `novalidate` attribute casing ([#15083](https://github.com/sveltejs/svelte/pull/15083))
+
+- fix: expand boolean attribute support ([#15095](https://github.com/sveltejs/svelte/pull/15095))
+
+- fix: avoid double deriveds in component props ([#15089](https://github.com/sveltejs/svelte/pull/15089))
+
+- fix: add check for `is` attribute to correctly detect custom elements ([#15086](https://github.com/sveltejs/svelte/pull/15086))
+
+## 5.19.2
+
+### Patch Changes
+
+- fix: address regression with untrack ([#15079](https://github.com/sveltejs/svelte/pull/15079))
+
 ## 5.19.1
 
 ### Patch Changes

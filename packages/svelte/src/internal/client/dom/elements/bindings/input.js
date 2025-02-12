@@ -5,7 +5,8 @@ import * as e from '../../../errors.js';
 import { is } from '../../../proxy.js';
 import { queue_micro_task } from '../../task.js';
 import { hydrating } from '../../hydration.js';
-import { is_runes, untrack } from '../../../runtime.js';
+import { untrack } from '../../../runtime.js';
+import { is_runes } from '../../../context.js';
 
 /**
  * @param {HTMLInputElement} input

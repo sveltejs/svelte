@@ -1,6 +1,6 @@
 /** @import { Effect, TemplateNode } from '#client' */
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
-import { create_text, get_first_child } from './operations.js';
+import { create_text, get_first_child, is_firefox } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { active_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
@@ -48,7 +48,7 @@ export function template(content, flags) {
 		}
 
 		var clone = /** @type {TemplateNode} */ (
-			use_import_node ? document.importNode(node, true) : node.cloneNode(true)
+			use_import_node || is_firefox ? document.importNode(node, true) : node.cloneNode(true)
 		);
 
 		if (is_fragment) {
@@ -248,4 +248,24 @@ export function append(anchor, dom) {
 	}
 
 	anchor.before(/** @type {Node} */ (dom));
+}
+
+let uid = 1;
+
+/**
+ * Create (or hydrate) an unique UID for the component instance.
+ */
+export function props_id() {
+	if (
+		hydrating &&
+		hydrate_node &&
+		hydrate_node.nodeType === 8 &&
+		hydrate_node.textContent?.startsWith('#s')
+	) {
+		const id = hydrate_node.textContent.substring(1);
+		hydrate_next();
+		return id;
+	}
+
+	return 'c' + uid++;
 }

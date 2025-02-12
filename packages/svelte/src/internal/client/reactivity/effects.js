@@ -1,10 +1,8 @@
 /** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
 import {
 	check_dirtiness,
-	component_context,
 	active_effect,
 	active_reaction,
-	dev_current_component_function,
 	update_effect,
 	get,
 	is_destroying_effect,
@@ -44,7 +42,8 @@ import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
-import { derived, destroy_derived } from './deriveds.js';
+import { derived } from './deriveds.js';
+import { component_context, dev_current_component_function } from '../context.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -54,7 +53,7 @@ export function validate_effect(rune) {
 		e.effect_orphan(rune);
 	}
 
-	if (active_reaction !== null && (active_reaction.f & UNOWNED) !== 0) {
+	if (active_reaction !== null && (active_reaction.f & UNOWNED) !== 0 && active_effect === null) {
 		e.effect_in_unowned_derived();
 	}
 
@@ -100,7 +99,6 @@ function create_effect(type, fn, sync, push = true) {
 	var effect = {
 		ctx: component_context,
 		deps: null,
-		deriveds: null,
 		nodes_start: null,
 		nodes_end: null,
 		f: type | DIRTY,
@@ -154,7 +152,7 @@ function create_effect(type, fn, sync, push = true) {
 		// if we're in a derived, add the effect there too
 		if (active_reaction !== null && (active_reaction.f & DERIVED) !== 0) {
 			var derived = /** @type {Derived} */ (active_reaction);
-			(derived.children ??= []).push(effect);
+			(derived.effects ??= []).push(effect);
 		}
 	}
 
@@ -166,13 +164,7 @@ function create_effect(type, fn, sync, push = true) {
  * @returns {boolean}
  */
 export function effect_tracking() {
-	if (active_reaction === null || untracking) {
-		return false;
-	}
-
-	// If it's skipped, that's because we're inside an unowned
-	// that is not being tracked by another reaction
-	return !skip_reaction;
+	return active_reaction !== null && !untracking;
 }
 
 /**
@@ -398,22 +390,6 @@ export function execute_effect_teardown(effect) {
 
 /**
  * @param {Effect} signal
- * @returns {void}
- */
-export function destroy_effect_deriveds(signal) {
-	var deriveds = signal.deriveds;
-
-	if (deriveds !== null) {
-		signal.deriveds = null;
-
-		for (var i = 0; i < deriveds.length; i += 1) {
-			destroy_derived(deriveds[i]);
-		}
-	}
-}
-
-/**
- * @param {Effect} signal
  * @param {boolean} remove_dom
  * @returns {void}
  */
@@ -469,7 +445,6 @@ export function destroy_effect(effect, remove_dom = true) {
 	}
 
 	destroy_effect_children(effect, remove_dom && !removed);
-	destroy_effect_deriveds(effect);
 	remove_reactions(effect, 0);
 	set_signal_status(effect, DESTROYED);
 
