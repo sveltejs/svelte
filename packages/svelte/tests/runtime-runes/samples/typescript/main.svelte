@@ -22,6 +22,11 @@
 
 	class MyClass implements Hello {}
 
+	abstract class MyAbstractClass {
+		abstract x(): void;
+		y() {}
+	}
+
 	declare const declared_const: number;
 	declare function declared_fn(): void;
 	declare class declared_class {
