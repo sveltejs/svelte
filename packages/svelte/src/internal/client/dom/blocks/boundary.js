@@ -55,7 +55,6 @@ export function boundary(node, props, children) {
 }
 
 export class Boundary {
-	suspended = false;
 	inert = false;
 
 	/** @type {Boundary | null} */
@@ -145,7 +144,6 @@ export class Boundary {
 				this.#main_effect = branch(() => children(this.#anchor));
 
 				if (this.#pending_count > 0) {
-					this.suspended = true;
 					this.#show_pending_snippet();
 				}
 			}
@@ -221,8 +219,8 @@ export class Boundary {
 	increment() {
 		if (active_fork) {
 			active_fork.increment();
-		} else if (this.#pending_count++ === 0) {
-			this.#show_pending_snippet();
+		} else {
+			this.#pending_count++ === 0;
 		}
 	}
 
@@ -241,7 +239,7 @@ export class Boundary {
 
 		const reset = () => {
 			this.#pending_count = 0;
-			this.suspended = false;
+			this.values.clear();
 
 			if (this.#failed_effect !== null) {
 				pause_effect(this.#failed_effect, () => {
@@ -260,7 +258,6 @@ export class Boundary {
 			});
 
 			if (this.#pending_count > 0) {
-				this.suspended = true;
 				this.#show_pending_snippet();
 			}
 		};
