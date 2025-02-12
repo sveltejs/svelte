@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: removing typescript abstract methods
+fix: ignore typescript abstract methods
