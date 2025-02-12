@@ -1,4 +1,4 @@
-/** @import { Effect, TemplateNode, } from '#client' */
+/** @import { Effect, Source, TemplateNode, } from '#client' */
 
 import {
 	BOUNDARY_EFFECT,
@@ -15,8 +15,6 @@ import {
 	set_active_effect,
 	set_active_reaction,
 	reset_is_throwing_error,
-	schedule_effect,
-	check_dirtiness,
 	update_effect
 } from '../../runtime.js';
 import {
@@ -42,6 +40,9 @@ import { from_async_derived, set_from_async_derived } from '../../reactivity/der
  */
 
 var flags = EFFECT_TRANSPARENT | EFFECT_PRESERVED | BOUNDARY_EFFECT;
+
+/** @type {Fork | null} */
+export var active_fork = null;
 
 /**
  * @param {TemplateNode} node
@@ -73,16 +74,7 @@ export class Boundary {
 	#children;
 
 	/** @type {Effect} */
-	#effect;
-
-	/** @type {Set<() => void>} */
-	#callbacks = new Set();
-
-	/** @type {Effect[]} */
-	#render_effects = [];
-
-	/** @type {Effect[]} */
-	#effects = [];
+	effect;
 
 	/** @type {Effect | null} */
 	#main_effect = null;
@@ -96,6 +88,12 @@ export class Boundary {
 	/** @type {DocumentFragment | null} */
 	#offscreen_fragment = null;
 
+	/** @type {Set<Fork>} */
+	#forks = new Set();
+
+	/** @type {Map<Source, any>} */
+	values = new Map();
+
 	#pending_count = 0;
 	#is_creating_fallback = false;
 
@@ -105,6 +103,8 @@ export class Boundary {
 	 * @param {((anchor: Node) => void)} children
 	 */
 	constructor(node, props, children) {
+		window.boundary = this;
+
 		this.#anchor = node;
 		this.#props = props;
 		this.#children = children;
@@ -113,7 +113,7 @@ export class Boundary {
 
 		this.parent = /** @type {Effect} */ (active_effect).b;
 
-		this.#effect = block(() => {
+		this.effect = block(() => {
 			/** @type {Effect} */ (active_effect).b = this;
 
 			if (hydrating) {
@@ -146,7 +146,7 @@ export class Boundary {
 
 				if (this.#pending_count > 0) {
 					this.suspended = true;
-					this.#show_pending_snippet(true);
+					this.#show_pending_snippet();
 				}
 			}
 
@@ -172,9 +172,9 @@ export class Boundary {
 		var previous_reaction = active_reaction;
 		var previous_ctx = component_context;
 
-		set_active_effect(this.#effect);
-		set_active_reaction(this.#effect);
-		set_component_context(this.#effect.ctx);
+		set_active_effect(this.effect);
+		set_active_reaction(this.effect);
+		set_component_context(this.effect.ctx);
 
 		try {
 			return fn();
@@ -185,10 +185,7 @@ export class Boundary {
 		}
 	}
 
-	/**
-	 * @param {boolean} initial
-	 */
-	#show_pending_snippet(initial) {
+	#show_pending_snippet() {
 		const pending = this.#props.pending;
 
 		if (pending !== undefined) {
@@ -208,36 +205,7 @@ export class Boundary {
 		}
 	}
 
-	/** @param {() => void} fn */
-	add_callback(fn) {
-		this.#callbacks.add(fn);
-	}
-
-	/** @param {Effect} effect */
-	add_effect(effect) {
-		((effect.f & RENDER_EFFECT) !== 0 ? this.#render_effects : this.#effects).push(effect);
-	}
-
-	commit() {
-		if (this.#pending_count > 0) {
-			return;
-		}
-
-		this.suspended = false;
-
-		for (const e of this.#render_effects) {
-			try {
-				if (check_dirtiness(e)) {
-					update_effect(e);
-				}
-			} catch (error) {
-				handle_error(error, e, null, e.ctx);
-			}
-		}
-
-		for (const fn of this.#callbacks) fn();
-		this.#callbacks.clear();
-
+	hide_pending_snippet() {
 		if (this.#pending_effect) {
 			pause_effect(this.#pending_effect, () => {
 				this.#pending_effect = null;
@@ -248,31 +216,21 @@ export class Boundary {
 			this.#anchor.before(this.#offscreen_fragment);
 			this.#offscreen_fragment = null;
 		}
-
-		for (const e of this.#effects) {
-			try {
-				if (check_dirtiness(e)) {
-					update_effect(e);
-				}
-			} catch (error) {
-				handle_error(error, e, null, e.ctx);
-			}
-		}
 	}
 
 	increment() {
-		this.suspended = true;
-		this.#pending_count++;
+		if (active_fork) {
+			active_fork.increment();
+		} else if (this.#pending_count++ === 0) {
+			this.#show_pending_snippet();
+		}
 	}
 
 	decrement() {
-		if (--this.#pending_count === 0) {
-			this.commit();
-
-			if (this.#main_effect !== null) {
-				// TODO do we also need to `resume_effect` here?
-				schedule_effect(this.#main_effect);
-			}
+		if (active_fork) {
+			active_fork.decrement();
+		} else if (--this.#pending_count === 0) {
+			this.hide_pending_snippet();
 		}
 	}
 
@@ -303,7 +261,7 @@ export class Boundary {
 
 			if (this.#pending_count > 0) {
 				this.suspended = true;
-				this.#show_pending_snippet(true);
+				this.#show_pending_snippet();
 			}
 		};
 
@@ -350,7 +308,7 @@ export class Boundary {
 							);
 						});
 					} catch (error) {
-						handle_error(error, this.#effect, null, this.#effect.ctx);
+						handle_error(error, this.effect, null, this.effect.ctx);
 						return null;
 					} finally {
 						reset_is_throwing_error();
@@ -359,6 +317,168 @@ export class Boundary {
 				});
 			});
 		}
+	}
+
+	/**
+	 * @param {Set<Source>} changeset
+	 * @param {(fork: Fork) => void} fn
+	 */
+	fork(changeset, fn) {
+		if (!active_fork || !this.#forks.has(active_fork)) {
+			active_fork = new Fork(this, changeset);
+			this.#forks.add(active_fork);
+		}
+
+		fn(active_fork);
+
+		if (!active_fork.suspended) {
+			active_fork.commit();
+		}
+
+		active_fork = null;
+	}
+
+	/**
+	 * @param {Source} source
+	 */
+	get(source) {
+		if (!this.values.has(source)) {
+			this.values.set(source, source.v);
+		}
+
+		return this.values.get(source);
+	}
+
+	/**
+	 * @param {Fork} fork
+	 */
+	commit_fork(fork) {
+		for (const source of fork.changeset) {
+			this.values.set(source, source.v);
+		}
+
+		this.delete_fork(fork);
+	}
+
+	/**
+	 * @param {Fork} fork
+	 */
+	delete_fork(fork) {
+		this.#forks.delete(fork);
+
+		if (this.#forks.size === 0) {
+			// TODO we need to clear this at some point otherwise
+			// it's a huge memory leak that will make dominic mad
+		}
+	}
+}
+
+export class Fork {
+	/** @type {Boundary} */
+	#boundary;
+
+	/** @type {Set<Source>} */
+	changeset; // TODO make private
+
+	/** @type {Set<() => void>} */
+	#callbacks = new Set();
+
+	/** @type {Effect[]} */
+	#render_effects = [];
+
+	/** @type {Effect[]} */
+	#effects = [];
+
+	#pending_count = 0;
+
+	/**
+	 *
+	 * @param {Boundary} boundary
+	 * @param {Set<Source>} changeset
+	 */
+	constructor(boundary, changeset) {
+		this.#boundary = boundary;
+		this.changeset = new Set(changeset);
+	}
+
+	/**
+	 *
+	 * @param {Source} source
+	 */
+	get(source) {
+		// console.log(
+		// 	'fork#get',
+		// 	[...this.changeset].map((s) => s.v),
+		// 	this.changeset.has(source),
+		// 	source.v
+		// );
+
+		if (this.changeset.has(source)) {
+			return source.v;
+		}
+
+		return this.#boundary.get(source);
+	}
+
+	/** @param {() => void} fn */
+	add_callback(fn) {
+		this.#callbacks.add(fn);
+	}
+
+	/** @param {Effect} effect */
+	add_effect(effect) {
+		((effect.f & RENDER_EFFECT) !== 0 ? this.#render_effects : this.#effects).push(effect);
+	}
+
+	commit() {
+		if (this.#pending_count > 0) {
+			return;
+		}
+
+		this.suspended = false;
+
+		for (const e of this.#render_effects) {
+			try {
+				// if (check_dirtiness(e)) {
+				update_effect(e);
+				// }
+			} catch (error) {
+				handle_error(error, e, null, e.ctx);
+			}
+		}
+
+		for (const fn of this.#callbacks) fn();
+		this.#callbacks.clear();
+
+		this.#boundary.hide_pending_snippet();
+
+		for (const e of this.#effects) {
+			try {
+				// if (check_dirtiness(e)) {
+				update_effect(e);
+				// }
+			} catch (error) {
+				handle_error(error, e, null, e.ctx);
+			}
+		}
+
+		this.#boundary.commit_fork(this);
+	}
+
+	increment() {
+		this.#pending_count++;
+		this.suspended = true;
+	}
+
+	decrement() {
+		if (--this.#pending_count === 0) {
+			this.suspended = false;
+			// this.commit();
+		}
+	}
+
+	discard() {
+		this.#boundary.delete_fork(this);
 	}
 }
 
@@ -381,6 +501,7 @@ function move_effect(effect, fragment) {
 }
 
 export function capture(track = true) {
+	var previous_fork = active_fork;
 	var previous_effect = active_effect;
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
@@ -391,6 +512,7 @@ export function capture(track = true) {
 
 	return function restore() {
 		if (track) {
+			active_fork = previous_fork;
 			set_active_effect(previous_effect);
 			set_active_reaction(previous_reaction);
 			set_component_context(previous_component_context);
@@ -419,10 +541,30 @@ export function suspend() {
 		e.await_outside_boundary();
 	}
 
-	boundary.increment();
+	let fork = active_fork;
 
-	return function unsuspend() {
-		boundary.decrement();
+	if (fork) {
+		fork.increment();
+	} else {
+		boundary.increment();
+	}
+
+	return {
+		discard() {
+			if (fork) {
+				fork.discard();
+			} else {
+				// TODO ???
+			}
+		},
+
+		unsuspend() {
+			if (fork) {
+				fork.decrement();
+			} else {
+				boundary.decrement();
+			}
+		}
 	};
 }
 

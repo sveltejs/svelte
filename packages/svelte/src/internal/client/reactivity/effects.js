@@ -349,7 +349,7 @@ export function template_effect(fn, sync = [], async = [], d = derived) {
 
 	if (async.length > 0) {
 		var restore = capture();
-		var unsuspend = suspend();
+		var { unsuspend } = suspend();
 
 		Promise.all(async.map((expression) => async_derived(expression))).then((result) => {
 			restore();

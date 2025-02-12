@@ -6,6 +6,7 @@ import { is_runes } from '../../context.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 import { create_text, should_defer_append } from '../operations.js';
 import { active_effect } from '../../runtime.js';
+import { active_fork } from './boundary.js';
 
 /**
  * @template V
@@ -57,7 +58,7 @@ export function key_block(node, get_key, render_fn) {
 		if (changed(key, (key = get_key()))) {
 			var target = anchor;
 
-			var defer = boundary !== null && should_defer_append();
+			var defer = active_fork !== null && should_defer_append();
 
 			if (defer) {
 				offscreen_fragment = document.createDocumentFragment();
@@ -67,7 +68,7 @@ export function key_block(node, get_key, render_fn) {
 			pending_effect = branch(() => render_fn(target));
 
 			if (defer) {
-				boundary?.add_callback(commit);
+				active_fork?.add_callback(commit);
 				target.remove();
 			} else {
 				commit();

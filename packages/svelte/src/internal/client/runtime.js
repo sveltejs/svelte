@@ -49,8 +49,9 @@ import {
 	set_component_context,
 	set_dev_current_component_function
 } from './context.js';
-import { Boundary } from './dom/blocks/boundary.js';
+import { active_fork, Boundary, Fork } from './dom/blocks/boundary.js';
 import * as w from './warnings.js';
+import { log_effect_tree } from './dev/debug.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -806,10 +807,10 @@ export function schedule_effect(signal) {
  * effects to be flushed.
  *
  * @param {Effect} effect
- * @param {Boundary} [boundary]
+ * @param {Fork} [fork]
  * @returns {Effect[]}
  */
-function process_effects(effect, boundary) {
+function process_effects(effect, fork) {
 	/** @type {Effect[]} */
 	var effects = [];
 
@@ -822,18 +823,18 @@ function process_effects(effect, boundary) {
 		var sibling = current_effect.next;
 
 		if (!is_skippable_branch && (flags & INERT) === 0) {
-			if (boundary !== undefined && (flags & (BLOCK_EFFECT | BRANCH_EFFECT)) === 0) {
-				// Inside a boundary, defer everything except block/branch effects
-				boundary.add_effect(current_effect);
-			} else if ((flags & BOUNDARY_EFFECT) !== 0) {
-				var b = /** @type {Boundary} */ (current_effect.b);
+			if (fork !== undefined && (flags & (BLOCK_EFFECT | BRANCH_EFFECT)) === 0) {
+				if (check_dirtiness(current_effect)) {
+					// Inside a boundary, defer everything except block/branch effects
+					fork.add_effect(current_effect);
 
-				process_effects(current_effect, b);
-
-				if (!b.suspended) {
-					// no more async work to happen
-					b.commit();
+					// Mark the effect clean, so that `mark_reactions` has the desired outcome
+					set_signal_status(current_effect, CLEAN);
 				}
+			} else if ((flags & BOUNDARY_EFFECT) !== 0) {
+				/** @type {Boundary} */ (current_effect.b).fork(changeset, (fork) => {
+					process_effects(/** @type {Effect} */ (current_effect), fork);
+				});
 			} else if ((flags & EFFECT) !== 0) {
 				effects.push(current_effect);
 			} else if (is_branch) {
@@ -1057,6 +1058,15 @@ export function get(signal) {
 		}
 
 		recent_async_deriveds.delete(signal);
+	}
+
+	if (active_fork) {
+		return active_fork.get(signal);
+	}
+
+	var boundary = active_effect?.b;
+	if (boundary) {
+		return boundary.get(signal);
 	}
 
 	return signal.v;

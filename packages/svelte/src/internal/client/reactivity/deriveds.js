@@ -26,7 +26,7 @@ import { block, destroy_effect } from './effects.js';
 import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
-import { capture, suspend } from '../dom/blocks/boundary.js';
+import { active_fork, capture, suspend } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { noop } from '../../shared/utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
@@ -107,6 +107,9 @@ export function async_derived(fn, location) {
 	/** @type {(() => void) | null} */
 	var unsuspend = null;
 
+	/** @type {(() => void) | null} */
+	var discard = null;
+
 	// TODO this isn't a block
 	block(() => {
 		if (DEV) from_async_derived = active_effect;
@@ -114,7 +117,11 @@ export function async_derived(fn, location) {
 		if (DEV) from_async_derived = null;
 
 		var restore = capture();
-		if (should_suspend) unsuspend ??= suspend();
+
+		if (should_suspend) {
+			discard?.();
+			({ discard, unsuspend } = suspend());
+		}
 
 		promise.then(
 			(v) => {
@@ -126,7 +133,13 @@ export function async_derived(fn, location) {
 					restore();
 					from_async_derived = null;
 
-					internal_set(signal, v);
+					if (signal.v === UNINITIALIZED) {
+						signal.v = v;
+					} else {
+						internal_set(signal, v);
+					}
+
+					active_fork?.changeset.add(signal);
 
 					if (DEV && location !== undefined) {
 						recent_async_deriveds.add(signal);
