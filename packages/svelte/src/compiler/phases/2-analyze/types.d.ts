@@ -19,7 +19,7 @@ export interface AnalysisState {
 	component_slots: Set<string>;
 	/** Information about the current expression/directive/block value */
 	expression: ExpressionMetadata | null;
-	derived_state: string[];
+	derived_state: { name: string; private: boolean }[];
 	function_depth: number;
 
 	// legacy stuff
