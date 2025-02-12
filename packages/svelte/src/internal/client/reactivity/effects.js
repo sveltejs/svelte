@@ -359,6 +359,7 @@ export function template_effect(fn, sync = [], async = [], d = derived) {
 			}
 
 			create_template_effect(fn, [...sync.map(d), ...result]);
+			schedule_effect(effect);
 
 			unsuspend();
 		});

@@ -374,6 +374,8 @@ export class Boundary {
 }
 
 export class Fork {
+	suspended = false;
+
 	/** @type {Boundary} */
 	#boundary;
 
@@ -459,14 +461,14 @@ export class Fork {
 	}
 
 	increment() {
-		this.#pending_count++;
-		this.suspended = true;
+		if (this.#pending_count++ === 0) {
+			this.suspended = true;
+		}
 	}
 
 	decrement() {
 		if (--this.#pending_count === 0) {
 			this.suspended = false;
-			// this.commit();
 		}
 	}
 
