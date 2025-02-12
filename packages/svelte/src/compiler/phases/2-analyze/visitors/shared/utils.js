@@ -42,18 +42,18 @@ export function validate_assignment(node, argument, state) {
 		argument.type === 'MemberExpression' &&
 		argument.object.type === 'ThisExpression' &&
 		(((argument.property.type === 'PrivateIdentifier' || argument.property.type === 'Identifier') &&
-			state.derived_state.findIndex(
+			state.derived_state.some(
 				(derived) =>
 					derived.name === /** @type {PrivateIdentifier | Identifier} */ (argument.property).name &&
 					derived.private === (argument.property.type === 'PrivateIdentifier')
-			) !== -1) ||
+			)) ||
 			(argument.property.type === 'Literal' &&
 				argument.property.value &&
 				typeof argument.property.value === 'string' &&
-				state.derived_state.findIndex(
+				state.derived_state.some(
 					(derived) =>
 						derived.name === /** @type {Literal} */ (argument.property).value && !derived.private
-				) !== -1))
+				)))
 	) {
 		e.constant_assignment(node, 'derived state');
 	}
