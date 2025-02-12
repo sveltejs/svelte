@@ -190,7 +190,6 @@ export function internal_set(source, value) {
 		if (
 			is_runes() &&
 			active_effect !== null &&
-			!untracking &&
 			(active_effect.f & CLEAN) !== 0 &&
 			(active_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0
 		) {
