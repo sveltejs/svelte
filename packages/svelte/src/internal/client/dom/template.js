@@ -25,7 +25,7 @@ export function assign_nodes(start, end) {
 /*#__NO_SIDE_EFFECTS__*/
 export function template(content, flags) {
 	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
-	var use_import_node = (flags & TEMPLATE_USE_IMPORT_NODE) !== 0;
+	var use_import_node = (flags & TEMPLATE_USE_IMPORT_NODE) !== 0 || is_firefox;
 
 	/** @type {Node} */
 	var node;
@@ -48,7 +48,7 @@ export function template(content, flags) {
 		}
 
 		var clone = /** @type {TemplateNode} */ (
-			use_import_node || is_firefox ? document.importNode(node, true) : node.cloneNode(true)
+			use_import_node ? document.importNode(node, true) : node.cloneNode(true)
 		);
 
 		if (is_fragment) {
