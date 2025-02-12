@@ -30,6 +30,7 @@ import { queue_boundary_micro_task } from '../task.js';
 import * as e from '../../../shared/errors.js';
 import { DEV } from 'esm-env';
 import { from_async_derived, set_from_async_derived } from '../../reactivity/deriveds.js';
+import { changeset } from '../../reactivity/sources.js';
 
 /**
  * @typedef {{
@@ -317,10 +318,9 @@ export class Boundary {
 	}
 
 	/**
-	 * @param {Set<Source>} changeset
 	 * @param {(fork: Fork) => void} fn
 	 */
-	fork(changeset, fn) {
+	fork(fn) {
 		if (!active_fork || !this.#forks.has(active_fork)) {
 			active_fork = new Fork(this, changeset);
 			this.#forks.add(active_fork);
@@ -328,10 +328,7 @@ export class Boundary {
 
 		fn(active_fork);
 
-		if (!active_fork.suspended) {
-			active_fork.commit();
-		}
-
+		active_fork.commit();
 		active_fork = null;
 	}
 
@@ -427,8 +424,6 @@ export class Fork {
 			return;
 		}
 
-		this.suspended = false;
-
 		for (const e of this.#render_effects) {
 			try {
 				// if (check_dirtiness(e)) {
@@ -458,15 +453,11 @@ export class Fork {
 	}
 
 	increment() {
-		if (this.#pending_count++ === 0) {
-			this.suspended = true;
-		}
+		this.#pending_count += 1;
 	}
 
 	decrement() {
-		if (--this.#pending_count === 0) {
-			this.suspended = false;
-		}
+		this.#pending_count -= 1;
 	}
 
 	discard() {

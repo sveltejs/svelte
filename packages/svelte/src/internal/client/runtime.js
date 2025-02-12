@@ -832,7 +832,7 @@ function process_effects(effect, fork) {
 					set_signal_status(current_effect, CLEAN);
 				}
 			} else if ((flags & BOUNDARY_EFFECT) !== 0) {
-				/** @type {Boundary} */ (current_effect.b).fork(changeset, (fork) => {
+				/** @type {Boundary} */ (current_effect.b).fork((fork) => {
 					process_effects(/** @type {Effect} */ (current_effect), fork);
 				});
 			} else if ((flags & EFFECT) !== 0) {
