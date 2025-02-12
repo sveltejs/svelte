@@ -371,17 +371,28 @@ export function handle_error(error, effect, previous_effect, component_context) 
  * @param {Effect} effect
  * @param {number} [depth]
  */
-function schedule_possible_effect_self_invalidation(signal, effect, depth = 0) {
+function schedule_possible_effect_self_invalidation(
+	signal,
+	effect,
+	depth = 0,
+	visited = new Set()
+) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
 	for (var i = 0; i < reactions.length; i++) {
 		var reaction = reactions[i];
+		if (visited.has(reaction)) {
+			continue;
+		}
+		visited.add(reaction);
+
 		if ((reaction.f & DERIVED) !== 0) {
 			schedule_possible_effect_self_invalidation(
 				/** @type {Derived} */ (reaction),
 				effect,
-				depth + 1
+				depth + 1,
+				visited
 			);
 		} else if (effect === reaction) {
 			if (depth === 0) {
