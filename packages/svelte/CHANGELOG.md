@@ -1,5 +1,11 @@
 # svelte
 
+## 5.20.1
+
+### Patch Changes
+
+- fix: ignore typescript abstract methods ([#15267](https://github.com/sveltejs/svelte/pull/15267))
+
 ## 5.20.0
 
 ### Minor Changes
