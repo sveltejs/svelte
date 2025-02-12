@@ -129,7 +129,10 @@ export function async_derived(fn, location) {
 					return;
 				}
 
-				if (promise === current) {
+				if (promise === current && !signal.equals(v)) {
+					// TODO this restores `active_fork`, but it will only be nulled out
+					// if the boundary is reached in `process_effects`... are there
+					// cases where it wouldn't be?
 					restore();
 					from_async_derived = null;
 
