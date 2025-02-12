@@ -457,6 +457,7 @@ export function update_reaction(reaction) {
 		if (
 			is_runes() &&
 			untracked_writes !== null &&
+			deps !== null &&
 			(reaction.f & (DERIVED | MAYBE_DIRTY | DIRTY)) === 0
 		) {
 			for (i = 0; i < /** @type {Source[]} */ (untracked_writes).length; i++) {
