@@ -36,6 +36,7 @@ export default test({
 		items[2].resolve('d');
 		items[3].resolve('e');
 		await Promise.resolve();
+		await Promise.resolve();
 		await tick();
 		assert.htmlEqual(target.innerHTML, '<p>b</p><p>c</p><p>d</p><p>e</p>');
 	}
