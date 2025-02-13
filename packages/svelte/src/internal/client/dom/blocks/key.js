@@ -28,8 +28,8 @@ export function key_block(node, get_key, render_fn) {
 	/** @type {Effect} */
 	var effect;
 
-	/** @type {Effect | null} */
-	var pending_effect = null;
+	/** @type {Effect} */
+	var pending_effect;
 
 	/** @type {DocumentFragment | null} */
 	var offscreen_fragment = null;
@@ -48,10 +48,7 @@ export function key_block(node, get_key, render_fn) {
 			offscreen_fragment = null;
 		}
 
-		if (pending_effect !== null) {
-			effect = pending_effect;
-			pending_effect = null;
-		}
+		effect = pending_effect;
 	}
 
 	block(() => {
