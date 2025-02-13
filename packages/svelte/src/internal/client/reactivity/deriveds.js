@@ -5,6 +5,7 @@ import {
 	DERIVED,
 	DESTROYED,
 	DIRTY,
+	EFFECT_ASYNC,
 	EFFECT_PRESERVED,
 	MAYBE_DIRTY,
 	UNOWNED
@@ -22,7 +23,7 @@ import {
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import { block, destroy_effect } from './effects.js';
+import { block, destroy_effect, render_effect } from './effects.js';
 import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
@@ -107,8 +108,7 @@ export function async_derived(fn, location) {
 	/** @type {(() => void) | null} */
 	var unsuspend = null;
 
-	// TODO this isn't a block
-	block(() => {
+	render_effect(() => {
 		if (DEV) from_async_derived = active_effect;
 		var current = (promise = fn());
 		if (DEV) from_async_derived = null;
@@ -151,7 +151,7 @@ export function async_derived(fn, location) {
 				}
 			}
 		);
-	}, EFFECT_PRESERVED);
+	}, EFFECT_ASYNC | EFFECT_PRESERVED);
 
 	return new Promise(async (fulfil) => {
 		// if the effect re-runs before the initial promise

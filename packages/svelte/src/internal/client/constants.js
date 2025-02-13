@@ -23,6 +23,7 @@ export const EFFECT_PRESERVED = 1 << 21; // effects with this flag should not be
 
 // Flags used for async
 export const REACTION_IS_UPDATING = 1 << 22;
+export const EFFECT_ASYNC = 1 << 23;
 
 export const STATE_SYMBOL = Symbol('$state');
 export const STATE_SYMBOL_METADATA = Symbol('$state metadata');

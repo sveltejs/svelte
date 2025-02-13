@@ -28,7 +28,8 @@ import {
 	UNOWNED,
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
-	ROOT_EFFECT
+	ROOT_EFFECT,
+	EFFECT_ASYNC
 } from '../constants.js';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -150,7 +151,7 @@ export function set(source, value) {
 		active_reaction !== null &&
 		!untracking &&
 		is_runes() &&
-		(active_reaction.f & (DERIVED | BLOCK_EFFECT)) !== 0 &&
+		(active_reaction.f & (DERIVED | BLOCK_EFFECT | EFFECT_ASYNC)) !== 0 &&
 		// If the source was created locally within the current derived, then
 		// we allow the mutation.
 		(derived_sources === null || !derived_sources.includes(source))

@@ -24,7 +24,8 @@ import {
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
 	BOUNDARY_EFFECT,
-	REACTION_IS_UPDATING
+	REACTION_IS_UPDATING,
+	EFFECT_ASYNC
 } from './constants.js';
 import {
 	flush_idle_tasks,
@@ -820,7 +821,7 @@ function process_effects(effect, effects = [], boundary) {
 		var sibling = current_effect.next;
 
 		if (!is_skippable_branch && (flags & INERT) === 0) {
-			if (boundary !== undefined && (flags & (BLOCK_EFFECT | BRANCH_EFFECT)) === 0) {
+			if (boundary !== undefined && (flags & (BLOCK_EFFECT | BRANCH_EFFECT | EFFECT_ASYNC)) === 0) {
 				// Inside a boundary, defer everything except block/branch effects
 				boundary.add_effect(current_effect);
 			} else if ((flags & BOUNDARY_EFFECT) !== 0) {
