@@ -34,7 +34,9 @@ export function copy_payload({ out, css, head, uid }) {
 		css: new Set(css),
 		head: {
 			title: head.title,
-			out: head.out
+			out: head.out,
+			css: new Set(head.css),
+			uid: head.uid
 		},
 		uid
 	};
@@ -99,12 +101,13 @@ function props_id_generator() {
  * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
+	const uid = options.uid ?? props_id_generator();
 	/** @type {Payload} */
 	const payload = {
 		out: '',
 		css: new Set(),
-		head: { title: '', out: '' },
-		uid: options.uid ?? props_id_generator()
+		head: { title: '', out: '', css: new Set(), uid },
+		uid
 	};
 
 	const prev_on_destroy = on_destroy;
