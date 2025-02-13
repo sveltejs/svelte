@@ -399,15 +399,18 @@ export function set_attributes(
 				if (name === 'value' || name === 'checked') {
 					// removing value/checked also removes defaultValue/defaultChecked — preserve
 					let input = /** @type {HTMLInputElement} */ (element);
-
+					const use_default = prev === undefined;
 					if (name === 'value') {
-						let prev = input.defaultValue;
+						let previous = input.defaultValue;
 						input.removeAttribute(name);
-						input.defaultValue = prev;
+						input.defaultValue = previous;
+						// @ts-ignore
+						input.value = input.__value = use_default ? previous : null;
 					} else {
-						let prev = input.defaultChecked;
+						let previous = input.defaultChecked;
 						input.removeAttribute(name);
-						input.defaultChecked = prev;
+						input.defaultChecked = previous;
+						input.checked = use_default ? previous : false;
 					}
 				} else {
 					element.removeAttribute(key);
@@ -519,29 +522,4 @@ function srcset_url_equal(element, srcset) {
 				(src_url_equal(element_urls[i][0], url) || src_url_equal(url, element_urls[i][0]))
 		)
 	);
-}
-
-/**
- * @param {HTMLImageElement} element
- * @returns {void}
- */
-export function handle_lazy_img(element) {
-	// If we're using an image that has a lazy loading attribute, we need to apply
-	// the loading and src after the img element has been appended to the document.
-	// Otherwise the lazy behaviour will not work due to our cloneNode heuristic for
-	// templates.
-	if (!hydrating && element.loading === 'lazy') {
-		var src = element.src;
-		// @ts-expect-error
-		element[LOADING_ATTR_SYMBOL] = null;
-		element.loading = 'eager';
-		element.removeAttribute('src');
-		requestAnimationFrame(() => {
-			// @ts-expect-error
-			if (element[LOADING_ATTR_SYMBOL] !== 'eager') {
-				element.loading = 'lazy';
-			}
-			element.src = src;
-		});
-	}
 }

@@ -7,7 +7,7 @@ import { get_rune } from '../../scope.js';
  * @param {Context} context
  */
 export function ClassBody(node, context) {
-	/** @type {string[]} */
+	/** @type {{name: string, private: boolean}[]} */
 	const derived_state = [];
 
 	for (const definition of node.body) {
@@ -18,7 +18,10 @@ export function ClassBody(node, context) {
 		) {
 			const rune = get_rune(definition.value, context.state.scope);
 			if (rune === '$derived' || rune === '$derived.by') {
-				derived_state.push(definition.key.name);
+				derived_state.push({
+					name: definition.key.name,
+					private: definition.key.type === 'PrivateIdentifier'
+				});
 			}
 		}
 	}
