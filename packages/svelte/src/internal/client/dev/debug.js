@@ -7,6 +7,7 @@ import {
 	CLEAN,
 	DERIVED,
 	EFFECT,
+	EFFECT_ASYNC,
 	MAYBE_DIRTY,
 	RENDER_EFFECT,
 	ROOT_EFFECT
@@ -39,6 +40,8 @@ export function log_effect_tree(effect) {
 		label = 'boundary';
 	} else if ((flags & BLOCK_EFFECT) !== 0) {
 		label = 'block';
+	} else if ((flags & EFFECT_ASYNC) !== 0) {
+		label = 'async';
 	} else if ((flags & BRANCH_EFFECT) !== 0) {
 		label = 'branch';
 	} else if ((flags & RENDER_EFFECT) !== 0) {

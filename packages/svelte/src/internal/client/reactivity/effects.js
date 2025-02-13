@@ -335,8 +335,8 @@ export function legacy_pre_effect_reset() {
  * @param {() => void | (() => void)} fn
  * @returns {Effect}
  */
-export function render_effect(fn) {
-	return create_effect(RENDER_EFFECT, fn, true);
+export function render_effect(fn, flags = 0) {
+	return create_effect(RENDER_EFFECT | flags, fn, true);
 }
 
 /**
