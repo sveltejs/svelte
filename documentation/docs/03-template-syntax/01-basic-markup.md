@@ -182,10 +182,10 @@ When using {expression} inside markup, Svelte automatically converts the value t
 - Primitive values (numbers, booleans, strings) are directly converted to strings.
 - Objects are converted based on JavaScript’s type coercion rules:
 
-  - If an object defines a [Symbol.toPrimitive](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/toPrimitive) method, it takes precedence and determines how the object is converted.
+  - If an object defines a [Symbol.toPrimitive()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/toPrimitive) method, it takes precedence and determines how the object is converted.
   - Otherwise, if a [toString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/toString) method is present, it is called. If not overridden, it defaults to "[object Object]".
   - If toString() is not available or does not return a primitive, JavaScript may fall back to [valueOf()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/valueOf), which may be used if it returns a primitive value.
-  - Additionally, an object with a [Symbol.toStringTag](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/toStringTag) property affects how it is represented when coerced to a string.
+  - Additionally, an object with a [Symbol.toStringTag()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/toStringTag) property affects how it is represented when coerced to a string.
 
 - undefined and null are treated as empty strings ("").
 - Expressions using runes ($state, $derived, etc.) maintain their specific reactive behavior.
