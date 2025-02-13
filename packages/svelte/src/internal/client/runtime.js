@@ -51,6 +51,7 @@ import {
 } from './context.js';
 import { Boundary } from './dom/blocks/boundary.js';
 import * as w from './warnings.js';
+import { is_firefox } from './dom/operations.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -352,7 +353,7 @@ export function handle_error(error, effect, previous_effect, component_context) 
 		current_context = current_context.p;
 	}
 
-	const indent = /Firefox/.test(navigator.userAgent) ? '  ' : '\t';
+	const indent = is_firefox ? '  ' : '\t';
 	define_property(error, 'message', {
 		value: error.message + `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`
 	});
@@ -388,22 +389,18 @@ export function handle_error(error, effect, previous_effect, component_context) 
 /**
  * @param {Value} signal
  * @param {Effect} effect
- * @param {number} [depth]
+ * @param {boolean} [root]
  */
-function schedule_possible_effect_self_invalidation(signal, effect, depth = 0) {
+function schedule_possible_effect_self_invalidation(signal, effect, root = true) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
 	for (var i = 0; i < reactions.length; i++) {
 		var reaction = reactions[i];
 		if ((reaction.f & DERIVED) !== 0) {
-			schedule_possible_effect_self_invalidation(
-				/** @type {Derived} */ (reaction),
-				effect,
-				depth + 1
-			);
+			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
 		} else if (effect === reaction) {
-			if (depth === 0) {
+			if (root) {
 				set_signal_status(reaction, DIRTY);
 			} else if ((reaction.f & CLEAN) !== 0) {
 				set_signal_status(reaction, MAYBE_DIRTY);
@@ -477,6 +474,8 @@ export function update_reaction(reaction) {
 		if (
 			is_runes() &&
 			untracked_writes !== null &&
+			!untracking &&
+			deps !== null &&
 			(reaction.f & (DERIVED | MAYBE_DIRTY | DIRTY)) === 0
 		) {
 			for (i = 0; i < /** @type {Source[]} */ (untracked_writes).length; i++) {

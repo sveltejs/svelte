@@ -300,11 +300,6 @@ export function RegularElement(node, context) {
 	build_class_directives(class_directives, node_id, context, is_attributes_reactive);
 	build_style_directives(style_directives, node_id, context, is_attributes_reactive);
 
-	// Apply the src and loading attributes for <img> elements after the element is appended to the document
-	if (node.name === 'img' && (has_spread || lookup.has('loading'))) {
-		context.state.after_update.push(b.stmt(b.call('$.handle_lazy_img', node_id)));
-	}
-
 	if (
 		is_load_error_element(node.name) &&
 		(has_spread || has_use || lookup.has('onload') || lookup.has('onerror'))
