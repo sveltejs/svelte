@@ -1059,13 +1059,13 @@ export function get(signal) {
 		recent_async_deriveds.delete(signal);
 	}
 
-	if ((signal.f & DERIVED) === 0) {
+	if (active_effect !== null && (signal.f & DERIVED) === 0) {
 		if (active_fork) {
 			// console.log('get from fork', (signal.f & DERIVED) !== 0 ? 'derived' : 'source', signal.v);
 			return active_fork.get(signal);
 		}
 
-		var boundary = active_effect?.b;
+		var boundary = (active_effect.f & EFFECT) === 0 && active_effect.b;
 		if (boundary) {
 			// console.log('get from boundary', (signal.f & DERIVED) !== 0 ? 'derived' : 'source', signal.v);
 			return boundary.get(signal);

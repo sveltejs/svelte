@@ -434,6 +434,9 @@ export class Fork {
 			return;
 		}
 
+		this.#boundary.commit_fork(this);
+		active_fork = null;
+
 		for (const e of this.#render_effects) {
 			try {
 				set_signal_status(
@@ -470,8 +473,6 @@ export class Fork {
 				handle_error(error, e, null, e.ctx);
 			}
 		}
-
-		this.#boundary.commit_fork(this);
 	}
 
 	increment() {
