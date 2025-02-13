@@ -2,8 +2,11 @@
 
 import {
 	BOUNDARY_EFFECT,
+	DIRTY,
 	EFFECT_PRESERVED,
+	EFFECT_RAN,
 	EFFECT_TRANSPARENT,
+	MAYBE_DIRTY,
 	RENDER_EFFECT
 } from '../../constants.js';
 import { component_context, set_component_context } from '../../context.js';
@@ -15,7 +18,9 @@ import {
 	set_active_effect,
 	set_active_reaction,
 	reset_is_throwing_error,
-	update_effect
+	update_effect,
+	check_dirtiness,
+	set_signal_status
 } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -44,6 +49,11 @@ var flags = EFFECT_TRANSPARENT | EFFECT_PRESERVED | BOUNDARY_EFFECT;
 
 /** @type {Fork | null} */
 export var active_fork = null;
+
+/** @param {Fork | null} v */
+export function set_active_fork(v) {
+	active_fork = v;
+}
 
 /**
  * @param {TemplateNode} node
@@ -103,8 +113,6 @@ export class Boundary {
 	 * @param {((anchor: Node) => void)} children
 	 */
 	constructor(node, props, children) {
-		window.boundary = this;
-
 		this.#anchor = node;
 		this.#props = props;
 		this.#children = children;
@@ -321,7 +329,7 @@ export class Boundary {
 	 * @param {(fork: Fork) => void} fn
 	 */
 	fork(fn) {
-		if (!active_fork || !this.#forks.has(active_fork)) {
+		if (active_fork === null || !this.#forks.has(active_fork)) {
 			active_fork = new Fork(this, changeset);
 			this.#forks.add(active_fork);
 		}
@@ -329,7 +337,7 @@ export class Boundary {
 		fn(active_fork);
 
 		active_fork.commit();
-		active_fork = null;
+		// active_fork = null;
 	}
 
 	/**
@@ -379,11 +387,11 @@ export class Fork {
 	/** @type {Set<() => void>} */
 	#callbacks = new Set();
 
-	/** @type {Effect[]} */
-	#render_effects = [];
+	/** @type {Set<Effect>} */
+	#render_effects = new Set();
 
-	/** @type {Effect[]} */
-	#effects = [];
+	/** @type {Set<Effect>} */
+	#effects = new Set();
 
 	#pending_count = 0;
 
@@ -416,7 +424,7 @@ export class Fork {
 
 	/** @param {Effect} effect */
 	add_effect(effect) {
-		((effect.f & RENDER_EFFECT) !== 0 ? this.#render_effects : this.#effects).push(effect);
+		((effect.f & RENDER_EFFECT) !== 0 ? this.#render_effects : this.#effects).add(effect);
 	}
 
 	commit() {
@@ -426,9 +434,15 @@ export class Fork {
 
 		for (const e of this.#render_effects) {
 			try {
-				// if (check_dirtiness(e)) {
-				update_effect(e);
-				// }
+				set_signal_status(
+					e,
+					(e.f & EFFECT_RAN) === 0 || e.deps?.some((d) => this.changeset.has(d))
+						? DIRTY
+						: MAYBE_DIRTY
+				);
+				if (check_dirtiness(e)) {
+					update_effect(e);
+				}
 			} catch (error) {
 				handle_error(error, e, null, e.ctx);
 			}
@@ -441,9 +455,15 @@ export class Fork {
 
 		for (const e of this.#effects) {
 			try {
-				// if (check_dirtiness(e)) {
-				update_effect(e);
-				// }
+				set_signal_status(
+					e,
+					(e.f & EFFECT_RAN) === 0 || e.deps?.some((d) => this.changeset.has(d))
+						? DIRTY
+						: MAYBE_DIRTY
+				);
+				if (check_dirtiness(e)) {
+					update_effect(e);
+				}
 			} catch (error) {
 				handle_error(error, e, null, e.ctx);
 			}

@@ -48,7 +48,7 @@ import {
 	set_component_context,
 	set_dev_current_component_function
 } from './context.js';
-import { active_fork, Boundary, Fork } from './dom/blocks/boundary.js';
+import { active_fork, Boundary, Fork, set_active_fork } from './dom/blocks/boundary.js';
 import * as w from './warnings.js';
 
 const FLUSH_MICROTASK = 0;
@@ -706,6 +706,7 @@ function flush_queued_root_effects(root_effects) {
 	} finally {
 		is_flushing_effect = previously_flushing_effect;
 		changeset.clear();
+		set_active_fork(null);
 	}
 }
 
@@ -822,7 +823,7 @@ function process_effects(effect, fork) {
 
 		if (!is_skippable_branch && (flags & INERT) === 0) {
 			if (fork !== undefined && (flags & (BLOCK_EFFECT | BRANCH_EFFECT)) === 0) {
-				if (check_dirtiness(current_effect)) {
+				if ((current_effect.f & CLEAN) === 0) {
 					// Inside a boundary, defer everything except block/branch effects
 					fork.add_effect(current_effect);
 
