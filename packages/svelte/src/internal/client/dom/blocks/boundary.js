@@ -246,6 +246,8 @@ export class Boundary {
 		var onerror = this.#props.onerror;
 		let failed = this.#props.failed;
 
+		active_fork = null;
+
 		const reset = () => {
 			this.#pending_count = 0;
 			this.values.clear();
@@ -336,8 +338,8 @@ export class Boundary {
 
 		fn(active_fork);
 
-		active_fork.commit();
-		// active_fork = null;
+		active_fork?.commit(); // could be nulled out if there was an error
+		active_fork = null;
 	}
 
 	/**
