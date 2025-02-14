@@ -12,7 +12,7 @@ jobs:
       - run: corepack enable
       - uses: actions/setup-node@v4
         with:
-          node-version: 18.x
+          node-version: 22.x
           cache: pnpm
 
       - name: Install dependencies
