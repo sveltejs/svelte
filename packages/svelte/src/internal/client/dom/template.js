@@ -252,6 +252,10 @@ export function append(anchor, dom) {
 
 let uid = 1;
 
+export function reset_props_id() {
+	uid = 1;
+}
+
 /**
  * Create (or hydrate) an unique UID for the component instance.
  */
