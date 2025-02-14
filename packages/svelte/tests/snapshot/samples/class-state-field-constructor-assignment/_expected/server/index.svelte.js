@@ -1,6 +1,8 @@
 import * as $ from 'svelte/internal/server';
 
 export default function Class_state_field_constructor_assignment($$payload, $$props) {
+	const $$cleanup = $.setup($$payload);
+
 	$.push();
 
 	class Foo {
@@ -14,4 +16,5 @@ export default function Class_state_field_constructor_assignment($$payload, $$pr
 	}
 
 	$.pop();
+	$$cleanup($$payload);
 }

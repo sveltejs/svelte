@@ -2,6 +2,8 @@ import 'svelte/internal/disclose-version';
 import * as $ from 'svelte/internal/client';
 
 export default function Props_identifier($$anchor, $$props) {
+	const $$cleanup = $.setup();
+
 	$.push($$props, true);
 
 	let props = $.rest_props($$props, ['$$slots', '$$events', '$$legacy']);
@@ -14,4 +16,5 @@ export default function Props_identifier($$anchor, $$props) {
 	props[a] = true;
 	props;
 	$.pop();
+	$$cleanup();
 }

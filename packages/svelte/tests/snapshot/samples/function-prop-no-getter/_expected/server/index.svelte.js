@@ -1,6 +1,7 @@
 import * as $ from 'svelte/internal/server';
 
 export default function Function_prop_no_getter($$payload) {
+	const $$cleanup = $.setup($$payload);
 	let count = 0;
 
 	function onmouseup() {
@@ -18,4 +19,6 @@ export default function Function_prop_no_getter($$payload) {
 		},
 		$$slots: { default: true }
 	});
+
+	$$cleanup($$payload);
 }

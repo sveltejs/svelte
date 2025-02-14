@@ -2,6 +2,7 @@ import 'svelte/internal/disclose-version';
 import * as $ from 'svelte/internal/client';
 
 export default function Function_prop_no_getter($$anchor) {
+	const $$cleanup = $.setup();
 	let count = $.state(0);
 
 	function onmouseup() {
@@ -24,4 +25,6 @@ export default function Function_prop_no_getter($$anchor) {
 		},
 		$$slots: { default: true }
 	});
+
+	$$cleanup();
 }

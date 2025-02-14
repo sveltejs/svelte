@@ -13,6 +13,7 @@ const snippet = ($$anchor) => {
 var root = $.template(`<!> `, 1);
 
 export default function Bind_component_snippet($$anchor) {
+	const $$cleanup = $.setup();
 	let value = $.state('');
 	const _snippet = snippet;
 	var fragment = root();
@@ -31,4 +32,5 @@ export default function Bind_component_snippet($$anchor) {
 
 	$.template_effect(() => $.set_text(text_1, ` value: ${$.get(value) ?? ''}`));
 	$.append($$anchor, fragment);
+	$$cleanup();
 }

@@ -6,6 +6,7 @@ function snippet($$payload) {
 }
 
 export default function Bind_component_snippet($$payload) {
+	const $$cleanup = $.setup($$payload);
 	let value = '';
 	const _snippet = snippet;
 	let $$settled = true;
@@ -32,4 +33,5 @@ export default function Bind_component_snippet($$payload) {
 	} while (!$$settled);
 
 	$.assign_payload($$payload, $$inner_payload);
+	$$cleanup($$payload);
 }
