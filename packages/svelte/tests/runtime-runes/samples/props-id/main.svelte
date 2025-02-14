@@ -8,7 +8,7 @@
 
 <button onclick={() => show = !show}>toggle</button>
 
-<p>{id}</p>
+<h1>{id}</h1>
 
 <Child />
 <Child />

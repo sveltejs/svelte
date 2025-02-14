@@ -252,6 +252,10 @@ export function append(anchor, dom) {
 
 let uid = 1;
 
+export function reset_props_id() {
+	uid = 1;
+}
+
 /**
  * @type {string | undefined}
  */
