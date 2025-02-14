@@ -3,59 +3,25 @@ import { test } from '../../test';
 
 export default test({
 	test({ assert, target, variant }) {
-		if (variant === 'dom') {
-			assert.htmlEqual(
-				target.innerHTML,
-				`
-					<button>toggle</button>
-					<h1>c1</h1>
-					<p>c2</p>
-					<p>c3</p>
-					<p>c4</p>
-				`
-			);
-		} else {
-			assert.htmlEqual(
-				target.innerHTML,
-				`
-					<button>toggle</button>
-					<h1>s1</h1>
-					<p>s2</p>
-					<p>s3</p>
-					<p>s4</p>
-				`
-			);
+		const ps = [...target.querySelectorAll('p')].map((p) => p.innerHTML);
+		const unique = new Set(ps);
+		assert.equal(ps.length, unique.size);
+
+		if (variant === 'hydrate') {
+			const start = ps.map((p) => p.substring(0, 1));
+			assert.deepEqual(start, ['s', 's', 's', 's']);
 		}
 
 		let button = target.querySelector('button');
 		flushSync(() => button?.click());
 
-		if (variant === 'dom') {
-			assert.htmlEqual(
-				target.innerHTML,
-				`
-					<button>toggle</button>
-					<h1>c1</h1>
-					<p>c2</p>
-					<p>c3</p>
-					<p>c4</p>
-					<p>c5</p>
-				`
-			);
-		} else {
-			// `c6` because this runs after the `dom` tests
-			// (slightly brittle but good enough for now)
-			assert.htmlEqual(
-				target.innerHTML,
-				`
-					<button>toggle</button>
-					<h1>s1</h1>
-					<p>s2</p>
-					<p>s3</p>
-					<p>s4</p>
-					<p>c6</p>
-				`
-			);
+		const ps_after = [...target.querySelectorAll('p')].map((p) => p.innerHTML);
+		const unique_after = new Set(ps_after);
+		assert.equal(ps_after.length, unique_after.size);
+
+		if (variant === 'hydrate') {
+			const start = ps_after.map((p) => p.substring(0, 1));
+			assert.deepEqual(start, ['s', 's', 's', 's', 'c']);
 		}
 	}
 });
