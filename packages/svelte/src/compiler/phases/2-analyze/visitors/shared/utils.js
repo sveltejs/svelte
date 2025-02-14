@@ -25,10 +25,6 @@ export function validate_assignment(node, argument, state) {
 				e.constant_assignment(node, 'derived state');
 			}
 
-			if (binding?.node === state.analysis.props_id) {
-				e.constant_assignment(node, '$props.id()');
-			}
-
 			if (binding?.kind === 'each') {
 				e.each_item_invalid_assignment(node);
 			}

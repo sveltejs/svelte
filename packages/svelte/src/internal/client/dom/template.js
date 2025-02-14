@@ -4,7 +4,7 @@ import { create_text, get_first_child, is_firefox } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { active_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
-
+import * as e from '../../shared/errors.js';
 /**
  * @param {TemplateNode} start
  * @param {TemplateNode | null} end
@@ -253,9 +253,25 @@ export function append(anchor, dom) {
 let uid = 1;
 
 /**
+ * @type {string | undefined}
+ */
+let current_uid;
+
+/**
  * Create (or hydrate) an unique UID for the component instance.
  */
 export function props_id() {
+	if (current_uid == null) {
+		e.props_id_invalid_placement();
+	}
+	return current_uid;
+}
+
+export function setup() {
+	let old_uid = current_uid;
+	function reset() {
+		current_uid = old_uid;
+	}
 	if (
 		hydrating &&
 		hydrate_node &&
@@ -264,8 +280,9 @@ export function props_id() {
 	) {
 		const id = hydrate_node.textContent.substring(1);
 		hydrate_next();
-		return id;
+		current_uid = id;
+		return reset;
 	}
-
-	return 'c' + uid++;
+	current_uid = 'c' + uid++;
+	return reset;
 }

@@ -34,6 +34,21 @@ export function lifecycle_outside_component(name) {
 }
 
 /**
+ * `$props.id()` can only be used inside a component initialization phase
+ * @returns {never}
+ */
+export function props_id_invalid_placement() {
+	if (DEV) {
+		const error = new Error(`props_id_invalid_placement\n\`$props.id()\` can only be used inside a component initialization phase\nhttps://svelte.dev/e/props_id_invalid_placement`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/props_id_invalid_placement`);
+	}
+}
+
+/**
  * `%name%` is not a store with a `subscribe` method
  * @param {string} name
  * @returns {never}

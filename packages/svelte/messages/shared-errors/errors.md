@@ -48,6 +48,10 @@ Certain lifecycle methods can only be used during component initialisation. To f
 <button onclick={handleClick}>click me</button>
 ```
 
+## props_id_invalid_placement
+
+> `$props.id()` can only be used inside a component initialization phase
+
 ## store_invalid_shape
 
 > `%name%` is not a store with a `subscribe` method

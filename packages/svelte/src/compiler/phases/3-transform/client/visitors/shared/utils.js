@@ -129,12 +129,6 @@ export function build_template_chunk(
 					if (value.right.value === null) {
 						value = { ...value, right: b.literal('') };
 					}
-				} else if (
-					state.analysis.props_id &&
-					value.type === 'Identifier' &&
-					value.name === state.analysis.props_id.name
-				) {
-					// do nothing ($props.id() is never null/undefined)
 				} else {
 					value = b.logical('??', value, b.literal(''));
 				}

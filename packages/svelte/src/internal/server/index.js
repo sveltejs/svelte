@@ -10,6 +10,7 @@ import {
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
 	ELEMENT_IS_NAMESPACED
 } from '../../constants.js';
+import * as e from '../shared/errors.js';
 
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
@@ -543,13 +544,41 @@ export function once(get_value) {
 
 /**
  * Create an unique ID
- * @param {Payload} payload
  * @returns {string}
  */
-export function props_id(payload) {
-	const uid = payload.uid();
-	payload.out += '<!--#' + uid + '-->';
-	return uid;
+export function props_id() {
+	if (current_id == null) {
+		e.props_id_invalid_placement();
+	}
+	need_props_id = true;
+	return current_id;
+}
+
+/**
+ * @type {string | undefined}
+ */
+let current_id;
+
+let need_props_id = false;
+
+/**
+ * @param {Payload} payload
+ * @returns {(payload: Payload)=>void}
+ */
+export function setup(payload) {
+	let old_payload = payload.out;
+	let old_needs_props_id = need_props_id;
+	let old_id = current_id;
+	current_id = payload.uid();
+	payload.out = '';
+	return (payload) => {
+		if (need_props_id) {
+			payload.out = '<!--#' + current_id + '-->' + payload.out;
+		}
+		need_props_id = old_needs_props_id;
+		payload.out = old_payload + payload.out;
+		current_id = old_id;
+	};
 }
 
 export { attr, clsx };

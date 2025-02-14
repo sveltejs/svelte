@@ -33,6 +33,8 @@ export function CallExpression(node, context) {
 		case '$inspect':
 		case '$inspect().with':
 			return transform_inspect_rune(node, context);
+		case '$props.id':
+			return b.call('$.props_id');
 	}
 
 	if (

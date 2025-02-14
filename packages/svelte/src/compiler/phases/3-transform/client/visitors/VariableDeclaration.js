@@ -43,7 +43,7 @@ export function VariableDeclaration(node, context) {
 			}
 
 			if (rune === '$props.id') {
-				// skip
+				declarations.push(/** @type {VariableDeclarator} */ (context.visit(declarator)));
 				continue;
 			}
 
