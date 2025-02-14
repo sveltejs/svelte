@@ -158,6 +158,25 @@ Curly braces can be included in a Svelte template by using their [HTML entity](h
 
 If you're using a regular expression (`RegExp`) [literal notation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp#literal_notation_and_constructor), you'll need to wrap it in parentheses.
 
+> [!NOTE] Svelte statically analyzes your code to determine what is actually reactive. As a result, if a text or attribute expression does not contain:
+>	- An object property
+>	- A function call
+>	- A reference to a reactive variable
+>
+> Then Svelte will treat it as a static expression that does not require updates. This means that this sort of statement would be treated as static, and would never update:
+> ```svelte
+> <script>
+> 	let count = $state(0);
+> 	let thing = {
+> 		toString() {
+> 			return count;
+> 		}
+> 	};
+> </script>
+> <button onclick={() => count++}>Count is {thing}</button>
+> ``` 
+> In the above case, if you wanted the statement to be reactive, you would have to append `.toString()` to the expression (to turn `{thing}` into `{thing.toString()}`). 
+
 <!-- prettier-ignore -->
 ```svelte
 <h1>Hello {name}!</h1>
