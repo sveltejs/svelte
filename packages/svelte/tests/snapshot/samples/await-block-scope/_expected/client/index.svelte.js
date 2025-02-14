@@ -8,6 +8,7 @@ function increment(_, counter) {
 var root = $.template(`<button> </button> <!> `, 1);
 
 export default function Await_block_scope($$anchor) {
+	const $$cleanup = $.setup();
 	let counter = $.proxy({ count: 0 });
 	const promise = $.derived(() => Promise.resolve(counter));
 	var fragment = root();
@@ -31,6 +32,7 @@ export default function Await_block_scope($$anchor) {
 	});
 
 	$.append($$anchor, fragment);
+	$$cleanup();
 }
 
 $.delegate(['click']);

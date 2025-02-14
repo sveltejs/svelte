@@ -4,6 +4,7 @@ import * as $ from 'svelte/internal/client';
 var root = $.template(`<p> </p>`);
 
 export default function Text_nodes_deriveds($$anchor) {
+	const $$cleanup = $.setup();
 	let count1 = 0;
 	let count2 = 0;
 
@@ -21,4 +22,5 @@ export default function Text_nodes_deriveds($$anchor) {
 	$.reset(p);
 	$.template_effect(($0, $1) => $.set_text(text, `${$0 ?? ''}${$1 ?? ''}`), [text1, text2]);
 	$.append($$anchor, p);
+	$$cleanup();
 }
