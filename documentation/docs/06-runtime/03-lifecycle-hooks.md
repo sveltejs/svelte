@@ -45,8 +45,6 @@ If a function is returned from `onMount`, it will be called when the component i
 
 ## `onDestroy`
 
-> EXPORT_SNIPPET: svelte#onDestroy
-
 Schedules a callback to run immediately before the component is unmounted.
 
 Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the only one that runs inside a server-side component.

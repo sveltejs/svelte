@@ -10,6 +10,7 @@ export {
 	mark_module_start,
 	mark_module_end,
 	add_owner_effect,
+	add_owner_to_class,
 	skip_ownership_validation
 } from './dev/ownership.js';
 export { check_target, legacy_api } from './dev/legacy.js';
@@ -34,7 +35,6 @@ export {
 	set_attributes,
 	set_custom_element_data,
 	set_xlink_attribute,
-	handle_lazy_img,
 	set_value,
 	set_checked,
 	set_selected,
@@ -96,7 +96,8 @@ export {
 	mathml_template,
 	template,
 	template_with_script,
-	text
+	text,
+	props_id
 } from './dom/template.js';
 export { derived, derived_safe_equal } from './reactivity/deriveds.js';
 export {

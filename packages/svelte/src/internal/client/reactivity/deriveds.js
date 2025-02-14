@@ -1,18 +1,9 @@
 /** @import { Derived, Effect } from '#client' */
 import { DEV } from 'esm-env';
-import {
-	CLEAN,
-	DERIVED,
-	DESTROYED,
-	DIRTY,
-	EFFECT_HAS_DERIVED,
-	MAYBE_DIRTY,
-	UNOWNED
-} from '../constants.js';
+import { CLEAN, DERIVED, DIRTY, EFFECT_HAS_DERIVED, MAYBE_DIRTY, UNOWNED } from '../constants.js';
 import {
 	active_reaction,
 	active_effect,
-	remove_reactions,
 	set_signal_status,
 	skip_reaction,
 	update_reaction,

@@ -1,5 +1,49 @@
 # svelte
 
+## 5.20.0
+
+### Minor Changes
+
+- feat: SSR-safe ID generation with `$props.id()` ([#15185](https://github.com/sveltejs/svelte/pull/15185))
+
+### Patch Changes
+
+- fix: take private and public into account for `constant_assignment` of derived state ([#15276](https://github.com/sveltejs/svelte/pull/15276))
+
+- fix: value/checked not correctly set using spread ([#15239](https://github.com/sveltejs/svelte/pull/15239))
+
+- chore: tweak effect self invalidation logic, run transition dispatches without reactive context ([#15275](https://github.com/sveltejs/svelte/pull/15275))
+
+- fix: use `importNode` to clone templates for Firefox ([#15272](https://github.com/sveltejs/svelte/pull/15272))
+
+- fix: recurse into `$derived` for ownership validation ([#15166](https://github.com/sveltejs/svelte/pull/15166))
+
+## 5.19.10
+
+### Patch Changes
+
+- fix: when re-connecting unowned deriveds, remove their unowned flag ([#15255](https://github.com/sveltejs/svelte/pull/15255))
+
+- fix: allow mutation of private derived state ([#15228](https://github.com/sveltejs/svelte/pull/15228))
+
+## 5.19.9
+
+### Patch Changes
+
+- fix: ensure unowned derived dependencies are not duplicated when reactions are skipped ([#15232](https://github.com/sveltejs/svelte/pull/15232))
+
+- fix: hydrate `href` that is part of spread attributes ([#15226](https://github.com/sveltejs/svelte/pull/15226))
+
+## 5.19.8
+
+### Patch Changes
+
+- fix: properly set `value` property of custom elements ([#15206](https://github.com/sveltejs/svelte/pull/15206))
+
+- fix: ensure custom element updates don't run in hydration mode ([#15217](https://github.com/sveltejs/svelte/pull/15217))
+
+- fix: ensure tracking returns true, even if in unowned ([#15214](https://github.com/sveltejs/svelte/pull/15214))
+
 ## 5.19.7
 
 ### Patch Changes

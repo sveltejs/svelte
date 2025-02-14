@@ -1,5 +1,5 @@
 import { DEV } from 'esm-env';
-import { hydrating } from '../hydration.js';
+import { hydrating, set_hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
 import { create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
@@ -213,6 +213,12 @@ export function set_custom_element_data(node, prop, value) {
 	// or effect
 	var previous_reaction = active_reaction;
 	var previous_effect = active_effect;
+	// If we're hydrating but the custom element is from Svelte, and it already scaffolded,
+	// then it might run block logic in hydration mode, which we have to prevent.
+	let was_hydrating = hydrating;
+	if (hydrating) {
+		set_hydrating(false);
+	}
 
 	set_active_reaction(null);
 	set_active_effect(null);
@@ -239,6 +245,9 @@ export function set_custom_element_data(node, prop, value) {
 	} finally {
 		set_active_reaction(previous_reaction);
 		set_active_effect(previous_effect);
+		if (was_hydrating) {
+			set_hydrating(true);
+		}
 	}
 }
 
@@ -262,6 +271,13 @@ export function set_attributes(
 	is_custom_element = false,
 	skip_warning = false
 ) {
+	// If we're hydrating but the custom element is from Svelte, and it already scaffolded,
+	// then it might run block logic in hydration mode, which we have to prevent.
+	let is_hydrating_custom_element = hydrating && is_custom_element;
+	if (is_hydrating_custom_element) {
+		set_hydrating(false);
+	}
+
 	var current = prev || {};
 	var is_option_element = element.tagName === 'OPTION';
 
@@ -363,9 +379,10 @@ export function set_attributes(
 			element.style.cssText = value + '';
 		} else if (key === 'autofocus') {
 			autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
-		} else if (key === '__value' || (key === 'value' && value != null)) {
-			// @ts-ignore
-			element.value = element[key] = element.__value = value;
+		} else if (!is_custom_element && (key === '__value' || (key === 'value' && value != null))) {
+			// @ts-ignore We're not running this for custom elements because __value is actually
+			// how Lit stores the current value on the element, and messing with that would break things.
+			element.value = element.__value = value;
 		} else if (key === 'selected' && is_option_element) {
 			set_selected(/** @type {HTMLOptionElement} */ (element), value);
 		} else {
@@ -382,15 +399,18 @@ export function set_attributes(
 				if (name === 'value' || name === 'checked') {
 					// removing value/checked also removes defaultValue/defaultChecked — preserve
 					let input = /** @type {HTMLInputElement} */ (element);
-
+					const use_default = prev === undefined;
 					if (name === 'value') {
-						let prev = input.defaultValue;
+						let previous = input.defaultValue;
 						input.removeAttribute(name);
-						input.defaultValue = prev;
+						input.defaultValue = previous;
+						// @ts-ignore
+						input.value = input.__value = use_default ? previous : null;
 					} else {
-						let prev = input.defaultChecked;
+						let previous = input.defaultChecked;
 						input.removeAttribute(name);
-						input.defaultChecked = prev;
+						input.defaultChecked = previous;
+						input.checked = use_default ? previous : false;
 					}
 				} else {
 					element.removeAttribute(key);
@@ -402,17 +422,17 @@ export function set_attributes(
 				// @ts-ignore
 				element[name] = value;
 			} else if (typeof value !== 'function') {
-				if (hydrating && (name === 'src' || name === 'href' || name === 'srcset')) {
-					if (!skip_warning) check_src_in_dev_hydration(element, name, value ?? '');
-				} else {
-					set_attribute(element, name, value);
-				}
+				set_attribute(element, name, value);
 			}
 		}
 		if (key === 'style' && '__styles' in element) {
 			// reset styles to force style: directive to update
 			element.__styles = {};
 		}
+	}
+
+	if (is_hydrating_custom_element) {
+		set_hydrating(true);
 	}
 
 	return current;
@@ -502,29 +522,4 @@ function srcset_url_equal(element, srcset) {
 				(src_url_equal(element_urls[i][0], url) || src_url_equal(url, element_urls[i][0]))
 		)
 	);
-}
-
-/**
- * @param {HTMLImageElement} element
- * @returns {void}
- */
-export function handle_lazy_img(element) {
-	// If we're using an image that has a lazy loading attribute, we need to apply
-	// the loading and src after the img element has been appended to the document.
-	// Otherwise the lazy behaviour will not work due to our cloneNode heuristic for
-	// templates.
-	if (!hydrating && element.loading === 'lazy') {
-		var src = element.src;
-		// @ts-expect-error
-		element[LOADING_ATTR_SYMBOL] = null;
-		element.loading = 'eager';
-		element.removeAttribute('src');
-		requestAnimationFrame(() => {
-			// @ts-expect-error
-			if (element[LOADING_ATTR_SYMBOL] !== 'eager') {
-				element.loading = 'lazy';
-			}
-			element.src = src;
-		});
-	}
 }

@@ -14,6 +14,7 @@ import { current_each_item } from '../blocks/each.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../constants.js';
 import { BLOCK_EFFECT, EFFECT_RAN, EFFECT_TRANSPARENT } from '../../constants.js';
 import { queue_micro_task } from '../task.js';
+import { without_reactive_context } from './bindings/shared.js';
 
 /**
  * @param {Element} element
@@ -21,7 +22,9 @@ import { queue_micro_task } from '../task.js';
  * @returns {void}
  */
 function dispatch_event(element, type) {
-	element.dispatchEvent(new CustomEvent(type));
+	without_reactive_context(() => {
+		element.dispatchEvent(new CustomEvent(type));
+	});
 }
 
 /**

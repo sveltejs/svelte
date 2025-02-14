@@ -39,6 +39,7 @@ import {
 	set_component_context,
 	set_dev_current_component_function
 } from './context.js';
+import { is_firefox } from './dom/operations.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -184,18 +185,28 @@ export function check_dirtiness(reaction) {
 			// If we are working with a disconnected or an unowned signal that is now connected (due to an active effect)
 			// then we need to re-connect the reaction to the dependency
 			if (is_disconnected || is_unowned_connected) {
+				var derived = /** @type {Derived} */ (reaction);
+				var parent = derived.parent;
+
 				for (i = 0; i < length; i++) {
 					dependency = dependencies[i];
 
 					// We always re-add all reactions (even duplicates) if the derived was
-					// previously disconnected
-					if (is_disconnected || !dependency?.reactions?.includes(reaction)) {
-						(dependency.reactions ??= []).push(reaction);
+					// previously disconnected, however we don't if it was unowned as we
+					// de-duplicate dependencies in that case
+					if (is_disconnected || !dependency?.reactions?.includes(derived)) {
+						(dependency.reactions ??= []).push(derived);
 					}
 				}
 
 				if (is_disconnected) {
-					reaction.f ^= DISCONNECTED;
+					derived.f ^= DISCONNECTED;
+				}
+				// If the unowned derived is now fully connected to the graph again (it's unowned and reconnected, has a parent
+				// and the parent is not unowned), then we can mark it as connected again, removing the need for the unowned
+				// flag
+				if (is_unowned_connected && parent !== null && (parent.f & UNOWNED) === 0) {
+					derived.f ^= UNOWNED;
 				}
 			}
 
@@ -323,7 +334,7 @@ export function handle_error(error, effect, previous_effect, component_context) 
 		current_context = current_context.p;
 	}
 
-	const indent = /Firefox/.test(navigator.userAgent) ? '  ' : '\t';
+	const indent = is_firefox ? '  ' : '\t';
 	define_property(error, 'message', {
 		value: error.message + `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`
 	});
@@ -359,22 +370,18 @@ export function handle_error(error, effect, previous_effect, component_context) 
 /**
  * @param {Value} signal
  * @param {Effect} effect
- * @param {number} [depth]
+ * @param {boolean} [root]
  */
-function schedule_possible_effect_self_invalidation(signal, effect, depth = 0) {
+function schedule_possible_effect_self_invalidation(signal, effect, root = true) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
 	for (var i = 0; i < reactions.length; i++) {
 		var reaction = reactions[i];
 		if ((reaction.f & DERIVED) !== 0) {
-			schedule_possible_effect_self_invalidation(
-				/** @type {Derived} */ (reaction),
-				effect,
-				depth + 1
-			);
+			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
 		} else if (effect === reaction) {
-			if (depth === 0) {
+			if (root) {
 				set_signal_status(reaction, DIRTY);
 			} else if ((reaction.f & CLEAN) !== 0) {
 				set_signal_status(reaction, MAYBE_DIRTY);
@@ -404,15 +411,9 @@ export function update_reaction(reaction) {
 	skipped_deps = 0;
 	untracked_writes = null;
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
-	// prettier-ignore
 	skip_reaction =
 		(flags & UNOWNED) !== 0 &&
-		(!is_flushing_effect ||
-			// If we were previously not in a reactive context and we're reading an unowned derived
-			// that was created inside another reaction, then we don't fully know the real owner and thus
-			// we need to skip adding any reactions for this unowned
-				((previous_reaction === null || previous_untracking) &&
-				/** @type {Derived} */ (reaction).parent !== null));
+		(!is_flushing_effect || previous_reaction === null || previous_untracking);
 
 	derived_sources = null;
 	set_component_context(reaction.ctx);
@@ -453,6 +454,8 @@ export function update_reaction(reaction) {
 		if (
 			is_runes() &&
 			untracked_writes !== null &&
+			!untracking &&
+			deps !== null &&
 			(reaction.f & (DERIVED | MAYBE_DIRTY | DIRTY)) === 0
 		) {
 			for (i = 0; i < /** @type {Source[]} */ (untracked_writes).length; i++) {
@@ -675,10 +678,7 @@ function flush_queued_root_effects(root_effects) {
 				effect.f ^= CLEAN;
 			}
 
-			/** @type {Effect[]} */
-			var collected_effects = [];
-
-			process_effects(effect, collected_effects);
+			var collected_effects = process_effects(effect);
 			flush_queued_effects(collected_effects);
 		}
 	} finally {
@@ -779,12 +779,13 @@ export function schedule_effect(signal) {
  * effects to be flushed.
  *
  * @param {Effect} effect
- * @param {Effect[]} collected_effects
- * @returns {void}
+ * @returns {Effect[]}
  */
-function process_effects(effect, collected_effects) {
-	var current_effect = effect.first;
+function process_effects(effect) {
+	/** @type {Effect[]} */
 	var effects = [];
+
+	var current_effect = effect.first;
 
 	main_loop: while (current_effect !== null) {
 		var flags = current_effect.f;
@@ -793,34 +794,32 @@ function process_effects(effect, collected_effects) {
 		var sibling = current_effect.next;
 
 		if (!is_skippable_branch && (flags & INERT) === 0) {
-			if ((flags & RENDER_EFFECT) !== 0) {
-				if (is_branch) {
-					current_effect.f ^= CLEAN;
-				} else {
-					// Ensure we set the effect to be the active reaction
-					// to ensure that unowned deriveds are correctly tracked
-					// because we're flushing the current effect
-					var previous_active_reaction = active_reaction;
-					try {
-						active_reaction = current_effect;
-						if (check_dirtiness(current_effect)) {
-							update_effect(current_effect);
-						}
-					} catch (error) {
-						handle_error(error, current_effect, null, current_effect.ctx);
-					} finally {
-						active_reaction = previous_active_reaction;
-					}
-				}
-
-				var child = current_effect.first;
-
-				if (child !== null) {
-					current_effect = child;
-					continue;
-				}
-			} else if ((flags & EFFECT) !== 0) {
+			if ((flags & EFFECT) !== 0) {
 				effects.push(current_effect);
+			} else if (is_branch) {
+				current_effect.f ^= CLEAN;
+			} else {
+				// Ensure we set the effect to be the active reaction
+				// to ensure that unowned deriveds are correctly tracked
+				// because we're flushing the current effect
+				var previous_active_reaction = active_reaction;
+				try {
+					active_reaction = current_effect;
+					if (check_dirtiness(current_effect)) {
+						update_effect(current_effect);
+					}
+				} catch (error) {
+					handle_error(error, current_effect, null, current_effect.ctx);
+				} finally {
+					active_reaction = previous_active_reaction;
+				}
+			}
+
+			var child = current_effect.first;
+
+			if (child !== null) {
+				current_effect = child;
+				continue;
 			}
 		}
 
@@ -843,13 +842,7 @@ function process_effects(effect, collected_effects) {
 		current_effect = sibling;
 	}
 
-	// We might be dealing with many effects here, far more than can be spread into
-	// an array push call (callstack overflow). So let's deal with each effect in a loop.
-	for (var i = 0; i < effects.length; i++) {
-		child = effects[i];
-		collected_effects.push(child);
-		process_effects(child, collected_effects);
-	}
+	return effects;
 }
 
 /**
@@ -933,7 +926,10 @@ export function get(signal) {
 				skipped_deps++;
 			} else if (new_deps === null) {
 				new_deps = [signal];
-			} else {
+			} else if (!skip_reaction || !new_deps.includes(signal)) {
+				// Normally we can push duplicated dependencies to `new_deps`, but if we're inside
+				// an unowned derived because skip_reaction is true, then we need to ensure that
+				// we don't have duplicates
 				new_deps.push(signal);
 			}
 		}

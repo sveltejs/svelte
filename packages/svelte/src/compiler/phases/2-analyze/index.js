@@ -416,6 +416,7 @@ export function analyze_component(root, source, options) {
 		immutable: runes || options.immutable,
 		exports: [],
 		uses_props: false,
+		props_id: null,
 		uses_rest_props: false,
 		uses_slots: false,
 		uses_component_bindings: false,
@@ -605,7 +606,7 @@ export function analyze_component(root, source, options) {
 				has_props_rune: false,
 				component_slots: new Set(),
 				expression: null,
-				private_derived_state: [],
+				derived_state: [],
 				function_depth: scope.function_depth,
 				instance_scope: instance.scope,
 				reactive_statement: null,
@@ -676,7 +677,7 @@ export function analyze_component(root, source, options) {
 				reactive_statements: analysis.reactive_statements,
 				component_slots: new Set(),
 				expression: null,
-				private_derived_state: [],
+				derived_state: [],
 				function_depth: scope.function_depth
 			};
 
