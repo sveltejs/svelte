@@ -12,14 +12,22 @@
 	</div>
 {/snippet}
 
+{#snippet c()}
+	<span></span>
+	{@render c()}
+{/snippet}
+
 <style>
 	div div {
 		color: green;
 	}
 	div + div {
-		color: red; /* this is marked as unused, but only because we've written an infinite loop - worth fixing? */
+		color: green;
 	}
 	div:has(div) {
+		color: green;
+	}
+	span:has(~span) {
 		color: green;
 	}
 </style>
