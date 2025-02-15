@@ -1,6 +1,8 @@
 import * as $ from 'svelte/internal/server';
 
 export default function Props_identifier($$payload, $$props) {
+	const $$cleanup = $.setup($$payload);
+
 	$.push();
 
 	let { $$slots, $$events, ...props } = $$props;
@@ -13,4 +15,5 @@ export default function Props_identifier($$payload, $$props) {
 	props[a] = true;
 	props;
 	$.pop();
+	$$cleanup($$payload);
 }

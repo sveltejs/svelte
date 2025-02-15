@@ -5,9 +5,11 @@ import * as $ from 'svelte/internal/client';
 var root = $.template(`<h1>hello world</h1>`);
 
 function Hmr($$anchor) {
+	const $$cleanup = $.setup();
 	var h1 = root();
 
 	$.append($$anchor, h1);
+	$$cleanup();
 }
 
 if (import.meta.hot) {

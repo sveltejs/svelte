@@ -37,5 +37,9 @@ export function CallExpression(node, context) {
 		return transform_inspect_rune(node, context);
 	}
 
+	if (rune === '$props.id') {
+		return b.call('$.props_id');
+	}
+
 	context.next();
 }

@@ -1,6 +1,7 @@
 import * as $ from 'svelte/internal/server';
 
 export default function State_proxy_literal($$payload) {
+	const $$cleanup = $.setup($$payload);
 	let str = '';
 	let tpl = ``;
 
@@ -12,4 +13,5 @@ export default function State_proxy_literal($$payload) {
 	}
 
 	$$payload.out += `<input${$.attr('value', str)}> <input${$.attr('value', tpl)}> <button>reset</button>`;
+	$$cleanup($$payload);
 }

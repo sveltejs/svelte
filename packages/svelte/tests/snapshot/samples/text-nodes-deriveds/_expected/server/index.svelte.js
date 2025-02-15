@@ -1,6 +1,7 @@
 import * as $ from 'svelte/internal/server';
 
 export default function Text_nodes_deriveds($$payload) {
+	const $$cleanup = $.setup($$payload);
 	let count1 = 0;
 	let count2 = 0;
 
@@ -13,4 +14,5 @@ export default function Text_nodes_deriveds($$payload) {
 	}
 
 	$$payload.out += `<p>${$.escape(text1())}${$.escape(text2())}</p>`;
+	$$cleanup($$payload);
 }
