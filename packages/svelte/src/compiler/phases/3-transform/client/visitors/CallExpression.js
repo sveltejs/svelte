@@ -17,6 +17,9 @@ export function CallExpression(node, context) {
 		case '$effect.tracking':
 			return b.call('$.effect_tracking');
 
+		case '$effect.active':
+			return b.call('$.effect_active');
+
 		case '$state.snapshot':
 			return b.call(
 				'$.snapshot',
