@@ -267,7 +267,7 @@ Elements with the `contenteditable` attribute support the following bindings:
 <!-- for some reason puts the comment and html on same line -->
 <!-- prettier-ignore -->
 ```svelte
-<div contenteditable="true" bind:innerHTML={html} />
+<div contenteditable="true" bind:innerHTML={html}></div>
 ```
 
 ## Dimensions
