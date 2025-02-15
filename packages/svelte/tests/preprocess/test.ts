@@ -25,7 +25,7 @@ const { test, run } = suite<PreprocessTest>(async (config, cwd) => {
 		fs.writeFileSync(`${cwd}/_actual.html.map`, JSON.stringify(result.map, null, 2));
 	}
 
-	expect(result.code).toMatchFileSnapshot(`${cwd}/output.svelte`);
+	await expect(result.code).toMatchFileSnapshot(`${cwd}/output.svelte`);
 
 	expect(result.dependencies).toEqual(config.dependencies || []);
 
