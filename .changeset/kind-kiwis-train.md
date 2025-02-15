@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-chore: remove an useless param
+chore: remove unused `options.uid` in `render`
