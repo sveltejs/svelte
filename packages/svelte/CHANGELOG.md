@@ -1,5 +1,11 @@
 # svelte
 
+## 5.20.2
+
+### Patch Changes
+
+- chore: remove unused `options.uid` in `render` ([#15302](https://github.com/sveltejs/svelte/pull/15302))
+
 ## 5.20.1
 
 ### Patch Changes
