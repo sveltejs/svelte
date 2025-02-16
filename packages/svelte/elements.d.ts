@@ -1534,7 +1534,7 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	method?: 'align' | 'stretch' | undefined | null;
 	min?: number | string | undefined | null;
 	name?: string | undefined | null;
-	style?: string | undefined | null;
+	style?: StyleValue | undefined | null;
 	target?: string | undefined | null;
 	type?: string | undefined | null;
 	width?: number | string | undefined | null;
@@ -2065,4 +2065,4 @@ export type ClassValue = string | import('clsx').ClassArray | import('clsx').Cla
 
 type StyleDictionary = Record<string, any>;
 type StyleArray = StyleValue[];
-export type StyleValue = StyleArray | StyleDictionary | string | null | undefined;
+export type StyleValue = StyleArray | StyleDictionary | string | number | null | undefined;
