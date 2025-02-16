@@ -46,6 +46,19 @@ export function Attribute(node, context) {
 		node.metadata.needs_clsx = true;
 	}
 
+	// style={[...]} or style={{...}} or `style={x}` need cssx to resolve the style
+	if (
+		node.name === 'style' &&
+		!Array.isArray(node.value) &&
+		node.value !== true &&
+		node.value.expression.type !== 'Literal' &&
+		node.value.expression.type !== 'TemplateLiteral' &&
+		node.value.expression.type !== 'BinaryExpression'
+	) {
+		// TODO ??? mark_subtree_dynamic(context.path);
+		node.metadata.needs_cssx = true;
+	}
+
 	if (node.value !== true) {
 		for (const chunk of get_attribute_chunks(node.value)) {
 			if (chunk.type !== 'ExpressionTag') continue;

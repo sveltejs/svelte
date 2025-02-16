@@ -49,7 +49,8 @@ export function create_attribute(name, start, end, value) {
 		value,
 		metadata: {
 			delegated: null,
-			needs_clsx: false
+			needs_clsx: false,
+			needs_cssx: false
 		}
 	};
 }

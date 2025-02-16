@@ -764,7 +764,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	placeholder?: string | undefined | null;
 	slot?: string | undefined | null;
 	spellcheck?: Booleanish | undefined | null;
-	style?: string | undefined | null;
+	style?: StyleValue | undefined | null;
 	tabindex?: number | undefined | null;
 	title?: string | undefined | null;
 	translate?: 'yes' | 'no' | '' | undefined | null;
@@ -2062,3 +2062,7 @@ export interface SvelteHTMLElements {
 }
 
 export type ClassValue = string | import('clsx').ClassArray | import('clsx').ClassDictionary;
+
+type StyleDictionary = Record<string, any>;
+type StyleArray = StyleValue[];
+export type StyleValue = StyleArray | StyleDictionary | string | null | undefined;

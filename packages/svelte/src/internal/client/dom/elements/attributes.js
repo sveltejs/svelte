@@ -13,7 +13,7 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from '../../runtime.js';
-import { clsx } from '../../../shared/attributes.js';
+import { clsx, cssx } from '../../../shared/attributes.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -289,6 +289,10 @@ export function set_attributes(
 
 	if (next.class) {
 		next.class = clsx(next.class);
+	}
+
+	if (next.style) {
+		next.style = cssx(next.style);
 	}
 
 	if (css_hash !== undefined) {
