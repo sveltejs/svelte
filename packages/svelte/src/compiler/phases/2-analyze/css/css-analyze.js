@@ -133,7 +133,7 @@ const css_visitors = {
 
 		node.metadata.is_global = node.selectors.length >= 1 && is_global(node);
 
-		if (node.selectors.length === 1) {
+		if (node.selectors.length >= 1) {
 			const first = node.selectors[0];
 			node.metadata.is_global_like ||=
 				(first.type === 'PseudoClassSelector' && first.name === 'host') ||
