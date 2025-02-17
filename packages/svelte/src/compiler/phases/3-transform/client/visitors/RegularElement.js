@@ -29,7 +29,8 @@ import {
 	build_render_statement,
 	build_template_chunk,
 	build_update_assignment,
-	get_expression_id
+	get_expression_id,
+	memoize_expression
 } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
 
@@ -532,18 +533,28 @@ function build_element_attribute_update_assignment(
 	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
 	const is_mathml = context.state.metadata.namespace === 'mathml';
 
+	const is_autofocus = name === 'autofocus';
+
 	let { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call ? get_expression_id(state, value) : value
+		metadata.has_call
+			? is_autofocus
+				? memoize_expression(state, value)
+				: get_expression_id(state, value)
+			: value
 	);
 
-	if (name === 'autofocus') {
+	if (is_autofocus) {
 		state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));
 		return false;
 	}
 
 	// Special case for Firefox who needs it set as a property in order to work
 	if (name === 'muted') {
-		state.init.push(b.stmt(b.assignment('=', b.member(node_id, b.id('muted')), value)));
+		if (!has_state) {
+			state.init.push(b.stmt(b.assignment('=', b.member(node_id, b.id('muted')), value)));
+			return false;
+		}
+		state.update.push(b.stmt(b.assignment('=', b.member(node_id, b.id('muted')), value)));
 		return false;
 	}
 
@@ -660,8 +671,17 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
  */
 function build_element_special_value_attribute(element, node_id, attribute, context) {
 	const state = context.state;
+	const is_select_with_value =
+		// attribute.metadata.dynamic would give false negatives because even if the value does not change,
+		// the inner options could still change, so we need to always treat it as reactive
+		element === 'select' && attribute.value !== true && !is_text_attribute(attribute);
+
 	const { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call ? get_expression_id(state, value) : value
+		metadata.has_call
+			? is_select_with_value
+				? memoize_expression(context.state, value)
+				: get_expression_id(state, value)
+			: value
 	);
 
 	const inner_assignment = b.assignment(
@@ -673,11 +693,6 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 			value
 		)
 	);
-
-	const is_select_with_value =
-		// attribute.metadata.dynamic would give false negatives because even if the value does not change,
-		// the inner options could still change, so we need to always treat it as reactive
-		element === 'select' && attribute.value !== true && !is_text_attribute(attribute);
 
 	const update = b.stmt(
 		is_select_with_value
