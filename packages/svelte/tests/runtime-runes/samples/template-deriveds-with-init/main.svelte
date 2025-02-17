@@ -2,4 +2,4 @@
 	const foobar = () => '';
 </script>
 
-<select value={foobar()}></select>
+<select value={foobar()} autofocus={foobar()} muted={foobar()}></select>
