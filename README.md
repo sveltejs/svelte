@@ -1,8 +1,8 @@
-<a href="https://svelte.dev">
-	<picture>
-		<source media="(prefers-color-scheme: dark)" srcset="assets/banner_dark.png">
-		<img src="assets/banner.png" alt="Svelte - web development for the rest of us" />
-	</picture>
+<a href="https://svelte.dev#gh-light-mode-only">
+	<img src="assets/banner.png" alt="Svelte - web development for the rest of us" />
+</a>
+<a href="https://svelte.dev#gh-dark-mode-only">
+	<img src="assets/banner_dark.png" alt="Svelte - web development for the rest of us" />
 </a>
 
 [![license](https://img.shields.io/npm/l/svelte.svg)](LICENSE.md) [![Chat](https://img.shields.io/discord/457912077277855764?label=chat&logo=discord)](https://svelte.dev/chat)
