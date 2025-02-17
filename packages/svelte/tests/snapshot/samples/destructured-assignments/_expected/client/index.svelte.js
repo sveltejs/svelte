@@ -8,8 +8,8 @@ let d = 4;
 
 export function update(array) {
 	(
-		$.set(a, $.proxy(array[0])),
-		$.set(b, $.proxy(array[1]))
+		$.set(a, array[0], true),
+		$.set(b, array[1], true)
 	);
 
 	[c, d] = array;
