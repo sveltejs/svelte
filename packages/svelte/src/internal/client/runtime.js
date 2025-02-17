@@ -421,7 +421,22 @@ export function update_reaction(reaction) {
 	read_version++;
 
 	try {
-		var result = /** @type {Function} */ (0, reaction.fn)();
+		/** @type {any} */
+		var result;
+
+		if ((flags & EFFECT) !== 0 && /** @type {Function} */ (reaction.fn).length > 0) {
+			var controller = new AbortController();
+			var signal = controller.signal;
+			var inner = /** @type {Function} */ (0, reaction.fn)({ signal });
+
+			result = () => {
+				controller.abort('effect destroyed');
+				inner?.();
+			};
+		} else {
+			result = /** @type {Function} */ (0, reaction.fn)();
+		}
+
 		var deps = reaction.deps;
 
 		if (new_deps !== null) {
