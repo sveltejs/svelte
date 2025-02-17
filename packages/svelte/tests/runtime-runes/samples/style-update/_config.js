@@ -32,5 +32,33 @@ export default test({
 			<custom-element style="${style_2}"></custom-element>
 			`
 		);
+
+		component.style = '';
+		flushSync();
+
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+			<div style=""></div>
+			<div style=""></div>
+
+			<custom-element style=""></custom-element>
+			<custom-element style=""></custom-element>
+			`
+		);
+
+		component.style = null;
+		flushSync();
+
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+			<div></div>
+			<div></div>
+
+			<custom-element></custom-element>
+			<custom-element></custom-element>
+			`
+		);
 	}
 });
