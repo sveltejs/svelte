@@ -309,12 +309,16 @@ export function validate_binding(state, binding, expression) {
 
 	const loc = locator(binding.start);
 
+	const obj = /** @type {Expression} */ (expression.object);
+
 	state.init.push(
 		b.stmt(
 			b.call(
 				'$.validate_binding',
 				b.literal(state.analysis.source.slice(binding.start, binding.end)),
-				b.thunk(/** @type {Expression} */ (expression.object)),
+				b.thunk(
+					state.store_to_invalidate ? b.sequence([b.call('$.mark_store_binding'), obj]) : obj
+				),
 				b.thunk(
 					/** @type {Expression} */ (
 						expression.computed
