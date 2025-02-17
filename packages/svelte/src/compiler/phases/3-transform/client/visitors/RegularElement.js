@@ -537,7 +537,9 @@ function build_element_attribute_update_assignment(
 
 	let { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
 		metadata.has_call
-			? is_autofocus
+			? // if it's autofocus we will not add this to a template effect so we don't want to get the expression id
+				// but separately memoize the expression
+				is_autofocus
 				? memoize_expression(state, value)
 				: get_expression_id(state, value)
 			: value
@@ -678,7 +680,8 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 
 	const { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
 		metadata.has_call
-			? is_select_with_value
+			? // if is a select with value we will also invoke `init_select` which need a reference before the template effect so we memoize separately
+				is_select_with_value
 				? memoize_expression(context.state, value)
 				: get_expression_id(state, value)
 			: value
