@@ -307,7 +307,7 @@ To get a reference to a DOM node, use `bind:this`. The value will be `undefined`
 	});
 </script>
 
-<canvas bind:this={canvas} />
+<canvas bind:this={canvas}></canvas>
 ```
 
 Components also support `bind:this`, allowing you to interact with component instances programmatically.
