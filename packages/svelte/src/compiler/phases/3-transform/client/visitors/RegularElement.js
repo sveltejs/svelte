@@ -3,7 +3,6 @@
 /** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
-import { escape_html } from '../../../../../escaping.js';
 import {
 	cannot_be_set_statically,
 	is_boolean_attribute,
@@ -11,6 +10,7 @@ import {
 	is_load_error_element,
 	is_void
 } from '../../../../../utils.js';
+import { escape_html } from '../../../../../escaping.js';
 import { dev, is_ignored, locator } from '../../../../state.js';
 import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
@@ -18,13 +18,12 @@ import { is_custom_element_node } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_getter } from '../utils.js';
 import {
+	get_attribute_name,
 	build_attribute_value,
 	build_class_directives,
-	build_set_attributes,
 	build_style_directives,
-	get_attribute_name
+	build_set_attributes
 } from './shared/element.js';
-import { visit_event_attribute } from './shared/events.js';
 import { process_children } from './shared/fragment.js';
 import {
 	build_render_statement,
@@ -32,6 +31,7 @@ import {
 	build_update_assignment,
 	get_expression_id
 } from './shared/utils.js';
+import { visit_event_attribute } from './shared/events.js';
 
 /**
  * @param {AST.RegularElement} node
@@ -693,7 +693,6 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 	);
 
 	if (is_select_with_value) {
-		let { value } = build_attribute_value(attribute.value, context);
 		state.init.push(b.stmt(b.call('$.init_select', node_id, b.thunk(value))));
 	}
 
