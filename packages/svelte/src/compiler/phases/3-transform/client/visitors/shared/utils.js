@@ -130,12 +130,21 @@ export function build_template_chunk(
 						value = { ...value, right: b.literal('') };
 					}
 				} else if (
-					state.analysis.props_id &&
-					value.type === 'Identifier' &&
-					value.name === state.analysis.props_id.name
+					// $props.id() is never null/undefined
+					!(
+						state.analysis.props_id &&
+						value.type === 'Identifier' &&
+						value.name === state.analysis.props_id.name
+					) &&
+					// Binary expressions are never null/undefined
+					value.type !== 'BinaryExpression' &&
+					// Unary expressions are never null/undefined (except for void/delete)
+					!(
+						value.type === 'UnaryExpression' &&
+						value.operator !== 'void' &&
+						value.operator !== 'delete'
+					)
 				) {
-					// do nothing ($props.id() is never null/undefined)
-				} else {
 					value = b.logical('??', value, b.literal(''));
 				}
 
