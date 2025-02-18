@@ -576,12 +576,6 @@ Unrecognised compiler option %keypath%
 Cannot use `%rune%()` more than once
 ```
 
-### props_id_invalid_placement
-
-```
-`$props.id()` can only be used at the top level of components as a variable declaration initializer
-```
-
 ### props_illegal_name
 
 ```

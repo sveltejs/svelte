@@ -97,7 +97,8 @@ export {
 	template,
 	template_with_script,
 	text,
-	props_id
+	props_id,
+	setup
 } from './dom/template.js';
 export { derived, derived_safe_equal } from './reactivity/deriveds.js';
 export {

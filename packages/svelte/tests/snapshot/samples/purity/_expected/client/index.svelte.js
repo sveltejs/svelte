@@ -5,6 +5,7 @@ import * as $ from 'svelte/internal/client';
 var root = $.template(`<p></p> <p></p> <!>`, 1);
 
 export default function Purity($$anchor) {
+	const $$cleanup = $.setup();
 	var fragment = root();
 	var p = $.first_child(fragment);
 
@@ -18,4 +19,5 @@ export default function Purity($$anchor) {
 
 	Child(node, { prop: encodeURIComponent('hello') });
 	$.append($$anchor, fragment);
+	$$cleanup();
 }
