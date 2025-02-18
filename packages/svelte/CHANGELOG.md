@@ -1,5 +1,21 @@
 # svelte
 
+## 5.20.2
+
+### Patch Changes
+
+- chore: remove unused `options.uid` in `render` ([#15302](https://github.com/sveltejs/svelte/pull/15302))
+
+- fix: do not warn for `binding_property_non_reactive` if binding is a store in an each ([#15318](https://github.com/sveltejs/svelte/pull/15318))
+
+- fix: prevent writable store value from becoming a proxy when reassigning using $-prefix ([#15283](https://github.com/sveltejs/svelte/pull/15283))
+
+- fix: `muted` reactive without `bind` and select/autofocus attributes working with function calls ([#15326](https://github.com/sveltejs/svelte/pull/15326))
+
+- fix: ensure input elements and elements with `dir` attribute are marked as non-static ([#15259](https://github.com/sveltejs/svelte/pull/15259))
+
+- fix: fire delegated events on target even it was disabled in the meantime ([#15319](https://github.com/sveltejs/svelte/pull/15319))
+
 ## 5.20.1
 
 ### Patch Changes
