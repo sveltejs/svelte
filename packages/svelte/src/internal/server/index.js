@@ -2,7 +2,7 @@
 /** @import { Component, Payload, RenderOutput } from '#server' */
 /** @import { Store } from '#shared' */
 export { FILENAME, HMR } from '../../constants.js';
-import { attr, clsx } from '../shared/attributes.js';
+import { attr, clsx, cssx } from '../shared/attributes.js';
 import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
@@ -204,6 +204,10 @@ export function css_props(payload, is_html, props, component, dynamic = false) {
  * @returns {string}
  */
 export function spread_attributes(attrs, classes, styles, flags = 0) {
+	if (attrs.style) {
+		attrs.style = cssx(attrs.style);
+	}
+
 	if (styles) {
 		attrs.style = attrs.style
 			? style_object_to_string(merge_styles(/** @type {string} */ (attrs.style), styles))
@@ -552,7 +556,7 @@ export function props_id(payload) {
 	return uid;
 }
 
-export { attr, clsx };
+export { attr, clsx, cssx };
 
 export { html } from './blocks/html.js';
 

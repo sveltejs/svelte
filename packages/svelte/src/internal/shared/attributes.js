@@ -40,3 +40,46 @@ export function clsx(value) {
 		return value ?? '';
 	}
 }
+
+/**
+ * Format a CSS key/value
+ * @param {[string,any]} value
+ * @returns {string|null}
+ */
+function cssx_format([k, v]) {
+	if (v == null) {
+		return null;
+	}
+	v = ('' + v).trim();
+	if (v === '') {
+		return null;
+	}
+	if (k[0] !== '-' && k[1] !== '-') {
+		k = k
+			.replaceAll('_', '-')
+			.replaceAll(/(?<=[a-z])[A-Z](?=[a-z])/g, (c) => '-' + c)
+			.toLowerCase();
+	}
+	return k + ':' + v;
+}
+
+/**
+ * Build a style attributes based on arrays/objects/strings
+ * @param  {any} value
+ * @returns {string|null}
+ */
+export function cssx(value) {
+	if (value == null) {
+		return null;
+	}
+	if (typeof value === 'object') {
+		if (value instanceof CSSStyleDeclaration) {
+			// Special case for CSSStyleDeclaration
+			return value.cssText;
+		}
+		return (Array.isArray(value) ? value.map(cssx) : Object.entries(value).map(cssx_format))
+			.filter((v) => v)
+			.join(';');
+	}
+	return value;
+}

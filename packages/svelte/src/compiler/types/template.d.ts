@@ -481,6 +481,8 @@ export namespace AST {
 			delegated: null | DelegatedEvent;
 			/** May be `true` if this is a `class` attribute that needs `clsx` */
 			needs_clsx: boolean;
+			/** May be `true` if this is a `style` attribute that needs `cssx` */
+			needs_cssx: boolean;
 		};
 	}
 

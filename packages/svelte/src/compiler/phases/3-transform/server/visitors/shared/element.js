@@ -108,11 +108,25 @@ export function build_element_attributes(node, context) {
 					} else {
 						attributes.push(attribute);
 					}
-				} else {
-					if (attribute.name === 'style') {
-						style_index = attributes.length;
-					}
+				} else if (attribute.name === 'style') {
+					style_index = attributes.length;
 
+					if (attribute.metadata.needs_cssx) {
+						const clsx_value = b.call(
+							'$.cssx',
+							/** @type {AST.ExpressionTag} */ (attribute.value).expression
+						);
+						attributes.push({
+							...attribute,
+							value: {
+								.../** @type {AST.ExpressionTag} */ (attribute.value),
+								expression: clsx_value
+							}
+						});
+					} else {
+						attributes.push(attribute);
+					}
+				} else {
 					attributes.push(attribute);
 				}
 			}
