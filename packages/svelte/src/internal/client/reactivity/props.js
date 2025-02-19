@@ -31,6 +31,7 @@ import {
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
+import { teardown } from './effects.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -415,4 +416,40 @@ export function prop(props, key, flags, fallback) {
 		}
 		return get(current_value);
 	};
+}
+
+/**
+ *
+ * @param {Record<string|symbol, unknown>} props
+ */
+export function safe_props(props) {
+	let unmounting = false;
+	teardown(() => {
+		unmounting = true;
+	});
+	const deriveds = new Map();
+	/**
+	 * @type {Map<string|symbol, unknown>}
+	 */
+	const olds = new Map(untrack(() => Object.entries(props)));
+	return new Proxy(
+		{},
+		{
+			get(_, key) {
+				if (!deriveds.has(key)) {
+					deriveds.set(
+						key,
+						derived(() => {
+							if (unmounting) {
+								return olds.get(key);
+							}
+							olds.set(key, props[key]);
+							return props[key];
+						})
+					);
+				}
+				return get(deriveds.get(key));
+			}
+		}
+	);
 }

@@ -118,7 +118,8 @@ export {
 	legacy_rest_props,
 	spread_props,
 	update_pre_prop,
-	update_prop
+	update_prop,
+	safe_props
 } from './reactivity/props.js';
 export {
 	invalidate_store,

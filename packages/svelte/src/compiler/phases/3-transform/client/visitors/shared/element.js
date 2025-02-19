@@ -185,7 +185,7 @@ export function build_attribute_value(value, context, memoize = (value) => value
 			return { value: b.literal(chunk.data), has_state: false };
 		}
 
-		let expression = /** @type {Expression} */ (context.visit(chunk.expression));
+		let expression = /** @type {Expression} */ (context.visit(chunk.expression, context.state));
 
 		return {
 			value: memoize(expression, chunk.metadata.expression),

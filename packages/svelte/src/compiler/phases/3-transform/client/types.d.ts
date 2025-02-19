@@ -23,6 +23,8 @@ export interface ClientTransformState extends TransformState {
 	 * us to rewrite `this.foo` as `this.#foo.value`
 	 */
 	readonly in_constructor: boolean;
+	readonly safe_props_ids?: Map<string, Expression>;
+	readonly safe_props_name?: string;
 
 	readonly transform: Record<
 		string,
