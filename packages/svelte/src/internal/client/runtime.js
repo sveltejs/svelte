@@ -703,10 +703,12 @@ function flush_queued_root_effects(root_effects) {
 				effect.f ^= CLEAN;
 			}
 
+			var fork = /** @type {Fork} */ (active_fork);
 			var collected_effects = process_effects(effect);
 
-			if (/** @type {Fork} */ (active_fork).settled()) {
+			if (fork.settled()) {
 				flush_queued_effects(collected_effects);
+				fork.remove();
 			}
 		}
 	} finally {

@@ -134,11 +134,9 @@ export function async_derived(fn, location) {
 				}
 
 				if (fork !== null) {
-					fork?.enable();
-					flush_sync(() => {
+					fork.run(() => {
 						internal_set(signal, v);
 					});
-					fork?.disable();
 				} else {
 					internal_set(signal, v);
 				}
