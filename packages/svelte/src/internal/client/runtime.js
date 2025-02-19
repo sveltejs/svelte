@@ -53,6 +53,8 @@ import {
 import { Boundary } from './dom/blocks/boundary.js';
 import * as w from './warnings.js';
 import { is_firefox } from './dom/operations.js';
+import { active_fork, Fork } from './reactivity/forks.js';
+import { log_effect_tree } from './dev/debug.js';
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -702,10 +704,14 @@ function flush_queued_root_effects(root_effects) {
 			}
 
 			var collected_effects = process_effects(effect);
-			flush_queued_effects(collected_effects);
+
+			if (/** @type {Fork} */ (active_fork).settled()) {
+				flush_queued_effects(collected_effects);
+			}
 		}
 	} finally {
 		is_flushing_effect = previously_flushing_effect;
+		Fork.unset();
 	}
 }
 
@@ -805,14 +811,16 @@ export function schedule_effect(signal) {
  * effects to be flushed.
  *
  * @param {Effect} effect
- * @param {Effect[]} effects
- * @param {Boundary} [boundary]
  * @returns {Effect[]}
  */
-function process_effects(effect, effects = [], boundary) {
+function process_effects(effect) {
 	var current_effect = effect.first;
 
-	var current_effect = effect.first;
+	/** @type {Effect[]} */
+	var render_effects = [];
+
+	/** @type {Effect[]} */
+	var effects = [];
 
 	main_loop: while (current_effect !== null) {
 		var flags = current_effect.f;
@@ -820,64 +828,24 @@ function process_effects(effect, effects = [], boundary) {
 		var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
 		var sibling = current_effect.next;
 
-		if (!is_skippable_branch && (flags & INERT) === 0) {
-			if (boundary !== undefined && (flags & (BLOCK_EFFECT | BRANCH_EFFECT | EFFECT_ASYNC)) === 0) {
-				// Inside a boundary, defer everything except block/branch effects
-				boundary.add_effect(current_effect);
-			} else if ((flags & BOUNDARY_EFFECT) !== 0) {
-				var b = /** @type {Boundary} */ (current_effect.b);
+		var skip =
+			is_skippable_branch ||
+			(flags & INERT) !== 0 ||
+			active_fork?.skipped_effects.has(current_effect);
 
-				process_effects(current_effect, effects, b);
-
-				if (!b.suspended) {
-					// no more async work to happen
-					b.commit();
+		if (!skip) {
+			if ((flags & (BLOCK_EFFECT | EFFECT_ASYNC)) !== 0) {
+				if (check_dirtiness(current_effect)) {
+					update_effect(current_effect);
 				}
 			} else if ((flags & RENDER_EFFECT) !== 0) {
 				if (is_branch) {
 					current_effect.f ^= CLEAN;
 				} else {
-					// Ensure we set the effect to be the active reaction
-					// to ensure that unowned deriveds are correctly tracked
-					// because we're flushing the current effect
-					var previous_active_reaction = active_reaction;
-					try {
-						active_reaction = current_effect;
-						if (check_dirtiness(current_effect)) {
-							update_effect(current_effect);
-						}
-					} catch (error) {
-						handle_error(error, current_effect, null, current_effect.ctx);
-					} finally {
-						active_reaction = previous_active_reaction;
-					}
-				}
-
-				var child = current_effect.first;
-
-				if (child !== null) {
-					current_effect = child;
-					continue;
+					render_effects.push(current_effect);
 				}
 			} else if ((flags & EFFECT) !== 0) {
 				effects.push(current_effect);
-			} else if (is_branch) {
-				current_effect.f ^= CLEAN;
-			} else {
-				// Ensure we set the effect to be the active reaction
-				// to ensure that unowned deriveds are correctly tracked
-				// because we're flushing the current effect
-				var previous_active_reaction = active_reaction;
-				try {
-					active_reaction = current_effect;
-					if (check_dirtiness(current_effect)) {
-						update_effect(current_effect);
-					}
-				} catch (error) {
-					handle_error(error, current_effect, null, current_effect.ctx);
-				} finally {
-					active_reaction = previous_active_reaction;
-				}
 			}
 
 			var child = current_effect.first;
@@ -908,7 +876,7 @@ function process_effects(effect, effects = [], boundary) {
 		current_effect = sibling;
 	}
 
-	return effects;
+	return [...render_effects, ...effects];
 }
 
 /**

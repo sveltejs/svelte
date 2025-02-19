@@ -35,6 +35,7 @@ import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack } from '../dev/tracing.js';
 import { component_context, is_runes } from '../context.js';
+import { active_fork, Fork } from './forks.js';
 
 export let inspect_effects = new Set();
 
@@ -174,6 +175,9 @@ export function internal_set(source, value) {
 		source.v = value;
 		source.wv = increment_write_version();
 
+		const fork = Fork.ensure();
+		fork.capture(source, old_value);
+
 		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');
 			if (active_effect != null) {
@@ -260,7 +264,7 @@ export function update_pre(source, d = 1) {
  * @param {number} status should be DIRTY or MAYBE_DIRTY
  * @returns {void}
  */
-function mark_reactions(signal, status) {
+export function mark_reactions(signal, status) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -270,9 +274,6 @@ function mark_reactions(signal, status) {
 	for (var i = 0; i < length; i++) {
 		var reaction = reactions[i];
 		var flags = reaction.f;
-
-		// Skip any effects that are already dirty
-		if ((flags & DIRTY) !== 0) continue;
 
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === active_effect) continue;
@@ -285,13 +286,10 @@ function mark_reactions(signal, status) {
 
 		set_signal_status(reaction, status);
 
-		// If the signal a) was previously clean or b) is an unowned derived, then mark it
-		if ((flags & (CLEAN | UNOWNED)) !== 0) {
-			if ((flags & DERIVED) !== 0) {
-				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
-			} else {
-				schedule_effect(/** @type {Effect} */ (reaction));
-			}
+		if ((flags & DERIVED) !== 0) {
+			mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
+		} else {
+			schedule_effect(/** @type {Effect} */ (reaction));
 		}
 	}
 }
