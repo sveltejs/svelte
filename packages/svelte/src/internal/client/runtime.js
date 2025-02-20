@@ -858,11 +858,8 @@ export function flush_sync(fn) {
 	try {
 		infinite_loop_guard();
 
-		/** @type {Effect[]} */
-		const root_effects = [];
-
 		scheduler_mode = FLUSH_SYNC;
-		queued_root_effects = root_effects;
+		queued_root_effects = [];
 		is_micro_task_queued = false;
 
 		flush_queued_root_effects(previous_queued_root_effects);
@@ -870,7 +867,7 @@ export function flush_sync(fn) {
 		var result = fn?.();
 
 		flush_tasks();
-		if (queued_root_effects.length > 0 || root_effects.length > 0) {
+		if (queued_root_effects.length > 0) {
 			flush_sync();
 		}
 
