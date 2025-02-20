@@ -10,10 +10,6 @@ import { build_component } from './shared/component.js';
  */
 export function Component(node, context) {
 	if (node.metadata.dynamic) {
-		let safe_props_ids = new Map();
-
-		const safe_props_name = context.state.scope.generate('$$safe_props');
-
 		// Handle dynamic references to what seems like static inline components
 		const component = build_component(
 			node,
@@ -22,8 +18,7 @@ export function Component(node, context) {
 				...context,
 				state: {
 					...context.state,
-					safe_props_ids,
-					safe_props_name
+					needs_safe_props: true
 				}
 			},
 			b.id('$$anchor')
@@ -36,19 +31,7 @@ export function Component(node, context) {
 					// TODO use untrack here to not update when binding changes?
 					// Would align with Svelte 4 behavior, but it's arguably nicer/expected to update this
 					b.thunk(/** @type {Expression} */ (context.visit(b.member_id(node.name)))),
-					b.arrow(
-						[b.id('$$anchor'), b.id('$$component')],
-						b.block([
-							b.const(
-								safe_props_name,
-								b.call(
-									'$.safe_props',
-									b.object([...safe_props_ids].map(([name, id]) => b.get(name, [b.return(id)])))
-								)
-							),
-							component
-						])
-					)
+					b.arrow([b.id('$$anchor'), b.id('$$component')], b.block([component]))
 				)
 			)
 		);

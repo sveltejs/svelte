@@ -23,8 +23,6 @@ export interface ClientTransformState extends TransformState {
 	 * us to rewrite `this.foo` as `this.#foo.value`
 	 */
 	readonly in_constructor: boolean;
-	readonly safe_props_ids?: Map<string, Expression>;
-	readonly safe_props_name?: string;
 
 	readonly transform: Record<
 		string,
@@ -47,6 +45,7 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly hoisted: Array<Statement | ModuleDeclaration>;
 	readonly events: Set<string>;
 	readonly is_instance: boolean;
+	readonly needs_safe_props: boolean;
 	readonly store_to_invalidate?: string;
 
 	/** Stuff that happens before the render effect(s) */

@@ -11,29 +11,13 @@ export function IfBlock(node, context) {
 	context.state.template.push('<!>');
 	const statements = [];
 
-	let safe_props_ids = new Map();
-
-	const safe_props_id = context.state.scope.generate('$$safe_props');
-
 	const consequent = /** @type {BlockStatement} */ (
 		context.visit(node.consequent, {
 			...context.state,
-			safe_props_ids,
-			safe_props_name: safe_props_id
+			needs_safe_props: true
 		})
 	);
 
-	if (consequent.body.length > 0 && safe_props_ids) {
-		consequent.body.unshift(
-			b.const(
-				safe_props_id,
-				b.call(
-					'$.safe_props',
-					b.object([...safe_props_ids].map(([name, id]) => b.get(name, [b.return(id)])))
-				)
-			)
-		);
-	}
 	const consequent_id = context.state.scope.generate('consequent');
 
 	statements.push(b.var(b.id(consequent_id), b.arrow([b.id('$$anchor')], consequent)));
@@ -41,7 +25,12 @@ export function IfBlock(node, context) {
 	let alternate_id;
 
 	if (node.alternate) {
-		const alternate = /** @type {BlockStatement} */ (context.visit(node.alternate));
+		const alternate = /** @type {BlockStatement} */ (
+			context.visit(node.alternate, {
+				...context.state,
+				needs_safe_props: true
+			})
+		);
 		alternate_id = context.state.scope.generate('alternate');
 		statements.push(b.var(b.id(alternate_id), b.arrow([b.id('$$anchor')], alternate)));
 	}
