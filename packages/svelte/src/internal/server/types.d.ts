@@ -17,6 +17,8 @@ export interface Payload {
 	head: {
 		title: string;
 		out: string;
+		uid: () => string;
+		css: Set<{ hash: string; code: string }>;
 	};
 	/** Function that generates a unique ID */
 	uid: () => string;

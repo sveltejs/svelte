@@ -45,6 +45,7 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly hoisted: Array<Statement | ModuleDeclaration>;
 	readonly events: Set<string>;
 	readonly is_instance: boolean;
+	readonly store_to_invalidate?: string;
 
 	/** Stuff that happens before the render effect(s) */
 	readonly init: Statement[];

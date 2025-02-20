@@ -267,7 +267,7 @@ Elements with the `contenteditable` attribute support the following bindings:
 <!-- for some reason puts the comment and html on same line -->
 <!-- prettier-ignore -->
 ```svelte
-<div contenteditable="true" bind:innerHTML={html} />
+<div contenteditable="true" bind:innerHTML={html}></div>
 ```
 
 ## Dimensions
@@ -307,7 +307,7 @@ To get a reference to a DOM node, use `bind:this`. The value will be `undefined`
 	});
 </script>
 
-<canvas bind:this={canvas} />
+<canvas bind:this={canvas}></canvas>
 ```
 
 Components also support `bind:this`, allowing you to interact with component instances programmatically.

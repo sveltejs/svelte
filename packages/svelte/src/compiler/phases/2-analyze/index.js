@@ -262,10 +262,20 @@ export function analyze_module(ast, options) {
 		{
 			scope,
 			scopes,
-			// @ts-expect-error TODO
-			analysis,
-			// @ts-expect-error TODO
-			options
+			analysis: /** @type {ComponentAnalysis} */ (analysis),
+			derived_state: [],
+			// TODO the following are not needed for modules, but we have to pass them in order to avoid type error,
+			// and reducing the type would result in a lot of tedious type casts elsewhere - find a good solution one day
+			ast_type: /** @type {any} */ (null),
+			component_slots: new Set(),
+			expression: null,
+			function_depth: 0,
+			has_props_rune: false,
+			instance_scope: /** @type {any} */ (null),
+			options: /** @type {ValidatedCompileOptions} */ (options),
+			parent_element: null,
+			reactive_statement: null,
+			reactive_statements: new Map()
 		},
 		visitors
 	);
