@@ -1,5 +1,4 @@
 /** @import { Effect, Source } from '#client' */
-
 import { flush_sync } from '../runtime.js';
 import { internal_set } from './sources.js';
 
@@ -17,10 +16,46 @@ export class Fork {
 	/** @type {Map<Source, any>} */
 	previous = new Map();
 
+	/** @type {Map<Source, any>} */
+	current = new Map();
+
 	/** @type {Set<Effect>} */
 	skipped_effects = new Set();
 
 	#pending = 0;
+
+	apply() {
+		var values = new Map();
+
+		for (const source of this.previous.keys()) {
+			values.set(source, source.v);
+		}
+
+		for (const fork of forks) {
+			if (fork === this) continue;
+
+			for (const [source, previous] of fork.previous) {
+				if (!values.has(source)) {
+					values.set(source, source.v);
+					// internal_set(source, previous);
+					source.v = previous;
+				}
+			}
+		}
+
+		for (const [source, current] of this.current) {
+			source.v = current;
+			// internal_set(source, current);
+		}
+
+		return () => {
+			for (const [source, value] of values) {
+				source.v = value;
+			}
+
+			active_fork = null;
+		};
+	}
 
 	/**
 	 * @param {Source} source
@@ -30,35 +65,8 @@ export class Fork {
 		if (!this.previous.has(source)) {
 			this.previous.set(source, value);
 		}
-	}
 
-	/**
-	 *
-	 * @param {() => void} fn
-	 */
-	flush(fn) {
-		var values = new Map();
-
-		for (const fork of forks) {
-			if (fork === this) continue;
-
-			for (const [source, previous] of fork.previous) {
-				if (this.previous.has(source)) continue;
-
-				values.set(source, source.v);
-				source.v = previous;
-				// internal_set(source, previous);
-			}
-		}
-
-		try {
-			fn();
-		} finally {
-			for (const [source, value] of values) {
-				// internal_set(source, value);
-				source.v = value;
-			}
-		}
+		this.current.set(source, source.v);
 	}
 
 	remove() {

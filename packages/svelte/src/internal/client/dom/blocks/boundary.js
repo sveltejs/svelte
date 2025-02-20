@@ -306,7 +306,7 @@ export class Boundary {
 
 			if (this.#main_effect !== null) {
 				// TODO do we also need to `resume_effect` here?
-				schedule_effect(this.#main_effect);
+				// schedule_effect(this.#main_effect);
 			}
 		}
 	}

@@ -695,6 +695,9 @@ function flush_queued_root_effects(root_effects) {
 	var previously_flushing_effect = is_flushing_effect;
 	is_flushing_effect = true;
 
+	var fork = /** @type {Fork} */ (active_fork);
+	var revert = fork.apply();
+
 	try {
 		for (var i = 0; i < length; i++) {
 			var effect = root_effects[i];
@@ -703,17 +706,23 @@ function flush_queued_root_effects(root_effects) {
 				effect.f ^= CLEAN;
 			}
 
-			var fork = /** @type {Fork} */ (active_fork);
 			var collected_effects = process_effects(effect);
 
 			if (fork.settled()) {
 				flush_queued_effects(collected_effects);
-				fork.remove();
 			}
 		}
 	} finally {
 		is_flushing_effect = previously_flushing_effect;
-		Fork.unset();
+
+		// TODO this doesn't seem quite right — may run into
+		// interesting cases where there are multiple roots.
+		// it'll do for now though
+		if (fork.settled()) {
+			fork.remove();
+		}
+
+		revert();
 	}
 }
 

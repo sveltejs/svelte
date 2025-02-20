@@ -138,7 +138,8 @@ export function async_derived(fn, location) {
 						internal_set(signal, v);
 					});
 				} else {
-					internal_set(signal, v);
+					signal.v = v;
+					// internal_set(signal, v);
 				}
 
 				if (DEV && location !== undefined) {

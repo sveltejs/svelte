@@ -170,6 +170,8 @@ export function set(source, value) {
  * @returns {V}
  */
 export function internal_set(source, value) {
+	// console.trace('internal_set', source.v, value);
+
 	if (!source.equals(value)) {
 		var old_value = source.v;
 		source.v = value;
