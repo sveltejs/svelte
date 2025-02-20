@@ -686,6 +686,12 @@ function infinite_loop_guard() {
  * @returns {void}
  */
 function flush_queued_root_effects(root_effects) {
+	if (active_fork === null) {
+		return;
+	}
+
+	var revert = active_fork.apply();
+
 	var length = root_effects.length;
 	if (length === 0) {
 		return;
@@ -694,9 +700,6 @@ function flush_queued_root_effects(root_effects) {
 
 	var previously_flushing_effect = is_flushing_effect;
 	is_flushing_effect = true;
-
-	var fork = /** @type {Fork} */ (active_fork);
-	var revert = fork.apply();
 
 	try {
 		for (var i = 0; i < length; i++) {
@@ -708,7 +711,7 @@ function flush_queued_root_effects(root_effects) {
 
 			var collected_effects = process_effects(effect);
 
-			if (fork.settled()) {
+			if (active_fork.settled()) {
 				flush_queued_effects(collected_effects);
 			}
 		}
@@ -718,8 +721,8 @@ function flush_queued_root_effects(root_effects) {
 		// TODO this doesn't seem quite right — may run into
 		// interesting cases where there are multiple roots.
 		// it'll do for now though
-		if (fork.settled()) {
-			fork.remove();
+		if (active_fork.settled()) {
+			active_fork.remove();
 		}
 
 		revert();
@@ -903,11 +906,8 @@ export function flush_sync(fn) {
 	try {
 		infinite_loop_guard();
 
-		/** @type {Effect[]} */
-		const root_effects = [];
-
 		scheduler_mode = FLUSH_SYNC;
-		queued_root_effects = root_effects;
+		queued_root_effects = [];
 		is_micro_task_queued = false;
 
 		flush_queued_root_effects(previous_queued_root_effects);
@@ -917,7 +917,7 @@ export function flush_sync(fn) {
 		flush_boundary_micro_tasks();
 		flush_post_micro_tasks();
 		flush_idle_tasks();
-		if (queued_root_effects.length > 0 || root_effects.length > 0) {
+		if (queued_root_effects.length > 0) {
 			flush_sync();
 		}
 

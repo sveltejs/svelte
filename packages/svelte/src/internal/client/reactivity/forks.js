@@ -95,10 +95,7 @@ export class Fork {
 	 */
 	run(fn) {
 		active_fork = this;
-
 		flush_sync(fn);
-
-		active_fork = null;
 	}
 
 	increment() {
@@ -120,9 +117,5 @@ export class Fork {
 		}
 
 		return active_fork;
-	}
-
-	static unset() {
-		active_fork = null;
 	}
 }
