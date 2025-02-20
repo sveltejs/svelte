@@ -43,8 +43,6 @@ export default test({
 				`
 			);
 		} else {
-			// `c6` because this runs after the `dom` tests
-			// (slightly brittle but good enough for now)
 			assert.htmlEqual(
 				target.innerHTML,
 				`
@@ -53,7 +51,7 @@ export default test({
 					<p>s2</p>
 					<p>s3</p>
 					<p>s4</p>
-					<p>c6</p>
+					<p>c1</p>
 				`
 			);
 		}

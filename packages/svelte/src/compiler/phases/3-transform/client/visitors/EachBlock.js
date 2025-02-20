@@ -143,7 +143,8 @@ export function EachBlock(node, context) {
 
 	const child_state = {
 		...context.state,
-		transform: { ...context.state.transform }
+		transform: { ...context.state.transform },
+		store_to_invalidate
 	};
 
 	/** The state used when generating the key function, if necessary */
