@@ -851,7 +851,6 @@ function process_effects(effect) {
  */
 export function flush_sync(fn) {
 	var previous_scheduler_mode = scheduler_mode;
-	var previous_queued_root_effects = queued_root_effects;
 
 	try {
 		infinite_loop_guard();
@@ -877,7 +876,6 @@ export function flush_sync(fn) {
 		return result;
 	} finally {
 		scheduler_mode = previous_scheduler_mode;
-		queued_root_effects = previous_queued_root_effects;
 	}
 }
 
