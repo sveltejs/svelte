@@ -1,6 +1,7 @@
 /** @import { Effect, Source } from '#client' */
+import { DIRTY } from '../constants.js';
 import { flush_sync } from '../runtime.js';
-import { internal_set } from './sources.js';
+import { internal_set, mark_reactions } from './sources.js';
 
 /** @type {Set<Fork>} */
 const forks = new Set();
@@ -28,7 +29,12 @@ export class Fork {
 		var values = new Map();
 
 		for (const source of this.previous.keys()) {
+			// mark_reactions(source, DIRTY);
 			values.set(source, source.v);
+		}
+
+		for (const [source, current] of this.current) {
+			source.v = current;
 		}
 
 		for (const fork of forks) {
@@ -36,16 +42,11 @@ export class Fork {
 
 			for (const [source, previous] of fork.previous) {
 				if (!values.has(source)) {
+					// mark_reactions(source, DIRTY);
 					values.set(source, source.v);
-					// internal_set(source, previous);
 					source.v = previous;
 				}
 			}
-		}
-
-		for (const [source, current] of this.current) {
-			source.v = current;
-			// internal_set(source, current);
 		}
 
 		return () => {
