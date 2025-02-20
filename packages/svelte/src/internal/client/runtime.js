@@ -661,6 +661,8 @@ function infinite_loop_guard() {
  * @returns {void}
  */
 function flush_queued_root_effects(root_effects) {
+	queued_root_effects = [];
+
 	var length = root_effects.length;
 	if (length === 0) {
 		return;
@@ -727,9 +729,7 @@ function flush_queued_effects(effects) {
 function process_deferred() {
 	is_micro_task_queued = false;
 
-	const previous_queued_root_effects = queued_root_effects;
-	queued_root_effects = [];
-	flush_queued_root_effects(previous_queued_root_effects);
+	flush_queued_root_effects(queued_root_effects);
 
 	if (!is_micro_task_queued) {
 		flush_count = 0;
@@ -857,10 +857,9 @@ export function flush_sync(fn) {
 		infinite_loop_guard();
 
 		scheduler_mode = FLUSH_SYNC;
-		queued_root_effects = [];
 		is_micro_task_queued = false;
 
-		flush_queued_root_effects(previous_queued_root_effects);
+		flush_queued_root_effects(queued_root_effects);
 
 		var result = fn?.();
 
