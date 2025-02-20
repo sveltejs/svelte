@@ -726,9 +726,7 @@ function flush_queued_effects(effects) {
 
 function process_deferred() {
 	is_micro_task_queued = false;
-	if (flush_count > 1001) {
-		return;
-	}
+
 	const previous_queued_root_effects = queued_root_effects;
 	queued_root_effects = [];
 	flush_queued_root_effects(previous_queued_root_effects);
