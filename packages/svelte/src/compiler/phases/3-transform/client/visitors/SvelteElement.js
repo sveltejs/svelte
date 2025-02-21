@@ -86,12 +86,17 @@ export function SvelteElement(node, context) {
 		attributes[0].name.toLowerCase() === 'class'
 	) {
 		// special case when there only a class attribute
-		build_set_class(
+		let { value, has_state } = build_attribute_value(
+			attributes[0].value,
+			context,
+			(value, metadata) => (metadata.has_call ? get_expression_id(context.state, value) : value)
+		);
+		is_attributes_reactive = build_set_class(
 			node,
 			element_id,
 			attributes[0],
-			b.null,
-			false,
+			value,
+			has_state,
 			class_directives,
 			inner_context,
 			false
