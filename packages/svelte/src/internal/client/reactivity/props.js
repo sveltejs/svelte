@@ -8,13 +8,18 @@ import {
 	PROPS_IS_UPDATED
 } from '../../../constants.js';
 import { legacy_mode_flag } from '../../flags/index.js';
-import { get_descriptor, is_function } from '../../shared/utils.js';
+import {
+	define_property,
+	get_descriptor,
+	get_descriptors,
+	is_function
+} from '../../shared/utils.js';
 import { LEGACY_DERIVED_PROP, LEGACY_PROPS, STATE_SYMBOL } from '../constants.js';
 import * as e from '../errors.js';
 import { proxy } from '../proxy.js';
 import { captured_signals, get, is_flushing_effect, untrack } from '../runtime.js';
 import { derived, derived_safe_equal } from './deriveds.js';
-import { teardown } from './effects.js';
+import { render_effect, teardown } from './effects.js';
 import { safe_equals } from './equality.js';
 import { inspect_effects, mutable_source, set, source, update } from './sources.js';
 import { capture_store_binding } from './store.js';
@@ -406,39 +411,39 @@ export function prop(props, key, flags, fallback) {
 
 /**
  *
- * @param {Record<string|symbol, unknown>} props
+ * @param {Record<string | symbol, unknown>} props
  */
 export function safe_props(props) {
 	let unmounting = false;
 	teardown(() => {
 		unmounting = true;
 	});
-	const deriveds = new Map();
-	return untrack(() => {
-		/**
-		 * @type {Map<string|symbol, unknown>}
-		 */
-		const olds = new Map(Object.entries(props));
 
-		return new Proxy(
-			{},
-			{
-				get(_, key) {
-					if (!deriveds.has(key)) {
-						deriveds.set(
-							key,
-							derived(() => {
-								if (unmounting) {
-									return olds.get(key);
-								}
-								olds.set(key, props[key]);
-								return props[key];
-							})
-						);
-					}
-					return get(deriveds.get(key));
+	/** @type {typeof props} */
+	var values = {};
+
+	for (const key in props) {
+		const descriptor = /** @type {PropertyDescriptor} */ (get_descriptor(props, key));
+
+		if (descriptor.get) {
+			let latest = props[key];
+
+			render_effect(() => {
+				if (!unmounting) {
+					latest = props[key];
 				}
-			}
-		);
-	});
+			});
+
+			define_property(values, key, {
+				...descriptor,
+				get() {
+					return unmounting ? latest : props[key];
+				}
+			});
+		} else {
+			values[key] = props[key];
+		}
+	}
+
+	return values;
 }
