@@ -267,7 +267,6 @@ export function analyze_module(ast, options) {
 			expression: null,
 			function_depth: 0,
 			has_props_rune: false,
-			instance_scope: /** @type {any} */ (null),
 			options: /** @type {ValidatedCompileOptions} */ (options),
 			parent_element: null,
 			reactive_statement: null,
@@ -620,7 +619,6 @@ export function analyze_component(root, source, options) {
 				expression: null,
 				derived_state: [],
 				function_depth: scope.function_depth,
-				instance_scope: instance.scope,
 				reactive_statement: null,
 				reactive_statements: new Map()
 			};
@@ -684,7 +682,6 @@ export function analyze_component(root, source, options) {
 				parent_element: null,
 				has_props_rune: false,
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
-				instance_scope: instance.scope,
 				reactive_statement: null,
 				reactive_statements: analysis.reactive_statements,
 				component_slots: new Set(),
