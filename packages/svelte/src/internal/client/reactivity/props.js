@@ -7,31 +7,17 @@ import {
 	PROPS_IS_RUNES,
 	PROPS_IS_UPDATED
 } from '../../../constants.js';
-import { get_descriptor, is_function } from '../../shared/utils.js';
-import { mutable_source, set, source, update } from './sources.js';
-import { derived, derived_safe_equal } from './deriveds.js';
-import {
-	active_effect,
-	get,
-	captured_signals,
-	set_active_effect,
-	untrack,
-	active_reaction,
-	set_active_reaction
-} from '../runtime.js';
-import { safe_equals } from './equality.js';
-import * as e from '../errors.js';
-import {
-	BRANCH_EFFECT,
-	LEGACY_DERIVED_PROP,
-	LEGACY_PROPS,
-	ROOT_EFFECT,
-	STATE_SYMBOL
-} from '../constants.js';
-import { proxy } from '../proxy.js';
-import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
+import { get_descriptor, is_function } from '../../shared/utils.js';
+import { LEGACY_DERIVED_PROP, LEGACY_PROPS, STATE_SYMBOL } from '../constants.js';
+import * as e from '../errors.js';
+import { proxy } from '../proxy.js';
+import { captured_signals, get, is_flushing_effect, untrack } from '../runtime.js';
+import { derived, derived_safe_equal } from './deriveds.js';
 import { teardown } from './effects.js';
+import { safe_equals } from './equality.js';
+import { inspect_effects, mutable_source, set, source, update } from './sources.js';
+import { capture_store_binding } from './store.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -428,28 +414,31 @@ export function safe_props(props) {
 		unmounting = true;
 	});
 	const deriveds = new Map();
-	/**
-	 * @type {Map<string|symbol, unknown>}
-	 */
-	const olds = new Map(untrack(() => Object.entries(props)));
-	return new Proxy(
-		{},
-		{
-			get(_, key) {
-				if (!deriveds.has(key)) {
-					deriveds.set(
-						key,
-						derived(() => {
-							if (unmounting) {
-								return olds.get(key);
-							}
-							olds.set(key, props[key]);
-							return props[key];
-						})
-					);
+	return untrack(() => {
+		/**
+		 * @type {Map<string|symbol, unknown>}
+		 */
+		const olds = new Map(Object.entries(props));
+
+		return new Proxy(
+			{},
+			{
+				get(_, key) {
+					if (!deriveds.has(key)) {
+						deriveds.set(
+							key,
+							derived(() => {
+								if (unmounting) {
+									return olds.get(key);
+								}
+								olds.set(key, props[key]);
+								return props[key];
+							})
+						);
+					}
+					return get(deriveds.get(key));
 				}
-				return get(deriveds.get(key));
 			}
-		}
-	);
+		);
+	});
 }
