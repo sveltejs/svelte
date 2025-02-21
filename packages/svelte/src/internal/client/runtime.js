@@ -51,7 +51,7 @@ let is_micro_task_queued = false;
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
 
-export let is_flushing_effect = false;
+export let is_flushing_effect = false; // TODO do we still need this?
 export let is_destroying_effect = false;
 
 /** @param {boolean} value */
@@ -733,12 +733,11 @@ function process_deferred() {
 
 	flush_queued_root_effects(queued_root_effects);
 
-	if (!is_micro_task_queued) {
-		flush_count = 0;
-		last_scheduled_effect = null;
-		if (DEV) {
-			dev_effect_stack = [];
-		}
+	flush_count = 0;
+	last_scheduled_effect = null;
+
+	if (DEV) {
+		dev_effect_stack = [];
 	}
 }
 
