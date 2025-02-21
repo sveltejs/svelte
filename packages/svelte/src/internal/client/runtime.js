@@ -9,7 +9,6 @@ import {
 } from './reactivity/effects.js';
 import {
 	EFFECT,
-	RENDER_EFFECT,
 	DIRTY,
 	MAYBE_DIRTY,
 	CLEAN,
@@ -41,15 +40,11 @@ import {
 } from './context.js';
 import { is_firefox } from './dom/operations.js';
 
-const FLUSH_MICROTASK = 0;
-const FLUSH_SYNC = 1;
 // Used for DEV time error handling
 /** @param {WeakSet<Error>} value */
 const handled_errors = new WeakSet();
 export let is_throwing_error = false;
 
-// Used for controlling the flush of effects.
-let scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
 
@@ -672,6 +667,8 @@ function flush_queued_root_effects(root_effects) {
 	var previously_flushing_effect = is_flushing_effect;
 	is_flushing_effect = true;
 
+	is_flushing = true;
+
 	try {
 		for (var i = 0; i < length; i++) {
 			var effect = root_effects[i];
@@ -683,8 +680,13 @@ function flush_queued_root_effects(root_effects) {
 			var collected_effects = process_effects(effect);
 			flush_queued_effects(collected_effects);
 		}
+
+		if (queued_root_effects.length > 0) {
+			flush_queued_root_effects(queued_root_effects);
+		}
 	} finally {
 		is_flushing_effect = previously_flushing_effect;
+		is_flushing = false;
 	}
 }
 
@@ -740,16 +742,16 @@ function process_deferred() {
 	}
 }
 
+let is_flushing = false;
+
 /**
  * @param {Effect} signal
  * @returns {void}
  */
 export function schedule_effect(signal) {
-	if (scheduler_mode === FLUSH_MICROTASK) {
-		if (!is_micro_task_queued) {
-			is_micro_task_queued = true;
-			queueMicrotask(process_deferred);
-		}
+	if (!is_micro_task_queued && !is_flushing) {
+		is_micro_task_queued = true;
+		queueMicrotask(process_deferred);
 	}
 
 	last_scheduled_effect = signal;
@@ -850,33 +852,26 @@ function process_effects(effect) {
  * @returns {any}
  */
 export function flush_sync(fn) {
-	var previous_scheduler_mode = scheduler_mode;
+	infinite_loop_guard();
 
-	try {
-		infinite_loop_guard();
+	is_micro_task_queued = false;
 
-		scheduler_mode = FLUSH_SYNC;
-		is_micro_task_queued = false;
+	flush_queued_root_effects(queued_root_effects);
 
-		flush_queued_root_effects(queued_root_effects);
+	var result = fn?.();
 
-		var result = fn?.();
-
-		flush_tasks();
-		if (queued_root_effects.length > 0) {
-			flush_sync();
-		}
-
-		flush_count = 0;
-		last_scheduled_effect = null;
-		if (DEV) {
-			dev_effect_stack = [];
-		}
-
-		return result;
-	} finally {
-		scheduler_mode = previous_scheduler_mode;
+	flush_tasks();
+	if (queued_root_effects.length > 0) {
+		flush_sync();
 	}
+
+	flush_count = 0;
+	last_scheduled_effect = null;
+	if (DEV) {
+		dev_effect_stack = [];
+	}
+
+	return result;
 }
 
 /**
