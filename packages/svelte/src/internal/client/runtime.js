@@ -652,6 +652,8 @@ function infinite_loop_guard() {
  */
 function flush_queued_root_effects(root_effects) {
 	var previously_flushing_effect = is_flushing_effect;
+
+	is_micro_task_queued = false;
 	is_flushing_effect = true;
 	is_flushing = true;
 
@@ -725,8 +727,6 @@ function flush_queued_effects(effects) {
 }
 
 function process_deferred() {
-	is_micro_task_queued = false;
-
 	flush_queued_root_effects(queued_root_effects);
 
 	last_scheduled_effect = null;
@@ -846,8 +846,6 @@ function process_effects(effect) {
  * @returns {any}
  */
 export function flush_sync(fn) {
-	is_micro_task_queued = false;
-
 	flush_queued_root_effects(queued_root_effects);
 
 	var result = fn?.();
