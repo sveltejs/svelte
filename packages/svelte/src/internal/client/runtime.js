@@ -668,13 +668,13 @@ function flush_queued_root_effects() {
 			queued_root_effects = [];
 
 			for (var i = 0; i < length; i++) {
-				var effect = root_effects[i];
+				var root = root_effects[i];
 
-				if ((effect.f & CLEAN) === 0) {
-					effect.f ^= CLEAN;
+				if ((root.f & CLEAN) === 0) {
+					root.f ^= CLEAN;
 				}
 
-				var collected_effects = process_effects(effect);
+				var collected_effects = process_effects(root);
 				flush_queued_effects(collected_effects);
 			}
 		}
@@ -739,9 +739,7 @@ export function schedule_effect(signal) {
 		queueMicrotask(flush_queued_root_effects);
 	}
 
-	last_scheduled_effect = signal;
-
-	var effect = signal;
+	var effect = (last_scheduled_effect = signal);
 
 	while (effect.parent !== null) {
 		effect = effect.parent;
