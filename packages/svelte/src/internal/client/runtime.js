@@ -45,8 +45,7 @@ import { is_firefox } from './dom/operations.js';
 const handled_errors = new WeakSet();
 export let is_throwing_error = false;
 
-// Used for handling scheduling
-let is_micro_task_queued = false;
+let is_flushing = false;
 
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
@@ -648,10 +647,7 @@ function infinite_loop_guard() {
 
 function flush_queued_root_effects() {
 	var previously_flushing_effect = is_flushing_effect;
-
-	is_micro_task_queued = false;
 	is_flushing_effect = true;
-	is_flushing = true;
 
 	try {
 		var length = queued_root_effects.length;
@@ -727,15 +723,13 @@ function flush_queued_effects(effects) {
 	}
 }
 
-let is_flushing = false;
-
 /**
  * @param {Effect} signal
  * @returns {void}
  */
 export function schedule_effect(signal) {
-	if (!is_micro_task_queued && !is_flushing) {
-		is_micro_task_queued = true;
+	if (!is_flushing) {
+		is_flushing = true;
 		queueMicrotask(flush_queued_root_effects);
 	}
 
