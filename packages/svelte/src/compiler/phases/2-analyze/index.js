@@ -566,7 +566,7 @@ export function analyze_component(root, source, options) {
 										binding.declaration_kind !== 'import'
 									) {
 										binding.kind = 'state';
-										binding.mutated = binding.updated = true;
+										binding.mutated = true;
 									}
 								}
 							}
