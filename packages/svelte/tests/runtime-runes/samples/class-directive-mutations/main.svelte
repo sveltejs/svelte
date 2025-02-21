@@ -1,4 +1,6 @@
 <script>
+	import { onDestroy } from "svelte";
+
 	let {
         clazz = 'custom',
         foo = true,
@@ -31,6 +33,8 @@
         mutations = [];
         return result;
     }
+
+    onDestroy(() => { if (observer) observer.disconnect(); });
 
 </script>
 
