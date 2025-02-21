@@ -646,11 +646,7 @@ function infinite_loop_guard() {
 	}
 }
 
-/**
- * @param {Array<Effect>} root_effects
- * @returns {void}
- */
-function flush_queued_root_effects(root_effects) {
+function flush_queued_root_effects() {
 	var previously_flushing_effect = is_flushing_effect;
 
 	is_micro_task_queued = false;
@@ -685,6 +681,11 @@ function flush_queued_root_effects(root_effects) {
 	} finally {
 		is_flushing_effect = previously_flushing_effect;
 		is_flushing = false;
+
+		last_scheduled_effect = null;
+		if (DEV) {
+			dev_effect_stack = [];
+		}
 	}
 }
 
@@ -726,16 +727,6 @@ function flush_queued_effects(effects) {
 	}
 }
 
-function process_deferred() {
-	flush_queued_root_effects(queued_root_effects);
-
-	last_scheduled_effect = null;
-
-	if (DEV) {
-		dev_effect_stack = [];
-	}
-}
-
 let is_flushing = false;
 
 /**
@@ -745,7 +736,7 @@ let is_flushing = false;
 export function schedule_effect(signal) {
 	if (!is_micro_task_queued && !is_flushing) {
 		is_micro_task_queued = true;
-		queueMicrotask(process_deferred);
+		queueMicrotask(flush_queued_root_effects);
 	}
 
 	last_scheduled_effect = signal;
@@ -846,18 +837,13 @@ function process_effects(effect) {
  * @returns {any}
  */
 export function flush_sync(fn) {
-	flush_queued_root_effects(queued_root_effects);
+	flush_queued_root_effects();
 
 	var result = fn?.();
 
 	flush_tasks();
 	if (queued_root_effects.length > 0) {
 		flush_sync();
-	}
-
-	last_scheduled_effect = null;
-	if (DEV) {
-		dev_effect_stack = [];
 	}
 
 	return result;
