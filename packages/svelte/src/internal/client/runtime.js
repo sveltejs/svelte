@@ -615,40 +615,36 @@ function log_effect_stack() {
 }
 
 function infinite_loop_guard() {
-	if (flush_count > 1000) {
-		flush_count = 0;
-		try {
-			e.effect_update_depth_exceeded();
-		} catch (error) {
+	try {
+		e.effect_update_depth_exceeded();
+	} catch (error) {
+		if (DEV) {
+			// stack is garbage, ignore. Instead add a console.error message.
+			define_property(error, 'stack', {
+				value: ''
+			});
+		}
+		// Try and handle the error so it can be caught at a boundary, that's
+		// if there's an effect available from when it was last scheduled
+		if (last_scheduled_effect !== null) {
 			if (DEV) {
-				// stack is garbage, ignore. Instead add a console.error message.
-				define_property(error, 'stack', {
-					value: ''
-				});
-			}
-			// Try and handle the error so it can be caught at a boundary, that's
-			// if there's an effect available from when it was last scheduled
-			if (last_scheduled_effect !== null) {
-				if (DEV) {
-					try {
-						handle_error(error, last_scheduled_effect, null, null);
-					} catch (e) {
-						// Only log the effect stack if the error is re-thrown
-						log_effect_stack();
-						throw e;
-					}
-				} else {
+				try {
 					handle_error(error, last_scheduled_effect, null, null);
+				} catch (e) {
+					// Only log the effect stack if the error is re-thrown
+					log_effect_stack();
+					throw e;
 				}
 			} else {
-				if (DEV) {
-					log_effect_stack();
-				}
-				throw error;
+				handle_error(error, last_scheduled_effect, null, null);
 			}
+		} else {
+			if (DEV) {
+				log_effect_stack();
+			}
+			throw error;
 		}
 	}
-	flush_count++;
 }
 
 /**
@@ -656,33 +652,34 @@ function infinite_loop_guard() {
  * @returns {void}
  */
 function flush_queued_root_effects(root_effects) {
-	queued_root_effects = [];
-
-	var length = root_effects.length;
-	if (length === 0) {
-		return;
-	}
-	infinite_loop_guard();
-
 	var previously_flushing_effect = is_flushing_effect;
 	is_flushing_effect = true;
-
 	is_flushing = true;
 
 	try {
-		for (var i = 0; i < length; i++) {
-			var effect = root_effects[i];
+		var length = queued_root_effects.length;
+		var flush_count = 0;
 
-			if ((effect.f & CLEAN) === 0) {
-				effect.f ^= CLEAN;
+		while (queued_root_effects.length > 0) {
+			if (flush_count++ > 1000) {
+				infinite_loop_guard();
 			}
 
-			var collected_effects = process_effects(effect);
-			flush_queued_effects(collected_effects);
-		}
+			var root_effects = queued_root_effects;
+			var length = root_effects.length;
 
-		if (queued_root_effects.length > 0) {
-			flush_queued_root_effects(queued_root_effects);
+			queued_root_effects = [];
+
+			for (var i = 0; i < length; i++) {
+				var effect = root_effects[i];
+
+				if ((effect.f & CLEAN) === 0) {
+					effect.f ^= CLEAN;
+				}
+
+				var collected_effects = process_effects(effect);
+				flush_queued_effects(collected_effects);
+			}
 		}
 	} finally {
 		is_flushing_effect = previously_flushing_effect;
@@ -851,8 +848,6 @@ function process_effects(effect) {
  * @returns {any}
  */
 export function flush_sync(fn) {
-	infinite_loop_guard();
-
 	is_micro_task_queued = false;
 
 	flush_queued_root_effects(queued_root_effects);
