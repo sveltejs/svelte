@@ -11,6 +11,7 @@ function reset(_, str, tpl) {
 var root = $.template(`<input> <input> <button>reset</button>`, 1);
 
 export default function State_proxy_literal($$anchor) {
+	const $$cleanup = $.setup();
 	let str = $.state('');
 	let tpl = $.state(``);
 	var fragment = root();
@@ -28,6 +29,7 @@ export default function State_proxy_literal($$anchor) {
 	$.bind_value(input, () => $.get(str), ($$value) => $.set(str, $$value));
 	$.bind_value(input_1, () => $.get(tpl), ($$value) => $.set(tpl, $$value));
 	$.append($$anchor, fragment);
+	$$cleanup();
 }
 
 $.delegate(['click']);

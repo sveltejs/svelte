@@ -226,7 +226,10 @@ export function client_component(analysis, options) {
 			if (store_setup.length === 0) {
 				needs_store_cleanup = true;
 				store_setup.push(
-					b.const(b.array_pattern([b.id('$$stores'), b.id('$$cleanup')]), b.call('$.setup_stores'))
+					b.const(
+						b.array_pattern([b.id('$$stores'), b.id('$$cleanup_stores')]),
+						b.call('$.setup_stores')
+					)
 				);
 			}
 
@@ -414,11 +417,13 @@ export function client_component(analysis, options) {
 	}
 
 	if (needs_store_cleanup) {
-		component_block.body.push(b.stmt(b.call('$$cleanup')));
+		component_block.body.push(b.stmt(b.call('$$cleanup_stores')));
 		if (component_returned_object.length > 0) {
 			component_block.body.push(b.return(b.id('$$pop')));
 		}
 	}
+	component_block.body.unshift(b.const('$$cleanup', b.call('$.setup')));
+	component_block.body.push(b.stmt(b.call('$$cleanup')));
 
 	if (analysis.uses_rest_props) {
 		const named_props = analysis.exports.map(({ name, alias }) => alias ?? name);
@@ -560,11 +565,6 @@ export function client_component(analysis, options) {
 		);
 	} else if (dev) {
 		component_block.body.unshift(b.stmt(b.call('$.check_target', b.id('new.target'))));
-	}
-
-	if (analysis.props_id) {
-		// need to be placed on first line of the component for hydration
-		component_block.body.unshift(b.const(analysis.props_id, b.call('$.props_id')));
 	}
 
 	if (state.events.size > 0) {

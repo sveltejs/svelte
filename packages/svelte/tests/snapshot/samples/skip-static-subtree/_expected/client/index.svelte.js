@@ -4,6 +4,7 @@ import * as $ from 'svelte/internal/client';
 var root = $.template(`<header><nav><a href="/">Home</a> <a href="/away">Away</a></nav></header> <main><h1> </h1> <div class="static"><p>we don't need to traverse these nodes</p></div> <p>or</p> <p>these</p> <p>ones</p> <!> <p>these</p> <p>trailing</p> <p>nodes</p> <p>can</p> <p>be</p> <p>completely</p> <p>ignored</p></main> <cant-skip><custom-elements></custom-elements></cant-skip> <div><input></div> <div><source></div> <select><option>a</option></select> <img src="..." alt="" loading="lazy"> <div><img src="..." alt="" loading="lazy"></div>`, 3);
 
 export default function Skip_static_subtree($$anchor, $$props) {
+	const $$cleanup = $.setup();
 	var fragment = root();
 	var main = $.sibling($.first_child(fragment), 2);
 	var h1 = $.child(main);
@@ -46,4 +47,5 @@ export default function Skip_static_subtree($$anchor, $$props) {
 	$.next(2);
 	$.template_effect(() => $.set_text(text, $$props.title));
 	$.append($$anchor, fragment);
+	$$cleanup();
 }

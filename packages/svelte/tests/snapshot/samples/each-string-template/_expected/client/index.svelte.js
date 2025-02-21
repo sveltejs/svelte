@@ -3,6 +3,7 @@ import 'svelte/internal/flags/legacy';
 import * as $ from 'svelte/internal/client';
 
 export default function Each_string_template($$anchor) {
+	const $$cleanup = $.setup();
 	var fragment = $.comment();
 	var node = $.first_child(fragment);
 
@@ -16,4 +17,5 @@ export default function Each_string_template($$anchor) {
 	});
 
 	$.append($$anchor, fragment);
+	$$cleanup();
 }

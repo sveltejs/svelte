@@ -289,15 +289,6 @@ export function props_duplicate(node, rune) {
 }
 
 /**
- * `$props.id()` can only be used at the top level of components as a variable declaration initializer
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function props_id_invalid_placement(node) {
-	e(node, 'props_id_invalid_placement', `\`$props.id()\` can only be used at the top level of components as a variable declaration initializer\nhttps://svelte.dev/e/props_id_invalid_placement`);
-}
-
-/**
  * Declaring or accessing a prop starting with `$$` is illegal (they are reserved for Svelte internals)
  * @param {null | number | NodeLike} node
  * @returns {never}

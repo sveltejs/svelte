@@ -5,6 +5,7 @@ var on_click = (_, count) => $.update(count);
 var root = $.template(`<h1></h1> <b></b> <button> </button> <h1></h1>`, 1);
 
 export default function Nullish_coallescence_omittance($$anchor) {
+	const $$cleanup = $.setup();
 	let name = 'world';
 	let count = $.state(0);
 	var fragment = root();
@@ -29,6 +30,7 @@ export default function Nullish_coallescence_omittance($$anchor) {
 	h1_1.textContent = `Hello, ${name ?? 'earth' ?? ''}`;
 	$.template_effect(() => $.set_text(text, `Count is ${$.get(count) ?? ''}`));
 	$.append($$anchor, fragment);
+	$$cleanup();
 }
 
 $.delegate(['click']);
