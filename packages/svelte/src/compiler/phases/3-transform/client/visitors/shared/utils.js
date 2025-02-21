@@ -101,11 +101,15 @@ export function build_template_chunk(
 
 		if (node.type === 'Text') {
 			quasi.value.cooked += node.data;
-		} else if (node.type === 'ExpressionTag' && node.expression.type === 'Literal') {
+		} else if (node.expression.type === 'Literal') {
 			if (node.expression.value != null) {
 				quasi.value.cooked += node.expression.value + '';
 			}
-		} else {
+		} else if (
+			node.expression.type !== 'Identifier' ||
+			node.expression.name !== 'undefined' ||
+			state.scope.get('undefined')
+		) {
 			let value = memoize(
 				/** @type {Expression} */ (visit(node.expression, state)),
 				node.metadata.expression
@@ -117,30 +121,32 @@ export function build_template_chunk(
 				// If we have a single expression, then pass that in directly to possibly avoid doing
 				// extra work in the template_effect (instead we do the work in set_text).
 				return { value, has_state };
-			} else {
-				// add `?? ''` where necessary (TODO optimise more cases)
-				if (
-					value.type === 'LogicalExpression' &&
-					value.right.type === 'Literal' &&
-					(value.operator === '??' || value.operator === '||')
-				) {
-					// `foo ?? null` -=> `foo ?? ''`
-					// otherwise leave the expression untouched
-					if (value.right.value === null) {
-						value = { ...value, right: b.literal('') };
-					}
-				} else if (
-					state.analysis.props_id &&
-					value.type === 'Identifier' &&
-					value.name === state.analysis.props_id.name
-				) {
-					// do nothing ($props.id() is never null/undefined)
-				} else {
-					value = b.logical('??', value, b.literal(''));
-				}
-
-				expressions.push(value);
 			}
+
+			if (
+				value.type === 'LogicalExpression' &&
+				value.right.type === 'Literal' &&
+				(value.operator === '??' || value.operator === '||')
+			) {
+				// `foo ?? null` -=> `foo ?? ''`
+				// otherwise leave the expression untouched
+				if (value.right.value === null) {
+					value = { ...value, right: b.literal('') };
+				}
+			}
+
+			const is_defined =
+				value.type === 'BinaryExpression' ||
+				(value.type === 'UnaryExpression' && value.operator !== 'void') ||
+				(value.type === 'LogicalExpression' && value.right.type === 'Literal') ||
+				(value.type === 'Identifier' && value.name === state.analysis.props_id?.name);
+
+			if (!is_defined) {
+				// add `?? ''` where necessary (TODO optimise more cases)
+				value = b.logical('??', value, b.literal(''));
+			}
+
+			expressions.push(value);
 
 			quasi = b.quasi('', i + 1 === values.length);
 			quasis.push(quasi);
@@ -151,7 +157,10 @@ export function build_template_chunk(
 		quasi.value.raw = sanitize_template_string(/** @type {string} */ (quasi.value.cooked));
 	}
 
-	const value = b.template(quasis, expressions);
+	const value =
+		expressions.length > 0
+			? b.template(quasis, expressions)
+			: b.literal(/** @type {string} */ (quasi.value.cooked));
 
 	return { value, has_state };
 }
@@ -309,12 +318,16 @@ export function validate_binding(state, binding, expression) {
 
 	const loc = locator(binding.start);
 
+	const obj = /** @type {Expression} */ (expression.object);
+
 	state.init.push(
 		b.stmt(
 			b.call(
 				'$.validate_binding',
 				b.literal(state.analysis.source.slice(binding.start, binding.end)),
-				b.thunk(/** @type {Expression} */ (expression.object)),
+				b.thunk(
+					state.store_to_invalidate ? b.sequence([b.call('$.mark_store_binding'), obj]) : obj
+				),
 				b.thunk(
 					/** @type {Expression} */ (
 						expression.computed
