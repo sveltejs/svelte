@@ -650,7 +650,6 @@ function flush_queued_root_effects() {
 	is_flushing_effect = true;
 
 	try {
-		var length = queued_root_effects.length;
 		var flush_count = 0;
 
 		while (queued_root_effects.length > 0) {
