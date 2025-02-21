@@ -823,12 +823,13 @@ function process_effects(effect) {
 }
 
 /**
- * Internal version of `flushSync` with the option to not flush previous effects.
- * Returns the result of the passed function, if given.
- * @param {() => any} [fn]
- * @returns {any}
+ * Synchronously flush any pending updates.
+ * Returns void if no callback is provided, otherwise returns the result of calling the callback.
+ * @template [T=void]
+ * @param {(() => T) | undefined} [fn]
+ * @returns {T extends void ? void : T}
  */
-export function flush_sync(fn) {
+export function flushSync(fn) {
 	flush_queued_root_effects();
 
 	var result = fn?.();
@@ -840,7 +841,7 @@ export function flush_sync(fn) {
 		flush_tasks();
 	}
 
-	return result;
+	return /** @type {T extends void ? void : T} */ (result);
 }
 
 /**
@@ -849,9 +850,9 @@ export function flush_sync(fn) {
  */
 export async function tick() {
 	await Promise.resolve();
-	// By calling flush_sync we guarantee that any pending state changes are applied after one tick.
+	// By calling flushSync we guarantee that any pending state changes are applied after one tick.
 	// TODO look into whether we can make flushing subsequent updates synchronously in the future.
-	flush_sync();
+	flushSync();
 }
 
 /**
