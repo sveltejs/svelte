@@ -50,7 +50,8 @@ let is_flushing = false;
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
 
-export let is_flushing_effect = false; // TODO do we still need this?
+let is_updating_effect = false;
+
 export let is_destroying_effect = false;
 
 /** @param {boolean} value */
@@ -401,7 +402,7 @@ export function update_reaction(reaction) {
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 	skip_reaction =
 		(flags & UNOWNED) !== 0 &&
-		(!is_flushing_effect || previous_reaction === null || previous_untracking);
+		(!is_updating_effect || previous_reaction === null || previous_untracking);
 
 	derived_sources = null;
 	set_component_context(reaction.ctx);
@@ -547,10 +548,10 @@ export function update_effect(effect) {
 
 	var previous_effect = active_effect;
 	var previous_component_context = component_context;
-	var previously_flushing_effect = is_flushing_effect;
+	var was_updating_effect = is_updating_effect;
 
 	active_effect = effect;
-	is_flushing_effect = true;
+	is_updating_effect = true;
 
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
@@ -592,7 +593,7 @@ export function update_effect(effect) {
 	} catch (error) {
 		handle_error(error, effect, previous_effect, previous_component_context || effect.ctx);
 	} finally {
-		is_flushing_effect = previously_flushing_effect;
+		is_updating_effect = was_updating_effect;
 		active_effect = previous_effect;
 
 		if (DEV) {
