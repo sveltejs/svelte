@@ -118,7 +118,6 @@ export function build_template_chunk(
 				// extra work in the template_effect (instead we do the work in set_text).
 				return { value, has_state };
 			} else {
-				// add `?? ''` where necessary (TODO optimise more cases)
 				if (
 					value.type === 'LogicalExpression' &&
 					value.right.type === 'Literal' &&
@@ -129,18 +128,16 @@ export function build_template_chunk(
 					if (value.right.value === null) {
 						value = { ...value, right: b.literal('') };
 					}
-				} else if (
-					// $props.id() is never null/undefined
-					!(
-						state.analysis.props_id &&
-						value.type === 'Identifier' &&
-						value.name === state.analysis.props_id.name
-					) &&
-					// Binary expressions are never null/undefined
-					value.type !== 'BinaryExpression' &&
-					// Unary expressions are never null/undefined (except for void/delete)
-					!(value.type === 'UnaryExpression' && value.operator !== 'void')
-				) {
+				}
+
+				const is_defined =
+					value.type === 'BinaryExpression' ||
+					(value.type === 'UnaryExpression' && value.operator !== 'void') ||
+					(value.type === 'LogicalExpression' && value.right.type === 'Literal') ||
+					(value.type === 'Identifier' && value.name === state.analysis.props_id?.name);
+
+				if (!is_defined) {
+					// add `?? ''` where necessary (TODO optimise more cases)
 					value = b.logical('??', value, b.literal(''));
 				}
 
