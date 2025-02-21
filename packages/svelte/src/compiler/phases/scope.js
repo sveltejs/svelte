@@ -17,6 +17,9 @@ import { determine_slot } from '../utils/slot.js';
 import { validate_identifier_name } from './2-analyze/visitors/shared/utils.js';
 
 export class Binding {
+	/** @type {Scope} */
+	scope;
+
 	/** @type {Identifier} */
 	node;
 
@@ -35,9 +38,6 @@ export class Binding {
 
 	/** @type {Array<{ node: Identifier; path: AST.SvelteNode[] }>} */
 	references = [];
-
-	/** @type {Scope} */
-	scope;
 
 	/**
 	 * For `legacy_reactive`: its reactive dependencies
