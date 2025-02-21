@@ -421,7 +421,7 @@ declare module 'svelte' {
 	 * Synchronously flush any pending updates.
 	 * Returns void if no callback is provided, otherwise returns the result of calling the callback.
 	 * */
-	export function flushSync<T = void>(fn?: (() => T) | undefined): T extends void ? void : T;
+	export function flushSync<T = void>(fn?: (() => T) | undefined): T;
 	/**
 	 * Returns a promise that resolves once any pending state changes have been applied.
 	 * */

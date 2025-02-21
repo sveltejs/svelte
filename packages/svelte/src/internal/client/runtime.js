@@ -820,7 +820,7 @@ function process_effects(effect) {
  * Returns void if no callback is provided, otherwise returns the result of calling the callback.
  * @template [T=void]
  * @param {(() => T) | undefined} [fn]
- * @returns {T extends void ? void : T}
+ * @returns {T}
  */
 export function flushSync(fn) {
 	var result;
@@ -839,7 +839,7 @@ export function flushSync(fn) {
 		flush_tasks();
 	}
 
-	return /** @type {T extends void ? void : T} */ (result);
+	return /** @type {T} */ (result);
 }
 
 /**
