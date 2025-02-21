@@ -69,7 +69,6 @@ export function set_is_destroying_effect(value) {
 /** @type {Effect[]} */
 let queued_root_effects = [];
 
-let flush_count = 0;
 /** @type {Effect[]} Stack of effects, dev only */
 let dev_effect_stack = [];
 // Handle signal reactivity tree dependencies and reactions
@@ -730,7 +729,6 @@ function process_deferred() {
 
 	flush_queued_root_effects(queued_root_effects);
 
-	flush_count = 0;
 	last_scheduled_effect = null;
 
 	if (DEV) {
@@ -859,7 +857,6 @@ export function flush_sync(fn) {
 		flush_sync();
 	}
 
-	flush_count = 0;
 	last_scheduled_effect = null;
 	if (DEV) {
 		dev_effect_stack = [];
