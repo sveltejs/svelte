@@ -105,7 +105,11 @@ export function build_template_chunk(
 			if (node.expression.value != null) {
 				quasi.value.cooked += node.expression.value + '';
 			}
-		} else {
+		} else if (
+			node.expression.type !== 'Identifier' ||
+			node.expression.name !== 'undefined' ||
+			state.scope.get('undefined')
+		) {
 			let value = memoize(
 				/** @type {Expression} */ (visit(node.expression, state)),
 				node.metadata.expression
