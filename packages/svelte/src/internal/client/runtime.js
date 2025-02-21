@@ -54,11 +54,6 @@ export let is_flushing_effect = false; // TODO do we still need this?
 export let is_destroying_effect = false;
 
 /** @param {boolean} value */
-export function set_is_flushing_effect(value) {
-	is_flushing_effect = value;
-}
-
-/** @param {boolean} value */
 export function set_is_destroying_effect(value) {
 	is_destroying_effect = value;
 }
@@ -552,8 +547,10 @@ export function update_effect(effect) {
 
 	var previous_effect = active_effect;
 	var previous_component_context = component_context;
+	var previously_flushing_effect = is_flushing_effect;
 
 	active_effect = effect;
+	is_flushing_effect = true;
 
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
@@ -595,6 +592,7 @@ export function update_effect(effect) {
 	} catch (error) {
 		handle_error(error, effect, previous_effect, previous_component_context || effect.ctx);
 	} finally {
+		is_flushing_effect = previously_flushing_effect;
 		active_effect = previous_effect;
 
 		if (DEV) {
@@ -646,9 +644,6 @@ function infinite_loop_guard() {
 }
 
 function flush_queued_root_effects() {
-	var previously_flushing_effect = is_flushing_effect;
-	is_flushing_effect = true;
-
 	try {
 		var flush_count = 0;
 
@@ -674,7 +669,6 @@ function flush_queued_root_effects() {
 			}
 		}
 	} finally {
-		is_flushing_effect = previously_flushing_effect;
 		is_flushing = false;
 
 		last_scheduled_effect = null;
