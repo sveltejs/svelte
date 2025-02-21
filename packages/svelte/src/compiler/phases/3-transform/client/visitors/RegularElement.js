@@ -368,15 +368,14 @@ export function RegularElement(node, context) {
 		trimmed.some((node) => node.type === 'ExpressionTag');
 
 	if (use_text_content) {
-		child_state.init.push(
-			b.stmt(
-				b.assignment(
-					'=',
-					b.member(context.state.node, 'textContent'),
-					build_template_chunk(trimmed, context.visit, child_state).value
-				)
-			)
-		);
+		const { value } = build_template_chunk(trimmed, context.visit, child_state);
+		const empty_string = value.type === 'Literal' && value.value === '';
+
+		if (!empty_string) {
+			child_state.init.push(
+				b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), value))
+			);
+		}
 	} else {
 		/** @type {Expression} */
 		let arg = context.state.node;
