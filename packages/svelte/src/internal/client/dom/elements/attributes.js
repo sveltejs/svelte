@@ -224,15 +224,17 @@ export function set_custom_element_data(node, prop, value) {
 	set_active_effect(null);
 	try {
 		if (
+			// style need set_attribute()
+			prop !== 'style' &&
 			// Don't compute setters for custom elements while they aren't registered yet,
 			// because during their upgrade/instantiation they might add more setters.
 			// Instead, fall back to a simple "an object, then set as property" heuristic.
-			setters_cache.has(node.nodeName) ||
+			(setters_cache.has(node.nodeName) ||
 			// customElements may not be available in browser extension contexts
 			!customElements ||
 			customElements.get(node.tagName.toLowerCase())
 				? get_setters(node).includes(prop)
-				: value && typeof value === 'object'
+				: value && typeof value === 'object')
 		) {
 			// @ts-expect-error
 			node[prop] = value;
@@ -375,8 +377,8 @@ export function set_attributes(
 				// @ts-ignore
 				element[`__${event_name}`] = undefined;
 			}
-		} else if (key === 'style' && value != null) {
-			element.style.cssText = value + '';
+		} else if (key === 'style') {
+			set_attribute(element, key, value);
 		} else if (key === 'autofocus') {
 			autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
 		} else if (!is_custom_element && (key === '__value' || (key === 'value' && value != null))) {
