@@ -25,13 +25,13 @@ function setup() {
 	return {
 		destroy,
 		run() {
-			$.flush_sync(() => {
+			$.flush(() => {
 				$.set(head, 1);
 			});
 			assert($.get(current) === size);
 			counter = 0;
 			for (let i = 0; i < 100; i++) {
-				$.flush_sync(() => {
+				$.flush(() => {
 					$.set(head, i);
 				});
 				assert($.get(current) === i * size);
