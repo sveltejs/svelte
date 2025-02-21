@@ -101,7 +101,7 @@ export function build_template_chunk(
 
 		if (node.type === 'Text') {
 			quasi.value.cooked += node.data;
-		} else if (node.type === 'ExpressionTag' && node.expression.type === 'Literal') {
+		} else if (node.expression.type === 'Literal') {
 			if (node.expression.value != null) {
 				quasi.value.cooked += node.expression.value + '';
 			}
