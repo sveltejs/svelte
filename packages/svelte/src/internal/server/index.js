@@ -2,7 +2,7 @@
 /** @import { Component, Payload, RenderOutput } from '#server' */
 /** @import { Store } from '#shared' */
 export { FILENAME, HMR } from '../../constants.js';
-import { attr, clsx } from '../shared/attributes.js';
+import { attr, clsx, to_class } from '../shared/attributes.js';
 import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
@@ -198,12 +198,13 @@ export function css_props(payload, is_html, props, component, dynamic = false) {
 
 /**
  * @param {Record<string, unknown>} attrs
- * @param {Record<string, string>} [classes]
+ * @param {string|null} css_hash
+ * @param {Record<string, boolean>} [classes]
  * @param {Record<string, string>} [styles]
  * @param {number} [flags]
  * @returns {string}
  */
-export function spread_attributes(attrs, classes, styles, flags = 0) {
+export function spread_attributes(attrs, css_hash, classes, styles, flags = 0) {
 	if (styles) {
 		attrs.style = attrs.style
 			? style_object_to_string(merge_styles(/** @type {string} */ (attrs.style), styles))
@@ -213,17 +214,8 @@ export function spread_attributes(attrs, classes, styles, flags = 0) {
 	if (attrs.class) {
 		attrs.class = clsx(attrs.class);
 	}
-
-	if (classes) {
-		const classlist = attrs.class ? [attrs.class] : [];
-
-		for (const key in classes) {
-			if (classes[key]) {
-				classlist.push(key);
-			}
-		}
-
-		attrs.class = classlist.join(' ');
+	if (css_hash || classes) {
+		attrs.class = to_class(attrs.class, css_hash, classes);
 	}
 
 	let attr_str = '';
@@ -552,7 +544,7 @@ export function props_id(payload) {
 	return uid;
 }
 
-export { attr, clsx };
+export { attr, clsx, to_class };
 
 export { html } from './blocks/html.js';
 

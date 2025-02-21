@@ -1,4 +1,4 @@
-/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, Statement } from 'estree' */
+/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
@@ -14,15 +14,15 @@ import { escape_html } from '../../../../../escaping.js';
 import { dev, is_ignored, locator } from '../../../../state.js';
 import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
-import { is_custom_element_node } from '../../../nodes.js';
+import { create_expression_metadata, is_custom_element_node } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_getter } from '../utils.js';
 import {
 	get_attribute_name,
 	build_attribute_value,
-	build_class_directives,
 	build_style_directives,
-	build_set_attributes
+	build_set_attributes,
+	build_set_class
 } from './shared/element.js';
 import { process_children } from './shared/fragment.js';
 import {
@@ -223,6 +223,8 @@ export function RegularElement(node, context) {
 
 		build_set_attributes(
 			attributes,
+			class_directives,
+			style_directives,
 			context,
 			node,
 			node_id,
@@ -270,13 +272,22 @@ export function RegularElement(node, context) {
 				continue;
 			}
 
+			const name = get_attribute_name(node, attribute);
 			if (
 				!is_custom_element &&
 				!cannot_be_set_statically(attribute.name) &&
-				(attribute.value === true || is_text_attribute(attribute))
+				(attribute.value === true || is_text_attribute(attribute)) &&
+				(name !== 'class' || class_directives.length === 0)
 			) {
-				const name = get_attribute_name(node, attribute);
-				const value = is_text_attribute(attribute) ? attribute.value[0].data : true;
+				let value = is_text_attribute(attribute) ? attribute.value[0].data : true;
+
+				if (name === 'class' && node.metadata.scoped && context.state.analysis.css.hash) {
+					if (value === true || value === '') {
+						value = context.state.analysis.css.hash;
+					} else {
+						value += ' ' + context.state.analysis.css.hash;
+					}
+				}
 
 				if (name !== 'class' || value) {
 					context.state.template.push(
@@ -290,15 +301,23 @@ export function RegularElement(node, context) {
 				continue;
 			}
 
-			const is = is_custom_element
-				? build_custom_element_attribute_update_assignment(node_id, attribute, context)
-				: build_element_attribute_update_assignment(node, node_id, attribute, attributes, context);
+			const is =
+				is_custom_element && name !== 'class'
+					? build_custom_element_attribute_update_assignment(node_id, attribute, context)
+					: build_element_attribute_update_assignment(
+							node,
+							node_id,
+							attribute,
+							attributes,
+							class_directives,
+							style_directives,
+							context
+						);
 			if (is) is_attributes_reactive = true;
 		}
 	}
 
-	// class/style directives must be applied last since they could override class/style attributes
-	build_class_directives(class_directives, node_id, context, is_attributes_reactive);
+	// style directives must be applied last since they could override class/style attributes
 	build_style_directives(style_directives, node_id, context, is_attributes_reactive);
 
 	if (
@@ -493,6 +512,23 @@ function setup_select_synchronization(value_binding, context) {
 }
 
 /**
+ * @param {AST.ClassDirective[]} class_directives
+ * @param {ComponentContext} context
+ * @return {ObjectExpression}
+ */
+export function build_class_directives_object(class_directives, context) {
+	let properties = [];
+	for (const d of class_directives) {
+		let expression = /** @type Expression */ (context.visit(d.expression));
+		if (d.metadata.expression.has_call) {
+			expression = get_expression_id(context.state, expression);
+		}
+		properties.push(b.init(d.name, expression));
+	}
+	return b.object(properties);
+}
+
+/**
  * Serializes an assignment to an element property by adding relevant statements to either only
  * the init or the the init and update arrays, depending on whether or not the value is dynamic.
  * Resulting code for static looks something like this:
@@ -518,6 +554,8 @@ function setup_select_synchronization(value_binding, context) {
  * @param {Identifier} node_id
  * @param {AST.Attribute} attribute
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
+ * @param {AST.ClassDirective[]} class_directives
+ * @param {AST.StyleDirective[]} style_directives
  * @param {ComponentContext} context
  * @returns {boolean}
  */
@@ -526,6 +564,8 @@ function build_element_attribute_update_assignment(
 	node_id,
 	attribute,
 	attributes,
+	class_directives,
+	style_directives,
 	context
 ) {
 	const state = context.state;
@@ -564,19 +604,15 @@ function build_element_attribute_update_assignment(
 	let update;
 
 	if (name === 'class') {
-		if (attribute.metadata.needs_clsx) {
-			value = b.call('$.clsx', value);
-		}
-
-		update = b.stmt(
-			b.call(
-				is_svg ? '$.set_svg_class' : is_mathml ? '$.set_mathml_class' : '$.set_class',
-				node_id,
-				value,
-				attribute.metadata.needs_clsx && context.state.analysis.css.hash
-					? b.literal(context.state.analysis.css.hash)
-					: undefined
-			)
+		return build_set_class(
+			element,
+			node_id,
+			attribute,
+			value,
+			has_state,
+			class_directives,
+			context,
+			!is_svg && !is_mathml
 		);
 	} else if (name === 'value') {
 		update = b.stmt(b.call('$.set_value', node_id, value));
@@ -639,14 +675,6 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
 	const state = context.state;
 	const name = attribute.name; // don't lowercase, as we set the element's property, which might be case sensitive
 	let { value, has_state } = build_attribute_value(attribute.value, context);
-
-	// We assume that noone's going to redefine the semantics of the class attribute on custom elements, i.e. it's still used for CSS classes
-	if (name === 'class' && attribute.metadata.needs_clsx) {
-		if (context.state.analysis.css.hash) {
-			value = b.array([value, b.literal(context.state.analysis.css.hash)]);
-		}
-		value = b.call('$.clsx', value);
-	}
 
 	const update = b.stmt(b.call('$.set_custom_element_data', node_id, b.literal(name), value));
 

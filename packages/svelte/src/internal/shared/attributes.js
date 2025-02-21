@@ -40,3 +40,46 @@ export function clsx(value) {
 		return value ?? '';
 	}
 }
+
+/**
+ * @param {any} clazz
+ * @param {string|null} [hash]
+ * @param {Record<string,boolean>} [classes]
+ * @returns {string|null}
+ */
+export function to_class(clazz, hash, classes) {
+	let class_name = clazz == null ? '' : '' + clazz;
+	if (hash) {
+		class_name = class_name ? class_name + ' ' + hash : hash;
+	}
+	if (classes) {
+		const white_spaces = ' \t\n\r\f\u00a0\u000b\ufeff';
+		for (const key in classes) {
+			if (classes[key]) {
+				class_name = class_name ? class_name + ' ' + key : key;
+			} else if (class_name.length) {
+				const len = key.length;
+				let start = 0;
+				while ((start = class_name.indexOf(key, start)) >= 0) {
+					let stop = start + len;
+					if (
+						white_spaces.indexOf(class_name[start - 1] ?? ' ') >= 0 &&
+						white_spaces.indexOf(class_name[stop] ?? ' ') >= 0
+					) {
+						class_name = (
+							class_name.substring(0, start).trim() +
+							' ' +
+							class_name.substring(stop).trim()
+						).trim();
+					} else {
+						start = stop;
+					}
+				}
+			}
+		}
+	}
+	if (class_name === '') {
+		return null;
+	}
+	return class_name;
+}
