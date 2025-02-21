@@ -606,6 +606,10 @@ function build_element_attribute_update_assignment(
 	} else if (is_dom_property(name)) {
 		update = b.stmt(b.assignment('=', b.member(node_id, name), value));
 	} else {
+		if (attribute.metadata.needs_cssx) {
+			value = b.call('$.cssx', value);
+		}
+
 		const callee = name.startsWith('xlink') ? '$.set_xlink_attribute' : '$.set_attribute';
 		update = b.stmt(
 			b.call(
@@ -645,6 +649,11 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
 			value = b.array([value, b.literal(context.state.analysis.css.hash)]);
 		}
 		value = b.call('$.clsx', value);
+	}
+
+	// We assume that noone's going to redefine the semantics of the style attribute on custom elements, i.e. it's still used for CSS styles
+	if (name === 'style' && attribute.metadata.needs_cssx) {
+		value = b.call('$.cssx', value);
 	}
 
 	const update = b.stmt(b.call('$.set_custom_element_data', node_id, b.literal(name), value));
