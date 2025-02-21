@@ -139,11 +139,7 @@ export function build_template_chunk(
 					// Binary expressions are never null/undefined
 					value.type !== 'BinaryExpression' &&
 					// Unary expressions are never null/undefined (except for void/delete)
-					!(
-						value.type === 'UnaryExpression' &&
-						value.operator !== 'void' &&
-						value.operator !== 'delete'
-					)
+					!(value.type === 'UnaryExpression' && value.operator !== 'void')
 				) {
 					value = b.logical('??', value, b.literal(''));
 				}
