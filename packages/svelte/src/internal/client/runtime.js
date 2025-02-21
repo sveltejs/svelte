@@ -834,8 +834,10 @@ export function flush_sync(fn) {
 	var result = fn?.();
 
 	flush_tasks();
-	if (queued_root_effects.length > 0) {
-		flush_sync();
+
+	while (queued_root_effects.length > 0) {
+		flush_queued_root_effects();
+		flush_tasks();
 	}
 
 	return result;
