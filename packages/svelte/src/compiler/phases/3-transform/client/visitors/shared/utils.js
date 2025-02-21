@@ -117,32 +117,32 @@ export function build_template_chunk(
 				// If we have a single expression, then pass that in directly to possibly avoid doing
 				// extra work in the template_effect (instead we do the work in set_text).
 				return { value, has_state };
-			} else {
-				if (
-					value.type === 'LogicalExpression' &&
-					value.right.type === 'Literal' &&
-					(value.operator === '??' || value.operator === '||')
-				) {
-					// `foo ?? null` -=> `foo ?? ''`
-					// otherwise leave the expression untouched
-					if (value.right.value === null) {
-						value = { ...value, right: b.literal('') };
-					}
-				}
-
-				const is_defined =
-					value.type === 'BinaryExpression' ||
-					(value.type === 'UnaryExpression' && value.operator !== 'void') ||
-					(value.type === 'LogicalExpression' && value.right.type === 'Literal') ||
-					(value.type === 'Identifier' && value.name === state.analysis.props_id?.name);
-
-				if (!is_defined) {
-					// add `?? ''` where necessary (TODO optimise more cases)
-					value = b.logical('??', value, b.literal(''));
-				}
-
-				expressions.push(value);
 			}
+
+			if (
+				value.type === 'LogicalExpression' &&
+				value.right.type === 'Literal' &&
+				(value.operator === '??' || value.operator === '||')
+			) {
+				// `foo ?? null` -=> `foo ?? ''`
+				// otherwise leave the expression untouched
+				if (value.right.value === null) {
+					value = { ...value, right: b.literal('') };
+				}
+			}
+
+			const is_defined =
+				value.type === 'BinaryExpression' ||
+				(value.type === 'UnaryExpression' && value.operator !== 'void') ||
+				(value.type === 'LogicalExpression' && value.right.type === 'Literal') ||
+				(value.type === 'Identifier' && value.name === state.analysis.props_id?.name);
+
+			if (!is_defined) {
+				// add `?? ''` where necessary (TODO optimise more cases)
+				value = b.logical('??', value, b.literal(''));
+			}
+
+			expressions.push(value);
 
 			quasi = b.quasi('', i + 1 === values.length);
 			quasis.push(quasi);
