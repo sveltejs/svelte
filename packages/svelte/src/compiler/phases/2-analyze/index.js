@@ -270,8 +270,7 @@ export function analyze_module(ast, options) {
 			instance_scope: /** @type {any} */ (null),
 			options: /** @type {ValidatedCompileOptions} */ (options),
 			parent_element: null,
-			reactive_statement: null,
-			reactive_statements: new Map()
+			reactive_statement: null
 		},
 		visitors
 	);
@@ -621,8 +620,7 @@ export function analyze_component(root, source, options) {
 				derived_state: [],
 				function_depth: scope.function_depth,
 				instance_scope: instance.scope,
-				reactive_statement: null,
-				reactive_statements: new Map()
+				reactive_statement: null
 			};
 
 			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);
@@ -686,7 +684,6 @@ export function analyze_component(root, source, options) {
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
 				instance_scope: instance.scope,
 				reactive_statement: null,
-				reactive_statements: analysis.reactive_statements,
 				component_slots: new Set(),
 				expression: null,
 				derived_state: [],
