@@ -421,9 +421,13 @@ function build_to_class(hash, class_directives, class_attribute) {
 		hash &&
 		!classes &&
 		class_name.type === 'Literal' &&
-		(class_name.value === null || class_name.value === '')
+		(class_name.value === null || class_name.value === '' || typeof class_name.value === 'string')
 	) {
-		expression = b.literal(hash);
+		if (class_name.value === null || class_name.value === '') {
+			expression = b.literal(hash);
+		} else {
+			expression = b.literal(escape_html(class_name.value, true) + ' ' + hash);
+		}
 	} else {
 		expression = b.call('$.to_class', class_name, b.literal(hash), classes);
 	}
