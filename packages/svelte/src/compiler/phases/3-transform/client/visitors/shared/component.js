@@ -92,21 +92,6 @@ export function build_component(node, component_name, context, anchor = context.
 		}
 	}
 
-	let safe_props_ids = new Map();
-	let safe_props_name = context.state.scope.generate('$$safe_props');
-
-	/**
-	 * @param {string} name
-	 * @param {Expression} expression
-	 */
-	function safe_propify(name, expression) {
-		if (context.state.needs_safe_props) {
-			safe_props_ids.set(name, expression);
-			return b.member(b.id(safe_props_name), b.id(name));
-		}
-		return expression;
-	}
-
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
 			if (!slot_scope_applies_to_itself) {
@@ -133,14 +118,13 @@ export function build_component(node, component_name, context, anchor = context.
 			if (attribute.metadata.expression.has_state) {
 				let value = expression;
 
-				const name = context.state.scope.generate('spread_element');
 				if (attribute.metadata.expression.has_call) {
-					const id = b.id(name);
+					const id = b.id(context.state.scope.generate('spread_element'));
 					context.state.init.push(b.var(id, b.call('$.derived', b.thunk(value))));
 					value = b.call('$.get', id);
 				}
 
-				props_and_spreads.push(b.thunk(safe_propify(name, value)));
+				props_and_spreads.push(b.thunk(value));
 			} else {
 				props_and_spreads.push(expression);
 			}
@@ -188,7 +172,7 @@ export function build_component(node, component_name, context, anchor = context.
 			);
 
 			if (has_state) {
-				push_prop(b.get(attribute.name, [b.return(safe_propify(attribute.name, value))]));
+				push_prop(b.get(attribute.name, [b.return(value)]));
 			} else {
 				push_prop(b.init(attribute.name, value));
 			}
@@ -221,9 +205,7 @@ export function build_component(node, component_name, context, anchor = context.
 					context.state.init.push(b.var(get_id, get));
 					context.state.init.push(b.var(set_id, set));
 
-					push_prop(
-						b.get(attribute.name, [b.return(safe_propify(attribute.name, b.call(get_id)))])
-					);
+					push_prop(b.get(attribute.name, [b.return(b.call(get_id))]));
 					push_prop(b.set(attribute.name, [b.stmt(b.call(set_id, b.id('$$value')))]));
 				}
 			} else {
@@ -246,17 +228,11 @@ export function build_component(node, component_name, context, anchor = context.
 					// Delay prop pushes so bindings come at the end, to avoid spreads overwriting them
 					if (is_store_sub) {
 						push_prop(
-							b.get(attribute.name, [
-								b.stmt(b.call('$.mark_store_binding')),
-								b.return(safe_propify(attribute.name, expression))
-							]),
+							b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)]),
 							true
 						);
 					} else {
-						push_prop(
-							b.get(attribute.name, [b.return(safe_propify(attribute.name, expression))]),
-							true
-						);
+						push_prop(b.get(attribute.name, [b.return(expression)]), true);
 					}
 
 					const assignment = b.assignment(
@@ -426,32 +402,6 @@ export function build_component(node, component_name, context, anchor = context.
 	}
 
 	const statements = [...snippet_declarations];
-
-	if (safe_props_ids.size > 0) {
-		// if it is a dynamic component we need to include the safe props call inside the component
-		// function otherwise in the init (which in case of the if will be in the consequent/alternate function)
-		if (component_name === '$$component') {
-			statements.push(
-				b.const(
-					safe_props_name,
-					b.call(
-						'$.safe_props',
-						b.object([...safe_props_ids].map(([name, id]) => b.get(name, [b.return(id)])))
-					)
-				)
-			);
-		} else {
-			context.state.init.push(
-				b.const(
-					safe_props_name,
-					b.call(
-						'$.safe_props',
-						b.object([...safe_props_ids].map(([name, id]) => b.get(name, [b.return(id)])))
-					)
-				)
-			);
-		}
-	}
 
 	if (node.type === 'SvelteComponent') {
 		const prev = fn;
