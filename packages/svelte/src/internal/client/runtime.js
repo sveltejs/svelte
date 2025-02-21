@@ -823,13 +823,18 @@ function process_effects(effect) {
  * @returns {T extends void ? void : T}
  */
 export function flushSync(fn) {
-	flush_queued_root_effects();
+	var result;
 
-	var result = fn?.();
+	if (fn) {
+		is_flushing = true;
+		flush_queued_root_effects();
+		result = fn();
+	}
 
 	flush_tasks();
 
 	while (queued_root_effects.length > 0) {
+		is_flushing = true;
 		flush_queued_root_effects();
 		flush_tasks();
 	}
