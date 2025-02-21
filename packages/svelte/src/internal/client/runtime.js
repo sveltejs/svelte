@@ -399,10 +399,9 @@ export function update_reaction(reaction) {
 	new_deps = /** @type {null | Value[]} */ (null);
 	skipped_deps = 0;
 	untracked_writes = null;
-	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 	skip_reaction =
-		(flags & UNOWNED) !== 0 &&
-		(!is_updating_effect || previous_reaction === null || previous_untracking);
+		(flags & UNOWNED) !== 0 && (untracking || !is_updating_effect || active_reaction === null);
+	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 
 	derived_sources = null;
 	set_component_context(reaction.ctx);
