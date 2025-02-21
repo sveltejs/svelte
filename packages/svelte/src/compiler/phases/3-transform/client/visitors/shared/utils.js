@@ -157,7 +157,10 @@ export function build_template_chunk(
 		quasi.value.raw = sanitize_template_string(/** @type {string} */ (quasi.value.cooked));
 	}
 
-	const value = b.template(quasis, expressions);
+	const value =
+		expressions.length > 0
+			? b.template(quasis, expressions)
+			: b.literal(/** @type {string} */ (quasi.value.cooked));
 
 	return { value, has_state };
 }
