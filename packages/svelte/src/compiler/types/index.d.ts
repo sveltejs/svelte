@@ -1,12 +1,5 @@
-import type {
-	ClassDeclaration,
-	Expression,
-	FunctionDeclaration,
-	Identifier,
-	ImportDeclaration
-} from 'estree';
 import type { SourceMap } from 'magic-string';
-import type { Scope } from '../phases/scope.js';
+import type { Binding } from '../phases/scope.js';
 import type { AST, Namespace } from './template.js';
 import type { ICompileDiagnostic } from '../utils/compile_diagnostic.js';
 
@@ -241,6 +234,20 @@ export type ValidatedCompileOptions = ValidatedModuleCompileOptions &
 		hmr: CompileOptions['hmr'];
 	};
 
+export type BindingKind =
+	| 'normal' // A variable that is not in any way special
+	| 'prop' // A normal prop (possibly reassigned or mutated)
+	| 'bindable_prop' // A prop one can `bind:` to (possibly reassigned or mutated)
+	| 'rest_prop' // A rest prop
+	| 'raw_state' // A state variable
+	| 'state' // A deeply reactive state variable
+	| 'derived' // A derived variable
+	| 'each' // An each block parameter
+	| 'snippet' // A snippet parameter
+	| 'store_sub' // A $store value
+	| 'legacy_reactive' // A `$:` declaration
+	| 'template'; // A binding declared in the template, e.g. in an `await` block or `const` tag
+
 export type DeclarationKind =
 	| 'var'
 	| 'let'
@@ -250,66 +257,6 @@ export type DeclarationKind =
 	| 'param'
 	| 'rest_param'
 	| 'synthetic';
-
-export interface Binding {
-	node: Identifier;
-	/**
-	 * - `normal`: A variable that is not in any way special
-	 * - `prop`: A normal prop (possibly reassigned or mutated)
-	 * - `bindable_prop`: A prop one can `bind:` to (possibly reassigned or mutated)
-	 * - `rest_prop`: A rest prop
-	 * - `state`: A state variable
-	 * - `derived`: A derived variable
-	 * - `each`: An each block parameter
-	 * - `snippet`: A snippet parameter
-	 * - `store_sub`: A $store value
-	 * - `legacy_reactive`: A `$:` declaration
-	 * - `template`: A binding declared in the template, e.g. in an `await` block or `const` tag
-	 */
-	kind:
-		| 'normal'
-		| 'prop'
-		| 'bindable_prop'
-		| 'rest_prop'
-		| 'state'
-		| 'raw_state'
-		| 'derived'
-		| 'each'
-		| 'snippet'
-		| 'store_sub'
-		| 'legacy_reactive'
-		| 'template'
-		| 'snippet';
-	declaration_kind: DeclarationKind;
-	/**
-	 * What the value was initialized with.
-	 * For destructured props such as `let { foo = 'bar' } = $props()` this is `'bar'` and not `$props()`
-	 */
-	initial:
-		| null
-		| Expression
-		| FunctionDeclaration
-		| ClassDeclaration
-		| ImportDeclaration
-		| AST.EachBlock
-		| AST.SnippetBlock;
-	is_called: boolean;
-	references: { node: Identifier; path: AST.SvelteNode[] }[];
-	mutated: boolean;
-	reassigned: boolean;
-	/** `true` if mutated _or_ reassigned */
-	updated: boolean;
-	scope: Scope;
-	/** For `legacy_reactive`: its reactive dependencies */
-	legacy_dependencies: Binding[];
-	/** Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props() */
-	prop_alias: string | null;
-	/** Additional metadata, varies per binding type */
-	metadata: {
-		/** `true` if is (inside) a rest parameter */
-		inside_rest?: boolean;
-	} | null;
-}
 
 export interface ExpressionMetadata {
 	/** All the bindings that are referenced inside this expression */
@@ -321,6 +268,8 @@ export interface ExpressionMetadata {
 }
 
 export * from './template.js';
+
+export { Binding, Scope } from '../phases/scope.js';
 
 // TODO this chain is a bit weird
 export { ReactiveStatement } from '../phases/types.js';
