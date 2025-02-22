@@ -49,19 +49,24 @@ export function clsx(value) {
  */
 export function to_class(value, hash, classes) {
 	let class_name = value == null ? '' : '' + value;
+
 	if (hash) {
 		class_name = class_name ? class_name + ' ' + hash : hash;
 	}
+
 	if (classes) {
 		const white_spaces = ' \t\n\r\f\u00a0\u000b\ufeff';
+
 		for (const key in classes) {
 			if (classes[key]) {
 				class_name = class_name ? class_name + ' ' + key : key;
 			} else if (class_name.length) {
 				const len = key.length;
 				let start = 0;
+
 				while ((start = class_name.indexOf(key, start)) >= 0) {
 					let stop = start + len;
+
 					if (
 						white_spaces.indexOf(class_name[start - 1] ?? ' ') >= 0 &&
 						white_spaces.indexOf(class_name[stop] ?? ' ') >= 0
@@ -78,8 +83,6 @@ export function to_class(value, hash, classes) {
 			}
 		}
 	}
-	if (class_name === '') {
-		return null;
-	}
-	return class_name;
+
+	return class_name === '' ? null : class_name;
 }

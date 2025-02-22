@@ -515,13 +515,17 @@ function setup_select_synchronization(value_binding, context) {
  */
 export function build_class_directives_object(class_directives, context) {
 	let properties = [];
+
 	for (const d of class_directives) {
 		let expression = /** @type Expression */ (context.visit(d.expression));
+
 		if (d.metadata.expression.has_call) {
 			expression = get_expression_id(context.state, expression);
 		}
+
 		properties.push(b.init(d.name, expression));
 	}
+
 	return b.object(properties);
 }
 

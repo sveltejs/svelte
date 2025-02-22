@@ -327,9 +327,7 @@ export function set_attributes(
 		}
 
 		var prev_value = current[key];
-		if (value === prev_value && key !== 'class') {
-			continue;
-		}
+		if (value === prev_value && key !== 'class') continue;
 
 		current[key] = value;
 

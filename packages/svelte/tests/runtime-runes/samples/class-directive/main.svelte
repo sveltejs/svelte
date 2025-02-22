@@ -2,7 +2,6 @@
 	let { foo = false, bar = true } = $props();
 </script>
 
-
 <div></div>
 <span></span>
 <div><span></span></div>
@@ -10,7 +9,6 @@
 <div class="foo"></div>
 <span class="foo"></span>
 <div><span class="foo"></span></div>
-
 
 <div class="foo" class:bar></div>
 <span class="foo" class:bar></span>

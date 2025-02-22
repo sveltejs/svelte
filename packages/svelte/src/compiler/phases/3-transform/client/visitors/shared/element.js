@@ -78,6 +78,7 @@ export function build_set_attributes(
 				build_class_directives_object(class_directives, context)
 			)
 		);
+
 		is_dynamic ||=
 			class_directives.find((directive) => directive.metadata.expression.has_state) !== null;
 	}
@@ -216,14 +217,17 @@ export function build_set_class(
 
 	/** @type {Identifier | undefined} */
 	let previous_id;
+
 	/** @type {ObjectExpression | Identifier | undefined} */
 	let prev;
+
 	/** @type {ObjectExpression | undefined} */
 	let next;
+
 	if (class_directives.length) {
 		next = build_class_directives_object(class_directives, context);
+		has_state ||= class_directives.some((d) => d.metadata.expression.has_state);
 
-		has_state = has_state || !!class_directives.find((d) => d.metadata.expression.has_state);
 		if (has_state) {
 			previous_id = b.id(context.state.scope.generate('classes'));
 			context.state.init.push(b.declaration('let', [b.declarator(previous_id)]));
@@ -235,6 +239,7 @@ export function build_set_class(
 
 	/** @type {Expression | undefined} */
 	let css_hash;
+
 	if (element.metadata.scoped && context.state.analysis.css.hash) {
 		if (value.type === 'Literal' && (value.value === '' || value.value === null)) {
 			value = b.literal(context.state.analysis.css.hash);
@@ -244,6 +249,7 @@ export function build_set_class(
 			css_hash = b.literal(context.state.analysis.css.hash);
 		}
 	}
+
 	if (!css_hash && next) {
 		css_hash = b.null;
 	}
@@ -264,11 +270,12 @@ export function build_set_class(
 	}
 
 	const update = b.stmt(set_class);
+
 	if (has_state) {
 		context.state.update.push(update);
 		return true;
-	} else {
-		context.state.init.push(update);
-		return false;
 	}
+
+	context.state.init.push(update);
+	return false;
 }

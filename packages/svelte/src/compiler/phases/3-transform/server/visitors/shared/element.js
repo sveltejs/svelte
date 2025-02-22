@@ -390,6 +390,7 @@ function build_to_class(hash, class_directives, class_attribute) {
 
 	/** @type {ObjectExpression | undefined} */
 	let classes;
+
 	if (class_directives.length) {
 		classes = b.object(
 			class_directives.map((directive) =>
@@ -400,6 +401,7 @@ function build_to_class(hash, class_directives, class_attribute) {
 
 	/** @type {Expression} */
 	let class_name;
+
 	if (class_attribute.value === true) {
 		class_name = b.literal('');
 	} else if (Array.isArray(class_attribute.value)) {
@@ -431,6 +433,7 @@ function build_to_class(hash, class_directives, class_attribute) {
 	} else {
 		expression = b.call('$.to_class', class_name, b.literal(hash), classes);
 	}
+
 	class_attribute.value = {
 		type: 'ExpressionTag',
 		start: -1,
@@ -440,6 +443,7 @@ function build_to_class(hash, class_directives, class_attribute) {
 			expression: create_expression_metadata()
 		}
 	};
+
 	return class_attribute;
 }
 

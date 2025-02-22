@@ -10,7 +10,6 @@ import {
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
 	ELEMENT_IS_NAMESPACED
 } from '../../constants.js';
-
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
@@ -198,7 +197,7 @@ export function css_props(payload, is_html, props, component, dynamic = false) {
 
 /**
  * @param {Record<string, unknown>} attrs
- * @param {string|null} css_hash
+ * @param {string | null} css_hash
  * @param {Record<string, boolean>} [classes]
  * @param {Record<string, string>} [styles]
  * @param {number} [flags]
@@ -214,6 +213,7 @@ export function spread_attributes(attrs, css_hash, classes, styles, flags = 0) {
 	if (attrs.class) {
 		attrs.class = clsx(attrs.class);
 	}
+
 	if (css_hash || classes) {
 		attrs.class = to_class(attrs.class, css_hash, classes);
 	}

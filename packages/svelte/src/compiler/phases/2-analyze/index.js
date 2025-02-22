@@ -777,6 +777,7 @@ export function analyze_component(root, source, options) {
 		let has_class = false;
 		let has_spread = false;
 		let has_class_directive = false;
+
 		for (const attribute of node.attributes) {
 			// The spread method appends the hash to the end of the class attribute on its own
 			if (attribute.type === 'SpreadAttribute') {
