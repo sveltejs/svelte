@@ -15,7 +15,8 @@ import type {
 	Program,
 	ChainExpression,
 	SimpleCallExpression,
-	SequenceExpression
+	SequenceExpression,
+	ExpressionStatement
 } from 'estree';
 import type { Scope } from '../phases/scope';
 import type { _CSS } from './css';
@@ -275,6 +276,8 @@ export namespace AST {
 		name: string;
 		attributes: Array<Attribute | SpreadAttribute | Directive>;
 		fragment: Fragment;
+		/** Id */
+		const_dev_statements?: ExpressionStatement[];
 	}
 
 	export interface Component extends BaseElement {

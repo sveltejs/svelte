@@ -1,6 +1,7 @@
 /** @import { BlockStatement, Statement, Expression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
+import { dev } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 
 /**
@@ -62,6 +63,10 @@ export function SvelteBoundary(node, context) {
 	snippets_visits.forEach((visit) => visit());
 
 	const block = /** @type {BlockStatement} */ (context.visit({ ...node.fragment, nodes }));
+
+	if (dev && node.const_dev_statements) {
+		block.body.unshift(...node.const_dev_statements);
+	}
 
 	const boundary = b.stmt(
 		b.call('$.boundary', context.state.node, props, b.arrow([b.id('$$anchor')], block))

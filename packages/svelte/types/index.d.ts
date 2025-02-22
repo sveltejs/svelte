@@ -622,7 +622,7 @@ declare module 'svelte/animate' {
 }
 
 declare module 'svelte/compiler' {
-	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
+	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression, ExpressionStatement } from 'estree';
 	import type { SourceMap } from 'magic-string';
 	import type { Location } from 'locate-character';
 	/**
@@ -1134,6 +1134,8 @@ declare module 'svelte/compiler' {
 			name: string;
 			attributes: Array<Attribute | SpreadAttribute | Directive>;
 			fragment: Fragment;
+			/** Id */
+			const_dev_statements?: ExpressionStatement[];
 		}
 
 		export interface Component extends BaseElement {
