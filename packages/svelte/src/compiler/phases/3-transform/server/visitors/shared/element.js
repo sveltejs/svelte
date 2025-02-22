@@ -378,7 +378,7 @@ function build_element_spread_attributes(
 
 /**
  *
- * @param {string|null} hash
+ * @param {string | null} hash
  * @param {AST.ClassDirective[]} class_directives
  * @param {AST.Attribute | null} class_attribute
  * @returns
