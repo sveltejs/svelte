@@ -109,7 +109,6 @@ export function SvelteElement(node, context) {
 		is_attributes_reactive = build_set_attributes(
 			attributes,
 			class_directives,
-			style_directives,
 			inner_context,
 			node,
 			element_id,

@@ -42,7 +42,7 @@ export function clsx(value) {
 }
 
 /**
- * @param {any} clazz
+ * @param {any} value
  * @param {string|null} [hash]
  * @param {Record<string,boolean>} [classes]
  * @returns {string|null}

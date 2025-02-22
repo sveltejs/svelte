@@ -224,7 +224,6 @@ export function RegularElement(node, context) {
 		build_set_attributes(
 			attributes,
 			class_directives,
-			style_directives,
 			context,
 			node,
 			node_id,
@@ -310,7 +309,6 @@ export function RegularElement(node, context) {
 							attribute,
 							attributes,
 							class_directives,
-							style_directives,
 							context
 						);
 			if (is) is_attributes_reactive = true;
@@ -555,7 +553,6 @@ export function build_class_directives_object(class_directives, context) {
  * @param {AST.Attribute} attribute
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
  * @param {AST.ClassDirective[]} class_directives
- * @param {AST.StyleDirective[]} style_directives
  * @param {ComponentContext} context
  * @returns {boolean}
  */

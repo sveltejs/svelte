@@ -13,7 +13,6 @@ import { build_template_chunk, get_expression_id } from './utils.js';
 /**
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
  * @param {AST.ClassDirective[]} class_directives
- * @param {AST.StyleDirective[]} style_directives
  * @param {ComponentContext} context
  * @param {AST.RegularElement | AST.SvelteElement} element
  * @param {Identifier} element_id
