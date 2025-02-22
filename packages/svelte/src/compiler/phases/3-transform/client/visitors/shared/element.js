@@ -25,7 +25,6 @@ import { build_template_chunk, get_expression_id } from './utils.js';
 export function build_set_attributes(
 	attributes,
 	class_directives,
-	style_directives,
 	context,
 	element,
 	element_id,
