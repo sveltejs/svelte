@@ -19,7 +19,6 @@ import { build_template_chunk, get_expression_id } from './utils.js';
  * @param {Identifier} attributes_id
  * @param {false | Expression} preserve_attribute_case
  * @param {false | Expression} is_custom_element
- * @param {ComponentClientTransformState} state
  */
 export function build_set_attributes(
 	attributes,
@@ -29,8 +28,7 @@ export function build_set_attributes(
 	element_id,
 	attributes_id,
 	preserve_attribute_case,
-	is_custom_element,
-	state
+	is_custom_element
 ) {
 	let is_dynamic = false;
 

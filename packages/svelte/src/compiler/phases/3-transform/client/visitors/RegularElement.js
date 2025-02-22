@@ -229,8 +229,7 @@ export function RegularElement(node, context) {
 			node_id,
 			attributes_id,
 			(node.metadata.svg || node.metadata.mathml || is_custom_element_node(node)) && b.true,
-			is_custom_element_node(node) && b.true,
-			context.state
+			is_custom_element_node(node) && b.true
 		);
 
 		// If value binding exists, that one takes care of calling $.init_select
