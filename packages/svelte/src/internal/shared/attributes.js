@@ -41,6 +41,8 @@ export function clsx(value) {
 	}
 }
 
+const white_spaces = [...' \t\n\r\f\u00a0\u000b\ufeff'];
+
 /**
  * @param {any} value
  * @param {string|null} [hash]
@@ -55,8 +57,6 @@ export function to_class(value, hash, classes) {
 	}
 
 	if (classes) {
-		const white_spaces = ' \t\n\r\f\u00a0\u000b\ufeff';
-
 		for (const key in classes) {
 			if (classes[key]) {
 				class_name = class_name ? class_name + ' ' + key : key;
@@ -68,8 +68,8 @@ export function to_class(value, hash, classes) {
 					let stop = start + len;
 
 					if (
-						white_spaces.indexOf(class_name[start - 1] ?? ' ') >= 0 &&
-						white_spaces.indexOf(class_name[stop] ?? ' ') >= 0
+						white_spaces.includes(class_name[start - 1] ?? ' ') &&
+						white_spaces.includes(class_name[stop] ?? ' ')
 					) {
 						class_name = (
 							class_name.substring(0, start).trim() +
