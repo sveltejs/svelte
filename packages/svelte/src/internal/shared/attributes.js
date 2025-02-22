@@ -45,20 +45,20 @@ const white_spaces = [...' \t\n\r\f\u00a0\u000b\ufeff'];
 
 /**
  * @param {any} value
- * @param {string|null} [hash]
- * @param {Record<string,boolean>} [classes]
- * @returns {string|null}
+ * @param {string | null} [hash]
+ * @param {Record<string, boolean>} [directives]
+ * @returns {string | null}
  */
-export function to_class(value, hash, classes) {
+export function to_class(value, hash, directives) {
 	let class_name = value == null ? '' : '' + value;
 
 	if (hash) {
 		class_name = class_name ? class_name + ' ' + hash : hash;
 	}
 
-	if (classes) {
-		for (const key in classes) {
-			if (classes[key]) {
+	if (directives) {
+		for (const key in directives) {
+			if (directives[key]) {
 				class_name = class_name ? class_name + ' ' + key : key;
 			} else if (class_name.length) {
 				const len = key.length;
