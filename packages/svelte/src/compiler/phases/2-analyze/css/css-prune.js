@@ -5,9 +5,12 @@ import { regex_ends_with_whitespace, regex_starts_with_whitespace } from '../../
 import { get_attribute_chunks, is_text_attribute } from '../../../utils/ast.js';
 
 /** @typedef {NODE_PROBABLY_EXISTS | NODE_DEFINITELY_EXISTS} NodeExistsValue */
+/** @typedef {FORWARD | BACKWARD} Direction */
 
 const NODE_PROBABLY_EXISTS = 0;
 const NODE_DEFINITELY_EXISTS = 1;
+const FORWARD = 0;
+const BACKWARD = 1;
 
 const whitelist_attribute_selector = new Map([
 	['details', ['open']],
@@ -32,6 +35,27 @@ const nesting_selector = {
 		{
 			type: 'NestingSelector',
 			name: '&',
+			start: -1,
+			end: -1
+		}
+	],
+	metadata: {
+		is_global: false,
+		is_global_like: false,
+		scoped: false
+	}
+};
+
+/** @type {Compiler.AST.CSS.RelativeSelector} */
+const any_selector = {
+	type: 'RelativeSelector',
+	start: -1,
+	end: -1,
+	combinator: null,
+	selectors: [
+		{
+			type: 'TypeSelector',
+			name: '*',
 			start: -1,
 			end: -1
 		}
@@ -72,7 +96,8 @@ export function prune(stylesheet, element) {
 				apply_selector(
 					selectors,
 					/** @type {Compiler.AST.CSS.Rule} */ (node.metadata.rule),
-					element
+					element,
+					BACKWARD
 				)
 			) {
 				node.metadata.used = true;
@@ -159,16 +184,17 @@ function truncate(node) {
  * @param {Compiler.AST.CSS.RelativeSelector[]} relative_selectors
  * @param {Compiler.AST.CSS.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
+ * @param {Direction} direction
  * @returns {boolean}
  */
-function apply_selector(relative_selectors, rule, element) {
-	const parent_selectors = relative_selectors.slice();
-	const relative_selector = parent_selectors.pop();
+function apply_selector(relative_selectors, rule, element, direction) {
+	const rest_selectors = relative_selectors.slice();
+	const relative_selector = direction === FORWARD ? rest_selectors.shift() : rest_selectors.pop();
 
 	const matched =
 		!!relative_selector &&
-		relative_selector_might_apply_to_node(relative_selector, rule, element) &&
-		apply_combinator(relative_selector, parent_selectors, rule, element);
+		relative_selector_might_apply_to_node(relative_selector, rule, element, direction) &&
+		apply_combinator(relative_selector, rest_selectors, rule, element, direction);
 
 	if (matched) {
 		if (!is_outer_global(relative_selector)) {
@@ -183,76 +209,63 @@ function apply_selector(relative_selectors, rule, element) {
 
 /**
  * @param {Compiler.AST.CSS.RelativeSelector} relative_selector
- * @param {Compiler.AST.CSS.RelativeSelector[]} parent_selectors
+ * @param {Compiler.AST.CSS.RelativeSelector[]} rest_selectors
  * @param {Compiler.AST.CSS.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
+ * @param {Direction} direction
  * @returns {boolean}
  */
-function apply_combinator(relative_selector, parent_selectors, rule, node) {
-	if (!relative_selector.combinator) return true;
+function apply_combinator(relative_selector, rest_selectors, rule, node, direction) {
+	const combinator =
+		direction == FORWARD ? rest_selectors[0]?.combinator : relative_selector.combinator;
+	if (!combinator) return true;
 
-	const name = relative_selector.combinator.name;
-
-	switch (name) {
+	switch (combinator.name) {
 		case ' ':
 		case '>': {
+			const is_adjacent = combinator.name === '>';
+			const parents =
+				direction === FORWARD
+					? get_descendant_elements(node, is_adjacent)
+					: get_ancestor_elements(node, is_adjacent);
 			let parent_matched = false;
 
-			const path = node.metadata.path;
-			let i = path.length;
-
-			while (i--) {
-				const parent = path[i];
-
-				if (parent.type === 'SnippetBlock') {
-					if (seen.has(parent)) {
-						parent_matched = true;
-					} else {
-						seen.add(parent);
-
-						for (const site of parent.metadata.sites) {
-							if (apply_combinator(relative_selector, parent_selectors, rule, site)) {
-								parent_matched = true;
-							}
-						}
-					}
-
-					break;
-				}
-
-				if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
-					if (apply_selector(parent_selectors, rule, parent)) {
-						parent_matched = true;
-					}
-
-					if (name === '>') return parent_matched;
+			for (const parent of parents) {
+				if (apply_selector(rest_selectors, rule, parent, direction)) {
+					parent_matched = true;
 				}
 			}
 
-			return parent_matched || parent_selectors.every((selector) => is_global(selector, rule));
+			return (
+				parent_matched ||
+				(direction === BACKWARD &&
+					(!is_adjacent || parents.length === 0) &&
+					rest_selectors.every((selector) => is_global(selector, rule)))
+			);
 		}
 
 		case '+':
 		case '~': {
-			const siblings = get_possible_element_siblings(node, name === '+');
+			const siblings = get_possible_element_siblings(node, direction, combinator.name === '+');
 
 			let sibling_matched = false;
 
 			for (const possible_sibling of siblings.keys()) {
 				if (possible_sibling.type === 'RenderTag' || possible_sibling.type === 'SlotElement') {
 					// `{@render foo()}<p>foo</p>` with `:global(.x) + p` is a match
-					if (parent_selectors.length === 1 && parent_selectors[0].metadata.is_global) {
+					if (rest_selectors.length === 1 && rest_selectors[0].metadata.is_global) {
 						sibling_matched = true;
 					}
-				} else if (apply_selector(parent_selectors, rule, possible_sibling)) {
+				} else if (apply_selector(rest_selectors, rule, possible_sibling, direction)) {
 					sibling_matched = true;
 				}
 			}
 
 			return (
 				sibling_matched ||
-				(get_element_parent(node) === null &&
-					parent_selectors.every((selector) => is_global(selector, rule)))
+				(direction === BACKWARD &&
+					get_element_parent(node) === null &&
+					rest_selectors.every((selector) => is_global(selector, rule)))
 			);
 		}
 
@@ -313,9 +326,10 @@ const regex_backslash_and_following_character = /\\(.)/g;
  * @param {Compiler.AST.CSS.RelativeSelector} relative_selector
  * @param {Compiler.AST.CSS.Rule} rule
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
+ * @param {Direction} direction
  * @returns {boolean}
  */
-function relative_selector_might_apply_to_node(relative_selector, rule, element) {
+function relative_selector_might_apply_to_node(relative_selector, rule, element, direction) {
 	// Sort :has(...) selectors in one bucket and everything else into another
 	const has_selectors = [];
 	const other_selectors = [];
@@ -331,13 +345,6 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element)
 	// If we're called recursively from a :has(...) selector, we're on the way of checking if the other selectors match.
 	// In that case ignore this check (because we just came from this) to avoid an infinite loop.
 	if (has_selectors.length > 0) {
-		/** @type {Array<Compiler.AST.RegularElement | Compiler.AST.SvelteElement>} */
-		const child_elements = [];
-		/** @type {Array<Compiler.AST.RegularElement | Compiler.AST.SvelteElement>} */
-		const descendant_elements = [];
-		/** @type {Array<Compiler.AST.RegularElement | Compiler.AST.SvelteElement>} */
-		let sibling_elements; // do them lazy because it's rarely used and expensive to calculate
-
 		// If this is a :has inside a global selector, we gotta include the element itself, too,
 		// because the global selector might be for an element that's outside the component,
 		// e.g. :root:has(.scoped), :global(.foo):has(.scoped), or :root { &:has(.scoped) {} }
@@ -353,46 +360,6 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element)
 					)
 				)
 			);
-		if (include_self) {
-			child_elements.push(element);
-			descendant_elements.push(element);
-		}
-
-		const seen = new Set();
-
-		/**
-		 * @param {Compiler.AST.SvelteNode} node
-		 * @param {{ is_child: boolean }} state
-		 */
-		function walk_children(node, state) {
-			walk(node, state, {
-				_(node, context) {
-					if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
-						descendant_elements.push(node);
-
-						if (context.state.is_child) {
-							child_elements.push(node);
-							context.state.is_child = false;
-							context.next();
-							context.state.is_child = true;
-						} else {
-							context.next();
-						}
-					} else if (node.type === 'RenderTag') {
-						for (const snippet of node.metadata.snippets) {
-							if (seen.has(snippet)) continue;
-
-							seen.add(snippet);
-							walk_children(snippet.body, context.state);
-						}
-					} else {
-						context.next();
-					}
-				}
-			});
-		}
-
-		walk_children(element.fragment, { is_child: true });
 
 		// :has(...) is special in that it means "look downwards in the CSS tree". Since our matching algorithm goes
 		// upwards and back-to-front, we need to first check the selectors inside :has(...), then check the rest of the
@@ -403,36 +370,33 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element)
 			let matched = false;
 
 			for (const complex_selector of complex_selectors) {
-				const selectors = truncate(complex_selector);
-				const left_most_combinator = selectors[0]?.combinator ?? descendant_combinator;
-				// In .x:has(> y), we want to search for y, ignoring the left-most combinator
-				// (else it would try to walk further up and fail because there are no selectors left)
-				if (selectors.length > 0) {
-					selectors[0] = {
-						...selectors[0],
-						combinator: null
-					};
+				const [first, ...rest] = truncate(complex_selector);
+				// if it was just a :global(...)
+				if (!first) {
+					complex_selector.metadata.used = true;
+					matched = true;
+					continue;
 				}
 
-				const descendants =
-					left_most_combinator.name === '+' || left_most_combinator.name === '~'
-						? (sibling_elements ??= get_following_sibling_elements(element, include_self))
-						: left_most_combinator.name === '>'
-							? child_elements
-							: descendant_elements;
-
-				let selector_matched = false;
-
-				// Iterate over all descendant elements and check if the selector inside :has matches
-				for (const element of descendants) {
-					if (
-						selectors.length === 0 /* is :global(...) */ ||
-						(element.metadata.scoped && selector_matched) ||
-						apply_selector(selectors, rule, element)
-					) {
+				if (include_self) {
+					const selector_including_self = [
+						first.combinator ? { ...first, combinator: null } : first,
+						...rest
+					];
+					if (apply_selector(selector_including_self, rule, element, FORWARD)) {
 						complex_selector.metadata.used = true;
-						selector_matched = matched = true;
+						matched = true;
 					}
+				}
+
+				const selector_excluding_self = [
+					any_selector,
+					first.combinator ? first : { ...first, combinator: descendant_combinator },
+					...rest
+				];
+				if (apply_selector(selector_excluding_self, rule, element, FORWARD)) {
+					complex_selector.metadata.used = true;
+					matched = true;
 				}
 			}
 
@@ -458,7 +422,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element)
 				) {
 					const args = selector.args;
 					const complex_selector = args.children[0];
-					return apply_selector(complex_selector.children, rule, element);
+					return apply_selector(complex_selector.children, rule, element, BACKWARD);
 				}
 
 				// We came across a :global, everything beyond it is global and therefore a potential match
@@ -507,7 +471,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element)
 						if (is_global) {
 							complex_selector.metadata.used = true;
 							matched = true;
-						} else if (apply_selector(relative, rule, element)) {
+						} else if (apply_selector(relative, rule, element, BACKWARD)) {
 							complex_selector.metadata.used = true;
 							matched = true;
 						} else if (complex_selector.children.length > 1 && (name == 'is' || name == 'where')) {
@@ -591,7 +555,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element)
 
 				for (const complex_selector of parent.prelude.children) {
 					if (
-						apply_selector(get_relative_selectors(complex_selector), parent, element) ||
+						apply_selector(get_relative_selectors(complex_selector), parent, element, direction) ||
 						complex_selector.children.every((s) => is_global(s, parent))
 					) {
 						complex_selector.metadata.used = true;
@@ -610,80 +574,6 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element)
 
 	// possible match
 	return true;
-}
-
-/**
- * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement} element
- * @param {boolean} include_self
- */
-function get_following_sibling_elements(element, include_self) {
-	const path = element.metadata.path;
-	let i = path.length;
-
-	/** @type {Compiler.AST.SvelteNode} */
-	let start = element;
-	let nodes = /** @type {Compiler.AST.SvelteNode[]} */ (
-		/** @type {Compiler.AST.Fragment} */ (path[0]).nodes
-	);
-
-	// find the set of nodes to walk...
-	while (i--) {
-		const node = path[i];
-
-		if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
-			nodes = node.fragment.nodes;
-			break;
-		}
-
-		if (node.type !== 'Fragment') {
-			start = node;
-		}
-	}
-
-	/** @type {Array<Compiler.AST.RegularElement | Compiler.AST.SvelteElement>} */
-	const siblings = [];
-
-	// ...then walk them, starting from the node containing the element in question
-	// skipping nodes that appears before the element
-
-	const seen = new Set();
-	let skip = true;
-
-	/** @param {Compiler.AST.SvelteNode} node */
-	function get_siblings(node) {
-		walk(node, null, {
-			RegularElement(node) {
-				if (node === element) {
-					skip = false;
-					if (include_self) siblings.push(node);
-				} else if (!skip) {
-					siblings.push(node);
-				}
-			},
-			SvelteElement(node) {
-				if (node === element) {
-					skip = false;
-					if (include_self) siblings.push(node);
-				} else if (!skip) {
-					siblings.push(node);
-				}
-			},
-			RenderTag(node) {
-				for (const snippet of node.metadata.snippets) {
-					if (seen.has(snippet)) continue;
-
-					seen.add(snippet);
-					get_siblings(snippet.body);
-				}
-			}
-		});
-	}
-
-	for (const node of nodes.slice(nodes.indexOf(start))) {
-		get_siblings(node);
-	}
-
-	return siblings;
 }
 
 /**
@@ -824,6 +714,84 @@ function unquote(str) {
 
 /**
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
+ * @param {boolean} adjacent_only
+ * @param {Set<Compiler.AST.SnippetBlock>} seen
+ */
+function get_ancestor_elements(node, adjacent_only, seen = new Set()) {
+	/** @type {Array<Compiler.AST.RegularElement | Compiler.AST.SvelteElement>} */
+	const ancestors = [];
+
+	const path = node.metadata.path;
+	let i = path.length;
+
+	while (i--) {
+		const parent = path[i];
+
+		if (parent.type === 'SnippetBlock') {
+			if (!seen.has(parent)) {
+				seen.add(parent);
+
+				for (const site of parent.metadata.sites) {
+					ancestors.push(...get_ancestor_elements(site, adjacent_only, seen));
+				}
+			}
+
+			break;
+		}
+
+		if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
+			ancestors.push(parent);
+			if (adjacent_only) {
+				break;
+			}
+		}
+	}
+
+	return ancestors;
+}
+
+/**
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
+ * @param {boolean} adjacent_only
+ * @param {Set<Compiler.AST.SnippetBlock>} seen
+ */
+function get_descendant_elements(node, adjacent_only, seen = new Set()) {
+	/** @type {Array<Compiler.AST.RegularElement | Compiler.AST.SvelteElement>} */
+	const descendants = [];
+
+	/**
+	 * @param {Compiler.AST.SvelteNode} node
+	 */
+	function walk_children(node) {
+		walk(node, null, {
+			_(node, context) {
+				if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
+					descendants.push(node);
+
+					if (!adjacent_only) {
+						context.next();
+					}
+				} else if (node.type === 'RenderTag') {
+					for (const snippet of node.metadata.snippets) {
+						if (seen.has(snippet)) continue;
+
+						seen.add(snippet);
+						walk_children(snippet.body);
+					}
+				} else {
+					context.next();
+				}
+			}
+		});
+	}
+
+	walk_children(node.type === 'RenderTag' ? node : node.fragment);
+
+	return descendants;
+}
+
+/**
+ * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
  * @returns {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | null}
  */
 function get_element_parent(node) {
@@ -843,11 +811,12 @@ function get_element_parent(node) {
 
 /**
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
+ * @param {Direction} direction
  * @param {boolean} adjacent_only
  * @param {Set<Compiler.AST.SnippetBlock>} seen
  * @returns {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag, NodeExistsValue>}
  */
-function get_possible_element_siblings(node, adjacent_only, seen = new Set()) {
+function get_possible_element_siblings(node, direction, adjacent_only, seen = new Set()) {
 	/** @type {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.SlotElement | Compiler.AST.RenderTag, NodeExistsValue>} */
 	const result = new Map();
 	const path = node.metadata.path;
@@ -859,9 +828,9 @@ function get_possible_element_siblings(node, adjacent_only, seen = new Set()) {
 
 	while (i--) {
 		const fragment = /** @type {Compiler.AST.Fragment} */ (path[i--]);
-		let j = fragment.nodes.indexOf(current);
+		let j = fragment.nodes.indexOf(current) + (direction === FORWARD ? 1 : -1);
 
-		while (j--) {
+		while (j >= 0 && j < fragment.nodes.length) {
 			const node = fragment.nodes[j];
 
 			if (node.type === 'RegularElement') {
@@ -876,21 +845,28 @@ function get_possible_element_siblings(node, adjacent_only, seen = new Set()) {
 						return result;
 					}
 				}
+				// Special case: slots, render tags and svelte:element tags could resolve to no siblings,
+				// so we want to continue until we find a definite sibling even with the adjacent-only combinator
 			} else if (is_block(node)) {
 				if (node.type === 'SlotElement') {
 					result.set(node, NODE_PROBABLY_EXISTS);
 				}
 
-				const possible_last_child = get_possible_last_child(node, adjacent_only);
+				const possible_last_child = get_possible_nested_siblings(node, direction, adjacent_only);
 				add_to_map(possible_last_child, result);
 				if (adjacent_only && has_definite_elements(possible_last_child)) {
 					return result;
 				}
-			} else if (node.type === 'RenderTag' || node.type === 'SvelteElement') {
+			} else if (node.type === 'SvelteElement') {
 				result.set(node, NODE_PROBABLY_EXISTS);
-				// Special case: slots, render tags and svelte:element tags could resolve to no siblings,
-				// so we want to continue until we find a definite sibling even with the adjacent-only combinator
+			} else if (node.type === 'RenderTag') {
+				result.set(node, NODE_PROBABLY_EXISTS);
+				for (const snippet of node.metadata.snippets) {
+					add_to_map(get_possible_nested_siblings(snippet, direction, adjacent_only), result);
+				}
 			}
+
+			j = direction === FORWARD ? j + 1 : j - 1;
 		}
 
 		current = path[i];
@@ -910,7 +886,7 @@ function get_possible_element_siblings(node, adjacent_only, seen = new Set()) {
 			seen.add(current);
 
 			for (const site of current.metadata.sites) {
-				const siblings = get_possible_element_siblings(site, adjacent_only, seen);
+				const siblings = get_possible_element_siblings(site, direction, adjacent_only, seen);
 				add_to_map(siblings, result);
 
 				if (adjacent_only && current.metadata.sites.size === 1 && has_definite_elements(siblings)) {
@@ -923,7 +899,7 @@ function get_possible_element_siblings(node, adjacent_only, seen = new Set()) {
 
 		if (current.type === 'EachBlock' && fragment === current.body) {
 			// `{#each ...}<a /><b />{/each}` — `<b>` can be previous sibling of `<a />`
-			add_to_map(get_possible_last_child(current, adjacent_only), result);
+			add_to_map(get_possible_nested_siblings(current, direction, adjacent_only), result);
 		}
 	}
 
@@ -931,11 +907,13 @@ function get_possible_element_siblings(node, adjacent_only, seen = new Set()) {
 }
 
 /**
- * @param {Compiler.AST.EachBlock | Compiler.AST.IfBlock | Compiler.AST.AwaitBlock | Compiler.AST.KeyBlock | Compiler.AST.SlotElement} node
+ * @param {Compiler.AST.EachBlock | Compiler.AST.IfBlock | Compiler.AST.AwaitBlock | Compiler.AST.KeyBlock | Compiler.AST.SlotElement | Compiler.AST.SnippetBlock} node
+ * @param {Direction} direction
  * @param {boolean} adjacent_only
+ * @param {Set<Compiler.AST.SnippetBlock>} seen
  * @returns {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement, NodeExistsValue>}
  */
-function get_possible_last_child(node, adjacent_only) {
+function get_possible_nested_siblings(node, direction, adjacent_only, seen = new Set()) {
 	/** @type {Array<Compiler.AST.Fragment | undefined | null>} */
 	let fragments = [];
 
@@ -956,12 +934,20 @@ function get_possible_last_child(node, adjacent_only) {
 		case 'SlotElement':
 			fragments.push(node.fragment);
 			break;
+
+		case 'SnippetBlock':
+			if (seen.has(node)) {
+				return new Map();
+			}
+			seen.add(node);
+			fragments.push(node.body);
+			break;
 	}
 
 	/** @type {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement, NodeExistsValue>} NodeMap */
 	const result = new Map();
 
-	let exhaustive = node.type !== 'SlotElement';
+	let exhaustive = node.type !== 'SlotElement' && node.type !== 'SnippetBlock';
 
 	for (const fragment of fragments) {
 		if (fragment == null) {
@@ -969,7 +955,7 @@ function get_possible_last_child(node, adjacent_only) {
 			continue;
 		}
 
-		const map = loop_child(fragment.nodes, adjacent_only);
+		const map = loop_child(fragment.nodes, direction, adjacent_only, seen);
 		exhaustive &&= has_definite_elements(map);
 
 		add_to_map(map, result);
@@ -1012,27 +998,28 @@ function add_to_map(from, to) {
 }
 
 /**
- * @param {NodeExistsValue | undefined} exist1
+ * @param {NodeExistsValue} exist1
  * @param {NodeExistsValue | undefined} exist2
  * @returns {NodeExistsValue}
  */
 function higher_existence(exist1, exist2) {
-	// @ts-expect-error TODO figure out if this is a bug
-	if (exist1 === undefined || exist2 === undefined) return exist1 || exist2;
+	if (exist2 === undefined) return exist1;
 	return exist1 > exist2 ? exist1 : exist2;
 }
 
 /**
  * @param {Compiler.AST.SvelteNode[]} children
+ * @param {Direction} direction
  * @param {boolean} adjacent_only
+ * @param {Set<Compiler.AST.SnippetBlock>} seen
  */
-function loop_child(children, adjacent_only) {
+function loop_child(children, direction, adjacent_only, seen) {
 	/** @type {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement, NodeExistsValue>} */
 	const result = new Map();
 
-	let i = children.length;
+	let i = direction === FORWARD ? 0 : children.length - 1;
 
-	while (i--) {
+	while (i >= 0 && i < children.length) {
 		const child = children[i];
 
 		if (child.type === 'RegularElement') {
@@ -1042,13 +1029,19 @@ function loop_child(children, adjacent_only) {
 			}
 		} else if (child.type === 'SvelteElement') {
 			result.set(child, NODE_PROBABLY_EXISTS);
+		} else if (child.type === 'RenderTag') {
+			for (const snippet of child.metadata.snippets) {
+				add_to_map(get_possible_nested_siblings(snippet, direction, adjacent_only, seen), result);
+			}
 		} else if (is_block(child)) {
-			const child_result = get_possible_last_child(child, adjacent_only);
+			const child_result = get_possible_nested_siblings(child, direction, adjacent_only, seen);
 			add_to_map(child_result, result);
 			if (adjacent_only && has_definite_elements(child_result)) {
 				break;
 			}
 		}
+
+		i = direction === FORWARD ? i + 1 : i - 1;
 	}
 
 	return result;
