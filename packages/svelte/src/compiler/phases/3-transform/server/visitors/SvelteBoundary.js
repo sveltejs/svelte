@@ -14,9 +14,6 @@ export function SvelteBoundary(node, context) {
 
 	const nodes = [];
 
-	/** @type {AST.SnippetBlock | null} */
-	let failed_snippet = null;
-
 	/** @type {Statement[]} */
 	const statements = [];
 
@@ -24,10 +21,22 @@ export function SvelteBoundary(node, context) {
 	let call_expression = null;
 
 	const payload = b.id('$$payload'); // correct ?
-	const out_len = b.id('$$out_len');
+	const out_pos = b.id('$$pos');
+	let err_id = b.id('$$err');
+
+	/** @type {Statement[]} */
+	let catch_statements = [
+		b.stmt(
+			b.assignment(
+				'=',
+				b.member(payload, 'out'),
+				b.call(b.member(payload, 'out.substring'), b.literal(0), out_pos)
+			)
+		)
+	];
 
 	statements.push(
-		b.declaration('const', [b.declarator(out_len.name, b.member(payload, 'out.length'))])
+		b.declaration('const', [b.declarator(out_pos.name, b.member(payload, 'out.length'))])
 	);
 
 	// Capture the `failed` explicit snippet prop
@@ -48,8 +57,11 @@ export function SvelteBoundary(node, context) {
 	// Capture the `failed` implicit snippet prop
 	for (const child of node.fragment.nodes) {
 		if (child.type === 'SnippetBlock' && child.expression.name === 'failed') {
-			failed_snippet = child;
-			call_expression = failed_snippet.expression;
+			/** @type {Statement[]} */
+			const init = [];
+			context.visit(child, { ...context.state, init });
+			catch_statements.push(...init);
+			call_expression = child.expression;
 		} else if (child.type === 'ConstTag') {
 			/** @type {Statement[]} */
 			const init = [];
@@ -60,31 +72,7 @@ export function SvelteBoundary(node, context) {
 		}
 	}
 
-	if (failed_snippet) {
-		/** @type {Statement[]} */
-		const init = [];
-		context.visit(failed_snippet, { ...context.state, init });
-		//props.properties.push(b.prop('init', failed_snippet.expression, failed_snippet.expression));
-		statements.push(...init);
-	}
-
 	const block = /** @type {BlockStatement} */ (context.visit({ ...node.fragment, nodes }));
-
-	/** @type {Identifier | null} */
-	let err_id = b.id('$$err');
-
-	/** @type {Statement[]} */
-	let catch_statements = [];
-
-	catch_statements.push(
-		b.stmt(
-			b.assignment(
-				'=',
-				b.member(payload, 'out'),
-				b.call(b.member(payload, 'out.substring'), b.literal(0), out_len)
-			)
-		)
-	);
 
 	if (call_expression) {
 		catch_statements.push(b.stmt(b.call(call_expression, payload, err_id)));
