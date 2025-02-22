@@ -47,8 +47,8 @@ export function clsx(value) {
  * @param {Record<string,boolean>} [classes]
  * @returns {string|null}
  */
-export function to_class(clazz, hash, classes) {
-	let class_name = clazz == null ? '' : '' + clazz;
+export function to_class(value, hash, classes) {
+	let class_name = value == null ? '' : '' + value;
 	if (hash) {
 		class_name = class_name ? class_name + ' ' + hash : hash;
 	}
