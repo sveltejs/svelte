@@ -565,7 +565,6 @@ function build_element_attribute_update_assignment(
 	attribute,
 	attributes,
 	class_directives,
-	style_directives,
 	context
 ) {
 	const state = context.state;
