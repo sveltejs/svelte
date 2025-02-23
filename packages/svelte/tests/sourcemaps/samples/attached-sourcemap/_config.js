@@ -53,9 +53,7 @@ export default test({
 		get_processor('style', '.replace_me_style', '.done_replace_style_1'),
 		get_processor('style', '.done_replace_style_1', '.done_replace_style_2')
 	],
-	client: [
-		{ str: 'replace_me_script', strGenerated: 'done_replace_script_2' }
-	],
+	client: [{ str: 'replace_me_script', strGenerated: 'done_replace_script_2' }],
 	css: [{ str: '.replace_me_style', strGenerated: '.done_replace_style_2.svelte-o6vre' }],
 	test({ assert, code_preprocessed, code_css }) {
 		assert.equal(
