@@ -77,7 +77,7 @@ function compare_expressions(a, b) {
 export const DYNAMIC = Symbol('DYNAMIC');
 
 /**
- * @param {Expression | Node} node
+ * @param {Node} node
  * @param {ComponentClientTransformState} state
  * @returns {any}
  */
@@ -86,9 +86,9 @@ export function evaluate_static_expression(node, state) {
 	/**
 	 * @param {BinaryExpression | LogicalExpression} node
 	 */
-	function handle_left_right_node(node) {
-		let left = evaluate_static_expression(node?.left, state);
-		let right = evaluate_static_expression(node?.right, state);
+	function handle_left_right(node) {
+		const left = evaluate_static_expression(node?.left, state);
+		const right = evaluate_static_expression(node?.right, state);
 		if (left === DYNAMIC || right === DYNAMIC) {
 			return DYNAMIC;
 		}
@@ -146,15 +146,15 @@ export function evaluate_static_expression(node, state) {
 	/**
 	 * @param {UnaryExpression} node
 	 */
-	function handle_unary_node(node) {
-		let argument = evaluate_static_expression(node?.argument, state);
+	function handle_unary(node) {
+		const argument = evaluate_static_expression(node?.argument, state);
 		if (argument === DYNAMIC) return DYNAMIC;
 		/**
 		 * @param {Expression} argument
 		 */
 		function handle_void(argument) {
 			//@ts-ignore
-			let evaluated = evaluate_static_expression(argument);
+			const evaluated = evaluate_static_expression(argument);
 			if (evaluated !== DYNAMIC) {
 				return undefined;
 			}
@@ -182,7 +182,7 @@ export function evaluate_static_expression(node, state) {
 	 * @param {SequenceExpression} node
 	 */
 	function handle_sequence(node) {
-		let is_static = node.expressions.reduce(
+		const is_static = node.expressions.reduce(
 			(a, b) => a && evaluate_static_expression(b, state) !== DYNAMIC,
 			true
 		);
@@ -196,8 +196,8 @@ export function evaluate_static_expression(node, state) {
 	 * @param {string} name
 	 */
 	function handle_ident(name) {
-		let scope = state.scope.get(name);
-		if (scope?.kind === 'normal') {
+		const scope = state.scope.get(name);
+		if (scope?.kind === 'normal' && scope?.declaration_kind !== 'import') {
 			if (scope.initial && !scope.mutated && !scope.reassigned && !scope.updated) {
 				//@ts-ignore
 				let evaluated = evaluate_static_expression(scope.initial, state);
@@ -211,13 +211,13 @@ export function evaluate_static_expression(node, state) {
 	 */
 	function handle_template(node) {
 		const expressions = node.expressions;
+		const quasis = node.quasis;
 		const is_static = expressions.reduce(
 			(a, b) => a && evaluate_static_expression(b, state) !== DYNAMIC,
 			true
 		);
 		if (is_static) {
 			let res = '';
-			let quasis = node.quasis;
 			let last_was_quasi = false;
 			let expr_index = 0;
 			let quasi_index = 0;
@@ -238,7 +238,7 @@ export function evaluate_static_expression(node, state) {
 	 * @param {ConditionalExpression} node
 	 */
 	function handle_ternary(node) {
-		let test = evaluate_static_expression(node.test, state);
+		const test = evaluate_static_expression(node.test, state);
 		if (test !== DYNAMIC) {
 			if (test) {
 				return evaluate_static_expression(node.consequent, state);
@@ -252,11 +252,11 @@ export function evaluate_static_expression(node, state) {
 		case 'Literal':
 			return node.value;
 		case 'BinaryExpression':
-			return handle_left_right_node(node);
+			return handle_left_right(node);
 		case 'LogicalExpression':
-			return handle_left_right_node(node);
+			return handle_left_right(node);
 		case 'UnaryExpression':
-			return handle_unary_node(node);
+			return handle_unary(node);
 		case 'Identifier':
 			return handle_ident(node.name);
 		case 'SequenceExpression':
