@@ -10,11 +10,11 @@ export default function Nullish_coallescence_omittance($$anchor) {
 	var fragment = root();
 	var h1 = $.first_child(fragment);
 
-	h1.textContent = `Hello, ${name ?? ''}!`;
+	h1.textContent = 'Hello, world!';
 
 	var b = $.sibling(h1, 2);
 
-	b.textContent = `${1 ?? 'stuff'}${2 ?? 'more stuff'}${3 ?? 'even more stuff'}`;
+	b.textContent = '123';
 
 	var button = $.sibling(b, 2);
 
@@ -26,7 +26,7 @@ export default function Nullish_coallescence_omittance($$anchor) {
 
 	var h1_1 = $.sibling(button, 2);
 
-	h1_1.textContent = `Hello, ${name ?? 'earth' ?? ''}`;
+	h1_1.textContent = 'Hello, world!';
 	$.template_effect(() => $.set_text(text, `Count is ${$.get(count) ?? ''}`));
 	$.append($$anchor, fragment);
 }
