@@ -77,7 +77,6 @@ function compare_expressions(a, b) {
 export const DYNAMIC = Symbol('DYNAMIC');
 
 /**
- *
  * @param {Expression | Node} node
  * @param {ComponentClientTransformState} state
  * @returns {any}
@@ -85,7 +84,6 @@ export const DYNAMIC = Symbol('DYNAMIC');
 export function evaluate_static_expression(node, state) {
 	if (node == undefined) return DYNAMIC;
 	/**
-	 *
 	 * @param {BinaryExpression | LogicalExpression} node
 	 */
 	function handle_left_right_node(node) {
@@ -146,15 +144,13 @@ export function evaluate_static_expression(node, state) {
 		}
 	}
 	/**
-	 *
 	 * @param {UnaryExpression} node
 	 */
 	function handle_unary_node(node) {
 		let argument = evaluate_static_expression(node?.argument, state);
 		if (argument === DYNAMIC) return DYNAMIC;
 		/**
-		 * 
-		 * @param {Expression} argument 
+		 * @param {Expression} argument
 		 */
 		function handle_void(argument) {
 			//@ts-ignore
@@ -183,10 +179,13 @@ export function evaluate_static_expression(node, state) {
 		}
 	}
 	/**
-	 * @param {SequenceExpression} node 
+	 * @param {SequenceExpression} node
 	 */
 	function handle_sequence(node) {
-		let is_static = node.expressions.reduce((a, b) => a && evaluate_static_expression(b, state) !== DYNAMIC, true);
+		let is_static = node.expressions.reduce(
+			(a, b) => a && evaluate_static_expression(b, state) !== DYNAMIC,
+			true
+		);
 		if (is_static) {
 			//@ts-ignore
 			return evaluate_static_expression(node.expressions.at(-1), state);
@@ -208,11 +207,14 @@ export function evaluate_static_expression(node, state) {
 		return DYNAMIC;
 	}
 	/**
-	 * @param {TemplateLiteral} node 
+	 * @param {TemplateLiteral} node
 	 */
 	function handle_template(node) {
 		const expressions = node.expressions;
-		const is_static = expressions.reduce((a, b) => a && evaluate_static_expression(b, state) !== DYNAMIC, true);
+		const is_static = expressions.reduce(
+			(a, b) => a && evaluate_static_expression(b, state) !== DYNAMIC,
+			true
+		);
 		if (is_static) {
 			let res = '';
 			let quasis = node.quasis;
