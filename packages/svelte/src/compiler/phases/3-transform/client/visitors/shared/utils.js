@@ -1,4 +1,4 @@
-/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Statement, Super } from 'estree' */
+/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Statement, Super, Node, UnaryExpression, TemplateLiteral, BinaryExpression, LogicalExpression, ConditionalExpression } from 'estree' */
 /** @import { AST, ExpressionMetadata } from '#compiler' */
 /** @import { ComponentClientTransformState } from '../../types' */
 import { walk } from 'zimmerframe';
@@ -74,6 +74,199 @@ function compare_expressions(a, b) {
 
 	return true;
 }
+export const DYNAMIC = Symbol('DYNAMIC');
+
+/**
+ *
+ * @param {Expression | Node} node
+ * @param {ComponentClientTransformState} state
+ * @returns {any}
+ */
+export function evaluate_static_expression(node, state) {
+	if (node == undefined) return DYNAMIC;
+	/**
+	 *
+	 * @param {BinaryExpression | LogicalExpression} node
+	 */
+	function handle_left_right_node(node) {
+		let left = evaluate_static_expression(node?.left, state);
+		let right = evaluate_static_expression(node?.right, state);
+		if (left === DYNAMIC || right === DYNAMIC) {
+			return DYNAMIC;
+		}
+		switch (node.operator) {
+			case '+':
+				return left + right;
+			case '-':
+				return left - right;
+			case '&':
+				return left & right;
+			case '|':
+				return left | right;
+			case '<<':
+				return left << right;
+			case '>>':
+				return left >> right;
+			case '>':
+				return left > right;
+			case '<':
+				return left < right;
+			case '>=':
+				return left >= right;
+			case '<=':
+				return left <= right;
+			case '==':
+				return left == right;
+			case '===':
+				return left === right;
+			case '||':
+				return left || right;
+			case '??':
+				return left ?? right;
+			case '&&':
+				return left && right;
+			case '%':
+				return left % right;
+			case '>>>':
+				return left >>> right;
+			case '^':
+				return left ^ right;
+			case '**':
+				return left ** right;
+			case '*':
+				return left * right;
+			case '/':
+				return left / right;
+			case '!=':
+				return left != right;
+			case '!==':
+				return left !== right;
+			default:
+				return DYNAMIC;
+		}
+	}
+	/**
+	 *
+	 * @param {UnaryExpression} node
+	 */
+	function handle_unary_node(node) {
+		let argument = evaluate_static_expression(node?.argument, state);
+		if (argument === DYNAMIC) return DYNAMIC;
+		/**
+		 * 
+		 * @param {Expression} argument 
+		 */
+		function handle_void(argument) {
+			//@ts-ignore
+			let evaluated = evaluate_static_expression(argument);
+			if (evaluated !== DYNAMIC) {
+				return undefined;
+			}
+			return DYNAMIC;
+		}
+		switch (node.operator) {
+			case '!':
+				return !argument;
+			case '-':
+				return -argument;
+			case 'typeof':
+				return typeof argument;
+			case '~':
+				return ~argument;
+			case '+':
+				return +argument;
+			case 'void':
+				return handle_void(argument);
+			default:
+				// `delete` is ignored, since it may have side effects
+				return DYNAMIC;
+		}
+	}
+	/**
+	 * @param {SequenceExpression} node 
+	 */
+	function handle_sequence(node) {
+		let is_static = node.expressions.reduce((a, b) => a && evaluate_static_expression(b, state) !== DYNAMIC, true);
+		if (is_static) {
+			//@ts-ignore
+			return evaluate_static_expression(node.expressions.at(-1), state);
+		}
+		return DYNAMIC;
+	}
+	/**
+	 * @param {string} name
+	 */
+	function handle_ident(name) {
+		let scope = state.scope.get(name);
+		if (scope?.kind === 'normal') {
+			if (scope.initial && !scope.mutated && !scope.reassigned && !scope.updated) {
+				//@ts-ignore
+				let evaluated = evaluate_static_expression(scope.initial, state);
+				return evaluated;
+			}
+		}
+		return DYNAMIC;
+	}
+	/**
+	 * @param {TemplateLiteral} node 
+	 */
+	function handle_template(node) {
+		const expressions = node.expressions;
+		const is_static = expressions.reduce((a, b) => a && evaluate_static_expression(b, state) !== DYNAMIC, true);
+		if (is_static) {
+			let res = '';
+			let quasis = node.quasis;
+			let last_was_quasi = false;
+			let expr_index = 0;
+			let quasi_index = 0;
+			for (let index = 0; index < quasis.length + expressions.length; index++) {
+				if (last_was_quasi) {
+					res += evaluate_static_expression(expressions[expr_index++], state);
+					last_was_quasi = false;
+				} else {
+					res += quasis[quasi_index++].value.cooked;
+					last_was_quasi = true;
+				}
+			}
+			return res;
+		}
+		return DYNAMIC;
+	}
+	/**
+	 * @param {ConditionalExpression} node
+	 */
+	function handle_ternary(node) {
+		let test = evaluate_static_expression(node.test, state);
+		if (test !== DYNAMIC) {
+			if (test) {
+				return evaluate_static_expression(node.consequent, state);
+			} else {
+				return evaluate_static_expression(node.alternate, state);
+			}
+		}
+		return DYNAMIC;
+	}
+	switch (node.type) {
+		case 'Literal':
+			return node.value;
+		case 'BinaryExpression':
+			return handle_left_right_node(node);
+		case 'LogicalExpression':
+			return handle_left_right_node(node);
+		case 'UnaryExpression':
+			return handle_unary_node(node);
+		case 'Identifier':
+			return handle_ident(node.name);
+		case 'SequenceExpression':
+			return handle_sequence(node);
+		case 'TemplateLiteral':
+			return handle_template(node);
+		case 'ConditionalExpression':
+			return handle_ternary(node);
+		default:
+			return DYNAMIC;
+	}
+}
 
 /**
  * @param {Array<AST.Text | AST.ExpressionTag>} values
@@ -110,6 +303,13 @@ export function build_template_chunk(
 			node.expression.name !== 'undefined' ||
 			state.scope.get('undefined')
 		) {
+			let evaluated = evaluate_static_expression(node.expression, state);
+			if (evaluated !== DYNAMIC) {
+				if (evaluated != null) {
+					quasi.value.cooked += evaluated + '';
+				}
+				continue;
+			}
 			let value = memoize(
 				/** @type {Expression} */ (visit(node.expression, state)),
 				node.metadata.expression
