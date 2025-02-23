@@ -544,11 +544,14 @@ export function once(get_value) {
 /**
  * Create an unique ID
  * @param {Payload} payload
+ * @param {boolean} hydrate
  * @returns {string}
  */
-export function props_id(payload) {
+export function props_id(payload, hydrate = true) {
 	const uid = payload.uid();
-	payload.out += '<!--#' + uid + '-->';
+	if (hydrate) {
+		payload.out += '<!--#' + uid + '-->';
+	}
 	return uid;
 }
 

@@ -95,7 +95,10 @@ export function CallExpression(node, context) {
 				e.rune_invalid_arguments(node, rune);
 			}
 
-			context.state.analysis.props_id = parent.id;
+			context.state.analysis.props_id = {
+				name: parent.id.name,
+				metadata: null
+			};
 
 			break;
 		}

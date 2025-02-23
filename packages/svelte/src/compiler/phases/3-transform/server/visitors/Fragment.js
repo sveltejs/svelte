@@ -35,7 +35,11 @@ export function Fragment(node, context) {
 		context.visit(node, state);
 	}
 
-	if (is_text_first) {
+	if (context.state.analysis.props_id?.metadata?.empty_comment) {
+		if (!is_text_first) {
+			throw new Error('This should not occurs');
+		}
+	} else if (is_text_first) {
 		// insert `<!---->` to prevent this from being glued to the previous fragment
 		state.template.push(empty_comment);
 	}

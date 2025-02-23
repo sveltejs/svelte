@@ -34,6 +34,7 @@ import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
 import { ExportSpecifier } from './visitors/ExportSpecifier.js';
 import { ExpressionStatement } from './visitors/ExpressionStatement.js';
 import { ExpressionTag } from './visitors/ExpressionTag.js';
+import { Fragment } from './visitors/Fragment.js';
 import { FunctionDeclaration } from './visitors/FunctionDeclaration.js';
 import { FunctionExpression } from './visitors/FunctionExpression.js';
 import { HtmlTag } from './visitors/HtmlTag.js';
@@ -147,6 +148,7 @@ const visitors = {
 	ExportSpecifier,
 	ExpressionStatement,
 	ExpressionTag,
+	Fragment,
 	FunctionDeclaration,
 	FunctionExpression,
 	HtmlTag,

@@ -44,8 +44,19 @@ export interface ComponentAnalysis extends Analysis {
 	exports: Array<{ name: string; alias: string | null }>;
 	/** Whether the component uses `$$props` */
 	uses_props: boolean;
-	/** The component ID variable name, if any */
-	props_id: Identifier | null;
+	/** The $props.id() variable */
+	props_id: {
+		/** The variable name */
+		name: string;
+		metadata: {
+			/** The name of the attribute from the first RegularElement */
+			attr: string | null;
+			/** Any suffix separator on the attribute */
+			suffix: string | null;
+			/** True if the props comment should replace the empty comment */
+			empty_comment: boolean;
+		} | null;
+	} | null;
 	/** Whether the component uses `$$restProps` */
 	uses_rest_props: boolean;
 	/** Whether the component uses `$$slots` */

@@ -564,7 +564,23 @@ export function client_component(analysis, options) {
 
 	if (analysis.props_id) {
 		// need to be placed on first line of the component for hydration
-		component_block.body.unshift(b.const(analysis.props_id, b.call('$.props_id')));
+		const args = [];
+		const metadata = analysis.props_id?.metadata;
+		if (metadata) {
+			if (metadata.attr) {
+				args.push(b.literal(metadata.attr));
+				if (metadata.suffix) {
+					args.push(b.literal(metadata.suffix));
+				}
+			} else if (metadata.empty_comment) {
+				// False to skip hydrate_next()
+				args.push(b.false);
+			}
+		}
+
+		component_block.body.unshift(
+			b.const(b.id(analysis.props_id.name), b.call('$.props_id', ...args))
+		);
 	}
 
 	if (state.events.size > 0) {

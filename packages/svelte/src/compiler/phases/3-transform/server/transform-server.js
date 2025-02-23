@@ -247,7 +247,10 @@ export function server_component(analysis, options) {
 	if (analysis.props_id) {
 		// need to be placed on first line of the component for hydration
 		component_block.body.unshift(
-			b.const(analysis.props_id, b.call('$.props_id', b.id('$$payload')))
+			b.const(
+				analysis.props_id.name,
+				b.call('$.props_id', b.id('$$payload'), analysis.props_id.metadata?.attr ? b.false : false)
+			)
 		);
 	}
 

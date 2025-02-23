@@ -258,18 +258,30 @@ export function reset_props_id() {
 
 /**
  * Create (or hydrate) an unique UID for the component instance.
+ * @param {string | false} [attr_or_skip]
+ * @param {string} [suffix]
  */
-export function props_id() {
-	if (
-		hydrating &&
-		hydrate_node &&
-		hydrate_node.nodeType === 8 &&
-		hydrate_node.textContent?.startsWith('#s')
-	) {
-		const id = hydrate_node.textContent.substring(1);
-		hydrate_next();
-		return id;
+export function props_id(attr_or_skip, suffix) {
+	if (hydrating && hydrate_node) {
+		if (attr_or_skip) {
+			if (hydrate_node.nodeType === 1) {
+				let id = /** @type {Element} */ (hydrate_node).getAttribute(attr_or_skip);
+				if (id !== null && id[0] === 's') {
+					if (suffix) {
+						let idx = id.indexOf(suffix);
+						if (idx > 0) {
+							return id.substring(0, idx);
+						}
+					} else {
+						return id;
+					}
+				}
+			}
+		} else if (hydrate_node.nodeType === 8 && hydrate_node.textContent?.startsWith('#s')) {
+			const id = hydrate_node.textContent.substring(1);
+			if (attr_or_skip !== false) hydrate_next();
+			return id;
+		}
 	}
-
 	return 'c' + uid++;
 }
