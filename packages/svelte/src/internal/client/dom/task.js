@@ -27,13 +27,13 @@ function run_post_micro_tasks() {
 	run_all(tasks);
 }
 
-export function run_idle_tasks() {
+function run_idle_tasks() {
 	var tasks = idle_tasks;
 	idle_tasks = [];
 	run_all(tasks);
 }
 
-export function run_micro_tasks() {
+function run_micro_tasks() {
 	run_boundary_micro_tasks();
 	run_post_micro_tasks();
 }
@@ -69,4 +69,17 @@ export function queue_idle_task(fn) {
 	}
 
 	idle_tasks.push(fn);
+}
+
+/**
+ * Synchronously run any queued tasks.
+ */
+export function flush_tasks() {
+	if (boundary_micro_tasks.length > 0 || micro_tasks.length > 0) {
+		run_micro_tasks();
+	}
+
+	if (idle_tasks.length > 0) {
+		run_idle_tasks();
+	}
 }

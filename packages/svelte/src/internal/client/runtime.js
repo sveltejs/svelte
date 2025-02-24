@@ -27,7 +27,7 @@ import {
 	REACTION_IS_UPDATING,
 	EFFECT_ASYNC
 } from './constants.js';
-import { run_idle_tasks, run_micro_tasks } from './dom/task.js';
+import { flush_tasks } from './dom/task.js';
 import { internal_set } from './reactivity/sources.js';
 import {
 	destroy_derived_effects,
@@ -931,8 +931,7 @@ export function flush_sync(fn) {
 
 		var result = fn?.();
 
-		run_micro_tasks();
-		run_idle_tasks();
+		flush_tasks();
 
 		if (queued_root_effects.length > 0 || root_effects.length > 0) {
 			flush_sync();
