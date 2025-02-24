@@ -34,18 +34,13 @@ export function set_class(dom, is_html, value, hash, prev_classes, next_classes)
 		// @ts-expect-error need to add __className to patched prototype
 		dom.__className = value;
 	} else if (next_classes) {
-		prev_classes = prev_classes ?? {};
+		prev_classes ??= {};
 
-		for (const key in next_classes) {
-			const is_present = !!next_classes[key];
+		for (var key in next_classes) {
+			var is_present = !!next_classes[key];
 
 			if (is_present !== !!prev_classes[key]) {
-				// TODO : use dom.classList.toggle instead ?
-				if (is_present) {
-					dom.classList.add(key);
-				} else {
-					dom.classList.remove(key);
-				}
+				dom.classList.toggle(key, is_present);
 			}
 		}
 	}
