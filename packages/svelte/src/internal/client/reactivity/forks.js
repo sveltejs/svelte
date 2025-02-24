@@ -1,4 +1,5 @@
 /** @import { Effect, Source } from '#client' */
+import { noop } from '../../shared/utils.js';
 import { DIRTY } from '../constants.js';
 import { flushSync } from '../runtime.js';
 import { internal_set, mark_reactions } from './sources.js';
@@ -26,6 +27,11 @@ export class Fork {
 	#pending = 0;
 
 	apply() {
+		if (forks.size === 1) {
+			// if this is the latest (and only) fork, we have nothing to do
+			return noop;
+		}
+
 		var values = new Map();
 
 		for (const source of this.previous.keys()) {
@@ -53,8 +59,6 @@ export class Fork {
 			for (const [source, value] of values) {
 				source.v = value;
 			}
-
-			active_fork = null;
 		};
 	}
 
@@ -118,4 +122,8 @@ export class Fork {
 
 		return active_fork;
 	}
+}
+
+export function remove_active_fork() {
+	active_fork = null;
 }

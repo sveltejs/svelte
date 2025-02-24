@@ -49,7 +49,7 @@ import {
 import { Boundary } from './dom/blocks/boundary.js';
 import * as w from './warnings.js';
 import { is_firefox } from './dom/operations.js';
-import { active_fork, Fork } from './reactivity/forks.js';
+import { active_fork, Fork, remove_active_fork } from './reactivity/forks.js';
 import { log_effect_tree } from './dev/debug.js';
 
 // Used for DEV time error handling
@@ -670,7 +670,7 @@ function flush_queued_root_effects() {
 		return;
 	}
 
-	var revert = active_fork.apply();
+	var fork = active_fork;
 
 	try {
 		var flush_count = 0;
@@ -692,18 +692,19 @@ function flush_queued_root_effects() {
 					root.f ^= CLEAN;
 				}
 
-				process_effects(root, active_fork);
+				process_effects(root, fork);
 			}
 		}
 	} finally {
 		// TODO this doesn't seem quite right — may run into
 		// interesting cases where there are multiple roots.
 		// it'll do for now though
-		if (active_fork.settled()) {
-			active_fork.remove();
+		if (fork.settled()) {
+			fork.remove();
 		}
 
-		revert();
+		remove_active_fork();
+
 		is_flushing = false;
 
 		last_scheduled_effect = null;
@@ -787,7 +788,12 @@ export function schedule_effect(signal) {
  * @param {Fork} fork
  */
 function process_effects(effect, fork) {
+	var revert = fork.apply();
+
 	var current_effect = effect.first;
+
+	/** @type {Effect[]} */
+	var async_effects = [];
 
 	/** @type {Effect[]} */
 	var render_effects = [];
@@ -807,7 +813,11 @@ function process_effects(effect, fork) {
 			active_fork?.skipped_effects.has(current_effect);
 
 		if (!skip) {
-			if ((flags & (BLOCK_EFFECT | EFFECT_ASYNC)) !== 0) {
+			if ((flags & EFFECT_ASYNC) !== 0) {
+				if (check_dirtiness(current_effect)) {
+					async_effects.push(current_effect);
+				}
+			} else if ((flags & BLOCK_EFFECT) !== 0) {
 				if (check_dirtiness(current_effect)) {
 					update_effect(current_effect);
 				}
@@ -849,9 +859,15 @@ function process_effects(effect, fork) {
 		current_effect = sibling;
 	}
 
-	if (fork.settled()) {
+	if (async_effects.length === 0 && fork.settled()) {
 		flush_queued_effects(render_effects);
 		flush_queued_effects(effects);
+	}
+
+	revert();
+
+	for (const effect of async_effects) {
+		update_effect(effect);
 	}
 }
 
