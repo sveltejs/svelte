@@ -9,7 +9,7 @@
 		if (ok) {
 			return "OK";
 		} else {
-			fail();
+			throwError();
 		}
 	}
 </script>
