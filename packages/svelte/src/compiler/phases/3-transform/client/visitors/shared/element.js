@@ -9,6 +9,7 @@ import * as b from '../../../../../utils/builders.js';
 import { build_getter } from '../../utils.js';
 import { build_class_directives_object } from '../RegularElement.js';
 import { build_template_chunk, get_expression_id } from './utils.js';
+import { evaluate_static_expression, DYNAMIC } from '../../../shared/static-evaluation.js';
 
 /**
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
@@ -168,7 +169,10 @@ export function build_attribute_value(value, context, memoize = (value) => value
 		}
 
 		let expression = /** @type {Expression} */ (context.visit(chunk.expression));
-
+		let evaluated = evaluate_static_expression(expression, context.state);
+		if (evaluated !== DYNAMIC) {
+			return { value: b.literal(evaluated), has_state: false };
+		}
 		return {
 			value: memoize(expression, chunk.metadata.expression),
 			has_state: chunk.metadata.expression.has_state
