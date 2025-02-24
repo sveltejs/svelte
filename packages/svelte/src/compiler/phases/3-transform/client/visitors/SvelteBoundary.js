@@ -36,6 +36,9 @@ export function SvelteBoundary(node, context) {
 	/** @type {Statement[]} */
 	const external_statements = [];
 
+	/** @type {Statement[]} */
+	const internal_statements = [];
+
 	const snippets_visits = [];
 
 	// Capture the `failed` implicit snippet prop
@@ -54,7 +57,20 @@ export function SvelteBoundary(node, context) {
 			/** @type {Statement[]} */
 			const init = [];
 			context.visit(child, { ...context.state, init });
-			external_statements.push(...init);
+
+			if (dev) {
+				// In dev we must separate the declarations from the code
+				// that eagerly evaluate the expression...
+				for (const statement of init) {
+					if (statement.type === 'VariableDeclaration') {
+						external_statements.push(statement);
+					} else {
+						internal_statements.push(statement);
+					}
+				}
+			} else {
+				external_statements.push(...init);
+			}
 		} else {
 			nodes.push(child);
 		}
@@ -64,8 +80,8 @@ export function SvelteBoundary(node, context) {
 
 	const block = /** @type {BlockStatement} */ (context.visit({ ...node.fragment, nodes }));
 
-	if (dev && node.const_dev_statements) {
-		block.body.unshift(...node.const_dev_statements);
+	if (dev && internal_statements.length) {
+		block.body.unshift(...internal_statements);
 	}
 
 	const boundary = b.stmt(
