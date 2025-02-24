@@ -5,7 +5,7 @@ import {
 	is_text_attribute,
 	object
 } from '../../../utils/ast.js';
-import { validate_no_const_assignment } from './shared/utils.js';
+import { validate_assignment } from './shared/utils.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { binding_properties } from '../../bindings.js';
@@ -158,7 +158,7 @@ export function BindDirective(node, context) {
 		return;
 	}
 
-	validate_no_const_assignment(node, node.expression, context.state.scope, true);
+	validate_assignment(node, node.expression, context.state);
 
 	const assignee = node.expression;
 	const left = object(assignee);
@@ -183,14 +183,6 @@ export function BindDirective(node, context) {
 					!binding.updated)) // TODO wut?
 		) {
 			e.bind_invalid_value(node.expression);
-		}
-
-		if (context.state.analysis.runes && binding?.kind === 'each') {
-			e.each_item_invalid_assignment(node);
-		}
-
-		if (binding?.kind === 'snippet') {
-			e.snippet_parameter_assignment(node);
 		}
 	}
 
