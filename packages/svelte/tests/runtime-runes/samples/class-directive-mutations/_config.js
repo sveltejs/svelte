@@ -2,7 +2,7 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 // This test counts mutations on hydration
-// set_class() shoult not mutate class on hydration, except if mismatch
+// set_class() should not mutate class on hydration, except if mismatch
 export default test({
 	mode: ['server', 'hydrate'],
 
