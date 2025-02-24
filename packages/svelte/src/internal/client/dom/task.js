@@ -6,8 +6,6 @@ const request_idle_callback =
 		? (/** @type {() => void} */ cb) => setTimeout(cb, 1)
 		: requestIdleCallback;
 
-let is_micro_task_queued = false;
-
 /** @type {Array<() => void>} */
 let queued_boundary_microtasks = [];
 
@@ -35,7 +33,7 @@ export function run_idle_tasks() {
 	run_all(tasks);
 }
 
-function flush_all_micro_tasks() {
+function run_micro_tasks() {
 	flush_boundary_micro_tasks();
 	flush_post_micro_tasks();
 }
@@ -45,7 +43,7 @@ function flush_all_micro_tasks() {
  */
 export function queue_boundary_micro_task(fn) {
 	if (queued_boundary_microtasks.length === 0 && micro_tasks.length === 0) {
-		queueMicrotask(flush_all_micro_tasks);
+		queueMicrotask(run_micro_tasks);
 	}
 
 	queued_boundary_microtasks.push(fn);
@@ -56,7 +54,7 @@ export function queue_boundary_micro_task(fn) {
  */
 export function queue_micro_task(fn) {
 	if (queued_boundary_microtasks.length === 0 && micro_tasks.length === 0) {
-		queueMicrotask(flush_all_micro_tasks);
+		queueMicrotask(run_micro_tasks);
 	}
 
 	micro_tasks.push(fn);
