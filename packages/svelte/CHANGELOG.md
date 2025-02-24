@@ -1,5 +1,15 @@
 # svelte
 
+## 5.20.3
+
+### Patch Changes
+
+- fix: allow `@const` inside `#key` ([#15377](https://github.com/sveltejs/svelte/pull/15377))
+
+- fix: remove unnecessary `?? ''` on some expressions ([#15287](https://github.com/sveltejs/svelte/pull/15287))
+
+- fix: correctly override class attributes with class directives ([#15352](https://github.com/sveltejs/svelte/pull/15352))
+
 ## 5.20.2
 
 ### Patch Changes

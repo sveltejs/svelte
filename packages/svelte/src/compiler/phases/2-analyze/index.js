@@ -267,7 +267,6 @@ export function analyze_module(ast, options) {
 			expression: null,
 			function_depth: 0,
 			has_props_rune: false,
-			instance_scope: /** @type {any} */ (null),
 			options: /** @type {ValidatedCompileOptions} */ (options),
 			parent_element: null,
 			reactive_statement: null
@@ -619,7 +618,6 @@ export function analyze_component(root, source, options) {
 				expression: null,
 				derived_state: [],
 				function_depth: scope.function_depth,
-				instance_scope: instance.scope,
 				reactive_statement: null
 			};
 
@@ -682,7 +680,6 @@ export function analyze_component(root, source, options) {
 				parent_element: null,
 				has_props_rune: false,
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
-				instance_scope: instance.scope,
 				reactive_statement: null,
 				component_slots: new Set(),
 				expression: null,
@@ -764,66 +761,40 @@ export function analyze_component(root, source, options) {
 		if (!should_ignore_unused) {
 			warn_unused(analysis.css.ast);
 		}
+	}
 
-		outer: for (const node of analysis.elements) {
-			if (node.metadata.scoped) {
-				// Dynamic elements in dom mode always use spread for attributes and therefore shouldn't have a class attribute added to them
-				// TODO this happens during the analysis phase, which shouldn't know anything about client vs server
-				if (node.type === 'SvelteElement' && options.generate === 'client') continue;
+	for (const node of analysis.elements) {
+		if (node.metadata.scoped && is_custom_element_node(node)) {
+			mark_subtree_dynamic(node.metadata.path);
+		}
 
-				/** @type {AST.Attribute | undefined} */
-				let class_attribute = undefined;
+		let has_class = false;
+		let has_spread = false;
+		let has_class_directive = false;
 
-				for (const attribute of node.attributes) {
-					if (attribute.type === 'SpreadAttribute') {
-						// The spread method appends the hash to the end of the class attribute on its own
-						continue outer;
-					}
-
-					if (attribute.type !== 'Attribute') continue;
-					if (attribute.name.toLowerCase() !== 'class') continue;
-					// The dynamic class method appends the hash to the end of the class attribute on its own
-					if (attribute.metadata.needs_clsx) continue outer;
-
-					class_attribute = attribute;
-				}
-
-				if (class_attribute && class_attribute.value !== true) {
-					if (is_text_attribute(class_attribute)) {
-						class_attribute.value[0].data += ` ${analysis.css.hash}`;
-					} else {
-						/** @type {AST.Text} */
-						const css_text = {
-							type: 'Text',
-							data: ` ${analysis.css.hash}`,
-							raw: ` ${analysis.css.hash}`,
-							start: -1,
-							end: -1
-						};
-
-						if (Array.isArray(class_attribute.value)) {
-							class_attribute.value.push(css_text);
-						} else {
-							class_attribute.value = [class_attribute.value, css_text];
-						}
-					}
-				} else {
-					node.attributes.push(
-						create_attribute('class', -1, -1, [
-							{
-								type: 'Text',
-								data: analysis.css.hash,
-								raw: analysis.css.hash,
-								start: -1,
-								end: -1
-							}
-						])
-					);
-					if (is_custom_element_node(node) && node.attributes.length === 1) {
-						mark_subtree_dynamic(node.metadata.path);
-					}
-				}
+		for (const attribute of node.attributes) {
+			// The spread method appends the hash to the end of the class attribute on its own
+			if (attribute.type === 'SpreadAttribute') {
+				has_spread = true;
+				break;
 			}
+			has_class_directive ||= attribute.type === 'ClassDirective';
+			has_class ||= attribute.type === 'Attribute' && attribute.name.toLowerCase() === 'class';
+		}
+
+		// We need an empty class to generate the set_class() or class="" correctly
+		if (!has_spread && !has_class && (node.metadata.scoped || has_class_directive)) {
+			node.attributes.push(
+				create_attribute('class', -1, -1, [
+					{
+						type: 'Text',
+						data: '',
+						raw: '',
+						start: -1,
+						end: -1
+					}
+				])
+			);
 		}
 	}
 

@@ -46,7 +46,7 @@ const FLUSH_SYNC = 1;
 // Used for DEV time error handling
 /** @param {WeakSet<Error>} value */
 const handled_errors = new WeakSet();
-export let is_throwing_error = false;
+let is_throwing_error = false;
 
 // Used for controlling the flush of effects.
 let scheduler_mode = FLUSH_MICROTASK;
@@ -117,7 +117,7 @@ export function set_derived_sources(sources) {
  * and until a new dependency is accessed — we track this via `skipped_deps`
  * @type {null | Value[]}
  */
-export let new_deps = null;
+let new_deps = null;
 
 let skipped_deps = 0;
 
@@ -994,7 +994,7 @@ export function safe_get(signal) {
  * @template T
  * @param {() => T} fn
  */
-export function capture_signals(fn) {
+function capture_signals(fn) {
 	var previous_captured_signals = captured_signals;
 	captured_signals = new Set();
 

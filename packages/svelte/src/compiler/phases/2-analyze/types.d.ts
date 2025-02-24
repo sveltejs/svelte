@@ -22,7 +22,6 @@ export interface AnalysisState {
 	function_depth: number;
 
 	// legacy stuff
-	instance_scope: Scope;
 	reactive_statement: null | ReactiveStatement;
 }
 
