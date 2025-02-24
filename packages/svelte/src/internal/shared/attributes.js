@@ -71,11 +71,7 @@ export function to_class(value, hash, directives) {
 						(a === 0 || whitespace.includes(classname[a - 1])) &&
 						(b === classname.length || whitespace.includes(classname[b]))
 					) {
-						classname = (
-							classname.substring(0, a).trim() +
-							' ' +
-							classname.substring(b).trim()
-						).trim();
+						classname = (a === 0 ? '' : classname.substring(0, a)) + classname.substring(b + 1);
 					} else {
 						a = b;
 					}
