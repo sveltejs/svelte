@@ -41,7 +41,7 @@ export function clsx(value) {
 	}
 }
 
-const white_spaces = [...' \t\n\r\f\u00a0\u000b\ufeff'];
+const whitespace = [...' \t\n\r\f\u00a0\u000b\ufeff'];
 
 /**
  * @param {any} value
@@ -50,39 +50,39 @@ const white_spaces = [...' \t\n\r\f\u00a0\u000b\ufeff'];
  * @returns {string | null}
  */
 export function to_class(value, hash, directives) {
-	let class_name = value == null ? '' : '' + value;
+	var classname = value == null ? '' : '' + value;
 
 	if (hash) {
-		class_name = class_name ? class_name + ' ' + hash : hash;
+		classname = classname ? classname + ' ' + hash : hash;
 	}
 
 	if (directives) {
-		for (const key in directives) {
+		for (var key in directives) {
 			if (directives[key]) {
-				class_name = class_name ? class_name + ' ' + key : key;
-			} else if (class_name.length) {
-				const len = key.length;
-				let start = 0;
+				classname = classname ? classname + ' ' + key : key;
+			} else if (classname.length) {
+				var len = key.length;
+				var a = 0;
 
-				while ((start = class_name.indexOf(key, start)) >= 0) {
-					let stop = start + len;
+				while ((a = classname.indexOf(key, a)) >= 0) {
+					var b = a + len;
 
 					if (
-						white_spaces.includes(class_name[start - 1] ?? ' ') &&
-						white_spaces.includes(class_name[stop] ?? ' ')
+						(a === 0 || whitespace.includes(classname[a - 1])) &&
+						(b === classname.length || whitespace.includes(classname[b]))
 					) {
-						class_name = (
-							class_name.substring(0, start).trim() +
+						classname = (
+							classname.substring(0, a).trim() +
 							' ' +
-							class_name.substring(stop).trim()
+							classname.substring(b).trim()
 						).trim();
 					} else {
-						start = stop;
+						a = b;
 					}
 				}
 			}
 		}
 	}
 
-	return class_name === '' ? null : class_name;
+	return classname === '' ? null : classname;
 }
