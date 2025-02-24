@@ -51,7 +51,7 @@ export default function Static_template_expression_evaluation($$anchor) {
 		c: 3
 	});
 
-	$.template_effect(() => $.set_text(text, `Count is ${$.get(count) ?? ""}`));
+	$.template_effect(() => $.set_text(text, `Count is ${$.get(count) ?? ''}`));
 	$.append($$anchor, fragment);
 }
 
