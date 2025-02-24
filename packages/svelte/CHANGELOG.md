@@ -1,5 +1,13 @@
 # svelte
 
+## 5.20.4
+
+### Patch Changes
+
+- chore: remove unnecessary `binding.is_called` property ([#15361](https://github.com/sveltejs/svelte/pull/15361))
+
+- fix: update types and inline docs for flushSync ([#15348](https://github.com/sveltejs/svelte/pull/15348))
+
 ## 5.20.3
 
 ### Patch Changes
