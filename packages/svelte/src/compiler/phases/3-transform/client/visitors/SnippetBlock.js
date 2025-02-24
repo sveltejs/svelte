@@ -22,7 +22,7 @@ export function SnippetBlock(node, context) {
 	const declarations = [];
 
 	const transform = { ...context.state.transform };
-	const child_state = { ...context.state, transform };
+	const child_state = { ...context.state, transform, needs_safe_props: true };
 
 	for (let i = 0; i < node.parameters.length; i++) {
 		const argument = node.parameters[i];

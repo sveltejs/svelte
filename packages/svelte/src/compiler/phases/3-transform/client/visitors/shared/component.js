@@ -370,14 +370,17 @@ export function build_component(node, component_name, context, anchor = context.
 		push_prop(b.init('$$legacy', b.true));
 	}
 
-	const props_expression =
-		props_and_spreads.length === 0 ||
-		(props_and_spreads.length === 1 && Array.isArray(props_and_spreads[0]))
-			? b.object(/** @type {Property[]} */ (props_and_spreads[0]) || [])
-			: b.call(
-					'$.spread_props',
-					...props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p))
-				);
+	const props = props_and_spreads.map((p) =>
+		Array.isArray(p)
+			? context.state.needs_safe_props
+				? b.call('$.safe_props', b.object(p))
+				: b.object(p)
+			: p
+	);
+
+	const props_expression = props_and_spreads.some((p) => !Array.isArray(p))
+		? b.call('$.spread_props', ...props)
+		: props[0] ?? b.object([]);
 
 	/** @param {Expression} node_id */
 	let fn = (node_id) => {

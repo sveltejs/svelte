@@ -144,7 +144,8 @@ export function EachBlock(node, context) {
 	const child_state = {
 		...context.state,
 		transform: { ...context.state.transform },
-		store_to_invalidate
+		store_to_invalidate,
+		needs_safe_props: true
 	};
 
 	/** The state used when generating the key function, if necessary */
@@ -308,7 +309,15 @@ export function EachBlock(node, context) {
 
 	if (node.fallback) {
 		args.push(
-			b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.fallback)))
+			b.arrow(
+				[b.id('$$anchor')],
+				/** @type {BlockStatement} */ (
+					context.visit(node.fallback, {
+						...context.state,
+						needs_safe_props: true
+					})
+				)
+			)
 		);
 	}
 
