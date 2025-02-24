@@ -6,12 +6,10 @@ import {
 	update_effect,
 	get,
 	is_destroying_effect,
-	is_flushing_effect,
 	remove_reactions,
 	schedule_effect,
 	set_active_reaction,
 	set_is_destroying_effect,
-	set_is_flushing_effect,
 	set_signal_status,
 	untrack,
 	untracking
@@ -122,17 +120,12 @@ function create_effect(type, fn, sync, push = true) {
 	}
 
 	if (sync) {
-		var previously_flushing_effect = is_flushing_effect;
-
 		try {
-			set_is_flushing_effect(true);
 			update_effect(effect);
 			effect.f |= EFFECT_RAN;
 		} catch (e) {
 			destroy_effect(effect);
 			throw e;
-		} finally {
-			set_is_flushing_effect(previously_flushing_effect);
 		}
 	} else if (fn !== null) {
 		schedule_effect(effect);

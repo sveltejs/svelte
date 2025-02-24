@@ -38,13 +38,13 @@ function setup() {
 		destroy,
 		run() {
 			const constant = count(width);
-			$.flush_sync(() => {
+			$.flush(() => {
 				$.set(head, 1);
 			});
 			assert($.get(sum) === constant);
 			counter = 0;
 			for (let i = 0; i < 100; i++) {
-				$.flush_sync(() => {
+				$.flush(() => {
 					$.set(head, i);
 				});
 				assert($.get(sum) === constant - width + i * width);

@@ -1,4 +1,4 @@
-/** @import { Expression, Literal } from 'estree' */
+/** @import { Expression, Literal, ObjectExpression } from 'estree' */
 /** @import { AST, Namespace } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../../types.js' */
 import {
@@ -24,6 +24,7 @@ import {
 	is_content_editable_binding,
 	is_load_error_element
 } from '../../../../../../utils.js';
+import { escape_html } from '../../../../../../escaping.js';
 
 const WHITESPACE_INSENSITIVE_ATTRIBUTES = ['class', 'style'];
 
@@ -86,23 +87,15 @@ export function build_element_attributes(node, context) {
 			} else if (attribute.name !== 'defaultValue' && attribute.name !== 'defaultChecked') {
 				if (attribute.name === 'class') {
 					class_index = attributes.length;
-
 					if (attribute.metadata.needs_clsx) {
-						const clsx_value = b.call(
-							'$.clsx',
-							/** @type {AST.ExpressionTag} */ (attribute.value).expression
-						);
 						attributes.push({
 							...attribute,
 							value: {
 								.../** @type {AST.ExpressionTag} */ (attribute.value),
-								expression: context.state.analysis.css.hash
-									? b.binary(
-											'+',
-											b.binary('+', clsx_value, b.literal(' ')),
-											b.literal(context.state.analysis.css.hash)
-										)
-									: clsx_value
+								expression: b.call(
+									'$.clsx',
+									/** @type {AST.ExpressionTag} */ (attribute.value).expression
+								)
 							}
 						});
 					} else {
@@ -219,8 +212,9 @@ export function build_element_attributes(node, context) {
 		}
 	}
 
-	if (class_directives.length > 0 && !has_spread) {
-		const class_attribute = build_class_directives(
+	if ((node.metadata.scoped || class_directives.length) && !has_spread) {
+		const class_attribute = build_to_class(
+			node.metadata.scoped ? context.state.analysis.css.hash : null,
 			class_directives,
 			/** @type {AST.Attribute | null} */ (attributes[class_index] ?? null)
 		);
@@ -274,9 +268,14 @@ export function build_element_attributes(node, context) {
 				WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 			);
 
-			context.state.template.push(
-				b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
-			);
+			// pre-escape and inline literal attributes :
+			if (value.type === 'Literal' && typeof value.value === 'string') {
+				context.state.template.push(b.literal(` ${name}="${escape_html(value.value, true)}"`));
+			} else {
+				context.state.template.push(
+					b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
+				);
+			}
 		}
 	}
 
@@ -322,7 +321,7 @@ function build_element_spread_attributes(
 	let styles;
 	let flags = 0;
 
-	if (class_directives.length > 0 || context.state.analysis.css.hash) {
+	if (class_directives.length) {
 		const properties = class_directives.map((directive) =>
 			b.init(
 				directive.name,
@@ -331,11 +330,6 @@ function build_element_spread_attributes(
 					: /** @type {Expression} */ (context.visit(directive.expression))
 			)
 		);
-
-		if (context.state.analysis.css.hash) {
-			properties.unshift(b.init(context.state.analysis.css.hash, b.literal(true)));
-		}
-
 		classes = b.object(properties);
 	}
 
@@ -374,55 +368,82 @@ function build_element_spread_attributes(
 		})
 	);
 
-	const args = [object, classes, styles, flags ? b.literal(flags) : undefined];
+	const css_hash = context.state.analysis.css.hash
+		? b.literal(context.state.analysis.css.hash)
+		: b.null;
+
+	const args = [object, css_hash, classes, styles, flags ? b.literal(flags) : undefined];
 	context.state.template.push(b.call('$.spread_attributes', ...args));
 }
 
 /**
  *
+ * @param {string | null} hash
  * @param {AST.ClassDirective[]} class_directives
  * @param {AST.Attribute | null} class_attribute
  * @returns
  */
-function build_class_directives(class_directives, class_attribute) {
-	const expressions = class_directives.map((directive) =>
-		b.conditional(directive.expression, b.literal(directive.name), b.literal(''))
-	);
-
+function build_to_class(hash, class_directives, class_attribute) {
 	if (class_attribute === null) {
 		class_attribute = create_attribute('class', -1, -1, []);
 	}
 
-	const chunks = get_attribute_chunks(class_attribute.value);
-	const last = chunks.at(-1);
+	/** @type {ObjectExpression | undefined} */
+	let classes;
 
-	if (last?.type === 'Text') {
-		last.data += ' ';
-		last.raw += ' ';
-	} else if (last) {
-		chunks.push({
-			type: 'Text',
-			start: -1,
-			end: -1,
-			data: ' ',
-			raw: ' '
-		});
+	if (class_directives.length) {
+		classes = b.object(
+			class_directives.map((directive) =>
+				b.prop('init', b.literal(directive.name), directive.expression)
+			)
+		);
 	}
 
-	chunks.push({
+	/** @type {Expression} */
+	let class_name;
+
+	if (class_attribute.value === true) {
+		class_name = b.literal('');
+	} else if (Array.isArray(class_attribute.value)) {
+		if (class_attribute.value.length === 0) {
+			class_name = b.null;
+		} else {
+			class_name = class_attribute.value
+				.map((val) => (val.type === 'Text' ? b.literal(val.data) : val.expression))
+				.reduce((left, right) => b.binary('+', left, right));
+		}
+	} else {
+		class_name = class_attribute.value.expression;
+	}
+
+	/** @type {Expression} */
+	let expression;
+
+	if (
+		hash &&
+		!classes &&
+		class_name.type === 'Literal' &&
+		(class_name.value === null || class_name.value === '' || typeof class_name.value === 'string')
+	) {
+		if (class_name.value === null || class_name.value === '') {
+			expression = b.literal(hash);
+		} else {
+			expression = b.literal(escape_html(class_name.value, true) + ' ' + hash);
+		}
+	} else {
+		expression = b.call('$.to_class', class_name, b.literal(hash), classes);
+	}
+
+	class_attribute.value = {
 		type: 'ExpressionTag',
 		start: -1,
 		end: -1,
-		expression: b.call(
-			b.member(b.call(b.member(b.array(expressions), 'filter'), b.id('Boolean')), b.id('join')),
-			b.literal(' ')
-		),
+		expression: expression,
 		metadata: {
 			expression: create_expression_metadata()
 		}
-	});
+	};
 
-	class_attribute.value = chunks;
 	return class_attribute;
 }
 

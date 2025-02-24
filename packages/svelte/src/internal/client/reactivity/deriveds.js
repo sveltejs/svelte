@@ -18,8 +18,7 @@ import {
 	update_reaction,
 	increment_write_version,
 	set_active_effect,
-	handle_error,
-	flush_sync
+	handle_error
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -223,7 +222,7 @@ function get_derived_parent_effect(derived) {
  * @param {Derived} derived
  * @returns {T}
  */
-export function execute_derived(derived) {
+function execute_derived(derived) {
 	var value;
 	var prev_active_effect = active_effect;
 

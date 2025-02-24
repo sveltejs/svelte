@@ -214,14 +214,6 @@ export function CallExpression(node, context) {
 			break;
 	}
 
-	if (node.callee.type === 'Identifier') {
-		const binding = context.state.scope.get(node.callee.name);
-
-		if (binding !== null) {
-			binding.is_called = true;
-		}
-	}
-
 	// `$inspect(foo)` or `$derived(foo) should not trigger the `static-state-reference` warning
 	if (rune === '$derived') {
 		const expression = create_expression_metadata();

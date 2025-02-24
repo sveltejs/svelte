@@ -1,6 +1,6 @@
 /** @import { Effect, Source } from '#client' */
 import { DIRTY } from '../constants.js';
-import { flush_sync } from '../runtime.js';
+import { flushSync } from '../runtime.js';
 import { internal_set, mark_reactions } from './sources.js';
 
 /** @type {Set<Fork>} */
@@ -95,7 +95,7 @@ export class Fork {
 	 */
 	run(fn) {
 		active_fork = this;
-		flush_sync(fn);
+		flushSync(fn);
 	}
 
 	increment() {
