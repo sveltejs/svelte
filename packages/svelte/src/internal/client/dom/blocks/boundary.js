@@ -140,7 +140,7 @@ export class Boundary {
 				// the pending or main block was rendered for a given
 				// boundary, and hydrate accordingly
 				queueMicrotask(() => {
-					destroy_effect(/** @type {Effect} */ (this.#pending_effect));
+					// destroy_effect(/** @type {Effect} */ (this.#pending_effect));
 
 					this.#main_effect = this.#run(() => {
 						return branch(() => this.#children(this.#anchor));

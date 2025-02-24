@@ -105,6 +105,12 @@ export function async_derived(fn, location) {
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
 
+	var boundary = /** @type {Effect} */ (active_effect).b;
+
+	while (boundary !== null && !boundary.has_pending_snippet()) {
+		boundary = boundary.parent;
+	}
+
 	render_effect(() => {
 		if (DEV) from_async_derived = active_effect;
 		promise = fn();
@@ -115,8 +121,16 @@ export function async_derived(fn, location) {
 		var fork = active_fork;
 
 		if (should_suspend) {
-			// TODO if nearest pending boundary is not ready, attach to the boundary
-			fork?.increment();
+			if (fork !== null) {
+				fork.increment();
+			} else {
+				if (boundary === null) {
+					throw new Error('TODO');
+				}
+
+				// if nearest pending boundary is not ready, attach to the boundary
+				boundary.increment();
+			}
 		}
 
 		promise.then(
@@ -129,7 +143,15 @@ export function async_derived(fn, location) {
 				from_async_derived = null;
 
 				if (should_suspend) {
-					fork?.decrement();
+					if (fork !== null) {
+						fork.decrement();
+					} else {
+						if (boundary === null) {
+							throw new Error('TODO');
+						}
+
+						boundary.decrement();
+					}
 				}
 
 				if (fork !== null) {

@@ -26,6 +26,7 @@ export default test({
 		await Promise.resolve();
 		await Promise.resolve();
 		await Promise.resolve();
+		await Promise.resolve();
 		flushSync();
 		await tick();
 		assert.htmlEqual(target.innerHTML, '<p>42</p>');
