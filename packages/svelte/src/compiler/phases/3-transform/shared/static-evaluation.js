@@ -217,9 +217,9 @@ export function evaluate_static_expression(node, state, server) {
 		} else if (
 			//@ts-expect-error firefox has a non-standard recursion error
 			typeof globalThis['InternalError'] === 'function' &&
-            //@ts-expect-error
+			//@ts-expect-error
 			err instanceof globalThis['InternalError'] &&
-            //@ts-ignore
+			//@ts-ignore
 			err.message === 'too much recursion'
 		) {
 			return DYNAMIC;
