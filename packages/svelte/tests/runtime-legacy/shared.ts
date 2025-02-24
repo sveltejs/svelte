@@ -26,6 +26,20 @@ type Assert = typeof import('vitest').assert & {
 	): void;
 };
 
+// TODO remove this shim when we can
+// @ts-expect-error
+Promise.withResolvers = () => {
+	let resolve;
+	let reject;
+
+	const promise = new Promise((f, r) => {
+		resolve = f;
+		reject = r;
+	});
+
+	return { promise, resolve, reject };
+};
+
 export interface RuntimeTest<Props extends Record<string, any> = Record<string, any>>
 	extends BaseTest {
 	/** Use e.g. `mode: ['client']` to indicate that this test should never run in server/hydrate modes */

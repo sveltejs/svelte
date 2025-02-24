@@ -6,7 +6,7 @@ import { test } from '../../test';
 let d;
 
 export default test({
-	html: `<p>pending</p>`,
+	html: `<button>reset</button><button>true</button><button>false</button><p>pending</p>`,
 
 	get props() {
 		d = deferred();
@@ -16,21 +16,31 @@ export default test({
 		};
 	},
 
-	async test({ assert, target, component }) {
-		d.resolve(true);
+	async test({ assert, target }) {
+		const [reset, t, f] = target.querySelectorAll('button');
+
+		flushSync(() => t.click());
 		await Promise.resolve();
 		await Promise.resolve();
 		await tick();
 		flushSync();
-		assert.htmlEqual(target.innerHTML, '<h1>yes</h1>');
+		assert.htmlEqual(
+			target.innerHTML,
+			'<button>reset</button><button>true</button><button>false</button><h1>yes</h1>'
+		);
 
-		d = deferred();
-		component.promise = d.promise;
+		flushSync(() => reset.click());
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<h1>yes</h1>');
+		assert.htmlEqual(
+			target.innerHTML,
+			'<button>reset</button><button>true</button><button>false</button><h1>yes</h1>'
+		);
 
-		d.resolve(false);
+		flushSync(() => f.click());
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<h1>no</h1>');
+		assert.htmlEqual(
+			target.innerHTML,
+			'<button>reset</button><button>true</button><button>false</button><h1>no</h1>'
+		);
 	}
 });
