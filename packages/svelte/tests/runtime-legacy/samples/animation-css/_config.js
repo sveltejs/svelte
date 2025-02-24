@@ -47,6 +47,8 @@ export default test({
 			{ id: 1, name: 'a' }
 		];
 
+		raf.tick(0);
+
 		divs = target.querySelectorAll('div');
 		assert.ok(divs[0].getAnimations().length > 0);
 		assert.equal(divs[1].getAnimations().length, 0);
