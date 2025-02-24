@@ -139,7 +139,7 @@ export {
 	get,
 	safe_get,
 	invalidate_inner_signals,
-	flush_sync,
+	flushSync as flush,
 	tick,
 	untrack,
 	exclude_from_object,
