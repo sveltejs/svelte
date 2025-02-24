@@ -10,6 +10,10 @@ const forks = new Set();
 /** @type {Fork | null} */
 export let active_fork = null;
 
+export function remove_active_fork() {
+	active_fork = null;
+}
+
 let uid = 1;
 
 export class Fork {
@@ -122,8 +126,4 @@ export class Fork {
 
 		return active_fork;
 	}
-}
-
-export function remove_active_fork() {
-	active_fork = null;
 }

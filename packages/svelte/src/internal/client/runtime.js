@@ -696,15 +696,6 @@ function flush_queued_root_effects() {
 			}
 		}
 	} finally {
-		// TODO this doesn't seem quite right — may run into
-		// interesting cases where there are multiple roots.
-		// it'll do for now though
-		if (fork.settled()) {
-			fork.remove();
-		}
-
-		remove_active_fork();
-
 		is_flushing = false;
 
 		last_scheduled_effect = null;
@@ -759,7 +750,18 @@ function flush_queued_effects(effects) {
 export function schedule_effect(signal) {
 	if (!is_flushing) {
 		is_flushing = true;
-		queueMicrotask(flush_queued_root_effects);
+		queueMicrotask(() => {
+			flush_queued_root_effects();
+
+			// TODO this doesn't seem quite right — may run into
+			// interesting cases where there are multiple roots.
+			// it'll do for now though
+			if (active_fork?.settled()) {
+				active_fork.remove();
+			}
+
+			remove_active_fork();
+		});
 	}
 
 	var effect = (last_scheduled_effect = signal);
@@ -894,6 +896,15 @@ export function flushSync(fn) {
 		flush_queued_root_effects();
 		flush_tasks();
 	}
+
+	// TODO this doesn't seem quite right — may run into
+	// interesting cases where there are multiple roots.
+	// it'll do for now though
+	if (active_fork?.settled()) {
+		active_fork.remove();
+	}
+
+	remove_active_fork();
 
 	return /** @type {T} */ (result);
 }
