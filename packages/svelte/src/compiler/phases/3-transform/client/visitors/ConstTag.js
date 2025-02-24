@@ -1,4 +1,4 @@
-/** @import { Expression, Pattern, Identifier } from 'estree' */
+/** @import { Expression, Pattern } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
@@ -12,16 +12,12 @@ import { get_value } from './shared/declarations.js';
  * @param {ComponentContext} context
  */
 export function ConstTag(node, context) {
-	/** @type {Identifier} */
-	let id;
-
 	const declaration = node.declaration.declarations[0];
 	// TODO we can almost certainly share some code with $derived(...)
 	if (declaration.id.type === 'Identifier') {
-		id = declaration.id;
 		context.state.init.push(
 			b.const(
-				id,
+				declaration.id,
 				create_derived(
 					context.state,
 					b.thunk(/** @type {Expression} */ (context.visit(declaration.init)))
@@ -29,12 +25,16 @@ export function ConstTag(node, context) {
 			)
 		);
 
-		context.state.transform[id.name] = { read: get_value };
+		context.state.transform[declaration.id.name] = { read: get_value };
 
-		id = declaration.id;
+		// we need to eagerly evaluate the expression in order to hit any
+		// 'Cannot access x before initialization' errors
+		if (dev) {
+			context.state.init.push(b.stmt(b.call('$.get', declaration.id)));
+		}
 	} else {
 		const identifiers = extract_identifiers(declaration.id);
-		id = b.id(context.state.scope.generate('computed_const'));
+		const tmp = b.id(context.state.scope.generate('computed_const'));
 
 		const transform = { ...context.state.transform };
 
@@ -59,26 +59,18 @@ export function ConstTag(node, context) {
 			])
 		);
 
-		context.state.init.push(b.const(id, create_derived(context.state, fn)));
+		context.state.init.push(b.const(tmp, create_derived(context.state, fn)));
+
+		// we need to eagerly evaluate the expression in order to hit any
+		// 'Cannot access x before initialization' errors
+		if (dev) {
+			context.state.init.push(b.stmt(b.call('$.get', tmp)));
+		}
 
 		for (const node of identifiers) {
 			context.state.transform[node.name] = {
-				read: (node) => b.member(b.call('$.get', id), node)
+				read: (node) => b.member(b.call('$.get', tmp), node)
 			};
-		}
-	}
-
-	// we need to eagerly evaluate the expression in order to hit any
-	// 'Cannot access x before initialization' errors
-	if (dev) {
-		const parent = context.path.at(-1);
-		const boundary = parent?.type === 'SvelteBoundary' ? parent : null;
-		const statement = b.stmt(b.call('$.get', id));
-		if (boundary) {
-			boundary.const_dev_statements ||= [];
-			boundary.const_dev_statements.push(statement);
-		} else {
-			context.state.init.push(statement);
 		}
 	}
 }
