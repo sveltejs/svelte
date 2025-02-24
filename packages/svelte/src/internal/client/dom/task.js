@@ -15,13 +15,13 @@ let micro_tasks = [];
 /** @type {Array<() => void>} */
 let idle_tasks = [];
 
-export function flush_boundary_micro_tasks() {
+function run_boundary_micro_tasks() {
 	var tasks = boundary_micro_tasks;
 	boundary_micro_tasks = [];
 	run_all(tasks);
 }
 
-export function flush_post_micro_tasks() {
+function run_post_micro_tasks() {
 	var tasks = micro_tasks;
 	micro_tasks = [];
 	run_all(tasks);
@@ -33,9 +33,9 @@ export function run_idle_tasks() {
 	run_all(tasks);
 }
 
-function run_micro_tasks() {
-	flush_boundary_micro_tasks();
-	flush_post_micro_tasks();
+export function run_micro_tasks() {
+	run_boundary_micro_tasks();
+	run_post_micro_tasks();
 }
 
 /**
