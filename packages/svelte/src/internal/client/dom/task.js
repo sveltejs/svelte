@@ -36,21 +36,18 @@ export function run_idle_tasks() {
 }
 
 function flush_all_micro_tasks() {
-	if (is_micro_task_queued) {
-		is_micro_task_queued = false;
-		flush_boundary_micro_tasks();
-		flush_post_micro_tasks();
-	}
+	flush_boundary_micro_tasks();
+	flush_post_micro_tasks();
 }
 
 /**
  * @param {() => void} fn
  */
 export function queue_boundary_micro_task(fn) {
-	if (!is_micro_task_queued) {
-		is_micro_task_queued = true;
+	if (queued_boundary_microtasks.length === 0 && micro_tasks.length === 0) {
 		queueMicrotask(flush_all_micro_tasks);
 	}
+
 	queued_boundary_microtasks.push(fn);
 }
 
@@ -58,10 +55,10 @@ export function queue_boundary_micro_task(fn) {
  * @param {() => void} fn
  */
 export function queue_micro_task(fn) {
-	if (!is_micro_task_queued) {
-		is_micro_task_queued = true;
+	if (queued_boundary_microtasks.length === 0 && micro_tasks.length === 0) {
 		queueMicrotask(flush_all_micro_tasks);
 	}
+
 	micro_tasks.push(fn);
 }
 
