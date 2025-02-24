@@ -72,6 +72,29 @@ When the attribute name and value match (`name={name}`), they can be replaced wi
 -->
 ```
 
+When passing null or undefined to an attribute, the attribute is omitted from the rendered HTML.
+
+```svelte
+<script>
+	let someId = undefined;
+	let someClass = null;
+</script>
+
+<div id={someId} class={someClass}>Attributes are not included.</div>
+<!-- The 'id' and 'class' attributes won't be included in the rendered HTML -->
+```
+
+If an empty string ("") is assigned to an attribute, the attribute remains in the HTML but with an empty value.
+
+```svelte
+<script>
+	let emptyClass = ""
+</script>
+
+<div class={emptyClass}>Hello</div>
+<!-- This will render as: <div class="">Hello</div> -->
+```
+
 ## Component props
 
 By convention, values passed to components are referred to as _properties_ or _props_ rather than _attributes_, which are a feature of the DOM.
@@ -152,6 +175,43 @@ A JavaScript expression can be included as text by surrounding it with curly bra
 
 ```svelte
 {expression}
+```
+
+When using {expression} inside markup, Svelte automatically converts the value to a string before rendering it and makes the expression reactive (similar to wrapping it in $derived). The conversion follows JavaScript's standard behavior:
+
+- Primitive values (numbers, booleans, strings) are directly converted to strings.
+- Objects are converted based on JavaScript’s type coercion rules:
+
+  - If an object defines a [Symbol.toPrimitive()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/toPrimitive) method, it takes precedence and determines how the object is converted.
+  - Otherwise, if a [toString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/toString) method is present, it is called. If not overridden, it defaults to "[object Object]".
+  - If toString() is not available or does not return a primitive, JavaScript may fall back to [valueOf()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/valueOf), which may be used if it returns a primitive value.
+  - Additionally, an object with a [Symbol.toStringTag()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/toStringTag) property affects how it is represented when coerced to a string.
+
+- undefined and null are treated as empty strings ("").
+- Expressions using runes ($state, $derived, etc.) maintain their specific reactive behavior.
+
+```svelte
+	let emptyStr = "";
+	let num = 1;
+	let bool = false;
+	let obj1 = { key: "value" };
+	let obj2 = { toString: () => "str" };
+	let obj3 = { [Symbol.toPrimitive]: () => "primitive" };
+	let obj4 = { valueOf: () => 42, toString: () => "str" };
+	let obj5 = { [Symbol.toStringTag]: "CustomObject" };
+	let empty = undefined;
+	let nul = null;
+
+<p>{emptyStr}</p>	<!-- Renders as: <p></p> -->
+<p>{num}</p>   		<!-- Renders as: <p>1</p> -->
+<p>{bool}</p>  		<!-- Renders as: <p>false</p> -->
+<p>{obj1}</p>   	<!-- Renders as: <p>[object Object]</p> -->
+<p>{obj2}</p> 		<!-- Renders as: <p>str</p> -->
+<p>{obj3}</p> 		<!-- Renders as: <p>primitive</p> -->
+<p>{obj4}</p> 		<!-- Renders as: <p>str</p> (toString takes precedence) -->
+<p>{obj5}</p> 		<!-- Renders as: <p>[object CustomObject]</p> -->
+<p>{empty}</p> 		<!-- Renders as: <p></p> (empty string) -->
+<p>{nul}</p> 		<!-- Renders as: <p></p> -->
 ```
 
 Curly braces can be included in a Svelte template by using their [HTML entity](https://developer.mozilla.org/docs/Glossary/Entity) strings: `&lbrace;`, `&lcub;`, or `&#123;` for `{` and `&rbrace;`, `&rcub;`, or `&#125;` for `}`.
