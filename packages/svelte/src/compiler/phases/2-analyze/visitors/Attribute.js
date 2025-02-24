@@ -162,7 +162,7 @@ function get_delegated_event(event_name, handler, context) {
 			return unhoisted;
 		}
 
-		if (binding !== null && binding.initial !== null && !binding.updated && !binding.is_called) {
+		if (binding !== null && binding.initial !== null && !binding.updated) {
 			const binding_type = binding.initial.type;
 
 			if (

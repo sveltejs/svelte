@@ -57,7 +57,6 @@ export class Binding {
 	 */
 	metadata = null;
 
-	is_called = false;
 	mutated = false;
 	reassigned = false;
 
