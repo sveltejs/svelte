@@ -862,6 +862,7 @@ function process_effects(effect, fork) {
 	}
 
 	if (async_effects.length === 0 && fork.settled()) {
+		fork.commit();
 		flush_queued_effects(render_effects);
 		flush_queued_effects(effects);
 	}

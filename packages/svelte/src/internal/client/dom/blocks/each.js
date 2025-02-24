@@ -39,6 +39,7 @@ import { queue_micro_task } from '../task.js';
 import { active_effect, get } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
+import { active_fork } from '../../reactivity/forks.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -267,7 +268,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				fallback = branch(() => fallback_fn(anchor));
 			}
 		} else {
-			if (boundary !== null && should_defer_append()) {
+			if (active_fork !== null && should_defer_append()) {
 				for (i = 0; i < length; i += 1) {
 					value = array[i];
 					key = get_key(value, i);
@@ -298,7 +299,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					}
 				}
 
-				boundary?.add_callback(commit);
+				active_fork?.add_callback(commit);
 			} else {
 				commit();
 			}

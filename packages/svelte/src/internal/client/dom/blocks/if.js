@@ -12,6 +12,7 @@ import { block, branch, pause_effect, resume_effect } from '../../reactivity/eff
 import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
 import { create_text, should_defer_append } from '../operations.js';
 import { active_effect } from '../../runtime.js';
+import { active_fork } from '../../reactivity/forks.js';
 
 /**
  * @param {TemplateNode} node
@@ -109,7 +110,7 @@ export function if_block(node, fn, elseif = false) {
 			}
 		}
 
-		var defer = boundary !== null && should_defer_append();
+		var defer = active_fork !== null && should_defer_append();
 		var target = anchor;
 
 		if (defer) {
@@ -122,7 +123,7 @@ export function if_block(node, fn, elseif = false) {
 		}
 
 		if (defer) {
-			boundary?.add_callback(commit);
+			active_fork?.add_callback(commit);
 			target.remove();
 		} else {
 			commit();

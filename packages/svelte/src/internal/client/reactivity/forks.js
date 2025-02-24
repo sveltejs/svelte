@@ -28,6 +28,9 @@ export class Fork {
 	/** @type {Set<Effect>} */
 	skipped_effects = new Set();
 
+	/** @type {Set<() => void>} */
+	#callbacks = new Set();
+
 	#pending = 0;
 
 	apply() {
@@ -116,6 +119,17 @@ export class Fork {
 
 	settled() {
 		return this.#pending === 0;
+	}
+
+	/** @param {() => void} fn */
+	add_callback(fn) {
+		this.#callbacks.add(fn);
+	}
+
+	commit() {
+		for (const fn of this.#callbacks) {
+			fn();
+		}
 	}
 
 	static ensure() {

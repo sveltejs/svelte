@@ -79,15 +79,6 @@ export class Boundary {
 	/** @type {Effect} */
 	#effect;
 
-	/** @type {Set<() => void>} */
-	#callbacks = new Set();
-
-	/** @type {Effect[]} */
-	#render_effects = [];
-
-	/** @type {Effect[]} */
-	#effects = [];
-
 	/** @type {Effect | null} */
 	#main_effect = null;
 
@@ -230,35 +221,12 @@ export class Boundary {
 		}
 	}
 
-	/** @param {() => void} fn */
-	add_callback(fn) {
-		this.#callbacks.add(fn);
-	}
-
-	/** @param {Effect} effect */
-	add_effect(effect) {
-		((effect.f & RENDER_EFFECT) !== 0 ? this.#render_effects : this.#effects).push(effect);
-	}
-
 	commit() {
 		if (this.#keep_pending_snippet || this.#pending_count > 0) {
 			return;
 		}
 
 		this.suspended = false;
-
-		for (const e of this.#render_effects) {
-			try {
-				if (check_dirtiness(e)) {
-					update_effect(e);
-				}
-			} catch (error) {
-				handle_error(error, e, null, e.ctx);
-			}
-		}
-
-		for (const fn of this.#callbacks) fn();
-		this.#callbacks.clear();
 
 		if (this.#pending_effect) {
 			pause_effect(this.#pending_effect, () => {
@@ -269,16 +237,6 @@ export class Boundary {
 		if (this.#offscreen_fragment) {
 			this.#anchor.before(this.#offscreen_fragment);
 			this.#offscreen_fragment = null;
-		}
-
-		for (const e of this.#effects) {
-			try {
-				if (check_dirtiness(e)) {
-					update_effect(e);
-				}
-			} catch (error) {
-				handle_error(error, e, null, e.ctx);
-			}
 		}
 	}
 
