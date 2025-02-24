@@ -692,10 +692,7 @@ function flush_queued_root_effects() {
 					root.f ^= CLEAN;
 				}
 
-				var collected_effects = process_effects(root);
-				if (active_fork.settled()) {
-					flush_queued_effects(collected_effects);
-				}
+				process_effects(root, active_fork);
 			}
 		}
 	} finally {
@@ -787,9 +784,9 @@ export function schedule_effect(signal) {
  * effects to be flushed.
  *
  * @param {Effect} effect
- * @returns {Effect[]}
+ * @param {Fork} fork
  */
-function process_effects(effect) {
+function process_effects(effect, fork) {
 	var current_effect = effect.first;
 
 	/** @type {Effect[]} */
@@ -852,7 +849,10 @@ function process_effects(effect) {
 		current_effect = sibling;
 	}
 
-	return [...render_effects, ...effects];
+	if (fork.settled()) {
+		flush_queued_effects(render_effects);
+		flush_queued_effects(effects);
+	}
 }
 
 /**
