@@ -312,7 +312,7 @@ export function client_component(analysis, options) {
 
 			const setter = b.set(key, [
 				b.stmt(b.call(b.id(name), b.id('$$value'))),
-				b.stmt(b.call('$.flush_sync'))
+				b.stmt(b.call('$.flush'))
 			]);
 
 			if (analysis.runes && binding.initial) {

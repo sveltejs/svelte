@@ -25,6 +25,7 @@ export function ConstTag(node, context) {
 			grand_parent?.type !== 'AwaitBlock' &&
 			grand_parent?.type !== 'SnippetBlock' &&
 			grand_parent?.type !== 'SvelteBoundary' &&
+			grand_parent?.type !== 'KeyBlock' &&
 			((grand_parent?.type !== 'RegularElement' && grand_parent?.type !== 'SvelteElement') ||
 				!grand_parent.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')))
 	) {

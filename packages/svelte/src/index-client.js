@@ -1,7 +1,7 @@
 /** @import { ComponentContext, ComponentContextLegacy } from '#client' */
 /** @import { EventDispatcher } from './index.js' */
 /** @import { NotFunction } from './internal/types.js' */
-import { flush_sync, untrack } from './internal/client/runtime.js';
+import { untrack } from './internal/client/runtime.js';
 import { is_array } from './internal/shared/utils.js';
 import { user_effect } from './internal/client/index.js';
 import * as e from './internal/client/errors.js';
@@ -206,15 +206,7 @@ function init_update_callbacks(context) {
 	return (l.u ??= { a: [], b: [], m: [] });
 }
 
-/**
- * Synchronously flushes any pending state changes and those that result from it.
- * @param {() => void} [fn]
- * @returns {void}
- */
-export function flushSync(fn) {
-	flush_sync(fn);
-}
-
+export { flushSync } from './internal/client/runtime.js';
 export { getContext, getAllContexts, hasContext, setContext } from './internal/client/context.js';
 export { hydrate, mount, unmount } from './internal/client/render.js';
 export { tick, untrack } from './internal/client/runtime.js';
