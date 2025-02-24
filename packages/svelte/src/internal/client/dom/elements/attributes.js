@@ -14,6 +14,10 @@ import {
 	set_active_reaction
 } from '../../runtime.js';
 import { clsx } from '../../../shared/attributes.js';
+import { set_class } from './class.js';
+
+export const CLASS = Symbol('class');
+export const STYLE = Symbol('style');
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -254,8 +258,8 @@ export function set_custom_element_data(node, prop, value) {
 /**
  * Spreads attributes onto a DOM element, taking into account the currently set attributes
  * @param {Element & ElementCSSInlineStyle} element
- * @param {Record<string, any> | undefined} prev
- * @param {Record<string, any>} next New attributes - this function mutates this object
+ * @param {Record<string | symbol, any> | undefined} prev
+ * @param {Record<string | symbol, any>} next New attributes - this function mutates this object
  * @param {string} [css_hash]
  * @param {boolean} [preserve_attribute_case]
  * @param {boolean} [is_custom_element]
@@ -289,10 +293,8 @@ export function set_attributes(
 
 	if (next.class) {
 		next.class = clsx(next.class);
-	}
-
-	if (css_hash !== undefined) {
-		next.class = next.class ? next.class + ' ' + css_hash : css_hash;
+	} else if (css_hash || next[CLASS]) {
+		next.class = null; /* force call to set_class() */
 	}
 
 	var setters = get_setters(element);
@@ -325,7 +327,7 @@ export function set_attributes(
 		}
 
 		var prev_value = current[key];
-		if (value === prev_value) continue;
+		if (value === prev_value && key !== 'class') continue;
 
 		current[key] = value;
 
@@ -375,6 +377,9 @@ export function set_attributes(
 				// @ts-ignore
 				element[`__${event_name}`] = undefined;
 			}
+		} else if (key === 'class') {
+			var is_html = element.namespaceURI === 'http://www.w3.org/1999/xhtml';
+			set_class(element, is_html, value, css_hash, prev?.[CLASS], next[CLASS]);
 		} else if (key === 'style' && value != null) {
 			element.style.cssText = value + '';
 		} else if (key === 'autofocus') {

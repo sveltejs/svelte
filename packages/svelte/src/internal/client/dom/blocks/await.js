@@ -3,7 +3,7 @@ import { DEV } from 'esm-env';
 import { is_promise } from '../../../shared/utils.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { internal_set, mutable_source, source } from '../../reactivity/sources.js';
-import { flush_sync, set_active_effect, set_active_reaction } from '../../runtime.js';
+import { flushSync, set_active_effect, set_active_reaction } from '../../runtime.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
 import { UNINITIALIZED } from '../../../../constants.js';
@@ -105,7 +105,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 
 				// without this, the DOM does not update until two ticks after the promise
 				// resolves, which is unexpected behaviour (and somewhat irksome to test)
-				flush_sync();
+				flushSync();
 			}
 		}
 	}

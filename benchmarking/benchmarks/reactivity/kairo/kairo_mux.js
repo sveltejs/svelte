@@ -22,13 +22,13 @@ function setup() {
 		destroy,
 		run() {
 			for (let i = 0; i < 10; i++) {
-				$.flush_sync(() => {
+				$.flush(() => {
 					$.set(heads[i], i);
 				});
 				assert($.get(splited[i]) === i + 1);
 			}
 			for (let i = 0; i < 10; i++) {
-				$.flush_sync(() => {
+				$.flush(() => {
 					$.set(heads[i], i * 2);
 				});
 				assert($.get(splited[i]) === i * 2 + 1);
