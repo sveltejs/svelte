@@ -1,6 +1,6 @@
 import * as $ from 'svelte/internal/server';
 
-export default function App($$payload) {
+export default function Static_template_expression_evaluation($$payload) {
 	let a = 1;
 	let b = 2;
 	let name = 'world';

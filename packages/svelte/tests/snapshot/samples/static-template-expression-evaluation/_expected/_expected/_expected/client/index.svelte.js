@@ -4,7 +4,7 @@ import * as $ from 'svelte/internal/client';
 var on_click = (_, count) => $.update(count);
 var root = $.template(`<h1></h1> <p></p> <button> </button> <p></p> <p></p> <p></p> <!>`, 1);
 
-export default function App($$anchor) {
+export default function Static_template_expression_evaluation($$anchor) {
 	let a = 1;
 	let b = 2;
 	let name = 'world';
