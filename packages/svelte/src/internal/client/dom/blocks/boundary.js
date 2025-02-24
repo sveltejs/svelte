@@ -1,11 +1,6 @@
 /** @import { Effect, TemplateNode, } from '#client' */
 
-import {
-	BOUNDARY_EFFECT,
-	EFFECT_PRESERVED,
-	EFFECT_TRANSPARENT,
-	RENDER_EFFECT
-} from '../../constants.js';
+import { BOUNDARY_EFFECT, EFFECT_PRESERVED, EFFECT_TRANSPARENT } from '../../constants.js';
 import { component_context, set_component_context } from '../../context.js';
 import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
 import {
@@ -14,10 +9,7 @@ import {
 	handle_error,
 	set_active_effect,
 	set_active_reaction,
-	reset_is_throwing_error,
-	schedule_effect,
-	check_dirtiness,
-	update_effect
+	reset_is_throwing_error
 } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -32,16 +24,12 @@ import { queue_boundary_micro_task } from '../task.js';
 import * as e from '../../../shared/errors.js';
 import { DEV } from 'esm-env';
 import { from_async_derived, set_from_async_derived } from '../../reactivity/deriveds.js';
-import { raf } from '../../timing.js';
-import { loop } from '../../loop.js';
 
 /**
  * @typedef {{
  * 	 onerror?: (error: unknown, reset: () => void) => void;
  *   failed?: (anchor: Node, error: () => unknown, reset: () => () => void) => void;
  *   pending?: (anchor: Node) => void;
- *   showPendingAfter?: number;
- *   showPendingFor?: number;
  * }} BoundaryProps
  */
 
@@ -58,7 +46,6 @@ export function boundary(node, props, children) {
 }
 
 export class Boundary {
-	suspended = false;
 	inert = false;
 
 	/** @type {Boundary | null} */
@@ -92,7 +79,6 @@ export class Boundary {
 	#offscreen_fragment = null;
 
 	#pending_count = 0;
-	#keep_pending_snippet = false; // TODO get rid of this
 	#is_creating_fallback = false;
 
 	/**
@@ -141,8 +127,7 @@ export class Boundary {
 				this.#main_effect = branch(() => children(this.#anchor));
 
 				if (this.#pending_count > 0) {
-					this.suspended = true;
-					this.#show_pending_snippet(true);
+					this.#show_pending_snippet();
 				}
 			}
 
@@ -181,10 +166,7 @@ export class Boundary {
 		}
 	}
 
-	/**
-	 * @param {boolean} initial
-	 */
-	#show_pending_snippet(initial) {
+	#show_pending_snippet() {
 		const pending = this.#props.pending;
 
 		if (pending !== undefined) {
@@ -197,23 +179,6 @@ export class Boundary {
 			if (this.#pending_effect === null) {
 				this.#pending_effect = branch(() => pending(this.#anchor));
 			}
-
-			// TODO do we want to differentiate between initial render and updates here?
-			if (!initial) {
-				this.#keep_pending_snippet = true;
-
-				var end = raf.now() + (this.#props.showPendingFor ?? 300);
-
-				loop((now) => {
-					if (now >= end) {
-						this.#keep_pending_snippet = false;
-						this.commit();
-						return false;
-					}
-
-					return true;
-				});
-			}
 		} else if (this.parent) {
 			throw new Error('TODO show pending snippet on parent');
 		} else {
@@ -222,12 +187,6 @@ export class Boundary {
 	}
 
 	commit() {
-		if (this.#keep_pending_snippet || this.#pending_count > 0) {
-			return;
-		}
-
-		this.suspended = false;
-
 		if (this.#pending_effect) {
 			pause_effect(this.#pending_effect, () => {
 				this.#pending_effect = null;
@@ -241,25 +200,11 @@ export class Boundary {
 	}
 
 	increment() {
-		// post-init, show the pending snippet after a timeout
-		if (!this.suspended && this.ran) {
-			var start = raf.now();
-			var end = start + (this.#props.showPendingAfter ?? 500);
-
-			loop((now) => {
-				if (this.#pending_count === 0) return false;
-				if (now < end) return true;
-
-				this.#show_pending_snippet(false);
-			});
-		}
-
-		this.suspended = true;
 		this.#pending_count++;
 	}
 
 	decrement() {
-		if (--this.#pending_count === 0 && !this.#keep_pending_snippet) {
+		if (--this.#pending_count === 0) {
 			this.commit();
 
 			if (this.#main_effect !== null) {
@@ -276,7 +221,6 @@ export class Boundary {
 
 		const reset = () => {
 			this.#pending_count = 0;
-			this.suspended = false;
 
 			if (this.#failed_effect !== null) {
 				pause_effect(this.#failed_effect, () => {
@@ -295,8 +239,7 @@ export class Boundary {
 			});
 
 			if (this.#pending_count > 0) {
-				this.suspended = true;
-				this.#show_pending_snippet(true);
+				this.#show_pending_snippet();
 			}
 		};
 
