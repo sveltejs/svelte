@@ -7,7 +7,7 @@ const request_idle_callback =
 		: requestIdleCallback;
 
 /** @type {Array<() => void>} */
-let queued_boundary_microtasks = [];
+let boundary_micro_tasks = [];
 
 /** @type {Array<() => void>} */
 let micro_tasks = [];
@@ -16,13 +16,13 @@ let micro_tasks = [];
 let idle_tasks = [];
 
 export function flush_boundary_micro_tasks() {
-	const tasks = queued_boundary_microtasks.slice();
-	queued_boundary_microtasks = [];
+	var tasks = boundary_micro_tasks;
+	boundary_micro_tasks = [];
 	run_all(tasks);
 }
 
 export function flush_post_micro_tasks() {
-	const tasks = micro_tasks.slice();
+	var tasks = micro_tasks;
 	micro_tasks = [];
 	run_all(tasks);
 }
@@ -42,18 +42,18 @@ function run_micro_tasks() {
  * @param {() => void} fn
  */
 export function queue_boundary_micro_task(fn) {
-	if (queued_boundary_microtasks.length === 0 && micro_tasks.length === 0) {
+	if (boundary_micro_tasks.length === 0 && micro_tasks.length === 0) {
 		queueMicrotask(run_micro_tasks);
 	}
 
-	queued_boundary_microtasks.push(fn);
+	boundary_micro_tasks.push(fn);
 }
 
 /**
  * @param {() => void} fn
  */
 export function queue_micro_task(fn) {
-	if (queued_boundary_microtasks.length === 0 && micro_tasks.length === 0) {
+	if (boundary_micro_tasks.length === 0 && micro_tasks.length === 0) {
 		queueMicrotask(run_micro_tasks);
 	}
 
