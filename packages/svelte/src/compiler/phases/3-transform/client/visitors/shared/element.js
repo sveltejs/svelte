@@ -6,12 +6,8 @@ import { is_ignored } from '../../../../../state.js';
 import { is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { build_getter } from '../../utils.js';
-import {
-	build_template_chunk,
-	get_expression_id,
-	DYNAMIC,
-	evaluate_static_expression
-} from './utils.js';
+import { build_template_chunk, get_expression_id } from './utils.js';
+import { evaluate_static_expression, DYNAMIC } from '../../../shared/static-evaluation.js';
 
 /**
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
