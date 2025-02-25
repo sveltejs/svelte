@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import { setImmediate } from 'node:timers/promises';
-import glob from 'tiny-glob/sync.js';
+import { globSync } from 'tinyglobby';
 import { createClassComponent } from 'svelte/legacy';
 import { proxy } from 'svelte/internal/client';
 import { flushSync, hydrate, mount, unmount } from 'svelte';
@@ -257,7 +257,7 @@ async function run_test_variant(
 		raf.reset();
 
 		// Put things we need on window for testing
-		const styles = glob('**/*.css', { cwd: `${cwd}/_output/client` })
+		const styles = globSync('**/*.css', { cwd: `${cwd}/_output/client` })
 			.map((file) => fs.readFileSync(`${cwd}/_output/client/${file}`, 'utf-8'))
 			.join('\n')
 			.replace(/\/\*<\/?style>\*\//g, '');
