@@ -368,9 +368,10 @@ function build_element_spread_attributes(
 		})
 	);
 
-	const css_hash = context.state.analysis.css.hash
-		? b.literal(context.state.analysis.css.hash)
-		: b.null;
+	const css_hash =
+		element.metadata.scoped && context.state.analysis.css.hash
+			? b.literal(context.state.analysis.css.hash)
+			: b.null;
 
 	const args = [object, css_hash, classes, styles, flags ? b.literal(flags) : undefined];
 	context.state.template.push(b.call('$.spread_attributes', ...args));
