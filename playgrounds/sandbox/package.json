@@ -17,7 +17,7 @@
     "@sveltejs/vite-plugin-svelte": "^4.0.0-next.6",
     "polka": "^1.0.0-next.25",
     "svelte": "workspace:*",
-    "tiny-glob": "^0.2.9",
+    "tinyglobby": "^0.2.12",
     "vite": "^5.4.14",
     "vite-plugin-inspect": "^0.8.4"
   }
