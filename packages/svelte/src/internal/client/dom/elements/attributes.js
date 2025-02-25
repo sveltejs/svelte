@@ -326,8 +326,16 @@ export function set_attributes(
 			continue;
 		}
 
+		if (key === 'class') {
+			var is_html = element.namespaceURI === 'http://www.w3.org/1999/xhtml';
+			set_class(element, is_html, value, css_hash, prev?.[CLASS], next[CLASS]);
+			current[key] = value;
+			current[CLASS] = next[CLASS];
+			continue;
+		}
+
 		var prev_value = current[key];
-		if (value === prev_value && key !== 'class') continue;
+		if (value === prev_value) continue;
 
 		current[key] = value;
 
@@ -377,9 +385,6 @@ export function set_attributes(
 				// @ts-ignore
 				element[`__${event_name}`] = undefined;
 			}
-		} else if (key === 'class') {
-			var is_html = element.namespaceURI === 'http://www.w3.org/1999/xhtml';
-			set_class(element, is_html, value, css_hash, prev?.[CLASS], next[CLASS]);
 		} else if (key === 'style' && value != null) {
 			element.style.cssText = value + '';
 		} else if (key === 'autofocus') {
