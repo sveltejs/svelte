@@ -70,7 +70,7 @@ export async function compile_directory(
 
 	fs.rmSync(output_dir, { recursive: true, force: true });
 
-	for (let file of globSync('**', { cwd, filesOnly: true })) {
+	for (let file of globSync('**', { cwd, onlyFiles: true })) {
 		if (file.startsWith('_')) continue;
 
 		let text = fs.readFileSync(`${cwd}/${file}`, 'utf-8').replace(/\r\n/g, '\n');
