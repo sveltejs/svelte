@@ -342,7 +342,6 @@ export function template_effect(fn, sync = [], async = [], d = derived) {
 
 	if (async.length > 0) {
 		var restore = capture();
-		var unsuspend = suspend();
 
 		Promise.all(async.map((expression) => async_derived(expression))).then((result) => {
 			restore();
@@ -352,8 +351,6 @@ export function template_effect(fn, sync = [], async = [], d = derived) {
 			}
 
 			create_template_effect(fn, [...sync.map(d), ...result]);
-
-			unsuspend();
 		});
 	} else {
 		create_template_effect(fn, sync.map(d));
