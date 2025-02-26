@@ -2,7 +2,7 @@
 /** @import { Node } from 'acorn' */
 import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
-import { tsPlugin } from 'acorn-typescript';
+import { tsPlugin } from '@sveltejs/acorn-typescript';
 import { locator } from '../../state.js';
 
 const ParserWithTS = acorn.Parser.extend(tsPlugin({ allowSatisfies: true }));
