@@ -553,7 +553,7 @@ export function props_id(payload) {
 }
 
 /**
- * <svelte:boundary>
+ * <svelte:boundary> for server-side
  * @param {Payload} payload
  * @param {(payload:Payload) => void} body
  * @param {(payload:Payload, err: any) => void} [failed]

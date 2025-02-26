@@ -20,6 +20,8 @@ export function SvelteBoundary(node, context) {
 	/** @type {AST.ConstTag[]} */
 	let const_tags = [];
 
+	/** @type {Statement[]} */
+	const init_body = [];
 	const nodes = [];
 
 	const payload = b.id('$$payload'); // correct ?
@@ -60,20 +62,60 @@ export function SvelteBoundary(node, context) {
 	}
 
 	if (snippet && has_const_referenced(context, snippet, const_tags)) {
+		const const_values = b.id(context.state.scope.generate('const_values'));
+		statements.push(b.declaration('const', [b.declarator(const_values, b.object([]))]));
 		for (const tag of const_tags) {
-			/** @type {Statement[]} */
-			const init = [];
-			context.visit(tag, { ...context.state, init });
-			statements.push(...init);
+			const identifiers = extract_identifiers(tag.declaration.declarations[0].id);
+
+			statements.push(
+				b.declaration(
+					'let',
+					identifiers.map((id) => b.declarator(id))
+				)
+			);
+			for (const id of identifiers) {
+				statements.push(b.stmt(b.call('console.log', id)));
+			}
+
+			context.visit(tag, { ...context.state, init: init_body });
+			for (const id of identifiers) {
+				init_body.push(b.stmt(b.assignment('=', const_values, id)));
+				init_body.push(b.stmt(b.call('console.log', const_values)));
+			}
+
+			// statements.push(b.declaration('const', [b.declarator(tmp, b.arrow([], b.block(init)))]));
+
+			// nodes.unshift(b.declaration('let', [b.declarator(b.array_pattern(identifiers), tmp)]));
+			// // b.declaration('let', [b.declarator(b.array_pattern(identifiers), tmp)]);
+
+			// const c = server_const(() => {
+			// 	const { t, x } = { x: name, y: 'x' };
+			// 	if (true) {
+			// 		throw new Error('badaboum');
+			// 	}
+			// 	return { t, x };
+			// });
+
+			///** @type {Statement[]} */
+			//const init = [];
+			//context.visit(tag, { ...context.state, init });
+			//statements.push(...init);
 		}
 	} else if (const_tags.length) {
 		nodes.unshift(...const_tags);
 	}
 
-	const body = b.arrow(
-		[b.id('$$payload')],
-		/** @type {BlockStatement} */ (context.visit({ ...node.fragment, nodes }))
-	);
+	if (init_body.length) {
+		//nodes.unshift(...init_body);
+	}
+
+	const body_block = /** @type {BlockStatement} */ (context.visit({ ...node.fragment, nodes }));
+
+	if (init_body.length) {
+		body_block.body.unshift(...init_body);
+	}
+
+	const body = b.arrow([b.id('$$payload')], body_block);
 
 	statements.push(b.stmt(b.call('$.boundary', payload, body, failed)));
 
