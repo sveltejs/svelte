@@ -666,12 +666,6 @@ function infinite_loop_guard() {
 }
 
 function flush_queued_root_effects() {
-	if (active_fork === null) {
-		return;
-	}
-
-	var fork = active_fork;
-
 	try {
 		var flush_count = 0;
 
@@ -692,7 +686,7 @@ function flush_queued_root_effects() {
 					root.f ^= CLEAN;
 				}
 
-				process_effects(root, fork);
+				process_effects(root, active_fork);
 			}
 		}
 	} finally {
@@ -787,10 +781,10 @@ export function schedule_effect(signal) {
  * effects to be flushed.
  *
  * @param {Effect} effect
- * @param {Fork} fork
+ * @param {Fork | null} fork
  */
 function process_effects(effect, fork) {
-	var revert = fork.apply();
+	var revert = fork?.apply();
 
 	var current_effect = effect.first;
 
@@ -861,13 +855,13 @@ function process_effects(effect, fork) {
 		current_effect = sibling;
 	}
 
-	if (async_effects.length === 0 && fork.settled()) {
-		fork.commit();
+	if (async_effects.length === 0 && (fork === null || fork.settled())) {
+		fork?.commit();
 		flush_queued_effects(render_effects);
 		flush_queued_effects(effects);
 	}
 
-	revert();
+	revert?.();
 
 	for (const effect of async_effects) {
 		update_effect(effect);
