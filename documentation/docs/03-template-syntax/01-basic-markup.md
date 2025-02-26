@@ -185,7 +185,7 @@ You can use HTML comments inside components.
 Comments beginning with `svelte-ignore` disable warnings for the next block of markup. Usually, these are accessibility warnings; make sure that you're disabling them for a good reason.
 
 ```svelte
-<!-- svelte-ignore a11y-autofocus -->
+<!-- svelte-ignore a11y_autofocus -->
 <input bind:value={name} autofocus />
 ```
 
