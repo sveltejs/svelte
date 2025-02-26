@@ -1,8 +1,6 @@
 /** @import { Effect, Source } from '#client' */
 import { noop } from '../../shared/utils.js';
-import { DIRTY } from '../constants.js';
 import { flushSync } from '../runtime.js';
-import { internal_set, mark_reactions } from './sources.js';
 
 /** @type {Set<Fork>} */
 const forks = new Set();

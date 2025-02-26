@@ -742,6 +742,24 @@ function flush_queued_effects(effects) {
  * @returns {void}
  */
 export function schedule_effect(signal) {
+	queue_flush();
+
+	var effect = (last_scheduled_effect = signal);
+
+	while (effect.parent !== null) {
+		effect = effect.parent;
+		var flags = effect.f;
+
+		if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
+			if ((flags & CLEAN) === 0) return;
+			effect.f ^= CLEAN;
+		}
+	}
+
+	queued_root_effects.push(effect);
+}
+
+export function queue_flush() {
 	if (!is_flushing) {
 		is_flushing = true;
 		queueMicrotask(() => {
@@ -757,20 +775,6 @@ export function schedule_effect(signal) {
 			remove_active_fork();
 		});
 	}
-
-	var effect = (last_scheduled_effect = signal);
-
-	while (effect.parent !== null) {
-		effect = effect.parent;
-		var flags = effect.f;
-
-		if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
-			if ((flags & CLEAN) === 0) return;
-			effect.f ^= CLEAN;
-		}
-	}
-
-	queued_root_effects.push(effect);
 }
 
 /**

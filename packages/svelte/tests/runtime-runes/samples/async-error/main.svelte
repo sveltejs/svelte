@@ -15,6 +15,6 @@
 
 	{#snippet failed(error, reset)}
 		<p>{error.message}</p>
-		<button onclick={reset}>reset</button>
+		<button data-id="reset" onclick={reset}>reset</button>
 	{/snippet}
 </svelte:boundary>

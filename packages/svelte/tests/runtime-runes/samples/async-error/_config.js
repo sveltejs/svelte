@@ -13,10 +13,14 @@ export default test({
 		flushSync();
 		assert.htmlEqual(
 			target.innerHTML,
-			'<button>step 1</button><button>step 2</button><button>step 3</button><p>oops!</p><button>reset</button>'
+			'<button>step 1</button><button>step 2</button><button>step 3</button><p>oops!</p><button data-id="reset">reset</button>'
 		);
 
 		flushSync(() => button2.click());
+
+		const reset = /** @type {HTMLButtonElement} */ (target.querySelector('[data-id="reset"]'));
+		flushSync(() => reset.click());
+
 		assert.htmlEqual(
 			target.innerHTML,
 			'<button>step 1</button><button>step 2</button><button>step 3</button><p>pending</p>'

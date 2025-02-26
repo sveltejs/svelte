@@ -14,7 +14,8 @@ import {
 	derived_sources,
 	set_derived_sources,
 	check_dirtiness,
-	untracking
+	untracking,
+	queue_flush
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -221,6 +222,8 @@ export function internal_set(source, value) {
 
 			inspect_effects.clear();
 		}
+
+		queue_flush();
 	}
 
 	return value;
