@@ -814,8 +814,12 @@ function process_effects(effect, fork) {
 					async_effects.push(current_effect);
 				}
 			} else if ((flags & BLOCK_EFFECT) !== 0) {
-				if (check_dirtiness(current_effect)) {
-					update_effect(current_effect);
+				try {
+					if (check_dirtiness(current_effect)) {
+						update_effect(current_effect);
+					}
+				} catch (error) {
+					handle_error(error, current_effect, null, null);
 				}
 			} else if ((flags & RENDER_EFFECT) !== 0) {
 				if (is_branch) {
