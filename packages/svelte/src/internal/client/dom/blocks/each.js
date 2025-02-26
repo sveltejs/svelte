@@ -410,7 +410,7 @@ function reconcile(
 				offscreen_items.delete(key);
 				items.set(key, pending);
 
-				var next = prev && prev.next;
+				var next = prev ? prev.next : current;
 
 				link(state, prev, pending);
 				link(state, pending, next);
