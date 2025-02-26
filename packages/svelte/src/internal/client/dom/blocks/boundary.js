@@ -112,15 +112,15 @@ export class Boundary {
 				// the pending or main block was rendered for a given
 				// boundary, and hydrate accordingly
 				queueMicrotask(() => {
+					this.#main_effect = this.#run(() => {
+						return branch(() => this.#children(this.#anchor));
+					});
+
 					if (this.#pending_count === 0) {
 						pause_effect(/** @type {Effect} */ (this.#pending_effect), () => {
 							this.#pending_effect = null;
 						});
 					}
-
-					this.#main_effect = this.#run(() => {
-						return branch(() => this.#children(this.#anchor));
-					});
 				});
 			} else {
 				this.#main_effect = branch(() => children(this.#anchor));
