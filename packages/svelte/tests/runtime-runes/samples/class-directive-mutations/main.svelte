@@ -33,10 +33,15 @@
 </script>
 
 <main id="main" class:browser>
-	<div class={classname} class:foo class:bar></div>
+	<div class={classname} title="a title" class:foo class:bar></div>
 	<span class:foo class:bar></span>
 	<b class={classname} class:foo class:bar></b>
 	<i class:foo class:bar></i>
+
+	<div {...{class:classname, title:"a title"}} class:foo class:bar></div>
+	<span {...{}} class:foo class:bar></span>
+	<b {...{class:classname}} class:foo class:bar></b>
+	<i {...{}} class:foo class:bar></i>	
 </main>
 
 <style>
