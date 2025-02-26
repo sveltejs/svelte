@@ -88,7 +88,9 @@ export function build_set_attributes(
 		element_id,
 		is_dynamic ? attributes_id : b.literal(null),
 		b.object(values),
-		context.state.analysis.css.hash !== '' && b.literal(context.state.analysis.css.hash),
+		element.metadata.scoped &&
+			context.state.analysis.css.hash !== '' &&
+			b.literal(context.state.analysis.css.hash),
 		preserve_attribute_case,
 		is_custom_element,
 		is_ignored(element, 'hydration_attribute_changed') && b.true
