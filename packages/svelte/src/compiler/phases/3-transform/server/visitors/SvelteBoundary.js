@@ -1,88 +1,122 @@
-/** @import { BlockStatement, Identifier, Statement, Expression } from 'estree' */
+/** @import { BlockStatement, Identifier, Statement, Expression, MaybeNamedFunctionDeclaration, Pattern } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { attr } from 'svelte/internal/client';
 import { BLOCK_CLOSE, BLOCK_OPEN } from '../../../../../internal/server/hydration.js';
 import * as b from '../../../../utils/builders.js';
+import { extract_identifiers } from '../../../../utils/ast.js';
 
 /**
  * @param {AST.SvelteBoundary} node
  * @param {ComponentContext} context
  */
 export function SvelteBoundary(node, context) {
-	const props = b.object([]);
-
-	const nodes = [];
-
 	/** @type {Statement[]} */
 	const statements = [];
 
-	/** @type {Expression | null} */
-	let call_expression = null;
+	/** @type {AST.SnippetBlock | null} */
+	let snippet = null;
+
+	/** @type {AST.ConstTag[]} */
+	let const_tags = [];
+
+	const nodes = [];
 
 	const payload = b.id('$$payload'); // correct ?
-	const out_pos = b.id('$$pos');
-	let err_id = b.id('$$err');
 
-	/** @type {Statement[]} */
-	let catch_statements = [
-		b.stmt(
-			b.assignment(
-				'=',
-				b.member(payload, 'out'),
-				b.call(b.member(payload, 'out.substring'), b.literal(0), out_pos)
-			)
-		)
-	];
-
-	statements.push(
-		b.declaration('const', [b.declarator(out_pos.name, b.member(payload, 'out.length'))])
-	);
+	/** @type {Expression | undefined} */
+	let failed;
 
 	// Capture the `failed` explicit snippet prop
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'Attribute' && attribute.name === 'failed' && attribute.value !== true) {
-			/** @type {Statement[]} */
-			const init = [];
-			context.visit(attribute, { ...context.state, init });
-			statements.push(...init);
-
 			const chunk = Array.isArray(attribute.value)
 				? /** @type {AST.ExpressionTag} */ (attribute.value[0])
 				: attribute.value;
-			call_expression = /** @type {Expression} */ (context.visit(chunk.expression, context.state));
+			failed = /** @type {Expression} */ (context.visit(chunk.expression, context.state));
 		}
 	}
 
 	// Capture the `failed` implicit snippet prop
 	for (const child of node.fragment.nodes) {
 		if (child.type === 'SnippetBlock' && child.expression.name === 'failed') {
+			snippet = child;
+
 			/** @type {Statement[]} */
 			const init = [];
-			context.visit(child, { ...context.state, init });
-			catch_statements.push(...init);
-			call_expression = child.expression;
+			context.visit(snippet, { ...context.state, init });
+
+			if (init.length === 1 && init[0].type === 'FunctionDeclaration') {
+				failed = b.arrow(init[0].params, init[0].body);
+			} else {
+				statements.push(...init);
+				failed = b.id('failed');
+			}
 		} else if (child.type === 'ConstTag') {
-			/** @type {Statement[]} */
-			const init = [];
-			context.visit(child, { ...context.state, init });
-			statements.push(...init);
+			const_tags.push(child);
 		} else {
 			nodes.push(child);
 		}
 	}
 
-	const block = /** @type {BlockStatement} */ (context.visit({ ...node.fragment, nodes }));
-
-	if (call_expression) {
-		catch_statements.push(b.stmt(b.call(call_expression, payload, err_id)));
+	if (snippet && has_const_referenced(context, snippet, const_tags)) {
+		for (const tag of const_tags) {
+			/** @type {Statement[]} */
+			const init = [];
+			context.visit(tag, { ...context.state, init });
+			statements.push(...init);
+		}
+	} else if (const_tags.length) {
+		nodes.unshift(...const_tags);
 	}
 
-	statements.push(b.try_catch(block, err_id, b.block(catch_statements)));
-
-	context.state.template.push(
-		b.literal(BLOCK_OPEN),
-		b.block([...statements]),
-		b.literal(BLOCK_CLOSE)
+	const body = b.arrow(
+		[b.id('$$payload')],
+		/** @type {BlockStatement} */ (context.visit({ ...node.fragment, nodes }))
 	);
+
+	statements.push(b.stmt(b.call('$.boundary', payload, body, failed)));
+
+	if (statements.length === 1) {
+		context.state.template.push(statements[0]);
+	} else {
+		context.state.template.push(b.block([...statements]));
+	}
+}
+
+/**
+ *
+ * @param {ComponentContext} context
+ * @param {AST.SnippetBlock} snippet
+ * @param {AST.ConstTag[]} const_tags
+ */
+function has_const_referenced(context, snippet, const_tags) {
+	if (const_tags.length === 0) {
+		return false;
+	}
+
+	const references = context.state.scopes.get(snippet)?.references;
+	if (references == null || references.size === 0) {
+		return false;
+	}
+
+	const identifiers = new Set();
+	for (const tag of const_tags) {
+		for (const declaration of tag.declaration.declarations) {
+			for (const id of extract_identifiers(declaration.id)) {
+				identifiers.add(id.name);
+			}
+		}
+	}
+
+	if (identifiers.size === 0) {
+		return false;
+	}
+
+	for (const reference of references.keys()) {
+		if (identifiers.has(reference)) {
+			return true;
+		}
+	}
+	return false;
 }

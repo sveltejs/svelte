@@ -14,7 +14,7 @@ import {
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
-import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
+import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN, BLOCK_OPEN_ELSE } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
 import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
 import { reset_elements } from './dev.js';
@@ -550,6 +550,27 @@ export function props_id(payload) {
 	const uid = payload.uid();
 	payload.out += '<!--#' + uid + '-->';
 	return uid;
+}
+
+/**
+ * <svelte:boundary>
+ * @param {Payload} payload
+ * @param {(payload:Payload) => void} body
+ * @param {(payload:Payload, err: any) => void} [failed]
+ * @returns {void}
+ */
+export function boundary(payload, body, failed) {
+	var inner_payload = copy_payload(payload);
+	try {
+		inner_payload.out += BLOCK_OPEN;
+		body(inner_payload);
+	} catch (err) {
+		inner_payload = copy_payload(payload);
+		inner_payload.out += BLOCK_OPEN_ELSE;
+		failed?.(inner_payload, err);
+	}
+	inner_payload.out += BLOCK_CLOSE;
+	assign_payload(payload, inner_payload);
 }
 
 export { attr, clsx };
