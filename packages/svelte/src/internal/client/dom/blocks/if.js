@@ -123,6 +123,12 @@ export function if_block(node, fn, elseif = false) {
 		}
 
 		if (defer) {
+			const skipped = condition ? alternate_effect : consequent_effect;
+			if (skipped !== null) {
+				// TODO need to do this for other kinds of blocks
+				active_fork?.skipped_effects.add(skipped);
+			}
+
 			active_fork?.add_callback(commit);
 			target.remove();
 		} else {
