@@ -2,7 +2,6 @@
 import { EFFECT_TRANSPARENT } from '../../constants.js';
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
 import { active_fork } from '../../reactivity/forks.js';
-import { active_effect } from '../../runtime.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 import { create_text, should_defer_append } from '../operations.js';
 
@@ -33,8 +32,6 @@ export function component(node, get_component, render_fn) {
 	/** @type {Effect | null} */
 	var pending_effect = null;
 
-	var boundary = /** @type {Effect} */ (active_effect).b;
-
 	function commit() {
 		if (effect) {
 			pause_effect(effect);
@@ -47,6 +44,7 @@ export function component(node, get_component, render_fn) {
 		}
 
 		effect = pending_effect;
+		pending_effect = null;
 	}
 
 	block(() => {

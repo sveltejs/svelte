@@ -130,6 +130,8 @@ export class Fork {
 		for (const fn of this.#callbacks) {
 			fn();
 		}
+
+		this.#callbacks.clear();
 	}
 
 	static ensure() {
