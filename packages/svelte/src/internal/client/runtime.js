@@ -792,13 +792,13 @@ export function queue_flush() {
  * bitwise flag passed in only. The collected effects array will be populated with all the user
  * effects to be flushed.
  *
- * @param {Effect} effect
+ * @param {Effect} root
  * @param {Fork | null} fork
  */
-function process_effects(effect, fork) {
+function process_effects(root, fork) {
 	var revert = fork?.apply();
 
-	var current_effect = effect.first;
+	var effect = root.first;
 
 	/** @type {Effect[]} */
 	var async_effects = [];
@@ -809,68 +809,66 @@ function process_effects(effect, fork) {
 	/** @type {Effect[]} */
 	var effects = [];
 
-	main_loop: while (current_effect !== null) {
-		var flags = current_effect.f;
+	main_loop: while (effect !== null) {
+		var flags = effect.f;
 		var is_branch = (flags & BRANCH_EFFECT) !== 0;
 		var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
-		var sibling = current_effect.next;
+		var sibling = effect.next;
 
 		var skip =
-			is_skippable_branch ||
-			(flags & INERT) !== 0 ||
-			active_fork?.skipped_effects.has(current_effect);
+			is_skippable_branch || (flags & INERT) !== 0 || active_fork?.skipped_effects.has(effect);
 
 		if (!skip) {
 			if ((flags & EFFECT_ASYNC) !== 0) {
-				if (check_dirtiness(current_effect)) {
-					async_effects.push(current_effect);
+				if (check_dirtiness(effect)) {
+					async_effects.push(effect);
 				}
 			} else if ((flags & BLOCK_EFFECT) !== 0) {
 				try {
-					if (check_dirtiness(current_effect)) {
-						update_effect(current_effect);
+					if (check_dirtiness(effect)) {
+						update_effect(effect);
 					}
 				} catch (error) {
-					handle_error(error, current_effect, null, null);
+					handle_error(error, effect, null, null);
 				}
 			} else if ((flags & RENDER_EFFECT) !== 0) {
 				if (is_branch) {
 					// TODO clean branch later, if fork is settled
 					// current_effect.f ^= CLEAN;
 				} else {
-					render_effects.push(current_effect);
+					render_effects.push(effect);
 				}
 			} else if ((flags & EFFECT) !== 0) {
-				effects.push(current_effect);
+				effects.push(effect);
 			}
 
-			var child = current_effect.first;
+			var child = effect.first;
 
 			if (child !== null) {
-				current_effect = child;
+				effect = child;
 				continue;
 			}
 		}
 
 		if (sibling === null) {
-			let parent = current_effect.parent;
+			let parent = effect.parent;
 
 			while (parent !== null) {
-				if (effect === parent) {
+				if (root === parent) {
 					// TODO is this still necessary?
 					break main_loop;
 				}
 
 				var parent_sibling = parent.next;
 				if (parent_sibling !== null) {
-					current_effect = parent_sibling;
+					effect = parent_sibling;
 					continue main_loop;
 				}
 				parent = parent.parent;
 			}
 		}
 
-		current_effect = sibling;
+		effect = sibling;
 	}
 
 	if (async_effects.length === 0 && (fork === null || fork.settled())) {
