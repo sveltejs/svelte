@@ -809,7 +809,7 @@ function process_effects(root, fork) {
 	/** @type {Effect[]} */
 	var effects = [];
 
-	main_loop: while (effect !== null) {
+	while (effect !== null) {
 		var flags = effect.f;
 		var is_branch = (flags & BRANCH_EFFECT) !== 0;
 		var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
@@ -854,15 +854,10 @@ function process_effects(root, fork) {
 			let parent = effect.parent;
 
 			while (parent !== null) {
-				if (root === parent) {
-					// TODO is this still necessary?
-					break main_loop;
-				}
-
 				var parent_sibling = parent.next;
 				if (parent_sibling !== null) {
 					effect = parent_sibling;
-					continue main_loop;
+					break;
 				}
 				parent = parent.parent;
 			}
