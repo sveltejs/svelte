@@ -73,4 +73,6 @@ export function Fragment(node, context) {
 		}
 		props_id.metadata = { attr, suffix, empty_comment };
 	}
+
+	node.nodes.forEach((node) => context.visit(node, { ...context.state }));
 }
