@@ -751,12 +751,20 @@ export function schedule_effect(signal) {
 		var flags = effect.f;
 
 		if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
-			if ((flags & CLEAN) === 0) return;
-			effect.f ^= CLEAN;
+			// TODO reinstate this
+			// if ((flags & CLEAN) === 0) return;
+			// effect.f ^= CLEAN;
+
+			if ((flags & CLEAN) !== 0) {
+				effect.f ^= CLEAN;
+			}
 		}
 	}
 
-	queued_root_effects.push(effect);
+	// TODO reinstate early bail-out when traversing up the graph
+	if (!queued_root_effects.includes(effect)) {
+		queued_root_effects.push(effect);
+	}
 }
 
 export function queue_flush() {
@@ -827,7 +835,8 @@ function process_effects(effect, fork) {
 				}
 			} else if ((flags & RENDER_EFFECT) !== 0) {
 				if (is_branch) {
-					current_effect.f ^= CLEAN;
+					// TODO clean branch later, if fork is settled
+					// current_effect.f ^= CLEAN;
 				} else {
 					render_effects.push(current_effect);
 				}
@@ -848,6 +857,7 @@ function process_effects(effect, fork) {
 
 			while (parent !== null) {
 				if (effect === parent) {
+					// TODO is this still necessary?
 					break main_loop;
 				}
 

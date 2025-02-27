@@ -12,7 +12,8 @@ import {
 	set_is_destroying_effect,
 	set_signal_status,
 	untrack,
-	untracking
+	untracking,
+	flushSync
 } from '../runtime.js';
 import {
 	DIRTY,
@@ -41,6 +42,7 @@ import { get_next_sibling } from '../dom/operations.js';
 import { async_derived, derived } from './deriveds.js';
 import { capture, suspend } from '../dom/blocks/boundary.js';
 import { component_context, dev_current_component_function } from '../context.js';
+import { active_fork } from './forks.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -338,19 +340,26 @@ export function render_effect(fn, flags = 0) {
  * @param {Array<() => Promise<any>>} async
  */
 export function template_effect(fn, sync = [], async = [], d = derived) {
-	let effect = /** @type {Effect} */ (active_effect);
+	var parent = /** @type {Effect} */ (active_effect);
 
 	if (async.length > 0) {
+		var fork = active_fork;
 		var restore = capture();
 
 		Promise.all(async.map((expression) => async_derived(expression))).then((result) => {
 			restore();
 
-			if ((effect.f & DESTROYED) !== 0) {
+			if ((parent.f & DESTROYED) !== 0) {
 				return;
 			}
 
-			create_template_effect(fn, [...sync.map(d), ...result]);
+			var effect = create_template_effect(fn, [...sync.map(d), ...result]);
+
+			if (fork !== null) {
+				fork.run(() => {
+					schedule_effect(effect);
+				});
+			}
 		});
 	} else {
 		create_template_effect(fn, sync.map(d));
@@ -370,7 +379,7 @@ function create_template_effect(fn, deriveds) {
 		});
 	}
 
-	create_effect(RENDER_EFFECT, effect, true);
+	return create_effect(RENDER_EFFECT, effect, true);
 }
 
 /**
