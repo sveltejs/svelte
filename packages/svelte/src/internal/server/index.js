@@ -86,9 +86,9 @@ export function element(payload, tag, attributes_fn = noop, children_fn = noop) 
  */
 export let on_destroy = [];
 
-function props_id_generator() {
+function props_id_generator(prefix = '') {
 	let uid = 1;
-	return () => 's' + uid++;
+	return () => `s${prefix ? `-${prefix}-` : ''}${uid++}`;
 }
 
 /**
@@ -96,11 +96,11 @@ function props_id_generator() {
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
  * @template {Record<string, any>} Props
  * @param {import('svelte').Component<Props> | ComponentType<SvelteComponent<Props>>} component
- * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }} [options]
+ * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; prefix?: string }} [options]
  * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
-	const uid = props_id_generator();
+	const uid = props_id_generator(options.prefix);
 	/** @type {Payload} */
 	const payload = {
 		out: '',
