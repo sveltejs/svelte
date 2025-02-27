@@ -567,14 +567,17 @@ export function update_effect(effect) {
 
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
+
 		if (typeof teardown === 'function') {
-			if (effect.ctx !== null && effect.ctx.f === 0) {
-				effect.ctx.f = CTX_CONTAINS_TEARDOWN;
+			var ctx = effect.ctx;
+			if (ctx !== null && ctx.f === 0) {
+				ctx.f = CTX_CONTAINS_TEARDOWN;
 			}
 			effect.teardown = teardown;
 		} else {
 			effect.teardown = null;
 		}
+
 		effect.wv = write_version;
 
 		var deps = effect.deps;
