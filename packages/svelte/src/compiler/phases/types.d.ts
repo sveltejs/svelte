@@ -53,8 +53,6 @@ export interface ComponentAnalysis extends Analysis {
 			attr: string | null;
 			/** Any suffix separator on the attribute */
 			suffix: string | null;
-			/** True if the props comment should replace the empty comment */
-			empty_comment: boolean;
 		} | null;
 	} | null;
 	/** Whether the component uses `$$restProps` */

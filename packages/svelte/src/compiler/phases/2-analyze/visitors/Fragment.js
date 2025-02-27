@@ -9,8 +9,7 @@ export function Fragment(node, context) {
 	const props_id = context.state.analysis.props_id;
 
 	if (context.path.length === 0 && props_id && props_id.metadata === null) {
-		const parent = context.path[0];
-		/** @type {AST.RegularElement | null} */
+		/** @type {AST.RegularElement | AST.SvelteElement | null} */
 		let first_elem = null;
 		for (const child of node.nodes) {
 			if (
@@ -23,7 +22,7 @@ export function Fragment(node, context) {
 				(child.type === 'Text' && child.raw.trim().length === 0)
 			) {
 				continue;
-			} else if (child.type === 'RegularElement') {
+			} else if (child.type === 'RegularElement' || child.type == 'SvelteElement') {
 				first_elem = child;
 			}
 			break;
@@ -32,7 +31,6 @@ export function Fragment(node, context) {
 		let attr = null;
 		/** @type {string | null} */
 		let suffix = null;
-		let empty_comment = false;
 
 		if (first_elem) {
 			for (const attribute of first_elem.attributes) {
@@ -68,10 +66,8 @@ export function Fragment(node, context) {
 					}
 				}
 			}
-		} else {
-			empty_comment = true;
 		}
-		props_id.metadata = { attr, suffix, empty_comment };
+		props_id.metadata = { attr, suffix };
 	}
 
 	node.nodes.forEach((node) => context.visit(node, { ...context.state }));

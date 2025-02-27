@@ -36,7 +36,6 @@ export function Fragment(node, context) {
 	}
 
 	if (is_text_first) {
-		// TODOD
 		// insert `<!---->` to prevent this from being glued to the previous fragment
 		state.template.push(empty_comment);
 	}

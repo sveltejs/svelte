@@ -258,15 +258,15 @@ export function reset_props_id() {
 
 /**
  * Create (or hydrate) an unique UID for the component instance.
- * @param {string | false} [attr_or_skip]
+ * @param {string} [attr]
  * @param {string} [suffix]
  */
-export function props_id(attr_or_skip, suffix) {
+export function props_id(attr, suffix) {
 	if (hydrating && hydrate_node) {
-		if (attr_or_skip) {
+		if (attr) {
 			if (hydrate_node.nodeType === 1) {
-				let id = /** @type {Element} */ (hydrate_node).getAttribute(attr_or_skip);
-				if (id !== null && id[0] === 's') {
+				let id = /** @type {Element} */ (hydrate_node).getAttribute(attr);
+				if (id && id[0] === 's') {
 					if (suffix) {
 						let idx = id.indexOf(suffix);
 						if (idx > 0) {
@@ -279,7 +279,7 @@ export function props_id(attr_or_skip, suffix) {
 			}
 		} else if (hydrate_node.nodeType === 8 && hydrate_node.textContent?.startsWith('#s')) {
 			const id = hydrate_node.textContent.substring(1);
-			if (attr_or_skip !== false) hydrate_next();
+			hydrate_next();
 			return id;
 		}
 	}

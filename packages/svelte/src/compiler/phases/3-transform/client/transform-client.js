@@ -572,9 +572,6 @@ export function client_component(analysis, options) {
 				if (metadata.suffix) {
 					args.push(b.literal(metadata.suffix));
 				}
-			} else if (metadata.empty_comment) {
-				// False to skip hydrate_next()
-				args.push(b.false);
 			}
 		}
 
