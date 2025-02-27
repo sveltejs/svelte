@@ -136,12 +136,12 @@ export function push(props, runes = false, fn) {
 	}
 
 	teardown(() => {
-		if (ctx.f !== CTX_CONTAINS_TEARDOWN) {
+		if ((ctx.f & (CTX_CONTAINS_TEARDOWN | CTX_DESTROYED)) === 0) {
 			return;
 		}
 		// Mark the context as destroyed, so any derived props can use
 		// the latest known value before teardown
-		ctx.f = CTX_DESTROYED;
+		ctx.f ^= CTX_DESTROYED;
 
 		var teardown_props = ctx.tp;
 		// Apply the latest known props before teardown over existing props
@@ -195,7 +195,7 @@ export function pop(component) {
 		context_stack_item.m = true;
 
 		effect(() => {
-			if (context_stack_item.f === CTX_CONTAINS_TEARDOWN) {
+			if ((context_stack_item.f & CTX_CONTAINS_TEARDOWN) !== 0) {
 				context_stack_item.tp = { ...context_stack_item.s };
 			}
 		});

@@ -26,5 +26,5 @@ export const STATE_SYMBOL_METADATA = Symbol('$state metadata');
 export const LEGACY_PROPS = Symbol('legacy props');
 export const LOADING_ATTR_SYMBOL = Symbol('');
 
-export const CTX_CONTAINS_TEARDOWN = 1;
-export const CTX_DESTROYED = 2;
+export const CTX_CONTAINS_TEARDOWN = 1 << 1;
+export const CTX_DESTROYED = 1 << 2;

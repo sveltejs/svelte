@@ -370,7 +370,7 @@ export function prop(props, key, flags, fallback) {
 	var current_value = derived(() => {
 		var ctx = component_context;
 
-		if (ctx !== null && ctx.f === CTX_DESTROYED) {
+		if (ctx !== null && (ctx.f & CTX_DESTROYED) !== 0) {
 			return get(inner_current_value);
 		}
 

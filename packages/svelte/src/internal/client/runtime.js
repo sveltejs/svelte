@@ -570,8 +570,8 @@ export function update_effect(effect) {
 
 		if (typeof teardown === 'function') {
 			var ctx = effect.ctx;
-			if (ctx !== null && ctx.f === 0) {
-				ctx.f = CTX_CONTAINS_TEARDOWN;
+			if (ctx !== null && (ctx.f & CTX_CONTAINS_TEARDOWN) === 0) {
+				ctx.f ^= CTX_CONTAINS_TEARDOWN;
 			}
 			effect.teardown = teardown;
 		} else {
