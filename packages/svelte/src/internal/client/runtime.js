@@ -748,68 +748,57 @@ export function schedule_effect(signal) {
  * bitwise flag passed in only. The collected effects array will be populated with all the user
  * effects to be flushed.
  *
- * @param {Effect} effect
+ * @param {Effect} root
  * @returns {Effect[]}
  */
-function process_effects(effect) {
+function process_effects(root) {
 	/** @type {Effect[]} */
 	var effects = [];
 
-	var current_effect = effect.first;
+	var effect = root.first;
 
-	main_loop: while (current_effect !== null) {
-		var flags = current_effect.f;
+	while (effect !== null) {
+		var flags = effect.f;
 		var is_branch = (flags & BRANCH_EFFECT) !== 0;
 		var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
-		var sibling = current_effect.next;
 
 		if (!is_skippable_branch && (flags & INERT) === 0) {
 			if ((flags & EFFECT) !== 0) {
-				effects.push(current_effect);
+				effects.push(effect);
 			} else if (is_branch) {
-				current_effect.f ^= CLEAN;
+				effect.f ^= CLEAN;
 			} else {
 				// Ensure we set the effect to be the active reaction
 				// to ensure that unowned deriveds are correctly tracked
 				// because we're flushing the current effect
 				var previous_active_reaction = active_reaction;
 				try {
-					active_reaction = current_effect;
-					if (check_dirtiness(current_effect)) {
-						update_effect(current_effect);
+					active_reaction = effect;
+					if (check_dirtiness(effect)) {
+						update_effect(effect);
 					}
 				} catch (error) {
-					handle_error(error, current_effect, null, current_effect.ctx);
+					handle_error(error, effect, null, effect.ctx);
 				} finally {
 					active_reaction = previous_active_reaction;
 				}
 			}
 
-			var child = current_effect.first;
+			var child = effect.first;
 
 			if (child !== null) {
-				current_effect = child;
+				effect = child;
 				continue;
 			}
 		}
 
-		if (sibling === null) {
-			let parent = current_effect.parent;
+		var parent = effect.parent;
+		effect = effect.next;
 
-			while (parent !== null) {
-				if (effect === parent) {
-					break main_loop;
-				}
-				var parent_sibling = parent.next;
-				if (parent_sibling !== null) {
-					current_effect = parent_sibling;
-					continue main_loop;
-				}
-				parent = parent.parent;
-			}
+		while (effect === null && parent !== null) {
+			effect = parent.next;
+			parent = parent.parent;
 		}
-
-		current_effect = sibling;
 	}
 
 	return effects;
