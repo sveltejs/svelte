@@ -66,8 +66,8 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0
       '@sveltejs/acorn-typescript':
-        specifier: ^1.0.1
-        version: 1.0.1(acorn@8.14.0)
+        specifier: ^1.0.2
+        version: 1.0.2(acorn@8.14.0)
       '@types/estree':
         specifier: ^1.0.5
         version: 1.0.6
@@ -626,10 +626,10 @@ packages:
     peerDependencies:
       eslint: '>=8.40.0'
 
-  '@sveltejs/acorn-typescript@1.0.1':
-    resolution: {integrity: sha512-MPvOVpdeRE5pA7hNPmPJwbVxoMC7dQWsIsn0PBJsfXlWyJJtwas4qSMNyArbLkpiNsMzlkyNU1k5Asckp57Srg==}
+  '@sveltejs/acorn-typescript@1.0.2':
+    resolution: {integrity: sha512-38Pff7qkxTQnWDHSaesgXGllvZoX5sc5A7sITVnCn56OZhDmMwD8kOr1fXTNAPjulB4mFNQMhUktkfsLHxWH2Q==}
     peerDependencies:
-      acorn: '>=8.9.0'
+      acorn: ^8.9.0
 
   '@sveltejs/eslint-config@8.1.0':
     resolution: {integrity: sha512-cfgp4lPREYBjNd4ZzaP/jA85ufm7vfXiaV7h9vILXNogne80IbZRNhRCQ8XoOqTAOY/pChIzWTBuR8aDNMbAEA==}
@@ -2720,7 +2720,7 @@ snapshots:
       eslint-visitor-keys: 3.4.3
       espree: 9.6.1
 
-  '@sveltejs/acorn-typescript@1.0.1(acorn@8.14.0)':
+  '@sveltejs/acorn-typescript@1.0.2(acorn@8.14.0)':
     dependencies:
       acorn: 8.14.0
 
