@@ -565,7 +565,7 @@ export function client_component(analysis, options) {
 	if (analysis.props_id) {
 		// need to be placed on first line of the component for hydration
 		const args = [];
-		const metadata = analysis.props_id?.metadata;
+		const metadata = analysis.props_id.metadata;
 		if (metadata) {
 			if (metadata.attr) {
 				args.push(b.literal(metadata.attr));
