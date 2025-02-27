@@ -269,6 +269,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			}
 		} else {
 			if (active_fork !== null && should_defer_append()) {
+				var keys = new Set();
+
 				for (i = 0; i < length; i += 1) {
 					value = array[i];
 					key = get_key(value, i);
@@ -296,6 +298,14 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 						);
 
 						offscreen_items.set(key, item);
+					}
+
+					keys.add(key);
+				}
+
+				for (const [key, item] of state.items) {
+					if (!keys.has(key)) {
+						active_fork.skipped_effects.add(item.e);
 					}
 				}
 
