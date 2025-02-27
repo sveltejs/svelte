@@ -22,7 +22,7 @@ export function AwaitBlock(node, context) {
 	if (node.then) {
 		const then_context = {
 			...context,
-			state: { ...context.state, transform: { ...context.state.transform } }
+			state: { ...context.state, transform: { ...context.state.transform }, needs_safe_props: true }
 		};
 		const argument = node.value && create_derived_block_argument(node.value, then_context);
 
@@ -37,7 +37,7 @@ export function AwaitBlock(node, context) {
 	}
 
 	if (node.catch) {
-		const catch_context = { ...context, state: { ...context.state } };
+		const catch_context = { ...context, state: { ...context.state, needs_safe_props: true } };
 		const argument = node.error && create_derived_block_argument(node.error, catch_context);
 
 		/** @type {Pattern[]} */
@@ -59,7 +59,12 @@ export function AwaitBlock(node, context) {
 				context.state.node,
 				expression,
 				node.pending
-					? b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.pending)))
+					? b.arrow(
+							[b.id('$$anchor')],
+							/** @type {BlockStatement} */ (
+								context.visit(node.pending, { ...context.state, needs_safe_props: true })
+							)
+						)
 					: b.literal(null),
 				then_block,
 				catch_block

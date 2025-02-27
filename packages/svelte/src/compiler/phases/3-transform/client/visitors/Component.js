@@ -11,7 +11,18 @@ import { build_component } from './shared/component.js';
 export function Component(node, context) {
 	if (node.metadata.dynamic) {
 		// Handle dynamic references to what seems like static inline components
-		const component = build_component(node, '$$component', context, b.id('$$anchor'));
+		const component = build_component(
+			node,
+			'$$component',
+			{
+				...context,
+				state: {
+					...context.state,
+					needs_safe_props: true
+				}
+			},
+			b.id('$$anchor')
+		);
 		context.state.init.push(
 			b.stmt(
 				b.call(
