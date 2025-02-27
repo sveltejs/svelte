@@ -415,9 +415,9 @@ export function prop(props, key, flags, fallback) {
 				}
 				untrack(() => get(current_value)); // force a synchronisation immediately
 			}
+
 			return value;
 		}
-
 		return get(current_value);
 	};
 }
