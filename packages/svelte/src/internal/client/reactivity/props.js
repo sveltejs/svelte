@@ -10,26 +10,10 @@ import {
 import { define_property, get_descriptor, is_function } from '../../shared/utils.js';
 import { mutable_source, set, source, update } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
-import {
-	active_effect,
-	get,
-	captured_signals,
-	set_active_effect,
-	untrack,
-	active_reaction,
-	set_active_reaction
-} from '../runtime.js';
+import { get, captured_signals, untrack } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
-import {
-	BRANCH_EFFECT,
-	CTX_DESTROYED,
-	DESTROYED,
-	LEGACY_DERIVED_PROP,
-	LEGACY_PROPS,
-	ROOT_EFFECT,
-	STATE_SYMBOL
-} from '../constants.js';
+import { CTX_DESTROYED, LEGACY_DERIVED_PROP, LEGACY_PROPS, STATE_SYMBOL } from '../constants.js';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
@@ -431,7 +415,6 @@ export function prop(props, key, flags, fallback) {
 				}
 				untrack(() => get(current_value)); // force a synchronisation immediately
 			}
-
 			return value;
 		}
 
