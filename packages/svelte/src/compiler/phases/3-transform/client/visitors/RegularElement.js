@@ -1,4 +1,4 @@
-/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, Statement } from 'estree' */
+/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
@@ -20,16 +20,17 @@ import { build_getter } from '../utils.js';
 import {
 	get_attribute_name,
 	build_attribute_value,
-	build_class_directives,
 	build_style_directives,
-	build_set_attributes
+	build_set_attributes,
+	build_set_class
 } from './shared/element.js';
 import { process_children } from './shared/fragment.js';
 import {
 	build_render_statement,
 	build_template_chunk,
 	build_update_assignment,
-	get_expression_id
+	get_expression_id,
+	memoize_expression
 } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
 
@@ -222,13 +223,13 @@ export function RegularElement(node, context) {
 
 		build_set_attributes(
 			attributes,
+			class_directives,
 			context,
 			node,
 			node_id,
 			attributes_id,
 			(node.metadata.svg || node.metadata.mathml || is_custom_element_node(node)) && b.true,
-			is_custom_element_node(node) && b.true,
-			context.state
+			is_custom_element_node(node) && b.true
 		);
 
 		// If value binding exists, that one takes care of calling $.init_select
@@ -269,13 +270,22 @@ export function RegularElement(node, context) {
 				continue;
 			}
 
+			const name = get_attribute_name(node, attribute);
 			if (
 				!is_custom_element &&
 				!cannot_be_set_statically(attribute.name) &&
-				(attribute.value === true || is_text_attribute(attribute))
+				(attribute.value === true || is_text_attribute(attribute)) &&
+				(name !== 'class' || class_directives.length === 0)
 			) {
-				const name = get_attribute_name(node, attribute);
-				const value = is_text_attribute(attribute) ? attribute.value[0].data : true;
+				let value = is_text_attribute(attribute) ? attribute.value[0].data : true;
+
+				if (name === 'class' && node.metadata.scoped && context.state.analysis.css.hash) {
+					if (value === true || value === '') {
+						value = context.state.analysis.css.hash;
+					} else {
+						value += ' ' + context.state.analysis.css.hash;
+					}
+				}
 
 				if (name !== 'class' || value) {
 					context.state.template.push(
@@ -289,21 +299,23 @@ export function RegularElement(node, context) {
 				continue;
 			}
 
-			const is = is_custom_element
-				? build_custom_element_attribute_update_assignment(node_id, attribute, context)
-				: build_element_attribute_update_assignment(node, node_id, attribute, attributes, context);
+			const is =
+				is_custom_element && name !== 'class'
+					? build_custom_element_attribute_update_assignment(node_id, attribute, context)
+					: build_element_attribute_update_assignment(
+							node,
+							node_id,
+							attribute,
+							attributes,
+							class_directives,
+							context
+						);
 			if (is) is_attributes_reactive = true;
 		}
 	}
 
-	// class/style directives must be applied last since they could override class/style attributes
-	build_class_directives(class_directives, node_id, context, is_attributes_reactive);
+	// style directives must be applied last since they could override class/style attributes
 	build_style_directives(style_directives, node_id, context, is_attributes_reactive);
-
-	// Apply the src and loading attributes for <img> elements after the element is appended to the document
-	if (node.name === 'img' && (has_spread || lookup.has('loading'))) {
-		context.state.after_update.push(b.stmt(b.call('$.handle_lazy_img', node_id)));
-	}
 
 	if (
 		is_load_error_element(node.name) &&
@@ -368,15 +380,14 @@ export function RegularElement(node, context) {
 		trimmed.some((node) => node.type === 'ExpressionTag');
 
 	if (use_text_content) {
-		child_state.init.push(
-			b.stmt(
-				b.assignment(
-					'=',
-					b.member(context.state.node, 'textContent'),
-					build_template_chunk(trimmed, context.visit, child_state).value
-				)
-			)
-		);
+		const { value } = build_template_chunk(trimmed, context.visit, child_state);
+		const empty_string = value.type === 'Literal' && value.value === '';
+
+		if (!empty_string) {
+			child_state.init.push(
+				b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), value))
+			);
+		}
 	} else {
 		/** @type {Expression} */
 		let arg = context.state.node;
@@ -497,6 +508,27 @@ function setup_select_synchronization(value_binding, context) {
 }
 
 /**
+ * @param {AST.ClassDirective[]} class_directives
+ * @param {ComponentContext} context
+ * @return {ObjectExpression}
+ */
+export function build_class_directives_object(class_directives, context) {
+	let properties = [];
+
+	for (const d of class_directives) {
+		let expression = /** @type Expression */ (context.visit(d.expression));
+
+		if (d.metadata.expression.has_call) {
+			expression = get_expression_id(context.state, expression);
+		}
+
+		properties.push(b.init(d.name, expression));
+	}
+
+	return b.object(properties);
+}
+
+/**
  * Serializes an assignment to an element property by adding relevant statements to either only
  * the init or the the init and update arrays, depending on whether or not the value is dynamic.
  * Resulting code for static looks something like this:
@@ -522,6 +554,7 @@ function setup_select_synchronization(value_binding, context) {
  * @param {Identifier} node_id
  * @param {AST.Attribute} attribute
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
+ * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
  * @returns {boolean}
  */
@@ -530,6 +563,7 @@ function build_element_attribute_update_assignment(
 	node_id,
 	attribute,
 	attributes,
+	class_directives,
 	context
 ) {
 	const state = context.state;
@@ -537,18 +571,30 @@ function build_element_attribute_update_assignment(
 	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
 	const is_mathml = context.state.metadata.namespace === 'mathml';
 
+	const is_autofocus = name === 'autofocus';
+
 	let { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call ? get_expression_id(state, value) : value
+		metadata.has_call
+			? // if it's autofocus we will not add this to a template effect so we don't want to get the expression id
+				// but separately memoize the expression
+				is_autofocus
+				? memoize_expression(state, value)
+				: get_expression_id(state, value)
+			: value
 	);
 
-	if (name === 'autofocus') {
+	if (is_autofocus) {
 		state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));
 		return false;
 	}
 
 	// Special case for Firefox who needs it set as a property in order to work
 	if (name === 'muted') {
-		state.init.push(b.stmt(b.assignment('=', b.member(node_id, b.id('muted')), value)));
+		if (!has_state) {
+			state.init.push(b.stmt(b.assignment('=', b.member(node_id, b.id('muted')), value)));
+			return false;
+		}
+		state.update.push(b.stmt(b.assignment('=', b.member(node_id, b.id('muted')), value)));
 		return false;
 	}
 
@@ -556,19 +602,15 @@ function build_element_attribute_update_assignment(
 	let update;
 
 	if (name === 'class') {
-		if (attribute.metadata.needs_clsx) {
-			value = b.call('$.clsx', value);
-		}
-
-		update = b.stmt(
-			b.call(
-				is_svg ? '$.set_svg_class' : is_mathml ? '$.set_mathml_class' : '$.set_class',
-				node_id,
-				value,
-				attribute.metadata.needs_clsx && context.state.analysis.css.hash
-					? b.literal(context.state.analysis.css.hash)
-					: undefined
-			)
+		return build_set_class(
+			element,
+			node_id,
+			attribute,
+			value,
+			has_state,
+			class_directives,
+			context,
+			!is_svg && !is_mathml
 		);
 	} else if (name === 'value') {
 		update = b.stmt(b.call('$.set_value', node_id, value));
@@ -632,14 +674,6 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
 	const name = attribute.name; // don't lowercase, as we set the element's property, which might be case sensitive
 	let { value, has_state } = build_attribute_value(attribute.value, context);
 
-	// We assume that noone's going to redefine the semantics of the class attribute on custom elements, i.e. it's still used for CSS classes
-	if (name === 'class' && attribute.metadata.needs_clsx) {
-		if (context.state.analysis.css.hash) {
-			value = b.array([value, b.literal(context.state.analysis.css.hash)]);
-		}
-		value = b.call('$.clsx', value);
-	}
-
 	const update = b.stmt(b.call('$.set_custom_element_data', node_id, b.literal(name), value));
 
 	if (has_state) {
@@ -665,8 +699,18 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
  */
 function build_element_special_value_attribute(element, node_id, attribute, context) {
 	const state = context.state;
+	const is_select_with_value =
+		// attribute.metadata.dynamic would give false negatives because even if the value does not change,
+		// the inner options could still change, so we need to always treat it as reactive
+		element === 'select' && attribute.value !== true && !is_text_attribute(attribute);
+
 	const { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call ? get_expression_id(state, value) : value
+		metadata.has_call
+			? // if is a select with value we will also invoke `init_select` which need a reference before the template effect so we memoize separately
+				is_select_with_value
+				? memoize_expression(context.state, value)
+				: get_expression_id(state, value)
+			: value
 	);
 
 	const inner_assignment = b.assignment(
@@ -678,11 +722,6 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 			value
 		)
 	);
-
-	const is_select_with_value =
-		// attribute.metadata.dynamic would give false negatives because even if the value does not change,
-		// the inner options could still change, so we need to always treat it as reactive
-		element === 'select' && attribute.value !== true && !is_text_attribute(attribute);
 
 	const update = b.stmt(
 		is_select_with_value

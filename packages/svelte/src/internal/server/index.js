@@ -2,7 +2,7 @@
 /** @import { Component, Payload, RenderOutput } from '#server' */
 /** @import { Store } from '#shared' */
 export { FILENAME, HMR } from '../../constants.js';
-import { attr, clsx } from '../shared/attributes.js';
+import { attr, clsx, to_class } from '../shared/attributes.js';
 import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
@@ -10,7 +10,6 @@ import {
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
 	ELEMENT_IS_NAMESPACED
 } from '../../constants.js';
-
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
@@ -28,14 +27,17 @@ const INVALID_ATTR_NAME_CHAR_REGEX =
  * @param {Payload} to_copy
  * @returns {Payload}
  */
-export function copy_payload({ out, css, head }) {
+export function copy_payload({ out, css, head, uid }) {
 	return {
 		out,
 		css: new Set(css),
 		head: {
 			title: head.title,
-			out: head.out
-		}
+			out: head.out,
+			css: new Set(head.css),
+			uid: head.uid
+		},
+		uid
 	};
 }
 
@@ -48,6 +50,7 @@ export function copy_payload({ out, css, head }) {
 export function assign_payload(p1, p2) {
 	p1.out = p2.out;
 	p1.head = p2.head;
+	p1.uid = p2.uid;
 }
 
 /**
@@ -83,6 +86,11 @@ export function element(payload, tag, attributes_fn = noop, children_fn = noop) 
  */
 export let on_destroy = [];
 
+function props_id_generator() {
+	let uid = 1;
+	return () => 's' + uid++;
+}
+
 /**
  * Only available on the server and when compiling with the `server` option.
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
@@ -92,8 +100,14 @@ export let on_destroy = [];
  * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
+	const uid = props_id_generator();
 	/** @type {Payload} */
-	const payload = { out: '', css: new Set(), head: { title: '', out: '' } };
+	const payload = {
+		out: '',
+		css: new Set(),
+		head: { title: '', out: '', css: new Set(), uid },
+		uid
+	};
 
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
@@ -183,12 +197,13 @@ export function css_props(payload, is_html, props, component, dynamic = false) {
 
 /**
  * @param {Record<string, unknown>} attrs
- * @param {Record<string, string>} [classes]
+ * @param {string | null} css_hash
+ * @param {Record<string, boolean>} [classes]
  * @param {Record<string, string>} [styles]
  * @param {number} [flags]
  * @returns {string}
  */
-export function spread_attributes(attrs, classes, styles, flags = 0) {
+export function spread_attributes(attrs, css_hash, classes, styles, flags = 0) {
 	if (styles) {
 		attrs.style = attrs.style
 			? style_object_to_string(merge_styles(/** @type {string} */ (attrs.style), styles))
@@ -199,16 +214,8 @@ export function spread_attributes(attrs, classes, styles, flags = 0) {
 		attrs.class = clsx(attrs.class);
 	}
 
-	if (classes) {
-		const classlist = attrs.class ? [attrs.class] : [];
-
-		for (const key in classes) {
-			if (classes[key]) {
-				classlist.push(key);
-			}
-		}
-
-		attrs.class = classlist.join(' ');
+	if (css_hash || classes) {
+		attrs.class = to_class(attrs.class, css_hash, classes);
 	}
 
 	let attr_str = '';
@@ -526,7 +533,18 @@ export function once(get_value) {
 	};
 }
 
-export { attr, clsx };
+/**
+ * Create an unique ID
+ * @param {Payload} payload
+ * @returns {string}
+ */
+export function props_id(payload) {
+	const uid = payload.uid();
+	payload.out += '<!--#' + uid + '-->';
+	return uid;
+}
+
+export { attr, clsx, to_class };
 
 export { html } from './blocks/html.js';
 

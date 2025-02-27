@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import { setImmediate } from 'node:timers/promises';
-import glob from 'tiny-glob/sync.js';
+import { globSync } from 'tinyglobby';
 import { createClassComponent } from 'svelte/legacy';
 import { proxy } from 'svelte/internal/client';
 import { flushSync, hydrate, mount, unmount } from 'svelte';
@@ -11,6 +11,7 @@ import { setup_html_equal } from '../html_equal.js';
 import { raf } from '../animation-helpers.js';
 import type { CompileOptions } from '#compiler';
 import { suite_with_variants, type BaseTest } from '../suite.js';
+import { reset_props_id } from '../../src/internal/client/dom/template.js';
 
 type Assert = typeof import('vitest').assert & {
 	htmlEqual(a: string, b: string, description?: string): void;
@@ -256,7 +257,7 @@ async function run_test_variant(
 		raf.reset();
 
 		// Put things we need on window for testing
-		const styles = glob('**/*.css', { cwd: `${cwd}/_output/client` })
+		const styles = globSync('**/*.css', { cwd: `${cwd}/_output/client` })
 			.map((file) => fs.readFileSync(`${cwd}/_output/client/${file}`, 'utf-8'))
 			.join('\n')
 			.replace(/\/\*<\/?style>\*\//g, '');
@@ -345,6 +346,7 @@ async function run_test_variant(
 
 			if (runes) {
 				props = proxy({ ...(config.props || {}) });
+				reset_props_id();
 				if (manual_hydrate) {
 					hydrate_fn = () => {
 						instance = hydrate(mod.default, {

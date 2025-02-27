@@ -14,6 +14,10 @@ import {
 	set_active_reaction
 } from '../../runtime.js';
 import { clsx } from '../../../shared/attributes.js';
+import { set_class } from './class.js';
+
+export const CLASS = Symbol('class');
+export const STYLE = Symbol('style');
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -254,8 +258,8 @@ export function set_custom_element_data(node, prop, value) {
 /**
  * Spreads attributes onto a DOM element, taking into account the currently set attributes
  * @param {Element & ElementCSSInlineStyle} element
- * @param {Record<string, any> | undefined} prev
- * @param {Record<string, any>} next New attributes - this function mutates this object
+ * @param {Record<string | symbol, any> | undefined} prev
+ * @param {Record<string | symbol, any>} next New attributes - this function mutates this object
  * @param {string} [css_hash]
  * @param {boolean} [preserve_attribute_case]
  * @param {boolean} [is_custom_element]
@@ -289,10 +293,8 @@ export function set_attributes(
 
 	if (next.class) {
 		next.class = clsx(next.class);
-	}
-
-	if (css_hash !== undefined) {
-		next.class = next.class ? next.class + ' ' + css_hash : css_hash;
+	} else if (css_hash || next[CLASS]) {
+		next.class = null; /* force call to set_class() */
 	}
 
 	var setters = get_setters(element);
@@ -321,6 +323,14 @@ export function set_attributes(
 			// @ts-ignore
 			element.value = element.__value = '';
 			current[key] = value;
+			continue;
+		}
+
+		if (key === 'class') {
+			var is_html = element.namespaceURI === 'http://www.w3.org/1999/xhtml';
+			set_class(element, is_html, value, css_hash, prev?.[CLASS], next[CLASS]);
+			current[key] = value;
+			current[CLASS] = next[CLASS];
 			continue;
 		}
 
@@ -399,15 +409,18 @@ export function set_attributes(
 				if (name === 'value' || name === 'checked') {
 					// removing value/checked also removes defaultValue/defaultChecked — preserve
 					let input = /** @type {HTMLInputElement} */ (element);
-
+					const use_default = prev === undefined;
 					if (name === 'value') {
-						let prev = input.defaultValue;
+						let previous = input.defaultValue;
 						input.removeAttribute(name);
-						input.defaultValue = prev;
+						input.defaultValue = previous;
+						// @ts-ignore
+						input.value = input.__value = use_default ? previous : null;
 					} else {
-						let prev = input.defaultChecked;
+						let previous = input.defaultChecked;
 						input.removeAttribute(name);
-						input.defaultChecked = prev;
+						input.defaultChecked = previous;
+						input.checked = use_default ? previous : false;
 					}
 				} else {
 					element.removeAttribute(key);
@@ -519,29 +532,4 @@ function srcset_url_equal(element, srcset) {
 				(src_url_equal(element_urls[i][0], url) || src_url_equal(url, element_urls[i][0]))
 		)
 	);
-}
-
-/**
- * @param {HTMLImageElement} element
- * @returns {void}
- */
-export function handle_lazy_img(element) {
-	// If we're using an image that has a lazy loading attribute, we need to apply
-	// the loading and src after the img element has been appended to the document.
-	// Otherwise the lazy behaviour will not work due to our cloneNode heuristic for
-	// templates.
-	if (!hydrating && element.loading === 'lazy') {
-		var src = element.src;
-		// @ts-expect-error
-		element[LOADING_ATTR_SYMBOL] = null;
-		element.loading = 'eager';
-		element.removeAttribute('src');
-		requestAnimationFrame(() => {
-			// @ts-expect-error
-			if (element[LOADING_ATTR_SYMBOL] !== 'eager') {
-				element.loading = 'lazy';
-			}
-			element.src = src;
-		});
-	}
 }

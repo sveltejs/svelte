@@ -1,5 +1,88 @@
 # svelte
 
+## 5.20.5
+
+### Patch Changes
+
+- fix: allow double hyphen css selector names ([#15384](https://github.com/sveltejs/svelte/pull/15384))
+
+- fix: class:directive not working with $restProps #15386 ([#15389](https://github.com/sveltejs/svelte/pull/15389))
+  fix: spread add an useless cssHash on non-scoped element
+
+- fix: catch error on @const tag in svelte:boundary in DEV mode ([#15369](https://github.com/sveltejs/svelte/pull/15369))
+
+- fix: allow for duplicate `var` declarations ([#15382](https://github.com/sveltejs/svelte/pull/15382))
+
+- fix : bug "$0 is not defined" on svelte:element with a function call on class ([#15396](https://github.com/sveltejs/svelte/pull/15396))
+
+## 5.20.4
+
+### Patch Changes
+
+- fix: update types and inline docs for flushSync ([#15348](https://github.com/sveltejs/svelte/pull/15348))
+
+## 5.20.3
+
+### Patch Changes
+
+- fix: allow `@const` inside `#key` ([#15377](https://github.com/sveltejs/svelte/pull/15377))
+
+- fix: remove unnecessary `?? ''` on some expressions ([#15287](https://github.com/sveltejs/svelte/pull/15287))
+
+- fix: correctly override class attributes with class directives ([#15352](https://github.com/sveltejs/svelte/pull/15352))
+
+## 5.20.2
+
+### Patch Changes
+
+- chore: remove unused `options.uid` in `render` ([#15302](https://github.com/sveltejs/svelte/pull/15302))
+
+- fix: do not warn for `binding_property_non_reactive` if binding is a store in an each ([#15318](https://github.com/sveltejs/svelte/pull/15318))
+
+- fix: prevent writable store value from becoming a proxy when reassigning using $-prefix ([#15283](https://github.com/sveltejs/svelte/pull/15283))
+
+- fix: `muted` reactive without `bind` and select/autofocus attributes working with function calls ([#15326](https://github.com/sveltejs/svelte/pull/15326))
+
+- fix: ensure input elements and elements with `dir` attribute are marked as non-static ([#15259](https://github.com/sveltejs/svelte/pull/15259))
+
+- fix: fire delegated events on target even it was disabled in the meantime ([#15319](https://github.com/sveltejs/svelte/pull/15319))
+
+## 5.20.1
+
+### Patch Changes
+
+- fix: ensure AST analysis on `svelte.js` modules succeeds ([#15297](https://github.com/sveltejs/svelte/pull/15297))
+
+- fix: ignore typescript abstract methods ([#15267](https://github.com/sveltejs/svelte/pull/15267))
+
+- fix: correctly ssr component in `svelte:head` with `$props.id()` or `css='injected'` ([#15291](https://github.com/sveltejs/svelte/pull/15291))
+
+## 5.20.0
+
+### Minor Changes
+
+- feat: SSR-safe ID generation with `$props.id()` ([#15185](https://github.com/sveltejs/svelte/pull/15185))
+
+### Patch Changes
+
+- fix: take private and public into account for `constant_assignment` of derived state ([#15276](https://github.com/sveltejs/svelte/pull/15276))
+
+- fix: value/checked not correctly set using spread ([#15239](https://github.com/sveltejs/svelte/pull/15239))
+
+- chore: tweak effect self invalidation logic, run transition dispatches without reactive context ([#15275](https://github.com/sveltejs/svelte/pull/15275))
+
+- fix: use `importNode` to clone templates for Firefox ([#15272](https://github.com/sveltejs/svelte/pull/15272))
+
+- fix: recurse into `$derived` for ownership validation ([#15166](https://github.com/sveltejs/svelte/pull/15166))
+
+## 5.19.10
+
+### Patch Changes
+
+- fix: when re-connecting unowned deriveds, remove their unowned flag ([#15255](https://github.com/sveltejs/svelte/pull/15255))
+
+- fix: allow mutation of private derived state ([#15228](https://github.com/sveltejs/svelte/pull/15228))
+
 ## 5.19.9
 
 ### Patch Changes

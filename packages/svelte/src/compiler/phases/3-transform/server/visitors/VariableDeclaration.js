@@ -24,6 +24,11 @@ export function VariableDeclaration(node, context) {
 				continue;
 			}
 
+			if (rune === '$props.id') {
+				// skip
+				continue;
+			}
+
 			if (rune === '$props') {
 				let has_rest = false;
 				// remove $bindable() from props declaration
@@ -154,6 +159,10 @@ export function VariableDeclaration(node, context) {
 				)
 			);
 		}
+	}
+
+	if (declarations.length === 0) {
+		return b.empty;
 	}
 
 	return {

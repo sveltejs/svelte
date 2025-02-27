@@ -118,6 +118,12 @@ const visitors = {
 		delete node.implements;
 		return context.next();
 	},
+	MethodDefinition(node, context) {
+		if (node.abstract) {
+			return b.empty;
+		}
+		return context.next();
+	},
 	VariableDeclaration(node, context) {
 		if (node.declare) {
 			return b.empty;

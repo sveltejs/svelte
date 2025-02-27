@@ -433,6 +433,7 @@ const RUNES = /** @type {const} */ ([
 	'$state.raw',
 	'$state.snapshot',
 	'$props',
+	'$props.id',
 	'$bindable',
 	'$derived',
 	'$derived.by',

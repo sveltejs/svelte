@@ -11,6 +11,9 @@ export var $window;
 /** @type {Document} */
 export var $document;
 
+/** @type {boolean} */
+export var is_firefox;
+
 /** @type {() => Node | null} */
 var first_child_getter;
 /** @type {() => Node | null} */
@@ -27,6 +30,7 @@ export function init_operations() {
 
 	$window = window;
 	$document = document;
+	is_firefox = /Firefox/.test(navigator.userAgent);
 
 	var element_prototype = Element.prototype;
 	var node_prototype = Node.prototype;
@@ -40,7 +44,7 @@ export function init_operations() {
 	// @ts-expect-error
 	element_prototype.__click = undefined;
 	// @ts-expect-error
-	element_prototype.__className = '';
+	element_prototype.__className = undefined;
 	// @ts-expect-error
 	element_prototype.__attributes = null;
 	// @ts-expect-error

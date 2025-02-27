@@ -20,12 +20,12 @@ function setup() {
 	return {
 		destroy,
 		run() {
-			$.flush_sync(() => {
+			$.flush(() => {
 				$.set(head, 1);
 			});
 			assert($.get(computed5) === 6);
 			for (let i = 0; i < 1000; i++) {
-				$.flush_sync(() => {
+				$.flush(() => {
 					$.set(head, i);
 				});
 				assert($.get(computed5) === 6);
