@@ -29,7 +29,7 @@ export function root(effect) {
  *
  * @param {Effect} effect
  */
-export function log_effect_tree(effect) {
+export function log_effect_tree(effect, depth = 0) {
 	const flags = effect.f;
 
 	let label = '(unknown)';
@@ -55,6 +55,14 @@ export function log_effect_tree(effect) {
 
 	console.group(`%c${label} (${status})`, `font-weight: ${status === 'clean' ? 'normal' : 'bold'}`);
 
+	if (depth === 0) {
+		const callsite = new Error().stack
+			?.split('\n')[2]
+			.replace(/\s+at (?: \w+\(?)?(.+)\)?/, (m, $1) => $1.replace(/\?[^:]+/, ''));
+
+		console.log(callsite);
+	}
+
 	if (effect.deps !== null) {
 		console.groupCollapsed('%cdeps', 'font-weight: normal');
 		for (const dep of effect.deps) {
@@ -65,7 +73,7 @@ export function log_effect_tree(effect) {
 
 	let child = effect.first;
 	while (child !== null) {
-		log_effect_tree(child);
+		log_effect_tree(child, depth + 1);
 		child = child.next;
 	}
 
