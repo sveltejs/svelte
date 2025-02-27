@@ -84,9 +84,7 @@ export function SvelteElement(node, context) {
 		attributes.length === 1 &&
 		attributes[0].type === 'Attribute' &&
 		attributes[0].name.toLowerCase() === 'class' &&
-		attributes[0].value !== true &&
-		!Array.isArray(attributes[0].value) &&
-		attributes[0].value.metadata.expression.has_call === false
+		is_text_attribute(attributes[0])
 	) {
 		// special case when there only a class attribute, without call expression
 		let { value, has_state } = build_attribute_value(
