@@ -7,7 +7,7 @@ import {
 	PROPS_IS_RUNES,
 	PROPS_IS_UPDATED
 } from '../../../constants.js';
-import { get_descriptor, is_function } from '../../shared/utils.js';
+import { define_property, get_descriptor, is_function } from '../../shared/utils.js';
 import { mutable_source, set, source, update } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
 import {
@@ -196,6 +196,18 @@ const spread_props_handler = {
 			const desc = get_descriptor(p, key);
 			if (desc && desc.set) {
 				desc.set(value);
+				return true;
+			}
+		}
+		return false;
+	},
+	defineProperty(target, key, descriptor) {
+		let i = target.props.length;
+		while (i--) {
+			let p = target.props[i];
+			if (is_function(p)) p = p();
+			if (typeof p === 'object' && p !== null && key in p) {
+				define_property(p, key, descriptor);
 				return true;
 			}
 		}

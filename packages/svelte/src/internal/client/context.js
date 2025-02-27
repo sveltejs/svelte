@@ -14,6 +14,7 @@ import {
 import { effect, teardown } from './reactivity/effects.js';
 import { legacy_mode_flag } from '../flags/index.js';
 import { CTX_CONTAINS_TEARDOWN, CTX_DESTROYED } from './constants.js';
+import { define_property } from '../shared/utils.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;
@@ -145,7 +146,7 @@ export function push(props, runes = false, fn) {
 		var teardown_props = ctx.tp;
 		// Apply the latest known props before teardown over existing props
 		for (var key in teardown_props) {
-			Object.defineProperty(props, key, {
+			define_property(props, key, {
 				value: teardown_props[key],
 				configurable: true
 			});
