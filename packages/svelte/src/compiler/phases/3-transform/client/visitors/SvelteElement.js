@@ -83,9 +83,10 @@ export function SvelteElement(node, context) {
 	if (
 		attributes.length === 1 &&
 		attributes[0].type === 'Attribute' &&
-		attributes[0].name.toLowerCase() === 'class'
+		attributes[0].name.toLowerCase() === 'class' &&
+		is_text_attribute(attributes[0])
 	) {
-		// special case when there only a class attribute
+		// special case when there only a class attribute, without call expression
 		let { value, has_state } = build_attribute_value(
 			attributes[0].value,
 			context,
