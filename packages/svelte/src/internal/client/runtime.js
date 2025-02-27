@@ -813,7 +813,6 @@ function process_effects(root, fork) {
 		var flags = effect.f;
 		var is_branch = (flags & BRANCH_EFFECT) !== 0;
 		var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
-		var sibling = effect.next;
 
 		var skip =
 			is_skippable_branch || (flags & INERT) !== 0 || active_fork?.skipped_effects.has(effect);
@@ -850,20 +849,13 @@ function process_effects(root, fork) {
 			}
 		}
 
-		if (sibling === null) {
-			let parent = effect.parent;
+		var parent = effect.parent;
+		effect = effect.next;
 
-			while (parent !== null) {
-				var parent_sibling = parent.next;
-				if (parent_sibling !== null) {
-					effect = parent_sibling;
-					break;
-				}
-				parent = parent.parent;
-			}
+		while (effect === null && parent !== null) {
+			effect = parent.next;
+			parent = parent.parent;
 		}
-
-		effect = sibling;
 	}
 
 	if (async_effects.length === 0 && (fork === null || fork.settled())) {
