@@ -15,7 +15,6 @@ import { effect, teardown } from './reactivity/effects.js';
 import { legacy_mode_flag } from '../flags/index.js';
 import { CTX_CONTAINS_TEARDOWN, CTX_DESTROYED } from './constants.js';
 import { define_property } from '../shared/utils.js';
-import { snapshot } from '../shared/clone.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;
@@ -197,7 +196,7 @@ export function pop(component) {
 
 		effect(() => {
 			if (context_stack_item.f === CTX_CONTAINS_TEARDOWN) {
-				context_stack_item.tp = snapshot(context_stack_item.s, true)
+				context_stack_item.tp = { ...context_stack_item.s };
 			}
 		});
 	}
