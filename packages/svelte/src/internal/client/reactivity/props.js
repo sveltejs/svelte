@@ -23,6 +23,8 @@ import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import {
 	BRANCH_EFFECT,
+	CTX_DESTROYED,
+	DESTROYED,
 	LEGACY_DERIVED_PROP,
 	LEGACY_PROPS,
 	ROOT_EFFECT,
@@ -31,6 +33,7 @@ import {
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
+import { component_context } from '../context.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -369,6 +372,12 @@ export function prop(props, key, flags, fallback) {
 	// source is written to from various places to persist this value.
 	var inner_current_value = mutable_source(prop_value);
 	var current_value = derived(() => {
+		var ctx = component_context;
+
+		if (ctx !== null && ctx.f === CTX_DESTROYED) {
+			return get(inner_current_value);
+		}
+
 		var parent_value = getter();
 		var child_value = get(inner_current_value);
 
@@ -413,6 +422,7 @@ export function prop(props, key, flags, fallback) {
 
 			return value;
 		}
+
 		return get(current_value);
 	};
 }

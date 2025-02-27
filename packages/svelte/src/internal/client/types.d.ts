@@ -20,6 +20,8 @@ export type ComponentContext = {
 		effect: null | Effect;
 		reaction: null | Reaction;
 	}>;
+	/** ctx flags */
+	f: number;
 	/** mounted */
 	m: boolean;
 	/**
@@ -57,6 +59,8 @@ export type ComponentContext = {
 	 * dev mode only: the component function
 	 */
 	function?: any;
+	/** teardown props */
+	tp: Record<string, unknown>;
 };
 
 export type ComponentContextLegacy = ComponentContext & {

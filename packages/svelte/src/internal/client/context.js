@@ -11,8 +11,9 @@ import {
 	set_active_reaction,
 	untrack
 } from './runtime.js';
-import { effect } from './reactivity/effects.js';
+import { effect, teardown } from './reactivity/effects.js';
 import { legacy_mode_flag } from '../flags/index.js';
+import { CTX_CONTAINS_TEARDOWN, CTX_DESTROYED } from './constants.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;
@@ -112,15 +113,17 @@ export function getAllContexts() {
  * @returns {void}
  */
 export function push(props, runes = false, fn) {
-	component_context = {
+	var ctx = (component_context = {
 		p: component_context,
 		c: null,
 		e: null,
+		f: 0,
 		m: false,
 		s: props,
 		x: null,
-		l: null
-	};
+		l: null,
+		tp: props
+	});
 
 	if (legacy_mode_flag && !runes) {
 		component_context.l = {
@@ -130,6 +133,24 @@ export function push(props, runes = false, fn) {
 			r2: source(false)
 		};
 	}
+
+	teardown(() => {
+		if (ctx.f !== CTX_CONTAINS_TEARDOWN) {
+			return;
+		}
+		// Mark the context as destroyed, so any derived props can use
+		// the latest known value before teardown
+		ctx.f = CTX_DESTROYED;
+
+		var teardown_props = ctx.tp;
+		// Apply the latest known props before teardown over existing props
+		for (var key in teardown_props) {
+			Object.defineProperty(props, key, {
+				value: teardown_props[key],
+				configurable: true
+			});
+		}
+	});
 
 	if (DEV) {
 		// component function
@@ -171,6 +192,12 @@ export function pop(component) {
 			dev_current_component_function = context_stack_item.p?.function ?? null;
 		}
 		context_stack_item.m = true;
+
+		effect(() => {
+			if (context_stack_item.f === CTX_CONTAINS_TEARDOWN) {
+				context_stack_item.tp = { ...context_stack_item.s };
+			}
+		});
 	}
 	// Micro-optimization: Don't set .a above to the empty object
 	// so it can be garbage-collected when the return here is unused
