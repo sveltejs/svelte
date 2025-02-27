@@ -24,10 +24,7 @@ export type ComponentContext = {
 	f: number;
 	/** mounted */
 	m: boolean;
-	/**
-	 * props — needed for legacy mode lifecycle functions, and for `createEventDispatcher`
-	 * @deprecated remove in 6.0
-	 */
+	/** props — needed for legacy mode lifecycle functions, for `createEventDispatcher` and teardown */
 	s: Record<string, unknown>;
 	/**
 	 * exports (and props, if `accessors: true`) — needed for `createEventDispatcher`
@@ -55,12 +52,12 @@ export type ComponentContext = {
 		/** This tracks whether `$:` statements have run in the current cycle, to ensure they only run once */
 		r2: Source<boolean>;
 	};
+	/** teardown props */
+	tp: Record<string, unknown>;
 	/**
 	 * dev mode only: the component function
 	 */
 	function?: any;
-	/** teardown props */
-	tp: Record<string, unknown>;
 };
 
 export type ComponentContextLegacy = ComponentContext & {
