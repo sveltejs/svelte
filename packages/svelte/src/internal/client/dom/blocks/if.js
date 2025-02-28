@@ -54,6 +54,7 @@ export function if_block(node, fn, elseif = false) {
 		if (offscreen_fragment !== null) {
 			// remove the anchor
 			/** @type {Text} */ (offscreen_fragment.lastChild).remove();
+
 			anchor.before(offscreen_fragment);
 			offscreen_fragment = null;
 		}

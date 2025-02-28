@@ -39,6 +39,9 @@ export function component(node, get_component, render_fn) {
 		}
 
 		if (offscreen_fragment) {
+			// remove the anchor
+			/** @type {Text} */ (offscreen_fragment.lastChild).remove();
+
 			anchor.before(offscreen_fragment);
 			offscreen_fragment = null;
 		}
@@ -61,10 +64,6 @@ export function component(node, get_component, render_fn) {
 			}
 
 			pending_effect = branch(() => render_fn(target, component));
-
-			if (defer) {
-				target.remove();
-			}
 		}
 
 		if (defer) {

@@ -139,8 +139,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 	var was_empty = false;
 
-	var boundary = /** @type {Effect} */ (active_effect).b;
-
 	/** @type {Map<any, EachItem>} */
 	var offscreen_items = new Map();
 

@@ -5,7 +5,6 @@ import { not_equal, safe_not_equal } from '../../reactivity/equality.js';
 import { is_runes } from '../../context.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 import { create_text, should_defer_append } from '../operations.js';
-import { active_effect } from '../../runtime.js';
 import { active_fork } from '../../reactivity/forks.js';
 
 /**
@@ -34,8 +33,6 @@ export function key_block(node, get_key, render_fn) {
 	/** @type {DocumentFragment | null} */
 	var offscreen_fragment = null;
 
-	var boundary = /** @type {Effect} */ (active_effect).b;
-
 	var changed = is_runes() ? not_equal : safe_not_equal;
 
 	function commit() {
@@ -44,6 +41,9 @@ export function key_block(node, get_key, render_fn) {
 		}
 
 		if (offscreen_fragment !== null) {
+			// remove the anchor
+			/** @type {Text} */ (offscreen_fragment.lastChild).remove();
+
 			anchor.before(offscreen_fragment);
 			offscreen_fragment = null;
 		}
@@ -66,7 +66,6 @@ export function key_block(node, get_key, render_fn) {
 
 			if (defer) {
 				active_fork?.add_callback(commit);
-				target.remove();
 			} else {
 				commit();
 			}
