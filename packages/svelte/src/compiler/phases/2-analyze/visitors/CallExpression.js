@@ -151,6 +151,13 @@ export function CallExpression(node, context) {
 
 			break;
 
+		case '$effect.pending':
+			if (context.state.expression) {
+				context.state.expression.has_state = true;
+			}
+
+			break;
+
 		case '$inspect':
 			if (node.arguments.length < 1) {
 				e.rune_invalid_arguments_length(node, rune, 'one or more arguments');
