@@ -25,6 +25,10 @@ export function CallExpression(node, context) {
 		return b.arrow([], b.block([]));
 	}
 
+	if (rune === '$effect.pending') {
+		return b.false;
+	}
+
 	if (rune === '$state.snapshot') {
 		return b.call(
 			'$.snapshot',

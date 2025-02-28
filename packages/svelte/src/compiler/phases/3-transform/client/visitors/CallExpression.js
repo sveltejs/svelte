@@ -30,6 +30,9 @@ export function CallExpression(node, context) {
 				.../** @type {Expression[]} */ (node.arguments.map((arg) => context.visit(arg)))
 			);
 
+		case '$effect.pending':
+			return b.call('$.get', b.id('$.pending'));
+
 		case '$inspect':
 		case '$inspect().with':
 			return transform_inspect_rune(node, context);

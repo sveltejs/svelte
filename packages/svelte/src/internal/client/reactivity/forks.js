@@ -1,6 +1,7 @@
 /** @import { Effect, Source } from '#client' */
 import { noop } from '../../shared/utils.js';
 import { flushSync } from '../runtime.js';
+import { internal_set, source } from './sources.js';
 
 /** @type {Set<Fork>} */
 const forks = new Set();
@@ -10,6 +11,12 @@ export let active_fork = null;
 
 export function remove_active_fork() {
 	active_fork = null;
+}
+
+export let pending = source(false);
+
+function update_pending() {
+	internal_set(pending, forks.size > 0);
 }
 
 let uid = 1;
@@ -97,6 +104,8 @@ export class Fork {
 				}
 			}
 		}
+
+		update_pending();
 	}
 
 	/**
@@ -134,6 +143,10 @@ export class Fork {
 
 	static ensure() {
 		if (active_fork === null) {
+			if (forks.size === 0) {
+				requestAnimationFrame(update_pending);
+			}
+
 			active_fork = new Fork();
 			forks.add(active_fork); // TODO figure out where we remove this
 		}
