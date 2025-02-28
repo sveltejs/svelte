@@ -10,6 +10,8 @@ export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;
 // when the JS VM JITs the code.
 
 export type ComponentContext = {
+	/** uid */
+	uid?: string;
 	/** parent */
 	p: null | ComponentContext;
 	/** context */

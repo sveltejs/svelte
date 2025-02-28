@@ -337,6 +337,10 @@ export type MountOptions<Props extends Record<string, any> = Record<string, any>
 	 * @default true
 	 */
 	intro?: boolean;
+	/**
+	 * Provide a prefix for the generated ID from `$props.id`
+	 */
+	uidPrefix?: string;
 } & ({} extends Props
 	? {
 			/**

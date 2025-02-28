@@ -364,7 +364,8 @@ async function run_test_variant(
 						target,
 						props,
 						intro: config.intro,
-						recover: config.recover ?? false
+						recover: config.recover ?? false,
+						uidPrefix: config.uid_prefix
 					});
 				}
 			} else {

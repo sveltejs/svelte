@@ -334,6 +334,10 @@ declare module 'svelte' {
 		 * @default true
 		 */
 		intro?: boolean;
+		/**
+		 * Provide a prefix for the generated ID from `$props.id`
+		 */
+		uidPrefix?: string;
 	} & ({} extends Props
 		? {
 				/**
@@ -485,6 +489,7 @@ declare module 'svelte' {
 		context?: Map<any, any>;
 		intro?: boolean;
 		recover?: boolean;
+		uidPrefix?: string;
 	} : {
 		target: Document | Element | ShadowRoot;
 		props: Props;
@@ -492,6 +497,7 @@ declare module 'svelte' {
 		context?: Map<any, any>;
 		intro?: boolean;
 		recover?: boolean;
+		uidPrefix?: string;
 	}): Exports;
 	/**
 	 * Unmounts a component that was previously mounted using `mount` or `hydrate`.

@@ -9,10 +9,10 @@ export default test({
 				target.innerHTML,
 				`
 					<button>toggle</button>
-					<h1>c1</h1>
-					<p>c2</p>
-					<p>c3</p>
-					<p>c4</p>
+					<h1>c-myPrefix-1</h1>
+					<p>c-myPrefix-2</p>
+					<p>c-myPrefix-3</p>
+					<p>c-myPrefix-4</p>
 				`
 			);
 		} else {
@@ -36,11 +36,11 @@ export default test({
 				target.innerHTML,
 				`
 					<button>toggle</button>
-					<h1>c1</h1>
-					<p>c2</p>
-					<p>c3</p>
-					<p>c4</p>
-					<p>c5</p>
+					<h1>c-myPrefix-1</h1>
+					<p>c-myPrefix-2</p>
+					<p>c-myPrefix-3</p>
+					<p>c-myPrefix-4</p>
+					<p>c-myPrefix-5</p>
 				`
 			);
 		} else {
@@ -52,7 +52,7 @@ export default test({
 					<p>s-myPrefix-2</p>
 					<p>s-myPrefix-3</p>
 					<p>s-myPrefix-4</p>
-					<p>c1</p>
+					<p>c-myPrefix-1</p>
 				`
 			);
 		}

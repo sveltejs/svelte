@@ -96,6 +96,7 @@ export function CallExpression(node, context) {
 			}
 
 			context.state.analysis.props_id = parent.id;
+			context.state.analysis.needs_context = true;
 
 			break;
 		}

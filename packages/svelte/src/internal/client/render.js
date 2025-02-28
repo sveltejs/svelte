@@ -86,6 +86,7 @@ export function mount(component, options) {
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		recover?: boolean;
+ * 	    uidPrefix?: string;
  * 	} : {
  * 		target: Document | Element | ShadowRoot;
  * 		props: Props;
@@ -93,6 +94,7 @@ export function mount(component, options) {
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		recover?: boolean;
+ * 	    uidPrefix?: string;
  * 	}} options
  * @returns {Exports}
  */
@@ -165,7 +167,10 @@ const document_listeners = new Map();
  * @param {MountOptions} options
  * @returns {Exports}
  */
-function _mount(Component, { target, anchor, props = {}, events, context, intro = true }) {
+function _mount(
+	Component,
+	{ target, anchor, props = {}, events, context, intro = true, uidPrefix }
+) {
 	init_operations();
 
 	var registered_events = new Set();
@@ -209,10 +214,15 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 		var anchor_node = anchor ?? target.appendChild(create_text());
 
 		branch(() => {
-			if (context) {
+			if (context || uidPrefix != null) {
 				push({});
 				var ctx = /** @type {ComponentContext} */ (component_context);
-				ctx.c = context;
+				if (context) {
+					ctx.c = context;
+				}
+				if (uidPrefix != null) {
+					ctx.uid = uidPrefix;
+				}
 			}
 
 			if (events) {

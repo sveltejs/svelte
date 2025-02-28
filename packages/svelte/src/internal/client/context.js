@@ -119,7 +119,8 @@ export function push(props, runes = false, fn) {
 		m: false,
 		s: props,
 		x: null,
-		l: null
+		l: null,
+		uid: component_context?.uid
 	};
 
 	if (legacy_mode_flag && !runes) {
