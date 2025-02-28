@@ -13,6 +13,7 @@ import { flushSync } from 'svelte';
 interface HydrationTest extends BaseTest {
 	load_compiled?: boolean;
 	server_props?: Record<string, any>;
+	uid_prefix?: string;
 	props?: Record<string, any>;
 	compileOptions?: Partial<CompileOptions>;
 	/**
@@ -50,7 +51,8 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 	const head = window.document.head;
 
 	const rendered = render((await import(`${cwd}/_output/server/main.svelte.js`)).default, {
-		props: config.server_props ?? config.props ?? {}
+		props: config.server_props ?? config.props ?? {},
+		uidPrefix: config?.uid_prefix
 	});
 
 	const override = read(`${cwd}/_override.html`);
