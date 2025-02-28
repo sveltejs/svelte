@@ -12,8 +12,7 @@ import {
 	set_is_destroying_effect,
 	set_signal_status,
 	untrack,
-	untracking,
-	flushSync
+	untracking
 } from '../runtime.js';
 import {
 	DIRTY,
@@ -40,7 +39,7 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { async_derived, derived } from './deriveds.js';
-import { capture, suspend } from '../dom/blocks/boundary.js';
+import { capture } from '../dom/blocks/boundary.js';
 import { component_context, dev_current_component_function } from '../context.js';
 import { active_fork } from './forks.js';
 

@@ -776,7 +776,7 @@ export function queue_flush() {
 			// TODO this doesn't seem quite right — may run into
 			// interesting cases where there are multiple roots.
 			// it'll do for now though
-			if (active_fork?.settled()) {
+			if (active_fork?.pending === 0) {
 				active_fork.remove();
 			}
 
@@ -858,7 +858,7 @@ function process_effects(root, fork) {
 		}
 	}
 
-	if (async_effects.length === 0 && (fork === null || fork.settled())) {
+	if (async_effects.length === 0 && (fork === null || fork.pending === 0)) {
 		fork?.commit();
 		flush_queued_effects(render_effects);
 		flush_queued_effects(effects);
@@ -898,7 +898,7 @@ export function flushSync(fn) {
 	// TODO this doesn't seem quite right — may run into
 	// interesting cases where there are multiple roots.
 	// it'll do for now though
-	if (active_fork?.settled()) {
+	if (active_fork?.pending === 0) {
 		active_fork.remove();
 	}
 

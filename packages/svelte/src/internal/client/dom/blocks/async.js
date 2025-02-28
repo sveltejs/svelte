@@ -1,7 +1,9 @@
-/** @import { TemplateNode, Value } from '#client' */
+/** @import { Effect, TemplateNode, Value } from '#client' */
 
 import { async_derived } from '../../reactivity/deriveds.js';
-import { capture, suspend } from './boundary.js';
+import { active_fork } from '../../reactivity/forks.js';
+import { active_effect, schedule_effect } from '../../runtime.js';
+import { capture } from './boundary.js';
 
 /**
  * @param {TemplateNode} node
@@ -11,12 +13,16 @@ import { capture, suspend } from './boundary.js';
 export function async(node, expressions, fn) {
 	// TODO handle hydration
 
+	var fork = active_fork;
+	var effect = /** @type {Effect} */ (active_effect);
 	var restore = capture();
-	var unsuspend = suspend();
 
 	Promise.all(expressions.map((fn) => async_derived(fn))).then((result) => {
 		restore();
 		fn(node, ...result);
-		unsuspend();
+
+		fork?.run(() => {
+			schedule_effect(effect);
+		});
 	});
 }

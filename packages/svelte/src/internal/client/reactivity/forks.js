@@ -29,7 +29,7 @@ export class Fork {
 	/** @type {Set<() => void>} */
 	#callbacks = new Set();
 
-	#pending = 0;
+	pending = 0;
 
 	apply() {
 		if (forks.size === 1) {
@@ -108,15 +108,15 @@ export class Fork {
 	}
 
 	increment() {
-		this.#pending += 1;
+		this.pending += 1;
 	}
 
 	decrement() {
-		this.#pending -= 1;
+		this.pending -= 1;
 	}
 
 	settled() {
-		return this.#pending === 0;
+		return this.pending === 0;
 	}
 
 	/** @param {() => void} fn */

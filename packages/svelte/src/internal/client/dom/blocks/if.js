@@ -11,7 +11,6 @@ import {
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
 import { create_text, should_defer_append } from '../operations.js';
-import { active_effect } from '../../runtime.js';
 import { active_fork } from '../../reactivity/forks.js';
 
 /**
@@ -51,10 +50,10 @@ export function if_block(node, fn, elseif = false) {
 	/** @type {Effect | null} */
 	var pending_effect = null;
 
-	var boundary = /** @type {Effect} */ (active_effect).b;
-
 	function commit() {
 		if (offscreen_fragment !== null) {
+			// remove the anchor
+			/** @type {Text} */ (offscreen_fragment.lastChild).remove();
 			anchor.before(offscreen_fragment);
 			offscreen_fragment = null;
 		}
@@ -130,7 +129,6 @@ export function if_block(node, fn, elseif = false) {
 			}
 
 			active_fork?.add_callback(commit);
-			target.remove();
 		} else {
 			commit();
 		}
