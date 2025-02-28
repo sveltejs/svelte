@@ -115,8 +115,15 @@ export {
 	user_effect,
 	user_pre_effect
 } from './reactivity/effects.js';
-export { pending } from './reactivity/forks.js';
-export { mutable_state, mutate, set, state, update, update_pre } from './reactivity/sources.js';
+export {
+	mutable_state,
+	mutate,
+	pending,
+	set,
+	state,
+	update,
+	update_pre
+} from './reactivity/sources.js';
 export {
 	prop,
 	rest_props,

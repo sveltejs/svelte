@@ -38,6 +38,8 @@ import { active_fork, Fork } from './forks.js';
 
 export let inspect_effects = new Set();
 
+export let pending = source(false);
+
 /**
  * @param {Set<any>} v
  */
