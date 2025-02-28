@@ -88,7 +88,7 @@ export let on_destroy = [];
 
 /**
  * Creates an ID generator
- * @param {string | undefined} prefix 
+ * @param {string | undefined} prefix
  * @returns {() => string}
  */
 function props_id_generator(prefix) {
