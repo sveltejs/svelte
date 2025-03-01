@@ -3,39 +3,59 @@
 
 /**
  * @param {AST.Fragment} node
+ * @return {AST.RegularElement | null}
+ */
+function search_first_elem(node) {
+	for (const child of node.nodes) {
+		if (
+			child.type === 'SvelteOptions' ||
+			child.type === 'SvelteWindow' ||
+			child.type === 'SvelteBody' ||
+			child.type === 'SvelteHead' ||
+			child.type === 'SvelteDocument' ||
+			child.type === 'SnippetBlock' ||
+			(child.type === 'Text' && child.raw.trim().length === 0)
+		) {
+			continue;
+		} else if (child.type === 'RegularElement') {
+			return child;
+		}
+		break;
+	}
+	return null;
+}
+
+/**
+ * @param {AST.Fragment} node
  * @param {Context} context
  */
 export function Fragment(node, context) {
 	const props_id = context.state.analysis.props_id;
 
+	// If the component has a $props.id(),
+	// We check if the root fragment starts with a RegularElement
 	if (context.path.length === 0 && props_id && props_id.metadata === null) {
-		/** @type {AST.RegularElement | AST.SvelteElement | null} */
-		let first_elem = null;
-		for (const child of node.nodes) {
-			if (
-				child.type === 'SvelteOptions' ||
-				child.type === 'SvelteWindow' ||
-				child.type === 'SvelteBody' ||
-				child.type === 'SvelteHead' ||
-				child.type === 'SvelteDocument' ||
-				child.type === 'SnippetBlock' ||
-				(child.type === 'Text' && child.raw.trim().length === 0)
-			) {
-				continue;
-			} else if (child.type === 'RegularElement' || child.type == 'SvelteElement') {
-				first_elem = child;
-			}
-			break;
-		}
+		let first_elem = search_first_elem(node);
+
 		/** @type {string | null} */
 		let attr = null;
 		/** @type {string | null} */
 		let suffix = null;
 
 		if (first_elem) {
+			// If the fragment starts with a RegularElement
+			// We look for an attribute that starts with the $props.id()
+			// so we can remove the hydration comment, and read the attribute.
+			// (note that this cannot be done on <svelte:element>, as it use an extra hydration comment)
 			for (const attribute of first_elem.attributes) {
-				if (
+				if (attribute.type === 'SpreadAttribute') {
+					// reset
+					attr = null;
+					suffix = null;
+				} else if (
 					attribute.type === 'Attribute' &&
+					attribute.name.toLowerCase() !== 'class' &&
+					attribute.name.toLowerCase() !== 'style' &&
 					attribute.value !== true &&
 					(attr === null || attr.length > attribute.name.length)
 				) {
