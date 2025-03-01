@@ -1,5 +1,5 @@
 /** @import { Effect, TemplateNode } from '#client' */
-import { FILENAME, NAMESPACE_SVG } from '../../../../constants.js';
+import { FILENAME, NAMESPACE_MATHML, NAMESPACE_SVG } from '../../../../constants.js';
 import {
 	hydrate_next,
 	hydrate_node,
@@ -28,7 +28,7 @@ import { is_raw_text_element } from '../../../../utils.js';
  * @param {Comment | Element} node
  * @param {() => string} get_tag
  * @param {boolean} is_svg
- * @param {undefined | ((element: Element, anchor: Node | null) => void)} render_fn,
+ * @param {undefined | ((element: Element, anchor: Node | null, preserve_attribute_case: boolean, is_custom_element: boolean) => void)} render_fn,
  * @param {undefined | (() => string)} get_namespace
  * @param {undefined | [number, number]} location
  * @returns {void}
@@ -137,11 +137,17 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 						}
 					}
 
+					var is_custom_element = element.nodeName.includes('-');
+					var preserve_attribute_case =
+						is_custom_element ||
+						element.namespaceURI === NAMESPACE_SVG ||
+						element.namespaceURI === NAMESPACE_MATHML;
+
 					// `child_anchor` is undefined if this is a void element, but we still
 					// need to call `render_fn` in order to run actions etc. If the element
 					// contains children, it's a user error (which is warned on elsewhere)
 					// and the DOM will be silently discarded
-					render_fn(element, child_anchor);
+					render_fn(element, child_anchor, preserve_attribute_case, is_custom_element);
 				}
 
 				// we do this after calling `render_fn` so that child effects don't override `nodes.end`

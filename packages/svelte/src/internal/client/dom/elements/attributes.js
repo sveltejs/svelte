@@ -432,7 +432,7 @@ export function set_attributes(
 				// @ts-ignore
 				element[name] = value;
 			} else if (typeof value !== 'function') {
-				set_attribute(element, name, value);
+				set_attribute(element, name, value, skip_warning);
 			}
 		}
 		if (key === 'style' && '__styles' in element) {
