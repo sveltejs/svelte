@@ -13,6 +13,7 @@ declare module 'svelte' {
 		props?: Props;
 		context?: Map<any, any>;
 		hydrate?: boolean;
+		uidPrefix?: string;
 		intro?: boolean;
 		recover?: boolean;
 		sync?: boolean;
