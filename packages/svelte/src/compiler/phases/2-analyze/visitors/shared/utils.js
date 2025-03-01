@@ -25,7 +25,11 @@ export function validate_assignment(node, argument, state) {
 				e.constant_assignment(node, 'derived state');
 			}
 
-			if (binding?.node === state.analysis.props_id) {
+			if (
+				state.analysis.props_id &&
+				binding?.node?.type === 'Identifier' &&
+				binding?.node?.name === state.analysis.props_id.name
+			) {
 				e.constant_assignment(node, '$props.id()');
 			}
 

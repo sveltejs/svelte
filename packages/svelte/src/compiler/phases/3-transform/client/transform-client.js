@@ -563,18 +563,15 @@ export function client_component(analysis, options) {
 	}
 
 	if (analysis.props_id) {
-		// need to be placed on first line of the component for hydration
 		const args = [];
-		const metadata = analysis.props_id.metadata;
-		if (metadata) {
-			if (metadata.attr) {
-				args.push(b.literal(metadata.attr));
-				if (metadata.suffix) {
-					args.push(b.literal(metadata.suffix));
-				}
+		if (analysis.props_id.attr) {
+			args.push(b.literal(analysis.props_id.attr));
+			if (analysis.props_id.suffix) {
+				args.push(b.literal(analysis.props_id.suffix));
 			}
 		}
 
+		// need to be placed on first line of the component for hydration
 		component_block.body.unshift(
 			b.const(b.id(analysis.props_id.name), b.call('$.props_id', ...args))
 		);

@@ -48,12 +48,10 @@ export interface ComponentAnalysis extends Analysis {
 	props_id: {
 		/** The variable name */
 		name: string;
-		metadata: {
-			/** The name of the attribute from the first RegularElement */
-			attr: string | null;
-			/** Any suffix separator on the attribute */
-			suffix: string | null;
-		} | null;
+		/** The name of the attribute from the first RegularElement */
+		attr: string | null;
+		/** Any suffix separator on the attribute */
+		suffix: string | null;
 	} | null;
 	/** Whether the component uses `$$restProps` */
 	uses_rest_props: boolean;

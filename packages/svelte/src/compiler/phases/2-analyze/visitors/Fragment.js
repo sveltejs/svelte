@@ -34,13 +34,8 @@ export function Fragment(node, context) {
 
 	// If the component has a $props.id(),
 	// We check if the root fragment starts with a RegularElement
-	if (context.path.length === 0 && props_id && props_id.metadata === null) {
+	if (context.path.length === 0 && props_id) {
 		let first_elem = search_first_elem(node);
-
-		/** @type {string | null} */
-		let attr = null;
-		/** @type {string | null} */
-		let suffix = null;
 
 		if (first_elem) {
 			// If the fragment starts with a RegularElement
@@ -50,14 +45,14 @@ export function Fragment(node, context) {
 			for (const attribute of first_elem.attributes) {
 				if (attribute.type === 'SpreadAttribute') {
 					// reset
-					attr = null;
-					suffix = null;
+					props_id.attr = null;
+					props_id.suffix = null;
 				} else if (
 					attribute.type === 'Attribute' &&
 					attribute.name.toLowerCase() !== 'class' &&
 					attribute.name.toLowerCase() !== 'style' &&
 					attribute.value !== true &&
-					(attr === null || attr.length > attribute.name.length)
+					(props_id.attr === null || props_id.attr.length > attribute.name.length)
 				) {
 					if (Array.isArray(attribute.value)) {
 						const attr0 = attribute.value[0];
@@ -67,27 +62,26 @@ export function Fragment(node, context) {
 							attr0.expression.name === props_id.name
 						) {
 							if (attribute.value.length === 1) {
-								attr = attribute.name;
-								suffix = null;
+								props_id.attr = attribute.name;
+								props_id.suffix = null;
 							} else if (
 								attribute.value[1].type === 'Text' &&
 								!'0123456789'.includes(attribute.value[1].data[0])
 							) {
-								attr = attribute.name;
-								suffix = attribute.value[1].data[0];
+								props_id.attr = attribute.name;
+								props_id.suffix = attribute.value[1].data[0];
 							}
 						}
 					} else if (
 						attribute.value.expression.type === 'Identifier' &&
 						attribute.value.expression.name === props_id.name
 					) {
-						attr = attribute.name;
-						suffix = null;
+						props_id.attr = attribute.name;
+						props_id.suffix = null;
 					}
 				}
 			}
 		}
-		props_id.metadata = { attr, suffix };
 	}
 
 	node.nodes.forEach((node) => context.visit(node, { ...context.state }));

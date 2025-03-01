@@ -97,7 +97,8 @@ export function CallExpression(node, context) {
 
 			context.state.analysis.props_id = {
 				name: parent.id.name,
-				metadata: null
+				attr: null,
+				suffix: null
 			};
 
 			break;

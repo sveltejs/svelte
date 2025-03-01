@@ -249,7 +249,7 @@ export function server_component(analysis, options) {
 		component_block.body.unshift(
 			b.const(
 				analysis.props_id.name,
-				b.call('$.props_id', b.id('$$payload'), analysis.props_id.metadata?.attr ? b.false : false)
+				b.call('$.props_id', b.id('$$payload'), analysis.props_id?.attr ? b.false : false)
 			)
 		);
 	}
