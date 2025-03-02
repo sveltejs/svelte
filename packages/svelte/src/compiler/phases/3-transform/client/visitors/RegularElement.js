@@ -1,4 +1,4 @@
-/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression, Statement } from 'estree' */
+/** @import { ArrayExpression, Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
@@ -20,9 +20,9 @@ import { build_getter } from '../utils.js';
 import {
 	get_attribute_name,
 	build_attribute_value,
-	build_style_directives,
 	build_set_attributes,
-	build_set_class
+	build_set_class,
+	build_set_style
 } from './shared/element.js';
 import { process_children } from './shared/fragment.js';
 import {
@@ -215,15 +215,13 @@ export function RegularElement(node, context) {
 
 	const node_id = context.state.node;
 
-	// Then do attributes
-	let is_attributes_reactive = has_spread;
-
 	if (has_spread) {
 		const attributes_id = b.id(context.state.scope.generate('attributes'));
 
 		build_set_attributes(
 			attributes,
 			class_directives,
+			style_directives,
 			context,
 			node,
 			node_id,
@@ -275,7 +273,8 @@ export function RegularElement(node, context) {
 				!is_custom_element &&
 				!cannot_be_set_statically(attribute.name) &&
 				(attribute.value === true || is_text_attribute(attribute)) &&
-				(name !== 'class' || class_directives.length === 0)
+				(name !== 'class' || class_directives.length === 0) &&
+				(name !== 'style' || style_directives.length === 0)
 			) {
 				let value = is_text_attribute(attribute) ? attribute.value[0].data : true;
 
@@ -299,23 +298,21 @@ export function RegularElement(node, context) {
 				continue;
 			}
 
-			const is =
-				is_custom_element && name !== 'class'
-					? build_custom_element_attribute_update_assignment(node_id, attribute, context)
-					: build_element_attribute_update_assignment(
-							node,
-							node_id,
-							attribute,
-							attributes,
-							class_directives,
-							context
-						);
-			if (is) is_attributes_reactive = true;
+			if (is_custom_element && name !== 'class' && name !== 'style') {
+				build_custom_element_attribute_update_assignment(node_id, attribute, context);
+			} else {
+				build_element_attribute_update_assignment(
+					node,
+					node_id,
+					attribute,
+					attributes,
+					class_directives,
+					style_directives,
+					context
+				);
+			}
 		}
 	}
-
-	// style directives must be applied last since they could override class/style attributes
-	build_style_directives(style_directives, node_id, context, is_attributes_reactive);
 
 	if (
 		is_load_error_element(node.name) &&
@@ -529,6 +526,40 @@ export function build_class_directives_object(class_directives, context) {
 }
 
 /**
+ * @param {AST.StyleDirective[]} style_directives
+ * @param {ComponentContext} context
+ * @return {ObjectExpression | ArrayExpression}}
+ */
+export function build_style_directives_object(style_directives, context) {
+	let normal_properties = [];
+	let important_properties = [];
+
+	for (const directive of style_directives) {
+		let expression =
+			directive.value === true
+				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
+				: build_attribute_value(directive.value, context, (value, metadata) =>
+						metadata.has_call ? get_expression_id(context.state, value) : value
+					).value;
+		let name = directive.name;
+		if (name[0] !== '-' || name[1] !== '-') {
+			name = name.toLowerCase();
+		}
+
+		const property = b.init(name, expression);
+		if (directive.modifiers.includes('important')) {
+			important_properties.push(property);
+		} else {
+			normal_properties.push(property);
+		}
+	}
+
+	return important_properties.length
+		? b.array([b.object(normal_properties), b.object(important_properties)])
+		: b.object(normal_properties);
+}
+
+/**
  * Serializes an assignment to an element property by adding relevant statements to either only
  * the init or the the init and update arrays, depending on whether or not the value is dynamic.
  * Resulting code for static looks something like this:
@@ -555,6 +586,7 @@ export function build_class_directives_object(class_directives, context) {
  * @param {AST.Attribute} attribute
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
  * @param {AST.ClassDirective[]} class_directives
+ * @param {AST.StyleDirective[]} style_directives
  * @param {ComponentContext} context
  * @returns {boolean}
  */
@@ -564,6 +596,7 @@ function build_element_attribute_update_assignment(
 	attribute,
 	attributes,
 	class_directives,
+	style_directives,
 	context
 ) {
 	const state = context.state;
@@ -612,6 +645,8 @@ function build_element_attribute_update_assignment(
 			context,
 			!is_svg && !is_mathml
 		);
+	} else if (name === 'style') {
+		return build_set_style(node_id, value, has_state, style_directives, context);
 	} else if (name === 'value') {
 		update = b.stmt(b.call('$.set_value', node_id, value));
 	} else if (name === 'checked') {

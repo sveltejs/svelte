@@ -15,6 +15,7 @@ import {
 } from '../../runtime.js';
 import { clsx } from '../../../shared/attributes.js';
 import { set_class } from './class.js';
+import { set_style } from './style.js';
 
 export const CLASS = Symbol('class');
 export const STYLE = Symbol('style');
@@ -176,11 +177,6 @@ export function set_attribute(element, attribute, value, skip_warning) {
 
 	if (attributes[attribute] === (attributes[attribute] = value)) return;
 
-	if (attribute === 'style' && '__styles' in element) {
-		// reset styles to force style: directive to update
-		element.__styles = {};
-	}
-
 	if (attribute === 'loading') {
 		// @ts-expect-error
 		element[LOADING_ATTR_SYMBOL] = value;
@@ -297,6 +293,10 @@ export function set_attributes(
 		next.class = null; /* force call to set_class() */
 	}
 
+	if (next[STYLE]) {
+		next.style ??= null; /* force call to set_style() */
+	}
+
 	var setters = get_setters(element);
 
 	// @ts-expect-error
@@ -331,6 +331,13 @@ export function set_attributes(
 			set_class(element, is_html, value, css_hash, prev?.[CLASS], next[CLASS]);
 			current[key] = value;
 			current[CLASS] = next[CLASS];
+			continue;
+		}
+
+		if (key === 'style') {
+			set_style(element, value, prev?.[STYLE], next[STYLE]);
+			current[key] = value;
+			current[STYLE] = next[STYLE];
 			continue;
 		}
 
@@ -385,8 +392,6 @@ export function set_attributes(
 				// @ts-ignore
 				element[`__${event_name}`] = undefined;
 			}
-		} else if (key === 'style' && value != null) {
-			element.style.cssText = value + '';
 		} else if (key === 'autofocus') {
 			autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
 		} else if (!is_custom_element && (key === '__value' || (key === 'value' && value != null))) {
@@ -434,10 +439,6 @@ export function set_attributes(
 			} else if (typeof value !== 'function') {
 				set_attribute(element, name, value);
 			}
-		}
-		if (key === 'style' && '__styles' in element) {
-			// reset styles to force style: directive to update
-			element.__styles = {};
 		}
 	}
 

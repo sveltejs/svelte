@@ -1,4 +1,4 @@
-/** @import { Expression, Literal, ObjectExpression } from 'estree' */
+/** @import { ArrayExpression, Expression, Literal, ObjectExpression } from 'estree' */
 /** @import { AST, Namespace } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../../types.js' */
 import {
@@ -48,9 +48,6 @@ export function build_element_attributes(node, context) {
 	let content = null;
 
 	let has_spread = false;
-	// Use the index to keep the attributes order which is important for spreading
-	let class_index = -1;
-	let style_index = -1;
 	let events_to_capture = new Set();
 
 	for (const attribute of node.attributes) {
@@ -86,7 +83,6 @@ export function build_element_attributes(node, context) {
 				// the defaultValue/defaultChecked properties don't exist as attributes
 			} else if (attribute.name !== 'defaultValue' && attribute.name !== 'defaultChecked') {
 				if (attribute.name === 'class') {
-					class_index = attributes.length;
 					if (attribute.metadata.needs_clsx) {
 						attributes.push({
 							...attribute,
@@ -102,10 +98,6 @@ export function build_element_attributes(node, context) {
 						attributes.push(attribute);
 					}
 				} else {
-					if (attribute.name === 'style') {
-						style_index = attributes.length;
-					}
-
 					attributes.push(attribute);
 				}
 			}
@@ -212,41 +204,27 @@ export function build_element_attributes(node, context) {
 		}
 	}
 
-	if ((node.metadata.scoped || class_directives.length) && !has_spread) {
-		const class_attribute = build_to_class(
-			node.metadata.scoped ? context.state.analysis.css.hash : null,
-			class_directives,
-			/** @type {AST.Attribute | null} */ (attributes[class_index] ?? null)
-		);
-		if (class_index === -1) {
-			attributes.push(class_attribute);
-		}
-	}
-
-	if (style_directives.length > 0 && !has_spread) {
-		build_style_directives(
-			style_directives,
-			/** @type {AST.Attribute | null} */ (attributes[style_index] ?? null),
-			context
-		);
-		if (style_index > -1) {
-			attributes.splice(style_index, 1);
-		}
-	}
-
 	if (has_spread) {
 		build_element_spread_attributes(node, attributes, style_directives, class_directives, context);
 	} else {
+		const css_hash = node.metadata.scoped ? context.state.analysis.css.hash : null;
 		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
-			if (attribute.value === true || is_text_attribute(attribute)) {
-				const name = get_attribute_name(node, attribute);
-				const literal_value = /** @type {Literal} */ (
+			const name = get_attribute_name(node, attribute);
+			const can_use_literal =
+				(name !== 'class' || class_directives.length === 0) &&
+				(name !== 'style' || style_directives.length === 0);
+
+			if (can_use_literal && (attribute.value === true || is_text_attribute(attribute))) {
+				let literal_value = /** @type {Literal} */ (
 					build_attribute_value(
 						attribute.value,
 						context,
 						WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 					)
 				).value;
+				if (name === 'class' && css_hash) {
+					literal_value = (String(literal_value) + ' ' + css_hash).trim();
+				}
 				if (name !== 'class' || literal_value) {
 					context.state.template.push(
 						b.literal(
@@ -261,7 +239,6 @@ export function build_element_attributes(node, context) {
 				continue;
 			}
 
-			const name = get_attribute_name(node, attribute);
 			const value = build_attribute_value(
 				attribute.value,
 				context,
@@ -269,8 +246,15 @@ export function build_element_attributes(node, context) {
 			);
 
 			// pre-escape and inline literal attributes :
-			if (value.type === 'Literal' && typeof value.value === 'string') {
+			if (can_use_literal && value.type === 'Literal' && typeof value.value === 'string') {
+				if (name === 'class' && css_hash) {
+					value.value = (value.value + ' ' + css_hash).trim();
+				}
 				context.state.template.push(b.literal(` ${name}="${escape_html(value.value, true)}"`));
+			} else if (name === 'class') {
+				context.state.template.push(build_attr_class(class_directives, value, context, css_hash));
+			} else if (name === 'style') {
+				context.state.template.push(build_attr_style(style_directives, value, context));
 			} else {
 				context.state.template.push(
 					b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
@@ -379,100 +363,77 @@ function build_element_spread_attributes(
 
 /**
  *
- * @param {string | null} hash
  * @param {AST.ClassDirective[]} class_directives
- * @param {AST.Attribute | null} class_attribute
- * @returns
+ * @param {Expression} expression
+ * @param {ComponentContext} context
+ * @param {string | null} hash
  */
-function build_to_class(hash, class_directives, class_attribute) {
-	if (class_attribute === null) {
-		class_attribute = create_attribute('class', -1, -1, []);
-	}
-
+function build_attr_class(class_directives, expression, context, hash) {
 	/** @type {ObjectExpression | undefined} */
-	let classes;
-
+	let directives;
 	if (class_directives.length) {
-		classes = b.object(
+		directives = b.object(
 			class_directives.map((directive) =>
-				b.prop('init', b.literal(directive.name), directive.expression)
+				b.prop(
+					'init',
+					b.literal(directive.name),
+					/** @type {Expression} */ (context.visit(directive.expression, context.state))
+				)
 			)
 		);
 	}
+	let css_hash;
 
-	/** @type {Expression} */
-	let class_name;
-
-	if (class_attribute.value === true) {
-		class_name = b.literal('');
-	} else if (Array.isArray(class_attribute.value)) {
-		if (class_attribute.value.length === 0) {
-			class_name = b.null;
+	if (hash) {
+		if (expression.type === 'Literal' && typeof expression.value === 'string') {
+			expression.value = (expression.value + ' ' + hash).trim();
 		} else {
-			class_name = class_attribute.value
-				.map((val) => (val.type === 'Text' ? b.literal(val.data) : val.expression))
-				.reduce((left, right) => b.binary('+', left, right));
+			css_hash = b.literal(hash);
 		}
-	} else {
-		class_name = class_attribute.value.expression;
+	} else if (directives) {
+		css_hash = b.null;
 	}
-
-	/** @type {Expression} */
-	let expression;
-
-	if (
-		hash &&
-		!classes &&
-		class_name.type === 'Literal' &&
-		(class_name.value === null || class_name.value === '' || typeof class_name.value === 'string')
-	) {
-		if (class_name.value === null || class_name.value === '') {
-			expression = b.literal(hash);
-		} else {
-			expression = b.literal(escape_html(class_name.value, true) + ' ' + hash);
-		}
-	} else {
-		expression = b.call('$.to_class', class_name, b.literal(hash), classes);
-	}
-
-	class_attribute.value = {
-		type: 'ExpressionTag',
-		start: -1,
-		end: -1,
-		expression: expression,
-		metadata: {
-			expression: create_expression_metadata()
-		}
-	};
-
-	return class_attribute;
+	return b.call('$.attr_class', expression, css_hash, directives);
 }
 
 /**
+ *
  * @param {AST.StyleDirective[]} style_directives
- * @param {AST.Attribute | null} style_attribute
+ * @param {Expression} expression
  * @param {ComponentContext} context
  */
-function build_style_directives(style_directives, style_attribute, context) {
-	const styles = style_directives.map((directive) => {
-		let value =
-			directive.value === true
-				? b.id(directive.name)
-				: build_attribute_value(directive.value, context, true);
-		if (directive.modifiers.includes('important')) {
-			value = b.binary('+', value, b.literal(' !important'));
+function build_attr_style(style_directives, expression, context) {
+	/** @type {ArrayExpression | ObjectExpression | undefined} */
+	let directives;
+	if (style_directives.length) {
+		let normal_properties = [];
+		let important_properties = [];
+
+		for (const directive of style_directives) {
+			const expression =
+				directive.value === true
+					? b.id(directive.name)
+					: build_attribute_value(directive.value, context, true);
+
+			let name = directive.name;
+			if (name[0] !== '-' || name[1] !== '-') {
+				name = name.toLowerCase();
+			}
+
+			const property = b.init(directive.name, expression);
+			if (directive.modifiers.includes('important')) {
+				important_properties.push(property);
+			} else {
+				normal_properties.push(property);
+			}
 		}
-		return b.init(directive.name, value);
-	});
 
-	const arg =
-		style_attribute === null
-			? b.object(styles)
-			: b.call(
-					'$.merge_styles',
-					build_attribute_value(style_attribute.value, context, true),
-					b.object(styles)
-				);
+		if (important_properties.length) {
+			directives = b.array([b.object(normal_properties), b.object(important_properties)]);
+		} else {
+			directives = b.object(normal_properties);
+		}
+	}
 
-	context.state.template.push(b.call('$.add_styles', arg));
+	return b.call('$.attr_style', expression, directives);
 }

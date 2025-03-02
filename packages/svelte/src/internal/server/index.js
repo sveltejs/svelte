@@ -2,7 +2,7 @@
 /** @import { Component, Payload, RenderOutput } from '#server' */
 /** @import { Store } from '#shared' */
 export { FILENAME, HMR } from '../../constants.js';
-import { attr, clsx, to_class } from '../shared/attributes.js';
+import { attr, clsx, to_class, to_style } from '../shared/attributes.js';
 import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
@@ -205,9 +205,7 @@ export function css_props(payload, is_html, props, component, dynamic = false) {
  */
 export function spread_attributes(attrs, css_hash, classes, styles, flags = 0) {
 	if (styles) {
-		attrs.style = attrs.style
-			? style_object_to_string(merge_styles(/** @type {string} */ (attrs.style), styles))
-			: style_object_to_string(styles);
+		attrs.style = to_style(attrs.style, styles);
 	}
 
 	if (attrs.class) {
@@ -281,35 +279,29 @@ function style_object_to_string(style_object) {
 		.join(' ');
 }
 
-/** @param {Record<string, string>} style_object */
-export function add_styles(style_object) {
-	const styles = style_object_to_string(style_object);
-	return styles ? ` style="${styles}"` : '';
+/**
+ * @param {any} value
+ * @param {string | null} [hash]
+ * @param {Record<string, boolean>} [directives]
+ */
+export function attr_class(value, hash, directives) {
+	var result = to_class(value, hash, directives);
+	if (result) {
+		return ` class="${escape_html(result, true)}"`;
+	}
+	return '';
 }
 
 /**
- * @param {string} attribute
- * @param {Record<string, string>} styles
+ * @param {any} value
+ * @param {Record<string,any>|[Record<string,any>,Record<string,any>]} [directives]
  */
-export function merge_styles(attribute, styles) {
-	/** @type {Record<string, string>} */
-	var merged = {};
-
-	if (attribute) {
-		for (var declaration of attribute.split(';')) {
-			var i = declaration.indexOf(':');
-			var name = declaration.slice(0, i).trim();
-			var value = declaration.slice(i + 1).trim();
-
-			if (name !== '') merged[name] = value;
-		}
+export function attr_style(value, directives) {
+	var result = to_style(value, directives);
+	if (result) {
+		return ` style="${escape_html(result, true)}"`;
 	}
-
-	for (name in styles) {
-		merged[name] = styles[name];
-	}
-
-	return merged;
+	return '';
 }
 
 /**
@@ -544,7 +536,7 @@ export function props_id(payload) {
 	return uid;
 }
 
-export { attr, clsx, to_class };
+export { attr, clsx };
 
 export { html } from './blocks/html.js';
 

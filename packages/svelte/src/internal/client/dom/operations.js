@@ -48,7 +48,7 @@ export function init_operations() {
 	// @ts-expect-error
 	element_prototype.__attributes = null;
 	// @ts-expect-error
-	element_prototype.__styles = null;
+	element_prototype.__style = undefined;
 	// @ts-expect-error
 	element_prototype.__e = undefined;
 

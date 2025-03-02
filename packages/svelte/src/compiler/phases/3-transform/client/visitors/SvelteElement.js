@@ -5,12 +5,7 @@ import { dev, locator } from '../../../../state.js';
 import { is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { determine_namespace_for_children } from '../../utils.js';
-import {
-	build_attribute_value,
-	build_set_attributes,
-	build_set_class,
-	build_style_directives
-} from './shared/element.js';
+import { build_attribute_value, build_set_attributes, build_set_class } from './shared/element.js';
 import { build_render_statement, get_expression_id } from './shared/utils.js';
 
 /**
@@ -77,9 +72,6 @@ export function SvelteElement(node, context) {
 	// Let bindings first, they can be used on attributes
 	context.state.init.push(...lets); // create computeds in the outer context; the dynamic element is the single child of this slot
 
-	// Then do attributes
-	let is_attributes_reactive = false;
-
 	if (
 		attributes.length === 1 &&
 		attributes[0].type === 'Attribute' &&
@@ -93,7 +85,7 @@ export function SvelteElement(node, context) {
 			(value, metadata) => (metadata.has_call ? get_expression_id(context.state, value) : value)
 		);
 
-		is_attributes_reactive = build_set_class(
+		build_set_class(
 			node,
 			element_id,
 			attributes[0],
@@ -108,9 +100,10 @@ export function SvelteElement(node, context) {
 
 		// Always use spread because we don't know whether the element is a custom element or not,
 		// therefore we need to do the "how to set an attribute" logic at runtime.
-		is_attributes_reactive = build_set_attributes(
+		build_set_attributes(
 			attributes,
 			class_directives,
+			style_directives,
 			inner_context,
 			node,
 			element_id,
@@ -119,9 +112,6 @@ export function SvelteElement(node, context) {
 			b.call(b.member(b.member(element_id, 'nodeName'), 'includes'), b.literal('-'))
 		);
 	}
-
-	// style directives must be applied last since they could override class/style attributes
-	build_style_directives(style_directives, element_id, inner_context, is_attributes_reactive);
 
 	const get_tag = b.thunk(/** @type {Expression} */ (context.visit(node.tag)));
 
