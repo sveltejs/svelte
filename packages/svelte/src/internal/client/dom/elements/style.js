@@ -35,7 +35,8 @@ export function set_style(dom, value, prev_styles, next_styles) {
 			if (next_style_attr == null) {
 				dom.removeAttribute('style');
 			} else {
-				dom.style.cssText = next_style_attr;
+				// TODO : dom.style.cssText = next_style_attr;
+				dom.setAttribute('style', next_style_attr);
 			}
 		}
 		// @ts-expect-error
