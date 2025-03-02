@@ -42,5 +42,14 @@ export function Fragment(node, context) {
 
 	process_children(trimmed, { ...context, state });
 
-	return b.block([...state.init, ...build_template(state.template)]);
+	return b.block([
+		...state.init,
+		...build_template(
+			state.template,
+			undefined,
+			undefined,
+			state.props_id,
+			state.props_id_needs_hydration
+		)
+	]);
 }

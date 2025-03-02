@@ -13,6 +13,8 @@ export interface ServerTransformState extends TransformState {
 export interface ComponentServerTransformState extends ServerTransformState {
 	readonly analysis: ComponentAnalysis;
 	readonly options: ValidatedCompileOptions;
+	readonly props_id?: string;
+	readonly props_id_needs_hydration: boolean;
 
 	readonly init: Statement[];
 

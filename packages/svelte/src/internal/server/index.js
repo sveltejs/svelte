@@ -536,11 +536,15 @@ export function once(get_value) {
 /**
  * Create an unique ID
  * @param {Payload} payload
+ * @param {boolean} [needs_hydration]
  * @returns {string}
  */
-export function props_id(payload) {
+export function props_id(payload, needs_hydration) {
 	const uid = payload.uid();
-	payload.out += '<!--#' + uid + '-->';
+	// we only add an hydration marker if the first comment of the component is not an empty comment
+	if (needs_hydration) {
+		payload.out += '<!--#' + uid + '-->';
+	}
 	return uid;
 }
 

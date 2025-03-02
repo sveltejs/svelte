@@ -28,6 +28,7 @@ export interface Analysis {
 	runes: boolean;
 	immutable: boolean;
 	tracing: boolean;
+	props_id_needs_hydration: boolean;
 
 	// TODO figure out if we can move this to ComponentAnalysis
 	accessors: boolean;

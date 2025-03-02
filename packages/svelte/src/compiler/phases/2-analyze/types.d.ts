@@ -20,6 +20,8 @@ export interface AnalysisState {
 	expression: ExpressionMetadata | null;
 	derived_state: { name: string; private: boolean }[];
 	function_depth: number;
+	// we need to use an object instead of the value because state is spread by the global visitor
+	props_id_needs_hydration: { value: boolean };
 
 	// legacy stuff
 	reactive_statement: null | ReactiveStatement;

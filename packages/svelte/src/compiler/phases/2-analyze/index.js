@@ -250,7 +250,8 @@ export function analyze_module(ast, options) {
 		accessors: false,
 		runes: true,
 		immutable: true,
-		tracing: false
+		tracing: false,
+		props_id_needs_hydration: true
 	};
 
 	walk(
@@ -269,7 +270,8 @@ export function analyze_module(ast, options) {
 			has_props_rune: false,
 			options: /** @type {ValidatedCompileOptions} */ (options),
 			parent_element: null,
-			reactive_statement: null
+			reactive_statement: null,
+			props_id_needs_hydration: { value: true }
 		},
 		visitors
 	);
@@ -460,7 +462,8 @@ export function analyze_component(root, source, options) {
 		source,
 		undefined_exports: new Map(),
 		snippet_renderers: new Map(),
-		snippets: new Set()
+		snippets: new Set(),
+		props_id_needs_hydration: true
 	};
 
 	if (!runes) {
@@ -618,10 +621,16 @@ export function analyze_component(root, source, options) {
 				expression: null,
 				derived_state: [],
 				function_depth: scope.function_depth,
-				reactive_statement: null
+				reactive_statement: null,
+				// we need to use an object instead of the value because state is spread by the global visitor
+				props_id_needs_hydration: { value: true }
 			};
 
 			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);
+
+			if (!state.props_id_needs_hydration.value) {
+				analysis.props_id_needs_hydration = false;
+			}
 		}
 
 		// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
@@ -684,7 +693,9 @@ export function analyze_component(root, source, options) {
 				component_slots: new Set(),
 				expression: null,
 				derived_state: [],
-				function_depth: scope.function_depth
+				function_depth: scope.function_depth,
+				// we need to use an object instead of the value because state is spread by the global visitor
+				props_id_needs_hydration: { value: true }
 			};
 
 			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);

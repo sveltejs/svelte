@@ -3,12 +3,16 @@
 import { is_tag_valid_with_parent } from '../../../../html-tree-validation.js';
 import { regex_not_whitespace } from '../../patterns.js';
 import * as e from '../../../errors.js';
+import { props_id_needs_hydration } from '../utils/props_id_needs_hydration.js';
 
 /**
  * @param {AST.Text} node
  * @param {Context} context
  */
 export function Text(node, context) {
+	if (props_id_needs_hydration(node, context.path)) {
+		context.state.props_id_needs_hydration.value = false;
+	}
 	const in_template = context.path.at(-1)?.type === 'Fragment';
 
 	if (in_template && context.state.parent_element && regex_not_whitespace.test(node.data)) {

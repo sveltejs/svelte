@@ -95,9 +95,17 @@ function is_statement(node) {
  * @param {Array<Statement | Expression>} template
  * @param {Identifier} out
  * @param {AssignmentOperator} operator
+ * @param {string} [props_id]
+ * @param {boolean} [props_id_needs_hydration]
  * @returns {Statement[]}
  */
-export function build_template(template, out = b.id('$$payload.out'), operator = '+=') {
+export function build_template(
+	template,
+	out = b.id('$$payload.out'),
+	operator = '+=',
+	props_id,
+	props_id_needs_hydration
+) {
 	/** @type {string[]} */
 	let strings = [];
 
@@ -139,7 +147,18 @@ export function build_template(template, out = b.id('$$payload.out'), operator =
 			}
 
 			if (node.type === 'Literal') {
-				strings[strings.length - 1] += node.value;
+				if (
+					i === 0 &&
+					node.value === empty_comment.value &&
+					!props_id_needs_hydration &&
+					props_id != null
+				) {
+					strings[strings.length - 1] += `<!--#`;
+					expressions.push(b.id(props_id));
+					strings.push(`-->`);
+				} else {
+					strings[strings.length - 1] += node.value;
+				}
 			} else if (node.type === 'TemplateLiteral') {
 				strings[strings.length - 1] += node.quasis[0].value.cooked;
 				strings.push(...node.quasis.slice(1).map((q) => /** @type {string} */ (q.value.cooked)));

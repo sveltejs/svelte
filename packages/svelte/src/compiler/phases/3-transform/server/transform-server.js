@@ -3,10 +3,10 @@
 /** @import { ComponentServerTransformState, ComponentVisitors, ServerTransformState, Visitors } from './types.js' */
 /** @import { Analysis, ComponentAnalysis } from '../../types.js' */
 import { walk } from 'zimmerframe';
-import { set_scope } from '../../scope.js';
+import { dev, filename } from '../../../state.js';
 import { extract_identifiers } from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
-import { dev, filename } from '../../../state.js';
+import { set_scope } from '../../scope.js';
 import { render_stylesheet } from '../css/index.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
@@ -30,6 +30,7 @@ import { RenderTag } from './visitors/RenderTag.js';
 import { SlotElement } from './visitors/SlotElement.js';
 import { SnippetBlock } from './visitors/SnippetBlock.js';
 import { SpreadAttribute } from './visitors/SpreadAttribute.js';
+import { SvelteBoundary } from './visitors/SvelteBoundary.js';
 import { SvelteComponent } from './visitors/SvelteComponent.js';
 import { SvelteElement } from './visitors/SvelteElement.js';
 import { SvelteFragment } from './visitors/SvelteFragment.js';
@@ -38,7 +39,6 @@ import { SvelteSelf } from './visitors/SvelteSelf.js';
 import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { VariableDeclaration } from './visitors/VariableDeclaration.js';
-import { SvelteBoundary } from './visitors/SvelteBoundary.js';
 
 /** @type {Visitors} */
 const global_visitors = {
@@ -100,7 +100,9 @@ export function server_component(analysis, options) {
 		namespace: options.namespace,
 		preserve_whitespace: options.preserveWhitespace,
 		private_derived: new Map(),
-		skip_hydration_boundaries: false
+		skip_hydration_boundaries: false,
+		props_id: analysis.props_id?.name,
+		props_id_needs_hydration: analysis.props_id_needs_hydration
 	};
 
 	const module = /** @type {Program} */ (
@@ -247,7 +249,10 @@ export function server_component(analysis, options) {
 	if (analysis.props_id) {
 		// need to be placed on first line of the component for hydration
 		component_block.body.unshift(
-			b.const(analysis.props_id, b.call('$.props_id', b.id('$$payload')))
+			b.const(
+				analysis.props_id,
+				b.call('$.props_id', b.id('$$payload'), analysis.props_id_needs_hydration && b.true)
+			)
 		);
 	}
 

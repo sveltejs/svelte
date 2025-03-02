@@ -258,8 +258,9 @@ export function reset_props_id() {
 
 /**
  * Create (or hydrate) an unique UID for the component instance.
+ * @param {boolean} needs_next
  */
-export function props_id() {
+export function props_id(needs_next) {
 	if (
 		hydrating &&
 		hydrate_node &&
@@ -267,7 +268,10 @@ export function props_id() {
 		hydrate_node.textContent?.startsWith('#s')
 	) {
 		const id = hydrate_node.textContent.substring(1);
-		hydrate_next();
+		// in some cases we reuse the empty comment to store the id...in those cases we don't need to call next
+		if (needs_next) {
+			hydrate_next();
+		}
 		return id;
 	}
 

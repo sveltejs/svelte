@@ -3,12 +3,16 @@
 import { validate_block_not_empty, validate_opening_tag } from './shared/utils.js';
 import * as e from '../../../errors.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
+import { props_id_needs_hydration } from '../utils/props_id_needs_hydration.js';
 
 /**
  * @param {AST.AwaitBlock} node
  * @param {Context} context
  */
 export function AwaitBlock(node, context) {
+	if (props_id_needs_hydration(node, context.path)) {
+		context.state.props_id_needs_hydration.value = false;
+	}
 	validate_block_not_empty(node.pending, context);
 	validate_block_not_empty(node.then, context);
 	validate_block_not_empty(node.catch, context);
