@@ -41,7 +41,7 @@
 	}
 </script>
 
-<main id="main">
+<main id="main" style:color={browser?'white':'black'}>
 	<div style:margin style:color style:font-size|important={fontSize}></div>
 	<div style={style1} style:margin style:color style:font-size|important={fontSize}></div>
 	<div style={style2} style:margin style:color style:font-size|important={fontSize}></div>
