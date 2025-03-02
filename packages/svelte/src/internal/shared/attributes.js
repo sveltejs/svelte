@@ -22,7 +22,7 @@ const replacements = {
  * @returns {string}
  */
 export function attr(name, value, is_boolean = false) {
-	if (value == null || (!value && is_boolean) || (value === '' && name === 'class')) return '';
+	if (value == null || (!value && is_boolean)) return '';
 	const normalized = (name in replacements && replacements[name].get(value)) || value;
 	const assignment = is_boolean ? '' : `="${escape_html(normalized, true)}"`;
 	return ` ${name}${assignment}`;
@@ -81,4 +81,122 @@ export function to_class(value, hash, directives) {
 	}
 
 	return classname === '' ? null : classname;
+}
+
+/**
+ *
+ * @param {Record<string,any>} styles
+ * @param {boolean} important
+ */
+function append_styles(styles, important = false) {
+	let separator = important ? ' !important;' : ';';
+	let css = '';
+
+	for (const key in styles) {
+		const value = styles[key];
+		if (value != null && value !== '') {
+			css += ' ' + key + ': ' + value + separator;
+		}
+	}
+	return css;
+}
+
+/**
+ * @param {any} value
+ * @param {Record<string,any>|[Record<string,any>,Record<string,any>]} [styles]
+ * @returns {string|null}
+ */
+export function to_style(value, styles) {
+	if (styles) {
+		var new_style = '';
+		/** @type {Record<string,any> | undefined} */
+		var normal_styles;
+		/** @type {Record<string,any> | undefined} */
+		var important_styles;
+		if (Array.isArray(styles)) {
+			normal_styles = styles[0];
+			important_styles = styles[1];
+		} else {
+			normal_styles = styles;
+		}
+		if (value) {
+			value = String(value)
+				.replaceAll(/\s*\/\*.*?\*\/\s*/g, '')
+				.trim();
+
+			/** @type {boolean | '"' | "'"} */
+			var in_str = false;
+			var in_apo = 0;
+			var in_comment = false;
+
+			var reserved_names = [];
+			if (normal_styles) {
+				reserved_names.push(...Object.keys(normal_styles));
+			}
+			if (important_styles) {
+				reserved_names.push(...Object.keys(important_styles));
+			}
+
+			var start_index = 0;
+			var name_index = -1;
+			const len = value.length;
+			for (var i = 0; i < len; i++) {
+				var c = value[i];
+
+				if (in_comment) {
+					if (c === '/' && value[i - 1] === '*') {
+						in_comment = false;
+					}
+				} else if (in_str) {
+					if (in_str === c) {
+						in_str = false;
+					}
+				} else if (c === '/' && value[i + 1] === '*') {
+					in_comment = true;
+				} else if (c === '"' || c === "'") {
+					in_str = c;
+				} else if (c === '(') {
+					in_apo++;
+				} else if (c === ')') {
+					in_apo--;
+				}
+				if (!in_comment && in_str === false && in_apo === 0) {
+					if (c === ':' && name_index < 0) {
+						name_index = i;
+					} else if (c === ';' || i === len - 1) {
+						if (name_index > 0) {
+							let name = value.substring(start_index, name_index).trim();
+							// if (name.indexOf('/*') > 0) {
+							// 	name = name.replaceAll(/\/\*.*?\*\//g, '').trim();
+							// }
+							if (name[0] !== '-' || name[1] !== '-') {
+								name = name.toLowerCase();
+							}
+							if (!reserved_names.includes(name)) {
+								if (c !== ';') {
+									i++;
+								}
+								const property = value.substring(start_index, i).trim();
+								new_style += ' ' + property + ';';
+							}
+						}
+						start_index = i + 1;
+						name_index = -1;
+					}
+				}
+			}
+		}
+
+		if (normal_styles) {
+			new_style += append_styles(normal_styles);
+		}
+		if (important_styles) {
+			new_style += append_styles(important_styles, true);
+		}
+		new_style = new_style.trim();
+		return new_style === '' ? null : new_style;
+	} else if (value == null) {
+		return null;
+	}
+	return String(value);
 }
