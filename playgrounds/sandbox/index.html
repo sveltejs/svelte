@@ -18,7 +18,8 @@
 			const render = root.firstChild?.nextSibling ? hydrate : mount;
 
 			const component = render(App, {
-				target: document.getElementById('root')
+				target: document.getElementById('root'),
+				uidPrefix: 'myPrefix'
 			});
 		</script>
 	</body>

@@ -93,7 +93,7 @@ export let on_destroy = [];
  */
 function props_id_generator(prefix) {
 	let uid = 1;
-	return () => `s${prefix ? `-${prefix}-` : ''}${uid++}`;
+	return () => `${prefix ? `${prefix}-` : ''}s${uid++}`;
 }
 
 /**

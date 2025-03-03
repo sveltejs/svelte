@@ -1,4 +1,4 @@
-/** @import { Effect, TemplateNode } from '#client' */
+/** @import { ComponentContext, Effect, TemplateNode } from '#client' */
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import { create_text, get_first_child, is_firefox } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
@@ -261,18 +261,20 @@ export function reset_props_id() {
  * Create (or hydrate) an unique UID for the component instance.
  */
 export function props_id() {
+	var prefix = /** @type {ComponentContext} */ (component_context).uid
+		? `${/** @type {ComponentContext} */ (component_context).uid}-`
+		: '';
+
 	if (
 		hydrating &&
 		hydrate_node &&
 		hydrate_node.nodeType === 8 &&
-		hydrate_node.textContent?.startsWith('#s')
+		hydrate_node.textContent?.startsWith(`#${prefix}s`)
 	) {
 		const id = hydrate_node.textContent.substring(1);
 		hydrate_next();
 		return id;
 	}
-	if (component_context?.uid) {
-		return `c-${component_context.uid}-${uid++}`;
-	}
-	return 'c' + uid++;
+
+	return `${prefix}c${uid++}`;
 }
