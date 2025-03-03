@@ -1,10 +1,9 @@
-/** @import { ComponentContext, Effect, TemplateNode } from '#client' */
+/** @import { Effect, TemplateNode } from '#client' */
 import { hydrate_next, hydrate_node, hydrating, id_prefix, set_hydrate_node } from './hydration.js';
 import { create_text, get_first_child, is_firefox } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { active_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
-import { component_context } from '../context.js';
 
 /**
  * @param {TemplateNode} start
