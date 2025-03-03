@@ -17,7 +17,8 @@ import {
 	hydrate_node,
 	hydrating,
 	set_hydrate_node,
-	set_hydrating
+	set_hydrating,
+	set_id_prefix
 } from './dom/hydration.js';
 import { array_from } from '../shared/utils.js';
 import {
@@ -220,9 +221,8 @@ function _mount(
 				if (context) {
 					ctx.c = context;
 				}
-				if (idPrefix != null) {
-					ctx.uid = idPrefix;
-				}
+
+				set_id_prefix(idPrefix ? idPrefix + '-' : '');
 			}
 
 			if (events) {
