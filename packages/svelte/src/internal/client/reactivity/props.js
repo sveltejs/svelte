@@ -13,7 +13,13 @@ import { derived, derived_safe_equal } from './deriveds.js';
 import { get, captured_signals, untrack } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
-import { CTX_DESTROYED, LEGACY_DERIVED_PROP, LEGACY_PROPS, STATE_SYMBOL } from '../constants.js';
+import {
+	CTX_DESTROYED,
+	LEGACY_DERIVED_PROP,
+	LEGACY_PROPS,
+	STATE_SYMBOL,
+	TEARDOWN_PROPS
+} from '../constants.js';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
@@ -173,6 +179,12 @@ const spread_props_handler = {
 		}
 	},
 	set(target, key, value) {
+		// If the spread props have been torn down, then replace the existing props with
+		// the stale props from the teardown
+		if (key === TEARDOWN_PROPS) {
+			target.props = [value];
+			return true;
+		}
 		let i = target.props.length;
 		while (i--) {
 			let p = target.props[i];
@@ -215,6 +227,9 @@ const spread_props_handler = {
 		}
 	},
 	has(target, key) {
+		if (key === TEARDOWN_PROPS) {
+			return true;
+		}
 		// To prevent a false positive `is_entry_props` in the `prop` function
 		if (key === STATE_SYMBOL || key === LEGACY_PROPS) return false;
 
@@ -368,12 +383,6 @@ export function prop(props, key, flags, fallback) {
 	// source is written to from various places to persist this value.
 	var inner_current_value = mutable_source(prop_value);
 	var current_value = derived(() => {
-		var ctx = component_context;
-
-		if (ctx !== null && (ctx.f & CTX_DESTROYED) !== 0) {
-			return get(inner_current_value);
-		}
-
 		var parent_value = getter();
 		var child_value = get(inner_current_value);
 
@@ -418,6 +427,12 @@ export function prop(props, key, flags, fallback) {
 
 			return value;
 		}
+
+		// If the prop is read, we might need to return the stale value if component ctx has been destroyed
+		if (current_value.ctx !== null && (current_value.ctx.f & CTX_DESTROYED) !== 0) {
+			return current_value.v;
+		}
+
 		return get(current_value);
 	};
 }

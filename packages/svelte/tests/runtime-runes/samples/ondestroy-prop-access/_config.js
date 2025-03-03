@@ -61,7 +61,7 @@ export default test({
 			true,
 			2,
 			true,
-			1,
+			2,
 			true
 		]);
 	}

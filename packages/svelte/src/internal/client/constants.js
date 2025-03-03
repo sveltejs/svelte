@@ -24,6 +24,7 @@ export const EFFECT_HAS_DERIVED = 1 << 20;
 export const STATE_SYMBOL = Symbol('$state');
 export const STATE_SYMBOL_METADATA = Symbol('$state metadata');
 export const LEGACY_PROPS = Symbol('legacy props');
+export const TEARDOWN_PROPS = Symbol('teardown props');
 export const LOADING_ATTR_SYMBOL = Symbol('');
 
 export const CTX_CONTAINS_TEARDOWN = 1 << 1;

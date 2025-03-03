@@ -42,6 +42,9 @@ export function CallExpression(node, context) {
 				e.bindable_invalid_location(node);
 			}
 
+			// We need context in case the bound prop is stale
+			context.state.analysis.needs_context = true;
+
 			break;
 
 		case '$host':
