@@ -15,7 +15,7 @@ import type { CompileOptions } from '#compiler';
 interface SSRTest extends BaseTest {
 	compileOptions?: Partial<CompileOptions>;
 	props?: Record<string, any>;
-	uid_prefix?: string;
+	id_prefix?: string;
 	withoutNormalizeHtml?: boolean;
 	errors?: string[];
 }
@@ -34,7 +34,7 @@ const { test, run } = suite<SSRTest>(async (config, test_dir) => {
 
 	const Component = (await import(`${test_dir}/_output/server/main.svelte.js`)).default;
 	const expected_html = try_read_file(`${test_dir}/_expected.html`);
-	const rendered = render(Component, { props: config.props || {}, uidPrefix: config.uid_prefix });
+	const rendered = render(Component, { props: config.props || {}, idPrefix: config.id_prefix });
 	const { body, head } = rendered;
 
 	fs.writeFileSync(`${test_dir}/_output/rendered.html`, body);

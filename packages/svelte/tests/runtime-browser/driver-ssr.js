@@ -6,5 +6,5 @@ import config from '__CONFIG__';
 import { render } from 'svelte/server';
 
 export default function () {
-	return render(SvelteComponent, { props: config.props || {}, uidPrefix: config?.uid_prefix });
+	return render(SvelteComponent, { props: config.props || {}, idPrefix: config?.id_prefix });
 }

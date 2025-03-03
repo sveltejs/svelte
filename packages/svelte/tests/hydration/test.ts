@@ -13,7 +13,7 @@ import { assert_ok, suite, type BaseTest } from '../suite.js';
 interface HydrationTest extends BaseTest {
 	load_compiled?: boolean;
 	server_props?: Record<string, any>;
-	uid_prefix?: string;
+	id_prefix?: string;
 	props?: Record<string, any>;
 	compileOptions?: Partial<CompileOptions>;
 	/**
@@ -52,7 +52,7 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 
 	const rendered = render((await import(`${cwd}/_output/server/main.svelte.js`)).default, {
 		props: config.server_props ?? config.props ?? {},
-		uidPrefix: config?.uid_prefix
+		idPrefix: config?.id_prefix
 	});
 
 	const override = read(`${cwd}/_override.html`);
@@ -106,7 +106,7 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 			target,
 			hydrate: true,
 			props: config.props,
-			uidPrefix: config?.uid_prefix
+			idPrefix: config?.id_prefix
 		});
 
 		console.warn = warn;

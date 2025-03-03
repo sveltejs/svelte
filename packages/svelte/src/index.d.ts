@@ -16,7 +16,7 @@ export interface ComponentConstructorOptions<
 	props?: Props;
 	context?: Map<any, any>;
 	hydrate?: boolean;
-	uidPrefix?: string;
+	idPrefix?: string;
 	intro?: boolean;
 	recover?: boolean;
 	sync?: boolean;
@@ -341,7 +341,7 @@ export type MountOptions<Props extends Record<string, any> = Record<string, any>
 	/**
 	 * Provide a prefix for the generated ID from `$props.id`
 	 */
-	uidPrefix?: string;
+	idPrefix?: string;
 } & ({} extends Props
 	? {
 			/**

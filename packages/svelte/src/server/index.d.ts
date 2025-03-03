@@ -15,7 +15,7 @@ export function render<
 				options?: {
 					props?: Omit<Props, '$$slots' | '$$events'>;
 					context?: Map<any, any>;
-					uidPrefix?: string;
+					idPrefix?: string;
 				}
 			]
 		: [
@@ -23,7 +23,7 @@ export function render<
 				options: {
 					props: Omit<Props, '$$slots' | '$$events'>;
 					context?: Map<any, any>;
-					uidPrefix?: string;
+					idPrefix?: string;
 				}
 			]
 ): RenderOutput;

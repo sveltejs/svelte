@@ -119,7 +119,7 @@ function normalize_children(node) {
  *  skip_mode?: Array<'server' | 'client' | 'hydrate'>;
  *	html?: string;
  *	ssrHtml?: string;
- *	uid_prefix?: string;
+ *	id_prefix?: string;
  *	props?: Props;
  *	compileOptions?: Partial<CompileOptions>;
  *	test?: (args: {

@@ -2,7 +2,7 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	uid_prefix: 'myPrefix',
+	id_prefix: 'myPrefix',
 	test({ assert, target, variant }) {
 		if (variant === 'dom') {
 			assert.htmlEqual(
