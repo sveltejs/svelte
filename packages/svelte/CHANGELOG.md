@@ -1,5 +1,15 @@
 # svelte
 
+## 5.21.0
+
+### Minor Changes
+
+- chore: Reduce hydration comment for {:else if} ([#15250](https://github.com/sveltejs/svelte/pull/15250))
+
+### Patch Changes
+
+- fix: disallow `bind:group` to snippet parameters ([#15401](https://github.com/sveltejs/svelte/pull/15401))
+
 ## 5.20.5
 
 ### Patch Changes
