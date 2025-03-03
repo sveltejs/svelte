@@ -541,12 +541,7 @@ export function build_style_directives_object(style_directives, context) {
 				: build_attribute_value(directive.value, context, (value, metadata) =>
 						metadata.has_call ? get_expression_id(context.state, value) : value
 					).value;
-		let name = directive.name;
-		if (name[0] !== '-' || name[1] !== '-') {
-			name = name.toLowerCase();
-		}
-
-		const property = b.init(name, expression);
+		const property = b.init(directive.name, expression);
 		if (directive.modifiers.includes('important')) {
 			important_properties.push(property);
 		} else {

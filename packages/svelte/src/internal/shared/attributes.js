@@ -102,6 +102,17 @@ function append_styles(styles, important = false) {
 }
 
 /**
+ * @param {string} name
+ * @returns {string}
+ */
+function to_css_name(name) {
+	if (name[0] !== '-' || name[1] !== '-') {
+		return name.toLowerCase();
+	}
+	return name;
+}
+
+/**
  * @param {any} value
  * @param {Record<string,any>|[Record<string,any>,Record<string,any>]} [styles]
  * @returns {string|null}
@@ -131,10 +142,10 @@ export function to_style(value, styles) {
 
 			var reserved_names = [];
 			if (normal_styles) {
-				reserved_names.push(...Object.keys(normal_styles));
+				reserved_names.push(...Object.keys(normal_styles).map(to_css_name));
 			}
 			if (important_styles) {
-				reserved_names.push(...Object.keys(important_styles));
+				reserved_names.push(...Object.keys(important_styles).map(to_css_name));
 			}
 
 			var start_index = 0;
@@ -165,13 +176,7 @@ export function to_style(value, styles) {
 						name_index = i;
 					} else if (c === ';' || i === len - 1) {
 						if (name_index > 0) {
-							let name = value.substring(start_index, name_index).trim();
-							// if (name.indexOf('/*') > 0) {
-							// 	name = name.replaceAll(/\/\*.*?\*\//g, '').trim();
-							// }
-							if (name[0] !== '-' || name[1] !== '-') {
-								name = name.toLowerCase();
-							}
+							let name = to_css_name(value.substring(start_index, name_index).trim());
 							if (!reserved_names.includes(name)) {
 								if (c !== ';') {
 									i++;
