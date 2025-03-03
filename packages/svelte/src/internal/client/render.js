@@ -87,7 +87,7 @@ export function mount(component, options) {
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		recover?: boolean;
- * 	    idPrefix?: string;
+ * 		idPrefix?: string;
  * 	} : {
  * 		target: Document | Element | ShadowRoot;
  * 		props: Props;
@@ -95,7 +95,7 @@ export function mount(component, options) {
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		recover?: boolean;
- * 	    idPrefix?: string;
+ * 		idPrefix?: string;
  * 	}} options
  * @returns {Exports}
  */
