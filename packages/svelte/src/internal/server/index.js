@@ -88,12 +88,12 @@ export let on_destroy = [];
 
 /**
  * Creates an ID generator
- * @param {string | undefined} prefix
+ * @param {string} prefix
  * @returns {() => string}
  */
 function props_id_generator(prefix) {
 	let uid = 1;
-	return () => `${prefix ? `${prefix}-` : ''}s${uid++}`;
+	return () => `${prefix}s${uid++}`;
 }
 
 /**
@@ -105,7 +105,7 @@ function props_id_generator(prefix) {
  * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
-	const uid = props_id_generator(options.idPrefix);
+	const uid = props_id_generator(options.idPrefix ? options.idPrefix + '-' : '');
 	/** @type {Payload} */
 	const payload = {
 		out: '',
