@@ -1,5 +1,21 @@
 # svelte
 
+## 5.22.1
+
+### Patch Changes
+
+- chore: switch acorn-typescript plugin ([#15393](https://github.com/sveltejs/svelte/pull/15393))
+
+## 5.22.0
+
+### Minor Changes
+
+- feat: Add `idPrefix` option to `render` ([#15428](https://github.com/sveltejs/svelte/pull/15428))
+
+### Patch Changes
+
+- fix: make dialog element and role interactive ([#15429](https://github.com/sveltejs/svelte/pull/15429))
+
 ## 5.21.0
 
 ### Minor Changes

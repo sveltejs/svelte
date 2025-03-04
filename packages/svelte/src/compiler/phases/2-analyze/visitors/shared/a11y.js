@@ -30,7 +30,7 @@ const non_interactive_roles = non_abstract_roles
 			// 'generic' is meant to have no semantic meaning.
 			// 'cell' is treated as CellRole by the AXObject which is interactive, so we treat 'cell' it as interactive as well.
 			!['toolbar', 'tabpanel', 'generic', 'cell'].includes(name) &&
-			!role?.superClass.some((classes) => classes.includes('widget'))
+			!role?.superClass.some((classes) => classes.includes('widget') || classes.includes('window'))
 		);
 	})
 	.concat(
