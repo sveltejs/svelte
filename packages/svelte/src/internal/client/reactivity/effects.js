@@ -32,7 +32,8 @@ import {
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
 	EFFECT_HAS_DERIVED,
-	BOUNDARY_EFFECT
+	BOUNDARY_EFFECT,
+	DISCONNECTED
 } from '../constants.js';
 import { set } from './sources.js';
 import * as e from '../errors.js';
@@ -229,7 +230,7 @@ export function inspect_effect(fn) {
  * @returns {() => void}
  */
 export function effect_root(fn) {
-	const effect = create_effect(ROOT_EFFECT, fn, true);
+	const effect = create_effect(ROOT_EFFECT | DISCONNECTED, fn, true);
 
 	return () => {
 		destroy_effect(effect);

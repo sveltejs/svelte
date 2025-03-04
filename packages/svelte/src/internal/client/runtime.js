@@ -738,7 +738,14 @@ export function schedule_effect(signal) {
 		}
 	}
 
-	queued_root_effects.push(effect);
+	// Schedule the root effect for component trees first so any updates
+	// that affect the component tree occur first. Root effects that are
+	// not for component trees (i.e. $effect.root) will be marked as disconnected
+	if ((effect.f & DISCONNECTED) === 0) {
+		queued_root_effects.unshift(effect);
+	} else {
+		queued_root_effects.push(effect);
+	}
 }
 
 /**
