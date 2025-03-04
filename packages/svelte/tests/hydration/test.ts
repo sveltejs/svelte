@@ -1,14 +1,14 @@
 // @vitest-environment jsdom
 
-import type { CompileOptions } from '#compiler';
 import * as fs from 'node:fs';
-import { flushSync } from 'svelte';
-import { createClassComponent } from 'svelte/legacy';
-import { render } from 'svelte/server';
 import { assert } from 'vitest';
 import { compile_directory } from '../helpers.js';
 import { assert_html_equal } from '../html_equal.js';
 import { assert_ok, suite, type BaseTest } from '../suite.js';
+import { createClassComponent } from 'svelte/legacy';
+import { render } from 'svelte/server';
+import type { CompileOptions } from '#compiler';
+import { flushSync } from 'svelte';
 
 interface HydrationTest extends BaseTest {
 	load_compiled?: boolean;
@@ -167,6 +167,6 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 		config.after_test?.();
 	}
 });
-export { assert_ok, test };
+export { test, assert_ok };
 
 await run(__dirname);
