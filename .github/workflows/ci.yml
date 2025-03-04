@@ -29,6 +29,7 @@ jobs:
             os: ubuntu-latest
 
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@v1
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
@@ -44,6 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@v1
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
@@ -64,6 +66,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@v1
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
