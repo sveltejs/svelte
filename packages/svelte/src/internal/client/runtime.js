@@ -644,7 +644,7 @@ function infinite_loop_guard() {
 }
 
 function flush_queued_root_effects() {
-	let was_updating_effect = is_updating_effect;
+	var was_updating_effect = is_updating_effect;
 
 	try {
 		var flush_count = 0;
