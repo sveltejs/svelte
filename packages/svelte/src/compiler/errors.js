@@ -753,6 +753,15 @@ export function bind_group_invalid_expression(node) {
 }
 
 /**
+ * Cannot `bind:group` to a snippet parameter
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function bind_group_invalid_snippet_parameter(node) {
+	e(node, 'bind_group_invalid_snippet_parameter', `Cannot \`bind:group\` to a snippet parameter\nhttps://svelte.dev/e/bind_group_invalid_snippet_parameter`);
+}
+
+/**
  * Can only bind to an Identifier or MemberExpression or a `{get, set}` pair
  * @param {null | number | NodeLike} node
  * @returns {never}

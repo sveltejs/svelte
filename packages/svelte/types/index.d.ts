@@ -16,6 +16,7 @@ declare module 'svelte' {
 		intro?: boolean;
 		recover?: boolean;
 		sync?: boolean;
+		idPrefix?: string;
 		$$inline?: boolean;
 	}
 
@@ -2080,11 +2081,19 @@ declare module 'svelte/server' {
 		...args: {} extends Props
 			? [
 					component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
-					options?: { props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }
+					options?: {
+						props?: Omit<Props, '$$slots' | '$$events'>;
+						context?: Map<any, any>;
+						idPrefix?: string;
+					}
 				]
 			: [
 					component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
-					options: { props: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }
+					options: {
+						props: Omit<Props, '$$slots' | '$$events'>;
+						context?: Map<any, any>;
+						idPrefix?: string;
+					}
 				]
 	): RenderOutput;
 	interface RenderOutput {
