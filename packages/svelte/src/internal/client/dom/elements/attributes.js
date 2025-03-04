@@ -15,7 +15,7 @@ import {
 } from '../../runtime.js';
 import { clsx } from '../../../shared/attributes.js';
 import { set_class } from './class.js';
-import { NAMESPACE_HTML, NAMESPACE_MATHML } from '../../../../constants.js';
+import { NAMESPACE_HTML } from '../../../../constants.js';
 
 export const CLASS = Symbol('class');
 export const STYLE = Symbol('style');
