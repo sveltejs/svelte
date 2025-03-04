@@ -265,7 +265,7 @@ export function props_id() {
 		return id;
 	}
 
-	// @ts-expect-error
+	// @ts-expect-error This way we ensure the id is unique even across Svelte runtimes
 	(window.__svelte ??= {}).uid ??= 1;
 
 	// @ts-expect-error
