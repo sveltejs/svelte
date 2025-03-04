@@ -5,16 +5,16 @@ import { hydrating } from '../hydration.js';
  * @param {Element & ElementCSSInlineStyle} dom
  * @param {Record<string,any>} prev
  * @param {Record<string,any>} next
- * @param {string} important
+ * @param {string} [priority]
  */
-function update_styles(dom, prev = {}, next, important) {
+function update_styles(dom, prev = {}, next, priority) {
 	for (const key in next) {
 		const value = next[key];
 		if (prev[key] !== value) {
 			if (next[key] == null) {
 				dom.style.removeProperty(key);
 			} else {
-				dom.style.setProperty(key, value, important);
+				dom.style.setProperty(key, value, priority);
 			}
 		}
 	}
@@ -42,10 +42,10 @@ export function set_style(dom, value, prev_styles, next_styles) {
 		dom.__style = value;
 	} else if (next_styles) {
 		if (Array.isArray(next_styles)) {
-			update_styles(dom, prev_styles?.[0], next_styles[0], '');
-			update_styles(dom, prev_styles?.[1], next_styles[1], '');
+			update_styles(dom, prev_styles?.[0], next_styles[0]);
+			update_styles(dom, prev_styles?.[1], next_styles[1], 'important');
 		} else {
-			update_styles(dom, prev_styles, next_styles, '');
+			update_styles(dom, prev_styles, next_styles);
 		}
 	}
 	return next_styles;
