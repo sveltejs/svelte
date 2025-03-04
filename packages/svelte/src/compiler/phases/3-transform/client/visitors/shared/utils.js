@@ -80,7 +80,7 @@ function compare_expressions(a, b) {
  * @param {(node: AST.SvelteNode, state: any) => any} visit
  * @param {ComponentClientTransformState} state
  * @param {(value: Expression, metadata: ExpressionMetadata) => Expression} memoize
- * @returns {{ value: Expression, has_state: boolean }}
+ * @returns {{ value: Expression, has_state: boolean, has_call: boolean }}
  */
 export function build_template_chunk(
 	values,
@@ -95,6 +95,7 @@ export function build_template_chunk(
 	const quasis = [quasi];
 
 	let has_state = false;
+	let has_call = false;
 
 	for (let i = 0; i < values.length; i++) {
 		const node = values[i];
@@ -116,11 +117,12 @@ export function build_template_chunk(
 			);
 
 			has_state ||= node.metadata.expression.has_state;
+			has_call ||= node.metadata.expression.has_call;
 
 			if (values.length === 1) {
 				// If we have a single expression, then pass that in directly to possibly avoid doing
 				// extra work in the template_effect (instead we do the work in set_text).
-				return { value, has_state };
+				return { value, has_state, has_call };
 			}
 
 			if (
@@ -162,7 +164,7 @@ export function build_template_chunk(
 			? b.template(quasis, expressions)
 			: b.literal(/** @type {string} */ (quasi.value.cooked));
 
-	return { value, has_state };
+	return { value, has_state, has_call };
 }
 
 /**

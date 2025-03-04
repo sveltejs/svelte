@@ -573,14 +573,17 @@ function build_element_attribute_update_assignment(
 
 	const is_autofocus = name === 'autofocus';
 
-	let { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call
-			? // if it's autofocus we will not add this to a template effect so we don't want to get the expression id
-				// but separately memoize the expression
-				is_autofocus
-				? memoize_expression(state, value)
-				: get_expression_id(state, value)
-			: value
+	let { value, has_state, has_call } = build_attribute_value(
+		attribute.value,
+		context,
+		(value, metadata) =>
+			metadata.has_call
+				? // if it's autofocus we will not add this to a template effect so we don't want to get the expression id
+					// but separately memoize the expression
+					is_autofocus
+					? memoize_expression(state, value)
+					: get_expression_id(state, value)
+				: value
 	);
 
 	if (is_autofocus) {
@@ -608,6 +611,7 @@ function build_element_attribute_update_assignment(
 			attribute,
 			value,
 			has_state,
+			has_call,
 			class_directives,
 			context,
 			!is_svg && !is_mathml

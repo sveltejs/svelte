@@ -155,25 +155,26 @@ export function build_style_directives(
  * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
  * @param {(value: Expression, metadata: ExpressionMetadata) => Expression} memoize
- * @returns {{ value: Expression, has_state: boolean }}
+ * @returns {{ value: Expression, has_state: boolean, has_call: boolean }}
  */
 export function build_attribute_value(value, context, memoize = (value) => value) {
 	if (value === true) {
-		return { value: b.literal(true), has_state: false };
+		return { value: b.literal(true), has_state: false, has_call: false };
 	}
 
 	if (!Array.isArray(value) || value.length === 1) {
 		const chunk = Array.isArray(value) ? value[0] : value;
 
 		if (chunk.type === 'Text') {
-			return { value: b.literal(chunk.data), has_state: false };
+			return { value: b.literal(chunk.data), has_state: false, has_call: false };
 		}
 
 		let expression = /** @type {Expression} */ (context.visit(chunk.expression));
 
 		return {
 			value: memoize(expression, chunk.metadata.expression),
-			has_state: chunk.metadata.expression.has_state
+			has_state: chunk.metadata.expression.has_state,
+			has_call: chunk.metadata.expression.has_call
 		};
 	}
 
@@ -198,6 +199,7 @@ export function get_attribute_name(element, attribute) {
  * @param {AST.Attribute | null} attribute
  * @param {Expression} value
  * @param {boolean} has_state
+ * @param {boolean} has_call
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
  * @param {boolean} is_html
@@ -209,12 +211,16 @@ export function build_set_class(
 	attribute,
 	value,
 	has_state,
+	has_call,
 	class_directives,
 	context,
 	is_html
 ) {
 	if (attribute && attribute.metadata.needs_clsx) {
 		value = b.call('$.clsx', value);
+		if (has_state && !has_call) {
+			value = get_expression_id(context.state, value);
+		}
 	}
 
 	/** @type {Identifier | undefined} */

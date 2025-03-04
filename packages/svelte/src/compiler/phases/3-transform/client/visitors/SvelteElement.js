@@ -87,7 +87,7 @@ export function SvelteElement(node, context) {
 		is_text_attribute(attributes[0])
 	) {
 		// special case when there only a class attribute, without call expression
-		let { value, has_state } = build_attribute_value(
+		let { value, has_state, has_call } = build_attribute_value(
 			attributes[0].value,
 			context,
 			(value, metadata) => (metadata.has_call ? get_expression_id(context.state, value) : value)
@@ -99,6 +99,7 @@ export function SvelteElement(node, context) {
 			attributes[0],
 			value,
 			has_state,
+			has_call,
 			class_directives,
 			inner_context,
 			false
