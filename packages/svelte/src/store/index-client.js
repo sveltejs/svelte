@@ -6,6 +6,7 @@ import {
 } from '../internal/client/reactivity/effects.js';
 import { get, writable } from './shared/index.js';
 import { createSubscriber } from '../reactivity/create-subscriber.js';
+import { active_effect } from '../internal/client/runtime.js';
 
 export { derived, get, readable, readonly, writable } from './shared/index.js';
 
@@ -46,12 +47,13 @@ export function toStore(get, set) {
 		let ran = init_value !== get();
 
 		// TODO do we need a different implementation on the server?
-		const teardown = effect_root(() => {
+		var render = () => {
 			render_effect(() => {
 				const value = get();
 				if (ran) set(value);
 			});
-		});
+		}
+		const teardown = active_effect === null ? effect_root(render) : render();
 
 		ran = true;
 
