@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-chore: small tweaks on set_attributes()
+chore: consolidate code around attribute logic
