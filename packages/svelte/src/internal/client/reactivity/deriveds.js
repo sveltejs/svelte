@@ -1,4 +1,4 @@
-/** @import { Derived, Effect } from '#client' */
+/** @import { Derived, Effect, Value } from '#client' */
 import { DEV } from 'esm-env';
 import { CLEAN, DERIVED, DIRTY, EFFECT_HAS_DERIVED, MAYBE_DIRTY, UNOWNED } from '../constants.js';
 import {
@@ -152,6 +152,25 @@ function execute_derived(derived) {
 }
 
 /**
+ * @param {Value} value
+ */
+function sync_reaction_versions(value) {
+	var reactions = value.reactions;
+
+	if (reactions !== null) {
+		for (var i = 0; i < reactions.length; i++) {
+			var reaction = reactions[i];
+			if ((value.f & UNOWNED) === 0 && value.wv > reaction.wv) {
+				reaction.wv = value.wv;
+			}
+			if ((reaction.f & DERIVED) !== 0) {
+				sync_reaction_versions(/** @type {Derived} */ (reaction));
+			}
+		}
+	}
+}
+
+/**
  * @param {Derived} derived
  * @returns {void}
  */
@@ -165,5 +184,7 @@ export function update_derived(derived) {
 	if (!derived.equals(value)) {
 		derived.v = value;
 		derived.wv = increment_write_version();
+	} else {
+		sync_reaction_versions(derived);
 	}
 }

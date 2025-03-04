@@ -206,7 +206,7 @@ export function check_dirtiness(reaction) {
 					update_derived(/** @type {Derived} */ (dependency));
 				}
 
-				if (dependency.wv > reaction.wv) {
+				if (dependency.wv > reaction.wv || (reaction.f & DIRTY) !== 0) {
 					return true;
 				}
 			}
