@@ -93,8 +93,7 @@ export function build_set_attributes(
 			)
 		);
 
-		is_dynamic ||=
-			style_directives.some((directive) => directive.metadata.expression.has_state);
+		is_dynamic ||= style_directives.some((directive) => directive.metadata.expression.has_state);
 	}
 
 	const call = b.call(
