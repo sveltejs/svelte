@@ -1,5 +1,11 @@
 # svelte
 
+## 5.22.1
+
+### Patch Changes
+
+- chore: switch acorn-typescript plugin ([#15393](https://github.com/sveltejs/svelte/pull/15393))
+
 ## 5.22.0
 
 ### Minor Changes
