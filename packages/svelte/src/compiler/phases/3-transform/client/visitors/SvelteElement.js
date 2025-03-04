@@ -113,9 +113,7 @@ export function SvelteElement(node, context) {
 			inner_context,
 			node,
 			element_id,
-			attributes_id,
-			b.id('$$preserve_attribute_case'),
-			b.id('$$is_custom_element')
+			attributes_id
 		);
 	}
 
@@ -158,16 +156,7 @@ export function SvelteElement(node, context) {
 				context.state.node,
 				get_tag,
 				node.metadata.svg || node.metadata.mathml ? b.true : b.false,
-				inner.length > 0 &&
-					b.arrow(
-						[
-							element_id,
-							b.id('$$anchor'),
-							b.id('$$preserve_attribute_case'),
-							b.id('$$is_custom_element')
-						],
-						b.block(inner)
-					),
+				inner.length > 0 && b.arrow([element_id, b.id('$$anchor')], b.block(inner)),
 				dynamic_namespace && b.thunk(build_attribute_value(dynamic_namespace, context).value),
 				location && b.array([b.literal(location.line), b.literal(location.column)])
 			)

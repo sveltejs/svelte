@@ -15,6 +15,7 @@ import {
 } from '../../runtime.js';
 import { clsx } from '../../../shared/attributes.js';
 import { set_class } from './class.js';
+import { NAMESPACE_HTML, NAMESPACE_MATHML } from '../../../../constants.js';
 
 export const CLASS = Symbol('class');
 export const STYLE = Symbol('style');
@@ -261,20 +262,13 @@ export function set_custom_element_data(node, prop, value) {
  * @param {Record<string | symbol, any> | undefined} prev
  * @param {Record<string | symbol, any>} next New attributes - this function mutates this object
  * @param {string} [css_hash]
- * @param {boolean} [preserve_attribute_case]
- * @param {boolean} [is_custom_element]
  * @param {boolean} [skip_warning]
  * @returns {Record<string, any>}
  */
-export function set_attributes(
-	element,
-	prev,
-	next,
-	css_hash,
-	preserve_attribute_case = false,
-	is_custom_element = false,
-	skip_warning = false
-) {
+export function set_attributes(element, prev, next, css_hash, skip_warning = false) {
+	var is_custom_element = element.nodeName.includes('-');
+	var preserve_attribute_case = is_custom_element || element.namespaceURI !== NAMESPACE_HTML;
+
 	// If we're hydrating but the custom element is from Svelte, and it already scaffolded,
 	// then it might run block logic in hydration mode, which we have to prevent.
 	let is_hydrating_custom_element = hydrating && is_custom_element;
