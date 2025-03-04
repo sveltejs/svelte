@@ -16,6 +16,7 @@ declare module 'svelte' {
 		intro?: boolean;
 		recover?: boolean;
 		sync?: boolean;
+		idPrefix?: string;
 		$$inline?: boolean;
 	}
 
