@@ -644,8 +644,10 @@ function infinite_loop_guard() {
 }
 
 function flush_queued_root_effects() {
+	let prev_updating = is_updating_effect;
 	try {
 		var flush_count = 0;
+		is_updating_effect = true;
 
 		while (queued_root_effects.length > 0) {
 			if (flush_count++ > 1000) {
@@ -670,6 +672,7 @@ function flush_queued_root_effects() {
 		}
 	} finally {
 		is_flushing = false;
+		is_updating_effect = prev_updating;
 
 		last_scheduled_effect = null;
 		if (DEV) {
