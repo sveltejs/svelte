@@ -23,9 +23,7 @@ polka()
 		const template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
 		const transformed_template = await vite.transformIndexHtml(req.url, template);
 		const { default: App } = await vite.ssrLoadModule('/src/App.svelte');
-		const { head, body } = render(App, {
-			idPrefix: 'hello'
-		});
+		const { head, body } = render(App);
 
 		const html = transformed_template
 			.replace(`<!--ssr-head-->`, head)
