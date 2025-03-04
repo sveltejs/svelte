@@ -94,7 +94,7 @@ export function build_set_attributes(
 		);
 
 		is_dynamic ||=
-			style_directives.find((directive) => directive.metadata.expression.has_state) !== null;
+			style_directives.some((directive) => directive.metadata.expression.has_state);
 	}
 
 	const call = b.call(
@@ -267,6 +267,7 @@ export function build_set_style(node_id, value, has_state, style_directives, con
 	let prev;
 	/** @type {ArrayExpression | ObjectExpression | undefined} */
 	let next;
+
 	if (style_directives.length) {
 		next = build_style_directives_object(style_directives, context);
 		has_state ||= style_directives.some((d) => d.metadata.expression.has_state);

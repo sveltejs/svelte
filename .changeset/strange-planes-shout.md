@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-chore: rewrite set_style() to handle directives
+fix: make `style:` directive and CSS handling more robust
