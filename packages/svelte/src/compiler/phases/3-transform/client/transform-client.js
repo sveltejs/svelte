@@ -398,13 +398,7 @@ export function client_component(analysis, options) {
 
 	// we want the cleanup function for the stores to run as the very last thing
 	// so that it can effectively clean up the store subscription even after the user effects runs
-	// if we have $props.id `should_inject_context` will always be true
 	if (should_inject_context) {
-		// we need to put the `$props.id` after the `$.push` because the `component_context` will be properly initialized
-		if (analysis.props_id) {
-			// need to be placed on first line of the component for hydration
-			component_block.body.unshift(b.const(analysis.props_id, b.call('$.props_id')));
-		}
 		component_block.body.unshift(b.stmt(b.call('$.push', ...push_args)));
 
 		let to_push;
@@ -566,6 +560,11 @@ export function client_component(analysis, options) {
 		);
 	} else if (dev) {
 		component_block.body.unshift(b.stmt(b.call('$.check_target', b.id('new.target'))));
+	}
+
+	if (analysis.props_id) {
+		// need to be placed on first line of the component for hydration
+		component_block.body.unshift(b.const(analysis.props_id, b.call('$.props_id')));
 	}
 
 	if (state.events.size > 0) {

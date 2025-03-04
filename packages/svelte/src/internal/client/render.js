@@ -212,9 +212,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			if (context) {
 				push({});
 				var ctx = /** @type {ComponentContext} */ (component_context);
-				if (context) {
-					ctx.c = context;
-				}
+				ctx.c = context;
 			}
 
 			if (events) {
