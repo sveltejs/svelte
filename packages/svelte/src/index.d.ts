@@ -19,6 +19,7 @@ export interface ComponentConstructorOptions<
 	intro?: boolean;
 	recover?: boolean;
 	sync?: boolean;
+	idPrefix?: string;
 	$$inline?: boolean;
 }
 
