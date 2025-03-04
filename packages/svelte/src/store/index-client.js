@@ -52,7 +52,7 @@ export function toStore(get, set) {
 				const value = get();
 				if (ran) set(value);
 			});
-		}
+		};
 		const teardown = active_effect === null ? effect_root(render) : render();
 
 		ran = true;
