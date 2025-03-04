@@ -1,5 +1,5 @@
 /** @import { Effect, TemplateNode } from '#client' */
-import { hydrate_next, hydrate_node, hydrating, id_prefix, set_hydrate_node } from './hydration.js';
+import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import { create_text, get_first_child, is_firefox } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { active_effect } from '../runtime.js';
@@ -250,12 +250,6 @@ export function append(anchor, dom) {
 	anchor.before(/** @type {Node} */ (dom));
 }
 
-let uid = 1;
-
-export function reset_props_id() {
-	uid = 1;
-}
-
 /**
  * Create (or hydrate) an unique UID for the component instance.
  */
@@ -264,12 +258,16 @@ export function props_id() {
 		hydrating &&
 		hydrate_node &&
 		hydrate_node.nodeType === 8 &&
-		hydrate_node.textContent?.startsWith(`#${id_prefix}s`)
+		hydrate_node.textContent?.startsWith(`#`)
 	) {
 		const id = hydrate_node.textContent.substring(1);
 		hydrate_next();
 		return id;
 	}
 
-	return `${id_prefix}c${uid++}`;
+	// @ts-expect-error
+	(window.__svelte ??= {}).uid ??= 1;
+
+	// @ts-expect-error
+	return `c${window.__svelte.uid++}`;
 }

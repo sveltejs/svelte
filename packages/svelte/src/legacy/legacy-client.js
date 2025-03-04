@@ -116,8 +116,7 @@ class Svelte4Component {
 			props,
 			context: options.context,
 			intro: options.intro ?? false,
-			recover: options.recover,
-			idPrefix: options.idPrefix
+			recover: options.recover
 		});
 
 		// We don't flushSync for custom element wrappers or if the user doesn't want it

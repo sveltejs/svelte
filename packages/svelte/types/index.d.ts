@@ -13,7 +13,6 @@ declare module 'svelte' {
 		props?: Props;
 		context?: Map<any, any>;
 		hydrate?: boolean;
-		idPrefix?: string;
 		intro?: boolean;
 		recover?: boolean;
 		sync?: boolean;
@@ -335,10 +334,6 @@ declare module 'svelte' {
 		 * @default true
 		 */
 		intro?: boolean;
-		/**
-		 * Provide a prefix for the generated ID from `$props.id`
-		 */
-		idPrefix?: string;
 	} & ({} extends Props
 		? {
 				/**
@@ -490,7 +485,6 @@ declare module 'svelte' {
 		context?: Map<any, any>;
 		intro?: boolean;
 		recover?: boolean;
-		idPrefix?: string;
 	} : {
 		target: Document | Element | ShadowRoot;
 		props: Props;
@@ -498,7 +492,6 @@ declare module 'svelte' {
 		context?: Map<any, any>;
 		intro?: boolean;
 		recover?: boolean;
-		idPrefix?: string;
 	}): Exports;
 	/**
 	 * Unmounts a component that was previously mounted using `mount` or `hydrate`.
@@ -1882,10 +1875,10 @@ declare module 'svelte/motion' {
 		 * 	const tween = Tween.of(() => number);
 		 * </script>
 		 * ```
-		 *
+		 * 
 		 */
 		static of<U>(fn: () => U, options?: TweenedOptions<U> | undefined): Tween<U>;
-
+		
 		constructor(value: T, options?: TweenedOptions<T>);
 		/**
 		 * Sets `tween.target` to `value` and returns a `Promise` that resolves if and when `tween.current` catches up to it.
@@ -1904,21 +1897,21 @@ declare module 'svelte/motion' {
 
 declare module 'svelte/reactivity' {
 	export class SvelteDate extends Date {
-
+		
 		constructor(...params: any[]);
 		#private;
 	}
 	export class SvelteSet<T> extends Set<T> {
-
+		
 		constructor(value?: Iterable<T> | null | undefined);
-
+		
 		add(value: T): this;
 		#private;
 	}
 	export class SvelteMap<K, V> extends Map<K, V> {
-
+		
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
-
+		
 		set(key: K, value: V): this;
 		#private;
 	}
@@ -1928,7 +1921,7 @@ declare module 'svelte/reactivity' {
 	}
 	const REPLACE: unique symbol;
 	export class SvelteURLSearchParams extends URLSearchParams {
-
+		
 		[REPLACE](params: URLSearchParams): void;
 		#private;
 	}
@@ -2000,7 +1993,7 @@ declare module 'svelte/reactivity' {
 	 */
 	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
 	class ReactiveValue<T> {
-
+		
 		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
 		get current(): T;
 		#private;
@@ -2065,7 +2058,7 @@ declare module 'svelte/reactivity/window' {
 		get current(): number | undefined;
 	};
 	class ReactiveValue<T> {
-
+		
 		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
 		get current(): T;
 		#private;

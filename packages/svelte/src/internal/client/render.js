@@ -17,8 +17,7 @@ import {
 	hydrate_node,
 	hydrating,
 	set_hydrate_node,
-	set_hydrating,
-	set_id_prefix
+	set_hydrating
 } from './dom/hydration.js';
 import { array_from } from '../shared/utils.js';
 import {
@@ -87,7 +86,6 @@ export function mount(component, options) {
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		recover?: boolean;
- * 		idPrefix?: string;
  * 	} : {
  * 		target: Document | Element | ShadowRoot;
  * 		props: Props;
@@ -95,7 +93,6 @@ export function mount(component, options) {
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		recover?: boolean;
- * 		idPrefix?: string;
  * 	}} options
  * @returns {Exports}
  */
@@ -168,10 +165,7 @@ const document_listeners = new Map();
  * @param {MountOptions} options
  * @returns {Exports}
  */
-function _mount(
-	Component,
-	{ target, anchor, props = {}, events, context, intro = true, idPrefix }
-) {
+function _mount(Component, { target, anchor, props = {}, events, context, intro = true }) {
 	init_operations();
 
 	var registered_events = new Set();
@@ -215,14 +209,12 @@ function _mount(
 		var anchor_node = anchor ?? target.appendChild(create_text());
 
 		branch(() => {
-			if (context || idPrefix != null) {
+			if (context) {
 				push({});
 				var ctx = /** @type {ComponentContext} */ (component_context);
 				if (context) {
 					ctx.c = context;
 				}
-
-				set_id_prefix(idPrefix ? idPrefix + '-' : '');
 			}
 
 			if (events) {

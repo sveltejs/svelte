@@ -2,4 +2,4 @@
 'svelte': minor
 ---
 
-feat: Add `idPrefix` option in `render`/`mount`/`hydrate` functions
+feat: Add `idPrefix` option to `render`

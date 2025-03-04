@@ -20,13 +20,6 @@ export function set_hydrating(value) {
 	hydrating = value;
 }
 
-export let id_prefix = '';
-
-/** @param {string} v */
-export function set_id_prefix(v) {
-	id_prefix = v;
-}
-
 /**
  * The node that is currently being hydrated. This starts out as the first node inside the opening
  * <!--[--> comment, and updates each time a component calls `$.child(...)` or `$.sibling(...)`.
