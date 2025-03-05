@@ -56,6 +56,7 @@ import { TitleElement } from './visitors/TitleElement.js';
 import { TransitionDirective } from './visitors/TransitionDirective.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { UseDirective } from './visitors/UseDirective.js';
+import { AttachTag } from './visitors/AttachTag.js';
 import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 
 /** @type {Visitors} */
@@ -131,6 +132,7 @@ const visitors = {
 	TransitionDirective,
 	UpdateExpression,
 	UseDirective,
+	AttachTag,
 	VariableDeclaration
 };
 
