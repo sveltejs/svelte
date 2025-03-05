@@ -286,7 +286,7 @@ function style_object_to_string(style_object) {
 
 /**
  * @param {any} value
- * @param {string | null} [hash]
+ * @param {string | undefined} [hash]
  * @param {Record<string, boolean>} [directives]
  */
 export function attr_class(value, hash, directives) {

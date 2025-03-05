@@ -396,8 +396,6 @@ function build_attr_class(class_directives, expression, context, hash) {
 		} else {
 			css_hash = b.literal(hash);
 		}
-	} else if (directives) {
-		css_hash = b.null;
 	}
 
 	return b.call('$.attr_class', expression, css_hash, directives);
