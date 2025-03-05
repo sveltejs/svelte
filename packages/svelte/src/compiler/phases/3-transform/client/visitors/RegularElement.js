@@ -539,13 +539,14 @@ export function build_style_directives_object(style_directives, context) {
 	let important_properties = [];
 
 	for (const directive of style_directives) {
-		let expression =
+		const expression =
 			directive.value === true
 				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
 				: build_attribute_value(directive.value, context, (value, metadata) =>
 						metadata.has_call ? get_expression_id(context.state, value) : value
 					).value;
 		const property = b.init(directive.name, expression);
+
 		if (directive.modifiers.includes('important')) {
 			important_properties.push(property);
 		} else {
