@@ -3,8 +3,8 @@ import { hydrating } from '../hydration.js';
 
 /**
  * @param {Element & ElementCSSInlineStyle} dom
- * @param {Record<string,any>} prev
- * @param {Record<string,any>} next
+ * @param {Record<string, any>} prev
+ * @param {Record<string, any>} next
  * @param {string} [priority]
  */
 function update_styles(dom, prev = {}, next, priority) {
@@ -23,9 +23,9 @@ function update_styles(dom, prev = {}, next, priority) {
 
 /**
  * @param {Element & ElementCSSInlineStyle} dom
- * @param {string|null} value
- * @param {Record<string,any>|[Record<string,any>,Record<string,any>]} [prev_styles]
- * @param {Record<string,any>|[Record<string,any>,Record<string,any>]} [next_styles]
+ * @param {string | null} value
+ * @param {Record<string, any> | [Record<string, any>, Record<string, any>]} [prev_styles]
+ * @param {Record<string, any> | [Record<string, any>, Record<string, any>]} [next_styles]
  */
 export function set_style(dom, value, prev_styles, next_styles) {
 	// @ts-expect-error
