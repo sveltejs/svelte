@@ -1,5 +1,11 @@
 # svelte
 
+## 5.22.3
+
+### Patch Changes
+
+- fix: run effect roots in tree order ([#15446](https://github.com/sveltejs/svelte/pull/15446))
+
 ## 5.22.2
 
 ### Patch Changes
