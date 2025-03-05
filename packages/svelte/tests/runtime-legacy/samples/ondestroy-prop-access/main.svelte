@@ -1,11 +1,9 @@
 <script>
 	import Component from "./Component.svelte";
 
-	let show = $state(true);
-	let count = $state(0);
-	let spread = $derived({ checked: show, count });
-	let Dynamic = $derived(count < 2 ? Component : undefined);
-	let Dynamic2 = $derived(show ? Component : undefined);
+	let show = true;
+	let count = 0;
+	$: spread = { checked: show, count };
 </script>
 
 <button onclick={()=> count++ }></button>
@@ -32,13 +30,13 @@
 {/if}
 
 <!-- dynamic component -->
-<Dynamic {count} checked={show} />
+<svelte:component this={count < 2 ? Component : undefined} {count} checked={show} />
 
 <!-- dynamic component spread -->
-<Dynamic {...spread} />
+<svelte:component this={count < 2 ? Component : undefined} {...spread} />
 
 <!-- dynamic component with prop only accessed on destroy -->
-<Dynamic2 {count} checked={show} />
+<svelte:component this={show ? Component : undefined} {count} checked={show} />
 
 <!-- dynamic component with prop only accessed on destroy spread -->
-<Dynamic2 {...spread} />
+<svelte:component this={show ? Component : undefined} {...spread} />
