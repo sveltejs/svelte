@@ -213,6 +213,7 @@ export function set_custom_element_data(node, prop, value) {
 	// or effect
 	var previous_reaction = active_reaction;
 	var previous_effect = active_effect;
+
 	// If we're hydrating but the custom element is from Svelte, and it already scaffolded,
 	// then it might run block logic in hydration mode, which we have to prevent.
 	let was_hydrating = hydrating;
@@ -222,9 +223,10 @@ export function set_custom_element_data(node, prop, value) {
 
 	set_active_reaction(null);
 	set_active_effect(null);
+
 	try {
 		if (
-			// style need set_attribute()
+			// `style` should use `set_attribute` rather than the setter
 			prop !== 'style' &&
 			// Don't compute setters for custom elements while they aren't registered yet,
 			// because during their upgrade/instantiation they might add more setters.
