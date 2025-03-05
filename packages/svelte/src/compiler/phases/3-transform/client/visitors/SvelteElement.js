@@ -90,7 +90,9 @@ export function SvelteElement(node, context) {
 		let { value, has_state } = build_attribute_value(
 			attributes[0].value,
 			context,
-			(value, metadata) => (metadata.has_call ? get_expression_id(context.state, value) : value)
+			attributes[0].metadata.needs_clsx
+				? (value) => value
+				: (value, metadata) => (metadata.has_call ? get_expression_id(context.state, value) : value)
 		);
 
 		is_attributes_reactive = build_set_class(
