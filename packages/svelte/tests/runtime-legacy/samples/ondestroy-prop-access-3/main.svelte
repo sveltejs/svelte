@@ -1,9 +1,7 @@
 <script>
 	import Component from './Component.svelte';
 
-	let state = $state({
-		title: 'foo'
-	});
+	let state = { title: 'foo' };
 </script>
 
 {#if state}

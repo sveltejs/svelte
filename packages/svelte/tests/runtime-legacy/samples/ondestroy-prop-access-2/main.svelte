@@ -1,7 +1,7 @@
 <script>
 	import Component from './Component.svelte';
 
-	let value = $state({ foo: 'bar' });
+	let value = { foo: 'bar' };
 </script>
 
 <button

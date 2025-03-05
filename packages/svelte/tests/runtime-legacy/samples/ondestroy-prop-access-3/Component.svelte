@@ -1,5 +1,5 @@
 <script lang="ts">
-	let { ref = $bindable(null) } = $props();
+	export let ref;
 </script>
 
 <input bind:this={ref} />
