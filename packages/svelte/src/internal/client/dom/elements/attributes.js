@@ -378,6 +378,7 @@ export function set_attributes(
 				element[`__${event_name}`] = undefined;
 			}
 		} else if (key === 'style') {
+			// avoid using the setter
 			set_attribute(element, key, value);
 		} else if (key === 'autofocus') {
 			autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
