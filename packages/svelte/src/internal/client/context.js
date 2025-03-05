@@ -13,7 +13,7 @@ import {
 } from './runtime.js';
 import { effect, teardown } from './reactivity/effects.js';
 import { legacy_mode_flag } from '../flags/index.js';
-import { CTX_CONTAINS_TEARDOWN, CTX_DESTROYED, TEARDOWN_PROPS } from './constants.js';
+import { CTX_DESTROYED, TEARDOWN_PROPS } from './constants.js';
 import { define_property } from '../shared/utils.js';
 
 /** @type {ComponentContext | null} */
@@ -136,24 +136,27 @@ export function push(props, runes = false, fn) {
 	}
 
 	teardown(() => {
-		if ((ctx.f & (CTX_CONTAINS_TEARDOWN | CTX_DESTROYED)) === 0) {
+		if ((ctx.f & CTX_DESTROYED) !== 0) {
 			return;
 		}
 		// Mark the context as destroyed, so any derived props can use
 		// the latest known value before teardown
 		ctx.f ^= CTX_DESTROYED;
 
-		var teardown_props = ctx.tp;
-		if (TEARDOWN_PROPS in props) {
-			props[TEARDOWN_PROPS] = teardown_props;
-			return;
-		}
-		// Apply the latest known props before teardown over existing props
-		for (var key in teardown_props) {
-			define_property(props, key, {
-				value: teardown_props[key],
-				configurable: true
-			});
+		// Only apply the latest known props before teardown in legacy mode
+		if (!is_runes()) {
+			var teardown_props = ctx.tp;
+			if (TEARDOWN_PROPS in props) {
+				props[TEARDOWN_PROPS] = teardown_props;
+				return;
+			}
+			// Apply the latest known props before teardown over existing props
+			for (var key in teardown_props) {
+				define_property(props, key, {
+					value: teardown_props[key],
+					configurable: true
+				});
+			}
 		}
 	});
 
@@ -198,11 +201,12 @@ export function pop(component) {
 		}
 		context_stack_item.m = true;
 
-		effect(() => {
-			if ((context_stack_item.f & CTX_CONTAINS_TEARDOWN) !== 0) {
+		// Only apply the latest known props before teardown in legacy mode
+		if (!is_runes()) {
+			effect(() => {
 				context_stack_item.tp = { ...context_stack_item.s };
-			}
-		});
+			});
+		}
 	}
 	// Micro-optimization: Don't set .a above to the empty object
 	// so it can be garbage-collected when the return here is unused

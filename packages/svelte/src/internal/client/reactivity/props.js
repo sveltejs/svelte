@@ -1,4 +1,4 @@
-/** @import { Source } from './types.js' */
+/** @import { Derived, Source } from './types.js' */
 import { DEV } from 'esm-env';
 import {
 	PROPS_IS_BINDABLE,
@@ -251,6 +251,14 @@ export function spread_props(...props) {
 }
 
 /**
+ * @param {Derived} signal
+ * @returns {boolean}
+ */
+function in_destroyed_context(signal) {
+	return signal.ctx !== null && (signal.ctx.f & CTX_DESTROYED) !== 0;
+}
+
+/**
  * This function is responsible for synchronizing a possibly bound prop with the inner component state.
  * It is used whenever the compiler sees that the component writes to the prop, or when it has a default prop_value.
  * @template V
@@ -409,6 +417,9 @@ export function prop(props, key, flags, fallback) {
 				if (fallback_used && fallback_value !== undefined) {
 					fallback_value = new_value;
 				}
+				if (in_destroyed_context(current_value)) {
+					return value;
+				}
 				untrack(() => get(current_value)); // force a synchronisation immediately
 			}
 
@@ -416,7 +427,7 @@ export function prop(props, key, flags, fallback) {
 		}
 
 		// If the prop is read, we might need to return the stale value if component ctx has been destroyed
-		if (current_value.ctx !== null && (current_value.ctx.f & CTX_DESTROYED) !== 0) {
+		if (in_destroyed_context(current_value)) {
 			return current_value.v;
 		}
 
