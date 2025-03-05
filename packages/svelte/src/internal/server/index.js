@@ -291,10 +291,7 @@ function style_object_to_string(style_object) {
  */
 export function attr_class(value, hash, directives) {
 	var result = to_class(value, hash, directives);
-	if (result) {
-		return ` class="${escape_html(result, true)}"`;
-	}
-	return '';
+	return result ? ` class="${escape_html(result, true)}"` : '';
 }
 
 /**

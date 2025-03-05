@@ -250,6 +250,7 @@ export function build_set_style(node_id, attribute, style_directives, context) {
 	if (style_directives.length) {
 		next = build_style_directives_object(style_directives, context);
 		has_state ||= style_directives.some((d) => d.metadata.expression.has_state);
+
 		if (has_state) {
 			previous_id = b.id(context.state.scope.generate('styles'));
 			context.state.init.push(b.declaration('let', [b.declarator(previous_id)]));

@@ -208,6 +208,7 @@ export function build_element_attributes(node, context) {
 		build_element_spread_attributes(node, attributes, style_directives, class_directives, context);
 	} else {
 		const css_hash = node.metadata.scoped ? context.state.analysis.css.hash : null;
+
 		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
 			const name = get_attribute_name(node, attribute);
 			const can_use_literal =
@@ -222,9 +223,11 @@ export function build_element_attributes(node, context) {
 						WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 					)
 				).value;
+
 				if (name === 'class' && css_hash) {
 					literal_value = (String(literal_value) + ' ' + css_hash).trim();
 				}
+
 				if (name !== 'class' || literal_value) {
 					context.state.template.push(
 						b.literal(
@@ -236,6 +239,7 @@ export function build_element_attributes(node, context) {
 						)
 					);
 				}
+
 				continue;
 			}
 
@@ -371,6 +375,7 @@ function build_element_spread_attributes(
 function build_attr_class(class_directives, expression, context, hash) {
 	/** @type {ObjectExpression | undefined} */
 	let directives;
+
 	if (class_directives.length) {
 		directives = b.object(
 			class_directives.map((directive) =>
@@ -382,6 +387,7 @@ function build_attr_class(class_directives, expression, context, hash) {
 			)
 		);
 	}
+
 	let css_hash;
 
 	if (hash) {
@@ -393,6 +399,7 @@ function build_attr_class(class_directives, expression, context, hash) {
 	} else if (directives) {
 		css_hash = b.null;
 	}
+
 	return b.call('$.attr_class', expression, css_hash, directives);
 }
 
@@ -405,6 +412,7 @@ function build_attr_class(class_directives, expression, context, hash) {
 function build_attr_style(style_directives, expression, context) {
 	/** @type {ArrayExpression | ObjectExpression | undefined} */
 	let directives;
+
 	if (style_directives.length) {
 		let normal_properties = [];
 		let important_properties = [];
