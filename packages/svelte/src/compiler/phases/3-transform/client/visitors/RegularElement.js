@@ -297,24 +297,14 @@ export function RegularElement(node, context) {
 			}
 
 			if (name === 'class') {
-				const is_svg = context.state.metadata.namespace === 'svg' || node.name === 'svg';
-				const is_mathml = context.state.metadata.namespace === 'mathml';
-
-				build_set_class(node, node_id, attribute, class_directives, context, !is_svg && !is_mathml);
+				const is_html = context.state.metadata.namespace === 'html' && node.name !== 'svg';
+				build_set_class(node, node_id, attribute, class_directives, context, is_html);
 			} else if (name === 'style') {
 				build_set_style(node_id, attribute, style_directives, context);
 			} else if (is_custom_element) {
 				build_custom_element_attribute_update_assignment(node_id, attribute, context);
 			} else {
-				build_element_attribute_update_assignment(
-					node,
-					node_id,
-					attribute,
-					attributes,
-					class_directives,
-					style_directives,
-					context
-				);
+				build_element_attribute_update_assignment(node, node_id, attribute, attributes, context);
 			}
 		}
 	}
@@ -585,8 +575,6 @@ export function build_style_directives_object(style_directives, context) {
  * @param {Identifier} node_id
  * @param {AST.Attribute} attribute
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
- * @param {AST.ClassDirective[]} class_directives
- * @param {AST.StyleDirective[]} style_directives
  * @param {ComponentContext} context
  */
 function build_element_attribute_update_assignment(
@@ -594,8 +582,6 @@ function build_element_attribute_update_assignment(
 	node_id,
 	attribute,
 	attributes,
-	class_directives,
-	style_directives,
 	context
 ) {
 	const state = context.state;
