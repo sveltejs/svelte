@@ -214,6 +214,7 @@ export function set_custom_element_data(node, prop, value) {
 	// or effect
 	var previous_reaction = active_reaction;
 	var previous_effect = active_effect;
+
 	// If we're hydrating but the custom element is from Svelte, and it already scaffolded,
 	// then it might run block logic in hydration mode, which we have to prevent.
 	let was_hydrating = hydrating;
@@ -223,17 +224,20 @@ export function set_custom_element_data(node, prop, value) {
 
 	set_active_reaction(null);
 	set_active_effect(null);
+
 	try {
 		if (
+			// `style` should use `set_attribute` rather than the setter
+			prop !== 'style' &&
 			// Don't compute setters for custom elements while they aren't registered yet,
 			// because during their upgrade/instantiation they might add more setters.
 			// Instead, fall back to a simple "an object, then set as property" heuristic.
-			setters_cache.has(node.nodeName) ||
+			(setters_cache.has(node.nodeName) ||
 			// customElements may not be available in browser extension contexts
 			!customElements ||
 			customElements.get(node.tagName.toLowerCase())
 				? get_setters(node).includes(prop)
-				: value && typeof value === 'object'
+				: value && typeof value === 'object')
 		) {
 			// @ts-expect-error
 			node[prop] = value;
@@ -385,6 +389,9 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 				// @ts-ignore
 				element[`__${event_name}`] = undefined;
 			}
+		} else if (key === 'style') {
+			// avoid using the setter
+			set_attribute(element, key, value);
 		} else if (key === 'autofocus') {
 			autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
 		} else if (!is_custom_element && (key === '__value' || (key === 'value' && value != null))) {
