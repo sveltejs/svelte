@@ -11,8 +11,10 @@ import {
 	set_active_reaction,
 	untrack
 } from './runtime.js';
-import { effect } from './reactivity/effects.js';
+import { effect, teardown } from './reactivity/effects.js';
 import { legacy_mode_flag } from '../flags/index.js';
+import { CTX_DESTROYED, TEARDOWN_PROPS } from './constants.js';
+import { define_property } from '../shared/utils.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;
@@ -112,15 +114,17 @@ export function getAllContexts() {
  * @returns {void}
  */
 export function push(props, runes = false, fn) {
-	component_context = {
+	var ctx = (component_context = {
 		p: component_context,
 		c: null,
 		e: null,
+		f: 0,
 		m: false,
 		s: props,
 		x: null,
-		l: null
-	};
+		l: null,
+		tp: props
+	});
 
 	if (legacy_mode_flag && !runes) {
 		component_context.l = {
@@ -130,6 +134,31 @@ export function push(props, runes = false, fn) {
 			r2: source(false)
 		};
 	}
+
+	teardown(() => {
+		if ((ctx.f & CTX_DESTROYED) !== 0) {
+			return;
+		}
+		// Mark the context as destroyed, so any derived props can use
+		// the latest known value before teardown
+		ctx.f ^= CTX_DESTROYED;
+
+		// Only apply the latest known props before teardown in legacy mode
+		if (!is_runes(ctx)) {
+			var teardown_props = ctx.tp;
+			if (TEARDOWN_PROPS in props) {
+				props[TEARDOWN_PROPS] = teardown_props;
+				return;
+			}
+			// Apply the latest known props before teardown over existing props
+			for (var key in teardown_props) {
+				define_property(props, key, {
+					value: teardown_props[key],
+					configurable: true
+				});
+			}
+		}
+	});
 
 	if (DEV) {
 		// component function
@@ -171,6 +200,13 @@ export function pop(component) {
 			dev_current_component_function = context_stack_item.p?.function ?? null;
 		}
 		context_stack_item.m = true;
+
+		// Only apply the latest known props before teardown in legacy mode
+		if (!is_runes(context_stack_item)) {
+			effect(() => {
+				context_stack_item.tp = { ...context_stack_item.s };
+			});
+		}
 	}
 	// Micro-optimization: Don't set .a above to the empty object
 	// so it can be garbage-collected when the return here is unused
@@ -178,8 +214,8 @@ export function pop(component) {
 }
 
 /** @returns {boolean} */
-export function is_runes() {
-	return !legacy_mode_flag || (component_context !== null && component_context.l === null);
+export function is_runes(ctx = component_context) {
+	return !legacy_mode_flag || (ctx !== null && ctx.l === null);
 }
 
 /**

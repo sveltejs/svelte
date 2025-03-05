@@ -1,4 +1,4 @@
-/** @import { Source } from './types.js' */
+/** @import { Derived, Source } from './types.js' */
 import { DEV } from 'esm-env';
 import {
 	PROPS_IS_BINDABLE,
@@ -10,27 +10,20 @@ import {
 import { get_descriptor, is_function } from '../../shared/utils.js';
 import { mutable_source, set, source, update } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
-import {
-	active_effect,
-	get,
-	captured_signals,
-	set_active_effect,
-	untrack,
-	active_reaction,
-	set_active_reaction
-} from '../runtime.js';
+import { get, captured_signals, untrack } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import {
-	BRANCH_EFFECT,
+	CTX_DESTROYED,
 	LEGACY_DERIVED_PROP,
 	LEGACY_PROPS,
-	ROOT_EFFECT,
-	STATE_SYMBOL
+	STATE_SYMBOL,
+	TEARDOWN_PROPS
 } from '../constants.js';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
+import { is_runes } from '../context.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -186,6 +179,12 @@ const spread_props_handler = {
 		}
 	},
 	set(target, key, value) {
+		// If the spread props have been torn down, then replace the existing props with
+		// the stale props from the teardown
+		if (key === TEARDOWN_PROPS) {
+			target.props = [value];
+			return true;
+		}
 		let i = target.props.length;
 		while (i--) {
 			let p = target.props[i];
@@ -216,6 +215,9 @@ const spread_props_handler = {
 		}
 	},
 	has(target, key) {
+		if (key === TEARDOWN_PROPS) {
+			return true;
+		}
 		// To prevent a false positive `is_entry_props` in the `prop` function
 		if (key === STATE_SYMBOL || key === LEGACY_PROPS) return false;
 
@@ -247,6 +249,14 @@ const spread_props_handler = {
  */
 export function spread_props(...props) {
 	return new Proxy({ props }, spread_props_handler);
+}
+
+/**
+ * @param {Derived} signal
+ * @returns {boolean}
+ */
+function in_destroyed_context(signal) {
+	return signal.ctx !== null && (signal.ctx.f & CTX_DESTROYED) !== 0;
 }
 
 /**
@@ -382,6 +392,11 @@ export function prop(props, key, flags, fallback) {
 		return (inner_current_value.v = parent_value);
 	});
 
+	// Read the bindable prop eagerly to ensure it has a value
+	if (!is_runes() && bindable) {
+		get(current_value);
+	}
+
 	if (!immutable) current_value.equals = safe_equals;
 
 	return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
@@ -408,11 +423,20 @@ export function prop(props, key, flags, fallback) {
 				if (fallback_used && fallback_value !== undefined) {
 					fallback_value = new_value;
 				}
+				if (in_destroyed_context(current_value)) {
+					return value;
+				}
 				untrack(() => get(current_value)); // force a synchronisation immediately
 			}
 
 			return value;
 		}
+
+		// If the prop is read, we might need to return the stale value if component ctx has been destroyed
+		if (in_destroyed_context(current_value)) {
+			return current_value.v;
+		}
+
 		return get(current_value);
 	};
 }
