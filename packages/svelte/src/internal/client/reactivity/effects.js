@@ -392,6 +392,7 @@ export function destroy_effect_children(signal, remove_dom = false) {
 		var next = effect.next;
 
 		if ((effect.f & ROOT_EFFECT) !== 0) {
+			// this is now an independent root
 			effect.parent = null;
 		} else {
 			destroy_effect(effect, remove_dom);
