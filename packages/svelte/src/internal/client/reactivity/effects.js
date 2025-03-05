@@ -82,7 +82,6 @@ function push_effect(effect, parent_effect) {
  * @returns {Effect}
  */
 function create_effect(type, fn, sync, push = true) {
-	var is_root = (type & ROOT_EFFECT) !== 0;
 	var parent_effect = active_effect;
 
 	if (DEV) {
@@ -103,7 +102,7 @@ function create_effect(type, fn, sync, push = true) {
 		fn,
 		last: null,
 		next: null,
-		parent: is_root ? null : parent_effect,
+		parent: parent_effect,
 		prev: null,
 		teardown: null,
 		transitions: null,
@@ -136,7 +135,7 @@ function create_effect(type, fn, sync, push = true) {
 		effect.teardown === null &&
 		(effect.f & (EFFECT_HAS_DERIVED | BOUNDARY_EFFECT)) === 0;
 
-	if (!inert && !is_root && push) {
+	if (!inert && push) {
 		if (parent_effect !== null) {
 			push_effect(effect, parent_effect);
 		}
@@ -391,7 +390,13 @@ export function destroy_effect_children(signal, remove_dom = false) {
 
 	while (effect !== null) {
 		var next = effect.next;
-		destroy_effect(effect, remove_dom);
+
+		if ((effect.f & ROOT_EFFECT) !== 0) {
+			effect.parent = null;
+		} else {
+			destroy_effect(effect, remove_dom);
+		}
+
 		effect = next;
 	}
 }
