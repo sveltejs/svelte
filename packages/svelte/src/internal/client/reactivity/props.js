@@ -5,8 +5,7 @@ import {
 	PROPS_IS_IMMUTABLE,
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_RUNES,
-	PROPS_IS_UPDATED,
-	UNINITIALIZED
+	PROPS_IS_UPDATED
 } from '../../../constants.js';
 import { get_descriptor, is_function } from '../../shared/utils.js';
 import { mutable_source, set, source, update } from './sources.js';
@@ -393,8 +392,8 @@ export function prop(props, key, flags, fallback) {
 		return (inner_current_value.v = parent_value);
 	});
 
-	// Read the prop eagerly to ensure it has a value
-	if (!is_runes()) {
+	// Read the bindable prop eagerly to ensure it has a value
+	if (!is_runes() && bindable) {
 		get(current_value);
 	}
 
