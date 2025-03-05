@@ -428,10 +428,6 @@ export function set_attributes(
 				set_attribute(element, name, value);
 			}
 		}
-		if (key === 'style' && '__styles' in element) {
-			// reset styles to force style: directive to update
-			element.__styles = {};
-		}
 	}
 
 	if (is_hydrating_custom_element) {
