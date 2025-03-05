@@ -156,23 +156,16 @@ export function get_attribute_name(element, attribute) {
 /**
  * @param {AST.RegularElement | AST.SvelteElement} element
  * @param {Identifier} node_id
- * @param {AST.Attribute | null} attribute
- * @param {Expression} value
- * @param {boolean} has_state
+ * @param {AST.Attribute} attribute
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
  * @param {boolean} is_html
  */
-export function build_set_class(
-	element,
-	node_id,
-	attribute,
-	value,
-	has_state,
-	class_directives,
-	context,
-	is_html
-) {
+export function build_set_class(element, node_id, attribute, class_directives, context, is_html) {
+	let { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
+		metadata.has_call ? get_expression_id(context.state, value) : value
+	);
+
 	if (attribute && attribute.metadata.needs_clsx) {
 		value = b.call('$.clsx', value);
 	}
@@ -237,12 +230,15 @@ export function build_set_class(
 
 /**
  * @param {Identifier} node_id
- * @param {Expression} value
- * @param {boolean} has_state
+ * @param {AST.Attribute} attribute
  * @param {AST.StyleDirective[]} style_directives
  * @param {ComponentContext} context
  */
-export function build_set_style(node_id, value, has_state, style_directives, context) {
+export function build_set_style(node_id, attribute, style_directives, context) {
+	let { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
+		metadata.has_call ? get_expression_id(context.state, value) : value
+	);
+
 	/** @type {Identifier | undefined} */
 	let previous_id;
 	/** @type {ObjectExpression | Identifier | undefined} */

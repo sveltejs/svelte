@@ -296,7 +296,14 @@ export function RegularElement(node, context) {
 				continue;
 			}
 
-			if (is_custom_element && name !== 'class' && name !== 'style') {
+			if (name === 'class') {
+				const is_svg = context.state.metadata.namespace === 'svg' || node.name === 'svg';
+				const is_mathml = context.state.metadata.namespace === 'mathml';
+
+				build_set_class(node, node_id, attribute, class_directives, context, !is_svg && !is_mathml);
+			} else if (name === 'style') {
+				build_set_style(node_id, attribute, style_directives, context);
+			} else if (is_custom_element) {
 				build_custom_element_attribute_update_assignment(node_id, attribute, context);
 			} else {
 				build_element_attribute_update_assignment(
@@ -593,8 +600,6 @@ function build_element_attribute_update_assignment(
 ) {
 	const state = context.state;
 	const name = get_attribute_name(element, attribute);
-	const is_svg = context.state.metadata.namespace === 'svg' || element.name === 'svg';
-	const is_mathml = context.state.metadata.namespace === 'mathml';
 
 	const is_autofocus = name === 'autofocus';
 
@@ -619,21 +624,6 @@ function build_element_attribute_update_assignment(
 	if (name === 'muted') {
 		// Special case for Firefox who needs it set as a property in order to work
 		update = b.stmt(b.assignment('=', b.member(node_id, b.id('muted')), value));
-	} else if (name === 'class') {
-		build_set_class(
-			element,
-			node_id,
-			attribute,
-			value,
-			has_state,
-			class_directives,
-			context,
-			!is_svg && !is_mathml
-		);
-		return; // TODO
-	} else if (name === 'style') {
-		build_set_style(node_id, value, has_state, style_directives, context);
-		return; // TODO
 	} else if (name === 'value') {
 		update = b.stmt(b.call('$.set_value', node_id, value));
 	} else if (name === 'checked') {

@@ -78,23 +78,7 @@ export function SvelteElement(node, context) {
 		attributes[0].name.toLowerCase() === 'class' &&
 		is_text_attribute(attributes[0])
 	) {
-		// special case when there only a class attribute, without call expression
-		let { value, has_state } = build_attribute_value(
-			attributes[0].value,
-			context,
-			(value, metadata) => (metadata.has_call ? get_expression_id(context.state, value) : value)
-		);
-
-		build_set_class(
-			node,
-			element_id,
-			attributes[0],
-			value,
-			has_state,
-			class_directives,
-			inner_context,
-			false
-		);
+		build_set_class(node, element_id, attributes[0], class_directives, inner_context, false);
 	} else if (attributes.length) {
 		const attributes_id = b.id(context.state.scope.generate('attributes'));
 
