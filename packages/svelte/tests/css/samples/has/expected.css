@@ -118,6 +118,9 @@
 	d.svelte-xyz:has(~ f:where(.svelte-xyz)) {
 		color: green;
 	}
+	/* (unused) d:has(+ f) {
+		color: red;
+	}*/
 	/* (unused) f:has(~ d) {
 		color: red;
 	}*/
@@ -143,3 +146,13 @@
 	/* (unused) :global(.foo):has(.unused) {
 		color: red;
 	}*/
+
+	g.svelte-xyz:has(> h:where(.svelte-xyz) > i:where(.svelte-xyz)) {
+		color: green;
+	}
+	/* (unused) h:has(> h > i) {
+		color: red;
+	}*/
+	g.svelte-xyz:has(+ j:where(.svelte-xyz) > k:where(.svelte-xyz)) {
+		color: green;
+	}
