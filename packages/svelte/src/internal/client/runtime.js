@@ -644,8 +644,11 @@ function infinite_loop_guard() {
 }
 
 function flush_queued_root_effects() {
+	var was_updating_effect = is_updating_effect;
+
 	try {
 		var flush_count = 0;
+		is_updating_effect = true;
 
 		while (queued_root_effects.length > 0) {
 			if (flush_count++ > 1000) {
@@ -658,18 +661,13 @@ function flush_queued_root_effects() {
 			queued_root_effects = [];
 
 			for (var i = 0; i < length; i++) {
-				var root = root_effects[i];
-
-				if ((root.f & CLEAN) === 0) {
-					root.f ^= CLEAN;
-				}
-
-				var collected_effects = process_effects(root);
+				var collected_effects = process_effects(root_effects[i]);
 				flush_queued_effects(collected_effects);
 			}
 		}
 	} finally {
 		is_flushing = false;
+		is_updating_effect = was_updating_effect;
 
 		last_scheduled_effect = null;
 		if (DEV) {
@@ -755,11 +753,12 @@ function process_effects(root) {
 	/** @type {Effect[]} */
 	var effects = [];
 
-	var effect = root.first;
+	/** @type {Effect | null} */
+	var effect = root;
 
 	while (effect !== null) {
 		var flags = effect.f;
-		var is_branch = (flags & BRANCH_EFFECT) !== 0;
+		var is_branch = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0;
 		var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
 
 		if (!is_skippable_branch && (flags & INERT) === 0) {
@@ -784,6 +783,7 @@ function process_effects(root) {
 				}
 			}
 
+			/** @type {Effect | null} */
 			var child = effect.first;
 
 			if (child !== null) {
