@@ -70,7 +70,7 @@ const css_visitors = {
 				context.state.keyframes.push(node.prelude);
 			} else if (node.prelude.startsWith('-global-')) {
 				// we don't check if the block.children.length because the keyframe is still added even if empty
-				if (is_unscoped_global(context.path)) {
+				if (!context.state.has_unscoped_global.value && is_unscoped_global(context.path)) {
 					context.state.has_unscoped_global.value = true;
 				}
 			}
@@ -98,6 +98,7 @@ const css_visitors = {
 
 				if (idx === 0) {
 					if (
+						!context.state.has_unscoped_global.value &&
 						is_unscoped_global(context.path, context.state.rule) &&
 						context.state.rule &&
 						context.state.rule.block.children.length > 0
@@ -227,7 +228,11 @@ const css_visitors = {
 				if (idx !== -1) {
 					is_global_block = true;
 					if (i === 0) {
-						if (is_unscoped_global(context.path) && node.block.children.length > 0) {
+						if (
+							!context.state.has_unscoped_global.value &&
+							is_unscoped_global(context.path) &&
+							node.block.children.length > 0
+						) {
 							context.state.has_unscoped_global.value = true;
 						}
 					}
