@@ -68,6 +68,11 @@ const css_visitors = {
 		if (is_keyframes_node(node)) {
 			if (!node.prelude.startsWith('-global-') && !is_in_global_block(context.path)) {
 				context.state.keyframes.push(node.prelude);
+			} else if (node.prelude.startsWith('-global-')) {
+				// we don't check if the block.children.length because the keyframe is still added even if empty
+				if (is_unscoped_global(context.path)) {
+					context.state.has_unscoped_global.value = true;
+				}
 			}
 		}
 
