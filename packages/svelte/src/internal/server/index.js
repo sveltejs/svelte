@@ -300,10 +300,7 @@ export function attr_class(value, hash, directives) {
  */
 export function attr_style(value, directives) {
 	var result = to_style(value, directives);
-	if (result) {
-		return ` style="${escape_html(result, true)}"`;
-	}
-	return '';
+	return result ? ` style="${escape_html(result, true)}"` : '';
 }
 
 /**
