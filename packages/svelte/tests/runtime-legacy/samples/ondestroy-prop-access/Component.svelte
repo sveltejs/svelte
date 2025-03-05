@@ -1,11 +1,14 @@
 <script>
-	import { onDestroy } from 'svelte';
+	import { onDestroy } from "svelte";
 
-	export let my_prop;
+	export let checked;
+	export let count;
 
 	onDestroy(() => {
-		console.log(my_prop.foo);
+		console.log(count, checked);
 	});
 </script>
 
-{my_prop.foo}
+<p>{count}</p>
+
+<button onclick={()=> count-- }></button>

@@ -5,7 +5,8 @@ import {
 	PROPS_IS_IMMUTABLE,
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_RUNES,
-	PROPS_IS_UPDATED
+	PROPS_IS_UPDATED,
+	UNINITIALIZED
 } from '../../../constants.js';
 import { get_descriptor, is_function } from '../../shared/utils.js';
 import { mutable_source, set, source, update } from './sources.js';
@@ -23,6 +24,7 @@ import {
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
+import { is_runes } from '../context.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -390,6 +392,11 @@ export function prop(props, key, flags, fallback) {
 		was_from_child = false;
 		return (inner_current_value.v = parent_value);
 	});
+
+	// Read the prop eagerly to ensure it has a value
+	if (!is_runes()) {
+		get(current_value);
+	}
 
 	if (!immutable) current_value.equals = safe_equals;
 

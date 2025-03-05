@@ -22,8 +22,7 @@ import {
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
-	BOUNDARY_EFFECT,
-	CTX_CONTAINS_TEARDOWN
+	BOUNDARY_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { internal_set } from './reactivity/sources.js';
@@ -567,17 +566,7 @@ export function update_effect(effect) {
 
 		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
-
-		if (typeof teardown === 'function') {
-			var ctx = effect.ctx;
-			if (ctx !== null && (ctx.f & CTX_CONTAINS_TEARDOWN) === 0) {
-				ctx.f ^= CTX_CONTAINS_TEARDOWN;
-			}
-			effect.teardown = teardown;
-		} else {
-			effect.teardown = null;
-		}
-
+		effect.teardown = typeof teardown === 'function' ? teardown : null;
 		effect.wv = write_version;
 
 		var deps = effect.deps;

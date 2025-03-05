@@ -27,5 +27,4 @@ export const LEGACY_PROPS = Symbol('legacy props');
 export const TEARDOWN_PROPS = Symbol('teardown props');
 export const LOADING_ATTR_SYMBOL = Symbol('');
 
-export const CTX_CONTAINS_TEARDOWN = 1 << 1;
-export const CTX_DESTROYED = 1 << 2;
+export const CTX_DESTROYED = 1 << 1;
