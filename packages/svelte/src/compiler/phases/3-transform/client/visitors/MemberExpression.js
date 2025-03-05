@@ -11,7 +11,9 @@ export function MemberExpression(node, context) {
 	if (node.property.type === 'PrivateIdentifier') {
 		const field = context.state.private_state.get(node.property.name);
 		if (field) {
-			return context.state.in_constructor ? b.member(node, 'v') : b.call('$.get', node);
+			return context.state.in_constructor && (field.kind === 'raw_state' || field.kind === 'state')
+				? b.member(node, 'v')
+				: b.call('$.get', node);
 		}
 	}
 
