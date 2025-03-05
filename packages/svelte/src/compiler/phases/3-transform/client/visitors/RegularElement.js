@@ -296,7 +296,10 @@ export function RegularElement(node, context) {
 				continue;
 			}
 
-			if (name === 'class') {
+			if (name === 'autofocus') {
+				let { value } = build_attribute_value(attribute.value, context);
+				context.state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));
+			} else if (name === 'class') {
 				const is_html = context.state.metadata.namespace === 'html' && node.name !== 'svg';
 				build_set_class(node, node_id, attribute, class_directives, context, is_html);
 			} else if (name === 'style') {
@@ -587,22 +590,9 @@ function build_element_attribute_update_assignment(
 	const state = context.state;
 	const name = get_attribute_name(element, attribute);
 
-	const is_autofocus = name === 'autofocus';
-
 	let { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call
-			? // if it's autofocus we will not add this to a template effect so we don't want to get the expression id
-				// but separately memoize the expression
-				is_autofocus
-				? memoize_expression(state, value)
-				: get_expression_id(state, value)
-			: value
+		metadata.has_call ? get_expression_id(state, value) : value
 	);
-
-	if (is_autofocus) {
-		state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));
-		return;
-	}
 
 	/** @type {Statement} */
 	let update;
