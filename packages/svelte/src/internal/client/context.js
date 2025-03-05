@@ -144,7 +144,7 @@ export function push(props, runes = false, fn) {
 		ctx.f ^= CTX_DESTROYED;
 
 		// Only apply the latest known props before teardown in legacy mode
-		if (!is_runes()) {
+		if (!is_runes(ctx)) {
 			var teardown_props = ctx.tp;
 			if (TEARDOWN_PROPS in props) {
 				props[TEARDOWN_PROPS] = teardown_props;
@@ -202,7 +202,7 @@ export function pop(component) {
 		context_stack_item.m = true;
 
 		// Only apply the latest known props before teardown in legacy mode
-		if (!is_runes()) {
+		if (!is_runes(context_stack_item)) {
 			effect(() => {
 				context_stack_item.tp = { ...context_stack_item.s };
 			});
@@ -214,8 +214,8 @@ export function pop(component) {
 }
 
 /** @returns {boolean} */
-export function is_runes() {
-	return !legacy_mode_flag || (component_context !== null && component_context.l === null);
+export function is_runes(ctx = component_context) {
+	return !legacy_mode_flag || (ctx !== null && ctx.l === null);
 }
 
 /**
