@@ -267,6 +267,7 @@ export function RegularElement(node, context) {
 			}
 
 			const name = get_attribute_name(node, attribute);
+
 			if (
 				!is_custom_element &&
 				!cannot_be_set_statically(attribute.name) &&
@@ -293,10 +294,7 @@ export function RegularElement(node, context) {
 						}`
 					);
 				}
-				continue;
-			}
-
-			if (name === 'autofocus') {
+			} else if (name === 'autofocus') {
 				let { value } = build_attribute_value(attribute.value, context);
 				context.state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));
 			} else if (name === 'class') {
