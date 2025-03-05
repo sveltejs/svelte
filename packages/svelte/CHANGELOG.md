@@ -1,5 +1,11 @@
 # svelte
 
+## 5.22.4
+
+### Patch Changes
+
+- fix: never deduplicate expressions in templates ([#15451](https://github.com/sveltejs/svelte/pull/15451))
+
 ## 5.22.3
 
 ### Patch Changes
