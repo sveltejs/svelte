@@ -89,15 +89,16 @@ export function to_class(value, hash, directives) {
  * @param {boolean} important
  */
 function append_styles(styles, important = false) {
-	let separator = important ? ' !important;' : ';';
-	let css = '';
+	var separator = important ? ' !important;' : ';';
+	var css = '';
 
-	for (const key in styles) {
-		const value = styles[key];
+	for (var key in styles) {
+		var value = styles[key];
 		if (value != null && value !== '') {
 			css += ' ' + key + ': ' + value + separator;
 		}
 	}
+
 	return css;
 }
 
@@ -114,22 +115,26 @@ function to_css_name(name) {
 
 /**
  * @param {any} value
- * @param {Record<string,any>|[Record<string,any>,Record<string,any>]} [styles]
- * @returns {string|null}
+ * @param {Record<string, any> | [Record<string, any>, Record<string, any>]} [styles]
+ * @returns {string | null}
  */
 export function to_style(value, styles) {
 	if (styles) {
 		var new_style = '';
+
 		/** @type {Record<string,any> | undefined} */
 		var normal_styles;
+
 		/** @type {Record<string,any> | undefined} */
 		var important_styles;
+
 		if (Array.isArray(styles)) {
 			normal_styles = styles[0];
 			important_styles = styles[1];
 		} else {
 			normal_styles = styles;
 		}
+
 		if (value) {
 			value = String(value)
 				.replaceAll(/\s*\/\*.*?\*\/\s*/g, '')
@@ -141,6 +146,7 @@ export function to_style(value, styles) {
 			var in_comment = false;
 
 			var reserved_names = [];
+
 			if (normal_styles) {
 				reserved_names.push(...Object.keys(normal_styles).map(to_css_name));
 			}
@@ -150,6 +156,7 @@ export function to_style(value, styles) {
 
 			var start_index = 0;
 			var name_index = -1;
+
 			const len = value.length;
 			for (var i = 0; i < len; i++) {
 				var c = value[i];
@@ -171,20 +178,24 @@ export function to_style(value, styles) {
 				} else if (c === ')') {
 					in_apo--;
 				}
+
 				if (!in_comment && in_str === false && in_apo === 0) {
-					if (c === ':' && name_index < 0) {
+					if (c === ':' && name_index === -1) {
 						name_index = i;
 					} else if (c === ';' || i === len - 1) {
-						if (name_index > 0) {
-							let name = to_css_name(value.substring(start_index, name_index).trim());
+						if (name_index !== -1) {
+							var name = to_css_name(value.substring(start_index, name_index).trim());
+
 							if (!reserved_names.includes(name)) {
 								if (c !== ';') {
 									i++;
 								}
-								const property = value.substring(start_index, i).trim();
+
+								var property = value.substring(start_index, i).trim();
 								new_style += ' ' + property + ';';
 							}
 						}
+
 						start_index = i + 1;
 						name_index = -1;
 					}
@@ -195,13 +206,14 @@ export function to_style(value, styles) {
 		if (normal_styles) {
 			new_style += append_styles(normal_styles);
 		}
+
 		if (important_styles) {
 			new_style += append_styles(important_styles, true);
 		}
+
 		new_style = new_style.trim();
 		return new_style === '' ? null : new_style;
-	} else if (value == null) {
-		return null;
 	}
-	return String(value);
+
+	return value == null ? null : String(value);
 }
