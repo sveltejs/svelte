@@ -3,6 +3,7 @@ import { test } from '../../test';
 
 const style_1 = 'invalid-key:0; margin:4px;;color: green ;color:blue ';
 const style_2 = ' other-key : 0 ; padding:2px; COLOR:green; color: blue';
+const style_2_normalized = 'padding: 2px; color: blue;';
 
 // https://github.com/sveltejs/svelte/issues/15309
 export default test({
@@ -10,7 +11,7 @@ export default test({
 		style: style_1
 	},
 
-	html: `
+	ssrHtml: `
 		<div style="${style_1}"></div>
 		<div style="${style_1}"></div>
 
@@ -25,11 +26,11 @@ export default test({
 		assert.htmlEqual(
 			target.innerHTML,
 			`
-			<div style="${style_2}"></div>
-			<div style="${style_2}"></div>
+			<div style="${style_2_normalized}"></div>
+			<div style="${style_2_normalized}"></div>
 
-			<custom-element style="${style_2}"></custom-element>
-			<custom-element style="${style_2}"></custom-element>
+			<custom-element style="${style_2_normalized}"></custom-element>
+			<custom-element style="${style_2_normalized}"></custom-element>
 			`
 		);
 

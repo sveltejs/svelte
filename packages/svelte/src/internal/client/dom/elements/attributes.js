@@ -15,6 +15,7 @@ import {
 } from '../../runtime.js';
 import { clsx } from '../../../shared/attributes.js';
 import { set_class } from './class.js';
+import { set_style } from './style.js';
 import { NAMESPACE_HTML } from '../../../../constants.js';
 
 export const CLASS = Symbol('class');
@@ -177,11 +178,6 @@ export function set_attribute(element, attribute, value, skip_warning) {
 
 	if (attributes[attribute] === (attributes[attribute] = value)) return;
 
-	if (attribute === 'style' && '__styles' in element) {
-		// reset styles to force style: directive to update
-		element.__styles = {};
-	}
-
 	if (attribute === 'loading') {
 		// @ts-expect-error
 		element[LOADING_ATTR_SYMBOL] = value;
@@ -297,6 +293,10 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 		next.class = null; /* force call to set_class() */
 	}
 
+	if (next[STYLE]) {
+		next.style ??= null; /* force call to set_style() */
+	}
+
 	var setters = get_setters(element);
 
 	// since key is captured we use const
@@ -328,6 +328,13 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 			set_class(element, is_html, value, css_hash, prev?.[CLASS], next[CLASS]);
 			current[key] = value;
 			current[CLASS] = next[CLASS];
+			continue;
+		}
+
+		if (key === 'style') {
+			set_style(element, value, prev?.[STYLE], next[STYLE]);
+			current[key] = value;
+			current[STYLE] = next[STYLE];
 			continue;
 		}
 
