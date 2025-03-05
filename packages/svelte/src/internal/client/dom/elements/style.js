@@ -8,8 +8,9 @@ import { hydrating } from '../hydration.js';
  * @param {string} [priority]
  */
 function update_styles(dom, prev = {}, next, priority) {
-	for (const key in next) {
-		const value = next[key];
+	for (var key in next) {
+		var value = next[key];
+
 		if (prev[key] !== value) {
 			if (next[key] == null) {
 				dom.style.removeProperty(key);
@@ -29,8 +30,10 @@ function update_styles(dom, prev = {}, next, priority) {
 export function set_style(dom, value, prev_styles, next_styles) {
 	// @ts-expect-error
 	var prev = dom.__style;
+
 	if (hydrating || prev !== value) {
 		var next_style_attr = to_style(value, next_styles);
+
 		if (!hydrating || next_style_attr !== dom.getAttribute('style')) {
 			if (next_style_attr == null) {
 				dom.removeAttribute('style');
@@ -38,6 +41,7 @@ export function set_style(dom, value, prev_styles, next_styles) {
 				dom.style.cssText = next_style_attr;
 			}
 		}
+
 		// @ts-expect-error
 		dom.__style = value;
 	} else if (next_styles) {
@@ -48,5 +52,6 @@ export function set_style(dom, value, prev_styles, next_styles) {
 			update_styles(dom, prev_styles, next_styles);
 		}
 	}
+
 	return next_styles;
 }
