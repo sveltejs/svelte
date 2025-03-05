@@ -15,9 +15,13 @@ import {
 } from '../../runtime.js';
 import { clsx } from '../../../shared/attributes.js';
 import { set_class } from './class.js';
+import { NAMESPACE_HTML } from '../../../../constants.js';
 
 export const CLASS = Symbol('class');
 export const STYLE = Symbol('style');
+
+const IS_CUSTOM_ELEMENT = Symbol('is custom element');
+const IS_HTML = Symbol('is html');
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -63,8 +67,7 @@ export function remove_input_defaults(input) {
  * @param {any} value
  */
 export function set_value(element, value) {
-	// @ts-expect-error
-	var attributes = (element.__attributes ??= {});
+	var attributes = get_attributes(element);
 
 	if (
 		attributes.value ===
@@ -87,8 +90,7 @@ export function set_value(element, value) {
  * @param {boolean} checked
  */
 export function set_checked(element, checked) {
-	// @ts-expect-error
-	var attributes = (element.__attributes ??= {});
+	var attributes = get_attributes(element);
 
 	if (
 		attributes.checked ===
@@ -151,8 +153,7 @@ export function set_default_value(element, value) {
  * @param {boolean} [skip_warning]
  */
 export function set_attribute(element, attribute, value, skip_warning) {
-	// @ts-expect-error
-	var attributes = (element.__attributes ??= {});
+	var attributes = get_attributes(element);
 
 	if (hydrating) {
 		attributes[attribute] = element.getAttribute(attribute);
@@ -261,20 +262,15 @@ export function set_custom_element_data(node, prop, value) {
  * @param {Record<string | symbol, any> | undefined} prev
  * @param {Record<string | symbol, any>} next New attributes - this function mutates this object
  * @param {string} [css_hash]
- * @param {boolean} [preserve_attribute_case]
- * @param {boolean} [is_custom_element]
  * @param {boolean} [skip_warning]
  * @returns {Record<string, any>}
  */
-export function set_attributes(
-	element,
-	prev,
-	next,
-	css_hash,
-	preserve_attribute_case = false,
-	is_custom_element = false,
-	skip_warning = false
-) {
+export function set_attributes(element, prev, next, css_hash, skip_warning = false) {
+	var attributes = get_attributes(element);
+
+	var is_custom_element = attributes[IS_CUSTOM_ELEMENT];
+	var preserve_attribute_case = !attributes[IS_HTML];
+
 	// If we're hydrating but the custom element is from Svelte, and it already scaffolded,
 	// then it might run block logic in hydration mode, which we have to prevent.
 	let is_hydrating_custom_element = hydrating && is_custom_element;
@@ -298,9 +294,6 @@ export function set_attributes(
 	}
 
 	var setters = get_setters(element);
-
-	// @ts-expect-error
-	var attributes = /** @type {Record<string, unknown>} **/ (element.__attributes ??= {});
 
 	// since key is captured we use const
 	for (const key in next) {
@@ -432,7 +425,7 @@ export function set_attributes(
 				// @ts-ignore
 				element[name] = value;
 			} else if (typeof value !== 'function') {
-				set_attribute(element, name, value);
+				set_attribute(element, name, value, skip_warning);
 			}
 		}
 		if (key === 'style' && '__styles' in element) {
@@ -446,6 +439,20 @@ export function set_attributes(
 	}
 
 	return current;
+}
+
+/**
+ *
+ * @param {Element} element
+ */
+function get_attributes(element) {
+	return /** @type {Record<string | symbol, unknown>} **/ (
+		// @ts-expect-error
+		element.__attributes ??= {
+			[IS_CUSTOM_ELEMENT]: element.nodeName.includes('-'),
+			[IS_HTML]: element.namespaceURI === NAMESPACE_HTML
+		}
+	);
 }
 
 /** @type {Map<string, string[]>} */

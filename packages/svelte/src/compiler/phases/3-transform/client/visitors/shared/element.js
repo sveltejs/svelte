@@ -17,8 +17,6 @@ import { build_template_chunk, get_expression_id } from './utils.js';
  * @param {AST.RegularElement | AST.SvelteElement} element
  * @param {Identifier} element_id
  * @param {Identifier} attributes_id
- * @param {false | Expression} preserve_attribute_case
- * @param {false | Expression} is_custom_element
  */
 export function build_set_attributes(
 	attributes,
@@ -26,9 +24,7 @@ export function build_set_attributes(
 	context,
 	element,
 	element_id,
-	attributes_id,
-	preserve_attribute_case,
-	is_custom_element
+	attributes_id
 ) {
 	let is_dynamic = false;
 
@@ -91,8 +87,6 @@ export function build_set_attributes(
 		element.metadata.scoped &&
 			context.state.analysis.css.hash !== '' &&
 			b.literal(context.state.analysis.css.hash),
-		preserve_attribute_case,
-		is_custom_element,
 		is_ignored(element, 'hydration_attribute_changed') && b.true
 	);
 
