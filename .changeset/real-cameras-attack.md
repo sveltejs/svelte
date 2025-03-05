@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: spreading style is not consistent with attribute
+fix: always use `setAttribute` when setting `style`
