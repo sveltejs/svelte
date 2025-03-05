@@ -82,12 +82,12 @@ function push_effect(effect, parent_effect) {
  * @returns {Effect}
  */
 function create_effect(type, fn, sync, push = true) {
-	var parent_effect = active_effect;
+	var parent = active_effect;
 
 	if (DEV) {
 		// Ensure the parent is never an inspect effect
-		while (parent_effect !== null && (parent_effect.f & INSPECT_EFFECT) !== 0) {
-			parent_effect = parent_effect.parent;
+		while (parent !== null && (parent.f & INSPECT_EFFECT) !== 0) {
+			parent = parent.parent;
 		}
 	}
 
@@ -102,7 +102,7 @@ function create_effect(type, fn, sync, push = true) {
 		fn,
 		last: null,
 		next: null,
-		parent: parent_effect,
+		parent,
 		prev: null,
 		teardown: null,
 		transitions: null,
@@ -136,8 +136,8 @@ function create_effect(type, fn, sync, push = true) {
 		(effect.f & (EFFECT_HAS_DERIVED | BOUNDARY_EFFECT)) === 0;
 
 	if (!inert && push) {
-		if (parent_effect !== null) {
-			push_effect(effect, parent_effect);
+		if (parent !== null) {
+			push_effect(effect, parent);
 		}
 
 		// if we're in a derived, add the effect there too
