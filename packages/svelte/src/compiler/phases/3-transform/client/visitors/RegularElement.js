@@ -307,7 +307,15 @@ export function RegularElement(node, context) {
 			} else if (is_custom_element) {
 				build_custom_element_attribute_update_assignment(node_id, attribute, context);
 			} else {
-				build_element_attribute_update_assignment(node, node_id, attribute, attributes, context);
+				const { value, has_state } = build_attribute_value(
+					attribute.value,
+					context,
+					(value, metadata) => (metadata.has_call ? get_expression_id(context.state, value) : value)
+				);
+
+				const update = build_element_attribute_update(node, node_id, name, value, attributes);
+
+				(has_state ? context.state.update : context.state.init).push(b.stmt(update));
 			}
 		}
 	}
@@ -576,37 +584,29 @@ export function build_style_directives_object(style_directives, context) {
  * Returns true if attribute is deemed reactive, false otherwise.
  * @param {AST.RegularElement} element
  * @param {Identifier} node_id
- * @param {AST.Attribute} attribute
+ * @param {string} name
+ * @param {Expression} value
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
- * @param {ComponentContext} context
  */
-function build_element_attribute_update_assignment(
-	element,
-	node_id,
-	attribute,
-	attributes,
-	context
-) {
-	const state = context.state;
-	const name = get_attribute_name(element, attribute);
-
-	let { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call ? get_expression_id(state, value) : value
-	);
-
-	/** @type {Statement} */
-	let update;
-
+function build_element_attribute_update(element, node_id, name, value, attributes) {
 	if (name === 'muted') {
 		// Special case for Firefox who needs it set as a property in order to work
-		update = b.stmt(b.assignment('=', b.member(node_id, b.id('muted')), value));
-	} else if (name === 'value') {
-		update = b.stmt(b.call('$.set_value', node_id, value));
-	} else if (name === 'checked') {
-		update = b.stmt(b.call('$.set_checked', node_id, value));
-	} else if (name === 'selected') {
-		update = b.stmt(b.call('$.set_selected', node_id, value));
-	} else if (
+		return b.assignment('=', b.member(node_id, b.id('muted')), value);
+	}
+
+	if (name === 'value') {
+		return b.call('$.set_value', node_id, value);
+	}
+
+	if (name === 'checked') {
+		return b.call('$.set_checked', node_id, value);
+	}
+
+	if (name === 'selected') {
+		return b.call('$.set_selected', node_id, value);
+	}
+
+	if (
 		// If we would just set the defaultValue property, it would override the value property,
 		// because it is set in the template which implicitly means it's also setting the default value,
 		// and if one updates the default value while the input is pristine it will also update the
@@ -617,35 +617,34 @@ function build_element_attribute_update_assignment(
 		) ||
 			(element.name === 'textarea' && element.fragment.nodes.length > 0))
 	) {
-		update = b.stmt(b.call('$.set_default_value', node_id, value));
-	} else if (
+		return b.call('$.set_default_value', node_id, value);
+	}
+
+	if (
 		// See defaultValue comment
 		name === 'defaultChecked' &&
 		attributes.some(
 			(attr) => attr.type === 'Attribute' && attr.name === 'checked' && attr.value === true
 		)
 	) {
-		update = b.stmt(b.call('$.set_default_checked', node_id, value));
-	} else if (is_dom_property(name)) {
-		update = b.stmt(b.assignment('=', b.member(node_id, name), value));
-	} else {
-		const callee = name.startsWith('xlink') ? '$.set_xlink_attribute' : '$.set_attribute';
-		update = b.stmt(
-			b.call(
-				callee,
-				node_id,
-				b.literal(name),
-				value,
-				is_ignored(element, 'hydration_attribute_changed') && b.true
-			)
-		);
+		return b.call('$.set_default_checked', node_id, value);
 	}
 
-	(has_state ? state.update : state.init).push(update);
+	if (is_dom_property(name)) {
+		return b.assignment('=', b.member(node_id, name), value);
+	}
+
+	return b.call(
+		name.startsWith('xlink') ? '$.set_xlink_attribute' : '$.set_attribute',
+		node_id,
+		b.literal(name),
+		value,
+		is_ignored(element, 'hydration_attribute_changed') && b.true
+	);
 }
 
 /**
- * Like `build_element_attribute_update_assignment` but without any special attribute treatment.
+ * Like `build_element_attribute_update` but without any special attribute treatment.
  * @param {Identifier}	node_id
  * @param {AST.Attribute} attribute
  * @param {ComponentContext} context
