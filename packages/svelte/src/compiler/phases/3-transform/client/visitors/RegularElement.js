@@ -682,7 +682,7 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 		metadata.has_call
 			? // if is a select with value we will also invoke `init_select` which need a reference before the template effect so we memoize separately
 				is_select_with_value
-				? memoize_expression(context.state, value)
+				? memoize_expression(state, value)
 				: get_expression_id(state, value)
 			: value
 	);
