@@ -22,7 +22,7 @@ export function transform_component(analysis, source, options) {
 			warnings: state.warnings, // set afterwards
 			metadata: {
 				runes: analysis.runes,
-				hasUnscopedGlobalCss: analysis.css.has_global_unscoped
+				hasUnscopedGlobalCss: analysis.css.has_unscoped_global
 			},
 			ast: /** @type {any} */ (null) // set afterwards
 		};
@@ -55,7 +55,7 @@ export function transform_component(analysis, source, options) {
 		warnings: state.warnings, // set afterwards. TODO apply preprocessor sourcemap
 		metadata: {
 			runes: analysis.runes,
-			hasUnscopedGlobalCss: analysis.css.has_global_unscoped
+			hasUnscopedGlobalCss: analysis.css.has_unscoped_global
 		},
 		ast: /** @type {any} */ (null) // set afterwards
 	};

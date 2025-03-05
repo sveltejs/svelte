@@ -13,7 +13,7 @@ import { is_global, is_unscoped_pseudo_class } from './utils.js';
  *   {
  *     keyframes: string[];
  *     rule: AST.CSS.Rule | null;
- *     has_global_unscoped: { value: boolean };
+ *     has_unscoped_global: { value: boolean };
  *   }
  * >} CssVisitors
  */
@@ -97,7 +97,7 @@ const css_visitors = {
 						context.state.rule &&
 						context.state.rule.block.children.length > 0
 					) {
-						context.state.has_global_unscoped.value = true;
+						context.state.has_unscoped_global.value = true;
 					}
 				}
 			}
@@ -223,7 +223,7 @@ const css_visitors = {
 					is_global_block = true;
 					if (i === 0) {
 						if (is_unscoped_global(context.path) && node.block.children.length > 0) {
-							context.state.has_global_unscoped.value = true;
+							context.state.has_unscoped_global.value = true;
 						}
 					}
 					for (let i = idx + 1; i < child.selectors.length; i++) {
@@ -329,8 +329,8 @@ export function analyze_css(stylesheet, analysis) {
 		keyframes: analysis.css.keyframes,
 		rule: null,
 		// we need to use an object since state is spread
-		has_global_unscoped: { value: false }
+		has_unscoped_global: { value: false }
 	};
 	walk(stylesheet, css_state, css_visitors);
-	analysis.css.has_global_unscoped = css_state.has_global_unscoped.value;
+	analysis.css.has_unscoped_global = css_state.has_unscoped_global.value;
 }
