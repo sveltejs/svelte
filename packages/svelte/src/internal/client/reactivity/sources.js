@@ -159,6 +159,8 @@ export function set(source, value) {
 	return internal_set(source, value);
 }
 
+export const old_values = new Map();
+
 /**
  * @template V
  * @param {Source<V>} source
@@ -167,6 +169,8 @@ export function set(source, value) {
  */
 export function internal_set(source, value) {
 	if (!source.equals(value)) {
+		old_values.set(source, source.v);
+
 		var old_value = source.v;
 		source.v = value;
 		source.wv = increment_write_version();
