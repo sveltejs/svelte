@@ -26,53 +26,7 @@ export function memoize_expression(state, value) {
  * @param {Expression} value
  */
 export function get_expression_id(state, value) {
-	for (let i = 0; i < state.expressions.length; i += 1) {
-		if (compare_expressions(state.expressions[i], value)) {
-			return b.id(`$${i}`);
-		}
-	}
-
 	return b.id(`$${state.expressions.push(value) - 1}`);
-}
-
-/**
- * Returns true of two expressions have an identical AST shape
- * @param {Expression} a
- * @param {Expression} b
- */
-function compare_expressions(a, b) {
-	if (a.type !== b.type) {
-		return false;
-	}
-
-	for (const key in a) {
-		if (key === 'type' || key === 'metadata' || key === 'loc' || key === 'start' || key === 'end') {
-			continue;
-		}
-
-		const va = /** @type {any} */ (a)[key];
-		const vb = /** @type {any} */ (b)[key];
-
-		if ((typeof va === 'object') !== (typeof vb === 'object')) {
-			return false;
-		}
-
-		if (typeof va !== 'object' || va === null || vb === null) {
-			if (va !== vb) return false;
-		} else if (Array.isArray(va)) {
-			if (va.length !== vb.length) {
-				return false;
-			}
-
-			if (va.some((v, i) => !compare_expressions(v, vb[i]))) {
-				return false;
-			}
-		} else if (!compare_expressions(va, vb)) {
-			return false;
-		}
-	}
-
-	return true;
 }
 
 /**
