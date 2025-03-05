@@ -73,6 +73,7 @@ export interface ComponentAnalysis extends Analysis {
 		ast: AST.CSS.StyleSheet | null;
 		hash: string;
 		keyframes: string[];
+		has_global_unscoped: boolean;
 	};
 	source: string;
 	undefined_exports: Map<string, Node>;

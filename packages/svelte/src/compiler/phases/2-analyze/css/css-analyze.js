@@ -7,11 +7,13 @@ import { is_keyframes_node } from '../../css.js';
 import { is_global, is_unscoped_pseudo_class } from './utils.js';
 
 /**
+ * We need to use an object for `has_global_unscoped` since state is spread
  * @typedef {Visitors<
  *   AST.CSS.Node,
  *   {
  *     keyframes: string[];
  *     rule: AST.CSS.Rule | null;
+ *     has_global_unscoped: { value: boolean };
  *   }
  * >} CssVisitors
  */
@@ -26,6 +28,30 @@ function is_global_block_selector(simple_selector) {
 		simple_selector.name === 'global' &&
 		simple_selector.args === null
 	);
+}
+
+/**
+ * @param {import('../types.js').Context["path"]} path
+ * @param {AST.CSS.Rule | null} [rule]
+ * @returns
+ */
+function is_unscoped_global(path, rule) {
+	// remove every at rule or stylesheet and the current rule in case is passed in from `ComplexSelector`
+	const parents = path.filter(
+		(parent) => parent.type !== 'Atrule' && parent.type !== 'StyleSheet' && parent !== rule
+	);
+
+	let unscoped_global = true;
+
+	// no parents means we are on top
+	if (parents.length > 0) {
+		// let's check that everything in the path is not a global block
+		unscoped_global = parents.every((parent) => {
+			return parent.type !== 'Rule' || parent.metadata.is_global_block;
+		});
+	}
+
+	return unscoped_global;
 }
 
 /**
@@ -62,6 +88,16 @@ const css_visitors = {
 						if (!is_global(node.children[i])) {
 							e.css_global_invalid_placement(global.selectors[0]);
 						}
+					}
+				}
+
+				if (idx === 0) {
+					if (
+						is_unscoped_global(context.path, context.state.rule) &&
+						context.state.rule &&
+						context.state.rule.block.children.length > 0
+					) {
+						context.state.has_global_unscoped.value = true;
 					}
 				}
 			}
@@ -174,7 +210,8 @@ const css_visitors = {
 		node.metadata.is_global_block = node.prelude.children.some((selector) => {
 			let is_global_block = false;
 
-			for (const child of selector.children) {
+			for (let i = 0; i < selector.children.length; i++) {
+				const child = selector.children[i];
 				const idx = child.selectors.findIndex(is_global_block_selector);
 
 				if (is_global_block) {
@@ -184,6 +221,11 @@ const css_visitors = {
 
 				if (idx !== -1) {
 					is_global_block = true;
+					if (i === 0) {
+						if (is_unscoped_global(context.path) && node.block.children.length > 0) {
+							context.state.has_global_unscoped.value = true;
+						}
+					}
 					for (let i = idx + 1; i < child.selectors.length; i++) {
 						walk(/** @type {AST.CSS.Node} */ (child.selectors[i]), null, {
 							ComplexSelector(node) {
@@ -283,5 +325,12 @@ const css_visitors = {
  * @param {ComponentAnalysis} analysis
  */
 export function analyze_css(stylesheet, analysis) {
-	walk(stylesheet, { keyframes: analysis.css.keyframes, rule: null }, css_visitors);
+	const css_state = {
+		keyframes: analysis.css.keyframes,
+		rule: null,
+		// we need to use an object since state is spread
+		has_global_unscoped: { value: false }
+	};
+	walk(stylesheet, css_state, css_visitors);
+	analysis.css.has_global_unscoped = css_state.has_global_unscoped.value;
 }
