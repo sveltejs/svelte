@@ -224,7 +224,6 @@ export function build_set_class(element, node_id, attribute, class_directives, c
 		set_class = b.assignment('=', previous_id, set_class);
 	}
 
-	// TODO just return the statement
 	(has_state ? context.state.update : context.state.init).push(b.stmt(set_class));
 }
 
@@ -241,8 +240,10 @@ export function build_set_style(node_id, attribute, style_directives, context) {
 
 	/** @type {Identifier | undefined} */
 	let previous_id;
+
 	/** @type {ObjectExpression | Identifier | undefined} */
 	let prev;
+
 	/** @type {ArrayExpression | ObjectExpression | undefined} */
 	let next;
 
