@@ -1,5 +1,5 @@
 /** @import { Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression, Statement } from 'estree' */
-/** @import { AST } from '#compiler' */
+/** @import { AST, ExpressionMetadata } from '#compiler' */
 /** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
@@ -501,22 +501,23 @@ function setup_select_synchronization(value_binding, context) {
 /**
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
- * @return {ObjectExpression}
+ * @return {ObjectExpression | Identifier}
  */
 export function build_class_directives_object(class_directives, context) {
 	let properties = [];
 
+	let has_call_or_state = false;
+
 	for (const d of class_directives) {
 		let expression = /** @type Expression */ (context.visit(d.expression));
-
-		if (d.metadata.expression.has_call) {
-			expression = get_expression_id(context.state, expression);
-		}
-
 		properties.push(b.init(d.name, expression));
+		has_call_or_state ||= d.metadata.expression.has_call || d.metadata.expression.has_state;
 	}
-
-	return b.object(properties);
+	let directives = b.object(properties);
+	if (has_call_or_state) {
+		return get_expression_id(context.state, directives);
+	}
+	return directives;
 }
 
 /**
@@ -564,15 +565,21 @@ function build_element_attribute_update_assignment(
 
 	const is_autofocus = name === 'autofocus';
 
-	let { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call
-			? // if it's autofocus we will not add this to a template effect so we don't want to get the expression id
-				// but separately memoize the expression
-				is_autofocus
-				? memoize_expression(state, value)
-				: get_expression_id(state, value)
-			: value
-	);
+	/** @type {(value: Expression, metadata: ExpressionMetadata) => Expression} */
+	let memoize;
+	if (is_autofocus) {
+		// if it's autofocus we will not add this to a template effect so we don't want to get the expression id
+		// but separately memoize the expression
+		memoize = (value, metadata) => (metadata.has_call ? memoize_expression(state, value) : value);
+	} else if (attribute.metadata.needs_clsx && name === 'class') {
+		// if class needs clsx() we do nothing here !
+		// => The entire value will be memoized inside build_set_class()
+		memoize = (value) => value;
+	} else {
+		memoize = (value, metadata) => (metadata.has_call ? get_expression_id(state, value) : value);
+	}
+
+	let { value, has_state } = build_attribute_value(attribute.value, context, memoize);
 
 	if (is_autofocus) {
 		state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));

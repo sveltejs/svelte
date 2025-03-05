@@ -33,7 +33,7 @@ export function set_class(dom, is_html, value, hash, prev_classes, next_classes)
 
 		// @ts-expect-error need to add __className to patched prototype
 		dom.__className = value;
-	} else if (next_classes) {
+	} else if (next_classes && prev_classes !== next_classes) {
 		for (var key in next_classes) {
 			var is_present = !!next_classes[key];
 

@@ -189,7 +189,7 @@ export function get_attribute_name(element, attribute) {
 /**
  * @param {AST.RegularElement | AST.SvelteElement} element
  * @param {Identifier} node_id
- * @param {AST.Attribute | null} attribute
+ * @param {AST.Attribute} attribute
  * @param {Expression} value
  * @param {boolean} has_state
  * @param {AST.ClassDirective[]} class_directives
@@ -207,8 +207,11 @@ export function build_set_class(
 	context,
 	is_html
 ) {
-	if (attribute && attribute.metadata.needs_clsx) {
+	if (attribute.metadata.needs_clsx) {
 		value = b.call('$.clsx', value);
+		if (has_state) {
+			value = get_expression_id(context.state, value);
+		}
 	}
 
 	/** @type {Identifier | undefined} */
@@ -217,7 +220,7 @@ export function build_set_class(
 	/** @type {ObjectExpression | Identifier | undefined} */
 	let prev;
 
-	/** @type {ObjectExpression | undefined} */
+	/** @type {ObjectExpression | Identifier | undefined} */
 	let next;
 
 	if (class_directives.length) {
