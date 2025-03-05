@@ -1,5 +1,11 @@
 # svelte
 
+## 5.22.2
+
+### Patch Changes
+
+- fix: correctly set `is_updating` before flushing root effects ([#15442](https://github.com/sveltejs/svelte/pull/15442))
+
 ## 5.22.1
 
 ### Patch Changes
