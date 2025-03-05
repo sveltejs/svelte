@@ -650,19 +650,16 @@ function build_element_attribute_update(element, node_id, name, value, attribute
  * @param {ComponentContext} context
  */
 function build_custom_element_attribute_update_assignment(node_id, attribute, context) {
-	const state = context.state;
-	const name = attribute.name; // don't lowercase, as we set the element's property, which might be case sensitive
-	let { value, has_state } = build_attribute_value(attribute.value, context);
+	const { value, has_state } = build_attribute_value(attribute.value, context);
 
-	const call = b.call('$.set_custom_element_data', node_id, b.literal(name), value);
+	// don't lowercase name, as we set the element's property, which might be case sensitive
+	const call = b.call('$.set_custom_element_data', node_id, b.literal(attribute.name), value);
 
-	if (has_state) {
-		// this is different from other updates — it doesn't get grouped,
-		// because set_custom_element_data may not be idempotent
-		state.init.push(b.stmt(b.call('$.template_effect', b.thunk(call))));
-	} else {
-		state.init.push(b.stmt(call));
-	}
+	// this is different from other updates — it doesn't get grouped,
+	// because set_custom_element_data may not be idempotent
+	const update = has_state ? b.call('$.template_effect', b.thunk(call)) : call;
+
+	context.state.init.push(b.stmt(update));
 }
 
 /**
