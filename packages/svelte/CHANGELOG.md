@@ -1,5 +1,13 @@
 # svelte
 
+## 5.22.5
+
+### Patch Changes
+
+- fix: respect `svelte-ignore hydration_attribute_changed` on elements with spread attributes ([#15443](https://github.com/sveltejs/svelte/pull/15443))
+
+- fix: always use `setAttribute` when setting `style` ([#15323](https://github.com/sveltejs/svelte/pull/15323))
+
 ## 5.22.4
 
 ### Patch Changes
