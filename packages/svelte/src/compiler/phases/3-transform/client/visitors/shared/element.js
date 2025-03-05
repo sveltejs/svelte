@@ -164,7 +164,6 @@ export function get_attribute_name(element, attribute) {
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
  * @param {boolean} is_html
- * @returns {boolean}
  */
 export function build_set_class(
 	element,
@@ -234,15 +233,8 @@ export function build_set_class(
 		set_class = b.assignment('=', previous_id, set_class);
 	}
 
-	const update = b.stmt(set_class);
-
-	if (has_state) {
-		context.state.update.push(update);
-		return true;
-	}
-
-	context.state.init.push(update);
-	return false;
+	// TODO just return the statement
+	(has_state ? context.state.update : context.state.init).push(b.stmt(set_class));
 }
 
 /**
