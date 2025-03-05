@@ -581,7 +581,6 @@ export function build_style_directives_object(style_directives, context) {
  * @param {AST.ClassDirective[]} class_directives
  * @param {AST.StyleDirective[]} style_directives
  * @param {ComponentContext} context
- * @returns {boolean}
  */
 function build_element_attribute_update_assignment(
 	element,
@@ -611,24 +610,17 @@ function build_element_attribute_update_assignment(
 
 	if (is_autofocus) {
 		state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));
-		return false;
-	}
-
-	// Special case for Firefox who needs it set as a property in order to work
-	if (name === 'muted') {
-		if (!has_state) {
-			state.init.push(b.stmt(b.assignment('=', b.member(node_id, b.id('muted')), value)));
-			return false;
-		}
-		state.update.push(b.stmt(b.assignment('=', b.member(node_id, b.id('muted')), value)));
-		return false;
+		return;
 	}
 
 	/** @type {Statement} */
 	let update;
 
-	if (name === 'class') {
-		return build_set_class(
+	if (name === 'muted') {
+		// Special case for Firefox who needs it set as a property in order to work
+		update = b.stmt(b.assignment('=', b.member(node_id, b.id('muted')), value));
+	} else if (name === 'class') {
+		build_set_class(
 			element,
 			node_id,
 			attribute,
@@ -638,8 +630,10 @@ function build_element_attribute_update_assignment(
 			context,
 			!is_svg && !is_mathml
 		);
+		return; // TODO
 	} else if (name === 'style') {
-		return build_set_style(node_id, value, has_state, style_directives, context);
+		build_set_style(node_id, value, has_state, style_directives, context);
+		return; // TODO
 	} else if (name === 'value') {
 		update = b.stmt(b.call('$.set_value', node_id, value));
 	} else if (name === 'checked') {
@@ -681,13 +675,7 @@ function build_element_attribute_update_assignment(
 		);
 	}
 
-	if (has_state) {
-		state.update.push(update);
-		return true;
-	} else {
-		state.init.push(update);
-		return false;
-	}
+	(has_state ? state.update : state.init).push(update);
 }
 
 /**
