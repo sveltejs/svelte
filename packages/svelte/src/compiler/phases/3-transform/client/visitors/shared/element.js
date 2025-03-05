@@ -107,11 +107,9 @@ export function build_set_attributes(
 		context.state.init.push(b.let(attributes_id));
 		const update = b.stmt(b.assignment('=', attributes_id, call));
 		context.state.update.push(update);
-		return true;
+	} else {
+		context.state.init.push(b.stmt(call));
 	}
-
-	context.state.init.push(b.stmt(call));
-	return false;
 }
 
 /**
@@ -243,7 +241,6 @@ export function build_set_class(
  * @param {boolean} has_state
  * @param {AST.StyleDirective[]} style_directives
  * @param {ComponentContext} context
- * @returns {boolean}
  */
 export function build_set_style(node_id, value, has_state, style_directives, context) {
 	/** @type {Identifier | undefined} */
@@ -272,12 +269,5 @@ export function build_set_style(node_id, value, has_state, style_directives, con
 		set_style = b.assignment('=', previous_id, set_style);
 	}
 
-	const update = b.stmt(set_style);
-	if (has_state) {
-		context.state.update.push(update);
-		return true;
-	} else {
-		context.state.init.push(update);
-		return false;
-	}
+	(has_state ? context.state.update : context.state.init).push(b.stmt(set_style));
 }

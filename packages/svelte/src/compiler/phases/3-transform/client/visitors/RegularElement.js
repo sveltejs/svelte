@@ -683,23 +683,20 @@ function build_element_attribute_update_assignment(
  * @param {Identifier}	node_id
  * @param {AST.Attribute} attribute
  * @param {ComponentContext} context
- * @returns {boolean}
  */
 function build_custom_element_attribute_update_assignment(node_id, attribute, context) {
 	const state = context.state;
 	const name = attribute.name; // don't lowercase, as we set the element's property, which might be case sensitive
 	let { value, has_state } = build_attribute_value(attribute.value, context);
 
-	const update = b.stmt(b.call('$.set_custom_element_data', node_id, b.literal(name), value));
+	const call = b.call('$.set_custom_element_data', node_id, b.literal(name), value);
 
 	if (has_state) {
 		// this is different from other updates — it doesn't get grouped,
 		// because set_custom_element_data may not be idempotent
-		state.init.push(b.stmt(b.call('$.template_effect', b.thunk(update.expression))));
-		return true;
+		state.init.push(b.stmt(b.call('$.template_effect', b.thunk(call))));
 	} else {
-		state.init.push(update);
-		return false;
+		state.init.push(b.stmt(call));
 	}
 }
 
@@ -711,7 +708,6 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
  * @param {Identifier} node_id
  * @param {AST.Attribute} attribute
  * @param {ComponentContext} context
- * @returns {boolean}
  */
 function build_element_special_value_attribute(element, node_id, attribute, context) {
 	const state = context.state;
@@ -768,9 +764,7 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 			value,
 			update
 		);
-		return true;
 	} else {
 		state.init.push(update);
-		return false;
 	}
 }
