@@ -515,19 +515,17 @@ function setup_select_synchronization(value_binding, context) {
  */
 export function build_class_directives_object(class_directives, context) {
 	let properties = [];
-
 	let has_call_or_state = false;
 
 	for (const d of class_directives) {
-		let expression = /** @type Expression */ (context.visit(d.expression));
+		const expression = /** @type Expression */ (context.visit(d.expression));
 		properties.push(b.init(d.name, expression));
 		has_call_or_state ||= d.metadata.expression.has_call || d.metadata.expression.has_state;
 	}
-	let directives = b.object(properties);
-	if (has_call_or_state) {
-		return get_expression_id(context.state, directives);
-	}
-	return directives;
+
+	const directives = b.object(properties);
+
+	return has_call_or_state ? get_expression_id(context.state, directives) : directives;
 }
 
 /**
