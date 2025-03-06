@@ -32,11 +32,15 @@ When Svelte runs an effect function, it tracks which pieces of state (and derive
 
 > [!NOTE] If you're having difficulty understanding why your `$effect` is rerunning or is not running see [understanding dependencies](#Understanding-dependencies). Effects are triggered differently than the `$:` blocks you may be used to if coming from Svelte 4.
 
+### Understanding lifecycle
+
 Your effects run after the component has been mounted to the DOM, and in a [microtask](https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide) after state changes. Re-runs are batched (i.e. changing `color` and `size` in the same moment won't cause two separate runs), and happen after any DOM updates have been applied.
 
-You can place `$effect` anywhere, not just at the top level of a component, as long as it is called during component initialization. It is then tied to the lifecycle of the component and will therefore destroy itself when the component unmounts. You can also place it within parent effects (i.e. within `$effect.root`, another `$effect`, or `$effect.pre`), which means it is tied to the lifecycle of its parent effect, and will destroy itself when the parent is destroyed.
+You can use `$effect` anywhere, not just at the top level of a component, as long as it is called while a parent effect is running.
 
-You can return a function from `$effect`, which will run immediately before the effect re-runs, and before it is destroyed ([demo](/playground/untitled#H4sIAAAAAAAAE42RQY-bMBCF_8rI2kPopiXpMQtIPfbeW6m0xjyKtWaM7CFphPjvFVB2k2oPe7LmzXzyezOjaqxDVKefo5JrD3VaBLVXrLu5-tb3X-IZTmat0hHv6cazgCWqk8qiCbaXouRSHISMH1gop4coWrA7JE9bp7PO2QjjuY5vA8fDYZ3hUh7QNDCy2yWUFzTOUilpSj9aG-linaMKFGACtKCmSwvGGYGeLQvCWbtnMq3m34grajxHoa1JOUXI93_V_Sfz7Oz7Mafj0ypN-zvHm8dSAmQITP_xaUq2IU1GO1dp80I2Uh_82dao92Rl9R8GvgF0QrbrUFstcFeq0PgAkha0LoICPoeB4w1SJUvsZcj4rvcMlvmvGlGCv6J-DeSgw2vabQnJlm55p7nM0rcTctYei3HZxZSl7XHVqkHEM3k2zpqXfFyj393zU05fpyI6f0HI0hUoPoamC9roKDeo2ivBH1EnCQOmX9NfYw2GHrgCAAA=)).
+> Svelte uses effects internally to represent logic and expressions in your template — this is how `<h1>hello {name}!</h1>` updates when `name` changes.
+
+An effect can return a _teardown function_ which will run immediately before the effect re-runs ([demo](/playground/untitled#H4sIAAAAAAAAE42RQY-bMBCF_8rI2kPopiXpMQtIPfbeW6m0xjyKtWaM7CFphPjvFVB2k2oPe7LmzXzyezOjaqxDVKefo5JrD3VaBLVXrLu5-tb3X-IZTmat0hHv6cazgCWqk8qiCbaXouRSHISMH1gop4coWrA7JE9bp7PO2QjjuY5vA8fDYZ3hUh7QNDCy2yWUFzTOUilpSj9aG-linaMKFGACtKCmSwvGGYGeLQvCWbtnMq3m34grajxHoa1JOUXI93_V_Sfz7Oz7Mafj0ypN-zvHm8dSAmQITP_xaUq2IU1GO1dp80I2Uh_82dao92Rl9R8GvgF0QrbrUFstcFeq0PgAkha0LoICPoeB4w1SJUvsZcj4rvcMlvmvGlGCv6J-DeSgw2vabQnJlm55p7nM0rcTctYei3HZxZSl7XHVqkHEM3k2zpqXfFyj393zU05fpyI6f0HI0hUoPoamC9roKDeo2ivBH1EnCQOmX9NfYw2GHrgCAAA=)).
 
 ```svelte
 <script>
@@ -64,9 +68,11 @@ You can return a function from `$effect`, which will run immediately before the 
 <button onclick={() => (milliseconds /= 2)}>faster</button>
 ```
 
+Teardown functions also run when the effect is destroyed, which happens when its parent is destroyed (for example, a component is unmounted) or the parent effect re-runs.
+
 ### Understanding dependencies
 
-`$effect` automatically picks up any reactive values (`$state`, `$derived`, `$props`) that are _synchronously_ read inside its function body and registers them as dependencies. When those dependencies change, the `$effect` schedules a rerun.
+`$effect` automatically picks up any reactive values (`$state`, `$derived`, `$props`) that are _synchronously_ read inside its function body and registers them as dependencies. When those dependencies change, the `$effect` schedules a re-run.
 
 Values that are read _asynchronously_ — after an `await` or inside a `setTimeout`, for example — will not be tracked. Here, the canvas will be repainted when `color` changes, but not when `size` changes ([demo](/playground/untitled#H4sIAAAAAAAAE31T246bMBD9lZF3pWSlBEirfaEQqdo_2PatVIpjBrDkGGQPJGnEv1e2IZfVal-wfHzmzJyZ4cIqqdCy9M-F0blDlnqArZjmB3f72XWRHVCRw_bc4me4aDWhJstSlllhZEfbQhekkMDKfwg5PFvihMvX5OXH_CJa1Zrb0-Kpqr5jkiwC48rieuDWQbqgZ6wqFLRcvkC-hYvnkWi1dWqa8ESQTxFRjfQWsOXiWzmr0sSLhEJu3p1YsoJkNUcdZUnN9dagrBu6FVRQHAM10sJRKgUG16bXcGxQ44AGdt7SDkTDdY02iqLHnJVU6hedlWuIp94JW6Tf8oBt_8GdTxlF0b4n0C35ZLBzXb3mmYn3ae6cOW74zj0YVzDNYXRHFt9mprNgHfZSl6mzml8CMoLvTV6wTZIUDEJv5us2iwMtiJRyAKG4tXnhl8O0yhbML0Wm-B7VNlSSSd31BG7z8oIZZ6dgIffAVY_5xdU9Qrz1Bnx8fCfwtZ7v8Qc9j3nB8PqgmMWlHIID6-bkVaPZwDySfWtKNGtquxQ23Qlsq2QJT0KIqb8dL0up6xQ2eIBkAg_c1FI_YqW0neLnFCqFpwmreedJYT7XX8FVOBfwWRhXstZrSXiwKQjUhOZeMIleb5JZfHWn2Yq5pWEpmR7Hv-N_wEqT8hEEAAA=)):
 
