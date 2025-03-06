@@ -84,6 +84,12 @@ Attribute values containing `{...}` must be enclosed in quote marks, unless the 
 `bind:group` can only bind to an Identifier or MemberExpression
 ```
 
+### bind_group_invalid_snippet_parameter
+
+```
+Cannot `bind:group` to a snippet parameter
+```
+
 ### bind_invalid_expression
 
 ```
@@ -573,7 +579,13 @@ Unrecognised compiler option %keypath%
 ### props_duplicate
 
 ```
-Cannot use `$props()` more than once
+Cannot use `%rune%()` more than once
+```
+
+### props_id_invalid_placement
+
+```
+`$props.id()` can only be used at the top level of components as a variable declaration initializer
 ```
 
 ### props_illegal_name

@@ -1,18 +1,20 @@
 import { describe, assert, it } from 'vitest';
 import { flushSync } from '../../src/index-client';
 import * as $ from '../../src/internal/client/runtime';
+import { push, pop } from '../../src/internal/client/context';
 import {
 	effect,
 	effect_root,
 	render_effect,
 	user_effect
 } from '../../src/internal/client/reactivity/effects';
-import { state, set } from '../../src/internal/client/reactivity/sources';
-import type { Derived, Value } from '../../src/internal/client/types';
+import { state, set, update, update_pre } from '../../src/internal/client/reactivity/sources';
+import type { Derived, Effect, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
+import { DESTROYED } from '../../src/internal/client/constants';
 
 /**
  * @param runes runes mode
@@ -22,13 +24,13 @@ import { SvelteSet } from '../../src/reactivity/set';
 function run_test(runes: boolean, fn: (runes: boolean) => () => void) {
 	return () => {
 		// Create a component context to test runes vs legacy mode
-		$.push({}, runes);
+		push({}, runes);
 		// Create a render context so that effect validations etc don't fail
 		let execute: any;
 		const destroy = effect_root(() => {
 			execute = fn(runes);
 		});
-		$.pop();
+		pop();
 		execute();
 		destroy();
 	};
@@ -67,7 +69,7 @@ describe('signals', () => {
 		};
 	});
 
-	test('multiple effects with state and derived in it#1', () => {
+	test('multiple effects with state and derived in it #1', () => {
 		const log: string[] = [];
 
 		let count = state(0);
@@ -88,7 +90,7 @@ describe('signals', () => {
 		};
 	});
 
-	test('multiple effects with state and derived in it#2', () => {
+	test('multiple effects with state and derived in it #2', () => {
 		const log: string[] = [];
 
 		let count = state(0);
@@ -222,20 +224,75 @@ describe('signals', () => {
 		};
 	});
 
+	test('https://perf.js.hyoo.ru/#!bench=9h2as6_u0mfnn #2', () => {
+		let res: number[] = [];
+
+		const numbers = Array.from({ length: 2 }, (_, i) => i);
+		const fib = (n: number): number => (n < 2 ? 1 : fib(n - 1) + fib(n - 2));
+		const hard = (n: number, l: string) => n + fib(16);
+
+		const A = state(0);
+		const B = state(0);
+
+		return () => {
+			const C = derived(() => ($.get(A) % 2) + ($.get(B) % 2));
+			const D = derived(() => numbers.map((i) => i + ($.get(A) % 2) - ($.get(B) % 2)));
+			const E = derived(() => hard($.get(C) + $.get(A) + $.get(D)[0]!, 'E'));
+			const F = derived(() => hard($.get(D)[0]! && $.get(B), 'F'));
+			const G = derived(() => $.get(C) + ($.get(C) || $.get(E) % 2) + $.get(D)[0]! + $.get(F));
+
+			const destroy = effect_root(() => {
+				effect(() => {
+					res.push(hard($.get(G), 'H'));
+				});
+				effect(() => {
+					res.push($.get(G));
+				});
+				effect(() => {
+					res.push(hard($.get(F), 'J'));
+				});
+			});
+
+			flushSync();
+
+			let i = 2;
+			while (--i) {
+				res.length = 0;
+				set(B, 1);
+				set(A, 1 + i * 2);
+				flushSync();
+
+				set(A, 2 + i * 2);
+				set(B, 2);
+				flushSync();
+
+				assert.equal(res.length, 4);
+				assert.deepEqual(res, [3198, 1601, 3195, 1598]);
+			}
+
+			destroy();
+			assert(A.reactions === null);
+			assert(B.reactions === null);
+		};
+	});
+
 	test('effects correctly handle unowned derived values that do not change', () => {
 		const log: number[] = [];
 
-		let count = state(0);
-		const read = () => {
-			const x = derived(() => ({ count: $.get(count) }));
-			return $.get(x);
-		};
-		const derivedCount = derived(() => read().count);
-		user_effect(() => {
-			log.push($.get(derivedCount));
-		});
-
 		return () => {
+			let count = state(0);
+			const read = () => {
+				const x = derived(() => ({ count: $.get(count) }));
+				return $.get(x);
+			};
+			const derivedCount = derived(() => read().count);
+
+			const destroy = effect_root(() => {
+				user_effect(() => {
+					log.push($.get(derivedCount));
+				});
+			});
+
 			flushSync(() => set(count, 1));
 			// Ensure we're not leaking consumers
 			assert.deepEqual(count.reactions?.length, 1);
@@ -246,6 +303,8 @@ describe('signals', () => {
 			// Ensure we're not leaking consumers
 			assert.deepEqual(count.reactions?.length, 1);
 			assert.deepEqual(log, [0, 1, 2, 3]);
+
+			destroy();
 		};
 	});
 
@@ -255,12 +314,16 @@ describe('signals', () => {
 
 			const a = state(0);
 			const b = state(0);
-			const c = derived(() => {
-				const a_2 = derived(() => $.get(a) + '!');
-				const b_2 = derived(() => $.get(b) + '?');
-				nested.push(a_2, b_2);
+			let c: any;
 
-				return { a: $.get(a_2), b: $.get(b_2) };
+			const destroy = effect_root(() => {
+				c = derived(() => {
+					const a_2 = derived(() => $.get(a) + '!');
+					const b_2 = derived(() => $.get(b) + '?');
+					nested.push(a_2, b_2);
+
+					return { a: $.get(a_2), b: $.get(b_2) };
+				});
 			});
 
 			$.get(c);
@@ -273,11 +336,10 @@ describe('signals', () => {
 
 			$.get(c);
 
-			// Ensure we're not leaking dependencies
-			assert.deepEqual(
-				nested.slice(0, -2).map((s) => s.deps),
-				[null, null, null, null]
-			);
+			destroy();
+
+			assert.equal(a.reactions, null);
+			assert.equal(b.reactions, null);
 		};
 	});
 
@@ -338,25 +400,69 @@ describe('signals', () => {
 		};
 	});
 
-	let some_state = state({});
-	let some_deps = derived(() => {
-		return [$.get(some_state)];
-	});
-
 	test('two effects with an unowned derived that has some dependencies', () => {
 		const log: Array<Array<any>> = [];
 
-		render_effect(() => {
-			log.push($.get(some_deps));
-		});
-
-		render_effect(() => {
-			log.push($.get(some_deps));
-		});
-
 		return () => {
+			let some_state = state({});
+			let some_deps = derived(() => {
+				return [$.get(some_state)];
+			});
+			let destroy2: any;
+
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					$.untrack(() => {
+						log.push($.get(some_deps));
+					});
+				});
+
+				destroy2 = effect_root(() => {
+					render_effect(() => {
+						log.push($.get(some_deps));
+					});
+
+					render_effect(() => {
+						log.push($.get(some_deps));
+					});
+				});
+			});
+
+			set(some_state, {});
 			flushSync();
-			assert.deepEqual(log, [[{}], [{}]]);
+
+			assert.deepEqual(log, [[{}], [{}], [{}], [{}], [{}]]);
+
+			destroy2();
+
+			set(some_state, {});
+			flushSync();
+
+			assert.deepEqual(log, [[{}], [{}], [{}], [{}], [{}]]);
+
+			log.length = 0;
+
+			const destroy3 = effect_root(() => {
+				render_effect(() => {
+					$.untrack(() => {
+						log.push($.get(some_deps));
+					});
+					log.push($.get(some_deps));
+				});
+			});
+
+			set(some_state, {});
+			flushSync();
+
+			assert.deepEqual(log, [[{}], [{}], [{}], [{}]]);
+
+			destroy3();
+
+			assert(some_state.reactions === null);
+
+			destroy();
+
+			assert(some_state.reactions === null);
 		};
 	});
 
@@ -476,6 +582,7 @@ describe('signals', () => {
 					effect(() => {
 						log.push('inner', $.get(inner));
 					});
+					return $.get(outer);
 				});
 			});
 		});
@@ -524,6 +631,103 @@ describe('signals', () => {
 			flushSync();
 			assert.equal(a?.deps?.length, 1);
 			assert.equal(s?.reactions?.length, 1);
+			destroy();
+			assert.equal(s?.reactions, null);
+		};
+	});
+
+	test('mixed nested deriveds correctly cleanup when no longer connected to graph #1', () => {
+		let a: Derived<unknown>;
+		let b: Derived<unknown>;
+		let s = state(0);
+
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				a = derived(() => {
+					b = derived(() => {
+						$.get(s);
+					});
+					$.untrack(() => {
+						$.get(b);
+					});
+					$.get(s);
+				});
+				$.get(a);
+			});
+		});
+
+		return () => {
+			flushSync();
+			assert.equal(a?.deps?.length, 1);
+			assert.equal(s?.reactions?.length, 1);
+			destroy();
+			assert.equal(s?.reactions, null);
+		};
+	});
+
+	test('mixed nested deriveds correctly cleanup when no longer connected to graph #2', () => {
+		let a: Derived<unknown>;
+		let b: Derived<unknown>;
+		let s = state(0);
+
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				a = derived(() => {
+					b = derived(() => {
+						$.get(s);
+					});
+					effect_root(() => {
+						$.get(b);
+					});
+					$.get(s);
+				});
+				$.get(a);
+			});
+		});
+
+		return () => {
+			flushSync();
+			assert.equal(a?.deps?.length, 1);
+			assert.equal(s?.reactions?.length, 1);
+			destroy();
+			assert.equal(s?.reactions, null);
+		};
+	});
+
+	test('mixed nested deriveds correctly cleanup when no longer connected to graph #3', () => {
+		let a: Derived<unknown>;
+		let b: Derived<unknown>;
+		let s = state(0);
+		let logs: any[] = [];
+
+		const destroy = effect_root(() => {
+			render_effect(() => {
+				a = derived(() => {
+					b = derived(() => {
+						return $.get(s);
+					});
+					effect_root(() => {
+						$.get(b);
+					});
+					render_effect(() => {
+						logs.push($.get(b));
+					});
+					$.get(s);
+				});
+				$.get(a);
+			});
+		});
+
+		return () => {
+			flushSync();
+			assert.equal(a?.deps?.length, 1);
+			assert.equal(s?.reactions?.length, 2);
+
+			set(s, 1);
+			flushSync();
+
+			assert.deepEqual(logs, [0, 1]);
+
 			destroy();
 			assert.equal(s?.reactions, null);
 		};
@@ -715,6 +919,28 @@ describe('signals', () => {
 		};
 	});
 
+	test('unowned deriveds dependencies are correctly de-duped', () => {
+		return () => {
+			let a = state(0);
+			let b = state(true);
+			let c = derived(() => $.get(a));
+			let d = derived(() => ($.get(b) ? 1 : $.get(a) + $.get(c) + $.get(a)));
+
+			$.get(d);
+
+			assert.equal(d.deps?.length, 1);
+
+			$.get(d);
+
+			set(a, 1);
+			set(b, false);
+
+			$.get(d);
+
+			assert.equal(d.deps?.length, 3);
+		};
+	});
+
 	test('unowned deriveds correctly update', () => {
 		return () => {
 			const arr1 = proxy<{ a: number }[]>([]);
@@ -777,29 +1003,44 @@ describe('signals', () => {
 		};
 	});
 
-	test('nested deriveds clean up the relationships when used with untrack', () => {
+	test('deriveds containing effects work correctly', () => {
 		return () => {
 			let a = render_effect(() => {});
+			let b = state(0);
+			let c;
+			let effects: Effect[] = [];
 
 			const destroy = effect_root(() => {
 				a = render_effect(() => {
-					$.untrack(() => {
-						const b = derived(() => {
-							const c = derived(() => {});
-							$.untrack(() => {
-								$.get(c);
-							});
-						});
+					c = derived(() => {
+						effects.push(
+							effect(() => {
+								$.get(b);
+							})
+						);
 						$.get(b);
 					});
+					$.get(c);
 				});
 			});
 
-			assert.deepEqual(a.deriveds?.length, 1);
+			assert.equal(c!.effects?.length, 1);
+			assert.equal(a.first, a.last);
+
+			set(b, 1);
+
+			flushSync();
+
+			assert.equal(c!.effects?.length, 1);
+			assert.equal(a.first, a.last);
 
 			destroy();
 
-			assert.deepEqual(a.deriveds, null);
+			assert.equal(a.first, null);
+
+			assert.equal(effects.length, 2);
+			assert.equal((effects[0].f & DESTROYED) !== 0, true);
+			assert.equal((effects[1].f & DESTROYED) !== 0, true);
 		};
 	});
 
@@ -808,7 +1049,7 @@ describe('signals', () => {
 			let a = render_effect(() => {});
 			let b = state(0);
 			let c;
-			let effects = [];
+			let effects: Effect[] = [];
 
 			const destroy = effect_root(() => {
 				a = render_effect(() => {
@@ -826,20 +1067,23 @@ describe('signals', () => {
 				});
 			});
 
-			assert.deepEqual(c!.children?.length, 1);
-			assert.deepEqual(a.first, a.last);
+			assert.equal(c!.effects?.length, 1);
+			assert.equal(a.first, a.last);
 
 			set(b, 1);
 
 			flushSync();
 
-			assert.deepEqual(c!.children?.length, 1);
-			assert.deepEqual(a.first, a.last);
+			assert.equal(c!.effects?.length, 1);
+			assert.equal(a.first, a.last);
 
 			destroy();
 
-			assert.deepEqual(a.deriveds, null);
-			assert.deepEqual(a.first, null);
+			assert.equal(a.first, null);
+
+			assert.equal(effects.length, 2);
+			assert.equal((effects[0].f & DESTROYED) !== 0, true);
+			assert.equal((effects[1].f & DESTROYED) !== 0, true);
 		};
 	});
 
@@ -847,14 +1091,14 @@ describe('signals', () => {
 		return () => {
 			const count = state(0n);
 
-			assert.doesNotThrow(() => $.update(count));
+			assert.doesNotThrow(() => update(count));
 			assert.equal($.get(count), 1n);
-			assert.doesNotThrow(() => $.update(count, -1));
+			assert.doesNotThrow(() => update(count, -1));
 			assert.equal($.get(count), 0n);
 
-			assert.doesNotThrow(() => $.update_pre(count));
+			assert.doesNotThrow(() => update_pre(count));
 			assert.equal($.get(count), 1n);
-			assert.doesNotThrow(() => $.update_pre(count, -1));
+			assert.doesNotThrow(() => update_pre(count, -1));
 			assert.equal($.get(count), 0n);
 		};
 	});
@@ -887,6 +1131,47 @@ describe('signals', () => {
 			flushSync();
 
 			assert.deepEqual(log, [0, 1]);
+
+			destroy();
+		};
+	});
+
+	test('unowned deriveds correctly update', () => {
+		const log: any[] = [];
+
+		return () => {
+			const a = state(0);
+			const b = state(0);
+			const c = derived(() => {
+				return $.get(a);
+			});
+			const d = derived(() => {
+				return $.get(b);
+			});
+
+			const destroy = effect_root(() => {
+				const e = derived(() => {
+					return $.get(c) === 1 && $.get(d) === 1;
+				});
+				render_effect(() => {
+					log.push($.get(e));
+				});
+			});
+
+			assert.deepEqual(log, [false]);
+
+			set(a, 1);
+			set(b, 1);
+
+			flushSync();
+
+			assert.deepEqual(log, [false, true]);
+
+			set(b, 9);
+
+			flushSync();
+
+			assert.deepEqual(log, [false, true, false]);
 
 			destroy();
 		};

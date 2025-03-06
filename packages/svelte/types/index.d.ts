@@ -16,6 +16,7 @@ declare module 'svelte' {
 		intro?: boolean;
 		recover?: boolean;
 		sync?: boolean;
+		idPrefix?: string;
 		$$inline?: boolean;
 	}
 
@@ -410,10 +411,6 @@ declare module 'svelte' {
 	 * */
 	export function afterUpdate(fn: () => void): void;
 	/**
-	 * Synchronously flushes any pending state changes and those that result from it.
-	 * */
-	export function flushSync(fn?: (() => void) | undefined): void;
-	/**
 	 * Create a snippet programmatically
 	 * */
 	export function createRawSnippet<Params extends unknown[]>(fn: (...params: Getters<Params>) => {
@@ -423,50 +420,10 @@ declare module 'svelte' {
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
 	/**
-	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
-	 * Transitions will play during the initial render unless the `intro` option is set to `false`.
-	 *
+	 * Synchronously flush any pending updates.
+	 * Returns void if no callback is provided, otherwise returns the result of calling the callback.
 	 * */
-	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: MountOptions<Props>): Exports;
-	/**
-	 * Hydrates a component on the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
-	 *
-	 * */
-	export function hydrate<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
-		target: Document | Element | ShadowRoot;
-		props?: Props;
-		events?: Record<string, (e: any) => any>;
-		context?: Map<any, any>;
-		intro?: boolean;
-		recover?: boolean;
-	} : {
-		target: Document | Element | ShadowRoot;
-		props: Props;
-		events?: Record<string, (e: any) => any>;
-		context?: Map<any, any>;
-		intro?: boolean;
-		recover?: boolean;
-	}): Exports;
-	/**
-	 * Unmounts a component that was previously mounted using `mount` or `hydrate`.
-	 *
-	 * Since 5.13.0, if `options.outro` is `true`, [transitions](https://svelte.dev/docs/svelte/transition) will play before the component is removed from the DOM.
-	 *
-	 * Returns a `Promise` that resolves after transitions have completed if `options.outro` is true, or immediately otherwise (prior to 5.13.0, returns `void`).
-	 *
-	 * ```js
-	 * import { mount, unmount } from 'svelte';
-	 * import App from './App.svelte';
-	 *
-	 * const app = mount(App, { target: document.body });
-	 *
-	 * // later...
-	 * unmount(app, { outro: true });
-	 * ```
-	 * */
-	export function unmount(component: Record<string, any>, options?: {
-		outro?: boolean;
-	} | undefined): Promise<void>;
+	export function flushSync<T = void>(fn?: (() => T) | undefined): T;
 	/**
 	 * Returns a promise that resolves once any pending state changes have been applied.
 	 * */
@@ -513,6 +470,51 @@ declare module 'svelte' {
 	 *
 	 * */
 	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
+	/**
+	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
+	 * Transitions will play during the initial render unless the `intro` option is set to `false`.
+	 *
+	 * */
+	export function mount<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: MountOptions<Props>): Exports;
+	/**
+	 * Hydrates a component on the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component
+	 *
+	 * */
+	export function hydrate<Props extends Record<string, any>, Exports extends Record<string, any>>(component: ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>, options: {} extends Props ? {
+		target: Document | Element | ShadowRoot;
+		props?: Props;
+		events?: Record<string, (e: any) => any>;
+		context?: Map<any, any>;
+		intro?: boolean;
+		recover?: boolean;
+	} : {
+		target: Document | Element | ShadowRoot;
+		props: Props;
+		events?: Record<string, (e: any) => any>;
+		context?: Map<any, any>;
+		intro?: boolean;
+		recover?: boolean;
+	}): Exports;
+	/**
+	 * Unmounts a component that was previously mounted using `mount` or `hydrate`.
+	 *
+	 * Since 5.13.0, if `options.outro` is `true`, [transitions](https://svelte.dev/docs/svelte/transition) will play before the component is removed from the DOM.
+	 *
+	 * Returns a `Promise` that resolves after transitions have completed if `options.outro` is true, or immediately otherwise (prior to 5.13.0, returns `void`).
+	 *
+	 * ```js
+	 * import { mount, unmount } from 'svelte';
+	 * import App from './App.svelte';
+	 *
+	 * const app = mount(App, { target: document.body });
+	 *
+	 * // later...
+	 * unmount(app, { outro: true });
+	 * ```
+	 * */
+	export function unmount(component: Record<string, any>, options?: {
+		outro?: boolean;
+	} | undefined): Promise<void>;
 	type Getters<T> = {
 		[K in keyof T]: () => T[K];
 	};
@@ -623,8 +625,8 @@ declare module 'svelte/animate' {
 }
 
 declare module 'svelte/compiler' {
-	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
 	import type { SourceMap } from 'magic-string';
+	import type { ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, Expression, Identifier, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
 	import type { Location } from 'locate-character';
 	/**
 	 * `compile` converts your `.svelte` source code into a JavaScript module that exports a component
@@ -2080,11 +2082,19 @@ declare module 'svelte/server' {
 		...args: {} extends Props
 			? [
 					component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
-					options?: { props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }
+					options?: {
+						props?: Omit<Props, '$$slots' | '$$events'>;
+						context?: Map<any, any>;
+						idPrefix?: string;
+					}
 				]
 			: [
 					component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
-					options: { props: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }
+					options: {
+						props: Omit<Props, '$$slots' | '$$events'>;
+						context?: Map<any, any>;
+						idPrefix?: string;
+					}
 				]
 	): RenderOutput;
 	interface RenderOutput {
@@ -2996,6 +3006,15 @@ declare namespace $effect {
 declare function $props(): any;
 
 declare namespace $props {
+	/**
+	 * Generates an ID that is unique to the current component instance. When hydrating a server-rendered component,
+	 * the value will be consistent between server and client.
+	 *
+	 * This is useful for linking elements via attributes like `for` and `aria-labelledby`.
+	 * @since 5.20.0
+	 */
+	export function id(): string;
+
 	// prevent intellisense from being unhelpful
 	/** @deprecated */
 	export const apply: never;

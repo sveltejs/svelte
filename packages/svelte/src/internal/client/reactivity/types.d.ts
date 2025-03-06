@@ -36,8 +36,8 @@ export interface Reaction extends Signal {
 export interface Derived<V = unknown> extends Value<V>, Reaction {
 	/** The derived function */
 	fn: () => V;
-	/** Reactions created inside this signal */
-	children: null | Reaction[];
+	/** Effects created inside this signal */
+	effects: null | Effect[];
 	/** Parent effect or derived */
 	parent: Effect | Derived | null;
 }
@@ -51,8 +51,6 @@ export interface Effect extends Reaction {
 	 */
 	nodes_start: null | TemplateNode;
 	nodes_end: null | TemplateNode;
-	/** Reactions created inside this signal */
-	deriveds: null | Derived[];
 	/** The effect function */
 	fn: null | (() => void | (() => void));
 	/** The teardown function returned from the effect function */

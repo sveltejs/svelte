@@ -2,7 +2,7 @@ import { ok, test } from '../../test';
 
 export default test({
 	html: `
-		<p style="opacity: 0.5; color: red">color: red</p>
+		<p style="opacity: 0.5; color: red;">color: red;</p>
 	`,
 
 	test({ assert, component, target, window }) {

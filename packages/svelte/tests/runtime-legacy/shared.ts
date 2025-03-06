@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import { setImmediate } from 'node:timers/promises';
-import glob from 'tiny-glob/sync.js';
+import { globSync } from 'tinyglobby';
 import { createClassComponent } from 'svelte/legacy';
 import { proxy } from 'svelte/internal/client';
 import { flushSync, hydrate, mount, unmount } from 'svelte';
@@ -36,6 +36,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	compileOptions?: Partial<CompileOptions>;
 	props?: Props;
 	server_props?: Props;
+	id_prefix?: string;
 	before_test?: () => void;
 	after_test?: () => void;
 	test?: (args: {
@@ -256,7 +257,7 @@ async function run_test_variant(
 		raf.reset();
 
 		// Put things we need on window for testing
-		const styles = glob('**/*.css', { cwd: `${cwd}/_output/client` })
+		const styles = globSync('**/*.css', { cwd: `${cwd}/_output/client` })
 			.map((file) => fs.readFileSync(`${cwd}/_output/client/${file}`, 'utf-8'))
 			.join('\n')
 			.replace(/\/\*<\/?style>\*\//g, '');
@@ -284,7 +285,8 @@ async function run_test_variant(
 			// ssr into target
 			const SsrSvelteComponent = (await import(`${cwd}/_output/server/main.svelte.js`)).default;
 			const { html, head } = render(SsrSvelteComponent, {
-				props: config.server_props ?? config.props ?? {}
+				props: config.server_props ?? config.props ?? {},
+				idPrefix: config.id_prefix
 			});
 
 			fs.writeFileSync(`${cwd}/_output/rendered.html`, html);
@@ -345,6 +347,10 @@ async function run_test_variant(
 
 			if (runes) {
 				props = proxy({ ...(config.props || {}) });
+
+				// @ts-expect-error
+				globalThis.__svelte.uid = 1;
+
 				if (manual_hydrate) {
 					hydrate_fn = () => {
 						instance = hydrate(mod.default, {
