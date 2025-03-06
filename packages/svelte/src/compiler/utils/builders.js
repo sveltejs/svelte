@@ -90,24 +90,6 @@ export function block(body) {
 }
 
 /**
- * @param {ESTree.BlockStatement} block
- * @param {ESTree.Pattern | null} param
- * @param {ESTree.BlockStatement} catch_block
- * @returns {ESTree.TryStatement}
- */
-export function try_catch(block, param, catch_block) {
-	return {
-		type: 'TryStatement',
-		block,
-		handler: {
-			type: 'CatchClause',
-			param,
-			body: catch_block
-		}
-	};
-}
-
-/**
  * @param {string} name
  * @param {ESTree.Statement} body
  * @returns {ESTree.LabeledStatement}
