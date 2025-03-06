@@ -1,5 +1,17 @@
 # svelte
 
+## 5.22.5
+
+### Patch Changes
+
+- fix: memoize `clsx` calls ([#15456](https://github.com/sveltejs/svelte/pull/15456))
+
+- fix: respect `svelte-ignore hydration_attribute_changed` on elements with spread attributes ([#15443](https://github.com/sveltejs/svelte/pull/15443))
+
+- fix: always use `setAttribute` when setting `style` ([#15323](https://github.com/sveltejs/svelte/pull/15323))
+
+- fix: make `style:` directive and CSS handling more robust ([#15418](https://github.com/sveltejs/svelte/pull/15418))
+
 ## 5.22.4
 
 ### Patch Changes
