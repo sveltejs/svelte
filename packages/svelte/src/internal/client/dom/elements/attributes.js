@@ -15,6 +15,7 @@ import {
 } from '../../runtime.js';
 import { clsx } from '../../../shared/attributes.js';
 import { set_class } from './class.js';
+import { set_style } from './style.js';
 import { NAMESPACE_HTML } from '../../../../constants.js';
 
 export const CLASS = Symbol('class');
@@ -177,11 +178,6 @@ export function set_attribute(element, attribute, value, skip_warning) {
 
 	if (attributes[attribute] === (attributes[attribute] = value)) return;
 
-	if (attribute === 'style' && '__styles' in element) {
-		// reset styles to force style: directive to update
-		element.__styles = {};
-	}
-
 	if (attribute === 'loading') {
 		// @ts-expect-error
 		element[LOADING_ATTR_SYMBOL] = value;
@@ -218,6 +214,7 @@ export function set_custom_element_data(node, prop, value) {
 	// or effect
 	var previous_reaction = active_reaction;
 	var previous_effect = active_effect;
+
 	// If we're hydrating but the custom element is from Svelte, and it already scaffolded,
 	// then it might run block logic in hydration mode, which we have to prevent.
 	let was_hydrating = hydrating;
@@ -227,17 +224,20 @@ export function set_custom_element_data(node, prop, value) {
 
 	set_active_reaction(null);
 	set_active_effect(null);
+
 	try {
 		if (
+			// `style` should use `set_attribute` rather than the setter
+			prop !== 'style' &&
 			// Don't compute setters for custom elements while they aren't registered yet,
 			// because during their upgrade/instantiation they might add more setters.
 			// Instead, fall back to a simple "an object, then set as property" heuristic.
-			setters_cache.has(node.nodeName) ||
+			(setters_cache.has(node.nodeName) ||
 			// customElements may not be available in browser extension contexts
 			!customElements ||
 			customElements.get(node.tagName.toLowerCase())
 				? get_setters(node).includes(prop)
-				: value && typeof value === 'object'
+				: value && typeof value === 'object')
 		) {
 			// @ts-expect-error
 			node[prop] = value;
@@ -293,6 +293,10 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 		next.class = null; /* force call to set_class() */
 	}
 
+	if (next[STYLE]) {
+		next.style ??= null; /* force call to set_style() */
+	}
+
 	var setters = get_setters(element);
 
 	// since key is captured we use const
@@ -324,6 +328,13 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 			set_class(element, is_html, value, css_hash, prev?.[CLASS], next[CLASS]);
 			current[key] = value;
 			current[CLASS] = next[CLASS];
+			continue;
+		}
+
+		if (key === 'style') {
+			set_style(element, value, prev?.[STYLE], next[STYLE]);
+			current[key] = value;
+			current[STYLE] = next[STYLE];
 			continue;
 		}
 
@@ -378,8 +389,9 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 				// @ts-ignore
 				element[`__${event_name}`] = undefined;
 			}
-		} else if (key === 'style' && value != null) {
-			element.style.cssText = value + '';
+		} else if (key === 'style') {
+			// avoid using the setter
+			set_attribute(element, key, value);
 		} else if (key === 'autofocus') {
 			autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
 		} else if (!is_custom_element && (key === '__value' || (key === 'value' && value != null))) {
@@ -427,10 +439,6 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 			} else if (typeof value !== 'function') {
 				set_attribute(element, name, value, skip_warning);
 			}
-		}
-		if (key === 'style' && '__styles' in element) {
-			// reset styles to force style: directive to update
-			element.__styles = {};
 		}
 	}
 
