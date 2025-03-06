@@ -25,7 +25,6 @@
 						"end": 147,
 						"type": "OnDirective",
 						"name": "click",
-						"modifiers": [],
 						"expression": {
 							"type": "ArrowFunctionExpression",
 							"start": 73,
@@ -48,7 +47,7 @@
 								{
 									"type": "Identifier",
 									"start": 74,
-									"end": 75,
+									"end": 87,
 									"loc": {
 										"start": {
 											"line": 6,
@@ -155,7 +154,7 @@
 												"id": {
 													"type": "Identifier",
 													"start": 102,
-													"end": 106,
+													"end": 114,
 													"loc": {
 														"start": {
 															"line": 7,
@@ -316,7 +315,8 @@
 									}
 								]
 							}
-						}
+						},
+						"modifiers": []
 					}
 				],
 				"fragment": {
