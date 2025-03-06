@@ -1,5 +1,5 @@
 /** @import { ArrayExpression, Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression, Statement } from 'estree' */
-/** @import { AST, ExpressionMetadata } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
