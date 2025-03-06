@@ -25,7 +25,7 @@ You can create an effect with the `$effect` rune ([demo](/playground/untitled#H4
 	});
 </script>
 
-<canvas bind:this={canvas} width="100" height="100" />
+<canvas bind:this={canvas} width="100" height="100"></canvas>
 ```
 
 When Svelte runs an effect function, it tracks which pieces of state (and derived state) are accessed (unless accessed inside [`untrack`](svelte#untrack)), and re-runs the function when that state later changes.
@@ -40,32 +40,44 @@ You can use `$effect` anywhere, not just at the top level of a component, as lon
 
 > [!NOTE] Svelte uses effects internally to represent logic and expressions in your template — this is how `<h1>hello {name}!</h1>` updates when `name` changes.
 
-An effect can return a _teardown function_ which will run immediately before the effect re-runs ([demo](/playground/untitled#H4sIAAAAAAAAE42SQVODMBCF_8pOxkPRKq3HCsx49K4n64xpskjGkDDJ0tph-O8uINo6HjxB3u7HvrehE07WKDbiyZEhi1osRWksRrF57gQdm6E2CKx_dd43zU3co6VB28mIf-nKO0JH_BmRRRVMQ8XWbXkAgfKtI8jhIpIkXKySu7lSG2tNRGZ1_GlYr1ZTD3ddYFmiosUigbyAbpC2lKbwWJkIB8ZhhxBQBWRSw6FCh3sM8GrYTthL-wqqku4N44TyqEgwF3lmRHr4Op0PGXoH31c5rO8mqV-eOZ49bikgtcHBL55tmhIkEMqg_cFB2TpFxjtg703we6NRL8HQFCS07oSUCZi6Rm04lz1yytIHBKoQpo1w6Gsm4gmyS8b8Y5PydeMdX8gwS2Ok4I-ov5NZtvQde95GMsccn_1wzNKfu3RZtS66cSl9lvL7qO1aIk7knbJGvefdtIOzi73M4bYvovUHDFk6AcX_0HRESxnpBOW_jfCDxIZCi_1L_wm4xGQ60wIAAA==)).
+An effect can return a _teardown function_ which will run immediately before the effect re-runs ([demo](/playground/untitled#H4sIAAAAAAAAA41T24rbQAz9FTEE4oCbuCndsq4dKHltH9ruPnUKmXjkeFhHNjPKrcH_XsaT214ofbOOjs6R5NFRkFqjSMUjseEatYhFaWp0Iv11FHxofc4DIj4zv7Tt2G2xZo8tlcO38KIhRmInUpG5wpqWZ5Ik18jgzB-EHAaOFWN0lySjz-dUoWirnA9JctGQY9i0WjHO-wTkEDHueQT5DI6ec2b1dnuG_CQxXiHPAxYNp3oYLHq2x8ZFjcr-wIKjJIYkPlftjObqElVoVhW_LC0b8j7DD9N2Dw6tKYcvGaauH7yzj2J4n8Tw8TRkF6gkeYBl6f2j18OsURv1fYP2ADnsDOlmN14rLqpvPhEtorXav-tbTWFw9Ovs2v1ocdOoY6gU6Rr7inmlaOVXHuGtmWRTQoRBGt3oiku-3Xq0-FlYRILeEnbKwcqiYrTAlaJrCzEo0sAVEtTo3KUhyV346E5_VvJ1xLHS-qtxjIQ2etW0lwAINRZ5Ywmi5zPcKFlcN1v8t9ilDe58mE2uj5MeGnCIfgAIPycGbdWqB1xYATewRL8IvBn2bRIpa5vd2Atn2mzB8aHGXIq1sitDKUyTdg-JFP1dZMsNc0PQUFGb4ik_hilPp3KXJN2sqLB4grKxPvRPrzfLJqHyP1Tun6vcv62STbTZ9uvIwhnA0pBOuTIuPwakCy8hl-JTkkgB4U5yKaY-nGWTQJuJWPgLECnbDXa_u7-plT6obAQAAA==)).
 
 ```svelte
 <script>
-	let count = $state(0);
-	let milliseconds = $state(1000);
+	let size = $state(600);
+	let canvas;
 
+	const updateCanvas = (text) => {
+		const context = canvas.getContext('2d');
+		context.clearRect(0, 0, canvas.width, canvas.height);
+		context.font = '32px serif';
+		context.fillText(text, 10, 50);
+	};
+	
 	$effect(() => {
-		// This will be recreated whenever `milliseconds` changes
-		const interval = setInterval(() => {
-			count += 1;
-		}, milliseconds);
+		const mediaQuery = window.matchMedia(`(max-width: ${size}px)`);
+		const handleMediaChange = (e) => {
+			if (e.matches) {
+				updateCanvas(`Screen width was greater than ${size}px, and then less`);
+			}
+		};
 
+		mediaQuery.addListener(handleMediaChange);
+  
 		return () => {
-			// if a teardown function is provided, it will run
-			// a) immediately before the effect re-runs
-			// b) when the component is destroyed
-			clearInterval(interval);
+			mediaQuery.removeListener(handleMediaChange);
 		};
 	});
 </script>
 
-<h1>{count}</h1>
+To see the effect, drag the screen to be wide, and then drag the screen to be narrow.
 
-<button onclick={() => (milliseconds *= 2)}>slower</button>
-<button onclick={() => (milliseconds /= 2)}>faster</button>
+<div style="margin: 20px 0">
+	<button onclick={() => size = 600}>check for 600px screen</button>
+	<button onclick={() => size = 900}>check for 900px screen</button>
+</div>
+
+<canvas bind:this={canvas} width="700" height="200"></canvas>
 ```
 
 Teardown functions also run when the effect is destroyed, which happens when its parent is destroyed (for example, a component is unmounted) or the parent effect re-runs.
@@ -133,7 +145,7 @@ An effect only reruns when the object it reads changes, not when a property insi
 
 An effect only depends on the values that it read the last time it ran. This has interesting implications for effects that have conditional code.
 
-For instance, if `a` is `true` in the code snippet below, the code inside the `if` block will run and `b` will be evaluated. As such, changes to either `a` or `b` [will cause the effect to re-run](/playground/untitled#H4sIAAAAAAAAE3VQzWrDMAx-FdUU4kBp71li6EPstOxge0ox8-QQK2PD-N1nLy2F0Z2Evj9_chKkP1B04pnYscc3cRCT8xhF95IEf8-Vq0DBr8rzPB_jJ3qumNERH-E2ECNxiRF9tIubWY00lgcYNAywj6wZJS8rtk83wjwgCrXHaULLUrYwKEgVGrnkx-Dx6MNFNstK5OjSbFGbwE0gdXuT_zGYrjmAuco515Hr1p_uXak3K3MgCGS9s-9D2grU-judlQYXIencnzad-tdR79qZrMyvw9wd5Z8Yv1h09dz8mn8AkM7Pfo0BAAA=).
+For instance, if `a` is `true` in the code snippet below, the code inside the `if` block will run and `b` will be evaluated. As such, changes to either `a` or `b` [will cause the effect to re-run](/playground/untitled#H4sIAAAAAAAAA31SXWvbQBD8K5slIBmErbiUgqoThPyD0Dzl-nAnreyjykro1q6D0H8Pp6taY9o-zuzM7cfchGzeCAt8YXHSUYMZtq4jj8XrhPI-hFogMFuVj8Ow9WfqJHDWePobX_csxOKxwNLXoxuk0qylIwEDCu69GKFUxhNtvq4F-69CbfhsfICspe7ZC5yGxgg9LQVQkApdZAOqgiloVtUyxUVA_XpieyB5ilya7JsktljUgdvWHZnxmWpJ8wzybHX9dI0cf6MjucNRbq1tz6FP8mk_XMDT6NrkVuG67lvoHFAGD3kGn_P4zBylrOWe2jb0T6-XuV42TcYTs-PDOvyicC2kZrPqbx22SDKw68Tz0jGgcvcnGi4bdwYv7x0pjW9mPDguYJ8PF8g1LuGV9iTSM_Rcd67-oaY4ZMjzzsyVAedhMnO5i7r_eULUd3au7OKx155y17hzFVcr48nBOm4KOTqvpsjMsGSiNH7Jc40QM1Ea9wFW5S7KKs2YYbg3FuFLzd_nD1eS-7_xAgAA).
 
 Conversely, if `a` is `false`, `b` will not be evaluated, and the effect will _only_ re-run when `a` changes.
 
@@ -142,10 +154,10 @@ let a = false;
 let b = false;
 // ---cut---
 $effect(() => {
-	console.log('running');
+	updateCanvas('running');
 
 	if (a) {
-		console.log('b:', b);
+		updateCanvas('b:', b);
 	}
 });
 ```
@@ -189,18 +201,24 @@ Apart from the timing, `$effect.pre` works exactly like `$effect`.
 
 ## `$effect.tracking`
 
-The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template ([demo](/playground/untitled#H4sIAAAAAAAACn3PwYrCMBDG8VeZDYIt2PYeY8Dn2HrIhqkU08nQjItS-u6buAt7UDzmz8ePyaKGMWBS-nNRcmdU-hHUTpGbyuvI3KZvDFLal0v4qvtIgiSZUSb5eWSxPfWSc4oB2xDP1XYk8HHiSHkICeXKeruDDQ4Demlldv4y0rmq6z10HQwuJMxGVv4mVVXDwcJS0jP9u3knynwtoKz1vifT_Z9Jhm0WBCcOTlDD8kyspmML5qNpHg40jc3fFryJ0iWsp_UHgz3180oBAAA=)):
+The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template ([demo](/playground/untitled?version=5.22.5#H4sIAAAAAAAAA22Q3U6DQBCFX2XcmEAjfzZeUSAxfQT1SrzYwlA2bocNO8UawrubLaKm9nK_PWfmzBkFyQOKVLwQK9ZYi0A0SqMV6eso-NO4PwdEsCgfjYnsgJod20mL13jVESOxFanIbNUrw0VJJVcdWQZF2-5gOkLiJ-SjgRxusWmw4oh7Wb0r2vurDcQxWDkgKALqKOxRVqwGhEH2Su40luRGamSoJA3Sbtzze5DvryAvYHRoWXvOdGLIv_XRHnk7M99b195q86N2LGo6cmJvnZgTWOxV410qlNbPZ7simBen4MHdlXMCSAJYJ_NZ3B9dep7cyiz-LYgyUyiCaqkHrOsnhfGysimLTQHZTRhCI7VFCMNicTMejJaMKYz_c_wxuhSzr6RsrgR2iuqUW2XzcSYTfKia27wUD0lSCmhR7VvOS3HvnkUWz7KiJBEIV4pI3dzpbfoCBROKmlsCAAA=)):
 
 ```svelte
 <script>
-	console.log('in component setup:', $effect.tracking()); // false
+	const inComponentSetup = $effect.tracking(); // save in non-reactive variable
 
+	let canvas;
 	$effect(() => {
-		console.log('in effect:', $effect.tracking()); // true
+		const context = canvas.getContext('2d');
+		context.font = '20px serif';
+		context.fillText('in effect: ' + $effect.tracking(), 0, 20); // true
 	});
 </script>
 
+<p>in component setup: {inComponentSetup}</p> <!-- false -->
 <p>in template: {$effect.tracking()}</p> <!-- true -->
+
+<canvas bind:this={canvas} width="400" height="100"></canvas>
 ```
 
 It is used to implement abstractions like [`createSubscriber`](/docs/svelte/svelte-reactivity#createSubscriber), which will create listeners to update reactive values but _only_ if those values are being tracked (rather than, for example, read inside an event handler).
@@ -211,15 +229,13 @@ The `$effect.root` rune is an advanced feature that creates a non-tracked scope 
 
 ```svelte
 <script>
-	let count = $state(0);
-
 	const cleanup = $effect.root(() => {
 		$effect(() => {
-			console.log(count);
+			// some effect
 		});
 
 		return () => {
-			console.log('effect root cleanup');
+			// cleanup function
 		};
 	});
 </script>
