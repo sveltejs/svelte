@@ -1,8 +1,6 @@
 /** @import { BlockStatement, Identifier, Statement, Expression, MaybeNamedFunctionDeclaration, Pattern } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import { attr } from 'svelte/internal/client';
-import { BLOCK_CLOSE, BLOCK_OPEN } from '../../../../../internal/server/hydration.js';
 import * as b from '../../../../utils/builders.js';
 import { extract_identifiers } from '../../../../utils/ast.js';
 
@@ -20,8 +18,6 @@ export function SvelteBoundary(node, context) {
 	/** @type {AST.ConstTag[]} */
 	let const_tags = [];
 
-	/** @type {Statement[]} */
-	const init_body = [];
 	const nodes = [];
 
 	const payload = b.id('$$payload'); // correct ?
@@ -61,59 +57,33 @@ export function SvelteBoundary(node, context) {
 		}
 	}
 
-	if (snippet && has_const_referenced(context, snippet, const_tags)) {
-		const const_values = b.id(context.state.scope.generate('const_values'));
-		statements.push(b.declaration('const', [b.declarator(const_values, b.object([]))]));
-		for (const tag of const_tags) {
-			const identifiers = extract_identifiers(tag.declaration.declarations[0].id);
+	let max_referenced_const_tag = -1;
 
-			statements.push(
-				b.declaration(
-					'let',
-					identifiers.map((id) => b.declarator(id))
-				)
-			);
-			for (const id of identifiers) {
-				statements.push(b.stmt(b.call('console.log', id)));
-			}
+	if (snippet) {
+		const references = context.state.scopes.get(snippet)?.references;
+		if (references != null && references.size) {
+			const keys = new Set(references.keys());
 
-			context.visit(tag, { ...context.state, init: init_body });
-			for (const id of identifiers) {
-				init_body.push(b.stmt(b.assignment('=', const_values, id)));
-				init_body.push(b.stmt(b.call('console.log', const_values)));
-			}
-
-			// statements.push(b.declaration('const', [b.declarator(tmp, b.arrow([], b.block(init)))]));
-
-			// nodes.unshift(b.declaration('let', [b.declarator(b.array_pattern(identifiers), tmp)]));
-			// // b.declaration('let', [b.declarator(b.array_pattern(identifiers), tmp)]);
-
-			// const c = server_const(() => {
-			// 	const { t, x } = { x: name, y: 'x' };
-			// 	if (true) {
-			// 		throw new Error('badaboum');
-			// 	}
-			// 	return { t, x };
-			// });
-
-			///** @type {Statement[]} */
-			//const init = [];
-			//context.visit(tag, { ...context.state, init });
-			//statements.push(...init);
+			const_tags.forEach((tag, index) => {
+				if (has_reference(keys, tag)) {
+					max_referenced_const_tag = index + 1;
+				}
+			});
 		}
-	} else if (const_tags.length) {
-		nodes.unshift(...const_tags);
 	}
 
-	if (init_body.length) {
-		//nodes.unshift(...init_body);
+	if (max_referenced_const_tag < 0) {
+		nodes.unshift(...const_tags);
+	} else if (max_referenced_const_tag === const_tags.length) {
+		const_tags.forEach((tag) => context.visit(tag, { ...context.state, init: statements }));
+	} else {
+		const_tags
+			.slice(0, max_referenced_const_tag)
+			.forEach((tag) => context.visit(tag, { ...context.state, init: statements }));
+		nodes.unshift(...const_tags.slice(max_referenced_const_tag));
 	}
 
 	const body_block = /** @type {BlockStatement} */ (context.visit({ ...node.fragment, nodes }));
-
-	if (init_body.length) {
-		body_block.body.unshift(...init_body);
-	}
 
 	const body = b.arrow([b.id('$$payload')], body_block);
 
@@ -127,37 +97,15 @@ export function SvelteBoundary(node, context) {
 }
 
 /**
- *
- * @param {ComponentContext} context
- * @param {AST.SnippetBlock} snippet
- * @param {AST.ConstTag[]} const_tags
+ * @param {Set<string>} keys
+ * @param {AST.ConstTag} tag
  */
-function has_const_referenced(context, snippet, const_tags) {
-	if (const_tags.length === 0) {
-		return false;
-	}
-
-	const references = context.state.scopes.get(snippet)?.references;
-	if (references == null || references.size === 0) {
-		return false;
-	}
-
-	const identifiers = new Set();
-	for (const tag of const_tags) {
-		for (const declaration of tag.declaration.declarations) {
-			for (const id of extract_identifiers(declaration.id)) {
-				identifiers.add(id.name);
+function has_reference(keys, tag) {
+	for (const declaration of tag.declaration.declarations) {
+		for (const id of extract_identifiers(declaration.id)) {
+			if (keys.has(id.name)) {
+				return true;
 			}
-		}
-	}
-
-	if (identifiers.size === 0) {
-		return false;
-	}
-
-	for (const reference of references.keys()) {
-		if (identifiers.has(reference)) {
-			return true;
 		}
 	}
 	return false;

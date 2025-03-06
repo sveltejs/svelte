@@ -1,5 +1,6 @@
 /** @import { Effect, TemplateNode, } from '#client' */
 
+import { HYDRATION_START } from '../../../../constants.js';
 import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT } from '../../constants.js';
 import { component_context, set_component_context } from '../../context.js';
 import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
@@ -17,7 +18,8 @@ import {
 	hydrating,
 	next,
 	remove_nodes,
-	set_hydrate_node
+	set_hydrate_node,
+	set_hydrating
 } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
 
@@ -119,12 +121,27 @@ export function boundary(node, props, boundary_fn) {
 			}
 		};
 
+		let mismatch = false;
+
 		if (hydrating) {
+			const data = /** @type {Comment} */ (anchor).data;
 			hydrate_next();
+			if (data !== HYDRATION_START) {
+				anchor = remove_nodes();
+
+				set_hydrate_node(anchor);
+				set_hydrating(false);
+				mismatch = true;
+			}
 		}
 
 		boundary_effect = branch(() => boundary_fn(anchor));
 		reset_is_throwing_error();
+
+		if (mismatch) {
+			// continue in hydration mode
+			set_hydrating(true);
+		}
 	}, EFFECT_TRANSPARENT | BOUNDARY_EFFECT);
 
 	if (hydrating) {
