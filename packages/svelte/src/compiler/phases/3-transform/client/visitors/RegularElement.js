@@ -511,22 +511,21 @@ function setup_select_synchronization(value_binding, context) {
 /**
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
- * @return {ObjectExpression}
+ * @return {ObjectExpression | Identifier}
  */
 export function build_class_directives_object(class_directives, context) {
 	let properties = [];
+	let has_call_or_state = false;
 
 	for (const d of class_directives) {
-		let expression = /** @type Expression */ (context.visit(d.expression));
-
-		if (d.metadata.expression.has_call) {
-			expression = get_expression_id(context.state, expression);
-		}
-
+		const expression = /** @type Expression */ (context.visit(d.expression));
 		properties.push(b.init(d.name, expression));
+		has_call_or_state ||= d.metadata.expression.has_call || d.metadata.expression.has_state;
 	}
 
-	return b.object(properties);
+	const directives = b.object(properties);
+
+	return has_call_or_state ? get_expression_id(context.state, directives) : directives;
 }
 
 /**

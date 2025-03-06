@@ -162,13 +162,13 @@ export function get_attribute_name(element, attribute) {
  * @param {boolean} is_html
  */
 export function build_set_class(element, node_id, attribute, class_directives, context, is_html) {
-	let { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call ? get_expression_id(context.state, value) : value
-	);
+	let { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) => {
+		if (attribute.metadata.needs_clsx) {
+			value = b.call('$.clsx', value);
+		}
 
-	if (attribute && attribute.metadata.needs_clsx) {
-		value = b.call('$.clsx', value);
-	}
+		return metadata.has_call ? get_expression_id(context.state, value) : value;
+	});
 
 	/** @type {Identifier | undefined} */
 	let previous_id;
@@ -176,7 +176,7 @@ export function build_set_class(element, node_id, attribute, class_directives, c
 	/** @type {ObjectExpression | Identifier | undefined} */
 	let prev;
 
-	/** @type {ObjectExpression | undefined} */
+	/** @type {ObjectExpression | Identifier | undefined} */
 	let next;
 
 	if (class_directives.length) {
