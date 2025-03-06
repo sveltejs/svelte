@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-chore: memoize clsx()
+fix: memoize `clsx` calls
