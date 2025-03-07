@@ -1,5 +1,15 @@
 # svelte
 
+## 5.22.6
+
+### Patch Changes
+
+- fix: skip `log_if_contains_state` if only logging literals ([#15468](https://github.com/sveltejs/svelte/pull/15468))
+
+- fix: Add `closedby` property to HTMLDialogAttributes type ([#15458](https://github.com/sveltejs/svelte/pull/15458))
+
+- fix: null and warnings for local handlers ([#15460](https://github.com/sveltejs/svelte/pull/15460))
+
 ## 5.22.5
 
 ### Patch Changes
