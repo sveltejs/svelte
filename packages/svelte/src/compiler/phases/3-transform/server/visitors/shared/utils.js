@@ -11,6 +11,7 @@ import {
 import * as b from '../../../../../utils/builders.js';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_whitespaces_strict } from '../../../../patterns.js';
+import { evaluate_static_expression, DYNAMIC } from '../../../shared/static-evaluation.js';
 
 /** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
 export const block_open = b.literal(BLOCK_OPEN);
@@ -49,7 +50,15 @@ export function process_children(nodes, { visit, state }) {
 					quasi.value.cooked += escape_html(node.expression.value + '');
 				}
 			} else {
-				expressions.push(b.call('$.escape', /** @type {Expression} */ (visit(node.expression))));
+				let evaluated = evaluate_static_expression(node.expression, state, true);
+				if (evaluated === DYNAMIC) {
+					expressions.push(b.call('$.escape', /** @type {Expression} */ (visit(node.expression))));
+				} else {
+					if (evaluated != null) {
+						quasi.value.cooked += escape_html(evaluated + '');
+					}
+					continue;
+				}
 
 				quasi = b.quasi('', i + 1 === sequence.length);
 				quasis.push(quasi);
