@@ -79,6 +79,21 @@ export class Binding {
 	get updated() {
 		return this.mutated || this.reassigned;
 	}
+
+	is_function() {
+		if (this.reassigned) {
+			// even if it's reassigned to another function,
+			// we can't use it directly as e.g. an event handler
+			return false;
+		}
+
+		if (this.declaration_kind === 'function') {
+			return true;
+		}
+
+		const type = this.initial?.type;
+		return type === 'ArrowFunctionExpression' || type === 'FunctionExpression';
+	}
 }
 
 export class Scope {
