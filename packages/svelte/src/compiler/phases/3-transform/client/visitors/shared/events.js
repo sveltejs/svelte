@@ -128,14 +128,16 @@ export function build_event_handler(node, metadata, context) {
 
 	// function declared in the script
 	if (handler.type === 'Identifier') {
-		const kind = context.state.scope.get(handler.name)?.declaration_kind;
-		if (kind === 'function') {
+		const binding = context.state.scope.get(handler.name);
+
+		if (binding?.is_function()) {
 			return handler;
 		}
+
 		// local variable can be assigned directly
 		// except in dev mode where when need $.apply()
 		// in order to handle warnings.
-		if (!dev && kind !== 'import') {
+		if (!dev && binding?.declaration_kind !== 'import') {
 			return handler;
 		}
 	}
