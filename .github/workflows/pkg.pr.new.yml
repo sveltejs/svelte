@@ -3,6 +3,8 @@ on: [push, pull_request]
 
 jobs:
   build:
+    permissions: {}
+
     runs-on: ubuntu-latest
 
     steps:

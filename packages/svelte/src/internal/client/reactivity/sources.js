@@ -14,8 +14,6 @@ import {
 	derived_sources,
 	set_derived_sources,
 	check_dirtiness,
-	set_is_flushing_effect,
-	is_flushing_effect,
 	untracking
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
@@ -202,22 +200,18 @@ export function internal_set(source, value) {
 
 		if (DEV && inspect_effects.size > 0) {
 			const inspects = Array.from(inspect_effects);
-			var previously_flushing_effect = is_flushing_effect;
-			set_is_flushing_effect(true);
-			try {
-				for (const effect of inspects) {
-					// Mark clean inspect-effects as maybe dirty and then check their dirtiness
-					// instead of just updating the effects - this way we avoid overfiring.
-					if ((effect.f & CLEAN) !== 0) {
-						set_signal_status(effect, MAYBE_DIRTY);
-					}
-					if (check_dirtiness(effect)) {
-						update_effect(effect);
-					}
+
+			for (const effect of inspects) {
+				// Mark clean inspect-effects as maybe dirty and then check their dirtiness
+				// instead of just updating the effects - this way we avoid overfiring.
+				if ((effect.f & CLEAN) !== 0) {
+					set_signal_status(effect, MAYBE_DIRTY);
 				}
-			} finally {
-				set_is_flushing_effect(previously_flushing_effect);
+				if (check_dirtiness(effect)) {
+					update_effect(effect);
+				}
 			}
+
 			inspect_effects.clear();
 		}
 	}

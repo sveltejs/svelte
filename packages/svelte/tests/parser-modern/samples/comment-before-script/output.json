@@ -75,7 +75,7 @@
 							"id": {
 								"type": "Identifier",
 								"start": 52,
-								"end": 57,
+								"end": 65,
 								"loc": {
 									"start": {
 										"line": 3,

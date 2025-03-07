@@ -1135,4 +1135,45 @@ describe('signals', () => {
 			destroy();
 		};
 	});
+
+	test('unowned deriveds correctly update', () => {
+		const log: any[] = [];
+
+		return () => {
+			const a = state(0);
+			const b = state(0);
+			const c = derived(() => {
+				return $.get(a);
+			});
+			const d = derived(() => {
+				return $.get(b);
+			});
+
+			const destroy = effect_root(() => {
+				const e = derived(() => {
+					return $.get(c) === 1 && $.get(d) === 1;
+				});
+				render_effect(() => {
+					log.push($.get(e));
+				});
+			});
+
+			assert.deepEqual(log, [false]);
+
+			set(a, 1);
+			set(b, 1);
+
+			flushSync();
+
+			assert.deepEqual(log, [false, true]);
+
+			set(b, 9);
+
+			flushSync();
+
+			assert.deepEqual(log, [false, true, false]);
+
+			destroy();
+		};
+	});
 });

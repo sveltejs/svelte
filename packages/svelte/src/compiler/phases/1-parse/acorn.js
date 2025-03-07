@@ -1,11 +1,9 @@
 /** @import { Comment, Program } from 'estree' */
-/** @import { Node } from 'acorn' */
 import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
-import { tsPlugin } from 'acorn-typescript';
-import { locator } from '../../state.js';
+import { tsPlugin } from '@sveltejs/acorn-typescript';
 
-const ParserWithTS = acorn.Parser.extend(tsPlugin({ allowSatisfies: true }));
+const ParserWithTS = acorn.Parser.extend(tsPlugin());
 
 /**
  * @param {string} source
@@ -48,7 +46,6 @@ export function parse(source, typescript, is_script) {
 		}
 	}
 
-	if (typescript) amend(source, ast);
 	add_comments(ast);
 
 	return /** @type {Program} */ (ast);
@@ -71,7 +68,6 @@ export function parse_expression_at(source, typescript, index) {
 		locations: true
 	});
 
-	if (typescript) amend(source, ast);
 	add_comments(ast);
 
 	return ast;
@@ -172,43 +168,4 @@ function get_comment_handlers(source) {
 			}
 		}
 	};
-}
-
-/**
- * Tidy up some stuff left behind by acorn-typescript
- * @param {string} source
- * @param {Node} node
- */
-function amend(source, node) {
-	return walk(node, null, {
-		_(node, context) {
-			// @ts-expect-error
-			delete node.loc.start.index;
-			// @ts-expect-error
-			delete node.loc.end.index;
-
-			if (typeof node.loc?.end === 'number') {
-				const loc = locator(node.loc.end);
-				if (loc) {
-					node.loc.end = {
-						line: loc.line,
-						column: loc.column
-					};
-				}
-			}
-
-			if (
-				/** @type {any} */ (node).typeAnnotation &&
-				(node.end === undefined || node.end < node.start)
-			) {
-				// i think there might be a bug in acorn-typescript that prevents
-				// `end` from being assigned when there's a type annotation
-				let end = /** @type {any} */ (node).typeAnnotation.start;
-				while (/\s/.test(source[end - 1])) end -= 1;
-				node.end = end;
-			}
-
-			context.next();
-		}
-	});
 }

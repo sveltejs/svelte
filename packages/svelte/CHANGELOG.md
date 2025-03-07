@@ -1,5 +1,102 @@
 # svelte
 
+## 5.22.6
+
+### Patch Changes
+
+- fix: skip `log_if_contains_state` if only logging literals ([#15468](https://github.com/sveltejs/svelte/pull/15468))
+
+- fix: Add `closedby` property to HTMLDialogAttributes type ([#15458](https://github.com/sveltejs/svelte/pull/15458))
+
+- fix: null and warnings for local handlers ([#15460](https://github.com/sveltejs/svelte/pull/15460))
+
+## 5.22.5
+
+### Patch Changes
+
+- fix: memoize `clsx` calls ([#15456](https://github.com/sveltejs/svelte/pull/15456))
+
+- fix: respect `svelte-ignore hydration_attribute_changed` on elements with spread attributes ([#15443](https://github.com/sveltejs/svelte/pull/15443))
+
+- fix: always use `setAttribute` when setting `style` ([#15323](https://github.com/sveltejs/svelte/pull/15323))
+
+- fix: make `style:` directive and CSS handling more robust ([#15418](https://github.com/sveltejs/svelte/pull/15418))
+
+## 5.22.4
+
+### Patch Changes
+
+- fix: never deduplicate expressions in templates ([#15451](https://github.com/sveltejs/svelte/pull/15451))
+
+## 5.22.3
+
+### Patch Changes
+
+- fix: run effect roots in tree order ([#15446](https://github.com/sveltejs/svelte/pull/15446))
+
+## 5.22.2
+
+### Patch Changes
+
+- fix: correctly set `is_updating` before flushing root effects ([#15442](https://github.com/sveltejs/svelte/pull/15442))
+
+## 5.22.1
+
+### Patch Changes
+
+- chore: switch acorn-typescript plugin ([#15393](https://github.com/sveltejs/svelte/pull/15393))
+
+## 5.22.0
+
+### Minor Changes
+
+- feat: Add `idPrefix` option to `render` ([#15428](https://github.com/sveltejs/svelte/pull/15428))
+
+### Patch Changes
+
+- fix: make dialog element and role interactive ([#15429](https://github.com/sveltejs/svelte/pull/15429))
+
+## 5.21.0
+
+### Minor Changes
+
+- chore: Reduce hydration comment for {:else if} ([#15250](https://github.com/sveltejs/svelte/pull/15250))
+
+### Patch Changes
+
+- fix: disallow `bind:group` to snippet parameters ([#15401](https://github.com/sveltejs/svelte/pull/15401))
+
+## 5.20.5
+
+### Patch Changes
+
+- fix: allow double hyphen css selector names ([#15384](https://github.com/sveltejs/svelte/pull/15384))
+
+- fix: class:directive not working with $restProps #15386 ([#15389](https://github.com/sveltejs/svelte/pull/15389))
+  fix: spread add an useless cssHash on non-scoped element
+
+- fix: catch error on @const tag in svelte:boundary in DEV mode ([#15369](https://github.com/sveltejs/svelte/pull/15369))
+
+- fix: allow for duplicate `var` declarations ([#15382](https://github.com/sveltejs/svelte/pull/15382))
+
+- fix : bug "$0 is not defined" on svelte:element with a function call on class ([#15396](https://github.com/sveltejs/svelte/pull/15396))
+
+## 5.20.4
+
+### Patch Changes
+
+- fix: update types and inline docs for flushSync ([#15348](https://github.com/sveltejs/svelte/pull/15348))
+
+## 5.20.3
+
+### Patch Changes
+
+- fix: allow `@const` inside `#key` ([#15377](https://github.com/sveltejs/svelte/pull/15377))
+
+- fix: remove unnecessary `?? ''` on some expressions ([#15287](https://github.com/sveltejs/svelte/pull/15287))
+
+- fix: correctly override class attributes with class directives ([#15352](https://github.com/sveltejs/svelte/pull/15352))
+
 ## 5.20.2
 
 ### Patch Changes
