@@ -1,4 +1,4 @@
-/** @import { Source } from './types.js' */
+/** @import { Derived, Source } from './types.js' */
 import { DEV } from 'esm-env';
 import {
 	PROPS_IS_BINDABLE,
@@ -11,23 +11,15 @@ import { get_descriptor, is_function } from '../../shared/utils.js';
 import { mutable_source, set, source, update } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
 import {
-	active_effect,
 	get,
 	captured_signals,
-	set_active_effect,
 	untrack,
-	active_reaction,
-	set_active_reaction
+	set_is_destroying_effect,
+	is_destroying_effect
 } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
-import {
-	BRANCH_EFFECT,
-	LEGACY_DERIVED_PROP,
-	LEGACY_PROPS,
-	ROOT_EFFECT,
-	STATE_SYMBOL
-} from '../constants.js';
+import { LEGACY_DERIVED_PROP, LEGACY_PROPS, STATE_SYMBOL } from '../constants.js';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
@@ -250,6 +242,14 @@ export function spread_props(...props) {
 }
 
 /**
+ * @param {Derived} current_value
+ * @returns {boolean}
+ */
+function has_destoyed_component_ctx(current_value) {
+	return current_value.ctx?.d ?? false;
+}
+
+/**
  * This function is responsible for synchronizing a possibly bound prop with the inner component state.
  * It is used whenever the compiler sees that the component writes to the prop, or when it has a default prop_value.
  * @template V
@@ -382,6 +382,11 @@ export function prop(props, key, flags, fallback) {
 		return (inner_current_value.v = parent_value);
 	});
 
+	// Ensure we eagerly capture the initial value if it's bindable
+	if (bindable) {
+		get(current_value);
+	}
+
 	if (!immutable) current_value.equals = safe_equals;
 
 	return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
@@ -408,11 +413,21 @@ export function prop(props, key, flags, fallback) {
 				if (fallback_used && fallback_value !== undefined) {
 					fallback_value = new_value;
 				}
+
+				if (has_destoyed_component_ctx(current_value)) {
+					return value;
+				}
+
 				untrack(() => get(current_value)); // force a synchronisation immediately
 			}
 
 			return value;
 		}
+
+		if (has_destoyed_component_ctx(current_value)) {
+			return current_value.v;
+		}
+
 		return get(current_value);
 	};
 }

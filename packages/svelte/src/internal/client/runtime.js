@@ -24,7 +24,7 @@ import {
 	DISCONNECTED,
 	BOUNDARY_EFFECT
 } from './constants.js';
-import { flush_tasks } from './dom/task.js';
+import { flush_tasks, queue_micro_task } from './dom/task.js';
 import { internal_set } from './reactivity/sources.js';
 import { destroy_derived_effects, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
@@ -39,6 +39,8 @@ import {
 	set_dev_current_component_function
 } from './context.js';
 import { is_firefox } from './dom/operations.js';
+
+export const old_values = new Map();
 
 // Used for DEV time error handling
 /** @param {WeakSet<Error>} value */
@@ -673,6 +675,7 @@ function flush_queued_root_effects() {
 		if (DEV) {
 			dev_effect_stack = [];
 		}
+		old_values.clear();
 	}
 }
 
@@ -921,6 +924,10 @@ export function get(signal) {
 
 			entry.read.push(get_stack('TracedAt'));
 		}
+	}
+
+	if (is_destroying_effect && old_values.has(signal)) {
+		return old_values.get(signal);
 	}
 
 	return signal.v;

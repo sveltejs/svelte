@@ -14,7 +14,9 @@ import {
 	derived_sources,
 	set_derived_sources,
 	check_dirtiness,
-	untracking
+	untracking,
+	old_values,
+	is_destroying_effect
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -32,6 +34,7 @@ import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack } from '../dev/tracing.js';
 import { component_context, is_runes } from '../context.js';
+import { queue_micro_task } from '../dom/task.js';
 
 export let inspect_effects = new Set();
 
@@ -168,6 +171,13 @@ export function set(source, value) {
 export function internal_set(source, value) {
 	if (!source.equals(value)) {
 		var old_value = source.v;
+
+		if (is_destroying_effect) {
+			old_values.set(source, value);
+		} else {
+			old_values.set(source, old_value);
+		}
+
 		source.v = value;
 		source.wv = increment_write_version();
 
