@@ -1,4 +1,4 @@
-/** @import { ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, Node, Pattern, VariableDeclarator } from 'estree' */
+/** @import { ArrowFunctionExpression, ClassDeclaration, Expression, FunctionDeclaration, FunctionExpression, Identifier, ImportDeclaration, MemberExpression, Node, Pattern, VariableDeclarator } from 'estree' */
 /** @import { Context, Visitor } from 'zimmerframe' */
 /** @import { AST, BindingKind, DeclarationKind } from '#compiler' */
 import is_reference from 'is-reference';
@@ -80,19 +80,23 @@ export class Binding {
 		return this.mutated || this.reassigned;
 	}
 
+	/**
+	 * @returns {this is Binding & { initial: ArrowFunctionExpression | FunctionDeclaration | FunctionExpression }}
+	 */
 	is_function() {
-		if (this.reassigned) {
+		if (this.updated) {
 			// even if it's reassigned to another function,
 			// we can't use it directly as e.g. an event handler
 			return false;
 		}
 
-		if (this.declaration_kind === 'function') {
-			return true;
-		}
-
 		const type = this.initial?.type;
-		return type === 'ArrowFunctionExpression' || type === 'FunctionExpression';
+
+		return (
+			type === 'ArrowFunctionExpression' ||
+			type === 'FunctionExpression' ||
+			type === 'FunctionDeclaration'
+		);
 	}
 }
 
