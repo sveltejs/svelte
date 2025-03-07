@@ -245,7 +245,7 @@ export function spread_props(...props) {
  * @param {Derived} current_value
  * @returns {boolean}
  */
-function has_destoyed_component_ctx(current_value) {
+function has_destroyed_component_ctx(current_value) {
 	return current_value.ctx?.d ?? false;
 }
 
