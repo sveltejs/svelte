@@ -11,7 +11,7 @@ import {
 	set_active_reaction,
 	untrack
 } from './runtime.js';
-import { effect } from './reactivity/effects.js';
+import { effect, teardown } from './reactivity/effects.js';
 import { legacy_mode_flag } from '../flags/index.js';
 
 /** @type {ComponentContext | null} */
@@ -112,15 +112,16 @@ export function getAllContexts() {
  * @returns {void}
  */
 export function push(props, runes = false, fn) {
-	component_context = {
+	var ctx = (component_context = {
 		p: component_context,
 		c: null,
+		d: false,
 		e: null,
 		m: false,
 		s: props,
 		x: null,
 		l: null
-	};
+	});
 
 	if (legacy_mode_flag && !runes) {
 		component_context.l = {
@@ -130,6 +131,10 @@ export function push(props, runes = false, fn) {
 			r2: source(false)
 		};
 	}
+
+	teardown(() => {
+		/** @type {ComponentContext} */ (ctx).d = true;
+	});
 
 	if (DEV) {
 		// component function

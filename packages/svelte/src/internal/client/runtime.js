@@ -25,7 +25,7 @@ import {
 	BOUNDARY_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
-import { internal_set } from './reactivity/sources.js';
+import { internal_set, old_values } from './reactivity/sources.js';
 import { destroy_derived_effects, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { FILENAME } from '../../constants.js';
@@ -673,6 +673,7 @@ function flush_queued_root_effects() {
 		if (DEV) {
 			dev_effect_stack = [];
 		}
+		old_values.clear();
 	}
 }
 
@@ -921,6 +922,10 @@ export function get(signal) {
 
 			entry.read.push(get_stack('TracedAt'));
 		}
+	}
+
+	if (is_destroying_effect && old_values.has(signal)) {
+		return old_values.get(signal);
 	}
 
 	return signal.v;
