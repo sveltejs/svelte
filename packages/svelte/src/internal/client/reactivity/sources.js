@@ -15,7 +15,6 @@ import {
 	set_derived_sources,
 	check_dirtiness,
 	untracking,
-	old_values,
 	is_destroying_effect
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
@@ -36,6 +35,7 @@ import { get_stack } from '../dev/tracing.js';
 import { component_context, is_runes } from '../context.js';
 
 export let inspect_effects = new Set();
+export const old_values = new Map();
 
 /**
  * @param {Set<any>} v

@@ -25,7 +25,7 @@ import {
 	BOUNDARY_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
-import { internal_set } from './reactivity/sources.js';
+import { internal_set, old_values } from './reactivity/sources.js';
 import { destroy_derived_effects, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { FILENAME } from '../../constants.js';
@@ -39,8 +39,6 @@ import {
 	set_dev_current_component_function
 } from './context.js';
 import { is_firefox } from './dom/operations.js';
-
-export const old_values = new Map();
 
 // Used for DEV time error handling
 /** @param {WeakSet<Error>} value */
