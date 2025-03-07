@@ -424,7 +424,7 @@ export function prop(props, key, flags, fallback) {
 			return value;
 		}
 
-		if (has_destoyed_component_ctx(current_value)) {
+		if (has_destroyed_component_ctx(current_value)) {
 			return current_value.v;
 		}
 
