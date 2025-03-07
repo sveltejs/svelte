@@ -24,7 +24,7 @@ import {
 	DISCONNECTED,
 	BOUNDARY_EFFECT
 } from './constants.js';
-import { flush_tasks, queue_micro_task } from './dom/task.js';
+import { flush_tasks } from './dom/task.js';
 import { internal_set } from './reactivity/sources.js';
 import { destroy_derived_effects, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
