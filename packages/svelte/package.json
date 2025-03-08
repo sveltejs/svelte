@@ -11,9 +11,10 @@
   "files": [
     "src",
     "!src/**/*.test.*",
-    "types",
+    "!src/**/*.d.ts",
     "compiler",
-    "*.d.ts",
+    "types/index.d.ts",
+    "elements.d.ts",
     "README.md"
   ],
   "module": "src/index-client.js",
