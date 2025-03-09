@@ -8,6 +8,6 @@
 	})
 </script>
 
-<svelte:element this={div ?? "div"}>
+<svelte:element this={div ?? "main"}>
 	<p>children</p>
 </svelte:element>
