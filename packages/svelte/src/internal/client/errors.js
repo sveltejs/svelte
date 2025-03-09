@@ -336,3 +336,18 @@ export function state_unsafe_mutation() {
 		throw new Error(`https://svelte.dev/e/state_unsafe_mutation`);
 	}
 }
+
+/**
+ * You can't use an HTML element as the `this` attribute of `svelte:element` if it's already connected to a document
+ * @returns {never}
+ */
+export function svelte_element_already_connected() {
+	if (DEV) {
+		const error = new Error(`svelte_element_already_connected\nYou can't use an HTML element as the \`this\` attribute of \`svelte:element\` if it's already connected to a document\nhttps://svelte.dev/e/svelte_element_already_connected`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/svelte_element_already_connected`);
+	}
+}

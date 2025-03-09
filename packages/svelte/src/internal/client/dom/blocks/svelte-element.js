@@ -23,6 +23,7 @@ import { DEV } from 'esm-env';
 import { EFFECT_TRANSPARENT } from '../../constants.js';
 import { assign_nodes } from '../template.js';
 import { is_raw_text_element } from '../../../../utils.js';
+import * as e from '../../errors.js';
 
 /**
  * @param {Comment | Element} node
@@ -70,10 +71,18 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 	block(() => {
 		const next_tag = get_tag() || null;
-		var ns = get_namespace ? get_namespace() : is_svg || next_tag === 'svg' ? NAMESPACE_SVG : null;
+		var ns = get_namespace
+			? get_namespace()
+			: is_svg || (typeof next_tag === 'string' ? next_tag === 'svg' : next_tag?.tagName === 'svg')
+				? NAMESPACE_SVG
+				: null;
 
 		// Assumption: Noone changes the namespace but not the tag (what would that even mean?)
 		if (next_tag === tag) return;
+
+		if (typeof next_tag !== 'string' && next_tag?.isConnected) {
+			e.svelte_element_already_connected();
+		}
 
 		// See explanation of `each_item_block` above
 		var previous_each_item = current_each_item;
