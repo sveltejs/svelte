@@ -23,10 +23,11 @@ import { DEV } from 'esm-env';
 import { EFFECT_TRANSPARENT } from '../../constants.js';
 import { assign_nodes } from '../template.js';
 import { is_raw_text_element } from '../../../../utils.js';
+import * as e from '../../errors.js';
 
 /**
  * @param {Comment | Element} node
- * @param {() => string} get_tag
+ * @param {() => string | HTMLElement | SVGElement} get_tag
  * @param {boolean} is_svg
  * @param {undefined | ((element: Element, anchor: Node | null) => void)} render_fn,
  * @param {undefined | (() => string)} get_namespace
@@ -42,10 +43,10 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 	var filename = DEV && location && component_context?.function[FILENAME];
 
-	/** @type {string | null} */
+	/** @type {string | HTMLElement | SVGElement | null} */
 	var tag;
 
-	/** @type {string | null} */
+	/** @type {string | HTMLElement | SVGElement | null} */
 	var current_tag;
 
 	/** @type {null | Element} */
@@ -70,10 +71,18 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 	block(() => {
 		const next_tag = get_tag() || null;
-		var ns = get_namespace ? get_namespace() : is_svg || next_tag === 'svg' ? NAMESPACE_SVG : null;
+		var ns = get_namespace
+			? get_namespace()
+			: is_svg || (typeof next_tag === 'string' ? next_tag === 'svg' : next_tag?.tagName === 'svg')
+				? NAMESPACE_SVG
+				: null;
 
 		// Assumption: Noone changes the namespace but not the tag (what would that even mean?)
 		if (next_tag === tag) return;
+
+		if (typeof next_tag !== 'string' && next_tag?.isConnected) {
+			e.svelte_element_already_connected();
+		}
 
 		// See explanation of `each_item_block` above
 		var previous_each_item = current_each_item;
@@ -100,9 +109,11 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 			effect = branch(() => {
 				element = hydrating
 					? /** @type {Element} */ (element)
-					: ns
-						? document.createElementNS(ns, next_tag)
-						: document.createElement(next_tag);
+					: typeof next_tag === 'string'
+						? ns
+							? document.createElementNS(ns, next_tag)
+							: document.createElement(next_tag)
+						: next_tag;
 
 				if (DEV && location) {
 					// @ts-expect-error
@@ -118,7 +129,10 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				assign_nodes(element, element);
 
 				if (render_fn) {
-					if (hydrating && is_raw_text_element(next_tag)) {
+					if (
+						hydrating &&
+						is_raw_text_element(typeof next_tag === 'string' ? next_tag : next_tag.nodeName)
+					) {
 						// prevent hydration glitches
 						element.append(document.createComment(''));
 					}
