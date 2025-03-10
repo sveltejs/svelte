@@ -87,3 +87,7 @@ See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-long
 ## state_unsafe_mutation
 
 > Updating state inside a derived or a template expression is forbidden. If the value should not be reactive, declare it without `$state`
+
+## svelte_element_already_connected
+
+> You can't use an HTML element as the `this` attribute of `svelte:element` if it's already connected to a document
