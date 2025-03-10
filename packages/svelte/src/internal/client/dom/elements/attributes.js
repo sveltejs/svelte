@@ -13,6 +13,7 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from '../../runtime.js';
+import { attach } from './attachments.js';
 import { clsx } from '../../../shared/attributes.js';
 import { set_class } from './class.js';
 import { set_style } from './style.js';
@@ -444,6 +445,10 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 
 	if (is_hydrating_custom_element) {
 		set_hydrating(true);
+	}
+
+	for (let symbol of Object.getOwnPropertySymbols(next)) {
+		attach(element, () => next[symbol]);
 	}
 
 	return current;
