@@ -4,6 +4,24 @@ title: transition:
 
 A _transition_ is triggered by an element entering or leaving the DOM as a result of a state change.
 
+ Transitions are _local_ by default. Local transitions only play when the block they belong to is created or destroyed, _not_ when parent blocks are created or destroyed.
+
+## Global Transitions
+
+You can specify a _global_ transition should by appending the modifier `|global` to the directive. 
+
+```svelte
+{#if x}
+	{#if y}
+		<p transition:fade>fades in and out only when y changes</p>
+
+		<p transition:fade|global>fades in and out when x or y change</p>
+	{/if}
+{/if}
+```
+
+## Bidirectional Transitions
+
 When a block (such as an `{#if ...}` block) is transitioning out, all elements inside it, including those that do not have their own transitions, are kept in the DOM until every transition in the block has been completed.
 
 The `transition:` directive indicates a _bidirectional_ transition, which means it can be smoothly reversed while the transition is in progress.
@@ -26,19 +44,6 @@ The `transition:` directive indicates a _bidirectional_ transition, which means 
 
 A selection of built-in transitions can be imported from the [`svelte/transition`](svelte-transition) module.
 
-## Local vs global
-
-Transitions are local by default. Local transitions only play when the block they belong to is created or destroyed, _not_ when parent blocks are created or destroyed.
-
-```svelte
-{#if x}
-	{#if y}
-		<p transition:fade>fades in and out only when y changes</p>
-
-		<p transition:fade|global>fades in and out when x or y change</p>
-	{/if}
-{/if}
-```
 
 ## Transition parameters
 
