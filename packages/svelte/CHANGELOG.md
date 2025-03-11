@@ -1,5 +1,11 @@
 # svelte
 
+## 5.23.0
+
+### Minor Changes
+
+- fix: make values consistent between effects and their cleanup functions ([#15469](https://github.com/sveltejs/svelte/pull/15469))
+
 ## 5.22.6
 
 ### Patch Changes
