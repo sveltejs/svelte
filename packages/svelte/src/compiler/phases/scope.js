@@ -298,7 +298,7 @@ export class Scope {
 			case 'Identifier':
 				const binding = this.get(expression.name);
 				if (binding && !binding.updated && binding.initial !== null) {
-					this.evaluate(/** @type {Expression} */ (binding.initial), values);
+					binding.scope.evaluate(/** @type {Expression} */ (binding.initial), values);
 					break;
 				}
 
