@@ -16,6 +16,10 @@ import { is_reserved, is_rune } from '../../utils.js';
 import { determine_slot } from '../utils/slot.js';
 import { validate_identifier_name } from './2-analyze/visitors/shared/utils.js';
 
+export const UNKNOWN = Symbol();
+export const NUMBER = Symbol();
+export const STRING = Symbol();
+
 export class Binding {
 	/** @type {Scope} */
 	scope;
@@ -34,7 +38,7 @@ export class Binding {
 	 * For destructured props such as `let { foo = 'bar' } = $props()` this is `'bar'` and not `$props()`
 	 * @type {null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | AST.EachBlock | AST.SnippetBlock}
 	 */
-	initial;
+	initial = null;
 
 	/** @type {Array<{ node: Identifier; path: AST.SvelteNode[] }>} */
 	references = [];
@@ -278,6 +282,114 @@ export class Scope {
 			// which means this is a global
 			this.root.conflicts.add(node.name);
 		}
+	}
+
+	/**
+	 *
+	 * @param {Expression} expression
+	 * @param {Set<any>} values
+	 */
+	evaluate(expression, values = new Set()) {
+		switch (expression.type) {
+			case 'Literal':
+				values.add(expression.value);
+				break;
+
+			case 'Identifier':
+				const binding = this.get(expression.name);
+				if (binding && !binding.updated && binding.initial !== null) {
+					this.evaluate(/** @type {Expression} */ (binding.initial), values);
+					break;
+				}
+
+				values.add(UNKNOWN);
+				break;
+
+			case 'BinaryExpression':
+				switch (expression.operator) {
+					case '!=':
+					case '!==':
+					case '<':
+					case '<=':
+					case '>':
+					case '>=':
+					case '==':
+					case '===':
+					case 'in':
+					case 'instanceof':
+						values.add(true);
+						values.add(false);
+						break;
+
+					case '%':
+					case '&':
+					case '*':
+					case '**':
+					case '-':
+					case '/':
+					case '<<':
+					case '>>':
+					case '>>>':
+					case '^':
+					case '|':
+						values.add(NUMBER);
+						break;
+
+					case '+':
+						const a = Array.from(this.evaluate(/** @type {Expression} */ (expression.left))); // `left` cannot be `PrivateIdentifier` unless operator is `in`
+						const b = Array.from(this.evaluate(expression.right));
+
+						if (
+							a.every((v) => v === STRING || typeof v === 'string') ||
+							b.every((v) => v === STRING || typeof v === 'string')
+						) {
+							// concatenating strings
+							if (
+								a.includes(STRING) ||
+								b.includes(STRING) ||
+								a.length > 1 ||
+								b.length > 1 ||
+								typeof a[0] === 'symbol' ||
+								typeof b[0] === 'symbol'
+							) {
+								values.add(STRING);
+								break;
+							}
+
+							values.add(a[0] + b[0]);
+							break;
+						}
+
+						if (
+							a.every((v) => v === NUMBER || typeof v === 'number') ||
+							b.every((v) => v === NUMBER || typeof v === 'number')
+						) {
+							// adding numbers
+							if (a.includes(NUMBER) || b.includes(NUMBER) || a.length > 1 || b.length > 1) {
+								values.add(NUMBER);
+								break;
+							}
+
+							values.add(a[0] + b[0]);
+							break;
+						}
+
+						values.add(STRING);
+						values.add(NUMBER);
+						break;
+
+					default:
+						values.add(UNKNOWN);
+				}
+				break;
+
+			// TODO others (LogicalExpression, ConditionalExpression, Identifier when we know something about the binding, etc)
+
+			default:
+				values.add(UNKNOWN);
+		}
+
+		return values;
 	}
 }
 
