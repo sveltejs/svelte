@@ -223,10 +223,6 @@ export function evaluate_static_expression(node, state, server) {
 			 * 		let variable = ident_or_evaluable_value;
 			 * 		return variable;
 			 * });
-			 * // it's fine if we don't want to use this for side effect reasons, its just one line (251)
-			 * (() => {
-			 * 		anything_but_a_return;
-			 * })()
 			 * ```
 			 * I would like to possibly optimize this:
 			 * ```
@@ -248,7 +244,6 @@ export function evaluate_static_expression(node, state, server) {
 			let { body } = callee;
 			if (body.type === 'BlockStatement') {
 				let children = body.body;
-				if (!children.find(({ type }) => type === 'ReturnStatement')) return undefined;
 				if (children.length === 1 && children[0].type === 'ReturnStatement') {
 					return children[0].argument == null
 						? undefined
