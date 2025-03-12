@@ -566,7 +566,7 @@ function read_attribute_value(parser) {
 }
 
 /**
- * https://www.w3.org/TR/CSS21/syndata.html#value-def-identifier
+ * https://www.w3.org/TR/css-syntax-3/#ident-token-diagram
  * @param {Parser} parser
  */
 function read_identifier(parser) {
@@ -574,7 +574,7 @@ function read_identifier(parser) {
 
 	let identifier = '';
 
-	if (parser.match('--') || parser.match_regex(REGEX_LEADING_HYPHEN_OR_DIGIT)) {
+	if (parser.match_regex(REGEX_LEADING_HYPHEN_OR_DIGIT)) {
 		e.css_expected_identifier(start);
 	}
 

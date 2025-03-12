@@ -1,6 +1,7 @@
 /** @import { BlockStatement, Statement, Expression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
+import { dev } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 
 /**
@@ -35,6 +36,9 @@ export function SvelteBoundary(node, context) {
 	/** @type {Statement[]} */
 	const external_statements = [];
 
+	/** @type {Statement[]} */
+	const internal_statements = [];
+
 	const snippets_visits = [];
 
 	// Capture the `failed` implicit snippet prop
@@ -53,7 +57,20 @@ export function SvelteBoundary(node, context) {
 			/** @type {Statement[]} */
 			const init = [];
 			context.visit(child, { ...context.state, init });
-			external_statements.push(...init);
+
+			if (dev) {
+				// In dev we must separate the declarations from the code
+				// that eagerly evaluate the expression...
+				for (const statement of init) {
+					if (statement.type === 'VariableDeclaration') {
+						external_statements.push(statement);
+					} else {
+						internal_statements.push(statement);
+					}
+				}
+			} else {
+				external_statements.push(...init);
+			}
 		} else {
 			nodes.push(child);
 		}
@@ -62,6 +79,10 @@ export function SvelteBoundary(node, context) {
 	snippets_visits.forEach((visit) => visit());
 
 	const block = /** @type {BlockStatement} */ (context.visit({ ...node.fragment, nodes }));
+
+	if (dev && internal_statements.length) {
+		block.body.unshift(...internal_statements);
+	}
 
 	const boundary = b.stmt(
 		b.call('$.boundary', context.state.node, props, b.arrow([b.id('$$anchor')], block))

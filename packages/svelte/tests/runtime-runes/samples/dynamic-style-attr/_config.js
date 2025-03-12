@@ -2,7 +2,7 @@ import { test } from '../../test';
 import { flushSync } from 'svelte';
 
 export default test({
-	html: `<div style="background-color: red">Hello world</div><button>Make blue</button`,
+	html: `<div style="background-color: red;">Hello world</div><button>Make blue</button`,
 
 	async test({ assert, target, component }) {
 		const [b1] = target.querySelectorAll('button');
@@ -11,7 +11,7 @@ export default test({
 		});
 		assert.htmlEqual(
 			target.innerHTML,
-			`<div style="background-color: blue">Hello world</div><button>Make blue</button`
+			`<div style="background-color: blue;">Hello world</div><button>Make blue</button`
 		);
 	}
 });

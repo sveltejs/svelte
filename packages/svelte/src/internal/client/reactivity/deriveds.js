@@ -116,7 +116,7 @@ function get_derived_parent_effect(derived) {
  * @param {Derived} derived
  * @returns {T}
  */
-export function execute_derived(derived) {
+function execute_derived(derived) {
 	var value;
 	var prev_active_effect = active_effect;
 

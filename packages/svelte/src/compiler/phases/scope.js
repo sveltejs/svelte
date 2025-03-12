@@ -1,4 +1,4 @@
-/** @import { ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, Node, Pattern, VariableDeclarator } from 'estree' */
+/** @import { ArrowFunctionExpression, ClassDeclaration, Expression, FunctionDeclaration, FunctionExpression, Identifier, ImportDeclaration, MemberExpression, Node, Pattern, VariableDeclarator } from 'estree' */
 /** @import { Context, Visitor } from 'zimmerframe' */
 /** @import { AST, BindingKind, DeclarationKind } from '#compiler' */
 import is_reference from 'is-reference';
@@ -57,10 +57,8 @@ export class Binding {
 	 */
 	metadata = null;
 
-	is_called = false;
 	mutated = false;
 	reassigned = false;
-	updated = false;
 
 	/**
 	 *
@@ -76,6 +74,29 @@ export class Binding {
 		this.initial = initial;
 		this.kind = kind;
 		this.declaration_kind = declaration_kind;
+	}
+
+	get updated() {
+		return this.mutated || this.reassigned;
+	}
+
+	/**
+	 * @returns {this is Binding & { initial: ArrowFunctionExpression | FunctionDeclaration | FunctionExpression }}
+	 */
+	is_function() {
+		if (this.updated) {
+			// even if it's reassigned to another function,
+			// we can't use it directly as e.g. an event handler
+			return false;
+		}
+
+		const type = this.initial?.type;
+
+		return (
+			type === 'ArrowFunctionExpression' ||
+			type === 'FunctionExpression' ||
+			type === 'FunctionDeclaration'
+		);
 	}
 }
 
@@ -159,8 +180,12 @@ export class Scope {
 		}
 
 		if (this.declarations.has(node.name)) {
-			// This also errors on var/function types, but that's arguably a good thing
-			e.declaration_duplicate(node, node.name);
+			const binding = this.declarations.get(node.name);
+			if (binding && binding.declaration_kind !== 'var' && declaration_kind !== 'var') {
+				// This also errors on function types, but that's arguably a good thing
+				// declaring function twice is also caught by acorn in the parse phase
+				e.declaration_duplicate(node, node.name);
+			}
 		}
 
 		const binding = new Binding(this, node, kind, declaration_kind, initial);
@@ -738,8 +763,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			const binding = left && scope.get(left.name);
 
 			if (binding !== null && left !== binding.node) {
-				binding.updated = true;
-
 				if (left === expression) {
 					binding.reassigned = true;
 				} else {
