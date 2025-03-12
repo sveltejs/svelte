@@ -14,3 +14,11 @@
 <p>Sum is {(a, b, a + b)}</p>
 <p>{a === 1 ? a : b}</p>
 <Component {a} {count} c={a+b} />
+{(() => {
+    let thing = 0;
+    return thing;
+})()}<br />
+{(() => 'Hello, world!')()}<br />
+{(() => {
+    return a + b;
+})()}

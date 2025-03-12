@@ -1,8 +1,27 @@
-/** @import { Node, BinaryExpression, LogicalExpression, UnaryExpression, Expression, SequenceExpression, TemplateLiteral, ConditionalExpression } from 'estree' */
+/** @import { Node, BinaryExpression, LogicalExpression, UnaryExpression, Expression, SequenceExpression, TemplateLiteral, ConditionalExpression, CallExpression } from 'estree' */
 /** @import { ComponentClientTransformState } from '../client/types' */
 /** @import { ComponentServerTransformState } from '../server/types' */
 export const DYNAMIC = Symbol('DYNAMIC');
-
+if (!('difference' in Set.prototype)) {
+	/**
+	 * Quick and dirty polfill for `Set.prototype.difference`
+	 * @template T
+	 * @this {Set<T>}
+	 * @param {Set<T>} other
+	 * @returns {Set<T>}
+	 */
+	//@ts-ignore
+	Set.prototype.difference = function difference(other) {
+		/** @type {Set<T>} */
+		let res = new Set();
+		for (let item of this) {
+			if (!other.has(item)) {
+				res.add(item);
+			}
+		}
+		return res;
+	};
+}
 /**
  * @template {boolean} S
  * @param {Node} node
@@ -135,6 +154,7 @@ export function evaluate_static_expression(node, state, server) {
 		function handle_ident(name) {
 			if (server) return DYNAMIC;
 			const scope = state.scope.get(name);
+			// TODO tweak this when implicit top-level reactivity is removed
 			if (scope?.kind === 'normal' && scope?.declaration_kind !== 'import') {
 				if (scope.initial && !scope.mutated && !scope.reassigned && !scope.updated) {
 					//@ts-ignore
@@ -186,6 +206,91 @@ export function evaluate_static_expression(node, state, server) {
 			}
 			return DYNAMIC;
 		}
+		/**
+		 * @param {CallExpression} node
+		 */
+		function handle_call(node) {
+			/**
+			 * There isn't much we can really do here (without having an unreasonable amount of code),
+			 * so we don't optimize for much
+			 * We only optimize for these:
+			 * ```
+			 * (() => identifier_or_evaluable_value)();
+			 * (() => {
+			 * 		return evaluable;
+			 * })();
+			 * (() => {
+			 * 		let variable = ident_or_evaluable_value;
+			 * 		return variable;
+			 * });
+			 * // it's fine if we don't want to use this for side effect reasons, its just one line (251)
+			 * (() => {
+			 * 		anything_but_a_return;
+			 * })()
+			 * ```
+			 * I would like to possibly optimize this:
+			 * ```
+			 * (() => {
+			 * 		let variable = ident_or_evaluable_value;
+			 * 		return variable_combined_with_evaluable;
+			 * })();
+			 * ```
+			 * But I don't know how to do that with the `Scope` class.
+			 */
+			let { callee } = node;
+			if (
+				callee.type !== 'ArrowFunctionExpression' ||
+				node.arguments.length ||
+				callee.params.length
+			) {
+				return DYNAMIC;
+			}
+			let { body } = callee;
+			if (body.type === 'BlockStatement') {
+				let children = body.body;
+				if (!children.find(({ type }) => type === 'ReturnStatement')) return undefined;
+				if (children.length === 1 && children[0].type === 'ReturnStatement') {
+					return children[0].argument == null
+						? undefined
+						: internal(children[0].argument, state, server);
+				}
+				let valid_body_children = new Set([
+					'VariableDeclaration',
+					'EmptyStatement',
+					'ReturnStatement'
+				]);
+				let types = new Set(children.map(({ type }) => type));
+				if (types.difference(valid_body_children).size) {
+					return DYNAMIC;
+				}
+				if (types.has('EmptyStatement')) {
+					children = children.filter(({ type }) => type !== 'EmptyStatement');
+				}
+				if (children.length > 2) return DYNAMIC;
+				if (children[0].type !== 'VariableDeclaration' || children[1].type !== 'ReturnStatement')
+					return DYNAMIC;
+				let [declaration, return_statement] = children;
+				if (declaration.declarations.length > 1) return DYNAMIC;
+				let [declarator] = declaration.declarations;
+				if (declarator.id.type !== 'Identifier') return DYNAMIC;
+				let variable_value;
+				if (declarator.init != null) {
+					variable_value = internal(declarator.init, state, server);
+					if (variable_value === DYNAMIC) {
+						//might be unpure
+						return DYNAMIC;
+					}
+				}
+				let { argument } = return_statement;
+				if (argument == null) return undefined;
+				if (argument.type === 'Identifier' && argument.name === declarator.id.name) {
+					return variable_value;
+				}
+				return internal(argument, state, server);
+			} else {
+				return internal(body, state, server);
+			}
+		}
 		switch (node.type) {
 			case 'Literal':
 				return node.value;
@@ -203,6 +308,8 @@ export function evaluate_static_expression(node, state, server) {
 				return handle_template(node);
 			case 'ConditionalExpression':
 				return handle_ternary(node);
+			case 'CallExpression':
+				return handle_call(node);
 			default:
 				return DYNAMIC;
 		}

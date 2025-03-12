@@ -2,9 +2,11 @@ import 'svelte/internal/disclose-version';
 import * as $ from 'svelte/internal/client';
 
 var on_click = (_, count) => $.update(count);
-var root = $.template(`<h1></h1> <p></p> <button> </button> <p></p> <p></p> <p></p> <!>`, 1);
+var root = $.template(`<h1></h1> <p></p> <button> </button> <p></p> <p></p> <p></p> <!> <br> <br> `, 1);
 
-export default function Static_template_expression_evaluation($$anchor) {
+export default function Static_template_expression_evaluation($$anchor, $$props) {
+	$.push($$props, true);
+
 	let a = 1;
 	let b = 2;
 	let name = 'world';
@@ -51,8 +53,20 @@ export default function Static_template_expression_evaluation($$anchor) {
 		c: 3
 	});
 
+	var text_1 = $.sibling(node);
+
+	text_1.nodeValue = ' 0';
+
+	var text_2 = $.sibling(text_1, 2);
+
+	text_2.nodeValue = ' Hello, world!';
+
+	var text_3 = $.sibling(text_2, 2);
+
+	text_3.nodeValue = ' 3';
 	$.template_effect(() => $.set_text(text, `Count is ${$.get(count) ?? ''}`));
 	$.append($$anchor, fragment);
+	$.pop();
 }
 
 $.delegate(['click']);
