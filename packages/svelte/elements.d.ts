@@ -958,6 +958,8 @@ export interface HTMLDelAttributes extends HTMLAttributes<HTMLModElement> {
 export interface HTMLDialogAttributes extends HTMLAttributes<HTMLDialogElement> {
 	open?: boolean | undefined | null;
 	closedby?: 'any' | 'closerequest' | 'none' | undefined | null;
+	/** [MDN Reference](https://developer.mozilla.org/docs/Web/API/HTMLDialogElement/returnValue) */
+	returnValue?: string | undefined | null;
 }
 
 export interface HTMLEmbedAttributes extends HTMLAttributes<HTMLEmbedElement> {
