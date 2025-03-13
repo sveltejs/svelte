@@ -460,6 +460,13 @@ export function update_reaction(reaction) {
 		// the same version
 		if (previous_reaction !== null) {
 			read_version++;
+			if (untracked_writes !== null) {
+				if (previous_untracked_writes === null) {
+					previous_untracked_writes = untracked_writes;
+				} else {
+					previous_untracked_writes.push(.../** @type {Source[]} */ (untracked_writes));
+				}
+			}
 		}
 
 		return result;
