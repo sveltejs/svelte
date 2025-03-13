@@ -1,4 +1,4 @@
-/** @import { ArrowFunctionExpression, BinaryOperator, ClassDeclaration, Expression, FunctionDeclaration, FunctionExpression, Identifier, ImportDeclaration, MemberExpression, Node, Pattern, VariableDeclarator } from 'estree' */
+/** @import { ArrowFunctionExpression, BinaryOperator, ClassDeclaration, Expression, FunctionDeclaration, FunctionExpression, Identifier, ImportDeclaration, MemberExpression, LogicalOperator, Node, Pattern, UnaryOperator, VariableDeclarator } from 'estree' */
 /** @import { Context, Visitor } from 'zimmerframe' */
 /** @import { AST, BindingKind, DeclarationKind } from '#compiler' */
 import is_reference from 'is-reference';
@@ -16,9 +16,9 @@ import { is_reserved, is_rune } from '../../utils.js';
 import { determine_slot } from '../utils/slot.js';
 import { validate_identifier_name } from './2-analyze/visitors/shared/utils.js';
 
-export const UNKNOWN = Symbol();
-export const NUMBER = Symbol();
-export const STRING = Symbol();
+export const UNKNOWN = Symbol('unknown');
+export const NUMBER = Symbol('number'); // includes BigInt
+export const STRING = Symbol('string');
 
 export class Binding {
 	/** @type {Scope} */
@@ -113,7 +113,7 @@ class Evaluation {
 	 * @readonly
 	 * @type {boolean}
 	 */
-	is_definite = false;
+	is_known = false;
 
 	/**
 	 * True if the value is known to not be null/undefined
@@ -155,13 +155,27 @@ class Evaluation {
 
 			case 'Identifier':
 				var binding = scope.get(expression.name);
-				if (binding && !binding.updated && binding.initial !== null) {
-					const evaluation = binding.scope.evaluate(/** @type {Expression} */ (binding.initial));
-					for (const value of evaluation.values) {
-						this.values.add(value);
+
+				if (binding) {
+					if (
+						binding.initial?.type === 'CallExpression' &&
+						get_rune(binding.initial, scope) === '$props.id'
+					) {
+						this.values.add(STRING);
+						break;
 					}
-					break;
+
+					if (!binding.updated && binding.initial !== null) {
+						const evaluation = binding.scope.evaluate(/** @type {Expression} */ (binding.initial));
+						for (const value of evaluation.values) {
+							this.values.add(value);
+						}
+						break;
+					}
 				}
+
+				// TODO glean what we can from reassignments
+				// TODO one day, expose props and imports somehow
 
 				this.values.add(UNKNOWN);
 				break;
@@ -170,7 +184,7 @@ class Evaluation {
 				var a = scope.evaluate(/** @type {Expression} */ (expression.left)); // `left` cannot be `PrivateIdentifier` unless operator is `in`
 				var b = scope.evaluate(expression.right);
 
-				if (a.is_definite && b.is_definite) {
+				if (a.is_known && b.is_known) {
 					this.values.add(binary[expression.operator](a.value, b.value));
 					break;
 				}
@@ -214,10 +228,102 @@ class Evaluation {
 							this.values.add(NUMBER);
 						}
 						break;
+
+					default:
+						// @ts-expect-error we can't guard against future operators without
+						// TypeScript getting confused
+						throw new Error(`Unknown operator ${expression.operator}`);
 				}
 				break;
 
-			// TODO others (LogicalExpression, ConditionalExpression, Identifier when we know something about the binding, etc)
+			case 'ConditionalExpression':
+				var test = scope.evaluate(expression.test);
+				var consequent = scope.evaluate(expression.consequent);
+				var alternate = scope.evaluate(expression.alternate);
+
+				if (test.is_known) {
+					for (const value of (test.value ? consequent : alternate).values) {
+						this.values.add(value);
+					}
+				} else {
+					for (const value of consequent.values) {
+						this.values.add(value);
+					}
+
+					for (const value of alternate.values) {
+						this.values.add(value);
+					}
+				}
+				break;
+
+			case 'LogicalExpression':
+				a = scope.evaluate(expression.left);
+				b = scope.evaluate(expression.right);
+
+				if (a.is_known) {
+					if (b.is_known) {
+						this.values.add(logical[expression.operator](a.value, b.value));
+						break;
+					}
+
+					if (
+						(expression.operator === '&&' && !a.value) ||
+						(expression.operator === '||' && a.value) ||
+						(expression.operator === '??' && a.value != null)
+					) {
+						this.values.add(a.value);
+					} else {
+						for (const value of b.values) {
+							this.values.add(value);
+						}
+					}
+
+					break;
+				}
+
+				for (const value of a.values) {
+					this.values.add(value);
+				}
+
+				for (const value of b.values) {
+					this.values.add(value);
+				}
+				break;
+
+			case 'UnaryExpression':
+				const argument = scope.evaluate(expression.argument);
+
+				if (argument.is_known) {
+					this.values.add(unary[expression.operator](argument.value));
+					break;
+				}
+
+				switch (expression.operator) {
+					case '!':
+					case 'delete':
+						this.values.add(false);
+						this.values.add(true);
+						break;
+
+					case '+':
+					case '-':
+					case '~':
+						this.values.add(NUMBER);
+						break;
+
+					case 'typeof':
+						this.values.add(STRING);
+						break;
+
+					case 'void':
+						this.values.add(undefined);
+						break;
+
+					default:
+						// @ts-expect-error we can't guard against future operators without
+						// TypeScript getting confused
+						throw new Error(`Unknown operator ${expression.operator}`);
+				}
 
 			default:
 				this.values.add(UNKNOWN);
@@ -234,12 +340,12 @@ class Evaluation {
 				this.is_number = false;
 			}
 
-			if (value == null || typeof value === 'symbol') {
+			if (value == null || value === UNKNOWN) {
 				this.is_defined = false;
 			}
 		}
 
-		this.is_definite = this.values.size === 1 && typeof this.value !== 'symbol';
+		this.is_known = this.values.size === 1 && typeof this.value !== 'symbol';
 	}
 }
 
@@ -457,6 +563,24 @@ const binary = {
 	'>>>': (left, right) => left >>> right,
 	'^': (left, right) => left ^ right,
 	'|': (left, right) => left | right
+};
+
+/** @type {Record<UnaryOperator, (argument: any) => any>} */
+const unary = {
+	'-': (argument) => -argument,
+	'+': (argument) => +argument,
+	'!': (argument) => !argument,
+	'~': (argument) => ~argument,
+	typeof: (argument) => typeof argument,
+	void: () => undefined,
+	delete: () => true
+};
+
+/** @type {Record<LogicalOperator, (left: any, right: any) => any>} */
+const logical = {
+	'||': (left, right) => left || right,
+	'&&': (left, right) => left && right,
+	'??': (left, right) => left ?? right
 };
 
 export class ScopeRoot {

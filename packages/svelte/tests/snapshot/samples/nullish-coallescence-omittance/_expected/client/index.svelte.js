@@ -10,7 +10,7 @@ export default function Nullish_coallescence_omittance($$anchor) {
 	var fragment = root();
 	var h1 = $.first_child(fragment);
 
-	h1.textContent = `Hello, ${name ?? ''}!`;
+	h1.textContent = `Hello, ${name}!`;
 
 	var b = $.sibling(h1, 2);
 

@@ -89,13 +89,9 @@ export function build_template_chunk(
 				}
 			}
 
-			const is_defined =
-				value.type === 'BinaryExpression' ||
-				(value.type === 'UnaryExpression' && value.operator !== 'void') ||
-				(value.type === 'LogicalExpression' && value.right.type === 'Literal') ||
-				(value.type === 'Identifier' && value.name === state.analysis.props_id?.name);
+			const evaluated = state.scope.evaluate(value);
 
-			if (!is_defined) {
+			if (!evaluated.is_defined) {
 				// add `?? ''` where necessary (TODO optimise more cases)
 				value = b.logical('??', value, b.literal(''));
 			}
