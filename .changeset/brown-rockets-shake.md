@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: ensure transient writes to tracked parent effects works as expected
+fix: invalidate parent effects when child effects update parent dependencies
