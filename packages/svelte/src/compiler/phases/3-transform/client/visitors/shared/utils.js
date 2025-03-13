@@ -91,15 +91,19 @@ export function build_template_chunk(
 
 			const evaluated = state.scope.evaluate(value);
 
-			if (!evaluated.is_defined) {
-				// add `?? ''` where necessary (TODO optimise more cases)
-				value = b.logical('??', value, b.literal(''));
+			if (evaluated.is_known) {
+				quasi.value.cooked += evaluated.value + '';
+			} else {
+				if (!evaluated.is_defined) {
+					// add `?? ''` where necessary (TODO optimise more cases)
+					value = b.logical('??', value, b.literal(''));
+				}
+
+				expressions.push(value);
+
+				quasi = b.quasi('', i + 1 === values.length);
+				quasis.push(quasi);
 			}
-
-			expressions.push(value);
-
-			quasi = b.quasi('', i + 1 === values.length);
-			quasis.push(quasi);
 		}
 	}
 
