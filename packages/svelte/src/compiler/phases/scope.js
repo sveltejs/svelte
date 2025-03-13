@@ -172,6 +172,8 @@ class Evaluation {
 						}
 						break;
 					}
+
+					// TODO each index is always defined
 				}
 
 				// TODO glean what we can from reassignments
