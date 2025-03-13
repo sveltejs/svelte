@@ -1,4 +1,4 @@
-/** @import { ArrowFunctionExpression, ClassDeclaration, Expression, FunctionDeclaration, FunctionExpression, Identifier, ImportDeclaration, MemberExpression, Node, Pattern, VariableDeclarator } from 'estree' */
+/** @import { ArrowFunctionExpression, BinaryOperator, ClassDeclaration, Expression, FunctionDeclaration, FunctionExpression, Identifier, ImportDeclaration, MemberExpression, Node, Pattern, VariableDeclarator } from 'estree' */
 /** @import { Context, Visitor } from 'zimmerframe' */
 /** @import { AST, BindingKind, DeclarationKind } from '#compiler' */
 import is_reference from 'is-reference';
@@ -101,6 +101,145 @@ export class Binding {
 			type === 'FunctionExpression' ||
 			type === 'FunctionDeclaration'
 		);
+	}
+}
+
+class Evaluation {
+	/** @type {Set<any>} */
+	values = new Set();
+
+	/**
+	 * True if there is exactly one possible value
+	 * @readonly
+	 * @type {boolean}
+	 */
+	is_definite = false;
+
+	/**
+	 * True if the value is known to not be null/undefined
+	 * @readonly
+	 * @type {boolean}
+	 */
+	is_defined = true;
+
+	/**
+	 * True if the value is known to be a string
+	 * @readonly
+	 * @type {boolean}
+	 */
+	is_string = true;
+
+	/**
+	 * True if the value is known to be a number
+	 * @readonly
+	 * @type {boolean}
+	 */
+	is_number = true;
+
+	/**
+	 * @readonly
+	 * @type {any}
+	 */
+	value = undefined;
+
+	/**
+	 *
+	 * @param {Scope} scope
+	 * @param {Expression} expression
+	 */
+	constructor(scope, expression) {
+		switch (expression.type) {
+			case 'Literal':
+				this.values.add(expression.value);
+				break;
+
+			case 'Identifier':
+				var binding = scope.get(expression.name);
+				if (binding && !binding.updated && binding.initial !== null) {
+					const evaluation = binding.scope.evaluate(/** @type {Expression} */ (binding.initial));
+					for (const value of evaluation.values) {
+						this.values.add(value);
+					}
+					break;
+				}
+
+				this.values.add(UNKNOWN);
+				break;
+
+			case 'BinaryExpression':
+				var a = scope.evaluate(/** @type {Expression} */ (expression.left)); // `left` cannot be `PrivateIdentifier` unless operator is `in`
+				var b = scope.evaluate(expression.right);
+
+				if (a.is_definite && b.is_definite) {
+					this.values.add(binary[expression.operator](a.value, b.value));
+					break;
+				}
+
+				switch (expression.operator) {
+					case '!=':
+					case '!==':
+					case '<':
+					case '<=':
+					case '>':
+					case '>=':
+					case '==':
+					case '===':
+					case 'in':
+					case 'instanceof':
+						this.values.add(true);
+						this.values.add(false);
+						break;
+
+					case '%':
+					case '&':
+					case '*':
+					case '**':
+					case '-':
+					case '/':
+					case '<<':
+					case '>>':
+					case '>>>':
+					case '^':
+					case '|':
+						this.values.add(NUMBER);
+						break;
+
+					case '+':
+						if (a.is_string || b.is_string) {
+							this.values.add(STRING);
+						} else if (a.is_number && b.is_number) {
+							this.values.add(NUMBER);
+						} else {
+							this.values.add(STRING);
+							this.values.add(NUMBER);
+						}
+						break;
+				}
+				break;
+
+			// TODO others (LogicalExpression, ConditionalExpression, Identifier when we know something about the binding, etc)
+
+			default:
+				this.values.add(UNKNOWN);
+		}
+
+		for (const value of this.values) {
+			this.value = value; // saves having special logic for `size === 1`
+
+			if (value !== STRING && typeof value !== 'string') {
+				this.is_string = false;
+			}
+
+			if (value !== NUMBER && typeof value !== 'number') {
+				this.is_number = false;
+			}
+
+			if (value == null || typeof value === 'symbol') {
+				this.is_defined = false;
+			}
+		}
+
+		this.is_definite = this.values.size === 1 && typeof this.value !== 'symbol';
 	}
 }
 
@@ -290,108 +429,35 @@ export class Scope {
 	 * @param {Set<any>} values
 	 */
 	evaluate(expression, values = new Set()) {
-		switch (expression.type) {
-			case 'Literal':
-				values.add(expression.value);
-				break;
-
-			case 'Identifier':
-				const binding = this.get(expression.name);
-				if (binding && !binding.updated && binding.initial !== null) {
-					binding.scope.evaluate(/** @type {Expression} */ (binding.initial), values);
-					break;
-				}
-
-				values.add(UNKNOWN);
-				break;
-
-			case 'BinaryExpression':
-				switch (expression.operator) {
-					case '!=':
-					case '!==':
-					case '<':
-					case '<=':
-					case '>':
-					case '>=':
-					case '==':
-					case '===':
-					case 'in':
-					case 'instanceof':
-						values.add(true);
-						values.add(false);
-						break;
-
-					case '%':
-					case '&':
-					case '*':
-					case '**':
-					case '-':
-					case '/':
-					case '<<':
-					case '>>':
-					case '>>>':
-					case '^':
-					case '|':
-						values.add(NUMBER);
-						break;
-
-					case '+':
-						const a = Array.from(this.evaluate(/** @type {Expression} */ (expression.left))); // `left` cannot be `PrivateIdentifier` unless operator is `in`
-						const b = Array.from(this.evaluate(expression.right));
-
-						if (
-							a.every((v) => v === STRING || typeof v === 'string') ||
-							b.every((v) => v === STRING || typeof v === 'string')
-						) {
-							// concatenating strings
-							if (
-								a.includes(STRING) ||
-								b.includes(STRING) ||
-								a.length > 1 ||
-								b.length > 1 ||
-								typeof a[0] === 'symbol' ||
-								typeof b[0] === 'symbol'
-							) {
-								values.add(STRING);
-								break;
-							}
-
-							values.add(a[0] + b[0]);
-							break;
-						}
-
-						if (
-							a.every((v) => v === NUMBER || typeof v === 'number') ||
-							b.every((v) => v === NUMBER || typeof v === 'number')
-						) {
-							// adding numbers
-							if (a.includes(NUMBER) || b.includes(NUMBER) || a.length > 1 || b.length > 1) {
-								values.add(NUMBER);
-								break;
-							}
-
-							values.add(a[0] + b[0]);
-							break;
-						}
-
-						values.add(STRING);
-						values.add(NUMBER);
-						break;
-
-					default:
-						values.add(UNKNOWN);
-				}
-				break;
-
-			// TODO others (LogicalExpression, ConditionalExpression, Identifier when we know something about the binding, etc)
-
-			default:
-				values.add(UNKNOWN);
-		}
-
-		return values;
+		return new Evaluation(this, expression);
 	}
 }
+
+/** @type {Record<BinaryOperator, (left: any, right: any) => any>} */
+const binary = {
+	'!=': (left, right) => left != right,
+	'!==': (left, right) => left !== right,
+	'<': (left, right) => left < right,
+	'<=': (left, right) => left <= right,
+	'>': (left, right) => left > right,
+	'>=': (left, right) => left >= right,
+	'==': (left, right) => left == right,
+	'===': (left, right) => left === right,
+	in: (left, right) => left in right,
+	instanceof: (left, right) => left instanceof right,
+	'%': (left, right) => left % right,
+	'&': (left, right) => left & right,
+	'*': (left, right) => left * right,
+	'**': (left, right) => left ** right,
+	'+': (left, right) => left + right,
+	'-': (left, right) => left - right,
+	'/': (left, right) => left / right,
+	'<<': (left, right) => left << right,
+	'>>': (left, right) => left >> right,
+	'>>>': (left, right) => left >>> right,
+	'^': (left, right) => left ^ right,
+	'|': (left, right) => left | right
+};
 
 export class ScopeRoot {
 	/** @type {Set<string>} */
