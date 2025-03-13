@@ -75,7 +75,7 @@ export class Parser {
 
 		regex_lang_attribute.lastIndex = 0; // reset matched index to pass tests - otherwise declare the regex inside the constructor
 
-		this.ts = match_lang?.[2] === 'ts';
+		this.ts = (match_lang?.[2] === 'ts') || (match_lang?.[2] === 'ts (typescript)');
 
 		this.root = {
 			css: null,
