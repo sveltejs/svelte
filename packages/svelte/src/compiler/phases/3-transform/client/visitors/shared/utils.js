@@ -95,7 +95,7 @@ export function build_template_chunk(
 				quasi.value.cooked += evaluated.value + '';
 			} else {
 				if (!evaluated.is_defined) {
-					// add `?? ''` where necessary (TODO optimise more cases)
+					// add `?? ''` where necessary
 					value = b.logical('??', value, b.literal(''));
 				}
 
