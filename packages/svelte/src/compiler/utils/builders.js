@@ -154,6 +154,8 @@ export function unary(operator, argument) {
 	return { type: 'UnaryExpression', argument, operator, prefix: true };
 }
 
+export const void0 = unary('void', b.literal(0));
+
 /**
  * @param {ESTree.Expression} test
  * @param {ESTree.Expression} consequent
