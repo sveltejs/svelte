@@ -33,7 +33,6 @@ import {
 	memoize_expression
 } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
-import { UNKNOWN } from '../../../scope.js';
 
 /**
  * @param {AST.RegularElement} node
