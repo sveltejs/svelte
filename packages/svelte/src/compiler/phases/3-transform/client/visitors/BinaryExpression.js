@@ -16,7 +16,7 @@ export function BinaryExpression(node, context) {
 				'$.strict_equals',
 				/** @type {Expression} */ (context.visit(node.left)),
 				/** @type {Expression} */ (context.visit(node.right)),
-				operator === '!==' && b.literal(false)
+				operator === '!==' && b.false
 			);
 		}
 
@@ -25,7 +25,7 @@ export function BinaryExpression(node, context) {
 				'$.equals',
 				/** @type {Expression} */ (context.visit(node.left)),
 				/** @type {Expression} */ (context.visit(node.right)),
-				operator === '!=' && b.literal(false)
+				operator === '!=' && b.false
 			);
 		}
 	}
