@@ -20,7 +20,8 @@ import {
 	clear_text_content,
 	create_text,
 	get_first_child,
-	get_next_sibling
+	get_next_sibling,
+	move_before
 } from '../operations.js';
 import {
 	block,
@@ -584,7 +585,7 @@ function move(item, next, anchor) {
 
 	while (node !== end) {
 		var next_node = /** @type {TemplateNode} */ (get_next_sibling(node));
-		dest.before(node);
+		move_before(dest, node);
 		node = next_node;
 	}
 }

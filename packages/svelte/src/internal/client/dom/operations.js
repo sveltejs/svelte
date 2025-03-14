@@ -18,6 +18,8 @@ export var is_firefox;
 var first_child_getter;
 /** @type {() => Node | null} */
 var next_sibling_getter;
+/** @type {(new_node: Node, reference_node: Node) => void} */
+var move_before_func;
 
 /**
  * Initialize these lazily to avoid issues when using the runtime in a server context
@@ -39,6 +41,11 @@ export function init_operations() {
 	first_child_getter = get_descriptor(node_prototype, 'firstChild').get;
 	// @ts-ignore
 	next_sibling_getter = get_descriptor(node_prototype, 'nextSibling').get;
+	// @ts-ignore
+	move_before_func = (
+		get_descriptor(element_prototype, 'moveBefore') ??
+		get_descriptor(node_prototype, 'insertBefore')
+	).value;
 
 	// the following assignments improve perf of lookups on DOM nodes
 	// @ts-expect-error
@@ -89,6 +96,15 @@ export function get_first_child(node) {
 /*@__NO_SIDE_EFFECTS__*/
 export function get_next_sibling(node) {
 	return next_sibling_getter.call(node);
+}
+
+/**
+ * @template {Node} N
+ * @param {N} node
+ * @param {N} new_node
+ */
+export function move_before(node, new_node) {
+	move_before_func.call(node.parentElement, new_node, node);
 }
 
 /**
