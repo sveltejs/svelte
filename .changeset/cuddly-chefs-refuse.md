@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: correctly match `:has()`'s selector during css pruning
+fix: correctly match `:has()` selector during css pruning
