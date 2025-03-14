@@ -9,11 +9,12 @@
     "node": ">=18"
   },
   "files": [
+    "*.d.ts",
     "src",
     "!src/**/*.test.*",
+    "!src/**/*.d.ts",
     "types",
     "compiler",
-    "*.d.ts",
     "README.md"
   ],
   "module": "src/index-client.js",
