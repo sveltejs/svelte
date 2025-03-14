@@ -21,6 +21,18 @@ export interface Spring<T> extends Readable<T> {
 }
 
 /**
+ * Defines the primitive data types that Spring and Tween objects can calculate on.
+ */
+export type MotionPrimitive = number | Date;
+
+/**
+ * Defines the type of objects Spring and Tween objects can work on.
+ */
+export interface MotionRecord {
+	[x: string]: MotionPrimitive | MotionRecord | (MotionPrimitive | MotionRecord)[];
+}
+
+/**
  * A wrapper for a value that behaves in a spring-like fashion. Changes to `spring.target` will cause `spring.current` to
  * move towards it over time, taking account of the `spring.stiffness` and `spring.damping` parameters.
  *
@@ -36,7 +48,7 @@ export interface Spring<T> extends Readable<T> {
  * ```
  * @since 5.8.0
  */
-export class Spring<T> {
+export class Spring<T extends MotionRecord[string]> {
 	constructor(value: T, options?: SpringOpts);
 
 	/**
@@ -53,7 +65,7 @@ export class Spring<T> {
 	 * </script>
 	 * ```
 	 */
-	static of<U>(fn: () => U, options?: SpringOpts): Spring<U>;
+	static of<U extends MotionRecord[string]>(fn: () => U, options?: SpringOpts): Spring<U>;
 
 	/**
 	 * Sets `spring.target` to `value` and returns a `Promise` that resolves if and when `spring.current` catches up to it.
