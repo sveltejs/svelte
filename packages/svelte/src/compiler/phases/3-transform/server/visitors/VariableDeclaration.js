@@ -76,7 +76,9 @@ export function VariableDeclaration(node, context) {
 
 			const args = /** @type {CallExpression} */ (init).arguments;
 			const value =
-				args.length === 0 ? b.unary('void', b.literal(0)) : /** @type {Expression} */ (context.visit(args[0]));
+				args.length === 0
+					? b.unary('void', b.literal(0))
+					: /** @type {Expression} */ (context.visit(args[0]));
 
 			if (rune === '$derived.by') {
 				declarations.push(
