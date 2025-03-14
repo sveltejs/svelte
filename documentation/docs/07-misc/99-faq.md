@@ -46,7 +46,7 @@ It will show up on hover.
 - You can use markdown here.
 - You can also use code blocks here.
 - Usage:
-  ```tsx
+  ```svelte
   <main name="Arethra">
   ```
 -->
