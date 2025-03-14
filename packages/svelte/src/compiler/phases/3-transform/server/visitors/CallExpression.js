@@ -13,7 +13,7 @@ export function CallExpression(node, context) {
 	const rune = get_rune(node, context.state.scope);
 
 	if (rune === '$host') {
-		return b.id('undefined');
+		return b.unary('void', b.literal(0));
 	}
 
 	if (rune === '$effect.tracking') {
