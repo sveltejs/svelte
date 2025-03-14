@@ -113,7 +113,7 @@ class Evaluation {
 	 * @readonly
 	 * @type {boolean}
 	 */
-	is_known = false;
+	is_known = true;
 
 	/**
 	 * True if the value is known to not be null/undefined
@@ -165,7 +165,12 @@ class Evaluation {
 						break;
 					}
 
-					if (!binding.updated && binding.initial !== null) {
+					const is_prop =
+						binding.kind === 'prop' ||
+						binding.kind === 'rest_prop' ||
+						binding.kind === 'bindable_prop';
+
+					if (!binding.updated && binding.initial !== null && !is_prop) {
 						const evaluation = binding.scope.evaluate(/** @type {Expression} */ (binding.initial));
 						for (const value of evaluation.values) {
 							this.values.add(value);
@@ -293,7 +298,7 @@ class Evaluation {
 				break;
 
 			case 'UnaryExpression':
-				const argument = scope.evaluate(expression.argument);
+				var argument = scope.evaluate(expression.argument);
 
 				if (argument.is_known) {
 					this.values.add(unary[expression.operator](argument.value));
@@ -326,6 +331,7 @@ class Evaluation {
 						// TypeScript getting confused
 						throw new Error(`Unknown operator ${expression.operator}`);
 				}
+				break;
 
 			default:
 				this.values.add(UNKNOWN);
@@ -347,7 +353,9 @@ class Evaluation {
 			}
 		}
 
-		this.is_known = this.values.size === 1 && typeof this.value !== 'symbol';
+		if (this.values.size > 1 || typeof this.value === 'symbol') {
+			this.is_known = false;
+		}
 	}
 }
 
