@@ -42,10 +42,7 @@ export function init_operations() {
 	// @ts-ignore
 	next_sibling_getter = get_descriptor(node_prototype, 'nextSibling').get;
 	// @ts-ignore
-	move_before_func = (
-		get_descriptor(element_prototype, 'moveBefore') ??
-		get_descriptor(node_prototype, 'insertBefore')
-	).value;
+	move_before_func = element_prototype.moveBefore ?? element_prototype.insertBefore;
 
 	// the following assignments improve perf of lookups on DOM nodes
 	// @ts-expect-error
