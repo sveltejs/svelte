@@ -689,7 +689,7 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 		'=',
 		b.member(node_id, 'value'),
 		b.conditional(
-			b.binary('==', b.literal(null), b.assignment('=', b.member(node_id, '__value'), value)),
+			b.binary('==', b.null, b.assignment('=', b.member(node_id, '__value'), value)),
 			b.literal(''), // render null/undefined values as empty string to support placeholder options
 			value
 		)

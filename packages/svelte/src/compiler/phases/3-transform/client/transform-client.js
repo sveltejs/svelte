@@ -596,7 +596,7 @@ export function client_component(analysis, options) {
 				/** @type {ESTree.Property[]} */ (
 					[
 						prop_def.attribute ? b.init('attribute', b.literal(prop_def.attribute)) : undefined,
-						prop_def.reflect ? b.init('reflect', b.literal(true)) : undefined,
+						prop_def.reflect ? b.init('reflect', b.true) : undefined,
 						prop_def.type ? b.init('type', b.literal(prop_def.type)) : undefined
 					].filter(Boolean)
 				)
