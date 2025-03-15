@@ -5,7 +5,7 @@ import {
 	is_tag_valid_with_parent
 } from '../../html-tree-validation.js';
 import { current_component } from './context.js';
-import { invalid_snippet_arguments } from '../shared/errors';
+import { invalid_snippet_arguments } from '../shared/errors.js';
 
 /**
  * @typedef {{

@@ -1,4 +1,4 @@
-import { invalid_snippet_arguments } from '../../shared/errors';
+import { invalid_snippet_arguments } from '../../shared/errors.js';
 /**
  * @param {Node} anchor
  * @param {...(()=>any)[]} args
