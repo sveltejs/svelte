@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Expression, Identifier, Pattern, Statement } from 'estree' */
+/** @import { AssignmentPattern, BlockStatement, Expression, Identifier, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
@@ -12,7 +12,7 @@ import { get_value } from './shared/declarations.js';
  */
 export function SnippetBlock(node, context) {
 	// TODO hoist where possible
-	/** @type {Pattern[]} */
+	/** @type {(Identifier | AssignmentPattern)[]} */
 	const args = [b.id('$$anchor')];
 
 	/** @type {BlockStatement} */
@@ -66,7 +66,18 @@ export function SnippetBlock(node, context) {
 			}
 		}
 	}
-
+	if (dev) {
+		declarations.unshift(
+			b.stmt(
+				b.call(
+					'$.validate_snippet_args',
+					.../** @type {Identifier[]} */ (
+						args.map((arg) => (arg?.type === 'Identifier' ? arg : arg?.left))
+					)
+				)
+			)
+		);
+	}
 	body = b.block([
 		...declarations,
 		.../** @type {BlockStatement} */ (context.visit(node.body, child_state)).body

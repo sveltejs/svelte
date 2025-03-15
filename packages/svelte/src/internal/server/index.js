@@ -541,7 +541,7 @@ export { html } from './blocks/html.js';
 
 export { push, pop } from './context.js';
 
-export { push_element, pop_element } from './dev.js';
+export { push_element, pop_element, validate_snippet_args } from './dev.js';
 
 export { snapshot } from '../shared/clone.js';
 

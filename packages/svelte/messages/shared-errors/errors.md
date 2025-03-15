@@ -26,6 +26,10 @@ This error would be thrown in a setup like this:
 
 Here, `List.svelte` is using `{@render children(item)` which means it expects `Parent.svelte` to use snippets. Instead, `Parent.svelte` uses the deprecated `let:` directive. This combination of APIs is incompatible, hence the error.
 
+## invalid_snippet_arguments
+
+> A snippet function was passed invalid arguments. A snippet function should only be called via `{@render ...}`
+
 ## lifecycle_outside_component
 
 > `%name%(...)` can only be used during component initialisation
