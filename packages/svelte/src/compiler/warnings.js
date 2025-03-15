@@ -645,7 +645,7 @@ export function reactive_declaration_module_script_dependency(node) {
  * @param {null | NodeLike} node
  */
 export function state_referenced_locally(node) {
-	w(node, 'state_referenced_locally', `State referenced in its own scope will never update. Did you mean to reference it inside a closure?\nhttps://svelte.dev/e/state_referenced_locally`);
+	w(node, 'state_referenced_locally', `This state is not reactive. Did you mean to reference it inside a closure?\nhttps://svelte.dev/e/state_referenced_locally`);
 }
 
 /**
