@@ -246,7 +246,8 @@ export function crossfade({ fallback, ...defaults }) {
 		const {
 			delay = 0,
 			duration = /** @param {number} d */ (d) => Math.sqrt(d) * 30,
-			easing = cubic_out
+			easing = cubic_out,
+			strategy = 'scale'
 		} = assign(assign({}, defaults), params);
 		const from = from_node.getBoundingClientRect();
 		const to = node.getBoundingClientRect();
@@ -263,11 +264,19 @@ export function crossfade({ fallback, ...defaults }) {
 			duration: typeof duration === 'function' ? duration(d) : duration,
 			easing,
 			css: (t, u) => `
-			   opacity: ${t * opacity};
-			   transform-origin: top left;
-			   transform: ${transform} translate(${u * dx}px,${u * dy}px) scale(${t + (1 - t) * dw}, ${
-						t + (1 - t) * dh
-					});
+				opacity: ${t * opacity};
+				transform-origin: top left;
+				transform: ${transform} translate(${u * dx}px, ${u * dy}px) ${
+					strategy === 'scale' ? `scale(${t + (1 - t) * dw}, ${t + (1 - t) * dh})` : ''
+				};
+				${
+					strategy === 'size'
+						? `
+                     width: ${to.width + (from.width - to.width) * (1 - t)}px;
+                     height: ${to.height + (from.height - to.height) * (1 - t)}px;
+				      `
+						: ''
+				}
 		   `
 		};
 	}
