@@ -59,7 +59,8 @@ export class Binding {
 
 	mutated = false;
 	reassigned = false;
-
+	read = false;
+	has_store_sub = false;
 	/**
 	 *
 	 * @param {Scope} scope
@@ -310,7 +311,7 @@ export class ScopeRoot {
  * @param {Scope | null} parent
  */
 export function create_scopes(ast, root, allow_reactive_declarations, parent) {
-	/** @typedef {{ scope: Scope }} State */
+	/** @typedef {{ scope: Scope, reading: boolean }} State */
 
 	/**
 	 * A map of node->associated scope. A node appearing in this map does not necessarily mean that it created a scope
@@ -321,14 +322,16 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	scopes.set(ast, scope);
 
 	/** @type {State} */
-	const state = { scope };
+	const state = { scope, reading: true };
 
-	/** @type {[Scope, { node: Identifier; path: AST.SvelteNode[] }][]} */
+	/** @type {[Scope, { node: Identifier; path: AST.SvelteNode[] }, boolean][]} */
 	const references = [];
 
 	/** @type {[Scope, Pattern | MemberExpression][]} */
 	const updates = [];
 
+	/** @type {[Scope, Pattern | MemberExpression][]} */
+	const read_updates = [];
 	/**
 	 * An array of reactive declarations, i.e. the `a` in `$: a = b * 2`
 	 * @type {Identifier[]}
@@ -354,7 +357,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		const scope = state.scope.child(true);
 		scopes.set(node, scope);
 
-		next({ scope });
+		next({ scope, reading: state.reading });
 	};
 
 	/**
@@ -363,7 +366,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	const SvelteFragment = (node, { state, next }) => {
 		const scope = state.scope.child();
 		scopes.set(node, scope);
-		next({ scope });
+		next({ scope, reading: state.reading });
 	};
 
 	/**
@@ -380,7 +383,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		const default_state = determine_slot(node)
 			? context.state
-			: { scope: node.metadata.scopes.default };
+			: { scope: node.metadata.scopes.default, reading: true };
 
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'LetDirective') {
@@ -399,7 +402,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				node.metadata.scopes[slot_name] = context.state.scope.child();
 
 				state = {
-					scope: node.metadata.scopes[slot_name]
+					scope: node.metadata.scopes[slot_name],
+					reading: true
 				};
 			}
 
@@ -430,10 +434,10 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				// TODO -> once migration script is gone we can remove this check
 				!parent.type.startsWith('TS')
 			) {
-				references.push([state.scope, { node, path: path.slice() }]);
+				references.push([state.scope, { node, path: path.slice() }, state.reading]);
 			}
 		},
-		LabeledStatement(node, { path, next }) {
+		LabeledStatement(node, { state, path, next }) {
 			if (path.length > 1 || !allow_reactive_declarations) return next();
 			if (node.label.name !== '$') return next();
 
@@ -452,7 +456,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				}
 			}
 
-			next({ scope });
+			next({ scope, reading: state.reading });
 		},
 
 		SvelteFragment,
@@ -495,13 +499,22 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		SvelteComponent: Component,
 
 		// updates
-		AssignmentExpression(node, { state, next }) {
+		AssignmentExpression(node, { state, next, visit }) {
 			updates.push([state.scope, node.left]);
-			next();
+			let reading = state.reading;
+			if (node.operator !== '=') {
+				reading = true;
+			} else {
+				reading = false;
+			}
+			visit(node.left, { ...state, reading });
+			visit(node.right, state);
 		},
 
 		UpdateExpression(node, { state, next }) {
 			updates.push([state.scope, /** @type {Identifier | MemberExpression} */ (node.argument)]);
+			//@ts-ignore
+			read_updates.push(updates.at(-1));
 			next();
 		},
 
@@ -518,7 +531,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			if (node.id) scope.declare(node.id, 'normal', 'function');
 
 			add_params(scope, node.params);
-			next({ scope });
+			next({ scope, reading: state.reading });
 		},
 
 		FunctionDeclaration(node, { state, next }) {
@@ -528,7 +541,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			scopes.set(node, scope);
 
 			add_params(scope, node.params);
-			next({ scope });
+			next({ scope, reading: state.reading });
 		},
 
 		ArrowFunctionExpression(node, { state, next }) {
@@ -536,7 +549,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			scopes.set(node, scope);
 
 			add_params(scope, node.params);
-			next({ scope });
+			next({ scope, reading: state.reading });
 		},
 
 		ForStatement: create_block_scope,
@@ -593,7 +606,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					scope.declare(id, 'normal', 'let');
 				}
 
-				next({ scope });
+				next({ scope, reading: state.reading });
 			} else {
 				next();
 			}
@@ -631,7 +644,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				}
 
 				// Visit to pick up references from default initializers
-				visit(node.context, { scope });
+				visit(node.context, { scope, reading: state.reading });
 			}
 
 			if (node.index) {
@@ -640,13 +653,13 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index);
 				scope.declare(b.id(node.index), is_keyed ? 'template' : 'normal', 'const', node);
 			}
-			if (node.key) visit(node.key, { scope });
+			if (node.key) visit(node.key, { scope, reading: state.reading });
 
 			// children
 			for (const child of node.body.nodes) {
-				visit(child, { scope });
+				visit(child, { scope, reading: state.reading });
 			}
-			if (node.fallback) visit(node.fallback, { scope });
+			if (node.fallback) visit(node.fallback, { scope, reading: state.reading });
 
 			node.metadata = {
 				expression: create_expression_metadata(),
@@ -671,7 +684,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					const then_scope = /** @type {Scope} */ (scopes.get(node.then));
 					const value_scope = context.state.scope.child();
 					scopes.set(node.value, value_scope);
-					context.visit(node.value, { scope: value_scope });
+					context.visit(node.value, { scope: value_scope, reading: state.reading });
 					for (const id of extract_identifiers(node.value)) {
 						then_scope.declare(id, 'template', 'const');
 						value_scope.declare(id, 'normal', 'const');
@@ -685,7 +698,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					const catch_scope = /** @type {Scope} */ (scopes.get(node.catch));
 					const error_scope = context.state.scope.child();
 					scopes.set(node.error, error_scope);
-					context.visit(node.error, { scope: error_scope });
+					context.visit(node.error, { scope: error_scope, reading: state.reading });
 					for (const id of extract_identifiers(node.error)) {
 						catch_scope.declare(id, 'template', 'const');
 						error_scope.declare(id, 'normal', 'const');
@@ -709,13 +722,13 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				}
 			}
 
-			context.next({ scope: child_scope });
+			context.next({ scope: child_scope, reading: state.reading });
 		},
 
 		Fragment: (node, context) => {
 			const scope = context.state.scope.child(node.metadata.transparent);
 			scopes.set(node, scope);
-			context.next({ scope });
+			context.next({ scope, reading: state.reading });
 		},
 
 		BindDirective(node, context) {
@@ -753,8 +766,12 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 	// we do this after the fact, so that we don't need to worry
 	// about encountering references before their declarations
-	for (const [scope, { node, path }] of references) {
+	for (const [scope, { node, path }, reading] of references) {
 		scope.reference(node, path);
+		let binding = scope.get(node.name);
+		if (binding && binding.node !== node && reading) {
+			binding.read = true;
+		}
 	}
 
 	for (const [scope, node] of updates) {

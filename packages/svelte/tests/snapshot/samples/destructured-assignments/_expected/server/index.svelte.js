@@ -9,4 +9,5 @@ let d = 4;
 export function update(array) {
 	[a, b] = array;
 	[c, d] = array;
+	console.log({ a, b });
 }

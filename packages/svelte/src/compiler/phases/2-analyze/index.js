@@ -389,6 +389,10 @@ export function analyze_component(root, source, options) {
 			});
 
 			const binding = instance.scope.declare(b.id(name), 'store_sub', 'synthetic');
+			const store_binding = instance.scope.get(name.slice(1));
+			if (store_binding) {
+				store_binding.has_store_sub = true;
+			}
 			binding.references = references;
 			instance.scope.references.set(name, references);
 			module.scope.references.delete(name);
