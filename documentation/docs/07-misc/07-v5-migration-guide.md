@@ -10,7 +10,7 @@ You don't have to migrate to the new syntax right away - Svelte 5 still supports
 
 At the heart of Svelte 5 is the new runes API. Runes are basically compiler instructions that inform Svelte about reactivity. Syntactically, runes are functions starting with a dollar-sign.
 
-### let -> $state
+### let → $state
 
 In Svelte 4, a `let` declaration at the top level of a component was implicitly reactive. In Svelte 5, things are more explicit: a variable is reactive when created using the `$state` rune. Let's migrate the counter to runes mode by wrapping the counter in `$state`:
 
@@ -25,7 +25,7 @@ Nothing else changes. `count` is still the number itself, and you read and write
 > [!DETAILS] Why we did this
 > `let` being implicitly reactive at the top level worked great, but it meant that reactivity was constrained - a `let` declaration anywhere else was not reactive. This forced you to resort to using stores when refactoring code out of the top level of components for reuse. This meant you had to learn an entirely separate reactivity model, and the result often wasn't as nice to work with. Because reactivity is more explicit in Svelte 5, you can keep using the same API outside the top level of components. Head to [the tutorial](/tutorial) to learn more.
 
-### $: -> $derived/$effect
+### $: → $derived/$effect
 
 In Svelte 4, a `$:` statement at the top level of a component could be used to declare a derivation, i.e. state that is entirely defined through a computation of other state. In Svelte 5, this is achieved using the `$derived` rune:
 
@@ -73,7 +73,7 @@ Note that [when `$effect` runs is different]($effect#Understanding-dependencies)
 > - executing dependencies as needed and therefore being immune to ordering problems
 > - being TypeScript-friendly
 
-### export let -> $props
+### export let → $props
 
 In Svelte 4, properties of a component were declared using `export let`. Each property was one declaration. In Svelte 5, all properties are declared through the `$props` rune, through destructuring:
 
@@ -466,11 +466,11 @@ By now you should have a pretty good understanding of the before/after and how t
 We thought the same, which is why we provide a migration script to do most of the migration automatically. You can upgrade your project by using `npx sv migrate svelte-5`. This will do the following things:
 
 - bump core dependencies in your `package.json`
-- migrate to runes (`let` -> `$state` etc)
-- migrate to event attributes for DOM elements (`on:click` -> `onclick`)
-- migrate slot creations to render tags (`<slot />` -> `{@render children()}`)
-- migrate slot usages to snippets (`<div slot="x">...</div>` -> `{#snippet x()}<div>...</div>{/snippet}`)
-- migrate obvious component creations (`new Component(...)` -> `mount(Component, ...)`)
+- migrate to runes (`let` → `$state` etc)
+- migrate to event attributes for DOM elements (`on:click` → `onclick`)
+- migrate slot creations to render tags (`<slot />` → `{@render children()}`)
+- migrate slot usages to snippets (`<div slot="x">...</div>` → `{#snippet x()}<div>...</div>{/snippet}`)
+- migrate obvious component creations (`new Component(...)` → `mount(Component, ...)`)
 
 You can also migrate a single component in VS Code through the `Migrate Component to Svelte 5 Syntax` command, or in our Playground through the `Migrate` button.
 
