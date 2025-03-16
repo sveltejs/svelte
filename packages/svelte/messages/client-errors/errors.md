@@ -52,6 +52,10 @@ See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-long
 
 > Failed to hydrate the application
 
+## invalid_html_structure
+
+> This html structure `%html_input%` would be corrected like this `%html_output%` by the browser making this component impossible to hydrate properly
+
 ## invalid_snippet
 
 > Could not `{@render}` snippet due to the expression being `null` or `undefined`. Consider using optional chaining `{@render snippet?.()}`

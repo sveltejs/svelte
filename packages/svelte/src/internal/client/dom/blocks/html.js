@@ -99,7 +99,7 @@ export function html(node, get_value, svg, mathml, skip_warning) {
 			// Don't use create_fragment_with_script_from_html here because that would mean script tags are executed.
 			// @html is basically `.innerHTML = ...` and that doesn't execute scripts either due to security reasons.
 			/** @type {DocumentFragment | Element} */
-			var node = create_fragment_from_html(html);
+			var node = create_fragment_from_html(html, false);
 
 			if (svg || mathml) {
 				node = /** @type {Element} */ (get_first_child(node));

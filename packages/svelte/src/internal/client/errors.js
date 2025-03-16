@@ -199,6 +199,23 @@ export function hydration_failed() {
 }
 
 /**
+ * This html structure `%html_input%` would be corrected like this `%html_output%` by the browser making this component impossible to hydrate properly
+ * @param {string} html_input
+ * @param {string} html_output
+ * @returns {never}
+ */
+export function invalid_html_structure(html_input, html_output) {
+	if (DEV) {
+		const error = new Error(`invalid_html_structure\nThis html structure \`${html_input}\` would be corrected like this \`${html_output}\` by the browser making this component impossible to hydrate properly\nhttps://svelte.dev/e/invalid_html_structure`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/invalid_html_structure`);
+	}
+}
+
+/**
  * Could not `{@render}` snippet due to the expression being `null` or `undefined`. Consider using optional chaining `{@render snippet?.()}`
  * @returns {never}
  */
