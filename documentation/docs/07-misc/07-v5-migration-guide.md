@@ -16,7 +16,7 @@ In Svelte 4, a `let` declaration at the top level of a component was implicitly 
 
 ```svelte
 <script>
-	let count = +++$state(+++0+++)+++;
+	let count = +++$state(0)+++;
 </script>
 ```
 
@@ -31,8 +31,8 @@ In Svelte 4, a `$:` statement at the top level of a component could be used to d
 
 ```svelte
 <script>
-	let count = +++$state(+++0+++)+++;
-	---$:--- +++const+++ double = +++$derived(+++count * 2+++)+++;
+	let count = $state(0);
+	---$:--- +++const+++ double = +++$derived(count * 2)+++;
 </script>
 ```
 
@@ -42,7 +42,8 @@ A `$:` statement could also be used to create side effects. In Svelte 5, this is
 
 ```svelte
 <script>
-	let count = +++$state(+++0+++)+++;
+	let count = $state(0);
+
 	---$:---+++$effect(() =>+++ {
 		if (count > 5) {
 			alert('Count is too high!');
@@ -79,8 +80,8 @@ In Svelte 4, properties of a component were declared using `export let`. Each pr
 
 ```svelte
 <script>
-	---export let optional = 'unset';
-	export let required;---
+	---export let optional = 'unset';---
+	---export let required;---
 	+++let { optional = 'unset', required } = $props();+++
 </script>
 ```
@@ -105,8 +106,8 @@ In Svelte 5, the `$props` rune makes this straightforward without any additional
 
 ```svelte
 <script>
-	---let klass = '';
-	export { klass as class};---
+	---let klass = '';---
+	---export { klass as class};---
 	+++let { class: klass, ...rest } = $props();+++
 </script>
 <button class={klass} {...---$$restProps---+++rest+++}>click me</button>
@@ -192,9 +193,9 @@ This function is deprecated in Svelte 5. Instead, components should accept _call
 ```svelte
 <!--- file: Pump.svelte --->
 <script>
-    ---import { createEventDispatcher } from 'svelte';
-    const dispatch = createEventDispatcher();
-    ---
+	---import { createEventDispatcher } from 'svelte';---
+	---const dispatch = createEventDispatcher();---
+
 	+++let { inflate, deflate } = $props();+++
 	let power = $state(5);
 </script>
