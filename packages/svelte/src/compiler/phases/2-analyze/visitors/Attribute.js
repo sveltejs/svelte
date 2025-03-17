@@ -1,6 +1,7 @@
 /** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression } from 'estree' */
 /** @import { AST, DelegatedEvent } from '#compiler' */
 /** @import { Context } from '../types' */
+import exp from 'node:constants';
 import { cannot_be_set_statically, is_capture_event, is_delegated } from '../../../../utils.js';
 import {
 	get_attribute_chunks,
@@ -182,6 +183,14 @@ function get_delegated_event(event_name, handler, context) {
 
 		const binding = scope.get(reference);
 		const local_binding = context.state.scope.get(reference);
+
+		if (
+			local_binding !== null &&
+			local_binding.initial?.type === 'SnippetBlock' &&
+			!local_binding.initial.metadata.can_hoist
+		) {
+			return unhoisted;
+		}
 
 		// If we are referencing a binding that is shadowed in another scope then bail out.
 		if (local_binding !== null && binding !== null && local_binding.node !== binding.node) {
