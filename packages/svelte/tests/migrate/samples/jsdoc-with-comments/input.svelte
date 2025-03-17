@@ -40,4 +40,10 @@
 	export let inline_multiline_trailing_comment = 'world'; /*
 	* this is a same-line trailing multiline comment
 	**/
+
+	/** @type {number} [default_value=1] */
+	export let default_value = 1;
+
+	/** @type {number} [comment_default_value=1] - This has a comment and an optional value. */
+	export let comment_default_value = 1;
 </script>

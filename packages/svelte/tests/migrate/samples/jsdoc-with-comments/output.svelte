@@ -27,6 +27,8 @@
 	 * @property {any} inline_commented_merged - This comment should be merged - with this inline comment
 	 * @property {string} [inline_multiline_leading_comment] - this is a same-line leading multiline comment
 	 * @property {string} [inline_multiline_trailing_comment] - this is a same-line trailing multiline comment
+	 * @property {number} [default_value=1]
+	 * @property {number} [comment_default_value=1] - This has a comment and an optional value.
 	 */
 
 	/** @type {Props} */
@@ -40,6 +42,8 @@
 		inline_commented,
 		inline_commented_merged,
 		inline_multiline_leading_comment = 'world',
-		inline_multiline_trailing_comment = 'world'
+		inline_multiline_trailing_comment = 'world',
+		default_value = 1,
+		comment_default_value = 1
 	} = $props();
 </script>
