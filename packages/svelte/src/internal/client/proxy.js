@@ -20,6 +20,15 @@ import { active_effect, get } from './runtime.js';
 const array_methods = ['push', 'pop', 'shift', 'unshift', 'splice', 'reverse', 'sort'];
 
 /**
+ * Used to prevent batching in case we are not setting the length of an array
+ * @param {any} fn
+ * @returns
+ */
+function identity(fn) {
+	return fn;
+}
+
+/**
  * @param {ValueOptions | undefined} options
  * @returns {ValueOptions | undefined}
  */
@@ -306,46 +315,54 @@ export function proxy(value, _options, parent = null, prev) {
 			var s = sources.get(prop);
 			var has = prop in target;
 
-			// variable.length = value -> clear all signals with index >= value
-			if (is_proxied_array && prop === 'length') {
-				for (var i = value; i < /** @type {Source<number>} */ (s).v; i += 1) {
-					var other_s = sources.get(i + '');
-					if (other_s !== undefined) {
-						if (typeof other_s.v === 'object' && other_s.v !== null && STATE_SYMBOL in other_s.v) {
-							other_s.v[PROXY_ONCHANGE_SYMBOL](options?.onchange, true);
+			// if we are changing the length of the array we batch all the changes
+			// to the sources and the original value by calling batch_onchange and immediately
+			// invoking it...otherwise we just invoke an identity function
+			(is_proxied_array && prop === 'length' ? batch_onchange : identity)(() => {
+				// variable.length = value -> clear all signals with index >= value
+				if (is_proxied_array && prop === 'length') {
+					for (var i = value; i < /** @type {Source<number>} */ (s).v; i += 1) {
+						var other_s = sources.get(i + '');
+						if (other_s !== undefined) {
+							if (
+								typeof other_s.v === 'object' &&
+								other_s.v !== null &&
+								STATE_SYMBOL in other_s.v
+							) {
+								other_s.v[PROXY_ONCHANGE_SYMBOL](options?.onchange, true);
+							}
+							set(other_s, UNINITIALIZED);
+						} else if (i in target) {
+							// If the item exists in the original, we need to create a uninitialized source,
+							// else a later read of the property would result in a source being created with
+							// the value of the original item at that index.
+							other_s = source(UNINITIALIZED, clone_options(options), stack);
+							sources.set(i + '', other_s);
 						}
-						set(other_s, UNINITIALIZED);
-					} else if (i in target) {
-						// If the item exists in the original, we need to create a uninitialized source,
-						// else a later read of the property would result in a source being created with
-						// the value of the original item at that index.
-						other_s = source(UNINITIALIZED, clone_options(options), stack);
-						sources.set(i + '', other_s);
 					}
 				}
-			}
 
-			// If we haven't yet created a source for this property, we need to ensure
-			// we do so otherwise if we read it later, then the write won't be tracked and
-			// the heuristics of effects will be different vs if we had read the proxied
-			// object property before writing to that property.
-			if (s === undefined) {
-				if (!has || get_descriptor(target, prop)?.writable) {
-					const opt = clone_options(options);
-					s = source(undefined, opt, stack);
-					set(s, proxy(value, opt, metadata));
-					sources.set(prop, s);
+				// If we haven't yet created a source for this property, we need to ensure
+				// we do so otherwise if we read it later, then the write won't be tracked and
+				// the heuristics of effects will be different vs if we had read the proxied
+				// object property before writing to that property.
+				if (s === undefined) {
+					if (!has || get_descriptor(target, prop)?.writable) {
+						const opt = clone_options(options);
+						s = source(undefined, opt, stack);
+						set(s, proxy(value, opt, metadata));
+						sources.set(prop, s);
+					}
+				} else {
+					has = s.v !== UNINITIALIZED;
+					// when we set a property if the source is a proxy we remove the current onchange from
+					// the proxy `onchanges` so that it doesn't trigger it anymore
+					if (typeof s.v === 'object' && s.v !== null && STATE_SYMBOL in s.v) {
+						s.v[PROXY_ONCHANGE_SYMBOL](options?.onchange, true);
+					}
+					set(s, proxy(value, clone_options(options), metadata));
 				}
-			} else {
-				has = s.v !== UNINITIALIZED;
-				// when we set a property if the source is a proxy we remove the current onchange from
-				// the proxy `onchanges` so that it doesn't trigger it anymore
-				if (typeof s.v === 'object' && s.v !== null && STATE_SYMBOL in s.v) {
-					s.v[PROXY_ONCHANGE_SYMBOL](options?.onchange, true);
-				}
-				set(s, proxy(value, clone_options(options), metadata));
-			}
-
+			})();
 			if (DEV) {
 				/** @type {ProxyMetadata | undefined} */
 				var prop_metadata = value?.[STATE_SYMBOL_METADATA];
