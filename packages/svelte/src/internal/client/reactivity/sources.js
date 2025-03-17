@@ -27,7 +27,8 @@ import {
 	UNOWNED,
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
-	ROOT_EFFECT
+	ROOT_EFFECT,
+	PROXY_ONCHANGE_SYMBOL
 } from '../constants.js';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -238,6 +239,14 @@ export function simple_set(source, value, should_proxy = false, needs_previous =
 export function internal_set(source, value) {
 	if (!source.equals(value)) {
 		var old_value = source.v;
+
+		if (old_value != null && source.o?.onchange) {
+			// @ts-ignore
+			const remove = old_value[PROXY_ONCHANGE_SYMBOL];
+			if (remove && typeof remove === 'function') {
+				remove(source.o?.onchange, true);
+			}
+		}
 
 		if (is_destroying_effect) {
 			old_values.set(source, value);
