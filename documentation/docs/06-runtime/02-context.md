@@ -30,7 +30,7 @@ export const myGlobalState = $state({
 This has a few drawbacks though:
 
 - it only safely works when your global state is only used client-side - for example, when you're building a single page application that does not render any of your components on the server. If your state ends up being managed and updated on the server, it could end up being shared between sessions and/or users, causing bugs
-- it may give the false impression that certain state is global when in reality it should only used in a certain part of your app
+- it may give the false impression that certain state is global when in reality it should only be used in a certain part of your app
 
 To solve these drawbacks, Svelte provides a few `context` primitives which alleviate these problems.
 
