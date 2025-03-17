@@ -4,6 +4,7 @@ import { create_text, get_first_child, is_firefox } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { active_effect } from '../runtime.js';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
+import { DEV } from 'esm-env';
 
 /**
  * @param {TemplateNode} start
@@ -36,6 +37,18 @@ export function template(content, flags) {
 	 */
 	var has_start = !content.startsWith('<!>');
 
+	function create_node() {
+		node = create_fragment_from_html(has_start ? content : '<!>' + content);
+	}
+
+	let eagerly_created = false;
+
+	if (DEV) {
+		eagerly_created = true;
+		// in dev we eagerly create the node to provide warnings in case of mismatches
+		create_node();
+	}
+
 	return () => {
 		if (hydrating) {
 			assign_nodes(hydrate_node, null);
@@ -43,8 +56,11 @@ export function template(content, flags) {
 		}
 
 		if (node === undefined) {
-			node = create_fragment_from_html(has_start ? content : '<!>' + content);
+			create_node();
 			if (!is_fragment) node = /** @type {Node} */ (get_first_child(node));
+		} else if (eagerly_created && !is_fragment) {
+			eagerly_created = false;
+			node = /** @type {Node} */ (get_first_child(node));
 		}
 
 		var clone = /** @type {TemplateNode} */ (

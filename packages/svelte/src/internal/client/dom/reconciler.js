@@ -1,14 +1,13 @@
 import { DEV } from 'esm-env';
-import * as e from '../errors.js';
+import * as w from '../warnings.js';
 
 /**
  *  @param {string} html
- *  @param {boolean} [check_structure]
  */
-export function create_fragment_from_html(html, check_structure = true) {
+export function create_fragment_from_html(html) {
 	var elem = document.createElement('template');
 	elem.innerHTML = html;
-	if (DEV && check_structure) {
+	if (DEV) {
 		let replace_comments = html.replaceAll('<!>', '<!---->');
 		let remove_attributes_and_text_input = replace_comments
 			// we remove every attribute since the template automatically adds ="" after boolean attributes
@@ -21,7 +20,7 @@ export function create_fragment_from_html(html, check_structure = true) {
 			// we remove the text within the elements because the template change & to &amp; (and similar)
 			.replace(/>([^<>]*)/g, '>');
 		if (remove_attributes_and_text_input !== remove_attributes_and_text_output) {
-			e.invalid_html_structure(remove_attributes_and_text_input, remove_attributes_and_text_output);
+			w.invalid_html_structure(remove_attributes_and_text_input, remove_attributes_and_text_output);
 		}
 	}
 

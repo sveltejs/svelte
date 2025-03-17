@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: throw runtime error when template returns different html
+fix: throw runtime warning when template returns different html

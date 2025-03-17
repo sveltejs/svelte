@@ -80,12 +80,6 @@ Maximum update depth exceeded. This can happen when a reactive block or effect r
 Failed to hydrate the application
 ```
 
-### invalid_html_structure
-
-```
-This html structure `%html_input%` would be corrected like this `%html_output%` by the browser making this component impossible to hydrate properly
-```
-
 ### invalid_snippet
 
 ```
