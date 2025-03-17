@@ -410,7 +410,9 @@ declare module 'svelte' {
 	 * @deprecated Use [`$effect`](https://svelte.dev/docs/svelte/$effect) instead
 	 * */
 	export function afterUpdate(fn: () => void): void;
-
+	type Getters<T> = {
+		[K in keyof T]: () => T[K];
+	};
 	export interface StateOptions {
 		onchange?: () => unknown;
 	}
