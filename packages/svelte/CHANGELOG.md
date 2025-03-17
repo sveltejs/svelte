@@ -1,5 +1,23 @@
 # svelte
 
+## 5.23.1
+
+### Patch Changes
+
+- fix: invalidate parent effects when child effects update parent dependencies ([#15506](https://github.com/sveltejs/svelte/pull/15506))
+
+- fix: correctly match `:has()` selector during css pruning ([#15277](https://github.com/sveltejs/svelte/pull/15277))
+
+- fix: replace `undefined` with `void 0` to avoid edge case ([#15511](https://github.com/sveltejs/svelte/pull/15511))
+
+- fix: allow global-like pseudo-selectors refinement ([#15313](https://github.com/sveltejs/svelte/pull/15313))
+
+- chore: don't distribute unused types definitions ([#15473](https://github.com/sveltejs/svelte/pull/15473))
+
+- fix: add `files` and `group` to HTMLInputAttributes in elements.d.ts ([#15492](https://github.com/sveltejs/svelte/pull/15492))
+
+- fix: throw rune_invalid_arguments_length when $state.raw() is used with more than 1 arg ([#15516](https://github.com/sveltejs/svelte/pull/15516))
+
 ## 5.23.0
 
 ### Minor Changes
