@@ -184,6 +184,7 @@ function get_delegated_event(event_name, handler, context) {
 		const binding = scope.get(reference);
 		const local_binding = context.state.scope.get(reference);
 
+		// if the function access a snippet that can't be hoisted we bail out
 		if (
 			local_binding !== null &&
 			local_binding.initial?.type === 'SnippetBlock' &&
