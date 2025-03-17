@@ -1,7 +1,6 @@
 /** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression } from 'estree' */
 /** @import { AST, DelegatedEvent } from '#compiler' */
 /** @import { Context } from '../types' */
-import exp from 'node:constants';
 import { cannot_be_set_statically, is_capture_event, is_delegated } from '../../../../utils.js';
 import {
 	get_attribute_chunks,
