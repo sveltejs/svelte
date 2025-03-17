@@ -240,7 +240,7 @@ export function internal_set(source, value) {
 	if (!source.equals(value)) {
 		var old_value = source.v;
 
-		if (old_value != null && source.o?.onchange) {
+		if (typeof old_value === 'object' && old_value != null && source.o?.onchange) {
 			// @ts-ignore
 			const remove = old_value[PROXY_ONCHANGE_SYMBOL];
 			if (remove && typeof remove === 'function') {
