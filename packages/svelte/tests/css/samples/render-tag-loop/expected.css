@@ -2,9 +2,12 @@
 	div.svelte-xyz div:where(.svelte-xyz) {
 		color: green;
 	}
-	/* (unused) div + div {
-		color: red; /* this is marked as unused, but only because we've written an infinite loop - worth fixing? *\/
-	}*/
+	div.svelte-xyz + div:where(.svelte-xyz) {
+		color: green;
+	}
 	div.svelte-xyz:has(div:where(.svelte-xyz)) {
+		color: green;
+	}
+	span.svelte-xyz:has(~span:where(.svelte-xyz)) {
 		color: green;
 	}

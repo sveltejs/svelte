@@ -119,6 +119,7 @@ function build_assignment(operator, left, right, context) {
 				binding.kind !== 'prop' &&
 				binding.kind !== 'bindable_prop' &&
 				binding.kind !== 'raw_state' &&
+				binding.kind !== 'store_sub' &&
 				context.state.analysis.runes &&
 				should_proxy(right, context.state.scope) &&
 				is_non_coercive_operator(operator)

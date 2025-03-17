@@ -60,7 +60,7 @@ export function AwaitBlock(node, context) {
 				expression,
 				node.pending
 					? b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.pending)))
-					: b.literal(null),
+					: b.null,
 				then_block,
 				catch_block
 			)

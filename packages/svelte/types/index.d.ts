@@ -16,6 +16,7 @@ declare module 'svelte' {
 		intro?: boolean;
 		recover?: boolean;
 		sync?: boolean;
+		idPrefix?: string;
 		$$inline?: boolean;
 	}
 
@@ -348,13 +349,14 @@ declare module 'svelte' {
 				props: Props;
 			});
 	/**
-	 * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
-	 * It must be called during the component's initialisation (but doesn't need to live *inside* the component;
-	 * it can be called from an external module).
+	 * `onMount`, like [`$effect`](https://svelte.dev/docs/svelte/$effect), schedules a function to run as soon as the component has been mounted to the DOM.
+	 * Unlike `$effect`, the provided function only runs once.
 	 *
-	 * If a function is returned _synchronously_ from `onMount`, it will be called when the component is unmounted.
+	 * It must be called during the component's initialisation (but doesn't need to live _inside_ the component;
+	 * it can be called from an external module). If a function is returned _synchronously_ from `onMount`,
+	 * it will be called when the component is unmounted.
 	 *
-	 * `onMount` does not run inside [server-side components](https://svelte.dev/docs/svelte/svelte-server#render).
+	 * `onMount` functions do not run during [server-side rendering](https://svelte.dev/docs/svelte/svelte-server#render).
 	 *
 	 * */
 	export function onMount<T>(fn: () => NotFunction<T> | Promise<NotFunction<T>> | (() => any)): void;
@@ -408,13 +410,7 @@ declare module 'svelte' {
 	 * @deprecated Use [`$effect`](https://svelte.dev/docs/svelte/$effect) instead
 	 * */
 	export function afterUpdate(fn: () => void): void;
-	/**
-	 * Synchronously flushes any pending state changes and those that result from it.
-	 * */
-	export function flushSync(fn?: (() => void) | undefined): void;
-	type Getters<T> = {
-		[K in keyof T]: () => T[K];
-	};
+
 	export interface StateOptions {
 		onchange?: () => unknown;
 	}
@@ -427,6 +423,29 @@ declare module 'svelte' {
 	}): Snippet<Params>;
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
+	/**
+	 * Synchronously flush any pending updates.
+	 * Returns void if no callback is provided, otherwise returns the result of calling the callback.
+	 * */
+	export function flushSync<T = void>(fn?: (() => T) | undefined): T;
+	/**
+	 * Returns a promise that resolves once any pending state changes have been applied.
+	 * */
+	export function tick(): Promise<void>;
+	/**
+	 * When used inside a [`$derived`](https://svelte.dev/docs/svelte/$derived) or [`$effect`](https://svelte.dev/docs/svelte/$effect),
+	 * any state read inside `fn` will not be treated as a dependency.
+	 *
+	 * ```ts
+	 * $effect(() => {
+	 *   // this will run when `data` changes, but not when `time` changes
+	 *   save(data, {
+	 *     timestamp: untrack(() => time)
+	 *   });
+	 * });
+	 * ```
+	 * */
+	export function untrack<T>(fn: () => T): T;
 	/**
 	 * Retrieves the context that belongs to the closest parent component with the specified `key`.
 	 * Must be called during component initialisation.
@@ -500,24 +519,6 @@ declare module 'svelte' {
 	export function unmount(component: Record<string, any>, options?: {
 		outro?: boolean;
 	} | undefined): Promise<void>;
-	/**
-	 * Returns a promise that resolves once any pending state changes have been applied.
-	 * */
-	export function tick(): Promise<void>;
-	/**
-	 * When used inside a [`$derived`](https://svelte.dev/docs/svelte/$derived) or [`$effect`](https://svelte.dev/docs/svelte/$effect),
-	 * any state read inside `fn` will not be treated as a dependency.
-	 *
-	 * ```ts
-	 * $effect(() => {
-	 *   // this will run when `data` changes, but not when `time` changes
-	 *   save(data, {
-	 *     timestamp: untrack(() => time)
-	 *   });
-	 * });
-	 * ```
-	 * */
-	export function untrack<T>(fn: () => T): T;
 
 	export {};
 }
@@ -625,8 +626,8 @@ declare module 'svelte/animate' {
 }
 
 declare module 'svelte/compiler' {
-	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
 	import type { SourceMap } from 'magic-string';
+	import type { ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, Expression, Identifier, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
 	import type { Location } from 'locate-character';
 	/**
 	 * `compile` converts your `.svelte` source code into a JavaScript module that exports a component
@@ -2082,11 +2083,19 @@ declare module 'svelte/server' {
 		...args: {} extends Props
 			? [
 					component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
-					options?: { props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }
+					options?: {
+						props?: Omit<Props, '$$slots' | '$$events'>;
+						context?: Map<any, any>;
+						idPrefix?: string;
+					}
 				]
 			: [
 					component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
-					options: { props: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }
+					options: {
+						props: Omit<Props, '$$slots' | '$$events'>;
+						context?: Map<any, any>;
+						idPrefix?: string;
+					}
 				]
 	): RenderOutput;
 	interface RenderOutput {

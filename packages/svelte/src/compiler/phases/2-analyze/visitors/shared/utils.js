@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, Expression, Literal, Node, Pattern, PrivateIdentifier, Super, UpdateExpression, VariableDeclarator } from 'estree' */
+/** @import { AssignmentExpression, Expression, Identifier, Literal, Node, Pattern, PrivateIdentifier, Super, UpdateExpression, VariableDeclarator } from 'estree' */
 /** @import { AST, Binding } from '#compiler' */
 /** @import { AnalysisState, Context } from '../../types' */
 /** @import { Scope } from '../../../scope' */
@@ -10,12 +10,12 @@ import * as b from '../../../../utils/builders.js';
 import { get_rune } from '../../../scope.js';
 
 /**
- * @param {AssignmentExpression | UpdateExpression} node
+ * @param {AssignmentExpression | UpdateExpression | AST.BindDirective} node
  * @param {Pattern | Expression} argument
  * @param {AnalysisState} state
  */
 export function validate_assignment(node, argument, state) {
-	validate_no_const_assignment(node, argument, state.scope, false);
+	validate_no_const_assignment(node, argument, state.scope, node.type === 'BindDirective');
 
 	if (argument.type === 'Identifier') {
 		const binding = state.scope.get(argument.name);
@@ -38,16 +38,22 @@ export function validate_assignment(node, argument, state) {
 			e.snippet_parameter_assignment(node);
 		}
 	}
-
 	if (
 		argument.type === 'MemberExpression' &&
 		argument.object.type === 'ThisExpression' &&
 		(((argument.property.type === 'PrivateIdentifier' || argument.property.type === 'Identifier') &&
-			state.derived_state.includes(argument.property.name)) ||
+			state.derived_state.some(
+				(derived) =>
+					derived.name === /** @type {PrivateIdentifier | Identifier} */ (argument.property).name &&
+					derived.private === (argument.property.type === 'PrivateIdentifier')
+			)) ||
 			(argument.property.type === 'Literal' &&
 				argument.property.value &&
 				typeof argument.property.value === 'string' &&
-				state.derived_state.includes(argument.property.value)))
+				state.derived_state.some(
+					(derived) =>
+						derived.name === /** @type {Literal} */ (argument.property).value && !derived.private
+				)))
 	) {
 		e.constant_assignment(node, 'derived state');
 	}

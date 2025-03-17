@@ -1,7 +1,6 @@
 import type { Scope } from '../scope.js';
 import type { ComponentAnalysis, ReactiveStatement } from '../types.js';
 import type { AST, ExpressionMetadata, ValidatedCompileOptions } from '#compiler';
-import type { LabeledStatement } from 'estree';
 
 export interface AnalysisState {
 	scope: Scope;
@@ -19,13 +18,11 @@ export interface AnalysisState {
 	component_slots: Set<string>;
 	/** Information about the current expression/directive/block value */
 	expression: ExpressionMetadata | null;
-	derived_state: string[];
+	derived_state: { name: string; private: boolean }[];
 	function_depth: number;
 
 	// legacy stuff
-	instance_scope: Scope;
 	reactive_statement: null | ReactiveStatement;
-	reactive_statements: Map<LabeledStatement, ReactiveStatement>;
 }
 
 export type Context<State extends AnalysisState = AnalysisState> = import('zimmerframe').Context<

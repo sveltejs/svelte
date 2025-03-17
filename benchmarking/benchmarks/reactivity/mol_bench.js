@@ -51,11 +51,11 @@ function setup() {
 		 */
 		run(i) {
 			res.length = 0;
-			$.flush_sync(() => {
+			$.flush(() => {
 				$.set(B, 1);
 				$.set(A, 1 + i * 2);
 			});
-			$.flush_sync(() => {
+			$.flush(() => {
 				$.set(A, 2 + i * 2);
 				$.set(B, 2);
 			});

@@ -59,7 +59,7 @@ export function SlotElement(node, context) {
 
 	const fallback =
 		node.fragment.nodes.length === 0
-			? b.literal(null)
+			? b.null
 			: b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.fragment)));
 
 	const slot = b.call(

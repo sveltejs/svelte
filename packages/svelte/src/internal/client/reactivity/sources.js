@@ -14,9 +14,8 @@ import {
 	derived_sources,
 	set_derived_sources,
 	check_dirtiness,
-	set_is_flushing_effect,
-	is_flushing_effect,
-	untracking
+	untracking,
+	is_destroying_effect
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -37,6 +36,7 @@ import { proxy } from '../proxy.js';
 import { component_context, is_runes } from '../context.js';
 
 export let inspect_effects = new Set();
+export const old_values = new Map();
 
 /**
  * @param {Set<any>} v
@@ -238,6 +238,13 @@ export function simple_set(source, value, should_proxy = false, needs_previous =
 export function internal_set(source, value) {
 	if (!source.equals(value)) {
 		var old_value = source.v;
+
+		if (is_destroying_effect) {
+			old_values.set(source, value);
+		} else {
+			old_values.set(source, old_value);
+		}
+
 		source.v = value;
 		source.wv = increment_write_version();
 
@@ -270,22 +277,18 @@ export function internal_set(source, value) {
 
 		if (DEV && inspect_effects.size > 0) {
 			const inspects = Array.from(inspect_effects);
-			var previously_flushing_effect = is_flushing_effect;
-			set_is_flushing_effect(true);
-			try {
-				for (const effect of inspects) {
-					// Mark clean inspect-effects as maybe dirty and then check their dirtiness
-					// instead of just updating the effects - this way we avoid overfiring.
-					if ((effect.f & CLEAN) !== 0) {
-						set_signal_status(effect, MAYBE_DIRTY);
-					}
-					if (check_dirtiness(effect)) {
-						update_effect(effect);
-					}
+
+			for (const effect of inspects) {
+				// Mark clean inspect-effects as maybe dirty and then check their dirtiness
+				// instead of just updating the effects - this way we avoid overfiring.
+				if ((effect.f & CLEAN) !== 0) {
+					set_signal_status(effect, MAYBE_DIRTY);
 				}
-			} finally {
-				set_is_flushing_effect(previously_flushing_effect);
+				if (check_dirtiness(effect)) {
+					update_effect(effect);
+				}
 			}
+
 			inspect_effects.clear();
 		}
 

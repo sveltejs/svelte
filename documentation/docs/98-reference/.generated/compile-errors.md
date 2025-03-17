@@ -84,6 +84,12 @@ Attribute values containing `{...}` must be enclosed in quote marks, unless the 
 `bind:group` can only bind to an Identifier or MemberExpression
 ```
 
+### bind_group_invalid_snippet_parameter
+
+```
+Cannot `bind:group` to a snippet parameter
+```
+
 ### bind_invalid_expression
 
 ```

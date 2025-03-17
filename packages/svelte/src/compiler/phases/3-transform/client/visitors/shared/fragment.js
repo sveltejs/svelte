@@ -144,6 +144,17 @@ function is_static_element(node, state) {
 			return false;
 		}
 
+		if (attribute.name === 'dir') {
+			return false;
+		}
+
+		if (
+			['input', 'textarea'].includes(node.name) &&
+			['value', 'checked'].includes(attribute.name)
+		) {
+			return false;
+		}
+
 		if (node.name === 'option' && attribute.name === 'value') {
 			return false;
 		}

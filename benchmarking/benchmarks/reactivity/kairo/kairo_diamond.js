@@ -28,13 +28,13 @@ function setup() {
 	return {
 		destroy,
 		run() {
-			$.flush_sync(() => {
+			$.flush(() => {
 				$.set(head, 1);
 			});
 			assert($.get(sum) === 2 * width);
 			counter = 0;
 			for (let i = 0; i < 500; i++) {
-				$.flush_sync(() => {
+				$.flush(() => {
 					$.set(head, i);
 				});
 				assert($.get(sum) === (i + 1) * width);

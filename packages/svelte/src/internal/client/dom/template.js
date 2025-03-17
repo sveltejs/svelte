@@ -250,8 +250,6 @@ export function append(anchor, dom) {
 	anchor.before(/** @type {Node} */ (dom));
 }
 
-let uid = 1;
-
 /**
  * Create (or hydrate) an unique UID for the component instance.
  */
@@ -260,12 +258,16 @@ export function props_id() {
 		hydrating &&
 		hydrate_node &&
 		hydrate_node.nodeType === 8 &&
-		hydrate_node.textContent?.startsWith('#s')
+		hydrate_node.textContent?.startsWith(`#`)
 	) {
 		const id = hydrate_node.textContent.substring(1);
 		hydrate_next();
 		return id;
 	}
 
-	return 'c' + uid++;
+	// @ts-expect-error This way we ensure the id is unique even across Svelte runtimes
+	(window.__svelte ??= {}).uid ??= 1;
+
+	// @ts-expect-error
+	return `c${window.__svelte.uid++}`;
 }

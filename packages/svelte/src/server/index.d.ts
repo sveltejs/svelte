@@ -12,10 +12,18 @@ export function render<
 	...args: {} extends Props
 		? [
 				component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
-				options?: { props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }
+				options?: {
+					props?: Omit<Props, '$$slots' | '$$events'>;
+					context?: Map<any, any>;
+					idPrefix?: string;
+				}
 			]
 		: [
 				component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
-				options: { props: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }
+				options: {
+					props: Omit<Props, '$$slots' | '$$events'>;
+					context?: Map<any, any>;
+					idPrefix?: string;
+				}
 			]
 ): RenderOutput;

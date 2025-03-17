@@ -116,8 +116,7 @@ export function VariableDeclaration(node, context) {
 			}
 
 			const args = /** @type {CallExpression} */ (init).arguments;
-			const value =
-				args.length === 0 ? b.id('undefined') : /** @type {Expression} */ (context.visit(args[0]));
+			const value = args.length > 0 ? /** @type {Expression} */ (context.visit(args[0])) : b.void0;
 			let options =
 				args.length === 2 ? /** @type {Expression} */ (context.visit(args[1])) : undefined;
 
