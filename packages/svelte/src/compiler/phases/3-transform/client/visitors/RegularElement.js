@@ -52,7 +52,10 @@ export function RegularElement(node, context) {
 	}
 
 	if (node.name === 'noscript') {
-		context.state.template.push('<noscript></noscript>');
+		context.state.template.push({
+			kind: 'create_element',
+			args: ['noscript']
+		});
 		return;
 	}
 
@@ -72,7 +75,10 @@ export function RegularElement(node, context) {
 		context.state.metadata.context.template_contains_script_tag = true;
 	}
 
-	context.state.template.push(`<${node.name}`);
+	context.state.template.push({
+		kind: 'create_element',
+		args: [node.name]
+	});
 
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
 	const attributes = [];
@@ -110,7 +116,10 @@ export function RegularElement(node, context) {
 					const { value } = build_attribute_value(attribute.value, context);
 
 					if (value.type === 'Literal' && typeof value.value === 'string') {
-						context.state.template.push(` is="${escape_html(value.value, true)}"`);
+						context.state.template.push({
+							kind: 'set_prop',
+							args: ['is', escape_html(value.value, true)]
+						});
 						continue;
 					}
 				}
@@ -286,13 +295,14 @@ export function RegularElement(node, context) {
 				}
 
 				if (name !== 'class' || value) {
-					context.state.template.push(
-						` ${attribute.name}${
+					context.state.template.push({
+						kind: 'set_prop',
+						args: [attribute.name].concat(
 							is_boolean_attribute(name) && value === true
-								? ''
-								: `="${value === true ? '' : escape_html(value, true)}"`
-						}`
-					);
+								? []
+								: [value === true ? '' : escape_html(value, true)]
+						)
+					});
 				}
 			} else if (name === 'autofocus') {
 				let { value } = build_attribute_value(attribute.value, context);
@@ -324,8 +334,7 @@ export function RegularElement(node, context) {
 	) {
 		context.state.after_update.push(b.stmt(b.call('$.replay_events', node_id)));
 	}
-
-	context.state.template.push('>');
+	context.state.template.push({ kind: 'push_element' });
 
 	const metadata = {
 		...context.state.metadata,
@@ -446,10 +455,7 @@ export function RegularElement(node, context) {
 		// @ts-expect-error
 		location.push(state.locations);
 	}
-
-	if (!is_void(node.name)) {
-		context.state.template.push(`</${node.name}>`);
-	}
+	context.state.template.push({ kind: 'pop_element' });
 }
 
 /**

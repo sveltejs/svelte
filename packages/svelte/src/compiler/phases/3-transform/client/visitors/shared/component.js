@@ -422,11 +422,24 @@ export function build_component(node, component_name, context, anchor = context.
 	}
 
 	if (Object.keys(custom_css_props).length > 0) {
-		context.state.template.push(
-			context.state.metadata.namespace === 'svg'
-				? '<g><!></g>'
-				: '<svelte-css-wrapper style="display: contents"><!></svelte-css-wrapper>'
-		);
+		/**
+		 * @type {typeof context.state.template}
+		 */
+		const template_operations = [];
+		if (context.state.metadata.namespace === 'svg') {
+			template_operations.push({ kind: 'create_element', args: ['g'] });
+			template_operations.push({ kind: 'push_element' });
+			template_operations.push({ kind: 'create_anchor' });
+			template_operations.push({ kind: 'pop_element' });
+		} else {
+			template_operations.push({ kind: 'create_element', args: ['svelte-css-wrapper'] });
+			template_operations.push({ kind: 'set_prop', args: ['style', 'display: contents'] });
+			template_operations.push({ kind: 'push_element' });
+			template_operations.push({ kind: 'create_anchor' });
+			template_operations.push({ kind: 'pop_element' });
+		}
+
+		context.state.template.push(...template_operations);
 
 		statements.push(
 			b.stmt(b.call('$.css_props', anchor, b.thunk(b.object(custom_css_props)))),
@@ -434,7 +447,7 @@ export function build_component(node, component_name, context, anchor = context.
 			b.stmt(b.call('$.reset', anchor))
 		);
 	} else {
-		context.state.template.push('<!>');
+		context.state.template.push({ kind: 'create_anchor' });
 		statements.push(b.stmt(fn(anchor)));
 	}
 

@@ -7,6 +7,7 @@ import { dev } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
 import { clean_nodes, infer_namespace } from '../../utils.js';
+import { transform_template } from '../transform-template/index.js';
 import { process_children } from './shared/fragment.js';
 import { build_render_statement } from './shared/utils.js';
 
@@ -118,7 +119,7 @@ export function Fragment(node, context) {
 		});
 
 		/** @type {Expression[]} */
-		const args = [join_template(state.template)];
+		const args = [b.template([b.quasi(transform_template(state.template), true)], [])];
 
 		if (state.metadata.context.template_needs_import_node) {
 			args.push(b.literal(TEMPLATE_USE_IMPORT_NODE));
@@ -168,11 +169,14 @@ export function Fragment(node, context) {
 					flags |= TEMPLATE_USE_IMPORT_NODE;
 				}
 
-				if (state.template.length === 1 && state.template[0] === '<!>') {
+				if (state.template.length === 1 && state.template[0].kind === 'create_anchor') {
 					// special case — we can use `$.comment` instead of creating a unique template
 					body.push(b.var(id, b.call('$.comment')));
 				} else {
-					add_template(template_name, [join_template(state.template), b.literal(flags)]);
+					add_template(template_name, [
+						b.template([b.quasi(transform_template(state.template), true)], []),
+						b.literal(flags)
+					]);
 
 					body.push(b.var(id, b.call(template_name)));
 				}

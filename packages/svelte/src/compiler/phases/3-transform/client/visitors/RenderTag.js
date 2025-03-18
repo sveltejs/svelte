@@ -9,7 +9,7 @@ import * as b from '../../../../utils/builders.js';
  * @param {ComponentContext} context
  */
 export function RenderTag(node, context) {
-	context.state.template.push('<!>');
+	context.state.template.push({ kind: 'create_anchor' });
 
 	const expression = unwrap_optional(node.expression);
 
