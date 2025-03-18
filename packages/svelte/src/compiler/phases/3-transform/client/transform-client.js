@@ -167,6 +167,7 @@ export function client_component(analysis, options) {
 		in_constructor: false,
 		instance_level_snippets: [],
 		module_level_snippets: [],
+		prevent_template_cloning: options.preventTemplateCloning,
 
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		init: /** @type {any} */ (null),

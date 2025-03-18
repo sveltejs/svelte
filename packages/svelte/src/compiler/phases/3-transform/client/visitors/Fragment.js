@@ -1,11 +1,8 @@
-/** @import { Expression, Identifier, Statement, TemplateElement } from 'estree' */
-/** @import { AST, Namespace } from '#compiler' */
-/** @import { SourceLocation } from '#shared' */
+/** @import { Expression, Statement } from 'estree' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../../../constants.js';
-import { dev } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
-import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
 import { clean_nodes, infer_namespace } from '../../utils.js';
 import { transform_template } from '../transform-template/index.js';
 import { process_children } from './shared/fragment.js';
@@ -90,24 +87,6 @@ export function Fragment(node, context) {
 		body.push(b.stmt(b.call('$.next')));
 	}
 
-	/**
-	 * @param {Identifier} template_name
-	 * @param {Expression[]} args
-	 */
-	const add_template = (template_name, args) => {
-		let call = b.call(get_template_function(namespace, state), ...args);
-		if (dev) {
-			call = b.call(
-				'$.add_locations',
-				call,
-				b.member(b.id(context.state.analysis.name), '$.FILENAME', true),
-				build_locations(state.locations)
-			);
-		}
-
-		context.state.hoisted.push(b.var(template_name, call));
-	};
-
 	if (is_single_element) {
 		const element = /** @type {AST.RegularElement} */ (trimmed[0]);
 
@@ -118,14 +97,13 @@ export function Fragment(node, context) {
 			node: id
 		});
 
-		/** @type {Expression[]} */
-		const args = [b.template([b.quasi(transform_template(state.template), true)], [])];
+		let flags = undefined;
 
 		if (state.metadata.context.template_needs_import_node) {
-			args.push(b.literal(TEMPLATE_USE_IMPORT_NODE));
+			flags = TEMPLATE_USE_IMPORT_NODE;
 		}
 
-		add_template(template_name, args);
+		transform_template(state, context, namespace, template_name, flags);
 
 		body.push(b.var(id, b.call(template_name)));
 		close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
@@ -173,10 +151,7 @@ export function Fragment(node, context) {
 					// special case — we can use `$.comment` instead of creating a unique template
 					body.push(b.var(id, b.call('$.comment')));
 				} else {
-					add_template(template_name, [
-						b.template([b.quasi(transform_template(state.template), true)], []),
-						b.literal(flags)
-					]);
+					transform_template(state, context, namespace, template_name, flags);
 
 					body.push(b.var(id, b.call(template_name)));
 				}
@@ -202,87 +177,4 @@ export function Fragment(node, context) {
 	}
 
 	return b.block(body);
-}
-
-/**
- * @param {Array<string | Expression>} items
- */
-function join_template(items) {
-	let quasi = b.quasi('');
-	const template = b.template([quasi], []);
-
-	/**
-	 * @param {Expression} expression
-	 */
-	function push(expression) {
-		if (expression.type === 'TemplateLiteral') {
-			for (let i = 0; i < expression.expressions.length; i += 1) {
-				const q = expression.quasis[i];
-				const e = expression.expressions[i];
-
-				quasi.value.cooked += /** @type {string} */ (q.value.cooked);
-				push(e);
-			}
-
-			const last = /** @type {TemplateElement} */ (expression.quasis.at(-1));
-			quasi.value.cooked += /** @type {string} */ (last.value.cooked);
-		} else if (expression.type === 'Literal') {
-			/** @type {string} */ (quasi.value.cooked) += expression.value;
-		} else {
-			template.expressions.push(expression);
-			template.quasis.push((quasi = b.quasi('')));
-		}
-	}
-
-	for (const item of items) {
-		if (typeof item === 'string') {
-			quasi.value.cooked += item;
-		} else {
-			push(item);
-		}
-	}
-
-	for (const quasi of template.quasis) {
-		quasi.value.raw = sanitize_template_string(/** @type {string} */ (quasi.value.cooked));
-	}
-
-	quasi.tail = true;
-
-	return template;
-}
-
-/**
- *
- * @param {Namespace} namespace
- * @param {ComponentClientTransformState} state
- * @returns
- */
-function get_template_function(namespace, state) {
-	const contains_script_tag = state.metadata.context.template_contains_script_tag;
-	return namespace === 'svg'
-		? contains_script_tag
-			? '$.svg_template_with_script'
-			: '$.ns_template'
-		: namespace === 'mathml'
-			? '$.mathml_template'
-			: contains_script_tag
-				? '$.template_with_script'
-				: '$.template';
-}
-
-/**
- * @param {SourceLocation[]} locations
- */
-function build_locations(locations) {
-	return b.array(
-		locations.map((loc) => {
-			const expression = b.array([b.literal(loc[0]), b.literal(loc[1])]);
-
-			if (loc.length === 3) {
-				expression.elements.push(build_locations(loc[2]));
-			}
-
-			return expression;
-		})
-	);
 }

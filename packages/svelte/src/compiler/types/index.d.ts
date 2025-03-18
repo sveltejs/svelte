@@ -114,6 +114,12 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 */
 	preserveWhitespace?: boolean;
 	/**
+	 *  If `true`, the template will get compiled to a series of `document.createElement` calls instead of using `template.innerHTML`.
+	 *
+	 * @default false
+	 */
+	preventTemplateCloning?: boolean;
+	/**
 	 * Set to `true` to force the compiler into runes mode, even if there are no indications of runes usage.
 	 * Set to `false` to force the compiler into ignoring runes, even if there are indications of runes usage.
 	 * Set to `undefined` (the default) to infer runes mode from the component code.
