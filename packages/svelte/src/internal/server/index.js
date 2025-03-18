@@ -108,8 +108,8 @@ class Payload {
 		out: '',
 		uid: () => ''
 	};
-	constructor(idPrefix = '') {
-		this.uid = props_id_generator(idPrefix);
+	constructor(id_prefix = '') {
+		this.uid = props_id_generator(id_prefix);
 		this.head.uid = this.uid;
 	}
 }
