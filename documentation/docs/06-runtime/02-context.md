@@ -2,129 +2,136 @@
 title: Context
 ---
 
-<!-- - get/set/hasContext
-- how to use, best practises (like encapsulating them) -->
-
-Most state is component-level state that lives as long as its component lives. There's also section-wide or app-wide state however, which also needs to be handled somehow.
-
-The easiest way to do that is to create global state and just import that.
-
-```ts
-/// file: state.svelte.js
-export const myGlobalState = $state({
-	user: {
-		/* ... */
-	}
-	/* ... */
-});
-```
-
-```svelte
-<!--- file: App.svelte --->
-<script>
-	import { myGlobalState } from './state.svelte.js';
-	// ...
-</script>
-```
-
-This has a few drawbacks though:
-
-- it only safely works when your global state is only used client-side - for example, when you're building a single page application that does not render any of your components on the server. If your state ends up being managed and updated on the server, it could end up being shared between sessions and/or users, causing bugs
-- it may give the false impression that certain state is global when in reality it should only be used in a certain part of your app
-
-To solve these drawbacks, Svelte provides a few `context` primitives which alleviate these problems.
-
-## Setting and getting context
-
-To associate an arbitrary object with the current component, use `setContext`.
-
-```svelte
-<script>
-	import { setContext } from 'svelte';
-
-	setContext('key', value);
-</script>
-```
-
-The context is then available to children of the component (including slotted content) with `getContext`.
-
-```svelte
-<script>
-	import { getContext } from 'svelte';
-
-	const value = getContext('key');
-</script>
-```
-
-`setContext` and `getContext` solve the above problems:
-
-- the state is not global, it's scoped to the component. That way it's safe to render your components on the server and not leak state
-- it's clear that the state is not global but rather scoped to a specific component tree and therefore can't be used in other parts of your app
-
-> [!NOTE] `setContext`/`getContext` must be called during component initialisation.
-
-Context is not inherently reactive. If you need reactive values in context then you can pass a `$state` object into context, whose properties _will_ be reactive.
+Context allows components to access values owned by parent components without passing them down as props (potentially through many layers of intermediate components, known as 'prop-drilling'). The parent component sets context with `setContext(key, value)`...
 
 ```svelte
 <!--- file: Parent.svelte --->
 <script>
 	import { setContext } from 'svelte';
 
-	let value = $state({ count: 0 });
-	setContext('counter', value);
+	setContext('my-context', 'hello from Parent.svelte');
 </script>
-
-<button onclick={() => value.count++}>increment</button>
 ```
+
+...and the child retrieves it with `getContext`:
 
 ```svelte
 <!--- file: Child.svelte --->
 <script>
 	import { getContext } from 'svelte';
 
-	const value = getContext('counter');
+	const message = getContext('my-context');
 </script>
 
-<p>Count is {value.count}</p>
+<h1>{message}, inside Child.svelte</h1>
 ```
 
-To check whether a given `key` has been set in the context of a parent component, use `hasContext`.
+This is particularly useful when `Parent.svelte` is not directly aware of `Child.svelte`, but instead renders it as part of a `children` [snippet](snippet) ([demo](/playground/untitled#H4sIAAAAAAAAE42Q3W6DMAyFX8WyJgESK-oto6hTX2D3YxcM3IIUQpR40yqUd58CrCXsp7tL7HNsf2dAWXaEKR56yfTBGOOxFWQwfR6Qz8q1XAHjL-GjUhvzToJd7bU09FO9ctMkG0wxM5VuFeeFLLjtVK8ZnkpNkuGo-w6CTTJ9Z3PwsBAemlbUF934W8iy5DpaZtOUcU02-ZLcaS51jHEkTFm_kY1_wfOO8QnXrb8hBzDEc6pgZ4gFoyz4KgiD7nxfTe8ghqAhIfrJ46cTzVZBbkPlODVJsLCDO6V7ZcJoncyw1yRr0hd1GNn_ZbEM3I9i1bmVxOlWElUvDUNHxpQngt3C4CXzjS1rtvkw22wMrTRtTbC8Lkuabe7jvthPPe3DofYCAAA=)):
+
+```svelte
+<Parent>
+	<Child />
+</Parent>
+```
+
+The key (`'my-context'`, in the example above) and the context itself can be any JavaScript value.
+
+In addition to [`setContext`](svelte#setContext) and [`getContext`](svelte#getContext), Svelte exposes [`hasContext`](svelte#hasContext) and [`getAllContexts`](svelte#getAllContexts) functions.
+
+## Using context with state
+
+You can store reactive state in context ([demo](/playground/untitled#H4sIAAAAAAAAE41R0W6DMAz8FSuaBNUQdK8MkKZ-wh7HHihzu6hgosRMm1D-fUpSVNq12x4iEvvOx_kmQU2PIhfP3DCCJGgHYvxkkYid7NCI_GUS_KUcxhVEMjOelErNB3bsatvG4LW6n0ZsRC4K02qpuKqpZtmrQTNMYJA3QRAs7PTQQxS40eMCt3mX3duxnWb-lS5h7nTI0A4jMWoo4c44P_Hku-zrOazdy64chWo-ScfRkRgl8wgHKrLTH1OxHZkHgoHaTraHcopXUFYzPPVfuC_hwQaD1GrskdiNCdQwJljJqlvXfyqVsA5CGg0uRUQifHw56xFtciO75QrP07vo_JXf_tf8yK2ezDKY_ZWt_1y2qqYzv7bI1IW1V_sN19m-07wCAAA=))...
 
 ```svelte
 <script>
-	import { hasContext } from 'svelte';
+	import { setContext } from 'svelte';
+	import Child from './Child.svelte';
 
-	if (hasContext('key')) {
-		// do something
+	let counter = $state({
+		count: 0
+	});
+
+	setContext('counter', counter);
+</script>
+
+<button onclick={() => counter.count += 1}>
+	increment
+</button>
+
+<Child />
+<Child />
+<Child />
+```
+
+...though note that if you _reassign_ `counter` instead of updating it, you will 'break the link' — in other words instead of this...
+
+```svelte
+<button onclick={() => counter = { count: 0 }}>
+	reset
+</button>
+```
+
+...you must do this:
+
+```svelte
+<button onclick={() => +++counter.count = 0+++}>
+	reset
+</button>
+```
+
+Svelte will warn you if you get it wrong.
+
+## Type-safe context
+
+A useful pattern is to wrap the calls to `setContext` and `getContext` inside helper functions that let you preserve type safety:
+
+```js
+// @filename: ambient.d.ts
+interface User {}
+
+// @filename: index.js
+// ---cut---
+import { getContext, setContext } from 'svelte';
+
+let key = {};
+
+/** @param {User} user */
+export function setUserContext(user) {
+	setContext(key, user);
+}
+
+export function getUserContext() {
+	return /** @type {User} */ (getContext(key));
+}
+```
+
+## Replacing global state
+
+When you have state shared by many different components, you might be tempted to put it in its own module and just import it wherever it's needed:
+
+```js
+/// file: state.svelte.js
+export const myGlobalState = $state({
+	user: {
+		// ...
+	}
+	// ...
+});
+```
+
+In many cases this is perfectly fine, but there is a risk: if you mutate the state during server-side rendering (which is discouraged, but entirely possible!)...
+
+```svelte
+<!--- file: App.svelte ---->
+<script>
+	import { myGlobalState } from 'svelte';
+
+	let { data } = $props();
+
+	if (data.user) {
+		myGlobalState.user = data.user;
 	}
 </script>
 ```
 
-You can also retrieve the whole context map that belongs to the closest parent component using `getAllContexts`. This is useful, for example, if you programmatically create a component and want to pass the existing context to it.
-
-```svelte
-<script>
-	import { getAllContexts } from 'svelte';
-
-	const contexts = getAllContexts();
-</script>
-```
-
-## Encapsulating context interactions
-
-The above methods are very unopinionated about how to use them. When your app grows in scale, it's worthwhile to encapsulate setting and getting the context into functions and properly type them.
-
-```ts
-// @errors: 2304
-import { getContext, setContext } from 'svelte';
-
-let userKey = Symbol('user');
-
-export function setUserContext(user: User) {
-	setContext(userKey, user);
-}
-
-export function getUserContext(): User {
-	return getContext(userKey) as User;
-}
-```
+...then the data may be accessible by the _next_ user. Context solves this problem because it is not shared between requests.
