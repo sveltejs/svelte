@@ -1,7 +1,7 @@
 /**
  * @import { TemplateOperations } from "../types.js"
  */
-import { template_to_string } from './to-string';
+import { template_to_string } from './to-string.js';
 
 /**
  * @param {TemplateOperations} items
