@@ -1,4 +1,4 @@
-/** @import { Component, Payload } from '#server' */
+/** @import { Component } from '#server' */
 import { FILENAME } from '../../constants.js';
 import {
 	is_tag_valid_with_ancestor,
@@ -6,6 +6,7 @@ import {
 } from '../../html-tree-validation.js';
 import { current_component } from './context.js';
 import { invalid_snippet_arguments } from '../shared/errors.js';
+import { Payload } from './index.js';
 
 /**
  * @typedef {{
@@ -104,7 +105,7 @@ export function pop_element() {
  * @param {Payload} payload
  */
 export function validate_snippet_args(payload) {
-	if (typeof payload !== 'object' || !('out' in payload)) {
+	if (typeof payload !== 'object' || !(payload instanceof Payload)) {
 		invalid_snippet_arguments();
 	}
 }

@@ -1,5 +1,5 @@
 /** @import { ComponentType, SvelteComponent } from 'svelte' */
-/** @import { Component, Payload, RenderOutput } from '#server' */
+/** @import { Component, RenderOutput } from '#server' */
 /** @import { Store } from '#shared' */
 export { FILENAME, HMR } from '../../constants.js';
 import { attr, clsx, to_class, to_style } from '../shared/attributes.js';
@@ -96,6 +96,24 @@ function props_id_generator(prefix) {
 	return () => `${prefix}s${uid++}`;
 }
 
+class Payload {
+	out = '';
+	/**@type {Set<{ hash: string; code: string }>} */
+	css = new Set();
+	uid = () => '';
+	head = {
+		/**@type {Set<{ hash: string; code: string }>} */
+		css: new Set(),
+		title: '',
+		out: '',
+		uid: () => ''
+	};
+	constructor(idPrefix = '') {
+		this.uid = props_id_generator(idPrefix);
+		this.head.uid = this.uid;
+	}
+}
+
 /**
  * Only available on the server and when compiling with the `server` option.
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
@@ -105,14 +123,7 @@ function props_id_generator(prefix) {
  * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
-	const uid = props_id_generator(options.idPrefix ? options.idPrefix + '-' : '');
-	/** @type {Payload} */
-	const payload = {
-		out: '',
-		css: new Set(),
-		head: { title: '', out: '', css: new Set(), uid },
-		uid
-	};
+	const payload = new Payload(options.idPrefix ? options.idPrefix + '' : '');
 
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
@@ -535,7 +546,7 @@ export function props_id(payload) {
 	return uid;
 }
 
-export { attr, clsx };
+export { attr, clsx, Payload };
 
 export { html } from './blocks/html.js';
 
