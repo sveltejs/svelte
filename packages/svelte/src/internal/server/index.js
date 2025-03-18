@@ -123,7 +123,7 @@ class Payload {
  * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
-	const payload = new Payload(options.idPrefix ? options.idPrefix + '' : '');
+	const payload = new Payload(options.idPrefix ? options.idPrefix + '-' : '');
 
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
