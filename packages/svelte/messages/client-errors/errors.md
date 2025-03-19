@@ -97,7 +97,7 @@ This error occurs when state is updated while evaluating a `$derived`. You might
 	let even = $state(true);
 
 	let odd = $derived.by(() => {
-		if (count % 2 !== 0) even = false;
+		even = count % 2 === 0;
 		return !even;
 	});
 </script>
