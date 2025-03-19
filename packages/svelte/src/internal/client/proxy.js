@@ -25,11 +25,6 @@ import { tracing_mode_flag } from '../flags/index.js';
  * @returns {T}
  */
 export function proxy(value, parent = null, prev) {
-	/** @type {Error | null} */
-	var stack = null;
-	if (DEV && tracing_mode_flag) {
-		stack = get_stack('CreatedAt');
-	}
 	// if non-proxyable, or is already a proxy, return `value`
 	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {
 		return value;
@@ -45,6 +40,8 @@ export function proxy(value, parent = null, prev) {
 	var sources = new Map();
 	var is_proxied_array = is_array(value);
 	var version = source(0);
+
+	var stack = DEV && tracing_mode_flag ? get_stack('CreatedAt') : null;
 
 	if (is_proxied_array) {
 		// We need to create the length source eagerly to ensure that
