@@ -49,16 +49,12 @@ function clone_options(options) {
  * @returns {T}
  */
 export function proxy(value, _options, parent = null, prev) {
-	let options = clone_options(_options);
-	/** @type {Error | null} */
-	var stack = null;
-	if (DEV && tracing_mode_flag) {
-		stack = get_stack('CreatedAt');
-	}
 	// if non-proxyable, or is already a proxy, return `value`
 	if (typeof value !== 'object' || value === null) {
 		return value;
 	}
+
+	var options = clone_options(_options);
 
 	if (STATE_SYMBOL in value) {
 		// @ts-ignore
@@ -87,6 +83,8 @@ export function proxy(value, _options, parent = null, prev) {
 	var sources = new Map();
 	var is_proxied_array = is_array(value);
 	var version = source(0);
+
+	var stack = DEV && tracing_mode_flag ? get_stack('CreatedAt') : null;
 
 	if (is_proxied_array) {
 		// We need to create the length source eagerly to ensure that
