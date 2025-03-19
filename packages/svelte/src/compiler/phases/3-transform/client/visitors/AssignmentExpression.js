@@ -1,5 +1,4 @@
-/** @import { Location } from 'locate-character' */
-/** @import { AssignmentExpression, AssignmentOperator, Expression, Identifier, Literal, MemberExpression, Pattern } from 'estree' */
+/** @import { AssignmentExpression, AssignmentOperator, Expression, Identifier, Pattern } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
@@ -8,7 +7,7 @@ import {
 	get_attribute_expression,
 	is_event_attribute
 } from '../../../../utils/ast.js';
-import { dev, filename, is_ignored, locate_node, locator } from '../../../../state.js';
+import { dev, is_ignored, locate_node } from '../../../../state.js';
 import { should_proxy } from '../utils.js';
 import { visit_assignment_expression } from '../../shared/assignments.js';
 
