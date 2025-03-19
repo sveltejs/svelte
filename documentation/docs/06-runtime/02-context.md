@@ -86,6 +86,7 @@ Svelte will warn you if you get it wrong.
 A useful pattern is to wrap the calls to `setContext` and `getContext` inside helper functions that let you preserve type safety:
 
 ```js
+/// file: context.js
 // @filename: ambient.d.ts
 interface User {}
 
