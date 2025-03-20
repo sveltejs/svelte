@@ -149,9 +149,9 @@
   "dependencies": {
     "@ampproject/remapping": "^2.3.0",
     "@jridgewell/sourcemap-codec": "^1.5.0",
-    "@sveltejs/acorn-typescript": "^1.0.5",
     "@types/estree": "^1.0.5",
     "acorn": "^8.12.1",
+    "@sveltejs/acorn-typescript": "^1.0.5",
     "aria-query": "^5.3.1",
     "axobject-query": "^4.1.0",
     "clsx": "^2.1.1",
