@@ -168,7 +168,7 @@ async function common_setup(
 		immutable: config.immutable,
 		accessors: 'accessors' in config ? config.accessors : true,
 		runes,
-		preventTemplateCloning: templating_mode === 'functional'
+		templatingMode: templating_mode
 	};
 
 	// load_compiled can be used for debugging a test. It means the compiler will not run on the input

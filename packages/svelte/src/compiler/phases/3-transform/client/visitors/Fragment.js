@@ -37,7 +37,7 @@ export function Fragment(node, context) {
 		context.state,
 		context.state.preserve_whitespace,
 		context.state.options.preserveComments,
-		context.state.prevent_template_cloning
+		context.state.is_functional_template_mode
 	);
 
 	if (hoisted.length === 0 && trimmed.length === 0) {
@@ -133,7 +133,7 @@ export function Fragment(node, context) {
 					...context,
 					state
 				},
-				context.state.prevent_template_cloning
+				context.state.is_functional_template_mode
 			);
 
 			body.push(b.var(id, b.call('$.text')));
@@ -146,7 +146,7 @@ export function Fragment(node, context) {
 					() => b.id('$$anchor'),
 					false,
 					{ ...context, state },
-					context.state.prevent_template_cloning
+					context.state.is_functional_template_mode
 				);
 			} else {
 				/** @type {(is_text: boolean) => Expression} */
@@ -157,7 +157,7 @@ export function Fragment(node, context) {
 					expression,
 					false,
 					{ ...context, state },
-					context.state.prevent_template_cloning
+					context.state.is_functional_template_mode
 				);
 
 				let flags = TEMPLATE_FRAGMENT;

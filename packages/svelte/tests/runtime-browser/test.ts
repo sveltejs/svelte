@@ -106,7 +106,7 @@ async function run_test(
 							immutable: config.immutable,
 							customElement: test_dir.includes('custom-elements-samples'),
 							accessors: 'accessors' in config ? config.accessors : true,
-							preventTemplateCloning: templating_mode === 'functional'
+							templatingMode: templating_mode
 						});
 
 						write(
@@ -171,7 +171,7 @@ async function run_test(
 								immutable: config.immutable,
 								customElement: test_dir.includes('custom-elements-samples'),
 								accessors: 'accessors' in config ? config.accessors : true,
-								preventTemplateCloning: templating_mode === 'functional'
+								templatingMode: templating_mode
 							});
 
 							return {

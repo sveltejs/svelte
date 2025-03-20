@@ -27,7 +27,7 @@ function get_template_function(namespace, state) {
 				: contains_script_tag
 					? '$.template_with_script'
 					: '$.template'
-	).concat(state.prevent_template_cloning ? '_fn' : '');
+	).concat(state.is_functional_template_mode ? '_fn' : '');
 }
 
 /**
@@ -75,7 +75,7 @@ export function transform_template(state, context, namespace, template_name, fla
 
 	/** @type {Expression[]} */
 	const args = [
-		state.prevent_template_cloning
+		state.is_functional_template_mode
 			? template_to_functions(state.template, namespace)
 			: b.template([b.quasi(template_to_string(state.template), true)], [])
 	];

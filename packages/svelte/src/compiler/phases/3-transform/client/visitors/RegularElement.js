@@ -124,7 +124,7 @@ export function RegularElement(node, context) {
 							kind: 'set_prop',
 							args: [
 								'is',
-								context.state.prevent_template_cloning
+								context.state.is_functional_template_mode
 									? value.value
 									: escape_html(value.value, true)
 							]
@@ -312,7 +312,7 @@ export function RegularElement(node, context) {
 								: [
 										value === true
 											? ''
-											: context.state.prevent_template_cloning
+											: context.state.is_functional_template_mode
 												? value
 												: escape_html(value, true)
 									]
@@ -386,7 +386,7 @@ export function RegularElement(node, context) {
 		state,
 		node.name === 'script' || state.preserve_whitespace,
 		state.options.preserveComments,
-		state.prevent_template_cloning
+		state.is_functional_template_mode
 	);
 
 	/** @type {typeof state} */
@@ -438,7 +438,7 @@ export function RegularElement(node, context) {
 				...context,
 				state: child_state
 			},
-			context.state.prevent_template_cloning
+			context.state.is_functional_template_mode
 		);
 
 		if (needs_reset) {

@@ -80,7 +80,7 @@ export async function compile_directory(
 			filename: path.join(cwd, file),
 			...compileOptions,
 			generate,
-			preventTemplateCloning: templating_mode === 'functional'
+			templatingMode: templating_mode
 		};
 
 		if (file.endsWith('.js')) {
