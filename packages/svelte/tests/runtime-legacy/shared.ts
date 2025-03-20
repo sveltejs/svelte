@@ -308,17 +308,11 @@ async function run_test_variant(
 				idPrefix: config.id_prefix
 			});
 
-			fs.writeFileSync(
-				`${cwd}/_output/rendered${templating_mode === 'functional' ? '-functional' : ''}.html`,
-				html
-			);
+			fs.writeFileSync(`${cwd}/_output/rendered.html`, html);
 			target.innerHTML = html;
 
 			if (head) {
-				fs.writeFileSync(
-					`${cwd}/_output/rendered_head${templating_mode === 'functional' ? '-functional' : ''}.html`,
-					head
-				);
+				fs.writeFileSync(`${cwd}/_output/rendered_head.html`, head);
 				window.document.head.innerHTML = window.document.head.innerHTML + head;
 			}
 
