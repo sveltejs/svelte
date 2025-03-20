@@ -957,6 +957,7 @@ export interface HTMLDelAttributes extends HTMLAttributes<HTMLModElement> {
 
 export interface HTMLDialogAttributes extends HTMLAttributes<HTMLDialogElement> {
 	open?: boolean | undefined | null;
+	closedby?: 'any' | 'closerequest' | 'none' | undefined | null;
 }
 
 export interface HTMLEmbedAttributes extends HTMLAttributes<HTMLEmbedElement> {
@@ -1075,6 +1076,7 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	checked?: boolean | undefined | null;
 	dirname?: string | undefined | null;
 	disabled?: boolean | undefined | null;
+	files?: FileList | undefined | null;
 	form?: string | undefined | null;
 	formaction?: string | undefined | null;
 	formenctype?:
@@ -1086,6 +1088,7 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	formmethod?: 'dialog' | 'get' | 'post' | 'DIALOG' | 'GET' | 'POST' | undefined | null;
 	formnovalidate?: boolean | undefined | null;
 	formtarget?: string | undefined | null;
+	group?: any | undefined | null;
 	height?: number | string | undefined | null;
 	indeterminate?: boolean | undefined | null;
 	list?: string | undefined | null;

@@ -308,21 +308,6 @@ export function state_prototype_fixed() {
 }
 
 /**
- * Reading state that was created inside the same derived is forbidden. Consider using `untrack` to read locally created state
- * @returns {never}
- */
-export function state_unsafe_local_read() {
-	if (DEV) {
-		const error = new Error(`state_unsafe_local_read\nReading state that was created inside the same derived is forbidden. Consider using \`untrack\` to read locally created state\nhttps://svelte.dev/e/state_unsafe_local_read`);
-
-		error.name = 'Svelte error';
-		throw error;
-	} else {
-		throw new Error(`https://svelte.dev/e/state_unsafe_local_read`);
-	}
-}
-
-/**
  * Updating state inside a derived or a template expression is forbidden. If the value should not be reactive, declare it without `$state`
  * @returns {never}
  */

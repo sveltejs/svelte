@@ -42,6 +42,9 @@ export function CallExpression(node, context) {
 				e.bindable_invalid_location(node);
 			}
 
+			// We need context in case the bound prop is stale
+			context.state.analysis.needs_context = true;
+
 			break;
 
 		case '$host':
@@ -114,7 +117,7 @@ export function CallExpression(node, context) {
 
 			if ((rune === '$derived' || rune === '$derived.by') && node.arguments.length !== 1) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
-			} else if (rune === '$state' && node.arguments.length > 1) {
+			} else if (node.arguments.length > 1) {
 				e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
 			}
 
@@ -211,14 +214,6 @@ export function CallExpression(node, context) {
 			}
 
 			break;
-	}
-
-	if (node.callee.type === 'Identifier') {
-		const binding = context.state.scope.get(node.callee.name);
-
-		if (binding !== null) {
-			binding.is_called = true;
-		}
 	}
 
 	// `$inspect(foo)` or `$derived(foo) should not trigger the `static-state-reference` warning

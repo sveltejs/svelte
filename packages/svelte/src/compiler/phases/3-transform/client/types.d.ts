@@ -30,7 +30,7 @@ export interface ClientTransformState extends TransformState {
 			/** turn `foo` into e.g. `$.get(foo)` */
 			read: (id: Identifier) => Expression;
 			/** turn `foo = bar` into e.g. `$.set(foo, bar)` */
-			assign?: (node: Identifier, value: Expression) => Expression;
+			assign?: (node: Identifier, value: Expression, proxy?: boolean) => Expression;
 			/** turn `foo.bar = baz` into e.g. `$.mutate(foo, $.get(foo).bar = baz);` */
 			mutate?: (node: Identifier, mutation: AssignmentExpression | UpdateExpression) => Expression;
 			/** turn `foo++` into e.g. `$.update(foo)` */
@@ -45,6 +45,7 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly hoisted: Array<Statement | ModuleDeclaration>;
 	readonly events: Set<string>;
 	readonly is_instance: boolean;
+	readonly store_to_invalidate?: string;
 
 	/** Stuff that happens before the render effect(s) */
 	readonly init: Statement[];

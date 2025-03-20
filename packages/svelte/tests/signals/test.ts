@@ -8,7 +8,12 @@ import {
 	render_effect,
 	user_effect
 } from '../../src/internal/client/reactivity/effects';
-import { state, set, update, update_pre } from '../../src/internal/client/reactivity/sources';
+import {
+	source as state,
+	set,
+	update,
+	update_pre
+} from '../../src/internal/client/reactivity/sources';
 import type { Derived, Effect, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
@@ -473,6 +478,26 @@ describe('signals', () => {
 		user_effect(() => {
 			set(value, { count: 0 });
 			$.get(value);
+		});
+
+		return () => {
+			let errored = false;
+			try {
+				flushSync();
+			} catch (e: any) {
+				assert.include(e.message, 'effect_update_depth_exceeded');
+				errored = true;
+			}
+			assert.equal(errored, true);
+		};
+	});
+
+	test('schedules rerun when updating deeply nested value', (runes) => {
+		if (!runes) return () => {};
+
+		const value = proxy({ a: { b: { c: 0 } } });
+		user_effect(() => {
+			value.a.b.c += 1;
 		});
 
 		return () => {
@@ -958,14 +983,30 @@ describe('signals', () => {
 		};
 	});
 
-	test('deriveds cannot depend on state they own', () => {
+	test('deriveds do not depend on state they own', () => {
 		return () => {
+			let s;
+
 			const d = derived(() => {
-				const s = state(0);
+				s = state(0);
 				return $.get(s);
 			});
 
-			assert.throws(() => $.get(d), 'state_unsafe_local_read');
+			assert.equal($.get(d), 0);
+
+			set(s!, 1);
+			assert.equal($.get(d), 0);
+		};
+	});
+
+	test('effects do not depend on state they own', () => {
+		user_effect(() => {
+			const value = state(0);
+			set(value, $.get(value) + 1);
+		});
+
+		return () => {
+			flushSync();
 		};
 	});
 
@@ -1131,6 +1172,47 @@ describe('signals', () => {
 			flushSync();
 
 			assert.deepEqual(log, [0, 1]);
+
+			destroy();
+		};
+	});
+
+	test('unowned deriveds correctly update', () => {
+		const log: any[] = [];
+
+		return () => {
+			const a = state(0);
+			const b = state(0);
+			const c = derived(() => {
+				return $.get(a);
+			});
+			const d = derived(() => {
+				return $.get(b);
+			});
+
+			const destroy = effect_root(() => {
+				const e = derived(() => {
+					return $.get(c) === 1 && $.get(d) === 1;
+				});
+				render_effect(() => {
+					log.push($.get(e));
+				});
+			});
+
+			assert.deepEqual(log, [false]);
+
+			set(a, 1);
+			set(b, 1);
+
+			flushSync();
+
+			assert.deepEqual(log, [false, true]);
+
+			set(b, 9);
+
+			flushSync();
+
+			assert.deepEqual(log, [false, true, false]);
 
 			destroy();
 		};

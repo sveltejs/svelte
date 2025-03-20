@@ -10,12 +10,12 @@ import * as b from '../../../../utils/builders.js';
 import { get_rune } from '../../../scope.js';
 
 /**
- * @param {AssignmentExpression | UpdateExpression} node
+ * @param {AssignmentExpression | UpdateExpression | AST.BindDirective} node
  * @param {Pattern | Expression} argument
  * @param {AnalysisState} state
  */
 export function validate_assignment(node, argument, state) {
-	validate_no_const_assignment(node, argument, state.scope, false);
+	validate_no_const_assignment(node, argument, state.scope, node.type === 'BindDirective');
 
 	if (argument.type === 'Identifier') {
 		const binding = state.scope.get(argument.name);

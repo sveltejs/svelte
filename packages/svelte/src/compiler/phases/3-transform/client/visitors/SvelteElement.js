@@ -5,13 +5,8 @@ import { dev, locator } from '../../../../state.js';
 import { is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 import { determine_namespace_for_children } from '../../utils.js';
-import {
-	build_attribute_value,
-	build_class_directives,
-	build_set_attributes,
-	build_style_directives
-} from './shared/element.js';
-import { build_render_statement } from './shared/utils.js';
+import { build_attribute_value, build_set_attributes, build_set_class } from './shared/element.js';
+import { build_render_statement, get_expression_id } from './shared/utils.js';
 
 /**
  * @param {AST.SvelteElement} node
@@ -77,35 +72,28 @@ export function SvelteElement(node, context) {
 	// Let bindings first, they can be used on attributes
 	context.state.init.push(...lets); // create computeds in the outer context; the dynamic element is the single child of this slot
 
-	// Then do attributes
-	let is_attributes_reactive = false;
-
-	if (attributes.length === 0) {
-		if (context.state.analysis.css.hash) {
-			inner_context.state.init.push(
-				b.stmt(b.call('$.set_class', element_id, b.literal(context.state.analysis.css.hash)))
-			);
-		}
-	} else {
+	if (
+		attributes.length === 1 &&
+		attributes[0].type === 'Attribute' &&
+		attributes[0].name.toLowerCase() === 'class' &&
+		is_text_attribute(attributes[0])
+	) {
+		build_set_class(node, element_id, attributes[0], class_directives, inner_context, false);
+	} else if (attributes.length) {
 		const attributes_id = b.id(context.state.scope.generate('attributes'));
 
 		// Always use spread because we don't know whether the element is a custom element or not,
 		// therefore we need to do the "how to set an attribute" logic at runtime.
-		is_attributes_reactive = build_set_attributes(
+		build_set_attributes(
 			attributes,
+			class_directives,
+			style_directives,
 			inner_context,
 			node,
 			element_id,
-			attributes_id,
-			b.binary('===', b.member(element_id, 'namespaceURI'), b.id('$.NAMESPACE_SVG')),
-			b.call(b.member(b.member(element_id, 'nodeName'), 'includes'), b.literal('-')),
-			context.state
+			attributes_id
 		);
 	}
-
-	// class/style directives must be applied last since they could override class/style attributes
-	build_class_directives(class_directives, element_id, inner_context, is_attributes_reactive);
-	build_style_directives(style_directives, element_id, inner_context, is_attributes_reactive);
 
 	const get_tag = b.thunk(/** @type {Expression} */ (context.visit(node.tag)));
 

@@ -39,9 +39,11 @@ export {
 	set_checked,
 	set_selected,
 	set_default_checked,
-	set_default_value
+	set_default_value,
+	CLASS,
+	STYLE
 } from './dom/elements/attributes.js';
-export { set_class, set_svg_class, set_mathml_class, toggle_class } from './dom/elements/class.js';
+export { set_class } from './dom/elements/class.js';
 export { apply, event, delegate, replay_events } from './dom/elements/events.js';
 export { autofocus, remove_textarea_child } from './dom/elements/misc.js';
 export { set_style } from './dom/elements/style.js';
@@ -111,7 +113,14 @@ export {
 	user_effect,
 	user_pre_effect
 } from './reactivity/effects.js';
-export { mutable_state, mutate, set, state, update, update_pre } from './reactivity/sources.js';
+export {
+	mutable_source,
+	mutate,
+	set,
+	source as state,
+	update,
+	update_pre
+} from './reactivity/sources.js';
 export {
 	prop,
 	rest_props,
@@ -137,7 +146,7 @@ export {
 	get,
 	safe_get,
 	invalidate_inner_signals,
-	flush_sync,
+	flushSync as flush,
 	tick,
 	untrack,
 	exclude_from_object,
