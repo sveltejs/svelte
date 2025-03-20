@@ -492,6 +492,26 @@ describe('signals', () => {
 		};
 	});
 
+	test('schedules rerun when updating deeply nested value', (runes) => {
+		if (!runes) return () => {};
+
+		const value = proxy({ a: { b: { c: 0 } } });
+		user_effect(() => {
+			value.a.b.c += 1;
+		});
+
+		return () => {
+			let errored = false;
+			try {
+				flushSync();
+			} catch (e: any) {
+				assert.include(e.message, 'effect_update_depth_exceeded');
+				errored = true;
+			}
+			assert.equal(errored, true);
+		};
+	});
+
 	test('schedules rerun when writing to signal before reading it', (runes) => {
 		if (!runes) return () => {};
 
