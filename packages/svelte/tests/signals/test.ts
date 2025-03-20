@@ -963,6 +963,36 @@ describe('signals', () => {
 		};
 	});
 
+	test('deriveds do not depend on state they own', () => {
+		return () => {
+			let s;
+
+			const d = derived(() => {
+				s = state(0);
+				return $.get(s);
+			});
+
+			assert.equal($.get(d), 0);
+
+			set(s!, 1);
+			assert.equal($.get(d), 0);
+		};
+	});
+
+	test('effects do not depend on state they own', () => {
+		return () => {
+			const destroy = effect_root(() => {
+				user_effect(() => {
+					const s = state(0);
+					set(s, $.get(s) + 1);
+				});
+			});
+
+			assert.ok(true);
+			destroy();
+		};
+	});
+
 	test('proxy version state does not trigger self-dependency guard', () => {
 		return () => {
 			const s = proxy({ a: { b: 1 } });
