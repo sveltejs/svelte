@@ -8,7 +8,12 @@ import {
 	render_effect,
 	user_effect
 } from '../../src/internal/client/reactivity/effects';
-import { state, set, update, update_pre } from '../../src/internal/client/reactivity/sources';
+import {
+	source as state,
+	set,
+	update,
+	update_pre
+} from '../../src/internal/client/reactivity/sources';
 import type { Derived, Effect, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
@@ -955,17 +960,6 @@ describe('signals', () => {
 
 			assert.deepEqual($.get(combined), [{ a: 1 }]);
 			assert.equal($.get(derived_length), 1);
-		};
-	});
-
-	test('deriveds cannot depend on state they own', () => {
-		return () => {
-			const d = derived(() => {
-				const s = state(0);
-				return $.get(s);
-			});
-
-			assert.throws(() => $.get(d), 'state_unsafe_local_read');
 		};
 	});
 

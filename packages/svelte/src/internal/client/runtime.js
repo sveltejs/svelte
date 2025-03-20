@@ -87,20 +87,6 @@ export function set_active_effect(effect) {
 }
 
 /**
- * When sources are created within a derived, we record them so that we can safely allow
- * local mutations to these sources without the side-effect error being invoked unnecessarily.
- * @type {null | Source[]}
- */
-export let derived_sources = null;
-
-/**
- * @param {Source[] | null} sources
- */
-export function set_derived_sources(sources) {
-	derived_sources = sources;
-}
-
-/**
  * The dependencies of the reaction that is currently being executed. In many cases,
  * the dependencies are unchanged between runs, and so this will be `null` unless
  * and until a new dependency is accessed — we track this via `skipped_deps`
@@ -393,7 +379,6 @@ export function update_reaction(reaction) {
 	var previous_untracked_writes = untracked_writes;
 	var previous_reaction = active_reaction;
 	var previous_skip_reaction = skip_reaction;
-	var prev_derived_sources = derived_sources;
 	var previous_component_context = component_context;
 	var previous_untracking = untracking;
 	var flags = reaction.f;
@@ -405,7 +390,6 @@ export function update_reaction(reaction) {
 		(flags & UNOWNED) !== 0 && (untracking || !is_updating_effect || active_reaction === null);
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 
-	derived_sources = null;
 	set_component_context(reaction.ctx);
 	untracking = false;
 	read_version++;
@@ -479,7 +463,6 @@ export function update_reaction(reaction) {
 		untracked_writes = previous_untracked_writes;
 		active_reaction = previous_reaction;
 		skip_reaction = previous_skip_reaction;
-		derived_sources = prev_derived_sources;
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
 	}
@@ -868,9 +851,6 @@ export function get(signal) {
 
 	// Register the dependency on the current reaction signal.
 	if (active_reaction !== null && !untracking) {
-		if (derived_sources !== null && derived_sources.includes(signal)) {
-			e.state_unsafe_local_read();
-		}
 		var deps = active_reaction.deps;
 		if (signal.rv < read_version) {
 			signal.rv = read_version;

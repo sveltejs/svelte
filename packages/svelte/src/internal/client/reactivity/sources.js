@@ -11,8 +11,6 @@ import {
 	untrack,
 	increment_write_version,
 	update_effect,
-	derived_sources,
-	set_derived_sources,
 	check_dirtiness,
 	untracking,
 	is_destroying_effect
@@ -51,6 +49,7 @@ export function set_inspect_effects(v) {
  * @param {Error | null} [stack]
  * @returns {Source<V>}
  */
+// TODO rename this to `state` throughout the codebase
 export function source(v, stack) {
 	/** @type {Value} */
 	var signal = {
@@ -69,25 +68,6 @@ export function source(v, stack) {
 	}
 
 	return signal;
-}
-
-/**
- * @template V
- * @param {V} v
- */
-export function state(v) {
-	var s = source(v);
-
-	// TODO maybe we make this dev-only?
-	if (active_reaction !== null && !untracking && (active_reaction.f & DERIVED) !== 0) {
-		if (derived_sources === null) {
-			set_derived_sources([s]);
-		} else {
-			derived_sources.push(s);
-		}
-	}
-
-	return s;
 }
 
 /**
