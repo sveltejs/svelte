@@ -102,7 +102,7 @@ function create_effect(type, fn, sync, push = true) {
 		fn,
 		last: null,
 		next: null,
-		parent: parent,
+		parent,
 		prev: null,
 		teardown: null,
 		transitions: null,
