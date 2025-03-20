@@ -53,12 +53,21 @@ export function proxy(value, prev) {
 	var with_parent = (fn) => {
 		var previous_reaction = active_reaction;
 		set_active_reaction(reaction);
-		var previous_metadata = parent_metadata;
-		parent_metadata = metadata;
-		var p = fn();
+
+		/** @type {T} */
+		var result;
+
+		if (DEV) {
+			var previous_metadata = parent_metadata;
+			parent_metadata = metadata;
+			result = fn();
+			parent_metadata = previous_metadata;
+		} else {
+			result = fn();
+		}
+
 		set_active_reaction(previous_reaction);
-		parent_metadata = previous_metadata;
-		return p;
+		return result;
 	};
 
 	if (is_proxied_array) {
