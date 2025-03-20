@@ -25,8 +25,18 @@ const { test, run } = suite<SnapshotTest>(async (config, cwd, templating_mode) =
 		fs.rmSync(`${cwd}/_expected`, { recursive: true, force: true });
 		fs.cpSync(`${cwd}/_output`, `${cwd}/_expected`, { recursive: true, force: true });
 	} else {
-		const actual = globSync('**', { cwd: `${cwd}/_output`, onlyFiles: true });
-		const expected = globSync('**', { cwd: `${cwd}/_expected`, onlyFiles: true });
+		const actual = globSync('**', { cwd: `${cwd}/_output`, onlyFiles: true }).filter(
+			// filters out files that might not yet be compiled (functional is executed after string)
+			(expected) =>
+				expected.startsWith('server/') ||
+				expected.startsWith(`client${templating_mode === 'functional' ? '-functional' : ''}/`)
+		);
+		const expected = globSync('**', { cwd: `${cwd}/_expected`, onlyFiles: true }).filter(
+			// filters out files that might not yet be compiled (functional is executed after string)
+			(expected) =>
+				expected.startsWith('server/') ||
+				expected.startsWith(`client${templating_mode === 'functional' ? '-functional' : ''}/`)
+		);
 
 		assert.deepEqual(actual, expected);
 

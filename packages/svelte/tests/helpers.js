@@ -68,7 +68,7 @@ export async function compile_directory(
 	preprocessor,
 	templating_mode
 ) {
-	const output_dir = `${cwd}/_output/${generate}${templating_mode === 'functional' ? `-${templating_mode}` : ''}`;
+	const output_dir = `${cwd}/_output/${generate}${templating_mode === 'functional' ? `-functional` : ''}`;
 
 	fs.rmSync(output_dir, { recursive: true, force: true });
 
