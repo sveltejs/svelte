@@ -11,11 +11,11 @@ import {
 	untrack,
 	increment_write_version,
 	update_effect,
+	reaction_sources,
+	set_reaction_sources,
 	check_dirtiness,
 	untracking,
-	is_destroying_effect,
-	reaction_sources,
-	set_reaction_sources
+	is_destroying_effect
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -28,7 +28,6 @@ import {
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	EFFECT,
 	EFFECT_IS_UPDATING
 } from '../constants.js';
 import * as e from '../errors.js';

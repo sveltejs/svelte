@@ -82,6 +82,11 @@ export function set_active_reaction(reaction) {
 /** @type {null | Effect} */
 export let active_effect = null;
 
+/** @param {null | Effect} effect */
+export function set_active_effect(effect) {
+	active_effect = effect;
+}
+
 /**
  * When sources are created within a derived, we record them so that we can safely allow
  * local mutations to these sources without the side-effect error being invoked unnecessarily.
@@ -94,11 +99,6 @@ export let reaction_sources = null;
  */
 export function set_reaction_sources(sources) {
 	reaction_sources = sources;
-}
-
-/** @param {null | Effect} effect */
-export function set_active_effect(effect) {
-	active_effect = effect;
 }
 
 /**
