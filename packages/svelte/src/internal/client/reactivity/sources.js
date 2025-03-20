@@ -76,9 +76,10 @@ export function source(v, stack) {
 /**
  * @template V
  * @param {V} v
+ * @param {Error | null} [stack]
  */
-export function state(v) {
-	const s = source(v);
+export function state(v, stack) {
+	const s = source(v, stack);
 
 	push_reaction_value(s);
 
