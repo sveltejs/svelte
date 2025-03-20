@@ -88,8 +88,8 @@ export function set_active_effect(effect) {
 }
 
 /**
- * When sources are created within a derived, we record them so that we can safely allow
- * local mutations to these sources without the side-effect error being invoked unnecessarily.
+ * When sources are created within a reaction, reading and writing
+ * them should not cause a re-run
  * @type {null | Source[]}
  */
 export let reaction_sources = null;
