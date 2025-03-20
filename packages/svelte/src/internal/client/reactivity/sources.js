@@ -13,7 +13,9 @@ import {
 	update_effect,
 	check_dirtiness,
 	untracking,
-	is_destroying_effect
+	is_destroying_effect,
+	reaction_sources,
+	set_reaction_sources
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -37,14 +39,6 @@ import { proxy } from '../proxy.js';
 
 export let inspect_effects = new Set();
 export const old_values = new Map();
-
-/** @type {Source[] | null} */
-export let reaction_sources = null;
-
-/** @param {Source[] | null} v */
-export function set_reaction_sources(v) {
-	reaction_sources = v;
-}
 
 /**
  * @param {Set<any>} v
@@ -73,7 +67,7 @@ export function source(v, stack) {
 
 	if (active_reaction !== null && active_reaction.f & EFFECT_IS_UPDATING) {
 		if (reaction_sources === null) {
-			reaction_sources = [signal];
+			set_reaction_sources([signal]);
 		} else {
 			reaction_sources.push(signal);
 		}

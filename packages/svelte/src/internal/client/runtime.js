@@ -26,12 +26,7 @@ import {
 	EFFECT_IS_UPDATING
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
-import {
-	internal_set,
-	old_values,
-	reaction_sources,
-	set_reaction_sources
-} from './reactivity/sources.js';
+import { internal_set, old_values } from './reactivity/sources.js';
 import { destroy_derived_effects, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { FILENAME } from '../../constants.js';
@@ -86,6 +81,20 @@ export function set_active_reaction(reaction) {
 
 /** @type {null | Effect} */
 export let active_effect = null;
+
+/**
+ * When sources are created within a derived, we record them so that we can safely allow
+ * local mutations to these sources without the side-effect error being invoked unnecessarily.
+ * @type {null | Source[]}
+ */
+export let reaction_sources = null;
+
+/**
+ * @param {Source[] | null} sources
+ */
+export function set_reaction_sources(sources) {
+	reaction_sources = sources;
+}
 
 /** @param {null | Effect} effect */
 export function set_active_effect(effect) {
@@ -386,13 +395,12 @@ export function update_reaction(reaction) {
 	var previous_untracked_writes = untracked_writes;
 	var previous_reaction = active_reaction;
 	var previous_skip_reaction = skip_reaction;
+	var previous_reaction_sources = reaction_sources;
 	var previous_component_context = component_context;
 	var previous_untracking = untracking;
-	var previous_reaction_sources = reaction_sources;
 
 	var flags = reaction.f;
 
-	set_reaction_sources(null);
 	new_deps = /** @type {null | Value[]} */ (null);
 	skipped_deps = 0;
 	untracked_writes = null;
@@ -400,6 +408,7 @@ export function update_reaction(reaction) {
 		(flags & UNOWNED) !== 0 && (untracking || !is_updating_effect || active_reaction === null);
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 
+	reaction_sources = null;
 	set_component_context(reaction.ctx);
 	untracking = false;
 	read_version++;
@@ -475,9 +484,9 @@ export function update_reaction(reaction) {
 		untracked_writes = previous_untracked_writes;
 		active_reaction = previous_reaction;
 		skip_reaction = previous_skip_reaction;
+		reaction_sources = previous_reaction_sources;
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
-		set_reaction_sources(previous_reaction_sources);
 
 		reaction.f ^= EFFECT_IS_UPDATING;
 	}
