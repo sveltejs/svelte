@@ -46,8 +46,11 @@ export function proxy(value, prev) {
 	var stack = DEV && tracing_mode_flag ? get_stack('CreatedAt') : null;
 	var reaction = active_reaction;
 
-	/** @param {any} value */
-	var child_source = (value) => {
+	/**
+	 * @param {any} value
+	 * @param {Error | null | undefined} stack
+	 */
+	var child_source = (value, stack) => {
 		var previous_reaction = active_reaction;
 		set_active_reaction(reaction);
 		var s = source(value, stack);
@@ -55,7 +58,10 @@ export function proxy(value, prev) {
 		return s;
 	};
 
-	/** @param {() => void} fn */
+	/**
+	 * @template T
+	 * @param {() => T} fn
+	 */
 	var with_parent = (fn) => {
 		var previous_reaction = active_reaction;
 		set_active_reaction(reaction);
@@ -116,7 +122,7 @@ export function proxy(value, prev) {
 			var s = sources.get(prop);
 
 			if (s === undefined) {
-				s = child_source(descriptor.value);
+				s = with_parent(() => source(descriptor.value, stack));
 				sources.set(prop, s);
 			} else {
 				set(
@@ -133,7 +139,10 @@ export function proxy(value, prev) {
 
 			if (s === undefined) {
 				if (prop in target) {
-					sources.set(prop, child_source(UNINITIALIZED));
+					sources.set(
+						prop,
+						with_parent(() => source(UNINITIALIZED, stack))
+					);
 				}
 			} else {
 				// When working with arrays, we need to also ensure we update the length when removing
@@ -167,7 +176,10 @@ export function proxy(value, prev) {
 
 			// create a source, but only if it's an own property and not a prototype property
 			if (s === undefined && (!exists || get_descriptor(target, prop)?.writable)) {
-				s = child_source(with_parent(() => proxy(exists ? target[prop] : UNINITIALIZED)));
+				s = child_source(
+					with_parent(() => proxy(exists ? target[prop] : UNINITIALIZED)),
+					stack
+				);
 				sources.set(prop, s);
 			}
 
@@ -235,7 +247,7 @@ export function proxy(value, prev) {
 				(active_effect !== null && (!has || get_descriptor(target, prop)?.writable))
 			) {
 				if (s === undefined) {
-					s = child_source(has ? with_parent(() => proxy(target[prop])) : UNINITIALIZED);
+					s = child_source(has ? with_parent(() => proxy(target[prop])) : UNINITIALIZED, stack);
 					sources.set(prop, s);
 				}
 
@@ -262,7 +274,7 @@ export function proxy(value, prev) {
 						// If the item exists in the original, we need to create a uninitialized source,
 						// else a later read of the property would result in a source being created with
 						// the value of the original item at that index.
-						other_s = child_source(UNINITIALIZED);
+						other_s = with_parent(() => source(UNINITIALIZED, stack));
 						sources.set(i + '', other_s);
 					}
 				}
@@ -274,7 +286,7 @@ export function proxy(value, prev) {
 			// object property before writing to that property.
 			if (s === undefined) {
 				if (!has || get_descriptor(target, prop)?.writable) {
-					s = child_source(undefined);
+					s = child_source(undefined, stack);
 					set(
 						s,
 						with_parent(() => proxy(value))
