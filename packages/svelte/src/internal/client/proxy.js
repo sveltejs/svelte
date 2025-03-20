@@ -17,14 +17,16 @@ import * as e from './errors.js';
 import { get_stack } from './dev/tracing.js';
 import { tracing_mode_flag } from '../flags/index.js';
 
+/** @type {ProxyMetadata | null} */
+var parent_metadata = null;
+
 /**
  * @template T
  * @param {T} value
- * @param {ProxyMetadata | null} [parent]
  * @param {Source<T>} [prev] dev mode only
  * @returns {T}
  */
-export function proxy(value, parent = null, prev) {
+export function proxy(value, prev) {
 	// if non-proxyable, or is already a proxy, return `value`
 	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {
 		return value;
@@ -57,8 +59,11 @@ export function proxy(value, parent = null, prev) {
 	var child_proxy = (value) => {
 		var previous_reaction = active_reaction;
 		set_active_reaction(reaction);
-		var p = proxy(value, metadata);
+		var previous_metadata = parent_metadata;
+		parent_metadata = metadata;
+		var p = proxy(value);
 		set_active_reaction(previous_reaction);
+		parent_metadata = previous_metadata;
 		return p;
 	};
 
@@ -73,7 +78,7 @@ export function proxy(value, parent = null, prev) {
 
 	if (DEV) {
 		metadata = {
-			parent,
+			parent: parent_metadata,
 			owners: null
 		};
 
@@ -85,7 +90,7 @@ export function proxy(value, parent = null, prev) {
 			metadata.owners = prev_owners ? new Set(prev_owners) : null;
 		} else {
 			metadata.owners =
-				parent === null
+				parent_metadata === null
 					? component_context !== null
 						? new Set([component_context.function])
 						: null
