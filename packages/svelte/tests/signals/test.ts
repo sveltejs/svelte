@@ -980,16 +980,13 @@ describe('signals', () => {
 	});
 
 	test('effects do not depend on state they own', () => {
-		return () => {
-			const destroy = effect_root(() => {
-				user_effect(() => {
-					const s = state(0);
-					set(s, $.get(s) + 1);
-				});
-			});
+		user_effect(() => {
+			const value = state(0);
+			set(value, $.get(value) + 1);
+		});
 
-			assert.ok(true);
-			destroy();
+		return () => {
+			flushSync();
 		};
 	});
 
