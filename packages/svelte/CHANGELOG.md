@@ -1,5 +1,11 @@
 # svelte
 
+## 5.23.2
+
+### Patch Changes
+
+- fix: don't hoist listeners that access non hoistable snippets ([#15534](https://github.com/sveltejs/svelte/pull/15534))
+
 ## 5.23.1
 
 ### Patch Changes

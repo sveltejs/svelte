@@ -33,6 +33,7 @@ import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack } from '../dev/tracing.js';
 import { component_context, is_runes } from '../context.js';
+import { proxy } from '../proxy.js';
 
 export let inspect_effects = new Set();
 export const old_values = new Map();
@@ -143,9 +144,10 @@ export function mutate(source, value) {
  * @template V
  * @param {Source<V>} source
  * @param {V} value
+ * @param {boolean} [should_proxy]
  * @returns {V}
  */
-export function set(source, value) {
+export function set(source, value, should_proxy = false) {
 	if (
 		active_reaction !== null &&
 		!untracking &&
@@ -158,7 +160,9 @@ export function set(source, value) {
 		e.state_unsafe_mutation();
 	}
 
-	return internal_set(source, value);
+	let new_value = should_proxy ? proxy(value, null, source) : value;
+
+	return internal_set(source, new_value);
 }
 
 /**
