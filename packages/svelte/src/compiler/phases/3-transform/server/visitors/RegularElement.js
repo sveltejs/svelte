@@ -48,7 +48,7 @@ export function RegularElement(node, context) {
 		},
 		state.preserve_whitespace,
 		state.options.preserveComments,
-		// prevent template cloning should always be false on the server
+		// templating mode doesn't affect server builds
 		false
 	);
 

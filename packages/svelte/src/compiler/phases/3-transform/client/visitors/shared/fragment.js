@@ -15,15 +15,8 @@ import { build_template_chunk } from './utils.js';
  * @param {(is_text: boolean) => Expression} initial
  * @param {boolean} is_element
  * @param {ComponentContext} context
- * @param {boolean} [is_functional_template_mode]
  */
-export function process_children(
-	nodes,
-	initial,
-	is_element,
-	{ visit, state },
-	is_functional_template_mode
-) {
+export function process_children(nodes, initial, is_element, { visit, state }) {
 	const within_bound_contenteditable = state.metadata.bound_contenteditable;
 	let prev = initial;
 	let skipped = 0;
@@ -74,7 +67,9 @@ export function process_children(
 			state.template.push({
 				kind: 'create_text',
 				args: [
-					sequence.map((node) => (is_functional_template_mode ? node.data : node.raw)).join('')
+					sequence
+						.map((node) => (state.is_functional_template_mode ? node.data : node.raw))
+						.join('')
 				]
 			});
 			return;

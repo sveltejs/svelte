@@ -69,6 +69,7 @@ export function Fragment(node, context) {
 		template: [],
 		locations: [],
 		transform: { ...context.state.transform },
+		is_functional_template_mode: context.state.is_functional_template_mode,
 		metadata: {
 			context: {
 				template_needs_import_node: false,
@@ -125,40 +126,22 @@ export function Fragment(node, context) {
 			// special case — we can use `$.text` instead of creating a unique template
 			const id = b.id(context.state.scope.generate('text'));
 
-			process_children(
-				trimmed,
-				() => id,
-				false,
-				{
-					...context,
-					state
-				},
-				context.state.is_functional_template_mode
-			);
+			process_children(trimmed, () => id, false, {
+				...context,
+				state
+			});
 
 			body.push(b.var(id, b.call('$.text')));
 			close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 		} else {
 			if (is_standalone) {
 				// no need to create a template, we can just use the existing block's anchor
-				process_children(
-					trimmed,
-					() => b.id('$$anchor'),
-					false,
-					{ ...context, state },
-					context.state.is_functional_template_mode
-				);
+				process_children(trimmed, () => b.id('$$anchor'), false, { ...context, state });
 			} else {
 				/** @type {(is_text: boolean) => Expression} */
 				const expression = (is_text) => b.call('$.first_child', id, is_text && b.true);
 
-				process_children(
-					trimmed,
-					expression,
-					false,
-					{ ...context, state },
-					context.state.is_functional_template_mode
-				);
+				process_children(trimmed, expression, false, { ...context, state });
 
 				let flags = TEMPLATE_FRAGMENT;
 

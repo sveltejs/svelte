@@ -20,7 +20,7 @@ export function Fragment(node, context) {
 		context.state,
 		context.state.preserve_whitespace,
 		context.state.options.preserveComments,
-		// prevent template cloning should always be false on the server
+		// templating mode doesn't affect server builds
 		false
 	);
 

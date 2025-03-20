@@ -375,7 +375,8 @@ export function RegularElement(node, context) {
 		locations: [],
 		scope: /** @type {Scope} */ (context.state.scopes.get(node.fragment)),
 		preserve_whitespace:
-			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea'
+			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea',
+		is_functional_template_mode: context.state.is_functional_template_mode
 	};
 
 	const { hoisted, trimmed } = clean_nodes(
@@ -430,16 +431,10 @@ export function RegularElement(node, context) {
 			arg = b.member(arg, 'content');
 		}
 
-		process_children(
-			trimmed,
-			(is_text) => b.call('$.child', arg, is_text && b.true),
-			true,
-			{
-				...context,
-				state: child_state
-			},
-			context.state.is_functional_template_mode
-		);
+		process_children(trimmed, (is_text) => b.call('$.child', arg, is_text && b.true), true, {
+			...context,
+			state: child_state
+		});
 
 		if (needs_reset) {
 			child_state.init.push(b.stmt(b.call('$.reset', context.state.node)));
