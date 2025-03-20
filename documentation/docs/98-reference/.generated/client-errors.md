@@ -122,12 +122,6 @@ Property descriptors defined on `$state` objects must contain `value` and always
 Cannot set prototype of `$state` object
 ```
 
-### state_unsafe_local_read
-
-```
-Reading state that was created inside the same derived is forbidden. Consider using `untrack` to read locally created state
-```
-
 ### state_unsafe_mutation
 
 ```

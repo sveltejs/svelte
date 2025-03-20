@@ -11,8 +11,8 @@ import {
 	untrack,
 	increment_write_version,
 	update_effect,
-	derived_sources,
-	set_derived_sources,
+	reaction_sources,
+	set_reaction_sources,
 	check_dirtiness,
 	untracking,
 	is_destroying_effect
@@ -27,7 +27,8 @@ import {
 	UNOWNED,
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
-	ROOT_EFFECT
+	ROOT_EFFECT,
+	EFFECT_IS_UPDATING
 } from '../constants.js';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -51,6 +52,7 @@ export function set_inspect_effects(v) {
  * @param {Error | null} [stack]
  * @returns {Source<V>}
  */
+// TODO rename this to `state` throughout the codebase
 export function source(v, stack) {
 	/** @type {Value} */
 	var signal = {
@@ -62,20 +64,20 @@ export function source(v, stack) {
 		wv: 0
 	};
 
+	if (active_reaction !== null && active_reaction.f & EFFECT_IS_UPDATING) {
+		if (reaction_sources === null) {
+			set_reaction_sources([signal]);
+		} else {
+			reaction_sources.push(signal);
+		}
+	}
+
 	if (DEV && tracing_mode_flag) {
 		signal.created = stack ?? get_stack('CreatedAt');
 		signal.debug = null;
 	}
 
 	return signal;
-}
-
-/**
- * @template V
- * @param {V} v
- */
-export function state(v) {
-	return push_derived_source(source(v));
 }
 
 /**
@@ -98,33 +100,6 @@ export function mutable_source(initial_value, immutable = false) {
 	}
 
 	return s;
-}
-
-/**
- * @template V
- * @param {V} v
- * @param {boolean} [immutable]
- * @returns {Source<V>}
- */
-export function mutable_state(v, immutable = false) {
-	return push_derived_source(mutable_source(v, immutable));
-}
-
-/**
- * @template V
- * @param {Source<V>} source
- */
-/*#__NO_SIDE_EFFECTS__*/
-function push_derived_source(source) {
-	if (active_reaction !== null && !untracking && (active_reaction.f & DERIVED) !== 0) {
-		if (derived_sources === null) {
-			set_derived_sources([source]);
-		} else {
-			derived_sources.push(source);
-		}
-	}
-
-	return source;
 }
 
 /**
@@ -153,14 +128,12 @@ export function set(source, value, should_proxy = false) {
 		!untracking &&
 		is_runes() &&
 		(active_reaction.f & (DERIVED | BLOCK_EFFECT)) !== 0 &&
-		// If the source was created locally within the current derived, then
-		// we allow the mutation.
-		(derived_sources === null || !derived_sources.includes(source))
+		!reaction_sources?.includes(source)
 	) {
 		e.state_unsafe_mutation();
 	}
 
-	let new_value = should_proxy ? proxy(value, null, source) : value;
+	let new_value = should_proxy ? proxy(value, source) : value;
 
 	return internal_set(source, new_value);
 }
