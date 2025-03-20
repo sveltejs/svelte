@@ -10,6 +10,7 @@ export var get_descriptors = Object.getOwnPropertyDescriptors;
 export var object_prototype = Object.prototype;
 export var array_prototype = Array.prototype;
 export var get_prototype_of = Object.getPrototypeOf;
+export var structured_clone = globalThis.structuredClone;
 
 /**
  * @param {any} thing
@@ -79,4 +80,13 @@ export function fallback(value, fallback, lazy = false) {
 			? /** @type {() => V} */ (fallback)()
 			: /** @type {V} */ (fallback)
 		: value;
+}
+
+/**
+ * Returns true if the value is an object that is not null
+ * @param {any} value
+ * @returns {boolean}
+ */
+export function is_object(value) {
+	return typeof value === "object" && value !== null;
 }

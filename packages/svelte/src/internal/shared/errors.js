@@ -63,3 +63,18 @@ export function svelte_element_invalid_this_value() {
 		throw new Error(`https://svelte.dev/e/svelte_element_invalid_this_value`);
 	}
 }
+
+/**
+ * To correctly clone a `$state` proxy, use `$state.snapshot` instead of `structuredClone`
+ * @returns {never}
+ */
+export function structured_clone_state_proxy() {
+	if (DEV) {
+		const error = new Error(`structured_clone_state_proxy\nTo correctly clone a \`$state\` proxy, use \`$state.snapshot\` instead of \`structuredClone\`\nhttps://svelte.dev/e/structured_clone_state_proxy`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/structured_clone_state_proxy`);
+	}
+}
