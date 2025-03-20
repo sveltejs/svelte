@@ -26,8 +26,10 @@
 	}
 
 	class Extended extends MyCustomElement {}
-
-	window.customElements.define('my-custom-inheritance-element', Extended);
+	
+	if(!window.customElements.get('my-custom-inheritance-element')) {
+		window.customElements.define('my-custom-inheritance-element', Extended);
+	}
 </script>
 
 <my-custom-inheritance-element camelCase={{ text: 'World' }} text="!" />

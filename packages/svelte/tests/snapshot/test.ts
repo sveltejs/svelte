@@ -9,8 +9,15 @@ interface SnapshotTest extends BaseTest {
 	compileOptions?: Partial<import('#compiler').CompileOptions>;
 }
 
-const { test, run } = suite<SnapshotTest>(async (config, cwd) => {
-	await compile_directory(cwd, 'client', config.compileOptions);
+const { test, run } = suite<SnapshotTest>(async (config, cwd, templating_mode) => {
+	await compile_directory(
+		cwd,
+		'client',
+		config.compileOptions,
+		undefined,
+		undefined,
+		templating_mode
+	);
 	await compile_directory(cwd, 'server', config.compileOptions);
 
 	// run `UPDATE_SNAPSHOTS=true pnpm test snapshot` to update snapshot tests
@@ -41,4 +48,5 @@ const { test, run } = suite<SnapshotTest>(async (config, cwd) => {
 
 export { test };
 
-await run(__dirname);
+await run(__dirname, 'string');
+await run(__dirname, 'functional');

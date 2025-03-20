@@ -22,7 +22,7 @@ import { current_component } from './context.js';
 let parent = null;
 
 /** @type {Set<string>} */
-let seen;
+export let seen;
 
 /**
  * @param {Element} element

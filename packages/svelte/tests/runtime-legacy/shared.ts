@@ -10,7 +10,8 @@ import { compile_directory } from '../helpers.js';
 import { setup_html_equal } from '../html_equal.js';
 import { raf } from '../animation-helpers.js';
 import type { CompileOptions } from '#compiler';
-import { suite_with_variants, type BaseTest } from '../suite.js';
+import { suite_with_variants, type BaseTest, type TemplatingMode } from '../suite.js';
+import { seen } from '../../src/internal/server/dev.js';
 
 type Assert = typeof import('vitest').assert & {
 	htmlEqual(a: string, b: string, description?: string): void;
@@ -141,16 +142,21 @@ export function runtime_suite(runes: boolean) {
 
 			return false;
 		},
-		(config, cwd) => {
-			return common_setup(cwd, runes, config);
+		(config, cwd, templating_mode) => {
+			return common_setup(cwd, runes, config, templating_mode);
 		},
-		async (config, cwd, variant, common) => {
-			await run_test_variant(cwd, config, variant, common, runes);
+		async (config, cwd, variant, common, templating_mode) => {
+			await run_test_variant(cwd, config, variant, common, runes, templating_mode);
 		}
 	);
 }
 
-async function common_setup(cwd: string, runes: boolean | undefined, config: RuntimeTest) {
+async function common_setup(
+	cwd: string,
+	runes: boolean | undefined,
+	config: RuntimeTest,
+	templating_mode: TemplatingMode
+) {
 	const force_hmr = process.env.HMR && config.compileOptions?.dev !== false && !config.error;
 
 	const compileOptions: CompileOptions = {
@@ -161,13 +167,14 @@ async function common_setup(cwd: string, runes: boolean | undefined, config: Run
 		...config.compileOptions,
 		immutable: config.immutable,
 		accessors: 'accessors' in config ? config.accessors : true,
-		runes
+		runes,
+		preventTemplateCloning: templating_mode === 'functional'
 	};
 
 	// load_compiled can be used for debugging a test. It means the compiler will not run on the input
 	// so you can manipulate the output manually to see what fixes it, adding console.logs etc.
 	if (!config.load_compiled) {
-		await compile_directory(cwd, 'client', compileOptions);
+		await compile_directory(cwd, 'client', compileOptions, undefined, undefined, templating_mode);
 		await compile_directory(cwd, 'server', compileOptions);
 	}
 
@@ -179,7 +186,8 @@ async function run_test_variant(
 	config: RuntimeTest,
 	variant: 'dom' | 'hydrate' | 'ssr',
 	compileOptions: CompileOptions,
-	runes: boolean
+	runes: boolean,
+	templating_mode: TemplatingMode
 ) {
 	let unintended_error = false;
 
@@ -257,8 +265,15 @@ async function run_test_variant(
 		raf.reset();
 
 		// Put things we need on window for testing
-		const styles = globSync('**/*.css', { cwd: `${cwd}/_output/client` })
-			.map((file) => fs.readFileSync(`${cwd}/_output/client/${file}`, 'utf-8'))
+		const styles = globSync('**/*.css', {
+			cwd: `${cwd}/_output/client${templating_mode === 'functional' ? '-functional' : ''}`
+		})
+			.map((file) =>
+				fs.readFileSync(
+					`${cwd}/_output/client${templating_mode === 'functional' ? '-functional' : ''}/${file}`,
+					'utf-8'
+				)
+			)
 			.join('\n')
 			.replace(/\/\*<\/?style>\*\//g, '');
 
@@ -274,7 +289,9 @@ async function run_test_variant(
 
 		globalThis.requestAnimationFrame = globalThis.setTimeout;
 
-		let mod = await import(`${cwd}/_output/client/main.svelte.js`);
+		let mod = await import(
+			`${cwd}/_output/client${templating_mode === 'functional' ? '-functional' : ''}/main.svelte.js`
+		);
 
 		const target = window.document.querySelector('main') as HTMLElement;
 
@@ -282,6 +299,8 @@ async function run_test_variant(
 
 		if (variant === 'hydrate' || variant === 'ssr') {
 			config.before_test?.();
+			// we need to clear the seen messages between tests
+			seen?.clear?.();
 			// ssr into target
 			const SsrSvelteComponent = (await import(`${cwd}/_output/server/main.svelte.js`)).default;
 			const { html, head } = render(SsrSvelteComponent, {
@@ -289,11 +308,17 @@ async function run_test_variant(
 				idPrefix: config.id_prefix
 			});
 
-			fs.writeFileSync(`${cwd}/_output/rendered.html`, html);
+			fs.writeFileSync(
+				`${cwd}/_output/rendered${templating_mode === 'functional' ? '-functional' : ''}.html`,
+				html
+			);
 			target.innerHTML = html;
 
 			if (head) {
-				fs.writeFileSync(`${cwd}/_output/rendered_head.html`, head);
+				fs.writeFileSync(
+					`${cwd}/_output/rendered_head${templating_mode === 'functional' ? '-functional' : ''}.html`,
+					head
+				);
 				window.document.head.innerHTML = window.document.head.innerHTML + head;
 			}
 
