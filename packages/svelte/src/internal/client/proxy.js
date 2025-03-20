@@ -47,18 +47,6 @@ export function proxy(value, prev) {
 	var reaction = active_reaction;
 
 	/**
-	 * @param {any} value
-	 * @param {Error | null | undefined} stack
-	 */
-	var child_source = (value, stack) => {
-		var previous_reaction = active_reaction;
-		set_active_reaction(reaction);
-		var s = source(value, stack);
-		set_active_reaction(previous_reaction);
-		return s;
-	};
-
-	/**
 	 * @template T
 	 * @param {() => T} fn
 	 */
@@ -176,10 +164,7 @@ export function proxy(value, prev) {
 
 			// create a source, but only if it's an own property and not a prototype property
 			if (s === undefined && (!exists || get_descriptor(target, prop)?.writable)) {
-				s = child_source(
-					with_parent(() => proxy(exists ? target[prop] : UNINITIALIZED)),
-					stack
-				);
+				s = with_parent(() => source(proxy(exists ? target[prop] : UNINITIALIZED), stack));
 				sources.set(prop, s);
 			}
 
@@ -247,7 +232,7 @@ export function proxy(value, prev) {
 				(active_effect !== null && (!has || get_descriptor(target, prop)?.writable))
 			) {
 				if (s === undefined) {
-					s = child_source(has ? with_parent(() => proxy(target[prop])) : UNINITIALIZED, stack);
+					s = with_parent(() => source(has ? proxy(target[prop]) : UNINITIALIZED, stack));
 					sources.set(prop, s);
 				}
 
@@ -286,7 +271,7 @@ export function proxy(value, prev) {
 			// object property before writing to that property.
 			if (s === undefined) {
 				if (!has || get_descriptor(target, prop)?.writable) {
-					s = child_source(undefined, stack);
+					s = with_parent(() => source(undefined, stack));
 					set(
 						s,
 						with_parent(() => proxy(value))
