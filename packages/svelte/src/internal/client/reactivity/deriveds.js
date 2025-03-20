@@ -55,13 +55,24 @@ export function derived(fn) {
 		parent: parent_derived ?? active_effect
 	};
 
-	push_reaction_value(signal);
-
 	if (DEV && tracing_mode_flag) {
 		signal.created = get_stack('CreatedAt');
 	}
 
 	return signal;
+}
+
+/**
+ * @template V
+ * @param {() => V} fn
+ * @returns {Derived<V>}
+ */
+export function user_derived(fn) {
+	const d = derived(fn);
+
+	push_reaction_value(d);
+
+	return d;
 }
 
 /**
