@@ -367,6 +367,8 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 
 	for (var i = 0; i < reactions.length; i++) {
 		var reaction = reactions[i];
+		if (signal.parent === reaction) continue;
+
 		if ((reaction.f & DERIVED) !== 0) {
 			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
 		} else if (effect === reaction) {

@@ -154,9 +154,7 @@ export function set(source, value, should_proxy = false) {
 		!untracking &&
 		is_runes() &&
 		(active_reaction.f & (DERIVED | BLOCK_EFFECT)) !== 0 &&
-		// If the source was created locally within the current derived, then
-		// we allow the mutation.
-		(derived_sources === null || !derived_sources.includes(source))
+		active_reaction !== source.parent
 	) {
 		e.state_unsafe_mutation();
 	}
