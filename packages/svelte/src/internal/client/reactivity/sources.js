@@ -76,7 +76,18 @@ export function source(v, stack) {
  * @param {V} v
  */
 export function state(v) {
-	return push_derived_source(source(v));
+	var s = source(v);
+
+	// TODO maybe we make this dev-only?
+	if (active_reaction !== null && !untracking && (active_reaction.f & DERIVED) !== 0) {
+		if (derived_sources === null) {
+			set_derived_sources([s]);
+		} else {
+			derived_sources.push(s);
+		}
+	}
+
+	return s;
 }
 
 /**
@@ -99,23 +110,6 @@ export function mutable_source(initial_value, immutable = false) {
 	}
 
 	return s;
-}
-
-/**
- * @template V
- * @param {Source<V>} source
- */
-/*#__NO_SIDE_EFFECTS__*/
-function push_derived_source(source) {
-	if (active_reaction !== null && !untracking && (active_reaction.f & DERIVED) !== 0) {
-		if (derived_sources === null) {
-			set_derived_sources([source]);
-		} else {
-			derived_sources.push(source);
-		}
-	}
-
-	return source;
 }
 
 /**
