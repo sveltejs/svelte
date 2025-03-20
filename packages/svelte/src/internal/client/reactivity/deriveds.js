@@ -8,7 +8,8 @@ import {
 	skip_reaction,
 	update_reaction,
 	increment_write_version,
-	set_active_effect
+	set_active_effect,
+	push_reaction_value
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -53,6 +54,8 @@ export function derived(fn) {
 		wv: 0,
 		parent: parent_derived ?? active_effect
 	};
+
+	push_reaction_value(signal);
 
 	if (DEV && tracing_mode_flag) {
 		signal.created = get_stack('CreatedAt');
