@@ -55,13 +55,13 @@ export function proxy(value, prev) {
 		return s;
 	};
 
-	/** @param {any} value */
-	var child_proxy = (value) => {
+	/** @param {() => void} fn */
+	var with_parent = (fn) => {
 		var previous_reaction = active_reaction;
 		set_active_reaction(reaction);
 		var previous_metadata = parent_metadata;
 		parent_metadata = metadata;
-		var p = proxy(value);
+		var p = fn();
 		set_active_reaction(previous_reaction);
 		parent_metadata = previous_metadata;
 		return p;
@@ -119,7 +119,10 @@ export function proxy(value, prev) {
 				s = child_source(descriptor.value);
 				sources.set(prop, s);
 			} else {
-				set(s, child_proxy(descriptor.value));
+				set(
+					s,
+					with_parent(() => proxy(descriptor.value))
+				);
 			}
 
 			return true;
@@ -164,7 +167,7 @@ export function proxy(value, prev) {
 
 			// create a source, but only if it's an own property and not a prototype property
 			if (s === undefined && (!exists || get_descriptor(target, prop)?.writable)) {
-				s = child_source(child_proxy(exists ? target[prop] : UNINITIALIZED));
+				s = child_source(with_parent(() => proxy(exists ? target[prop] : UNINITIALIZED)));
 				sources.set(prop, s);
 			}
 
@@ -232,7 +235,7 @@ export function proxy(value, prev) {
 				(active_effect !== null && (!has || get_descriptor(target, prop)?.writable))
 			) {
 				if (s === undefined) {
-					s = child_source(has ? child_proxy(target[prop]) : UNINITIALIZED);
+					s = child_source(has ? with_parent(() => proxy(target[prop])) : UNINITIALIZED);
 					sources.set(prop, s);
 				}
 
@@ -272,12 +275,18 @@ export function proxy(value, prev) {
 			if (s === undefined) {
 				if (!has || get_descriptor(target, prop)?.writable) {
 					s = child_source(undefined);
-					set(s, child_proxy(value));
+					set(
+						s,
+						with_parent(() => proxy(value))
+					);
 					sources.set(prop, s);
 				}
 			} else {
 				has = s.v !== UNINITIALIZED;
-				set(s, child_proxy(value));
+				set(
+					s,
+					with_parent(() => proxy(value))
+				);
 			}
 
 			if (DEV) {
