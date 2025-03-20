@@ -25,7 +25,9 @@ import {
 	UNOWNED,
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
-	ROOT_EFFECT
+	ROOT_EFFECT,
+	EFFECT,
+	EFFECT_IS_UPDATING
 } from '../constants.js';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -35,6 +37,14 @@ import { proxy } from '../proxy.js';
 
 export let inspect_effects = new Set();
 export const old_values = new Map();
+
+/** @type {Source[] | null} */
+export let reaction_sources = null;
+
+/** @param {Source[] | null} v */
+export function set_reaction_sources(v) {
+	reaction_sources = v;
+}
 
 /**
  * @param {Set<any>} v
@@ -61,6 +71,14 @@ export function source(v, stack) {
 		rv: 0,
 		wv: 0
 	};
+
+	if (active_reaction !== null && active_reaction.f & EFFECT_IS_UPDATING) {
+		if (reaction_sources === null) {
+			reaction_sources = [signal];
+		} else {
+			reaction_sources.push(signal);
+		}
+	}
 
 	if (DEV && tracing_mode_flag) {
 		signal.created = stack ?? get_stack('CreatedAt');
@@ -118,7 +136,7 @@ export function set(source, value, should_proxy = false) {
 		!untracking &&
 		is_runes() &&
 		(active_reaction.f & (DERIVED | BLOCK_EFFECT)) !== 0 &&
-		active_reaction !== source.p
+		!reaction_sources?.includes(source)
 	) {
 		e.state_unsafe_mutation();
 	}

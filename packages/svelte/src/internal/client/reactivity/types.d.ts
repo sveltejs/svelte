@@ -5,8 +5,6 @@ export interface Signal {
 	f: number;
 	/** Write version */
 	wv: number;
-	/** Parent effect or derived */
-	p: Reaction | null;
 }
 
 export interface Value<V = unknown> extends Signal {
@@ -40,6 +38,8 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 	fn: () => V;
 	/** Effects created inside this signal */
 	effects: null | Effect[];
+	/** Parent effect or derived */
+	parent: Effect | Derived | null;
 }
 
 export interface Effect extends Reaction {
@@ -66,7 +66,7 @@ export interface Effect extends Reaction {
 	/** Last child effect created inside this signal */
 	last: null | Effect;
 	/** Parent effect */
-	p: Effect | null;
+	parent: Effect | null;
 	/** Dev only */
 	component_function?: any;
 }

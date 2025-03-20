@@ -51,7 +51,7 @@ export function derived(fn) {
 		rv: 0,
 		v: /** @type {V} */ (null),
 		wv: 0,
-		p: parent_derived ?? active_effect
+		parent: parent_derived ?? active_effect
 	};
 
 	if (DEV && tracing_mode_flag) {
@@ -101,12 +101,12 @@ let stack = [];
  * @returns {Effect | null}
  */
 function get_derived_parent_effect(derived) {
-	var parent = derived.p;
+	var parent = derived.parent;
 	while (parent !== null) {
 		if ((parent.f & DERIVED) === 0) {
 			return /** @type {Effect} */ (parent);
 		}
-		parent = parent.p;
+		parent = parent.parent;
 	}
 	return null;
 }

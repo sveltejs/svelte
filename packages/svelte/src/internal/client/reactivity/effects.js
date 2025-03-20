@@ -87,7 +87,7 @@ function create_effect(type, fn, sync, push = true) {
 	if (DEV) {
 		// Ensure the parent is never an inspect effect
 		while (parent !== null && (parent.f & INSPECT_EFFECT) !== 0) {
-			parent = parent.p;
+			parent = parent.parent;
 		}
 	}
 
@@ -102,7 +102,7 @@ function create_effect(type, fn, sync, push = true) {
 		fn,
 		last: null,
 		next: null,
-		p: parent,
+		parent: parent,
 		prev: null,
 		teardown: null,
 		transitions: null,
@@ -393,7 +393,7 @@ export function destroy_effect_children(signal, remove_dom = false) {
 
 		if ((effect.f & ROOT_EFFECT) !== 0) {
 			// this is now an independent root
-			effect.p = null;
+			effect.parent = null;
 		} else {
 			destroy_effect(effect, remove_dom);
 		}
@@ -456,7 +456,7 @@ export function destroy_effect(effect, remove_dom = true) {
 
 	execute_effect_teardown(effect);
 
-	var parent = effect.p;
+	var parent = effect.parent;
 
 	// If the parent doesn't have any children, then skip this work altogether
 	if (parent !== null && parent.first !== null) {
@@ -486,7 +486,7 @@ export function destroy_effect(effect, remove_dom = true) {
  * @param {Effect} effect
  */
 export function unlink_effect(effect) {
-	var parent = effect.p;
+	var parent = effect.parent;
 	var prev = effect.prev;
 	var next = effect.next;
 

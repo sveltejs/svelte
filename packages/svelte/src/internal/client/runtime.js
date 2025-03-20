@@ -22,10 +22,16 @@ import {
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
-	BOUNDARY_EFFECT
+	BOUNDARY_EFFECT,
+	EFFECT_IS_UPDATING
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
-import { internal_set, old_values } from './reactivity/sources.js';
+import {
+	internal_set,
+	old_values,
+	reaction_sources,
+	set_reaction_sources
+} from './reactivity/sources.js';
 import { destroy_derived_effects, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { FILENAME } from '../../constants.js';
@@ -161,7 +167,7 @@ export function check_dirtiness(reaction) {
 			// then we need to re-connect the reaction to the dependency
 			if (is_disconnected || is_unowned_connected) {
 				var derived = /** @type {Derived} */ (reaction);
-				var parent = derived.p;
+				var parent = derived.parent;
 
 				for (i = 0; i < length; i++) {
 					dependency = dependencies[i];
@@ -228,7 +234,7 @@ function propagate_error(error, effect) {
 			}
 		}
 
-		current = current.p;
+		current = current.parent;
 	}
 
 	is_throwing_error = false;
@@ -240,7 +246,8 @@ function propagate_error(error, effect) {
  */
 function should_rethrow_error(effect) {
 	return (
-		(effect.f & DESTROYED) === 0 && (effect.p === null || (effect.p.f & BOUNDARY_EFFECT) === 0)
+		(effect.f & DESTROYED) === 0 &&
+		(effect.parent === null || (effect.parent.f & BOUNDARY_EFFECT) === 0)
 	);
 }
 
@@ -352,7 +359,8 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 
 	for (var i = 0; i < reactions.length; i++) {
 		var reaction = reactions[i];
-		if (signal.p === reaction) continue;
+
+		if (reaction_sources?.includes(signal)) continue;
 
 		if ((reaction.f & DERIVED) !== 0) {
 			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
@@ -380,8 +388,11 @@ export function update_reaction(reaction) {
 	var previous_skip_reaction = skip_reaction;
 	var previous_component_context = component_context;
 	var previous_untracking = untracking;
+	var previous_reaction_sources = reaction_sources;
+
 	var flags = reaction.f;
 
+	set_reaction_sources(null);
 	new_deps = /** @type {null | Value[]} */ (null);
 	skipped_deps = 0;
 	untracked_writes = null;
@@ -392,6 +403,8 @@ export function update_reaction(reaction) {
 	set_component_context(reaction.ctx);
 	untracking = false;
 	read_version++;
+
+	reaction.f |= EFFECT_IS_UPDATING;
 
 	try {
 		var result = /** @type {Function} */ (0, reaction.fn)();
@@ -464,6 +477,9 @@ export function update_reaction(reaction) {
 		skip_reaction = previous_skip_reaction;
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
+		set_reaction_sources(previous_reaction_sources);
+
+		reaction.f ^= EFFECT_IS_UPDATING;
 	}
 }
 
@@ -719,8 +735,8 @@ export function schedule_effect(signal) {
 
 	var effect = (last_scheduled_effect = signal);
 
-	while (effect.p !== null) {
-		effect = effect.p;
+	while (effect.parent !== null) {
+		effect = effect.parent;
 		var flags = effect.f;
 
 		if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
@@ -785,12 +801,12 @@ function process_effects(root) {
 			}
 		}
 
-		var parent = effect.p;
+		var parent = effect.parent;
 		effect = effect.next;
 
 		while (effect === null && parent !== null) {
 			effect = parent.next;
-			parent = parent.p;
+			parent = parent.parent;
 		}
 	}
 
@@ -873,7 +889,7 @@ export function get(signal) {
 		/** @type {Derived} */ (signal).effects === null
 	) {
 		var derived = /** @type {Derived} */ (signal);
-		var parent = derived.p;
+		var parent = derived.parent;
 
 		if (parent !== null && (parent.f & UNOWNED) === 0) {
 			// If the derived is owned by another derived then mark it as unowned
