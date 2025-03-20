@@ -103,16 +103,6 @@ export function mutable_source(initial_value, immutable = false) {
 
 /**
  * @template V
- * @param {V} v
- * @param {boolean} [immutable]
- * @returns {Source<V>}
- */
-export function mutable_state(v, immutable = false) {
-	return push_derived_source(mutable_source(v, immutable));
-}
-
-/**
- * @template V
  * @param {Source<V>} source
  */
 /*#__NO_SIDE_EFFECTS__*/
