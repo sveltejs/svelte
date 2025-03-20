@@ -2,4 +2,4 @@
 'svelte': minor
 ---
 
-feat: templateless template generation
+feat: functional template generation

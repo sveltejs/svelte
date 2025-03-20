@@ -15,8 +15,15 @@ import { build_template_chunk } from './utils.js';
  * @param {(is_text: boolean) => Expression} initial
  * @param {boolean} is_element
  * @param {ComponentContext} context
+ * @param {boolean} [prevent_template_cloning]
  */
-export function process_children(nodes, initial, is_element, { visit, state }) {
+export function process_children(
+	nodes,
+	initial,
+	is_element,
+	{ visit, state },
+	prevent_template_cloning
+) {
 	const within_bound_contenteditable = state.metadata.bound_contenteditable;
 	let prev = initial;
 	let skipped = 0;
@@ -66,7 +73,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 			skipped += 1;
 			state.template.push({
 				kind: 'create_text',
-				args: [sequence.map((node) => node.raw).join('')]
+				args: [sequence.map((node) => (prevent_template_cloning ? node.data : node.raw)).join('')]
 			});
 			return;
 		}

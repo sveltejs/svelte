@@ -141,6 +141,7 @@ function sort_const_tags(nodes, state) {
  * @param {TransformState & { options: ValidatedCompileOptions }} state
  * @param {boolean} preserve_whitespace
  * @param {boolean} preserve_comments
+ * @param {boolean} [prevent_template_cloning]
  */
 export function clean_nodes(
 	parent,
@@ -152,7 +153,8 @@ export function clean_nodes(
 	// first, we need to make `Component(Client|Server)TransformState` inherit from a new `ComponentTransformState`
 	// rather than from `ClientTransformState` and `ServerTransformState`
 	preserve_whitespace,
-	preserve_comments
+	preserve_comments,
+	prevent_template_cloning
 ) {
 	if (!state.analysis.runes) {
 		nodes = sort_const_tags(nodes, state);
@@ -272,11 +274,15 @@ export function clean_nodes(
 	var first = trimmed[0];
 
 	// initial newline inside a `<pre>` is disregarded, if not followed by another newline
-	if (parent.type === 'RegularElement' && parent.name === 'pre' && first?.type === 'Text') {
+	if (
+		parent.type === 'RegularElement' &&
+		(parent.name === 'pre' || (prevent_template_cloning && parent.name === 'textarea')) &&
+		first?.type === 'Text'
+	) {
 		const text = first.data.replace(regex_starts_with_newline, '');
 		if (text !== first.data) {
 			const tmp = text.replace(regex_starts_with_newline, '');
-			if (text === tmp) {
+			if (text === tmp || prevent_template_cloning) {
 				first.data = text;
 				first.raw = first.raw.replace(regex_starts_with_newline, '');
 				if (first.data === '') {

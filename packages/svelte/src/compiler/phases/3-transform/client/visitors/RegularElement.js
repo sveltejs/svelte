@@ -77,7 +77,11 @@ export function RegularElement(node, context) {
 
 	context.state.template.push({
 		kind: 'create_element',
-		args: [node.name]
+		args: [node.name],
+		metadata: {
+			svg: node.metadata.svg,
+			mathml: node.metadata.mathml
+		}
 	});
 
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
@@ -118,7 +122,12 @@ export function RegularElement(node, context) {
 					if (value.type === 'Literal' && typeof value.value === 'string') {
 						context.state.template.push({
 							kind: 'set_prop',
-							args: ['is', escape_html(value.value, true)]
+							args: [
+								'is',
+								context.state.prevent_template_cloning
+									? value.value
+									: escape_html(value.value, true)
+							]
 						});
 						continue;
 					}
@@ -300,7 +309,13 @@ export function RegularElement(node, context) {
 						args: [attribute.name].concat(
 							is_boolean_attribute(name) && value === true
 								? []
-								: [value === true ? '' : escape_html(value, true)]
+								: [
+										value === true
+											? ''
+											: context.state.prevent_template_cloning
+												? value
+												: escape_html(value, true)
+									]
 						)
 					});
 				}
@@ -370,7 +385,8 @@ export function RegularElement(node, context) {
 		state.metadata.namespace,
 		state,
 		node.name === 'script' || state.preserve_whitespace,
-		state.options.preserveComments
+		state.options.preserveComments,
+		state.prevent_template_cloning
 	);
 
 	/** @type {typeof state} */
@@ -414,10 +430,16 @@ export function RegularElement(node, context) {
 			arg = b.member(arg, 'content');
 		}
 
-		process_children(trimmed, (is_text) => b.call('$.child', arg, is_text && b.true), true, {
-			...context,
-			state: child_state
-		});
+		process_children(
+			trimmed,
+			(is_text) => b.call('$.child', arg, is_text && b.true),
+			true,
+			{
+				...context,
+				state: child_state
+			},
+			context.state.prevent_template_cloning
+		);
 
 		if (needs_reset) {
 			child_state.init.push(b.stmt(b.call('$.reset', context.state.node)));

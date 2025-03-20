@@ -65,6 +65,47 @@ export function template(content, flags) {
 }
 
 /**
+ * @param {()=>(DocumentFragment | Node)} fn
+ * @param {number} flags
+ * @returns {() => Node | Node[]}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function template_fn(fn, flags) {
+	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
+	var use_import_node = (flags & TEMPLATE_USE_IMPORT_NODE) !== 0;
+
+	/** @type {Node} */
+	var node;
+
+	return () => {
+		if (hydrating) {
+			assign_nodes(hydrate_node, null);
+			return hydrate_node;
+		}
+
+		if (node === undefined) {
+			node = fn();
+			if (!is_fragment) node = /** @type {Node} */ (get_first_child(node));
+		}
+
+		var clone = /** @type {TemplateNode} */ (
+			use_import_node || is_firefox ? document.importNode(node, true) : node.cloneNode(true)
+		);
+
+		if (is_fragment) {
+			var start = /** @type {TemplateNode} */ (get_first_child(clone));
+			var end = /** @type {TemplateNode} */ (clone.lastChild);
+
+			assign_nodes(start, end);
+		} else {
+			assign_nodes(clone, clone);
+		}
+
+		return clone;
+	};
+}
+
+/**
  * @param {string} content
  * @param {number} flags
  * @returns {() => Node | Node[]}
@@ -73,6 +114,16 @@ export function template(content, flags) {
 export function template_with_script(content, flags) {
 	var fn = template(content, flags);
 	return () => run_scripts(/** @type {Element | DocumentFragment} */ (fn()));
+}
+
+/**
+ * @param {()=>(DocumentFragment | Node)} fn
+ * @param {number} flags
+ * @returns {() => Node | Node[]}
+ */ /*#__NO_SIDE_EFFECTS__*/
+export function template_with_script_fn(fn, flags) {
+	var templated_fn = template_fn(fn, flags);
+	return () => run_scripts(/** @type {Element | DocumentFragment} */ (templated_fn()));
 }
 
 /**
@@ -131,6 +182,53 @@ export function ns_template(content, flags, ns = 'svg') {
 }
 
 /**
+ * @param {()=>(DocumentFragment | Node)} fn
+ * @param {number} flags
+ * @param {'svg' | 'math'} ns
+ * @returns {() => Node | Node[]}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function ns_template_fn(fn, flags, ns = 'svg') {
+	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
+
+	/** @type {Element | DocumentFragment} */
+	var node;
+
+	return () => {
+		if (hydrating) {
+			assign_nodes(hydrate_node, null);
+			return hydrate_node;
+		}
+
+		if (!node) {
+			var fragment = /** @type {DocumentFragment} */ (fn());
+
+			if (is_fragment) {
+				node = document.createDocumentFragment();
+				while (get_first_child(fragment)) {
+					node.appendChild(/** @type {Node} */ (get_first_child(fragment)));
+				}
+			} else {
+				node = /** @type {Element} */ (get_first_child(fragment));
+			}
+		}
+
+		var clone = /** @type {TemplateNode} */ (node.cloneNode(true));
+
+		if (is_fragment) {
+			var start = /** @type {TemplateNode} */ (get_first_child(clone));
+			var end = /** @type {TemplateNode} */ (clone.lastChild);
+
+			assign_nodes(start, end);
+		} else {
+			assign_nodes(clone, clone);
+		}
+
+		return clone;
+	};
+}
+
+/**
  * @param {string} content
  * @param {number} flags
  * @returns {() => Node | Node[]}
@@ -142,6 +240,17 @@ export function svg_template_with_script(content, flags) {
 }
 
 /**
+ * @param {()=>(DocumentFragment | Node)} fn
+ * @param {number} flags
+ * @returns {() => Node | Node[]}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function svg_template_with_script_fn(fn, flags) {
+	var templated_fn = ns_template_fn(fn, flags);
+	return () => run_scripts(/** @type {Element | DocumentFragment} */ (templated_fn()));
+}
+
+/**
  * @param {string} content
  * @param {number} flags
  * @returns {() => Node | Node[]}
@@ -149,6 +258,16 @@ export function svg_template_with_script(content, flags) {
 /*#__NO_SIDE_EFFECTS__*/
 export function mathml_template(content, flags) {
 	return ns_template(content, flags, 'math');
+}
+
+/**
+ * @param {()=>(DocumentFragment | Node)} fn
+ * @param {number} flags
+ * @returns {() => Node | Node[]}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function mathml_template_fn(fn, flags) {
+	return ns_template_fn(fn, flags, 'math');
 }
 
 /**

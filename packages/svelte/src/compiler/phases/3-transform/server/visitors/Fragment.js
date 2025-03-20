@@ -19,7 +19,9 @@ export function Fragment(node, context) {
 		namespace,
 		context.state,
 		context.state.preserve_whitespace,
-		context.state.options.preserveComments
+		context.state.options.preserveComments,
+		// prevent template cloning should always be false on the server
+		false
 	);
 
 	/** @type {ComponentServerTransformState} */

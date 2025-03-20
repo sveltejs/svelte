@@ -1,11 +1,12 @@
 /**
  * @import { TemplateOperations } from "../types.js"
  * @import { Namespace } from "#compiler"
- * @import { Statement } from "estree"
+ * @import { CallExpression, Statement } from "estree"
  */
 import { NAMESPACE_SVG } from 'svelte/internal/client';
-import * as b from '../../../../utils/builders.js';
 import { NAMESPACE_MATHML } from '../../../../../constants.js';
+import * as b from '../../../../utils/builders.js';
+import fix_attribute_casing from './fix-attribute-casing.js';
 
 class Scope {
 	declared = new Map();
@@ -28,9 +29,8 @@ class Scope {
 /**
  * @param {TemplateOperations} items
  * @param {Namespace} namespace
- * @param {boolean} use_fragment
  */
-export function template_to_functions(items, namespace, use_fragment = false) {
+export function template_to_functions(items, namespace) {
 	let elements = [];
 
 	let body = [];
@@ -43,9 +43,23 @@ export function template_to_functions(items, namespace, use_fragment = false) {
 	let elements_stack = [];
 
 	/**
+	 * @type {Array<string>}
+	 */
+	let namespace_stack = [];
+
+	/**
+	 * @type {number}
+	 */
+	let foreign_object_count = 0;
+
+	/**
 	 * @type {Element | undefined}
 	 */
 	let last_current_element;
+
+	if (items[0].kind === 'create_anchor') {
+		items.unshift({ kind: 'create_anchor' });
+	}
 
 	for (let instruction of items) {
 		if (instruction.kind === 'push_element' && last_current_element) {
@@ -53,15 +67,36 @@ export function template_to_functions(items, namespace, use_fragment = false) {
 			continue;
 		}
 		if (instruction.kind === 'pop_element') {
-			elements_stack.pop();
+			const removed = elements_stack.pop();
+			if (removed?.namespaced) {
+				namespace_stack.pop();
+			}
+			if (removed?.element === 'foreignObject') {
+				foreign_object_count--;
+			}
 			continue;
+		}
+
+		if (instruction.metadata?.svg || instruction.metadata?.mathml) {
+			namespace_stack.push(instruction.metadata.svg ? NAMESPACE_SVG : NAMESPACE_MATHML);
 		}
 
 		// @ts-expect-error we can't be here if `swap_current_element` but TS doesn't know that
 		const value = map[instruction.kind](
 			...[
 				...(instruction.kind === 'set_prop' ? [last_current_element] : [scope]),
-				...(instruction.kind === 'create_element' ? [namespace] : []),
+				...(instruction.kind === 'create_element'
+					? [
+							foreign_object_count > 0
+								? undefined
+								: namespace_stack.at(-1) ??
+									(namespace === 'svg'
+										? NAMESPACE_SVG
+										: namespace === 'mathml'
+											? NAMESPACE_MATHML
+											: undefined)
+						]
+					: []),
 				...(instruction.args ?? [])
 			]
 		);
@@ -79,23 +114,22 @@ export function template_to_functions(items, namespace, use_fragment = false) {
 			}
 			if (instruction.kind === 'create_element') {
 				last_current_element = /** @type {Element} */ (value);
+				if (last_current_element.element === 'foreignObject') {
+					foreign_object_count++;
+				}
 			}
 		}
 	}
-	if (elements.length > 1 || use_fragment) {
-		const fragment = scope.generate('fragment');
-		body.push(b.var(fragment, b.call('document.createDocumentFragment')));
-		body.push(b.call(fragment + '.append', ...elements));
-		body.push(b.return(b.id(fragment)));
-	} else {
-		body.push(b.return(elements[0]));
-	}
+	const fragment = scope.generate('fragment');
+	body.push(b.var(fragment, b.call('document.createDocumentFragment')));
+	body.push(b.call(fragment + '.append', ...elements));
+	body.push(b.return(b.id(fragment)));
 
 	return b.arrow([], b.block(body));
 }
 
 /**
- * @typedef {{ call: Statement, name: string }} Element
+ * @typedef {{ call: Statement, name: string, add_is: (value: string)=>void, namespaced: boolean; element: string; }} Element
  */
 
 /**
@@ -118,14 +152,26 @@ export function template_to_functions(items, namespace, use_fragment = false) {
  */
 function create_element(scope, namespace, element) {
 	const name = scope.generate(element);
-	let fn = namespace !== 'html' ? 'document.createElementNS' : 'document.createElement';
+	let fn = namespace != null ? 'document.createElementNS' : 'document.createElement';
 	let args = [b.literal(element)];
-	if (namespace !== 'html') {
-		args.unshift(namespace === 'svg' ? b.literal(NAMESPACE_SVG) : b.literal(NAMESPACE_MATHML));
+	if (namespace != null) {
+		args.unshift(b.literal(namespace));
+	}
+	const call = b.var(name, b.call(fn, ...args));
+	/**
+	 * @param {string} value
+	 */
+	function add_is(value) {
+		/** @type {CallExpression} */ (call.declarations[0].init).arguments.push(
+			b.object([b.prop('init', b.literal('is'), b.literal(value))])
+		);
 	}
 	return {
-		call: b.var(name, b.call(fn, ...args)),
-		name
+		call,
+		name,
+		element,
+		add_is,
+		namespaced: namespace != null
 	};
 }
 
@@ -162,8 +208,21 @@ function create_text(scope, value) {
  * @param {string} value
  */
 function set_prop(el, prop, value) {
+	if (prop === 'is') {
+		el.add_is(value);
+		return;
+	}
+
+	const [namespace] = prop.split(':');
+	let fn = namespace !== prop ? '.setAttributeNS' : '.setAttribute';
+	let args = [b.literal(fix_attribute_casing(prop)), b.literal(value ?? '')];
+
+	if (namespace === 'xlink') {
+		args.unshift(b.literal('http://www.w3.org/1999/xlink'));
+	}
+
 	return {
-		call: b.call(el.name + '.setAttribute', b.literal(prop), b.literal(value))
+		call: b.call(el.name + fn, ...args)
 	};
 }
 
@@ -175,7 +234,11 @@ function set_prop(el, prop, value) {
  */
 function insert(el, child, anchor) {
 	return {
-		call: b.call(el.name + '.insertBefore', b.id(child.name), b.id(anchor?.name ?? 'undefined'))
+		call: b.call(
+			el.name + (el.element === 'template' ? '.content' : '') + '.insertBefore',
+			b.id(child.name),
+			b.id(anchor?.name ?? 'undefined')
+		)
 	};
 }
 

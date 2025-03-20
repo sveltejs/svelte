@@ -4,7 +4,6 @@
  * @import { AST, Namespace } from '#compiler'
  * @import { SourceLocation } from '#shared'
  */
-import { TEMPLATE_FRAGMENT } from '../../../../../constants.js';
 import { dev } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { template_to_functions } from './to-functions.js';
@@ -18,15 +17,17 @@ import { template_to_string } from './to-string.js';
  */
 function get_template_function(namespace, state) {
 	const contains_script_tag = state.metadata.context.template_contains_script_tag;
-	return namespace === 'svg'
-		? contains_script_tag
-			? '$.svg_template_with_script'
-			: '$.ns_template'
-		: namespace === 'mathml'
-			? '$.mathml_template'
-			: contains_script_tag
-				? '$.template_with_script'
-				: '$.template';
+	return (
+		namespace === 'svg'
+			? contains_script_tag
+				? '$.svg_template_with_script'
+				: '$.ns_template'
+			: namespace === 'mathml'
+				? '$.mathml_template'
+				: contains_script_tag
+					? '$.template_with_script'
+					: '$.template'
+	).concat(state.prevent_template_cloning ? '_fn' : '');
 }
 
 /**
@@ -54,21 +55,6 @@ function build_locations(locations) {
  * @param {number} [flags]
  */
 export function transform_template(state, context, namespace, template_name, flags) {
-	if (context.state.prevent_template_cloning) {
-		context.state.hoisted.push(
-			b.var(
-				template_name,
-				template_to_functions(
-					state.template,
-					namespace,
-					flags != null && (flags & TEMPLATE_FRAGMENT) !== 0
-				)
-			)
-		);
-
-		return;
-	}
-
 	/**
 	 * @param {Identifier} template_name
 	 * @param {Expression[]} args
@@ -88,7 +74,11 @@ export function transform_template(state, context, namespace, template_name, fla
 	};
 
 	/** @type {Expression[]} */
-	const args = [b.template([b.quasi(template_to_string(state.template), true)], [])];
+	const args = [
+		state.prevent_template_cloning
+			? template_to_functions(state.template, namespace)
+			: b.template([b.quasi(template_to_string(state.template), true)], [])
+	];
 
 	if (flags) {
 		args.push(b.literal(flags));

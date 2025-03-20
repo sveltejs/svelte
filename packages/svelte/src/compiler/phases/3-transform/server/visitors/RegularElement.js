@@ -47,7 +47,9 @@ export function RegularElement(node, context) {
 			scope: /** @type {Scope} */ (state.scopes.get(node.fragment))
 		},
 		state.preserve_whitespace,
-		state.options.preserveComments
+		state.options.preserveComments,
+		// prevent template cloning should always be false on the server
+		false
 	);
 
 	for (const node of hoisted) {
