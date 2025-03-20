@@ -55,7 +55,7 @@ export function source(v, stack) {
 	var signal = {
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
 		v,
-		parent: active_reaction,
+		p: active_reaction,
 		reactions: null,
 		equals,
 		rv: 0,
@@ -118,7 +118,7 @@ export function set(source, value, should_proxy = false) {
 		!untracking &&
 		is_runes() &&
 		(active_reaction.f & (DERIVED | BLOCK_EFFECT)) !== 0 &&
-		active_reaction !== source.parent
+		active_reaction !== source.p
 	) {
 		e.state_unsafe_mutation();
 	}

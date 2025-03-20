@@ -161,7 +161,7 @@ export function check_dirtiness(reaction) {
 			// then we need to re-connect the reaction to the dependency
 			if (is_disconnected || is_unowned_connected) {
 				var derived = /** @type {Derived} */ (reaction);
-				var parent = derived.parent;
+				var parent = derived.p;
 
 				for (i = 0; i < length; i++) {
 					dependency = dependencies[i];
@@ -228,7 +228,7 @@ function propagate_error(error, effect) {
 			}
 		}
 
-		current = current.parent;
+		current = current.p;
 	}
 
 	is_throwing_error = false;
@@ -240,8 +240,7 @@ function propagate_error(error, effect) {
  */
 function should_rethrow_error(effect) {
 	return (
-		(effect.f & DESTROYED) === 0 &&
-		(effect.parent === null || (effect.parent.f & BOUNDARY_EFFECT) === 0)
+		(effect.f & DESTROYED) === 0 && (effect.p === null || (effect.p.f & BOUNDARY_EFFECT) === 0)
 	);
 }
 
@@ -353,7 +352,7 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 
 	for (var i = 0; i < reactions.length; i++) {
 		var reaction = reactions[i];
-		if (signal.parent === reaction) continue;
+		if (signal.p === reaction) continue;
 
 		if ((reaction.f & DERIVED) !== 0) {
 			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
@@ -720,8 +719,8 @@ export function schedule_effect(signal) {
 
 	var effect = (last_scheduled_effect = signal);
 
-	while (effect.parent !== null) {
-		effect = effect.parent;
+	while (effect.p !== null) {
+		effect = effect.p;
 		var flags = effect.f;
 
 		if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
@@ -786,12 +785,12 @@ function process_effects(root) {
 			}
 		}
 
-		var parent = effect.parent;
+		var parent = effect.p;
 		effect = effect.next;
 
 		while (effect === null && parent !== null) {
 			effect = parent.next;
-			parent = parent.parent;
+			parent = parent.p;
 		}
 	}
 
@@ -874,7 +873,7 @@ export function get(signal) {
 		/** @type {Derived} */ (signal).effects === null
 	) {
 		var derived = /** @type {Derived} */ (signal);
-		var parent = derived.parent;
+		var parent = derived.p;
 
 		if (parent !== null && (parent.f & UNOWNED) === 0) {
 			// If the derived is owned by another derived then mark it as unowned

@@ -289,11 +289,11 @@ export function transition(flags, element, get_fn, get_params) {
 		var run = is_global;
 
 		if (!run) {
-			var block = /** @type {Effect | null} */ (e.parent);
+			var block = /** @type {Effect | null} */ (e.p);
 
 			// skip over transparent blocks (e.g. snippets, else-if blocks)
 			while (block && (block.f & EFFECT_TRANSPARENT) !== 0) {
-				while ((block = block.parent)) {
+				while ((block = block.p)) {
 					if ((block.f & BLOCK_EFFECT) !== 0) break;
 				}
 			}
