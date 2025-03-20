@@ -55,7 +55,7 @@ export function source(v, stack) {
 	var signal = {
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
 		v,
-		p: active_reaction,
+		// p: active_reaction,
 		reactions: null,
 		equals,
 		rv: 0,
