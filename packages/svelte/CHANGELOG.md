@@ -1,5 +1,11 @@
 # svelte
 
+## 5.25.0
+
+### Minor Changes
+
+- feat: make deriveds writable ([#15570](https://github.com/sveltejs/svelte/pull/15570))
+
 ## 5.24.1
 
 ### Patch Changes
