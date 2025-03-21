@@ -54,7 +54,32 @@ To exempt a piece of state from being treated as a dependency, use [`untrack`](s
 
 ## Overriding derived values
 
-Derived expressions are recalculated when their dependencies change, but you can temporarily override their values by reassigning them. This can be useful for things like _optimistic UI_, where a value is derived from the 'source of truth' (such as data from your server) but you'd like to show immediate feedback to the user.
+Derived expressions are recalculated when their dependencies change, but you can temporarily override their values by reassigning them. This can be useful for things like _optimistic UI_, where a value is derived from the 'source of truth' (such as data from your server) but you'd like to show immediate feedback to the user:
+
+```svelte
+<script>
+	let { post, like } = $props();
+
+	let likes = $derived(post.likes);
+</script>
+
+<button
+	onclick={() => {
+		// increment the `likes` count immediately...
+		likes += 1;
+
+		// and tell the server, which will eventually update `post`
+		try {
+			await like();
+		} catch {
+			// failed! roll back the change
+			likes -= 1;
+		}
+	}}
+>
+	🧡 {likes}
+</button>
+```
 
 ## Update propagation
 
