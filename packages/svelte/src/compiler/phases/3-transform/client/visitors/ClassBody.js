@@ -116,25 +116,17 @@ export function ClassBody(node, context) {
 						context.visit(definition.value.arguments[0], child_state)
 					);
 
-					let options =
-						definition.value.arguments.length === 2
-							? /** @type {Expression} **/ (
-									context.visit(definition.value.arguments[1], child_state)
-								)
-							: undefined;
+					if (field.kind === 'state' || field.kind === 'raw_state') {
+						let arg = definition.value.arguments[1];
+						let options = arg && /** @type {Expression} **/ (context.visit(arg, child_state));
 
-					let proxied = should_proxy(init, context.state.scope);
-
-					value =
-						field.kind === 'state'
-							? should_proxy(init, context.state.scope)
+						value =
+							field.kind === 'state' && should_proxy(init, context.state.scope)
 								? b.call('$.assignable_proxy', init, options)
-								: b.call('$.state', init, options)
-							: field.kind === 'raw_state'
-								? b.call('$.state', init, options)
-								: field.kind === 'derived_by'
-									? b.call('$.derived', init)
-									: b.call('$.derived', b.thunk(init));
+								: b.call('$.state', init, options);
+					} else {
+						value = b.call('$derived', field.kind === 'derived_by' ? init : b.thunk(init));
+					}
 				} else {
 					// if no arguments, we know it's state as `$derived()` is a compile error
 					value = b.call('$.state');
