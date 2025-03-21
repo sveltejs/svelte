@@ -81,6 +81,8 @@ Derived expressions are recalculated when their dependencies change, but you can
 </button>
 ```
 
+> [!NOTE] Prior to Svelte 5.25, deriveds were read-only.
+
 ## Update propagation
 
 Svelte uses something called _push-pull reactivity_ — when state is updated, everything that depends on the state (whether directly or indirectly) is immediately notified of the change (the 'push'), but derived values are not re-evaluated until they are actually read (the 'pull').
