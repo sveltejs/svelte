@@ -660,12 +660,6 @@ Cannot access a computed property of a rune
 `%name%` is not a valid rune
 ```
 
-### rune_invalid_options
-
-```
-Options for `%rune%` needs to be declared inline
-```
-
 ### rune_invalid_usage
 
 ```

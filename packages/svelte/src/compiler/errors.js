@@ -384,16 +384,6 @@ export function rune_invalid_name(node, name) {
 }
 
 /**
- * Options for `%rune%` needs to be declared inline
- * @param {null | number | NodeLike} node
- * @param {string} rune
- * @returns {never}
- */
-export function rune_invalid_options(node, rune) {
-	e(node, 'rune_invalid_options', `Options for \`${rune}\` needs to be declared inline\nhttps://svelte.dev/e/rune_invalid_options`);
-}
-
-/**
  * Cannot use `%rune%` rune in non-runes mode
  * @param {null | number | NodeLike} node
  * @param {string} rune

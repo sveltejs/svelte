@@ -121,9 +121,6 @@ export function CallExpression(node, context) {
 				if (node.arguments.length > 2) {
 					e.rune_invalid_arguments_length(node, rune, 'at most two arguments');
 				}
-				if (node.arguments.length === 2 && node.arguments[1].type !== 'ObjectExpression') {
-					e.rune_invalid_options(node.arguments[1], rune);
-				}
 			}
 
 			break;
