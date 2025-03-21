@@ -8,6 +8,9 @@ export default test({
 		btn?.click();
 		flushSync();
 
-		assert.htmlEqual(target.innerHTML, `<div>Count 1!</div><div>Count from store 1!</div><button>Add 1</button>`);
+		assert.htmlEqual(
+			target.innerHTML,
+			`<div>Count 1!</div><div>Count from store 1!</div><button>Add 1</button>`
+		);
 	}
 });
