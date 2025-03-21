@@ -3,7 +3,7 @@
 import * as b from '../../../../../utils/builders.js';
 
 /**
- *
+ * Extract the `onchange` callback from the options passed to `$state`
  * @param {Expression} options
  * @param {ComponentContext} context
  * @returns {Expression | undefined}
