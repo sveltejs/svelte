@@ -52,6 +52,10 @@ Anything read synchronously inside the `$derived` expression (or `$derived.by` f
 
 To exempt a piece of state from being treated as a dependency, use [`untrack`](svelte#untrack).
 
+## Overriding derived values
+
+Derived expressions are recalculated when their dependencies change, but you can temporarily override their values by reassigning them. This can be useful for things like _optimistic UI_, where a value is derived from the 'source of truth' (such as data from your server) but you'd like to show immediate feedback to the user.
+
 ## Update propagation
 
 Svelte uses something called _push-pull reactivity_ — when state is updated, everything that depends on the state (whether directly or indirectly) is immediately notified of the change (the 'push'), but derived values are not re-evaluated until they are actually read (the 'pull').
