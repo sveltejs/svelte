@@ -83,6 +83,19 @@ Derived expressions are recalculated when their dependencies change, but you can
 
 > [!NOTE] Prior to Svelte 5.25, deriveds were read-only.
 
+## Deriveds and reactivity
+
+Unlike `$state`, which converts objects and arrays to [deeply reactive proxies]($state#Deep-state), `$derived` values are left as-is. For example, [in a case like this](https://svelte.dev/playground/b0d5cb9ecb6c463fafb8976e06c9335f)...
+
+```svelte
+let items = $state([...]);
+
+let index = $state(0);
+let selected = $derived(items[index]);
+```
+
+...you can change (or `bind:` to) properties of `selected` and it will affect the underlying `items` array. If `items` was _not_ deeply reactive, mutating `selected` would have no effect.
+
 ## Update propagation
 
 Svelte uses something called _push-pull reactivity_ — when state is updated, everything that depends on the state (whether directly or indirectly) is immediately notified of the change (the 'push'), but derived values are not re-evaluated until they are actually read (the 'pull').
