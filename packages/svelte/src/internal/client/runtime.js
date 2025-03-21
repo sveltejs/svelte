@@ -101,6 +101,17 @@ export function set_reaction_sources(sources) {
 	reaction_sources = sources;
 }
 
+/** @param {Value} value */
+export function push_reaction_value(value) {
+	if (active_reaction !== null && active_reaction.f & EFFECT_IS_UPDATING) {
+		if (reaction_sources === null) {
+			set_reaction_sources([value]);
+		} else {
+			reaction_sources.push(value);
+		}
+	}
+}
+
 /**
  * The dependencies of the reaction that is currently being executed. In many cases,
  * the dependencies are unchanged between runs, and so this will be `null` unless
@@ -875,21 +886,23 @@ export function get(signal) {
 
 	// Register the dependency on the current reaction signal.
 	if (active_reaction !== null && !untracking) {
-		var deps = active_reaction.deps;
-		if (signal.rv < read_version) {
-			signal.rv = read_version;
-			// If the signal is accessing the same dependencies in the same
-			// order as it did last time, increment `skipped_deps`
-			// rather than updating `new_deps`, which creates GC cost
-			if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
-				skipped_deps++;
-			} else if (new_deps === null) {
-				new_deps = [signal];
-			} else if (!skip_reaction || !new_deps.includes(signal)) {
-				// Normally we can push duplicated dependencies to `new_deps`, but if we're inside
-				// an unowned derived because skip_reaction is true, then we need to ensure that
-				// we don't have duplicates
-				new_deps.push(signal);
+		if (!reaction_sources?.includes(signal)) {
+			var deps = active_reaction.deps;
+			if (signal.rv < read_version) {
+				signal.rv = read_version;
+				// If the signal is accessing the same dependencies in the same
+				// order as it did last time, increment `skipped_deps`
+				// rather than updating `new_deps`, which creates GC cost
+				if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
+					skipped_deps++;
+				} else if (new_deps === null) {
+					new_deps = [signal];
+				} else if (!skip_reaction || !new_deps.includes(signal)) {
+					// Normally we can push duplicated dependencies to `new_deps`, but if we're inside
+					// an unowned derived because skip_reaction is true, then we need to ensure that
+					// we don't have duplicates
+					new_deps.push(signal);
+				}
 			}
 		}
 	} else if (

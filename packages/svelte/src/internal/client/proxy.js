@@ -10,7 +10,7 @@ import {
 	object_prototype
 } from '../shared/utils.js';
 import { check_ownership, widen_ownership } from './dev/ownership.js';
-import { source, set } from './reactivity/sources.js';
+import { state as source, set } from './reactivity/sources.js';
 import { STATE_SYMBOL, STATE_SYMBOL_METADATA } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
