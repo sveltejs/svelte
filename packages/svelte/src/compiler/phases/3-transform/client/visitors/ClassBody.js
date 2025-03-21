@@ -125,7 +125,7 @@ export function ClassBody(node, context) {
 								? b.call('$.assignable_proxy', init, options)
 								: b.call('$.state', init, options);
 					} else {
-						value = b.call('$derived', field.kind === 'derived_by' ? init : b.thunk(init));
+						value = b.call('$.derived', field.kind === 'derived_by' ? init : b.thunk(init));
 					}
 				} else {
 					// if no arguments, we know it's state as `$derived()` is a compile error
