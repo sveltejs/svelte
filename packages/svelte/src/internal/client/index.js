@@ -101,7 +101,7 @@ export {
 	text,
 	props_id
 } from './dom/template.js';
-export { derived, derived_safe_equal } from './reactivity/deriveds.js';
+export { user_derived as derived, derived_safe_equal } from './reactivity/deriveds.js';
 export {
 	effect_tracking,
 	effect_root,
@@ -117,7 +117,7 @@ export {
 	mutable_source,
 	mutate,
 	set,
-	source as state,
+	state,
 	update,
 	update_pre,
 	get_options

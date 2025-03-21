@@ -1592,7 +1592,6 @@ function extract_type_and_comment(declarator, state, path) {
 	const comment_start = /** @type {any} */ (comment_node)?.start;
 	const comment_end = /** @type {any} */ (comment_node)?.end;
 	let comment = comment_node && str.original.substring(comment_start, comment_end);
-
 	if (comment_node) {
 		str.update(comment_start, comment_end, '');
 	}
@@ -1673,6 +1672,11 @@ function extract_type_and_comment(declarator, state, path) {
 		state.has_type_or_fallback = true;
 		const match = /@type {(.+)}/.exec(comment_node.value);
 		if (match) {
+			// try to find JSDoc comments after a hyphen `-`
+			const jsdocComment = /@type {.+} (?:\w+|\[.*?\]) - (.+)/.exec(comment_node.value);
+			if (jsdocComment) {
+				cleaned_comment += jsdocComment[1]?.trim();
+			}
 			return {
 				type: match[1],
 				comment: cleaned_comment,
@@ -1693,7 +1697,6 @@ function extract_type_and_comment(declarator, state, path) {
 			};
 		}
 	}
-
 	return {
 		type: 'any',
 		comment: state.uses_ts ? comment : cleaned_comment,

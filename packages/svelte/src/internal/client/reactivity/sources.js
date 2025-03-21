@@ -15,7 +15,8 @@ import {
 	set_reaction_sources,
 	check_dirtiness,
 	untracking,
-	is_destroying_effect
+	is_destroying_effect,
+	push_reaction_value
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -93,14 +94,6 @@ export function source(v, o, stack) {
 		o
 	};
 
-	if (active_reaction !== null && active_reaction.f & EFFECT_IS_UPDATING) {
-		if (reaction_sources === null) {
-			set_reaction_sources([signal]);
-		} else {
-			reaction_sources.push(signal);
-		}
-	}
-
 	if (DEV && tracing_mode_flag) {
 		signal.created = stack ?? get_stack('CreatedAt');
 		signal.debug = null;
@@ -109,14 +102,26 @@ export function source(v, o, stack) {
 	return signal;
 }
 
-export { source as state };
-
 /**
  * @param {Source} source
  * @returns {ValueOptions | undefined}
  */
 export function get_options(source) {
 	return source.o;
+}
+
+/**
+ * @template V
+ * @param {V} v
+ * @param {ValueOptions} [o]
+ * @param {Error | null} [stack]
+ */
+export function state(v, o, stack) {
+	const s = source(v, o, stack);
+
+	push_reaction_value(s);
+
+	return s;
 }
 
 /**

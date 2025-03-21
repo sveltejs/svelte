@@ -8,12 +8,7 @@ import {
 	render_effect,
 	user_effect
 } from '../../src/internal/client/reactivity/effects';
-import {
-	source as state,
-	set,
-	update,
-	update_pre
-} from '../../src/internal/client/reactivity/sources';
+import { state, set, update, update_pre } from '../../src/internal/client/reactivity/sources';
 import type { Derived, Effect, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';

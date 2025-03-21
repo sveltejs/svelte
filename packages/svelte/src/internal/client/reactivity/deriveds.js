@@ -8,7 +8,8 @@ import {
 	skip_reaction,
 	update_reaction,
 	increment_write_version,
-	set_active_effect
+	set_active_effect,
+	push_reaction_value
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -59,6 +60,19 @@ export function derived(fn) {
 	}
 
 	return signal;
+}
+
+/**
+ * @template V
+ * @param {() => V} fn
+ * @returns {Derived<V>}
+ */
+export function user_derived(fn) {
+	const d = derived(fn);
+
+	push_reaction_value(d);
+
+	return d;
 }
 
 /**
