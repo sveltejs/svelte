@@ -85,7 +85,7 @@ Derived expressions are recalculated when their dependencies change, but you can
 
 ## Deriveds and reactivity
 
-Unlike `$state`, which converts objects and arrays to [deeply reactive proxies]($state#Deep-state), `$derived` values are left as-is. For example, [in a case like this](https://svelte.dev/playground/b0d5cb9ecb6c463fafb8976e06c9335f)...
+Unlike `$state`, which converts objects and arrays to [deeply reactive proxies]($state#Deep-state), `$derived` values are left as-is. For example, [in a case like this](/playground/b0d5cb9ecb6c463fafb8976e06c9335f)...
 
 ```svelte
 let items = $state([...]);
