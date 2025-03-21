@@ -151,8 +151,6 @@ This error occurs when state is updated while evaluating a `$derived`. You might
 This is forbidden because it introduces instability: if `<p>{count} is even: {even}</p>` is updated before `odd` is recalculated, `even` will be stale. In most cases the solution is to make everything derived:
 
 ```js
-let count = 0;
-// ---cut---
 let even = $derived(count % 2 === 0);
 let odd = $derived(!even);
 ```
