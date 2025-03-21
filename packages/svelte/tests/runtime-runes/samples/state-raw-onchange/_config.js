@@ -10,54 +10,34 @@ export default test({
 
 		logs.length = 0;
 
-		flushSync(() => {
-			btn.click();
-		});
+		flushSync(() => btn.click());
 		assert.deepEqual(logs, ['count']);
 
-		flushSync(() => {
-			btn2.click();
-		});
+		flushSync(() => btn2.click());
 		assert.deepEqual(logs, ['count']);
 
-		flushSync(() => {
-			btn3.click();
-		});
+		flushSync(() => btn3.click());
 		assert.deepEqual(logs, ['count', 'proxy']);
 
-		flushSync(() => {
-			btn4.click();
-		});
+		flushSync(() => btn4.click());
 		assert.deepEqual(logs, ['count', 'proxy', 'class count']);
 
-		flushSync(() => {
-			btn5.click();
-		});
+		flushSync(() => btn5.click());
 		assert.deepEqual(logs, ['count', 'proxy', 'class count']);
 
-		flushSync(() => {
-			btn6.click();
-		});
+		flushSync(() => btn6.click());
 		assert.deepEqual(logs, ['count', 'proxy', 'class count', 'class proxy']);
 
-		flushSync(() => {
-			btn7.click();
-		});
+		flushSync(() => btn7.click());
 		assert.deepEqual(logs, ['count', 'proxy', 'class count', 'class proxy']);
 
-		flushSync(() => {
-			btn8.click();
-		});
+		flushSync(() => btn8.click());
 		assert.deepEqual(logs, ['count', 'proxy', 'class count', 'class proxy']);
 
-		flushSync(() => {
-			btn9.click();
-		});
+		flushSync(() => btn9.click());
 		assert.deepEqual(logs, ['count', 'proxy', 'class count', 'class proxy']);
 
-		flushSync(() => {
-			btn10.click();
-		});
+		flushSync(() => btn10.click());
 		assert.deepEqual(logs, ['count', 'proxy', 'class count', 'class proxy', 'arr']);
 	}
 });

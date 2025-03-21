@@ -9,19 +9,13 @@ export default test({
 
 		logs.length = 0;
 
-		flushSync(() => {
-			btn.click();
-		});
+		flushSync(() => btn.click());
 		assert.deepEqual(logs, ['class count']);
 
-		flushSync(() => {
-			btn2.click();
-		});
+		flushSync(() => btn2.click());
 		assert.deepEqual(logs, ['class count', 'class proxy']);
 
-		flushSync(() => {
-			btn3.click();
-		});
+		flushSync(() => btn3.click());
 		assert.deepEqual(logs, ['class count', 'class proxy', 'class proxy']);
 	}
 });
