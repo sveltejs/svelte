@@ -61,10 +61,8 @@ Derived expressions are recalculated when their dependencies change, but you can
 	let { post, like } = $props();
 
 	let likes = $derived(post.likes);
-</script>
 
-<button
-	onclick={() => {
+	async function onclick() {
 		// increment the `likes` count immediately...
 		likes += 1;
 
@@ -75,10 +73,10 @@ Derived expressions are recalculated when their dependencies change, but you can
 			// failed! roll back the change
 			likes -= 1;
 		}
-	}}
->
-	🧡 {likes}
-</button>
+	}
+</script>
+
+<button {onclick}>🧡 {likes}</button>
 ```
 
 > [!NOTE] Prior to Svelte 5.25, deriveds were read-only.
