@@ -114,11 +114,10 @@ export {
 	user_pre_effect
 } from './reactivity/effects.js';
 export {
-	mutable_state,
+	mutable_source,
 	mutate,
 	set,
-	simple_set,
-	state,
+	source as state,
 	update,
 	update_pre,
 	get_options

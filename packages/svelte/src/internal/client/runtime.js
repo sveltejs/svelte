@@ -22,7 +22,8 @@ import {
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
-	BOUNDARY_EFFECT
+	BOUNDARY_EFFECT,
+	EFFECT_IS_UPDATING
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { internal_set, old_values } from './reactivity/sources.js';
@@ -87,17 +88,17 @@ export function set_active_effect(effect) {
 }
 
 /**
- * When sources are created within a derived, we record them so that we can safely allow
- * local mutations to these sources without the side-effect error being invoked unnecessarily.
+ * When sources are created within a reaction, reading and writing
+ * them should not cause a re-run
  * @type {null | Source[]}
  */
-export let derived_sources = null;
+export let reaction_sources = null;
 
 /**
  * @param {Source[] | null} sources
  */
-export function set_derived_sources(sources) {
-	derived_sources = sources;
+export function set_reaction_sources(sources) {
+	reaction_sources = sources;
 }
 
 /**
@@ -367,6 +368,9 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 
 	for (var i = 0; i < reactions.length; i++) {
 		var reaction = reactions[i];
+
+		if (reaction_sources?.includes(signal)) continue;
+
 		if ((reaction.f & DERIVED) !== 0) {
 			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
 		} else if (effect === reaction) {
@@ -391,9 +395,10 @@ export function update_reaction(reaction) {
 	var previous_untracked_writes = untracked_writes;
 	var previous_reaction = active_reaction;
 	var previous_skip_reaction = skip_reaction;
-	var prev_derived_sources = derived_sources;
+	var previous_reaction_sources = reaction_sources;
 	var previous_component_context = component_context;
 	var previous_untracking = untracking;
+
 	var flags = reaction.f;
 
 	new_deps = /** @type {null | Value[]} */ (null);
@@ -403,10 +408,12 @@ export function update_reaction(reaction) {
 		(flags & UNOWNED) !== 0 && (untracking || !is_updating_effect || active_reaction === null);
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 
-	derived_sources = null;
+	reaction_sources = null;
 	set_component_context(reaction.ctx);
 	untracking = false;
 	read_version++;
+
+	reaction.f |= EFFECT_IS_UPDATING;
 
 	try {
 		var result = /** @type {Function} */ (0, reaction.fn)();
@@ -477,9 +484,11 @@ export function update_reaction(reaction) {
 		untracked_writes = previous_untracked_writes;
 		active_reaction = previous_reaction;
 		skip_reaction = previous_skip_reaction;
-		derived_sources = prev_derived_sources;
+		reaction_sources = previous_reaction_sources;
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
+
+		reaction.f ^= EFFECT_IS_UPDATING;
 	}
 }
 
@@ -866,9 +875,6 @@ export function get(signal) {
 
 	// Register the dependency on the current reaction signal.
 	if (active_reaction !== null && !untracking) {
-		if (derived_sources !== null && derived_sources.includes(signal)) {
-			e.state_unsafe_local_read();
-		}
 		var deps = active_reaction.deps;
 		if (signal.rv < read_version) {
 			signal.rv = read_version;

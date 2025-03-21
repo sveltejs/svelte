@@ -69,14 +69,7 @@ function build_assignment(operator, left, right, context) {
 				is_non_coercive_operator(operator) &&
 				should_proxy(value, context.state.scope);
 
-			return b.call(
-				// inside the constructor, we use `$.simple_set` rather than using `$.set`,
-				// that only assign the value and eventually call onchange since nothing is tracking the signal at this point
-				context.state.in_constructor ? '$.simple_set' : '$.set',
-				left,
-				value,
-				needs_proxy && b.true
-			);
+			return b.call('$.set', left, value, needs_proxy && b.true);
 		}
 	}
 

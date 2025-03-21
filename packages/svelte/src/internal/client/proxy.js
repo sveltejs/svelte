@@ -2,6 +2,7 @@
 import { DEV } from 'esm-env';
 import { UNINITIALIZED } from '../../constants.js';
 import { tracing_mode_flag } from '../flags/index.js';
+import { get, active_effect, active_reaction, set_active_reaction } from './runtime.js';
 import { component_context } from './context.js';
 import {
 	array_prototype,
@@ -15,7 +16,6 @@ import { check_ownership, widen_ownership } from './dev/ownership.js';
 import { get_stack } from './dev/tracing.js';
 import * as e from './errors.js';
 import { batch_onchange, set, source, state } from './reactivity/sources.js';
-import { active_effect, get } from './runtime.js';
 
 const array_methods = ['push', 'pop', 'shift', 'unshift', 'splice', 'reverse', 'sort'];
 
@@ -40,15 +40,17 @@ function clone_options(options) {
 		: undefined;
 }
 
+/** @type {ProxyMetadata | null} */
+var parent_metadata = null;
+
 /**
  * @template T
  * @param {T} value
  * @param {ValueOptions} [_options]
- * @param {ProxyMetadata | null} [parent]
  * @param {Source<T>} [prev] dev mode only
  * @returns {T}
  */
-export function proxy(value, _options, parent = null, prev) {
+export function proxy(value, _options, prev) {
 	// if non-proxyable, or is already a proxy, return `value`
 	if (typeof value !== 'object' || value === null) {
 		return value;
@@ -85,6 +87,31 @@ export function proxy(value, _options, parent = null, prev) {
 	var version = source(0);
 
 	var stack = DEV && tracing_mode_flag ? get_stack('CreatedAt') : null;
+	var reaction = active_reaction;
+
+	/**
+	 * @template T
+	 * @param {() => T} fn
+	 */
+	var with_parent = (fn) => {
+		var previous_reaction = active_reaction;
+		set_active_reaction(reaction);
+
+		/** @type {T} */
+		var result;
+
+		if (DEV) {
+			var previous_metadata = parent_metadata;
+			parent_metadata = metadata;
+			result = fn();
+			parent_metadata = previous_metadata;
+		} else {
+			result = fn();
+		}
+
+		set_active_reaction(previous_reaction);
+		return result;
+	};
 
 	if (is_proxied_array) {
 		// We need to create the length source eagerly to ensure that
@@ -100,7 +127,7 @@ export function proxy(value, _options, parent = null, prev) {
 
 	if (DEV) {
 		metadata = {
-			parent,
+			parent: parent_metadata,
 			owners: null
 		};
 
@@ -112,7 +139,7 @@ export function proxy(value, _options, parent = null, prev) {
 			metadata.owners = prev_owners ? new Set(prev_owners) : null;
 		} else {
 			metadata.owners =
-				parent === null
+				parent_metadata === null
 					? component_context !== null
 						? new Set([component_context.function])
 						: null
@@ -138,10 +165,13 @@ export function proxy(value, _options, parent = null, prev) {
 			var s = sources.get(prop);
 
 			if (s === undefined) {
-				s = source(descriptor.value, clone_options(options), stack);
+				s = with_parent(() => source(descriptor.value, clone_options(options), stack));
 				sources.set(prop, s);
 			} else {
-				set(s, proxy(descriptor.value, options, metadata));
+				set(
+					s,
+					with_parent(() => proxy(descriptor.value, options))
+				);
 			}
 
 			return true;
@@ -152,7 +182,10 @@ export function proxy(value, _options, parent = null, prev) {
 
 			if (s === undefined) {
 				if (prop in target) {
-					sources.set(prop, source(UNINITIALIZED, clone_options(options), stack));
+					sources.set(
+						prop,
+						with_parent(() => source(UNINITIALIZED, clone_options(options), stack))
+					);
 				}
 			} else {
 				// When working with arrays, we need to also ensure we update the length when removing
@@ -217,7 +250,9 @@ export function proxy(value, _options, parent = null, prev) {
 			// create a source, but only if it's an own property and not a prototype property
 			if (s === undefined && (!exists || get_descriptor(target, prop)?.writable)) {
 				let opt = clone_options(options);
-				s = source(proxy(exists ? target[prop] : UNINITIALIZED, opt, metadata), opt, stack);
+				s = with_parent(() =>
+					source(proxy(exists ? target[prop] : UNINITIALIZED, opt), opt, stack)
+				);
 				sources.set(prop, s);
 			}
 
@@ -296,7 +331,7 @@ export function proxy(value, _options, parent = null, prev) {
 			) {
 				if (s === undefined) {
 					let opt = clone_options(options);
-					s = source(has ? proxy(target[prop], opt, metadata) : UNINITIALIZED, opt, stack);
+					s = with_parent(() => source(has ? proxy(target[prop], opt) : UNINITIALIZED, opt, stack));
 					sources.set(prop, s);
 				}
 
@@ -334,7 +369,7 @@ export function proxy(value, _options, parent = null, prev) {
 							// If the item exists in the original, we need to create a uninitialized source,
 							// else a later read of the property would result in a source being created with
 							// the value of the original item at that index.
-							other_s = source(UNINITIALIZED, clone_options(options), stack);
+							other_s = with_parent(() => source(UNINITIALIZED, clone_options(options), stack));
 							sources.set(i + '', other_s);
 						}
 					}
@@ -347,8 +382,11 @@ export function proxy(value, _options, parent = null, prev) {
 				if (s === undefined) {
 					if (!has || get_descriptor(target, prop)?.writable) {
 						const opt = clone_options(options);
-						s = source(undefined, opt, stack);
-						set(s, proxy(value, opt, metadata));
+						s = with_parent(() => source(undefined, opt, stack));
+						set(
+							s,
+							with_parent(() => proxy(value, opt))
+						);
 						sources.set(prop, s);
 					}
 				} else {
@@ -358,7 +396,10 @@ export function proxy(value, _options, parent = null, prev) {
 					if (typeof s.v === 'object' && s.v !== null && STATE_SYMBOL in s.v) {
 						s.v[PROXY_ONCHANGE_SYMBOL](options?.onchange, true);
 					}
-					set(s, proxy(value, clone_options(options), metadata));
+					set(
+						s,
+						with_parent(() => proxy(value, clone_options(options)))
+					);
 				}
 			})();
 			if (DEV) {

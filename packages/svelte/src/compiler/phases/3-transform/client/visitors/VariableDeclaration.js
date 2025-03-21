@@ -305,7 +305,7 @@ function create_state_declarators(declarator, { scope, analysis }, value) {
 		return [
 			b.declarator(
 				declarator.id,
-				b.call('$.mutable_state', value, analysis.immutable ? b.true : undefined)
+				b.call('$.mutable_source', value, analysis.immutable ? b.true : undefined)
 			)
 		];
 	}
@@ -320,7 +320,7 @@ function create_state_declarators(declarator, { scope, analysis }, value) {
 			return b.declarator(
 				path.node,
 				binding?.kind === 'state'
-					? b.call('$.mutable_state', value, analysis.immutable ? b.true : undefined)
+					? b.call('$.mutable_source', value, analysis.immutable ? b.true : undefined)
 					: value
 			);
 		})

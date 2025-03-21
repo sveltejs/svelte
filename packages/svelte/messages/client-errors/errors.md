@@ -80,10 +80,6 @@ See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-long
 
 > Cannot set prototype of `$state` object
 
-## state_unsafe_local_read
-
-> Reading state that was created inside the same derived is forbidden. Consider using `untrack` to read locally created state
-
 ## state_unsafe_mutation
 
 > Updating state inside a derived or a template expression is forbidden. If the value should not be reactive, declare it without `$state`

@@ -19,7 +19,7 @@ export default function Class_state_field_constructor_assignment($$anchor, $$pro
 
 		constructor() {
 			this.a = 1;
-			$.simple_set(this.#b, 2);
+			$.set(this.#b, 2);
 		}
 	}
 
