@@ -1673,9 +1673,9 @@ function extract_type_and_comment(declarator, state, path) {
 		const match = /@type {(.+)}/.exec(comment_node.value);
 		if (match) {
 			// try to find JSDoc comments after a hyphen `-`
-			const jsdocComment = /@type {.+} (?:\w+|\[.*?\]) - (.+)/.exec(comment_node.value);
-			if (jsdocComment) {
-				cleaned_comment += jsdocComment[1]?.trim();
+			const jsdoc_comment = /@type {.+} (?:\w+|\[.*?\]) - (.+)/.exec(comment_node.value);
+			if (jsdoc_comment) {
+				cleaned_comment += jsdoc_comment[1]?.trim();
 			}
 			return {
 				type: match[1],
