@@ -366,8 +366,18 @@ function update_version(signal, d = 1) {
  * @param {any} value
  */
 export function get_proxied_value(value) {
-	if (value !== null && typeof value === 'object' && STATE_SYMBOL in value) {
-		return value[STATE_SYMBOL];
+	try {
+		if (value !== null && typeof value === 'object' && STATE_SYMBOL in value) {
+			return value[STATE_SYMBOL];
+		}
+	} catch {
+		// the above if check can throw an error if the value in question
+		// is the contentWindow of an iframe on another domain, in which
+		// case we want to just return the value (because it's definitely
+		// not a proxied value) so we don't break any JavaScript interacting
+		// with that iframe (such as various payment companies client side
+		// JavaScript libraries interacting with their iframes on the same
+		// domain)
 	}
 
 	return value;
