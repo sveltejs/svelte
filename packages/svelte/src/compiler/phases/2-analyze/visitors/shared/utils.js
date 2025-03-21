@@ -21,10 +21,6 @@ export function validate_assignment(node, argument, state) {
 		const binding = state.scope.get(argument.name);
 
 		if (state.analysis.runes) {
-			if (binding?.kind === 'derived') {
-				e.constant_assignment(node, 'derived state');
-			}
-
 			if (binding?.node === state.analysis.props_id) {
 				e.constant_assignment(node, '$props.id()');
 			}
@@ -37,25 +33,6 @@ export function validate_assignment(node, argument, state) {
 		if (binding?.kind === 'snippet') {
 			e.snippet_parameter_assignment(node);
 		}
-	}
-	if (
-		argument.type === 'MemberExpression' &&
-		argument.object.type === 'ThisExpression' &&
-		(((argument.property.type === 'PrivateIdentifier' || argument.property.type === 'Identifier') &&
-			state.derived_state.some(
-				(derived) =>
-					derived.name === /** @type {PrivateIdentifier | Identifier} */ (argument.property).name &&
-					derived.private === (argument.property.type === 'PrivateIdentifier')
-			)) ||
-			(argument.property.type === 'Literal' &&
-				argument.property.value &&
-				typeof argument.property.value === 'string' &&
-				state.derived_state.some(
-					(derived) =>
-						derived.name === /** @type {Literal} */ (argument.property).value && !derived.private
-				)))
-	) {
-		e.constant_assignment(node, 'derived state');
 	}
 }
 
@@ -81,7 +58,6 @@ export function validate_no_const_assignment(node, argument, scope, is_binding) 
 	} else if (argument.type === 'Identifier') {
 		const binding = scope.get(argument.name);
 		if (
-			binding?.kind === 'derived' ||
 			binding?.declaration_kind === 'import' ||
 			(binding?.declaration_kind === 'const' && binding.kind !== 'each')
 		) {
@@ -96,12 +72,7 @@ export function validate_no_const_assignment(node, argument, scope, is_binding) 
 			// );
 
 			// TODO have a more specific error message for assignments to things like `{:then foo}`
-			const thing =
-				binding.declaration_kind === 'import'
-					? 'import'
-					: binding.kind === 'derived'
-						? 'derived state'
-						: 'constant';
+			const thing = binding.declaration_kind === 'import' ? 'import' : 'constant';
 
 			if (is_binding) {
 				e.constant_binding(node, thing);
