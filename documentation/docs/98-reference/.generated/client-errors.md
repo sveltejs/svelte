@@ -128,26 +128,33 @@ Cannot set prototype of `$state` object
 Updating state inside a derived or a template expression is forbidden. If the value should not be reactive, declare it without `$state`
 ```
 
-This error is thrown in a situation like this:
+This error occurs when state is updated while evaluating a `$derived`. You might encounter it while trying to 'derive' two pieces of state in one go:
 
 ```svelte
 <script>
-    let count = $state(0);
-    let multiple = $derived.by(() => {
-        const result = count * 2;
-        if (result > 10) {
-            count = 0;
-        }
-        return result;
-    });
+	let count = $state(0);
+
+	let even = $state(true);
+
+	let odd = $derived.by(() => {
+		even = count % 2 === 0;
+		return !even;
+	});
 </script>
 
-<button onclick={() => count++}>{count} / {multiple}</button>
+<button onclick={() => count++}>{count}</button>
+
+<p>{count} is even: {even}</p>
+<p>{count} is odd: {odd}</p>
 ```
 
-Here, the `$derived` updates `count`, which is `$state` and therefore forbidden to do. It is forbidden because the reactive graph could become unstable as a result, leading to subtle bugs, like values being stale or effects firing in the wrong order. To prevent this, Svelte errors when detecting an update to a `$state` variable.
+This is forbidden because it introduces instability: if `<p>{count} is even: {even}</p>` is updated before `odd` is recalculated, `even` will be stale. In most cases the solution is to make everything derived:
 
-To fix this:
-- See if it's possible to refactor your `$derived` such that the update becomes unnecessary
-- Think about why you need to update `$state` inside a `$derived` in the first place. Maybe it's because you're using `bind:`, which leads you down a bad code path, and separating input and output path (by splitting it up to an attribute and an event, or by using [Function bindings](bind#Function-bindings)) makes it possible avoid the update
-- If it's unavoidable, you may need to use an [`$effect`]($effect) instead. This could include splitting parts of the `$derived` into an [`$effect`]($effect) which does the updates
+```js
+let count = 0;
+// ---cut---
+let even = $derived(count % 2 === 0);
+let odd = $derived(!even);
+```
+
+If side-effects are unavoidable, use [`$effect`]($effect) instead.
