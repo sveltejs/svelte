@@ -3,8 +3,7 @@
  * @import { Namespace } from "#compiler"
  * @import { CallExpression, Statement } from "estree"
  */
-import { NAMESPACE_SVG } from 'svelte/internal/client';
-import { NAMESPACE_MATHML } from '../../../../../constants.js';
+import { NAMESPACE_SVG, NAMESPACE_MATHML } from '../../../../../constants.js';
 import * as b from '../../../../utils/builders.js';
 import fix_attribute_casing from './fix-attribute-casing.js';
 
