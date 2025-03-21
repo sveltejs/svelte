@@ -1,4 +1,4 @@
-/** @import { ClassBody, Expression, Identifier, Literal, MethodDefinition, PrivateIdentifier, PropertyDefinition, SpreadElement } from 'estree' */
+/** @import { ClassBody, Expression, Identifier, Literal, MethodDefinition, PrivateIdentifier, PropertyDefinition } from 'estree' */
 /** @import {  } from '#compiler' */
 /** @import { Context, StateField } from '../types' */
 import { dev, is_ignored } from '../../../../state.js';
@@ -113,37 +113,23 @@ export function ClassBody(node, context) {
 				let value = null;
 
 				if (definition.value.arguments.length > 0) {
-					let init = /** @type {Expression | SpreadElement} **/ (
+					const init = /** @type {Expression} **/ (
 						context.visit(definition.value.arguments[0], child_state)
 					);
 
 					if (field.kind === 'state' || field.kind === 'raw_state') {
-						let onchange;
-						if (
-							/** @type {Expression | SpreadElement} */ (/** @type {unknown} */ (init)).type ===
-							'SpreadElement'
-						) {
-							const argument = init.argument;
-							init = b.member(argument, '0', true);
-							onchange = b.member(b.member(argument, '1', true), 'onchange', false, true);
-						}
-						if (!onchange) {
-							onchange = get_onchange(
-								/** @type {Expression} */ (definition.value.arguments[1]),
-								// @ts-ignore mismatch between Context and ComponentContext. TODO look into
-								context
-							);
-						}
+						const onchange = get_onchange(
+							/** @type {Expression} */ (definition.value.arguments[1]),
+							// @ts-ignore mismatch between Context and ComponentContext. TODO look into
+							context
+						);
 
 						value =
 							field.kind === 'state' && should_proxy(init, context.state.scope)
 								? b.call('$.assignable_proxy', init, onchange)
 								: b.call('$.state', init, onchange);
 					} else {
-						value = b.call(
-							'$.derived',
-							field.kind === 'derived_by' ? init : b.thunk(/** @type {Expression} */ (init))
-						);
+						value = b.call('$.derived', field.kind === 'derived_by' ? init : b.thunk(init));
 					}
 				} else {
 					// if no arguments, we know it's state as `$derived()` is a compile error
