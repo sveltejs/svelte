@@ -1,4 +1,4 @@
-/** @import { CallExpression, Expression, Identifier, Literal, VariableDeclaration, VariableDeclarator } from 'estree' */
+/** @import { CallExpression, Expression, Identifier, Literal, VariableDeclaration, VariableDeclarator, SpreadElement } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
@@ -117,9 +117,20 @@ export function VariableDeclaration(node, context) {
 			}
 
 			const args = /** @type {CallExpression} */ (init).arguments;
-			const value = args.length > 0 ? /** @type {Expression} */ (context.visit(args[0])) : b.void0;
+			let value =
+				args.length > 0
+					? /** @type {Expression | SpreadElement} */ (context.visit(args[0]))
+					: b.void0;
+			let onchange;
 
-			const onchange = get_onchange(/** @type {Expression} */ (args[1]), context);
+			if (value.type === 'SpreadElement') {
+				const argument = value.argument;
+				value = b.member(argument, '0', true);
+				onchange = b.member(b.member(argument, '1', true), 'onchange', false, true);
+			}
+			if (!onchange) {
+				onchange = get_onchange(/** @type {Expression} */ (args[1]), context);
+			}
 
 			if (rune === '$state' || rune === '$state.raw') {
 				/**
