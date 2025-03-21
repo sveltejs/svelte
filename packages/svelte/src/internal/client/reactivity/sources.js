@@ -77,7 +77,7 @@ export function batch_onchange(fn) {
 /**
  * @template V
  * @param {V} v
- * @param {ValueOptions} [o]
+ * @param {() => void} [o]
  * @param {Error | null} [stack]
  * @returns {Source<V>}
  */
@@ -103,17 +103,9 @@ export function source(v, o, stack) {
 }
 
 /**
- * @param {Source} source
- * @returns {ValueOptions | undefined}
- */
-export function get_options(source) {
-	return source.o;
-}
-
-/**
  * @template V
  * @param {V} v
- * @param {ValueOptions} [o]
+ * @param {() => void} [o]
  * @param {Error | null} [stack]
  */
 export function state(v, o, stack) {
@@ -196,11 +188,11 @@ export function internal_set(source, value) {
 	if (!source.equals(value)) {
 		var old_value = source.v;
 
-		if (typeof old_value === 'object' && old_value != null && source.o?.onchange) {
+		if (typeof old_value === 'object' && old_value != null && source.o) {
 			// @ts-ignore
 			const remove = old_value[PROXY_ONCHANGE_SYMBOL];
 			if (remove && typeof remove === 'function') {
-				remove(source.o?.onchange, true);
+				remove(source.o, true);
 			}
 		}
 
@@ -257,7 +249,7 @@ export function internal_set(source, value) {
 			inspect_effects.clear();
 		}
 
-		var onchange = source.o?.onchange;
+		var onchange = source.o;
 		if (onchange) {
 			if (onchange_batch) {
 				onchange_batch.add(onchange);
