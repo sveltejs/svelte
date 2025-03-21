@@ -124,6 +124,8 @@ export function RegularElement(node, context) {
 							kind: 'set_prop',
 							args: [
 								'is',
+								// if we are using the functional template mode we don't want to escape since we will
+								// create a text node from it which is already escaped
 								context.state.is_functional_template_mode
 									? value.value
 									: escape_html(value.value, true)
@@ -312,7 +314,9 @@ export function RegularElement(node, context) {
 								: [
 										value === true
 											? ''
-											: context.state.is_functional_template_mode
+											: // if we are using the functional template mode we don't want to escape since we will
+												// create a text node from it which is already escaped
+												context.state.is_functional_template_mode
 												? value
 												: escape_html(value, true)
 									]

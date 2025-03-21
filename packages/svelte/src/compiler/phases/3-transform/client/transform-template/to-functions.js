@@ -57,15 +57,20 @@ export function template_to_functions(items, namespace) {
 	 */
 	let last_current_element;
 
+	// if the first item is a comment we need to add another comment for effect.start
 	if (items[0].kind === 'create_anchor') {
 		items.unshift({ kind: 'create_anchor' });
 	}
 
 	for (let instruction of items) {
+		// on push element we add the element to the stack, from this moment on every insert will
+		// happen on the last element in the stack
 		if (instruction.kind === 'push_element' && last_current_element) {
 			elements_stack.push(last_current_element);
 			continue;
 		}
+		// we closed one element, we remove it from the stack and eventually revert back
+		// the namespace to the previous one
 		if (instruction.kind === 'pop_element') {
 			const removed = elements_stack.pop();
 			if (removed?.namespaced) {
@@ -77,6 +82,8 @@ export function template_to_functions(items, namespace) {
 			continue;
 		}
 
+		// if the inserted node is in the svg/mathml we push the namespace to the stack because we need to
+		// create with createElementNS
 		if (instruction.metadata?.svg || instruction.metadata?.mathml) {
 			namespace_stack.push(instruction.metadata.svg ? NAMESPACE_SVG : NAMESPACE_MATHML);
 		}
@@ -84,7 +91,12 @@ export function template_to_functions(items, namespace) {
 		// @ts-expect-error we can't be here if `swap_current_element` but TS doesn't know that
 		const value = map[instruction.kind](
 			...[
+				// for set prop we need to send the last element (not the one in the stack since
+				// it get's added to the stack only after the push_element instruction)...for all the rest
+				// the first prop is a the scope to generate the name of the variable
 				...(instruction.kind === 'set_prop' ? [last_current_element] : [scope]),
+				// for create element we also need to add the namespace...namespaces in the stack get's precedence over
+				// the "global" namespace (and if we are in a foreignObject we default to html)
 				...(instruction.kind === 'create_element'
 					? [
 							foreign_object_count > 0
@@ -102,9 +114,12 @@ export function template_to_functions(items, namespace) {
 		);
 
 		if (value) {
+			// this will compose the body of the function
 			body.push(value.call);
 		}
 
+		// with set_prop we don't need to do anything else, in all other cases we also need to
+		// append the element/node/anchor to the current active element or push it in the elements array
 		if (instruction.kind !== 'set_prop') {
 			if (elements_stack.length >= 1 && value) {
 				const { call } = map.insert(/** @type {Element} */ (elements_stack.at(-1)), value);
@@ -112,6 +127,7 @@ export function template_to_functions(items, namespace) {
 			} else if (value) {
 				elements.push(b.id(value.name));
 			}
+			// keep track of the last created element (it will be pushed to the stack after the props are set)
 			if (instruction.kind === 'create_element') {
 				last_current_element = /** @type {Element} */ (value);
 				if (last_current_element.element === 'foreignObject') {
@@ -120,6 +136,7 @@ export function template_to_functions(items, namespace) {
 			}
 		}
 	}
+	// every function needs to return a fragment so we create one and push all the elements there
 	const fragment = scope.generate('fragment');
 	body.push(b.var(fragment, b.call('document.createDocumentFragment')));
 	body.push(b.call(fragment + '.append', ...elements));
@@ -159,6 +176,11 @@ function create_element(scope, namespace, element) {
 	}
 	const call = b.var(name, b.call(fn, ...args));
 	/**
+	 * if there's an "is" attribute we can't just add it as a property, it needs to be
+	 * specified on creation like this `document.createElement('button', { is: 'my-button' })`
+	 *
+	 * Since the props are appended after the creation we change the generated call arguments and we push
+	 * the is attribute later on on `set_prop`
 	 * @param {string} value
 	 */
 	function add_is(value) {
@@ -208,6 +230,7 @@ function create_text(scope, value) {
  * @param {string} value
  */
 function set_prop(el, prop, value) {
+	// see comment above about the "is" attribute
 	if (prop === 'is') {
 		el.add_is(value);
 		return;
@@ -217,6 +240,7 @@ function set_prop(el, prop, value) {
 	let fn = namespace !== prop ? '.setAttributeNS' : '.setAttribute';
 	let args = [b.literal(fix_attribute_casing(prop)), b.literal(value ?? '')];
 
+	// attributes like `xlink:href` need to be set with the `xlink` namespace
 	if (namespace === 'xlink') {
 		args.unshift(b.literal('http://www.w3.org/1999/xlink'));
 	}
@@ -235,6 +259,7 @@ function set_prop(el, prop, value) {
 function insert(el, child, anchor) {
 	return {
 		call: b.call(
+			// if we have a template element we need to push into it's content rather than the element itself
 			el.name + (el.element === 'template' ? '.content' : '') + '.insertBefore',
 			b.id(child.name),
 			b.id(anchor?.name ?? 'undefined')

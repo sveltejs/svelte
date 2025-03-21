@@ -427,11 +427,13 @@ export function build_component(node, component_name, context, anchor = context.
 		 */
 		const template_operations = [];
 		if (context.state.metadata.namespace === 'svg') {
+			// this boils down to <g><!></g>
 			template_operations.push({ kind: 'create_element', args: ['g'] });
 			template_operations.push({ kind: 'push_element' });
 			template_operations.push({ kind: 'create_anchor' });
 			template_operations.push({ kind: 'pop_element' });
 		} else {
+			// this boils down to <svelte-css-wrapper style='display: contents'><!></svelte-css-wrapper>
 			template_operations.push({ kind: 'create_element', args: ['svelte-css-wrapper'] });
 			template_operations.push({ kind: 'set_prop', args: ['style', 'display: contents'] });
 			template_operations.push({ kind: 'push_element' });
