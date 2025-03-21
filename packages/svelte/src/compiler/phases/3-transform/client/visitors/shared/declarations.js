@@ -1,8 +1,7 @@
 /** @import { Identifier } from 'estree' */
 /** @import { ComponentContext, Context } from '../../types' */
-import { is_state_source, should_proxy } from '../../utils.js';
+import { is_state_source } from '../../utils.js';
 import * as b from '../../../../../utils/builders.js';
-import { dev } from '../../../../../state.js';
 
 /**
  * Turns `foo` into `$.get(foo)`
