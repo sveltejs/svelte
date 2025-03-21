@@ -9,9 +9,7 @@ import * as b from '../../../../../utils/builders.js';
  * @returns {Expression | undefined}
  */
 export function get_onchange(options, context) {
-	if (!options) {
-		return undefined;
-	}
+	if (!options) return;
 
 	if (options.type === 'ObjectExpression') {
 		const onchange = /** @type {Property | undefined} */ (
@@ -24,9 +22,7 @@ export function get_onchange(options, context) {
 			)
 		);
 
-		if (!onchange) {
-			return undefined;
-		}
+		if (!onchange) return;
 
 		return /** @type {Expression} */ (context.visit(onchange.value));
 	}
