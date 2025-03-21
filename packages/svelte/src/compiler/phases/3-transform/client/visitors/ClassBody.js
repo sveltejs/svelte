@@ -118,7 +118,7 @@ export function ClassBody(node, context) {
 					);
 
 					if (field.kind === 'state' || field.kind === 'raw_state') {
-						let onchange = get_onchange(
+						const onchange = get_onchange(
 							/** @type {Expression} */ (definition.value.arguments[1]),
 							// @ts-ignore mismatch between Context and ComponentContext. TODO look into
 							context
