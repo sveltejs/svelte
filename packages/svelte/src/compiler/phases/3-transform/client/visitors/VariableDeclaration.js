@@ -127,18 +127,18 @@ export function VariableDeclaration(node, context) {
 				 * @param {Expression} [options]
 				 */
 				const create_state_declarator = (id, value, options) => {
-					const binding = /** @type {import('#compiler').Binding} */ (
-						context.state.scope.get(id.name)
-					);
+					const binding = /** @type {Binding} */ (context.state.scope.get(id.name));
 					const proxied = rune === '$state' && should_proxy(value, context.state.scope);
 					const is_state = is_state_source(binding, context.state.analysis);
-					if (proxied && is_state) {
-						value = b.call('$.assignable_proxy', value, options);
-					} else if (proxied) {
-						value = b.call('$.proxy', value, options);
-					} else if (is_state) {
-						value = b.call('$.state', value, options);
+
+					if (proxied) {
+						return b.call(is_state ? '$.assignable_proxy' : '$.proxy', value, options);
 					}
+
+					if (is_state) {
+						return b.call('$.state', value, options);
+					}
+
 					return value;
 				};
 
