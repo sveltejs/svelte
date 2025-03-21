@@ -467,7 +467,6 @@ export function proxy(value, _options, prev) {
  * @param {ValueOptions} [options]
  * @returns {Source<T>}
  */
-
 export function assignable_proxy(value, options) {
 	return state(proxy(value, options), options);
 }
