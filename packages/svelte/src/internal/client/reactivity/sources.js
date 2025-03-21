@@ -183,10 +183,9 @@ export function mutate(source, value) {
  * @param {Source<V>} source
  * @param {V} value
  * @param {boolean} [should_proxy]
- * @param {boolean} [needs_previous]
  * @returns {V}
  */
-export function set(source, value, should_proxy = false, needs_previous = false) {
+export function set(source, value, should_proxy = false) {
 	if (
 		active_reaction !== null &&
 		!untracking &&
@@ -200,7 +199,7 @@ export function set(source, value, should_proxy = false, needs_previous = false)
 	}
 
 	let new_value = should_proxy
-		? needs_previous
+		? DEV
 			? proxy(value, source.o, null, source)
 			: proxy(value, source.o)
 		: value;
@@ -213,12 +212,11 @@ export function set(source, value, should_proxy = false, needs_previous = false)
  * @param {Source<V>} source
  * @param {V} value
  * @param {boolean} [should_proxy]
- * @param {boolean} [needs_previous]
  * @returns {V}
  */
-export function simple_set(source, value, should_proxy = false, needs_previous = false) {
+export function simple_set(source, value, should_proxy = false) {
 	let new_value = should_proxy
-		? needs_previous
+		? DEV
 			? proxy(value, source.o, null, source)
 			: proxy(value, source.o)
 		: value;

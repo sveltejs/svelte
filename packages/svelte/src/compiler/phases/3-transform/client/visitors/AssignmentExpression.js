@@ -75,8 +75,7 @@ function build_assignment(operator, left, right, context) {
 				context.state.in_constructor ? '$.simple_set' : '$.set',
 				left,
 				value,
-				needs_proxy && b.true,
-				dev && needs_proxy && b.true
+				needs_proxy && b.true
 			);
 		}
 	}

@@ -159,11 +159,7 @@ export function ClassBody(node, context) {
 								'set',
 								definition.key,
 								[value],
-								[
-									b.stmt(
-										b.call('$.set', member, value, field.kind === 'state' && b.true, dev && b.true)
-									)
-								]
+								[b.stmt(b.call('$.set', member, value, field.kind === 'state' && b.true))]
 							)
 						);
 					}
