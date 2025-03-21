@@ -1,5 +1,19 @@
 # svelte
 
+## 5.25.0
+
+### Minor Changes
+
+- feat: make deriveds writable ([#15570](https://github.com/sveltejs/svelte/pull/15570))
+
+## 5.24.1
+
+### Patch Changes
+
+- fix: use `get` in constructor for deriveds ([#15300](https://github.com/sveltejs/svelte/pull/15300))
+
+- fix: ensure toStore root effect is connected to correct parent effect ([#15574](https://github.com/sveltejs/svelte/pull/15574))
+
 ## 5.24.0
 
 ### Minor Changes
