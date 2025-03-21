@@ -1,5 +1,11 @@
 # svelte
 
+## 5.25.2
+
+### Patch Changes
+
+- feat: migrate reassigned deriveds to `$derived` ([#15581](https://github.com/sveltejs/svelte/pull/15581))
+
 ## 5.25.1
 
 ### Patch Changes
