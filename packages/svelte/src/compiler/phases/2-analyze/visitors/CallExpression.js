@@ -115,6 +115,10 @@ export function CallExpression(node, context) {
 				e.state_invalid_placement(node, rune);
 			}
 
+			if (node.arguments.some((arg) => arg.type === 'SpreadElement')) {
+				e.rune_invalid_spread(node, rune);
+			}
+
 			if ((rune === '$derived' || rune === '$derived.by') && node.arguments.length !== 1) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 			} else if (node.arguments.length > 1) {
