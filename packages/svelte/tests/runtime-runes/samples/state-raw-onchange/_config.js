@@ -6,7 +6,7 @@ export default test({
 		const [btn, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9, btn10] =
 			target.querySelectorAll('button');
 
-		assert.deepEqual(logs, ['constructor count', 'constructor proxy']);
+		assert.deepEqual(logs, ['constructor count', 'constructor object']);
 
 		logs.length = 0;
 
@@ -17,27 +17,27 @@ export default test({
 		assert.deepEqual(logs, ['count']);
 
 		flushSync(() => btn3.click());
-		assert.deepEqual(logs, ['count', 'proxy']);
+		assert.deepEqual(logs, ['count', 'object']);
 
 		flushSync(() => btn4.click());
-		assert.deepEqual(logs, ['count', 'proxy', 'class count']);
+		assert.deepEqual(logs, ['count', 'object', 'class count']);
 
 		flushSync(() => btn5.click());
-		assert.deepEqual(logs, ['count', 'proxy', 'class count']);
+		assert.deepEqual(logs, ['count', 'object', 'class count']);
 
 		flushSync(() => btn6.click());
-		assert.deepEqual(logs, ['count', 'proxy', 'class count', 'class proxy']);
+		assert.deepEqual(logs, ['count', 'object', 'class count', 'class object']);
 
 		flushSync(() => btn7.click());
-		assert.deepEqual(logs, ['count', 'proxy', 'class count', 'class proxy']);
+		assert.deepEqual(logs, ['count', 'object', 'class count', 'class object']);
 
 		flushSync(() => btn8.click());
-		assert.deepEqual(logs, ['count', 'proxy', 'class count', 'class proxy']);
+		assert.deepEqual(logs, ['count', 'object', 'class count', 'class object']);
 
 		flushSync(() => btn9.click());
-		assert.deepEqual(logs, ['count', 'proxy', 'class count', 'class proxy']);
+		assert.deepEqual(logs, ['count', 'object', 'class count', 'class object']);
 
 		flushSync(() => btn10.click());
-		assert.deepEqual(logs, ['count', 'proxy', 'class count', 'class proxy', 'arr']);
+		assert.deepEqual(logs, ['count', 'object', 'class count', 'class object', 'arr']);
 	}
 });

@@ -5,9 +5,9 @@
 		}
 	})
 
-	let proxy = $state.raw({count: 0}, {
+	let object = $state.raw({count: 0}, {
 		onchange(){
-			console.log("proxy");
+			console.log("object");
 		}
 	})
 
@@ -17,9 +17,9 @@
 				console.log("class count");
 			}
 		})
-		proxy = $state.raw({count: 0}, {
+		object = $state.raw({count: 0}, {
 			onchange(){
-				console.log("class proxy");
+				console.log("class object");
 			}
 		})
 
@@ -31,7 +31,7 @@
 
 		#in_constructor_proxy = $state({ count: 0 }, {
 			onchange(){
-				console.log("constructor proxy");
+				console.log("constructor object");
 			}
 		});
 
@@ -52,12 +52,12 @@
 </script>
 
 <button onclick={()=> count++}>{count}</button>
-<button onclick={()=> proxy.count++}>{proxy.count}</button>
-<button onclick={()=> proxy = {count: proxy.count+1}}>{proxy.count}</button>
+<button onclick={()=> object.count++}>{object.count}</button>
+<button onclick={()=> object = {count: object.count+1}}>{object.count}</button>
 
 <button onclick={()=> class_test.count++}>{class_test.count}</button>
-<button onclick={()=> class_test.proxy.count++}>{class_test.proxy.count}</button>
-<button onclick={()=> class_test.proxy = {count: class_test.proxy.count+1}}>{class_test.proxy.count}</button>
+<button onclick={()=> class_test.object.count++}>{class_test.object.count}</button>
+<button onclick={()=> class_test.object = {count: class_test.object.count+1}}>{class_test.object.count}</button>
 
 <button onclick={()=> arr.push(arr.length)}>push</button>
 <button onclick={()=>arr.splice(0, 2)}>splice</button>
