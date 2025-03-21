@@ -10,6 +10,7 @@ export var get_descriptors = Object.getOwnPropertyDescriptors;
 export var object_prototype = Object.prototype;
 export var array_prototype = Array.prototype;
 export var get_prototype_of = Object.getPrototypeOf;
+export var is_extensible = Object.isExtensible;
 
 /**
  * @param {any} thing
