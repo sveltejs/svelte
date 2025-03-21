@@ -21,6 +21,9 @@
 	 */
 	export let type_no_comment;
 
+	/** @type {boolean} type_with_comment - One-line declaration with comment */
+	export let type_with_comment;
+
 	/**
 	 * This is optional
 	 */
