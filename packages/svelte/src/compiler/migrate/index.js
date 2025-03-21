@@ -19,7 +19,6 @@ import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
 import { validate_component_options } from '../validate-options.js';
 import { is_reserved, is_svg, is_void } from '../../utils.js';
 import { regex_is_valid_identifier } from '../phases/patterns.js';
-import { VERSION } from 'svelte/compiler';
 
 const regex_style_tags = /(<style[^>]+>)([\S\s]*?)(<\/style>)/g;
 const style_placeholder = '/*$$__STYLE_CONTENT__$$*/';
@@ -113,16 +112,6 @@ function find_closing_parenthesis(start, code) {
 	}
 	return end;
 }
-
-function check_support_writable_deriveds() {
-	const [major, minor, patch] = VERSION.split('.');
-
-	if (+major < 5) return false;
-	if (+minor < 25) return false;
-	return true;
-}
-
-const support_writable_derived = check_support_writable_deriveds();
 
 /**
  * Does a best-effort migration of Svelte code towards using runes, event attributes and render tags.
@@ -963,11 +952,7 @@ const instance_script = {
 			const reassigned_bindings = bindings.filter((b) => b?.reassigned);
 
 			if (
-				// on version 5.25.0 deriveds are writable so we can use them even if
-				// reassigned (but if the right side is a literal we want to use `$state`)
-				(support_writable_derived
-					? node.body.expression.right.type !== 'Literal'
-					: reassigned_bindings.length === 0) &&
+				node.body.expression.right.type !== 'Literal' &&
 				!bindings.some((b) => b?.kind === 'store_sub') &&
 				node.body.expression.left.type !== 'MemberExpression'
 			) {
