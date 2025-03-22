@@ -28,47 +28,33 @@ function identity(fn) {
 	return fn;
 }
 
-/**
- * @param {ValueOptions | undefined} options
- * @returns {ValueOptions | undefined}
- */
-function clone_options(options) {
-	return options != null
-		? {
-				onchange: options.onchange
-			}
-		: undefined;
-}
-
 /** @type {ProxyMetadata | null} */
 var parent_metadata = null;
 
 /**
  * @template T
  * @param {T} value
- * @param {ValueOptions} [_options]
+ * @param {() => void} [onchange]
  * @param {Source<T>} [prev] dev mode only
  * @returns {T}
  */
-export function proxy(value, _options, prev) {
+export function proxy(value, onchange, prev) {
 	// if non-proxyable, or is already a proxy, return `value`
 	if (typeof value !== 'object' || value === null) {
 		return value;
 	}
 
-	var options = clone_options(_options);
-
 	if (STATE_SYMBOL in value) {
 		// @ts-ignore
-		value[PROXY_ONCHANGE_SYMBOL](options?.onchange);
+		value[PROXY_ONCHANGE_SYMBOL](onchange);
 		return value;
 	}
 
-	if (options?.onchange) {
+	if (onchange) {
 		// if there's an onchange we actually store that but override the value
 		// to store every other onchange that new proxies might add
-		var onchanges = new Set([options.onchange]);
-		options.onchange = () => {
+		var onchanges = new Set([onchange]);
+		onchange = () => {
 			for (let onchange of onchanges) {
 				onchange();
 			}
@@ -116,10 +102,7 @@ export function proxy(value, _options, prev) {
 	if (is_proxied_array) {
 		// We need to create the length source eagerly to ensure that
 		// mutations to the array are properly synced with our proxy
-		sources.set(
-			'length',
-			source(/** @type {any[]} */ (value).length, clone_options(options), stack)
-		);
+		sources.set('length', source(/** @type {any[]} */ (value).length, onchange, stack));
 	}
 
 	/** @type {ProxyMetadata} */
@@ -165,12 +148,12 @@ export function proxy(value, _options, prev) {
 			var s = sources.get(prop);
 
 			if (s === undefined) {
-				s = with_parent(() => source(descriptor.value, clone_options(options), stack));
+				s = with_parent(() => source(descriptor.value, onchange, stack));
 				sources.set(prop, s);
 			} else {
 				set(
 					s,
-					with_parent(() => proxy(descriptor.value, options))
+					with_parent(() => proxy(descriptor.value, onchange))
 				);
 			}
 
@@ -184,7 +167,7 @@ export function proxy(value, _options, prev) {
 				if (prop in target) {
 					sources.set(
 						prop,
-						with_parent(() => source(UNINITIALIZED, clone_options(options), stack))
+						with_parent(() => source(UNINITIALIZED, onchange, stack))
 					);
 				}
 			} else {
@@ -201,7 +184,7 @@ export function proxy(value, _options, prev) {
 				// when we delete a property if the source is a proxy we remove the current onchange from
 				// the proxy `onchanges` so that it doesn't trigger it anymore
 				if (typeof s.v === 'object' && s.v !== null && STATE_SYMBOL in s.v) {
-					s.v[PROXY_ONCHANGE_SYMBOL](options?.onchange, true);
+					s.v[PROXY_ONCHANGE_SYMBOL](onchange, true);
 				}
 				set(s, UNINITIALIZED);
 				update_version(version);
@@ -227,18 +210,14 @@ export function proxy(value, _options, prev) {
 					// we either add or remove the passed in value
 					// to the onchanges array or we set every source onchange
 					// to the passed in value (if it's undefined it will make the chain stop)
-					if (options?.onchange != null && value && !remove) {
+					if (onchange != null && value && !remove) {
 						onchanges?.add?.(value);
-					} else if (options?.onchange != null && value) {
+					} else if (onchange != null && value) {
 						onchanges?.delete?.(value);
 					} else {
-						options = {
-							onchange: value
-						};
+						onchange = value;
 						for (let [, s] of sources) {
-							if (s.o) {
-								s.o.onchange = value;
-							}
+							s.o = value;
 						}
 					}
 				};
@@ -249,7 +228,7 @@ export function proxy(value, _options, prev) {
 
 			// create a source, but only if it's an own property and not a prototype property
 			if (s === undefined && (!exists || get_descriptor(target, prop)?.writable)) {
-				let opt = clone_options(options);
+				let opt = onchange;
 				s = with_parent(() =>
 					source(proxy(exists ? target[prop] : UNINITIALIZED, opt), opt, stack)
 				);
@@ -281,7 +260,7 @@ export function proxy(value, _options, prev) {
 
 			if (
 				is_proxied_array &&
-				options?.onchange != null &&
+				onchange != null &&
 				array_methods.includes(/** @type {string} */ (prop))
 			) {
 				return batch_onchange(v);
@@ -330,7 +309,7 @@ export function proxy(value, _options, prev) {
 				(active_effect !== null && (!has || get_descriptor(target, prop)?.writable))
 			) {
 				if (s === undefined) {
-					let opt = clone_options(options);
+					let opt = onchange;
 					s = with_parent(() => source(has ? proxy(target[prop], opt) : UNINITIALIZED, opt, stack));
 					sources.set(prop, s);
 				}
@@ -362,14 +341,14 @@ export function proxy(value, _options, prev) {
 								other_s.v !== null &&
 								STATE_SYMBOL in other_s.v
 							) {
-								other_s.v[PROXY_ONCHANGE_SYMBOL](options?.onchange, true);
+								other_s.v[PROXY_ONCHANGE_SYMBOL](onchange, true);
 							}
 							set(other_s, UNINITIALIZED);
 						} else if (i in target) {
 							// If the item exists in the original, we need to create a uninitialized source,
 							// else a later read of the property would result in a source being created with
 							// the value of the original item at that index.
-							other_s = with_parent(() => source(UNINITIALIZED, clone_options(options), stack));
+							other_s = with_parent(() => source(UNINITIALIZED, onchange, stack));
 							sources.set(i + '', other_s);
 						}
 					}
@@ -381,7 +360,7 @@ export function proxy(value, _options, prev) {
 				// object property before writing to that property.
 				if (s === undefined) {
 					if (!has || get_descriptor(target, prop)?.writable) {
-						const opt = clone_options(options);
+						const opt = onchange;
 						s = with_parent(() => source(undefined, opt, stack));
 						set(
 							s,
@@ -394,11 +373,11 @@ export function proxy(value, _options, prev) {
 					// when we set a property if the source is a proxy we remove the current onchange from
 					// the proxy `onchanges` so that it doesn't trigger it anymore
 					if (typeof s.v === 'object' && s.v !== null && STATE_SYMBOL in s.v) {
-						s.v[PROXY_ONCHANGE_SYMBOL](options?.onchange, true);
+						s.v[PROXY_ONCHANGE_SYMBOL](onchange, true);
 					}
 					set(
 						s,
-						with_parent(() => proxy(value, clone_options(options)))
+						with_parent(() => proxy(value, onchange))
 					);
 				}
 			})();
@@ -464,11 +443,11 @@ export function proxy(value, _options, prev) {
 /**
  * @template T
  * @param {T} value
- * @param {ValueOptions} [options]
+ * @param {() => void} [onchange]
  * @returns {Source<T>}
  */
-export function assignable_proxy(value, options) {
-	return state(proxy(value, options), options);
+export function assignable_proxy(value, onchange) {
+	return state(proxy(value, onchange), onchange);
 }
 
 /**

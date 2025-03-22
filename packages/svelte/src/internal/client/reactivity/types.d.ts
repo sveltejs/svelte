@@ -20,8 +20,8 @@ export interface Value<V = unknown> extends Signal {
 	rv: number;
 	/** The latest value for this signal */
 	v: V;
-	/** Options for the source */
-	o?: ValueOptions;
+	/** onchange callback */
+	o?: () => void;
 	/** Dev only */
 	created?: Error | null;
 	updated?: Error | null;

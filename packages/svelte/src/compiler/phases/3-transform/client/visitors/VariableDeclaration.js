@@ -8,6 +8,7 @@ import * as assert from '../../../../utils/assert.js';
 import { get_rune } from '../../../scope.js';
 import { get_prop_source, is_prop_source, is_state_source, should_proxy } from '../utils.js';
 import { is_hoisted_function } from '../../utils.js';
+import { get_onchange } from './shared/state.js';
 
 /**
  * @param {VariableDeclaration} node
@@ -117,26 +118,26 @@ export function VariableDeclaration(node, context) {
 
 			const args = /** @type {CallExpression} */ (init).arguments;
 			const value = args.length > 0 ? /** @type {Expression} */ (context.visit(args[0])) : b.void0;
-			let options =
-				args.length === 2 ? /** @type {Expression} */ (context.visit(args[1])) : undefined;
+
+			const onchange = get_onchange(/** @type {Expression} */ (args[1]), context);
 
 			if (rune === '$state' || rune === '$state.raw') {
 				/**
 				 * @param {Identifier} id
 				 * @param {Expression} value
-				 * @param {Expression} [options]
+				 * @param {Expression} [onchange]
 				 */
-				const create_state_declarator = (id, value, options) => {
+				const create_state_declarator = (id, value, onchange) => {
 					const binding = /** @type {Binding} */ (context.state.scope.get(id.name));
 					const proxied = rune === '$state' && should_proxy(value, context.state.scope);
 					const is_state = is_state_source(binding, context.state.analysis);
 
 					if (proxied) {
-						return b.call(is_state ? '$.assignable_proxy' : '$.proxy', value, options);
+						return b.call(is_state ? '$.assignable_proxy' : '$.proxy', value, onchange);
 					}
 
 					if (is_state) {
-						return b.call('$.state', value, options);
+						return b.call('$.state', value, onchange);
 					}
 
 					return value;
@@ -144,7 +145,7 @@ export function VariableDeclaration(node, context) {
 
 				if (declarator.id.type === 'Identifier') {
 					declarations.push(
-						b.declarator(declarator.id, create_state_declarator(declarator.id, value, options))
+						b.declarator(declarator.id, create_state_declarator(declarator.id, value, onchange))
 					);
 				} else {
 					const tmp = context.state.scope.generate('tmp');
@@ -157,7 +158,7 @@ export function VariableDeclaration(node, context) {
 							return b.declarator(
 								path.node,
 								binding?.kind === 'state' || binding?.kind === 'raw_state'
-									? create_state_declarator(binding.node, value, options)
+									? create_state_declarator(binding.node, value, onchange)
 									: value
 							);
 						})
