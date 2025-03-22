@@ -44,15 +44,17 @@ export function process_children(nodes, { visit, state }) {
 			if (node.type === 'Text' || node.type === 'Comment') {
 				quasi.value.cooked +=
 					node.type === 'Comment' ? `<!--${node.data}-->` : escape_html(node.data);
-			} else if (node.type === 'ExpressionTag' && node.expression.type === 'Literal') {
-				if (node.expression.value != null) {
-					quasi.value.cooked += escape_html(node.expression.value + '');
-				}
 			} else {
-				expressions.push(b.call('$.escape', /** @type {Expression} */ (visit(node.expression))));
+				const evaluated = state.scope.evaluate(node.expression);
 
-				quasi = b.quasi('', i + 1 === sequence.length);
-				quasis.push(quasi);
+				if (evaluated.is_known) {
+					quasi.value.cooked += escape_html((evaluated.value ?? '') + '');
+				} else {
+					expressions.push(b.call('$.escape', /** @type {Expression} */ (visit(node.expression))));
+
+					quasi = b.quasi('', i + 1 === sequence.length);
+					quasis.push(quasi);
+				}
 			}
 		}
 
