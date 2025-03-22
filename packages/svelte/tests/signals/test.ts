@@ -1080,6 +1080,21 @@ describe('signals', () => {
 		};
 	});
 
+	test.only("deriveds set after they are DIRTY doesn't get updated on get", () => {
+		return () => {
+			const a = state(0);
+			const b = derived(() => $.get(a));
+
+			set(b, 1);
+			assert.equal($.get(b), 1);
+
+			set(a, 2);
+			set(b, 3);
+
+			assert.equal($.get(b), 3);
+		};
+	});
+
 	test('deriveds containing effects work correctly when used with untrack', () => {
 		return () => {
 			let a = render_effect(() => {});

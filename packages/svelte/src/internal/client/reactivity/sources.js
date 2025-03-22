@@ -171,6 +171,10 @@ export function internal_set(source, value) {
 			}
 		}
 
+		if ((source.f & DERIVED) !== 0) {
+			set_signal_status(/** @type {Derived} */ (source), CLEAN);
+		}
+
 		mark_reactions(source, DIRTY);
 
 		// It's possible that the current reaction might not have up-to-date dependencies
