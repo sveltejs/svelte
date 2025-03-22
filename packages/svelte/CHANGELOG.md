@@ -1,5 +1,17 @@
 # svelte
 
+## 5.25.2
+
+### Patch Changes
+
+- feat: migrate reassigned deriveds to `$derived` ([#15581](https://github.com/sveltejs/svelte/pull/15581))
+
+## 5.25.1
+
+### Patch Changes
+
+- fix: prevent dev server from throwing errors when attempting to retrieve the proxied value of an iframe's contentWindow ([#15577](https://github.com/sveltejs/svelte/pull/15577))
+
 ## 5.25.0
 
 ### Minor Changes
