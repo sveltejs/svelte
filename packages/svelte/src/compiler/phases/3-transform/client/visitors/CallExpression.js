@@ -4,6 +4,7 @@ import { dev, is_ignored } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { get_rune } from '../../../scope.js';
 import { transform_inspect_rune } from '../../utils.js';
+import { should_proxy } from '../utils.js';
 
 /**
  * @param {CallExpression} node
@@ -33,6 +34,20 @@ export function CallExpression(node, context) {
 		case '$inspect':
 		case '$inspect().with':
 			return transform_inspect_rune(node, context);
+		case '$state':
+			if (context.path.at(-1)?.type === 'ReturnStatement') {
+				if (
+					node.arguments[0] &&
+					should_proxy(
+						/** @type {Expression} */ (context.visit(node.arguments[0])),
+						context.state.scope
+					)
+				) {
+					return b.call('$.proxy', node.arguments[0]);
+				} else {
+					return node.arguments[0] ?? b.void0;
+				}
+			}
 	}
 
 	if (
