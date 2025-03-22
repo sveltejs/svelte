@@ -15,10 +15,11 @@ export function ObjectExpression(node, context) {
 	 * @type {Array<{rune: NonNullable<ReturnType<typeof get_rune>>, property: Property & {value: CallExpression}}>}
 	 */
 	let reactive_properties = [];
+	let valid_property_runes = ['$state', '$derived', '$state.raw', '$derived.by'];
 	for (let property of node.properties) {
 		if (property.type !== 'Property') continue;
 		const rune = get_rune(property.value, context.state.scope);
-		if (rune) {
+		if (rune && valid_property_runes.includes(rune)) {
 			has_runes = true;
 			reactive_properties.push({
 				rune,
