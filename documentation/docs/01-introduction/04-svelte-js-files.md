@@ -29,4 +29,4 @@ export let state = $state({ count: 0 });
 // Later: state.count += 1; (valid mutation)
 ```
 
-> [!NOTE] You cannot reassign an exported $state variable (e.g., count = 5) in its module. Either export a function returning the state or use an object and mutate its properties to maintain reactivity. See [Compiler Errors: state_invalid_export](https://svelte.dev/docs/svelte/compiler-errors#state_invalid_export) for details.
+> [!NOTE] You cannot reassign an exported $state variable (e.g., count = 5) in its module. Either export a function returning the state or use an object and mutate its properties to maintain reactivity. See [Compiler Errors: state_invalid_export](https://svelte.dev/docs/svelte/compiler-errors#state_invalid_export) for Svelte-specific details, and [MDN: JavaScript export](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/export) for how JavaScript module bindings work.
