@@ -35,7 +35,12 @@ export function ObjectExpression(node, context) {
 		const call = rune.match(/^\$state/) ? '$.state' : '$.derived';
 		/** @type {Expression} */
 		let value = /** @type {Expression} */ (context.visit(property.value.arguments[0] ?? b.void0));
-		value = deep && should_proxy(value, context.state.scope) ? b.call('$.proxy', value) : value;
+		value =
+			deep && should_proxy(value, context.state.scope)
+				? b.call('$.proxy', value)
+				: rune === '$derived'
+					? b.thunk(value)
+					: value;
 		sources.set(property, [deep, name]);
 		body.push(b.let(name, b.call(call, value)));
 	}
