@@ -17,6 +17,14 @@ export function CallExpression(node, context) {
 
 	const rune = get_rune(node, context.state.scope);
 
+	if (rune && rune !== '$inspect') {
+		for (const arg of node.arguments) {
+			if (arg.type === 'SpreadElement') {
+				e.rune_invalid_spread(node, rune);
+			}
+		}
+	}
+
 	switch (rune) {
 		case null:
 			if (!is_safe_identifier(node.callee, context.state.scope)) {

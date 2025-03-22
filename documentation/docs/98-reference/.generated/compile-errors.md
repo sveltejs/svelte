@@ -660,6 +660,12 @@ Cannot access a computed property of a rune
 `%name%` is not a valid rune
 ```
 
+### rune_invalid_spread
+
+```
+`%rune%` cannot be called with a spread argument
+```
+
 ### rune_invalid_usage
 
 ```

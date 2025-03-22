@@ -11,11 +11,12 @@ import {
 	untrack,
 	increment_write_version,
 	update_effect,
-	derived_sources,
-	set_derived_sources,
+	reaction_sources,
+	set_reaction_sources,
 	check_dirtiness,
 	untracking,
-	is_destroying_effect
+	is_destroying_effect,
+	push_reaction_value
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -27,12 +28,14 @@ import {
 	UNOWNED,
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
-	ROOT_EFFECT
+	ROOT_EFFECT,
+	EFFECT_IS_UPDATING
 } from '../constants.js';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack } from '../dev/tracing.js';
 import { component_context, is_runes } from '../context.js';
+import { proxy } from '../proxy.js';
 
 export let inspect_effects = new Set();
 export const old_values = new Map();
@@ -50,6 +53,7 @@ export function set_inspect_effects(v) {
  * @param {Error | null} [stack]
  * @returns {Source<V>}
  */
+// TODO rename this to `state` throughout the codebase
 export function source(v, stack) {
 	/** @type {Value} */
 	var signal = {
@@ -72,9 +76,14 @@ export function source(v, stack) {
 /**
  * @template V
  * @param {V} v
+ * @param {Error | null} [stack]
  */
-export function state(v) {
-	return push_derived_source(source(v));
+export function state(v, stack) {
+	const s = source(v, stack);
+
+	push_reaction_value(s);
+
+	return s;
 }
 
 /**
@@ -101,33 +110,6 @@ export function mutable_source(initial_value, immutable = false) {
 
 /**
  * @template V
- * @param {V} v
- * @param {boolean} [immutable]
- * @returns {Source<V>}
- */
-export function mutable_state(v, immutable = false) {
-	return push_derived_source(mutable_source(v, immutable));
-}
-
-/**
- * @template V
- * @param {Source<V>} source
- */
-/*#__NO_SIDE_EFFECTS__*/
-function push_derived_source(source) {
-	if (active_reaction !== null && !untracking && (active_reaction.f & DERIVED) !== 0) {
-		if (derived_sources === null) {
-			set_derived_sources([source]);
-		} else {
-			derived_sources.push(source);
-		}
-	}
-
-	return source;
-}
-
-/**
- * @template V
  * @param {Value<V>} source
  * @param {V} value
  */
@@ -143,22 +125,23 @@ export function mutate(source, value) {
  * @template V
  * @param {Source<V>} source
  * @param {V} value
+ * @param {boolean} [should_proxy]
  * @returns {V}
  */
-export function set(source, value) {
+export function set(source, value, should_proxy = false) {
 	if (
 		active_reaction !== null &&
 		!untracking &&
 		is_runes() &&
 		(active_reaction.f & (DERIVED | BLOCK_EFFECT)) !== 0 &&
-		// If the source was created locally within the current derived, then
-		// we allow the mutation.
-		(derived_sources === null || !derived_sources.includes(source))
+		!reaction_sources?.includes(source)
 	) {
 		e.state_unsafe_mutation();
 	}
 
-	return internal_set(source, value);
+	let new_value = should_proxy ? proxy(value, source) : value;
+
+	return internal_set(source, new_value);
 }
 
 /**

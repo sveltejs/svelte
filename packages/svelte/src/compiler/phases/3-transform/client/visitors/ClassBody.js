@@ -5,7 +5,7 @@ import { dev, is_ignored } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { regex_invalid_identifier_chars } from '../../../patterns.js';
 import { get_rune } from '../../../scope.js';
-import { build_proxy_reassignment, should_proxy } from '../utils.js';
+import { should_proxy } from '../utils.js';
 
 /**
  * @param {ClassBody} node
@@ -142,26 +142,17 @@ export function ClassBody(node, context) {
 					// get foo() { return this.#foo; }
 					body.push(b.method('get', definition.key, [], [b.return(b.call('$.get', member))]));
 
-					if (field.kind === 'state') {
+					if (field.kind === 'state' || field.kind === 'raw_state') {
 						// set foo(value) { this.#foo = value; }
 						const value = b.id('value');
-						const prev = b.member(b.this, field.id);
 
 						body.push(
 							b.method(
 								'set',
 								definition.key,
 								[value],
-								[b.stmt(b.call('$.set', member, build_proxy_reassignment(value, prev)))]
+								[b.stmt(b.call('$.set', member, value, field.kind === 'state' && b.true))]
 							)
-						);
-					}
-
-					if (field.kind === 'raw_state') {
-						// set foo(value) { this.#foo = value; }
-						const value = b.id('value');
-						body.push(
-							b.method('set', definition.key, [value], [b.stmt(b.call('$.set', member, value))])
 						);
 					}
 

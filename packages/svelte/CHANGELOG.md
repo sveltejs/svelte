@@ -1,5 +1,47 @@
 # svelte
 
+## 5.25.2
+
+### Patch Changes
+
+- feat: migrate reassigned deriveds to `$derived` ([#15581](https://github.com/sveltejs/svelte/pull/15581))
+
+## 5.25.1
+
+### Patch Changes
+
+- fix: prevent dev server from throwing errors when attempting to retrieve the proxied value of an iframe's contentWindow ([#15577](https://github.com/sveltejs/svelte/pull/15577))
+
+## 5.25.0
+
+### Minor Changes
+
+- feat: make deriveds writable ([#15570](https://github.com/sveltejs/svelte/pull/15570))
+
+## 5.24.1
+
+### Patch Changes
+
+- fix: use `get` in constructor for deriveds ([#15300](https://github.com/sveltejs/svelte/pull/15300))
+
+- fix: ensure toStore root effect is connected to correct parent effect ([#15574](https://github.com/sveltejs/svelte/pull/15574))
+
+## 5.24.0
+
+### Minor Changes
+
+- feat: allow state created in deriveds/effects to be written/read locally without self-invalidation ([#15553](https://github.com/sveltejs/svelte/pull/15553))
+
+### Patch Changes
+
+- fix: check if DOM prototypes are extensible ([#15569](https://github.com/sveltejs/svelte/pull/15569))
+
+- Keep inlined trailing JSDoc comments of properties when running svelte-migrate ([#15567](https://github.com/sveltejs/svelte/pull/15567))
+
+- fix: simplify set calls for proxyable values ([#15548](https://github.com/sveltejs/svelte/pull/15548))
+
+- fix: don't depend on deriveds created inside the current reaction ([#15564](https://github.com/sveltejs/svelte/pull/15564))
+
 ## 5.23.2
 
 ### Patch Changes
