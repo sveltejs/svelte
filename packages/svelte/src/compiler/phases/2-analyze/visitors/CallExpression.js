@@ -17,6 +17,14 @@ export function CallExpression(node, context) {
 
 	const rune = get_rune(node, context.state.scope);
 
+	if (rune && rune !== '$inspect') {
+		for (const arg of node.arguments) {
+			if (arg.type === 'SpreadElement') {
+				e.rune_invalid_spread(node, rune);
+			}
+		}
+	}
+
 	switch (rune) {
 		case null:
 			if (!is_safe_identifier(node.callee, context.state.scope)) {
@@ -113,10 +121,6 @@ export function CallExpression(node, context) {
 				!(parent.type === 'PropertyDefinition' && !parent.static && !parent.computed)
 			) {
 				e.state_invalid_placement(node, rune);
-			}
-
-			if (node.arguments.some((arg) => arg.type === 'SpreadElement')) {
-				e.rune_invalid_spread(node, rune);
 			}
 
 			if ((rune === '$derived' || rune === '$derived.by') && node.arguments.length !== 1) {
