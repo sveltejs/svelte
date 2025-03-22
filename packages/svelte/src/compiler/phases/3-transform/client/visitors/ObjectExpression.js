@@ -3,6 +3,7 @@
 import * as b from '../../../../utils/builders.js';
 import { get_rune } from '../../../scope.js';
 import { should_proxy } from '../utils.js';
+import { walk } from 'zimmerframe';
 
 /**
  * @param {ObjectExpression} node
@@ -25,16 +26,39 @@ export function ObjectExpression(node, context) {
 			});
 		}
 	}
-	if (!has_runes) return;
+	if (!has_runes) {
+		context.next();
+		return;
+	}
 	let body = [];
 	let sources = new Map();
+	let has_this_reference = false;
 	let counter = 0;
+	let to_push = [];
 	for (let { rune, property } of reactive_properties) {
 		const name = context.state.scope.generate(`$$${++counter}`);
-		const deep = rune !== '$state.raw';
 		const call = rune.match(/^\$state/) ? '$.state' : '$.derived';
 		/** @type {Expression} */
 		let value = /** @type {Expression} */ (context.visit(property.value.arguments[0] ?? b.void0));
+		value = walk(value, null, {
+			FunctionExpression() {
+				return;
+			},
+			//@ts-ignore
+			FunctionDeclaration() {
+				return;
+			},
+			ObjectExpression() {
+				return;
+			},
+			ThisExpression() {
+				has_this_reference = true;
+				return b.id('$$object');
+			},
+			ClassBody() {
+				return;
+			}
+		});
 		value =
 			rune === '$derived'
 				? b.thunk(value)
@@ -42,7 +66,7 @@ export function ObjectExpression(node, context) {
 					? b.call('$.proxy', value)
 					: value;
 		sources.set(property, [name, rune]);
-		body.push(b.let(name, b.call(call, value)));
+		to_push.push(b.let(name, b.call(call, value)));
 	}
 	/** @type {(Property | SpreadElement)[]} */
 	let properties = [];
@@ -79,6 +103,13 @@ export function ObjectExpression(node, context) {
 			properties.push(/** @type {Property} */ (context.visit(property)));
 		}
 	}
-	body.push(b.return(b.object(properties)));
+	if (has_this_reference) {
+		body.push(b.let('$$object', b.object(properties)));
+		body.push(...to_push);
+		body.push(b.return(b.id('$$object')));
+	} else {
+		body.push(...to_push);
+		body.push(b.return(b.object(properties)));
+	}
 	return b.call(b.arrow([], b.block(body)));
 }
