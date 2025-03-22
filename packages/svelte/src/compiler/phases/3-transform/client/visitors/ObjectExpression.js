@@ -38,10 +38,10 @@ export function ObjectExpression(node, context) {
 		value =
 			rune === '$derived'
 				? b.thunk(value)
-				: rune !== '$derived.by' && deep && should_proxy(value, context.state.scope)
+				: rune === '$state' && should_proxy(value, context.state.scope)
 					? b.call('$.proxy', value)
 					: value;
-		sources.set(property, [deep, name]);
+		sources.set(property, [name, rune]);
 		body.push(b.let(name, b.call(call, value)));
 	}
 	/** @type {(Property | SpreadElement)[]} */
@@ -52,7 +52,7 @@ export function ObjectExpression(node, context) {
 			continue;
 		}
 		if (sources.has(property)) {
-			let [deep, name] = sources.get(property);
+			let [name, rune] = sources.get(property);
 			properties.push(
 				b.prop(
 					'get',
@@ -67,7 +67,9 @@ export function ObjectExpression(node, context) {
 						null,
 						[b.id('$$value')],
 						b.block([
-							b.stmt(b.call('$.set', b.id(name), b.id('$$value'), deep ? b.true : undefined))
+							b.stmt(
+								b.call('$.set', b.id(name), b.id('$$value'), rune === '$state' ? b.true : undefined)
+							)
 						])
 					),
 					property.computed
