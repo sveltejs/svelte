@@ -9,8 +9,15 @@ interface SnapshotTest extends BaseTest {
 	compileOptions?: Partial<import('#compiler').CompileOptions>;
 }
 
-const { test, run } = suite<SnapshotTest>(async (config, cwd) => {
-	await compile_directory(cwd, 'client', config.compileOptions);
+const { test, run } = suite<SnapshotTest>(async (config, cwd, templating_mode) => {
+	await compile_directory(
+		cwd,
+		'client',
+		config.compileOptions,
+		undefined,
+		undefined,
+		templating_mode
+	);
 	await compile_directory(cwd, 'server', config.compileOptions);
 
 	// run `UPDATE_SNAPSHOTS=true pnpm test snapshot` to update snapshot tests
@@ -18,8 +25,18 @@ const { test, run } = suite<SnapshotTest>(async (config, cwd) => {
 		fs.rmSync(`${cwd}/_expected`, { recursive: true, force: true });
 		fs.cpSync(`${cwd}/_output`, `${cwd}/_expected`, { recursive: true, force: true });
 	} else {
-		const actual = globSync('**', { cwd: `${cwd}/_output`, onlyFiles: true });
-		const expected = globSync('**', { cwd: `${cwd}/_expected`, onlyFiles: true });
+		const actual = globSync('**', { cwd: `${cwd}/_output`, onlyFiles: true }).filter(
+			// filters out files that might not yet be compiled (functional is executed after string)
+			(expected) =>
+				expected.startsWith('server/') ||
+				expected.startsWith(`client${templating_mode === 'functional' ? '-functional' : ''}/`)
+		);
+		const expected = globSync('**', { cwd: `${cwd}/_expected`, onlyFiles: true }).filter(
+			// filters out files that might not yet be compiled (functional is executed after string)
+			(expected) =>
+				expected.startsWith('server/') ||
+				expected.startsWith(`client${templating_mode === 'functional' ? '-functional' : ''}/`)
+		);
 
 		assert.deepEqual(actual, expected);
 
@@ -41,4 +58,5 @@ const { test, run } = suite<SnapshotTest>(async (config, cwd) => {
 
 export { test };
 
-await run(__dirname);
+await run(__dirname, 'string');
+await run(__dirname, 'functional');

@@ -94,10 +94,15 @@ export {
 	append,
 	comment,
 	ns_template,
+	ns_template_fn,
 	svg_template_with_script,
+	svg_template_with_script_fn,
 	mathml_template,
+	mathml_template_fn,
 	template,
+	template_fn,
 	template_with_script,
+	template_with_script_fn,
 	text,
 	props_id
 } from './dom/template.js';
