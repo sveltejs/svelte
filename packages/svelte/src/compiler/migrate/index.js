@@ -952,7 +952,7 @@ const instance_script = {
 			const reassigned_bindings = bindings.filter((b) => b?.reassigned);
 
 			if (
-				reassigned_bindings.length === 0 &&
+				node.body.expression.right.type !== 'Literal' &&
 				!bindings.some((b) => b?.kind === 'store_sub') &&
 				node.body.expression.left.type !== 'MemberExpression'
 			) {
