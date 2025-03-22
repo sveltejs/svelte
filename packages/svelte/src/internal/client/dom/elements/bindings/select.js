@@ -2,6 +2,8 @@ import { effect } from '../../../reactivity/effects.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 import { untrack } from '../../../runtime.js';
 import { is } from '../../../proxy.js';
+import { is_array } from '../../../../shared/utils.js';
+import * as w from '../../../warnings.js';
 
 /**
  * Selects the correct option(s) (depending on whether this is a multiple select)
@@ -12,6 +14,17 @@ import { is } from '../../../proxy.js';
  */
 export function select_option(select, value, mounting) {
 	if (select.multiple) {
+		// If value is null or undefined, keep the selection as is
+		if (value == undefined) {
+			return;
+		}
+
+		// If not an array, warn and keep the selection as is
+		if (!is_array(value)) {
+			return w.select_multiple_invalid_value();
+		}
+
+		// Otherwise, update the selection
 		return select_options(select, value);
 	}
 
@@ -124,14 +137,12 @@ export function bind_select_value(select, get, set = get) {
 }
 
 /**
- * @template V
  * @param {HTMLSelectElement} select
- * @param {V} value
+ * @param {unknown[]} value
  */
 function select_options(select, value) {
 	for (var option of select.options) {
-		// @ts-ignore
-		option.selected = ~value.indexOf(get_option_value(option));
+		option.selected = value.includes(get_option_value(option));
 	}
 }
 
