@@ -172,7 +172,7 @@ export function internal_set(source, value) {
 		}
 
 		if ((source.f & DERIVED) !== 0) {
-			set_signal_status(/** @type {Derived} */ (source), CLEAN);
+			set_signal_status(source, CLEAN);
 		}
 
 		mark_reactions(source, DIRTY);
