@@ -120,6 +120,10 @@ export function CallExpression(node, context) {
 				e.state_invalid_placement(node, rune);
 			}
 
+			if (node.arguments.length > 1) {
+				e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
+			}
+
 			break;
 		case '$state.raw':
 		case '$derived':
