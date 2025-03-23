@@ -28,7 +28,7 @@ import {
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { internal_set, old_values } from './reactivity/sources.js';
-import { destroy_derived_effects, update_derived } from './reactivity/deriveds.js';
+import { destroy_derived_effects, execute_derived, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { FILENAME } from '../../constants.js';
 import { tracing_mode_flag } from '../flags/index.js';
@@ -931,7 +931,7 @@ export function get(signal) {
 			// if the derived is clean but has been assigned a new value, then we need to
 			// still invoke the derived function and update the dependencies or else
 			// it will not depend on the original source
-			update_reaction(derived);
+			execute_derived(derived);
 		}
 	}
 
