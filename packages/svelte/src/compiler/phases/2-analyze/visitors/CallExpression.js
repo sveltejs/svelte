@@ -115,7 +115,8 @@ export function CallExpression(node, context) {
 			if (
 				(!(parent.type === 'VariableDeclarator' || parent.type === 'ReturnStatement') ||
 					get_parent(context.path, -3).type === 'ConstTag') &&
-				!(parent.type === 'PropertyDefinition' && !parent.static && !parent.computed)
+				!(parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) &&
+				!(parent.type === 'ArrowFunctionExpression' && parent.body === node)
 			) {
 				e.state_invalid_placement(node, rune);
 			}

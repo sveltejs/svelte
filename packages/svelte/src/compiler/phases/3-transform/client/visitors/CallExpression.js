@@ -11,6 +11,7 @@ import { should_proxy } from '../utils.js';
  * @param {Context} context
  */
 export function CallExpression(node, context) {
+	const parent = context.path.at(-1);
 	switch (get_rune(node, context.state.scope)) {
 		case '$host':
 			return b.id('$$props.$$host');
@@ -35,7 +36,10 @@ export function CallExpression(node, context) {
 		case '$inspect().with':
 			return transform_inspect_rune(node, context);
 		case '$state':
-			if (context.path.at(-1)?.type === 'ReturnStatement') {
+			if (
+				parent?.type === 'ReturnStatement' ||
+				(parent?.type === 'ArrowFunctionExpression' && parent.body === node)
+			) {
 				if (
 					node.arguments[0] &&
 					should_proxy(
