@@ -2157,6 +2157,10 @@ declare module 'svelte/store' {
 		 */
 		update(this: void, updater: Updater<T>): void;
 	}
+
+	/** One or more values from `Readable` stores. */
+	export type StoresValues<T> =
+		T extends Readable<infer U> ? U : { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
 	export function toStore<V>(get: () => V, set: (v: V) => void): Writable<V>;
 
 	export function toStore<V>(get: () => V): Readable<V>;
@@ -2205,10 +2209,6 @@ declare module 'svelte/store' {
 	export function get<T>(store: Readable<T>): T;
 	/** One or more `Readable`s. */
 	type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>;
-
-	/** One or more values from `Readable` stores. */
-	type StoresValues<T> =
-		T extends Readable<infer U> ? U : { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
 
 	export {};
 }
