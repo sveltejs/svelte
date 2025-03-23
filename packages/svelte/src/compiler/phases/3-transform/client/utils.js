@@ -258,15 +258,6 @@ export function should_proxy(node, scope) {
 		}
 	}
 
-	if (node.type === 'ObjectExpression' && scope !== null) {
-		for (let property of node.properties) {
-			if (property.type === 'Property') {
-				// if there are any getters/setters, return false
-				if (property.kind !== 'init') return false;
-			}
-		}
-	}
-
 	return true;
 }
 
