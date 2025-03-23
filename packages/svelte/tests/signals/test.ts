@@ -1089,9 +1089,26 @@ describe('signals', () => {
 			assert.equal($.get(b), 1);
 
 			set(a, 2);
+			assert.equal($.get(b), 2);
 			set(b, 3);
 
 			assert.equal($.get(b), 3);
+		};
+	});
+
+	test("unowned deriveds set after they are DIRTY doesn't get updated on get", () => {
+		return () => {
+			const a = state(0);
+			const b = derived(() => $.get(a));
+			const c = derived(() => $.get(b));
+
+			set(b, 1);
+			assert.equal($.get(c), 1);
+
+			set(a, 2);
+
+			assert.equal($.get(b), 2);
+			assert.equal($.get(c), 2);
 		};
 	});
 

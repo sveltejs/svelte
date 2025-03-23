@@ -23,7 +23,8 @@ import {
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
 	BOUNDARY_EFFECT,
-	EFFECT_IS_UPDATING
+	EFFECT_IS_UPDATING,
+	ASSIGNED_DERIVED
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { internal_set, old_values } from './reactivity/sources.js';
@@ -926,6 +927,11 @@ export function get(signal) {
 
 		if (check_dirtiness(derived)) {
 			update_derived(derived);
+		} else if ((derived.f & ASSIGNED_DERIVED) !== 0) {
+			// if the derived is clean but has been assigned a new value, then we need to
+			// still invoke the derived function and update the dependencies or else
+			// it will not depend on the original source
+			update_reaction(derived);
 		}
 	}
 
@@ -1043,7 +1049,7 @@ export function untrack(fn) {
 	}
 }
 
-const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN);
+const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN | ASSIGNED_DERIVED);
 
 /**
  * @param {Signal} signal
