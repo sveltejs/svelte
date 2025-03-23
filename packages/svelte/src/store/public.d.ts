@@ -46,4 +46,5 @@ export interface Writable<T> extends Readable<T> {
 	update(this: void, updater: Updater<T>): void;
 }
 
+export { StoresValues } from './private';
 export * from './index-client.js';
