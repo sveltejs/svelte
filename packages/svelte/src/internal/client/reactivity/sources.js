@@ -172,7 +172,7 @@ export function internal_set(source, value) {
 		}
 
 		if ((source.f & DERIVED) !== 0) {
-			set_signal_status(source, CLEAN);
+			set_signal_status(source, (source.f & UNOWNED) === 0 ? CLEAN : MAYBE_DIRTY);
 		}
 
 		mark_reactions(source, DIRTY);
