@@ -92,7 +92,7 @@ function structure_to_fragment(structure, ns, namespace_stack = [], foreign_obje
 			let namespace =
 				foreign_object_count > 0
 					? undefined
-					: namespace_stack.at(-1) ??
+					: namespace_stack[namespace_stack.length - 1] ??
 						(ns
 							? ns === 'svg'
 								? NAMESPACE_SVG
@@ -104,7 +104,7 @@ function structure_to_fragment(structure, ns, namespace_stack = [], foreign_obje
 								: item.e === 'math'
 									? NAMESPACE_MATHML
 									: undefined);
-			if (namespace !== namespace_stack.at(-1)) {
+			if (namespace !== namespace_stack[namespace_stack.length - 1]) {
 				namespace_stack.push(namespace);
 			}
 			var args = [item.e];
