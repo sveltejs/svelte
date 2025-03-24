@@ -220,7 +220,10 @@ export function client_component(analysis, options) {
 	for (const [name, binding] of analysis.instance.scope.declarations) {
 		if (binding.kind === 'legacy_reactive') {
 			legacy_reactive_declarations.push(
-				b.const(name, b.call('$.mutable_state', undefined, analysis.immutable ? b.true : undefined))
+				b.const(
+					name,
+					b.call('$.mutable_source', undefined, analysis.immutable ? b.true : undefined)
+				)
 			);
 		}
 		if (binding.kind === 'store_sub') {
