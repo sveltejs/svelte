@@ -5,23 +5,7 @@ function increment(_, counter) {
 	counter.count += 1;
 }
 
-var root = $.template_fn(
-	() => {
-		var button = document.createElement('button');
-		var text = document.createTextNode(' ');
-
-		button.insertBefore(text, undefined)
-
-		var text_1 = document.createTextNode(' ');
-		var comment = document.createComment('');
-		var text_2 = document.createTextNode(' ');
-		var fragment = document.createDocumentFragment();
-
-		fragment.append(button, text_1, comment, text_2)
-		return fragment;
-	},
-	1
-);
+var root = $.template_fn([{ e: 'button', c: [' '] }, ' ', , ' '], 1);
 
 export default function Await_block_scope($$anchor) {
 	let counter = $.proxy({ count: 0 });

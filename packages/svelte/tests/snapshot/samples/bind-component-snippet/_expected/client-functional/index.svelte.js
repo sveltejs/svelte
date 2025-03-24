@@ -10,18 +10,7 @@ const snippet = ($$anchor) => {
 	$.append($$anchor, text);
 };
 
-var root = $.template_fn(
-	() => {
-		var comment = document.createComment('');
-		var comment_1 = document.createComment('');
-		var text = document.createTextNode(' ');
-		var fragment = document.createDocumentFragment();
-
-		fragment.append(comment, comment_1, text)
-		return fragment;
-	},
-	1
-);
+var root = $.template_fn([,, ' '], 1);
 
 export default function Bind_component_snippet($$anchor) {
 	let value = $.state('');

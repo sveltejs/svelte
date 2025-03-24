@@ -2,20 +2,7 @@ import 'svelte/internal/disclose-version';
 import 'svelte/internal/flags/legacy';
 import * as $ from 'svelte/internal/client';
 
-var root = $.template_fn(
-	() => {
-		var p = document.createElement('p');
-		var text = document.createTextNode(' ');
-		var p_1 = document.createElement('p');
-		var text_1 = document.createTextNode(' ');
-		var comment = document.createComment('');
-		var fragment = document.createDocumentFragment();
-
-		fragment.append(p, text, p_1, text_1, comment)
-		return fragment;
-	},
-	1
-);
+var root = $.template_fn([{ e: 'p' }, ' ', { e: 'p' }, ' ', ,], 1);
 
 export default function Purity($$anchor) {
 	var fragment = root();
