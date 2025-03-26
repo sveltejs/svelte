@@ -1,6 +1,14 @@
 /** @import { Effect, TemplateNode } from '#client' */
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
-import { create_text, get_first_child, is_firefox } from './operations.js';
+import {
+	create_text,
+	get_first_child,
+	is_firefox,
+	create_element,
+	create_fragment,
+	create_comment,
+	set_attribute
+} from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { active_effect } from '../runtime.js';
 import {
@@ -79,14 +87,14 @@ export function template(content, flags) {
  * @param {Array<string | undefined>} [namespace_stack]
  */
 function structure_to_fragment(structure, ns, namespace_stack = [], foreign_object_count = 0) {
-	var fragment = document.createDocumentFragment();
+	var fragment = create_fragment();
 	for (var i = 0; i < structure.length; i += 1) {
 		var item = structure[i];
 		if (item == null || Array.isArray(item)) {
 			const data = item ? item[0] : '';
-			fragment.insertBefore(document.createComment(data), null);
+			fragment.insertBefore(create_comment(data), null);
 		} else if (typeof item === 'string') {
-			fragment.appendChild(document.createTextNode(item));
+			fragment.appendChild(create_text(item));
 			continue;
 		} else {
 			let namespace =
@@ -107,25 +115,10 @@ function structure_to_fragment(structure, ns, namespace_stack = [], foreign_obje
 			if (namespace !== namespace_stack[namespace_stack.length - 1]) {
 				namespace_stack.push(namespace);
 			}
-			var args = [item.e];
-			if (item.is) {
-				// @ts-ignore
-				args.push({ is: item.is });
-			}
-			if (namespace) {
-				args.unshift(namespace);
-			}
-			var element = /** @type {HTMLElement} */ (
-				// @ts-ignore
-				(namespace ? document.createElementNS : document.createElement).call(document, ...args)
-			);
+			var element = create_element(item.e, namespace, item.is);
 
 			for (var key in item.p) {
-				if (key.startsWith('xlink:')) {
-					element.setAttributeNS('http://www.w3.org/1999/xlink', key, item.p[key] ?? '');
-					continue;
-				}
-				element.setAttribute(key, item.p[key] ?? '');
+				set_attribute(element, key, item.p[key]);
 			}
 			if (item.c) {
 				(element.tagName === 'TEMPLATE'
