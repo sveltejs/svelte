@@ -1,17 +1,7 @@
 import 'svelte/internal/disclose-version';
 import * as $ from 'svelte/internal/client';
 
-var root = $.template_fn(() => {
-	var p = document.createElement('p');
-	var text = document.createTextNode(' ');
-
-	p.insertBefore(text, undefined)
-
-	var fragment = document.createDocumentFragment();
-
-	fragment.append(p)
-	return fragment;
-});
+var root = $.template_fn([{ e: 'p', c: [' '] }]);
 
 export default function Text_nodes_deriveds($$anchor) {
 	let count1 = 0;

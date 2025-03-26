@@ -9,21 +9,13 @@ function reset(_, str, tpl) {
 }
 
 var root = $.template_fn(
-	() => {
-		var input = document.createElement('input');
-		var text = document.createTextNode(' ');
-		var input_1 = document.createElement('input');
-		var text_1 = document.createTextNode(' ');
-		var button = document.createElement('button');
-		var text_2 = document.createTextNode('reset');
-
-		button.insertBefore(text_2, undefined)
-
-		var fragment = document.createDocumentFragment();
-
-		fragment.append(input, text, input_1, text_1, button)
-		return fragment;
-	},
+	[
+		{ e: 'input' },
+		' ',
+		{ e: 'input' },
+		' ',
+		{ e: 'button', c: ['reset'] }
+	],
 	1
 );
 

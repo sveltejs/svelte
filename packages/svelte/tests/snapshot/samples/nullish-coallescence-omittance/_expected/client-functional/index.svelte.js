@@ -4,23 +4,15 @@ import * as $ from 'svelte/internal/client';
 var on_click = (_, count) => $.update(count);
 
 var root = $.template_fn(
-	() => {
-		var h1 = document.createElement('h1');
-		var text = document.createTextNode(' ');
-		var b = document.createElement('b');
-		var text_1 = document.createTextNode(' ');
-		var button = document.createElement('button');
-		var text_2 = document.createTextNode(' ');
-
-		button.insertBefore(text_2, undefined)
-
-		var text_3 = document.createTextNode(' ');
-		var h1_1 = document.createElement('h1');
-		var fragment = document.createDocumentFragment();
-
-		fragment.append(h1, text, b, text_1, button, text_3, h1_1)
-		return fragment;
-	},
+	[
+		{ e: 'h1' },
+		' ',
+		{ e: 'b' },
+		' ',
+		{ e: 'button', c: [' '] },
+		' ',
+		{ e: 'h1' }
+	],
 	1
 );
 

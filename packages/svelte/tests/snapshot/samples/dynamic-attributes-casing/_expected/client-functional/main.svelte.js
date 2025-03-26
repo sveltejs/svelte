@@ -2,23 +2,19 @@ import 'svelte/internal/disclose-version';
 import * as $ from 'svelte/internal/client';
 
 var root = $.template_fn(
-	() => {
-		var div = document.createElement('div');
-		var text = document.createTextNode(' ');
-		var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-		var text_1 = document.createTextNode(' ');
-		var custom_element = document.createElement('custom-element');
-		var text_2 = document.createTextNode(' ');
-		var div_1 = document.createElement('div');
-		var text_3 = document.createTextNode(' ');
-		var svg_1 = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-		var text_4 = document.createTextNode(' ');
-		var custom_element_1 = document.createElement('custom-element');
-		var fragment = document.createDocumentFragment();
-
-		fragment.append(div, text, svg, text_1, custom_element, text_2, div_1, text_3, svg_1, text_4, custom_element_1)
-		return fragment;
-	},
+	[
+		{ e: 'div' },
+		' ',
+		{ e: 'svg' },
+		' ',
+		{ e: 'custom-element' },
+		' ',
+		{ e: 'div' },
+		' ',
+		{ e: 'svg' },
+		' ',
+		{ e: 'custom-element' }
+	],
 	3
 );
 

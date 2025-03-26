@@ -76,7 +76,7 @@ export function transform_template(state, context, namespace, template_name, fla
 	/** @type {Expression[]} */
 	const args = [
 		state.is_functional_template_mode
-			? template_to_functions(state.template, namespace)
+			? template_to_functions(state.template)
 			: b.template([b.quasi(template_to_string(state.template), true)], [])
 	];
 
