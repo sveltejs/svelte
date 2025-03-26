@@ -92,9 +92,9 @@ function structure_to_fragment(structure, ns, namespace_stack = [], foreign_obje
 		var item = structure[i];
 		if (item == null || Array.isArray(item)) {
 			const data = item ? item[0] : '';
-			fragment.insertBefore(create_comment(data), null);
+			fragment.append(create_comment(data));
 		} else if (typeof item === 'string') {
-			fragment.appendChild(create_text(item));
+			fragment.append(create_text(item));
 			continue;
 		} else {
 			let namespace =
@@ -134,7 +134,7 @@ function structure_to_fragment(structure, ns, namespace_stack = [], foreign_obje
 				);
 			}
 			namespace_stack.pop();
-			fragment.insertBefore(element, null);
+			fragment.append(element);
 		}
 	}
 	return fragment;
