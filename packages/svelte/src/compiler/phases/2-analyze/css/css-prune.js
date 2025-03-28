@@ -952,7 +952,8 @@ function get_possible_nested_siblings(node, direction, adjacent_only, seen = new
 			break;
 
 		case 'Component':
-			fragments.push(node.fragment, ...node.metadata.snippets.values().map((s) => s.body));
+			fragments.push(node.fragment, ...[...node.metadata.snippets].map((s) => s.body));
+			break;
 	}
 
 	/** @type {Map<Compiler.AST.RegularElement | Compiler.AST.SvelteElement, NodeExistsValue>} NodeMap */
