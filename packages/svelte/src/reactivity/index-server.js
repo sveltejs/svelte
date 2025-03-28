@@ -21,3 +21,13 @@ export class MediaQuery {
 export function createSubscriber(_) {
 	return () => {};
 }
+
+/**
+ * @template T
+ * @param {() => T} getSnapshot 
+ * @param {any} __ 
+ * @returns {() => T}
+ */
+export function createReactiveFunction(getSnapshot, __) {
+	return getSnapshot
+}
