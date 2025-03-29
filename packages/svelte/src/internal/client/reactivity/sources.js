@@ -29,7 +29,7 @@ import {
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	EFFECT_IS_UPDATING
+	ASSIGNED_DERIVED
 } from '../constants.js';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -169,6 +169,14 @@ export function internal_set(source, value) {
 				source.trace_need_increase = true;
 				source.trace_v ??= old_value;
 			}
+		}
+
+		if ((source.f & DERIVED) !== 0) {
+			// if we are assigning a derived we set it to clean but we also
+			// keep the assigned derived flag so that we can read the dependencies
+			// in the get function
+			var flags = (source.f & UNOWNED) === 0 ? CLEAN : MAYBE_DIRTY;
+			set_signal_status(source, flags | ASSIGNED_DERIVED);
 		}
 
 		mark_reactions(source, DIRTY);
