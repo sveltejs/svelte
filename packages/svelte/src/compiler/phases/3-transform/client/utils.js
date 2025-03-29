@@ -23,7 +23,9 @@ import { get_value } from './visitors/shared/declarations.js';
 export function is_state_source(binding, analysis) {
 	return (
 		(binding.kind === 'state' || binding.kind === 'raw_state') &&
-		(!analysis.immutable || binding.reassigned || analysis.accessors)
+		(!analysis.immutable ||
+			(binding.reassigned && (binding.read || binding.has_store_sub)) ||
+			analysis.accessors)
 	);
 }
 
