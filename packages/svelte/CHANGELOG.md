@@ -1,5 +1,11 @@
 # svelte
 
+## 5.25.3
+
+### Patch Changes
+
+- fix: prevent state runes from being called with spread ([#15585](https://github.com/sveltejs/svelte/pull/15585))
+
 ## 5.25.2
 
 ### Patch Changes
