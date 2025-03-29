@@ -1,4 +1,4 @@
-import { ReactiveValue } from "./reactive-value";
+import { ReactiveValue } from "./reactive-value.js";
 
 /**
  * @typedef {() => void} VoidFn
