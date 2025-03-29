@@ -35,6 +35,11 @@ export interface CompileResult {
 		 * For `compileModule`, this is always `true`
 		 */
 		runes: boolean;
+		/**
+		 * Whether the component contains a top level :global selector or not
+		 * For `compileModule`, this is always `true`
+		 */
+		hasUnscopedGlobalCss: boolean;
 	};
 	/** The AST */
 	ast: any;
