@@ -2,10 +2,10 @@
 	.d.svelte-xyz ~ .e:where(.svelte-xyz) { color: green; }
 	.a.svelte-xyz ~ .g:where(.svelte-xyz) { color: green; }
 	.a.svelte-xyz ~ .b:where(.svelte-xyz) { color: green; }
+	.f.svelte-xyz ~ .g:where(.svelte-xyz) { color: green; }
+	.b.svelte-xyz ~ .g:where(.svelte-xyz) { color: green; }
 
 	/* no match */
 	/* (unused) .b ~ .c { color: red; }*/
 	/* (unused) .c ~ .f { color: red; }*/
-	/* (unused) .f ~ .g { color: red; }*/
 	/* (unused) .b ~ .f { color: red; }*/
-	/* (unused) .b ~ .g { color: red; }*/
