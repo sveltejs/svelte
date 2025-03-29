@@ -6,6 +6,7 @@ import * as b from '../../../../utils/builders.js';
 import { regex_invalid_identifier_chars } from '../../../patterns.js';
 import { get_rune } from '../../../scope.js';
 import { should_proxy } from '../utils.js';
+import { get_onchange } from './shared/state.js';
 
 /**
  * @param {ClassBody} node
@@ -116,17 +117,20 @@ export function ClassBody(node, context) {
 						context.visit(definition.value.arguments[0], child_state)
 					);
 
-					value =
-						field.kind === 'state'
-							? b.call(
-									'$.state',
-									should_proxy(init, context.state.scope) ? b.call('$.proxy', init) : init
-								)
-							: field.kind === 'raw_state'
-								? b.call('$.state', init)
-								: field.kind === 'derived_by'
-									? b.call('$.derived', init)
-									: b.call('$.derived', b.thunk(init));
+					if (field.kind === 'state' || field.kind === 'raw_state') {
+						const onchange = get_onchange(
+							/** @type {Expression} */ (definition.value.arguments[1]),
+							// @ts-ignore mismatch between Context and ComponentContext. TODO look into
+							context
+						);
+
+						value =
+							field.kind === 'state' && should_proxy(init, context.state.scope)
+								? b.call('$.assignable_proxy', init, onchange)
+								: b.call('$.state', init, onchange);
+					} else {
+						value = b.call('$.derived', field.kind === 'derived_by' ? init : b.thunk(init));
+					}
 				} else {
 					// if no arguments, we know it's state as `$derived()` is a compile error
 					value = b.call('$.state');

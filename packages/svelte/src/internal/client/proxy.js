@@ -1,5 +1,7 @@
-/** @import { ProxyMetadata, Source } from '#client' */
+/** @import { ProxyMetadata, Source, ValueOptions } from '#client' */
 import { DEV } from 'esm-env';
+import { UNINITIALIZED } from '../../constants.js';
+import { tracing_mode_flag } from '../flags/index.js';
 import { get, active_effect, active_reaction, set_active_reaction } from './runtime.js';
 import { component_context } from './context.js';
 import {
@@ -9,13 +11,22 @@ import {
 	is_array,
 	object_prototype
 } from '../shared/utils.js';
+import { PROXY_ONCHANGE_SYMBOL, STATE_SYMBOL, STATE_SYMBOL_METADATA } from './constants.js';
 import { check_ownership, widen_ownership } from './dev/ownership.js';
-import { state as source, set } from './reactivity/sources.js';
-import { STATE_SYMBOL, STATE_SYMBOL_METADATA } from './constants.js';
-import { UNINITIALIZED } from '../../constants.js';
-import * as e from './errors.js';
 import { get_stack } from './dev/tracing.js';
-import { tracing_mode_flag } from '../flags/index.js';
+import * as e from './errors.js';
+import { batch_onchange, set, source, state } from './reactivity/sources.js';
+
+const array_methods = ['push', 'pop', 'shift', 'unshift', 'splice', 'reverse', 'sort'];
+
+/**
+ * Used to prevent batching in case we are not setting the length of an array
+ * @param {any} fn
+ * @returns
+ */
+function identity(fn) {
+	return fn;
+}
 
 /** @type {ProxyMetadata | null} */
 var parent_metadata = null;
@@ -23,13 +34,31 @@ var parent_metadata = null;
 /**
  * @template T
  * @param {T} value
+ * @param {() => void} [onchange]
  * @param {Source<T>} [prev] dev mode only
  * @returns {T}
  */
-export function proxy(value, prev) {
+export function proxy(value, onchange, prev) {
 	// if non-proxyable, or is already a proxy, return `value`
-	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {
+	if (typeof value !== 'object' || value === null) {
 		return value;
+	}
+
+	if (STATE_SYMBOL in value) {
+		// @ts-ignore
+		value[PROXY_ONCHANGE_SYMBOL](onchange);
+		return value;
+	}
+
+	if (onchange) {
+		// if there's an onchange we actually store that but override the value
+		// to store every other onchange that new proxies might add
+		var onchanges = new Set([onchange]);
+		onchange = () => {
+			for (let onchange of onchanges) {
+				onchange();
+			}
+		};
 	}
 
 	const prototype = get_prototype_of(value);
@@ -73,7 +102,7 @@ export function proxy(value, prev) {
 	if (is_proxied_array) {
 		// We need to create the length source eagerly to ensure that
 		// mutations to the array are properly synced with our proxy
-		sources.set('length', source(/** @type {any[]} */ (value).length, stack));
+		sources.set('length', source(/** @type {any[]} */ (value).length, onchange, stack));
 	}
 
 	/** @type {ProxyMetadata} */
@@ -119,12 +148,12 @@ export function proxy(value, prev) {
 			var s = sources.get(prop);
 
 			if (s === undefined) {
-				s = with_parent(() => source(descriptor.value, stack));
+				s = with_parent(() => source(descriptor.value, onchange, stack));
 				sources.set(prop, s);
 			} else {
 				set(
 					s,
-					with_parent(() => proxy(descriptor.value))
+					with_parent(() => proxy(descriptor.value, onchange))
 				);
 			}
 
@@ -138,7 +167,7 @@ export function proxy(value, prev) {
 				if (prop in target) {
 					sources.set(
 						prop,
-						with_parent(() => source(UNINITIALIZED, stack))
+						with_parent(() => source(UNINITIALIZED, onchange, stack))
 					);
 				}
 			} else {
@@ -151,6 +180,11 @@ export function proxy(value, prev) {
 					if (Number.isInteger(n) && n < ls.v) {
 						set(ls, n);
 					}
+				}
+				// when we delete a property if the source is a proxy we remove the current onchange from
+				// the proxy `onchanges` so that it doesn't trigger it anymore
+				if (typeof s.v === 'object' && s.v !== null && STATE_SYMBOL in s.v) {
+					s.v[PROXY_ONCHANGE_SYMBOL](onchange, true);
 				}
 				set(s, UNINITIALIZED);
 				update_version(version);
@@ -168,12 +202,36 @@ export function proxy(value, prev) {
 				return value;
 			}
 
+			if (prop === PROXY_ONCHANGE_SYMBOL) {
+				return (
+					/** @type {(() => unknown) | undefined} */ value,
+					/** @type {boolean} */ remove
+				) => {
+					// we either add or remove the passed in value
+					// to the onchanges array or we set every source onchange
+					// to the passed in value (if it's undefined it will make the chain stop)
+					if (onchange != null && value && !remove) {
+						onchanges?.add?.(value);
+					} else if (onchange != null && value) {
+						onchanges?.delete?.(value);
+					} else {
+						onchange = value;
+						for (let [, s] of sources) {
+							s.o = value;
+						}
+					}
+				};
+			}
+
 			var s = sources.get(prop);
 			var exists = prop in target;
 
 			// create a source, but only if it's an own property and not a prototype property
 			if (s === undefined && (!exists || get_descriptor(target, prop)?.writable)) {
-				s = with_parent(() => source(proxy(exists ? target[prop] : UNINITIALIZED), stack));
+				let opt = onchange;
+				s = with_parent(() =>
+					source(proxy(exists ? target[prop] : UNINITIALIZED, opt), opt, stack)
+				);
 				sources.set(prop, s);
 			}
 
@@ -198,7 +256,17 @@ export function proxy(value, prev) {
 				return v === UNINITIALIZED ? undefined : v;
 			}
 
-			return Reflect.get(target, prop, receiver);
+			v = Reflect.get(target, prop, receiver);
+
+			if (
+				is_proxied_array &&
+				onchange != null &&
+				array_methods.includes(/** @type {string} */ (prop))
+			) {
+				return batch_onchange(v);
+			}
+
+			return v;
 		},
 
 		getOwnPropertyDescriptor(target, prop) {
@@ -241,7 +309,8 @@ export function proxy(value, prev) {
 				(active_effect !== null && (!has || get_descriptor(target, prop)?.writable))
 			) {
 				if (s === undefined) {
-					s = with_parent(() => source(has ? proxy(target[prop]) : UNINITIALIZED, stack));
+					let opt = onchange;
+					s = with_parent(() => source(has ? proxy(target[prop], opt) : UNINITIALIZED, opt, stack));
 					sources.set(prop, s);
 				}
 
@@ -258,43 +327,60 @@ export function proxy(value, prev) {
 			var s = sources.get(prop);
 			var has = prop in target;
 
-			// variable.length = value -> clear all signals with index >= value
-			if (is_proxied_array && prop === 'length') {
-				for (var i = value; i < /** @type {Source<number>} */ (s).v; i += 1) {
-					var other_s = sources.get(i + '');
-					if (other_s !== undefined) {
-						set(other_s, UNINITIALIZED);
-					} else if (i in target) {
-						// If the item exists in the original, we need to create a uninitialized source,
-						// else a later read of the property would result in a source being created with
-						// the value of the original item at that index.
-						other_s = with_parent(() => source(UNINITIALIZED, stack));
-						sources.set(i + '', other_s);
+			// if we are changing the length of the array we batch all the changes
+			// to the sources and the original value by calling batch_onchange and immediately
+			// invoking it...otherwise we just invoke an identity function
+			(is_proxied_array && prop === 'length' ? batch_onchange : identity)(() => {
+				// variable.length = value -> clear all signals with index >= value
+				if (is_proxied_array && prop === 'length') {
+					for (var i = value; i < /** @type {Source<number>} */ (s).v; i += 1) {
+						var other_s = sources.get(i + '');
+						if (other_s !== undefined) {
+							if (
+								typeof other_s.v === 'object' &&
+								other_s.v !== null &&
+								STATE_SYMBOL in other_s.v
+							) {
+								other_s.v[PROXY_ONCHANGE_SYMBOL](onchange, true);
+							}
+							set(other_s, UNINITIALIZED);
+						} else if (i in target) {
+							// If the item exists in the original, we need to create a uninitialized source,
+							// else a later read of the property would result in a source being created with
+							// the value of the original item at that index.
+							other_s = with_parent(() => source(UNINITIALIZED, onchange, stack));
+							sources.set(i + '', other_s);
+						}
 					}
 				}
-			}
 
-			// If we haven't yet created a source for this property, we need to ensure
-			// we do so otherwise if we read it later, then the write won't be tracked and
-			// the heuristics of effects will be different vs if we had read the proxied
-			// object property before writing to that property.
-			if (s === undefined) {
-				if (!has || get_descriptor(target, prop)?.writable) {
-					s = with_parent(() => source(undefined, stack));
+				// If we haven't yet created a source for this property, we need to ensure
+				// we do so otherwise if we read it later, then the write won't be tracked and
+				// the heuristics of effects will be different vs if we had read the proxied
+				// object property before writing to that property.
+				if (s === undefined) {
+					if (!has || get_descriptor(target, prop)?.writable) {
+						const opt = onchange;
+						s = with_parent(() => source(undefined, opt, stack));
+						set(
+							s,
+							with_parent(() => proxy(value, opt))
+						);
+						sources.set(prop, s);
+					}
+				} else {
+					has = s.v !== UNINITIALIZED;
+					// when we set a property if the source is a proxy we remove the current onchange from
+					// the proxy `onchanges` so that it doesn't trigger it anymore
+					if (typeof s.v === 'object' && s.v !== null && STATE_SYMBOL in s.v) {
+						s.v[PROXY_ONCHANGE_SYMBOL](onchange, true);
+					}
 					set(
 						s,
-						with_parent(() => proxy(value))
+						with_parent(() => proxy(value, onchange))
 					);
-					sources.set(prop, s);
 				}
-			} else {
-				has = s.v !== UNINITIALIZED;
-				set(
-					s,
-					with_parent(() => proxy(value))
-				);
-			}
-
+			})();
 			if (DEV) {
 				/** @type {ProxyMetadata | undefined} */
 				var prop_metadata = value?.[STATE_SYMBOL_METADATA];
@@ -352,6 +438,16 @@ export function proxy(value, prev) {
 			e.state_prototype_fixed();
 		}
 	});
+}
+
+/**
+ * @template T
+ * @param {T} value
+ * @param {() => void} [onchange]
+ * @returns {Source<T>}
+ */
+export function assignable_proxy(value, onchange) {
+	return state(proxy(value, onchange), onchange);
 }
 
 /**
