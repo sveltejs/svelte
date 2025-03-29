@@ -39,6 +39,22 @@ export interface ClientTransformState extends TransformState {
 	>;
 }
 
+type TemplateOperationsKind =
+	| 'create_element'
+	| 'create_text'
+	| 'create_anchor'
+	| 'set_prop'
+	| 'push_element'
+	| 'pop_element';
+
+type TemplateOperations = Array<{
+	kind: TemplateOperationsKind;
+	args?: Array<string>;
+	metadata?: {
+		svg: boolean;
+		mathml: boolean;
+	};
+}>;
 export interface ComponentClientTransformState extends ClientTransformState {
 	readonly analysis: ComponentAnalysis;
 	readonly options: ValidatedCompileOptions;
@@ -56,7 +72,7 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	/** Expressions used inside the render effect */
 	readonly expressions: Expression[];
 	/** The HTML template string */
-	readonly template: Array<string | Expression>;
+	readonly template: TemplateOperations;
 	readonly locations: SourceLocation[];
 	readonly metadata: {
 		namespace: Namespace;
@@ -78,6 +94,7 @@ export interface ComponentClientTransformState extends ClientTransformState {
 		};
 	};
 	readonly preserve_whitespace: boolean;
+	readonly is_functional_template_mode?: boolean;
 
 	/** The anchor node for the current context */
 	readonly node: Identifier;
