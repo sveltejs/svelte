@@ -1,5 +1,13 @@
 # svelte
 
+## 5.25.4
+
+### Patch Changes
+
+- fix: support TS type assertions ([#15642](https://github.com/sveltejs/svelte/pull/15642))
+
+- fix: ensure `undefined` class still applies scoping class, if necessary ([#15643](https://github.com/sveltejs/svelte/pull/15643))
+
 ## 5.25.3
 
 ### Patch Changes
