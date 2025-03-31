@@ -94,6 +94,9 @@ const visitors = {
 	TSTypeAliasDeclaration() {
 		return b.empty;
 	},
+	TSTypeAssertion(node, context) {
+		return context.visit(node.expression);
+	},
 	TSEnumDeclaration(node) {
 		e.typescript_invalid_feature(node, 'enums');
 	},

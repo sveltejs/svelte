@@ -45,6 +45,7 @@
 	export type { Hello };
 
 	const TypedFoo = Foo<true>;
+	const typeAssertion = <boolean>true;
 </script>
 
 <script>
