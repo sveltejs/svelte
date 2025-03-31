@@ -86,7 +86,7 @@ export function normalize_html(
 		clean_children(node);
 		return node.innerHTML;
 	} catch (err) {
-		throw new Error(`Failed to normalize HTML:\n${html}`);
+		throw new Error(`Failed to normalize HTML:\n${html}\nCause: ${err.message}`);
 	}
 }
 
