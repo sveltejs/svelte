@@ -49,6 +49,7 @@ export function copy_payload({ out, css, head, uid }) {
  */
 export function assign_payload(p1, p2) {
 	p1.out = p2.out;
+	p1.css = p2.css;
 	p1.head = p2.head;
 	p1.uid = p2.uid;
 }
