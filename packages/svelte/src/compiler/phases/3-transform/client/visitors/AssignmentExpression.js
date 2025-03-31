@@ -165,7 +165,9 @@ function build_assignment(operator, left, right, context) {
 		path.at(-1) === 'SvelteComponent' ||
 		(path.at(-1) === 'ArrowFunctionExpression' &&
 			path.at(-2) === 'SequenceExpression' &&
-			(path.at(-3) === 'Component' || path.at(-3) === 'SvelteComponent'))
+			(path.at(-3) === 'Component' ||
+				path.at(-3) === 'SvelteComponent' ||
+				path.at(-3) === 'BindDirective'))
 	) {
 		should_transform = false;
 	}
