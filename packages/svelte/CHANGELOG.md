@@ -1,5 +1,15 @@
 # svelte
 
+## 5.25.5
+
+### Patch Changes
+
+- fix: add setters to `$derived` class properties ([#15628](https://github.com/sveltejs/svelte/pull/15628))
+
+- fix: silence assignment warning on more function bindings ([#15644](https://github.com/sveltejs/svelte/pull/15644))
+
+- fix: make sure CSS is preserved during SSR with bindings ([#15645](https://github.com/sveltejs/svelte/pull/15645))
+
 ## 5.25.4
 
 ### Patch Changes
