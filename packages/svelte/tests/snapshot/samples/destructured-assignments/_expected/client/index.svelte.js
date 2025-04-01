@@ -13,4 +13,5 @@ export function update(array) {
 	);
 
 	[c, d] = array;
+	console.log({ a: $.get(a), b: $.get(b) });
 }
