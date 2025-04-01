@@ -8,7 +8,7 @@
 		console.log(this);
 	}
 
-	function foo(): string {
+	function foo<T>(): string {
 		return ""!;
 	}
 
@@ -46,6 +46,7 @@
 
 	const TypedFoo = Foo<true>;
 	const typeAssertion = <boolean>true;
+	const x = foo<true>();
 </script>
 
 <script>

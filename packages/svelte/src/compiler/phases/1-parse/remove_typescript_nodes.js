@@ -24,6 +24,7 @@ const visitors = {
 		// until that day comes, we just delete them so they don't confuse esrap
 		delete n.typeAnnotation;
 		delete n.typeParameters;
+		delete n.typeArguments;
 		delete n.returnType;
 		delete n.accessibility;
 	},
