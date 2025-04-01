@@ -237,6 +237,10 @@ export function build_getter(node, state) {
 			b.literal(node.name),
 			build_getter(store_id, state)
 		);
+	} else if (binding.kind === 'derived') {
+		// we need a maybe_call because in case of `var`
+		// the user might use the variable before the initialization
+		return b.maybe_call(node.name);
 	}
 
 	return node;
