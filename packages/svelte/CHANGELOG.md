@@ -1,5 +1,13 @@
 # svelte
 
+## 5.25.6
+
+### Patch Changes
+
+- fix: ignore generic type arguments while creating AST ([#15659](https://github.com/sveltejs/svelte/pull/15659))
+
+- fix: better consider component and its snippets during css pruning ([#15630](https://github.com/sveltejs/svelte/pull/15630))
+
 ## 5.25.5
 
 ### Patch Changes
