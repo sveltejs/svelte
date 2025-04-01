@@ -1,9 +1,22 @@
 /** @import { Effect, TemplateNode } from '#client' */
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
-import { create_text, get_first_child, is_firefox } from './operations.js';
+import {
+	create_text,
+	get_first_child,
+	is_firefox,
+	create_element,
+	create_fragment,
+	create_comment,
+	set_attribute
+} from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { active_effect } from '../runtime.js';
-import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../constants.js';
+import {
+	NAMESPACE_MATHML,
+	NAMESPACE_SVG,
+	TEMPLATE_FRAGMENT,
+	TEMPLATE_USE_IMPORT_NODE
+} from '../../../constants.js';
 
 /**
  * @param {TemplateNode} start
@@ -65,12 +78,75 @@ export function template(content, flags) {
 }
 
 /**
- * @param {()=>(DocumentFragment | Node)} fn
+ * @typedef {{e: string, is?: string, p: Record<string, string>, c: Array<TemplateStructure>} | null | string | [string]} TemplateStructure
+ */
+
+/**
+ * @param {Array<TemplateStructure>} structure
+ * @param {'svg' | 'math'} [ns]
+ * @param {Array<string | undefined>} [namespace_stack]
+ */
+function structure_to_fragment(structure, ns, namespace_stack = [], foreign_object_count = 0) {
+	var fragment = create_fragment();
+	for (var i = 0; i < structure.length; i += 1) {
+		var item = structure[i];
+		if (item == null || Array.isArray(item)) {
+			const data = item ? item[0] : '';
+			fragment.append(create_comment(data));
+		} else if (typeof item === 'string') {
+			fragment.append(create_text(item));
+			continue;
+		} else {
+			let namespace =
+				foreign_object_count > 0
+					? undefined
+					: namespace_stack[namespace_stack.length - 1] ??
+						(ns
+							? ns === 'svg'
+								? NAMESPACE_SVG
+								: ns === 'math'
+									? NAMESPACE_MATHML
+									: undefined
+							: item.e === 'svg'
+								? NAMESPACE_SVG
+								: item.e === 'math'
+									? NAMESPACE_MATHML
+									: undefined);
+			if (namespace !== namespace_stack[namespace_stack.length - 1]) {
+				namespace_stack.push(namespace);
+			}
+			var element = create_element(item.e, namespace, item.is);
+
+			for (var key in item.p) {
+				set_attribute(element, key, item.p[key]);
+			}
+			if (item.c) {
+				(element.tagName === 'TEMPLATE'
+					? /** @type {HTMLTemplateElement} */ (element).content
+					: element
+				).append(
+					...structure_to_fragment(
+						item.c,
+						ns,
+						namespace_stack,
+						element.tagName === 'foreignObject' ? foreign_object_count + 1 : foreign_object_count
+					).childNodes
+				);
+			}
+			namespace_stack.pop();
+			fragment.append(element);
+		}
+	}
+	return fragment;
+}
+
+/**
+ * @param {Array<TemplateStructure>} structure
  * @param {number} flags
  * @returns {() => Node | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function template_fn(fn, flags) {
+export function template_fn(structure, flags) {
 	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
 	var use_import_node = (flags & TEMPLATE_USE_IMPORT_NODE) !== 0;
 
@@ -84,7 +160,7 @@ export function template_fn(fn, flags) {
 		}
 
 		if (node === undefined) {
-			node = fn();
+			node = structure_to_fragment(structure);
 			if (!is_fragment) node = /** @type {Node} */ (get_first_child(node));
 		}
 
@@ -117,12 +193,12 @@ export function template_with_script(content, flags) {
 }
 
 /**
- * @param {()=>(DocumentFragment | Node)} fn
+ * @param {Array<TemplateStructure>} structure
  * @param {number} flags
  * @returns {() => Node | Node[]}
  */ /*#__NO_SIDE_EFFECTS__*/
-export function template_with_script_fn(fn, flags) {
-	var templated_fn = template_fn(fn, flags);
+export function template_with_script_fn(structure, flags) {
+	var templated_fn = template_fn(structure, flags);
 	return () => run_scripts(/** @type {Element | DocumentFragment} */ (templated_fn()));
 }
 
@@ -182,13 +258,13 @@ export function ns_template(content, flags, ns = 'svg') {
 }
 
 /**
- * @param {()=>(DocumentFragment | Node)} fn
+ * @param {Array<TemplateStructure>} structure
  * @param {number} flags
  * @param {'svg' | 'math'} ns
  * @returns {() => Node | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function ns_template_fn(fn, flags, ns = 'svg') {
+export function ns_template_fn(structure, flags, ns = 'svg') {
 	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
 
 	/** @type {Element | DocumentFragment} */
@@ -201,7 +277,7 @@ export function ns_template_fn(fn, flags, ns = 'svg') {
 		}
 
 		if (!node) {
-			var fragment = /** @type {DocumentFragment} */ (fn());
+			var fragment = structure_to_fragment(structure, ns);
 
 			if (is_fragment) {
 				node = document.createDocumentFragment();
@@ -240,13 +316,13 @@ export function svg_template_with_script(content, flags) {
 }
 
 /**
- * @param {()=>(DocumentFragment | Node)} fn
+ * @param {Array<TemplateStructure>} structure
  * @param {number} flags
  * @returns {() => Node | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function svg_template_with_script_fn(fn, flags) {
-	var templated_fn = ns_template_fn(fn, flags);
+export function svg_template_with_script_fn(structure, flags) {
+	var templated_fn = ns_template_fn(structure, flags);
 	return () => run_scripts(/** @type {Element | DocumentFragment} */ (templated_fn()));
 }
 
@@ -261,13 +337,13 @@ export function mathml_template(content, flags) {
 }
 
 /**
- * @param {()=>(DocumentFragment | Node)} fn
+ * @param {Array<TemplateStructure>} structure
  * @param {number} flags
  * @returns {() => Node | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function mathml_template_fn(fn, flags) {
-	return ns_template_fn(fn, flags, 'math');
+export function mathml_template_fn(structure, flags) {
+	return ns_template_fn(structure, flags, 'math');
 }
 
 /**
