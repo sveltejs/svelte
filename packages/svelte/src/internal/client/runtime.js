@@ -692,6 +692,7 @@ function flush_queued_root_effects() {
 				var collected_effects = process_effects(root_effects[i]);
 				flush_queued_effects(collected_effects);
 			}
+			old_values.clear();
 		}
 	} finally {
 		is_flushing = false;
@@ -701,7 +702,6 @@ function flush_queued_root_effects() {
 		if (DEV) {
 			dev_effect_stack = [];
 		}
-		old_values.clear();
 	}
 }
 
