@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execSync, fork } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { benchmarks } from '../benchmarks.js';
 
 // if (execSync('git status --porcelain').toString().trim()) {
 // 	console.error('Working directory is not clean');

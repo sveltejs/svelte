@@ -186,12 +186,10 @@ export function server_component(analysis, options) {
 			...snippets,
 			b.let('$$settled', b.true),
 			b.let('$$inner_payload'),
-			b.stmt(
-				b.function(
-					b.id('$$render_inner'),
-					[b.id('$$payload')],
-					b.block(/** @type {Statement[]} */ (rest))
-				)
+			b.function_declaration(
+				b.id('$$render_inner'),
+				[b.id('$$payload')],
+				b.block(/** @type {Statement[]} */ (rest))
 			),
 			b.do_while(
 				b.unary('!', b.id('$$settled')),
