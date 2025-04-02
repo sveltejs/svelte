@@ -338,6 +338,10 @@ export type MountOptions<Props extends Record<string, any> = Record<string, any>
 	 * @default true
 	 */
 	intro?: boolean;
+	/**
+	 * The custom renderer to use to mount the component.
+	 */
+	customRenderer?: any;
 } & ({} extends Props
 	? {
 			/**

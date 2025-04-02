@@ -112,6 +112,8 @@ export const validate_component_options =
 
 			templatingMode: list(['string', 'functional']),
 
+			customRenderer: boolean(false),
+
 			preserveWhitespace: boolean(false),
 
 			runes: boolean(undefined),

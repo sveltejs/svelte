@@ -51,12 +51,21 @@ export function replay_events(dom) {
  * @param {EventTarget} dom
  * @param {EventListener} [handler]
  * @param {AddEventListenerOptions} [options]
+ * @param {boolean} [custom_renderer]
  */
-export function create_event(event_name, dom, handler, options = {}) {
+export function create_event(event_name, dom, handler, options = {}, custom_renderer = false) {
 	/**
 	 * @this {EventTarget}
 	 */
 	function target_handler(/** @type {Event} */ event) {
+		// if we have a custom renderer we just want to call the function
+		// without a reactive context because we don't know if event propagation
+		// is even a thing in the target renderer
+		if (custom_renderer) {
+			return without_reactive_context(() => {
+				return handler?.call(this, event);
+			});
+		}
 		if (!options.capture) {
 			// Only call in the bubble phase, else delegated events would be called before the capturing events
 			handle_event_propagation.call(dom, event);
@@ -109,13 +118,14 @@ export function on(element, type, handler, options = {}) {
  * @param {string} event_name
  * @param {Element} dom
  * @param {EventListener} [handler]
+ * @param {boolean} [custom_renderer]
  * @param {boolean} [capture]
  * @param {boolean} [passive]
  * @returns {void}
  */
-export function event(event_name, dom, handler, capture, passive) {
+export function event(event_name, dom, handler, custom_renderer, capture, passive) {
 	var options = { capture, passive };
-	var target_handler = create_event(event_name, dom, handler, options);
+	var target_handler = create_event(event_name, dom, handler, options, custom_renderer);
 
 	// @ts-ignore
 	if (dom === document.body || dom === window || dom === document) {

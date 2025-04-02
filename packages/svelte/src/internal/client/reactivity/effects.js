@@ -38,7 +38,7 @@ import { set } from './sources.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
-import { get_next_sibling } from '../dom/operations.js';
+import { get_next_sibling, get_renderer } from '../dom/operations.js';
 import { derived } from './deriveds.js';
 import { component_context, dev_current_component_function } from '../context.js';
 
@@ -99,6 +99,8 @@ function create_effect(type, fn, sync, push = true) {
 		nodes_end: null,
 		f: type | DIRTY,
 		first: null,
+		// we only need to update the renderer for render effects
+		renderer: (type & RENDER_EFFECT) !== 0 ? get_renderer() : undefined,
 		fn,
 		last: null,
 		next: null,

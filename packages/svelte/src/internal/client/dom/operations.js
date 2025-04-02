@@ -19,6 +19,8 @@ var first_child_getter;
 /** @type {() => Node | null} */
 var next_sibling_getter;
 
+var renderer;
+
 /**
  * Initialize these lazily to avoid issues when using the runtime in a server context
  * where these globals are not available while avoiding a separate server entry point
@@ -28,20 +30,23 @@ export function init_operations() {
 		return;
 	}
 
-	$window = window;
-	$document = document;
-	is_firefox = /Firefox/.test(navigator.userAgent);
+	$window = typeof window === 'undefined' ? /** @type {Window} */ ({}) : window;
+	$document = typeof document === 'undefined' ? /** @type {Document} */ ({}) : document;
+	is_firefox = typeof navigator === 'undefined' ? true : /Firefox/.test(navigator.userAgent);
 
-	var element_prototype = Element.prototype;
-	var node_prototype = Node.prototype;
-	var text_prototype = Text.prototype;
+	var element_prototype;
+	if (window.Element) element_prototype = Element.prototype;
+	var node_prototype;
+	if (window.Node) node_prototype = Node.prototype;
+	var text_prototype;
+	if (window.Text) text_prototype = Text.prototype;
 
 	// @ts-ignore
-	first_child_getter = get_descriptor(node_prototype, 'firstChild').get;
+	first_child_getter = get_descriptor(node_prototype, 'firstChild')?.get;
 	// @ts-ignore
-	next_sibling_getter = get_descriptor(node_prototype, 'nextSibling').get;
+	next_sibling_getter = get_descriptor(node_prototype, 'nextSibling')?.get;
 
-	if (is_extensible(element_prototype)) {
+	if (element_prototype && is_extensible(element_prototype)) {
 		// the following assignments improve perf of lookups on DOM nodes
 		// @ts-expect-error
 		element_prototype.__click = undefined;
@@ -73,6 +78,9 @@ export function init_operations() {
  * @returns {Text}
  */
 export function create_text(value = '') {
+	if (renderer) {
+		return renderer.document.createTextNode(value);
+	}
 	return document.createTextNode(value);
 }
 
@@ -83,6 +91,9 @@ export function create_text(value = '') {
  */
 /*@__NO_SIDE_EFFECTS__*/
 export function get_first_child(node) {
+	if (renderer_first_child) {
+		return renderer_first_child.call(node);
+	}
 	return first_child_getter.call(node);
 }
 
@@ -93,6 +104,9 @@ export function get_first_child(node) {
  */
 /*@__NO_SIDE_EFFECTS__*/
 export function get_next_sibling(node) {
+	if (renderer_next_sibling) {
+		return renderer_next_sibling.call(node);
+	}
 	return next_sibling_getter.call(node);
 }
 
@@ -213,6 +227,9 @@ export function clear_text_content(node) {
  * @returns
  */
 export function create_element(tag, namespace, is) {
+	if (renderer) {
+		return renderer.document.createElement(tag);
+	}
 	let options = is ? { is } : undefined;
 	if (namespace) {
 		return document.createElementNS(namespace, tag, options);
@@ -221,6 +238,9 @@ export function create_element(tag, namespace, is) {
 }
 
 export function create_fragment() {
+	if (renderer) {
+		return renderer.document.createDocumentFragment();
+	}
 	return document.createDocumentFragment();
 }
 
@@ -229,6 +249,9 @@ export function create_fragment() {
  * @returns
  */
 export function create_comment(data = '') {
+	if (renderer) {
+		return renderer.document.createComment(data);
+	}
 	return document.createComment(data);
 }
 
@@ -244,4 +267,25 @@ export function set_attribute(element, key, value = '') {
 		return;
 	}
 	return element.setAttribute(key, value);
+}
+
+var renderer_next_sibling;
+var renderer_first_child;
+
+export function push_renderer(custom_renderer) {
+	var old_next_sibling = renderer_next_sibling;
+	var old_first_child = renderer_first_child;
+	var old_renderer = renderer;
+	renderer_next_sibling = get_descriptor(custom_renderer.Node.prototype, 'nextSibling')?.get;
+	renderer_first_child = get_descriptor(custom_renderer.Node.prototype, 'firstChild')?.get;
+	renderer = custom_renderer;
+	return () => {
+		renderer_next_sibling = old_next_sibling;
+		renderer_first_child = old_first_child;
+		renderer = old_renderer;
+	};
+}
+
+export function get_renderer() {
+	return renderer;
 }

@@ -67,7 +67,7 @@ export function Attribute(node, context) {
 			const expression = get_attribute_expression(node);
 			const delegated_event = get_delegated_event(node.name.slice(2), expression, context);
 
-			if (delegated_event !== null) {
+			if (delegated_event !== null && !context.state.options.customRenderer) {
 				if (delegated_event.hoisted) {
 					delegated_event.function.metadata.hoisted = true;
 				}

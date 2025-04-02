@@ -67,6 +67,8 @@ export interface Effect extends Reaction {
 	last: null | Effect;
 	/** Parent effect */
 	parent: Effect | null;
+	/** The original renderer used when mounting the root component */
+	renderer?: any;
 	/** Dev only */
 	component_function?: any;
 }

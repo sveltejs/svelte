@@ -20,6 +20,7 @@ export { default as preprocess } from './preprocess/index.js';
  * @returns {CompileResult}
  */
 export function compile(source, options) {
+	options.customRenderer = true;
 	source = remove_bom(source);
 	state.reset_warning_filter(options.warningFilter);
 	const validated = validate_component_options(options, '');

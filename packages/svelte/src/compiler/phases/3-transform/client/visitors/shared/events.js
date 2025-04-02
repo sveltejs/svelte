@@ -68,7 +68,8 @@ export function visit_event_attribute(node, context) {
 				context.state.node,
 				handler,
 				capture,
-				is_passive_event(event_name) ? true : undefined
+				is_passive_event(event_name) ? true : undefined,
+				context.state.options.customRenderer
 			)
 		);
 
@@ -90,13 +91,15 @@ export function visit_event_attribute(node, context) {
  * @param {Expression} handler
  * @param {boolean} capture
  * @param {boolean | undefined} passive
+ * @param {boolean | undefined} custom_renderer
  */
-export function build_event(event_name, node, handler, capture, passive) {
+export function build_event(event_name, node, handler, capture, passive, custom_renderer) {
 	return b.call(
 		'$.event',
 		b.literal(event_name),
 		node,
 		handler,
+		custom_renderer && b.true,
 		capture && b.true,
 		passive === undefined ? undefined : b.literal(passive)
 	);

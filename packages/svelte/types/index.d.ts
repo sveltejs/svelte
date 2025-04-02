@@ -851,6 +851,10 @@ declare module 'svelte/compiler' {
 		 */
 		templatingMode?: 'string' | 'functional';
 		/**
+		 *  Allow to specify a module that exports a custom renderer for svelte components.
+		 */
+		customRenderer?: string;
+		/**
 		 * Set to `true` to force the compiler into runes mode, even if there are no indications of runes usage.
 		 * Set to `false` to force the compiler into ignoring runes, even if there are indications of runes usage.
 		 * Set to `undefined` (the default) to infer runes mode from the component code.
@@ -2566,6 +2570,10 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * @default 'string'
 		 */
 		templatingMode?: 'string' | 'functional';
+		/**
+		 *  Allow to specify a module that exports a custom renderer for svelte components.
+		 */
+		customRenderer?: string;
 		/**
 		 * Set to `true` to force the compiler into runes mode, even if there are no indications of runes usage.
 		 * Set to `false` to force the compiler into ignoring runes, even if there are indications of runes usage.

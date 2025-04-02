@@ -39,7 +39,7 @@ import {
 	set_component_context,
 	set_dev_current_component_function
 } from './context.js';
-import { is_firefox } from './dom/operations.js';
+import { is_firefox, push_renderer } from './dom/operations.js';
 
 // Used for DEV time error handling
 /** @param {WeakSet<Error>} value */
@@ -421,6 +421,13 @@ export function update_reaction(reaction) {
 
 	reaction_sources = null;
 	set_component_context(reaction.ctx);
+	var cleanup_renderer = undefined;
+	if ((reaction.f & DERIVED) === 0) {
+		var effect = /** @type {Effect} */ (reaction);
+		if (effect.renderer) {
+			cleanup_renderer = push_renderer(effect.renderer);
+		}
+	}
 	untracking = false;
 	read_version++;
 
@@ -498,6 +505,7 @@ export function update_reaction(reaction) {
 		reaction_sources = previous_reaction_sources;
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
+		cleanup_renderer?.();
 
 		reaction.f ^= EFFECT_IS_UPDATING;
 	}

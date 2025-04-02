@@ -120,6 +120,10 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 */
 	templatingMode?: 'string' | 'functional';
 	/**
+	 *  If `true` the output will be adapted to accept a custom renderer.
+	 */
+	customRenderer?: boolean;
+	/**
 	 * Set to `true` to force the compiler into runes mode, even if there are no indications of runes usage.
 	 * Set to `false` to force the compiler into ignoring runes, even if there are indications of runes usage.
 	 * Set to `undefined` (the default) to infer runes mode from the component code.

@@ -6,7 +6,8 @@ import {
 	create_text,
 	get_first_child,
 	get_next_sibling,
-	init_operations
+	init_operations,
+	push_renderer
 } from './dom/operations.js';
 import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
 import { active_effect } from './runtime.js';
@@ -86,6 +87,7 @@ export function mount(component, options) {
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		recover?: boolean;
+ * 		customRenderer?: any;
  * 	} : {
  * 		target: Document | Element | ShadowRoot;
  * 		props: Props;
@@ -93,10 +95,15 @@ export function mount(component, options) {
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		recover?: boolean;
+ * 		customRenderer?: any;
  * 	}} options
  * @returns {Exports}
  */
 export function hydrate(component, options) {
+	let cleanup_renderer = undefined;
+	if (options.customRenderer) {
+		cleanup_renderer = push_renderer(options.customRenderer);
+	}
 	init_operations();
 	options.intro = options.intro ?? false;
 	const target = options.target;
@@ -153,6 +160,7 @@ export function hydrate(component, options) {
 		set_hydrating(was_hydrating);
 		set_hydrate_node(previous_hydrate_node);
 		reset_head_anchor();
+		cleanup_renderer?.();
 	}
 }
 
@@ -165,7 +173,14 @@ const document_listeners = new Map();
  * @param {MountOptions} options
  * @returns {Exports}
  */
-function _mount(Component, { target, anchor, props = {}, events, context, intro = true }) {
+function _mount(
+	Component,
+	{ target, anchor, props = {}, events, context, intro = true, customRenderer }
+) {
+	let cleanup_renderer = undefined;
+	if (customRenderer) {
+		cleanup_renderer = push_renderer(customRenderer);
+	}
 	init_operations();
 
 	var registered_events = new Set();
@@ -261,6 +276,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 	});
 
 	mounted_components.set(component, unmount);
+	cleanup_renderer?.();
 	return component;
 }
 
