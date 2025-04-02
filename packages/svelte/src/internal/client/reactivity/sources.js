@@ -28,14 +28,14 @@ import {
 	UNOWNED,
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
-	ROOT_EFFECT,
-	ASSIGNED_DERIVED
+	ROOT_EFFECT
 } from '../constants.js';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack } from '../dev/tracing.js';
 import { component_context, is_runes } from '../context.js';
 import { proxy } from '../proxy.js';
+import { execute_derived } from './deriveds.js';
 
 export let inspect_effects = new Set();
 export const old_values = new Map();
@@ -172,11 +172,11 @@ export function internal_set(source, value) {
 		}
 
 		if ((source.f & DERIVED) !== 0) {
-			// if we are assigning a derived we set it to clean but we also
-			// keep the assigned derived flag so that we can read the dependencies
-			// in the get function
-			var flags = (source.f & UNOWNED) === 0 ? CLEAN : MAYBE_DIRTY;
-			set_signal_status(source, flags | ASSIGNED_DERIVED);
+			// if we are assigning to a dirty derived we set it to clean/maybe dirty but we also eagerly execute it to track the dependencies
+			if ((source.f & DIRTY) !== 0) {
+				execute_derived(/** @type {Derived} */ (source));
+			}
+			set_signal_status(source, (source.f & UNOWNED) === 0 ? CLEAN : MAYBE_DIRTY);
 		}
 
 		mark_reactions(source, DIRTY);
