@@ -132,7 +132,7 @@ During development, this error is often preceeded by a `console.error` detailing
 
 ## ownership_invalid_binding
 
-> %parent% passed a value to %child% with `bind:`, but the value is owned by %owner%. Consider creating a binding between %owner% and %parent%
+> %parent% passed property `%prop%` to %child% with `bind:`, but its parent component %owner% did not declare `%prop%` as a binding. Consider creating a binding between %owner% and %parent% (e.g. `bind:%prop%={...}` instead of `%prop%={...}`)
 
 Consider three components `GrandParent`, `Parent` and `Child`. If you do `<GrandParent bind:value>`, inside `GrandParent` pass on the variable via `<Parent {value} />` (note the missing `bind:`) and then do `<Child bind:value>` inside `Parent`, this warning is thrown.
 
@@ -140,9 +140,7 @@ To fix it, `bind:` to the value instead of just passing a property (i.e. in this
 
 ## ownership_invalid_mutation
 
-> Mutating a value outside the component that created it is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead
-
-> %component% mutated a value owned by %owner%. This is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead
+> %component% mutated property `%prop%` from parent component %owner%, which did not declare it as a binding. This is strongly discouraged. Consider passing props to child components that mutate them with `bind:` (e.g. `bind:%prop%={...}` instead of `%prop%={...}`), or use a callback instead
 
 Consider the following code:
 

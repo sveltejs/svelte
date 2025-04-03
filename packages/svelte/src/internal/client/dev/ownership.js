@@ -130,7 +130,7 @@ export function create_ownership_validator(props) {
 		 */
 		mutation: (path, result) => {
 			const prop_name = path[0];
-			if (is_bound(prop_name)) {
+			if (is_bound(prop_name) || !parent) {
 				return result;
 			}
 
@@ -143,7 +143,7 @@ export function create_ownership_validator(props) {
 				prop = prop[path[i]];
 			}
 
-			w.ownership_invalid_mutation(component[FILENAME], parent[FILENAME]);
+			w.ownership_invalid_mutation(component[FILENAME], prop_name, parent[FILENAME]);
 
 			return result;
 		},
@@ -156,6 +156,7 @@ export function create_ownership_validator(props) {
 			if (!is_bound(key) && parent && value()?.[STATE_SYMBOL]) {
 				w.ownership_invalid_binding(
 					component[FILENAME],
+					key,
 					child_component[FILENAME],
 					parent[FILENAME]
 				);
