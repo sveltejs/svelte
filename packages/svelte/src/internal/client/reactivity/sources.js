@@ -212,6 +212,49 @@ export function internal_set(source, value) {
 }
 
 /**
+ * @param {Source} source
+ */
+export function invalidate(source) {
+	source.wv = increment_write_version();
+
+	mark_reactions(source, DIRTY);
+
+	// It's possible that the current reaction might not have up-to-date dependencies
+	// whilst it's actively running. So in the case of ensuring it registers the reaction
+	// properly for itself, we need to ensure the current effect actually gets
+	// scheduled. i.e: `$effect(() => x++)`
+	if (
+		is_runes() &&
+		active_effect !== null &&
+		(active_effect.f & CLEAN) !== 0 &&
+		(active_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0
+	) {
+		if (untracked_writes === null) {
+			set_untracked_writes([source]);
+		} else {
+			untracked_writes.push(source);
+		}
+	}
+
+	if (DEV && inspect_effects.size > 0) {
+		const inspects = Array.from(inspect_effects);
+
+		for (const effect of inspects) {
+			// Mark clean inspect-effects as maybe dirty and then check their dirtiness
+			// instead of just updating the effects - this way we avoid overfiring.
+			if ((effect.f & CLEAN) !== 0) {
+				set_signal_status(effect, MAYBE_DIRTY);
+			}
+			if (check_dirtiness(effect)) {
+				update_effect(effect);
+			}
+		}
+
+		inspect_effects.clear();
+	}
+}
+
+/**
  * @template {number | bigint} T
  * @param {Source<T>} source
  * @param {1 | -1} [d]

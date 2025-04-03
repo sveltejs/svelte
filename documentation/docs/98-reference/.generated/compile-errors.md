@@ -828,6 +828,12 @@ Cannot export state from a module if it is reassigned. Either export a function 
 `%rune%(...)` can only be used as a variable declaration initializer or a class field
 ```
 
+### state_invalidate_nonreactive_argument
+
+```
+`$state.invalidate` only takes a variable declared with `$state` or `$state.raw` as its argument
+```
+
 ### store_invalid_scoped_subscription
 
 ```

@@ -481,6 +481,15 @@ export function state_invalid_placement(node, rune) {
 }
 
 /**
+ * `$state.invalidate` only takes a variable declared with `$state` or `$state.raw` as its argument
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function state_invalidate_nonreactive_argument(node) {
+	e(node, 'state_invalidate_nonreactive_argument', `\`$state.invalidate\` only takes a variable declared with \`$state\` or \`$state.raw\` as its argument\nhttps://svelte.dev/e/state_invalidate_nonreactive_argument`);
+}
+
+/**
  * Cannot subscribe to stores that are not declared at the top level of the component
  * @param {null | number | NodeLike} node
  * @returns {never}

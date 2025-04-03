@@ -111,6 +111,24 @@ export function CallExpression(node, context) {
 			break;
 		}
 
+		case '$state.invalidate':
+			if (node.arguments.length !== 1) {
+				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+			} else {
+				let arg = node.arguments[0];
+				if (arg.type !== 'Identifier') {
+					e.rune_invalid_arguments(node, rune);
+				}
+				let binding = context.state.scope.get(arg.name);
+				if (binding) {
+					if (binding.kind === 'raw_state' || binding.kind === 'state') {
+						binding.reassigned = true;
+						break;
+					}
+				}
+				e.state_invalidate_nonreactive_argument(node);
+			}
+
 		case '$state':
 		case '$state.raw':
 		case '$derived':

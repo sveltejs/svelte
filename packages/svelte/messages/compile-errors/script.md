@@ -220,6 +220,10 @@ It's possible to export a snippet from a `<script module>` block, but only if it
 
 > `%rune%(...)` can only be used as a variable declaration initializer or a class field
 
+## state_invalidate_nonreactive_argument
+
+> `$state.invalidate` only takes a variable declared with `$state` or `$state.raw` as its argument
+
 ## store_invalid_scoped_subscription
 
 > Cannot subscribe to stores that are not declared at the top level of the component
