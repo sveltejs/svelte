@@ -179,20 +179,29 @@ export function build_component(node, component_name, context, anchor = context.
 		} else if (attribute.type === 'BindDirective') {
 			const expression = /** @type {Expression} */ (context.visit(attribute.expression));
 
-			if (dev && attribute.name !== 'this' && !is_ignored(node, 'ownership_invalid_binding')) {
-				context.state.analysis.needs_mutation_validation = true;
-				binding_initializers.push(
-					b.stmt(
-						b.call(
-							b.id('$$ownership_validator.binding'),
-							b.literal(attribute.name),
-							b.id(component_name),
-							expression.type === 'SequenceExpression'
-								? expression.expressions[0]
-								: b.thunk(expression)
+			if (
+				dev &&
+				attribute.name !== 'this' &&
+				!is_ignored(node, 'ownership_invalid_binding') &&
+				// bind:x={() => x.y, y => x.y = y} will be handled by the assignment expression binding validation
+				attribute.expression.type !== 'SequenceExpression'
+			) {
+				const left = object(attribute.expression);
+				const binding = left && context.state.scope.get(left.name);
+
+				if (binding?.kind === 'bindable_prop' || binding?.kind === 'prop') {
+					context.state.analysis.needs_mutation_validation = true;
+					binding_initializers.push(
+						b.stmt(
+							b.call(
+								b.id('$$ownership_validator.binding'),
+								b.literal(binding.node.name),
+								b.id(component_name),
+								b.thunk(expression)
+							)
 						)
-					)
-				);
+					);
+				}
 			}
 
 			if (expression.type === 'SequenceExpression') {
