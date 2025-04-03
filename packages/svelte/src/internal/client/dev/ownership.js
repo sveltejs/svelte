@@ -1,5 +1,11 @@
 /** @typedef {{ file: string, line: number, column: number }} Location */
 
+import { get_descriptor } from '../../shared/utils.js';
+import { LEGACY_PROPS, STATE_SYMBOL } from '../constants.js';
+import { FILENAME } from '../../../constants.js';
+import { component_context } from '../context.js';
+import * as w from '../warnings.js';
+
 /** @type {Record<string, Array<{ start: Location, end: Location, component: Function }>>} */
 const boundaries = {};
 
@@ -95,4 +101,65 @@ export function mark_module_end(component) {
 		boundary.end = end;
 		boundary.component = component;
 	}
+}
+
+/**
+ * Sets up a validator that
+ * - traverses the path of a prop to find out if it is allowed to be mutated
+ * - checks that the binding chain is not interrupted
+ * @param {Record<string, any>} props
+ */
+export function create_ownership_validator(props) {
+	const component = component_context?.function;
+	const parent = component_context?.p?.function;
+
+	/** @param {string} prop_name */
+	function is_bound(prop_name) {
+		// Can be the case when someone does `mount(Component, props)` with `let props = $state({...})`
+		// or `createClassComponent(Component, props)`
+		const is_entry_props = STATE_SYMBOL in props || LEGACY_PROPS in props;
+		const is_bound =
+			!!get_descriptor(props, prop_name)?.set || (is_entry_props && prop_name in props);
+		return is_bound;
+	}
+
+	return {
+		/**
+		 * @param {any[]} path
+		 * @param {any} result
+		 */
+		mutation: (path, result) => {
+			const prop_name = path[0];
+			if (is_bound(prop_name)) {
+				return result;
+			}
+
+			let prop = props[prop_name];
+
+			for (let i = 1; i < path.length - 1; i++) {
+				if (!prop?.[STATE_SYMBOL]) {
+					return result;
+				}
+				prop = prop[path[i]];
+			}
+
+			w.ownership_invalid_mutation(component[FILENAME], parent[FILENAME]);
+
+			return result;
+		},
+		/**
+		 * @param {any} key
+		 * @param {any} child_component
+		 * @param {() => any} value
+		 */
+		binding: (key, child_component, value) => {
+			if (!is_bound(key) && parent && value()?.[STATE_SYMBOL]) {
+				w.ownership_invalid_binding(
+					component[FILENAME],
+					child_component[FILENAME],
+					parent[FILENAME]
+				);
+			}
+		}
+	};
 }

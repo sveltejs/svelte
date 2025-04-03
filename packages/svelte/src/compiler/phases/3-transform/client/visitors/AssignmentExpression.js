@@ -10,15 +10,18 @@ import {
 import { dev, locate_node } from '../../../../state.js';
 import { should_proxy } from '../utils.js';
 import { visit_assignment_expression } from '../../shared/assignments.js';
+import { validate_mutation } from './shared/utils.js';
 
 /**
  * @param {AssignmentExpression} node
  * @param {Context} context
  */
 export function AssignmentExpression(node, context) {
-	return /** @type {Expression} */ (
+	const expression = /** @type {Expression} */ (
 		visit_assignment_expression(node, context, build_assignment) ?? context.next()
 	);
+
+	return validate_mutation(node, context, expression);
 }
 
 /**

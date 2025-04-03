@@ -402,6 +402,20 @@ export function client_component(analysis, options) {
 	// we want the cleanup function for the stores to run as the very last thing
 	// so that it can effectively clean up the store subscription even after the user effects runs
 	if (should_inject_context) {
+		if (analysis.needs_mutation_validation) {
+			// It's easier to have the mutation validator instance be on the module level because of hoisted events
+			state.hoisted.push(b.let('$$ownership_validator'));
+			component_block.body.unshift(
+				b.stmt(
+					b.assignment(
+						'=',
+						b.id('$$ownership_validator'),
+						b.call('$.create_ownership_validator', b.id('$$props'))
+					)
+				)
+			);
+		}
+
 		component_block.body.unshift(b.stmt(b.call('$.push', ...push_args)));
 
 		let to_push;

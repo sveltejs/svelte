@@ -2,6 +2,7 @@
 /** @import { Context } from '../types' */
 import { object } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
+import { validate_mutation } from './shared/utils.js';
 
 /**
  * @param {UpdateExpression} node
@@ -50,5 +51,5 @@ export function UpdateExpression(node, context) {
 		);
 	}
 
-	return update;
+	return validate_mutation(node, context, update);
 }
