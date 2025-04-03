@@ -7,7 +7,7 @@ import {
 	get_attribute_expression,
 	is_event_attribute
 } from '../../../../utils/ast.js';
-import { dev, is_ignored, locate_node } from '../../../../state.js';
+import { dev, locate_node } from '../../../../state.js';
 import { should_proxy } from '../utils.js';
 import { visit_assignment_expression } from '../../shared/assignments.js';
 
@@ -16,13 +16,9 @@ import { visit_assignment_expression } from '../../shared/assignments.js';
  * @param {Context} context
  */
 export function AssignmentExpression(node, context) {
-	const expression = /** @type {Expression} */ (
+	return /** @type {Expression} */ (
 		visit_assignment_expression(node, context, build_assignment) ?? context.next()
 	);
-
-	return is_ignored(node, 'ownership_invalid_mutation')
-		? b.call('$.skip_ownership_validation', b.thunk(expression))
-		: expression;
 }
 
 /**

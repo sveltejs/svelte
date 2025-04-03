@@ -1,6 +1,5 @@
 /** @import { AssignmentExpression, Expression, UpdateExpression } from 'estree' */
 /** @import { Context } from '../types' */
-import { is_ignored } from '../../../../state.js';
 import { object } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 
@@ -51,7 +50,5 @@ export function UpdateExpression(node, context) {
 		);
 	}
 
-	return is_ignored(node, 'ownership_invalid_mutation')
-		? b.call('$.skip_ownership_validation', b.thunk(update))
-		: update;
+	return update;
 }

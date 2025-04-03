@@ -178,22 +178,6 @@ export function build_component(node, component_name, context, anchor = context.
 			}
 		} else if (attribute.type === 'BindDirective') {
 			const expression = /** @type {Expression} */ (context.visit(attribute.expression));
-
-			if (dev && attribute.name !== 'this') {
-				binding_initializers.push(
-					b.stmt(
-						b.call(
-							b.id('$.add_owner_effect'),
-							expression.type === 'SequenceExpression'
-								? expression.expressions[0]
-								: b.thunk(expression),
-							b.id(component_name),
-							is_ignored(node, 'ownership_invalid_binding') && b.true
-						)
-					)
-				);
-			}
-
 			if (expression.type === 'SequenceExpression') {
 				if (attribute.name === 'this') {
 					bind_this = attribute.expression;
