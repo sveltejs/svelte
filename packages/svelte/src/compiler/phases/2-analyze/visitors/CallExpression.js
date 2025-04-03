@@ -110,14 +110,14 @@ export function CallExpression(node, context) {
 
 			break;
 		}
-
+		/* eslint-disable no-fallthrough */
 		case '$state.invalidate':
 			if (node.arguments.length !== 1) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 			} else {
 				let arg = node.arguments[0];
 				if (arg.type !== 'Identifier') {
-					e.rune_invalid_arguments(node, rune);
+					e.state_invalidate_nonreactive_argument(node);
 				}
 				let binding = context.state.scope.get(arg.name);
 				if (binding) {
