@@ -102,11 +102,11 @@ declare namespace $state {
 	 * ```svelte
 	 * <script>
 	 *   import Counter from 'external-class';
-	 * 
+	 *
 	 *   let counter = $state(new Counter());
-	 * 
+	 *
 	 *   function increment() {
-	 *     counter.increment(); 
+	 *     counter.increment();
 	 *     $state.invalidate(counter);
 	 *   }
 	 * </script>
