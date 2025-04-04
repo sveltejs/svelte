@@ -481,12 +481,21 @@ export function state_invalid_placement(node, rune) {
 }
 
 /**
- * `$state.invalidate` only takes a variable declared with `$state` or `$state.raw` as its argument
+ * `$state.invalidate` can only be called with an argument referencing `this` in a class using a non-computed property
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function state_invalidate_invalid_this_property(node) {
+	e(node, 'state_invalidate_invalid_this_property', `\`$state.invalidate\` can only be called with an argument referencing \`this\` in a class using a non-computed property\nhttps://svelte.dev/e/state_invalidate_invalid_this_property`);
+}
+
+/**
+ * `$state.invalidate` only takes a variable or non-computed class field declared with `$state` or `$state.raw` as its argument
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function state_invalidate_nonreactive_argument(node) {
-	e(node, 'state_invalidate_nonreactive_argument', `\`$state.invalidate\` only takes a variable declared with \`$state\` or \`$state.raw\` as its argument\nhttps://svelte.dev/e/state_invalidate_nonreactive_argument`);
+	e(node, 'state_invalidate_nonreactive_argument', `\`$state.invalidate\` only takes a variable or non-computed class field declared with \`$state\` or \`$state.raw\` as its argument\nhttps://svelte.dev/e/state_invalidate_nonreactive_argument`);
 }
 
 /**

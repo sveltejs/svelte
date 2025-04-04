@@ -116,14 +116,44 @@ export function CallExpression(node, context) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
 			} else {
 				let arg = node.arguments[0];
-				if (arg.type !== 'Identifier') {
+				if (arg.type !== 'Identifier' && arg.type !== 'MemberExpression') {
 					e.state_invalidate_nonreactive_argument(node);
 				}
-				let binding = context.state.scope.get(arg.name);
-				if (binding) {
-					if (binding.kind === 'raw_state' || binding.kind === 'state') {
-						binding.reassigned = true;
+				if (arg.type === 'MemberExpression') {
+					if (arg.object.type !== 'ThisExpression') {
+						e.state_invalidate_nonreactive_argument(node);
+					}
+					const class_body = context.path.findLast((parent) => parent.type === 'ClassBody');
+					if (arg.computed || !class_body) {
+						e.state_invalidate_invalid_this_property(node);
+					}
+					const possible_this_bindings = context.path.filter((parent, index) => {
+						return (
+							parent.type === 'FunctionDeclaration' ||
+							(parent.type === 'FunctionExpression' &&
+								context.path[index - 1]?.type !== 'MethodDefinition')
+						);
+					});
+					if (possible_this_bindings.length === 0) {
 						break;
+					}
+					const class_index = context.path.indexOf(class_body);
+					const last_possible_this_index = context.path.indexOf(
+						/** @type {AST.SvelteNode} */ (possible_this_bindings.at(-1))
+					);
+					if (class_index < last_possible_this_index) {
+						e.state_invalidate_invalid_this_property(node);
+					}
+					// we can't really do anything else yet, so we just wait for the transformation phase
+					// where we know which class fields are reactive (and what their private aliases are)
+					break;
+				} else {
+					let binding = context.state.scope.get(arg.name);
+					if (binding) {
+						if (binding.kind === 'raw_state' || binding.kind === 'state') {
+							binding.reassigned = true;
+							break;
+						}
 					}
 				}
 				e.state_invalidate_nonreactive_argument(node);

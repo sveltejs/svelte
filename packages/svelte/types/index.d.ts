@@ -2761,7 +2761,7 @@ declare namespace $state {
 						: never;
 
 	/**
-	 * Forces an update on a `$state` or `$state.raw` variable.
+	 * Forces an update on a `$state` or `$state.raw` variable or class field.
 	 * This is primarily meant as an escape hatch to be able to use external or native classes
 	 * with Svelte's reactivity system.
 	 * If you used Svelte 3 or 4, this is the equivalent of `foo = foo`.

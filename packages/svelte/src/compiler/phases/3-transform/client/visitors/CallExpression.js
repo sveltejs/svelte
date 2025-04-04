@@ -4,6 +4,7 @@ import { dev, is_ignored } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { get_rune } from '../../../scope.js';
 import { transform_inspect_rune } from '../../utils.js';
+import * as e from '../../../../errors.js';
 
 /**
  * @param {CallExpression} node
@@ -24,7 +25,24 @@ export function CallExpression(node, context) {
 				is_ignored(node, 'state_snapshot_uncloneable') && b.true
 			);
 		case '$state.invalidate':
-			return b.call('$.invalidate', node.arguments[0]);
+			if (node.arguments[0].type === 'Identifier') {
+				return b.call('$.invalidate', node.arguments[0]);
+			} else if (node.arguments[0].type === 'MemberExpression') {
+				const { property } = node.arguments[0];
+				let field;
+				switch (property.type) {
+					case 'Identifier':
+						field = context.state.public_state.get(property.name);
+						break;
+					case 'PrivateIdentifier':
+						field = context.state.private_state.get(property.name);
+						break;
+				}
+				if (!field || (field.kind !== 'state' && field.kind !== 'raw_state')) {
+					e.state_invalidate_nonreactive_argument(node);
+				}
+				return b.call('$.invalidate', b.member(b.this, field.id));
+			}
 
 		case '$effect.root':
 			return b.call(
