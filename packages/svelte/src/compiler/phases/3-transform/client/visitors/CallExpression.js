@@ -24,6 +24,7 @@ export function CallExpression(node, context) {
 				/** @type {Expression} */ (context.visit(node.arguments[0])),
 				is_ignored(node, 'state_snapshot_uncloneable') && b.true
 			);
+		/* eslint-disable no-fallthrough */
 		case '$state.invalidate':
 			if (node.arguments[0].type === 'Identifier') {
 				return b.call('$.invalidate', node.arguments[0]);
