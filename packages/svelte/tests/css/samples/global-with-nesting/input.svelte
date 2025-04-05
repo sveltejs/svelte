@@ -1,7 +1,12 @@
 <style>
 	div {
 		&:global(.class){
-			color: red;
+			color: green;
+		}
+	}
+	:global(*) {
+		&:hover .class {
+			color: green;
 		}
 	}
 </style>

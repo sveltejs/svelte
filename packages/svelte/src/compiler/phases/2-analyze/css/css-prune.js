@@ -1,6 +1,11 @@
 /** @import * as Compiler from '#compiler' */
 import { walk } from 'zimmerframe';
-import { get_parent_rules, get_possible_values, is_outer_global } from './utils.js';
+import {
+	get_parent_rules,
+	get_possible_values,
+	is_outer_global,
+	is_unscoped_pseudo_class
+} from './utils.js';
 import { regex_ends_with_whitespace, regex_starts_with_whitespace } from '../../patterns.js';
 import { get_attribute_chunks, is_text_attribute } from '../../../utils/ast.js';
 
@@ -286,20 +291,26 @@ function apply_combinator(relative_selector, rest_selectors, rule, node, directi
  * a global selector
  * @param {Compiler.AST.CSS.RelativeSelector} selector
  * @param {Compiler.AST.CSS.Rule} rule
+ * @returns {boolean}
  */
 function is_global(selector, rule) {
 	if (selector.metadata.is_global || selector.metadata.is_global_like) {
 		return true;
 	}
 
+	let explicitly_global = false;
+
 	for (const s of selector.selectors) {
 		/** @type {Compiler.AST.CSS.SelectorList | null} */
 		let selector_list = null;
+		let can_be_global = false;
 		let owner = rule;
 
 		if (s.type === 'PseudoClassSelector') {
 			if ((s.name === 'is' || s.name === 'where') && s.args) {
 				selector_list = s.args;
+			} else {
+				can_be_global = is_unscoped_pseudo_class(s);
 			}
 		}
 
@@ -308,18 +319,19 @@ function is_global(selector, rule) {
 			selector_list = owner.prelude;
 		}
 
-		const has_global_selectors = selector_list?.children.some((complex_selector) => {
+		const has_global_selectors = !!selector_list?.children.some((complex_selector) => {
 			return complex_selector.children.every((relative_selector) =>
 				is_global(relative_selector, owner)
 			);
 		});
+		explicitly_global ||= has_global_selectors;
 
-		if (!has_global_selectors) {
+		if (!has_global_selectors && !can_be_global) {
 			return false;
 		}
 	}
 
-	return true;
+	return explicitly_global || selector.selectors.length === 0;
 }
 
 const regex_backslash_and_following_character = /\\(.)/g;
