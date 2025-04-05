@@ -1,5 +1,11 @@
 # svelte
 
+## 5.25.7
+
+### Patch Changes
+
+- fix: ensure clearing of old values happens independent of root flushes ([#15664](https://github.com/sveltejs/svelte/pull/15664))
+
 ## 5.25.6
 
 ### Patch Changes
