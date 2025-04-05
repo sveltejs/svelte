@@ -10,7 +10,7 @@ export default test({
 
 	test({ assert, target, warnings }) {
 		const warning =
-			'Counter.svelte mutated a value owned by main.svelte. This is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead';
+			'Counter.svelte mutated property `object` from parent component main.svelte, which did not declare it as a binding. This is strongly discouraged. Consider passing props to child components that mutate them with `bind:` (e.g. `bind:object={...}` instead of `object={...}`), or use a callback instead';
 		const [btn1, btn2] = target.querySelectorAll('button');
 
 		btn1.click();

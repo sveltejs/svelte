@@ -8,6 +8,8 @@ let warn;
 let warnings = [];
 
 export default test({
+	html: `<button>[]</button>`,
+
 	compileOptions: {
 		dev: true
 	},
@@ -32,6 +34,8 @@ export default test({
 			btn?.click();
 		});
 
-		assert.deepEqual(warnings, []);
+		assert.htmlEqual(target.innerHTML, `<button>[foo]</button>`);
+
+		assert.deepEqual(warnings, [], 'expected getContext to have widened ownership');
 	}
 });

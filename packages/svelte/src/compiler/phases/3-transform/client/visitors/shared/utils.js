@@ -1,13 +1,13 @@
-/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Statement, Super } from 'estree' */
+/** @import { AssignmentExpression, Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression } from 'estree' */
 /** @import { AST, ExpressionMetadata } from '#compiler' */
-/** @import { ComponentClientTransformState } from '../../types' */
+/** @import { ComponentClientTransformState, Context } from '../../types' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
-import { locator } from '../../../../../state.js';
+import { is_ignored, locator } from '../../../../../state.js';
 import { create_derived } from '../../utils.js';
 
 /**
@@ -294,4 +294,56 @@ export function validate_binding(state, binding, expression) {
 			)
 		)
 	);
+}
+
+/**
+ * In dev mode validate mutations to props
+ * @param {AssignmentExpression | UpdateExpression} node
+ * @param {Context} context
+ * @param {Expression} expression
+ */
+export function validate_mutation(node, context, expression) {
+	const left = node.type === 'AssignmentExpression' ? node.left : node.argument;
+
+	if (
+		!context.state.options.dev ||
+		is_ignored(node, 'ownership_invalid_mutation') ||
+		(left.type !== 'Identifier' && left.type !== 'MemberExpression')
+	) {
+		return expression;
+	}
+
+	const name = object(left);
+	if (!name) return expression;
+
+	const binding = context.state.scope.get(name.name);
+	if (binding?.kind !== 'prop' && binding?.kind !== 'bindable_prop') return expression;
+
+	const state = /** @type {ComponentClientTransformState} */ (context.state);
+
+	state.analysis.needs_mutation_validation = true;
+
+	/** @type {Array<Identifier | Literal>} */
+	const path = [];
+	/** @type {Expression | Super} */
+	let current = left;
+
+	while (current.type === 'MemberExpression') {
+		if (current.property.type === 'Literal') {
+			path.unshift(current.property);
+		} else if (current.property.type === 'Identifier') {
+			if (current.computed) {
+				path.unshift(current.property);
+			} else {
+				path.unshift(b.literal(current.property.name));
+			}
+		} else {
+			return expression;
+		}
+		current = current.object;
+	}
+
+	path.unshift(b.literal(name.name));
+
+	return b.call('$$ownership_validator.mutation', b.array(path), expression);
 }

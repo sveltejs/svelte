@@ -1,9 +1,13 @@
 <script>
-	import { setContext } from 'svelte';
-	import Sub from './sub.svelte';
+	import Child from './Child.svelte';
 
-	let list = $state([]);
-	setContext('list', list);
+	let items = $state([{ id: "test", name: "this is a test"}, { id:"test2", name: "this is a second test"}]);
+	let found = $state();
+
+	function onclick() {
+		found = items.find(c => c.id === 'test2');
+	}
 </script>
 
-<Sub />
+<button {onclick}>First click here</button>
+<Child item={found} />
