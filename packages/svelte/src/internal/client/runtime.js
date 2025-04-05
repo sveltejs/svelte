@@ -398,13 +398,13 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 /**
  * @template V
  * @param {Reaction} reaction
- * @param {Reaction | null} [previous_reaction]
  * @returns {V}
  */
-export function update_reaction(reaction, previous_reaction = active_reaction) {
+export function update_reaction(reaction) {
 	var previous_deps = new_deps;
 	var previous_skipped_deps = skipped_deps;
 	var previous_untracked_writes = untracked_writes;
+	var previous_reaction = active_reaction;
 	var previous_skip_reaction = skip_reaction;
 	var previous_reaction_sources = reaction_sources;
 	var previous_component_context = component_context;
@@ -476,7 +476,7 @@ export function update_reaction(reaction, previous_reaction = active_reaction) {
 		// we need to increment the read version to ensure that
 		// any dependencies in this reaction aren't marked with
 		// the same version
-		if (previous_reaction !== null) {
+		if (previous_reaction !== null && previous_reaction !== reaction) {
 			read_version++;
 
 			if (untracked_writes !== null) {
@@ -493,6 +493,7 @@ export function update_reaction(reaction, previous_reaction = active_reaction) {
 		new_deps = previous_deps;
 		skipped_deps = previous_skipped_deps;
 		untracked_writes = previous_untracked_writes;
+		console.log(untracked_writes)
 		active_reaction = previous_reaction;
 		skip_reaction = previous_skip_reaction;
 		reaction_sources = previous_reaction_sources;
@@ -562,10 +563,9 @@ export function remove_reactions(signal, start_index) {
 
 /**
  * @param {Effect} effect
- * @param {Reaction | null} [previous_reaction]
  * @returns {void}
  */
-export function update_effect(effect, previous_reaction = active_reaction) {
+export function update_effect(effect) {
 	var flags = effect.f;
 
 	if ((flags & DESTROYED) !== 0) {
@@ -594,7 +594,7 @@ export function update_effect(effect, previous_reaction = active_reaction) {
 		}
 
 		execute_effect_teardown(effect);
-		var teardown = update_reaction(effect, previous_reaction);
+		var teardown = update_reaction(effect);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 		effect.wv = write_version;
 
