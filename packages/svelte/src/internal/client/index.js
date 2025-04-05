@@ -113,7 +113,15 @@ export {
 	user_effect,
 	user_pre_effect
 } from './reactivity/effects.js';
-export { mutable_source, mutate, set, state, update, update_pre } from './reactivity/sources.js';
+export {
+	invalidate,
+	mutable_source,
+	mutate,
+	set,
+	state,
+	update,
+	update_pre
+} from './reactivity/sources.js';
 export {
 	prop,
 	rest_props,

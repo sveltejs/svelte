@@ -430,6 +430,7 @@ export function is_mathml(name) {
 
 const RUNES = /** @type {const} */ ([
 	'$state',
+	'$state.invalidate',
 	'$state.raw',
 	'$state.snapshot',
 	'$props',
