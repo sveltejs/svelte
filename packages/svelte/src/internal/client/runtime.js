@@ -493,7 +493,6 @@ export function update_reaction(reaction) {
 		new_deps = previous_deps;
 		skipped_deps = previous_skipped_deps;
 		untracked_writes = previous_untracked_writes;
-		console.log(untracked_writes)
 		active_reaction = previous_reaction;
 		skip_reaction = previous_skip_reaction;
 		reaction_sources = previous_reaction_sources;
@@ -804,7 +803,7 @@ function process_effects(root) {
 				try {
 					active_reaction = effect;
 					if (check_dirtiness(effect)) {
-						update_effect(effect, previous_active_reaction);
+						update_effect(effect);
 					}
 				} catch (error) {
 					handle_error(error, effect, null, effect.ctx);
