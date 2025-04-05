@@ -118,7 +118,8 @@ export function CallExpression(node, context) {
 			if (
 				(parent.type !== 'VariableDeclarator' ||
 					get_parent(context.path, -3).type === 'ConstTag') &&
-				!(parent.type === 'PropertyDefinition' && !parent.static && !parent.computed)
+				!(parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) &&
+				!(parent.type === 'Property' && parent.value === node)
 			) {
 				e.state_invalid_placement(node, rune);
 			}
