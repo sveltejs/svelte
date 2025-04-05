@@ -398,13 +398,13 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 /**
  * @template V
  * @param {Reaction} reaction
+ * @param {Reaction | null} [previous_reaction]
  * @returns {V}
  */
-export function update_reaction(reaction) {
+export function update_reaction(reaction, previous_reaction = active_reaction) {
 	var previous_deps = new_deps;
 	var previous_skipped_deps = skipped_deps;
 	var previous_untracked_writes = untracked_writes;
-	var previous_reaction = active_reaction;
 	var previous_skip_reaction = skip_reaction;
 	var previous_reaction_sources = reaction_sources;
 	var previous_component_context = component_context;
@@ -562,9 +562,10 @@ export function remove_reactions(signal, start_index) {
 
 /**
  * @param {Effect} effect
+ * @param {Reaction | null} [previous_reaction]
  * @returns {void}
  */
-export function update_effect(effect) {
+export function update_effect(effect, previous_reaction = active_reaction) {
 	var flags = effect.f;
 
 	if ((flags & DESTROYED) !== 0) {
@@ -593,7 +594,7 @@ export function update_effect(effect) {
 		}
 
 		execute_effect_teardown(effect);
-		var teardown = update_reaction(effect);
+		var teardown = update_reaction(effect, previous_reaction);
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 		effect.wv = write_version;
 
@@ -803,7 +804,7 @@ function process_effects(root) {
 				try {
 					active_reaction = effect;
 					if (check_dirtiness(effect)) {
-						update_effect(effect);
+						update_effect(effect, previous_active_reaction);
 					}
 				} catch (error) {
 					handle_error(error, effect, null, effect.ctx);
