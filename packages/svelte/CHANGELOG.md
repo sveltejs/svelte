@@ -1,5 +1,11 @@
 # svelte
 
+## 5.25.8
+
+### Patch Changes
+
+- fix: address untracked_writes memory leak ([#15694](https://github.com/sveltejs/svelte/pull/15694))
+
 ## 5.25.7
 
 ### Patch Changes
