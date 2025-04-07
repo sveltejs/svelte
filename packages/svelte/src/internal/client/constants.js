@@ -23,6 +23,7 @@ export const EFFECT_HAS_DERIVED = 1 << 20;
 export const EFFECT_IS_UPDATING = 1 << 21;
 
 export const STATE_SYMBOL = Symbol('$state');
+export const PROXY_ONCHANGE_SYMBOL = Symbol('proxy onchange');
 export const STATE_SYMBOL_METADATA = Symbol('$state metadata');
 export const LEGACY_PROPS = Symbol('legacy props');
 export const LOADING_ATTR_SYMBOL = Symbol('');
