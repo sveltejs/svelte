@@ -67,6 +67,7 @@ export function derived(fn) {
  * @param {() => V} fn
  * @returns {Derived<V>}
  */
+/*#__NO_SIDE_EFFECTS__*/
 export function user_derived(fn) {
 	const d = derived(fn);
 

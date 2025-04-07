@@ -78,6 +78,7 @@ export function source(v, stack) {
  * @param {V} v
  * @param {Error | null} [stack]
  */
+/*#__NO_SIDE_EFFECTS__*/
 export function state(v, stack) {
 	const s = source(v, stack);
 
