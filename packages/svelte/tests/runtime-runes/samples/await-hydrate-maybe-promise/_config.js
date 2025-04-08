@@ -2,8 +2,8 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	ssrHtml: '<button>fulfil</button><p>42</p>',
-	html: '<button>fulfil</button><p>loading...</p>',
+	ssrHtml: '<button>fulfil</button><p>42</p><hr><p>loading...</p>',
+	html: '<button>fulfil</button><p>loading...</p><hr><p>42</p>',
 
 	props: {
 		browser: true
@@ -18,6 +18,6 @@ export default test({
 
 		flushSync(() => button?.click());
 		await Promise.resolve();
-		assert.htmlEqual(target.innerHTML, '<button>fulfil</button><p>42</p>');
+		assert.htmlEqual(target.innerHTML, '<button>fulfil</button><p>42</p><hr><p>42</p>');
 	}
 });

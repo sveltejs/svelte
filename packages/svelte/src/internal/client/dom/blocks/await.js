@@ -4,9 +4,16 @@ import { is_promise } from '../../../shared/utils.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { internal_set, mutable_source, source } from '../../reactivity/sources.js';
 import { flushSync, set_active_effect, set_active_reaction } from '../../runtime.js';
-import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
+import {
+	hydrate_next,
+	hydrate_node,
+	hydrating,
+	remove_nodes,
+	set_hydrate_node,
+	set_hydrating
+} from '../hydration.js';
 import { queue_micro_task } from '../task.js';
-import { UNINITIALIZED } from '../../../../constants.js';
+import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
 import {
 	component_context,
 	is_runes,
@@ -113,6 +120,20 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 	var effect = block(() => {
 		if (input === (input = get_input())) return;
 
+		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
+		let mismatch = false;
+
+		if (hydrating) {
+			if (/** @type {Comment} */ (anchor).data !== HYDRATION_START_ELSE) {
+				// Hydration mismatch: remove everything inside the anchor and start fresh
+				anchor = remove_nodes();
+
+				set_hydrate_node(anchor);
+				set_hydrating(false);
+				mismatch = true;
+			}
+		}
+
 		if (is_promise(input)) {
 			var promise = input;
 
@@ -140,6 +161,15 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 			);
 
 			if (hydrating) {
+				if (/** @type {Comment} */ (anchor).data === HYDRATION_START_ELSE) {
+					// Hydration mismatch: remove everything inside the anchor and start fresh
+					anchor = remove_nodes();
+
+					set_hydrate_node(anchor);
+					set_hydrating(false);
+					mismatch = true;
+				}
+
 				if (pending_fn) {
 					pending_effect = branch(() => pending_fn(anchor));
 				}
@@ -151,8 +181,24 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 				});
 			}
 		} else {
+			if (hydrating) {
+				if (/** @type {Comment} */ (anchor).data !== HYDRATION_START_ELSE) {
+					// Hydration mismatch: remove everything inside the anchor and start fresh
+					anchor = remove_nodes();
+
+					set_hydrate_node(anchor);
+					set_hydrating(false);
+					mismatch = true;
+				}
+			}
+
 			internal_set(input_source, input);
 			update(THEN, false);
+		}
+
+		if (mismatch) {
+			// continue in hydration mode
+			set_hydrating(true);
 		}
 
 		// Set the input to something else, in order to disable the promise callbacks
