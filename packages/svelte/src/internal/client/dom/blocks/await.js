@@ -121,17 +121,16 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 		if (input === (input = get_input())) return;
 
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
-		let mismatch = false;
+		// @ts-ignore coercing `anchor` to a `Comment` causes TypeScript and Prettier to fight
+		let mismatch = hydrating && is_promise(input) === (anchor.data === HYDRATION_START_ELSE);
 
-		if (hydrating) {
-			if (/** @type {Comment} */ (anchor).data !== HYDRATION_START_ELSE) {
-				// Hydration mismatch: remove everything inside the anchor and start fresh
-				anchor = remove_nodes();
+		if (mismatch) {
+			// Hydration mismatch: remove everything inside the anchor and start fresh
+			anchor = remove_nodes();
 
-				set_hydrate_node(anchor);
-				set_hydrating(false);
-				mismatch = true;
-			}
+			set_hydrate_node(anchor);
+			set_hydrating(false);
+			mismatch = true;
 		}
 
 		if (is_promise(input)) {
@@ -161,15 +160,6 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 			);
 
 			if (hydrating) {
-				if (/** @type {Comment} */ (anchor).data === HYDRATION_START_ELSE) {
-					// Hydration mismatch: remove everything inside the anchor and start fresh
-					anchor = remove_nodes();
-
-					set_hydrate_node(anchor);
-					set_hydrating(false);
-					mismatch = true;
-				}
-
 				if (pending_fn) {
 					pending_effect = branch(() => pending_fn(anchor));
 				}
@@ -181,17 +171,6 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 				});
 			}
 		} else {
-			if (hydrating) {
-				if (/** @type {Comment} */ (anchor).data !== HYDRATION_START_ELSE) {
-					// Hydration mismatch: remove everything inside the anchor and start fresh
-					anchor = remove_nodes();
-
-					set_hydrate_node(anchor);
-					set_hydrating(false);
-					mismatch = true;
-				}
-			}
-
 			internal_set(input_source, input);
 			update(THEN, false);
 		}
