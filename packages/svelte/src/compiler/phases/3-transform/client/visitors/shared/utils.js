@@ -7,7 +7,7 @@ import * as b from '../../../../../utils/builders.js';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
-import { is_ignored, locator } from '../../../../../state.js';
+import { dev, is_ignored, locator } from '../../../../../state.js';
 import { create_derived } from '../../utils.js';
 
 /**
@@ -305,11 +305,7 @@ export function validate_binding(state, binding, expression) {
 export function validate_mutation(node, context, expression) {
 	const left = node.type === 'AssignmentExpression' ? node.left : node.argument;
 
-	if (
-		!context.state.options.dev ||
-		is_ignored(node, 'ownership_invalid_mutation') ||
-		left.type !== 'MemberExpression'
-	) {
+	if (!dev || left.type !== 'MemberExpression' || is_ignored(node, 'ownership_invalid_mutation')) {
 		return expression;
 	}
 
