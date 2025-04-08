@@ -303,7 +303,9 @@ export function validate_binding(state, binding, expression) {
  * @param {Expression} expression
  */
 export function validate_mutation(node, context, expression) {
-	const left = node.type === 'AssignmentExpression' ? node.left : node.argument;
+	let left = /** @type {Expression | Super} */ (
+		node.type === 'AssignmentExpression' ? node.left : node.argument
+	);
 
 	if (!dev || left.type !== 'MemberExpression' || is_ignored(node, 'ownership_invalid_mutation')) {
 		return expression;
@@ -316,27 +318,25 @@ export function validate_mutation(node, context, expression) {
 	if (binding?.kind !== 'prop' && binding?.kind !== 'bindable_prop') return expression;
 
 	const state = /** @type {ComponentClientTransformState} */ (context.state);
-
 	state.analysis.needs_mutation_validation = true;
 
 	/** @type {Array<Identifier | Literal>} */
 	const path = [];
-	/** @type {Expression | Super} */
-	let current = left;
 
-	while (current.type === 'MemberExpression') {
-		if (current.property.type === 'Literal') {
-			path.unshift(current.property);
-		} else if (current.property.type === 'Identifier') {
-			if (current.computed) {
-				path.unshift(current.property);
+	while (left.type === 'MemberExpression') {
+		if (left.property.type === 'Literal') {
+			path.unshift(left.property);
+		} else if (left.property.type === 'Identifier') {
+			if (left.computed) {
+				path.unshift(left.property);
 			} else {
-				path.unshift(b.literal(current.property.name));
+				path.unshift(b.literal(left.property.name));
 			}
 		} else {
 			return expression;
 		}
-		current = current.object;
+
+		left = left.object;
 	}
 
 	path.unshift(b.literal(name.name));
