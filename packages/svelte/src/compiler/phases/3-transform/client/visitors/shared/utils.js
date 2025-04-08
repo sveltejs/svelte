@@ -308,7 +308,7 @@ export function validate_mutation(node, context, expression) {
 	if (
 		!context.state.options.dev ||
 		is_ignored(node, 'ownership_invalid_mutation') ||
-		(left.type !== 'Identifier' && left.type !== 'MemberExpression')
+		left.type !== 'MemberExpression'
 	) {
 		return expression;
 	}
