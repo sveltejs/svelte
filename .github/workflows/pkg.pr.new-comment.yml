@@ -6,6 +6,9 @@ on:
     types:
       - completed
 
+permissions:
+  pull-requests: write
+
 jobs:
   build:
     name: 'Update comment'

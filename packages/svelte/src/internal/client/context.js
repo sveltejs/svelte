@@ -1,7 +1,6 @@
 /** @import { ComponentContext } from '#client' */
 
 import { DEV } from 'esm-env';
-import { add_owner } from './dev/ownership.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
 import { source } from './reactivity/sources.js';
 import {
@@ -11,7 +10,7 @@ import {
 	set_active_reaction,
 	untrack
 } from './runtime.js';
-import { effect } from './reactivity/effects.js';
+import { effect, teardown } from './reactivity/effects.js';
 import { legacy_mode_flag } from '../flags/index.js';
 
 /** @type {ComponentContext | null} */
@@ -67,15 +66,6 @@ export function getContext(key) {
  */
 export function setContext(key, context) {
 	const context_map = get_or_init_context_map('setContext');
-
-	if (DEV) {
-		// When state is put into context, we treat as if it's global from now on.
-		// We do for performance reasons (it's for example very expensive to call
-		// getContext on a big object many times when part of a list component)
-		// and danger of false positives.
-		untrack(() => add_owner(context, null, true));
-	}
-
 	context_map.set(key, context);
 	return context;
 }
@@ -112,15 +102,16 @@ export function getAllContexts() {
  * @returns {void}
  */
 export function push(props, runes = false, fn) {
-	component_context = {
+	var ctx = (component_context = {
 		p: component_context,
 		c: null,
+		d: false,
 		e: null,
 		m: false,
 		s: props,
 		x: null,
 		l: null
-	};
+	});
 
 	if (legacy_mode_flag && !runes) {
 		component_context.l = {
@@ -130,6 +121,10 @@ export function push(props, runes = false, fn) {
 			r2: source(false)
 		};
 	}
+
+	teardown(() => {
+		/** @type {ComponentContext} */ (ctx).d = true;
+	});
 
 	if (DEV) {
 		// component function

@@ -6,13 +6,13 @@
 	.d ~ .e { color: green; }
 	.a ~ .g { color: green; }
 	.a ~ .b { color: green; }
+	.f ~ .g { color: green; }
+	.b ~ .g { color: green; }
 
 	/* no match */
 	.b ~ .c { color: red; }
 	.c ~ .f { color: red; }
-	.f ~ .g { color: red; }
 	.b ~ .f { color: red; }
-	.b ~ .g { color: red; }
 </style>
 
 <div class="a"></div>

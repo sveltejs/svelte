@@ -95,7 +95,7 @@ export function build_set_attributes(
 	const call = b.call(
 		'$.set_attributes',
 		element_id,
-		is_dynamic ? attributes_id : b.literal(null),
+		is_dynamic ? attributes_id : b.null,
 		b.object(values),
 		element.metadata.scoped &&
 			context.state.analysis.css.hash !== '' &&
@@ -120,7 +120,7 @@ export function build_set_attributes(
  */
 export function build_attribute_value(value, context, memoize = (value) => value) {
 	if (value === true) {
-		return { value: b.literal(true), has_state: false };
+		return { value: b.true, has_state: false };
 	}
 
 	if (!Array.isArray(value) || value.length === 1) {
