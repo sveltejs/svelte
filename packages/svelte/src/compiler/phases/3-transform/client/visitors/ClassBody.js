@@ -161,33 +161,6 @@ export function ClassBody(node, context) {
 		body.push(/** @type {MethodDefinition} **/ (context.visit(definition, child_state)));
 	}
 
-	if (dev && public_state.size > 0) {
-		// add an `[$.ADD_OWNER]` method so that a class with state fields can widen ownership
-		body.push(
-			b.method(
-				'method',
-				b.id('$.ADD_OWNER'),
-				[b.id('owner')],
-				[
-					b.stmt(
-						b.call(
-							'$.add_owner_to_class',
-							b.this,
-							b.id('owner'),
-							b.array(
-								Array.from(public_state).map(([name]) =>
-									b.thunk(b.call('$.get', b.member(b.this, b.private_id(name))))
-								)
-							),
-							is_ignored(node, 'ownership_invalid_binding') && b.true
-						)
-					)
-				],
-				true
-			)
-		);
-	}
-
 	return { ...node, body };
 }
 

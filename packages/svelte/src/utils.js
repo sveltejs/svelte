@@ -465,8 +465,10 @@ export function is_raw_text_element(name) {
 
 /**
  * Prevent devtools trying to make `location` a clickable link by inserting a zero-width space
- * @param {string | undefined} location
+ * @template {string | undefined} T
+ * @param {T} location
+ * @returns {T};
  */
 export function sanitize_location(location) {
-	return location?.replace(/\//g, '/\u200b');
+	return /** @type {T} */ (location?.replace(/\//g, '/\u200b'));
 }
