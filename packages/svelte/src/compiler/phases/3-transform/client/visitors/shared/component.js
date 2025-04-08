@@ -194,7 +194,7 @@ export function build_component(node, component_name, context, anchor = context.
 					binding_initializers.push(
 						b.stmt(
 							b.call(
-								b.id('$$ownership_validator.binding'),
+								'$$ownership_validator.binding',
 								b.literal(binding.node.name),
 								b.id(component_name),
 								b.thunk(expression)
