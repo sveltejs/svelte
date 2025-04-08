@@ -341,10 +341,14 @@ export function validate_mutation(node, context, expression) {
 
 	path.unshift(b.literal(name.name));
 
+	const loc = locator(/** @type {number} */ (left.start));
+
 	return b.call(
 		'$$ownership_validator.mutation',
 		b.literal(binding.prop_alias),
 		b.array(path),
-		expression
+		expression,
+		loc && b.literal(loc.line),
+		loc && b.literal(loc.column)
 	);
 }

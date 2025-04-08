@@ -5,6 +5,7 @@ import { LEGACY_PROPS, STATE_SYMBOL } from '../constants.js';
 import { FILENAME } from '../../../constants.js';
 import { component_context } from '../context.js';
 import * as w from '../warnings.js';
+import { sanitize_location } from '../../../utils.js';
 
 /** @type {Record<string, Array<{ start: Location, end: Location, component: Function }>>} */
 const boundaries = {};
@@ -118,8 +119,10 @@ export function create_ownership_validator(props) {
 		 * @param {string} prop
 		 * @param {any[]} path
 		 * @param {any} result
+		 * @param {number} line
+		 * @param {number} column
 		 */
-		mutation: (prop, path, result) => {
+		mutation: (prop, path, result, line, column) => {
 			const name = path[0];
 			if (is_bound(props, name) || !parent) {
 				return result;
@@ -134,7 +137,9 @@ export function create_ownership_validator(props) {
 				value = value[path[i]];
 			}
 
-			w.ownership_invalid_mutation(component[FILENAME], name, parent[FILENAME], prop);
+			const location = sanitize_location(`${component[FILENAME]}:${line}:${column}`);
+
+			w.ownership_invalid_mutation(name, location, prop, parent[FILENAME]);
 
 			return result;
 		},

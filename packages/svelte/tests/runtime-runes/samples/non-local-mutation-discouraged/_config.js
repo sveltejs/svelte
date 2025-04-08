@@ -10,7 +10,7 @@ export default test({
 
 	test({ assert, target, warnings }) {
 		const warning =
-			'Counter.svelte mutated property `object` from parent component main.svelte, which did not declare it as a binding. This is strongly discouraged. Consider passing props to child components that mutate them with `bind:` (e.g. `bind:object={...}` instead of `object={...}`), or use a callback instead';
+			'Mutating unbound props (`object`, at Counter.svelte:5:23) is strongly discouraged. Consider using `bind:object={...}` in main.svelte (or using a callback) instead';
 		const [btn1, btn2] = target.querySelectorAll('button');
 
 		btn1.click();

@@ -140,7 +140,7 @@ To fix it, `bind:` to the value instead of just passing a property (i.e. in this
 
 ## ownership_invalid_mutation
 
-> %component% mutated property `%name%` from parent component %owner%, which did not declare it as a binding. This is strongly discouraged. Consider passing props to child components that mutate them with `bind:` (e.g. `bind:%prop%={...}` instead of `%prop%={...}`), or use a callback instead
+> Mutating unbound props (`%name%`, at %location%) is strongly discouraged. Consider using `bind:%prop%={...}` in %parent% (or using a callback) instead
 
 Consider the following code:
 
