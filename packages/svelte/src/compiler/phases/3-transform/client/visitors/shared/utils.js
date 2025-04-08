@@ -341,5 +341,10 @@ export function validate_mutation(node, context, expression) {
 
 	path.unshift(b.literal(name.name));
 
-	return b.call('$$ownership_validator.mutation', b.array(path), expression);
+	return b.call(
+		'$$ownership_validator.mutation',
+		b.literal(binding.prop_alias),
+		b.array(path),
+		expression
+	);
 }

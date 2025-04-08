@@ -144,14 +144,15 @@ export function ownership_invalid_binding(parent, prop, child, owner) {
 }
 
 /**
- * %component% mutated property `%prop%` from parent component %owner%, which did not declare it as a binding. This is strongly discouraged. Consider passing props to child components that mutate them with `bind:` (e.g. `bind:%prop%={...}` instead of `%prop%={...}`), or use a callback instead
+ * %component% mutated property `%name%` from parent component %owner%, which did not declare it as a binding. This is strongly discouraged. Consider passing props to child components that mutate them with `bind:` (e.g. `bind:%prop%={...}` instead of `%prop%={...}`), or use a callback instead
  * @param {string} component
- * @param {string} prop
+ * @param {string} name
  * @param {string} owner
+ * @param {string} prop
  */
-export function ownership_invalid_mutation(component, prop, owner) {
+export function ownership_invalid_mutation(component, name, owner, prop) {
 	if (DEV) {
-		console.warn(`%c[svelte] ownership_invalid_mutation\n%c${component} mutated property \`${prop}\` from parent component ${owner}, which did not declare it as a binding. This is strongly discouraged. Consider passing props to child components that mutate them with \`bind:\` (e.g. \`bind:${prop}={...}\` instead of \`${prop}={...}\`), or use a callback instead\nhttps://svelte.dev/e/ownership_invalid_mutation`, bold, normal);
+		console.warn(`%c[svelte] ownership_invalid_mutation\n%c${component} mutated property \`${name}\` from parent component ${owner}, which did not declare it as a binding. This is strongly discouraged. Consider passing props to child components that mutate them with \`bind:\` (e.g. \`bind:${prop}={...}\` instead of \`${prop}={...}\`), or use a callback instead\nhttps://svelte.dev/e/ownership_invalid_mutation`, bold, normal);
 	} else {
 		console.warn(`https://svelte.dev/e/ownership_invalid_mutation`);
 	}
