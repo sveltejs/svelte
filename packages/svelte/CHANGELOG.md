@@ -1,5 +1,13 @@
 # svelte
 
+## 5.25.9
+
+### Patch Changes
+
+- fix: allow `$.state` and `$.derived` to be treeshaken ([#15702](https://github.com/sveltejs/svelte/pull/15702))
+
+- fix: rework binding ownership validation ([#15678](https://github.com/sveltejs/svelte/pull/15678))
+
 ## 5.25.8
 
 ### Patch Changes
