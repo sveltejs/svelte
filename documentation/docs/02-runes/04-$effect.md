@@ -40,44 +40,32 @@ You can use `$effect` anywhere, not just at the top level of a component, as lon
 
 > [!NOTE] Svelte uses effects internally to represent logic and expressions in your template — this is how `<h1>hello {name}!</h1>` updates when `name` changes.
 
-An effect can return a _teardown function_ which will run immediately before the effect re-runs ([demo](/playground/untitled#H4sIAAAAAAAAA41T24rbQAz9FTEE4oCbuCndsq4dKHltH9ruPnUKmXjkeFhHNjPKrcH_XsaT214ofbOOjs6R5NFRkFqjSMUjseEatYhFaWp0Iv11FHxofc4DIj4zv7Tt2G2xZo8tlcO38KIhRmInUpG5wpqWZ5Ik18jgzB-EHAaOFWN0lySjz-dUoWirnA9JctGQY9i0WjHO-wTkEDHueQT5DI6ec2b1dnuG_CQxXiHPAxYNp3oYLHq2x8ZFjcr-wIKjJIYkPlftjObqElVoVhW_LC0b8j7DD9N2Dw6tKYcvGaauH7yzj2J4n8Tw8TRkF6gkeYBl6f2j18OsURv1fYP2ADnsDOlmN14rLqpvPhEtorXav-tbTWFw9Ovs2v1ocdOoY6gU6Rr7inmlaOVXHuGtmWRTQoRBGt3oiku-3Xq0-FlYRILeEnbKwcqiYrTAlaJrCzEo0sAVEtTo3KUhyV346E5_VvJ1xLHS-qtxjIQ2etW0lwAINRZ5Ywmi5zPcKFlcN1v8t9ilDe58mE2uj5MeGnCIfgAIPycGbdWqB1xYATewRL8IvBn2bRIpa5vd2Atn2mzB8aHGXIq1sitDKUyTdg-JFP1dZMsNc0PQUFGb4ik_hilPp3KXJN2sqLB4grKxPvRPrzfLJqHyP1Tun6vcv62STbTZ9uvIwhnA0pBOuTIuPwakCy8hl-JTkkgB4U5yKaY-nGWTQJuJWPgLECnbDXa_u7-plT6obAQAAA==)).
+An effect can return a _teardown function_ which will run immediately before the effect re-runs ([demo](/playground/untitled#H4sIAAAAAAAAE42SQVODMBCF_8pOxkPRKq3HCsx49K4n64xpskjGkDDJ0tph-O8uINo6HjxB3u7HvrehE07WKDbiyZEhi1osRWksRrF57gQdm6E2CKx_dd43zU3co6VB28mIf-nKO0JH_BmRRRVMQ8XWbXkAgfKtI8jhIpIkXKySu7lSG2tNRGZ1_GlYr1ZTD3ddYFmiosUigbyAbpC2lKbwWJkIB8ZhhxBQBWRSw6FCh3sM8GrYTthL-wqqku4N44TyqEgwF3lmRHr4Op0PGXoH31c5rO8mqV-eOZ49bikgtcHBL55tmhIkEMqg_cFB2TpFxjtg703we6NRL8HQFCS07oSUCZi6Rm04lz1yytIHBKoQpo1w6Gsm4gmyS8b8Y5PydeMdX8gwS2Ok4I-ov5NZtvQde95GMsccn_1wzNKfu3RZtS66cSl9lvL7qO1aIk7knbJGvefdtIOzi73M4bYvovUHDFk6AcX_0HRESxnpBOW_jfCDxIZCi_1L_wm4xGQ60wIAAA==)).
 
 ```svelte
 <script>
-	let size = $state(600);
-	let canvas;
+	let count = $state(0);
+	let milliseconds = $state(1000);
 
-	const updateCanvas = (text) => {
-		const context = canvas.getContext('2d');
-		context.clearRect(0, 0, canvas.width, canvas.height);
-		context.font = '32px serif';
-		context.fillText(text, 10, 50);
-	};
-	
 	$effect(() => {
-		const mediaQuery = window.matchMedia(`(max-width: ${size}px)`);
-		const handleMediaChange = (e) => {
-			if (e.matches) {
-				updateCanvas(`Screen width was greater than ${size}px, and then less`);
-			}
-		};
+		// This will be recreated whenever `milliseconds` changes
+		const interval = setInterval(() => {
+			count += 1;
+		}, milliseconds);
 
-		mediaQuery.addListener(handleMediaChange);
-  
 		return () => {
-			mediaQuery.removeListener(handleMediaChange);
+			// if a teardown function is provided, it will run
+			// a) immediately before the effect re-runs
+			// b) when the component is destroyed
+			clearInterval(interval);
 		};
 	});
 </script>
 
-To see the effect, drag the screen to be wide, and then drag the screen to be narrow.
+<h1>{count}</h1>
 
-<div style="margin: 20px 0">
-	<button onclick={() => size = 600}>check for 600px screen</button>
-	<button onclick={() => size = 900}>check for 900px screen</button>
-</div>
-
-<canvas bind:this={canvas} width="700" height="200"></canvas>
+<button onclick={() => (milliseconds *= 2)}>slower</button>
+<button onclick={() => (milliseconds /= 2)}>faster</button>
 ```
 
 Teardown functions also run when the effect is destroyed, which happens when its parent is destroyed (for example, a component is unmounted) or the parent effect re-runs.
