@@ -225,18 +225,19 @@ It is used to implement abstractions like [`createSubscriber`](/docs/svelte/svel
 
 The `$effect.root` rune is an advanced feature that creates a non-tracked scope that doesn't auto-cleanup. This is useful for nested effects that you want to manually control. This rune also allows for the creation of effects outside of the component initialisation phase.
 
-```svelte
-<script>
-	const cleanup = $effect.root(() => {
-		$effect(() => {
-			// some effect
-		});
-
-		return () => {
-			// cleanup function
-		};
+```js
+const destroy = $effect.root(() => {
+	$effect(() => {
+		// setup
 	});
-</script>
+
+	return () => {
+		// cleanup
+	};
+});
+
+// later...
+destroy();
 ```
 
 ## When not to use `$effect`
