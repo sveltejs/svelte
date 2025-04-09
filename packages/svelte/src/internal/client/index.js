@@ -4,7 +4,7 @@ export { assign, assign_and, assign_or, assign_nullish } from './dev/assign.js';
 export { cleanup_styles } from './dev/css.js';
 export { add_locations } from './dev/elements.js';
 export { hmr } from './dev/hmr.js';
-export { mark_module_start, mark_module_end, create_ownership_validator } from './dev/ownership.js';
+export { create_ownership_validator } from './dev/ownership.js';
 export { check_target, legacy_api } from './dev/legacy.js';
 export { trace } from './dev/tracing.js';
 export { inspect } from './dev/inspect.js';

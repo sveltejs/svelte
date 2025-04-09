@@ -536,9 +536,6 @@ export function client_component(analysis, options) {
 				b.assignment('=', b.member(b.id(analysis.name), '$.FILENAME', true), b.literal(filename))
 			)
 		);
-
-		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'))));
-		body.push(b.stmt(b.call(b.id('$.mark_module_end'), b.id(analysis.name))));
 	}
 
 	if (!analysis.runes) {
