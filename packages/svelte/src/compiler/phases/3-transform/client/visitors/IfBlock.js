@@ -40,9 +40,7 @@ export function IfBlock(node, context) {
 				b.if(
 					/** @type {Expression} */ (context.visit(node.test)),
 					b.stmt(b.call(b.id('$$render'), b.id(consequent_id))),
-					alternate_id
-						? b.stmt(b.call(b.id('$$render'), b.id(alternate_id), b.literal(false)))
-						: undefined
+					alternate_id ? b.stmt(b.call(b.id('$$render'), b.id(alternate_id), b.false)) : undefined
 				)
 			])
 		)

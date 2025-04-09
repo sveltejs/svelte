@@ -219,7 +219,10 @@ export function client_component(analysis, options) {
 	for (const [name, binding] of analysis.instance.scope.declarations) {
 		if (binding.kind === 'legacy_reactive') {
 			legacy_reactive_declarations.push(
-				b.const(name, b.call('$.mutable_state', undefined, analysis.immutable ? b.true : undefined))
+				b.const(
+					name,
+					b.call('$.mutable_source', undefined, analysis.immutable ? b.true : undefined)
+				)
 			);
 		}
 		if (binding.kind === 'store_sub') {
@@ -387,6 +390,12 @@ export function client_component(analysis, options) {
 
 		component_block.body.unshift(
 			b.stmt(b.call('$.append_styles', b.id('$$anchor'), b.id('$$css')))
+		);
+	}
+
+	if (analysis.needs_mutation_validation) {
+		component_block.body.unshift(
+			b.var('$$ownership_validator', b.call('$.create_ownership_validator', b.id('$$props')))
 		);
 	}
 
@@ -596,7 +605,7 @@ export function client_component(analysis, options) {
 				/** @type {ESTree.Property[]} */ (
 					[
 						prop_def.attribute ? b.init('attribute', b.literal(prop_def.attribute)) : undefined,
-						prop_def.reflect ? b.init('reflect', b.literal(true)) : undefined,
+						prop_def.reflect ? b.init('reflect', b.true) : undefined,
 						prop_def.type ? b.init('type', b.literal(prop_def.type)) : undefined
 					].filter(Boolean)
 				)

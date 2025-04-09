@@ -384,6 +384,16 @@ export function rune_invalid_name(node, name) {
 }
 
 /**
+ * `%rune%` cannot be called with a spread argument
+ * @param {null | number | NodeLike} node
+ * @param {string} rune
+ * @returns {never}
+ */
+export function rune_invalid_spread(node, rune) {
+	e(node, 'rune_invalid_spread', `\`${rune}\` cannot be called with a spread argument\nhttps://svelte.dev/e/rune_invalid_spread`);
+}
+
+/**
  * Cannot use `%rune%` rune in non-runes mode
  * @param {null | number | NodeLike} node
  * @param {string} rune

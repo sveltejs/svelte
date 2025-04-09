@@ -17,6 +17,14 @@ export function CallExpression(node, context) {
 
 	const rune = get_rune(node, context.state.scope);
 
+	if (rune && rune !== '$inspect') {
+		for (const arg of node.arguments) {
+			if (arg.type === 'SpreadElement') {
+				e.rune_invalid_spread(node, rune);
+			}
+		}
+	}
+
 	switch (rune) {
 		case null:
 			if (!is_safe_identifier(node.callee, context.state.scope)) {
@@ -41,6 +49,9 @@ export function CallExpression(node, context) {
 			) {
 				e.bindable_invalid_location(node);
 			}
+
+			// We need context in case the bound prop is stale
+			context.state.analysis.needs_context = true;
 
 			break;
 
@@ -114,7 +125,7 @@ export function CallExpression(node, context) {
 
 			if ((rune === '$derived' || rune === '$derived.by') && node.arguments.length !== 1) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
-			} else if (rune === '$state' && node.arguments.length > 1) {
+			} else if (node.arguments.length > 1) {
 				e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
 			}
 

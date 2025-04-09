@@ -154,6 +154,8 @@ export function unary(operator, argument) {
 	return { type: 'UnaryExpression', argument, operator, prefix: true };
 }
 
+export const void0 = unary('void', literal(0));
+
 /**
  * @param {ESTree.Expression} test
  * @param {ESTree.Expression} consequent
@@ -483,7 +485,7 @@ export function do_while(test, body) {
 
 const true_instance = literal(true);
 const false_instance = literal(false);
-const null_instane = literal(null);
+const null_instance = literal(null);
 
 /** @type {ESTree.DebuggerStatement} */
 const debugger_builder = {
@@ -645,7 +647,7 @@ export {
 	return_builder as return,
 	if_builder as if,
 	this_instance as this,
-	null_instane as null,
+	null_instance as null,
 	debugger_builder as debugger
 };
 

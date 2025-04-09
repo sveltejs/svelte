@@ -44,7 +44,8 @@ export function CallExpression(node, context) {
 		node.callee.property.type === 'Identifier' &&
 		['debug', 'dir', 'error', 'group', 'groupCollapsed', 'info', 'log', 'trace', 'warn'].includes(
 			node.callee.property.name
-		)
+		) &&
+		node.arguments.some((arg) => arg.type !== 'Literal') // TODO more cases?
 	) {
 		return b.call(
 			node.callee,

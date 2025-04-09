@@ -4,15 +4,7 @@ export { assign, assign_and, assign_or, assign_nullish } from './dev/assign.js';
 export { cleanup_styles } from './dev/css.js';
 export { add_locations } from './dev/elements.js';
 export { hmr } from './dev/hmr.js';
-export {
-	ADD_OWNER,
-	add_owner,
-	mark_module_start,
-	mark_module_end,
-	add_owner_effect,
-	add_owner_to_class,
-	skip_ownership_validation
-} from './dev/ownership.js';
+export { mark_module_start, mark_module_end, create_ownership_validator } from './dev/ownership.js';
 export { check_target, legacy_api } from './dev/legacy.js';
 export { trace } from './dev/tracing.js';
 export { inspect } from './dev/inspect.js';
@@ -101,7 +93,7 @@ export {
 	text,
 	props_id
 } from './dom/template.js';
-export { derived, derived_safe_equal } from './reactivity/deriveds.js';
+export { user_derived as derived, derived_safe_equal } from './reactivity/deriveds.js';
 export {
 	effect_tracking,
 	effect_root,
@@ -113,7 +105,7 @@ export {
 	user_effect,
 	user_pre_effect
 } from './reactivity/effects.js';
-export { mutable_state, mutate, set, state, update, update_pre } from './reactivity/sources.js';
+export { mutable_source, mutate, set, state, update, update_pre } from './reactivity/sources.js';
 export {
 	prop,
 	rest_props,

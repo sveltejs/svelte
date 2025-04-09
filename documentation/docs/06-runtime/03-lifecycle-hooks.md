@@ -147,7 +147,7 @@ With runes, we can use `$effect.pre`, which behaves the same as `$effect` but ru
 	}
 
 	function toggle() {
-		toggleValue = !toggleValue;
+		theme = theme === 'dark' ? 'light' : 'dark';
 	}
 </script>
 
