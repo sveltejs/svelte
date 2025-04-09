@@ -1,5 +1,13 @@
 # svelte
 
+## 5.25.10
+
+### Patch Changes
+
+- fix: set deriveds as `CLEAN` if they are assigned to ([#15592](https://github.com/sveltejs/svelte/pull/15592))
+
+- fix: better scope `:global()` with nesting selector `&` ([#15671](https://github.com/sveltejs/svelte/pull/15671))
+
 ## 5.25.9
 
 ### Patch Changes
