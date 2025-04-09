@@ -205,24 +205,18 @@ Apart from the timing, `$effect.pre` works exactly like `$effect`.
 
 ## `$effect.tracking`
 
-The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template ([demo](/playground/untitled?version=5.22.5#H4sIAAAAAAAAA22Q3U6DQBCFX2XcmEAjfzZeUSAxfQT1SrzYwlA2bocNO8UawrubLaKm9nK_PWfmzBkFyQOKVLwQK9ZYi0A0SqMV6eso-NO4PwdEsCgfjYnsgJod20mL13jVESOxFanIbNUrw0VJJVcdWQZF2-5gOkLiJ-SjgRxusWmw4oh7Wb0r2vurDcQxWDkgKALqKOxRVqwGhEH2Su40luRGamSoJA3Sbtzze5DvryAvYHRoWXvOdGLIv_XRHnk7M99b195q86N2LGo6cmJvnZgTWOxV410qlNbPZ7simBen4MHdlXMCSAJYJ_NZ3B9dep7cyiz-LYgyUyiCaqkHrOsnhfGysimLTQHZTRhCI7VFCMNicTMejJaMKYz_c_wxuhSzr6RsrgR2iuqUW2XzcSYTfKia27wUD0lSCmhR7VvOS3HvnkUWz7KiJBEIV4pI3dzpbfoCBROKmlsCAAA=)):
+The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template ([demo](/playground/untitled#H4sIAAAAAAAACn3PwYrCMBDG8VeZDYIt2PYeY8Dn2HrIhqkU08nQjItS-u6buAt7UDzmz8ePyaKGMWBS-nNRcmdU-hHUTpGbyuvI3KZvDFLal0v4qvtIgiSZUSb5eWSxPfWSc4oB2xDP1XYk8HHiSHkICeXKeruDDQ4Demlldv4y0rmq6z10HQwuJMxGVv4mVVXDwcJS0jP9u3knynwtoKz1vifT_Z9Jhm0WBCcOTlDD8kyspmML5qNpHg40jc3fFryJ0iWsp_UHgz3180oBAAA=)):
 
 ```svelte
 <script>
-	const inComponentSetup = $effect.tracking(); // save in non-reactive variable
+	console.log('in component setup:', $effect.tracking()); // false
 
-	let canvas;
 	$effect(() => {
-		const context = canvas.getContext('2d');
-		context.font = '20px serif';
-		context.fillText('in effect: ' + $effect.tracking(), 0, 20); // true
+		console.log('in effect:', $effect.tracking()); // true
 	});
 </script>
 
-<p>in component setup: {inComponentSetup}</p> <!-- false -->
 <p>in template: {$effect.tracking()}</p> <!-- true -->
-
-<canvas bind:this={canvas} width="400" height="100"></canvas>
 ```
 
 It is used to implement abstractions like [`createSubscriber`](/docs/svelte/svelte-reactivity#createSubscriber), which will create listeners to update reactive values but _only_ if those values are being tracked (rather than, for example, read inside an event handler).
