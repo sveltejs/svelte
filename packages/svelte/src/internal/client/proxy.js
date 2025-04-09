@@ -9,7 +9,7 @@ import {
 	object_prototype
 } from '../shared/utils.js';
 import { state as source, set } from './reactivity/sources.js';
-import { STATE_SYMBOL } from './constants.js';
+import { BINDABLE_FALLBACK_SYMBOL, STATE_SYMBOL } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 import { get_stack } from './dev/tracing.js';
@@ -64,10 +64,13 @@ export function proxy(value) {
 	return new Proxy(/** @type {any} */ (value), {
 		defineProperty(_, prop, descriptor) {
 			if (
-				!('value' in descriptor) ||
-				descriptor.configurable === false ||
-				descriptor.enumerable === false ||
-				descriptor.writable === false
+				// we allow non enumerable/writable defines if the prop being set is our own symbol
+				// this should be fine for the invariants since the user can't get a handle to the symbol
+				(!DEV || prop !== BINDABLE_FALLBACK_SYMBOL) &&
+				(!('value' in descriptor) ||
+					descriptor.configurable === false ||
+					descriptor.enumerable === false ||
+					descriptor.writable === false)
 			) {
 				// we disallow non-basic descriptors, because unless they are applied to the
 				// target object — which we avoid, so that state can be forked — we will run

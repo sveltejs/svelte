@@ -1,7 +1,7 @@
 /** @typedef {{ file: string, line: number, column: number }} Location */
 
 import { get_descriptor } from '../../shared/utils.js';
-import { LEGACY_PROPS, STATE_SYMBOL } from '../constants.js';
+import { BINDABLE_FALLBACK_SYMBOL, LEGACY_PROPS, STATE_SYMBOL } from '../constants.js';
 import { FILENAME } from '../../../constants.js';
 import { component_context } from '../context.js';
 import * as w from '../warnings.js';
@@ -22,12 +22,13 @@ export function create_ownership_validator(props) {
 		 * @param {string} prop
 		 * @param {any[]} path
 		 * @param {any} result
+		 * @param {any} prop_value
 		 * @param {number} line
 		 * @param {number} column
 		 */
-		mutation: (prop, path, result, line, column) => {
+		mutation: (prop, path, result, prop_value, line, column) => {
 			const name = path[0];
-			if (is_bound(props, name) || !parent) {
+			if (is_bound(props, name) || !parent || prop_value()?.[BINDABLE_FALLBACK_SYMBOL]) {
 				return result;
 			}
 
@@ -52,7 +53,14 @@ export function create_ownership_validator(props) {
 		 * @param {() => any} value
 		 */
 		binding: (key, child_component, value) => {
-			if (!is_bound(props, key) && parent && value()?.[STATE_SYMBOL]) {
+			var val;
+			if (
+				!is_bound(props, key) &&
+				parent &&
+				// we do this trick to prevent calling the value function twice
+				(val = value())?.[STATE_SYMBOL] &&
+				!val[BINDABLE_FALLBACK_SYMBOL]
+			) {
 				w.ownership_invalid_binding(
 					component[FILENAME],
 					key,
