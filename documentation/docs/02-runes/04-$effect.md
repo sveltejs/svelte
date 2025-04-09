@@ -135,19 +135,33 @@ An effect only reruns when the object it reads changes, not when a property insi
 
 An effect only depends on the values that it read the last time it ran. This has interesting implications for effects that have conditional code.
 
-For instance, if `condition` is `true` in the code snippet below, the code inside the `if` block will run and `color` will be evaluated. As such, changes to either `condition` or `color` [will cause the effect to re-run](/playground/untitled#H4sIAAAAAAAAE21RQW6DMBD8ytaNBJHaJJdeHECq-oyQgwPryqoxFl5oIsTfa5sQeggSAs_Ojmd2R2ZEg4yzr9bUilRrHCgDKCVW5Ngbk0qjY_w0MrrZQAyAx-9tn9bu3ICaAnYRDp_hVWsIjZfjLHNVpywVpSlJNbbtCHxVIpEC2bUNJJUwg3DvC5ocAzW8GiN3dgk5bBwJwpS6HrfHlaDbbi0mr1Ie_JNEhuds5mRpuoW8gDFqk5KQPpS3C1rS4iEdZ13H4RR_zjDNV5Y0AWqHT3oehPCJ9Gy_hjdZrYY4hezSE_lAram0qn7ycbb2P-nL4zAVs-haVQ7GtRwF97NisQwuU8b2BGF_ecligJLBRZmaD0L3mI8Rm2BfBJN3YyZzdNMYVTy0JKyVs1rcOEiN13vEb2E5HHYfHTYRmWLW2O23T3glxsOaprM_CaV__dWMS-EHN_0BitaP1YECAAA=).
+For instance, if `condition` is `true` in the code snippet below, the code inside the `if` block will run and `color` will be evaluated. As such, changes to either `condition` or `color` [will cause the effect to re-run](/playground/untitled#H4sIAAAAAAAAE21RQW6DMBD8ytaNBJHaJFLViwNIVZ8RcnBgXVk1xsILTYT4e20TQg89IOPZ2fHM7siMaJBx9tmaWpFqjQNlAKXEihx7YVJpdIyfRkY3G4gB8Pi97cPanRtQU8AuwuF_eNUaQuPlOMtc1SlLRWlKUo1tOwJflUikQHZtA0klzCDc64Imx0ANn8bInV1CDhtHgjClrsftcSXotluLybOUb3g4JJHhOZs5WZpuIS9gjNqkJKQP5e2ClrR4SMdZ13E4xZ8zTPOTJU2A2uE_PQ9COCI926_hTVarIU4hu_REPlBrKq2q73ycrf1N-vS4TMUsulaVg3EtR8H9rFgsg8uUsT1B2F9eshigZHBRpuaD0D3mY8Qm2BfB5N2YyRzdNEYVDy0Ja-WsFjcOUuP1HvFLWA6H3XuHTUSmmDV2--0TXonxsKbp7G9C6R__NONS-MFNvxj_d6mBAgAA).
 
-Conversely, if `a` is `false`, `b` will not be evaluated, and the effect will _only_ re-run when `a` changes.
+Conversely, if `condition` is `false`, `color` will not be evaluated, and the effect will _only_ re-run again when `condition` changes.
 
 ```ts
-let a = false;
-let b = false;
-// ---cut---
-$effect(() => {
-	updateCanvas('running');
+// @filename: ambient.d.ts
+declare module 'canvas-confetti' {
+	interface ConfettiOptions {
+		colors: string[];
+	}
 
-	if (a) {
-		updateCanvas('b:', b);
+	function confetti(opts?: ConfettiOptions): void;
+	export default confetti;
+}
+
+// @filename: index.js
+// ---cut---
+import confetti from 'canvas-confetti';
+
+let condition = $state(true);
+let color = $state('#ff3e00');
+
+$effect(() => {
+	if (condition) {
+		confetti({ colors: [color] });
+	} else {
+		confetti();
 	}
 });
 ```
