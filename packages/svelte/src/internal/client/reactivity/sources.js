@@ -215,6 +215,15 @@ export function internal_set(source, value) {
  * @param {Source} source
  */
 export function invalidate(source) {
+	if (
+		active_reaction !== null &&
+		!untracking &&
+		is_runes() &&
+		(active_reaction.f & (DERIVED | BLOCK_EFFECT)) !== 0 &&
+		!reaction_sources?.includes(source)
+	) {
+		e.state_unsafe_mutation();
+	}
 	source.wv = increment_write_version();
 
 	mark_reactions(source, DIRTY);
