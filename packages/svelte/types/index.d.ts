@@ -1942,6 +1942,50 @@ declare module 'svelte/reactivity' {
 		add(value: T): this;
 		#private;
 	}
+	/**
+	 * A reactive version of the built-in [`Map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) object.
+	 * Reading contents of the map in an [effect](https://svelte.dev/docs/svelte/$effect) or [derived](https://svelte.dev/docs/svelte/$derived) (by iterating, or by reading `map.size` or calling `map.get(...)` or `map.has(...)` as in the [tic-tac-toe example](https://svelte.dev/playground/0b0ff4aa49c9443f9b47fe5203c78293?version=5.25.10) below)
+	 * will cause it to be re-evaluated as necessary when the map is updated.
+	 *
+	 * Note that values in a reactive map are _not_ made [deeply reactive](https://svelte.dev/docs/svelte/$state#Deep-state).
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { SvelteMap } from 'svelte/reactivity';
+	 * 	import { result } from './game.js';
+	 *
+	 * 	let board = new SvelteMap();
+	 * 	let player = $state('x');
+	 * 	let winner = $derived(result(board));
+	 *
+	 * 	function reset() {
+	 * 		player = 'x';
+	 * 		board.clear();
+	 * 	}
+	 * </script>
+	 *
+	 * <div class="board">
+	 * 	{#each Array(9), i}
+	 * 		<button
+	 * 			disabled={board.has(i) || winner}
+	 * 			onclick={() => {
+	 * 				board.set(i, player);
+	 * 				player = player === 'x' ? 'o' : 'x';
+	 * 			}}
+	 * 		>{board.get(i)}</button>
+	 * 	{/each}
+	 * </div>
+	 *
+	 * {#if winner}
+	 * 	<p>{winner} wins!</p>
+	 * 	<button onclick={reset}>reset</button>
+	 * {:else}
+	 * 	<p>{player} is next</p>
+	 * {/if}
+	 * ```
+	 *
+	 * 
+	 */
 	export class SvelteMap<K, V> extends Map<K, V> {
 		
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
