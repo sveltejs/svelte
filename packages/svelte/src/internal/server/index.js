@@ -17,66 +17,12 @@ import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
 import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
 import { reset_elements } from './dev.js';
+import { Payload } from './payload.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
 const INVALID_ATTR_NAME_CHAR_REGEX =
 	/[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
-
-class Payload {
-	/** @type {Set<{ hash: string; code: string }>} */
-	css = new Set();
-	out = '';
-	uid = () => '';
-
-	head = {
-		/** @type {Set<{ hash: string; code: string }>} */
-		css: new Set(),
-		title: '',
-		out: '',
-		uid: () => ''
-	};
-
-	constructor(id_prefix = '') {
-		this.uid = props_id_generator(id_prefix);
-		this.head.uid = this.uid;
-	}
-}
-
-/**
- * Used in legacy mode to handle bindings
- * @param {Payload} to_copy
- * @returns {Payload}
- */
-export function copy_payload({ out, css, head, uid }) {
-	const payload = new Payload();
-
-	payload.out = out;
-	payload.css = new Set(css);
-	payload.uid = uid;
-
-	payload.head = {
-		title: head.title,
-		out: head.out,
-		css: new Set(head.css),
-		uid: head.uid
-	};
-
-	return payload;
-}
-
-/**
- * Assigns second payload to first
- * @param {Payload} p1
- * @param {Payload} p2
- * @returns {void}
- */
-export function assign_payload(p1, p2) {
-	p1.out = p2.out;
-	p1.css = p2.css;
-	p1.head = p2.head;
-	p1.uid = p2.uid;
-}
 
 /**
  * @param {Payload} payload
@@ -110,16 +56,6 @@ export function element(payload, tag, attributes_fn = noop, children_fn = noop) 
  * @type {Function[]}
  */
 export let on_destroy = [];
-
-/**
- * Creates an ID generator
- * @param {string} prefix
- * @returns {() => string}
- */
-function props_id_generator(prefix) {
-	let uid = 1;
-	return () => `${prefix}s${uid++}`;
-}
 
 /**
  * Only available on the server and when compiling with the `server` option.
@@ -553,13 +489,15 @@ export function props_id(payload) {
 	return uid;
 }
 
-export { attr, clsx, Payload };
+export { attr, clsx };
 
 export { html } from './blocks/html.js';
 
 export { push, pop } from './context.js';
 
 export { push_element, pop_element, validate_snippet_args } from './dev.js';
+
+export { assign_payload, copy_payload } from './payload.js';
 
 export { snapshot } from '../shared/clone.js';
 

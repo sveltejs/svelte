@@ -18,12 +18,12 @@ export function invalid_default_snippet() {
 }
 
 /**
- * A snippet function was passed invalid arguments. A snippet function should only be called via `{@render ...}`
+ * A snippet function was passed invalid arguments. Snippets should only be instantiated via `{@render ...}`
  * @returns {never}
  */
 export function invalid_snippet_arguments() {
 	if (DEV) {
-		const error = new Error(`invalid_snippet_arguments\nA snippet function was passed invalid arguments. A snippet function should only be called via \`{@render ...}\`\nhttps://svelte.dev/e/invalid_snippet_arguments`);
+		const error = new Error(`invalid_snippet_arguments\nA snippet function was passed invalid arguments. Snippets should only be instantiated via \`{@render ...}\`\nhttps://svelte.dev/e/invalid_snippet_arguments`);
 
 		error.name = 'Svelte error';
 		throw error;

@@ -6,7 +6,7 @@ import {
 } from '../../html-tree-validation.js';
 import { current_component } from './context.js';
 import { invalid_snippet_arguments } from '../shared/errors.js';
-import { Payload } from './index.js';
+import { Payload } from './payload.js';
 
 /**
  * @typedef {{
