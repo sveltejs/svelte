@@ -266,7 +266,9 @@ export function proxy(value) {
 
 			var own_keys = Reflect.ownKeys(target).filter((key) => {
 				var source = sources.get(key);
-				return source === undefined || source.v !== UNINITIALIZED;
+				return (
+					source === undefined || source.v !== UNINITIALIZED || key !== BINDABLE_FALLBACK_SYMBOL
+				);
 			});
 
 			for (var [key, source] of sources) {
