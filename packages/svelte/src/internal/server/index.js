@@ -23,22 +23,46 @@ import { reset_elements } from './dev.js';
 const INVALID_ATTR_NAME_CHAR_REGEX =
 	/[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
 
+class Payload {
+	/** @type {Set<{ hash: string; code: string }>} */
+	css = new Set();
+	out = '';
+	uid = () => '';
+
+	head = {
+		/** @type {Set<{ hash: string; code: string }>} */
+		css: new Set(),
+		title: '',
+		out: '',
+		uid: () => ''
+	};
+
+	constructor(id_prefix = '') {
+		this.uid = props_id_generator(id_prefix);
+		this.head.uid = this.uid;
+	}
+}
+
 /**
+ * Used in legacy mode to handle bindings
  * @param {Payload} to_copy
  * @returns {Payload}
  */
 export function copy_payload({ out, css, head, uid }) {
-	return {
-		out,
-		css: new Set(css),
-		head: {
-			title: head.title,
-			out: head.out,
-			css: new Set(head.css),
-			uid: head.uid
-		},
-		uid
+	const payload = new Payload();
+
+	payload.out = out;
+	payload.css = new Set(css);
+	payload.uid = uid;
+
+	payload.head = {
+		title: head.title,
+		out: head.out,
+		css: new Set(head.css),
+		uid: head.uid
 	};
+
+	return payload;
 }
 
 /**
@@ -95,24 +119,6 @@ export let on_destroy = [];
 function props_id_generator(prefix) {
 	let uid = 1;
 	return () => `${prefix}s${uid++}`;
-}
-
-class Payload {
-	out = '';
-	/**@type {Set<{ hash: string; code: string }>} */
-	css = new Set();
-	uid = () => '';
-	head = {
-		/**@type {Set<{ hash: string; code: string }>} */
-		css: new Set(),
-		title: '',
-		out: '',
-		uid: () => ''
-	};
-	constructor(id_prefix = '') {
-		this.uid = props_id_generator(id_prefix);
-		this.head.uid = this.uid;
-	}
 }
 
 /**
