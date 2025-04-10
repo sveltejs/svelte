@@ -162,7 +162,6 @@ export function internal_set(source, value) {
 		}
 
 		source.v = value;
-		source.wv = increment_write_version();
 
 		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');
@@ -179,6 +178,8 @@ export function internal_set(source, value) {
 			}
 			set_signal_status(source, (source.f & UNOWNED) === 0 ? CLEAN : MAYBE_DIRTY);
 		}
+
+		source.wv = increment_write_version();
 
 		mark_reactions(source, DIRTY);
 
