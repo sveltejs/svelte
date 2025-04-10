@@ -12,7 +12,7 @@
 
 ## component_api_changed
 
-> %parent% called `%method%` on an instance of %component%, which is no longer valid in Svelte 5
+> Calling `%method%` on a component instance (of %component%) is no longer valid in Svelte 5
 
 See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more information.
 
