@@ -1,5 +1,13 @@
 # svelte
 
+## 5.25.11
+
+### Patch Changes
+
+- fix: handle hydration mismatches in await blocks ([#15708](https://github.com/sveltejs/svelte/pull/15708))
+
+- fix: prevent ownership warnings if the fallback of a bindable is used ([#15720](https://github.com/sveltejs/svelte/pull/15720))
+
 ## 5.25.10
 
 ### Patch Changes
