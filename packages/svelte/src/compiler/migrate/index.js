@@ -948,13 +948,13 @@ const instance_script = {
 			const [, expression_ids] = extract_all_identifiers_from_expression(
 				node.body.expression.right
 			);
-			const bindings = ids.map((id) => state.scope.get(id.name));
-			const reassigned_bindings = bindings.filter((b) => b?.reassigned);
+			const bindings = ids.map((id) => /** @type {Binding} */ (state.scope.get(id.name)));
+			const reassigned_bindings = bindings.filter((b) => b.reassigned);
 
-			if (!bindings.some((b) => b?.kind === 'state')) {
+			if (!bindings.some((b) => b.kind === 'state')) {
 				if (
 					node.body.expression.right.type !== 'Literal' &&
-					!bindings.some((b) => b?.kind === 'store_sub') &&
+					!bindings.some((b) => b.kind === 'store_sub') &&
 					node.body.expression.left.type !== 'MemberExpression'
 				) {
 					let { start, end } = /** @type {{ start: number, end: number }} */ (
@@ -1001,7 +1001,7 @@ const instance_script = {
 							);
 						}
 					}
-					if (expression_ids.length === 0 && !bindings.some((b) => b?.kind === 'store_sub')) {
+					if (expression_ids.length === 0 && !bindings.some((b) => b.kind === 'store_sub')) {
 						state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
 						return;
 					}
