@@ -944,22 +944,20 @@ const instance_script = {
 			node.body.type === 'ExpressionStatement' &&
 			node.body.expression.type === 'AssignmentExpression'
 		) {
-			const ids = extract_identifiers(node.body.expression.left);
-			const [, expression_ids] = extract_all_identifiers_from_expression(
-				node.body.expression.right
-			);
+			const { left, right } = node.body.expression;
+
+			const ids = extract_identifiers(left);
+			const [, expression_ids] = extract_all_identifiers_from_expression(right);
 			const bindings = ids.map((id) => /** @type {Binding} */ (state.scope.get(id.name)));
 			const reassigned_bindings = bindings.filter((b) => b.reassigned);
 
-			if (!bindings.some((b) => b.kind === 'state')) {
+			if (bindings.every((b) => b.kind === 'legacy_reactive')) {
 				if (
-					node.body.expression.right.type !== 'Literal' &&
-					!bindings.some((b) => b.kind === 'store_sub') &&
-					node.body.expression.left.type !== 'MemberExpression'
+					right.type !== 'Literal' &&
+					bindings.every((b) => b.kind !== 'store_sub') &&
+					left.type !== 'MemberExpression'
 				) {
-					let { start, end } = /** @type {{ start: number, end: number }} */ (
-						node.body.expression.right
-					);
+					let { start, end } = /** @type {{ start: number, end: number }} */ (right);
 
 					check_rune_binding('derived');
 
@@ -970,7 +968,7 @@ const instance_script = {
 						'let '
 					);
 
-					if (node.body.expression.right.type === 'SequenceExpression') {
+					if (right.type === 'SequenceExpression') {
 						while (state.str.original[start] !== '(') start -= 1;
 						while (state.str.original[end - 1] !== ')') end += 1;
 					}
@@ -992,7 +990,7 @@ const instance_script = {
 								binding.kind === 'state'
 									? ' = $state()'
 									: expression_ids.length === 0
-										? ` = $state(${state.str.original.substring(/** @type {number} */ (node.body.expression.right.start), node.body.expression.right.end)})`
+										? ` = $state(${state.str.original.substring(/** @type {number} */ (right.start), right.end)})`
 										: '';
 							// implicitly-declared variable which we need to make explicit
 							state.str.prependLeft(
