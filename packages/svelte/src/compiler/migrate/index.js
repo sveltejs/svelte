@@ -949,7 +949,6 @@ const instance_script = {
 			const ids = extract_identifiers(left);
 			const [, expression_ids] = extract_all_identifiers_from_expression(right);
 			const bindings = ids.map((id) => /** @type {Binding} */ (state.scope.get(id.name)));
-			const reassigned_bindings = bindings.filter((b) => b.reassigned);
 
 			if (bindings.every((b) => b.kind === 'legacy_reactive')) {
 				if (
@@ -982,27 +981,28 @@ const instance_script = {
 					}
 
 					return;
-				} else {
-					for (const binding of reassigned_bindings) {
-						if (binding && (ids.includes(binding.node) || expression_ids.length === 0)) {
-							check_rune_binding('state');
-							const init =
-								binding.kind === 'state'
-									? ' = $state()'
-									: expression_ids.length === 0
-										? ` = $state(${state.str.original.substring(/** @type {number} */ (right.start), right.end)})`
-										: '';
-							// implicitly-declared variable which we need to make explicit
-							state.str.prependLeft(
-								/** @type {number} */ (node.start),
-								`let ${binding.node.name}${init};\n${state.indent}`
-							);
-						}
+				}
+
+				for (const binding of bindings) {
+					if (binding.reassigned && (ids.includes(binding.node) || expression_ids.length === 0)) {
+						check_rune_binding('state');
+						const init =
+							binding.kind === 'state'
+								? ' = $state()'
+								: expression_ids.length === 0
+									? ` = $state(${state.str.original.substring(/** @type {number} */ (right.start), right.end)})`
+									: '';
+						// implicitly-declared variable which we need to make explicit
+						state.str.prependLeft(
+							/** @type {number} */ (node.start),
+							`let ${binding.node.name}${init};\n${state.indent}`
+						);
 					}
-					if (expression_ids.length === 0 && !bindings.some((b) => b.kind === 'store_sub')) {
-						state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
-						return;
-					}
+				}
+
+				if (expression_ids.length === 0 && bindings.every((b) => b.kind !== 'store_sub')) {
+					state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
+					return;
 				}
 			}
 		}
