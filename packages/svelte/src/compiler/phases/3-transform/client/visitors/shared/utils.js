@@ -348,7 +348,6 @@ export function validate_mutation(node, context, expression) {
 		b.literal(binding.prop_alias),
 		b.array(path),
 		expression,
-		binding.prop_alias != null && b.id(binding.prop_alias),
 		loc && b.literal(loc.line),
 		loc && b.literal(loc.column)
 	);

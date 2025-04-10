@@ -13,12 +13,7 @@ import { derived, derived_safe_equal } from './deriveds.js';
 import { get, captured_signals, untrack } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
-import {
-	BINDABLE_FALLBACK_SYMBOL,
-	LEGACY_DERIVED_PROP,
-	LEGACY_PROPS,
-	STATE_SYMBOL
-} from '../constants.js';
+import { LEGACY_DERIVED_PROP, LEGACY_PROPS, STATE_SYMBOL } from '../constants.js';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
@@ -309,29 +304,6 @@ export function prop(props, key, flags, fallback) {
 		if (setter) setter(prop_value);
 	}
 
-	/**
-	 * @param {any} value
-	 */
-	function set_bindable_fallback(value) {
-		if (DEV && !setter && fallback_used && value != null && typeof value === 'object') {
-			// in dev we issue a warning if a bindable prop is passed with bindable
-			// to a child if the prop doesn't have a setter but if it's a fallback
-			// it's a false positive since the state it's actually created in this
-			// component so we store the fact that this is a bindable fallback with
-			// a symbol
-			define_property(value, BINDABLE_FALLBACK_SYMBOL, {
-				enumerable: false,
-				// it needs to be configurable or the proxy will complain when we return true
-				// for a non configurable property
-				configurable: true,
-				writable: false,
-				value: true
-			});
-		}
-	}
-
-	set_bindable_fallback(prop_value);
-
 	/** @type {() => V} */
 	var getter;
 	if (runes) {
@@ -426,11 +398,6 @@ export function prop(props, key, flags, fallback) {
 
 		if (arguments.length > 0) {
 			const new_value = mutation ? get(current_value) : runes && bindable ? proxy(value) : value;
-
-			// we only care to add the symbol if the original prop is reassigned
-			if (runes && bindable && !mutation) {
-				set_bindable_fallback(new_value);
-			}
 
 			if (!current_value.equals(new_value)) {
 				from_child = true;

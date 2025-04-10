@@ -1,7 +1,7 @@
 /** @typedef {{ file: string, line: number, column: number }} Location */
 
 import { get_descriptor } from '../../shared/utils.js';
-import { BINDABLE_FALLBACK_SYMBOL, LEGACY_PROPS, STATE_SYMBOL } from '../constants.js';
+import { LEGACY_PROPS, STATE_SYMBOL } from '../constants.js';
 import { FILENAME } from '../../../constants.js';
 import { component_context } from '../context.js';
 import * as w from '../warnings.js';
@@ -22,13 +22,12 @@ export function create_ownership_validator(props) {
 		 * @param {string} prop
 		 * @param {any[]} path
 		 * @param {any} result
-		 * @param {any} prop_value
 		 * @param {number} line
 		 * @param {number} column
 		 */
-		mutation: (prop, path, result, prop_value, line, column) => {
+		mutation: (prop, path, result, line, column) => {
 			const name = path[0];
-			if (is_bound(props, name) || !parent || prop_value()?.[BINDABLE_FALLBACK_SYMBOL]) {
+			if (is_bound(props, name) || !parent) {
 				return result;
 			}
 
@@ -53,14 +52,7 @@ export function create_ownership_validator(props) {
 		 * @param {() => any} value
 		 */
 		binding: (key, child_component, value) => {
-			var val;
-			if (
-				!is_bound(props, key) &&
-				parent &&
-				// we do this trick to prevent calling the value function twice
-				(val = value())?.[STATE_SYMBOL] &&
-				!val[BINDABLE_FALLBACK_SYMBOL]
-			) {
+			if (!is_bound(props, key) && parent && value()?.[STATE_SYMBOL]) {
 				w.ownership_invalid_binding(
 					component[FILENAME],
 					key,
@@ -80,5 +72,9 @@ function is_bound(props, prop_name) {
 	// Can be the case when someone does `mount(Component, props)` with `let props = $state({...})`
 	// or `createClassComponent(Component, props)`
 	const is_entry_props = STATE_SYMBOL in props || LEGACY_PROPS in props;
-	return !!get_descriptor(props, prop_name)?.set || (is_entry_props && prop_name in props);
+	return (
+		!!get_descriptor(props, prop_name)?.set ||
+		(is_entry_props && prop_name in props) ||
+		!(prop_name in props)
+	);
 }
