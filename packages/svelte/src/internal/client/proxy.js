@@ -63,14 +63,17 @@ export function proxy(value) {
 
 	return new Proxy(/** @type {any} */ (value), {
 		defineProperty(_, prop, descriptor) {
+			// we allow non enumerable/writable defines if the prop being set is our own symbol
+			// this should be fine for the invariants since the user can't get a handle to the symbol
+			if (DEV && prop === BINDABLE_FALLBACK_SYMBOL) {
+				return Reflect.defineProperty(_, prop, descriptor);
+			}
+
 			if (
-				// we allow non enumerable/writable defines if the prop being set is our own symbol
-				// this should be fine for the invariants since the user can't get a handle to the symbol
-				(!DEV || prop !== BINDABLE_FALLBACK_SYMBOL) &&
-				(!('value' in descriptor) ||
-					descriptor.configurable === false ||
-					descriptor.enumerable === false ||
-					descriptor.writable === false)
+				!('value' in descriptor) ||
+				descriptor.configurable === false ||
+				descriptor.enumerable === false ||
+				descriptor.writable === false
 			) {
 				// we disallow non-basic descriptors, because unless they are applied to the
 				// target object — which we avoid, so that state can be forked — we will run
@@ -125,6 +128,9 @@ export function proxy(value) {
 		get(target, prop, receiver) {
 			if (prop === STATE_SYMBOL) {
 				return value;
+			}
+			if (DEV && prop === BINDABLE_FALLBACK_SYMBOL) {
+				return Reflect.get(target, prop);
 			}
 
 			var s = sources.get(prop);
