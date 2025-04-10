@@ -13,7 +13,7 @@ import {
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
-import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
+import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN, BLOCK_OPEN_ELSE } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
 import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
 import { reset_elements } from './dev.js';
@@ -474,18 +474,21 @@ export function bind_props(props_parent, props_now) {
 
 /**
  * @template V
+ * @param {Payload} payload
  * @param {Promise<V>} promise
  * @param {null | (() => void)} pending_fn
  * @param {(value: V) => void} then_fn
  * @returns {void}
  */
-function await_block(promise, pending_fn, then_fn) {
+function await_block(payload, promise, pending_fn, then_fn) {
 	if (is_promise(promise)) {
+		payload.out += BLOCK_OPEN;
 		promise.then(null, noop);
 		if (pending_fn !== null) {
 			pending_fn();
 		}
 	} else if (then_fn !== null) {
+		payload.out += BLOCK_OPEN_ELSE;
 		then_fn(promise);
 	}
 }
