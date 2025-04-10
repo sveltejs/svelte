@@ -951,58 +951,60 @@ const instance_script = {
 			const bindings = ids.map((id) => state.scope.get(id.name));
 			const reassigned_bindings = bindings.filter((b) => b?.reassigned);
 
-			if (
-				node.body.expression.right.type !== 'Literal' &&
-				!bindings.some((b) => b?.kind === 'store_sub') &&
-				node.body.expression.left.type !== 'MemberExpression'
-			) {
-				let { start, end } = /** @type {{ start: number, end: number }} */ (
-					node.body.expression.right
-				);
+			if (!bindings.some((b) => b?.kind === 'state')) {
+				if (
+					node.body.expression.right.type !== 'Literal' &&
+					!bindings.some((b) => b?.kind === 'store_sub') &&
+					node.body.expression.left.type !== 'MemberExpression'
+				) {
+					let { start, end } = /** @type {{ start: number, end: number }} */ (
+						node.body.expression.right
+					);
 
-				check_rune_binding('derived');
+					check_rune_binding('derived');
 
-				// $derived
-				state.str.update(
-					/** @type {number} */ (node.start),
-					/** @type {number} */ (node.body.expression.start),
-					'let '
-				);
+					// $derived
+					state.str.update(
+						/** @type {number} */ (node.start),
+						/** @type {number} */ (node.body.expression.start),
+						'let '
+					);
 
-				if (node.body.expression.right.type === 'SequenceExpression') {
-					while (state.str.original[start] !== '(') start -= 1;
-					while (state.str.original[end - 1] !== ')') end += 1;
-				}
-
-				state.str.prependRight(start, `$derived(`);
-
-				// in a case like `$: ({ a } = b())`, there's already a trailing parenthesis.
-				// otherwise, we need to add one
-				if (state.str.original[/** @type {number} */ (node.body.start)] !== '(') {
-					state.str.appendLeft(end, `)`);
-				}
-
-				return;
-			} else {
-				for (const binding of reassigned_bindings) {
-					if (binding && (ids.includes(binding.node) || expression_ids.length === 0)) {
-						check_rune_binding('state');
-						const init =
-							binding.kind === 'state'
-								? ' = $state()'
-								: expression_ids.length === 0
-									? ` = $state(${state.str.original.substring(/** @type {number} */ (node.body.expression.right.start), node.body.expression.right.end)})`
-									: '';
-						// implicitly-declared variable which we need to make explicit
-						state.str.prependLeft(
-							/** @type {number} */ (node.start),
-							`let ${binding.node.name}${init};\n${state.indent}`
-						);
+					if (node.body.expression.right.type === 'SequenceExpression') {
+						while (state.str.original[start] !== '(') start -= 1;
+						while (state.str.original[end - 1] !== ')') end += 1;
 					}
-				}
-				if (expression_ids.length === 0 && !bindings.some((b) => b?.kind === 'store_sub')) {
-					state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
+
+					state.str.prependRight(start, `$derived(`);
+
+					// in a case like `$: ({ a } = b())`, there's already a trailing parenthesis.
+					// otherwise, we need to add one
+					if (state.str.original[/** @type {number} */ (node.body.start)] !== '(') {
+						state.str.appendLeft(end, `)`);
+					}
+
 					return;
+				} else {
+					for (const binding of reassigned_bindings) {
+						if (binding && (ids.includes(binding.node) || expression_ids.length === 0)) {
+							check_rune_binding('state');
+							const init =
+								binding.kind === 'state'
+									? ' = $state()'
+									: expression_ids.length === 0
+										? ` = $state(${state.str.original.substring(/** @type {number} */ (node.body.expression.right.start), node.body.expression.right.end)})`
+										: '';
+							// implicitly-declared variable which we need to make explicit
+							state.str.prependLeft(
+								/** @type {number} */ (node.start),
+								`let ${binding.node.name}${init};\n${state.indent}`
+							);
+						}
+					}
+					if (expression_ids.length === 0 && !bindings.some((b) => b?.kind === 'store_sub')) {
+						state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
+						return;
+					}
 				}
 			}
 		}
