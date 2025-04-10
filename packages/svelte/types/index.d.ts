@@ -1900,9 +1900,9 @@ declare module 'svelte/motion' {
 declare module 'svelte/reactivity' {
 	/**
 	 * A reactive version of the built-in [`Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date) object.
-	 * Reading the date in an [effect](https://svelte.dev/docs/svelte/$effect) or [derived](https://svelte.dev/docs/svelte/$derived) (whether with methods like `date.getTime()` or `date.toString()`,
-	 * or via things like [`Intl.DateTimeFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat)) will cause it to be re-evaluated when the
-	 * value of the date changes.
+	 * Reading the date (whether with methods like `date.getTime()` or `date.toString()`, or via things like [`Intl.DateTimeFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat))
+	 * in an [effect](https://svelte.dev/docs/svelte/$effect) or [derived](https://svelte.dev/docs/svelte/$derived)
+	 * will cause it to be re-evaluated when the value of the date changes.
 	 *
 	 * ```svelte
 	 * <script>
@@ -1937,7 +1937,7 @@ declare module 'svelte/reactivity' {
 	}
 	/**
 	 * A reactive version of the built-in [`Set`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set) object.
-	 * Reading contents of the set in an [effect](https://svelte.dev/docs/svelte/$effect) or [derived](https://svelte.dev/docs/svelte/$derived) (by iterating, or by reading `set.size` or calling `set.has(...)` as in the [example](https://svelte.dev/playground/53438b51194b4882bcc18cddf9f96f15) below)
+	 * Reading contents of the set (by iterating, or by reading `set.size` or calling `set.has(...)` as in the [example](https://svelte.dev/playground/53438b51194b4882bcc18cddf9f96f15) below) in an [effect](https://svelte.dev/docs/svelte/$effect) or [derived](https://svelte.dev/docs/svelte/$derived)
 	 * will cause it to be re-evaluated as necessary when the set is updated.
 	 *
 	 * Note that values in a reactive set are _not_ made [deeply reactive](https://svelte.dev/docs/svelte/$state#Deep-state).
@@ -1978,7 +1978,7 @@ declare module 'svelte/reactivity' {
 	}
 	/**
 	 * A reactive version of the built-in [`Map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) object.
-	 * Reading contents of the map in an [effect](https://svelte.dev/docs/svelte/$effect) or [derived](https://svelte.dev/docs/svelte/$derived) (by iterating, or by reading `map.size` or calling `map.get(...)` or `map.has(...)` as in the [tic-tac-toe example](https://svelte.dev/playground/0b0ff4aa49c9443f9b47fe5203c78293) below)
+	 * Reading contents of the map (by iterating, or by reading `map.size` or calling `map.get(...)` or `map.has(...)` as in the [tic-tac-toe example](https://svelte.dev/playground/0b0ff4aa49c9443f9b47fe5203c78293) below) in an [effect](https://svelte.dev/docs/svelte/$effect) or [derived](https://svelte.dev/docs/svelte/$derived)
 	 * will cause it to be re-evaluated as necessary when the map is updated.
 	 *
 	 * Note that values in a reactive map are _not_ made [deeply reactive](https://svelte.dev/docs/svelte/$state#Deep-state).
@@ -2027,11 +2027,64 @@ declare module 'svelte/reactivity' {
 		set(key: K, value: V): this;
 		#private;
 	}
+	/**
+	 * A reactive version of the built-in [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) object.
+	 * Reading properties of the URL (such as `url.href` or `url.pathname`) in an [effect](https://svelte.dev/docs/svelte/$effect) or [derived](https://svelte.dev/docs/svelte/$derived)
+	 * will cause it to be re-evaluated as necessary when the URL changes.
+	 *
+	 * The `searchParams` property is an instance of [SvelteURLSearchParams](http://localhost:5173/docs/svelte/svelte-reactivity#SvelteURLSearchParams).
+	 *
+	 * [Example](https://svelte.dev/playground/5a694758901b448c83dc40dc31c71f2a):
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { SvelteURL } from 'svelte/reactivity';
+	 *
+	 * 	const url = new SvelteURL('https://example.com/path');
+	 * </script>
+	 *
+	 * <!-- changes to these... -->
+	 * <input bind:value={url.protocol} />
+	 * <input bind:value={url.hostname} />
+	 * <input bind:value={url.pathname} />
+	 *
+	 * <hr />
+	 *
+	 * <!-- will update `href` and vice versa -->
+	 * <input bind:value={url.href} size="65" />
+	 * ```
+	 */
 	export class SvelteURL extends URL {
 		get searchParams(): SvelteURLSearchParams;
 		#private;
 	}
 	const REPLACE: unique symbol;
+	/**
+	 * A reactive version of the built-in [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) object.
+	 * Reading its contents (by iterating, or by calling `params.get(...)` or `params.getAll(...)` as in the [example](https://svelte.dev/playground/b3926c86c5384bab9f2cf993bc08c1c8) below) in an [effect](https://svelte.dev/docs/svelte/$effect) or [derived](https://svelte.dev/docs/svelte/$derived)
+	 * will cause it to be re-evaluated as necessary when the params are updated.
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { SvelteURLSearchParams } from 'svelte/reactivity';
+	 *
+	 * 	const params = new SvelteURLSearchParams('message=hello');
+	 *
+	 * 	let key = $state('key');
+	 * 	let value = $state('value');
+	 * </script>
+	 *
+	 * <input bind:value={key} />
+	 * <input bind:value={value} />
+	 * <button onclick={() => params.append(key, value)}>append</button>
+	 *
+	 * <p>?{params.toString()}</p>
+	 *
+	 * {#each params as [key, value]}
+	 * 	<p>{key}: {value}</p>
+	 * {/each}
+	 * ```
+	 */
 	export class SvelteURLSearchParams extends URLSearchParams {
 		
 		[REPLACE](params: URLSearchParams): void;
