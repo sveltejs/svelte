@@ -7,7 +7,7 @@ import {
 	PROPS_IS_RUNES,
 	PROPS_IS_UPDATED
 } from '../../../constants.js';
-import { get_descriptor, is_function } from '../../shared/utils.js';
+import { define_property, get_descriptor, is_function } from '../../shared/utils.js';
 import { mutable_source, set, source, update } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
 import { get, captured_signals, untrack } from '../runtime.js';

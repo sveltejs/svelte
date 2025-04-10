@@ -27,7 +27,7 @@ export function create_ownership_validator(props) {
 		 */
 		mutation: (prop, path, result, line, column) => {
 			const name = path[0];
-			if (is_bound(props, name) || !parent) {
+			if (is_bound_or_unset(props, name) || !parent) {
 				return result;
 			}
 
@@ -52,7 +52,7 @@ export function create_ownership_validator(props) {
 		 * @param {() => any} value
 		 */
 		binding: (key, child_component, value) => {
-			if (!is_bound(props, key) && parent && value()?.[STATE_SYMBOL]) {
+			if (!is_bound_or_unset(props, key) && parent && value()?.[STATE_SYMBOL]) {
 				w.ownership_invalid_binding(
 					component[FILENAME],
 					key,
@@ -68,9 +68,13 @@ export function create_ownership_validator(props) {
  * @param {Record<string, any>} props
  * @param {string} prop_name
  */
-function is_bound(props, prop_name) {
+function is_bound_or_unset(props, prop_name) {
 	// Can be the case when someone does `mount(Component, props)` with `let props = $state({...})`
 	// or `createClassComponent(Component, props)`
 	const is_entry_props = STATE_SYMBOL in props || LEGACY_PROPS in props;
-	return !!get_descriptor(props, prop_name)?.set || (is_entry_props && prop_name in props);
+	return (
+		!!get_descriptor(props, prop_name)?.set ||
+		(is_entry_props && prop_name in props) ||
+		!(prop_name in props)
+	);
 }
