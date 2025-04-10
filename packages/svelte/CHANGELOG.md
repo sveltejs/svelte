@@ -1,5 +1,13 @@
 # svelte
 
+## 5.25.12
+
+### Patch Changes
+
+- fix: improve internal_set versioning mechanic ([#15724](https://github.com/sveltejs/svelte/pull/15724))
+
+- fix: don't transform reassigned state in labeled statement in `$derived` ([#15725](https://github.com/sveltejs/svelte/pull/15725))
+
 ## 5.25.11
 
 ### Patch Changes
