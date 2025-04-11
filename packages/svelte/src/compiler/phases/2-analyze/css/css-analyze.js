@@ -10,7 +10,7 @@ import { is_global, is_unscoped_pseudo_class } from './utils.js';
  * @typedef {{
  *   keyframes: string[];
  *   rule: AST.CSS.Rule | null;
- *   has_global: { value: boolean }; // need an object since state is spread
+ *   analysis: ComponentAnalysis;
  * }} CssState
  */
 
@@ -57,7 +57,7 @@ const css_visitors = {
 				context.state.keyframes.push(node.prelude);
 			} else if (node.prelude.startsWith('-global-')) {
 				// we don't check if the block.children.length because the keyframe is still added even if empty
-				context.state.has_global.value ||= is_unscoped(context.path);
+				context.state.analysis.css.has_global ||= is_unscoped(context.path);
 			}
 		}
 
@@ -276,7 +276,7 @@ const css_visitors = {
 		// if this rule has a ComplexSelector whose RelativeSelector children are all
 		// `:global(...)`, and the rule contains declarations (rather than just
 		// nested rules) then the component as a whole includes global CSS
-		context.state.has_global.value ||=
+		context.state.analysis.css.has_global ||=
 			node.metadata.has_global_selectors &&
 			node.block.children.filter((child) => child.type === 'Declaration').length > 0 &&
 			is_unscoped(context.path);
@@ -324,10 +324,8 @@ export function analyze_css(stylesheet, analysis) {
 	const css_state = {
 		keyframes: analysis.css.keyframes,
 		rule: null,
-		// we need to use an object since state is spread
-		has_global: { value: false }
+		analysis
 	};
 
 	walk(stylesheet, css_state, css_visitors);
-	analysis.css.has_global = css_state.has_global.value;
 }
