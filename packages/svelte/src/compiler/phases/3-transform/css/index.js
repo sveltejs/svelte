@@ -59,7 +59,8 @@ export function render_stylesheet(source, analysis, options) {
 			// generateMap takes care of calculating source relative to file
 			source: options.filename,
 			file: options.cssOutputFilename || options.filename
-		})
+		}),
+		hasGlobal: analysis.css.has_unscoped_global
 	};
 
 	merge_with_preprocessor_map(css, options, css.map.sources[0]);
