@@ -22,11 +22,12 @@ import {
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
-	BOUNDARY_EFFECT
+	BOUNDARY_EFFECT,
+	EFFECT_IS_UPDATING
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
-import { internal_set } from './reactivity/sources.js';
-import { destroy_derived_effects, update_derived } from './reactivity/deriveds.js';
+import { internal_set, old_values } from './reactivity/sources.js';
+import { destroy_derived_effects, execute_derived, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { FILENAME } from '../../constants.js';
 import { tracing_mode_flag } from '../flags/index.js';
@@ -87,17 +88,28 @@ export function set_active_effect(effect) {
 }
 
 /**
- * When sources are created within a derived, we record them so that we can safely allow
- * local mutations to these sources without the side-effect error being invoked unnecessarily.
+ * When sources are created within a reaction, reading and writing
+ * them should not cause a re-run
  * @type {null | Source[]}
  */
-export let derived_sources = null;
+export let reaction_sources = null;
 
 /**
  * @param {Source[] | null} sources
  */
-export function set_derived_sources(sources) {
-	derived_sources = sources;
+export function set_reaction_sources(sources) {
+	reaction_sources = sources;
+}
+
+/** @param {Value} value */
+export function push_reaction_value(value) {
+	if (active_reaction !== null && active_reaction.f & EFFECT_IS_UPDATING) {
+		if (reaction_sources === null) {
+			set_reaction_sources([value]);
+		} else {
+			reaction_sources.push(value);
+		}
+	}
 }
 
 /**
@@ -367,6 +379,9 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 
 	for (var i = 0; i < reactions.length; i++) {
 		var reaction = reactions[i];
+
+		if (reaction_sources?.includes(signal)) continue;
+
 		if ((reaction.f & DERIVED) !== 0) {
 			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
 		} else if (effect === reaction) {
@@ -391,9 +406,10 @@ export function update_reaction(reaction) {
 	var previous_untracked_writes = untracked_writes;
 	var previous_reaction = active_reaction;
 	var previous_skip_reaction = skip_reaction;
-	var prev_derived_sources = derived_sources;
+	var previous_reaction_sources = reaction_sources;
 	var previous_component_context = component_context;
 	var previous_untracking = untracking;
+
 	var flags = reaction.f;
 
 	new_deps = /** @type {null | Value[]} */ (null);
@@ -403,10 +419,12 @@ export function update_reaction(reaction) {
 		(flags & UNOWNED) !== 0 && (untracking || !is_updating_effect || active_reaction === null);
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 
-	derived_sources = null;
+	reaction_sources = null;
 	set_component_context(reaction.ctx);
 	untracking = false;
 	read_version++;
+
+	reaction.f |= EFFECT_IS_UPDATING;
 
 	try {
 		var result = /** @type {Function} */ (0, reaction.fn)();
@@ -458,8 +476,16 @@ export function update_reaction(reaction) {
 		// we need to increment the read version to ensure that
 		// any dependencies in this reaction aren't marked with
 		// the same version
-		if (previous_reaction !== null) {
+		if (previous_reaction !== reaction) {
 			read_version++;
+
+			if (untracked_writes !== null) {
+				if (previous_untracked_writes === null) {
+					previous_untracked_writes = untracked_writes;
+				} else {
+					previous_untracked_writes.push(.../** @type {Source[]} */ (untracked_writes));
+				}
+			}
 		}
 
 		return result;
@@ -469,9 +495,11 @@ export function update_reaction(reaction) {
 		untracked_writes = previous_untracked_writes;
 		active_reaction = previous_reaction;
 		skip_reaction = previous_skip_reaction;
-		derived_sources = prev_derived_sources;
+		reaction_sources = previous_reaction_sources;
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
+
+		reaction.f ^= EFFECT_IS_UPDATING;
 	}
 }
 
@@ -664,6 +692,7 @@ function flush_queued_root_effects() {
 				var collected_effects = process_effects(root_effects[i]);
 				flush_queued_effects(collected_effects);
 			}
+			old_values.clear();
 		}
 	} finally {
 		is_flushing = false;
@@ -857,24 +886,23 @@ export function get(signal) {
 
 	// Register the dependency on the current reaction signal.
 	if (active_reaction !== null && !untracking) {
-		if (derived_sources !== null && derived_sources.includes(signal)) {
-			e.state_unsafe_local_read();
-		}
-		var deps = active_reaction.deps;
-		if (signal.rv < read_version) {
-			signal.rv = read_version;
-			// If the signal is accessing the same dependencies in the same
-			// order as it did last time, increment `skipped_deps`
-			// rather than updating `new_deps`, which creates GC cost
-			if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
-				skipped_deps++;
-			} else if (new_deps === null) {
-				new_deps = [signal];
-			} else if (!skip_reaction || !new_deps.includes(signal)) {
-				// Normally we can push duplicated dependencies to `new_deps`, but if we're inside
-				// an unowned derived because skip_reaction is true, then we need to ensure that
-				// we don't have duplicates
-				new_deps.push(signal);
+		if (!reaction_sources?.includes(signal)) {
+			var deps = active_reaction.deps;
+			if (signal.rv < read_version) {
+				signal.rv = read_version;
+				// If the signal is accessing the same dependencies in the same
+				// order as it did last time, increment `skipped_deps`
+				// rather than updating `new_deps`, which creates GC cost
+				if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
+					skipped_deps++;
+				} else if (new_deps === null) {
+					new_deps = [signal];
+				} else if (!skip_reaction || !new_deps.includes(signal)) {
+					// Normally we can push duplicated dependencies to `new_deps`, but if we're inside
+					// an unowned derived because skip_reaction is true, then we need to ensure that
+					// we don't have duplicates
+					new_deps.push(signal);
+				}
 			}
 		}
 	} else if (
@@ -921,6 +949,10 @@ export function get(signal) {
 
 			entry.read.push(get_stack('TracedAt'));
 		}
+	}
+
+	if (is_destroying_effect && old_values.has(signal)) {
+		return old_values.get(signal);
 	}
 
 	return signal.v;

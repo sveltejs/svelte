@@ -21,7 +21,7 @@ A component is attempting to bind to a non-bindable property `%key%` belonging t
 ### component_api_changed
 
 ```
-%parent% called `%method%` on an instance of %component%, which is no longer valid in Svelte 5
+Calling `%method%` on a component instance (of %component%) is no longer valid in Svelte 5
 ```
 
 See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-longer-classes) for more information.
@@ -122,14 +122,39 @@ Property descriptors defined on `$state` objects must contain `value` and always
 Cannot set prototype of `$state` object
 ```
 
-### state_unsafe_local_read
-
-```
-Reading state that was created inside the same derived is forbidden. Consider using `untrack` to read locally created state
-```
-
 ### state_unsafe_mutation
 
 ```
 Updating state inside a derived or a template expression is forbidden. If the value should not be reactive, declare it without `$state`
 ```
+
+This error occurs when state is updated while evaluating a `$derived`. You might encounter it while trying to 'derive' two pieces of state in one go:
+
+```svelte
+<script>
+	let count = $state(0);
+
+	let even = $state(true);
+
+	let odd = $derived.by(() => {
+		even = count % 2 === 0;
+		return !even;
+	});
+</script>
+
+<button onclick={() => count++}>{count}</button>
+
+<p>{count} is even: {even}</p>
+<p>{count} is odd: {odd}</p>
+```
+
+This is forbidden because it introduces instability: if `<p>{count} is even: {even}</p>` is updated before `odd` is recalculated, `even` will be stale. In most cases the solution is to make everything derived:
+
+```js
+let count = 0;
+// ---cut---
+let even = $derived(count % 2 === 0);
+let odd = $derived(!even);
+```
+
+If side-effects are unavoidable, use [`$effect`]($effect) instead.

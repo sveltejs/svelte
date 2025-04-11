@@ -6,6 +6,12 @@ import {
 } from '../internal/client/reactivity/effects.js';
 import { get, writable } from './shared/index.js';
 import { createSubscriber } from '../reactivity/create-subscriber.js';
+import {
+	active_effect,
+	active_reaction,
+	set_active_effect,
+	set_active_reaction
+} from '../internal/client/runtime.js';
 
 export { derived, get, readable, readonly, writable } from './shared/index.js';
 
@@ -39,19 +45,34 @@ export { derived, get, readable, readonly, writable } from './shared/index.js';
  * @returns {Writable<V> | Readable<V>}
  */
 export function toStore(get, set) {
-	let init_value = get();
+	var effect = active_effect;
+	var reaction = active_reaction;
+	var init_value = get();
+
 	const store = writable(init_value, (set) => {
 		// If the value has changed before we call subscribe, then
 		// we need to treat the value as already having run
-		let ran = init_value !== get();
+		var ran = init_value !== get();
 
 		// TODO do we need a different implementation on the server?
-		const teardown = effect_root(() => {
-			render_effect(() => {
-				const value = get();
-				if (ran) set(value);
+		var teardown;
+		// Apply the reaction and effect at the time of toStore being called
+		var previous_reaction = active_reaction;
+		var previous_effect = active_effect;
+		set_active_reaction(reaction);
+		set_active_effect(effect);
+
+		try {
+			teardown = effect_root(() => {
+				render_effect(() => {
+					const value = get();
+					if (ran) set(value);
+				});
 			});
-		});
+		} finally {
+			set_active_reaction(previous_reaction);
+			set_active_effect(previous_effect);
+		}
 
 		ran = true;
 

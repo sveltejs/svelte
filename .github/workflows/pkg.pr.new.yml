@@ -3,19 +3,18 @@ on: [push, pull_request]
 
 jobs:
   build:
+    permissions: {}
+
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: install corepack
-        run: npm i -g corepack@0.31.0
-
       - run: corepack enable
       - uses: actions/setup-node@v4
         with:
-          node-version: 18.x
+          node-version: 22.x
           cache: pnpm
 
       - name: Install dependencies
