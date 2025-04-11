@@ -823,7 +823,7 @@ See [the migration guide](v5-migration-guide#Snippets-instead-of-slots) for more
 ### state_referenced_locally
 
 ```
-Referencing state in its own scope will cause reactivity loss. Did you mean to reference `%name%` inside a %type% instead?
+This reference only captures the initial value of `%name%`. Did you mean to reference it inside a %type% instead?
 ```
 
 This warning is thrown when the compiler detects the following:
