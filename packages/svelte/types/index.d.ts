@@ -2275,6 +2275,7 @@ declare module 'svelte/transition' {
 		delay?: number;
 		duration?: number | ((len: number) => number);
 		easing?: EasingFunction;
+		strategy?: 'scale' | 'size';
 	}
 	/**
 	 * Animates a `blur` filter alongside an element's opacity.
