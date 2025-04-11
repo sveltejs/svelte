@@ -12,7 +12,7 @@ title: {#each ...}
 {#each expression as name, index}...{/each}
 ```
 
-Iterating over values can be done with an each block. The values in question can be arrays, array-like objects (i.e. anything with a `length` property), or iterables like `Map` and `Set` — in other words, anything that can be used with `Array.from`.
+Iterating over values can be done with an each block. The values in question can be arrays, array-like objects (i.e. anything with a `length` property), or iterables like `Map` and `Set` — in other words, anything that can be used with `Array.from`. For reactive values, changes in state are determined by comparing old and new items at the same position in the iterated sequence. As such, an "unkeyed" each block is best suited for values whose length stays fixed, since a change in position of an item will cause a change in state.
 
 ```svelte
 <h1>Shopping list</h1>
@@ -43,7 +43,7 @@ An each block can also specify an _index_, equivalent to the second argument in 
 {#each expression as name, index (key)}...{/each}
 ```
 
-If a _key_ expression is provided — which must uniquely identify each iterated item — Svelte will compare old and new items having the same key to determine data changes, rather than using their position in the iterated sequence. This is useful when the positions of items change, e.g. when modifying the length of an array. The key can be any object, but strings and numbers are recommended since they allow identity to persist when the objects themselves change.
+If a _key_ expression is provided — which must uniquely identify each iterated item — Svelte will compare old and new reactive items having the same key to determine state changes, rather than comparing items at the same position in the iterated sequence. This is useful when the positions of items change, e.g. when modifying the length of an array. The key can be any object, but strings and numbers are recommended since they allow identity to persist when the objects themselves change.
 
 ```svelte
 {#each items as item (item.id)}
