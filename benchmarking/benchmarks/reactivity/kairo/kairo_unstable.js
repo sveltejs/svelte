@@ -25,13 +25,13 @@ function setup() {
 	return {
 		destroy,
 		run() {
-			$.flush_sync(() => {
+			$.flush(() => {
 				$.set(head, 1);
 			});
 			assert($.get(current) === 40);
 			counter = 0;
 			for (let i = 0; i < 100; i++) {
-				$.flush_sync(() => {
+				$.flush(() => {
 					$.set(head, i);
 				});
 			}
@@ -51,7 +51,7 @@ export async function kairo_unstable_unowned() {
 	const { run, destroy } = setup();
 
 	const { timing } = await fastest_test(10, () => {
-		for (let i = 0; i < 100; i++) {
+		for (let i = 0; i < 1000; i++) {
 			run();
 		}
 	});
@@ -80,7 +80,7 @@ export async function kairo_unstable_owned() {
 	});
 
 	const { timing } = await fastest_test(10, () => {
-		for (let i = 0; i < 100; i++) {
+		for (let i = 0; i < 1000; i++) {
 			run();
 		}
 	});

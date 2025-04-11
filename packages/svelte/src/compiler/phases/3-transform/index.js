@@ -33,12 +33,14 @@ export function transform_component(analysis, source, options) {
 			: client_component(analysis, options);
 
 	const js_source_name = get_source_name(options.filename, options.outputFilename, 'input.svelte');
+
 	const js = print(program, {
 		// include source content; makes it easier/more robust looking up the source map code
 		// (else esrap does return null for source and sourceMapContent which may trip up tooling)
 		sourceMapContent: source,
 		sourceMapSource: js_source_name
 	});
+
 	merge_with_preprocessor_map(js, options, js_source_name);
 
 	const css =

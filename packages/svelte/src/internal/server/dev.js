@@ -1,10 +1,12 @@
-/** @import { Component, Payload } from '#server' */
+/** @import { Component } from '#server' */
 import { FILENAME } from '../../constants.js';
 import {
 	is_tag_valid_with_ancestor,
 	is_tag_valid_with_parent
 } from '../../html-tree-validation.js';
 import { current_component } from './context.js';
+import { invalid_snippet_arguments } from '../shared/errors.js';
+import { Payload } from './payload.js';
 
 /**
  * @typedef {{
@@ -97,4 +99,13 @@ export function push_element(payload, tag, line, column) {
 
 export function pop_element() {
 	parent = /** @type {Element} */ (parent).parent;
+}
+
+/**
+ * @param {Payload} payload
+ */
+export function validate_snippet_args(payload) {
+	if (typeof payload !== 'object' || !(payload instanceof Payload)) {
+		invalid_snippet_arguments();
+	}
 }

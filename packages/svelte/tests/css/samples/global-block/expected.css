@@ -69,3 +69,24 @@
 			color: red;
 		}
 	}*/
+	/* :global{*/
+		.x{
+			animation: svelte-xyz-test 1s;
+		}
+
+		.y{
+			animation: test-in 1s;
+		}
+
+		@keyframes test-in{
+			to{
+				opacity: 1;
+			}
+		}
+	/*}*/
+
+	@keyframes svelte-xyz-test{
+		to{
+			opacity: 1;
+		}
+	}

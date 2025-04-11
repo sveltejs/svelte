@@ -156,6 +156,7 @@ const DOM_BOOLEAN_ATTRIBUTES = [
 	'formnovalidate',
 	'hidden',
 	'indeterminate',
+	'inert',
 	'ismap',
 	'loop',
 	'multiple',
@@ -169,7 +170,10 @@ const DOM_BOOLEAN_ATTRIBUTES = [
 	'reversed',
 	'seamless',
 	'selected',
-	'webkitdirectory'
+	'webkitdirectory',
+	'defer',
+	'disablepictureinpicture',
+	'disableremoteplayback'
 ];
 
 /**
@@ -195,7 +199,11 @@ const ATTRIBUTE_ALIASES = {
 	readonly: 'readOnly',
 	defaultvalue: 'defaultValue',
 	defaultchecked: 'defaultChecked',
-	srcobject: 'srcObject'
+	srcobject: 'srcObject',
+	novalidate: 'noValidate',
+	allowfullscreen: 'allowFullscreen',
+	disablepictureinpicture: 'disablePictureInPicture',
+	disableremoteplayback: 'disableRemotePlayback'
 };
 
 /**
@@ -214,11 +222,14 @@ const DOM_PROPERTIES = [
 	'playsInline',
 	'readOnly',
 	'value',
-	'inert',
 	'volume',
 	'defaultValue',
 	'defaultChecked',
-	'srcObject'
+	'srcObject',
+	'noValidate',
+	'allowFullscreen',
+	'disablePictureInPicture',
+	'disableRemotePlayback'
 ];
 
 /**
@@ -422,6 +433,7 @@ const RUNES = /** @type {const} */ ([
 	'$state.raw',
 	'$state.snapshot',
 	'$props',
+	'$props.id',
 	'$bindable',
 	'$derived',
 	'$derived.by',
@@ -431,6 +443,7 @@ const RUNES = /** @type {const} */ ([
 	'$effect.root',
 	'$inspect',
 	'$inspect().with',
+	'$inspect.trace',
 	'$host'
 ]);
 
@@ -440,4 +453,22 @@ const RUNES = /** @type {const} */ ([
  */
 export function is_rune(name) {
 	return RUNES.includes(/** @type {RUNES[number]} */ (name));
+}
+
+/** List of elements that require raw contents and should not have SSR comments put in them */
+const RAW_TEXT_ELEMENTS = /** @type {const} */ (['textarea', 'script', 'style', 'title']);
+
+/** @param {string} name */
+export function is_raw_text_element(name) {
+	return RAW_TEXT_ELEMENTS.includes(/** @type {RAW_TEXT_ELEMENTS[number]} */ (name));
+}
+
+/**
+ * Prevent devtools trying to make `location` a clickable link by inserting a zero-width space
+ * @template {string | undefined} T
+ * @param {T} location
+ * @returns {T};
+ */
+export function sanitize_location(location) {
+	return /** @type {T} */ (location?.replace(/\//g, '/\u200b'));
 }

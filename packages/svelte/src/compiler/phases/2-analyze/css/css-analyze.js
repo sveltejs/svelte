@@ -1,5 +1,5 @@
 /** @import { ComponentAnalysis } from '../../types.js' */
-/** @import { Css } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Visitors } from 'zimmerframe' */
 import { walk } from 'zimmerframe';
 import * as e from '../../../errors.js';
@@ -7,18 +7,20 @@ import { is_keyframes_node } from '../../css.js';
 import { is_global, is_unscoped_pseudo_class } from './utils.js';
 
 /**
- * @typedef {Visitors<
- *   Css.Node,
- *   {
- *     keyframes: string[];
- *     rule: Css.Rule | null;
- *   }
- * >} CssVisitors
+ * @typedef {{
+ *   keyframes: string[];
+ *   rule: AST.CSS.Rule | null;
+ *   analysis: ComponentAnalysis;
+ * }} CssState
+ */
+
+/**
+ * @typedef {Visitors<AST.CSS.Node, CssState>} CssVisitors
  */
 
 /**
  * True if is `:global`
- * @param {Css.SimpleSelector} simple_selector
+ * @param {AST.CSS.SimpleSelector} simple_selector
  */
 function is_global_block_selector(simple_selector) {
 	return (
@@ -28,12 +30,32 @@ function is_global_block_selector(simple_selector) {
 	);
 }
 
+/**
+ * @param {AST.SvelteNode[]} path
+ */
+function is_unscoped(path) {
+	return path
+		.filter((node) => node.type === 'Rule')
+		.every((node) => node.metadata.has_global_selectors);
+}
+
+/**
+ *
+ * @param {Array<AST.CSS.Node>} path
+ */
+function is_in_global_block(path) {
+	return path.some((node) => node.type === 'Rule' && node.metadata.is_global_block);
+}
+
 /** @type {CssVisitors} */
 const css_visitors = {
 	Atrule(node, context) {
 		if (is_keyframes_node(node)) {
-			if (!node.prelude.startsWith('-global-')) {
+			if (!node.prelude.startsWith('-global-') && !is_in_global_block(context.path)) {
 				context.state.keyframes.push(node.prelude);
+			} else if (node.prelude.startsWith('-global-')) {
+				// we don't check if the block.children.length because the keyframe is still added even if empty
+				context.state.analysis.css.has_global ||= is_unscoped(context.path);
 			}
 		}
 
@@ -91,9 +113,11 @@ const css_visitors = {
 
 		node.metadata.rule = context.state.rule;
 
-		node.metadata.used ||= node.children.every(
+		node.metadata.is_global = node.children.every(
 			({ metadata }) => metadata.is_global || metadata.is_global_like
 		);
+
+		node.metadata.used ||= node.metadata.is_global;
 
 		if (
 			node.metadata.rule?.metadata.parent_rule &&
@@ -112,7 +136,7 @@ const css_visitors = {
 		}
 	},
 	RelativeSelector(node, context) {
-		const parent = /** @type {Css.ComplexSelector} */ (context.path.at(-1));
+		const parent = /** @type {AST.CSS.ComplexSelector} */ (context.path.at(-1));
 
 		if (
 			node.combinator != null &&
@@ -125,7 +149,13 @@ const css_visitors = {
 
 		node.metadata.is_global = node.selectors.length >= 1 && is_global(node);
 
-		if (node.selectors.length === 1) {
+		if (
+			node.selectors.length >= 1 &&
+			node.selectors.every(
+				(selector) =>
+					selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector'
+			)
+		) {
 			const first = node.selectors[0];
 			node.metadata.is_global_like ||=
 				(first.type === 'PseudoClassSelector' && first.name === 'host') ||
@@ -149,7 +179,7 @@ const css_visitors = {
 		if (node.metadata.is_global_like || node.metadata.is_global) {
 			// So that nested selectors like `:root:not(.x)` are not marked as unused
 			for (const child of node.selectors) {
-				walk(/** @type {Css.Node} */ (child), null, {
+				walk(/** @type {AST.CSS.Node} */ (child), null, {
 					ComplexSelector(node, context) {
 						node.metadata.used = true;
 						context.next();
@@ -176,8 +206,9 @@ const css_visitors = {
 
 				if (idx !== -1) {
 					is_global_block = true;
+
 					for (let i = idx + 1; i < child.selectors.length; i++) {
-						walk(/** @type {Css.Node} */ (child.selectors[i]), null, {
+						walk(/** @type {AST.CSS.Node} */ (child.selectors[i]), null, {
 							ComplexSelector(node) {
 								node.metadata.used = true;
 							}
@@ -228,19 +259,29 @@ const css_visitors = {
 			}
 		}
 
-		context.next({
-			...context.state,
-			rule: node
-		});
+		const state = { ...context.state, rule: node };
 
-		node.metadata.has_local_selectors = node.prelude.children.some((selector) => {
-			return selector.children.some(
-				({ metadata }) => !metadata.is_global && !metadata.is_global_like
-			);
-		});
+		// visit selector list first, to populate child selector metadata
+		context.visit(node.prelude, state);
+
+		for (const selector of node.prelude.children) {
+			node.metadata.has_global_selectors ||= selector.metadata.is_global;
+			node.metadata.has_local_selectors ||= !selector.metadata.is_global;
+		}
+
+		// if this rule has a ComplexSelector whose RelativeSelector children are all
+		// `:global(...)`, and the rule contains declarations (rather than just
+		// nested rules) then the component as a whole includes global CSS
+		context.state.analysis.css.has_global ||=
+			node.metadata.has_global_selectors &&
+			node.block.children.filter((child) => child.type === 'Declaration').length > 0 &&
+			is_unscoped(context.path);
+
+		// visit block list, so parent rule metadata is populated
+		context.visit(node.block, state);
 	},
 	NestingSelector(node, context) {
-		const rule = /** @type {Css.Rule} */ (context.state.rule);
+		const rule = /** @type {AST.CSS.Rule} */ (context.state.rule);
 		const parent_rule = rule.metadata.parent_rule;
 
 		if (!parent_rule) {
@@ -271,9 +312,16 @@ const css_visitors = {
 };
 
 /**
- * @param {Css.StyleSheet} stylesheet
+ * @param {AST.CSS.StyleSheet} stylesheet
  * @param {ComponentAnalysis} analysis
  */
 export function analyze_css(stylesheet, analysis) {
-	walk(stylesheet, { keyframes: analysis.css.keyframes, rule: null }, css_visitors);
+	/** @type {CssState} */
+	const css_state = {
+		keyframes: analysis.css.keyframes,
+		rule: null,
+		analysis
+	};
+
+	walk(stylesheet, css_state, css_visitors);
 }

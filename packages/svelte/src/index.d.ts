@@ -19,6 +19,7 @@ export interface ComponentConstructorOptions<
 	intro?: boolean;
 	recover?: boolean;
 	sync?: boolean;
+	idPrefix?: string;
 	$$inline?: boolean;
 }
 
@@ -278,7 +279,7 @@ declare const SnippetReturn: unique symbol;
  * ```
  * You can only call a snippet through the `{@render ...}` tag.
  *
- * https://svelte.dev/docs/svelte/snippet
+ * See the [snippet documentation](https://svelte.dev/docs/svelte/snippet) for more info.
  *
  * @template Parameters the parameters that the snippet expects (if any) as a tuple.
  */

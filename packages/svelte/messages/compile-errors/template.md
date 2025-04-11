@@ -50,15 +50,27 @@
 
 > Attribute values containing `{...}` must be enclosed in quote marks, unless the value only contains the expression
 
+## bind_group_invalid_expression
+
+> `bind:group` can only bind to an Identifier or MemberExpression
+
+## bind_group_invalid_snippet_parameter
+
+> Cannot `bind:group` to a snippet parameter
+
 ## bind_invalid_expression
 
-> Can only bind to an Identifier or MemberExpression
+> Can only bind to an Identifier or MemberExpression or a `{get, set}` pair
 
 ## bind_invalid_name
 
 > `bind:%name%` is not a valid binding
 
 > `bind:%name%` is not a valid binding. %explanation%
+
+## bind_invalid_parens
+
+> `bind:%name%={get, set}` must not have surrounding parentheses
 
 ## bind_invalid_target
 
@@ -110,7 +122,7 @@
 
 ## const_tag_invalid_placement
 
-> `{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>` or `<Component>`
+> `{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>`, `<svelte:boundary` or `<Component>`
 
 ## debug_tag_invalid_arguments
 
@@ -409,6 +421,10 @@ See https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-ele
 ## unexpected_reserved_word
 
 > '%word%' is a reserved word in JavaScript and cannot be used here
+
+## unterminated_string_constant
+
+> Unterminated string constant
 
 ## void_element_invalid_content
 

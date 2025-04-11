@@ -1,5 +1,5 @@
 /** @import { Program, Property, Statement, VariableDeclarator } from 'estree' */
-/** @import { SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { ComponentServerTransformState, ComponentVisitors, ServerTransformState, Visitors } from './types.js' */
 /** @import { Analysis, ComponentAnalysis } from '../../types.js' */
 import { walk } from 'zimmerframe';
@@ -104,12 +104,12 @@ export function server_component(analysis, options) {
 	};
 
 	const module = /** @type {Program} */ (
-		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, global_visitors)
+		walk(/** @type {AST.SvelteNode} */ (analysis.module.ast), state, global_visitors)
 	);
 
 	const instance = /** @type {Program} */ (
 		walk(
-			/** @type {SvelteNode} */ (analysis.instance.ast),
+			/** @type {AST.SvelteNode} */ (analysis.instance.ast),
 			{ ...state, scopes: analysis.instance.scopes },
 			{
 				...global_visitors,
@@ -130,7 +130,7 @@ export function server_component(analysis, options) {
 
 	const template = /** @type {Program} */ (
 		walk(
-			/** @type {SvelteNode} */ (analysis.template.ast),
+			/** @type {AST.SvelteNode} */ (analysis.template.ast),
 			{ ...state, scopes: analysis.template.scopes },
 			// @ts-expect-error don't know, don't care
 			{ ...global_visitors, ...template_visitors }
@@ -186,12 +186,10 @@ export function server_component(analysis, options) {
 			...snippets,
 			b.let('$$settled', b.true),
 			b.let('$$inner_payload'),
-			b.stmt(
-				b.function(
-					b.id('$$render_inner'),
-					[b.id('$$payload')],
-					b.block(/** @type {Statement[]} */ (rest))
-				)
+			b.function_declaration(
+				b.id('$$render_inner'),
+				[b.id('$$payload')],
+				b.block(/** @type {Statement[]} */ (rest))
 			),
 			b.do_while(
 				b.unary('!', b.id('$$settled')),
@@ -243,6 +241,13 @@ export function server_component(analysis, options) {
 		.../** @type {Statement[]} */ (instance.body),
 		.../** @type {Statement[]} */ (template.body)
 	]);
+
+	if (analysis.props_id) {
+		// need to be placed on first line of the component for hydration
+		component_block.body.unshift(
+			b.const(analysis.props_id, b.call('$.props_id', b.id('$$payload')))
+		);
+	}
 
 	let should_inject_context = dev || analysis.needs_context;
 
@@ -394,7 +399,7 @@ export function server_module(analysis, options) {
 	};
 
 	const module = /** @type {Program} */ (
-		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, global_visitors)
+		walk(/** @type {AST.SvelteNode} */ (analysis.module.ast), state, global_visitors)
 	);
 
 	return {

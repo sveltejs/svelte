@@ -5,7 +5,7 @@ import { dev, is_ignored } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { regex_invalid_identifier_chars } from '../../../patterns.js';
 import { get_rune } from '../../../scope.js';
-import { build_proxy_reassignment, should_proxy } from '../utils.js';
+import { should_proxy } from '../utils.js';
 
 /**
  * @param {ClassBody} node
@@ -23,6 +23,9 @@ export function ClassBody(node, context) {
 	/** @type {Map<string, StateField>} */
 	const private_state = new Map();
 
+	/** @type {Map<(MethodDefinition|PropertyDefinition)["key"], string>} */
+	const definition_names = new Map();
+
 	/** @type {string[]} */
 	const private_ids = [];
 
@@ -34,8 +37,11 @@ export function ClassBody(node, context) {
 				definition.key.type === 'Literal')
 		) {
 			const type = definition.key.type;
-			const name = get_name(definition.key);
+			const name = get_name(definition.key, public_state);
 			if (!name) continue;
+
+			// we store the deconflicted name in the map so that we can access it later
+			definition_names.set(definition.key, name);
 
 			const is_private = type === 'PrivateIdentifier';
 			if (is_private) private_ids.push(name);
@@ -96,7 +102,7 @@ export function ClassBody(node, context) {
 				definition.key.type === 'PrivateIdentifier' ||
 				definition.key.type === 'Literal')
 		) {
-			const name = get_name(definition.key);
+			const name = definition_names.get(definition.key);
 			if (!name) continue;
 
 			const is_private = definition.key.type === 'PrivateIdentifier';
@@ -136,39 +142,17 @@ export function ClassBody(node, context) {
 					// get foo() { return this.#foo; }
 					body.push(b.method('get', definition.key, [], [b.return(b.call('$.get', member))]));
 
-					if (field.kind === 'state') {
-						// set foo(value) { this.#foo = value; }
-						const value = b.id('value');
-						const prev = b.member(b.this, field.id);
+					// set foo(value) { this.#foo = value; }
+					const val = b.id('value');
 
-						body.push(
-							b.method(
-								'set',
-								definition.key,
-								[value],
-								[b.stmt(b.call('$.set', member, build_proxy_reassignment(value, prev)))]
-							)
-						);
-					}
-
-					if (field.kind === 'raw_state') {
-						// set foo(value) { this.#foo = value; }
-						const value = b.id('value');
-						body.push(
-							b.method('set', definition.key, [value], [b.stmt(b.call('$.set', member, value))])
-						);
-					}
-
-					if (dev && (field.kind === 'derived' || field.kind === 'derived_by')) {
-						body.push(
-							b.method(
-								'set',
-								definition.key,
-								[b.id('_')],
-								[b.throw_error(`Cannot update a derived property ('${name}')`)]
-							)
-						);
-					}
+					body.push(
+						b.method(
+							'set',
+							definition.key,
+							[val],
+							[b.stmt(b.call('$.set', member, val, field.kind === 'state' && b.true))]
+						)
+					);
 				}
 				continue;
 			}
@@ -177,43 +161,25 @@ export function ClassBody(node, context) {
 		body.push(/** @type {MethodDefinition} **/ (context.visit(definition, child_state)));
 	}
 
-	if (dev && public_state.size > 0) {
-		// add an `[$.ADD_OWNER]` method so that a class with state fields can widen ownership
-		body.push(
-			b.method(
-				'method',
-				b.id('$.ADD_OWNER'),
-				[b.id('owner')],
-				Array.from(public_state)
-					// Only run ownership addition on $state fields.
-					// Theoretically someone could create a `$state` while creating `$state.raw` or inside a `$derived.by`,
-					// but that feels so much of an edge case that it doesn't warrant a perf hit for the common case.
-					.filter(([_, { kind }]) => kind === 'state')
-					.map(([name]) =>
-						b.stmt(
-							b.call(
-								'$.add_owner',
-								b.call('$.get', b.member(b.this, b.private_id(name))),
-								b.id('owner'),
-								b.literal(false),
-								is_ignored(node, 'ownership_invalid_binding') && b.true
-							)
-						)
-					),
-				true
-			)
-		);
-	}
-
 	return { ...node, body };
 }
 
 /**
  * @param {Identifier | PrivateIdentifier | Literal} node
+ * @param {Map<string, StateField>} public_state
  */
-function get_name(node) {
+function get_name(node, public_state) {
 	if (node.type === 'Literal') {
-		return node.value?.toString().replace(regex_invalid_identifier_chars, '_');
+		let name = node.value?.toString().replace(regex_invalid_identifier_chars, '_');
+
+		// the above could generate conflicts because it has to generate a valid identifier
+		// so stuff like `0` and `1` or `state%` and `state^` will result in the same string
+		// so we have to de-conflict. We can only check `public_state` because private state
+		// can't have literal keys
+		while (name && public_state.has(name)) {
+			name = '_' + name;
+		}
+		return name;
 	} else {
 		return node.name;
 	}

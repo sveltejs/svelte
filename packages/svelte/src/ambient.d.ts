@@ -338,6 +338,38 @@ declare namespace $effect {
  */
 declare function $props(): any;
 
+declare namespace $props {
+	/**
+	 * Generates an ID that is unique to the current component instance. When hydrating a server-rendered component,
+	 * the value will be consistent between server and client.
+	 *
+	 * This is useful for linking elements via attributes like `for` and `aria-labelledby`.
+	 * @since 5.20.0
+	 */
+	export function id(): string;
+
+	// prevent intellisense from being unhelpful
+	/** @deprecated */
+	export const apply: never;
+	/** @deprecated */
+	// @ts-ignore
+	export const arguments: never;
+	/** @deprecated */
+	export const bind: never;
+	/** @deprecated */
+	export const call: never;
+	/** @deprecated */
+	export const caller: never;
+	/** @deprecated */
+	export const length: never;
+	/** @deprecated */
+	export const name: never;
+	/** @deprecated */
+	export const prototype: never;
+	/** @deprecated */
+	export const toString: never;
+}
+
 /**
  * Declares a prop as bindable, meaning the parent component can use `bind:propName={value}` to bind to it.
  *
@@ -348,6 +380,29 @@ declare function $props(): any;
  * https://svelte.dev/docs/svelte/$bindable
  */
 declare function $bindable<T>(fallback?: T): T;
+
+declare namespace $bindable {
+	// prevent intellisense from being unhelpful
+	/** @deprecated */
+	export const apply: never;
+	/** @deprecated */
+	// @ts-ignore
+	export const arguments: never;
+	/** @deprecated */
+	export const bind: never;
+	/** @deprecated */
+	export const call: never;
+	/** @deprecated */
+	export const caller: never;
+	/** @deprecated */
+	export const length: never;
+	/** @deprecated */
+	export const name: never;
+	/** @deprecated */
+	export const prototype: never;
+	/** @deprecated */
+	export const toString: never;
+}
 
 /**
  * Inspects one or more values whenever they, or the properties they contain, change. Example:
@@ -371,6 +426,46 @@ declare function $inspect<T extends any[]>(
 	...values: T
 ): { with: (fn: (type: 'init' | 'update', ...values: T) => void) => void };
 
+declare namespace $inspect {
+	/**
+	 * Tracks which reactive state changes caused an effect to re-run. Must be the first
+	 * statement of a function body. Example:
+	 *
+	 * ```svelte
+	 * <script>
+	 *   let count = $state(0);
+	 *
+	 *   $effect(() => {
+	 *     $inspect.trace('my effect');
+	 *
+	 *     count;
+	 *   });
+	 * </script>
+	 */
+	export function trace(name?: string): void;
+
+	// prevent intellisense from being unhelpful
+	/** @deprecated */
+	export const apply: never;
+	/** @deprecated */
+	// @ts-ignore
+	export const arguments: never;
+	/** @deprecated */
+	export const bind: never;
+	/** @deprecated */
+	export const call: never;
+	/** @deprecated */
+	export const caller: never;
+	/** @deprecated */
+	export const length: never;
+	/** @deprecated */
+	export const name: never;
+	/** @deprecated */
+	export const prototype: never;
+	/** @deprecated */
+	export const toString: never;
+}
+
 /**
  * Retrieves the `this` reference of the custom element that contains this component. Example:
  *
@@ -391,3 +486,26 @@ declare function $inspect<T extends any[]>(
  * https://svelte.dev/docs/svelte/$host
  */
 declare function $host<El extends HTMLElement = HTMLElement>(): El;
+
+declare namespace $host {
+	// prevent intellisense from being unhelpful
+	/** @deprecated */
+	export const apply: never;
+	/** @deprecated */
+	// @ts-ignore
+	export const arguments: never;
+	/** @deprecated */
+	export const bind: never;
+	/** @deprecated */
+	export const call: never;
+	/** @deprecated */
+	export const caller: never;
+	/** @deprecated */
+	export const length: never;
+	/** @deprecated */
+	export const name: never;
+	/** @deprecated */
+	export const prototype: never;
+	/** @deprecated */
+	export const toString: never;
+}

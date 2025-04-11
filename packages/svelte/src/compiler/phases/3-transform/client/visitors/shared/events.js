@@ -1,5 +1,5 @@
 /** @import { Expression } from 'estree' */
-/** @import { AST, ExpressionMetadata, SvelteNode } from '#compiler' */
+/** @import { AST, ExpressionMetadata } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
 import { is_capture_event, is_passive_event } from '../../../../../../utils.js';
 import { dev, locator } from '../../../../../state.js';
@@ -46,8 +46,12 @@ export function visit_event_attribute(node, context) {
 
 			// When we hoist a function we assign an array with the function and all
 			// hoisted closure params.
-			const args = [handler, ...hoisted_params];
-			delegated_assignment = b.array(args);
+			if (hoisted_params) {
+				const args = [handler, ...hoisted_params];
+				delegated_assignment = b.array(args);
+			} else {
+				delegated_assignment = handler;
+			}
 		} else {
 			delegated_assignment = handler;
 		}
@@ -68,7 +72,7 @@ export function visit_event_attribute(node, context) {
 			)
 		);
 
-		const type = /** @type {SvelteNode} */ (context.path.at(-1)).type;
+		const type = /** @type {AST.SvelteNode} */ (context.path.at(-1)).type;
 
 		if (type === 'SvelteDocument' || type === 'SvelteWindow' || type === 'SvelteBody') {
 			// These nodes are above the component tree, and its events should run parent first
@@ -123,11 +127,19 @@ export function build_event_handler(node, metadata, context) {
 	}
 
 	// function declared in the script
-	if (
-		handler.type === 'Identifier' &&
-		context.state.scope.get(handler.name)?.declaration_kind !== 'import'
-	) {
-		return handler;
+	if (handler.type === 'Identifier') {
+		const binding = context.state.scope.get(handler.name);
+
+		if (binding?.is_function()) {
+			return handler;
+		}
+
+		// local variable can be assigned directly
+		// except in dev mode where when need $.apply()
+		// in order to handle warnings.
+		if (!dev && binding?.declaration_kind !== 'import') {
+			return handler;
+		}
 	}
 
 	if (metadata.has_call) {

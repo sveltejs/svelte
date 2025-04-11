@@ -1,4 +1,4 @@
-import * as $ from "svelte/internal/server";
+import * as $ from 'svelte/internal/server';
 
 export default function Text_nodes_deriveds($$payload) {
 	let count1 = 0;

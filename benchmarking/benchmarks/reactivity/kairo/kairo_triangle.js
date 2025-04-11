@@ -38,13 +38,13 @@ function setup() {
 		destroy,
 		run() {
 			const constant = count(width);
-			$.flush_sync(() => {
+			$.flush(() => {
 				$.set(head, 1);
 			});
 			assert($.get(sum) === constant);
 			counter = 0;
 			for (let i = 0; i < 100; i++) {
-				$.flush_sync(() => {
+				$.flush(() => {
 					$.set(head, i);
 				});
 				assert($.get(sum) === constant - width + i * width);
@@ -65,7 +65,7 @@ export async function kairo_triangle_unowned() {
 	const { run, destroy } = setup();
 
 	const { timing } = await fastest_test(10, () => {
-		for (let i = 0; i < 100; i++) {
+		for (let i = 0; i < 1000; i++) {
 			run();
 		}
 	});
@@ -94,7 +94,7 @@ export async function kairo_triangle_owned() {
 	});
 
 	const { timing } = await fastest_test(10, () => {
-		for (let i = 0; i < 100; i++) {
+		for (let i = 0; i < 1000; i++) {
 			run();
 		}
 	});

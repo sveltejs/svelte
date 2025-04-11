@@ -1,5 +1,5 @@
 /** @import { Snippet } from 'svelte' */
-/** @import { Payload } from '#server' */
+/** @import { Payload } from '../payload' */
 /** @import { Getters } from '#shared' */
 
 /**

@@ -1,5 +1,4 @@
-/** @import { Location } from 'locate-character' */
-/** @import { AssignmentExpression, AssignmentOperator, Expression, Identifier, Literal, MemberExpression, Pattern } from 'estree' */
+/** @import { AssignmentExpression, AssignmentOperator, Expression, Identifier, Pattern } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../types.js' */
 import * as b from '../../../../utils/builders.js';
@@ -8,9 +7,10 @@ import {
 	get_attribute_expression,
 	is_event_attribute
 } from '../../../../utils/ast.js';
-import { dev, filename, is_ignored, locator } from '../../../../state.js';
-import { build_proxy_reassignment, should_proxy } from '../utils.js';
+import { dev, locate_node } from '../../../../state.js';
+import { should_proxy } from '../utils.js';
 import { visit_assignment_expression } from '../../shared/assignments.js';
+import { validate_mutation } from './shared/utils.js';
 
 /**
  * @param {AssignmentExpression} node
@@ -21,9 +21,7 @@ export function AssignmentExpression(node, context) {
 		visit_assignment_expression(node, context, build_assignment) ?? context.next()
 	);
 
-	return is_ignored(node, 'ownership_invalid_mutation')
-		? b.call('$.skip_ownership_validation', b.thunk(expression))
-		: expression;
+	return validate_mutation(node, context, expression);
 }
 
 /**
@@ -65,21 +63,12 @@ function build_assignment(operator, left, right, context) {
 				context.visit(build_assignment_value(operator, left, right))
 			);
 
-			if (
+			const needs_proxy =
 				private_state.kind === 'state' &&
 				is_non_coercive_operator(operator) &&
-				should_proxy(value, context.state.scope)
-			) {
-				value = build_proxy_reassignment(value, b.member(b.this, private_state.id));
-			}
+				should_proxy(value, context.state.scope);
 
-			if (context.state.in_constructor) {
-				// inside the constructor, we can assign to `this.#foo.v` rather than using `$.set`,
-				// since nothing is tracking the signal at this point
-				return b.assignment(operator, /** @type {Pattern} */ (context.visit(left)), value);
-			}
-
-			return b.call('$.set', left, value);
+			return b.call('$.set', left, value, needs_proxy && b.true);
 		}
 	}
 
@@ -113,19 +102,18 @@ function build_assignment(operator, left, right, context) {
 			context.visit(build_assignment_value(operator, left, right))
 		);
 
-		if (
+		return transform.assign(
+			object,
+			value,
 			!is_primitive &&
-			binding.kind !== 'prop' &&
-			binding.kind !== 'bindable_prop' &&
-			binding.kind !== 'raw_state' &&
-			context.state.analysis.runes &&
-			should_proxy(right, context.state.scope) &&
-			is_non_coercive_operator(operator)
-		) {
-			value = build_proxy_reassignment(value, object);
-		}
-
-		return transform.assign(object, value);
+				binding.kind !== 'prop' &&
+				binding.kind !== 'bindable_prop' &&
+				binding.kind !== 'raw_state' &&
+				binding.kind !== 'store_sub' &&
+				context.state.analysis.runes &&
+				should_proxy(right, context.state.scope) &&
+				is_non_coercive_operator(operator)
+		);
 	}
 
 	// mutation
@@ -169,11 +157,22 @@ function build_assignment(operator, left, right, context) {
 		}
 	}
 
+	// special case — ignore `bind:prop={getter, (v) => (...)}` / `bind:value={x.y}`
+	if (
+		path.at(-1) === 'BindDirective' ||
+		path.at(-1) === 'Component' ||
+		path.at(-1) === 'SvelteComponent' ||
+		(path.at(-1) === 'ArrowFunctionExpression' &&
+			path.at(-2) === 'SequenceExpression' &&
+			(path.at(-3) === 'Component' ||
+				path.at(-3) === 'SvelteComponent' ||
+				path.at(-3) === 'BindDirective'))
+	) {
+		should_transform = false;
+	}
+
 	if (left.type === 'MemberExpression' && should_transform) {
 		const callee = callees[operator];
-
-		const loc = /** @type {Location} */ (locator(/** @type {number} */ (left.start)));
-		const location = `${filename}:${loc.line}:${loc.column}`;
 
 		return /** @type {Expression} */ (
 			context.visit(
@@ -186,7 +185,7 @@ function build_assignment(operator, left, right, context) {
 							: b.literal(/** @type {Identifier} */ (left.property).name)
 					),
 					right,
-					b.literal(location)
+					b.literal(locate_node(left))
 				)
 			)
 		);

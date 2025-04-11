@@ -17,6 +17,17 @@ function remove_this_param(node, context) {
 
 /** @type {Visitors<any, null>} */
 const visitors = {
+	_(node, context) {
+		const n = context.next() ?? node;
+
+		// TODO there may come a time when we decide to preserve type annotations.
+		// until that day comes, we just delete them so they don't confuse esrap
+		delete n.typeAnnotation;
+		delete n.typeParameters;
+		delete n.typeArguments;
+		delete n.returnType;
+		delete n.accessibility;
+	},
 	Decorator(node) {
 		e.typescript_invalid_feature(node, 'decorators (related TSC proposal is not stage 4 yet)');
 	},
@@ -78,22 +89,14 @@ const visitors = {
 	TSNonNullExpression(node, context) {
 		return context.visit(node.expression);
 	},
-	TSTypeAnnotation() {
-		// This isn't correct, strictly speaking, and could result in invalid ASTs (like an empty statement within function parameters),
-		// but esrap, our printing tool, just ignores these AST nodes at invalid positions, so it's fine
-		return b.empty;
-	},
 	TSInterfaceDeclaration() {
 		return b.empty;
 	},
 	TSTypeAliasDeclaration() {
 		return b.empty;
 	},
-	TSTypeParameterDeclaration() {
-		return b.empty;
-	},
-	TSTypeParameterInstantiation() {
-		return b.empty;
+	TSTypeAssertion(node, context) {
+		return context.visit(node.expression);
 	},
 	TSEnumDeclaration(node) {
 		e.typescript_invalid_feature(node, 'enums');
@@ -114,6 +117,13 @@ const visitors = {
 	},
 	ClassDeclaration(node, context) {
 		if (node.declare) {
+			return b.empty;
+		}
+		delete node.implements;
+		return context.next();
+	},
+	MethodDefinition(node, context) {
+		if (node.abstract) {
 			return b.empty;
 		}
 		return context.next();

@@ -12,6 +12,7 @@ env:
 
 jobs:
   Tests:
+    permissions: {}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
@@ -41,6 +42,7 @@ jobs:
         env:
           CI: true
   Lint:
+    permissions: {}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -59,8 +61,9 @@ jobs:
         run: pnpm lint
       - name: build and check generated types
         if: (${{ success() }} || ${{ failure() }}) # ensures this step runs even if previous steps fail
-        run: pnpm build && { [ "`git status --porcelain=v1`" == "" ] || (echo "Generated types have changed — please regenerate types locally and commit the changes after you have reviewed them"; git diff; exit 1); }
+        run: pnpm build && { [ "`git status --porcelain=v1`" == "" ] || (echo "Generated types have changed — please regenerate types locally with `cd packages/svelte && pnpm generate:types` and commit the changes after you have reviewed them"; git diff; exit 1); }
   Benchmarks:
+    permissions: {}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

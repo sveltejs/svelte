@@ -1,17 +1,17 @@
-import type { AST, Binding, Css, SvelteNode } from '#compiler';
+import type { AST, Binding } from '#compiler';
 import type { Identifier, LabeledStatement, Node, Program } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
 
 export interface Js {
 	ast: Program;
 	scope: Scope;
-	scopes: Map<SvelteNode, Scope>;
+	scopes: Map<AST.SvelteNode, Scope>;
 }
 
 export interface Template {
 	ast: AST.Fragment;
 	scope: Scope;
-	scopes: Map<SvelteNode, Scope>;
+	scopes: Map<AST.SvelteNode, Scope>;
 }
 
 export interface ReactiveStatement {
@@ -27,6 +27,7 @@ export interface Analysis {
 	name: string; // TODO should this be filename? it's used in `compileModule` as well as `compile`
 	runes: boolean;
 	immutable: boolean;
+	tracing: boolean;
 
 	// TODO figure out if we can move this to ComponentAnalysis
 	accessors: boolean;
@@ -39,9 +40,12 @@ export interface ComponentAnalysis extends Analysis {
 	/** Used for CSS pruning and scoping */
 	elements: Array<AST.RegularElement | AST.SvelteElement>;
 	runes: boolean;
+	tracing: boolean;
 	exports: Array<{ name: string; alias: string | null }>;
 	/** Whether the component uses `$$props` */
 	uses_props: boolean;
+	/** The component ID variable name, if any */
+	props_id: Identifier | null;
 	/** Whether the component uses `$$restProps` */
 	uses_rest_props: boolean;
 	/** Whether the component uses `$$slots` */
@@ -49,6 +53,7 @@ export interface ComponentAnalysis extends Analysis {
 	uses_component_bindings: boolean;
 	uses_render_tags: boolean;
 	needs_context: boolean;
+	needs_mutation_validation: boolean;
 	needs_props: boolean;
 	/** Set to the first event directive (on:x) found on a DOM element in the code */
 	event_directive_node: AST.OnDirective | null;
@@ -66,9 +71,10 @@ export interface ComponentAnalysis extends Analysis {
 	binding_groups: Map<[key: string, bindings: Array<Binding | null>], Identifier>;
 	slot_names: Map<string, AST.SlotElement>;
 	css: {
-		ast: Css.StyleSheet | null;
+		ast: AST.CSS.StyleSheet | null;
 		hash: string;
 		keyframes: string[];
+		has_global: boolean;
 	};
 	source: string;
 	undefined_exports: Map<string, Node>;

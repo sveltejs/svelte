@@ -1,5 +1,5 @@
-import "svelte/internal/disclose-version";
-import * as $ from "svelte/internal/client";
+import 'svelte/internal/disclose-version';
+import * as $ from 'svelte/internal/client';
 
 export default function Function_prop_no_getter($$anchor) {
 	let count = $.state(0);
@@ -13,13 +13,13 @@ export default function Function_prop_no_getter($$anchor) {
 	Button($$anchor, {
 		onmousedown: () => $.set(count, $.get(count) + 1),
 		onmouseup,
-		onmouseenter: () => $.set(count, $.proxy(plusOne($.get(count)))),
+		onmouseenter: () => $.set(count, plusOne($.get(count)), true),
 		children: ($$anchor, $$slotProps) => {
 			$.next();
 
 			var text = $.text();
 
-			$.template_effect(() => $.set_text(text, `clicks: ${$.get(count) ?? ""}`));
+			$.template_effect(() => $.set_text(text, `clicks: ${$.get(count) ?? ''}`));
 			$.append($$anchor, text);
 		},
 		$$slots: { default: true }

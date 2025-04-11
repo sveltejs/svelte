@@ -42,7 +42,7 @@ function add() {
 
 When logging a [proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy), browser devtools will log the proxy itself rather than the value it represents. In the case of Svelte, the 'target' of a `$state` proxy might not resemble its current value, which can be confusing.
 
-The easiest way to log a value as it changes over time is to use the [`$inspect`](https://svelte.dev/docs/svelte/$inspect) rune. Alternatively, to log things on a one-off basis (for example, inside an event handler) you can use [`$state.snapshot`](https://svelte.dev/docs/svelte/$state#$state.snapshot) to take a snapshot of the current value.
+The easiest way to log a value as it changes over time is to use the [`$inspect`](/docs/svelte/$inspect) rune. Alternatively, to log things on a one-off basis (for example, inside an event handler) you can use [`$state.snapshot`](/docs/svelte/$state#$state.snapshot) to take a snapshot of the current value.
 
 ## event_handler_invalid
 
@@ -52,17 +52,71 @@ The easiest way to log a value as it changes over time is to use the [`$inspect`
 
 > The `%attribute%` attribute on `%html%` changed its value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
 
+Certain attributes like `src` on an `<img>` element will not be repaired during hydration, i.e. the server value will be kept. That's because updating these attributes can cause the image to be refetched (or in the case of an `<iframe>`, for the frame to be reloaded), even if they resolve to the same resource.
+
+To fix this, either silence the warning with a [`svelte-ignore`](basic-markup#Comments) comment, or ensure that the value stays the same between server and client. If you really need the value to change on hydration, you can force an update like this:
+
+```svelte
+<script>
+	let { src } = $props();
+
+	if (typeof window !== 'undefined') {
+		// stash the value...
+		const initial = src;
+
+		// unset it...
+		src = undefined;
+
+		$effect(() => {
+			// ...and reset after we've mounted
+			src = initial;
+		});
+	}
+</script>
+
+<img {src} />
+```
+
 ## hydration_html_changed
 
 > The value of an `{@html ...}` block changed between server and client renders. The client value will be ignored in favour of the server value
 
 > The value of an `{@html ...}` block %location% changed between server and client renders. The client value will be ignored in favour of the server value
 
+If the `{@html ...}` value changes between the server and the client, it will not be repaired during hydration, i.e. the server value will be kept. That's because change detection during hydration is expensive and usually unnecessary.
+
+To fix this, either silence the warning with a [`svelte-ignore`](basic-markup#Comments) comment, or ensure that the value stays the same between server and client. If you really need the value to change on hydration, you can force an update like this:
+
+```svelte
+<script>
+	let { markup } = $props();
+
+	if (typeof window !== 'undefined') {
+		// stash the value...
+		const initial = markup;
+
+		// unset it...
+		markup = undefined;
+
+		$effect(() => {
+			// ...and reset after we've mounted
+			markup = initial;
+		});
+	}
+</script>
+
+{@html markup}
+```
+
 ## hydration_mismatch
 
 > Hydration failed because the initial UI does not match what was rendered on the server
 
 > Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near %location%
+
+This warning is thrown when Svelte encounters an error while hydrating the HTML from the server. During hydration, Svelte walks the DOM, expecting a certain structure. If that structure is different (for example because the HTML was repaired by the DOM because of invalid HTML), then Svelte will run into issues, resulting in this warning.
+
+During development, this error is often preceeded by a `console.error` detailing the offending HTML, which needs fixing.
 
 ## invalid_raw_snippet_render
 
@@ -78,51 +132,41 @@ The easiest way to log a value as it changes over time is to use the [`$inspect`
 
 ## ownership_invalid_binding
 
-> %parent% passed a value to %child% with `bind:`, but the value is owned by %owner%. Consider creating a binding between %owner% and %parent%
+> %parent% passed property `%prop%` to %child% with `bind:`, but its parent component %owner% did not declare `%prop%` as a binding. Consider creating a binding between %owner% and %parent% (e.g. `bind:%prop%={...}` instead of `%prop%={...}`)
+
+Consider three components `GrandParent`, `Parent` and `Child`. If you do `<GrandParent bind:value>`, inside `GrandParent` pass on the variable via `<Parent {value} />` (note the missing `bind:`) and then do `<Child bind:value>` inside `Parent`, this warning is thrown.
+
+To fix it, `bind:` to the value instead of just passing a property (i.e. in this example do `<Parent bind:value />`).
 
 ## ownership_invalid_mutation
 
-> Mutating a value outside the component that created it is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead
+> Mutating unbound props (`%name%`, at %location%) is strongly discouraged. Consider using `bind:%prop%={...}` in %parent% (or using a callback) instead
 
-> %component% mutated a value owned by %owner%. This is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead
+Consider the following code:
 
-## reactive_declaration_non_reactive_property
+```svelte
+<!--- file: App.svelte --->
+<script>
+	import Child from './Child.svelte';
+	let person = $state({ name: 'Florida', surname: 'Man' });
+</script>
 
-> A `$:` statement (%location%) read reactive state that was not visible to the compiler. Updates to this state will not cause the statement to re-run. The behaviour of this code will change if you migrate it to runes mode
-
-In legacy mode, a `$:` [reactive statement](https://svelte.dev/docs/svelte/legacy-reactive-assignments) re-runs when the state it _references_ changes. This is determined at compile time, by analysing the code.
-
-In runes mode, effects and deriveds re-run when there are changes to the values that are read during the function's _execution_.
-
-Often, the result is the same — for example these can be considered equivalent:
-
-```js
-let a = 1, b = 2, sum = 3;
-// ---cut---
-$: sum = a + b;
+<Child {person} />
 ```
 
-```js
-let a = 1, b = 2;
-// ---cut---
-const sum = $derived(a + b);
+```svelte
+<!--- file: Child.svelte --->
+<script>
+	let { person } = $props();
+</script>
+
+<input bind:value={person.name}>
+<input bind:value={person.surname}>
 ```
 
-In some cases — such as the one that triggered the above warning — they are _not_ the same:
+`Child` is mutating `person` which is owned by `App` without being explicitly "allowed" to do so. This is strongly discouraged since it can create code that is hard to reason about at scale ("who mutated this value?"), hence the warning.
 
-```js
-let a = 1, b = 2, sum = 3;
-// ---cut---
-const add = () => a + b;
-
-// the compiler can't 'see' that `sum` depends on `a` and `b`, but
-// they _would_ be read while executing the `$derived` version
-$: sum = add();
-```
-
-Similarly, reactive properties of [deep state](https://svelte.dev/docs/svelte/$state#Deep-state) are not visible to the compiler. As such, changes to these properties will cause effects and deriveds to re-run but will _not_ cause `$:` statements to re-run.
-
-When you [migrate this component](https://svelte.dev/docs/svelte/v5-migration-guide) to runes mode, the behaviour will change accordingly.
+To fix it, either create callback props to communicate changes, or mark `person` as [`$bindable`]($bindable).
 
 ## state_proxy_equality_mismatch
 
@@ -140,3 +184,13 @@ When you [migrate this component](https://svelte.dev/docs/svelte/v5-migration-gu
 ```
 
 To resolve this, ensure you're comparing values where both values were created with `$state(...)`, or neither were. Note that `$state.raw(...)` will _not_ create a state proxy.
+
+## transition_slide_display
+
+> The `slide` transition does not work correctly for elements with `display: %value%`
+
+The [slide](/docs/svelte/svelte-transition#slide) transition works by animating the `height` of the element, which requires a `display` style like `block`, `flex` or `grid`. It does not work for:
+
+- `display: inline` (which is the default for elements like `<span>`), and its variants like `inline-block`, `inline-flex` and `inline-grid`
+- `display: table` and `table-[name]`, which are the defaults for elements like `<table>` and `<tr>`
+- `display: contents`

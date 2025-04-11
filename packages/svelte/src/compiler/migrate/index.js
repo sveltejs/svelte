@@ -2,7 +2,7 @@
 /** @import { Visitors } from 'zimmerframe' */
 /** @import { ComponentAnalysis } from '../phases/types.js' */
 /** @import { Scope, ScopeRoot } from '../phases/scope.js' */
-/** @import { AST, Binding, SvelteNode, ValidatedCompileOptions } from '#compiler' */
+/** @import { AST, Binding, ValidatedCompileOptions } from '#compiler' */
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
 import { parse } from '../phases/1-parse/index.js';
@@ -479,7 +479,7 @@ export function migrate(source, { filename, use_ts } = {}) {
  * }} State
  */
 
-/** @type {Visitors<SvelteNode, State>} */
+/** @type {Visitors<AST.SvelteNode, State>} */
 const instance_script = {
 	_(node, { state, next }) {
 		// @ts-expect-error
@@ -944,54 +944,53 @@ const instance_script = {
 			node.body.type === 'ExpressionStatement' &&
 			node.body.expression.type === 'AssignmentExpression'
 		) {
-			const ids = extract_identifiers(node.body.expression.left);
-			const [, expression_ids] = extract_all_identifiers_from_expression(
-				node.body.expression.right
-			);
-			const bindings = ids.map((id) => state.scope.get(id.name));
-			const reassigned_bindings = bindings.filter((b) => b?.reassigned);
+			const { left, right } = node.body.expression;
 
-			if (
-				reassigned_bindings.length === 0 &&
-				!bindings.some((b) => b?.kind === 'store_sub') &&
-				node.body.expression.left.type !== 'MemberExpression'
-			) {
-				let { start, end } = /** @type {{ start: number, end: number }} */ (
-					node.body.expression.right
-				);
+			const ids = extract_identifiers(left);
+			const [, expression_ids] = extract_all_identifiers_from_expression(right);
+			const bindings = ids.map((id) => /** @type {Binding} */ (state.scope.get(id.name)));
 
-				check_rune_binding('derived');
+			if (bindings.every((b) => b.kind === 'legacy_reactive')) {
+				if (
+					right.type !== 'Literal' &&
+					bindings.every((b) => b.kind !== 'store_sub') &&
+					left.type !== 'MemberExpression'
+				) {
+					let { start, end } = /** @type {{ start: number, end: number }} */ (right);
 
-				// $derived
-				state.str.update(
-					/** @type {number} */ (node.start),
-					/** @type {number} */ (node.body.expression.start),
-					'let '
-				);
+					check_rune_binding('derived');
 
-				if (node.body.expression.right.type === 'SequenceExpression') {
-					while (state.str.original[start] !== '(') start -= 1;
-					while (state.str.original[end - 1] !== ')') end += 1;
+					// $derived
+					state.str.update(
+						/** @type {number} */ (node.start),
+						/** @type {number} */ (node.body.expression.start),
+						'let '
+					);
+
+					if (right.type === 'SequenceExpression') {
+						while (state.str.original[start] !== '(') start -= 1;
+						while (state.str.original[end - 1] !== ')') end += 1;
+					}
+
+					state.str.prependRight(start, `$derived(`);
+
+					// in a case like `$: ({ a } = b())`, there's already a trailing parenthesis.
+					// otherwise, we need to add one
+					if (state.str.original[/** @type {number} */ (node.body.start)] !== '(') {
+						state.str.appendLeft(end, `)`);
+					}
+
+					return;
 				}
 
-				state.str.prependRight(start, `$derived(`);
-
-				// in a case like `$: ({ a } = b())`, there's already a trailing parenthesis.
-				// otherwise, we need to add one
-				if (state.str.original[/** @type {number} */ (node.body.start)] !== '(') {
-					state.str.appendLeft(end, `)`);
-				}
-
-				return;
-			} else {
-				for (const binding of reassigned_bindings) {
-					if (binding && (ids.includes(binding.node) || expression_ids.length === 0)) {
+				for (const binding of bindings) {
+					if (binding.reassigned && (ids.includes(binding.node) || expression_ids.length === 0)) {
 						check_rune_binding('state');
 						const init =
 							binding.kind === 'state'
 								? ' = $state()'
 								: expression_ids.length === 0
-									? ` = $state(${state.str.original.substring(/** @type {number} */ (node.body.expression.right.start), node.body.expression.right.end)})`
+									? ` = $state(${state.str.original.substring(/** @type {number} */ (right.start), right.end)})`
 									: '';
 						// implicitly-declared variable which we need to make explicit
 						state.str.prependLeft(
@@ -1000,7 +999,8 @@ const instance_script = {
 						);
 					}
 				}
-				if (expression_ids.length === 0 && !bindings.some((b) => b?.kind === 'store_sub')) {
+
+				if (expression_ids.length === 0 && bindings.every((b) => b.kind !== 'store_sub')) {
 					state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
 					return;
 				}
@@ -1050,7 +1050,7 @@ function trim_block(state, start, end) {
 	}
 }
 
-/** @type {Visitors<SvelteNode, State>} */
+/** @type {Visitors<AST.SvelteNode, State>} */
 const template = {
 	Identifier(node, { state, path }) {
 		handle_identifier(node, state, path);
@@ -1410,7 +1410,7 @@ const template = {
 
 /**
  * @param {AST.RegularElement | AST.SvelteElement | AST.SvelteComponent | AST.Component | AST.SlotElement | AST.SvelteFragment} node
- * @param {SvelteNode[]} path
+ * @param {AST.SvelteNode[]} path
  * @param {State} state
  */
 function migrate_slot_usage(node, path, state) {
@@ -1580,7 +1580,7 @@ function migrate_slot_usage(node, path, state) {
 /**
  * @param {VariableDeclarator} declarator
  * @param {State} state
- * @param {SvelteNode[]} path
+ * @param {AST.SvelteNode[]} path
  */
 function extract_type_and_comment(declarator, state, path) {
 	const str = state.str;
@@ -1592,7 +1592,6 @@ function extract_type_and_comment(declarator, state, path) {
 	const comment_start = /** @type {any} */ (comment_node)?.start;
 	const comment_end = /** @type {any} */ (comment_node)?.end;
 	let comment = comment_node && str.original.substring(comment_start, comment_end);
-
 	if (comment_node) {
 		str.update(comment_start, comment_end, '');
 	}
@@ -1673,6 +1672,11 @@ function extract_type_and_comment(declarator, state, path) {
 		state.has_type_or_fallback = true;
 		const match = /@type {(.+)}/.exec(comment_node.value);
 		if (match) {
+			// try to find JSDoc comments after a hyphen `-`
+			const jsdoc_comment = /@type {.+} (?:\w+|\[.*?\]) - (.+)/.exec(comment_node.value);
+			if (jsdoc_comment) {
+				cleaned_comment += jsdoc_comment[1]?.trim();
+			}
 			return {
 				type: match[1],
 				comment: cleaned_comment,
@@ -1693,7 +1697,6 @@ function extract_type_and_comment(declarator, state, path) {
 			};
 		}
 	}
-
 	return {
 		type: 'any',
 		comment: state.uses_ts ? comment : cleaned_comment,

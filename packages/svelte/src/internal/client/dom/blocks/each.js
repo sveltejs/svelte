@@ -35,7 +35,9 @@ import { source, mutable_source, internal_set } from '../../reactivity/sources.j
 import { array_from, is_array } from '../../../shared/utils.js';
 import { INERT } from '../../constants.js';
 import { queue_micro_task } from '../task.js';
-import { active_effect, active_reaction } from '../../runtime.js';
+import { active_effect, active_reaction, get } from '../../runtime.js';
+import { DEV } from 'esm-env';
+import { derived_safe_equal } from '../../reactivity/deriveds.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -134,15 +136,17 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 	var was_empty = false;
 
-	block(() => {
+	// TODO: ideally we could use derived for runes mode but because of the ability
+	// to use a store which can be mutated, we can't do that here as mutating a store
+	// will still result in the collection array being the same from the store
+	var each_array = derived_safe_equal(() => {
 		var collection = get_collection();
 
-		var array = is_array(collection)
-			? collection
-			: collection == null
-				? []
-				: array_from(collection);
+		return is_array(collection) ? collection : collection == null ? [] : array_from(collection);
+	});
 
+	block(() => {
+		var array = get(each_array);
 		var length = array.length;
 
 		if (was_empty && length === 0) {
@@ -191,7 +195,18 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 				var value = array[i];
 				var key = get_key(value, i);
-				item = create_item(hydrate_node, state, prev, null, value, key, i, render_fn, flags);
+				item = create_item(
+					hydrate_node,
+					state,
+					prev,
+					null,
+					value,
+					key,
+					i,
+					render_fn,
+					flags,
+					get_collection
+				);
 				state.items.set(key, item);
 
 				prev = item;
@@ -204,8 +219,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		}
 
 		if (!hydrating) {
-			var effect = /** @type {Effect} */ (active_reaction);
-			reconcile(array, state, anchor, render_fn, flags, (effect.f & INERT) !== 0, get_key);
+			reconcile(array, state, anchor, render_fn, flags, get_key, get_collection);
 		}
 
 		if (fallback_fn !== null) {
@@ -233,7 +247,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		// that a mutation occurred and it's made the collection MAYBE_DIRTY, so reading the
 		// collection again can provide consistency to the reactive graph again as the deriveds
 		// will now be `CLEAN`.
-		get_collection();
+		get(each_array);
 	});
 
 	if (hydrating) {
@@ -247,13 +261,13 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
  * @param {Array<V>} array
  * @param {EachState} state
  * @param {Element | Comment | Text} anchor
- * @param {(anchor: Node, item: MaybeSource<V>, index: number | Source<number>) => void} render_fn
+ * @param {(anchor: Node, item: MaybeSource<V>, index: number | Source<number>, collection: () => V[]) => void} render_fn
  * @param {number} flags
- * @param {boolean} is_inert
  * @param {(value: V, index: number) => any} get_key
+ * @param {() => V[]} get_collection
  * @returns {void}
  */
-function reconcile(array, state, anchor, render_fn, flags, is_inert, get_key) {
+function reconcile(array, state, anchor, render_fn, flags, get_key, get_collection) {
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 	var should_update = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 
@@ -319,7 +333,8 @@ function reconcile(array, state, anchor, render_fn, flags, is_inert, get_key) {
 				key,
 				i,
 				render_fn,
-				flags
+				flags,
+				get_collection
 			);
 
 			items.set(key, prev);
@@ -394,7 +409,7 @@ function reconcile(array, state, anchor, render_fn, flags, is_inert, get_key) {
 			while (current !== null && current.k !== key) {
 				// If the each block isn't inert and an item has an effect that is already inert,
 				// skip over adding it to our seen Set as the item is already being handled
-				if (is_inert || (current.e.f & INERT) === 0) {
+				if ((current.e.f & INERT) === 0) {
 					(seen ??= new Set()).add(current);
 				}
 				stashed.push(current);
@@ -418,7 +433,7 @@ function reconcile(array, state, anchor, render_fn, flags, is_inert, get_key) {
 
 		while (current !== null) {
 			// If the each block isn't inert, then inert effects are currently outroing and will be removed once the transition is finished
-			if (is_inert || (current.e.f & INERT) === 0) {
+			if ((current.e.f & INERT) === 0) {
 				to_destroy.push(current);
 			}
 			current = current.next;
@@ -484,17 +499,39 @@ function update_item(item, value, index, type) {
  * @param {V} value
  * @param {unknown} key
  * @param {number} index
- * @param {(anchor: Node, item: V | Source<V>, index: number | Value<number>) => void} render_fn
+ * @param {(anchor: Node, item: V | Source<V>, index: number | Value<number>, collection: () => V[]) => void} render_fn
  * @param {number} flags
+ * @param {() => V[]} get_collection
  * @returns {EachItem}
  */
-function create_item(anchor, state, prev, next, value, key, index, render_fn, flags) {
+function create_item(
+	anchor,
+	state,
+	prev,
+	next,
+	value,
+	key,
+	index,
+	render_fn,
+	flags,
+	get_collection
+) {
 	var previous_each_item = current_each_item;
 	var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
 	var mutable = (flags & EACH_ITEM_IMMUTABLE) === 0;
 
 	var v = reactive ? (mutable ? mutable_source(value) : source(value)) : value;
 	var i = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
+
+	if (DEV && reactive) {
+		// For tracing purposes, we need to link the source signal we create with the
+		// collection + index so that tracing works as intended
+		/** @type {Value} */ (v).debug = () => {
+			var collection_index = typeof i === 'number' ? index : i.v;
+			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+			get_collection()[collection_index];
+		};
+	}
 
 	/** @type {EachItem} */
 	var item = {
@@ -511,7 +548,7 @@ function create_item(anchor, state, prev, next, value, key, index, render_fn, fl
 	current_each_item = item;
 
 	try {
-		item.e = branch(() => render_fn(anchor, v, i), hydrating);
+		item.e = branch(() => render_fn(anchor, v, i, get_collection), hydrating);
 
 		item.e.prev = prev && prev.e;
 		item.e.next = next && next.e;

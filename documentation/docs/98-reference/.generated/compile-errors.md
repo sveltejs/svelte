@@ -78,10 +78,22 @@ Sequence expressions are not allowed as attribute/directive values in runes mode
 Attribute values containing `{...}` must be enclosed in quote marks, unless the value only contains the expression
 ```
 
+### bind_group_invalid_expression
+
+```
+`bind:group` can only bind to an Identifier or MemberExpression
+```
+
+### bind_group_invalid_snippet_parameter
+
+```
+Cannot `bind:group` to a snippet parameter
+```
+
 ### bind_invalid_expression
 
 ```
-Can only bind to an Identifier or MemberExpression
+Can only bind to an Identifier or MemberExpression or a `{get, set}` pair
 ```
 
 ### bind_invalid_name
@@ -92,6 +104,12 @@ Can only bind to an Identifier or MemberExpression
 
 ```
 `bind:%name%` is not a valid binding. %explanation%
+```
+
+### bind_invalid_parens
+
+```
+`bind:%name%={get, set}` must not have surrounding parentheses
 ```
 
 ### bind_invalid_target
@@ -175,7 +193,7 @@ Cyclical dependency detected: %cycle%
 ### const_tag_invalid_placement
 
 ```
-`{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>` or `<Component>`
+`{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>`, `<svelte:boundary` or `<Component>`
 ```
 
 ### constant_assignment
@@ -319,7 +337,39 @@ The $ prefix is reserved, and cannot be used for variables and imports
 ### each_item_invalid_assignment
 
 ```
-Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`)
+Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`, or `bind:value={array[i]}` instead of `bind:value={entry}`)
+```
+
+In legacy mode, it was possible to reassign or bind to the each block argument itself:
+
+```svelte
+<script>
+	let array = [1, 2, 3];
+</script>
+
+{#each array as entry}
+	<!-- reassignment -->
+	<button on:click={() => entry = 4}>change</button>
+
+	<!-- binding -->
+	<input bind:value={entry}>
+{/each}
+```
+
+This turned out to be buggy and unpredictable, particularly when working with derived values (such as `array.map(...)`), and as such is forbidden in runes mode. You can achieve the same outcome by using the index instead:
+
+```svelte
+<script>
+	let array = $state([1, 2, 3]);
+</script>
+
+{#each array as entry, i}
+	<!-- reassignment -->
+	<button onclick={() => array[i] = 4}>change</button>
+
+	<!-- binding -->
+	<input bind:value={array[i]}>
+{/each}
 ```
 
 ### effect_invalid_placement
@@ -430,6 +480,18 @@ Expected whitespace
 Imports of `svelte/internal/*` are forbidden. It contains private runtime code which is subject to change without notice. If you're importing from `svelte/internal/*` to work around a limitation of Svelte, please open an issue at https://github.com/sveltejs/svelte and explain your use case
 ```
 
+### inspect_trace_generator
+
+```
+`$inspect.trace(...)` cannot be used inside a generator function
+```
+
+### inspect_trace_invalid_placement
+
+```
+`$inspect.trace(...)` must be the first statement of a function body
+```
+
 ### invalid_arguments_usage
 
 ```
@@ -517,7 +579,13 @@ Unrecognised compiler option %keypath%
 ### props_duplicate
 
 ```
-Cannot use `$props()` more than once
+Cannot use `%rune%()` more than once
+```
+
+### props_id_invalid_placement
+
+```
+`$props.id()` can only be used at the top level of components as a variable declaration initializer
 ```
 
 ### props_illegal_name
@@ -590,6 +658,12 @@ Cannot access a computed property of a rune
 
 ```
 `%name%` is not a valid rune
+```
+
+### rune_invalid_spread
+
+```
+`%rune%` cannot be called with a spread argument
 ```
 
 ### rune_invalid_usage
@@ -986,6 +1060,12 @@ Unexpected end of input
 
 ```
 '%word%' is a reserved word in JavaScript and cannot be used here
+```
+
+### unterminated_string_constant
+
+```
+Unterminated string constant
 ```
 
 ### void_element_invalid_content

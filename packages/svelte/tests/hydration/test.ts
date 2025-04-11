@@ -2,9 +2,9 @@
 
 import * as fs from 'node:fs';
 import { assert } from 'vitest';
-import { compile_directory, should_update_expected } from '../helpers.js';
+import { compile_directory } from '../helpers.js';
 import { assert_html_equal } from '../html_equal.js';
-import { suite, assert_ok, type BaseTest } from '../suite.js';
+import { assert_ok, suite, type BaseTest } from '../suite.js';
 import { createClassComponent } from 'svelte/legacy';
 import { render } from 'svelte/server';
 import type { CompileOptions } from '#compiler';
@@ -13,6 +13,7 @@ import { flushSync } from 'svelte';
 interface HydrationTest extends BaseTest {
 	load_compiled?: boolean;
 	server_props?: Record<string, any>;
+	id_prefix?: string;
 	props?: Record<string, any>;
 	compileOptions?: Partial<CompileOptions>;
 	/**
@@ -50,7 +51,8 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 	const head = window.document.head;
 
 	const rendered = render((await import(`${cwd}/_output/server/main.svelte.js`)).default, {
-		props: config.server_props ?? config.props ?? {}
+		props: config.server_props ?? config.props ?? {},
+		idPrefix: config?.id_prefix
 	});
 
 	const override = read(`${cwd}/_override.html`);
@@ -77,7 +79,14 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 				// TODO convert this to structured data, for more robust comparison?
 				const text = args[0];
 				const code = text.slice(11, text.indexOf('\n%c', 11));
-				const message = text.slice(text.indexOf('%c', 2) + 2);
+				let message = text.slice(text.indexOf('%c', 2) + 2);
+
+				// Remove the "https://svelte.dev/e/..." link at the end
+				const lines = message.split('\n');
+				if (lines.at(-1)?.startsWith('https://svelte.dev/e/')) {
+					lines.pop();
+				}
+				message = lines.join('\n');
 
 				if (typeof message === 'string' && code === 'hydration_mismatch') {
 					got_hydration_error = true;
@@ -96,7 +105,8 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 			component: (await import(`${cwd}/_output/client/main.svelte.js`)).default,
 			target,
 			hydrate: true,
-			props: config.props
+			props: config.props,
+			idPrefix: config?.id_prefix
 		});
 
 		console.warn = warn;

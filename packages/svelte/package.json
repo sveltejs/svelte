@@ -2,18 +2,19 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.8.0",
+  "version": "5.26.1",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
     "node": ">=18"
   },
   "files": [
+    "*.d.ts",
     "src",
     "!src/**/*.test.*",
+    "!src/**/*.d.ts",
     "types",
     "compiler",
-    "*.d.ts",
     "README.md"
   ],
   "module": "src/index-client.js",
@@ -21,6 +22,7 @@
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
+      "worker": "./src/index-server.js",
       "browser": "./src/index-client.js",
       "default": "./src/index-server.js"
     },
@@ -56,11 +58,15 @@
     "./internal/flags/legacy": {
       "default": "./src/internal/flags/legacy.js"
     },
+    "./internal/flags/tracing": {
+      "default": "./src/internal/flags/tracing.js"
+    },
     "./internal/server": {
       "default": "./src/internal/server/index.js"
     },
     "./legacy": {
       "types": "./types/index.d.ts",
+      "worker": "./src/legacy/legacy-server.js",
       "browser": "./src/legacy/legacy-client.js",
       "default": "./src/legacy/legacy-server.js"
     },
@@ -70,8 +76,13 @@
     },
     "./reactivity": {
       "types": "./types/index.d.ts",
+      "worker": "./src/reactivity/index-server.js",
       "browser": "./src/reactivity/index-client.js",
       "default": "./src/reactivity/index-server.js"
+    },
+    "./reactivity/window": {
+      "types": "./types/index.d.ts",
+      "default": "./src/reactivity/window/index.js"
     },
     "./server": {
       "types": "./types/index.d.ts",
@@ -79,6 +90,7 @@
     },
     "./store": {
       "types": "./types/index.d.ts",
+      "worker": "./src/store/index-server.js",
       "browser": "./src/store/index-client.js",
       "default": "./src/store/index-server.js"
     },
@@ -126,24 +138,25 @@
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/aria-query": "^5.0.4",
     "@types/node": "^20.11.5",
-    "dts-buddy": "^0.5.3",
+    "dts-buddy": "^0.5.5",
     "esbuild": "^0.21.5",
     "rollup": "^4.22.4",
     "source-map": "^0.7.4",
-    "tiny-glob": "^0.2.9",
+    "tinyglobby": "^0.2.12",
     "typescript": "^5.5.4",
-    "vitest": "^2.0.5"
+    "vitest": "^2.1.9"
   },
   "dependencies": {
     "@ampproject/remapping": "^2.3.0",
     "@jridgewell/sourcemap-codec": "^1.5.0",
     "@types/estree": "^1.0.5",
     "acorn": "^8.12.1",
-    "acorn-typescript": "^1.4.13",
+    "@sveltejs/acorn-typescript": "^1.0.5",
     "aria-query": "^5.3.1",
     "axobject-query": "^4.1.0",
+    "clsx": "^2.1.1",
     "esm-env": "^1.2.1",
-    "esrap": "^1.2.3",
+    "esrap": "^1.4.6",
     "is-reference": "^3.0.3",
     "locate-character": "^3.0.0",
     "magic-string": "^0.30.11",

@@ -1,4 +1,4 @@
-/** @import { AST, ElementLike } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../../types' */
 import * as e from '../../../../errors.js';
 import { is_text_attribute } from '../../../../utils/ast.js';
@@ -22,7 +22,7 @@ export function validate_attribute_name(attribute) {
 
 /**
  * @param {AST.Attribute} attribute
- * @param {ElementLike} parent
+ * @param {AST.ElementLike} parent
  */
 export function validate_attribute(attribute, parent) {
 	if (
@@ -80,40 +80,42 @@ export function validate_slot_attribute(context, attribute, is_component = false
 	}
 
 	if (owner) {
-		if (!is_text_attribute(attribute)) {
-			e.slot_attribute_invalid(attribute);
-		}
-
 		if (
 			owner.type === 'Component' ||
 			owner.type === 'SvelteComponent' ||
 			owner.type === 'SvelteSelf'
 		) {
 			if (owner !== parent) {
-				e.slot_attribute_invalid_placement(attribute);
-			}
+				if (!is_component) {
+					e.slot_attribute_invalid_placement(attribute);
+				}
+			} else {
+				if (!is_text_attribute(attribute)) {
+					e.slot_attribute_invalid(attribute);
+				}
 
-			const name = attribute.value[0].data;
+				const name = attribute.value[0].data;
 
-			if (context.state.component_slots.has(name)) {
-				e.slot_attribute_duplicate(attribute, name, owner.name);
-			}
+				if (context.state.component_slots.has(name)) {
+					e.slot_attribute_duplicate(attribute, name, owner.name);
+				}
 
-			context.state.component_slots.add(name);
+				context.state.component_slots.add(name);
 
-			if (name === 'default') {
-				for (const node of owner.fragment.nodes) {
-					if (node.type === 'Text' && regex_only_whitespaces.test(node.data)) {
-						continue;
-					}
-
-					if (node.type === 'RegularElement' || node.type === 'SvelteFragment') {
-						if (node.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')) {
+				if (name === 'default') {
+					for (const node of owner.fragment.nodes) {
+						if (node.type === 'Text' && regex_only_whitespaces.test(node.data)) {
 							continue;
 						}
-					}
 
-					e.slot_default_duplicate(node);
+						if (node.type === 'RegularElement' || node.type === 'SvelteFragment') {
+							if (node.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')) {
+								continue;
+							}
+						}
+
+						e.slot_default_duplicate(node);
+					}
 				}
 			}
 		}

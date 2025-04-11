@@ -1,8 +1,9 @@
 /** @import { CompileOptions } from '#compiler' */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import glob from 'tiny-glob/sync.js';
+import { globSync } from 'tinyglobby';
 import { VERSION, compile, compileModule, preprocess } from 'svelte/compiler';
+import { vi } from 'vitest';
 
 /**
  * @param {string} file
@@ -69,7 +70,7 @@ export async function compile_directory(
 
 	fs.rmSync(output_dir, { recursive: true, force: true });
 
-	for (let file of glob('**', { cwd, filesOnly: true })) {
+	for (let file of globSync('**', { cwd, onlyFiles: true })) {
 		if (file.startsWith('_')) continue;
 
 		let text = fs.readFileSync(`${cwd}/${file}`, 'utf-8').replace(/\r\n/g, '\n');
@@ -145,6 +146,10 @@ export async function compile_directory(
 
 			if (compiled.css) {
 				write(`${output_dir}/${file}.css`, compiled.css.code);
+				write(
+					`${output_dir}/${file}.css.json`,
+					JSON.stringify({ hasGlobal: compiled.css.hasGlobal })
+				);
 				if (output_map) {
 					write(`${output_dir}/${file}.css.map`, JSON.stringify(compiled.css.map, null, '\t'));
 				}
@@ -176,12 +181,12 @@ export function write(file, contents) {
 // Guard because not all test contexts load this with JSDOM
 if (typeof window !== 'undefined') {
 	// @ts-expect-error JS DOM doesn't support it
-	Window.prototype.matchMedia = (media) => {
+	Window.prototype.matchMedia = vi.fn((media) => {
 		return {
 			matches: false,
 			media,
 			addEventListener: () => {},
 			removeEventListener: () => {}
 		};
-	};
+	});
 }

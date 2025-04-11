@@ -16,10 +16,10 @@ export default test({
 		assert.equal(div.className, 'testClassName svelte-x1o6ra');
 
 		component.testName = null;
-		assert.equal(div.className, ' svelte-x1o6ra');
+		assert.equal(div.className, 'svelte-x1o6ra');
 
 		component.testName = undefined;
-		assert.equal(div.className, ' svelte-x1o6ra');
+		assert.equal(div.className, 'svelte-x1o6ra');
 
 		component.testName = undefined + '';
 		assert.equal(div.className, 'undefined svelte-x1o6ra');
@@ -40,9 +40,9 @@ export default test({
 		assert.equal(div.className, 'true svelte-x1o6ra');
 
 		component.testName = {};
-		assert.equal(div.className, '[object Object] svelte-x1o6ra');
+		assert.equal(div.className, 'svelte-x1o6ra');
 
 		component.testName = '';
-		assert.equal(div.className, ' svelte-x1o6ra');
+		assert.equal(div.className, 'svelte-x1o6ra');
 	}
 });

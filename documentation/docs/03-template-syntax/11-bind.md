@@ -12,9 +12,33 @@ The general syntax is `bind:property={expression}`, where `expression` is an _lv
 <input bind:value />
 ```
 
+
 Svelte creates an event listener that updates the bound value. If an element already has a listener for the same event, that listener will be fired before the bound value is updated.
 
 Most bindings are _two-way_, meaning that changes to the value will affect the element and vice versa. A few bindings are _readonly_, meaning that changing their value will have no effect on the element.
+
+## Function bindings
+
+You can also use `bind:property={get, set}`, where `get` and `set` are functions, allowing you to perform validation and transformation:
+
+```svelte
+<input bind:value={
+	() => value,
+	(v) => value = v.toLowerCase()}
+/>
+```
+
+In the case of readonly bindings like [dimension bindings](#Dimensions), the `get` value should be `null`:
+
+```svelte
+<div
+	bind:clientWidth={null, redraw}
+	bind:clientHeight={null, redraw}
+>...</div>
+```
+
+> [!NOTE]
+> Function bindings are available in Svelte 5.9.0 and newer.
 
 ## `<input bind:value>`
 
@@ -195,11 +219,10 @@ You can give the `<select>` a default value by adding a `selected` attribute to 
 - [`volume`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/volume)
 - [`muted`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/muted)
 
-...and seven readonly ones:
+...and six readonly ones:
 
 - [`duration`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/duration)
 - [`buffered`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/buffered)
-- [`paused`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/paused)
 - [`seekable`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/seekable)
 - [`seeking`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/seeking_event)
 - [`ended`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/ended)
@@ -211,7 +234,7 @@ You can give the `<select>` a default value by adding a `selected` attribute to 
 
 ## `<video>`
 
-`<video>` elements have all the same bindings as [#audio] elements, plus readonly [`videoWidth`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/videoWidth) and [`videoHeight`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/videoHeight) bindings.
+`<video>` elements have all the same bindings as [`<audio>`](#audio) elements, plus readonly [`videoWidth`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/videoWidth) and [`videoHeight`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/videoHeight) bindings.
 
 ## `<img>`
 
@@ -244,7 +267,7 @@ Elements with the `contenteditable` attribute support the following bindings:
 <!-- for some reason puts the comment and html on same line -->
 <!-- prettier-ignore -->
 ```svelte
-<div contenteditable="true" bind:innerHTML={html} />
+<div contenteditable="true" bind:innerHTML={html}></div>
 ```
 
 ## Dimensions
@@ -284,7 +307,7 @@ To get a reference to a DOM node, use `bind:this`. The value will be `undefined`
 	});
 </script>
 
-<canvas bind:this={canvas} />
+<canvas bind:this={canvas}></canvas>
 ```
 
 Components also support `bind:this`, allowing you to interact with component instances programmatically.

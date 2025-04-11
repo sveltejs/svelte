@@ -1,5 +1,5 @@
 /** @import { Expression, Node, Program } from 'estree' */
-/** @import { Binding, AST, SvelteNode, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { Binding, AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 import { walk } from 'zimmerframe';
@@ -243,24 +243,38 @@ export function analyze_module(ast, options) {
 		}
 	}
 
+	/** @type {Analysis} */
+	const analysis = {
+		module: { ast, scope, scopes },
+		name: options.filename,
+		accessors: false,
+		runes: true,
+		immutable: true,
+		tracing: false
+	};
+
 	walk(
 		/** @type {Node} */ (ast),
 		{
 			scope,
 			scopes,
-			// @ts-expect-error TODO
-			analysis: { runes: true }
+			analysis: /** @type {ComponentAnalysis} */ (analysis),
+			derived_state: [],
+			// TODO the following are not needed for modules, but we have to pass them in order to avoid type error,
+			// and reducing the type would result in a lot of tedious type casts elsewhere - find a good solution one day
+			ast_type: /** @type {any} */ (null),
+			component_slots: new Set(),
+			expression: null,
+			function_depth: 0,
+			has_props_rune: false,
+			options: /** @type {ValidatedCompileOptions} */ (options),
+			parent_element: null,
+			reactive_statement: null
 		},
 		visitors
 	);
 
-	return {
-		module: { ast, scope, scopes },
-		name: options.filename,
-		accessors: false,
-		runes: true,
-		immutable: true
-	};
+	return analysis;
 }
 
 /**
@@ -408,14 +422,17 @@ export function analyze_component(root, source, options) {
 		template,
 		elements: [],
 		runes,
+		tracing: false,
 		immutable: runes || options.immutable,
 		exports: [],
 		uses_props: false,
+		props_id: null,
 		uses_rest_props: false,
 		uses_slots: false,
 		uses_component_bindings: false,
 		uses_render_tags: false,
 		needs_context: false,
+		needs_mutation_validation: false,
 		needs_props: false,
 		event_directive_node: null,
 		uses_event_attributes: false,
@@ -439,7 +456,8 @@ export function analyze_component(root, source, options) {
 						hash
 					})
 				: '',
-			keyframes: []
+			keyframes: [],
+			has_global: false
 		},
 		source,
 		undefined_exports: new Map(),
@@ -525,7 +543,7 @@ export function analyze_component(root, source, options) {
 
 		// more legacy nonsense: if an `each` binding is reassigned/mutated,
 		// treat the expression as being mutated as well
-		walk(/** @type {SvelteNode} */ (template.ast), null, {
+		walk(/** @type {AST.SvelteNode} */ (template.ast), null, {
 			EachBlock(node) {
 				const scope = /** @type {Scope} */ (template.scopes.get(node));
 
@@ -548,7 +566,7 @@ export function analyze_component(root, source, options) {
 										binding.declaration_kind !== 'import'
 									) {
 										binding.kind = 'state';
-										binding.mutated = binding.updated = true;
+										binding.mutated = true;
 									}
 								}
 							}
@@ -600,15 +618,12 @@ export function analyze_component(root, source, options) {
 				has_props_rune: false,
 				component_slots: new Set(),
 				expression: null,
-				render_tag: null,
-				private_derived_state: [],
+				derived_state: [],
 				function_depth: scope.function_depth,
-				instance_scope: instance.scope,
-				reactive_statement: null,
-				reactive_statements: new Map()
+				reactive_statement: null
 			};
 
-			walk(/** @type {SvelteNode} */ (ast), state, visitors);
+			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);
 		}
 
 		// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
@@ -667,17 +682,14 @@ export function analyze_component(root, source, options) {
 				parent_element: null,
 				has_props_rune: false,
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
-				instance_scope: instance.scope,
 				reactive_statement: null,
-				reactive_statements: analysis.reactive_statements,
 				component_slots: new Set(),
 				expression: null,
-				render_tag: null,
-				private_derived_state: [],
+				derived_state: [],
 				function_depth: scope.function_depth
 			};
 
-			walk(/** @type {SvelteNode} */ (ast), state, visitors);
+			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);
 		}
 
 		for (const [name, binding] of instance.scope.declarations) {
@@ -698,7 +710,7 @@ export function analyze_component(root, source, options) {
 	}
 
 	for (const node of analysis.module.ast.body) {
-		if (node.type === 'ExportNamedDeclaration' && node.specifiers !== null) {
+		if (node.type === 'ExportNamedDeclaration' && node.specifiers !== null && node.source == null) {
 			for (const specifier of node.specifiers) {
 				if (specifier.local.type !== 'Identifier') continue;
 
@@ -751,64 +763,62 @@ export function analyze_component(root, source, options) {
 		if (!should_ignore_unused) {
 			warn_unused(analysis.css.ast);
 		}
+	}
 
-		outer: for (const node of analysis.elements) {
-			if (node.metadata.scoped) {
-				// Dynamic elements in dom mode always use spread for attributes and therefore shouldn't have a class attribute added to them
-				// TODO this happens during the analysis phase, which shouldn't know anything about client vs server
-				if (node.type === 'SvelteElement' && options.generate === 'client') continue;
+	for (const node of analysis.elements) {
+		if (node.metadata.scoped && is_custom_element_node(node)) {
+			mark_subtree_dynamic(node.metadata.path);
+		}
 
-				/** @type {AST.Attribute | undefined} */
-				let class_attribute = undefined;
+		let has_class = false;
+		let has_style = false;
+		let has_spread = false;
+		let has_class_directive = false;
+		let has_style_directive = false;
 
-				for (const attribute of node.attributes) {
-					if (attribute.type === 'SpreadAttribute') {
-						// The spread method appends the hash to the end of the class attribute on its own
-						continue outer;
-					}
-
-					if (attribute.type !== 'Attribute') continue;
-					if (attribute.name.toLowerCase() !== 'class') continue;
-
-					class_attribute = attribute;
-				}
-
-				if (class_attribute && class_attribute.value !== true) {
-					if (is_text_attribute(class_attribute)) {
-						class_attribute.value[0].data += ` ${analysis.css.hash}`;
-					} else {
-						/** @type {AST.Text} */
-						const css_text = {
-							type: 'Text',
-							data: ` ${analysis.css.hash}`,
-							raw: ` ${analysis.css.hash}`,
-							start: -1,
-							end: -1
-						};
-
-						if (Array.isArray(class_attribute.value)) {
-							class_attribute.value.push(css_text);
-						} else {
-							class_attribute.value = [class_attribute.value, css_text];
-						}
-					}
-				} else {
-					node.attributes.push(
-						create_attribute('class', -1, -1, [
-							{
-								type: 'Text',
-								data: analysis.css.hash,
-								raw: analysis.css.hash,
-								start: -1,
-								end: -1
-							}
-						])
-					);
-					if (is_custom_element_node(node) && node.attributes.length === 1) {
-						mark_subtree_dynamic(node.metadata.path);
-					}
-				}
+		for (const attribute of node.attributes) {
+			// The spread method appends the hash to the end of the class attribute on its own
+			if (attribute.type === 'SpreadAttribute') {
+				has_spread = true;
+				break;
+			} else if (attribute.type === 'Attribute') {
+				has_class ||= attribute.name.toLowerCase() === 'class';
+				has_style ||= attribute.name.toLowerCase() === 'style';
+			} else if (attribute.type === 'ClassDirective') {
+				has_class_directive = true;
+			} else if (attribute.type === 'StyleDirective') {
+				has_style_directive = true;
 			}
+		}
+
+		// We need an empty class to generate the set_class() or class="" correctly
+		if (!has_spread && !has_class && (node.metadata.scoped || has_class_directive)) {
+			node.attributes.push(
+				create_attribute('class', -1, -1, [
+					{
+						type: 'Text',
+						data: '',
+						raw: '',
+						start: -1,
+						end: -1
+					}
+				])
+			);
+		}
+
+		// We need an empty style to generate the set_style() correctly
+		if (!has_spread && !has_style && has_style_directive) {
+			node.attributes.push(
+				create_attribute('style', -1, -1, [
+					{
+						type: 'Text',
+						data: '',
+						raw: '',
+						start: -1,
+						end: -1
+					}
+				])
+			);
 		}
 	}
 

@@ -1,4 +1,9 @@
-[![Cybernetically enhanced web apps: Svelte](https://sveltejs.github.io/assets/banner.png)](https://svelte.dev)
+<a href="https://svelte.dev">
+	<picture>
+		<source media="(prefers-color-scheme: dark)" srcset="../../assets/banner_dark.png">
+		<img src="../../assets/banner.png" alt="Svelte - web development for the rest of us" />
+	</picture>
+</a>
 
 [![npm version](https://img.shields.io/npm/v/svelte.svg)](https://www.npmjs.com/package/svelte) [![license](https://img.shields.io/npm/l/svelte.svg)](LICENSE.md) [![Chat](https://img.shields.io/discord/457912077277855764?label=chat&logo=discord)](https://svelte.dev/chat)
 

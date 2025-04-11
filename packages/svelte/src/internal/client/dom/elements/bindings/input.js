@@ -5,7 +5,8 @@ import * as e from '../../../errors.js';
 import { is } from '../../../proxy.js';
 import { queue_micro_task } from '../../task.js';
 import { hydrating } from '../../hydration.js';
-import { is_runes, untrack } from '../../../runtime.js';
+import { untrack } from '../../../runtime.js';
+import { is_runes } from '../../../context.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -30,8 +31,17 @@ export function bind_value(input, get, set = get) {
 		// In runes mode, respect any validation in accessors (doesn't apply in legacy mode,
 		// because we use mutable state which ensures the render effect always runs)
 		if (runes && value !== (value = get())) {
+			var start = input.selectionStart;
+			var end = input.selectionEnd;
+
 			// the value is coerced on assignment
 			input.value = value ?? '';
+
+			// Restore selection
+			if (end !== null) {
+				input.selectionStart = start;
+				input.selectionEnd = Math.min(end, input.value.length);
+			}
 		}
 	});
 
@@ -249,6 +259,15 @@ export function bind_files(input, get, set = get) {
 	listen_to_event_and_reset_event(input, 'change', () => {
 		set(input.files);
 	});
+
+	if (
+		// If we are hydrating and the value has since changed,
+		// then use the updated value from the input instead.
+		hydrating &&
+		input.files
+	) {
+		set(input.files);
+	}
 
 	render_effect(() => {
 		input.files = get();

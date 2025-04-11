@@ -1,5 +1,5 @@
 /** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression } from 'estree' */
-/** @import { AST, DelegatedEvent, SvelteNode } from '#compiler' */
+/** @import { AST, DelegatedEvent } from '#compiler' */
 /** @import { Context } from '../types' */
 import { cannot_be_set_statically, is_capture_event, is_delegated } from '../../../../utils.js';
 import {
@@ -16,16 +16,11 @@ import { mark_subtree_dynamic } from './shared/fragment.js';
 export function Attribute(node, context) {
 	context.next();
 
-	const parent = /** @type {SvelteNode} */ (context.path.at(-1));
+	const parent = /** @type {AST.SvelteNode} */ (context.path.at(-1));
 
 	if (parent.type === 'RegularElement') {
 		// special case <option value="" />
 		if (node.name === 'value' && parent.name === 'option') {
-			mark_subtree_dynamic(context.path);
-		}
-
-		// special case <img loading="lazy" />
-		if (node.name === 'loading' && parent.name === 'img') {
 			mark_subtree_dynamic(context.path);
 		}
 	}
@@ -38,6 +33,19 @@ export function Attribute(node, context) {
 		mark_subtree_dynamic(context.path);
 	}
 
+	// class={[...]} or class={{...}} or `class={x}` need clsx to resolve the classes
+	if (
+		node.name === 'class' &&
+		!Array.isArray(node.value) &&
+		node.value !== true &&
+		node.value.expression.type !== 'Literal' &&
+		node.value.expression.type !== 'TemplateLiteral' &&
+		node.value.expression.type !== 'BinaryExpression'
+	) {
+		mark_subtree_dynamic(context.path);
+		node.metadata.needs_clsx = true;
+	}
+
 	if (node.value !== true) {
 		for (const chunk of get_attribute_chunks(node.value)) {
 			if (chunk.type !== 'ExpressionTag') continue;
@@ -48,9 +56,6 @@ export function Attribute(node, context) {
 			) {
 				continue;
 			}
-
-			node.metadata.expression.has_state ||= chunk.metadata.expression.has_state;
-			node.metadata.expression.has_call ||= chunk.metadata.expression.has_call;
 		}
 
 		if (is_event_attribute(node)) {
@@ -157,16 +162,8 @@ function get_delegated_event(event_name, handler, context) {
 			return unhoisted;
 		}
 
-		if (binding !== null && binding.initial !== null && !binding.updated && !binding.is_called) {
-			const binding_type = binding.initial.type;
-
-			if (
-				binding_type === 'ArrowFunctionExpression' ||
-				binding_type === 'FunctionDeclaration' ||
-				binding_type === 'FunctionExpression'
-			) {
-				target_function = binding.initial;
-			}
+		if (binding?.is_function()) {
+			target_function = binding.initial;
 		}
 	}
 
@@ -185,6 +182,15 @@ function get_delegated_event(event_name, handler, context) {
 
 		const binding = scope.get(reference);
 		const local_binding = context.state.scope.get(reference);
+
+		// if the function access a snippet that can't be hoisted we bail out
+		if (
+			local_binding !== null &&
+			local_binding.initial?.type === 'SnippetBlock' &&
+			!local_binding.initial.metadata.can_hoist
+		) {
+			return unhoisted;
+		}
 
 		// If we are referencing a binding that is shadowed in another scope then bail out.
 		if (local_binding !== null && binding !== null && local_binding.node !== binding.node) {

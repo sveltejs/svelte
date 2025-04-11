@@ -15,7 +15,6 @@
 		"allowJs": true,
 		"checkJs": true,
 		"paths": {
-			"acorn-typescript": ["./src/compiler/phases/1-parse/ambient.d.ts"],
 			"svelte": ["./src/index.d.ts"],
 			"svelte/action": ["./src/action/public.d.ts"],
 			"svelte/compiler": ["./src/compiler/public.d.ts"],
@@ -40,5 +39,9 @@
 		"./tests/runtime-browser/test-ssr.ts",
 		"./tests/*/samples/*/_config.js"
 	],
-	"exclude": ["./scripts/process-messages/templates/", "./src/compiler/optimizer/"]
+	"exclude": [
+		"./scripts/process-messages/templates/",
+		"./scripts/_bundle.js",
+		"./src/compiler/optimizer/"
+	]
 }

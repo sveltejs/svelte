@@ -2,7 +2,7 @@
 	"css": null,
 	"js": [],
 	"start": 0,
-	"end": 94,
+	"end": 344,
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
@@ -298,6 +298,873 @@
 										"end": {
 											"line": 1,
 											"column": 36
+										}
+									},
+									"value": true,
+									"raw": "true"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"type": "Text",
+				"start": 94,
+				"end": 96,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "EachBlock",
+				"start": 96,
+				"end": 208,
+				"expression": {
+					"type": "Identifier",
+					"start": 103,
+					"end": 109,
+					"loc": {
+						"start": {
+							"line": 5,
+							"column": 7
+						},
+						"end": {
+							"line": 5,
+							"column": 13
+						}
+					},
+					"name": "people"
+				},
+				"body": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 153,
+							"end": 155,
+							"raw": "\n\t",
+							"data": "\n\t"
+						},
+						{
+							"type": "RegularElement",
+							"start": 155,
+							"end": 200,
+							"name": "p",
+							"attributes": [],
+							"fragment": {
+								"type": "Fragment",
+								"nodes": [
+									{
+										"type": "ExpressionTag",
+										"start": 158,
+										"end": 164,
+										"expression": {
+											"type": "Identifier",
+											"start": 159,
+											"end": 163,
+											"loc": {
+												"start": {
+													"line": 6,
+													"column": 5
+												},
+												"end": {
+													"line": 6,
+													"column": 9
+												}
+											},
+											"name": "name"
+										}
+									},
+									{
+										"type": "Text",
+										"start": 164,
+										"end": 168,
+										"raw": " is ",
+										"data": " is "
+									},
+									{
+										"type": "ExpressionTag",
+										"start": 168,
+										"end": 196,
+										"expression": {
+											"type": "ConditionalExpression",
+											"start": 169,
+											"end": 195,
+											"loc": {
+												"start": {
+													"line": 6,
+													"column": 15
+												},
+												"end": {
+													"line": 6,
+													"column": 41
+												}
+											},
+											"test": {
+												"type": "Identifier",
+												"start": 169,
+												"end": 173,
+												"loc": {
+													"start": {
+														"line": 6,
+														"column": 15
+													},
+													"end": {
+														"line": 6,
+														"column": 19
+													}
+												},
+												"name": "cool"
+											},
+											"consequent": {
+												"type": "Literal",
+												"start": 176,
+												"end": 182,
+												"loc": {
+													"start": {
+														"line": 6,
+														"column": 22
+													},
+													"end": {
+														"line": 6,
+														"column": 28
+													}
+												},
+												"value": "cool",
+												"raw": "'cool'"
+											},
+											"alternate": {
+												"type": "Literal",
+												"start": 185,
+												"end": 195,
+												"loc": {
+													"start": {
+														"line": 6,
+														"column": 31
+													},
+													"end": {
+														"line": 6,
+														"column": 41
+													}
+												},
+												"value": "not cool",
+												"raw": "'not cool'"
+											}
+										}
+									}
+								]
+							}
+						},
+						{
+							"type": "Text",
+							"start": 200,
+							"end": 201,
+							"raw": "\n",
+							"data": "\n"
+						}
+					]
+				},
+				"context": {
+					"type": "ObjectPattern",
+					"start": 113,
+					"end": 152,
+					"loc": {
+						"start": {
+							"line": 5,
+							"column": 18
+						},
+						"end": {
+							"line": 5,
+							"column": 57
+						}
+					},
+					"properties": [
+						{
+							"type": "Property",
+							"start": 115,
+							"end": 137,
+							"loc": {
+								"start": {
+									"line": 5,
+									"column": 20
+								},
+								"end": {
+									"line": 5,
+									"column": 42
+								}
+							},
+							"method": false,
+							"shorthand": true,
+							"computed": false,
+							"key": {
+								"type": "Identifier",
+								"start": 115,
+								"end": 119,
+								"loc": {
+									"start": {
+										"line": 5,
+										"column": 20
+									},
+									"end": {
+										"line": 5,
+										"column": 24
+									}
+								},
+								"name": "name"
+							},
+							"kind": "init",
+							"value": {
+								"type": "AssignmentPattern",
+								"start": 115,
+								"end": 137,
+								"loc": {
+									"start": {
+										"line": 5,
+										"column": 20
+									},
+									"end": {
+										"line": 5,
+										"column": 42
+									}
+								},
+								"left": {
+									"type": "Identifier",
+									"start": 115,
+									"end": 119,
+									"loc": {
+										"start": {
+											"line": 5,
+											"column": 20
+										},
+										"end": {
+											"line": 5,
+											"column": 24
+										}
+									},
+									"name": "name"
+								},
+								"right": {
+									"type": "TemplateLiteral",
+									"start": 122,
+									"end": 137,
+									"loc": {
+										"start": {
+											"line": 5,
+											"column": 27
+										},
+										"end": {
+											"line": 5,
+											"column": 42
+										}
+									},
+									"expressions": [
+										{
+											"type": "Literal",
+											"start": 130,
+											"end": 135,
+											"loc": {
+												"start": {
+													"line": 5,
+													"column": 35
+												},
+												"end": {
+													"line": 5,
+													"column": 40
+												}
+											},
+											"value": "Doe",
+											"raw": "\"Doe\""
+										}
+									],
+									"quasis": [
+										{
+											"type": "TemplateElement",
+											"start": 123,
+											"end": 128,
+											"loc": {
+												"start": {
+													"line": 5,
+													"column": 28
+												},
+												"end": {
+													"line": 5,
+													"column": 33
+												}
+											},
+											"value": {
+												"raw": "Jane ",
+												"cooked": "Jane "
+											},
+											"tail": false
+										},
+										{
+											"type": "TemplateElement",
+											"start": 136,
+											"end": 136,
+											"loc": {
+												"start": {
+													"line": 5,
+													"column": 41
+												},
+												"end": {
+													"line": 5,
+													"column": 41
+												}
+											},
+											"value": {
+												"raw": "",
+												"cooked": ""
+											},
+											"tail": true
+										}
+									]
+								}
+							}
+						},
+						{
+							"type": "Property",
+							"start": 139,
+							"end": 150,
+							"loc": {
+								"start": {
+									"line": 5,
+									"column": 44
+								},
+								"end": {
+									"line": 5,
+									"column": 55
+								}
+							},
+							"method": false,
+							"shorthand": true,
+							"computed": false,
+							"key": {
+								"type": "Identifier",
+								"start": 139,
+								"end": 143,
+								"loc": {
+									"start": {
+										"line": 5,
+										"column": 44
+									},
+									"end": {
+										"line": 5,
+										"column": 48
+									}
+								},
+								"name": "cool"
+							},
+							"kind": "init",
+							"value": {
+								"type": "AssignmentPattern",
+								"start": 139,
+								"end": 150,
+								"loc": {
+									"start": {
+										"line": 5,
+										"column": 44
+									},
+									"end": {
+										"line": 5,
+										"column": 55
+									}
+								},
+								"left": {
+									"type": "Identifier",
+									"start": 139,
+									"end": 143,
+									"loc": {
+										"start": {
+											"line": 5,
+											"column": 44
+										},
+										"end": {
+											"line": 5,
+											"column": 48
+										}
+									},
+									"name": "cool"
+								},
+								"right": {
+									"type": "Literal",
+									"start": 146,
+									"end": 150,
+									"loc": {
+										"start": {
+											"line": 5,
+											"column": 51
+										},
+										"end": {
+											"line": 5,
+											"column": 55
+										}
+									},
+									"value": true,
+									"raw": "true"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"type": "Text",
+				"start": 208,
+				"end": 210,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "EachBlock",
+				"start": 210,
+				"end": 344,
+				"expression": {
+					"type": "Identifier",
+					"start": 217,
+					"end": 223,
+					"loc": {
+						"start": {
+							"line": 9,
+							"column": 7
+						},
+						"end": {
+							"line": 9,
+							"column": 13
+						}
+					},
+					"name": "people"
+				},
+				"body": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 289,
+							"end": 291,
+							"raw": "\n\t",
+							"data": "\n\t"
+						},
+						{
+							"type": "RegularElement",
+							"start": 291,
+							"end": 336,
+							"name": "p",
+							"attributes": [],
+							"fragment": {
+								"type": "Fragment",
+								"nodes": [
+									{
+										"type": "ExpressionTag",
+										"start": 294,
+										"end": 300,
+										"expression": {
+											"type": "Identifier",
+											"start": 295,
+											"end": 299,
+											"loc": {
+												"start": {
+													"line": 10,
+													"column": 5
+												},
+												"end": {
+													"line": 10,
+													"column": 9
+												}
+											},
+											"name": "name"
+										}
+									},
+									{
+										"type": "Text",
+										"start": 300,
+										"end": 304,
+										"raw": " is ",
+										"data": " is "
+									},
+									{
+										"type": "ExpressionTag",
+										"start": 304,
+										"end": 332,
+										"expression": {
+											"type": "ConditionalExpression",
+											"start": 305,
+											"end": 331,
+											"loc": {
+												"start": {
+													"line": 10,
+													"column": 15
+												},
+												"end": {
+													"line": 10,
+													"column": 41
+												}
+											},
+											"test": {
+												"type": "Identifier",
+												"start": 305,
+												"end": 309,
+												"loc": {
+													"start": {
+														"line": 10,
+														"column": 15
+													},
+													"end": {
+														"line": 10,
+														"column": 19
+													}
+												},
+												"name": "cool"
+											},
+											"consequent": {
+												"type": "Literal",
+												"start": 312,
+												"end": 318,
+												"loc": {
+													"start": {
+														"line": 10,
+														"column": 22
+													},
+													"end": {
+														"line": 10,
+														"column": 28
+													}
+												},
+												"value": "cool",
+												"raw": "'cool'"
+											},
+											"alternate": {
+												"type": "Literal",
+												"start": 321,
+												"end": 331,
+												"loc": {
+													"start": {
+														"line": 10,
+														"column": 31
+													},
+													"end": {
+														"line": 10,
+														"column": 41
+													}
+												},
+												"value": "not cool",
+												"raw": "'not cool'"
+											}
+										}
+									}
+								]
+							}
+						},
+						{
+							"type": "Text",
+							"start": 336,
+							"end": 337,
+							"raw": "\n",
+							"data": "\n"
+						}
+					]
+				},
+				"context": {
+					"type": "ObjectPattern",
+					"start": 227,
+					"end": 288,
+					"loc": {
+						"start": {
+							"line": 9,
+							"column": 18
+						},
+						"end": {
+							"line": 9,
+							"column": 79
+						}
+					},
+					"properties": [
+						{
+							"type": "Property",
+							"start": 229,
+							"end": 273,
+							"loc": {
+								"start": {
+									"line": 9,
+									"column": 20
+								},
+								"end": {
+									"line": 9,
+									"column": 64
+								}
+							},
+							"method": false,
+							"shorthand": true,
+							"computed": false,
+							"key": {
+								"type": "Identifier",
+								"start": 229,
+								"end": 233,
+								"loc": {
+									"start": {
+										"line": 9,
+										"column": 20
+									},
+									"end": {
+										"line": 9,
+										"column": 24
+									}
+								},
+								"name": "name"
+							},
+							"kind": "init",
+							"value": {
+								"type": "AssignmentPattern",
+								"start": 229,
+								"end": 273,
+								"loc": {
+									"start": {
+										"line": 9,
+										"column": 20
+									},
+									"end": {
+										"line": 9,
+										"column": 64
+									}
+								},
+								"left": {
+									"type": "Identifier",
+									"start": 229,
+									"end": 233,
+									"loc": {
+										"start": {
+											"line": 9,
+											"column": 20
+										},
+										"end": {
+											"line": 9,
+											"column": 24
+										}
+									},
+									"name": "name"
+								},
+								"right": {
+									"type": "CallExpression",
+									"start": 236,
+									"end": 273,
+									"loc": {
+										"start": {
+											"line": 9,
+											"column": 27
+										},
+										"end": {
+											"line": 9,
+											"column": 64
+										}
+									},
+									"callee": {
+										"type": "ArrowFunctionExpression",
+										"start": 237,
+										"end": 270,
+										"loc": {
+											"start": {
+												"line": 9,
+												"column": 28
+											},
+											"end": {
+												"line": 9,
+												"column": 61
+											}
+										},
+										"id": null,
+										"expression": false,
+										"generator": false,
+										"async": false,
+										"params": [],
+										"body": {
+											"type": "BlockStatement",
+											"start": 243,
+											"end": 270,
+											"loc": {
+												"start": {
+													"line": 9,
+													"column": 34
+												},
+												"end": {
+													"line": 9,
+													"column": 61
+												}
+											},
+											"body": [
+												{
+													"type": "ReturnStatement",
+													"start": 245,
+													"end": 268,
+													"loc": {
+														"start": {
+															"line": 9,
+															"column": 36
+														},
+														"end": {
+															"line": 9,
+															"column": 59
+														}
+													},
+													"argument": {
+														"type": "TemplateLiteral",
+														"start": 252,
+														"end": 267,
+														"loc": {
+															"start": {
+																"line": 9,
+																"column": 43
+															},
+															"end": {
+																"line": 9,
+																"column": 58
+															}
+														},
+														"expressions": [
+															{
+																"type": "Literal",
+																"start": 260,
+																"end": 265,
+																"loc": {
+																	"start": {
+																		"line": 9,
+																		"column": 51
+																	},
+																	"end": {
+																		"line": 9,
+																		"column": 56
+																	}
+																},
+																"value": "Doe",
+																"raw": "\"Doe\""
+															}
+														],
+														"quasis": [
+															{
+																"type": "TemplateElement",
+																"start": 253,
+																"end": 258,
+																"loc": {
+																	"start": {
+																		"line": 9,
+																		"column": 44
+																	},
+																	"end": {
+																		"line": 9,
+																		"column": 49
+																	}
+																},
+																"value": {
+																	"raw": "Jane ",
+																	"cooked": "Jane "
+																},
+																"tail": false
+															},
+															{
+																"type": "TemplateElement",
+																"start": 266,
+																"end": 266,
+																"loc": {
+																	"start": {
+																		"line": 9,
+																		"column": 57
+																	},
+																	"end": {
+																		"line": 9,
+																		"column": 57
+																	}
+																},
+																"value": {
+																	"raw": "",
+																	"cooked": ""
+																},
+																"tail": true
+															}
+														]
+													}
+												}
+											]
+										}
+									},
+									"arguments": [],
+									"optional": false
+								}
+							}
+						},
+						{
+							"type": "Property",
+							"start": 275,
+							"end": 286,
+							"loc": {
+								"start": {
+									"line": 9,
+									"column": 66
+								},
+								"end": {
+									"line": 9,
+									"column": 77
+								}
+							},
+							"method": false,
+							"shorthand": true,
+							"computed": false,
+							"key": {
+								"type": "Identifier",
+								"start": 275,
+								"end": 279,
+								"loc": {
+									"start": {
+										"line": 9,
+										"column": 66
+									},
+									"end": {
+										"line": 9,
+										"column": 70
+									}
+								},
+								"name": "cool"
+							},
+							"kind": "init",
+							"value": {
+								"type": "AssignmentPattern",
+								"start": 275,
+								"end": 286,
+								"loc": {
+									"start": {
+										"line": 9,
+										"column": 66
+									},
+									"end": {
+										"line": 9,
+										"column": 77
+									}
+								},
+								"left": {
+									"type": "Identifier",
+									"start": 275,
+									"end": 279,
+									"loc": {
+										"start": {
+											"line": 9,
+											"column": 66
+										},
+										"end": {
+											"line": 9,
+											"column": 70
+										}
+									},
+									"name": "cool"
+								},
+								"right": {
+									"type": "Literal",
+									"start": 282,
+									"end": 286,
+									"loc": {
+										"start": {
+											"line": 9,
+											"column": 73
+										},
+										"end": {
+											"line": 9,
+											"column": 77
 										}
 									},
 									"value": true,

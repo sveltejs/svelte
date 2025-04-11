@@ -1,11 +1,10 @@
-/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Property, Statement } from 'estree' */
-/** @import { AST, TemplateNode } from '#compiler' */
+/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
 import * as b from '../../../../../utils/builders.js';
-import { create_derived } from '../../utils.js';
-import { build_bind_this, validate_binding } from '../shared/utils.js';
+import { build_bind_this, memoize_expression, validate_binding } from '../shared/utils.js';
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
@@ -35,7 +34,7 @@ export function build_component(node, component_name, context, anchor = context.
 		}
 	};
 
-	/** @type {Record<string, TemplateNode[]>} */
+	/** @type {Record<string, AST.TemplateNode[]>} */
 	const children = {};
 
 	/** @type {Record<string, Expression[]>} */
@@ -44,7 +43,7 @@ export function build_component(node, component_name, context, anchor = context.
 	/** @type {Property[]} */
 	const custom_css_props = [];
 
-	/** @type {Identifier | MemberExpression | null} */
+	/** @type {Identifier | MemberExpression | SequenceExpression | null} */
 	let bind_this = null;
 
 	/** @type {ExpressionStatement[]} */
@@ -132,7 +131,13 @@ export function build_component(node, component_name, context, anchor = context.
 		} else if (attribute.type === 'Attribute') {
 			if (attribute.name.startsWith('--')) {
 				custom_css_props.push(
-					b.init(attribute.name, build_attribute_value(attribute.value, context).value)
+					b.init(
+						attribute.name,
+						build_attribute_value(attribute.value, context, (value, metadata) =>
+							// TODO put the derived in the local block
+							metadata.has_call ? memoize_expression(context.state, value) : value
+						).value
+					)
 				);
 				continue;
 			}
@@ -145,29 +150,29 @@ export function build_component(node, component_name, context, anchor = context.
 				has_children_prop = true;
 			}
 
-			const { value } = build_attribute_value(attribute.value, context);
+			const { value, has_state } = build_attribute_value(
+				attribute.value,
+				context,
+				(value, metadata) => {
+					if (!metadata.has_state) return value;
 
-			if (attribute.metadata.expression.has_state) {
-				let arg = value;
+					// When we have a non-simple computation, anything other than an Identifier or Member expression,
+					// then there's a good chance it needs to be memoized to avoid over-firing when read within the
+					// child component (e.g. `active={i === index}`)
+					const should_wrap_in_derived = get_attribute_chunks(attribute.value).some((n) => {
+						return (
+							n.type === 'ExpressionTag' &&
+							n.expression.type !== 'Identifier' &&
+							n.expression.type !== 'MemberExpression'
+						);
+					});
 
-				// When we have a non-simple computation, anything other than an Identifier or Member expression,
-				// then there's a good chance it needs to be memoized to avoid over-firing when read within the
-				// child component.
-				const should_wrap_in_derived = get_attribute_chunks(attribute.value).some((n) => {
-					return (
-						n.type === 'ExpressionTag' &&
-						n.expression.type !== 'Identifier' &&
-						n.expression.type !== 'MemberExpression'
-					);
-				});
-
-				if (should_wrap_in_derived) {
-					const id = b.id(context.state.scope.generate(attribute.name));
-					context.state.init.push(b.var(id, create_derived(context.state, b.thunk(value))));
-					arg = b.call('$.get', id);
+					return should_wrap_in_derived ? memoize_expression(context.state, value) : value;
 				}
+			);
 
-				push_prop(b.get(attribute.name, [b.return(arg)]));
+			if (has_state) {
+				push_prop(b.get(attribute.name, [b.return(value)]));
 			} else {
 				push_prop(b.init(attribute.name, value));
 			}
@@ -176,58 +181,81 @@ export function build_component(node, component_name, context, anchor = context.
 
 			if (
 				dev &&
-				expression.type === 'MemberExpression' &&
-				context.state.analysis.runes &&
-				!is_ignored(node, 'binding_property_non_reactive')
+				attribute.name !== 'this' &&
+				!is_ignored(node, 'ownership_invalid_binding') &&
+				// bind:x={() => x.y, y => x.y = y} will be handled by the assignment expression binding validation
+				attribute.expression.type !== 'SequenceExpression'
 			) {
-				validate_binding(context.state, attribute, expression);
+				const left = object(attribute.expression);
+				const binding = left && context.state.scope.get(left.name);
+
+				if (binding?.kind === 'bindable_prop' || binding?.kind === 'prop') {
+					context.state.analysis.needs_mutation_validation = true;
+					binding_initializers.push(
+						b.stmt(
+							b.call(
+								'$$ownership_validator.binding',
+								b.literal(binding.node.name),
+								b.id(component_name),
+								b.thunk(expression)
+							)
+						)
+					);
+				}
 			}
 
-			if (attribute.name === 'this') {
-				bind_this = attribute.expression;
+			if (expression.type === 'SequenceExpression') {
+				if (attribute.name === 'this') {
+					bind_this = attribute.expression;
+				} else {
+					const [get, set] = expression.expressions;
+					const get_id = b.id(context.state.scope.generate('bind_get'));
+					const set_id = b.id(context.state.scope.generate('bind_set'));
+
+					context.state.init.push(b.var(get_id, get));
+					context.state.init.push(b.var(set_id, set));
+
+					push_prop(b.get(attribute.name, [b.return(b.call(get_id))]));
+					push_prop(b.set(attribute.name, [b.stmt(b.call(set_id, b.id('$$value')))]));
+				}
 			} else {
-				if (dev) {
-					const left = object(attribute.expression);
-					let binding;
-					if (left?.type === 'Identifier') {
-						binding = context.state.scope.get(left.name);
-					}
-					// Only run ownership addition on $state fields.
-					// Theoretically someone could create a `$state` while creating `$state.raw` or inside a `$derived.by`,
-					// but that feels so much of an edge case that it doesn't warrant a perf hit for the common case.
-					if (binding?.kind !== 'derived' && binding?.kind !== 'raw_state') {
-						binding_initializers.push(
-							b.stmt(
-								b.call(
-									b.id('$.add_owner_effect'),
-									b.thunk(expression),
-									b.id(component_name),
-									is_ignored(node, 'ownership_invalid_binding') && b.true
-								)
-							)
-						);
-					}
+				if (
+					dev &&
+					expression.type === 'MemberExpression' &&
+					context.state.analysis.runes &&
+					!is_ignored(node, 'binding_property_non_reactive')
+				) {
+					validate_binding(context.state, attribute, expression);
 				}
 
-				const is_store_sub =
-					attribute.expression.type === 'Identifier' &&
-					context.state.scope.get(attribute.expression.name)?.kind === 'store_sub';
+				if (attribute.name === 'this') {
+					bind_this = attribute.expression;
+				} else {
+					const is_store_sub =
+						attribute.expression.type === 'Identifier' &&
+						context.state.scope.get(attribute.expression.name)?.kind === 'store_sub';
 
-				// Delay prop pushes so bindings come at the end, to avoid spreads overwriting them
-				if (is_store_sub) {
+					// Delay prop pushes so bindings come at the end, to avoid spreads overwriting them
+					if (is_store_sub) {
+						push_prop(
+							b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)]),
+							true
+						);
+					} else {
+						push_prop(b.get(attribute.name, [b.return(expression)]), true);
+					}
+
+					const assignment = b.assignment(
+						'=',
+						/** @type {Pattern} */ (attribute.expression),
+						b.id('$$value')
+					);
+
 					push_prop(
-						b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)]),
+						b.set(attribute.name, [b.stmt(/** @type {Expression} */ (context.visit(assignment)))]),
 						true
 					);
-				} else {
-					push_prop(b.get(attribute.name, [b.return(expression)]), true);
 				}
-
-				const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
-				push_prop(
-					b.set(attribute.name, [b.stmt(/** @type {Expression} */ (context.visit(assignment)))]),
-					true
-				);
 			}
 		}
 	}

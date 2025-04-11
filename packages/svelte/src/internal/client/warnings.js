@@ -12,10 +12,9 @@ var normal = 'font-weight: normal';
  */
 export function assignment_value_stale(property, location) {
 	if (DEV) {
-		console.warn(`%c[svelte] assignment_value_stale\n%cAssignment to \`${property}\` property (${location}) will evaluate to the right-hand side, not the value of \`${property}\` following the assignment. This may result in unexpected behaviour.`, bold, normal);
+		console.warn(`%c[svelte] assignment_value_stale\n%cAssignment to \`${property}\` property (${location}) will evaluate to the right-hand side, not the value of \`${property}\` following the assignment. This may result in unexpected behaviour.\nhttps://svelte.dev/e/assignment_value_stale`, bold, normal);
 	} else {
-		// TODO print a link to the documentation
-		console.warn("assignment_value_stale");
+		console.warn(`https://svelte.dev/e/assignment_value_stale`);
 	}
 }
 
@@ -26,10 +25,9 @@ export function assignment_value_stale(property, location) {
  */
 export function binding_property_non_reactive(binding, location) {
 	if (DEV) {
-		console.warn(`%c[svelte] binding_property_non_reactive\n%c${location ? `\`${binding}\` (${location}) is binding to a non-reactive property` : `\`${binding}\` is binding to a non-reactive property`}`, bold, normal);
+		console.warn(`%c[svelte] binding_property_non_reactive\n%c${location ? `\`${binding}\` (${location}) is binding to a non-reactive property` : `\`${binding}\` is binding to a non-reactive property`}\nhttps://svelte.dev/e/binding_property_non_reactive`, bold, normal);
 	} else {
-		// TODO print a link to the documentation
-		console.warn("binding_property_non_reactive");
+		console.warn(`https://svelte.dev/e/binding_property_non_reactive`);
 	}
 }
 
@@ -39,10 +37,9 @@ export function binding_property_non_reactive(binding, location) {
  */
 export function console_log_state(method) {
 	if (DEV) {
-		console.warn(`%c[svelte] console_log_state\n%cYour \`console.${method}\` contained \`$state\` proxies. Consider using \`$inspect(...)\` or \`$state.snapshot(...)\` instead`, bold, normal);
+		console.warn(`%c[svelte] console_log_state\n%cYour \`console.${method}\` contained \`$state\` proxies. Consider using \`$inspect(...)\` or \`$state.snapshot(...)\` instead\nhttps://svelte.dev/e/console_log_state`, bold, normal);
 	} else {
-		// TODO print a link to the documentation
-		console.warn("console_log_state");
+		console.warn(`https://svelte.dev/e/console_log_state`);
 	}
 }
 
@@ -53,10 +50,9 @@ export function console_log_state(method) {
  */
 export function event_handler_invalid(handler, suggestion) {
 	if (DEV) {
-		console.warn(`%c[svelte] event_handler_invalid\n%c${handler} should be a function. Did you mean to ${suggestion}?`, bold, normal);
+		console.warn(`%c[svelte] event_handler_invalid\n%c${handler} should be a function. Did you mean to ${suggestion}?\nhttps://svelte.dev/e/event_handler_invalid`, bold, normal);
 	} else {
-		// TODO print a link to the documentation
-		console.warn("event_handler_invalid");
+		console.warn(`https://svelte.dev/e/event_handler_invalid`);
 	}
 }
 
@@ -68,10 +64,9 @@ export function event_handler_invalid(handler, suggestion) {
  */
 export function hydration_attribute_changed(attribute, html, value) {
 	if (DEV) {
-		console.warn(`%c[svelte] hydration_attribute_changed\n%cThe \`${attribute}\` attribute on \`${html}\` changed its value between server and client renders. The client value, \`${value}\`, will be ignored in favour of the server value`, bold, normal);
+		console.warn(`%c[svelte] hydration_attribute_changed\n%cThe \`${attribute}\` attribute on \`${html}\` changed its value between server and client renders. The client value, \`${value}\`, will be ignored in favour of the server value\nhttps://svelte.dev/e/hydration_attribute_changed`, bold, normal);
 	} else {
-		// TODO print a link to the documentation
-		console.warn("hydration_attribute_changed");
+		console.warn(`https://svelte.dev/e/hydration_attribute_changed`);
 	}
 }
 
@@ -81,10 +76,9 @@ export function hydration_attribute_changed(attribute, html, value) {
  */
 export function hydration_html_changed(location) {
 	if (DEV) {
-		console.warn(`%c[svelte] hydration_html_changed\n%c${location ? `The value of an \`{@html ...}\` block ${location} changed between server and client renders. The client value will be ignored in favour of the server value` : "The value of an `{@html ...}` block changed between server and client renders. The client value will be ignored in favour of the server value"}`, bold, normal);
+		console.warn(`%c[svelte] hydration_html_changed\n%c${location ? `The value of an \`{@html ...}\` block ${location} changed between server and client renders. The client value will be ignored in favour of the server value` : 'The value of an `{@html ...}` block changed between server and client renders. The client value will be ignored in favour of the server value'}\nhttps://svelte.dev/e/hydration_html_changed`, bold, normal);
 	} else {
-		// TODO print a link to the documentation
-		console.warn("hydration_html_changed");
+		console.warn(`https://svelte.dev/e/hydration_html_changed`);
 	}
 }
 
@@ -94,10 +88,9 @@ export function hydration_html_changed(location) {
  */
 export function hydration_mismatch(location) {
 	if (DEV) {
-		console.warn(`%c[svelte] hydration_mismatch\n%c${location ? `Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near ${location}` : "Hydration failed because the initial UI does not match what was rendered on the server"}`, bold, normal);
+		console.warn(`%c[svelte] hydration_mismatch\n%c${location ? `Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near ${location}` : 'Hydration failed because the initial UI does not match what was rendered on the server'}\nhttps://svelte.dev/e/hydration_mismatch`, bold, normal);
 	} else {
-		// TODO print a link to the documentation
-		console.warn("hydration_mismatch");
+		console.warn(`https://svelte.dev/e/hydration_mismatch`);
 	}
 }
 
@@ -106,10 +99,9 @@ export function hydration_mismatch(location) {
  */
 export function invalid_raw_snippet_render() {
 	if (DEV) {
-		console.warn(`%c[svelte] invalid_raw_snippet_render\n%cThe \`render\` function passed to \`createRawSnippet\` should return HTML for a single element`, bold, normal);
+		console.warn(`%c[svelte] invalid_raw_snippet_render\n%cThe \`render\` function passed to \`createRawSnippet\` should return HTML for a single element\nhttps://svelte.dev/e/invalid_raw_snippet_render`, bold, normal);
 	} else {
-		// TODO print a link to the documentation
-		console.warn("invalid_raw_snippet_render");
+		console.warn(`https://svelte.dev/e/invalid_raw_snippet_render`);
 	}
 }
 
@@ -119,10 +111,9 @@ export function invalid_raw_snippet_render() {
  */
 export function legacy_recursive_reactive_block(filename) {
 	if (DEV) {
-		console.warn(`%c[svelte] legacy_recursive_reactive_block\n%cDetected a migrated \`$:\` reactive block in \`${filename}\` that both accesses and updates the same reactive value. This may cause recursive updates when converted to an \`$effect\`.`, bold, normal);
+		console.warn(`%c[svelte] legacy_recursive_reactive_block\n%cDetected a migrated \`$:\` reactive block in \`${filename}\` that both accesses and updates the same reactive value. This may cause recursive updates when converted to an \`$effect\`.\nhttps://svelte.dev/e/legacy_recursive_reactive_block`, bold, normal);
 	} else {
-		// TODO print a link to the documentation
-		console.warn("legacy_recursive_reactive_block");
+		console.warn(`https://svelte.dev/e/legacy_recursive_reactive_block`);
 	}
 }
 
@@ -131,52 +122,39 @@ export function legacy_recursive_reactive_block(filename) {
  */
 export function lifecycle_double_unmount() {
 	if (DEV) {
-		console.warn(`%c[svelte] lifecycle_double_unmount\n%cTried to unmount a component that was not mounted`, bold, normal);
+		console.warn(`%c[svelte] lifecycle_double_unmount\n%cTried to unmount a component that was not mounted\nhttps://svelte.dev/e/lifecycle_double_unmount`, bold, normal);
 	} else {
-		// TODO print a link to the documentation
-		console.warn("lifecycle_double_unmount");
+		console.warn(`https://svelte.dev/e/lifecycle_double_unmount`);
 	}
 }
 
 /**
- * %parent% passed a value to %child% with `bind:`, but the value is owned by %owner%. Consider creating a binding between %owner% and %parent%
+ * %parent% passed property `%prop%` to %child% with `bind:`, but its parent component %owner% did not declare `%prop%` as a binding. Consider creating a binding between %owner% and %parent% (e.g. `bind:%prop%={...}` instead of `%prop%={...}`)
  * @param {string} parent
+ * @param {string} prop
  * @param {string} child
  * @param {string} owner
  */
-export function ownership_invalid_binding(parent, child, owner) {
+export function ownership_invalid_binding(parent, prop, child, owner) {
 	if (DEV) {
-		console.warn(`%c[svelte] ownership_invalid_binding\n%c${parent} passed a value to ${child} with \`bind:\`, but the value is owned by ${owner}. Consider creating a binding between ${owner} and ${parent}`, bold, normal);
+		console.warn(`%c[svelte] ownership_invalid_binding\n%c${parent} passed property \`${prop}\` to ${child} with \`bind:\`, but its parent component ${owner} did not declare \`${prop}\` as a binding. Consider creating a binding between ${owner} and ${parent} (e.g. \`bind:${prop}={...}\` instead of \`${prop}={...}\`)\nhttps://svelte.dev/e/ownership_invalid_binding`, bold, normal);
 	} else {
-		// TODO print a link to the documentation
-		console.warn("ownership_invalid_binding");
+		console.warn(`https://svelte.dev/e/ownership_invalid_binding`);
 	}
 }
 
 /**
- * %component% mutated a value owned by %owner%. This is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead
- * @param {string | undefined | null} [component]
- * @param {string | undefined | null} [owner]
- */
-export function ownership_invalid_mutation(component, owner) {
-	if (DEV) {
-		console.warn(`%c[svelte] ownership_invalid_mutation\n%c${component ? `${component} mutated a value owned by ${owner}. This is strongly discouraged. Consider passing values to child components with \`bind:\`, or use a callback instead` : "Mutating a value outside the component that created it is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead"}`, bold, normal);
-	} else {
-		// TODO print a link to the documentation
-		console.warn("ownership_invalid_mutation");
-	}
-}
-
-/**
- * A `$:` statement (%location%) read reactive state that was not visible to the compiler. Updates to this state will not cause the statement to re-run. The behaviour of this code will change if you migrate it to runes mode
+ * Mutating unbound props (`%name%`, at %location%) is strongly discouraged. Consider using `bind:%prop%={...}` in %parent% (or using a callback) instead
+ * @param {string} name
  * @param {string} location
+ * @param {string} prop
+ * @param {string} parent
  */
-export function reactive_declaration_non_reactive_property(location) {
+export function ownership_invalid_mutation(name, location, prop, parent) {
 	if (DEV) {
-		console.warn(`%c[svelte] reactive_declaration_non_reactive_property\n%cA \`$:\` statement (${location}) read reactive state that was not visible to the compiler. Updates to this state will not cause the statement to re-run. The behaviour of this code will change if you migrate it to runes mode`, bold, normal);
+		console.warn(`%c[svelte] ownership_invalid_mutation\n%cMutating unbound props (\`${name}\`, at ${location}) is strongly discouraged. Consider using \`bind:${prop}={...}\` in ${parent} (or using a callback) instead\nhttps://svelte.dev/e/ownership_invalid_mutation`, bold, normal);
 	} else {
-		// TODO print a link to the documentation
-		console.warn("reactive_declaration_non_reactive_property");
+		console.warn(`https://svelte.dev/e/ownership_invalid_mutation`);
 	}
 }
 
@@ -186,9 +164,20 @@ export function reactive_declaration_non_reactive_property(location) {
  */
 export function state_proxy_equality_mismatch(operator) {
 	if (DEV) {
-		console.warn(`%c[svelte] state_proxy_equality_mismatch\n%cReactive \`$state(...)\` proxies and the values they proxy have different identities. Because of this, comparisons with \`${operator}\` will produce unexpected results`, bold, normal);
+		console.warn(`%c[svelte] state_proxy_equality_mismatch\n%cReactive \`$state(...)\` proxies and the values they proxy have different identities. Because of this, comparisons with \`${operator}\` will produce unexpected results\nhttps://svelte.dev/e/state_proxy_equality_mismatch`, bold, normal);
 	} else {
-		// TODO print a link to the documentation
-		console.warn("state_proxy_equality_mismatch");
+		console.warn(`https://svelte.dev/e/state_proxy_equality_mismatch`);
+	}
+}
+
+/**
+ * The `slide` transition does not work correctly for elements with `display: %value%`
+ * @param {string} value
+ */
+export function transition_slide_display(value) {
+	if (DEV) {
+		console.warn(`%c[svelte] transition_slide_display\n%cThe \`slide\` transition does not work correctly for elements with \`display: ${value}\`\nhttps://svelte.dev/e/transition_slide_display`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/transition_slide_display`);
 	}
 }

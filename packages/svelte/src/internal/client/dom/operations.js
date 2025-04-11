@@ -2,7 +2,7 @@
 import { hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
-import { get_descriptor } from '../../shared/utils.js';
+import { get_descriptor, is_extensible } from '../../shared/utils.js';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
 /** @type {Window} */
@@ -10,6 +10,9 @@ export var $window;
 
 /** @type {Document} */
 export var $document;
+
+/** @type {boolean} */
+export var is_firefox;
 
 /** @type {() => Node | null} */
 var first_child_getter;
@@ -27,29 +30,35 @@ export function init_operations() {
 
 	$window = window;
 	$document = document;
+	is_firefox = /Firefox/.test(navigator.userAgent);
 
 	var element_prototype = Element.prototype;
 	var node_prototype = Node.prototype;
+	var text_prototype = Text.prototype;
 
 	// @ts-ignore
 	first_child_getter = get_descriptor(node_prototype, 'firstChild').get;
 	// @ts-ignore
 	next_sibling_getter = get_descriptor(node_prototype, 'nextSibling').get;
 
-	// the following assignments improve perf of lookups on DOM nodes
-	// @ts-expect-error
-	element_prototype.__click = undefined;
-	// @ts-expect-error
-	element_prototype.__className = '';
-	// @ts-expect-error
-	element_prototype.__attributes = null;
-	// @ts-expect-error
-	element_prototype.__styles = null;
-	// @ts-expect-error
-	element_prototype.__e = undefined;
+	if (is_extensible(element_prototype)) {
+		// the following assignments improve perf of lookups on DOM nodes
+		// @ts-expect-error
+		element_prototype.__click = undefined;
+		// @ts-expect-error
+		element_prototype.__className = undefined;
+		// @ts-expect-error
+		element_prototype.__attributes = null;
+		// @ts-expect-error
+		element_prototype.__style = undefined;
+		// @ts-expect-error
+		element_prototype.__e = undefined;
+	}
 
-	// @ts-expect-error
-	Text.prototype.__t = undefined;
+	if (is_extensible(text_prototype)) {
+		// @ts-expect-error
+		text_prototype.__t = undefined;
+	}
 
 	if (DEV) {
 		// @ts-expect-error

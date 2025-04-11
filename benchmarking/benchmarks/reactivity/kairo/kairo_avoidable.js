@@ -20,12 +20,12 @@ function setup() {
 	return {
 		destroy,
 		run() {
-			$.flush_sync(() => {
+			$.flush(() => {
 				$.set(head, 1);
 			});
 			assert($.get(computed5) === 6);
 			for (let i = 0; i < 1000; i++) {
-				$.flush_sync(() => {
+				$.flush(() => {
 					$.set(head, i);
 				});
 				assert($.get(computed5) === 6);
@@ -45,7 +45,7 @@ export async function kairo_avoidable_unowned() {
 	const { run, destroy } = setup();
 
 	const { timing } = await fastest_test(10, () => {
-		for (let i = 0; i < 100; i++) {
+		for (let i = 0; i < 1000; i++) {
 			run();
 		}
 	});
@@ -74,7 +74,7 @@ export async function kairo_avoidable_owned() {
 	});
 
 	const { timing } = await fastest_test(10, () => {
-		for (let i = 0; i < 100; i++) {
+		for (let i = 0; i < 1000; i++) {
 			run();
 		}
 	});

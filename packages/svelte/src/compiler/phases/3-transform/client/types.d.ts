@@ -9,7 +9,7 @@ import type {
 	UpdateExpression,
 	VariableDeclaration
 } from 'estree';
-import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
+import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
 import type { SourceLocation } from '#shared';
@@ -30,7 +30,7 @@ export interface ClientTransformState extends TransformState {
 			/** turn `foo` into e.g. `$.get(foo)` */
 			read: (id: Identifier) => Expression;
 			/** turn `foo = bar` into e.g. `$.set(foo, bar)` */
-			assign?: (node: Identifier, value: Expression) => Expression;
+			assign?: (node: Identifier, value: Expression, proxy?: boolean) => Expression;
 			/** turn `foo.bar = baz` into e.g. `$.mutate(foo, $.get(foo).bar = baz);` */
 			mutate?: (node: Identifier, mutation: AssignmentExpression | UpdateExpression) => Expression;
 			/** turn `foo++` into e.g. `$.update(foo)` */
@@ -45,15 +45,16 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly hoisted: Array<Statement | ModuleDeclaration>;
 	readonly events: Set<string>;
 	readonly is_instance: boolean;
+	readonly store_to_invalidate?: string;
 
-	/** Stuff that happens before the render effect(s) */
-	readonly before_init: Statement[];
 	/** Stuff that happens before the render effect(s) */
 	readonly init: Statement[];
 	/** Stuff that happens inside the render effect */
 	readonly update: Statement[];
 	/** Stuff that happens after the render effect (control blocks, dynamic elements, bindings, actions, etc) */
 	readonly after_update: Statement[];
+	/** Expressions used inside the render effect */
+	readonly expressions: Expression[];
 	/** The HTML template string */
 	readonly template: Array<string | Expression>;
 	readonly locations: SourceLocation[];
@@ -98,14 +99,14 @@ export interface StateField {
 	id: PrivateIdentifier;
 }
 
-export type Context = import('zimmerframe').Context<SvelteNode, ClientTransformState>;
-export type Visitors = import('zimmerframe').Visitors<SvelteNode, any>;
+export type Context = import('zimmerframe').Context<AST.SvelteNode, ClientTransformState>;
+export type Visitors = import('zimmerframe').Visitors<AST.SvelteNode, any>;
 
 export type ComponentContext = import('zimmerframe').Context<
-	SvelteNode,
+	AST.SvelteNode,
 	ComponentClientTransformState
 >;
 export type ComponentVisitors = import('zimmerframe').Visitors<
-	SvelteNode,
+	AST.SvelteNode,
 	ComponentClientTransformState
 >;

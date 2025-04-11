@@ -1,18 +1,14 @@
 export { FILENAME, HMR, NAMESPACE_SVG } from '../../constants.js';
+export { push, pop } from './context.js';
 export { assign, assign_and, assign_or, assign_nullish } from './dev/assign.js';
 export { cleanup_styles } from './dev/css.js';
 export { add_locations } from './dev/elements.js';
 export { hmr } from './dev/hmr.js';
-export {
-	ADD_OWNER,
-	add_owner,
-	mark_module_start,
-	mark_module_end,
-	add_owner_effect,
-	skip_ownership_validation
-} from './dev/ownership.js';
+export { create_ownership_validator } from './dev/ownership.js';
 export { check_target, legacy_api } from './dev/legacy.js';
+export { trace } from './dev/tracing.js';
 export { inspect } from './dev/inspect.js';
+export { validate_snippet_args } from './dev/validation.js';
 export { await_block as await } from './dom/blocks/await.js';
 export { if_block as if } from './dom/blocks/if.js';
 export { key_block as key } from './dom/blocks/key.js';
@@ -32,14 +28,15 @@ export {
 	set_attributes,
 	set_custom_element_data,
 	set_xlink_attribute,
-	handle_lazy_img,
 	set_value,
 	set_checked,
 	set_selected,
 	set_default_checked,
-	set_default_value
+	set_default_value,
+	CLASS,
+	STYLE
 } from './dom/elements/attributes.js';
-export { set_class, set_svg_class, set_mathml_class, toggle_class } from './dom/elements/class.js';
+export { set_class } from './dom/elements/class.js';
 export { apply, event, delegate, replay_events } from './dom/elements/events.js';
 export { autofocus, remove_textarea_child } from './dom/elements/misc.js';
 export { set_style } from './dom/elements/style.js';
@@ -94,9 +91,10 @@ export {
 	mathml_template,
 	template,
 	template_with_script,
-	text
+	text,
+	props_id
 } from './dom/template.js';
-export { derived, derived_safe_equal } from './reactivity/deriveds.js';
+export { user_derived as derived, derived_safe_equal } from './reactivity/deriveds.js';
 export {
 	effect_tracking,
 	effect_root,
@@ -108,7 +106,7 @@ export {
 	user_effect,
 	user_pre_effect
 } from './reactivity/effects.js';
-export { mutable_state, mutate, set, state } from './reactivity/sources.js';
+export { mutable_source, mutate, set, state, update, update_pre } from './reactivity/sources.js';
 export {
 	prop,
 	rest_props,
@@ -134,22 +132,14 @@ export {
 	get,
 	safe_get,
 	invalidate_inner_signals,
-	flush_sync,
+	flushSync as flush,
 	tick,
 	untrack,
-	update,
-	update_pre,
 	exclude_from_object,
-	pop,
-	push,
 	deep_read,
-	deep_read_state,
-	getAllContexts,
-	getContext,
-	setContext,
-	hasContext
+	deep_read_state
 } from './runtime.js';
-export { validate_binding, validate_each_keys, validate_prop_bindings } from './validate.js';
+export { validate_binding, validate_each_keys } from './validate.js';
 export { raf } from './timing.js';
 export { proxy } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';
@@ -160,7 +150,7 @@ export {
 	$window as window,
 	$document as document
 } from './dom/operations.js';
-export { attr } from '../shared/attributes.js';
+export { attr, clsx } from '../shared/attributes.js';
 export { snapshot } from '../shared/clone.js';
 export { noop, fallback } from '../shared/utils.js';
 export {

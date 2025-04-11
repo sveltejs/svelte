@@ -1,5 +1,5 @@
 /** @import * as ESTree from 'estree' */
-/** @import { ValidatedCompileOptions, AST, ValidatedModuleCompileOptions, SvelteNode } from '#compiler' */
+/** @import { AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { ComponentAnalysis, Analysis } from '../../types' */
 /** @import { Visitors, ComponentClientTransformState, ClientTransformState } from './types' */
 import { walk } from 'zimmerframe';
@@ -169,16 +169,16 @@ export function client_component(analysis, options) {
 		module_level_snippets: [],
 
 		// these are set inside the `Fragment` visitor, and cannot be used until then
-		before_init: /** @type {any} */ (null),
 		init: /** @type {any} */ (null),
 		update: /** @type {any} */ (null),
+		expressions: /** @type {any} */ (null),
 		after_update: /** @type {any} */ (null),
 		template: /** @type {any} */ (null),
 		locations: /** @type {any} */ (null)
 	};
 
 	const module = /** @type {ESTree.Program} */ (
-		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, visitors)
+		walk(/** @type {AST.SvelteNode} */ (analysis.module.ast), state, visitors)
 	);
 
 	const instance_state = {
@@ -190,12 +190,12 @@ export function client_component(analysis, options) {
 	};
 
 	const instance = /** @type {ESTree.Program} */ (
-		walk(/** @type {SvelteNode} */ (analysis.instance.ast), instance_state, visitors)
+		walk(/** @type {AST.SvelteNode} */ (analysis.instance.ast), instance_state, visitors)
 	);
 
 	const template = /** @type {ESTree.Program} */ (
 		walk(
-			/** @type {SvelteNode} */ (analysis.template.ast),
+			/** @type {AST.SvelteNode} */ (analysis.template.ast),
 			{
 				...state,
 				transform: instance_state.transform,
@@ -214,15 +214,23 @@ export function client_component(analysis, options) {
 	/** @type {ESTree.VariableDeclaration[]} */
 	const legacy_reactive_declarations = [];
 
+	let needs_store_cleanup = false;
+
 	for (const [name, binding] of analysis.instance.scope.declarations) {
 		if (binding.kind === 'legacy_reactive') {
 			legacy_reactive_declarations.push(
-				b.const(name, b.call('$.mutable_state', undefined, analysis.immutable ? b.true : undefined))
+				b.const(
+					name,
+					b.call('$.mutable_source', undefined, analysis.immutable ? b.true : undefined)
+				)
 			);
 		}
 		if (binding.kind === 'store_sub') {
 			if (store_setup.length === 0) {
-				store_setup.push(b.const('$$stores', b.call('$.setup_stores')));
+				needs_store_cleanup = true;
+				store_setup.push(
+					b.const(b.array_pattern([b.id('$$stores'), b.id('$$cleanup')]), b.call('$.setup_stores'))
+				);
 			}
 
 			// We're creating an arrow function that gets the store value which minifies better for two or more references
@@ -299,28 +307,6 @@ export function client_component(analysis, options) {
 			(binding.kind === 'prop' || binding.kind === 'bindable_prop') && !name.startsWith('$$')
 	);
 
-	if (dev && analysis.runes) {
-		const exports = analysis.exports.map(({ name, alias }) => b.literal(alias ?? name));
-		/** @type {ESTree.Literal[]} */
-		const bindable = [];
-		for (const [name, binding] of properties) {
-			if (binding.kind === 'bindable_prop') {
-				bindable.push(b.literal(binding.prop_alias ?? name));
-			}
-		}
-		instance.body.unshift(
-			b.stmt(
-				b.call(
-					'$.validate_prop_bindings',
-					b.id('$$props'),
-					b.array(bindable),
-					b.array(exports),
-					b.id(`${analysis.name}`)
-				)
-			)
-		);
-	}
-
 	if (analysis.accessors) {
 		for (const [name, binding] of properties) {
 			const key = binding.prop_alias ?? name;
@@ -329,7 +315,7 @@ export function client_component(analysis, options) {
 
 			const setter = b.set(key, [
 				b.stmt(b.call(b.id(name), b.id('$$value'))),
-				b.stmt(b.call('$.flush_sync'))
+				b.stmt(b.call('$.flush'))
 			]);
 
 			if (analysis.runes && binding.initial) {
@@ -407,20 +393,40 @@ export function client_component(analysis, options) {
 		);
 	}
 
+	if (analysis.needs_mutation_validation) {
+		component_block.body.unshift(
+			b.var('$$ownership_validator', b.call('$.create_ownership_validator', b.id('$$props')))
+		);
+	}
+
 	const should_inject_context =
 		dev ||
 		analysis.needs_context ||
 		analysis.reactive_statements.size > 0 ||
 		component_returned_object.length > 0;
 
+	// we want the cleanup function for the stores to run as the very last thing
+	// so that it can effectively clean up the store subscription even after the user effects runs
 	if (should_inject_context) {
 		component_block.body.unshift(b.stmt(b.call('$.push', ...push_args)));
 
-		component_block.body.push(
-			component_returned_object.length > 0
-				? b.return(b.call('$.pop', b.object(component_returned_object)))
-				: b.stmt(b.call('$.pop'))
-		);
+		let to_push;
+
+		if (component_returned_object.length > 0) {
+			let pop_call = b.call('$.pop', b.object(component_returned_object));
+			to_push = needs_store_cleanup ? b.var('$$pop', pop_call) : b.return(pop_call);
+		} else {
+			to_push = b.stmt(b.call('$.pop'));
+		}
+
+		component_block.body.push(to_push);
+	}
+
+	if (needs_store_cleanup) {
+		component_block.body.push(b.stmt(b.call('$$cleanup')));
+		if (component_returned_object.length > 0) {
+			component_block.body.push(b.return(b.id('$$pop')));
+		}
 	}
 
 	if (analysis.uses_rest_props) {
@@ -530,13 +536,14 @@ export function client_component(analysis, options) {
 				b.assignment('=', b.member(b.id(analysis.name), '$.FILENAME', true), b.literal(filename))
 			)
 		);
-
-		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'))));
-		body.push(b.stmt(b.call(b.id('$.mark_module_end'), b.id(analysis.name))));
 	}
 
 	if (!analysis.runes) {
 		body.unshift(b.imports([], 'svelte/internal/flags/legacy'));
+	}
+
+	if (analysis.tracing) {
+		body.unshift(b.imports([], 'svelte/internal/flags/tracing'));
 	}
 
 	if (options.discloseVersion) {
@@ -559,6 +566,11 @@ export function client_component(analysis, options) {
 		);
 	} else if (dev) {
 		component_block.body.unshift(b.stmt(b.call('$.check_target', b.id('new.target'))));
+	}
+
+	if (analysis.props_id) {
+		// need to be placed on first line of the component for hydration
+		component_block.body.unshift(b.const(analysis.props_id, b.call('$.props_id')));
 	}
 
 	if (state.events.size > 0) {
@@ -590,7 +602,7 @@ export function client_component(analysis, options) {
 				/** @type {ESTree.Property[]} */ (
 					[
 						prop_def.attribute ? b.init('attribute', b.literal(prop_def.attribute)) : undefined,
-						prop_def.reflect ? b.init('reflect', b.literal(true)) : undefined,
+						prop_def.reflect ? b.init('reflect', b.true) : undefined,
 						prop_def.type ? b.init('type', b.literal(prop_def.type)) : undefined
 					].filter(Boolean)
 				)
@@ -664,12 +676,18 @@ export function client_module(analysis, options) {
 	};
 
 	const module = /** @type {ESTree.Program} */ (
-		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, visitors)
+		walk(/** @type {AST.SvelteNode} */ (analysis.module.ast), state, visitors)
 	);
+
+	const body = [b.import_all('$', 'svelte/internal/client')];
+
+	if (analysis.tracing) {
+		body.push(b.imports([], 'svelte/internal/flags/tracing'));
+	}
 
 	return {
 		type: 'Program',
 		sourceType: 'module',
-		body: [b.import_all('$', 'svelte/internal/client'), ...module.body]
+		body: [...body, ...module.body]
 	};
 }

@@ -1,6 +1,6 @@
-/** @import { ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, Node, Pattern, VariableDeclarator } from 'estree' */
+/** @import { ArrowFunctionExpression, ClassDeclaration, Expression, FunctionDeclaration, FunctionExpression, Identifier, ImportDeclaration, MemberExpression, Node, Pattern, VariableDeclarator } from 'estree' */
 /** @import { Context, Visitor } from 'zimmerframe' */
-/** @import { AST, Binding, DeclarationKind, ElementLike, SvelteNode } from '#compiler' */
+/** @import { AST, BindingKind, DeclarationKind } from '#compiler' */
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import { create_expression_metadata } from './nodes.js';
@@ -15,6 +15,90 @@ import {
 import { is_reserved, is_rune } from '../../utils.js';
 import { determine_slot } from '../utils/slot.js';
 import { validate_identifier_name } from './2-analyze/visitors/shared/utils.js';
+
+export class Binding {
+	/** @type {Scope} */
+	scope;
+
+	/** @type {Identifier} */
+	node;
+
+	/** @type {BindingKind} */
+	kind;
+
+	/** @type {DeclarationKind} */
+	declaration_kind;
+
+	/**
+	 * What the value was initialized with.
+	 * For destructured props such as `let { foo = 'bar' } = $props()` this is `'bar'` and not `$props()`
+	 * @type {null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | AST.EachBlock | AST.SnippetBlock}
+	 */
+	initial;
+
+	/** @type {Array<{ node: Identifier; path: AST.SvelteNode[] }>} */
+	references = [];
+
+	/**
+	 * For `legacy_reactive`: its reactive dependencies
+	 * @type {Binding[]}
+	 */
+	legacy_dependencies = [];
+
+	/**
+	 * Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props()
+	 * @type {string | null}
+	 */
+	prop_alias = null;
+
+	/**
+	 * Additional metadata, varies per binding type
+	 * @type {null | { inside_rest?: boolean }}
+	 */
+	metadata = null;
+
+	mutated = false;
+	reassigned = false;
+
+	/**
+	 *
+	 * @param {Scope} scope
+	 * @param {Identifier} node
+	 * @param {BindingKind} kind
+	 * @param {DeclarationKind} declaration_kind
+	 * @param {Binding['initial']} initial
+	 */
+	constructor(scope, node, kind, declaration_kind, initial) {
+		this.scope = scope;
+		this.node = node;
+		this.initial = initial;
+		this.kind = kind;
+		this.declaration_kind = declaration_kind;
+	}
+
+	get updated() {
+		return this.mutated || this.reassigned;
+	}
+
+	/**
+	 * @returns {this is Binding & { initial: ArrowFunctionExpression | FunctionDeclaration | FunctionExpression }}
+	 */
+	is_function() {
+		if (this.updated) {
+			// even if it's reassigned to another function,
+			// we can't use it directly as e.g. an event handler
+			return false;
+		}
+
+		const type = this.initial?.type;
+
+		return (
+			type === 'ArrowFunctionExpression' ||
+			type === 'FunctionExpression' ||
+			type === 'FunctionDeclaration'
+		);
+	}
+}
 
 export class Scope {
 	/** @type {ScopeRoot} */
@@ -48,7 +132,7 @@ export class Scope {
 	/**
 	 * A set of all the names referenced with this scope
 	 * — useful for generating unique names
-	 * @type {Map<string, { node: Identifier; path: SvelteNode[] }[]>}
+	 * @type {Map<string, { node: Identifier; path: AST.SvelteNode[] }[]>}
 	 */
 	references = new Map();
 
@@ -57,6 +141,12 @@ export class Scope {
 	 * which is usually an error. Block statements do not increase this value
 	 */
 	function_depth = 0;
+
+	/**
+	 * If tracing of reactive dependencies is enabled for this scope
+	 * @type {null | Expression}
+	 */
+	tracing = null;
 
 	/**
 	 *
@@ -90,26 +180,15 @@ export class Scope {
 		}
 
 		if (this.declarations.has(node.name)) {
-			// This also errors on var/function types, but that's arguably a good thing
-			e.declaration_duplicate(node, node.name);
+			const binding = this.declarations.get(node.name);
+			if (binding && binding.declaration_kind !== 'var' && declaration_kind !== 'var') {
+				// This also errors on function types, but that's arguably a good thing
+				// declaring function twice is also caught by acorn in the parse phase
+				e.declaration_duplicate(node, node.name);
+			}
 		}
 
-		/** @type {Binding} */
-		const binding = {
-			node,
-			references: [],
-			legacy_dependencies: [],
-			initial,
-			reassigned: false,
-			mutated: false,
-			updated: false,
-			scope: this,
-			kind,
-			declaration_kind,
-			is_called: false,
-			prop_alias: null,
-			metadata: null
-		};
+		const binding = new Binding(this, node, kind, declaration_kind, initial);
 
 		validate_identifier_name(binding, this.function_depth);
 
@@ -179,7 +258,7 @@ export class Scope {
 
 	/**
 	 * @param {Identifier} node
-	 * @param {SvelteNode[]} path
+	 * @param {AST.SvelteNode[]} path
 	 */
 	reference(node, path) {
 		path = [...path]; // ensure that mutations to path afterwards don't affect this reference
@@ -225,7 +304,7 @@ export class ScopeRoot {
 }
 
 /**
- * @param {SvelteNode} ast
+ * @param {AST.SvelteNode} ast
  * @param {ScopeRoot} root
  * @param {boolean} allow_reactive_declarations
  * @param {Scope | null} parent
@@ -235,7 +314,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 	/**
 	 * A map of node->associated scope. A node appearing in this map does not necessarily mean that it created a scope
-	 * @type {Map<SvelteNode, Scope>}
+	 * @type {Map<AST.SvelteNode, Scope>}
 	 */
 	const scopes = new Map();
 	const scope = new Scope(root, parent, false);
@@ -244,7 +323,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	/** @type {State} */
 	const state = { scope };
 
-	/** @type {[Scope, { node: Identifier; path: SvelteNode[] }][]} */
+	/** @type {[Scope, { node: Identifier; path: AST.SvelteNode[] }][]} */
 	const references = [];
 
 	/** @type {[Scope, Pattern | MemberExpression][]} */
@@ -269,7 +348,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	}
 
 	/**
-	 * @type {Visitor<Node, State, SvelteNode>}
+	 * @type {Visitor<Node, State, AST.SvelteNode>}
 	 */
 	const create_block_scope = (node, { state, next }) => {
 		const scope = state.scope.child(true);
@@ -279,7 +358,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	};
 
 	/**
-	 * @type {Visitor<ElementLike, State, SvelteNode>}
+	 * @type {Visitor<AST.ElementLike, State, AST.SvelteNode>}
 	 */
 	const SvelteFragment = (node, { state, next }) => {
 		const scope = state.scope.child();
@@ -288,7 +367,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	};
 
 	/**
-	 * @type {Visitor<AST.Component | AST.SvelteComponent | AST.SvelteSelf, State, SvelteNode>}
+	 * @type {Visitor<AST.Component | AST.SvelteComponent | AST.SvelteSelf, State, AST.SvelteNode>}
 	 */
 	const Component = (node, context) => {
 		node.metadata.scopes = {
@@ -329,7 +408,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	};
 
 	/**
-	 * @type {Visitor<AST.AnimateDirective | AST.TransitionDirective | AST.UseDirective, State, SvelteNode>}
+	 * @type {Visitor<AST.AnimateDirective | AST.TransitionDirective | AST.UseDirective, State, AST.SvelteNode>}
 	 */
 	const SvelteDirective = (node, { state, path, visit }) => {
 		state.scope.reference(b.id(node.name.split('.')[0]), path);
@@ -569,21 +648,10 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			}
 			if (node.fallback) visit(node.fallback, { scope });
 
-			// Check if inner scope shadows something from outer scope.
-			// This is necessary because we need access to the array expression of the each block
-			// in the inner scope if bindings are used, in order to invalidate the array.
-			let needs_array_deduplication = false;
-			for (const [name] of scope.declarations) {
-				if (state.scope.get(name) !== null) {
-					needs_array_deduplication = true;
-				}
-			}
-
 			node.metadata = {
 				expression: create_expression_metadata(),
 				keyed: false,
 				contains_group_binding: false,
-				array_name: needs_array_deduplication ? state.scope.root.unique('$$array') : null,
 				index: scope.root.unique('$$index'),
 				declarations: scope.declarations,
 				is_controlled: false
@@ -628,12 +696,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		SnippetBlock(node, context) {
 			const state = context.state;
-			// Special-case for root-level snippets: they become part of the instance scope
-			const is_top_level = !context.path.at(-2);
 			let scope = state.scope;
-			if (is_top_level) {
-				scope = /** @type {Scope} */ (parent);
-			}
+
 			scope.declare(node.expression, 'normal', 'function', node);
 
 			const child_scope = state.scope.child();
@@ -699,8 +763,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			const binding = left && scope.get(left.name);
 
 			if (binding !== null && left !== binding.node) {
-				binding.updated = true;
-
 				if (left === expression) {
 					binding.reassigned = true;
 				} else {
@@ -717,9 +779,9 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 }
 
 /**
- * @template {{ scope: Scope, scopes: Map<SvelteNode, Scope> }} State
- * @param {SvelteNode} node
- * @param {Context<SvelteNode, State>} context
+ * @template {{ scope: Scope, scopes: Map<AST.SvelteNode, Scope> }} State
+ * @param {AST.SvelteNode} node
+ * @param {Context<AST.SvelteNode, State>} context
  */
 export function set_scope(node, { next, state }) {
 	const scope = state.scopes.get(node);
