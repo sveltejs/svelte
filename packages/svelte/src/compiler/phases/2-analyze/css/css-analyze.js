@@ -32,14 +32,11 @@ function is_global_block_selector(simple_selector) {
 
 /**
  * @param {import('../types.js').Context["path"]} path
- * @param {AST.CSS.Rule | null} [rule]
  * @returns
  */
-function is_unscoped_global(path, rule) {
+function is_unscoped_global(path) {
 	// remove every at rule or stylesheet and the current rule in case is passed in from `ComplexSelector`
-	const parents = path.filter(
-		(parent) => parent.type !== 'Atrule' && parent.type !== 'StyleSheet' && parent !== rule
-	);
+	const parents = path.filter((parent) => parent.type !== 'Atrule' && parent.type !== 'StyleSheet');
 
 	let unscoped_global = true;
 
