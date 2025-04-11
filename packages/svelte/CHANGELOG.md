@@ -1,5 +1,15 @@
 # svelte
 
+## 5.26.0
+
+### Minor Changes
+
+- feat: add `css.hasGlobal` to `compile` output ([#15450](https://github.com/sveltejs/svelte/pull/15450))
+
+### Patch Changes
+
+- fix: add snippet argument validation in dev ([#15521](https://github.com/sveltejs/svelte/pull/15521))
+
 ## 5.25.12
 
 ### Patch Changes
