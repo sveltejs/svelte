@@ -221,9 +221,12 @@ export function internal_set(source, value) {
 }
 
 /**
- * @param {Source} source
+ * @param {Source | null} source
  */
 export function invalidate(source) {
+	if (source === null) {
+		return;
+	}
 	if (
 		active_reaction !== null &&
 		!untracking &&
