@@ -343,6 +343,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 				children,
 				metadata: {
 					rule: null,
+					is_global: false,
 					used: false
 				}
 			};
