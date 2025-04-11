@@ -9,6 +9,7 @@ import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator } from '../../../../../state.js';
 import { create_derived } from '../../utils.js';
+import { evaluate_static_expression, DYNAMIC } from '../../../shared/static-evaluation.js';
 
 /**
  * @param {ComponentClientTransformState} state
@@ -64,6 +65,13 @@ export function build_template_chunk(
 			node.expression.name !== 'undefined' ||
 			state.scope.get('undefined')
 		) {
+			let evaluated = evaluate_static_expression(node.expression, state);
+			if (evaluated !== DYNAMIC) {
+				if (evaluated != null) {
+					quasi.value.cooked += evaluated + '';
+				}
+				continue;
+			}
 			let value = memoize(
 				/** @type {Expression} */ (visit(node.expression, state)),
 				node.metadata.expression
