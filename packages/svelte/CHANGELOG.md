@@ -1,5 +1,11 @@
 # svelte
 
+## 5.26.1
+
+### Patch Changes
+
+- fix: update `state_referenced_locally` message ([#15733](https://github.com/sveltejs/svelte/pull/15733))
+
 ## 5.26.0
 
 ### Minor Changes
