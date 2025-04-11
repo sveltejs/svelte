@@ -37,6 +37,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	props?: Props;
 	server_props?: Props;
 	id_prefix?: string;
+	needs_import_logs?: boolean;
 	before_test?: () => void;
 	after_test?: () => void;
 	test?: (args: {
@@ -174,6 +175,8 @@ async function common_setup(cwd: string, runes: boolean | undefined, config: Run
 	return compileOptions;
 }
 
+let import_logs = new Map();
+
 async function run_test_variant(
 	cwd: string,
 	config: RuntimeTest,
@@ -276,6 +279,13 @@ async function run_test_variant(
 
 		let mod = await import(`${cwd}/_output/client/main.svelte.js`);
 
+		if (config.needs_import_logs && !import_logs.has(`${cwd}/_output/client/main.svelte.js`)) {
+			import_logs.set(`${cwd}/_output/client/main.svelte.js`, {
+				logs: [...logs],
+				warnings: [...warnings]
+			});
+		}
+
 		const target = window.document.querySelector('main') as HTMLElement;
 
 		let snapshot = undefined;
@@ -336,6 +346,13 @@ async function run_test_variant(
 			}
 		} else {
 			logs.length = warnings.length = 0;
+			if (config.needs_import_logs) {
+				const { logs: import_logs_logs, warnings: import_logs_warnings } = import_logs.get(
+					`${cwd}/_output/client/main.svelte.js`
+				);
+				logs.push(...import_logs_logs);
+				warnings.push(...import_logs_warnings);
+			}
 
 			config.before_test?.();
 

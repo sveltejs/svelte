@@ -95,6 +95,19 @@ export function hydration_mismatch(location) {
 }
 
 /**
+ * This html structure `%html_input%` would be corrected like this `%html_output%` by the browser making this component impossible to hydrate properly
+ * @param {string} html_input
+ * @param {string} html_output
+ */
+export function invalid_html_structure(html_input, html_output) {
+	if (DEV) {
+		console.warn(`%c[svelte] invalid_html_structure\n%cThis html structure \`${html_input}\` would be corrected like this \`${html_output}\` by the browser making this component impossible to hydrate properly\nhttps://svelte.dev/e/invalid_html_structure`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/invalid_html_structure`);
+	}
+}
+
+/**
  * The `render` function passed to `createRawSnippet` should return HTML for a single element
  */
 export function invalid_raw_snippet_render() {

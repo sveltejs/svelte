@@ -140,6 +140,12 @@ This warning is thrown when Svelte encounters an error while hydrating the HTML 
 
 During development, this error is often preceeded by a `console.error` detailing the offending HTML, which needs fixing.
 
+### invalid_html_structure
+
+```
+This html structure `%html_input%` would be corrected like this `%html_output%` by the browser making this component impossible to hydrate properly
+```
+
 ### invalid_raw_snippet_render
 
 ```
