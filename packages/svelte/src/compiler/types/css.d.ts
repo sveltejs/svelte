@@ -68,6 +68,7 @@ export namespace _CSS {
 		/** @internal */
 		metadata: {
 			rule: null | Rule;
+			is_global: boolean;
 			/** True if this selector applies to an element. For global selectors, this is defined in css-analyze, for others in css-prune while scoping */
 			used: boolean;
 		};

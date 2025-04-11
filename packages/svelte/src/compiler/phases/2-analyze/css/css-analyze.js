@@ -113,9 +113,11 @@ const css_visitors = {
 
 		node.metadata.rule = context.state.rule;
 
-		node.metadata.used ||= node.children.every(
+		node.metadata.is_global = node.children.every(
 			({ metadata }) => metadata.is_global || metadata.is_global_like
 		);
+
+		node.metadata.used ||= node.metadata.is_global;
 
 		if (
 			node.metadata.rule?.metadata.parent_rule &&
@@ -262,13 +264,10 @@ const css_visitors = {
 		// visit selector list first, to populate child selector metadata
 		context.visit(node.prelude, state);
 
-		node.metadata.has_global_selectors = node.prelude.children.some((selector) =>
-			selector.children.every(({ metadata }) => metadata.is_global || metadata.is_global_like)
-		);
-
-		node.metadata.has_local_selectors = node.prelude.children.some((selector) =>
-			selector.children.some(({ metadata }) => !metadata.is_global && !metadata.is_global_like)
-		);
+		for (const selector of node.prelude.children) {
+			node.metadata.has_global_selectors ||= selector.metadata.is_global;
+			node.metadata.has_local_selectors ||= !selector.metadata.is_global;
+		}
 
 		// if this rule has a ComplexSelector whose RelativeSelector children are all
 		// `:global(...)`, and the rule contains declarations (rather than just
