@@ -60,7 +60,7 @@ export function render_stylesheet(source, analysis, options) {
 			source: options.filename,
 			file: options.cssOutputFilename || options.filename
 		}),
-		hasGlobal: analysis.css.has_unscoped_global
+		hasGlobal: analysis.css.has_global
 	};
 
 	merge_with_preprocessor_map(css, options, css.map.sources[0]);

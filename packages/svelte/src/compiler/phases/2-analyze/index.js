@@ -457,7 +457,7 @@ export function analyze_component(root, source, options) {
 					})
 				: '',
 			keyframes: [],
-			has_unscoped_global: false
+			has_global: false
 		},
 		source,
 		undefined_exports: new Map(),
