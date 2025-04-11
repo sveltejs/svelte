@@ -1,9 +1,11 @@
-/** @import { CallExpression, Expression } from 'estree' */
+/** @import { CallExpression, Expression, Identifier } from 'estree' */
 /** @import { Context } from '../types' */
 import { dev, is_ignored } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { get_rune } from '../../../scope.js';
 import { transform_inspect_rune } from '../../utils.js';
+import * as e from '../../../../errors.js';
+import { object } from '../../../../utils/ast.js';
 
 /**
  * @param {CallExpression} node
@@ -23,6 +25,38 @@ export function CallExpression(node, context) {
 				/** @type {Expression} */ (context.visit(node.arguments[0])),
 				is_ignored(node, 'state_snapshot_uncloneable') && b.true
 			);
+		/* eslint-disable no-fallthrough */
+		case '$state.invalidate':
+			if (node.arguments[0].type === 'Identifier') {
+				return b.call('$.invalidate', node.arguments[0]);
+			} else if (node.arguments[0].type === 'MemberExpression') {
+				const { object: obj, property } = node.arguments[0];
+				const root = object(node.arguments[0]);
+				if (obj.type === 'ThisExpression') {
+					let field;
+					switch (property.type) {
+						case 'Identifier':
+							field = context.state.public_state.get(property.name);
+							break;
+						case 'PrivateIdentifier':
+							field = context.state.private_state.get(property.name);
+							break;
+					}
+					if (!field || (field.kind !== 'state' && field.kind !== 'raw_state')) {
+						e.state_invalidate_nonreactive_argument(node);
+					}
+					return b.call('$.invalidate', b.member(b.this, field.id));
+				}
+				/** @type {Expression[]} */
+				const source_args = /** @type {Expression[]} */ ([
+					context.visit(obj),
+					node.arguments[0].computed
+						? context.visit(property)
+						: b.literal(/** @type {Identifier} */ (property).name)
+				]);
+				const arg = b.call('$.lookup_source', ...source_args);
+				return b.call('$.invalidate', arg);
+			}
 
 		case '$effect.root':
 			return b.call(
