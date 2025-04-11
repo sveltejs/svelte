@@ -194,8 +194,7 @@ const css_visitors = {
 		node.metadata.is_global_block = node.prelude.children.some((selector) => {
 			let is_global_block = false;
 
-			for (let i = 0; i < selector.children.length; i++) {
-				const child = selector.children[i];
+			for (const child of selector.children) {
 				const idx = child.selectors.findIndex(is_global_block_selector);
 
 				if (is_global_block) {
