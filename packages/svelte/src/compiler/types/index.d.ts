@@ -116,6 +116,12 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 */
 	preserveWhitespace?: boolean;
 	/**
+	 *  If `functional`, the template will get compiled to a series of `document.createElement` calls, if `string` it will render the template tp a string and use `template.innerHTML`.
+	 *
+	 * @default 'string'
+	 */
+	templatingMode?: 'string' | 'functional';
+	/**
 	 * Set to `true` to force the compiler into runes mode, even if there are no indications of runes usage.
 	 * Set to `false` to force the compiler into ignoring runes, even if there are indications of runes usage.
 	 * Set to `undefined` (the default) to infer runes mode from the component code.

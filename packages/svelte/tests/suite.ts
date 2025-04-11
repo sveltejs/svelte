@@ -6,6 +6,8 @@ export interface BaseTest {
 	solo?: boolean;
 }
 
+export type TemplatingMode = 'string' | 'functional';
+
 /**
  * To filter tests, run one of these:
  *
@@ -20,14 +22,22 @@ const filter = process.env.FILTER
 		)
 	: /./;
 
-export function suite<Test extends BaseTest>(fn: (config: Test, test_dir: string) => void) {
+export function suite<Test extends BaseTest>(
+	fn: (config: Test, test_dir: string, templating_mode: TemplatingMode) => void
+) {
 	return {
 		test: (config: Test) => config,
-		run: async (cwd: string, samples_dir = 'samples') => {
+		run: async (
+			cwd: string,
+			templating_mode: TemplatingMode = 'string',
+			samples_dir = 'samples'
+		) => {
 			await for_each_dir<Test>(cwd, samples_dir, (config, dir) => {
 				let it_fn = config.skip ? it.skip : config.solo ? it.only : it;
 
-				it_fn(dir, () => fn(config, `${cwd}/${samples_dir}/${dir}`));
+				it_fn(`${dir} (${templating_mode})`, () =>
+					fn(config, `${cwd}/${samples_dir}/${dir}`, templating_mode)
+				);
 			});
 		}
 	};
@@ -36,12 +46,26 @@ export function suite<Test extends BaseTest>(fn: (config: Test, test_dir: string
 export function suite_with_variants<Test extends BaseTest, Variants extends string, Common>(
 	variants: Variants[],
 	should_skip_variant: (variant: Variants, config: Test) => boolean | 'no-test',
-	common_setup: (config: Test, test_dir: string) => Promise<Common> | Common,
-	fn: (config: Test, test_dir: string, variant: Variants, common: Common) => void
+	common_setup: (
+		config: Test,
+		test_dir: string,
+		templating_mode: TemplatingMode
+	) => Promise<Common> | Common,
+	fn: (
+		config: Test,
+		test_dir: string,
+		variant: Variants,
+		common: Common,
+		templating_mode: TemplatingMode
+	) => void
 ) {
 	return {
 		test: (config: Test) => config,
-		run: async (cwd: string, samples_dir = 'samples') => {
+		run: async (
+			cwd: string,
+			templating_mode: TemplatingMode = 'string',
+			samples_dir = 'samples'
+		) => {
 			await for_each_dir<Test>(cwd, samples_dir, (config, dir) => {
 				let called_common = false;
 				let common: any = undefined;
@@ -54,12 +78,12 @@ export function suite_with_variants<Test extends BaseTest, Variants extends stri
 					const solo = config.solo;
 					let it_fn = skip ? it.skip : solo ? it.only : it;
 
-					it_fn(`${dir} (${variant})`, async () => {
+					it_fn(`${dir} (${templating_mode}-${variant})`, async () => {
 						if (!called_common) {
 							called_common = true;
-							common = await common_setup(config, `${cwd}/${samples_dir}/${dir}`);
+							common = await common_setup(config, `${cwd}/${samples_dir}/${dir}`, templating_mode);
 						}
-						return fn(config, `${cwd}/${samples_dir}/${dir}`, variant, common);
+						return fn(config, `${cwd}/${samples_dir}/${dir}`, variant, common, templating_mode);
 					});
 				}
 			});
