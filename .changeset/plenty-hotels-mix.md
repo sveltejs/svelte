@@ -2,4 +2,4 @@
 'svelte': minor
 ---
 
-feat: add `hasUnscopedGlobalCss` to `compile` metadata
+feat: add `css.hasGlobal` to `compile` output
