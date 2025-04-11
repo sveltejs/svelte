@@ -492,7 +492,28 @@ export function props_id(payload) {
 	return uid;
 }
 
-export { attr, clsx };
+/**
+ * <svelte:boundary> for server-side
+ * @param {Payload} payload
+ * @param {(payload:Payload) => void} body
+ * @param {(payload:Payload, err: any) => void} [failed]
+ * @returns {void}
+ */
+export function boundary(payload, body, failed) {
+	var inner_payload = copy_payload(payload);
+	try {
+		inner_payload.out += BLOCK_OPEN;
+		body(inner_payload);
+	} catch (err) {
+		inner_payload = copy_payload(payload);
+		inner_payload.out += BLOCK_OPEN_ELSE;
+		failed?.(inner_payload, err);
+	}
+	inner_payload.out += BLOCK_CLOSE;
+	assign_payload(payload, inner_payload);
+}
+
+export { attr, clsx, to_class };
 
 export { html } from './blocks/html.js';
 
