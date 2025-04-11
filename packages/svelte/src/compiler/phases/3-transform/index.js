@@ -21,8 +21,7 @@ export function transform_component(analysis, source, options) {
 			css: null,
 			warnings: state.warnings, // set afterwards
 			metadata: {
-				runes: analysis.runes,
-				hasUnscopedGlobalCss: analysis.css.has_unscoped_global
+				runes: analysis.runes
 			},
 			ast: /** @type {any} */ (null) // set afterwards
 		};
@@ -54,8 +53,7 @@ export function transform_component(analysis, source, options) {
 		css,
 		warnings: state.warnings, // set afterwards. TODO apply preprocessor sourcemap
 		metadata: {
-			runes: analysis.runes,
-			hasUnscopedGlobalCss: analysis.css.has_unscoped_global
+			runes: analysis.runes
 		},
 		ast: /** @type {any} */ (null) // set afterwards
 	};
@@ -74,8 +72,7 @@ export function transform_module(analysis, source, options) {
 			css: null,
 			warnings: state.warnings, // set afterwards
 			metadata: {
-				runes: true,
-				hasUnscopedGlobalCss: false
+				runes: true
 			},
 			ast: /** @type {any} */ (null) // set afterwards
 		};
@@ -105,8 +102,7 @@ export function transform_module(analysis, source, options) {
 		}),
 		css: null,
 		metadata: {
-			runes: true,
-			hasUnscopedGlobalCss: false
+			runes: true
 		},
 		warnings: state.warnings, // set afterwards
 		ast: /** @type {any} */ (null) // set afterwards

@@ -18,6 +18,8 @@ export interface CompileResult {
 		code: string;
 		/** A source map */
 		map: SourceMap;
+		/** Whether or not the CSS includes global rules */
+		hasGlobal: boolean;
 	};
 	/**
 	 * An array of warning objects that were generated during compilation. Each warning has several properties:
@@ -35,11 +37,6 @@ export interface CompileResult {
 		 * For `compileModule`, this is always `true`
 		 */
 		runes: boolean;
-		/**
-		 * Whether the component contains a top level :global selector or not
-		 * For `compileModule`, this is always `true`
-		 */
-		hasUnscopedGlobalCss: boolean;
 	};
 	/** The AST */
 	ast: any;
