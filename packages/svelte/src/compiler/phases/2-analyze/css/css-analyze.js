@@ -207,10 +207,11 @@ const css_visitors = {
 	Rule(node, context) {
 		node.metadata.parent_rule = context.state.rule;
 
-		// if this rule has a ComplexSelector whose RelativeSelector children
-		// are all `:global(...)`
+		// if this rule has a ComplexSelector whose RelativeSelector children are all
+		// `:global(...)`, and the rule contains declarations (rather than just
+		// nested rules) then the component as a whole includes global CSS
 		context.state.has_global.value ||=
-			node.block.children.length > 0 &&
+			node.block.children.filter((child) => child.type === 'Declaration').length > 0 &&
 			node.prelude.children.some((selector) => selector.children.every(is_global)) &&
 			is_unscoped_global(context.path);
 
