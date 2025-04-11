@@ -43,7 +43,7 @@ An each block can also specify an _index_, equivalent to the second argument in 
 {#each expression as name, index (key)}...{/each}
 ```
 
-If a _key_ expression is provided — which must uniquely identify each list item — Svelte will use it to diff the list when data changes, rather than adding or removing items at the end. The key can be any object, but strings and numbers are recommended since they allow identity to persist when the objects themselves change.
+If a _key_ expression is provided — which must uniquely identify each iterated item — Svelte will compare old and new items having the same key to determine data changes, rather than using their position in the iterated sequence. This is useful when the positions of items change, e.g. when modifying the length of an array. The key can be any object, but strings and numbers are recommended since they allow identity to persist when the objects themselves change.
 
 ```svelte
 {#each items as item (item.id)}
