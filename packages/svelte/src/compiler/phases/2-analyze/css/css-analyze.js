@@ -36,7 +36,9 @@ function is_global_block_selector(simple_selector) {
  */
 function is_unscoped_global(path) {
 	// remove every at rule or stylesheet and the current rule in case is passed in from `ComplexSelector`
-	return path.filter((node) => node.type === 'Rule').every((node) => node.metadata.is_global);
+	return path
+		.filter((node) => node.type === 'Rule')
+		.every((node) => node.metadata.has_global_selectors);
 }
 
 /**
@@ -263,7 +265,7 @@ const css_visitors = {
 		// visit selector list first, to populate child selector metadata
 		context.visit(node.prelude, state);
 
-		node.metadata.is_global = node.prelude.children.some((selector) =>
+		node.metadata.has_global_selectors = node.prelude.children.some((selector) =>
 			selector.children.every(({ metadata }) => metadata.is_global || metadata.is_global_like)
 		);
 
@@ -275,7 +277,7 @@ const css_visitors = {
 		// `:global(...)`, and the rule contains declarations (rather than just
 		// nested rules) then the component as a whole includes global CSS
 		context.state.has_global.value ||=
-			node.metadata.is_global &&
+			node.metadata.has_global_selectors &&
 			node.block.children.filter((child) => child.type === 'Declaration').length > 0 &&
 			is_unscoped_global(context.path);
 

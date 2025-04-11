@@ -37,7 +37,7 @@ export namespace _CSS {
 			/**
 			 * `true` if the rule contains a ComplexSelector whose RelativeSelectors are all global or global-like
 			 */
-			is_global: boolean;
+			has_global_selectors: boolean;
 			/**
 			 * `true` if the rule contains a `:global` selector, and therefore everything inside should be unscoped
 			 */

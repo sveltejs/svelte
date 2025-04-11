@@ -118,7 +118,7 @@ function read_rule(parser) {
 		metadata: {
 			parent_rule: null,
 			has_local_selectors: false,
-			is_global: false,
+			has_global_selectors: false,
 			is_global_block: false
 		}
 	};
