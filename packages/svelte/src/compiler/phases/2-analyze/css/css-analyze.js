@@ -34,7 +34,7 @@ function is_global_block_selector(simple_selector) {
  * @param {import('../types.js').Context["path"]} path
  * @returns
  */
-function is_unscoped_global(path) {
+function is_unscoped(path) {
 	// remove every at rule or stylesheet and the current rule in case is passed in from `ComplexSelector`
 	return path
 		.filter((node) => node.type === 'Rule')
@@ -57,7 +57,7 @@ const css_visitors = {
 				context.state.keyframes.push(node.prelude);
 			} else if (node.prelude.startsWith('-global-')) {
 				// we don't check if the block.children.length because the keyframe is still added even if empty
-				context.state.has_global.value ||= is_unscoped_global(context.path);
+				context.state.has_global.value ||= is_unscoped(context.path);
 			}
 		}
 
@@ -279,7 +279,7 @@ const css_visitors = {
 		context.state.has_global.value ||=
 			node.metadata.has_global_selectors &&
 			node.block.children.filter((child) => child.type === 'Declaration').length > 0 &&
-			is_unscoped_global(context.path);
+			is_unscoped(context.path);
 
 		// visit block list, so parent rule metadata is populated
 		context.visit(node.block, state);
