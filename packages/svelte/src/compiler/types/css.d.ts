@@ -35,6 +35,10 @@ export namespace _CSS {
 			parent_rule: null | Rule;
 			has_local_selectors: boolean;
 			/**
+			 * `true` if the rule contains a ComplexSelector whose RelativeSelectors are all global or global-like
+			 */
+			is_global: boolean;
+			/**
 			 * `true` if the rule contains a `:global` selector, and therefore everything inside should be unscoped
 			 */
 			is_global_block: boolean;

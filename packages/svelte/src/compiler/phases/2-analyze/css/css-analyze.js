@@ -36,19 +36,7 @@ function is_global_block_selector(simple_selector) {
  */
 function is_unscoped_global(path) {
 	// remove every at rule or stylesheet and the current rule in case is passed in from `ComplexSelector`
-	const parents = path.filter((parent) => parent.type !== 'Atrule' && parent.type !== 'StyleSheet');
-
-	let unscoped_global = true;
-
-	// no parents means we are on top
-	if (parents.length > 0) {
-		// let's check that everything in the path is not a global block
-		unscoped_global = parents.every((parent) => {
-			return parent.type !== 'Rule' || parent.metadata.is_global_block;
-		});
-	}
-
-	return unscoped_global;
+	return path.filter((node) => node.type === 'Rule').every((node) => node.metadata.is_global);
 }
 
 /**
@@ -203,14 +191,6 @@ const css_visitors = {
 	Rule(node, context) {
 		node.metadata.parent_rule = context.state.rule;
 
-		// if this rule has a ComplexSelector whose RelativeSelector children are all
-		// `:global(...)`, and the rule contains declarations (rather than just
-		// nested rules) then the component as a whole includes global CSS
-		context.state.has_global.value ||=
-			node.block.children.filter((child) => child.type === 'Declaration').length > 0 &&
-			node.prelude.children.some((selector) => selector.children.every(is_global)) &&
-			is_unscoped_global(context.path);
-
 		node.metadata.is_global_block = node.prelude.children.some((selector) => {
 			let is_global_block = false;
 
@@ -278,16 +258,29 @@ const css_visitors = {
 			}
 		}
 
-		context.next({
-			...context.state,
-			rule: node
-		});
+		const state = { ...context.state, rule: node };
 
-		node.metadata.has_local_selectors = node.prelude.children.some((selector) => {
-			return selector.children.some(
-				({ metadata }) => !metadata.is_global && !metadata.is_global_like
-			);
-		});
+		// visit selector list first, to populate child selector metadata
+		context.visit(node.prelude, state);
+
+		node.metadata.is_global = node.prelude.children.some((selector) =>
+			selector.children.every(({ metadata }) => metadata.is_global || metadata.is_global_like)
+		);
+
+		node.metadata.has_local_selectors = node.prelude.children.some((selector) =>
+			selector.children.some(({ metadata }) => !metadata.is_global && !metadata.is_global_like)
+		);
+
+		// if this rule has a ComplexSelector whose RelativeSelector children are all
+		// `:global(...)`, and the rule contains declarations (rather than just
+		// nested rules) then the component as a whole includes global CSS
+		context.state.has_global.value ||=
+			node.metadata.is_global &&
+			node.block.children.filter((child) => child.type === 'Declaration').length > 0 &&
+			is_unscoped_global(context.path);
+
+		// visit block list, so parent rule metadata is populated
+		context.visit(node.block, state);
 	},
 	NestingSelector(node, context) {
 		const rule = /** @type {AST.CSS.Rule} */ (context.state.rule);
