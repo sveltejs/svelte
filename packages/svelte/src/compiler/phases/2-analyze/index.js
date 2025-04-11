@@ -456,7 +456,8 @@ export function analyze_component(root, source, options) {
 						hash
 					})
 				: '',
-			keyframes: []
+			keyframes: [],
+			has_global: false
 		},
 		source,
 		undefined_exports: new Map(),
