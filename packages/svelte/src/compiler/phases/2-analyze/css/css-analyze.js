@@ -10,12 +10,11 @@ import { is_global, is_unscoped_pseudo_class } from './utils.js';
  * @typedef {{
  *   keyframes: string[];
  *   rule: AST.CSS.Rule | null;
- *   has_global: { value: boolean };
+ *   has_global: { value: boolean }; // need an object since state is spread
  * }} CssState
  */
 
 /**
- * We need to use an object for `has_global_unscoped` since state is spread
  * @typedef {Visitors<AST.CSS.Node, CssState>} CssVisitors
  */
 
