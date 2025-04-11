@@ -31,11 +31,9 @@ function is_global_block_selector(simple_selector) {
 }
 
 /**
- * @param {import('../types.js').Context["path"]} path
- * @returns
+ * @param {AST.SvelteNode[]} path
  */
 function is_unscoped(path) {
-	// remove every at rule or stylesheet and the current rule in case is passed in from `ComplexSelector`
 	return path
 		.filter((node) => node.type === 'Rule')
 		.every((node) => node.metadata.has_global_selectors);
