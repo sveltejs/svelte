@@ -1,26 +1,38 @@
 [
 	{
 		"code": "state_referenced_locally",
-		"message": "State referenced in its own scope will never update. Did you mean to reference it inside a closure?",
+		"message": "Referencing state in its own scope will cause reactivity loss. Did you mean to reference `count` inside a derived instead?",
 		"start": {
-			"column": 13,
-			"line": 7
+			"column": 22,
+			"line": 5
 		},
 		"end": {
-			"column": 18,
-			"line": 7
+			"column": 27,
+			"line": 5
 		}
 	},
 	{
 		"code": "state_referenced_locally",
-		"message": "State referenced in its own scope will never update. Did you mean to reference it inside a closure?",
+		"message": "Referencing state in its own scope will cause reactivity loss. Did you mean to reference `count` inside a closure instead?",
 		"start": {
 			"column": 13,
 			"line": 8
 		},
 		"end": {
-			"column": 20,
+			"column": 18,
 			"line": 8
+		}
+	},
+	{
+		"code": "state_referenced_locally",
+		"message": "Referencing state in its own scope will cause reactivity loss. Did you mean to reference `doubled` inside a closure instead?",
+		"start": {
+			"column": 13,
+			"line": 9
+		},
+		"end": {
+			"column": 20,
+			"line": 9
 		}
 	}
 ]
