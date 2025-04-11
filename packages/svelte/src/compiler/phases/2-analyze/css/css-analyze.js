@@ -221,15 +221,12 @@ const css_visitors = {
 
 				if (idx !== -1) {
 					is_global_block = true;
+
 					if (i === 0) {
-						if (
-							!context.state.has_unscoped_global.value &&
-							is_unscoped_global(context.path) &&
-							node.block.children.length > 0
-						) {
-							context.state.has_unscoped_global.value = true;
-						}
+						context.state.has_unscoped_global.value ||=
+							node.block.children.length > 0 && is_unscoped_global(context.path);
 					}
+
 					for (let i = idx + 1; i < child.selectors.length; i++) {
 						walk(/** @type {AST.CSS.Node} */ (child.selectors[i]), null, {
 							ComplexSelector(node) {
