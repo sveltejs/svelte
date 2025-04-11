@@ -37,7 +37,7 @@ On the other side, inside `MyComponent.svelte`, we can receive props with the `$
 
 ## Fallback values
 
-Destructuring allows us to declare fallback values, which are used if the parent component does not set a given prop:
+Destructuring allows us to declare fallback values, which are used if the parent component does not set a given prop (or the value is `undefined`):
 
 ```js
 let { adjective = 'happy' } = $props();
