@@ -5,6 +5,32 @@ import { increment } from './utils.js';
 
 export const REPLACE = Symbol();
 
+/**
+ * A reactive version of the built-in [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) object.
+ * Reading its contents (by iterating, or by calling `params.get(...)` or `params.getAll(...)` as in the [example](https://svelte.dev/playground/b3926c86c5384bab9f2cf993bc08c1c8) below) in an [effect](https://svelte.dev/docs/svelte/$effect) or [derived](https://svelte.dev/docs/svelte/$derived)
+ * will cause it to be re-evaluated as necessary when the params are updated.
+ *
+ * ```svelte
+ * <script>
+ * 	import { SvelteURLSearchParams } from 'svelte/reactivity';
+ *
+ * 	const params = new SvelteURLSearchParams('message=hello');
+ *
+ * 	let key = $state('key');
+ * 	let value = $state('value');
+ * </script>
+ *
+ * <input bind:value={key} />
+ * <input bind:value={value} />
+ * <button onclick={() => params.append(key, value)}>append</button>
+ *
+ * <p>?{params.toString()}</p>
+ *
+ * {#each params as [key, value]}
+ * 	<p>{key}: {value}</p>
+ * {/each}
+ * ```
+ */
 export class SvelteURLSearchParams extends URLSearchParams {
 	#version = source(0);
 	#url = get_current_url();
@@ -23,6 +49,7 @@ export class SvelteURLSearchParams extends URLSearchParams {
 
 	/**
 	 * @param {URLSearchParams} params
+	 * @internal
 	 */
 	[REPLACE](params) {
 		if (this.#updating) return;

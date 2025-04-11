@@ -10,6 +10,37 @@ var set_like_methods = ['difference', 'intersection', 'symmetricDifference', 'un
 var inited = false;
 
 /**
+ * A reactive version of the built-in [`Set`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set) object.
+ * Reading contents of the set (by iterating, or by reading `set.size` or calling `set.has(...)` as in the [example](https://svelte.dev/playground/53438b51194b4882bcc18cddf9f96f15) below) in an [effect](https://svelte.dev/docs/svelte/$effect) or [derived](https://svelte.dev/docs/svelte/$derived)
+ * will cause it to be re-evaluated as necessary when the set is updated.
+ *
+ * Note that values in a reactive set are _not_ made [deeply reactive](https://svelte.dev/docs/svelte/$state#Deep-state).
+ *
+ * ```svelte
+ * <script>
+ * 	import { SvelteSet } from 'svelte/reactivity';
+ * 	let monkeys = new SvelteSet();
+ *
+ * 	function toggle(monkey) {
+ * 		if (monkeys.has(monkey)) {
+ * 			monkeys.delete(monkey);
+ * 		} else {
+ * 			monkeys.add(monkey);
+ * 		}
+ * 	}
+ * </script>
+ *
+ * {#each ['🙈', '🙉', '🙊'] as monkey}
+ * 	<button onclick={() => toggle(monkey)}>{monkey}</button>
+ * {/each}
+ *
+ * <button onclick={() => monkeys.clear()}>clear</button>
+ *
+ * {#if monkeys.has('🙈')}<p>see no evil</p>{/if}
+ * {#if monkeys.has('🙉')}<p>hear no evil</p>{/if}
+ * {#if monkeys.has('🙊')}<p>speak no evil</p>{/if}
+ * ```
+ *
  * @template T
  * @extends {Set<T>}
  */
