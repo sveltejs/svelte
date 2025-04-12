@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Reaction, Source, Value, ValueOptions } from '#client' */
+/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import {
 	active_reaction,

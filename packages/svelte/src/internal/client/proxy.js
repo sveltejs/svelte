@@ -1,4 +1,4 @@
-/** @import { Source, ValueOptions } from '#client' */
+/** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
 import { UNINITIALIZED } from '../../constants.js';
 import { tracing_mode_flag } from '../flags/index.js';

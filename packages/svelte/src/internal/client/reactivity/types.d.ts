@@ -7,7 +7,7 @@ export interface Signal {
 	wv: number;
 }
 
-export interface ValueOptions {
+export interface StateOptions {
 	onchange?: () => unknown;
 }
 

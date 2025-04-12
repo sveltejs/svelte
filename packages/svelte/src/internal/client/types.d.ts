@@ -1,6 +1,6 @@
 import type { Store } from '#shared';
 import { STATE_SYMBOL } from './constants.js';
-import type { Effect, Source, Value, Reaction, ValueOptions } from './reactivity/types.js';
+import type { Effect, Source, Value, Reaction } from './reactivity/types.js';
 
 type EventCallback = (event: Event) => boolean;
 export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;
