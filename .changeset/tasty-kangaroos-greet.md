@@ -2,4 +2,4 @@
 'svelte': minor
 ---
 
-feat: add `onFrame` lifecycle function
+feat: add `onAnimationFrame` lifecycle function
