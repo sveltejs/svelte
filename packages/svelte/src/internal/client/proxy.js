@@ -300,11 +300,10 @@ export function proxy(value, onchange) {
 				// object property before writing to that property.
 				if (s === undefined) {
 					if (!has || get_descriptor(target, prop)?.writable) {
-						const opt = onchange;
-						s = with_parent(() => source(undefined, opt, stack));
+						s = with_parent(() => source(undefined, onchange, stack));
 						set(
 							s,
-							with_parent(() => proxy(value, opt))
+							with_parent(() => proxy(value, onchange))
 						);
 						sources.set(prop, s);
 					}
