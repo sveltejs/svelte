@@ -186,10 +186,7 @@ export function internal_set(source, value) {
 
 		if (typeof old_value === 'object' && old_value != null && source.o) {
 			// @ts-ignore
-			const remove = old_value[PROXY_ONCHANGE_SYMBOL];
-			if (remove && typeof remove === 'function') {
-				remove(source.o, true);
-			}
+			old_value[PROXY_ONCHANGE_SYMBOL]?.(source.o, true);
 		}
 
 		if (is_destroying_effect) {
