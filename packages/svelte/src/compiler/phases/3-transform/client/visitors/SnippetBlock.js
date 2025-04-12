@@ -34,12 +34,7 @@ export function SnippetBlock(node, context) {
 		if (!argument) continue;
 
 		if (argument.type === 'Identifier') {
-			args.push({
-				type: 'AssignmentPattern',
-				left: argument,
-				right: b.id('$.noop')
-			});
-
+			args.push(b.assignment_pattern(argument, b.id('$.noop')));
 			transform[argument.name] = { read: b.call };
 
 			continue;
