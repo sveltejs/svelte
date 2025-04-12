@@ -1,5 +1,11 @@
 # svelte
 
+## 5.26.2
+
+### Patch Changes
+
+- fix: correctly validate `undefined` snippet params with default value ([#15750](https://github.com/sveltejs/svelte/pull/15750))
+
 ## 5.26.1
 
 ### Patch Changes
