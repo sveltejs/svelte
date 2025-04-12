@@ -199,15 +199,15 @@ export function afterUpdate(fn) {
 }
 
 /**
- * The `onFrame` function schedules a callback to run on `requestAnimationFrame`. It must be called inside an effect (e.g. during component initialisation).
+ * The `onAnimationFrame` function schedules a callback to run on `requestAnimationFrame`. It must be called inside an effect (e.g. during component initialisation).
  *
- * `onFrame` does not run inside [server-side components](https://svelte.dev/docs/svelte/svelte-server#render).
+ * `onAnimationFrame` does not run inside [server-side components](https://svelte.dev/docs/svelte/svelte-server#render).
  *
  * @template T
  * @param {() => NotFunction<T> | Promise<NotFunction<T>> | (() => any)} fn
  * @returns {void}
  */
-export function onFrame(fn) {
+export function onAnimationFrame(fn) {
 	onMount(() => {
 		let frame = -1;
 
