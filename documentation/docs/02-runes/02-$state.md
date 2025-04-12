@@ -149,32 +149,19 @@ This can improve performance with large arrays and objects that you weren't plan
 
 ## State options
 
-Both `$state` and `$state.raw` can optionally accept a second argument. This allows you to specify an `onchange` function that will be called synchronously whenever the state value changes (for `$state` it will also be called for deep mutations).
+Both `$state` and `$state.raw` accept an optional second argument that includes an `onchange` function.
 
-The `onchange` function is untracked so even if you assign within an `$effect` it will not cause unwanted dependencies.
+This function is called synchronously whenever the value is reassigned or (for `$state`) mutated, allowing you to respond to changes before [effects]($effect) run. It's useful for — for example — persisting data, or validating it:
 
 ```js
 let count = $state(0, {
-	onchange(){
-		console.log("count is now", count);
+	onchange() {
+		count = Math.min(count, 10);
 	}
 });
-
-// this will log "count is now 1"
-count++;
 ```
 
-this could be especially useful if you want to sync some stateful variable that could be mutated without using an effect.
-
-```js
-let array = $state([], {
-	onchange(){
-		localStorage.setItem('array', JSON.stringify(array));
-	}
-});
-
-array.push(array.length);
-```
+> The `onchange` function is [untracked](svelte#untrack).
 
 ## `$state.snapshot`
 
