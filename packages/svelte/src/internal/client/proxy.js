@@ -141,11 +141,13 @@ export function proxy(value, onchange) {
 						set(ls, n);
 					}
 				}
+
 				// when we delete a property if the source is a proxy we remove the current onchange from
 				// the proxy `onchanges` so that it doesn't trigger it anymore
 				if (typeof s.v === 'object' && s.v !== null && STATE_SYMBOL in s.v) {
 					s.v[PROXY_ONCHANGE_SYMBOL](onchange, true);
 				}
+
 				set(s, UNINITIALIZED);
 				update_version(version);
 			}
