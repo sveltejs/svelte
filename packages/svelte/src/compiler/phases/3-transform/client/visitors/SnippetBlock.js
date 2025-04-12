@@ -21,6 +21,10 @@ export function SnippetBlock(node, context) {
 	/** @type {Statement[]} */
 	const declarations = [];
 
+	if (dev) {
+		declarations.push(b.stmt(b.call('$.validate_snippet_args', b.spread(b.id('arguments')))));
+	}
+
 	const transform = { ...context.state.transform };
 	const child_state = { ...context.state, transform };
 
@@ -71,33 +75,15 @@ export function SnippetBlock(node, context) {
 			}
 		}
 	}
-	if (dev) {
-		const [anchor, ...validations_args] = args;
-		declarations.unshift(
-			b.stmt(
-				b.call(
-					'$.validate_snippet_args',
-					.../** @type {Identifier[]} */ (
-						[anchor, b.array(fallback_arr.map((i) => b.literal(i))), ...validations_args].map(
-							(arg) =>
-								arg?.type === 'Identifier' || arg.type === 'ArrayExpression' ? arg : arg?.left
-						)
-					)
-				)
-			)
-		);
-	}
 	body = b.block([
 		...declarations,
 		.../** @type {BlockStatement} */ (context.visit(node.body, child_state)).body
 	]);
 
-	/** @type {Expression} */
-	let snippet = b.arrow(args, body);
-
-	if (dev) {
-		snippet = b.call('$.wrap_snippet', b.id(context.state.analysis.name), snippet);
-	}
+	// in dev we use a FunctionExpression (not arrow function) so we can use `arguments`
+	let snippet = dev
+		? b.call('$.wrap_snippet', b.id(context.state.analysis.name), b.function(null, args, body))
+		: b.arrow(args, body);
 
 	const declaration = b.const(node.expression, snippet);
 
