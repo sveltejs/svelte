@@ -28,8 +28,6 @@ export function SnippetBlock(node, context) {
 	const transform = { ...context.state.transform };
 	const child_state = { ...context.state, transform };
 
-	let fallback_arr = [];
-
 	for (let i = 0; i < node.parameters.length; i++) {
 		const argument = node.parameters[i];
 
@@ -55,9 +53,6 @@ export function SnippetBlock(node, context) {
 		for (const path of paths) {
 			const name = /** @type {Identifier} */ (path.node).name;
 			const needs_derived = path.has_default_value; // to ensure that default value is only called once
-			if (needs_derived) {
-				fallback_arr.push(i);
-			}
 			const fn = b.thunk(
 				/** @type {Expression} */ (context.visit(path.expression?.(b.maybe_call(b.id(arg_alias)))))
 			);
@@ -75,6 +70,7 @@ export function SnippetBlock(node, context) {
 			}
 		}
 	}
+
 	body = b.block([
 		...declarations,
 		.../** @type {BlockStatement} */ (context.visit(node.body, child_state)).body
