@@ -39,8 +39,11 @@ export function proxy(value, onchange) {
 	}
 
 	if (STATE_SYMBOL in value) {
-		// @ts-ignore
-		value[PROXY_ONCHANGE_SYMBOL](onchange);
+		if (onchange) {
+			// @ts-ignore
+			value[PROXY_ONCHANGE_SYMBOL](onchange);
+		}
+
 		return value;
 	}
 
@@ -144,7 +147,7 @@ export function proxy(value, onchange) {
 
 				// when we delete a property if the source is a proxy we remove the current onchange from
 				// the proxy `onchanges` so that it doesn't trigger it anymore
-				if (typeof s.v === 'object' && s.v !== null && STATE_SYMBOL in s.v) {
+				if (onchange && typeof s.v === 'object' && s.v !== null && STATE_SYMBOL in s.v) {
 					s.v[PROXY_ONCHANGE_SYMBOL](onchange, true);
 				}
 
@@ -161,24 +164,15 @@ export function proxy(value, onchange) {
 			}
 
 			if (prop === PROXY_ONCHANGE_SYMBOL) {
-				return (
-					/** @type {(() => unknown) | undefined} */ value,
-					/** @type {boolean} */ remove
-				) => {
+				return (/** @type {(() => unknown)} */ value, /** @type {boolean} */ remove) => {
 					// we either add or remove the passed in value
 					// to the onchanges array or we set every source onchange
 					// to the passed in value (if it's undefined it will make the chain stop)
-					if (onchange != null && value) {
-						if (remove) {
-							onchanges?.delete(value);
-						} else {
-							onchanges?.add(value);
-						}
+					// if (onchange != null && value) {
+					if (remove) {
+						onchanges?.delete(value);
 					} else {
-						onchange = value;
-						for (let [, s] of sources) {
-							s.o = value;
-						}
+						onchanges?.add(value);
 					}
 				};
 			}
@@ -277,6 +271,7 @@ export function proxy(value, onchange) {
 						var other_s = sources.get(i + '');
 						if (other_s !== undefined) {
 							if (
+								onchange &&
 								typeof other_s.v === 'object' &&
 								other_s.v !== null &&
 								STATE_SYMBOL in other_s.v
@@ -309,11 +304,13 @@ export function proxy(value, onchange) {
 					}
 				} else {
 					has = s.v !== UNINITIALIZED;
+
 					// when we set a property if the source is a proxy we remove the current onchange from
 					// the proxy `onchanges` so that it doesn't trigger it anymore
-					if (typeof s.v === 'object' && s.v !== null && STATE_SYMBOL in s.v) {
+					if (onchange && typeof s.v === 'object' && s.v !== null && STATE_SYMBOL in s.v) {
 						s.v[PROXY_ONCHANGE_SYMBOL](onchange, true);
 					}
+
 					set(
 						s,
 						with_parent(() => proxy(value, onchange))
