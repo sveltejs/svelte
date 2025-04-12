@@ -208,15 +208,15 @@ export function afterUpdate(fn) {
  * @returns {void}
  */
 export function onAnimationFrame(fn) {
-	onMount(() => {
-		let frame = -1;
+	if (component_context === null) {
+		lifecycle_outside_component('onAnimationFrame');
+	}
 
-		function next() {
+	user_effect(() => {
+		let frame = requestAnimationFrame(function next() {
 			frame = requestAnimationFrame(next);
 			fn();
-		}
-
-		next();
+		});
 
 		return () => {
 			cancelAnimationFrame(frame);
