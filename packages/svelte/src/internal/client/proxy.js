@@ -168,10 +168,12 @@ export function proxy(value, onchange) {
 					// we either add or remove the passed in value
 					// to the onchanges array or we set every source onchange
 					// to the passed in value (if it's undefined it will make the chain stop)
-					if (onchange != null && value && !remove) {
-						onchanges?.add?.(value);
-					} else if (onchange != null && value) {
-						onchanges?.delete?.(value);
+					if (onchange != null && value) {
+						if (remove) {
+							onchanges?.delete(value);
+						} else {
+							onchanges?.add(value);
+						}
 					} else {
 						onchange = value;
 						for (let [, s] of sources) {
