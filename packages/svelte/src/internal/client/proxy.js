@@ -296,10 +296,6 @@ export function proxy(value, onchange) {
 				if (s === undefined) {
 					if (!has || get_descriptor(target, prop)?.writable) {
 						s = with_parent(() => source(undefined, onchange, stack));
-						set(
-							s,
-							with_parent(() => proxy(value, onchange))
-						);
 						sources.set(prop, s);
 					}
 				} else {
@@ -310,7 +306,9 @@ export function proxy(value, onchange) {
 					if (onchange && typeof s.v === 'object' && s.v !== null && STATE_SYMBOL in s.v) {
 						s.v[PROXY_ONCHANGE_SYMBOL](onchange, true);
 					}
+				}
 
+				if (s !== undefined) {
 					set(
 						s,
 						with_parent(() => proxy(value, onchange))
