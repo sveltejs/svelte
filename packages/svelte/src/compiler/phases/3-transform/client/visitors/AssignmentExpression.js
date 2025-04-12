@@ -7,9 +7,10 @@ import {
 	get_attribute_expression,
 	is_event_attribute
 } from '../../../../utils/ast.js';
-import { dev, is_ignored, locate_node } from '../../../../state.js';
+import { dev, locate_node } from '../../../../state.js';
 import { should_proxy } from '../utils.js';
 import { visit_assignment_expression } from '../../shared/assignments.js';
+import { validate_mutation } from './shared/utils.js';
 
 /**
  * @param {AssignmentExpression} node
@@ -20,9 +21,7 @@ export function AssignmentExpression(node, context) {
 		visit_assignment_expression(node, context, build_assignment) ?? context.next()
 	);
 
-	return is_ignored(node, 'ownership_invalid_mutation')
-		? b.call('$.skip_ownership_validation', b.thunk(expression))
-		: expression;
+	return validate_mutation(node, context, expression);
 }
 
 /**
@@ -165,7 +164,9 @@ function build_assignment(operator, left, right, context) {
 		path.at(-1) === 'SvelteComponent' ||
 		(path.at(-1) === 'ArrowFunctionExpression' &&
 			path.at(-2) === 'SequenceExpression' &&
-			(path.at(-3) === 'Component' || path.at(-3) === 'SvelteComponent'))
+			(path.at(-3) === 'Component' ||
+				path.at(-3) === 'SvelteComponent' ||
+				path.at(-3) === 'BindDirective'))
 	) {
 		should_transform = false;
 	}

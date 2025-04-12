@@ -129,27 +129,30 @@ export function lifecycle_double_unmount() {
 }
 
 /**
- * %parent% passed a value to %child% with `bind:`, but the value is owned by %owner%. Consider creating a binding between %owner% and %parent%
+ * %parent% passed property `%prop%` to %child% with `bind:`, but its parent component %owner% did not declare `%prop%` as a binding. Consider creating a binding between %owner% and %parent% (e.g. `bind:%prop%={...}` instead of `%prop%={...}`)
  * @param {string} parent
+ * @param {string} prop
  * @param {string} child
  * @param {string} owner
  */
-export function ownership_invalid_binding(parent, child, owner) {
+export function ownership_invalid_binding(parent, prop, child, owner) {
 	if (DEV) {
-		console.warn(`%c[svelte] ownership_invalid_binding\n%c${parent} passed a value to ${child} with \`bind:\`, but the value is owned by ${owner}. Consider creating a binding between ${owner} and ${parent}\nhttps://svelte.dev/e/ownership_invalid_binding`, bold, normal);
+		console.warn(`%c[svelte] ownership_invalid_binding\n%c${parent} passed property \`${prop}\` to ${child} with \`bind:\`, but its parent component ${owner} did not declare \`${prop}\` as a binding. Consider creating a binding between ${owner} and ${parent} (e.g. \`bind:${prop}={...}\` instead of \`${prop}={...}\`)\nhttps://svelte.dev/e/ownership_invalid_binding`, bold, normal);
 	} else {
 		console.warn(`https://svelte.dev/e/ownership_invalid_binding`);
 	}
 }
 
 /**
- * %component% mutated a value owned by %owner%. This is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead
- * @param {string | undefined | null} [component]
- * @param {string | undefined | null} [owner]
+ * Mutating unbound props (`%name%`, at %location%) is strongly discouraged. Consider using `bind:%prop%={...}` in %parent% (or using a callback) instead
+ * @param {string} name
+ * @param {string} location
+ * @param {string} prop
+ * @param {string} parent
  */
-export function ownership_invalid_mutation(component, owner) {
+export function ownership_invalid_mutation(name, location, prop, parent) {
 	if (DEV) {
-		console.warn(`%c[svelte] ownership_invalid_mutation\n%c${component ? `${component} mutated a value owned by ${owner}. This is strongly discouraged. Consider passing values to child components with \`bind:\`, or use a callback instead` : 'Mutating a value outside the component that created it is strongly discouraged. Consider passing values to child components with `bind:`, or use a callback instead'}\nhttps://svelte.dev/e/ownership_invalid_mutation`, bold, normal);
+		console.warn(`%c[svelte] ownership_invalid_mutation\n%cMutating unbound props (\`${name}\`, at ${location}) is strongly discouraged. Consider using \`bind:${prop}={...}\` in ${parent} (or using a callback) instead\nhttps://svelte.dev/e/ownership_invalid_mutation`, bold, normal);
 	} else {
 		console.warn(`https://svelte.dev/e/ownership_invalid_mutation`);
 	}

@@ -756,6 +756,8 @@ declare module 'svelte/compiler' {
 			code: string;
 			/** A source map */
 			map: SourceMap;
+			/** Whether or not the CSS includes global rules */
+			hasGlobal: boolean;
 		};
 		/**
 		 * An array of warning objects that were generated during compilation. Each warning has several properties:

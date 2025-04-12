@@ -1,7 +1,6 @@
 /** @import { ComponentContext } from '#client' */
 
 import { DEV } from 'esm-env';
-import { add_owner } from './dev/ownership.js';
 import { lifecycle_outside_component } from '../shared/errors.js';
 import { source } from './reactivity/sources.js';
 import {
@@ -67,15 +66,6 @@ export function getContext(key) {
  */
 export function setContext(key, context) {
 	const context_map = get_or_init_context_map('setContext');
-
-	if (DEV) {
-		// When state is put into context, we treat as if it's global from now on.
-		// We do for performance reasons (it's for example very expensive to call
-		// getContext on a big object many times when part of a list component)
-		// and danger of false positives.
-		untrack(() => add_owner(context, null, true));
-	}
-
 	context_map.set(key, context);
 	return context;
 }

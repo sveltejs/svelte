@@ -27,7 +27,7 @@ import {
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { internal_set, old_values } from './reactivity/sources.js';
-import { destroy_derived_effects, update_derived } from './reactivity/deriveds.js';
+import { destroy_derived_effects, execute_derived, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { FILENAME } from '../../constants.js';
 import { tracing_mode_flag } from '../flags/index.js';
@@ -476,7 +476,7 @@ export function update_reaction(reaction) {
 		// we need to increment the read version to ensure that
 		// any dependencies in this reaction aren't marked with
 		// the same version
-		if (previous_reaction !== null) {
+		if (previous_reaction !== reaction) {
 			read_version++;
 
 			if (untracked_writes !== null) {
@@ -692,6 +692,7 @@ function flush_queued_root_effects() {
 				var collected_effects = process_effects(root_effects[i]);
 				flush_queued_effects(collected_effects);
 			}
+			old_values.clear();
 		}
 	} finally {
 		is_flushing = false;
@@ -701,7 +702,6 @@ function flush_queued_root_effects() {
 		if (DEV) {
 			dev_effect_stack = [];
 		}
-		old_values.clear();
 	}
 }
 

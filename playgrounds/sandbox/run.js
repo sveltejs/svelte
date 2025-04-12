@@ -56,7 +56,7 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 			});
 
 			write(
-				`${cwd}/output/${file}.json`,
+				`${cwd}/output/ast/${file}.json`,
 				JSON.stringify(
 					ast,
 					(key, value) => (typeof value === 'bigint' ? ['BigInt', value.toString()] : value),
@@ -66,7 +66,7 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 
 			try {
 				const migrated = migrate(source);
-				write(`${cwd}/output/${file}.migrated.svelte`, migrated.code);
+				write(`${cwd}/output/migrated/${file}`, migrated.code);
 			} catch (e) {
 				console.warn(`Error migrating ${file}`, e);
 			}

@@ -1,9 +1,8 @@
-/** @import { ProxyMetadata, Source, ValueOptions } from '#client' */
+/** @import { Source, ValueOptions } from '#client' */
 import { DEV } from 'esm-env';
 import { UNINITIALIZED } from '../../constants.js';
 import { tracing_mode_flag } from '../flags/index.js';
 import { get, active_effect, active_reaction, set_active_reaction } from './runtime.js';
-import { component_context } from './context.js';
 import {
 	array_prototype,
 	get_descriptor,
@@ -11,8 +10,7 @@ import {
 	is_array,
 	object_prototype
 } from '../shared/utils.js';
-import { PROXY_ONCHANGE_SYMBOL, STATE_SYMBOL, STATE_SYMBOL_METADATA } from './constants.js';
-import { check_ownership, widen_ownership } from './dev/ownership.js';
+import { PROXY_ONCHANGE_SYMBOL, STATE_SYMBOL } from './constants.js';
 import { get_stack } from './dev/tracing.js';
 import * as e from './errors.js';
 import { batch_onchange, set, source, state } from './reactivity/sources.js';
@@ -28,17 +26,13 @@ function identity(fn) {
 	return fn;
 }
 
-/** @type {ProxyMetadata | null} */
-var parent_metadata = null;
-
 /**
  * @template T
  * @param {T} value
  * @param {() => void} [onchange]
- * @param {Source<T>} [prev] dev mode only
  * @returns {T}
  */
-export function proxy(value, onchange, prev) {
+export function proxy(value, onchange) {
 	// if non-proxyable, or is already a proxy, return `value`
 	if (typeof value !== 'object' || value === null) {
 		return value;
@@ -84,16 +78,7 @@ export function proxy(value, onchange, prev) {
 		set_active_reaction(reaction);
 
 		/** @type {T} */
-		var result;
-
-		if (DEV) {
-			var previous_metadata = parent_metadata;
-			parent_metadata = metadata;
-			result = fn();
-			parent_metadata = previous_metadata;
-		} else {
-			result = fn();
-		}
+		var result = fn();
 
 		set_active_reaction(previous_reaction);
 		return result;
@@ -103,31 +88,6 @@ export function proxy(value, onchange, prev) {
 		// We need to create the length source eagerly to ensure that
 		// mutations to the array are properly synced with our proxy
 		sources.set('length', source(/** @type {any[]} */ (value).length, onchange, stack));
-	}
-
-	/** @type {ProxyMetadata} */
-	var metadata;
-
-	if (DEV) {
-		metadata = {
-			parent: parent_metadata,
-			owners: null
-		};
-
-		if (prev) {
-			// Reuse owners from previous state; necessary because reassignment is not guaranteed to have correct component context.
-			// If no previous proxy exists we play it safe and assume ownerless state
-			// @ts-expect-error
-			const prev_owners = prev.v?.[STATE_SYMBOL_METADATA]?.owners;
-			metadata.owners = prev_owners ? new Set(prev_owners) : null;
-		} else {
-			metadata.owners =
-				parent_metadata === null
-					? component_context !== null
-						? new Set([component_context.function])
-						: null
-					: new Set();
-		}
 	}
 
 	return new Proxy(/** @type {any} */ (value), {
@@ -194,10 +154,6 @@ export function proxy(value, onchange, prev) {
 		},
 
 		get(target, prop, receiver) {
-			if (DEV && prop === STATE_SYMBOL_METADATA) {
-				return metadata;
-			}
-
 			if (prop === STATE_SYMBOL) {
 				return value;
 			}
@@ -237,22 +193,6 @@ export function proxy(value, onchange, prev) {
 
 			if (s !== undefined) {
 				var v = get(s);
-
-				// In case of something like `foo = bar.map(...)`, foo would have ownership
-				// of the array itself, while the individual items would have ownership
-				// of the component that created bar. That means if we later do `foo[0].baz = 42`,
-				// we could get a false-positive ownership violation, since the two proxies
-				// are not connected to each other via the parent metadata relationship.
-				// For this reason, we need to widen the ownership of the children
-				// upon access when we detect they are not connected.
-				if (DEV) {
-					/** @type {ProxyMetadata | undefined} */
-					var prop_metadata = v?.[STATE_SYMBOL_METADATA];
-					if (prop_metadata && prop_metadata?.parent !== metadata) {
-						widen_ownership(metadata, prop_metadata);
-					}
-				}
-
 				return v === UNINITIALIZED ? undefined : v;
 			}
 
@@ -293,10 +233,6 @@ export function proxy(value, onchange, prev) {
 		},
 
 		has(target, prop) {
-			if (DEV && prop === STATE_SYMBOL_METADATA) {
-				return true;
-			}
-
 			if (prop === STATE_SYMBOL) {
 				return true;
 			}
@@ -381,14 +317,6 @@ export function proxy(value, onchange, prev) {
 					);
 				}
 			})();
-			if (DEV) {
-				/** @type {ProxyMetadata | undefined} */
-				var prop_metadata = value?.[STATE_SYMBOL_METADATA];
-				if (prop_metadata && prop_metadata?.parent !== metadata) {
-					widen_ownership(metadata, prop_metadata);
-				}
-				check_ownership(metadata);
-			}
 
 			var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
 

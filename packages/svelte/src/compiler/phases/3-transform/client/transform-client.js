@@ -393,6 +393,12 @@ export function client_component(analysis, options) {
 		);
 	}
 
+	if (analysis.needs_mutation_validation) {
+		component_block.body.unshift(
+			b.var('$$ownership_validator', b.call('$.create_ownership_validator', b.id('$$props')))
+		);
+	}
+
 	const should_inject_context =
 		dev ||
 		analysis.needs_context ||
@@ -530,9 +536,6 @@ export function client_component(analysis, options) {
 				b.assignment('=', b.member(b.id(analysis.name), '$.FILENAME', true), b.literal(filename))
 			)
 		);
-
-		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'))));
-		body.push(b.stmt(b.call(b.id('$.mark_module_end'), b.id(analysis.name))));
 	}
 
 	if (!analysis.runes) {
