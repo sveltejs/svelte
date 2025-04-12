@@ -94,18 +94,11 @@ export function set_active_effect(effect) {
  */
 export let reaction_sources = null;
 
-/**
- * @param {Source[] | null} sources
- */
-export function set_reaction_sources(sources) {
-	reaction_sources = sources;
-}
-
 /** @param {Value} value */
 export function push_reaction_value(value) {
 	if (active_reaction !== null && active_reaction.f & EFFECT_IS_UPDATING) {
 		if (reaction_sources === null) {
-			set_reaction_sources([value]);
+			reaction_sources = [value];
 		} else {
 			reaction_sources.push(value);
 		}
