@@ -24,6 +24,8 @@ export function SnippetBlock(node, context) {
 	const transform = { ...context.state.transform };
 	const child_state = { ...context.state, transform };
 
+	let fallback_arr = [];
+
 	for (let i = 0; i < node.parameters.length; i++) {
 		const argument = node.parameters[i];
 
@@ -49,6 +51,9 @@ export function SnippetBlock(node, context) {
 		for (const path of paths) {
 			const name = /** @type {Identifier} */ (path.node).name;
 			const needs_derived = path.has_default_value; // to ensure that default value is only called once
+			if (needs_derived) {
+				fallback_arr.push(i);
+			}
 			const fn = b.thunk(
 				/** @type {Expression} */ (context.visit(path.expression?.(b.maybe_call(b.id(arg_alias)))))
 			);
@@ -67,12 +72,16 @@ export function SnippetBlock(node, context) {
 		}
 	}
 	if (dev) {
+		const [anchor, ...validations_args] = args;
 		declarations.unshift(
 			b.stmt(
 				b.call(
 					'$.validate_snippet_args',
 					.../** @type {Identifier[]} */ (
-						args.map((arg) => (arg?.type === 'Identifier' ? arg : arg?.left))
+						[anchor, b.array(fallback_arr.map((i) => b.literal(i))), ...validations_args].map(
+							(arg) =>
+								arg?.type === 'Identifier' || arg.type === 'ArrayExpression' ? arg : arg?.left
+						)
 					)
 				)
 			)
