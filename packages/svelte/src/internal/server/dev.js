@@ -6,7 +6,7 @@ import {
 } from '../../html-tree-validation.js';
 import { current_component } from './context.js';
 import { invalid_snippet_arguments } from '../shared/errors.js';
-import { Payload } from './payload.js';
+import { HeadPayload, Payload } from './payload.js';
 
 /**
  * @typedef {{
@@ -105,7 +105,11 @@ export function pop_element() {
  * @param {Payload} payload
  */
 export function validate_snippet_args(payload) {
-	if (typeof payload !== 'object' || !(payload instanceof Payload)) {
+	if (
+		typeof payload !== 'object' ||
+		// for some reason typescript consider the type of payload as never after the first instanceof
+		!(payload instanceof Payload || /** @type {any} */ (payload) instanceof HeadPayload)
+	) {
 		invalid_snippet_arguments();
 	}
 }

@@ -1,16 +1,25 @@
+export class HeadPayload {
+	/** @type {Set<{ hash: string; code: string }>} */
+	css = new Set();
+	out = '';
+	uid = () => '';
+	title = '';
+
+	constructor(css = new Set(), out = '', title = '', uid = () => '') {
+		this.css = css;
+		this.out = out;
+		this.title = title;
+		this.uid = uid;
+	}
+}
+
 export class Payload {
 	/** @type {Set<{ hash: string; code: string }>} */
 	css = new Set();
 	out = '';
 	uid = () => '';
 
-	head = {
-		/** @type {Set<{ hash: string; code: string }>} */
-		css: new Set(),
-		title: '',
-		out: '',
-		uid: () => ''
-	};
+	head = new HeadPayload();
 
 	constructor(id_prefix = '') {
 		this.uid = props_id_generator(id_prefix);
@@ -30,12 +39,11 @@ export function copy_payload({ out, css, head, uid }) {
 	payload.css = new Set(css);
 	payload.uid = uid;
 
-	payload.head = {
-		title: head.title,
-		out: head.out,
-		css: new Set(head.css),
-		uid: head.uid
-	};
+	payload.head = new HeadPayload();
+	payload.head.out = head.out;
+	payload.head.css = new Set(head.css);
+	payload.head.title = head.title;
+	payload.head.uid = head.uid;
 
 	return payload;
 }
