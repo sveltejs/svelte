@@ -168,9 +168,17 @@ export function set(source, value, should_proxy = false) {
 		e.state_unsafe_mutation();
 	}
 
-	let new_value = should_proxy ? proxy(value, source.o) : value;
+	var onchange = source.o;
 
-	return internal_set(source, new_value);
+	var new_value = should_proxy ? proxy(value, onchange) : value;
+
+	internal_set(source, new_value);
+
+	if (onchange && new_value !== value) {
+		onchange();
+	}
+
+	return new_value;
 }
 
 /**
@@ -182,11 +190,6 @@ export function set(source, value, should_proxy = false) {
 export function internal_set(source, value) {
 	if (!source.equals(value)) {
 		var old_value = source.v;
-
-		if (typeof old_value === 'object' && old_value != null && source.o) {
-			// @ts-ignore
-			old_value[PROXY_ONCHANGE_SYMBOL]?.(source.o, true);
-		}
 
 		if (is_destroying_effect) {
 			old_values.set(source, value);
