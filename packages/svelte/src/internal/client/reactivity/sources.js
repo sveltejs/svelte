@@ -76,12 +76,11 @@ export function batch_onchange(fn) {
 /**
  * @template V
  * @param {V} v
- * @param {() => void} [o]
  * @param {Error | null} [stack]
  * @returns {Source<V>}
  */
 // TODO rename this to `state` throughout the codebase
-export function source(v, o, stack) {
+export function source(v, stack) {
 	/** @type {Value} */
 	var signal = {
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
@@ -89,8 +88,7 @@ export function source(v, o, stack) {
 		reactions: null,
 		equals,
 		rv: 0,
-		wv: 0,
-		o
+		wv: 0
 	};
 
 	if (DEV && tracing_mode_flag) {
@@ -109,7 +107,8 @@ export function source(v, o, stack) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function state(v, o, stack) {
-	const s = source(v, o, stack);
+	const s = source(v, stack);
+	if (o) s.o = o;
 
 	push_reaction_value(s);
 
