@@ -126,7 +126,7 @@ export function ClassBody(node, context) {
 
 						value =
 							field.kind === 'state' && should_proxy(init, context.state.scope)
-								? b.call('$.assignable_proxy', init, onchange)
+								? b.call('$.proxy_state', init, onchange)
 								: b.call('$.state', init, onchange);
 					} else {
 						value = b.call('$.derived', field.kind === 'derived_by' ? init : b.thunk(init));

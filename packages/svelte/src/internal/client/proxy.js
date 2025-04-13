@@ -370,7 +370,7 @@ export function proxy(value, onchange) {
  * @param {() => void} [onchange]
  * @returns {Source<T>}
  */
-export function assignable_proxy(value, onchange) {
+export function proxy_state(value, onchange) {
 	return state(proxy(value, onchange), onchange);
 }
 

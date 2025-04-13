@@ -133,7 +133,7 @@ export function VariableDeclaration(node, context) {
 					const is_state = is_state_source(binding, context.state.analysis);
 
 					if (proxied) {
-						return b.call(is_state ? '$.assignable_proxy' : '$.proxy', value, onchange);
+						return b.call(is_state ? '$.proxy_state' : '$.proxy', value, onchange);
 					}
 
 					if (is_state) {
