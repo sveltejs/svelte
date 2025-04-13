@@ -11,17 +11,6 @@ export class HeadPayload {
 		this.title = title;
 		this.uid = uid;
 	}
-
-	clone() {
-		const payload = new HeadPayload();
-
-		payload.out = this.out;
-		payload.css = new Set(this.css);
-		payload.title = this.title;
-		payload.uid = this.uid;
-
-		return payload;
-	}
 }
 
 export class Payload {
@@ -50,7 +39,11 @@ export function copy_payload({ out, css, head, uid }) {
 	payload.css = new Set(css);
 	payload.uid = uid;
 
-	payload.head = head.clone();
+	payload.head = new HeadPayload();
+	payload.head.out = head.out;
+	payload.head.css = new Set(head.css);
+	payload.head.title = head.title;
+	payload.head.uid = head.uid;
 
 	return payload;
 }
