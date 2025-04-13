@@ -50,6 +50,11 @@ export function create_proxy(value, onchanges) {
 	}
 
 	if (STATE_SYMBOL in value) {
+		if (onchanges.length > 0) {
+			// @ts-ignore
+			value[PROXY_ONCHANGE_SYMBOL](onchanges);
+		}
+
 		return value;
 	}
 
