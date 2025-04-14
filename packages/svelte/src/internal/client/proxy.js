@@ -29,6 +29,7 @@ export function proxy(value, onchange) {
 }
 
 let batching = false;
+let changed_in_batch = false;
 
 /**
  * @template T
@@ -200,11 +201,16 @@ export function create_proxy(value, onchanges) {
 				return function (...args) {
 					try {
 						batching = true;
+						changed_in_batch = false;
 
 						// @ts-expect-error
 						return v.apply(this, args);
 					} finally {
 						batching = false;
+
+						if (changed_in_batch) {
+							run_all(onchanges);
+						}
 					}
 				};
 			}
@@ -293,6 +299,8 @@ export function create_proxy(value, onchanges) {
 						sources.set(i + '', other_s);
 					}
 				}
+			} else if (batching) {
+				changed_in_batch = true;
 			}
 
 			// If we haven't yet created a source for this property, we need to ensure
