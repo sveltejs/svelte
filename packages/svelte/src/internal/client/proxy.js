@@ -120,6 +120,10 @@ export function create_proxy(value, onchanges) {
 		deleteProperty(target, prop) {
 			var s = sources.get(prop);
 
+			if (batching && s ? s.v !== UNINITIALIZED : prop in target) {
+				changed_in_batch = true;
+			}
+
 			if (s === undefined) {
 				if (prop in target) {
 					sources.set(
