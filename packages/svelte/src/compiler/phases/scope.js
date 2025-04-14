@@ -150,12 +150,13 @@ class Evaluation {
 	 */
 	constructor(scope, expression) {
 		switch (expression.type) {
-			case 'Literal':
+			case 'Literal': {
 				this.values.add(expression.value);
 				break;
+			}
 
-			case 'Identifier':
-				var binding = scope.get(expression.name);
+			case 'Identifier': {
+				const binding = scope.get(expression.name);
 
 				if (binding) {
 					if (
@@ -187,10 +188,11 @@ class Evaluation {
 
 				this.values.add(UNKNOWN);
 				break;
+			}
 
-			case 'BinaryExpression':
-				var a = scope.evaluate(/** @type {Expression} */ (expression.left)); // `left` cannot be `PrivateIdentifier` unless operator is `in`
-				var b = scope.evaluate(expression.right);
+			case 'BinaryExpression': {
+				const a = scope.evaluate(/** @type {Expression} */ (expression.left)); // `left` cannot be `PrivateIdentifier` unless operator is `in`
+				const b = scope.evaluate(expression.right);
 
 				if (a.is_known && b.is_known) {
 					this.values.add(binary[expression.operator](a.value, b.value));
@@ -241,11 +243,12 @@ class Evaluation {
 						this.values.add(UNKNOWN);
 				}
 				break;
+			}
 
-			case 'ConditionalExpression':
-				var test = scope.evaluate(expression.test);
-				var consequent = scope.evaluate(expression.consequent);
-				var alternate = scope.evaluate(expression.alternate);
+			case 'ConditionalExpression': {
+				const test = scope.evaluate(expression.test);
+				const consequent = scope.evaluate(expression.consequent);
+				const alternate = scope.evaluate(expression.alternate);
 
 				if (test.is_known) {
 					for (const value of (test.value ? consequent : alternate).values) {
@@ -261,10 +264,11 @@ class Evaluation {
 					}
 				}
 				break;
+			}
 
-			case 'LogicalExpression':
-				a = scope.evaluate(expression.left);
-				b = scope.evaluate(expression.right);
+			case 'LogicalExpression': {
+				const a = scope.evaluate(expression.left);
+				const b = scope.evaluate(expression.right);
 
 				if (a.is_known) {
 					if (b.is_known) {
@@ -295,9 +299,10 @@ class Evaluation {
 					this.values.add(value);
 				}
 				break;
+			}
 
-			case 'UnaryExpression':
-				var argument = scope.evaluate(expression.argument);
+			case 'UnaryExpression': {
+				const argument = scope.evaluate(expression.argument);
 
 				if (argument.is_known) {
 					this.values.add(unary[expression.operator](argument.value));
@@ -329,9 +334,11 @@ class Evaluation {
 						this.values.add(UNKNOWN);
 				}
 				break;
+			}
 
-			default:
+			default: {
 				this.values.add(UNKNOWN);
+			}
 		}
 
 		for (const value of this.values) {
