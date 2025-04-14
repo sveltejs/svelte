@@ -31,13 +31,14 @@ export function create_ownership_validator(props) {
 				return result;
 			}
 
-			let value = props[name];
+			/** @type {any} */
+			let value = props;
 
-			for (let i = 1; i < path.length - 1; i++) {
+			for (let i = 0; i < path.length - 1; i++) {
+				value = value[path[i]];
 				if (!value?.[STATE_SYMBOL]) {
 					return result;
 				}
-				value = value[path[i]];
 			}
 
 			const location = sanitize_location(`${component[FILENAME]}:${line}:${column}`);
