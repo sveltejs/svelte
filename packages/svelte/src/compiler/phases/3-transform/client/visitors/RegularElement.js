@@ -686,7 +686,6 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 	);
 
 	const evaluated = context.state.scope.evaluate(value);
-
 	const assignment = b.assignment('=', b.member(node_id, '__value'), value);
 
 	const inner_assignment = b.assignment(

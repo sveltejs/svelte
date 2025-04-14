@@ -2,4 +2,4 @@
 'svelte': minor
 ---
 
-feat: partial evaluation
+feat: partially evaluate certain expressions

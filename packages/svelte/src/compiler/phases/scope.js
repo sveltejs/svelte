@@ -17,7 +17,8 @@ import { determine_slot } from '../utils/slot.js';
 import { validate_identifier_name } from './2-analyze/visitors/shared/utils.js';
 
 export const UNKNOWN = Symbol('unknown');
-export const NUMBER = Symbol('number'); // includes BigInt
+/** Includes `BigInt` */
+export const NUMBER = Symbol('number');
 export const STRING = Symbol('string');
 
 export class Binding {
@@ -540,7 +541,9 @@ export class Scope {
 	}
 
 	/**
-	 *
+	 * Does partial evaluation to find an exact value or at least the rough type of the expression.
+	 * Only call this once scope has been fully generated in a first pass,
+	 * else this evaluates on incomplete data and may yield wrong results.
 	 * @param {Expression} expression
 	 * @param {Set<any>} values
 	 */
