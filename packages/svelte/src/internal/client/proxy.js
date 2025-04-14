@@ -37,6 +37,8 @@ export function proxy(value, onchange) {
 	return create_proxy(value, onchange ? [onchange] : []);
 }
 
+let batching = false;
+
 /**
  * @template T
  * @param {T} value
@@ -165,6 +167,8 @@ export function create_proxy(value, onchanges) {
 
 			if (prop === PROXY_ONCHANGE_SYMBOL) {
 				return (/** @type {(Array<() => void>)} */ callbacks, /** @type {boolean} */ remove) => {
+					if (callbacks === onchanges) return;
+
 					if (remove) {
 						let i = callbacks.length;
 						while (i--) {
@@ -258,6 +262,10 @@ export function create_proxy(value, onchanges) {
 			var s = sources.get(prop);
 			var has = prop in target;
 
+			if (is_proxied_array && prop === 'length') {
+				batching = true;
+			}
+
 			// if we are changing the length of the array we batch all the changes
 			// to the sources and the original value by calling batch_onchange and immediately
 			// invoking it...otherwise we just invoke an identity function
@@ -312,7 +320,13 @@ export function create_proxy(value, onchanges) {
 				}
 			})();
 
-			run_all(onchanges);
+			if (is_proxied_array && prop === 'length') {
+				batching = false;
+			}
+
+			if (!batching) {
+				run_all(onchanges);
+			}
 
 			var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
 

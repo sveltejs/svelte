@@ -252,15 +252,6 @@ export function internal_set(source, value) {
 
 			inspect_effects.clear();
 		}
-
-		var onchange = source.o;
-		if (onchange) {
-			if (onchange_batch) {
-				onchange_batch.add(onchange);
-			} else {
-				onchange();
-			}
-		}
 	}
 
 	return value;
