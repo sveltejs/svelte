@@ -238,9 +238,7 @@ class Evaluation {
 						break;
 
 					default:
-						// @ts-expect-error we can't guard against future operators without
-						// TypeScript getting confused
-						throw new Error(`Unknown operator ${expression.operator}`);
+						this.values.add(UNKNOWN);
 				}
 				break;
 
@@ -328,9 +326,7 @@ class Evaluation {
 						break;
 
 					default:
-						// @ts-expect-error we can't guard against future operators without
-						// TypeScript getting confused
-						throw new Error(`Unknown operator ${expression.operator}`);
+						this.values.add(UNKNOWN);
 				}
 				break;
 
