@@ -15,7 +15,7 @@ export function get_current_url() {
  * Reading properties of the URL (such as `url.href` or `url.pathname`) in an [effect](https://svelte.dev/docs/svelte/$effect) or [derived](https://svelte.dev/docs/svelte/$derived)
  * will cause it to be re-evaluated as necessary when the URL changes.
  *
- * The `searchParams` property is an instance of [SvelteURLSearchParams](http://localhost:5173/docs/svelte/svelte-reactivity#SvelteURLSearchParams).
+ * The `searchParams` property is an instance of [SvelteURLSearchParams](https://svelte.dev/docs/svelte/svelte-reactivity#SvelteURLSearchParams).
  *
  * [Example](https://svelte.dev/playground/5a694758901b448c83dc40dc31c71f2a):
  *
