@@ -193,10 +193,12 @@ const css_visitors = {
 	Rule(node, context) {
 		node.metadata.parent_rule = context.state.rule;
 
-		node.metadata.is_global_block = node.prelude.children.some((selector) => {
+		// We gotta allow :global x, :global y because CSS preprocessors might generate that from :global { x, y {...} }
+		for (const complex_selector of node.prelude.children) {
 			let is_global_block = false;
 
-			for (const child of selector.children) {
+			for (let selector_idx = 0; selector_idx < complex_selector.children.length; selector_idx++) {
+				const child = complex_selector.children[selector_idx];
 				const idx = child.selectors.findIndex(is_global_block_selector);
 
 				if (is_global_block) {
@@ -204,58 +206,56 @@ const css_visitors = {
 					child.metadata.is_global_like = true;
 				}
 
-				if (idx !== -1) {
-					is_global_block = true;
-
-					for (let i = idx + 1; i < child.selectors.length; i++) {
-						walk(/** @type {AST.CSS.Node} */ (child.selectors[i]), null, {
-							ComplexSelector(node) {
-								node.metadata.used = true;
-							}
-						});
-					}
-				}
-			}
-
-			return is_global_block;
-		});
-
-		if (node.metadata.is_global_block) {
-			if (node.prelude.children.length > 1) {
-				e.css_global_block_invalid_list(node.prelude);
-			}
-
-			const complex_selector = node.prelude.children[0];
-			const global_selector = complex_selector.children.find((r, selector_idx) => {
-				const idx = r.selectors.findIndex(is_global_block_selector);
 				if (idx === 0) {
-					if (r.selectors.length > 1 && selector_idx === 0 && node.metadata.parent_rule === null) {
-						e.css_global_block_invalid_modifier_start(r.selectors[1]);
+					if (
+						child.selectors.length > 1 &&
+						selector_idx === 0 &&
+						node.metadata.parent_rule === null
+					) {
+						e.css_global_block_invalid_modifier_start(child.selectors[1]);
+					} else {
+						// `child` starts with `:global`
+						node.metadata.is_global_block = is_global_block = true;
+
+						for (let i = 1; i < child.selectors.length; i++) {
+							walk(/** @type {AST.CSS.Node} */ (child.selectors[i]), null, {
+								ComplexSelector(node) {
+									node.metadata.used = true;
+								}
+							});
+						}
+
+						if (child.combinator && child.combinator.name !== ' ') {
+							e.css_global_block_invalid_combinator(child, child.combinator.name);
+						}
+
+						const declaration = node.block.children.find((child) => child.type === 'Declaration');
+						const is_lone_global =
+							complex_selector.children.length === 1 &&
+							complex_selector.children[0].selectors.length === 1; // just `:global`, not e.g. `:global x`
+
+						if (is_lone_global && node.prelude.children.length > 1) {
+							// `:global, :global x { z { ... } }` would become `x { z { ... } }` which means `z` is always
+							// constrained by `x`, which is not what the user intended
+							e.css_global_block_invalid_list(node.prelude);
+						}
+
+						if (
+							declaration &&
+							// :global { color: red; } is invalid, but foo :global { color: red; } is valid
+							node.prelude.children.length === 1 &&
+							is_lone_global
+						) {
+							e.css_global_block_invalid_declaration(declaration);
+						}
 					}
-					return true;
 				} else if (idx !== -1) {
-					e.css_global_block_invalid_modifier(r.selectors[idx]);
+					e.css_global_block_invalid_modifier(child.selectors[idx]);
 				}
-			});
-
-			if (!global_selector) {
-				throw new Error('Internal error: global block without :global selector');
 			}
 
-			if (global_selector.combinator && global_selector.combinator.name !== ' ') {
-				e.css_global_block_invalid_combinator(global_selector, global_selector.combinator.name);
-			}
-
-			const declaration = node.block.children.find((child) => child.type === 'Declaration');
-
-			if (
-				declaration &&
-				// :global { color: red; } is invalid, but foo :global { color: red; } is valid
-				node.prelude.children.length === 1 &&
-				node.prelude.children[0].children.length === 1 &&
-				node.prelude.children[0].children[0].selectors.length === 1
-			) {
-				e.css_global_block_invalid_declaration(declaration);
+			if (node.metadata.is_global_block && !is_global_block) {
+				e.css_global_block_invalid_list(node.prelude);
 			}
 		}
 
