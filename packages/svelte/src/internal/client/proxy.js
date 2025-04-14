@@ -280,59 +280,50 @@ export function create_proxy(value, onchanges) {
 				batching = true;
 			}
 
-			// if we are changing the length of the array we batch all the changes
-			// to the sources and the original value by calling batch_onchange and immediately
-			// invoking it...otherwise we just invoke an identity function
-			(is_proxied_array && prop === 'length' ? batch_onchange : identity)(() => {
-				// variable.length = value -> clear all signals with index >= value
-				if (is_proxied_array && prop === 'length') {
-					for (var i = value; i < /** @type {Source<number>} */ (s).v; i += 1) {
-						var other_s = sources.get(i + '');
-						if (other_s !== undefined) {
-							if (
-								typeof other_s.v === 'object' &&
-								other_s.v !== null &&
-								STATE_SYMBOL in other_s.v
-							) {
-								other_s.v[PROXY_ONCHANGE_SYMBOL](onchanges, true);
-							}
-							set(other_s, UNINITIALIZED);
-						} else if (i in target) {
-							// If the item exists in the original, we need to create a uninitialized source,
-							// else a later read of the property would result in a source being created with
-							// the value of the original item at that index.
-							other_s = with_parent(() => source(UNINITIALIZED, stack));
-							sources.set(i + '', other_s);
+			// variable.length = value -> clear all signals with index >= value
+			if (is_proxied_array && prop === 'length') {
+				for (var i = value; i < /** @type {Source<number>} */ (s).v; i += 1) {
+					var other_s = sources.get(i + '');
+					if (other_s !== undefined) {
+						if (typeof other_s.v === 'object' && other_s.v !== null && STATE_SYMBOL in other_s.v) {
+							other_s.v[PROXY_ONCHANGE_SYMBOL](onchanges, true);
 						}
+						set(other_s, UNINITIALIZED);
+					} else if (i in target) {
+						// If the item exists in the original, we need to create a uninitialized source,
+						// else a later read of the property would result in a source being created with
+						// the value of the original item at that index.
+						other_s = with_parent(() => source(UNINITIALIZED, stack));
+						sources.set(i + '', other_s);
 					}
 				}
+			}
 
-				// If we haven't yet created a source for this property, we need to ensure
-				// we do so otherwise if we read it later, then the write won't be tracked and
-				// the heuristics of effects will be different vs if we had read the proxied
-				// object property before writing to that property.
-				if (s === undefined) {
-					if (!has || get_descriptor(target, prop)?.writable) {
-						s = with_parent(() => source(undefined, stack));
-						sources.set(prop, s);
-					}
-				} else {
-					has = s.v !== UNINITIALIZED;
-
-					// when we set a property if the source is a proxy we remove the parent `onchanges` from
-					// the child `onchanges` so that it doesn't trigger it anymore
-					if (typeof s.v === 'object' && s.v !== null && STATE_SYMBOL in s.v) {
-						s.v[PROXY_ONCHANGE_SYMBOL](onchanges, true);
-					}
+			// If we haven't yet created a source for this property, we need to ensure
+			// we do so otherwise if we read it later, then the write won't be tracked and
+			// the heuristics of effects will be different vs if we had read the proxied
+			// object property before writing to that property.
+			if (s === undefined) {
+				if (!has || get_descriptor(target, prop)?.writable) {
+					s = with_parent(() => source(undefined, stack));
+					sources.set(prop, s);
 				}
+			} else {
+				has = s.v !== UNINITIALIZED;
 
-				if (s !== undefined) {
-					set(
-						s,
-						with_parent(() => create_proxy(value, onchanges))
-					);
+				// when we set a property if the source is a proxy we remove the parent `onchanges` from
+				// the child `onchanges` so that it doesn't trigger it anymore
+				if (typeof s.v === 'object' && s.v !== null && STATE_SYMBOL in s.v) {
+					s.v[PROXY_ONCHANGE_SYMBOL](onchanges, true);
 				}
-			})();
+			}
+
+			if (s !== undefined) {
+				set(
+					s,
+					with_parent(() => create_proxy(value, onchanges))
+				);
+			}
 
 			if (is_proxied_array && prop === 'length') {
 				batching = false;
