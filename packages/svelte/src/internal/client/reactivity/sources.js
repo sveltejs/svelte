@@ -27,8 +27,7 @@ import {
 	UNOWNED,
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
-	ROOT_EFFECT,
-	PROXY_ONCHANGE_SYMBOL
+	ROOT_EFFECT
 } from '../constants.js';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -45,32 +44,6 @@ export const old_values = new Map();
  */
 export function set_inspect_effects(v) {
 	inspect_effects = v;
-}
-
-/** @type {null | Set<() => void>} */
-let onchange_batch = null;
-
-/**
- * @param {Function} fn
- */
-export function batch_onchange(fn) {
-	// @ts-expect-error
-	return function (...args) {
-		let previous_onchange_batch = onchange_batch;
-
-		try {
-			onchange_batch = new Set();
-
-			// @ts-expect-error
-			return fn.apply(this, args);
-		} finally {
-			for (const onchange of /** @type {Set<() => void>} */ (onchange_batch)) {
-				onchange();
-			}
-
-			onchange_batch = previous_onchange_batch;
-		}
-	};
 }
 
 /**

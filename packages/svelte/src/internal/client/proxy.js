@@ -14,18 +14,9 @@ import {
 import { PROXY_ONCHANGE_SYMBOL, STATE_SYMBOL } from './constants.js';
 import { get_stack } from './dev/tracing.js';
 import * as e from './errors.js';
-import { batch_onchange, set, source, state } from './reactivity/sources.js';
+import { set, source, state } from './reactivity/sources.js';
 
 const array_methods = ['push', 'pop', 'shift', 'unshift', 'splice', 'reverse', 'sort'];
-
-/**
- * Used to prevent batching in case we are not setting the length of an array
- * @param {any} fn
- * @returns
- */
-function identity(fn) {
-	return fn;
-}
 
 /**
  * @template T
