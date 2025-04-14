@@ -267,12 +267,17 @@ export function create_proxy(value, onchanges) {
 			var s = sources.get(prop);
 			var has = prop in target;
 
-			if (is_proxied_array && prop === 'length') {
-				batching = true;
+			// bail if nothing changed
+			if (s ? s.v === value : target[prop] === value) {
+				return true;
 			}
 
-			// variable.length = value -> clear all signals with index >= value
-			if (is_proxied_array && prop === 'length') {
+			var is_length_change = is_proxied_array && prop === 'length';
+
+			if (is_length_change) {
+				batching = true;
+
+				// variable.length = value -> clear all signals with index >= value
 				for (var i = value; i < /** @type {Source<number>} */ (s).v; i += 1) {
 					var other_s = sources.get(i + '');
 					if (other_s !== undefined) {
@@ -316,7 +321,7 @@ export function create_proxy(value, onchanges) {
 				);
 			}
 
-			if (is_proxied_array && prop === 'length') {
+			if (is_length_change) {
 				batching = false;
 			}
 
