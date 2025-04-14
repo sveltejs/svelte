@@ -166,7 +166,11 @@ export function create_proxy(value, onchanges) {
 			}
 
 			if (prop === PROXY_ONCHANGE_SYMBOL) {
-				return (/** @type {(Array<() => void>)} */ callbacks, /** @type {boolean} */ remove) => {
+				/**
+				 * @param {(Array<() => void>)} callbacks
+				 * @param {boolean} remove
+				 */
+				return (callbacks, remove) => {
 					if (callbacks === onchanges) return;
 
 					if (remove) {
