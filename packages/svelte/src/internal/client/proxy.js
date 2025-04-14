@@ -201,7 +201,17 @@ export function create_proxy(value, onchanges) {
 			v = Reflect.get(target, prop, receiver);
 
 			if (is_proxied_array && array_methods.includes(/** @type {string} */ (prop))) {
-				return batch_onchange(v);
+				// @ts-expect-error
+				return function (...args) {
+					try {
+						batching = true;
+
+						// @ts-expect-error
+						return v.apply(this, args);
+					} finally {
+						batching = false;
+					}
+				};
 			}
 
 			return v;
