@@ -168,17 +168,9 @@ export function set(source, value, should_proxy = false) {
 		e.state_unsafe_mutation();
 	}
 
-	var onchange = source.o;
+	var new_value = should_proxy ? proxy(value, source.o) : value;
 
-	var new_value = should_proxy ? proxy(value, onchange) : value;
-
-	internal_set(source, new_value);
-
-	if (onchange && new_value !== value) {
-		onchange();
-	}
-
-	return new_value;
+	return internal_set(source, new_value);
 }
 
 /**
@@ -198,6 +190,8 @@ export function internal_set(source, value) {
 		}
 
 		source.v = value;
+
+		source.o?.();
 
 		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');
