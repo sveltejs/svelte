@@ -1,5 +1,15 @@
 # svelte
 
+## 5.27.0
+
+### Minor Changes
+
+- feat: partially evaluate certain expressions ([#15494](https://github.com/sveltejs/svelte/pull/15494))
+
+### Patch Changes
+
+- fix: relax `:global` selector list validation ([#15762](https://github.com/sveltejs/svelte/pull/15762))
+
 ## 5.26.3
 
 ### Patch Changes
