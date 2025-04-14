@@ -1,5 +1,15 @@
 # svelte
 
+## 5.26.3
+
+### Patch Changes
+
+- fix: correctly validate head snippets on the server ([#15755](https://github.com/sveltejs/svelte/pull/15755))
+
+- fix: ignore mutation validation for props that are not proxies in more cases ([#15759](https://github.com/sveltejs/svelte/pull/15759))
+
+- fix: allow self-closing tags within math namespace ([#15761](https://github.com/sveltejs/svelte/pull/15761))
+
 ## 5.26.2
 
 ### Patch Changes
