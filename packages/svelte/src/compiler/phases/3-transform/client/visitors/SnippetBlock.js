@@ -71,7 +71,6 @@ export function SnippetBlock(node, context) {
 		.../** @type {BlockStatement} */ (context.visit(node.body, child_state)).body
 	]);
 
-	// in dev we use a FunctionExpression (not arrow function) so we can use `arguments`
 	let snippet = dev
 		? b.call('$.wrap_snippet', b.id(context.state.analysis.name), b.function(null, args, body))
 		: b.arrow(args, body);

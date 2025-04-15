@@ -1,4 +1,4 @@
-/** @import { CallExpression, ArrowFunctionExpression, BlockStatement, Expression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { empty_comment, build_attribute_value } from './utils.js';
