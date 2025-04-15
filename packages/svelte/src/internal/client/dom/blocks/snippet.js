@@ -72,9 +72,7 @@ export function wrap_snippet(component, fn) {
 		}
 	};
 
-	if (DEV) {
-		prevent_snippet_stringification(snippet);
-	}
+	prevent_snippet_stringification(snippet);
 
 	return snippet;
 }

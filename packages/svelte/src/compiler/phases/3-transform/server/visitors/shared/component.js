@@ -4,7 +4,7 @@
 import { empty_comment, build_attribute_value } from './utils.js';
 import * as b from '../../../../../utils/builders.js';
 import { is_element_node } from '../../../../nodes.js';
-import { DEV } from 'esm-env';
+import { dev } from '../../../../../state.js';
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
@@ -227,8 +227,7 @@ export function build_inline_component(node, expression, context) {
 			params.push(pattern);
 		}
 
-		/** @type {ArrowFunctionExpression | CallExpression} */
-		let slot_fn = b.arrow(params, b.block(block.body));
+		const slot_fn = b.arrow(params, b.block(block.body));
 
 		if (slot_name === 'default' && !has_children_prop) {
 			if (
@@ -239,12 +238,14 @@ export function build_inline_component(node, expression, context) {
 						!node.attributes.some((attr) => attr.type === 'LetDirective')
 				)
 			) {
-				if (DEV) {
-					slot_fn = b.call('$.prevent_snippet_stringification', slot_fn);
-				}
-
 				// create `children` prop...
-				push_prop(b.prop('init', b.id('children'), slot_fn));
+				push_prop(
+					b.prop(
+						'init',
+						b.id('children'),
+						dev ? b.call('$.prevent_snippet_stringification', slot_fn) : slot_fn
+					)
+				);
 
 				// and `$$slots.default: true` so that `<slot>` on the child works
 				serialized_slots.push(b.init(slot_name, b.true));

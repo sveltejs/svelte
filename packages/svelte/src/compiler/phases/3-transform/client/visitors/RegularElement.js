@@ -685,14 +685,13 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 			: value
 	);
 
+	const evaluated = context.state.scope.evaluate(value);
+	const assignment = b.assignment('=', b.member(node_id, '__value'), value);
+
 	const inner_assignment = b.assignment(
 		'=',
 		b.member(node_id, 'value'),
-		b.conditional(
-			b.binary('==', b.null, b.assignment('=', b.member(node_id, '__value'), value)),
-			b.literal(''), // render null/undefined values as empty string to support placeholder options
-			value
-		)
+		evaluated.is_defined ? assignment : b.logical('??', assignment, b.literal(''))
 	);
 
 	const update = b.stmt(

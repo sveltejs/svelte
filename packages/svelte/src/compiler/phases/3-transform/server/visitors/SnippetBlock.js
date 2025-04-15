@@ -1,7 +1,7 @@
-/** @import { ArrowFunctionExpression, BlockStatement, CallExpression, ModuleDeclaration, Statement } from 'estree' */
+/** @import { ArrowFunctionExpression, BlockStatement, CallExpression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
-import { DEV } from 'esm-env';
+import { dev } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 
 /**
@@ -9,13 +9,16 @@ import * as b from '../../../../utils/builders.js';
  * @param {ComponentContext} context
  */
 export function SnippetBlock(node, context) {
-	/** @type {ArrowFunctionExpression | CallExpression} */
-	let fn = b.arrow(
-		[b.id('$$payload'), ...node.parameters],
-		/** @type {BlockStatement} */ (context.visit(node.body))
-	);
+	const body = /** @type {BlockStatement} */ (context.visit(node.body));
 
-	if (DEV) {
+	if (dev) {
+		body.body.unshift(b.stmt(b.call('$.validate_snippet_args', b.id('$$payload'))));
+	}
+
+	/** @type {ArrowFunctionExpression | CallExpression} */
+	let fn = b.arrow([b.id('$$payload'), ...node.parameters], body);
+
+	if (dev) {
 		fn = b.call('$.prevent_snippet_stringification', fn);
 	}
 

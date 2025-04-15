@@ -641,11 +641,13 @@ export function reactive_declaration_module_script_dependency(node) {
 }
 
 /**
- * State referenced in its own scope will never update. Did you mean to reference it inside a closure?
+ * This reference only captures the initial value of `%name%`. Did you mean to reference it inside a %type% instead?
  * @param {null | NodeLike} node
+ * @param {string} name
+ * @param {string} type
  */
-export function state_referenced_locally(node) {
-	w(node, 'state_referenced_locally', `State referenced in its own scope will never update. Did you mean to reference it inside a closure?\nhttps://svelte.dev/e/state_referenced_locally`);
+export function state_referenced_locally(node, name, type) {
+	w(node, 'state_referenced_locally', `This reference only captures the initial value of \`${name}\`. Did you mean to reference it inside a ${type} instead?\nhttps://svelte.dev/e/state_referenced_locally`);
 }
 
 /**

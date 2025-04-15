@@ -1,5 +1,117 @@
 # svelte
 
+## 5.27.0
+
+### Minor Changes
+
+- feat: partially evaluate certain expressions ([#15494](https://github.com/sveltejs/svelte/pull/15494))
+
+### Patch Changes
+
+- fix: relax `:global` selector list validation ([#15762](https://github.com/sveltejs/svelte/pull/15762))
+
+## 5.26.3
+
+### Patch Changes
+
+- fix: correctly validate head snippets on the server ([#15755](https://github.com/sveltejs/svelte/pull/15755))
+
+- fix: ignore mutation validation for props that are not proxies in more cases ([#15759](https://github.com/sveltejs/svelte/pull/15759))
+
+- fix: allow self-closing tags within math namespace ([#15761](https://github.com/sveltejs/svelte/pull/15761))
+
+## 5.26.2
+
+### Patch Changes
+
+- fix: correctly validate `undefined` snippet params with default value ([#15750](https://github.com/sveltejs/svelte/pull/15750))
+
+## 5.26.1
+
+### Patch Changes
+
+- fix: update `state_referenced_locally` message ([#15733](https://github.com/sveltejs/svelte/pull/15733))
+
+## 5.26.0
+
+### Minor Changes
+
+- feat: add `css.hasGlobal` to `compile` output ([#15450](https://github.com/sveltejs/svelte/pull/15450))
+
+### Patch Changes
+
+- fix: add snippet argument validation in dev ([#15521](https://github.com/sveltejs/svelte/pull/15521))
+
+## 5.25.12
+
+### Patch Changes
+
+- fix: improve internal_set versioning mechanic ([#15724](https://github.com/sveltejs/svelte/pull/15724))
+
+- fix: don't transform reassigned state in labeled statement in `$derived` ([#15725](https://github.com/sveltejs/svelte/pull/15725))
+
+## 5.25.11
+
+### Patch Changes
+
+- fix: handle hydration mismatches in await blocks ([#15708](https://github.com/sveltejs/svelte/pull/15708))
+
+- fix: prevent ownership warnings if the fallback of a bindable is used ([#15720](https://github.com/sveltejs/svelte/pull/15720))
+
+## 5.25.10
+
+### Patch Changes
+
+- fix: set deriveds as `CLEAN` if they are assigned to ([#15592](https://github.com/sveltejs/svelte/pull/15592))
+
+- fix: better scope `:global()` with nesting selector `&` ([#15671](https://github.com/sveltejs/svelte/pull/15671))
+
+## 5.25.9
+
+### Patch Changes
+
+- fix: allow `$.state` and `$.derived` to be treeshaken ([#15702](https://github.com/sveltejs/svelte/pull/15702))
+
+- fix: rework binding ownership validation ([#15678](https://github.com/sveltejs/svelte/pull/15678))
+
+## 5.25.8
+
+### Patch Changes
+
+- fix: address untracked_writes memory leak ([#15694](https://github.com/sveltejs/svelte/pull/15694))
+
+## 5.25.7
+
+### Patch Changes
+
+- fix: ensure clearing of old values happens independent of root flushes ([#15664](https://github.com/sveltejs/svelte/pull/15664))
+
+## 5.25.6
+
+### Patch Changes
+
+- fix: ignore generic type arguments while creating AST ([#15659](https://github.com/sveltejs/svelte/pull/15659))
+
+- fix: better consider component and its snippets during css pruning ([#15630](https://github.com/sveltejs/svelte/pull/15630))
+
+## 5.25.5
+
+### Patch Changes
+
+- fix: add setters to `$derived` class properties ([#15628](https://github.com/sveltejs/svelte/pull/15628))
+
+- fix: silence assignment warning on more function bindings ([#15644](https://github.com/sveltejs/svelte/pull/15644))
+
+- fix: make sure CSS is preserved during SSR with bindings ([#15645](https://github.com/sveltejs/svelte/pull/15645))
+
+## 5.25.4
+
+### Patch Changes
+
+- fix: support TS type assertions ([#15642](https://github.com/sveltejs/svelte/pull/15642))
+
+- fix: ensure `undefined` class still applies scoping class, if necessary ([#15643](https://github.com/sveltejs/svelte/pull/15643))
+
 ## 5.25.3
 
 ### Patch Changes

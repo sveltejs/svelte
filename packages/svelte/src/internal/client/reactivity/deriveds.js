@@ -67,6 +67,7 @@ export function derived(fn) {
  * @param {() => V} fn
  * @returns {Derived<V>}
  */
+/*#__NO_SIDE_EFFECTS__*/
 export function user_derived(fn) {
 	const d = derived(fn);
 
@@ -130,7 +131,7 @@ function get_derived_parent_effect(derived) {
  * @param {Derived} derived
  * @returns {T}
  */
-function execute_derived(derived) {
+export function execute_derived(derived) {
 	var value;
 	var prev_active_effect = active_effect;
 

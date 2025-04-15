@@ -432,6 +432,7 @@ export function analyze_component(root, source, options) {
 		uses_component_bindings: false,
 		uses_render_tags: false,
 		needs_context: false,
+		needs_mutation_validation: false,
 		needs_props: false,
 		event_directive_node: null,
 		uses_event_attributes: false,
@@ -455,7 +456,8 @@ export function analyze_component(root, source, options) {
 						hash
 					})
 				: '',
-			keyframes: []
+			keyframes: [],
+			has_global: false
 		},
 		source,
 		undefined_exports: new Map(),
