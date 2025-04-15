@@ -118,6 +118,7 @@ function read_rule(parser) {
 		metadata: {
 			parent_rule: null,
 			has_local_selectors: false,
+			has_global_selectors: false,
 			is_global_block: false
 		}
 	};
@@ -342,6 +343,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 				children,
 				metadata: {
 					rule: null,
+					is_global: false,
 					used: false
 				}
 			};

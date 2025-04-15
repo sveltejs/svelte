@@ -1,5 +1,5 @@
 /** @import { ComponentType, SvelteComponent } from 'svelte' */
-/** @import { Component, Payload, RenderOutput } from '#server' */
+/** @import { Component, RenderOutput } from '#server' */
 /** @import { Store } from '#shared' */
 export { FILENAME, HMR } from '../../constants.js';
 import { attr, clsx, to_class, to_style } from '../shared/attributes.js';
@@ -13,46 +13,16 @@ import {
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
-import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
+import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN, BLOCK_OPEN_ELSE } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
 import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
 import { reset_elements } from './dev.js';
+import { Payload } from './payload.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
 const INVALID_ATTR_NAME_CHAR_REGEX =
 	/[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
-
-/**
- * @param {Payload} to_copy
- * @returns {Payload}
- */
-export function copy_payload({ out, css, head, uid }) {
-	return {
-		out,
-		css: new Set(css),
-		head: {
-			title: head.title,
-			out: head.out,
-			css: new Set(head.css),
-			uid: head.uid
-		},
-		uid
-	};
-}
-
-/**
- * Assigns second payload to first
- * @param {Payload} p1
- * @param {Payload} p2
- * @returns {void}
- */
-export function assign_payload(p1, p2) {
-	p1.out = p2.out;
-	p1.css = p2.css;
-	p1.head = p2.head;
-	p1.uid = p2.uid;
-}
 
 /**
  * @param {Payload} payload
@@ -88,16 +58,6 @@ export function element(payload, tag, attributes_fn = noop, children_fn = noop) 
 export let on_destroy = [];
 
 /**
- * Creates an ID generator
- * @param {string} prefix
- * @returns {() => string}
- */
-function props_id_generator(prefix) {
-	let uid = 1;
-	return () => `${prefix}s${uid++}`;
-}
-
-/**
  * Only available on the server and when compiling with the `server` option.
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
  * @template {Record<string, any>} Props
@@ -106,14 +66,7 @@ function props_id_generator(prefix) {
  * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
-	const uid = props_id_generator(options.idPrefix ? options.idPrefix + '-' : '');
-	/** @type {Payload} */
-	const payload = {
-		out: '',
-		css: new Set(),
-		head: { title: '', out: '', css: new Set(), uid },
-		uid
-	};
+	const payload = new Payload(options.idPrefix ? options.idPrefix + '-' : '');
 
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
@@ -474,18 +427,21 @@ export function bind_props(props_parent, props_now) {
 
 /**
  * @template V
+ * @param {Payload} payload
  * @param {Promise<V>} promise
  * @param {null | (() => void)} pending_fn
  * @param {(value: V) => void} then_fn
  * @returns {void}
  */
-function await_block(promise, pending_fn, then_fn) {
+function await_block(payload, promise, pending_fn, then_fn) {
 	if (is_promise(promise)) {
+		payload.out += BLOCK_OPEN;
 		promise.then(null, noop);
 		if (pending_fn !== null) {
 			pending_fn();
 		}
 	} else if (then_fn !== null) {
+		payload.out += BLOCK_OPEN_ELSE;
 		then_fn(promise);
 	}
 }
@@ -542,7 +498,9 @@ export { html } from './blocks/html.js';
 
 export { push, pop } from './context.js';
 
-export { push_element, pop_element } from './dev.js';
+export { push_element, pop_element, validate_snippet_args } from './dev.js';
+
+export { assign_payload, copy_payload } from './payload.js';
 
 export { snapshot } from '../shared/clone.js';
 
