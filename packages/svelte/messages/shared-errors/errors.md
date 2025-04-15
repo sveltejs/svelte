@@ -71,9 +71,9 @@ A component throwing this error will look something like this (`children` is not
 ```svelte
 <!--- file: Parent.svelte --->
 <ChildComponent>
-  {#slot label()}
+  {#snippet label()}
     <span>Hi!</span>
-  {/slot}
+  {/snippet}
 </ChildComponent>
 ```
 
