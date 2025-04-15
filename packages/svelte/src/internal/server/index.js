@@ -550,7 +550,8 @@ export { fallback } from '../shared/utils.js';
 export {
 	invalid_default_snippet,
 	validate_dynamic_element_tag,
-	validate_void_dynamic_element
+	validate_void_dynamic_element,
+	prevent_snippet_stringification
 } from '../shared/validate.js';
 
 export { escape_html as escape };

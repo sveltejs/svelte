@@ -13,9 +13,9 @@ export default function Function_prop_no_getter($$payload) {
 		onmousedown: () => count += 1,
 		onmouseup,
 		onmouseenter: () => count = plusOne(count),
-		children: ($$payload) => {
+		children: $.prevent_snippet_stringification(($$payload) => {
 			$$payload.out += `<!---->clicks: ${$.escape(count)}`;
-		},
+		}),
 		$$slots: { default: true }
 	});
 }

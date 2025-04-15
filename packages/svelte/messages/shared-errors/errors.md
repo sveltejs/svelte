@@ -48,6 +48,41 @@ Certain lifecycle methods can only be used during component initialisation. To f
 <button onclick={handleClick}>click me</button>
 ```
 
+## snippet_without_render_tag
+
+> Attempted to render a snippet without a `{@render}` block. This would cause the snippet to be rendered directly to the DOM. To fix this, change `{snippet}` to `{@render snippet()}`.
+
+A component throwing this error will look something like this (`children` is not being rendered):
+
+```svelte
+<script>
+    let { children } = $props();
+</script>
+
+{children}
+```
+
+...or like this (a parent component is passing a snippet where a non-snippet value is expected):
+
+```svelte
+<!--- file: Parent.svelte --->
+<ChildComponent>
+  {#slot label()}
+    <span>Hi!</span>
+  {/slot}
+</ChildComponent>
+```
+
+```svelte
+<!--- file: Child.svelte --->
+<script>
+  let { label } = $props();
+</script>
+
+<!-- This component doesn't expect a snippet, but the parent provided one -->
+<p>{label}</p>
+```
+
 ## store_invalid_shape
 
 > `%name%` is not a store with a `subscribe` method
