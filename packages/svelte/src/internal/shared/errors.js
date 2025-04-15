@@ -49,12 +49,12 @@ export function lifecycle_outside_component(name) {
 }
 
 /**
- * Attempted to render a snippet without a `{@render}` block. This would cause the snippet to be rendered directly to the DOM. To fix this, change `{snippet}` to `{@render snippet()}`.
+ * Attempted to render a snippet without a `{@render}` block. This would cause the snippet code to be stringified instead of its content being rendered to the DOM. To fix this, change `{snippet}` to `{@render snippet()}`.
  * @returns {never}
  */
 export function snippet_without_render_tag() {
 	if (DEV) {
-		const error = new Error(`snippet_without_render_tag\nAttempted to render a snippet without a \`{@render}\` block. This would cause the snippet to be rendered directly to the DOM. To fix this, change \`{snippet}\` to \`{@render snippet()}\`.\nhttps://svelte.dev/e/snippet_without_render_tag`);
+		const error = new Error(`snippet_without_render_tag\nAttempted to render a snippet without a \`{@render}\` block. This would cause the snippet code to be stringified instead of its content being rendered to the DOM. To fix this, change \`{snippet}\` to \`{@render snippet()}\`.\nhttps://svelte.dev/e/snippet_without_render_tag`);
 
 		error.name = 'Svelte error';
 		throw error;
