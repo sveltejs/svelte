@@ -54,7 +54,7 @@ Certain lifecycle methods can only be used during component initialisation. To f
 
 ## snippet_without_render_tag
 
-> Attempted to render a snippet without a `{@render}` block. This would cause the snippet to be rendered directly to the DOM. To fix this, change `{snippet}` to `{@render snippet()}`.
+> Attempted to render a snippet without a `{@render}` block. This would cause the snippet code to be stringified instead of its content being rendered to the DOM. To fix this, change `{snippet}` to `{@render snippet()}`.
 
 A component throwing this error will look something like this (`children` is not being rendered):
 
