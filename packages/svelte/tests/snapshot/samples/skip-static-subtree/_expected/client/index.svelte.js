@@ -13,7 +13,7 @@ export default function Skip_static_subtree($$anchor, $$props) {
 
 	var node = $.sibling(h1, 10);
 
-	$.html(node, () => $$props.content, false, false);
+	$.html(node, () => $$props.content);
 	$.next(14);
 	$.reset(main);
 

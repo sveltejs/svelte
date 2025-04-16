@@ -34,12 +34,12 @@ function check_hash(element, server_hash, value) {
 /**
  * @param {Element | Text | Comment} node
  * @param {() => string} get_value
- * @param {boolean} svg
- * @param {boolean} mathml
+ * @param {boolean} [svg]
+ * @param {boolean} [mathml]
  * @param {boolean} [skip_warning]
  * @returns {void}
  */
-export function html(node, get_value, svg, mathml, skip_warning) {
+export function html(node, get_value, svg = false, mathml = false, skip_warning = false) {
 	var anchor = node;
 
 	var value = '';
