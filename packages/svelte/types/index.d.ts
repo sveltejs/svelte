@@ -381,7 +381,7 @@ declare module 'svelte' {
 	 * The event dispatcher can be typed to narrow the allowed event names and the type of the `detail` argument:
 	 * ```ts
 	 * const dispatch = createEventDispatcher<{
-	 *  loaded: never; // does not take a detail argument
+	 *  loaded: null; // does not take a detail argument
 	 *  change: string; // takes a detail argument of type string, which is required
 	 *  optional: number | null; // takes an optional detail argument of type number
 	 * }>();
