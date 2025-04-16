@@ -224,8 +224,8 @@ export function internal_set(source, value) {
  * @param {Source | null} source
  */
 export function invalidate(source) {
-	if (source === null) {
-		return;
+	if (source === null || (source.f & DERIVED) !== 0) {
+		e.state_invalidate_invalid_source();
 	}
 	if (
 		active_reaction !== null &&

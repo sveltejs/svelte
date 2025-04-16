@@ -184,7 +184,7 @@ In the case that you aren't using a proxied `$state` via use of `$state.raw` or 
 </button>
 ```
 
-`$state.invalidate` can also be used with reactive class fields:
+`$state.invalidate` can also be used with reactive class fields, and properties of `$state` objects:
 
 ```js
 class Box {
@@ -199,9 +199,16 @@ class Counter {
 	count = $state(new Box(0));
 
 	increment() {
-		this.count.value++;
+		this.count.value += 1;
 		$state.invalidate(this.count);
 	}
+}
+
+let counter = $state({count: new Box(0)});
+
+function increment() {
+	counter.count.value += 1;
+	$state.invalidate(counter.count);
 }
 ```
 
