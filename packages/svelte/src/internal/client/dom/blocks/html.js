@@ -39,7 +39,7 @@ function check_hash(element, server_hash, value) {
  * @param {boolean} [skip_warning]
  * @returns {void}
  */
-export function html(node, get_value, svg, mathml, skip_warning) {
+export function html(node, get_value, svg = false, mathml = false, skip_warning = false) {
 	var anchor = node;
 
 	var value = '';
