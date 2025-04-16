@@ -1,4 +1,4 @@
-/** @import { BlockStatement } from 'estree' */
+/** @import { ArrowFunctionExpression, BlockStatement, CallExpression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import { dev } from '../../../../state.js';
@@ -9,20 +9,27 @@ import * as b from '../../../../utils/builders.js';
  * @param {ComponentContext} context
  */
 export function SnippetBlock(node, context) {
-	const fn = b.function_declaration(
-		node.expression,
-		[b.id('$$payload'), ...node.parameters],
-		/** @type {BlockStatement} */ (context.visit(node.body))
-	);
+	const body = /** @type {BlockStatement} */ (context.visit(node.body));
+
 	if (dev) {
-		fn.body.body.unshift(b.stmt(b.call('$.validate_snippet_args', b.id('$$payload'))));
+		body.body.unshift(b.stmt(b.call('$.validate_snippet_args', b.id('$$payload'))));
 	}
+
+	/** @type {ArrowFunctionExpression | CallExpression} */
+	let fn = b.arrow([b.id('$$payload'), ...node.parameters], body);
+
+	if (dev) {
+		fn = b.call('$.prevent_snippet_stringification', fn);
+	}
+
+	const declaration = b.declaration('const', [b.declarator(node.expression, fn)]);
+
 	// @ts-expect-error - TODO remove this hack once $$render_inner for legacy bindings is gone
 	fn.___snippet = true;
 
 	if (node.metadata.can_hoist) {
-		context.state.hoisted.push(fn);
+		context.state.hoisted.push(declaration);
 	} else {
-		context.state.init.push(fn);
+		context.state.init.push(declaration);
 	}
 }
