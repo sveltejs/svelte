@@ -469,7 +469,7 @@ export function update_reaction(reaction) {
 		// we need to increment the read version to ensure that
 		// any dependencies in this reaction aren't marked with
 		// the same version
-		if (previous_reaction !== reaction) {
+		if (previous_reaction !== null && previous_reaction !== reaction) {
 			read_version++;
 
 			if (untracked_writes !== null) {
