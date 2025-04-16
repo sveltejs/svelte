@@ -13,6 +13,8 @@ import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
 import { create_text, should_defer_append } from '../operations.js';
 import { active_fork } from '../../reactivity/forks.js';
 
+// TODO reinstate https://github.com/sveltejs/svelte/pull/15250
+
 /**
  * @param {TemplateNode} node
  * @param {(branch: (fn: (anchor: Node) => void, flag?: boolean) => void) => void} fn
