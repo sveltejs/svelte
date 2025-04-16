@@ -162,16 +162,8 @@ function get_delegated_event(event_name, handler, context) {
 			return unhoisted;
 		}
 
-		if (binding !== null && binding.initial !== null && !binding.updated) {
-			const binding_type = binding.initial.type;
-
-			if (
-				binding_type === 'ArrowFunctionExpression' ||
-				binding_type === 'FunctionDeclaration' ||
-				binding_type === 'FunctionExpression'
-			) {
-				target_function = binding.initial;
-			}
+		if (binding?.is_function()) {
+			target_function = binding.initial;
 		}
 	}
 
@@ -190,6 +182,15 @@ function get_delegated_event(event_name, handler, context) {
 
 		const binding = scope.get(reference);
 		const local_binding = context.state.scope.get(reference);
+
+		// if the function access a snippet that can't be hoisted we bail out
+		if (
+			local_binding !== null &&
+			local_binding.initial?.type === 'SnippetBlock' &&
+			!local_binding.initial.metadata.can_hoist
+		) {
+			return unhoisted;
+		}
 
 		// If we are referencing a binding that is shadowed in another scope then bail out.
 		if (local_binding !== null && binding !== null && local_binding.node !== binding.node) {

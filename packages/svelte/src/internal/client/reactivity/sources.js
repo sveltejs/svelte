@@ -11,11 +11,12 @@ import {
 	untrack,
 	increment_write_version,
 	update_effect,
-	derived_sources,
-	set_derived_sources,
+	reaction_sources,
 	check_dirtiness,
 	untracking,
-	queue_flush
+	queue_flush,
+	is_destroying_effect,
+	push_reaction_value
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -35,8 +36,11 @@ import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack } from '../dev/tracing.js';
 import { component_context, is_runes } from '../context.js';
 import { active_fork, Fork } from './forks.js';
+import { proxy } from '../proxy.js';
+import { execute_derived } from './deriveds.js';
 
 export let inspect_effects = new Set();
+export const old_values = new Map();
 
 export let pending = source(false);
 
@@ -53,6 +57,7 @@ export function set_inspect_effects(v) {
  * @param {Error | null} [stack]
  * @returns {Source<V>}
  */
+// TODO rename this to `state` throughout the codebase
 export function source(v, stack) {
 	/** @type {Value} */
 	var signal = {
@@ -75,9 +80,15 @@ export function source(v, stack) {
 /**
  * @template V
  * @param {V} v
+ * @param {Error | null} [stack]
  */
-export function state(v) {
-	return push_derived_source(source(v));
+/*#__NO_SIDE_EFFECTS__*/
+export function state(v, stack) {
+	const s = source(v, stack);
+
+	push_reaction_value(s);
+
+	return s;
 }
 
 /**
@@ -104,33 +115,6 @@ export function mutable_source(initial_value, immutable = false) {
 
 /**
  * @template V
- * @param {V} v
- * @param {boolean} [immutable]
- * @returns {Source<V>}
- */
-export function mutable_state(v, immutable = false) {
-	return push_derived_source(mutable_source(v, immutable));
-}
-
-/**
- * @template V
- * @param {Source<V>} source
- */
-/*#__NO_SIDE_EFFECTS__*/
-function push_derived_source(source) {
-	if (active_reaction !== null && !untracking && (active_reaction.f & DERIVED) !== 0) {
-		if (derived_sources === null) {
-			set_derived_sources([source]);
-		} else {
-			derived_sources.push(source);
-		}
-	}
-
-	return source;
-}
-
-/**
- * @template V
  * @param {Value<V>} source
  * @param {V} value
  */
@@ -146,22 +130,23 @@ export function mutate(source, value) {
  * @template V
  * @param {Source<V>} source
  * @param {V} value
+ * @param {boolean} [should_proxy]
  * @returns {V}
  */
-export function set(source, value) {
+export function set(source, value, should_proxy = false) {
 	if (
 		active_reaction !== null &&
 		!untracking &&
 		is_runes() &&
 		(active_reaction.f & (DERIVED | BLOCK_EFFECT | EFFECT_ASYNC)) !== 0 &&
-		// If the source was created locally within the current derived, then
-		// we allow the mutation.
-		(derived_sources === null || !derived_sources.includes(source))
+		!reaction_sources?.includes(source)
 	) {
 		e.state_unsafe_mutation();
 	}
 
-	return internal_set(source, value);
+	let new_value = should_proxy ? proxy(value) : value;
+
+	return internal_set(source, new_value);
 }
 
 /**
@@ -175,8 +160,14 @@ export function internal_set(source, value) {
 
 	if (!source.equals(value)) {
 		var old_value = source.v;
+
+		if (is_destroying_effect) {
+			old_values.set(source, value);
+		} else {
+			old_values.set(source, old_value);
+		}
+
 		source.v = value;
-		source.wv = increment_write_version();
 
 		const fork = Fork.ensure();
 		fork.capture(source, old_value);
@@ -188,6 +179,16 @@ export function internal_set(source, value) {
 				source.trace_v ??= old_value;
 			}
 		}
+
+		if ((source.f & DERIVED) !== 0) {
+			// if we are assigning to a dirty derived we set it to clean/maybe dirty but we also eagerly execute it to track the dependencies
+			if ((source.f & DIRTY) !== 0) {
+				execute_derived(/** @type {Derived} */ (source));
+			}
+			set_signal_status(source, (source.f & UNOWNED) === 0 ? CLEAN : MAYBE_DIRTY);
+		}
+
+		source.wv = increment_write_version();
 
 		mark_reactions(source, DIRTY);
 

@@ -1,7 +1,7 @@
-import { benchmarks } from '../benchmarks.js';
+import { reactivity_benchmarks } from '../benchmarks/reactivity/index.js';
 
 const results = [];
-for (const benchmark of benchmarks) {
+for (const benchmark of reactivity_benchmarks) {
 	const result = await benchmark();
 	console.error(result.benchmark);
 	results.push(result);

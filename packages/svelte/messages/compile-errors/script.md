@@ -170,6 +170,10 @@ This turned out to be buggy and unpredictable, particularly when working with de
 
 > `%name%` is not a valid rune
 
+## rune_invalid_spread
+
+> `%rune%` cannot be called with a spread argument
+
 ## rune_invalid_usage
 
 > Cannot use `%rune%` rune in non-runes mode

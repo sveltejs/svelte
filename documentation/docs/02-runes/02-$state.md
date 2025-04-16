@@ -250,3 +250,83 @@ console.log(total.value); // 7
 ```
 
 ...though if you find yourself writing code like that, consider using [classes](#Classes) instead.
+
+## Passing state across modules
+
+You can declare state in `.svelte.js` and `.svelte.ts` files, but you can only _export_ that state if it's not directly reassigned. In other words you can't do this:
+
+```js
+/// file: state.svelte.js
+export let count = $state(0);
+
+export function increment() {
+	count += 1;
+}
+```
+
+That's because every reference to `count` is transformed by the Svelte compiler — the code above is roughly equivalent to this:
+
+```js
+/// file: state.svelte.js (compiler output)
+// @filename: index.ts
+interface Signal<T> {
+	value: T;
+}
+
+interface Svelte {
+	state<T>(value?: T): Signal<T>;
+	get<T>(source: Signal<T>): T;
+	set<T>(source: Signal<T>, value: T): void;
+}
+declare const $: Svelte;
+// ---cut---
+export let count = $.state(0);
+
+export function increment() {
+	$.set(count, $.get(count) + 1);
+}
+```
+
+> [!NOTE] You can see the code Svelte generates by clicking the 'JS Output' tab in the [playground](/playground).
+
+Since the compiler only operates on one file at a time, if another file imports `count` Svelte doesn't know that it needs to wrap each reference in `$.get` and `$.set`:
+
+```js
+// @filename: state.svelte.js
+export let count = 0;
+
+// @filename: index.js
+// ---cut---
+import { count } from './state.svelte.js';
+
+console.log(typeof count); // 'object', not 'number'
+```
+
+This leaves you with two options for sharing state between modules — either don't reassign it...
+
+```js
+// This is allowed — since we're updating
+// `counter.count` rather than `counter`,
+// Svelte doesn't wrap it in `$.state`
+export const counter = $state({
+	count: 0
+});
+
+export function increment() {
+	counter.count += 1;
+}
+```
+
+...or don't directly export it:
+
+```js
+let count = $state(0);
+
+export function getCount() {
+	return count;
+}
+
+export function increment() {
+	count += 1;
+}
+```

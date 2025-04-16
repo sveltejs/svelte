@@ -20,6 +20,7 @@ export default test({
 		d.resolve('cool');
 		await Promise.resolve();
 		await Promise.resolve();
+		await Promise.resolve();
 		await tick();
 		flushSync();
 		assert.htmlEqual(target.innerHTML, '<p class="cool">hello</p>');

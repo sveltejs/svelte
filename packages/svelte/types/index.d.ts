@@ -16,6 +16,7 @@ declare module 'svelte' {
 		intro?: boolean;
 		recover?: boolean;
 		sync?: boolean;
+		idPrefix?: string;
 		$$inline?: boolean;
 	}
 
@@ -348,13 +349,14 @@ declare module 'svelte' {
 				props: Props;
 			});
 	/**
-	 * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
-	 * It must be called during the component's initialisation (but doesn't need to live *inside* the component;
-	 * it can be called from an external module).
+	 * `onMount`, like [`$effect`](https://svelte.dev/docs/svelte/$effect), schedules a function to run as soon as the component has been mounted to the DOM.
+	 * Unlike `$effect`, the provided function only runs once.
 	 *
-	 * If a function is returned _synchronously_ from `onMount`, it will be called when the component is unmounted.
+	 * It must be called during the component's initialisation (but doesn't need to live _inside_ the component;
+	 * it can be called from an external module). If a function is returned _synchronously_ from `onMount`,
+	 * it will be called when the component is unmounted.
 	 *
-	 * `onMount` does not run inside [server-side components](https://svelte.dev/docs/svelte/svelte-server#render).
+	 * `onMount` functions do not run during [server-side rendering](https://svelte.dev/docs/svelte/svelte-server#render).
 	 *
 	 * */
 	export function onMount<T>(fn: () => NotFunction<T> | Promise<NotFunction<T>> | (() => any)): void;
@@ -751,6 +753,8 @@ declare module 'svelte/compiler' {
 			code: string;
 			/** A source map */
 			map: SourceMap;
+			/** Whether or not the CSS includes global rules */
+			hasGlobal: boolean;
 		};
 		/**
 		 * An array of warning objects that were generated during compilation. Each warning has several properties:
@@ -2085,11 +2089,19 @@ declare module 'svelte/server' {
 		...args: {} extends Props
 			? [
 					component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
-					options?: { props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }
+					options?: {
+						props?: Omit<Props, '$$slots' | '$$events'>;
+						context?: Map<any, any>;
+						idPrefix?: string;
+					}
 				]
 			: [
 					component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
-					options: { props: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }
+					options: {
+						props: Omit<Props, '$$slots' | '$$events'>;
+						context?: Map<any, any>;
+						idPrefix?: string;
+					}
 				]
 	): RenderOutput;
 	interface RenderOutput {

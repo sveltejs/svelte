@@ -21,6 +21,9 @@
 	 */
 	export let type_no_comment;
 
+	/** @type {boolean} type_with_comment - One-line declaration with comment */
+	export let type_with_comment;
+
 	/**
 	 * This is optional
 	 */
@@ -40,4 +43,10 @@
 	export let inline_multiline_trailing_comment = 'world'; /*
 	* this is a same-line trailing multiline comment
 	**/
+
+	/** @type {number} [default_value=1] */
+	export let default_value = 1;
+
+	/** @type {number} [comment_default_value=1] - This has a comment and an optional value. */
+	export let comment_default_value = 1;
 </script>

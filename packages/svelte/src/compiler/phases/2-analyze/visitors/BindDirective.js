@@ -191,6 +191,10 @@ export function BindDirective(node, context) {
 			throw new Error('Cannot find declaration for bind:group');
 		}
 
+		if (binding.kind === 'snippet') {
+			e.bind_group_invalid_snippet_parameter(node);
+		}
+
 		// Traverse the path upwards and find all EachBlocks who are (indirectly) contributing to bind:group,
 		// i.e. one of their declarations is referenced in the binding. This allows group bindings to work
 		// correctly when referencing a variable declared in an EachBlock by using the index of the each block

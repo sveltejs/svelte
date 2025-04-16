@@ -1,8 +1,8 @@
 /** @import { ComponentType, SvelteComponent } from 'svelte' */
-/** @import { Component, Payload, RenderOutput } from '#server' */
+/** @import { Component, RenderOutput } from '#server' */
 /** @import { Store } from '#shared' */
 export { FILENAME, HMR } from '../../constants.js';
-import { attr, clsx, to_class } from '../shared/attributes.js';
+import { attr, clsx, to_class, to_style } from '../shared/attributes.js';
 import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
@@ -13,45 +13,16 @@ import {
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
 import { current_component, pop, push } from './context.js';
-import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
+import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN, BLOCK_OPEN_ELSE } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
 import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
 import { reset_elements } from './dev.js';
+import { Payload } from './payload.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
 const INVALID_ATTR_NAME_CHAR_REGEX =
 	/[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
-
-/**
- * @param {Payload} to_copy
- * @returns {Payload}
- */
-export function copy_payload({ out, css, head, uid }) {
-	return {
-		out,
-		css: new Set(css),
-		head: {
-			title: head.title,
-			out: head.out,
-			css: new Set(head.css),
-			uid: head.uid
-		},
-		uid
-	};
-}
-
-/**
- * Assigns second payload to first
- * @param {Payload} p1
- * @param {Payload} p2
- * @returns {void}
- */
-export function assign_payload(p1, p2) {
-	p1.out = p2.out;
-	p1.head = p2.head;
-	p1.uid = p2.uid;
-}
 
 /**
  * @param {Payload} payload
@@ -86,28 +57,16 @@ export function element(payload, tag, attributes_fn = noop, children_fn = noop) 
  */
 export let on_destroy = [];
 
-function props_id_generator() {
-	let uid = 1;
-	return () => 's' + uid++;
-}
-
 /**
  * Only available on the server and when compiling with the `server` option.
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
  * @template {Record<string, any>} Props
  * @param {import('svelte').Component<Props> | ComponentType<SvelteComponent<Props>>} component
- * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }} [options]
+ * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} [options]
  * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
-	const uid = props_id_generator();
-	/** @type {Payload} */
-	const payload = {
-		out: '',
-		css: new Set(),
-		head: { title: '', out: '', css: new Set(), uid },
-		uid
-	};
+	const payload = new Payload(options.idPrefix ? options.idPrefix + '-' : '');
 
 	const prev_on_destroy = on_destroy;
 	on_destroy = [];
@@ -205,9 +164,7 @@ export function css_props(payload, is_html, props, component, dynamic = false) {
  */
 export function spread_attributes(attrs, css_hash, classes, styles, flags = 0) {
 	if (styles) {
-		attrs.style = attrs.style
-			? style_object_to_string(merge_styles(/** @type {string} */ (attrs.style), styles))
-			: style_object_to_string(styles);
+		attrs.style = to_style(attrs.style, styles);
 	}
 
 	if (attrs.class) {
@@ -281,35 +238,23 @@ function style_object_to_string(style_object) {
 		.join(' ');
 }
 
-/** @param {Record<string, string>} style_object */
-export function add_styles(style_object) {
-	const styles = style_object_to_string(style_object);
-	return styles ? ` style="${styles}"` : '';
+/**
+ * @param {any} value
+ * @param {string | undefined} [hash]
+ * @param {Record<string, boolean>} [directives]
+ */
+export function attr_class(value, hash, directives) {
+	var result = to_class(value, hash, directives);
+	return result ? ` class="${escape_html(result, true)}"` : '';
 }
 
 /**
- * @param {string} attribute
- * @param {Record<string, string>} styles
+ * @param {any} value
+ * @param {Record<string,any>|[Record<string,any>,Record<string,any>]} [directives]
  */
-export function merge_styles(attribute, styles) {
-	/** @type {Record<string, string>} */
-	var merged = {};
-
-	if (attribute) {
-		for (var declaration of attribute.split(';')) {
-			var i = declaration.indexOf(':');
-			var name = declaration.slice(0, i).trim();
-			var value = declaration.slice(i + 1).trim();
-
-			if (name !== '') merged[name] = value;
-		}
-	}
-
-	for (name in styles) {
-		merged[name] = styles[name];
-	}
-
-	return merged;
+export function attr_style(value, directives) {
+	var result = to_style(value, directives);
+	return result ? ` style="${escape_html(result, true)}"` : '';
 }
 
 /**
@@ -482,18 +427,21 @@ export function bind_props(props_parent, props_now) {
 
 /**
  * @template V
+ * @param {Payload} payload
  * @param {Promise<V>} promise
  * @param {null | (() => void)} pending_fn
  * @param {(value: V) => void} then_fn
  * @returns {void}
  */
-function await_block(promise, pending_fn, then_fn) {
+function await_block(payload, promise, pending_fn, then_fn) {
 	if (is_promise(promise)) {
+		payload.out += BLOCK_OPEN;
 		promise.then(null, noop);
 		if (pending_fn !== null) {
 			pending_fn();
 		}
 	} else if (then_fn !== null) {
+		payload.out += BLOCK_OPEN_ELSE;
 		then_fn(promise);
 	}
 }
@@ -544,13 +492,15 @@ export function props_id(payload) {
 	return uid;
 }
 
-export { attr, clsx, to_class };
+export { attr, clsx };
 
 export { html } from './blocks/html.js';
 
 export { push, pop } from './context.js';
 
-export { push_element, pop_element } from './dev.js';
+export { push_element, pop_element, validate_snippet_args } from './dev.js';
+
+export { assign_payload, copy_payload } from './payload.js';
 
 export { snapshot } from '../shared/clone.js';
 
@@ -559,7 +509,8 @@ export { fallback } from '../shared/utils.js';
 export {
 	invalid_default_snippet,
 	validate_dynamic_element_tag,
-	validate_void_dynamic_element
+	validate_void_dynamic_element,
+	prevent_snippet_stringification
 } from '../shared/validate.js';
 
 export { escape_html as escape };

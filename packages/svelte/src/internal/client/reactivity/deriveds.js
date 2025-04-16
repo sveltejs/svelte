@@ -18,7 +18,8 @@ import {
 	update_reaction,
 	increment_write_version,
 	set_active_effect,
-	handle_error
+	handle_error,
+	push_reaction_value
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -194,6 +195,20 @@ export function async_derived(fn, location) {
  * @returns {Derived<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
+export function user_derived(fn) {
+	const d = derived(fn);
+
+	push_reaction_value(d);
+
+	return d;
+}
+
+/**
+ * @template V
+ * @param {() => V} fn
+ * @returns {Derived<V>}
+ */
+/*#__NO_SIDE_EFFECTS__*/
 export function derived_safe_equal(fn) {
 	const signal = derived(fn);
 	signal.equals = safe_equals;
@@ -243,7 +258,7 @@ function get_derived_parent_effect(derived) {
  * @param {Derived} derived
  * @returns {T}
  */
-function execute_derived(derived) {
+export function execute_derived(derived) {
 	var value;
 	var prev_active_effect = active_effect;
 

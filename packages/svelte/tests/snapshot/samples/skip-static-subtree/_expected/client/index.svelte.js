@@ -38,7 +38,7 @@ export default function Skip_static_subtree($$anchor, $$props) {
 	var select = $.sibling(div_1, 2);
 	var option = $.child(select);
 
-	option.value = null == (option.__value = 'a') ? '' : 'a';
+	option.value = option.__value = 'a';
 	$.reset(select);
 
 	var img = $.sibling(select, 2);

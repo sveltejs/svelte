@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
-import glob from 'tiny-glob/sync.js';
+import { globSync } from 'tinyglobby';
 import { compile, compileModule, parse, migrate } from 'svelte/compiler';
 
 const argv = parseArgs({ options: { runes: { type: 'boolean' } }, args: process.argv.slice(2) });
@@ -35,8 +35,8 @@ function write(file, contents) {
 	fs.writeFileSync(file, contents);
 }
 
-const svelte_modules = glob('**/*.svelte', { cwd: `${cwd}/src` });
-const js_modules = glob('**/*.js', { cwd: `${cwd}/src` });
+const svelte_modules = globSync('**/*.svelte', { cwd: `${cwd}/src` });
+const js_modules = globSync('**/*.js', { cwd: `${cwd}/src` });
 
 for (const generate of /** @type {const} */ (['client', 'server'])) {
 	console.error(`\n--- generating ${generate} ---\n`);
@@ -56,7 +56,7 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 			});
 
 			write(
-				`${cwd}/output/${file}.json`,
+				`${cwd}/output/ast/${file}.json`,
 				JSON.stringify(
 					ast,
 					(key, value) => (typeof value === 'bigint' ? ['BigInt', value.toString()] : value),
@@ -66,7 +66,7 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 
 			try {
 				const migrated = migrate(source);
-				write(`${cwd}/output/${file}.migrated.svelte`, migrated.code);
+				write(`${cwd}/output/migrated/${file}`, migrated.code);
 			} catch (e) {
 				console.warn(`Error migrating ${file}`, e);
 			}

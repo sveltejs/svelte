@@ -16,6 +16,20 @@ export default test({
 				column: 16,
 				character: 932
 			}
+		},
+		{
+			code: 'css_unused_selector',
+			message: 'Unused CSS selector "unused :global"',
+			start: {
+				line: 100,
+				column: 29,
+				character: 1223
+			},
+			end: {
+				line: 100,
+				column: 43,
+				character: 1237
+			}
 		}
 	]
 });

@@ -11,7 +11,6 @@ import { block_close, block_open } from './shared/utils.js';
  */
 export function IfBlock(node, context) {
 	const test = /** @type {Expression} */ (context.visit(node.test));
-
 	const consequent = /** @type {BlockStatement} */ (context.visit(node.consequent));
 
 	const alternate = node.alternate

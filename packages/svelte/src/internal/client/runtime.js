@@ -24,13 +24,15 @@ import {
 	DISCONNECTED,
 	BOUNDARY_EFFECT,
 	REACTION_IS_UPDATING,
+	EFFECT_IS_UPDATING,
 	EFFECT_ASYNC,
 	RENDER_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
-import { internal_set } from './reactivity/sources.js';
+import { internal_set, old_values } from './reactivity/sources.js';
 import {
 	destroy_derived_effects,
+	execute_derived,
 	from_async_derived,
 	recent_async_deriveds,
 	update_derived
@@ -108,17 +110,21 @@ setInterval(() => {
 });
 
 /**
- * When sources are created within a derived, we record them so that we can safely allow
- * local mutations to these sources without the side-effect error being invoked unnecessarily.
+ * When sources are created within a reaction, reading and writing
+ * them should not cause a re-run
  * @type {null | Source[]}
  */
-export let derived_sources = null;
+export let reaction_sources = null;
 
-/**
- * @param {Source[] | null} sources
- */
-export function set_derived_sources(sources) {
-	derived_sources = sources;
+/** @param {Value} value */
+export function push_reaction_value(value) {
+	if (active_reaction !== null && active_reaction.f & EFFECT_IS_UPDATING) {
+		if (reaction_sources === null) {
+			reaction_sources = [value];
+		} else {
+			reaction_sources.push(value);
+		}
+	}
 }
 
 /**
@@ -386,6 +392,9 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 
 	for (var i = 0; i < reactions.length; i++) {
 		var reaction = reactions[i];
+
+		if (reaction_sources?.includes(signal)) continue;
+
 		if ((reaction.f & DERIVED) !== 0) {
 			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
 		} else if (effect === reaction) {
@@ -410,9 +419,10 @@ export function update_reaction(reaction) {
 	var previous_untracked_writes = untracked_writes;
 	var previous_reaction = active_reaction;
 	var previous_skip_reaction = skip_reaction;
-	var prev_derived_sources = derived_sources;
+	var previous_reaction_sources = reaction_sources;
 	var previous_component_context = component_context;
 	var previous_untracking = untracking;
+
 	var flags = reaction.f;
 
 	new_deps = /** @type {null | Value[]} */ (null);
@@ -422,10 +432,12 @@ export function update_reaction(reaction) {
 		(flags & UNOWNED) !== 0 && (untracking || !is_updating_effect || active_reaction === null);
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 
-	derived_sources = null;
+	reaction_sources = null;
 	set_component_context(reaction.ctx);
 	untracking = false;
 	read_version++;
+
+	reaction.f |= EFFECT_IS_UPDATING;
 
 	try {
 		reaction.f |= REACTION_IS_UPDATING;
@@ -478,8 +490,16 @@ export function update_reaction(reaction) {
 		// we need to increment the read version to ensure that
 		// any dependencies in this reaction aren't marked with
 		// the same version
-		if (previous_reaction !== null) {
+		if (previous_reaction !== reaction) {
 			read_version++;
+
+			if (untracked_writes !== null) {
+				if (previous_untracked_writes === null) {
+					previous_untracked_writes = untracked_writes;
+				} else {
+					previous_untracked_writes.push(.../** @type {Source[]} */ (untracked_writes));
+				}
+			}
 		}
 
 		return result;
@@ -490,9 +510,11 @@ export function update_reaction(reaction) {
 		untracked_writes = previous_untracked_writes;
 		active_reaction = previous_reaction;
 		skip_reaction = previous_skip_reaction;
-		derived_sources = prev_derived_sources;
+		reaction_sources = previous_reaction_sources;
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
+
+		reaction.f ^= EFFECT_IS_UPDATING;
 	}
 }
 
@@ -666,8 +688,11 @@ function infinite_loop_guard() {
 }
 
 function flush_queued_root_effects() {
+	var was_updating_effect = is_updating_effect;
+
 	try {
 		var flush_count = 0;
+		is_updating_effect = true;
 
 		while (queued_root_effects.length > 0) {
 			if (flush_count++ > 1000) {
@@ -688,9 +713,11 @@ function flush_queued_root_effects() {
 
 				process_effects(root, active_fork);
 			}
+			old_values.clear();
 		}
 	} finally {
 		is_flushing = false;
+		is_updating_effect = was_updating_effect;
 
 		last_scheduled_effect = null;
 		if (DEV) {
@@ -933,16 +960,12 @@ export function get(signal) {
 
 	// Register the dependency on the current reaction signal.
 	if (active_reaction !== null && !untracking) {
-		if (derived_sources !== null && derived_sources.includes(signal)) {
-			e.state_unsafe_local_read();
-		}
-
 		// if we're in a derived that is being read inside an _async_ derived,
 		// it's possible that the effect was already destroyed. In this case,
 		// we don't add the dependency, because that would create a memory leak
 		var destroyed = active_effect !== null && (active_effect.f & DESTROYED) !== 0;
 
-		if (!destroyed) {
+		if (!destroyed && !reaction_sources?.includes(signal)) {
 			var deps = active_reaction.deps;
 
 			if ((active_reaction.f & REACTION_IS_UPDATING) !== 0) {
@@ -1034,6 +1057,10 @@ export function get(signal) {
 		}
 
 		recent_async_deriveds.delete(signal);
+	}
+
+	if (is_destroying_effect && old_values.has(signal)) {
+		return old_values.get(signal);
 	}
 
 	return signal.v;

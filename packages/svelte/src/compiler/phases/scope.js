@@ -1,4 +1,4 @@
-/** @import { ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, Node, Pattern, VariableDeclarator } from 'estree' */
+/** @import { ArrowFunctionExpression, BinaryOperator, ClassDeclaration, Expression, FunctionDeclaration, FunctionExpression, Identifier, ImportDeclaration, MemberExpression, LogicalOperator, Node, Pattern, UnaryOperator, VariableDeclarator } from 'estree' */
 /** @import { Context, Visitor } from 'zimmerframe' */
 /** @import { AST, BindingKind, DeclarationKind } from '#compiler' */
 import is_reference from 'is-reference';
@@ -15,6 +15,11 @@ import {
 import { is_reserved, is_rune } from '../../utils.js';
 import { determine_slot } from '../utils/slot.js';
 import { validate_identifier_name } from './2-analyze/visitors/shared/utils.js';
+
+export const UNKNOWN = Symbol('unknown');
+/** Includes `BigInt` */
+export const NUMBER = Symbol('number');
+export const STRING = Symbol('string');
 
 export class Binding {
 	/** @type {Scope} */
@@ -34,7 +39,7 @@ export class Binding {
 	 * For destructured props such as `let { foo = 'bar' } = $props()` this is `'bar'` and not `$props()`
 	 * @type {null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | AST.EachBlock | AST.SnippetBlock}
 	 */
-	initial;
+	initial = null;
 
 	/** @type {Array<{ node: Identifier; path: AST.SvelteNode[] }>} */
 	references = [];
@@ -78,6 +83,283 @@ export class Binding {
 
 	get updated() {
 		return this.mutated || this.reassigned;
+	}
+
+	/**
+	 * @returns {this is Binding & { initial: ArrowFunctionExpression | FunctionDeclaration | FunctionExpression }}
+	 */
+	is_function() {
+		if (this.updated) {
+			// even if it's reassigned to another function,
+			// we can't use it directly as e.g. an event handler
+			return false;
+		}
+
+		const type = this.initial?.type;
+
+		return (
+			type === 'ArrowFunctionExpression' ||
+			type === 'FunctionExpression' ||
+			type === 'FunctionDeclaration'
+		);
+	}
+}
+
+class Evaluation {
+	/** @type {Set<any>} */
+	values = new Set();
+
+	/**
+	 * True if there is exactly one possible value
+	 * @readonly
+	 * @type {boolean}
+	 */
+	is_known = true;
+
+	/**
+	 * True if the value is known to not be null/undefined
+	 * @readonly
+	 * @type {boolean}
+	 */
+	is_defined = true;
+
+	/**
+	 * True if the value is known to be a string
+	 * @readonly
+	 * @type {boolean}
+	 */
+	is_string = true;
+
+	/**
+	 * True if the value is known to be a number
+	 * @readonly
+	 * @type {boolean}
+	 */
+	is_number = true;
+
+	/**
+	 * @readonly
+	 * @type {any}
+	 */
+	value = undefined;
+
+	/**
+	 *
+	 * @param {Scope} scope
+	 * @param {Expression} expression
+	 */
+	constructor(scope, expression) {
+		switch (expression.type) {
+			case 'Literal': {
+				this.values.add(expression.value);
+				break;
+			}
+
+			case 'Identifier': {
+				const binding = scope.get(expression.name);
+
+				if (binding) {
+					if (
+						binding.initial?.type === 'CallExpression' &&
+						get_rune(binding.initial, scope) === '$props.id'
+					) {
+						this.values.add(STRING);
+						break;
+					}
+
+					const is_prop =
+						binding.kind === 'prop' ||
+						binding.kind === 'rest_prop' ||
+						binding.kind === 'bindable_prop';
+
+					if (!binding.updated && binding.initial !== null && !is_prop) {
+						const evaluation = binding.scope.evaluate(/** @type {Expression} */ (binding.initial));
+						for (const value of evaluation.values) {
+							this.values.add(value);
+						}
+						break;
+					}
+
+					// TODO each index is always defined
+				}
+
+				// TODO glean what we can from reassignments
+				// TODO one day, expose props and imports somehow
+
+				this.values.add(UNKNOWN);
+				break;
+			}
+
+			case 'BinaryExpression': {
+				const a = scope.evaluate(/** @type {Expression} */ (expression.left)); // `left` cannot be `PrivateIdentifier` unless operator is `in`
+				const b = scope.evaluate(expression.right);
+
+				if (a.is_known && b.is_known) {
+					this.values.add(binary[expression.operator](a.value, b.value));
+					break;
+				}
+
+				switch (expression.operator) {
+					case '!=':
+					case '!==':
+					case '<':
+					case '<=':
+					case '>':
+					case '>=':
+					case '==':
+					case '===':
+					case 'in':
+					case 'instanceof':
+						this.values.add(true);
+						this.values.add(false);
+						break;
+
+					case '%':
+					case '&':
+					case '*':
+					case '**':
+					case '-':
+					case '/':
+					case '<<':
+					case '>>':
+					case '>>>':
+					case '^':
+					case '|':
+						this.values.add(NUMBER);
+						break;
+
+					case '+':
+						if (a.is_string || b.is_string) {
+							this.values.add(STRING);
+						} else if (a.is_number && b.is_number) {
+							this.values.add(NUMBER);
+						} else {
+							this.values.add(STRING);
+							this.values.add(NUMBER);
+						}
+						break;
+
+					default:
+						this.values.add(UNKNOWN);
+				}
+				break;
+			}
+
+			case 'ConditionalExpression': {
+				const test = scope.evaluate(expression.test);
+				const consequent = scope.evaluate(expression.consequent);
+				const alternate = scope.evaluate(expression.alternate);
+
+				if (test.is_known) {
+					for (const value of (test.value ? consequent : alternate).values) {
+						this.values.add(value);
+					}
+				} else {
+					for (const value of consequent.values) {
+						this.values.add(value);
+					}
+
+					for (const value of alternate.values) {
+						this.values.add(value);
+					}
+				}
+				break;
+			}
+
+			case 'LogicalExpression': {
+				const a = scope.evaluate(expression.left);
+				const b = scope.evaluate(expression.right);
+
+				if (a.is_known) {
+					if (b.is_known) {
+						this.values.add(logical[expression.operator](a.value, b.value));
+						break;
+					}
+
+					if (
+						(expression.operator === '&&' && !a.value) ||
+						(expression.operator === '||' && a.value) ||
+						(expression.operator === '??' && a.value != null)
+					) {
+						this.values.add(a.value);
+					} else {
+						for (const value of b.values) {
+							this.values.add(value);
+						}
+					}
+
+					break;
+				}
+
+				for (const value of a.values) {
+					this.values.add(value);
+				}
+
+				for (const value of b.values) {
+					this.values.add(value);
+				}
+				break;
+			}
+
+			case 'UnaryExpression': {
+				const argument = scope.evaluate(expression.argument);
+
+				if (argument.is_known) {
+					this.values.add(unary[expression.operator](argument.value));
+					break;
+				}
+
+				switch (expression.operator) {
+					case '!':
+					case 'delete':
+						this.values.add(false);
+						this.values.add(true);
+						break;
+
+					case '+':
+					case '-':
+					case '~':
+						this.values.add(NUMBER);
+						break;
+
+					case 'typeof':
+						this.values.add(STRING);
+						break;
+
+					case 'void':
+						this.values.add(undefined);
+						break;
+
+					default:
+						this.values.add(UNKNOWN);
+				}
+				break;
+			}
+
+			default: {
+				this.values.add(UNKNOWN);
+			}
+		}
+
+		for (const value of this.values) {
+			this.value = value; // saves having special logic for `size === 1`
+
+			if (value !== STRING && typeof value !== 'string') {
+				this.is_string = false;
+			}
+
+			if (value !== NUMBER && typeof value !== 'number') {
+				this.is_number = false;
+			}
+
+			if (value == null || value === UNKNOWN) {
+				this.is_defined = false;
+			}
+		}
+
+		if (this.values.size > 1 || typeof this.value === 'symbol') {
+			this.is_known = false;
+		}
 	}
 }
 
@@ -161,8 +443,12 @@ export class Scope {
 		}
 
 		if (this.declarations.has(node.name)) {
-			// This also errors on var/function types, but that's arguably a good thing
-			e.declaration_duplicate(node, node.name);
+			const binding = this.declarations.get(node.name);
+			if (binding && binding.declaration_kind !== 'var' && declaration_kind !== 'var') {
+				// This also errors on function types, but that's arguably a good thing
+				// declaring function twice is also caught by acorn in the parse phase
+				e.declaration_duplicate(node, node.name);
+			}
 		}
 
 		const binding = new Binding(this, node, kind, declaration_kind, initial);
@@ -256,7 +542,62 @@ export class Scope {
 			this.root.conflicts.add(node.name);
 		}
 	}
+
+	/**
+	 * Does partial evaluation to find an exact value or at least the rough type of the expression.
+	 * Only call this once scope has been fully generated in a first pass,
+	 * else this evaluates on incomplete data and may yield wrong results.
+	 * @param {Expression} expression
+	 * @param {Set<any>} values
+	 */
+	evaluate(expression, values = new Set()) {
+		return new Evaluation(this, expression);
+	}
 }
+
+/** @type {Record<BinaryOperator, (left: any, right: any) => any>} */
+const binary = {
+	'!=': (left, right) => left != right,
+	'!==': (left, right) => left !== right,
+	'<': (left, right) => left < right,
+	'<=': (left, right) => left <= right,
+	'>': (left, right) => left > right,
+	'>=': (left, right) => left >= right,
+	'==': (left, right) => left == right,
+	'===': (left, right) => left === right,
+	in: (left, right) => left in right,
+	instanceof: (left, right) => left instanceof right,
+	'%': (left, right) => left % right,
+	'&': (left, right) => left & right,
+	'*': (left, right) => left * right,
+	'**': (left, right) => left ** right,
+	'+': (left, right) => left + right,
+	'-': (left, right) => left - right,
+	'/': (left, right) => left / right,
+	'<<': (left, right) => left << right,
+	'>>': (left, right) => left >> right,
+	'>>>': (left, right) => left >>> right,
+	'^': (left, right) => left ^ right,
+	'|': (left, right) => left | right
+};
+
+/** @type {Record<UnaryOperator, (argument: any) => any>} */
+const unary = {
+	'-': (argument) => -argument,
+	'+': (argument) => +argument,
+	'!': (argument) => !argument,
+	'~': (argument) => ~argument,
+	typeof: (argument) => typeof argument,
+	void: () => undefined,
+	delete: () => true
+};
+
+/** @type {Record<LogicalOperator, (left: any, right: any) => any>} */
+const logical = {
+	'||': (left, right) => left || right,
+	'&&': (left, right) => left && right,
+	'??': (left, right) => left ?? right
+};
 
 export class ScopeRoot {
 	/** @type {Set<string>} */

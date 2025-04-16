@@ -238,7 +238,7 @@ export function handle_event_propagation(event) {
 				var delegated = current_target['__' + event_name];
 
 				if (
-					delegated !== undefined &&
+					delegated != null &&
 					(!(/** @type {any} */ (current_target).disabled) ||
 						// DOM could've been updated already by the time this is reached, so we check this as well
 						// -> the target could not have been disabled because it emits the event in the first place
@@ -311,13 +311,11 @@ export function apply(
 		error = e;
 	}
 
-	if (typeof handler === 'function') {
-		handler.apply(element, args);
-	} else if (has_side_effects || handler != null || error) {
+	if (typeof handler !== 'function' && (has_side_effects || handler != null || error)) {
 		const filename = component?.[FILENAME];
 		const location = loc ? ` at ${filename}:${loc[0]}:${loc[1]}` : ` in ${filename}`;
-
-		const event_name = args[0].type;
+		const phase = args[0]?.eventPhase < Event.BUBBLING_PHASE ? 'capture' : '';
+		const event_name = args[0]?.type + phase;
 		const description = `\`${event_name}\` handler${location}`;
 		const suggestion = remove_parens ? 'remove the trailing `()`' : 'add a leading `() =>`';
 
@@ -327,4 +325,5 @@ export function apply(
 			throw error;
 		}
 	}
+	handler?.apply(element, args);
 }

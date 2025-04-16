@@ -46,8 +46,12 @@ export function visit_event_attribute(node, context) {
 
 			// When we hoist a function we assign an array with the function and all
 			// hoisted closure params.
-			const args = [handler, ...hoisted_params];
-			delegated_assignment = b.array(args);
+			if (hoisted_params) {
+				const args = [handler, ...hoisted_params];
+				delegated_assignment = b.array(args);
+			} else {
+				delegated_assignment = handler;
+			}
 		} else {
 			delegated_assignment = handler;
 		}
@@ -123,11 +127,19 @@ export function build_event_handler(node, metadata, context) {
 	}
 
 	// function declared in the script
-	if (
-		handler.type === 'Identifier' &&
-		context.state.scope.get(handler.name)?.declaration_kind !== 'import'
-	) {
-		return handler;
+	if (handler.type === 'Identifier') {
+		const binding = context.state.scope.get(handler.name);
+
+		if (binding?.is_function()) {
+			return handler;
+		}
+
+		// local variable can be assigned directly
+		// except in dev mode where when need $.apply()
+		// in order to handle warnings.
+		if (!dev && binding?.declaration_kind !== 'import') {
+			return handler;
+		}
 	}
 
 	if (metadata.has_call) {

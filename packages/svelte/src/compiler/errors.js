@@ -402,6 +402,16 @@ export function rune_invalid_name(node, name) {
 }
 
 /**
+ * `%rune%` cannot be called with a spread argument
+ * @param {null | number | NodeLike} node
+ * @param {string} rune
+ * @returns {never}
+ */
+export function rune_invalid_spread(node, rune) {
+	e(node, 'rune_invalid_spread', `\`${rune}\` cannot be called with a spread argument\nhttps://svelte.dev/e/rune_invalid_spread`);
+}
+
+/**
  * Cannot use `%rune%` rune in non-runes mode
  * @param {null | number | NodeLike} node
  * @param {string} rune
@@ -563,12 +573,12 @@ export function css_global_block_invalid_declaration(node) {
 }
 
 /**
- * A `:global` selector cannot be part of a selector list with more than one item
+ * A `:global` selector cannot be part of a selector list with entries that don't contain `:global`
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function css_global_block_invalid_list(node) {
-	e(node, 'css_global_block_invalid_list', `A \`:global\` selector cannot be part of a selector list with more than one item\nhttps://svelte.dev/e/css_global_block_invalid_list`);
+	e(node, 'css_global_block_invalid_list', `A \`:global\` selector cannot be part of a selector list with entries that don't contain \`:global\`\nhttps://svelte.dev/e/css_global_block_invalid_list`);
 }
 
 /**
@@ -768,6 +778,15 @@ export function attribute_unquoted_sequence(node) {
  */
 export function bind_group_invalid_expression(node) {
 	e(node, 'bind_group_invalid_expression', `\`bind:group\` can only bind to an Identifier or MemberExpression\nhttps://svelte.dev/e/bind_group_invalid_expression`);
+}
+
+/**
+ * Cannot `bind:group` to a snippet parameter
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function bind_group_invalid_snippet_parameter(node) {
+	e(node, 'bind_group_invalid_snippet_parameter', `Cannot \`bind:group\` to a snippet parameter\nhttps://svelte.dev/e/bind_group_invalid_snippet_parameter`);
 }
 
 /**

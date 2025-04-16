@@ -67,6 +67,7 @@ export interface ComponentAnalysis extends Analysis {
 	uses_component_bindings: boolean;
 	uses_render_tags: boolean;
 	needs_context: boolean;
+	needs_mutation_validation: boolean;
 	needs_props: boolean;
 	/** Set to the first event directive (on:x) found on a DOM element in the code */
 	event_directive_node: AST.OnDirective | null;
@@ -87,6 +88,7 @@ export interface ComponentAnalysis extends Analysis {
 		ast: AST.CSS.StyleSheet | null;
 		hash: string;
 		keyframes: string[];
+		has_global: boolean;
 	};
 	source: string;
 	undefined_exports: Map<string, Node>;
