@@ -34,8 +34,8 @@ function check_hash(element, server_hash, value) {
 /**
  * @param {Element | Text | Comment} node
  * @param {() => string} get_value
- * @param {boolean} svg
- * @param {boolean} mathml
+ * @param {boolean} [svg]
+ * @param {boolean} [mathml]
  * @param {boolean} [skip_warning]
  * @returns {void}
  */
