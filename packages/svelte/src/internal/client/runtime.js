@@ -855,7 +855,7 @@ function process_effects(root, fork) {
 						update_effect(effect);
 					}
 				} catch (error) {
-					handle_error(error, effect, null, null);
+					handle_error(error, effect, null, effect.ctx);
 				}
 			} else if ((flags & RENDER_EFFECT) !== 0) {
 				if (is_branch) {
