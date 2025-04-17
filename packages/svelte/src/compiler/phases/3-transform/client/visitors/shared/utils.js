@@ -3,7 +3,7 @@
 /** @import { ComponentClientTransformState, Context } from '../../types' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
-import * as b from '../../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
@@ -89,21 +89,21 @@ export function build_template_chunk(
 				}
 			}
 
-			const is_defined =
-				value.type === 'BinaryExpression' ||
-				(value.type === 'UnaryExpression' && value.operator !== 'void') ||
-				(value.type === 'LogicalExpression' && value.right.type === 'Literal') ||
-				(value.type === 'Identifier' && value.name === state.analysis.props_id?.name);
+			const evaluated = state.scope.evaluate(value);
 
-			if (!is_defined) {
-				// add `?? ''` where necessary (TODO optimise more cases)
-				value = b.logical('??', value, b.literal(''));
+			if (evaluated.is_known) {
+				quasi.value.cooked += evaluated.value + '';
+			} else {
+				if (!evaluated.is_defined) {
+					// add `?? ''` where necessary
+					value = b.logical('??', value, b.literal(''));
+				}
+
+				expressions.push(value);
+
+				quasi = b.quasi('', i + 1 === values.length);
+				quasis.push(quasi);
 			}
-
-			expressions.push(value);
-
-			quasi = b.quasi('', i + 1 === values.length);
-			quasis.push(quasi);
 		}
 	}
 

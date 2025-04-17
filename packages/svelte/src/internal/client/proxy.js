@@ -10,7 +10,7 @@ import {
 	is_array,
 	object_prototype
 } from '../shared/utils.js';
-import { PROXY_ONCHANGE_SYMBOL, STATE_SYMBOL } from './constants.js';
+import { PROXY_ONCHANGE_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { get_stack } from './dev/tracing.js';
 import * as e from './errors.js';
 import { batch_onchange, set, source, state } from './reactivity/sources.js';

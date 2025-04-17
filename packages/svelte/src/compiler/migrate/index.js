@@ -1,7 +1,7 @@
 /** @import { VariableDeclarator, Node, Identifier, AssignmentExpression, LabeledStatement, ExpressionStatement } from 'estree' */
 /** @import { Visitors } from 'zimmerframe' */
 /** @import { ComponentAnalysis } from '../phases/types.js' */
-/** @import { Scope, ScopeRoot } from '../phases/scope.js' */
+/** @import { Scope } from '../phases/scope.js' */
 /** @import { AST, Binding, ValidatedCompileOptions } from '#compiler' */
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';

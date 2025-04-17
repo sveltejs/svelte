@@ -1,5 +1,49 @@
 # svelte
 
+## 5.27.2
+
+### Patch Changes
+
+- chore: use pkg.imports for common modules ([#15787](https://github.com/sveltejs/svelte/pull/15787))
+
+## 5.27.1
+
+### Patch Changes
+
+- chore: default params for html blocks ([#15778](https://github.com/sveltejs/svelte/pull/15778))
+
+- fix: correct suggested type for custom events without detail ([#15763](https://github.com/sveltejs/svelte/pull/15763))
+
+- fix: Throw on unrendered snippets in `dev` ([#15766](https://github.com/sveltejs/svelte/pull/15766))
+
+- fix: avoid unnecessary read version increments ([#15777](https://github.com/sveltejs/svelte/pull/15777))
+
+## 5.27.0
+
+### Minor Changes
+
+- feat: partially evaluate certain expressions ([#15494](https://github.com/sveltejs/svelte/pull/15494))
+
+### Patch Changes
+
+- fix: relax `:global` selector list validation ([#15762](https://github.com/sveltejs/svelte/pull/15762))
+
+## 5.26.3
+
+### Patch Changes
+
+- fix: correctly validate head snippets on the server ([#15755](https://github.com/sveltejs/svelte/pull/15755))
+
+- fix: ignore mutation validation for props that are not proxies in more cases ([#15759](https://github.com/sveltejs/svelte/pull/15759))
+
+- fix: allow self-closing tags within math namespace ([#15761](https://github.com/sveltejs/svelte/pull/15761))
+
+## 5.26.2
+
+### Patch Changes
+
+- fix: correctly validate `undefined` snippet params with default value ([#15750](https://github.com/sveltejs/svelte/pull/15750))
+
 ## 5.26.1
 
 ### Patch Changes

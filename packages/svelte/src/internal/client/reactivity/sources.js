@@ -29,7 +29,7 @@ import {
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	PROXY_ONCHANGE_SYMBOL
-} from '../constants.js';
+} from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack } from '../dev/tracing.js';

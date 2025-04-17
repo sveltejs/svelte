@@ -1,6 +1,6 @@
 /** @import { Effect, TemplateNode, } from '#client' */
 
-import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT } from '../../constants.js';
+import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT } from '#client/constants';
 import { component_context, set_component_context } from '../../context.js';
 import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
 import {

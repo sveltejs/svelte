@@ -1,4 +1,3 @@
-/** @import { Location } from 'locate-character' */
 import { teardown } from '../../reactivity/effects.js';
 import { define_property, is_array } from '../../../shared/utils.js';
 import { hydrating } from '../hydration.js';
