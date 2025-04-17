@@ -6,7 +6,7 @@
 
 - chore: default params for html blocks ([#15778](https://github.com/sveltejs/svelte/pull/15778))
 
-- correct the suggested type for custom events without detail ([#15763](https://github.com/sveltejs/svelte/pull/15763))
+- fix: correct suggested type for custom events without detail ([#15763](https://github.com/sveltejs/svelte/pull/15763))
 
 - fix: Throw on unrendered snippets in `dev` ([#15766](https://github.com/sveltejs/svelte/pull/15766))
 
