@@ -15,7 +15,6 @@ import {
 import { is_reserved, is_rune } from '../../utils.js';
 import { determine_slot } from '../utils/slot.js';
 import { validate_identifier_name } from './2-analyze/visitors/shared/utils.js';
-import { bind_window_scroll } from 'svelte/internal/client';
 
 export const UNKNOWN = Symbol('unknown');
 /** Includes `BigInt` */
