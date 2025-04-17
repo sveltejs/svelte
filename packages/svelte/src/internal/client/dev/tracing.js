@@ -1,4 +1,4 @@
-/** @import { Derived, Reaction, Signal, Value } from '#client' */
+/** @import { Derived, Reaction, Value } from '#client' */
 import { UNINITIALIZED } from '../../../constants.js';
 import { snapshot } from '../../shared/clone.js';
 import { define_property } from '../../shared/utils.js';

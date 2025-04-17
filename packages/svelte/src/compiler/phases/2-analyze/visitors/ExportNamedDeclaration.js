@@ -1,7 +1,5 @@
-/** @import { ExportNamedDeclaration, Identifier, Node } from 'estree' */
-/** @import { Binding } from '#compiler' */
+/** @import { ExportNamedDeclaration, Identifier } from 'estree' */
 /** @import { Context } from '../types' */
-/** @import { Scope } from '../../scope' */
 import * as e from '../../../errors.js';
 import { extract_identifiers } from '../../../utils/ast.js';
 

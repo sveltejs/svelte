@@ -1,4 +1,4 @@
-/** @import { AssignmentOperator, Expression, Identifier, Node, Statement, TemplateElement } from 'estree' */
+/** @import { AssignmentOperator, Expression, Identifier, Node, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ServerTransformState } from '../../types.js' */
 

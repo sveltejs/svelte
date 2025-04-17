@@ -1,11 +1,7 @@
 /** @import { ArrayExpression, Expression, Literal, ObjectExpression } from 'estree' */
-/** @import { AST, Namespace } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../../types.js' */
-import {
-	get_attribute_chunks,
-	is_event_attribute,
-	is_text_attribute
-} from '../../../../../utils/ast.js';
+import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import { binding_properties } from '../../../../bindings.js';
 import {
 	create_attribute,
