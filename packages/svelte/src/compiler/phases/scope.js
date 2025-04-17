@@ -392,30 +392,21 @@ class Evaluation {
 				if (expression.callee.type === 'Identifier' && scope.get(expression.callee.name) === null) {
 					switch (expression.callee.name) {
 						case 'Number': {
-							if (expression.arguments.length) {
-								const arg = scope.evaluate(/** @type {Expression} */ (expression.arguments[0]));
-								if (arg.is_known) {
-									this.values.add(Number(arg.value));
-								} else {
-									this.values.add(NUMBER);
-								}
-							} else {
-								this.values.add(0);
-							}
+							const arg = /** @type {Expression | undefined} */ (expression.arguments[0]);
+							const e = arg && scope.evaluate(arg);
+
+							this.values.add(e ? (e.is_known ? Number(e.value) : NUMBER) : 0);
 							break;
 						}
-						case 'String':
-							if (expression.arguments.length) {
-								const arg = scope.evaluate(/** @type {Expression} */ (expression.arguments[0]));
-								if (arg.is_known) {
-									this.values.add(String(arg.value));
-								} else {
-									this.values.add(STRING);
-								}
-							} else {
-								this.values.add('');
-							}
+
+						case 'String': {
+							const arg = /** @type {Expression | undefined} */ (expression.arguments[0]);
+							const e = arg && scope.evaluate(arg);
+
+							this.values.add(e ? (e.is_known ? String(e.value) : STRING) : 0);
 							break;
+						}
+
 						default:
 							this.values.add(UNKNOWN);
 					}
