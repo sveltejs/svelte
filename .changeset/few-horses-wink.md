@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: allow accessing snippet in script tag
+fix: use function declaration for snippets in server output to avoid TDZ violation
