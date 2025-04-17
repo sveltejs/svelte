@@ -1,4 +1,3 @@
-import { hydrating } from '../../hydration.js';
 import { render_effect, effect, teardown } from '../../../reactivity/effects.js';
 import { listen } from './shared.js';
 
@@ -52,7 +51,10 @@ export function bind_current_time(media, get, set = get) {
 		}
 	});
 
-	teardown(() => cancelAnimationFrame(raf_id));
+	teardown(() => {
+		cancelAnimationFrame(raf_id);
+		media.removeEventListener('timeupdate', callback);
+	});
 }
 
 /**

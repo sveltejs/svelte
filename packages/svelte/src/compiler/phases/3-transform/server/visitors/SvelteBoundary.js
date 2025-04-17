@@ -2,7 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { BLOCK_CLOSE, BLOCK_OPEN } from '../../../../../internal/server/hydration.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 
 /**
  * @param {AST.SvelteBoundary} node

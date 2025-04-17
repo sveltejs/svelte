@@ -30,7 +30,7 @@ const non_interactive_roles = non_abstract_roles
 			// 'generic' is meant to have no semantic meaning.
 			// 'cell' is treated as CellRole by the AXObject which is interactive, so we treat 'cell' it as interactive as well.
 			!['toolbar', 'tabpanel', 'generic', 'cell'].includes(name) &&
-			!role?.superClass.some((classes) => classes.includes('widget'))
+			!role?.superClass.some((classes) => classes.includes('widget') || classes.includes('window'))
 		);
 	})
 	.concat(
@@ -756,7 +756,8 @@ export function check_element(node, context) {
 				name === 'aria-activedescendant' &&
 				!is_dynamic_element &&
 				!is_interactive_element(node.name, attribute_map) &&
-				!attribute_map.has('tabindex')
+				!attribute_map.has('tabindex') &&
+				!has_spread
 			) {
 				w.a11y_aria_activedescendant_has_tabindex(attribute);
 			}
@@ -810,9 +811,9 @@ export function check_element(node, context) {
 						const role = roles_map.get(current_role);
 						if (role) {
 							const required_role_props = Object.keys(role.requiredProps);
-							const has_missing_props = required_role_props.some(
-								(prop) => !attributes.find((a) => a.name === prop)
-							);
+							const has_missing_props =
+								!has_spread &&
+								required_role_props.some((prop) => !attributes.find((a) => a.name === prop));
 							if (has_missing_props) {
 								w.a11y_role_has_required_aria_props(
 									attribute,
@@ -828,6 +829,7 @@ export function check_element(node, context) {
 
 					// interactive-supports-focus
 					if (
+						!has_spread &&
 						!has_disabled_attribute(attribute_map) &&
 						!is_hidden_from_screen_reader(node.name, attribute_map) &&
 						!is_presentation_role(current_role) &&
@@ -845,6 +847,7 @@ export function check_element(node, context) {
 
 					// no-interactive-element-to-noninteractive-role
 					if (
+						!has_spread &&
 						is_interactive_element(node.name, attribute_map) &&
 						(is_non_interactive_roles(current_role) || is_presentation_role(current_role))
 					) {
@@ -853,6 +856,7 @@ export function check_element(node, context) {
 
 					// no-noninteractive-element-to-interactive-role
 					if (
+						!has_spread &&
 						is_non_interactive_element(node.name, attribute_map) &&
 						is_interactive_roles(current_role) &&
 						!a11y_non_interactive_element_to_interactive_role_exceptions[node.name]?.includes(
@@ -947,6 +951,7 @@ export function check_element(node, context) {
 
 	// no-noninteractive-element-interactions
 	if (
+		!has_spread &&
 		!has_contenteditable_attr &&
 		!is_hidden_from_screen_reader(node.name, attribute_map) &&
 		!is_presentation_role(role_static_value) &&
@@ -964,6 +969,7 @@ export function check_element(node, context) {
 
 	// no-static-element-interactions
 	if (
+		!has_spread &&
 		(!role || role_static_value !== null) &&
 		!is_hidden_from_screen_reader(node.name, attribute_map) &&
 		!is_presentation_role(role_static_value) &&
@@ -981,11 +987,11 @@ export function check_element(node, context) {
 		}
 	}
 
-	if (handlers.has('mouseover') && !handlers.has('focus')) {
+	if (!has_spread && handlers.has('mouseover') && !handlers.has('focus')) {
 		w.a11y_mouse_events_have_key_events(node, 'mouseover', 'focus');
 	}
 
-	if (handlers.has('mouseout') && !handlers.has('blur')) {
+	if (!has_spread && handlers.has('mouseout') && !handlers.has('blur')) {
 		w.a11y_mouse_events_have_key_events(node, 'mouseout', 'blur');
 	}
 
@@ -995,7 +1001,7 @@ export function check_element(node, context) {
 	if (node.name === 'a' || node.name === 'button') {
 		const is_hidden = get_static_value(attribute_map.get('aria-hidden')) === 'true';
 
-		if (!is_hidden && !is_labelled && !has_content(node)) {
+		if (!has_spread && !is_hidden && !is_labelled && !has_content(node)) {
 			w.a11y_consider_explicit_label(node);
 		}
 	}
@@ -1054,7 +1060,7 @@ export function check_element(node, context) {
 	if (node.name === 'img') {
 		const alt_attribute = get_static_text_value(attribute_map.get('alt'));
 		const aria_hidden = get_static_value(attribute_map.get('aria-hidden'));
-		if (alt_attribute && !aria_hidden) {
+		if (alt_attribute && !aria_hidden && !has_spread) {
 			if (/\b(image|picture|photo)\b/i.test(alt_attribute)) {
 				w.a11y_img_redundant_alt(node);
 			}
@@ -1087,7 +1093,7 @@ export function check_element(node, context) {
 			);
 			return has;
 		};
-		if (!attribute_map.has('for') && !has_input_child(node)) {
+		if (!has_spread && !attribute_map.has('for') && !has_input_child(node)) {
 			w.a11y_label_has_associated_control(node);
 		}
 	}
@@ -1095,7 +1101,7 @@ export function check_element(node, context) {
 	if (node.name === 'video') {
 		const aria_hidden_attribute = attribute_map.get('aria-hidden');
 		const aria_hidden_exist = aria_hidden_attribute && get_static_value(aria_hidden_attribute);
-		if (attribute_map.has('muted') || aria_hidden_exist === 'true') {
+		if (attribute_map.has('muted') || aria_hidden_exist === 'true' || has_spread) {
 			return;
 		}
 		let has_caption = false;
@@ -1141,6 +1147,7 @@ export function check_element(node, context) {
 
 	// Check content
 	if (
+		!has_spread &&
 		!is_labelled &&
 		!has_contenteditable_binding &&
 		a11y_required_content.includes(node.name) &&

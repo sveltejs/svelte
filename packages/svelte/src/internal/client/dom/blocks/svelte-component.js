@@ -1,5 +1,5 @@
 /** @import { TemplateNode, Dom, Effect } from '#client' */
-import { EFFECT_TRANSPARENT } from '../../constants.js';
+import { EFFECT_TRANSPARENT } from '#client/constants';
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 

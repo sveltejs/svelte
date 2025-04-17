@@ -2,7 +2,7 @@
 /** @import { Context } from '../types.js' */
 /** @import { StateField } from '../../client/types.js' */
 import { dev } from '../../../../state.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 
 /**

@@ -3,7 +3,7 @@
 /** @import { ComponentContext } from '../types' */
 import { dev, is_ignored } from '../../../../state.js';
 import { is_text_attribute } from '../../../../utils/ast.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { binding_properties } from '../../../bindings.js';
 import { build_attribute_value } from './shared/element.js';
 import { build_bind_this, validate_binding } from './shared/utils.js';

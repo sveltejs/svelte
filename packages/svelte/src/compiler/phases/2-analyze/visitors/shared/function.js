@@ -15,6 +15,7 @@ export function visit_function(node, context) {
 
 	context.next({
 		...context.state,
-		function_depth: context.state.function_depth + 1
+		function_depth: context.state.function_depth + 1,
+		expression: null
 	});
 }

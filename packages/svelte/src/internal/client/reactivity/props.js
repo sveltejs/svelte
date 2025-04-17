@@ -1,4 +1,4 @@
-/** @import { Source } from './types.js' */
+/** @import { Derived, Source } from './types.js' */
 import { DEV } from 'esm-env';
 import {
 	PROPS_IS_BINDABLE,
@@ -8,25 +8,12 @@ import {
 	PROPS_IS_UPDATED
 } from '../../../constants.js';
 import { get_descriptor, is_function } from '../../shared/utils.js';
-import { mutable_source, set, source } from './sources.js';
+import { mutable_source, set, source, update } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
-import {
-	active_effect,
-	get,
-	captured_signals,
-	set_active_effect,
-	untrack,
-	update
-} from '../runtime.js';
+import { get, captured_signals, untrack } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
-import {
-	BRANCH_EFFECT,
-	LEGACY_DERIVED_PROP,
-	LEGACY_PROPS,
-	ROOT_EFFECT,
-	STATE_SYMBOL
-} from '../constants.js';
+import { LEGACY_DERIVED_PROP, LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
@@ -249,23 +236,11 @@ export function spread_props(...props) {
 }
 
 /**
- * @template T
- * @param {() => T} fn
- * @returns {T}
+ * @param {Derived} current_value
+ * @returns {boolean}
  */
-function with_parent_branch(fn) {
-	var effect = active_effect;
-	var previous_effect = active_effect;
-
-	while (effect !== null && (effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0) {
-		effect = effect.parent;
-	}
-	try {
-		set_active_effect(effect);
-		return fn();
-	} finally {
-		set_active_effect(previous_effect);
-	}
+function has_destroyed_component_ctx(current_value) {
+	return current_value.ctx?.d ?? false;
 }
 
 /**
@@ -342,8 +317,8 @@ export function prop(props, key, flags, fallback) {
 	} else {
 		// Svelte 4 did not trigger updates when a primitive value was updated to the same value.
 		// Replicate that behavior through using a derived
-		var derived_getter = with_parent_branch(() =>
-			(immutable ? derived : derived_safe_equal)(() => /** @type {V} */ (props[key]))
+		var derived_getter = (immutable ? derived : derived_safe_equal)(
+			() => /** @type {V} */ (props[key])
 		);
 		derived_getter.f |= LEGACY_DERIVED_PROP;
 		getter = () => {
@@ -387,21 +362,24 @@ export function prop(props, key, flags, fallback) {
 	// The derived returns the current value. The underlying mutable
 	// source is written to from various places to persist this value.
 	var inner_current_value = mutable_source(prop_value);
-	var current_value = with_parent_branch(() =>
-		derived(() => {
-			var parent_value = getter();
-			var child_value = get(inner_current_value);
+	var current_value = derived(() => {
+		var parent_value = getter();
+		var child_value = get(inner_current_value);
 
-			if (from_child) {
-				from_child = false;
-				was_from_child = true;
-				return child_value;
-			}
+		if (from_child) {
+			from_child = false;
+			was_from_child = true;
+			return child_value;
+		}
 
-			was_from_child = false;
-			return (inner_current_value.v = parent_value);
-		})
-	);
+		was_from_child = false;
+		return (inner_current_value.v = parent_value);
+	});
+
+	// Ensure we eagerly capture the initial value if it's bindable
+	if (bindable) {
+		get(current_value);
+	}
 
 	if (!immutable) current_value.equals = safe_equals;
 
@@ -429,11 +407,21 @@ export function prop(props, key, flags, fallback) {
 				if (fallback_used && fallback_value !== undefined) {
 					fallback_value = new_value;
 				}
+
+				if (has_destroyed_component_ctx(current_value)) {
+					return value;
+				}
+
 				untrack(() => get(current_value)); // force a synchronisation immediately
 			}
 
 			return value;
 		}
+
+		if (has_destroyed_component_ctx(current_value)) {
+			return current_value.v;
+		}
+
 		return get(current_value);
 	};
 }

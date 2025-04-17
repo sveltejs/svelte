@@ -1,24 +1,21 @@
-/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
+/** @import { Derived, Effect, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import {
-	component_context,
 	active_reaction,
-	new_deps,
 	active_effect,
 	untracked_writes,
 	get,
-	is_runes,
 	schedule_effect,
 	set_untracked_writes,
 	set_signal_status,
 	untrack,
 	increment_write_version,
 	update_effect,
-	derived_sources,
-	set_derived_sources,
+	reaction_sources,
 	check_dirtiness,
-	set_is_flushing_effect,
-	is_flushing_effect
+	untracking,
+	is_destroying_effect,
+	push_reaction_value
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -29,13 +26,18 @@ import {
 	INSPECT_EFFECT,
 	UNOWNED,
 	MAYBE_DIRTY,
-	BLOCK_EFFECT
-} from '../constants.js';
+	BLOCK_EFFECT,
+	ROOT_EFFECT
+} from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack } from '../dev/tracing.js';
+import { component_context, is_runes } from '../context.js';
+import { proxy } from '../proxy.js';
+import { execute_derived } from './deriveds.js';
 
 export let inspect_effects = new Set();
+export const old_values = new Map();
 
 /**
  * @param {Set<any>} v
@@ -50,6 +52,7 @@ export function set_inspect_effects(v) {
  * @param {Error | null} [stack]
  * @returns {Source<V>}
  */
+// TODO rename this to `state` throughout the codebase
 export function source(v, stack) {
 	/** @type {Value} */
 	var signal = {
@@ -72,9 +75,15 @@ export function source(v, stack) {
 /**
  * @template V
  * @param {V} v
+ * @param {Error | null} [stack]
  */
-export function state(v) {
-	return push_derived_source(source(v));
+/*#__NO_SIDE_EFFECTS__*/
+export function state(v, stack) {
+	const s = source(v, stack);
+
+	push_reaction_value(s);
+
+	return s;
 }
 
 /**
@@ -101,33 +110,6 @@ export function mutable_source(initial_value, immutable = false) {
 
 /**
  * @template V
- * @param {V} v
- * @param {boolean} [immutable]
- * @returns {Source<V>}
- */
-export function mutable_state(v, immutable = false) {
-	return push_derived_source(mutable_source(v, immutable));
-}
-
-/**
- * @template V
- * @param {Source<V>} source
- */
-/*#__NO_SIDE_EFFECTS__*/
-function push_derived_source(source) {
-	if (active_reaction !== null && (active_reaction.f & DERIVED) !== 0) {
-		if (derived_sources === null) {
-			set_derived_sources([source]);
-		} else {
-			derived_sources.push(source);
-		}
-	}
-
-	return source;
-}
-
-/**
- * @template V
  * @param {Value<V>} source
  * @param {V} value
  */
@@ -143,21 +125,23 @@ export function mutate(source, value) {
  * @template V
  * @param {Source<V>} source
  * @param {V} value
+ * @param {boolean} [should_proxy]
  * @returns {V}
  */
-export function set(source, value) {
+export function set(source, value, should_proxy = false) {
 	if (
 		active_reaction !== null &&
+		!untracking &&
 		is_runes() &&
 		(active_reaction.f & (DERIVED | BLOCK_EFFECT)) !== 0 &&
-		// If the source was created locally within the current derived, then
-		// we allow the mutation.
-		(derived_sources === null || !derived_sources.includes(source))
+		!reaction_sources?.includes(source)
 	) {
 		e.state_unsafe_mutation();
 	}
 
-	return internal_set(source, value);
+	let new_value = should_proxy ? proxy(value) : value;
+
+	return internal_set(source, new_value);
 }
 
 /**
@@ -169,8 +153,14 @@ export function set(source, value) {
 export function internal_set(source, value) {
 	if (!source.equals(value)) {
 		var old_value = source.v;
+
+		if (is_destroying_effect) {
+			old_values.set(source, value);
+		} else {
+			old_values.set(source, old_value);
+		}
+
 		source.v = value;
-		source.wv = increment_write_version();
 
 		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');
@@ -180,54 +170,83 @@ export function internal_set(source, value) {
 			}
 		}
 
+		if ((source.f & DERIVED) !== 0) {
+			// if we are assigning to a dirty derived we set it to clean/maybe dirty but we also eagerly execute it to track the dependencies
+			if ((source.f & DIRTY) !== 0) {
+				execute_derived(/** @type {Derived} */ (source));
+			}
+			set_signal_status(source, (source.f & UNOWNED) === 0 ? CLEAN : MAYBE_DIRTY);
+		}
+
+		source.wv = increment_write_version();
+
 		mark_reactions(source, DIRTY);
 
-		// If the current signal is running for the first time, it won't have any
-		// reactions as we only allocate and assign the reactions after the signal
-		// has fully executed. So in the case of ensuring it registers the reaction
+		// It's possible that the current reaction might not have up-to-date dependencies
+		// whilst it's actively running. So in the case of ensuring it registers the reaction
 		// properly for itself, we need to ensure the current effect actually gets
 		// scheduled. i.e: `$effect(() => x++)`
 		if (
 			is_runes() &&
 			active_effect !== null &&
 			(active_effect.f & CLEAN) !== 0 &&
-			(active_effect.f & BRANCH_EFFECT) === 0
+			(active_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0
 		) {
-			if (new_deps !== null && new_deps.includes(source)) {
-				set_signal_status(active_effect, DIRTY);
-				schedule_effect(active_effect);
+			if (untracked_writes === null) {
+				set_untracked_writes([source]);
 			} else {
-				if (untracked_writes === null) {
-					set_untracked_writes([source]);
-				} else {
-					untracked_writes.push(source);
-				}
+				untracked_writes.push(source);
 			}
 		}
 
 		if (DEV && inspect_effects.size > 0) {
 			const inspects = Array.from(inspect_effects);
-			var previously_flushing_effect = is_flushing_effect;
-			set_is_flushing_effect(true);
-			try {
-				for (const effect of inspects) {
-					// Mark clean inspect-effects as maybe dirty and then check their dirtiness
-					// instead of just updating the effects - this way we avoid overfiring.
-					if ((effect.f & CLEAN) !== 0) {
-						set_signal_status(effect, MAYBE_DIRTY);
-					}
-					if (check_dirtiness(effect)) {
-						update_effect(effect);
-					}
+
+			for (const effect of inspects) {
+				// Mark clean inspect-effects as maybe dirty and then check their dirtiness
+				// instead of just updating the effects - this way we avoid overfiring.
+				if ((effect.f & CLEAN) !== 0) {
+					set_signal_status(effect, MAYBE_DIRTY);
 				}
-			} finally {
-				set_is_flushing_effect(previously_flushing_effect);
+				if (check_dirtiness(effect)) {
+					update_effect(effect);
+				}
 			}
+
 			inspect_effects.clear();
 		}
 	}
 
 	return value;
+}
+
+/**
+ * @template {number | bigint} T
+ * @param {Source<T>} source
+ * @param {1 | -1} [d]
+ * @returns {T}
+ */
+export function update(source, d = 1) {
+	var value = get(source);
+	var result = d === 1 ? value++ : value--;
+
+	set(source, value);
+
+	// @ts-expect-error
+	return result;
+}
+
+/**
+ * @template {number | bigint} T
+ * @param {Source<T>} source
+ * @param {1 | -1} [d]
+ * @returns {T}
+ */
+export function update_pre(source, d = 1) {
+	var value = get(source);
+
+	// @ts-expect-error
+	return set(source, d === 1 ? ++value : --value);
 }
 
 /**

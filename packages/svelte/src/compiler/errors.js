@@ -279,12 +279,22 @@ export function module_illegal_default_export(node) {
 }
 
 /**
- * Cannot use `$props()` more than once
+ * Cannot use `%rune%()` more than once
+ * @param {null | number | NodeLike} node
+ * @param {string} rune
+ * @returns {never}
+ */
+export function props_duplicate(node, rune) {
+	e(node, 'props_duplicate', `Cannot use \`${rune}()\` more than once\nhttps://svelte.dev/e/props_duplicate`);
+}
+
+/**
+ * `$props.id()` can only be used at the top level of components as a variable declaration initializer
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
-export function props_duplicate(node) {
-	e(node, 'props_duplicate', `Cannot use \`$props()\` more than once\nhttps://svelte.dev/e/props_duplicate`);
+export function props_id_invalid_placement(node) {
+	e(node, 'props_id_invalid_placement', `\`$props.id()\` can only be used at the top level of components as a variable declaration initializer\nhttps://svelte.dev/e/props_id_invalid_placement`);
 }
 
 /**
@@ -371,6 +381,16 @@ export function rune_invalid_computed_property(node) {
  */
 export function rune_invalid_name(node, name) {
 	e(node, 'rune_invalid_name', `\`${name}\` is not a valid rune\nhttps://svelte.dev/e/rune_invalid_name`);
+}
+
+/**
+ * `%rune%` cannot be called with a spread argument
+ * @param {null | number | NodeLike} node
+ * @param {string} rune
+ * @returns {never}
+ */
+export function rune_invalid_spread(node, rune) {
+	e(node, 'rune_invalid_spread', `\`${rune}\` cannot be called with a spread argument\nhttps://svelte.dev/e/rune_invalid_spread`);
 }
 
 /**
@@ -535,12 +555,12 @@ export function css_global_block_invalid_declaration(node) {
 }
 
 /**
- * A `:global` selector cannot be part of a selector list with more than one item
+ * A `:global` selector cannot be part of a selector list with entries that don't contain `:global`
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function css_global_block_invalid_list(node) {
-	e(node, 'css_global_block_invalid_list', `A \`:global\` selector cannot be part of a selector list with more than one item\nhttps://svelte.dev/e/css_global_block_invalid_list`);
+	e(node, 'css_global_block_invalid_list', `A \`:global\` selector cannot be part of a selector list with entries that don't contain \`:global\`\nhttps://svelte.dev/e/css_global_block_invalid_list`);
 }
 
 /**
@@ -743,6 +763,15 @@ export function bind_group_invalid_expression(node) {
 }
 
 /**
+ * Cannot `bind:group` to a snippet parameter
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function bind_group_invalid_snippet_parameter(node) {
+	e(node, 'bind_group_invalid_snippet_parameter', `Cannot \`bind:group\` to a snippet parameter\nhttps://svelte.dev/e/bind_group_invalid_snippet_parameter`);
+}
+
+/**
  * Can only bind to an Identifier or MemberExpression or a `{get, set}` pair
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -888,12 +917,12 @@ export function const_tag_invalid_expression(node) {
 }
 
 /**
- * `{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>` or `<Component>`
+ * `{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>`, `<svelte:boundary` or `<Component>`
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function const_tag_invalid_placement(node) {
-	e(node, 'const_tag_invalid_placement', `\`{@const}\` must be the immediate child of \`{#snippet}\`, \`{#if}\`, \`{:else if}\`, \`{:else}\`, \`{#each}\`, \`{:then}\`, \`{:catch}\`, \`<svelte:fragment>\` or \`<Component>\`\nhttps://svelte.dev/e/const_tag_invalid_placement`);
+	e(node, 'const_tag_invalid_placement', `\`{@const}\` must be the immediate child of \`{#snippet}\`, \`{#if}\`, \`{:else if}\`, \`{:else}\`, \`{#each}\`, \`{:then}\`, \`{:catch}\`, \`<svelte:fragment>\`, \`<svelte:boundary\` or \`<Component>\`\nhttps://svelte.dev/e/const_tag_invalid_placement`);
 }
 
 /**

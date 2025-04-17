@@ -8,7 +8,7 @@
 		console.log(this);
 	}
 
-	function foo(): string {
+	function foo<T>(): string {
 		return ""!;
 	}
 
@@ -21,6 +21,11 @@
 	}
 
 	class MyClass implements Hello {}
+
+	abstract class MyAbstractClass {
+		abstract x(): void;
+		y() {}
+	}
 
 	declare const declared_const: number;
 	declare function declared_fn(): void;
@@ -40,6 +45,8 @@
 	export type { Hello };
 
 	const TypedFoo = Foo<true>;
+	const typeAssertion = <boolean>true;
+	const x = foo<true>();
 </script>
 
 <script>

@@ -1,10 +1,12 @@
-/** @import { Component, Payload } from '#server' */
+/** @import { Component } from '#server' */
 import { FILENAME } from '../../constants.js';
 import {
 	is_tag_valid_with_ancestor,
 	is_tag_valid_with_parent
 } from '../../html-tree-validation.js';
 import { current_component } from './context.js';
+import { invalid_snippet_arguments } from '../shared/errors.js';
+import { HeadPayload, Payload } from './payload.js';
 
 /**
  * @typedef {{
@@ -23,14 +25,6 @@ let parent = null;
 
 /** @type {Set<string>} */
 let seen;
-
-/**
- * @param {Element} element
- */
-function stringify(element) {
-	if (element.filename === null) return `\`<${element.tag}>\``;
-	return `\`<${element.tag}>\` (${element.filename}:${element.line}:${element.column})`;
-}
 
 /**
  * @param {Payload} payload
@@ -97,4 +91,17 @@ export function push_element(payload, tag, line, column) {
 
 export function pop_element() {
 	parent = /** @type {Element} */ (parent).parent;
+}
+
+/**
+ * @param {Payload} payload
+ */
+export function validate_snippet_args(payload) {
+	if (
+		typeof payload !== 'object' ||
+		// for some reason typescript consider the type of payload as never after the first instanceof
+		!(payload instanceof Payload || /** @type {any} */ (payload) instanceof HeadPayload)
+	) {
+		invalid_snippet_arguments();
+	}
 }

@@ -5,7 +5,7 @@ import {
 	is_text_attribute,
 	object
 } from '../../../utils/ast.js';
-import { validate_no_const_assignment } from './shared/utils.js';
+import { validate_assignment } from './shared/utils.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { binding_properties } from '../../bindings.js';
@@ -132,8 +132,19 @@ export function BindDirective(node, context) {
 		}
 
 		let i = /** @type {number} */ (node.expression.start);
+		let leading_comments_start = /**@type {any}*/ (node.expression.leadingComments?.at(0))?.start;
+		let leading_comments_end = /**@type {any}*/ (node.expression.leadingComments?.at(-1))?.end;
 		while (context.state.analysis.source[--i] !== '{') {
-			if (context.state.analysis.source[i] === '(') {
+			if (
+				context.state.analysis.source[i] === '(' &&
+				// if the parenthesis is in a leading comment we don't need to throw the error
+				!(
+					leading_comments_start &&
+					leading_comments_end &&
+					i <= leading_comments_end &&
+					i >= leading_comments_start
+				)
+			) {
 				e.bind_invalid_parens(node, node.name);
 			}
 		}
@@ -147,7 +158,7 @@ export function BindDirective(node, context) {
 		return;
 	}
 
-	validate_no_const_assignment(node, node.expression, context.state.scope, true);
+	validate_assignment(node, node.expression, context.state);
 
 	const assignee = node.expression;
 	const left = object(assignee);
@@ -173,19 +184,15 @@ export function BindDirective(node, context) {
 		) {
 			e.bind_invalid_value(node.expression);
 		}
-
-		if (context.state.analysis.runes && binding?.kind === 'each') {
-			e.each_item_invalid_assignment(node);
-		}
-
-		if (binding?.kind === 'snippet') {
-			e.snippet_parameter_assignment(node);
-		}
 	}
 
 	if (node.name === 'group') {
 		if (!binding) {
 			throw new Error('Cannot find declaration for bind:group');
+		}
+
+		if (binding.kind === 'snippet') {
+			e.bind_group_invalid_snippet_parameter(node);
 		}
 
 		// Traverse the path upwards and find all EachBlocks who are (indirectly) contributing to bind:group,

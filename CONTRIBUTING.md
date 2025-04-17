@@ -51,7 +51,7 @@ We use [GitHub issues](https://github.com/sveltejs/svelte/issues) for our public
 
 If you have questions about using Svelte, contact us on Discord at [svelte.dev/chat](https://svelte.dev/chat), and we will do our best to answer your questions.
 
-If you see anything you'd like to be implemented, create a [feature request issue](https://github.com/sveltejs/svelte/issues/new?template=feature_request.yml)
+If you see anything you'd like to be implemented, create a [feature request issue](https://github.com/sveltejs/svelte/issues/new?template=feature_request.yml).
 
 ### Reporting new issues
 
@@ -61,8 +61,6 @@ When [opening a new issue](https://github.com/sveltejs/svelte/issues/new/choose)
 - **Provide reproduction steps:** List all the steps necessary to reproduce the issue. The person reading your bug report should be able to follow these steps to reproduce your issue with minimal effort. If possible, use the [REPL](https://svelte.dev/repl) to create your reproduction.
 
 ## Pull requests
-
-> HEADS UP: Svelte 5 will likely change a lot on the compiler. For that reason, please don't open PRs that are large in scope, touch more than a couple of files etc. In other words, bug fixes are fine, but big feature PRs will likely not be merged.
 
 ### Proposing a change
 

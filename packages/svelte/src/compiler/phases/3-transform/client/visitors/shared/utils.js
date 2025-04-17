@@ -1,80 +1,109 @@
-/** @import { Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Statement, Super } from 'estree' */
-/** @import { AST } from '#compiler' */
-/** @import { ComponentClientTransformState } from '../../types' */
+/** @import { AssignmentExpression, Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression } from 'estree' */
+/** @import { AST, ExpressionMetadata } from '#compiler' */
+/** @import { ComponentClientTransformState, Context } from '../../types' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
-import * as b from '../../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_is_valid_identifier } from '../../../../patterns.js';
-import { create_derived } from '../../utils.js';
 import is_reference from 'is-reference';
-import { locator } from '../../../../../state.js';
+import { dev, is_ignored, locator } from '../../../../../state.js';
+import { create_derived } from '../../utils.js';
+
+/**
+ * @param {ComponentClientTransformState} state
+ * @param {Expression} value
+ */
+export function memoize_expression(state, value) {
+	const id = b.id(state.scope.generate('expression'));
+	state.init.push(b.const(id, create_derived(state, b.thunk(value))));
+	return b.call('$.get', id);
+}
+
+/**
+ *
+ * @param {ComponentClientTransformState} state
+ * @param {Expression} value
+ */
+export function get_expression_id(state, value) {
+	return b.id(`$${state.expressions.push(value) - 1}`);
+}
 
 /**
  * @param {Array<AST.Text | AST.ExpressionTag>} values
  * @param {(node: AST.SvelteNode, state: any) => any} visit
  * @param {ComponentClientTransformState} state
- * @returns {{ value: Expression, has_state: boolean, has_call: boolean }}
+ * @param {(value: Expression, metadata: ExpressionMetadata) => Expression} memoize
+ * @returns {{ value: Expression, has_state: boolean }}
  */
-export function build_template_chunk(values, visit, state) {
+export function build_template_chunk(
+	values,
+	visit,
+	state,
+	memoize = (value, metadata) => (metadata.has_call ? get_expression_id(state, value) : value)
+) {
 	/** @type {Expression[]} */
 	const expressions = [];
 
 	let quasi = b.quasi('');
 	const quasis = [quasi];
 
-	let has_call = false;
 	let has_state = false;
-	let contains_multiple_call_expression = false;
-
-	for (const node of values) {
-		if (node.type === 'ExpressionTag') {
-			const metadata = node.metadata.expression;
-
-			contains_multiple_call_expression ||= has_call && metadata.has_call;
-			has_call ||= metadata.has_call;
-			has_state ||= metadata.has_state;
-		}
-	}
 
 	for (let i = 0; i < values.length; i++) {
 		const node = values[i];
 
 		if (node.type === 'Text') {
 			quasi.value.cooked += node.data;
-		} else if (node.type === 'ExpressionTag' && node.expression.type === 'Literal') {
+		} else if (node.expression.type === 'Literal') {
 			if (node.expression.value != null) {
 				quasi.value.cooked += node.expression.value + '';
 			}
-		} else {
-			if (contains_multiple_call_expression) {
-				const id = b.id(state.scope.generate('stringified_text'));
-				state.init.push(
-					b.const(
-						id,
-						create_derived(
-							state,
-							b.thunk(
-								b.logical(
-									'??',
-									/** @type {Expression} */ (visit(node.expression, state)),
-									b.literal('')
-								)
-							)
-						)
-					)
-				);
-				expressions.push(b.call('$.get', id));
-			} else if (values.length === 1) {
+		} else if (
+			node.expression.type !== 'Identifier' ||
+			node.expression.name !== 'undefined' ||
+			state.scope.get('undefined')
+		) {
+			let value = memoize(
+				/** @type {Expression} */ (visit(node.expression, state)),
+				node.metadata.expression
+			);
+
+			has_state ||= node.metadata.expression.has_state;
+
+			if (values.length === 1) {
 				// If we have a single expression, then pass that in directly to possibly avoid doing
 				// extra work in the template_effect (instead we do the work in set_text).
-				return { value: visit(node.expression, state), has_state, has_call };
-			} else {
-				expressions.push(b.logical('??', visit(node.expression, state), b.literal('')));
+				return { value, has_state };
 			}
 
-			quasi = b.quasi('', i + 1 === values.length);
-			quasis.push(quasi);
+			if (
+				value.type === 'LogicalExpression' &&
+				value.right.type === 'Literal' &&
+				(value.operator === '??' || value.operator === '||')
+			) {
+				// `foo ?? null` -=> `foo ?? ''`
+				// otherwise leave the expression untouched
+				if (value.right.value === null) {
+					value = { ...value, right: b.literal('') };
+				}
+			}
+
+			const evaluated = state.scope.evaluate(value);
+
+			if (evaluated.is_known) {
+				quasi.value.cooked += evaluated.value + '';
+			} else {
+				if (!evaluated.is_defined) {
+					// add `?? ''` where necessary
+					value = b.logical('??', value, b.literal(''));
+				}
+
+				expressions.push(value);
+
+				quasi = b.quasi('', i + 1 === values.length);
+				quasis.push(quasi);
+			}
 		}
 	}
 
@@ -82,28 +111,32 @@ export function build_template_chunk(values, visit, state) {
 		quasi.value.raw = sanitize_template_string(/** @type {string} */ (quasi.value.cooked));
 	}
 
-	const value = b.template(quasis, expressions);
+	const value =
+		expressions.length > 0
+			? b.template(quasis, expressions)
+			: b.literal(/** @type {string} */ (quasi.value.cooked));
 
-	return { value, has_state, has_call };
+	return { value, has_state };
 }
 
 /**
- * @param {Statement} statement
+ * @param {ComponentClientTransformState} state
  */
-export function build_update(statement) {
-	const body =
-		statement.type === 'ExpressionStatement' ? statement.expression : b.block([statement]);
-
-	return b.stmt(b.call('$.template_effect', b.thunk(body)));
-}
-
-/**
- * @param {Statement[]} update
- */
-export function build_render_statement(update) {
-	return update.length === 1
-		? build_update(update[0])
-		: b.stmt(b.call('$.template_effect', b.thunk(b.block(update))));
+export function build_render_statement(state) {
+	return b.stmt(
+		b.call(
+			'$.template_effect',
+			b.arrow(
+				state.expressions.map((_, i) => b.id(`$${i}`)),
+				state.update.length === 1 && state.update[0].type === 'ExpressionStatement'
+					? state.update[0].expression
+					: b.block(state.update)
+			),
+			state.expressions.length > 0 &&
+				b.array(state.expressions.map((expression) => b.thunk(expression))),
+			state.expressions.length > 0 && !state.analysis.runes && b.id('$.derived_safe_equal')
+		)
+	);
 }
 
 /**
@@ -239,12 +272,16 @@ export function validate_binding(state, binding, expression) {
 
 	const loc = locator(binding.start);
 
+	const obj = /** @type {Expression} */ (expression.object);
+
 	state.init.push(
 		b.stmt(
 			b.call(
 				'$.validate_binding',
 				b.literal(state.analysis.source.slice(binding.start, binding.end)),
-				b.thunk(/** @type {Expression} */ (expression.object)),
+				b.thunk(
+					state.store_to_invalidate ? b.sequence([b.call('$.mark_store_binding'), obj]) : obj
+				),
 				b.thunk(
 					/** @type {Expression} */ (
 						expression.computed
@@ -256,5 +293,62 @@ export function validate_binding(state, binding, expression) {
 				loc && b.literal(loc.column)
 			)
 		)
+	);
+}
+
+/**
+ * In dev mode validate mutations to props
+ * @param {AssignmentExpression | UpdateExpression} node
+ * @param {Context} context
+ * @param {Expression} expression
+ */
+export function validate_mutation(node, context, expression) {
+	let left = /** @type {Expression | Super} */ (
+		node.type === 'AssignmentExpression' ? node.left : node.argument
+	);
+
+	if (!dev || left.type !== 'MemberExpression' || is_ignored(node, 'ownership_invalid_mutation')) {
+		return expression;
+	}
+
+	const name = object(left);
+	if (!name) return expression;
+
+	const binding = context.state.scope.get(name.name);
+	if (binding?.kind !== 'prop' && binding?.kind !== 'bindable_prop') return expression;
+
+	const state = /** @type {ComponentClientTransformState} */ (context.state);
+	state.analysis.needs_mutation_validation = true;
+
+	/** @type {Array<Identifier | Literal>} */
+	const path = [];
+
+	while (left.type === 'MemberExpression') {
+		if (left.property.type === 'Literal') {
+			path.unshift(left.property);
+		} else if (left.property.type === 'Identifier') {
+			if (left.computed) {
+				path.unshift(left.property);
+			} else {
+				path.unshift(b.literal(left.property.name));
+			}
+		} else {
+			return expression;
+		}
+
+		left = left.object;
+	}
+
+	path.unshift(b.literal(name.name));
+
+	const loc = locator(/** @type {number} */ (left.start));
+
+	return b.call(
+		'$$ownership_validator.mutation',
+		b.literal(binding.prop_alias),
+		b.array(path),
+		expression,
+		loc && b.literal(loc.line),
+		loc && b.literal(loc.column)
 	);
 }

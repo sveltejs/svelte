@@ -120,7 +120,11 @@ This turned out to be buggy and unpredictable, particularly when working with de
 
 ## props_duplicate
 
-> Cannot use `$props()` more than once
+> Cannot use `%rune%()` more than once
+
+## props_id_invalid_placement
+
+> `$props.id()` can only be used at the top level of components as a variable declaration initializer
 
 ## props_illegal_name
 
@@ -157,6 +161,10 @@ This turned out to be buggy and unpredictable, particularly when working with de
 ## rune_invalid_name
 
 > `%name%` is not a valid rune
+
+## rune_invalid_spread
+
+> `%rune%` cannot be called with a spread argument
 
 ## rune_invalid_usage
 

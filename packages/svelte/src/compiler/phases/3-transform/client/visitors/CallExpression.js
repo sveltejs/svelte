@@ -1,7 +1,7 @@
 /** @import { CallExpression, Expression } from 'estree' */
 /** @import { Context } from '../types' */
 import { dev, is_ignored } from '../../../../state.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 import { transform_inspect_rune } from '../../utils.js';
 
@@ -44,7 +44,8 @@ export function CallExpression(node, context) {
 		node.callee.property.type === 'Identifier' &&
 		['debug', 'dir', 'error', 'group', 'groupCollapsed', 'info', 'log', 'trace', 'warn'].includes(
 			node.callee.property.name
-		)
+		) &&
+		node.arguments.some((arg) => arg.type !== 'Literal') // TODO more cases?
 	) {
 		return b.call(
 			node.callee,

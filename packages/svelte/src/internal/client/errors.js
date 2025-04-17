@@ -54,15 +54,14 @@ export function bind_not_bindable(key, component, name) {
 }
 
 /**
- * %parent% called `%method%` on an instance of %component%, which is no longer valid in Svelte 5
- * @param {string} parent
+ * Calling `%method%` on a component instance (of %component%) is no longer valid in Svelte 5
  * @param {string} method
  * @param {string} component
  * @returns {never}
  */
-export function component_api_changed(parent, method, component) {
+export function component_api_changed(method, component) {
 	if (DEV) {
-		const error = new Error(`component_api_changed\n${parent} called \`${method}\` on an instance of ${component}, which is no longer valid in Svelte 5\nhttps://svelte.dev/e/component_api_changed`);
+		const error = new Error(`component_api_changed\nCalling \`${method}\` on a component instance (of ${component}) is no longer valid in Svelte 5\nhttps://svelte.dev/e/component_api_changed`);
 
 		error.name = 'Svelte error';
 		throw error;
@@ -304,21 +303,6 @@ export function state_prototype_fixed() {
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/state_prototype_fixed`);
-	}
-}
-
-/**
- * Reading state that was created inside the same derived is forbidden. Consider using `untrack` to read locally created state
- * @returns {never}
- */
-export function state_unsafe_local_read() {
-	if (DEV) {
-		const error = new Error(`state_unsafe_local_read\nReading state that was created inside the same derived is forbidden. Consider using \`untrack\` to read locally created state\nhttps://svelte.dev/e/state_unsafe_local_read`);
-
-		error.name = 'Svelte error';
-		throw error;
-	} else {
-		throw new Error(`https://svelte.dev/e/state_unsafe_local_read`);
 	}
 }
 
