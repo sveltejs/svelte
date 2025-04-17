@@ -1,4 +1,3 @@
-import { hydrating } from '../../hydration.js';
 import { render_effect, effect, teardown } from '../../../reactivity/effects.js';
 import { listen } from './shared.js';
 

@@ -1,5 +1,4 @@
 /** @import { Expression, Identifier } from 'estree' */
-/** @import { EachBlock } from '#compiler' */
 /** @import { Context } from '../types' */
 import is_reference from 'is-reference';
 import { should_proxy } from '../../3-transform/client/utils.js';

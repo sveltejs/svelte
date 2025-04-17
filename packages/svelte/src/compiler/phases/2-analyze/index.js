@@ -5,7 +5,7 @@
 import { walk } from 'zimmerframe';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
-import { extract_identifiers, is_text_attribute } from '../../utils/ast.js';
+import { extract_identifiers } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
