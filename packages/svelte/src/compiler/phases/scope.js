@@ -172,19 +172,16 @@ class Evaluation {
 						binding.kind === 'rest_prop' ||
 						binding.kind === 'bindable_prop';
 
+					if (binding.initial?.type === 'EachBlock' && binding.initial.index === expression.name) {
+						this.values.add(NUMBER);
+						break;
+					}
+
 					if (!binding.updated && binding.initial !== null && !is_prop) {
 						const evaluation = binding.scope.evaluate(/** @type {Expression} */ (binding.initial));
 						for (const value of evaluation.values) {
 							this.values.add(value);
 						}
-						break;
-					}
-					if (
-						binding.kind === 'each' &&
-						binding.initial?.type === 'EachBlock' &&
-						binding.initial.index === expression.name
-					) {
-						this.values.add(NUMBER);
 						break;
 					}
 				} else if (expression.name === 'undefined') {
