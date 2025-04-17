@@ -21,18 +21,14 @@ export function SnippetBlock(node, context) {
 		/** @type {BlockStatement} */ (context.visit(node.body))
 	);
 
+	// @ts-expect-error - TODO remove this hack once $$render_inner for legacy bindings is gone
+	fn.___snippet = true;
+
 	const push_to = node.metadata.can_hoist ? context.state.hoisted : context.state.init;
 
 	if (dev) {
 		push_to.push(b.stmt(b.call('$.prevent_snippet_stringification', fn.id)));
 	}
 
-	// @ts-expect-error - TODO remove this hack once $$render_inner for legacy bindings is gone
-	fn.___snippet = true;
-
-	if (node.metadata.can_hoist) {
-		push_to.push(fn);
-	} else {
-		push_to.push(fn);
-	}
+	push_to.push(fn);
 }
