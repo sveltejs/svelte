@@ -407,20 +407,8 @@ class Evaluation {
 								const arg = scope.evaluate(/** @type {Expression} */ (expression.arguments[0]));
 								if (arg.is_known) {
 									this.values.add(Number(arg.value));
-								} else if (arg.is_number) {
-									this.values.add(NUMBER);
 								} else {
-									for (let value of arg.values) {
-										switch (value) {
-											case STRING:
-											case NUMBER:
-											case UNKNOWN:
-												this.values.add(NUMBER);
-												break;
-											default:
-												this.values.add(Number(value));
-										}
-									}
+									this.values.add(NUMBER);
 								}
 							} else {
 								this.values.add(0);
@@ -432,20 +420,8 @@ class Evaluation {
 								const arg = scope.evaluate(/** @type {Expression} */ (expression.arguments[0]));
 								if (arg.is_known) {
 									this.values.add(String(arg.value));
-								} else if (arg.is_number || arg.is_string) {
-									this.values.add(STRING);
 								} else {
-									for (let value of arg.values) {
-										switch (value) {
-											case STRING:
-											case NUMBER:
-											case UNKNOWN:
-												this.values.add(STRING);
-												break;
-											default:
-												this.values.add(String(value));
-										}
-									}
+									this.values.add(STRING);
 								}
 							} else {
 								this.values.add('');
