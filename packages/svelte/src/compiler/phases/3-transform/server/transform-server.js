@@ -186,12 +186,10 @@ export function server_component(analysis, options) {
 			...snippets,
 			b.let('$$settled', b.true),
 			b.let('$$inner_payload'),
-			b.stmt(
-				b.function(
-					b.id('$$render_inner'),
-					[b.id('$$payload')],
-					b.block(/** @type {Statement[]} */ (rest))
-				)
+			b.function_declaration(
+				b.id('$$render_inner'),
+				[b.id('$$payload')],
+				b.block(/** @type {Statement[]} */ (rest))
 			),
 			b.do_while(
 				b.unary('!', b.id('$$settled')),
@@ -243,6 +241,13 @@ export function server_component(analysis, options) {
 		.../** @type {Statement[]} */ (instance.body),
 		.../** @type {Statement[]} */ (template.body)
 	]);
+
+	if (analysis.props_id) {
+		// need to be placed on first line of the component for hydration
+		component_block.body.unshift(
+			b.const(analysis.props_id, b.call('$.props_id', b.id('$$payload')))
+		);
+	}
 
 	let should_inject_context = dev || analysis.needs_context;
 

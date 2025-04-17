@@ -52,7 +52,10 @@ export function bind_current_time(media, get, set = get) {
 		}
 	});
 
-	teardown(() => cancelAnimationFrame(raf_id));
+	teardown(() => {
+		cancelAnimationFrame(raf_id);
+		media.removeEventListener('timeupdate', callback);
+	});
 }
 
 /**

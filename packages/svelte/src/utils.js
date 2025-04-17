@@ -156,6 +156,7 @@ const DOM_BOOLEAN_ATTRIBUTES = [
 	'formnovalidate',
 	'hidden',
 	'indeterminate',
+	'inert',
 	'ismap',
 	'loop',
 	'multiple',
@@ -169,7 +170,10 @@ const DOM_BOOLEAN_ATTRIBUTES = [
 	'reversed',
 	'seamless',
 	'selected',
-	'webkitdirectory'
+	'webkitdirectory',
+	'defer',
+	'disablepictureinpicture',
+	'disableremoteplayback'
 ];
 
 /**
@@ -195,7 +199,11 @@ const ATTRIBUTE_ALIASES = {
 	readonly: 'readOnly',
 	defaultvalue: 'defaultValue',
 	defaultchecked: 'defaultChecked',
-	srcobject: 'srcObject'
+	srcobject: 'srcObject',
+	novalidate: 'noValidate',
+	allowfullscreen: 'allowFullscreen',
+	disablepictureinpicture: 'disablePictureInPicture',
+	disableremoteplayback: 'disableRemotePlayback'
 };
 
 /**
@@ -214,11 +222,14 @@ const DOM_PROPERTIES = [
 	'playsInline',
 	'readOnly',
 	'value',
-	'inert',
 	'volume',
 	'defaultValue',
 	'defaultChecked',
-	'srcObject'
+	'srcObject',
+	'noValidate',
+	'allowFullscreen',
+	'disablePictureInPicture',
+	'disableRemotePlayback'
 ];
 
 /**
@@ -422,6 +433,7 @@ const RUNES = /** @type {const} */ ([
 	'$state.raw',
 	'$state.snapshot',
 	'$props',
+	'$props.id',
 	'$bindable',
 	'$derived',
 	'$derived.by',
@@ -453,8 +465,10 @@ export function is_raw_text_element(name) {
 
 /**
  * Prevent devtools trying to make `location` a clickable link by inserting a zero-width space
- * @param {string | undefined} location
+ * @template {string | undefined} T
+ * @param {T} location
+ * @returns {T};
  */
 export function sanitize_location(location) {
-	return location?.replace(/\//g, '/\u200b');
+	return /** @type {T} */ (location?.replace(/\//g, '/\u200b'));
 }

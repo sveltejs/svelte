@@ -1,6 +1,6 @@
-/** @import { ProxyMetadata, ProxyStateObject, Source } from '#client' */
+/** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
-import { get, component_context, active_effect } from './runtime.js';
+import { get, active_effect, active_reaction, set_active_reaction } from './runtime.js';
 import {
 	array_prototype,
 	get_descriptor,
@@ -8,9 +8,8 @@ import {
 	is_array,
 	object_prototype
 } from '../shared/utils.js';
-import { check_ownership, widen_ownership } from './dev/ownership.js';
-import { source, set } from './reactivity/sources.js';
-import { STATE_SYMBOL, STATE_SYMBOL_METADATA } from './constants.js';
+import { state as source, set } from './reactivity/sources.js';
+import { STATE_SYMBOL } from './constants.js';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 import { get_stack } from './dev/tracing.js';
@@ -19,16 +18,9 @@ import { tracing_mode_flag } from '../flags/index.js';
 /**
  * @template T
  * @param {T} value
- * @param {ProxyMetadata | null} [parent]
- * @param {Source<T>} [prev] dev mode only
  * @returns {T}
  */
-export function proxy(value, parent = null, prev) {
-	/** @type {Error | null} */
-	var stack = null;
-	if (DEV && tracing_mode_flag) {
-		stack = get_stack('CreatedAt');
-	}
+export function proxy(value) {
 	// if non-proxyable, or is already a proxy, return `value`
 	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {
 		return value;
@@ -45,35 +37,28 @@ export function proxy(value, parent = null, prev) {
 	var is_proxied_array = is_array(value);
 	var version = source(0);
 
+	var stack = DEV && tracing_mode_flag ? get_stack('CreatedAt') : null;
+	var reaction = active_reaction;
+
+	/**
+	 * @template T
+	 * @param {() => T} fn
+	 */
+	var with_parent = (fn) => {
+		var previous_reaction = active_reaction;
+		set_active_reaction(reaction);
+
+		/** @type {T} */
+		var result = fn();
+
+		set_active_reaction(previous_reaction);
+		return result;
+	};
+
 	if (is_proxied_array) {
 		// We need to create the length source eagerly to ensure that
 		// mutations to the array are properly synced with our proxy
 		sources.set('length', source(/** @type {any[]} */ (value).length, stack));
-	}
-
-	/** @type {ProxyMetadata} */
-	var metadata;
-
-	if (DEV) {
-		metadata = {
-			parent,
-			owners: null
-		};
-
-		if (prev) {
-			// Reuse owners from previous state; necessary because reassignment is not guaranteed to have correct component context.
-			// If no previous proxy exists we play it safe and assume ownerless state
-			// @ts-expect-error
-			const prev_owners = prev.v?.[STATE_SYMBOL_METADATA]?.owners;
-			metadata.owners = prev_owners ? new Set(prev_owners) : null;
-		} else {
-			metadata.owners =
-				parent === null
-					? component_context !== null
-						? new Set([component_context.function])
-						: null
-					: new Set();
-		}
 	}
 
 	return new Proxy(/** @type {any} */ (value), {
@@ -94,10 +79,13 @@ export function proxy(value, parent = null, prev) {
 			var s = sources.get(prop);
 
 			if (s === undefined) {
-				s = source(descriptor.value, stack);
+				s = with_parent(() => source(descriptor.value, stack));
 				sources.set(prop, s);
 			} else {
-				set(s, proxy(descriptor.value, metadata));
+				set(
+					s,
+					with_parent(() => proxy(descriptor.value))
+				);
 			}
 
 			return true;
@@ -108,7 +96,10 @@ export function proxy(value, parent = null, prev) {
 
 			if (s === undefined) {
 				if (prop in target) {
-					sources.set(prop, source(UNINITIALIZED, stack));
+					sources.set(
+						prop,
+						with_parent(() => source(UNINITIALIZED, stack))
+					);
 				}
 			} else {
 				// When working with arrays, we need to also ensure we update the length when removing
@@ -129,10 +120,6 @@ export function proxy(value, parent = null, prev) {
 		},
 
 		get(target, prop, receiver) {
-			if (DEV && prop === STATE_SYMBOL_METADATA) {
-				return metadata;
-			}
-
 			if (prop === STATE_SYMBOL) {
 				return value;
 			}
@@ -142,28 +129,12 @@ export function proxy(value, parent = null, prev) {
 
 			// create a source, but only if it's an own property and not a prototype property
 			if (s === undefined && (!exists || get_descriptor(target, prop)?.writable)) {
-				s = source(proxy(exists ? target[prop] : UNINITIALIZED, metadata), stack);
+				s = with_parent(() => source(proxy(exists ? target[prop] : UNINITIALIZED), stack));
 				sources.set(prop, s);
 			}
 
 			if (s !== undefined) {
 				var v = get(s);
-
-				// In case of something like `foo = bar.map(...)`, foo would have ownership
-				// of the array itself, while the individual items would have ownership
-				// of the component that created bar. That means if we later do `foo[0].baz = 42`,
-				// we could get a false-positive ownership violation, since the two proxies
-				// are not connected to each other via the parent metadata relationship.
-				// For this reason, we need to widen the ownership of the children
-				// upon access when we detect they are not connected.
-				if (DEV) {
-					/** @type {ProxyMetadata | undefined} */
-					var prop_metadata = v?.[STATE_SYMBOL_METADATA];
-					if (prop_metadata && prop_metadata?.parent !== metadata) {
-						widen_ownership(metadata, prop_metadata);
-					}
-				}
-
 				return v === UNINITIALIZED ? undefined : v;
 			}
 
@@ -194,10 +165,6 @@ export function proxy(value, parent = null, prev) {
 		},
 
 		has(target, prop) {
-			if (DEV && prop === STATE_SYMBOL_METADATA) {
-				return true;
-			}
-
 			if (prop === STATE_SYMBOL) {
 				return true;
 			}
@@ -210,7 +177,7 @@ export function proxy(value, parent = null, prev) {
 				(active_effect !== null && (!has || get_descriptor(target, prop)?.writable))
 			) {
 				if (s === undefined) {
-					s = source(has ? proxy(target[prop], metadata) : UNINITIALIZED, stack);
+					s = with_parent(() => source(has ? proxy(target[prop]) : UNINITIALIZED, stack));
 					sources.set(prop, s);
 				}
 
@@ -237,7 +204,7 @@ export function proxy(value, parent = null, prev) {
 						// If the item exists in the original, we need to create a uninitialized source,
 						// else a later read of the property would result in a source being created with
 						// the value of the original item at that index.
-						other_s = source(UNINITIALIZED, stack);
+						other_s = with_parent(() => source(UNINITIALIZED, stack));
 						sources.set(i + '', other_s);
 					}
 				}
@@ -249,22 +216,19 @@ export function proxy(value, parent = null, prev) {
 			// object property before writing to that property.
 			if (s === undefined) {
 				if (!has || get_descriptor(target, prop)?.writable) {
-					s = source(undefined, stack);
-					set(s, proxy(value, metadata));
+					s = with_parent(() => source(undefined, stack));
+					set(
+						s,
+						with_parent(() => proxy(value))
+					);
 					sources.set(prop, s);
 				}
 			} else {
 				has = s.v !== UNINITIALIZED;
-				set(s, proxy(value, metadata));
-			}
-
-			if (DEV) {
-				/** @type {ProxyMetadata | undefined} */
-				var prop_metadata = value?.[STATE_SYMBOL_METADATA];
-				if (prop_metadata && prop_metadata?.parent !== metadata) {
-					widen_ownership(metadata, prop_metadata);
-				}
-				check_ownership(metadata);
+				set(
+					s,
+					with_parent(() => proxy(value))
+				);
 			}
 
 			var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
@@ -329,8 +293,18 @@ function update_version(signal, d = 1) {
  * @param {any} value
  */
 export function get_proxied_value(value) {
-	if (value !== null && typeof value === 'object' && STATE_SYMBOL in value) {
-		return value[STATE_SYMBOL];
+	try {
+		if (value !== null && typeof value === 'object' && STATE_SYMBOL in value) {
+			return value[STATE_SYMBOL];
+		}
+	} catch {
+		// the above if check can throw an error if the value in question
+		// is the contentWindow of an iframe on another domain, in which
+		// case we want to just return the value (because it's definitely
+		// not a proxied value) so we don't break any JavaScript interacting
+		// with that iframe (such as various payment companies client side
+		// JavaScript libraries interacting with their iframes on the same
+		// domain)
 	}
 
 	return value;

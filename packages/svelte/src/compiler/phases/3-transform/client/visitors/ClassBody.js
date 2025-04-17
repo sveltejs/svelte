@@ -5,7 +5,7 @@ import { dev, is_ignored } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { regex_invalid_identifier_chars } from '../../../patterns.js';
 import { get_rune } from '../../../scope.js';
-import { build_proxy_reassignment, should_proxy } from '../utils.js';
+import { should_proxy } from '../utils.js';
 
 /**
  * @param {ClassBody} node
@@ -142,73 +142,23 @@ export function ClassBody(node, context) {
 					// get foo() { return this.#foo; }
 					body.push(b.method('get', definition.key, [], [b.return(b.call('$.get', member))]));
 
-					if (field.kind === 'state') {
-						// set foo(value) { this.#foo = value; }
-						const value = b.id('value');
-						const prev = b.member(b.this, field.id);
+					// set foo(value) { this.#foo = value; }
+					const val = b.id('value');
 
-						body.push(
-							b.method(
-								'set',
-								definition.key,
-								[value],
-								[b.stmt(b.call('$.set', member, build_proxy_reassignment(value, prev)))]
-							)
-						);
-					}
-
-					if (field.kind === 'raw_state') {
-						// set foo(value) { this.#foo = value; }
-						const value = b.id('value');
-						body.push(
-							b.method('set', definition.key, [value], [b.stmt(b.call('$.set', member, value))])
-						);
-					}
-
-					if (dev && (field.kind === 'derived' || field.kind === 'derived_by')) {
-						body.push(
-							b.method(
-								'set',
-								definition.key,
-								[b.id('_')],
-								[b.throw_error(`Cannot update a derived property ('${name}')`)]
-							)
-						);
-					}
+					body.push(
+						b.method(
+							'set',
+							definition.key,
+							[val],
+							[b.stmt(b.call('$.set', member, val, field.kind === 'state' && b.true))]
+						)
+					);
 				}
 				continue;
 			}
 		}
 
 		body.push(/** @type {MethodDefinition} **/ (context.visit(definition, child_state)));
-	}
-
-	if (dev && public_state.size > 0) {
-		// add an `[$.ADD_OWNER]` method so that a class with state fields can widen ownership
-		body.push(
-			b.method(
-				'method',
-				b.id('$.ADD_OWNER'),
-				[b.id('owner')],
-				Array.from(public_state)
-					// Only run ownership addition on $state fields.
-					// Theoretically someone could create a `$state` while creating `$state.raw` or inside a `$derived.by`,
-					// but that feels so much of an edge case that it doesn't warrant a perf hit for the common case.
-					.filter(([_, { kind }]) => kind === 'state')
-					.map(([name]) =>
-						b.stmt(
-							b.call(
-								'$.add_owner',
-								b.call('$.get', b.member(b.this, b.private_id(name))),
-								b.id('owner'),
-								b.literal(false),
-								is_ignored(node, 'ownership_invalid_binding') && b.true
-							)
-						)
-					),
-				true
-			)
-		);
 	}
 
 	return { ...node, body };

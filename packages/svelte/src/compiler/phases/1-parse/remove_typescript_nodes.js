@@ -24,6 +24,7 @@ const visitors = {
 		// until that day comes, we just delete them so they don't confuse esrap
 		delete n.typeAnnotation;
 		delete n.typeParameters;
+		delete n.typeArguments;
 		delete n.returnType;
 		delete n.accessibility;
 	},
@@ -94,6 +95,9 @@ const visitors = {
 	TSTypeAliasDeclaration() {
 		return b.empty;
 	},
+	TSTypeAssertion(node, context) {
+		return context.visit(node.expression);
+	},
 	TSEnumDeclaration(node) {
 		e.typescript_invalid_feature(node, 'enums');
 	},
@@ -116,6 +120,12 @@ const visitors = {
 			return b.empty;
 		}
 		delete node.implements;
+		return context.next();
+	},
+	MethodDefinition(node, context) {
+		if (node.abstract) {
+			return b.empty;
+		}
 		return context.next();
 	},
 	VariableDeclaration(node, context) {

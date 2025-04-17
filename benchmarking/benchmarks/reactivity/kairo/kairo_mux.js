@@ -22,13 +22,13 @@ function setup() {
 		destroy,
 		run() {
 			for (let i = 0; i < 10; i++) {
-				$.flush_sync(() => {
+				$.flush(() => {
 					$.set(heads[i], i);
 				});
 				assert($.get(splited[i]) === i + 1);
 			}
 			for (let i = 0; i < 10; i++) {
-				$.flush_sync(() => {
+				$.flush(() => {
 					$.set(heads[i], i * 2);
 				});
 				assert($.get(splited[i]) === i * 2 + 1);
@@ -48,7 +48,7 @@ export async function kairo_mux_unowned() {
 	const { run, destroy } = setup();
 
 	const { timing } = await fastest_test(10, () => {
-		for (let i = 0; i < 100; i++) {
+		for (let i = 0; i < 1000; i++) {
 			run();
 		}
 	});
@@ -77,7 +77,7 @@ export async function kairo_mux_owned() {
 	});
 
 	const { timing } = await fastest_test(10, () => {
-		for (let i = 0; i < 100; i++) {
+		for (let i = 0; i < 1000; i++) {
 			run();
 		}
 	});

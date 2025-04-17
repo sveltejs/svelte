@@ -741,7 +741,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	accesskey?: string | undefined | null;
 	autocapitalize?: 'characters' | 'off' | 'on' | 'none' | 'sentences' | 'words' | undefined | null;
 	autofocus?: boolean | undefined | null;
-	class?: string | import('clsx').ClassArray | import('clsx').ClassDictionary | undefined | null;
+	class?: ClassValue | undefined | null;
 	contenteditable?: Booleanish | 'inherit' | 'plaintext-only' | undefined | null;
 	contextmenu?: string | undefined | null;
 	dir?: 'ltr' | 'rtl' | 'auto' | undefined | null;
@@ -839,6 +839,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	readonly 'bind:contentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
 	readonly 'bind:borderBoxSize'?: Array<ResizeObserverSize> | undefined | null;
 	readonly 'bind:devicePixelContentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
+	readonly 'bind:focused'?: boolean | undefined | null;
 
 	// SvelteKit
 	'data-sveltekit-keepfocus'?: true | '' | 'off' | undefined | null;
@@ -956,6 +957,7 @@ export interface HTMLDelAttributes extends HTMLAttributes<HTMLModElement> {
 
 export interface HTMLDialogAttributes extends HTMLAttributes<HTMLDialogElement> {
 	open?: boolean | undefined | null;
+	closedby?: 'any' | 'closerequest' | 'none' | undefined | null;
 }
 
 export interface HTMLEmbedAttributes extends HTMLAttributes<HTMLEmbedElement> {
@@ -1074,6 +1076,7 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	checked?: boolean | undefined | null;
 	dirname?: string | undefined | null;
 	disabled?: boolean | undefined | null;
+	files?: FileList | undefined | null;
 	form?: string | undefined | null;
 	formaction?: string | undefined | null;
 	formenctype?:
@@ -1085,6 +1088,7 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	formmethod?: 'dialog' | 'get' | 'post' | 'DIALOG' | 'GET' | 'POST' | undefined | null;
 	formnovalidate?: boolean | undefined | null;
 	formtarget?: string | undefined | null;
+	group?: any | undefined | null;
 	height?: number | string | undefined | null;
 	indeterminate?: boolean | undefined | null;
 	list?: string | undefined | null;
@@ -1522,7 +1526,7 @@ export interface SvelteWindowAttributes extends HTMLAttributes<Window> {
 export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DOMAttributes<T> {
 	// Attributes which also defined in HTMLAttributes
 	className?: string | undefined | null;
-	class?: string | import('clsx').ClassArray | import('clsx').ClassDictionary | undefined | null;
+	class?: ClassValue | undefined | null;
 	color?: string | undefined | null;
 	height?: number | string | undefined | null;
 	id?: string | undefined | null;
@@ -2059,3 +2063,5 @@ export interface SvelteHTMLElements {
 
 	[name: string]: { [name: string]: any };
 }
+
+export type ClassValue = string | import('clsx').ClassArray | import('clsx').ClassDictionary;

@@ -10,20 +10,24 @@ import * as b from '../../../../utils/builders.js';
  */
 export function RenderTag(node, context) {
 	context.state.template.push('<!>');
-	const callee = unwrap_optional(node.expression).callee;
-	const raw_args = unwrap_optional(node.expression).arguments;
+
+	const expression = unwrap_optional(node.expression);
+
+	const callee = expression.callee;
+	const raw_args = expression.arguments;
 
 	/** @type {Expression[]} */
 	let args = [];
 	for (let i = 0; i < raw_args.length; i++) {
-		const raw = raw_args[i];
-		const arg = /** @type {Expression} */ (context.visit(raw));
-		if (node.metadata.args_with_call_expression.has(i)) {
+		let thunk = b.thunk(/** @type {Expression} */ (context.visit(raw_args[i])));
+		const { has_call } = node.metadata.arguments[i];
+
+		if (has_call) {
 			const id = b.id(context.state.scope.generate('render_arg'));
-			context.state.init.push(b.var(id, b.call('$.derived_safe_equal', b.thunk(arg))));
+			context.state.init.push(b.var(id, b.call('$.derived_safe_equal', thunk)));
 			args.push(b.thunk(b.call('$.get', id)));
 		} else {
-			args.push(b.thunk(arg));
+			args.push(thunk);
 		}
 	}
 

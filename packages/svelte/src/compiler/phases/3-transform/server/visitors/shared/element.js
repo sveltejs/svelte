@@ -1,4 +1,4 @@
-/** @import { Expression, Literal } from 'estree' */
+/** @import { ArrayExpression, Expression, Literal, ObjectExpression } from 'estree' */
 /** @import { AST, Namespace } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../../types.js' */
 import {
@@ -24,6 +24,7 @@ import {
 	is_content_editable_binding,
 	is_load_error_element
 } from '../../../../../../utils.js';
+import { escape_html } from '../../../../../../escaping.js';
 
 const WHITESPACE_INSENSITIVE_ATTRIBUTES = ['class', 'style'];
 
@@ -47,9 +48,6 @@ export function build_element_attributes(node, context) {
 	let content = null;
 
 	let has_spread = false;
-	// Use the index to keep the attributes order which is important for spreading
-	let class_index = -1;
-	let style_index = -1;
 	let events_to_capture = new Set();
 
 	for (const attribute of node.attributes) {
@@ -85,34 +83,21 @@ export function build_element_attributes(node, context) {
 				// the defaultValue/defaultChecked properties don't exist as attributes
 			} else if (attribute.name !== 'defaultValue' && attribute.name !== 'defaultChecked') {
 				if (attribute.name === 'class') {
-					class_index = attributes.length;
-
 					if (attribute.metadata.needs_clsx) {
-						const clsx_value = b.call(
-							'$.clsx',
-							/** @type {AST.ExpressionTag} */ (attribute.value).expression
-						);
 						attributes.push({
 							...attribute,
 							value: {
 								.../** @type {AST.ExpressionTag} */ (attribute.value),
-								expression: context.state.analysis.css.hash
-									? b.binary(
-											'+',
-											b.binary('+', clsx_value, b.literal(' ')),
-											b.literal(context.state.analysis.css.hash)
-										)
-									: clsx_value
+								expression: b.call(
+									'$.clsx',
+									/** @type {AST.ExpressionTag} */ (attribute.value).expression
+								)
 							}
 						});
 					} else {
 						attributes.push(attribute);
 					}
 				} else {
-					if (attribute.name === 'style') {
-						style_index = attributes.length;
-					}
-
 					attributes.push(attribute);
 				}
 			}
@@ -219,40 +204,30 @@ export function build_element_attributes(node, context) {
 		}
 	}
 
-	if (class_directives.length > 0 && !has_spread) {
-		const class_attribute = build_class_directives(
-			class_directives,
-			/** @type {AST.Attribute | null} */ (attributes[class_index] ?? null)
-		);
-		if (class_index === -1) {
-			attributes.push(class_attribute);
-		}
-	}
-
-	if (style_directives.length > 0 && !has_spread) {
-		build_style_directives(
-			style_directives,
-			/** @type {AST.Attribute | null} */ (attributes[style_index] ?? null),
-			context
-		);
-		if (style_index > -1) {
-			attributes.splice(style_index, 1);
-		}
-	}
-
 	if (has_spread) {
 		build_element_spread_attributes(node, attributes, style_directives, class_directives, context);
 	} else {
+		const css_hash = node.metadata.scoped ? context.state.analysis.css.hash : null;
+
 		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
-			if (attribute.value === true || is_text_attribute(attribute)) {
-				const name = get_attribute_name(node, attribute);
-				const literal_value = /** @type {Literal} */ (
+			const name = get_attribute_name(node, attribute);
+			const can_use_literal =
+				(name !== 'class' || class_directives.length === 0) &&
+				(name !== 'style' || style_directives.length === 0);
+
+			if (can_use_literal && (attribute.value === true || is_text_attribute(attribute))) {
+				let literal_value = /** @type {Literal} */ (
 					build_attribute_value(
 						attribute.value,
 						context,
 						WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 					)
 				).value;
+
+				if (name === 'class' && css_hash) {
+					literal_value = (String(literal_value) + ' ' + css_hash).trim();
+				}
+
 				if (name !== 'class' || literal_value) {
 					context.state.template.push(
 						b.literal(
@@ -264,19 +239,31 @@ export function build_element_attributes(node, context) {
 						)
 					);
 				}
+
 				continue;
 			}
 
-			const name = get_attribute_name(node, attribute);
 			const value = build_attribute_value(
 				attribute.value,
 				context,
 				WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 			);
 
-			context.state.template.push(
-				b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
-			);
+			// pre-escape and inline literal attributes :
+			if (can_use_literal && value.type === 'Literal' && typeof value.value === 'string') {
+				if (name === 'class' && css_hash) {
+					value.value = (value.value + ' ' + css_hash).trim();
+				}
+				context.state.template.push(b.literal(` ${name}="${escape_html(value.value, true)}"`));
+			} else if (name === 'class') {
+				context.state.template.push(build_attr_class(class_directives, value, context, css_hash));
+			} else if (name === 'style') {
+				context.state.template.push(build_attr_style(style_directives, value, context));
+			} else {
+				context.state.template.push(
+					b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
+				);
+			}
 		}
 	}
 
@@ -322,7 +309,7 @@ function build_element_spread_attributes(
 	let styles;
 	let flags = 0;
 
-	if (class_directives.length > 0 || context.state.analysis.css.hash) {
+	if (class_directives.length) {
 		const properties = class_directives.map((directive) =>
 			b.init(
 				directive.name,
@@ -331,11 +318,6 @@ function build_element_spread_attributes(
 					: /** @type {Expression} */ (context.visit(directive.expression))
 			)
 		);
-
-		if (context.state.analysis.css.hash) {
-			properties.unshift(b.init(context.state.analysis.css.hash, b.literal(true)));
-		}
-
 		classes = b.object(properties);
 	}
 
@@ -374,83 +356,90 @@ function build_element_spread_attributes(
 		})
 	);
 
-	const args = [object, classes, styles, flags ? b.literal(flags) : undefined];
+	const css_hash =
+		element.metadata.scoped && context.state.analysis.css.hash
+			? b.literal(context.state.analysis.css.hash)
+			: b.null;
+
+	const args = [object, css_hash, classes, styles, flags ? b.literal(flags) : undefined];
 	context.state.template.push(b.call('$.spread_attributes', ...args));
 }
 
 /**
  *
  * @param {AST.ClassDirective[]} class_directives
- * @param {AST.Attribute | null} class_attribute
- * @returns
+ * @param {Expression} expression
+ * @param {ComponentContext} context
+ * @param {string | null} hash
  */
-function build_class_directives(class_directives, class_attribute) {
-	const expressions = class_directives.map((directive) =>
-		b.conditional(directive.expression, b.literal(directive.name), b.literal(''))
-	);
+function build_attr_class(class_directives, expression, context, hash) {
+	/** @type {ObjectExpression | undefined} */
+	let directives;
 
-	if (class_attribute === null) {
-		class_attribute = create_attribute('class', -1, -1, []);
+	if (class_directives.length) {
+		directives = b.object(
+			class_directives.map((directive) =>
+				b.prop(
+					'init',
+					b.literal(directive.name),
+					/** @type {Expression} */ (context.visit(directive.expression, context.state))
+				)
+			)
+		);
 	}
 
-	const chunks = get_attribute_chunks(class_attribute.value);
-	const last = chunks.at(-1);
+	let css_hash;
 
-	if (last?.type === 'Text') {
-		last.data += ' ';
-		last.raw += ' ';
-	} else if (last) {
-		chunks.push({
-			type: 'Text',
-			start: -1,
-			end: -1,
-			data: ' ',
-			raw: ' '
-		});
-	}
-
-	chunks.push({
-		type: 'ExpressionTag',
-		start: -1,
-		end: -1,
-		expression: b.call(
-			b.member(b.call(b.member(b.array(expressions), 'filter'), b.id('Boolean')), b.id('join')),
-			b.literal(' ')
-		),
-		metadata: {
-			expression: create_expression_metadata()
+	if (hash) {
+		if (expression.type === 'Literal' && typeof expression.value === 'string') {
+			expression.value = (expression.value + ' ' + hash).trim();
+		} else {
+			css_hash = b.literal(hash);
 		}
-	});
+	}
 
-	class_attribute.value = chunks;
-	return class_attribute;
+	return b.call('$.attr_class', expression, css_hash, directives);
 }
 
 /**
+ *
  * @param {AST.StyleDirective[]} style_directives
- * @param {AST.Attribute | null} style_attribute
+ * @param {Expression} expression
  * @param {ComponentContext} context
  */
-function build_style_directives(style_directives, style_attribute, context) {
-	const styles = style_directives.map((directive) => {
-		let value =
-			directive.value === true
-				? b.id(directive.name)
-				: build_attribute_value(directive.value, context, true);
-		if (directive.modifiers.includes('important')) {
-			value = b.binary('+', value, b.literal(' !important'));
+function build_attr_style(style_directives, expression, context) {
+	/** @type {ArrayExpression | ObjectExpression | undefined} */
+	let directives;
+
+	if (style_directives.length) {
+		let normal_properties = [];
+		let important_properties = [];
+
+		for (const directive of style_directives) {
+			const expression =
+				directive.value === true
+					? b.id(directive.name)
+					: build_attribute_value(directive.value, context, true);
+
+			let name = directive.name;
+			if (name[0] !== '-' || name[1] !== '-') {
+				name = name.toLowerCase();
+			}
+
+			const property = b.init(directive.name, expression);
+			if (directive.modifiers.includes('important')) {
+				important_properties.push(property);
+			} else {
+				normal_properties.push(property);
+			}
 		}
-		return b.init(directive.name, value);
-	});
 
-	const arg =
-		style_attribute === null
-			? b.object(styles)
-			: b.call(
-					'$.merge_styles',
-					build_attribute_value(style_attribute.value, context, true),
-					b.object(styles)
-				);
+		if (important_properties.length) {
+			directives = b.array([b.object(normal_properties), b.object(important_properties)]);
+		} else {
+			directives = b.object(normal_properties);
+		}
+	}
 
-	context.state.template.push(b.call('$.add_styles', arg));
+	return b.call('$.attr_style', expression, directives);
 }

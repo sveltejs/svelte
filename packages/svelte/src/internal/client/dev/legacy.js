@@ -1,7 +1,6 @@
 import * as e from '../errors.js';
-import { component_context } from '../runtime.js';
+import { component_context } from '../context.js';
 import { FILENAME } from '../../../constants.js';
-import { get_component } from './ownership.js';
 
 /** @param {Function & { [FILENAME]: string }} target */
 export function check_target(target) {
@@ -15,9 +14,7 @@ export function legacy_api() {
 
 	/** @param {string} method */
 	function error(method) {
-		// @ts-expect-error
-		const parent = get_component()?.[FILENAME] ?? 'Something';
-		e.component_api_changed(parent, method, component[FILENAME]);
+		e.component_api_changed(method, component[FILENAME]);
 	}
 
 	return {

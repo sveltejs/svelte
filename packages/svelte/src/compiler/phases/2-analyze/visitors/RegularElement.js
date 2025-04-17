@@ -90,8 +90,11 @@ export function RegularElement(node, context) {
 		if (is_svg(node.name)) {
 			return true;
 		}
-		if (node.name === 'a') {
-			for (let i = context.path.length - 1; i >= 0; i--) {
+
+		if (node.name === 'a' || node.name === 'title') {
+			let i = context.path.length;
+
+			while (i--) {
 				const ancestor = context.path[i];
 				if (ancestor.type === 'RegularElement') {
 					return ancestor.metadata.svg;
@@ -170,7 +173,8 @@ export function RegularElement(node, context) {
 	if (
 		context.state.analysis.source[node.end - 2] === '/' &&
 		!is_void(node_name) &&
-		!is_svg(node_name)
+		!is_svg(node_name) &&
+		!is_mathml(node_name)
 	) {
 		w.element_invalid_self_closing_tag(node, node.name);
 	}

@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'sveltejs/svelte' && github.event.issue.pull_request && startsWith(github.event.comment.body, '/ecosystem-ci run')
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@v1
       - uses: actions/github-script@v6
         with:
           script: |

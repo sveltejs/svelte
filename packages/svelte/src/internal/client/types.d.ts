@@ -14,6 +14,8 @@ export type ComponentContext = {
 	p: null | ComponentContext;
 	/** context */
 	c: null | Map<unknown, unknown>;
+	/** destroyed */
+	d: boolean;
 	/** deferred effects */
 	e: null | Array<{
 		fn: () => void | (() => void);
@@ -176,14 +178,6 @@ export interface Task {
 export type TaskCallback = (now: number) => boolean | void;
 
 export type TaskEntry = { c: TaskCallback; f: () => void };
-
-/** Dev-only */
-export interface ProxyMetadata {
-	/** The components that 'own' this state, if any. `null` means no owners, i.e. everyone can mutate this state. */
-	owners: null | Set<Function>;
-	/** The parent metadata object */
-	parent: null | ProxyMetadata;
-}
 
 export type ProxyStateObject<T = Record<string | symbol, any>> = T & {
 	[STATE_SYMBOL]: T;

@@ -33,7 +33,7 @@ Now, a component that uses `<FancyInput>` can add the [`bind:`](bind) directive 
 
 <!-- prettier-ignore -->
 ```svelte
-/// App.svelte
+/// file: App.svelte
 <script>
 	import FancyInput from './FancyInput.svelte';
 

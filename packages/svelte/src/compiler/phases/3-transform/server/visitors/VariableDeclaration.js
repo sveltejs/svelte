@@ -24,6 +24,11 @@ export function VariableDeclaration(node, context) {
 				continue;
 			}
 
+			if (rune === '$props.id') {
+				// skip
+				continue;
+			}
+
 			if (rune === '$props') {
 				let has_rest = false;
 				// remove $bindable() from props declaration
@@ -40,7 +45,7 @@ export function VariableDeclaration(node, context) {
 						) {
 							const right = node.right.arguments.length
 								? /** @type {Expression} */ (context.visit(node.right.arguments[0]))
-								: b.id('undefined');
+								: b.void0;
 							return b.assignment_pattern(node.left, right);
 						}
 					}
@@ -70,8 +75,7 @@ export function VariableDeclaration(node, context) {
 			}
 
 			const args = /** @type {CallExpression} */ (init).arguments;
-			const value =
-				args.length === 0 ? b.id('undefined') : /** @type {Expression} */ (context.visit(args[0]));
+			const value = args.length > 0 ? /** @type {Expression} */ (context.visit(args[0])) : b.void0;
 
 			if (rune === '$derived.by') {
 				declarations.push(
@@ -154,6 +158,10 @@ export function VariableDeclaration(node, context) {
 				)
 			);
 		}
+	}
+
+	if (declarations.length === 0) {
+		return b.empty;
 	}
 
 	return {

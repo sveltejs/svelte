@@ -10,13 +10,13 @@ You don't have to migrate to the new syntax right away - Svelte 5 still supports
 
 At the heart of Svelte 5 is the new runes API. Runes are basically compiler instructions that inform Svelte about reactivity. Syntactically, runes are functions starting with a dollar-sign.
 
-### let -> $state
+### let → $state
 
 In Svelte 4, a `let` declaration at the top level of a component was implicitly reactive. In Svelte 5, things are more explicit: a variable is reactive when created using the `$state` rune. Let's migrate the counter to runes mode by wrapping the counter in `$state`:
 
 ```svelte
 <script>
-	let count = +++$state(+++0+++)+++;
+	let count = +++$state(0)+++;
 </script>
 ```
 
@@ -25,14 +25,14 @@ Nothing else changes. `count` is still the number itself, and you read and write
 > [!DETAILS] Why we did this
 > `let` being implicitly reactive at the top level worked great, but it meant that reactivity was constrained - a `let` declaration anywhere else was not reactive. This forced you to resort to using stores when refactoring code out of the top level of components for reuse. This meant you had to learn an entirely separate reactivity model, and the result often wasn't as nice to work with. Because reactivity is more explicit in Svelte 5, you can keep using the same API outside the top level of components. Head to [the tutorial](/tutorial) to learn more.
 
-### $: -> $derived/$effect
+### $: → $derived/$effect
 
 In Svelte 4, a `$:` statement at the top level of a component could be used to declare a derivation, i.e. state that is entirely defined through a computation of other state. In Svelte 5, this is achieved using the `$derived` rune:
 
 ```svelte
 <script>
-	let count = +++$state(+++0+++)+++;
-	---$:--- +++const+++ double = +++$derived(+++count * 2+++)+++;
+	let count = $state(0);
+	---$:--- +++const+++ double = +++$derived(count * 2)+++;
 </script>
 ```
 
@@ -42,7 +42,8 @@ A `$:` statement could also be used to create side effects. In Svelte 5, this is
 
 ```svelte
 <script>
-	let count = +++$state(+++0+++)+++;
+	let count = $state(0);
+
 	---$:---+++$effect(() =>+++ {
 		if (count > 5) {
 			alert('Count is too high!');
@@ -50,6 +51,8 @@ A `$:` statement could also be used to create side effects. In Svelte 5, this is
 	}+++);+++
 </script>
 ```
+
+Note that [when `$effect` runs is different]($effect#Understanding-dependencies) than when `$:` runs.
 
 > [!DETAILS] Why we did this
 > `$:` was a great shorthand and easy to get started with: you could slap a `$:` in front of most code and it would somehow work. This intuitiveness was also its drawback the more complicated your code became, because it wasn't as easy to reason about. Was the intent of the code to create a derivation, or a side effect? With `$derived` and `$effect`, you have a bit more up-front decision making to do (spoiler alert: 90% of the time you want `$derived`), but future-you and other developers on your team will have an easier time.
@@ -71,14 +74,14 @@ A `$:` statement could also be used to create side effects. In Svelte 5, this is
 > - executing dependencies as needed and therefore being immune to ordering problems
 > - being TypeScript-friendly
 
-### export let -> $props
+### export let → $props
 
 In Svelte 4, properties of a component were declared using `export let`. Each property was one declaration. In Svelte 5, all properties are declared through the `$props` rune, through destructuring:
 
 ```svelte
 <script>
-	---export let optional = 'unset';
-	export let required;---
+	---export let optional = 'unset';---
+	---export let required;---
 	+++let { optional = 'unset', required } = $props();+++
 </script>
 ```
@@ -103,8 +106,8 @@ In Svelte 5, the `$props` rune makes this straightforward without any additional
 
 ```svelte
 <script>
-	---let klass = '';
-	export { klass as class};---
+	---let klass = '';---
+	---export { klass as class};---
 	+++let { class: klass, ...rest } = $props();+++
 </script>
 <button class={klass} {...---$$restProps---+++rest+++}>click me</button>
@@ -190,9 +193,9 @@ This function is deprecated in Svelte 5. Instead, components should accept _call
 ```svelte
 <!--- file: Pump.svelte --->
 <script>
-    ---import { createEventDispatcher } from 'svelte';
-    const dispatch = createEventDispatcher();
-    ---
+	---import { createEventDispatcher } from 'svelte';---
+	---const dispatch = createEventDispatcher();---
+
 	+++let { inflate, deflate } = $props();+++
 	let power = $state(5);
 </script>
@@ -339,7 +342,31 @@ When spreading props, local event handlers must go _after_ the spread, or they r
 
 In Svelte 4, content can be passed to components using slots. Svelte 5 replaces them with snippets which are more powerful and flexible, and as such slots are deprecated in Svelte 5.
 
-They continue to work, however, and you can mix and match snippets and slots in your components.
+They continue to work, however, and you can pass snippets to a component that uses slots:
+
+```svelte
+<!--- file: Child.svelte --->
+<slot />
+<hr />
+<slot name="foo" message="hello" />
+```
+
+```svelte
+<!--- file: Parent.svelte --->
+<script>
+	import Child from './Child.svelte';
+</script>
+
+<Child>
+	default child content
+
+	{#snippet foo({ message })}
+		message from child: {message}
+	{/snippet}
+</Child>
+```
+
+(The reverse is not true — you cannot pass slotted content to a component that uses [`{@render ...}`](/docs/svelte/@render) tags.)
 
 When using custom elements, you should still use `<slot />` like before. In a future version, when Svelte removes its internal version of slots, it will leave those slots as-is, i.e. output a regular DOM tag instead of transforming it.
 
@@ -440,11 +467,11 @@ By now you should have a pretty good understanding of the before/after and how t
 We thought the same, which is why we provide a migration script to do most of the migration automatically. You can upgrade your project by using `npx sv migrate svelte-5`. This will do the following things:
 
 - bump core dependencies in your `package.json`
-- migrate to runes (`let` -> `$state` etc)
-- migrate to event attributes for DOM elements (`on:click` -> `onclick`)
-- migrate slot creations to render tags (`<slot />` -> `{@render children()}`)
-- migrate slot usages to snippets (`<div slot="x">...</div>` -> `{#snippet x()}<div>...</div>{/snippet}`)
-- migrate obvious component creations (`new Component(...)` -> `mount(Component, ...)`)
+- migrate to runes (`let` → `$state` etc)
+- migrate to event attributes for DOM elements (`on:click` → `onclick`)
+- migrate slot creations to render tags (`<slot />` → `{@render children()}`)
+- migrate slot usages to snippets (`<div slot="x">...</div>` → `{#snippet x()}<div>...</div>{/snippet}`)
+- migrate obvious component creations (`new Component(...)` → `mount(Component, ...)`)
 
 You can also migrate a single component in VS Code through the `Migrate Component to Svelte 5 Syntax` command, or in our Playground through the `Migrate` button.
 
@@ -597,28 +624,57 @@ export declare const MyComponent: Component<{
 
 To declare that a component of a certain type is required:
 
-```svelte
-<script lang="ts">
-	import type { ---SvelteComponent--- +++Component+++ } from 'svelte';
-	import {
-		ComponentA,
-		ComponentB
-	} from 'component-library';
+```js
+import { ComponentA, ComponentB } from 'component-library';
+---import type { SvelteComponent } from 'svelte';---
++++import type { Component } from 'svelte';+++
 
-	---let component: typeof SvelteComponent<{ foo: string }>---
-	+++let component: Component<{ foo: string }>+++ = $state(
-		Math.random() ? ComponentA : ComponentB
-	);
-</script>
-
-<svelte:component this={component} foo="bar" />
+---let C: typeof SvelteComponent<{ foo: string }> = $state(---
++++let C: Component<{ foo: string }> = $state(+++
+	Math.random() ? ComponentA : ComponentB
+);
 ```
 
-The two utility types `ComponentEvents` and `ComponentType` are also deprecated. `ComponentEvents` is obsolete because events are defined as callback props now, and `ComponentType` is obsolete because the new `Component` type is the component type already (e.g. `ComponentType<SvelteComponent<{ prop: string }>>` == `Component<{ prop: string }>`).
+The two utility types `ComponentEvents` and `ComponentType` are also deprecated. `ComponentEvents` is obsolete because events are defined as callback props now, and `ComponentType` is obsolete because the new `Component` type is the component type already (i.e. `ComponentType<SvelteComponent<{ prop: string }>>` is equivalent to `Component<{ prop: string }>`).
 
 ### bind:this changes
 
 Because components are no longer classes, using `bind:this` no longer returns a class instance with `$set`, `$on` and `$destroy` methods on it. It only returns the instance exports (`export function/const`) and, if you're using the `accessors` option, a getter/setter-pair for each property.
+
+## `<svelte:component>` is no longer necessary
+
+In Svelte 4, components are _static_ — if you render `<Thing>`, and the value of `Thing` changes, [nothing happens](/playground/7f1fa24f0ab44c1089dcbb03568f8dfa?version=4.2.18). To make it dynamic you had to use `<svelte:component>`.
+
+This is no longer true in Svelte 5:
+
+```svelte
+<script>
+	import A from './A.svelte';
+	import B from './B.svelte';
+
+	let Thing = $state();
+</script>
+
+<select bind:value={Thing}>
+	<option value={A}>A</option>
+	<option value={B}>B</option>
+</select>
+
+<!-- these are equivalent -->
+<Thing />
+<svelte:component this={Thing} />
+```
+While migrating, keep in mind that your component's name should be capitalized (`Thing`) to distinguish it from elements, unless using dot notation.
+
+### Dot notation indicates a component
+
+In Svelte 4, `<foo.bar>` would create an element with a tag name of `"foo.bar"`. In Svelte 5, `foo.bar` is treated as a component instead. This is particularly useful inside `each` blocks:
+
+```svelte
+{#each items as item}
+	<item.component {...item.props} />
+{/each}
+```
 
 ## Whitespace handling changed
 
@@ -653,16 +709,6 @@ The `legacy` compiler option, which generated bulkier but IE-friendly code, no l
 
 Content inside component tags becomes a snippet prop called `children`. You cannot have a separate prop by that name.
 
-## Dot notation indicates a component
-
-In Svelte 4, `<foo.bar>` would create an element with a tag name of `"foo.bar"`. In Svelte 5, `foo.bar` is treated as a component instead. This is particularly useful inside `each` blocks:
-
-```svelte
-{#each items as item}
-	<item.component {...item.props} />
-{/each}
-```
-
 ## Breaking changes in runes mode
 
 Some breaking changes only apply once your component is in runes mode.
@@ -679,7 +725,39 @@ If a bindable property has a default value (e.g. `let { foo = $bindable('bar') }
 
 ### `accessors` option is ignored
 
-Setting the `accessors` option to `true` makes properties of a component directly accessible on the component instance. In runes mode, properties are never accessible on the component instance. You can use component exports instead if you need to expose them.
+Setting the `accessors` option to `true` makes properties of a component directly accessible on the component instance.
+
+```svelte
+<svelte:options accessors={true} />
+
+<script>
+	// available via componentInstance.name
+	export let name;
+</script>
+```
+
+In runes mode, properties are never accessible on the component instance. You can use component exports instead if you need to expose them.
+
+```svelte
+<script>
+	let { name } = $props();
+	// available via componentInstance.getName()
+	export const getName = () => name;
+</script>
+```
+
+Alternatively, if the place where they are instantiated is under your control, you can also make use of runes inside `.js/.ts` files by adjusting their ending to include `.svelte`, i.e. `.svelte.js` or `.svelte.ts`, and then use `$state`:
+
+```js
++++import { mount } from 'svelte';+++
+import App from './App.svelte'
+
+---const app = new App({ target: document.getElementById("app"), props: { foo: 'bar' } });
+app.foo = 'baz'---
++++const props = $state({ foo: 'bar' });
+const app = mount(App, { target: document.getElementById("app"), props });
+props.foo = 'baz';+++
+```
 
 ### `immutable` option is ignored
 
@@ -699,30 +777,6 @@ In Svelte 4, doing the following triggered reactivity:
 ```
 
 This is because the Svelte compiler treated the assignment to `foo.value` as an instruction to update anything that referenced `foo`. In Svelte 5, reactivity is determined at runtime rather than compile time, so you should define `value` as a reactive `$state` field on the `Foo` class. Wrapping `new Foo()` with `$state(...)` will have no effect — only vanilla objects and arrays are made deeply reactive.
-
-### `<svelte:component>` is no longer necessary
-
-In Svelte 4, components are _static_ — if you render `<Thing>`, and the value of `Thing` changes, [nothing happens](/playground/7f1fa24f0ab44c1089dcbb03568f8dfa?version=4.2.18). To make it dynamic you must use `<svelte:component>`.
-
-This is no longer true in Svelte 5:
-
-```svelte
-<script>
-	import A from './A.svelte';
-	import B from './B.svelte';
-
-	let Thing = $state();
-</script>
-
-<select bind:value={Thing}>
-	<option value={A}>A</option>
-	<option value={B}>B</option>
-</select>
-
-<!-- these are equivalent -->
-<Thing />
-<svelte:component this={Thing} />
-```
 
 ### Touch and wheel events are passive
 

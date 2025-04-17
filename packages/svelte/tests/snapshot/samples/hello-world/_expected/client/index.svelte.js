@@ -1,6 +1,6 @@
-import "svelte/internal/disclose-version";
-import "svelte/internal/flags/legacy";
-import * as $ from "svelte/internal/client";
+import 'svelte/internal/disclose-version';
+import 'svelte/internal/flags/legacy';
+import * as $ from 'svelte/internal/client';
 
 var root = $.template(`<h1>hello world</h1>`);
 

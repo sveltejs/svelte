@@ -1,5 +1,5 @@
-import "svelte/internal/disclose-version";
-import * as $ from "svelte/internal/client";
+import 'svelte/internal/disclose-version';
+import * as $ from 'svelte/internal/client';
 
 var root = $.template(`<p> </p>`);
 
@@ -16,11 +16,9 @@ export default function Text_nodes_deriveds($$anchor) {
 	}
 
 	var p = root();
-	const stringified_text = $.derived(() => text1() ?? "");
-	const stringified_text_1 = $.derived(() => text2() ?? "");
 	var text = $.child(p);
 
-	$.template_effect(() => $.set_text(text, `${$.get(stringified_text)}${$.get(stringified_text_1)}`));
 	$.reset(p);
+	$.template_effect(($0, $1) => $.set_text(text, `${$0 ?? ''}${$1 ?? ''}`), [text1, text2]);
 	$.append($$anchor, p);
 }

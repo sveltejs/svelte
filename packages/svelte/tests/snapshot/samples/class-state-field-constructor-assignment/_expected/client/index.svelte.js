@@ -1,5 +1,5 @@
-import "svelte/internal/disclose-version";
-import * as $ from "svelte/internal/client";
+import 'svelte/internal/disclose-version';
+import * as $ from 'svelte/internal/client';
 
 export default function Class_state_field_constructor_assignment($$anchor, $$props) {
 	$.push($$props, true);
@@ -12,14 +12,14 @@ export default function Class_state_field_constructor_assignment($$anchor, $$pro
 		}
 
 		set a(value) {
-			$.set(this.#a, $.proxy(value));
+			$.set(this.#a, value, true);
 		}
 
 		#b = $.state();
 
 		constructor() {
 			this.a = 1;
-			this.#b.v = 2;
+			$.set(this.#b, 2);
 		}
 	}
 

@@ -32,7 +32,39 @@
 
 ## each_item_invalid_assignment
 
-> Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`)
+> Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`, or `bind:value={array[i]}` instead of `bind:value={entry}`)
+
+In legacy mode, it was possible to reassign or bind to the each block argument itself:
+
+```svelte
+<script>
+	let array = [1, 2, 3];
+</script>
+
+{#each array as entry}
+	<!-- reassignment -->
+	<button on:click={() => entry = 4}>change</button>
+
+	<!-- binding -->
+	<input bind:value={entry}>
+{/each}
+```
+
+This turned out to be buggy and unpredictable, particularly when working with derived values (such as `array.map(...)`), and as such is forbidden in runes mode. You can achieve the same outcome by using the index instead:
+
+```svelte
+<script>
+	let array = $state([1, 2, 3]);
+</script>
+
+{#each array as entry, i}
+	<!-- reassignment -->
+	<button onclick={() => array[i] = 4}>change</button>
+
+	<!-- binding -->
+	<input bind:value={array[i]}>
+{/each}
+```
 
 ## effect_invalid_placement
 
@@ -88,7 +120,11 @@
 
 ## props_duplicate
 
-> Cannot use `$props()` more than once
+> Cannot use `%rune%()` more than once
+
+## props_id_invalid_placement
+
+> `$props.id()` can only be used at the top level of components as a variable declaration initializer
 
 ## props_illegal_name
 
@@ -125,6 +161,10 @@
 ## rune_invalid_name
 
 > `%name%` is not a valid rune
+
+## rune_invalid_spread
+
+> `%rune%` cannot be called with a spread argument
 
 ## rune_invalid_usage
 

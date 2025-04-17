@@ -1,8 +1,10 @@
 /** @import { BlockStatement, Expression, Pattern, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
-/** @import { ComponentContext } from '../types' */
+/** @import { ComponentClientTransformState, ComponentContext } from '../types' */
+import { extract_identifiers } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
-import { create_derived_block_argument } from '../utils.js';
+import { create_derived } from '../utils.js';
+import { get_value } from './shared/declarations.js';
 
 /**
  * @param {AST.AwaitBlock} node
@@ -58,10 +60,45 @@ export function AwaitBlock(node, context) {
 				expression,
 				node.pending
 					? b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.pending)))
-					: b.literal(null),
+					: b.null,
 				then_block,
 				catch_block
 			)
 		)
 	);
+}
+
+/**
+ * @param {Pattern} node
+ * @param {import('zimmerframe').Context<AST.SvelteNode, ComponentClientTransformState>} context
+ * @returns {{ id: Pattern, declarations: null | Statement[] }}
+ */
+function create_derived_block_argument(node, context) {
+	if (node.type === 'Identifier') {
+		context.state.transform[node.name] = { read: get_value };
+		return { id: node, declarations: null };
+	}
+
+	const pattern = /** @type {Pattern} */ (context.visit(node));
+	const identifiers = extract_identifiers(node);
+
+	const id = b.id('$$source');
+	const value = b.id('$$value');
+
+	const block = b.block([
+		b.var(pattern, b.call('$.get', id)),
+		b.return(b.object(identifiers.map((identifier) => b.prop('init', identifier, identifier))))
+	]);
+
+	const declarations = [b.var(value, create_derived(context.state, b.thunk(block)))];
+
+	for (const id of identifiers) {
+		context.state.transform[id.name] = { read: get_value };
+
+		declarations.push(
+			b.var(id, create_derived(context.state, b.thunk(b.member(b.call('$.get', value), id))))
+		);
+	}
+
+	return { id, declarations };
 }

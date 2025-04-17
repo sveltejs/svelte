@@ -90,3 +90,13 @@
 			opacity: 1;
 		}
 	}
+
+	 x,  y {
+		color: green;
+	}
+
+	div.svelte-xyz, div.svelte-xyz y /* (unused) unused*/ {
+		z {
+			color: green;
+		}
+	}

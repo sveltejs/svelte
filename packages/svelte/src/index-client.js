@@ -1,21 +1,58 @@
 /** @import { ComponentContext, ComponentContextLegacy } from '#client' */
 /** @import { EventDispatcher } from './index.js' */
 /** @import { NotFunction } from './internal/types.js' */
-import { component_context, flush_sync, untrack } from './internal/client/runtime.js';
+import { untrack } from './internal/client/runtime.js';
 import { is_array } from './internal/shared/utils.js';
 import { user_effect } from './internal/client/index.js';
 import * as e from './internal/client/errors.js';
 import { lifecycle_outside_component } from './internal/shared/errors.js';
 import { legacy_mode_flag } from './internal/flags/index.js';
+import { component_context } from './internal/client/context.js';
+import { DEV } from 'esm-env';
+
+if (DEV) {
+	/**
+	 * @param {string} rune
+	 */
+	function throw_rune_error(rune) {
+		if (!(rune in globalThis)) {
+			// TODO if people start adjusting the "this can contain runes" config through v-p-s more, adjust this message
+			/** @type {any} */
+			let value; // let's hope noone modifies this global, but belts and braces
+			Object.defineProperty(globalThis, rune, {
+				configurable: true,
+				// eslint-disable-next-line getter-return
+				get: () => {
+					if (value !== undefined) {
+						return value;
+					}
+
+					e.rune_outside_svelte(rune);
+				},
+				set: (v) => {
+					value = v;
+				}
+			});
+		}
+	}
+
+	throw_rune_error('$state');
+	throw_rune_error('$effect');
+	throw_rune_error('$derived');
+	throw_rune_error('$inspect');
+	throw_rune_error('$props');
+	throw_rune_error('$bindable');
+}
 
 /**
- * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
- * It must be called during the component's initialisation (but doesn't need to live *inside* the component;
- * it can be called from an external module).
+ * `onMount`, like [`$effect`](https://svelte.dev/docs/svelte/$effect), schedules a function to run as soon as the component has been mounted to the DOM.
+ * Unlike `$effect`, the provided function only runs once.
  *
- * If a function is returned _synchronously_ from `onMount`, it will be called when the component is unmounted.
+ * It must be called during the component's initialisation (but doesn't need to live _inside_ the component;
+ * it can be called from an external module). If a function is returned _synchronously_ from `onMount`,
+ * it will be called when the component is unmounted.
  *
- * `onMount` does not run inside [server-side components](https://svelte.dev/docs/svelte/svelte-server#render).
+ * `onMount` functions do not run during [server-side rendering](https://svelte.dev/docs/svelte/svelte-server#render).
  *
  * @template T
  * @param {() => NotFunction<T> | Promise<NotFunction<T>> | (() => any)} fn
@@ -77,7 +114,7 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
  * The event dispatcher can be typed to narrow the allowed event names and the type of the `detail` argument:
  * ```ts
  * const dispatch = createEventDispatcher<{
- *  loaded: never; // does not take a detail argument
+ *  loaded: null; // does not take a detail argument
  *  change: string; // takes a detail argument of type string, which is required
  *  optional: number | null; // takes an optional detail argument of type number
  * }>();
@@ -170,24 +207,8 @@ function init_update_callbacks(context) {
 	return (l.u ??= { a: [], b: [], m: [] });
 }
 
-/**
- * Synchronously flushes any pending state changes and those that result from it.
- * @param {() => void} [fn]
- * @returns {void}
- */
-export function flushSync(fn) {
-	flush_sync(fn);
-}
-
+export { flushSync } from './internal/client/runtime.js';
+export { getContext, getAllContexts, hasContext, setContext } from './internal/client/context.js';
 export { hydrate, mount, unmount } from './internal/client/render.js';
-
-export {
-	getContext,
-	getAllContexts,
-	hasContext,
-	setContext,
-	tick,
-	untrack
-} from './internal/client/runtime.js';
-
+export { tick, untrack } from './internal/client/runtime.js';
 export { createRawSnippet } from './internal/client/dom/blocks/snippet.js';

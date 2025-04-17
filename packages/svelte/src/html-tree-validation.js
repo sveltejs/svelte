@@ -186,6 +186,8 @@ export function is_tag_valid_with_ancestor(child_tag, ancestors, child_loc, ance
 export function is_tag_valid_with_parent(child_tag, parent_tag, child_loc, parent_loc) {
 	if (child_tag.includes('-') || parent_tag?.includes('-')) return null; // custom elements can be anything
 
+	if (parent_tag === 'template') return null; // no errors or warning should be thrown in immediate children of template tags
+
 	const disallowed = disallowed_children[parent_tag];
 
 	const child = child_loc ? `\`<${child_tag}>\` (${child_loc})` : `\`<${child_tag}>\``;

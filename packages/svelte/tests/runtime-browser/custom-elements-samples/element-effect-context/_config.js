@@ -1,4 +1,5 @@
 import { test } from '../../assert';
+import { flushSync } from 'svelte';
 const tick = () => Promise.resolve();
 
 export default test({
@@ -16,7 +17,7 @@ export default test({
 		assert.equal(p.innerHTML, 'false');
 
 		button.click();
-		await tick();
+		flushSync();
 
 		assert.equal(button.innerHTML, '1');
 		assert.equal(p.innerHTML, 'false');

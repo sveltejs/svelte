@@ -1,5 +1,5 @@
-import "svelte/internal/disclose-version";
-import * as $ from "svelte/internal/client";
+import 'svelte/internal/disclose-version';
+import * as $ from 'svelte/internal/client';
 
 function reset(_, str, tpl) {
 	$.set(str, '');
@@ -30,4 +30,4 @@ export default function State_proxy_literal($$anchor) {
 	$.append($$anchor, fragment);
 }
 
-$.delegate(["click"]);
+$.delegate(['click']);
