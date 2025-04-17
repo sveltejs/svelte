@@ -8,7 +8,7 @@ import {
 	BLOCK_OPEN,
 	EMPTY_COMMENT
 } from '../../../../../../internal/server/hydration.js';
-import * as b from '../../../../../utils/builders.js';
+import * as b from '#builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_whitespaces_strict } from '../../../../patterns.js';
 

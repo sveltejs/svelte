@@ -3,7 +3,7 @@
 /** @import { ComponentAnalysis, Analysis } from '../../types' */
 /** @import { Visitors, ComponentClientTransformState, ClientTransformState } from './types' */
 import { walk } from 'zimmerframe';
-import * as b from '../../../utils/builders.js';
+import * as b from '#builders';
 import { build_getter, is_state_source } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
 import { dev, filename } from '../../../state.js';

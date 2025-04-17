@@ -1,6 +1,6 @@
 /** @import { MemberExpression } from 'estree' */
 /** @import { Context } from '../types.js' */
-import * as b from '../../../../utils/builders.js';
+import * as b from '#builders';
 
 /**
  * @param {MemberExpression} node

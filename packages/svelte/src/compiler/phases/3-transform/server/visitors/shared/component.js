@@ -2,7 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { empty_comment, build_attribute_value } from './utils.js';
-import * as b from '../../../../../utils/builders.js';
+import * as b from '#builders';
 import { is_element_node } from '../../../../nodes.js';
 import { dev } from '../../../../../state.js';
 

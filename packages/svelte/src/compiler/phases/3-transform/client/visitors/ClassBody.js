@@ -1,6 +1,6 @@
 /** @import { ClassBody, Expression, Identifier, Literal, MethodDefinition, PrivateIdentifier, PropertyDefinition } from 'estree' */
 /** @import { Context, StateField } from '../types' */
-import * as b from '../../../../utils/builders.js';
+import * as b from '#builders';
 import { regex_invalid_identifier_chars } from '../../../patterns.js';
 import { get_rune } from '../../../scope.js';
 import { should_proxy } from '../utils.js';

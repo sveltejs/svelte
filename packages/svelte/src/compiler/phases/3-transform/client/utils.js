@@ -3,7 +3,7 @@
 /** @import { ClientTransformState, ComponentClientTransformState, ComponentContext } from './types.js' */
 /** @import { Analysis } from '../../types.js' */
 /** @import { Scope } from '../../scope.js' */
-import * as b from '../../../utils/builders.js';
+import * as b from '#builders';
 import { is_simple_expression } from '../../../utils/ast.js';
 import {
 	PROPS_IS_LAZY_INITIAL,

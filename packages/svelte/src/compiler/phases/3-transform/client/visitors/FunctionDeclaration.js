@@ -1,7 +1,7 @@
 /** @import { FunctionDeclaration } from 'estree' */
 /** @import { ComponentContext } from '../types' */
 import { build_hoisted_params } from '../utils.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#builders';
 
 /**
  * @param {FunctionDeclaration} node

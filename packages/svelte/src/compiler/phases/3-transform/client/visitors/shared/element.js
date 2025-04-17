@@ -5,7 +5,7 @@ import { escape_html } from '../../../../../../escaping.js';
 import { normalize_attribute } from '../../../../../../utils.js';
 import { is_ignored } from '../../../../../state.js';
 import { is_event_attribute } from '../../../../../utils/ast.js';
-import * as b from '../../../../../utils/builders.js';
+import * as b from '#builders';
 import { build_class_directives_object, build_style_directives_object } from '../RegularElement.js';
 import { build_template_chunk, get_expression_id } from './utils.js';
 

@@ -103,6 +103,9 @@
       "default": "./src/events/index.js"
     }
   },
+  "imports": {
+    "#builders": "./src/compiler/utils/builders.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sveltejs/svelte.git",

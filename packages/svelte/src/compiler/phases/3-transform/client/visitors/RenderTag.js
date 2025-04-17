@@ -2,7 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { unwrap_optional } from '../../../../utils/ast.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#builders';
 
 /**
  * @param {AST.RenderTag} node

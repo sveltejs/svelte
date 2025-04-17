@@ -1,7 +1,7 @@
 /** @import { Expression, BinaryExpression } from 'estree' */
 /** @import { ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#builders';
 
 /**
  * @param {BinaryExpression} node

@@ -9,7 +9,7 @@ import {
 	is_custom_element_node
 } from '../../../../nodes.js';
 import { regex_starts_with_newline } from '../../../../patterns.js';
-import * as b from '../../../../../utils/builders.js';
+import * as b from '#builders';
 import {
 	ELEMENT_IS_NAMESPACED,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE

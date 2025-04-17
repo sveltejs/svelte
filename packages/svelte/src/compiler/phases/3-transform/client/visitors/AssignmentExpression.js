@@ -1,7 +1,7 @@
 /** @import { AssignmentExpression, AssignmentOperator, Expression, Identifier, Pattern } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../types.js' */
-import * as b from '../../../../utils/builders.js';
+import * as b from '#builders';
 import {
 	build_assignment_value,
 	get_attribute_expression,

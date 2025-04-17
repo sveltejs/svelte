@@ -4,7 +4,7 @@
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import { create_expression_metadata } from './nodes.js';
-import * as b from '../utils/builders.js';
+import * as b from '#builders';
 import * as e from '../errors.js';
 import {
 	extract_identifiers,
