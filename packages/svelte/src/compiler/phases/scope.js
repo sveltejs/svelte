@@ -174,7 +174,6 @@ class Evaluation {
 						binding.kind === 'bindable_prop';
 
 					if (!binding.updated && binding.initial !== null && !is_prop) {
-						console.log(binding.initial);
 						const evaluation = binding.scope.evaluate(/** @type {Expression} */ (binding.initial));
 						for (const value of evaluation.values) {
 							this.values.add(value);
