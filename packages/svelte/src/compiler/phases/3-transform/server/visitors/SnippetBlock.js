@@ -1,4 +1,4 @@
-/** @import { ArrowFunctionExpression, BlockStatement, CallExpression, Statement } from 'estree' */
+/** @import { BlockStatement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import { dev } from '../../../../state.js';
@@ -18,12 +18,12 @@ export function SnippetBlock(node, context) {
 	// @ts-expect-error - TODO remove this hack once $$render_inner for legacy bindings is gone
 	fn.___snippet = true;
 
-	const push_to = node.metadata.can_hoist ? context.state.hoisted : context.state.init;
+	const statements = node.metadata.can_hoist ? context.state.hoisted : context.state.init;
 
 	if (dev) {
 		fn.body.body.unshift(b.stmt(b.call('$.validate_snippet_args', b.id('$$payload'))));
-		push_to.push(b.stmt(b.call('$.prevent_snippet_stringification', fn.id)));
+		statements.push(b.stmt(b.call('$.prevent_snippet_stringification', fn.id)));
 	}
 
-	push_to.push(fn);
+	statements.push(fn);
 }
