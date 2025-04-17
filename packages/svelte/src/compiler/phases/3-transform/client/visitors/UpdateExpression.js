@@ -1,7 +1,7 @@
 /** @import { AssignmentExpression, Expression, UpdateExpression } from 'estree' */
 /** @import { Context } from '../types' */
 import { object } from '../../../../utils/ast.js';
-import * as b from '#builders';
+import * as b from '#compiler/builders';
 import { validate_mutation } from './shared/utils.js';
 
 /**

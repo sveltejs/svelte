@@ -104,7 +104,14 @@
     }
   },
   "imports": {
-    "#builders": "./src/compiler/utils/builders.js"
+    "#client": "./src/internal/client/types.d.ts",
+    "#compiler": {
+      "types": "./src/compiler/private.d.ts",
+      "default": "./src/compiler/index.js"
+    },
+    "#compiler/builders": "./src/compiler/utils/builders.js",
+    "#server": "./src/internal/server/types.d.ts",
+    "#shared": "./src/internal/shared/types.d.ts"
   },
   "repository": {
     "type": "git",

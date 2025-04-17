@@ -1,7 +1,7 @@
 /** @import { Expression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
-import * as b from '#builders';
+import * as b from '#compiler/builders';
 
 /**
  *

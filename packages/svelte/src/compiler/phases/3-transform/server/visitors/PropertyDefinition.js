@@ -1,6 +1,6 @@
 /** @import { Expression, PropertyDefinition } from 'estree' */
 /** @import { Context } from '../types.js' */
-import * as b from '#builders';
+import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 
 /**

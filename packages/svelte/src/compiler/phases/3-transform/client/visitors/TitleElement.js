@@ -1,6 +1,6 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import * as b from '#builders';
+import * as b from '#compiler/builders';
 import { build_template_chunk } from './shared/utils.js';
 
 /**

@@ -1,6 +1,6 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
-import * as b from '#builders';
+import * as b from '#compiler/builders';
 import { process_children, build_template } from './shared/utils.js';
 
 /**

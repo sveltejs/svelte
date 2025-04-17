@@ -2,7 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { is_ignored } from '../../../../state.js';
-import * as b from '#builders';
+import * as b from '#compiler/builders';
 
 /**
  * @param {AST.HtmlTag} node

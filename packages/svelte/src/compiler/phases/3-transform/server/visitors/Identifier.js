@@ -1,7 +1,7 @@
 /** @import { Identifier, Node } from 'estree' */
 /** @import { Context } from '../types.js' */
 import is_reference from 'is-reference';
-import * as b from '#builders';
+import * as b from '#compiler/builders';
 import { build_getter } from './shared/utils.js';
 
 /**

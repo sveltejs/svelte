@@ -1,6 +1,6 @@
 /** @import { ImportDeclaration } from 'estree' */
 /** @import { ComponentContext } from '../types' */
-import * as b from '#builders';
+import * as b from '#compiler/builders';
 
 /**
  * @param {ImportDeclaration} node
