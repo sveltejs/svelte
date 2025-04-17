@@ -1,5 +1,11 @@
 # svelte
 
+## 5.27.3
+
+### Patch Changes
+
+- fix: use function declaration for snippets in server output to avoid TDZ violation ([#15789](https://github.com/sveltejs/svelte/pull/15789))
+
 ## 5.27.2
 
 ### Patch Changes
