@@ -344,15 +344,16 @@ class Evaluation {
 
 			case 'CallExpression': {
 				const rune = get_rune(expression, scope);
+
 				if (rune) {
+					const arg = /** @type {Expression | undefined} */ (expression.arguments[0]);
+
 					switch (rune) {
 						case '$state':
 						case '$state.raw':
-							if (expression.arguments.length) {
-								const evaluated = scope.evaluate(
-									/** @type {Expression} */ (expression.arguments[0])
-								);
-								for (let value of evaluated.values) {
+						case '$derived':
+							if (arg) {
+								for (let value of scope.evaluate(arg).values) {
 									this.values.add(value);
 								}
 							} else {
@@ -369,25 +370,12 @@ class Evaluation {
 							this.values.add(true);
 							break;
 
-						case '$derived': {
-							const evaluated = scope.evaluate(/** @type {Expression} */ (expression.arguments[0]));
-							for (let value of evaluated.values) {
-								this.values.add(value);
-							}
-							break;
-						}
-
 						case '$derived.by':
-							if (expression.arguments[0]?.type === 'ArrowFunctionExpression') {
-								if (expression.arguments[0].body?.type !== 'BlockStatement') {
-									const evaluated = scope.evaluate(
-										/** @type {Expression} */ (expression.arguments[0].body)
-									);
-									for (let value of evaluated.values) {
-										this.values.add(value);
-									}
-									break;
+							if (arg?.type === 'ArrowFunctionExpression' && arg.body.type !== 'BlockStatement') {
+								for (let value of scope.evaluate(arg.body).values) {
+									this.values.add(value);
 								}
+								break;
 							}
 
 							this.values.add(UNKNOWN);
@@ -397,10 +385,11 @@ class Evaluation {
 							this.values.add(UNKNOWN);
 						}
 					}
-				} else if (
-					expression.callee.type === 'Identifier' &&
-					scope.get(expression.callee.name) === null
-				) {
+
+					break;
+				}
+
+				if (expression.callee.type === 'Identifier' && scope.get(expression.callee.name) === null) {
 					switch (expression.callee.name) {
 						case 'Number': {
 							if (expression.arguments.length) {
