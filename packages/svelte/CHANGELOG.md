@@ -1,5 +1,11 @@
 # svelte
 
+## 5.27.2
+
+### Patch Changes
+
+- chore: use pkg.imports for common modules ([#15787](https://github.com/sveltejs/svelte/pull/15787))
+
 ## 5.27.1
 
 ### Patch Changes
