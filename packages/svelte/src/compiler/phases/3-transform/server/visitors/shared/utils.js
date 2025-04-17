@@ -1,4 +1,4 @@
-/** @import { AssignmentOperator, Expression, Identifier, Node, Statement, TemplateElement } from 'estree' */
+/** @import { AssignmentOperator, Expression, Identifier, Node, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ServerTransformState } from '../../types.js' */
 
@@ -8,7 +8,7 @@ import {
 	BLOCK_OPEN,
 	EMPTY_COMMENT
 } from '../../../../../../internal/server/hydration.js';
-import * as b from '../../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_whitespaces_strict } from '../../../../patterns.js';
 

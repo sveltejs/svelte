@@ -5,6 +5,38 @@ import { active_reaction, get, set_active_reaction } from '../internal/client/ru
 
 var inited = false;
 
+/**
+ * A reactive version of the built-in [`Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date) object.
+ * Reading the date (whether with methods like `date.getTime()` or `date.toString()`, or via things like [`Intl.DateTimeFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat))
+ * in an [effect](https://svelte.dev/docs/svelte/$effect) or [derived](https://svelte.dev/docs/svelte/$derived)
+ * will cause it to be re-evaluated when the value of the date changes.
+ *
+ * ```svelte
+ * <script>
+ * 	import { SvelteDate } from 'svelte/reactivity';
+ *
+ * 	const date = new SvelteDate();
+ *
+ * 	const formatter = new Intl.DateTimeFormat(undefined, {
+ * 	  hour: 'numeric',
+ * 	  minute: 'numeric',
+ * 	  second: 'numeric'
+ * 	});
+ *
+ * 	$effect(() => {
+ * 		const interval = setInterval(() => {
+ * 			date.setTime(Date.now());
+ * 		}, 1000);
+ *
+ * 		return () => {
+ * 			clearInterval(interval);
+ * 		};
+ * 	});
+ * </script>
+ *
+ * <p>The time is {formatter.format(date)}</p>
+ * ```
+ */
 export class SvelteDate extends Date {
 	#time = source(super.getTime());
 

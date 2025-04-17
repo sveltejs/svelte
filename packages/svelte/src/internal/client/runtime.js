@@ -32,7 +32,6 @@ import { flush_tasks } from './dom/task.js';
 import { internal_set, old_values } from './reactivity/sources.js';
 import {
 	destroy_derived_effects,
-	execute_derived,
 	from_async_derived,
 	recent_async_deriveds,
 	update_derived
@@ -52,7 +51,6 @@ import { Boundary } from './dom/blocks/boundary.js';
 import * as w from './warnings.js';
 import { is_firefox } from './dom/operations.js';
 import { active_fork, Fork, remove_active_fork } from './reactivity/forks.js';
-import { log_effect_tree } from './dev/debug.js';
 
 // Used for DEV time error handling
 /** @param {WeakSet<Error>} value */

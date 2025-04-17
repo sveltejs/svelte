@@ -1,5 +1,5 @@
 /** @import { Effect, TemplateNode } from '#client' */
-import { EFFECT_TRANSPARENT } from '../../constants.js';
+import { EFFECT_TRANSPARENT } from '#client/constants';
 import {
 	hydrate_next,
 	hydrate_node,

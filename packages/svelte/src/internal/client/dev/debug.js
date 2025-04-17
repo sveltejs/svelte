@@ -11,7 +11,7 @@ import {
 	MAYBE_DIRTY,
 	RENDER_EFFECT,
 	ROOT_EFFECT
-} from '../constants.js';
+} from '#client/constants';
 
 /**
  *

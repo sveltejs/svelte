@@ -3,10 +3,10 @@
 /** @import { ComponentContext } from '../types' */
 import { dev, locator } from '../../../../state.js';
 import { is_text_attribute } from '../../../../utils/ast.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { determine_namespace_for_children } from '../../utils.js';
 import { build_attribute_value, build_set_attributes, build_set_class } from './shared/element.js';
-import { build_render_statement, get_expression_id } from './shared/utils.js';
+import { build_render_statement } from './shared/utils.js';
 
 /**
  * @param {AST.SvelteElement} node

@@ -2,7 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext, MemoizedExpression } from '../types' */
 import { unwrap_optional } from '../../../../utils/ast.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { create_derived } from '../utils.js';
 import { get_expression_id } from './shared/utils.js';
 

@@ -32,7 +32,7 @@ import {
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
 	EFFECT_PRESERVED
-} from '../constants.js';
+} from '#client/constants';
 import { set } from './sources.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';

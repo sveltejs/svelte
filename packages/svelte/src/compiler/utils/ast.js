@@ -1,7 +1,7 @@
 /** @import { AST } from '#compiler' */
 /** @import * as ESTree from 'estree' */
 import { walk } from 'zimmerframe';
-import * as b from '../utils/builders.js';
+import * as b from '#compiler/builders';
 
 /**
  * Gets the left-most identifier of a member expression or identifier.

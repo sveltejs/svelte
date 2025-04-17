@@ -7,8 +7,7 @@ import {
 	active_effect,
 	active_reaction,
 	set_active_effect,
-	set_active_reaction,
-	untrack
+	set_active_reaction
 } from './runtime.js';
 import { effect, teardown } from './reactivity/effects.js';
 import { legacy_mode_flag } from '../flags/index.js';

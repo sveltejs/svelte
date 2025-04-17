@@ -9,7 +9,7 @@ import {
 	EFFECT_PRESERVED,
 	MAYBE_DIRTY,
 	UNOWNED
-} from '../constants.js';
+} from '#client/constants';
 import {
 	active_reaction,
 	active_effect,

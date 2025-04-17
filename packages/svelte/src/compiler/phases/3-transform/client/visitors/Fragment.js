@@ -4,7 +4,7 @@
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../../../constants.js';
 import { dev } from '../../../../state.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
 import { clean_nodes, infer_namespace } from '../../utils.js';
 import { process_children } from './shared/fragment.js';

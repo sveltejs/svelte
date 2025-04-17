@@ -1,5 +1,5 @@
 import { createClassComponent } from '../../../../legacy/legacy-client.js';
-import { destroy_effect, effect_root, render_effect } from '../../reactivity/effects.js';
+import { effect_root, render_effect } from '../../reactivity/effects.js';
 import { append } from '../template.js';
 import { define_property, get_descriptor, object_keys } from '../../../shared/utils.js';
 
