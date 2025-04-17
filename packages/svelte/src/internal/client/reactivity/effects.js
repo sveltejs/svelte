@@ -33,7 +33,7 @@ import {
 	MAYBE_DIRTY,
 	EFFECT_HAS_DERIVED,
 	BOUNDARY_EFFECT
-} from '../constants.js';
+} from '#client/constants';
 import { set } from './sources.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';

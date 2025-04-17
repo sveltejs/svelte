@@ -105,6 +105,7 @@
   },
   "imports": {
     "#client": "./src/internal/client/types.d.ts",
+    "#client/constants": "./src/internal/client/constants.js",
     "#compiler": {
       "types": "./src/compiler/private.d.ts",
       "default": "./src/compiler/index.js"

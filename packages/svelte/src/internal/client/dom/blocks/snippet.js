@@ -1,7 +1,7 @@
 /** @import { Snippet } from 'svelte' */
 /** @import { Effect, TemplateNode } from '#client' */
 /** @import { Getters } from '#shared' */
-import { EFFECT_TRANSPARENT } from '../../constants.js';
+import { EFFECT_TRANSPARENT } from '#client/constants';
 import { branch, block, destroy_effect, teardown } from '../../reactivity/effects.js';
 import {
 	dev_current_component_function,
