@@ -736,7 +736,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		}
 	};
 
-	let is_async = false;
+	let has_await = false;
 
 	walk(ast, state, {
 		AwaitExpression(node, context) {
@@ -744,7 +744,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			// automatically opt into runes mode on encountering
 			// blocking awaits, without doing an additional walk
 			// before the analysis occurs
-			is_async ||= context.path.every(
+			has_await ||= context.path.every(
 				({ type }) =>
 					type !== 'ArrowFunctionExpression' &&
 					type !== 'FunctionExpression' &&
@@ -1108,7 +1108,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	}
 
 	return {
-		is_async,
+		has_await,
 		scope,
 		scopes
 	};

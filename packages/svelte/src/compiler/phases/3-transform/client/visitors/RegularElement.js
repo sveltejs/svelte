@@ -311,7 +311,7 @@ export function RegularElement(node, context) {
 					(value, metadata) =>
 						metadata.has_call
 							? get_expression_id(
-									metadata.is_async ? context.state.async_expressions : context.state.expressions,
+									metadata.has_await ? context.state.async_expressions : context.state.expressions,
 									value
 								)
 							: value
@@ -386,7 +386,7 @@ export function RegularElement(node, context) {
 		trimmed.every(
 			(node) =>
 				node.type === 'Text' ||
-				(!node.metadata.expression.has_state && !node.metadata.expression.is_async)
+				(!node.metadata.expression.has_state && !node.metadata.expression.has_await)
 		) &&
 		trimmed.some((node) => node.type === 'ExpressionTag');
 
@@ -532,7 +532,7 @@ export function build_class_directives_object(class_directives, context) {
 		const expression = /** @type Expression */ (context.visit(d.expression));
 		properties.push(b.init(d.name, expression));
 		has_call_or_state ||= d.metadata.expression.has_call || d.metadata.expression.has_state;
-		has_async ||= d.metadata.expression.is_async;
+		has_async ||= d.metadata.expression.has_await;
 	}
 
 	const directives = b.object(properties);
@@ -561,7 +561,7 @@ export function build_style_directives_object(style_directives, context) {
 				: build_attribute_value(directive.value, context, (value, metadata) =>
 						metadata.has_call
 							? get_expression_id(
-									metadata.is_async ? context.state.async_expressions : context.state.expressions,
+									metadata.has_await ? context.state.async_expressions : context.state.expressions,
 									value
 								)
 							: value
@@ -699,11 +699,11 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 		element === 'select' && attribute.value !== true && !is_text_attribute(attribute);
 
 	const { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call || metadata.is_async
+		metadata.has_call || metadata.has_await
 			? // if is a select with value we will also invoke `init_select` which need a reference before the template effect so we memoize separately
 				is_select_with_value
 				? memoize_expression(context.state, value)
-				: get_expression_id(metadata.is_async ? state.async_expressions : state.expressions, value)
+				: get_expression_id(metadata.has_await ? state.async_expressions : state.expressions, value)
 			: value
 	);
 

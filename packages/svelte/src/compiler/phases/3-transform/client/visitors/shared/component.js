@@ -126,11 +126,11 @@ export function build_component(node, component_name, context, anchor = context.
 			if (attribute.metadata.expression.has_state) {
 				props_and_spreads.push(
 					b.thunk(
-						attribute.metadata.expression.is_async || attribute.metadata.expression.has_call
+						attribute.metadata.expression.has_await || attribute.metadata.expression.has_call
 							? b.call(
 									'$.get',
 									get_expression_id(
-										attribute.metadata.expression.is_async ? async_expressions : expressions,
+										attribute.metadata.expression.has_await ? async_expressions : expressions,
 										expression
 									)
 								)
@@ -147,10 +147,10 @@ export function build_component(node, component_name, context, anchor = context.
 						attribute.name,
 						build_attribute_value(attribute.value, context, (value, metadata) => {
 							// TODO put the derived in the local block
-							return metadata.has_call || metadata.is_async
+							return metadata.has_call || metadata.has_await
 								? b.call(
 										'$.get',
-										get_expression_id(metadata.is_async ? async_expressions : expressions, value)
+										get_expression_id(metadata.has_await ? async_expressions : expressions, value)
 									)
 								: value;
 						}).value
@@ -171,13 +171,13 @@ export function build_component(node, component_name, context, anchor = context.
 				attribute.value,
 				context,
 				(value, metadata) => {
-					if (!metadata.has_state && !metadata.is_async) return value;
+					if (!metadata.has_state && !metadata.has_await) return value;
 
 					// When we have a non-simple computation, anything other than an Identifier or Member expression,
 					// then there's a good chance it needs to be memoized to avoid over-firing when read within the
 					// child component (e.g. `active={i === index}`)
 					const should_wrap_in_derived =
-						metadata.is_async ||
+						metadata.has_await ||
 						get_attribute_chunks(attribute.value).some((n) => {
 							return (
 								n.type === 'ExpressionTag' &&
@@ -189,7 +189,7 @@ export function build_component(node, component_name, context, anchor = context.
 					return should_wrap_in_derived
 						? b.call(
 								'$.get',
-								get_expression_id(metadata.is_async ? async_expressions : expressions, value)
+								get_expression_id(metadata.has_await ? async_expressions : expressions, value)
 							)
 						: value;
 				}

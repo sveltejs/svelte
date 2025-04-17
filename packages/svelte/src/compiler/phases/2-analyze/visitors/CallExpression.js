@@ -242,7 +242,7 @@ export function CallExpression(node, context) {
 			expression
 		});
 
-		if (expression.is_async) {
+		if (expression.has_await) {
 			context.state.analysis.async_deriveds.add(node);
 		}
 	} else if (rune === '$inspect') {

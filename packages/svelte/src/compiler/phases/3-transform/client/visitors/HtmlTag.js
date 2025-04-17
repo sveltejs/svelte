@@ -11,10 +11,10 @@ import * as b from '../../../../utils/builders.js';
 export function HtmlTag(node, context) {
 	context.state.template.push('<!>');
 
-	const { is_async } = node.metadata.expression;
+	const { has_await } = node.metadata.expression;
 
 	const expression = /** @type {Expression} */ (context.visit(node.expression));
-	const html = is_async ? b.call('$.get', b.id('$$html')) : expression;
+	const html = has_await ? b.call('$.get', b.id('$$html')) : expression;
 
 	const is_svg = context.state.metadata.namespace === 'svg';
 	const is_mathml = context.state.metadata.namespace === 'mathml';
@@ -31,7 +31,7 @@ export function HtmlTag(node, context) {
 	);
 
 	// push into init, so that bindings run afterwards, which might trigger another run and override hydration
-	if (node.metadata.expression.is_async) {
+	if (node.metadata.expression.has_await) {
 		context.state.init.push(
 			b.stmt(
 				b.call(

@@ -13,7 +13,7 @@ export interface Js {
 	ast: Program;
 	scope: Scope;
 	scopes: Map<AST.SvelteNode, Scope>;
-	is_async: boolean;
+	has_await: boolean;
 }
 
 export interface Template {

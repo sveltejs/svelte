@@ -12,7 +12,7 @@ export function AwaitExpression(node, context) {
 	let preserve_context = tla;
 
 	if (context.state.expression) {
-		context.state.expression.is_async = true;
+		context.state.expression.has_await = true;
 		suspend = true;
 
 		// wrap the expression in `(await $.save(...)).restore()` if necessary,

@@ -45,8 +45,8 @@ export function build_template_chunk(
 	visit,
 	state,
 	memoize = (value, metadata) =>
-		metadata.has_call || metadata.is_async
-			? get_expression_id(metadata.is_async ? state.async_expressions : state.expressions, value)
+		metadata.has_call || metadata.has_await
+			? get_expression_id(metadata.has_await ? state.async_expressions : state.expressions, value)
 			: value
 ) {
 	/** @type {Expression[]} */
@@ -56,7 +56,7 @@ export function build_template_chunk(
 	const quasis = [quasi];
 
 	let has_state = false;
-	let is_async = false;
+	let has_await = false;
 
 	for (let i = 0; i < values.length; i++) {
 		const node = values[i];
@@ -77,8 +77,8 @@ export function build_template_chunk(
 				node.metadata.expression
 			);
 
-			is_async ||= node.metadata.expression.is_async;
-			has_state ||= is_async || node.metadata.expression.has_state;
+			has_await ||= node.metadata.expression.has_await;
+			has_state ||= has_await || node.metadata.expression.has_state;
 
 			if (values.length === 1) {
 				// If we have a single expression, then pass that in directly to possibly avoid doing

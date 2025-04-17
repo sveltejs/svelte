@@ -24,10 +24,10 @@ export function IfBlock(node, context) {
 		statements.push(b.var(b.id(alternate_id), b.arrow([b.id('$$anchor')], alternate)));
 	}
 
-	const { is_async } = node.metadata.expression;
+	const { has_await } = node.metadata.expression;
 
 	const expression = /** @type {Expression} */ (context.visit(node.test));
-	const test = is_async ? b.call('$.get', b.id('$$condition')) : expression;
+	const test = has_await ? b.call('$.get', b.id('$$condition')) : expression;
 
 	/** @type {Expression[]} */
 	const args = [
@@ -79,7 +79,7 @@ export function IfBlock(node, context) {
 
 	statements.push(b.stmt(b.call('$.if', ...args)));
 
-	if (is_async) {
+	if (has_await) {
 		context.state.init.push(
 			b.stmt(
 				b.call(

@@ -38,9 +38,9 @@ export function build_set_attributes(
 				attribute.value,
 				context,
 				(value, metadata) =>
-					metadata.has_call || metadata.is_async
+					metadata.has_call || metadata.has_await
 						? get_expression_id(
-								metadata.is_async ? context.state.async_expressions : context.state.expressions,
+								metadata.has_await ? context.state.async_expressions : context.state.expressions,
 								value
 							)
 						: value
@@ -65,9 +65,9 @@ export function build_set_attributes(
 
 			let value = /** @type {Expression} */ (context.visit(attribute));
 
-			if (attribute.metadata.expression.has_call || attribute.metadata.expression.is_async) {
+			if (attribute.metadata.expression.has_call || attribute.metadata.expression.has_await) {
 				value = get_expression_id(
-					attribute.metadata.expression.is_async
+					attribute.metadata.expression.has_await
 						? context.state.async_expressions
 						: context.state.expressions,
 					value
@@ -145,7 +145,7 @@ export function build_attribute_value(value, context, memoize = (value) => value
 
 		return {
 			value: memoize(expression, chunk.metadata.expression),
-			has_state: chunk.metadata.expression.has_state || chunk.metadata.expression.is_async
+			has_state: chunk.metadata.expression.has_state || chunk.metadata.expression.has_await
 		};
 	}
 
@@ -178,9 +178,9 @@ export function build_set_class(element, node_id, attribute, class_directives, c
 			value = b.call('$.clsx', value);
 		}
 
-		return metadata.has_call || metadata.is_async
+		return metadata.has_call || metadata.has_await
 			? get_expression_id(
-					metadata.is_async ? context.state.async_expressions : context.state.expressions,
+					metadata.has_await ? context.state.async_expressions : context.state.expressions,
 					value
 				)
 			: value;
@@ -253,7 +253,7 @@ export function build_set_style(node_id, attribute, style_directives, context) {
 	let { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
 		metadata.has_call
 			? get_expression_id(
-					metadata.is_async ? context.state.async_expressions : context.state.expressions,
+					metadata.has_await ? context.state.async_expressions : context.state.expressions,
 					value
 				)
 			: value

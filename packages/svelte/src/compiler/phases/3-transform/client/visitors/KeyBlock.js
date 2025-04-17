@@ -13,7 +13,7 @@ export function KeyBlock(node, context) {
 	const key = /** @type {Expression} */ (context.visit(node.expression));
 	const body = /** @type {Expression} */ (context.visit(node.fragment));
 
-	if (node.metadata.expression.is_async) {
+	if (node.metadata.expression.has_await) {
 		context.state.init.push(
 			b.stmt(
 				b.call(

@@ -293,9 +293,9 @@ export function EachBlock(node, context) {
 		);
 	}
 
-	const { is_async } = node.metadata.expression;
+	const { has_await } = node.metadata.expression;
 
-	const thunk = b.thunk(collection, is_async);
+	const thunk = b.thunk(collection, has_await);
 
 	const render_args = [b.id('$$anchor'), item];
 	if (uses_index || collection_id) render_args.push(index);
@@ -305,7 +305,7 @@ export function EachBlock(node, context) {
 	const args = [
 		context.state.node,
 		b.literal(flags),
-		is_async ? b.thunk(b.call('$.get', b.id('$$collection'))) : thunk,
+		has_await ? b.thunk(b.call('$.get', b.id('$$collection'))) : thunk,
 		key_function,
 		b.arrow(render_args, b.block(declarations.concat(block.body)))
 	];
@@ -316,7 +316,7 @@ export function EachBlock(node, context) {
 		);
 	}
 
-	if (is_async) {
+	if (has_await) {
 		context.state.init.push(
 			b.stmt(
 				b.call(

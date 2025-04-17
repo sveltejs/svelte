@@ -29,12 +29,12 @@ export function RenderTag(node, context) {
 
 	for (let i = 0; i < raw_args.length; i++) {
 		let expression = /** @type {Expression} */ (context.visit(raw_args[i]));
-		const { has_call, is_async } = node.metadata.arguments[i];
+		const { has_call, has_await } = node.metadata.arguments[i];
 
-		if (is_async || has_call) {
+		if (has_await || has_call) {
 			expression = b.call(
 				'$.get',
-				get_expression_id(is_async ? async_expressions : expressions, expression)
+				get_expression_id(has_await ? async_expressions : expressions, expression)
 			);
 		}
 

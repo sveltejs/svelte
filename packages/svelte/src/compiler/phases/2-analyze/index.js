@@ -203,9 +203,14 @@ function js(script, root, allow_reactive_declarations, parent) {
 		body: []
 	};
 
-	const { scope, scopes, is_async } = create_scopes(ast, root, allow_reactive_declarations, parent);
+	const { scope, scopes, has_await } = create_scopes(
+		ast,
+		root,
+		allow_reactive_declarations,
+		parent
+	);
 
-	return { ast, scope, scopes, is_async };
+	return { ast, scope, scopes, has_await };
 }
 
 /**
@@ -230,7 +235,7 @@ const RESERVED = ['$$props', '$$restProps', '$$slots'];
  * @returns {Analysis}
  */
 export function analyze_module(ast, options) {
-	const { scope, scopes, is_async } = create_scopes(ast, new ScopeRoot(), false, null);
+	const { scope, scopes, has_await } = create_scopes(ast, new ScopeRoot(), false, null);
 
 	for (const [name, references] of scope.references) {
 		if (name[0] !== '$' || RESERVED.includes(name)) continue;
@@ -247,7 +252,7 @@ export function analyze_module(ast, options) {
 
 	/** @type {Analysis} */
 	const analysis = {
-		module: { ast, scope, scopes, is_async },
+		module: { ast, scope, scopes, has_await },
 		name: options.filename,
 		accessors: false,
 		runes: true,
@@ -293,7 +298,7 @@ export function analyze_component(root, source, options) {
 	const module = js(root.module, scope_root, false, null);
 	const instance = js(root.instance, scope_root, true, module.scope);
 
-	const { scope, scopes, is_async } = create_scopes(
+	const { scope, scopes, has_await } = create_scopes(
 		root.fragment,
 		scope_root,
 		false,
@@ -408,7 +413,7 @@ export function analyze_component(root, source, options) {
 
 	const runes =
 		options.runes ??
-		(is_async || instance.is_async || Array.from(module.scope.references.keys()).some(is_rune));
+		(has_await || instance.has_await || Array.from(module.scope.references.keys()).some(is_rune));
 
 	if (!runes) {
 		for (let check of synthetic_stores_legacy_check) {

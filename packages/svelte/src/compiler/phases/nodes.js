@@ -62,6 +62,6 @@ export function create_expression_metadata() {
 		dependencies: new Set(),
 		has_state: false,
 		has_call: false,
-		is_async: false
+		has_await: false
 	};
 }

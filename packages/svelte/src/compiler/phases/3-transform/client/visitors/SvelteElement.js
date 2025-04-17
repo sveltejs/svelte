@@ -93,10 +93,10 @@ export function SvelteElement(node, context) {
 		);
 	}
 
-	const { is_async } = node.metadata.expression;
+	const { has_await } = node.metadata.expression;
 
 	const expression = /** @type {Expression} */ (context.visit(node.tag));
-	const get_tag = b.thunk(is_async ? b.call('$.get', b.id('$$tag')) : expression);
+	const get_tag = b.thunk(has_await ? b.call('$.get', b.id('$$tag')) : expression);
 
 	/** @type {Statement[]} */
 	const inner = inner_context.state.init;
@@ -139,7 +139,7 @@ export function SvelteElement(node, context) {
 		)
 	);
 
-	if (is_async) {
+	if (has_await) {
 		context.state.init.push(
 			b.stmt(
 				b.call(

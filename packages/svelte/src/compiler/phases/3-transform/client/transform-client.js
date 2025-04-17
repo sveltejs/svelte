@@ -369,7 +369,7 @@ export function client_component(analysis, options) {
 			: b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined))
 	]);
 
-	if (analysis.instance.is_async) {
+	if (analysis.instance.has_await) {
 		const body = b.function_declaration(
 			b.id('$$body'),
 			[b.id('$$anchor'), b.id('$$props')],
@@ -379,9 +379,9 @@ export function client_component(analysis, options) {
 				b.if(b.call('$.aborted'), b.return()),
 				.../** @type {ESTree.Statement[]} */ (template.body),
 				b.stmt(b.call('$$unsuspend'))
-			])
+			]),
+			true
 		);
-		body.async = true;
 
 		state.hoisted.push(body);
 
