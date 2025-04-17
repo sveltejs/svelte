@@ -169,7 +169,7 @@ export function build_element_attributes(node, context) {
 							type: 'ExpressionTag',
 							start: -1,
 							end: -1,
-							expression,
+							expression: attribute.expression,
 							metadata: {
 								expression: create_expression_metadata()
 							}
