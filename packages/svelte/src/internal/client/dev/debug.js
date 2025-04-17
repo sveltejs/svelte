@@ -53,6 +53,7 @@ export function log_effect_tree(effect, depth = 0) {
 	let status =
 		(flags & CLEAN) !== 0 ? 'clean' : (flags & MAYBE_DIRTY) !== 0 ? 'maybe dirty' : 'dirty';
 
+	// eslint-disable-next-line no-console
 	console.group(`%c${label} (${status})`, `font-weight: ${status === 'clean' ? 'normal' : 'bold'}`);
 
 	if (depth === 0) {
@@ -60,14 +61,19 @@ export function log_effect_tree(effect, depth = 0) {
 			?.split('\n')[2]
 			.replace(/\s+at (?: \w+\(?)?(.+)\)?/, (m, $1) => $1.replace(/\?[^:]+/, ''));
 
+		// eslint-disable-next-line no-console
 		console.log(callsite);
 	}
 
 	if (effect.deps !== null) {
+		// eslint-disable-next-line no-console
 		console.groupCollapsed('%cdeps', 'font-weight: normal');
+
 		for (const dep of effect.deps) {
 			log_dep(dep);
 		}
+
+		// eslint-disable-next-line no-console
 		console.groupEnd();
 	}
 
@@ -77,6 +83,7 @@ export function log_effect_tree(effect, depth = 0) {
 		child = child.next;
 	}
 
+	// eslint-disable-next-line no-console
 	console.groupEnd();
 }
 
@@ -87,14 +94,19 @@ export function log_effect_tree(effect, depth = 0) {
 function log_dep(dep) {
 	if ((dep.f & DERIVED) !== 0) {
 		const derived = /** @type {Derived} */ (dep);
+
+		// eslint-disable-next-line no-console
 		console.groupCollapsed('%cderived', 'font-weight: normal', derived.v);
 		if (derived.deps) {
 			for (const d of derived.deps) {
 				log_dep(d);
 			}
 		}
+
+		// eslint-disable-next-line no-console
 		console.groupEnd();
 	} else {
+		// eslint-disable-next-line no-console
 		console.log('state', dep.v);
 	}
 }
