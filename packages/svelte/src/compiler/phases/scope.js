@@ -345,12 +345,7 @@ class Evaluation {
 			case 'CallExpression':
 				{
 					const rune = get_rune(expression, scope);
-					if (
-						rune &&
-						scope.get(
-							object(/** @type {Identifier | MemberExpression} */ (expression.callee))?.name ?? ''
-						) === null
-					) {
+					if (rune) {
 						switch (rune) {
 							case '$state':
 							case '$state.raw':
