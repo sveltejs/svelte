@@ -15,6 +15,7 @@ import {
 import { is_reserved, is_rune } from '../../utils.js';
 import { determine_slot } from '../utils/slot.js';
 import { validate_identifier_name } from './2-analyze/visitors/shared/utils.js';
+import { bind_window_scroll } from 'svelte/internal/client';
 
 export const UNKNOWN = Symbol('unknown');
 /** Includes `BigInt` */
@@ -173,14 +174,24 @@ class Evaluation {
 						binding.kind === 'bindable_prop';
 
 					if (!binding.updated && binding.initial !== null && !is_prop) {
+						console.log(binding.initial);
 						const evaluation = binding.scope.evaluate(/** @type {Expression} */ (binding.initial));
 						for (const value of evaluation.values) {
 							this.values.add(value);
 						}
 						break;
 					}
-
-					// TODO each index is always defined
+					if (
+						binding.kind === 'each' &&
+						binding.initial?.type === 'EachBlock' &&
+						binding.initial.index === expression.name
+					) {
+						this.values.add(NUMBER);
+						break;
+					}
+				} else if (expression.name === 'undefined') {
+					this.values.add(undefined);
+					break;
 				}
 
 				// TODO glean what we can from reassignments
@@ -335,6 +346,124 @@ class Evaluation {
 				}
 				break;
 			}
+
+			case 'CallExpression':
+				{
+					const rune = get_rune(expression, scope);
+					if (
+						rune &&
+						scope.get(
+							object(/** @type {Identifier | MemberExpression} */ (expression.callee))?.name ?? ''
+						) === null
+					) {
+						switch (rune) {
+							case '$state':
+							case '$state.raw':
+								if (expression.arguments.length) {
+									const evaluated = scope.evaluate(
+										/** @type {Expression} */ (expression.arguments[0])
+									);
+									for (let value of evaluated.values) {
+										this.values.add(value);
+									}
+								} else {
+									this.values.add(undefined);
+								}
+								break;
+							case '$props.id':
+								this.values.add(STRING);
+								break;
+							case '$effect.tracking':
+								this.values.add(false);
+								this.values.add(true);
+								break;
+							case '$derived': {
+								const evaluated = scope.evaluate(
+									/** @type {Expression} */ (expression.arguments[0])
+								);
+								for (let value of evaluated.values) {
+									this.values.add(value);
+								}
+								break;
+							}
+							case '$derived.by':
+								if (expression.arguments[0]?.type === 'ArrowFunctionExpression') {
+									if (expression.arguments[0].body?.type !== 'BlockStatement') {
+										const evaluated = scope.evaluate(
+											/** @type {Expression} */ (expression.arguments[0].body)
+										);
+										for (let value of evaluated.values) {
+											this.values.add(value);
+										}
+										break;
+									}
+								}
+							default: {
+								this.values.add(UNKNOWN);
+							}
+						}
+					} else if (
+						expression.callee.type === 'Identifier' &&
+						scope.get(expression.callee.name) === null
+					) {
+						switch (expression.callee.name) {
+							case 'Number': {
+								if (expression.arguments.length) {
+									const arg = scope.evaluate(/** @type {Expression} */ (expression.arguments[0]));
+									if (arg.is_known) {
+										this.values.add(Number(arg.value));
+									} else if (arg.is_number) {
+										this.values.add(NUMBER);
+									} else {
+										for (let value of arg.values) {
+											switch (value) {
+												case STRING:
+												case NUMBER:
+												case UNKNOWN:
+													this.values.add(NUMBER);
+													break;
+												default:
+													this.values.add(Number(value));
+											}
+										}
+									}
+								} else {
+									this.values.add(0);
+								}
+								break;
+							}
+							case 'String':
+								if (expression.arguments.length) {
+									const arg = scope.evaluate(/** @type {Expression} */ (expression.arguments[0]));
+									if (arg.is_known) {
+										this.values.add(String(arg.value));
+									} else if (arg.is_number || arg.is_string) {
+										this.values.add(STRING);
+									} else {
+										for (let value of arg.values) {
+											switch (value) {
+												case STRING:
+												case NUMBER:
+												case UNKNOWN:
+													this.values.add(STRING);
+													break;
+												default:
+													this.values.add(String(value));
+											}
+										}
+									}
+								} else {
+									this.values.add('');
+								}
+								break;
+							default:
+								this.values.add(UNKNOWN);
+						}
+					} else {
+						this.values.add(UNKNOWN);
+					}
+				}
+				break;
 
 			default: {
 				this.values.add(UNKNOWN);
