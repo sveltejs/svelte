@@ -360,13 +360,16 @@ class Evaluation {
 									this.values.add(undefined);
 								}
 								break;
+
 							case '$props.id':
 								this.values.add(STRING);
 								break;
+
 							case '$effect.tracking':
 								this.values.add(false);
 								this.values.add(true);
 								break;
+
 							case '$derived': {
 								const evaluated = scope.evaluate(
 									/** @type {Expression} */ (expression.arguments[0])
@@ -376,6 +379,7 @@ class Evaluation {
 								}
 								break;
 							}
+
 							case '$derived.by':
 								if (expression.arguments[0]?.type === 'ArrowFunctionExpression') {
 									if (expression.arguments[0].body?.type !== 'BlockStatement') {
@@ -388,6 +392,10 @@ class Evaluation {
 										break;
 									}
 								}
+
+								this.values.add(UNKNOWN);
+								break;
+
 							default: {
 								this.values.add(UNKNOWN);
 							}
