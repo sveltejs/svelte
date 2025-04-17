@@ -107,7 +107,7 @@ export class Binding {
 
 class Evaluation {
 	/** @type {Set<any>} */
-	values = new Set();
+	values;
 
 	/**
 	 * True if there is exactly one possible value
@@ -147,8 +147,11 @@ class Evaluation {
 	 *
 	 * @param {Scope} scope
 	 * @param {Expression} expression
+	 * @param {Set<any>} values
 	 */
-	constructor(scope, expression) {
+	constructor(scope, expression, values = new Set()) {
+		this.values = values;
+
 		switch (expression.type) {
 			case 'Literal': {
 				this.values.add(expression.value);
@@ -178,10 +181,7 @@ class Evaluation {
 					}
 
 					if (!binding.updated && binding.initial !== null && !is_prop) {
-						const evaluation = binding.scope.evaluate(/** @type {Expression} */ (binding.initial));
-						for (const value of evaluation.values) {
-							this.values.add(value);
-						}
+						binding.scope.evaluate(/** @type {Expression} */ (binding.initial), this.values);
 						break;
 					}
 				} else if (expression.name === 'undefined') {
@@ -353,9 +353,7 @@ class Evaluation {
 						case '$state.raw':
 						case '$derived':
 							if (arg) {
-								for (let value of scope.evaluate(arg).values) {
-									this.values.add(value);
-								}
+								scope.evaluate(arg, this.values);
 							} else {
 								this.values.add(undefined);
 							}
@@ -372,9 +370,7 @@ class Evaluation {
 
 						case '$derived.by':
 							if (arg?.type === 'ArrowFunctionExpression' && arg.body.type !== 'BlockStatement') {
-								for (let value of scope.evaluate(arg.body).values) {
-									this.values.add(value);
-								}
+								scope.evaluate(arg.body, this.values);
 								break;
 							}
 
@@ -629,10 +625,10 @@ export class Scope {
 	 * Only call this once scope has been fully generated in a first pass,
 	 * else this evaluates on incomplete data and may yield wrong results.
 	 * @param {Expression} expression
-	 * @param {Set<any>} values
+	 * @param {Set<any>} [values]
 	 */
-	evaluate(expression, values = new Set()) {
-		return new Evaluation(this, expression);
+	evaluate(expression, values) {
+		return new Evaluation(this, expression, values);
 	}
 }
 
