@@ -1,7 +1,7 @@
 /** @import { Context, Visitors } from 'zimmerframe' */
 /** @import { FunctionExpression, FunctionDeclaration } from 'estree' */
 import { walk } from 'zimmerframe';
-import * as b from '../../utils/builders.js';
+import * as b from '#compiler/builders';
 import * as e from '../../errors.js';
 
 /**
@@ -24,6 +24,7 @@ const visitors = {
 		// until that day comes, we just delete them so they don't confuse esrap
 		delete n.typeAnnotation;
 		delete n.typeParameters;
+		delete n.typeArguments;
 		delete n.returnType;
 		delete n.accessibility;
 	},
@@ -93,6 +94,9 @@ const visitors = {
 	},
 	TSTypeAliasDeclaration() {
 		return b.empty;
+	},
+	TSTypeAssertion(node, context) {
+		return context.visit(node.expression);
 	},
 	TSEnumDeclaration(node) {
 		e.typescript_invalid_feature(node, 'enums');

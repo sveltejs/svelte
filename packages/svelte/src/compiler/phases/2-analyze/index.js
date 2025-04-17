@@ -5,8 +5,8 @@
 import { walk } from 'zimmerframe';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
-import { extract_identifiers, is_text_attribute } from '../../utils/ast.js';
-import * as b from '../../utils/builders.js';
+import { extract_identifiers } from '../../utils/ast.js';
+import * as b from '#compiler/builders';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { create_attribute, is_custom_element_node } from '../nodes.js';
@@ -432,6 +432,7 @@ export function analyze_component(root, source, options) {
 		uses_component_bindings: false,
 		uses_render_tags: false,
 		needs_context: false,
+		needs_mutation_validation: false,
 		needs_props: false,
 		event_directive_node: null,
 		uses_event_attributes: false,
@@ -455,7 +456,8 @@ export function analyze_component(root, source, options) {
 						hash
 					})
 				: '',
-			keyframes: []
+			keyframes: [],
+			has_global: false
 		},
 		source,
 		undefined_exports: new Map(),

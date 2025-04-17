@@ -1,4 +1,4 @@
-/** @import { AssignmentOperator, Expression, Identifier, Node, Statement, TemplateElement } from 'estree' */
+/** @import { AssignmentOperator, Expression, Identifier, Node, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ServerTransformState } from '../../types.js' */
 
@@ -8,7 +8,7 @@ import {
 	BLOCK_OPEN,
 	EMPTY_COMMENT
 } from '../../../../../../internal/server/hydration.js';
-import * as b from '../../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_whitespaces_strict } from '../../../../patterns.js';
 
@@ -44,15 +44,17 @@ export function process_children(nodes, { visit, state }) {
 			if (node.type === 'Text' || node.type === 'Comment') {
 				quasi.value.cooked +=
 					node.type === 'Comment' ? `<!--${node.data}-->` : escape_html(node.data);
-			} else if (node.type === 'ExpressionTag' && node.expression.type === 'Literal') {
-				if (node.expression.value != null) {
-					quasi.value.cooked += escape_html(node.expression.value + '');
-				}
 			} else {
-				expressions.push(b.call('$.escape', /** @type {Expression} */ (visit(node.expression))));
+				const evaluated = state.scope.evaluate(node.expression);
 
-				quasi = b.quasi('', i + 1 === sequence.length);
-				quasis.push(quasi);
+				if (evaluated.is_known) {
+					quasi.value.cooked += escape_html((evaluated.value ?? '') + '');
+				} else {
+					expressions.push(b.call('$.escape', /** @type {Expression} */ (visit(node.expression))));
+
+					quasi = b.quasi('', i + 1 === sequence.length);
+					quasis.push(quasi);
+				}
 			}
 		}
 

@@ -1,5 +1,4 @@
 /** @import { Expression, Identifier } from 'estree' */
-/** @import { EachBlock } from '#compiler' */
 /** @import { Context } from '../types' */
 import is_reference from 'is-reference';
 import { should_proxy } from '../../3-transform/client/utils.js';
@@ -7,6 +6,7 @@ import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { is_rune } from '../../../../utils.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
+import { get_rune } from '../../scope.js';
 
 /**
  * @param {Identifier} node
@@ -111,7 +111,34 @@ export function Identifier(node, context) {
 			(parent.type !== 'AssignmentExpression' || parent.left !== node) &&
 			parent.type !== 'UpdateExpression'
 		) {
-			w.state_referenced_locally(node);
+			let type = 'closure';
+
+			let i = context.path.length;
+			while (i--) {
+				const parent = context.path[i];
+
+				if (
+					parent.type === 'ArrowFunctionExpression' ||
+					parent.type === 'FunctionDeclaration' ||
+					parent.type === 'FunctionExpression'
+				) {
+					break;
+				}
+
+				if (
+					parent.type === 'CallExpression' &&
+					parent.arguments.includes(/** @type {any} */ (context.path[i + 1]))
+				) {
+					const rune = get_rune(parent, context.state.scope);
+
+					if (rune === '$state' || rune === '$state.raw') {
+						type = 'derived';
+						break;
+					}
+				}
+			}
+
+			w.state_referenced_locally(node, node.name, type);
 		}
 
 		if (

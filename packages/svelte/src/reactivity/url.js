@@ -10,6 +10,33 @@ export function get_current_url() {
 	return current_url;
 }
 
+/**
+ * A reactive version of the built-in [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) object.
+ * Reading properties of the URL (such as `url.href` or `url.pathname`) in an [effect](https://svelte.dev/docs/svelte/$effect) or [derived](https://svelte.dev/docs/svelte/$derived)
+ * will cause it to be re-evaluated as necessary when the URL changes.
+ *
+ * The `searchParams` property is an instance of [SvelteURLSearchParams](https://svelte.dev/docs/svelte/svelte-reactivity#SvelteURLSearchParams).
+ *
+ * [Example](https://svelte.dev/playground/5a694758901b448c83dc40dc31c71f2a):
+ *
+ * ```svelte
+ * <script>
+ * 	import { SvelteURL } from 'svelte/reactivity';
+ *
+ * 	const url = new SvelteURL('https://example.com/path');
+ * </script>
+ *
+ * <!-- changes to these... -->
+ * <input bind:value={url.protocol} />
+ * <input bind:value={url.hostname} />
+ * <input bind:value={url.pathname} />
+ *
+ * <hr />
+ *
+ * <!-- will update `href` and vice versa -->
+ * <input bind:value={url.href} size="65" />
+ * ```
+ */
 export class SvelteURL extends URL {
 	#protocol = source(super.protocol);
 	#username = source(super.username);

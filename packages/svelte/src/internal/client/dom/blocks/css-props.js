@@ -1,6 +1,6 @@
 /** @import { TemplateNode } from '#client' */
 import { render_effect, teardown } from '../../reactivity/effects.js';
-import { hydrate_node, hydrating, set_hydrate_node } from '../hydration.js';
+import { hydrating, set_hydrate_node } from '../hydration.js';
 import { get_first_child } from '../operations.js';
 
 /**

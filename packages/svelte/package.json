@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.25.3",
+  "version": "5.27.2",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -103,6 +103,17 @@
       "default": "./src/events/index.js"
     }
   },
+  "imports": {
+    "#client": "./src/internal/client/types.d.ts",
+    "#client/constants": "./src/internal/client/constants.js",
+    "#compiler": {
+      "types": "./src/compiler/private.d.ts",
+      "default": "./src/compiler/index.js"
+    },
+    "#compiler/builders": "./src/compiler/utils/builders.js",
+    "#server": "./src/internal/server/types.d.ts",
+    "#shared": "./src/internal/shared/types.d.ts"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sveltejs/svelte.git",
@@ -156,7 +167,7 @@
     "axobject-query": "^4.1.0",
     "clsx": "^2.1.1",
     "esm-env": "^1.2.1",
-    "esrap": "^1.4.3",
+    "esrap": "^1.4.6",
     "is-reference": "^3.0.3",
     "locate-character": "^3.0.0",
     "magic-string": "^0.30.11",

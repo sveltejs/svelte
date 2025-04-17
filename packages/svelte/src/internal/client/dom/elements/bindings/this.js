@@ -1,4 +1,4 @@
-import { STATE_SYMBOL } from '../../../constants.js';
+import { STATE_SYMBOL } from '#client/constants';
 import { effect, render_effect } from '../../../reactivity/effects.js';
 import { untrack } from '../../../runtime.js';
 import { queue_micro_task } from '../../task.js';

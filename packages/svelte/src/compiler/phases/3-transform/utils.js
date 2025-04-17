@@ -8,7 +8,7 @@ import {
 	regex_starts_with_newline,
 	regex_starts_with_whitespaces
 } from '../patterns.js';
-import * as b from '../../utils/builders.js';
+import * as b from '#compiler/builders';
 import * as e from '../../errors.js';
 import { walk } from 'zimmerframe';
 import { extract_identifiers } from '../../utils/ast.js';

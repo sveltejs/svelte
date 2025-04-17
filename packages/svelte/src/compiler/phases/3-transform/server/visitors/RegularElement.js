@@ -4,7 +4,7 @@
 /** @import { Scope } from '../../../scope.js' */
 import { is_void } from '../../../../../utils.js';
 import { dev, locator } from '../../../../state.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_element_attributes } from './shared/element.js';
 import { process_children, build_template } from './shared/utils.js';

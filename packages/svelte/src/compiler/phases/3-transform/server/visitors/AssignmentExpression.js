@@ -1,7 +1,7 @@
 /** @import { AssignmentExpression, AssignmentOperator, Expression, Pattern } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Context, ServerTransformState } from '../types.js' */
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { build_assignment_value } from '../../../../utils/ast.js';
 import { visit_assignment_expression } from '../../shared/assignments.js';
 

@@ -1,7 +1,7 @@
 /** @import { BlockStatement, Expression, ExpressionStatement, Literal, Property } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { build_attribute_value } from './shared/element.js';
 import { memoize_expression } from './shared/utils.js';
 

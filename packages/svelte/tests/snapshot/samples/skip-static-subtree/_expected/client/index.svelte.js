@@ -13,7 +13,7 @@ export default function Skip_static_subtree($$anchor, $$props) {
 
 	var node = $.sibling(h1, 10);
 
-	$.html(node, () => $$props.content, false, false);
+	$.html(node, () => $$props.content);
 	$.next(14);
 	$.reset(main);
 
@@ -38,7 +38,7 @@ export default function Skip_static_subtree($$anchor, $$props) {
 	var select = $.sibling(div_1, 2);
 	var option = $.child(select);
 
-	option.value = null == (option.__value = 'a') ? '' : 'a';
+	option.value = option.__value = 'a';
 	$.reset(select);
 
 	var img = $.sibling(select, 2);

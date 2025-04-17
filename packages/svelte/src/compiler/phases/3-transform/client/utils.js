@@ -1,10 +1,10 @@
-/** @import { ArrowFunctionExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, Pattern, PrivateIdentifier, Statement } from 'estree' */
-/** @import { AST, Binding } from '#compiler' */
+/** @import { ArrowFunctionExpression, AssignmentExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, Node, Pattern, UpdateExpression } from 'estree' */
+/** @import { Binding } from '#compiler' */
 /** @import { ClientTransformState, ComponentClientTransformState, ComponentContext } from './types.js' */
 /** @import { Analysis } from '../../types.js' */
 /** @import { Scope } from '../../scope.js' */
-import * as b from '../../../utils/builders.js';
-import { extract_identifiers, is_simple_expression } from '../../../utils/ast.js';
+import * as b from '#compiler/builders';
+import { is_simple_expression } from '../../../utils/ast.js';
 import {
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_IMMUTABLE,
@@ -13,7 +13,8 @@ import {
 	PROPS_IS_BINDABLE
 } from '../../../../constants.js';
 import { dev } from '../../../state.js';
-import { get_value } from './visitors/shared/declarations.js';
+import { walk } from 'zimmerframe';
+import { validate_mutation } from './visitors/shared/utils.js';
 
 /**
  * @param {Binding} binding
@@ -110,6 +111,30 @@ function get_hoisted_params(node, context) {
 			}
 		}
 	}
+
+	if (dev) {
+		// this is a little hacky, but necessary for ownership validation
+		// to work inside hoisted event handlers
+
+		/**
+		 * @param {AssignmentExpression | UpdateExpression} node
+		 * @param {{ next: () => void, stop: () => void }} context
+		 */
+		function visit(node, { next, stop }) {
+			if (validate_mutation(node, /** @type {any} */ (context), node) !== node) {
+				params.push(b.id('$$ownership_validator'));
+				stop();
+			} else {
+				next();
+			}
+		}
+
+		walk(/** @type {Node} */ (node), null, {
+			AssignmentExpression: visit,
+			UpdateExpression: visit
+		});
+	}
+
 	return params;
 }
 

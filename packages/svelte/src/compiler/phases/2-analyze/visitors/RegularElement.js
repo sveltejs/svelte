@@ -173,7 +173,8 @@ export function RegularElement(node, context) {
 	if (
 		context.state.analysis.source[node.end - 2] === '/' &&
 		!is_void(node_name) &&
-		!is_svg(node_name)
+		!is_svg(node_name) &&
+		!is_mathml(node_name)
 	) {
 		w.element_invalid_self_closing_tag(node, node.name);
 	}
