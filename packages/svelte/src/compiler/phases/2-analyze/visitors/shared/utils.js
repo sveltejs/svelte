@@ -6,7 +6,7 @@
 import * as e from '../../../../errors.js';
 import { extract_identifiers } from '../../../../utils/ast.js';
 import * as w from '../../../../warnings.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 
 /**

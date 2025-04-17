@@ -1,7 +1,7 @@
 /** @typedef {{ file: string, line: number, column: number }} Location */
 
 import { get_descriptor } from '../../shared/utils.js';
-import { LEGACY_PROPS, STATE_SYMBOL } from '../constants.js';
+import { LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
 import { FILENAME } from '../../../constants.js';
 import { component_context } from '../context.js';
 import * as w from '../warnings.js';

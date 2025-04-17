@@ -3,7 +3,7 @@
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
 import { extract_paths } from '../../../../utils/ast.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import * as assert from '../../../../utils/assert.js';
 import { get_rune } from '../../../scope.js';
 import { get_prop_source, is_prop_source, is_state_source, should_proxy } from '../utils.js';

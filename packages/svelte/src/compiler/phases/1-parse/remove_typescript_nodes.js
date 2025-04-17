@@ -1,7 +1,7 @@
 /** @import { Context, Visitors } from 'zimmerframe' */
 /** @import { FunctionExpression, FunctionDeclaration } from 'estree' */
 import { walk } from 'zimmerframe';
-import * as b from '../../utils/builders.js';
+import * as b from '#compiler/builders';
 import * as e from '../../errors.js';
 
 /**
