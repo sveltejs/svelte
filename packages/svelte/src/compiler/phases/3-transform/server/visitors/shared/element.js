@@ -163,13 +163,26 @@ export function build_element_attributes(node, context) {
 					])
 				);
 			} else {
+				/** @type {Expression} */
+				let expression = attribute.expression;
+
+				if (attribute.type === 'BindDirective' && expression.type === 'SequenceExpression') {
+					const getter = expression.expressions[0];
+					expression =
+						getter.type === 'ArrowFunctionExpression' &&
+						getter.params.length === 0 &&
+						getter.body.type !== 'BlockStatement'
+							? getter.body
+							: b.call(getter);
+				}
+
 				attributes.push(
 					create_attribute(attribute.name, -1, -1, [
 						{
 							type: 'ExpressionTag',
 							start: -1,
 							end: -1,
-							expression: attribute.expression,
+							expression,
 							metadata: {
 								expression: create_expression_metadata()
 							}
