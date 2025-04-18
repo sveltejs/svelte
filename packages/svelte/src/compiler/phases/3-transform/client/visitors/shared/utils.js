@@ -64,12 +64,13 @@ export function build_template_chunk(
 			node.expression.name !== 'undefined' ||
 			state.scope.get('undefined')
 		) {
-			let value = memoize(
-				/** @type {Expression} */ (visit(node.expression, state)),
-				node.metadata.expression
-			);
+			let value = /** @type {Expression} */ (visit(node.expression, state));
 
 			const evaluated = state.scope.evaluate(value);
+
+			if (!evaluated.is_known) {
+				value = memoize(value, node.metadata.expression);
+			}
 
 			has_state ||= node.metadata.expression.has_state && !evaluated.is_known;
 
