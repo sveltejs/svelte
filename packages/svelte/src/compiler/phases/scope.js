@@ -15,6 +15,7 @@ import {
 import { is_reserved, is_rune } from '../../utils.js';
 import { determine_slot } from '../utils/slot.js';
 import { validate_identifier_name } from './2-analyze/visitors/shared/utils.js';
+import { regex_is_valid_identifier } from './patterns.js';
 
 const UNKNOWN = Symbol('unknown');
 /** Includes `BigInt` */
@@ -24,11 +25,12 @@ export const STRING = Symbol('string');
 /** @type {Record<string, [type: NUMBER | STRING | UNKNOWN, fn?: Function]>} */
 const globals = {
 	BigInt: [NUMBER, BigInt],
+	'Date.now': [NUMBER],
 	'Math.min': [NUMBER, Math.min],
 	'Math.max': [NUMBER, Math.max],
 	'Math.random': [NUMBER],
 	'Math.floor': [NUMBER, Math.floor],
-	// @ts-expect-error
+	// @ts-ignore
 	'Math.f16round': [NUMBER, Math.f16round],
 	'Math.round': [NUMBER, Math.round],
 	'Math.abs': [NUMBER, Math.abs],
@@ -84,6 +86,39 @@ const global_constants = {
 	'Math.SQRT1_2': Math.SQRT1_2
 };
 
+/**
+ * @template T
+ * @param {(...args: any) => T} fn
+ * @returns {(this: unknown, ...args: any) => T}
+ */
+function call_bind(fn) {
+	return /** @type {(this: unknown, ...args: any) => T} */ (fn.call.bind(fn));
+}
+
+const string_proto = String.prototype;
+const number_proto = Number.prototype;
+
+/** @type {Record<string, Record<string, [type: NUMBER | STRING | UNKNOWN, fn?: Function]>>} */
+const prototype_methods = {
+	string: {
+		//@ts-ignore
+		toString: [STRING, call_bind(string_proto.toString)],
+		toLowerCase: [STRING, call_bind(string_proto.toLowerCase)],
+		toUpperCase: [STRING, call_bind(string_proto.toUpperCase)],
+		slice: [STRING, call_bind(string_proto.slice)],
+		at: [STRING, call_bind(string_proto.at)],
+		charAt: [STRING, call_bind(string_proto.charAt)],
+		trim: [STRING, call_bind(string_proto.trim)],
+		indexOf: [STRING, call_bind(string_proto.indexOf)]
+	},
+	number: {
+		//@ts-ignore
+		toString: [STRING, call_bind(number_proto.toString)],
+		toFixed: [NUMBER, call_bind(number_proto.toFixed)],
+		toExponential: [NUMBER, call_bind(number_proto.toExponential)],
+		toPrecision: [NUMBER, call_bind(number_proto.toPrecision)]
+	}
+};
 export class Binding {
 	/** @type {Scope} */
 	scope;
@@ -462,6 +497,53 @@ class Evaluation {
 							this.values.add(type);
 						}
 
+						break;
+					}
+				} else if (
+					expression.callee.type === 'MemberExpression' &&
+					expression.callee.object.type !== 'Super' &&
+					expression.arguments.every((arg) => arg.type !== 'SpreadElement')
+				) {
+					const object = scope.evaluate(expression.callee.object);
+					if (!object.is_known) {
+						this.values.add(UNKNOWN);
+						break;
+					}
+					let property;
+					if (
+						expression.callee.computed &&
+						expression.callee.property.type !== 'PrivateIdentifier'
+					) {
+						property = scope.evaluate(expression.callee.property);
+						if (property.is_known) {
+							property = property.value;
+						} else {
+							this.values.add(UNKNOWN);
+							break;
+						}
+					} else if (expression.callee.property.type === 'Identifier') {
+						property = expression.callee.property.name;
+					}
+					if (property === undefined) {
+						this.values.add(UNKNOWN);
+						break;
+					}
+					if (typeof object.value !== 'string' && typeof object.value !== 'number') {
+						this.values.add(UNKNOWN);
+						break;
+					}
+					const available_methods =
+						prototype_methods[/** @type {'string' | 'number'} */ (typeof object.value)];
+					if (Object.hasOwn(available_methods, property)) {
+						const [type, fn] = available_methods[property];
+						console.log([type, fn]);
+						const values = expression.arguments.map((arg) => scope.evaluate(arg));
+
+						if (fn && values.every((e) => e.is_known)) {
+							this.values.add(fn(object.value, ...values.map((e) => e.value)));
+						} else {
+							this.values.add(type);
+						}
 						break;
 					}
 				}
@@ -1296,7 +1378,17 @@ function get_global_keypath(node, scope) {
 	let joined = '';
 
 	while (n.type === 'MemberExpression') {
-		if (n.computed) return null;
+		if (n.computed && n.property.type !== 'PrivateIdentifier') {
+			const property = scope.evaluate(n.property);
+			if (property.is_known) {
+				if (!regex_is_valid_identifier.test(property.value)) {
+					return null;
+				}
+				joined = '.' + property.value + joined;
+				n = n.object;
+				continue;
+			}
+		}
 		if (n.property.type !== 'Identifier') return null;
 		joined = '.' + n.property.name + joined;
 		n = n.object;
