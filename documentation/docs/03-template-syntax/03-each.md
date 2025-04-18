@@ -12,7 +12,7 @@ title: {#each ...}
 {#each expression as name, index}...{/each}
 ```
 
-Iterating over values can be done with an each block. The values in question can be arrays, array-like objects (i.e. anything with a `length` property), or iterables like `Map` and `Set` — in other words, anything that can be used with `Array.from`.
+Iterating over values can be done with an each block. The values in question can be arrays, array-like objects (i.e. anything with a `length` property), or iterables like `Map` and `Set` — in other words, anything that can be used with `Array.from`. For reactive values, change in state is based on an item's index in the iterated sequence. As such, changes in the positions of items are interpreted as changes in state.
 
 ```svelte
 <h1>Shopping list</h1>
@@ -43,7 +43,7 @@ An each block can also specify an _index_, equivalent to the second argument in 
 {#each expression as name, index (key)}...{/each}
 ```
 
-If a _key_ expression is provided — which must uniquely identify each list item — Svelte will use it to diff the list when data changes, rather than adding or removing items at the end. The key can be any object, but strings and numbers are recommended since they allow identity to persist when the objects themselves change.
+If a _key_ expression is provided — which must uniquely identify each iterated item — Svelte will determine changes in state of reactive items based on key instead of index. This is useful when the positions of items change, e.g. when modifying the length of an array. The key can be any object, but strings and numbers are recommended since they allow identity to persist when the objects themselves change.
 
 ```svelte
 {#each items as item (item.id)}
