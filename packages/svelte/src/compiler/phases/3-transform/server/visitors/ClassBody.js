@@ -85,8 +85,7 @@ export function ClassBody(node, context) {
 				const init = /** @type {Expression} **/ (
 					context.visit(definition.value.arguments[0], child_state)
 				);
-				const value =
-					field.kind === 'derived_by' ? b.call('$.once', init) : b.call('$.once', b.thunk(init));
+				const value = field.kind === 'derived_by' ? init : b.thunk(init);
 
 				if (is_private) {
 					body.push(b.prop_def(field.id, value));
