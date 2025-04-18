@@ -68,8 +68,12 @@ const css_visitors = {
 			const global = node.children.find(is_global);
 
 			if (global) {
-				const idx = node.children.indexOf(global);
+				const is_nested = context.path.at(-2)?.type === 'PseudoClassSelector';
+				if (is_nested && !global.selectors[0].args) {
+					e.css_global_block_invalid_placement(global.selectors[0]);
+				}
 
+				const idx = node.children.indexOf(global);
 				if (global.selectors[0].args !== null && idx !== 0 && idx !== node.children.length - 1) {
 					// ensure `:global(...)` is not used in the middle of a selector (but multiple `global(...)` in sequence are ok)
 					for (let i = idx + 1; i < node.children.length; i++) {
