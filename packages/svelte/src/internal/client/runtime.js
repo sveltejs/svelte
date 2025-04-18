@@ -763,7 +763,21 @@ function flush_queued_effects(effects) {
  * @returns {void}
  */
 export function schedule_effect(signal) {
-	queue_flush();
+	if (!is_flushing) {
+		is_flushing = true;
+		queueMicrotask(() => {
+			flush_queued_root_effects();
+
+			// TODO this doesn't seem quite right — may run into
+			// interesting cases where there are multiple roots.
+			// it'll do for now though
+			if (active_fork?.pending === 0) {
+				active_fork.remove();
+			}
+
+			remove_active_fork();
+		});
+	}
 
 	var effect = (last_scheduled_effect = signal);
 
@@ -785,24 +799,6 @@ export function schedule_effect(signal) {
 	// TODO reinstate early bail-out when traversing up the graph
 	if (!queued_root_effects.includes(effect)) {
 		queued_root_effects.push(effect);
-	}
-}
-
-function queue_flush() {
-	if (!is_flushing) {
-		is_flushing = true;
-		queueMicrotask(() => {
-			flush_queued_root_effects();
-
-			// TODO this doesn't seem quite right — may run into
-			// interesting cases where there are multiple roots.
-			// it'll do for now though
-			if (active_fork?.pending === 0) {
-				active_fork.remove();
-			}
-
-			remove_active_fork();
-		});
 	}
 }
 
