@@ -45,7 +45,7 @@ export function process_children(nodes, { visit, state }) {
 				quasi.value.cooked +=
 					node.type === 'Comment' ? `<!--${node.data}-->` : escape_html(node.data);
 			} else {
-				const evaluated = state.scope.evaluate(node.expression, new Set(), state.scopes);
+				const evaluated = state.scope.evaluate(node.expression);
 
 				if (evaluated.is_known) {
 					quasi.value.cooked += escape_html((evaluated.value ?? '') + '');
