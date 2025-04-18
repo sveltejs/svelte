@@ -1,5 +1,5 @@
 ---
-'svelte': patch
+'svelte': minor
 ---
 
-fix: partially evaluate more expressions
+feat: partially evaluate more expressions
