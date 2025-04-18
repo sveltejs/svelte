@@ -200,6 +200,19 @@ Consider the following code:
 
 To fix it, either create callback props to communicate changes, or mark `person` as [`$bindable`]($bindable).
 
+### select_multiple_invalid_value
+
+```
+The `value` property of a `<select multiple>` element should be an array, but it received a non-array value. The selection will be kept as is.
+```
+
+When using `<select multiple value={...}>`, Svelte will mark all selected `<option>` elements as selected by iterating over the array passed to `value`. If `value` is not an array, Svelte will emit this warning and keep the selected options as they are.
+
+To silence the warning, ensure that `value`:
+
+- is an array for an explicit selection
+- is `null` or `undefined` to keep the selection as is
+
 ### state_proxy_equality_mismatch
 
 ```
