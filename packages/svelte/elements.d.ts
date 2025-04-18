@@ -860,6 +860,9 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 
 	// allow any data- attribute
 	[key: `data-${string}`]: any;
+
+	// allow any attachment
+	[key: symbol]: (node: T) => void | (() => void);
 }
 
 export type HTMLAttributeAnchorTarget = '_self' | '_blank' | '_parent' | '_top' | (string & {});
