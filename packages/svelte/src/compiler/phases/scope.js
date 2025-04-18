@@ -20,10 +20,8 @@ const UNKNOWN = Symbol('unknown');
 /** Includes `BigInt` */
 export const NUMBER = Symbol('number');
 export const STRING = Symbol('string');
-/** Used for when you need to add `true` and `false` to the values, but can't do it for whatever reason */
-const BOOLEAN = Symbol('boolean');
 
-/** @type {Record<string, [type: NUMBER | STRING | UNKNOWN | BOOLEAN, fn?: Function]} */
+/** @type {Record<string, [type: NUMBER | STRING | UNKNOWN, fn?: Function]>} */
 const globals = {
 	BigInt: [NUMBER, BigInt],
 	'Math.min': [NUMBER, Math.min],
