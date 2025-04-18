@@ -100,6 +100,7 @@ export function proxy(value) {
 						prop,
 						with_parent(() => source(UNINITIALIZED, stack))
 					);
+					update_version(version);
 				}
 			} else {
 				// When working with arrays, we need to also ensure we update the length when removing
