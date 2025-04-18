@@ -693,6 +693,17 @@ function flush_queued_root_effects() {
 				infinite_loop_guard();
 			}
 
+			var revert = active_fork?.apply();
+
+			/** @type {Effect[]} */
+			var async_effects = [];
+
+			/** @type {Effect[]} */
+			var render_effects = [];
+
+			/** @type {Effect[]} */
+			var effects = [];
+
 			var root_effects = queued_root_effects;
 			var length = root_effects.length;
 
@@ -705,8 +716,21 @@ function flush_queued_root_effects() {
 					root.f ^= CLEAN;
 				}
 
-				process_effects(root, active_fork);
+				process_effects(root, async_effects, render_effects, effects);
 			}
+
+			if (async_effects.length === 0 && (active_fork === null || active_fork.pending === 0)) {
+				active_fork?.commit();
+				flush_queued_effects(render_effects);
+				flush_queued_effects(effects);
+			}
+
+			revert?.();
+
+			for (const effect of async_effects) {
+				update_effect(effect);
+			}
+
 			old_values.clear();
 		}
 	} finally {
@@ -810,21 +834,12 @@ export function schedule_effect(signal) {
  * effects to be flushed.
  *
  * @param {Effect} root
- * @param {Fork | null} fork
+ * @param {Effect[]} async_effects
+ * @param {Effect[]} render_effects
+ * @param {Effect[]} effects
  */
-function process_effects(root, fork) {
-	var revert = fork?.apply();
-
+function process_effects(root, async_effects, render_effects, effects) {
 	var effect = root.first;
-
-	/** @type {Effect[]} */
-	var async_effects = [];
-
-	/** @type {Effect[]} */
-	var render_effects = [];
-
-	/** @type {Effect[]} */
-	var effects = [];
 
 	while (effect !== null) {
 		var flags = effect.f;
@@ -873,18 +888,6 @@ function process_effects(root, fork) {
 			effect = parent.next;
 			parent = parent.parent;
 		}
-	}
-
-	if (async_effects.length === 0 && (fork === null || fork.pending === 0)) {
-		fork?.commit();
-		flush_queued_effects(render_effects);
-		flush_queued_effects(effects);
-	}
-
-	revert?.();
-
-	for (const effect of async_effects) {
-		update_effect(effect);
 	}
 }
 
