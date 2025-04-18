@@ -4,7 +4,7 @@
 
 ### Patch Changes
 
-- fix: ensure <svelte:boundary> properly removes error content in production mode ([#15793](https://github.com/sveltejs/svelte/pull/15793))
+- fix: ensure `<svelte:boundary>` properly removes error content in production mode ([#15793](https://github.com/sveltejs/svelte/pull/15793))
 
 - fix: `update_version` after `delete` if `source` is `undefined` and `prop` in `target` ([#15796](https://github.com/sveltejs/svelte/pull/15796))
 
