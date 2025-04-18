@@ -21,6 +21,7 @@ const UNKNOWN = Symbol('unknown');
 /** Includes `BigInt` */
 export const NUMBER = Symbol('number');
 export const STRING = Symbol('string');
+const NOT_NULL = Symbol('not null');
 /** @typedef {NUMBER | STRING | UNKNOWN | undefined | boolean} TYPE */
 /** @type {Record<string, [type: TYPE | TYPE[], fn?: Function]>} */
 const globals = {
@@ -296,6 +297,11 @@ class Evaluation {
 
 					if (!binding.updated && binding.initial !== null && !is_prop) {
 						binding.scope.evaluate(/** @type {Expression} */ (binding.initial), this.values);
+						break;
+					}
+
+					if (binding.kind === 'rest_prop' && !binding.updated) {
+						this.values.add(NOT_NULL);
 						break;
 					}
 				} else if (expression.name === 'undefined') {
