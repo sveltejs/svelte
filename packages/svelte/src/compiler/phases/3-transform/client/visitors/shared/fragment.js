@@ -68,6 +68,8 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 			return;
 		}
 
+		state.template.push(' ');
+
 		const { has_state, value } = build_template_chunk(sequence, visit, state);
 
 		// if this is a standalone `{expression}`, make sure we handle the case where
@@ -79,12 +81,8 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 
 		if (has_state && !within_bound_contenteditable) {
 			state.update.push(update);
-			state.template.push(' ');
-		} else if (value.type !== 'Literal') {
+		} else {
 			state.init.push(b.stmt(b.assignment('=', b.member(id, 'nodeValue'), value)));
-			state.template.push(' ');
-		} else if (value.type === 'Literal') {
-			state.template.push((value.value ?? '') + '');
 		}
 	}
 
