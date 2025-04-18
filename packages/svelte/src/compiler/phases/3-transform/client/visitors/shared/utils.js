@@ -78,7 +78,7 @@ export function build_template_chunk(
 				// If we have a single expression, then pass that in directly to possibly avoid doing
 				// extra work in the template_effect (instead we do the work in set_text).
 				if (evaluated.is_known) {
-					value = b.literal(evaluated.value);
+					value = b.literal(evaluated.value ?? '');
 				}
 
 				return { value, has_state };
@@ -97,7 +97,7 @@ export function build_template_chunk(
 			}
 
 			if (evaluated.is_known) {
-				quasi.value.cooked += evaluated.value + '';
+				quasi.value.cooked += (evaluated.value ?? '') + '';
 			} else {
 				if (!evaluated.is_defined) {
 					// add `?? ''` where necessary
