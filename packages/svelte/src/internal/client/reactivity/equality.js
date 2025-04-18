@@ -1,4 +1,5 @@
 /** @import { Equals } from '#client' */
+
 /** @type {Equals} */
 export function equals(value) {
 	return value === this.v;

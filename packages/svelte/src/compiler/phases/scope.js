@@ -4,7 +4,7 @@
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import { create_expression_metadata } from './nodes.js';
-import * as b from '../utils/builders.js';
+import * as b from '#compiler/builders';
 import * as e from '../errors.js';
 import {
 	extract_identifiers,
@@ -16,10 +16,10 @@ import { is_reserved, is_rune } from '../../utils.js';
 import { determine_slot } from '../utils/slot.js';
 import { validate_identifier_name } from './2-analyze/visitors/shared/utils.js';
 
-export const UNKNOWN = Symbol('unknown');
+const UNKNOWN = Symbol('unknown');
 /** Includes `BigInt` */
-export const NUMBER = Symbol('number');
-export const STRING = Symbol('string');
+const NUMBER = Symbol('number');
+const STRING = Symbol('string');
 
 export class Binding {
 	/** @type {Scope} */

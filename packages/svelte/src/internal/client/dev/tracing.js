@@ -1,8 +1,8 @@
-/** @import { Derived, Reaction, Signal, Value } from '#client' */
+/** @import { Derived, Reaction, Value } from '#client' */
 import { UNINITIALIZED } from '../../../constants.js';
 import { snapshot } from '../../shared/clone.js';
 import { define_property } from '../../shared/utils.js';
-import { DERIVED, STATE_SYMBOL } from '../constants.js';
+import { DERIVED, STATE_SYMBOL } from '#client/constants';
 import { effect_tracking } from '../reactivity/effects.js';
 import { active_reaction, captured_signals, set_captured_signals, untrack } from '../runtime.js';
 

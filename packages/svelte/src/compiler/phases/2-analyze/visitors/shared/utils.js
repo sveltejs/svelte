@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, Expression, Identifier, Literal, Node, Pattern, PrivateIdentifier, Super, UpdateExpression, VariableDeclarator } from 'estree' */
+/** @import { AssignmentExpression, Expression, Literal, Node, Pattern, Super, UpdateExpression, VariableDeclarator } from 'estree' */
 /** @import { AST, Binding } from '#compiler' */
 /** @import { AnalysisState, Context } from '../../types' */
 /** @import { Scope } from '../../../scope' */
@@ -6,7 +6,7 @@
 import * as e from '../../../../errors.js';
 import { extract_identifiers } from '../../../../utils/ast.js';
 import * as w from '../../../../warnings.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 
 /**

@@ -33,7 +33,7 @@ import {
 	MAYBE_DIRTY,
 	EFFECT_HAS_DERIVED,
 	BOUNDARY_EFFECT
-} from '../constants.js';
+} from '#client/constants';
 import { set } from './sources.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
@@ -427,18 +427,7 @@ export function destroy_effect(effect, remove_dom = true) {
 	var removed = false;
 
 	if ((remove_dom || (effect.f & HEAD_EFFECT) !== 0) && effect.nodes_start !== null) {
-		/** @type {TemplateNode | null} */
-		var node = effect.nodes_start;
-		var end = effect.nodes_end;
-
-		while (node !== null) {
-			/** @type {TemplateNode | null} */
-			var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
-
-			node.remove();
-			node = next;
-		}
-
+		remove_effect_dom(effect.nodes_start, /** @type {TemplateNode} */ (effect.nodes_end));
 		removed = true;
 	}
 
@@ -478,6 +467,21 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.nodes_start =
 		effect.nodes_end =
 			null;
+}
+
+/**
+ *
+ * @param {TemplateNode | null} node
+ * @param {TemplateNode} end
+ */
+export function remove_effect_dom(node, end) {
+	while (node !== null) {
+		/** @type {TemplateNode | null} */
+		var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
+
+		node.remove();
+		node = next;
+	}
 }
 
 /**

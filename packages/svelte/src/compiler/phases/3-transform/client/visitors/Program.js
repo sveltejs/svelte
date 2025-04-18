@@ -1,7 +1,7 @@
 /** @import { Expression, ImportDeclaration, MemberExpression, Program } from 'estree' */
 /** @import { ComponentContext } from '../types' */
 import { build_getter, is_prop_source } from '../utils.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { add_state_transformers } from './shared/declarations.js';
 
 /**

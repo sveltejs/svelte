@@ -1,4 +1,4 @@
-import { STATE_SYMBOL } from '../constants.js';
+import { STATE_SYMBOL } from '#client/constants';
 import { snapshot } from '../../shared/clone.js';
 import * as w from '../warnings.js';
 import { untrack } from '../runtime.js';

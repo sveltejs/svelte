@@ -2,7 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../../constants.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { parse_directive_name } from './shared/utils.js';
 
 /**

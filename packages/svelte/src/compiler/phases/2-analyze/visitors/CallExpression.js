@@ -6,7 +6,7 @@ import * as e from '../../../errors.js';
 import { get_parent, object, unwrap_optional } from '../../../utils/ast.js';
 import { is_pure, is_safe_identifier } from './shared/utils.js';
 import { dev, locate_node, source } from '../../../state.js';
-import * as b from '../../../utils/builders.js';
+import * as b from '#compiler/builders';
 
 /**
  * @param {CallExpression} node

@@ -1,6 +1,6 @@
 /** @import { Effect, TemplateNode } from '#client' */
 import { FILENAME, HYDRATION_ERROR } from '../../../../constants.js';
-import { block, branch, destroy_effect } from '../../reactivity/effects.js';
+import { remove_effect_dom, template_effect } from '../../reactivity/effects.js';
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from '../hydration.js';
 import { create_fragment_from_html } from '../reconciler.js';
 import { assign_nodes } from '../template.js';
@@ -9,6 +9,7 @@ import { hash, sanitize_location } from '../../../../utils.js';
 import { DEV } from 'esm-env';
 import { dev_current_component_function } from '../../context.js';
 import { get_first_child, get_next_sibling } from '../operations.js';
+import { active_effect } from '../../runtime.js';
 
 /**
  * @param {Element} element
@@ -34,89 +35,81 @@ function check_hash(element, server_hash, value) {
 /**
  * @param {Element | Text | Comment} node
  * @param {() => string} get_value
- * @param {boolean} svg
- * @param {boolean} mathml
+ * @param {boolean} [svg]
+ * @param {boolean} [mathml]
  * @param {boolean} [skip_warning]
  * @returns {void}
  */
-export function html(node, get_value, svg, mathml, skip_warning) {
+export function html(node, get_value, svg = false, mathml = false, skip_warning = false) {
 	var anchor = node;
 
 	var value = '';
 
-	/** @type {Effect | undefined} */
-	var effect;
+	template_effect(() => {
+		var effect = /** @type {Effect} */ (active_effect);
 
-	block(() => {
 		if (value === (value = get_value() ?? '')) {
-			if (hydrating) {
-				hydrate_next();
-			}
+			if (hydrating) hydrate_next();
 			return;
 		}
 
-		if (effect !== undefined) {
-			destroy_effect(effect);
-			effect = undefined;
+		if (effect.nodes_start !== null) {
+			remove_effect_dom(effect.nodes_start, /** @type {TemplateNode} */ (effect.nodes_end));
+			effect.nodes_start = effect.nodes_end = null;
 		}
 
 		if (value === '') return;
 
-		effect = branch(() => {
-			if (hydrating) {
-				// We're deliberately not trying to repair mismatches between server and client,
-				// as it's costly and error-prone (and it's an edge case to have a mismatch anyway)
-				var hash = /** @type {Comment} */ (hydrate_node).data;
-				var next = hydrate_next();
-				var last = next;
+		if (hydrating) {
+			// We're deliberately not trying to repair mismatches between server and client,
+			// as it's costly and error-prone (and it's an edge case to have a mismatch anyway)
+			var hash = /** @type {Comment} */ (hydrate_node).data;
+			var next = hydrate_next();
+			var last = next;
 
-				while (
-					next !== null &&
-					(next.nodeType !== 8 || /** @type {Comment} */ (next).data !== '')
-				) {
-					last = next;
-					next = /** @type {TemplateNode} */ (get_next_sibling(next));
-				}
-
-				if (next === null) {
-					w.hydration_mismatch();
-					throw HYDRATION_ERROR;
-				}
-
-				if (DEV && !skip_warning) {
-					check_hash(/** @type {Element} */ (next.parentNode), hash, value);
-				}
-
-				assign_nodes(hydrate_node, last);
-				anchor = set_hydrate_node(next);
-				return;
+			while (next !== null && (next.nodeType !== 8 || /** @type {Comment} */ (next).data !== '')) {
+				last = next;
+				next = /** @type {TemplateNode} */ (get_next_sibling(next));
 			}
 
-			var html = value + '';
-			if (svg) html = `<svg>${html}</svg>`;
-			else if (mathml) html = `<math>${html}</math>`;
-
-			// Don't use create_fragment_with_script_from_html here because that would mean script tags are executed.
-			// @html is basically `.innerHTML = ...` and that doesn't execute scripts either due to security reasons.
-			/** @type {DocumentFragment | Element} */
-			var node = create_fragment_from_html(html);
-
-			if (svg || mathml) {
-				node = /** @type {Element} */ (get_first_child(node));
+			if (next === null) {
+				w.hydration_mismatch();
+				throw HYDRATION_ERROR;
 			}
 
-			assign_nodes(
-				/** @type {TemplateNode} */ (get_first_child(node)),
-				/** @type {TemplateNode} */ (node.lastChild)
-			);
-
-			if (svg || mathml) {
-				while (get_first_child(node)) {
-					anchor.before(/** @type {Node} */ (get_first_child(node)));
-				}
-			} else {
-				anchor.before(node);
+			if (DEV && !skip_warning) {
+				check_hash(/** @type {Element} */ (next.parentNode), hash, value);
 			}
-		});
+
+			assign_nodes(hydrate_node, last);
+			anchor = set_hydrate_node(next);
+			return;
+		}
+
+		var html = value + '';
+		if (svg) html = `<svg>${html}</svg>`;
+		else if (mathml) html = `<math>${html}</math>`;
+
+		// Don't use create_fragment_with_script_from_html here because that would mean script tags are executed.
+		// @html is basically `.innerHTML = ...` and that doesn't execute scripts either due to security reasons.
+		/** @type {DocumentFragment | Element} */
+		var node = create_fragment_from_html(html);
+
+		if (svg || mathml) {
+			node = /** @type {Element} */ (get_first_child(node));
+		}
+
+		assign_nodes(
+			/** @type {TemplateNode} */ (get_first_child(node)),
+			/** @type {TemplateNode} */ (node.lastChild)
+		);
+
+		if (svg || mathml) {
+			while (get_first_child(node)) {
+				anchor.before(/** @type {Node} */ (get_first_child(node)));
+			}
+		} else {
+			anchor.before(node);
+		}
 	});
 }
