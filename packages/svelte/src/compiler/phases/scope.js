@@ -115,7 +115,6 @@ const prototype_methods = {
 		codePointAt: [[NUMBER, undefined], call_bind(string_proto.codePointAt)],
 		startsWith: [[true, false], call_bind(string_proto.startsWith)],
 		endsWith: [[true, false], call_bind(string_proto.endsWith)],
-		isWellFormed: [[true, false], call_bind(string_proto.isWellFormed)],
 		normalize: [STRING, call_bind(string_proto.normalize)],
 		padEnd: [STRING, call_bind(string_proto.padEnd)],
 		padStart: [STRING, call_bind(string_proto.padStart)],
