@@ -1,5 +1,11 @@
 # svelte
 
+## 5.28.0
+
+### Minor Changes
+
+- feat: partially evaluate more expressions ([#15781](https://github.com/sveltejs/svelte/pull/15781))
+
 ## 5.27.3
 
 ### Patch Changes
