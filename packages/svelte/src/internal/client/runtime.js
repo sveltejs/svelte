@@ -788,7 +788,7 @@ export function schedule_effect(signal) {
 	}
 }
 
-export function queue_flush() {
+function queue_flush() {
 	if (!is_flushing) {
 		is_flushing = true;
 		queueMicrotask(() => {

@@ -14,7 +14,6 @@ import {
 	reaction_sources,
 	check_dirtiness,
 	untracking,
-	queue_flush,
 	is_destroying_effect,
 	push_reaction_value
 } from '../runtime.js';
@@ -226,8 +225,6 @@ export function internal_set(source, value) {
 
 			inspect_effects.clear();
 		}
-
-		queue_flush();
 	}
 
 	return value;
