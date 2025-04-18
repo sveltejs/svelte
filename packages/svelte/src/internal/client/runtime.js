@@ -314,31 +314,21 @@ export function handle_error(error, effect, previous_effect, component_context) 
 		is_throwing_error = true;
 	}
 
-	if (
-		!DEV ||
-		component_context === null ||
-		!(error instanceof Error) ||
-		handled_errors.has(error)
-	) {
-		propagate_error(error, effect);
-		return;
-	}
+	if (DEV && component_context !== null && error instanceof Error && !handled_errors.has(error)) {
+		handled_errors.add(error);
 
-	handled_errors.add(error);
+		const component_stack = [];
 
-	const component_stack = [];
+		const effect_name = effect.fn?.name;
 
-	const effect_name = effect.fn?.name;
+		if (effect_name) {
+			component_stack.push(effect_name);
+		}
 
-	if (effect_name) {
-		component_stack.push(effect_name);
-	}
+		/** @type {ComponentContext | null} */
+		let current_context = component_context;
 
-	/** @type {ComponentContext | null} */
-	let current_context = component_context;
-
-	while (current_context !== null) {
-		if (DEV) {
+		while (current_context !== null) {
 			/** @type {string} */
 			var filename = current_context.function?.[FILENAME];
 
@@ -346,35 +336,36 @@ export function handle_error(error, effect, previous_effect, component_context) 
 				const file = filename.split('/').pop();
 				component_stack.push(file);
 			}
+
+			current_context = current_context.p;
 		}
 
-		current_context = current_context.p;
-	}
-
-	const indent = is_firefox ? '  ' : '\t';
-	define_property(error, 'message', {
-		value: error.message + `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`
-	});
-	define_property(error, 'component_stack', {
-		value: component_stack
-	});
-
-	const stack = error.stack;
-
-	// Filter out internal files from callstack
-	if (stack) {
-		const lines = stack.split('\n');
-		const new_lines = [];
-		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i];
-			if (line.includes('svelte/src/internal')) {
-				continue;
-			}
-			new_lines.push(line);
-		}
-		define_property(error, 'stack', {
-			value: new_lines.join('\n')
+		const indent = is_firefox ? '  ' : '\t';
+		define_property(error, 'message', {
+			value:
+				error.message + `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`
 		});
+		define_property(error, 'component_stack', {
+			value: component_stack
+		});
+
+		const stack = error.stack;
+
+		// Filter out internal files from callstack
+		if (stack) {
+			const lines = stack.split('\n');
+			const new_lines = [];
+			for (let i = 0; i < lines.length; i++) {
+				const line = lines[i];
+				if (line.includes('svelte/src/internal')) {
+					continue;
+				}
+				new_lines.push(line);
+			}
+			define_property(error, 'stack', {
+				value: new_lines.join('\n')
+			});
+		}
 	}
 
 	propagate_error(error, effect);

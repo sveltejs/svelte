@@ -600,6 +600,15 @@ export function css_global_block_invalid_modifier_start(node) {
 }
 
 /**
+ * A `:global` selector cannot be inside a pseudoclass
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function css_global_block_invalid_placement(node) {
+	e(node, 'css_global_block_invalid_placement', `A \`:global\` selector cannot be inside a pseudoclass\nhttps://svelte.dev/e/css_global_block_invalid_placement`);
+}
+
+/**
  * `:global(...)` can be at the start or end of a selector sequence, but not in the middle
  * @param {null | number | NodeLike} node
  * @returns {never}
