@@ -22,7 +22,6 @@ const UNKNOWN = Symbol('unknown');
 export const NUMBER = Symbol('number');
 export const STRING = Symbol('string');
 /** @typedef {NUMBER | STRING | UNKNOWN | undefined | boolean} TYPE */
-
 /** @type {Record<string, [type: TYPE | TYPE[], fn?: Function]>} */
 const globals = {
 	BigInt: [NUMBER, BigInt],
@@ -70,6 +69,8 @@ const globals = {
 	'Number.isSafeInteger': [NUMBER, Number.isSafeInteger],
 	'Number.parseFloat': [NUMBER, Number.parseFloat],
 	'Number.parseInt': [NUMBER, Number.parseInt],
+	'Object.is': [[true, false], Object.is],
+	'Object.hasOwn': [[true, false], Object.hasOwn],
 	String: [STRING, String],
 	'String.fromCharCode': [STRING, String.fromCharCode],
 	'String.fromCodePoint': [STRING, String.fromCodePoint]
@@ -605,6 +606,9 @@ class Evaluation {
 
 				if (keypath && Object.hasOwn(global_constants, keypath)) {
 					this.values.add(global_constants[keypath]);
+					break;
+				} else if (keypath?.match(/\.name$/) && Object.hasOwn(globals, keypath.slice(0, -5))) {
+					this.values.add(globals[keypath.slice(0, -5)]?.[1]?.name ?? STRING);
 					break;
 				}
 
