@@ -32,7 +32,7 @@ export function EachBlock(node, context) {
 	);
 
 	if (!each_node_meta.is_controlled) {
-		context.state.template.push('<!>');
+		context.state.template.push({ kind: 'create_anchor' });
 	}
 
 	let flags = 0;
