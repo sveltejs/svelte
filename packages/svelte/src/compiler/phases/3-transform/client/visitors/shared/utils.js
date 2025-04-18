@@ -3,7 +3,7 @@
 /** @import { ComponentClientTransformState, Context } from '../../types' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
-import * as b from '../../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
