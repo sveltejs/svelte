@@ -1495,13 +1495,7 @@ function get_type_of_ts_node(node, scope) {
 			return STRING;
 		case 'TSLiteralType':
 			return node.literal.type === 'Literal'
-				? typeof node.literal.value === 'string'
-					? STRING
-					: ['number', 'bigint'].includes(typeof node.literal.value)
-						? NUMBER
-						: typeof node.literal.value === 'boolean'
-							? [true, false]
-							: UNKNOWN
+				? node.literal.value
 				: node.literal.type === 'TemplateLiteral'
 					? STRING
 					: UNKNOWN;
@@ -1510,6 +1504,8 @@ function get_type_of_ts_node(node, scope) {
 		case 'TSNeverKeyword':
 		case 'TSVoidKeyword':
 			return undefined;
+		case 'TSNullKeyword':
+			return null;
 		default:
 			return UNKNOWN;
 	}
