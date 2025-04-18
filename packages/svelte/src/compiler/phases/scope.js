@@ -23,8 +23,6 @@ export const STRING = Symbol('string');
 /** Used for when you need to add `true` and `false` to the values, but can't do it for whatever reason */
 const BOOLEAN = Symbol('boolean');
 
-const TYPES = [UNKNOWN, NUMBER, STRING];
-
 const global_calls = Object.freeze({
 	String: ['fromCharCode', 'fromCodepoint'],
 	Math: [
