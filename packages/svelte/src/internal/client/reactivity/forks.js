@@ -14,6 +14,7 @@ export function remove_active_fork() {
 	active_fork = null;
 }
 
+/** Update `$effect.pending()` */
 function update_pending() {
 	internal_set(pending, forks.size > 0);
 }
