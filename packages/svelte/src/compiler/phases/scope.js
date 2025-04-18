@@ -122,7 +122,6 @@ const prototype_methods = {
 		substring: [STRING, call_bind(string_proto.substring)],
 		trimEnd: [STRING, call_bind(string_proto.trimEnd)],
 		trimStart: [STRING, call_bind(string_proto.trimStart)],
-		toWellFormed: [STRING, call_bind(string_proto.toWellFormed)],
 		//@ts-ignore
 		valueOf: [STRING, call_bind(string_proto.valueOf)]
 	},
