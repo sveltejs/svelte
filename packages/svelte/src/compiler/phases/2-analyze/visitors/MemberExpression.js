@@ -1,10 +1,7 @@
-/** @import { MemberExpression, Node } from 'estree' */
+/** @import { MemberExpression } from 'estree' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
-import * as w from '../../../warnings.js';
-import { object } from '../../../utils/ast.js';
 import { is_pure, is_safe_identifier } from './shared/utils.js';
-import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
  * @param {MemberExpression} node

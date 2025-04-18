@@ -27,14 +27,6 @@ let parent = null;
 let seen;
 
 /**
- * @param {Element} element
- */
-function stringify(element) {
-	if (element.filename === null) return `\`<${element.tag}>\``;
-	return `\`<${element.tag}>\` (${element.filename}:${element.line}:${element.column})`;
-}
-
-/**
  * @param {Payload} payload
  * @param {string} message
  */

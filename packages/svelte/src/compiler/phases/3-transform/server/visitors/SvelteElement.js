@@ -3,7 +3,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import { dev, locator } from '../../../../state.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { determine_namespace_for_children } from '../../utils.js';
 import { build_element_attributes } from './shared/element.js';
 import { build_template } from './shared/utils.js';
