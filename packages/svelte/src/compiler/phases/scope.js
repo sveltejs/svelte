@@ -1480,6 +1480,43 @@ function get_global_keypath(node, scope) {
  * @returns {any}
  */
 function get_type_of_ts_node(node, scope) {
+	/**
+	 * @param {any[]} types
+	 * @returns {any[]}
+	 */
+	function intersect_types(types) {
+		if (types.includes(UNKNOWN)) return [UNKNOWN];
+		/** @type {any[]} */
+		let res = [];
+		if (
+			types.filter((type) => typeof type === 'number' || typeof type === 'bigint').length > 1 ||
+			(!types.some((type) => typeof type === 'number' || typeof type === 'bigint') &&
+				types.includes(NUMBER))
+		) {
+			res.push(NUMBER);
+		} else {
+			res.push(...types.filter((type) => typeof type === 'number' || typeof type === 'bigint'));
+		}
+		if (
+			types.filter((type) => typeof type === 'string').length > 1 ||
+			(!types.some((type) => typeof type === 'string') && types.includes(STRING))
+		) {
+			res.push(STRING);
+		} else {
+			res.push(...types.filter((type) => typeof type === 'string'));
+		}
+		if (
+			types.filter((type) => !['symbol', 'string', 'number', 'bigint'].includes(typeof type))
+				.length > 1
+		) {
+			res.push(UNKNOWN);
+		} else {
+			types.push(
+				...types.filter((type) => !['symbol', 'string', 'number', 'bigint'].includes(typeof type))
+			);
+		}
+		return res;
+	}
 	switch (node.type) {
 		case 'TypeAnnotation':
 			return get_type_of_ts_node(node.annotation, scope);
@@ -1488,6 +1525,12 @@ function get_type_of_ts_node(node, scope) {
 				get_type_of_ts_node(node.trueType, scope),
 				get_type_of_ts_node(node.falseType, scope)
 			].flat();
+		case 'TSUnionType':
+			//@ts-ignore
+			return node.types.map((type) => get_type_of_ts_node(type, scope)).flat();
+		case 'TSIntersectionType':
+			//@ts-ignore
+			return intersect_types(node.types.map((type) => get_type_of_ts_node(type, scope)).flat());
 		case 'TSBigIntKeyword':
 		case 'TSNumberKeyword':
 			return NUMBER;
