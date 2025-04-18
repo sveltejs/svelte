@@ -76,6 +76,10 @@ See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-long
 
 > Property descriptors defined on `$state` objects must contain `value` and always be `enumerable`, `configurable` and `writable`.
 
+## state_invalidate_invalid_source
+
+> The argument passed to `$state.invalidate` must be a variable or class field declared with `$state` or `$state.raw`, or a property of a `$state` object.
+
 ## state_prototype_fixed
 
 > Cannot set prototype of `$state` object
