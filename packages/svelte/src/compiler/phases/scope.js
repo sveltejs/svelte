@@ -471,26 +471,20 @@ class Evaluation {
 			}
 
 			case 'TemplateLiteral': {
-				const expressions = expression.expressions.map((expr) => scope.evaluate(expr));
-				const all_are_known = expressions.every((evaluated) => evaluated.is_known);
-				if (all_are_known) {
-					let res = '';
-					let quasi_index = 0;
-					let expr_index = 0;
-					let last_quasi = false;
-					for (let i = 0; i < expressions.length + expression.quasis.length; i++) {
-						if (last_quasi) {
-							const expression = expressions[expr_index++];
-							res += expression.value;
-						} else {
-							res += expression.quasis[quasi_index++].value.raw;
-						}
-						last_quasi = !last_quasi;
+				let result = expression.quasis[0].value.cooked;
+
+				for (let i = 0; i < expression.expressions.length; i += 1) {
+					const e = scope.evaluate(expression.expressions[i]);
+
+					if (e.is_known) {
+						result += e.value + expression.quasis[i + 1].value.cooked;
+					} else {
+						this.values.add(STRING);
+						break;
 					}
-					this.values.add(res);
-				} else {
-					this.values.add(STRING);
 				}
+
+				this.values.add(result);
 				break;
 			}
 
