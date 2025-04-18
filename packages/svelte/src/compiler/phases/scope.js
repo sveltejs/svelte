@@ -119,14 +119,12 @@ function is_global_call(callee, scope) {
 			//@ts-ignore
 			root_name = /** @type {Identifier} */ (callee.object).name;
 		}
-		console.log(root_name);
 		if (root_name === undefined) return null;
 		if (!(root_name in global_calls)) {
 			return null;
 		}
 		const valid_members = global_calls[root_name];
 		const property = /** @type {Identifier} */ (callee.property).name;
-		console.log(property, valid_members, valid_members.includes(property));
 		if (!valid_members.includes(property)) {
 			return null;
 		}
@@ -863,7 +861,6 @@ function evaluate_function(fn, binding, scopes, stack = new Set()) {
 					}
 				} else if (!is_global_call(node.callee, context.state.scope)) {
 					analysis.pure = false;
-					console.log(node.callee);
 				}
 				context.next();
 			},
@@ -961,7 +958,6 @@ function evaluate_function(fn, binding, scopes, stack = new Set()) {
 	if (analysis.values.size <= 1 && !TYPES.includes(analysis.value)) {
 		analysis.is_known = true;
 	}
-	console.log(analysis);
 	return analysis;
 }
 export class Scope {
