@@ -9,3 +9,9 @@ Promise.withResolvers ??= () => {
 
 	return { promise, resolve, reject };
 };
+
+globalThis.delayed = (v, ms = 1000) => {
+	return new Promise((f) => {
+		setTimeout(() => f(v), ms);
+	});
+};
