@@ -1,4 +1,4 @@
-/** @import { ArrowFunctionExpression, BinaryOperator, ClassDeclaration, Expression, FunctionDeclaration, FunctionExpression, Identifier, ImportDeclaration, MemberExpression, LogicalOperator, Node, Pattern, UnaryOperator, VariableDeclarator } from 'estree' */
+/** @import { ArrowFunctionExpression, BinaryOperator, ClassDeclaration, Expression, FunctionDeclaration, FunctionExpression, Identifier, ImportDeclaration, MemberExpression, LogicalOperator, Node, Pattern, UnaryOperator, VariableDeclarator, Super, Function, Program, PrivateIdentifier } from 'estree' */
 /** @import { Context, Visitor } from 'zimmerframe' */
 /** @import { AST, BindingKind, DeclarationKind } from '#compiler' */
 import is_reference from 'is-reference';
@@ -20,7 +20,124 @@ export const UNKNOWN = Symbol('unknown');
 /** Includes `BigInt` */
 export const NUMBER = Symbol('number');
 export const STRING = Symbol('string');
+/** Used for when you need to add `true` and `false` to the values, but can't do it for whatever reason */
+const BOOLEAN = Symbol('boolean');
 
+const TYPES = [UNKNOWN, NUMBER, STRING];
+
+const global_calls = Object.freeze({
+	String: ['fromCharCode', 'fromCodepoint'],
+	Math: [
+		'min',
+		'max',
+		'random',
+		'floor',
+		'f16round',
+		'round',
+		'abs',
+		'acos',
+		'asin',
+		'atan',
+		'atan2',
+		'ceil',
+		'cos',
+		'sin',
+		'tan',
+		'exp',
+		'log',
+		'pow',
+		'sqrt',
+		'clz32',
+		'imul',
+		'sign',
+		'log10',
+		'log2',
+		'log1p',
+		'expm1',
+		'cosh',
+		'sinh',
+		'tanh',
+		'acosh',
+		'asinh',
+		'atanh',
+		'trunc',
+		'fround',
+		'cbrt'
+	],
+	Number: ['isInteger', 'isFinite', 'isNaN', 'isSafeInteger', 'parseFloat', 'parseInt']
+});
+
+const math_constants = Object.freeze([
+	'PI',
+	'E',
+	'LN10',
+	'LN2',
+	'LOG10E',
+	'LOG2E',
+	'SQRT_2',
+	'SQRT1_2'
+]);
+
+/**
+ * @param {Expression | Super} callee
+ * @param {Scope} scope
+ * @returns {null | [keyof typeof global_calls, (typeof global_calls)[keyof typeof global_calls][number]] | [string]}
+ */
+function is_global_call(callee, scope) {
+	if (
+		callee.type === 'MemberExpression' &&
+		callee.property?.type !== 'PrivateIdentifier' &&
+		!callee.computed
+	) {
+		const root = object(callee);
+		if (root?.type !== 'Identifier') {
+			return null;
+		}
+		if (scope.get(root.name)) {
+			return null;
+		}
+		if (callee.object === root && root.name === 'globalThis') {
+			return is_global_call(callee.property, scope);
+		}
+		/** @type {keyof typeof global_calls | undefined} */
+		let root_name;
+
+		if (
+			callee.object.type === 'MemberExpression' &&
+			callee.object.property.type === 'Identifier' &&
+			!callee.object.computed
+		) {
+			if (
+				callee.object.object.type === 'Identifier' &&
+				callee.object.object.name === 'globalThis'
+			) {
+				root_name = /** @type {keyof typeof global_calls} */ (callee.object.property?.name);
+			} else if (callee.object.object === root) {
+				root_name = /** @type {keyof typeof global_calls} */ (root.name);
+			}
+		} else {
+			//@ts-ignore
+			root_name = /** @type {Identifier} */ (callee.object).name;
+		}
+		console.log(root_name);
+		if (root_name === undefined) return null;
+		if (!(root_name in global_calls)) {
+			return null;
+		}
+		const valid_members = global_calls[root_name];
+		const property = /** @type {Identifier} */ (callee.property).name;
+		console.log(property, valid_members, valid_members.includes(property));
+		if (!valid_members.includes(property)) {
+			return null;
+		}
+		return [root_name, property];
+	} else if (callee.type === 'Identifier') {
+		return callee.name === 'Number' || callee.name === 'BigInt' || callee.name === 'String'
+			? [callee.name]
+			: null;
+	}
+	return null;
+}
 export class Binding {
 	/** @type {Scope} */
 	scope;
@@ -148,8 +265,9 @@ class Evaluation {
 	 * @param {Scope} scope
 	 * @param {Expression} expression
 	 * @param {Set<any>} values
+	 * @param {Map<AST.SvelteNode, Scope>} scopes
 	 */
-	constructor(scope, expression, values = new Set()) {
+	constructor(scope, expression, values, scopes) {
 		this.values = values;
 
 		switch (expression.type) {
@@ -181,7 +299,11 @@ class Evaluation {
 					}
 
 					if (!binding.updated && binding.initial !== null && !is_prop) {
-						binding.scope.evaluate(/** @type {Expression} */ (binding.initial), this.values);
+						binding.scope.evaluate(
+							/** @type {Expression} */ (binding.initial),
+							this.values,
+							scopes
+						);
 						break;
 					}
 				} else if (expression.name === 'undefined') {
@@ -197,8 +319,8 @@ class Evaluation {
 			}
 
 			case 'BinaryExpression': {
-				const a = scope.evaluate(/** @type {Expression} */ (expression.left)); // `left` cannot be `PrivateIdentifier` unless operator is `in`
-				const b = scope.evaluate(expression.right);
+				const a = scope.evaluate(/** @type {Expression} */ (expression.left), new Set(), scopes); // `left` cannot be `PrivateIdentifier` unless operator is `in`
+				const b = scope.evaluate(expression.right, new Set(), scopes);
 
 				if (a.is_known && b.is_known) {
 					this.values.add(binary[expression.operator](a.value, b.value));
@@ -252,9 +374,9 @@ class Evaluation {
 			}
 
 			case 'ConditionalExpression': {
-				const test = scope.evaluate(expression.test);
-				const consequent = scope.evaluate(expression.consequent);
-				const alternate = scope.evaluate(expression.alternate);
+				const test = scope.evaluate(expression.test, new Set(), scopes);
+				const consequent = scope.evaluate(expression.consequent, new Set(), scopes);
+				const alternate = scope.evaluate(expression.alternate, new Set(), scopes);
 
 				if (test.is_known) {
 					for (const value of (test.value ? consequent : alternate).values) {
@@ -273,8 +395,8 @@ class Evaluation {
 			}
 
 			case 'LogicalExpression': {
-				const a = scope.evaluate(expression.left);
-				const b = scope.evaluate(expression.right);
+				const a = scope.evaluate(expression.left, new Set(), scopes);
+				const b = scope.evaluate(expression.right, new Set(), scopes);
 
 				if (a.is_known) {
 					if (b.is_known) {
@@ -308,7 +430,7 @@ class Evaluation {
 			}
 
 			case 'UnaryExpression': {
-				const argument = scope.evaluate(expression.argument);
+				const argument = scope.evaluate(expression.argument, new Set(), scopes);
 
 				if (argument.is_known) {
 					this.values.add(unary[expression.operator](argument.value));
@@ -353,7 +475,7 @@ class Evaluation {
 						case '$state.raw':
 						case '$derived':
 							if (arg) {
-								scope.evaluate(arg, this.values);
+								scope.evaluate(arg, this.values, scopes);
 							} else {
 								this.values.add(undefined);
 							}
@@ -370,7 +492,7 @@ class Evaluation {
 
 						case '$derived.by':
 							if (arg?.type === 'ArrowFunctionExpression' && arg.body.type !== 'BlockStatement') {
-								scope.evaluate(arg.body, this.values);
+								scope.evaluate(arg.body, this.values, scopes);
 								break;
 							}
 
@@ -385,11 +507,12 @@ class Evaluation {
 					break;
 				}
 
-				if (expression.callee.type === 'Identifier' && scope.get(expression.callee.name) === null) {
-					switch (expression.callee.name) {
+				if (is_global_call(expression.callee, scope)?.length === 1) {
+					const [call] = /** @type {[string]} */ (is_global_call(expression.callee, scope));
+					switch (call) {
 						case 'Number': {
 							const arg = /** @type {Expression | undefined} */ (expression.arguments[0]);
-							const e = arg && scope.evaluate(arg);
+							const e = arg && scope.evaluate(arg, new Set(), scopes);
 
 							this.values.add(e ? (e.is_known ? Number(e.value) : NUMBER) : 0);
 							break;
@@ -397,19 +520,203 @@ class Evaluation {
 
 						case 'String': {
 							const arg = /** @type {Expression | undefined} */ (expression.arguments[0]);
-							const e = arg && scope.evaluate(arg);
+							const e = arg && scope.evaluate(arg, new Set(), scopes);
 
-							this.values.add(e ? (e.is_known ? String(e.value) : STRING) : 0);
+							this.values.add(e ? (e.is_known ? String(e.value) : STRING) : '');
+							break;
+						}
+
+						case 'BigInt': {
+							const arg = /** @type {Expression | undefined} */ (expression.arguments[0]);
+							const e = arg && scope.evaluate(arg, new Set(), scopes);
+							this.values.add(e ? (e.is_known ? BigInt(e.value) : NUMBER) : 0n);
 							break;
 						}
 
 						default:
 							this.values.add(UNKNOWN);
 					}
-				} else {
-					this.values.add(UNKNOWN);
+					break;
+				} else if (
+					expression.callee.type === 'MemberExpression' &&
+					is_global_call(expression.callee, scope)?.length === 2
+				) {
+					const [object, property] = /** @type {[keyof typeof global_calls, string]} */ (
+						is_global_call(expression.callee, scope)
+					);
+					switch (object) {
+						case 'Math': {
+							const args = /** @type {Expression[]} */ (expression.arguments).map((arg) =>
+								scope.evaluate(arg, new Set(), scopes)
+							);
+							const all_are_known = args.every((evaluated) => evaluated.is_known);
+							const vals = all_are_known
+								? //@ts-expect-error
+									/** @type {() => unknown} */ (Math[property])(...args.map((arg) => arg.value))
+								: NUMBER;
+							this.values.add(vals);
+							break;
+						}
+						case 'Number': {
+							const args = /** @type {Expression[]} */ (expression.arguments).map((arg) =>
+								scope.evaluate(arg, new Set(), scopes)
+							);
+							const all_are_known = args.every((evaluated) => evaluated.is_known);
+							const vals = all_are_known
+								? Number[
+										/** @type {'isSafeInteger' | 'isFinite' | 'isNaN' | 'parseFloat' | 'parseInt' | 'isInteger'} */ (
+											property
+										)
+										//@ts-expect-error types are a monster here
+									](...args.map((arg) => arg.value))
+								: property.startsWith('is')
+									? BOOLEAN
+									: NUMBER;
+							if (vals === BOOLEAN) {
+								this.values.add(true);
+								this.values.add(false);
+							} else {
+								this.values.add(vals);
+							}
+							break;
+						}
+						case 'String': {
+							const args = /** @type {Expression[]} */ (expression.arguments).map((arg) =>
+								scope.evaluate(arg, new Set(), scopes)
+							);
+							const all_are_known = args.every((evaluated) => evaluated.is_known);
+							this.values.add(
+								all_are_known
+									? String[/** @type {'fromCharCode' | 'fromCodePoint'} */ (property)](
+											...args.map((arg) => arg.value)
+										)
+									: STRING
+							);
+							break;
+						}
+					}
+					break;
+				} else if (expression.callee.type === 'Identifier' && !expression.arguments.length) {
+					const binding = scope.get(expression.callee.name);
+					if (binding) {
+						if (
+							binding.kind === 'normal' &&
+							!binding.reassigned &&
+							(binding.declaration_kind === 'function' ||
+								binding.declaration_kind === 'const' ||
+								binding.declaration_kind === 'let' ||
+								binding.declaration_kind === 'var')
+						) {
+							const fn =
+								/** @type {FunctionExpression | FunctionDeclaration | ArrowFunctionExpression} */ (
+									binding.initial
+								);
+							if (fn && fn.async === false && !fn?.generator) {
+								const fn_analysis = evaluate_function(fn, binding, scopes, new Set());
+								if (fn_analysis.pure && fn_analysis.never_throws) {
+									for (let value of fn_analysis.values) {
+										this.values.add(value);
+									}
+									break;
+								}
+							}
+						}
+					}
 				}
 
+				this.values.add(UNKNOWN);
+				break;
+			}
+
+			case 'TemplateLiteral': {
+				const expressions = expression.expressions.map((expr) =>
+					scope.evaluate(expr, new Set(), scopes)
+				);
+				const all_are_known = expressions.every((evaluated) => evaluated.is_known);
+				if (all_are_known) {
+					let res = '';
+					let quasi_index = 0;
+					let expr_index = 0;
+					let last_quasi = false;
+					for (let i = 0; i < expressions.length + expression.quasis.length; i++) {
+						if (last_quasi) {
+							const expression = expressions[expr_index++];
+							res += expression.value;
+						} else {
+							res += expression.quasis[quasi_index++].value.raw;
+						}
+						last_quasi = !last_quasi;
+					}
+					this.values.add(res);
+				} else {
+					this.values.add(STRING);
+				}
+				break;
+			}
+
+			case 'MemberExpression': {
+				if (
+					expression.object.type !== 'Identifier' &&
+					expression.object.type !== 'MemberExpression'
+				) {
+					this.values.add(UNKNOWN);
+					break;
+				}
+				const { object, property, computed } = expression;
+				if (
+					object.type === 'MemberExpression' &&
+					object.object.type === 'Identifier' &&
+					object.object.name === 'globalThis' &&
+					!scope.get('globalThis')
+				) {
+					if (object.computed && object.property.type !== 'PrivateIdentifier') {
+						const key = scope.evaluate(object.property, new Set(), scopes);
+						if (key.is_known && key.value === 'Math') {
+							if (computed && property.type !== 'PrivateIdentifier') {
+								const math_prop = scope.evaluate(property, new Set(), scopes);
+								if (math_prop.is_known && math_constants.includes(math_prop.value)) {
+									this.values.add(Math[/** @type {keyof typeof Math} */ (math_prop.value)]);
+									break;
+								}
+							} else if (property.type === 'Identifier') {
+								if (math_constants.includes(property.name)) {
+									this.values.add(Math[/** @type {keyof typeof Math} */ (property.name)]);
+									break;
+								}
+							}
+						}
+					} else if (object.property.type === 'Identifier' && object.property.name === 'Math') {
+						if (computed && property.type !== 'PrivateIdentifier') {
+							const math_prop = scope.evaluate(property, new Set(), scopes);
+							if (math_prop.is_known && math_constants.includes(math_prop.value)) {
+								this.values.add(Math[/** @type {keyof typeof Math} */ (math_prop.value)]);
+								break;
+							}
+						} else if (property.type === 'Identifier') {
+							if (math_constants.includes(property.name)) {
+								this.values.add(Math[/** @type {keyof typeof Math} */ (property.name)]);
+								break;
+							}
+						}
+					} else {
+						this.values.add(UNKNOWN);
+						break;
+					}
+				} else if (object.type === 'Identifier' && object.name === 'Math' && !scope.get('Math')) {
+					if (computed && property.type !== 'PrivateIdentifier') {
+						const math_prop = scope.evaluate(property, new Set(), scopes);
+						if (math_prop.is_known && math_constants.includes(math_prop.value)) {
+							this.values.add(Math[/** @type {keyof typeof Math} */ (math_prop.value)]);
+							break;
+						}
+					} else if (property.type === 'Identifier') {
+						if (math_constants.includes(property.name)) {
+							this.values.add(Math[/** @type {keyof typeof Math} */ (property.name)]);
+							break;
+						}
+					}
+				}
+				this.values.add(UNKNOWN);
 				break;
 			}
 
@@ -440,6 +747,223 @@ class Evaluation {
 	}
 }
 
+// TODO add more
+const global_classes = [
+	'String',
+	'BigInt',
+	'Object',
+	'Set',
+	'Array',
+	'Proxy',
+	'Map',
+	'Boolean',
+	'WeakMap',
+	'WeakRef',
+	'WeakSet',
+	'Number',
+	'RegExp',
+	'Error',
+	'Date'
+];
+
+// TODO ditto
+const known_globals = [
+	...global_classes,
+	'Symbol',
+	'console',
+	'Math',
+	'isNaN',
+	'isFinite',
+	'setTimeout',
+	'setInterval',
+	'NaN',
+	'undefined'
+];
+
+/**
+ * @param {FunctionExpression | ArrowFunctionExpression | FunctionDeclaration} fn
+ * @param {Binding} binding
+ * @param {Map<AST.SvelteNode, Scope>} scopes
+ * @param {Set<Binding>} [stack]
+ */
+function evaluate_function(fn, binding, scopes, stack = new Set()) {
+	const analysis = {
+		pure: true,
+		is_known: false,
+		is_defined: false,
+		values: new Set(),
+		/** @type {any} */
+		value: undefined,
+		never_throws: true
+	};
+	/** @type {Set<Scope>} */
+	const walked_scopes = new Set(/** @type {Scope[]} */ ([binding.scope]));
+	const fn_binding = binding;
+	walk(
+		/** @type {AST.SvelteNode} */ (fn),
+		{ scope: binding.scope },
+		{
+			MemberExpression(node, context) {
+				if (
+					!context.state.scope.evaluate(node, new Set(), scopes).is_known &&
+					!is_global_call(node, context.state.scope)
+				) {
+					analysis.pure = false;
+					analysis.never_throws = false; // getters/proxies could throw
+				}
+				context.next();
+			},
+			Identifier(node, context) {
+				if (is_reference(node, /** @type {Node} */ (context.path.at(-1)))) {
+					const binding = context.state.scope.get(node.name);
+					if (binding !== fn_binding) {
+						if (binding === null) {
+							if (known_globals.includes(node.name)) {
+								context.next();
+								return;
+							}
+							analysis.pure = false;
+						} else if (!walked_scopes.has(binding?.scope)) {
+							const evaluated = context.state.scope.evaluate(node, new Set(), scopes);
+							if (!evaluated.is_known) {
+								analysis.pure = false;
+							}
+						}
+					}
+				}
+				context.next();
+			},
+			CallExpression(node, context) {
+				if (node.callee.type === 'Identifier' && !node.arguments.length) {
+					const binding = context.state.scope.get(node.callee.name);
+					if (
+						binding &&
+						fn_binding !== binding &&
+						binding.kind === 'normal' &&
+						!binding.reassigned &&
+						(binding.declaration_kind === 'function' ||
+							binding.declaration_kind === 'const' ||
+							binding.declaration_kind === 'let' ||
+							binding.declaration_kind === 'var')
+					) {
+						if (!stack.has(binding)) {
+							const fn_analysis = evaluate_function(
+								/** @type {FunctionExpression | ArrowFunctionExpression | FunctionDeclaration} */ (
+									binding.initial
+								),
+								binding,
+								scopes,
+								new Set([...stack])
+							);
+							analysis.pure &&= fn_analysis.pure;
+							analysis.never_throws &&= fn_analysis.never_throws;
+						}
+					} else if (!(node.callee.name in global_calls)) {
+						analysis.pure = false;
+					}
+				} else if (!is_global_call(node.callee, context.state.scope)) {
+					analysis.pure = false;
+					console.log(node.callee);
+				}
+				context.next();
+			},
+			NewExpression(node, context) {
+				const { callee } = node;
+				if (callee.type === 'Identifier') {
+					if (context.state.scope.get(callee.name) || !global_classes.includes(callee.name)) {
+						analysis.pure = false;
+					}
+				}
+				context.next();
+			},
+			AssignmentExpression(node, context) {
+				const { left } = node;
+				const assigned_to = unwrap_pattern(/** @type {Pattern} */ (context.visit(left)));
+				if (assigned_to.some((assigned) => assigned.type === 'MemberExpression')) {
+					analysis.pure = false;
+					analysis.never_throws = false;
+				} else if (
+					assigned_to.some((assigned) => {
+						const binding = context.state.scope.get(/** @type {Identifier} */ (assigned).name);
+						if (binding) {
+							return !walked_scopes.has(binding.scope);
+						} else {
+							return true;
+						}
+					})
+				) {
+					analysis.pure = false;
+				}
+				context.next();
+			},
+			UpdateExpression(node, context) {
+				analysis.pure = false;
+				analysis.never_throws = false;
+				context.next();
+			},
+			ReturnStatement(node, context) {
+				if (
+					context.path.findLast(
+						(parent) =>
+							parent.type === 'FunctionDeclaration' ||
+							parent.type === 'FunctionExpression' ||
+							parent.type === 'ArrowFunctionExpression'
+					) === fn
+				) {
+					const return_values = node.argument
+						? context.state.scope.evaluate(
+								/** @type {Expression} */ (context.visit(node.argument)),
+								new Set(),
+								scopes
+							)
+						: undefined;
+					if (return_values === undefined) {
+						analysis.values.add(undefined);
+					} else {
+						for (let value of return_values.values) {
+							analysis.values.add(value);
+						}
+					}
+				}
+			},
+			ThrowStatement(node, context) {
+				if (
+					context.path.findLast(
+						(parent) =>
+							parent.type === 'FunctionDeclaration' ||
+							parent.type === 'FunctionExpression' ||
+							parent.type === 'ArrowFunctionExpression'
+					) === fn
+				) {
+					analysis.never_throws = false;
+				}
+				context.next();
+			},
+			_(node, context) {
+				const scope = scopes.get(node);
+				if (scope && node.type !== 'FunctionDeclaration') {
+					walked_scopes.add(scope);
+					context.next({ scope });
+				} else if (node.type !== 'FunctionDeclaration' || node === fn) {
+					context.next(context.state);
+				}
+			}
+		}
+	);
+	for (const value of analysis.values) {
+		analysis.value = value; // saves having special logic for `size === 1`
+
+		if (value == null || value === UNKNOWN) {
+			analysis.is_defined = false;
+		}
+	}
+
+	if (analysis.values.size <= 1 && !TYPES.includes(analysis.value)) {
+		analysis.is_known = true;
+	}
+	console.log(analysis);
+	return analysis;
+}
 export class Scope {
 	/** @type {ScopeRoot} */
 	root;
@@ -625,10 +1149,11 @@ export class Scope {
 	 * Only call this once scope has been fully generated in a first pass,
 	 * else this evaluates on incomplete data and may yield wrong results.
 	 * @param {Expression} expression
-	 * @param {Set<any>} [values]
+	 * @param {Set<any>} values
+	 * @param {Map<AST.SvelteNode, Scope>} scopes
 	 */
-	evaluate(expression, values) {
-		return new Evaluation(this, expression, values);
+	evaluate(expression, values, scopes) {
+		return new Evaluation(this, expression, values, scopes);
 	}
 }
 
