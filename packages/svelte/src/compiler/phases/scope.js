@@ -23,117 +23,69 @@ export const STRING = Symbol('string');
 /** Used for when you need to add `true` and `false` to the values, but can't do it for whatever reason */
 const BOOLEAN = Symbol('boolean');
 
-const global_calls = Object.freeze({
-	String: ['fromCharCode', 'fromCodepoint'],
-	Math: [
-		'min',
-		'max',
-		'random',
-		'floor',
-		'f16round',
-		'round',
-		'abs',
-		'acos',
-		'asin',
-		'atan',
-		'atan2',
-		'ceil',
-		'cos',
-		'sin',
-		'tan',
-		'exp',
-		'log',
-		'pow',
-		'sqrt',
-		'clz32',
-		'imul',
-		'sign',
-		'log10',
-		'log2',
-		'log1p',
-		'expm1',
-		'cosh',
-		'sinh',
-		'tanh',
-		'acosh',
-		'asinh',
-		'atanh',
-		'trunc',
-		'fround',
-		'cbrt'
-	],
-	Number: ['isInteger', 'isFinite', 'isNaN', 'isSafeInteger', 'parseFloat', 'parseInt']
-});
+/** @type {Record<string, [type: NUMBER | STRING | UNKNOWN | BOOLEAN, fn?: Function]} */
+const globals = {
+	BigInt: [NUMBER, BigInt],
+	'Math.min': [NUMBER, Math.min],
+	'Math.max': [NUMBER, Math.max],
+	'Math.random': [NUMBER],
+	'Math.floor': [NUMBER, Math.floor],
+	// @ts-expect-error
+	'Math.f16round': [NUMBER, Math.f16round],
+	'Math.round': [NUMBER, Math.round],
+	'Math.abs': [NUMBER, Math.abs],
+	'Math.acos': [NUMBER, Math.acos],
+	'Math.asin': [NUMBER, Math.asin],
+	'Math.atan': [NUMBER, Math.atan],
+	'Math.atan2': [NUMBER, Math.atan2],
+	'Math.ceil': [NUMBER, Math.ceil],
+	'Math.cos': [NUMBER, Math.cos],
+	'Math.sin': [NUMBER, Math.sin],
+	'Math.tan': [NUMBER, Math.tan],
+	'Math.exp': [NUMBER, Math.exp],
+	'Math.log': [NUMBER, Math.log],
+	'Math.pow': [NUMBER, Math.pow],
+	'Math.sqrt': [NUMBER, Math.sqrt],
+	'Math.clz32': [NUMBER, Math.clz32],
+	'Math.imul': [NUMBER, Math.imul],
+	'Math.sign': [NUMBER, Math.sign],
+	'Math.log10': [NUMBER, Math.log10],
+	'Math.log2': [NUMBER, Math.log2],
+	'Math.log1p': [NUMBER, Math.log1p],
+	'Math.expm1': [NUMBER, Math.expm1],
+	'Math.cosh': [NUMBER, Math.cosh],
+	'Math.sinh': [NUMBER, Math.sinh],
+	'Math.tanh': [NUMBER, Math.tanh],
+	'Math.acosh': [NUMBER, Math.acosh],
+	'Math.asinh': [NUMBER, Math.asinh],
+	'Math.atanh': [NUMBER, Math.atanh],
+	'Math.trunc': [NUMBER, Math.trunc],
+	'Math.fround': [NUMBER, Math.fround],
+	'Math.cbrt': [NUMBER, Math.cbrt],
+	Number: [NUMBER, Number],
+	'Number.isInteger': [NUMBER, Number.isInteger],
+	'Number.isFinite': [NUMBER, Number.isFinite],
+	'Number.isNaN': [NUMBER, Number.isNaN],
+	'Number.isSafeInteger': [NUMBER, Number.isSafeInteger],
+	'Number.parseFloat': [NUMBER, Number.parseFloat],
+	'Number.parseInt': [NUMBER, Number.parseInt],
+	String: [STRING, String],
+	'String.fromCharCode': [STRING, String.fromCharCode],
+	'String.fromCodePoint': [STRING, String.fromCodePoint]
+};
 
-const math_constants = Object.freeze([
-	'PI',
-	'E',
-	'LN10',
-	'LN2',
-	'LOG10E',
-	'LOG2E',
-	'SQRT_2',
-	'SQRT1_2'
-]);
+/** @type {Record<string, any>} */
+const global_constants = {
+	'Math.PI': Math.PI,
+	'Math.E': Math.E,
+	'Math.LN10': Math.LN10,
+	'Math.LN2': Math.LN2,
+	'Math.LOG10E': Math.LOG10E,
+	'Math.LOG2E': Math.LOG2E,
+	'Math.SQRT2': Math.SQRT2,
+	'Math.SQRT1_2': Math.SQRT1_2
+};
 
-/**
- * @param {Expression | Super} callee
- * @param {Scope} scope
- * @returns {null | [keyof typeof global_calls, (typeof global_calls)[keyof typeof global_calls][number]] | [string]}
- */
-function is_global_call(callee, scope) {
-	if (
-		callee.type === 'MemberExpression' &&
-		callee.property?.type !== 'PrivateIdentifier' &&
-		!callee.computed
-	) {
-		const root = object(callee);
-		if (root?.type !== 'Identifier') {
-			return null;
-		}
-		if (scope.get(root.name)) {
-			return null;
-		}
-		if (callee.object === root && root.name === 'globalThis') {
-			return is_global_call(callee.property, scope);
-		}
-		/** @type {keyof typeof global_calls | undefined} */
-		let root_name;
-
-		if (
-			callee.object.type === 'MemberExpression' &&
-			callee.object.property.type === 'Identifier' &&
-			!callee.object.computed
-		) {
-			if (
-				callee.object.object.type === 'Identifier' &&
-				callee.object.object.name === 'globalThis'
-			) {
-				root_name = /** @type {keyof typeof global_calls} */ (callee.object.property?.name);
-			} else if (callee.object.object === root) {
-				root_name = /** @type {keyof typeof global_calls} */ (root.name);
-			}
-		} else {
-			//@ts-ignore
-			root_name = /** @type {Identifier} */ (callee.object).name;
-		}
-		if (root_name === undefined) return null;
-		if (!(root_name in global_calls)) {
-			return null;
-		}
-		const valid_members = global_calls[root_name];
-		const property = /** @type {Identifier} */ (callee.property).name;
-		if (!valid_members.includes(property)) {
-			return null;
-		}
-		return [root_name, property];
-	} else if (callee.type === 'Identifier') {
-		return callee.name === 'Number' || callee.name === 'BigInt' || callee.name === 'String'
-			? [callee.name]
-			: null;
-	}
-	return null;
-}
 export class Binding {
 	/** @type {Scope} */
 	scope;
@@ -456,137 +408,64 @@ class Evaluation {
 			}
 
 			case 'CallExpression': {
-				const rune = get_rune(expression, scope);
+				const keypath = get_global_keypath(expression.callee, scope);
 
-				if (rune) {
-					const arg = /** @type {Expression | undefined} */ (expression.arguments[0]);
+				if (keypath) {
+					if (is_rune(keypath)) {
+						const arg = /** @type {Expression | undefined} */ (expression.arguments[0]);
 
-					switch (rune) {
-						case '$state':
-						case '$state.raw':
-						case '$derived':
-							if (arg) {
-								scope.evaluate(arg, this.values);
-							} else {
-								this.values.add(undefined);
-							}
-							break;
-
-						case '$props.id':
-							this.values.add(STRING);
-							break;
-
-						case '$effect.tracking':
-							this.values.add(false);
-							this.values.add(true);
-							break;
-
-						case '$derived.by':
-							if (arg?.type === 'ArrowFunctionExpression' && arg.body.type !== 'BlockStatement') {
-								scope.evaluate(arg.body, this.values);
+						switch (keypath) {
+							case '$state':
+							case '$state.raw':
+							case '$derived':
+								if (arg) {
+									scope.evaluate(arg, this.values);
+								} else {
+									this.values.add(undefined);
+								}
 								break;
-							}
 
-							this.values.add(UNKNOWN);
-							break;
+							case '$props.id':
+								this.values.add(STRING);
+								break;
 
-						default: {
-							this.values.add(UNKNOWN);
-						}
-					}
-
-					break;
-				}
-
-				if (is_global_call(expression.callee, scope)?.length === 1) {
-					const [call] = /** @type {[string]} */ (is_global_call(expression.callee, scope));
-					switch (call) {
-						case 'Number': {
-							const arg = /** @type {Expression | undefined} */ (expression.arguments[0]);
-							const e = arg && scope.evaluate(arg);
-
-							this.values.add(e ? (e.is_known ? Number(e.value) : NUMBER) : 0);
-							break;
-						}
-
-						case 'String': {
-							const arg = /** @type {Expression | undefined} */ (expression.arguments[0]);
-							const e = arg && scope.evaluate(arg);
-
-							this.values.add(e ? (e.is_known ? String(e.value) : STRING) : '');
-							break;
-						}
-
-						case 'BigInt': {
-							const arg = /** @type {Expression | undefined} */ (expression.arguments[0]);
-							const e = arg && scope.evaluate(arg);
-							this.values.add(e ? (e.is_known ? BigInt(e.value) : NUMBER) : 0n);
-							break;
-						}
-
-						default:
-							this.values.add(UNKNOWN);
-					}
-					break;
-				} else if (
-					expression.callee.type === 'MemberExpression' &&
-					is_global_call(expression.callee, scope)?.length === 2
-				) {
-					const [object, property] = /** @type {[keyof typeof global_calls, string]} */ (
-						is_global_call(expression.callee, scope)
-					);
-					switch (object) {
-						case 'Math': {
-							const args = /** @type {Expression[]} */ (expression.arguments).map((arg) =>
-								scope.evaluate(arg)
-							);
-							const all_are_known = args.every((evaluated) => evaluated.is_known);
-							const vals = all_are_known
-								? //@ts-expect-error
-									/** @type {() => unknown} */ (Math[property])(...args.map((arg) => arg.value))
-								: NUMBER;
-							this.values.add(vals);
-							break;
-						}
-						case 'Number': {
-							const args = /** @type {Expression[]} */ (expression.arguments).map((arg) =>
-								scope.evaluate(arg)
-							);
-							const all_are_known = args.every((evaluated) => evaluated.is_known);
-							const vals = all_are_known
-								? Number[
-										/** @type {'isSafeInteger' | 'isFinite' | 'isNaN' | 'parseFloat' | 'parseInt' | 'isInteger'} */ (
-											property
-										)
-										//@ts-expect-error types are a monster here
-									](...args.map((arg) => arg.value))
-								: property.startsWith('is')
-									? BOOLEAN
-									: NUMBER;
-							if (vals === BOOLEAN) {
-								this.values.add(true);
+							case '$effect.tracking':
 								this.values.add(false);
-							} else {
-								this.values.add(vals);
+								this.values.add(true);
+								break;
+
+							case '$derived.by':
+								if (arg?.type === 'ArrowFunctionExpression' && arg.body.type !== 'BlockStatement') {
+									scope.evaluate(arg.body, this.values);
+									break;
+								}
+
+								this.values.add(UNKNOWN);
+								break;
+
+							default: {
+								this.values.add(UNKNOWN);
 							}
-							break;
 						}
-						case 'String': {
-							const args = /** @type {Expression[]} */ (expression.arguments).map((arg) =>
-								scope.evaluate(arg)
-							);
-							const all_are_known = args.every((evaluated) => evaluated.is_known);
-							this.values.add(
-								all_are_known
-									? String[/** @type {'fromCharCode' | 'fromCodePoint'} */ (property)](
-											...args.map((arg) => arg.value)
-										)
-									: STRING
-							);
-							break;
-						}
+
+						break;
 					}
-					break;
+
+					if (
+						Object.hasOwn(globals, keypath) &&
+						expression.arguments.every((arg) => arg.type !== 'SpreadElement')
+					) {
+						const [type, fn] = globals[keypath];
+						const values = expression.arguments.map((arg) => scope.evaluate(arg));
+
+						if (fn && values.every((e) => e.is_known)) {
+							this.values.add(fn(...values.map((e) => e.value)));
+						} else {
+							this.values.add(type);
+						}
+
+						break;
+					}
 				}
 
 				this.values.add(UNKNOWN);
@@ -618,67 +497,13 @@ class Evaluation {
 			}
 
 			case 'MemberExpression': {
-				if (
-					expression.object.type !== 'Identifier' &&
-					expression.object.type !== 'MemberExpression'
-				) {
-					this.values.add(UNKNOWN);
+				const keypath = get_global_keypath(expression, scope);
+
+				if (keypath && Object.hasOwn(global_constants, keypath)) {
+					this.values.add(global_constants[keypath]);
 					break;
 				}
-				const { object, property, computed } = expression;
-				if (
-					object.type === 'MemberExpression' &&
-					object.object.type === 'Identifier' &&
-					object.object.name === 'globalThis' &&
-					!scope.get('globalThis')
-				) {
-					if (object.computed && object.property.type !== 'PrivateIdentifier') {
-						const key = scope.evaluate(object.property);
-						if (key.is_known && key.value === 'Math') {
-							if (computed && property.type !== 'PrivateIdentifier') {
-								const math_prop = scope.evaluate(property);
-								if (math_prop.is_known && math_constants.includes(math_prop.value)) {
-									this.values.add(Math[/** @type {keyof typeof Math} */ (math_prop.value)]);
-									break;
-								}
-							} else if (property.type === 'Identifier') {
-								if (math_constants.includes(property.name)) {
-									this.values.add(Math[/** @type {keyof typeof Math} */ (property.name)]);
-									break;
-								}
-							}
-						}
-					} else if (object.property.type === 'Identifier' && object.property.name === 'Math') {
-						if (computed && property.type !== 'PrivateIdentifier') {
-							const math_prop = scope.evaluate(property);
-							if (math_prop.is_known && math_constants.includes(math_prop.value)) {
-								this.values.add(Math[/** @type {keyof typeof Math} */ (math_prop.value)]);
-								break;
-							}
-						} else if (property.type === 'Identifier') {
-							if (math_constants.includes(property.name)) {
-								this.values.add(Math[/** @type {keyof typeof Math} */ (property.name)]);
-								break;
-							}
-						}
-					} else {
-						this.values.add(UNKNOWN);
-						break;
-					}
-				} else if (object.type === 'Identifier' && object.name === 'Math' && !scope.get('Math')) {
-					if (computed && property.type !== 'PrivateIdentifier') {
-						const math_prop = scope.evaluate(property);
-						if (math_prop.is_known && math_constants.includes(math_prop.value)) {
-							this.values.add(Math[/** @type {keyof typeof Math} */ (math_prop.value)]);
-							break;
-						}
-					} else if (property.type === 'Identifier') {
-						if (math_constants.includes(property.name)) {
-							this.values.add(Math[/** @type {keyof typeof Math} */ (property.name)]);
-							break;
-						}
-					}
-				}
+
 				this.values.add(UNKNOWN);
 				break;
 			}
@@ -1462,7 +1287,19 @@ export function get_rune(node, scope) {
 	if (!node) return null;
 	if (node.type !== 'CallExpression') return null;
 
-	let n = node.callee;
+	const keypath = get_global_keypath(node.callee, scope);
+
+	if (!keypath || !is_rune(keypath)) return null;
+	return keypath;
+}
+
+/**
+ * Returns the name of the rune if the given expression is a `CallExpression` using a rune.
+ * @param {Expression | Super} node
+ * @param {Scope} scope
+ */
+function get_global_keypath(node, scope) {
+	let n = node;
 
 	let joined = '';
 
@@ -1480,12 +1317,8 @@ export function get_rune(node, scope) {
 
 	if (n.type !== 'Identifier') return null;
 
-	joined = n.name + joined;
-
-	if (!is_rune(joined)) return null;
-
 	const binding = scope.get(n.name);
 	if (binding !== null) return null; // rune name, but references a variable or store
 
-	return joined;
+	return n.name + joined;
 }
