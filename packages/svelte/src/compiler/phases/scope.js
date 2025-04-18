@@ -70,7 +70,6 @@ const globals = {
 	'Number.parseFloat': [NUMBER, Number.parseFloat],
 	'Number.parseInt': [NUMBER, Number.parseInt],
 	'Object.is': [[true, false], Object.is],
-	'Object.hasOwn': [[true, false], Object.hasOwn],
 	String: [STRING, String],
 	'String.fromCharCode': [STRING, String.fromCharCode],
 	'String.fromCodePoint': [STRING, String.fromCodePoint]
@@ -117,7 +116,6 @@ const prototype_methods = {
 		startsWith: [[true, false], call_bind(string_proto.startsWith)],
 		endsWith: [[true, false], call_bind(string_proto.endsWith)],
 		isWellFormed: [[true, false], call_bind(string_proto.isWellFormed)],
-		lastIndexOf: [NUMBER, call_bind(string_proto.lastIndexOf)],
 		normalize: [STRING, call_bind(string_proto.normalize)],
 		padEnd: [STRING, call_bind(string_proto.padEnd)],
 		padStart: [STRING, call_bind(string_proto.padStart)],
