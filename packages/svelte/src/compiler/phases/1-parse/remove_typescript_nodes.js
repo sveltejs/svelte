@@ -20,8 +20,25 @@ const visitors = {
 	_(node, context) {
 		const n = context.next() ?? node;
 
-		// TODO there may come a time when we decide to preserve type annotations.
-		// until that day comes, we just delete them so they don't confuse esrap
+		const type_information = {};
+		if (Object.hasOwn(n, 'typeAnnotation')) {
+			type_information.annotation = n.typeAnnotation;
+		}
+		if (Object.hasOwn(n, 'typeParameters')) {
+			type_information.parameters = n.typeParameters;
+		}
+		if (Object.hasOwn(n, 'typeArguments')) {
+			type_information.arguments = n.typeArguments;
+		}
+		if (Object.hasOwn(n, 'returnType')) {
+			type_information.return = n.returnType;
+		}
+		Object.defineProperty(n, 'type_information', {
+			value: type_information,
+			writable: true,
+			configurable: true,
+			enumerable: false
+		});
 		delete n.typeAnnotation;
 		delete n.typeParameters;
 		delete n.typeArguments;

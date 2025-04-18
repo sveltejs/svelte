@@ -573,6 +573,43 @@ class Evaluation {
 						}
 						break;
 					}
+				} else if (expression.callee.type === 'Identifier' && !expression.arguments.length) {
+					const binding = scope.get(expression.callee.name);
+					if (binding) {
+						if (
+							binding.kind === 'normal' &&
+							!binding.reassigned &&
+							(binding.declaration_kind === 'function' ||
+								binding.declaration_kind === 'const' ||
+								binding.declaration_kind === 'let' ||
+								binding.declaration_kind === 'var')
+						) {
+							const fn =
+								/** @type {FunctionExpression | FunctionDeclaration | ArrowFunctionExpression} */ (
+									binding.initial
+								);
+							if (fn && fn.async === false && !fn?.generator) {
+								if (Object.hasOwn(fn, 'type_information')) {
+									// @ts-ignore
+									const { type_information } = fn;
+									if (Object.hasOwn(type_information, 'return')) {
+										const return_types = get_type_of_ts_node(
+											type_information.return?.type_information?.annotation,
+											scope
+										);
+										if (Array.isArray(return_types)) {
+											for (let type of return_types) {
+												this.values.add(type);
+											}
+										} else {
+											this.values.add(return_types);
+										}
+										break;
+									}
+								}
+							}
+						}
+					}
 				}
 
 				this.values.add(UNKNOWN);
@@ -1435,4 +1472,45 @@ function get_global_keypath(node, scope) {
 	if (binding !== null) return null; // rune name, but references a variable or store
 
 	return n.name + joined;
+}
+
+/**
+ * @param {{type: string} & Record<string, any>} node
+ * @param {Scope} scope
+ * @returns {any}
+ */
+function get_type_of_ts_node(node, scope) {
+	switch (node.type) {
+		case 'TypeAnnotation':
+			return get_type_of_ts_node(node.annotation, scope);
+		case 'TSCheckType':
+			return [
+				get_type_of_ts_node(node.trueType, scope),
+				get_type_of_ts_node(node.falseType, scope)
+			].flat();
+		case 'TSBigIntKeyword':
+		case 'TSNumberKeyword':
+			return NUMBER;
+		case 'TSStringKeyword':
+			return STRING;
+		case 'TSLiteralType':
+			return node.literal.type === 'Literal'
+				? typeof node.literal.value === 'string'
+					? STRING
+					: ['number', 'bigint'].includes(typeof node.literal.value)
+						? NUMBER
+						: typeof node.literal.value === 'boolean'
+							? [true, false]
+							: UNKNOWN
+				: node.literal.type === 'TemplateLiteral'
+					? STRING
+					: UNKNOWN;
+		case 'TSBooleanKeyword':
+			return [true, false];
+		case 'TSNeverKeyword':
+		case 'TSVoidKeyword':
+			return undefined;
+		default:
+			return UNKNOWN;
+	}
 }
