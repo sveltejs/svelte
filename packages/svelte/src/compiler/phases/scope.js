@@ -21,8 +21,9 @@ const UNKNOWN = Symbol('unknown');
 /** Includes `BigInt` */
 export const NUMBER = Symbol('number');
 export const STRING = Symbol('string');
+/** @typedef {NUMBER | STRING | UNKNOWN | undefined | boolean} TYPE */
 
-/** @type {Record<string, [type: NUMBER | STRING | UNKNOWN, fn?: Function]>} */
+/** @type {Record<string, [type: TYPE | TYPE[], fn?: Function]>} */
 const globals = {
 	BigInt: [NUMBER, BigInt],
 	'Date.now': [NUMBER],
@@ -98,7 +99,7 @@ function call_bind(fn) {
 const string_proto = String.prototype;
 const number_proto = Number.prototype;
 
-/** @type {Record<string, Record<string, [type: NUMBER | STRING | UNKNOWN, fn?: Function]>>} */
+/** @type {Record<string, Record<string, [type: TYPE | TYPE[], fn?: Function]>>} */
 const prototype_methods = {
 	string: {
 		//@ts-ignore
@@ -109,14 +110,32 @@ const prototype_methods = {
 		at: [STRING, call_bind(string_proto.at)],
 		charAt: [STRING, call_bind(string_proto.charAt)],
 		trim: [STRING, call_bind(string_proto.trim)],
-		indexOf: [STRING, call_bind(string_proto.indexOf)]
+		indexOf: [NUMBER, call_bind(string_proto.indexOf)],
+		charCodeAt: [NUMBER, call_bind(string_proto.charCodeAt)],
+		codePointAt: [[NUMBER, undefined], call_bind(string_proto.codePointAt)],
+		startsWith: [[true, false], call_bind(string_proto.startsWith)],
+		endsWith: [[true, false], call_bind(string_proto.endsWith)],
+		isWellFormed: [[true, false], call_bind(string_proto.isWellFormed)],
+		lastIndexOf: [NUMBER, call_bind(string_proto.lastIndexOf)],
+		normalize: [STRING, call_bind(string_proto.normalize)],
+		padEnd: [STRING, call_bind(string_proto.padEnd)],
+		padStart: [STRING, call_bind(string_proto.padStart)],
+		repeat: [STRING, call_bind(string_proto.repeat)],
+		substring: [STRING, call_bind(string_proto.substring)],
+		trimEnd: [STRING, call_bind(string_proto.trimEnd)],
+		trimStart: [STRING, call_bind(string_proto.trimStart)],
+		toWellFormed: [STRING, call_bind(string_proto.toWellFormed)],
+		//@ts-ignore
+		valueOf: [STRING, call_bind(string_proto.valueOf)]
 	},
 	number: {
 		//@ts-ignore
 		toString: [STRING, call_bind(number_proto.toString)],
 		toFixed: [NUMBER, call_bind(number_proto.toFixed)],
 		toExponential: [NUMBER, call_bind(number_proto.toExponential)],
-		toPrecision: [NUMBER, call_bind(number_proto.toPrecision)]
+		toPrecision: [NUMBER, call_bind(number_proto.toPrecision)],
+		//@ts-ignore
+		valueOf: [NUMBER, call_bind(number_proto.valueOf)]
 	}
 };
 export class Binding {
@@ -494,7 +513,13 @@ class Evaluation {
 						if (fn && values.every((e) => e.is_known)) {
 							this.values.add(fn(...values.map((e) => e.value)));
 						} else {
-							this.values.add(type);
+							if (Array.isArray(type)) {
+								for (const t of type) {
+									this.values.add(t);
+								}
+							} else {
+								this.values.add(type);
+							}
 						}
 
 						break;
@@ -536,13 +561,18 @@ class Evaluation {
 						prototype_methods[/** @type {'string' | 'number'} */ (typeof object.value)];
 					if (Object.hasOwn(available_methods, property)) {
 						const [type, fn] = available_methods[property];
-						console.log([type, fn]);
 						const values = expression.arguments.map((arg) => scope.evaluate(arg));
 
 						if (fn && values.every((e) => e.is_known)) {
 							this.values.add(fn(object.value, ...values.map((e) => e.value)));
 						} else {
-							this.values.add(type);
+							if (Array.isArray(type)) {
+								for (const t of type) {
+									this.values.add(t);
+								}
+							} else {
+								this.values.add(type);
+							}
 						}
 						break;
 					}
