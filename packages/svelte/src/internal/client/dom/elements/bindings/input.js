@@ -64,6 +64,10 @@ export function bind_value(input, get, set = get) {
 
 		var value = get();
 
+		if (input === document.activeElement) {
+			return;
+		}
+
 		if (is_numberlike_input(input) && value === to_number(input.value)) {
 			// handles 0 vs 00 case (see https://github.com/sveltejs/svelte/issues/9959)
 			return;
