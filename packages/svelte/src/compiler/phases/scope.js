@@ -616,7 +616,7 @@ class Evaluation {
 								);
 							if (fn && fn.async === false && !fn?.generator) {
 								const analysis = evaluate_function(fn, binding); // typescript won't tell you if a function is pure or if it could throw, so we have to do this regardless of type annotations
-								console.log({ fn, binding, analysis });
+								// console.log({ fn, binding, analysis });
 								if (!analysis.pure || !analysis.never_throws) {
 									// if its not pure, or we don't know if it could throw, we can't use any constant return values from the evaluation, but we can check if its nullish
 									this.values.add(NOT_NULL); // `NOT_NULL` doesn't have precedence over `UNKNOWN`, so if the value is nullish, this won't have precedence
@@ -1718,7 +1718,7 @@ function evaluate_function(fn, binding, stack = new Set(), [...seen_bindings] = 
 	 * - While currently all the globals we have are pure and error-free, that could change, so we shouldn't be too dependent on that in the future.
 	 * 	Things like `JSON.stringify` and a *lot* of array methods are prime examples. 
 	 */
-	1;
+	let thing;
 	const analysis = {
 		pure: true,
 		is_known: false,
