@@ -11,6 +11,7 @@ import {
 import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_whitespaces_strict } from '../../../../patterns.js';
+import { NUMBER } from '../../../../scope.js';
 
 /** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
 export const block_open = b.literal(BLOCK_OPEN);
@@ -45,13 +46,19 @@ export function process_children(nodes, { visit, state }) {
 				quasi.value.cooked +=
 					node.type === 'Comment' ? `<!--${node.data}-->` : escape_html(node.data);
 			} else {
-				const evaluated = state.scope.evaluate(node.expression);
-
+				const expression = /** @type {Expression} */ (visit(node.expression));
+				const evaluated = state.scope.evaluate(expression);
 				if (evaluated.is_known) {
 					quasi.value.cooked += escape_html((evaluated.value ?? '') + '');
 				} else {
-					expressions.push(b.call('$.escape', /** @type {Expression} */ (visit(node.expression))));
-
+					if (
+						(evaluated.values.size === 1 && [...evaluated.values][0] === NUMBER) ||
+						[...evaluated.values].every((value) => typeof value === 'string' && !/[&<]/.test(value))
+					) {
+						expressions.push(expression);
+					} else {
+						expressions.push(b.call('$.escape', expression));
+					}
 					quasi = b.quasi('', i + 1 === sequence.length);
 					quasis.push(quasi);
 				}
