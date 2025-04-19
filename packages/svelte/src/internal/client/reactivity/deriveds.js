@@ -124,13 +124,13 @@ export function async_derived(fn, location) {
 		var restore = capture();
 
 		var fork = active_fork;
+		var ran = boundary.ran;
 
 		if (should_suspend) {
-			if (fork !== null) {
-				fork.increment();
-			} else {
-				// if nearest pending boundary is not ready, attach to the boundary
+			if (!ran) {
 				boundary.increment();
+			} else {
+				fork?.increment();
 			}
 		}
 
@@ -144,10 +144,10 @@ export function async_derived(fn, location) {
 				from_async_derived = null;
 
 				if (should_suspend) {
-					if (fork !== null) {
-						fork.decrement();
-					} else {
+					if (!ran) {
 						boundary.decrement();
+					} else {
+						fork?.decrement();
 					}
 				}
 

@@ -228,6 +228,8 @@ export class Boundary {
 				});
 			}
 
+			this.ran = false;
+
 			this.#main_effect = this.#run(() => {
 				this.#is_creating_fallback = false;
 
@@ -237,6 +239,8 @@ export class Boundary {
 					reset_is_throwing_error();
 				}
 			});
+
+			this.ran = true;
 
 			if (this.#pending_count > 0) {
 				this.#show_pending_snippet();
