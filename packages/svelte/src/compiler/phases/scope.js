@@ -27,7 +27,7 @@ const NOT_NULL = Symbol('not null');
 const TYPES = [NUMBER, STRING, UNKNOWN, NOT_NULL, undefined, true, false];
 /** @type {Record<string, [type: TYPE | TYPE[], fn?: Function]>} */
 const globals = {
-	BigInt: [NUMBER, BigInt],
+	BigInt: [NUMBER], // `BigInt` throws when a decimal is passed to it
 	'Date.now': [NUMBER],
 	'Math.min': [NUMBER, Math.min],
 	'Math.max': [NUMBER, Math.max],
@@ -267,7 +267,7 @@ class Evaluation {
 	 * @param {Set<any>} values
 	 * @param {Binding[]} seen_bindings
 	 */
-	constructor(scope, expression, values, seen_bindings) {
+	constructor(scope, expression, values, seen_bindings, from_fn_call = false) {
 		this.values = values;
 
 		switch (expression.type) {
@@ -300,10 +300,12 @@ class Evaluation {
 					}
 
 					if (!binding.updated && binding.initial !== null && !is_prop) {
-						binding.scope.evaluate(/** @type {Expression} */ (binding.initial), this.values, [
-							...seen_bindings,
-							binding
-						]);
+						binding.scope.evaluate(
+							/** @type {Expression} */ (binding.initial),
+							this.values,
+							[...seen_bindings, binding],
+							from_fn_call
+						);
 						break;
 					}
 
@@ -327,9 +329,10 @@ class Evaluation {
 				const a = scope.evaluate(
 					/** @type {Expression} */ (expression.left),
 					new Set(),
-					seen_bindings
+					seen_bindings,
+					from_fn_call
 				); // `left` cannot be `PrivateIdentifier` unless operator is `in`
-				const b = scope.evaluate(expression.right, new Set(), seen_bindings);
+				const b = scope.evaluate(expression.right, new Set(), seen_bindings, from_fn_call);
 
 				if (a.is_known && b.is_known) {
 					this.values.add(binary[expression.operator](a.value, b.value));
@@ -383,9 +386,19 @@ class Evaluation {
 			}
 
 			case 'ConditionalExpression': {
-				const test = scope.evaluate(expression.test, new Set(), seen_bindings);
-				const consequent = scope.evaluate(expression.consequent, new Set(), seen_bindings);
-				const alternate = scope.evaluate(expression.alternate, new Set(), seen_bindings);
+				const test = scope.evaluate(expression.test, new Set(), seen_bindings, from_fn_call);
+				const consequent = scope.evaluate(
+					expression.consequent,
+					new Set(),
+					seen_bindings,
+					from_fn_call
+				);
+				const alternate = scope.evaluate(
+					expression.alternate,
+					new Set(),
+					seen_bindings,
+					from_fn_call
+				);
 
 				if (test.is_known) {
 					for (const value of (test.value ? consequent : alternate).values) {
@@ -404,8 +417,8 @@ class Evaluation {
 			}
 
 			case 'LogicalExpression': {
-				const a = scope.evaluate(expression.left, new Set(), seen_bindings);
-				const b = scope.evaluate(expression.right, new Set(), seen_bindings);
+				const a = scope.evaluate(expression.left, new Set(), seen_bindings, from_fn_call);
+				const b = scope.evaluate(expression.right, new Set(), seen_bindings, from_fn_call);
 
 				if (a.is_known) {
 					if (b.is_known) {
@@ -439,7 +452,12 @@ class Evaluation {
 			}
 
 			case 'UnaryExpression': {
-				const argument = scope.evaluate(expression.argument, new Set(), seen_bindings);
+				const argument = scope.evaluate(
+					expression.argument,
+					new Set(),
+					seen_bindings,
+					from_fn_call
+				);
 
 				if (argument.is_known) {
 					this.values.add(unary[expression.operator](argument.value));
@@ -476,7 +494,7 @@ class Evaluation {
 			case 'SequenceExpression': {
 				const { expressions } = expression;
 				const evaluated = expressions.map((expression) =>
-					scope.evaluate(expression, new Set(), seen_bindings)
+					scope.evaluate(expression, new Set(), seen_bindings, from_fn_call)
 				);
 				if (evaluated.every((ev) => ev.is_known)) {
 					this.values.add(evaluated.at(-1)?.value);
@@ -498,7 +516,7 @@ class Evaluation {
 							case '$state.raw':
 							case '$derived':
 								if (arg) {
-									scope.evaluate(arg, this.values);
+									scope.evaluate(arg, this.values, seen_bindings, from_fn_call);
 								} else {
 									this.values.add(undefined);
 								}
@@ -514,7 +532,12 @@ class Evaluation {
 								break;
 
 							case '$derived.by':
-								scope.evaluate(b.call(/** @type {Expression} */ (arg)), this.values, seen_bindings);
+								scope.evaluate(
+									b.call(/** @type {Expression} */ (arg)),
+									this.values,
+									seen_bindings,
+									from_fn_call
+								);
 								break;
 
 							case '$effect.root':
@@ -535,7 +558,7 @@ class Evaluation {
 					) {
 						const [type, fn] = globals[keypath];
 						const values = expression.arguments.map((arg) =>
-							scope.evaluate(arg, new Set(), seen_bindings)
+							scope.evaluate(arg, new Set(), seen_bindings, from_fn_call)
 						);
 
 						if (fn && values.every((e) => e.is_known)) {
@@ -557,7 +580,12 @@ class Evaluation {
 					expression.callee.object.type !== 'Super' &&
 					expression.arguments.every((arg) => arg.type !== 'SpreadElement')
 				) {
-					const object = scope.evaluate(expression.callee.object, new Set(), seen_bindings);
+					const object = scope.evaluate(
+						expression.callee.object,
+						new Set(),
+						seen_bindings,
+						from_fn_call
+					);
 					if (!object.is_known) {
 						this.values.add(UNKNOWN);
 						break;
@@ -567,7 +595,12 @@ class Evaluation {
 						expression.callee.computed &&
 						expression.callee.property.type !== 'PrivateIdentifier'
 					) {
-						property = scope.evaluate(expression.callee.property, new Set(), seen_bindings);
+						property = scope.evaluate(
+							expression.callee.property,
+							new Set(),
+							seen_bindings,
+							from_fn_call
+						);
 						if (property.is_known) {
 							property = property.value;
 						} else {
@@ -590,7 +623,7 @@ class Evaluation {
 					if (Object.hasOwn(available_methods, property)) {
 						const [type, fn] = available_methods[property];
 						const values = expression.arguments.map((arg) =>
-							scope.evaluate(arg, new Set(), seen_bindings)
+							scope.evaluate(arg, new Set(), seen_bindings, from_fn_call)
 						);
 
 						if (fn && values.every((e) => e.is_known)) {
@@ -609,7 +642,7 @@ class Evaluation {
 				} else if (expression.callee.type === 'Identifier' && !expression.arguments.length) {
 					const binding = scope.get(expression.callee.name);
 					if (binding) {
-						if (is_valid_function_binding(binding)) {
+						if (binding.is_function()) {
 							const fn =
 								/** @type {FunctionExpression | FunctionDeclaration | ArrowFunctionExpression} */ (
 									binding.initial
@@ -663,7 +696,12 @@ class Evaluation {
 					const fn = expression.callee;
 					const binding = /** @type {Binding} */ ({ scope });
 					if (fn && fn.async === false && !fn?.generator) {
-						const analysis = evaluate_function(fn, binding);
+						const analysis = evaluate_function(
+							fn,
+							binding,
+							new Set(),
+							from_fn_call ? seen_bindings : []
+						);
 						if (!analysis.pure || !analysis.never_throws) {
 							this.values.add(NOT_NULL);
 						}
@@ -733,6 +771,35 @@ class Evaluation {
 				} else if (keypath?.match?.(/\.name$/) && Object.hasOwn(globals, keypath.slice(0, -5))) {
 					this.values.add(globals[keypath.slice(0, -5)]?.[1]?.name ?? STRING);
 					break;
+				} else if (
+					expression.object.type !== 'Super' &&
+					expression.property.type !== 'PrivateIdentifier'
+				) {
+					const object = scope.evaluate(expression.object, new Set(), seen_bindings, from_fn_call);
+					if (object.is_string) {
+						let property;
+						if (expression.computed) {
+							let prop = scope.evaluate(
+								expression.property,
+								new Set(),
+								seen_bindings,
+								from_fn_call
+							);
+							if (prop.is_known && prop.value === 'length') {
+								property = 'length';
+							}
+						} else if (expression.property.type === 'Identifier') {
+							property = expression.property.name;
+						}
+						if (property === 'length') {
+							if (object.is_known) {
+								this.values.add(object.value.length);
+							} else {
+								this.values.add(NUMBER);
+							}
+							break;
+						}
+					}
 				}
 
 				this.values.add(UNKNOWN);
@@ -954,8 +1021,8 @@ export class Scope {
 	 * @param {Set<any>} [values]
 	 * @param {Binding[]} [seen_bindings]
 	 */
-	evaluate(expression, values = new Set(), seen_bindings = []) {
-		return new Evaluation(this, expression, values, seen_bindings);
+	evaluate(expression, values = new Set(), seen_bindings = [], from_fn_call = false) {
+		return new Evaluation(this, expression, values, seen_bindings, from_fn_call);
 	}
 }
 
@@ -1704,7 +1771,7 @@ function evaluate_function(fn, binding, stack = new Set(), [...seen_bindings] = 
 	 * 	Additionally, since `$effect`s and `$derived`s exist, any reference to an external value could lead to a missed dependency if the function is evaluated by the compiler.
 	 * - Errors
 	 * 	A function that could throw an error should not be evaluated. Additionally, `$derived`s could be reevaluated upon reading, which could throw an error.
-	 * 	The purpose of a compile-time evaluator is to replicate the behavior the function would have at runtime, but in compile time.
+	 * 	The purpose of a compile-time evaluator is to replicate the behavior the function would have at runtime, without actually running the function.
 	 * 	If an error is/could be thrown, that can not be replicated.
 	 *
 	 * So, how do we figure out if either of these things (could) happen in a function?
@@ -1760,13 +1827,11 @@ function evaluate_function(fn, binding, stack = new Set(), [...seen_bindings] = 
 					binding &&
 					binding !== fn_binding &&
 					!stack.has(binding) &&
-					is_valid_function_binding(binding) &&
+					binding.is_function() &&
 					node.type === 'CallExpression'
 				) {
 					const child_analysis = evaluate_function(
-						/** @type {ArrowFunctionExpression | FunctionDeclaration | FunctionExpression} */ (
-							binding.initial
-						),
+						binding.initial,
 						binding,
 						new Set([...stack, fn_binding])
 					);
@@ -1792,7 +1857,7 @@ function evaluate_function(fn, binding, stack = new Set(), [...seen_bindings] = 
 	walk(/** @type {AST.SvelteNode} */ (fn), state, {
 		MemberExpression(node, context) {
 			const keypath = get_global_keypath(node, context.state.scope);
-			const evaluated = context.state.scope.evaluate(node);
+			const evaluated = context.state.scope.evaluate(node, new Set(), seen_bindings, true);
 			if (keypath === null && !evaluated.is_known) {
 				analysis.pure = false;
 				analysis.never_throws = false;
@@ -1811,7 +1876,7 @@ function evaluate_function(fn, binding, stack = new Set(), [...seen_bindings] = 
 					}
 					if (
 						binding.scope !== fn_scope &&
-						!binding.updated &&
+						binding.updated &&
 						context.state.current_call === 0 &&
 						!seen_bindings.includes(binding)
 					) {
@@ -1859,7 +1924,7 @@ function evaluate_function(fn, binding, stack = new Set(), [...seen_bindings] = 
 			) {
 				if (node.argument) {
 					const argument = /** @type {Expression} */ (context.visit(node.argument));
-					context.state.scope.evaluate(argument, analysis.values, seen_bindings);
+					context.state.scope.evaluate(argument, analysis.values, seen_bindings, true);
 				} else {
 					analysis.values.add(undefined);
 				}
@@ -1888,7 +1953,7 @@ function evaluate_function(fn, binding, stack = new Set(), [...seen_bindings] = 
 		}
 	});
 	if (uses_implicit_return) {
-		fn_scope.evaluate(/** @type {Expression} */ (fn.body), analysis.values, seen_bindings);
+		fn_scope.evaluate(/** @type {Expression} */ (fn.body), analysis.values, seen_bindings, true);
 	}
 	for (const value of analysis.values) {
 		analysis.value = value; // saves having special logic for `size === 1`
@@ -1906,22 +1971,4 @@ function evaluate_function(fn, binding, stack = new Set(), [...seen_bindings] = 
 	}
 	fn_cache.set(fn, analysis);
 	return analysis;
-}
-
-/**
- * @param {Binding} binding
- * @returns {boolean}
- */
-function is_valid_function_binding(binding) {
-	return (
-		(binding.kind === 'normal' &&
-			!binding.reassigned &&
-			binding.initial?.type === 'ArrowFunctionExpression') ||
-		binding.initial?.type === 'FunctionDeclaration' ||
-		(binding.initial?.type === 'FunctionExpression' &&
-			(binding.declaration_kind === 'function' ||
-				binding.declaration_kind === 'const' ||
-				binding.declaration_kind === 'let' ||
-				binding.declaration_kind === 'var'))
-	);
 }
