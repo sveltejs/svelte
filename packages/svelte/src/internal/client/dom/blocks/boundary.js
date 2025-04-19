@@ -47,6 +47,7 @@ export function boundary(node, props, children) {
 
 export class Boundary {
 	inert = false;
+	ran = false;
 
 	/** @type {Boundary | null} */
 	parent;
