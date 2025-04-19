@@ -469,10 +469,6 @@ async function run_test_variant(
 			throw err;
 		}
 	} finally {
-		console.log = console_log;
-		console.warn = console_warn;
-		console.error = console_error;
-
 		config.after_test?.();
 
 		// Free up the microtask queue
@@ -486,6 +482,10 @@ async function run_test_variant(
 				process.on('unhandledRejection', listener);
 			});
 		}
+
+		console.log = console_log;
+		console.warn = console_warn;
+		console.error = console_error;
 	}
 }
 
