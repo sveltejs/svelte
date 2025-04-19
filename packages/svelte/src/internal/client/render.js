@@ -30,6 +30,7 @@ import * as w from './warnings.js';
 import * as e from './errors.js';
 import { assign_nodes } from './dom/template.js';
 import { is_passive_event } from '../../utils.js';
+import { active_fork, Fork } from './reactivity/forks.js';
 
 /**
  * This is normally true — block effects should run their intro transitions —
@@ -204,6 +205,8 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 	/** @type {Exports} */
 	// @ts-expect-error will be defined because the render effect runs synchronously
 	var component = undefined;
+
+	Fork.ensure();
 
 	var unmount = component_root(() => {
 		var anchor_node = anchor ?? target.appendChild(create_text());
