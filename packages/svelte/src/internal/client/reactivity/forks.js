@@ -45,11 +45,11 @@ export class Fork {
 			return noop;
 		}
 
-		var values = new Map();
+		var current_values = new Map();
 
 		for (const source of this.previous.keys()) {
 			// mark_reactions(source, DIRTY);
-			values.set(source, source.v);
+			current_values.set(source, source.v);
 		}
 
 		for (const [source, current] of this.current) {
@@ -60,16 +60,16 @@ export class Fork {
 			if (fork === this) continue;
 
 			for (const [source, previous] of fork.previous) {
-				if (!values.has(source)) {
+				if (!current_values.has(source)) {
 					// mark_reactions(source, DIRTY);
-					values.set(source, source.v);
+					current_values.set(source, source.v);
 					source.v = previous;
 				}
 			}
 		}
 
 		return () => {
-			for (const [source, value] of values) {
+			for (const [source, value] of current_values) {
 				source.v = value;
 			}
 		};
