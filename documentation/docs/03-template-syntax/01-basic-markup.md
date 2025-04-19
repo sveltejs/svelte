@@ -82,12 +82,27 @@ As with elements, `name={name}` can be replaced with the `{name}` shorthand.
 <Widget foo={bar} answer={42} text="hello" />
 ```
 
-_Spread attributes_ allow many attributes or properties to be passed to an element or component at once.
+## Spreading
+
+_Spreading_ allow many attributes or properties to be passed to an element or component at once.
 
 An element or component can have multiple spread attributes, interspersed with regular ones.
 
 ```svelte
-<Widget {...things} />
+<button {...attributes}>...</button>
+<button {...attributes} type="button">...</button>
+<Widget {...props} />
+<Widget {...props} foo={bar} text="hello" {...aria} />
+```
+The order in which they are displayed matters
+
+```svelte
+<script>
+	const attributes = { type: "button" };
+</script>
+
+<button {...attributes} type="submit">...</button> <!-- type is "submit" -->
+<button type="submit" {...attributes}>...</button> <!-- type is "button" -->
 ```
 
 ## Events
