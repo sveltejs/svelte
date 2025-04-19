@@ -100,17 +100,21 @@ export function async_derived(fn, location) {
 		throw new Error('TODO cannot create unowned async derived');
 	}
 
+	let boundary = parent.b;
+
+	while (boundary !== null && !boundary.has_pending_snippet()) {
+		boundary = boundary.parent;
+	}
+
+	if (boundary === null) {
+		throw new Error('TODO cannot create async derived outside a boundary with a pending snippet');
+	}
+
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
-
-	var boundary = /** @type {Effect} */ parent.b;
-
-	while (boundary !== null && !boundary.has_pending_snippet()) {
-		boundary = boundary.parent;
-	}
 
 	render_effect(() => {
 		if (DEV) from_async_derived = active_effect;
@@ -125,10 +129,6 @@ export function async_derived(fn, location) {
 			if (fork !== null) {
 				fork.increment();
 			} else {
-				if (boundary === null) {
-					throw new Error('TODO');
-				}
-
 				// if nearest pending boundary is not ready, attach to the boundary
 				boundary.increment();
 			}
@@ -147,10 +147,6 @@ export function async_derived(fn, location) {
 					if (fork !== null) {
 						fork.decrement();
 					} else {
-						if (boundary === null) {
-							throw new Error('TODO');
-						}
-
 						boundary.decrement();
 					}
 				}
