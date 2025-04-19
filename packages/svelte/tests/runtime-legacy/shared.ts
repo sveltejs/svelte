@@ -351,7 +351,7 @@ async function run_test_variant(
 				// @ts-expect-error
 				globalThis.__svelte.uid = 1;
 
-				if (manual_hydrate) {
+				if (manual_hydrate && variant === 'hydrate') {
 					hydrate_fn = () => {
 						instance = hydrate(mod.default, {
 							target,
