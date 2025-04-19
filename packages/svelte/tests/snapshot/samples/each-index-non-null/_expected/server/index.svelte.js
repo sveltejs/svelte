@@ -6,7 +6,7 @@ export default function Each_index_non_null($$payload) {
 	$$payload.out += `<!--[-->`;
 
 	for (let i = 0, $$length = each_array.length; i < $$length; i++) {
-		$$payload.out += `<p>index: ${$.escape(i)}</p>`;
+		$$payload.out += `<p>index: ${i}</p>`;
 	}
 
 	$$payload.out += `<!--]-->`;

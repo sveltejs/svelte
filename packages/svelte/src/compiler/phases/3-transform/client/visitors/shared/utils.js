@@ -64,12 +64,13 @@ export function build_template_chunk(
 			node.expression.name !== 'undefined' ||
 			state.scope.get('undefined')
 		) {
-			let value = memoize(
-				/** @type {Expression} */ (visit(node.expression, state)),
-				node.metadata.expression
-			);
+			let value = /** @type {Expression} */ (visit(node.expression, state));
 
 			const evaluated = state.scope.evaluate(value);
+
+			if (!evaluated.is_known) {
+				value = memoize(value, node.metadata.expression);
+			}
 
 			has_state ||= node.metadata.expression.has_state && !evaluated.is_known;
 
@@ -77,7 +78,7 @@ export function build_template_chunk(
 				// If we have a single expression, then pass that in directly to possibly avoid doing
 				// extra work in the template_effect (instead we do the work in set_text).
 				if (evaluated.is_known) {
-					value = b.literal(evaluated.value);
+					value = b.literal(evaluated.value ?? '');
 				}
 
 				return { value, has_state };
@@ -96,7 +97,7 @@ export function build_template_chunk(
 			}
 
 			if (evaluated.is_known) {
-				quasi.value.cooked += evaluated.value + '';
+				quasi.value.cooked += (evaluated.value ?? '') + '';
 			} else {
 				if (!evaluated.is_defined) {
 					// add `?? ''` where necessary

@@ -122,6 +122,7 @@ function to_public_ast(source, ast, modern) {
 	if (modern) {
 		const clean = (/** @type {any} */ node) => {
 			delete node.metadata;
+			delete node.type_information;
 		};
 
 		ast.options?.attributes.forEach((attribute) => {
