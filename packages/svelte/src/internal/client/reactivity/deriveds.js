@@ -106,7 +106,7 @@ export function async_derived(fn, location) {
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
 
-	var boundary = /** @type {Effect} */ (active_effect).b;
+	var boundary = /** @type {Effect} */ parent.b;
 
 	while (boundary !== null && !boundary.has_pending_snippet()) {
 		boundary = boundary.parent;
