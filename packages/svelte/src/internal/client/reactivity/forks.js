@@ -1,8 +1,9 @@
 /** @import { Effect, Source } from '#client' */
+import { DIRTY } from '#client/constants';
 import { noop } from '../../shared/utils.js';
 import { flushSync } from '../runtime.js';
 import { raf } from '../timing.js';
-import { internal_set, pending } from './sources.js';
+import { internal_set, mark_reactions, pending } from './sources.js';
 
 /** @type {Set<Fork>} */
 const forks = new Set();
@@ -16,7 +17,7 @@ export function remove_active_fork() {
 
 /** Update `$effect.pending()` */
 function update_pending() {
-	internal_set(pending, forks.size > 0);
+	// internal_set(pending, forks.size > 0);
 }
 
 let uid = 1;
