@@ -684,6 +684,11 @@ function infinite_loop_guard() {
 function flush_queued_root_effects() {
 	var was_updating_effect = is_updating_effect;
 
+	// TODO it should be impossible to get here without an active fork
+	if (!active_fork && queued_root_effects.length > 0) {
+		console.trace('here');
+	}
+
 	try {
 		var flush_count = 0;
 		is_updating_effect = true;
@@ -900,6 +905,8 @@ function process_effects(root, async_effects, render_effects, effects) {
  */
 export function flushSync(fn) {
 	var result;
+
+	Fork.ensure();
 
 	if (fn) {
 		is_flushing = true;

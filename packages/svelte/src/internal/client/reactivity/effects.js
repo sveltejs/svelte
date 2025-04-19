@@ -41,7 +41,7 @@ import { get_next_sibling } from '../dom/operations.js';
 import { async_derived, derived } from './deriveds.js';
 import { capture } from '../dom/blocks/boundary.js';
 import { component_context, dev_current_component_function } from '../context.js';
-import { active_fork } from './forks.js';
+import { active_fork, Fork } from './forks.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -234,6 +234,7 @@ export function inspect_effect(fn) {
  * @returns {() => void}
  */
 export function effect_root(fn) {
+	Fork.ensure();
 	const effect = create_effect(ROOT_EFFECT, fn, true);
 
 	return () => {
@@ -247,6 +248,7 @@ export function effect_root(fn) {
  * @returns {(options?: { outro?: boolean }) => Promise<void>}
  */
 export function component_root(fn) {
+	Fork.ensure();
 	const effect = create_effect(ROOT_EFFECT, fn, true);
 
 	return (options = {}) => {
