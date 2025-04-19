@@ -28,6 +28,7 @@ export default test({
 
 		flushSync(() => increment.click());
 		await Promise.resolve();
+		await Promise.resolve();
 		await tick();
 		assert.htmlEqual(p.innerHTML, '2a');
 
@@ -35,6 +36,7 @@ export default test({
 		assert.htmlEqual(p.innerHTML, '2a');
 
 		flushSync(() => resolve_b.click());
+		await Promise.resolve();
 		await Promise.resolve();
 		await tick();
 		assert.htmlEqual(p.innerHTML, '2b');

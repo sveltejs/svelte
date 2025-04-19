@@ -27,6 +27,7 @@ export default test({
 		assert.htmlEqual(p.outerHTML, '<p class="cool">hello</p>');
 
 		flushSync(() => neat.click());
+		await Promise.resolve();
 		await tick();
 		assert.htmlEqual(p.outerHTML, '<p class="neat">hello</p>');
 	}

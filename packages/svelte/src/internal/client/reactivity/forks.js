@@ -114,7 +114,7 @@ export class Fork {
 	 */
 	run(fn) {
 		active_fork = this;
-		flushSync(fn);
+		fn();
 	}
 
 	increment() {
