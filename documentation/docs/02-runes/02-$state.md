@@ -20,7 +20,7 @@ Unlike other frameworks you may have encountered, there is no API for interactin
 
 If `$state` is used with an array or a simple object, the result is a deeply reactive _state proxy_. [Proxies](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) allow Svelte to run code when you read or write properties, including via methods like `array.push(...)`, triggering granular updates.
 
-> [!NOTE] Classes like `Set` and `Map` will not be proxied, but Svelte provides reactive implementations for various built-ins like these that can be imported from [`svelte/reactivity`](./svelte-reactivity).
+> [!NOTE] Classes will not be proxied. They need to be explicitly [implemented](./$state#Classes) with reactivity in mind. Svelte provides a reactive version of common built-ins which can be imported from [`svelte/reactivity`](./svelte-reactivity).
 
 State is proxified recursively until Svelte finds something other than an array or simple object. In a case like this...
 
