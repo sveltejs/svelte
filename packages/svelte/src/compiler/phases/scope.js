@@ -1698,7 +1698,7 @@ function evaluate_function(fn, binding, stack = new Set(), [...seen_bindings] = 
 	/**
 	 * This big blob of comments is for my (https://github.com/Ocean-OS) sanity and for that of anyone who tries working with this function. Feel free to modify this as the function evolves.
 	 * So, when evaluating functions at compile-time, there are a few things you have to avoid evaluating:
-	 * 
+	 *
 	 * - Side effects
 	 * 	A function that modifies state from outside of its scope should not be evaluated.
 	 * 	Additionally, since `$effect`s and `$derived`s exist, any reference to an external value could lead to a missed dependency if the function is evaluated by the compiler.
@@ -1706,17 +1706,17 @@ function evaluate_function(fn, binding, stack = new Set(), [...seen_bindings] = 
 	 * 	A function that could throw an error should not be evaluated. Additionally, `$derived`s could be reevaluated upon reading, which could throw an error.
 	 * 	The purpose of a compile-time evaluator is to replicate the behavior the function would have at runtime, but in compile time.
 	 * 	If an error is/could be thrown, that can not be replicated.
-	 * 
+	 *
 	 * So, how do we figure out if either of these things (could) happen in a function?
 	 * Well, for errors, it's relatively simple. If a `throw` statement is used in the function, then we assume that the error could be thrown at any time.
 	 * For side effects, it gets a bit tricky. External `Identifier`s that change their value are definitely side effects, but also any `MemberExpression` that isn't a known global constant could have a side effect, due to getters and `Proxy`s.
 	 * Additionally, since a function can call other functions, we check each individual function call: if it's a known global, we know its pure, and if we can find its definition, the parent function inherits its throwability and purity. If we cannot find its definition, we assume it is impure and could throw.
-	 * 
+	 *
 	 * A few other things to note/remember:
 	 * - Not all functions rely on return statements to determine the return value.
 	 * 	Arrow functions without a `BlockStatement` for a body use their expression body as an implicit `ReturnStatement`.
 	 * - While currently all the globals we have are pure and error-free, that could change, so we shouldn't be too dependent on that in the future.
-	 * 	Things like `JSON.stringify` and a *lot* of array methods are prime examples. 
+	 * 	Things like `JSON.stringify` and a *lot* of array methods are prime examples.
 	 */
 	let thing;
 	const analysis = {
@@ -1811,7 +1811,7 @@ function evaluate_function(fn, binding, stack = new Set(), [...seen_bindings] = 
 					}
 					if (
 						binding.scope !== fn_scope &&
-						!binding.updated && 
+						!binding.updated &&
 						context.state.current_call === 0 &&
 						!seen_bindings.includes(binding)
 					) {
