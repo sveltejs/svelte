@@ -13,5 +13,3 @@
 		<p>pending</p>
 	{/snippet}
 </svelte:boundary>
-
-{console.log(`outside boundary ${count}`)}
