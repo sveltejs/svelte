@@ -6,11 +6,12 @@ export default test({
 		dev: true
 	},
 
-	async test({ assert, target, logs }) {
+	async test({ assert, target, logs, errors }) {
 		const b1 = target.querySelector('button');
 		b1?.click();
 		flushSync();
 
+		assert.ok(errors.length > 0);
 		assert.deepEqual(logs, ['init', 'a', 'init', 'b']);
 	}
 });
