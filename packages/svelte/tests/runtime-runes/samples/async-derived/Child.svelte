@@ -1,7 +1,7 @@
 <script>
 	let { promise, num } = $props();
 
-	let value = $derived((await promise) * num);
+	let value = $derived(num + (await promise));
 
 	$effect(() => {
 		console.log(`$effect ${value} ${num}`);

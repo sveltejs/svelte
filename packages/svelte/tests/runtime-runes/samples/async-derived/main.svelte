@@ -1,11 +1,17 @@
 <script>
 	import Child from './Child.svelte';
 
-	let { promise, num } = $props();
+	let deferred = $state(Promise.withResolvers());
+	let num = $state(1);
 </script>
 
+<button onclick={() => deferred.resolve('a')}>resolve a</button>
+<button onclick={() => deferred.resolve('b')}>resolve b</button>
+<button onclick={() => deferred = Promise.withResolvers()}>reset</button>
+<button onclick={() => num += 1}>increment</button>
+
 <svelte:boundary>
-	<Child {promise} {num} />
+	<Child promise={deferred.promise} {num} />
 
 	{#snippet pending()}
 		<p>pending</p>

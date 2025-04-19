@@ -1,24 +1,19 @@
 import { flushSync, tick } from 'svelte';
-import { deferred } from '../../../../src/internal/shared/utils.js';
-import { test } from '../../test';
-
-/** @type {ReturnType<typeof deferred>} */
-let d;
+import { ok, test } from '../../test';
 
 export default test({
-	html: `<p>pending</p>`,
+	html: `
+		<button>resolve a</button>
+		<button>resolve b</button>
+		<button>reset</button>
+		<button>increment</button>
+		<p>pending</p>
+	`,
 
-	get props() {
-		d = deferred();
+	async test({ assert, target, logs }) {
+		const [resolve_a, resolve_b, reset, increment] = target.querySelectorAll('button');
 
-		return {
-			promise: d.promise,
-			num: 1
-		};
-	},
-
-	async test({ assert, target, component, logs }) {
-		d.resolve(42);
+		flushSync(() => resolve_a.click());
 		await Promise.resolve();
 		await Promise.resolve();
 		await Promise.resolve();
@@ -26,38 +21,36 @@ export default test({
 		await Promise.resolve();
 		await Promise.resolve();
 		flushSync();
-		assert.htmlEqual(target.innerHTML, '<p>42</p>');
 
-		component.num = 2;
-		await Promise.resolve();
-		await Promise.resolve();
+		const p = target.querySelector('p');
+		ok(p);
+		assert.htmlEqual(p.innerHTML, '1a');
+
+		flushSync(() => increment.click());
 		await Promise.resolve();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>84</p>');
+		assert.htmlEqual(p.innerHTML, '2a');
 
-		d = deferred();
-		component.promise = d.promise;
-		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>84</p>');
+		flushSync(() => reset.click());
+		assert.htmlEqual(p.innerHTML, '2a');
 
-		d.resolve(43);
-		await Promise.resolve();
+		flushSync(() => resolve_b.click());
 		await Promise.resolve();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>86</p>');
+		assert.htmlEqual(p.innerHTML, '2b');
 
 		assert.deepEqual(logs, [
 			'outside boundary 1',
-			'$effect.pre 42 1',
-			'template 42 1',
-			'$effect 42 1',
-			'$effect.pre 84 2',
-			'template 84 2',
+			'$effect.pre 1a 1',
+			'template 1a 1',
+			'$effect 1a 1',
+			'$effect.pre 2a 2',
+			'template 2a 2',
 			'outside boundary 2',
-			'$effect 84 2',
-			'$effect.pre 86 2',
-			'template 86 2',
-			'$effect 86 2'
+			'$effect 2a 2',
+			'$effect.pre 2b 2',
+			'template 2b 2',
+			'$effect 2b 2'
 		]);
 	}
 });
