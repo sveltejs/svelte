@@ -1,37 +1,33 @@
 import { flushSync, tick } from 'svelte';
-import { deferred } from '../../../../src/internal/shared/utils.js';
-import { test } from '../../test';
-
-/** @type {ReturnType<typeof deferred>} */
-let d;
+import { ok, test } from '../../test';
 
 export default test({
-	html: `<p>pending</p>`,
-
-	get props() {
-		d = deferred();
-
-		return {
-			promise: d.promise
-		};
-	},
+	html: `
+		<button>cool</button>
+		<button>neat</button>
+		<button>reset</button>
+		<p>pending</p>
+	`,
 
 	async test({ assert, target, component }) {
-		d.resolve('cool');
+		const [cool, neat, reset] = target.querySelectorAll('button');
+
+		flushSync(() => cool.click());
 		await Promise.resolve();
 		await Promise.resolve();
 		await Promise.resolve();
 		await tick();
 		flushSync();
-		assert.htmlEqual(target.innerHTML, '<p class="cool">hello</p>');
 
-		d = deferred();
-		component.promise = d.promise;
-		await tick();
-		assert.htmlEqual(target.innerHTML, '<p class="cool">hello</p>');
+		const p = target.querySelector('p');
+		ok(p);
+		assert.htmlEqual(p.outerHTML, '<p class="cool">hello</p>');
 
-		d.resolve('neat');
+		flushSync(() => reset.click());
+		assert.htmlEqual(p.outerHTML, '<p class="cool">hello</p>');
+
+		flushSync(() => neat.click());
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p class="neat">hello</p>');
+		assert.htmlEqual(p.outerHTML, '<p class="neat">hello</p>');
 	}
 });
