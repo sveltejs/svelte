@@ -920,9 +920,6 @@ export function flushSync(fn) {
 		flush_tasks();
 	}
 
-	// TODO this doesn't seem quite right — may run into
-	// interesting cases where there are multiple roots.
-	// it'll do for now though
 	if (active_fork?.pending === 0) {
 		active_fork.remove();
 	}
