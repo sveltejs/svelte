@@ -51,6 +51,7 @@ import { Boundary } from './dom/blocks/boundary.js';
 import * as w from './warnings.js';
 import { is_firefox } from './dom/operations.js';
 import { current_batch, Batch, remove_current_batch } from './reactivity/batch.js';
+import { log_effect_tree, root } from './dev/debug.js';
 
 // Used for DEV time error handling
 /** @param {WeakSet<Error>} value */
@@ -813,20 +814,12 @@ export function schedule_effect(signal) {
 		var flags = effect.f;
 
 		if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
-			// TODO reinstate this
-			// if ((flags & CLEAN) === 0) return;
-			// effect.f ^= CLEAN;
-
-			if ((flags & CLEAN) !== 0) {
-				effect.f ^= CLEAN;
-			}
+			if ((flags & CLEAN) === 0) return;
+			effect.f ^= CLEAN;
 		}
 	}
 
-	// TODO reinstate early bail-out when traversing up the graph
-	if (!queued_root_effects.includes(effect)) {
-		queued_root_effects.push(effect);
-	}
+	queued_root_effects.push(effect);
 }
 
 /**
@@ -847,7 +840,7 @@ function process_effects(root, async_effects, render_effects, effects) {
 
 	while (effect !== null) {
 		var flags = effect.f;
-		var is_branch = (flags & BRANCH_EFFECT) !== 0;
+		var is_branch = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0;
 		var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
 
 		var skip = is_skippable_branch || (flags & INERT) !== 0 || batch.skipped_effects.has(effect);
@@ -865,13 +858,10 @@ function process_effects(root, async_effects, render_effects, effects) {
 				} catch (error) {
 					handle_error(error, effect, null, effect.ctx);
 				}
+			} else if (is_branch) {
+				effect.f ^= CLEAN;
 			} else if ((flags & RENDER_EFFECT) !== 0) {
-				if (is_branch) {
-					// TODO clean branch later, if batch is settled
-					// current_effect.f ^= CLEAN;
-				} else {
-					render_effects.push(effect);
-				}
+				render_effects.push(effect);
 			} else if ((flags & EFFECT) !== 0) {
 				effects.push(effect);
 			}
