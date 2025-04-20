@@ -345,6 +345,7 @@ export function capture(track = true) {
 	};
 }
 
+// TODO we should probably be incrementing the current batch, not the boundary?
 export function suspend() {
 	let boundary = /** @type {Effect} */ (active_effect).b;
 
