@@ -40,9 +40,6 @@ export class Batch {
 	#pending = 0;
 
 	apply() {
-		// common case: no overlapping batches, nothing to revert
-		if (batches.size === 1) return noop;
-
 		var current_values = new Map();
 
 		for (const [source, current] of this.#current) {
