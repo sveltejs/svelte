@@ -1,4 +1,5 @@
 /** @import { Derived, Effect, Source } from '#client' */
+/** @import { Fork } from './forks.js'; */
 import { DEV } from 'esm-env';
 import {
 	CLEAN,
@@ -123,14 +124,14 @@ export function async_derived(fn, location) {
 
 		var restore = capture();
 
-		var fork = active_fork;
+		var fork = /** @type {Fork} */ (active_fork);
 		var ran = boundary.ran;
 
 		if (should_suspend) {
 			if (!ran) {
 				boundary.increment();
 			} else {
-				fork?.increment();
+				fork.increment();
 			}
 		}
 
@@ -147,17 +148,13 @@ export function async_derived(fn, location) {
 					if (!ran) {
 						boundary.decrement();
 					} else {
-						fork?.decrement();
+						fork.decrement();
 					}
 				}
 
-				if (fork !== null) {
-					fork.run(() => {
-						internal_set(signal, v);
-					});
-				} else {
+				fork.run(() => {
 					internal_set(signal, v);
-				}
+				});
 
 				if (DEV && location !== undefined) {
 					recent_async_deriveds.add(signal);
