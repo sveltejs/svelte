@@ -47,11 +47,6 @@ export class Batch {
 
 		var current_values = new Map();
 
-		for (const source of this.previous.keys()) {
-			// mark_reactions(source, DIRTY);
-			current_values.set(source, source.v);
-		}
-
 		for (const [source, current] of this.current) {
 			source.v = current;
 		}
@@ -60,7 +55,7 @@ export class Batch {
 			if (batch === this) continue;
 
 			for (const [source, previous] of batch.previous) {
-				if (!current_values.has(source)) {
+				if (!this.previous.has(source)) {
 					// mark_reactions(source, DIRTY);
 					current_values.set(source, source.v);
 					source.v = previous;
