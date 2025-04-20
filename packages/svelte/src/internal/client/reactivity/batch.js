@@ -47,9 +47,10 @@ export class Batch {
 
 		var current_values = new Map();
 
-		// TODO this shouldn't be necessary, but tests fail otherwise,
-		// presumably because we need a try-finally somewhere
 		for (const [source, current] of this.current) {
+			// TODO this shouldn't be necessary, but tests fail otherwise,
+			// presumably because we need a try-finally somewhere, and the
+			// source wasn't correctly reverted after the previous batch
 			source.v = current;
 		}
 
