@@ -40,10 +40,8 @@ export class Batch {
 	pending = 0;
 
 	apply() {
-		if (batches.size === 1) {
-			// if this is the latest (and only) batch, we have nothing to do
-			return noop;
-		}
+		// common case: no overlapping batches, nothing to revert
+		if (batches.size === 1) return noop;
 
 		var current_values = new Map();
 
