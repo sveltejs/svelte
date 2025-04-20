@@ -262,9 +262,10 @@ export function update_pre(source, d = 1) {
 /**
  * @param {Value} signal
  * @param {number} status should be DIRTY or MAYBE_DIRTY
+ * @param {boolean} partial should skip async/block effects
  * @returns {void}
  */
-export function mark_reactions(signal, status) {
+export function mark_reactions(signal, status, partial = false) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -284,10 +285,14 @@ export function mark_reactions(signal, status) {
 			continue;
 		}
 
+		if (partial && (flags & (EFFECT_ASYNC | BLOCK_EFFECT)) !== 0) {
+			continue;
+		}
+
 		set_signal_status(reaction, status);
 
 		if ((flags & DERIVED) !== 0) {
-			mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
+			mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY, partial);
 		} else {
 			schedule_effect(/** @type {Effect} */ (reaction));
 		}
