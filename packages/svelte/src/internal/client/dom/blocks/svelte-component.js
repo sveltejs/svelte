@@ -1,4 +1,5 @@
 /** @import { TemplateNode, Dom, Effect } from '#client' */
+/** @import { Fork } from '../../reactivity/forks.js'; */
 import { EFFECT_TRANSPARENT } from '#client/constants';
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
 import { active_fork } from '../../reactivity/forks.js';
@@ -53,7 +54,7 @@ export function component(node, get_component, render_fn) {
 	block(() => {
 		if (component === (component = get_component())) return;
 
-		var defer = active_fork !== null && should_defer_append();
+		var defer = should_defer_append();
 
 		if (component) {
 			var target = anchor;
@@ -67,7 +68,7 @@ export function component(node, get_component, render_fn) {
 		}
 
 		if (defer) {
-			active_fork?.add_callback(commit);
+			/** @type {Fork} */ (active_fork).add_callback(commit);
 		} else {
 			commit();
 		}

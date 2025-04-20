@@ -1,4 +1,5 @@
 /** @import { EachItem, EachState, Effect, MaybeSource, Source, TemplateNode, TransitionManager, Value } from '#client' */
+/** @import { Fork } from '../../reactivity/forks.js'; */
 import {
 	EACH_INDEX_REACTIVE,
 	EACH_IS_ANIMATED,
@@ -266,8 +267,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				fallback = branch(() => fallback_fn(anchor));
 			}
 		} else {
-			if (active_fork !== null && should_defer_append()) {
+			if (should_defer_append()) {
 				var keys = new Set();
+				var fork = /** @type {Fork} */ (active_fork);
 
 				for (i = 0; i < length; i += 1) {
 					value = array[i];
@@ -303,11 +305,11 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 				for (const [key, item] of state.items) {
 					if (!keys.has(key)) {
-						active_fork.skipped_effects.add(item.e);
+						fork.skipped_effects.add(item.e);
 					}
 				}
 
-				active_fork?.add_callback(commit);
+				fork.add_callback(commit);
 			} else {
 				commit();
 			}

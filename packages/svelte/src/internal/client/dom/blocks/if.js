@@ -1,4 +1,5 @@
 /** @import { Effect, TemplateNode } from '#client' */
+/** @import { Fork } from '../../reactivity/forks.js'; */
 import { EFFECT_TRANSPARENT } from '#client/constants';
 import {
 	hydrate_next,
@@ -112,7 +113,7 @@ export function if_block(node, fn, elseif = false) {
 			}
 		}
 
-		var defer = active_fork !== null && should_defer_append();
+		var defer = should_defer_append();
 		var target = anchor;
 
 		if (defer) {
@@ -125,13 +126,15 @@ export function if_block(node, fn, elseif = false) {
 		}
 
 		if (defer) {
+			var fork = /** @type {Fork} */ (active_fork);
+
 			const skipped = condition ? alternate_effect : consequent_effect;
 			if (skipped !== null) {
 				// TODO need to do this for other kinds of blocks
-				active_fork?.skipped_effects.add(skipped);
+				fork.skipped_effects.add(skipped);
 			}
 
-			active_fork?.add_callback(commit);
+			fork.add_callback(commit);
 		} else {
 			commit();
 		}

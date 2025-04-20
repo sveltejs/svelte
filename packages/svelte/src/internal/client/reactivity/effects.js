@@ -343,7 +343,7 @@ export function template_effect(fn, sync = [], async = [], d = derived) {
 	var parent = /** @type {Effect} */ (active_effect);
 
 	if (async.length > 0) {
-		var fork = active_fork;
+		var fork = /** @type {Fork} */ (active_fork);
 		var restore = capture();
 
 		Promise.all(async.map((expression) => async_derived(expression))).then((result) => {
@@ -355,11 +355,9 @@ export function template_effect(fn, sync = [], async = [], d = derived) {
 
 			var effect = create_template_effect(fn, [...sync.map(d), ...result]);
 
-			if (fork !== null) {
-				fork.run(() => {
-					schedule_effect(effect);
-				});
-			}
+			fork.run(() => {
+				schedule_effect(effect);
+			});
 		});
 	} else {
 		create_template_effect(fn, sync.map(d));

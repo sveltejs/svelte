@@ -1,4 +1,5 @@
 /** @import { Effect, TemplateNode } from '#client' */
+/** @import { Fork } from '../../reactivity/forks.js'; */
 import { UNINITIALIZED } from '../../../../constants.js';
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
 import { not_equal, safe_not_equal } from '../../reactivity/equality.js';
@@ -55,7 +56,7 @@ export function key_block(node, get_key, render_fn) {
 		if (changed(key, (key = get_key()))) {
 			var target = anchor;
 
-			var defer = active_fork !== null && should_defer_append();
+			var defer = should_defer_append();
 
 			if (defer) {
 				offscreen_fragment = document.createDocumentFragment();
@@ -65,7 +66,7 @@ export function key_block(node, get_key, render_fn) {
 			pending_effect = branch(() => render_fn(target));
 
 			if (defer) {
-				active_fork?.add_callback(commit);
+				/** @type {Fork} */ (active_fork).add_callback(commit);
 			} else {
 				commit();
 			}
