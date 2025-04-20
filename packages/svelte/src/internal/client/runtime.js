@@ -720,7 +720,7 @@ function flush_queued_root_effects() {
 				process_effects(root, async_effects, render_effects, effects);
 			}
 
-			if (async_effects.length === 0 && batch.pending === 0) {
+			if (async_effects.length === 0 && batch.settled()) {
 				batch.commit();
 				flush_queued_effects(render_effects);
 				flush_queued_effects(effects);
@@ -798,7 +798,7 @@ export function schedule_effect(signal) {
 
 			flush_queued_root_effects();
 
-			if (current_batch?.pending === 0) {
+			if (current_batch?.settled()) {
 				current_batch.remove();
 			}
 
@@ -920,7 +920,7 @@ export function flushSync(fn) {
 		flush_tasks();
 	}
 
-	if (current_batch?.pending === 0) {
+	if (current_batch?.settled()) {
 		current_batch.remove();
 	}
 

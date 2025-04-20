@@ -23,13 +23,13 @@ function update_pending() {
 let uid = 1;
 
 export class Batch {
-	id = uid++;
+	#id = uid++;
 
 	/** @type {Map<Source, any>} */
-	previous = new Map();
+	#previous = new Map();
 
 	/** @type {Map<Source, any>} */
-	current = new Map();
+	#current = new Map();
 
 	/** @type {Set<Effect>} */
 	skipped_effects = new Set();
@@ -37,7 +37,7 @@ export class Batch {
 	/** @type {Set<() => void>} */
 	#callbacks = new Set();
 
-	pending = 0;
+	#pending = 0;
 
 	apply() {
 		// common case: no overlapping batches, nothing to revert
@@ -45,7 +45,7 @@ export class Batch {
 
 		var current_values = new Map();
 
-		for (const [source, current] of this.current) {
+		for (const [source, current] of this.#current) {
 			// TODO this shouldn't be necessary, but tests fail otherwise,
 			// presumably because we need a try-finally somewhere, and the
 			// source wasn't correctly reverted after the previous batch
@@ -55,8 +55,8 @@ export class Batch {
 		for (const batch of batches) {
 			if (batch === this) continue;
 
-			for (const [source, previous] of batch.previous) {
-				if (!this.previous.has(source)) {
+			for (const [source, previous] of batch.#previous) {
+				if (!this.#previous.has(source)) {
 					// mark_reactions(source, DIRTY);
 					current_values.set(source, source.v);
 					source.v = previous;
@@ -76,27 +76,27 @@ export class Batch {
 	 * @param {any} value
 	 */
 	capture(source, value) {
-		if (!this.previous.has(source)) {
-			this.previous.set(source, value);
+		if (!this.#previous.has(source)) {
+			this.#previous.set(source, value);
 		}
 
-		this.current.set(source, source.v);
+		this.#current.set(source, source.v);
 	}
 
 	remove() {
 		batches.delete(this);
 
 		for (var batch of batches) {
-			if (batch.id < this.id) {
+			if (batch.#id < this.#id) {
 				// other batch is older than this
-				for (var source of this.previous.keys()) {
-					batch.previous.delete(source);
+				for (var source of this.#previous.keys()) {
+					batch.#previous.delete(source);
 				}
 			} else {
 				// other batch is newer than this
-				for (var source of batch.previous.keys()) {
-					if (this.previous.has(source)) {
-						batch.previous.set(source, source.v);
+				for (var source of batch.#previous.keys()) {
+					if (this.#previous.has(source)) {
+						batch.#previous.set(source, source.v);
 					}
 				}
 			}
@@ -114,15 +114,15 @@ export class Batch {
 	}
 
 	increment() {
-		this.pending += 1;
+		this.#pending += 1;
 	}
 
 	decrement() {
-		this.pending -= 1;
+		this.#pending -= 1;
 	}
 
 	settled() {
-		return this.pending === 0;
+		return this.#pending === 0;
 	}
 
 	/** @param {() => void} fn */
