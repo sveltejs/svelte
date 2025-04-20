@@ -1024,6 +1024,23 @@ export class Scope {
 	evaluate(expression, values = new Set(), seen_bindings = [], from_fn_call = false) {
 		return new Evaluation(this, expression, values, seen_bindings, from_fn_call);
 	}
+
+	/**
+	 * @param {Scope} child
+	 */
+	contains(child) {
+		let contains = false;
+		/** @type {Scope | null} */
+		let curr = child;
+		while (curr?.parent != null) {
+			curr = curr?.parent;
+			if (curr === this) {
+				contains = true;
+				break;
+			}
+		}
+		return contains;
+	}
 }
 
 /** @type {Record<BinaryOperator, (left: any, right: any) => any>} */
@@ -1646,7 +1663,12 @@ function get_type_of_ts_node(node, scope) {
 	 * @returns {any[]}
 	 */
 	function intersect_types(types) {
-		if (types.includes(UNKNOWN)) return [UNKNOWN];
+		if (
+			types.includes(UNKNOWN) ||
+			types.filter((type) => !['symbol', 'string', 'number', 'bigint'].includes(typeof type))
+				.length > 1
+		)
+			return [UNKNOWN];
 		/** @type {any[]} */
 		let res = [];
 		if (
@@ -1666,14 +1688,9 @@ function get_type_of_ts_node(node, scope) {
 		} else {
 			res.push(...types.filter((type) => typeof type === 'string'));
 		}
-		if (
-			types.filter((type) => !['symbol', 'string', 'number', 'bigint'].includes(typeof type))
-				.length > 1
-		) {
-			res.push(UNKNOWN);
-		} else {
+		if (types.some((type) => !['symbol', 'string', 'number', 'bigint'].includes(typeof type))) {
 			types.push(
-				...types.filter((type) => !['symbol', 'string', 'number', 'bigint'].includes(typeof type))
+				types.find((type) => !['symbol', 'string', 'number', 'bigint'].includes(typeof type))
 			);
 		}
 		return res;
@@ -1752,6 +1769,19 @@ const known_globals = [
 let fn_cache = new Map();
 
 /**
+ * @param {Expression} callee
+ * @param {Scope} scope
+ */
+function is_global_class(callee, scope) {
+	let keypath = get_global_keypath(callee, scope);
+	if (keypath === null) return false;
+	if (keypath.match(/^(globalThis\.)+/)) {
+		keypath = keypath.replace(/^(globalThis\.)+/, '');
+	}
+	return global_classes.includes(keypath);
+}
+
+/**
  * Analyzes and partially evaluates the provided function.
  * @param {FunctionExpression | ArrowFunctionExpression | FunctionDeclaration} fn
  * @param {Binding} binding
@@ -1806,21 +1836,31 @@ function evaluate_function(fn, binding, stack = new Set(), [...seen_bindings] = 
 	};
 	const uses_implicit_return =
 		fn.type === 'ArrowFunctionExpression' && fn.body.type !== 'BlockStatement';
+	function needs_check(purity = true, throwability = true) {
+		if (!throwability) {
+			return analysis.pure;
+		}
+		if (!purity) {
+			return analysis.never_throws;
+		}
+		return analysis.pure || analysis.never_throws;
+	}
 	/**
 	 * @param {CallExpression | NewExpression} node
 	 * @param {import('zimmerframe').Context<AST.SvelteNode, typeof state>} context
 	 */
 	function handle_call_expression(node, context) {
 		const { callee: call, arguments: args } = node;
-		const callee = context.visit(call, {
-			...context.state,
-			current_call: (node.type === 'CallExpression' ? CALL_EXPRESSION : NEW_EXPRESSION) | 0
-		});
+		const callee = /** @type {Expression} */ (
+			context.visit(call, {
+				...context.state,
+				current_call: (node.type === 'CallExpression' ? CALL_EXPRESSION : NEW_EXPRESSION) | 0
+			})
+		);
 		for (let arg of args) {
 			context.visit(arg);
 		}
-		if (analysis.pure || analysis.never_throws) {
-			// don't check unless we think the function is pure or error-free
+		if (needs_check()) {
 			if (callee.type === 'Identifier') {
 				const binding = context.state.scope.get(callee.name);
 				if (
@@ -1851,6 +1891,9 @@ function evaluate_function(fn, binding, stack = new Set(), [...seen_bindings] = 
 				);
 				analysis.pure &&= child_analysis.pure;
 				analysis.never_throws &&= child_analysis.never_throws;
+			} else if (node.type === 'NewExpression' && !is_global_class(callee, context.state.scope)) {
+				analysis.pure = false;
+				analysis.never_throws = false;
 			}
 		}
 	}
@@ -1858,14 +1901,14 @@ function evaluate_function(fn, binding, stack = new Set(), [...seen_bindings] = 
 		MemberExpression(node, context) {
 			const keypath = get_global_keypath(node, context.state.scope);
 			const evaluated = context.state.scope.evaluate(node, new Set(), seen_bindings, true);
-			if (keypath === null && !evaluated.is_known) {
+			if (!(keypath !== null && Object.hasOwn(globals, keypath)) && !evaluated.is_known) {
 				analysis.pure = false;
 				analysis.never_throws = false;
 			}
 			context.next();
 		},
 		Identifier(node, context) {
-			if (is_reference(node, /** @type {Node} */ (context.path.at(-1)))) {
+			if (is_reference(node, /** @type {Node} */ (context.path.at(-1))) && needs_check()) {
 				const binding = context.state.scope.get(node.name);
 				if (binding !== fn_binding) {
 					if (binding === null) {
@@ -1878,21 +1921,10 @@ function evaluate_function(fn, binding, stack = new Set(), [...seen_bindings] = 
 						binding.scope !== fn_scope &&
 						binding.updated &&
 						context.state.current_call === 0 &&
-						!seen_bindings.includes(binding)
+						!seen_bindings.includes(binding) &&
+						needs_check(true, false)
 					) {
-						let has_fn_scope = false;
-						/** @type {null | Scope} */
-						let curr = binding.scope;
-						while (curr !== null) {
-							curr = curr?.parent ?? null;
-							if (fn_scope === curr) {
-								has_fn_scope = true;
-								break;
-							}
-						}
-						if (!has_fn_scope) {
-							analysis.pure = false;
-						}
+						analysis.pure &&= fn_scope.contains(binding.scope);
 						seen_bindings.push(binding);
 					}
 					if (binding.kind === 'derived') {
@@ -1904,6 +1936,9 @@ function evaluate_function(fn, binding, stack = new Set(), [...seen_bindings] = 
 		},
 		CallExpression: handle_call_expression,
 		NewExpression: handle_call_expression,
+		TaggedTemplateExpression(node, context) {
+			return handle_call_expression(b.call(node.tag, node.quasi), context);
+		},
 		ThrowStatement(node, context) {
 			if (
 				fn.type !== 'FunctionDeclaration' ||
