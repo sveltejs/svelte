@@ -149,7 +149,7 @@ export class Fork {
 			}
 
 			active_fork = new Fork();
-			forks.add(active_fork); // TODO figure out where we remove this
+			forks.add(active_fork);
 		}
 
 		return active_fork;

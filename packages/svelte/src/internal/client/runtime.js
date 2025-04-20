@@ -683,11 +683,7 @@ function infinite_loop_guard() {
 
 function flush_queued_root_effects() {
 	var was_updating_effect = is_updating_effect;
-
-	// TODO it should be impossible to get here without an active fork
-	if (!active_fork && queued_root_effects.length > 0) {
-		console.trace('here');
-	}
+	var fork = /** @type {Fork} */ (active_fork);
 
 	try {
 		var flush_count = 0;
@@ -698,7 +694,7 @@ function flush_queued_root_effects() {
 				infinite_loop_guard();
 			}
 
-			var revert = active_fork?.apply();
+			var revert = fork.apply();
 
 			/** @type {Effect[]} */
 			var async_effects = [];
@@ -724,13 +720,13 @@ function flush_queued_root_effects() {
 				process_effects(root, async_effects, render_effects, effects);
 			}
 
-			if (async_effects.length === 0 && (active_fork === null || active_fork.pending === 0)) {
-				active_fork?.commit();
+			if (async_effects.length === 0 && fork.pending === 0) {
+				fork.commit();
 				flush_queued_effects(render_effects);
 				flush_queued_effects(effects);
 			}
 
-			revert?.();
+			revert();
 
 			for (const effect of async_effects) {
 				update_effect(effect);
@@ -795,11 +791,13 @@ export function schedule_effect(signal) {
 	if (!is_flushing) {
 		is_flushing = true;
 		queueMicrotask(() => {
+			if (active_fork === null) {
+				// a flushSync happened in the meantime
+				return;
+			}
+
 			flush_queued_root_effects();
 
-			// TODO this doesn't seem quite right — may run into
-			// interesting cases where there are multiple roots.
-			// it'll do for now though
 			if (active_fork?.pending === 0) {
 				active_fork.remove();
 			}
@@ -845,14 +843,14 @@ export function schedule_effect(signal) {
  */
 function process_effects(root, async_effects, render_effects, effects) {
 	var effect = root.first;
+	var fork = /** @type {Fork} */ (active_fork);
 
 	while (effect !== null) {
 		var flags = effect.f;
 		var is_branch = (flags & BRANCH_EFFECT) !== 0;
 		var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
 
-		var skip =
-			is_skippable_branch || (flags & INERT) !== 0 || active_fork?.skipped_effects.has(effect);
+		var skip = is_skippable_branch || (flags & INERT) !== 0 || fork.skipped_effects.has(effect);
 
 		if (!skip) {
 			if ((flags & EFFECT_ASYNC) !== 0) {

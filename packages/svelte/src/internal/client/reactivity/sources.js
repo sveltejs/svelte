@@ -34,7 +34,7 @@ import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack } from '../dev/tracing.js';
 import { component_context, is_runes } from '../context.js';
-import { active_fork, Fork } from './forks.js';
+import { Fork } from './forks.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 
