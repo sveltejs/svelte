@@ -34,7 +34,7 @@ import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack } from '../dev/tracing.js';
 import { component_context, is_runes } from '../context.js';
-import { Fork } from './batch.js';
+import { Batch } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 
@@ -169,8 +169,8 @@ export function internal_set(source, value) {
 
 		source.v = value;
 
-		const fork = Fork.ensure();
-		fork.capture(source, old_value);
+		const batch = Batch.ensure();
+		batch.capture(source, old_value);
 
 		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');

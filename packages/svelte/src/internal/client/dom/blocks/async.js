@@ -1,7 +1,7 @@
 /** @import { Effect, TemplateNode, Value } from '#client' */
-/** @import { Fork } from '../../reactivity/batch.js' */
+/** @import { Batch } from '../../reactivity/batch.js' */
 import { async_derived } from '../../reactivity/deriveds.js';
-import { active_fork } from '../../reactivity/batch.js';
+import { current_batch } from '../../reactivity/batch.js';
 import { active_effect, schedule_effect } from '../../runtime.js';
 import { capture } from './boundary.js';
 
@@ -13,7 +13,7 @@ import { capture } from './boundary.js';
 export function async(node, expressions, fn) {
 	// TODO handle hydration
 
-	var fork = /** @type {Fork} */ (active_fork);
+	var batch = /** @type {Batch} */ (current_batch);
 	var effect = /** @type {Effect} */ (active_effect);
 
 	var restore = capture();
@@ -22,7 +22,7 @@ export function async(node, expressions, fn) {
 		restore();
 		fn(node, ...result);
 
-		fork.run(() => {
+		batch.run(() => {
 			schedule_effect(effect);
 		});
 	});

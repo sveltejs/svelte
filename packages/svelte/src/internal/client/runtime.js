@@ -50,7 +50,7 @@ import {
 import { Boundary } from './dom/blocks/boundary.js';
 import * as w from './warnings.js';
 import { is_firefox } from './dom/operations.js';
-import { active_fork, Fork, remove_active_fork } from './reactivity/batch.js';
+import { current_batch, Batch, remove_current_batch } from './reactivity/batch.js';
 
 // Used for DEV time error handling
 /** @param {WeakSet<Error>} value */
@@ -683,7 +683,7 @@ function infinite_loop_guard() {
 
 function flush_queued_root_effects() {
 	var was_updating_effect = is_updating_effect;
-	var fork = /** @type {Fork} */ (active_fork);
+	var batch = /** @type {Batch} */ (current_batch);
 
 	try {
 		var flush_count = 0;
@@ -694,7 +694,7 @@ function flush_queued_root_effects() {
 				infinite_loop_guard();
 			}
 
-			var revert = fork.apply();
+			var revert = batch.apply();
 
 			/** @type {Effect[]} */
 			var async_effects = [];
@@ -720,8 +720,8 @@ function flush_queued_root_effects() {
 				process_effects(root, async_effects, render_effects, effects);
 			}
 
-			if (async_effects.length === 0 && fork.pending === 0) {
-				fork.commit();
+			if (async_effects.length === 0 && batch.pending === 0) {
+				batch.commit();
 				flush_queued_effects(render_effects);
 				flush_queued_effects(effects);
 			}
@@ -791,18 +791,18 @@ export function schedule_effect(signal) {
 	if (!is_flushing) {
 		is_flushing = true;
 		queueMicrotask(() => {
-			if (active_fork === null) {
+			if (current_batch === null) {
 				// a flushSync happened in the meantime
 				return;
 			}
 
 			flush_queued_root_effects();
 
-			if (active_fork?.pending === 0) {
-				active_fork.remove();
+			if (current_batch?.pending === 0) {
+				current_batch.remove();
 			}
 
-			remove_active_fork();
+			remove_current_batch();
 		});
 	}
 
@@ -843,14 +843,14 @@ export function schedule_effect(signal) {
  */
 function process_effects(root, async_effects, render_effects, effects) {
 	var effect = root.first;
-	var fork = /** @type {Fork} */ (active_fork);
+	var batch = /** @type {Batch} */ (current_batch);
 
 	while (effect !== null) {
 		var flags = effect.f;
 		var is_branch = (flags & BRANCH_EFFECT) !== 0;
 		var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
 
-		var skip = is_skippable_branch || (flags & INERT) !== 0 || fork.skipped_effects.has(effect);
+		var skip = is_skippable_branch || (flags & INERT) !== 0 || batch.skipped_effects.has(effect);
 
 		if (!skip) {
 			if ((flags & EFFECT_ASYNC) !== 0) {
@@ -867,7 +867,7 @@ function process_effects(root, async_effects, render_effects, effects) {
 				}
 			} else if ((flags & RENDER_EFFECT) !== 0) {
 				if (is_branch) {
-					// TODO clean branch later, if fork is settled
+					// TODO clean branch later, if batch is settled
 					// current_effect.f ^= CLEAN;
 				} else {
 					render_effects.push(effect);
@@ -904,7 +904,7 @@ function process_effects(root, async_effects, render_effects, effects) {
 export function flushSync(fn) {
 	var result;
 
-	Fork.ensure();
+	Batch.ensure();
 
 	if (fn) {
 		is_flushing = true;
@@ -920,11 +920,11 @@ export function flushSync(fn) {
 		flush_tasks();
 	}
 
-	if (active_fork?.pending === 0) {
-		active_fork.remove();
+	if (current_batch?.pending === 0) {
+		current_batch.remove();
 	}
 
-	remove_active_fork();
+	remove_current_batch();
 
 	return /** @type {T} */ (result);
 }

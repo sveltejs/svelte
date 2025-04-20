@@ -1,8 +1,8 @@
 /** @import { TemplateNode, Dom, Effect } from '#client' */
-/** @import { Fork } from '../../reactivity/batch.js'; */
+/** @import { Batch } from '../../reactivity/batch.js'; */
 import { EFFECT_TRANSPARENT } from '#client/constants';
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
-import { active_fork } from '../../reactivity/batch.js';
+import { current_batch } from '../../reactivity/batch.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 import { create_text, should_defer_append } from '../operations.js';
 
@@ -68,7 +68,7 @@ export function component(node, get_component, render_fn) {
 		}
 
 		if (defer) {
-			/** @type {Fork} */ (active_fork).add_callback(commit);
+			/** @type {Batch} */ (current_batch).add_callback(commit);
 		} else {
 			commit();
 		}

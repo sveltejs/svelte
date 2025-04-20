@@ -1,5 +1,5 @@
 /** @import { EachItem, EachState, Effect, MaybeSource, Source, TemplateNode, TransitionManager, Value } from '#client' */
-/** @import { Fork } from '../../reactivity/batch.js'; */
+/** @import { Batch } from '../../reactivity/batch.js'; */
 import {
 	EACH_INDEX_REACTIVE,
 	EACH_IS_ANIMATED,
@@ -40,7 +40,7 @@ import { queue_micro_task } from '../task.js';
 import { active_effect, get } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
-import { active_fork } from '../../reactivity/batch.js';
+import { current_batch } from '../../reactivity/batch.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -269,7 +269,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		} else {
 			if (should_defer_append()) {
 				var keys = new Set();
-				var fork = /** @type {Fork} */ (active_fork);
+				var batch = /** @type {Batch} */ (current_batch);
 
 				for (i = 0; i < length; i += 1) {
 					value = array[i];
@@ -305,11 +305,11 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 				for (const [key, item] of state.items) {
 					if (!keys.has(key)) {
-						fork.skipped_effects.add(item.e);
+						batch.skipped_effects.add(item.e);
 					}
 				}
 
-				fork.add_callback(commit);
+				batch.add_callback(commit);
 			} else {
 				commit();
 			}

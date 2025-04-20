@@ -5,24 +5,24 @@ import { flushSync } from '../runtime.js';
 import { raf } from '../timing.js';
 import { internal_set, mark_reactions, pending } from './sources.js';
 
-/** @type {Set<Fork>} */
-const forks = new Set();
+/** @type {Set<Batch>} */
+const batches = new Set();
 
-/** @type {Fork | null} */
-export let active_fork = null;
+/** @type {Batch | null} */
+export let current_batch = null;
 
-export function remove_active_fork() {
-	active_fork = null;
+export function remove_current_batch() {
+	current_batch = null;
 }
 
 /** Update `$effect.pending()` */
 function update_pending() {
-	// internal_set(pending, forks.size > 0);
+	// internal_set(pending, batches.size > 0);
 }
 
 let uid = 1;
 
-export class Fork {
+export class Batch {
 	id = uid++;
 
 	/** @type {Map<Source, any>} */
@@ -40,8 +40,8 @@ export class Fork {
 	pending = 0;
 
 	apply() {
-		if (forks.size === 1) {
-			// if this is the latest (and only) fork, we have nothing to do
+		if (batches.size === 1) {
+			// if this is the latest (and only) batch, we have nothing to do
 			return noop;
 		}
 
@@ -56,10 +56,10 @@ export class Fork {
 			source.v = current;
 		}
 
-		for (const fork of forks) {
-			if (fork === this) continue;
+		for (const batch of batches) {
+			if (batch === this) continue;
 
-			for (const [source, previous] of fork.previous) {
+			for (const [source, previous] of batch.previous) {
 				if (!current_values.has(source)) {
 					// mark_reactions(source, DIRTY);
 					current_values.set(source, source.v);
@@ -88,19 +88,19 @@ export class Fork {
 	}
 
 	remove() {
-		forks.delete(this);
+		batches.delete(this);
 
-		for (var fork of forks) {
-			if (fork.id < this.id) {
-				// other fork is older than this
+		for (var batch of batches) {
+			if (batch.id < this.id) {
+				// other batch is older than this
 				for (var source of this.previous.keys()) {
-					fork.previous.delete(source);
+					batch.previous.delete(source);
 				}
 			} else {
-				// other fork is newer than this
-				for (var source of fork.previous.keys()) {
+				// other batch is newer than this
+				for (var source of batch.previous.keys()) {
 					if (this.previous.has(source)) {
-						fork.previous.set(source, source.v);
+						batch.previous.set(source, source.v);
 					}
 				}
 			}
@@ -113,7 +113,7 @@ export class Fork {
 	 * @param {() => void} fn
 	 */
 	run(fn) {
-		active_fork = this;
+		current_batch = this;
 		fn();
 	}
 
@@ -143,15 +143,15 @@ export class Fork {
 	}
 
 	static ensure() {
-		if (active_fork === null) {
-			if (forks.size === 0) {
+		if (current_batch === null) {
+			if (batches.size === 0) {
 				raf.tick(update_pending);
 			}
 
-			active_fork = new Fork();
-			forks.add(active_fork);
+			current_batch = new Batch();
+			batches.add(current_batch);
 		}
 
-		return active_fork;
+		return current_batch;
 	}
 }

@@ -41,7 +41,7 @@ import { get_next_sibling } from '../dom/operations.js';
 import { async_derived, derived } from './deriveds.js';
 import { capture } from '../dom/blocks/boundary.js';
 import { component_context, dev_current_component_function } from '../context.js';
-import { active_fork, Fork } from './batch.js';
+import { current_batch, Batch } from './batch.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -234,7 +234,7 @@ export function inspect_effect(fn) {
  * @returns {() => void}
  */
 export function effect_root(fn) {
-	Fork.ensure();
+	Batch.ensure();
 	const effect = create_effect(ROOT_EFFECT, fn, true);
 
 	return () => {
@@ -248,7 +248,7 @@ export function effect_root(fn) {
  * @returns {(options?: { outro?: boolean }) => Promise<void>}
  */
 export function component_root(fn) {
-	Fork.ensure();
+	Batch.ensure();
 	const effect = create_effect(ROOT_EFFECT, fn, true);
 
 	return (options = {}) => {
@@ -343,7 +343,7 @@ export function template_effect(fn, sync = [], async = [], d = derived) {
 	var parent = /** @type {Effect} */ (active_effect);
 
 	if (async.length > 0) {
-		var fork = /** @type {Fork} */ (active_fork);
+		var batch = /** @type {Batch} */ (current_batch);
 		var restore = capture();
 
 		Promise.all(async.map((expression) => async_derived(expression))).then((result) => {
@@ -355,7 +355,7 @@ export function template_effect(fn, sync = [], async = [], d = derived) {
 
 			var effect = create_template_effect(fn, [...sync.map(d), ...result]);
 
-			fork.run(() => {
+			batch.run(() => {
 				schedule_effect(effect);
 			});
 		});

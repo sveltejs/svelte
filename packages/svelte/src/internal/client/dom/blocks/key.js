@@ -1,12 +1,12 @@
 /** @import { Effect, TemplateNode } from '#client' */
-/** @import { Fork } from '../../reactivity/batch.js'; */
+/** @import { Batch } from '../../reactivity/batch.js'; */
 import { UNINITIALIZED } from '../../../../constants.js';
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
 import { not_equal, safe_not_equal } from '../../reactivity/equality.js';
 import { is_runes } from '../../context.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 import { create_text, should_defer_append } from '../operations.js';
-import { active_fork } from '../../reactivity/batch.js';
+import { current_batch } from '../../reactivity/batch.js';
 
 /**
  * @template V
@@ -66,7 +66,7 @@ export function key_block(node, get_key, render_fn) {
 			pending_effect = branch(() => render_fn(target));
 
 			if (defer) {
-				/** @type {Fork} */ (active_fork).add_callback(commit);
+				/** @type {Batch} */ (current_batch).add_callback(commit);
 			} else {
 				commit();
 			}

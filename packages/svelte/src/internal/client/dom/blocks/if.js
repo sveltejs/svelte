@@ -1,5 +1,5 @@
 /** @import { Effect, TemplateNode } from '#client' */
-/** @import { Fork } from '../../reactivity/batch.js'; */
+/** @import { Batch } from '../../reactivity/batch.js'; */
 import { EFFECT_TRANSPARENT } from '#client/constants';
 import {
 	hydrate_next,
@@ -12,7 +12,7 @@ import {
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
 import { create_text, should_defer_append } from '../operations.js';
-import { active_fork } from '../../reactivity/batch.js';
+import { current_batch } from '../../reactivity/batch.js';
 
 // TODO reinstate https://github.com/sveltejs/svelte/pull/15250
 
@@ -126,15 +126,15 @@ export function if_block(node, fn, elseif = false) {
 		}
 
 		if (defer) {
-			var fork = /** @type {Fork} */ (active_fork);
+			var batch = /** @type {Batch} */ (current_batch);
 
 			const skipped = condition ? alternate_effect : consequent_effect;
 			if (skipped !== null) {
 				// TODO need to do this for other kinds of blocks
-				fork.skipped_effects.add(skipped);
+				batch.skipped_effects.add(skipped);
 			}
 
-			fork.add_callback(commit);
+			batch.add_callback(commit);
 		} else {
 			commit();
 		}

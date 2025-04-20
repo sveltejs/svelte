@@ -1,5 +1,5 @@
 /** @import { Derived, Effect, Source } from '#client' */
-/** @import { Fork } from './batch.js'; */
+/** @import { Batch } from './batch.js'; */
 import { DEV } from 'esm-env';
 import {
 	CLEAN,
@@ -32,7 +32,7 @@ import { tracing_mode_flag } from '../../flags/index.js';
 import { capture } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { active_fork } from './batch.js';
+import { current_batch } from './batch.js';
 
 /** @type {Effect | null} */
 export let from_async_derived = null;
@@ -124,14 +124,14 @@ export function async_derived(fn, location) {
 
 		var restore = capture();
 
-		var fork = /** @type {Fork} */ (active_fork);
+		var batch = /** @type {Batch} */ (current_batch);
 		var ran = boundary.ran;
 
 		if (should_suspend) {
 			if (!ran) {
 				boundary.increment();
 			} else {
-				fork.increment();
+				batch.increment();
 			}
 		}
 
@@ -148,11 +148,11 @@ export function async_derived(fn, location) {
 					if (!ran) {
 						boundary.decrement();
 					} else {
-						fork.decrement();
+						batch.decrement();
 					}
 				}
 
-				fork.run(() => {
+				batch.run(() => {
 					internal_set(signal, v);
 				});
 

@@ -24,7 +24,7 @@ import { queue_boundary_micro_task } from '../task.js';
 import * as e from '../../../shared/errors.js';
 import { DEV } from 'esm-env';
 import { from_async_derived, set_from_async_derived } from '../../reactivity/deriveds.js';
-import { Fork } from '../../reactivity/batch.js';
+import { Batch } from '../../reactivity/batch.js';
 
 /**
  * @typedef {{
@@ -115,7 +115,7 @@ export class Boundary {
 				// boundary, and hydrate accordingly
 				queueMicrotask(() => {
 					this.#main_effect = this.#run(() => {
-						Fork.ensure();
+						Batch.ensure();
 						return branch(() => this.#children(this.#anchor));
 					});
 
