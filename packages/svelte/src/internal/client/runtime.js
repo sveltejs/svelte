@@ -707,17 +707,10 @@ function flush_queued_root_effects() {
 			var effects = [];
 
 			var root_effects = queued_root_effects;
-			var length = root_effects.length;
 
 			queued_root_effects = [];
 
-			for (var i = 0; i < length; i++) {
-				var root = root_effects[i];
-
-				if ((root.f & CLEAN) === 0) {
-					root.f ^= CLEAN;
-				}
-
+			for (const root of root_effects) {
 				process_effects(root, async_effects, render_effects, effects);
 			}
 
@@ -835,6 +828,8 @@ export function schedule_effect(signal) {
  * @param {Effect[]} effects
  */
 function process_effects(root, async_effects, render_effects, effects) {
+	root.f ^= CLEAN;
+
 	var effect = root.first;
 	var batch = /** @type {Batch} */ (current_batch);
 
