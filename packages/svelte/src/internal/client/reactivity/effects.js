@@ -322,7 +322,7 @@ export function legacy_pre_effect_reset() {
 			token.ran = false;
 		}
 
-		context.l.r2.v = false; // set directly to avoid rerunning this effect
+		set(context.l.r2, false);
 	});
 }
 
