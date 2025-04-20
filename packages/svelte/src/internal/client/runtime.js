@@ -718,6 +718,18 @@ function flush_queued_root_effects() {
 				batch.commit();
 				flush_queued_effects(render_effects);
 				flush_queued_effects(effects);
+			} else {
+				// store the effects on the batch so that they run next time,
+				// even if they don't get re-dirtied
+				for (const e of render_effects) {
+					batch.effects.add(e);
+					set_signal_status(e, CLEAN);
+				}
+
+				for (const e of effects) {
+					batch.effects.add(e);
+					set_signal_status(e, CLEAN);
+				}
 			}
 
 			revert();

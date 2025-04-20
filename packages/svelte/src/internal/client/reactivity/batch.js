@@ -1,7 +1,6 @@
 /** @import { Effect, Source } from '#client' */
 import { DIRTY } from '#client/constants';
-import { noop } from '../../shared/utils.js';
-import { flushSync } from '../runtime.js';
+import { schedule_effect, set_signal_status } from '../runtime.js';
 import { raf } from '../timing.js';
 import { internal_set, mark_reactions, pending } from './sources.js';
 
@@ -32,6 +31,9 @@ export class Batch {
 	#current = new Map();
 
 	/** @type {Set<Effect>} */
+	effects = new Set();
+
+	/** @type {Set<Effect>} */
 	skipped_effects = new Set();
 
 	/** @type {Set<() => void>} */
@@ -47,6 +49,13 @@ export class Batch {
 			// presumably because we need a try-finally somewhere, and the
 			// source wasn't correctly reverted after the previous batch
 			source.v = current;
+		}
+
+		for (const e of this.effects) {
+			if (e.fn) {
+				set_signal_status(e, DIRTY);
+				schedule_effect(e);
+			}
 		}
 
 		for (const batch of batches) {
