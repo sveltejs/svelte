@@ -63,7 +63,6 @@ export class Batch {
 
 			for (const [source, previous] of batch.#previous) {
 				if (!this.#previous.has(source)) {
-					// mark_reactions(source, DIRTY);
 					current_values.set(source, source.v);
 					source.v = previous;
 				}
