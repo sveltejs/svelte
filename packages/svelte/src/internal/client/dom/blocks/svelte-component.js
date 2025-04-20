@@ -1,8 +1,8 @@
 /** @import { TemplateNode, Dom, Effect } from '#client' */
-/** @import { Fork } from '../../reactivity/forks.js'; */
+/** @import { Fork } from '../../reactivity/batch.js'; */
 import { EFFECT_TRANSPARENT } from '#client/constants';
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
-import { active_fork } from '../../reactivity/forks.js';
+import { active_fork } from '../../reactivity/batch.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 import { create_text, should_defer_append } from '../operations.js';
 

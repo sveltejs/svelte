@@ -41,7 +41,7 @@ import { get_next_sibling } from '../dom/operations.js';
 import { async_derived, derived } from './deriveds.js';
 import { capture } from '../dom/blocks/boundary.js';
 import { component_context, dev_current_component_function } from '../context.js';
-import { active_fork, Fork } from './forks.js';
+import { active_fork, Fork } from './batch.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune

@@ -1,5 +1,5 @@
 /** @import { Effect, TemplateNode } from '#client' */
-/** @import { Fork } from '../../reactivity/forks.js'; */
+/** @import { Fork } from '../../reactivity/batch.js'; */
 import { EFFECT_TRANSPARENT } from '#client/constants';
 import {
 	hydrate_next,
@@ -12,7 +12,7 @@ import {
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
 import { create_text, should_defer_append } from '../operations.js';
-import { active_fork } from '../../reactivity/forks.js';
+import { active_fork } from '../../reactivity/batch.js';
 
 // TODO reinstate https://github.com/sveltejs/svelte/pull/15250
 

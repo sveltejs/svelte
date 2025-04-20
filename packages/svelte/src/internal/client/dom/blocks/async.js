@@ -1,7 +1,7 @@
 /** @import { Effect, TemplateNode, Value } from '#client' */
-/** @import { Fork } from '../../reactivity/forks.js' */
+/** @import { Fork } from '../../reactivity/batch.js' */
 import { async_derived } from '../../reactivity/deriveds.js';
-import { active_fork } from '../../reactivity/forks.js';
+import { active_fork } from '../../reactivity/batch.js';
 import { active_effect, schedule_effect } from '../../runtime.js';
 import { capture } from './boundary.js';
 

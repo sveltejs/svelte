@@ -1,12 +1,12 @@
 /** @import { Effect, TemplateNode } from '#client' */
-/** @import { Fork } from '../../reactivity/forks.js'; */
+/** @import { Fork } from '../../reactivity/batch.js'; */
 import { UNINITIALIZED } from '../../../../constants.js';
 import { block, branch, pause_effect } from '../../reactivity/effects.js';
 import { not_equal, safe_not_equal } from '../../reactivity/equality.js';
 import { is_runes } from '../../context.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 import { create_text, should_defer_append } from '../operations.js';
-import { active_fork } from '../../reactivity/forks.js';
+import { active_fork } from '../../reactivity/batch.js';
 
 /**
  * @template V

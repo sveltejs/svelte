@@ -1,5 +1,5 @@
 /** @import { EachItem, EachState, Effect, MaybeSource, Source, TemplateNode, TransitionManager, Value } from '#client' */
-/** @import { Fork } from '../../reactivity/forks.js'; */
+/** @import { Fork } from '../../reactivity/batch.js'; */
 import {
 	EACH_INDEX_REACTIVE,
 	EACH_IS_ANIMATED,
@@ -40,7 +40,7 @@ import { queue_micro_task } from '../task.js';
 import { active_effect, get } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
-import { active_fork } from '../../reactivity/forks.js';
+import { active_fork } from '../../reactivity/batch.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this

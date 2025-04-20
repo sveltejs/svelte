@@ -50,7 +50,7 @@ import {
 import { Boundary } from './dom/blocks/boundary.js';
 import * as w from './warnings.js';
 import { is_firefox } from './dom/operations.js';
-import { active_fork, Fork, remove_active_fork } from './reactivity/forks.js';
+import { active_fork, Fork, remove_active_fork } from './reactivity/batch.js';
 
 // Used for DEV time error handling
 /** @param {WeakSet<Error>} value */
