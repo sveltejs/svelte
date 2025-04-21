@@ -43,6 +43,7 @@ const visitors = {
 		delete n.typeParameters;
 		delete n.typeArguments;
 		delete n.returnType;
+		// TODO figure out what this is exactly, and if it should be added to `type_information`
 		delete n.accessibility;
 	},
 	Decorator(node) {

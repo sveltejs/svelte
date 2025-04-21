@@ -1,4 +1,4 @@
-/** @import { ArrowFunctionExpression, BinaryOperator, ClassDeclaration, Expression, FunctionDeclaration, FunctionExpression, Identifier, ImportDeclaration, MemberExpression, LogicalOperator, Node, Pattern, UnaryOperator, VariableDeclarator, Super, CallExpression, NewExpression } from 'estree' */
+/** @import { ArrowFunctionExpression, BinaryOperator, ClassDeclaration, Expression, FunctionDeclaration, FunctionExpression, Identifier, ImportDeclaration, MemberExpression, LogicalOperator, Node, Pattern, UnaryOperator, VariableDeclarator, Super, CallExpression, NewExpression, AssignmentExpression, UpdateExpression } from 'estree' */
 /** @import { Context, Visitor } from 'zimmerframe' */
 /** @import { AST, BindingKind, DeclarationKind } from '#compiler' */
 import is_reference from 'is-reference';
@@ -152,13 +152,19 @@ export class Binding {
 	declaration_kind;
 
 	/**
+	 * Any nodes that may have updated the value of the binding
+	 * @type {AST.SvelteNode[]}
+	 */
+	updates = [];
+
+	/**
 	 * What the value was initialized with.
 	 * For destructured props such as `let { foo = 'bar' } = $props()` this is `'bar'` and not `$props()`
 	 * @type {null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | AST.EachBlock | AST.SnippetBlock}
 	 */
 	initial = null;
 
-	/** @type {Array<{ node: Identifier; path: AST.SvelteNode[] }>} */
+	/** @type {Array<{ node: Identifier; path: AST.SvelteNode[], scope: Scope }>} */
 	references = [];
 
 	/**
@@ -255,6 +261,20 @@ class Evaluation {
 	is_number = true;
 
 	/**
+	 * True if the value is known to be truthy
+	 * @readonly
+	 * @type {boolean}
+	 */
+	is_truthy = true;
+
+	/**
+	 * True if the value is known to be falsy
+	 * @readonly
+	 * @type {boolean}
+	 */
+	is_falsy = true;
+
+	/**
 	 * @readonly
 	 * @type {any}
 	 */
@@ -269,405 +289,517 @@ class Evaluation {
 	 */
 	constructor(scope, expression, values, seen_bindings, from_fn_call = false) {
 		this.values = values;
-
-		switch (expression.type) {
-			case 'Literal': {
-				this.values.add(expression.value);
-				break;
-			}
-
-			case 'Identifier': {
-				const binding = scope.get(expression.name);
-
-				if (binding && seen_bindings.includes(binding)) break;
-				if (binding) {
-					if (
-						binding.initial?.type === 'CallExpression' &&
-						get_rune(binding.initial, scope) === '$props.id'
-					) {
-						this.values.add(STRING);
-						break;
-					}
-
-					const is_prop =
-						binding.kind === 'prop' ||
-						binding.kind === 'rest_prop' ||
-						binding.kind === 'bindable_prop';
-
-					if (binding.initial?.type === 'EachBlock' && binding.initial.index === expression.name) {
-						this.values.add(NUMBER);
-						break;
-					}
-
-					if (!binding.updated && binding.initial !== null && !is_prop) {
-						binding.scope.evaluate(
-							/** @type {Expression} */ (binding.initial),
-							this.values,
-							[...seen_bindings, binding],
-							from_fn_call
-						);
-						break;
-					}
-
-					if (binding.kind === 'rest_prop' && !binding.updated) {
-						this.values.add(NOT_NULL);
-						break;
-					}
-				} else if (expression.name === 'undefined') {
-					this.values.add(undefined);
+		try {
+			switch (expression.type) {
+				case 'Literal': {
+					this.values.add(expression.value);
 					break;
 				}
 
-				// TODO glean what we can from reassignments
-				// TODO one day, expose props and imports somehow
+				case 'Identifier': {
+					const binding = scope.get(expression.name);
 
-				this.values.add(UNKNOWN);
-				break;
-			}
-
-			case 'BinaryExpression': {
-				const a = scope.evaluate(
-					/** @type {Expression} */ (expression.left),
-					new Set(),
-					seen_bindings,
-					from_fn_call
-				); // `left` cannot be `PrivateIdentifier` unless operator is `in`
-				const b = scope.evaluate(expression.right, new Set(), seen_bindings, from_fn_call);
-
-				if (a.is_known && b.is_known) {
-					this.values.add(binary[expression.operator](a.value, b.value));
-					break;
-				}
-
-				switch (expression.operator) {
-					case '!=':
-					case '!==':
-					case '<':
-					case '<=':
-					case '>':
-					case '>=':
-					case '==':
-					case '===':
-					case 'in':
-					case 'instanceof':
-						this.values.add(true);
-						this.values.add(false);
-						break;
-
-					case '%':
-					case '&':
-					case '*':
-					case '**':
-					case '-':
-					case '/':
-					case '<<':
-					case '>>':
-					case '>>>':
-					case '^':
-					case '|':
-						this.values.add(NUMBER);
-						break;
-
-					case '+':
-						if (a.is_string || b.is_string) {
+					if (binding && seen_bindings.includes(binding)) break;
+					if (binding) {
+						if (
+							binding.initial?.type === 'CallExpression' &&
+							get_rune(binding.initial, scope) === '$props.id'
+						) {
 							this.values.add(STRING);
-						} else if (a.is_number && b.is_number) {
-							this.values.add(NUMBER);
-						} else {
-							this.values.add(STRING);
-							this.values.add(NUMBER);
+							break;
 						}
-						break;
 
-					default:
-						this.values.add(UNKNOWN);
-				}
-				break;
-			}
+						const is_prop =
+							binding.kind === 'prop' ||
+							binding.kind === 'rest_prop' ||
+							binding.kind === 'bindable_prop';
 
-			case 'ConditionalExpression': {
-				const test = scope.evaluate(expression.test, new Set(), seen_bindings, from_fn_call);
-				const consequent = scope.evaluate(
-					expression.consequent,
-					new Set(),
-					seen_bindings,
-					from_fn_call
-				);
-				const alternate = scope.evaluate(
-					expression.alternate,
-					new Set(),
-					seen_bindings,
-					from_fn_call
-				);
-
-				if (test.is_known) {
-					for (const value of (test.value ? consequent : alternate).values) {
-						this.values.add(value);
-					}
-				} else {
-					for (const value of consequent.values) {
-						this.values.add(value);
-					}
-
-					for (const value of alternate.values) {
-						this.values.add(value);
-					}
-				}
-				break;
-			}
-
-			case 'LogicalExpression': {
-				const a = scope.evaluate(expression.left, new Set(), seen_bindings, from_fn_call);
-				const b = scope.evaluate(expression.right, new Set(), seen_bindings, from_fn_call);
-
-				if (a.is_known) {
-					if (b.is_known) {
-						this.values.add(logical[expression.operator](a.value, b.value));
-						break;
-					}
-
-					if (
-						(expression.operator === '&&' && !a.value) ||
-						(expression.operator === '||' && a.value) ||
-						(expression.operator === '??' && a.value != null)
-					) {
-						this.values.add(a.value);
-					} else {
-						for (const value of b.values) {
-							this.values.add(value);
+						if (
+							binding.initial?.type === 'EachBlock' &&
+							binding.initial.index === expression.name
+						) {
+							this.values.add(NUMBER);
+							break;
 						}
-					}
 
-					break;
-				}
+						if (!binding.updated && binding.initial !== null && !is_prop) {
+							binding.scope.evaluate(
+								/** @type {Expression} */ (binding.initial),
+								this.values,
+								[...seen_bindings, binding],
+								from_fn_call
+							);
+							break;
+						}
 
-				for (const value of a.values) {
-					this.values.add(value);
-				}
+						if (binding.kind === 'rest_prop' && !binding.updated) {
+							this.values.add(NOT_NULL);
+							break;
+						}
 
-				for (const value of b.values) {
-					this.values.add(value);
-				}
-				break;
-			}
-
-			case 'UnaryExpression': {
-				const argument = scope.evaluate(
-					expression.argument,
-					new Set(),
-					seen_bindings,
-					from_fn_call
-				);
-
-				if (argument.is_known) {
-					this.values.add(unary[expression.operator](argument.value));
-					break;
-				}
-
-				switch (expression.operator) {
-					case '!':
-					case 'delete':
-						this.values.add(false);
-						this.values.add(true);
-						break;
-
-					case '+':
-					case '-':
-					case '~':
-						this.values.add(NUMBER);
-						break;
-
-					case 'typeof':
-						this.values.add(STRING);
-						break;
-
-					case 'void':
-						this.values.add(undefined);
-						break;
-
-					default:
-						this.values.add(UNKNOWN);
-				}
-				break;
-			}
-
-			case 'SequenceExpression': {
-				const { expressions } = expression;
-				const evaluated = expressions.map((expression) =>
-					scope.evaluate(expression, new Set(), seen_bindings, from_fn_call)
-				);
-				if (evaluated.every((ev) => ev.is_known)) {
-					this.values.add(evaluated.at(-1)?.value);
-				} else {
-					this.values.add(UNKNOWN);
-				}
-				break;
-			}
-
-			case 'CallExpression': {
-				const keypath = get_global_keypath(expression.callee, scope);
-
-				if (keypath !== null) {
-					if (is_rune(keypath)) {
-						const arg = /** @type {Expression | undefined} */ (expression.arguments[0]);
-
-						switch (keypath) {
-							case '$state':
-							case '$state.raw':
-							case '$derived':
-								if (arg) {
-									scope.evaluate(arg, this.values, seen_bindings, from_fn_call);
+						if (
+							Object.hasOwn(binding.node, 'type_information') &&
+							//@ts-expect-error
+							Object.keys(binding.node?.type_information).includes('annotation')
+						) {
+							//@ts-ignore todo add this to types
+							const { type_information } = binding.node;
+							if (type_information.annotation?.type_information?.annotation) {
+								const type_annotation = get_type_of_ts_node(
+									type_information?.annotation?.type_information?.annotation
+								);
+								if (Array.isArray(type_annotation)) {
+									for (let type of type_annotation) {
+										this.values.add(type);
+									}
 								} else {
-									this.values.add(undefined);
+									this.values.add(type_annotation);
 								}
+							}
+							if (
+								!(
+									binding.updated &&
+									!is_prop &&
+									binding.kind !== 'snippet' &&
+									binding.kind !== 'template' &&
+									binding.declaration_kind !== 'param' &&
+									binding.declaration_kind !== 'rest_param'
+								)
+							)
 								break;
-
-							case '$props.id':
-								this.values.add(STRING);
-								break;
-
-							case '$effect.tracking':
-								this.values.add(false);
-								this.values.add(true);
-								break;
-
-							case '$derived.by':
-								scope.evaluate(
-									b.call(/** @type {Expression} */ (arg)),
+						}
+						if (
+							binding.updated &&
+							!is_prop &&
+							binding.kind !== 'snippet' &&
+							binding.kind !== 'template' &&
+							binding.declaration_kind !== 'param' &&
+							binding.declaration_kind !== 'rest_param'
+						) {
+							if (binding.initial !== null) {
+								binding.scope.evaluate(
+									/** @type {Expression} */ (binding.initial),
 									this.values,
-									seen_bindings,
+									[...seen_bindings, binding],
 									from_fn_call
 								);
-								break;
-
-							case '$effect.root':
-								this.values.add(NOT_NULL);
-								break;
-
-							default: {
-								this.values.add(UNKNOWN);
 							}
-						}
-
-						break;
-					}
-
-					if (
-						Object.hasOwn(globals, keypath) &&
-						expression.arguments.every((arg) => arg.type !== 'SpreadElement')
-					) {
-						const [type, fn] = globals[keypath];
-						const values = expression.arguments.map((arg) =>
-							scope.evaluate(arg, new Set(), seen_bindings, from_fn_call)
-						);
-
-						if (fn && values.every((e) => e.is_known)) {
-							this.values.add(fn(...values.map((e) => e.value)));
-						} else {
-							if (Array.isArray(type)) {
-								for (const t of type) {
-									this.values.add(t);
+							for (const update of binding.updates) {
+								switch (update.type) {
+									case 'AssignmentExpression':
+										if (binding.references.find(({ node }) => update.left === node)) {
+											const { scope } = /** @type {Binding['references'][number]} */ (
+												binding.references.find(({ node }) => update.left === node)
+											);
+											switch (update.operator) {
+												case '=':
+												case '??=':
+												case '||=':
+												case '&&=':
+													scope.evaluate(update.right, this.values, seen_bindings, from_fn_call);
+													break;
+												case '+=': {
+													this.values.add(NUMBER);
+													this.values.add(STRING);
+													break;
+												}
+												case '-=':
+												case '*=':
+												case '/=':
+												case '%=':
+												case '**=':
+												case '<<=':
+												case '>>=':
+												case '>>>=':
+												case '|=':
+												case '^=':
+												case '&=':
+													this.values.add(NUMBER);
+													break;
+												default: {
+													this.values.add(UNKNOWN);
+												}
+											}
+										} else {
+											this.values.add(UNKNOWN);
+										}
+										break;
+									case 'UpdateExpression': {
+										if (binding.references.find(({ node }) => update.argument === node)) {
+											this.values.add(NUMBER);
+										} else {
+											this.values.add(UNKNOWN);
+										}
+										break;
+									}
+									default: {
+										this.values.add(UNKNOWN);
+									}
 								}
-							} else {
-								this.values.add(type);
 							}
+							break;
 						}
-
+					} else if (expression.name === 'undefined') {
+						this.values.add(undefined);
 						break;
 					}
-				} else if (
-					expression.callee.type === 'MemberExpression' &&
-					expression.callee.object.type !== 'Super' &&
-					expression.arguments.every((arg) => arg.type !== 'SpreadElement')
-				) {
-					const object = scope.evaluate(
-						expression.callee.object,
+
+					// TODO one day, expose props and imports somehow
+
+					this.values.add(UNKNOWN);
+					break;
+				}
+
+				case 'BinaryExpression': {
+					const a = scope.evaluate(
+						/** @type {Expression} */ (expression.left),
+						new Set(),
+						seen_bindings,
+						from_fn_call
+					); // `left` cannot be `PrivateIdentifier` unless operator is `in`
+					const b = scope.evaluate(expression.right, new Set(), seen_bindings, from_fn_call);
+
+					if (a.is_known && b.is_known) {
+						this.values.add(binary[expression.operator](a.value, b.value));
+						break;
+					}
+
+					switch (expression.operator) {
+						case '!=':
+						case '!==':
+						case '<':
+						case '<=':
+						case '>':
+						case '>=':
+						case '==':
+						case '===':
+						case 'in':
+						case 'instanceof':
+							this.values.add(true);
+							this.values.add(false);
+							break;
+
+						case '%':
+						case '&':
+						case '*':
+						case '**':
+						case '-':
+						case '/':
+						case '<<':
+						case '>>':
+						case '>>>':
+						case '^':
+						case '|':
+							this.values.add(NUMBER);
+							break;
+
+						case '+':
+							if (a.is_string || b.is_string) {
+								this.values.add(STRING);
+							} else if (a.is_number && b.is_number) {
+								this.values.add(NUMBER);
+							} else {
+								this.values.add(STRING);
+								this.values.add(NUMBER);
+							}
+							break;
+
+						default:
+							this.values.add(UNKNOWN);
+					}
+					break;
+				}
+
+				case 'ConditionalExpression': {
+					const test = scope.evaluate(expression.test, new Set(), seen_bindings, from_fn_call);
+					const consequent = scope.evaluate(
+						expression.consequent,
 						new Set(),
 						seen_bindings,
 						from_fn_call
 					);
-					if (!object.is_known) {
-						this.values.add(UNKNOWN);
+					const alternate = scope.evaluate(
+						expression.alternate,
+						new Set(),
+						seen_bindings,
+						from_fn_call
+					);
+
+					if (test.is_known) {
+						for (const value of (test.value ? consequent : alternate).values) {
+							this.values.add(value);
+						}
+					} else {
+						for (const value of consequent.values) {
+							this.values.add(value);
+						}
+
+						for (const value of alternate.values) {
+							this.values.add(value);
+						}
+					}
+					break;
+				}
+
+				case 'LogicalExpression': {
+					const a = scope.evaluate(expression.left, new Set(), seen_bindings, from_fn_call);
+					const b = scope.evaluate(expression.right, new Set(), seen_bindings, from_fn_call);
+
+					if (a.is_known) {
+						if (b.is_known) {
+							this.values.add(logical[expression.operator](a.value, b.value));
+							break;
+						}
+
+						if (
+							(expression.operator === '&&' && !a.value) ||
+							(expression.operator === '||' && a.value) ||
+							(expression.operator === '??' && a.value != null)
+						) {
+							this.values.add(a.value);
+						} else {
+							for (const value of b.values) {
+								this.values.add(value);
+							}
+						}
+
 						break;
 					}
-					let property;
-					if (
-						expression.callee.computed &&
-						expression.callee.property.type !== 'PrivateIdentifier'
+
+					for (const value of a.values) {
+						this.values.add(value);
+					}
+
+					for (const value of b.values) {
+						this.values.add(value);
+					}
+					break;
+				}
+
+				case 'UnaryExpression': {
+					const argument = scope.evaluate(
+						expression.argument,
+						new Set(),
+						seen_bindings,
+						from_fn_call
+					);
+
+					if (argument.is_known) {
+						this.values.add(unary[expression.operator](argument.value));
+						break;
+					}
+
+					switch (expression.operator) {
+						case '!':
+						case 'delete':
+							this.values.add(false);
+							this.values.add(true);
+							break;
+
+						case '+':
+						case '-':
+						case '~':
+							this.values.add(NUMBER);
+							break;
+
+						case 'typeof':
+							this.values.add(STRING);
+							break;
+
+						case 'void':
+							this.values.add(undefined);
+							break;
+
+						default:
+							this.values.add(UNKNOWN);
+					}
+					break;
+				}
+
+				case 'SequenceExpression': {
+					const { expressions } = expression;
+					const evaluated = expressions.map((expression) =>
+						scope.evaluate(expression, new Set(), seen_bindings, from_fn_call)
+					);
+					if (evaluated.every((ev) => ev.is_known)) {
+						this.values.add(evaluated.at(-1)?.value);
+					} else {
+						this.values.add(UNKNOWN);
+					}
+					break;
+				}
+
+				case 'CallExpression': {
+					const keypath = get_global_keypath(expression.callee, scope);
+
+					if (keypath !== null) {
+						if (is_rune(keypath)) {
+							const arg = /** @type {Expression | undefined} */ (expression.arguments[0]);
+
+							switch (keypath) {
+								case '$state':
+								case '$state.raw':
+								case '$derived':
+									if (arg) {
+										scope.evaluate(arg, this.values, seen_bindings, from_fn_call);
+									} else {
+										this.values.add(undefined);
+									}
+									break;
+
+								case '$props.id':
+									this.values.add(STRING);
+									break;
+
+								case '$effect.tracking':
+									this.values.add(false);
+									this.values.add(true);
+									break;
+
+								case '$derived.by':
+									scope.evaluate(
+										b.call(/** @type {Expression} */ (arg)),
+										this.values,
+										seen_bindings,
+										from_fn_call
+									);
+									break;
+
+								case '$effect.root':
+									this.values.add(NOT_NULL);
+									break;
+
+								default: {
+									this.values.add(UNKNOWN);
+								}
+							}
+
+							break;
+						}
+
+						if (
+							Object.hasOwn(globals, keypath) &&
+							expression.arguments.every((arg) => arg.type !== 'SpreadElement')
+						) {
+							const [type, fn] = globals[keypath];
+							const values = expression.arguments.map((arg) =>
+								scope.evaluate(arg, new Set(), seen_bindings, from_fn_call)
+							);
+
+							if (fn && values.every((e) => e.is_known)) {
+								this.values.add(fn(...values.map((e) => e.value)));
+							} else {
+								if (Array.isArray(type)) {
+									for (const t of type) {
+										this.values.add(t);
+									}
+								} else {
+									this.values.add(type);
+								}
+							}
+
+							break;
+						}
+					} else if (
+						expression.callee.type === 'MemberExpression' &&
+						expression.callee.object.type !== 'Super' &&
+						expression.arguments.every((arg) => arg.type !== 'SpreadElement')
 					) {
-						property = scope.evaluate(
-							expression.callee.property,
+						const object = scope.evaluate(
+							expression.callee.object,
 							new Set(),
 							seen_bindings,
 							from_fn_call
 						);
-						if (property.is_known) {
-							property = property.value;
-						} else {
+						if (!object.is_known) {
 							this.values.add(UNKNOWN);
 							break;
 						}
-					} else if (expression.callee.property.type === 'Identifier') {
-						property = expression.callee.property.name;
-					}
-					if (property === undefined) {
-						this.values.add(UNKNOWN);
-						break;
-					}
-					if (typeof object.value !== 'string' && typeof object.value !== 'number') {
-						this.values.add(UNKNOWN);
-						break;
-					}
-					const available_methods =
-						prototype_methods[/** @type {'string' | 'number'} */ (typeof object.value)];
-					if (Object.hasOwn(available_methods, property)) {
-						const [type, fn] = available_methods[property];
-						const values = expression.arguments.map((arg) =>
-							scope.evaluate(arg, new Set(), seen_bindings, from_fn_call)
-						);
-
-						if (fn && values.every((e) => e.is_known)) {
-							this.values.add(fn(object.value, ...values.map((e) => e.value)));
-						} else {
-							if (Array.isArray(type)) {
-								for (const t of type) {
-									this.values.add(t);
-								}
+						let property;
+						if (
+							expression.callee.computed &&
+							expression.callee.property.type !== 'PrivateIdentifier'
+						) {
+							property = scope.evaluate(
+								expression.callee.property,
+								new Set(),
+								seen_bindings,
+								from_fn_call
+							);
+							if (property.is_known) {
+								property = property.value;
 							} else {
-								this.values.add(type);
+								this.values.add(UNKNOWN);
+								break;
 							}
+						} else if (expression.callee.property.type === 'Identifier') {
+							property = expression.callee.property.name;
 						}
-						break;
-					}
-				} else if (expression.callee.type === 'Identifier' && !expression.arguments.length) {
-					const binding = scope.get(expression.callee.name);
-					if (binding) {
-						if (binding.is_function()) {
-							const fn =
-								/** @type {FunctionExpression | FunctionDeclaration | ArrowFunctionExpression} */ (
-									binding.initial
-								);
-							if (fn && fn.async === false && !fn?.generator) {
-								const analysis = evaluate_function(fn, binding); // typescript won't tell you if a function is pure or if it could throw, so we have to do this regardless of type annotations
-								// console.log({ fn, binding, analysis });
-								if (!analysis.pure || !analysis.never_throws) {
-									// if its not pure, or we don't know if it could throw, we can't use any constant return values from the evaluation, but we can check if its nullish
-									this.values.add(NOT_NULL); // `NOT_NULL` doesn't have precedence over `UNKNOWN`, so if the value is nullish, this won't have precedence
+						if (property === undefined) {
+							this.values.add(UNKNOWN);
+							break;
+						}
+						if (typeof object.value !== 'string' && typeof object.value !== 'number') {
+							this.values.add(UNKNOWN);
+							break;
+						}
+						const available_methods =
+							prototype_methods[/** @type {'string' | 'number'} */ (typeof object.value)];
+						if (Object.hasOwn(available_methods, property)) {
+							const [type, fn] = available_methods[property];
+							const values = expression.arguments.map((arg) =>
+								scope.evaluate(arg, new Set(), seen_bindings, from_fn_call)
+							);
+
+							if (fn && values.every((e) => e.is_known)) {
+								this.values.add(fn(object.value, ...values.map((e) => e.value)));
+							} else {
+								if (Array.isArray(type)) {
+									for (const t of type) {
+										this.values.add(t);
+									}
+								} else {
+									this.values.add(type);
 								}
-								if (Object.hasOwn(fn, 'type_information')) {
-									// @ts-ignore
-									const { type_information } = fn;
-									if (Object.hasOwn(type_information, 'return')) {
-										const return_types = get_type_of_ts_node(
-											type_information.return?.type_information?.annotation,
-											scope
-										);
-										if (Array.isArray(return_types)) {
-											for (let type of return_types) {
-												this.values.add(type);
+							}
+							break;
+						}
+					} else if (expression.callee.type === 'Identifier' && !expression.arguments.length) {
+						const binding = scope.get(expression.callee.name);
+						if (binding) {
+							if (binding.is_function()) {
+								const fn =
+									/** @type {FunctionExpression | FunctionDeclaration | ArrowFunctionExpression} */ (
+										binding.initial
+									);
+								if (fn && fn.async === false && !fn?.generator) {
+									const analysis = evaluate_function(fn, binding); // typescript won't tell you if a function is pure or if it could throw, so we have to do this regardless of type annotations
+									// console.log({ fn, binding, analysis });
+									if (!analysis.pure || !analysis.never_throws) {
+										// if its not pure, or we don't know if it could throw, we can't use any constant return values from the evaluation, but we can check if its nullish
+										this.values.add(NOT_NULL); // `NOT_NULL` doesn't have precedence over `UNKNOWN`, so if the value is nullish, this won't have precedence
+									}
+									if (Object.hasOwn(fn, 'type_information')) {
+										// @ts-ignore
+										const { type_information } = fn;
+										if (Object.hasOwn(type_information, 'return')) {
+											const return_types = get_type_of_ts_node(
+												type_information.return?.type_information?.annotation
+											);
+											if (Array.isArray(return_types)) {
+												for (let type of return_types) {
+													this.values.add(type);
+												}
+											} else {
+												this.values.add(return_types);
 											}
+										} else if (analysis.is_known) {
+											this.values.add(analysis.value);
+											break;
 										} else {
-											this.values.add(return_types);
+											for (let value of analysis.values) {
+												this.values.add(value);
+											}
 										}
 									} else if (analysis.is_known) {
 										this.values.add(analysis.value);
@@ -677,6 +809,40 @@ class Evaluation {
 											this.values.add(value);
 										}
 									}
+									break;
+								}
+							}
+						}
+					} else if (
+						expression.callee.type === 'ArrowFunctionExpression' ||
+						expression.callee.type === 'FunctionExpression'
+					) {
+						const fn = expression.callee;
+						const binding = /** @type {Binding} */ ({ scope });
+						if (fn && fn.async === false && !fn?.generator) {
+							const analysis = evaluate_function(
+								fn,
+								binding,
+								new Set(),
+								from_fn_call ? seen_bindings : []
+							);
+							if (!analysis.pure || !analysis.never_throws) {
+								this.values.add(NOT_NULL);
+							}
+							if (Object.hasOwn(fn, 'type_information')) {
+								// @ts-ignore
+								const { type_information } = fn;
+								if (Object.hasOwn(type_information, 'return')) {
+									const return_types = get_type_of_ts_node(
+										type_information.return?.type_information?.annotation
+									);
+									if (Array.isArray(return_types)) {
+										for (let type of return_types) {
+											this.values.add(type);
+										}
+									} else {
+										this.values.add(return_types);
+									}
 								} else if (analysis.is_known) {
 									this.values.add(analysis.value);
 									break;
@@ -684,41 +850,6 @@ class Evaluation {
 									for (let value of analysis.values) {
 										this.values.add(value);
 									}
-								}
-								break;
-							}
-						}
-					}
-				} else if (
-					expression.callee.type === 'ArrowFunctionExpression' ||
-					expression.callee.type === 'FunctionExpression'
-				) {
-					const fn = expression.callee;
-					const binding = /** @type {Binding} */ ({ scope });
-					if (fn && fn.async === false && !fn?.generator) {
-						const analysis = evaluate_function(
-							fn,
-							binding,
-							new Set(),
-							from_fn_call ? seen_bindings : []
-						);
-						if (!analysis.pure || !analysis.never_throws) {
-							this.values.add(NOT_NULL);
-						}
-						if (Object.hasOwn(fn, 'type_information')) {
-							// @ts-ignore
-							const { type_information } = fn;
-							if (Object.hasOwn(type_information, 'return')) {
-								const return_types = get_type_of_ts_node(
-									type_information.return?.type_information?.annotation,
-									scope
-								);
-								if (Array.isArray(return_types)) {
-									for (let type of return_types) {
-										this.values.add(type);
-									}
-								} else {
-									this.values.add(return_types);
 								}
 							} else if (analysis.is_known) {
 								this.values.add(analysis.value);
@@ -728,107 +859,122 @@ class Evaluation {
 									this.values.add(value);
 								}
 							}
-						} else if (analysis.is_known) {
-							this.values.add(analysis.value);
 							break;
+						}
+					}
+
+					this.values.add(UNKNOWN);
+					break;
+				}
+
+				case 'TemplateLiteral': {
+					let result = expression.quasis[0].value.cooked;
+
+					for (let i = 0; i < expression.expressions.length; i += 1) {
+						const e = scope.evaluate(expression.expressions[i], new Set(), seen_bindings);
+
+						if (e.is_known) {
+							result += e.value + expression.quasis[i + 1].value.cooked;
 						} else {
-							for (let value of analysis.values) {
-								this.values.add(value);
-							}
-						}
-						break;
-					}
-				}
-
-				this.values.add(UNKNOWN);
-				break;
-			}
-
-			case 'TemplateLiteral': {
-				let result = expression.quasis[0].value.cooked;
-
-				for (let i = 0; i < expression.expressions.length; i += 1) {
-					const e = scope.evaluate(expression.expressions[i], new Set(), seen_bindings);
-
-					if (e.is_known) {
-						result += e.value + expression.quasis[i + 1].value.cooked;
-					} else {
-						this.values.add(STRING);
-						break;
-					}
-				}
-
-				this.values.add(result);
-				break;
-			}
-
-			case 'MemberExpression': {
-				const keypath = get_global_keypath(expression, scope);
-
-				if (keypath !== null && Object.hasOwn(global_constants, keypath)) {
-					this.values.add(global_constants[keypath]);
-					break;
-				} else if (keypath?.match?.(/\.name$/) && Object.hasOwn(globals, keypath.slice(0, -5))) {
-					this.values.add(globals[keypath.slice(0, -5)]?.[1]?.name ?? STRING);
-					break;
-				} else if (
-					expression.object.type !== 'Super' &&
-					expression.property.type !== 'PrivateIdentifier'
-				) {
-					const object = scope.evaluate(expression.object, new Set(), seen_bindings, from_fn_call);
-					if (object.is_string) {
-						let property;
-						if (expression.computed) {
-							let prop = scope.evaluate(
-								expression.property,
-								new Set(),
-								seen_bindings,
-								from_fn_call
-							);
-							if (prop.is_known && prop.value === 'length') {
-								property = 'length';
-							}
-						} else if (expression.property.type === 'Identifier') {
-							property = expression.property.name;
-						}
-						if (property === 'length') {
-							if (object.is_known) {
-								this.values.add(object.value.length);
-							} else {
-								this.values.add(NUMBER);
-							}
+							this.values.add(STRING);
 							break;
 						}
 					}
+
+					this.values.add(result);
+					break;
 				}
 
-				this.values.add(UNKNOWN);
-				break;
+				case 'MemberExpression': {
+					const keypath = get_global_keypath(expression, scope);
+
+					if (keypath !== null && Object.hasOwn(global_constants, keypath)) {
+						this.values.add(global_constants[keypath]);
+						break;
+					} else if (keypath?.match?.(/\.name$/) && Object.hasOwn(globals, keypath.slice(0, -5))) {
+						this.values.add(globals[keypath.slice(0, -5)]?.[1]?.name ?? STRING);
+						break;
+					} else if (
+						expression.object.type !== 'Super' &&
+						expression.property.type !== 'PrivateIdentifier'
+					) {
+						const object = scope.evaluate(
+							expression.object,
+							new Set(),
+							seen_bindings,
+							from_fn_call
+						);
+						if (object.is_string) {
+							let property;
+							if (expression.computed) {
+								let prop = scope.evaluate(
+									expression.property,
+									new Set(),
+									seen_bindings,
+									from_fn_call
+								);
+								if (prop.is_known && prop.value === 'length') {
+									property = 'length';
+								}
+							} else if (expression.property.type === 'Identifier') {
+								property = expression.property.name;
+							}
+							if (property === 'length') {
+								if (object.is_known) {
+									this.values.add(object.value.length);
+								} else {
+									this.values.add(NUMBER);
+								}
+								break;
+							}
+						}
+					}
+
+					this.values.add(UNKNOWN);
+					break;
+				}
+
+				default: {
+					this.values.add(UNKNOWN);
+				}
 			}
 
-			default: {
-				this.values.add(UNKNOWN);
+			for (const value of this.values) {
+				this.value = value; // saves having special logic for `size === 1`
+
+				if (value !== STRING && typeof value !== 'string') {
+					this.is_string = false;
+				}
+
+				if (value !== NUMBER && typeof value !== 'number') {
+					this.is_number = false;
+				}
+
+				if (value === NUMBER || value === STRING || value === NOT_NULL || !value) {
+					this.is_truthy = false;
+					this.is_falsy = !value;
+				}
+
+				if (value == null || value === UNKNOWN) {
+					this.is_defined = false;
+					this.is_truthy = false;
+				}
 			}
-		}
 
-		for (const value of this.values) {
-			this.value = value; // saves having special logic for `size === 1`
-
-			if (value !== STRING && typeof value !== 'string') {
-				this.is_string = false;
+			if (this.values.size > 1 || typeof this.value === 'symbol') {
+				this.is_known = false;
 			}
 
-			if (value !== NUMBER && typeof value !== 'number') {
-				this.is_number = false;
+			if (!this.value) {
+				this.is_truthy = false;
 			}
-
-			if (value == null || value === UNKNOWN) {
-				this.is_defined = false;
+		} catch (err) {
+			if (
+				/** @type {Error} */ (err).message !== 'Maximum call stack size exceeded' &&
+				/** @type {Error} */ (err).message !== 'too much recursion'
+			) {
+				throw err;
 			}
-		}
-
-		if (this.values.size > 1 || typeof this.value === 'symbol') {
-			this.is_known = false;
 		}
 	}
 }
@@ -1003,7 +1149,7 @@ export class Scope {
 
 		const binding = this.declarations.get(node.name);
 		if (binding) {
-			binding.references.push({ node, path });
+			binding.references.push({ node, path, scope: this });
 		} else if (this.parent) {
 			this.parent.reference(node, path);
 		} else {
@@ -1135,7 +1281,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	/** @type {[Scope, { node: Identifier; path: AST.SvelteNode[] }][]} */
 	const references = [];
 
-	/** @type {[Scope, Pattern | MemberExpression][]} */
+	/** @type {[Scope, Pattern | MemberExpression, AssignmentExpression | UpdateExpression | AST.BindDirective][]} */
 	const updates = [];
 
 	/**
@@ -1305,12 +1451,16 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		// updates
 		AssignmentExpression(node, { state, next }) {
-			updates.push([state.scope, node.left]);
+			updates.push([state.scope, node.left, node]);
 			next();
 		},
 
 		UpdateExpression(node, { state, next }) {
-			updates.push([state.scope, /** @type {Identifier | MemberExpression} */ (node.argument)]);
+			updates.push([
+				state.scope,
+				/** @type {Identifier | MemberExpression} */ (node.argument),
+				node
+			]);
 			next();
 		},
 
@@ -1530,7 +1680,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		BindDirective(node, context) {
 			updates.push([
 				context.state.scope,
-				/** @type {Identifier | MemberExpression} */ (node.expression)
+				/** @type {Identifier | MemberExpression} */ (node.expression),
+				node
 			]);
 			context.next();
 		},
@@ -1566,7 +1717,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		scope.reference(node, path);
 	}
 
-	for (const [scope, node] of updates) {
+	for (const [scope, node, update] of updates) {
 		for (const expression of unwrap_pattern(node)) {
 			const left = object(expression);
 			const binding = left && scope.get(left.name);
@@ -1577,6 +1728,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				} else {
 					binding.mutated = true;
 				}
+				binding.updates.push(update);
 			}
 		}
 	}
@@ -1654,10 +1806,9 @@ function get_global_keypath(node, scope) {
 
 /**
  * @param {{type: string} & Record<string, any>} node
- * @param {Scope} scope
  * @returns {any}
  */
-function get_type_of_ts_node(node, scope) {
+function get_type_of_ts_node(node) {
 	/**
 	 * @param {any[]} types
 	 * @returns {any[]}
@@ -1695,20 +1846,17 @@ function get_type_of_ts_node(node, scope) {
 		}
 		return res;
 	}
-	switch (node.type) {
+	switch (node?.type) {
 		case 'TypeAnnotation':
-			return get_type_of_ts_node(node.annotation, scope);
+			return get_type_of_ts_node(node.annotation);
 		case 'TSCheckType':
-			return [
-				get_type_of_ts_node(node.trueType, scope),
-				get_type_of_ts_node(node.falseType, scope)
-			].flat();
+			return [get_type_of_ts_node(node.trueType), get_type_of_ts_node(node.falseType)].flat();
 		case 'TSUnionType':
 			//@ts-ignore
-			return node.types.map((type) => get_type_of_ts_node(type, scope)).flat();
+			return node.types.map((type) => get_type_of_ts_node(type)).flat();
 		case 'TSIntersectionType':
 			//@ts-ignore
-			return intersect_types(node.types.map((type) => get_type_of_ts_node(type, scope)).flat());
+			return intersect_types(node.types.map((type) => get_type_of_ts_node(type)).flat());
 		case 'TSBigIntKeyword':
 		case 'TSNumberKeyword':
 			return NUMBER;

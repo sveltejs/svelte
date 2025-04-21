@@ -1,7 +1,7 @@
 /** @import { Context } from 'zimmerframe' */
 /** @import { TransformState } from './types.js' */
 /** @import { AST, Binding, Namespace, ValidatedCompileOptions } from '#compiler' */
-/** @import { Node, Expression, CallExpression } from 'estree' */
+/** @import { Node, Expression, CallExpression, BlockStatement } from 'estree' */
 import {
 	regex_ends_with_whitespaces,
 	regex_not_whitespace,
@@ -485,4 +485,15 @@ export function transform_inspect_rune(node, context) {
 		const arg = node.arguments.map((arg) => /** @type {Expression} */ (visit(arg)));
 		return b.call('$.inspect', as_fn ? b.thunk(b.array(arg)) : b.array(arg));
 	}
+}
+
+/**
+ * Whether a `BlockStatement` needs to be a block statement as opposed to just inlining all of its statements. 
+ * @param {BlockStatement} block
+ */
+export function needs_new_scope(block) {
+	const has_vars = block.body.some(child => child.type === 'VariableDeclaration');
+	const has_fns = block.body.some(child => child.type === 'FunctionDeclaration');
+	const has_class = block.body.some(child => child.type === 'ClassDeclaration');
+	return has_vars || has_fns || has_class;
 }
