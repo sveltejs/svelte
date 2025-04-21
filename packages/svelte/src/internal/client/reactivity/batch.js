@@ -94,7 +94,13 @@ export class Batch {
 				this.render_effects = [];
 				this.effects = [];
 
-				this.commit();
+				// commit changes
+				for (const fn of this.#callbacks) {
+					fn();
+				}
+
+				this.#callbacks.clear();
+
 				flush_queued_effects(render_effects);
 				flush_queued_effects(effects);
 			} else {
@@ -171,14 +177,6 @@ export class Batch {
 	/** @param {() => void} fn */
 	add_callback(fn) {
 		this.#callbacks.add(fn);
-	}
-
-	commit() {
-		for (const fn of this.#callbacks) {
-			fn();
-		}
-
-		this.#callbacks.clear();
 	}
 
 	static ensure() {
