@@ -23,7 +23,7 @@ export function remove_current_batch() {
 
 /** Update `$effect.pending()` */
 function update_pending() {
-	// internal_set(pending, batches.size > 0);
+	internal_set(pending, batches.size > 0);
 }
 
 let uid = 1;
