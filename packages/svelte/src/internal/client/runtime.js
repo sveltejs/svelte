@@ -726,7 +726,7 @@ function flush_queued_root_effects() {
 					set_signal_status(e, CLEAN);
 				}
 
-				batch.effects.push(...render_effects, ...effects);
+				batch.combined_effects.push(...render_effects, ...effects);
 			}
 
 			revert();

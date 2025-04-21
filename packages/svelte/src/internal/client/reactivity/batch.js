@@ -39,7 +39,7 @@ export class Batch {
 	async_effects = [];
 
 	/** @type {Effect[]} */
-	effects = [];
+	combined_effects = [];
 
 	/** @type {Set<Effect>} */
 	skipped_effects = new Set();
@@ -54,12 +54,12 @@ export class Batch {
 			source.v = current;
 		}
 
-		for (const e of this.effects) {
+		for (const e of this.combined_effects) {
 			set_signal_status(e, DIRTY);
 			schedule_effect(e);
 		}
 
-		this.effects = [];
+		this.combined_effects = [];
 
 		for (const batch of batches) {
 			if (batch === this) continue;
