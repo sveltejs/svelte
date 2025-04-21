@@ -488,12 +488,12 @@ export function transform_inspect_rune(node, context) {
 }
 
 /**
- * Whether a `BlockStatement` needs to be a block statement as opposed to just inlining all of its statements. 
+ * Whether a `BlockStatement` needs to be a block statement as opposed to just inlining all of its statements.
  * @param {BlockStatement} block
  */
 export function needs_new_scope(block) {
-	const has_vars = block.body.some(child => child.type === 'VariableDeclaration');
-	const has_fns = block.body.some(child => child.type === 'FunctionDeclaration');
-	const has_class = block.body.some(child => child.type === 'ClassDeclaration');
+	const has_vars = block.body.some((child) => child.type === 'VariableDeclaration');
+	const has_fns = block.body.some((child) => child.type === 'FunctionDeclaration');
+	const has_class = block.body.some((child) => child.type === 'ClassDeclaration');
 	return has_vars || has_fns || has_class;
 }

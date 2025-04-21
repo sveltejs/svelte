@@ -14,7 +14,9 @@ export function IfBlock(node, context) {
 	const consequent = /** @type {BlockStatement} */ (context.visit(node.consequent));
 	context.state.template.push('<!>');
 	if (evaluated.is_truthy) {
-		context.state.init.push(b.stmt(b.call(b.arrow([b.id('$$anchor')], consequent), context.state.node)));
+		context.state.init.push(
+			b.stmt(b.call(b.arrow([b.id('$$anchor')], consequent), context.state.node))
+		);
 	} else {
 		const statements = [];
 		const consequent_id = context.state.scope.generate('consequent');

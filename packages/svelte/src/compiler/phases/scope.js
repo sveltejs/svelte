@@ -1011,7 +1011,7 @@ export class Scope {
 	/**
 	 * A set of all the names referenced with this scope
 	 * — useful for generating unique names
-	 * @type {Map<string, { node: Identifier; path: AST.SvelteNode[] }[]>}
+	 * @type {Map<string, { node: Identifier; path: AST.SvelteNode[], scope: Scope }[]>}
 	 */
 	references = new Map();
 
@@ -1145,7 +1145,7 @@ export class Scope {
 
 		if (!references) this.references.set(node.name, (references = []));
 
-		references.push({ node, path });
+		references.push({ node, path, scope: this });
 
 		const binding = this.declarations.get(node.name);
 		if (binding) {
