@@ -2,11 +2,6 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	html: `
-		<button>show</button>
-		<p>pending</p>
-	`,
-
 	async test({ assert, target }) {
 		const button = target.querySelector('button');
 
