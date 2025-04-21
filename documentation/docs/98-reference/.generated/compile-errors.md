@@ -274,6 +274,12 @@ A `:global` selector cannot modify an existing selector
 A `:global` selector can only be modified if it is a descendant of other selectors
 ```
 
+### css_global_block_invalid_placement
+
+```
+A `:global` selector cannot be inside a pseudoclass
+```
+
 ### css_global_invalid_placement
 
 ```
