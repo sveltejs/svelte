@@ -369,10 +369,24 @@ export function client_component(analysis, options) {
 			: b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined))
 	]);
 
+	const should_inject_context =
+		dev ||
+		analysis.needs_context ||
+		analysis.reactive_statements.size > 0 ||
+		component_returned_object.length > 0;
+
+	let should_inject_props =
+		should_inject_context ||
+		analysis.needs_props ||
+		analysis.uses_props ||
+		analysis.uses_rest_props ||
+		analysis.uses_slots ||
+		analysis.slot_names.size > 0;
+
 	if (analysis.instance.has_await) {
 		const body = b.function_declaration(
 			b.id('$$body'),
-			[b.id('$$anchor'), b.id('$$props')],
+			should_inject_props ? [b.id('$$anchor'), b.id('$$props')] : [b.id('$$anchor')],
 			b.block([
 				b.var('$$unsuspend', b.call('$.suspend')),
 				...component_block.body,
@@ -388,7 +402,7 @@ export function client_component(analysis, options) {
 		component_block = b.block([
 			b.var('fragment', b.call('$.comment')),
 			b.var('node', b.call('$.first_child', b.id('fragment'))),
-			b.stmt(b.call(body.id, b.id('node'), b.id('$$props'))),
+			b.stmt(b.call(body.id, b.id('node'), should_inject_props && b.id('$$props'))),
 			b.stmt(b.call('$.append', b.id('$$anchor'), b.id('fragment')))
 		]);
 	} else {
@@ -427,12 +441,6 @@ export function client_component(analysis, options) {
 			b.var('$$ownership_validator', b.call('$.create_ownership_validator', b.id('$$props')))
 		);
 	}
-
-	const should_inject_context =
-		dev ||
-		analysis.needs_context ||
-		analysis.reactive_statements.size > 0 ||
-		component_returned_object.length > 0;
 
 	// we want the cleanup function for the stores to run as the very last thing
 	// so that it can effectively clean up the store subscription even after the user effects runs
@@ -498,14 +506,6 @@ export function client_component(analysis, options) {
 	if (analysis.uses_slots) {
 		component_block.body.unshift(b.const('$$slots', b.call('$.sanitize_slots', b.id('$$props'))));
 	}
-
-	let should_inject_props =
-		should_inject_context ||
-		analysis.needs_props ||
-		analysis.uses_props ||
-		analysis.uses_rest_props ||
-		analysis.uses_slots ||
-		analysis.slot_names.size > 0;
 
 	// Merge hoisted statements into module body.
 	// Ensure imports are on top, with the order preserved, then module body, then hoisted statements
