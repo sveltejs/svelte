@@ -73,7 +73,7 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 		}
 
 		const compiled = compile(source, {
-			dev: true,
+			dev: false,
 			filename: input,
 			generate,
 			runes: argv.values.runes,
@@ -101,7 +101,7 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 		const source = fs.readFileSync(input, 'utf-8');
 
 		const compiled = compileModule(source, {
-			dev: true,
+			dev: false,
 			filename: input,
 			generate,
 			experimental: {
