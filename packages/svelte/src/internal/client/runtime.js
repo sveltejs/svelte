@@ -698,10 +698,10 @@ function flush_queued_root_effects() {
 			var revert = batch.apply();
 
 			/** @type {Effect[]} */
-			var render_effects = [];
+			var render_effects = batch.render_effects;
 
 			/** @type {Effect[]} */
-			var effects = [];
+			var effects = batch.effects;
 
 			var root_effects = queued_root_effects;
 

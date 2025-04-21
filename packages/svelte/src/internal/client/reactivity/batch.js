@@ -39,6 +39,12 @@ export class Batch {
 	async_effects = [];
 
 	/** @type {Effect[]} */
+	render_effects = [];
+
+	/** @type {Effect[]} */
+	effects = [];
+
+	/** @type {Effect[]} */
 	combined_effects = [];
 
 	/** @type {Set<Effect>} */
@@ -71,6 +77,9 @@ export class Batch {
 				}
 			}
 		}
+
+		this.render_effects = [];
+		this.effects = [];
 
 		return () => {
 			for (const [source, value] of current_values) {
