@@ -697,36 +697,29 @@ function flush_queued_root_effects() {
 
 			var revert = batch.apply();
 
-			/** @type {Effect[]} */
-			var render_effects = batch.render_effects;
-
-			/** @type {Effect[]} */
-			var effects = batch.effects;
-
 			var root_effects = queued_root_effects;
-
 			queued_root_effects = [];
 
 			for (const root of root_effects) {
-				process_effects(batch, root, render_effects, effects);
+				process_effects(batch, root);
 			}
 
 			if (batch.async_effects.length === 0 && batch.settled()) {
 				batch.commit();
-				flush_queued_effects(render_effects);
-				flush_queued_effects(effects);
+				flush_queued_effects(batch.render_effects);
+				flush_queued_effects(batch.effects);
 			} else {
 				// store the effects on the batch so that they run next time,
 				// even if they don't get re-dirtied
-				for (const e of render_effects) {
+				for (const e of batch.render_effects) {
 					set_signal_status(e, CLEAN);
 				}
 
-				for (const e of effects) {
+				for (const e of batch.effects) {
 					set_signal_status(e, CLEAN);
 				}
 
-				batch.combined_effects.push(...render_effects, ...effects);
+				batch.combined_effects.push(...batch.render_effects, ...batch.effects);
 			}
 
 			revert();
@@ -829,10 +822,8 @@ export function schedule_effect(signal) {
  *
  * @param {Batch} batch
  * @param {Effect} root
- * @param {Effect[]} render_effects
- * @param {Effect[]} effects
  */
-function process_effects(batch, root, render_effects, effects) {
+function process_effects(batch, root) {
 	root.f ^= CLEAN;
 
 	var effect = root.first;
@@ -860,9 +851,9 @@ function process_effects(batch, root, render_effects, effects) {
 			} else if (is_branch) {
 				effect.f ^= CLEAN;
 			} else if ((flags & RENDER_EFFECT) !== 0) {
-				render_effects.push(effect);
+				batch.render_effects.push(effect);
 			} else if ((flags & EFFECT) !== 0) {
-				effects.push(effect);
+				batch.effects.push(effect);
 			}
 
 			var child = effect.first;
