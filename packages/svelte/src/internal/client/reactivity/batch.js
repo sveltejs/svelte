@@ -30,16 +30,16 @@ export class Batch {
 	/** @type {Map<Source, any>} */
 	#current = new Map();
 
+	/** @type {Set<() => void>} */
+	#callbacks = new Set();
+
+	#pending = 0;
+
 	/** @type {Set<Effect>} */
 	effects = new Set();
 
 	/** @type {Set<Effect>} */
 	skipped_effects = new Set();
-
-	/** @type {Set<() => void>} */
-	#callbacks = new Set();
-
-	#pending = 0;
 
 	apply() {
 		var current_values = new Map();
