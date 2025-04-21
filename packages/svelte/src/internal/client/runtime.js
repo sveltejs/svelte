@@ -780,19 +780,12 @@ function process_effects(root) {
 			} else if (is_branch) {
 				effect.f ^= CLEAN;
 			} else {
-				// Ensure we set the effect to be the active reaction
-				// to ensure that unowned deriveds are correctly tracked
-				// because we're flushing the current effect
-				var previous_active_reaction = active_reaction;
 				try {
-					active_reaction = effect;
 					if (check_dirtiness(effect)) {
 						update_effect(effect);
 					}
 				} catch (error) {
 					handle_error(error, effect, null, effect.ctx);
-				} finally {
-					active_reaction = previous_active_reaction;
 				}
 			}
 
