@@ -1,6 +1,11 @@
 /** @import { Effect, Source } from '#client' */
-import { DIRTY } from '#client/constants';
-import { schedule_effect, set_signal_status, update_effect } from '../runtime.js';
+import { CLEAN, DIRTY } from '#client/constants';
+import {
+	flush_queued_effects,
+	schedule_effect,
+	set_signal_status,
+	update_effect
+} from '../runtime.js';
 import { raf } from '../timing.js';
 import { internal_set, mark_reactions, pending } from './sources.js';
 
@@ -44,9 +49,6 @@ export class Batch {
 	/** @type {Effect[]} */
 	effects = [];
 
-	/** @type {Effect[]} */
-	combined_effects = [];
-
 	/** @type {Set<Effect>} */
 	skipped_effects = new Set();
 
@@ -70,8 +72,6 @@ export class Batch {
 			schedule_effect(e);
 		}
 
-		this.combined_effects = [];
-
 		for (const batch of batches) {
 			if (batch === this) continue;
 
@@ -87,6 +87,21 @@ export class Batch {
 		this.effects = [];
 
 		return () => {
+			if (this.async_effects.length === 0 && this.settled()) {
+				var render_effects = this.render_effects;
+				var effects = this.effects;
+
+				this.render_effects = [];
+				this.effects = [];
+
+				this.commit();
+				flush_queued_effects(render_effects);
+				flush_queued_effects(effects);
+			} else {
+				for (const e of this.render_effects) set_signal_status(e, CLEAN);
+				for (const e of this.effects) set_signal_status(e, CLEAN);
+			}
+
 			for (const [source, value] of current_values) {
 				source.v = value;
 			}
