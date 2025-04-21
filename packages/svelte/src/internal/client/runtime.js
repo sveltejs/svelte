@@ -711,7 +711,7 @@ function flush_queued_root_effects() {
 			queued_root_effects = [];
 
 			for (const root of root_effects) {
-				process_effects(root, async_effects, render_effects, effects);
+				process_effects(batch, root, async_effects, render_effects, effects);
 			}
 
 			if (async_effects.length === 0 && batch.settled()) {
@@ -834,16 +834,16 @@ export function schedule_effect(signal) {
  * bitwise flag passed in only. The collected effects array will be populated with all the user
  * effects to be flushed.
  *
+ * @param {Batch} batch
  * @param {Effect} root
  * @param {Effect[]} async_effects
  * @param {Effect[]} render_effects
  * @param {Effect[]} effects
  */
-function process_effects(root, async_effects, render_effects, effects) {
+function process_effects(batch, root, async_effects, render_effects, effects) {
 	root.f ^= CLEAN;
 
 	var effect = root.first;
-	var batch = /** @type {Batch} */ (current_batch);
 
 	while (effect !== null) {
 		var flags = effect.f;
