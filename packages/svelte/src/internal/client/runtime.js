@@ -77,6 +77,11 @@ export function set_is_destroying_effect(value) {
 /** @type {Effect[]} */
 let queued_root_effects = [];
 
+/** @param {Effect[]} v */
+export function set_queued_root_effects(v) {
+	queued_root_effects = v;
+}
+
 /** @type {Effect[]} Stack of effects, dev only */
 let dev_effect_stack = [];
 // Handle signal reactivity tree dependencies and reactions
@@ -695,16 +700,7 @@ function flush_queued_root_effects() {
 				infinite_loop_guard();
 			}
 
-			var revert = batch.apply();
-
-			var root_effects = queued_root_effects;
-			queued_root_effects = [];
-
-			for (const root of root_effects) {
-				process_effects(batch, root);
-			}
-
-			revert();
+			batch.process(queued_root_effects);
 
 			old_values.clear();
 		}
@@ -805,7 +801,7 @@ export function schedule_effect(signal) {
  * @param {Batch} batch
  * @param {Effect} root
  */
-function process_effects(batch, root) {
+export function process_effects(batch, root) {
 	root.f ^= CLEAN;
 
 	var effect = root.first;

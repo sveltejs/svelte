@@ -2,7 +2,9 @@
 import { CLEAN, DIRTY } from '#client/constants';
 import {
 	flush_queued_effects,
+	process_effects,
 	schedule_effect,
+	set_queued_root_effects,
 	set_signal_status,
 	update_effect
 } from '../runtime.js';
@@ -52,8 +54,27 @@ export class Batch {
 	/** @type {Set<Effect>} */
 	skipped_effects = new Set();
 
-	apply() {
+	apply() {}
+
+	/**
+	 *
+	 * @param {Effect[]} root_effects
+	 */
+	process(root_effects) {
+		set_queued_root_effects([]);
+
 		var current_values = new Map();
+
+		for (const batch of batches) {
+			if (batch === this) continue;
+
+			for (const [source, previous] of batch.#previous) {
+				if (!this.#current.has(source)) {
+					current_values.set(source, source.v);
+					source.v = previous;
+				}
+			}
+		}
 
 		for (const [source, current] of this.#current) {
 			// TODO this shouldn't be necessary, but tests fail otherwise,
@@ -72,41 +93,32 @@ export class Batch {
 			schedule_effect(e);
 		}
 
-		for (const batch of batches) {
-			if (batch === this) continue;
-
-			for (const [source, previous] of batch.#previous) {
-				if (!this.#previous.has(source)) {
-					current_values.set(source, source.v);
-					source.v = previous;
-				}
-			}
-		}
-
 		this.render_effects = [];
 		this.effects = [];
 
-		return () => {
-			if (this.async_effects.length === 0 && this.settled()) {
-				var render_effects = this.render_effects;
-				var effects = this.effects;
+		for (const root of root_effects) {
+			process_effects(this, root);
+		}
 
-				this.render_effects = [];
-				this.effects = [];
+		if (this.async_effects.length === 0 && this.settled()) {
+			var render_effects = this.render_effects;
+			var effects = this.effects;
 
-				// commit changes
-				for (const fn of this.#callbacks) {
-					fn();
-				}
+			this.render_effects = [];
+			this.effects = [];
 
-				this.#callbacks.clear();
-
-				flush_queued_effects(render_effects);
-				flush_queued_effects(effects);
-			} else {
-				for (const e of this.render_effects) set_signal_status(e, CLEAN);
-				for (const e of this.effects) set_signal_status(e, CLEAN);
+			// commit changes
+			for (const fn of this.#callbacks) {
+				fn();
 			}
+
+			this.#callbacks.clear();
+
+			flush_queued_effects(render_effects);
+			flush_queued_effects(effects);
+		} else {
+			for (const e of this.render_effects) set_signal_status(e, CLEAN);
+			for (const e of this.effects) set_signal_status(e, CLEAN);
 
 			for (const [source, value] of current_values) {
 				source.v = value;
@@ -117,7 +129,7 @@ export class Batch {
 			}
 
 			this.async_effects = [];
-		};
+		}
 	}
 
 	/**
