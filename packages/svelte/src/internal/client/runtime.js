@@ -852,7 +852,7 @@ function process_effects(root, async_effects, render_effects, effects) {
 
 		var skip = is_skippable_branch || (flags & INERT) !== 0 || batch.skipped_effects.has(effect);
 
-		if (!skip) {
+		if (!skip && effect.fn !== null) {
 			if ((flags & EFFECT_ASYNC) !== 0) {
 				if (check_dirtiness(effect)) {
 					async_effects.push(effect);

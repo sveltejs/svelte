@@ -52,10 +52,8 @@ export class Batch {
 		}
 
 		for (const e of this.effects) {
-			if (e.fn) {
-				set_signal_status(e, DIRTY);
-				schedule_effect(e);
-			}
+			set_signal_status(e, DIRTY);
+			schedule_effect(e);
 		}
 
 		for (const batch of batches) {
