@@ -2926,7 +2926,7 @@ declare namespace $state {
 						: never;
 
 	/**
-	 * Forces an update on a `$state` or `$state.raw` variable or class field.
+	 * Forces an update on a variable or class field declared with `$state` or `$state.raw`, or a property of a `$state` object. 
 	 * This is primarily meant as an escape hatch to be able to use external or native classes
 	 * with Svelte's reactivity system.
 	 * If you used Svelte 3 or 4, this is the equivalent of `foo = foo`.
@@ -2946,6 +2946,8 @@ declare namespace $state {
 	 *   Count is {counter.count}
 	 * </button>
 	 * ```
+	 * 
+	 * https://svelte.dev/docs/svelte/$state#$state.invalidate
 	 */
 	export function invalidate(source: unknown): void;
 
