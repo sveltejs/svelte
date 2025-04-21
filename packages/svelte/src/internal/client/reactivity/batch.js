@@ -35,8 +35,8 @@ export class Batch {
 
 	#pending = 0;
 
-	/** @type {Set<Effect>} */
-	effects = new Set();
+	/** @type {Effect[]} */
+	effects = [];
 
 	/** @type {Set<Effect>} */
 	skipped_effects = new Set();
@@ -55,6 +55,8 @@ export class Batch {
 			set_signal_status(e, DIRTY);
 			schedule_effect(e);
 		}
+
+		this.effects = [];
 
 		for (const batch of batches) {
 			if (batch === this) continue;
