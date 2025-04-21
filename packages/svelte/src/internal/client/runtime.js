@@ -705,9 +705,15 @@ function flush_queued_root_effects() {
 			}
 
 			if (batch.async_effects.length === 0 && batch.settled()) {
+				var render_effects = batch.render_effects;
+				var effects = batch.effects;
+
+				batch.render_effects = [];
+				batch.effects = [];
+
 				batch.commit();
-				flush_queued_effects(batch.render_effects);
-				flush_queued_effects(batch.effects);
+				flush_queued_effects(render_effects);
+				flush_queued_effects(effects);
 			} else {
 				// store the effects on the batch so that they run next time,
 				// even if they don't get re-dirtied

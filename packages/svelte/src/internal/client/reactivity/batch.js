@@ -60,7 +60,12 @@ export class Batch {
 			source.v = current;
 		}
 
-		for (const e of this.combined_effects) {
+		for (const e of this.render_effects) {
+			set_signal_status(e, DIRTY);
+			schedule_effect(e);
+		}
+
+		for (const e of this.effects) {
 			set_signal_status(e, DIRTY);
 			schedule_effect(e);
 		}
