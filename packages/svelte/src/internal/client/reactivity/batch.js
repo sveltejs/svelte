@@ -1,6 +1,6 @@
 /** @import { Effect, Source } from '#client' */
 import { DIRTY } from '#client/constants';
-import { schedule_effect, set_signal_status } from '../runtime.js';
+import { schedule_effect, set_signal_status, update_effect } from '../runtime.js';
 import { raf } from '../timing.js';
 import { internal_set, mark_reactions, pending } from './sources.js';
 
@@ -34,6 +34,9 @@ export class Batch {
 	#callbacks = new Set();
 
 	#pending = 0;
+
+	/** @type {Effect[]} */
+	async_effects = [];
 
 	/** @type {Effect[]} */
 	effects = [];
@@ -73,6 +76,12 @@ export class Batch {
 			for (const [source, value] of current_values) {
 				source.v = value;
 			}
+
+			for (const effect of this.async_effects) {
+				update_effect(effect);
+			}
+
+			this.async_effects = [];
 		};
 	}
 

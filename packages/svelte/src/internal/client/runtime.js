@@ -698,9 +698,6 @@ function flush_queued_root_effects() {
 			var revert = batch.apply();
 
 			/** @type {Effect[]} */
-			var async_effects = [];
-
-			/** @type {Effect[]} */
 			var render_effects = [];
 
 			/** @type {Effect[]} */
@@ -711,10 +708,10 @@ function flush_queued_root_effects() {
 			queued_root_effects = [];
 
 			for (const root of root_effects) {
-				process_effects(batch, root, async_effects, render_effects, effects);
+				process_effects(batch, root, render_effects, effects);
 			}
 
-			if (async_effects.length === 0 && batch.settled()) {
+			if (batch.async_effects.length === 0 && batch.settled()) {
 				batch.commit();
 				flush_queued_effects(render_effects);
 				flush_queued_effects(effects);
@@ -733,10 +730,6 @@ function flush_queued_root_effects() {
 			}
 
 			revert();
-
-			for (const effect of async_effects) {
-				update_effect(effect);
-			}
 
 			old_values.clear();
 		}
@@ -836,11 +829,10 @@ export function schedule_effect(signal) {
  *
  * @param {Batch} batch
  * @param {Effect} root
- * @param {Effect[]} async_effects
  * @param {Effect[]} render_effects
  * @param {Effect[]} effects
  */
-function process_effects(batch, root, async_effects, render_effects, effects) {
+function process_effects(batch, root, render_effects, effects) {
 	root.f ^= CLEAN;
 
 	var effect = root.first;
@@ -855,7 +847,7 @@ function process_effects(batch, root, async_effects, render_effects, effects) {
 		if (!skip && effect.fn !== null) {
 			if ((flags & EFFECT_ASYNC) !== 0) {
 				if (check_dirtiness(effect)) {
-					async_effects.push(effect);
+					batch.async_effects.push(effect);
 				}
 			} else if ((flags & BLOCK_EFFECT) !== 0) {
 				try {
