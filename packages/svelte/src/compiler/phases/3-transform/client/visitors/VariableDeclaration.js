@@ -2,7 +2,7 @@
 /** @import { Binding } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
-import { extract_paths } from '../../../../utils/ast.js';
+import { extract_paths, is_array } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import * as assert from '../../../../utils/assert.js';
 import { get_rune } from '../../../scope.js';
@@ -142,7 +142,7 @@ export function VariableDeclaration(node, context) {
 					);
 				} else {
 					const tmp = context.state.scope.generate('tmp');
-					const paths = extract_paths(declarator.id);
+					const paths = extract_paths(declarator.id, is_array(value, context.state.scope));
 					declarations.push(
 						b.declarator(b.id(tmp), value),
 						...paths.map((path) => {
@@ -170,7 +170,10 @@ export function VariableDeclaration(node, context) {
 						)
 					);
 				} else {
-					const bindings = extract_paths(declarator.id);
+					const bindings = extract_paths(
+						declarator.id,
+						rune === '$derived' ? is_array(value, context.state.scope) : false
+					);
 
 					const init = /** @type {CallExpression} */ (declarator.init);
 
@@ -305,7 +308,7 @@ function create_state_declarators(declarator, { scope, analysis }, value) {
 	}
 
 	const tmp = scope.generate('tmp');
-	const paths = extract_paths(declarator.id);
+	const paths = extract_paths(declarator.id, is_array(declarator.init, scope));
 	return [
 		b.declarator(b.id(tmp), value),
 		...paths.map((path) => {

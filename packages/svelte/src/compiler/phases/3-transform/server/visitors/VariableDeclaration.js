@@ -2,7 +2,7 @@
 /** @import { Binding } from '#compiler' */
 /** @import { Context } from '../types.js' */
 /** @import { Scope } from '../../../scope.js' */
-import { build_fallback, extract_paths } from '../../../../utils/ast.js';
+import { build_fallback, extract_paths, is_array } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 import { walk } from 'zimmerframe';
@@ -182,7 +182,7 @@ function create_state_declarators(declarator, scope, value) {
 	}
 
 	const tmp = scope.generate('tmp');
-	const paths = extract_paths(declarator.id);
+	const paths = extract_paths(declarator.id, is_array(declarator.init, scope));
 	return [
 		b.declarator(b.id(tmp), value), // TODO inject declarator for opts, so we can use it below
 		...paths.map((path) => {

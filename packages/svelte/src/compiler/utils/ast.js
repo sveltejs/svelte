@@ -1,4 +1,4 @@
-/** @import { AST } from '#compiler' */
+/** @import { AST, Scope } from '#compiler' */
 /** @import * as ESTree from 'estree' */
 import { walk } from 'zimmerframe';
 import * as b from '#compiler/builders';
@@ -220,6 +220,31 @@ export function extract_identifiers_from_destructuring(node, nodes = []) {
 }
 
 /**
+ * @param {ESTree.Expression | null | undefined} node
+ * @param {Scope} scope
+ */
+export function is_array(node, scope) {
+	switch (node?.type) {
+		case 'ArrayExpression':
+			return true;
+		case 'CallExpression': {
+			const { callee } = node;
+			if (
+				callee.type === 'Identifier' &&
+				callee.name === 'Array' &&
+				scope.get(callee.name) === null
+			) {
+				return true;
+			}
+			return false;
+		}
+		default: {
+			return false;
+		}
+	}
+}
+
+/**
  * Represents the path of a destructured assignment from either a declaration
  * or assignment expression. For example, given `const { foo: { bar: baz } } = quux`,
  * the path of `baz` is `foo.bar`
@@ -236,15 +261,17 @@ export function extract_identifiers_from_destructuring(node, nodes = []) {
 /**
  * Extracts all destructured assignments from a pattern.
  * @param {ESTree.Node} param
+ * @param {boolean} [is_array]
  * @returns {DestructuredAssignment[]}
  */
-export function extract_paths(param) {
+export function extract_paths(param, is_array = false) {
 	return _extract_paths(
 		[],
 		param,
 		(node) => /** @type {ESTree.Identifier | ESTree.MemberExpression} */ (node),
 		(node) => /** @type {ESTree.Identifier | ESTree.MemberExpression} */ (node),
-		false
+		false,
+		is_array
 	);
 }
 
@@ -254,9 +281,17 @@ export function extract_paths(param) {
  * @param {DestructuredAssignment['expression']} expression
  * @param {DestructuredAssignment['update_expression']} update_expression
  * @param {boolean} has_default_value
+ * @param {boolean} [is_array]
  * @returns {DestructuredAssignment[]}
  */
-function _extract_paths(assignments = [], param, expression, update_expression, has_default_value) {
+function _extract_paths(
+	assignments = [],
+	param,
+	expression,
+	update_expression,
+	has_default_value,
+	is_array = false
+) {
 	switch (param.type) {
 		case 'Identifier':
 		case 'MemberExpression':
@@ -332,7 +367,13 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 					if (element.type === 'RestElement') {
 						/** @type {DestructuredAssignment['expression']} */
 						const rest_expression = (object) =>
-							b.call(b.member(expression(object), 'slice'), b.literal(i));
+							b.call(
+								b.member(
+									is_array ? expression(object) : b.array([b.spread(expression(object))]),
+									'slice'
+								),
+								b.literal(i)
+							);
 						if (element.argument.type === 'Identifier') {
 							assignments.push({
 								node: element.argument,
@@ -352,7 +393,12 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 						}
 					} else {
 						/** @type {DestructuredAssignment['expression']} */
-						const array_expression = (object) => b.member(expression(object), b.literal(i), true);
+						const array_expression = (object) =>
+							b.member(
+								is_array ? expression(object) : b.array([b.spread(expression(object))]),
+								b.literal(i),
+								true
+							);
 						_extract_paths(
 							assignments,
 							element,
