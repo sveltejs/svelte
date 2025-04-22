@@ -5,6 +5,10 @@
 		.x {
 			color: green;
 		}
+
+		.a, .selector, .list {
+			color: green;
+		}
 	}
 
 	div :global {
