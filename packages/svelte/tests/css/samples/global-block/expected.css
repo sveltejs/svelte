@@ -3,6 +3,10 @@
 		.x {
 			color: green;
 		}
+
+		.a, .selector, .list {
+			color: green;
+		}
 	/*}*/
 
 	div.svelte-xyz {
