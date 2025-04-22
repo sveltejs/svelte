@@ -1,24 +1,29 @@
 <script>
 	let bar = $state('');
 
-	const foo = {
-		set bar(v) {
-
-			console.log($effect.tracking());
-
+	const value = {
+		set value(v) {
+			console.log('bind:value ' + $effect.tracking());
 			bar = v;
 		},
-		get bar() {
+		get value() {
 			return bar;
 		}
-	}
+	};
+
+	const active = {
+		set bar(_v) {
+			console.log('bind:activeElement ' + $effect.tracking());
+		}
+	};
 
 	let input;
 
 	$effect(() => {
 		input.value = 'everybody';
 		input.dispatchEvent(new window.Event('input'));
-	})
+	});
 </script>
 
-<input type="text" bind:value={foo.bar} bind:this={input}>
+<svelte:document bind:activeElement={active.bar} />
+<input type="text" bind:value={value.value} bind:this={input}>

@@ -12,10 +12,14 @@ import { add_form_reset_listener } from '../misc.js';
  * then listens to the given events until the render effect context is destroyed
  * @param {EventTarget} target
  * @param {Array<string>} events
- * @param {(event?: Event) => void} handler
+ * @param {(event?: Event) => void} event_handler
  * @param {any} call_handler_immediately
  */
-export function listen(target, events, handler, call_handler_immediately = true) {
+export function listen(target, events, event_handler, call_handler_immediately = true) {
+	// Just like user-defined events, our internal events shouldn't have any reactive context
+	/** @type {typeof event_handler} */
+	const handler = (e) => without_reactive_context(() => event_handler(e));
+
 	if (call_handler_immediately) {
 		handler();
 	}
@@ -32,6 +36,9 @@ export function listen(target, events, handler, call_handler_immediately = true)
 }
 
 /**
+ * Runs a function without a reactive context.
+ * This is important for events which should "start fresh" and not inherit
+ * context that accidentally happens to be active at the time of the event.
  * @template T
  * @param {() => T} fn
  */

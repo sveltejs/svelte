@@ -62,5 +62,5 @@ export function bind_window_scroll(type, get, set = get) {
  * @param {(size: number) => void} set
  */
 export function bind_window_size(type, set) {
-	listen(window, ['resize'], () => without_reactive_context(() => set(window[type])));
+	listen(window, ['resize'], () => set(window[type]));
 }
