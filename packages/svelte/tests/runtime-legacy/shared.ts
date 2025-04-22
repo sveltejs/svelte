@@ -370,7 +370,7 @@ async function run_test_variant(
 				// @ts-expect-error
 				globalThis.__svelte.uid = 1;
 
-				if (manual_hydrate) {
+				if (manual_hydrate && variant === 'hydrate') {
 					hydrate_fn = () => {
 						instance = hydrate(mod.default, {
 							target,
@@ -488,10 +488,6 @@ async function run_test_variant(
 			throw err;
 		}
 	} finally {
-		console.log = console_log;
-		console.warn = console_warn;
-		console.error = console_error;
-
 		config.after_test?.();
 
 		// Free up the microtask queue
@@ -505,6 +501,10 @@ async function run_test_variant(
 				process.on('unhandledRejection', listener);
 			});
 		}
+
+		console.log = console_log;
+		console.warn = console_warn;
+		console.error = console_error;
 	}
 }
 
