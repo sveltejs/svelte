@@ -1,5 +1,11 @@
 # svelte
 
+## 5.28.2
+
+### Patch Changes
+
+- fix: don't mark selector lists inside `:global` with multiple items as unused ([#15817](https://github.com/sveltejs/svelte/pull/15817))
+
 ## 5.28.1
 
 ### Patch Changes
