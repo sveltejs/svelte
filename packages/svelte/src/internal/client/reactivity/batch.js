@@ -157,8 +157,6 @@ export class Batch {
 				}
 			}
 		}
-
-		update_pending();
 	}
 
 	/**
@@ -176,6 +174,8 @@ export class Batch {
 		}
 
 		this.#callbacks.clear();
+
+		raf.tick(update_pending);
 	}
 
 	increment() {
