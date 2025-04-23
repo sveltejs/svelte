@@ -116,9 +116,11 @@ export function CallExpression(node, context) {
 		case '$derived':
 		case '$derived.by':
 			if (
-				(parent.type !== 'VariableDeclarator' ||
-					get_parent(context.path, -3).type === 'ConstTag') &&
-				!(parent.type === 'PropertyDefinition' && !parent.static && !parent.computed)
+				!(
+					call_expression_is_variable_declaration(parent, context) ||
+					call_expression_is_class_property_definition(parent) ||
+					call_expression_is_valid_class_property_assignment_in_constructor(parent, context)
+				)
 			) {
 				e.state_invalid_placement(node, rune);
 			}
@@ -268,5 +270,97 @@ function get_function_label(nodes) {
 
 	if (parent.type === 'VariableDeclarator' && parent.id.type === 'Identifier') {
 		return parent.id.name;
+	}
+}
+
+/**
+ *
+ * @param {AST.SvelteNode} parent
+ * @param {Context} context
+ */
+function call_expression_is_variable_declaration(parent, context) {
+	return parent.type === 'VariableDeclarator' && get_parent(context.path, -3).type !== 'ConstTag';
+}
+
+/**
+ *
+ * @param {AST.SvelteNode} parent
+ */
+function call_expression_is_class_property_definition(parent) {
+	return parent.type === 'PropertyDefinition' && !parent.static && !parent.computed;
+}
+
+/**
+ *
+ * @param {AST.SvelteNode} parent
+ * @param {Context} context
+ * @returns
+ */
+function call_expression_is_valid_class_property_assignment_in_constructor(parent, context) {
+	return (
+		expression_is_assignment_to_top_level_property_of_this(parent) &&
+		current_node_is_in_constructor_root_or_control_flow_blocks(context)
+	);
+}
+
+/**
+ * yes:
+ *   - `this.foo = bar`
+ *
+ * no:
+ *   - `this = bar`
+ *   - `this.foo.baz = bar`
+ *   - `anything_other_than_this = bar`
+ *
+ * @param {AST.SvelteNode} node
+ */
+function expression_is_assignment_to_top_level_property_of_this(node) {
+	return (
+		node.type === 'AssignmentExpression' &&
+		node.operator === '=' &&
+		node.left.type === 'MemberExpression' &&
+		node.left.object.type === 'ThisExpression' &&
+		node.left.property.type === 'Identifier'
+	);
+}
+
+/**
+ * @param {AST.SvelteNode} node
+ */
+function node_is_constructor(node) {
+	return (
+		node.type === 'MethodDefinition' &&
+		node.key.type === 'Identifier' &&
+		node.key.name === 'constructor'
+	);
+}
+
+// if blocks are just IfStatements with BlockStatements or other IfStatements as consequents
+const allowed_parent_types = new Set([
+	'IfStatement',
+	'BlockStatement',
+	'SwitchCase',
+	'SwitchStatement'
+]);
+
+/**
+ * Succeeds if the node's only direct parents are `if` / `else if` / `else` blocks _and_
+ * those blocks are the direct children of the constructor.
+ *
+ * @param {Context} context
+ */
+function current_node_is_in_constructor_root_or_control_flow_blocks(context) {
+	let parent_index = -3; // this gets us from CallExpression -> AssignmentExpression -> ExpressionStatement -> Whatever is here
+	while (true) {
+		const grandparent = get_parent(context.path, parent_index - 1);
+		const parent = get_parent(context.path, parent_index);
+		if (grandparent && node_is_constructor(grandparent)) {
+			// if this is the case then `parent` is the FunctionExpression
+			return true;
+		}
+		if (!allowed_parent_types.has(parent.type)) {
+			return false;
+		}
+		parent_index--;
 	}
 }
