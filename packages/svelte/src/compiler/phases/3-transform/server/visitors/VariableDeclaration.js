@@ -182,9 +182,14 @@ function create_state_declarators(declarator, scope, value) {
 	}
 
 	const tmp = scope.generate('tmp');
-	const paths = extract_paths(declarator.id, is_array(declarator.init, scope));
+	const paths = extract_paths(declarator.id, true);
 	return [
-		b.declarator(b.id(tmp), value), // TODO inject declarator for opts, so we can use it below
+		b.declarator(
+			b.id(tmp),
+			declarator.id.type === 'ArrayPattern' && !is_array(value, scope)
+				? b.array([b.spread(value)])
+				: value
+		), // TODO inject declarator for opts, so we can use it below
 		...paths.map((path) => {
 			const value = path.expression?.(b.id(tmp));
 			return b.declarator(path.node, value);

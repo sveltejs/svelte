@@ -308,9 +308,14 @@ function create_state_declarators(declarator, { scope, analysis }, value) {
 	}
 
 	const tmp = scope.generate('tmp');
-	const paths = extract_paths(declarator.id, is_array(declarator.init, scope));
+	const paths = extract_paths(declarator.id, true);
 	return [
-		b.declarator(b.id(tmp), value),
+		b.declarator(
+			b.id(tmp),
+			declarator.id.type === 'ArrayPattern' && !is_array(value, scope)
+				? b.array([b.spread(value)])
+				: value
+		),
 		...paths.map((path) => {
 			const value = path.expression?.(b.id(tmp));
 			const binding = scope.get(/** @type {Identifier} */ (path.node).name);

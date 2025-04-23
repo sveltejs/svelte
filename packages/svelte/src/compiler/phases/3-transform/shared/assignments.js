@@ -1,7 +1,7 @@
 /** @import { AssignmentExpression, AssignmentOperator, Expression, Node, Pattern } from 'estree' */
 /** @import { Context as ClientContext } from '../client/types.js' */
 /** @import { Context as ServerContext } from '../server/types.js' */
-import { extract_paths, is_expression_async } from '../../../utils/ast.js';
+import { extract_paths, is_array, is_expression_async } from '../../../utils/ast.js';
 import * as b from '#compiler/builders';
 
 /**
@@ -23,7 +23,10 @@ export function visit_assignment_expression(node, context, build_assignment) {
 
 		let changed = false;
 
-		const assignments = extract_paths(node.left).map((path) => {
+		const assignments = extract_paths(
+			node.left,
+			!should_cache && is_array(value, context.state.scope)
+		).map((path) => {
 			const value = path.expression?.(rhs);
 
 			let assignment = build_assignment('=', path.node, value, context);
@@ -54,7 +57,14 @@ export function visit_assignment_expression(node, context, build_assignment) {
 
 		if (should_cache) {
 			// the right hand side is a complex expression, wrap in an IIFE to cache it
-			const iife = b.arrow([rhs], sequence);
+			const iife = b.arrow(
+				[
+					!is_array(value, context.state.scope) && node.left.type === 'ArrayPattern'
+						? b.array_pattern([b.rest(rhs)])
+						: rhs
+				],
+				sequence
+			);
 
 			const iife_is_async =
 				is_expression_async(value) ||
