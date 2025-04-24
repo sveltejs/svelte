@@ -22,7 +22,6 @@ import { Attribute } from './visitors/Attribute.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
 import { BindDirective } from './visitors/BindDirective.js';
 import { CallExpression } from './visitors/CallExpression.js';
-import { ClassBody } from './visitors/ClassBody.js';
 import { ClassDeclaration } from './visitors/ClassDeclaration.js';
 import { ClassDirective } from './visitors/ClassDirective.js';
 import { Component } from './visitors/Component.js';
@@ -46,6 +45,7 @@ import { LetDirective } from './visitors/LetDirective.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
 import { NewExpression } from './visitors/NewExpression.js';
 import { OnDirective } from './visitors/OnDirective.js';
+import { PropertyDefinition } from './visitors/PropertyDefinition.js';
 import { RegularElement } from './visitors/RegularElement.js';
 import { RenderTag } from './visitors/RenderTag.js';
 import { SlotElement } from './visitors/SlotElement.js';
@@ -135,7 +135,6 @@ const visitors = {
 	AwaitBlock,
 	BindDirective,
 	CallExpression,
-	ClassBody,
 	ClassDeclaration,
 	ClassDirective,
 	Component,
@@ -159,6 +158,7 @@ const visitors = {
 	MemberExpression,
 	NewExpression,
 	OnDirective,
+	PropertyDefinition,
 	RegularElement,
 	RenderTag,
 	SlotElement,
@@ -259,7 +259,7 @@ export function analyze_module(ast, options) {
 			scope,
 			scopes,
 			analysis: /** @type {ComponentAnalysis} */ (analysis),
-			derived_state: [],
+			class_state: null,
 			// TODO the following are not needed for modules, but we have to pass them in order to avoid type error,
 			// and reducing the type would result in a lot of tedious type casts elsewhere - find a good solution one day
 			ast_type: /** @type {any} */ (null),
@@ -618,7 +618,7 @@ export function analyze_component(root, source, options) {
 				has_props_rune: false,
 				component_slots: new Set(),
 				expression: null,
-				derived_state: [],
+				class_state: null,
 				function_depth: scope.function_depth,
 				reactive_statement: null
 			};
@@ -685,7 +685,7 @@ export function analyze_component(root, source, options) {
 				reactive_statement: null,
 				component_slots: new Set(),
 				expression: null,
-				derived_state: [],
+				class_state: null,
 				function_depth: scope.function_depth
 			};
 

@@ -105,6 +105,17 @@ export function constant_binding(node, thing) {
 }
 
 /**
+ * Cannot redeclare stateful field `%name%` in the constructor. The field was originally declared here: `%original_location%`
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @param {string} original_location
+ * @returns {never}
+ */
+export function constructor_state_reassignment(node, name, original_location) {
+	e(node, 'constructor_state_reassignment', `Cannot redeclare stateful field \`${name}\` in the constructor. The field was originally declared here: \`${original_location}\`\nhttps://svelte.dev/e/constructor_state_reassignment`);
+}
+
+/**
  * `%name%` has already been declared
  * @param {null | number | NodeLike} node
  * @param {string} name
@@ -471,13 +482,13 @@ export function state_invalid_export(node) {
 }
 
 /**
- * `%rune%(...)` can only be used as a variable declaration initializer or a class field
+ * `%rune%(...)` can only be used as a variable declaration initializer, a class field declaration, or the first assignment to a class field at the top level of the constructor.
  * @param {null | number | NodeLike} node
  * @param {string} rune
  * @returns {never}
  */
 export function state_invalid_placement(node, rune) {
-	e(node, 'state_invalid_placement', `\`${rune}(...)\` can only be used as a variable declaration initializer or a class field\nhttps://svelte.dev/e/state_invalid_placement`);
+	e(node, 'state_invalid_placement', `\`${rune}(...)\` can only be used as a variable declaration initializer, a class field declaration, or the first assignment to a class field at the top level of the constructor.\nhttps://svelte.dev/e/state_invalid_placement`);
 }
 
 /**

@@ -1,6 +1,7 @@
 import type { Scope } from '../scope.js';
 import type { ComponentAnalysis, ReactiveStatement } from '../types.js';
 import type { AST, ExpressionMetadata, ValidatedCompileOptions } from '#compiler';
+import type { ClassAnalysis } from './visitors/shared/class-analysis.js';
 
 export interface AnalysisState {
 	scope: Scope;
@@ -18,7 +19,9 @@ export interface AnalysisState {
 	component_slots: Set<string>;
 	/** Information about the current expression/directive/block value */
 	expression: ExpressionMetadata | null;
-	derived_state: { name: string; private: boolean }[];
+
+	/** Used to analyze class state. */
+	class_state: ClassAnalysis | null;
 	function_depth: number;
 
 	// legacy stuff

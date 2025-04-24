@@ -208,6 +208,37 @@ Cannot assign to %thing%
 Cannot bind to %thing%
 ```
 
+### constructor_state_reassignment
+
+```
+Cannot redeclare stateful field `%name%` in the constructor. The field was originally declared here: `%original_location%`
+```
+
+To create stateful class fields in the constructor, the rune assignment must be the _first_ assignment to the class field.
+Assignments thereafter must not use the rune.
+
+```ts
+constructor() {
+	this.count = $state(0);
+	this.count = $state(1); // invalid, assigning to the same property with `$state` again
+}
+
+constructor() {
+	this.count = $state(0);
+	this.count = $state.raw(1); // invalid, assigning to the same property with a different rune
+}
+
+constructor() {
+	this.count = 0;
+	this.count = $state(1); // invalid, this property was created as a regular property, not state
+}
+
+constructor() {
+	this.count = $state(0);
+	this.count = 1; // valid, this is setting the state that has already been declared
+}
+```
+
 ### css_empty_declaration
 
 ```
@@ -855,7 +886,7 @@ Cannot export state from a module if it is reassigned. Either export a function 
 ### state_invalid_placement
 
 ```
-`%rune%(...)` can only be used as a variable declaration initializer or a class field
+`%rune%(...)` can only be used as a variable declaration initializer, a class field declaration, or the first assignment to a class field at the top level of the constructor.
 ```
 
 ### store_invalid_scoped_subscription

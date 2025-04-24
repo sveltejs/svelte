@@ -1,6 +1,7 @@
 /** @import { ClassDeclaration } from 'estree' */
 /** @import { Context } from '../types' */
 import * as w from '../../../warnings.js';
+import { ClassAnalysis } from './shared/class-analysis.js';
 import { validate_identifier_name } from './shared/utils.js';
 
 /**
@@ -21,5 +22,5 @@ export function ClassDeclaration(node, context) {
 		w.perf_avoid_nested_class(node);
 	}
 
-	context.next();
+	context.next({ ...context.state, class_state: new ClassAnalysis() });
 }

@@ -1,0 +1,147 @@
+/** @import { AssignmentExpression, PropertyDefinition, Expression } from 'estree' */
+/** @import { AST } from '#compiler' */
+/** @import { Context } from '../../types' */
+
+import { get_parent } from '../../../../utils/ast.js';
+import { get_rune } from '../../../scope.js';
+import * as e from '../../../../errors.js';
+import { locate_node } from '../../../../state.js';
+
+/** @typedef {'$state' | '$state.raw' | '$derived' | '$derived.by' | 'regular'} PropertyAssignmentType */
+/** @typedef {{ type: PropertyAssignmentType; node: AssignmentExpression | PropertyDefinition; }} PropertyAssignmentDetails */
+
+const reassignable_assignments = new Set(['$state', '$state.raw', 'regular']);
+
+const property_assignment_types = new Set([
+	'$state',
+	'$state.raw',
+	'$derived',
+	'$derived.by',
+	'regular'
+]);
+
+export class ClassAnalysis {
+	// TODO: Probably need to include property definitions here too
+	/** @type {Map<string, PropertyAssignmentDetails>} */
+	property_assignments = new Map();
+
+	/**
+	 * Determines if the node is a valid assignment to a class property, and if so,
+	 * registers the assignment.
+	 * @param {AssignmentExpression | PropertyDefinition} node
+	 * @param {Context} context
+	 */
+	register(node, context) {
+		/** @type {string} */
+		let name;
+		/** @type {PropertyAssignmentType} */
+		let type;
+
+		if (node.type === 'AssignmentExpression') {
+			if (!this.is_class_property_assignment_at_constructor_root(node, context.path)) {
+				return;
+			}
+			name = node.left.property.name;
+			type = this.#get_assignment_type(node, context);
+
+			this.#check_for_conflicts(node, name, type);
+		} else {
+			if (!this.#is_assigned_property(node)) {
+				return;
+			}
+
+			name = node.key.name;
+			type = this.#get_assignment_type(node, context);
+
+			// we don't need to check for conflicts here because they're not possible yet
+		}
+
+		// we don't have to validate anything other than conflicts here, because the rune placement rules
+		// catch all of the other weirdness.
+		if (!this.property_assignments.has(name)) {
+			this.property_assignments.set(name, { type, node });
+		}
+	}
+
+	/**
+	 * @template {AST.SvelteNode} T
+	 * @param {AST.SvelteNode} node
+	 * @param {T[]} path
+	 * @returns {node is AssignmentExpression & { left: { type: 'MemberExpression' } & { object: { type: 'ThisExpression' }; property: { type: 'Identifier' } } }}
+	 */
+	is_class_property_assignment_at_constructor_root(node, path) {
+		if (
+			!(
+				node.type === 'AssignmentExpression' &&
+				node.operator === '=' &&
+				node.left.type === 'MemberExpression' &&
+				node.left.object.type === 'ThisExpression' &&
+				node.left.property.type === 'Identifier'
+			)
+		) {
+			return false;
+		}
+		// AssignmentExpression (here) -> ExpressionStatement (-1) -> BlockStatement (-2) -> FunctionExpression (-3) -> MethodDefinition (-4)
+		const maybe_constructor = get_parent(path, -4);
+		return (
+			maybe_constructor &&
+			maybe_constructor.type === 'MethodDefinition' &&
+			maybe_constructor.kind === 'constructor'
+		);
+	}
+
+	/**
+	 * We only care about properties that have values assigned to them -- if they don't,
+	 * they can't be a conflict for state declared in the constructor.
+	 * @param {PropertyDefinition} node
+	 * @returns {node is PropertyDefinition & { key: { type: 'PrivateIdentifier' | 'Identifier' }; value: Expression; static: false; computed: false }}
+	 */
+	#is_assigned_property(node) {
+		return (
+			(node.key.type === 'PrivateIdentifier' || node.key.type === 'Identifier') &&
+			Boolean(node.value) &&
+			!node.static &&
+			!node.computed
+		);
+	}
+
+	/**
+	 * Checks for conflicts with existing assignments. A conflict occurs if:
+	 * - The original assignment used `$derived` or `$derived.by` (these can never be reassigned)
+	 * - The original assignment used `$state`, `$state.raw`, or `regular` and is being assigned to with any type other than `regular`
+	 * @param {AssignmentExpression} node
+	 * @param {string} name
+	 * @param {PropertyAssignmentType} type
+	 */
+	#check_for_conflicts(node, name, type) {
+		const existing = this.property_assignments.get(name);
+		if (!existing) {
+			return;
+		}
+
+		if (reassignable_assignments.has(existing.type) && type === 'regular') {
+			return;
+		}
+
+		e.constructor_state_reassignment(node, name, locate_node(existing.node));
+	}
+
+	/**
+	 * @param {AssignmentExpression | PropertyDefinition} node
+	 * @param {Context} context
+	 * @returns {PropertyAssignmentType}
+	 */
+	#get_assignment_type(node, context) {
+		const value = node.type === 'AssignmentExpression' ? node.right : node.value;
+		const rune = get_rune(value, context.state.scope);
+		if (rune === null) {
+			return 'regular';
+		}
+		if (property_assignment_types.has(rune)) {
+			return /** @type {PropertyAssignmentType} */ (rune);
+		}
+		// this does mean we return `regular` for some other runes (like `$trace` or `$state.raw`)
+		// -- this is ok because the rune placement rules will throw if they're invalid.
+		return 'regular';
+	}
+}
