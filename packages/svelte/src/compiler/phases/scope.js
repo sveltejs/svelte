@@ -28,7 +28,7 @@ const globals = {
 	'Math.max': [NUMBER, Math.max],
 	'Math.random': [NUMBER],
 	'Math.floor': [NUMBER, Math.floor],
-	// @ts-expect-error
+	// @ts-ignore
 	'Math.f16round': [NUMBER, Math.f16round],
 	'Math.round': [NUMBER, Math.round],
 	'Math.abs': [NUMBER, Math.abs],
@@ -630,9 +630,10 @@ export class Scope {
 
 	/**
 	 * @param {string} preferred_name
+	 * @param {(name: string, counter: number) => string} [generator]
 	 * @returns {string}
 	 */
-	generate(preferred_name) {
+	generate(preferred_name, generator = (name, counter) => `${name}_${counter}`) {
 		if (this.#porous) {
 			return /** @type {Scope} */ (this.parent).generate(preferred_name);
 		}
@@ -647,7 +648,7 @@ export class Scope {
 			this.root.conflicts.has(name) ||
 			is_reserved(name)
 		) {
-			name = `${preferred_name}_${n++}`;
+			name = generator(preferred_name, n++);
 		}
 
 		this.references.set(name, []);
