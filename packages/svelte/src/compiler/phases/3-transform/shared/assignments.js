@@ -54,6 +54,10 @@ export function visit_assignment_expression(node, context, build_assignment) {
 			block.body.push(b.return(rhs));
 		}
 
+		if (is_standalone && !should_cache) {
+			return block;
+		}
+
 		const iife = b.arrow(should_cache ? [rhs] : [], block);
 
 		const iife_is_async =
