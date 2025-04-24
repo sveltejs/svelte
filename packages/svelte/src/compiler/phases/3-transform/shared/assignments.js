@@ -33,7 +33,7 @@ export function visit_assignment_expression(node, context, build_assignment) {
 				return b.stmt(
 					assignment ??
 						b.assignment(
-							'=',
+							node.operator,
 							/** @type {Identifier} */ (context.visit(original)),
 							/** @type {Expression} */ (context.visit(replacement))
 						)
