@@ -83,19 +83,6 @@ export class Batch {
 			source.v = current;
 		}
 
-		for (const e of this.render_effects) {
-			set_signal_status(e, DIRTY);
-			schedule_effect(e);
-		}
-
-		for (const e of this.effects) {
-			set_signal_status(e, DIRTY);
-			schedule_effect(e);
-		}
-
-		this.render_effects = [];
-		this.effects = [];
-
 		for (const root of root_effects) {
 			process_effects(this, root);
 		}
@@ -186,6 +173,19 @@ export class Batch {
 		this.#pending -= 1;
 
 		if (this.#pending === 0) {
+			for (const e of this.render_effects) {
+				set_signal_status(e, DIRTY);
+				schedule_effect(e);
+			}
+
+			for (const e of this.effects) {
+				set_signal_status(e, DIRTY);
+				schedule_effect(e);
+			}
+
+			this.render_effects = [];
+			this.effects = [];
+
 			this.commit();
 		}
 	}
