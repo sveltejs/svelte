@@ -447,12 +447,26 @@ const RUNES = /** @type {const} */ ([
 	'$host'
 ]);
 
+/** @typedef {RUNES[number]} RuneName */
+
 /**
  * @param {string} name
- * @returns {name is RUNES[number]}
+ * @returns {name is RuneName}
  */
 export function is_rune(name) {
 	return RUNES.includes(/** @type {RUNES[number]} */ (name));
+}
+
+/** @typedef {'$state' | '$state.raw' | '$derived' | '$derived.by'} StateCreationRuneName */
+
+/**
+ * @param {string} name
+ * @returns {name is StateCreationRuneName}
+ */
+export function is_state_creation_rune(name) {
+	return (
+		name === '$state' || name === '$state.raw' || name === '$derived' || name === '$derived.by'
+	);
 }
 
 /** List of elements that require raw contents and should not have SSR comments put in them */

@@ -6,6 +6,7 @@ import { get_parent } from '../../../../utils/ast.js';
 import { get_rune } from '../../../scope.js';
 import * as e from '../../../../errors.js';
 import { locate_node } from '../../../../state.js';
+import { is_state_creation_rune } from '../../../../../utils.js';
 
 /** @typedef {'$state' | '$state.raw' | '$derived' | '$derived.by' | 'regular'} PropertyAssignmentType */
 /** @typedef {{ type: PropertyAssignmentType; node: AssignmentExpression | PropertyDefinition; }} PropertyAssignmentDetails */
@@ -67,7 +68,7 @@ export class ClassAnalysis {
 	 * @template {AST.SvelteNode} T
 	 * @param {AST.SvelteNode} node
 	 * @param {T[]} path
-	 * @returns {node is AssignmentExpression & { left: { type: 'MemberExpression' } & { object: { type: 'ThisExpression' }; property: { type: 'Identifier' } } }}
+	 * @returns {node is AssignmentExpression & { left: { type: 'MemberExpression' } & { object: { type: 'ThisExpression' }; property: { type: 'Identifier' | 'PrivateIdentifier' } } }}
 	 */
 	is_class_property_assignment_at_constructor_root(node, path) {
 		if (
@@ -76,7 +77,8 @@ export class ClassAnalysis {
 				node.operator === '=' &&
 				node.left.type === 'MemberExpression' &&
 				node.left.object.type === 'ThisExpression' &&
-				node.left.property.type === 'Identifier'
+				(node.left.property.type === 'Identifier' ||
+					node.left.property.type === 'PrivateIdentifier')
 			)
 		) {
 			return false;
@@ -137,8 +139,8 @@ export class ClassAnalysis {
 		if (rune === null) {
 			return 'regular';
 		}
-		if (property_assignment_types.has(rune)) {
-			return /** @type {PropertyAssignmentType} */ (rune);
+		if (is_state_creation_rune(rune)) {
+			return rune;
 		}
 		// this does mean we return `regular` for some other runes (like `$trace` or `$state.raw`)
 		// -- this is ok because the rune placement rules will throw if they're invalid.

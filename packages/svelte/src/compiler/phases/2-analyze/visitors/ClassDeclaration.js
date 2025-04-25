@@ -22,5 +22,8 @@ export function ClassDeclaration(node, context) {
 		w.perf_avoid_nested_class(node);
 	}
 
-	context.next({ ...context.state, class_state: new ClassAnalysis() });
+	context.next({
+		...context.state,
+		class_state: context.state.analysis.runes ? new ClassAnalysis() : null
+	});
 }
