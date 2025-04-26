@@ -1,6 +1,7 @@
 /** @import { AssignmentExpression, PropertyDefinition, Expression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../../types' */
+/** @import { StateCreationRuneName } from '../../../../../utils.js' */
 
 import { get_parent } from '../../../../utils/ast.js';
 import { get_rune } from '../../../scope.js';
@@ -8,18 +9,10 @@ import * as e from '../../../../errors.js';
 import { locate_node } from '../../../../state.js';
 import { is_state_creation_rune } from '../../../../../utils.js';
 
-/** @typedef {'$state' | '$state.raw' | '$derived' | '$derived.by' | 'regular'} PropertyAssignmentType */
+/** @typedef { StateCreationRuneName | 'regular'} PropertyAssignmentType */
 /** @typedef {{ type: PropertyAssignmentType; node: AssignmentExpression | PropertyDefinition; }} PropertyAssignmentDetails */
 
 const reassignable_assignments = new Set(['$state', '$state.raw', 'regular']);
-
-const property_assignment_types = new Set([
-	'$state',
-	'$state.raw',
-	'$derived',
-	'$derived.by',
-	'regular'
-]);
 
 export class ClassAnalysis {
 	// TODO: Probably need to include property definitions here too

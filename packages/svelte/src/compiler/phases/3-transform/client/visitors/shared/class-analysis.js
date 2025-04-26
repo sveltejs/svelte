@@ -121,7 +121,7 @@ export class ClassAnalysis {
 
 		const rune = get_rune(node.right, context.state.scope);
 		if (!rune || !is_state_creation_rune(rune)) {
-			return false;
+			return;
 		}
 
 		const id = this.#deconflict(name);
