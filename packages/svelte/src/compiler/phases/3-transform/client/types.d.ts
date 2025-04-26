@@ -13,10 +13,11 @@ import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
 import type { SourceLocation } from '#shared';
+import type { StateCreationRuneName } from '../../../../utils.js';
+import type { ClassAnalysis } from './visitors/shared/class-analysis.js';
 
 export interface ClientTransformState extends TransformState {
-	readonly private_state: Map<string, StateField>;
-	readonly public_state: Map<string, StateField>;
+	readonly class_analysis: ClassAnalysis | null;
 
 	/**
 	 * `true` if the current lexical scope belongs to a class constructor. this allows
@@ -95,7 +96,7 @@ export interface ComponentClientTransformState extends ClientTransformState {
 }
 
 export interface StateField {
-	kind: 'state' | 'raw_state' | 'derived' | 'derived_by';
+	kind: StateCreationRuneName;
 	id: PrivateIdentifier;
 }
 

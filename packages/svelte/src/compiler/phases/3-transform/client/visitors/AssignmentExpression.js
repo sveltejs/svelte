@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, AssignmentOperator, Expression, Identifier, Pattern } from 'estree' */
+/** @import { AssignmentExpression, AssignmentOperator, Expression, Identifier, Pattern, MemberExpression, ThisExpression, PrivateIdentifier, CallExpression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../types.js' */
 import * as b from '#compiler/builders';
@@ -17,6 +17,7 @@ import { validate_mutation } from './shared/utils.js';
  * @param {Context} context
  */
 export function AssignmentExpression(node, context) {
+	context.state.class_analysis?.register_assignment(node, context);
 	const expression = /** @type {Expression} */ (
 		visit_assignment_expression(node, context, build_assignment) ?? context.next()
 	);
@@ -56,7 +57,7 @@ function build_assignment(operator, left, right, context) {
 		left.type === 'MemberExpression' &&
 		left.property.type === 'PrivateIdentifier'
 	) {
-		const private_state = context.state.private_state.get(left.property.name);
+		const private_state = context.state.class_analysis?.private_state.get(left.property.name);
 
 		if (private_state !== undefined) {
 			let value = /** @type {Expression} */ (
@@ -64,7 +65,7 @@ function build_assignment(operator, left, right, context) {
 			);
 
 			const needs_proxy =
-				private_state.kind === 'state' &&
+				private_state.kind === '$state' &&
 				is_non_coercive_operator(operator) &&
 				should_proxy(value, context.state.scope);
 

@@ -1,9 +1,7 @@
-/** @import { ClassBody, Expression, Identifier, Literal, MethodDefinition, PrivateIdentifier, PropertyDefinition } from 'estree' */
+/** @import { ClassBody, Identifier, Literal, MethodDefinition, PrivateIdentifier, PropertyDefinition } from 'estree' */
 /** @import { Context, StateField } from '../types' */
-import * as b from '#compiler/builders';
 import { regex_invalid_identifier_chars } from '../../../patterns.js';
-import { get_rune } from '../../../scope.js';
-import { should_proxy } from '../utils.js';
+import { ClassAnalysis } from './shared/class-analysis.js';
 
 /**
  * @param {ClassBody} node
@@ -15,170 +13,46 @@ export function ClassBody(node, context) {
 		return;
 	}
 
-	/** @type {Map<string, StateField>} */
-	const public_state = new Map();
-
-	/** @type {Map<string, StateField>} */
-	const private_state = new Map();
-
-	/** @type {Map<(MethodDefinition|PropertyDefinition)["key"], string>} */
-	const definition_names = new Map();
-
-	/** @type {string[]} */
-	const private_ids = [];
+	const class_analysis = new ClassAnalysis();
 
 	for (const definition of node.body) {
-		if (
-			(definition.type === 'PropertyDefinition' || definition.type === 'MethodDefinition') &&
-			(definition.key.type === 'Identifier' ||
-				definition.key.type === 'PrivateIdentifier' ||
-				definition.key.type === 'Literal')
-		) {
-			const type = definition.key.type;
-			const name = get_name(definition.key, public_state);
-			if (!name) continue;
-
-			// we store the deconflicted name in the map so that we can access it later
-			definition_names.set(definition.key, name);
-
-			const is_private = type === 'PrivateIdentifier';
-			if (is_private) private_ids.push(name);
-
-			if (definition.value?.type === 'CallExpression') {
-				const rune = get_rune(definition.value, context.state.scope);
-				if (
-					rune === '$state' ||
-					rune === '$state.raw' ||
-					rune === '$derived' ||
-					rune === '$derived.by'
-				) {
-					/** @type {StateField} */
-					const field = {
-						kind:
-							rune === '$state'
-								? 'state'
-								: rune === '$state.raw'
-									? 'raw_state'
-									: rune === '$derived.by'
-										? 'derived_by'
-										: 'derived',
-						// @ts-expect-error this is set in the next pass
-						id: is_private ? definition.key : null
-					};
-
-					if (is_private) {
-						private_state.set(name, field);
-					} else {
-						public_state.set(name, field);
-					}
-				}
-			}
-		}
+		class_analysis.register_body_definition(definition, context.state.scope);
 	}
 
-	// each `foo = $state()` needs a backing `#foo` field
-	for (const [name, field] of public_state) {
-		let deconflicted = name;
-		while (private_ids.includes(deconflicted)) {
-			deconflicted = '_' + deconflicted;
-		}
-
-		private_ids.push(deconflicted);
-		field.id = b.private_id(deconflicted);
-	}
+	class_analysis.finalize_property_definitions();
 
 	/** @type {Array<MethodDefinition | PropertyDefinition>} */
 	const body = [];
 
-	const child_state = { ...context.state, public_state, private_state };
+	const child_state = {
+		...context.state,
+		class_analysis
+	};
+
+	// we need to visit the constructor first so that it can add to the field maps.
+	const constructor_node = node.body.find(
+		(child) => child.type === 'MethodDefinition' && child.kind === 'constructor'
+	);
+	const constructor = constructor_node && context.visit(constructor_node, child_state);
 
 	// Replace parts of the class body
 	for (const definition of node.body) {
-		if (
-			definition.type === 'PropertyDefinition' &&
-			(definition.key.type === 'Identifier' ||
-				definition.key.type === 'PrivateIdentifier' ||
-				definition.key.type === 'Literal')
-		) {
-			const name = definition_names.get(definition.key);
-			if (!name) continue;
+		if (definition === constructor_node) {
+			body.push(/** @type {MethodDefinition} */ (constructor));
+			continue;
+		}
 
-			const is_private = definition.key.type === 'PrivateIdentifier';
-			const field = (is_private ? private_state : public_state).get(name);
+		const state_field = class_analysis.build_state_field_from_body_definition(definition, context);
 
-			if (definition.value?.type === 'CallExpression' && field !== undefined) {
-				let value = null;
-
-				if (definition.value.arguments.length > 0) {
-					const init = /** @type {Expression} **/ (
-						context.visit(definition.value.arguments[0], child_state)
-					);
-
-					value =
-						field.kind === 'state'
-							? b.call(
-									'$.state',
-									should_proxy(init, context.state.scope) ? b.call('$.proxy', init) : init
-								)
-							: field.kind === 'raw_state'
-								? b.call('$.state', init)
-								: field.kind === 'derived_by'
-									? b.call('$.derived', init)
-									: b.call('$.derived', b.thunk(init));
-				} else {
-					// if no arguments, we know it's state as `$derived()` is a compile error
-					value = b.call('$.state');
-				}
-
-				if (is_private) {
-					body.push(b.prop_def(field.id, value));
-				} else {
-					// #foo;
-					const member = b.member(b.this, field.id);
-					body.push(b.prop_def(field.id, value));
-
-					// get foo() { return this.#foo; }
-					body.push(b.method('get', definition.key, [], [b.return(b.call('$.get', member))]));
-
-					// set foo(value) { this.#foo = value; }
-					const val = b.id('value');
-
-					body.push(
-						b.method(
-							'set',
-							definition.key,
-							[val],
-							[b.stmt(b.call('$.set', member, val, field.kind === 'state' && b.true))]
-						)
-					);
-				}
-				continue;
-			}
+		if (state_field) {
+			body.push(...state_field);
+			continue;
 		}
 
 		body.push(/** @type {MethodDefinition} **/ (context.visit(definition, child_state)));
 	}
 
+	body.push(...class_analysis.constructor_state_fields);
+
 	return { ...node, body };
-}
-
-/**
- * @param {Identifier | PrivateIdentifier | Literal} node
- * @param {Map<string, StateField>} public_state
- */
-function get_name(node, public_state) {
-	if (node.type === 'Literal') {
-		let name = node.value?.toString().replace(regex_invalid_identifier_chars, '_');
-
-		// the above could generate conflicts because it has to generate a valid identifier
-		// so stuff like `0` and `1` or `state%` and `state^` will result in the same string
-		// so we have to de-conflict. We can only check `public_state` because private state
-		// can't have literal keys
-		while (name && public_state.has(name)) {
-			name = '_' + name;
-		}
-		return name;
-	} else {
-		return node.name;
-	}
 }

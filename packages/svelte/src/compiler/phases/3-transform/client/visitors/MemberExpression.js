@@ -9,9 +9,10 @@ import * as b from '#compiler/builders';
 export function MemberExpression(node, context) {
 	// rewrite `this.#foo` as `this.#foo.v` inside a constructor
 	if (node.property.type === 'PrivateIdentifier') {
-		const field = context.state.private_state.get(node.property.name);
+		const field = context.state.class_analysis?.private_state.get(node.property.name);
 		if (field) {
-			return context.state.in_constructor && (field.kind === 'raw_state' || field.kind === 'state')
+			return context.state.in_constructor &&
+				(field.kind === '$state.raw' || field.kind === '$state')
 				? b.member(node, 'v')
 				: b.call('$.get', node);
 		}
