@@ -309,7 +309,7 @@ export function RegularElement(node, context) {
 					attribute.value,
 					context,
 					(value, metadata) =>
-						metadata.has_call
+						metadata.has_call || metadata.has_await
 							? get_expression_id(
 									metadata.has_await ? context.state.async_expressions : context.state.expressions,
 									value

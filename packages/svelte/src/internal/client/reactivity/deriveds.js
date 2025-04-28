@@ -119,7 +119,7 @@ export function async_derived(fn, location) {
 
 	render_effect(() => {
 		if (DEV) from_async_derived = active_effect;
-		promise = fn();
+		promise = Promise.resolve(fn());
 		if (DEV) from_async_derived = null;
 
 		var restore = capture();
