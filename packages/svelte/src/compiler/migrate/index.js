@@ -1307,7 +1307,7 @@ const template = {
 			name = state.scope.generate(slot_name);
 			if (name !== slot_name) {
 				throw new MigrationError(
-					'This migration would change the name of a slot making the component unusable'
+					`This migration would change the name of a slot (${slot_name} to ${name}) making the component unusable`
 				);
 			}
 		}
@@ -1880,7 +1880,7 @@ function handle_identifier(node, state, path) {
 				let new_name = state.scope.generate(name);
 				if (new_name !== name) {
 					throw new MigrationError(
-						'This migration would change the name of a slot making the component unusable'
+						`This migration would change the name of a slot (${name} to ${new_name}) making the component unusable`
 					);
 				}
 			}
