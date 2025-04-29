@@ -5,6 +5,10 @@
 		.x {
 			color: green;
 		}
+
+		.a, .selector, .list {
+			color: green;
+		}
 	}
 
 	div :global {
@@ -90,6 +94,16 @@
 	@keyframes test{
 		to{
 			opacity: 1;
+		}
+	}
+
+	:global x, :global y {
+		color: green;
+	}
+
+	div :global, div :global y, unused :global {
+		z {
+			color: green;
 		}
 	}
 </style>

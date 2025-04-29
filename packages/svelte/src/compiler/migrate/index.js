@@ -1,7 +1,7 @@
 /** @import { VariableDeclarator, Node, Identifier, AssignmentExpression, LabeledStatement, ExpressionStatement } from 'estree' */
 /** @import { Visitors } from 'zimmerframe' */
 /** @import { ComponentAnalysis } from '../phases/types.js' */
-/** @import { Scope, ScopeRoot } from '../phases/scope.js' */
+/** @import { Scope } from '../phases/scope.js' */
 /** @import { AST, Binding, ValidatedCompileOptions } from '#compiler' */
 import MagicString from 'magic-string';
 import { walk } from 'zimmerframe';
@@ -944,54 +944,53 @@ const instance_script = {
 			node.body.type === 'ExpressionStatement' &&
 			node.body.expression.type === 'AssignmentExpression'
 		) {
-			const ids = extract_identifiers(node.body.expression.left);
-			const [, expression_ids] = extract_all_identifiers_from_expression(
-				node.body.expression.right
-			);
-			const bindings = ids.map((id) => state.scope.get(id.name));
-			const reassigned_bindings = bindings.filter((b) => b?.reassigned);
+			const { left, right } = node.body.expression;
 
-			if (
-				node.body.expression.right.type !== 'Literal' &&
-				!bindings.some((b) => b?.kind === 'store_sub') &&
-				node.body.expression.left.type !== 'MemberExpression'
-			) {
-				let { start, end } = /** @type {{ start: number, end: number }} */ (
-					node.body.expression.right
-				);
+			const ids = extract_identifiers(left);
+			const [, expression_ids] = extract_all_identifiers_from_expression(right);
+			const bindings = ids.map((id) => /** @type {Binding} */ (state.scope.get(id.name)));
 
-				check_rune_binding('derived');
+			if (bindings.every((b) => b.kind === 'legacy_reactive')) {
+				if (
+					right.type !== 'Literal' &&
+					bindings.every((b) => b.kind !== 'store_sub') &&
+					left.type !== 'MemberExpression'
+				) {
+					let { start, end } = /** @type {{ start: number, end: number }} */ (right);
 
-				// $derived
-				state.str.update(
-					/** @type {number} */ (node.start),
-					/** @type {number} */ (node.body.expression.start),
-					'let '
-				);
+					check_rune_binding('derived');
 
-				if (node.body.expression.right.type === 'SequenceExpression') {
-					while (state.str.original[start] !== '(') start -= 1;
-					while (state.str.original[end - 1] !== ')') end += 1;
+					// $derived
+					state.str.update(
+						/** @type {number} */ (node.start),
+						/** @type {number} */ (node.body.expression.start),
+						'let '
+					);
+
+					if (right.type === 'SequenceExpression') {
+						while (state.str.original[start] !== '(') start -= 1;
+						while (state.str.original[end - 1] !== ')') end += 1;
+					}
+
+					state.str.prependRight(start, `$derived(`);
+
+					// in a case like `$: ({ a } = b())`, there's already a trailing parenthesis.
+					// otherwise, we need to add one
+					if (state.str.original[/** @type {number} */ (node.body.start)] !== '(') {
+						state.str.appendLeft(end, `)`);
+					}
+
+					return;
 				}
 
-				state.str.prependRight(start, `$derived(`);
-
-				// in a case like `$: ({ a } = b())`, there's already a trailing parenthesis.
-				// otherwise, we need to add one
-				if (state.str.original[/** @type {number} */ (node.body.start)] !== '(') {
-					state.str.appendLeft(end, `)`);
-				}
-
-				return;
-			} else {
-				for (const binding of reassigned_bindings) {
-					if (binding && (ids.includes(binding.node) || expression_ids.length === 0)) {
+				for (const binding of bindings) {
+					if (binding.reassigned && (ids.includes(binding.node) || expression_ids.length === 0)) {
 						check_rune_binding('state');
 						const init =
 							binding.kind === 'state'
 								? ' = $state()'
 								: expression_ids.length === 0
-									? ` = $state(${state.str.original.substring(/** @type {number} */ (node.body.expression.right.start), node.body.expression.right.end)})`
+									? ` = $state(${state.str.original.substring(/** @type {number} */ (right.start), right.end)})`
 									: '';
 						// implicitly-declared variable which we need to make explicit
 						state.str.prependLeft(
@@ -1000,7 +999,8 @@ const instance_script = {
 						);
 					}
 				}
-				if (expression_ids.length === 0 && !bindings.some((b) => b?.kind === 'store_sub')) {
+
+				if (expression_ids.length === 0 && bindings.every((b) => b.kind !== 'store_sub')) {
 					state.str.remove(/** @type {number} */ (node.start), /** @type {number} */ (node.end));
 					return;
 				}

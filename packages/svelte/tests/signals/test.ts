@@ -15,6 +15,7 @@ import { derived } from '../../src/internal/client/reactivity/deriveds';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
 import { DESTROYED } from '../../src/internal/client/constants';
+import { noop } from 'svelte/internal/client';
 
 /**
  * @param runes runes mode
@@ -469,6 +470,9 @@ describe('signals', () => {
 	test('schedules rerun when writing to signal before reading it', (runes) => {
 		if (!runes) return () => {};
 
+		const error = console.error;
+		console.error = noop;
+
 		const value = state({ count: 0 });
 		user_effect(() => {
 			set(value, { count: 0 });
@@ -482,13 +486,18 @@ describe('signals', () => {
 			} catch (e: any) {
 				assert.include(e.message, 'effect_update_depth_exceeded');
 				errored = true;
+			} finally {
+				assert.equal(errored, true);
+				console.error = error;
 			}
-			assert.equal(errored, true);
 		};
 	});
 
 	test('schedules rerun when updating deeply nested value', (runes) => {
 		if (!runes) return () => {};
+
+		const error = console.error;
+		console.error = noop;
 
 		const value = proxy({ a: { b: { c: 0 } } });
 		user_effect(() => {
@@ -502,13 +511,18 @@ describe('signals', () => {
 			} catch (e: any) {
 				assert.include(e.message, 'effect_update_depth_exceeded');
 				errored = true;
+			} finally {
+				assert.equal(errored, true);
+				console.error = error;
 			}
-			assert.equal(errored, true);
 		};
 	});
 
 	test('schedules rerun when writing to signal before reading it', (runes) => {
 		if (!runes) return () => {};
+
+		const error = console.error;
+		console.error = noop;
 
 		const value = proxy({ arr: [] });
 		user_effect(() => {
@@ -523,8 +537,10 @@ describe('signals', () => {
 			} catch (e: any) {
 				assert.include(e.message, 'effect_update_depth_exceeded');
 				errored = true;
+			} finally {
+				assert.equal(errored, true);
+				console.error = error;
 			}
-			assert.equal(errored, true);
 		};
 	});
 
@@ -1077,6 +1093,38 @@ describe('signals', () => {
 			assert.equal(effects.length, 2);
 			assert.equal((effects[0].f & DESTROYED) !== 0, true);
 			assert.equal((effects[1].f & DESTROYED) !== 0, true);
+		};
+	});
+
+	test("deriveds set after they are DIRTY doesn't get updated on get", () => {
+		return () => {
+			const a = state(0);
+			const b = derived(() => $.get(a));
+
+			set(b, 1);
+			assert.equal($.get(b), 1);
+
+			set(a, 2);
+			assert.equal($.get(b), 2);
+			set(b, 3);
+
+			assert.equal($.get(b), 3);
+		};
+	});
+
+	test("unowned deriveds set after they are DIRTY doesn't get updated on get", () => {
+		return () => {
+			const a = state(0);
+			const b = derived(() => $.get(a));
+			const c = derived(() => $.get(b));
+
+			set(b, 1);
+			assert.equal($.get(c), 1);
+
+			set(a, 2);
+
+			assert.equal($.get(b), 2);
+			assert.equal($.get(c), 2);
 		};
 	});
 

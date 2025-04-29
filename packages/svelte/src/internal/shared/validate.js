@@ -35,3 +35,15 @@ export function validate_store(store, name) {
 		e.store_invalid_shape(name);
 	}
 }
+
+/**
+ * @template {() => unknown} T
+ * @param {T} fn
+ */
+export function prevent_snippet_stringification(fn) {
+	fn.toString = () => {
+		e.snippet_without_render_tag();
+		return '';
+	};
+	return fn;
+}

@@ -823,15 +823,16 @@ See [the migration guide](v5-migration-guide#Snippets-instead-of-slots) for more
 ### state_referenced_locally
 
 ```
-State referenced in its own scope will never update. Did you mean to reference it inside a closure?
+This reference only captures the initial value of `%name%`. Did you mean to reference it inside a %type% instead?
 ```
 
 This warning is thrown when the compiler detects the following:
-- A reactive variable is declared
-- the variable is reassigned
-- the variable is referenced inside the same scope it is declared and it is a non-reactive context
 
-In this case, the state reassignment will not be noticed by whatever you passed it to. For example, if you pass the state to a function, that function will not notice the updates:
+- A reactive variable is declared
+- ...and later reassigned...
+- ...and referenced in the same scope
+
+This 'breaks the link' to the original state declaration. For example, if you pass the state to a function, the function loses access to the state once it is reassigned:
 
 ```svelte
 <!--- file: Parent.svelte --->

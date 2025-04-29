@@ -35,6 +35,10 @@ export namespace _CSS {
 			parent_rule: null | Rule;
 			has_local_selectors: boolean;
 			/**
+			 * `true` if the rule contains a ComplexSelector whose RelativeSelectors are all global or global-like
+			 */
+			has_global_selectors: boolean;
+			/**
 			 * `true` if the rule contains a `:global` selector, and therefore everything inside should be unscoped
 			 */
 			is_global_block: boolean;
@@ -64,6 +68,7 @@ export namespace _CSS {
 		/** @internal */
 		metadata: {
 			rule: null | Rule;
+			is_global: boolean;
 			/** True if this selector applies to an element. For global selectors, this is defined in css-analyze, for others in css-prune while scoping */
 			used: boolean;
 		};

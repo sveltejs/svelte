@@ -4,18 +4,11 @@ export { assign, assign_and, assign_or, assign_nullish } from './dev/assign.js';
 export { cleanup_styles } from './dev/css.js';
 export { add_locations } from './dev/elements.js';
 export { hmr } from './dev/hmr.js';
-export {
-	ADD_OWNER,
-	add_owner,
-	mark_module_start,
-	mark_module_end,
-	add_owner_effect,
-	add_owner_to_class,
-	skip_ownership_validation
-} from './dev/ownership.js';
+export { create_ownership_validator } from './dev/ownership.js';
 export { check_target, legacy_api } from './dev/legacy.js';
 export { trace } from './dev/tracing.js';
 export { inspect } from './dev/inspect.js';
+export { validate_snippet_args } from './dev/validation.js';
 export { await_block as await } from './dom/blocks/await.js';
 export { if_block as if } from './dom/blocks/if.js';
 export { key_block as key } from './dom/blocks/key.js';
@@ -164,7 +157,8 @@ export {
 	invalid_default_snippet,
 	validate_dynamic_element_tag,
 	validate_store,
-	validate_void_dynamic_element
+	validate_void_dynamic_element,
+	prevent_snippet_stringification
 } from '../shared/validate.js';
 export { strict_equals, equals } from './dev/equality.js';
 export { log_if_contains_state } from './dev/console-log.js';

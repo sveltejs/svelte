@@ -59,7 +59,8 @@ export function render_stylesheet(source, analysis, options) {
 			// generateMap takes care of calculating source relative to file
 			source: options.filename,
 			file: options.cssOutputFilename || options.filename
-		})
+		}),
+		hasGlobal: analysis.css.has_global
 	};
 
 	merge_with_preprocessor_map(css, options, css.map.sources[0]);
@@ -169,7 +170,11 @@ const visitors = {
 		if (node.metadata.is_global_block) {
 			const selector = node.prelude.children[0];
 
-			if (selector.children.length === 1 && selector.children[0].selectors.length === 1) {
+			if (
+				node.prelude.children.length === 1 &&
+				selector.children.length === 1 &&
+				selector.children[0].selectors.length === 1
+			) {
 				// `:global {...}`
 				if (state.minify) {
 					state.code.remove(node.start, node.block.start + 1);
@@ -191,9 +196,12 @@ const visitors = {
 		next();
 	},
 	SelectorList(node, { state, next, path }) {
+		const parent = path.at(-1);
+
 		// Only add comments if we're not inside a complex selector that itself is unused or a global block
 		if (
-			!is_in_global_block(path) &&
+			(!is_in_global_block(path) ||
+				(node.children.length > 1 && parent?.type === 'Rule' && parent.metadata.is_global_block)) &&
 			!path.find((n) => n.type === 'ComplexSelector' && !n.metadata.used)
 		) {
 			const children = node.children;
@@ -255,7 +263,6 @@ const visitors = {
 
 		// if this selector list belongs to a rule, require a specificity bump for the
 		// first scoped selector but only if we're at the top level
-		let parent = path.at(-1);
 		if (parent?.type === 'Rule') {
 			specificity = { bumped: false };
 
@@ -281,13 +288,24 @@ const visitors = {
 				const global = /** @type {AST.CSS.PseudoClassSelector} */ (relative_selector.selectors[0]);
 				remove_global_pseudo_class(global, relative_selector.combinator, context.state);
 
-				if (
-					node.metadata.rule?.metadata.parent_rule &&
-					global.args === null &&
-					relative_selector.combinator === null
-				) {
-					// div { :global.x { ... } } becomes div { &.x { ... } }
-					context.state.code.prependRight(global.start, '&');
+				const parent_rule = node.metadata.rule?.metadata.parent_rule;
+				if (parent_rule && global.args === null) {
+					if (relative_selector.combinator === null) {
+						// div { :global.x { ... } } becomes div { &.x { ... } }
+						context.state.code.prependRight(global.start, '&');
+					}
+
+					// In case of multiple :global selectors in a selector list we gotta delete the comma, too, but only if
+					// the next selector is used; if it's unused then the comma deletion happens as part of removal of that next selector
+					if (
+						parent_rule.prelude.children.length > 1 &&
+						node.children.length === node.children.findIndex((s) => s === relative_selector) - 1
+					) {
+						const next_selector = parent_rule.prelude.children.find((s) => s.start > global.end);
+						if (next_selector && next_selector.metadata.used) {
+							context.state.code.update(global.end, next_selector.start, '');
+						}
+					}
 				}
 				continue;
 			} else {
@@ -360,7 +378,6 @@ const visitors = {
 };
 
 /**
- *
  * @param {Array<AST.CSS.Node>} path
  */
 function is_in_global_block(path) {
@@ -379,7 +396,9 @@ function remove_global_pseudo_class(selector, combinator, state) {
 			// div :global.x becomes div.x
 			while (/\s/.test(state.code.original[start - 1])) start--;
 		}
-		state.code.remove(start, selector.start + ':global'.length);
+
+		// update(...), not remove(...) because there could be a closing unused comment at the end
+		state.code.update(start, selector.start + ':global'.length, '');
 	} else {
 		state.code
 			.remove(selector.start, selector.start + ':global('.length)

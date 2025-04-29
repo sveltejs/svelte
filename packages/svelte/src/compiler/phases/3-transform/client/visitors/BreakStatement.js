@@ -1,6 +1,6 @@
 /** @import { BreakStatement } from 'estree' */
 /** @import { ComponentContext } from '../types' */
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 
 /**
  * @param {BreakStatement} node

@@ -555,12 +555,12 @@ export function css_global_block_invalid_declaration(node) {
 }
 
 /**
- * A `:global` selector cannot be part of a selector list with more than one item
+ * A `:global` selector cannot be part of a selector list with entries that don't contain `:global`
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function css_global_block_invalid_list(node) {
-	e(node, 'css_global_block_invalid_list', `A \`:global\` selector cannot be part of a selector list with more than one item\nhttps://svelte.dev/e/css_global_block_invalid_list`);
+	e(node, 'css_global_block_invalid_list', `A \`:global\` selector cannot be part of a selector list with entries that don't contain \`:global\`\nhttps://svelte.dev/e/css_global_block_invalid_list`);
 }
 
 /**
@@ -579,6 +579,15 @@ export function css_global_block_invalid_modifier(node) {
  */
 export function css_global_block_invalid_modifier_start(node) {
 	e(node, 'css_global_block_invalid_modifier_start', `A \`:global\` selector can only be modified if it is a descendant of other selectors\nhttps://svelte.dev/e/css_global_block_invalid_modifier_start`);
+}
+
+/**
+ * A `:global` selector cannot be inside a pseudoclass
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function css_global_block_invalid_placement(node) {
+	e(node, 'css_global_block_invalid_placement', `A \`:global\` selector cannot be inside a pseudoclass\nhttps://svelte.dev/e/css_global_block_invalid_placement`);
 }
 
 /**

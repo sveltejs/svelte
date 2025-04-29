@@ -235,7 +235,31 @@ A top-level `:global {...}` block can only contain rules, not declarations
 ### css_global_block_invalid_list
 
 ```
-A `:global` selector cannot be part of a selector list with more than one item
+A `:global` selector cannot be part of a selector list with entries that don't contain `:global`
+```
+
+The following CSS is invalid:
+
+```css
+:global, x {
+    y {
+        color: red;
+    }
+}
+```
+
+This is mixing a `:global` block, which means "everything in here is unscoped", with a scoped selector (`x` in this case). As a result it's not possible to transform the inner selector (`y` in this case) into something that satisfies both requirements. You therefore have to split this up into two selectors:
+
+```css
+:global {
+    y {
+        color: red;
+    }
+}
+
+x y {
+    color: red;
+}
 ```
 
 ### css_global_block_invalid_modifier
@@ -248,6 +272,12 @@ A `:global` selector cannot modify an existing selector
 
 ```
 A `:global` selector can only be modified if it is a descendant of other selectors
+```
+
+### css_global_block_invalid_placement
+
+```
+A `:global` selector cannot be inside a pseudoclass
 ```
 
 ### css_global_invalid_placement

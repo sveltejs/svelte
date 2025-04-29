@@ -3,7 +3,7 @@
 /** @import { ComponentAnalysis, Analysis } from '../../types' */
 /** @import { Visitors, ComponentClientTransformState, ClientTransformState } from './types' */
 import { walk } from 'zimmerframe';
-import * as b from '../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { build_getter, is_state_source } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
 import { dev, filename } from '../../../state.js';
@@ -393,6 +393,12 @@ export function client_component(analysis, options) {
 		);
 	}
 
+	if (analysis.needs_mutation_validation) {
+		component_block.body.unshift(
+			b.var('$$ownership_validator', b.call('$.create_ownership_validator', b.id('$$props')))
+		);
+	}
+
 	const should_inject_context =
 		dev ||
 		analysis.needs_context ||
@@ -530,9 +536,6 @@ export function client_component(analysis, options) {
 				b.assignment('=', b.member(b.id(analysis.name), '$.FILENAME', true), b.literal(filename))
 			)
 		);
-
-		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'))));
-		body.push(b.stmt(b.call(b.id('$.mark_module_end'), b.id(analysis.name))));
 	}
 
 	if (!analysis.runes) {

@@ -1,8 +1,8 @@
-/** @import { BlockStatement, Expression, Pattern, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import { BLOCK_OPEN_ELSE } from '../../../../../internal/server/hydration.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { block_close, block_open } from './shared/utils.js';
 
 /**

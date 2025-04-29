@@ -1,7 +1,7 @@
 /** @import { Identifier } from 'estree' */
 /** @import { ComponentContext, Context } from '../../types' */
 import { is_state_source } from '../../utils.js';
-import * as b from '../../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 
 /**
  * Turns `foo` into `$.get(foo)`

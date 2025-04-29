@@ -1,11 +1,7 @@
 /** @import { ArrayExpression, Expression, Literal, ObjectExpression } from 'estree' */
-/** @import { AST, Namespace } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../../types.js' */
-import {
-	get_attribute_chunks,
-	is_event_attribute,
-	is_text_attribute
-} from '../../../../../utils/ast.js';
+import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import { binding_properties } from '../../../../bindings.js';
 import {
 	create_attribute,
@@ -13,7 +9,7 @@ import {
 	is_custom_element_node
 } from '../../../../nodes.js';
 import { regex_starts_with_newline } from '../../../../patterns.js';
-import * as b from '../../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import {
 	ELEMENT_IS_NAMESPACED,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE
