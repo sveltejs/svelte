@@ -1,6 +1,7 @@
 /** @import { VariableDeclaration, VariableDeclarator, Expression, CallExpression, Pattern, Identifier } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { Context } from '../types.js' */
+/** @import { ComponentAnalysis } from '../../../types.js' */
 /** @import { Scope } from '../../../scope.js' */
 import { build_fallback, extract_paths } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
@@ -50,23 +51,25 @@ export function VariableDeclaration(node, context) {
 						}
 					}
 				});
+				const to_remove = [b.prop('init', b.id('$$events'), b.id('$$events'))];
+				// we don't want to spread away `$$slots` if `$$slots` is used in the component
+				// otherwise there will be a reference to `$$slots` in the component already
+				// the typecast is fine since `$props` can only be used in a component
+				if (!(/** @type {ComponentAnalysis} */ (context.state.analysis).uses_slots)) {
+					to_remove.unshift(b.prop('init', b.id('$$slots'), b.id('$$slots')));
+				}
 				if (id.type === 'ObjectPattern' && has_rest) {
 					// If a rest pattern is used within an object pattern, we need to ensure we don't expose $$slots or $$events
 					id.properties.splice(
 						id.properties.length - 1,
 						0,
 						// @ts-ignore
-						b.prop('init', b.id('$$slots'), b.id('$$slots')),
-						b.prop('init', b.id('$$events'), b.id('$$events'))
+						...to_remove
 					);
 				} else if (id.type === 'Identifier') {
 					// If $props is referenced as an identifier, we need to ensure we don't expose $$slots or $$events as properties
 					// on the identifier reference
-					id = b.object_pattern([
-						b.prop('init', b.id('$$slots'), b.id('$$slots')),
-						b.prop('init', b.id('$$events'), b.id('$$events')),
-						b.rest(b.id(id.name))
-					]);
+					id = b.object_pattern([...to_remove, b.rest(b.id(id.name))]);
 				}
 				declarations.push(
 					b.declarator(/** @type {Pattern} */ (context.visit(id)), b.id('$$props'))
