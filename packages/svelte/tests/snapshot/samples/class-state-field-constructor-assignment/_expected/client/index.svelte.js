@@ -5,6 +5,11 @@ export default function Class_state_field_constructor_assignment($$anchor, $$pro
 	$.push($$props, true);
 
 	class Foo {
+		constructor() {
+			this.a = 1;
+			$.set(this.#b, 2);
+		}
+
 		#a = $.state();
 
 		get a() {
@@ -16,11 +21,6 @@ export default function Class_state_field_constructor_assignment($$anchor, $$pro
 		}
 
 		#b = $.state();
-
-		constructor() {
-			this.a = 1;
-			$.set(this.#b, 2);
-		}
 	}
 
 	$.pop();

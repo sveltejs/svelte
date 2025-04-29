@@ -3,7 +3,6 @@ import type {
 	Statement,
 	LabeledStatement,
 	Identifier,
-	PrivateIdentifier,
 	Expression,
 	AssignmentExpression,
 	UpdateExpression,
@@ -13,11 +12,10 @@ import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
 import type { SourceLocation } from '#shared';
-import type { StateCreationRuneName } from '../../../../utils.js';
-import type { ClassAnalysis } from './visitors/shared/class-analysis.js';
+import type { ClassAnalysis } from '../shared/types.js';
 
 export interface ClientTransformState extends TransformState {
-	readonly class_analysis: ClassAnalysis | null;
+	readonly class_analysis: ClassAnalysis<Context> | null;
 
 	/**
 	 * `true` if the current lexical scope belongs to a class constructor. this allows
@@ -93,11 +91,6 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly instance_level_snippets: VariableDeclaration[];
 	/** Snippets hoisted to the module */
 	readonly module_level_snippets: VariableDeclaration[];
-}
-
-export interface StateField {
-	kind: StateCreationRuneName;
-	id: PrivateIdentifier;
 }
 
 export type Context = import('zimmerframe').Context<AST.SvelteNode, ClientTransformState>;

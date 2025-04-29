@@ -15,7 +15,7 @@ export function UpdateExpression(node, context) {
 		argument.type === 'MemberExpression' &&
 		argument.object.type === 'ThisExpression' &&
 		argument.property.type === 'PrivateIdentifier' &&
-		context.state.class_analysis?.private_state.has(argument.property.name)
+		context.state.class_analysis?.get_field(argument.property.name, true)
 	) {
 		let fn = '$.update';
 		if (node.prefix) fn += '_pre';

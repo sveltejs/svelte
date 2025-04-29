@@ -57,7 +57,7 @@ function build_assignment(operator, left, right, context) {
 		left.type === 'MemberExpression' &&
 		left.property.type === 'PrivateIdentifier'
 	) {
-		const private_state = context.state.class_analysis?.private_state.get(left.property.name);
+		const private_state = context.state.class_analysis?.get_field(left.property.name, true);
 
 		if (private_state !== undefined) {
 			let value = /** @type {Expression} */ (
@@ -65,7 +65,7 @@ function build_assignment(operator, left, right, context) {
 			);
 
 			const needs_proxy =
-				private_state.kind === '$state' &&
+				private_state?.kind === '$state' &&
 				is_non_coercive_operator(operator) &&
 				should_proxy(value, context.state.scope);
 

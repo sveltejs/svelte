@@ -12,7 +12,10 @@ export function MemberExpression(node, context) {
 		node.object.type === 'ThisExpression' &&
 		node.property.type === 'PrivateIdentifier'
 	) {
-		const field = context.state.private_derived.get(node.property.name);
+		const field = context.state.class_analysis?.get_field(node.property.name, true, [
+			'$derived',
+			'$derived.by'
+		]);
 
 		if (field) {
 			return b.call(node);

@@ -1,0 +1,334 @@
+/** @import { AssignmentExpression, Identifier, Literal, MethodDefinition, PrivateIdentifier, PropertyDefinition, StaticBlock } from 'estree' */
+/** @import { StateField } from '../types.js' */
+/** @import { Context as ClientContext } from '../client/types.js' */
+/** @import { Context as ServerContext } from '../server/types.js' */
+/** @import { StateCreationRuneName } from '../../../../utils.js' */
+/** @import { AssignmentBuilder, ClassAnalysis, StateFieldBuilder, StatefulAssignment, StatefulPropertyDefinition } from './types.js' */
+/** @import { Scope }  from '../../scope.js' */
+import * as b from '#compiler/builders';
+import { once } from '../../../../internal/server/index.js';
+import { is_state_creation_rune, STATE_CREATION_RUNES } from '../../../../utils.js';
+import { regex_invalid_identifier_chars } from '../../patterns.js';
+import { get_rune } from '../../scope.js';
+
+/**
+ * @template {ClientContext | ServerContext} TContext
+ * @param {Array<PropertyDefinition | MethodDefinition | StaticBlock>} body
+ * @param {StateFieldBuilder<TContext>} build_state_field
+ * @param {AssignmentBuilder<TContext>} build_assignment
+ * @returns {ClassAnalysis<TContext>}
+ */
+export function create_class_analysis(body, build_state_field, build_assignment) {
+	/** @type {Map<string, StateField>} */
+	const public_fields = new Map();
+
+	/** @type {Map<string, StateField>} */
+	const private_fields = new Map();
+
+	/** @type {Array<PropertyDefinition | MethodDefinition>} */
+	const new_body = [];
+
+	/**
+	 * Private identifiers in use by this analysis.
+	 * Factoid: Unlike public class fields, private fields _must_ be declared in the class body
+	 * before use. So the following is actually a JavaScript syntax error, which means we can
+	 * be 100% certain we know all private fields after parsing the class body:
+	 *
+	 * ```ts
+	 * class Example {
+	 *   constructor() {
+	 *     this.public = 'foo'; // not a problem!
+	 *     this.#private = 'bar'; // JavaScript parser error
+	 *   }
+	 * }
+	 * ```
+	 * @type {Set<string>}
+	 */
+	const private_ids = new Set();
+
+	/**
+	 * A registry of functions to call to complete body modifications.
+	 * Replacements may insert more than one node to the body. The original
+	 * body should not be modified -- instead, replacers should push new
+	 * nodes to new_body.
+	 *
+	 * @type {Array<() => void>}
+	 */
+	const replacers = [];
+
+	/**
+	 * @param {string} name
+	 * @param {boolean} is_private
+	 * @param {ReadonlyArray<StateCreationRuneName>} [kinds]
+	 */
+	function get_field(name, is_private, kinds = STATE_CREATION_RUNES) {
+		const value = (is_private ? private_fields : public_fields).get(name);
+		if (value && kinds.includes(value.kind)) {
+			return value;
+		}
+	}
+
+	/**
+	 * @param {TContext} context
+	 * @returns {TContext}
+	 */
+	function create_child_context(context) {
+		return {
+			...context,
+			state: {
+				...context.state,
+				class_analysis
+			}
+		};
+	}
+
+	/**
+	 * @param {TContext} context
+	 */
+	function generate_body(context) {
+		const child_context = create_child_context(context);
+		for (const node of body) {
+			const was_registered = register_body_definition(node, child_context);
+			if (!was_registered) {
+				new_body.push(
+					/** @type {PropertyDefinition | MethodDefinition} */ (
+						// @ts-expect-error generics silliness
+						child_context.visit(node, child_context.state)
+					)
+				);
+			}
+		}
+
+		for (const replacer of replacers) {
+			replacer();
+		}
+
+		return new_body;
+	}
+
+	/**
+	 * Important note: It is a syntax error in JavaScript to try to assign to a private class field
+	 * that was not declared in the class body. So there is absolutely no risk of unresolvable conflicts here.
+	 *
+	 * This function will modify the assignment expression passed to it if it is registered as a state field.
+	 * @param {AssignmentExpression} node
+	 * @param {TContext} context
+	 */
+	function register_assignment(node, context) {
+		const child_context = create_child_context(context);
+		if (
+			!(
+				node.operator === '=' &&
+				node.left.type === 'MemberExpression' &&
+				node.left.object.type === 'ThisExpression' &&
+				node.left.property.type === 'Identifier'
+			)
+		) {
+			return;
+		}
+
+		const name = get_name(node.left.property);
+		if (!name) {
+			return;
+		}
+
+		const parsed = parse_stateful_assignment(node, child_context.state.scope);
+		if (!parsed) {
+			return;
+		}
+		const { stateful_assignment, rune } = parsed;
+
+		const id = deconflict(name);
+		const field = { kind: rune, id };
+		public_fields.set(name, field);
+
+		const replacer = () => {
+			const nodes = build_state_field({
+				is_private: false,
+				field,
+				node: stateful_assignment,
+				context: child_context
+			});
+			if (!nodes) {
+				return;
+			}
+			new_body.push(...nodes);
+		};
+		replacers.push(replacer);
+
+		build_assignment({
+			node: stateful_assignment,
+			field,
+			context: child_context
+		});
+	}
+
+	/**
+	 * @param {PropertyDefinition | MethodDefinition | StaticBlock} node
+	 * @param {TContext} child_context
+	 * @returns {boolean} if this node is stateful and was registered
+	 */
+	function register_body_definition(node, child_context) {
+		if (node.type === 'MethodDefinition' && node.kind === 'constructor') {
+			// life is easier to reason about if we've visited the constructor
+			// and registered its public state field before we start building
+			// anything else
+			replacers.unshift(() => {
+				new_body.push(
+					/** @type {MethodDefinition} */ (
+						// @ts-expect-error generics silliness
+						child_context.visit(node, child_context.state)
+					)
+				);
+			});
+			return true;
+		}
+
+		if (
+			!(
+				(node.type === 'PropertyDefinition' || node.type === 'MethodDefinition') &&
+				(node.key.type === 'Identifier' ||
+					node.key.type === 'PrivateIdentifier' ||
+					node.key.type === 'Literal')
+			)
+		) {
+			return false;
+		}
+
+		/*
+		 * We don't know if the node is stateful yet, but we still need to register some details.
+		 * For example: If the node is a private identifier, we could accidentally conflict with it later
+		 * if we create a private field for public state (as would happen in this example:)
+		 *
+		 * ```ts
+		 * class Foo {
+		 *   #count = 0;
+		 *   count = $state(0); // would become #count if we didn't know about the private field above
+		 * }
+		 */
+
+		const name = get_name(node.key);
+		if (!name) {
+			return false;
+		}
+
+		const is_private = node.key.type === 'PrivateIdentifier';
+		if (is_private) {
+			private_ids.add(name);
+		}
+
+		const parsed = prop_def_is_stateful(node, child_context.state.scope);
+		if (!parsed) {
+			return false;
+		}
+		const { stateful_prop_def, rune } = parsed;
+
+		let field;
+		if (is_private) {
+			field = {
+				kind: rune,
+				id: /** @type {PrivateIdentifier} */ (stateful_prop_def.key)
+			};
+			private_fields.set(name, field);
+		} else {
+			// We can't set the ID until we've identified all of the private state fields,
+			// otherwise we might conflict with them. After registering all property definitions,
+			// call `finalize_property_definitions` to populate the IDs. So long as we don't
+			// access the ID before the end of this loop, we're fine!
+			const id = once(() => deconflict(name));
+			field = {
+				kind: rune,
+				get id() {
+					return id();
+				}
+			};
+			public_fields.set(name, field);
+		}
+
+		const replacer = () => {
+			const nodes = build_state_field({
+				is_private,
+				field,
+				node: stateful_prop_def,
+				context: child_context
+			});
+			if (!nodes) {
+				return;
+			}
+			new_body.push(...nodes);
+		};
+		replacers.push(replacer);
+
+		return true;
+	}
+
+	/**
+	 * @param {string} name
+	 * @returns {PrivateIdentifier}
+	 */
+	function deconflict(name) {
+		let deconflicted = name;
+		while (private_ids.has(deconflicted)) {
+			deconflicted = '_' + deconflicted;
+		}
+
+		private_ids.add(deconflicted);
+		return b.private_id(deconflicted);
+	}
+
+	/**
+	 * @param {Identifier | PrivateIdentifier | Literal} node
+	 */
+	function get_name(node) {
+		if (node.type === 'Literal') {
+			let name = node.value?.toString().replace(regex_invalid_identifier_chars, '_');
+
+			// the above could generate conflicts because it has to generate a valid identifier
+			// so stuff like `0` and `1` or `state%` and `state^` will result in the same string
+			// so we have to de-conflict. We can only check `public_fields` because private state
+			// can't have literal keys
+			while (name && public_fields.has(name)) {
+				name = '_' + name;
+			}
+			return name;
+		} else {
+			return node.name;
+		}
+	}
+
+	const class_analysis = {
+		get_field,
+		generate_body,
+		register_assignment
+	};
+
+	return class_analysis;
+}
+
+/**
+ * `get_rune` is really annoying because it really guarantees this already
+ * we just need this to tell the type system about it
+ * @param {AssignmentExpression} node
+ * @param {Scope} scope
+ * @returns {{ stateful_assignment: StatefulAssignment, rune: StateCreationRuneName } | null}
+ */
+function parse_stateful_assignment(node, scope) {
+	const rune = get_rune(node.right, scope);
+	if (!rune || !is_state_creation_rune(rune)) {
+		return null;
+	}
+	return { stateful_assignment: /** @type {StatefulAssignment} */ (node), rune };
+}
+
+/**
+ * @param {PropertyDefinition | MethodDefinition} node
+ * @param {Scope} scope
+ * @returns {{ stateful_prop_def: StatefulPropertyDefinition, rune: StateCreationRuneName } | null}
+ */
+function prop_def_is_stateful(node, scope) {
+	const rune = get_rune(node.value, scope);
+	if (!rune || !is_state_creation_rune(rune)) {
+		return null;
+	}
+	return { stateful_prop_def: /** @type {StatefulPropertyDefinition} */ (node), rune };
+}
