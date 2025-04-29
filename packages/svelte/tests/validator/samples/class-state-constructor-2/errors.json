@@ -1,0 +1,14 @@
+[
+	{
+		"code": "constructor_state_reassignment",
+		"message": "Cannot redeclare stateful field `count` in the constructor. The field was originally declared here: `(unknown):3:2`",
+		"start": {
+			"line": 5,
+			"column": 2
+		},
+		"end": {
+			"line": 5,
+			"column": 24
+		}
+	}
+]

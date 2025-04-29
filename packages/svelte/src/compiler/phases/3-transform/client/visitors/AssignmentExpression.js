@@ -17,7 +17,11 @@ import { validate_mutation } from './shared/utils.js';
  * @param {Context} context
  */
 export function AssignmentExpression(node, context) {
-	context.state.class_analysis?.register_assignment(node, context);
+	const stripped_node = context.state.class_analysis?.register_assignment(node, context);
+	if (stripped_node) {
+		return stripped_node;
+	}
+
 	const expression = /** @type {Expression} */ (
 		visit_assignment_expression(node, context, build_assignment) ?? context.next()
 	);

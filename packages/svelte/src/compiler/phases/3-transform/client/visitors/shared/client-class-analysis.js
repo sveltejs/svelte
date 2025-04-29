@@ -13,7 +13,7 @@ import { should_proxy } from '../../utils.js';
 export function create_client_class_analysis(body) {
 	/** @type {StateFieldBuilder<Context>} */
 	function build_state_field({ is_private, field, node, context }) {
-		let original_id = node.type === 'AssignmentExpression' ? node.left : node.key;
+		let original_id = node.type === 'AssignmentExpression' ? node.left.property : node.key;
 		let value;
 		if (node.type === 'AssignmentExpression') {
 			// if there's no call expression, this is state that's created in the constructor.
@@ -51,10 +51,16 @@ export function create_client_class_analysis(body) {
 
 	/** @type {AssignmentBuilder<Context>} */
 	function build_assignment({ field, node, context }) {
-		// ...swap out the assignment to go directly against the private field
-		node.left.property = field.id;
-		// ...and swap out the assignment's value for the state field init
-		node.right = build_init_value(field.kind, node.right.arguments[0], context);
+		return {
+			...node,
+			left: {
+				...node.left,
+				// ...swap out the assignment to go directly against the private field
+				property: field.id
+			},
+			// ...and swap out the assignment's value for the state field init
+			right: build_init_value(field.kind, node.right.arguments[0], context)
+		};
 	}
 
 	return create_class_analysis(body, build_state_field, build_assignment);
@@ -67,7 +73,9 @@ export function create_client_class_analysis(body) {
  * @param {Context} context
  */
 function build_init_value(kind, arg, context) {
-	const init = /** @type {Expression} **/ (context.visit(arg, context.state));
+	const init = /** @type {Expression} **/ (
+		context.visit(arg, { ...context.state, in_constructor: false })
+	);
 
 	switch (kind) {
 		case '$state':

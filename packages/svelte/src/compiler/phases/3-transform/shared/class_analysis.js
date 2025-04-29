@@ -107,12 +107,9 @@ export function create_class_analysis(body, build_state_field, build_assignment)
 	}
 
 	/**
-	 * Important note: It is a syntax error in JavaScript to try to assign to a private class field
-	 * that was not declared in the class body. So there is absolutely no risk of unresolvable conflicts here.
-	 *
-	 * This function will modify the assignment expression passed to it if it is registered as a state field.
 	 * @param {AssignmentExpression} node
 	 * @param {TContext} context
+	 * @returns {AssignmentExpression | null} The node, if `register_assignment` handled its transformation.
 	 */
 	function register_assignment(node, context) {
 		const child_context = create_child_context(context);
@@ -121,30 +118,46 @@ export function create_class_analysis(body, build_state_field, build_assignment)
 				node.operator === '=' &&
 				node.left.type === 'MemberExpression' &&
 				node.left.object.type === 'ThisExpression' &&
-				node.left.property.type === 'Identifier'
+				(node.left.property.type === 'Identifier' ||
+					node.left.property.type === 'PrivateIdentifier')
 			)
 		) {
-			return;
+			return null;
 		}
 
 		const name = get_name(node.left.property);
 		if (!name) {
-			return;
+			return null;
 		}
 
 		const parsed = parse_stateful_assignment(node, child_context.state.scope);
 		if (!parsed) {
-			return;
+			return null;
 		}
 		const { stateful_assignment, rune } = parsed;
 
-		const id = deconflict(name);
-		const field = { kind: rune, id };
-		public_fields.set(name, field);
+		const is_private = stateful_assignment.left.property.type === 'PrivateIdentifier';
+
+		let field;
+		if (is_private) {
+			field = {
+				kind: rune,
+				id: /** @type {PrivateIdentifier} */ (stateful_assignment.left.property)
+			};
+			private_fields.set(name, field);
+		} else {
+			field = {
+				kind: rune,
+				// it's safe to do this upfront now because we're guaranteed to already know about all private
+				// identifiers (they had to have been declared at the class root, before we visited the constructor)
+				id: deconflict(name)
+			};
+			public_fields.set(name, field);
+		}
 
 		const replacer = () => {
 			const nodes = build_state_field({
-				is_private: false,
+				is_private,
 				field,
 				node: stateful_assignment,
 				context: child_context
@@ -156,9 +169,9 @@ export function create_class_analysis(body, build_state_field, build_assignment)
 		};
 		replacers.push(replacer);
 
-		build_assignment({
-			node: stateful_assignment,
+		return build_assignment({
 			field,
+			node: stateful_assignment,
 			context: child_context
 		});
 	}
@@ -219,7 +232,20 @@ export function create_class_analysis(body, build_state_field, build_assignment)
 
 		const parsed = prop_def_is_stateful(node, child_context.state.scope);
 		if (!parsed) {
-			return false;
+			// this isn't a stateful field definition, but if could become one in the constructor -- so we register
+			// it, but conditionally -- so that if it's added as a field in the constructor (which causes us to create)
+			// a field definition for it), we don't end up with a duplicate definition (this one, plus the one we create)
+			replacers.push(() => {
+				if (!get_field(name, is_private)) {
+					new_body.push(
+						/** @type {PropertyDefinition | MethodDefinition} */ (
+							// @ts-expect-error generics silliness
+							child_context.visit(node, child_context.state)
+						)
+					);
+				}
+			});
+			return true;
 		}
 		const { stateful_prop_def, rune } = parsed;
 

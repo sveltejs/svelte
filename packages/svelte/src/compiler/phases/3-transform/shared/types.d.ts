@@ -34,7 +34,7 @@ export type AssignmentBuilderParams<TContext extends ServerContext | ClientConte
 	context: TContext;
 };
 
-export type AssignmentBuilder<TContext  extends ServerContext | ClientContext> = (params: AssignmentBuilderParams<TContext>) => void;
+export type AssignmentBuilder<TContext  extends ServerContext | ClientContext> = (params: AssignmentBuilderParams<TContext>) => AssignmentExpression;
 
 export type ClassAnalysis<TContext extends ServerContext | ClientContext> = {
 	/**
@@ -59,5 +59,5 @@ export type ClassAnalysis<TContext extends ServerContext | ClientContext> = {
 	 * a state field on the class. If it is, it registers that state field and modifies the
 	 * assignment expression.
 	 */
-	register_assignment: (node: AssignmentExpression, context: TContext) => void;
+	register_assignment: (node: AssignmentExpression, context: TContext) => AssignmentExpression | null;
 }
