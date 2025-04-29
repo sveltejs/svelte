@@ -17,7 +17,7 @@ import { validate_mutation } from './shared/utils.js';
  * @param {Context} context
  */
 export function AssignmentExpression(node, context) {
-	const stripped_node = context.state.class_analysis?.register_assignment(node, context);
+	const stripped_node = context.state.class_analysis?.generate_assignment(node, context);
 	if (stripped_node) {
 		return stripped_node;
 	}

@@ -1,4 +1,5 @@
 /** @import { AST, ExpressionMetadata } from '#compiler' */
+
 /**
  * All nodes that can appear elsewhere than the top level, have attributes and can contain children
  */

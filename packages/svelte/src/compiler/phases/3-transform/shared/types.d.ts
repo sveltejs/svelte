@@ -1,4 +1,14 @@
-import type { AssignmentExpression, CallExpression, Identifier, MemberExpression, PropertyDefinition, MethodDefinition, PrivateIdentifier, ThisExpression } from 'estree';
+import type {
+	AssignmentExpression,
+	CallExpression,
+	Identifier,
+	MemberExpression,
+	PropertyDefinition,
+	MethodDefinition,
+	PrivateIdentifier,
+	ThisExpression,
+	Literal
+} from 'estree';
 import type { StateField } from '../types';
 import type { Context as ServerContext } from '../server/types';
 import type { Context as ClientContext } from '../client/types';
@@ -7,13 +17,13 @@ import type { StateCreationRuneName } from '../../../../utils';
 export type StatefulAssignment = AssignmentExpression & {
 	left: MemberExpression & {
 		object: ThisExpression;
-		property: Identifier | PrivateIdentifier
+		property: Identifier | PrivateIdentifier | Literal;
 	};
 	right: CallExpression;
 };
 
 export type StatefulPropertyDefinition = PropertyDefinition & {
-	key: Identifier | PrivateIdentifier;
+	key: Identifier | PrivateIdentifier | Literal;
 	value: CallExpression;
 };
 
@@ -34,7 +44,9 @@ export type AssignmentBuilderParams<TContext extends ServerContext | ClientConte
 	context: TContext;
 };
 
-export type AssignmentBuilder<TContext  extends ServerContext | ClientContext> = (params: AssignmentBuilderParams<TContext>) => AssignmentExpression;
+export type AssignmentBuilder<TContext extends ServerContext | ClientContext> = (
+	params: AssignmentBuilderParams<TContext>
+) => AssignmentExpression;
 
 export type ClassAnalysis<TContext extends ServerContext | ClientContext> = {
 	/**
@@ -43,7 +55,11 @@ export type ClassAnalysis<TContext extends ServerContext | ClientContext> = {
 	 * @param kinds - What kinds of state creation runes you're looking for, eg. only '$derived.by'.
 	 * @returns The field if it exists and matches the given criteria, or null.
 	 */
-	get_field: (name: string, is_private: boolean, kinds?: Array<StateCreationRuneName>) => StateField | undefined;
+	get_field: (
+		name: string,
+		is_private: boolean,
+		kinds?: Array<StateCreationRuneName>
+	) => StateField | undefined;
 
 	/**
 	 * Given the body of a class, generate a new body with stateful fields.
@@ -59,5 +75,8 @@ export type ClassAnalysis<TContext extends ServerContext | ClientContext> = {
 	 * a state field on the class. If it is, it registers that state field and modifies the
 	 * assignment expression.
 	 */
-	register_assignment: (node: AssignmentExpression, context: TContext) => AssignmentExpression | null;
-}
+	generate_assignment: (
+		node: AssignmentExpression,
+		context: TContext
+	) => AssignmentExpression | null;
+};

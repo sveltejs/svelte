@@ -19,13 +19,25 @@ import { get_rune } from '../../scope.js';
  * @returns {ClassAnalysis<TContext>}
  */
 export function create_class_analysis(body, build_state_field, build_assignment) {
-	/** @type {Map<string, StateField>} */
+	/**
+	 * Public, stateful fields.
+	 * @type {Map<string, StateField>}
+	 */
 	const public_fields = new Map();
 
-	/** @type {Map<string, StateField>} */
+	/**
+	 * Private, stateful fields. These are namespaced separately because
+	 * public and private fields can have the same name in the AST -- ex.
+	 * `count` and `#count` are both named `count` -- and because it's useful
+	 * in a couple of cases to be able to check for only one or the other.
+	 * @type {Map<string, StateField>}
+	 */
 	const private_fields = new Map();
 
-	/** @type {Array<PropertyDefinition | MethodDefinition>} */
+	/**
+	 * Accumulates nodes for the new class body.
+	 * @type {Array<PropertyDefinition | MethodDefinition>}
+	 */
 	const new_body = [];
 
 	/**
@@ -57,6 +69,8 @@ export function create_class_analysis(body, build_state_field, build_assignment)
 	const replacers = [];
 
 	/**
+	 * Get a state field by name.
+	 *
 	 * @param {string} name
 	 * @param {boolean} is_private
 	 * @param {ReadonlyArray<StateCreationRuneName>} [kinds]
@@ -69,20 +83,30 @@ export function create_class_analysis(body, build_state_field, build_assignment)
 	}
 
 	/**
+	 * Create a child context that makes sense for passing to the child analyzers.
 	 * @param {TContext} context
 	 * @returns {TContext}
 	 */
 	function create_child_context(context) {
+		const state = {
+			...context.state,
+			class_analysis
+		};
+		// @ts-expect-error - I can't find a way to make TypeScript happy with these
+		const visit = (node, state_override) => context.visit(node, { ...state, ...state_override });
+		// @ts-expect-error - I can't find a way to make TypeScript happy with these
+		const next = (state_override) => context.next({ ...state, ...state_override });
 		return {
 			...context,
-			state: {
-				...context.state,
-				class_analysis
-			}
+			state,
+			visit,
+			next
 		};
 	}
 
 	/**
+	 * Generate a new body for the class. Ensure there is a visitor for AssignmentExpression that
+	 * calls `generate_assignment` to capture any stateful fields declared in the constructor.
 	 * @param {TContext} context
 	 */
 	function generate_body(context) {
@@ -107,11 +131,16 @@ export function create_class_analysis(body, build_state_field, build_assignment)
 	}
 
 	/**
+	 * Given an assignment expression, check to see if that assignment expression declares
+	 * a stateful field. If it does, register that field and then return the processed
+	 * assignment expression. If an assignment expression is returned from this function,
+	 * it should be considered _fully processed_ and should replace the existing assignment
+	 * expression node.
 	 * @param {AssignmentExpression} node
 	 * @param {TContext} context
 	 * @returns {AssignmentExpression | null} The node, if `register_assignment` handled its transformation.
 	 */
-	function register_assignment(node, context) {
+	function generate_assignment(node, context) {
 		const child_context = create_child_context(context);
 		if (
 			!(
@@ -119,7 +148,8 @@ export function create_class_analysis(body, build_state_field, build_assignment)
 				node.left.type === 'MemberExpression' &&
 				node.left.object.type === 'ThisExpression' &&
 				(node.left.property.type === 'Identifier' ||
-					node.left.property.type === 'PrivateIdentifier')
+					node.left.property.type === 'PrivateIdentifier' ||
+					node.left.property.type === 'Literal')
 			)
 		) {
 			return null;
@@ -177,6 +207,8 @@ export function create_class_analysis(body, build_state_field, build_assignment)
 	}
 
 	/**
+	 * Register a class body definition.
+	 *
 	 * @param {PropertyDefinition | MethodDefinition | StaticBlock} node
 	 * @param {TContext} child_context
 	 * @returns {boolean} if this node is stateful and was registered
@@ -325,7 +357,7 @@ export function create_class_analysis(body, build_state_field, build_assignment)
 	const class_analysis = {
 		get_field,
 		generate_body,
-		register_assignment
+		generate_assignment
 	};
 
 	return class_analysis;

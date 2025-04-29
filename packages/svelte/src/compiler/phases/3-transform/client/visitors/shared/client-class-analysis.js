@@ -56,7 +56,10 @@ export function create_client_class_analysis(body) {
 			left: {
 				...node.left,
 				// ...swap out the assignment to go directly against the private field
-				property: field.id
+				property: field.id,
+				// this could be a transformation from `this.[1]` to `this.#_` (the private field we generated)
+				// -- private fields are never computed
+				computed: false
 			},
 			// ...and swap out the assignment's value for the state field init
 			right: build_init_value(field.kind, node.right.arguments[0], context)
@@ -67,15 +70,14 @@ export function create_client_class_analysis(body) {
 }
 
 /**
- *
  * @param {StateCreationRuneName} kind
  * @param {Expression | SpreadElement} arg
  * @param {Context} context
  */
 function build_init_value(kind, arg, context) {
-	const init = /** @type {Expression} **/ (
-		context.visit(arg, { ...context.state, in_constructor: false })
-	);
+	const init = arg
+		? /** @type {Expression} **/ (context.visit(arg, { ...context.state, in_constructor: false }))
+		: b.void0;
 
 	switch (kind) {
 		case '$state':

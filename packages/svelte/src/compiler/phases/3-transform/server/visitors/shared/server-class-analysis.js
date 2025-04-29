@@ -23,11 +23,9 @@ export function create_server_class_analysis(body) {
 			// value can be assigned in the constructor.
 			value = null;
 		} else if (field.kind !== '$derived' && field.kind !== '$derived.by') {
-			return [/** @type {PropertyDefinition} */ (context.visit(node, context.state))];
+			return [/** @type {PropertyDefinition} */ (context.visit(node))];
 		} else {
-			const init = /** @type {Expression} **/ (
-				context.visit(node.value.arguments[0], context.state)
-			);
+			const init = /** @type {Expression} **/ (context.visit(node.value.arguments[0]));
 			value =
 				field.kind === '$derived.by' ? b.call('$.once', init) : b.call('$.once', b.thunk(init));
 		}
@@ -73,7 +71,8 @@ export function create_server_class_analysis(body) {
 			left: {
 				...node.left,
 				// ...swap out the assignment to go directly against the private field
-				property: field.id
+				property: field.id,
+				computed: false
 			},
 			// ...and swap out the assignment's value for the state field init
 			right: build_init_value(field.kind, node.right.arguments[0], context)
@@ -90,7 +89,7 @@ export function create_server_class_analysis(body) {
  * @param {Context} context
  */
 function build_init_value(kind, arg, context) {
-	const init = /** @type {Expression} **/ (context.visit(arg, context.state));
+	const init = arg ? /** @type {Expression} **/ (context.visit(arg)) : b.void0;
 
 	switch (kind) {
 		case '$state':

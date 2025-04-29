@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, PropertyDefinition, Expression } from 'estree' */
+/** @import { AssignmentExpression, PropertyDefinition, Expression, Identifier, PrivateIdentifier, Literal, MethodDefinition } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../../types' */
 /** @import { StateCreationRuneName } from '../../../../../utils.js' */
@@ -15,9 +15,11 @@ import { is_state_creation_rune } from '../../../../../utils.js';
 const reassignable_assignments = new Set(['$state', '$state.raw', 'regular']);
 
 export class ClassAnalysis {
-	// TODO: Probably need to include property definitions here too
 	/** @type {Map<string, PropertyAssignmentDetails>} */
-	property_assignments = new Map();
+	#public_assignments = new Map();
+
+	/** @type {Map<string, PropertyAssignmentDetails>} */
+	#private_assignments = new Map();
 
 	/**
 	 * Determines if the node is a valid assignment to a class property, and if so,
@@ -30,30 +32,46 @@ export class ClassAnalysis {
 		let name;
 		/** @type {PropertyAssignmentType} */
 		let type;
+		/** @type {boolean} */
+		let is_private;
 
 		if (node.type === 'AssignmentExpression') {
 			if (!this.is_class_property_assignment_at_constructor_root(node, context.path)) {
 				return;
 			}
-			name = node.left.property.name;
-			type = this.#get_assignment_type(node, context);
 
-			this.#check_for_conflicts(node, name, type);
+			let maybe_name = get_name_for_identifier(node.left.property);
+			if (!maybe_name) {
+				return;
+			}
+
+			name = maybe_name;
+			type = this.#get_assignment_type(node, context);
+			is_private = node.left.property.type === 'PrivateIdentifier';
+
+			this.#check_for_conflicts(node, name, type, is_private);
 		} else {
 			if (!this.#is_assigned_property(node)) {
 				return;
 			}
 
-			name = node.key.name;
+			let maybe_name = get_name_for_identifier(node.key);
+			if (!maybe_name) {
+				return;
+			}
+
+			name = maybe_name;
 			type = this.#get_assignment_type(node, context);
+			is_private = node.key.type === 'PrivateIdentifier';
 
 			// we don't need to check for conflicts here because they're not possible yet
 		}
 
 		// we don't have to validate anything other than conflicts here, because the rune placement rules
 		// catch all of the other weirdness.
-		if (!this.property_assignments.has(name)) {
-			this.property_assignments.set(name, { type, node });
+		const map = is_private ? this.#private_assignments : this.#public_assignments;
+		if (!map.has(name)) {
+			map.set(name, { type, node });
 		}
 	}
 
@@ -61,7 +79,7 @@ export class ClassAnalysis {
 	 * @template {AST.SvelteNode} T
 	 * @param {AST.SvelteNode} node
 	 * @param {T[]} path
-	 * @returns {node is AssignmentExpression & { left: { type: 'MemberExpression' } & { object: { type: 'ThisExpression' }; property: { type: 'Identifier' | 'PrivateIdentifier' } } }}
+	 * @returns {node is AssignmentExpression & { left: { type: 'MemberExpression' } & { object: { type: 'ThisExpression' }; property: { type: 'Identifier' | 'PrivateIdentifier' | 'Literal' } } }}
 	 */
 	is_class_property_assignment_at_constructor_root(node, path) {
 		if (
@@ -71,7 +89,8 @@ export class ClassAnalysis {
 				node.left.type === 'MemberExpression' &&
 				node.left.object.type === 'ThisExpression' &&
 				(node.left.property.type === 'Identifier' ||
-					node.left.property.type === 'PrivateIdentifier')
+					node.left.property.type === 'PrivateIdentifier' ||
+					node.left.property.type === 'Literal')
 			)
 		) {
 			return false;
@@ -89,11 +108,13 @@ export class ClassAnalysis {
 	 * We only care about properties that have values assigned to them -- if they don't,
 	 * they can't be a conflict for state declared in the constructor.
 	 * @param {PropertyDefinition} node
-	 * @returns {node is PropertyDefinition & { key: { type: 'PrivateIdentifier' | 'Identifier' }; value: Expression; static: false; computed: false }}
+	 * @returns {node is PropertyDefinition & { key: { type: 'PrivateIdentifier' | 'Identifier' | 'Literal' }; value: Expression; static: false; computed: false }}
 	 */
 	#is_assigned_property(node) {
 		return (
-			(node.key.type === 'PrivateIdentifier' || node.key.type === 'Identifier') &&
+			(node.key.type === 'PrivateIdentifier' ||
+				node.key.type === 'Identifier' ||
+				node.key.type === 'Literal') &&
 			Boolean(node.value) &&
 			!node.static &&
 			!node.computed
@@ -107,9 +128,10 @@ export class ClassAnalysis {
 	 * @param {AssignmentExpression} node
 	 * @param {string} name
 	 * @param {PropertyAssignmentType} type
+	 * @param {boolean} is_private
 	 */
-	#check_for_conflicts(node, name, type) {
-		const existing = this.property_assignments.get(name);
+	#check_for_conflicts(node, name, type, is_private) {
+		const existing = (is_private ? this.#private_assignments : this.#public_assignments).get(name);
 		if (!existing) {
 			return;
 		}
@@ -139,4 +161,12 @@ export class ClassAnalysis {
 		// -- this is ok because the rune placement rules will throw if they're invalid.
 		return 'regular';
 	}
+}
+
+/**
+ *
+ * @param {PrivateIdentifier | Identifier | Literal} node
+ */
+function get_name_for_identifier(node) {
+	return node.type === 'Literal' ? node.value?.toString() : node.name;
 }
