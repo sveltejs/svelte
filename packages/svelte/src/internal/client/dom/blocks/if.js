@@ -57,6 +57,7 @@ export function if_block(node, fn, [root_index, hydrate_index] = [0, 0]) {
 		if (hydrating && hydrate_index !== -1) {
 			if (root_index === 0) {
 				const data = /** @type {Comment} */ (anchor).data;
+				if (!data) return;
 				if (data === HYDRATION_START) {
 					hydrate_index = 0;
 				} else if (data === HYDRATION_START_ELSE) {
