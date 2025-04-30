@@ -1,7 +1,7 @@
 import { DEV } from 'esm-env';
 import { hydrating, set_hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
-import { create_event, delegate } from './events.js';
+import { call_event_handler, create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
 import { LOADING_ATTR_SYMBOL } from '#client/constants';
@@ -376,7 +376,7 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 					 * @param {Event} evt
 					 */
 					function handle(evt) {
-						current[key].call(this, evt);
+						call_event_handler(current[key], this, evt);
 					}
 
 					current[event_handle_key] = create_event(event_name, element, handle, opts);

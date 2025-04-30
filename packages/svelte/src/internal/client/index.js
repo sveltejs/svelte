@@ -37,7 +37,13 @@ export {
 	STYLE
 } from './dom/elements/attributes.js';
 export { set_class } from './dom/elements/class.js';
-export { apply, event, delegate, replay_events } from './dom/elements/events.js';
+export {
+	apply,
+	call_event_handler,
+	event,
+	delegate,
+	replay_events
+} from './dom/elements/events.js';
 export { autofocus, remove_textarea_child } from './dom/elements/misc.js';
 export { set_style } from './dom/elements/style.js';
 export { animation, transition } from './dom/elements/transitions.js';

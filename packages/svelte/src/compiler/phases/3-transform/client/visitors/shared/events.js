@@ -151,7 +151,7 @@ export function build_event_handler(node, metadata, context) {
 	}
 
 	// wrap the handler in a function, so the expression is re-evaluated for each event
-	let call = b.call(b.member(handler, 'apply', false, true), b.this, b.id('$$args'));
+	let call = b.call('$.call_event_handler', handler, b.this, b.id('$$evt'), b.id('$$data'));
 
 	if (dev) {
 		const loc = locator(/** @type {number} */ (node.start));
@@ -165,7 +165,8 @@ export function build_event_handler(node, metadata, context) {
 			'$.apply',
 			b.thunk(handler),
 			b.this,
-			b.id('$$args'),
+			b.id('$$evt'),
+			b.id('$$data'),
 			b.id(context.state.analysis.name),
 			loc && b.array([b.literal(loc.line), b.literal(loc.column)]),
 			has_side_effects(node) && b.true,
@@ -173,7 +174,7 @@ export function build_event_handler(node, metadata, context) {
 		);
 	}
 
-	return b.function(null, [b.rest(b.id('$$args'))], b.block([b.stmt(call)]));
+	return b.function(null, [b.id('$$evt'), b.rest(b.id('$$data'))], b.block([b.stmt(call)]));
 }
 
 /**

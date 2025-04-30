@@ -39,9 +39,11 @@ type Booleanish = boolean | 'true' | 'false';
 // Event Handler Types
 // ----------------------------------------------------------------------
 
-type EventHandler<E extends Event = Event, T extends EventTarget = Element> = (
-	event: E & { currentTarget: EventTarget & T }
-) => any;
+type EventHandler<E extends Event = Event, T extends EventTarget = Element> =
+	| ((event: E & { currentTarget: EventTarget & T }) => any)
+	| {
+			handleEvent: (event: E & { currentTarget: EventTarget & T }) => any;
+	  };
 
 export type ClipboardEventHandler<T extends EventTarget> = EventHandler<ClipboardEvent, T>;
 export type CompositionEventHandler<T extends EventTarget> = EventHandler<CompositionEvent, T>;
