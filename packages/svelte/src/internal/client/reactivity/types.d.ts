@@ -74,3 +74,5 @@ export interface Effect extends Reaction {
 export type Source<V = unknown> = Value<V>;
 
 export type MaybeSource<T = unknown> = T | Source<T>;
+
+export type ValueNode = { s: Source, n: null | ValueNode, v: any };

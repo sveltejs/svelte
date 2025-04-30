@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Source, Value } from '#client' */
+/** @import { Derived, Effect, Source, Value, ValueNode } from '#client' */
 import { DEV } from 'esm-env';
 import {
 	active_reaction,
@@ -37,7 +37,70 @@ import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 
 export let inspect_effects = new Set();
-export const old_values = new Map();
+/** @type { null | ValueNode } */
+export let old_value_node = null;
+/** @type { null | ValueNode } */
+export let last_old_value_node = null;
+
+export function clear_old_value_node() {
+	old_value_node = null;
+	last_old_value_node = null;
+}
+
+/**
+ * @param {Source} signal
+ */
+export function get_old_value_node(signal) {
+	let current = old_value_node;
+	while (current !== null) {
+		if (current.s === signal) {
+			return current;
+		}
+		current = current.n;
+	}
+	return null;
+}
+
+/**
+ * @param {Source} signal
+ * @param {any} value
+ */
+function create_value_node(signal, value) {
+	return {
+		s: signal,
+		v: value,
+		n: null
+	};
+}
+
+/**
+ * @param {Source} signal
+ * @param {any} value
+ */
+function set_old_value(signal, value) {
+	const value_node = get_old_value_node(signal);
+	if (value_node !== null) {
+		value_node.v = value;
+		return;
+	}
+	add_old_value(signal, value);
+}
+
+/**
+ * @param {Source} signal
+ * @param {any} value
+ */
+function add_old_value(signal, value) {
+	const value_node = create_value_node(signal, value);
+
+	if (last_old_value_node === null) {
+		last_old_value_node = value_node;
+		old_value_node = value_node;
+	} else {
+		last_old_value_node.n = value_node;
+		last_old_value_node = value_node;
+	}
+}
 
 /**
  * @param {Set<any>} v
@@ -155,9 +218,9 @@ export function internal_set(source, value) {
 		var old_value = source.v;
 
 		if (is_destroying_effect) {
-			old_values.set(source, value);
+			set_old_value(source, value);
 		} else {
-			old_values.set(source, old_value);
+			add_old_value(source, old_value);
 		}
 
 		source.v = value;

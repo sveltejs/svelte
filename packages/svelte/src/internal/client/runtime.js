@@ -26,7 +26,7 @@ import {
 	EFFECT_IS_UPDATING
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
-import { internal_set, old_values } from './reactivity/sources.js';
+import { clear_old_value_node, internal_set, get_old_value_node } from './reactivity/sources.js';
 import { destroy_derived_effects, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { FILENAME } from '../../constants.js';
@@ -676,7 +676,7 @@ function flush_queued_root_effects() {
 				var collected_effects = process_effects(root_effects[i]);
 				flush_queued_effects(collected_effects);
 			}
-			old_values.clear();
+			clear_old_value_node();
 		}
 	} finally {
 		is_flushing = false;
@@ -928,8 +928,11 @@ export function get(signal) {
 		}
 	}
 
-	if (is_destroying_effect && old_values.has(signal)) {
-		return old_values.get(signal);
+	if (is_destroying_effect) {
+		const value_node = get_old_value_node(signal);
+		if (value_node !== null) {
+			return value_node.v;
+		}
 	}
 
 	return signal.v;
