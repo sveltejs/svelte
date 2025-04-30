@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-The migration warning when slots cannot be migrated due to naming conflicts now states the name of the slot causing the issue
+fix: improve error message for migration errors when slot would be renamed
