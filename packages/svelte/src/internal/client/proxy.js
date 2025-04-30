@@ -17,19 +17,28 @@ import { get_stack } from './dev/tracing.js';
 import { tracing_mode_flag } from '../flags/index.js';
 
 /**
+ * @param {unknown} value
+ * @returns {boolean}
+ */
+function should_proxy(value) {
+	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {
+		return false;
+	}
+	const prototype = get_prototype_of(value);
+	if (prototype !== object_prototype && prototype !== array_prototype) {
+		return false;
+	}
+	return true;
+}
+
+/**
  * @template T
  * @param {T} value
  * @returns {T}
  */
 export function proxy(value) {
 	// if non-proxyable, or is already a proxy, return `value`
-	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {
-		return value;
-	}
-
-	const prototype = get_prototype_of(value);
-
-	if (prototype !== object_prototype && prototype !== array_prototype) {
+	if (!should_proxy(value)) {
 		return value;
 	}
 
@@ -289,10 +298,12 @@ export function proxy(value) {
  * @returns {T | void}
  */
 export function return_proxy(value) {
-	const res = proxy(value);
-	if (res !== value || (typeof value === 'object' && value !== null && STATE_SYMBOL in value)) {
+	if (
+		!should_proxy(value) &&
+		!(typeof value === 'object' && value !== null && STATE_SYMBOL in value)
+	) {
 		// if the argument passed was already a proxy, we don't warn
-		return res;
+		return proxy(value);
 	}
 	w.state_return_not_proxyable();
 }
