@@ -286,11 +286,10 @@ export function proxy(value) {
 /**
  * @template T
  * @param {T} value
- * @param {Source<T>} [prev]
  * @returns {T | void}
  */
-export function return_proxy(value, prev) {
-	const res = proxy(value, prev);
+export function return_proxy(value) {
+	const res = proxy(value);
 	if (res !== value || (typeof value === 'object' && value !== null && STATE_SYMBOL in value)) {
 		// if the argument passed was already a proxy, we don't warn
 		return res;
