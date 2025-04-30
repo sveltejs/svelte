@@ -832,15 +832,15 @@ export function flushSync(fn) {
 			flush_queued_root_effects();
 			result = fn();
 		}
-	
+
 		flush_tasks();
-	
+
 		while (queued_root_effects.length > 0) {
 			is_flushing = true;
 			flush_queued_root_effects();
 			flush_tasks();
 		}
-	
+
 		return /** @type {T} */ (result);
 	} finally {
 		is_flushing_sync = previously_flushing_sync;
