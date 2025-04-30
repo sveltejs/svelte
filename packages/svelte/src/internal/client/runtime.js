@@ -47,6 +47,7 @@ const handled_errors = new WeakSet();
 let is_throwing_error = false;
 
 let is_flushing = false;
+let is_flushing_sync = false;
 
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
@@ -734,7 +735,9 @@ function flush_queued_effects(effects) {
 export function schedule_effect(signal) {
 	if (!is_flushing) {
 		is_flushing = true;
-		queueMicrotask(flush_queued_root_effects);
+		if (!is_flushing_sync) {
+			queueMicrotask(flush_queued_root_effects);
+		}
 	}
 
 	var effect = (last_scheduled_effect = signal);
@@ -818,23 +821,30 @@ function process_effects(root) {
  * @returns {T}
  */
 export function flushSync(fn) {
-	var result;
+	var previously_flushing_sync = is_flushing_sync;
 
-	if (fn) {
-		is_flushing = true;
-		flush_queued_root_effects();
-		result = fn();
-	}
+	try {
+		var result;
+		is_flushing_sync = true;
 
-	while (true) {
-		flush_tasks();
-
-		if (queued_root_effects.length === 0) {
-			return /** @type {T} */ (result);
+		if (fn) {
+			is_flushing = true;
+			flush_queued_root_effects();
+			result = fn();
 		}
 
-		is_flushing = true;
-		flush_queued_root_effects();
+		while (true) {
+			flush_tasks();
+
+			if (queued_root_effects.length === 0) {
+				return /** @type {T} */ (result);
+			}
+
+			is_flushing = true;
+			flush_queued_root_effects();
+		}
+	} finally {
+		is_flushing_sync = previously_flushing_sync;
 	}
 }
 
