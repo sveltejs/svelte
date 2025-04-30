@@ -2,7 +2,7 @@
 import * as $ from 'svelte/internal/client';
 
 export default function proxy(object) {
-	return $.proxy(object);
+	return $.return_proxy(object);
 }
 
 export function createCounter() {
@@ -11,4 +11,4 @@ export function createCounter() {
 	$.update(count);
 }
 
-export const proxy_in_arrow = (object) => $.proxy(object);
+export const proxy_in_arrow = (object) => $.return_proxy(object);

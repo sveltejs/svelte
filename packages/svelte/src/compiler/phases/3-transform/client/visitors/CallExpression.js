@@ -40,16 +40,11 @@ export function CallExpression(node, context) {
 				parent?.type === 'ReturnStatement' ||
 				(parent?.type === 'ArrowFunctionExpression' && parent.body === node)
 			) {
-				if (
-					node.arguments[0] &&
-					should_proxy(
-						/** @type {Expression} */ (context.visit(node.arguments[0])),
-						context.state.scope
-					)
-				) {
-					return b.call('$.proxy', node.arguments[0]);
-				} else {
-					return node.arguments[0] ?? b.void0;
+				if (node.arguments[0]) {
+					return b.call(
+						'$.return_proxy',
+						/** @type {Expression} */ (context.visit(node.arguments[0] ?? b.void0))
+					);
 				}
 			}
 	}

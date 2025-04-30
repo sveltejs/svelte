@@ -12,6 +12,7 @@ import { state as source, set } from './reactivity/sources.js';
 import { STATE_SYMBOL } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
+import * as w from './warnings.js';
 import { get_stack } from './dev/tracing.js';
 import { tracing_mode_flag } from '../flags/index.js';
 
@@ -280,6 +281,21 @@ export function proxy(value) {
 			e.state_prototype_fixed();
 		}
 	});
+}
+
+/**
+ * @template T
+ * @param {T} value
+ * @param {Source<T>} [prev]
+ * @returns {T | void}
+ */
+export function return_proxy(value, prev) {
+	const res = proxy(value, prev);
+	if (res !== value || (typeof value === 'object' && value !== null && STATE_SYMBOL in value)) {
+		// if the argument passed was already a proxy, we don't warn
+		return res;
+	}
+	w.state_return_not_proxyable();
 }
 
 /**
