@@ -184,6 +184,7 @@ export function spread_attributes(attrs, css_hash, classes, styles, flags = 0) {
 	for (name in attrs) {
 		// omit functions, internal svelte properties and invalid attribute names
 		if (typeof attrs[name] === 'function') continue;
+		if (name[0] === 'o' && name[1] === 'n' && typeof attrs[name] === 'object') continue;
 		if (name[0] === '$' && name[1] === '$') continue; // faster than name.startsWith('$$')
 		if (INVALID_ATTR_NAME_CHAR_REGEX.test(name)) continue;
 
