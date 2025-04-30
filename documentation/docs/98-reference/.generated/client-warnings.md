@@ -222,7 +222,7 @@ To resolve this, ensure you're comparing values where both values were created w
 ### state_return_not_proxyable
 
 ```
-The argument passed to a `$state` in a return statement must be a plain object or array. Otherwise, the `$state` call will have no effect
+The argument passed to a `$state` call in a return statement must be a plain object or array. Otherwise, the `$state` call will have no effect
 ```
 
 ### transition_slide_display
