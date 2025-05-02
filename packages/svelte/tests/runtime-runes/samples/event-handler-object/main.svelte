@@ -1,39 +1,38 @@
 <script>
 	import { on } from 'svelte/events';
 
-	let count = $state(0);
-
 	let onclick = $state.raw({
-		handleEvent() {
-			count += +this.dataset.step;
-			console.log(count);
+		handleEvent(ev) {
+			console.log(this === ev.currentTarget);
 		}
 	});
 
 	function click2() {
-		count++;
-		console.log(count);
+		console.log("mutated");
 	}
 
 	function click3() {
-		count += 2;
-		console.log(count);
+		console.log("assigned");
 	}
 
 	let btn;
+	let step = 1;
 	$effect(() => {
 		return on(btn, 'click', () => {
-			if (onclick.handleEvent !== click2) {
-				onclick.handleEvent = click2;
-			} else {
-				onclick = { handleEvent: click3 };
+			switch (step) {
+				case 1: {
+					onclick.handleEvent = click2;
+					step = 2;
+					break;
+				}
+				case 2: {
+					onclick = { handleEvent: click3 };
+				}
 			}
 		});
 	});
 </script>
 
-<button data-step="2" {onclick}>
-	clicks: {count}
-</button>
-<button data-step="3" {...{onclick}}>inc</button>
+<button {onclick}>a</button>
+<button {...{onclick}}>b</button>
 <button bind:this={btn}>next</button>

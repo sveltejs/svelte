@@ -13,10 +13,10 @@ export default test({
 		flushSync();
 		buttons.forEach((b) => b.click());
 		flushSync();
-		assert.deepEqual(logs, [2, 5, 6, 7, 9, 11]);
+		assert.deepEqual(logs, [true, true, "mutated", "mutated", "assigned", "assigned"]);
 		assert.htmlEqual(
 			target.innerHTML,
-			'<button data-step="2">clicks: 11</button><button data-step="3">inc</button><button>next</button>'
+			'<button>a</button><button>b</button><button>next</button>'
 		);
 	}
 });
