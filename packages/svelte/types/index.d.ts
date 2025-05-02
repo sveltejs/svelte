@@ -2224,6 +2224,10 @@ declare module 'svelte/reactivity/window' {
 	export const devicePixelRatio: {
 		get current(): number | undefined;
 	};
+	/**
+	 * `languages.current` is a reactive view of `navigator.languages`. On the server it is `undefined`.
+	 * */
+	export const languages: ReactiveValue<readonly string[] | undefined>;
 	class ReactiveValue<T> {
 		
 		constructor(fn: () => T, onsubscribe: (update: () => void) => void);

@@ -1,10 +1,11 @@
 <script>
-	import { devicePixelRatio, innerHeight, innerWidth, online, outerHeight, outerWidth, screenLeft, screenTop, scrollX, scrollY } from "svelte/reactivity/window";
+	import { devicePixelRatio, innerHeight, innerWidth, languages, online, outerHeight, outerWidth, screenLeft, screenTop, scrollX, scrollY } from "svelte/reactivity/window";
 </script>
 
 <p>devicePixelRatio: {devicePixelRatio.current}</p>
 <p>innerHeight: {innerHeight.current}</p>
 <p>innerWidth: {innerWidth.current}</p>
+<p>languages: {languages.current}</p>
 <p>online: {online.current}</p>
 <p>outerHeight: {outerHeight.current}</p>
 <p>outerWidth: {outerWidth.current}</p>

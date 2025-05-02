@@ -154,3 +154,12 @@ export const devicePixelRatio = /* @__PURE__ */ new (class DevicePixelRatio {
 		return BROWSER ? window.devicePixelRatio : undefined;
 	}
 })();
+
+/**
+ * `languages.current` is a reactive view of `navigator.languages`. On the server it is `undefined`.
+ * @since
+ */
+export const languages = new ReactiveValue(
+	BROWSER ? () => navigator.languages : () => undefined,
+	(update) => on(window, 'languagechange', update)
+);
