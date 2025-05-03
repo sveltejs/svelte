@@ -52,8 +52,8 @@ This rune, added in 5.14, causes the surrounding function to be _traced_ in deve
 	import { doSomeWork } from './elsewhere';
 
 	$effect(() => {
-		+++// $inspect.trace must be the first statement of a function body
-		$inspect.trace();+++
+		+++// $inspect.trace must be the first statement of a function body+++
+		+++$inspect.trace();+++
 		doSomeWork();
 	});
 </script>
