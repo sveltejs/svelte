@@ -22,6 +22,7 @@ export function async(node, expressions, fn) {
 		restore();
 		fn(node, ...result);
 
+		// TODO is this necessary?
 		batch.run(() => {
 			schedule_effect(effect);
 		});
