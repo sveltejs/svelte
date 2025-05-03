@@ -1,6 +1,6 @@
 <script>
 	const log = () => {
-		console.log(snip);
+		if (!snip) throw new Error('oops');
 	}
 	let x = $state(0);
 </script>

@@ -50,6 +50,10 @@ x y {
 
 > A `:global` selector can only be modified if it is a descendant of other selectors
 
+## css_global_block_invalid_placement
+
+> A `:global` selector cannot be inside a pseudoclass
+
 ## css_global_invalid_placement
 
 > `:global(...)` can be at the start or end of a selector sequence, but not in the middle

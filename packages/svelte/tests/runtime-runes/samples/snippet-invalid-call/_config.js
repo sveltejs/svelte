@@ -1,4 +1,3 @@
-import { assert } from 'vitest';
 import { test } from '../../test';
 
 export default test({
@@ -6,7 +5,5 @@ export default test({
 		dev: true
 	},
 
-	test({ logs }) {
-		assert.ok(logs.length > 0);
-	}
+	error: 'invalid_snippet_arguments'
 });

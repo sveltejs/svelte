@@ -196,9 +196,12 @@ const visitors = {
 		next();
 	},
 	SelectorList(node, { state, next, path }) {
+		const parent = path.at(-1);
+
 		// Only add comments if we're not inside a complex selector that itself is unused or a global block
 		if (
-			(!is_in_global_block(path) || node.children.length > 1) &&
+			(!is_in_global_block(path) ||
+				(node.children.length > 1 && parent?.type === 'Rule' && parent.metadata.is_global_block)) &&
 			!path.find((n) => n.type === 'ComplexSelector' && !n.metadata.used)
 		) {
 			const children = node.children;
@@ -260,7 +263,6 @@ const visitors = {
 
 		// if this selector list belongs to a rule, require a specificity bump for the
 		// first scoped selector but only if we're at the top level
-		let parent = path.at(-1);
 		if (parent?.type === 'Rule') {
 			specificity = { bumped: false };
 
@@ -376,7 +378,6 @@ const visitors = {
 };
 
 /**
- *
  * @param {Array<AST.CSS.Node>} path
  */
 function is_in_global_block(path) {
