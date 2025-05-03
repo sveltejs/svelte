@@ -18,13 +18,27 @@ export function async(node, expressions, fn) {
 
 	var restore = capture();
 
-	Promise.all(expressions.map((fn) => async_derived(fn))).then((result) => {
-		restore();
-		fn(node, ...result);
+	let boundary = effect.b;
 
-		// TODO is this necessary?
+	while (boundary !== null && !boundary.has_pending_snippet()) {
+		boundary = boundary.parent;
+	}
+
+	if (boundary === null) {
+		throw new Error('TODO cannot create async derived outside a boundary with a pending snippet');
+	}
+
+	boundary.increment();
+
+	Promise.all(expressions.map((fn) => async_derived(fn))).then((result) => {
 		batch.run(() => {
+			restore();
+			fn(node, ...result);
+
+			// TODO is this necessary?
 			schedule_effect(effect);
 		});
+
+		boundary.decrement();
 	});
 }

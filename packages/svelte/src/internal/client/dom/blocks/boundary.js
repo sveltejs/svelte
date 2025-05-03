@@ -119,10 +119,13 @@ export class Boundary {
 						return branch(() => this.#children(this.#anchor));
 					});
 
-					if (this.#pending_count === 0) {
+					if (this.#pending_count > 0) {
+						this.#show_pending_snippet();
+					} else {
 						pause_effect(/** @type {Effect} */ (this.#pending_effect), () => {
 							this.#pending_effect = null;
 						});
+						this.ran = true;
 					}
 				});
 			} else {
@@ -130,13 +133,13 @@ export class Boundary {
 
 				if (this.#pending_count > 0) {
 					this.#show_pending_snippet();
+				} else {
+					this.ran = true;
 				}
 			}
 
 			reset_is_throwing_error();
 		}, flags);
-
-		this.ran = true;
 
 		if (hydrating) {
 			this.#anchor = hydrate_node;
@@ -189,6 +192,8 @@ export class Boundary {
 	}
 
 	commit() {
+		this.ran = true;
+
 		if (this.#pending_effect) {
 			pause_effect(this.#pending_effect, () => {
 				this.#pending_effect = null;
@@ -242,10 +247,10 @@ export class Boundary {
 				}
 			});
 
-			this.ran = true;
-
 			if (this.#pending_count > 0) {
 				this.#show_pending_snippet();
+			} else {
+				this.ran = true;
 			}
 		};
 
