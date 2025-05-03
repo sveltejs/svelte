@@ -106,13 +106,26 @@ export function async_derived(fn, location) {
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 
+	/** @type {Promise<V> | null} */
+	var prev = null;
+
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
 
 	render_effect(() => {
 		if (DEV) from_async_derived = active_effect;
-		promise = Promise.resolve(fn());
+		var p = fn();
 		if (DEV) from_async_derived = null;
+
+		promise =
+			prev === null
+				? Promise.resolve(p)
+				: prev.then(
+						() => p,
+						() => p
+					);
+
+		prev = promise;
 
 		var restore = capture();
 
@@ -129,6 +142,8 @@ export function async_derived(fn, location) {
 
 		promise.then(
 			(v) => {
+				prev = null;
+
 				if ((parent.f & DESTROYED) !== 0) {
 					return;
 				}
@@ -160,6 +175,8 @@ export function async_derived(fn, location) {
 				}
 			},
 			(e) => {
+				prev = null;
+
 				handle_error(e, parent, null, parent.ctx);
 			}
 		);
