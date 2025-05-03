@@ -3,7 +3,7 @@
 import { async_derived } from '../../reactivity/deriveds.js';
 import { current_batch } from '../../reactivity/batch.js';
 import { active_effect, schedule_effect } from '../../runtime.js';
-import { capture } from './boundary.js';
+import { capture, get_pending_boundary } from './boundary.js';
 
 /**
  * @param {TemplateNode} node
@@ -15,18 +15,9 @@ export function async(node, expressions, fn) {
 
 	var batch = /** @type {Batch} */ (current_batch);
 	var effect = /** @type {Effect} */ (active_effect);
+	var boundary = get_pending_boundary(effect);
 
 	var restore = capture();
-
-	let boundary = effect.b;
-
-	while (boundary !== null && !boundary.has_pending_snippet()) {
-		boundary = boundary.parent;
-	}
-
-	if (boundary === null) {
-		throw new Error('TODO cannot create async derived outside a boundary with a pending snippet');
-	}
 
 	boundary.increment();
 

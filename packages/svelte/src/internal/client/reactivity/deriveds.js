@@ -29,7 +29,7 @@ import { destroy_effect, render_effect } from './effects.js';
 import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
-import { capture } from '../dom/blocks/boundary.js';
+import { capture, get_pending_boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { current_batch } from './batch.js';
@@ -101,15 +101,7 @@ export function async_derived(fn, location) {
 		throw new Error('TODO cannot create unowned async derived');
 	}
 
-	let boundary = parent.b;
-
-	while (boundary !== null && !boundary.has_pending_snippet()) {
-		boundary = boundary.parent;
-	}
-
-	if (boundary === null) {
-		throw new Error('TODO cannot create async derived outside a boundary with a pending snippet');
-	}
+	let boundary = get_pending_boundary(parent);
 
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
