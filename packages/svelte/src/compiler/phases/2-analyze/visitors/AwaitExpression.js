@@ -26,7 +26,7 @@ export function AwaitExpression(node, context) {
 			// @ts-expect-error we could probably use a neater/more robust mechanism
 			if (parent.metadata) break;
 
-			// TODO make this more accurate — we don't need to call suspend
+			// TODO make this more accurate — we don't need to call suspend
 			// if this is the last thing that could be read
 			preserve_context = true;
 		}

@@ -130,14 +130,17 @@ export class Batch {
 		batches.delete(this);
 
 		for (var batch of batches) {
+			/** @type {Source} */
+			var source;
+
 			if (batch.#id < this.#id) {
 				// other batch is older than this
-				for (var source of this.#previous.keys()) {
+				for (source of this.#previous.keys()) {
 					batch.#previous.delete(source);
 				}
 			} else {
 				// other batch is newer than this
-				for (var source of batch.#previous.keys()) {
+				for (source of batch.#previous.keys()) {
 					if (this.#previous.has(source)) {
 						batch.#previous.set(source, source.v);
 					}

@@ -283,7 +283,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 							update_item(existing, value, i, flags);
 						}
 					} else {
-						var item = create_item(
+						item = create_item(
 							null,
 							state,
 							null,

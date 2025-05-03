@@ -89,7 +89,7 @@ export function derived(fn) {
 
 /**
  * @template V
- * @param {() => Promise<V>} fn
+ * @param {() => V | Promise<V>} fn
  * @param {string} [location] If provided, print a warning if the value is not read immediately after update
  * @returns {Promise<Source<V>>}
  */
@@ -173,12 +173,21 @@ export function async_derived(fn, location) {
 		);
 	}, EFFECT_ASYNC | EFFECT_PRESERVED);
 
-	return new Promise(async (fulfil) => {
-		// if the effect re-runs before the initial promise
-		// resolves, delay resolution until we have a value
-		var p;
-		while (p !== (p = promise)) await p;
-		fulfil(signal);
+	return new Promise((fulfil) => {
+		/** @param {Promise<V>} p */
+		function next(p) {
+			p.then(() => {
+				if (p === promise) {
+					fulfil(signal);
+				} else {
+					// if the effect re-runs before the initial promise
+					// resolves, delay resolution until we have a value
+					next(promise);
+				}
+			});
+		}
+
+		next(promise);
 	});
 }
 
