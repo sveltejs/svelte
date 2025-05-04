@@ -47,7 +47,8 @@ const common = {
 export const validate_module_options =
 	/** @type {Validator<ModuleCompileOptions, ValidatedModuleCompileOptions>} */ (
 		object({
-			...common
+			...common,
+			typeScript: boolean(false),
 		})
 	);
 

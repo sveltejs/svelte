@@ -57,7 +57,7 @@ export interface OptimizeOptions {
 	hydrate?: boolean;
 }
 
-export interface CompileOptions extends ModuleCompileOptions {
+export interface CompileOptions extends Omit<ModuleCompileOptions, 'typeScript'> {
 	/**
 	 * Sets the name of the resulting JavaScript class (though the compiler will rename it if it would otherwise conflict with other variables in scope).
 	 * If unspecified, will be inferred from `filename`
@@ -207,6 +207,12 @@ export interface ModuleCompileOptions {
 	 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 	 */
 	warningFilter?: (warning: Warning) => boolean;
+	/**
+	 * Indicates whether the source code is in Typescript or JavaScript.
+	 *
+	 * @default false
+	 */
+	typeScript?: boolean;
 }
 
 // The following two somewhat scary looking types ensure that certain types are required but can be undefined still

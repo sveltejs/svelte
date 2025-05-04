@@ -80,13 +80,14 @@ export async function compile_directory(
 			generate
 		};
 
-		if (file.endsWith('.js')) {
+		if (file.endsWith('.js') || file.endsWith('.ts')) {
 			const out = `${output_dir}/${file}`;
-			if (file.endsWith('.svelte.js')) {
+			if (file.endsWith('.svelte.js') || file.endsWith('.svelte.ts')) {
 				const compiled = compileModule(text, {
 					filename: opts.filename,
 					generate: opts.generate,
-					dev: opts.dev
+					dev: opts.dev,
+					typeScript: file.endsWith('.svelte.ts')
 				});
 				write(out, compiled.js.code.replace(`v${VERSION}`, 'VERSION'));
 			} else {

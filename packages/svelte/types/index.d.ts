@@ -636,7 +636,7 @@ declare module 'svelte/compiler' {
 	 * */
 	export function compile(source: string, options: CompileOptions): CompileResult;
 	/**
-	 * `compileModule` takes your JavaScript source code containing runes, and turns it into a JavaScript module.
+	 * `compileModule` takes your JavaScript/TypeScript source code containing runes, and turns it into a JavaScript module.
 	 *
 	 * @param source The component source code
 	 * */
@@ -788,7 +788,7 @@ declare module 'svelte/compiler' {
 		hash: (input: string) => string;
 	}) => string;
 
-	export interface CompileOptions extends ModuleCompileOptions {
+	export interface CompileOptions extends Omit<ModuleCompileOptions, 'typeScript'> {
 		/**
 		 * Sets the name of the resulting JavaScript class (though the compiler will rename it if it would otherwise conflict with other variables in scope).
 		 * If unspecified, will be inferred from `filename`
@@ -938,6 +938,12 @@ declare module 'svelte/compiler' {
 		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 		 */
 		warningFilter?: (warning: Warning) => boolean;
+		/**
+		 * Indicates whether the source code is in Typescript or JavaScript.
+		 *
+		 * @default false
+		 */
+		typeScript?: boolean;
 	}
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
@@ -2661,7 +2667,7 @@ declare module 'svelte/types/compiler/interfaces' {
 		hash: (input: string) => string;
 	}) => string;
 
-	interface CompileOptions_1 extends ModuleCompileOptions {
+	interface CompileOptions_1 extends Omit<ModuleCompileOptions, 'typeScript'> {
 		/**
 		 * Sets the name of the resulting JavaScript class (though the compiler will rename it if it would otherwise conflict with other variables in scope).
 		 * If unspecified, will be inferred from `filename`
@@ -2811,6 +2817,12 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 		 */
 		warningFilter?: (warning: Warning_1) => boolean;
+		/**
+		 * Indicates whether the source code is in Typescript or JavaScript.
+		 *
+		 * @default false
+		 */
+		typeScript?: boolean;
 	}
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`

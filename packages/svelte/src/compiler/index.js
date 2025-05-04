@@ -52,7 +52,7 @@ export function compile(source, options) {
 }
 
 /**
- * `compileModule` takes your JavaScript source code containing runes, and turns it into a JavaScript module.
+ * `compileModule` takes your JavaScript/TypeScript source code containing runes, and turns it into a JavaScript module.
  *
  * @param {string} source The component source code
  * @param {ModuleCompileOptions} options
@@ -64,7 +64,7 @@ export function compileModule(source, options) {
 	const validated = validate_module_options(options, '');
 	state.reset(source, validated);
 
-	const analysis = analyze_module(parse_acorn(source, false), validated);
+	const analysis = analyze_module(parse_acorn(source, options.typeScript ?? false), validated);
 	return transform_module(analysis, source, validated);
 }
 
