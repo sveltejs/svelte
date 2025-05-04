@@ -357,9 +357,9 @@ export function template_effect(fn, sync = [], async = [], d = derived) {
 
 			var effect = create_template_effect(fn, [...sync.map(d), ...result]);
 
-			batch.run(() => {
-				schedule_effect(effect);
-			});
+			batch?.restore();
+			schedule_effect(effect);
+			batch?.flush();
 		});
 	} else {
 		create_template_effect(fn, sync.map(d));

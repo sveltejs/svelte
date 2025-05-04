@@ -51,7 +51,7 @@ import {
 import { Boundary } from './dom/blocks/boundary.js';
 import * as w from './warnings.js';
 import { is_firefox } from './dom/operations.js';
-import { current_batch, Batch, remove_current_batch } from './reactivity/batch.js';
+import { current_batch, Batch } from './reactivity/batch.js';
 import { log_effect_tree, root } from './dev/debug.js';
 
 // Used for DEV time error handling
@@ -693,7 +693,7 @@ function infinite_loop_guard() {
 	}
 }
 
-function flush_queued_root_effects() {
+export function flush_queued_root_effects() {
 	var was_updating_effect = is_updating_effect;
 	var batch = /** @type {Batch} */ (current_batch);
 
@@ -764,24 +764,6 @@ export function flush_queued_effects(effects) {
  * @returns {void}
  */
 export function schedule_effect(signal) {
-	if (!is_flushing) {
-		is_flushing = true;
-		queueMicrotask(() => {
-			if (current_batch === null) {
-				// a flushSync happened in the meantime
-				return;
-			}
-
-			flush_queued_root_effects();
-
-			if (current_batch?.settled()) {
-				current_batch.remove();
-			}
-
-			remove_current_batch();
-		});
-	}
-
 	var effect = (last_scheduled_effect = signal);
 
 	while (effect.parent !== null) {
@@ -868,7 +850,7 @@ export function process_effects(batch, root) {
 export function flushSync(fn) {
 	var result;
 
-	Batch.ensure();
+	const batch = Batch.ensure();
 
 	if (fn) {
 		is_flushing = true;
@@ -884,11 +866,9 @@ export function flushSync(fn) {
 		flush_tasks();
 	}
 
-	if (current_batch?.settled()) {
-		current_batch.remove();
+	if (batch === current_batch) {
+		batch.flush();
 	}
-
-	remove_current_batch();
 
 	return /** @type {T} */ (result);
 }

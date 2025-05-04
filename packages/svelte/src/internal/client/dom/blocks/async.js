@@ -22,14 +22,15 @@ export function async(node, expressions, fn) {
 	boundary.increment();
 
 	Promise.all(expressions.map((fn) => async_derived(fn))).then((result) => {
-		batch.run(() => {
-			restore();
-			fn(node, ...result);
+		batch?.restore();
 
-			// TODO is this necessary?
-			schedule_effect(effect);
-		});
+		restore();
+		fn(node, ...result);
 
+		// TODO is this necessary?
+		schedule_effect(effect);
+
+		batch?.flush();
 		boundary.decrement();
 	});
 }

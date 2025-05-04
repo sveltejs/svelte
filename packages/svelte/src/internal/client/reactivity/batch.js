@@ -2,6 +2,7 @@
 import { CLEAN, DIRTY } from '#client/constants';
 import {
 	flush_queued_effects,
+	flush_queued_root_effects,
 	process_effects,
 	schedule_effect,
 	set_queued_root_effects,
@@ -16,10 +17,6 @@ const batches = new Set();
 
 /** @type {Batch | null} */
 export let current_batch = null;
-
-export function remove_current_batch() {
-	current_batch = null;
-}
 
 /** Update `$effect.pending()` */
 function update_pending() {
@@ -149,12 +146,21 @@ export class Batch {
 		}
 	}
 
-	/**
-	 * @param {() => void} fn
-	 */
-	run(fn) {
+	restore() {
 		current_batch = this;
-		fn();
+	}
+
+	flush() {
+		flush_queued_root_effects();
+
+		// TODO can this happen?
+		if (current_batch !== this) return;
+
+		if (this.settled()) {
+			this.remove();
+		}
+
+		current_batch = null;
 	}
 
 	commit() {
@@ -210,6 +216,15 @@ export class Batch {
 
 			current_batch = new Batch();
 			batches.add(current_batch);
+
+			queueMicrotask(() => {
+				if (current_batch === null) {
+					// a flushSync happened in the meantime
+					return;
+				}
+
+				current_batch.flush();
+			});
 		}
 
 		return current_batch;
