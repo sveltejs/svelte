@@ -1,31 +1,28 @@
 import { flushSync, tick } from 'svelte';
-import { deferred } from '../../../../src/internal/shared/utils.js';
 import { test } from '../../test';
 
-/** @type {ReturnType<typeof deferred>} */
-let d1;
-
 export default test({
-	html: `<p>pending</p>`,
+	html: `
+		<button>switch to d2</button>
+		<button>resolve d1</button>
+		<button>resolve d2</button>
+		<p>pending</p>
+	`,
 
-	get props() {
-		d1 = deferred();
+	async test({ assert, target, component, errors, variant }) {
+		if (variant === 'hydrate') {
+			await Promise.resolve();
+		}
 
-		return {
-			promise: d1.promise
-		};
-	},
+		const [toggle, resolve1, resolve2] = target.querySelectorAll('button');
 
-	async test({ assert, target, component, errors }) {
+		flushSync(() => toggle.click());
+
+		flushSync(() => resolve1.click());
 		await Promise.resolve();
-		var d2 = deferred();
-		component.promise = d2.promise;
-
-		d1.resolve('unused');
 		await Promise.resolve();
-		await Promise.resolve();
-		d2.resolve('hello');
 
+		flushSync(() => resolve2.click());
 		await Promise.resolve();
 		await Promise.resolve();
 		await Promise.resolve();
@@ -37,7 +34,15 @@ export default test({
 		await Promise.resolve();
 		await tick();
 
-		assert.htmlEqual(target.innerHTML, '<p>hello</p>');
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<button>switch to d2</button>
+				<button>resolve d1</button>
+				<button>resolve d2</button>
+				<p>two</p>
+			`
+		);
 
 		assert.deepEqual(errors, []);
 	}
