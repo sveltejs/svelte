@@ -9,6 +9,7 @@ import {
 	EFFECT_ASYNC,
 	EFFECT_PRESERVED,
 	MAYBE_DIRTY,
+	STALE_REACTION,
 	UNOWNED
 } from '#client/constants';
 import {
@@ -33,6 +34,7 @@ import { capture, get_pending_boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { current_batch } from './batch.js';
+import { noop } from '../../shared/utils.js';
 
 /** @type {Effect | null} */
 export let from_async_derived = null;
@@ -77,7 +79,8 @@ export function derived(fn) {
 		rv: 0,
 		v: /** @type {V} */ (null),
 		wv: 0,
-		parent: parent_derived ?? active_effect
+		parent: parent_derived ?? active_effect,
+		ac: null
 	};
 
 	if (DEV && tracing_mode_flag) {
@@ -177,7 +180,17 @@ export function async_derived(fn, location) {
 			(e) => {
 				prev = null;
 
-				handle_error(e, parent, null, parent.ctx);
+				if (e === STALE_REACTION) {
+					if (should_suspend) {
+						if (!ran) {
+							boundary.decrement();
+						} else {
+							batch.decrement();
+						}
+					}
+				} else {
+					handle_error(e, parent, null, parent.ctx);
+				}
 			}
 		);
 	}, EFFECT_ASYNC | EFFECT_PRESERVED);
@@ -185,7 +198,7 @@ export function async_derived(fn, location) {
 	return new Promise((fulfil) => {
 		/** @param {Promise<V>} p */
 		function next(p) {
-			p.then(() => {
+			function go() {
 				if (p === promise) {
 					fulfil(signal);
 				} else {
@@ -193,7 +206,9 @@ export function async_derived(fn, location) {
 					// resolves, delay resolution until we have a value
 					next(promise);
 				}
-			});
+			}
+
+			p.then(go, go);
 		}
 
 		next(promise);

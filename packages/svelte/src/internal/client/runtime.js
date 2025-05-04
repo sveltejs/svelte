@@ -26,7 +26,8 @@ import {
 	REACTION_IS_UPDATING,
 	EFFECT_IS_UPDATING,
 	EFFECT_ASYNC,
-	RENDER_EFFECT
+	RENDER_EFFECT,
+	STALE_REACTION
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { internal_set, old_values } from './reactivity/sources.js';
@@ -438,6 +439,11 @@ export function update_reaction(reaction) {
 	read_version++;
 
 	reaction.f |= EFFECT_IS_UPDATING;
+
+	if (reaction.ac !== null) {
+		reaction.ac?.abort(STALE_REACTION);
+		reaction.ac = null;
+	}
 
 	try {
 		reaction.f |= REACTION_IS_UPDATING;

@@ -348,6 +348,7 @@ declare module 'svelte' {
 				 */
 				props: Props;
 			});
+	export function getAbortSignal(): AbortSignal;
 	/**
 	 * `onMount`, like [`$effect`](https://svelte.dev/docs/svelte/$effect), schedules a function to run as soon as the component has been mounted to the DOM.
 	 * Unlike `$effect`, the provided function only runs once.

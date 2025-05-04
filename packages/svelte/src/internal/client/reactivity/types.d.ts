@@ -32,6 +32,8 @@ export interface Reaction extends Signal {
 	fn: null | Function;
 	/** Signals that this signal reads from */
 	deps: null | Value[];
+	/** An AbortController that aborts when the signal is destroyed */
+	ac: null | AbortController;
 }
 
 export interface Derived<V = unknown> extends Value<V>, Reaction {

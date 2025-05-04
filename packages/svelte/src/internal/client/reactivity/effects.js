@@ -31,7 +31,8 @@ import {
 	INSPECT_EFFECT,
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
-	EFFECT_PRESERVED
+	EFFECT_PRESERVED,
+	STALE_REACTION
 } from '#client/constants';
 import { set } from './sources.js';
 import * as e from '../errors.js';
@@ -112,7 +113,8 @@ function create_effect(type, fn, sync, push = true) {
 		prev: null,
 		teardown: null,
 		transitions: null,
-		wv: 0
+		wv: 0,
+		ac: null
 	};
 
 	if (DEV) {
@@ -425,6 +427,8 @@ export function destroy_effect_children(signal, remove_dom = false) {
 	signal.first = signal.last = null;
 
 	while (effect !== null) {
+		effect.ac?.abort(STALE_REACTION);
+
 		var next = effect.next;
 
 		if ((effect.f & ROOT_EFFECT) !== 0) {
@@ -502,6 +506,7 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.fn =
 		effect.nodes_start =
 		effect.nodes_end =
+		effect.ac =
 			null;
 }
 

@@ -30,3 +30,5 @@ export const EFFECT_ASYNC = 1 << 25;
 export const STATE_SYMBOL = Symbol('$state');
 export const LEGACY_PROPS = Symbol('legacy props');
 export const LOADING_ATTR_SYMBOL = Symbol('');
+
+export const STALE_REACTION = Symbol('stale reaction');

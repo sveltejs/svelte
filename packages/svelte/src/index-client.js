@@ -1,7 +1,7 @@
 /** @import { ComponentContext, ComponentContextLegacy } from '#client' */
 /** @import { EventDispatcher } from './index.js' */
 /** @import { NotFunction } from './internal/types.js' */
-import { untrack } from './internal/client/runtime.js';
+import { active_reaction, untrack } from './internal/client/runtime.js';
 import { is_array } from './internal/shared/utils.js';
 import { user_effect } from './internal/client/index.js';
 import * as e from './internal/client/errors.js';
@@ -42,6 +42,14 @@ if (DEV) {
 	throw_rune_error('$inspect');
 	throw_rune_error('$props');
 	throw_rune_error('$bindable');
+}
+
+export function getAbortSignal() {
+	if (active_reaction === null) {
+		throw new Error('TODO getAbortSignal can only be called inside a reaction');
+	}
+
+	return (active_reaction.ac ??= new AbortController()).signal;
 }
 
 /**
