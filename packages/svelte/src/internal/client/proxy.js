@@ -298,14 +298,13 @@ export function proxy(value) {
  * @returns {T | void}
  */
 export function return_proxy(value) {
-	if (
-		!should_proxy(value) &&
-		!(typeof value === 'object' && value !== null && STATE_SYMBOL in value)
-	) {
-		// if the argument passed was already a proxy, we don't warn
+	if (should_proxy(value)) {
 		return proxy(value);
+	} else if (DEV && !(typeof value === 'object' && value !== null && STATE_SYMBOL in value)) {
+		// if the argument passed was already a proxy, we don't warn
+		w.state_return_not_proxyable();
 	}
-	w.state_return_not_proxyable();
+	return value;
 }
 
 /**
