@@ -101,17 +101,17 @@ export class Batch {
 		} else {
 			for (const e of this.render_effects) set_signal_status(e, CLEAN);
 			for (const e of this.effects) set_signal_status(e, CLEAN);
-
-			for (const [source, value] of current_values) {
-				source.v = value;
-			}
-
-			for (const effect of this.async_effects) {
-				update_effect(effect);
-			}
-
-			this.async_effects = [];
 		}
+
+		for (const [source, value] of current_values) {
+			source.v = value;
+		}
+
+		for (const effect of this.async_effects) {
+			update_effect(effect);
+		}
+
+		this.async_effects = [];
 	}
 
 	/**

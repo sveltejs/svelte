@@ -1,9 +1,5 @@
 import { flushSync, tick } from 'svelte';
-import { deferred } from '../../../../src/internal/shared/utils.js';
 import { test } from '../../test';
-
-/** @type {ReturnType<typeof deferred>} */
-let d;
 
 export default test({
 	html: `
@@ -13,10 +9,11 @@ export default test({
 		<p>pending</p>
 	`,
 
-	async test({ assert, target }) {
+	async test({ assert, target, raf }) {
 		const [reset, hello, goodbye] = target.querySelectorAll('button');
 
 		flushSync(() => hello.click());
+		raf.tick(0);
 		await Promise.resolve();
 		await Promise.resolve();
 		await tick();
@@ -32,6 +29,7 @@ export default test({
 		);
 
 		flushSync(() => reset.click());
+		raf.tick(0);
 		await tick();
 		assert.htmlEqual(
 			target.innerHTML,
@@ -40,10 +38,13 @@ export default test({
 				<button>hello</button>
 				<button>goodbye</button>
 				<h1>hello</h1>
+				<p>updating...</p>
 			`
 		);
 
 		flushSync(() => goodbye.click());
+		await Promise.resolve();
+		raf.tick(0);
 		await tick();
 		assert.htmlEqual(
 			target.innerHTML,

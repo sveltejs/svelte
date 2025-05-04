@@ -9,6 +9,10 @@
 <svelte:boundary>
 	<h1>{await deferred.promise}</h1>
 
+	{#if $effect.pending()}
+		<p>updating...</p>
+	{/if}
+
 	{#snippet pending()}
 		<p>pending</p>
 	{/snippet}
