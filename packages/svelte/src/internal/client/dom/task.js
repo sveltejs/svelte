@@ -46,6 +46,8 @@ export function queue_boundary_micro_task(fn) {
 		queueMicrotask(run_micro_tasks);
 	}
 
+	// TODO do we need to differentiate between `boundary_micro_tasks` and `micro_tasks`?
+	// nothing breaks if we push everything to `micro_tasks`
 	boundary_micro_tasks.push(fn);
 }
 
