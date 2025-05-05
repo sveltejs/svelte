@@ -101,6 +101,10 @@
     "./events": {
       "types": "./types/index.d.ts",
       "default": "./src/events/index.js"
+    },
+    "./devtool": {
+      "types": "./types/index.d.ts",
+      "default": "./src/devtool/index.js"
     }
   },
   "imports": {
