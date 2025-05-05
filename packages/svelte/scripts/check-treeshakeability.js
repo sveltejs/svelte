@@ -59,6 +59,7 @@ for (const key in pkg.exports) {
 	if (key === './internal/disclose-version') continue;
 	if (key === './internal/flags/legacy') continue;
 	if (key === './internal/flags/tracing') continue;
+	if (key === './devtool') continue;
 
 	for (const type of ['browser', 'default']) {
 		if (!pkg.exports[key][type]) continue;
