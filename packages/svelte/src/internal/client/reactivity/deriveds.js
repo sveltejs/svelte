@@ -162,9 +162,9 @@ export function async_derived(fn, location) {
 					}
 				}
 
-				batch?.restore();
+				if (ran) batch.restore();
 				internal_set(signal, v);
-				batch?.flush();
+				if (ran) batch.flush();
 
 				if (DEV && location !== undefined) {
 					recent_async_deriveds.add(signal);

@@ -74,6 +74,8 @@ export class Batch {
 		}
 
 		for (const [source, current] of this.#current) {
+			current_values.set(source, source.v);
+
 			// TODO this shouldn't be necessary, but tests fail otherwise,
 			// presumably because we need a try-finally somewhere, and the
 			// source wasn't correctly reverted after the previous batch
@@ -214,16 +216,16 @@ export class Batch {
 				raf.tick(update_pending);
 			}
 
-			current_batch = new Batch();
+			const batch = (current_batch = new Batch());
 			batches.add(current_batch);
 
 			queueMicrotask(() => {
-				if (current_batch === null) {
+				if (current_batch !== batch) {
 					// a flushSync happened in the meantime
 					return;
 				}
 
-				current_batch.flush();
+				batch.flush();
 			});
 		}
 

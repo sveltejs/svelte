@@ -40,7 +40,7 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { async_derived, derived } from './deriveds.js';
-import { capture } from '../dom/blocks/boundary.js';
+import { capture, get_pending_boundary } from '../dom/blocks/boundary.js';
 import { component_context, dev_current_component_function } from '../context.js';
 import { current_batch, Batch } from './batch.js';
 
@@ -348,6 +348,9 @@ export function template_effect(fn, sync = [], async = [], d = derived) {
 		var batch = /** @type {Batch} */ (current_batch);
 		var restore = capture();
 
+		var boundary = get_pending_boundary(parent);
+		var ran = boundary.ran;
+
 		Promise.all(async.map((expression) => async_derived(expression))).then((result) => {
 			restore();
 
@@ -357,9 +360,9 @@ export function template_effect(fn, sync = [], async = [], d = derived) {
 
 			var effect = create_template_effect(fn, [...sync.map(d), ...result]);
 
-			batch?.restore();
+			if (ran) batch.restore();
 			schedule_effect(effect);
-			batch?.flush();
+			if (ran) batch.flush();
 		});
 	} else {
 		create_template_effect(fn, sync.map(d));

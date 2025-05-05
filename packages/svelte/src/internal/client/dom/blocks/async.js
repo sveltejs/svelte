@@ -15,14 +15,16 @@ export function async(node, expressions, fn) {
 
 	var batch = /** @type {Batch} */ (current_batch);
 	var effect = /** @type {Effect} */ (active_effect);
+
 	var boundary = get_pending_boundary(effect);
+	var ran = boundary.ran;
 
 	var restore = capture();
 
 	boundary.increment();
 
 	Promise.all(expressions.map((fn) => async_derived(fn))).then((result) => {
-		batch?.restore();
+		if (ran) batch.restore();
 
 		restore();
 		fn(node, ...result);
@@ -30,7 +32,7 @@ export function async(node, expressions, fn) {
 		// TODO is this necessary?
 		schedule_effect(effect);
 
-		batch?.flush();
+		if (ran) batch.flush();
 		boundary.decrement();
 	});
 }
