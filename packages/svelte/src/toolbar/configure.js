@@ -1,6 +1,6 @@
 /**
  * toolbar config
- * @type {import('./public.d.ts').Config}
+ * @type {import('./public.d.ts').ResolvedConfig}
  */
 const config = {
 	tools: []
@@ -12,22 +12,25 @@ const config = {
 export function configure(options) {
 	for (const [key, value] of Object.entries(options)) {
 		if (key === 'tools') {
-			for (let tool of /** @type {import('./public.d.ts').Config.tools[0][]}*/ value) {
-				if(typeof tool === 'function') {
-					tool = tool(); // TODO lazy init?
-				}
-				/** @type {import('./public.d.ts').Tool}*/
-				const existing = config.tools.find((t) => t.name === tool.name);
-				if (existing) {
-					for (const [k, v] of Object.entries(tool)) {
-						existing[k] = v;
-					}
-				} else {
-					config.tools.push(tool);
-				}
-			}
+			continue
 		} else {
+			// @ts-expect-error index access
 			config[key] = value;
+		}
+	}
+	if(options.tools) {
+		for (let tool of options.tools) {
+			/** @type {import('./public.d.ts').Tool} */
+			const resolved_tool = typeof tool === 'function' ? tool() : tool;
+			const existing = config.tools.find((t) => t.name === resolved_tool.name);
+			if (existing) {
+				for (const [k, v] of Object.entries(tool)) {
+					// @ts-expect-error index access
+					existing[k] = v;
+				}
+			} else {
+				config.tools.push(resolved_tool);
+			}
 		}
 	}
 }

@@ -2563,6 +2563,10 @@ declare module 'svelte/toolbar' {
 		position?: 'top' | 'bottom';
 		tools?: (Tool | ToolFn)[];
 	}
+
+	export interface ResolvedConfig extends Config {
+		tools: Tool[]
+	}
 	export function configure(options: Partial<Config>): void;
 
 	export function getConfig(): Config;

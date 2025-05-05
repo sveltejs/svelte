@@ -14,3 +14,7 @@ export interface Config {
 	position?: 'top' | 'bottom';
 	tools?: (Tool | ToolFn)[];
 }
+
+export interface ResolvedConfig extends Config {
+	tools: Tool[]
+}
