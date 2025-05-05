@@ -12,10 +12,8 @@ function create_toolbar_host() {
 	document.documentElement.appendChild(el);
 	return el;
 }
-export function mountUI(){
-	if(typeof window !== 'undefined') {
+export function mountUI() {
+	if (typeof window !== 'undefined') {
 		mount(ToolBar, { target: create_toolbar_host() });
 	}
 }
-
-
