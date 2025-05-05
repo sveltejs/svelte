@@ -8,7 +8,9 @@ export interface Tool {
 	keyCombo?: string;
 	disabled?: boolean;
 }
+type ToolFn = ()=>Tool
+
 export interface Config {
 	position?: 'top' | 'bottom';
-	tools?: Tool[];
+	tools?: (Tool | ToolFn)[];
 }
