@@ -62,24 +62,20 @@ export class Batch {
 
 		var current_values = new Map();
 
+		for (const [source, current] of this.#current) {
+			current_values.set(source, source.v);
+			source.v = current;
+		}
+
 		for (const batch of batches) {
 			if (batch === this) continue;
 
 			for (const [source, previous] of batch.#previous) {
-				if (!this.#current.has(source)) {
+				if (!current_values.has(source)) {
 					current_values.set(source, source.v);
 					source.v = previous;
 				}
 			}
-		}
-
-		for (const [source, current] of this.#current) {
-			current_values.set(source, source.v);
-
-			// TODO this shouldn't be necessary, but tests fail otherwise,
-			// presumably because we need a try-finally somewhere, and the
-			// source wasn't correctly reverted after the previous batch
-			source.v = current;
 		}
 
 		for (const root of root_effects) {
