@@ -2549,8 +2549,19 @@ declare module 'svelte/events' {
 }
 
 declare module 'svelte/toolbar' {
+	export interface Tool {
+		name: string;
+		icon: string; // url or svg
+		activate:()=>void;
+		deactivate:()=>void;
+		keyCombo?: string;
+		disabled?: boolean;
+	}
+	type ToolFn = ()=>Tool
+
 	export interface Config {
-		position: 'top'|'bottom'
+		position?: 'top' | 'bottom';
+		tools?: (Tool | ToolFn)[];
 	}
 	export function configure(options: Partial<Config>): void;
 
