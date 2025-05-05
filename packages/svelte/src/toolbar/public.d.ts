@@ -3,8 +3,8 @@ export * from './index.js';
 export interface Tool {
 	name: string;
 	icon: string; // url or svg
-	activate();
-	deactivate();
+	activate:()=>void;
+	deactivate:()=>void;
 	keyCombo?: string;
 	disabled?: boolean;
 }
