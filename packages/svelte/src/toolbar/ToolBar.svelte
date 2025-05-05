@@ -1,25 +1,13 @@
 <script>
 	import { draggable } from '@neodrag/svelte';
 	import Icon from './Icon.svelte';
-	import { configure, getConfig } from 'svelte/toolbar';
 
+	let {
+		/** @type import('./public.d.ts').ResolvedConfig */
+		config
+	} = $props();
 	let open = $state(true); // todo change this to false
 
-	configure({
-		tools: [
-			{ name: 'state' },
-			{
-				name: 'inspector',
-				activate: () => {
-					console.log('inspector activated');
-				}
-			},
-			{ name: 'a11y' },
-			{ name: 'config' }
-		]
-	});
-
-	let config = getConfig();
 	/** @type {string[]} */
 	let active_tool_names = $state([]);
 

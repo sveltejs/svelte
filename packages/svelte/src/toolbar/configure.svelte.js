@@ -2,14 +2,14 @@
  * toolbar config
  * @type {import('./public.d.ts').ResolvedConfig}
  */
-const config = {
+const config = $state({
 	tools: []
-};
+});
 
 /**
  * @param  {Partial<import('./public.d.ts').Config>} options
  */
-export function configure(options) {
+export function configureSvelte(options) {
 	for (const [key, value] of Object.entries(options)) {
 		if (key === 'tools') {
 			continue;
@@ -40,6 +40,5 @@ export function configure(options) {
  * @return {import('./public.d.ts').ResolvedConfig}
  */
 export function getConfig() {
-	// TODO clone to avoid direct manipulation
 	return config;
 }
