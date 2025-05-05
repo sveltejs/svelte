@@ -12,13 +12,13 @@ const config = {
 export function configure(options) {
 	for (const [key, value] of Object.entries(options)) {
 		if (key === 'tools') {
-			continue
+			continue;
 		} else {
 			// @ts-expect-error index access
 			config[key] = value;
 		}
 	}
-	if(options.tools) {
+	if (options.tools) {
 		for (let tool of options.tools) {
 			/** @type {import('./public.d.ts').Tool} */
 			const resolved_tool = typeof tool === 'function' ? tool() : tool;
@@ -37,7 +37,7 @@ export function configure(options) {
 
 /**
  *
- * @return {import('./public.d.ts').Config}
+ * @return {import('./public.d.ts').ResolvedConfig}
  */
 export function getConfig() {
 	// TODO clone to avoid direct manipulation

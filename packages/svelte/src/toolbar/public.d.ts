@@ -3,12 +3,12 @@ export * from './index.js';
 export interface Tool {
 	name: string;
 	icon: string; // url or svg
-	activate:()=>void;
-	deactivate:()=>void;
+	activate: () => void;
+	deactivate: () => void;
 	keyCombo?: string;
 	disabled?: boolean;
 }
-type ToolFn = ()=>Tool
+type ToolFn = () => Tool;
 
 export interface Config {
 	position?: 'top' | 'bottom';
@@ -16,5 +16,5 @@ export interface Config {
 }
 
 export interface ResolvedConfig extends Config {
-	tools: Tool[]
+	tools: Tool[];
 }
