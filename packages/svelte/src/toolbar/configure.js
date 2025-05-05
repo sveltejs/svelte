@@ -1,5 +1,5 @@
 /**
- * devtools config
+ * toolbar config
  * @type {import('./public.d.ts').Config}
  */
 const config = {};

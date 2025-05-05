@@ -102,9 +102,9 @@
       "types": "./types/index.d.ts",
       "default": "./src/events/index.js"
     },
-    "./devtool": {
+    "./toolbar": {
       "types": "./types/index.d.ts",
-      "default": "./src/devtool/index.js"
+      "default": "./src/toolbar/index.js"
     }
   },
   "imports": {

@@ -1,9 +1,9 @@
-import DevTool from './DevTool.svelte';
+import ToolBar from './ToolBar.svelte';
 import { mount } from 'svelte';
-function create_devtool_host() {
-	const id = 'svelte-devtool-host';
+function create_toolbar_host() {
+	const id = 'svelte-toolbar-host';
 	if (document.getElementById(id) != null) {
-		console.debug('svelte-devtool-host already exists, skipping');
+		console.debug('svelte-toolbar-host already exists, skipping');
 		return;
 	}
 	const el = document.createElement('div');
@@ -14,7 +14,7 @@ function create_devtool_host() {
 }
 export function mountUI(){
 	if(typeof window !== 'undefined') {
-		mount(DevTool, { target: create_devtool_host() });
+		mount(ToolBar, { target: create_toolbar_host() });
 	}
 }
 

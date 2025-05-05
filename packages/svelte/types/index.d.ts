@@ -2548,13 +2548,14 @@ declare module 'svelte/events' {
 	export {};
 }
 
-declare module 'svelte/devtool' {
+declare module 'svelte/toolbar' {
 	export interface Config {
 		position: 'top'|'bottom'
 	}
 	export function configure(options: Partial<Config>): void;
 
 	export function getConfig(): Config;
+	export function mountUI(): void;
 
 	export {};
 }
