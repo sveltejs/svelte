@@ -45,6 +45,8 @@ await createBundle({
 		[`${pkg.name}/store`]: `${dir}/src/store/public.d.ts`,
 		[`${pkg.name}/transition`]: `${dir}/src/transition/public.d.ts`,
 		[`${pkg.name}/events`]: `${dir}/src/events/public.d.ts`,
+		[`${pkg.name}/devtool`]: `${dir}/src/devtool/public.d.ts`,
+
 		// TODO remove in Svelte 6
 		[`${pkg.name}/types/compiler/preprocess`]: `${dir}/src/compiler/preprocess/legacy-public.d.ts`,
 		[`${pkg.name}/types/compiler/interfaces`]: `${dir}/src/compiler/types/legacy-interfaces.d.ts`
