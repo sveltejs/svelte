@@ -2548,6 +2548,17 @@ declare module 'svelte/events' {
 	export {};
 }
 
+declare module 'svelte/devtool' {
+	export interface Config {
+		position: 'top'|'bottom'
+	}
+	export function configure(options: Partial<Config>): void;
+
+	export function getConfig(): Config;
+
+	export {};
+}
+
 declare module 'svelte/types/compiler/preprocess' {
 	/** @deprecated import this from 'svelte/preprocess' instead */
 	export type MarkupPreprocessor = MarkupPreprocessor_1;
