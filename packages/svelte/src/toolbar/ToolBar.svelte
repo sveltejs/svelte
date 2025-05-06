@@ -9,8 +9,8 @@
 	} = $props();
 	let open = $state(false); // Default to closed
 
-	/** @type {SvelteMap<string, Record<string, any>>} */
-	let active_tools = $state(new SvelteMap());
+	/** @type {import('svelte').Component} */
+	let ActiveComponent = $state(null);
 	/** @type {HTMLElement} */
 	let toolbar;
 	/** @type {HTMLElement} */
@@ -29,52 +29,14 @@
 	 * @param {import('./public').Tool} tool
 	 */
 	function toggle_tool(tool) {
-		const active = active_tools.has(tool.name);
-		if (!active) {
-			let mounted_component;
-			if (tool.component) mounted_component = mountTool(tool.component, tool.name, { tool });
-
-			active_tools.set(tool.name, mounted_component);
-			if (tool.activate) tool.activate();
+		if (tool.component === ActiveComponent) {
+			ActiveComponent = undefined;
 		} else {
-			const mounted_component = active_tools.get(tool.name);
-			if (tool.component && mounted_component) unmountTool(mounted_component, tool.name);
-
-			if (tool.deactivate) tool.deactivate();
-			active_tools.delete(tool.name);
+			ActiveComponent = tool.component;
 		}
 
-		if (active_tools.size === 0) toolbarPanels.style.display = 'none';
+		if (!ActiveComponent) toolbarPanels.style.display = 'none';
 		else toolbarPanels.style.display = 'block';
-	}
-
-	/**
-	 * @param {import('svelte').Component} component
-	 * @param {string} id
-	 * @param {Record<string, any>} props
-	 */
-	function mountTool(component, id, props) {
-		if (document.getElementById(id) != null) {
-			throw Error(`${id} already exists, skipping`);
-		}
-
-		const el = document.createElement('div');
-		el.setAttribute('id', `svelte-toolbar-${id}`);
-		toolbarPanels.appendChild(el);
-		const mounted_component = mount(component, { target: el, props });
-
-		return mounted_component;
-	}
-
-	/**
-	 * @param {string} id
-	 * @param {Record<string, any>} component
-	 */
-	async function unmountTool(component, id) {
-		await unmount(component);
-
-		const el = document.getElementById(`svelte-toolbar-${id}`);
-		if (el) el.remove();
 	}
 
 	/**
@@ -129,7 +91,7 @@
 	{#if open}
 		<ul class="svelte-toolbar-tools">
 			{#each config.tools as tool}
-				<li class:active={active_tools.has(tool.name)}>
+				<li class:active={tool.component === ActiveComponent}>
 					<button onclick={() => toggle_tool(tool)} aria-label={tool.name}>{@html tool.icon}</button
 					>
 				</li>
@@ -140,7 +102,11 @@
 		<Icon />
 	</button>
 </div>
-<div class="svelte-toolbar-panels" bind:this={toolbarPanels}></div>
+<div class="svelte-toolbar-panels" bind:this={toolbarPanels}>
+	{#if ActiveComponent}
+		<ActiveComponent />
+	{/if}
+</div>
 
 <style>
 	.svelte-toolbar {
