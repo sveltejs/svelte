@@ -7,7 +7,7 @@
 		/** @type import('./public.d.ts').ResolvedConfig */
 		config
 	} = $props();
-	let open = $state(true); // todo change this to false
+	let open = $state(false); // Default to closed
 
 	/** @type {SvelteMap<string, Record<string, any>>} */
 	let active_tools = $state(new SvelteMap());
@@ -20,6 +20,8 @@
 	let dragOffsetY = 0;
 
 	onMount(() => {
+		toolbar.style.right = '20px';
+		toolbar.style.bottom = '20px';
 		recalculate_toolbar_panel_position();
 	});
 
@@ -33,14 +35,17 @@
 			if (tool.component) mounted_component = mountTool(tool.component, tool.name, { tool });
 
 			active_tools.set(tool.name, mounted_component);
-			tool.activate();
+			if (tool.activate) tool.activate();
 		} else {
 			const mounted_component = active_tools.get(tool.name);
 			if (tool.component && mounted_component) unmountTool(mounted_component, tool.name);
 
-			tool.deactivate();
+			if (tool.deactivate) tool.deactivate();
 			active_tools.delete(tool.name);
 		}
+
+		if (active_tools.size === 0) toolbarPanels.style.display = 'none';
+		else toolbarPanels.style.display = 'block';
 	}
 
 	/**
@@ -99,24 +104,21 @@
 
 	async function toggle_toolbar() {
 		open = !open;
-
-		// need to wait here, so that the toolbar can close first
 		await tick();
-
 		recalculate_toolbar_panel_position();
 	}
 
 	function recalculate_toolbar_panel_position() {
 		const rect = toolbar.getBoundingClientRect();
 		toolbarPanels.style.right = toolbar.style.right;
-		toolbarPanels.style.bottom = parseFloat(toolbar.style.bottom ?? 0) + rect.height + 'px';
+		toolbarPanels.style.bottom = parseFloat(toolbar.style.bottom ?? 0) + rect.height + 10 + 'px'; // Add a small gap
 	}
 </script>
 
 <svelte:window onresize={recalculate_toolbar_panel_position} />
 
 <div
-	class="toolbar"
+	class="svelte-toolbar"
 	bind:this={toolbar}
 	draggable="true"
 	ondrag={drag}
@@ -125,7 +127,7 @@
 	tabindex="-1"
 >
 	{#if open}
-		<ul class="tools">
+		<ul class="svelte-toolbar-tools">
 			{#each config.tools as tool}
 				<li class:active={active_tools.has(tool.name)}>
 					<button onclick={() => toggle_tool(tool)} aria-label={tool.name}>{@html tool.icon}</button
@@ -134,23 +136,44 @@
 			{/each}
 		</ul>
 	{/if}
-	<button type="button" class="toolbar-selector" onclick={toggle_toolbar}>
+	<button type="button" class="svelte-toolbar-selector" onclick={toggle_toolbar}>
 		<Icon />
 	</button>
 </div>
-<div class="toolbar-panels" bind:this={toolbarPanels}></div>
+<div class="svelte-toolbar-panels" bind:this={toolbarPanels}></div>
 
 <style>
-	.toolbar-selector {
+	.svelte-toolbar {
+		display: inline-flex;
+		background-color: var(--toolbar-background);
+		color: var(--toolbar-color);
+		position: fixed;
+		z-index: 1000;
+		border-radius: 8px;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+		padding: 8px;
+	}
+
+	.svelte-toolbar-selector {
 		cursor: pointer;
+		background: none;
+		border: none;
+		padding: 8px;
+		border-radius: 6px;
+		transition: background-color 0.2s ease-in-out;
 	}
 
-	.toolbar-selector :global(svg) {
-		width: 50px;
-		height: 50px;
+	.svelte-toolbar-selector:hover {
+		background-color: var(--toolbar-selector-hover-background);
 	}
 
-	.tools {
+	.svelte-toolbar-selector :global(svg) {
+		width: 24px;
+		height: 24px;
+		fill: var(--toolbar-icon-color);
+	}
+
+	.svelte-toolbar-tools {
 		list-style: none;
 		margin: 0;
 		padding: 0;
@@ -158,48 +181,88 @@
 		align-items: center;
 	}
 
-	.tools li {
+	.svelte-toolbar-tools li {
 		display: inline-block;
-		background-color: #444;
-		border: #111 1px solid;
-		border-radius: 50%;
-		margin: 0 10px;
-		height: 50px;
-		width: 50px;
+		margin: 0 4px;
 	}
 
-	.tools li.active {
-		border-color: #ff3e00;
-	}
-
-	.tools li button {
-		padding: 0;
+	.svelte-toolbar-tools li button {
+		padding: 8px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 100%;
-		height: 100%;
+		width: 36px;
+		height: 36px;
+		border-radius: 50%;
+		border: none;
+		background-color: var(--tool-button-background);
+		color: var(--tool-button-color);
+		cursor: pointer;
+		transition:
+			background-color 0.2s ease-in-out,
+			border-color 0.2s ease-in-out;
 	}
 
-	.tools li button :global(svg) {
-		height: 30px;
-		width: 30px;
+	.svelte-toolbar-tools li button:hover {
+		background-color: var(--tool-button-hover-background);
 	}
 
-	.toolbar {
-		display: inline-flex;
-		background-color: #666; /* TODO: consider dark / light mode */
-		color: white;
+	.svelte-toolbar-tools li.active button {
+		border: 2px solid var(--accent-color);
+	}
+
+	.svelte-toolbar-tools li :global(svg) {
+		filter: grayscale(100%);
+	}
+
+	.svelte-toolbar-tools li.active :global(svg) {
+		filter: unset;
+	}
+
+	.svelte-toolbar-tools li button :global(svg) {
+		height: 20px;
+		width: 20px;
+		fill: var(--tool-icon-color);
+	}
+
+	.svelte-toolbar-panels {
 		position: fixed;
-		right: 0;
-		bottom: 0;
+		z-index: 999;
+		background-color: var(--panel-background);
+		border-radius: 8px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+		padding: 16px;
+		display: none;
+		flex-direction: column;
+		gap: 8px;
+		color: var(--toolbar-color);
 	}
 
-	.toolbar-panels {
-		position: fixed;
-		background-color: #999;
-		right: 0;
-		bottom: 0;
-		display: flex;
+	:root {
+		--toolbar-background: #f0f0f0;
+		--toolbar-color: #222;
+		--toolbar-selector-hover-background: #e0e0e0;
+		--toolbar-icon-color: #333;
+		--tool-button-background: #fff;
+		--tool-button-color: #333;
+		--tool-button-hover-background: #eee;
+		--tool-icon-color: #333;
+		--accent-color: #ff3e00;
+		--panel-background: #fff;
+	}
+
+	@media (prefers-color-scheme: dark) {
+		:root {
+			--toolbar-background: #1e1e27;
+			--toolbar-color: white;
+			--toolbar-selector-hover-background: #333344;
+			--toolbar-icon-color: #d4d4d8;
+			--tool-button-background: #333344;
+			--tool-button-color: #d4d4d8;
+			--tool-button-hover-background: #444;
+			--tool-icon-color: #d4d4d8;
+			--accent-color: #ff3e00;
+			--panel-background: #252531;
+		}
 	}
 </style>
