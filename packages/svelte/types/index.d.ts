@@ -2549,6 +2549,7 @@ declare module 'svelte/events' {
 }
 
 declare module 'svelte/toolbar' {
+	import type { Component } from 'svelte';
 	export interface Tool {
 		name: string;
 		icon: string; // url or svg
@@ -2556,6 +2557,7 @@ declare module 'svelte/toolbar' {
 		deactivate: () => void;
 		keyCombo?: string;
 		disabled?: boolean;
+		component?: Component;
 	}
 	type ToolFn = () => Tool;
 
@@ -2565,12 +2567,11 @@ declare module 'svelte/toolbar' {
 	}
 
 	export interface ResolvedConfig extends Config {
-		tools: Tool[]
+		tools: Tool[];
 	}
-	export function configure(options: Partial<Config>): void;
+	export function configureSvelte(options: Partial<Config>): void;
 
 	export function getConfig(): ResolvedConfig;
-	export function mountUI(): void;
 
 	export {};
 }

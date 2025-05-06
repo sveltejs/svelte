@@ -1,3 +1,5 @@
+import type { Component } from 'svelte';
+
 export * from './index.js';
 
 export interface Tool {
@@ -7,6 +9,7 @@ export interface Tool {
 	deactivate: () => void;
 	keyCombo?: string;
 	disabled?: boolean;
+	component?: Component;
 }
 type ToolFn = () => Tool;
 

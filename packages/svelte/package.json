@@ -146,7 +146,6 @@
   },
   "devDependencies": {
     "@jridgewell/trace-mapping": "^0.3.25",
-    "@neodrag/svelte": "^2.3.2",
     "@playwright/test": "^1.46.1",
     "@rollup/plugin-commonjs": "^28.0.1",
     "@rollup/plugin-node-resolve": "^15.3.0",
