@@ -4,5 +4,8 @@ import { svelte_inspector } from './tools/inspector/index.js';
 import { svelte_config } from './tools/config/index.js';
 export * from './configure.svelte.js';
 
-configureSvelte({ tools: [svelte_inspector, svelte_config] });
+configureSvelte({
+	position: 'top-left',
+	tools: [svelte_inspector, svelte_config]
+});
 mountUI();

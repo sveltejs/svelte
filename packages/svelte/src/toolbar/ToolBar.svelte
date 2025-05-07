@@ -1,34 +1,136 @@
 <script>
-	import { mount, onMount, tick, unmount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import Icon from './Icon.svelte';
-	import { SvelteMap } from 'svelte/reactivity';
 
-	let {
-		/** @type import('./public.d.ts').ResolvedConfig */
-		config
-	} = $props();
-	let open = $state(false); // Default to closed
+	/** @type {{ config: import('./public.d.ts').ResolvedConfig }} */
+	let { config } = $props();
+	let open = $state(false);
 
-	/** @type {import('svelte').Component} */
-	let ActiveComponent = $state(null);
+	/** @type {import('svelte').Component | undefined} */
+	let ActiveComponent = $state();
 	/** @type {HTMLElement} */
-	let toolbar;
+	let toolbarSelector;
 	/** @type {HTMLElement} */
 	let toolbarPanels;
+	/** @type {HTMLElement} */
+	let toolbarTools;
 
 	let dragOffsetX = 0;
 	let dragOffsetY = 0;
+	let toolbarScreenOffset = 20;
+
+	/** @type {import('./public').Config['position']} */
+	let computedPosition = config.position;
 
 	onMount(() => {
-		toolbar.style.right = '20px';
-		toolbar.style.bottom = '20px';
-		recalculate_toolbar_panel_position();
+		computedPosition = config.position;
+		layout_selector();
 	});
+
+	$effect(() => {
+		computedPosition = config.position;
+		layout_selector();
+		layout_toolbar();
+	});
+
+	function layout_selector() {
+		const rect = toolbarSelector.getBoundingClientRect();
+
+		let x = 0;
+		let y = 0;
+
+		switch (computedPosition) {
+			case 'top-left':
+				x = toolbarScreenOffset;
+				y = toolbarScreenOffset;
+				break;
+
+			case 'top-right':
+				x = window.innerWidth - rect.width - toolbarScreenOffset;
+				y = toolbarScreenOffset;
+				break;
+
+			case 'bottom-right':
+				x = window.innerWidth - rect.width - toolbarScreenOffset;
+				y = window.innerHeight - rect.height - toolbarScreenOffset;
+				break;
+
+			case 'bottom-left':
+				x = toolbarScreenOffset;
+				y = window.innerHeight - rect.height - toolbarScreenOffset;
+				break;
+
+			default:
+				break;
+		}
+
+		toolbarSelector.style.left = x + 'px';
+		toolbarSelector.style.top = y + 'px';
+	}
+
+	function layout_toolbar() {
+		const toolbarSelectorRect = toolbarSelector.getBoundingClientRect();
+		const toolbarToolsRect = toolbarTools.getBoundingClientRect();
+		const toolbarPanelsRect = toolbarPanels.getBoundingClientRect();
+
+		switch (computedPosition) {
+			case 'top-left':
+				toolbarTools.style.top = toolbarSelector.style.top;
+				toolbarTools.style.left =
+					parseFloat(toolbarSelector.style.left) + toolbarSelectorRect.width + 'px';
+
+				toolbarPanels.style.top =
+					parseFloat(toolbarSelector.style.top) + toolbarSelectorRect.height + 'px';
+				toolbarPanels.style.left = toolbarSelectorRect.x + 'px';
+				break;
+
+			case 'top-right':
+				toolbarTools.style.top = toolbarSelector.style.top;
+				toolbarTools.style.left =
+					parseFloat(toolbarSelector.style.left) - toolbarToolsRect.width + 'px';
+
+				toolbarPanels.style.top =
+					parseFloat(toolbarSelector.style.top) + toolbarSelectorRect.height + 'px';
+				toolbarPanels.style.left =
+					parseFloat(toolbarSelector.style.left) -
+					toolbarPanelsRect.width +
+					toolbarSelectorRect.width +
+					'px';
+				break;
+
+			case 'bottom-left':
+				toolbarTools.style.top = toolbarSelector.style.top;
+				toolbarTools.style.left =
+					parseFloat(toolbarSelector.style.left) + toolbarSelectorRect.width + 'px';
+
+				toolbarPanels.style.top =
+					parseFloat(toolbarSelector.style.top) - toolbarPanelsRect.height + 'px';
+				toolbarPanels.style.left = toolbarSelectorRect.x + 'px';
+				break;
+
+			case 'bottom-right':
+				toolbarTools.style.top = toolbarSelector.style.top;
+				toolbarTools.style.left =
+					parseFloat(toolbarSelector.style.left) - toolbarToolsRect.width + 'px';
+
+				toolbarPanels.style.top =
+					parseFloat(toolbarSelector.style.top) - toolbarPanelsRect.height + 'px';
+				toolbarPanels.style.left =
+					parseFloat(toolbarSelector.style.left) -
+					toolbarPanelsRect.width +
+					toolbarSelectorRect.width +
+					'px';
+				break;
+
+			default:
+				break;
+		}
+	}
 
 	/**
 	 * @param {import('./public').Tool} tool
 	 */
-	function toggle_tool(tool) {
+	async function toggle_tool(tool) {
 		if (tool.component === ActiveComponent) {
 			ActiveComponent = undefined;
 		} else {
@@ -37,13 +139,16 @@
 
 		if (!ActiveComponent) toolbarPanels.style.display = 'none';
 		else toolbarPanels.style.display = 'block';
+
+		await tick();
+		layout_toolbar();
 	}
 
 	/**
 	 * @param {DragEvent} event
 	 */
 	function drag_start(event) {
-		const rect = toolbar.getBoundingClientRect();
+		const rect = toolbarSelector.getBoundingClientRect();
 		dragOffsetX = event.clientX - rect.x;
 		dragOffsetY = event.clientY - rect.y;
 	}
@@ -54,58 +159,67 @@
 	function drag(event) {
 		if (event.clientX === 0 || event.clientY === 0) return;
 
-		const rect = toolbar.getBoundingClientRect();
+		const x = event.clientX - dragOffsetX;
+		const y = event.clientY - dragOffsetY;
+		toolbarSelector.style.left = x + 'px';
+		toolbarSelector.style.top = y + 'px';
 
-		const x = window.innerWidth - event.clientX + dragOffsetX - rect.width;
-		const y = window.innerHeight - event.clientY + dragOffsetY - rect.height;
-		toolbar.style.right = x + 'px';
-		toolbar.style.bottom = y + 'px';
+		let top = false;
+		let left = false;
 
-		recalculate_toolbar_panel_position();
+		if (y < window.innerHeight / 2) top = true;
+		if (x < window.innerWidth / 2) left = true;
+
+		if (top && left) computedPosition = 'top-left';
+		if (top && !left) computedPosition = 'top-right';
+		if (!top && left) computedPosition = 'bottom-left';
+		if (!top && !left) computedPosition = 'bottom-right';
+
+		layout_toolbar();
 	}
 
 	async function toggle_toolbar() {
 		open = !open;
 		await tick();
-		recalculate_toolbar_panel_position();
-	}
-
-	function recalculate_toolbar_panel_position() {
-		const rect = toolbar.getBoundingClientRect();
-		toolbarPanels.style.right = toolbar.style.right;
-		toolbarPanels.style.bottom = parseFloat(toolbar.style.bottom ?? 0) + rect.height + 10 + 'px'; // Add a small gap
 	}
 </script>
 
-<svelte:window onresize={recalculate_toolbar_panel_position} />
+<svelte:window onresize={layout_toolbar} />
 
-<div
-	class="svelte-toolbar"
-	bind:this={toolbar}
-	draggable="true"
-	ondrag={drag}
-	ondragstart={drag_start}
-	role="toolbar"
-	tabindex="-1"
->
-	{#if open}
-		<ul class="svelte-toolbar-tools">
-			{#each config.tools as tool}
-				<li class:active={tool.component === ActiveComponent}>
-					<button onclick={() => toggle_tool(tool)} aria-label={tool.name}>{@html tool.icon}</button
-					>
-				</li>
-			{/each}
-		</ul>
-	{/if}
-	<button type="button" class="svelte-toolbar-selector" onclick={toggle_toolbar}>
-		<Icon />
-	</button>
-</div>
-<div class="svelte-toolbar-panels" bind:this={toolbarPanels}>
-	{#if ActiveComponent}
-		<ActiveComponent />
-	{/if}
+<div class="svelte-toolbar">
+	<div
+		bind:this={toolbarSelector}
+		draggable="true"
+		ondrag={drag}
+		ondragstart={drag_start}
+		role="toolbar"
+		tabindex="-1"
+		class="svelte-toolbar-selector svelte-toolbar-base"
+	>
+		<button type="button" onclick={toggle_toolbar}>
+			<Icon />
+		</button>
+	</div>
+
+	<div class="svelte-toolbar-tools svelte-toolbar-base" bind:this={toolbarTools}>
+		{#if open}
+			<ul>
+				{#each config.tools as tool}
+					<li class:active={tool.component === ActiveComponent}>
+						<button onclick={() => toggle_tool(tool)} aria-label={tool.name}>
+							{@html tool.icon}
+						</button>
+					</li>
+				{/each}
+			</ul>
+		{/if}
+	</div>
+
+	<div class="svelte-toolbar-panels" bind:this={toolbarPanels}>
+		{#if ActiveComponent}
+			<ActiveComponent {config} />
+		{/if}
+	</div>
 </div>
 
 <style>
@@ -113,20 +227,25 @@
 		display: inline-flex;
 		background-color: var(--toolbar-background);
 		color: var(--toolbar-color);
-		position: fixed;
 		z-index: 1000;
 		border-radius: 8px;
 		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-		padding: 8px;
 	}
 
 	.svelte-toolbar-selector {
+		position: fixed;
+	}
+
+	.svelte-toolbar-selector button {
 		cursor: pointer;
-		background: none;
+	}
+
+	.svelte-toolbar-base {
 		border: none;
-		padding: 8px;
 		border-radius: 6px;
 		transition: background-color 0.2s ease-in-out;
+		background-color: var(--toolbar-background);
+		margin: 0;
 	}
 
 	.svelte-toolbar-selector:hover {
@@ -140,9 +259,14 @@
 	}
 
 	.svelte-toolbar-tools {
+		position: fixed;
+		background-color: var(--toolbar-background);
+	}
+
+	.svelte-toolbar-tools ul {
 		list-style: none;
 		margin: 0;
-		padding: 0;
+		padding: 8px;
 		display: flex;
 		align-items: center;
 	}
@@ -204,7 +328,9 @@
 		color: var(--toolbar-color);
 	}
 
-	:root {
+	.svelte-toolbar-selector,
+	.svelte-toolbar,
+	.svelte-toolbar-panels {
 		--toolbar-background: #f0f0f0;
 		--toolbar-color: #222;
 		--toolbar-selector-hover-background: #e0e0e0;
@@ -218,7 +344,9 @@
 	}
 
 	@media (prefers-color-scheme: dark) {
-		:root {
+		.svelte-toolbar-selector,
+		.svelte-toolbar,
+		.svelte-toolbar-panels {
 			--toolbar-background: #1e1e27;
 			--toolbar-color: white;
 			--toolbar-selector-hover-background: #333344;

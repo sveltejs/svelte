@@ -4,7 +4,7 @@ export * from './index.js';
 
 export interface Tool {
 	name: string;
-	icon: string; // url or svg
+	icon: string; // TODO: url or svg
 	activate: () => void;
 	deactivate: () => void;
 	keyCombo?: string;
@@ -14,7 +14,7 @@ export interface Tool {
 type ToolFn = () => Tool;
 
 export interface Config {
-	position?: 'top' | 'bottom';
+	position?: 'top-left' | 'top-right' | 'bottom-right' | 'bottom-left';
 	tools?: (Tool | ToolFn)[];
 }
 
