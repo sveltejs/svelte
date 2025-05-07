@@ -228,7 +228,6 @@
 		background-color: var(--toolbar-background);
 		color: var(--toolbar-color);
 		z-index: 1000;
-		border-radius: 8px;
 		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 	}
 
@@ -246,6 +245,8 @@
 		transition: background-color 0.2s ease-in-out;
 		background-color: var(--toolbar-background);
 		margin: 0;
+		height: var(--toolbar-height);
+		display: flex;
 	}
 
 	.svelte-toolbar-selector:hover {
@@ -341,6 +342,7 @@
 		--tool-icon-color: #333;
 		--accent-color: #ff3e00;
 		--panel-background: #fff;
+		--toolbar-height: 50px;
 	}
 
 	@media (prefers-color-scheme: dark) {
