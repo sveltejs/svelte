@@ -885,6 +885,15 @@ export async function tick() {
 }
 
 /**
+ * Returns a promise that resolves once any state changes, and asynchronous work resulting from them,
+ * have resolved and the DOM has been updated
+ * @returns {Promise<void>}
+ */
+export function settled() {
+	return (Batch.ensure().deferred ??= Promise.withResolvers()).promise;
+}
+
+/**
  * @template V
  * @param {Value<V>} signal
  * @returns {V}

@@ -35,6 +35,8 @@ export function unmount() {
 
 export async function tick() {}
 
+export async function settled() {}
+
 /** @type {AbortController | null} */
 let controller = null;
 

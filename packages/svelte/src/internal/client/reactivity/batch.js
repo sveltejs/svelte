@@ -39,6 +39,9 @@ export class Batch {
 
 	#pending = 0;
 
+	/** @type {PromiseWithResolvers<void> | null} */
+	deferred = null;
+
 	/** @type {Effect[]} */
 	async_effects = [];
 
@@ -50,8 +53,6 @@ export class Batch {
 
 	/** @type {Set<Effect>} */
 	skipped_effects = new Set();
-
-	apply() {}
 
 	/**
 	 *
@@ -93,6 +94,8 @@ export class Batch {
 
 			flush_queued_effects(render_effects);
 			flush_queued_effects(effects);
+
+			this.deferred?.resolve();
 		} else {
 			for (const e of this.render_effects) set_signal_status(e, CLEAN);
 			for (const e of this.effects) set_signal_status(e, CLEAN);

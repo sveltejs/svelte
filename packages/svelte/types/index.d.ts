@@ -453,6 +453,11 @@ declare module 'svelte' {
 	 * */
 	export function tick(): Promise<void>;
 	/**
+	 * Returns a promise that resolves once any state changes, and asynchronous work resulting from them,
+	 * have resolved and the DOM has been updated
+	 * */
+	export function settled(): Promise<void>;
+	/**
 	 * When used inside a [`$derived`](https://svelte.dev/docs/svelte/$derived) or [`$effect`](https://svelte.dev/docs/svelte/$effect),
 	 * any state read inside `fn` will not be treated as a dependency.
 	 *
