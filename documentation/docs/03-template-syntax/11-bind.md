@@ -75,7 +75,7 @@ In the case of a numeric input (`type="number"` or `type="range"`), the value wi
 <p>{a} + {b} = {a + b}</p>
 ```
 
-If the input is empty or invalid (in the case of `type="number"`), the value is `undefined`.
+If the input is empty or invalid (in the case of `type="number"`), the value is `null`.
 
 Since 5.6.0, if an `<input>` has a `defaultValue` and is part of a form, it will revert to that value instead of the empty string when the form is reset. Note that for the initial render the value of the binding takes precedence unless it is `null` or `undefined`.
 
