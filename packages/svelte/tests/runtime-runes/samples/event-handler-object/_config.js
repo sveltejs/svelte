@@ -13,7 +13,20 @@ export default test({
 		flushSync();
 		buttons.forEach((b) => b.click());
 		flushSync();
-		assert.deepEqual(logs, [true, true, 'mutated', 'mutated', 'assigned', 'assigned']);
+		assert.deepEqual(logs, [
+			'click',
+			true,
+			'click',
+			true,
+			'mutated',
+			true,
+			'mutated',
+			true,
+			'assigned',
+			true,
+			'assigned',
+			true
+		]);
 		assert.htmlEqual(target.innerHTML, '<button>a</button><button>b</button><button>next</button>');
 	}
 });

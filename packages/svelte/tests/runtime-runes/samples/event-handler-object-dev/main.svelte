@@ -2,8 +2,8 @@
 	let count = $state(0);
 
 	let onclick = $state({
-		handleEvent() {
-			count += +this.dataset.step;
+		handleEvent(ev) {
+			count += +ev.currentTarget.dataset.step;
 		}
 	});
 </script>

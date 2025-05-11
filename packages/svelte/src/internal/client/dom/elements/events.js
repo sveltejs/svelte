@@ -57,12 +57,7 @@ export function call_event_handler(handler, current_target, event, data = []) {
 	if (typeof handler === 'function') {
 		handler.call(current_target, event, ...data);
 	} else {
-		if (handler && handler.handleEvent == null) {
-			// @ts-expect-error - do so to get a nicer "handler.handleEvent is not a function" error instead of "Cannot read properties of null (reading 'call')"
-			handler.handleEvent();
-		} else {
-			handler?.handleEvent.call(current_target, event);
-		}
+		handler?.handleEvent(event);
 	}
 }
 

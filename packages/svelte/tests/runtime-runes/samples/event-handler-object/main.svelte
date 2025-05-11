@@ -3,16 +3,16 @@
 
 	let onclick = $state.raw({
 		handleEvent(ev) {
-			console.log(this === ev.currentTarget);
+			console.log(ev.type, this === onclick);
 		}
 	});
 
 	function click2() {
-		console.log("mutated");
+		console.log("mutated", this === onclick);
 	}
 
 	function click3() {
-		console.log("assigned");
+		console.log("assigned", this === onclick);
 	}
 
 	let btn;
