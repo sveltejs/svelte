@@ -38,5 +38,25 @@
 			67
 		],
 		"frame": "1: <script>\n2:     let name = '\\u2067\\u2066rld\\u2069\\u2066wo\\u2069\\u2069';\n                                                             ^\n3: </script>\n4: ⁧⁦def⁩⁦abc⁩⁩"
+	},
+	{
+		"code": "bidirectional_control_characters_detected",
+		"message": "A bidirectional control character was detected in your code. These characters can be used to alter the visual direction of your code and could have unintended consequences\nhttps://svelte.dev/e/bidirectional_control_characters_detected",
+		"filename": "packages/svelte/tests/snapshot/samples/bidirectional-control-chars/index.svelte",
+		"start": {
+			"line": 5,
+			"column": 11,
+			"character": 103
+		},
+		"end": {
+			"line": 5,
+			"column": 17,
+			"character": 109
+		},
+		"position": [
+			103,
+			109
+		],
+		"frame": "3: </script>\n4: ⁧⁦def⁩⁦abc⁩⁩\n5: <h1>Hello, {name}!</h1>\n                    ^"
 	}
 ]
