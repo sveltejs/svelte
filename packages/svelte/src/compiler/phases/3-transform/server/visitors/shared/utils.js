@@ -9,8 +9,12 @@ import {
 	EMPTY_COMMENT
 } from '../../../../../../internal/server/hydration.js';
 import * as b from '#compiler/builders';
+import * as w from '../../../../../warnings.js';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
-import { regex_whitespaces_strict } from '../../../../patterns.js';
+import {
+	regex_bidirectional_control_characters,
+	regex_whitespaces_strict
+} from '../../../../patterns.js';
 
 /** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
 export const block_open = b.literal(BLOCK_OPEN);
@@ -48,6 +52,9 @@ export function process_children(nodes, { visit, state }) {
 				const evaluated = state.scope.evaluate(node.expression);
 
 				if (evaluated.is_known) {
+					if (regex_bidirectional_control_characters.test((evaluated.value ?? '') + '')) {
+						w.bidirectional_control_characters_detected(node);
+					}
 					quasi.value.cooked += escape_html((evaluated.value ?? '') + '');
 				} else {
 					expressions.push(b.call('$.escape', /** @type {Expression} */ (visit(node.expression))));

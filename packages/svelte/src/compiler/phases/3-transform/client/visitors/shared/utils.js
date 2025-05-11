@@ -4,8 +4,12 @@
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
+import * as w from '../../../../../warnings.js';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
-import { regex_is_valid_identifier } from '../../../../patterns.js';
+import {
+	regex_is_valid_identifier,
+	regex_bidirectional_control_characters
+} from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator } from '../../../../../state.js';
 import { create_derived } from '../../utils.js';
@@ -77,7 +81,10 @@ export function build_template_chunk(
 				// If we have a single expression, then pass that in directly to possibly avoid doing
 				// extra work in the template_effect (instead we do the work in set_text).
 				if (evaluated.is_known) {
-					value = b.literal(evaluated.value);
+					if (regex_bidirectional_control_characters.test((evaluated.value ?? '') + '')) {
+						w.bidirectional_control_characters_detected(node);
+					}
+					value = b.literal((evaluated.value ?? '') + '');
 				}
 
 				return { value, has_state };
@@ -96,7 +103,10 @@ export function build_template_chunk(
 			}
 
 			if (evaluated.is_known) {
-				quasi.value.cooked += evaluated.value + '';
+				if (regex_bidirectional_control_characters.test((evaluated.value ?? '') + '')) {
+					w.bidirectional_control_characters_detected(node);
+				}
+				quasi.value.cooked += (evaluated.value ?? '') + '';
 			} else {
 				if (!evaluated.is_defined) {
 					// add `?? ''` where necessary
