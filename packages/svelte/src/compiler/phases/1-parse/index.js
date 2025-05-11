@@ -2,8 +2,9 @@
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment.js';
-import { regex_whitespace } from '../patterns.js';
+import { regex_bidirectional_control_characters, regex_whitespace } from '../patterns.js';
 import * as e from '../../errors.js';
+import * as w from '../../warnings.js';
 import { create_fragment } from './utils/create.js';
 import read_options from './read/options.js';
 import { is_reserved } from '../../../utils.js';
@@ -62,6 +63,11 @@ export class Parser {
 	constructor(template, loose) {
 		if (typeof template !== 'string') {
 			throw new TypeError('Template must be a string');
+		}
+
+		const control_chars = regex_bidirectional_control_characters.exec(template);
+		if (control_chars) {
+			w.bidirectional_control_characters_detected({ start: template.indexOf(control_chars[0][0]) });
 		}
 
 		this.loose = loose;
