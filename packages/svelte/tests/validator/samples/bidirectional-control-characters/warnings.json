@@ -3,6 +3,18 @@
 		"code": "bidirectional_control_characters",
 		"message": "A bidirectional control character was detected in your code. These characters can be used to alter the visual direction of your code and could have unintended consequences",
 		"start": {
+			"line": 2,
+			"column": 15
+		},
+		"end": {
+			"line": 2,
+			"column": 58
+		}
+	},
+	{
+		"code": "bidirectional_control_characters",
+		"message": "A bidirectional control character was detected in your code. These characters can be used to alter the visual direction of your code and could have unintended consequences",
+		"start": {
 			"line": 4,
 			"column": 0
 		},
@@ -33,18 +45,6 @@
 		"end": {
 			"line": 4,
 			"column": 12
-		}
-	},
-	{
-		"code": "bidirectional_control_characters",
-		"message": "A bidirectional control character was detected in your code. These characters can be used to alter the visual direction of your code and could have unintended consequences",
-		"start": {
-			"line": 2,
-			"column": 15
-		},
-		"end": {
-			"line": 2,
-			"column": 58
 		}
 	}
 ]
