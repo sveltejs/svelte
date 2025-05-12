@@ -67,19 +67,24 @@ for (let i = 0; i < results[0].length; i += 1) {
 	for (const metric of ['time', 'gc_time']) {
 		const times = results.map((result) => +result[i][metric]);
 		let min = Infinity;
+		let max = -Infinity;
 		let min_index = -1;
 
 		for (let b = 0; b < times.length; b += 1) {
 			if (times[b] < min) {
 				min = times[b];
 				min_index = b;
+			} else {
+				max = times[b];
 			}
 		}
 
 		if (min !== 0) {
 			console.group(`${metric}: fastest is ${branches[min_index]}`);
 			times.forEach((time, b) => {
-				console.log(`${branches[b]}: ${time.toFixed(2)}ms (${((time / min) * 100).toFixed(2)}%)`);
+				console.log(
+					`${branches[b]}: ${'◼'.repeat(Math.round(20 * (time / max)))} (${time.toFixed(2)}ms)`
+				);
 			});
 			console.groupEnd();
 		}
