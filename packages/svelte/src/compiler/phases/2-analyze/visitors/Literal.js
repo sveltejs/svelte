@@ -8,7 +8,7 @@ import { regex_bidirectional_control_characters } from '../../patterns.js';
 export function Literal(node) {
 	if (typeof node.value === 'string') {
 		if (regex_bidirectional_control_characters.test(node.value)) {
-			w.bidirectional_control_characters_detected(node);
+			w.bidirectional_control_characters(node);
 		}
 	}
 }

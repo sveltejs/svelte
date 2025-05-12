@@ -67,7 +67,7 @@ export class Parser {
 
 		const control_chars = regex_bidirectional_control_characters.exec(template);
 		if (control_chars) {
-			w.bidirectional_control_characters_detected({ start: template.indexOf(control_chars[0][0]) });
+			w.bidirectional_control_characters({ start: template.indexOf(control_chars[0][0]) });
 		}
 
 		this.loose = loose;

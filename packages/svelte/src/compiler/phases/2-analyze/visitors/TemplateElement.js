@@ -7,6 +7,6 @@ import { regex_bidirectional_control_characters } from '../../patterns.js';
  */
 export function TemplateElement(node) {
 	if (regex_bidirectional_control_characters.test(node.value.cooked ?? '')) {
-		w.bidirectional_control_characters_detected(node);
+		w.bidirectional_control_characters(node);
 	}
 }

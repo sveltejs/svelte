@@ -82,7 +82,7 @@ export function build_template_chunk(
 				// extra work in the template_effect (instead we do the work in set_text).
 				if (evaluated.is_known) {
 					if (regex_bidirectional_control_characters.test((evaluated.value ?? '') + '')) {
-						w.bidirectional_control_characters_detected(node);
+						w.bidirectional_control_characters(node);
 					}
 					value = b.literal((evaluated.value ?? '') + '');
 				}
@@ -104,7 +104,7 @@ export function build_template_chunk(
 
 			if (evaluated.is_known) {
 				if (regex_bidirectional_control_characters.test((evaluated.value ?? '') + '')) {
-					w.bidirectional_control_characters_detected(node);
+					w.bidirectional_control_characters(node);
 				}
 				quasi.value.cooked += (evaluated.value ?? '') + '';
 			} else {

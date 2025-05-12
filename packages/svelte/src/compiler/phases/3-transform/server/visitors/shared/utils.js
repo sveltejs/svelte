@@ -53,7 +53,7 @@ export function process_children(nodes, { visit, state }) {
 
 				if (evaluated.is_known) {
 					if (regex_bidirectional_control_characters.test((evaluated.value ?? '') + '')) {
-						w.bidirectional_control_characters_detected(node);
+						w.bidirectional_control_characters(node);
 					}
 					quasi.value.cooked += escape_html((evaluated.value ?? '') + '');
 				} else {

@@ -1,4 +1,4 @@
-## bidirectional_control_characters_detected
+## bidirectional_control_characters
 
 > A bidirectional control character was detected in your code. These characters can be used to alter the visual direction of your code and could have unintended consequences
 

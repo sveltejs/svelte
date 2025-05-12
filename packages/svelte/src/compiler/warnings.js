@@ -86,7 +86,7 @@ export const codes = [
 	'a11y_role_supports_aria_props_implicit',
 	'a11y_unknown_aria_attribute',
 	'a11y_unknown_role',
-	'bidirectional_control_characters_detected',
+	'bidirectional_control_characters',
 	'legacy_code',
 	'unknown_code',
 	'options_deprecated_accessors',
@@ -511,8 +511,8 @@ export function a11y_unknown_role(node, role, suggestion) {
  * A bidirectional control character was detected in your code. These characters can be used to alter the visual direction of your code and could have unintended consequences
  * @param {null | NodeLike} node
  */
-export function bidirectional_control_characters_detected(node) {
-	w(node, 'bidirectional_control_characters_detected', `A bidirectional control character was detected in your code. These characters can be used to alter the visual direction of your code and could have unintended consequences\nhttps://svelte.dev/e/bidirectional_control_characters_detected`);
+export function bidirectional_control_characters(node) {
+	w(node, 'bidirectional_control_characters', `A bidirectional control character was detected in your code. These characters can be used to alter the visual direction of your code and could have unintended consequences\nhttps://svelte.dev/e/bidirectional_control_characters`);
 }
 
 /**
