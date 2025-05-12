@@ -24,8 +24,4 @@ export function Text(node, context) {
 		let start = match.index + node.start;
 		w.bidirectional_control_characters({ start, end: start + match[0].length });
 	}
-
-	// if (regex_bidirectional_control_characters.test(node.data)) {
-	// 	w.bidirectional_control_characters(node);
-	// }
 }
