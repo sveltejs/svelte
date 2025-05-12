@@ -3,3 +3,6 @@
 </script>
 ⁧⁦def⁩⁦abc⁩⁩
 <h1>Hello, {name}!</h1>
+
+<!-- svelte-ignore bidirectional_control_characters -->
+<div>⁧⁦def⁩⁦abc⁩⁩</div>
