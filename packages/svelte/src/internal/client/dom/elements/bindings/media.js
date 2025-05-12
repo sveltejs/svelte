@@ -64,16 +64,18 @@ export function bind_current_time(media, get, set = get) {
 export function bind_buffered(media, set) {
 	/** @type {{ start: number; end: number; }[]} */
 	var current;
+
 	// `buffered` can update without emitting any event, so we check it on various events.
 	// By specs, `buffered` always returns a new object, so we have to compare deeply.
 	listen(media, ['loadedmetadata', 'progress', 'timeupdate', 'seeking'], () => {
-		var buf = media.buffered;
+		var ranges = media.buffered;
+
 		if (
 			!current ||
-			current.length !== buf.length ||
-			current.some((range, i) => buf.start(i) !== range.start || buf.end(i) !== range.end)
+			current.length !== ranges.length ||
+			current.some((range, i) => ranges.start(i) !== range.start || ranges.end(i) !== range.end)
 		) {
-			current = time_ranges_to_array(buf);
+			current = time_ranges_to_array(ranges);
 			set(current);
 		}
 	});
