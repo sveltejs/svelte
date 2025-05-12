@@ -86,9 +86,10 @@ for (let i = 0; i < results[0].length; i += 1) {
 		if (min !== 0) {
 			console.group(`${metric}: fastest is ${char(min_index)} (${branches[min_index]})`);
 			times.forEach((time, b) => {
-				console.log(
-					`${char(b)}: ${'◼'.repeat(Math.round(20 * (time / max)))} (${time.toFixed(2)}ms)`
-				);
+				const SIZE = 20;
+				const n = Math.round(SIZE * (time / max));
+
+				console.log(`${char(b)}: ${'◼'.repeat(n)}${' '.repeat(SIZE - n)} ${time.toFixed(2)}ms`);
 			});
 			console.groupEnd();
 		}
