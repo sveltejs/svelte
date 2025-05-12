@@ -833,8 +833,6 @@ export function flushSync(fn) {
 	while (queued_root_effects.length > 0) {
 		is_flushing = true;
 		flush_queued_root_effects();
-
-		is_flushing = true;
 		flush_tasks();
 	}
 
