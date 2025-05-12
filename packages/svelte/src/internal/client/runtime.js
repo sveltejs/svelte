@@ -828,16 +828,14 @@ export function flushSync(fn) {
 		result = fn();
 	}
 
-	while (true) {
-		flush_tasks();
-
-		if (queued_root_effects.length === 0) {
-			return /** @type {T} */ (result);
-		}
-
+	while (queued_root_effects.length > 0) {
 		is_flushing = true;
 		flush_queued_root_effects();
+
+		flush_tasks();
 	}
+
+	return /** @type {T} */ (result);
 }
 
 /**
