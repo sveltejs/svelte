@@ -71,11 +71,15 @@ for (let i = 0; i < results[0].length; i += 1) {
 		let min_index = -1;
 
 		for (let b = 0; b < times.length; b += 1) {
-			if (times[b] < min) {
-				min = times[b];
+			const time = times[b];
+
+			if (time < min) {
+				min = time;
 				min_index = b;
-			} else {
-				max = times[b];
+			}
+
+			if (time > max) {
+				max = time;
 			}
 		}
 
