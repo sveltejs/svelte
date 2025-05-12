@@ -1,13 +1,14 @@
 /** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
-/** @import { ComponentContext } from '../../types.js' */
+/** @import { ComponentContext, MemoizedExpression } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { build_bind_this, memoize_expression, validate_binding } from '../shared/utils.js';
+import { build_bind_this, get_expression_id, validate_binding } from '../shared/utils.js';
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
+import { create_derived } from '../../utils.js';
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
@@ -39,6 +40,12 @@ export function build_component(node, component_name, context, anchor = context.
 
 	/** @type {Record<string, Expression[]>} */
 	const events = {};
+
+	/** @type {MemoizedExpression[]} */
+	const expressions = [];
+
+	/** @type {MemoizedExpression[]} */
+	const async_expressions = [];
 
 	/** @type {Property[]} */
 	const custom_css_props = [];
@@ -115,16 +122,21 @@ export function build_component(node, component_name, context, anchor = context.
 			(events[attribute.name] ||= []).push(handler);
 		} else if (attribute.type === 'SpreadAttribute') {
 			const expression = /** @type {Expression} */ (context.visit(attribute));
+
 			if (attribute.metadata.expression.has_state) {
-				let value = expression;
-
-				if (attribute.metadata.expression.has_call) {
-					const id = b.id(context.state.scope.generate('spread_element'));
-					context.state.init.push(b.var(id, b.call('$.derived', b.thunk(value))));
-					value = b.call('$.get', id);
-				}
-
-				props_and_spreads.push(b.thunk(value));
+				props_and_spreads.push(
+					b.thunk(
+						attribute.metadata.expression.has_await || attribute.metadata.expression.has_call
+							? b.call(
+									'$.get',
+									get_expression_id(
+										attribute.metadata.expression.has_await ? async_expressions : expressions,
+										expression
+									)
+								)
+							: expression
+					)
+				);
 			} else {
 				props_and_spreads.push(expression);
 			}
@@ -133,10 +145,15 @@ export function build_component(node, component_name, context, anchor = context.
 				custom_css_props.push(
 					b.init(
 						attribute.name,
-						build_attribute_value(attribute.value, context, (value, metadata) =>
+						build_attribute_value(attribute.value, context, (value, metadata) => {
 							// TODO put the derived in the local block
-							metadata.has_call ? memoize_expression(context.state, value) : value
-						).value
+							return metadata.has_call || metadata.has_await
+								? b.call(
+										'$.get',
+										get_expression_id(metadata.has_await ? async_expressions : expressions, value)
+									)
+								: value;
+						}).value
 					)
 				);
 				continue;
@@ -154,20 +171,27 @@ export function build_component(node, component_name, context, anchor = context.
 				attribute.value,
 				context,
 				(value, metadata) => {
-					if (!metadata.has_state) return value;
+					if (!metadata.has_state && !metadata.has_await) return value;
 
 					// When we have a non-simple computation, anything other than an Identifier or Member expression,
 					// then there's a good chance it needs to be memoized to avoid over-firing when read within the
 					// child component (e.g. `active={i === index}`)
-					const should_wrap_in_derived = get_attribute_chunks(attribute.value).some((n) => {
-						return (
-							n.type === 'ExpressionTag' &&
-							n.expression.type !== 'Identifier' &&
-							n.expression.type !== 'MemberExpression'
-						);
-					});
+					const should_wrap_in_derived =
+						metadata.has_await ||
+						get_attribute_chunks(attribute.value).some((n) => {
+							return (
+								n.type === 'ExpressionTag' &&
+								n.expression.type !== 'Identifier' &&
+								n.expression.type !== 'MemberExpression'
+							);
+						});
 
-					return should_wrap_in_derived ? memoize_expression(context.state, value) : value;
+					return should_wrap_in_derived
+						? b.call(
+								'$.get',
+								get_expression_id(metadata.has_await ? async_expressions : expressions, value)
+							)
+						: value;
 				}
 			);
 
@@ -411,7 +435,12 @@ export function build_component(node, component_name, context, anchor = context.
 		};
 	}
 
-	const statements = [...snippet_declarations];
+	const statements = [
+		...snippet_declarations,
+		...expressions.map((memo) =>
+			b.let(memo.id, create_derived(context.state, b.thunk(memo.expression)))
+		)
+	];
 
 	if (node.type === 'SvelteComponent') {
 		const prev = fn;
@@ -446,6 +475,21 @@ export function build_component(node, component_name, context, anchor = context.
 	} else {
 		context.state.template.push('<!>');
 		statements.push(b.stmt(fn(anchor)));
+	}
+
+	[...async_expressions, ...expressions].forEach((memo, i) => {
+		memo.id.name = `$${i}`;
+	});
+
+	if (async_expressions.length > 0) {
+		return b.stmt(
+			b.call(
+				'$.async',
+				anchor,
+				b.array(async_expressions.map(({ expression }) => b.thunk(expression, true))),
+				b.arrow([b.id('$$anchor'), ...async_expressions.map(({ id }) => id)], b.block(statements))
+			)
+		);
 	}
 
 	return statements.length > 1 ? b.block(statements) : statements[0];

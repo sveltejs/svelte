@@ -60,7 +60,10 @@ function open(parser) {
 			end: -1,
 			test: read_expression(parser),
 			consequent: create_fragment(),
-			alternate: null
+			alternate: null,
+			metadata: {
+				expression: create_expression_metadata()
+			}
 		});
 
 		parser.allow_whitespace();
@@ -323,7 +326,10 @@ function open(parser) {
 			start,
 			end: -1,
 			expression,
-			fragment: create_fragment()
+			fragment: create_fragment(),
+			metadata: {
+				expression: create_expression_metadata()
+			}
 		});
 
 		parser.stack.push(block);
@@ -441,7 +447,10 @@ function next(parser) {
 				elseif: true,
 				test: expression,
 				consequent: create_fragment(),
-				alternate: null
+				alternate: null,
+				metadata: {
+					expression: create_expression_metadata()
+				}
 			});
 
 			parser.stack.push(child);
@@ -604,7 +613,10 @@ function special(parser) {
 			type: 'HtmlTag',
 			start,
 			end: parser.index,
-			expression
+			expression,
+			metadata: {
+				expression: create_expression_metadata()
+			}
 		});
 
 		return;

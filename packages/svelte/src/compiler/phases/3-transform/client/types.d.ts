@@ -54,7 +54,9 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	/** Stuff that happens after the render effect (control blocks, dynamic elements, bindings, actions, etc) */
 	readonly after_update: Statement[];
 	/** Expressions used inside the render effect */
-	readonly expressions: Expression[];
+	readonly expressions: Array<{ id: Identifier; expression: Expression }>;
+	/** Expressions used inside the render effect */
+	readonly async_expressions: Array<{ id: Identifier; expression: Expression }>;
 	/** The HTML template string */
 	readonly template: Array<string | Expression>;
 	readonly locations: SourceLocation[];
@@ -76,6 +78,10 @@ export interface ComponentClientTransformState extends ClientTransformState {
 			 */
 			template_contains_script_tag: boolean;
 		};
+		/**
+		 * Synthetic async deriveds belonging to the current fragment
+		 */
+		async: Array<{ id: Identifier; expression: Expression }>;
 	};
 	readonly preserve_whitespace: boolean;
 
@@ -110,3 +116,8 @@ export type ComponentVisitors = import('zimmerframe').Visitors<
 	AST.SvelteNode,
 	ComponentClientTransformState
 >;
+
+export interface MemoizedExpression {
+	id: Identifier;
+	expression: Expression;
+}

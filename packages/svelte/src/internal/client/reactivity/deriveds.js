@@ -1,6 +1,17 @@
-/** @import { Derived, Effect } from '#client' */
+/** @import { Derived, Effect, Source } from '#client' */
+/** @import { Batch } from './batch.js'; */
 import { DEV } from 'esm-env';
-import { CLEAN, DERIVED, DIRTY, EFFECT_HAS_DERIVED, MAYBE_DIRTY, UNOWNED } from '#client/constants';
+import {
+	CLEAN,
+	DERIVED,
+	DESTROYED,
+	DIRTY,
+	EFFECT_ASYNC,
+	EFFECT_PRESERVED,
+	MAYBE_DIRTY,
+	STALE_REACTION,
+	UNOWNED
+} from '#client/constants';
 import {
 	active_reaction,
 	active_effect,
@@ -9,15 +20,31 @@ import {
 	update_reaction,
 	increment_write_version,
 	set_active_effect,
+	handle_error,
 	push_reaction_value
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
-import { destroy_effect } from './effects.js';
-import { inspect_effects, set_inspect_effects } from './sources.js';
+import * as w from '../warnings.js';
+import { destroy_effect, render_effect } from './effects.js';
+import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
+import { capture, get_pending_boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
+import { UNINITIALIZED } from '../../../constants.js';
+import { current_batch } from './batch.js';
+import { noop } from '../../shared/utils.js';
+
+/** @type {Effect | null} */
+export let from_async_derived = null;
+
+/** @param {Effect | null} v */
+export function set_from_async_derived(v) {
+	from_async_derived = v;
+}
+
+export const recent_async_deriveds = new Set();
 
 /**
  * @template V
@@ -37,7 +64,7 @@ export function derived(fn) {
 	} else {
 		// Since deriveds are evaluated lazily, any effects created inside them are
 		// created too late to ensure that the parent effect is added to the tree
-		active_effect.f |= EFFECT_HAS_DERIVED;
+		active_effect.f |= EFFECT_PRESERVED;
 	}
 
 	/** @type {Derived<V>} */
@@ -52,7 +79,8 @@ export function derived(fn) {
 		rv: 0,
 		v: /** @type {V} */ (null),
 		wv: 0,
-		parent: parent_derived ?? active_effect
+		parent: parent_derived ?? active_effect,
+		ac: null
 	};
 
 	if (DEV && tracing_mode_flag) {
@@ -60,6 +88,132 @@ export function derived(fn) {
 	}
 
 	return signal;
+}
+
+/**
+ * @template V
+ * @param {() => V | Promise<V>} fn
+ * @param {string} [location] If provided, print a warning if the value is not read immediately after update
+ * @returns {Promise<Source<V>>}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function async_derived(fn, location) {
+	let parent = /** @type {Effect | null} */ (active_effect);
+
+	if (parent === null) {
+		throw new Error('TODO cannot create unowned async derived');
+	}
+
+	let boundary = get_pending_boundary(parent);
+
+	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
+	var signal = source(/** @type {V} */ (UNINITIALIZED));
+
+	/** @type {Promise<V> | null} */
+	var prev = null;
+
+	// only suspend in async deriveds created on initialisation
+	var should_suspend = !active_reaction;
+
+	render_effect(() => {
+		if (DEV) from_async_derived = active_effect;
+		var p = fn();
+		if (DEV) from_async_derived = null;
+
+		promise =
+			prev === null
+				? Promise.resolve(p)
+				: prev.then(
+						() => p,
+						() => p
+					);
+
+		prev = promise;
+
+		var restore = capture();
+
+		var batch = /** @type {Batch} */ (current_batch);
+		var ran = boundary.ran;
+
+		if (should_suspend) {
+			if (!ran) {
+				boundary.increment();
+			} else {
+				batch.increment();
+			}
+		}
+
+		promise.then(
+			(v) => {
+				prev = null;
+
+				if ((parent.f & DESTROYED) !== 0) {
+					return;
+				}
+
+				restore();
+				from_async_derived = null;
+
+				if (should_suspend) {
+					if (!ran) {
+						boundary.decrement();
+					} else {
+						batch.decrement();
+					}
+				}
+
+				if (ran) batch.restore();
+				internal_set(signal, v);
+				if (ran) batch.flush();
+
+				if (DEV && location !== undefined) {
+					recent_async_deriveds.add(signal);
+
+					setTimeout(() => {
+						if (recent_async_deriveds.has(signal)) {
+							w.await_waterfall(location);
+							recent_async_deriveds.delete(signal);
+						}
+					});
+				}
+			},
+			(e) => {
+				prev = null;
+
+				if (e === STALE_REACTION) {
+					if (should_suspend) {
+						// TODO this feels asymmetrical though it seems to work?
+						if (!ran) {
+							boundary.decrement();
+						} else {
+							batch.remove();
+						}
+					}
+				} else {
+					handle_error(e, parent, null, parent.ctx);
+				}
+			}
+		);
+	}, EFFECT_ASYNC | EFFECT_PRESERVED);
+
+	return new Promise((fulfil) => {
+		/** @param {Promise<V>} p */
+		function next(p) {
+			function go() {
+				if (p === promise) {
+					fulfil(signal);
+				} else {
+					// if the effect re-runs before the initial promise
+					// resolves, delay resolution until we have a value
+					next(promise);
+				}
+			}
+
+			p.then(go, go);
+		}
+
+		next(promise);
+	});
 }
 
 /**
