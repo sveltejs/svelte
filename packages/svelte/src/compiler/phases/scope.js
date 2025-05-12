@@ -28,7 +28,7 @@ const globals = {
 	'Math.max': [NUMBER, Math.max],
 	'Math.random': [NUMBER],
 	'Math.floor': [NUMBER, Math.floor],
-	// @ts-expect-error
+	// @ts-ignore
 	'Math.f16round': [NUMBER, Math.f16round],
 	'Math.round': [NUMBER, Math.round],
 	'Math.abs': [NUMBER, Math.abs],
