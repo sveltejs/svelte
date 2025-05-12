@@ -65,9 +65,10 @@ export class Parser {
 			throw new TypeError('Template must be a string');
 		}
 
-		const control_chars = regex_bidirectional_control_characters.exec(template);
-		if (control_chars) {
-			w.bidirectional_control_characters({ start: template.indexOf(control_chars[0][0]) });
+		regex_bidirectional_control_characters.lastIndex = 0;
+		for (const match of template.matchAll(regex_bidirectional_control_characters)) {
+			let start = match.index;
+			w.bidirectional_control_characters({ start, end: start + match[0].length });
 		}
 
 		this.loose = loose;
