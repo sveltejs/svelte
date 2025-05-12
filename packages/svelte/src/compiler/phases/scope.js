@@ -23,7 +23,7 @@ export const STRING = Symbol('string');
 
 /** @type {Record<string, [type: NUMBER | STRING | UNKNOWN, fn?: Function]>} */
 const globals = {
-	BigInt: [NUMBER, BigInt],
+	BigInt: [NUMBER],
 	'Math.min': [NUMBER, Math.min],
 	'Math.max': [NUMBER, Math.max],
 	'Math.random': [NUMBER],
