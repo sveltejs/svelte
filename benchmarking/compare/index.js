@@ -80,10 +80,10 @@ for (let i = 0; i < results[0].length; i += 1) {
 		}
 
 		if (min !== 0) {
-			console.group(`${metric}: fastest is ${branches[min_index]}`);
+			console.group(`${metric}: fastest is ${char(min_index)} (${branches[min_index]})`);
 			times.forEach((time, b) => {
 				console.log(
-					`${branches[b]}: ${'◼'.repeat(Math.round(20 * (time / max)))} (${time.toFixed(2)}ms)`
+					`${char(b)}: ${'◼'.repeat(Math.round(20 * (time / max)))} (${time.toFixed(2)}ms)`
 				);
 			});
 			console.groupEnd();
@@ -91,4 +91,8 @@ for (let i = 0; i < results[0].length; i += 1) {
 	}
 
 	console.groupEnd();
+}
+
+function char(i) {
+	return String.fromCharCode(97 + i);
 }
