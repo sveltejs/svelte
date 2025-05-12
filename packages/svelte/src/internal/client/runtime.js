@@ -47,7 +47,6 @@ const handled_errors = new WeakSet();
 let is_throwing_error = false;
 
 let is_flushing = false;
-let is_flushing_sync = false;
 
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
@@ -820,7 +819,6 @@ function process_effects(root) {
  */
 export function flushSync(fn) {
 	var result;
-	is_flushing_sync = true;
 
 	if (fn) {
 		is_flushing = true;
