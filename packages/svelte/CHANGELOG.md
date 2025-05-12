@@ -1,5 +1,15 @@
 # svelte
 
+## 5.28.3
+
+### Patch Changes
+
+- chore: avoid microtasks when flushing sync ([#15895](https://github.com/sveltejs/svelte/pull/15895))
+
+- fix: improve error message for migration errors when slot would be renamed ([#15841](https://github.com/sveltejs/svelte/pull/15841))
+
+- fix: allow characters in the supplementary special-purpose plane ([#15823](https://github.com/sveltejs/svelte/pull/15823))
+
 ## 5.28.2
 
 ### Patch Changes
