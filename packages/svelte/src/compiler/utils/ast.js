@@ -624,5 +624,7 @@ export function build_assignment_value(operator, left, right) {
 	return operator === '='
 		? right
 		: // turn something like x += 1 into x = x + 1
-			b.binary(/** @type {ESTree.BinaryOperator} */ (operator.slice(0, -1)), left, right);
+			['||=', '&&=', '??='].includes(operator)
+			? b.logical(/** @type {ESTree.LogicalOperator} */ (operator.slice(0, -1)), left, right)
+			: b.binary(/** @type {ESTree.BinaryOperator} */ (operator.slice(0, -1)), left, right);
 }

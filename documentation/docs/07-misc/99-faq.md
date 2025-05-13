@@ -81,9 +81,10 @@ _End-to-End Tests_: To ensure your users are able to interact with your applicat
 
 Some resources for getting started with testing:
 
+- [Svelte docs on testing](/docs/svelte/testing)
+- [Setup Vitest using the Svelte CLI](/docs/cli/vitest)
 - [Svelte Testing Library](https://testing-library.com/docs/svelte-testing-library/example/)
 - [Svelte Component Testing in Cypress](https://docs.cypress.io/guides/component-testing/svelte/overview)
-- [Example using vitest](https://github.com/vitest-dev/vitest/tree/main/examples/sveltekit)
 - [Example using uvu test runner with JSDOM](https://github.com/lukeed/uvu/tree/master/examples/svelte)
 - [Test Svelte components using Vitest & Playwright](https://davipon.hashnode.dev/test-svelte-component-using-vitest-playwright)
 - [Component testing with WebdriverIO](https://webdriver.io/docs/component-testing/svelte)
