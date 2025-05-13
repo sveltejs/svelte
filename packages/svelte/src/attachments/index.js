@@ -1,3 +1,5 @@
+import { ATTACHMENT_KEY } from '../constants.js';
+
 /**
  * Creates an object key that will be recognised as an attachment when the object is spread onto an element,
  * as a programmatic alternative to using `{@attach ...}`. This can be useful for library authors, though
@@ -20,5 +22,5 @@
  * ```
  */
 export function createAttachmentKey() {
-	return Symbol('@attach');
+	return Symbol(ATTACHMENT_KEY);
 }

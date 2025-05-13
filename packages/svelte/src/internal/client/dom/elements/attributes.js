@@ -15,6 +15,7 @@ import {
 } from '../../runtime.js';
 import { attach } from './attachments.js';
 import { clsx } from '../../../shared/attributes.js';
+import { ATTACHMENT_KEY } from '../../../../constants.js';
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -417,7 +418,9 @@ export function set_attributes(
 	}
 
 	for (let symbol of Object.getOwnPropertySymbols(next)) {
-		attach(element, () => next[symbol]);
+		if (symbol.description === ATTACHMENT_KEY) {
+			attach(element, () => next[symbol]);
+		}
 	}
 
 	return current;
