@@ -621,6 +621,33 @@ declare module 'svelte/animate' {
 	export {};
 }
 
+declare module 'svelte/attachments' {
+	/**
+	 * Creates an object key that will be recognised as an attachment when the object is spread onto an element,
+	 * as a programmatic alternative to using `{@attach ...}`. This can be useful for library authors, though
+	 * is generally not needed when building an app.
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { createAttachmentKey } from 'svelte/attachments';
+	 *
+	 * 	const props = {
+	 * 		class: 'cool',
+	 * 		onclick: () => alert('clicked'),
+	 * 		[createAttachmentKey()]: (node) => {
+	 * 			node.textContent = 'attached!';
+	 * 		}
+	 * 	};
+	 * </script>
+	 *
+	 * <button {...props}>click me</button>
+	 * ```
+	 */
+	export function createAttachmentKey(): symbol;
+
+	export {};
+}
+
 declare module 'svelte/compiler' {
 	import type { Expression, Identifier, ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
 	import type { SourceMap } from 'magic-string';
