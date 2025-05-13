@@ -178,6 +178,10 @@ export namespace AST {
 	export interface AttachTag extends BaseNode {
 		type: 'AttachTag';
 		expression: Expression;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	/** An `animate:` directive */

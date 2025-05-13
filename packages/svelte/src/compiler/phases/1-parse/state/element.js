@@ -500,7 +500,10 @@ function read_attribute(parser) {
 				type: 'AttachTag',
 				start,
 				end: parser.index,
-				expression
+				expression,
+				metadata: {
+					expression: create_expression_metadata()
+				}
 			};
 
 			return attachment;
