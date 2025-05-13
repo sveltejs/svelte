@@ -1,4 +1,3 @@
-/** @import { Location } from 'locate-character' */
 import { teardown } from '../../reactivity/effects.js';
 import { define_property, is_array } from '../../../shared/utils.js';
 import { hydrating } from '../hydration.js';
@@ -27,12 +26,8 @@ export const root_event_handles = new Set();
 export function replay_events(dom) {
 	if (!hydrating) return;
 
-	if (dom.onload) {
-		dom.removeAttribute('onload');
-	}
-	if (dom.onerror) {
-		dom.removeAttribute('onerror');
-	}
+	dom.removeAttribute('onload');
+	dom.removeAttribute('onerror');
 	// @ts-expect-error
 	const event = dom.__e;
 	if (event !== undefined) {
@@ -49,10 +44,10 @@ export function replay_events(dom) {
 /**
  * @param {string} event_name
  * @param {EventTarget} dom
- * @param {EventListener} handler
- * @param {AddEventListenerOptions} options
+ * @param {EventListener} [handler]
+ * @param {AddEventListenerOptions} [options]
  */
-export function create_event(event_name, dom, handler, options) {
+export function create_event(event_name, dom, handler, options = {}) {
 	/**
 	 * @this {EventTarget}
 	 */
@@ -63,7 +58,7 @@ export function create_event(event_name, dom, handler, options) {
 		}
 		if (!event.cancelBubble) {
 			return without_reactive_context(() => {
-				return handler.call(this, event);
+				return handler?.call(this, event);
 			});
 		}
 	}
@@ -108,8 +103,8 @@ export function on(element, type, handler, options = {}) {
 /**
  * @param {string} event_name
  * @param {Element} dom
- * @param {EventListener} handler
- * @param {boolean} capture
+ * @param {EventListener} [handler]
+ * @param {boolean} [capture]
  * @param {boolean} [passive]
  * @returns {void}
  */
@@ -237,7 +232,13 @@ export function handle_event_propagation(event) {
 				// @ts-expect-error
 				var delegated = current_target['__' + event_name];
 
-				if (delegated !== undefined && !(/** @type {any} */ (current_target).disabled)) {
+				if (
+					delegated != null &&
+					(!(/** @type {any} */ (current_target).disabled) ||
+						// DOM could've been updated already by the time this is reached, so we check this as well
+						// -> the target could not have been disabled because it emits the event in the first place
+						event.target === current_target)
+				) {
 					if (is_array(delegated)) {
 						var [fn, ...data] = delegated;
 						fn.apply(current_target, [event, ...data]);
@@ -305,13 +306,11 @@ export function apply(
 		error = e;
 	}
 
-	if (typeof handler === 'function') {
-		handler.apply(element, args);
-	} else if (has_side_effects || handler != null || error) {
+	if (typeof handler !== 'function' && (has_side_effects || handler != null || error)) {
 		const filename = component?.[FILENAME];
 		const location = loc ? ` at ${filename}:${loc[0]}:${loc[1]}` : ` in ${filename}`;
-
-		const event_name = args[0].type;
+		const phase = args[0]?.eventPhase < Event.BUBBLING_PHASE ? 'capture' : '';
+		const event_name = args[0]?.type + phase;
 		const description = `\`${event_name}\` handler${location}`;
 		const suggestion = remove_parens ? 'remove the trailing `()`' : 'add a leading `() =>`';
 
@@ -321,4 +320,5 @@ export function apply(
 			throw error;
 		}
 	}
+	handler?.apply(element, args);
 }

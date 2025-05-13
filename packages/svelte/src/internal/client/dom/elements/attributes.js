@@ -1,10 +1,10 @@
 import { DEV } from 'esm-env';
-import { hydrating } from '../hydration.js';
+import { hydrating, set_hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
 import { create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
-import { LOADING_ATTR_SYMBOL } from '../../constants.js';
+import { LOADING_ATTR_SYMBOL } from '#client/constants';
 import { queue_idle_task } from '../task.js';
 import { is_capture_event, is_delegated, normalize_attribute } from '../../../../utils.js';
 import {
@@ -15,7 +15,15 @@ import {
 } from '../../runtime.js';
 import { attach } from './attachments.js';
 import { clsx } from '../../../shared/attributes.js';
-import { ATTACHMENT_KEY } from '../../../../constants.js';
+import { set_class } from './class.js';
+import { set_style } from './style.js';
+import { ATTACHMENT_KEY, NAMESPACE_HTML } from '../../../../constants.js';
+
+export const CLASS = Symbol('class');
+export const STYLE = Symbol('style');
+
+const IS_CUSTOM_ELEMENT = Symbol('is custom element');
+const IS_HTML = Symbol('is html');
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
@@ -61,8 +69,7 @@ export function remove_input_defaults(input) {
  * @param {any} value
  */
 export function set_value(element, value) {
-	// @ts-expect-error
-	var attributes = (element.__attributes ??= {});
+	var attributes = get_attributes(element);
 
 	if (
 		attributes.value ===
@@ -70,14 +77,14 @@ export function set_value(element, value) {
 				// treat null and undefined the same for the initial value
 				value ?? undefined) ||
 		// @ts-expect-error
-		// `progress` elements always need their value set when its `0`
+		// `progress` elements always need their value set when it's `0`
 		(element.value === value && (value !== 0 || element.nodeName !== 'PROGRESS'))
 	) {
 		return;
 	}
 
 	// @ts-expect-error
-	element.value = value;
+	element.value = value ?? '';
 }
 
 /**
@@ -85,8 +92,7 @@ export function set_value(element, value) {
  * @param {boolean} checked
  */
 export function set_checked(element, checked) {
-	// @ts-expect-error
-	var attributes = (element.__attributes ??= {});
+	var attributes = get_attributes(element);
 
 	if (
 		attributes.checked ===
@@ -149,8 +155,7 @@ export function set_default_value(element, value) {
  * @param {boolean} [skip_warning]
  */
 export function set_attribute(element, attribute, value, skip_warning) {
-	// @ts-expect-error
-	var attributes = (element.__attributes ??= {});
+	var attributes = get_attributes(element);
 
 	if (hydrating) {
 		attributes[attribute] = element.getAttribute(attribute);
@@ -173,11 +178,6 @@ export function set_attribute(element, attribute, value, skip_warning) {
 	}
 
 	if (attributes[attribute] === (attributes[attribute] = value)) return;
-
-	if (attribute === 'style' && '__styles' in element) {
-		// reset styles to force style: directive to update
-		element.__styles = {};
-	}
 
 	if (attribute === 'loading') {
 		// @ts-expect-error
@@ -216,19 +216,29 @@ export function set_custom_element_data(node, prop, value) {
 	var previous_reaction = active_reaction;
 	var previous_effect = active_effect;
 
+	// If we're hydrating but the custom element is from Svelte, and it already scaffolded,
+	// then it might run block logic in hydration mode, which we have to prevent.
+	let was_hydrating = hydrating;
+	if (hydrating) {
+		set_hydrating(false);
+	}
+
 	set_active_reaction(null);
 	set_active_effect(null);
+
 	try {
 		if (
+			// `style` should use `set_attribute` rather than the setter
+			prop !== 'style' &&
 			// Don't compute setters for custom elements while they aren't registered yet,
 			// because during their upgrade/instantiation they might add more setters.
 			// Instead, fall back to a simple "an object, then set as property" heuristic.
-			setters_cache.has(node.nodeName) ||
+			(setters_cache.has(node.nodeName) ||
 			// customElements may not be available in browser extension contexts
 			!customElements ||
 			customElements.get(node.tagName.toLowerCase())
 				? get_setters(node).includes(prop)
-				: value && typeof value === 'object'
+				: value && typeof value === 'object')
 		) {
 			// @ts-expect-error
 			node[prop] = value;
@@ -241,6 +251,9 @@ export function set_custom_element_data(node, prop, value) {
 	} finally {
 		set_active_reaction(previous_reaction);
 		set_active_effect(previous_effect);
+		if (was_hydrating) {
+			set_hydrating(true);
+		}
 	}
 }
 
@@ -250,20 +263,22 @@ export function set_custom_element_data(node, prop, value) {
  * @param {Record<string | symbol, any> | undefined} prev
  * @param {Record<string | symbol, any>} next New attributes - this function mutates this object
  * @param {string} [css_hash]
- * @param {boolean} [preserve_attribute_case]
- * @param {boolean} [is_custom_element]
  * @param {boolean} [skip_warning]
  * @returns {Record<string, any>}
  */
-export function set_attributes(
-	element,
-	prev,
-	next,
-	css_hash,
-	preserve_attribute_case = false,
-	is_custom_element = false,
-	skip_warning = false
-) {
+export function set_attributes(element, prev, next, css_hash, skip_warning = false) {
+	var attributes = get_attributes(element);
+
+	var is_custom_element = attributes[IS_CUSTOM_ELEMENT];
+	var preserve_attribute_case = !attributes[IS_HTML];
+
+	// If we're hydrating but the custom element is from Svelte, and it already scaffolded,
+	// then it might run block logic in hydration mode, which we have to prevent.
+	let is_hydrating_custom_element = hydrating && is_custom_element;
+	if (is_hydrating_custom_element) {
+		set_hydrating(false);
+	}
+
 	var current = prev || {};
 	var is_option_element = element.tagName === 'OPTION';
 
@@ -275,16 +290,15 @@ export function set_attributes(
 
 	if (next.class) {
 		next.class = clsx(next.class);
+	} else if (css_hash || next[CLASS]) {
+		next.class = null; /* force call to set_class() */
 	}
 
-	if (css_hash !== undefined) {
-		next.class = next.class ? next.class + ' ' + css_hash : css_hash;
+	if (next[STYLE]) {
+		next.style ??= null; /* force call to set_style() */
 	}
 
 	var setters = get_setters(element);
-
-	// @ts-expect-error
-	var attributes = /** @type {Record<string, unknown>} **/ (element.__attributes ??= {});
 
 	// since key is captured we use const
 	for (const key in next) {
@@ -307,6 +321,21 @@ export function set_attributes(
 			// @ts-ignore
 			element.value = element.__value = '';
 			current[key] = value;
+			continue;
+		}
+
+		if (key === 'class') {
+			var is_html = element.namespaceURI === 'http://www.w3.org/1999/xhtml';
+			set_class(element, is_html, value, css_hash, prev?.[CLASS], next[CLASS]);
+			current[key] = value;
+			current[CLASS] = next[CLASS];
+			continue;
+		}
+
+		if (key === 'style') {
+			set_style(element, value, prev?.[STYLE], next[STYLE]);
+			current[key] = value;
+			current[STYLE] = next[STYLE];
 			continue;
 		}
 
@@ -361,13 +390,15 @@ export function set_attributes(
 				// @ts-ignore
 				element[`__${event_name}`] = undefined;
 			}
-		} else if (key === 'style' && value != null) {
-			element.style.cssText = value + '';
+		} else if (key === 'style') {
+			// avoid using the setter
+			set_attribute(element, key, value);
 		} else if (key === 'autofocus') {
 			autofocus(/** @type {HTMLElement} */ (element), Boolean(value));
-		} else if (key === '__value' || (key === 'value' && value != null)) {
-			// @ts-ignore
-			element.value = element[key] = element.__value = value;
+		} else if (!is_custom_element && (key === '__value' || (key === 'value' && value != null))) {
+			// @ts-ignore We're not running this for custom elements because __value is actually
+			// how Lit stores the current value on the element, and messing with that would break things.
+			element.value = element.__value = value;
 		} else if (key === 'selected' && is_option_element) {
 			set_selected(/** @type {HTMLOptionElement} */ (element), value);
 		} else {
@@ -384,15 +415,18 @@ export function set_attributes(
 				if (name === 'value' || name === 'checked') {
 					// removing value/checked also removes defaultValue/defaultChecked — preserve
 					let input = /** @type {HTMLInputElement} */ (element);
-
+					const use_default = prev === undefined;
 					if (name === 'value') {
-						let prev = input.defaultValue;
+						let previous = input.defaultValue;
 						input.removeAttribute(name);
-						input.defaultValue = prev;
+						input.defaultValue = previous;
+						// @ts-ignore
+						input.value = input.__value = use_default ? previous : null;
 					} else {
-						let prev = input.defaultChecked;
+						let previous = input.defaultChecked;
 						input.removeAttribute(name);
-						input.defaultChecked = prev;
+						input.defaultChecked = previous;
+						input.checked = use_default ? previous : false;
 					}
 				} else {
 					element.removeAttribute(key);
@@ -404,17 +438,13 @@ export function set_attributes(
 				// @ts-ignore
 				element[name] = value;
 			} else if (typeof value !== 'function') {
-				if (hydrating && (name === 'src' || name === 'href' || name === 'srcset')) {
-					if (!skip_warning) check_src_in_dev_hydration(element, name, value ?? '');
-				} else {
-					set_attribute(element, name, value);
-				}
+				set_attribute(element, name, value, skip_warning);
 			}
 		}
-		if (key === 'style' && '__styles' in element) {
-			// reset styles to force style: directive to update
-			element.__styles = {};
-		}
+	}
+
+	if (is_hydrating_custom_element) {
+		set_hydrating(true);
 	}
 
 	for (let symbol of Object.getOwnPropertySymbols(next)) {
@@ -424,6 +454,20 @@ export function set_attributes(
 	}
 
 	return current;
+}
+
+/**
+ *
+ * @param {Element} element
+ */
+function get_attributes(element) {
+	return /** @type {Record<string | symbol, unknown>} **/ (
+		// @ts-expect-error
+		element.__attributes ??= {
+			[IS_CUSTOM_ELEMENT]: element.nodeName.includes('-'),
+			[IS_HTML]: element.namespaceURI === NAMESPACE_HTML
+		}
+	);
 }
 
 /** @type {Map<string, string[]>} */
@@ -510,29 +554,4 @@ function srcset_url_equal(element, srcset) {
 				(src_url_equal(element_urls[i][0], url) || src_url_equal(url, element_urls[i][0]))
 		)
 	);
-}
-
-/**
- * @param {HTMLImageElement} element
- * @returns {void}
- */
-export function handle_lazy_img(element) {
-	// If we're using an image that has a lazy loading attribute, we need to apply
-	// the loading and src after the img element has been appended to the document.
-	// Otherwise the lazy behaviour will not work due to our cloneNode heuristic for
-	// templates.
-	if (!hydrating && element.loading === 'lazy') {
-		var src = element.src;
-		// @ts-expect-error
-		element[LOADING_ATTR_SYMBOL] = null;
-		element.loading = 'eager';
-		element.removeAttribute('src');
-		requestAnimationFrame(() => {
-			// @ts-expect-error
-			if (element[LOADING_ATTR_SYMBOL] !== 'eager') {
-				element.loading = 'lazy';
-			}
-			element.src = src;
-		});
-	}
 }

@@ -1,9 +1,10 @@
 /** @import { VariableDeclaration, VariableDeclarator, Expression, CallExpression, Pattern, Identifier } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { Context } from '../types.js' */
+/** @import { ComponentAnalysis } from '../../../types.js' */
 /** @import { Scope } from '../../../scope.js' */
-import { build_fallback, extract_paths } from '../../../../utils/ast.js';
-import * as b from '../../../../utils/builders.js';
+import { build_pattern, build_fallback, extract_paths } from '../../../../utils/ast.js';
+import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 import { walk } from 'zimmerframe';
 
@@ -24,6 +25,11 @@ export function VariableDeclaration(node, context) {
 				continue;
 			}
 
+			if (rune === '$props.id') {
+				// skip
+				continue;
+			}
+
 			if (rune === '$props') {
 				let has_rest = false;
 				// remove $bindable() from props declaration
@@ -40,25 +46,31 @@ export function VariableDeclaration(node, context) {
 						) {
 							const right = node.right.arguments.length
 								? /** @type {Expression} */ (context.visit(node.right.arguments[0]))
-								: b.id('undefined');
+								: b.void0;
 							return b.assignment_pattern(node.left, right);
 						}
 					}
 				});
+
+				// if `$$slots` is declared separately, deconflict
+				const slots_name = /** @type {ComponentAnalysis} */ (context.state.analysis).uses_slots
+					? b.id('$$slots_')
+					: b.id('$$slots');
+
 				if (id.type === 'ObjectPattern' && has_rest) {
 					// If a rest pattern is used within an object pattern, we need to ensure we don't expose $$slots or $$events
 					id.properties.splice(
 						id.properties.length - 1,
 						0,
 						// @ts-ignore
-						b.prop('init', b.id('$$slots'), b.id('$$slots')),
+						b.prop('init', b.id('$$slots'), slots_name),
 						b.prop('init', b.id('$$events'), b.id('$$events'))
 					);
 				} else if (id.type === 'Identifier') {
 					// If $props is referenced as an identifier, we need to ensure we don't expose $$slots or $$events as properties
 					// on the identifier reference
 					id = b.object_pattern([
-						b.prop('init', b.id('$$slots'), b.id('$$slots')),
+						b.prop('init', b.id('$$slots'), slots_name),
 						b.prop('init', b.id('$$events'), b.id('$$events')),
 						b.rest(b.id(id.name))
 					]);
@@ -70,8 +82,7 @@ export function VariableDeclaration(node, context) {
 			}
 
 			const args = /** @type {CallExpression} */ (init).arguments;
-			const value =
-				args.length === 0 ? b.id('undefined') : /** @type {Expression} */ (context.visit(args[0]));
+			const value = args.length > 0 ? /** @type {Expression} */ (context.visit(args[0])) : b.void0;
 
 			if (rune === '$derived.by') {
 				declarations.push(
@@ -156,6 +167,10 @@ export function VariableDeclaration(node, context) {
 		}
 	}
 
+	if (declarations.length === 0) {
+		return b.empty;
+	}
+
 	return {
 		...node,
 		declarations
@@ -173,13 +188,10 @@ function create_state_declarators(declarator, scope, value) {
 		return [b.declarator(declarator.id, value)];
 	}
 
-	const tmp = scope.generate('tmp');
-	const paths = extract_paths(declarator.id);
+	const [pattern, replacements] = build_pattern(declarator.id, scope);
 	return [
-		b.declarator(b.id(tmp), value), // TODO inject declarator for opts, so we can use it below
-		...paths.map((path) => {
-			const value = path.expression?.(b.id(tmp));
-			return b.declarator(path.node, value);
-		})
+		b.declarator(pattern, value),
+		// TODO inject declarator for opts, so we can use it below
+		...[...replacements].map(([original, replacement]) => b.declarator(original, replacement))
 	];
 }

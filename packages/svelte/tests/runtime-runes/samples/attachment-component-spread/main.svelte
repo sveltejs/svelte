@@ -1,8 +1,9 @@
 <script>
+	import { createAttachmentKey } from 'svelte/attachments';
 	import Child from './Child.svelte';
 
 	let stuff = $state({
-		[Symbol()]: (node) => node.textContent = 'set from component'
+		[createAttachmentKey()]: (node) => node.textContent = 'set from component'
 	});
 </script>
 

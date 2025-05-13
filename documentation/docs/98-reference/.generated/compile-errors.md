@@ -84,6 +84,12 @@ Attribute values containing `{...}` must be enclosed in quote marks, unless the 
 `bind:group` can only bind to an Identifier or MemberExpression
 ```
 
+### bind_group_invalid_snippet_parameter
+
+```
+Cannot `bind:group` to a snippet parameter
+```
+
 ### bind_invalid_expression
 
 ```
@@ -187,7 +193,7 @@ Cyclical dependency detected: %cycle%
 ### const_tag_invalid_placement
 
 ```
-`{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>` or `<Component>`
+`{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>`, `<svelte:boundary` or `<Component>`
 ```
 
 ### constant_assignment
@@ -229,7 +235,31 @@ A top-level `:global {...}` block can only contain rules, not declarations
 ### css_global_block_invalid_list
 
 ```
-A `:global` selector cannot be part of a selector list with more than one item
+A `:global` selector cannot be part of a selector list with entries that don't contain `:global`
+```
+
+The following CSS is invalid:
+
+```css
+:global, x {
+    y {
+        color: red;
+    }
+}
+```
+
+This is mixing a `:global` block, which means "everything in here is unscoped", with a scoped selector (`x` in this case). As a result it's not possible to transform the inner selector (`y` in this case) into something that satisfies both requirements. You therefore have to split this up into two selectors:
+
+```css
+:global {
+    y {
+        color: red;
+    }
+}
+
+x y {
+    color: red;
+}
 ```
 
 ### css_global_block_invalid_modifier
@@ -242,6 +272,12 @@ A `:global` selector cannot modify an existing selector
 
 ```
 A `:global` selector can only be modified if it is a descendant of other selectors
+```
+
+### css_global_block_invalid_placement
+
+```
+A `:global` selector cannot be inside a pseudoclass
 ```
 
 ### css_global_invalid_placement
@@ -573,7 +609,13 @@ Unrecognised compiler option %keypath%
 ### props_duplicate
 
 ```
-Cannot use `$props()` more than once
+Cannot use `%rune%()` more than once
+```
+
+### props_id_invalid_placement
+
+```
+`$props.id()` can only be used at the top level of components as a variable declaration initializer
 ```
 
 ### props_illegal_name
@@ -646,6 +688,12 @@ Cannot access a computed property of a rune
 
 ```
 `%name%` is not a valid rune
+```
+
+### rune_invalid_spread
+
+```
+`%rune%` cannot be called with a spread argument
 ```
 
 ### rune_invalid_usage

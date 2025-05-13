@@ -44,6 +44,8 @@ export interface ComponentAnalysis extends Analysis {
 	exports: Array<{ name: string; alias: string | null }>;
 	/** Whether the component uses `$$props` */
 	uses_props: boolean;
+	/** The component ID variable name, if any */
+	props_id: Identifier | null;
 	/** Whether the component uses `$$restProps` */
 	uses_rest_props: boolean;
 	/** Whether the component uses `$$slots` */
@@ -51,6 +53,7 @@ export interface ComponentAnalysis extends Analysis {
 	uses_component_bindings: boolean;
 	uses_render_tags: boolean;
 	needs_context: boolean;
+	needs_mutation_validation: boolean;
 	needs_props: boolean;
 	/** Set to the first event directive (on:x) found on a DOM element in the code */
 	event_directive_node: AST.OnDirective | null;
@@ -71,6 +74,7 @@ export interface ComponentAnalysis extends Analysis {
 		ast: AST.CSS.StyleSheet | null;
 		hash: string;
 		keyframes: string[];
+		has_global: boolean;
 	};
 	source: string;
 	undefined_exports: Map<string, Node>;

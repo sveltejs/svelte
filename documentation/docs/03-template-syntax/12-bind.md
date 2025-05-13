@@ -117,6 +117,29 @@ Since 5.6.0, if an `<input>` has a `defaultChecked` attribute and is part of a f
 </form>
 ```
 
+## `<input bind:indeterminate>`
+
+Checkboxes can be in an [indeterminate](https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement/indeterminate) state, independently of whether they are checked or unchecked:
+
+```svelte
+<script>
+	let checked = $state(false);
+	let indeterminate = $state(true);
+</script>
+
+<form>
+	<input type="checkbox" bind:checked bind:indeterminate>
+
+	{#if indeterminate}
+		waiting...
+	{:else if checked}
+		checked
+	{:else}
+		unchecked
+	{/if}
+</form>
+```
+
 ## `<input bind:group>`
 
 Inputs that work together can use `bind:group`.
@@ -219,15 +242,15 @@ You can give the `<select>` a default value by adding a `selected` attribute to 
 - [`volume`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/volume)
 - [`muted`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/muted)
 
-...and seven readonly ones:
+...and six readonly ones:
 
 - [`duration`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/duration)
 - [`buffered`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/buffered)
-- [`paused`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/paused)
 - [`seekable`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/seekable)
 - [`seeking`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/seeking_event)
 - [`ended`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/ended)
 - [`readyState`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/readyState)
+- [`played`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/played)
 
 ```svelte
 <audio src={clip} bind:duration bind:currentTime bind:paused></audio>
@@ -235,7 +258,7 @@ You can give the `<select>` a default value by adding a `selected` attribute to 
 
 ## `<video>`
 
-`<video>` elements have all the same bindings as [#audio] elements, plus readonly [`videoWidth`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/videoWidth) and [`videoHeight`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/videoHeight) bindings.
+`<video>` elements have all the same bindings as [`<audio>`](#audio) elements, plus readonly [`videoWidth`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/videoWidth) and [`videoHeight`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/videoHeight) bindings.
 
 ## `<img>`
 
@@ -255,6 +278,10 @@ You can give the `<select>` a default value by adding a `selected` attribute to 
 </details>
 ```
 
+## `window` and `document`
+
+To bind to properties of `window` and `document`, see [`<svelte:window>`](svelte-window) and [`<svelte:document>`](svelte-document).
+
 ## Contenteditable bindings
 
 Elements with the `contenteditable` attribute support the following bindings:
@@ -268,7 +295,7 @@ Elements with the `contenteditable` attribute support the following bindings:
 <!-- for some reason puts the comment and html on same line -->
 <!-- prettier-ignore -->
 ```svelte
-<div contenteditable="true" bind:innerHTML={html} />
+<div contenteditable="true" bind:innerHTML={html}></div>
 ```
 
 ## Dimensions
@@ -279,6 +306,10 @@ All visible elements have the following readonly bindings, measured with a `Resi
 - [`clientHeight`](https://developer.mozilla.org/en-US/docs/Web/API/Element/clientHeight)
 - [`offsetWidth`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/offsetWidth)
 - [`offsetHeight`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/offsetHeight)
+- [`contentRect`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserverEntry/contentRect)
+- [`contentBoxSize`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserverEntry/contentBoxSize)
+- [`borderBoxSize`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserverEntry/borderBoxSize)
+- [`devicePixelContentBoxSize`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserverEntry/devicePixelContentBoxSize)
 
 ```svelte
 <div bind:offsetWidth={width} bind:offsetHeight={height}>
@@ -286,7 +317,7 @@ All visible elements have the following readonly bindings, measured with a `Resi
 </div>
 ```
 
-> [!NOTE] `display: inline` elements do not have a width or height (except for elements with 'intrinsic' dimensions, like `<img>` and `<canvas>`), and cannot be observed with a `ResizeObserver`. You will need to change the `display` style of these elements to something else, such as `inline-block`.
+> [!NOTE] `display: inline` elements do not have a width or height (except for elements with 'intrinsic' dimensions, like `<img>` and `<canvas>`), and cannot be observed with a `ResizeObserver`. You will need to change the `display` style of these elements to something else, such as `inline-block`. Note that CSS transformations do not trigger `ResizeObserver` callbacks.
 
 ## bind:this
 
@@ -308,7 +339,7 @@ To get a reference to a DOM node, use `bind:this`. The value will be `undefined`
 	});
 </script>
 
-<canvas bind:this={canvas} />
+<canvas bind:this={canvas}></canvas>
 ```
 
 Components also support `bind:this`, allowing you to interact with component instances programmatically.

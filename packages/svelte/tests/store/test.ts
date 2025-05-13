@@ -602,7 +602,7 @@ describe('toStore', () => {
 		assert.deepEqual(log, [0]);
 
 		set(count, 1);
-		$.flush_sync();
+		$.flushSync();
 		assert.deepEqual(log, [0, 1]);
 
 		unsubscribe();
@@ -625,7 +625,7 @@ describe('toStore', () => {
 		assert.deepEqual(log, [0]);
 
 		set(count, 1);
-		$.flush_sync();
+		$.flushSync();
 		assert.deepEqual(log, [0, 1]);
 
 		store.set(2);
@@ -654,11 +654,11 @@ describe('fromStore', () => {
 		assert.deepEqual(log, [0]);
 
 		store.set(1);
-		$.flush_sync();
+		$.flushSync();
 		assert.deepEqual(log, [0, 1]);
 
 		count.current = 2;
-		$.flush_sync();
+		$.flushSync();
 		assert.deepEqual(log, [0, 1, 2]);
 
 		assert.equal(get(store), 2);

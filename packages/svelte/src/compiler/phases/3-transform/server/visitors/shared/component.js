@@ -2,8 +2,9 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { empty_comment, build_attribute_value } from './utils.js';
-import * as b from '../../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { is_element_node } from '../../../../nodes.js';
+import { dev } from '../../../../../state.js';
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
@@ -238,7 +239,13 @@ export function build_inline_component(node, expression, context) {
 				)
 			) {
 				// create `children` prop...
-				push_prop(b.prop('init', b.id('children'), slot_fn));
+				push_prop(
+					b.prop(
+						'init',
+						b.id('children'),
+						dev ? b.call('$.prevent_snippet_stringification', slot_fn) : slot_fn
+					)
+				);
 
 				// and `$$slots.default: true` so that `<slot>` on the child works
 				serialized_slots.push(b.init(slot_name, b.true));

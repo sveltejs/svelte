@@ -86,6 +86,7 @@ export const codes = [
 	'a11y_role_supports_aria_props_implicit',
 	'a11y_unknown_aria_attribute',
 	'a11y_unknown_role',
+	'bidirectional_control_characters',
 	'legacy_code',
 	'unknown_code',
 	'options_deprecated_accessors',
@@ -507,6 +508,14 @@ export function a11y_unknown_role(node, role, suggestion) {
 }
 
 /**
+ * A bidirectional control character was detected in your code. These characters can be used to alter the visual direction of your code and could have unintended consequences
+ * @param {null | NodeLike} node
+ */
+export function bidirectional_control_characters(node) {
+	w(node, 'bidirectional_control_characters', `A bidirectional control character was detected in your code. These characters can be used to alter the visual direction of your code and could have unintended consequences\nhttps://svelte.dev/e/bidirectional_control_characters`);
+}
+
+/**
  * `%code%` is no longer valid — please use `%suggestion%` instead
  * @param {null | NodeLike} node
  * @param {string} code
@@ -641,11 +650,13 @@ export function reactive_declaration_module_script_dependency(node) {
 }
 
 /**
- * State referenced in its own scope will never update. Did you mean to reference it inside a closure?
+ * This reference only captures the initial value of `%name%`. Did you mean to reference it inside a %type% instead?
  * @param {null | NodeLike} node
+ * @param {string} name
+ * @param {string} type
  */
-export function state_referenced_locally(node) {
-	w(node, 'state_referenced_locally', `State referenced in its own scope will never update. Did you mean to reference it inside a closure?\nhttps://svelte.dev/e/state_referenced_locally`);
+export function state_referenced_locally(node, name, type) {
+	w(node, 'state_referenced_locally', `This reference only captures the initial value of \`${name}\`. Did you mean to reference it inside a ${type} instead?\nhttps://svelte.dev/e/state_referenced_locally`);
 }
 
 /**

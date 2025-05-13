@@ -1,6 +1,7 @@
 <!-- valid -->
 <link />
 <svg><g /></svg>
+<math><mspace /></math>
 <enhanced:img />
 
 

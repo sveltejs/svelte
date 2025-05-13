@@ -46,7 +46,7 @@ It will show up on hover.
 - You can use markdown here.
 - You can also use code blocks here.
 - Usage:
-  ```tsx
+  ```svelte
   <main name="Arethra">
   ```
 -->
@@ -81,9 +81,10 @@ _End-to-End Tests_: To ensure your users are able to interact with your applicat
 
 Some resources for getting started with testing:
 
+- [Svelte docs on testing](/docs/svelte/testing)
+- [Setup Vitest using the Svelte CLI](/docs/cli/vitest)
 - [Svelte Testing Library](https://testing-library.com/docs/svelte-testing-library/example/)
 - [Svelte Component Testing in Cypress](https://docs.cypress.io/guides/component-testing/svelte/overview)
-- [Example using vitest](https://github.com/vitest-dev/vitest/tree/main/examples/sveltekit)
 - [Example using uvu test runner with JSDOM](https://github.com/lukeed/uvu/tree/master/examples/svelte)
 - [Test Svelte components using Vitest & Playwright](https://davipon.hashnode.dev/test-svelte-component-using-vitest-playwright)
 - [Component testing with WebdriverIO](https://webdriver.io/docs/component-testing/svelte)
@@ -96,7 +97,7 @@ However, you can use any router library. A lot of people use [page.js](https://g
 
 If you prefer a declarative HTML approach, there's the isomorphic [svelte-routing](https://github.com/EmilTholin/svelte-routing) library and a fork of it called [svelte-navigator](https://github.com/mefechoel/svelte-navigator) containing some additional functionality.
 
-If you need hash-based routing on the client side, check out [svelte-spa-router](https://github.com/ItalyPaleAle/svelte-spa-router) or [abstract-state-router](https://github.com/TehShrike/abstract-state-router/).
+If you need hash-based routing on the client side, check out the [hash option](https://svelte.dev/docs/kit/configuration#router) in SvelteKit, [svelte-spa-router](https://github.com/ItalyPaleAle/svelte-spa-router), or [abstract-state-router](https://github.com/TehShrike/abstract-state-router/).
 
 [Routify](https://routify.dev) is another filesystem-based router, similar to SvelteKit's router. Version 3 supports Svelte's native SSR.
 

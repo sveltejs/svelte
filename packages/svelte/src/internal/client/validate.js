@@ -1,4 +1,4 @@
-import { dev_current_component_function } from './runtime.js';
+import { dev_current_component_function } from './context.js';
 import { is_array } from '../shared/utils.js';
 import * as e from './errors.js';
 import { FILENAME } from '../../constants.js';

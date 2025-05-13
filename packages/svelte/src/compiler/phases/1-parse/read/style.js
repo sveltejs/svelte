@@ -118,6 +118,7 @@ function read_rule(parser) {
 		metadata: {
 			parent_rule: null,
 			has_local_selectors: false,
+			has_global_selectors: false,
 			is_global_block: false
 		}
 	};
@@ -342,6 +343,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 				children,
 				metadata: {
 					rule: null,
+					is_global: false,
 					used: false
 				}
 			};
@@ -566,7 +568,7 @@ function read_attribute_value(parser) {
 }
 
 /**
- * https://www.w3.org/TR/CSS21/syndata.html#value-def-identifier
+ * https://www.w3.org/TR/css-syntax-3/#ident-token-diagram
  * @param {Parser} parser
  */
 function read_identifier(parser) {
@@ -574,7 +576,7 @@ function read_identifier(parser) {
 
 	let identifier = '';
 
-	if (parser.match('--') || parser.match_regex(REGEX_LEADING_HYPHEN_OR_DIGIT)) {
+	if (parser.match_regex(REGEX_LEADING_HYPHEN_OR_DIGIT)) {
 		e.css_expected_identifier(start);
 	}
 

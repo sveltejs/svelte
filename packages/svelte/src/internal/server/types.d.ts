@@ -11,15 +11,6 @@ export interface Component {
 	function?: any;
 }
 
-export interface Payload {
-	out: string;
-	css: Set<{ hash: string; code: string }>;
-	head: {
-		title: string;
-		out: string;
-	};
-}
-
 export interface RenderOutput {
 	/** HTML that goes into the `<head>` */
 	head: string;

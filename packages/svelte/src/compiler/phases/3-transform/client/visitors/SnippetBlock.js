@@ -1,9 +1,9 @@
-/** @import { BlockStatement, Expression, Identifier, Pattern, Statement } from 'estree' */
+/** @import { AssignmentPattern, BlockStatement, Expression, Identifier, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
 import { extract_paths } from '../../../../utils/ast.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { get_value } from './shared/declarations.js';
 
 /**
@@ -12,7 +12,7 @@ import { get_value } from './shared/declarations.js';
  */
 export function SnippetBlock(node, context) {
 	// TODO hoist where possible
-	/** @type {Pattern[]} */
+	/** @type {(Identifier | AssignmentPattern)[]} */
 	const args = [b.id('$$anchor')];
 
 	/** @type {BlockStatement} */
@@ -20,6 +20,10 @@ export function SnippetBlock(node, context) {
 
 	/** @type {Statement[]} */
 	const declarations = [];
+
+	if (dev) {
+		declarations.push(b.stmt(b.call('$.validate_snippet_args', b.spread(b.id('arguments')))));
+	}
 
 	const transform = { ...context.state.transform };
 	const child_state = { ...context.state, transform };
@@ -30,12 +34,7 @@ export function SnippetBlock(node, context) {
 		if (!argument) continue;
 
 		if (argument.type === 'Identifier') {
-			args.push({
-				type: 'AssignmentPattern',
-				left: argument,
-				right: b.id('$.noop')
-			});
-
+			args.push(b.assignment_pattern(argument, b.id('$.noop')));
 			transform[argument.name] = { read: b.call };
 
 			continue;
@@ -72,12 +71,10 @@ export function SnippetBlock(node, context) {
 		.../** @type {BlockStatement} */ (context.visit(node.body, child_state)).body
 	]);
 
-	/** @type {Expression} */
-	let snippet = b.arrow(args, body);
-
-	if (dev) {
-		snippet = b.call('$.wrap_snippet', b.id(context.state.analysis.name), snippet);
-	}
+	// in dev we use a FunctionExpression (not arrow function) so we can use `arguments`
+	let snippet = dev
+		? b.call('$.wrap_snippet', b.id(context.state.analysis.name), b.function(null, args, body))
+		: b.arrow(args, body);
 
 	const declaration = b.const(node.expression, snippet);
 

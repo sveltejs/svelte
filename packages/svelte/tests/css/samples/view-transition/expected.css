@@ -8,7 +8,13 @@
 	::view-transition-old {
 		animation-duration: 0.5s;
 	}
+	::view-transition-old:only-child {
+		animation-duration: 0.5s;
+	}
 	::view-transition-new {
+		animation-duration: 0.5s;
+	}
+	::view-transition-new:only-child {
 		animation-duration: 0.5s;
 	}
 	::view-transition-image-pair {

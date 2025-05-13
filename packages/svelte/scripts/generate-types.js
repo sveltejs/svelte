@@ -24,7 +24,12 @@ await createBundle({
 	output: `${dir}/types/index.d.ts`,
 	compilerOptions: {
 		// so that types/properties with `@internal` (and its dependencies) are removed from the output
-		stripInternal: true
+		stripInternal: true,
+		paths: Object.fromEntries(
+			Object.entries(pkg.imports).map(([key, value]) => {
+				return [key, [value.types ?? value.default ?? value]];
+			})
+		)
 	},
 	modules: {
 		[pkg.name]: `${dir}/src/index.d.ts`,

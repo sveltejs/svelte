@@ -3,7 +3,7 @@
 /** @import { ComponentAnalysis, Analysis } from '../../types' */
 /** @import { Visitors, ComponentClientTransformState, ClientTransformState } from './types' */
 import { walk } from 'zimmerframe';
-import * as b from '../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { build_getter, is_state_source } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
 import { dev, filename } from '../../../state.js';
@@ -171,9 +171,9 @@ export function client_component(analysis, options) {
 		module_level_snippets: [],
 
 		// these are set inside the `Fragment` visitor, and cannot be used until then
-		before_init: /** @type {any} */ (null),
 		init: /** @type {any} */ (null),
 		update: /** @type {any} */ (null),
+		expressions: /** @type {any} */ (null),
 		after_update: /** @type {any} */ (null),
 		template: /** @type {any} */ (null),
 		locations: /** @type {any} */ (null)
@@ -221,7 +221,10 @@ export function client_component(analysis, options) {
 	for (const [name, binding] of analysis.instance.scope.declarations) {
 		if (binding.kind === 'legacy_reactive') {
 			legacy_reactive_declarations.push(
-				b.const(name, b.call('$.mutable_state', undefined, analysis.immutable ? b.true : undefined))
+				b.const(
+					name,
+					b.call('$.mutable_source', undefined, analysis.immutable ? b.true : undefined)
+				)
 			);
 		}
 		if (binding.kind === 'store_sub') {
@@ -314,7 +317,7 @@ export function client_component(analysis, options) {
 
 			const setter = b.set(key, [
 				b.stmt(b.call(b.id(name), b.id('$$value'))),
-				b.stmt(b.call('$.flush_sync'))
+				b.stmt(b.call('$.flush'))
 			]);
 
 			if (analysis.runes && binding.initial) {
@@ -389,6 +392,12 @@ export function client_component(analysis, options) {
 
 		component_block.body.unshift(
 			b.stmt(b.call('$.append_styles', b.id('$$anchor'), b.id('$$css')))
+		);
+	}
+
+	if (analysis.needs_mutation_validation) {
+		component_block.body.unshift(
+			b.var('$$ownership_validator', b.call('$.create_ownership_validator', b.id('$$props')))
 		);
 	}
 
@@ -529,9 +538,6 @@ export function client_component(analysis, options) {
 				b.assignment('=', b.member(b.id(analysis.name), '$.FILENAME', true), b.literal(filename))
 			)
 		);
-
-		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'))));
-		body.push(b.stmt(b.call(b.id('$.mark_module_end'), b.id(analysis.name))));
 	}
 
 	if (!analysis.runes) {
@@ -564,6 +570,11 @@ export function client_component(analysis, options) {
 		component_block.body.unshift(b.stmt(b.call('$.check_target', b.id('new.target'))));
 	}
 
+	if (analysis.props_id) {
+		// need to be placed on first line of the component for hydration
+		component_block.body.unshift(b.const(analysis.props_id, b.call('$.props_id')));
+	}
+
 	if (state.events.size > 0) {
 		body.push(
 			b.stmt(b.call('$.delegate', b.array(Array.from(state.events).map((name) => b.literal(name)))))
@@ -593,7 +604,7 @@ export function client_component(analysis, options) {
 				/** @type {ESTree.Property[]} */ (
 					[
 						prop_def.attribute ? b.init('attribute', b.literal(prop_def.attribute)) : undefined,
-						prop_def.reflect ? b.init('reflect', b.literal(true)) : undefined,
+						prop_def.reflect ? b.init('reflect', b.true) : undefined,
 						prop_def.type ? b.init('type', b.literal(prop_def.type)) : undefined
 					].filter(Boolean)
 				)
