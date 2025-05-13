@@ -119,7 +119,7 @@ Since 5.6.0, if an `<input>` has a `defaultChecked` attribute and is part of a f
 
 ## `<input bind:indeterminate>`
 
-Checkbox can be in [indeterminate](https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement/indeterminate) state, though it is still either checked or unchecked:
+Checkboxes can be in an [indeterminate](https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement/indeterminate) state, independently of whether they are checked or unchecked:
 
 ```svelte
 <script>
@@ -129,16 +129,14 @@ Checkbox can be in [indeterminate](https://developer.mozilla.org/en-US/docs/Web/
 
 <form>
 	<input type="checkbox" bind:checked bind:indeterminate>
-	<p>
-		Choice:
-		{#if indeterminate}
-			no choice was done yet
-		{:else if checked}
-			the option is checked
-		{:else}
-			the option is unchecked
-		{/if}
-	</p>
+
+	{#if indeterminate}
+		waiting...
+	{:else if checked}
+		checked
+	{:else}
+		unchecked
+	{/if}
 </form>
 ```
 
