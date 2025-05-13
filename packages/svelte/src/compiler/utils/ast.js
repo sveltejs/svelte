@@ -135,8 +135,6 @@ export function unwrap_pattern(pattern, nodes = []) {
  * @returns {[ESTree.Pattern, Map<ESTree.Identifier | ESTree.MemberExpression, ESTree.Identifier>]}
  */
 export function build_pattern(id, scope) {
-	const nodes = unwrap_pattern(id);
-
 	/** @type {Map<ESTree.Identifier | ESTree.MemberExpression, ESTree.Identifier>} */
 	const map = new Map();
 
@@ -145,11 +143,13 @@ export function build_pattern(id, scope) {
 
 	let counter = 0;
 
-	for (const node of nodes) {
-		map.set(node, b.id(scope.generate(`$$${++counter}`, (_, counter) => `$$${counter}`)));
+	for (const node of unwrap_pattern(id)) {
+		const name = scope.generate(`$$${++counter}`, (_, counter) => `$$${counter}`);
+
+		map.set(node, b.id(name));
 
 		if (node.type === 'Identifier') {
-			names.set(node.name, /** @type {ESTree.Identifier} */ (map.get(node)).name);
+			names.set(node.name, name);
 		}
 	}
 
