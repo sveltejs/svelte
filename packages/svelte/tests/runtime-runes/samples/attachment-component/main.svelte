@@ -1,5 +1,15 @@
 <script>
 	import Child from './Child.svelte';
+
+	let message = $state('one');
+
+	function attachment(message) {
+		return (node) => {
+			node.textContent = message;
+		};
+	}
 </script>
 
-<Child {@attach (node) => node.textContent = 'set from component'} />
+<button onclick={() => message = 'two'}>update</button>
+
+<Child {@attach attachment(message)} />
