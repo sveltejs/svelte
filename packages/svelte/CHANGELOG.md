@@ -1,5 +1,13 @@
 # svelte
 
+## 5.28.6
+
+### Patch Changes
+
+- fix: use `transform.read` for `ownership_validator.mutation` array ([#15848](https://github.com/sveltejs/svelte/pull/15848))
+
+- fix: don't redeclare `$slots` ([#15849](https://github.com/sveltejs/svelte/pull/15849))
+
 ## 5.28.5
 
 ### Patch Changes
