@@ -324,15 +324,18 @@ export function validate_mutation(node, context, expression) {
 	const state = /** @type {ComponentClientTransformState} */ (context.state);
 	state.analysis.needs_mutation_validation = true;
 
-	/** @type {Array<Identifier | Literal>} */
+	/** @type {Array<Identifier | Literal | Expression>} */
 	const path = [];
 
 	while (left.type === 'MemberExpression') {
 		if (left.property.type === 'Literal') {
 			path.unshift(left.property);
 		} else if (left.property.type === 'Identifier') {
+			const transform = Object.hasOwn(context.state.transform, left.property.name)
+				? context.state.transform[left.property.name]
+				: null;
 			if (left.computed) {
-				path.unshift(left.property);
+				path.unshift(transform?.read ? transform.read(left.property) : left.property);
 			} else {
 				path.unshift(b.literal(left.property.name));
 			}
