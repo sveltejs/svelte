@@ -1,5 +1,13 @@
 # svelte
 
+## 5.28.5
+
+### Patch Changes
+
+- fix: proxify the value in assignment shorthands to the private field ([#15862](https://github.com/sveltejs/svelte/pull/15862))
+
+- fix: more frequently update `bind:buffered` to actual value ([#15874](https://github.com/sveltejs/svelte/pull/15874))
+
 ## 5.28.4
 
 ### Patch Changes
