@@ -136,33 +136,41 @@ export function unwrap_pattern(pattern, nodes = []) {
  */
 export function build_pattern(id, scope) {
 	const nodes = unwrap_pattern(id);
+
 	/** @type {Map<ESTree.Identifier | ESTree.MemberExpression, ESTree.Identifier>} */
 	const map = new Map();
+
 	/** @type {Map<string, string>} */
-	const ident_map = new Map();
+	const names = new Map();
+
 	let counter = 0;
+
 	for (const node of nodes) {
 		map.set(node, b.id(scope.generate(`$$${++counter}`, (_, counter) => `$$${counter}`)));
+
 		if (node.type === 'Identifier') {
-			ident_map.set(node.name, /** @type {ESTree.Identifier} */ (map.get(node)).name);
+			names.set(node.name, /** @type {ESTree.Identifier} */ (map.get(node)).name);
 		}
 	}
+
 	const pattern = walk(id, null, {
 		_(node, { path, next }) {
 			if (
 				(node.type === 'Identifier' &&
 					is_reference(node, /** @type {ESTree.Pattern} */ (path.at(-1))) &&
-					ident_map.has(node.name)) ||
+					names.has(node.name)) ||
 				(node.type === 'MemberExpression' && map.has(node))
 			) {
 				return (
 					map.get(node) ??
-					b.id(/** @type {string} */ (ident_map.get(/** @type {ESTree.Identifier} */ (node).name)))
+					b.id(/** @type {string} */ (names.get(/** @type {ESTree.Identifier} */ (node).name)))
 				);
 			}
-			return next();
+
+			next();
 		}
 	});
+
 	return [pattern, map];
 }
 
