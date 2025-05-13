@@ -280,7 +280,7 @@ You can give the `<select>` a default value by adding a `selected` attribute to 
 
 ## `window` and `document`
 
-Binding to properties of `window` and `document` is done via the special elements [`<svelte:window>`](svelte-window) and [`<svelte:document>`](svelte-document). The available bindings are listed in their documentations.
+To bind to properties of `window` and `document`, see [`<svelte:window>`](svelte-window) and [`<svelte:document>`](svelte-document).
 
 ## Contenteditable bindings
 
@@ -317,7 +317,7 @@ All visible elements have the following readonly bindings, measured with a `Resi
 </div>
 ```
 
-> [!NOTE] `display: inline` elements do not have a width or height (except for elements with 'intrinsic' dimensions, like `<img>` and `<canvas>`), and cannot be observed with a `ResizeObserver`. You will need to change the `display` style of these elements to something else, such as `inline-block`. Also, CSS transformations do not trigger `ResizeObserver` as well.
+> [!NOTE] `display: inline` elements do not have a width or height (except for elements with 'intrinsic' dimensions, like `<img>` and `<canvas>`), and cannot be observed with a `ResizeObserver`. You will need to change the `display` style of these elements to something else, such as `inline-block`. Note that CSS transformations do not trigger `ResizeObserver` callbacks.
 
 ## bind:this
 
