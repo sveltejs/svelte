@@ -14,7 +14,11 @@ export function set_class(dom, is_html, value, hash, prev_classes, next_classes)
 	// @ts-expect-error need to add __className to patched prototype
 	var prev = dom.__className;
 
-	if (hydrating || prev !== value) {
+	if (
+		hydrating ||
+		prev !== value ||
+		prev === undefined // for edge case of `class={undefined}`
+	) {
 		var next_class_name = to_class(value, hash, next_classes);
 
 		if (!hydrating || next_class_name !== dom.getAttribute('class')) {

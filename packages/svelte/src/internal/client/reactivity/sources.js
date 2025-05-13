@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
+/** @import { Derived, Effect, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import {
 	active_reaction,
@@ -12,10 +12,10 @@ import {
 	increment_write_version,
 	update_effect,
 	reaction_sources,
-	set_reaction_sources,
 	check_dirtiness,
 	untracking,
-	is_destroying_effect
+	is_destroying_effect,
+	push_reaction_value
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -27,14 +27,14 @@ import {
 	UNOWNED,
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
-	ROOT_EFFECT,
-	EFFECT_IS_UPDATING
-} from '../constants.js';
+	ROOT_EFFECT
+} from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack } from '../dev/tracing.js';
 import { component_context, is_runes } from '../context.js';
 import { proxy } from '../proxy.js';
+import { execute_derived } from './deriveds.js';
 
 export let inspect_effects = new Set();
 export const old_values = new Map();
@@ -64,20 +64,26 @@ export function source(v, stack) {
 		wv: 0
 	};
 
-	if (active_reaction !== null && active_reaction.f & EFFECT_IS_UPDATING) {
-		if (reaction_sources === null) {
-			set_reaction_sources([signal]);
-		} else {
-			reaction_sources.push(signal);
-		}
-	}
-
 	if (DEV && tracing_mode_flag) {
 		signal.created = stack ?? get_stack('CreatedAt');
 		signal.debug = null;
 	}
 
 	return signal;
+}
+
+/**
+ * @template V
+ * @param {V} v
+ * @param {Error | null} [stack]
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function state(v, stack) {
+	const s = source(v, stack);
+
+	push_reaction_value(s);
+
+	return s;
 }
 
 /**
@@ -133,7 +139,7 @@ export function set(source, value, should_proxy = false) {
 		e.state_unsafe_mutation();
 	}
 
-	let new_value = should_proxy ? proxy(value, source) : value;
+	let new_value = should_proxy ? proxy(value) : value;
 
 	return internal_set(source, new_value);
 }
@@ -155,7 +161,6 @@ export function internal_set(source, value) {
 		}
 
 		source.v = value;
-		source.wv = increment_write_version();
 
 		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');
@@ -164,6 +169,16 @@ export function internal_set(source, value) {
 				source.trace_v ??= old_value;
 			}
 		}
+
+		if ((source.f & DERIVED) !== 0) {
+			// if we are assigning to a dirty derived we set it to clean/maybe dirty but we also eagerly execute it to track the dependencies
+			if ((source.f & DIRTY) !== 0) {
+				execute_derived(/** @type {Derived} */ (source));
+			}
+			set_signal_status(source, (source.f & UNOWNED) === 0 ? CLEAN : MAYBE_DIRTY);
+		}
+
+		source.wv = increment_write_version();
 
 		mark_reactions(source, DIRTY);
 

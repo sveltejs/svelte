@@ -1,7 +1,7 @@
 /** @import { BlockStatement, Expression, Literal, Property } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { empty_comment, build_attribute_value } from './shared/utils.js';
 
 /**

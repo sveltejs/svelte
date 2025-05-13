@@ -5,7 +5,7 @@
 import { walk } from 'zimmerframe';
 import { set_scope } from '../../scope.js';
 import { extract_identifiers } from '../../../utils/ast.js';
-import * as b from '../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { dev, filename } from '../../../state.js';
 import { render_stylesheet } from '../css/index.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
@@ -186,12 +186,10 @@ export function server_component(analysis, options) {
 			...snippets,
 			b.let('$$settled', b.true),
 			b.let('$$inner_payload'),
-			b.stmt(
-				b.function(
-					b.id('$$render_inner'),
-					[b.id('$$payload')],
-					b.block(/** @type {Statement[]} */ (rest))
-				)
+			b.function_declaration(
+				b.id('$$render_inner'),
+				[b.id('$$payload')],
+				b.block(/** @type {Statement[]} */ (rest))
 			),
 			b.do_while(
 				b.unary('!', b.id('$$settled')),

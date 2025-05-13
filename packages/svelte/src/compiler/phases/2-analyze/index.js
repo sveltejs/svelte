@@ -5,8 +5,8 @@
 import { walk } from 'zimmerframe';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
-import { extract_identifiers, is_text_attribute } from '../../utils/ast.js';
-import * as b from '../../utils/builders.js';
+import { extract_identifiers } from '../../utils/ast.js';
+import * as b from '#compiler/builders';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { create_attribute, is_custom_element_node } from '../nodes.js';
@@ -43,6 +43,7 @@ import { ImportDeclaration } from './visitors/ImportDeclaration.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { LetDirective } from './visitors/LetDirective.js';
+import { Literal } from './visitors/Literal.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
 import { NewExpression } from './visitors/NewExpression.js';
 import { OnDirective } from './visitors/OnDirective.js';
@@ -63,6 +64,7 @@ import { SvelteSelf } from './visitors/SvelteSelf.js';
 import { SvelteWindow } from './visitors/SvelteWindow.js';
 import { SvelteBoundary } from './visitors/SvelteBoundary.js';
 import { TaggedTemplateExpression } from './visitors/TaggedTemplateExpression.js';
+import { TemplateElement } from './visitors/TemplateElement.js';
 import { Text } from './visitors/Text.js';
 import { TitleElement } from './visitors/TitleElement.js';
 import { TransitionDirective } from './visitors/TransitionDirective.js';
@@ -156,6 +158,7 @@ const visitors = {
 	KeyBlock,
 	LabeledStatement,
 	LetDirective,
+	Literal,
 	MemberExpression,
 	NewExpression,
 	OnDirective,
@@ -176,6 +179,7 @@ const visitors = {
 	SvelteWindow,
 	SvelteBoundary,
 	TaggedTemplateExpression,
+	TemplateElement,
 	Text,
 	TransitionDirective,
 	TitleElement,
@@ -432,6 +436,7 @@ export function analyze_component(root, source, options) {
 		uses_component_bindings: false,
 		uses_render_tags: false,
 		needs_context: false,
+		needs_mutation_validation: false,
 		needs_props: false,
 		event_directive_node: null,
 		uses_event_attributes: false,
@@ -455,7 +460,8 @@ export function analyze_component(root, source, options) {
 						hash
 					})
 				: '',
-			keyframes: []
+			keyframes: [],
+			has_global: false
 		},
 		source,
 		undefined_exports: new Map(),

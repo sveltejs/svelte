@@ -96,7 +96,7 @@ However, you can use any router library. A lot of people use [page.js](https://g
 
 If you prefer a declarative HTML approach, there's the isomorphic [svelte-routing](https://github.com/EmilTholin/svelte-routing) library and a fork of it called [svelte-navigator](https://github.com/mefechoel/svelte-navigator) containing some additional functionality.
 
-If you need hash-based routing on the client side, check out [svelte-spa-router](https://github.com/ItalyPaleAle/svelte-spa-router) or [abstract-state-router](https://github.com/TehShrike/abstract-state-router/).
+If you need hash-based routing on the client side, check out the [hash option](https://svelte.dev/docs/kit/configuration#router) in SvelteKit, [svelte-spa-router](https://github.com/ItalyPaleAle/svelte-spa-router), or [abstract-state-router](https://github.com/TehShrike/abstract-state-router/).
 
 [Routify](https://routify.dev) is another filesystem-based router, similar to SvelteKit's router. Version 3 supports Svelte's native SSR.
 

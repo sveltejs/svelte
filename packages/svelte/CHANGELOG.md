@@ -1,5 +1,249 @@
 # svelte
 
+## 5.28.6
+
+### Patch Changes
+
+- fix: use `transform.read` for `ownership_validator.mutation` array ([#15848](https://github.com/sveltejs/svelte/pull/15848))
+
+- fix: don't redeclare `$slots` ([#15849](https://github.com/sveltejs/svelte/pull/15849))
+
+## 5.28.5
+
+### Patch Changes
+
+- fix: proxify the value in assignment shorthands to the private field ([#15862](https://github.com/sveltejs/svelte/pull/15862))
+
+- fix: more frequently update `bind:buffered` to actual value ([#15874](https://github.com/sveltejs/svelte/pull/15874))
+
+## 5.28.4
+
+### Patch Changes
+
+- fix: treat nullish expression as empty string ([#15901](https://github.com/sveltejs/svelte/pull/15901))
+
+- fix: prevent invalid BigInt calls from blowing up at compile time ([#15900](https://github.com/sveltejs/svelte/pull/15900))
+
+- fix: warn on bidirectional control characters ([#15893](https://github.com/sveltejs/svelte/pull/15893))
+
+- fix: emit right error for a shadowed invalid rune ([#15892](https://github.com/sveltejs/svelte/pull/15892))
+
+## 5.28.3
+
+### Patch Changes
+
+- chore: avoid microtasks when flushing sync ([#15895](https://github.com/sveltejs/svelte/pull/15895))
+
+- fix: improve error message for migration errors when slot would be renamed ([#15841](https://github.com/sveltejs/svelte/pull/15841))
+
+- fix: allow characters in the supplementary special-purpose plane ([#15823](https://github.com/sveltejs/svelte/pull/15823))
+
+## 5.28.2
+
+### Patch Changes
+
+- fix: don't mark selector lists inside `:global` with multiple items as unused ([#15817](https://github.com/sveltejs/svelte/pull/15817))
+
+## 5.28.1
+
+### Patch Changes
+
+- fix: ensure `<svelte:boundary>` properly removes error content in production mode ([#15793](https://github.com/sveltejs/svelte/pull/15793))
+
+- fix: `update_version` after `delete` if `source` is `undefined` and `prop` in `target` ([#15796](https://github.com/sveltejs/svelte/pull/15796))
+
+- fix: emit error on wrong placement of the `:global` block selector ([#15794](https://github.com/sveltejs/svelte/pull/15794))
+
+## 5.28.0
+
+### Minor Changes
+
+- feat: partially evaluate more expressions ([#15781](https://github.com/sveltejs/svelte/pull/15781))
+
+## 5.27.3
+
+### Patch Changes
+
+- fix: use function declaration for snippets in server output to avoid TDZ violation ([#15789](https://github.com/sveltejs/svelte/pull/15789))
+
+## 5.27.2
+
+### Patch Changes
+
+- chore: use pkg.imports for common modules ([#15787](https://github.com/sveltejs/svelte/pull/15787))
+
+## 5.27.1
+
+### Patch Changes
+
+- chore: default params for html blocks ([#15778](https://github.com/sveltejs/svelte/pull/15778))
+
+- fix: correct suggested type for custom events without detail ([#15763](https://github.com/sveltejs/svelte/pull/15763))
+
+- fix: Throw on unrendered snippets in `dev` ([#15766](https://github.com/sveltejs/svelte/pull/15766))
+
+- fix: avoid unnecessary read version increments ([#15777](https://github.com/sveltejs/svelte/pull/15777))
+
+## 5.27.0
+
+### Minor Changes
+
+- feat: partially evaluate certain expressions ([#15494](https://github.com/sveltejs/svelte/pull/15494))
+
+### Patch Changes
+
+- fix: relax `:global` selector list validation ([#15762](https://github.com/sveltejs/svelte/pull/15762))
+
+## 5.26.3
+
+### Patch Changes
+
+- fix: correctly validate head snippets on the server ([#15755](https://github.com/sveltejs/svelte/pull/15755))
+
+- fix: ignore mutation validation for props that are not proxies in more cases ([#15759](https://github.com/sveltejs/svelte/pull/15759))
+
+- fix: allow self-closing tags within math namespace ([#15761](https://github.com/sveltejs/svelte/pull/15761))
+
+## 5.26.2
+
+### Patch Changes
+
+- fix: correctly validate `undefined` snippet params with default value ([#15750](https://github.com/sveltejs/svelte/pull/15750))
+
+## 5.26.1
+
+### Patch Changes
+
+- fix: update `state_referenced_locally` message ([#15733](https://github.com/sveltejs/svelte/pull/15733))
+
+## 5.26.0
+
+### Minor Changes
+
+- feat: add `css.hasGlobal` to `compile` output ([#15450](https://github.com/sveltejs/svelte/pull/15450))
+
+### Patch Changes
+
+- fix: add snippet argument validation in dev ([#15521](https://github.com/sveltejs/svelte/pull/15521))
+
+## 5.25.12
+
+### Patch Changes
+
+- fix: improve internal_set versioning mechanic ([#15724](https://github.com/sveltejs/svelte/pull/15724))
+
+- fix: don't transform reassigned state in labeled statement in `$derived` ([#15725](https://github.com/sveltejs/svelte/pull/15725))
+
+## 5.25.11
+
+### Patch Changes
+
+- fix: handle hydration mismatches in await blocks ([#15708](https://github.com/sveltejs/svelte/pull/15708))
+
+- fix: prevent ownership warnings if the fallback of a bindable is used ([#15720](https://github.com/sveltejs/svelte/pull/15720))
+
+## 5.25.10
+
+### Patch Changes
+
+- fix: set deriveds as `CLEAN` if they are assigned to ([#15592](https://github.com/sveltejs/svelte/pull/15592))
+
+- fix: better scope `:global()` with nesting selector `&` ([#15671](https://github.com/sveltejs/svelte/pull/15671))
+
+## 5.25.9
+
+### Patch Changes
+
+- fix: allow `$.state` and `$.derived` to be treeshaken ([#15702](https://github.com/sveltejs/svelte/pull/15702))
+
+- fix: rework binding ownership validation ([#15678](https://github.com/sveltejs/svelte/pull/15678))
+
+## 5.25.8
+
+### Patch Changes
+
+- fix: address untracked_writes memory leak ([#15694](https://github.com/sveltejs/svelte/pull/15694))
+
+## 5.25.7
+
+### Patch Changes
+
+- fix: ensure clearing of old values happens independent of root flushes ([#15664](https://github.com/sveltejs/svelte/pull/15664))
+
+## 5.25.6
+
+### Patch Changes
+
+- fix: ignore generic type arguments while creating AST ([#15659](https://github.com/sveltejs/svelte/pull/15659))
+
+- fix: better consider component and its snippets during css pruning ([#15630](https://github.com/sveltejs/svelte/pull/15630))
+
+## 5.25.5
+
+### Patch Changes
+
+- fix: add setters to `$derived` class properties ([#15628](https://github.com/sveltejs/svelte/pull/15628))
+
+- fix: silence assignment warning on more function bindings ([#15644](https://github.com/sveltejs/svelte/pull/15644))
+
+- fix: make sure CSS is preserved during SSR with bindings ([#15645](https://github.com/sveltejs/svelte/pull/15645))
+
+## 5.25.4
+
+### Patch Changes
+
+- fix: support TS type assertions ([#15642](https://github.com/sveltejs/svelte/pull/15642))
+
+- fix: ensure `undefined` class still applies scoping class, if necessary ([#15643](https://github.com/sveltejs/svelte/pull/15643))
+
+## 5.25.3
+
+### Patch Changes
+
+- fix: prevent state runes from being called with spread ([#15585](https://github.com/sveltejs/svelte/pull/15585))
+
+## 5.25.2
+
+### Patch Changes
+
+- feat: migrate reassigned deriveds to `$derived` ([#15581](https://github.com/sveltejs/svelte/pull/15581))
+
+## 5.25.1
+
+### Patch Changes
+
+- fix: prevent dev server from throwing errors when attempting to retrieve the proxied value of an iframe's contentWindow ([#15577](https://github.com/sveltejs/svelte/pull/15577))
+
+## 5.25.0
+
+### Minor Changes
+
+- feat: make deriveds writable ([#15570](https://github.com/sveltejs/svelte/pull/15570))
+
+## 5.24.1
+
+### Patch Changes
+
+- fix: use `get` in constructor for deriveds ([#15300](https://github.com/sveltejs/svelte/pull/15300))
+
+- fix: ensure toStore root effect is connected to correct parent effect ([#15574](https://github.com/sveltejs/svelte/pull/15574))
+
+## 5.24.0
+
+### Minor Changes
+
+- feat: allow state created in deriveds/effects to be written/read locally without self-invalidation ([#15553](https://github.com/sveltejs/svelte/pull/15553))
+
+### Patch Changes
+
+- fix: check if DOM prototypes are extensible ([#15569](https://github.com/sveltejs/svelte/pull/15569))
+
+- Keep inlined trailing JSDoc comments of properties when running svelte-migrate ([#15567](https://github.com/sveltejs/svelte/pull/15567))
+
+- fix: simplify set calls for proxyable values ([#15548](https://github.com/sveltejs/svelte/pull/15548))
+
+- fix: don't depend on deriveds created inside the current reaction ([#15564](https://github.com/sveltejs/svelte/pull/15564))
+
 ## 5.23.2
 
 ### Patch Changes

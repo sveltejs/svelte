@@ -7,13 +7,15 @@ import { is_keyframes_node } from '../../css.js';
 import { is_global, is_unscoped_pseudo_class } from './utils.js';
 
 /**
- * @typedef {Visitors<
- *   AST.CSS.Node,
- *   {
- *     keyframes: string[];
- *     rule: AST.CSS.Rule | null;
- *   }
- * >} CssVisitors
+ * @typedef {{
+ *   keyframes: string[];
+ *   rule: AST.CSS.Rule | null;
+ *   analysis: ComponentAnalysis;
+ * }} CssState
+ */
+
+/**
+ * @typedef {Visitors<AST.CSS.Node, CssState>} CssVisitors
  */
 
 /**
@@ -26,6 +28,15 @@ function is_global_block_selector(simple_selector) {
 		simple_selector.name === 'global' &&
 		simple_selector.args === null
 	);
+}
+
+/**
+ * @param {AST.SvelteNode[]} path
+ */
+function is_unscoped(path) {
+	return path
+		.filter((node) => node.type === 'Rule')
+		.every((node) => node.metadata.has_global_selectors);
 }
 
 /**
@@ -42,6 +53,9 @@ const css_visitors = {
 		if (is_keyframes_node(node)) {
 			if (!node.prelude.startsWith('-global-') && !is_in_global_block(context.path)) {
 				context.state.keyframes.push(node.prelude);
+			} else if (node.prelude.startsWith('-global-')) {
+				// we don't check if the block.children.length because the keyframe is still added even if empty
+				context.state.analysis.css.has_global ||= is_unscoped(context.path);
 			}
 		}
 
@@ -54,8 +68,12 @@ const css_visitors = {
 			const global = node.children.find(is_global);
 
 			if (global) {
-				const idx = node.children.indexOf(global);
+				const is_nested = context.path.at(-2)?.type === 'PseudoClassSelector';
+				if (is_nested && !global.selectors[0].args) {
+					e.css_global_block_invalid_placement(global.selectors[0]);
+				}
 
+				const idx = node.children.indexOf(global);
 				if (global.selectors[0].args !== null && idx !== 0 && idx !== node.children.length - 1) {
 					// ensure `:global(...)` is not used in the middle of a selector (but multiple `global(...)` in sequence are ok)
 					for (let i = idx + 1; i < node.children.length; i++) {
@@ -99,9 +117,11 @@ const css_visitors = {
 
 		node.metadata.rule = context.state.rule;
 
-		node.metadata.used ||= node.children.every(
+		node.metadata.is_global = node.children.every(
 			({ metadata }) => metadata.is_global || metadata.is_global_like
 		);
+
+		node.metadata.used ||= node.metadata.is_global;
 
 		if (
 			node.metadata.rule?.metadata.parent_rule &&
@@ -177,10 +197,12 @@ const css_visitors = {
 	Rule(node, context) {
 		node.metadata.parent_rule = context.state.rule;
 
-		node.metadata.is_global_block = node.prelude.children.some((selector) => {
+		// We gotta allow :global x, :global y because CSS preprocessors might generate that from :global { x, y {...} }
+		for (const complex_selector of node.prelude.children) {
 			let is_global_block = false;
 
-			for (const child of selector.children) {
+			for (let selector_idx = 0; selector_idx < complex_selector.children.length; selector_idx++) {
+				const child = complex_selector.children[selector_idx];
 				const idx = child.selectors.findIndex(is_global_block_selector);
 
 				if (is_global_block) {
@@ -188,70 +210,79 @@ const css_visitors = {
 					child.metadata.is_global_like = true;
 				}
 
-				if (idx !== -1) {
-					is_global_block = true;
-					for (let i = idx + 1; i < child.selectors.length; i++) {
-						walk(/** @type {AST.CSS.Node} */ (child.selectors[i]), null, {
-							ComplexSelector(node) {
-								node.metadata.used = true;
-							}
-						});
-					}
-				}
-			}
-
-			return is_global_block;
-		});
-
-		if (node.metadata.is_global_block) {
-			if (node.prelude.children.length > 1) {
-				e.css_global_block_invalid_list(node.prelude);
-			}
-
-			const complex_selector = node.prelude.children[0];
-			const global_selector = complex_selector.children.find((r, selector_idx) => {
-				const idx = r.selectors.findIndex(is_global_block_selector);
 				if (idx === 0) {
-					if (r.selectors.length > 1 && selector_idx === 0 && node.metadata.parent_rule === null) {
-						e.css_global_block_invalid_modifier_start(r.selectors[1]);
+					if (
+						child.selectors.length > 1 &&
+						selector_idx === 0 &&
+						node.metadata.parent_rule === null
+					) {
+						e.css_global_block_invalid_modifier_start(child.selectors[1]);
+					} else {
+						// `child` starts with `:global`
+						node.metadata.is_global_block = is_global_block = true;
+
+						for (let i = 1; i < child.selectors.length; i++) {
+							walk(/** @type {AST.CSS.Node} */ (child.selectors[i]), null, {
+								ComplexSelector(node) {
+									node.metadata.used = true;
+								}
+							});
+						}
+
+						if (child.combinator && child.combinator.name !== ' ') {
+							e.css_global_block_invalid_combinator(child, child.combinator.name);
+						}
+
+						const declaration = node.block.children.find((child) => child.type === 'Declaration');
+						const is_lone_global =
+							complex_selector.children.length === 1 &&
+							complex_selector.children[0].selectors.length === 1; // just `:global`, not e.g. `:global x`
+
+						if (is_lone_global && node.prelude.children.length > 1) {
+							// `:global, :global x { z { ... } }` would become `x { z { ... } }` which means `z` is always
+							// constrained by `x`, which is not what the user intended
+							e.css_global_block_invalid_list(node.prelude);
+						}
+
+						if (
+							declaration &&
+							// :global { color: red; } is invalid, but foo :global { color: red; } is valid
+							node.prelude.children.length === 1 &&
+							is_lone_global
+						) {
+							e.css_global_block_invalid_declaration(declaration);
+						}
 					}
-					return true;
 				} else if (idx !== -1) {
-					e.css_global_block_invalid_modifier(r.selectors[idx]);
+					e.css_global_block_invalid_modifier(child.selectors[idx]);
 				}
-			});
-
-			if (!global_selector) {
-				throw new Error('Internal error: global block without :global selector');
 			}
 
-			if (global_selector.combinator && global_selector.combinator.name !== ' ') {
-				e.css_global_block_invalid_combinator(global_selector, global_selector.combinator.name);
-			}
-
-			const declaration = node.block.children.find((child) => child.type === 'Declaration');
-
-			if (
-				declaration &&
-				// :global { color: red; } is invalid, but foo :global { color: red; } is valid
-				node.prelude.children.length === 1 &&
-				node.prelude.children[0].children.length === 1 &&
-				node.prelude.children[0].children[0].selectors.length === 1
-			) {
-				e.css_global_block_invalid_declaration(declaration);
+			if (node.metadata.is_global_block && !is_global_block) {
+				e.css_global_block_invalid_list(node.prelude);
 			}
 		}
 
-		context.next({
-			...context.state,
-			rule: node
-		});
+		const state = { ...context.state, rule: node };
 
-		node.metadata.has_local_selectors = node.prelude.children.some((selector) => {
-			return selector.children.some(
-				({ metadata }) => !metadata.is_global && !metadata.is_global_like
-			);
-		});
+		// visit selector list first, to populate child selector metadata
+		context.visit(node.prelude, state);
+
+		for (const selector of node.prelude.children) {
+			node.metadata.has_global_selectors ||= selector.metadata.is_global;
+			node.metadata.has_local_selectors ||= !selector.metadata.is_global;
+		}
+
+		// if this rule has a ComplexSelector whose RelativeSelector children are all
+		// `:global(...)`, and the rule contains declarations (rather than just
+		// nested rules) then the component as a whole includes global CSS
+		context.state.analysis.css.has_global ||=
+			node.metadata.has_global_selectors &&
+			node.block.children.filter((child) => child.type === 'Declaration').length > 0 &&
+			is_unscoped(context.path);
+
+		// visit block list, so parent rule metadata is populated
+		context.visit(node.block, state);
 	},
 	NestingSelector(node, context) {
 		const rule = /** @type {AST.CSS.Rule} */ (context.state.rule);
@@ -289,5 +320,12 @@ const css_visitors = {
  * @param {ComponentAnalysis} analysis
  */
 export function analyze_css(stylesheet, analysis) {
-	walk(stylesheet, { keyframes: analysis.css.keyframes, rule: null }, css_visitors);
+	/** @type {CssState} */
+	const css_state = {
+		keyframes: analysis.css.keyframes,
+		rule: null,
+		analysis
+	};
+
+	walk(stylesheet, css_state, css_visitors);
 }

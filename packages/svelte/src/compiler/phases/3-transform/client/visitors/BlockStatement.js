@@ -1,7 +1,7 @@
-/** @import { ArrowFunctionExpression, BlockStatement, CallExpression, Expression, FunctionDeclaration, FunctionExpression, Statement } from 'estree' */
+/** @import { ArrowFunctionExpression, BlockStatement, Expression, FunctionDeclaration, FunctionExpression, Statement } from 'estree' */
 /** @import { ComponentContext } from '../types' */
 import { add_state_transformers } from './shared/declarations.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 
 /**
  * @param {BlockStatement} node

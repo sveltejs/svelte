@@ -146,6 +146,10 @@ export async function compile_directory(
 
 			if (compiled.css) {
 				write(`${output_dir}/${file}.css`, compiled.css.code);
+				write(
+					`${output_dir}/${file}.css.json`,
+					JSON.stringify({ hasGlobal: compiled.css.hasGlobal })
+				);
 				if (output_map) {
 					write(`${output_dir}/${file}.css.map`, JSON.stringify(compiled.css.map, null, '\t'));
 				}

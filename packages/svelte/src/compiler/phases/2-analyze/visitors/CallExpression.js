@@ -3,10 +3,10 @@
 /** @import { Context } from '../types' */
 import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
-import { get_parent, unwrap_optional } from '../../../utils/ast.js';
+import { get_parent } from '../../../utils/ast.js';
 import { is_pure, is_safe_identifier } from './shared/utils.js';
 import { dev, locate_node, source } from '../../../state.js';
-import * as b from '../../../utils/builders.js';
+import * as b from '#compiler/builders';
 
 /**
  * @param {CallExpression} node
@@ -16,6 +16,14 @@ export function CallExpression(node, context) {
 	const parent = /** @type {AST.SvelteNode} */ (get_parent(context.path, -1));
 
 	const rune = get_rune(node, context.state.scope);
+
+	if (rune && rune !== '$inspect') {
+		for (const arg of node.arguments) {
+			if (arg.type === 'SpreadElement') {
+				e.rune_invalid_spread(node, rune);
+			}
+		}
+	}
 
 	switch (rune) {
 		case null:

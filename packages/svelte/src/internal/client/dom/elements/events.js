@@ -1,4 +1,3 @@
-/** @import { Location } from 'locate-character' */
 import { teardown } from '../../reactivity/effects.js';
 import { define_property, is_array } from '../../../shared/utils.js';
 import { hydrating } from '../hydration.js';
@@ -27,12 +26,8 @@ export const root_event_handles = new Set();
 export function replay_events(dom) {
 	if (!hydrating) return;
 
-	if (dom.onload) {
-		dom.removeAttribute('onload');
-	}
-	if (dom.onerror) {
-		dom.removeAttribute('onerror');
-	}
+	dom.removeAttribute('onload');
+	dom.removeAttribute('onerror');
 	// @ts-expect-error
 	const event = dom.__e;
 	if (event !== undefined) {

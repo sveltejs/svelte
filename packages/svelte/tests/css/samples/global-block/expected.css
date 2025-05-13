@@ -3,6 +3,10 @@
 		.x {
 			color: green;
 		}
+
+		.a, .selector, .list {
+			color: green;
+		}
 	/*}*/
 
 	div.svelte-xyz {
@@ -88,5 +92,15 @@
 	@keyframes svelte-xyz-test{
 		to{
 			opacity: 1;
+		}
+	}
+
+	 x,  y {
+		color: green;
+	}
+
+	div.svelte-xyz, div.svelte-xyz y /* (unused) unused*/ {
+		z {
+			color: green;
 		}
 	}

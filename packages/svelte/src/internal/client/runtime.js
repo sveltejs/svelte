@@ -94,11 +94,15 @@ export function set_active_effect(effect) {
  */
 export let reaction_sources = null;
 
-/**
- * @param {Source[] | null} sources
- */
-export function set_reaction_sources(sources) {
-	reaction_sources = sources;
+/** @param {Value} value */
+export function push_reaction_value(value) {
+	if (active_reaction !== null && active_reaction.f & EFFECT_IS_UPDATING) {
+		if (reaction_sources === null) {
+			reaction_sources = [value];
+		} else {
+			reaction_sources.push(value);
+		}
+	}
 }
 
 /**
@@ -287,31 +291,21 @@ export function handle_error(error, effect, previous_effect, component_context) 
 		is_throwing_error = true;
 	}
 
-	if (
-		!DEV ||
-		component_context === null ||
-		!(error instanceof Error) ||
-		handled_errors.has(error)
-	) {
-		propagate_error(error, effect);
-		return;
-	}
+	if (DEV && component_context !== null && error instanceof Error && !handled_errors.has(error)) {
+		handled_errors.add(error);
 
-	handled_errors.add(error);
+		const component_stack = [];
 
-	const component_stack = [];
+		const effect_name = effect.fn?.name;
 
-	const effect_name = effect.fn?.name;
+		if (effect_name) {
+			component_stack.push(effect_name);
+		}
 
-	if (effect_name) {
-		component_stack.push(effect_name);
-	}
+		/** @type {ComponentContext | null} */
+		let current_context = component_context;
 
-	/** @type {ComponentContext | null} */
-	let current_context = component_context;
-
-	while (current_context !== null) {
-		if (DEV) {
+		while (current_context !== null) {
 			/** @type {string} */
 			var filename = current_context.function?.[FILENAME];
 
@@ -319,35 +313,36 @@ export function handle_error(error, effect, previous_effect, component_context) 
 				const file = filename.split('/').pop();
 				component_stack.push(file);
 			}
+
+			current_context = current_context.p;
 		}
 
-		current_context = current_context.p;
-	}
-
-	const indent = is_firefox ? '  ' : '\t';
-	define_property(error, 'message', {
-		value: error.message + `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`
-	});
-	define_property(error, 'component_stack', {
-		value: component_stack
-	});
-
-	const stack = error.stack;
-
-	// Filter out internal files from callstack
-	if (stack) {
-		const lines = stack.split('\n');
-		const new_lines = [];
-		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i];
-			if (line.includes('svelte/src/internal')) {
-				continue;
-			}
-			new_lines.push(line);
-		}
-		define_property(error, 'stack', {
-			value: new_lines.join('\n')
+		const indent = is_firefox ? '  ' : '\t';
+		define_property(error, 'message', {
+			value:
+				error.message + `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`
 		});
+		define_property(error, 'component_stack', {
+			value: component_stack
+		});
+
+		const stack = error.stack;
+
+		// Filter out internal files from callstack
+		if (stack) {
+			const lines = stack.split('\n');
+			const new_lines = [];
+			for (let i = 0; i < lines.length; i++) {
+				const line = lines[i];
+				if (line.includes('svelte/src/internal')) {
+					continue;
+				}
+				new_lines.push(line);
+			}
+			define_property(error, 'stack', {
+				value: new_lines.join('\n')
+			});
+		}
 	}
 
 	propagate_error(error, effect);
@@ -465,7 +460,7 @@ export function update_reaction(reaction) {
 		// we need to increment the read version to ensure that
 		// any dependencies in this reaction aren't marked with
 		// the same version
-		if (previous_reaction !== null) {
+		if (previous_reaction !== null && previous_reaction !== reaction) {
 			read_version++;
 
 			if (untracked_writes !== null) {
@@ -681,6 +676,7 @@ function flush_queued_root_effects() {
 				var collected_effects = process_effects(root_effects[i]);
 				flush_queued_effects(collected_effects);
 			}
+			old_values.clear();
 		}
 	} finally {
 		is_flushing = false;
@@ -690,7 +686,6 @@ function flush_queued_root_effects() {
 		if (DEV) {
 			dev_effect_stack = [];
 		}
-		old_values.clear();
 	}
 }
 
@@ -785,19 +780,12 @@ function process_effects(root) {
 			} else if (is_branch) {
 				effect.f ^= CLEAN;
 			} else {
-				// Ensure we set the effect to be the active reaction
-				// to ensure that unowned deriveds are correctly tracked
-				// because we're flushing the current effect
-				var previous_active_reaction = active_reaction;
 				try {
-					active_reaction = effect;
 					if (check_dirtiness(effect)) {
 						update_effect(effect);
 					}
 				} catch (error) {
 					handle_error(error, effect, null, effect.ctx);
-				} finally {
-					active_reaction = previous_active_reaction;
 				}
 			}
 
@@ -835,18 +823,21 @@ export function flushSync(fn) {
 	if (fn) {
 		is_flushing = true;
 		flush_queued_root_effects();
+
+		is_flushing = true;
 		result = fn();
 	}
 
-	flush_tasks();
+	while (true) {
+		flush_tasks();
 
-	while (queued_root_effects.length > 0) {
+		if (queued_root_effects.length === 0) {
+			return /** @type {T} */ (result);
+		}
+
 		is_flushing = true;
 		flush_queued_root_effects();
-		flush_tasks();
 	}
-
-	return /** @type {T} */ (result);
 }
 
 /**
@@ -875,21 +866,23 @@ export function get(signal) {
 
 	// Register the dependency on the current reaction signal.
 	if (active_reaction !== null && !untracking) {
-		var deps = active_reaction.deps;
-		if (signal.rv < read_version) {
-			signal.rv = read_version;
-			// If the signal is accessing the same dependencies in the same
-			// order as it did last time, increment `skipped_deps`
-			// rather than updating `new_deps`, which creates GC cost
-			if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
-				skipped_deps++;
-			} else if (new_deps === null) {
-				new_deps = [signal];
-			} else if (!skip_reaction || !new_deps.includes(signal)) {
-				// Normally we can push duplicated dependencies to `new_deps`, but if we're inside
-				// an unowned derived because skip_reaction is true, then we need to ensure that
-				// we don't have duplicates
-				new_deps.push(signal);
+		if (!reaction_sources?.includes(signal)) {
+			var deps = active_reaction.deps;
+			if (signal.rv < read_version) {
+				signal.rv = read_version;
+				// If the signal is accessing the same dependencies in the same
+				// order as it did last time, increment `skipped_deps`
+				// rather than updating `new_deps`, which creates GC cost
+				if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
+					skipped_deps++;
+				} else if (new_deps === null) {
+					new_deps = [signal];
+				} else if (!skip_reaction || !new_deps.includes(signal)) {
+					// Normally we can push duplicated dependencies to `new_deps`, but if we're inside
+					// an unowned derived because skip_reaction is true, then we need to ensure that
+					// we don't have duplicates
+					new_deps.push(signal);
+				}
 			}
 		}
 	} else if (

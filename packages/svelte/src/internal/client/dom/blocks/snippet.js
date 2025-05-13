@@ -1,7 +1,7 @@
 /** @import { Snippet } from 'svelte' */
 /** @import { Effect, TemplateNode } from '#client' */
 /** @import { Getters } from '#shared' */
-import { EFFECT_TRANSPARENT } from '../../constants.js';
+import { EFFECT_TRANSPARENT } from '#client/constants';
 import { branch, block, destroy_effect, teardown } from '../../reactivity/effects.js';
 import {
 	dev_current_component_function,
@@ -15,6 +15,7 @@ import * as e from '../../errors.js';
 import { DEV } from 'esm-env';
 import { get_first_child, get_next_sibling } from '../operations.js';
 import { noop } from '../../../shared/utils.js';
+import { prevent_snippet_stringification } from '../../../shared/validate.js';
 
 /**
  * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
@@ -60,7 +61,7 @@ export function snippet(node, get_snippet, ...args) {
  * @param {(node: TemplateNode, ...args: any[]) => void} fn
  */
 export function wrap_snippet(component, fn) {
-	return (/** @type {TemplateNode} */ node, /** @type {any[]} */ ...args) => {
+	const snippet = (/** @type {TemplateNode} */ node, /** @type {any[]} */ ...args) => {
 		var previous_component_function = dev_current_component_function;
 		set_dev_current_component_function(component);
 
@@ -70,6 +71,10 @@ export function wrap_snippet(component, fn) {
 			set_dev_current_component_function(previous_component_function);
 		}
 	};
+
+	prevent_snippet_stringification(snippet);
+
+	return snippet;
 }
 
 /**
