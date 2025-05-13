@@ -154,20 +154,18 @@ export function build_pattern(id, scope) {
 	}
 
 	const pattern = walk(id, null, {
-		_(node, { path, next }) {
-			if (
-				(node.type === 'Identifier' &&
-					is_reference(node, /** @type {ESTree.Pattern} */ (path.at(-1))) &&
-					names.has(node.name)) ||
-				(node.type === 'MemberExpression' && map.has(node))
-			) {
-				return (
-					map.get(node) ??
-					b.id(/** @type {string} */ (names.get(/** @type {ESTree.Identifier} */ (node).name)))
-				);
+		Identifier(node, context) {
+			if (is_reference(node, /** @type {ESTree.Pattern} */ (context.path.at(-1)))) {
+				const name = names.get(node.name);
+				if (name) return b.id(name);
 			}
+		},
 
-			next();
+		MemberExpression(node, context) {
+			const n = map.get(node);
+			if (n) return n;
+
+			context.next();
 		}
 	});
 
