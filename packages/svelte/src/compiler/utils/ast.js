@@ -1,7 +1,8 @@
-/** @import { AST } from '#compiler' */
+/** @import { AST, Scope } from '#compiler' */
 /** @import * as ESTree from 'estree' */
 import { walk } from 'zimmerframe';
 import * as b from '#compiler/builders';
+import is_reference from 'is-reference';
 
 /**
  * Gets the left-most identifier of a member expression or identifier.
@@ -126,6 +127,49 @@ export function unwrap_pattern(pattern, nodes = []) {
 	}
 
 	return nodes;
+}
+
+/**
+ * @param {ESTree.Pattern} id
+ * @param {Scope} scope
+ * @returns {[ESTree.Pattern, Map<ESTree.Identifier | ESTree.MemberExpression, ESTree.Identifier>]}
+ */
+export function build_pattern(id, scope) {
+	/** @type {Map<ESTree.Identifier | ESTree.MemberExpression, ESTree.Identifier>} */
+	const map = new Map();
+
+	/** @type {Map<string, string>} */
+	const names = new Map();
+
+	let counter = 0;
+
+	for (const node of unwrap_pattern(id)) {
+		const name = scope.generate(`$$${++counter}`, (_, counter) => `$$${counter}`);
+
+		map.set(node, b.id(name));
+
+		if (node.type === 'Identifier') {
+			names.set(node.name, name);
+		}
+	}
+
+	const pattern = walk(id, null, {
+		Identifier(node, context) {
+			if (is_reference(node, /** @type {ESTree.Pattern} */ (context.path.at(-1)))) {
+				const name = names.get(node.name);
+				if (name) return b.id(name);
+			}
+		},
+
+		MemberExpression(node, context) {
+			const n = map.get(node);
+			if (n) return n;
+
+			context.next();
+		}
+	});
+
+	return [pattern, map];
 }
 
 /**
