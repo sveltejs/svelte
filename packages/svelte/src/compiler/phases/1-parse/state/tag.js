@@ -8,8 +8,11 @@ import { parse_expression_at } from '../acorn.js';
 import read_pattern from '../read/context.js';
 import read_expression, { get_loose_identifier } from '../read/expression.js';
 import { create_fragment } from '../utils/create.js';
+import { match_bracket } from '../utils/bracket.js';
 
 const regex_whitespace_with_closing_curly_brace = /^\s*}/;
+
+const pointy_bois = { '<': '>' };
 
 /** @param {Parser} parser */
 export default function tag(parser) {
@@ -352,35 +355,17 @@ function open(parser) {
 		const params_start = parser.index;
 
 		// snippets could have a generic signature, e.g. `#snippet foo<T>(...)`
+		/** @type {string | undefined} */
 		let generic;
 
 		// if we match a generic opening
 		if (parser.ts && parser.match('<')) {
-			parser.index += 1;
-			// keep track of the amount of open brackets
-			let open_brackets = 1;
-			// except when we are in quotes eg. <T extends "<">
-			let in_quotes;
+			const start = parser.index;
+			const end = match_bracket(parser, start, pointy_bois);
 
-			while (parser.index < parser.template.length) {
-				const char = parser.template[parser.index];
-				if (!in_quotes && char === '<') open_brackets++;
-				if (!in_quotes && char === '>') open_brackets--;
-				if (!in_quotes && (char === '"' || char === "'" || char === '`')) {
-					in_quotes = char;
-				} else if (char === in_quotes && parser.template[parser.index - 1] !== '\\') {
-					// don't close the quotes if we are escaping
-					in_quotes = undefined;
-				}
-				parser.index += 1;
-				if (open_brackets === 0) {
-					break;
-				}
-				if (generic == null) {
-					generic = '';
-				}
-				generic += char;
-			}
+			generic = parser.template.slice(start + 1, end - 1);
+
+			parser.index = end;
 		}
 
 		parser.allow_whitespace();
