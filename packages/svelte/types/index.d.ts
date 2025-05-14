@@ -632,8 +632,8 @@ declare module 'svelte/attachments' {
 	 * It can be attached to an element with an `{@attach ...}` tag, or by spreading an object containing
 	 * a property created with [`createAttachmentKey`](https://svelte.dev/docs/svelte/svelte-attachments#createAttachmentKey).
 	 */
-	export interface Attachment {
-		(element: Element): void | (() => void);
+	export interface Attachment<T extends EventTarget = Element> {
+		(element: T): void | (() => void);
 	}
 	/**
 	 * Creates an object key that will be recognised as an attachment when the object is spread onto an element,
