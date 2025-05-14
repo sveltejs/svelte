@@ -1,3 +1,4 @@
+export { createAttachmentKey as attachment } from '../../attachments/index.js';
 export { FILENAME, HMR, NAMESPACE_SVG } from '../../constants.js';
 export { push, pop } from './context.js';
 export { assign, assign_and, assign_or, assign_nullish } from './dev/assign.js';
@@ -22,6 +23,7 @@ export { element } from './dom/blocks/svelte-element.js';
 export { head } from './dom/blocks/svelte-head.js';
 export { append_styles } from './dom/css.js';
 export { action } from './dom/elements/actions.js';
+export { attach } from './dom/elements/attachments.js';
 export {
 	remove_input_defaults,
 	set_attribute,
