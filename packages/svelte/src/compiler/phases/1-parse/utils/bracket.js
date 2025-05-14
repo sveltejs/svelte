@@ -1,34 +1,5 @@
-const SQUARE_BRACKET_OPEN = '[';
-const SQUARE_BRACKET_CLOSE = ']';
-const CURLY_BRACKET_OPEN = '{';
-const CURLY_BRACKET_CLOSE = '}';
-const PARENTHESES_OPEN = '(';
-const PARENTHESES_CLOSE = ')';
-
-/** @param {string} char */
-export function is_bracket_open(char) {
-	return char === SQUARE_BRACKET_OPEN || char === CURLY_BRACKET_OPEN;
-}
-
-/** @param {string} char */
-export function is_bracket_close(char) {
-	return char === SQUARE_BRACKET_CLOSE || char === CURLY_BRACKET_CLOSE;
-}
-
-/** @param {string} open */
-export function get_bracket_close(open) {
-	if (open === SQUARE_BRACKET_OPEN) {
-		return SQUARE_BRACKET_CLOSE;
-	}
-
-	if (open === CURLY_BRACKET_OPEN) {
-		return CURLY_BRACKET_CLOSE;
-	}
-
-	if (open === PARENTHESES_OPEN) {
-		return PARENTHESES_CLOSE;
-	}
-}
+/** @import { Parser } from '../index.js' */
+import * as e from '../../../errors.js';
 
 /**
  * @param {number} num
@@ -121,7 +92,7 @@ function count_leading_backslashes(string, search_start_index) {
  * @returns {number | undefined} The index of the closing bracket, or undefined if not found.
  */
 export function find_matching_bracket(template, index, open) {
-	const close = get_bracket_close(open);
+	const close = default_brackets[open];
 	let brackets = 1;
 	let i = index;
 	while (brackets > 0 && i < template.length) {
@@ -161,4 +132,82 @@ export function find_matching_bracket(template, index, open) {
 		}
 	}
 	return undefined;
+}
+
+/** @type {Record<string, string>} */
+const default_brackets = {
+	'{': '}',
+	'(': ')',
+	'[': ']'
+};
+
+/**
+ * @param {Parser} parser
+ * @param {number} start
+ * @param {Record<string, string>} brackets
+ */
+export function match_bracket(parser, start, brackets = default_brackets) {
+	const close = Object.values(brackets);
+	const bracket_stack = [];
+
+	let i = start;
+
+	while (i < parser.template.length) {
+		let char = parser.template[i++];
+
+		if (char === "'" || char === '"' || char === '`') {
+			i = match_quote(parser, i, char);
+			continue;
+		}
+
+		if (char in brackets) {
+			bracket_stack.push(char);
+		} else if (close.includes(char)) {
+			const popped = /** @type {string} */ (bracket_stack.pop());
+			const expected = /** @type {string} */ (brackets[popped]);
+
+			if (char !== expected) {
+				e.expected_token(i - 1, expected);
+			}
+
+			if (bracket_stack.length === 0) {
+				return i;
+			}
+		}
+	}
+
+	e.unexpected_eof(parser.template.length);
+}
+
+/**
+ * @param {Parser} parser
+ * @param {number} start
+ * @param {string} quote
+ */
+function match_quote(parser, start, quote) {
+	let is_escaped = false;
+	let i = start;
+
+	while (i < parser.template.length) {
+		const char = parser.template[i++];
+
+		if (is_escaped) {
+			is_escaped = false;
+			continue;
+		}
+
+		if (char === quote) {
+			return i;
+		}
+
+		if (char === '\\') {
+			is_escaped = true;
+		}
+
+		if (quote === '`' && char === '$' && parser.template[i] === '{') {
+			i = match_bracket(parser, i);
+		}
+	}
+
+	e.unterminated_string_constant(start);
 }
