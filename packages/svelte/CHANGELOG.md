@@ -1,5 +1,11 @@
 # svelte
 
+## 5.30.1
+
+### Patch Changes
+
+- fix: add `typeParams` to `SnippetBlock` for legacy parser ([#15921](https://github.com/sveltejs/svelte/pull/15921))
+
 ## 5.30.0
 
 ### Minor Changes
