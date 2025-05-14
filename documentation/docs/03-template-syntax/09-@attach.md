@@ -9,8 +9,9 @@ Attachments are functions that run when an element is mounted to the DOM. Option
 
 ```svelte
 <script>
-	function myAttachment(node) {
-		console.log(node.nodeName); // 'DIV'
+	/** @type {import('svelte/attachments').Attachment} */
+	function myAttachment(element) {
+		console.log(element.nodeName); // 'DIV'
 
 		return () => {
 			console.log('cleaning up');
@@ -33,9 +34,13 @@ A useful pattern is for a function, such as `tooltip` in this example, to _retur
 
 	let content = $state('Hello!');
 
+	/**
+	 * @param {string} content
+	 * @returns {import('svelte/attachments').Attachment}
+	 */
 	function tooltip(content) {
-		return (node) => {
-			const tooltip = tippy(node, { content });
+		return (element) => {
+			const tooltip = tippy(element, { content });
 			return tooltip.destroy;
 		};
 	}
@@ -106,9 +111,13 @@ This allows you to create _wrapper components_ that augment elements ([demo](/pl
 
 	let content = $state('Hello!');
 
+	/**
+	 * @param {string} content
+	 * @returns {import('svelte/attachments').Attachment}
+	 */
 	function tooltip(content) {
-		return (node) => {
-			const tooltip = tippy(node, { content });
+		return (element) => {
+			const tooltip = tippy(element, { content });
 			return tooltip.destroy;
 		};
 	}

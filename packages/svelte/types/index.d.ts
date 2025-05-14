@@ -625,6 +625,9 @@ declare module 'svelte/animate' {
 }
 
 declare module 'svelte/attachments' {
+	export interface Attachment {
+		(element: Element): void | (() => void);
+	}
 	/**
 	 * Creates an object key that will be recognised as an attachment when the object is spread onto an element,
 	 * as a programmatic alternative to using `{@attach ...}`. This can be useful for library authors, though
