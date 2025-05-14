@@ -1,5 +1,11 @@
 # svelte
 
+## 5.29.0
+
+### Minor Changes
+
+- feat: attachments ([#15000](https://github.com/sveltejs/svelte/pull/15000))
+
 ## 5.28.7
 
 ### Patch Changes
