@@ -645,6 +645,7 @@ declare module 'svelte/attachments' {
 	 *
 	 * <button {...props}>click me</button>
 	 * ```
+	 * @since 5.29
 	 */
 	export function createAttachmentKey(): symbol;
 
