@@ -261,7 +261,7 @@ export function build_component(node, component_name, context, anchor = context.
 			let expression = /** @type {Expression} */ (context.visit(attribute.expression));
 
 			if (attribute.metadata.expression.has_state) {
-				expression = b.arrow([b.id('node')], b.call(expression, b.id('node')));
+				expression = b.arrow([b.id('$$node')], b.call(expression, b.id('$$node')));
 			}
 
 			push_prop(b.prop('get', b.call('$.attachment'), expression, true));
