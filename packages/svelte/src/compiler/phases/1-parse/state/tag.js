@@ -351,6 +351,40 @@ function open(parser) {
 
 		const params_start = parser.index;
 
+		// snippets could have a generic signature, e.g. `#snippet foo<T>(...)`
+		let generic;
+
+		// if we match a generic opening
+		if (parser.ts && parser.match('<')) {
+			parser.index += 1;
+			// keep track of the amount of open brackets
+			let open_brackets = 1;
+			// except when we are in quotes eg. <T extends "<">
+			let in_quotes;
+
+			while (parser.index < parser.template.length) {
+				const char = parser.template[parser.index];
+				if (!in_quotes && char === '<') open_brackets++;
+				if (!in_quotes && char === '>') open_brackets--;
+				if (!in_quotes && (char === '"' || char === "'" || char === '`')) {
+					in_quotes = char;
+				} else if (char === in_quotes && parser.template[parser.index - 1] !== '\\') {
+					// don't close the quotes if we are escaping
+					in_quotes = undefined;
+				}
+				parser.index += 1;
+				if (open_brackets === 0) {
+					break;
+				}
+				if (generic == null) {
+					generic = '';
+				}
+				generic += char;
+			}
+		}
+
+		parser.allow_whitespace();
+
 		const matched = parser.eat('(', true, false);
 
 		if (matched) {
@@ -388,6 +422,7 @@ function open(parser) {
 				end: name_end,
 				name
 			},
+			generic,
 			parameters: function_expression.params,
 			body: create_fragment(),
 			metadata: {
