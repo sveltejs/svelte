@@ -3,7 +3,7 @@ title: use:
 ---
 
 > [!NOTE]
-> In Svelte 5.29 and newer, consider using [attachments](attach) instead, as they are more flexible and composable.
+> In Svelte 5.29 and newer, consider using [attachments](@attach) instead, as they are more flexible and composable.
 
 Actions are functions that are called when an element is mounted. They are added with the `use:` directive, and will typically use an `$effect` so that they can reset any state when the element is unmounted:
 
