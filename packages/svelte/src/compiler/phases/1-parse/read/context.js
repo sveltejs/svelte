@@ -1,12 +1,7 @@
 /** @import { Location } from 'locate-character' */
 /** @import { Pattern } from 'estree' */
 /** @import { Parser } from '../index.js' */
-import {
-	is_bracket_open,
-	is_bracket_close,
-	get_bracket_close,
-	match_bracket
-} from '../utils/bracket.js';
+import { match_bracket } from '../utils/bracket.js';
 import { parse_expression_at } from '../acorn.js';
 import { regex_not_newline_characters } from '../../patterns.js';
 import * as e from '../../../errors.js';
@@ -38,7 +33,9 @@ export default function read_pattern(parser) {
 		};
 	}
 
-	if (!is_bracket_open(parser.template[i])) {
+	const char = parser.template[i];
+
+	if (char !== '{' && char !== '[') {
 		e.expected_pattern(i);
 	}
 
