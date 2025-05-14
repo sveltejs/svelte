@@ -4,6 +4,9 @@ title: {@attach ...}
 
 Attachments are functions that run when an element is mounted to the DOM. Optionally, they can return a function that is called when the element is later removed from the DOM.
 
+> [!NOTE]
+> Attachments are available in Svelte 5.29 and newer.
+
 ```svelte
 <script>
 	function myAttachment(node) {
@@ -17,6 +20,8 @@ Attachments are functions that run when an element is mounted to the DOM. Option
 
 <div {@attach myAttachment}>...</div>
 ```
+
+An element can have any number of attachments.
 
 ## Attachment factories
 

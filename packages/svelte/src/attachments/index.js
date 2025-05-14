@@ -20,6 +20,7 @@ import { ATTACHMENT_KEY } from '../constants.js';
  *
  * <button {...props}>click me</button>
  * ```
+ * @since 5.29
  */
 export function createAttachmentKey() {
 	return Symbol(ATTACHMENT_KEY);
