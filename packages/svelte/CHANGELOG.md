@@ -1,5 +1,11 @@
 # svelte
 
+## 5.30.0
+
+### Minor Changes
+
+- feat: allow generics on snippets ([#15915](https://github.com/sveltejs/svelte/pull/15915))
+
 ## 5.29.0
 
 ### Minor Changes
