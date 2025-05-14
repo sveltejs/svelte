@@ -356,14 +356,14 @@ function open(parser) {
 
 		// snippets could have a generic signature, e.g. `#snippet foo<T>(...)`
 		/** @type {string | undefined} */
-		let generic;
+		let type_params;
 
 		// if we match a generic opening
 		if (parser.ts && parser.match('<')) {
 			const start = parser.index;
 			const end = match_bracket(parser, start, pointy_bois);
 
-			generic = parser.template.slice(start + 1, end - 1);
+			type_params = parser.template.slice(start + 1, end - 1);
 
 			parser.index = end;
 		}
@@ -407,7 +407,7 @@ function open(parser) {
 				end: name_end,
 				name
 			},
-			generic,
+			typeParams: type_params,
 			parameters: function_expression.params,
 			body: create_fragment(),
 			metadata: {

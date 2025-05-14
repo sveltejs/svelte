@@ -1301,6 +1301,7 @@ declare module 'svelte/compiler' {
 			type: 'SnippetBlock';
 			expression: Identifier;
 			parameters: Pattern[];
+			typeParams?: string;
 			body: Fragment;
 		}
 
