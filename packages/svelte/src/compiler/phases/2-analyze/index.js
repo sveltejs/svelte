@@ -256,7 +256,8 @@ export function analyze_module(ast, options) {
 		accessors: false,
 		runes: true,
 		immutable: true,
-		tracing: false
+		tracing: false,
+		classes: new Map()
 	};
 
 	walk(
@@ -265,7 +266,6 @@ export function analyze_module(ast, options) {
 			scope,
 			scopes,
 			analysis: /** @type {ComponentAnalysis} */ (analysis),
-			classes: new Map(),
 			state_fields: null,
 			// TODO the following are not needed for modules, but we have to pass them in order to avoid type error,
 			// and reducing the type would result in a lot of tedious type casts elsewhere - find a good solution one day
@@ -430,6 +430,7 @@ export function analyze_component(root, source, options) {
 		elements: [],
 		runes,
 		tracing: false,
+		classes: new Map(),
 		immutable: runes || options.immutable,
 		exports: [],
 		uses_props: false,
@@ -625,7 +626,6 @@ export function analyze_component(root, source, options) {
 				has_props_rune: false,
 				component_slots: new Set(),
 				expression: null,
-				classes: new Map(),
 				state_fields: null,
 				function_depth: scope.function_depth,
 				reactive_statement: null
@@ -693,7 +693,6 @@ export function analyze_component(root, source, options) {
 				reactive_statement: null,
 				component_slots: new Set(),
 				expression: null,
-				classes: new Map(),
 				state_fields: null,
 				function_depth: scope.function_depth
 			};

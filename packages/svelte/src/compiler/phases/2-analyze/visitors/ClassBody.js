@@ -18,6 +18,8 @@ export function ClassBody(node, context) {
 	/** @type {Record<string, StateField>} */
 	const state_fields = {};
 
+	context.state.analysis.classes.set(node, state_fields);
+
 	/** @type {string[]} */
 	const seen = [];
 

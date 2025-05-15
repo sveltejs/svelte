@@ -21,7 +21,6 @@ export interface AnalysisState {
 	expression: ExpressionMetadata | null;
 
 	/** Used to analyze class state. */
-	classes: Map<ClassBody, Record<string, StateField>>;
 	state_fields: Record<string, StateField> | null;
 
 	function_depth: number;
