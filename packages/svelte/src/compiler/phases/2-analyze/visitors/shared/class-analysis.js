@@ -88,7 +88,7 @@ export class ClassAnalysis {
 				node.operator === '=' &&
 				node.left.type === 'MemberExpression' &&
 				node.left.object.type === 'ThisExpression' &&
-				(node.left.property.type === 'Identifier' ||
+				((node.left.property.type === 'Identifier' && !node.left.computed) ||
 					node.left.property.type === 'PrivateIdentifier' ||
 					node.left.property.type === 'Literal')
 			)
