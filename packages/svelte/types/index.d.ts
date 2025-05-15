@@ -624,6 +624,44 @@ declare module 'svelte/animate' {
 	export {};
 }
 
+declare module 'svelte/attachments' {
+	/**
+	 * An [attachment](https://svelte.dev/docs/svelte/@attach) is a function that runs when an element is mounted
+	 * to the DOM, and optionally returns a function that is called when the element is later removed.
+	 *
+	 * It can be attached to an element with an `{@attach ...}` tag, or by spreading an object containing
+	 * a property created with [`createAttachmentKey`](https://svelte.dev/docs/svelte/svelte-attachments#createAttachmentKey).
+	 */
+	export interface Attachment<T extends EventTarget = Element> {
+		(element: T): void | (() => void);
+	}
+	/**
+	 * Creates an object key that will be recognised as an attachment when the object is spread onto an element,
+	 * as a programmatic alternative to using `{@attach ...}`. This can be useful for library authors, though
+	 * is generally not needed when building an app.
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { createAttachmentKey } from 'svelte/attachments';
+	 *
+	 * 	const props = {
+	 * 		class: 'cool',
+	 * 		onclick: () => alert('clicked'),
+	 * 		[createAttachmentKey()]: (node) => {
+	 * 			node.textContent = 'attached!';
+	 * 		}
+	 * 	};
+	 * </script>
+	 *
+	 * <button {...props}>click me</button>
+	 * ```
+	 * @since 5.29
+	 */
+	export function createAttachmentKey(): symbol;
+
+	export {};
+}
+
 declare module 'svelte/compiler' {
 	import type { SourceMap } from 'magic-string';
 	import type { ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, Expression, Identifier, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
@@ -1055,6 +1093,12 @@ declare module 'svelte/compiler' {
 			expression: SimpleCallExpression | (ChainExpression & { expression: SimpleCallExpression });
 		}
 
+		/** A `{@attach foo(...)} tag */
+		export interface AttachTag extends BaseNode {
+			type: 'AttachTag';
+			expression: Expression;
+		}
+
 		/** An `animate:` directive */
 		export interface AnimateDirective extends BaseNode {
 			type: 'AnimateDirective';
@@ -1137,7 +1181,7 @@ declare module 'svelte/compiler' {
 
 		interface BaseElement extends BaseNode {
 			name: string;
-			attributes: Array<Attribute | SpreadAttribute | Directive>;
+			attributes: Array<Attribute | SpreadAttribute | Directive | AttachTag>;
 			fragment: Fragment;
 		}
 
@@ -1257,6 +1301,7 @@ declare module 'svelte/compiler' {
 			type: 'SnippetBlock';
 			expression: Identifier;
 			parameters: Pattern[];
+			typeParams?: string;
 			body: Fragment;
 		}
 
@@ -1327,6 +1372,7 @@ declare module 'svelte/compiler' {
 			| AST.Attribute
 			| AST.SpreadAttribute
 			| Directive
+			| AST.AttachTag
 			| AST.Comment
 			| Block;
 

@@ -1,8 +1,9 @@
 /** @import { VariableDeclaration, VariableDeclarator, Expression, CallExpression, Pattern, Identifier } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { Context } from '../types.js' */
+/** @import { ComponentAnalysis } from '../../../types.js' */
 /** @import { Scope } from '../../../scope.js' */
-import { build_fallback, extract_paths } from '../../../../utils/ast.js';
+import { build_pattern, build_fallback, extract_paths } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 import { walk } from 'zimmerframe';
@@ -50,20 +51,26 @@ export function VariableDeclaration(node, context) {
 						}
 					}
 				});
+
+				// if `$$slots` is declared separately, deconflict
+				const slots_name = /** @type {ComponentAnalysis} */ (context.state.analysis).uses_slots
+					? b.id('$$slots_')
+					: b.id('$$slots');
+
 				if (id.type === 'ObjectPattern' && has_rest) {
 					// If a rest pattern is used within an object pattern, we need to ensure we don't expose $$slots or $$events
 					id.properties.splice(
 						id.properties.length - 1,
 						0,
 						// @ts-ignore
-						b.prop('init', b.id('$$slots'), b.id('$$slots')),
+						b.prop('init', b.id('$$slots'), slots_name),
 						b.prop('init', b.id('$$events'), b.id('$$events'))
 					);
 				} else if (id.type === 'Identifier') {
 					// If $props is referenced as an identifier, we need to ensure we don't expose $$slots or $$events as properties
 					// on the identifier reference
 					id = b.object_pattern([
-						b.prop('init', b.id('$$slots'), b.id('$$slots')),
+						b.prop('init', b.id('$$slots'), slots_name),
 						b.prop('init', b.id('$$events'), b.id('$$events')),
 						b.rest(b.id(id.name))
 					]);
@@ -181,13 +188,10 @@ function create_state_declarators(declarator, scope, value) {
 		return [b.declarator(declarator.id, value)];
 	}
 
-	const tmp = scope.generate('tmp');
-	const paths = extract_paths(declarator.id);
+	const [pattern, replacements] = build_pattern(declarator.id, scope);
 	return [
-		b.declarator(b.id(tmp), value), // TODO inject declarator for opts, so we can use it below
-		...paths.map((path) => {
-			const value = path.expression?.(b.id(tmp));
-			return b.declarator(path.node, value);
-		})
+		b.declarator(pattern, value),
+		// TODO inject declarator for opts, so we can use it below
+		...[...replacements].map(([original, replacement]) => b.declarator(original, replacement))
 	];
 }

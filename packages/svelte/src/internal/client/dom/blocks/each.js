@@ -12,6 +12,7 @@ import {
 	hydrate_next,
 	hydrate_node,
 	hydrating,
+	read_hydration_instruction,
 	remove_nodes,
 	set_hydrate_node,
 	set_hydrating
@@ -160,7 +161,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		let mismatch = false;
 
 		if (hydrating) {
-			var is_else = /** @type {Comment} */ (anchor).data === HYDRATION_START_ELSE;
+			var is_else = read_hydration_instruction(anchor) === HYDRATION_START_ELSE;
 
 			if (is_else !== (length === 0)) {
 				// hydration mismatch — remove the server-rendered DOM and start over
