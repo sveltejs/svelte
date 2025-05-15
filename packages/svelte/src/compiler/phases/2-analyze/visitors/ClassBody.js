@@ -1,5 +1,5 @@
 /** @import { AssignmentExpression, ClassBody, PropertyDefinition, Expression, PrivateIdentifier, MethodDefinition } from 'estree' */
-/** @import { StateFields } from '#compiler' */
+/** @import { StateField } from '#compiler' */
 /** @import { Context } from '../types' */
 import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
@@ -15,7 +15,7 @@ export function ClassBody(node, context) {
 		return;
 	}
 
-	/** @type {StateFields} */
+	/** @type {Record<string, StateField>} */
 	const state_fields = {};
 
 	/** @type {string[]} */

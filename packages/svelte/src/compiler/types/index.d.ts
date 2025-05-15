@@ -271,11 +271,9 @@ export interface ExpressionMetadata {
 	has_call: boolean;
 }
 
-export interface StateFields {
-	[name: string]: {
-		type: StateCreationRuneName;
-		node: PropertyDefinition | AssignmentExpression;
-	};
+export interface StateField {
+	type: StateCreationRuneName;
+	node: PropertyDefinition | AssignmentExpression;
 }
 
 export * from './template.js';

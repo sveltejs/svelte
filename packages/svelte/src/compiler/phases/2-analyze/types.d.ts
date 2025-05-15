@@ -1,6 +1,6 @@
 import type { Scope } from '../scope.js';
 import type { ComponentAnalysis, ReactiveStatement } from '../types.js';
-import type { AST, ExpressionMetadata, StateFields, ValidatedCompileOptions } from '#compiler';
+import type { AST, ExpressionMetadata, StateField, ValidatedCompileOptions } from '#compiler';
 import type { ClassBody } from 'estree';
 
 export interface AnalysisState {
@@ -21,8 +21,8 @@ export interface AnalysisState {
 	expression: ExpressionMetadata | null;
 
 	/** Used to analyze class state. */
-	classes: Map<ClassBody, StateFields>;
-	state_fields: StateFields | null;
+	classes: Map<ClassBody, Record<string, StateField>>;
+	state_fields: Record<string, StateField> | null;
 
 	function_depth: number;
 
