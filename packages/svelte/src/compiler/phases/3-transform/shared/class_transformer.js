@@ -90,7 +90,7 @@ export function create_class_transformer(body, build_state_field, build_assignme
 	function create_child_context(context) {
 		const state = {
 			...context.state,
-			class_analysis
+			class_transformer
 		};
 		// @ts-expect-error - I can't find a way to make TypeScript happy with these
 		const visit = (node, state_override) => context.visit(node, { ...state, ...state_override });
@@ -354,13 +354,13 @@ export function create_class_transformer(body, build_state_field, build_assignme
 		}
 	}
 
-	const class_analysis = {
+	const class_transformer = {
 		get_field,
 		generate_body,
 		generate_assignment
 	};
 
-	return class_analysis;
+	return class_transformer;
 }
 
 /**
