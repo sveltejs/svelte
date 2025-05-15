@@ -7,7 +7,7 @@ import type { ClassTransformer } from '../shared/types.js';
 export interface ServerTransformState extends TransformState {
 	/** The $: calls, which will be ordered in the end */
 	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
-	readonly class_analysis: ClassTransformer<Context> | null;
+	readonly class_transformer: ClassTransformer<Context> | null;
 }
 
 export interface ComponentServerTransformState extends ServerTransformState {

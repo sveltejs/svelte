@@ -9,7 +9,7 @@ import * as b from '#compiler/builders';
 export function MemberExpression(node, context) {
 	// rewrite `this.#foo` as `this.#foo.v` inside a constructor
 	if (node.property.type === 'PrivateIdentifier') {
-		const field = context.state.class_analysis?.get_field(node.property.name, true);
+		const field = context.state.class_transformer?.get_field(node.property.name, true);
 		if (field) {
 			return context.state.in_constructor &&
 				(field.kind === '$state.raw' || field.kind === '$state')

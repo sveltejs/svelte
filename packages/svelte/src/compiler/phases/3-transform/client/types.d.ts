@@ -15,7 +15,7 @@ import type { SourceLocation } from '#shared';
 import type { ClassTransformer } from '../shared/types.js';
 
 export interface ClientTransformState extends TransformState {
-	readonly class_analysis: ClassTransformer<Context> | null;
+	readonly class_transformer: ClassTransformer<Context> | null;
 
 	/**
 	 * `true` if the current lexical scope belongs to a class constructor. this allows

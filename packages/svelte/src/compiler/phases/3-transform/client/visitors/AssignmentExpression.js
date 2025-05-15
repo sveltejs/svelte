@@ -17,7 +17,7 @@ import { validate_mutation } from './shared/utils.js';
  * @param {Context} context
  */
 export function AssignmentExpression(node, context) {
-	const stripped_node = context.state.class_analysis?.generate_assignment(node, context);
+	const stripped_node = context.state.class_transformer?.generate_assignment(node, context);
 	if (stripped_node) {
 		return stripped_node;
 	}
@@ -61,7 +61,7 @@ function build_assignment(operator, left, right, context) {
 		left.type === 'MemberExpression' &&
 		left.property.type === 'PrivateIdentifier'
 	) {
-		const private_state = context.state.class_analysis?.get_field(left.property.name, true);
+		const private_state = context.state.class_transformer?.get_field(left.property.name, true);
 
 		if (private_state !== undefined) {
 			let value = /** @type {Expression} */ (
