@@ -1,6 +1,6 @@
 /** @import { ClassBody } from 'estree' */
 /** @import { Context } from '../types' */
-import { create_client_class_analysis } from './shared/client-class-analysis.js';
+import { create_client_class_transformer } from './shared/client-class-transformer.js';
 
 /**
  * @param {ClassBody} node
@@ -12,8 +12,8 @@ export function ClassBody(node, context) {
 		return;
 	}
 
-	const class_analysis = create_client_class_analysis(node.body);
-	const body = class_analysis.generate_body(context);
+	const class_transformer = create_client_class_transformer(node.body);
+	const body = class_transformer.generate_body(context);
 
 	return { ...node, body };
 }

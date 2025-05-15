@@ -48,7 +48,7 @@ export type AssignmentBuilder<TContext extends ServerContext | ClientContext> = 
 	params: AssignmentBuilderParams<TContext>
 ) => AssignmentExpression;
 
-export type ClassAnalysis<TContext extends ServerContext | ClientContext> = {
+export type ClassTransformer<TContext extends ServerContext | ClientContext> = {
 	/**
 	 * @param name - The name of the field.
 	 * @param is_private - Whether the field is private (whether its name starts with '#').

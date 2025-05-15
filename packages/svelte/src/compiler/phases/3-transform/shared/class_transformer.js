@@ -3,7 +3,7 @@
 /** @import { Context as ClientContext } from '../client/types.js' */
 /** @import { Context as ServerContext } from '../server/types.js' */
 /** @import { StateCreationRuneName } from '../../../../utils.js' */
-/** @import { AssignmentBuilder, ClassAnalysis, StateFieldBuilder, StatefulAssignment, StatefulPropertyDefinition } from './types.js' */
+/** @import { AssignmentBuilder, ClassTransformer, StateFieldBuilder, StatefulAssignment, StatefulPropertyDefinition } from './types.js' */
 /** @import { Scope }  from '../../scope.js' */
 import * as b from '#compiler/builders';
 import { once } from '../../../../internal/server/index.js';
@@ -16,9 +16,9 @@ import { get_rune } from '../../scope.js';
  * @param {Array<PropertyDefinition | MethodDefinition | StaticBlock>} body
  * @param {StateFieldBuilder<TContext>} build_state_field
  * @param {AssignmentBuilder<TContext>} build_assignment
- * @returns {ClassAnalysis<TContext>}
+ * @returns {ClassTransformer<TContext>}
  */
-export function create_class_analysis(body, build_state_field, build_assignment) {
+export function create_class_transformer(body, build_state_field, build_assignment) {
 	/**
 	 * Public, stateful fields.
 	 * @type {Map<string, StateField>}

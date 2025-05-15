@@ -1,16 +1,16 @@
 /** @import { Context } from '../../types.js' */
 /** @import { MethodDefinition, PropertyDefinition, Expression, StaticBlock, SpreadElement } from 'estree' */
 /** @import { StateCreationRuneName } from '../../../../../../utils.js' */
-/** @import { AssignmentBuilder, ClassAnalysis, StateFieldBuilder } from '../../../shared/types.js' */
+/** @import { AssignmentBuilder, ClassTransformer, StateFieldBuilder } from '../../../shared/types.js' */
 import * as b from '#compiler/builders';
-import { create_class_analysis } from '../../../shared/class_analysis.js';
+import { create_class_transformer } from '../../../shared/class_transformer.js';
 import { should_proxy } from '../../utils.js';
 
 /**
  * @param {Array<MethodDefinition | PropertyDefinition | StaticBlock>} body
- * @returns {ClassAnalysis<Context>}
+ * @returns {ClassTransformer<Context>}
  */
-export function create_client_class_analysis(body) {
+export function create_client_class_transformer(body) {
 	/** @type {StateFieldBuilder<Context>} */
 	function build_state_field({ is_private, field, node, context }) {
 		let original_id = node.type === 'AssignmentExpression' ? node.left.property : node.key;
@@ -66,7 +66,7 @@ export function create_client_class_analysis(body) {
 		};
 	}
 
-	return create_class_analysis(body, build_state_field, build_assignment);
+	return create_class_transformer(body, build_state_field, build_assignment);
 }
 
 /**

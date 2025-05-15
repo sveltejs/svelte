@@ -12,10 +12,10 @@ import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
 import type { SourceLocation } from '#shared';
-import type { ClassAnalysis } from '../shared/types.js';
+import type { ClassTransformer } from '../shared/types.js';
 
 export interface ClientTransformState extends TransformState {
-	readonly class_analysis: ClassAnalysis<Context> | null;
+	readonly class_analysis: ClassTransformer<Context> | null;
 
 	/**
 	 * `true` if the current lexical scope belongs to a class constructor. this allows
