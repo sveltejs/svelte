@@ -30,7 +30,11 @@ export function ClassBody(node, context) {
 	 * @param {Expression | null | undefined} value
 	 */
 	function handle(node, key, value) {
-		const name = get_name(key);
+		const name =
+			(key.type === 'Literal' && String(key.value)) ||
+			(key.type === 'PrivateIdentifier' && '#' + key.name) ||
+			(key.type === 'Identifier' && key.name);
+
 		if (!name) return;
 
 		const rune = get_rune(value, context.state.scope);
@@ -84,13 +88,4 @@ export function ClassBody(node, context) {
 		...context.state,
 		state_fields
 	});
-}
-
-/** @param {Expression | PrivateIdentifier} node */
-function get_name(node) {
-	if (node.type === 'Literal') return String(node.value);
-	if (node.type === 'PrivateIdentifier') return '#' + node.name;
-	if (node.type === 'Identifier') return node.name;
-
-	return null;
 }
