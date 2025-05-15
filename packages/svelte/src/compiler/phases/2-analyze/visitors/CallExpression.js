@@ -117,8 +117,8 @@ export function CallExpression(node, context) {
 		case '$derived.by':
 			if (
 				!(
-					call_expression_is_variable_declaration(parent, context) ||
-					call_expression_is_class_property_definition(parent) ||
+					is_variable_declaration(parent, context) ||
+					is_class_property_definition(parent) ||
 					context.state.class_state?.is_class_property_assignment_at_constructor_root(
 						parent,
 						context.path.slice(0, -1)
@@ -281,7 +281,7 @@ function get_function_label(nodes) {
  * @param {AST.SvelteNode} parent
  * @param {Context} context
  */
-function call_expression_is_variable_declaration(parent, context) {
+function is_variable_declaration(parent, context) {
 	return parent.type === 'VariableDeclarator' && get_parent(context.path, -3).type !== 'ConstTag';
 }
 
@@ -289,6 +289,6 @@ function call_expression_is_variable_declaration(parent, context) {
  *
  * @param {AST.SvelteNode} parent
  */
-function call_expression_is_class_property_definition(parent) {
+function is_class_property_definition(parent) {
 	return parent.type === 'PropertyDefinition' && !parent.static && !parent.computed;
 }
