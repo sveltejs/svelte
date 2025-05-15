@@ -1,6 +1,7 @@
 import type { AST, Binding } from '#compiler';
-import type { Identifier, LabeledStatement, Node, Program } from 'estree';
+import type { AssignmentExpression, Identifier, LabeledStatement, Node, Program } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
+import type { StateCreationRuneName } from '../../utils.js';
 
 export interface Js {
 	ast: Program;

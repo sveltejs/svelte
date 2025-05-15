@@ -1,6 +1,6 @@
 /** @import { AssignmentExpression, ClassBody, PropertyDefinition, Expression, PrivateIdentifier, MethodDefinition } from 'estree' */
+/** @import { StateFields } from '#compiler' */
 /** @import { Context } from '../types' */
-/** @import { StateCreationRuneName } from '../../../../utils.js' */
 import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
 import { is_state_creation_rune } from '../../../../utils.js';
@@ -15,7 +15,8 @@ export function ClassBody(node, context) {
 		return;
 	}
 
-	const analyzed = new ClassAnalysis();
+	/** @type {StateFields} */
+	const state_fields = {};
 
 	/** @type {string[]} */
 	const seen = [];
@@ -39,7 +40,7 @@ export function ClassBody(node, context) {
 				e.constructor_state_reassignment(node); // TODO the same thing applies to duplicate fields, so the code/message needs to change
 			}
 
-			analyzed.fields[name] = {
+			state_fields[name] = {
 				node,
 				type: rune
 			};
@@ -81,7 +82,7 @@ export function ClassBody(node, context) {
 
 	context.next({
 		...context.state,
-		class: analyzed
+		state_fields
 	});
 }
 
@@ -92,12 +93,4 @@ function get_name(node) {
 	if (node.type === 'Identifier') return node.name;
 
 	return null;
-}
-
-/** @typedef { StateCreationRuneName | 'regular'} PropertyAssignmentType */
-/** @typedef {{ type: PropertyAssignmentType; node: AssignmentExpression | PropertyDefinition; }} PropertyAssignmentDetails */
-
-class ClassAnalysis {
-	/** @type {Record<string, PropertyAssignmentDetails>} */
-	fields = {};
 }
