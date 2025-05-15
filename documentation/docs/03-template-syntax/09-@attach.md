@@ -4,7 +4,7 @@ title: {@attach ...}
 
 Attachments are functions that run in an [effect]($effect) when an element is mounted to the DOM or when [state]($state) read inside the function updates.
 
-Optionally, they can return a function that is called before the attachment re-runs, or when the element is later removed from the DOM.
+Optionally, they can return a function that is called before the attachment re-runs, or after the element is later removed from the DOM.
 
 > [!NOTE]
 > Attachments are available in Svelte 5.29 and newer.
