@@ -118,7 +118,7 @@ export function CallExpression(node, context) {
 			const valid =
 				is_variable_declaration(parent, context) ||
 				is_class_property_definition(parent) ||
-				context.state.class_state?.is_class_property_assignment_at_constructor_root(
+				context.state.class?.is_class_property_assignment_at_constructor_root(
 					parent,
 					context.path.slice(0, -1)
 				);

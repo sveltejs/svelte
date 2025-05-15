@@ -9,6 +9,6 @@ import { ClassAnalysis } from './shared/class-analysis.js';
 export function ClassBody(node, context) {
 	context.next({
 		...context.state,
-		class_state: context.state.analysis.runes ? new ClassAnalysis() : null
+		class: context.state.analysis.runes ? new ClassAnalysis() : null
 	});
 }

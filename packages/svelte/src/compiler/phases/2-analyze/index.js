@@ -267,7 +267,8 @@ export function analyze_module(ast, options) {
 			scope,
 			scopes,
 			analysis: /** @type {ComponentAnalysis} */ (analysis),
-			class_state: null,
+			classes: new Map(),
+			class: null,
 			// TODO the following are not needed for modules, but we have to pass them in order to avoid type error,
 			// and reducing the type would result in a lot of tedious type casts elsewhere - find a good solution one day
 			ast_type: /** @type {any} */ (null),
@@ -626,7 +627,8 @@ export function analyze_component(root, source, options) {
 				has_props_rune: false,
 				component_slots: new Set(),
 				expression: null,
-				class_state: null,
+				classes: new Map(),
+				class: null,
 				function_depth: scope.function_depth,
 				reactive_statement: null
 			};
@@ -693,7 +695,8 @@ export function analyze_component(root, source, options) {
 				reactive_statement: null,
 				component_slots: new Set(),
 				expression: null,
-				class_state: null,
+				classes: new Map(),
+				class: null,
 				function_depth: scope.function_depth
 			};
 

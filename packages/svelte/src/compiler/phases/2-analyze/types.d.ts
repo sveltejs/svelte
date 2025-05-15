@@ -2,6 +2,7 @@ import type { Scope } from '../scope.js';
 import type { ComponentAnalysis, ReactiveStatement } from '../types.js';
 import type { AST, ExpressionMetadata, ValidatedCompileOptions } from '#compiler';
 import type { ClassAnalysis } from './visitors/shared/class-analysis.js';
+import type { ClassBody } from 'estree';
 
 export interface AnalysisState {
 	scope: Scope;
@@ -21,7 +22,9 @@ export interface AnalysisState {
 	expression: ExpressionMetadata | null;
 
 	/** Used to analyze class state. */
-	class_state: ClassAnalysis | null;
+	classes: Map<ClassBody, ClassAnalysis>;
+	class: ClassAnalysis | null;
+
 	function_depth: number;
 
 	// legacy stuff

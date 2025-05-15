@@ -23,6 +23,6 @@ export function AssignmentExpression(node, context) {
 		}
 	}
 
-	context.state.class_state?.register?.(node, context);
+	context.state.class?.register?.(node, context);
 	context.next();
 }

@@ -140,7 +140,7 @@ export class ClassAnalysis {
 			return;
 		}
 
-		e.constructor_state_reassignment(node, name, locate_node(existing.node));
+		e.constructor_state_reassignment(node);
 	}
 
 	/**
