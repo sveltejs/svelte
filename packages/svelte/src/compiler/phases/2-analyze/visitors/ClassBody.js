@@ -1,8 +1,6 @@
-/** @import { AssignmentExpression, ClassBody, PropertyDefinition, Expression, Identifier, PrivateIdentifier, Literal, MethodDefinition } from 'estree' */
-/** @import { AST } from '#compiler' */
+/** @import { AssignmentExpression, ClassBody, PropertyDefinition, Expression, PrivateIdentifier, MethodDefinition } from 'estree' */
 /** @import { Context } from '../types' */
 /** @import { StateCreationRuneName } from '../../../../utils.js' */
-import { get_parent } from '../../../utils/ast.js';
 import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
 import { is_state_creation_rune } from '../../../../utils.js';
@@ -102,33 +100,4 @@ function get_name(node) {
 class ClassAnalysis {
 	/** @type {Record<string, PropertyAssignmentDetails>} */
 	fields = {};
-
-	/**
-	 * @template {AST.SvelteNode} T
-	 * @param {AST.SvelteNode} node
-	 * @param {T[]} path
-	 * @returns {node is AssignmentExpression & { left: { type: 'MemberExpression' } & { object: { type: 'ThisExpression' }; property: { type: 'Identifier' | 'PrivateIdentifier' | 'Literal' } } }}
-	 */
-	is_class_property_assignment_at_constructor_root(node, path) {
-		if (
-			!(
-				node.type === 'AssignmentExpression' &&
-				node.operator === '=' &&
-				node.left.type === 'MemberExpression' &&
-				node.left.object.type === 'ThisExpression' &&
-				((node.left.property.type === 'Identifier' && !node.left.computed) ||
-					node.left.property.type === 'PrivateIdentifier' ||
-					node.left.property.type === 'Literal')
-			)
-		) {
-			return false;
-		}
-		// AssignmentExpression (here) -> ExpressionStatement (-1) -> BlockStatement (-2) -> FunctionExpression (-3) -> MethodDefinition (-4)
-		const maybe_constructor = get_parent(path, -4);
-		return (
-			maybe_constructor &&
-			maybe_constructor.type === 'MethodDefinition' &&
-			maybe_constructor.kind === 'constructor'
-		);
-	}
 }

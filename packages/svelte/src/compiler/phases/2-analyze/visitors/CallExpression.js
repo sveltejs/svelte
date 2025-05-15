@@ -118,10 +118,7 @@ export function CallExpression(node, context) {
 			const valid =
 				is_variable_declaration(parent, context) ||
 				is_class_property_definition(parent) ||
-				context.state.class?.is_class_property_assignment_at_constructor_root(
-					parent,
-					context.path.slice(0, -1)
-				);
+				is_class_property_assignment_at_constructor_root(parent, context);
 
 			if (!valid) {
 				e.state_invalid_placement(node, rune);
@@ -291,4 +288,33 @@ function is_variable_declaration(parent, context) {
  */
 function is_class_property_definition(parent) {
 	return parent.type === 'PropertyDefinition' && !parent.static && !parent.computed;
+}
+
+/**
+ * @param {AST.SvelteNode} node
+ * @param {Context} context
+ * @returns {node is AssignmentExpression & { left: { type: 'MemberExpression' } & { object: { type: 'ThisExpression' }; property: { type: 'Identifier' | 'PrivateIdentifier' | 'Literal' } } }}
+ */
+function is_class_property_assignment_at_constructor_root(node, context) {
+	if (
+		!(
+			node.type === 'AssignmentExpression' &&
+			node.operator === '=' &&
+			node.left.type === 'MemberExpression' &&
+			node.left.object.type === 'ThisExpression' &&
+			((node.left.property.type === 'Identifier' && !node.left.computed) ||
+				node.left.property.type === 'PrivateIdentifier' ||
+				node.left.property.type === 'Literal')
+		)
+	) {
+		return false;
+	}
+
+	// AssignmentExpression (here) -> ExpressionStatement (-1) -> BlockStatement (-2) -> FunctionExpression (-3) -> MethodDefinition (-4)
+	const maybe_constructor = get_parent(context.path, -5);
+	return (
+		maybe_constructor &&
+		maybe_constructor.type === 'MethodDefinition' &&
+		maybe_constructor.kind === 'constructor'
+	);
 }
