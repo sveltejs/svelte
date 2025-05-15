@@ -114,17 +114,16 @@ export function CallExpression(node, context) {
 		case '$state':
 		case '$state.raw':
 		case '$derived':
-		case '$derived.by':
-			if (
-				!(
-					is_variable_declaration(parent, context) ||
-					is_class_property_definition(parent) ||
-					context.state.class_state?.is_class_property_assignment_at_constructor_root(
-						parent,
-						context.path.slice(0, -1)
-					)
-				)
-			) {
+		case '$derived.by': {
+			const valid =
+				is_variable_declaration(parent, context) ||
+				is_class_property_definition(parent) ||
+				context.state.class_state?.is_class_property_assignment_at_constructor_root(
+					parent,
+					context.path.slice(0, -1)
+				);
+
+			if (!valid) {
 				e.state_invalid_placement(node, rune);
 			}
 
@@ -135,6 +134,7 @@ export function CallExpression(node, context) {
 			}
 
 			break;
+		}
 
 		case '$effect':
 		case '$effect.pre':
