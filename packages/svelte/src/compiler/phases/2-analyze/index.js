@@ -48,7 +48,6 @@ import { Literal } from './visitors/Literal.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
 import { NewExpression } from './visitors/NewExpression.js';
 import { OnDirective } from './visitors/OnDirective.js';
-import { PropertyDefinition } from './visitors/PropertyDefinition.js';
 import { RegularElement } from './visitors/RegularElement.js';
 import { RenderTag } from './visitors/RenderTag.js';
 import { SlotElement } from './visitors/SlotElement.js';
@@ -165,7 +164,6 @@ const visitors = {
 	MemberExpression,
 	NewExpression,
 	OnDirective,
-	PropertyDefinition,
 	RegularElement,
 	RenderTag,
 	SlotElement,
