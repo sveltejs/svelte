@@ -93,7 +93,12 @@ export default function element(parser) {
 				}
 			}
 
-			if (parent.type !== 'RegularElement' && !parser.loose) {
+			if (parent.type === 'RegularElement') {
+				if (!parser.last_auto_closed_tag || parser.last_auto_closed_tag.tag !== name) {
+					const opening_tag_end = parent.fragment.nodes[0]?.start ?? parent.start + parent.name.length + 2;
+					w.element_implicitly_closed({ start: parent.start, end: opening_tag_end }, parent.name);
+				}
+			} else if (!parser.loose) {
 				if (parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name) {
 					e.element_invalid_closing_tag_autoclosed(start, name, parser.last_auto_closed_tag.reason);
 				} else {
@@ -186,6 +191,8 @@ export default function element(parser) {
 	parser.allow_whitespace();
 
 	if (parent.type === 'RegularElement' && closing_tag_omitted(parent.name, name)) {
+		const opening_tag_end = parent.fragment.nodes[0]?.start ?? parent.start + parent.name.length + 2;
+		w.element_implicitly_closed({ start: parent.start, end: opening_tag_end }, parent.name);
 		parent.end = start;
 		parser.pop();
 		parser.last_auto_closed_tag = {

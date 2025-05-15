@@ -1,0 +1,26 @@
+[
+	{
+		"code": "element_implicitly_closed",
+		"message": "The tag `<p>` was implicitly closed by the parent or a next element. This may cause DOM structure being other than expected one.",
+		"start": {
+			"line": 4,
+			"column": 4
+		},
+		"end": {
+			"line": 4,
+			"column": 7
+		}
+	},
+	{
+		"code": "element_implicitly_closed",
+		"message": "The tag `<div>` was implicitly closed by the parent or a next element. This may cause DOM structure being other than expected one.",
+		"start": {
+			"line": 3,
+			"column": 4
+		},
+		"end": {
+			"line": 3,
+			"column": 9
+		}
+	}
+]

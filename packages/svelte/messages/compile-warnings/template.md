@@ -30,6 +30,10 @@
 
 > `<%name%>` will be treated as an HTML element unless it begins with a capital letter
 
+## element_implicitly_closed
+
+> The tag `<%name%>` was implicitly closed by the parent or a next element. This may cause DOM structure being other than expected one.
+
 ## element_invalid_self_closing_tag
 
 > Self-closing HTML tags for non-void elements are ambiguous — use `<%name% ...></%name%>` rather than `<%name% ... />`
