@@ -105,14 +105,12 @@ export function constant_binding(node, thing) {
 }
 
 /**
- * Cannot redeclare stateful field `%name%` in the constructor. The field was originally declared here: `%original_location%`
+ * A state field declaration in a constructor must be the first assignment, and the only one that uses a rune
  * @param {null | number | NodeLike} node
- * @param {string} name
- * @param {string} original_location
  * @returns {never}
  */
-export function constructor_state_reassignment(node, name, original_location) {
-	e(node, 'constructor_state_reassignment', `Cannot redeclare stateful field \`${name}\` in the constructor. The field was originally declared here: \`${original_location}\`\nhttps://svelte.dev/e/constructor_state_reassignment`);
+export function constructor_state_reassignment(node) {
+	e(node, 'constructor_state_reassignment', `A state field declaration in a constructor must be the first assignment, and the only one that uses a rune\nhttps://svelte.dev/e/constructor_state_reassignment`);
 }
 
 /**

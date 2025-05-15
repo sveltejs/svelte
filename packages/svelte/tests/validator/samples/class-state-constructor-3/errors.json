@@ -1,7 +1,7 @@
 [
 	{
 		"code": "constructor_state_reassignment",
-		"message": "Cannot redeclare stateful field `count` in the constructor. The field was originally declared here: `(unknown):3:2`",
+		"message": "A state field declaration in a constructor must be the first assignment, and the only one that uses a rune",
 		"start": {
 			"line": 5,
 			"column": 2

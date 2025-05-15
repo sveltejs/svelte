@@ -3,11 +3,11 @@
 		"code": "constructor_state_reassignment",
 		"message": "A state field declaration in a constructor must be the first assignment, and the only one that uses a rune",
 		"start": {
-			"line": 5,
+			"line": 4,
 			"column": 2
 		},
 		"end": {
-			"line": 5,
+			"line": 4,
 			"column": 24
 		}
 	}

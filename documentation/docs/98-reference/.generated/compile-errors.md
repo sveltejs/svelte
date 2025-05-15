@@ -211,10 +211,10 @@ Cannot bind to %thing%
 ### constructor_state_reassignment
 
 ```
-Cannot redeclare stateful field `%name%` in the constructor. The field was originally declared here: `%original_location%`
+A state field declaration in a constructor must be the first assignment, and the only one that uses a rune
 ```
 
-To create stateful class fields in the constructor, the rune assignment must be the _first_ assignment to the class field.
+[State fields]($state#Classes) can be declared as normal class fields or inside the constructor, in which case the declaration must be the _first_ assignment.
 Assignments thereafter must not use the rune.
 
 ```ts
