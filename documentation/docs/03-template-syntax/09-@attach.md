@@ -2,7 +2,9 @@
 title: {@attach ...}
 ---
 
-Attachments are functions that run when an element is mounted to the DOM. Optionally, they can return a function that is called when the element is later removed from the DOM.
+Attachments are functions that run in an [effect]($effect) when an element is mounted to the DOM or when [state]($state) read inside the function updates.
+
+Optionally, they can return a function that is called when the element is later removed from the DOM.
 
 > [!NOTE]
 > Attachments are available in Svelte 5.29 and newer.
@@ -55,7 +57,7 @@ A useful pattern is for a function, such as `tooltip` in this example, to _retur
 </button>
 ```
 
-Since the `tooltip(content)` expression runs inside an [effect]($effect), the attachment will be destroyed and recreated whenever `content` changes.
+Since the `tooltip(content)` expression runs inside an [effect]($effect), the attachment will be destroyed and recreated whenever `content` changes. The same thing would happen for any state read _inside_ the attachment function when it first runs.
 
 ## Inline attachments
 
