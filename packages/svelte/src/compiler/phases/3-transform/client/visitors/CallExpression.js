@@ -19,6 +19,7 @@ export function CallExpression(node, context) {
 		case '$effect.tracking':
 			return b.call('$.effect_tracking');
 
+		// TODO can we reuse this logic for normal declarations, i.e. fall through to this?
 		case '$state':
 		case '$state.raw': {
 			let should_proxy = rune === '$state' && true; // TODO
