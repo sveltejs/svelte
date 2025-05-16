@@ -35,18 +35,16 @@ function build_assignment(operator, left, right, context) {
 				const rune = get_rune(right, context.state.scope);
 
 				if (rune) {
-					const field = context.state.state_fields[name];
-
 					const key =
 						left.property.type === 'PrivateIdentifier' || rune === '$state' || rune === '$state.raw'
 							? left.property
-							: field.key;
+							: context.state.state_fields[name].key;
 
-					const l = b.member(b.this, key, key.type === 'Literal');
-
-					const r = /** @type {Expression} */ (context.visit(right));
-
-					return b.assignment(operator, l, r);
+					return b.assignment(
+						operator,
+						b.member(b.this, key, key.type === 'Literal'),
+						/** @type {Expression} */ (context.visit(right))
+					);
 				}
 			}
 		}
