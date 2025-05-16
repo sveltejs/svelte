@@ -112,8 +112,5 @@ export function ClassBody(node, context) {
 		field.key = b.private_id(deconflicted);
 	}
 
-	context.next({
-		...context.state,
-		state_fields
-	});
+	context.next({ ...context.state, state_fields });
 }
