@@ -33,13 +33,12 @@ function build_assignment(operator, left, right, context) {
 
 			if (rune) {
 				const name = get_name(left.property);
-
-				const l = b.member(
-					b.this,
+				const key =
 					left.property.type === 'PrivateIdentifier' || rune === '$state' || rune === '$state.raw'
 						? left.property
-						: context.state.backing_fields[name]
-				);
+						: context.state.backing_fields[name];
+
+				const l = b.member(b.this, key, key.type === 'Literal');
 
 				const r = /** @type {Expression} */ (context.visit(right));
 
