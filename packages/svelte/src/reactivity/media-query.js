@@ -3,12 +3,12 @@ import { ReactiveValue } from './reactive-value.js';
 
 const parenthesis_regex = /\(.+\)/;
 
-// this keyworks are valid media queries but they need to be without parenthesis
+// these keywords are valid media queries but they need to be without parenthesis
 //
 // eg: new MediaQuery('screen')
 //
 // however because of the auto-parenthesis logic in the constructor since there's no parentehesis
-// in the media query they'll be surrounded by parentehesis
+// in the media query they'll be surrounded by parenthesis
 //
 // however we can check if the media query is only composed of these keywords
 // and skip the auto-parenthesis
