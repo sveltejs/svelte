@@ -641,7 +641,7 @@ declare module 'svelte/attachments' {
 		<Node extends Element, Parameter extends Par>(
 			...args: undefined extends NoInfer<Parameter>
 				? [
-						action: (node: Node, parameter?: Parameter) => void | ActionReturn<Parameter>,
+						action: (node: Node, parameter?: never) => void | ActionReturn<Parameter>,
 						parameter?: () => NoInfer<Parameter>
 					]
 				: [
@@ -673,7 +673,7 @@ declare module 'svelte/attachments' {
 	 * @since 5.29
 	 */
 	export function createAttachmentKey(): symbol;
-	export function fromAction<Node extends HTMLElement, Parameter extends any>(...args: undefined extends NoInfer<Parameter> ? [action: (node: Node, parameter?: Parameter | undefined) => void | ActionReturn<Parameter, Record<never, any>>, parameter?: (() => NoInfer<Parameter>) | undefined] : [action: (node: Node, parameter: Parameter) => void | ActionReturn<Parameter, Record<never, any>>, parameter: () => NoInfer<Parameter>]): Attachment<Node>;
+	export function fromAction<Node extends HTMLElement, Parameter extends any>(...args: undefined extends NoInfer<Parameter> ? [action: (node: Node, parameter?: never) => void | ActionReturn<Parameter, Record<never, any>>, parameter?: (() => NoInfer<Parameter>) | undefined] : [action: (node: Node, parameter: Parameter) => void | ActionReturn<Parameter, Record<never, any>>, parameter: () => NoInfer<Parameter>]): Attachment<Node>;
 
 	export {};
 }

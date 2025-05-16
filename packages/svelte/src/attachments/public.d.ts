@@ -15,7 +15,7 @@ export interface FromAction<Element extends EventTarget = HTMLElement, Par = unk
 	<Node extends Element, Parameter extends Par>(
 		...args: undefined extends NoInfer<Parameter>
 			? [
-					action: (node: Node, parameter?: Parameter) => void | ActionReturn<Parameter>,
+					action: (node: Node, parameter?: never) => void | ActionReturn<Parameter>,
 					parameter?: () => NoInfer<Parameter>
 				]
 			: [
