@@ -4,13 +4,13 @@ export default function Class_state_field_constructor_assignment($$payload, $$pr
 	$.push();
 
 	class Foo {
+		a;
+		#b;
+
 		constructor() {
 			this.a = 1;
 			this.#b = 2;
 		}
-
-		a;
-		#b;
 	}
 
 	$.pop();
