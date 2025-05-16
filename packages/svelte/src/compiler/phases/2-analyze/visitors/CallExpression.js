@@ -274,7 +274,6 @@ function get_function_label(nodes) {
 }
 
 /**
- *
  * @param {AST.SvelteNode} parent
  * @param {Context} context
  */
@@ -283,7 +282,6 @@ function is_variable_declaration(parent, context) {
 }
 
 /**
- *
  * @param {AST.SvelteNode} parent
  */
 function is_class_property_definition(parent) {
@@ -293,28 +291,21 @@ function is_class_property_definition(parent) {
 /**
  * @param {AST.SvelteNode} node
  * @param {Context} context
- * @returns {node is AssignmentExpression & { left: { type: 'MemberExpression' } & { object: { type: 'ThisExpression' }; property: { type: 'Identifier' | 'PrivateIdentifier' | 'Literal' } } }}
  */
 function is_class_property_assignment_at_constructor_root(node, context) {
 	if (
-		!(
-			node.type === 'AssignmentExpression' &&
-			node.operator === '=' &&
-			node.left.type === 'MemberExpression' &&
-			node.left.object.type === 'ThisExpression' &&
-			((node.left.property.type === 'Identifier' && !node.left.computed) ||
-				node.left.property.type === 'PrivateIdentifier' ||
-				node.left.property.type === 'Literal')
-		)
+		node.type === 'AssignmentExpression' &&
+		node.operator === '=' &&
+		node.left.type === 'MemberExpression' &&
+		node.left.object.type === 'ThisExpression' &&
+		((node.left.property.type === 'Identifier' && !node.left.computed) ||
+			node.left.property.type === 'PrivateIdentifier' ||
+			node.left.property.type === 'Literal')
 	) {
-		return false;
+		// MethodDefinition (-5) -> FunctionExpression (-4) -> BlockStatement (-3) -> ExpressionStatement (-2) -> AssignmentExpression (-1)
+		const parent = get_parent(context.path, -5);
+		return parent?.type === 'MethodDefinition' && parent.kind === 'constructor';
 	}
 
-	// AssignmentExpression (here) -> ExpressionStatement (-1) -> BlockStatement (-2) -> FunctionExpression (-3) -> MethodDefinition (-4)
-	const maybe_constructor = get_parent(context.path, -5);
-	return (
-		maybe_constructor &&
-		maybe_constructor.type === 'MethodDefinition' &&
-		maybe_constructor.kind === 'constructor'
-	);
+	return false;
 }
