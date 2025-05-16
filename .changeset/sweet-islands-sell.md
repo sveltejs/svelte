@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: avoid auto-parenthesis for special keywords only `MediaQuery`
+fix: avoid auto-parenthesis for special-keywords-only `MediaQuery`
