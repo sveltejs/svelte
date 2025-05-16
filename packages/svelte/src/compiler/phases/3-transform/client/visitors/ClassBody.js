@@ -1,8 +1,7 @@
-/** @import { CallExpression, ClassBody, MethodDefinition, PrivateIdentifier, PropertyDefinition, StaticBlock } from 'estree' */
+/** @import { CallExpression, ClassBody, MethodDefinition, PropertyDefinition, StaticBlock } from 'estree' */
 /** @import { Context } from '../types' */
 import * as b from '#compiler/builders';
 import { get_name } from '../../../nodes.js';
-import { regex_invalid_identifier_chars } from '../../../patterns.js';
 
 /**
  * @param {ClassBody} node
