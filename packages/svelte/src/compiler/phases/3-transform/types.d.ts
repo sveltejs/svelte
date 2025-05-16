@@ -1,7 +1,6 @@
 import type { Scope } from '../scope.js';
 import type { AST, StateField, ValidatedModuleCompileOptions } from '#compiler';
 import type { Analysis } from '../types.js';
-import type { PrivateIdentifier } from 'estree';
 
 export interface TransformState {
 	readonly analysis: Analysis;
