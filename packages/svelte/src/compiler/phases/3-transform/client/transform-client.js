@@ -163,7 +163,8 @@ export function client_component(analysis, options) {
 		},
 		events: new Set(),
 		preserve_whitespace: options.preserveWhitespace,
-		class_transformer: null,
+		public_state: new Map(),
+		private_state: new Map(),
 		transform: {},
 		in_constructor: false,
 		instance_level_snippets: [],
@@ -670,9 +671,10 @@ export function client_module(analysis, options) {
 		options,
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
+		public_state: new Map(),
+		private_state: new Map(),
 		transform: {},
-		in_constructor: false,
-		class_transformer: null
+		in_constructor: false
 	};
 
 	const module = /** @type {ESTree.Program} */ (

@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, AssignmentOperator, Expression, Identifier, Pattern, MemberExpression, ThisExpression, PrivateIdentifier, CallExpression } from 'estree' */
+/** @import { AssignmentExpression, AssignmentOperator, Expression, Identifier, Pattern } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../types.js' */
 import * as b from '#compiler/builders';
@@ -11,17 +11,14 @@ import { dev, locate_node } from '../../../../state.js';
 import { should_proxy } from '../utils.js';
 import { visit_assignment_expression } from '../../shared/assignments.js';
 import { validate_mutation } from './shared/utils.js';
+import { get_rune } from '../../../scope.js';
+import { get_name } from '../../../nodes.js';
 
 /**
  * @param {AssignmentExpression} node
  * @param {Context} context
  */
 export function AssignmentExpression(node, context) {
-	const stripped_node = context.state.class_transformer?.generate_assignment(node, context);
-	if (stripped_node) {
-		return stripped_node;
-	}
-
 	const expression = /** @type {Expression} */ (
 		visit_assignment_expression(node, context, build_assignment) ?? context.next()
 	);
@@ -55,25 +52,50 @@ const callees = {
  * @returns {Expression | null}
  */
 function build_assignment(operator, left, right, context) {
-	// Handle class private/public state assignment cases
-	if (
-		context.state.analysis.runes &&
-		left.type === 'MemberExpression' &&
-		left.property.type === 'PrivateIdentifier'
-	) {
-		const private_state = context.state.class_transformer?.get_field(left.property.name, true);
+	if (context.state.analysis.runes && left.type === 'MemberExpression') {
+		// special case — state declaration in class constructor
+		const ancestor = context.path.at(-4);
 
-		if (private_state !== undefined) {
-			let value = /** @type {Expression} */ (
-				context.visit(build_assignment_value(operator, left, right))
-			);
+		if (ancestor?.type === 'MethodDefinition' && ancestor.kind === 'constructor') {
+			const rune = get_rune(right, context.state.scope);
 
-			const needs_proxy =
-				private_state?.kind === '$state' &&
-				is_non_coercive_operator(operator) &&
-				should_proxy(value, context.state.scope);
+			if (rune) {
+				const name = get_name(left.property);
 
-			return b.call('$.set', left, value, needs_proxy && b.true);
+				const child_state = {
+					...context.state,
+					in_constructor: rune !== '$derived' && rune !== '$derived.by'
+				};
+
+				const l = b.member(
+					b.this,
+					left.property.type === 'PrivateIdentifier'
+						? left.property
+						: context.state.backing_fields[name]
+				);
+
+				const r = /** @type {Expression} */ (context.visit(right, child_state));
+
+				return b.assignment(operator, l, r);
+			}
+		}
+
+		// special case — assignment to private state field
+		if (left.property.type === 'PrivateIdentifier') {
+			const private_state = context.state.private_state.get(left.property.name);
+
+			if (private_state !== undefined) {
+				let value = /** @type {Expression} */ (
+					context.visit(build_assignment_value(operator, left, right))
+				);
+
+				const needs_proxy =
+					private_state.type === '$state' &&
+					is_non_coercive_operator(operator) &&
+					should_proxy(value, context.state.scope);
+
+				return b.call('$.set', left, value, needs_proxy && b.true);
+			}
 		}
 	}
 

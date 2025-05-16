@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, ClassBody, PropertyDefinition, Expression, PrivateIdentifier, MethodDefinition } from 'estree' */
+/** @import { AssignmentExpression, CallExpression, ClassBody, PropertyDefinition, Expression, PrivateIdentifier, MethodDefinition } from 'estree' */
 /** @import { StateField } from '#compiler' */
 /** @import { Context } from '../types' */
 import { get_rune } from '../../scope.js';
@@ -48,7 +48,8 @@ export function ClassBody(node, context) {
 
 			state_fields[name] = {
 				node,
-				type: rune
+				type: rune,
+				value: /** @type {CallExpression} */ (value)
 			};
 		}
 

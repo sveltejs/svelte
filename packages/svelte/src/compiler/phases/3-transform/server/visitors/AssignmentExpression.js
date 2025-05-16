@@ -3,6 +3,8 @@
 /** @import { Context, ServerTransformState } from '../types.js' */
 import * as b from '#compiler/builders';
 import { build_assignment_value } from '../../../../utils/ast.js';
+import { get_name } from '../../../nodes.js';
+import { get_rune } from '../../../scope.js';
 import { visit_assignment_expression } from '../../shared/assignments.js';
 
 /**
@@ -10,11 +12,6 @@ import { visit_assignment_expression } from '../../shared/assignments.js';
  * @param {Context} context
  */
 export function AssignmentExpression(node, context) {
-	const stripped_node = context.state.class_transformer?.generate_assignment(node, context);
-	if (stripped_node) {
-		return stripped_node;
-	}
-
 	return visit_assignment_expression(node, context, build_assignment) ?? context.next();
 }
 
@@ -27,6 +24,30 @@ export function AssignmentExpression(node, context) {
  * @returns {Expression | null}
  */
 function build_assignment(operator, left, right, context) {
+	if (context.state.analysis.runes && left.type === 'MemberExpression') {
+		// special case — state declaration in class constructor
+		const ancestor = context.path.at(-4);
+
+		if (ancestor?.type === 'MethodDefinition' && ancestor.kind === 'constructor') {
+			const rune = get_rune(right, context.state.scope);
+
+			if (rune) {
+				const name = get_name(left.property);
+
+				const l = b.member(
+					b.this,
+					left.property.type === 'PrivateIdentifier' || rune === '$state' || rune === '$state.raw'
+						? left.property
+						: context.state.backing_fields[name]
+				);
+
+				const r = /** @type {Expression} */ (context.visit(right));
+
+				return b.assignment(operator, l, r);
+			}
+		}
+	}
+
 	let object = left;
 
 	while (object.type === 'MemberExpression') {

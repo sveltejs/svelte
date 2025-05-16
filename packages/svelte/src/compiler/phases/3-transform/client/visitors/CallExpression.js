@@ -10,12 +10,33 @@ import { transform_inspect_rune } from '../../utils.js';
  * @param {Context} context
  */
 export function CallExpression(node, context) {
-	switch (get_rune(node, context.state.scope)) {
+	const rune = get_rune(node, context.state.scope);
+
+	switch (rune) {
 		case '$host':
 			return b.id('$$props.$$host');
 
 		case '$effect.tracking':
 			return b.call('$.effect_tracking');
+
+		case '$state':
+		case '$state.raw': {
+			let should_proxy = rune === '$state' && true; // TODO
+
+			return b.call(
+				'$.state',
+				node.arguments[0] && /** @type {Expression} */ (context.visit(node.arguments[0])),
+				should_proxy && b.true
+			);
+		}
+
+		case '$derived':
+		case '$derived.by': {
+			let fn = /** @type {Expression} */ (context.visit(node.arguments[0]));
+			if (rune === '$derived') fn = b.thunk(fn);
+
+			return b.call('$.derived', fn);
+		}
 
 		case '$state.snapshot':
 			return b.call(
