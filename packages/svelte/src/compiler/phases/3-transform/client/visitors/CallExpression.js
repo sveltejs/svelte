@@ -4,6 +4,7 @@ import { dev, is_ignored } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 import { transform_inspect_rune } from '../../utils.js';
+import { should_proxy } from '../utils.js';
 
 /**
  * @param {CallExpression} node
@@ -19,15 +20,23 @@ export function CallExpression(node, context) {
 		case '$effect.tracking':
 			return b.call('$.effect_tracking');
 
-		// TODO can we reuse this logic for normal declarations, i.e. fall through to this?
+		// transform state field assignments in constructors
 		case '$state':
 		case '$state.raw': {
-			let should_proxy = rune === '$state' && true; // TODO
+			let arg = node.arguments[0];
 
-			let value = node.arguments[0] && /** @type {Expression} */ (context.visit(node.arguments[0]));
+			/** @type {Expression | undefined} */
+			let value = undefined;
 
-			if (value && should_proxy) {
-				value = b.call('$.proxy', value);
+			if (arg) {
+				value = /** @type {Expression} */ (context.visit(node.arguments[0]));
+
+				if (
+					rune === '$state' &&
+					should_proxy(/** @type {Expression} */ (arg), context.state.scope)
+				) {
+					value = b.call('$.proxy', value);
+				}
 			}
 
 			return b.call('$.state', value);
