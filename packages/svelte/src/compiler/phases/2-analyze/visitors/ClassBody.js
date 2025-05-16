@@ -1,10 +1,12 @@
 /** @import { AssignmentExpression, CallExpression, ClassBody, PropertyDefinition, Expression, PrivateIdentifier, MethodDefinition } from 'estree' */
 /** @import { StateField } from '#compiler' */
 /** @import { Context } from '../types' */
+import * as b from '#compiler/builders';
 import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
 import { is_state_creation_rune } from '../../../../utils.js';
 import { get_name } from '../../nodes.js';
+import { regex_invalid_identifier_chars } from '../../patterns.js';
 
 /**
  * @param {ClassBody} node
@@ -14,6 +16,18 @@ export function ClassBody(node, context) {
 	if (!context.state.analysis.runes) {
 		context.next();
 		return;
+	}
+
+	/** @type {string[]} */
+	const private_ids = [];
+
+	for (const prop of node.body) {
+		if (
+			(prop.type === 'MethodDefinition' || prop.type === 'PropertyDefinition') &&
+			prop.key.type === 'PrivateIdentifier'
+		) {
+			private_ids.push(prop.key.name);
+		}
 	}
 
 	/** @type {Record<string, StateField>} */
@@ -46,6 +60,8 @@ export function ClassBody(node, context) {
 			state_fields[name] = {
 				node,
 				type: rune,
+				// @ts-expect-error for public state this is filled out in a moment
+				key: key.type === 'PrivateIdentifier' ? key : null,
 				value: /** @type {CallExpression} */ (value)
 			};
 		}
@@ -82,6 +98,22 @@ export function ClassBody(node, context) {
 
 			handle(statement.expression, left.property, right);
 		}
+	}
+
+	for (const name in state_fields) {
+		if (name[0] === '#') {
+			continue;
+		}
+
+		const field = state_fields[name];
+
+		let deconflicted = name.replace(regex_invalid_identifier_chars, '_');
+		while (private_ids.includes(deconflicted)) {
+			deconflicted = '_' + deconflicted;
+		}
+
+		private_ids.push(deconflicted);
+		field.key = b.private_id(deconflicted);
 	}
 
 	context.next({

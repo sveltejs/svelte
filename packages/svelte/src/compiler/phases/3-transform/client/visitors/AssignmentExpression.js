@@ -68,12 +68,9 @@ function build_assignment(operator, left, right, context) {
 						in_constructor: rune !== '$derived' && rune !== '$derived.by'
 					};
 
-					const l = b.member(
-						b.this,
-						left.property.type === 'PrivateIdentifier'
-							? left.property
-							: context.state.backing_fields[name]
-					);
+					const field = context.state.state_fields[name];
+
+					const l = b.member(b.this, field.key);
 
 					const r = /** @type {Expression} */ (context.visit(right, child_state));
 

@@ -17,42 +17,10 @@ export function ClassBody(node, context) {
 		return;
 	}
 
-	/** @type {string[]} */
-	const private_ids = [];
-
-	for (const prop of node.body) {
-		if (
-			(prop.type === 'MethodDefinition' || prop.type === 'PropertyDefinition') &&
-			prop.key.type === 'PrivateIdentifier'
-		) {
-			private_ids.push(prop.key.name);
-		}
-	}
-
-	/**
-	 * each `foo = $state()` needs a backing `#foo` field
-	 * @type {Record<string, PrivateIdentifier>}
-	 */
-	const backing_fields = {};
-
-	for (const name in state_fields) {
-		if (name[0] === '#') {
-			continue;
-		}
-
-		let deconflicted = name.replace(regex_invalid_identifier_chars, '_');
-		while (private_ids.includes(deconflicted)) {
-			deconflicted = '_' + deconflicted;
-		}
-
-		private_ids.push(deconflicted);
-		backing_fields[name] = b.private_id(deconflicted);
-	}
-
 	/** @type {Array<MethodDefinition | PropertyDefinition | StaticBlock>} */
 	const body = [];
 
-	const child_state = { ...context.state, state_fields, backing_fields };
+	const child_state = { ...context.state, state_fields };
 
 	for (const name in state_fields) {
 		if (name[0] === '#') {
@@ -63,15 +31,14 @@ export function ClassBody(node, context) {
 
 		// insert backing fields for stuff declared in the constructor
 		if (field.node.type === 'AssignmentExpression') {
-			const backing = backing_fields[name];
-			const member = b.member(b.this, backing);
+			const member = b.member(b.this, field.key);
 
 			const should_proxy = field.type === '$state' && true; // TODO
 
 			const key = b.key(name);
 
 			body.push(
-				b.prop_def(backing, null),
+				b.prop_def(field.key, null),
 
 				b.method('get', key, [], [b.return(b.call('$.get', member))]),
 
@@ -109,14 +76,13 @@ export function ClassBody(node, context) {
 				continue;
 			}
 
-			const backing = backing_fields[name];
-			const member = b.member(b.this, backing);
+			const member = b.member(b.this, field.key);
 
 			const should_proxy = field.type === '$state' && true; // TODO
 
 			body.push(
 				b.prop_def(
-					backing,
+					field.key,
 					/** @type {CallExpression} */ (
 						context.visit(definition.value ?? field.value, child_state)
 					)

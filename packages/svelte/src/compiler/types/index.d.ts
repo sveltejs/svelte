@@ -3,7 +3,12 @@ import type { Binding } from '../phases/scope.js';
 import type { AST, Namespace } from './template.js';
 import type { ICompileDiagnostic } from '../utils/compile_diagnostic.js';
 import type { StateCreationRuneName } from '../../utils.js';
-import type { AssignmentExpression, CallExpression, PropertyDefinition } from 'estree';
+import type {
+	AssignmentExpression,
+	CallExpression,
+	PrivateIdentifier,
+	PropertyDefinition
+} from 'estree';
 
 /** The return value of `compile` from `svelte/compiler` */
 export interface CompileResult {
@@ -274,6 +279,7 @@ export interface ExpressionMetadata {
 export interface StateField {
 	type: StateCreationRuneName;
 	node: PropertyDefinition | AssignmentExpression;
+	key: PrivateIdentifier;
 	value: CallExpression;
 }
 
