@@ -15,9 +15,6 @@ import type { ComponentAnalysis } from '../../types.js';
 import type { SourceLocation } from '#shared';
 
 export interface ClientTransformState extends TransformState {
-	readonly state_fields: Record<string, StateField>;
-	readonly backing_fields: Record<string, PrivateIdentifier>;
-
 	/**
 	 * `true` if the current lexical scope belongs to a class constructor. this allows
 	 * us to rewrite `this.foo` as `this.#foo.value`

@@ -69,14 +69,9 @@ export function ClassBody(node, context) {
 			const backing = backing_fields[name];
 			const member = b.member(b.this, backing);
 
-			const should_proxy = field.type === '$state' && true; // TODO
-
-			const key = b.key(name);
-
 			body.push(
 				b.prop_def(backing, null),
-
-				b.method('get', key, [], [b.return(b.call(member))])
+				b.method('get', b.key(name), [], [b.return(b.call(member))])
 			);
 		}
 	}
@@ -107,8 +102,6 @@ export function ClassBody(node, context) {
 
 			const backing = backing_fields[name];
 			const member = b.member(b.this, backing);
-
-			const should_proxy = field.type === '$state' && true; // TODO
 
 			body.push(
 				b.prop_def(

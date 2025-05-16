@@ -25,24 +25,27 @@ export function AssignmentExpression(node, context) {
  */
 function build_assignment(operator, left, right, context) {
 	if (context.state.analysis.runes && left.type === 'MemberExpression') {
-		// special case — state declaration in class constructor
-		const ancestor = context.path.at(-4);
+		const name = get_name(left.property);
 
-		if (ancestor?.type === 'MethodDefinition' && ancestor.kind === 'constructor') {
-			const rune = get_rune(right, context.state.scope);
+		if (name !== null) {
+			// special case — state declaration in class constructor
+			const ancestor = context.path.at(-4);
 
-			if (rune) {
-				const name = get_name(left.property);
-				const key =
-					left.property.type === 'PrivateIdentifier' || rune === '$state' || rune === '$state.raw'
-						? left.property
-						: context.state.backing_fields[name];
+			if (ancestor?.type === 'MethodDefinition' && ancestor.kind === 'constructor') {
+				const rune = get_rune(right, context.state.scope);
 
-				const l = b.member(b.this, key, key.type === 'Literal');
+				if (rune) {
+					const key =
+						left.property.type === 'PrivateIdentifier' || rune === '$state' || rune === '$state.raw'
+							? left.property
+							: context.state.backing_fields[name];
 
-				const r = /** @type {Expression} */ (context.visit(right));
+					const l = b.member(b.this, key, key.type === 'Literal');
 
-				return b.assignment(operator, l, r);
+					const r = /** @type {Expression} */ (context.visit(right));
+
+					return b.assignment(operator, l, r);
+				}
 			}
 		}
 	}
