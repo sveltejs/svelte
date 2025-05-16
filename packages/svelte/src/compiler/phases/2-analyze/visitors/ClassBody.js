@@ -76,11 +76,7 @@ export function ClassBody(node, context) {
 			handle(child, child.key, child.value);
 		}
 
-		if (
-			child.type === 'MethodDefinition' &&
-			child.key.type === 'Identifier' &&
-			child.key.name === 'constructor'
-		) {
+		if (child.type === 'MethodDefinition' && child.kind === 'constructor') {
 			constructor = child;
 		}
 	}
