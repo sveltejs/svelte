@@ -1,10 +1,8 @@
-/** @import { CallExpression, ClassBody, Expression, Identifier, Literal, MethodDefinition, PrivateIdentifier, PropertyDefinition, StaticBlock } from 'estree' */
-/** @import { Context, StateField } from '../types' */
+/** @import { CallExpression, ClassBody, MethodDefinition, PrivateIdentifier, PropertyDefinition, StaticBlock } from 'estree' */
+/** @import { Context } from '../types' */
 import * as b from '#compiler/builders';
 import { get_name } from '../../../nodes.js';
 import { regex_invalid_identifier_chars } from '../../../patterns.js';
-import { get_rune } from '../../../scope.js';
-import { should_proxy } from '../utils.js';
 
 /**
  * @param {ClassBody} node
