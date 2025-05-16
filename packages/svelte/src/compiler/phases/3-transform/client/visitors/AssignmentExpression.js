@@ -53,6 +53,8 @@ const callees = {
  */
 function build_assignment(operator, left, right, context) {
 	if (context.state.analysis.runes && left.type === 'MemberExpression') {
+		const name = get_name(left.property);
+
 		// special case — state declaration in class constructor
 		const ancestor = context.path.at(-4);
 
@@ -60,8 +62,6 @@ function build_assignment(operator, left, right, context) {
 			const rune = get_rune(right, context.state.scope);
 
 			if (rune) {
-				const name = get_name(left.property);
-
 				const child_state = {
 					...context.state,
 					in_constructor: rune !== '$derived' && rune !== '$derived.by'
@@ -82,15 +82,15 @@ function build_assignment(operator, left, right, context) {
 
 		// special case — assignment to private state field
 		if (left.property.type === 'PrivateIdentifier') {
-			const private_state = context.state.private_state.get(left.property.name);
+			const field = context.state.state_fields[name];
 
-			if (private_state !== undefined) {
+			if (field) {
 				let value = /** @type {Expression} */ (
 					context.visit(build_assignment_value(operator, left, right))
 				);
 
 				const needs_proxy =
-					private_state.type === '$state' &&
+					field.type === '$state' &&
 					is_non_coercive_operator(operator) &&
 					should_proxy(value, context.state.scope);
 

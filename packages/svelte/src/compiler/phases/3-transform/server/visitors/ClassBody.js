@@ -32,8 +32,6 @@ export function ClassBody(node, context) {
 		}
 	}
 
-	const private_state = new Map();
-
 	/**
 	 * each `foo = $state()` needs a backing `#foo` field
 	 * @type {Record<string, PrivateIdentifier>}
@@ -42,7 +40,6 @@ export function ClassBody(node, context) {
 
 	for (const name in state_fields) {
 		if (name[0] === '#') {
-			private_state.set(name.slice(1), state_fields[name]);
 			continue;
 		}
 
@@ -58,7 +55,7 @@ export function ClassBody(node, context) {
 	/** @type {Array<MethodDefinition | PropertyDefinition | StaticBlock>} */
 	const body = [];
 
-	const child_state = { ...context.state, state_fields, backing_fields, private_state }; // TODO populate private_state
+	const child_state = { ...context.state, state_fields, backing_fields };
 
 	for (const name in state_fields) {
 		if (name[0] === '#') {

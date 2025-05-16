@@ -9,14 +9,14 @@ import type {
 	UpdateExpression,
 	VariableDeclaration
 } from 'estree';
-import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
+import type { AST, Namespace, StateField, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
 import type { SourceLocation } from '#shared';
 
 export interface ClientTransformState extends TransformState {
-	readonly private_state: Map<string, StateField>;
-	readonly public_state: Map<string, StateField>;
+	readonly state_fields: Record<string, StateField>;
+	readonly backing_fields: Record<string, PrivateIdentifier>;
 
 	/**
 	 * `true` if the current lexical scope belongs to a class constructor. this allows
@@ -92,10 +92,6 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly instance_level_snippets: VariableDeclaration[];
 	/** Snippets hoisted to the module */
 	readonly module_level_snippets: VariableDeclaration[];
-}
-
-export interface StateField {
-	type: '$state' | '$state.raw' | '$derived' | '$derived.by';
 }
 
 export type Context = import('zimmerframe').Context<AST.SvelteNode, ClientTransformState>;
