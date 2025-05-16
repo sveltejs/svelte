@@ -4,6 +4,7 @@
 import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
 import { is_state_creation_rune } from '../../../../utils.js';
+import { get_name } from '../../nodes.js';
 
 /**
  * @param {ClassBody} node
@@ -32,12 +33,8 @@ export function ClassBody(node, context) {
 	 * @param {Expression | null | undefined} value
 	 */
 	function handle(node, key, value) {
-		const name =
-			(key.type === 'Literal' && String(key.value)) ||
-			(key.type === 'PrivateIdentifier' && '#' + key.name) ||
-			(key.type === 'Identifier' && key.name);
-
-		if (!name) return;
+		const name = get_name(key);
+		if (name === null) return;
 
 		const rune = get_rune(value, context.state.scope);
 
