@@ -110,6 +110,10 @@ export function ClassBody(node, context) {
 		if (name[0] === '#') {
 			body.push(/** @type {PropertyDefinition} */ (context.visit(definition, child_state)));
 		} else {
+			if (field.node.type === 'AssignmentExpression') {
+				continue;
+			}
+
 			const backing = backing_fields[name];
 			const member = b.member(b.this, backing);
 
