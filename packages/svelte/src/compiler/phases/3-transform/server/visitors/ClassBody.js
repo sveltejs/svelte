@@ -89,7 +89,7 @@ export function ClassBody(node, context) {
 
 	// Replace parts of the class body
 	for (const definition of node.body) {
-		if (definition.type === 'MethodDefinition' || definition.type === 'StaticBlock') {
+		if (definition.type !== 'PropertyDefinition') {
 			body.push(
 				/** @type {MethodDefinition | StaticBlock} */ (context.visit(definition, child_state))
 			);
