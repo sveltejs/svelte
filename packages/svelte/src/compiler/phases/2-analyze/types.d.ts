@@ -1,7 +1,6 @@
 import type { Scope } from '../scope.js';
 import type { ComponentAnalysis, ReactiveStatement } from '../types.js';
 import type { AST, ExpressionMetadata, StateField, ValidatedCompileOptions } from '#compiler';
-import type { ClassBody } from 'estree';
 
 export interface AnalysisState {
 	scope: Scope;
@@ -20,7 +19,7 @@ export interface AnalysisState {
 	/** Information about the current expression/directive/block value */
 	expression: ExpressionMetadata | null;
 
-	/** Used to analyze class state. */
+	/** Used to analyze class state */
 	state_fields: Record<string, StateField> | null;
 
 	function_depth: number;
