@@ -23,11 +23,13 @@ export function CallExpression(node, context) {
 		case '$state.raw': {
 			let should_proxy = rune === '$state' && true; // TODO
 
-			return b.call(
-				'$.state',
-				node.arguments[0] && /** @type {Expression} */ (context.visit(node.arguments[0])),
-				should_proxy && b.true
-			);
+			let value = node.arguments[0] && /** @type {Expression} */ (context.visit(node.arguments[0]));
+
+			if (value && should_proxy) {
+				value = b.call('$.proxy', value);
+			}
+
+			return b.call('$.state', value);
 		}
 
 		case '$derived':
