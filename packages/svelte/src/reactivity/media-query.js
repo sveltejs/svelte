@@ -3,6 +3,19 @@ import { ReactiveValue } from './reactive-value.js';
 
 const parenthesis_regex = /\(.+\)/;
 
+// this keyworks are valid media queries but they need to be without parenthesis
+//
+// eg: new MediaQuery('screen')
+//
+// however because of the auto-parenthesis logic in the constructor since there's no parentehesis
+// in the media query they'll be surrounded by parentehesis
+//
+// however we can check if the media query is only composed of these keywords
+// and skip the auto-parenthesis
+//
+// https://github.com/sveltejs/svelte/issues/15930
+const non_parenthesized_keywords = new Set(['all', 'print', 'screen', 'and', 'or', 'not', 'only']);
+
 /**
  * Creates a media query and provides a `current` property that reflects whether or not it matches.
  *
@@ -27,7 +40,11 @@ export class MediaQuery extends ReactiveValue {
 	 * @param {boolean} [fallback] Fallback value for the server
 	 */
 	constructor(query, fallback) {
-		let final_query = parenthesis_regex.test(query) ? query : `(${query})`;
+		let final_query =
+			parenthesis_regex.test(query) ||
+			query.split(' ').every((keyword) => non_parenthesized_keywords.has(keyword))
+				? query
+				: `(${query})`;
 		const q = window.matchMedia(final_query);
 		super(
 			() => q.matches,
