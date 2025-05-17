@@ -126,6 +126,29 @@ This allows you to create _wrapper components_ that augment elements ([demo](/pl
 </Button>
 ```
 
+### Converting actions to attachments
+
+If you want to use this functionality on Components but you are using a library that only provides actions you can use the `fromAction` utility exported from `svelte/attachments` to convert between the two.
+
+This function accept an action as the first argument and a function returning the arguments of the action as the second argument and returns an attachment.
+
+```svelte
+<script>
+	import Button from "./Button.svelte";
+	import { log } from "log-my-number";
+	import { fromAction } from "svelte/attachments";
+
+	let count = $state(0);
+</script>
+
+<Button
+	onclick={() => count++}
+	{@attach fromAction(log, () => count)}
+>
+	{count}
+</Button>
+```
+
 ## Creating attachments programmatically
 
 To add attachments to an object that will be spread onto a component or element, use [`createAttachmentKey`](svelte-attachments#createAttachmentKey).
