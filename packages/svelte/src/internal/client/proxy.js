@@ -12,8 +12,24 @@ import { state as source, set } from './reactivity/sources.js';
 import { STATE_SYMBOL } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
+import * as w from './warnings.js';
 import { get_stack } from './dev/tracing.js';
 import { tracing_mode_flag } from '../flags/index.js';
+
+/**
+ * @param {unknown} value
+ * @returns {boolean}
+ */
+function should_proxy(value) {
+	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {
+		return false;
+	}
+	const prototype = get_prototype_of(value);
+	if (prototype !== object_prototype && prototype !== array_prototype) {
+		return false;
+	}
+	return true;
+}
 
 /**
  * @template T
@@ -22,13 +38,7 @@ import { tracing_mode_flag } from '../flags/index.js';
  */
 export function proxy(value) {
 	// if non-proxyable, or is already a proxy, return `value`
-	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {
-		return value;
-	}
-
-	const prototype = get_prototype_of(value);
-
-	if (prototype !== object_prototype && prototype !== array_prototype) {
+	if (!should_proxy(value)) {
 		return value;
 	}
 
@@ -280,6 +290,21 @@ export function proxy(value) {
 			e.state_prototype_fixed();
 		}
 	});
+}
+
+/**
+ * @template T
+ * @param {T} value
+ * @returns {T | void}
+ */
+export function return_proxy(value) {
+	if (should_proxy(value)) {
+		return proxy(value);
+	} else if (DEV && !(typeof value === 'object' && value !== null && STATE_SYMBOL in value)) {
+		// if the argument passed was already a proxy, we don't warn
+		w.state_return_not_proxyable();
+	}
+	return value;
 }
 
 /**

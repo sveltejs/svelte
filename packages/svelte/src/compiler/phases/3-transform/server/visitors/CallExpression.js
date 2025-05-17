@@ -1,4 +1,4 @@
-/** @import { CallExpression, Expression } from 'estree' */
+/** @import { ArrowFunctionExpression, CallExpression, Expression } from 'estree' */
 /** @import { Context } from '../types.js' */
 import { is_ignored } from '../../../../state.js';
 import * as b from '#compiler/builders';
@@ -35,6 +35,18 @@ export function CallExpression(node, context) {
 
 	if (rune === '$inspect' || rune === '$inspect().with') {
 		return transform_inspect_rune(node, context);
+	}
+
+	if (
+		rune === '$state' &&
+		(context.path.at(-1)?.type === 'ReturnStatement' ||
+			(context.path.at(-1)?.type === 'ArrowFunctionExpression' &&
+				/** @type {ArrowFunctionExpression} */ (context.path.at(-1)).body === node))
+	) {
+		if (node.arguments[0]) {
+			return context.visit(node.arguments[0]);
+		}
+		return b.void0;
 	}
 
 	context.next();

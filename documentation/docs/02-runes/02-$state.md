@@ -65,6 +65,19 @@ let { done, text } = todos[0];
 todos[0].done = !todos[0].done;
 ```
 
+You can also use `$state` in return statements to proxy their argument:
+
+```js
+function createCounter() {
+	return $state({
+		count: 0,
+		increment() {
+			this.count++;
+		}
+	});
+}
+```
+
 ### Classes
 
 You can also use `$state` in class fields (whether public or private):

@@ -112,6 +112,20 @@ export function CallExpression(node, context) {
 		}
 
 		case '$state':
+			if (
+				(!(parent.type === 'VariableDeclarator' || parent.type === 'ReturnStatement') ||
+					get_parent(context.path, -3).type === 'ConstTag') &&
+				!(parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) &&
+				!(parent.type === 'ArrowFunctionExpression' && parent.body === node)
+			) {
+				e.state_invalid_placement(node, rune);
+			}
+
+			if (node.arguments.length > 1) {
+				e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
+			}
+
+			break;
 		case '$state.raw':
 		case '$derived':
 		case '$derived.by':

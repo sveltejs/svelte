@@ -4,12 +4,14 @@ import { dev, is_ignored } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 import { transform_inspect_rune } from '../../utils.js';
+import { should_proxy } from '../utils.js';
 
 /**
  * @param {CallExpression} node
  * @param {Context} context
  */
 export function CallExpression(node, context) {
+	const parent = context.path.at(-1);
 	switch (get_rune(node, context.state.scope)) {
 		case '$host':
 			return b.id('$$props.$$host');
@@ -33,6 +35,18 @@ export function CallExpression(node, context) {
 		case '$inspect':
 		case '$inspect().with':
 			return transform_inspect_rune(node, context);
+		case '$state':
+			if (
+				parent?.type === 'ReturnStatement' ||
+				(parent?.type === 'ArrowFunctionExpression' && parent.body === node)
+			) {
+				if (node.arguments[0]) {
+					return b.call(
+						'$.return_proxy',
+						/** @type {Expression} */ (context.visit(node.arguments[0] ?? b.void0))
+					);
+				}
+			}
 	}
 
 	if (
