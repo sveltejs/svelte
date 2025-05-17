@@ -3,6 +3,8 @@
 /** @import { Context, ServerTransformState } from '../types.js' */
 import * as b from '#compiler/builders';
 import { build_assignment_value } from '../../../../utils/ast.js';
+import { get_name } from '../../../nodes.js';
+import { get_rune } from '../../../scope.js';
 import { visit_assignment_expression } from '../../shared/assignments.js';
 
 /**
@@ -22,6 +24,32 @@ export function AssignmentExpression(node, context) {
  * @returns {Expression | null}
  */
 function build_assignment(operator, left, right, context) {
+	if (context.state.analysis.runes && left.type === 'MemberExpression') {
+		const name = get_name(left.property);
+
+		if (name !== null) {
+			// special case — state declaration in class constructor
+			const ancestor = context.path.at(-4);
+
+			if (ancestor?.type === 'MethodDefinition' && ancestor.kind === 'constructor') {
+				const rune = get_rune(right, context.state.scope);
+
+				if (rune) {
+					const key =
+						left.property.type === 'PrivateIdentifier' || rune === '$state' || rune === '$state.raw'
+							? left.property
+							: context.state.state_fields[name].key;
+
+					return b.assignment(
+						operator,
+						b.member(b.this, key, key.type === 'Literal'),
+						/** @type {Expression} */ (context.visit(right))
+					);
+				}
+			}
+		}
+	}
+
 	let object = left;
 
 	while (object.type === 'MemberExpression') {

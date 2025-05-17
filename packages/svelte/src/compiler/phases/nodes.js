@@ -1,4 +1,6 @@
+/** @import { Expression, PrivateIdentifier } from 'estree' */
 /** @import { AST, ExpressionMetadata } from '#compiler' */
+
 /**
  * All nodes that can appear elsewhere than the top level, have attributes and can contain children
  */
@@ -63,4 +65,15 @@ export function create_expression_metadata() {
 		has_state: false,
 		has_call: false
 	};
+}
+
+/**
+ * @param {Expression | PrivateIdentifier} node
+ */
+export function get_name(node) {
+	if (node.type === 'Literal') return String(node.value);
+	if (node.type === 'PrivateIdentifier') return '#' + node.name;
+	if (node.type === 'Identifier') return node.name;
+
+	return null;
 }

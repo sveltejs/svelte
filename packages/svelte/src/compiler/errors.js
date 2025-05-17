@@ -105,6 +105,15 @@ export function constant_binding(node, thing) {
 }
 
 /**
+ * A state field declaration in a constructor must be the first assignment, and the only one that uses a rune
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function constructor_state_reassignment(node) {
+	e(node, 'constructor_state_reassignment', `A state field declaration in a constructor must be the first assignment, and the only one that uses a rune\nhttps://svelte.dev/e/constructor_state_reassignment`);
+}
+
+/**
  * `%name%` has already been declared
  * @param {null | number | NodeLike} node
  * @param {string} name
@@ -471,13 +480,13 @@ export function state_invalid_export(node) {
 }
 
 /**
- * `%rune%(...)` can only be used as a variable declaration initializer or a class field
+ * `%rune%(...)` can only be used as a variable declaration initializer, a class field declaration, or the first assignment to a class field at the top level of the constructor.
  * @param {null | number | NodeLike} node
  * @param {string} rune
  * @returns {never}
  */
 export function state_invalid_placement(node, rune) {
-	e(node, 'state_invalid_placement', `\`${rune}(...)\` can only be used as a variable declaration initializer or a class field\nhttps://svelte.dev/e/state_invalid_placement`);
+	e(node, 'state_invalid_placement', `\`${rune}(...)\` can only be used as a variable declaration initializer, a class field declaration, or the first assignment to a class field at the top level of the constructor.\nhttps://svelte.dev/e/state_invalid_placement`);
 }
 
 /**

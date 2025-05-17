@@ -11,6 +11,8 @@ import { dev, locate_node } from '../../../../state.js';
 import { should_proxy } from '../utils.js';
 import { visit_assignment_expression } from '../../shared/assignments.js';
 import { validate_mutation } from './shared/utils.js';
+import { get_rune } from '../../../scope.js';
+import { get_name } from '../../../nodes.js';
 
 /**
  * @param {AssignmentExpression} node
@@ -50,25 +52,47 @@ const callees = {
  * @returns {Expression | null}
  */
 function build_assignment(operator, left, right, context) {
-	// Handle class private/public state assignment cases
-	if (
-		context.state.analysis.runes &&
-		left.type === 'MemberExpression' &&
-		left.property.type === 'PrivateIdentifier'
-	) {
-		const private_state = context.state.private_state.get(left.property.name);
+	if (context.state.analysis.runes && left.type === 'MemberExpression') {
+		const name = get_name(left.property);
 
-		if (private_state !== undefined) {
-			let value = /** @type {Expression} */ (
-				context.visit(build_assignment_value(operator, left, right))
-			);
+		if (name !== null) {
+			// special case — state declaration in class constructor
+			const ancestor = context.path.at(-4);
 
-			const needs_proxy =
-				private_state.kind === 'state' &&
-				is_non_coercive_operator(operator) &&
-				should_proxy(value, context.state.scope);
+			if (ancestor?.type === 'MethodDefinition' && ancestor.kind === 'constructor') {
+				const rune = get_rune(right, context.state.scope);
 
-			return b.call('$.set', left, value, needs_proxy && b.true);
+				if (rune) {
+					const child_state = {
+						...context.state,
+						in_constructor: rune !== '$derived' && rune !== '$derived.by'
+					};
+
+					return b.assignment(
+						operator,
+						b.member(b.this, context.state.state_fields[name].key),
+						/** @type {Expression} */ (context.visit(right, child_state))
+					);
+				}
+			}
+
+			// special case — assignment to private state field
+			if (left.property.type === 'PrivateIdentifier') {
+				const field = context.state.state_fields[name];
+
+				if (field) {
+					let value = /** @type {Expression} */ (
+						context.visit(build_assignment_value(operator, left, right))
+					);
+
+					const needs_proxy =
+						field.type === '$state' &&
+						is_non_coercive_operator(operator) &&
+						should_proxy(value, context.state.scope);
+
+					return b.call('$.set', left, value, needs_proxy && b.true);
+				}
+			}
 		}
 	}
 
