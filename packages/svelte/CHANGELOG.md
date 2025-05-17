@@ -1,5 +1,13 @@
 # svelte
 
+## 5.30.2
+
+### Patch Changes
+
+- fix: falsy attachments types ([#15939](https://github.com/sveltejs/svelte/pull/15939))
+
+- fix: handle more hydration mismatches ([#15851](https://github.com/sveltejs/svelte/pull/15851))
+
 ## 5.30.1
 
 ### Patch Changes
