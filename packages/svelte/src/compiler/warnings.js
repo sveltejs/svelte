@@ -114,6 +114,7 @@ export const codes = [
 	'bind_invalid_each_rest',
 	'block_empty',
 	'component_name_lowercase',
+	'element_implicitly_closed',
 	'element_invalid_self_closing_tag',
 	'event_directive_deprecated',
 	'node_invalid_placement_ssr',
@@ -744,6 +745,15 @@ export function block_empty(node) {
  */
 export function component_name_lowercase(node, name) {
 	w(node, 'component_name_lowercase', `\`<${name}>\` will be treated as an HTML element unless it begins with a capital letter\nhttps://svelte.dev/e/component_name_lowercase`);
+}
+
+/**
+ * The tag `<%name%>` was implicitly closed by the parent or a next element. This may cause DOM structure being other than expected one.
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function element_implicitly_closed(node, name) {
+	w(node, 'element_implicitly_closed', `The tag \`<${name}>\` was implicitly closed by the parent or a next element. This may cause DOM structure being other than expected one.\nhttps://svelte.dev/e/element_implicitly_closed`);
 }
 
 /**

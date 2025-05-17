@@ -632,6 +632,12 @@ In some situations a selector may target an element that is not 'visible' to the
 </style>
 ```
 
+### element_implicitly_closed
+
+```
+The tag `<%name%>` was implicitly closed by the parent or a next element. This may cause DOM structure being other than expected one.
+```
+
 ### element_invalid_self_closing_tag
 
 ```
