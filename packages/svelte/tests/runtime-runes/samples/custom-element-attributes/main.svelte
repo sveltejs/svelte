@@ -1,18 +1,20 @@
 <script module>
-    customElements.define('value-element', class extends HTMLElement {
+	if(!customElements.get('value-element')) {
+		customElements.define('value-element', class extends HTMLElement {
 
-        constructor() {
-            super();
-            this.attachShadow({ mode: 'open' });
-        }
+			constructor() {
+				super();
+				this.attachShadow({ mode: 'open' });
+			}
 
-        set value(v) {
-            if (this.__value !== v) {
-                this.__value = v;
-                this.shadowRoot.innerHTML = `<span>${v}</span>`;
-            }
-        }
-    });
+			set value(v) {
+				if (this.__value !== v) {
+					this.__value = v;
+					this.shadowRoot.innerHTML = `<span>${v}</span>`;
+				}
+			}
+		});
+	}
 </script>
 
 <my-element string="test" object={{ test: true }}></my-element>

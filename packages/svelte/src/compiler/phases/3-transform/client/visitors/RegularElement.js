@@ -52,7 +52,10 @@ export function RegularElement(node, context) {
 	}
 
 	if (node.name === 'noscript') {
-		context.state.template.push('<noscript></noscript>');
+		context.state.template.push({
+			kind: 'create_element',
+			args: ['noscript']
+		});
 		return;
 	}
 
@@ -72,7 +75,14 @@ export function RegularElement(node, context) {
 		context.state.metadata.context.template_contains_script_tag = true;
 	}
 
-	context.state.template.push(`<${node.name}`);
+	context.state.template.push({
+		kind: 'create_element',
+		args: [node.name],
+		metadata: {
+			svg: node.metadata.svg,
+			mathml: node.metadata.mathml
+		}
+	});
 
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
 	const attributes = [];
@@ -110,7 +120,17 @@ export function RegularElement(node, context) {
 					const { value } = build_attribute_value(attribute.value, context);
 
 					if (value.type === 'Literal' && typeof value.value === 'string') {
-						context.state.template.push(` is="${escape_html(value.value, true)}"`);
+						context.state.template.push({
+							kind: 'set_prop',
+							args: [
+								'is',
+								// if we are using the functional template mode we don't want to escape since we will
+								// create a text node from it which is already escaped
+								context.state.is_functional_template_mode
+									? value.value
+									: escape_html(value.value, true)
+							]
+						});
 						continue;
 					}
 				}
@@ -290,13 +310,22 @@ export function RegularElement(node, context) {
 				}
 
 				if (name !== 'class' || value) {
-					context.state.template.push(
-						` ${attribute.name}${
+					context.state.template.push({
+						kind: 'set_prop',
+						args: [attribute.name].concat(
 							is_boolean_attribute(name) && value === true
-								? ''
-								: `="${value === true ? '' : escape_html(value, true)}"`
-						}`
-					);
+								? []
+								: [
+										value === true
+											? ''
+											: // if we are using the functional template mode we don't want to escape since we will
+												// create a text node from it which is already escaped
+												context.state.is_functional_template_mode
+												? value
+												: escape_html(value, true)
+									]
+						)
+					});
 				}
 			} else if (name === 'autofocus') {
 				let { value } = build_attribute_value(attribute.value, context);
@@ -328,8 +357,7 @@ export function RegularElement(node, context) {
 	) {
 		context.state.after_update.push(b.stmt(b.call('$.replay_events', node_id)));
 	}
-
-	context.state.template.push('>');
+	context.state.template.push({ kind: 'push_element' });
 
 	const metadata = {
 		...context.state.metadata,
@@ -355,7 +383,8 @@ export function RegularElement(node, context) {
 		locations: [],
 		scope: /** @type {Scope} */ (context.state.scopes.get(node.fragment)),
 		preserve_whitespace:
-			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea'
+			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea',
+		is_functional_template_mode: context.state.is_functional_template_mode
 	};
 
 	const { hoisted, trimmed } = clean_nodes(
@@ -365,7 +394,8 @@ export function RegularElement(node, context) {
 		state.metadata.namespace,
 		state,
 		node.name === 'script' || state.preserve_whitespace,
-		state.options.preserveComments
+		state.options.preserveComments,
+		state.is_functional_template_mode
 	);
 
 	/** @type {typeof state} */
@@ -450,10 +480,7 @@ export function RegularElement(node, context) {
 		// @ts-expect-error
 		location.push(state.locations);
 	}
-
-	if (!is_void(node.name)) {
-		context.state.template.push(`</${node.name}>`);
-	}
+	context.state.template.push({ kind: 'pop_element' });
 }
 
 /**
