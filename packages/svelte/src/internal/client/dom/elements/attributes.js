@@ -448,7 +448,7 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 	}
 
 	for (let symbol of Object.getOwnPropertySymbols(next)) {
-		if (symbol.description === ATTACHMENT_KEY && !(key in prev)) {
+		if (symbol.description === ATTACHMENT_KEY && (prev == undefined || !(symbol in prev))) {
 			attach(element, () => next[symbol]);
 		}
 	}
