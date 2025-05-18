@@ -556,6 +556,12 @@ Elements with ARIA roles must use a valid, non-abstract ARIA role. A reference t
 <div role="toooltip"></div>
 ```
 
+### attachment_legacy_member_access
+
+```
+Using `@attach` with a function from an object in legacy mode can cause unnecessary reruns of the attachment function if you mutate that object.
+```
+
 ### attribute_avoid_is
 
 ```

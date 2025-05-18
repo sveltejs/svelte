@@ -106,6 +106,7 @@ export const codes = [
 	'state_referenced_locally',
 	'store_rune_conflict',
 	'css_unused_selector',
+	'attachment_legacy_member_access',
 	'attribute_avoid_is',
 	'attribute_global_event_reference',
 	'attribute_illegal_colon',
@@ -675,6 +676,14 @@ export function store_rune_conflict(node, name) {
  */
 export function css_unused_selector(node, name) {
 	w(node, 'css_unused_selector', `Unused CSS selector "${name}"\nhttps://svelte.dev/e/css_unused_selector`);
+}
+
+/**
+ * Using `@attach` with a function from an object in legacy mode can cause unnecessary reruns of the attachment function if you mutate that object.
+ * @param {null | NodeLike} node
+ */
+export function attachment_legacy_member_access(node) {
+	w(node, 'attachment_legacy_member_access', `Using \`@attach\` with a function from an object can cause unnecessary reruns of the attachment function if you mutate that object in legacy mode.\nhttps://svelte.dev/e/attachment_legacy_member_access`);
 }
 
 /**

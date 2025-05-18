@@ -1,3 +1,7 @@
+## attachment_legacy_member_access
+
+> Using `@attach` with a function from an object in legacy mode can cause unnecessary reruns of the attachment function if you mutate that object.
+
 ## attribute_avoid_is
 
 > The "is" attribute is not supported cross-browser and should be avoided
