@@ -18,6 +18,7 @@ import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
 import { ignore_map, ignore_stack, pop_ignore, push_ignore } from '../../state.js';
 import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
+import { AttachTag } from './visitors/AttachTag.js';
 import { Attribute } from './visitors/Attribute.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
 import { BindDirective } from './visitors/BindDirective.js';
@@ -43,6 +44,7 @@ import { ImportDeclaration } from './visitors/ImportDeclaration.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { LetDirective } from './visitors/LetDirective.js';
+import { Literal } from './visitors/Literal.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
 import { NewExpression } from './visitors/NewExpression.js';
 import { OnDirective } from './visitors/OnDirective.js';
@@ -63,6 +65,7 @@ import { SvelteSelf } from './visitors/SvelteSelf.js';
 import { SvelteWindow } from './visitors/SvelteWindow.js';
 import { SvelteBoundary } from './visitors/SvelteBoundary.js';
 import { TaggedTemplateExpression } from './visitors/TaggedTemplateExpression.js';
+import { TemplateElement } from './visitors/TemplateElement.js';
 import { Text } from './visitors/Text.js';
 import { TitleElement } from './visitors/TitleElement.js';
 import { TransitionDirective } from './visitors/TransitionDirective.js';
@@ -131,6 +134,7 @@ const visitors = {
 	},
 	ArrowFunctionExpression,
 	AssignmentExpression,
+	AttachTag,
 	Attribute,
 	AwaitBlock,
 	BindDirective,
@@ -156,6 +160,7 @@ const visitors = {
 	KeyBlock,
 	LabeledStatement,
 	LetDirective,
+	Literal,
 	MemberExpression,
 	NewExpression,
 	OnDirective,
@@ -176,6 +181,7 @@ const visitors = {
 	SvelteWindow,
 	SvelteBoundary,
 	TaggedTemplateExpression,
+	TemplateElement,
 	Text,
 	TransitionDirective,
 	TitleElement,

@@ -1,5 +1,77 @@
 # svelte
 
+## 5.30.2
+
+### Patch Changes
+
+- fix: falsy attachments types ([#15939](https://github.com/sveltejs/svelte/pull/15939))
+
+- fix: handle more hydration mismatches ([#15851](https://github.com/sveltejs/svelte/pull/15851))
+
+## 5.30.1
+
+### Patch Changes
+
+- fix: add `typeParams` to `SnippetBlock` for legacy parser ([#15921](https://github.com/sveltejs/svelte/pull/15921))
+
+## 5.30.0
+
+### Minor Changes
+
+- feat: allow generics on snippets ([#15915](https://github.com/sveltejs/svelte/pull/15915))
+
+## 5.29.0
+
+### Minor Changes
+
+- feat: attachments ([#15000](https://github.com/sveltejs/svelte/pull/15000))
+
+## 5.28.7
+
+### Patch Changes
+
+- fix: remove unncessary guards that require CSP privilege when removing event attributes ([#15846](https://github.com/sveltejs/svelte/pull/15846))
+
+- fix: rewrite destructuring logic to handle iterators ([#15813](https://github.com/sveltejs/svelte/pull/15813))
+
+## 5.28.6
+
+### Patch Changes
+
+- fix: use `transform.read` for `ownership_validator.mutation` array ([#15848](https://github.com/sveltejs/svelte/pull/15848))
+
+- fix: don't redeclare `$slots` ([#15849](https://github.com/sveltejs/svelte/pull/15849))
+
+## 5.28.5
+
+### Patch Changes
+
+- fix: proxify the value in assignment shorthands to the private field ([#15862](https://github.com/sveltejs/svelte/pull/15862))
+
+- fix: more frequently update `bind:buffered` to actual value ([#15874](https://github.com/sveltejs/svelte/pull/15874))
+
+## 5.28.4
+
+### Patch Changes
+
+- fix: treat nullish expression as empty string ([#15901](https://github.com/sveltejs/svelte/pull/15901))
+
+- fix: prevent invalid BigInt calls from blowing up at compile time ([#15900](https://github.com/sveltejs/svelte/pull/15900))
+
+- fix: warn on bidirectional control characters ([#15893](https://github.com/sveltejs/svelte/pull/15893))
+
+- fix: emit right error for a shadowed invalid rune ([#15892](https://github.com/sveltejs/svelte/pull/15892))
+
+## 5.28.3
+
+### Patch Changes
+
+- chore: avoid microtasks when flushing sync ([#15895](https://github.com/sveltejs/svelte/pull/15895))
+
+- fix: improve error message for migration errors when slot would be renamed ([#15841](https://github.com/sveltejs/svelte/pull/15841))
+
+- fix: allow characters in the supplementary special-purpose plane ([#15823](https://github.com/sveltejs/svelte/pull/15823))
+
 ## 5.28.2
 
 ### Patch Changes

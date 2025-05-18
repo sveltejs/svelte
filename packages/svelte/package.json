@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.28.2",
+  "version": "5.30.2",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -33,6 +33,10 @@
     "./animate": {
       "types": "./types/index.d.ts",
       "default": "./src/animate/index.js"
+    },
+    "./attachments": {
+      "types": "./types/index.d.ts",
+      "default": "./src/attachments/index.js"
     },
     "./compiler": {
       "types": "./types/index.d.ts",
