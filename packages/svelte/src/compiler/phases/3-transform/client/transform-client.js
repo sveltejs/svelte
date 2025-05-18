@@ -36,6 +36,7 @@ import { KeyBlock } from './visitors/KeyBlock.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { LetDirective } from './visitors/LetDirective.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
+import { ObjectExpression } from './visitors/ObjectExpression.js';
 import { OnDirective } from './visitors/OnDirective.js';
 import { Program } from './visitors/Program.js';
 import { RegularElement } from './visitors/RegularElement.js';
@@ -112,6 +113,7 @@ const visitors = {
 	LabeledStatement,
 	LetDirective,
 	MemberExpression,
+	ObjectExpression,
 	OnDirective,
 	Program,
 	RegularElement,
