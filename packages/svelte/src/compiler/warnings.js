@@ -683,7 +683,7 @@ export function css_unused_selector(node, name) {
  * @param {null | NodeLike} node
  */
 export function attachment_legacy_member_access(node) {
-	w(node, 'attachment_legacy_member_access', `Using \`@attach\` with a function from an object can cause unnecessary reruns of the attachment function if you mutate that object in legacy mode.\nhttps://svelte.dev/e/attachment_legacy_member_access`);
+	w(node, 'attachment_legacy_member_access', `Using \`@attach\` with a function from an object in legacy mode can cause unnecessary reruns of the attachment function if you mutate that object.\nhttps://svelte.dev/e/attachment_legacy_member_access`);
 }
 
 /**
