@@ -171,6 +171,17 @@ export function state_proxy_equality_mismatch(operator) {
 }
 
 /**
+ * The argument passed to a `$state` call in a return statement must be a plain object or array. Otherwise, the `$state` call will have no effect
+ */
+export function state_return_not_proxyable() {
+	if (DEV) {
+		console.warn(`%c[svelte] state_return_not_proxyable\n%cThe argument passed to a \`$state\` call in a return statement must be a plain object or array. Otherwise, the \`$state\` call will have no effect\nhttps://svelte.dev/e/state_return_not_proxyable`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/state_return_not_proxyable`);
+	}
+}
+
+/**
  * The `slide` transition does not work correctly for elements with `display: %value%`
  * @param {string} value
  */

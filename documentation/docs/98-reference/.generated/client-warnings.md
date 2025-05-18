@@ -219,6 +219,12 @@ Reactive `$state(...)` proxies and the values they proxy have different identiti
 
 To resolve this, ensure you're comparing values where both values were created with `$state(...)`, or neither were. Note that `$state.raw(...)` will _not_ create a state proxy.
 
+### state_return_not_proxyable
+
+```
+The argument passed to a `$state` call in a return statement must be a plain object or array. Otherwise, the `$state` call will have no effect
+```
+
 ### transition_slide_display
 
 ```
