@@ -26,26 +26,23 @@ export function AssignmentExpression(node, context) {
 function build_assignment(operator, left, right, context) {
 	if (context.state.analysis.runes && left.type === 'MemberExpression') {
 		const name = get_name(left.property);
+		const field = name && context.state.state_fields.get(name);
 
-		if (name !== null) {
-			// special case — state declaration in class constructor
-			const ancestor = context.path.at(-4);
+		// special case — state declaration in class constructor
+		if (field && field.node.type === 'AssignmentExpression' && left === field.node.left) {
+			const rune = get_rune(right, context.state.scope);
 
-			if (ancestor?.type === 'MethodDefinition' && ancestor.kind === 'constructor') {
-				const rune = get_rune(right, context.state.scope);
+			if (rune) {
+				const key =
+					left.property.type === 'PrivateIdentifier' || rune === '$state' || rune === '$state.raw'
+						? left.property
+						: field.key;
 
-				if (rune) {
-					const key =
-						left.property.type === 'PrivateIdentifier' || rune === '$state' || rune === '$state.raw'
-							? left.property
-							: context.state.state_fields[name].key;
-
-					return b.assignment(
-						operator,
-						b.member(b.this, key, key.type === 'Literal'),
-						/** @type {Expression} */ (context.visit(right))
-					);
-				}
+				return b.assignment(
+					operator,
+					b.member(b.this, key, key.type === 'Literal'),
+					/** @type {Expression} */ (context.visit(right))
+				);
 			}
 		}
 	}

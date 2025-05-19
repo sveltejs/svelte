@@ -42,11 +42,7 @@ export function validate_assignment(node, argument, context) {
 				? null
 				: get_name(argument.property);
 
-		const field =
-			name !== null &&
-			context.state.state_fields &&
-			Object.hasOwn(context.state.state_fields, name) &&
-			context.state.state_fields[name];
+		const field = name !== null && context.state.state_fields?.get(name);
 
 		// check we're not assigning to a state field before its declaration in the constructor
 		if (field && field.node.type === 'AssignmentExpression' && node !== field.node) {

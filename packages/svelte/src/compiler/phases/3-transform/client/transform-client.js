@@ -163,7 +163,7 @@ export function client_component(analysis, options) {
 		},
 		events: new Set(),
 		preserve_whitespace: options.preserveWhitespace,
-		state_fields: {},
+		state_fields: new Map(),
 		transform: {},
 		in_constructor: false,
 		instance_level_snippets: [],
@@ -670,7 +670,7 @@ export function client_module(analysis, options) {
 		options,
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
-		state_fields: {},
+		state_fields: new Map(),
 		transform: {},
 		in_constructor: false
 	};

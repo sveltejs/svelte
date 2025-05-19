@@ -30,13 +30,10 @@ export function ClassBody(node, context) {
 		}
 	}
 
-	/** @type {Record<string, StateField>} */
-	const state_fields = {};
+	/** @type {Map<string, StateField>} */
+	const state_fields = new Map();
 
 	context.state.analysis.classes.set(node, state_fields);
-
-	/** @type {string[]} */
-	const seen = [];
 
 	/** @type {MethodDefinition | null} */
 	let constructor = null;
@@ -53,24 +50,22 @@ export function ClassBody(node, context) {
 		const rune = get_rune(value, context.state.scope);
 
 		if (rune && is_state_creation_rune(rune)) {
-			if (seen.includes(name)) {
+			if (state_fields.has(name)) {
 				e.state_field_duplicate(node, name);
 			}
 
-			state_fields[name] = {
+			state_fields.set(name, {
 				node,
 				type: rune,
 				// @ts-expect-error for public state this is filled out in a moment
 				key: key.type === 'PrivateIdentifier' ? key : null,
 				value: /** @type {CallExpression} */ (value)
-			};
-
-			seen.push(name);
+			});
 		}
 	}
 
 	for (const child of node.body) {
-		if (child.type === 'PropertyDefinition' && !child.computed) {
+		if (child.type === 'PropertyDefinition' && !child.computed && !child.static) {
 			handle(child, child.key, child.value);
 		}
 
@@ -94,12 +89,10 @@ export function ClassBody(node, context) {
 		}
 	}
 
-	for (const name in state_fields) {
+	for (const [name, field] of state_fields) {
 		if (name[0] === '#') {
 			continue;
 		}
-
-		const field = state_fields[name];
 
 		let deconflicted = name.replace(regex_invalid_identifier_chars, '_');
 		while (private_ids.includes(deconflicted)) {

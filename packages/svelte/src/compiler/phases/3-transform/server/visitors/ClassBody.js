@@ -21,15 +21,14 @@ export function ClassBody(node, context) {
 
 	const child_state = { ...context.state, state_fields };
 
-	for (const name in state_fields) {
+	for (const [name, field] of state_fields) {
 		if (name[0] === '#') {
 			continue;
 		}
 
-		const field = state_fields[name];
-
 		// insert backing fields for stuff declared in the constructor
 		if (
+			field &&
 			field.node.type === 'AssignmentExpression' &&
 			(field.type === '$derived' || field.type === '$derived.by')
 		) {
@@ -52,12 +51,12 @@ export function ClassBody(node, context) {
 		}
 
 		const name = get_name(definition.key);
-		if (name === null || !Object.hasOwn(state_fields, name)) {
+		const field = name && state_fields.get(name);
+
+		if (!field) {
 			body.push(/** @type {PropertyDefinition} */ (context.visit(definition, child_state)));
 			continue;
 		}
-
-		const field = state_fields[name];
 
 		if (name[0] === '#' || field.type === '$state' || field.type === '$state.raw') {
 			body.push(/** @type {PropertyDefinition} */ (context.visit(definition, child_state)));

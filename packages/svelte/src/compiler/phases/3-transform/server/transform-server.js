@@ -97,7 +97,7 @@ export function server_component(analysis, options) {
 		template: /** @type {any} */ (null),
 		namespace: options.namespace,
 		preserve_whitespace: options.preserveWhitespace,
-		state_fields: {},
+		state_fields: new Map(),
 		skip_hydration_boundaries: false
 	};
 
@@ -393,7 +393,7 @@ export function server_module(analysis, options) {
 		// to be present for `javascript_visitors_legacy` and so is included in module
 		// transform state as well as component transform state
 		legacy_reactive_statements: new Map(),
-		state_fields: {}
+		state_fields: new Map()
 	};
 
 	const module = /** @type {Program} */ (

@@ -1,4 +1,5 @@
 /** @import { CallExpression, ClassBody, MethodDefinition, PropertyDefinition, StaticBlock } from 'estree' */
+/** @import { StateField } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as b from '#compiler/builders';
 import { get_name } from '../../../nodes.js';
@@ -21,12 +22,10 @@ export function ClassBody(node, context) {
 
 	const child_state = { ...context.state, state_fields };
 
-	for (const name in state_fields) {
+	for (const [name, field] of state_fields) {
 		if (name[0] === '#') {
 			continue;
 		}
-
-		const field = state_fields[name];
 
 		// insert backing fields for stuff declared in the constructor
 		if (field.node.type === 'AssignmentExpression') {
@@ -61,12 +60,12 @@ export function ClassBody(node, context) {
 		}
 
 		const name = get_name(definition.key);
-		if (name === null || !Object.hasOwn(state_fields, name)) {
+		const field = name && /** @type {StateField} */ (state_fields.get(name));
+
+		if (!field) {
 			body.push(/** @type {PropertyDefinition} */ (context.visit(definition, child_state)));
 			continue;
 		}
-
-		const field = state_fields[name];
 
 		if (name[0] === '#') {
 			body.push(/** @type {PropertyDefinition} */ (context.visit(definition, child_state)));

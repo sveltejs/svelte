@@ -54,12 +54,11 @@ const callees = {
 function build_assignment(operator, left, right, context) {
 	if (context.state.analysis.runes && left.type === 'MemberExpression') {
 		const name = get_name(left.property);
+		const field = name && context.state.state_fields.get(name);
 
-		if (name !== null) {
+		if (field) {
 			// special case — state declaration in class constructor
-			const ancestor = context.path.at(-4);
-
-			if (ancestor?.type === 'MethodDefinition' && ancestor.kind === 'constructor') {
+			if (field.node.type === 'AssignmentExpression' && left === field.node.left) {
 				const rune = get_rune(right, context.state.scope);
 
 				if (rune) {
@@ -70,7 +69,7 @@ function build_assignment(operator, left, right, context) {
 
 					return b.assignment(
 						operator,
-						b.member(b.this, context.state.state_fields[name].key),
+						b.member(b.this, field.key),
 						/** @type {Expression} */ (context.visit(right, child_state))
 					);
 				}
@@ -78,20 +77,16 @@ function build_assignment(operator, left, right, context) {
 
 			// special case — assignment to private state field
 			if (left.property.type === 'PrivateIdentifier') {
-				const field = context.state.state_fields[name];
+				let value = /** @type {Expression} */ (
+					context.visit(build_assignment_value(operator, left, right))
+				);
 
-				if (field) {
-					let value = /** @type {Expression} */ (
-						context.visit(build_assignment_value(operator, left, right))
-					);
+				const needs_proxy =
+					field.type === '$state' &&
+					is_non_coercive_operator(operator) &&
+					should_proxy(value, context.state.scope);
 
-					const needs_proxy =
-						field.type === '$state' &&
-						is_non_coercive_operator(operator) &&
-						should_proxy(value, context.state.scope);
-
-					return b.call('$.set', left, value, needs_proxy && b.true);
-				}
+				return b.call('$.set', left, value, needs_proxy && b.true);
 			}
 		}
 	}

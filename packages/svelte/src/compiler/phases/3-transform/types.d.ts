@@ -8,5 +8,5 @@ export interface TransformState {
 	readonly scope: Scope;
 	readonly scopes: Map<AST.SvelteNode, Scope>;
 
-	readonly state_fields: Record<string, StateField>;
+	readonly state_fields: Map<string, StateField>;
 }

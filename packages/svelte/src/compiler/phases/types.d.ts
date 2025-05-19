@@ -38,7 +38,7 @@ export interface Analysis {
 	immutable: boolean;
 	tracing: boolean;
 
-	classes: Map<ClassBody, Record<string, StateField>>;
+	classes: Map<ClassBody, Map<string, StateField>>;
 
 	// TODO figure out if we can move this to ComponentAnalysis
 	accessors: boolean;
