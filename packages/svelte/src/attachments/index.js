@@ -34,6 +34,7 @@ export function createAttachmentKey() {
  * Converts an Action into an Attachment keeping the same behavior. It's useful if you want to start using
  * attachments on Components but you have library provided actions.
  * @type {FromAction}
+ * @since 5.32
  */
 export function fromAction(action, /** @type {() => any} */ get_arg = noop) {
 	return (element) => {
