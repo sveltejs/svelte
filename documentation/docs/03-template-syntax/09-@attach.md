@@ -2,7 +2,9 @@
 title: {@attach ...}
 ---
 
-Attachments are functions that run when an element is mounted to the DOM. Optionally, they can return a function that is called when the element is later removed from the DOM.
+Attachments are functions that run in an [effect]($effect) when an element is mounted to the DOM or when [state]($state) read inside the function updates.
+
+Optionally, they can return a function that is called before the attachment re-runs, or after the element is later removed from the DOM.
 
 > [!NOTE]
 > Attachments are available in Svelte 5.29 and newer.
@@ -55,7 +57,7 @@ A useful pattern is for a function, such as `tooltip` in this example, to _retur
 </button>
 ```
 
-Since the `tooltip(content)` expression runs inside an [effect]($effect), the attachment will be destroyed and recreated whenever `content` changes.
+Since the `tooltip(content)` expression runs inside an [effect]($effect), the attachment will be destroyed and recreated whenever `content` changes. The same thing would happen for any state read _inside_ the attachment function when it first runs. (If this isn't what you want, see [Controlling when attachments re-run](#Controlling-when-attachments-re-run).)
 
 ## Inline attachments
 
@@ -124,6 +126,35 @@ This allows you to create _wrapper components_ that augment elements ([demo](/pl
 <Button {@attach tooltip(content)}>
 	Hover me
 </Button>
+```
+
+## Controlling when attachments re-run
+
+Attachments, unlike [actions](use), are fully reactive: `{@attach foo(bar)}` will re-run on changes to `foo` _or_ `bar` (or any state read inside `foo`):
+
+```js
+// @errors: 7006 2304 2552
+function foo(bar) {
+	return (node) => {
+		veryExpensiveSetupWork(node);
+		update(node, bar);
+	};
+}
+```
+
+In the rare case that this is a problem (for example, if `foo` does expensive and unavoidable setup work) consider passing the data inside a function and reading it in a child effect:
+
+```js
+// @errors: 7006 2304 2552
+function foo(+++getBar+++) {
+	return (node) => {
+		veryExpensiveSetupWork(node);
+
++++		$effect(() => {
+			update(node, getBar());
+		});+++
+	}
+}
 ```
 
 ## Creating attachments programmatically
