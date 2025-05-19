@@ -163,7 +163,7 @@ To add attachments to an object that will be spread onto a component or element,
 
 ## Converting actions to attachments
 
-If you want to use this functionality on components but you are using a library that only provides actions you can use the [`fromAction`](svelte/attachments#fromAction) utility.
+If you want to use this functionality on components but you are using a library that only provides actions you can use the [`fromAction`](svelte-attachments#fromAction) utility.
 
 This function accept an action as the first argument and a function returning the arguments of the action as the second argument and returns an attachment.
 
