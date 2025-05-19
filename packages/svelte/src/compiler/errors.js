@@ -462,6 +462,25 @@ export function snippet_parameter_assignment(node) {
 }
 
 /**
+ * `%name%` has already been declared on this class
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function state_field_duplicate(node, name) {
+	e(node, 'state_field_duplicate', `\`${name}\` has already been declared on this class\nhttps://svelte.dev/e/state_field_duplicate`);
+}
+
+/**
+ * Cannot assign to a state field before its declaration
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function state_field_invalid_assignment(node) {
+	e(node, 'state_field_invalid_assignment', `Cannot assign to a state field before its declaration\nhttps://svelte.dev/e/state_field_invalid_assignment`);
+}
+
+/**
  * Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -471,13 +490,13 @@ export function state_invalid_export(node) {
 }
 
 /**
- * `%rune%(...)` can only be used as a variable declaration initializer or a class field
+ * `%rune%(...)` can only be used as a variable declaration initializer, a class field declaration, or the first assignment to a class field at the top level of the constructor.
  * @param {null | number | NodeLike} node
  * @param {string} rune
  * @returns {never}
  */
 export function state_invalid_placement(node, rune) {
-	e(node, 'state_invalid_placement', `\`${rune}(...)\` can only be used as a variable declaration initializer or a class field\nhttps://svelte.dev/e/state_invalid_placement`);
+	e(node, 'state_invalid_placement', `\`${rune}(...)\` can only be used as a variable declaration initializer, a class field declaration, or the first assignment to a class field at the top level of the constructor.\nhttps://svelte.dev/e/state_invalid_placement`);
 }
 
 /**
