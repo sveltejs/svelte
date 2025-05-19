@@ -1,5 +1,11 @@
 # svelte
 
+## 5.31.1
+
+### Patch Changes
+
+- fix: avoid auto-parenthesis for special-keywords-only `MediaQuery` ([#15937](https://github.com/sveltejs/svelte/pull/15937))
+
 ## 5.31.0
 
 ### Minor Changes
