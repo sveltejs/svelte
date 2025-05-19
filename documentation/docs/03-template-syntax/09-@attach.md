@@ -133,6 +133,7 @@ This allows you to create _wrapper components_ that augment elements ([demo](/pl
 Attachments, unlike [actions](use), are fully reactive: `{@attach foo(bar)}` will re-run on changes to `foo` _or_ `bar` (or any state read inside `foo`):
 
 ```js
+// @errors: 7006 2304 2552
 function foo(bar) {
 	return (node) => {
 		veryExpensiveSetupWork(node);
@@ -144,6 +145,7 @@ function foo(bar) {
 In the rare case that this is a problem (for example, if `foo` does expensive and unavoidable setup work) consider passing the data inside a function and reading it in a child effect:
 
 ```js
+// @errors: 7006 2304 2552
 function foo(+++getBar+++) {
 	return (node) => {
 		veryExpensiveSetupWork(node);
