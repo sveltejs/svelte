@@ -1,4 +1,7 @@
-/** @import { FromAction } from './public.js' */
+/**
+ * @import { Attachment } from "./public.js";
+ * @import { ActionReturn } from "svelte/action";
+ */
 import { noop, render_effect } from 'svelte/internal/client';
 import { ATTACHMENT_KEY } from '../constants.js';
 import { untrack } from 'svelte';
@@ -29,6 +32,22 @@ import { teardown } from '../internal/client/reactivity/effects.js';
 export function createAttachmentKey() {
 	return Symbol(ATTACHMENT_KEY);
 }
+
+/**
+ * @template {EventTarget} [Element=HTMLElement]
+ * @template {*} [Par=unknown]
+ * @typedef {<Node extends Element, Parameter extends Par>(
+ * ...args: (undefined extends NoInfer<Parameter>
+ * ? [
+ * action: (node: Node, parameter?: never) => void | ActionReturn<Parameter>,
+ * parameter?: () => NoInfer<Parameter>
+ * ]
+ * : [
+ * action: (node: Node, parameter: Parameter) => void | ActionReturn<Parameter>,
+ * parameter: () => NoInfer<Parameter>
+ * ])
+ * ) => Attachment<Node>} FromAction
+ */
 
 /**
  * Converts an Action into an Attachment keeping the same behavior. It's useful if you want to start using
