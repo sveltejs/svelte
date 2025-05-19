@@ -11,12 +11,7 @@ const [, , watch_flag] = process.argv;
 
 const watch = watch_flag === '-w';
 
-/**
- * @type {((value?: any) => void) | undefined}
- */
-let resolve_writing_promise;
-
-async function run() {
+function run() {
 	/** @type {Record<string, Record<string, { messages: string[], details: string | null }>>} */
 	const messages = {};
 	const seen = new Set();
@@ -67,18 +62,10 @@ async function run() {
 
 			sorted.sort((a, b) => (a.code < b.code ? -1 : 1));
 
-			const writing_promise = watch
-				? new Promise((resolve) => {
-						resolve_writing_promise = resolve;
-					})
-				: Promise.resolve();
-
 			fs.writeFileSync(
 				`messages/${category}/${file}`,
 				sorted.map((x) => x._.trim()).join('\n\n') + '\n'
 			);
-
-			await writing_promise;
 		}
 
 		fs.writeFileSync(
@@ -435,15 +422,10 @@ async function run() {
 
 if (watch) {
 	fs.watch('messages', { recursive: true }, () => {
-		if (resolve_writing_promise) {
-			resolve_writing_promise();
-			resolve_writing_promise = undefined;
-			return;
-		}
 		// eslint-disable-next-line no-console
 		console.log('Regenerating messages...');
 		run();
 	});
 }
 
-await run();
+run();
