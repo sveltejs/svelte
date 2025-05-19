@@ -105,12 +105,13 @@ export function constant_binding(node, thing) {
 }
 
 /**
- * A state field declaration in a constructor must be the first assignment, and the only one that uses a rune
+ * `%name%` has already been declared on this class
  * @param {null | number | NodeLike} node
+ * @param {string} name
  * @returns {never}
  */
-export function constructor_state_reassignment(node) {
-	e(node, 'constructor_state_reassignment', `A state field declaration in a constructor must be the first assignment, and the only one that uses a rune\nhttps://svelte.dev/e/constructor_state_reassignment`);
+export function state_field_duplicate(node, name) {
+	e(node, 'state_field_duplicate', `\`${name}\` has already been declared on this class\nhttps://svelte.dev/e/state_field_duplicate`);
 }
 
 /**

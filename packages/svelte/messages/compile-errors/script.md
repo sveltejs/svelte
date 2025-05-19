@@ -10,35 +10,6 @@
 
 > Cannot bind to %thing%
 
-## constructor_state_reassignment
-
-> A state field declaration in a constructor must be the first assignment, and the only one that uses a rune
-
-[State fields]($state#Classes) can be declared as normal class fields or inside the constructor, in which case the declaration must be the _first_ assignment.
-Assignments thereafter must not use the rune.
-
-```ts
-constructor() {
-	this.count = $state(0);
-	this.count = $state(1); // invalid, assigning to the same property with `$state` again
-}
-
-constructor() {
-	this.count = $state(0);
-	this.count = $state.raw(1); // invalid, assigning to the same property with a different rune
-}
-
-constructor() {
-	this.count = 0;
-	this.count = $state(1); // invalid, this property was created as a regular property, not state
-}
-
-constructor() {
-	this.count = $state(0);
-	this.count = 1; // valid, this is setting the state that has already been declared
-}
-```
-
 ## declaration_duplicate
 
 > `%name%` has already been declared
@@ -240,6 +211,30 @@ It's possible to export a snippet from a `<script module>` block, but only if it
 ## snippet_parameter_assignment
 
 > Cannot reassign or bind to snippet parameter
+
+## state_field_duplicate
+
+> `%name%` has already been declared on this class
+
+An assignment to a class field that uses a `$state` or `$derived` rune is considered a _state field declaration_. The declaration can happen in the class body...
+
+```js
+class Counter {
+	count = $state(0);
+}
+```
+
+...or inside the constructor...
+
+```js
+class Counter {
+	constructor() {
+		this.count = $state(0);
+	}
+}
+```
+
+...but it can only happen once.
 
 ## state_invalid_export
 

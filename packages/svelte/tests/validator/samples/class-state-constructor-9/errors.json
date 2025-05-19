@@ -1,7 +1,7 @@
 [
 	{
-		"code": "constructor_state_reassignment",
-		"message": "A state field declaration in a constructor must be the first assignment, and the only one that uses a rune",
+		"code": "state_field_duplicate",
+		"message": "`count` has already been declared on this class",
 		"start": {
 			"line": 7,
 			"column": 2

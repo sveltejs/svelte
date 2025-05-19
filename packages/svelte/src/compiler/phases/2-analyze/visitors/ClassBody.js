@@ -54,7 +54,7 @@ export function ClassBody(node, context) {
 
 		if (rune && is_state_creation_rune(rune)) {
 			if (seen.includes(name)) {
-				e.constructor_state_reassignment(node); // TODO the same thing applies to duplicate fields, so the code/message needs to change
+				e.state_field_duplicate(node, name);
 			}
 
 			state_fields[name] = {
