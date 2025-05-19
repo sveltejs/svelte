@@ -863,8 +863,8 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	// allow any data- attribute
 	[key: `data-${string}`]: any;
 
-	// allow any attachment
-	[key: symbol]: Attachment<T>;
+	// allow any attachment and falsy values (by using false we prevent the usage of booleans values by themselves)
+	[key: symbol]: Attachment<T> | false | undefined | null;
 }
 
 export type HTMLAttributeAnchorTarget = '_self' | '_blank' | '_parent' | '_top' | (string & {});

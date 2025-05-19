@@ -428,15 +428,19 @@ export function is_mathml(name) {
 	return MATHML_ELEMENTS.includes(name);
 }
 
-const RUNES = /** @type {const} */ ([
+export const STATE_CREATION_RUNES = /** @type {const} */ ([
 	'$state',
 	'$state.raw',
+	'$derived',
+	'$derived.by'
+]);
+
+const RUNES = /** @type {const} */ ([
+	...STATE_CREATION_RUNES,
 	'$state.snapshot',
 	'$props',
 	'$props.id',
 	'$bindable',
-	'$derived',
-	'$derived.by',
 	'$effect',
 	'$effect.pre',
 	'$effect.tracking',
@@ -447,12 +451,24 @@ const RUNES = /** @type {const} */ ([
 	'$host'
 ]);
 
+/** @typedef {RUNES[number]} RuneName */
+
 /**
  * @param {string} name
- * @returns {name is RUNES[number]}
+ * @returns {name is RuneName}
  */
 export function is_rune(name) {
-	return RUNES.includes(/** @type {RUNES[number]} */ (name));
+	return RUNES.includes(/** @type {RuneName} */ (name));
+}
+
+/** @typedef {STATE_CREATION_RUNES[number]} StateCreationRuneName */
+
+/**
+ * @param {string} name
+ * @returns {name is StateCreationRuneName}
+ */
+export function is_state_creation_rune(name) {
+	return STATE_CREATION_RUNES.includes(/** @type {StateCreationRuneName} */ (name));
 }
 
 /** List of elements that require raw contents and should not have SSR comments put in them */

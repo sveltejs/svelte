@@ -1,5 +1,23 @@
 # svelte
 
+## 5.31.0
+
+### Minor Changes
+
+- feat: allow state fields to be declared inside class constructors ([#15820](https://github.com/sveltejs/svelte/pull/15820))
+
+### Patch Changes
+
+- fix: Add missing `AttachTag` in `Tag` union type inside the `AST` namespace from `"svelte/compiler"` ([#15946](https://github.com/sveltejs/svelte/pull/15946))
+
+## 5.30.2
+
+### Patch Changes
+
+- fix: falsy attachments types ([#15939](https://github.com/sveltejs/svelte/pull/15939))
+
+- fix: handle more hydration mismatches ([#15851](https://github.com/sveltejs/svelte/pull/15851))
+
 ## 5.30.1
 
 ### Patch Changes

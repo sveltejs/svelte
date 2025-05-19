@@ -1362,7 +1362,13 @@ declare module 'svelte/compiler' {
 			| AST.SvelteWindow
 			| AST.SvelteBoundary;
 
-		export type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
+		export type Tag =
+			| AST.AttachTag
+			| AST.ConstTag
+			| AST.DebugTag
+			| AST.ExpressionTag
+			| AST.HtmlTag
+			| AST.RenderTag;
 
 		export type TemplateNode =
 			| AST.Root
