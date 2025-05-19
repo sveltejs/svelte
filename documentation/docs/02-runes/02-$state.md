@@ -67,16 +67,15 @@ todos[0].done = !todos[0].done;
 
 ### Classes
 
-You can also use `$state` in class fields (whether public or private):
+You can also use `$state` in class fields (whether public or private), or as the first assignment to a property immediately inside the `constructor`:
 
 ```js
 // @errors: 7006 2554
 class Todo {
 	done = $state(false);
-	text = $state();
 
 	constructor(text) {
-		this.text = text;
+		this.text = $state(text);
 	}
 
 	reset() {
@@ -110,10 +109,9 @@ You can either use an inline function...
 // @errors: 7006 2554
 class Todo {
 	done = $state(false);
-	text = $state();
 
 	constructor(text) {
-		this.text = text;
+		this.text = $state(text);
 	}
 
 	+++reset = () => {+++

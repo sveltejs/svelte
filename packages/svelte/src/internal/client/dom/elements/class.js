@@ -24,7 +24,7 @@ export function set_class(dom, is_html, value, hash, prev_classes, next_classes)
 		if (!hydrating || next_class_name !== dom.getAttribute('class')) {
 			// Removing the attribute when the value is only an empty string causes
 			// performance issues vs simply making the className an empty string. So
-			// we should only remove the class if the the value is nullish
+			// we should only remove the class if the value is nullish
 			// and there no hash/directives :
 			if (next_class_name == null) {
 				dom.removeAttribute('class');
