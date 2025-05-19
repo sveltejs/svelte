@@ -7,5 +7,8 @@ export default test({
 		expect(window.matchMedia).toHaveBeenCalledWith('(min-width: 900px)');
 		expect(window.matchMedia).toHaveBeenCalledWith('screen');
 		expect(window.matchMedia).toHaveBeenCalledWith('not print');
+		expect(window.matchMedia).toHaveBeenCalledWith('screen,print');
+		expect(window.matchMedia).toHaveBeenCalledWith('screen,      print');
+		expect(window.matchMedia).toHaveBeenCalledWith('screen,      random');
 	}
 });

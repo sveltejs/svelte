@@ -42,7 +42,8 @@ export class MediaQuery extends ReactiveValue {
 	constructor(query, fallback) {
 		let final_query =
 			parenthesis_regex.test(query) ||
-			query.split(' ').every((keyword) => non_parenthesized_keywords.has(keyword))
+			// we need to use `some` here because technically this `window.matchMedia('random,screen')` still returns true
+			query.split(/[\s,]+/).some((keyword) => non_parenthesized_keywords.has(keyword.trim()))
 				? query
 				: `(${query})`;
 		const q = window.matchMedia(final_query);
