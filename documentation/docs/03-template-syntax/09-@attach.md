@@ -160,3 +160,7 @@ function foo(+++getBar+++) {
 ## Creating attachments programmatically
 
 To add attachments to an object that will be spread onto a component or element, use [`createAttachmentKey`](svelte-attachments#createAttachmentKey).
+
+## Converting actions to attachments
+
+If you're using a library that only provides actions, you can convert them to attachments with [`fromAction`](svelte-attachments#fromAction), allowing you to (for example) use them with components.
