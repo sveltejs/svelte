@@ -1,4 +1,5 @@
 // @ts-check
+import process from 'node:process';
 import fs from 'node:fs';
 import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
@@ -6,10 +7,7 @@ import * as esrap from 'esrap';
 
 const DIR = '../../documentation/docs/98-reference/.generated';
 
-// eslint-disable-next-line n/prefer-global/process
-const [, , watch_flag] = process.argv;
-
-const watch = watch_flag === '-w';
+const watch = process.argv.includes('-w');
 
 function run() {
 	/** @type {Record<string, Record<string, { messages: string[], details: string | null }>>} */
