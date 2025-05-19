@@ -1,5 +1,5 @@
-/** @import { Action, ActionReturn } from 'svelte/action' */
-/** @import { Attachment } from 'svelte/attachments' */
+/** @import { Action, ActionReturn } from '../action/public' */
+/** @import { Attachment } from './public' */
 import { noop, render_effect } from 'svelte/internal/client';
 import { ATTACHMENT_KEY } from '../constants.js';
 import { untrack } from 'svelte';
