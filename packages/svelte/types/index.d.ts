@@ -625,7 +625,7 @@ declare module 'svelte/animate' {
 }
 
 declare module 'svelte/attachments' {
-	import type { ActionReturn } from 'svelte/action';
+	import type { ActionReturn, Action } from 'svelte/action';
 	/**
 	 * An [attachment](https://svelte.dev/docs/svelte/@attach) is a function that runs when an element is mounted
 	 * to the DOM, and optionally returns a function that is called when the element is later removed.
@@ -659,8 +659,10 @@ declare module 'svelte/attachments' {
 	 * @since 5.29
 	 */
 	export function createAttachmentKey(): symbol;
-	export function fromAction<Node extends HTMLElement, Parameter extends unknown>(...args: undefined extends NoInfer<Parameter> ? [action: (node: Node, parameter?: never) => void | ActionReturn<Parameter, any>, parameter?: (() => NoInfer<Parameter>) | undefined] : [action: (node: Node, parameter: Parameter) => void | ActionReturn<Parameter, any>, parameter: () => NoInfer<Parameter>]): Attachment<Node>;
-	export type FromAction<Element extends EventTarget = HTMLElement, Par extends unknown = unknown> = <Node extends Element, Parameter extends Par>(...args: (undefined extends NoInfer<Parameter> ? [action: (node: Node, parameter?: never) => void | ActionReturn<Parameter>, parameter?: () => NoInfer<Parameter>] : [action: (node: Node, parameter: Parameter) => void | ActionReturn<Parameter>, parameter: () => NoInfer<Parameter>])) => Attachment<Node>;
+
+	export function fromAction<E extends EventTarget, T extends unknown>(action: Action<E, T> | ((arg0: E, arg1: T) => void | ActionReturn<T>), fn: () => T): Attachment<E>;
+
+	export function fromAction<E extends EventTarget>(action: Action<E, void> | ((arg0: E) => void | ActionReturn<void>)): Attachment<E>;
 
 	export {};
 }
