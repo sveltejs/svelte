@@ -403,7 +403,23 @@ export function analyze_component(root, source, options) {
 
 	const component_name = get_component_name(options.filename);
 
-	const runes = options.runes ?? Array.from(module.scope.references.keys()).some(is_rune);
+	let runes = options.runes ?? Array.from(module.scope.references.keys()).some(is_rune);
+
+	// if we are not in runes mode by the bindings we need to check if there's any attachment
+	if (!runes) {
+		// we need to do it beforehand otherwise we would not be in runes mode until we hit an attachment
+		walk(
+			/** @type {AST.SvelteNode} */ (template.ast),
+			{},
+			{
+				AttachTag(_, context) {
+					runes = true;
+					// once we found one we can stop the traversal
+					context.stop();
+				}
+			}
+		);
+	}
 
 	if (!runes) {
 		for (let check of synthetic_stores_legacy_check) {

@@ -7,6 +7,9 @@ Attachments are functions that run when an element is mounted to the DOM. Option
 > [!NOTE]
 > Attachments are available in Svelte 5.29 and newer.
 
+> [!NOTE]
+> Attachments also opt you in for runes mode so if you use them in a legacy component you would have to also migrate that component.
+
 ```svelte
 <!--- file: App.svelte --->
 <script>
