@@ -57,7 +57,11 @@ export function validate_assignment(node, argument, context) {
 				) {
 					const grandparent = get_parent(context.path, i - 1);
 
-					if (grandparent.type === 'MethodDefinition' && grandparent.kind === 'constructor') {
+					if (
+						grandparent.type === 'MethodDefinition' &&
+						grandparent.kind === 'constructor' &&
+						/** @type {number} */ (node.start) < /** @type {number} */ (field.node.start)
+					) {
 						e.state_field_invalid_assignment(node);
 					}
 
