@@ -420,11 +420,13 @@ function run() {
 
 if (watch) {
 	let running = false;
+	let timeout;
 
 	fs.watch('messages', { recursive: true }, (type, file) => {
 		if (running) {
-			setTimeout(() => {
+			timeout ??= setTimeout(() => {
 				running = false;
+				timeout = null;
 			});
 		} else {
 			running = true;
