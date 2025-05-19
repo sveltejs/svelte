@@ -236,6 +236,10 @@ class Counter {
 
 ...but it can only happen once.
 
+## state_field_invalid_assignment
+
+> Cannot assign to a state field before its declaration
+
 ## state_invalid_export
 
 > Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties

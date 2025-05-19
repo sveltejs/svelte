@@ -872,6 +872,12 @@ class Counter {
 
 ...but it can only happen once.
 
+### state_field_invalid_assignment
+
+```
+Cannot assign to a state field before its declaration
+```
+
 ### state_invalid_export
 
 ```

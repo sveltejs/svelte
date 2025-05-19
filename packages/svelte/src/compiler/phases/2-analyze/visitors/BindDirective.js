@@ -158,7 +158,7 @@ export function BindDirective(node, context) {
 		return;
 	}
 
-	validate_assignment(node, node.expression, context.state);
+	validate_assignment(node, node.expression, context);
 
 	const assignee = node.expression;
 	const left = object(assignee);

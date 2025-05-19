@@ -105,16 +105,6 @@ export function constant_binding(node, thing) {
 }
 
 /**
- * `%name%` has already been declared on this class
- * @param {null | number | NodeLike} node
- * @param {string} name
- * @returns {never}
- */
-export function state_field_duplicate(node, name) {
-	e(node, 'state_field_duplicate', `\`${name}\` has already been declared on this class\nhttps://svelte.dev/e/state_field_duplicate`);
-}
-
-/**
  * `%name%` has already been declared
  * @param {null | number | NodeLike} node
  * @param {string} name
@@ -469,6 +459,25 @@ export function snippet_invalid_export(node) {
  */
 export function snippet_parameter_assignment(node) {
 	e(node, 'snippet_parameter_assignment', `Cannot reassign or bind to snippet parameter\nhttps://svelte.dev/e/snippet_parameter_assignment`);
+}
+
+/**
+ * `%name%` has already been declared on this class
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function state_field_duplicate(node, name) {
+	e(node, 'state_field_duplicate', `\`${name}\` has already been declared on this class\nhttps://svelte.dev/e/state_field_duplicate`);
+}
+
+/**
+ * Cannot assign to a state field before its declaration
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function state_field_invalid_assignment(node) {
+	e(node, 'state_field_invalid_assignment', `Cannot assign to a state field before its declaration\nhttps://svelte.dev/e/state_field_invalid_assignment`);
 }
 
 /**
