@@ -11,18 +11,4 @@ export interface Attachment<T extends EventTarget = Element> {
 	(element: T): void | (() => void);
 }
 
-export interface FromAction<Element extends EventTarget = HTMLElement, Par = unknown> {
-	<Node extends Element, Parameter extends Par>(
-		...args: undefined extends NoInfer<Parameter>
-			? [
-					action: (node: Node, parameter?: never) => void | ActionReturn<Parameter>,
-					parameter?: () => NoInfer<Parameter>
-				]
-			: [
-					action: (node: Node, parameter: Parameter) => void | ActionReturn<Parameter>,
-					parameter: () => NoInfer<Parameter>
-				]
-	): Attachment<Node>;
-}
-
 export * from './index.js';

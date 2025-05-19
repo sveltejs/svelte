@@ -625,7 +625,7 @@ declare module 'svelte/animate' {
 }
 
 declare module 'svelte/attachments' {
-	import type { ActionReturn } from 'svelte/action';
+	import type { ActionReturn, Action } from 'svelte/action';
 	/**
 	 * An [attachment](https://svelte.dev/docs/svelte/@attach) is a function that runs when an element is mounted
 	 * to the DOM, and optionally returns a function that is called when the element is later removed.
@@ -635,20 +635,6 @@ declare module 'svelte/attachments' {
 	 */
 	export interface Attachment<T extends EventTarget = Element> {
 		(element: T): void | (() => void);
-	}
-
-	export interface FromAction<Element extends EventTarget = HTMLElement, Par = unknown> {
-		<Node extends Element, Parameter extends Par>(
-			...args: undefined extends NoInfer<Parameter>
-				? [
-						action: (node: Node, parameter?: never) => void | ActionReturn<Parameter>,
-						parameter?: () => NoInfer<Parameter>
-					]
-				: [
-						action: (node: Node, parameter: Parameter) => void | ActionReturn<Parameter>,
-						parameter: () => NoInfer<Parameter>
-					]
-		): Attachment<Node>;
 	}
 	/**
 	 * Creates an object key that will be recognised as an attachment when the object is spread onto an element,
@@ -673,49 +659,18 @@ declare module 'svelte/attachments' {
 	 * @since 5.29
 	 */
 	export function createAttachmentKey(): symbol;
-	export function fromAction<Node extends HTMLElement, Parameter extends any>(...args: undefined extends NoInfer<Parameter> ? [action: (node: Node, parameter?: never) => void | ActionReturn_1<Parameter, Record<never, any>>, parameter?: (() => NoInfer<Parameter>) | undefined] : [action: (node: Node, parameter: Parameter) => void | ActionReturn_1<Parameter, Record<never, any>>, parameter: () => NoInfer<Parameter>]): Attachment<Node>;
 	/**
-	 * Actions can return an object containing the two properties defined in this interface. Both are optional.
-	 * - update: An action can have a parameter. This method will be called whenever that parameter changes,
-	 *   immediately after Svelte has applied updates to the markup. `ActionReturn` and `ActionReturn<undefined>` both
-	 *   mean that the action accepts no parameters.
-	 * - destroy: Method that is called after the element is unmounted
+	 * Converts an Action into an Attachment keeping the same behavior. It's useful if you want to start using
+	 * attachments on Components but you have library provided actions.
 	 *
-	 * Additionally, you can specify which additional attributes and events the action enables on the applied element.
-	 * This applies to TypeScript typings only and has no effect at runtime.
+	 * Note that the second argument, if provided, must be a function that _returns_ the argument to the
+	 * action function, not the argument itself.
 	 *
-	 * Example usage:
-	 * ```ts
-	 * interface Attributes {
-	 * 	newprop?: string;
-	 * 	'on:event': (e: CustomEvent<boolean>) => void;
-	 * }
-	 *
-	 * export function myAction(node: HTMLElement, parameter: Parameter): ActionReturn<Parameter, Attributes> {
-	 * 	// ...
-	 * 	return {
-	 * 		update: (updatedParameter) => {...},
-	 * 		destroy: () => {...}
-	 * 	};
-	 * }
-	 * ```
+	 * @param action The action function
+	 * @param fn A function that returns the argument for the action
+	 * @since 5.32
 	 */
-	interface ActionReturn_1<
-		Parameter = undefined,
-		Attributes extends Record<string, any> = Record<never, any>
-	> {
-		update?: (parameter: Parameter) => void;
-		destroy?: () => void;
-		/**
-		 * ### DO NOT USE THIS
-		 * This exists solely for type-checking and has no effect at runtime.
-		 * Set this through the `Attributes` generic instead.
-		 */
-		$$_attributes?: Attributes;
-	}
-
-	// Implementation notes:
-	// - undefined extends X instead of X extends undefined makes this work better with both strict and nonstrict mode
+	export function fromAction<E extends EventTarget, T extends unknown>(action: Action<E, T> | ((arg0: E, arg1: T) => void | ActionReturn<T>), fn?: (() => T) | undefined): Attachment<E>;
 
 	export {};
 }
