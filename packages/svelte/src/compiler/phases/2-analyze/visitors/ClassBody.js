@@ -64,9 +64,7 @@ export function ClassBody(node, context) {
 				key: key.type === 'PrivateIdentifier' ? key : null,
 				value: /** @type {CallExpression} */ (value)
 			};
-		}
 
-		if (value) {
 			seen.push(name);
 		}
 	}
