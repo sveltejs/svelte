@@ -1,120 +1,77 @@
-/** @import { ClassBody, Expression, MethodDefinition, PropertyDefinition } from 'estree' */
+/** @import { CallExpression, ClassBody, MethodDefinition, PropertyDefinition, StaticBlock } from 'estree' */
 /** @import { Context } from '../types.js' */
-/** @import { StateField } from '../../client/types.js' */
-import { dev } from '../../../../state.js';
 import * as b from '#compiler/builders';
-import { get_rune } from '../../../scope.js';
+import { get_name } from '../../../nodes.js';
 
 /**
  * @param {ClassBody} node
  * @param {Context} context
  */
 export function ClassBody(node, context) {
-	if (!context.state.analysis.runes) {
+	const state_fields = context.state.analysis.classes.get(node);
+
+	if (!state_fields) {
+		// in legacy mode, do nothing
 		context.next();
 		return;
 	}
 
-	/** @type {Map<string, StateField>} */
-	const public_derived = new Map();
-
-	/** @type {Map<string, StateField>} */
-	const private_derived = new Map();
-
-	/** @type {string[]} */
-	const private_ids = [];
-
-	for (const definition of node.body) {
-		if (
-			definition.type === 'PropertyDefinition' &&
-			(definition.key.type === 'Identifier' || definition.key.type === 'PrivateIdentifier')
-		) {
-			const { type, name } = definition.key;
-
-			const is_private = type === 'PrivateIdentifier';
-			if (is_private) private_ids.push(name);
-
-			if (definition.value?.type === 'CallExpression') {
-				const rune = get_rune(definition.value, context.state.scope);
-				if (rune === '$derived' || rune === '$derived.by') {
-					/** @type {StateField} */
-					const field = {
-						kind: rune === '$derived.by' ? 'derived_by' : 'derived',
-						// @ts-expect-error this is set in the next pass
-						id: is_private ? definition.key : null
-					};
-
-					if (is_private) {
-						private_derived.set(name, field);
-					} else {
-						public_derived.set(name, field);
-					}
-				}
-			}
-		}
-	}
-
-	// each `foo = $derived()` needs a backing `#foo` field
-	for (const [name, field] of public_derived) {
-		let deconflicted = name;
-		while (private_ids.includes(deconflicted)) {
-			deconflicted = '_' + deconflicted;
-		}
-
-		private_ids.push(deconflicted);
-		field.id = b.private_id(deconflicted);
-	}
-
-	/** @type {Array<MethodDefinition | PropertyDefinition>} */
+	/** @type {Array<MethodDefinition | PropertyDefinition | StaticBlock>} */
 	const body = [];
 
-	const child_state = { ...context.state, private_derived };
+	const child_state = { ...context.state, state_fields };
+
+	for (const [name, field] of state_fields) {
+		if (name[0] === '#') {
+			continue;
+		}
+
+		// insert backing fields for stuff declared in the constructor
+		if (
+			field &&
+			field.node.type === 'AssignmentExpression' &&
+			(field.type === '$derived' || field.type === '$derived.by')
+		) {
+			const member = b.member(b.this, field.key);
+
+			body.push(
+				b.prop_def(field.key, null),
+				b.method('get', b.key(name), [], [b.return(b.call(member))])
+			);
+		}
+	}
 
 	// Replace parts of the class body
 	for (const definition of node.body) {
-		if (
-			definition.type === 'PropertyDefinition' &&
-			(definition.key.type === 'Identifier' || definition.key.type === 'PrivateIdentifier')
-		) {
-			const name = definition.key.name;
-
-			const is_private = definition.key.type === 'PrivateIdentifier';
-			const field = (is_private ? private_derived : public_derived).get(name);
-
-			if (definition.value?.type === 'CallExpression' && field !== undefined) {
-				const init = /** @type {Expression} **/ (
-					context.visit(definition.value.arguments[0], child_state)
-				);
-				const value =
-					field.kind === 'derived_by' ? b.call('$.once', init) : b.call('$.once', b.thunk(init));
-
-				if (is_private) {
-					body.push(b.prop_def(field.id, value));
-				} else {
-					// #foo;
-					const member = b.member(b.this, field.id);
-					body.push(b.prop_def(field.id, value));
-
-					// get foo() { return this.#foo; }
-					body.push(b.method('get', definition.key, [], [b.return(b.call(member))]));
-
-					if (dev && (field.kind === 'derived' || field.kind === 'derived_by')) {
-						body.push(
-							b.method(
-								'set',
-								definition.key,
-								[b.id('_')],
-								[b.throw_error(`Cannot update a derived property ('${name}')`)]
-							)
-						);
-					}
-				}
-
-				continue;
-			}
+		if (definition.type !== 'PropertyDefinition') {
+			body.push(
+				/** @type {MethodDefinition | StaticBlock} */ (context.visit(definition, child_state))
+			);
+			continue;
 		}
 
-		body.push(/** @type {MethodDefinition} **/ (context.visit(definition, child_state)));
+		const name = get_name(definition.key);
+		const field = name && state_fields.get(name);
+
+		if (!field) {
+			body.push(/** @type {PropertyDefinition} */ (context.visit(definition, child_state)));
+			continue;
+		}
+
+		if (name[0] === '#' || field.type === '$state' || field.type === '$state.raw') {
+			body.push(/** @type {PropertyDefinition} */ (context.visit(definition, child_state)));
+		} else if (field.node === definition) {
+			const member = b.member(b.this, field.key);
+
+			body.push(
+				b.prop_def(
+					field.key,
+					/** @type {CallExpression} */ (context.visit(field.value, child_state))
+				),
+
+				b.method('get', definition.key, [], [b.return(b.call(member))])
+			);
+		}
 	}
 
 	return { ...node, body };

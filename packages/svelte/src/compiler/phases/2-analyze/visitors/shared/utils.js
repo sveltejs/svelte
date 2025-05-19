@@ -4,24 +4,25 @@
 /** @import { Scope } from '../../../scope' */
 /** @import { NodeLike } from '../../../../errors.js' */
 import * as e from '../../../../errors.js';
-import { extract_identifiers } from '../../../../utils/ast.js';
+import { extract_identifiers, get_parent } from '../../../../utils/ast.js';
 import * as w from '../../../../warnings.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
+import { get_name } from '../../../nodes.js';
 
 /**
  * @param {AssignmentExpression | UpdateExpression | AST.BindDirective} node
  * @param {Pattern | Expression} argument
- * @param {AnalysisState} state
+ * @param {Context} context
  */
-export function validate_assignment(node, argument, state) {
-	validate_no_const_assignment(node, argument, state.scope, node.type === 'BindDirective');
+export function validate_assignment(node, argument, context) {
+	validate_no_const_assignment(node, argument, context.state.scope, node.type === 'BindDirective');
 
 	if (argument.type === 'Identifier') {
-		const binding = state.scope.get(argument.name);
+		const binding = context.state.scope.get(argument.name);
 
-		if (state.analysis.runes) {
-			if (binding?.node === state.analysis.props_id) {
+		if (context.state.analysis.runes) {
+			if (binding?.node === context.state.analysis.props_id) {
 				e.constant_assignment(node, '$props.id()');
 			}
 
@@ -32,6 +33,41 @@ export function validate_assignment(node, argument, state) {
 
 		if (binding?.kind === 'snippet') {
 			e.snippet_parameter_assignment(node);
+		}
+	}
+
+	if (argument.type === 'MemberExpression' && argument.object.type === 'ThisExpression') {
+		const name =
+			argument.computed && argument.property.type !== 'Literal'
+				? null
+				: get_name(argument.property);
+
+		const field = name !== null && context.state.state_fields?.get(name);
+
+		// check we're not assigning to a state field before its declaration in the constructor
+		if (field && field.node.type === 'AssignmentExpression' && node !== field.node) {
+			let i = context.path.length;
+			while (i--) {
+				const parent = context.path[i];
+
+				if (
+					parent.type === 'FunctionDeclaration' ||
+					parent.type === 'FunctionExpression' ||
+					parent.type === 'ArrowFunctionExpression'
+				) {
+					const grandparent = get_parent(context.path, i - 1);
+
+					if (
+						grandparent.type === 'MethodDefinition' &&
+						grandparent.kind === 'constructor' &&
+						/** @type {number} */ (node.start) < /** @type {number} */ (field.node.start)
+					) {
+						e.state_field_invalid_assignment(node);
+					}
+
+					break;
+				}
+			}
 		}
 	}
 }
