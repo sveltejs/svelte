@@ -32,6 +32,20 @@ export function createAttachmentKey() {
 }
 
 /**
+ * @template {EventTarget} E
+ * @template {unknown} T
+ * @overload
+ * @param {Action<E, T> | function(E, T): void | ActionReturn<T>} action The action function
+ * @param {() => T} fn A function that returns the argument for the action
+ * @returns {Attachment<E>}
+ */
+/**
+ * @template {EventTarget} E
+ * @overload
+ * @param {Action<E, void> | function(E): void | ActionReturn<void>} action The action function
+ * @returns {Attachment<E>}
+ */
+/**
  * Converts an Action into an Attachment keeping the same behavior. It's useful if you want to start using
  * attachments on Components but you have library provided actions.
  *
@@ -41,7 +55,7 @@ export function createAttachmentKey() {
  * @template {EventTarget} E
  * @template {unknown} T
  * @param {Action<E, T> | function(E, T): void | ActionReturn<T>} action The action function
- * @param {() => T} [fn] A function that returns the argument for the action
+ * @param {() => T} fn A function that returns the argument for the action
  * @returns {Attachment<E>}
  * @since 5.32
  */

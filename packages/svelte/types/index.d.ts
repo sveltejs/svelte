@@ -659,18 +659,10 @@ declare module 'svelte/attachments' {
 	 * @since 5.29
 	 */
 	export function createAttachmentKey(): symbol;
-	/**
-	 * Converts an Action into an Attachment keeping the same behavior. It's useful if you want to start using
-	 * attachments on Components but you have library provided actions.
-	 *
-	 * Note that the second argument, if provided, must be a function that _returns_ the argument to the
-	 * action function, not the argument itself.
-	 *
-	 * @param action The action function
-	 * @param fn A function that returns the argument for the action
-	 * @since 5.32
-	 */
-	export function fromAction<E extends EventTarget, T extends unknown>(action: Action<E, T> | ((arg0: E, arg1: T) => void | ActionReturn<T>), fn?: (() => T) | undefined): Attachment<E>;
+
+	export function fromAction<E extends EventTarget, T extends unknown>(action: Action<E, T> | ((arg0: E, arg1: T) => void | ActionReturn<T>), fn: () => T): Attachment<E>;
+
+	export function fromAction<E extends EventTarget>(action: Action<E, void> | ((arg0: E) => void | ActionReturn<void>)): Attachment<E>;
 
 	export {};
 }
