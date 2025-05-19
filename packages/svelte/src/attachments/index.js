@@ -32,6 +32,19 @@ export function createAttachmentKey() {
 }
 
 /**
+ * Converts an [action](https://svelte.dev/docs/svelte/use) into an [attachment](https://svelte.dev/docs/svelte/@attach) keeping the same behavior.
+ * It's useful if you want to start using attachments on components but you have actions provided by a library.
+ *
+ * Note that the second argument, if provided, must be a function that _returns_ the argument to the
+ * action function, not the argument itself.
+ *
+ * ```svelte
+ * <!-- with an action -->
+ * <div use:foo={bar}>...</div>
+ *
+ * <!-- with an attachment -->
+ * <div {@attach fromAction(foo, () => bar)}>...</div>
+ * ```
  * @template {EventTarget} E
  * @template {unknown} T
  * @overload
@@ -40,17 +53,38 @@ export function createAttachmentKey() {
  * @returns {Attachment<E>}
  */
 /**
+ * Converts an [action](https://svelte.dev/docs/svelte/use) into an [attachment](https://svelte.dev/docs/svelte/@attach) keeping the same behavior.
+ * It's useful if you want to start using attachments on components but you have actions provided by a library.
+ *
+ * Note that the second argument, if provided, must be a function that _returns_ the argument to the
+ * action function, not the argument itself.
+ *
+ * ```svelte
+ * <!-- with an action -->
+ * <div use:foo={bar}>...</div>
+ *
+ * <!-- with an attachment -->
+ * <div {@attach fromAction(foo, () => bar)}>...</div>
+ * ```
  * @template {EventTarget} E
  * @overload
  * @param {Action<E, void> | ((element: E) => void | ActionReturn<void>)} action The action function
  * @returns {Attachment<E>}
  */
 /**
- * Converts an Action into an Attachment keeping the same behavior. It's useful if you want to start using
- * attachments on Components but you have library provided actions.
+ * Converts an [action](https://svelte.dev/docs/svelte/use) into an [attachment](https://svelte.dev/docs/svelte/@attach) keeping the same behavior.
+ * It's useful if you want to start using attachments on components but you have actions provided by a library.
  *
  * Note that the second argument, if provided, must be a function that _returns_ the argument to the
  * action function, not the argument itself.
+ *
+ * ```svelte
+ * <!-- with an action -->
+ * <div use:foo={bar}>...</div>
+ *
+ * <!-- with an attachment -->
+ * <div {@attach fromAction(foo, () => bar)}>...</div>
+ * ```
  *
  * @template {EventTarget} E
  * @template {unknown} T

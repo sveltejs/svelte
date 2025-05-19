@@ -659,9 +659,37 @@ declare module 'svelte/attachments' {
 	 * @since 5.29
 	 */
 	export function createAttachmentKey(): symbol;
-
+	/**
+	 * Converts an [action](https://svelte.dev/docs/svelte/use) into an [attachment](https://svelte.dev/docs/svelte/@attach) keeping the same behavior.
+	 * It's useful if you want to start using attachments on components but you have actions provided by a library.
+	 *
+	 * Note that the second argument, if provided, must be a function that _returns_ the argument to the
+	 * action function, not the argument itself.
+	 *
+	 * ```svelte
+	 * <!-- with an action -->
+	 * <div use:foo={bar}>...</div>
+	 *
+	 * <!-- with an attachment -->
+	 * <div {@attach fromAction(foo, () => bar)}>...</div>
+	 * ```
+	 * */
 	export function fromAction<E extends EventTarget, T extends unknown>(action: Action<E, T> | ((element: E, arg: T) => void | ActionReturn<T>), fn: () => T): Attachment<E>;
-
+	/**
+	 * Converts an [action](https://svelte.dev/docs/svelte/use) into an [attachment](https://svelte.dev/docs/svelte/@attach) keeping the same behavior.
+	 * It's useful if you want to start using attachments on components but you have actions provided by a library.
+	 *
+	 * Note that the second argument, if provided, must be a function that _returns_ the argument to the
+	 * action function, not the argument itself.
+	 *
+	 * ```svelte
+	 * <!-- with an action -->
+	 * <div use:foo={bar}>...</div>
+	 *
+	 * <!-- with an attachment -->
+	 * <div {@attach fromAction(foo, () => bar)}>...</div>
+	 * ```
+	 * */
 	export function fromAction<E extends EventTarget>(action: Action<E, void> | ((element: E) => void | ActionReturn<void>)): Attachment<E>;
 
 	export {};
