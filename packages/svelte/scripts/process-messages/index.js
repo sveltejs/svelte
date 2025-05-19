@@ -419,10 +419,20 @@ function run() {
 }
 
 if (watch) {
-	fs.watch('messages', { recursive: true }, () => {
-		// eslint-disable-next-line no-console
-		console.log('Regenerating messages...');
-		run();
+	let running = false;
+
+	fs.watch('messages', { recursive: true }, (type, file) => {
+		if (running) {
+			setTimeout(() => {
+				running = false;
+			});
+		} else {
+			running = true;
+
+			// eslint-disable-next-line no-console
+			console.log('Regenerating messages...');
+			run();
+		}
 	});
 }
 
