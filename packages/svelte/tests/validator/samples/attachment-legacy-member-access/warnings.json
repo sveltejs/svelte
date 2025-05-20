@@ -3,11 +3,11 @@
 		"code": "attachment_legacy_member_access",
 		"message": "Using `@attach` with a function from an object in legacy mode can cause unnecessary reruns of the attachment function if you mutate that object.",
 		"start": {
-			"line": 14,
+			"line": 19,
 			"column": 14
 		},
 		"end": {
-			"line": 14,
+			"line": 19,
 			"column": 30
 		}
 	}
