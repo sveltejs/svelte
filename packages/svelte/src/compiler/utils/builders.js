@@ -231,12 +231,18 @@ export function function_declaration(id, params, body) {
 }
 
 /**
- * @param {string} name
+ * @param {ESTree.Expression | string} name
  * @param {ESTree.Statement[]} body
+ * @param {boolean} computed
  * @returns {ESTree.Property & { value: ESTree.FunctionExpression}}}
  */
-export function get(name, body) {
-	return prop('get', key(name), function_builder(null, [], block(body)));
+export function get(name, body, computed = false) {
+	return prop(
+		'get',
+		typeof name === 'string' ? key(name) : name,
+		function_builder(null, [], block(body)),
+		computed
+	);
 }
 
 /**
