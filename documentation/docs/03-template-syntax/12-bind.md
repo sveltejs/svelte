@@ -149,7 +149,7 @@ Inputs that work together can use `bind:group` ([demo](/playground/untitled#H4sI
 <script>
 	let tortilla = $state('Plain');
 
-	/** @type {Array<string>} */
+	/** @type {string[]} */
 	let fillings = $state([]);
 </script>
 
