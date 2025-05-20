@@ -12,7 +12,7 @@
     "lint": "cd packages/svelte && pnpm build && cd ../../ && pnpm -r lint",
     "format": "pnpm -r format",
     "changeset:version": "changeset version && pnpm -r generate:version && git add --all",
-    "changeset:publish": "changeset publish"
+    "changeset:publish": "changeset publish --tag legacy"
   },
   "repository": {
     "type": "git",
