@@ -1,5 +1,11 @@
 # svelte
 
+## 4.2.20
+
+### Patch Changes
+
+- fix: properly remove event listeners in Component's removeEventListener ([#13556](https://github.com/sveltejs/svelte/pull/13556))
+
 ## 4.2.19
 
 ### Patch Changes
