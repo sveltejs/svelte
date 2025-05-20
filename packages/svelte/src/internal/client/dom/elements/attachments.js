@@ -1,5 +1,5 @@
 /** @import { Effect } from '#client' */
-import { block, branch, destroy_effect } from '../../reactivity/effects.js';
+import { block, branch, effect, destroy_effect } from '../../reactivity/effects.js';
 
 // TODO in 6.0 or 7.0, when we remove legacy mode, we can simplify this by
 // getting rid of the block/branch stuff and just letting the effect rip.
@@ -14,17 +14,19 @@ export function attach(node, get_fn) {
 	var fn = undefined;
 
 	/** @type {Effect | null} */
-	var effect;
+	var e;
 
 	block(() => {
 		if (fn !== (fn = get_fn())) {
-			if (effect) {
-				destroy_effect(effect);
-				effect = null;
+			if (e) {
+				destroy_effect(e);
+				e = null;
 			}
 
 			if (fn) {
-				effect = branch(() => /** @type {(node: Element) => void} */ (fn)(node));
+				e = branch(() => {
+					effect(() => /** @type {(node: Element) => void} */ (fn)(node));
+				});
 			}
 		}
 	});
