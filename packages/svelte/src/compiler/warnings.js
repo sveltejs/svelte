@@ -748,12 +748,13 @@ export function component_name_lowercase(node, name) {
 }
 
 /**
- * The tag `<%name%>` was implicitly closed by the parent or a next element. This may cause DOM structure being other than expected one.
+ * This element is implicitly closed by the following `%tag%`, which can cause an unexpected DOM structure. Add an explicit `%closing%` to avoid surprises.
  * @param {null | NodeLike} node
- * @param {string} name
+ * @param {string} tag
+ * @param {string} closing
  */
-export function element_implicitly_closed(node, name) {
-	w(node, 'element_implicitly_closed', `The tag \`<${name}>\` was implicitly closed by the parent or a next element. This may cause DOM structure being other than expected one.\nhttps://svelte.dev/e/element_implicitly_closed`);
+export function element_implicitly_closed(node, tag, closing) {
+	w(node, 'element_implicitly_closed', `This element is implicitly closed by the following \`${tag}\`, which can cause an unexpected DOM structure. Add an explicit \`${closing}\` to avoid surprises.\nhttps://svelte.dev/e/element_implicitly_closed`);
 }
 
 /**

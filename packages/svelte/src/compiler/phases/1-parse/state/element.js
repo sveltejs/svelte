@@ -96,7 +96,11 @@ export default function element(parser) {
 			if (parent.type === 'RegularElement') {
 				if (!parser.last_auto_closed_tag || parser.last_auto_closed_tag.tag !== name) {
 					const end = parent.fragment.nodes[0]?.start ?? start;
-					w.element_implicitly_closed({ start: parent.start, end }, parent.name);
+					w.element_implicitly_closed(
+						{ start: parent.start, end },
+						`</${name}>`,
+						`</${parent.name}>`
+					);
 				}
 			} else if (!parser.loose) {
 				if (parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name) {
@@ -192,7 +196,7 @@ export default function element(parser) {
 
 	if (parent.type === 'RegularElement' && closing_tag_omitted(parent.name, name)) {
 		const end = parent.fragment.nodes[0]?.start ?? start;
-		w.element_implicitly_closed({ start: parent.start, end }, parent.name);
+		w.element_implicitly_closed({ start: parent.start, end }, `<${name}>`, `</${parent.name}>`);
 		parent.end = start;
 		parser.pop();
 		parser.last_auto_closed_tag = {
