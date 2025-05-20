@@ -20,7 +20,7 @@ Unlike other frameworks you may have encountered, there is no API for interactin
 
 If `$state` is used with an array or a simple object, the result is a deeply reactive _state proxy_. [Proxies](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) allow Svelte to run code when you read or write properties, including via methods like `array.push(...)`, triggering granular updates.
 
-> [!NOTE] Classes like `Set` and `Map` will not be proxied, but Svelte provides reactive implementations for various built-ins like these that can be imported from [`svelte/reactivity`](./svelte-reactivity).
+> [!NOTE] Class instances are not proxied. You can create [reactive state fields](#Classes) on classes that you define. Svelte provides reactive implementations of built-ins like `Set` and `Map` that can be imported from [`svelte/reactivity`](svelte-reactivity).
 
 State is proxified recursively until Svelte finds something other than an array or simple object. In a case like this...
 
@@ -67,16 +67,15 @@ todos[0].done = !todos[0].done;
 
 ### Classes
 
-You can also use `$state` in class fields (whether public or private):
+You can also use `$state` in class fields (whether public or private), or as the first assignment to a property immediately inside the `constructor`:
 
 ```js
 // @errors: 7006 2554
 class Todo {
 	done = $state(false);
-	text = $state();
 
 	constructor(text) {
-		this.text = text;
+		this.text = $state(text);
 	}
 
 	reset() {
@@ -110,10 +109,9 @@ You can either use an inline function...
 // @errors: 7006 2554
 class Todo {
 	done = $state(false);
-	text = $state();
 
 	constructor(text) {
-		this.text = text;
+		this.text = $state(text);
 	}
 
 	+++reset = () => {+++

@@ -5,6 +5,7 @@ import {
 	hydrate_next,
 	hydrate_node,
 	hydrating,
+	read_hydration_instruction,
 	remove_nodes,
 	set_hydrate_node,
 	set_hydrating
@@ -100,7 +101,7 @@ export function if_block(node, fn, elseif = false) {
 		let mismatch = false;
 
 		if (hydrating) {
-			const is_else = /** @type {Comment} */ (anchor).data === HYDRATION_START_ELSE;
+			const is_else = read_hydration_instruction(anchor) === HYDRATION_START_ELSE;
 
 			if (!!condition === is_else) {
 				// Hydration mismatch: remove everything inside the anchor and start fresh.

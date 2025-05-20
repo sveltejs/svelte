@@ -31,6 +31,8 @@
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 2.8
 
+import type { Attachment } from 'svelte/attachments';
+
 // Note: We also allow `null` as a valid value because Svelte treats this the same as `undefined`
 
 type Booleanish = boolean | 'true' | 'false';
@@ -860,6 +862,9 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 
 	// allow any data- attribute
 	[key: `data-${string}`]: any;
+
+	// allow any attachment and falsy values (by using false we prevent the usage of booleans values by themselves)
+	[key: symbol]: Attachment<T> | false | undefined | null;
 }
 
 export type HTMLAttributeAnchorTarget = '_self' | '_blank' | '_parent' | '_top' | (string & {});

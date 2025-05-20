@@ -1,7 +1,8 @@
-import type { AST, Binding } from '#compiler';
+import type { AST, Binding, StateField } from '#compiler';
 import type {
 	AwaitExpression,
 	CallExpression,
+	ClassBody,
 	Identifier,
 	LabeledStatement,
 	Node,
@@ -36,6 +37,8 @@ export interface Analysis {
 	runes: boolean;
 	immutable: boolean;
 	tracing: boolean;
+
+	classes: Map<ClassBody, Map<string, StateField>>;
 
 	// TODO figure out if we can move this to ComponentAnalysis
 	accessors: boolean;

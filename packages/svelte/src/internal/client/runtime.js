@@ -855,22 +855,25 @@ export function flushSync(fn) {
 	if (fn) {
 		is_flushing = true;
 		flush_queued_root_effects();
+
+		is_flushing = true;
 		result = fn();
 	}
 
-	flush_tasks();
+	while (true) {
+		flush_tasks();
 
-	while (queued_root_effects.length > 0) {
+		if (queued_root_effects.length === 0) {
+			if (batch === current_batch) {
+				batch.flush();
+			}
+
+			return /** @type {T} */ (result);
+		}
+
 		is_flushing = true;
 		flush_queued_root_effects();
-		flush_tasks();
 	}
-
-	if (batch === current_batch) {
-		batch.flush();
-	}
-
-	return /** @type {T} */ (result);
 }
 
 /**

@@ -211,7 +211,7 @@ function get_delegated_event(event_name, handler, context) {
 
 		if (
 			binding !== null &&
-			// Bail out if the the binding is a rest param
+			// Bail out if the binding is a rest param
 			(binding.declaration_kind === 'rest_param' ||
 				// Bail out if we reference anything from the EachBlock (for now) that mutates in non-runes mode,
 				(((!context.state.analysis.runes && binding.kind === 'each') ||

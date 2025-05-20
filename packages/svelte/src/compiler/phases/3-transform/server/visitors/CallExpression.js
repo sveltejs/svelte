@@ -29,6 +29,15 @@ export function CallExpression(node, context) {
 		return b.false;
 	}
 
+	if (rune === '$state' || rune === '$state.raw') {
+		return node.arguments[0] ? context.visit(node.arguments[0]) : b.void0;
+	}
+
+	if (rune === '$derived' || rune === '$derived.by') {
+		const fn = /** @type {Expression} */ (context.visit(node.arguments[0]));
+		return b.call('$.once', rune === '$derived' ? b.thunk(fn) : fn);
+	}
+
 	if (rune === '$state.snapshot') {
 		return b.call(
 			'$.snapshot',

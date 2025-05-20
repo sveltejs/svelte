@@ -86,7 +86,7 @@ export function build_template_chunk(
 				// If we have a single expression, then pass that in directly to possibly avoid doing
 				// extra work in the template_effect (instead we do the work in set_text).
 				if (evaluated.is_known) {
-					value = b.literal(evaluated.value);
+					value = b.literal((evaluated.value ?? '') + '');
 				}
 
 				return { value, has_state };
@@ -105,7 +105,7 @@ export function build_template_chunk(
 			}
 
 			if (evaluated.is_known) {
-				quasi.value.cooked += evaluated.value + '';
+				quasi.value.cooked += (evaluated.value ?? '') + '';
 			} else {
 				if (!evaluated.is_defined) {
 					// add `?? ''` where necessary
@@ -342,15 +342,18 @@ export function validate_mutation(node, context, expression) {
 	const state = /** @type {ComponentClientTransformState} */ (context.state);
 	state.analysis.needs_mutation_validation = true;
 
-	/** @type {Array<Identifier | Literal>} */
+	/** @type {Array<Identifier | Literal | Expression>} */
 	const path = [];
 
 	while (left.type === 'MemberExpression') {
 		if (left.property.type === 'Literal') {
 			path.unshift(left.property);
 		} else if (left.property.type === 'Identifier') {
+			const transform = Object.hasOwn(context.state.transform, left.property.name)
+				? context.state.transform[left.property.name]
+				: null;
 			if (left.computed) {
-				path.unshift(left.property);
+				path.unshift(transform?.read ? transform.read(left.property) : left.property);
 			} else {
 				path.unshift(b.literal(left.property.name));
 			}

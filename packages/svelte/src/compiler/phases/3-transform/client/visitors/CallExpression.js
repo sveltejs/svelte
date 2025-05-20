@@ -4,18 +4,51 @@ import { dev, is_ignored } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 import { transform_inspect_rune } from '../../utils.js';
+import { should_proxy } from '../utils.js';
 
 /**
  * @param {CallExpression} node
  * @param {Context} context
  */
 export function CallExpression(node, context) {
-	switch (get_rune(node, context.state.scope)) {
+	const rune = get_rune(node, context.state.scope);
+
+	switch (rune) {
 		case '$host':
 			return b.id('$$props.$$host');
 
 		case '$effect.tracking':
 			return b.call('$.effect_tracking');
+
+		// transform state field assignments in constructors
+		case '$state':
+		case '$state.raw': {
+			let arg = node.arguments[0];
+
+			/** @type {Expression | undefined} */
+			let value = undefined;
+
+			if (arg) {
+				value = /** @type {Expression} */ (context.visit(node.arguments[0]));
+
+				if (
+					rune === '$state' &&
+					should_proxy(/** @type {Expression} */ (arg), context.state.scope)
+				) {
+					value = b.call('$.proxy', value);
+				}
+			}
+
+			return b.call('$.state', value);
+		}
+
+		case '$derived':
+		case '$derived.by': {
+			let fn = /** @type {Expression} */ (context.visit(node.arguments[0]));
+			if (rune === '$derived') fn = b.thunk(fn);
+
+			return b.call('$.derived', fn);
+		}
 
 		case '$state.snapshot':
 			return b.call(
