@@ -23,6 +23,7 @@ import { Identifier } from './visitors/Identifier.js';
 import { IfBlock } from './visitors/IfBlock.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
+import { MemberExpression } from './visitors/MemberExpression.js';
 import { PropertyDefinition } from './visitors/PropertyDefinition.js';
 import { RegularElement } from './visitors/RegularElement.js';
 import { RenderTag } from './visitors/RenderTag.js';
@@ -48,6 +49,7 @@ const global_visitors = {
 	ExpressionStatement,
 	Identifier,
 	LabeledStatement,
+	MemberExpression,
 	PropertyDefinition,
 	UpdateExpression,
 	VariableDeclaration

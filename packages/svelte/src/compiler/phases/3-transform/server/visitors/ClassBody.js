@@ -22,10 +22,6 @@ export function ClassBody(node, context) {
 	const child_state = { ...context.state, state_fields };
 
 	for (const [name, field] of state_fields) {
-		if (name[0] === '#') {
-			continue;
-		}
-
 		// insert backing fields for stuff declared in the constructor
 		if (
 			field &&
