@@ -8,7 +8,7 @@ import * as svelteElements from './elements.js';
 /**
  * @internal do not use
  */
-type HTMLProps<Property extends string, Override> = Omit<
+type HTMLProps<Property extends keyof svelteElements.SvelteHTMLElements, Override> = Omit<
 	import('./elements.js').SvelteHTMLElements[Property],
 	keyof Override
 > &
