@@ -261,10 +261,10 @@ export function build_component(node, component_name, context, anchor = context.
 			let expression = /** @type {Expression} */ (context.visit(attribute.expression));
 
 			if (attribute.metadata.expression.has_state) {
-				push_prop(b.get(b.call('$.attachment'), [b.return(expression)], true));
-			} else {
-				push_prop(b.prop('init', b.call('$.attachment'), expression, true));
+				expression = b.arrow([b.id('$$node')], b.call(expression, b.id('$$node')));
 			}
+
+			push_prop(b.prop('get', b.call('$.attachment'), expression, true));
 		}
 	}
 
