@@ -220,6 +220,12 @@ if (typeof HTMLElement === 'function') {
 					this.$$l_u.delete(listener);
 				}
 			}
+			if (this.$$l[type]) {
+				const idx = this.$$l[type].indexOf(listener);
+				if (idx >= 0) {
+					this.$$l[type].splice(idx, 1);
+				}
+			}
 		}
 
 		async connectedCallback() {
