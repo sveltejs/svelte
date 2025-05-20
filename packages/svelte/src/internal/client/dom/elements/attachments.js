@@ -1,5 +1,9 @@
 /** @import { Effect } from '#client' */
-import { block, branch, destroy_effect, effect } from '../../reactivity/effects.js';
+import { block, branch, destroy_effect } from '../../reactivity/effects.js';
+
+// TODO in 6.0 or 7.0, when we remove legacy mode, we can simplify this by
+// getting rid of the block/branch stuff and just letting the effect rip.
+// see https://github.com/sveltejs/svelte/pull/15962
 
 /**
  * @param {Element} node
