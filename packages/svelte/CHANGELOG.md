@@ -1,5 +1,11 @@
 # svelte
 
+## 5.32.1
+
+### Patch Changes
+
+- Warn when an invalid `<select multiple>` value is given ([#14816](https://github.com/sveltejs/svelte/pull/14816))
+
 ## 5.32.0
 
 ### Minor Changes
