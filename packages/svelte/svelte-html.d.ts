@@ -250,7 +250,7 @@ declare global {
 			};
 			// don't type svelte:options, it would override the types in svelte/elements and it isn't extendable anyway
 
-			[name: string]: { [name: string]: any };
+			[name: string & {}]: { [name: string]: any };
 		}
 	}
 }
