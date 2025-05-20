@@ -5,7 +5,7 @@ export default test({
 	html: `
 		<button>0</button>
 		<p>doubled: 0</p>
-		<p>trippled: 0</p>
+		<p>tripled: 0</p>
 	`,
 
 	test({ assert, target }) {
@@ -18,7 +18,7 @@ export default test({
 			`
 				<button>1</button>
 				<p>doubled: 2</p>
-				<p>trippled: 3</p>
+				<p>tripled: 3</p>
 			`
 		);
 
@@ -29,7 +29,7 @@ export default test({
 			`
 				<button>2</button>
 				<p>doubled: 4</p>
-				<p>trippled: 9</p>
+				<p>tripled: 6</p>
 			`
 		);
 	}

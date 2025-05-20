@@ -28,7 +28,7 @@ export function PropertyDefinition(node, context) {
 				value:
 					node.value.arguments.length === 0
 						? null
-						: b.call('$.once', rune === '$derived' ? b.thunk(fn) : fn)
+						: b.call('$.derived', rune === '$derived' ? b.thunk(fn) : fn)
 			};
 		}
 	}
