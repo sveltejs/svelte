@@ -104,9 +104,10 @@ export function build_set_attributes(
 	);
 
 	if (is_dynamic) {
-		context.state.init.push(b.let(attributes_id));
-		const update = b.stmt(b.assignment('=', attributes_id, call));
-		context.state.update.push(update);
+		context.state.init.push(
+			b.let(attributes_id),
+			b.stmt(b.call('$.set_attribute_effect', element_id, b.thunk(b.object(values))))
+		);
 	} else {
 		context.state.init.push(b.stmt(call));
 	}
