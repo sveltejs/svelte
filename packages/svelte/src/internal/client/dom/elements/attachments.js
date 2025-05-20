@@ -5,7 +5,7 @@ import { effect } from '../../reactivity/effects.js';
  * @param {() => (node: Element) => void} get_fn
  */
 export function attach(node, get_fn) {
-	effect(() => {
+	return effect(() => {
 		const fn = get_fn();
 
 		// we use `&&` rather than `?.` so that things like

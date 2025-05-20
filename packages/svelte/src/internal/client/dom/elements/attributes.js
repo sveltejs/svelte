@@ -18,6 +18,7 @@ import { clsx } from '../../../shared/attributes.js';
 import { set_class } from './class.js';
 import { set_style } from './style.js';
 import { ATTACHMENT_KEY, NAMESPACE_HTML } from '../../../../constants.js';
+import { block, branch, destroy_effect } from '../../reactivity/effects.js';
 
 export const CLASS = Symbol('class');
 export const STYLE = Symbol('style');
@@ -454,6 +455,49 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 	}
 
 	return current;
+}
+
+/**
+ * @param {Element & ElementCSSInlineStyle} element
+ * @param {() => Record<string | symbol, any>} fn
+ * @param {string} [css_hash]
+ * @param {boolean} [skip_warning]
+ */
+export function set_attribute_effect(element, fn, css_hash, skip_warning = false) {
+	/** @type {Record<string | symbol, any>} */
+	var prev = {};
+
+	/** @type {Record<symbol, import('#client').Effect>} */
+	var effects = {};
+
+	block(() => {
+		var next = fn();
+
+		for (const key in prev) {
+			if (!next[key]) {
+				element.removeAttribute(key);
+			}
+		}
+
+		for (let symbol of Object.getOwnPropertySymbols(prev)) {
+			if (!next[symbol]) {
+				destroy_effect(effects[symbol]);
+				delete effects[symbol];
+			}
+		}
+
+		for (const key in next) {
+			set_attribute(element, key, next[key], skip_warning);
+		}
+
+		for (let symbol of Object.getOwnPropertySymbols(next)) {
+			if (symbol.description === ATTACHMENT_KEY && next[symbol] !== prev[symbol]) {
+				effects[symbol] = branch(() => attach(element, () => next[symbol]));
+			}
+		}
+
+		prev = next;
+	});
 }
 
 /**
