@@ -1,5 +1,17 @@
 # svelte
 
+## 5.32.0
+
+### Minor Changes
+
+- feat: warn on implicitly closed tags ([#15932](https://github.com/sveltejs/svelte/pull/15932))
+
+- feat: attachments `fromAction` utility ([#15933](https://github.com/sveltejs/svelte/pull/15933))
+
+### Patch Changes
+
+- fix: only re-run directly applied attachment if it changed ([#15962](https://github.com/sveltejs/svelte/pull/15962))
+
 ## 5.31.1
 
 ### Patch Changes
