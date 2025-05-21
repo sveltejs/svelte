@@ -1,5 +1,15 @@
 # svelte
 
+## 5.32.2
+
+### Patch Changes
+
+- chore: simplify `<pre>` cleaning ([#15980](https://github.com/sveltejs/svelte/pull/15980))
+
+- fix: attach `__svelte_meta` correctly to elements following a CSS wrapper ([#15982](https://github.com/sveltejs/svelte/pull/15982))
+
+- fix: import untrack directly from client in `svelte/attachments` ([#15974](https://github.com/sveltejs/svelte/pull/15974))
+
 ## 5.32.1
 
 ### Patch Changes
