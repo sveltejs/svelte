@@ -36,18 +36,31 @@ export interface ClientTransformState extends TransformState {
 	>;
 }
 
-type TemplateOperationsKind =
-	| 'create_element'
-	| 'create_text'
-	| 'create_anchor'
-	| 'set_prop'
-	| 'push_element'
-	| 'pop_element';
+type TemplateOperations = Array<
+	| {
+			kind: 'create_element';
+			args: string[];
+	  }
+	| {
+			kind: 'create_text';
+			args: string[];
+	  }
+	| {
+			kind: 'create_anchor';
+			args?: string[];
+	  }
+	| {
+			kind: 'set_prop';
+			args: string[];
+	  }
+	| {
+			kind: 'push_element';
+	  }
+	| {
+			kind: 'pop_element';
+	  }
+>;
 
-type TemplateOperations = Array<{
-	kind: TemplateOperationsKind;
-	args?: Array<string>;
-}>;
 export interface ComponentClientTransformState extends ClientTransformState {
 	readonly analysis: ComponentAnalysis;
 	readonly options: ValidatedCompileOptions;

@@ -49,13 +49,13 @@ export function template_to_string(items) {
 			case 'create_element':
 				last_current_element = insert({
 					kind: 'element',
-					element: /** @type {string[]} */ (instruction.args)[0]
+					element: instruction.args[0]
 				});
 				break;
 			case 'create_text':
 				insert({
 					kind: 'text',
-					value: /** @type {string[]} */ (instruction.args)[0]
+					value: instruction.args[0]
 				});
 				break;
 			case 'create_anchor':
@@ -66,7 +66,7 @@ export function template_to_string(items) {
 				break;
 			case 'set_prop': {
 				const el = /** @type {Element} */ (last_current_element);
-				const [prop, value] = /** @type {string[]} */ (instruction.args);
+				const [prop, value] = instruction.args;
 				el.props ??= {};
 				el.props[prop] = escape_html(value, true);
 				break;
