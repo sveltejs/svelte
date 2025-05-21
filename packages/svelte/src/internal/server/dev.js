@@ -24,7 +24,7 @@ import { HeadPayload, Payload } from './payload.js';
 let parent = null;
 
 /** @type {Set<string>} */
-export let seen;
+let seen;
 
 /**
  * @param {Payload} payload
