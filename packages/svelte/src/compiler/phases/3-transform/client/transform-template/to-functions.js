@@ -49,7 +49,7 @@ function build(item) {
 				const children = item.children.map(build);
 				element.properties.push(b.prop('init', b.id('c'), b.array(children)));
 
-				// special case — strip leading newline from `<pre>` and `<textarea>`
+				// special case — strip leading newline from `<pre>` and `<textarea>`
 				if (item.name === 'pre' || item.name === 'textarea') {
 					const first = children[0];
 					if (first?.type === 'Literal') {
