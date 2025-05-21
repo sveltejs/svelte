@@ -45,8 +45,7 @@ export class Template {
 	}
 
 	push_element() {
-		const element = /** @type {Element} */ (this.#element);
-		this.#fragment = element.children;
+		this.#fragment = /** @type {Element} */ (this.#element).children;
 		this.#stack.push(this.#fragment);
 	}
 
@@ -60,7 +59,6 @@ export class Template {
 	 * @param {string | undefined} value
 	 */
 	set_prop(key, value) {
-		const element = /** @type {Element} */ (this.#element);
-		element.attributes[key] = value;
+		/** @type {Element} */ (this.#element).attributes[key] = value;
 	}
 }
