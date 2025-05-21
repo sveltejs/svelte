@@ -7,6 +7,9 @@ import { is_void } from '../../../../../utils.js';
  * @param {TemplateOperations} items
  */
 export function template_to_string(items) {
+	/**
+	 * @type {Array<Element>}
+	 */
 	let elements = [];
 
 	/**
@@ -19,41 +22,53 @@ export function template_to_string(items) {
 	 */
 	let last_current_element;
 
+	/**
+	 * @template {Node} T
+	 * @param {T} child
+	 */
+	function insert(child) {
+		if (last_current_element) {
+			last_current_element.children ??= [];
+			last_current_element.children.push(child);
+		} else {
+			elements.push(/** @type {Element} */ (child));
+		}
+		return child;
+	}
+
 	for (let instruction of items) {
-		// on push element we add the element to the stack, from this moment on every insert will
-		// happen on the last element in the stack
-		if (instruction.kind === 'push_element' && last_current_element) {
-			elements_stack.push(last_current_element);
-			continue;
-		}
-		// we closed one element, we remove it from the stack
-		if (instruction.kind === 'pop_element') {
-			elements_stack.pop();
-			continue;
-		}
-		/**
-		 * @type {Node | void}
-		 */
-		// @ts-expect-error we can't be here if `swap_current_element` but TS doesn't know that
-		const value = map[instruction.kind](
-			...[
-				// for set prop we need to send the last element (not the one in the stack since
-				// it get's added to the stack only after the push_element instruction)
-				...(instruction.kind === 'set_prop' ? [last_current_element] : []),
-				...(instruction.args ?? [])
-			]
-		);
-		// with set_prop we don't need to do anything else, in all other cases we also need to
-		// append the element/node/anchor to the current active element or push it in the elements array
-		if (instruction.kind !== 'set_prop') {
-			if (elements_stack.length >= 1 && value) {
-				map.insert(/** @type {Element} */ (elements_stack.at(-1)), value);
-			} else if (value) {
-				elements.push(value);
-			}
-			// keep track of the last created element (it will be pushed to the stack after the props are set)
-			if (instruction.kind === 'create_element') {
-				last_current_element = /** @type {Element} */ (value);
+		switch (instruction.kind) {
+			case 'push_element':
+				elements_stack.push(/** @type {Element} */ (last_current_element));
+				break;
+			case 'pop_element':
+				elements_stack.pop();
+				last_current_element = elements_stack.at(-1);
+				break;
+			case 'create_element':
+				last_current_element = insert({
+					kind: 'element',
+					element: /** @type {string[]} */ (instruction.args)[0]
+				});
+				break;
+			case 'create_text':
+				insert({
+					kind: 'text',
+					value: /** @type {string[]} */ (instruction.args)[0]
+				});
+				break;
+			case 'create_anchor':
+				insert({
+					kind: 'anchor',
+					data: instruction.args?.[0]
+				});
+				break;
+			case 'set_prop': {
+				const el = /** @type {Element} */ (last_current_element);
+				const [prop, value] = /** @type {string[]} */ (instruction.args);
+				el.props ??= {};
+				el.props[prop] = value;
+				break;
 			}
 		}
 	}
@@ -76,70 +91,6 @@ export function template_to_string(items) {
 /**
  * @typedef { Element | Anchor| Text } Node
  */
-
-/**
- *
- * @param {string} element
- * @returns {Element}
- */
-function create_element(element) {
-	return {
-		kind: 'element',
-		element
-	};
-}
-
-/**
- * @param {string} data
- * @returns {Anchor}
- */
-function create_anchor(data) {
-	return {
-		kind: 'anchor',
-		data
-	};
-}
-
-/**
- * @param {string} value
- * @returns {Text}
- */
-function create_text(value) {
-	return {
-		kind: 'text',
-		value
-	};
-}
-
-/**
- *
- * @param {Element} el
- * @param {string} prop
- * @param {string} value
- */
-function set_prop(el, prop, value) {
-	el.props ??= {};
-	el.props[prop] = value;
-}
-
-/**
- *
- * @param {Element} el
- * @param {Node} child
- * @param {Node} [anchor]
- */
-function insert(el, child, anchor) {
-	el.children ??= [];
-	el.children.push(child);
-}
-
-let map = {
-	create_element,
-	create_text,
-	create_anchor,
-	set_prop,
-	insert
-};
 
 /**
  *
