@@ -14,7 +14,7 @@ import { template_to_string } from './to-string.js';
  * @returns
  */
 function get_template_function(namespace, state) {
-	const contains_script_tag = state.metadata.context.template_contains_script_tag;
+	const contains_script_tag = state.template.contains_script_tag;
 	return (
 		namespace === 'svg'
 			? contains_script_tag

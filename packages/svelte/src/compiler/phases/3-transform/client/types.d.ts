@@ -59,21 +59,6 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly metadata: {
 		namespace: Namespace;
 		bound_contenteditable: boolean;
-		/**
-		 * Stuff that is set within the children of one `Fragment` visitor that is relevant
-		 * to said fragment. Shouldn't be destructured or otherwise spread unless inside the
-		 * `Fragment` visitor to keep the object reference intact (it's also nested
-		 * within `metadata` for this reason).
-		 */
-		context: {
-			/** `true` if the HTML template needs to be instantiated with `importNode` */
-			template_needs_import_node: boolean;
-			/**
-			 * `true` if HTML template contains a `<script>` tag. In this case we need to invoke a special
-			 * template instantiation function (see `create_fragment_with_script_from_html` for more info)
-			 */
-			template_contains_script_tag: boolean;
-		};
 	};
 	readonly preserve_whitespace: boolean;
 

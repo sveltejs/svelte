@@ -58,19 +58,15 @@ export function RegularElement(node, context) {
 
 	const is_custom_element = is_custom_element_node(node);
 
-	if (node.name === 'video' || is_custom_element) {
-		// cloneNode is faster, but it does not instantiate the underlying class of the
-		// custom element until the template is connected to the dom, which would
-		// cause problems when setting properties on the custom element.
-		// Therefore we need to use importNode instead, which doesn't have this caveat.
-		// Additionally, Webkit browsers need importNode for video elements for autoplay
-		// to work correctly.
-		context.state.metadata.context.template_needs_import_node = true;
-	}
+	// cloneNode is faster, but it does not instantiate the underlying class of the
+	// custom element until the template is connected to the dom, which would
+	// cause problems when setting properties on the custom element.
+	// Therefore we need to use importNode instead, which doesn't have this caveat.
+	// Additionally, Webkit browsers need importNode for video elements for autoplay
+	// to work correctly.
+	context.state.template.needs_import_node ||= node.name === 'video' || is_custom_element;
 
-	if (node.name === 'script') {
-		context.state.metadata.context.template_contains_script_tag = true;
-	}
+	context.state.template.contains_script_tag ||= node.name === 'script';
 
 	context.state.template.create_element(node.name);
 

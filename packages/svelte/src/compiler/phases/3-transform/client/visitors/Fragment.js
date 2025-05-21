@@ -70,10 +70,6 @@ export function Fragment(node, context) {
 		locations: [],
 		transform: { ...context.state.transform },
 		metadata: {
-			context: {
-				template_needs_import_node: false,
-				template_contains_script_tag: false
-			},
 			namespace,
 			bound_contenteditable: context.state.metadata.bound_contenteditable
 		}
@@ -98,11 +94,7 @@ export function Fragment(node, context) {
 			node: id
 		});
 
-		let flags = undefined;
-
-		if (state.metadata.context.template_needs_import_node) {
-			flags = TEMPLATE_USE_IMPORT_NODE;
-		}
+		let flags = state.template.needs_import_node ? TEMPLATE_USE_IMPORT_NODE : undefined;
 
 		transform_template(state, context, namespace, template_name, flags);
 
@@ -144,7 +136,7 @@ export function Fragment(node, context) {
 
 				let flags = TEMPLATE_FRAGMENT;
 
-				if (state.metadata.context.template_needs_import_node) {
+				if (state.template.needs_import_node) {
 					flags |= TEMPLATE_USE_IMPORT_NODE;
 				}
 

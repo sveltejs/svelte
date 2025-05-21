@@ -2,6 +2,15 @@
 /** @import { Node, Element } from './types'; */
 
 export class Template {
+	/**
+	 * `true` if HTML template contains a `<script>` tag. In this case we need to invoke a special
+	 * template instantiation function (see `create_fragment_with_script_from_html` for more info)
+	 */
+	contains_script_tag = false;
+
+	/** `true` if the HTML template needs to be instantiated with `importNode` */
+	needs_import_node = false;
+
 	/** @type {Node[]} */
 	nodes = [];
 
