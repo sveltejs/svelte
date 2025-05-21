@@ -86,6 +86,7 @@ export const codes = [
 	'a11y_role_supports_aria_props_implicit',
 	'a11y_unknown_aria_attribute',
 	'a11y_unknown_role',
+	'bidirectional_control_characters',
 	'legacy_code',
 	'unknown_code',
 	'options_deprecated_accessors',
@@ -113,6 +114,7 @@ export const codes = [
 	'bind_invalid_each_rest',
 	'block_empty',
 	'component_name_lowercase',
+	'element_implicitly_closed',
 	'element_invalid_self_closing_tag',
 	'event_directive_deprecated',
 	'node_invalid_placement_ssr',
@@ -507,6 +509,14 @@ export function a11y_unknown_role(node, role, suggestion) {
 }
 
 /**
+ * A bidirectional control character was detected in your code. These characters can be used to alter the visual direction of your code and could have unintended consequences
+ * @param {null | NodeLike} node
+ */
+export function bidirectional_control_characters(node) {
+	w(node, 'bidirectional_control_characters', `A bidirectional control character was detected in your code. These characters can be used to alter the visual direction of your code and could have unintended consequences\nhttps://svelte.dev/e/bidirectional_control_characters`);
+}
+
+/**
  * `%code%` is no longer valid — please use `%suggestion%` instead
  * @param {null | NodeLike} node
  * @param {string} code
@@ -735,6 +745,16 @@ export function block_empty(node) {
  */
 export function component_name_lowercase(node, name) {
 	w(node, 'component_name_lowercase', `\`<${name}>\` will be treated as an HTML element unless it begins with a capital letter\nhttps://svelte.dev/e/component_name_lowercase`);
+}
+
+/**
+ * This element is implicitly closed by the following `%tag%`, which can cause an unexpected DOM structure. Add an explicit `%closing%` to avoid surprises.
+ * @param {null | NodeLike} node
+ * @param {string} tag
+ * @param {string} closing
+ */
+export function element_implicitly_closed(node, tag, closing) {
+	w(node, 'element_implicitly_closed', `This element is implicitly closed by the following \`${tag}\`, which can cause an unexpected DOM structure. Add an explicit \`${closing}\` to avoid surprises.\nhttps://svelte.dev/e/element_implicitly_closed`);
 }
 
 /**

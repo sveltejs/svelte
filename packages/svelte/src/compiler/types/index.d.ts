@@ -2,6 +2,13 @@ import type { SourceMap } from 'magic-string';
 import type { Binding } from '../phases/scope.js';
 import type { AST, Namespace } from './template.js';
 import type { ICompileDiagnostic } from '../utils/compile_diagnostic.js';
+import type { StateCreationRuneName } from '../../utils.js';
+import type {
+	AssignmentExpression,
+	CallExpression,
+	PrivateIdentifier,
+	PropertyDefinition
+} from 'estree';
 
 /** The return value of `compile` from `svelte/compiler` */
 export interface CompileResult {
@@ -273,6 +280,13 @@ export interface ExpressionMetadata {
 	has_state: boolean;
 	/** True if the expression involves a call expression (often, it will need to be wrapped in a derived) */
 	has_call: boolean;
+}
+
+export interface StateField {
+	type: StateCreationRuneName;
+	node: PropertyDefinition | AssignmentExpression;
+	key: PrivateIdentifier;
+	value: CallExpression;
 }
 
 export * from './template.js';

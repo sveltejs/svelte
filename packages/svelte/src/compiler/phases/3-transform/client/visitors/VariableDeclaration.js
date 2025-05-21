@@ -2,7 +2,7 @@
 /** @import { Binding } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
-import { extract_paths } from '../../../../utils/ast.js';
+import { build_pattern, extract_paths } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import * as assert from '../../../../utils/assert.js';
 import { get_rune } from '../../../scope.js';
@@ -141,20 +141,20 @@ export function VariableDeclaration(node, context) {
 						b.declarator(declarator.id, create_state_declarator(declarator.id, value))
 					);
 				} else {
-					const tmp = context.state.scope.generate('tmp');
-					const paths = extract_paths(declarator.id);
+					const [pattern, replacements] = build_pattern(declarator.id, context.state.scope);
 					declarations.push(
-						b.declarator(b.id(tmp), value),
-						...paths.map((path) => {
-							const value = path.expression?.(b.id(tmp));
-							const binding = context.state.scope.get(/** @type {Identifier} */ (path.node).name);
-							return b.declarator(
-								path.node,
-								binding?.kind === 'state' || binding?.kind === 'raw_state'
-									? create_state_declarator(binding.node, value)
-									: value
-							);
-						})
+						b.declarator(pattern, value),
+						.../** @type {[Identifier, Identifier][]} */ ([...replacements]).map(
+							([original, replacement]) => {
+								const binding = context.state.scope.get(original.name);
+								return b.declarator(
+									original,
+									binding?.kind === 'state' || binding?.kind === 'raw_state'
+										? create_state_declarator(binding.node, replacement)
+										: replacement
+								);
+							}
+						)
 					);
 				}
 
@@ -170,8 +170,7 @@ export function VariableDeclaration(node, context) {
 						)
 					);
 				} else {
-					const bindings = extract_paths(declarator.id);
-
+					const [pattern, replacements] = build_pattern(declarator.id, context.state.scope);
 					const init = /** @type {CallExpression} */ (declarator.init);
 
 					/** @type {Identifier} */
@@ -189,10 +188,16 @@ export function VariableDeclaration(node, context) {
 						);
 					}
 
-					for (let i = 0; i < bindings.length; i++) {
-						const binding = bindings[i];
+					for (let i = 0; i < replacements.size; i++) {
+						const [original, replacement] = [...replacements][i];
 						declarations.push(
-							b.declarator(binding.node, b.call('$.derived', b.thunk(binding.expression(rhs))))
+							b.declarator(
+								original,
+								b.call(
+									'$.derived',
+									b.arrow([], b.block([b.let(pattern, rhs), b.return(replacement)]))
+								)
+							)
 						);
 					}
 				}
@@ -304,19 +309,19 @@ function create_state_declarators(declarator, { scope, analysis }, value) {
 		];
 	}
 
-	const tmp = scope.generate('tmp');
-	const paths = extract_paths(declarator.id);
+	const [pattern, replacements] = build_pattern(declarator.id, scope);
 	return [
-		b.declarator(b.id(tmp), value),
-		...paths.map((path) => {
-			const value = path.expression?.(b.id(tmp));
-			const binding = scope.get(/** @type {Identifier} */ (path.node).name);
-			return b.declarator(
-				path.node,
-				binding?.kind === 'state'
-					? b.call('$.mutable_source', value, analysis.immutable ? b.true : undefined)
-					: value
-			);
-		})
+		b.declarator(pattern, value),
+		.../** @type {[Identifier, Identifier][]} */ ([...replacements]).map(
+			([original, replacement]) => {
+				const binding = scope.get(original.name);
+				return b.declarator(
+					original,
+					binding?.kind === 'state'
+						? b.call('$.mutable_source', replacement, analysis.immutable ? b.true : undefined)
+						: replacement
+				);
+			}
+		)
 	];
 }

@@ -23,7 +23,6 @@ import { Identifier } from './visitors/Identifier.js';
 import { IfBlock } from './visitors/IfBlock.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
-import { MemberExpression } from './visitors/MemberExpression.js';
 import { PropertyDefinition } from './visitors/PropertyDefinition.js';
 import { RegularElement } from './visitors/RegularElement.js';
 import { RenderTag } from './visitors/RenderTag.js';
@@ -49,7 +48,6 @@ const global_visitors = {
 	ExpressionStatement,
 	Identifier,
 	LabeledStatement,
-	MemberExpression,
 	PropertyDefinition,
 	UpdateExpression,
 	VariableDeclaration
@@ -99,7 +97,7 @@ export function server_component(analysis, options) {
 		template: /** @type {any} */ (null),
 		namespace: options.namespace,
 		preserve_whitespace: options.preserveWhitespace,
-		private_derived: new Map(),
+		state_fields: new Map(),
 		skip_hydration_boundaries: false
 	};
 
@@ -395,7 +393,7 @@ export function server_module(analysis, options) {
 		// to be present for `javascript_visitors_legacy` and so is included in module
 		// transform state as well as component transform state
 		legacy_reactive_statements: new Map(),
-		private_derived: new Map()
+		state_fields: new Map()
 	};
 
 	const module = /** @type {Program} */ (

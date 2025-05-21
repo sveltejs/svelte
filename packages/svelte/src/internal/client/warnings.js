@@ -159,6 +159,17 @@ export function ownership_invalid_mutation(name, location, prop, parent) {
 }
 
 /**
+ * The `value` property of a `<select multiple>` element should be an array, but it received a non-array value. The selection will be kept as is.
+ */
+export function select_multiple_invalid_value() {
+	if (DEV) {
+		console.warn(`%c[svelte] select_multiple_invalid_value\n%cThe \`value\` property of a \`<select multiple>\` element should be an array, but it received a non-array value. The selection will be kept as is.\nhttps://svelte.dev/e/select_multiple_invalid_value`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/select_multiple_invalid_value`);
+	}
+}
+
+/**
  * Reactive `$state(...)` proxies and the values they proxy have different identities. Because of this, comparisons with `%operator%` will produce unexpected results
  * @param {string} operator
  */

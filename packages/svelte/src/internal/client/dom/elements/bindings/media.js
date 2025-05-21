@@ -62,7 +62,23 @@ export function bind_current_time(media, get, set = get) {
  * @param {(array: Array<{ start: number; end: number }>) => void} set
  */
 export function bind_buffered(media, set) {
-	listen(media, ['loadedmetadata', 'progress'], () => set(time_ranges_to_array(media.buffered)));
+	/** @type {{ start: number; end: number; }[]} */
+	var current;
+
+	// `buffered` can update without emitting any event, so we check it on various events.
+	// By specs, `buffered` always returns a new object, so we have to compare deeply.
+	listen(media, ['loadedmetadata', 'progress', 'timeupdate', 'seeking'], () => {
+		var ranges = media.buffered;
+
+		if (
+			!current ||
+			current.length !== ranges.length ||
+			current.some((range, i) => ranges.start(i) !== range.start || ranges.end(i) !== range.end)
+		) {
+			current = time_ranges_to_array(ranges);
+			set(current);
+		}
+	});
 }
 
 /**
