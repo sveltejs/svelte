@@ -22,23 +22,28 @@ function build(item) {
 		case 'element': {
 			const element = b.object([b.prop('init', b.id('e'), b.literal(item.name))]);
 
-			const entries = Object.entries(item.attributes);
-			if (entries.length > 0) {
-				element.properties.push(
+			if (item.attributes.is) {
+				element.properties.push(b.prop('init', b.id('is'), b.literal(item.attributes.is)));
+			}
+
+			const attributes = b.prop('init', b.id('p'), b.object([]));
+
+			for (const key in item.attributes) {
+				if (key === 'is') continue;
+
+				const value = item.attributes[key];
+
+				attributes.value.properties.push(
 					b.prop(
 						'init',
-						b.id('p'),
-						b.object(
-							entries.map(([key, value]) => {
-								return b.prop(
-									'init',
-									b.key(fix_attribute_casing(key)),
-									value === undefined ? b.void0 : b.literal(value)
-								);
-							})
-						)
+						b.key(fix_attribute_casing(key)),
+						value === undefined ? b.void0 : b.literal(value)
 					)
 				);
+			}
+
+			if (attributes.value.properties.length > 0) {
+				element.properties.push(attributes);
 			}
 
 			if (item.children.length > 0) {
