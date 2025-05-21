@@ -9,7 +9,7 @@ import * as b from '#compiler/builders';
  * @param {ComponentContext} context
  */
 export function RenderTag(node, context) {
-	context.state.template.push({ kind: 'create_anchor' });
+	context.state.template.create_anchor();
 
 	const expression = unwrap_optional(node.expression);
 

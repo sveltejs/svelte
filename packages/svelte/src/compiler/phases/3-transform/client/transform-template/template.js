@@ -1,5 +1,4 @@
 /** @import { AST } from '#compiler' */
-/** @import { TemplateOperation } from '../types.js' */
 /** @import { Node, Element } from './types'; */
 
 export class Template {
@@ -14,43 +13,6 @@ export class Template {
 
 	#fragment = this.nodes;
 
-	/**
-	 * @param {...TemplateOperation} nodes
-	 * @deprecated
-	 */
-	push(...nodes) {
-		for (const node of nodes) {
-			switch (node.kind) {
-				case 'create_element':
-					this.create_element(node.name);
-					break;
-
-				case 'create_anchor':
-					this.create_anchor(node.data);
-					break;
-
-				case 'create_text':
-					this.create_text(node.nodes);
-					break;
-
-				case 'push_element': {
-					this.push_element();
-					break;
-				}
-
-				case 'pop_element': {
-					this.pop_element();
-					break;
-				}
-
-				case 'set_prop': {
-					this.set_prop(node.key, node.value);
-					break;
-				}
-			}
-		}
-	}
-
 	/** @param {string} name */
 	create_element(name) {
 		this.#element = {
@@ -63,7 +25,7 @@ export class Template {
 		this.#fragment.push(this.#element);
 	}
 
-	/** @param {string | undefined} data */
+	/** @param {string} [data] */
 	create_anchor(data) {
 		this.#fragment.push({ type: 'anchor', data });
 	}

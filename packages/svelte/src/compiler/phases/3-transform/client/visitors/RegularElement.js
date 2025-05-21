@@ -52,10 +52,7 @@ export function RegularElement(node, context) {
 	}
 
 	if (node.name === 'noscript') {
-		context.state.template.push({
-			kind: 'create_element',
-			name: 'noscript'
-		});
+		context.state.template.create_element('noscript');
 		return;
 	}
 
@@ -75,10 +72,7 @@ export function RegularElement(node, context) {
 		context.state.metadata.context.template_contains_script_tag = true;
 	}
 
-	context.state.template.push({
-		kind: 'create_element',
-		name: node.name
-	});
+	context.state.template.create_element(node.name);
 
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
 	const attributes = [];
@@ -116,11 +110,7 @@ export function RegularElement(node, context) {
 					const { value } = build_attribute_value(attribute.value, context);
 
 					if (value.type === 'Literal' && typeof value.value === 'string') {
-						context.state.template.push({
-							kind: 'set_prop',
-							key: 'is',
-							value: value.value
-						});
+						context.state.template.set_prop('is', value.value);
 						continue;
 					}
 				}
@@ -300,12 +290,10 @@ export function RegularElement(node, context) {
 				}
 
 				if (name !== 'class' || value) {
-					context.state.template.push({
-						kind: 'set_prop',
-						key: attribute.name,
-						value:
-							is_boolean_attribute(name) && value === true ? undefined : value === true ? '' : value
-					});
+					context.state.template.set_prop(
+						attribute.name,
+						is_boolean_attribute(name) && value === true ? undefined : value === true ? '' : value
+					);
 				}
 			} else if (name === 'autofocus') {
 				let { value } = build_attribute_value(attribute.value, context);
@@ -337,7 +325,8 @@ export function RegularElement(node, context) {
 	) {
 		context.state.after_update.push(b.stmt(b.call('$.replay_events', node_id)));
 	}
-	context.state.template.push({ kind: 'push_element' });
+
+	context.state.template.push_element();
 
 	const metadata = {
 		...context.state.metadata,
@@ -458,7 +447,7 @@ export function RegularElement(node, context) {
 		// @ts-expect-error
 		location.push(state.locations);
 	}
-	context.state.template.push({ kind: 'pop_element' });
+	context.state.template.pop_element();
 }
 
 /**

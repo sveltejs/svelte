@@ -11,7 +11,7 @@ import { get_value } from './shared/declarations.js';
  * @param {ComponentContext} context
  */
 export function AwaitBlock(node, context) {
-	context.state.template.push({ kind: 'create_anchor' });
+	context.state.template.create_anchor();
 
 	// Visit {#await <expression>} first to ensure that scopes are in the correct order
 	const expression = b.thunk(/** @type {Expression} */ (context.visit(node.expression)));

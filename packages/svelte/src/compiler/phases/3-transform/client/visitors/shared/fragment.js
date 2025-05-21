@@ -64,16 +64,11 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	function flush_sequence(sequence) {
 		if (sequence.every((node) => node.type === 'Text')) {
 			skipped += 1;
-			state.template.push({
-				kind: 'create_text',
-				nodes: sequence
-			});
+			state.template.create_text(sequence);
 			return;
 		}
-		state.template.push({
-			kind: 'create_text',
-			nodes: [{ type: 'Text', data: ' ', raw: ' ', start: -1, end: -1 }]
-		});
+
+		state.template.create_text([{ type: 'Text', data: ' ', raw: ' ', start: -1, end: -1 }]);
 
 		const { has_state, value } = build_template_chunk(sequence, visit, state);
 

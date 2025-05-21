@@ -8,7 +8,7 @@ import * as b from '#compiler/builders';
  * @param {ComponentContext} context
  */
 export function IfBlock(node, context) {
-	context.state.template.push({ kind: 'create_anchor' });
+	context.state.template.create_anchor();
 	const statements = [];
 
 	const consequent = /** @type {BlockStatement} */ (context.visit(node.consequent));

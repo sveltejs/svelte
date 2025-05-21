@@ -37,31 +37,6 @@ export interface ClientTransformState extends TransformState {
 	>;
 }
 
-type TemplateOperation =
-	| {
-			kind: 'create_element';
-			name: string;
-	  }
-	| {
-			kind: 'create_text';
-			nodes: AST.Text[];
-	  }
-	| {
-			kind: 'create_anchor';
-			data?: string;
-	  }
-	| {
-			kind: 'set_prop';
-			key: string;
-			value: string | undefined;
-	  }
-	| {
-			kind: 'push_element';
-	  }
-	| {
-			kind: 'pop_element';
-	  };
-
 export interface ComponentClientTransformState extends ClientTransformState {
 	readonly analysis: ComponentAnalysis;
 	readonly options: ValidatedCompileOptions;

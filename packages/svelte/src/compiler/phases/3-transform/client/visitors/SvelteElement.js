@@ -13,7 +13,7 @@ import { build_render_statement } from './shared/utils.js';
  * @param {ComponentContext} context
  */
 export function SvelteElement(node, context) {
-	context.state.template.push({ kind: 'create_anchor' });
+	context.state.template.create_anchor();
 
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
 	const attributes = [];

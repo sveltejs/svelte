@@ -1,6 +1,6 @@
 /** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
-/** @import { ComponentContext, TemplateOperation } from '../../types.js' */
+/** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
@@ -440,25 +440,20 @@ export function build_component(node, component_name, context, anchor = context.
 	}
 
 	if (Object.keys(custom_css_props).length > 0) {
-		/** @type {TemplateOperation[]} */
-		const template_operations = [];
-
 		if (context.state.metadata.namespace === 'svg') {
 			// this boils down to <g><!></g>
-			template_operations.push({ kind: 'create_element', name: 'g' });
-			template_operations.push({ kind: 'push_element' });
-			template_operations.push({ kind: 'create_anchor' });
-			template_operations.push({ kind: 'pop_element' });
+			context.state.template.create_element('g');
+			context.state.template.push_element();
+			context.state.template.create_anchor();
+			context.state.template.pop_element();
 		} else {
 			// this boils down to <svelte-css-wrapper style='display: contents'><!></svelte-css-wrapper>
-			template_operations.push({ kind: 'create_element', name: 'svelte-css-wrapper' });
-			template_operations.push({ kind: 'set_prop', key: 'style', value: 'display: contents' });
-			template_operations.push({ kind: 'push_element' });
-			template_operations.push({ kind: 'create_anchor' });
-			template_operations.push({ kind: 'pop_element' });
+			context.state.template.create_element('svelte-css-wrapper');
+			context.state.template.set_prop('style', 'display: contents');
+			context.state.template.push_element();
+			context.state.template.create_anchor();
+			context.state.template.pop_element();
 		}
-
-		context.state.template.push(...template_operations);
 
 		statements.push(
 			b.stmt(b.call('$.css_props', anchor, b.thunk(b.object(custom_css_props)))),
@@ -466,7 +461,7 @@ export function build_component(node, component_name, context, anchor = context.
 			b.stmt(b.call('$.reset', anchor))
 		);
 	} else {
-		context.state.template.push({ kind: 'create_anchor' });
+		context.state.template.create_anchor();
 		statements.push(b.stmt(fn(anchor)));
 	}
 
