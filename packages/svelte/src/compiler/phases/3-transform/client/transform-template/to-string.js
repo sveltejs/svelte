@@ -1,6 +1,7 @@
 /**
  * @import { TemplateOperations } from "../types.js"
  */
+import { escape_html } from '../../../../../escaping.js';
 import { is_void } from '../../../../../utils.js';
 
 /**
@@ -67,7 +68,7 @@ export function template_to_string(items) {
 				const el = /** @type {Element} */ (last_current_element);
 				const [prop, value] = /** @type {string[]} */ (instruction.args);
 				el.props ??= {};
-				el.props[prop] = value;
+				el.props[prop] = escape_html(value, true);
 				break;
 			}
 		}

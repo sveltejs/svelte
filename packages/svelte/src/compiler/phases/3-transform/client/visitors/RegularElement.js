@@ -122,14 +122,7 @@ export function RegularElement(node, context) {
 					if (value.type === 'Literal' && typeof value.value === 'string') {
 						context.state.template.push({
 							kind: 'set_prop',
-							args: [
-								'is',
-								// if we are using the functional template mode we don't want to escape since we will
-								// create a text node from it which is already escaped
-								context.state.is_functional_template_mode
-									? value.value
-									: escape_html(value.value, true)
-							]
+							args: ['is', value.value]
 						});
 						continue;
 					}
@@ -313,17 +306,7 @@ export function RegularElement(node, context) {
 					context.state.template.push({
 						kind: 'set_prop',
 						args: [attribute.name].concat(
-							is_boolean_attribute(name) && value === true
-								? []
-								: [
-										value === true
-											? ''
-											: // if we are using the functional template mode we don't want to escape since we will
-												// create a text node from it which is already escaped
-												context.state.is_functional_template_mode
-												? value
-												: escape_html(value, true)
-									]
+							is_boolean_attribute(name) && value === true ? [] : [value === true ? '' : value]
 						)
 					});
 				}
