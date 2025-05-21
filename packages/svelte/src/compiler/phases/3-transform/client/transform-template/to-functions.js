@@ -8,6 +8,11 @@ import fix_attribute_casing from './fix-attribute-casing.js';
  * @param {Node[]} items
  */
 export function template_to_functions(items) {
+	// if the first item is a comment we need to add another comment for effect.start
+	if (items[0].type === 'anchor') {
+		items.unshift({ type: 'anchor', data: undefined });
+	}
+
 	return b.array(items.map(build));
 }
 
@@ -25,7 +30,11 @@ function build(item) {
 						b.id('p'),
 						b.object(
 							entries.map(([key, value]) => {
-								return b.prop('init', b.key(key), value === undefined ? b.void0 : b.literal(value));
+								return b.prop(
+									'init',
+									b.key(fix_attribute_casing(key)),
+									value === undefined ? b.void0 : b.literal(value)
+								);
 							})
 						)
 					)
@@ -33,7 +42,19 @@ function build(item) {
 			}
 
 			if (item.children.length > 0) {
-				element.properties.push(b.prop('init', b.id('c'), b.array(item.children.map(build))));
+				const children = item.children.map(build);
+				element.properties.push(b.prop('init', b.id('c'), b.array(children)));
+
+				// special case — strip leading newline from `<pre>` and `<textarea>`
+				if (item.name === 'pre' || item.name === 'textarea') {
+					const first = children[0];
+					if (first?.type === 'Literal') {
+						first.value = /** @type {string} */ (first.value).replace(
+							regex_starts_with_newline,
+							''
+						);
+					}
+				}
 			}
 
 			return element;
