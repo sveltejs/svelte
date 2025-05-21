@@ -69,7 +69,6 @@ export function Fragment(node, context) {
 		template: [],
 		locations: [],
 		transform: { ...context.state.transform },
-		is_functional_template_mode: context.state.is_functional_template_mode,
 		metadata: {
 			context: {
 				template_needs_import_node: false,

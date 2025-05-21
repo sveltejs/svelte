@@ -383,8 +383,7 @@ export function RegularElement(node, context) {
 		locations: [],
 		scope: /** @type {Scope} */ (context.state.scopes.get(node.fragment)),
 		preserve_whitespace:
-			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea',
-		is_functional_template_mode: context.state.is_functional_template_mode
+			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea'
 	};
 
 	const { hoisted, trimmed } = clean_nodes(
