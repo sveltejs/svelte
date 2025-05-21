@@ -77,11 +77,7 @@ export function RegularElement(node, context) {
 
 	context.state.template.push({
 		kind: 'create_element',
-		args: [node.name],
-		metadata: {
-			svg: node.metadata.svg,
-			mathml: node.metadata.mathml
-		}
+		args: [node.name]
 	});
 
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */

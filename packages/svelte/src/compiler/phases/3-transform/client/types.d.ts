@@ -47,10 +47,6 @@ type TemplateOperationsKind =
 type TemplateOperations = Array<{
 	kind: TemplateOperationsKind;
 	args?: Array<string>;
-	metadata?: {
-		svg: boolean;
-		mathml: boolean;
-	};
 }>;
 export interface ComponentClientTransformState extends ClientTransformState {
 	readonly analysis: ComponentAnalysis;
