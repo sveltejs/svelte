@@ -135,6 +135,10 @@ export namespace AST {
 	export interface HtmlTag extends BaseNode {
 		type: 'HtmlTag';
 		expression: Expression;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	/** An HTML comment */
@@ -355,6 +359,7 @@ export namespace AST {
 		tag: Expression;
 		/** @internal */
 		metadata: {
+			expression: ExpressionMetadata;
 			/**
 			 * `true` if this is an svg element. The boolean may not be accurate because
 			 * the tag is dynamic, but we do our best to infer it from the template.
@@ -442,6 +447,10 @@ export namespace AST {
 		test: Expression;
 		consequent: Fragment;
 		alternate: Fragment | null;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	/** An `{#await ...}` block */
@@ -462,6 +471,10 @@ export namespace AST {
 		type: 'KeyBlock';
 		expression: Expression;
 		fragment: Fragment;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	export interface SnippetBlock extends BaseNode {

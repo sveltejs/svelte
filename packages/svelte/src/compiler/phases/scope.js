@@ -901,7 +901,24 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		}
 	};
 
+	let has_await = false;
+
 	walk(ast, state, {
+		AwaitExpression(node, context) {
+			// this doesn't _really_ belong here, but it allows us to
+			// automatically opt into runes mode on encountering
+			// blocking awaits, without doing an additional walk
+			// before the analysis occurs
+			has_await ||= context.path.every(
+				({ type }) =>
+					type !== 'ArrowFunctionExpression' &&
+					type !== 'FunctionExpression' &&
+					type !== 'FunctionDeclaration'
+			);
+
+			context.next();
+		},
+
 		// references
 		Identifier(node, { path, state }) {
 			const parent = path.at(-1);
@@ -1256,6 +1273,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	}
 
 	return {
+		has_await,
 		scope,
 		scopes
 	};
