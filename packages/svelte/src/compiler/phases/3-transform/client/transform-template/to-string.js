@@ -1,51 +1,46 @@
 /** @import { Node } from './types.js' */
 import { escape_html } from '../../../../../escaping.js';
 import { is_void } from '../../../../../utils.js';
+import * as b from '../../../../utils/builders.js';
 
 /**
  * @param {Node[]} items
  */
 export function template_to_string(items) {
-	return items.map((el) => stringify(el)).join('');
+	return b.template([b.quasi(items.map(stringify).join(''), true)], []);
 }
 
 /**
- *
- * @param {Node} el
- * @returns
+ * @param {Node} node
  */
-function stringify(el) {
-	let str = ``;
-	if (el.type === 'element') {
-		// we create the <tagname part
-		str += `<${el.name}`;
-		// we concatenate all the prop to it
-		for (let [prop, value] of Object.entries(el.attributes ?? {})) {
-			if (value == null) {
-				str += ` ${prop}`;
-			} else {
-				str += ` ${prop}="${escape_html(value, true)}"`;
+function stringify(node) {
+	switch (node.type) {
+		case 'element': {
+			let str = `<${node.name}`;
+
+			for (const key in node.attributes) {
+				const value = node.attributes[key];
+
+				str += ` ${key}`;
+				if (value !== undefined) str += `="${escape_html(value, true)}"`;
 			}
+
+			str += `>`;
+			str += node.children.map(stringify);
+
+			if (!is_void(node.name)) {
+				str += `</${node.name}>`;
+			}
+
+			return str;
 		}
-		// then we close the opening tag
-		str += `>`;
-		// we stringify all the children and concatenate them
-		for (let child of el.children ?? []) {
-			str += stringify(child);
+
+		case 'text': {
+			return node.nodes.map((node) => node.raw).join('');
 		}
-		// if it's not void we also add the closing tag
-		if (!is_void(el.name)) {
-			str += `</${el.name}>`;
-		}
-	} else if (el.type === 'text') {
-		str += el.nodes.map((node) => node.raw).join('');
-	} else if (el.type === 'anchor') {
-		if (el.data) {
-			str += `<!--${el.data}-->`;
-		} else {
-			str += `<!>`;
+
+		case 'anchor': {
+			return node.data ? `<!--${node.data}-->` : '<!>';
 		}
 	}
-
-	return str;
 }
