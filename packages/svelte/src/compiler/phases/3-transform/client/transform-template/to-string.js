@@ -26,7 +26,7 @@ function stringify(node) {
 			}
 
 			str += `>`;
-			str += node.children.map(stringify);
+			str += node.children.map(stringify).join('');
 
 			if (!is_void(node.name)) {
 				str += `</${node.name}>`;
