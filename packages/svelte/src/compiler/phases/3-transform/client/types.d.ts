@@ -100,7 +100,6 @@ export interface ComponentClientTransformState extends ClientTransformState {
 		};
 	};
 	readonly preserve_whitespace: boolean;
-	readonly is_functional_template_mode?: boolean;
 
 	/** The anchor node for the current context */
 	readonly node: Identifier;
