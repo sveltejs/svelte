@@ -443,17 +443,15 @@ export function build_component(node, component_name, context, anchor = context.
 		if (context.state.metadata.namespace === 'svg') {
 			// this boils down to <g><!></g>
 			context.state.template.create_element('g');
-			context.state.template.push_element();
-			context.state.template.create_anchor();
-			context.state.template.pop_element();
 		} else {
 			// this boils down to <svelte-css-wrapper style='display: contents'><!></svelte-css-wrapper>
 			context.state.template.create_element('svelte-css-wrapper');
 			context.state.template.set_prop('style', 'display: contents');
-			context.state.template.push_element();
-			context.state.template.create_anchor();
-			context.state.template.pop_element();
 		}
+
+		context.state.template.push_element();
+		context.state.template.create_anchor();
+		context.state.template.pop_element();
 
 		statements.push(
 			b.stmt(b.call('$.css_props', anchor, b.thunk(b.object(custom_css_props)))),

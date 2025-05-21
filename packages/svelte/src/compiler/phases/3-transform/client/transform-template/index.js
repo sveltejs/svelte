@@ -1,9 +1,7 @@
-/**
- * @import { ComponentContext, ComponentClientTransformState } from "../types.js"
- * @import { Identifier, Expression } from "estree"
- * @import { Namespace } from '#compiler'
- * @import { SourceLocation } from '#shared'
- */
+/** @import { ComponentContext, ComponentClientTransformState } from '../types.js' */
+/** @import { Identifier, Expression } from 'estree' */
+/** @import { Namespace } from '#compiler' */
+/** @import { SourceLocation } from '#shared' */
 import { dev } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { template_to_functions } from './to-functions.js';
