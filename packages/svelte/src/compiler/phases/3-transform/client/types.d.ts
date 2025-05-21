@@ -43,7 +43,7 @@ type TemplateOperations = Array<
 	  }
 	| {
 			kind: 'create_text';
-			args: string[];
+			nodes: AST.Text[];
 	  }
 	| {
 			kind: 'create_anchor';

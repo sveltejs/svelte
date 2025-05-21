@@ -55,7 +55,7 @@ export function template_to_string(items) {
 			case 'create_text':
 				insert({
 					kind: 'text',
-					value: instruction.args[0]
+					value: instruction.nodes.map((node) => node.raw).join('')
 				});
 				break;
 			case 'create_anchor':

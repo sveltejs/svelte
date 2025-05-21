@@ -66,17 +66,13 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 			skipped += 1;
 			state.template.push({
 				kind: 'create_text',
-				args: [
-					sequence
-						.map((node) => (state.is_functional_template_mode ? node.data : node.raw))
-						.join('')
-				]
+				nodes: sequence
 			});
 			return;
 		}
 		state.template.push({
 			kind: 'create_text',
-			args: [' ']
+			nodes: [{ type: 'Text', data: ' ', raw: ' ', start: -1, end: -1 }]
 		});
 
 		const { has_state, value } = build_template_chunk(sequence, visit, state);

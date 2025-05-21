@@ -28,7 +28,6 @@ export function template_to_functions(items) {
 	}
 
 	for (let instruction of items) {
-		const args = instruction.args ?? [];
 		const last_element_stack = /** @type {Element} */ (elements_stack.at(-1));
 		/**
 		 * @param {Expression | null | void} value
@@ -56,7 +55,7 @@ export function template_to_functions(items) {
 				push(last_current_element);
 				break;
 			case 'create_text':
-				push(create_text(last_element_stack, args[0]));
+				push(create_text(last_element_stack, instruction.nodes.map((node) => node.data).join('')));
 				break;
 			case 'create_anchor':
 				push(create_anchor(last_element_stack, instruction.data));
@@ -138,13 +137,13 @@ function create_text(element, value) {
  *
  * @param {Element} element
  * @param {string} prop
- * @param {string} value
+ * @param {string | undefined} value
  */
 function set_prop(element, prop, value) {
 	const p = get_or_create_prop(element, 'p', b.object([]));
 
 	if (prop === 'is') {
-		element.properties.push(b.prop('init', b.id(prop), b.literal(value)));
+		element.properties.push(b.prop('init', b.id(prop), b.literal(/** @type {string} */ (value))));
 		return;
 	}
 
