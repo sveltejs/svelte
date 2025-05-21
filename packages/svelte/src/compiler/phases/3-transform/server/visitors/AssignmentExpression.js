@@ -45,7 +45,10 @@ function build_assignment(operator, left, right, context) {
 				);
 			}
 		} else if (field && (field.type === '$derived' || field.type === '$derived.by')) {
-			return b.call(b.member(b.this, name), right);
+			let value = /** @type {Expression} */ (
+				context.visit(build_assignment_value(operator, left, right))
+			);
+			return b.call(b.member(b.this, name), value);
 		}
 	}
 
