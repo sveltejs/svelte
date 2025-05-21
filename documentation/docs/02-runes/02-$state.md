@@ -20,7 +20,7 @@ Unlike other frameworks you may have encountered, there is no API for interactin
 
 If `$state` is used with an array or a simple object, the result is a deeply reactive _state proxy_. [Proxies](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) allow Svelte to run code when you read or write properties, including via methods like `array.push(...)`, triggering granular updates.
 
-State is proxified recursively until Svelte finds something other than an array or simple object. In a case like this...
+State is proxified recursively until Svelte finds something other than an array or simple object (like a class). In a case like this...
 
 ```js
 let todos = $state([
