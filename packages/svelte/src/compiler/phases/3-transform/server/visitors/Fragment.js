@@ -19,9 +19,7 @@ export function Fragment(node, context) {
 		namespace,
 		context.state,
 		context.state.preserve_whitespace,
-		context.state.options.preserveComments,
-		// templating mode doesn't affect server builds
-		false
+		context.state.options.preserveComments
 	);
 
 	/** @type {ComponentServerTransformState} */

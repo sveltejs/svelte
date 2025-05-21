@@ -36,8 +36,7 @@ export function Fragment(node, context) {
 		namespace,
 		context.state,
 		context.state.preserve_whitespace,
-		context.state.options.preserveComments,
-		context.state.is_functional_template_mode
+		context.state.options.preserveComments
 	);
 
 	if (hoisted.length === 0 && trimmed.length === 0) {

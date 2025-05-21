@@ -47,9 +47,7 @@ export function RegularElement(node, context) {
 			scope: /** @type {Scope} */ (state.scopes.get(node.fragment))
 		},
 		state.preserve_whitespace,
-		state.options.preserveComments,
-		// templating mode doesn't affect server builds
-		false
+		state.options.preserveComments
 	);
 
 	for (const node of hoisted) {

@@ -141,7 +141,6 @@ function sort_const_tags(nodes, state) {
  * @param {TransformState & { options: ValidatedCompileOptions }} state
  * @param {boolean} preserve_whitespace
  * @param {boolean} preserve_comments
- * @param {boolean} [is_functional_template_mode]
  */
 export function clean_nodes(
 	parent,
@@ -153,8 +152,7 @@ export function clean_nodes(
 	// first, we need to make `Component(Client|Server)TransformState` inherit from a new `ComponentTransformState`
 	// rather than from `ClientTransformState` and `ServerTransformState`
 	preserve_whitespace,
-	preserve_comments,
-	is_functional_template_mode
+	preserve_comments
 ) {
 	if (!state.analysis.runes) {
 		nodes = sort_const_tags(nodes, state);

@@ -373,8 +373,7 @@ export function RegularElement(node, context) {
 		state.metadata.namespace,
 		state,
 		node.name === 'script' || state.preserve_whitespace,
-		state.options.preserveComments,
-		state.is_functional_template_mode
+		state.options.preserveComments
 	);
 
 	/** @type {typeof state} */
