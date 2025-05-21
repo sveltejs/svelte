@@ -39,6 +39,7 @@ An action can be called with an argument:
 ```
 
 The action is only called once (but not during server-side rendering) — it will _not_ run again if the argument changes.
+However, the action _can_ [return an object](./svelte-action#ActionReturn) containing an `update` method that will be run when the argument changes.
 
 > [!LEGACY]
 > Prior to the `$effect` rune, actions could return an object with `update` and `destroy` methods, where `update` would be called with the latest value of the argument if it changed. Using effects is preferred.
