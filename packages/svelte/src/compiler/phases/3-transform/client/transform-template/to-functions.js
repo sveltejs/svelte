@@ -1,9 +1,7 @@
 /**
  * @import { TemplateOperations } from "../types.js"
- * @import { Namespace } from "#compiler"
- * @import { CallExpression, Statement, ObjectExpression, Identifier, ArrayExpression, Property, Expression, Literal } from "estree"
+ * @import { ObjectExpression, Identifier, ArrayExpression, Property, Expression, Literal } from "estree"
  */
-import { NAMESPACE_SVG, NAMESPACE_MATHML } from '../../../../../constants.js';
 import * as b from '../../../../utils/builders.js';
 import { regex_is_valid_identifier } from '../../../patterns.js';
 import fix_attribute_casing from './fix-attribute-casing.js';
@@ -30,41 +28,42 @@ export function template_to_functions(items) {
 	}
 
 	for (let instruction of items) {
-		// on push element we add the element to the stack, from this moment on every insert will
-		// happen on the last element in the stack
-		if (instruction.kind === 'push_element' && last_current_element) {
-			elements_stack.push(last_current_element);
-			continue;
-		}
-		// we closed one element, we remove it from the stack and eventually revert back
-		// the namespace to the previous one
-		if (instruction.kind === 'pop_element') {
-			elements_stack.pop();
-			continue;
-		}
-
-		// @ts-expect-error we can't be here if `swap_current_element` but TS doesn't know that
-		const value = map[instruction.kind](
-			...[
-				...(instruction.kind === 'create_element'
-					? []
-					: [instruction.kind === 'set_prop' ? last_current_element : elements_stack.at(-1)]),
-				...(instruction.args ?? [])
-			]
-		);
-
-		// with set_prop we don't need to do anything else, in all other cases we also need to
-		// append the element/node/anchor to the current active element or push it in the elements array
-		if (instruction.kind !== 'set_prop') {
-			if (elements_stack.length >= 1 && value !== undefined) {
-				map.insert(/** @type {Element} */ (elements_stack.at(-1)), value);
-			} else if (value !== undefined) {
+		const args = instruction.args ?? [];
+		const last_element_stack = /** @type {Element} */ (elements_stack.at(-1));
+		/**
+		 * @param {Expression | null | void} value
+		 * @returns
+		 */
+		function push(value) {
+			if (value === undefined) return;
+			if (last_element_stack) {
+				insert(last_element_stack, value);
+			} else {
 				elements.elements.push(value);
 			}
-			// keep track of the last created element (it will be pushed to the stack after the props are set)
-			if (instruction.kind === 'create_element') {
-				last_current_element = /** @type {Element} */ (value);
-			}
+		}
+
+		switch (instruction.kind) {
+			case 'push_element':
+				elements_stack.push(/** @type {Element} */ (last_current_element));
+				break;
+			case 'pop_element':
+				elements_stack.pop();
+				last_current_element = elements_stack.at(-1);
+				break;
+			case 'create_element':
+				last_current_element = create_element(args[0]);
+				push(last_current_element);
+				break;
+			case 'create_text':
+				push(create_text(last_element_stack, args[0]));
+				break;
+			case 'create_anchor':
+				push(create_anchor(last_element_stack, args[0]));
+				break;
+			case 'set_prop':
+				set_prop(/** @type {Element} */ (last_current_element), args[0], args[1]);
+				break;
 		}
 	}
 
@@ -166,17 +165,9 @@ function set_prop(element, prop, value) {
 /**
  *
  * @param {Element} element
- * @param {Element} child
+ * @param {Expression | null} child
  */
 function insert(element, child) {
 	const c = get_or_create_prop(element, 'c', b.array([]));
 	/** @type {ArrayExpression} */ (c.value).elements.push(child);
 }
-
-let map = {
-	create_element,
-	create_text,
-	create_anchor,
-	set_prop,
-	insert
-};
