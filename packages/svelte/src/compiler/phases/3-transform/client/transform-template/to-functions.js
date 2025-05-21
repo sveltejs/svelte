@@ -1,70 +1,52 @@
-/** @import { TemplateOperation } from '../types.js' */
+/** @import { Node } from './types.js' */
 /** @import { ObjectExpression, Identifier, ArrayExpression, Property, Expression, Literal } from 'estree' */
 import * as b from '../../../../utils/builders.js';
 import { regex_is_valid_identifier, regex_starts_with_newline } from '../../../patterns.js';
 import fix_attribute_casing from './fix-attribute-casing.js';
 
 /**
- * @param {TemplateOperation[]} items
+ * @param {Node[]} items
  */
 export function template_to_functions(items) {
-	let elements = b.array([]);
+	return b.array(items.map(build));
+}
 
-	/**
-	 * @type {Array<Element>}
-	 */
-	let elements_stack = [];
+/** @param {Node} item */
+function build(item) {
+	switch (item.type) {
+		case 'element': {
+			const element = b.object([b.prop('init', b.id('e'), b.literal(item.name))]);
 
-	/**
-	 * @type {Element | undefined}
-	 */
-	let last_current_element;
-
-	// if the first item is a comment we need to add another comment for effect.start
-	if (items[0].kind === 'create_anchor') {
-		items.unshift({ kind: 'create_anchor' });
-	}
-
-	for (let instruction of items) {
-		const last_element_stack = /** @type {Element} */ (elements_stack.at(-1));
-		/**
-		 * @param {Expression | null | void} value
-		 * @returns
-		 */
-		function push(value) {
-			if (value === undefined) return;
-			if (last_element_stack) {
-				insert(last_element_stack, value);
-			} else {
-				elements.elements.push(value);
+			const entries = Object.entries(item.attributes);
+			if (entries.length > 0) {
+				element.properties.push(
+					b.prop(
+						'init',
+						b.id('p'),
+						b.object(
+							entries.map(([key, value]) => {
+								return b.prop('init', b.key(key), value === undefined ? b.void0 : b.literal(value));
+							})
+						)
+					)
+				);
 			}
+
+			if (item.children.length > 0) {
+				element.properties.push(b.prop('init', b.id('c'), b.array(item.children.map(build))));
+			}
+
+			return element;
 		}
 
-		switch (instruction.kind) {
-			case 'push_element':
-				elements_stack.push(/** @type {Element} */ (last_current_element));
-				break;
-			case 'pop_element':
-				elements_stack.pop();
-				last_current_element = elements_stack.at(-1);
-				break;
-			case 'create_element':
-				last_current_element = create_element(instruction.name);
-				push(last_current_element);
-				break;
-			case 'create_text':
-				push(create_text(last_element_stack, instruction.nodes.map((node) => node.data).join('')));
-				break;
-			case 'create_anchor':
-				push(create_anchor(last_element_stack, instruction.data));
-				break;
-			case 'set_prop':
-				set_prop(/** @type {Element} */ (last_current_element), instruction.key, instruction.value);
-				break;
+		case 'anchor': {
+			return item.data ? b.array([b.literal(item.data)]) : null;
+		}
+
+		case 'text': {
+			return b.literal(item.nodes.map((node) => node.data).join(','));
 		}
 	}
-
-	return elements;
 }
 
 /**

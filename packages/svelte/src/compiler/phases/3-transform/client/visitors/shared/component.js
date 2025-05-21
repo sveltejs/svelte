@@ -1,6 +1,6 @@
 /** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
-/** @import { ComponentContext } from '../../types.js' */
+/** @import { ComponentContext, TemplateOperation } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
@@ -440,10 +440,9 @@ export function build_component(node, component_name, context, anchor = context.
 	}
 
 	if (Object.keys(custom_css_props).length > 0) {
-		/**
-		 * @type {typeof context.state.template}
-		 */
+		/** @type {TemplateOperation[]} */
 		const template_operations = [];
+
 		if (context.state.metadata.namespace === 'svg') {
 			// this boils down to <g><!></g>
 			template_operations.push({ kind: 'create_element', name: 'g' });

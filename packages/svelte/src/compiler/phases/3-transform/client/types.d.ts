@@ -13,6 +13,7 @@ import type { AST, Namespace, StateField, ValidatedCompileOptions } from '#compi
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
 import type { SourceLocation } from '#shared';
+import type { Template } from './transform-template/template.js';
 
 export interface ClientTransformState extends TransformState {
 	/**
@@ -78,7 +79,7 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	/** Expressions used inside the render effect */
 	readonly expressions: Expression[];
 	/** The HTML template string */
-	readonly template: TemplateOperation[];
+	readonly template: Template;
 	readonly locations: SourceLocation[];
 	readonly metadata: {
 		namespace: Namespace;

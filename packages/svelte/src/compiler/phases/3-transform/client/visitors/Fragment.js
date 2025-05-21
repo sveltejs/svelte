@@ -7,6 +7,7 @@ import { clean_nodes, infer_namespace } from '../../utils.js';
 import { transform_template } from '../transform-template/index.js';
 import { process_children } from './shared/fragment.js';
 import { build_render_statement } from './shared/utils.js';
+import { Template } from '../transform-template/template.js';
 
 /**
  * @param {AST.Fragment} node
@@ -65,7 +66,7 @@ export function Fragment(node, context) {
 		update: [],
 		expressions: [],
 		after_update: [],
-		template: [],
+		template: new Template(),
 		locations: [],
 		transform: { ...context.state.transform },
 		metadata: {
@@ -147,7 +148,7 @@ export function Fragment(node, context) {
 					flags |= TEMPLATE_USE_IMPORT_NODE;
 				}
 
-				if (state.template.length === 1 && state.template[0].kind === 'create_anchor') {
+				if (state.template.nodes.length === 1 && state.template.nodes[0].type === 'anchor') {
 					// special case — we can use `$.comment` instead of creating a unique template
 					body.push(b.var(id, b.call('$.comment')));
 				} else {
