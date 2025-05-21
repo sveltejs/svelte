@@ -70,7 +70,7 @@ function build(item) {
 		}
 
 		case 'text': {
-			return b.literal(item.nodes.map((node) => node.data).join(','));
+			return b.literal(item.nodes.map((node) => node.data).join(''));
 		}
 	}
 }
