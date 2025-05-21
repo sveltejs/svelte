@@ -96,7 +96,8 @@ export function Fragment(node, context) {
 
 		let flags = state.template.needs_import_node ? TEMPLATE_USE_IMPORT_NODE : undefined;
 
-		transform_template(state, namespace, template_name, flags);
+		const template = transform_template(state, namespace, flags);
+		state.hoisted.push(b.var(template_name, template));
 
 		body.push(b.var(id, b.call(template_name)));
 		close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
@@ -144,7 +145,8 @@ export function Fragment(node, context) {
 					// special case — we can use `$.comment` instead of creating a unique template
 					body.push(b.var(id, b.call('$.comment')));
 				} else {
-					transform_template(state, namespace, template_name, flags);
+					const template = transform_template(state, namespace, flags);
+					state.hoisted.push(b.var(template_name, template));
 
 					body.push(b.var(id, b.call(template_name)));
 				}

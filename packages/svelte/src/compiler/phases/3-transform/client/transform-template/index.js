@@ -48,10 +48,9 @@ function build_locations(locations) {
 /**
  * @param {ComponentClientTransformState} state
  * @param {Namespace} namespace
- * @param {Identifier} template_name
  * @param {number} [flags]
  */
-export function transform_template(state, namespace, template_name, flags) {
+export function transform_template(state, namespace, flags) {
 	const expression =
 		state.options.templatingMode === 'functional'
 			? template_to_functions(state.template.nodes)
@@ -64,7 +63,7 @@ export function transform_template(state, namespace, template_name, flags) {
 	);
 
 	if (dev) {
-		call = b.call(
+		return b.call(
 			'$.add_locations',
 			call,
 			b.member(b.id(state.analysis.name), '$.FILENAME', true),
@@ -72,5 +71,5 @@ export function transform_template(state, namespace, template_name, flags) {
 		);
 	}
 
-	state.hoisted.push(b.var(template_name, call));
+	return call;
 }
