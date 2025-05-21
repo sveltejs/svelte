@@ -1,7 +1,7 @@
 /** @import { TemplateOperation } from '../types.js' */
 /** @import { ObjectExpression, Identifier, ArrayExpression, Property, Expression, Literal } from 'estree' */
 import * as b from '../../../../utils/builders.js';
-import { regex_is_valid_identifier } from '../../../patterns.js';
+import { regex_is_valid_identifier, regex_starts_with_newline } from '../../../patterns.js';
 import fix_attribute_casing from './fix-attribute-casing.js';
 
 /**
@@ -127,6 +127,18 @@ function create_anchor(element, data = '') {
  */
 function create_text(element, value) {
 	if (!element) return b.literal(value);
+
+	// TODO this is temporary, but i want the tests to keep passing in the meantime
+	// @ts-expect-error
+	const name = element?.properties[0].value.value;
+
+	if ((name === 'pre' || name === 'textarea') && regex_starts_with_newline.test(value)) {
+		// @ts-expect-error
+		if (!element.properties.find((prop) => prop.key.name === 'c')) {
+			value = value.replace(regex_starts_with_newline, '');
+		}
+	}
+
 	const c = get_or_create_prop(element, 'c', b.array([]));
 	/** @type {ArrayExpression} */ (c.value).elements.push(b.literal(value));
 }

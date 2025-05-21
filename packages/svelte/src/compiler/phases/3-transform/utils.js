@@ -273,27 +273,12 @@ export function clean_nodes(
 
 	var first = trimmed[0];
 
-	// initial newline inside a `<pre>` is disregarded, if not followed by another newline
-	if (
-		parent.type === 'RegularElement' &&
-		// we also want to do the replacement on the textarea if we are in functional template mode because createTextNode behave differently
-		// then template.innerHTML
-		(parent.name === 'pre' || (is_functional_template_mode && parent.name === 'textarea')) &&
-		first?.type === 'Text'
-	) {
-		const text = first.data.replace(regex_starts_with_newline, '');
-		if (text !== first.data) {
-			const tmp = text.replace(regex_starts_with_newline, '');
-			// do an extra replacement if we are in functional template mode because createTextNode behave differently
-			// then template.innerHTML
-			if (text === tmp || is_functional_template_mode) {
-				first.data = text;
-				first.raw = first.raw.replace(regex_starts_with_newline, '');
-				if (first.data === '') {
-					trimmed.shift();
-					first = trimmed[0];
-				}
-			}
+	// if first text node inside a <pre> is a single newline, discard it, because otherwise
+	// the browser will do it for us which could break hydration
+	if (parent.type === 'RegularElement' && parent.name === 'pre' && first?.type === 'Text') {
+		if (first.data === '\n' || first.data === '\r\n') {
+			trimmed.shift();
+			first = trimmed[0];
 		}
 	}
 
