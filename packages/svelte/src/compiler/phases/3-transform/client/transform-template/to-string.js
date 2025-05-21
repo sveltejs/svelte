@@ -1,11 +1,9 @@
-/**
- * @import { TemplateOperations } from "../types.js"
- */
+/** @import { TemplateOperation } from '../types.js' */
 import { escape_html } from '../../../../../escaping.js';
 import { is_void } from '../../../../../utils.js';
 
 /**
- * @param {TemplateOperations} items
+ * @param {TemplateOperation[]} items
  */
 export function template_to_string(items) {
 	/**

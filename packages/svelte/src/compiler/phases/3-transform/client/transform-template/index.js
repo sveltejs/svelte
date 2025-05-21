@@ -1,7 +1,7 @@
 /**
- * @import { ComponentContext, TemplateOperations, ComponentClientTransformState } from "../types.js"
+ * @import { ComponentContext, ComponentClientTransformState } from "../types.js"
  * @import { Identifier, Expression } from "estree"
- * @import { AST, Namespace } from '#compiler'
+ * @import { Namespace } from '#compiler'
  * @import { SourceLocation } from '#shared'
  */
 import { dev } from '../../../../state.js';

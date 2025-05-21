@@ -36,7 +36,7 @@ export interface ClientTransformState extends TransformState {
 	>;
 }
 
-type TemplateOperations = Array<
+type TemplateOperation =
 	| {
 			kind: 'create_element';
 			name: string;
@@ -59,8 +59,7 @@ type TemplateOperations = Array<
 	  }
 	| {
 			kind: 'pop_element';
-	  }
->;
+	  };
 
 export interface ComponentClientTransformState extends ClientTransformState {
 	readonly analysis: ComponentAnalysis;
@@ -79,7 +78,7 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	/** Expressions used inside the render effect */
 	readonly expressions: Expression[];
 	/** The HTML template string */
-	readonly template: TemplateOperations;
+	readonly template: TemplateOperation[];
 	readonly locations: SourceLocation[];
 	readonly metadata: {
 		namespace: Namespace;

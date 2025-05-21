@@ -1,13 +1,11 @@
-/**
- * @import { TemplateOperations } from "../types.js"
- * @import { ObjectExpression, Identifier, ArrayExpression, Property, Expression, Literal } from "estree"
- */
+/** @import { TemplateOperation } from '../types.js' */
+/** @import { ObjectExpression, Identifier, ArrayExpression, Property, Expression, Literal } from 'estree' */
 import * as b from '../../../../utils/builders.js';
 import { regex_is_valid_identifier } from '../../../patterns.js';
 import fix_attribute_casing from './fix-attribute-casing.js';
 
 /**
- * @param {TemplateOperations} items
+ * @param {TemplateOperation[]} items
  */
 export function template_to_functions(items) {
 	let elements = b.array([]);
