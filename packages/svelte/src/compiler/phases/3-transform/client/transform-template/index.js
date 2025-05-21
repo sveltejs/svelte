@@ -53,34 +53,25 @@ function build_locations(locations) {
  * @param {number} [flags]
  */
 export function transform_template(state, context, namespace, template_name, flags) {
-	/**
-	 * @param {Identifier} template_name
-	 * @param {Expression[]} args
-	 */
-	const add_template = (template_name, args) => {
-		let call = b.call(get_template_function(namespace, state), ...args);
-		if (dev) {
-			call = b.call(
-				'$.add_locations',
-				call,
-				b.member(b.id(context.state.analysis.name), '$.FILENAME', true),
-				build_locations(state.locations)
-			);
-		}
-
-		context.state.hoisted.push(b.var(template_name, call));
-	};
-
-	/** @type {Expression[]} */
-	const args = [
+	const expression =
 		state.options.templatingMode === 'functional'
 			? template_to_functions(state.template.nodes)
-			: template_to_string(state.template.nodes)
-	];
+			: template_to_string(state.template.nodes);
 
-	if (flags) {
-		args.push(b.literal(flags));
+	let call = b.call(
+		get_template_function(namespace, state),
+		expression,
+		flags ? b.literal(flags) : undefined
+	);
+
+	if (dev) {
+		call = b.call(
+			'$.add_locations',
+			call,
+			b.member(b.id(context.state.analysis.name), '$.FILENAME', true),
+			build_locations(state.locations)
+		);
 	}
 
-	add_template(template_name, args);
+	context.state.hoisted.push(b.var(template_name, call));
 }
