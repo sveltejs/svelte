@@ -1,5 +1,4 @@
-/** @import { ComponentContext, ComponentClientTransformState } from '../types.js' */
-/** @import { Identifier, Expression } from 'estree' */
+/** @import { ComponentClientTransformState } from '../types.js' */
 /** @import { Namespace } from '#compiler' */
 /** @import { SourceLocation } from '#shared' */
 import { dev } from '../../../../state.js';
