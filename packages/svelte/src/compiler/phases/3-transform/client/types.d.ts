@@ -39,7 +39,7 @@ export interface ClientTransformState extends TransformState {
 type TemplateOperations = Array<
 	| {
 			kind: 'create_element';
-			args: string[];
+			name: string;
 	  }
 	| {
 			kind: 'create_text';
@@ -47,11 +47,12 @@ type TemplateOperations = Array<
 	  }
 	| {
 			kind: 'create_anchor';
-			args?: string[];
+			data?: string;
 	  }
 	| {
 			kind: 'set_prop';
-			args: string[];
+			key: string;
+			value: string | undefined;
 	  }
 	| {
 			kind: 'push_element';

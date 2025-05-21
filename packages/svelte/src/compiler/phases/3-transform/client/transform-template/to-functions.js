@@ -52,17 +52,17 @@ export function template_to_functions(items) {
 				last_current_element = elements_stack.at(-1);
 				break;
 			case 'create_element':
-				last_current_element = create_element(args[0]);
+				last_current_element = create_element(instruction.name);
 				push(last_current_element);
 				break;
 			case 'create_text':
 				push(create_text(last_element_stack, args[0]));
 				break;
 			case 'create_anchor':
-				push(create_anchor(last_element_stack, args[0]));
+				push(create_anchor(last_element_stack, instruction.data));
 				break;
 			case 'set_prop':
-				set_prop(/** @type {Element} */ (last_current_element), args[0], args[1]);
+				set_prop(/** @type {Element} */ (last_current_element), instruction.key, instruction.value);
 				break;
 		}
 	}

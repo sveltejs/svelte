@@ -54,7 +54,7 @@ export function RegularElement(node, context) {
 	if (node.name === 'noscript') {
 		context.state.template.push({
 			kind: 'create_element',
-			args: ['noscript']
+			name: 'noscript'
 		});
 		return;
 	}
@@ -77,7 +77,7 @@ export function RegularElement(node, context) {
 
 	context.state.template.push({
 		kind: 'create_element',
-		args: [node.name]
+		name: node.name
 	});
 
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
@@ -118,7 +118,8 @@ export function RegularElement(node, context) {
 					if (value.type === 'Literal' && typeof value.value === 'string') {
 						context.state.template.push({
 							kind: 'set_prop',
-							args: ['is', value.value]
+							key: 'is',
+							value: value.value
 						});
 						continue;
 					}
@@ -301,9 +302,9 @@ export function RegularElement(node, context) {
 				if (name !== 'class' || value) {
 					context.state.template.push({
 						kind: 'set_prop',
-						args: [attribute.name].concat(
-							is_boolean_attribute(name) && value === true ? [] : [value === true ? '' : value]
-						)
+						key: attribute.name,
+						value:
+							is_boolean_attribute(name) && value === true ? undefined : value === true ? '' : value
 					});
 				}
 			} else if (name === 'autofocus') {
