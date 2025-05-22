@@ -78,65 +78,50 @@ export function template(content, flags) {
 }
 
 /**
- * @typedef {{e: string, is?: string, p: Record<string, string>, c: Array<TemplateStructure>} | null | string | [string]} TemplateStructure
+ * @typedef {{e: string, is?: string, p: Record<string, string>, c: Array<TemplateStructure>} | undefined | string | [string]} TemplateStructure
  */
 
 /**
  * @param {Array<TemplateStructure>} structure
- * @param {'svg' | 'math'} [ns]
- * @param {Array<string | undefined>} [namespace_stack]
+ * @param {NAMESPACE_SVG | NAMESPACE_MATHML | undefined} [ns]
  */
-function structure_to_fragment(structure, ns, namespace_stack = [], foreign_object_count = 0) {
+function structure_to_fragment(structure, ns) {
 	var fragment = create_fragment();
-	for (var i = 0; i < structure.length; i += 1) {
-		var item = structure[i];
-		if (item == null || Array.isArray(item)) {
-			const data = item ? item[0] : '';
-			fragment.append(create_comment(data));
-		} else if (typeof item === 'string') {
+
+	for (var item of structure) {
+		if (item === undefined || Array.isArray(item)) {
+			fragment.append(create_comment(item ? item[0] : ''));
+			continue;
+		}
+
+		if (typeof item === 'string') {
 			fragment.append(create_text(item));
 			continue;
-		} else {
-			let namespace =
-				foreign_object_count > 0
-					? undefined
-					: namespace_stack[namespace_stack.length - 1] ??
-						(ns
-							? ns === 'svg'
-								? NAMESPACE_SVG
-								: ns === 'math'
-									? NAMESPACE_MATHML
-									: undefined
-							: item.e === 'svg'
-								? NAMESPACE_SVG
-								: item.e === 'math'
-									? NAMESPACE_MATHML
-									: undefined);
-			if (namespace !== namespace_stack[namespace_stack.length - 1]) {
-				namespace_stack.push(namespace);
-			}
-			var element = create_element(item.e, namespace, item.is);
-
-			for (var key in item.p) {
-				set_attribute(element, key, item.p[key]);
-			}
-			if (item.c) {
-				(element.tagName === 'TEMPLATE'
-					? /** @type {HTMLTemplateElement} */ (element).content
-					: element
-				).append(
-					...structure_to_fragment(
-						item.c,
-						ns,
-						namespace_stack,
-						element.tagName === 'foreignObject' ? foreign_object_count + 1 : foreign_object_count
-					).childNodes
-				);
-			}
-			namespace_stack.pop();
-			fragment.append(element);
 		}
+
+		/** @type {NAMESPACE_SVG | NAMESPACE_MATHML | undefined}  */
+		let namespace = item.e === 'svg' ? NAMESPACE_SVG : item.e === 'math' ? NAMESPACE_MATHML : ns;
+
+		var element = create_element(item.e, namespace, item.is);
+
+		for (var key in item.p) {
+			set_attribute(element, key, item.p[key]);
+		}
+
+		if (item.c) {
+			var target =
+				element.tagName === 'TEMPLATE'
+					? /** @type {HTMLTemplateElement} */ (element).content
+					: element;
+
+			target.append(
+				structure_to_fragment(item.c, element.tagName === 'foreignObject' ? undefined : namespace)
+			);
+		}
+
+		fragment.append(element);
 	}
+
 	return fragment;
 }
 
@@ -277,7 +262,10 @@ export function ns_template_fn(structure, flags, ns = 'svg') {
 		}
 
 		if (!node) {
-			var fragment = structure_to_fragment(structure, ns);
+			var fragment = structure_to_fragment(
+				structure,
+				ns === 'svg' ? NAMESPACE_SVG : NAMESPACE_MATHML
+			);
 
 			if (is_fragment) {
 				node = document.createDocumentFragment();
