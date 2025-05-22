@@ -986,6 +986,15 @@ declare module 'svelte/compiler' {
 		 */
 		preserveWhitespace?: boolean;
 		/**
+		 * Which strategy to use when cloning DOM fragments:
+		 *
+		 * - `html` populates a `<template>` with `innerHTML` and clones it. This is faster, but cannot be used if your app's [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP) includes [`require-trusted-types-for 'script'`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/require-trusted-types-for)
+		 * - `tree` creates the fragment one element at a time and _then_ clones it. This is slower, but works everywhere
+		 *
+		 * @default 'html'
+		 */
+		fragments?: 'html' | 'tree';
+		/**
 		 * Set to `true` to force the compiler into runes mode, even if there are no indications of runes usage.
 		 * Set to `false` to force the compiler into ignoring runes, even if there are indications of runes usage.
 		 * Set to `undefined` (the default) to infer runes mode from the component code.
@@ -2872,6 +2881,15 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * @default false
 		 */
 		preserveWhitespace?: boolean;
+		/**
+		 * Which strategy to use when cloning DOM fragments:
+		 *
+		 * - `html` populates a `<template>` with `innerHTML` and clones it. This is faster, but cannot be used if your app's [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP) includes [`require-trusted-types-for 'script'`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/require-trusted-types-for)
+		 * - `tree` creates the fragment one element at a time and _then_ clones it. This is slower, but works everywhere
+		 *
+		 * @default 'html'
+		 */
+		fragments?: 'html' | 'tree';
 		/**
 		 * Set to `true` to force the compiler into runes mode, even if there are no indications of runes usage.
 		 * Set to `false` to force the compiler into ignoring runes, even if there are indications of runes usage.

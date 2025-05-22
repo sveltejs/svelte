@@ -1,5 +1,41 @@
 # svelte
 
+## 5.33.0
+
+### Minor Changes
+
+- feat: XHTML compliance ([#15538](https://github.com/sveltejs/svelte/pull/15538))
+
+- feat: add `fragments: 'html' | 'tree'` option for wider CSP compliance ([#15538](https://github.com/sveltejs/svelte/pull/15538))
+
+## 5.32.2
+
+### Patch Changes
+
+- chore: simplify `<pre>` cleaning ([#15980](https://github.com/sveltejs/svelte/pull/15980))
+
+- fix: attach `__svelte_meta` correctly to elements following a CSS wrapper ([#15982](https://github.com/sveltejs/svelte/pull/15982))
+
+- fix: import untrack directly from client in `svelte/attachments` ([#15974](https://github.com/sveltejs/svelte/pull/15974))
+
+## 5.32.1
+
+### Patch Changes
+
+- Warn when an invalid `<select multiple>` value is given ([#14816](https://github.com/sveltejs/svelte/pull/14816))
+
+## 5.32.0
+
+### Minor Changes
+
+- feat: warn on implicitly closed tags ([#15932](https://github.com/sveltejs/svelte/pull/15932))
+
+- feat: attachments `fromAction` utility ([#15933](https://github.com/sveltejs/svelte/pull/15933))
+
+### Patch Changes
+
+- fix: only re-run directly applied attachment if it changed ([#15962](https://github.com/sveltejs/svelte/pull/15962))
+
 ## 5.31.1
 
 ### Patch Changes

@@ -2,7 +2,7 @@ import 'svelte/internal/disclose-version';
 import * as $ from 'svelte/internal/client';
 
 var on_click = (_, count) => $.update(count);
-var root = $.template(`<h1></h1> <b></b> <button> </button> <h1></h1>`, 1);
+var root = $.from_html(`<h1></h1> <b></b> <button> </button> <h1></h1>`, 1);
 
 export default function Nullish_coallescence_omittance($$anchor) {
 	let name = 'world';

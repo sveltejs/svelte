@@ -2,7 +2,7 @@
 /** @import { Attachment } from './public' */
 import { noop, render_effect } from 'svelte/internal/client';
 import { ATTACHMENT_KEY } from '../constants.js';
-import { untrack } from 'svelte';
+import { untrack } from '../index-client.js';
 import { teardown } from '../internal/client/reactivity/effects.js';
 
 /**
