@@ -1,5 +1,13 @@
 # svelte
 
+## 5.33.0
+
+### Minor Changes
+
+- feat: XHTML compliance ([#15538](https://github.com/sveltejs/svelte/pull/15538))
+
+- feat: add `fragments: 'html' | 'tree'` option for wider CSP compliance ([#15538](https://github.com/sveltejs/svelte/pull/15538))
+
 ## 5.32.2
 
 ### Patch Changes
