@@ -78,7 +78,7 @@ export function template(content, flags) {
 }
 
 /**
- * @typedef {{e: string, is?: string, p: Record<string, string>, c: Array<TemplateStructure>} | undefined | string | [string]} TemplateStructure
+ * @typedef {{e: string, p: Record<string, string>, c: Array<TemplateStructure>} | undefined | string | [string]} TemplateStructure
  */
 
 /**
@@ -102,7 +102,7 @@ function structure_to_fragment(structure, ns) {
 		/** @type {NAMESPACE_SVG | NAMESPACE_MATHML | undefined}  */
 		let namespace = item.e === 'svg' ? NAMESPACE_SVG : item.e === 'math' ? NAMESPACE_MATHML : ns;
 
-		var element = create_element(item.e, namespace, item.is);
+		var element = create_element(item.e, namespace, item.p?.is);
 
 		for (var key in item.p) {
 			set_attribute(element, key, item.p[key]);
