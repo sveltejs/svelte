@@ -98,8 +98,7 @@ function structure_to_fragment(structure, ns) {
 
 		const [name, attributes, ...children] = item;
 
-		/** @type {NAMESPACE_SVG | NAMESPACE_MATHML | undefined}  */
-		let namespace = name === 'svg' ? NAMESPACE_SVG : name === 'math' ? NAMESPACE_MATHML : ns;
+		const namespace = name === 'svg' ? NAMESPACE_SVG : name === 'math' ? NAMESPACE_MATHML : ns;
 
 		var element = create_element(name, namespace, attributes?.is);
 
