@@ -514,3 +514,24 @@ export {
 } from '../shared/validate.js';
 
 export { escape_html as escape };
+
+/**
+ * @template T
+ * @param {()=>T} fn
+ * @returns {(new_value?: T) => (T | void)}
+ */
+export function derived(fn) {
+	const get_value = once(fn);
+	/**
+	 * @type {T | undefined}
+	 */
+	let updated_value;
+
+	return function (new_value) {
+		if (arguments.length === 0) {
+			return updated_value ?? get_value();
+		}
+		updated_value = new_value;
+		return updated_value;
+	};
+}
