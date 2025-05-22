@@ -1,5 +1,11 @@
 # svelte
 
+## 5.33.1
+
+### Patch Changes
+
+- fix: make deriveds on the server lazy again ([#15964](https://github.com/sveltejs/svelte/pull/15964))
+
 ## 5.33.0
 
 ### Minor Changes
