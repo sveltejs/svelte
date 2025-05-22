@@ -1,5 +1,10 @@
 /** @import { AST } from '#compiler' */
 /** @import { Node, Element } from './types'; */
+import { escape_html } from '../../../../../escaping.js';
+import { is_void } from '../../../../../utils.js';
+import * as b from '#compiler/builders';
+import fix_attribute_casing from './fix-attribute-casing.js';
+import { regex_starts_with_newline } from '../../../patterns.js';
 
 export class Template {
 	/**
@@ -65,4 +70,94 @@ export class Template {
 	set_prop(key, value) {
 		/** @type {Element} */ (this.#element).attributes[key] = value;
 	}
+
+	as_string() {
+		return b.template([b.quasi(this.nodes.map(stringify).join(''), true)], []);
+	}
+
+	as_objects() {
+		// if the first item is a comment we need to add another comment for effect.start
+		if (this.nodes[0].type === 'anchor') {
+			this.nodes.unshift({ type: 'anchor', data: undefined });
+		}
+
+		return b.array(this.nodes.map(objectify));
+	}
+}
+
+/**
+ * @param {Node} item
+ */
+function stringify(item) {
+	if (item.type === 'text') {
+		return item.nodes.map((node) => node.raw).join('');
+	}
+
+	if (item.type === 'anchor') {
+		return item.data ? `<!--${item.data}-->` : '<!>';
+	}
+
+	let str = `<${item.name}`;
+
+	for (const key in item.attributes) {
+		const value = item.attributes[key];
+
+		str += ` ${key}`;
+		if (value !== undefined) str += `="${escape_html(value, true)}"`;
+	}
+
+	str += `>`;
+	str += item.children.map(stringify).join('');
+
+	if (!is_void(item.name)) {
+		str += `</${item.name}>`;
+	}
+
+	return str;
+}
+
+/** @param {Node} item */
+function objectify(item) {
+	if (item.type === 'text') {
+		return b.literal(item.nodes.map((node) => node.data).join(''));
+	}
+
+	if (item.type === 'anchor') {
+		return item.data ? b.array([b.literal(`// ${item.data}`)]) : null;
+	}
+
+	const element = b.array([b.literal(item.name)]);
+
+	const attributes = b.object([]);
+
+	for (const key in item.attributes) {
+		const value = item.attributes[key];
+
+		attributes.properties.push(
+			b.prop(
+				'init',
+				b.key(fix_attribute_casing(key)),
+				value === undefined ? b.void0 : b.literal(value)
+			)
+		);
+	}
+
+	if (attributes.properties.length > 0 || item.children.length > 0) {
+		element.elements.push(attributes.properties.length > 0 ? attributes : b.null);
+	}
+
+	if (item.children.length > 0) {
+		const children = item.children.map(objectify);
+		element.elements.push(...children);
+
+		// special case — strip leading newline from `<pre>` and `<textarea>`
+		if (item.name === 'pre' || item.name === 'textarea') {
+			const first = children[0];
+			if (first?.type === 'Literal') {
+				first.value = /** @type {string} */ (first.value).replace(regex_starts_with_newline, '');
+			}
+		}
+	}
+
+	return element;
 }

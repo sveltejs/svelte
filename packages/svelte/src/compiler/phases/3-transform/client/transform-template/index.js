@@ -4,8 +4,6 @@
 /** @import { Node } from './types.js' */
 import { dev, locator } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
-import { template_to_functions } from './to-functions.js';
-import { template_to_string } from './to-string.js';
 
 /**
  *
@@ -60,8 +58,8 @@ function build_locations(nodes) {
 export function transform_template(state, namespace, flags) {
 	const expression =
 		state.options.templatingMode === 'functional'
-			? template_to_functions(state.template.nodes)
-			: template_to_string(state.template.nodes);
+			? state.template.as_objects()
+			: state.template.as_string();
 
 	let call = b.call(
 		get_template_function(namespace, state),
