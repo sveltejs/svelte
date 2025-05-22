@@ -11,7 +11,6 @@ import { setup_html_equal } from '../html_equal.js';
 import { raf } from '../animation-helpers.js';
 import type { CompileOptions } from '#compiler';
 import { suite_with_variants, type BaseTest } from '../suite.js';
-import { seen } from '../../src/internal/server/dev.js';
 
 type Assert = typeof import('vitest').assert & {
 	htmlEqual(a: string, b: string, description?: string): void;
@@ -284,8 +283,6 @@ async function run_test_variant(
 
 		if (variant === 'hydrate' || variant === 'ssr') {
 			config.before_test?.();
-			// we need to clear the seen messages between tests
-			seen?.clear?.();
 			// ssr into target
 			const SsrSvelteComponent = (await import(`${cwd}/_output/server/main.svelte.js`)).default;
 			const { html, head } = render(SsrSvelteComponent, {
