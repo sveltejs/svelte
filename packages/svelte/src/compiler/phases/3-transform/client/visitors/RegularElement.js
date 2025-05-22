@@ -36,7 +36,7 @@ import { visit_event_attribute } from './shared/events.js';
  * @param {ComponentContext} context
  */
 export function RegularElement(node, context) {
-	context.state.template.create_element(node.name, node.start);
+	context.state.template.push_element(node.name, node.start);
 
 	if (node.name === 'noscript') {
 		context.state.template.pop_element();

@@ -442,14 +442,14 @@ export function build_component(node, component_name, context, anchor = context.
 	if (Object.keys(custom_css_props).length > 0) {
 		if (context.state.metadata.namespace === 'svg') {
 			// this boils down to <g><!></g>
-			context.state.template.create_element('g', node.start);
+			context.state.template.push_element('g', node.start);
 		} else {
 			// this boils down to <svelte-css-wrapper style='display: contents'><!></svelte-css-wrapper>
-			context.state.template.create_element('svelte-css-wrapper', node.start);
+			context.state.template.push_element('svelte-css-wrapper', node.start);
 			context.state.template.set_prop('style', 'display: contents');
 		}
 
-		context.state.template.create_anchor();
+		context.state.template.push_comment();
 		context.state.template.pop_element();
 
 		statements.push(
@@ -458,7 +458,7 @@ export function build_component(node, component_name, context, anchor = context.
 			b.stmt(b.call('$.reset', anchor))
 		);
 	} else {
-		context.state.template.create_anchor();
+		context.state.template.push_comment();
 		statements.push(b.stmt(fn(anchor)));
 	}
 

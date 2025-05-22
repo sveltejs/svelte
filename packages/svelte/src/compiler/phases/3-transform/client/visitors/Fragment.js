@@ -140,7 +140,7 @@ export function Fragment(node, context) {
 					flags |= TEMPLATE_USE_IMPORT_NODE;
 				}
 
-				if (state.template.nodes.length === 1 && state.template.nodes[0].type === 'anchor') {
+				if (state.template.nodes.length === 1 && state.template.nodes[0].type === 'comment') {
 					// special case — we can use `$.comment` instead of creating a unique template
 					body.push(b.var(id, b.call('$.comment')));
 				} else {

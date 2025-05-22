@@ -31,7 +31,7 @@ export class Template {
 	 * @param {string} name
 	 * @param {number} start
 	 */
-	create_element(name, start) {
+	push_element(name, start) {
 		this.#element = {
 			type: 'element',
 			name,
@@ -47,12 +47,12 @@ export class Template {
 	}
 
 	/** @param {string} [data] */
-	create_anchor(data) {
-		this.#fragment.push({ type: 'anchor', data });
+	push_comment(data) {
+		this.#fragment.push({ type: 'comment', data });
 	}
 
 	/** @param {AST.Text[]} nodes */
-	create_text(nodes) {
+	push_text(nodes) {
 		this.#fragment.push({ type: 'text', nodes });
 	}
 
@@ -75,8 +75,8 @@ export class Template {
 
 	as_objects() {
 		// if the first item is a comment we need to add another comment for effect.start
-		if (this.nodes[0].type === 'anchor') {
-			this.nodes.unshift({ type: 'anchor', data: undefined });
+		if (this.nodes[0].type === 'comment') {
+			this.nodes.unshift({ type: 'comment', data: undefined });
 		}
 
 		return b.array(this.nodes.map(objectify));
@@ -91,7 +91,7 @@ function stringify(item) {
 		return item.nodes.map((node) => node.raw).join('');
 	}
 
-	if (item.type === 'anchor') {
+	if (item.type === 'comment') {
 		return item.data ? `<!--${item.data}-->` : '<!>';
 	}
 
@@ -120,7 +120,7 @@ function objectify(item) {
 		return b.literal(item.nodes.map((node) => node.data).join(''));
 	}
 
-	if (item.type === 'anchor') {
+	if (item.type === 'comment') {
 		return item.data ? b.array([b.literal(`// ${item.data}`)]) : null;
 	}
 

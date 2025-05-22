@@ -14,9 +14,9 @@ export interface Text {
 	nodes: AST.Text[];
 }
 
-export interface Anchor {
-	type: 'anchor';
+export interface Comment {
+	type: 'comment';
 	data: string | undefined;
 }
 
-export type Node = Element | Text | Anchor;
+export type Node = Element | Text | Comment;
