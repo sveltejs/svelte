@@ -16,7 +16,9 @@ import {
 	NAMESPACE_MATHML,
 	NAMESPACE_SVG,
 	TEMPLATE_FRAGMENT,
-	TEMPLATE_USE_IMPORT_NODE
+	TEMPLATE_USE_IMPORT_NODE,
+	TEMPLATE_USE_MATHML,
+	TEMPLATE_USE_SVG
 } from '../../../constants.js';
 
 /**
@@ -37,7 +39,7 @@ export function assign_nodes(start, end) {
  * @returns {() => Node | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function template(content, flags) {
+export function from_html(content, flags) {
 	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
 	var use_import_node = (flags & TEMPLATE_USE_IMPORT_NODE) !== 0;
 
@@ -77,99 +79,6 @@ export function template(content, flags) {
 		return clone;
 	};
 }
-/**
- * @param {TemplateStructure[]} structure
- * @param {NAMESPACE_SVG | NAMESPACE_MATHML | undefined} [ns]
- */
-function structure_to_fragment(structure, ns) {
-	var fragment = create_fragment();
-
-	for (var item of structure) {
-		if (typeof item === 'string') {
-			fragment.append(create_text(item));
-			continue;
-		}
-
-		// if `preserveComments === true`, comments are represented as `['// <data>']`
-		if (item === undefined || item[0][0] === '/') {
-			fragment.append(create_comment(item ? item[0].slice(3) : ''));
-			continue;
-		}
-
-		const [name, attributes, ...children] = item;
-
-		const namespace = name === 'svg' ? NAMESPACE_SVG : name === 'math' ? NAMESPACE_MATHML : ns;
-
-		var element = create_element(name, namespace, attributes?.is);
-
-		for (var key in attributes) {
-			set_attribute(element, key, attributes[key]);
-		}
-
-		if (children.length > 0) {
-			var target =
-				element.tagName === 'TEMPLATE'
-					? /** @type {HTMLTemplateElement} */ (element).content
-					: element;
-
-			target.append(
-				structure_to_fragment(children, element.tagName === 'foreignObject' ? undefined : namespace)
-			);
-		}
-
-		fragment.append(element);
-	}
-
-	return fragment;
-}
-
-/**
- * @param {Array<TemplateStructure>} structure
- * @param {number} flags
- * @returns {() => Node | Node[]}
- */
-/*#__NO_SIDE_EFFECTS__*/
-export function template_fn(structure, flags) {
-	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
-	var use_import_node = (flags & TEMPLATE_USE_IMPORT_NODE) !== 0;
-
-	/** @type {Node} */
-	var node;
-
-	return () => {
-		if (hydrating) {
-			assign_nodes(hydrate_node, null);
-			return hydrate_node;
-		}
-
-		if (node === undefined) {
-			node = structure_to_fragment(structure);
-			if (!is_fragment) node = /** @type {Node} */ (get_first_child(node));
-		}
-
-		var clone = /** @type {TemplateNode} */ (
-			use_import_node || is_firefox ? document.importNode(node, true) : node.cloneNode(true)
-		);
-
-		if (is_fragment) {
-			var start = /** @type {TemplateNode} */ (get_first_child(clone));
-			var end = /** @type {TemplateNode} */ (clone.lastChild);
-
-			assign_nodes(start, end);
-		} else {
-			assign_nodes(clone, clone);
-		}
-
-		return clone;
-	};
-}
-
-/**
- * @param {() => Element | DocumentFragment} fn
- */
-export function with_script(fn) {
-	return () => run_scripts(fn());
-}
 
 /**
  * @param {string} content
@@ -178,7 +87,7 @@ export function with_script(fn) {
  * @returns {() => Node | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function ns_template(content, flags, ns = 'svg') {
+function from_namespace(content, flags, ns = 'svg') {
 	/**
 	 * Whether or not the first item is a text/element node. If not, we need to
 	 * create an additional comment node to act as `effect.nodes.start`
@@ -227,14 +136,78 @@ export function ns_template(content, flags, ns = 'svg') {
 }
 
 /**
- * @param {Array<TemplateStructure>} structure
+ * @param {string} content
  * @param {number} flags
- * @param {'svg' | 'math'} ns
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function from_svg(content, flags) {
+	return from_namespace(content, flags, 'svg');
+}
+
+/**
+ * @param {string} content
+ * @param {number} flags
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function from_mathml(content, flags) {
+	return from_namespace(content, flags, 'math');
+}
+
+/**
+ * @param {TemplateStructure[]} structure
+ * @param {NAMESPACE_SVG | NAMESPACE_MATHML | undefined} [ns]
+ */
+function fragment_from_tree(structure, ns) {
+	var fragment = create_fragment();
+
+	for (var item of structure) {
+		if (typeof item === 'string') {
+			fragment.append(create_text(item));
+			continue;
+		}
+
+		// if `preserveComments === true`, comments are represented as `['// <data>']`
+		if (item === undefined || item[0][0] === '/') {
+			fragment.append(create_comment(item ? item[0].slice(3) : ''));
+			continue;
+		}
+
+		const [name, attributes, ...children] = item;
+
+		const namespace = name === 'svg' ? NAMESPACE_SVG : name === 'math' ? NAMESPACE_MATHML : ns;
+
+		var element = create_element(name, namespace, attributes?.is);
+
+		for (var key in attributes) {
+			set_attribute(element, key, attributes[key]);
+		}
+
+		if (children.length > 0) {
+			var target =
+				element.tagName === 'TEMPLATE'
+					? /** @type {HTMLTemplateElement} */ (element).content
+					: element;
+
+			target.append(
+				fragment_from_tree(children, element.tagName === 'foreignObject' ? undefined : namespace)
+			);
+		}
+
+		fragment.append(element);
+	}
+
+	return fragment;
+}
+
+/**
+ * @param {TemplateStructure[]} structure
+ * @param {number} flags
  * @returns {() => Node | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function ns_template_fn(structure, flags, ns = 'svg') {
+export function from_tree(structure, flags) {
 	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
+	var use_import_node = (flags & TEMPLATE_USE_IMPORT_NODE) !== 0;
 
 	/** @type {Node} */
 	var node;
@@ -246,11 +219,20 @@ export function ns_template_fn(structure, flags, ns = 'svg') {
 		}
 
 		if (node === undefined) {
-			node = structure_to_fragment(structure, ns === 'svg' ? NAMESPACE_SVG : NAMESPACE_MATHML);
+			const ns =
+				(flags & TEMPLATE_USE_SVG) !== 0
+					? NAMESPACE_SVG
+					: (flags & TEMPLATE_USE_MATHML) !== 0
+						? NAMESPACE_MATHML
+						: undefined;
+
+			node = fragment_from_tree(structure, ns);
 			if (!is_fragment) node = /** @type {Node} */ (get_first_child(node));
 		}
 
-		var clone = /** @type {TemplateNode} */ (node.cloneNode(true));
+		var clone = /** @type {TemplateNode} */ (
+			use_import_node || is_firefox ? document.importNode(node, true) : node.cloneNode(true)
+		);
 
 		if (is_fragment) {
 			var start = /** @type {TemplateNode} */ (get_first_child(clone));
@@ -266,23 +248,10 @@ export function ns_template_fn(structure, flags, ns = 'svg') {
 }
 
 /**
- * @param {string} content
- * @param {number} flags
- * @returns {() => Node | Node[]}
+ * @param {() => Element | DocumentFragment} fn
  */
-/*#__NO_SIDE_EFFECTS__*/
-export function mathml_template(content, flags) {
-	return ns_template(content, flags, 'math');
-}
-
-/**
- * @param {Array<TemplateStructure>} structure
- * @param {number} flags
- * @returns {() => Node | Node[]}
- */
-/*#__NO_SIDE_EFFECTS__*/
-export function mathml_template_fn(structure, flags) {
-	return ns_template_fn(structure, flags, 'math');
+export function with_script(fn) {
+	return () => run_scripts(fn());
 }
 
 /**

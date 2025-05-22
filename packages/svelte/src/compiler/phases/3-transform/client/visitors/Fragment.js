@@ -17,7 +17,7 @@ export function Fragment(node, context) {
 	// Creates a new block which looks roughly like this:
 	// ```js
 	// // hoisted:
-	// const block_name = $.template(`...`);
+	// const block_name = $.from_html(`...`);
 	//
 	// // for the main block:
 	// const id = block_name();

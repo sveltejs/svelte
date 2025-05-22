@@ -69,11 +69,11 @@ export class Template {
 		/** @type {Element} */ (this.#element).attributes[key] = value;
 	}
 
-	as_string() {
+	as_html() {
 		return b.template([b.quasi(this.nodes.map(stringify).join(''), true)], []);
 	}
 
-	as_objects() {
+	as_tree() {
 		// if the first item is a comment we need to add another comment for effect.start
 		if (this.nodes[0].type === 'comment') {
 			this.nodes.unshift({ type: 'comment', data: undefined });

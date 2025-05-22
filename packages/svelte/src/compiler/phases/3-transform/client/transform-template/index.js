@@ -2,24 +2,9 @@
 /** @import { Namespace } from '#compiler' */
 /** @import { ComponentClientTransformState } from '../types.js' */
 /** @import { Node } from './types.js' */
+import { TEMPLATE_USE_MATHML, TEMPLATE_USE_SVG } from '../../../../../constants.js';
 import { dev, locator } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
-
-/**
- *
- * @param {Namespace} namespace
- * @param {ComponentClientTransformState} state
- * @returns
- */
-function get_template_function(namespace, state) {
-	return (
-		namespace === 'svg'
-			? '$.ns_template'
-			: namespace === 'mathml'
-				? '$.mathml_template'
-				: '$.template'
-	).concat(state.options.templatingMode === 'functional' ? '_fn' : '');
-}
 
 /**
  * @param {Node[]} nodes
@@ -50,14 +35,18 @@ function build_locations(nodes) {
  * @param {Namespace} namespace
  * @param {number} [flags]
  */
-export function transform_template(state, namespace, flags) {
-	const expression =
-		state.options.templatingMode === 'functional'
-			? state.template.as_objects()
-			: state.template.as_string();
+export function transform_template(state, namespace, flags = 0) {
+	const tree = state.options.templatingMode === 'functional';
+
+	const expression = tree ? state.template.as_tree() : state.template.as_html();
+
+	if (tree) {
+		if (namespace === 'svg') flags |= TEMPLATE_USE_SVG;
+		if (namespace === 'mathml') flags |= TEMPLATE_USE_MATHML;
+	}
 
 	let call = b.call(
-		get_template_function(namespace, state),
+		tree ? `$.from_tree` : `$.from_${namespace}`,
 		expression,
 		flags ? b.literal(flags) : undefined
 	);

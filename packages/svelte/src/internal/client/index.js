@@ -88,12 +88,10 @@ export {
 export {
 	append,
 	comment,
-	ns_template,
-	ns_template_fn,
-	mathml_template,
-	mathml_template_fn,
-	template,
-	template_fn,
+	from_html,
+	from_mathml,
+	from_svg,
+	from_tree,
 	text,
 	props_id,
 	with_script
