@@ -12,17 +12,12 @@ import * as b from '../../../../utils/builders.js';
  * @returns
  */
 function get_template_function(namespace, state) {
-	const contains_script_tag = state.template.contains_script_tag;
 	return (
 		namespace === 'svg'
-			? contains_script_tag
-				? '$.svg_template_with_script'
-				: '$.ns_template'
+			? '$.ns_template'
 			: namespace === 'mathml'
 				? '$.mathml_template'
-				: contains_script_tag
-					? '$.template_with_script'
-					: '$.template'
+				: '$.template'
 	).concat(state.options.templatingMode === 'functional' ? '_fn' : '');
 }
 
@@ -66,6 +61,10 @@ export function transform_template(state, namespace, flags) {
 		expression,
 		flags ? b.literal(flags) : undefined
 	);
+
+	if (state.template.contains_script_tag) {
+		call = b.call(`$.with_script`, call);
+	}
 
 	if (dev) {
 		return b.call(

@@ -90,16 +90,13 @@ export {
 	comment,
 	ns_template,
 	ns_template_fn,
-	svg_template_with_script,
-	svg_template_with_script_fn,
 	mathml_template,
 	mathml_template_fn,
 	template,
 	template_fn,
-	template_with_script,
-	template_with_script_fn,
 	text,
-	props_id
+	props_id,
+	with_script
 } from './dom/template.js';
 export { user_derived as derived, derived_safe_equal } from './reactivity/deriveds.js';
 export {

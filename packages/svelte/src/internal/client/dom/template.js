@@ -165,24 +165,10 @@ export function template_fn(structure, flags) {
 }
 
 /**
- * @param {string} content
- * @param {number} flags
- * @returns {() => Node | Node[]}
+ * @param {() => Element | DocumentFragment} fn
  */
-/*#__NO_SIDE_EFFECTS__*/
-export function template_with_script(content, flags) {
-	var fn = template(content, flags);
-	return () => run_scripts(/** @type {Element | DocumentFragment} */ (fn()));
-}
-
-/**
- * @param {Array<TemplateStructure>} structure
- * @param {number} flags
- * @returns {() => Node | Node[]}
- */ /*#__NO_SIDE_EFFECTS__*/
-export function template_with_script_fn(structure, flags) {
-	var templated_fn = template_fn(structure, flags);
-	return () => run_scripts(/** @type {Element | DocumentFragment} */ (templated_fn()));
+export function with_script(fn) {
+	return () => run_scripts(fn());
 }
 
 /**
@@ -288,28 +274,6 @@ export function ns_template_fn(structure, flags, ns = 'svg') {
 
 		return clone;
 	};
-}
-
-/**
- * @param {string} content
- * @param {number} flags
- * @returns {() => Node | Node[]}
- */
-/*#__NO_SIDE_EFFECTS__*/
-export function svg_template_with_script(content, flags) {
-	var fn = ns_template(content, flags);
-	return () => run_scripts(/** @type {Element | DocumentFragment} */ (fn()));
-}
-
-/**
- * @param {Array<TemplateStructure>} structure
- * @param {number} flags
- * @returns {() => Node | Node[]}
- */
-/*#__NO_SIDE_EFFECTS__*/
-export function svg_template_with_script_fn(structure, flags) {
-	var templated_fn = ns_template_fn(structure, flags);
-	return () => run_scripts(/** @type {Element | DocumentFragment} */ (templated_fn()));
 }
 
 /**
