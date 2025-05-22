@@ -104,10 +104,11 @@ function stringify(item) {
 		if (value !== undefined) str += `="${escape_html(value, true)}"`;
 	}
 
-	str += `>`;
-	str += item.children.map(stringify).join('');
-
-	if (!is_void(item.name)) {
+	if (is_void(item.name)) {
+		str += '/>'; // XHTML compliance
+	} else {
+		str += `>`;
+		str += item.children.map(stringify).join('');
 		str += `</${item.name}>`;
 	}
 
