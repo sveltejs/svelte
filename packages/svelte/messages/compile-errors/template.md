@@ -398,10 +398,6 @@ See https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-ele
 
 > A `<textarea>` can have either a value attribute or (equivalently) child content, but not both
 
-## title_illegal_attribute
-
-> `<title>` cannot have attributes nor directives
-
 ## title_invalid_content
 
 > `<title>` can only contain text and {tags}
