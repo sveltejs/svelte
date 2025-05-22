@@ -22,13 +22,17 @@ export class Template {
 
 	#fragment = this.nodes;
 
-	/** @param {string} name */
-	create_element(name) {
+	/**
+	 * @param {string} name
+	 * @param {number} start
+	 */
+	create_element(name, start) {
 		this.#element = {
 			type: 'element',
 			name,
 			attributes: {},
-			children: []
+			children: [],
+			start
 		};
 
 		this.#fragment.push(this.#element);

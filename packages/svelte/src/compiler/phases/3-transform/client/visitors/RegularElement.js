@@ -1,17 +1,14 @@
 /** @import { ArrayExpression, Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression } from 'estree' */
 /** @import { AST } from '#compiler' */
-/** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
 import {
 	cannot_be_set_statically,
 	is_boolean_attribute,
 	is_dom_property,
-	is_load_error_element,
-	is_void
+	is_load_error_element
 } from '../../../../../utils.js';
-import { escape_html } from '../../../../../escaping.js';
-import { dev, is_ignored, locator } from '../../../../state.js';
+import { is_ignored } from '../../../../state.js';
 import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { is_custom_element_node } from '../../../nodes.js';
@@ -39,20 +36,9 @@ import { visit_event_attribute } from './shared/events.js';
  * @param {ComponentContext} context
  */
 export function RegularElement(node, context) {
-	/** @type {SourceLocation} */
-	let location = [-1, -1];
-
-	if (dev) {
-		const loc = locator(node.start);
-		if (loc) {
-			location[0] = loc.line;
-			location[1] = loc.column;
-			context.state.locations.push(location);
-		}
-	}
+	context.state.template.create_element(node.name, node.start);
 
 	if (node.name === 'noscript') {
-		context.state.template.create_element('noscript');
 		return;
 	}
 
@@ -67,8 +53,6 @@ export function RegularElement(node, context) {
 	context.state.template.needs_import_node ||= node.name === 'video' || is_custom_element;
 
 	context.state.template.contains_script_tag ||= node.name === 'script';
-
-	context.state.template.create_element(node.name);
 
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
 	const attributes = [];
@@ -345,7 +329,6 @@ export function RegularElement(node, context) {
 	const state = {
 		...context.state,
 		metadata,
-		locations: [],
 		scope: /** @type {Scope} */ (context.state.scopes.get(node.fragment)),
 		preserve_whitespace:
 			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea'
@@ -439,10 +422,6 @@ export function RegularElement(node, context) {
 		context.state.update.push(b.stmt(b.assignment('=', dir, dir)));
 	}
 
-	if (state.locations.length > 0) {
-		// @ts-expect-error
-		location.push(state.locations);
-	}
 	context.state.template.pop_element();
 }
 

@@ -1,7 +1,7 @@
 /** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
-import { dev, is_ignored, locator } from '../../../../../state.js';
+import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { build_bind_this, memoize_expression, validate_binding } from '../shared/utils.js';
@@ -440,19 +440,12 @@ export function build_component(node, component_name, context, anchor = context.
 	}
 
 	if (Object.keys(custom_css_props).length > 0) {
-		if (dev) {
-			const loc = locator(node.start);
-			if (loc) {
-				context.state.locations.push([loc.line, loc.column]);
-			}
-		}
-
 		if (context.state.metadata.namespace === 'svg') {
 			// this boils down to <g><!></g>
-			context.state.template.create_element('g');
+			context.state.template.create_element('g', node.start);
 		} else {
 			// this boils down to <svelte-css-wrapper style='display: contents'><!></svelte-css-wrapper>
-			context.state.template.create_element('svelte-css-wrapper');
+			context.state.template.create_element('svelte-css-wrapper', node.start);
 			context.state.template.set_prop('style', 'display: contents');
 		}
 

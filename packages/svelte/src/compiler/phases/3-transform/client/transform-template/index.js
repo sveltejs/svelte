@@ -1,7 +1,8 @@
-/** @import { ComponentClientTransformState } from '../types.js' */
+/** @import { Location } from 'locate-character' */
 /** @import { Namespace } from '#compiler' */
-/** @import { SourceLocation } from '#shared' */
-import { dev } from '../../../../state.js';
+/** @import { ComponentClientTransformState } from '../types.js' */
+/** @import { Node } from './types.js' */
+import { dev, locator } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 import { template_to_functions } from './to-functions.js';
 import { template_to_string } from './to-string.js';
@@ -28,20 +29,27 @@ function get_template_function(namespace, state) {
 }
 
 /**
- * @param {SourceLocation[]} locations
+ * @param {Node[]} nodes
  */
-function build_locations(locations) {
-	return b.array(
-		locations.map((loc) => {
-			const expression = b.array([b.literal(loc[0]), b.literal(loc[1])]);
+function build_locations(nodes) {
+	const array = b.array([]);
 
-			if (loc.length === 3) {
-				expression.elements.push(build_locations(loc[2]));
-			}
+	for (const node of nodes) {
+		if (node.type !== 'element') continue;
 
-			return expression;
-		})
-	);
+		const { line, column } = /** @type {Location} */ (locator(node.start));
+
+		const expression = b.array([b.literal(line), b.literal(column)]);
+		const children = build_locations(node.children);
+
+		if (children.elements.length > 0) {
+			expression.elements.push(children);
+		}
+
+		array.elements.push(expression);
+	}
+
+	return array;
 }
 
 /**
@@ -66,7 +74,7 @@ export function transform_template(state, namespace, flags) {
 			'$.add_locations',
 			call,
 			b.member(b.id(state.analysis.name), '$.FILENAME', true),
-			build_locations(state.locations)
+			build_locations(state.template.nodes)
 		);
 	}
 

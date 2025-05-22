@@ -5,6 +5,8 @@ export interface Element {
 	name: string;
 	attributes: Record<string, string | undefined>;
 	children: Node[];
+	/** used for populating __svelte_meta */
+	start: number;
 }
 
 export interface Text {

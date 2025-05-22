@@ -3,16 +3,14 @@ import type {
 	Statement,
 	LabeledStatement,
 	Identifier,
-	PrivateIdentifier,
 	Expression,
 	AssignmentExpression,
 	UpdateExpression,
 	VariableDeclaration
 } from 'estree';
-import type { AST, Namespace, StateField, ValidatedCompileOptions } from '#compiler';
+import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
-import type { SourceLocation } from '#shared';
 import type { Template } from './transform-template/template.js';
 
 export interface ClientTransformState extends TransformState {
@@ -55,7 +53,6 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly expressions: Expression[];
 	/** The HTML template string */
 	readonly template: Template;
-	readonly locations: SourceLocation[];
 	readonly metadata: {
 		namespace: Namespace;
 		bound_contenteditable: boolean;

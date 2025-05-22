@@ -67,7 +67,6 @@ export function Fragment(node, context) {
 		expressions: [],
 		after_update: [],
 		template: new Template(),
-		locations: [],
 		transform: { ...context.state.transform },
 		metadata: {
 			namespace,
