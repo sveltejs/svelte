@@ -4,8 +4,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { compile } from 'svelte/compiler';
 import { afterAll, assert, beforeAll, describe } from 'vitest';
-import { suite, suite_with_variants, type TemplatingMode } from '../suite';
-import { write } from '../helpers';
+import { suite, suite_with_variants } from '../suite';
+import { write, templatingMode } from '../helpers';
 import type { Warning } from '#compiler';
 
 const assert_file = path.resolve(__dirname, 'assert.js');
@@ -35,41 +35,34 @@ const { run: run_browser_tests } = suite_with_variants<
 		return false;
 	},
 	() => {},
-	async (config, test_dir, variant, _, templating_mode) => {
-		await run_test(test_dir, config, variant === 'hydrate', templating_mode);
+	async (config, test_dir, variant) => {
+		await run_test(test_dir, config, variant === 'hydrate');
 	}
 );
 
 describe.concurrent(
 	'runtime-browser',
-	() => run_browser_tests(__dirname, 'string'),
-	// Browser tests are brittle and slow on CI
-	{ timeout: 20000, retry: process.env.CI ? 1 : 0 }
-);
-
-describe.concurrent(
-	'runtime-browser-functional',
-	() => run_browser_tests(__dirname, 'functional'),
+	() => run_browser_tests(__dirname),
 	// Browser tests are brittle and slow on CI
 	{ timeout: 20000, retry: process.env.CI ? 1 : 0 }
 );
 
 const { run: run_ce_tests } = suite<ReturnType<typeof import('./assert').test>>(
-	async (config, test_dir, templating_mode) => {
-		await run_test(test_dir, config, false, templating_mode);
+	async (config, test_dir) => {
+		await run_test(test_dir, config, false);
 	}
 );
 
 describe.concurrent(
 	'custom-elements',
-	() => run_ce_tests(__dirname, 'string', 'custom-elements-samples'),
+	() => run_ce_tests(__dirname, 'custom-elements-samples'),
 	// Browser tests are brittle and slow on CI
 	{ timeout: 20000, retry: process.env.CI ? 1 : 0 }
 );
 
 describe.concurrent(
 	'custom-elements',
-	() => run_ce_tests(__dirname, 'functional', 'custom-elements-samples'),
+	() => run_ce_tests(__dirname, 'custom-elements-samples'),
 	// Browser tests are brittle and slow on CI
 	{ timeout: 20000, retry: process.env.CI ? 1 : 0 }
 );
@@ -77,8 +70,7 @@ describe.concurrent(
 async function run_test(
 	test_dir: string,
 	config: ReturnType<typeof import('./assert').test>,
-	hydrate: boolean,
-	templating_mode: TemplatingMode
+	hydrate: boolean
 ) {
 	const warnings: any[] = [];
 
@@ -102,17 +94,14 @@ async function run_test(
 					build.onLoad({ filter: /\.svelte$/ }, (args) => {
 						const compiled = compile(fs.readFileSync(args.path, 'utf-8').replace(/\r/g, ''), {
 							generate: 'client',
+							templatingMode,
 							...config.compileOptions,
 							immutable: config.immutable,
 							customElement: test_dir.includes('custom-elements-samples'),
-							accessors: 'accessors' in config ? config.accessors : true,
-							templatingMode: templating_mode
+							accessors: 'accessors' in config ? config.accessors : true
 						});
 
-						write(
-							`${test_dir}/_output/client${templating_mode === 'functional' ? '-functional' : ''}/${path.basename(args.path)}.js`,
-							compiled.js.code
-						);
+						write(`${test_dir}/_output/client/${path.basename(args.path)}.js`, compiled.js.code);
 
 						compiled.warnings.forEach((warning) => {
 							if (warning.code === 'options_deprecated_accessors') return;
@@ -121,10 +110,7 @@ async function run_test(
 
 						if (compiled.css !== null) {
 							compiled.js.code += `document.head.innerHTML += \`<style>${compiled.css.code}</style>\``;
-							write(
-								`${test_dir}/_output/${templating_mode === 'functional' ? '-functional' : ''}/${path.basename(args.path)}.css`,
-								compiled.css.code
-							);
+							write(`${test_dir}/_output/${path.basename(args.path)}.css`, compiled.css.code);
 						}
 
 						return {
@@ -170,8 +156,7 @@ async function run_test(
 								...config.compileOptions,
 								immutable: config.immutable,
 								customElement: test_dir.includes('custom-elements-samples'),
-								accessors: 'accessors' in config ? config.accessors : true,
-								templatingMode: templating_mode
+								accessors: 'accessors' in config ? config.accessors : true
 							});
 
 							return {

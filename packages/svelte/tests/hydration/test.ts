@@ -4,6 +4,7 @@ import * as fs from 'node:fs';
 import { assert } from 'vitest';
 import { compile_directory } from '../helpers.js';
 import { assert_html_equal } from '../html_equal.js';
+import { templatingMode } from '../helpers.js';
 import { assert_ok, suite, type BaseTest } from '../suite.js';
 import { createClassComponent } from 'svelte/legacy';
 import { render } from 'svelte/server';
@@ -41,24 +42,15 @@ function read(path: string): string | void {
 	return fs.existsSync(path) ? fs.readFileSync(path, 'utf-8') : undefined;
 }
 
-const { test, run } = suite<HydrationTest>(async (config, cwd, templating_mode) => {
+const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 	if (!config.load_compiled) {
-		await compile_directory(
-			cwd,
-			'client',
-			{ accessors: true, ...config.compileOptions },
-			undefined,
-			undefined,
-			templating_mode
-		);
-		await compile_directory(
-			cwd,
-			'server',
-			config.compileOptions,
-			undefined,
-			undefined,
-			templating_mode
-		);
+		await compile_directory(cwd, 'client', {
+			accessors: true,
+			templatingMode,
+			...config.compileOptions
+		});
+
+		await compile_directory(cwd, 'server', config.compileOptions, undefined, undefined);
 	}
 
 	const target = window.document.body;
@@ -116,11 +108,7 @@ const { test, run } = suite<HydrationTest>(async (config, cwd, templating_mode) 
 		};
 
 		const component = createClassComponent({
-			component: (
-				await import(
-					`${cwd}/_output/client${templating_mode === 'functional' ? '-functional' : ''}/main.svelte.js`
-				)
-			).default,
+			component: (await import(`${cwd}/_output/client/main.svelte.js`)).default,
 			target,
 			hydrate: true,
 			props: config.props,
@@ -187,5 +175,4 @@ const { test, run } = suite<HydrationTest>(async (config, cwd, templating_mode) 
 });
 export { test, assert_ok };
 
-await run(__dirname, 'string');
-await run(__dirname, 'functional');
+await run(__dirname);

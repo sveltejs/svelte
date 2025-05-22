@@ -5,5 +5,4 @@ const { test, run } = runtime_suite(true);
 
 export { test, ok };
 
-await run(__dirname, 'string');
-await run(__dirname, 'functional');
+await run(__dirname);

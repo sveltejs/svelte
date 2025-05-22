@@ -58,17 +58,15 @@ export function create_deferred() {
  * @param {Partial<CompileOptions>} compileOptions
  * @param {boolean} [output_map]
  * @param {any} [preprocessor]
- * @param {import('./suite').TemplatingMode} [templating_mode]
  */
 export async function compile_directory(
 	cwd,
 	generate,
 	compileOptions = {},
 	output_map = false,
-	preprocessor,
-	templating_mode
+	preprocessor
 ) {
-	const output_dir = `${cwd}/_output/${generate}${templating_mode === 'functional' ? `-functional` : ''}`;
+	const output_dir = `${cwd}/_output/${generate}`;
 
 	fs.rmSync(output_dir, { recursive: true, force: true });
 
@@ -79,8 +77,7 @@ export async function compile_directory(
 		let opts = {
 			filename: path.join(cwd, file),
 			...compileOptions,
-			generate,
-			templatingMode: templating_mode
+			generate
 		};
 
 		if (file.endsWith('.js')) {
@@ -193,3 +190,6 @@ if (typeof window !== 'undefined') {
 		};
 	});
 }
+
+export const templatingMode =
+	/** @type {'string' | 'functional'} */ (process.env.TEMPLATING_MODE) ?? 'string';

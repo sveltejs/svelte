@@ -6,11 +6,11 @@ import { proxy } from 'svelte/internal/client';
 import { flushSync, hydrate, mount, unmount } from 'svelte';
 import { render } from 'svelte/server';
 import { afterAll, assert, beforeAll } from 'vitest';
-import { compile_directory } from '../helpers.js';
+import { compile_directory, templatingMode } from '../helpers.js';
 import { setup_html_equal } from '../html_equal.js';
 import { raf } from '../animation-helpers.js';
 import type { CompileOptions } from '#compiler';
-import { suite_with_variants, type BaseTest, type TemplatingMode } from '../suite.js';
+import { suite_with_variants, type BaseTest } from '../suite.js';
 import { seen } from '../../src/internal/server/dev.js';
 
 type Assert = typeof import('vitest').assert & {
@@ -142,21 +142,16 @@ export function runtime_suite(runes: boolean) {
 
 			return false;
 		},
-		(config, cwd, templating_mode) => {
-			return common_setup(cwd, runes, config, templating_mode);
+		(config, cwd) => {
+			return common_setup(cwd, runes, config);
 		},
-		async (config, cwd, variant, common, templating_mode) => {
-			await run_test_variant(cwd, config, variant, common, runes, templating_mode);
+		async (config, cwd, variant, common) => {
+			await run_test_variant(cwd, config, variant, common, runes);
 		}
 	);
 }
 
-async function common_setup(
-	cwd: string,
-	runes: boolean | undefined,
-	config: RuntimeTest,
-	templating_mode: TemplatingMode
-) {
+async function common_setup(cwd: string, runes: boolean | undefined, config: RuntimeTest) {
 	const force_hmr = process.env.HMR && config.compileOptions?.dev !== false && !config.error;
 
 	const compileOptions: CompileOptions = {
@@ -164,17 +159,17 @@ async function common_setup(
 		rootDir: cwd,
 		dev: force_hmr ? true : undefined,
 		hmr: force_hmr ? true : undefined,
+		templatingMode,
 		...config.compileOptions,
 		immutable: config.immutable,
 		accessors: 'accessors' in config ? config.accessors : true,
-		runes,
-		templatingMode: templating_mode
+		runes
 	};
 
 	// load_compiled can be used for debugging a test. It means the compiler will not run on the input
 	// so you can manipulate the output manually to see what fixes it, adding console.logs etc.
 	if (!config.load_compiled) {
-		await compile_directory(cwd, 'client', compileOptions, undefined, undefined, templating_mode);
+		await compile_directory(cwd, 'client', compileOptions, undefined, undefined);
 		await compile_directory(cwd, 'server', compileOptions);
 	}
 
@@ -186,8 +181,7 @@ async function run_test_variant(
 	config: RuntimeTest,
 	variant: 'dom' | 'hydrate' | 'ssr',
 	compileOptions: CompileOptions,
-	runes: boolean,
-	templating_mode: TemplatingMode
+	runes: boolean
 ) {
 	let unintended_error = false;
 
@@ -266,14 +260,9 @@ async function run_test_variant(
 
 		// Put things we need on window for testing
 		const styles = globSync('**/*.css', {
-			cwd: `${cwd}/_output/client${templating_mode === 'functional' ? '-functional' : ''}`
+			cwd: `${cwd}/_output/client`
 		})
-			.map((file) =>
-				fs.readFileSync(
-					`${cwd}/_output/client${templating_mode === 'functional' ? '-functional' : ''}/${file}`,
-					'utf-8'
-				)
-			)
+			.map((file) => fs.readFileSync(`${cwd}/_output/client/${file}`, 'utf-8'))
 			.join('\n')
 			.replace(/\/\*<\/?style>\*\//g, '');
 
@@ -289,9 +278,7 @@ async function run_test_variant(
 
 		globalThis.requestAnimationFrame = globalThis.setTimeout;
 
-		let mod = await import(
-			`${cwd}/_output/client${templating_mode === 'functional' ? '-functional' : ''}/main.svelte.js`
-		);
+		let mod = await import(`${cwd}/_output/client/main.svelte.js`);
 
 		const target = window.document.querySelector('main') as HTMLElement;
 
