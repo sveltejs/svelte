@@ -5,13 +5,13 @@ var on_click = (_, count) => $.update(count);
 
 var root = $.template_fn(
 	[
-		{ e: 'h1' },
+		['h1'],
 		' ',
-		{ e: 'b' },
+		['b'],
 		' ',
-		{ e: 'button', c: [' '] },
+		['button', null, ' '],
 		' ',
-		{ e: 'h1' }
+		['h1']
 	],
 	1
 );

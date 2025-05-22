@@ -10,11 +10,11 @@ function reset(_, str, tpl) {
 
 var root = $.template_fn(
 	[
-		{ e: 'input' },
+		['input'],
 		' ',
-		{ e: 'input' },
+		['input'],
 		' ',
-		{ e: 'button', c: ['reset'] }
+		['button', null, 'reset']
 	],
 	1
 );

@@ -1,7 +1,7 @@
 import 'svelte/internal/disclose-version';
 import * as $ from 'svelte/internal/client';
 
-var root = $.template_fn([{ e: 'p', c: [' '] }]);
+var root = $.template_fn([['p', null, ' ']]);
 
 export default function Text_nodes_deriveds($$anchor) {
 	let count1 = 0;

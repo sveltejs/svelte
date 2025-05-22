@@ -2,7 +2,7 @@ import 'svelte/internal/disclose-version';
 import 'svelte/internal/flags/legacy';
 import * as $ from 'svelte/internal/client';
 
-var root_1 = $.template_fn([{ e: 'p' }]);
+var root_1 = $.template_fn([['p']]);
 
 export default function Each_index_non_null($$anchor) {
 	var fragment = $.comment();

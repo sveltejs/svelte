@@ -19,14 +19,14 @@ export function template_to_functions(items) {
 function build(item) {
 	switch (item.type) {
 		case 'element': {
-			const element = b.object([b.prop('init', b.id('e'), b.literal(item.name))]);
+			const element = b.array([b.literal(item.name)]);
 
-			const attributes = b.prop('init', b.id('p'), b.object([]));
+			const attributes = b.object([]);
 
 			for (const key in item.attributes) {
 				const value = item.attributes[key];
 
-				attributes.value.properties.push(
+				attributes.properties.push(
 					b.prop(
 						'init',
 						b.key(fix_attribute_casing(key)),
@@ -35,13 +35,13 @@ function build(item) {
 				);
 			}
 
-			if (attributes.value.properties.length > 0) {
-				element.properties.push(attributes);
+			if (attributes.properties.length > 0 || item.children.length > 0) {
+				element.elements.push(attributes.properties.length > 0 ? attributes : b.null);
 			}
 
 			if (item.children.length > 0) {
 				const children = item.children.map(build);
-				element.properties.push(b.prop('init', b.id('c'), b.array(children)));
+				element.elements.push(...children);
 
 				// special case — strip leading newline from `<pre>` and `<textarea>`
 				if (item.name === 'pre' || item.name === 'textarea') {
@@ -59,7 +59,7 @@ function build(item) {
 		}
 
 		case 'anchor': {
-			return item.data ? b.array([b.literal(item.data)]) : null;
+			return item.data ? b.array([b.literal(`// ${item.data}`)]) : null;
 		}
 
 		case 'text': {

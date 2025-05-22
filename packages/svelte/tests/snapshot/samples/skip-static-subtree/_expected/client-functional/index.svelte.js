@@ -3,92 +3,77 @@ import * as $ from 'svelte/internal/client';
 
 var root = $.template_fn(
 	[
-		{
-			e: 'header',
-			c: [
-				{
-					e: 'nav',
-					c: [
-						{ e: 'a', p: { href: '/' }, c: ['Home'] },
-						' ',
-						{
-							e: 'a',
-							p: { href: '/away' },
-							c: ['Away']
-						}
-					]
-				}
+		[
+			'header',
+			null,
+			[
+				'nav',
+				null,
+				['a', { href: '/' }, 'Home'],
+				' ',
+				['a', { href: '/away' }, 'Away']
 			]
-		},
+		],
 		' ',
-		{
-			e: 'main',
-			c: [
-				{ e: 'h1', c: [' '] },
-				' ',
-				{
-					e: 'div',
-					p: { class: 'static' },
-					c: [
-						{
-							e: 'p',
-							c: ['we don\'t need to traverse these nodes']
-						}
-					]
-				},
-				' ',
-				{ e: 'p', c: ['or'] },
-				' ',
-				{ e: 'p', c: ['these'] },
-				' ',
-				{ e: 'p', c: ['ones'] },
-				' ',
-				,
-				' ',
-				{ e: 'p', c: ['these'] },
-				' ',
-				{ e: 'p', c: ['trailing'] },
-				' ',
-				{ e: 'p', c: ['nodes'] },
-				' ',
-				{ e: 'p', c: ['can'] },
-				' ',
-				{ e: 'p', c: ['be'] },
-				' ',
-				{ e: 'p', c: ['completely'] },
-				' ',
-				{ e: 'p', c: ['ignored'] }
+		[
+			'main',
+			null,
+			['h1', null, ' '],
+			' ',
+			[
+				'div',
+				{ class: 'static' },
+				[
+					'p',
+					null,
+					'we don\'t need to traverse these nodes'
+				]
+			],
+			' ',
+			['p', null, 'or'],
+			' ',
+			['p', null, 'these'],
+			' ',
+			['p', null, 'ones'],
+			' ',
+			,
+			' ',
+			['p', null, 'these'],
+			' ',
+			['p', null, 'trailing'],
+			' ',
+			['p', null, 'nodes'],
+			' ',
+			['p', null, 'can'],
+			' ',
+			['p', null, 'be'],
+			' ',
+			['p', null, 'completely'],
+			' ',
+			['p', null, 'ignored']
+		],
+		' ',
+		['cant-skip', null, ['custom-elements']],
+		' ',
+		['div', null, ['input']],
+		' ',
+		['div', null, ['source']],
+		' ',
+		['select', null, ['option', null, 'a']],
+		' ',
+		[
+			'img',
+			{ src: '...', alt: '', loading: 'lazy' }
+		],
+		' ',
+		[
+			'div',
+			null,
+			[
+				'img',
+				{ src: '...', alt: '', loading: 'lazy' }
 			]
-		},
-		' ',
-		{
-			e: 'cant-skip',
-			c: [{ e: 'custom-elements' }]
-		},
-		' ',
-		{ e: 'div', c: [{ e: 'input' }] },
-		' ',
-		{ e: 'div', c: [{ e: 'source' }] },
-		' ',
-		{
-			e: 'select',
-			c: [{ e: 'option', c: ['a'] }]
-		},
-		' ',
-		{
-			e: 'img',
-			p: { src: '...', alt: '', loading: 'lazy' }
-		},
-		' ',
-		{
-			e: 'div',
-			c: [
-				{
-					e: 'img',
-					p: { src: '...', alt: '', loading: 'lazy' }
-				}
-			]
-		}
+		]
 	],
 	3
 );

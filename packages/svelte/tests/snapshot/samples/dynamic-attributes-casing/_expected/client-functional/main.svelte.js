@@ -3,17 +3,17 @@ import * as $ from 'svelte/internal/client';
 
 var root = $.template_fn(
 	[
-		{ e: 'div' },
+		['div'],
 		' ',
-		{ e: 'svg' },
+		['svg'],
 		' ',
-		{ e: 'custom-element' },
+		['custom-element'],
 		' ',
-		{ e: 'div' },
+		['div'],
 		' ',
-		{ e: 'svg' },
+		['svg'],
 		' ',
-		{ e: 'custom-element' }
+		['custom-element']
 	],
 	3
 );

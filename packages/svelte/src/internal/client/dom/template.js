@@ -1,4 +1,5 @@
 /** @import { Effect, TemplateNode } from '#client' */
+/** @import { TemplateStructure } from './types' */
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import {
 	create_text,
@@ -76,46 +77,44 @@ export function template(content, flags) {
 		return clone;
 	};
 }
-
 /**
- * @typedef {{e: string, p: Record<string, string>, c: Array<TemplateStructure>} | undefined | string | [string]} TemplateStructure
- */
-
-/**
- * @param {Array<TemplateStructure>} structure
+ * @param {TemplateStructure[]} structure
  * @param {NAMESPACE_SVG | NAMESPACE_MATHML | undefined} [ns]
  */
 function structure_to_fragment(structure, ns) {
 	var fragment = create_fragment();
 
 	for (var item of structure) {
-		if (item === undefined || Array.isArray(item)) {
-			fragment.append(create_comment(item ? item[0] : ''));
-			continue;
-		}
-
 		if (typeof item === 'string') {
 			fragment.append(create_text(item));
 			continue;
 		}
 
-		/** @type {NAMESPACE_SVG | NAMESPACE_MATHML | undefined}  */
-		let namespace = item.e === 'svg' ? NAMESPACE_SVG : item.e === 'math' ? NAMESPACE_MATHML : ns;
-
-		var element = create_element(item.e, namespace, item.p?.is);
-
-		for (var key in item.p) {
-			set_attribute(element, key, item.p[key]);
+		// if `preserveComments === true`, comments are represented as `['// <data>']`
+		if (item === undefined || item[0][0] === '/') {
+			fragment.append(create_comment(item ? item[0].slice(3) : ''));
+			continue;
 		}
 
-		if (item.c) {
+		const [name, attributes, ...children] = item;
+
+		/** @type {NAMESPACE_SVG | NAMESPACE_MATHML | undefined}  */
+		let namespace = name === 'svg' ? NAMESPACE_SVG : name === 'math' ? NAMESPACE_MATHML : ns;
+
+		var element = create_element(name, namespace, attributes?.is);
+
+		for (var key in attributes) {
+			set_attribute(element, key, attributes[key]);
+		}
+
+		if (children.length > 0) {
 			var target =
 				element.tagName === 'TEMPLATE'
 					? /** @type {HTMLTemplateElement} */ (element).content
 					: element;
 
 			target.append(
-				structure_to_fragment(item.c, element.tagName === 'foreignObject' ? undefined : namespace)
+				structure_to_fragment(children, element.tagName === 'foreignObject' ? undefined : namespace)
 			);
 		}
 
