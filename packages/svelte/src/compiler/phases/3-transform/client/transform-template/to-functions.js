@@ -17,53 +17,46 @@ export function template_to_functions(items) {
 
 /** @param {Node} item */
 function build(item) {
-	switch (item.type) {
-		case 'element': {
-			const element = b.array([b.literal(item.name)]);
+	if (item.type === 'text') {
+		return b.literal(item.nodes.map((node) => node.data).join(''));
+	}
 
-			const attributes = b.object([]);
+	if (item.type === 'anchor') {
+		return item.data ? b.array([b.literal(`// ${item.data}`)]) : null;
+	}
 
-			for (const key in item.attributes) {
-				const value = item.attributes[key];
+	const element = b.array([b.literal(item.name)]);
 
-				attributes.properties.push(
-					b.prop(
-						'init',
-						b.key(fix_attribute_casing(key)),
-						value === undefined ? b.void0 : b.literal(value)
-					)
-				);
+	const attributes = b.object([]);
+
+	for (const key in item.attributes) {
+		const value = item.attributes[key];
+
+		attributes.properties.push(
+			b.prop(
+				'init',
+				b.key(fix_attribute_casing(key)),
+				value === undefined ? b.void0 : b.literal(value)
+			)
+		);
+	}
+
+	if (attributes.properties.length > 0 || item.children.length > 0) {
+		element.elements.push(attributes.properties.length > 0 ? attributes : b.null);
+	}
+
+	if (item.children.length > 0) {
+		const children = item.children.map(build);
+		element.elements.push(...children);
+
+		// special case — strip leading newline from `<pre>` and `<textarea>`
+		if (item.name === 'pre' || item.name === 'textarea') {
+			const first = children[0];
+			if (first?.type === 'Literal') {
+				first.value = /** @type {string} */ (first.value).replace(regex_starts_with_newline, '');
 			}
-
-			if (attributes.properties.length > 0 || item.children.length > 0) {
-				element.elements.push(attributes.properties.length > 0 ? attributes : b.null);
-			}
-
-			if (item.children.length > 0) {
-				const children = item.children.map(build);
-				element.elements.push(...children);
-
-				// special case — strip leading newline from `<pre>` and `<textarea>`
-				if (item.name === 'pre' || item.name === 'textarea') {
-					const first = children[0];
-					if (first?.type === 'Literal') {
-						first.value = /** @type {string} */ (first.value).replace(
-							regex_starts_with_newline,
-							''
-						);
-					}
-				}
-			}
-
-			return element;
-		}
-
-		case 'anchor': {
-			return item.data ? b.array([b.literal(`// ${item.data}`)]) : null;
-		}
-
-		case 'text': {
-			return b.literal(item.nodes.map((node) => node.data).join(''));
 		}
 	}
+
+	return element;
 }
