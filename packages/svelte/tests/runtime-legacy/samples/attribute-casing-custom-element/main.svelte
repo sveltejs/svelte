@@ -18,9 +18,8 @@
 			this.innerHTML = 'Hello ' + this._obj.text + '!';
 		}
 	}
-	if(!window.customElements.get('my-custom-element')) {
-		window.customElements.define('my-custom-element', MyCustomElement);
-	}
+
+	window.customElements.define('my-custom-element', MyCustomElement);
 </script>
 
 <my-custom-element camelCase={{ text: 'World' }} />
