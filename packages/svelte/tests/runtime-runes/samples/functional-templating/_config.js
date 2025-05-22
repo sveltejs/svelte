@@ -2,7 +2,7 @@ import { test } from '../../test';
 
 export default test({
 	compileOptions: {
-		templatingMode: 'functional'
+		fragments: 'tree'
 	},
 
 	html: `<p>hello</p>`

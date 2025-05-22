@@ -123,11 +123,14 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 */
 	preserveWhitespace?: boolean;
 	/**
-	 *  If `functional`, the template will get compiled to a series of `document.createElement` calls, if `string` it will render the template tp a string and use `template.innerHTML`.
+	 * Which strategy to use when cloning DOM fragments:
 	 *
-	 * @default 'string'
+	 * - `html` populates a `<template>` with `innerHTML` and clones it. This is faster, but cannot be used if your app's [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP) includes [`require-trusted-types-for 'script'`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/require-trusted-types-for)
+	 * - `tree` creates the fragment one element at a time and _then_ clones it. This is slower, but works everywhere
+	 *
+	 * @default 'html'
 	 */
-	templatingMode?: 'string' | 'functional';
+	fragments?: 'html' | 'tree';
 	/**
 	 * Set to `true` to force the compiler into runes mode, even if there are no indications of runes usage.
 	 * Set to `false` to force the compiler into ignoring runes, even if there are indications of runes usage.

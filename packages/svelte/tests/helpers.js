@@ -191,5 +191,4 @@ if (typeof window !== 'undefined') {
 	});
 }
 
-export const templatingMode =
-	/** @type {'string' | 'functional'} */ (process.env.TEMPLATING_MODE) ?? 'string';
+export const fragments = /** @type {'html' | 'tree'} */ (process.env.FRAGMENTS) ?? 'html';

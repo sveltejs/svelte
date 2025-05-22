@@ -36,7 +36,7 @@ function build_locations(nodes) {
  * @param {number} [flags]
  */
 export function transform_template(state, namespace, flags = 0) {
-	const tree = state.options.templatingMode === 'functional';
+	const tree = state.options.fragments === 'tree';
 
 	const expression = tree ? state.template.as_tree() : state.template.as_html();
 

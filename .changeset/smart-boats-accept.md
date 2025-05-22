@@ -2,4 +2,4 @@
 'svelte': minor
 ---
 
-feat: functional template generation
+feat: add `fragments: 'html' | 'tree'` option for wider CSP compliance

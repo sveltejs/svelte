@@ -110,7 +110,7 @@ export const validate_component_options =
 
 			preserveComments: boolean(false),
 
-			templatingMode: list(['string', 'functional']),
+			fragments: list(['html', 'tree']),
 
 			preserveWhitespace: boolean(false),
 
