@@ -9,8 +9,7 @@ export default test({
 		Object.defineProperties(window, {
 			scrollY: {
 				value: 0,
-				configurable: true,
-				writable: true
+				configurable: true
 			}
 		});
 		original_scrollTo = window.scrollTo;
