@@ -1,4 +1,4 @@
-/** @import { SourceLocation } from '#shared' */
+/** @import { SourceLocation } from '#client' */
 import { HYDRATION_END, HYDRATION_START, HYDRATION_START_ELSE } from '../../../constants.js';
 import { hydrating } from '../dom/hydration.js';
 

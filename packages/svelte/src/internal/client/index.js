@@ -88,13 +88,13 @@ export {
 export {
 	append,
 	comment,
-	ns_template,
-	svg_template_with_script,
-	mathml_template,
-	template,
-	template_with_script,
+	from_html,
+	from_mathml,
+	from_svg,
+	from_tree,
 	text,
-	props_id
+	props_id,
+	with_script
 } from './dom/template.js';
 export { user_derived as derived, derived_safe_equal } from './reactivity/deriveds.js';
 export {

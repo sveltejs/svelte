@@ -324,7 +324,7 @@ export function clean_nodes(
 }
 
 /**
- * Infers the namespace for the children of a node that should be used when creating the `$.template(...)`.
+ * Infers the namespace for the children of a node that should be used when creating the fragment
  * @param {Namespace} namespace
  * @param {AST.SvelteNode} parent
  * @param {AST.SvelteNode[]} nodes

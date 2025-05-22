@@ -9,7 +9,7 @@ import * as b from '#compiler/builders';
  * @param {ComponentContext} context
  */
 export function HtmlTag(node, context) {
-	context.state.template.push('<!>');
+	context.state.template.push_comment();
 
 	const expression = /** @type {Expression} */ (context.visit(node.expression));
 
