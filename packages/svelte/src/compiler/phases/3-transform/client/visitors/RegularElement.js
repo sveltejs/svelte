@@ -39,6 +39,7 @@ export function RegularElement(node, context) {
 	context.state.template.create_element(node.name, node.start);
 
 	if (node.name === 'noscript') {
+		context.state.template.pop_element();
 		return;
 	}
 
@@ -305,8 +306,6 @@ export function RegularElement(node, context) {
 	) {
 		context.state.after_update.push(b.stmt(b.call('$.replay_events', node_id)));
 	}
-
-	context.state.template.push_element();
 
 	const metadata = {
 		...context.state.metadata,

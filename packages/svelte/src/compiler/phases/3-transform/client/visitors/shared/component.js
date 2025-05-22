@@ -449,7 +449,6 @@ export function build_component(node, component_name, context, anchor = context.
 			context.state.template.set_prop('style', 'display: contents');
 		}
 
-		context.state.template.push_element();
 		context.state.template.create_anchor();
 		context.state.template.pop_element();
 

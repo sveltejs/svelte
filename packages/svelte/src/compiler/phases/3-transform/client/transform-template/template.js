@@ -41,6 +41,9 @@ export class Template {
 		};
 
 		this.#fragment.push(this.#element);
+
+		this.#fragment = /** @type {Element} */ (this.#element).children;
+		this.#stack.push(this.#fragment);
 	}
 
 	/** @param {string} [data] */
@@ -51,11 +54,6 @@ export class Template {
 	/** @param {AST.Text[]} nodes */
 	create_text(nodes) {
 		this.#fragment.push({ type: 'text', nodes });
-	}
-
-	push_element() {
-		this.#fragment = /** @type {Element} */ (this.#element).children;
-		this.#stack.push(this.#fragment);
 	}
 
 	pop_element() {
