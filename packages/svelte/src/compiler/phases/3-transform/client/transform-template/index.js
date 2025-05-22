@@ -56,7 +56,7 @@ export function transform_template(state, namespace, flags = 0) {
 	}
 
 	if (dev) {
-		return b.call(
+		call = b.call(
 			'$.add_locations',
 			call,
 			b.member(b.id(state.analysis.name), '$.FILENAME', true),
