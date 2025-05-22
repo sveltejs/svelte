@@ -169,7 +169,7 @@ async function common_setup(cwd: string, runes: boolean | undefined, config: Run
 	// load_compiled can be used for debugging a test. It means the compiler will not run on the input
 	// so you can manipulate the output manually to see what fixes it, adding console.logs etc.
 	if (!config.load_compiled) {
-		await compile_directory(cwd, 'client', compileOptions, undefined, undefined);
+		await compile_directory(cwd, 'client', compileOptions);
 		await compile_directory(cwd, 'server', compileOptions);
 	}
 
@@ -259,9 +259,7 @@ async function run_test_variant(
 		raf.reset();
 
 		// Put things we need on window for testing
-		const styles = globSync('**/*.css', {
-			cwd: `${cwd}/_output/client`
-		})
+		const styles = globSync('**/*.css', { cwd: `${cwd}/_output/client` })
 			.map((file) => fs.readFileSync(`${cwd}/_output/client/${file}`, 'utf-8'))
 			.join('\n')
 			.replace(/\/\*<\/?style>\*\//g, '');

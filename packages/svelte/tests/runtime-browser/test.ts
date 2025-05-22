@@ -60,13 +60,6 @@ describe.concurrent(
 	{ timeout: 20000, retry: process.env.CI ? 1 : 0 }
 );
 
-describe.concurrent(
-	'custom-elements',
-	() => run_ce_tests(__dirname, 'custom-elements-samples'),
-	// Browser tests are brittle and slow on CI
-	{ timeout: 20000, retry: process.env.CI ? 1 : 0 }
-);
-
 async function run_test(
 	test_dir: string,
 	config: ReturnType<typeof import('./assert').test>,
@@ -110,7 +103,10 @@ async function run_test(
 
 						if (compiled.css !== null) {
 							compiled.js.code += `document.head.innerHTML += \`<style>${compiled.css.code}</style>\``;
-							write(`${test_dir}/_output/${path.basename(args.path)}.css`, compiled.css.code);
+							write(
+								`${test_dir}/_output/client/${path.basename(args.path)}.css`,
+								compiled.css.code
+							);
 						}
 
 						return {

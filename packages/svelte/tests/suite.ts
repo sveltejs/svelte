@@ -54,7 +54,7 @@ export function suite_with_variants<Test extends BaseTest, Variants extends stri
 					const solo = config.solo;
 					let it_fn = skip ? it.skip : solo ? it.only : it;
 
-					it_fn(dir, async () => {
+					it_fn(`${dir} (${variant})`, async () => {
 						if (!called_common) {
 							called_common = true;
 							common = await common_setup(config, `${cwd}/${samples_dir}/${dir}`);
