@@ -236,7 +236,7 @@ export function ns_template(content, flags, ns = 'svg') {
 export function ns_template_fn(structure, flags, ns = 'svg') {
 	var is_fragment = (flags & TEMPLATE_FRAGMENT) !== 0;
 
-	/** @type {Element | DocumentFragment} */
+	/** @type {Node} */
 	var node;
 
 	return () => {
@@ -245,20 +245,9 @@ export function ns_template_fn(structure, flags, ns = 'svg') {
 			return hydrate_node;
 		}
 
-		if (!node) {
-			var fragment = structure_to_fragment(
-				structure,
-				ns === 'svg' ? NAMESPACE_SVG : NAMESPACE_MATHML
-			);
-
-			if (is_fragment) {
-				node = document.createDocumentFragment();
-				while (get_first_child(fragment)) {
-					node.appendChild(/** @type {Node} */ (get_first_child(fragment)));
-				}
-			} else {
-				node = /** @type {Element} */ (get_first_child(fragment));
-			}
+		if (node === undefined) {
+			node = structure_to_fragment(structure, ns === 'svg' ? NAMESPACE_SVG : NAMESPACE_MATHML);
+			if (!is_fragment) node = /** @type {Node} */ (get_first_child(node));
 		}
 
 		var clone = /** @type {TemplateNode} */ (node.cloneNode(true));
