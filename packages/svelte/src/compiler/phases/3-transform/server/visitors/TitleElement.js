@@ -2,6 +2,7 @@
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '#compiler/builders';
 import { process_children, build_template } from './shared/utils.js';
+import { build_element_attributes } from "./shared/element.js";
 
 /**
  * @param {AST.TitleElement} node
@@ -9,7 +10,9 @@ import { process_children, build_template } from './shared/utils.js';
  */
 export function TitleElement(node, context) {
 	// title is guaranteed to contain only text/expression tag children
-	const template = [b.literal('<title>')];
+	const template = [b.literal('<title')];
+	build_element_attributes(node, { ...context, state: { ...context.state, template } });
+	template.push(b.literal('>'));
 	process_children(node.fragment.nodes, { ...context, state: { ...context.state, template } });
 	template.push(b.literal('</title>'));
 

@@ -25,9 +25,9 @@ import { escape_html } from '../../../../../../escaping.js';
 const WHITESPACE_INSENSITIVE_ATTRIBUTES = ['class', 'style'];
 
 /**
- * Writes the output to the template output. Some elements may have attributes on them that require the
+ * Writes the output to the template output. Some elements may have attributes on them that require
  * their output to be the child content instead. In this case, an object is returned.
- * @param {AST.RegularElement | AST.SvelteElement} node
+ * @param {AST.RegularElement | AST.SvelteElement | AST.TitleElement} node
  * @param {import('zimmerframe').Context<AST.SvelteNode, ComponentServerTransformState>} context
  */
 export function build_element_attributes(node, context) {
@@ -203,7 +203,7 @@ export function build_element_attributes(node, context) {
 	if (has_spread) {
 		build_element_spread_attributes(node, attributes, style_directives, class_directives, context);
 	} else {
-		const css_hash = node.metadata.scoped ? context.state.analysis.css.hash : null;
+		const css_hash = node.type !== 'TitleElement' && node.metadata.scoped ? context.state.analysis.css.hash : null;
 
 		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
 			const name = get_attribute_name(node, attribute);
@@ -273,12 +273,12 @@ export function build_element_attributes(node, context) {
 }
 
 /**
- * @param {AST.RegularElement | AST.SvelteElement} element
+ * @param {AST.RegularElement | AST.SvelteElement | AST.TitleElement} element
  * @param {AST.Attribute} attribute
  */
 function get_attribute_name(element, attribute) {
 	let name = attribute.name;
-	if (!element.metadata.svg && !element.metadata.mathml) {
+	if (element.type !== 'TitleElement' && !element.metadata.svg && !element.metadata.mathml) {
 		name = name.toLowerCase();
 		// don't lookup boolean aliases here, the server runtime function does only
 		// check for the lowercase variants of boolean attributes
@@ -288,7 +288,7 @@ function get_attribute_name(element, attribute) {
 
 /**
  *
- * @param {AST.RegularElement | AST.SvelteElement} element
+ * @param {AST.RegularElement | AST.SvelteElement | AST.TitleElement} element
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
  * @param {AST.StyleDirective[]} style_directives
  * @param {AST.ClassDirective[]} class_directives
@@ -330,10 +330,12 @@ function build_element_spread_attributes(
 		styles = b.object(properties);
 	}
 
-	if (element.metadata.svg || element.metadata.mathml) {
-		flags |= ELEMENT_IS_NAMESPACED | ELEMENT_PRESERVE_ATTRIBUTE_CASE;
-	} else if (is_custom_element_node(element)) {
-		flags |= ELEMENT_PRESERVE_ATTRIBUTE_CASE;
+	if (element.type !== 'TitleElement') {
+		if (element.metadata.svg || element.metadata.mathml) {
+			flags |= ELEMENT_IS_NAMESPACED | ELEMENT_PRESERVE_ATTRIBUTE_CASE;
+		} else if (is_custom_element_node(element)) {
+			flags |= ELEMENT_PRESERVE_ATTRIBUTE_CASE;
+		}
 	}
 
 	const object = b.object(
@@ -353,7 +355,7 @@ function build_element_spread_attributes(
 	);
 
 	const css_hash =
-		element.metadata.scoped && context.state.analysis.css.hash
+		element.type !== 'TitleElement' && element.metadata.scoped && context.state.analysis.css.hash
 			? b.literal(context.state.analysis.css.hash)
 			: b.null;
 
