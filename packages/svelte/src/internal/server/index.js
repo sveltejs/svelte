@@ -521,6 +521,7 @@ export { escape_html as escape };
  * @returns {(new_value?: T) => (T | void)}
  */
 export function derived(fn) {
+	const get_value = once(fn);
 	/**
 	 * @type {T | undefined}
 	 */
@@ -528,7 +529,7 @@ export function derived(fn) {
 
 	return function (new_value) {
 		if (arguments.length === 0) {
-			return updated_value ?? fn();
+			return updated_value ?? get_value();
 		}
 		updated_value = new_value;
 		return updated_value;
