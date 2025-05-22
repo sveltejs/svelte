@@ -50,7 +50,7 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 			...config.compileOptions
 		});
 
-		await compile_directory(cwd, 'server', config.compileOptions, undefined, undefined);
+		await compile_directory(cwd, 'server', config.compileOptions);
 	}
 
 	const target = window.document.body;
