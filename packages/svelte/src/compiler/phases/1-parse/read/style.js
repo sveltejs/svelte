@@ -12,6 +12,7 @@ const REGEX_NTH_OF =
 const REGEX_WHITESPACE_OR_COLON = /[\s:]/;
 const REGEX_LEADING_HYPHEN_OR_DIGIT = /-?\d/;
 const REGEX_VALID_IDENTIFIER_CHAR = /[a-zA-Z0-9_-]/;
+const REGEX_UNICODE_SEQUENCE = /^\\[0-9a-fA-F]{1,6}(\r\n|\s)?/;
 const REGEX_COMMENT_CLOSE = /\*\//;
 const REGEX_HTML_COMMENT_CLOSE = /-->/;
 
@@ -580,25 +581,26 @@ function read_identifier(parser) {
 		e.css_expected_identifier(start);
 	}
 
-	let escaped = false;
-
 	while (parser.index < parser.template.length) {
 		const char = parser.template[parser.index];
-		if (escaped) {
-			identifier += '\\' + char;
-			escaped = false;
-		} else if (char === '\\') {
-			escaped = true;
+		if (char === '\\') {
+			const sequence = parser.match_regex(REGEX_UNICODE_SEQUENCE);
+			if (sequence) {
+				identifier += String.fromCodePoint(parseInt(sequence.slice(1), 16));
+				parser.index += sequence.length;
+			} else {
+				identifier += '\\' + parser.template[parser.index + 1];
+				parser.index += 2;
+			}
 		} else if (
 			/** @type {number} */ (char.codePointAt(0)) >= 160 ||
 			REGEX_VALID_IDENTIFIER_CHAR.test(char)
 		) {
 			identifier += char;
+			parser.index++;
 		} else {
 			break;
 		}
-
-		parser.index++;
 	}
 
 	if (identifier === '') {
