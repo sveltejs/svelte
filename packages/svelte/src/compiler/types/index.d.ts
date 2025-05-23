@@ -129,6 +129,7 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 * - `tree` creates the fragment one element at a time and _then_ clones it. This is slower, but works everywhere
 	 *
 	 * @default 'html'
+	 * @since 5.33
 	 */
 	fragments?: 'html' | 'tree';
 	/**

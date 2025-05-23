@@ -992,6 +992,7 @@ declare module 'svelte/compiler' {
 		 * - `tree` creates the fragment one element at a time and _then_ clones it. This is slower, but works everywhere
 		 *
 		 * @default 'html'
+		 * @since 5.33
 		 */
 		fragments?: 'html' | 'tree';
 		/**
@@ -2888,6 +2889,7 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * - `tree` creates the fragment one element at a time and _then_ clones it. This is slower, but works everywhere
 		 *
 		 * @default 'html'
+		 * @since 5.33
 		 */
 		fragments?: 'html' | 'tree';
 		/**
