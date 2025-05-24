@@ -297,7 +297,7 @@ You might be tempted to do something convoluted with effects to link one value t
 </label>
 ```
 
-Instead, use `oninput` callbacks or — better still — [function bindings](bind#Function-bindings) where possible ([demo](/playground/untitled#H4sIAAAAAAAAE51Qu27DMAz8FYLo4ABu4g5d1DhAl07dOtYdFJsOBCi0YNF5wPC_F5KrJGgzdZJ0d-TpbkTWe0KFbwPXYjqGreHG8M5jjq2x5FF9jihnF0QBwDyNvDq39AeyErCt9nQPrzsWYvGocO3r3jjZVFxJ3bEXkE60hRKeiuIloJYEvCMWKOHBixbKisWFsdRGoqHeHKjJ5unHeSLKuJI25Rhco4U-ApcxHeNlAWPQVJJMEhE9prsb3qmNC8L5Zz594YdPa9ara1ReW70lG1OvDbtBILRZVthr3lGFsXF10HagcswWUG7mRPlthAn2-lSO0W-CVdw2Rtm0Smh8BvOL4X-8Q8v5Tfa7zkF0NQ6vX75ezpaiNoKpt8Z4Z_VZQWvp9DJjO-0UFMtn2t_UF8cxR6GToJJ-oOkrR9HGHg03qFptPU3fs8i37r4CAAA=)):
+Instead, use `oninput` callbacks or — better still — [function bindings](bind#Function-bindings) where possible ([demo](/playground/untitled##H4sIAAAAAAAAE5VRvW7CMBB-FcvqECQK6dDFJEgsnfoGTQdDLsjSxVjxhYKivHvPBwFUsXS8774_nwftbQva6I_e78gdvNo6Xzu_j3quG4cQtfkaNJ1DIiWA8atkE8IiHgEpYVsb4Rm-O3gCT2yji7jrXKB15StiOJKiA1lUpXrL81VCEUjFwHTGXiJZgiyf3TYIjSxq6NwR6uyifr0ohMbEZnpHH2rWf7ImS8KZGtK6osl_UqelRIyVL5b3ir5AuwWUtoXzoee6fIWy0p31e6i0XMocLfZQDuI6qtaeykGcR7UU6XWznFAZU9LN_X9B2UyVayk9f3ji0-REugen6U9upDOCcAWcLlS7GNCejWoQTqsLtrfBqHzxDu3DrUTOf0xwIm2o62H85sk6_OHG2jQWI4y_3byXXGMCAAA=)):
 
 ```svelte
 <script>
@@ -305,17 +305,13 @@ Instead, use `oninput` callbacks or — better still — [function bindings](bin
 	let spent = $state(0);
 	let left = $derived(total - spent);
 
-	function updateSpent(newSpent) {
-		spent = newSpent;
-	}
-
-	function updateLeft(newLeft) {
-		spent = total - newLeft;
+	function updateLeft(left) {
+		spent = total - left;
 	}
 </script>
 
 <label>
-	<input type="range" bind:value={() => spent, updateSpent} max={total} />
+	<input type="range" bind:value={spent} max={total} />
 	{spent}/{total} spent
 </label>
 
