@@ -1574,15 +1574,6 @@ export function textarea_invalid_content(node) {
 }
 
 /**
- * `<title>` cannot have attributes nor directives
- * @param {null | number | NodeLike} node
- * @returns {never}
- */
-export function title_illegal_attribute(node) {
-	e(node, 'title_illegal_attribute', `\`<title>\` cannot have attributes nor directives\nhttps://svelte.dev/e/title_illegal_attribute`);
-}
-
-/**
  * `<title>` can only contain text and {tags}
  * @param {null | number | NodeLike} node
  * @returns {never}
