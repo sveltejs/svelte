@@ -305,9 +305,9 @@ Instead, use `oninput` callbacks or — better still — [function bindings](bin
 	let spent = $state(0);
 	let left = $derived(total - spent);
 
-	function updateLeft(left) {
++++	function updateLeft(left) {
 		spent = total - left;
-	}
+	}+++
 </script>
 
 <label>
@@ -316,7 +316,7 @@ Instead, use `oninput` callbacks or — better still — [function bindings](bin
 </label>
 
 <label>
-	<input type="range" bind:value={() => left, updateLeft} max={total} />
+	<input type="range" +++bind:value={() => left, updateLeft}+++ max={total} />
 	{left}/{total} left
 </label>
 ```
