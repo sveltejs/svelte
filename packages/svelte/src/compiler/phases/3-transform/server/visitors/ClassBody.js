@@ -36,7 +36,8 @@ export function ClassBody(node, context) {
 
 			body.push(
 				b.prop_def(field.key, null),
-				b.method('get', b.key(name), [], [b.return(b.call(member))])
+				b.method('get', b.key(name), [], [b.return(b.call(member))]),
+				b.method('set', b.key(name), [b.id('$$value')], [b.return(b.call(member, b.id('$$value')))])
 			);
 		}
 	}
@@ -61,6 +62,7 @@ export function ClassBody(node, context) {
 		if (name[0] === '#' || field.type === '$state' || field.type === '$state.raw') {
 			body.push(/** @type {PropertyDefinition} */ (context.visit(definition, child_state)));
 		} else if (field.node === definition) {
+			// $derived / $derived.by
 			const member = b.member(b.this, field.key);
 
 			body.push(
@@ -69,7 +71,8 @@ export function ClassBody(node, context) {
 					/** @type {CallExpression} */ (context.visit(field.value, child_state))
 				),
 
-				b.method('get', definition.key, [], [b.return(b.call(member))])
+				b.method('get', definition.key, [], [b.return(b.call(member))]),
+				b.method('set', b.key(name), [b.id('$$value')], [b.return(b.call(member, b.id('$$value')))])
 			);
 		}
 	}

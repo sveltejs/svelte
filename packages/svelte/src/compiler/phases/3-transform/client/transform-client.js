@@ -154,10 +154,6 @@ export function client_component(analysis, options) {
 		legacy_reactive_imports: [],
 		legacy_reactive_statements: new Map(),
 		metadata: {
-			context: {
-				template_needs_import_node: false,
-				template_contains_script_tag: false
-			},
 			namespace: options.namespace,
 			bound_contenteditable: false
 		},
@@ -174,8 +170,7 @@ export function client_component(analysis, options) {
 		update: /** @type {any} */ (null),
 		expressions: /** @type {any} */ (null),
 		after_update: /** @type {any} */ (null),
-		template: /** @type {any} */ (null),
-		locations: /** @type {any} */ (null)
+		template: /** @type {any} */ (null)
 	};
 
 	const module = /** @type {ESTree.Program} */ (

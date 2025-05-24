@@ -190,3 +190,5 @@ if (typeof window !== 'undefined') {
 		};
 	});
 }
+
+export const fragments = /** @type {'html' | 'tree'} */ (process.env.FRAGMENTS) ?? 'html';

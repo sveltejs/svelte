@@ -632,6 +632,25 @@ In some situations a selector may target an element that is not 'visible' to the
 </style>
 ```
 
+### element_implicitly_closed
+
+```
+This element is implicitly closed by the following `%tag%`, which can cause an unexpected DOM structure. Add an explicit `%closing%` to avoid surprises.
+```
+
+In HTML, some elements are implicitly closed by another element. For example, you cannot nest a `<p>` inside another `<p>`:
+
+```html
+<!-- this HTML... -->
+<p><p>hello</p>
+
+<!-- results in this DOM structure -->
+<p></p>
+<p>hello</p>
+```
+
+Similarly, a parent element's closing tag will implicitly close all child elements, even if the `</` was a typo and you meant to create a _new_ element. To avoid ambiguity, it's always a good idea to have an explicit closing tag.
+
 ### element_invalid_self_closing_tag
 
 ```

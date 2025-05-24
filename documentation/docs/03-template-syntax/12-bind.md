@@ -142,26 +142,27 @@ Checkboxes can be in an [indeterminate](https://developer.mozilla.org/en-US/docs
 
 ## `<input bind:group>`
 
-Inputs that work together can use `bind:group`.
+Inputs that work together can use `bind:group` ([demo](/playground/untitled#H4sIAAAAAAAAE62T32_TMBDH_5XDQkpbrct7SCMGEvCEECDxsO7BSW6L2c227EvbKOv_jp0f6jYhQKJv5_P3PvdL1wstH1Bk4hMSGdgbRzUssFaM9VJciFtF6EV23QvubNRFR_BPUVfWXvodEkdfKT3-zl8Zzag5YETuK6csF1u9ZUIGNo4VkYQNvPYsGRfJF5JKJ8s3QRJE6WoFb2Nq6K-ck13u2Sl9Vxxhlc6QUBIFnz9Brm9ifJ6esun81XoNd860FmtwslYGlLYte5AO4aHlVhJ1gIeKWq92COt1iMtJlkhFPkgh1rHZiiF6K6BUus4G5KafGznCTlIbVUMfQZUWMJh5OrL-C_qjMYSwb1DyiH7iOEuCb1ZpWTUjfHqcwC_GWDVY3ZfmME_SGttSmD9IHaYatvWHIc6xLyqad3mq6KuqcCwnWn9p8p-p71BqP2IH81zc9w2in-od7XORP7ayCpd5YCeXI_-p59mObPF9WmwGpx3nqS2Gzw8TO3zOaS5_GqUXyQUkS3h8hOSz0ZhMESHGc0c4Hm3MAn00t1wrb0l2GZRkqvt4sXwczm6Qh8vnUJzI2LV4vAkvqWgfehTZrSSPx19WiVfFfAQAAA==)):
 
 ```svelte
+<!--- file: BurritoChooser.svelte --->
 <script>
 	let tortilla = $state('Plain');
 
-	/** @type {Array<string>} */
+	/** @type {string[]} */
 	let fillings = $state([]);
 </script>
 
 <!-- grouped radio inputs are mutually exclusive -->
-<input type="radio" bind:group={tortilla} value="Plain" />
-<input type="radio" bind:group={tortilla} value="Whole wheat" />
-<input type="radio" bind:group={tortilla} value="Spinach" />
+<label><input type="radio" bind:group={tortilla} value="Plain" /> Plain</label>
+<label><input type="radio" bind:group={tortilla} value="Whole wheat" /> Whole wheat</label>
+<label><input type="radio" bind:group={tortilla} value="Spinach" /> Spinach</label>
 
 <!-- grouped checkbox inputs populate an array -->
-<input type="checkbox" bind:group={fillings} value="Rice" />
-<input type="checkbox" bind:group={fillings} value="Beans" />
-<input type="checkbox" bind:group={fillings} value="Cheese" />
-<input type="checkbox" bind:group={fillings} value="Guac (extra)" />
+<label><input type="checkbox" bind:group={fillings} value="Rice" /> Rice</label>
+<label><input type="checkbox" bind:group={fillings} value="Beans" /> Beans</label>
+<label><input type="checkbox" bind:group={fillings} value="Cheese" /> Cheese</label>
+<label><input type="checkbox" bind:group={fillings} value="Guac (extra)" /> Guac (extra)</label>
 ```
 
 > [!NOTE] `bind:group` only works if the inputs are in the same Svelte component.

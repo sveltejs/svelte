@@ -8,7 +8,7 @@ function reset(_, str, tpl) {
 	$.set(tpl, ``);
 }
 
-var root = $.template(`<input> <input> <button>reset</button>`, 1);
+var root = $.from_html(`<input/> <input/> <button>reset</button>`, 1);
 
 export default function State_proxy_literal($$anchor) {
 	let str = $.state('');
