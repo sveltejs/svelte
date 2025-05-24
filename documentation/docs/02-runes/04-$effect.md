@@ -297,22 +297,20 @@ You might be tempted to do something convoluted with effects to link one value t
 </label>
 ```
 
-Instead, use `oninput` callbacks or — better still — [function bindings](bind#Function-bindings) where possible ([demo](/playground/untitled#H4sIAAAAAAAAE51SsW6DMBT8FcvqABINdOhCIFKXTt06lg4GHpElYyz8iECIf69tcIIipo6-u3f3fPZMJWuBpvRzkBXyTpKSy5rLq6YRbbgATdOfmeKkrMgCBt9GPpQ66RsItFjJNBzhVScRJBobmumq5wovhSxQABLskAmSk7ckOXtMKyM22ItGhhAk4Z0R0OwIN-tIQzd-90HVhvy2HsGNiQFCMltBgd7XoecV2xzXNV7XaEcth7ZfRv7kujnsTX2Qd7USb5rFjwZkJlgJwpWRcakG04cpOS9oz-QVCuoeInXW-RyEJL-sG0b7Wy6kZWM-u7CFxM5tdrIl9qg72vB74H-y7T2iXROHyVb0CLanp1yNk4D1A1jQ91hzrQSbUtIIGLcir0ylJDm9Q7urz42bX4UwIk2xH2D5Xf4A7SeMcMQCAAA=)):
+Instead, use `oninput` callbacks or — better still — [function bindings](bind#Function-bindings) where possible ([demo](/playground/untitled#H4sIAAAAAAAAE51Qu27DMAz8FYLo4ABu4g5d1DhAl07dOtYdFJsOBCi0YNF5wPC_F5KrJGgzdZJ0d-TpbkTWe0KFbwPXYjqGreHG8M5jjq2x5FF9jihnF0QBwDyNvDq39AeyErCt9nQPrzsWYvGocO3r3jjZVFxJ3bEXkE60hRKeiuIloJYEvCMWKOHBixbKisWFsdRGoqHeHKjJ5unHeSLKuJI25Rhco4U-ApcxHeNlAWPQVJJMEhE9prsb3qmNC8L5Zz594YdPa9ara1ReW70lG1OvDbtBILRZVthr3lGFsXF10HagcswWUG7mRPlthAn2-lSO0W-CVdw2Rtm0Smh8BvOL4X-8Q8v5Tfa7zkF0NQ6vX75ezpaiNoKpt8Z4Z_VZQWvp9DJjO-0UFMtn2t_UF8cxR6GToJJ-oOkrR9HGHg03qFptPU3fs8i37r4CAAA=)):
 
 ```svelte
 <script>
-	let total = 100;
+	const total = 100;
 	let spent = $state(0);
-	let left = $state(total);
+	let left = $derived(total - spent);
 
-	function updateSpent(value) {
-		spent = value;
-		left = total - spent;
+	function updateSpent(newSpent) {
+		spent = newSpent;
 	}
 
-	function updateLeft(value) {
-		left = value;
-		spent = total - left;
+	function updateLeft(newLeft) {
+		spent = total - newLeft;
 	}
 </script>
 
