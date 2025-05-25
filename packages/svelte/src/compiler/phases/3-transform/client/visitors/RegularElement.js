@@ -205,25 +205,25 @@ export function RegularElement(node, context) {
 
 		build_set_attributes(attributes, class_directives, style_directives, context, node, node_id);
 
-		// If value binding exists, that one takes care of calling $.init_select
-		if (node.name === 'select' && !bindings.has('value')) {
-			context.state.init.push(
-				b.stmt(b.call('$.init_select', node_id, b.thunk(b.member(attributes_id, 'value'))))
-			);
+		// // If value binding exists, that one takes care of calling $.init_select
+		// if (node.name === 'select' && !bindings.has('value')) {
+		// 	context.state.init.push(
+		// 		b.stmt(b.call('$.init_select', node_id, b.thunk(b.member(attributes_id, 'value'))))
+		// 	);
 
-			context.state.update.push(
-				b.if(
-					b.binary('in', b.literal('value'), attributes_id),
-					b.block([
-						// This ensures a one-way street to the DOM in case it's <select {value}>
-						// and not <select bind:value>. We need it in addition to $.init_select
-						// because the select value is not reflected as an attribute, so the
-						// mutation observer wouldn't notice.
-						b.stmt(b.call('$.select_option', node_id, b.member(attributes_id, 'value')))
-					])
-				)
-			);
-		}
+		// 	context.state.update.push(
+		// 		b.if(
+		// 			b.binary('in', b.literal('value'), attributes_id),
+		// 			b.block([
+		// 				// This ensures a one-way street to the DOM in case it's <select {value}>
+		// 				// and not <select bind:value>. We need it in addition to $.init_select
+		// 				// because the select value is not reflected as an attribute, so the
+		// 				// mutation observer wouldn't notice.
+		// 				b.stmt(b.call('$.select_option', node_id, b.member(attributes_id, 'value')))
+		// 			])
+		// 		)
+		// 	);
+		// }
 	} else {
 		/** If true, needs `__value` for inputs */
 		const needs_special_value_handling =

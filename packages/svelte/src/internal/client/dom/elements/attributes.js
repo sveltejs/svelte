@@ -20,8 +20,9 @@ import { clsx } from '../../../shared/attributes.js';
 import { set_class } from './class.js';
 import { set_style } from './style.js';
 import { ATTACHMENT_KEY, NAMESPACE_HTML } from '../../../../constants.js';
-import { block, branch, destroy_effect } from '../../reactivity/effects.js';
+import { block, branch, destroy_effect, effect } from '../../reactivity/effects.js';
 import { derived } from '../../reactivity/deriveds.js';
+import { init_select, select_option } from './bindings/select.js';
 
 export const CLASS = Symbol('class');
 export const STYLE = Symbol('style');
@@ -483,10 +484,17 @@ export function attribute_effect(
 	/** @type {Record<symbol, Effect>} */
 	var effects = {};
 
+	var is_select = element.nodeName === 'SELECT';
+	var inited = false;
+
 	block(() => {
 		var next = fn(...deriveds.map(get));
 
 		set_attributes(element, prev, next, css_hash, skip_warning);
+
+		if (inited && is_select) {
+			select_option(/** @type {HTMLSelectElement} */ (element), next.value, false);
+		}
 
 		for (let symbol of Object.getOwnPropertySymbols(effects)) {
 			if (!next[symbol]) destroy_effect(effects[symbol]);
@@ -503,6 +511,12 @@ export function attribute_effect(
 
 		prev = next;
 	});
+
+	if (is_select) {
+		init_select(/** @type {HTMLSelectElement} */ (element), () => prev.value);
+	}
+
+	inited = true;
 }
 
 /**
