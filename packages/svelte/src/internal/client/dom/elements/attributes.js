@@ -10,6 +10,7 @@ import { is_capture_event, is_delegated, normalize_attribute } from '../../../..
 import {
 	active_effect,
 	active_reaction,
+	get,
 	set_active_effect,
 	set_active_reaction
 } from '../../runtime.js';
@@ -19,6 +20,7 @@ import { set_class } from './class.js';
 import { set_style } from './style.js';
 import { ATTACHMENT_KEY, NAMESPACE_HTML } from '../../../../constants.js';
 import { block, branch, destroy_effect } from '../../reactivity/effects.js';
+import { derived } from '../../reactivity/deriveds.js';
 
 export const CLASS = Symbol('class');
 export const STYLE = Symbol('style');
@@ -448,22 +450,32 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 		set_hydrating(true);
 	}
 
-	for (let symbol of Object.getOwnPropertySymbols(next)) {
-		if (symbol.description === ATTACHMENT_KEY) {
-			attach(element, () => next[symbol]);
-		}
-	}
+	// for (let symbol of Object.getOwnPropertySymbols(next)) {
+	// 	if (symbol.description === ATTACHMENT_KEY) {
+	// 		attach(element, () => next[symbol]);
+	// 	}
+	// }
 
 	return current;
 }
 
 /**
  * @param {Element & ElementCSSInlineStyle} element
- * @param {() => Record<string | symbol, any>} fn
+ * @param {(...expressions: any) => Record<string | symbol, any>} fn
+ * @param {Array<() => any>} thunks
  * @param {string} [css_hash]
  * @param {boolean} [skip_warning]
  */
-export function set_attribute_effect(element, fn, css_hash, skip_warning = false) {
+export function set_attribute_effect(
+	element,
+	fn,
+	thunks = [],
+	css_hash,
+	skip_warning = false,
+	d = derived
+) {
+	const deriveds = thunks.map(d);
+
 	/** @type {Record<string | symbol, any>} */
 	var prev = {};
 
@@ -471,24 +483,9 @@ export function set_attribute_effect(element, fn, css_hash, skip_warning = false
 	var effects = {};
 
 	block(() => {
-		var next = fn();
+		var next = fn(...deriveds.map(get));
 
-		for (const key in prev) {
-			if (!next[key]) {
-				element.removeAttribute(key);
-			}
-		}
-
-		for (let symbol of Object.getOwnPropertySymbols(prev)) {
-			if (!next[symbol]) {
-				destroy_effect(effects[symbol]);
-				delete effects[symbol];
-			}
-		}
-
-		for (const key in next) {
-			set_attribute(element, key, next[key], skip_warning);
-		}
+		set_attributes(element, prev, next, css_hash, skip_warning);
 
 		for (let symbol of Object.getOwnPropertySymbols(next)) {
 			if (symbol.description === ATTACHMENT_KEY && next[symbol] !== prev[symbol]) {
