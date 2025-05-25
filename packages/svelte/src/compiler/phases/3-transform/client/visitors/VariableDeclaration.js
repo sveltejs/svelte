@@ -1,4 +1,4 @@
-/** @import { CallExpression, Expression, Identifier, Literal, VariableDeclaration, VariableDeclarator } from 'estree' */
+/** @import { CallExpression, Expression, Identifier, Literal, VariableDeclaration, VariableDeclarator, ObjectPattern, ArrayPattern } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
@@ -8,6 +8,7 @@ import * as assert from '../../../../utils/assert.js';
 import { get_rune } from '../../../scope.js';
 import { get_prop_source, is_prop_source, is_state_source, should_proxy } from '../utils.js';
 import { is_hoisted_function } from '../../utils.js';
+import { walk } from 'zimmerframe';
 
 /**
  * @param {VariableDeclaration} node
@@ -170,9 +171,7 @@ export function VariableDeclaration(node, context) {
 						)
 					);
 				} else {
-					const [pattern, replacements] = build_pattern(declarator.id, context.state.scope);
 					const init = /** @type {CallExpression} */ (declarator.init);
-
 					/** @type {Identifier} */
 					let id;
 					let rhs = value;
@@ -188,17 +187,55 @@ export function VariableDeclaration(node, context) {
 						);
 					}
 
-					for (let i = 0; i < replacements.size; i++) {
-						const [original, replacement] = [...replacements][i];
-						declarations.push(
-							b.declarator(
-								original,
-								b.call(
-									'$.derived',
-									b.arrow([], b.block([b.let(pattern, rhs), b.return(replacement)]))
-								)
-							)
+					/**
+					 *
+					 * @param {ObjectPattern} object_pattern
+					 * @returns
+					 */
+					function has_destructured_array(object_pattern) {
+						let has_array = false;
+						walk(
+							/** @type {ObjectPattern | ArrayPattern} */ (object_pattern),
+							{},
+							{
+								ArrayPattern(_, context) {
+									has_array = true;
+									context.stop();
+								}
+							}
 						);
+						return has_array;
+					}
+
+					if (
+						// if the declarator is an array patter or if it's an object pattern with an array pattern inside
+						// we want to use this method to account for possible iterators in the derived value
+						declarator.id.type === 'ArrayPattern' ||
+						(declarator.id.type === 'ObjectPattern' && has_destructured_array(declarator.id))
+					) {
+						const [pattern, replacements] = build_pattern(declarator.id, context.state.scope);
+
+						for (let i = 0; i < replacements.size; i++) {
+							const [original, replacement] = [...replacements][i];
+							declarations.push(
+								b.declarator(
+									original,
+									b.call(
+										'$.derived',
+										b.arrow([], b.block([b.let(pattern, rhs), b.return(replacement)]))
+									)
+								)
+							);
+						}
+					} else {
+						const bindings = extract_paths(declarator.id);
+
+						for (let i = 0; i < bindings.length; i++) {
+							const binding = bindings[i];
+							declarations.push(
+								b.declarator(binding.node, b.call('$.derived', b.thunk(binding.expression(rhs))))
+							);
+						}
 					}
 				}
 				continue;
