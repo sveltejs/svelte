@@ -16,7 +16,6 @@ import { build_template_chunk, get_expression_id } from './utils.js';
  * @param {ComponentContext} context
  * @param {AST.RegularElement | AST.SvelteElement} element
  * @param {Identifier} element_id
- * @param {Identifier} attributes_id
  */
 export function build_set_attributes(
 	attributes,
@@ -24,8 +23,7 @@ export function build_set_attributes(
 	style_directives,
 	context,
 	element,
-	element_id,
-	attributes_id
+	element_id
 ) {
 	/** @type {ObjectExpression['properties']} */
 	const values = [];

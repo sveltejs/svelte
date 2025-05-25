@@ -203,15 +203,7 @@ export function RegularElement(node, context) {
 	if (has_spread) {
 		const attributes_id = b.id(context.state.scope.generate('attributes'));
 
-		build_set_attributes(
-			attributes,
-			class_directives,
-			style_directives,
-			context,
-			node,
-			node_id,
-			attributes_id
-		);
+		build_set_attributes(attributes, class_directives, style_directives, context, node, node_id);
 
 		// If value binding exists, that one takes care of calling $.init_select
 		if (node.name === 'select' && !bindings.has('value')) {
