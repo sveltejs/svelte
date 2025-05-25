@@ -1,5 +1,13 @@
 # svelte
 
+## 5.33.2
+
+### Patch Changes
+
+- fix: correctly parse escaped unicode characters in css selector ([#15976](https://github.com/sveltejs/svelte/pull/15976))
+
+- fix: don't mark deriveds as clean if updating during teardown ([#15997](https://github.com/sveltejs/svelte/pull/15997))
+
 ## 5.33.1
 
 ### Patch Changes
