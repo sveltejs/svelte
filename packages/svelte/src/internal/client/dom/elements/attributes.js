@@ -1,3 +1,4 @@
+/** @import { Effect } from '#client' */
 import { DEV } from 'esm-env';
 import { hydrating, set_hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
@@ -479,7 +480,7 @@ export function attribute_effect(
 	/** @type {Record<string | symbol, any>} */
 	var prev = {};
 
-	/** @type {Record<symbol, import('#client').Effect>} */
+	/** @type {Record<symbol, Effect>} */
 	var effects = {};
 
 	block(() => {
@@ -487,9 +488,16 @@ export function attribute_effect(
 
 		set_attributes(element, prev, next, css_hash, skip_warning);
 
+		for (let symbol of Object.getOwnPropertySymbols(effects)) {
+			if (!next[symbol]) destroy_effect(effects[symbol]);
+		}
+
 		for (let symbol of Object.getOwnPropertySymbols(next)) {
-			if (symbol.description === ATTACHMENT_KEY && next[symbol] !== prev[symbol]) {
-				effects[symbol] = branch(() => attach(element, () => next[symbol]));
+			var n = next[symbol];
+
+			if (symbol.description === ATTACHMENT_KEY && n !== prev[symbol]) {
+				if (effects[symbol]) destroy_effect(effects[symbol]);
+				effects[symbol] = branch(() => attach(element, () => n));
 			}
 		}
 
