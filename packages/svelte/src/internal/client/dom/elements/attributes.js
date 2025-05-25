@@ -466,7 +466,7 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
  * @param {string} [css_hash]
  * @param {boolean} [skip_warning]
  */
-export function set_attribute_effect(
+export function attribute_effect(
 	element,
 	fn,
 	thunks = [],

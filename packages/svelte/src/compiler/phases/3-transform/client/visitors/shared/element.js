@@ -87,7 +87,7 @@ export function build_set_attributes(
 	context.state.init.push(
 		b.stmt(
 			b.call(
-				'$.set_attribute_effect',
+				'$.attribute_effect',
 				element_id,
 				b.arrow(
 					expressions.map((_, i) => b.id(`$${i}`)),
