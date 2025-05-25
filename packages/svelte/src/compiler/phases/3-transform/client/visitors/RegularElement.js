@@ -290,7 +290,8 @@ export function RegularElement(node, context) {
 				const { value, has_state } = build_attribute_value(
 					attribute.value,
 					context,
-					(value, metadata) => (metadata.has_call ? get_expression_id(context.state, value) : value)
+					(value, metadata) =>
+						metadata.has_call ? get_expression_id(context.state.expressions, value) : value
 				);
 
 				const update = build_element_attribute_update(node, node_id, name, value, attributes);
@@ -482,10 +483,11 @@ function setup_select_synchronization(value_binding, context) {
 
 /**
  * @param {AST.ClassDirective[]} class_directives
+ * @param {Expression[]} expressions
  * @param {ComponentContext} context
  * @return {ObjectExpression | Identifier}
  */
-export function build_class_directives_object(class_directives, context) {
+export function build_class_directives_object(class_directives, expressions, context) {
 	let properties = [];
 	let has_call_or_state = false;
 
@@ -497,15 +499,16 @@ export function build_class_directives_object(class_directives, context) {
 
 	const directives = b.object(properties);
 
-	return has_call_or_state ? get_expression_id(context.state, directives) : directives;
+	return has_call_or_state ? get_expression_id(expressions, directives) : directives;
 }
 
 /**
  * @param {AST.StyleDirective[]} style_directives
+ * @param {Expression[]} expressions
  * @param {ComponentContext} context
  * @return {ObjectExpression | ArrayExpression}}
  */
-export function build_style_directives_object(style_directives, context) {
+export function build_style_directives_object(style_directives, expressions, context) {
 	let normal_properties = [];
 	let important_properties = [];
 
@@ -514,7 +517,7 @@ export function build_style_directives_object(style_directives, context) {
 			directive.value === true
 				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
 				: build_attribute_value(directive.value, context, (value, metadata) =>
-						metadata.has_call ? get_expression_id(context.state, value) : value
+						metadata.has_call ? get_expression_id(expressions, value) : value
 					).value;
 		const property = b.init(directive.name, expression);
 
@@ -653,7 +656,7 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 			? // if is a select with value we will also invoke `init_select` which need a reference before the template effect so we memoize separately
 				is_select_with_value
 				? memoize_expression(state, value)
-				: get_expression_id(state, value)
+				: get_expression_id(state.expressions, value) // TODO i think this will break in spread, needs to be `expressions`
 			: value
 	);
 

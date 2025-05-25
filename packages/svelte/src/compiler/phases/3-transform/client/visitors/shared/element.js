@@ -71,7 +71,7 @@ export function build_set_attributes(
 			b.prop(
 				'init',
 				b.array([b.id('$.CLASS')]),
-				build_class_directives_object(class_directives, context)
+				build_class_directives_object(class_directives, expressions, context)
 			)
 		);
 	}
@@ -81,7 +81,7 @@ export function build_set_attributes(
 			b.prop(
 				'init',
 				b.array([b.id('$.STYLE')]),
-				build_style_directives_object(style_directives, context)
+				build_style_directives_object(style_directives, expressions, context)
 			)
 		);
 	}
@@ -160,7 +160,7 @@ export function build_set_class(element, node_id, attribute, class_directives, c
 			value = b.call('$.clsx', value);
 		}
 
-		return metadata.has_call ? get_expression_id(context.state, value) : value;
+		return metadata.has_call ? get_expression_id(context.state.expressions, value) : value;
 	});
 
 	/** @type {Identifier | undefined} */
@@ -173,7 +173,7 @@ export function build_set_class(element, node_id, attribute, class_directives, c
 	let next;
 
 	if (class_directives.length) {
-		next = build_class_directives_object(class_directives, context);
+		next = build_class_directives_object(class_directives, context.state.expressions, context);
 		has_state ||= class_directives.some((d) => d.metadata.expression.has_state);
 
 		if (has_state) {
@@ -228,7 +228,7 @@ export function build_set_class(element, node_id, attribute, class_directives, c
  */
 export function build_set_style(node_id, attribute, style_directives, context) {
 	let { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call ? get_expression_id(context.state, value) : value
+		metadata.has_call ? get_expression_id(context.state.expressions, value) : value
 	);
 
 	/** @type {Identifier | undefined} */
@@ -241,7 +241,7 @@ export function build_set_style(node_id, attribute, style_directives, context) {
 	let next;
 
 	if (style_directives.length) {
-		next = build_style_directives_object(style_directives, context);
+		next = build_style_directives_object(style_directives, context.state.expressions, context);
 		has_state ||= style_directives.some((d) => d.metadata.expression.has_state);
 
 		if (has_state) {
