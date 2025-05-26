@@ -118,6 +118,7 @@ export function event(event_name, dom, handler, capture, passive) {
 		dom === window ||
 		// @ts-ignore
 		dom === document ||
+		// Firefox has quirky behavior, it can happen that we still get "canplay" events when the element is already removed
 		dom instanceof HTMLMediaElement
 	) {
 		teardown(() => {
