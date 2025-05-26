@@ -114,7 +114,7 @@ When constructing a custom element, you can tailor several aspects by defining `
 ...
 ```
 
-> [!NOTE] While Typescript is supported in the `extend` function is subject to the same limitations of the script tags: you need to set `lang="ts"` on one of the scripts AND you can only use [erasable syntax](https://www.typescriptlang.org/tsconfig/#erasableSyntaxOnly) in it.
+> [!NOTE] While Typescript is supported in the `extend` function, it is subject to limitations: you need to set `lang="ts"` on one of the scripts AND you can only use [erasable syntax](https://www.typescriptlang.org/tsconfig/#erasableSyntaxOnly) in it. They are not processed by script preprocessors.
 
 ## Caveats and limitations
 
