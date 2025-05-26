@@ -594,11 +594,11 @@ export function options_renamed_ssr_dom(node) {
 }
 
 /**
- * Using an identifier or a rest element as the declarator for `$props` when compiling to custom elements without declaring `props` in the component options means that Svelte can't know which props to expose as properties on the DOM element. Consider explicitly destructure all the props or add the `customElement.props` option.
+ * Using an identifier or a rest element as the declarator for `$props` when compiling to custom elements without declaring `props` in the component options means that Svelte can't know which props to expose as properties on the DOM element. Consider explicitly destructuring all the props or add the `customElement.props` option.
  * @param {null | NodeLike} node
  */
 export function custom_element_props_identifier(node) {
-	w(node, 'custom_element_props_identifier', `Using an identifier or a rest element as the declarator for \`$props\` when compiling to custom elements without declaring \`props\` in the component options means that Svelte can't know which props to expose as properties on the DOM element. Consider explicitly destructure all the props or add the \`customElement.props\` option.\nhttps://svelte.dev/e/custom_element_props_identifier`);
+	w(node, 'custom_element_props_identifier', `Using an identifier or a rest element as the declarator for \`$props\` when compiling to custom elements without declaring \`props\` in the component options means that Svelte can't know which props to expose as properties on the DOM element. Consider explicitly destructuring all the props or add the \`customElement.props\` option.\nhttps://svelte.dev/e/custom_element_props_identifier`);
 }
 
 /**
