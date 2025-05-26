@@ -143,7 +143,7 @@ export class Parser {
 		if (options_index !== -1) {
 			const options = /** @type {AST.SvelteOptionsRaw} */ (this.root.fragment.nodes[options_index]);
 			this.root.fragment.nodes.splice(options_index, 1);
-			this.root.options = read_options(options, this.ts);
+			this.root.options = read_options(options);
 
 			disallow_children(options);
 

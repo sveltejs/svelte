@@ -2,14 +2,12 @@
 /** @import { AST } from '#compiler' */
 import { NAMESPACE_MATHML, NAMESPACE_SVG } from '../../../../constants.js';
 import * as e from '../../../errors.js';
-import { remove_typescript_nodes } from '../remove_typescript_nodes.js';
 
 /**
  * @param {AST.SvelteOptionsRaw} node
- * @param {boolean} ts
  * @returns {AST.Root['options']}
  */
-export default function read_options(node, ts) {
+export default function read_options(node) {
 	/** @type {AST.SvelteOptions} */
 	const component_options = {
 		start: node.start,
@@ -144,7 +142,7 @@ export default function read_options(node, ts) {
 
 				const extend = properties.find(([name]) => name === 'extend')?.[1];
 				if (extend) {
-					ce.extend = ts ? remove_typescript_nodes(extend) : extend;
+					ce.extend = extend;
 				}
 
 				component_options.customElement = ce;
