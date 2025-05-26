@@ -4,7 +4,7 @@ import { ok, test } from '../../test';
 export default test({
 	html: `
 		<select>
-			<option value="a">A</option>
+			<option selected="" value="a">A</option>
 			<option value="b">B</option>
 		</select>
 		selected: a

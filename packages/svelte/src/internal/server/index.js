@@ -535,3 +535,12 @@ export function derived(fn) {
 		return updated_value;
 	};
 }
+
+/**
+ *
+ * @param {Payload} payload
+ * @param {*} value
+ */
+export function maybe_selected(payload, value) {
+	return value === payload.select_value ? ' selected' : '';
+}

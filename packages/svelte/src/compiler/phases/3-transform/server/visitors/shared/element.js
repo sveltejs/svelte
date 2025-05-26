@@ -236,6 +236,16 @@ export function build_element_attributes(node, context) {
 					);
 				}
 
+				if (node.name === 'option' && name === 'value') {
+					context.state.template.push(
+						b.call(
+							'$.maybe_selected',
+							b.id('$$payload'),
+							literal_value != null ? b.literal(/** @type {any} */ (literal_value)) : b.void0
+						)
+					);
+				}
+
 				continue;
 			}
 
@@ -259,6 +269,10 @@ export function build_element_attributes(node, context) {
 				context.state.template.push(
 					b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
 				);
+			}
+
+			if (name === 'value' && node.name === 'option') {
+				context.state.template.push(b.call('$.maybe_selected', b.id('$$payload'), value));
 			}
 		}
 	}

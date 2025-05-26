@@ -7,7 +7,7 @@ import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_element_attributes } from './shared/element.js';
-import { process_children, build_template } from './shared/utils.js';
+import { process_children, build_template, build_attribute_value } from './shared/utils.js';
 
 /**
  * @param {AST.RegularElement} node
@@ -71,6 +71,42 @@ export function RegularElement(node, context) {
 		);
 	}
 
+	let select_with_value = false;
+
+	if (node.name === 'select') {
+		const value = node.attributes.find(
+			(attribute) =>
+				((attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
+					attribute.name === 'value') ||
+				attribute.type === 'SpreadAttribute'
+		);
+		if (value) {
+			select_with_value = true;
+			const left = b.id('$$payload.select_value');
+			if (value.type === 'SpreadAttribute') {
+				state.template.push(
+					b.stmt(b.assignment('=', left, b.member(value.expression, 'value', false, true)))
+				);
+			} else if (value.type === 'Attribute') {
+				state.template.push(
+					b.stmt(b.assignment('=', left, build_attribute_value(value.value, context)))
+				);
+			} else if (value.type === 'BindDirective') {
+				state.template.push(
+					b.stmt(
+						b.assignment(
+							'=',
+							left,
+							value.expression.type === 'SequenceExpression'
+								? b.call(value.expression.expressions[0])
+								: value.expression
+						)
+					)
+				);
+			}
+		}
+	}
+
 	if (body === null) {
 		process_children(trimmed, { ...context, state });
 	} else {
@@ -94,6 +130,10 @@ export function RegularElement(node, context) {
 				b.block([...inner_state.init, ...build_template(inner_state.template)])
 			)
 		);
+	}
+
+	if (select_with_value) {
+		state.template.push(b.stmt(b.assignment('=', b.id('$$payload.select_value'), b.void0)));
 	}
 
 	if (!node_is_void) {
