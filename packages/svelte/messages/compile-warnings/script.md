@@ -1,3 +1,7 @@
+## custom_element_props_identifier
+
+> Using an identifier or a rest element as the declarator for `$props` when compiling to custom elements without declaring `props` in the component options means that Svelte can't know which props to expose as properties on the DOM element. Consider explicitly destructure all the props or add the `customElement.props` option.
+
 ## export_let_unused
 
 > Component has unused export property '%name%'. If it is for external reference only, please consider using `export const %name%`

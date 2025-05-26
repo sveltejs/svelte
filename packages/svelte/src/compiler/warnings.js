@@ -96,6 +96,7 @@ export const codes = [
 	'options_removed_hydratable',
 	'options_removed_loop_guard_timeout',
 	'options_renamed_ssr_dom',
+	'custom_element_props_identifier',
 	'export_let_unused',
 	'legacy_component_creation',
 	'non_reactive_update',
@@ -590,6 +591,14 @@ export function options_removed_loop_guard_timeout(node) {
  */
 export function options_renamed_ssr_dom(node) {
 	w(node, 'options_renamed_ssr_dom', `\`generate: "dom"\` and \`generate: "ssr"\` options have been renamed to "client" and "server" respectively\nhttps://svelte.dev/e/options_renamed_ssr_dom`);
+}
+
+/**
+ * Using an identifier or a rest element as the declarator for `$props` when compiling to custom elements without declaring `props` in the component options means that Svelte can't know which props to expose as properties on the DOM element. Consider explicitly destructure all the props or add the `customElement.props` option.
+ * @param {null | NodeLike} node
+ */
+export function custom_element_props_identifier(node) {
+	w(node, 'custom_element_props_identifier', `Using an identifier or a rest element as the declarator for \`$props\` when compiling to custom elements without declaring \`props\` in the component options means that Svelte can't know which props to expose as properties on the DOM element. Consider explicitly destructure all the props or add the \`customElement.props\` option.\nhttps://svelte.dev/e/custom_element_props_identifier`);
 }
 
 /**
