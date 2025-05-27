@@ -452,12 +452,6 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 		set_hydrating(true);
 	}
 
-	// for (let symbol of Object.getOwnPropertySymbols(next)) {
-	// 	if (symbol.description === ATTACHMENT_KEY) {
-	// 		attach(element, () => next[symbol]);
-	// 	}
-	// }
-
 	return current;
 }
 
