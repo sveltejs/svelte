@@ -635,7 +635,7 @@ In some situations a selector may target an element that is not 'visible' to the
 ### custom_element_props_identifier
 
 ```
-Using an identifier or a rest element as the declarator for `$props` when compiling to custom elements without declaring `props` in the component options means that Svelte can't know which props to expose as properties on the DOM element. Consider explicitly destructuring all the props or add the `customElement.props` option.
+Using a rest element or a non-destructured declaration with `$props()` means that Svelte can't infer what properties to expose when creating a custom element. Consider destructuring all the props or explicitly specifying the `customElement.props` option.
 ```
 
 ### element_implicitly_closed
