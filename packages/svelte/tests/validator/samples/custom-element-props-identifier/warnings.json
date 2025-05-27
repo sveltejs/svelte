@@ -17,7 +17,7 @@
 			"column": 10,
 			"line": 4
 		},
-		"message": "Using an identifier or a rest element as the declarator for `$props` when compiling to custom elements without declaring `props` in the component options means that Svelte can't know what to expose as properties on the DOM element. Consider explicitly destructuring all the props or adding the `customElement.props` option.",
+		"message": "Using a rest element or a non-destructured declaration with `$props()` means that Svelte can't infer what properties to expose when creating a custom element. Consider destructuring all the props or explicitly specifying the `customElement.props` option.",
 		"start": {
 			"column": 5,
 			"line": 4
