@@ -1,5 +1,13 @@
 # svelte
 
+## 5.33.4
+
+### Patch Changes
+
+- fix: narrow `defaultChecked` to boolean ([#16009](https://github.com/sveltejs/svelte/pull/16009))
+
+- fix: warn when using rest or identifier in custom elements without props option ([#16003](https://github.com/sveltejs/svelte/pull/16003))
+
 ## 5.33.3
 
 ### Patch Changes
