@@ -32,7 +32,7 @@ export function select_option(select, value, mounting) {
 		return;
 	}
 
-	for (var option of select.options) {
+	for (option of select.options) {
 		var option_value = get_option_value(option);
 		if (is(option_value, value)) {
 			option.selected = true;
