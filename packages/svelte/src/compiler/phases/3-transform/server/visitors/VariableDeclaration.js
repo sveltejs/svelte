@@ -3,7 +3,7 @@
 /** @import { Context } from '../types.js' */
 /** @import { ComponentAnalysis } from '../../../types.js' */
 /** @import { Scope } from '../../../scope.js' */
-import { build_pattern, build_fallback, extract_paths } from '../../../../utils/ast.js';
+import { build_fallback, extract_paths } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 import { walk } from 'zimmerframe';
@@ -188,10 +188,13 @@ function create_state_declarators(declarator, scope, value) {
 		return [b.declarator(declarator.id, value)];
 	}
 
-	const [pattern, replacements] = build_pattern(declarator.id, scope);
+	const tmp = scope.generate('tmp');
+	const paths = extract_paths(declarator.id);
 	return [
-		b.declarator(pattern, value),
-		// TODO inject declarator for opts, so we can use it below
-		...[...replacements].map(([original, replacement]) => b.declarator(original, replacement))
+		b.declarator(b.id(tmp), value), // TODO inject declarator for opts, so we can use it below
+		...paths.map((path) => {
+			const value = path.expression?.(b.id(tmp));
+			return b.declarator(path.node, value);
+		})
 	];
 }
