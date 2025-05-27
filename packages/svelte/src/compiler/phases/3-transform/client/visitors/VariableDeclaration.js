@@ -146,7 +146,7 @@ export function VariableDeclaration(node, context) {
 					declarations.push(
 						b.declarator(tmp, value),
 						...paths.map((path) => {
-							const value = path.expression?.(tmp);
+							const value = path.expression(tmp);
 							const binding = context.state.scope.get(/** @type {Identifier} */ (path.node).name);
 							return b.declarator(
 								path.node,
@@ -237,7 +237,7 @@ export function VariableDeclaration(node, context) {
 					for (const path of paths) {
 						const name = /** @type {Identifier} */ (path.node).name;
 						const binding = /** @type {Binding} */ (context.state.scope.get(name));
-						const value = path.expression?.(b.id(tmp));
+						const value = path.expression(b.id(tmp));
 						declarations.push(
 							b.declarator(
 								path.node,
@@ -309,7 +309,7 @@ function create_state_declarators(declarator, { scope, analysis }, value) {
 	return [
 		b.declarator(b.id(tmp), value),
 		...paths.map((path) => {
-			const value = path.expression?.(b.id(tmp));
+			const value = path.expression(b.id(tmp));
 			const binding = scope.get(/** @type {Identifier} */ (path.node).name);
 			return b.declarator(
 				path.node,

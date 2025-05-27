@@ -129,7 +129,7 @@ export function VariableDeclaration(node, context) {
 						)
 					);
 					for (const path of paths) {
-						const value = path.expression?.(b.id(tmp));
+						const value = path.expression(b.id(tmp));
 						const name = /** @type {Identifier} */ (path.node).name;
 						const binding = /** @type {Binding} */ (context.state.scope.get(name));
 						const prop = b.member(b.id('$$props'), b.literal(binding.prop_alias ?? name), true);
@@ -188,12 +188,12 @@ function create_state_declarators(declarator, scope, value) {
 		return [b.declarator(declarator.id, value)];
 	}
 
-	const tmp = scope.generate('tmp');
+	const tmp = b.id(scope.generate('tmp'));
 	const paths = extract_paths(declarator.id);
 	return [
-		b.declarator(b.id(tmp), value), // TODO inject declarator for opts, so we can use it below
+		b.declarator(tmp, value), // TODO inject declarator for opts, so we can use it below
 		...paths.map((path) => {
-			const value = path.expression?.(b.id(tmp));
+			const value = path.expression(tmp);
 			return b.declarator(path.node, value);
 		})
 	];

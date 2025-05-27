@@ -49,7 +49,7 @@ export function SnippetBlock(node, context) {
 			const name = /** @type {Identifier} */ (path.node).name;
 			const needs_derived = path.has_default_value; // to ensure that default value is only called once
 			const fn = b.thunk(
-				/** @type {Expression} */ (context.visit(path.expression?.(b.maybe_call(b.id(arg_alias)))))
+				/** @type {Expression} */ (context.visit(path.expression(b.maybe_call(b.id(arg_alias)))))
 			);
 
 			declarations.push(b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn));
