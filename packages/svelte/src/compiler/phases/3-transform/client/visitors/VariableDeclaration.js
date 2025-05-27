@@ -141,12 +141,12 @@ export function VariableDeclaration(node, context) {
 						b.declarator(declarator.id, create_state_declarator(declarator.id, value))
 					);
 				} else {
-					const tmp = context.state.scope.generate('tmp');
+					const tmp = b.id(context.state.scope.generate('tmp'));
 					const paths = extract_paths(declarator.id);
 					declarations.push(
-						b.declarator(b.id(tmp), value),
+						b.declarator(tmp, value),
 						...paths.map((path) => {
-							const value = path.expression?.(b.id(tmp));
+							const value = path.expression?.(tmp);
 							const binding = context.state.scope.get(/** @type {Identifier} */ (path.node).name);
 							return b.declarator(
 								path.node,
@@ -170,7 +170,7 @@ export function VariableDeclaration(node, context) {
 						)
 					);
 				} else {
-					const bindings = extract_paths(declarator.id);
+					const paths = extract_paths(declarator.id);
 
 					const init = /** @type {CallExpression} */ (declarator.init);
 
@@ -189,10 +189,10 @@ export function VariableDeclaration(node, context) {
 						);
 					}
 
-					for (let i = 0; i < bindings.length; i++) {
-						const binding = bindings[i];
+					for (let i = 0; i < paths.length; i++) {
+						const path = paths[i];
 						declarations.push(
-							b.declarator(binding.node, b.call('$.derived', b.thunk(binding.expression(rhs))))
+							b.declarator(path.node, b.call('$.derived', b.thunk(path.expression(rhs))))
 						);
 					}
 				}
