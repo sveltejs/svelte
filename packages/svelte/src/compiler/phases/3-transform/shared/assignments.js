@@ -1,7 +1,7 @@
 /** @import { AssignmentExpression, AssignmentOperator, Expression, Node, Pattern } from 'estree' */
 /** @import { Context as ClientContext } from '../client/types.js' */
 /** @import { Context as ServerContext } from '../server/types.js' */
-import { extract_paths, is_expression_async } from '../../../utils/ast.js';
+import { destructure, is_expression_async } from '../../../utils/ast.js';
 import * as b from '#compiler/builders';
 
 /**
@@ -23,8 +23,8 @@ export function visit_assignment_expression(node, context, build_assignment) {
 
 		let changed = false;
 
-		const assignments = extract_paths(node.left).map((path) => {
-			const value = path.expression?.(rhs);
+		const assignments = destructure(node.left, rhs).map((path) => {
+			const value = path.expression;
 
 			let assignment = build_assignment('=', path.node, value, context);
 			if (assignment !== null) changed = true;

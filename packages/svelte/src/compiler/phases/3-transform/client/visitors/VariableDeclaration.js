@@ -2,7 +2,7 @@
 /** @import { Binding } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
-import { extract_paths } from '../../../../utils/ast.js';
+import { destructure, extract_paths } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import * as assert from '../../../../utils/assert.js';
 import { get_rune } from '../../../scope.js';
@@ -142,11 +142,11 @@ export function VariableDeclaration(node, context) {
 					);
 				} else {
 					const tmp = b.id(context.state.scope.generate('tmp'));
-					const paths = extract_paths(declarator.id);
+					const paths = destructure(declarator.id, tmp);
 					declarations.push(
 						b.declarator(tmp, value),
 						...paths.map((path) => {
-							const value = path.expression(tmp);
+							const value = path.expression;
 							const binding = context.state.scope.get(/** @type {Identifier} */ (path.node).name);
 							return b.declarator(
 								path.node,
@@ -224,12 +224,12 @@ export function VariableDeclaration(node, context) {
 				if (declarator.id.type !== 'Identifier') {
 					// Turn export let into props. It's really really weird because export let { x: foo, z: [bar]} = ..
 					// means that foo and bar are the props (i.e. the leafs are the prop names), not x and z.
-					const tmp = context.state.scope.generate('tmp');
-					const paths = extract_paths(declarator.id);
+					const tmp = b.id(context.state.scope.generate('tmp'));
+					const paths = destructure(declarator.id, tmp);
 
 					declarations.push(
 						b.declarator(
-							b.id(tmp),
+							tmp,
 							/** @type {Expression} */ (context.visit(/** @type {Expression} */ (declarator.init)))
 						)
 					);
@@ -237,7 +237,7 @@ export function VariableDeclaration(node, context) {
 					for (const path of paths) {
 						const name = /** @type {Identifier} */ (path.node).name;
 						const binding = /** @type {Binding} */ (context.state.scope.get(name));
-						const value = path.expression(b.id(tmp));
+						const value = path.expression;
 						declarations.push(
 							b.declarator(
 								path.node,
@@ -304,12 +304,12 @@ function create_state_declarators(declarator, { scope, analysis }, value) {
 		];
 	}
 
-	const tmp = scope.generate('tmp');
-	const paths = extract_paths(declarator.id);
+	const tmp = b.id(scope.generate('tmp'));
+	const paths = destructure(declarator.id, tmp);
 	return [
-		b.declarator(b.id(tmp), value),
+		b.declarator(tmp, value),
 		...paths.map((path) => {
-			const value = path.expression(b.id(tmp));
+			const value = path.expression;
 			const binding = scope.get(/** @type {Identifier} */ (path.node).name);
 			return b.declarator(
 				path.node,

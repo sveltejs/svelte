@@ -2,7 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
-import { extract_paths } from '../../../../utils/ast.js';
+import { destructure } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { get_value } from './shared/declarations.js';
 
@@ -43,14 +43,12 @@ export function SnippetBlock(node, context) {
 		let arg_alias = `$$arg${i}`;
 		args.push(b.id(arg_alias));
 
-		const paths = extract_paths(argument);
+		const paths = destructure(argument, b.maybe_call(b.id(arg_alias)));
 
 		for (const path of paths) {
 			const name = /** @type {Identifier} */ (path.node).name;
 			const needs_derived = path.has_default_value; // to ensure that default value is only called once
-			const fn = b.thunk(
-				/** @type {Expression} */ (context.visit(path.expression(b.maybe_call(b.id(arg_alias)))))
-			);
+			const fn = b.thunk(/** @type {Expression} */ (context.visit(path.expression)));
 
 			declarations.push(b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn));
 

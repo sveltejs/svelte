@@ -3,7 +3,7 @@
 /** @import { Context } from '../types.js' */
 /** @import { ComponentAnalysis } from '../../../types.js' */
 /** @import { Scope } from '../../../scope.js' */
-import { build_fallback, extract_paths } from '../../../../utils/ast.js';
+import { build_fallback, destructure } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 import { walk } from 'zimmerframe';
@@ -120,16 +120,16 @@ export function VariableDeclaration(node, context) {
 				if (declarator.id.type !== 'Identifier') {
 					// Turn export let into props. It's really really weird because export let { x: foo, z: [bar]} = ..
 					// means that foo and bar are the props (i.e. the leafs are the prop names), not x and z.
-					const tmp = context.state.scope.generate('tmp');
-					const paths = extract_paths(declarator.id);
+					const tmp = b.id(context.state.scope.generate('tmp'));
+					const paths = destructure(declarator.id, tmp);
 					declarations.push(
 						b.declarator(
-							b.id(tmp),
+							tmp,
 							/** @type {Expression} */ (context.visit(/** @type {Expression} */ (declarator.init)))
 						)
 					);
 					for (const path of paths) {
-						const value = path.expression(b.id(tmp));
+						const value = path.expression;
 						const name = /** @type {Identifier} */ (path.node).name;
 						const binding = /** @type {Binding} */ (context.state.scope.get(name));
 						const prop = b.member(b.id('$$props'), b.literal(binding.prop_alias ?? name), true);
@@ -189,11 +189,11 @@ function create_state_declarators(declarator, scope, value) {
 	}
 
 	const tmp = b.id(scope.generate('tmp'));
-	const paths = extract_paths(declarator.id);
+	const paths = destructure(declarator.id, tmp);
 	return [
 		b.declarator(tmp, value), // TODO inject declarator for opts, so we can use it below
 		...paths.map((path) => {
-			const value = path.expression(tmp);
+			const value = path.expression;
 			return b.declarator(path.node, value);
 		})
 	];

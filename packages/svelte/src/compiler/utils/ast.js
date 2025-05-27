@@ -390,6 +390,169 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 }
 
 /**
+ * Represents the path of a destructured assignment from either a declaration
+ * or assignment expression. For example, given `const { foo: { bar: baz } } = quux`,
+ * the path of `baz` is `foo.bar`
+ * @typedef {Object} DestructuredAssignment2
+ * @property {ESTree.Identifier | ESTree.MemberExpression} node The node the destructuring path end in. Can be a member expression only for assignment expressions
+ * @property {boolean} is_rest `true` if this is a `...rest` destructuring
+ * @property {boolean} has_default_value `true` if this has a fallback value like `const { foo = 'bar } = ..`
+ * @property {ESTree.Expression} expression Returns an expression which walks the path starting at the given expression.
+ * This will be a call expression if a rest element or default is involved — e.g. `const { foo: { bar: baz = 42 }, ...rest } = quux` — since we can't represent `baz` or `rest` purely as a path
+ * Will be an await expression in case of an async default value (`const { foo = await bar } = ...`)
+ * @property {ESTree.Expression} update_expression Like `expression` but without default values.
+ */
+
+/**
+ * Extracts all destructured assignments from a pattern.
+ * @param {ESTree.Node} param
+ * @param {ESTree.Expression} initial
+ * @returns {DestructuredAssignment2[]}
+ */
+export function destructure(param, initial) {
+	return _destructure([], param, initial, initial, false);
+}
+
+/**
+ * @param {DestructuredAssignment2[]} assignments
+ * @param {ESTree.Node} param
+ * @param {ESTree.Expression} expression
+ * @param {ESTree.Expression} update_expression
+ * @param {boolean} has_default_value
+ * @returns {DestructuredAssignment2[]}
+ */
+function _destructure(assignments = [], param, expression, update_expression, has_default_value) {
+	switch (param.type) {
+		case 'Identifier':
+		case 'MemberExpression':
+			assignments.push({
+				node: param,
+				is_rest: false,
+				has_default_value,
+				expression,
+				update_expression
+			});
+			break;
+
+		case 'ObjectPattern':
+			for (const prop of param.properties) {
+				if (prop.type === 'RestElement') {
+					/** @type {ESTree.Expression[]} */
+					const props = [];
+
+					for (const p of param.properties) {
+						if (p.type === 'Property' && p.key.type !== 'PrivateIdentifier') {
+							if (p.key.type === 'Identifier' && !p.computed) {
+								props.push(b.literal(p.key.name));
+							} else if (p.key.type === 'Literal') {
+								props.push(b.literal(String(p.key.value)));
+							} else {
+								props.push(b.call('String', p.key));
+							}
+						}
+					}
+
+					const rest_expression = b.call('$.exclude_from_object', expression, b.array(props));
+
+					if (prop.argument.type === 'Identifier') {
+						assignments.push({
+							node: prop.argument,
+							is_rest: true,
+							has_default_value,
+							expression: rest_expression,
+							update_expression: rest_expression
+						});
+					} else {
+						_destructure(
+							assignments,
+							prop.argument,
+							rest_expression,
+							rest_expression,
+							has_default_value
+						);
+					}
+				} else {
+					const object_expression = b.member(
+						expression,
+						prop.key,
+						prop.computed || prop.key.type !== 'Identifier'
+					);
+
+					_destructure(
+						assignments,
+						prop.value,
+						object_expression,
+						object_expression,
+						has_default_value
+					);
+				}
+			}
+
+			break;
+
+		case 'ArrayPattern':
+			for (let i = 0; i < param.elements.length; i += 1) {
+				const element = param.elements[i];
+				if (element) {
+					if (element.type === 'RestElement') {
+						const rest_expression = b.call(b.member(expression, 'slice'), b.literal(i));
+
+						if (element.argument.type === 'Identifier') {
+							assignments.push({
+								node: element.argument,
+								is_rest: true,
+								has_default_value,
+								expression: rest_expression,
+								update_expression: rest_expression
+							});
+						} else {
+							_destructure(
+								assignments,
+								element.argument,
+								rest_expression,
+								rest_expression,
+								has_default_value
+							);
+						}
+					} else {
+						const array_expression = b.member(expression, b.literal(i), true);
+
+						_destructure(
+							assignments,
+							element,
+							array_expression,
+							array_expression,
+							has_default_value
+						);
+					}
+				}
+			}
+
+			break;
+
+		case 'AssignmentPattern': {
+			const fallback_expression = build_fallback(expression, param.right);
+
+			if (param.left.type === 'Identifier') {
+				assignments.push({
+					node: param.left,
+					is_rest: false,
+					has_default_value: true,
+					expression: fallback_expression,
+					update_expression
+				});
+			} else {
+				_destructure(assignments, param.left, fallback_expression, update_expression, true);
+			}
+
+			break;
+		}
+	}
+
+	return assignments;
+}
+
+/**
  * Like `path.at(x)`, but skips over `TSNonNullExpression` and `TSAsExpression` nodes and eases assertions a bit
  * by removing the `| undefined` from the resulting type.
  *
