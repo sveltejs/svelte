@@ -604,7 +604,7 @@ const instance_script = {
 					// Turn export let into props. It's really really weird because export let { x: foo, z: [bar]} = ..
 					// means that foo and bar are the props (i.e. the leafs are the prop names), not x and z.
 					// const tmp = b.id(state.scope.generate('tmp'));
-					// const paths = destructure(declarator.id, tmp);
+					// const paths = extract_paths(declarator.id, tmp);
 					// state.props_pre.push(
 					// 	b.declaration('const', tmp, visit(declarator.init!) as Expression)
 					// );

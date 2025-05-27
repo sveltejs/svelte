@@ -2,7 +2,7 @@
 /** @import { Binding } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
-import { destructure, extract_paths } from '../../../../utils/ast.js';
+import { extract_paths } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import * as assert from '../../../../utils/assert.js';
 import { get_rune } from '../../../scope.js';
@@ -142,7 +142,7 @@ export function VariableDeclaration(node, context) {
 					);
 				} else {
 					const tmp = b.id(context.state.scope.generate('tmp'));
-					const paths = destructure(declarator.id, tmp);
+					const paths = extract_paths(declarator.id, tmp);
 					declarations.push(
 						b.declarator(tmp, value),
 						...paths.map((path) => {
@@ -170,18 +170,12 @@ export function VariableDeclaration(node, context) {
 						)
 					);
 				} else {
-					const paths = extract_paths(declarator.id);
-
 					const init = /** @type {CallExpression} */ (declarator.init);
 
-					/** @type {Identifier} */
-					let id;
 					let rhs = value;
 
-					if (rune === '$derived' && init.arguments[0].type === 'Identifier') {
-						id = init.arguments[0];
-					} else {
-						id = b.id(context.state.scope.generate('$$d'));
+					if (rune !== '$derived' || init.arguments[0].type !== 'Identifier') {
+						const id = b.id(context.state.scope.generate('$$d'));
 						rhs = b.call('$.get', id);
 
 						declarations.push(
@@ -189,10 +183,9 @@ export function VariableDeclaration(node, context) {
 						);
 					}
 
-					for (let i = 0; i < paths.length; i++) {
-						const path = paths[i];
+					for (const path of extract_paths(declarator.id, rhs)) {
 						declarations.push(
-							b.declarator(path.node, b.call('$.derived', b.thunk(path.expression(rhs))))
+							b.declarator(path.node, b.call('$.derived', b.thunk(path.expression)))
 						);
 					}
 				}
@@ -225,7 +218,7 @@ export function VariableDeclaration(node, context) {
 					// Turn export let into props. It's really really weird because export let { x: foo, z: [bar]} = ..
 					// means that foo and bar are the props (i.e. the leafs are the prop names), not x and z.
 					const tmp = b.id(context.state.scope.generate('tmp'));
-					const paths = destructure(declarator.id, tmp);
+					const paths = extract_paths(declarator.id, tmp);
 
 					declarations.push(
 						b.declarator(
@@ -305,7 +298,7 @@ function create_state_declarators(declarator, { scope, analysis }, value) {
 	}
 
 	const tmp = b.id(scope.generate('tmp'));
-	const paths = destructure(declarator.id, tmp);
+	const paths = extract_paths(declarator.id, tmp);
 	return [
 		b.declarator(tmp, value),
 		...paths.map((path) => {

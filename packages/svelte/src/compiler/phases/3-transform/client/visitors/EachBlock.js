@@ -10,7 +10,7 @@ import {
 	EACH_ITEM_REACTIVE
 } from '../../../../../constants.js';
 import { dev } from '../../../../state.js';
-import { destructure, object } from '../../../../utils/ast.js';
+import { extract_paths, object } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { build_getter } from '../utils.js';
 import { get_value } from './shared/declarations.js';
@@ -234,7 +234,7 @@ export function EachBlock(node, context) {
 	} else if (node.context) {
 		const unwrapped = (flags & EACH_ITEM_REACTIVE) !== 0 ? b.call('$.get', item) : item;
 
-		for (const path of destructure(node.context, unwrapped)) {
+		for (const path of extract_paths(node.context, unwrapped)) {
 			const name = /** @type {Identifier} */ (path.node).name;
 			const needs_derived = path.has_default_value; // to ensure that default value is only called once
 

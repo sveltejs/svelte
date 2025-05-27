@@ -3,7 +3,7 @@
 /** @import { Context } from '../types.js' */
 /** @import { ComponentAnalysis } from '../../../types.js' */
 /** @import { Scope } from '../../../scope.js' */
-import { build_fallback, destructure } from '../../../../utils/ast.js';
+import { build_fallback, extract_paths } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 import { walk } from 'zimmerframe';
@@ -121,7 +121,7 @@ export function VariableDeclaration(node, context) {
 					// Turn export let into props. It's really really weird because export let { x: foo, z: [bar]} = ..
 					// means that foo and bar are the props (i.e. the leafs are the prop names), not x and z.
 					const tmp = b.id(context.state.scope.generate('tmp'));
-					const paths = destructure(declarator.id, tmp);
+					const paths = extract_paths(declarator.id, tmp);
 					declarations.push(
 						b.declarator(
 							tmp,
@@ -189,7 +189,7 @@ function create_state_declarators(declarator, scope, value) {
 	}
 
 	const tmp = b.id(scope.generate('tmp'));
-	const paths = destructure(declarator.id, tmp);
+	const paths = extract_paths(declarator.id, tmp);
 	return [
 		b.declarator(tmp, value), // TODO inject declarator for opts, so we can use it below
 		...paths.map((path) => {
