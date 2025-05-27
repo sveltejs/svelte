@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-narrow `defaultChecked` to boolean
+fix: narrow `defaultChecked` to boolean
