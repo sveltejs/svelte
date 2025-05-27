@@ -478,8 +478,8 @@ export function attribute_effect(
 ) {
 	const deriveds = thunks.map(d);
 
-	/** @type {Record<string | symbol, any>} */
-	var prev = {};
+	/** @type {Record<string | symbol, any> | undefined} */
+	var prev = undefined;
 
 	/** @type {Record<symbol, Effect>} */
 	var effects = {};
@@ -503,7 +503,7 @@ export function attribute_effect(
 		for (let symbol of Object.getOwnPropertySymbols(next)) {
 			var n = next[symbol];
 
-			if (symbol.description === ATTACHMENT_KEY && n !== prev[symbol]) {
+			if (symbol.description === ATTACHMENT_KEY && (!prev || n !== prev[symbol])) {
 				if (effects[symbol]) destroy_effect(effects[symbol]);
 				effects[symbol] = branch(() => attach(element, () => n));
 			}
@@ -513,7 +513,10 @@ export function attribute_effect(
 	});
 
 	if (is_select) {
-		init_select(/** @type {HTMLSelectElement} */ (element), () => prev.value);
+		init_select(
+			/** @type {HTMLSelectElement} */ (element),
+			() => /** @type {Record<string | symbol, any>} */ (prev).value
+		);
 	}
 
 	inited = true;
