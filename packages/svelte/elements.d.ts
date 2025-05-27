@@ -1115,8 +1115,8 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	// needs both casing variants because language tools does lowercase names of non-shorthand attributes
 	defaultValue?: any;
 	defaultvalue?: any;
-	defaultChecked?: any;
-	defaultchecked?: any;
+	defaultChecked?: boolean | undefined | null;
+	defaultchecked?: boolean | undefined | null;
 	width?: number | string | undefined | null;
 	webkitdirectory?: boolean | undefined | null;
 
