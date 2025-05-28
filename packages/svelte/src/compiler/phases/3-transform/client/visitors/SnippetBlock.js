@@ -43,7 +43,7 @@ export function SnippetBlock(node, context) {
 		let arg_alias = `$$arg${i}`;
 		args.push(b.id(arg_alias));
 
-		const paths = extract_paths(argument, b.maybe_call(b.id(arg_alias)));
+		const { paths } = extract_paths(argument, b.maybe_call(b.id(arg_alias)));
 
 		for (const path of paths) {
 			const name = /** @type {Identifier} */ (path.node).name;

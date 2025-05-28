@@ -234,7 +234,9 @@ export function EachBlock(node, context) {
 	} else if (node.context) {
 		const unwrapped = (flags & EACH_ITEM_REACTIVE) !== 0 ? b.call('$.get', item) : item;
 
-		for (const path of extract_paths(node.context, unwrapped)) {
+		const { paths } = extract_paths(node.context, unwrapped);
+
+		for (const path of paths) {
 			const name = /** @type {Identifier} */ (path.node).name;
 			const needs_derived = path.has_default_value; // to ensure that default value is only called once
 

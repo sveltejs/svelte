@@ -237,10 +237,15 @@ export function extract_identifiers_from_destructuring(node, nodes = []) {
  * Extracts all destructured assignments from a pattern.
  * @param {ESTree.Node} param
  * @param {ESTree.Expression} initial
- * @returns {DestructuredAssignment[]}
+ * @returns {{ paths: DestructuredAssignment[] }}
  */
 export function extract_paths(param, initial) {
-	return _extract_paths([], param, initial, initial, false);
+	/** @type {DestructuredAssignment[]} */
+	const paths = [];
+
+	_extract_paths(paths, param, initial, initial, false);
+
+	return { paths };
 }
 
 /**

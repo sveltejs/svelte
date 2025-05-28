@@ -23,7 +23,9 @@ export function visit_assignment_expression(node, context, build_assignment) {
 
 		let changed = false;
 
-		const assignments = extract_paths(node.left, rhs).map((path) => {
+		const { paths } = extract_paths(node.left, rhs);
+
+		const assignments = paths.map((path) => {
 			const value = path.expression;
 
 			let assignment = build_assignment('=', path.node, value, context);

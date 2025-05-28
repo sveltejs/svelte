@@ -142,7 +142,7 @@ export function VariableDeclaration(node, context) {
 					);
 				} else {
 					const tmp = b.id(context.state.scope.generate('tmp'));
-					const paths = extract_paths(declarator.id, tmp);
+					const { paths } = extract_paths(declarator.id, tmp);
 					declarations.push(
 						b.declarator(tmp, value),
 						...paths.map((path) => {
@@ -183,7 +183,9 @@ export function VariableDeclaration(node, context) {
 						);
 					}
 
-					for (const path of extract_paths(declarator.id, rhs)) {
+					const { paths } = extract_paths(declarator.id, rhs);
+
+					for (const path of paths) {
 						declarations.push(
 							b.declarator(path.node, b.call('$.derived', b.thunk(path.expression)))
 						);
@@ -218,7 +220,7 @@ export function VariableDeclaration(node, context) {
 					// Turn export let into props. It's really really weird because export let { x: foo, z: [bar]} = ..
 					// means that foo and bar are the props (i.e. the leafs are the prop names), not x and z.
 					const tmp = b.id(context.state.scope.generate('tmp'));
-					const paths = extract_paths(declarator.id, tmp);
+					const { paths } = extract_paths(declarator.id, tmp);
 
 					declarations.push(
 						b.declarator(
@@ -298,7 +300,7 @@ function create_state_declarators(declarator, { scope, analysis }, value) {
 	}
 
 	const tmp = b.id(scope.generate('tmp'));
-	const paths = extract_paths(declarator.id, tmp);
+	const { paths } = extract_paths(declarator.id, tmp);
 	return [
 		b.declarator(tmp, value),
 		...paths.map((path) => {

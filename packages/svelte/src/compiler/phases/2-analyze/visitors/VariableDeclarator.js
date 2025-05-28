@@ -19,7 +19,7 @@ export function VariableDeclarator(node, context) {
 	if (context.state.analysis.runes) {
 		const init = node.init;
 		const rune = get_rune(init, context.state.scope);
-		const paths = extract_paths(node.id, b.id('dummy'));
+		const { paths } = extract_paths(node.id, b.id('dummy'));
 
 		for (const path of paths) {
 			validate_identifier_name(context.state.scope.get(/** @type {Identifier} */ (path.node).name));
