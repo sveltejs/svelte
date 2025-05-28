@@ -227,7 +227,7 @@ export function extract_identifiers_from_destructuring(node, nodes = []) {
  * @property {ESTree.Identifier | ESTree.MemberExpression} node The node the destructuring path end in. Can be a member expression only for assignment expressions
  * @property {boolean} is_rest `true` if this is a `...rest` destructuring
  * @property {boolean} has_default_value `true` if this has a fallback value like `const { foo = 'bar } = ..`
- * @property {ESTree.Expression} expression Returns an expression which walks the path starting at the given expression.
+ * @property {ESTree.Expression} expression The value of the current path
  * This will be a call expression if a rest element or default is involved — e.g. `const { foo: { bar: baz = 42 }, ...rest } = quux` — since we can't represent `baz` or `rest` purely as a path
  * Will be an await expression in case of an async default value (`const { foo = await bar } = ...`)
  * @property {ESTree.Expression} update_expression Like `expression` but without default values.
