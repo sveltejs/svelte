@@ -130,13 +130,6 @@ export function RegularElement(node, context) {
 	if (body === null) {
 		process_children(trimmed, { ...context, state });
 	} else {
-		let id = body;
-
-		if (body.type !== 'Identifier') {
-			id = b.id(state.scope.generate('$$body'));
-			state.template.push(b.const(id, body));
-		}
-
 		// we need the body if:
 
 		// - it's a <textarea> or a contenteditable element...we will add it ad the inner template in case the value of value is falsy
@@ -151,12 +144,19 @@ export function RegularElement(node, context) {
 			state.template.push(
 				b.stmt(
 					b.call(
-						id,
+						body,
 						b.thunk(b.block([...inner_state.init, ...build_template(inner_state.template)]))
 					)
 				)
 			);
 		} else {
+			let id = body;
+
+			if (body.type !== 'Identifier') {
+				id = b.id(state.scope.generate('$$body'));
+				state.template.push(b.const(id, body));
+			}
+
 			// Use the body expression as the body if it's truthy, otherwise use the inner template
 			state.template.push(
 				b.if(
