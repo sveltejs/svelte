@@ -552,18 +552,18 @@ export function maybe_selected(payload, value) {
  */
 export function valueless_option(payload, children) {
 	// store the initial payload before rendering children
-	let initial_payload = payload.out;
+	let i = payload.out.length;
 
 	// execute the child to get the runtime body of the option
 	children();
 
 	// remove the initial payload and eventual hydration comments
-	let body = payload.out.substring(initial_payload.length).replace(/<!---->/g, '');
+	let body = payload.out.slice(i);
 
 	// check the value of the body with the select_value
-	if (body === payload.select_value) {
+	if (body.replace(/<!---->/g, '') === payload.select_value) {
 		// substring the initial payload to remove the last character (the closing `>`)
 		// append selected and the body (the closing tag will be added later)
-		payload.out = initial_payload.substring(0, initial_payload.length - 1) + ' selected>' + body;
+		payload.out = payload.out.slice(0, i - 1) + ' selected>' + body;
 	}
 }
