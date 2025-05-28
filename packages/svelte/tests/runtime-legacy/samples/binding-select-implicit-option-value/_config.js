@@ -9,7 +9,7 @@ export default test({
 	ssrHtml: `
 		<select>
 			<option value="1">1</option>
-			<option selected="" value="2">2</option>
+			<option selected value="2">2</option>
 			<option value="3">3</option>
 		</select>
 
@@ -22,7 +22,7 @@ export default test({
 			`
 			<select>
 				<option value="1">1</option>
-				<option ${variant === 'hydrate' ? 'selected="" ' : ''}value="2">2</option>
+				<option ${variant === 'hydrate' ? 'selected ' : ''}value="2">2</option>
 				<option value="3">3</option>
 			</select>
 
@@ -48,7 +48,7 @@ export default test({
 			`
 			<select>
 				<option value="1">1</option>
-				<option ${variant === 'hydrate' ? 'selected="" ' : ''}value="2">2</option>
+				<option ${variant === 'hydrate' ? 'selected ' : ''}value="2">2</option>
 				<option value="3">3</option>
 			</select>
 

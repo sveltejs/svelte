@@ -3,13 +3,13 @@ import { test } from '../../test';
 export default test({
 	ssrHtml: `
 		<select>
-			<option selected="" value='hullo'>Hullo</option>
+			<option selected value='hullo'>Hullo</option>
 			<option value='world'>World</option>
 		</select>
 
 		<select>
 			<option value='hullo'>Hullo</option>
-			<option selected="" value='world'>World</option>
+			<option selected value='world'>World</option>
 		</select>
 	`,
 
@@ -24,13 +24,13 @@ export default test({
 			target.innerHTML,
 			`
 			<select>
-				<option ${variant === 'hydrate' ? 'selected="" ' : ''}value='hullo'>Hullo</option>
+				<option ${variant === 'hydrate' ? 'selected ' : ''}value='hullo'>Hullo</option>
 				<option value='world'>World</option>
 			</select>
 
 			<select>
 				<option value='hullo'>Hullo</option>
-				<option ${variant === 'hydrate' ? 'selected="" ' : ''}value='world'>World</option>
+				<option ${variant === 'hydrate' ? 'selected ' : ''}value='world'>World</option>
 			</select>
 		`
 		);

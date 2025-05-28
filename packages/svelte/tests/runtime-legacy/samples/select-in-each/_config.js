@@ -7,7 +7,7 @@ export default test({
 			target.innerHTML,
 			`
 			<select>
-				<option${variant === 'hydrate' ? ' selected=""' : ''} value="a">A</option$>
+				<option${variant === 'hydrate' ? ' selected' : ''} value="a">A</option$>
 				<option value="b">B</option>
 			</select>
 			selected: a
@@ -23,7 +23,7 @@ export default test({
 			target.innerHTML,
 			`
 			<select>
-				<option${variant === 'hydrate' ? ' selected=""' : ''} value="a">A</option$>
+				<option${variant === 'hydrate' ? ' selected' : ''} value="a">A</option$>
 				<option value="b">B</option>
 			</select>
 			selected: b
