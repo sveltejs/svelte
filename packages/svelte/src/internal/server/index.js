@@ -535,3 +535,30 @@ export function derived(fn) {
 		return updated_value;
 	};
 }
+
+/**
+ *
+ * @param {Payload} payload
+ * @param {*} value
+ */
+export function maybe_selected(payload, value) {
+	return value === payload.select_value ? ' selected' : '';
+}
+
+/**
+ * @param {Payload} payload
+ * @param {() => void} children
+ * @returns {void}
+ */
+export function valueless_option(payload, children) {
+	var i = payload.out.length;
+
+	children();
+
+	var body = payload.out.slice(i);
+
+	if (body.replace(/<!---->/g, '') === payload.select_value) {
+		// replace '>' with ' selected>' (closing tag will be added later)
+		payload.out = payload.out.slice(0, i - 1) + ' selected>' + body;
+	}
+}

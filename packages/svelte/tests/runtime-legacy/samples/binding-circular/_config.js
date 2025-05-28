@@ -1,9 +1,9 @@
 import { test } from '../../test';
 
 export default test({
-	html: `
+	ssrHtml: `
 		<select>
-			<option value="[object Object]">wheeee</option>
+			<option selected value="[object Object]">wheeee</option>
 		</select>
 	`
 });
