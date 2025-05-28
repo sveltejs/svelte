@@ -544,3 +544,24 @@ export function derived(fn) {
 export function maybe_selected(payload, value) {
 	return value === payload.select_value ? ' selected' : '';
 }
+
+/**
+ * @param {Payload} payload
+ * @returns {(child: () => void) => void}
+ */
+export function valueless_option(payload) {
+	return (child) => {
+		// store the initial payload before executing the child
+		let initial_payload = payload.out;
+		// execute the child to get the runtime body of the option
+		child();
+		// remove the initial payload and eventual hydration comments
+		let body = payload.out.substring(initial_payload.length).replace(/<!---->/g, '');
+		// check the value of the body with the select_value
+		if (body === payload.select_value) {
+			// substring the initial payload to remove the last character (the closing `>`)
+			// append selected and the body (the closing tag will be added later)
+			payload.out = initial_payload.substring(0, initial_payload.length - 1) + ' selected>' + body;
+		}
+	};
+}

@@ -137,19 +137,35 @@ export function RegularElement(node, context) {
 			state.template.push(b.const(id, body));
 		}
 
-		// if this is a `<textarea>` value or a contenteditable binding, we only add
-		// the body if the attribute/binding is falsy
+		// we need the body if:
+
+		// - it's a <textarea> or a contenteditable element...we will add it ad the inner template in case the value of value is falsy
+		// - it's a valueless <option> element...we will check the body value at runtime to determine the implicit value selection
 		const inner_state = { ...state, template: [], init: [] };
 		process_children(trimmed, { ...context, state: inner_state });
 
-		// Use the body expression as the body if it's truthy, otherwise use the inner template
-		state.template.push(
-			b.if(
-				id,
-				b.block(build_template([id])),
-				b.block([...inner_state.init, ...build_template(inner_state.template)])
-			)
-		);
+		if (node.name === 'option') {
+			// in case of a valueless `<option>` element, $$body is a function that accepts the children...internally it
+			// will run the children to get the value of the body at runtime since it's needed to for the implicit value
+			// selection
+			state.template.push(
+				b.stmt(
+					b.call(
+						id,
+						b.thunk(b.block([...inner_state.init, ...build_template(inner_state.template)]))
+					)
+				)
+			);
+		} else {
+			// Use the body expression as the body if it's truthy, otherwise use the inner template
+			state.template.push(
+				b.if(
+					id,
+					b.block(build_template([id])),
+					b.block([...inner_state.init, ...build_template(inner_state.template)])
+				)
+			);
+		}
 	}
 
 	if (select_with_value) {

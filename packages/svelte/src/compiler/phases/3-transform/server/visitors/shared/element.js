@@ -305,14 +305,7 @@ export function build_element_attributes(node, context) {
 	}
 
 	if (!option_has_value && node.name === 'option') {
-		context.state.template.push(
-			b.call(
-				'$.maybe_selected',
-				b.id('$$payload'),
-				// this should be fine for the moment since option can only contain text and expressions
-				build_attribute_value(/** @type {*} */ (node.fragment.nodes), context)
-			)
-		);
+		content = b.call('$.valueless_option', b.id('$$payload'));
 	}
 
 	if (events_to_capture.size !== 0) {
