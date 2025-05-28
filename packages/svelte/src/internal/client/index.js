@@ -28,6 +28,7 @@ export {
 	remove_input_defaults,
 	set_attribute,
 	set_attributes,
+	attribute_effect,
 	set_custom_element_data,
 	set_xlink_attribute,
 	set_value,

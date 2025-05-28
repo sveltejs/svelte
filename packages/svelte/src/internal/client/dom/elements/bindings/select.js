@@ -25,10 +25,14 @@ export function select_option(select, value, mounting) {
 		}
 
 		// Otherwise, update the selection
-		return select_options(select, value);
+		for (var option of select.options) {
+			option.selected = value.includes(get_option_value(option));
+		}
+
+		return;
 	}
 
-	for (var option of select.options) {
+	for (option of select.options) {
 		var option_value = get_option_value(option);
 		if (is(option_value, value)) {
 			option.selected = true;
@@ -134,16 +138,6 @@ export function bind_select_value(select, get, set = get) {
 
 	// don't pass get_value, we already initialize it in the effect above
 	init_select(select);
-}
-
-/**
- * @param {HTMLSelectElement} select
- * @param {unknown[]} value
- */
-function select_options(select, value) {
-	for (var option of select.options) {
-		option.selected = value.includes(get_option_value(option));
-	}
 }
 
 /** @param {HTMLOptionElement} option */

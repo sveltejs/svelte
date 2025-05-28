@@ -21,12 +21,12 @@ export function memoize_expression(state, value) {
 }
 
 /**
- *
- * @param {ComponentClientTransformState} state
+ * Pushes `value` into `expressions` and returns a new id
+ * @param {Expression[]} expressions
  * @param {Expression} value
  */
-export function get_expression_id(state, value) {
-	return b.id(`$${state.expressions.push(value) - 1}`);
+export function get_expression_id(expressions, value) {
+	return b.id(`$${expressions.push(value) - 1}`);
 }
 
 /**
@@ -40,7 +40,8 @@ export function build_template_chunk(
 	values,
 	visit,
 	state,
-	memoize = (value, metadata) => (metadata.has_call ? get_expression_id(state, value) : value)
+	memoize = (value, metadata) =>
+		metadata.has_call ? get_expression_id(state.expressions, value) : value
 ) {
 	/** @type {Expression[]} */
 	const expressions = [];
