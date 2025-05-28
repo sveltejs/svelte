@@ -1,3 +1,4 @@
+/** @import { Expression } from 'estree' */
 /** @import { Location } from 'locate-character' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../types.js' */
@@ -127,55 +128,50 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	const is_option_with_implicit_value =
+	if (
 		node.name === 'option' &&
 		!node.attributes.some(
 			(attribute) =>
 				attribute.type === 'SpreadAttribute' ||
 				((attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
 					attribute.name === 'value')
-		);
-
-	if (body === null && !is_option_with_implicit_value) {
-		process_children(trimmed, { ...context, state });
-	} else {
-		// we need the body if:
-
-		// - it's a <textarea> or a contenteditable element...we will add it ad the inner template in case the value of value is falsy
-		// - it's a valueless <option> element...we will check the body value at runtime to determine the implicit value selection
+		)
+	) {
 		const inner_state = { ...state, template: [], init: [] };
 		process_children(trimmed, { ...context, state: inner_state });
 
-		if (is_option_with_implicit_value) {
-			// in case of a valueless `<option>` element, $$body is a function that accepts the children...internally it
-			// will run the children to get the value of the body at runtime since it's needed to for the implicit value
-			// selection
-			state.template.push(
-				b.stmt(
-					b.call(
-						'$.valueless_option',
-						b.id('$$payload'),
-						b.thunk(b.block([...inner_state.init, ...build_template(inner_state.template)]))
-					)
+		state.template.push(
+			b.stmt(
+				b.call(
+					'$.valueless_option',
+					b.id('$$payload'),
+					b.thunk(b.block([...inner_state.init, ...build_template(inner_state.template)]))
 				)
-			);
-		} else {
-			let id = body;
+			)
+		);
+	} else if (body !== null) {
+		// if this is a `<textarea>` value or a contenteditable binding, we only add
+		// the body if the attribute/binding is falsy
+		const inner_state = { ...state, template: [], init: [] };
+		process_children(trimmed, { ...context, state: inner_state });
 
-			if (body.type !== 'Identifier') {
-				id = b.id(state.scope.generate('$$body'));
-				state.template.push(b.const(id, body));
-			}
+		let id = /** @type {Expression} */ (body);
 
-			// Use the body expression as the body if it's truthy, otherwise use the inner template
-			state.template.push(
-				b.if(
-					id,
-					b.block(build_template([id])),
-					b.block([...inner_state.init, ...build_template(inner_state.template)])
-				)
-			);
+		if (body.type !== 'Identifier') {
+			id = b.id(state.scope.generate('$$body'));
+			state.template.push(b.const(id, body));
 		}
+
+		// Use the body expression as the body if it's truthy, otherwise use the inner template
+		state.template.push(
+			b.if(
+				id,
+				b.block(build_template([id])),
+				b.block([...inner_state.init, ...build_template(inner_state.template)])
+			)
+		);
+	} else {
+		process_children(trimmed, { ...context, state });
 	}
 
 	if (select_with_value) {
