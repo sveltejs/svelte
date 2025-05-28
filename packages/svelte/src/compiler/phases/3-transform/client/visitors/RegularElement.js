@@ -626,7 +626,7 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 			? // if is a select with value we will also invoke `init_select` which need a reference before the template effect so we memoize separately
 				is_select_with_value
 				? memoize_expression(state, value)
-				: get_expression_id(state.expressions, value) // TODO i think this will break in spread, needs to be `expressions`
+				: get_expression_id(state.expressions, value)
 			: value
 	);
 
