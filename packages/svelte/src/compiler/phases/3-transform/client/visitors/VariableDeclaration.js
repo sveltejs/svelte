@@ -183,7 +183,12 @@ export function VariableDeclaration(node, context) {
 						);
 					}
 
-					const { paths } = extract_paths(declarator.id, rhs);
+					const { inserts, paths } = extract_paths(declarator.id, rhs);
+
+					for (const insert of inserts) {
+						insert.id.name = context.state.scope.generate('$$array');
+						declarations.push(b.declarator(insert.id, insert.value));
+					}
 
 					for (const path of paths) {
 						declarations.push(

@@ -237,42 +237,35 @@ export function extract_identifiers_from_destructuring(node, nodes = []) {
  * Extracts all destructured assignments from a pattern.
  * @param {ESTree.Node} param
  * @param {ESTree.Expression} initial
- * @returns {{ declarations: ESTree.VariableDeclaration[], paths: DestructuredAssignment[] }}
+ * @returns {{ inserts: Array<{ id: ESTree.Identifier, value: ESTree.Expression }>, paths: DestructuredAssignment[] }}
  */
 export function extract_paths(param, initial) {
 	/**
 	 * When dealing with array destructuring patterns (`let [a, b, c] = $derived(blah())`)
 	 * we need an intermediate declaration that creates an array, since `blah()` could
 	 * return a non-array-like iterator
-	 * @type {ESTree.VariableDeclaration[]}
+	 * @type {Array<{ id: ESTree.Identifier, value: ESTree.Expression }>}
 	 */
-	const declarations = [];
+	const inserts = [];
 
 	/** @type {DestructuredAssignment[]} */
 	const paths = [];
 
-	_extract_paths(paths, declarations, param, initial, initial, false);
+	_extract_paths(paths, inserts, param, initial, initial, false);
 
-	return { declarations, paths };
+	return { inserts, paths };
 }
 
 /**
  * @param {DestructuredAssignment[]} paths
- * @param {ESTree.VariableDeclaration[]} declarations
+ * @param {Array<{ id: ESTree.Identifier, value: ESTree.Expression }>} inserts
  * @param {ESTree.Node} param
  * @param {ESTree.Expression} expression
  * @param {ESTree.Expression} update_expression
  * @param {boolean} has_default_value
  * @returns {DestructuredAssignment[]}
  */
-function _extract_paths(
-	paths,
-	declarations,
-	param,
-	expression,
-	update_expression,
-	has_default_value
-) {
+function _extract_paths(paths, inserts, param, expression, update_expression, has_default_value) {
 	switch (param.type) {
 		case 'Identifier':
 		case 'MemberExpression':
@@ -316,7 +309,7 @@ function _extract_paths(
 					} else {
 						_extract_paths(
 							paths,
-							declarations,
+							inserts,
 							prop.argument,
 							rest_expression,
 							rest_expression,
@@ -332,7 +325,7 @@ function _extract_paths(
 
 					_extract_paths(
 						paths,
-						declarations,
+						inserts,
 						prop.value,
 						object_expression,
 						object_expression,
@@ -344,11 +337,26 @@ function _extract_paths(
 			break;
 
 		case 'ArrayPattern': {
+			// we create an intermediate declaration to convert iterables to arrays if necessary.
+			// the consumer is responsible for setting the name of the identifier
+			const id = b.id('#');
+
+			const is_rest = param.elements.at(-1)?.type === 'RestElement';
+			const call = b.call(
+				'$.to_array',
+				expression,
+				is_rest ? undefined : b.literal(param.elements.length)
+			);
+
+			inserts.push({ id, value: b.call('$.derived', b.thunk(call)) });
+
+			const array = b.call('$.get', id);
+
 			for (let i = 0; i < param.elements.length; i += 1) {
 				const element = param.elements[i];
 				if (element) {
 					if (element.type === 'RestElement') {
-						const rest_expression = b.call(b.member(expression, 'slice'), b.literal(i));
+						const rest_expression = b.call(b.member(array, 'slice'), b.literal(i));
 
 						if (element.argument.type === 'Identifier') {
 							paths.push({
@@ -361,7 +369,7 @@ function _extract_paths(
 						} else {
 							_extract_paths(
 								paths,
-								declarations,
+								inserts,
 								element.argument,
 								rest_expression,
 								rest_expression,
@@ -369,11 +377,11 @@ function _extract_paths(
 							);
 						}
 					} else {
-						const array_expression = b.member(expression, b.literal(i), true);
+						const array_expression = b.member(array, b.literal(i), true);
 
 						_extract_paths(
 							paths,
-							declarations,
+							inserts,
 							element,
 							array_expression,
 							array_expression,
@@ -398,14 +406,7 @@ function _extract_paths(
 					update_expression
 				});
 			} else {
-				_extract_paths(
-					paths,
-					declarations,
-					param.left,
-					fallback_expression,
-					update_expression,
-					true
-				);
+				_extract_paths(paths, inserts, param.left, fallback_expression, update_expression, true);
 			}
 
 			break;
