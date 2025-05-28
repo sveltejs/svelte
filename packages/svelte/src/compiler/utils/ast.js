@@ -237,30 +237,46 @@ export function extract_identifiers_from_destructuring(node, nodes = []) {
  * Extracts all destructured assignments from a pattern.
  * @param {ESTree.Node} param
  * @param {ESTree.Expression} initial
- * @returns {{ paths: DestructuredAssignment[] }}
+ * @returns {{ declarations: ESTree.VariableDeclaration[], paths: DestructuredAssignment[] }}
  */
 export function extract_paths(param, initial) {
+	/**
+	 * When dealing with array destructuring patterns (`let [a, b, c] = $derived(blah())`)
+	 * we need an intermediate declaration that creates an array, since `blah()` could
+	 * return a non-array-like iterator
+	 * @type {ESTree.VariableDeclaration[]}
+	 */
+	const declarations = [];
+
 	/** @type {DestructuredAssignment[]} */
 	const paths = [];
 
-	_extract_paths(paths, param, initial, initial, false);
+	_extract_paths(paths, declarations, param, initial, initial, false);
 
-	return { paths };
+	return { declarations, paths };
 }
 
 /**
- * @param {DestructuredAssignment[]} assignments
+ * @param {DestructuredAssignment[]} paths
+ * @param {ESTree.VariableDeclaration[]} declarations
  * @param {ESTree.Node} param
  * @param {ESTree.Expression} expression
  * @param {ESTree.Expression} update_expression
  * @param {boolean} has_default_value
  * @returns {DestructuredAssignment[]}
  */
-function _extract_paths(assignments = [], param, expression, update_expression, has_default_value) {
+function _extract_paths(
+	paths,
+	declarations,
+	param,
+	expression,
+	update_expression,
+	has_default_value
+) {
 	switch (param.type) {
 		case 'Identifier':
 		case 'MemberExpression':
-			assignments.push({
+			paths.push({
 				node: param,
 				is_rest: false,
 				has_default_value,
@@ -290,7 +306,7 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 					const rest_expression = b.call('$.exclude_from_object', expression, b.array(props));
 
 					if (prop.argument.type === 'Identifier') {
-						assignments.push({
+						paths.push({
 							node: prop.argument,
 							is_rest: true,
 							has_default_value,
@@ -299,7 +315,8 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 						});
 					} else {
 						_extract_paths(
-							assignments,
+							paths,
+							declarations,
 							prop.argument,
 							rest_expression,
 							rest_expression,
@@ -314,7 +331,8 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 					);
 
 					_extract_paths(
-						assignments,
+						paths,
+						declarations,
 						prop.value,
 						object_expression,
 						object_expression,
@@ -325,7 +343,7 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 
 			break;
 
-		case 'ArrayPattern':
+		case 'ArrayPattern': {
 			for (let i = 0; i < param.elements.length; i += 1) {
 				const element = param.elements[i];
 				if (element) {
@@ -333,7 +351,7 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 						const rest_expression = b.call(b.member(expression, 'slice'), b.literal(i));
 
 						if (element.argument.type === 'Identifier') {
-							assignments.push({
+							paths.push({
 								node: element.argument,
 								is_rest: true,
 								has_default_value,
@@ -342,7 +360,8 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 							});
 						} else {
 							_extract_paths(
-								assignments,
+								paths,
+								declarations,
 								element.argument,
 								rest_expression,
 								rest_expression,
@@ -353,7 +372,8 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 						const array_expression = b.member(expression, b.literal(i), true);
 
 						_extract_paths(
-							assignments,
+							paths,
+							declarations,
 							element,
 							array_expression,
 							array_expression,
@@ -364,12 +384,13 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 			}
 
 			break;
+		}
 
 		case 'AssignmentPattern': {
 			const fallback_expression = build_fallback(expression, param.right);
 
 			if (param.left.type === 'Identifier') {
-				assignments.push({
+				paths.push({
 					node: param.left,
 					is_rest: false,
 					has_default_value: true,
@@ -377,14 +398,21 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 					update_expression
 				});
 			} else {
-				_extract_paths(assignments, param.left, fallback_expression, update_expression, true);
+				_extract_paths(
+					paths,
+					declarations,
+					param.left,
+					fallback_expression,
+					update_expression,
+					true
+				);
 			}
 
 			break;
 		}
 	}
 
-	return assignments;
+	return paths;
 }
 
 /**
