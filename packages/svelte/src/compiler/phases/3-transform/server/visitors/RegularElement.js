@@ -6,7 +6,7 @@ import { is_void } from '../../../../../utils.js';
 import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
-import { build_element_attributes } from './shared/element.js';
+import { build_element_attributes, build_spread_object } from './shared/element.js';
 import { process_children, build_template, build_attribute_value } from './shared/utils.js';
 
 /**
@@ -76,18 +76,42 @@ export function RegularElement(node, context) {
 	if (node.name === 'select') {
 		const value = node.attributes.find(
 			(attribute) =>
-				((attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
-					attribute.name === 'value') ||
-				attribute.type === 'SpreadAttribute'
+				(attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
+				attribute.name === 'value'
 		);
-		if (value) {
+		if (node.attributes.some((attribute) => attribute.type === 'SpreadAttribute')) {
+			select_with_value = true;
+			state.template.push(
+				b.stmt(
+					b.assignment(
+						'=',
+						b.id('$$payload.select_value'),
+						b.member(
+							b.call(
+								'$.spread_attributes',
+								build_spread_object(
+									node,
+									node.attributes.filter(
+										(attribute) =>
+											attribute.type === 'Attribute' ||
+											attribute.type === 'BindDirective' ||
+											attribute.type === 'SpreadAttribute'
+									),
+									context
+								),
+								b.null
+							),
+							'value',
+							false,
+							true
+						)
+					)
+				)
+			);
+		} else if (value) {
 			select_with_value = true;
 			const left = b.id('$$payload.select_value');
-			if (value.type === 'SpreadAttribute') {
-				state.template.push(
-					b.stmt(b.assignment('=', left, b.member(value.expression, 'value', false, true)))
-				);
-			} else if (value.type === 'Attribute') {
+			if (value.type === 'Attribute') {
 				state.template.push(
 					b.stmt(b.assignment('=', left, build_attribute_value(value.value, context)))
 				);
