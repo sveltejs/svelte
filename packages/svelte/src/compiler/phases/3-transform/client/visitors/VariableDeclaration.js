@@ -138,14 +138,10 @@ export function VariableDeclaration(node, context) {
 				};
 
 				if (declarator.id.type === 'Identifier') {
+					const expression = /** @type {Expression} */ (context.visit(value));
+
 					declarations.push(
-						b.declarator(
-							declarator.id,
-							create_state_declarator(
-								declarator.id,
-								/** @type {Expression} */ (context.visit(value))
-							)
-						)
+						b.declarator(declarator.id, create_state_declarator(declarator.id, expression))
 					);
 				} else {
 					const tmp = b.id(context.state.scope.generate('tmp'));
@@ -157,10 +153,8 @@ export function VariableDeclaration(node, context) {
 							id.name = context.state.scope.generate('$$array');
 							context.state.transform[id.name] = { read: get_value };
 
-							return b.declarator(
-								id,
-								b.call('$.derived', /** @type {Expression} */ (context.visit(b.thunk(value))))
-							);
+							const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
+							return b.declarator(id, b.call('$.derived', expression));
 						}),
 						...paths.map((path) => {
 							const value = /** @type {Expression} */ (context.visit(path.expression));
@@ -205,12 +199,8 @@ export function VariableDeclaration(node, context) {
 						id.name = context.state.scope.generate('$$array');
 						context.state.transform[id.name] = { read: get_value };
 
-						declarations.push(
-							b.declarator(
-								id,
-								b.call('$.derived', /** @type {Expression} */ (context.visit(b.thunk(value))))
-							)
-						);
+						const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
+						declarations.push(b.declarator(id, b.call('$.derived', expression)));
 					}
 
 					for (const path of paths) {
@@ -261,12 +251,8 @@ export function VariableDeclaration(node, context) {
 						id.name = context.state.scope.generate('$$array');
 						context.state.transform[id.name] = { read: get_value };
 
-						declarations.push(
-							b.declarator(
-								id,
-								b.call('$.derived', /** @type {Expression} */ (context.visit(b.thunk(value))))
-							)
-						);
+						const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
+						declarations.push(b.declarator(id, b.call('$.derived', expression)));
 					}
 
 					for (const path of paths) {
@@ -349,10 +335,8 @@ function create_state_declarators(declarator, context, value) {
 			id.name = context.state.scope.generate('$$array');
 			context.state.transform[id.name] = { read: get_value };
 
-			return b.declarator(
-				id,
-				b.call('$.derived', /** @type {Expression} */ (context.visit(b.thunk(value))))
-			);
+			const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
+			return b.declarator(id, b.call('$.derived', expression));
 		}),
 		...paths.map((path) => {
 			const value = /** @type {Expression} */ (context.visit(path.expression));

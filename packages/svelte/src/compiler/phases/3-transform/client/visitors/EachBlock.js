@@ -240,15 +240,8 @@ export function EachBlock(node, context) {
 			id.name = context.state.scope.generate('$$array');
 			child_state.transform[id.name] = { read: get_value };
 
-			declarations.push(
-				b.var(
-					id,
-					b.call(
-						'$.derived',
-						/** @type {Expression} */ (context.visit(b.thunk(value), child_state))
-					)
-				)
-			);
+			const expression = /** @type {Expression} */ (context.visit(b.thunk(value), child_state));
+			declarations.push(b.var(id, b.call('$.derived', expression)));
 		}
 
 		for (const path of paths) {
