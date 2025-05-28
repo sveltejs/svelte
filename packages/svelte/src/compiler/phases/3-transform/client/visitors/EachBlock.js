@@ -234,7 +234,22 @@ export function EachBlock(node, context) {
 	} else if (node.context) {
 		const unwrapped = (flags & EACH_ITEM_REACTIVE) !== 0 ? b.call('$.get', item) : item;
 
-		const { paths } = extract_paths(node.context, unwrapped);
+		const { inserts, paths } = extract_paths(node.context, unwrapped);
+
+		for (const { id, value } of inserts) {
+			id.name = context.state.scope.generate('$$array');
+			child_state.transform[id.name] = { read: get_value };
+
+			declarations.push(
+				b.var(
+					id,
+					b.call(
+						'$.derived',
+						/** @type {Expression} */ (context.visit(b.thunk(value), child_state))
+					)
+				)
+			);
+		}
 
 		for (const path of paths) {
 			const name = /** @type {Identifier} */ (path.node).name;

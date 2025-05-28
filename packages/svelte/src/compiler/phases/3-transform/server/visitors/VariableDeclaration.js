@@ -121,13 +121,20 @@ export function VariableDeclaration(node, context) {
 					// Turn export let into props. It's really really weird because export let { x: foo, z: [bar]} = ..
 					// means that foo and bar are the props (i.e. the leafs are the prop names), not x and z.
 					const tmp = b.id(context.state.scope.generate('tmp'));
-					const { paths } = extract_paths(declarator.id, tmp);
+					const { inserts, paths } = extract_paths(declarator.id, tmp);
+
 					declarations.push(
 						b.declarator(
 							tmp,
 							/** @type {Expression} */ (context.visit(/** @type {Expression} */ (declarator.init)))
 						)
 					);
+
+					for (const { id, value } of inserts) {
+						id.name = context.state.scope.generate('$$array');
+						declarations.push(b.declarator(id, value));
+					}
+
 					for (const path of paths) {
 						const value = path.expression;
 						const name = /** @type {Identifier} */ (path.node).name;
@@ -135,6 +142,7 @@ export function VariableDeclaration(node, context) {
 						const prop = b.member(b.id('$$props'), b.literal(binding.prop_alias ?? name), true);
 						declarations.push(b.declarator(path.node, build_fallback(prop, value)));
 					}
+
 					continue;
 				}
 

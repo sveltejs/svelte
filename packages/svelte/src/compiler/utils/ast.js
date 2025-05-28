@@ -341,22 +341,19 @@ function _extract_paths(paths, inserts, param, expression, update_expression, ha
 			// the consumer is responsible for setting the name of the identifier
 			const id = b.id('#');
 
-			const is_rest = param.elements.at(-1)?.type === 'RestElement';
-			const call = b.call(
+			const value = b.call(
 				'$.to_array',
 				expression,
-				is_rest ? undefined : b.literal(param.elements.length)
+				param.elements.at(-1)?.type === 'RestElement' ? undefined : b.literal(param.elements.length)
 			);
 
-			inserts.push({ id, value: b.call('$.derived', b.thunk(call)) });
-
-			const array = b.call('$.get', id);
+			inserts.push({ id, value });
 
 			for (let i = 0; i < param.elements.length; i += 1) {
 				const element = param.elements[i];
 				if (element) {
 					if (element.type === 'RestElement') {
-						const rest_expression = b.call(b.member(array, 'slice'), b.literal(i));
+						const rest_expression = b.call(b.member(id, 'slice'), b.literal(i));
 
 						if (element.argument.type === 'Identifier') {
 							paths.push({
@@ -377,7 +374,7 @@ function _extract_paths(paths, inserts, param, expression, update_expression, ha
 							);
 						}
 					} else {
-						const array_expression = b.member(array, b.literal(i), true);
+						const array_expression = b.member(id, b.literal(i), true);
 
 						_extract_paths(
 							paths,
