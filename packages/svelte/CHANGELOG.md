@@ -1,5 +1,21 @@
 # svelte
 
+## 5.33.4
+
+### Patch Changes
+
+- fix: narrow `defaultChecked` to boolean ([#16009](https://github.com/sveltejs/svelte/pull/16009))
+
+- fix: warn when using rest or identifier in custom elements without props option ([#16003](https://github.com/sveltejs/svelte/pull/16003))
+
+## 5.33.3
+
+### Patch Changes
+
+- fix: allow using typescript in `customElement.extend` option ([#16001](https://github.com/sveltejs/svelte/pull/16001))
+
+- fix: cleanup event handlers on media elements ([#16005](https://github.com/sveltejs/svelte/pull/16005))
+
 ## 5.33.2
 
 ### Patch Changes
