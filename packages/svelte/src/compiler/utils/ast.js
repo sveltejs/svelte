@@ -235,6 +235,7 @@ export function extract_identifiers_from_destructuring(node, nodes = []) {
 
 /**
  * Extracts all destructured assignments from a pattern.
+ * For each `id` in the returned `inserts`, make sure to adjust the `name`.
  * @param {ESTree.Node} param
  * @param {ESTree.Expression} initial
  * @returns {{ inserts: Array<{ id: ESTree.Identifier, value: ESTree.Expression }>, paths: DestructuredAssignment[] }}
