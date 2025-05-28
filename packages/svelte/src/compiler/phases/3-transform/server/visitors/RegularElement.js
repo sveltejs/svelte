@@ -87,19 +87,15 @@ export function RegularElement(node, context) {
 						'=',
 						b.id('$$payload.select_value'),
 						b.member(
-							b.call(
-								'$.spread_attributes',
-								build_spread_object(
-									node,
-									node.attributes.filter(
-										(attribute) =>
-											attribute.type === 'Attribute' ||
-											attribute.type === 'BindDirective' ||
-											attribute.type === 'SpreadAttribute'
-									),
-									context
+							build_spread_object(
+								node,
+								node.attributes.filter(
+									(attribute) =>
+										attribute.type === 'Attribute' ||
+										attribute.type === 'BindDirective' ||
+										attribute.type === 'SpreadAttribute'
 								),
-								b.null
+								context
 							),
 							'value',
 							false,

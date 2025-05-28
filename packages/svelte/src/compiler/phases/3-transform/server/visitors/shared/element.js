@@ -211,19 +211,15 @@ export function build_element_attributes(node, context) {
 					'$.maybe_selected',
 					b.id('$$payload'),
 					b.member(
-						b.call(
-							'$.spread_attributes',
-							build_spread_object(
-								node,
-								node.attributes.filter(
-									(attribute) =>
-										attribute.type === 'Attribute' ||
-										attribute.type === 'BindDirective' ||
-										attribute.type === 'SpreadAttribute'
-								),
-								context
+						build_spread_object(
+							node,
+							node.attributes.filter(
+								(attribute) =>
+									attribute.type === 'Attribute' ||
+									attribute.type === 'BindDirective' ||
+									attribute.type === 'SpreadAttribute'
 							),
-							b.null
+							context
 						),
 						'value',
 						false,
