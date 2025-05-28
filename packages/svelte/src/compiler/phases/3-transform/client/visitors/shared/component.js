@@ -258,10 +258,18 @@ export function build_component(node, component_name, context, anchor = context.
 				}
 			}
 		} else if (attribute.type === 'AttachTag') {
+			const evaluated = context.state.scope.evaluate(attribute.expression);
+
 			let expression = /** @type {Expression} */ (context.visit(attribute.expression));
 
 			if (attribute.metadata.expression.has_state) {
-				expression = b.arrow([b.id('$$node')], b.call(expression, b.id('$$node')));
+				expression = b.arrow(
+					[b.id('$$node')],
+					b.call(
+						evaluated.is_function ? expression : b.logical('||', expression, b.id('$.noop')),
+						b.id('$$node')
+					)
+				);
 			}
 
 			push_prop(b.prop('get', b.call('$.attachment'), expression, true));
