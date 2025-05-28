@@ -630,10 +630,9 @@ export class Scope {
 
 	/**
 	 * @param {string} preferred_name
-	 * @param {(name: string, counter: number) => string} [generator]
 	 * @returns {string}
 	 */
-	generate(preferred_name, generator = (name, counter) => `${name}_${counter}`) {
+	generate(preferred_name) {
 		if (this.#porous) {
 			return /** @type {Scope} */ (this.parent).generate(preferred_name);
 		}
@@ -648,7 +647,7 @@ export class Scope {
 			this.root.conflicts.has(name) ||
 			is_reserved(name)
 		) {
-			name = generator(preferred_name, n++);
+			name = `${preferred_name}_${n++}`;
 		}
 
 		this.references.set(name, []);

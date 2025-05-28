@@ -3,7 +3,7 @@
 /** @import { Context } from '../types.js' */
 /** @import { ComponentAnalysis } from '../../../types.js' */
 /** @import { Scope } from '../../../scope.js' */
-import { build_pattern, build_fallback, extract_paths } from '../../../../utils/ast.js';
+import { build_fallback, extract_paths } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 import { walk } from 'zimmerframe';
@@ -120,21 +120,29 @@ export function VariableDeclaration(node, context) {
 				if (declarator.id.type !== 'Identifier') {
 					// Turn export let into props. It's really really weird because export let { x: foo, z: [bar]} = ..
 					// means that foo and bar are the props (i.e. the leafs are the prop names), not x and z.
-					const tmp = context.state.scope.generate('tmp');
-					const paths = extract_paths(declarator.id);
+					const tmp = b.id(context.state.scope.generate('tmp'));
+					const { inserts, paths } = extract_paths(declarator.id, tmp);
+
 					declarations.push(
 						b.declarator(
-							b.id(tmp),
+							tmp,
 							/** @type {Expression} */ (context.visit(/** @type {Expression} */ (declarator.init)))
 						)
 					);
+
+					for (const { id, value } of inserts) {
+						id.name = context.state.scope.generate('$$array');
+						declarations.push(b.declarator(id, value));
+					}
+
 					for (const path of paths) {
-						const value = path.expression?.(b.id(tmp));
+						const value = path.expression;
 						const name = /** @type {Identifier} */ (path.node).name;
 						const binding = /** @type {Binding} */ (context.state.scope.get(name));
 						const prop = b.member(b.id('$$props'), b.literal(binding.prop_alias ?? name), true);
 						declarations.push(b.declarator(path.node, build_fallback(prop, value)));
 					}
+
 					continue;
 				}
 
@@ -188,10 +196,13 @@ function create_state_declarators(declarator, scope, value) {
 		return [b.declarator(declarator.id, value)];
 	}
 
-	const [pattern, replacements] = build_pattern(declarator.id, scope);
+	const tmp = b.id(scope.generate('tmp'));
+	const { paths } = extract_paths(declarator.id, tmp);
 	return [
-		b.declarator(pattern, value),
-		// TODO inject declarator for opts, so we can use it below
-		...[...replacements].map(([original, replacement]) => b.declarator(original, replacement))
+		b.declarator(tmp, value), // TODO inject declarator for opts, so we can use it below
+		...paths.map((path) => {
+			const value = path.expression;
+			return b.declarator(path.node, value);
+		})
 	];
 }

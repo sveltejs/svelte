@@ -7,6 +7,7 @@ import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { extract_paths } from '../../../utils/ast.js';
 import { equal } from '../../../utils/assert.js';
+import * as b from '#compiler/builders';
 
 /**
  * @param {VariableDeclarator} node
@@ -18,7 +19,7 @@ export function VariableDeclarator(node, context) {
 	if (context.state.analysis.runes) {
 		const init = node.init;
 		const rune = get_rune(init, context.state.scope);
-		const paths = extract_paths(node.id);
+		const { paths } = extract_paths(node.id, b.id('dummy'));
 
 		for (const path of paths) {
 			validate_identifier_name(context.state.scope.get(/** @type {Identifier} */ (path.node).name));
