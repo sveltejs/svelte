@@ -5,7 +5,11 @@ import { dev, locator } from '../../../../state.js';
 import { is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { determine_namespace_for_children } from '../../utils.js';
-import { build_attribute_value, build_set_attributes, build_set_class } from './shared/element.js';
+import {
+	build_attribute_value,
+	build_attribute_effect,
+	build_set_class
+} from './shared/element.js';
 import { build_render_statement } from './shared/utils.js';
 
 /**
@@ -82,7 +86,7 @@ export function SvelteElement(node, context) {
 	} else if (attributes.length) {
 		// Always use spread because we don't know whether the element is a custom element or not,
 		// therefore we need to do the "how to set an attribute" logic at runtime.
-		build_set_attributes(
+		build_attribute_effect(
 			attributes,
 			class_directives,
 			style_directives,

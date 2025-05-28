@@ -17,7 +17,7 @@ import { build_getter } from '../utils.js';
 import {
 	get_attribute_name,
 	build_attribute_value,
-	build_set_attributes,
+	build_attribute_effect,
 	build_set_class,
 	build_set_style
 } from './shared/element.js';
@@ -201,7 +201,7 @@ export function RegularElement(node, context) {
 	const node_id = context.state.node;
 
 	if (has_spread) {
-		build_set_attributes(attributes, class_directives, style_directives, context, node, node_id);
+		build_attribute_effect(attributes, class_directives, style_directives, context, node, node_id);
 	} else {
 		/** If true, needs `__value` for inputs */
 		const needs_special_value_handling =

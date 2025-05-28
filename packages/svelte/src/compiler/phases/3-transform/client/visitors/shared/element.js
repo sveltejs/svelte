@@ -17,7 +17,7 @@ import { build_template_chunk, get_expression_id } from './utils.js';
  * @param {AST.RegularElement | AST.SvelteElement} element
  * @param {Identifier} element_id
  */
-export function build_set_attributes(
+export function build_attribute_effect(
 	attributes,
 	class_directives,
 	style_directives,
