@@ -1,5 +1,13 @@
 # svelte
 
+## 5.33.5
+
+### Patch Changes
+
+- fix: handle derived destructured iterators ([#16015](https://github.com/sveltejs/svelte/pull/16015))
+
+- fix: avoid rerunning attachments when unrelated spread attributes change ([#15961](https://github.com/sveltejs/svelte/pull/15961))
+
 ## 5.33.4
 
 ### Patch Changes
