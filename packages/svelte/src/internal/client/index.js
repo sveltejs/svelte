@@ -155,7 +155,7 @@ export {
 } from './dom/operations.js';
 export { attr, clsx } from '../shared/attributes.js';
 export { snapshot } from '../shared/clone.js';
-export { noop, fallback, to_array } from '../shared/utils.js';
+export { noop, fallback, safe_call, to_array } from '../shared/utils.js';
 export {
 	invalid_default_snippet,
 	validate_dynamic_element_tag,
