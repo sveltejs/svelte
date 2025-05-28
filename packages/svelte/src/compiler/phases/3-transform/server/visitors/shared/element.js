@@ -200,12 +200,15 @@ export function build_element_attributes(node, context) {
 		}
 	}
 
-	let option_has_value = false;
+	let is_option_with_implicit_value =
+		node.name === 'option' &&
+		!attributes.some(
+			(attribute) => attribute.type === 'SpreadAttribute' || attribute.name === 'value'
+		);
 
 	if (has_spread) {
 		build_element_spread_attributes(node, attributes, style_directives, class_directives, context);
 		if (node.name === 'option') {
-			option_has_value = true;
 			context.state.template.push(
 				b.call(
 					'$.maybe_selected',
@@ -298,13 +301,12 @@ export function build_element_attributes(node, context) {
 			}
 
 			if (name === 'value' && node.name === 'option') {
-				option_has_value = true;
 				context.state.template.push(b.call('$.maybe_selected', b.id('$$payload'), value));
 			}
 		}
 	}
 
-	if (!option_has_value && node.name === 'option') {
+	if (is_option_with_implicit_value) {
 		content = b.call('$.valueless_option', b.id('$$payload'));
 	}
 
