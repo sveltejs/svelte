@@ -83,16 +83,6 @@ export function fallback(value, fallback, lazy = false) {
 }
 
 /**
- * @param {*} value
- */
-export function safe_call(value) {
-	if (is_function(value)) {
-		return value;
-	}
-	return noop;
-}
-
-/**
  * When encountering a situation like `let [a, b, c] = $derived(blah())`,
  * we need to stash an intermediate value that `a`, `b`, and `c` derive
  * from, in case it's an iterable
