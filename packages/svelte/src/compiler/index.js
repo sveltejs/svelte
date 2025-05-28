@@ -43,6 +43,11 @@ export function compile(source, options) {
 			instance: parsed.instance && remove_typescript_nodes(parsed.instance),
 			module: parsed.module && remove_typescript_nodes(parsed.module)
 		};
+		if (combined_options.customElementOptions?.extend) {
+			combined_options.customElementOptions.extend = remove_typescript_nodes(
+				combined_options.customElementOptions?.extend
+			);
+		}
 	}
 
 	const analysis = analyze_component(parsed, source, combined_options);

@@ -1,5 +1,59 @@
 # svelte
 
+## 5.33.4
+
+### Patch Changes
+
+- fix: narrow `defaultChecked` to boolean ([#16009](https://github.com/sveltejs/svelte/pull/16009))
+
+- fix: warn when using rest or identifier in custom elements without props option ([#16003](https://github.com/sveltejs/svelte/pull/16003))
+
+## 5.33.3
+
+### Patch Changes
+
+- fix: allow using typescript in `customElement.extend` option ([#16001](https://github.com/sveltejs/svelte/pull/16001))
+
+- fix: cleanup event handlers on media elements ([#16005](https://github.com/sveltejs/svelte/pull/16005))
+
+## 5.33.2
+
+### Patch Changes
+
+- fix: correctly parse escaped unicode characters in css selector ([#15976](https://github.com/sveltejs/svelte/pull/15976))
+
+- fix: don't mark deriveds as clean if updating during teardown ([#15997](https://github.com/sveltejs/svelte/pull/15997))
+
+## 5.33.1
+
+### Patch Changes
+
+- fix: make deriveds on the server lazy again ([#15964](https://github.com/sveltejs/svelte/pull/15964))
+
+## 5.33.0
+
+### Minor Changes
+
+- feat: XHTML compliance ([#15538](https://github.com/sveltejs/svelte/pull/15538))
+
+- feat: add `fragments: 'html' | 'tree'` option for wider CSP compliance ([#15538](https://github.com/sveltejs/svelte/pull/15538))
+
+## 5.32.2
+
+### Patch Changes
+
+- chore: simplify `<pre>` cleaning ([#15980](https://github.com/sveltejs/svelte/pull/15980))
+
+- fix: attach `__svelte_meta` correctly to elements following a CSS wrapper ([#15982](https://github.com/sveltejs/svelte/pull/15982))
+
+- fix: import untrack directly from client in `svelte/attachments` ([#15974](https://github.com/sveltejs/svelte/pull/15974))
+
+## 5.32.1
+
+### Patch Changes
+
+- Warn when an invalid `<select multiple>` value is given ([#14816](https://github.com/sveltejs/svelte/pull/14816))
+
 ## 5.32.0
 
 ### Minor Changes

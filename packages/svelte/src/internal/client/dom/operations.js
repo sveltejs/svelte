@@ -217,3 +217,44 @@ export function should_defer_append() {
 	var flags = /** @type {Effect} */ (active_effect).f;
 	return (flags & EFFECT_RAN) !== 0;
 }
+
+/**
+ *
+ * @param {string} tag
+ * @param {string} [namespace]
+ * @param {string} [is]
+ * @returns
+ */
+export function create_element(tag, namespace, is) {
+	let options = is ? { is } : undefined;
+	if (namespace) {
+		return document.createElementNS(namespace, tag, options);
+	}
+	return document.createElement(tag, options);
+}
+
+export function create_fragment() {
+	return document.createDocumentFragment();
+}
+
+/**
+ * @param {string} data
+ * @returns
+ */
+export function create_comment(data = '') {
+	return document.createComment(data);
+}
+
+/**
+ * @param {Element} element
+ * @param {string} key
+ * @param {string} value
+ * @returns
+ */
+export function set_attribute(element, key, value = '') {
+	if (key.startsWith('xlink:')) {
+		element.setAttributeNS('http://www.w3.org/1999/xlink', key, value);
+		return;
+	}
+	return element.setAttribute(key, value);
+}

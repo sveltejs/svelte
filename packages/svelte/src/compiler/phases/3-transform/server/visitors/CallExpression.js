@@ -35,7 +35,7 @@ export function CallExpression(node, context) {
 
 	if (rune === '$derived' || rune === '$derived.by') {
 		const fn = /** @type {Expression} */ (context.visit(node.arguments[0]));
-		return b.call('$.once', rune === '$derived' ? b.thunk(fn) : fn);
+		return b.call('$.derived', rune === '$derived' ? b.thunk(fn) : fn);
 	}
 
 	if (rune === '$state.snapshot') {

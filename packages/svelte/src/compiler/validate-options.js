@@ -114,6 +114,8 @@ export const validate_component_options =
 
 			preserveComments: boolean(false),
 
+			fragments: list(['html', 'tree']),
+
 			preserveWhitespace: boolean(false),
 
 			runes: boolean(undefined),

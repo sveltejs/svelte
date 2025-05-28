@@ -183,4 +183,8 @@ export type ProxyStateObject<T = Record<string | symbol, any>> = T & {
 	[STATE_SYMBOL]: T;
 };
 
+export type SourceLocation =
+	| [line: number, column: number]
+	| [line: number, column: number, SourceLocation[]];
+
 export * from './reactivity/types';

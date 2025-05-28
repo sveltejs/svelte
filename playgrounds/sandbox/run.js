@@ -88,8 +88,24 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 		}
 
 		write(output_js, compiled.js.code + '\n//# sourceMappingURL=' + path.basename(output_map));
-
 		write(output_map, compiled.js.map.toString());
+
+		// generate with fragments: 'tree'
+		if (generate === 'client') {
+			const compiled = compile(source, {
+				dev: true,
+				filename: input,
+				generate,
+				runes: argv.values.runes,
+				fragments: 'tree'
+			});
+
+			const output_js = `${cwd}/output/${generate}/${file}.tree.js`;
+			const output_map = `${cwd}/output/${generate}/${file}.tree.js.map`;
+
+			write(output_js, compiled.js.code + '\n//# sourceMappingURL=' + path.basename(output_map));
+			write(output_map, compiled.js.map.toString());
+		}
 
 		if (compiled.css) {
 			write(output_css, compiled.css.code);

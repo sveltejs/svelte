@@ -4,6 +4,7 @@
 import { get_rune } from '../../scope.js';
 import { ensure_no_module_import_conflict, validate_identifier_name } from './shared/utils.js';
 import * as e from '../../../errors.js';
+import * as w from '../../../warnings.js';
 import { extract_paths } from '../../../utils/ast.js';
 import { equal } from '../../../utils/assert.js';
 
@@ -50,6 +51,19 @@ export function VariableDeclarator(node, context) {
 		if (rune === '$props') {
 			if (node.id.type !== 'ObjectPattern' && node.id.type !== 'Identifier') {
 				e.props_invalid_identifier(node);
+			}
+
+			if (
+				context.state.analysis.custom_element &&
+				context.state.options.customElementOptions?.props == null
+			) {
+				let warn_on;
+				if (
+					node.id.type === 'Identifier' ||
+					(warn_on = node.id.properties.find((p) => p.type === 'RestElement')) != null
+				) {
+					w.custom_element_props_identifier(warn_on ?? node.id);
+				}
 			}
 
 			context.state.analysis.needs_props = true;

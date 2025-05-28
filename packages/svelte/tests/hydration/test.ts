@@ -4,6 +4,7 @@ import * as fs from 'node:fs';
 import { assert } from 'vitest';
 import { compile_directory } from '../helpers.js';
 import { assert_html_equal } from '../html_equal.js';
+import { fragments } from '../helpers.js';
 import { assert_ok, suite, type BaseTest } from '../suite.js';
 import { createClassComponent } from 'svelte/legacy';
 import { render } from 'svelte/server';
@@ -43,7 +44,12 @@ function read(path: string): string | void {
 
 const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 	if (!config.load_compiled) {
-		await compile_directory(cwd, 'client', { accessors: true, ...config.compileOptions });
+		await compile_directory(cwd, 'client', {
+			accessors: true,
+			fragments,
+			...config.compileOptions
+		});
+
 		await compile_directory(cwd, 'server', config.compileOptions);
 	}
 
@@ -125,7 +131,8 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 
 		flushSync();
 
-		const normalize = (string: string) => string.trim().replace(/\r\n/g, '\n');
+		const normalize = (string: string) =>
+			string.trim().replaceAll('\r\n', '\n').replaceAll('/>', '>');
 
 		const expected = read(`${cwd}/_expected.html`) ?? rendered.html;
 		assert.equal(normalize(target.innerHTML), normalize(expected));

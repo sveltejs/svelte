@@ -24,9 +24,11 @@ export function RegularElement(node, context) {
 			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea'
 	};
 
+	const node_is_void = is_void(node.name);
+
 	context.state.template.push(b.literal(`<${node.name}`));
 	const body = build_element_attributes(node, { ...context, state });
-	context.state.template.push(b.literal('>'));
+	context.state.template.push(b.literal(node_is_void ? '/>' : '>')); // add `/>` for XHTML compliance
 
 	if ((node.name === 'script' || node.name === 'style') && node.fragment.nodes.length === 1) {
 		context.state.template.push(
@@ -94,7 +96,7 @@ export function RegularElement(node, context) {
 		);
 	}
 
-	if (!is_void(node.name)) {
+	if (!node_is_void) {
 		state.template.push(b.literal(`</${node.name}>`));
 	}
 
