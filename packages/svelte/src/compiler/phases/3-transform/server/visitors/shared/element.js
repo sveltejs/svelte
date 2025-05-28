@@ -200,6 +200,8 @@ export function build_element_attributes(node, context) {
 		}
 	}
 
+	let option_has_value = false;
+
 	if (has_spread) {
 		build_element_spread_attributes(node, attributes, style_directives, class_directives, context);
 	} else {
@@ -272,9 +274,21 @@ export function build_element_attributes(node, context) {
 			}
 
 			if (name === 'value' && node.name === 'option') {
+				option_has_value = true;
 				context.state.template.push(b.call('$.maybe_selected', b.id('$$payload'), value));
 			}
 		}
+	}
+
+	if (!option_has_value && node.name === 'option') {
+		context.state.template.push(
+			b.call(
+				'$.maybe_selected',
+				b.id('$$payload'),
+				// this should be fine for the moment since option can only contain text and expressions
+				build_attribute_value(/** @type {*} */ (node.fragment.nodes), context)
+			)
+		);
 	}
 
 	if (events_to_capture.size !== 0) {
