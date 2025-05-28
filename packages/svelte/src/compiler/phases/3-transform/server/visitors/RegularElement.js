@@ -127,7 +127,16 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	if (body === null) {
+	const is_option_with_implicit_value =
+		node.name === 'option' &&
+		!node.attributes.some(
+			(attribute) =>
+				attribute.type === 'SpreadAttribute' ||
+				((attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
+					attribute.name === 'value')
+		);
+
+	if (body === null && !is_option_with_implicit_value) {
 		process_children(trimmed, { ...context, state });
 	} else {
 		// we need the body if:
@@ -137,14 +146,15 @@ export function RegularElement(node, context) {
 		const inner_state = { ...state, template: [], init: [] };
 		process_children(trimmed, { ...context, state: inner_state });
 
-		if (node.name === 'option') {
+		if (is_option_with_implicit_value) {
 			// in case of a valueless `<option>` element, $$body is a function that accepts the children...internally it
 			// will run the children to get the value of the body at runtime since it's needed to for the implicit value
 			// selection
 			state.template.push(
 				b.stmt(
 					b.call(
-						body,
+						'$.valueless_option',
+						b.id('$$payload'),
 						b.thunk(b.block([...inner_state.init, ...build_template(inner_state.template)]))
 					)
 				)

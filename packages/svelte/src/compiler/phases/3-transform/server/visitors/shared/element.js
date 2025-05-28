@@ -200,12 +200,6 @@ export function build_element_attributes(node, context) {
 		}
 	}
 
-	let is_option_with_implicit_value =
-		node.name === 'option' &&
-		!attributes.some(
-			(attribute) => attribute.type === 'SpreadAttribute' || attribute.name === 'value'
-		);
-
 	if (has_spread) {
 		build_element_spread_attributes(node, attributes, style_directives, class_directives, context);
 		if (node.name === 'option') {
@@ -304,10 +298,6 @@ export function build_element_attributes(node, context) {
 				context.state.template.push(b.call('$.maybe_selected', b.id('$$payload'), value));
 			}
 		}
-	}
-
-	if (is_option_with_implicit_value) {
-		content = b.call('$.valueless_option', b.id('$$payload'));
 	}
 
 	if (events_to_capture.size !== 0) {
