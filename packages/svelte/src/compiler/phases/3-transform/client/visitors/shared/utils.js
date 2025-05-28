@@ -21,7 +21,7 @@ export function memoize_expression(state, value) {
 }
 
 /**
- *
+ * Pushes `value` into `expressions` and returns a new id
  * @param {Expression[]} expressions
  * @param {Expression} value
  */
