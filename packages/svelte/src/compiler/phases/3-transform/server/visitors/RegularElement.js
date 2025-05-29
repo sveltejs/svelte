@@ -119,7 +119,7 @@ export function RegularElement(node, context) {
 							'=',
 							left,
 							value.expression.type === 'SequenceExpression'
-								? b.call(value.expression.expressions[0])
+								? /** @type {Expression} */ (context.visit(b.call(value.expression.expressions[0])))
 								: /** @type {Expression} */ (context.visit(value.expression))
 						)
 					)
