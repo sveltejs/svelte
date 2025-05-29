@@ -1,13 +1,8 @@
 /** @import { CallExpression, Expression, Identifier, Literal, VariableDeclaration, VariableDeclarator } from 'estree' */
 /** @import { Binding } from '#compiler' */
-/** @import { ComponentClientTransformState, ComponentContext } from '../types' */
-<<<<<<< HEAD
+/** @import { ComponentContext } from '../types' */
 import { dev, is_ignored, locate_node } from '../../../../state.js';
-import { build_pattern, extract_paths } from '../../../../utils/ast.js';
-=======
-import { dev } from '../../../../state.js';
 import { extract_paths } from '../../../../utils/ast.js';
->>>>>>> main
 import * as b from '#compiler/builders';
 import * as assert from '../../../../utils/assert.js';
 import { get_rune } from '../../../scope.js';
