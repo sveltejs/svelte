@@ -29,6 +29,7 @@ export {
 	remove_input_defaults,
 	set_attribute,
 	set_attributes,
+	attribute_effect,
 	set_custom_element_data,
 	set_xlink_attribute,
 	set_value,
@@ -168,7 +169,7 @@ export {
 } from './dom/operations.js';
 export { attr, clsx } from '../shared/attributes.js';
 export { snapshot } from '../shared/clone.js';
-export { noop, fallback } from '../shared/utils.js';
+export { noop, fallback, to_array } from '../shared/utils.js';
 export {
 	invalid_default_snippet,
 	validate_dynamic_element_tag,

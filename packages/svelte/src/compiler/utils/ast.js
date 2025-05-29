@@ -1,8 +1,7 @@
-/** @import { AST, Scope } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import * as ESTree from 'estree' */
 import { walk } from 'zimmerframe';
 import * as b from '#compiler/builders';
-import is_reference from 'is-reference';
 
 /**
  * Gets the left-most identifier of a member expression or identifier.
@@ -130,49 +129,6 @@ export function unwrap_pattern(pattern, nodes = []) {
 }
 
 /**
- * @param {ESTree.Pattern} id
- * @param {Scope} scope
- * @returns {[ESTree.Pattern, Map<ESTree.Identifier | ESTree.MemberExpression, ESTree.Identifier>]}
- */
-export function build_pattern(id, scope) {
-	/** @type {Map<ESTree.Identifier | ESTree.MemberExpression, ESTree.Identifier>} */
-	const map = new Map();
-
-	/** @type {Map<string, string>} */
-	const names = new Map();
-
-	let counter = 0;
-
-	for (const node of unwrap_pattern(id)) {
-		const name = scope.generate(`$$${++counter}`, (_, counter) => `$$${counter}`);
-
-		map.set(node, b.id(name));
-
-		if (node.type === 'Identifier') {
-			names.set(node.name, name);
-		}
-	}
-
-	const pattern = walk(id, null, {
-		Identifier(node, context) {
-			if (is_reference(node, /** @type {ESTree.Pattern} */ (context.path.at(-1)))) {
-				const name = names.get(node.name);
-				if (name) return b.id(name);
-			}
-		},
-
-		MemberExpression(node, context) {
-			const n = map.get(node);
-			if (n) return n;
-
-			context.next();
-		}
-	});
-
-	return [pattern, map];
-}
-
-/**
  * Extracts all identifiers from a pattern.
  * @param {ESTree.Pattern} pattern
  * @returns {ESTree.Identifier[]}
@@ -271,40 +227,50 @@ export function extract_identifiers_from_destructuring(node, nodes = []) {
  * @property {ESTree.Identifier | ESTree.MemberExpression} node The node the destructuring path end in. Can be a member expression only for assignment expressions
  * @property {boolean} is_rest `true` if this is a `...rest` destructuring
  * @property {boolean} has_default_value `true` if this has a fallback value like `const { foo = 'bar } = ..`
- * @property {(expression: ESTree.Expression) => ESTree.Identifier | ESTree.MemberExpression | ESTree.CallExpression | ESTree.AwaitExpression} expression Returns an expression which walks the path starting at the given expression.
+ * @property {ESTree.Expression} expression The value of the current path
  * This will be a call expression if a rest element or default is involved — e.g. `const { foo: { bar: baz = 42 }, ...rest } = quux` — since we can't represent `baz` or `rest` purely as a path
  * Will be an await expression in case of an async default value (`const { foo = await bar } = ...`)
- * @property {(expression: ESTree.Expression) => ESTree.Identifier | ESTree.MemberExpression | ESTree.CallExpression | ESTree.AwaitExpression} update_expression Like `expression` but without default values.
+ * @property {ESTree.Expression} update_expression Like `expression` but without default values.
  */
 
 /**
  * Extracts all destructured assignments from a pattern.
+ * For each `id` in the returned `inserts`, make sure to adjust the `name`.
  * @param {ESTree.Node} param
- * @returns {DestructuredAssignment[]}
+ * @param {ESTree.Expression} initial
+ * @returns {{ inserts: Array<{ id: ESTree.Identifier, value: ESTree.Expression }>, paths: DestructuredAssignment[] }}
  */
-export function extract_paths(param) {
-	return _extract_paths(
-		[],
-		param,
-		(node) => /** @type {ESTree.Identifier | ESTree.MemberExpression} */ (node),
-		(node) => /** @type {ESTree.Identifier | ESTree.MemberExpression} */ (node),
-		false
-	);
+export function extract_paths(param, initial) {
+	/**
+	 * When dealing with array destructuring patterns (`let [a, b, c] = $derived(blah())`)
+	 * we need an intermediate declaration that creates an array, since `blah()` could
+	 * return a non-array-like iterator
+	 * @type {Array<{ id: ESTree.Identifier, value: ESTree.Expression }>}
+	 */
+	const inserts = [];
+
+	/** @type {DestructuredAssignment[]} */
+	const paths = [];
+
+	_extract_paths(paths, inserts, param, initial, initial, false);
+
+	return { inserts, paths };
 }
 
 /**
- * @param {DestructuredAssignment[]} assignments
+ * @param {DestructuredAssignment[]} paths
+ * @param {Array<{ id: ESTree.Identifier, value: ESTree.Expression }>} inserts
  * @param {ESTree.Node} param
- * @param {DestructuredAssignment['expression']} expression
- * @param {DestructuredAssignment['update_expression']} update_expression
+ * @param {ESTree.Expression} expression
+ * @param {ESTree.Expression} update_expression
  * @param {boolean} has_default_value
  * @returns {DestructuredAssignment[]}
  */
-function _extract_paths(assignments = [], param, expression, update_expression, has_default_value) {
+function _extract_paths(paths, inserts, param, expression, update_expression, has_default_value) {
 	switch (param.type) {
 		case 'Identifier':
 		case 'MemberExpression':
-			assignments.push({
+			paths.push({
 				node: param,
 				is_rest: false,
 				has_default_value,
@@ -316,28 +282,25 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 		case 'ObjectPattern':
 			for (const prop of param.properties) {
 				if (prop.type === 'RestElement') {
-					/** @type {DestructuredAssignment['expression']} */
-					const rest_expression = (object) => {
-						/** @type {ESTree.Expression[]} */
-						const props = [];
+					/** @type {ESTree.Expression[]} */
+					const props = [];
 
-						for (const p of param.properties) {
-							if (p.type === 'Property' && p.key.type !== 'PrivateIdentifier') {
-								if (p.key.type === 'Identifier' && !p.computed) {
-									props.push(b.literal(p.key.name));
-								} else if (p.key.type === 'Literal') {
-									props.push(b.literal(String(p.key.value)));
-								} else {
-									props.push(b.call('String', p.key));
-								}
+					for (const p of param.properties) {
+						if (p.type === 'Property' && p.key.type !== 'PrivateIdentifier') {
+							if (p.key.type === 'Identifier' && !p.computed) {
+								props.push(b.literal(p.key.name));
+							} else if (p.key.type === 'Literal') {
+								props.push(b.literal(String(p.key.value)));
+							} else {
+								props.push(b.call('String', p.key));
 							}
 						}
+					}
 
-						return b.call('$.exclude_from_object', expression(object), b.array(props));
-					};
+					const rest_expression = b.call('$.exclude_from_object', expression, b.array(props));
 
 					if (prop.argument.type === 'Identifier') {
-						assignments.push({
+						paths.push({
 							node: prop.argument,
 							is_rest: true,
 							has_default_value,
@@ -346,7 +309,8 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 						});
 					} else {
 						_extract_paths(
-							assignments,
+							paths,
+							inserts,
 							prop.argument,
 							rest_expression,
 							rest_expression,
@@ -354,11 +318,15 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 						);
 					}
 				} else {
-					/** @type {DestructuredAssignment['expression']} */
-					const object_expression = (object) =>
-						b.member(expression(object), prop.key, prop.computed || prop.key.type !== 'Identifier');
+					const object_expression = b.member(
+						expression,
+						prop.key,
+						prop.computed || prop.key.type !== 'Identifier'
+					);
+
 					_extract_paths(
-						assignments,
+						paths,
+						inserts,
 						prop.value,
 						object_expression,
 						object_expression,
@@ -369,16 +337,27 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 
 			break;
 
-		case 'ArrayPattern':
+		case 'ArrayPattern': {
+			// we create an intermediate declaration to convert iterables to arrays if necessary.
+			// the consumer is responsible for setting the name of the identifier
+			const id = b.id('#');
+
+			const value = b.call(
+				'$.to_array',
+				expression,
+				param.elements.at(-1)?.type === 'RestElement' ? undefined : b.literal(param.elements.length)
+			);
+
+			inserts.push({ id, value });
+
 			for (let i = 0; i < param.elements.length; i += 1) {
 				const element = param.elements[i];
 				if (element) {
 					if (element.type === 'RestElement') {
-						/** @type {DestructuredAssignment['expression']} */
-						const rest_expression = (object) =>
-							b.call(b.member(expression(object), 'slice'), b.literal(i));
+						const rest_expression = b.call(b.member(id, 'slice'), b.literal(i));
+
 						if (element.argument.type === 'Identifier') {
-							assignments.push({
+							paths.push({
 								node: element.argument,
 								is_rest: true,
 								has_default_value,
@@ -387,7 +366,8 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 							});
 						} else {
 							_extract_paths(
-								assignments,
+								paths,
+								inserts,
 								element.argument,
 								rest_expression,
 								rest_expression,
@@ -395,10 +375,11 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 							);
 						}
 					} else {
-						/** @type {DestructuredAssignment['expression']} */
-						const array_expression = (object) => b.member(expression(object), b.literal(i), true);
+						const array_expression = b.member(id, b.literal(i), true);
+
 						_extract_paths(
-							assignments,
+							paths,
+							inserts,
 							element,
 							array_expression,
 							array_expression,
@@ -409,13 +390,13 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 			}
 
 			break;
+		}
 
 		case 'AssignmentPattern': {
-			/** @type {DestructuredAssignment['expression']} */
-			const fallback_expression = (object) => build_fallback(expression(object), param.right);
+			const fallback_expression = build_fallback(expression, param.right);
 
 			if (param.left.type === 'Identifier') {
-				assignments.push({
+				paths.push({
 					node: param.left,
 					is_rest: false,
 					has_default_value: true,
@@ -423,14 +404,14 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 					update_expression
 				});
 			} else {
-				_extract_paths(assignments, param.left, fallback_expression, update_expression, true);
+				_extract_paths(paths, inserts, param.left, fallback_expression, update_expression, true);
 			}
 
 			break;
 		}
 	}
 
-	return assignments;
+	return paths;
 }
 
 /**

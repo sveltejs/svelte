@@ -9,10 +9,16 @@ export default function Main($$anchor) {
 	let y = () => 'test';
 	var fragment = root();
 	var div = $.first_child(fragment);
+
+	$.set_attribute(div, 'foobar', x);
+
 	var svg = $.sibling(div, 2);
+
+	$.set_attribute(svg, 'viewBox', x);
+
 	var custom_element = $.sibling(svg, 2);
 
-	$.template_effect(() => $.set_custom_element_data(custom_element, 'fooBar', x));
+	$.set_custom_element_data(custom_element, 'fooBar', x);
 
 	var div_1 = $.sibling(custom_element, 2);
 	var svg_1 = $.sibling(div_1, 2);
@@ -22,8 +28,6 @@ export default function Main($$anchor) {
 
 	$.template_effect(
 		($0, $1) => {
-			$.set_attribute(div, 'foobar', x);
-			$.set_attribute(svg, 'viewBox', x);
 			$.set_attribute(div_1, 'foobar', $0);
 			$.set_attribute(svg_1, 'viewBox', $1);
 		},

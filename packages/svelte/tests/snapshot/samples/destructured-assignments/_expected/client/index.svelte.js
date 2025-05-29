@@ -7,12 +7,12 @@ let c = 3;
 let d = 4;
 
 export function update(array) {
-	{
-		let [$$1, $$2] = array;
+	((array) => {
+		var $$array = $.to_array(array, 2);
 
-		$.set(a, $$1, true);
-		$.set(b, $$2, true);
-	};
+		$.set(a, $$array[0], true);
+		$.set(b, $$array[1], true);
+	})(array);
 
 	[c, d] = array;
 }

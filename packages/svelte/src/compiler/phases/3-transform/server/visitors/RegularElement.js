@@ -1,3 +1,4 @@
+/** @import { Expression } from 'estree' */
 /** @import { Location } from 'locate-character' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../types.js' */
@@ -6,8 +7,8 @@ import { is_void } from '../../../../../utils.js';
 import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
-import { build_element_attributes } from './shared/element.js';
-import { process_children, build_template } from './shared/utils.js';
+import { build_element_attributes, build_spread_object } from './shared/element.js';
+import { process_children, build_template, build_attribute_value } from './shared/utils.js';
 
 /**
  * @param {AST.RegularElement} node
@@ -71,20 +72,95 @@ export function RegularElement(node, context) {
 		);
 	}
 
-	if (body === null) {
-		process_children(trimmed, { ...context, state });
-	} else {
-		let id = body;
+	let select_with_value = false;
+
+	if (node.name === 'select') {
+		const value = node.attributes.find(
+			(attribute) =>
+				(attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
+				attribute.name === 'value'
+		);
+		if (node.attributes.some((attribute) => attribute.type === 'SpreadAttribute')) {
+			select_with_value = true;
+			state.template.push(
+				b.stmt(
+					b.assignment(
+						'=',
+						b.id('$$payload.select_value'),
+						b.member(
+							build_spread_object(
+								node,
+								node.attributes.filter(
+									(attribute) =>
+										attribute.type === 'Attribute' ||
+										attribute.type === 'BindDirective' ||
+										attribute.type === 'SpreadAttribute'
+								),
+								context
+							),
+							'value',
+							false,
+							true
+						)
+					)
+				)
+			);
+		} else if (value) {
+			select_with_value = true;
+			const left = b.id('$$payload.select_value');
+			if (value.type === 'Attribute') {
+				state.template.push(
+					b.stmt(b.assignment('=', left, build_attribute_value(value.value, context)))
+				);
+			} else if (value.type === 'BindDirective') {
+				state.template.push(
+					b.stmt(
+						b.assignment(
+							'=',
+							left,
+							value.expression.type === 'SequenceExpression'
+								? /** @type {Expression} */ (context.visit(b.call(value.expression.expressions[0])))
+								: /** @type {Expression} */ (context.visit(value.expression))
+						)
+					)
+				);
+			}
+		}
+	}
+
+	if (
+		node.name === 'option' &&
+		!node.attributes.some(
+			(attribute) =>
+				attribute.type === 'SpreadAttribute' ||
+				((attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
+					attribute.name === 'value')
+		)
+	) {
+		const inner_state = { ...state, template: [], init: [] };
+		process_children(trimmed, { ...context, state: inner_state });
+
+		state.template.push(
+			b.stmt(
+				b.call(
+					'$.valueless_option',
+					b.id('$$payload'),
+					b.thunk(b.block([...inner_state.init, ...build_template(inner_state.template)]))
+				)
+			)
+		);
+	} else if (body !== null) {
+		// if this is a `<textarea>` value or a contenteditable binding, we only add
+		// the body if the attribute/binding is falsy
+		const inner_state = { ...state, template: [], init: [] };
+		process_children(trimmed, { ...context, state: inner_state });
+
+		let id = /** @type {Expression} */ (body);
 
 		if (body.type !== 'Identifier') {
 			id = b.id(state.scope.generate('$$body'));
 			state.template.push(b.const(id, body));
 		}
-
-		// if this is a `<textarea>` value or a contenteditable binding, we only add
-		// the body if the attribute/binding is falsy
-		const inner_state = { ...state, template: [], init: [] };
-		process_children(trimmed, { ...context, state: inner_state });
 
 		// Use the body expression as the body if it's truthy, otherwise use the inner template
 		state.template.push(
@@ -94,6 +170,12 @@ export function RegularElement(node, context) {
 				b.block([...inner_state.init, ...build_template(inner_state.template)])
 			)
 		);
+	} else {
+		process_children(trimmed, { ...context, state });
+	}
+
+	if (select_with_value) {
+		state.template.push(b.stmt(b.assignment('=', b.id('$$payload.select_value'), b.void0)));
 	}
 
 	if (!node_is_void) {

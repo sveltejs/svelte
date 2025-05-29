@@ -504,7 +504,7 @@ export { assign_payload, copy_payload } from './payload.js';
 
 export { snapshot } from '../shared/clone.js';
 
-export { fallback } from '../shared/utils.js';
+export { fallback, to_array } from '../shared/utils.js';
 
 export {
 	invalid_default_snippet,
@@ -536,4 +536,31 @@ export function derived(fn) {
 		updated_value = new_value;
 		return updated_value;
 	};
+}
+
+/**
+ *
+ * @param {Payload} payload
+ * @param {*} value
+ */
+export function maybe_selected(payload, value) {
+	return value === payload.select_value ? ' selected' : '';
+}
+
+/**
+ * @param {Payload} payload
+ * @param {() => void} children
+ * @returns {void}
+ */
+export function valueless_option(payload, children) {
+	var i = payload.out.length;
+
+	children();
+
+	var body = payload.out.slice(i);
+
+	if (body.replace(/<!---->/g, '') === payload.select_value) {
+		// replace '>' with ' selected>' (closing tag will be added later)
+		payload.out = payload.out.slice(0, i - 1) + ' selected>' + body;
+	}
 }

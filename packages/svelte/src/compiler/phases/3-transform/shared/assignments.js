@@ -1,8 +1,9 @@
-/** @import { AssignmentExpression, AssignmentOperator, Expression, Identifier, Node, Pattern } from 'estree' */
+/** @import { AssignmentExpression, AssignmentOperator, Expression, Node, Pattern, Statement } from 'estree' */
 /** @import { Context as ClientContext } from '../client/types.js' */
 /** @import { Context as ServerContext } from '../server/types.js' */
-import { build_pattern, is_expression_async } from '../../../utils/ast.js';
+import { extract_paths, is_expression_async } from '../../../utils/ast.js';
 import * as b from '#compiler/builders';
+import { get_value } from '../client/visitors/shared/declarations.js';
 
 /**
  * @template {ClientContext | ServerContext} Context
@@ -23,23 +24,27 @@ export function visit_assignment_expression(node, context, build_assignment) {
 
 		let changed = false;
 
-		const [pattern, replacements] = build_pattern(node.left, context.state.scope);
+		const { inserts, paths } = extract_paths(node.left, rhs);
 
-		const assignments = [
-			b.let(pattern, rhs),
-			...[...replacements].map(([original, replacement]) => {
-				let assignment = build_assignment(node.operator, original, replacement, context);
-				if (assignment !== null) changed = true;
-				return b.stmt(
-					assignment ??
-						b.assignment(
-							node.operator,
-							/** @type {Identifier} */ (context.visit(original)),
-							/** @type {Expression} */ (context.visit(replacement))
-						)
-				);
-			})
-		];
+		for (const { id } of inserts) {
+			id.name = context.state.scope.generate('$$array');
+		}
+
+		const assignments = paths.map((path) => {
+			const value = path.expression;
+
+			let assignment = build_assignment('=', path.node, value, context);
+			if (assignment !== null) changed = true;
+
+			return (
+				assignment ??
+				b.assignment(
+					'=',
+					/** @type {Pattern} */ (context.visit(path.node)),
+					/** @type {Expression} */ (context.visit(value))
+				)
+			);
+		});
 
 		if (!changed) {
 			// No change to output -> nothing to transform -> we can keep the original assignment
@@ -47,36 +52,36 @@ export function visit_assignment_expression(node, context, build_assignment) {
 		}
 
 		const is_standalone = /** @type {Node} */ (context.path.at(-1)).type.endsWith('Statement');
-		const block = b.block(assignments);
+
+		if (inserts.length > 0 || should_cache) {
+			/** @type {Statement[]} */
+			const statements = [
+				...inserts.map(({ id, value }) => b.var(id, value)),
+				...assignments.map(b.stmt)
+			];
+
+			if (!is_standalone) {
+				// this is part of an expression, we need the sequence to end with the value
+				statements.push(b.return(rhs));
+			}
+
+			const iife = b.arrow([rhs], b.block(statements));
+
+			const iife_is_async =
+				is_expression_async(value) ||
+				assignments.some((assignment) => is_expression_async(assignment));
+
+			return iife_is_async ? b.await(b.call(b.async(iife), value)) : b.call(iife, value);
+		}
+
+		const sequence = b.sequence(assignments);
 
 		if (!is_standalone) {
 			// this is part of an expression, we need the sequence to end with the value
-			block.body.push(b.return(rhs));
+			sequence.expressions.push(rhs);
 		}
 
-		if (is_standalone && !should_cache) {
-			return block;
-		}
-
-		const iife = b.arrow(should_cache ? [rhs] : [], block);
-
-		const iife_is_async =
-			is_expression_async(value) ||
-			assignments.some(
-				(assignment) =>
-					(assignment.type === 'ExpressionStatement' &&
-						is_expression_async(assignment.expression)) ||
-					(assignment.type === 'VariableDeclaration' &&
-						assignment.declarations.some(
-							(declaration) =>
-								is_expression_async(declaration.id) ||
-								(declaration.init && is_expression_async(declaration.init))
-						))
-			);
-
-		return iife_is_async
-			? b.await(b.call(b.async(iife), should_cache ? value : undefined))
-			: b.call(iife, should_cache ? value : undefined);
+		return sequence;
 	}
 
 	if (node.left.type !== 'Identifier' && node.left.type !== 'MemberExpression') {

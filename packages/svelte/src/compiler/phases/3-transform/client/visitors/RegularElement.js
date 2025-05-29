@@ -1,6 +1,6 @@
 /** @import { ArrayExpression, Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression } from 'estree' */
 /** @import { AST } from '#compiler' */
-/** @import { ComponentClientTransformState, ComponentContext } from '../types' */
+/** @import { ComponentClientTransformState, ComponentContext, MemoizedExpression } from '../types' */
 /** @import { Scope } from '../../../scope' */
 import {
 	cannot_be_set_statically,
@@ -17,7 +17,7 @@ import { build_getter } from '../utils.js';
 import {
 	get_attribute_name,
 	build_attribute_value,
-	build_set_attributes,
+	build_attribute_effect,
 	build_set_class,
 	build_set_style
 } from './shared/element.js';
@@ -201,37 +201,7 @@ export function RegularElement(node, context) {
 	const node_id = context.state.node;
 
 	if (has_spread) {
-		const attributes_id = b.id(context.state.scope.generate('attributes'));
-
-		build_set_attributes(
-			attributes,
-			class_directives,
-			style_directives,
-			context,
-			node,
-			node_id,
-			attributes_id
-		);
-
-		// If value binding exists, that one takes care of calling $.init_select
-		if (node.name === 'select' && !bindings.has('value')) {
-			context.state.init.push(
-				b.stmt(b.call('$.init_select', node_id, b.thunk(b.member(attributes_id, 'value'))))
-			);
-
-			context.state.update.push(
-				b.if(
-					b.binary('in', b.literal('value'), attributes_id),
-					b.block([
-						// This ensures a one-way street to the DOM in case it's <select {value}>
-						// and not <select bind:value>. We need it in addition to $.init_select
-						// because the select value is not reflected as an attribute, so the
-						// mutation observer wouldn't notice.
-						b.stmt(b.call('$.select_option', node_id, b.member(attributes_id, 'value')))
-					])
-				)
-			);
-		}
+		build_attribute_effect(attributes, class_directives, style_directives, context, node, node_id);
 	} else {
 		/** If true, needs `__value` for inputs */
 		const needs_special_value_handling =
@@ -492,10 +462,17 @@ function setup_select_synchronization(value_binding, context) {
 
 /**
  * @param {AST.ClassDirective[]} class_directives
+ * @param {MemoizedExpression[]} async_expressions
+ * @param {MemoizedExpression[]} expressions
  * @param {ComponentContext} context
  * @return {ObjectExpression | Identifier}
  */
-export function build_class_directives_object(class_directives, context) {
+export function build_class_directives_object(
+	class_directives,
+	async_expressions,
+	expressions,
+	context
+) {
 	let properties = [];
 	let has_call_or_state = false;
 	let has_async = false;
@@ -510,19 +487,23 @@ export function build_class_directives_object(class_directives, context) {
 	const directives = b.object(properties);
 
 	return has_call_or_state || has_async
-		? get_expression_id(
-				has_async ? context.state.async_expressions : context.state.expressions,
-				directives
-			)
+		? get_expression_id(has_async ? async_expressions : expressions, directives)
 		: directives;
 }
 
 /**
  * @param {AST.StyleDirective[]} style_directives
+ * @param {MemoizedExpression[]} async_expressions
+ * @param {MemoizedExpression[]} expressions
  * @param {ComponentContext} context
  * @return {ObjectExpression | ArrayExpression}}
  */
-export function build_style_directives_object(style_directives, context) {
+export function build_style_directives_object(
+	style_directives,
+	async_expressions,
+	expressions,
+	context
+) {
 	let normal_properties = [];
 	let important_properties = [];
 
@@ -532,10 +513,7 @@ export function build_style_directives_object(style_directives, context) {
 				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
 				: build_attribute_value(directive.value, context, (value, metadata) =>
 						metadata.has_call
-							? get_expression_id(
-									metadata.has_await ? context.state.async_expressions : context.state.expressions,
-									value
-								)
+							? get_expression_id(metadata.has_await ? async_expressions : expressions, value)
 							: value
 					).value;
 		const property = b.init(directive.name, expression);

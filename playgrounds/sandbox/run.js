@@ -93,7 +93,7 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 		// generate with fragments: 'tree'
 		if (generate === 'client') {
 			const compiled = compile(source, {
-				dev: true,
+				dev: false,
 				filename: input,
 				generate,
 				runes: argv.values.runes,

@@ -270,7 +270,8 @@ export type BindingKind =
 	| 'snippet' // A snippet parameter
 	| 'store_sub' // A $store value
 	| 'legacy_reactive' // A `$:` declaration
-	| 'template'; // A binding declared in the template, e.g. in an `await` block or `const` tag
+	| 'template' // A binding declared in the template, e.g. in an `await` block or `const` tag
+	| 'static'; // A binding whose value is known to be static (i.e. each index)
 
 export type DeclarationKind =
 	| 'var'

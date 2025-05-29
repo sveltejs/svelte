@@ -1,5 +1,45 @@
 # svelte
 
+## 5.33.10
+
+### Patch Changes
+
+- fix: use `fill: 'forwards'` on transition animations to prevent flicker ([#16035](https://github.com/sveltejs/svelte/pull/16035))
+
+## 5.33.9
+
+### Patch Changes
+
+- fix: put expressions in effects unless known to be static ([#15792](https://github.com/sveltejs/svelte/pull/15792))
+
+## 5.33.8
+
+### Patch Changes
+
+- fix: only `select_option` if `'value'` is in `next` ([#16032](https://github.com/sveltejs/svelte/pull/16032))
+
+## 5.33.7
+
+### Patch Changes
+
+- fix: `bind:value` to select with stores ([#16028](https://github.com/sveltejs/svelte/pull/16028))
+
+## 5.33.6
+
+### Patch Changes
+
+- fix: falsy attachments on components ([#16021](https://github.com/sveltejs/svelte/pull/16021))
+
+- fix: correctly mark <option> elements as selected during SSR ([#16017](https://github.com/sveltejs/svelte/pull/16017))
+
+## 5.33.5
+
+### Patch Changes
+
+- fix: handle derived destructured iterators ([#16015](https://github.com/sveltejs/svelte/pull/16015))
+
+- fix: avoid rerunning attachments when unrelated spread attributes change ([#15961](https://github.com/sveltejs/svelte/pull/15961))
+
 ## 5.33.4
 
 ### Patch Changes
