@@ -91,7 +91,9 @@ export function Identifier(node, context) {
 		if (context.state.expression) {
 			context.state.expression.dependencies.add(binding);
 			context.state.expression.has_state ||=
-				!binding.is_function() && !context.state.scope.evaluate(node).is_known;
+				binding.kind !== 'static' &&
+				!binding.is_function() &&
+				!context.state.scope.evaluate(node).is_known;
 		}
 
 		if (
