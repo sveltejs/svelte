@@ -1,5 +1,11 @@
 # svelte
 
+## 5.33.8
+
+### Patch Changes
+
+- fix: only `select_option` if `'value'` is in `next` ([#16032](https://github.com/sveltejs/svelte/pull/16032))
+
 ## 5.33.7
 
 ### Patch Changes
