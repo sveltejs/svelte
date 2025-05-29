@@ -1,5 +1,11 @@
 # svelte
 
+## 5.33.9
+
+### Patch Changes
+
+- fix: put expressions in effects unless known to be static ([#15792](https://github.com/sveltejs/svelte/pull/15792))
+
 ## 5.33.8
 
 ### Patch Changes
