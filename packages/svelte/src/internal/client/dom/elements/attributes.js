@@ -486,7 +486,7 @@ export function attribute_effect(
 
 		set_attributes(element, prev, next, css_hash, skip_warning);
 
-		if (inited && is_select) {
+		if (inited && is_select && 'value' in next) {
 			select_option(/** @type {HTMLSelectElement} */ (element), next.value, false);
 		}
 
