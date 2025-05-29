@@ -271,19 +271,12 @@ export function clean_nodes(
 
 	var first = trimmed[0];
 
-	// initial newline inside a `<pre>` is disregarded, if not followed by another newline
+	// if first text node inside a <pre> is a single newline, discard it, because otherwise
+	// the browser will do it for us which could break hydration
 	if (parent.type === 'RegularElement' && parent.name === 'pre' && first?.type === 'Text') {
-		const text = first.data.replace(regex_starts_with_newline, '');
-		if (text !== first.data) {
-			const tmp = text.replace(regex_starts_with_newline, '');
-			if (text === tmp) {
-				first.data = text;
-				first.raw = first.raw.replace(regex_starts_with_newline, '');
-				if (first.data === '') {
-					trimmed.shift();
-					first = trimmed[0];
-				}
-			}
+		if (first.data === '\n' || first.data === '\r\n') {
+			trimmed.shift();
+			first = trimmed[0];
 		}
 	}
 
@@ -331,7 +324,7 @@ export function clean_nodes(
 }
 
 /**
- * Infers the namespace for the children of a node that should be used when creating the `$.template(...)`.
+ * Infers the namespace for the children of a node that should be used when creating the fragment
  * @param {Namespace} namespace
  * @param {AST.SvelteNode} parent
  * @param {AST.SvelteNode[]} nodes

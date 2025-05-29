@@ -8,8 +8,11 @@ import { parse_expression_at } from '../acorn.js';
 import read_pattern from '../read/context.js';
 import read_expression, { get_loose_identifier } from '../read/expression.js';
 import { create_fragment } from '../utils/create.js';
+import { match_bracket } from '../utils/bracket.js';
 
 const regex_whitespace_with_closing_curly_brace = /^\s*}/;
+
+const pointy_bois = { '<': '>' };
 
 /** @param {Parser} parser */
 export default function tag(parser) {
@@ -351,6 +354,22 @@ function open(parser) {
 
 		const params_start = parser.index;
 
+		// snippets could have a generic signature, e.g. `#snippet foo<T>(...)`
+		/** @type {string | undefined} */
+		let type_params;
+
+		// if we match a generic opening
+		if (parser.ts && parser.match('<')) {
+			const start = parser.index;
+			const end = match_bracket(parser, start, pointy_bois);
+
+			type_params = parser.template.slice(start + 1, end - 1);
+
+			parser.index = end;
+		}
+
+		parser.allow_whitespace();
+
 		const matched = parser.eat('(', true, false);
 
 		if (matched) {
@@ -388,6 +407,7 @@ function open(parser) {
 				end: name_end,
 				name
 			},
+			typeParams: type_params,
 			parameters: function_expression.params,
 			body: create_fragment(),
 			metadata: {

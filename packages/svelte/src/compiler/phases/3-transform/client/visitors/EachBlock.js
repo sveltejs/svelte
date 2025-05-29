@@ -32,7 +32,7 @@ export function EachBlock(node, context) {
 	);
 
 	if (!each_node_meta.is_controlled) {
-		context.state.template.push('<!>');
+		context.state.template.push_comment();
 	}
 
 	let flags = 0;
@@ -234,13 +234,21 @@ export function EachBlock(node, context) {
 	} else if (node.context) {
 		const unwrapped = (flags & EACH_ITEM_REACTIVE) !== 0 ? b.call('$.get', item) : item;
 
-		for (const path of extract_paths(node.context)) {
+		const { inserts, paths } = extract_paths(node.context, unwrapped);
+
+		for (const { id, value } of inserts) {
+			id.name = context.state.scope.generate('$$array');
+			child_state.transform[id.name] = { read: get_value };
+
+			const expression = /** @type {Expression} */ (context.visit(b.thunk(value), child_state));
+			declarations.push(b.var(id, b.call('$.derived', expression)));
+		}
+
+		for (const path of paths) {
 			const name = /** @type {Identifier} */ (path.node).name;
 			const needs_derived = path.has_default_value; // to ensure that default value is only called once
 
-			const fn = b.thunk(
-				/** @type {Expression} */ (context.visit(path.expression?.(unwrapped), child_state))
-			);
+			const fn = b.thunk(/** @type {Expression} */ (context.visit(path.expression, child_state)));
 
 			declarations.push(b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn));
 
@@ -249,7 +257,7 @@ export function EachBlock(node, context) {
 			child_state.transform[name] = {
 				read,
 				assign: (_, value) => {
-					const left = /** @type {Pattern} */ (path.update_expression(unwrapped));
+					const left = /** @type {Pattern} */ (path.update_expression);
 					return b.sequence([b.assignment('=', left, value), ...sequence]);
 				},
 				mutate: (_, mutation) => {

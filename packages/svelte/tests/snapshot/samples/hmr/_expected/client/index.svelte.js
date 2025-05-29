@@ -2,7 +2,7 @@ import 'svelte/internal/disclose-version';
 import 'svelte/internal/flags/legacy';
 import * as $ from 'svelte/internal/client';
 
-var root = $.template(`<h1>hello world</h1>`);
+var root = $.from_html(`<h1>hello world</h1>`);
 
 function Hmr($$anchor) {
 	var h1 = root();

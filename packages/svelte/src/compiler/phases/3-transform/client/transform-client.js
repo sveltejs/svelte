@@ -56,6 +56,7 @@ import { TitleElement } from './visitors/TitleElement.js';
 import { TransitionDirective } from './visitors/TransitionDirective.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { UseDirective } from './visitors/UseDirective.js';
+import { AttachTag } from './visitors/AttachTag.js';
 import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 
 /** @type {Visitors} */
@@ -131,6 +132,7 @@ const visitors = {
 	TransitionDirective,
 	UpdateExpression,
 	UseDirective,
+	AttachTag,
 	VariableDeclaration
 };
 
@@ -152,17 +154,12 @@ export function client_component(analysis, options) {
 		legacy_reactive_imports: [],
 		legacy_reactive_statements: new Map(),
 		metadata: {
-			context: {
-				template_needs_import_node: false,
-				template_contains_script_tag: false
-			},
 			namespace: options.namespace,
 			bound_contenteditable: false
 		},
 		events: new Set(),
 		preserve_whitespace: options.preserveWhitespace,
-		public_state: new Map(),
-		private_state: new Map(),
+		state_fields: new Map(),
 		transform: {},
 		in_constructor: false,
 		instance_level_snippets: [],
@@ -173,8 +170,7 @@ export function client_component(analysis, options) {
 		update: /** @type {any} */ (null),
 		expressions: /** @type {any} */ (null),
 		after_update: /** @type {any} */ (null),
-		template: /** @type {any} */ (null),
-		locations: /** @type {any} */ (null)
+		template: /** @type {any} */ (null)
 	};
 
 	const module = /** @type {ESTree.Program} */ (
@@ -669,8 +665,7 @@ export function client_module(analysis, options) {
 		options,
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
-		public_state: new Map(),
-		private_state: new Map(),
+		state_fields: new Map(),
 		transform: {},
 		in_constructor: false
 	};

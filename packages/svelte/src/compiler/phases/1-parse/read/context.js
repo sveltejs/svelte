@@ -1,7 +1,7 @@
 /** @import { Location } from 'locate-character' */
 /** @import { Pattern } from 'estree' */
 /** @import { Parser } from '../index.js' */
-import { is_bracket_open, is_bracket_close, get_bracket_close } from '../utils/bracket.js';
+import { match_bracket } from '../utils/bracket.js';
 import { parse_expression_at } from '../acorn.js';
 import { regex_not_newline_characters } from '../../patterns.js';
 import * as e from '../../../errors.js';
@@ -33,7 +33,9 @@ export default function read_pattern(parser) {
 		};
 	}
 
-	if (!is_bracket_open(parser.template[i])) {
+	const char = parser.template[i];
+
+	if (char !== '{' && char !== '[') {
 		e.expected_pattern(i);
 	}
 
@@ -69,75 +71,6 @@ export default function read_pattern(parser) {
 	} catch (error) {
 		parser.acorn_error(error);
 	}
-}
-
-/**
- * @param {Parser} parser
- * @param {number} start
- */
-function match_bracket(parser, start) {
-	const bracket_stack = [];
-
-	let i = start;
-
-	while (i < parser.template.length) {
-		let char = parser.template[i++];
-
-		if (char === "'" || char === '"' || char === '`') {
-			i = match_quote(parser, i, char);
-			continue;
-		}
-
-		if (is_bracket_open(char)) {
-			bracket_stack.push(char);
-		} else if (is_bracket_close(char)) {
-			const popped = /** @type {string} */ (bracket_stack.pop());
-			const expected = /** @type {string} */ (get_bracket_close(popped));
-
-			if (char !== expected) {
-				e.expected_token(i - 1, expected);
-			}
-
-			if (bracket_stack.length === 0) {
-				return i;
-			}
-		}
-	}
-
-	e.unexpected_eof(parser.template.length);
-}
-
-/**
- * @param {Parser} parser
- * @param {number} start
- * @param {string} quote
- */
-function match_quote(parser, start, quote) {
-	let is_escaped = false;
-	let i = start;
-
-	while (i < parser.template.length) {
-		const char = parser.template[i++];
-
-		if (is_escaped) {
-			is_escaped = false;
-			continue;
-		}
-
-		if (char === quote) {
-			return i;
-		}
-
-		if (char === '\\') {
-			is_escaped = true;
-		}
-
-		if (quote === '`' && char === '$' && parser.template[i] === '{') {
-			i = match_bracket(parser, i);
-		}
-	}
-
-	e.unterminated_string_constant(start);
 }
 
 /**

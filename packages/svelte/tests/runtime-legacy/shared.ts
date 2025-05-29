@@ -6,7 +6,7 @@ import { proxy } from 'svelte/internal/client';
 import { flushSync, hydrate, mount, unmount } from 'svelte';
 import { render } from 'svelte/server';
 import { afterAll, assert, beforeAll } from 'vitest';
-import { compile_directory } from '../helpers.js';
+import { compile_directory, fragments } from '../helpers.js';
 import { setup_html_equal } from '../html_equal.js';
 import { raf } from '../animation-helpers.js';
 import type { CompileOptions } from '#compiler';
@@ -158,6 +158,7 @@ async function common_setup(cwd: string, runes: boolean | undefined, config: Run
 		rootDir: cwd,
 		dev: force_hmr ? true : undefined,
 		hmr: force_hmr ? true : undefined,
+		fragments,
 		...config.compileOptions,
 		immutable: config.immutable,
 		accessors: 'accessors' in config ? config.accessors : true,
@@ -351,7 +352,7 @@ async function run_test_variant(
 				// @ts-expect-error
 				globalThis.__svelte.uid = 1;
 
-				if (manual_hydrate) {
+				if (manual_hydrate && variant === 'hydrate') {
 					hydrate_fn = () => {
 						instance = hydrate(mod.default, {
 							target,
@@ -469,10 +470,6 @@ async function run_test_variant(
 			throw err;
 		}
 	} finally {
-		console.log = console_log;
-		console.warn = console_warn;
-		console.error = console_error;
-
 		config.after_test?.();
 
 		// Free up the microtask queue
@@ -486,6 +483,10 @@ async function run_test_variant(
 				process.on('unhandledRejection', listener);
 			});
 		}
+
+		console.log = console_log;
+		console.warn = console_warn;
+		console.error = console_error;
 	}
 }
 

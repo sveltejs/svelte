@@ -1,8 +1,9 @@
-/** @import { AssignmentExpression, AssignmentOperator, Expression, Node, Pattern } from 'estree' */
+/** @import { AssignmentExpression, AssignmentOperator, Expression, Node, Pattern, Statement } from 'estree' */
 /** @import { Context as ClientContext } from '../client/types.js' */
 /** @import { Context as ServerContext } from '../server/types.js' */
 import { extract_paths, is_expression_async } from '../../../utils/ast.js';
 import * as b from '#compiler/builders';
+import { get_value } from '../client/visitors/shared/declarations.js';
 
 /**
  * @template {ClientContext | ServerContext} Context
@@ -23,8 +24,14 @@ export function visit_assignment_expression(node, context, build_assignment) {
 
 		let changed = false;
 
-		const assignments = extract_paths(node.left).map((path) => {
-			const value = path.expression?.(rhs);
+		const { inserts, paths } = extract_paths(node.left, rhs);
+
+		for (const { id } of inserts) {
+			id.name = context.state.scope.generate('$$array');
+		}
+
+		const assignments = paths.map((path) => {
+			const value = path.expression;
 
 			let assignment = build_assignment('=', path.node, value, context);
 			if (assignment !== null) changed = true;
@@ -45,22 +52,33 @@ export function visit_assignment_expression(node, context, build_assignment) {
 		}
 
 		const is_standalone = /** @type {Node} */ (context.path.at(-1)).type.endsWith('Statement');
-		const sequence = b.sequence(assignments);
 
-		if (!is_standalone) {
-			// this is part of an expression, we need the sequence to end with the value
-			sequence.expressions.push(rhs);
-		}
+		if (inserts.length > 0 || should_cache) {
+			/** @type {Statement[]} */
+			const statements = [
+				...inserts.map(({ id, value }) => b.var(id, value)),
+				...assignments.map(b.stmt)
+			];
 
-		if (should_cache) {
-			// the right hand side is a complex expression, wrap in an IIFE to cache it
-			const iife = b.arrow([rhs], sequence);
+			if (!is_standalone) {
+				// this is part of an expression, we need the sequence to end with the value
+				statements.push(b.return(rhs));
+			}
+
+			const iife = b.arrow([rhs], b.block(statements));
 
 			const iife_is_async =
 				is_expression_async(value) ||
 				assignments.some((assignment) => is_expression_async(assignment));
 
 			return iife_is_async ? b.await(b.call(b.async(iife), value)) : b.call(iife, value);
+		}
+
+		const sequence = b.sequence(assignments);
+
+		if (!is_standalone) {
+			// this is part of an expression, we need the sequence to end with the value
+			sequence.expressions.push(rhs);
 		}
 
 		return sequence;

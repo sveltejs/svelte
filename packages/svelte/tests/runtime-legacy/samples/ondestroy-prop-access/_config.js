@@ -36,8 +36,6 @@ export default test({
 			btn1.click();
 		});
 
-		console.warn(logs);
-
 		// the five components guarded by `count < 2` unmount and log
 		assert.deepEqual(logs, [1, true, 1, true, 1, true, 1, true, 1, true]);
 

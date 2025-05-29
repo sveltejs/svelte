@@ -174,6 +174,16 @@ export namespace AST {
 		};
 	}
 
+	/** A `{@attach foo(...)} tag */
+	export interface AttachTag extends BaseNode {
+		type: 'AttachTag';
+		expression: Expression;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
+	}
+
 	/** An `animate:` directive */
 	export interface AnimateDirective extends BaseNode {
 		type: 'AnimateDirective';
@@ -273,7 +283,7 @@ export namespace AST {
 
 	interface BaseElement extends BaseNode {
 		name: string;
-		attributes: Array<Attribute | SpreadAttribute | Directive>;
+		attributes: Array<Attribute | SpreadAttribute | Directive | AttachTag>;
 		fragment: Fragment;
 	}
 
@@ -458,6 +468,7 @@ export namespace AST {
 		type: 'SnippetBlock';
 		expression: Identifier;
 		parameters: Pattern[];
+		typeParams?: string;
 		body: Fragment;
 		/** @internal */
 		metadata: {
@@ -536,7 +547,13 @@ export namespace AST {
 		| AST.SvelteWindow
 		| AST.SvelteBoundary;
 
-	export type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
+	export type Tag =
+		| AST.AttachTag
+		| AST.ConstTag
+		| AST.DebugTag
+		| AST.ExpressionTag
+		| AST.HtmlTag
+		| AST.RenderTag;
 
 	export type TemplateNode =
 		| AST.Root
@@ -546,6 +563,7 @@ export namespace AST {
 		| AST.Attribute
 		| AST.SpreadAttribute
 		| Directive
+		| AST.AttachTag
 		| AST.Comment
 		| Block;
 

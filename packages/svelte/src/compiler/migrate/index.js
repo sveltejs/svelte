@@ -603,15 +603,15 @@ const instance_script = {
 					);
 					// Turn export let into props. It's really really weird because export let { x: foo, z: [bar]} = ..
 					// means that foo and bar are the props (i.e. the leafs are the prop names), not x and z.
-					// const tmp = state.scope.generate('tmp');
-					// const paths = extract_paths(declarator.id);
+					// const tmp = b.id(state.scope.generate('tmp'));
+					// const paths = extract_paths(declarator.id, tmp);
 					// state.props_pre.push(
-					// 	b.declaration('const', b.id(tmp), visit(declarator.init!) as Expression)
+					// 	b.declaration('const', tmp, visit(declarator.init!) as Expression)
 					// );
 					// for (const path of paths) {
 					// 	const name = (path.node as Identifier).name;
 					// 	const binding = state.scope.get(name)!;
-					// 	const value = path.expression!(b.id(tmp));
+					// 	const value = path.expression;
 					// 	if (binding.kind === 'bindable_prop' || binding.kind === 'rest_prop') {
 					// 		state.props.push({
 					// 			local: name,
@@ -1307,7 +1307,7 @@ const template = {
 			name = state.scope.generate(slot_name);
 			if (name !== slot_name) {
 				throw new MigrationError(
-					'This migration would change the name of a slot making the component unusable'
+					`This migration would change the name of a slot (${slot_name} to ${name}) making the component unusable`
 				);
 			}
 		}
@@ -1880,7 +1880,7 @@ function handle_identifier(node, state, path) {
 				let new_name = state.scope.generate(name);
 				if (new_name !== name) {
 					throw new MigrationError(
-						'This migration would change the name of a slot making the component unusable'
+						`This migration would change the name of a slot (${name} to ${new_name}) making the component unusable`
 					);
 				}
 			}

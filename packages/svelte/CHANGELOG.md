@@ -1,5 +1,187 @@
 # svelte
 
+## 5.33.7
+
+### Patch Changes
+
+- fix: `bind:value` to select with stores ([#16028](https://github.com/sveltejs/svelte/pull/16028))
+
+## 5.33.6
+
+### Patch Changes
+
+- fix: falsy attachments on components ([#16021](https://github.com/sveltejs/svelte/pull/16021))
+
+- fix: correctly mark <option> elements as selected during SSR ([#16017](https://github.com/sveltejs/svelte/pull/16017))
+
+## 5.33.5
+
+### Patch Changes
+
+- fix: handle derived destructured iterators ([#16015](https://github.com/sveltejs/svelte/pull/16015))
+
+- fix: avoid rerunning attachments when unrelated spread attributes change ([#15961](https://github.com/sveltejs/svelte/pull/15961))
+
+## 5.33.4
+
+### Patch Changes
+
+- fix: narrow `defaultChecked` to boolean ([#16009](https://github.com/sveltejs/svelte/pull/16009))
+
+- fix: warn when using rest or identifier in custom elements without props option ([#16003](https://github.com/sveltejs/svelte/pull/16003))
+
+## 5.33.3
+
+### Patch Changes
+
+- fix: allow using typescript in `customElement.extend` option ([#16001](https://github.com/sveltejs/svelte/pull/16001))
+
+- fix: cleanup event handlers on media elements ([#16005](https://github.com/sveltejs/svelte/pull/16005))
+
+## 5.33.2
+
+### Patch Changes
+
+- fix: correctly parse escaped unicode characters in css selector ([#15976](https://github.com/sveltejs/svelte/pull/15976))
+
+- fix: don't mark deriveds as clean if updating during teardown ([#15997](https://github.com/sveltejs/svelte/pull/15997))
+
+## 5.33.1
+
+### Patch Changes
+
+- fix: make deriveds on the server lazy again ([#15964](https://github.com/sveltejs/svelte/pull/15964))
+
+## 5.33.0
+
+### Minor Changes
+
+- feat: XHTML compliance ([#15538](https://github.com/sveltejs/svelte/pull/15538))
+
+- feat: add `fragments: 'html' | 'tree'` option for wider CSP compliance ([#15538](https://github.com/sveltejs/svelte/pull/15538))
+
+## 5.32.2
+
+### Patch Changes
+
+- chore: simplify `<pre>` cleaning ([#15980](https://github.com/sveltejs/svelte/pull/15980))
+
+- fix: attach `__svelte_meta` correctly to elements following a CSS wrapper ([#15982](https://github.com/sveltejs/svelte/pull/15982))
+
+- fix: import untrack directly from client in `svelte/attachments` ([#15974](https://github.com/sveltejs/svelte/pull/15974))
+
+## 5.32.1
+
+### Patch Changes
+
+- Warn when an invalid `<select multiple>` value is given ([#14816](https://github.com/sveltejs/svelte/pull/14816))
+
+## 5.32.0
+
+### Minor Changes
+
+- feat: warn on implicitly closed tags ([#15932](https://github.com/sveltejs/svelte/pull/15932))
+
+- feat: attachments `fromAction` utility ([#15933](https://github.com/sveltejs/svelte/pull/15933))
+
+### Patch Changes
+
+- fix: only re-run directly applied attachment if it changed ([#15962](https://github.com/sveltejs/svelte/pull/15962))
+
+## 5.31.1
+
+### Patch Changes
+
+- fix: avoid auto-parenthesis for special-keywords-only `MediaQuery` ([#15937](https://github.com/sveltejs/svelte/pull/15937))
+
+## 5.31.0
+
+### Minor Changes
+
+- feat: allow state fields to be declared inside class constructors ([#15820](https://github.com/sveltejs/svelte/pull/15820))
+
+### Patch Changes
+
+- fix: Add missing `AttachTag` in `Tag` union type inside the `AST` namespace from `"svelte/compiler"` ([#15946](https://github.com/sveltejs/svelte/pull/15946))
+
+## 5.30.2
+
+### Patch Changes
+
+- fix: falsy attachments types ([#15939](https://github.com/sveltejs/svelte/pull/15939))
+
+- fix: handle more hydration mismatches ([#15851](https://github.com/sveltejs/svelte/pull/15851))
+
+## 5.30.1
+
+### Patch Changes
+
+- fix: add `typeParams` to `SnippetBlock` for legacy parser ([#15921](https://github.com/sveltejs/svelte/pull/15921))
+
+## 5.30.0
+
+### Minor Changes
+
+- feat: allow generics on snippets ([#15915](https://github.com/sveltejs/svelte/pull/15915))
+
+## 5.29.0
+
+### Minor Changes
+
+- feat: attachments ([#15000](https://github.com/sveltejs/svelte/pull/15000))
+
+## 5.28.7
+
+### Patch Changes
+
+- fix: remove unncessary guards that require CSP privilege when removing event attributes ([#15846](https://github.com/sveltejs/svelte/pull/15846))
+
+- fix: rewrite destructuring logic to handle iterators ([#15813](https://github.com/sveltejs/svelte/pull/15813))
+
+## 5.28.6
+
+### Patch Changes
+
+- fix: use `transform.read` for `ownership_validator.mutation` array ([#15848](https://github.com/sveltejs/svelte/pull/15848))
+
+- fix: don't redeclare `$slots` ([#15849](https://github.com/sveltejs/svelte/pull/15849))
+
+## 5.28.5
+
+### Patch Changes
+
+- fix: proxify the value in assignment shorthands to the private field ([#15862](https://github.com/sveltejs/svelte/pull/15862))
+
+- fix: more frequently update `bind:buffered` to actual value ([#15874](https://github.com/sveltejs/svelte/pull/15874))
+
+## 5.28.4
+
+### Patch Changes
+
+- fix: treat nullish expression as empty string ([#15901](https://github.com/sveltejs/svelte/pull/15901))
+
+- fix: prevent invalid BigInt calls from blowing up at compile time ([#15900](https://github.com/sveltejs/svelte/pull/15900))
+
+- fix: warn on bidirectional control characters ([#15893](https://github.com/sveltejs/svelte/pull/15893))
+
+- fix: emit right error for a shadowed invalid rune ([#15892](https://github.com/sveltejs/svelte/pull/15892))
+
+## 5.28.3
+
+### Patch Changes
+
+- chore: avoid microtasks when flushing sync ([#15895](https://github.com/sveltejs/svelte/pull/15895))
+
+- fix: improve error message for migration errors when slot would be renamed ([#15841](https://github.com/sveltejs/svelte/pull/15841))
+
+- fix: allow characters in the supplementary special-purpose plane ([#15823](https://github.com/sveltejs/svelte/pull/15823))
+
+## 5.28.2
+
+### Patch Changes
+
+- fix: don't mark selector lists inside `:global` with multiple items as unused ([#15817](https://github.com/sveltejs/svelte/pull/15817))
+
 ## 5.28.1
 
 ### Patch Changes

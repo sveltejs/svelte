@@ -4,7 +4,7 @@ title: bind:
 
 Data ordinarily flows down, from parent to child. The `bind:` directive allows data to flow the other way, from child to parent.
 
-The general syntax is `bind:property={expression}`, where `expression` is an _lvalue_ (i.e. a variable or an object property). When the expression is an identifier with the same name as the property, we can omit the expression — in other words these are equivalent:
+The general syntax is `bind:property={expression}`, where `expression` is an [_lvalue_](https://press.rebus.community/programmingfundamentals/chapter/lvalue-and-rvalue/) (i.e. a variable or an object property). When the expression is an identifier with the same name as the property, we can omit the expression — in other words these are equivalent:
 
 <!-- prettier-ignore -->
 ```svelte
@@ -117,28 +117,52 @@ Since 5.6.0, if an `<input>` has a `defaultChecked` attribute and is part of a f
 </form>
 ```
 
-## `<input bind:group>`
+## `<input bind:indeterminate>`
 
-Inputs that work together can use `bind:group`.
+Checkboxes can be in an [indeterminate](https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement/indeterminate) state, independently of whether they are checked or unchecked:
 
 ```svelte
 <script>
+	let checked = $state(false);
+	let indeterminate = $state(true);
+</script>
+
+<form>
+	<input type="checkbox" bind:checked bind:indeterminate>
+
+	{#if indeterminate}
+		waiting...
+	{:else if checked}
+		checked
+	{:else}
+		unchecked
+	{/if}
+</form>
+```
+
+## `<input bind:group>`
+
+Inputs that work together can use `bind:group` ([demo](/playground/untitled#H4sIAAAAAAAAE62T32_TMBDH_5XDQkpbrct7SCMGEvCEECDxsO7BSW6L2c227EvbKOv_jp0f6jYhQKJv5_P3PvdL1wstH1Bk4hMSGdgbRzUssFaM9VJciFtF6EV23QvubNRFR_BPUVfWXvodEkdfKT3-zl8Zzag5YETuK6csF1u9ZUIGNo4VkYQNvPYsGRfJF5JKJ8s3QRJE6WoFb2Nq6K-ck13u2Sl9Vxxhlc6QUBIFnz9Brm9ifJ6esun81XoNd860FmtwslYGlLYte5AO4aHlVhJ1gIeKWq92COt1iMtJlkhFPkgh1rHZiiF6K6BUus4G5KafGznCTlIbVUMfQZUWMJh5OrL-C_qjMYSwb1DyiH7iOEuCb1ZpWTUjfHqcwC_GWDVY3ZfmME_SGttSmD9IHaYatvWHIc6xLyqad3mq6KuqcCwnWn9p8p-p71BqP2IH81zc9w2in-od7XORP7ayCpd5YCeXI_-p59mObPF9WmwGpx3nqS2Gzw8TO3zOaS5_GqUXyQUkS3h8hOSz0ZhMESHGc0c4Hm3MAn00t1wrb0l2GZRkqvt4sXwczm6Qh8vnUJzI2LV4vAkvqWgfehTZrSSPx19WiVfFfAQAAA==)):
+
+```svelte
+<!--- file: BurritoChooser.svelte --->
+<script>
 	let tortilla = $state('Plain');
 
-	/** @type {Array<string>} */
+	/** @type {string[]} */
 	let fillings = $state([]);
 </script>
 
 <!-- grouped radio inputs are mutually exclusive -->
-<input type="radio" bind:group={tortilla} value="Plain" />
-<input type="radio" bind:group={tortilla} value="Whole wheat" />
-<input type="radio" bind:group={tortilla} value="Spinach" />
+<label><input type="radio" bind:group={tortilla} value="Plain" /> Plain</label>
+<label><input type="radio" bind:group={tortilla} value="Whole wheat" /> Whole wheat</label>
+<label><input type="radio" bind:group={tortilla} value="Spinach" /> Spinach</label>
 
 <!-- grouped checkbox inputs populate an array -->
-<input type="checkbox" bind:group={fillings} value="Rice" />
-<input type="checkbox" bind:group={fillings} value="Beans" />
-<input type="checkbox" bind:group={fillings} value="Cheese" />
-<input type="checkbox" bind:group={fillings} value="Guac (extra)" />
+<label><input type="checkbox" bind:group={fillings} value="Rice" /> Rice</label>
+<label><input type="checkbox" bind:group={fillings} value="Beans" /> Beans</label>
+<label><input type="checkbox" bind:group={fillings} value="Cheese" /> Cheese</label>
+<label><input type="checkbox" bind:group={fillings} value="Guac (extra)" /> Guac (extra)</label>
 ```
 
 > [!NOTE] `bind:group` only works if the inputs are in the same Svelte component.
@@ -227,6 +251,7 @@ You can give the `<select>` a default value by adding a `selected` attribute to 
 - [`seeking`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/seeking_event)
 - [`ended`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/ended)
 - [`readyState`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/readyState)
+- [`played`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/played)
 
 ```svelte
 <audio src={clip} bind:duration bind:currentTime bind:paused></audio>
@@ -254,6 +279,10 @@ You can give the `<select>` a default value by adding a `selected` attribute to 
 </details>
 ```
 
+## `window` and `document`
+
+To bind to properties of `window` and `document`, see [`<svelte:window>`](svelte-window) and [`<svelte:document>`](svelte-document).
+
 ## Contenteditable bindings
 
 Elements with the `contenteditable` attribute support the following bindings:
@@ -278,6 +307,10 @@ All visible elements have the following readonly bindings, measured with a `Resi
 - [`clientHeight`](https://developer.mozilla.org/en-US/docs/Web/API/Element/clientHeight)
 - [`offsetWidth`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/offsetWidth)
 - [`offsetHeight`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/offsetHeight)
+- [`contentRect`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserverEntry/contentRect)
+- [`contentBoxSize`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserverEntry/contentBoxSize)
+- [`borderBoxSize`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserverEntry/borderBoxSize)
+- [`devicePixelContentBoxSize`](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserverEntry/devicePixelContentBoxSize)
 
 ```svelte
 <div bind:offsetWidth={width} bind:offsetHeight={height}>
@@ -285,7 +318,7 @@ All visible elements have the following readonly bindings, measured with a `Resi
 </div>
 ```
 
-> [!NOTE] `display: inline` elements do not have a width or height (except for elements with 'intrinsic' dimensions, like `<img>` and `<canvas>`), and cannot be observed with a `ResizeObserver`. You will need to change the `display` style of these elements to something else, such as `inline-block`.
+> [!NOTE] `display: inline` elements do not have a width or height (except for elements with 'intrinsic' dimensions, like `<img>` and `<canvas>`), and cannot be observed with a `ResizeObserver`. You will need to change the `display` style of these elements to something else, such as `inline-block`. Note that CSS transformations do not trigger `ResizeObserver` callbacks.
 
 ## bind:this
 

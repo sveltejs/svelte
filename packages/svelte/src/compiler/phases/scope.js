@@ -20,15 +20,16 @@ const UNKNOWN = Symbol('unknown');
 /** Includes `BigInt` */
 export const NUMBER = Symbol('number');
 export const STRING = Symbol('string');
+export const FUNCTION = Symbol('string');
 
 /** @type {Record<string, [type: NUMBER | STRING | UNKNOWN, fn?: Function]>} */
 const globals = {
-	BigInt: [NUMBER, BigInt],
+	BigInt: [NUMBER],
 	'Math.min': [NUMBER, Math.min],
 	'Math.max': [NUMBER, Math.max],
 	'Math.random': [NUMBER],
 	'Math.floor': [NUMBER, Math.floor],
-	// @ts-expect-error
+	// @ts-ignore
 	'Math.f16round': [NUMBER, Math.f16round],
 	'Math.round': [NUMBER, Math.round],
 	'Math.abs': [NUMBER, Math.abs],
@@ -201,6 +202,13 @@ class Evaluation {
 	is_number = true;
 
 	/**
+	 * True if the value is known to be a function
+	 * @readonly
+	 * @type {boolean}
+	 */
+	is_function = true;
+
+	/**
 	 * @readonly
 	 * @type {any}
 	 */
@@ -209,7 +217,7 @@ class Evaluation {
 	/**
 	 *
 	 * @param {Scope} scope
-	 * @param {Expression} expression
+	 * @param {Expression | FunctionDeclaration} expression
 	 * @param {Set<any>} values
 	 */
 	constructor(scope, expression, values) {
@@ -500,6 +508,13 @@ class Evaluation {
 				break;
 			}
 
+			case 'ArrowFunctionExpression':
+			case 'FunctionExpression':
+			case 'FunctionDeclaration': {
+				this.values.add(FUNCTION);
+				break;
+			}
+
 			default: {
 				this.values.add(UNKNOWN);
 			}
@@ -514,6 +529,10 @@ class Evaluation {
 
 			if (value !== NUMBER && typeof value !== 'number') {
 				this.is_number = false;
+			}
+
+			if (value !== FUNCTION) {
+				this.is_function = false;
 			}
 
 			if (value == null || value === UNKNOWN) {

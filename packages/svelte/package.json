@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.28.1",
+  "version": "5.33.7",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -33,6 +33,10 @@
     "./animate": {
       "types": "./types/index.d.ts",
       "default": "./src/animate/index.js"
+    },
+    "./attachments": {
+      "types": "./types/index.d.ts",
+      "default": "./src/attachments/index.js"
     },
     "./compiler": {
       "types": "./types/index.d.ts",
@@ -132,7 +136,7 @@
   ],
   "scripts": {
     "build": "node scripts/process-messages && rollup -c && pnpm generate:types && node scripts/check-treeshakeability.js",
-    "dev": "node scripts/process-messages && rollup -cw",
+    "dev": "node scripts/process-messages -w & rollup -cw",
     "check": "tsc --project tsconfig.runtime.json && tsc && cd ./tests/types && tsc",
     "check:watch": "tsc --watch",
     "generate:version": "node ./scripts/generate-version.js",

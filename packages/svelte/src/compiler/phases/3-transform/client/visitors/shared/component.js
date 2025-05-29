@@ -257,6 +257,22 @@ export function build_component(node, component_name, context, anchor = context.
 					);
 				}
 			}
+		} else if (attribute.type === 'AttachTag') {
+			const evaluated = context.state.scope.evaluate(attribute.expression);
+
+			let expression = /** @type {Expression} */ (context.visit(attribute.expression));
+
+			if (attribute.metadata.expression.has_state) {
+				expression = b.arrow(
+					[b.id('$$node')],
+					b.call(
+						evaluated.is_function ? expression : b.logical('||', expression, b.id('$.noop')),
+						b.id('$$node')
+					)
+				);
+			}
+
+			push_prop(b.prop('get', b.call('$.attachment'), expression, true));
 		}
 	}
 
@@ -432,11 +448,17 @@ export function build_component(node, component_name, context, anchor = context.
 	}
 
 	if (Object.keys(custom_css_props).length > 0) {
-		context.state.template.push(
-			context.state.metadata.namespace === 'svg'
-				? '<g><!></g>'
-				: '<svelte-css-wrapper style="display: contents"><!></svelte-css-wrapper>'
-		);
+		if (context.state.metadata.namespace === 'svg') {
+			// this boils down to <g><!></g>
+			context.state.template.push_element('g', node.start);
+		} else {
+			// this boils down to <svelte-css-wrapper style='display: contents'><!></svelte-css-wrapper>
+			context.state.template.push_element('svelte-css-wrapper', node.start);
+			context.state.template.set_prop('style', 'display: contents');
+		}
+
+		context.state.template.push_comment();
+		context.state.template.pop_element();
 
 		statements.push(
 			b.stmt(b.call('$.css_props', anchor, b.thunk(b.object(custom_css_props)))),
@@ -444,7 +466,7 @@ export function build_component(node, component_name, context, anchor = context.
 			b.stmt(b.call('$.reset', anchor))
 		);
 	} else {
-		context.state.template.push('<!>');
+		context.state.template.push_comment();
 		statements.push(b.stmt(fn(anchor)));
 	}
 

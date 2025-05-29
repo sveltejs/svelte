@@ -39,7 +39,7 @@ export function Identifier(node, context) {
 		if (
 			is_rune(node.name) &&
 			context.state.scope.get(node.name) === null &&
-			context.state.scope.get(node.name.slice(1)) === null
+			context.state.scope.get(node.name.slice(1))?.kind !== 'store_sub'
 		) {
 			/** @type {Expression} */
 			let current = node;

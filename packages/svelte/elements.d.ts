@@ -31,6 +31,8 @@
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 2.8
 
+import type { Attachment } from 'svelte/attachments';
+
 // Note: We also allow `null` as a valid value because Svelte treats this the same as `undefined`
 
 type Booleanish = boolean | 'true' | 'false';
@@ -860,6 +862,9 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 
 	// allow any data- attribute
 	[key: `data-${string}`]: any;
+
+	// allow any attachment and falsy values (by using false we prevent the usage of booleans values by themselves)
+	[key: symbol]: Attachment<T> | false | undefined | null;
 }
 
 export type HTMLAttributeAnchorTarget = '_self' | '_blank' | '_parent' | '_top' | (string & {});
@@ -1110,8 +1115,8 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	// needs both casing variants because language tools does lowercase names of non-shorthand attributes
 	defaultValue?: any;
 	defaultvalue?: any;
-	defaultChecked?: any;
-	defaultchecked?: any;
+	defaultChecked?: boolean | undefined | null;
+	defaultchecked?: boolean | undefined | null;
 	width?: number | string | undefined | null;
 	webkitdirectory?: boolean | undefined | null;
 
@@ -2061,7 +2066,7 @@ export interface SvelteHTMLElements {
 		failed?: import('svelte').Snippet<[error: unknown, reset: () => void]>;
 	};
 
-	[name: string]: { [name: string]: any };
+	[name: string & {}]: { [name: string]: any };
 }
 
 export type ClassValue = string | import('clsx').ClassArray | import('clsx').ClassDictionary;
