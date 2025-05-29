@@ -1,5 +1,11 @@
 # svelte
 
+## 5.33.7
+
+### Patch Changes
+
+- fix: `bind:value` to select with stores ([#16028](https://github.com/sveltejs/svelte/pull/16028))
+
 ## 5.33.6
 
 ### Patch Changes
