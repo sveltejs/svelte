@@ -203,12 +203,7 @@ export function VariableDeclaration(node, context) {
 						let expression = /** @type {Expression} */ (context.visit(value));
 						if (rune === '$derived') expression = b.thunk(expression);
 
-						declarations.push(
-							b.declarator(
-								declarator.id,
-								b.call('$.derived', rune === '$derived.by' ? value : b.thunk(value))
-							)
-						);
+						declarations.push(b.declarator(declarator.id, b.call('$.derived', expression)));
 					}
 				} else {
 					const init = /** @type {CallExpression} */ (declarator.init);
