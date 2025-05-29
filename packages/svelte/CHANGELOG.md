@@ -1,5 +1,11 @@
 # svelte
 
+## 5.33.10
+
+### Patch Changes
+
+- fix: use `fill: 'forwards'` on transition animations to prevent flicker ([#16035](https://github.com/sveltejs/svelte/pull/16035))
+
 ## 5.33.9
 
 ### Patch Changes
