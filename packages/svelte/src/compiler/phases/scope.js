@@ -221,6 +221,8 @@ class Evaluation {
 	 * @param {Set<any>} values
 	 */
 	constructor(scope, expression, values) {
+		current_evaluations.set(expression, this);
+
 		this.values = values;
 
 		switch (expression.type) {
@@ -543,6 +545,8 @@ class Evaluation {
 		if (this.values.size > 1 || typeof this.value === 'symbol') {
 			this.is_known = false;
 		}
+
+		current_evaluations.delete(expression);
 	}
 }
 
@@ -734,9 +738,19 @@ export class Scope {
 	 * @param {Set<any>} [values]
 	 */
 	evaluate(expression, values = new Set()) {
+		const current = current_evaluations.get(expression);
+		if (current) return current;
+
 		return new Evaluation(this, expression, values);
 	}
 }
+
+/**
+ * Track which expressions are currently being evaluated — this allows
+ * us to prevent cyclical evaluations without passing the map around
+ * @type {Map<Expression | FunctionDeclaration, Evaluation>}
+ */
+const current_evaluations = new Map();
 
 /** @type {Record<BinaryOperator, (left: any, right: any) => any>} */
 const binary = {
@@ -1139,7 +1153,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				const is_keyed =
 					node.key &&
 					(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index);
-				scope.declare(b.id(node.index), is_keyed ? 'template' : 'normal', 'const', node);
+				scope.declare(b.id(node.index), is_keyed ? 'template' : 'static', 'const', node);
 			}
 			if (node.key) visit(node.key, { scope });
 
