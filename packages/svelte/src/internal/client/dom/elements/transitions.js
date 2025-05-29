@@ -381,9 +381,17 @@ function animate(element, options, counterpart, t2, on_finish) {
 	// create a dummy animation that lasts as long as the delay (but with whatever devtools
 	// multiplier is in effect). in the common case that it is `0`, we keep it anyway so that
 	// the CSS keyframes aren't created until the DOM is updated
-	var animation = element.animate(keyframes, { duration: delay });
+	//
+	// fill forwards to prevent the element to render without animation styles applied
+	// when entering the onfinish callback, can be verified by adding a breakpoint in the onfinish callback
+	// see https://github.com/sveltejs/svelte/issues/14732
+	var animation = element.animate(keyframes, { duration: delay, fill: 'forwards' });
 
 	animation.onfinish = () => {
+		// have to manually cancel the dummy animation to remove it from the animations stack
+		// because it fill forwards
+		animation.cancel();
+
 		// for bidirectional transitions, we start from the current position,
 		// rather than doing a full intro/outro
 		var t1 = counterpart?.t() ?? 1 - t2;
