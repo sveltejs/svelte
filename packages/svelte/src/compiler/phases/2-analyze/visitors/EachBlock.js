@@ -2,6 +2,7 @@
 /** @import { Context } from '../types' */
 /** @import { Scope } from '../../scope' */
 import * as e from '../../../errors.js';
+import { extract_identifiers } from '../../../utils/ast.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 import { validate_block_not_empty, validate_opening_tag } from './shared/utils.js';
 
@@ -38,21 +39,32 @@ export function EachBlock(node, context) {
 	if (node.key) context.visit(node.key);
 	if (node.fallback) context.visit(node.fallback);
 
+	let mutated = false;
+
 	// collect transitive dependencies...
 	for (const binding of node.metadata.expression.dependencies) {
 		collect_transitive_dependencies(binding, node.metadata.transitive_deps);
 	}
 
+	if (node.context) {
+		for (const id of extract_identifiers(node.context)) {
+			const binding = context.state.scope.get(id.name);
+			if (binding?.mutated) mutated = true;
+		}
+	}
+
 	// ...and ensure they are marked as state, so they can be turned
 	// into mutable sources and invalidated
-	for (const binding of node.metadata.transitive_deps) {
-		if (
-			binding.kind === 'normal' &&
-			(binding.declaration_kind === 'const' ||
-				binding.declaration_kind === 'let' ||
-				binding.declaration_kind === 'var')
-		) {
-			binding.kind = 'state';
+	if (mutated) {
+		for (const binding of node.metadata.transitive_deps) {
+			if (
+				binding.kind === 'normal' &&
+				(binding.declaration_kind === 'const' ||
+					binding.declaration_kind === 'let' ||
+					binding.declaration_kind === 'var')
+			) {
+				binding.kind = 'state';
+			}
 		}
 	}
 

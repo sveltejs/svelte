@@ -1,5 +1,5 @@
 <script>
-	const { foo } = $state(x());
+	const { foo } = x();
 </script>
 
 {#each foo as f}{/each}
