@@ -335,7 +335,7 @@ export function prop(props, key, flags, fallback) {
 	}
 
 	// easy mode — prop is never written to
-	if ((flags & PROPS_IS_UPDATED) === 0) {
+	if ((flags & PROPS_IS_UPDATED) === 0 && runes) {
 		return getter;
 	}
 

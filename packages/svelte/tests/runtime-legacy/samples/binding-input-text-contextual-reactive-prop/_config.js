@@ -2,6 +2,16 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
+	get props() {
+		return {
+			items: [
+				{ done: false, text: 'one' },
+				{ done: true, text: 'two' },
+				{ done: false, text: 'three' }
+			]
+		};
+	},
+
 	html: `
 		<div>
 			<input type="checkbox">
@@ -98,6 +108,12 @@ export default test({
 		`
 		);
 
+		assert.deepEqual(component.items, [
+			{ done: false, text: 'one' },
+			{ done: true, text: 'two' },
+			{ done: false, text: 'four' }
+		]);
+
 		set_done(0, true);
 		flushSync();
 
@@ -112,6 +128,12 @@ export default test({
 			<p>done:one / done:two / remaining:four</p>
 		`
 		);
+
+		assert.deepEqual(component.items, [
+			{ done: true, text: 'one' },
+			{ done: true, text: 'two' },
+			{ done: false, text: 'four' }
+		]);
 
 		component.filter = 'done';
 
