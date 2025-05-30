@@ -12,6 +12,8 @@ import {
 } from '../../runtime.js';
 import { without_reactive_context } from './bindings/shared.js';
 
+/** @typedef {((ev: Event, ...args: any) => void) | { handleEvent: (ev: Event, ...args: any) => void }} EventListenerWrapper */
+
 /** @type {Set<string>} */
 export const all_registered_events = new Set();
 
@@ -42,9 +44,23 @@ export function replay_events(dom) {
 }
 
 /**
+ * @param {EventListenerWrapper | undefined} handler
+ * @param {EventTarget} current_target
+ * @param {Event} event
+ * @param {any[]} [data]
+ */
+export function call_event_handler(handler, current_target, event, data = []) {
+	if (typeof handler === 'function') {
+		handler.call(current_target, event, ...data);
+	} else {
+		handler?.handleEvent(event);
+	}
+}
+
+/**
  * @param {string} event_name
  * @param {EventTarget} dom
- * @param {EventListener} [handler]
+ * @param {EventListenerOrEventListenerObject} [handler]
  * @param {AddEventListenerOptions} [options]
  */
 export function create_event(event_name, dom, handler, options = {}) {
@@ -57,8 +73,8 @@ export function create_event(event_name, dom, handler, options = {}) {
 			handle_event_propagation.call(dom, event);
 		}
 		if (!event.cancelBubble) {
-			return without_reactive_context(() => {
-				return handler?.call(this, event);
+			without_reactive_context(() => {
+				call_event_handler(handler, this, event);
 			});
 		}
 	}
@@ -89,7 +105,7 @@ export function create_event(event_name, dom, handler, options = {}) {
  *
  * @param {EventTarget} element
  * @param {string} type
- * @param {EventListener} handler
+ * @param {EventListenerOrEventListenerObject} handler
  * @param {AddEventListenerOptions} [options]
  */
 export function on(element, type, handler, options = {}) {
@@ -103,7 +119,7 @@ export function on(element, type, handler, options = {}) {
 /**
  * @param {string} event_name
  * @param {Element} dom
- * @param {EventListener} [handler]
+ * @param {EventListenerOrEventListenerObject} [handler]
  * @param {boolean} [capture]
  * @param {boolean} [passive]
  * @returns {void}
@@ -248,9 +264,9 @@ export function handle_event_propagation(event) {
 				) {
 					if (is_array(delegated)) {
 						var [fn, ...data] = delegated;
-						fn.apply(current_target, [event, ...data]);
+						call_event_handler(fn, current_target, event, data);
 					} else {
-						delegated.call(current_target, event);
+						call_event_handler(delegated, current_target, event);
 					}
 				}
 			} catch (error) {
@@ -288,9 +304,10 @@ export function handle_event_propagation(event) {
 /**
  * In dev, warn if an event handler is not a function, as it means the
  * user probably called the handler or forgot to add a `() =>`
- * @param {() => (event: Event, ...args: any) => void} thunk
+ * @param {() => EventListenerWrapper} thunk
  * @param {EventTarget} element
- * @param {[Event, ...any]} args
+ * @param {Event} evt
+ * @param {any[]} data
  * @param {any} component
  * @param {[number, number]} [loc]
  * @param {boolean} [remove_parens]
@@ -298,7 +315,8 @@ export function handle_event_propagation(event) {
 export function apply(
 	thunk,
 	element,
-	args,
+	evt,
+	data,
 	component,
 	loc,
 	has_side_effects = false,
@@ -313,11 +331,15 @@ export function apply(
 		error = e;
 	}
 
-	if (typeof handler !== 'function' && (has_side_effects || handler != null || error)) {
+	if (
+		typeof handler !== 'function' &&
+		typeof handler?.handleEvent !== 'function' &&
+		(has_side_effects || handler != null || error)
+	) {
 		const filename = component?.[FILENAME];
 		const location = loc ? ` at ${filename}:${loc[0]}:${loc[1]}` : ` in ${filename}`;
-		const phase = args[0]?.eventPhase < Event.BUBBLING_PHASE ? 'capture' : '';
-		const event_name = args[0]?.type + phase;
+		const phase = evt?.eventPhase < Event.BUBBLING_PHASE ? 'capture' : '';
+		const event_name = evt?.type + phase;
 		const description = `\`${event_name}\` handler${location}`;
 		const suggestion = remove_parens ? 'remove the trailing `()`' : 'add a leading `() =>`';
 
@@ -327,5 +349,5 @@ export function apply(
 			throw error;
 		}
 	}
-	handler?.apply(element, args);
+	call_event_handler(handler, element, evt, data);
 }
