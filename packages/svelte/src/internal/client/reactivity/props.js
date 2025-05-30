@@ -335,7 +335,6 @@ export function prop(props, key, flags, fallback) {
 	}
 
 	// easy mode — prop is never written to
-	// TODO i think the `&& runes` might now be superfluous
 	if ((flags & PROPS_IS_UPDATED) === 0 && runes) {
 		return getter;
 	}
