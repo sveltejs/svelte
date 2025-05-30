@@ -1169,7 +1169,9 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				contains_group_binding: false,
 				index: scope.root.unique('$$index'),
 				declarations: scope.declarations,
-				is_controlled: false
+				is_controlled: false,
+				// filled in during analysis
+				transitive_deps: new Set()
 			};
 		},
 
