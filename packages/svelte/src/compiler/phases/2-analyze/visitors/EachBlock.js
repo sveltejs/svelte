@@ -39,31 +39,31 @@ export function EachBlock(node, context) {
 	if (node.key) context.visit(node.key);
 	if (node.fallback) context.visit(node.fallback);
 
-	let mutated = false;
+	if (!context.state.analysis.runes) {
+		let mutated =
+			!!node.context &&
+			extract_identifiers(node.context).some((id) => {
+				const binding = context.state.scope.get(id.name);
+				return !!binding?.mutated;
+			});
 
-	// collect transitive dependencies...
-	for (const binding of node.metadata.expression.dependencies) {
-		collect_transitive_dependencies(binding, node.metadata.transitive_deps);
-	}
-
-	if (node.context) {
-		for (const id of extract_identifiers(node.context)) {
-			const binding = context.state.scope.get(id.name);
-			if (binding?.mutated) mutated = true;
+		// collect transitive dependencies...
+		for (const binding of node.metadata.expression.dependencies) {
+			collect_transitive_dependencies(binding, node.metadata.transitive_deps);
 		}
-	}
 
-	// ...and ensure they are marked as state, so they can be turned
-	// into mutable sources and invalidated
-	if (mutated) {
-		for (const binding of node.metadata.transitive_deps) {
-			if (
-				binding.kind === 'normal' &&
-				(binding.declaration_kind === 'const' ||
-					binding.declaration_kind === 'let' ||
-					binding.declaration_kind === 'var')
-			) {
-				binding.kind = 'state';
+		// ...and ensure they are marked as state, so they can be turned
+		// into mutable sources and invalidated
+		if (mutated) {
+			for (const binding of node.metadata.transitive_deps) {
+				if (
+					binding.kind === 'normal' &&
+					(binding.declaration_kind === 'const' ||
+						binding.declaration_kind === 'let' ||
+						binding.declaration_kind === 'var')
+				) {
+					binding.kind = 'state';
+				}
 			}
 		}
 	}
