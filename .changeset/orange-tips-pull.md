@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: use local mutable sources for props in legacy mode in case they are indirectly invalidated
+fix: treat transitive dependencies of each blocks as mutable in legacy mode if item is mutated
