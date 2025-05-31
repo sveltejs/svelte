@@ -61,10 +61,11 @@ export class Batch {
 	process(root_effects) {
 		set_queued_root_effects([]);
 
+		/** @type {Map<Source, { v: unknown, wv: number }>} */
 		var current_values = new Map();
 
 		for (const [source, current] of this.#current) {
-			current_values.set(source, source.v);
+			current_values.set(source, { v: source.v, wv: source.wv });
 			source.v = current;
 		}
 
@@ -73,7 +74,7 @@ export class Batch {
 
 			for (const [source, previous] of batch.#previous) {
 				if (!current_values.has(source)) {
-					current_values.set(source, source.v);
+					current_values.set(source, { v: source.v, wv: source.wv });
 					source.v = previous;
 				}
 			}
@@ -101,8 +102,12 @@ export class Batch {
 			for (const e of this.effects) set_signal_status(e, CLEAN);
 		}
 
-		for (const [source, value] of current_values) {
-			source.v = value;
+		for (const [source, { v, wv }] of current_values) {
+			// reset the source to the current value (unless
+			// it got a newer value as a result of effects running)
+			if (source.wv <= wv) {
+				source.v = v;
+			}
 		}
 
 		for (const effect of this.async_effects) {
