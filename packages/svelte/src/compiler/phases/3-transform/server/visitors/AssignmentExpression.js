@@ -24,7 +24,12 @@ export function AssignmentExpression(node, context) {
  * @returns {Expression | null}
  */
 function build_assignment(operator, left, right, context) {
-	if (context.state.analysis.runes && left.type === 'MemberExpression') {
+	if (
+		context.state.analysis.runes &&
+		left.type === 'MemberExpression' &&
+		left.object.type === 'ThisExpression' &&
+		!left.computed
+	) {
 		const name = get_name(left.property);
 		const field = name && context.state.state_fields.get(name);
 
