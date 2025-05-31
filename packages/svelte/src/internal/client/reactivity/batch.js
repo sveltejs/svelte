@@ -39,7 +39,8 @@ export class Batch {
 
 	#pending = 0;
 
-	/** @type {PromiseWithResolvers<void> | null} */
+	/** @type {{ promise: Promise<void>, resolve: (value?: any) => void, reject: (reason: unknown) => void } | null} */
+	// TODO replace with Promise.withResolvers once supported widely enough
 	deferred = null;
 
 	/** @type {Effect[]} */
