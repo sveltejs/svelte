@@ -59,8 +59,8 @@ let todos = [{ done: false, text: 'add more todos' }];
 // ---cut---
 let { done, text } = todos[0];
 
-// this will not affect the value of `done`
-todos[0].done = !todos[0].done;
+// this will not affect the value of `done` within the actual item in the array
+done = !done;
 ```
 
 ### Classes
