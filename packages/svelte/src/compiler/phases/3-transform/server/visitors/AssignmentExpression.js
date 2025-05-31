@@ -49,11 +49,6 @@ function build_assignment(operator, left, right, context) {
 					/** @type {Expression} */ (context.visit(right))
 				);
 			}
-		} else if (field && (field.type === '$derived' || field.type === '$derived.by')) {
-			let value = /** @type {Expression} */ (
-				context.visit(build_assignment_value(operator, left, right))
-			);
-			return b.call(b.member(b.this, name), value);
 		}
 	}
 
