@@ -490,17 +490,37 @@ export function attribute_effect(
 			select_option(/** @type {HTMLSelectElement} */ (element), next.value, false);
 		}
 
-		for (let symbol of Object.getOwnPropertySymbols(effects)) {
-			if (!next[symbol]) destroy_effect(effects[symbol]);
-		}
-
 		for (let symbol of Object.getOwnPropertySymbols(next)) {
 			var n = next[symbol];
 
-			if (symbol.description === ATTACHMENT_KEY && (!prev || n !== prev[symbol])) {
+			// we check if the same function is already attached to the element
+			var prev_fn_attached_symbol =
+				prev &&
+				Object.getOwnPropertySymbols(prev).find(
+					(s) => /** @type {NonNullable<typeof prev>} */ (prev)[s] === n
+				);
+
+			// we only re-attach if the symbol is the ATTACHMENT_KEY
+			// the function is different from the previous one
+			// and the previous function is not attached to the element already
+			if (
+				symbol.description === ATTACHMENT_KEY &&
+				(!prev || n !== prev[symbol]) &&
+				!prev_fn_attached_symbol
+			) {
 				if (effects[symbol]) destroy_effect(effects[symbol]);
 				effects[symbol] = branch(() => attach(element, () => n));
+			} else if (prev_fn_attached_symbol) {
+				// but if the previous function is attached to the element,
+				// we need to store the old effect in the effects map at `symbol`
+				// and delete the previous so it's not destroyed
+				effects[symbol] = prev?.[prev_fn_attached_symbol];
+				delete effects[prev_fn_attached_symbol];
 			}
+		}
+
+		for (let symbol of Object.getOwnPropertySymbols(effects)) {
+			if (!next[symbol]) destroy_effect(effects[symbol]);
 		}
 
 		prev = next;
