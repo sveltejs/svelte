@@ -5,6 +5,7 @@ import { init_array_prototype_warnings } from '../dev/equality.js';
 import { get_descriptor, is_extensible } from '../../shared/utils.js';
 import { active_effect } from '../runtime.js';
 import { EFFECT_RAN } from '../constants.js';
+import { async_mode_flag } from '../../flags/index.js';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
 /** @type {Window} */
@@ -214,6 +215,8 @@ export function clear_text_content(node) {
  * current `<svelte:boundary>`
  */
 export function should_defer_append() {
+	if (!async_mode_flag) return false;
+
 	var flags = /** @type {Effect} */ (active_effect).f;
 	return (flags & EFFECT_RAN) !== 0;
 }

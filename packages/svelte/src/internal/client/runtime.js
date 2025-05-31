@@ -45,7 +45,7 @@ import {
 } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 import { FILENAME } from '../../constants.js';
-import { tracing_mode_flag } from '../flags/index.js';
+import { async_mode_flag, tracing_mode_flag } from '../flags/index.js';
 import { tracing_expressions, get_stack } from './dev/tracing.js';
 import {
 	component_context,
@@ -823,7 +823,19 @@ export function process_effects(batch, root) {
 			} else if (is_branch) {
 				effect.f ^= CLEAN;
 			} else if ((flags & RENDER_EFFECT) !== 0) {
-				batch.render_effects.push(effect);
+				// we need to branch here because in legacy mode we run render effects
+				// before running block effects
+				if (async_mode_flag) {
+					batch.render_effects.push(effect);
+				} else {
+					try {
+						if (check_dirtiness(effect)) {
+							update_effect(effect);
+						}
+					} catch (error) {
+						handle_error(error, effect, null, effect.ctx);
+					}
+				}
 			} else if ((flags & EFFECT) !== 0) {
 				batch.effects.push(effect);
 			}

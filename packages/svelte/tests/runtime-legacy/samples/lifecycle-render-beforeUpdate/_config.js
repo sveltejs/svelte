@@ -2,12 +2,6 @@ import { test } from '../../test';
 import { flushSync } from 'svelte';
 
 export default test({
-	// this test breaks because of the changes required to make async work
-	// (namely, running blocks before other render effects including
-	// beforeUpdate and $effect.pre). Not sure if there's a good
-	// solution. We may be forced to release 6.0
-	skip: true,
-
 	async test({ assert, target, logs }) {
 		const input = /** @type {HTMLInputElement} */ (target.querySelector('input'));
 		assert.equal(input?.value, 'rich');
