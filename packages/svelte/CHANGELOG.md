@@ -1,5 +1,11 @@
 # svelte
 
+## 5.33.11
+
+### Patch Changes
+
+- fix: treat transitive dependencies of each blocks as mutable in legacy mode if item is mutated ([#16038](https://github.com/sveltejs/svelte/pull/16038))
+
 ## 5.33.10
 
 ### Patch Changes
