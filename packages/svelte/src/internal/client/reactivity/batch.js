@@ -1,0 +1,238 @@
+/** @import { Effect, Source } from '#client' */
+import { CLEAN, DIRTY } from '#client/constants';
+import {
+	flush_queued_effects,
+	flush_queued_root_effects,
+	process_effects,
+	schedule_effect,
+	set_queued_root_effects,
+	set_signal_status,
+	update_effect
+} from '../runtime.js';
+import { raf } from '../timing.js';
+import { internal_set, mark_reactions, pending } from './sources.js';
+
+/** @type {Set<Batch>} */
+const batches = new Set();
+
+/** @type {Batch | null} */
+export let current_batch = null;
+
+/** Update `$effect.pending()` */
+function update_pending() {
+	internal_set(pending, batches.size > 0);
+}
+
+let uid = 1;
+
+export class Batch {
+	#id = uid++;
+
+	/** @type {Map<Source, any>} */
+	#previous = new Map();
+
+	/** @type {Map<Source, any>} */
+	#current = new Map();
+
+	/** @type {Set<() => void>} */
+	#callbacks = new Set();
+
+	#pending = 0;
+
+	/** @type {PromiseWithResolvers<void> | null} */
+	deferred = null;
+
+	/** @type {Effect[]} */
+	async_effects = [];
+
+	/** @type {Effect[]} */
+	render_effects = [];
+
+	/** @type {Effect[]} */
+	effects = [];
+
+	/** @type {Set<Effect>} */
+	skipped_effects = new Set();
+
+	/**
+	 *
+	 * @param {Effect[]} root_effects
+	 */
+	process(root_effects) {
+		set_queued_root_effects([]);
+
+		/** @type {Map<Source, { v: unknown, wv: number }>} */
+		var current_values = new Map();
+
+		for (const [source, current] of this.#current) {
+			current_values.set(source, { v: source.v, wv: source.wv });
+			source.v = current;
+		}
+
+		for (const batch of batches) {
+			if (batch === this) continue;
+
+			for (const [source, previous] of batch.#previous) {
+				if (!current_values.has(source)) {
+					current_values.set(source, { v: source.v, wv: source.wv });
+					source.v = previous;
+				}
+			}
+		}
+
+		for (const root of root_effects) {
+			process_effects(this, root);
+		}
+
+		if (this.async_effects.length === 0 && this.settled()) {
+			var render_effects = this.render_effects;
+			var effects = this.effects;
+
+			this.render_effects = [];
+			this.effects = [];
+
+			this.commit();
+
+			flush_queued_effects(render_effects);
+			flush_queued_effects(effects);
+
+			this.deferred?.resolve();
+		} else {
+			for (const e of this.render_effects) set_signal_status(e, CLEAN);
+			for (const e of this.effects) set_signal_status(e, CLEAN);
+		}
+
+		for (const [source, { v, wv }] of current_values) {
+			// reset the source to the current value (unless
+			// it got a newer value as a result of effects running)
+			if (source.wv <= wv) {
+				source.v = v;
+			}
+		}
+
+		for (const effect of this.async_effects) {
+			update_effect(effect);
+		}
+
+		this.async_effects = [];
+	}
+
+	/**
+	 * @param {Source} source
+	 * @param {any} value
+	 */
+	capture(source, value) {
+		if (!this.#previous.has(source)) {
+			this.#previous.set(source, value);
+		}
+
+		this.#current.set(source, source.v);
+	}
+
+	remove() {
+		batches.delete(this);
+
+		for (var batch of batches) {
+			/** @type {Source} */
+			var source;
+
+			if (batch.#id < this.#id) {
+				// other batch is older than this
+				for (source of this.#previous.keys()) {
+					batch.#previous.delete(source);
+				}
+			} else {
+				// other batch is newer than this
+				for (source of batch.#previous.keys()) {
+					if (this.#previous.has(source)) {
+						batch.#previous.set(source, source.v);
+					}
+				}
+			}
+		}
+	}
+
+	restore() {
+		current_batch = this;
+	}
+
+	flush() {
+		flush_queued_root_effects();
+
+		// TODO can this happen?
+		if (current_batch !== this) return;
+
+		if (this.settled()) {
+			this.remove();
+		}
+
+		current_batch = null;
+	}
+
+	commit() {
+		// commit changes
+		for (const fn of this.#callbacks) {
+			fn();
+		}
+
+		this.#callbacks.clear();
+
+		raf.tick(update_pending);
+	}
+
+	increment() {
+		this.#pending += 1;
+	}
+
+	decrement() {
+		this.#pending -= 1;
+
+		if (this.#pending === 0) {
+			for (const e of this.render_effects) {
+				set_signal_status(e, DIRTY);
+				schedule_effect(e);
+			}
+
+			for (const e of this.effects) {
+				set_signal_status(e, DIRTY);
+				schedule_effect(e);
+			}
+
+			this.render_effects = [];
+			this.effects = [];
+
+			this.commit();
+		}
+	}
+
+	settled() {
+		return this.#pending === 0;
+	}
+
+	/** @param {() => void} fn */
+	add_callback(fn) {
+		this.#callbacks.add(fn);
+	}
+
+	static ensure() {
+		if (current_batch === null) {
+			if (batches.size === 0) {
+				raf.tick(update_pending);
+			}
+
+			const batch = (current_batch = new Batch());
+			batches.add(current_batch);
+
+			queueMicrotask(() => {
+				if (current_batch !== batch) {
+					// a flushSync happened in the meantime
+					return;
+				}
+
+				batch.flush();
+			});
+		}
+
+		return current_batch;
+	}
+}

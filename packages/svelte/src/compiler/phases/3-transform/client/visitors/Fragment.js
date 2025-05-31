@@ -47,9 +47,7 @@ export function Fragment(node, context) {
 	const is_single_element = trimmed.length === 1 && trimmed[0].type === 'RegularElement';
 	const is_single_child_not_needing_template =
 		trimmed.length === 1 &&
-		(trimmed[0].type === 'SvelteFragment' ||
-			trimmed[0].type === 'TitleElement' ||
-			(trimmed[0].type === 'IfBlock' && trimmed[0].elseif));
+		(trimmed[0].type === 'SvelteFragment' || trimmed[0].type === 'TitleElement');
 
 	const template_name = context.state.scope.root.unique('root'); // TODO infer name from parent
 
@@ -65,12 +63,14 @@ export function Fragment(node, context) {
 		init: [],
 		update: [],
 		expressions: [],
+		async_expressions: [],
 		after_update: [],
 		template: new Template(),
 		transform: { ...context.state.transform },
 		metadata: {
 			namespace,
-			bound_contenteditable: context.state.metadata.bound_contenteditable
+			bound_contenteditable: context.state.metadata.bound_contenteditable,
+			async: []
 		}
 	};
 

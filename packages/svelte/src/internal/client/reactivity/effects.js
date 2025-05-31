@@ -1,4 +1,4 @@
-/** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
+/** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager, Value } from '#client' */
 import {
 	check_dirtiness,
 	active_effect,
@@ -31,16 +31,18 @@ import {
 	INSPECT_EFFECT,
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
-	EFFECT_HAS_DERIVED,
-	BOUNDARY_EFFECT
+	EFFECT_PRESERVED,
+	STALE_REACTION
 } from '#client/constants';
 import { set } from './sources.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
-import { derived } from './deriveds.js';
+import { async_derived, derived } from './deriveds.js';
+import { capture, get_pending_boundary } from '../dom/blocks/boundary.js';
 import { component_context, dev_current_component_function } from '../context.js';
+import { current_batch, Batch } from './batch.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -91,6 +93,10 @@ function create_effect(type, fn, sync, push = true) {
 		}
 	}
 
+	if (parent !== null && (parent.f & INERT) !== 0) {
+		type |= INERT;
+	}
+
 	/** @type {Effect} */
 	var effect = {
 		ctx: component_context,
@@ -103,10 +109,12 @@ function create_effect(type, fn, sync, push = true) {
 		last: null,
 		next: null,
 		parent,
+		b: parent && parent.b,
 		prev: null,
 		teardown: null,
 		transitions: null,
-		wv: 0
+		wv: 0,
+		ac: null
 	};
 
 	if (DEV) {
@@ -133,7 +141,7 @@ function create_effect(type, fn, sync, push = true) {
 		effect.first === null &&
 		effect.nodes_start === null &&
 		effect.teardown === null &&
-		(effect.f & (EFFECT_HAS_DERIVED | BOUNDARY_EFFECT)) === 0;
+		(effect.f & EFFECT_PRESERVED) === 0;
 
 	if (!inert && push) {
 		if (parent !== null) {
@@ -228,6 +236,7 @@ export function inspect_effect(fn) {
  * @returns {() => void}
  */
 export function effect_root(fn) {
+	Batch.ensure();
 	const effect = create_effect(ROOT_EFFECT, fn, true);
 
 	return () => {
@@ -241,6 +250,7 @@ export function effect_root(fn) {
  * @returns {(options?: { outro?: boolean }) => Promise<void>}
  */
 export function component_root(fn) {
+	Batch.ensure();
 	const effect = create_effect(ROOT_EFFECT, fn, true);
 
 	return (options = {}) => {
@@ -274,9 +284,10 @@ export function effect(fn) {
 export function legacy_pre_effect(deps, fn) {
 	var context = /** @type {ComponentContextLegacy} */ (component_context);
 
-	/** @type {{ effect: null | Effect, ran: boolean }} */
-	var token = { effect: null, ran: false };
-	context.l.r1.push(token);
+	/** @type {{ effect: null | Effect, ran: boolean, deps: () => any }} */
+	var token = { effect: null, ran: false, deps };
+
+	context.l.$.push(token);
 
 	token.effect = render_effect(() => {
 		deps();
@@ -286,7 +297,6 @@ export function legacy_pre_effect(deps, fn) {
 		if (token.ran) return;
 
 		token.ran = true;
-		set(context.l.r2, true);
 		untrack(fn);
 	});
 }
@@ -295,10 +305,10 @@ export function legacy_pre_effect_reset() {
 	var context = /** @type {ComponentContextLegacy} */ (component_context);
 
 	render_effect(() => {
-		if (!get(context.l.r2)) return;
-
 		// Run dirty `$:` statements
-		for (var token of context.l.r1) {
+		for (var token of context.l.$) {
+			token.deps();
+
 			var effect = token.effect;
 
 			// If the effect is CLEAN, then make it MAYBE_DIRTY. This ensures we traverse through
@@ -313,8 +323,6 @@ export function legacy_pre_effect_reset() {
 
 			token.ran = false;
 		}
-
-		context.l.r2.v = false; // set directly to avoid rerunning this effect
 	});
 }
 
@@ -322,18 +330,49 @@ export function legacy_pre_effect_reset() {
  * @param {() => void | (() => void)} fn
  * @returns {Effect}
  */
-export function render_effect(fn) {
-	return create_effect(RENDER_EFFECT, fn, true);
+export function render_effect(fn, flags = 0) {
+	return create_effect(RENDER_EFFECT | flags, fn, true);
 }
 
 /**
  * @param {(...expressions: any) => void | (() => void)} fn
- * @param {Array<() => any>} thunks
- * @returns {Effect}
+ * @param {Array<() => any>} sync
+ * @param {Array<() => Promise<any>>} async
  */
-export function template_effect(fn, thunks = [], d = derived) {
-	const deriveds = thunks.map(d);
-	const effect = () => fn(...deriveds.map(get));
+export function template_effect(fn, sync = [], async = [], d = derived) {
+	var parent = /** @type {Effect} */ (active_effect);
+
+	if (async.length > 0) {
+		var batch = /** @type {Batch} */ (current_batch);
+		var restore = capture();
+
+		var boundary = get_pending_boundary(parent);
+		var ran = boundary.ran;
+
+		Promise.all(async.map((expression) => async_derived(expression))).then((result) => {
+			restore();
+
+			if ((parent.f & DESTROYED) !== 0) {
+				return;
+			}
+
+			var effect = create_template_effect(fn, [...sync.map(d), ...result]);
+
+			if (ran) batch.restore();
+			schedule_effect(effect);
+			if (ran) batch.flush();
+		});
+	} else {
+		create_template_effect(fn, sync.map(d));
+	}
+}
+
+/**
+ * @param {(...expressions: any) => void | (() => void)} fn
+ * @param {Value[]} deriveds
+ */
+function create_template_effect(fn, deriveds) {
+	var effect = () => fn(...deriveds.map(get));
 
 	if (DEV) {
 		define_property(effect, 'name', {
@@ -341,7 +380,7 @@ export function template_effect(fn, thunks = [], d = derived) {
 		});
 	}
 
-	return block(effect);
+	return create_effect(RENDER_EFFECT, effect, true);
 }
 
 /**
@@ -389,6 +428,8 @@ export function destroy_effect_children(signal, remove_dom = false) {
 	signal.first = signal.last = null;
 
 	while (effect !== null) {
+		effect.ac?.abort(STALE_REACTION);
+
 		var next = effect.next;
 
 		if ((effect.f & ROOT_EFFECT) !== 0) {
@@ -466,6 +507,7 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.fn =
 		effect.nodes_start =
 		effect.nodes_end =
+		effect.ac =
 			null;
 }
 
@@ -619,4 +661,9 @@ function resume_children(effect, local) {
 			}
 		}
 	}
+}
+
+export function aborted() {
+	var effect = /** @type {Effect} */ (active_effect);
+	return (effect.f & DESTROYED) !== 0;
 }

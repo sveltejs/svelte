@@ -1,7 +1,7 @@
 /** @import { CallExpression, Expression, Identifier, Literal, VariableDeclaration, VariableDeclarator } from 'estree' */
 /** @import { Binding } from '#compiler' */
-/** @import { ComponentClientTransformState, ComponentContext } from '../types' */
-import { dev } from '../../../../state.js';
+/** @import { ComponentContext } from '../types' */
+import { dev, is_ignored, locate_node } from '../../../../state.js';
 import { extract_paths } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import * as assert from '../../../../utils/assert.js';
@@ -20,7 +20,7 @@ export function VariableDeclaration(node, context) {
 
 	if (context.state.analysis.runes) {
 		for (const declarator of node.declarations) {
-			const init = declarator.init;
+			const init = /** @type {Expression} */ (declarator.init);
 			const rune = get_rune(init, context.state.scope);
 
 			if (
@@ -173,11 +173,38 @@ export function VariableDeclaration(node, context) {
 			}
 
 			if (rune === '$derived' || rune === '$derived.by') {
-				if (declarator.id.type === 'Identifier') {
-					let expression = /** @type {Expression} */ (context.visit(value));
-					if (rune === '$derived') expression = b.thunk(expression);
+				const is_async = context.state.analysis.async_deriveds.has(
+					/** @type {CallExpression} */ (init)
+				);
 
-					declarations.push(b.declarator(declarator.id, b.call('$.derived', expression)));
+				if (declarator.id.type === 'Identifier') {
+					if (is_async) {
+						const location = dev && is_ignored(init, 'await_waterfall') && locate_node(init);
+						const expression = /** @type {Expression} */ (context.visit(value));
+
+						declarations.push(
+							b.declarator(
+								declarator.id,
+								b.call(
+									b.await(
+										b.call(
+											'$.save',
+											b.call(
+												'$.async_derived',
+												b.thunk(expression, true),
+												location ? b.literal(location) : undefined
+											)
+										)
+									)
+								)
+							)
+						);
+					} else {
+						let expression = /** @type {Expression} */ (context.visit(value));
+						if (rune === '$derived') expression = b.thunk(expression);
+
+						declarations.push(b.declarator(declarator.id, b.call('$.derived', expression)));
+					}
 				} else {
 					const init = /** @type {CallExpression} */ (declarator.init);
 

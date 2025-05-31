@@ -515,6 +515,8 @@ export {
 
 export { escape_html as escape };
 
+export { await_outside_boundary } from '../shared/errors.js';
+
 /**
  * @template T
  * @param {()=>T} fn

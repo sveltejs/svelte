@@ -311,6 +311,10 @@ export function EachBlock(node, context) {
 		);
 	}
 
+	const { has_await } = node.metadata.expression;
+
+	const thunk = b.thunk(collection, has_await);
+
 	const render_args = [b.id('$$anchor'), item];
 	if (uses_index || collection_id) render_args.push(index);
 	if (collection_id) render_args.push(collection_id);
@@ -319,7 +323,7 @@ export function EachBlock(node, context) {
 	const args = [
 		context.state.node,
 		b.literal(flags),
-		b.thunk(collection),
+		has_await ? b.thunk(b.call('$.get', b.id('$$collection'))) : thunk,
 		key_function,
 		b.arrow(render_args, b.block(declarations.concat(block.body)))
 	];
@@ -330,7 +334,23 @@ export function EachBlock(node, context) {
 		);
 	}
 
-	context.state.init.push(b.stmt(b.call('$.each', ...args)));
+	if (has_await) {
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.async',
+					context.state.node,
+					b.array([thunk]),
+					b.arrow(
+						[context.state.node, b.id('$$collection')],
+						b.block([b.stmt(b.call('$.each', ...args))])
+					)
+				)
+			)
+		);
+	} else {
+		context.state.init.push(b.stmt(b.call('$.each', ...args)));
+	}
 }
 
 /**

@@ -12,6 +12,7 @@ import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { Attribute } from './visitors/Attribute.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
+import { AwaitExpression } from './visitors/AwaitExpression.js';
 import { BinaryExpression } from './visitors/BinaryExpression.js';
 import { BindDirective } from './visitors/BindDirective.js';
 import { BlockStatement } from './visitors/BlockStatement.js';
@@ -88,6 +89,7 @@ const visitors = {
 	AssignmentExpression,
 	Attribute,
 	AwaitBlock,
+	AwaitExpression,
 	BinaryExpression,
 	BindDirective,
 	BlockStatement,
@@ -155,7 +157,8 @@ export function client_component(analysis, options) {
 		legacy_reactive_statements: new Map(),
 		metadata: {
 			namespace: options.namespace,
-			bound_contenteditable: false
+			bound_contenteditable: false,
+			async: []
 		},
 		events: new Set(),
 		preserve_whitespace: options.preserveWhitespace,
@@ -169,6 +172,7 @@ export function client_component(analysis, options) {
 		init: /** @type {any} */ (null),
 		update: /** @type {any} */ (null),
 		expressions: /** @type {any} */ (null),
+		async_expressions: /** @type {any} */ (null),
 		after_update: /** @type {any} */ (null),
 		template: /** @type {any} */ (null)
 	};
@@ -350,7 +354,7 @@ export function client_component(analysis, options) {
 	const push_args = [b.id('$$props'), b.literal(analysis.runes)];
 	if (dev) push_args.push(b.id(analysis.name));
 
-	const component_block = b.block([
+	let component_block = b.block([
 		...store_setup,
 		...legacy_reactive_declarations,
 		...group_binding_declarations,
@@ -358,9 +362,48 @@ export function client_component(analysis, options) {
 		.../** @type {ESTree.Statement[]} */ (instance.body),
 		analysis.runes || !analysis.needs_context
 			? b.empty
-			: b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)),
-		.../** @type {ESTree.Statement[]} */ (template.body)
+			: b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined))
 	]);
+
+	const should_inject_context =
+		dev ||
+		analysis.needs_context ||
+		analysis.reactive_statements.size > 0 ||
+		component_returned_object.length > 0;
+
+	let should_inject_props =
+		should_inject_context ||
+		analysis.needs_props ||
+		analysis.uses_props ||
+		analysis.uses_rest_props ||
+		analysis.uses_slots ||
+		analysis.slot_names.size > 0;
+
+	if (analysis.instance.has_await) {
+		const body = b.function_declaration(
+			b.id('$$body'),
+			should_inject_props ? [b.id('$$anchor'), b.id('$$props')] : [b.id('$$anchor')],
+			b.block([
+				b.var('$$unsuspend', b.call('$.suspend')),
+				...component_block.body,
+				b.if(b.call('$.aborted'), b.return()),
+				.../** @type {ESTree.Statement[]} */ (template.body),
+				b.stmt(b.call('$$unsuspend'))
+			]),
+			true
+		);
+
+		state.hoisted.push(body);
+
+		component_block = b.block([
+			b.var('fragment', b.call('$.comment')),
+			b.var('node', b.call('$.first_child', b.id('fragment'))),
+			b.stmt(b.call(body.id, b.id('node'), should_inject_props && b.id('$$props'))),
+			b.stmt(b.call('$.append', b.id('$$anchor'), b.id('fragment')))
+		]);
+	} else {
+		component_block.body.push(.../** @type {ESTree.Statement[]} */ (template.body));
+	}
 
 	if (!analysis.runes) {
 		// Bind static exports to props so that people can access them with bind:x
@@ -394,12 +437,6 @@ export function client_component(analysis, options) {
 			b.var('$$ownership_validator', b.call('$.create_ownership_validator', b.id('$$props')))
 		);
 	}
-
-	const should_inject_context =
-		dev ||
-		analysis.needs_context ||
-		analysis.reactive_statements.size > 0 ||
-		component_returned_object.length > 0;
 
 	// we want the cleanup function for the stores to run as the very last thing
 	// so that it can effectively clean up the store subscription even after the user effects runs
@@ -465,14 +502,6 @@ export function client_component(analysis, options) {
 	if (analysis.uses_slots) {
 		component_block.body.unshift(b.const('$$slots', b.call('$.sanitize_slots', b.id('$$props'))));
 	}
-
-	let should_inject_props =
-		should_inject_context ||
-		analysis.needs_props ||
-		analysis.uses_props ||
-		analysis.uses_rest_props ||
-		analysis.uses_slots ||
-		analysis.slot_names.size > 0;
 
 	// Merge hoisted statements into module body.
 	// Ensure imports are on top, with the order preserved, then module body, then hoisted statements

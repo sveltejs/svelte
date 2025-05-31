@@ -32,6 +32,7 @@ export function StyleDirective(node, context) {
 
 			node.metadata.expression.has_state ||= chunk.metadata.expression.has_state;
 			node.metadata.expression.has_call ||= chunk.metadata.expression.has_call;
+			node.metadata.expression.has_await ||= chunk.metadata.expression.has_await;
 		}
 	}
 }

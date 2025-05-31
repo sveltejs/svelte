@@ -35,6 +35,23 @@ export function unmount() {
 
 export async function tick() {}
 
+export async function settled() {}
+
+/** @type {AbortController | null} */
+let controller = null;
+
+export function getAbortSignal() {
+	if (controller === null) {
+		const c = (controller = new AbortController());
+		queueMicrotask(() => {
+			c.abort();
+			controller = null;
+		});
+	}
+
+	return controller.signal;
+}
+
 export { getAllContexts, getContext, hasContext, setContext } from './internal/server/context.js';
 
 export { createRawSnippet } from './internal/server/blocks/snippet.js';
