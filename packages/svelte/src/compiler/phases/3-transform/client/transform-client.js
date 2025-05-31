@@ -563,6 +563,10 @@ export function client_component(analysis, options) {
 		);
 	}
 
+	if (options.experimental.async) {
+		body.unshift(b.imports([], 'svelte/internal/flags/async'));
+	}
+
 	if (!analysis.runes) {
 		body.unshift(b.imports([], 'svelte/internal/flags/legacy'));
 	}

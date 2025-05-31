@@ -30,6 +30,7 @@ import * as w from './warnings.js';
 import * as e from './errors.js';
 import { assign_nodes } from './dom/template.js';
 import { is_passive_event } from '../../utils.js';
+import { async_mode_flag } from '../flags/index.js';
 
 /**
  * This is normally true — block effects should run their intro transitions —

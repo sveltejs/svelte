@@ -173,7 +173,7 @@ async function common_setup(cwd: string, runes: boolean | undefined, config: Run
 		dev: force_hmr ? true : undefined,
 		hmr: force_hmr ? true : undefined,
 		experimental: {
-			async: true
+			async: runes
 		},
 		fragments,
 		...config.compileOptions,

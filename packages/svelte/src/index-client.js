@@ -6,7 +6,7 @@ import { is_array } from './internal/shared/utils.js';
 import { user_effect } from './internal/client/index.js';
 import * as e from './internal/client/errors.js';
 import { lifecycle_outside_component } from './internal/shared/errors.js';
-import { legacy_mode_flag } from './internal/flags/index.js';
+import { async_mode_flag, legacy_mode_flag } from './internal/flags/index.js';
 import { component_context } from './internal/client/context.js';
 import { DEV } from 'esm-env';
 
