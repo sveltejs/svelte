@@ -116,8 +116,7 @@ export function push(props, runes = false, fn) {
 		component_context.l = {
 			s: null,
 			u: null,
-			r1: [],
-			r2: source(false)
+			$: []
 		};
 	}
 

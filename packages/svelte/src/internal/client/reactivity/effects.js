@@ -284,9 +284,10 @@ export function effect(fn) {
 export function legacy_pre_effect(deps, fn) {
 	var context = /** @type {ComponentContextLegacy} */ (component_context);
 
-	/** @type {{ effect: null | Effect, ran: boolean }} */
-	var token = { effect: null, ran: false };
-	context.l.r1.push(token);
+	/** @type {{ effect: null | Effect, ran: boolean, deps: () => any }} */
+	var token = { effect: null, ran: false, deps };
+
+	context.l.$.push(token);
 
 	token.effect = render_effect(() => {
 		deps();
@@ -296,7 +297,6 @@ export function legacy_pre_effect(deps, fn) {
 		if (token.ran) return;
 
 		token.ran = true;
-		set(context.l.r2, true);
 		untrack(fn);
 	});
 }
@@ -305,10 +305,10 @@ export function legacy_pre_effect_reset() {
 	var context = /** @type {ComponentContextLegacy} */ (component_context);
 
 	render_effect(() => {
-		if (!get(context.l.r2)) return;
-
 		// Run dirty `$:` statements
-		for (var token of context.l.r1) {
+		for (var token of context.l.$) {
+			token.deps();
+
 			var effect = token.effect;
 
 			// If the effect is CLEAN, then make it MAYBE_DIRTY. This ensures we traverse through
@@ -323,8 +323,6 @@ export function legacy_pre_effect_reset() {
 
 			token.ran = false;
 		}
-
-		set(context.l.r2, false);
 	});
 }
 
