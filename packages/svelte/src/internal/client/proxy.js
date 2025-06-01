@@ -9,7 +9,7 @@ import {
 	object_prototype
 } from '../shared/utils.js';
 import { state as source, set } from './reactivity/sources.js';
-import { STATE_SYMBOL } from '#client/constants';
+import { PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 import { get_stack, tag_source } from './dev/tracing.js';
@@ -22,6 +22,16 @@ import { tracing_mode_flag } from '../flags/index.js';
  * @returns {T}
  */
 export function proxy(value, path) {
+	// if `DEV`, change the proxy `path` since we don't know if its still "owned" by its original source
+	if (
+		DEV &&
+		typeof value === 'object' &&
+		value !== null &&
+		STATE_SYMBOL in value &&
+		PROXY_PATH_SYMBOL in value
+	) {
+		value[PROXY_PATH_SYMBOL] = '[$state proxy]';
+	}
 	// if non-proxyable, or is already a proxy, return `value`
 	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {
 		return value;
@@ -135,6 +145,9 @@ export function proxy(value, path) {
 			if (prop === STATE_SYMBOL) {
 				return value;
 			}
+			if (DEV && prop === PROXY_PATH_SYMBOL) {
+				return path;
+			}
 
 			var s = sources.get(prop);
 			var exists = prop in target;
@@ -180,7 +193,7 @@ export function proxy(value, path) {
 		},
 
 		has(target, prop) {
-			if (prop === STATE_SYMBOL) {
+			if (prop === STATE_SYMBOL || (DEV && prop === PROXY_PATH_SYMBOL)) {
 				return true;
 			}
 
@@ -209,6 +222,9 @@ export function proxy(value, path) {
 		},
 
 		set(target, prop, value, receiver) {
+			if (DEV && prop === PROXY_PATH_SYMBOL) {
+				path = value;
+			}
 			var s = sources.get(prop);
 			var has = prop in target;
 
