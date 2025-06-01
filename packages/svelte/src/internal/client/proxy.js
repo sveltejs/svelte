@@ -44,7 +44,7 @@ export function proxy(value, path) {
 	var to_trace_name = DEV
 		? (prop) => {
 				return typeof prop === 'symbol'
-					? `${path}[unique symbol]`
+					? `${path}[Symbol(${prop.description ?? ''})]`
 					: typeof prop === 'number' || Number(prop) === Number(prop)
 						? `${path}[${prop}]`
 						: `${path}.${prop}`;
