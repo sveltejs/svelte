@@ -26,8 +26,6 @@ function update_pending() {
 let uid = 1;
 
 export class Batch {
-	#id = uid++;
-
 	/** @type {Map<Source, any>} */
 	#previous = new Map();
 
