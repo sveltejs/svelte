@@ -90,7 +90,7 @@ export function VariableDeclaration(node, context) {
 								binding.kind === 'bindable_prop' &&
 								should_proxy(initial, context.state.scope)
 							) {
-								initial = b.call('$.proxy', initial);
+								initial = b.call('$.proxy', initial, dev ? b.literal(id.name) : undefined, dev ? b.literal(PROXY_REMOVE_PATH) : undefined);
 							}
 
 							if (is_prop_source(binding, context.state)) {
