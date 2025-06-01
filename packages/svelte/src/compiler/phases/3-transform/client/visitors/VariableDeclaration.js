@@ -90,7 +90,12 @@ export function VariableDeclaration(node, context) {
 								binding.kind === 'bindable_prop' &&
 								should_proxy(initial, context.state.scope)
 							) {
-								initial = b.call('$.proxy', initial, dev ? b.literal(id.name) : undefined, dev ? b.literal(PROXY_REMOVE_PATH) : undefined);
+								initial = b.call(
+									'$.proxy',
+									initial,
+									dev ? b.literal(id.name) : undefined,
+									dev ? b.literal(PROXY_REMOVE_PATH) : undefined
+								);
 							}
 
 							if (is_prop_source(binding, context.state)) {
@@ -168,7 +173,7 @@ export function VariableDeclaration(node, context) {
 							const call = b.call('$.derived', expression);
 							return b.declarator(
 								id,
-								dev ? b.call('$.tag_source', call, b.literal(id.name)) : call
+								dev ? b.call('$.tag_source', call, b.literal('[$state iterable]')) : call
 							);
 						}),
 						...paths.map((path) => {
@@ -209,8 +214,13 @@ export function VariableDeclaration(node, context) {
 
 						let expression = /** @type {Expression} */ (context.visit(value));
 						if (rune === '$derived') expression = b.thunk(expression);
-
-						declarations.push(b.declarator(id, b.call('$.derived', expression)));
+						const call = b.call('$.derived', expression);
+						declarations.push(
+							b.declarator(
+								id,
+								dev ? b.call('$.tag_source', call, b.literal('[$derived iterable]')) : call
+							)
+						);
 					}
 
 					const { inserts, paths } = extract_paths(declarator.id, rhs);
@@ -220,7 +230,13 @@ export function VariableDeclaration(node, context) {
 						context.state.transform[id.name] = { read: get_value };
 
 						const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
-						declarations.push(b.declarator(id, b.call('$.derived', expression)));
+						const call = b.call('$.derived', expression);
+						declarations.push(
+							b.declarator(
+								id,
+								dev ? b.call('$.tag_source', call, b.literal('[$derived iterable]')) : call
+							)
+						);
 					}
 
 					for (const path of paths) {
