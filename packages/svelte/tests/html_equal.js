@@ -96,7 +96,7 @@ function clean_children(node, opts) {
 	}
 
 	if (has_element_children && node.parentNode) {
-		node.innerHTML = `\n\t${node.innerHTML.replace(/\n/g, '\n\t')}\n`;
+		node.innerHTML = `\n\  ${node.innerHTML.replace(/\n/g, '\n  ')}\n`;
 	}
 
 	if (template) {
