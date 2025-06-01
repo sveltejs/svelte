@@ -27,7 +27,8 @@ import {
 	UNOWNED,
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
-	ROOT_EFFECT
+	ROOT_EFFECT,
+	PROXY_REMOVE_PATH
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -139,7 +140,9 @@ export function set(source, value, should_proxy = false) {
 		e.state_unsafe_mutation();
 	}
 
-	let new_value = should_proxy ? proxy(value, DEV ? source.trace_name : undefined, DEV ? false : undefined) : value;
+	let new_value = should_proxy
+		? proxy(value, DEV ? source.trace_name : undefined, DEV ? PROXY_REMOVE_PATH : undefined)
+		: value;
 
 	return internal_set(source, new_value);
 }

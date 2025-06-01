@@ -9,7 +9,13 @@ import {
 	object_prototype
 } from '../shared/utils.js';
 import { state as source, set } from './reactivity/sources.js';
-import { PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
+import {
+	PROXY_CHANGE_PATH,
+	PROXY_PATH_SYMBOL,
+	PROXY_PRESERVE_PATH,
+	PROXY_REMOVE_PATH,
+	STATE_SYMBOL
+} from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 import { get_stack, tag_source } from './dev/tracing.js';
@@ -19,20 +25,20 @@ import { tracing_mode_flag } from '../flags/index.js';
  * @template T
  * @param {T} value
  * @param {string} [path]
- * @param {boolean} [preserve_path] 
+ * @param {number} [path_preservation]
  * @returns {T}
  */
-export function proxy(value, path, preserve_path = true) {
+export function proxy(value, path, path_preservation = PROXY_PRESERVE_PATH) {
 	// if `DEV`, change the proxy `path` since we don't know if its still "owned" by its original source
 	if (
 		DEV &&
-		!preserve_path &&
+		(path_preservation & PROXY_PRESERVE_PATH) === 0 &&
 		typeof value === 'object' &&
 		value !== null &&
 		STATE_SYMBOL in value &&
 		PROXY_PATH_SYMBOL in value
 	) {
-		value[PROXY_PATH_SYMBOL] = '[$state proxy]';
+		value[PROXY_PATH_SYMBOL] = (path_preservation & PROXY_CHANGE_PATH) === 0 ? '[$state proxy]' : path;
 	}
 	// if non-proxyable, or is already a proxy, return `value`
 	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {
@@ -257,7 +263,7 @@ export function proxy(value, path, preserve_path = true) {
 					s = DEV ? tag_source(s, to_trace_name(prop)) : s;
 					set(
 						s,
-						with_parent(() => proxy(value, to_trace_name(prop)))
+						with_parent(() => proxy(value, to_trace_name(prop), PROXY_CHANGE_PATH))
 					);
 					sources.set(prop, s);
 				}
@@ -265,7 +271,7 @@ export function proxy(value, path, preserve_path = true) {
 				has = s.v !== UNINITIALIZED;
 				set(
 					s,
-					with_parent(() => proxy(value, to_trace_name(prop)))
+					with_parent(() => proxy(value, to_trace_name(prop), PROXY_CHANGE_PATH))
 				);
 			}
 
