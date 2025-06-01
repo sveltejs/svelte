@@ -19,14 +19,14 @@ import { tracing_mode_flag } from '../flags/index.js';
  * @template T
  * @param {T} value
  * @param {string} [path]
- * @param {boolean} [rename_path] 
+ * @param {boolean} [preserve_path] 
  * @returns {T}
  */
-export function proxy(value, path, rename_path = true) {
+export function proxy(value, path, preserve_path = true) {
 	// if `DEV`, change the proxy `path` since we don't know if its still "owned" by its original source
 	if (
 		DEV &&
-		rename_path &&
+		!preserve_path &&
 		typeof value === 'object' &&
 		value !== null &&
 		STATE_SYMBOL in value &&
