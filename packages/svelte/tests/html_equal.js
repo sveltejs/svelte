@@ -121,63 +121,53 @@ export function normalize_new_line(html) {
 	return html.replace(/\r\n/g, '\n');
 }
 
-export function setup_html_equal() {
-	/**
-	 * @param {string} actual
-	 * @param {string} expected
-	 * @param {string} [message]
-	 */
-	const assert_html_equal = (actual, expected, message) => {
-		try {
-			assert.deepEqual(normalize_html(window, actual), normalize_html(window, expected), message);
-		} catch (e) {
-			if (Error.captureStackTrace)
-				Error.captureStackTrace(/** @type {Error} */ (e), assert_html_equal);
-			throw e;
-		}
-	};
+/**
+ * @param {string} actual
+ * @param {string} expected
+ * @param {string} [message]
+ */
+export const assert_html_equal = (actual, expected, message) => {
+	try {
+		assert.deepEqual(normalize_html(window, actual), normalize_html(window, expected), message);
+	} catch (e) {
+		if (Error.captureStackTrace)
+			Error.captureStackTrace(/** @type {Error} */ (e), assert_html_equal);
+		throw e;
+	}
+};
 
-	/**
-	 *
-	 * @param {string} actual
-	 * @param {string} expected
-	 * @param {{ preserveComments?: boolean, withoutNormalizeHtml?: boolean }} param2
-	 * @param {string} [message]
-	 */
-	const assert_html_equal_with_options = (
-		actual,
-		expected,
-		{ preserveComments, withoutNormalizeHtml },
-		message
-	) => {
-		try {
-			assert.deepEqual(
-				withoutNormalizeHtml
-					? normalize_new_line(actual.trim()).replace(
-							/(<!(--)?.*?\2>)/g,
-							preserveComments !== false ? '$1' : ''
-						)
-					: normalize_html(window, actual.trim(), { preserveComments }),
-				withoutNormalizeHtml
-					? normalize_new_line(expected.trim()).replace(
-							/(<!(--)?.*?\2>)/g,
-							preserveComments !== false ? '$1' : ''
-						)
-					: normalize_html(window, expected.trim(), { preserveComments }),
-				message
-			);
-		} catch (e) {
-			if (Error.captureStackTrace)
-				Error.captureStackTrace(/** @type {Error} */ (e), assert_html_equal_with_options);
-			throw e;
-		}
-	};
-
-	return {
-		assert_html_equal,
-		assert_html_equal_with_options
-	};
-}
-
-// Common case without options
-export const { assert_html_equal, assert_html_equal_with_options } = setup_html_equal();
+/**
+ *
+ * @param {string} actual
+ * @param {string} expected
+ * @param {{ preserveComments?: boolean, withoutNormalizeHtml?: boolean }} param2
+ * @param {string} [message]
+ */
+export const assert_html_equal_with_options = (
+	actual,
+	expected,
+	{ preserveComments, withoutNormalizeHtml },
+	message
+) => {
+	try {
+		assert.deepEqual(
+			withoutNormalizeHtml
+				? normalize_new_line(actual.trim()).replace(
+						/(<!(--)?.*?\2>)/g,
+						preserveComments !== false ? '$1' : ''
+					)
+				: normalize_html(window, actual.trim(), { preserveComments }),
+			withoutNormalizeHtml
+				? normalize_new_line(expected.trim()).replace(
+						/(<!(--)?.*?\2>)/g,
+						preserveComments !== false ? '$1' : ''
+					)
+				: normalize_html(window, expected.trim(), { preserveComments }),
+			message
+		);
+	} catch (e) {
+		if (Error.captureStackTrace)
+			Error.captureStackTrace(/** @type {Error} */ (e), assert_html_equal_with_options);
+		throw e;
+	}
+};
