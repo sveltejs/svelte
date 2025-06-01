@@ -1,7 +1,10 @@
 import { assert } from 'vitest';
 
-/** @param {Element} node */
-function clean_children(node) {
+/**
+ * @param {Element} node
+ * @param {{ preserveComments: boolean }} opts
+ */
+function clean_children(node, opts) {
 	let previous = null;
 	let has_element_children = false;
 	let template =
@@ -56,20 +59,26 @@ function clean_children(node) {
 
 				continue;
 			}
-		} else if (child.nodeType === 8) {
+		}
+
+		if (child.nodeType === 8 && !opts.preserveComments) {
 			// comment
 			child.remove();
 			continue;
-		} else if (child.nodeType === 1) {
+		}
+
+		if (child.nodeType === 1 || child.nodeType === 8) {
 			if (previous?.nodeType === 3) {
 				const prev = /** @type {Text} */ (previous);
 				prev.data = prev.data.replace(/^[^\S]+$/, '\n');
-			} else if (previous?.nodeType === 1) {
+			} else if (previous?.nodeType === 1 || previous?.nodeType === 8) {
 				node.insertBefore(document.createTextNode('\n'), child);
 			}
 
-			has_element_children = true;
-			clean_children(/** @type {Element} */ (child));
+			if (child.nodeType === 1) {
+				has_element_children = true;
+				clean_children(/** @type {Element} */ (child), opts);
+			}
 		}
 
 		previous = child;
@@ -103,9 +112,9 @@ function clean_children(node) {
 export function normalize_html(window, html, { preserveComments = false } = {}) {
 	try {
 		const node = window.document.createElement('div');
-		node.innerHTML = html.replace(/(<!(--)?.*?\2>)/g, preserveComments ? '$1' : '').trim();
 
-		clean_children(node);
+		node.innerHTML = html.trim();
+		clean_children(node, { preserveComments });
 
 		return node.innerHTML;
 	} catch (err) {
