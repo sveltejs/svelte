@@ -1,5 +1,11 @@
 # svelte
 
+## 5.33.12
+
+### Patch Changes
+
+- fix: correctly transform reassignments to class fields in SSR mode ([#16051](https://github.com/sveltejs/svelte/pull/16051))
+
 ## 5.33.11
 
 ### Patch Changes
