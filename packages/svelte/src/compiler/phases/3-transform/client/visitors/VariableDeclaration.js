@@ -128,11 +128,16 @@ export function VariableDeclaration(node, context) {
 					const binding = /** @type {import('#compiler').Binding} */ (
 						context.state.scope.get(id.name)
 					);
-					if (rune === '$state' && should_proxy(value, context.state.scope)) {
-						value = b.call('$.proxy', value);
+					const is_state = is_state_source(binding, context.state.analysis);
+					const is_proxy = should_proxy(value, context.state.scope);
+					if (rune === '$state' && is_proxy) {
+						value = b.call('$.proxy', value, dev ? b.literal(id.name) : undefined);
 					}
-					if (is_state_source(binding, context.state.analysis)) {
+					if (is_state) {
 						value = b.call('$.state', value);
+					}
+					if (dev && is_state) {
+						value = b.call('$.tag_source', value, b.literal(id.name));
 					}
 					return value;
 				};
@@ -154,7 +159,11 @@ export function VariableDeclaration(node, context) {
 							context.state.transform[id.name] = { read: get_value };
 
 							const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
-							return b.declarator(id, b.call('$.derived', expression));
+							const call = b.call('$.derived', expression);
+							return b.declarator(
+								id,
+								dev ? b.call('$.tag_source', call, b.literal(id.name)) : call
+							);
 						}),
 						...paths.map((path) => {
 							const value = /** @type {Expression} */ (context.visit(path.expression));
@@ -176,8 +185,13 @@ export function VariableDeclaration(node, context) {
 				if (declarator.id.type === 'Identifier') {
 					let expression = /** @type {Expression} */ (context.visit(value));
 					if (rune === '$derived') expression = b.thunk(expression);
-
-					declarations.push(b.declarator(declarator.id, b.call('$.derived', expression)));
+					const call = b.call('$.derived', expression);
+					declarations.push(
+						b.declarator(
+							declarator.id,
+							dev ? b.call('$.tag_source', call, b.literal(declarator.id.name)) : call
+						)
+					);
 				} else {
 					const init = /** @type {CallExpression} */ (declarator.init);
 
@@ -205,7 +219,19 @@ export function VariableDeclaration(node, context) {
 
 					for (const path of paths) {
 						const expression = /** @type {Expression} */ (context.visit(path.expression));
-						declarations.push(b.declarator(path.node, b.call('$.derived', b.thunk(expression))));
+						const call = b.call('$.derived', b.thunk(expression));
+						declarations.push(
+							b.declarator(
+								path.node,
+								dev
+									? b.call(
+											'$.tag_source',
+											call,
+											b.literal(/** @type {Identifier} */ (path.node).name)
+										)
+									: call
+							)
+						);
 					}
 				}
 

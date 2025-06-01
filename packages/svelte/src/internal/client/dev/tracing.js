@@ -43,11 +43,14 @@ function log_entry(signal, entry) {
 	const type = (signal.f & DERIVED) !== 0 ? '$derived' : '$state';
 	const current_reaction = /** @type {Reaction} */ (active_reaction);
 	const dirty = signal.wv > current_reaction.wv || current_reaction.wv === 0;
-
+	const { trace_name: name } = signal;
+	const style = dirty
+		? 'color: CornflowerBlue; font-weight: bold'
+		: 'color: grey; font-weight: bold';
 	// eslint-disable-next-line no-console
 	console.groupCollapsed(
-		`%c${type}`,
-		dirty ? 'color: CornflowerBlue; font-weight: bold' : 'color: grey; font-weight: bold',
+		typeof name === 'string' ? `%c${name} — ${type}` : `%c${type}`,
+		style,
 		typeof value === 'object' && value !== null && STATE_SYMBOL in value
 			? snapshot(value, true)
 			: value
@@ -92,11 +95,9 @@ export function trace(label, fn) {
 	var previously_tracing_expressions = tracing_expressions;
 	try {
 		tracing_expressions = { entries: new Map(), reaction: active_reaction };
-
 		var start = performance.now();
 		var value = fn();
 		var time = (performance.now() - start).toFixed(2);
-
 		if (!effect_tracking()) {
 			// eslint-disable-next-line no-console
 			console.log(`${label()} %cran outside of an effect (${time}ms)`, 'color: grey');
@@ -176,4 +177,13 @@ export function get_stack(label) {
 		});
 	}
 	return error;
+}
+
+/**
+ * @param {Value} source
+ * @param {string} name
+ */
+export function tag_source(source, name) {
+	source.trace_name = name;
+	return source;
 }
