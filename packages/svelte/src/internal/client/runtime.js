@@ -5,7 +5,10 @@ import {
 	destroy_block_effect_children,
 	destroy_effect_children,
 	execute_effect_teardown,
-	unlink_effect
+	unlink_effect,
+	decode_reaction_flags,
+	log_flag_operation,
+	get_comprehensive_effect_info
 } from './reactivity/effects.js';
 import {
 	EFFECT,
@@ -76,6 +79,11 @@ export let untracking = false;
 
 /** @param {null | Reaction} reaction */
 export function set_active_reaction(reaction) {
+	const reaction_as_any = /** @type {any} */ (reaction);
+	const reaction_as_effect = /** @type {Effect} */ (reaction_as_any);
+	if (DEV && reaction_as_effect?.component_function?.[FILENAME].includes('App_15870.svelte')) {
+		console.trace('set_active_reaction', get_comprehensive_effect_info(reaction_as_effect));
+	}
 	active_reaction = reaction;
 }
 
@@ -97,6 +105,17 @@ export let reaction_sources = null;
 /** @param {Value} value */
 export function push_reaction_value(value) {
 	if (active_reaction !== null && active_reaction.f & EFFECT_IS_UPDATING) {
+		if (DEV && new Error().stack?.includes('NestedComponent')) {
+			const active_reaction_as_any = /** @type {any} */ (active_reaction);
+			const active_reaction_as_effect = /** @type {Effect} */ (active_reaction_as_any);
+			console.debug('push_reaction_value value', value);
+			console.debug(
+				'push_reaction_value active_reaction',
+				get_comprehensive_effect_info(active_reaction_as_effect)
+			);
+			debugger;
+		}
+
 		if (reaction_sources === null) {
 			reaction_sources = [value];
 		} else {
@@ -403,6 +422,18 @@ export function update_reaction(reaction) {
 		(flags & UNOWNED) !== 0 && (untracking || !is_updating_effect || active_reaction === null);
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 
+	const active_reaction_as_any = /** @type {any} */ (active_reaction);
+	const active_reaction_as_effect = /** @type {Effect} */ (active_reaction_as_any);
+	if (
+		DEV &&
+		active_reaction_as_effect?.component_function?.[FILENAME].includes('NestedComponent.svelte')
+	) {
+		console.debug(
+			'update_reaction active_reaction',
+			get_comprehensive_effect_info(active_reaction_as_effect)
+		);
+	}
+
 	reaction_sources = null;
 	set_component_context(reaction.ctx);
 	untracking = false;
@@ -411,9 +442,20 @@ export function update_reaction(reaction) {
 	reaction.f |= EFFECT_IS_UPDATING;
 
 	try {
+		if (DEV) {
+			const reaction_as_any = /** @type {any} */ (reaction);
+			const reaction_as_an_effect = /** @type {Effect} */ (reaction_as_any);
+
+			if (reaction_as_an_effect.component_function?.[FILENAME].includes('NestedComponent')) {
+				console.debug('update_reaction', get_comprehensive_effect_info(reaction_as_an_effect));
+				// debugger;
+			}
+		}
+
 		var result = /** @type {Function} */ (0, reaction.fn)();
 		var deps = reaction.deps;
 
+		// BREAKPOINT
 		if (new_deps !== null) {
 			var i;
 
@@ -774,6 +816,14 @@ function process_effects(root) {
 		var is_branch = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0;
 		var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
 
+		// Log each effect being processed
+		if (DEV) {
+			if (effect.component_function?.[FILENAME].includes('NestedComponent')) {
+				console.debug('process_effects', get_comprehensive_effect_info(effect));
+				// debugger;
+			}
+		}
+
 		if (!is_skippable_branch && (flags & INERT) === 0) {
 			if ((flags & EFFECT) !== 0) {
 				effects.push(effect);
@@ -864,8 +914,34 @@ export function get(signal) {
 		captured_signals.add(signal);
 	}
 
+	if (DEV && new Error().stack?.includes('NestedComponent')) {
+		// console.debug('get() signal', signal);
+		// const active_reaction_as_any = /** @type {any} */ (active_reaction);
+		// const active_reaction_as_effect = /** @type {Effect} */ (active_reaction_as_any);
+		// console.debug(
+		// 	'get() signal active_reaction',
+		// 	get_comprehensive_effect_info(active_reaction_as_effect)
+		// );
+		// reaction_sources?.forEach((reaction) => {
+		// 	const reaction_as_any = /** @type {any} */ (reaction);
+		// 	const reaction_as_effect = /** @type {Effect} */ (reaction_as_any);
+		// 	console.debug('get() signal reaction', get_comprehensive_effect_info(reaction_as_effect));
+		// });
+		// debugger;
+	}
+
 	// Register the dependency on the current reaction signal.
 	if (active_reaction !== null && !untracking) {
+		const active_reaction_as_any = /** @type {any} */ (active_reaction);
+		const active_reaction_as_effect = /** @type {Effect} */ (active_reaction_as_any);
+		if (DEV) {
+			// console.debug(
+			// 	'get() signal active_reaction',
+			// 	get_comprehensive_effect_info(active_reaction_as_effect)
+			// );
+		}
+
+		// BREAKPOINT
 		if (!reaction_sources?.includes(signal)) {
 			var deps = active_reaction.deps;
 			if (signal.rv < read_version) {

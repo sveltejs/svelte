@@ -35,6 +35,7 @@ import { get_stack } from '../dev/tracing.js';
 import { component_context, is_runes } from '../context.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
+import { get_comprehensive_effect_info } from './effects.js';
 
 export let inspect_effects = new Set();
 export const old_values = new Map();
@@ -180,6 +181,15 @@ export function internal_set(source, value) {
 
 		source.wv = increment_write_version();
 
+		// if (DEV && new Error().stack?.includes('service.svelte.ts')) {
+		// 	console.debug('internal_set', source, value);
+		// 	source.reactions?.forEach((reaction) => {
+		// 		const reaction_as_any = /** @type {any} */ (reaction);
+		// 		const reaction_as_effect = /** @type {Effect} */ (reaction_as_any);
+		// 		console.debug('internal_set reaction', get_comprehensive_effect_info(reaction_as_effect));
+		// 	});
+		// 	// debugger;
+		// }
 		mark_reactions(source, DIRTY);
 
 		// It's possible that the current reaction might not have up-to-date dependencies
@@ -261,6 +271,7 @@ function mark_reactions(signal, status) {
 	var runes = is_runes();
 	var length = reactions.length;
 
+	// BREAKPOINT
 	for (var i = 0; i < length; i++) {
 		var reaction = reactions[i];
 		var flags = reaction.f;

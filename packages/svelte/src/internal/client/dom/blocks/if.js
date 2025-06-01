@@ -10,7 +10,13 @@ import {
 	set_hydrating
 } from '../hydration.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
-import { HYDRATION_START, HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
+import {
+	FILENAME,
+	HYDRATION_START,
+	HYDRATION_START_ELSE,
+	UNINITIALIZED
+} from '../../../../constants.js';
+import { DEV } from 'esm-env';
 
 /**
  * @param {TemplateNode} node
@@ -50,6 +56,16 @@ export function if_block(node, fn, [root_index, hydrate_index] = [0, 0]) {
 		/** @type {boolean | null} */ new_condition,
 		/** @type {null | ((anchor: Node, elseif?: [number,number]) => void)} */ fn
 	) => {
+		// if (DEV && new Error().stack?.includes('NestedComponent')) {
+		// 	console.debug('update_branch', new_condition, {
+		// 		previousCondition: condition,
+		// 		conditionChanged: condition !== new_condition,
+		// 		hasConsequentEffect: !!consequent_effect,
+		// 		hasAlternateEffect: !!alternate_effect,
+		// 		fn
+		// 	});
+		// }
+
 		if (condition === (condition = new_condition)) return;
 
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
@@ -86,6 +102,10 @@ export function if_block(node, fn, [root_index, hydrate_index] = [0, 0]) {
 			}
 		}
 
+		// if (new Error().stack?.includes('NestedComponent')) {
+		// 	// debugger;
+		// }
+
 		if (condition) {
 			if (consequent_effect) {
 				resume_effect(consequent_effect);
@@ -106,6 +126,12 @@ export function if_block(node, fn, [root_index, hydrate_index] = [0, 0]) {
 			}
 
 			if (consequent_effect) {
+				// if (DEV) {
+				// 	// HERE is the deletion of the dom text node
+				// 	if (new Error().stack?.includes('NestedComponent')) {
+				// 		// debugger;
+				// 	}
+				// }
 				pause_effect(consequent_effect, () => {
 					consequent_effect = null;
 				});
