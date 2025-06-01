@@ -19,12 +19,14 @@ import { tracing_mode_flag } from '../flags/index.js';
  * @template T
  * @param {T} value
  * @param {string} [path]
+ * @param {boolean} [rename_path] 
  * @returns {T}
  */
-export function proxy(value, path) {
+export function proxy(value, path, rename_path = true) {
 	// if `DEV`, change the proxy `path` since we don't know if its still "owned" by its original source
 	if (
 		DEV &&
+		rename_path &&
 		typeof value === 'object' &&
 		value !== null &&
 		STATE_SYMBOL in value &&
@@ -255,7 +257,7 @@ export function proxy(value, path) {
 					s = DEV ? tag_source(s, to_trace_name(prop)) : s;
 					set(
 						s,
-						with_parent(() => proxy(value, to_trace_name(prop)))
+						with_parent(() => proxy(value, to_trace_name(prop), false))
 					);
 					sources.set(prop, s);
 				}
@@ -263,7 +265,7 @@ export function proxy(value, path) {
 				has = s.v !== UNINITIALIZED;
 				set(
 					s,
-					with_parent(() => proxy(value, to_trace_name(prop)))
+					with_parent(() => proxy(value, to_trace_name(prop), false))
 				);
 			}
 
