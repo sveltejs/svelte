@@ -86,18 +86,61 @@ export class Batch {
 		}
 
 		if (this.async_effects.length === 0 && this.settled()) {
-			var render_effects = this.render_effects;
-			var effects = this.effects;
+			var merged = false;
 
-			this.render_effects = [];
-			this.effects = [];
+			// if there are older batches with overlapping
+			// state, we can't commit this batch. instead,
+			// we merge it into the older batches
+			for (const batch of batches) {
+				if (batch === this) break;
 
-			this.commit();
+				for (const [source] of batch.#current) {
+					if (this.#current.has(source)) {
+						merged = true;
 
-			flush_queued_effects(render_effects);
-			flush_queued_effects(effects);
+						for (const [source, value] of this.#current) {
+							batch.#current.set(source, value);
+							// TODO what about batch.#previous?
+						}
 
-			this.deferred?.resolve();
+						for (const e of this.render_effects) {
+							set_signal_status(e, CLEAN);
+							// TODO use sets instead of arrays
+							if (!batch.render_effects.includes(e)) {
+								batch.render_effects.push(e);
+							}
+						}
+
+						for (const e of this.effects) {
+							set_signal_status(e, CLEAN);
+							// TODO use sets instead of arrays
+							if (!batch.effects.includes(e)) {
+								batch.effects.push(e);
+							}
+						}
+
+						this.remove();
+						break;
+					}
+				}
+			}
+
+			if (merged) {
+				this.remove();
+			} else {
+				var render_effects = this.render_effects;
+				var effects = this.effects;
+
+				this.render_effects = [];
+				this.effects = [];
+
+				this.commit();
+
+				flush_queued_effects(render_effects);
+				flush_queued_effects(effects);
+
+				this.deferred?.resolve();
+			}
 		} else {
 			for (const e of this.render_effects) set_signal_status(e, CLEAN);
 			for (const e of this.effects) set_signal_status(e, CLEAN);
@@ -133,24 +176,24 @@ export class Batch {
 	remove() {
 		batches.delete(this);
 
-		for (var batch of batches) {
-			/** @type {Source} */
-			var source;
+		// for (var batch of batches) {
+		// 	/** @type {Source} */
+		// 	var source;
 
-			if (batch.#id < this.#id) {
-				// other batch is older than this
-				for (source of this.#previous.keys()) {
-					batch.#previous.delete(source);
-				}
-			} else {
-				// other batch is newer than this
-				for (source of batch.#previous.keys()) {
-					if (this.#previous.has(source)) {
-						batch.#previous.set(source, source.v);
-					}
-				}
-			}
-		}
+		// 	if (batch.#id < this.#id) {
+		// 		// other batch is older than this
+		// 		for (source of this.#previous.keys()) {
+		// 			batch.#previous.delete(source);
+		// 		}
+		// 	} else {
+		// 		// other batch is newer than this
+		// 		for (source of batch.#previous.keys()) {
+		// 			if (this.#previous.has(source)) {
+		// 				batch.#previous.set(source, source.v);
+		// 			}
+		// 		}
+		// 	}
+		// }
 	}
 
 	restore() {
