@@ -110,10 +110,7 @@ export function proxy(value, path) {
 			if (s === undefined) {
 				if (prop in target) {
 					const s = with_parent(() => source(UNINITIALIZED, stack));
-					sources.set(
-						prop,
-						DEV && typeof prop === 'string' ? tag_source(s, to_trace_name(prop)) : s
-					);
+					sources.set(prop, DEV ? tag_source(s, to_trace_name(prop)) : s);
 					update_version(version);
 				}
 			} else {
@@ -147,7 +144,7 @@ export function proxy(value, path) {
 				s = with_parent(() =>
 					source(proxy(exists ? target[prop] : UNINITIALIZED, to_trace_name(prop)), stack)
 				);
-				s = DEV && typeof prop === 'string' ? tag_source(s, to_trace_name(prop)) : s;
+				s = DEV ? tag_source(s, to_trace_name(prop)) : s;
 				sources.set(prop, s);
 			}
 
@@ -198,7 +195,7 @@ export function proxy(value, path) {
 					s = with_parent(() =>
 						source(has ? proxy(target[prop], to_trace_name(prop)) : UNINITIALIZED, stack)
 					);
-					s = DEV && typeof prop === 'string' ? tag_source(s, to_trace_name(prop)) : s;
+					s = DEV ? tag_source(s, to_trace_name(prop)) : s;
 					sources.set(prop, s);
 				}
 
@@ -239,7 +236,7 @@ export function proxy(value, path) {
 			if (s === undefined) {
 				if (!has || get_descriptor(target, prop)?.writable) {
 					s = with_parent(() => source(undefined, stack));
-					s = DEV && typeof prop === 'string' ? tag_source(s, to_trace_name(prop)) : s;
+					s = DEV ? tag_source(s, to_trace_name(prop)) : s;
 					set(
 						s,
 						with_parent(() => proxy(value, to_trace_name(prop)))
