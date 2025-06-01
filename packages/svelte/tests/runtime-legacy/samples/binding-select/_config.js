@@ -25,7 +25,7 @@ export default test({
 			<p>selected: one</p>
 
 			<select>
-				<option${variant === 'hydrate' ? ' selected' : ''}>one</option$>
+				<option${variant === 'hydrate' ? ' selected' : ''}>one</option>
 				<option>two</option>
 				<option>three</option>
 			</select>
@@ -54,7 +54,7 @@ export default test({
 			<p>selected: two</p>
 
 			<select>
-				<option${variant === 'hydrate' ? ' selected' : ''}>one</option$>
+				<option${variant === 'hydrate' ? ' selected' : ''}>one</option>
 				<option>two</option>
 				<option>three</option>
 			</select>
