@@ -86,9 +86,7 @@ function unhandled_rejection_handler(err: Error) {
 
 const listeners = process.rawListeners('unhandledRejection');
 
-const { assert_html_equal, assert_html_equal_with_options } = setup_html_equal({
-	removeDataSvelte: true
-});
+const { assert_html_equal, assert_html_equal_with_options } = setup_html_equal();
 
 beforeAll(() => {
 	// @ts-expect-error TODO huh?
