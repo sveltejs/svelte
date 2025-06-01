@@ -38,7 +38,8 @@ export function proxy(value, path, path_preservation = PROXY_PRESERVE_PATH) {
 		STATE_SYMBOL in value &&
 		PROXY_PATH_SYMBOL in value
 	) {
-		value[PROXY_PATH_SYMBOL] = (path_preservation & PROXY_CHANGE_PATH) === 0 ? '[$state proxy]' : path;
+		value[PROXY_PATH_SYMBOL] =
+			(path_preservation & PROXY_CHANGE_PATH) === 0 ? '[$state proxy]' : path;
 	}
 	// if non-proxyable, or is already a proxy, return `value`
 	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {
@@ -232,6 +233,13 @@ export function proxy(value, path, path_preservation = PROXY_PRESERVE_PATH) {
 		set(target, prop, value, receiver) {
 			if (DEV && prop === PROXY_PATH_SYMBOL) {
 				path = value;
+				// rename all child sources and child proxies
+				for (const [prop, source] of sources) {
+					tag_source(source, to_trace_name(prop));
+					if (typeof source.v === 'object' && source.v !== null && PROXY_PATH_SYMBOL in source.v) {
+						source.v[PROXY_PATH_SYMBOL] = to_trace_name(prop);
+					}
+				}
 			}
 			var s = sources.get(prop);
 			var has = prop in target;
