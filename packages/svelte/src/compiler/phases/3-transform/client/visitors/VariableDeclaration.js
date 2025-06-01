@@ -9,6 +9,7 @@ import { get_rune } from '../../../scope.js';
 import { get_prop_source, is_prop_source, is_state_source, should_proxy } from '../utils.js';
 import { is_hoisted_function } from '../../utils.js';
 import { get_value } from './shared/declarations.js';
+import { PROXY_REMOVE_PATH } from '#client/constants';
 
 /**
  * @param {VariableDeclaration} node
@@ -131,7 +132,12 @@ export function VariableDeclaration(node, context) {
 					const is_state = is_state_source(binding, context.state.analysis);
 					const is_proxy = should_proxy(value, context.state.scope);
 					if (rune === '$state' && is_proxy) {
-						value = b.call('$.proxy', value, dev ? b.literal(id.name) : undefined);
+						value = b.call(
+							'$.proxy',
+							value,
+							dev ? b.literal(id.name) : undefined,
+							dev ? b.literal(PROXY_REMOVE_PATH) : undefined
+						);
 					}
 					if (is_state) {
 						value = b.call('$.state', value);
