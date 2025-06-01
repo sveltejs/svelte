@@ -24,7 +24,12 @@ export function AssignmentExpression(node, context) {
  * @returns {Expression | null}
  */
 function build_assignment(operator, left, right, context) {
-	if (context.state.analysis.runes && left.type === 'MemberExpression') {
+	if (
+		context.state.analysis.runes &&
+		left.type === 'MemberExpression' &&
+		left.object.type === 'ThisExpression' &&
+		!left.computed
+	) {
 		const name = get_name(left.property);
 		const field = name && context.state.state_fields.get(name);
 
@@ -44,7 +49,11 @@ function build_assignment(operator, left, right, context) {
 					/** @type {Expression} */ (context.visit(right))
 				);
 			}
-		} else if (field && (field.type === '$derived' || field.type === '$derived.by')) {
+		} else if (
+			field &&
+			(field.type === '$derived' || field.type === '$derived.by') &&
+			left.property.type === 'PrivateIdentifier'
+		) {
 			let value = /** @type {Expression} */ (
 				context.visit(build_assignment_value(operator, left, right))
 			);
