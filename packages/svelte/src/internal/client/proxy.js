@@ -257,7 +257,7 @@ export function proxy(value, path, preserve_path = true) {
 					s = DEV ? tag_source(s, to_trace_name(prop)) : s;
 					set(
 						s,
-						with_parent(() => proxy(value, to_trace_name(prop), false))
+						with_parent(() => proxy(value, to_trace_name(prop)))
 					);
 					sources.set(prop, s);
 				}
@@ -265,7 +265,7 @@ export function proxy(value, path, preserve_path = true) {
 				has = s.v !== UNINITIALIZED;
 				set(
 					s,
-					with_parent(() => proxy(value, to_trace_name(prop), false))
+					with_parent(() => proxy(value, to_trace_name(prop)))
 				);
 			}
 
