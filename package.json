@@ -15,13 +15,10 @@
   },
   "scripts": {
     "build": "pnpm -r --filter=./packages/* build",
-    "build:sites": "pnpm -r --filter=./sites/* build",
-    "preview-site": "npm run build --prefix sites/svelte-5-preview",
     "check": "cd packages/svelte && pnpm build && cd ../../ && pnpm -r check",
     "lint": "eslint && prettier --check .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "test-output": "vitest run --coverage --reporter=json --outputFile=sites/svelte-5-preview/src/routes/status/results.json",
     "changeset:version": "changeset version && pnpm -r generate:version && git add --all",
     "changeset:publish": "changeset publish",
     "bench": "node --allow-natives-syntax ./benchmarking/run.js",
