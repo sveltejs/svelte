@@ -55,8 +55,7 @@ export function proxy(value, path, path_preservation = PROXY_PRESERVE_PATH) {
 	/** @type {Map<any, Source<any>>} */
 	var sources = new Map();
 	var is_proxied_array = is_array(value);
-	// var version = tag(source(0), `${path} version`);
-	var version = source(0);
+	var version = tag(source(0), `${path} version`);
 
 	var stack = DEV && tracing_mode_flag ? get_stack('CreatedAt') : null;
 	var reaction = active_reaction;
