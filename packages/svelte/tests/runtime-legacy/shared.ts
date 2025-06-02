@@ -7,7 +7,7 @@ import { flushSync, hydrate, mount, unmount } from 'svelte';
 import { render } from 'svelte/server';
 import { afterAll, assert, beforeAll } from 'vitest';
 import { compile_directory, fragments } from '../helpers.js';
-import { setup_html_equal } from '../html_equal.js';
+import { assert_html_equal, assert_html_equal_with_options } from '../html_equal.js';
 import { raf } from '../animation-helpers.js';
 import type { CompileOptions } from '#compiler';
 import { suite_with_variants, type BaseTest } from '../suite.js';
@@ -85,10 +85,6 @@ function unhandled_rejection_handler(err: Error) {
 }
 
 const listeners = process.rawListeners('unhandledRejection');
-
-const { assert_html_equal, assert_html_equal_with_options } = setup_html_equal({
-	removeDataSvelte: true
-});
 
 beforeAll(() => {
 	// @ts-expect-error TODO huh?
