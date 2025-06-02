@@ -2066,7 +2066,7 @@ export interface SvelteHTMLElements {
 		failed?: import('svelte').Snippet<[error: unknown, reset: () => void]>;
 	};
 
-	[name: string & {}]: { [name: string]: any };
+	[name: string]: { [name: string]: any };
 }
 
 export type ClassValue = string | import('clsx').ClassArray | import('clsx').ClassDictionary;
