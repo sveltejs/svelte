@@ -53,10 +53,6 @@ export function CallExpression(node, context) {
 				);
 				const property = get_name(parent.left.property);
 				source_tag = `${constructor?.id?.name ?? '[class]'}.${property}`;
-			} else if (dev && parent?.type === 'PropertyDefinition' && context.state.in_constructor) {
-				const constructor = /** @type {ClassDeclaration | ClassExpression} */ (context.path.at(-3));
-				const property = get_name(parent.key);
-				source_tag = `${constructor?.id?.name ?? '[class]'}.${property}`;
 			}
 			const call = b.call('$.state', value);
 			return dev ? b.call('$.tag', call, b.literal(/** @type {string} */ (source_tag))) : call;
@@ -79,10 +75,6 @@ export function CallExpression(node, context) {
 					context.path.findLast((parent) => parent.type.match(/^Class(Declaration|Expression)$/))
 				);
 				const property = get_name(parent.left.property);
-				source_tag = `${constructor?.id?.name ?? '[class]'}.${property}`;
-			} else if (dev && parent?.type === 'PropertyDefinition' && context.state.in_constructor) {
-				const constructor = /** @type {ClassDeclaration | ClassExpression} */ (context.path.at(-3));
-				const property = get_name(parent.key);
 				source_tag = `${constructor?.id?.name ?? '[class]'}.${property}`;
 			}
 			const call = b.call('$.derived', fn);
