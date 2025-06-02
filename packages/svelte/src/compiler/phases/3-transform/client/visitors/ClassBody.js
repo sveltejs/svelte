@@ -3,6 +3,7 @@
 /** @import { Context } from '../types' */
 import * as b from '#compiler/builders';
 import { dev } from '../../../../state.js';
+import { get_parent } from '../../../../utils/ast.js';
 import { get_name } from '../../../nodes.js';
 
 /**
@@ -76,23 +77,21 @@ export function ClassBody(node, context) {
 			if (dev) value = b.call('$.tag', value, b.literal(name));
 			body.push(b.prop_def(definition.key, value));
 		} else if (field.node === definition) {
-			const member = b.member(b.this, field.key);
+			let call = /** @type {CallExpression} */ (context.visit(field.value, child_state));
 
+			if (dev) {
+				const declaration = /** @type {ClassDeclaration | ClassExpression} */ (
+					get_parent(context.path, -1)
+				);
+
+				call = b.call('$.tag', call, b.literal(`${declaration.id?.name ?? '[class]'}.${name}`));
+			}
+
+			const member = b.member(b.this, field.key);
 			const should_proxy = field.type === '$state' && true; // TODO
-			const call = /** @type {CallExpression} */ (context.visit(field.value, child_state));
+
 			body.push(
-				b.prop_def(
-					field.key,
-					dev
-						? b.call(
-								'$.tag',
-								call,
-								b.literal(
-									`${/** @type {ClassDeclaration | ClassExpression} */ (context.path.at(-1))?.id?.name ?? '[class]'}.${field.key.name}`
-								)
-							)
-						: call
-				),
+				b.prop_def(field.key, call),
 
 				b.method('get', definition.key, [], [b.return(b.call('$.get', member))]),
 
