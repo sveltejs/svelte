@@ -52,6 +52,10 @@ export function ClassBody(node, context) {
 		}
 	}
 
+	const declaration = /** @type {ClassDeclaration | ClassExpression} */ (
+		get_parent(context.path, -1)
+	);
+
 	// Replace parts of the class body
 	for (const definition of node.body) {
 		if (definition.type !== 'PropertyDefinition') {
@@ -74,19 +78,17 @@ export function ClassBody(node, context) {
 				? /** @type {CallExpression} */ (context.visit(definition.value, child_state))
 				: undefined;
 
-			if (dev) value = b.call('$.tag', value, b.literal(name));
+			if (dev) {
+				value = b.call('$.tag', value, b.literal(`${declaration.id?.name ?? '[class]'}.${name}`));
+			}
+
 			body.push(b.prop_def(definition.key, value));
 		} else if (field.node === definition) {
 			let call = /** @type {CallExpression} */ (context.visit(field.value, child_state));
 
 			if (dev) {
-				const declaration = /** @type {ClassDeclaration | ClassExpression} */ (
-					get_parent(context.path, -1)
-				);
-
 				call = b.call('$.tag', call, b.literal(`${declaration.id?.name ?? '[class]'}.${name}`));
 			}
-
 			const member = b.member(b.this, field.key);
 			const should_proxy = field.type === '$state' && true; // TODO
 
