@@ -46,7 +46,7 @@ function log_entry(signal, entry) {
 	const { trace_name: name } = signal;
 	const style = dirty
 		? 'color: CornflowerBlue; font-weight: bold'
-		: 'color: grey; font-weight: bold';
+		: 'color: grey; font-weight: normal';
 	// eslint-disable-next-line no-console
 	console.groupCollapsed(
 		typeof name === 'string' ? `%c${name} — ${type}` : `%c${type}`,
@@ -185,7 +185,7 @@ export function get_stack(label) {
  * @param {Value} source
  * @param {string} name
  */
-export function tag_source(source, name) {
+export function tag(source, name) {
 	source.trace_name = name;
 	return source;
 }

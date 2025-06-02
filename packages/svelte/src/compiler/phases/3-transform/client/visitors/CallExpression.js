@@ -59,9 +59,7 @@ export function CallExpression(node, context) {
 				source_tag = `${constructor?.id?.name ?? '[class]'}.${property}`;
 			}
 			const call = b.call('$.state', value);
-			return dev
-				? b.call('$.tag_source', call, b.literal(/** @type {string} */ (source_tag)))
-				: call;
+			return dev ? b.call('$.tag', call, b.literal(/** @type {string} */ (source_tag))) : call;
 		}
 
 		case '$derived':
@@ -88,9 +86,7 @@ export function CallExpression(node, context) {
 				source_tag = `${constructor?.id?.name ?? '[class]'}.${property}`;
 			}
 			const call = b.call('$.derived', fn);
-			return dev
-				? b.call('$.tag_source', call, b.literal(/** @type {string} */ (source_tag)))
-				: call;
+			return dev ? b.call('$.tag', call, b.literal(/** @type {string} */ (source_tag))) : call;
 		}
 
 		case '$state.snapshot':

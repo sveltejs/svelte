@@ -80,7 +80,7 @@ export function ClassBody(node, context) {
 					field.key,
 					dev
 						? b.call(
-								'$.tag_source',
+								'$.tag',
 								call,
 								b.literal(
 									`${/** @type {ClassDeclaration | ClassExpression} */ (context.path.at(-1))?.id?.name ?? '[class]'}.${field.key.name}`

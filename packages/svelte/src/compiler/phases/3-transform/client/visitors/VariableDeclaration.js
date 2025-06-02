@@ -148,7 +148,7 @@ export function VariableDeclaration(node, context) {
 						value = b.call('$.state', value);
 					}
 					if (dev && is_state) {
-						value = b.call('$.tag_source', value, b.literal(id.name));
+						value = b.call('$.tag', value, b.literal(id.name));
 					}
 					return value;
 				};
@@ -173,7 +173,7 @@ export function VariableDeclaration(node, context) {
 							const call = b.call('$.derived', expression);
 							return b.declarator(
 								id,
-								dev ? b.call('$.tag_source', call, b.literal('[$state iterable]')) : call
+								dev ? b.call('$.tag', call, b.literal('[$state iterable]')) : call
 							);
 						}),
 						...paths.map((path) => {
@@ -200,7 +200,7 @@ export function VariableDeclaration(node, context) {
 					declarations.push(
 						b.declarator(
 							declarator.id,
-							dev ? b.call('$.tag_source', call, b.literal(declarator.id.name)) : call
+							dev ? b.call('$.tag', call, b.literal(declarator.id.name)) : call
 						)
 					);
 				} else {
@@ -216,10 +216,7 @@ export function VariableDeclaration(node, context) {
 						if (rune === '$derived') expression = b.thunk(expression);
 						const call = b.call('$.derived', expression);
 						declarations.push(
-							b.declarator(
-								id,
-								dev ? b.call('$.tag_source', call, b.literal('[$derived iterable]')) : call
-							)
+							b.declarator(id, dev ? b.call('$.tag', call, b.literal('[$derived iterable]')) : call)
 						);
 					}
 
@@ -232,10 +229,7 @@ export function VariableDeclaration(node, context) {
 						const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
 						const call = b.call('$.derived', expression);
 						declarations.push(
-							b.declarator(
-								id,
-								dev ? b.call('$.tag_source', call, b.literal('[$derived iterable]')) : call
-							)
+							b.declarator(id, dev ? b.call('$.tag', call, b.literal('[$derived iterable]')) : call)
 						);
 					}
 
@@ -246,11 +240,7 @@ export function VariableDeclaration(node, context) {
 							b.declarator(
 								path.node,
 								dev
-									? b.call(
-											'$.tag_source',
-											call,
-											b.literal(/** @type {Identifier} */ (path.node).name)
-										)
+									? b.call('$.tag', call, b.literal(/** @type {Identifier} */ (path.node).name))
 									: call
 							)
 						);

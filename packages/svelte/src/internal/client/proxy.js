@@ -18,7 +18,7 @@ import {
 } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
-import { get_stack, tag_source } from './dev/tracing.js';
+import { get_stack, tag } from './dev/tracing.js';
 import { tracing_mode_flag } from '../flags/index.js';
 
 /**
@@ -55,7 +55,8 @@ export function proxy(value, path, path_preservation = PROXY_PRESERVE_PATH) {
 	/** @type {Map<any, Source<any>>} */
 	var sources = new Map();
 	var is_proxied_array = is_array(value);
-	var version = tag_source(source(0), `${path} version`);
+	// var version = tag(source(0), `${path} version`);
+	var version = source(0);
 
 	var stack = DEV && tracing_mode_flag ? get_stack('CreatedAt') : null;
 	var reaction = active_reaction;
@@ -89,7 +90,7 @@ export function proxy(value, path, path_preservation = PROXY_PRESERVE_PATH) {
 		// We need to create the length source eagerly to ensure that
 		// mutations to the array are properly synced with our proxy
 		const length_source = source(/** @type {any[]} */ (value).length, stack);
-		sources.set('length', DEV ? tag_source(length_source, to_trace_name('length')) : length_source);
+		sources.set('length', DEV ? tag(length_source, to_trace_name('length')) : length_source);
 	}
 
 	return new Proxy(/** @type {any} */ (value), {
@@ -111,7 +112,7 @@ export function proxy(value, path, path_preservation = PROXY_PRESERVE_PATH) {
 
 			if (s === undefined) {
 				s = with_parent(() => source(descriptor.value, stack));
-				s = DEV && typeof prop === 'string' ? tag_source(s, to_trace_name(prop)) : s;
+				s = DEV && typeof prop === 'string' ? tag(s, to_trace_name(prop)) : s;
 				sources.set(prop, s);
 			} else {
 				set(
@@ -129,7 +130,7 @@ export function proxy(value, path, path_preservation = PROXY_PRESERVE_PATH) {
 			if (s === undefined) {
 				if (prop in target) {
 					const s = with_parent(() => source(UNINITIALIZED, stack));
-					sources.set(prop, DEV ? tag_source(s, to_trace_name(prop)) : s);
+					sources.set(prop, DEV ? tag(s, to_trace_name(prop)) : s);
 					update_version(version);
 				}
 			} else {
@@ -166,7 +167,7 @@ export function proxy(value, path, path_preservation = PROXY_PRESERVE_PATH) {
 				s = with_parent(() =>
 					source(proxy(exists ? target[prop] : UNINITIALIZED, to_trace_name(prop)), stack)
 				);
-				s = DEV ? tag_source(s, to_trace_name(prop)) : s;
+				s = DEV ? tag(s, to_trace_name(prop)) : s;
 				sources.set(prop, s);
 			}
 
@@ -217,7 +218,7 @@ export function proxy(value, path, path_preservation = PROXY_PRESERVE_PATH) {
 					s = with_parent(() =>
 						source(has ? proxy(target[prop], to_trace_name(prop)) : UNINITIALIZED, stack)
 					);
-					s = DEV ? tag_source(s, to_trace_name(prop)) : s;
+					s = DEV ? tag(s, to_trace_name(prop)) : s;
 					sources.set(prop, s);
 				}
 
@@ -233,10 +234,10 @@ export function proxy(value, path, path_preservation = PROXY_PRESERVE_PATH) {
 		set(target, prop, value, receiver) {
 			if (DEV && prop === PROXY_PATH_SYMBOL) {
 				path = value;
-				tag_source(version, `${path} version`);
+				// tag(version, `${path} version`);
 				// rename all child sources and child proxies
 				for (const [prop, source] of sources) {
-					tag_source(source, to_trace_name(prop));
+					tag(source, to_trace_name(prop));
 					if (typeof source.v === 'object' && source.v !== null && PROXY_PATH_SYMBOL in source.v) {
 						source.v[PROXY_PATH_SYMBOL] = to_trace_name(prop);
 					}
@@ -256,7 +257,7 @@ export function proxy(value, path, path_preservation = PROXY_PRESERVE_PATH) {
 						// else a later read of the property would result in a source being created with
 						// the value of the original item at that index.
 						other_s = with_parent(() => source(UNINITIALIZED, stack));
-						other_s = DEV ? tag_source(other_s, to_trace_name(i)) : other_s;
+						other_s = DEV ? tag(other_s, to_trace_name(i)) : other_s;
 						sources.set(i + '', other_s);
 					}
 				}
@@ -269,7 +270,7 @@ export function proxy(value, path, path_preservation = PROXY_PRESERVE_PATH) {
 			if (s === undefined) {
 				if (!has || get_descriptor(target, prop)?.writable) {
 					s = with_parent(() => source(undefined, stack));
-					s = DEV ? tag_source(s, to_trace_name(prop)) : s;
+					s = DEV ? tag(s, to_trace_name(prop)) : s;
 					set(
 						s,
 						with_parent(() => proxy(value, to_trace_name(prop), PROXY_CHANGE_PATH))
