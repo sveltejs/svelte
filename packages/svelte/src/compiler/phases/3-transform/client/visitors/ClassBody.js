@@ -69,7 +69,12 @@ export function ClassBody(node, context) {
 		}
 
 		if (name[0] === '#') {
-			body.push(/** @type {PropertyDefinition} */ (context.visit(definition, child_state)));
+			let value = definition.value
+				? /** @type {CallExpression} */ (context.visit(definition.value, child_state))
+				: undefined;
+
+			if (dev) value = b.call('$.tag', value, b.literal(name));
+			body.push(b.prop_def(definition.key, value));
 		} else if (field.node === definition) {
 			const member = b.member(b.this, field.key);
 
