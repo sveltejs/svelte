@@ -1,7 +1,8 @@
-/** @import { CallExpression, ClassBody, MethodDefinition, PropertyDefinition, StaticBlock } from 'estree' */
+/** @import { CallExpression, ClassBody, ClassDeclaration, ClassExpression, MethodDefinition, PropertyDefinition, StaticBlock } from 'estree' */
 /** @import { StateField } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as b from '#compiler/builders';
+import { dev } from '../../../../state.js';
 import { get_name } from '../../../nodes.js';
 
 /**
@@ -73,11 +74,19 @@ export function ClassBody(node, context) {
 			const member = b.member(b.this, field.key);
 
 			const should_proxy = field.type === '$state' && true; // TODO
-
+			const call = /** @type {CallExpression} */ (context.visit(field.value, child_state));
 			body.push(
 				b.prop_def(
 					field.key,
-					/** @type {CallExpression} */ (context.visit(field.value, child_state))
+					dev
+						? b.call(
+								'$.tag_source',
+								call,
+								b.literal(
+									`${/** @type {ClassDeclaration | ClassExpression} */ (context.path.at(-1))?.id?.name ?? '[class]'}.${field.key.name}`
+								)
+							)
+						: call
 				),
 
 				b.method('get', definition.key, [], [b.return(b.call('$.get', member))]),
