@@ -55,7 +55,7 @@ export function proxy(value, path, path_preservation = PROXY_PRESERVE_PATH) {
 	/** @type {Map<any, Source<any>>} */
 	var sources = new Map();
 	var is_proxied_array = is_array(value);
-	var version = tag(source(0), `${path} version`);
+	var version = DEV ? tag(source(0), `${path} version`) : source(0);
 
 	var stack = DEV && tracing_mode_flag ? get_stack('CreatedAt') : null;
 	var reaction = active_reaction;
@@ -233,7 +233,7 @@ export function proxy(value, path, path_preservation = PROXY_PRESERVE_PATH) {
 		set(target, prop, value, receiver) {
 			if (DEV && prop === PROXY_PATH_SYMBOL) {
 				path = value;
-				// tag(version, `${path} version`);
+				tag(version, `${path} version`);
 				// rename all child sources and child proxies
 				for (const [prop, source] of sources) {
 					tag(source, to_trace_name(prop));
