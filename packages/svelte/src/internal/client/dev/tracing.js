@@ -95,9 +95,11 @@ export function trace(label, fn) {
 	var previously_tracing_expressions = tracing_expressions;
 	try {
 		tracing_expressions = { entries: new Map(), reaction: active_reaction };
+
 		var start = performance.now();
 		var value = fn();
 		var time = (performance.now() - start).toFixed(2);
+
 		if (!effect_tracking()) {
 			// eslint-disable-next-line no-console
 			console.log(`${label()} %cran outside of an effect (${time}ms)`, 'color: grey');
