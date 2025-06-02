@@ -1,10 +1,11 @@
-/** @import { CallExpression, Expression } from 'estree' */
+/** @import { CallExpression, ClassDeclaration, ClassExpression, Expression } from 'estree' */
 /** @import { Context } from '../types' */
 import { dev, is_ignored } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 import { transform_inspect_rune } from '../../utils.js';
 import { should_proxy } from '../utils.js';
+import { get_name } from '../../../nodes.js';
 
 /**
  * @param {CallExpression} node
@@ -38,16 +39,58 @@ export function CallExpression(node, context) {
 					value = b.call('$.proxy', value);
 				}
 			}
-
-			return b.call('$.state', value);
+			let source_tag;
+			const parent = context.path.at(-1);
+			if (
+				dev &&
+				parent?.type === 'AssignmentExpression' &&
+				parent?.left?.type === 'MemberExpression' &&
+				context.state.in_constructor
+			) {
+				/** @type {ClassDeclaration | ClassExpression} */
+				const constructor = /** @type {ClassDeclaration | ClassExpression} */ (
+					context.path.findLast((parent) => parent.type.match(/^Class(Declaration|Expression)$/))
+				);
+				const property = get_name(parent.left.property);
+				source_tag = `${constructor?.id?.name ?? '[class]'}.${property}`;
+			} else if (dev && parent?.type === 'PropertyDefinition' && context.state.in_constructor) {
+				const constructor = /** @type {ClassDeclaration | ClassExpression} */ (context.path.at(-3));
+				const property = get_name(parent.key);
+				source_tag = `${constructor?.id?.name ?? '[class]'}.${property}`;
+			}
+			const call = b.call('$.state', value);
+			return dev
+				? b.call('$.tag_source', call, b.literal(/** @type {string} */ (source_tag)))
+				: call;
 		}
 
 		case '$derived':
 		case '$derived.by': {
 			let fn = /** @type {Expression} */ (context.visit(node.arguments[0]));
 			if (rune === '$derived') fn = b.thunk(fn);
-
-			return b.call('$.derived', fn);
+			let source_tag;
+			const parent = context.path.at(-1);
+			if (
+				dev &&
+				parent?.type === 'AssignmentExpression' &&
+				parent?.left?.type === 'MemberExpression' &&
+				context.state.in_constructor
+			) {
+				/** @type {ClassDeclaration | ClassExpression} */
+				const constructor = /** @type {ClassDeclaration | ClassExpression} */ (
+					context.path.findLast((parent) => parent.type.match(/^Class(Declaration|Expression)$/))
+				);
+				const property = get_name(parent.left.property);
+				source_tag = `${constructor?.id?.name ?? '[class]'}.${property}`;
+			} else if (dev && parent?.type === 'PropertyDefinition' && context.state.in_constructor) {
+				const constructor = /** @type {ClassDeclaration | ClassExpression} */ (context.path.at(-3));
+				const property = get_name(parent.key);
+				source_tag = `${constructor?.id?.name ?? '[class]'}.${property}`;
+			}
+			const call = b.call('$.derived', fn);
+			return dev
+				? b.call('$.tag_source', call, b.literal(/** @type {string} */ (source_tag)))
+				: call;
 		}
 
 		case '$state.snapshot':
