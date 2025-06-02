@@ -1,5 +1,13 @@
 # svelte
 
+## 5.33.14
+
+### Patch Changes
+
+- Revert "feat: enable TS autocomplete for Svelte HTML element definitions" ([#16063](https://github.com/sveltejs/svelte/pull/16063))
+
+- fix: destructuring snippet arguments ([#16068](https://github.com/sveltejs/svelte/pull/16068))
+
 ## 5.33.13
 
 ### Patch Changes
