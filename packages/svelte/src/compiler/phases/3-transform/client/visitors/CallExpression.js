@@ -47,9 +47,8 @@ export function CallExpression(node, context) {
 				parent?.left?.type === 'MemberExpression' &&
 				context.state.in_constructor
 			) {
-				/** @type {ClassDeclaration | ClassExpression} */
-				const constructor = /** @type {ClassDeclaration | ClassExpression} */ (
-					context.path.findLast((parent) => parent.type.match(/^Class(Declaration|Expression)$/))
+				const constructor = context.path.findLast(
+					(parent) => parent.type === 'ClassDeclaration' || parent.type === 'ClassExpression'
 				);
 				const property = get_name(parent.left.property);
 				source_tag = `${constructor?.id?.name ?? '[class]'}.${property}`;
@@ -70,9 +69,8 @@ export function CallExpression(node, context) {
 				parent?.left?.type === 'MemberExpression' &&
 				context.state.in_constructor
 			) {
-				/** @type {ClassDeclaration | ClassExpression} */
-				const constructor = /** @type {ClassDeclaration | ClassExpression} */ (
-					context.path.findLast((parent) => parent.type.match(/^Class(Declaration|Expression)$/))
+				const constructor = context.path.findLast(
+					(parent) => parent.type === 'ClassDeclaration' || parent.type === 'ClassExpression'
 				);
 				const property = get_name(parent.left.property);
 				source_tag = `${constructor?.id?.name ?? '[class]'}.${property}`;
