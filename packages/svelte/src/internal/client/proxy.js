@@ -8,7 +8,7 @@ import {
 	is_array,
 	object_prototype
 } from '../shared/utils.js';
-import { state as source, set } from './reactivity/sources.js';
+import { source, state, set } from './reactivity/sources.js';
 import { STATE_SYMBOL } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
@@ -35,7 +35,7 @@ export function proxy(value) {
 	/** @type {Map<any, Source<any>>} */
 	var sources = new Map();
 	var is_proxied_array = is_array(value);
-	var version = source(0);
+	var version = state(0);
 
 	var stack = DEV && tracing_mode_flag ? get_stack('CreatedAt') : null;
 	var reaction = active_reaction;
@@ -56,9 +56,9 @@ export function proxy(value) {
 	};
 
 	if (is_proxied_array) {
-		// We need to create the length source eagerly to ensure that
+		// We need to create the length source (state) eagerly to ensure that
 		// mutations to the array are properly synced with our proxy
-		sources.set('length', source(/** @type {any[]} */ (value).length, stack));
+		sources.set('length', state(/** @type {any[]} */ (value).length, stack));
 	}
 
 	return new Proxy(/** @type {any} */ (value), {
@@ -79,7 +79,7 @@ export function proxy(value) {
 			var s = sources.get(prop);
 
 			if (s === undefined) {
-				s = with_parent(() => source(descriptor.value, stack));
+				s = with_parent(() => state(descriptor.value, stack));
 				sources.set(prop, s);
 			} else {
 				set(
@@ -98,7 +98,7 @@ export function proxy(value) {
 				if (prop in target) {
 					sources.set(
 						prop,
-						with_parent(() => source(UNINITIALIZED, stack))
+						with_parent(() => state(UNINITIALIZED, stack))
 					);
 					update_version(version);
 				}
@@ -178,7 +178,7 @@ export function proxy(value) {
 				(active_effect !== null && (!has || get_descriptor(target, prop)?.writable))
 			) {
 				if (s === undefined) {
-					s = with_parent(() => source(has ? proxy(target[prop]) : UNINITIALIZED, stack));
+					s = with_parent(() => state(has ? proxy(target[prop]) : UNINITIALIZED, stack));
 					sources.set(prop, s);
 				}
 
@@ -202,22 +202,22 @@ export function proxy(value) {
 					if (other_s !== undefined) {
 						set(other_s, UNINITIALIZED);
 					} else if (i in target) {
-						// If the item exists in the original, we need to create a uninitialized source,
-						// else a later read of the property would result in a source being created with
+						// If the item exists in the original, we need to create a uninitialized source (state),
+						// else a later read of the property would result in a source (state) being created with
 						// the value of the original item at that index.
-						other_s = with_parent(() => source(UNINITIALIZED, stack));
+						other_s = with_parent(() => state(UNINITIALIZED, stack));
 						sources.set(i + '', other_s);
 					}
 				}
 			}
 
-			// If we haven't yet created a source for this property, we need to ensure
+			// If we haven't yet created a source (state) for this property, we need to ensure
 			// we do so otherwise if we read it later, then the write won't be tracked and
 			// the heuristics of effects will be different vs if we had read the proxied
 			// object property before writing to that property.
 			if (s === undefined) {
 				if (!has || get_descriptor(target, prop)?.writable) {
-					s = with_parent(() => source(undefined, stack));
+					s = with_parent(() => state(undefined, stack));
 					set(
 						s,
 						with_parent(() => proxy(value))
