@@ -39,6 +39,7 @@ import { flush_tasks } from './dom/task.js';
 import { internal_set, old_values } from './reactivity/sources.js';
 import {
 	destroy_derived_effects,
+	execute_derived,
 	from_async_derived,
 	recent_async_deriveds,
 	update_derived
@@ -57,7 +58,7 @@ import {
 import { Boundary } from './dom/blocks/boundary.js';
 import * as w from './warnings.js';
 import { is_firefox } from './dom/operations.js';
-import { current_batch, Batch } from './reactivity/batch.js';
+import { current_batch, Batch, batch_deriveds } from './reactivity/batch.js';
 import { log_effect_tree, root } from './dev/debug.js';
 
 // Used for DEV time error handling
@@ -986,7 +987,10 @@ export function get(signal) {
 		}
 	}
 
-	if (is_derived) {
+	// if this is a derived, we may need to update it, but
+	// not if `batch_deriveds` is not null (meaning we're
+	// currently time travelling))
+	if (is_derived && batch_deriveds === null) {
 		derived = /** @type {Derived} */ (signal);
 
 		if (check_dirtiness(derived)) {
@@ -1030,6 +1034,19 @@ export function get(signal) {
 
 	if (is_destroying_effect && old_values.has(signal)) {
 		return old_values.get(signal);
+	}
+
+	// if we're time travelling, we don't want to update the
+	// intrinsic value of the derived — we want to compute it
+	// once and stash it for the duration of batch processing
+	if (is_derived && batch_deriveds !== null) {
+		derived = /** @type {Derived} */ (signal);
+
+		if (!batch_deriveds.has(derived)) {
+			batch_deriveds.set(derived, execute_derived(derived));
+		}
+
+		return batch_deriveds.get(derived);
 	}
 
 	return signal.v;
