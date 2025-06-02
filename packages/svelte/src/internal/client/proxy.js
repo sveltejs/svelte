@@ -21,8 +21,6 @@ import { tracing_mode_flag } from '../flags/index.js';
  * @returns {T}
  */
 export function proxy(value) {
-	// console.debug('proxy', value);
-
 	// if non-proxyable, or is already a proxy, return `value`
 	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {
 		return value;
@@ -48,14 +46,12 @@ export function proxy(value) {
 	 */
 	var with_parent = (fn) => {
 		var previous_reaction = active_reaction;
-		// var previous_reaction_sources = reaction_sources;
 		set_active_reaction(reaction);
 
 		/** @type {T} */
 		var result = fn();
 
 		set_active_reaction(previous_reaction);
-		// set_active_reaction_sources(previous_reaction_sources);
 		return result;
 	};
 
@@ -132,7 +128,6 @@ export function proxy(value) {
 			var s = sources.get(prop);
 			var exists = prop in target;
 
-			// BREAKPOINT
 			// create a source, but only if it's an own property and not a prototype property
 			if (s === undefined && (!exists || get_descriptor(target, prop)?.writable)) {
 				s = with_parent(() => source(proxy(exists ? target[prop] : UNINITIALIZED), stack));
