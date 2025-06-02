@@ -35,11 +35,11 @@ export default test({
 
 		assert.deepEqual(normalise_trace_logs(logs), [
 			{ log: 'effect', highlighted: false },
-			{ log: '$derived', highlighted: true },
+			{ log: 'double — $derived', highlighted: true },
 			{ log: 0 },
-			{ log: '$state', highlighted: true },
+			{ log: 'count — $state', highlighted: true },
 			{ log: 0 },
-			{ log: '$state', highlighted: true },
+			{ log: 'checked — $state', highlighted: true },
 			{ log: false }
 		]);
 
@@ -53,11 +53,11 @@ export default test({
 
 		assert.deepEqual(normalise_trace_logs(logs), [
 			{ log: 'effect', highlighted: false },
-			{ log: '$derived', highlighted: true },
+			{ log: 'double — $derived', highlighted: true },
 			{ log: 2 },
-			{ log: '$state', highlighted: true },
+			{ log: 'count — $state', highlighted: true },
 			{ log: 1 },
-			{ log: '$state', highlighted: false },
+			{ log: 'checked — $state', highlighted: false },
 			{ log: false }
 		]);
 
@@ -71,11 +71,11 @@ export default test({
 
 		assert.deepEqual(normalise_trace_logs(logs), [
 			{ log: 'effect', highlighted: false },
-			{ log: '$derived', highlighted: false },
+			{ log: 'double — $derived', highlighted: false },
 			{ log: 2 },
-			{ log: '$state', highlighted: false },
+			{ log: 'count — $state', highlighted: false },
 			{ log: 1 },
-			{ log: '$state', highlighted: true },
+			{ log: 'checked — $state', highlighted: true },
 			{ log: true }
 		]);
 
@@ -88,9 +88,9 @@ export default test({
 
 		assert.deepEqual(normalise_trace_logs(logs), [
 			{ log: 'effect', highlighted: false },
-			{ log: '$derived', highlighted: true },
+			{ log: 'double — $derived', highlighted: true },
 			{ log: 4 },
-			{ log: '$state', highlighted: true },
+			{ log: 'count — $state', highlighted: true },
 			{ log: 2 }
 		]);
 	}
