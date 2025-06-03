@@ -1,6 +1,6 @@
 /** @import { AssignmentExpression, Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression } from 'estree' */
 /** @import { AST, ExpressionMetadata } from '#compiler' */
-/** @import { ComponentClientTransformState, Context } from '../../types' */
+/** @import { ComponentClientTransformState, ComponentContext, Context } from '../../types' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
@@ -8,7 +8,7 @@ import { sanitize_template_string } from '../../../../../utils/sanitize_template
 import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator } from '../../../../../state.js';
-import { create_derived } from '../../utils.js';
+import { build_getter, create_derived } from '../../utils.js';
 
 /**
  * @param {ComponentClientTransformState} state
@@ -359,4 +359,58 @@ export function validate_mutation(node, context, expression) {
 		loc && b.literal(loc.line),
 		loc && b.literal(loc.column)
 	);
+}
+
+/**
+ * Serializes an expression with reactivity like in Svelte 4
+ * @param {Expression} expression
+ * @param {ComponentContext} context
+ */
+export function build_legacy_expression(expression, context) {
+	// To recreate Svelte 4 behaviour, we track the dependencies
+	// the compiler can 'see', but we untrack the effect itself
+	const serialized_expression = /** @type {Expression} */ (context.visit(expression));
+	if (expression.type === "Identifier") return serialized_expression;
+
+	/** @type {Expression[]} */
+	const sequence = [];
+
+	for (const [name, nodes] of context.state.scope.references) {
+		const binding = context.state.scope.get(name);
+
+		if (binding === null || binding.kind === 'normal' && binding.declaration_kind !== 'import') continue;
+
+		let used = false;
+		for (const { node, path } of nodes) {
+			const expressionIdx = path.indexOf(expression);
+			if (expressionIdx < 0) continue;
+			// in Svelte 4, #if, #each and #await copy context, so assignments
+			// aren't propagated to the parent block / component root
+			const track_assignment = !path.find((node, i) =>
+				i < expressionIdx - 1 && ["IfBlock", "EachBlock", "AwaitBlock"].includes(node.type)
+			)
+			if (track_assignment) {
+				used = true;
+				break;
+			}
+			const assignment = /** @type {AssignmentExpression|undefined} */(path.find((node, i) => i >= expressionIdx && node.type === "AssignmentExpression"));
+			if (!assignment || assignment.left !== node && !path.includes(assignment.left)) {
+				used = true;
+				break;
+			}
+		}
+		if (!used) continue;
+
+		let serialized = build_getter(b.id(name), context.state);
+
+		// If the binding is a prop, we need to deep read it because it could be fine-grained $state
+		// from a runes-component, where mutations don't trigger an update on the prop as a whole.
+		if (name === '$$props' || name === '$$restProps' || binding.kind === 'bindable_prop') {
+			serialized = b.call('$.deep_read_state', serialized);
+		}
+
+		sequence.push(serialized);
+	}
+
+	return b.sequence([...sequence, b.call('$.untrack', b.thunk(serialized_expression))]);
 }

@@ -6,6 +6,7 @@ import { extract_identifiers } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { create_derived } from '../utils.js';
 import { get_value } from './shared/declarations.js';
+import { build_legacy_expression } from './shared/utils.js';
 
 /**
  * @param {AST.ConstTag} node
@@ -15,12 +16,15 @@ export function ConstTag(node, context) {
 	const declaration = node.declaration.declarations[0];
 	// TODO we can almost certainly share some code with $derived(...)
 	if (declaration.id.type === 'Identifier') {
+		const init = context.state.analysis.runes
+			? /** @type {Expression} */ (context.visit(declaration.init))
+			: build_legacy_expression(declaration.init, context);
 		context.state.init.push(
 			b.const(
 				declaration.id,
 				create_derived(
 					context.state,
-					b.thunk(/** @type {Expression} */ (context.visit(declaration.init)))
+					b.thunk(init)
 				)
 			)
 		);
@@ -48,12 +52,15 @@ export function ConstTag(node, context) {
 
 		// TODO optimise the simple `{ x } = y` case — we can just return `y`
 		// instead of destructuring it only to return a new object
+		const init = context.state.analysis.runes
+			? /** @type {Expression} */ (context.visit(declaration.init, child_state))
+			: build_legacy_expression(declaration.init, { ...context, state: child_state });
 		const fn = b.arrow(
 			[],
 			b.block([
 				b.const(
 					/** @type {Pattern} */ (context.visit(declaration.id, child_state)),
-					/** @type {Expression} */ (context.visit(declaration.init, child_state))
+					init,
 				),
 				b.return(b.object(identifiers.map((node) => b.prop('init', node, node))))
 			])
