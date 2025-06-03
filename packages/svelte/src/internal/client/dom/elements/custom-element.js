@@ -10,11 +10,12 @@ import { define_property, get_descriptor, object_keys } from '../../../shared/ut
  * @property {'String'|'Boolean'|'Number'|'Array'|'Object'} [type]
  */
 
-/** @type {any} */
-let SvelteElement;
+function get_svelte_element_class() {
+	if (typeof HTMLElement !== 'function') {
+		return;
+	}
 
-if (typeof HTMLElement === 'function') {
-	SvelteElement = class extends HTMLElement {
+	return class extends HTMLElement {
 		/** The Svelte component constructor */
 		$$ctor;
 		/** Slots */
@@ -218,6 +219,9 @@ if (typeof HTMLElement === 'function') {
 		}
 	};
 }
+
+/** @type {any} */
+const SvelteElement = /* @__PURE__ */ get_svelte_element_class();
 
 /**
  * @param {string} prop
