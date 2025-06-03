@@ -52,7 +52,11 @@ const callees = {
  * @returns {Expression | null}
  */
 function build_assignment(operator, left, right, context) {
-	if (context.state.analysis.runes && left.type === 'MemberExpression') {
+	if (
+		context.state.analysis.runes &&
+		left.type === 'MemberExpression' &&
+		left.object.type === 'ThisExpression'
+	) {
 		const name = get_name(left.property);
 		const field = name && context.state.state_fields.get(name);
 
@@ -70,7 +74,14 @@ function build_assignment(operator, left, right, context) {
 					let value = /** @type {Expression} */ (context.visit(right, child_state));
 
 					if (dev) {
-						value = b.call('$.tag', value, b.literal(name));
+						const declaration = context.path.find(
+							(parent) => parent.type === 'ClassDeclaration' || parent.type === 'ClassExpression'
+						);
+						value = b.call(
+							'$.tag',
+							value,
+							b.literal(`${declaration?.id?.name ?? '[class]'}.${name}`)
+						);
 					}
 
 					return b.assignment(operator, b.member(b.this, field.key), value);
