@@ -112,15 +112,6 @@ export function set_active_effect(effect) {
 	active_effect = effect;
 }
 
-// TODO remove this, once we're satisfied that we're not leaking context
-/* @__PURE__ */
-setInterval(() => {
-	if (active_effect !== null || active_reaction !== null) {
-		// eslint-disable-next-line no-debugger
-		debugger;
-	}
-});
-
 /**
  * When sources are created within a reaction, reading and writing
  * them should not cause a re-run
