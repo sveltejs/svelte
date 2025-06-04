@@ -34,15 +34,14 @@ import {
 	EFFECT_PRESERVED,
 	STALE_REACTION
 } from '#client/constants';
-import { set } from './sources.js';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { async_derived, derived } from './deriveds.js';
-import { capture, get_pending_boundary } from '../dom/blocks/boundary.js';
+import { capture } from '../dom/blocks/boundary.js';
 import { component_context, dev_current_component_function } from '../context.js';
-import { current_batch, Batch } from './batch.js';
+import { Batch } from './batch.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -343,24 +342,13 @@ export function template_effect(fn, sync = [], async = [], d = derived) {
 	var parent = /** @type {Effect} */ (active_effect);
 
 	if (async.length > 0) {
-		var batch = /** @type {Batch} */ (current_batch);
 		var restore = capture();
 
-		var boundary = get_pending_boundary();
-		var ran = boundary.ran;
-
 		Promise.all(async.map((expression) => async_derived(expression))).then((result) => {
+			if ((parent.f & DESTROYED) !== 0) return;
+
 			restore();
-
-			if ((parent.f & DESTROYED) !== 0) {
-				return;
-			}
-
-			var effect = create_template_effect(fn, [...sync.map(d), ...result]);
-
-			if (ran) batch.restore();
-			schedule_effect(effect);
-			if (ran) batch.flush();
+			create_template_effect(fn, [...sync.map(d), ...result]);
 		});
 	} else {
 		create_template_effect(fn, sync.map(d));
@@ -380,7 +368,7 @@ function create_template_effect(fn, deriveds) {
 		});
 	}
 
-	return create_effect(RENDER_EFFECT, effect, true);
+	create_effect(RENDER_EFFECT, effect, true);
 }
 
 /**
