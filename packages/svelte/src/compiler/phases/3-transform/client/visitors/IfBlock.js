@@ -51,7 +51,6 @@ export function IfBlock(node, context) {
 		)
 	];
 
-
 	if (node.elseif) {
 		// We treat this...
 		//

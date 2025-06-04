@@ -19,7 +19,7 @@ export function AwaitBlock(node, context) {
 		context.state.analysis.runes
 			? /** @type {Expression} */ (context.visit(node.expression))
 			: build_legacy_expression(node.expression, context)
-		);
+	);
 
 	let then_block;
 	let catch_block;

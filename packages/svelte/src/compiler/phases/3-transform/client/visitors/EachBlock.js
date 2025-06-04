@@ -32,9 +32,9 @@ export function EachBlock(node, context) {
 	const collection = context.state.analysis.runes
 		? /** @type {Expression} */ (context.visit(node.expression, parent_scope_state))
 		: build_legacy_expression(node.expression, {
-			...context,
-			state: parent_scope_state
-		});
+				...context,
+				state: parent_scope_state
+			});
 
 	if (!each_node_meta.is_controlled) {
 		context.state.template.push_comment();

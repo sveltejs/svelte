@@ -19,15 +19,7 @@ export function ConstTag(node, context) {
 		const init = context.state.analysis.runes
 			? /** @type {Expression} */ (context.visit(declaration.init))
 			: build_legacy_expression(declaration.init, context);
-		context.state.init.push(
-			b.const(
-				declaration.id,
-				create_derived(
-					context.state,
-					b.thunk(init)
-				)
-			)
-		);
+		context.state.init.push(b.const(declaration.id, create_derived(context.state, b.thunk(init))));
 
 		context.state.transform[declaration.id.name] = { read: get_value };
 
@@ -58,10 +50,7 @@ export function ConstTag(node, context) {
 		const fn = b.arrow(
 			[],
 			b.block([
-				b.const(
-					/** @type {Pattern} */ (context.visit(declaration.id, child_state)),
-					init,
-				),
+				b.const(/** @type {Pattern} */ (context.visit(declaration.id, child_state)), init),
 				b.return(b.object(identifiers.map((node) => b.prop('init', node, node))))
 			])
 		);

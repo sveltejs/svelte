@@ -370,41 +370,67 @@ function is_pure_expression(expression) {
 	// It's supposed that values do not have custom @@toPrimitive() or toString(),
 	// which may be implicitly called in expressions like `a + b`, `a & b`, `+a`, `str: ${a}`
 	switch (expression.type) {
-		case "ArrayExpression": return expression.elements.every((element) => element == null || (element.type === "SpreadElement" ? false : is_pure_expression(element)));
-		case "BinaryExpression": return expression.left.type !== "PrivateIdentifier" && is_pure_expression(expression.left) && is_pure_expression(expression.right);
-		case "ConditionalExpression": return is_pure_expression(expression.test) && is_pure_expression(expression.consequent) && is_pure_expression(expression.alternate);
-		case "Identifier": return true;
-		case "Literal": return true;
-		case "LogicalExpression": return is_pure_expression(expression.left) && is_pure_expression(expression.right);
-		case "MetaProperty": return true; // new.target
-		case "ObjectExpression": return expression.properties.every((property) =>
-				property.type !== "SpreadElement"
-				&& property.key.type !== "PrivateIdentifier"
-				&& is_pure_expression(property.key)
-				&& is_pure_expression(property.value)
-		);
-		case "SequenceExpression": return expression.expressions.every(is_pure_expression);
-		case "TemplateLiteral": return expression.expressions.every(is_pure_expression);
-		case "ThisExpression": return true;
-		case "UnaryExpression": return is_pure_expression(expression.argument);
-		case "YieldExpression": return expression.argument == null || is_pure_expression(expression.argument);
+		case 'ArrayExpression':
+			return expression.elements.every(
+				(element) =>
+					element == null ||
+					(element.type === 'SpreadElement' ? false : is_pure_expression(element))
+			);
+		case 'BinaryExpression':
+			return (
+				expression.left.type !== 'PrivateIdentifier' &&
+				is_pure_expression(expression.left) &&
+				is_pure_expression(expression.right)
+			);
+		case 'ConditionalExpression':
+			return (
+				is_pure_expression(expression.test) &&
+				is_pure_expression(expression.consequent) &&
+				is_pure_expression(expression.alternate)
+			);
+		case 'Identifier':
+			return true;
+		case 'Literal':
+			return true;
+		case 'LogicalExpression':
+			return is_pure_expression(expression.left) && is_pure_expression(expression.right);
+		case 'MetaProperty':
+			return true; // new.target
+		case 'ObjectExpression':
+			return expression.properties.every(
+				(property) =>
+					property.type !== 'SpreadElement' &&
+					property.key.type !== 'PrivateIdentifier' &&
+					is_pure_expression(property.key) &&
+					is_pure_expression(property.value)
+			);
+		case 'SequenceExpression':
+			return expression.expressions.every(is_pure_expression);
+		case 'TemplateLiteral':
+			return expression.expressions.every(is_pure_expression);
+		case 'ThisExpression':
+			return true;
+		case 'UnaryExpression':
+			return is_pure_expression(expression.argument);
+		case 'YieldExpression':
+			return expression.argument == null || is_pure_expression(expression.argument);
 
-		case "ArrayPattern":
-		case "ArrowFunctionExpression":
-		case "AssignmentExpression":
-		case "AssignmentPattern":
-		case "AwaitExpression":
-		case "CallExpression":
-		case "ChainExpression":
-		case "ClassExpression":
-		case "FunctionExpression":
-		case "ImportExpression":
-		case "MemberExpression":
-		case "NewExpression":
-		case "ObjectPattern":
-		case "RestElement":
-		case "TaggedTemplateExpression":
-		case "UpdateExpression":
+		case 'ArrayPattern':
+		case 'ArrowFunctionExpression':
+		case 'AssignmentExpression':
+		case 'AssignmentPattern':
+		case 'AwaitExpression':
+		case 'CallExpression':
+		case 'ChainExpression':
+		case 'ClassExpression':
+		case 'FunctionExpression':
+		case 'ImportExpression':
+		case 'MemberExpression':
+		case 'NewExpression':
+		case 'ObjectPattern':
+		case 'RestElement':
+		case 'TaggedTemplateExpression':
+		case 'UpdateExpression':
 			return false;
 	}
 }
@@ -426,23 +452,27 @@ export function build_legacy_expression(expression, context) {
 	for (const [name, nodes] of context.state.scope.references) {
 		const binding = context.state.scope.get(name);
 
-		if (binding === null || binding.kind === 'normal' && binding.declaration_kind !== 'import') continue;
+		if (binding === null || (binding.kind === 'normal' && binding.declaration_kind !== 'import'))
+			continue;
 
 		let used = false;
 		for (const { node, path } of nodes) {
-			const expressionIdx = path.indexOf(expression);
-			if (expressionIdx < 0) continue;
+			const expression_idx = path.indexOf(expression);
+			if (expression_idx < 0) continue;
 			// in Svelte 4, #if, #each and #await copy context, so assignments
 			// aren't propagated to the parent block / component root
-			const track_assignment = !path.find((node, i) =>
-				i < expressionIdx - 1 && ["IfBlock", "EachBlock", "AwaitBlock"].includes(node.type)
-			)
+			const track_assignment = !path.find(
+				(node, i) =>
+					i < expression_idx - 1 && ['IfBlock', 'EachBlock', 'AwaitBlock'].includes(node.type)
+			);
 			if (track_assignment) {
 				used = true;
 				break;
 			}
-			const assignment = /** @type {AssignmentExpression|undefined} */(path.find((node, i) => i >= expressionIdx && node.type === "AssignmentExpression"));
-			if (!assignment || assignment.left !== node && !path.includes(assignment.left)) {
+			const assignment = /** @type {AssignmentExpression|undefined} */ (
+				path.find((node, i) => i >= expression_idx && node.type === 'AssignmentExpression')
+			);
+			if (!assignment || (assignment.left !== node && !path.includes(assignment.left))) {
 				used = true;
 				break;
 			}

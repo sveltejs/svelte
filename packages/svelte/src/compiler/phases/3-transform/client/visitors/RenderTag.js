@@ -34,7 +34,7 @@ export function RenderTag(node, context) {
 
 	let snippet_function = context.state.analysis.runes
 		? /** @type {Expression} */ (context.visit(callee))
-		: build_legacy_expression(/** @type {Expression} */(callee), context);
+		: build_legacy_expression(/** @type {Expression} */ (callee), context);
 
 	if (node.metadata.dynamic) {
 		// If we have a chain expression then ensure a nullish snippet function gets turned into an empty one
