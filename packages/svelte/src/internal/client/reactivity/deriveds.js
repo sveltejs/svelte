@@ -180,18 +180,21 @@ export function async_derived(fn, location) {
 			(e) => {
 				prev = null;
 
-				if (e === STALE_REACTION) {
-					if (should_suspend) {
-						// TODO this feels asymmetrical though it seems to work?
-						if (!ran) {
-							boundary.decrement();
-						} else {
-							batch.remove();
-						}
-					}
-				} else {
+				if (e !== STALE_REACTION) {
 					handle_error(e, parent, null, parent.ctx);
-					batch.remove();
+				}
+
+				if (should_suspend) {
+					if (!ran) {
+						boundary.decrement();
+					} else {
+						batch.decrement();
+					}
+				}
+
+				if (ran) {
+					batch.restore();
+					batch.flush();
 				}
 			}
 		);
