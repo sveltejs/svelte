@@ -219,8 +219,9 @@ export class Batch {
 	flush() {
 		flush_queued_root_effects();
 
-		// TODO can this happen?
-		if (current_batch !== this) return;
+		if (current_batch !== this) {
+			return;
+		}
 
 		if (this.settled()) {
 			this.remove();
