@@ -26,6 +26,7 @@ function clean_children(node, opts) {
 	});
 
 	attributes.forEach((attr) => {
+		// Strip out the special onload/onerror hydration events from the test output
 		if ((attr.name === 'onload' || attr.name === 'onerror') && attr.value === 'this.__e=event') {
 			return;
 		}
@@ -67,6 +68,7 @@ function clean_children(node, opts) {
 			continue;
 		}
 
+		// add newlines for better readability and potentially recurse into children
 		if (child.nodeType === 1 || child.nodeType === 8) {
 			if (previous?.nodeType === 3) {
 				const prev = /** @type {Text} */ (previous);
@@ -95,8 +97,9 @@ function clean_children(node, opts) {
 		text.data = text.data.trimEnd();
 	}
 
+	// indent code for better readability
 	if (has_element_children && node.parentNode) {
-		node.innerHTML = `\n\t${node.innerHTML.replace(/\n/g, '\n\t')}\n`;
+		node.innerHTML = `\n\  ${node.innerHTML.replace(/\n/g, '\n  ')}\n`;
 	}
 
 	if (template) {

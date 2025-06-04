@@ -1,5 +1,25 @@
 # svelte
 
+## 5.33.14
+
+### Patch Changes
+
+- Revert "feat: enable TS autocomplete for Svelte HTML element definitions" ([#16063](https://github.com/sveltejs/svelte/pull/16063))
+
+- fix: destructuring snippet arguments ([#16068](https://github.com/sveltejs/svelte/pull/16068))
+
+## 5.33.13
+
+### Patch Changes
+
+- fix: avoid recursion error in `EachBlock` visitor ([#16058](https://github.com/sveltejs/svelte/pull/16058))
+
+## 5.33.12
+
+### Patch Changes
+
+- fix: correctly transform reassignments to class fields in SSR mode ([#16051](https://github.com/sveltejs/svelte/pull/16051))
+
 ## 5.33.11
 
 ### Patch Changes
