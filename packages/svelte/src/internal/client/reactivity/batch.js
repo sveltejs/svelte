@@ -97,7 +97,7 @@ export class Batch {
 			process_effects(this, root);
 		}
 
-		if (this.async_effects.length === 0 && this.settled()) {
+		if (this.async_effects.length === 0 && this.#pending === 0) {
 			var merged = false;
 
 			// if there are older batches with overlapping
@@ -191,25 +191,6 @@ export class Batch {
 
 	remove() {
 		batches.delete(this);
-
-		// for (var batch of batches) {
-		// 	/** @type {Source} */
-		// 	var source;
-
-		// 	if (batch.#id < this.#id) {
-		// 		// other batch is older than this
-		// 		for (source of this.#previous.keys()) {
-		// 			batch.#previous.delete(source);
-		// 		}
-		// 	} else {
-		// 		// other batch is newer than this
-		// 		for (source of batch.#previous.keys()) {
-		// 			if (this.#previous.has(source)) {
-		// 				batch.#previous.set(source, source.v);
-		// 			}
-		// 		}
-		// 	}
-		// }
 	}
 
 	restore() {
@@ -223,7 +204,7 @@ export class Batch {
 			return;
 		}
 
-		if (this.settled()) {
+		if (this.#pending === 0) {
 			this.remove();
 		}
 
@@ -231,7 +212,6 @@ export class Batch {
 	}
 
 	commit() {
-		// commit changes
 		for (const fn of this.#callbacks) {
 			fn();
 		}
@@ -264,10 +244,6 @@ export class Batch {
 
 			this.commit();
 		}
-	}
-
-	settled() {
-		return this.#pending === 0;
 	}
 
 	/** @param {() => void} fn */
