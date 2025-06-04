@@ -327,9 +327,8 @@ function move_effect(effect, fragment) {
 	}
 }
 
-/** @param {Effect} effect */
-export function get_pending_boundary(effect) {
-	let boundary = effect.b;
+export function get_pending_boundary() {
+	var boundary = /** @type {Effect} */ (active_effect).b;
 
 	while (boundary !== null && !boundary.has_pending_snippet()) {
 		boundary = boundary.parent;
@@ -367,7 +366,7 @@ export function capture(track = true) {
 
 // TODO we should probably be incrementing the current batch, not the boundary?
 export function suspend() {
-	let boundary = get_pending_boundary(/** @type {Effect} */ (active_effect));
+	let boundary = get_pending_boundary();
 
 	boundary.increment();
 

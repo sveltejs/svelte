@@ -346,7 +346,7 @@ export function template_effect(fn, sync = [], async = [], d = derived) {
 		var batch = /** @type {Batch} */ (current_batch);
 		var restore = capture();
 
-		var boundary = get_pending_boundary(parent);
+		var boundary = get_pending_boundary();
 		var ran = boundary.ran;
 
 		Promise.all(async.map((expression) => async_derived(expression))).then((result) => {

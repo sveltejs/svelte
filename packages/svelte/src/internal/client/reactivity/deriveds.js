@@ -104,7 +104,7 @@ export function async_derived(fn, location) {
 		throw new Error('TODO cannot create unowned async derived');
 	}
 
-	let boundary = get_pending_boundary(parent);
+	let boundary = get_pending_boundary();
 
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
