@@ -834,6 +834,9 @@ export function flushSync(fn) {
 		}
 
 		while (true) {
+			// is_flushing cannot be set to `true` before `flush_tasks` because it
+			// causes the regression at #16076, this can only be observed
+			// in browser and not in jsdom
 			flush_tasks();
 
 			if (queued_root_effects.length === 0) {
