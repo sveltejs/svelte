@@ -143,28 +143,37 @@ export function async_derived(fn, location) {
 			}
 		}
 
-		promise.then(
-			(v) => {
-				prev = null;
+		/**
+		 * @param {any} value
+		 * @param {unknown} error
+		 * @param {boolean} errored
+		 */
+		const handler = (value, error = undefined, errored = false) => {
+			prev = null;
 
-				if ((parent.f & DESTROYED) !== 0) {
-					return;
+			if ((parent.f & DESTROYED) !== 0) {
+				return;
+			}
+
+			restore();
+			from_async_derived = null;
+
+			if (should_suspend) {
+				if (!ran) {
+					boundary.decrement();
+				} else {
+					batch.decrement();
 				}
+			}
 
-				restore();
-				from_async_derived = null;
+			if (ran) batch.restore();
 
-				if (should_suspend) {
-					if (!ran) {
-						boundary.decrement();
-					} else {
-						batch.decrement();
-					}
+			if (errored) {
+				if (error !== STALE_REACTION) {
+					handle_error(error, parent, null, parent.ctx);
 				}
-
-				if (ran) batch.restore();
-				internal_set(signal, v);
-				if (ran) batch.flush();
+			} else {
+				internal_set(signal, value);
 
 				if (DEV && location !== undefined) {
 					recent_async_deriveds.add(signal);
@@ -176,27 +185,14 @@ export function async_derived(fn, location) {
 						}
 					});
 				}
-			},
-			(e) => {
-				prev = null;
-
-				if (e !== STALE_REACTION) {
-					handle_error(e, parent, null, parent.ctx);
-				}
-
-				if (should_suspend) {
-					if (!ran) {
-						boundary.decrement();
-					} else {
-						batch.decrement();
-					}
-				}
-
-				if (ran) {
-					batch.restore();
-					batch.flush();
-				}
 			}
+
+			if (ran) batch.flush();
+		};
+
+		promise.then(
+			(v) => handler(v),
+			(e) => handler(null, e, true)
 		);
 	}, EFFECT_ASYNC | EFFECT_PRESERVED);
 
