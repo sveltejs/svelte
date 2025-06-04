@@ -192,6 +192,7 @@ export function async_derived(fn, location) {
 					}
 				} else {
 					handle_error(e, parent, null, parent.ctx);
+					batch.remove();
 				}
 			}
 		);

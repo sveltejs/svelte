@@ -76,7 +76,5 @@ export default test({
 		await Promise.resolve();
 		await Promise.resolve();
 		assert.equal(p.textContent, '5');
-
-		console.log(target.innerHTML);
 	}
 });
