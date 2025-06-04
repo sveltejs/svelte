@@ -146,9 +146,8 @@ export function async_derived(fn, location) {
 		/**
 		 * @param {any} value
 		 * @param {unknown} error
-		 * @param {boolean} errored
 		 */
-		const handler = (value, error = undefined, errored = false) => {
+		const handler = (value, error = undefined) => {
 			prev = null;
 
 			if ((parent.f & DESTROYED) !== 0) {
@@ -168,7 +167,7 @@ export function async_derived(fn, location) {
 
 			if (ran) batch.restore();
 
-			if (errored) {
+			if (error) {
 				if (error !== STALE_REACTION) {
 					handle_error(error, parent, null, parent.ctx);
 				}
@@ -190,10 +189,7 @@ export function async_derived(fn, location) {
 			if (ran) batch.flush();
 		};
 
-		promise.then(
-			(v) => handler(v),
-			(e) => handler(null, e, true)
-		);
+		promise.then(handler, (e) => handler(null, e || 'unknown'));
 	}, EFFECT_ASYNC | EFFECT_PRESERVED);
 
 	return new Promise((fulfil) => {
