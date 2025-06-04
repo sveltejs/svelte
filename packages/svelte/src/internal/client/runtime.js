@@ -823,8 +823,6 @@ export function flushSync(fn) {
 	if (fn) {
 		is_flushing = true;
 		flush_queued_root_effects();
-
-		is_flushing = true;
 		result = fn();
 	}
 
