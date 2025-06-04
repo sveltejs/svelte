@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression } from 'estree' */
+/** @import { AssignmentExpression, Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression, Pattern } from 'estree' */
 /** @import { AST, ExpressionMetadata } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext, Context } from '../../types' */
 import { walk } from 'zimmerframe';
@@ -362,6 +362,54 @@ export function validate_mutation(node, context, expression) {
 }
 
 /**
+ * Checks whether the expression contains assignments, function calls, or member accesses
+ * @param {Expression|Pattern} expression
+ * @returns {boolean}
+ */
+function is_pure_expression(expression) {
+	// It's supposed that values do not have custom @@toPrimitive() or toString(),
+	// which may be implicitly called in expressions like `a + b`, `a & b`, `+a`, `str: ${a}`
+	switch (expression.type) {
+		case "ArrayExpression": return expression.elements.every((element) => element == null || (element.type === "SpreadElement" ? false : is_pure_expression(element)));
+		case "BinaryExpression": return expression.left.type !== "PrivateIdentifier" && is_pure_expression(expression.left) && is_pure_expression(expression.right);
+		case "ConditionalExpression": return is_pure_expression(expression.test) && is_pure_expression(expression.consequent) && is_pure_expression(expression.alternate);
+		case "Identifier": return true;
+		case "Literal": return true;
+		case "LogicalExpression": return is_pure_expression(expression.left) && is_pure_expression(expression.right);
+		case "MetaProperty": return true; // new.target
+		case "ObjectExpression": return expression.properties.every((property) =>
+				property.type !== "SpreadElement"
+				&& property.key.type !== "PrivateIdentifier"
+				&& is_pure_expression(property.key)
+				&& is_pure_expression(property.value)
+		);
+		case "SequenceExpression": return expression.expressions.every(is_pure_expression);
+		case "TemplateLiteral": return expression.expressions.every(is_pure_expression);
+		case "ThisExpression": return true;
+		case "UnaryExpression": return is_pure_expression(expression.argument);
+		case "YieldExpression": return expression.argument == null || is_pure_expression(expression.argument);
+
+		case "ArrayPattern":
+		case "ArrowFunctionExpression":
+		case "AssignmentExpression":
+		case "AssignmentPattern":
+		case "AwaitExpression":
+		case "CallExpression":
+		case "ChainExpression":
+		case "ClassExpression":
+		case "FunctionExpression":
+		case "ImportExpression":
+		case "MemberExpression":
+		case "NewExpression":
+		case "ObjectPattern":
+		case "RestElement":
+		case "TaggedTemplateExpression":
+		case "UpdateExpression":
+			return false;
+	}
+}
+
+/**
  * Serializes an expression with reactivity like in Svelte 4
  * @param {Expression} expression
  * @param {ComponentContext} context
@@ -370,7 +418,7 @@ export function build_legacy_expression(expression, context) {
 	// To recreate Svelte 4 behaviour, we track the dependencies
 	// the compiler can 'see', but we untrack the effect itself
 	const serialized_expression = /** @type {Expression} */ (context.visit(expression));
-	if (expression.type === "Identifier") return serialized_expression;
+	if (is_pure_expression(expression)) return serialized_expression;
 
 	/** @type {Expression[]} */
 	const sequence = [];

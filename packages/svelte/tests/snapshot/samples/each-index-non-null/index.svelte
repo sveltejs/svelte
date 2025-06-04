@@ -1,3 +1,3 @@
-{#each Array(10), i}
+{#each [,,,,,], i}
 	<p>index: {i}</p>
 {/each}
