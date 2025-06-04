@@ -8,7 +8,7 @@
 </script>
 
 <button onclick={() => count++}>
-	increment
+	clicks: {count}
 </button>
 
 <svelte:boundary>
