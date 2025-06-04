@@ -130,17 +130,11 @@ export function async_derived(fn, location) {
 
 		prev = promise;
 
-		var restore = capture();
-
 		var batch = /** @type {Batch} */ (current_batch);
 		var ran = boundary.ran;
 
 		if (should_suspend) {
-			if (!ran) {
-				boundary.increment();
-			} else {
-				batch.increment();
-			}
+			(ran ? batch : boundary).increment();
 		}
 
 		/**
@@ -154,15 +148,10 @@ export function async_derived(fn, location) {
 				return;
 			}
 
-			restore();
 			from_async_derived = null;
 
 			if (should_suspend) {
-				if (!ran) {
-					boundary.decrement();
-				} else {
-					batch.decrement();
-				}
+				(ran ? batch : boundary).decrement();
 			}
 
 			if (ran) batch.restore();
