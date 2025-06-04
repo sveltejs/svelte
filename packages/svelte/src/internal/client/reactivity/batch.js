@@ -10,7 +10,7 @@ import {
 	update_effect
 } from '../runtime.js';
 import { raf } from '../timing.js';
-import { internal_set, mark_reactions, pending } from './sources.js';
+import { internal_set, pending } from './sources.js';
 
 /** @type {Set<Batch>} */
 const batches = new Set();
