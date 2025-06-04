@@ -773,6 +773,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	inert?: boolean | undefined | null;
 	popover?: 'auto' | 'manual' | '' | undefined | null;
 	writingsuggestions?: Booleanish | undefined | null;
+	xmlns?: string | undefined | null;
 
 	// Unknown
 	radiogroup?: string | undefined | null; // <command>, <menuitem>
