@@ -289,7 +289,10 @@ export function mark_reactions(signal, status, partial = false) {
 			continue;
 		}
 
-		set_signal_status(reaction, status);
+		if (status === DIRTY || (flags & DIRTY) === 0) {
+			// don't make a DIRTY signal MAYBE_DIRTY
+			set_signal_status(reaction, status);
+		}
 
 		if ((flags & DERIVED) !== 0) {
 			mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY, partial);

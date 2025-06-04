@@ -35,7 +35,7 @@ export default test({
 			await Promise.resolve();
 			await Promise.resolve();
 
-			assert.equal(p.innerHTML, `${i}: ${i}`);
+			assert.equal(p.innerHTML, `${i}: ${Math.min(i, 3)}`);
 		}
 	}
 });
