@@ -131,6 +131,14 @@ export class Batch {
 							}
 						}
 
+						for (const e of this.skipped_effects) {
+							batch.skipped_effects.add(e);
+						}
+
+						for (const fn of this.#callbacks) {
+							batch.#callbacks.add(fn);
+						}
+
 						this.remove();
 						break;
 					}
