@@ -51,9 +51,6 @@ export function if_block(node, fn, elseif = false) {
 	/** @type {DocumentFragment | null} */
 	var offscreen_fragment = null;
 
-	/** @type {Effect | null} */
-	var pending_effect = null;
-
 	function commit() {
 		if (offscreen_fragment !== null) {
 			// remove the anchor
@@ -63,23 +60,15 @@ export function if_block(node, fn, elseif = false) {
 			offscreen_fragment = null;
 		}
 
-		if (pending_effect) {
-			if (condition) {
-				consequent_effect = pending_effect;
-			} else {
-				alternate_effect = pending_effect;
-			}
+		var active = condition ? consequent_effect : alternate_effect;
+		var inactive = condition ? alternate_effect : consequent_effect;
+
+		if (active) {
+			resume_effect(active);
 		}
 
-		var current_effect = condition ? consequent_effect : alternate_effect;
-		var previous_effect = condition ? alternate_effect : consequent_effect;
-
-		if (current_effect !== null) {
-			resume_effect(current_effect);
-		}
-
-		if (previous_effect !== null) {
-			pause_effect(previous_effect, () => {
+		if (inactive) {
+			pause_effect(inactive, () => {
 				if (condition) {
 					alternate_effect = null;
 				} else {
@@ -87,8 +76,6 @@ export function if_block(node, fn, elseif = false) {
 				}
 			});
 		}
-
-		pending_effect = null;
 	}
 
 	const update_branch = (
@@ -122,24 +109,20 @@ export function if_block(node, fn, elseif = false) {
 			offscreen_fragment.append((target = create_text()));
 		}
 
-		var batch = /** @type {Batch} */ (current_batch);
-
-		// TODO need to do this for other block types
-		if (pending_effect) {
-			// batch.skipped_effects.add(pending_effect);
-			// pending_effect = null;
-		}
-
-		if (condition ? !consequent_effect : !alternate_effect) {
-			pending_effect = fn && branch(() => fn(target));
+		if (condition) {
+			consequent_effect ??= fn && branch(() => fn(target));
+		} else {
+			alternate_effect ??= fn && branch(() => fn(target));
 		}
 
 		if (defer) {
-			const skipped = condition ? alternate_effect : consequent_effect;
-			if (skipped !== null) {
-				// TODO need to do this for other kinds of blocks
-				batch.skipped_effects.add(skipped);
-			}
+			var batch = /** @type {Batch} */ (current_batch);
+
+			var active = condition ? consequent_effect : alternate_effect;
+			var inactive = condition ? alternate_effect : consequent_effect;
+
+			if (active) batch.skipped_effects.delete(active);
+			if (inactive) batch.skipped_effects.add(inactive);
 
 			batch.add_callback(commit);
 		} else {
