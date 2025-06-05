@@ -160,9 +160,15 @@ export function async_derived(fn, location) {
 			if (error) {
 				if (error !== STALE_REACTION) {
 					signal.f |= ASYNC_ERROR;
+
+					// @ts-expect-error the error is the wrong type, but we don't care
 					internal_set(signal, error);
 				}
 			} else {
+				if ((signal.f & ASYNC_ERROR) !== 0) {
+					signal.f ^= ASYNC_ERROR;
+				}
+
 				internal_set(signal, value);
 
 				if (DEV && location !== undefined) {

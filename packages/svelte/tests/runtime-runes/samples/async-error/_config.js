@@ -10,6 +10,7 @@ export default test({
 		flushSync(() => button1.click());
 		await Promise.resolve();
 		await Promise.resolve();
+		await Promise.resolve();
 		flushSync();
 		assert.htmlEqual(
 			target.innerHTML,

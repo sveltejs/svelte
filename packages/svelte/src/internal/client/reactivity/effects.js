@@ -339,7 +339,7 @@ export function render_effect(fn, flags = 0) {
  * @param {Array<() => Promise<any>>} async
  */
 export function template_effect(fn, sync = [], async = [], d = derived) {
-	var batch = /** @type {Batch} */ (current_batch);
+	var batch = current_batch;
 	var parent = /** @type {Effect} */ (active_effect);
 
 	if (async.length > 0) {
@@ -349,12 +349,12 @@ export function template_effect(fn, sync = [], async = [], d = derived) {
 			if ((parent.f & DESTROYED) !== 0) return;
 
 			// TODO probably need to do this in async.js as well
-			batch.restore();
+			batch?.restore();
 
 			restore();
 			create_template_effect(fn, [...sync.map(d), ...result]);
 
-			batch.flush();
+			batch?.flush();
 		});
 	} else {
 		create_template_effect(fn, sync.map(d));
