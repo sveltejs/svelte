@@ -11,6 +11,10 @@ const handled_errors = new WeakSet();
 
 let is_throwing_error = false;
 
+export function reset_is_throwing_error() {
+	is_throwing_error = false;
+}
+
 /**
  * @param {unknown} error
  * @param {Effect} effect
@@ -89,7 +93,7 @@ export function handle_error(error, effect, previous_effect = null) {
 		}
 	}
 
-	propagate_error(error, effect);
+	invoke_error_boundary(error, effect);
 
 	if (should_rethrow_error(effect)) {
 		throw error;
@@ -100,7 +104,7 @@ export function handle_error(error, effect, previous_effect = null) {
  * @param {unknown} error
  * @param {Effect} effect
  */
-function propagate_error(error, effect) {
+function invoke_error_boundary(error, effect) {
 	/** @type {Effect | null} */
 	var current = effect;
 
@@ -131,8 +135,4 @@ function should_rethrow_error(effect) {
 		(effect.f & DESTROYED) === 0 &&
 		(effect.parent === null || (effect.parent.f & BOUNDARY_EFFECT) === 0)
 	);
-}
-
-export function reset_is_throwing_error() {
-	is_throwing_error = false;
 }
