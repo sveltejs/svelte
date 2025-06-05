@@ -26,7 +26,12 @@ function update_pending() {
 /** @type {Map<Derived, any> | null} */
 export let batch_deriveds = null;
 
+/** TODO handy for debugging, but we should probably eventually delete it */
+let uid = 1;
+
 export class Batch {
+	id = uid++;
+
 	/** @type {Map<Source, any>} */
 	#previous = new Map();
 
