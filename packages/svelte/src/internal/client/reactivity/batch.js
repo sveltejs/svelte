@@ -26,7 +26,12 @@ function update_pending() {
 /** @type {Map<Derived, any> | null} */
 export let batch_deriveds = null;
 
+/** TODO handy for debugging, but we should probably eventually delete it */
+let uid = 1;
+
 export class Batch {
+	id = uid++;
+
 	/** @type {Map<Source, any>} */
 	#previous = new Map();
 
@@ -257,6 +262,22 @@ export class Batch {
 	/** @param {() => void} fn */
 	add_callback(fn) {
 		this.#callbacks.add(fn);
+	}
+
+	/** @param {Effect} effect */
+	skips(effect) {
+		/** @type {Effect | null} */
+		var e = effect;
+
+		while (e !== null) {
+			if (this.skipped_effects.has(e)) {
+				return true;
+			}
+
+			e = e.parent;
+		}
+
+		return false;
 	}
 
 	static ensure() {

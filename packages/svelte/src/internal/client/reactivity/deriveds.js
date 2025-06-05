@@ -2,6 +2,7 @@
 /** @import { Batch } from './batch.js'; */
 import { DEV } from 'esm-env';
 import {
+	ASYNC_ERROR,
 	CLEAN,
 	DERIVED,
 	DESTROYED,
@@ -158,7 +159,8 @@ export function async_derived(fn, location) {
 
 			if (error) {
 				if (error !== STALE_REACTION) {
-					handle_error(error, parent, null, parent.ctx);
+					signal.f |= ASYNC_ERROR;
+					internal_set(signal, error);
 				}
 			} else {
 				internal_set(signal, value);

@@ -122,13 +122,19 @@ export function if_block(node, fn, elseif = false) {
 			offscreen_fragment.append((target = create_text()));
 		}
 
+		var batch = /** @type {Batch} */ (current_batch);
+
+		// TODO need to do this for other block types
+		if (pending_effect) {
+			// batch.skipped_effects.add(pending_effect);
+			// pending_effect = null;
+		}
+
 		if (condition ? !consequent_effect : !alternate_effect) {
 			pending_effect = fn && branch(() => fn(target));
 		}
 
 		if (defer) {
-			var batch = /** @type {Batch} */ (current_batch);
-
 			const skipped = condition ? alternate_effect : consequent_effect;
 			if (skipped !== null) {
 				// TODO need to do this for other kinds of blocks

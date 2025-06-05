@@ -33,7 +33,8 @@ import {
 	EFFECT_IS_UPDATING,
 	EFFECT_ASYNC,
 	RENDER_EFFECT,
-	STALE_REACTION
+	STALE_REACTION,
+	ASYNC_ERROR
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { internal_set, old_values } from './reactivity/sources.js';
@@ -303,6 +304,12 @@ export function reset_is_throwing_error() {
  * @param {ComponentContext | null} component_context
  */
 export function handle_error(error, effect, previous_effect, component_context) {
+	// if the error occurred inside an effect that's
+	// about to be destroyed, look the other way
+	if (current_batch?.skips(effect)) {
+		return;
+	}
+
 	if (is_throwing_error) {
 		if (previous_effect === null) {
 			is_throwing_error = false;
@@ -1038,6 +1045,10 @@ export function get(signal) {
 		}
 
 		return batch_deriveds.get(derived);
+	}
+
+	if ((signal.f & ASYNC_ERROR) !== 0) {
+		throw signal.v;
 	}
 
 	return signal.v;

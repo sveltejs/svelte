@@ -41,7 +41,7 @@ import { get_next_sibling } from '../dom/operations.js';
 import { async_derived, derived } from './deriveds.js';
 import { capture } from '../dom/blocks/boundary.js';
 import { component_context, dev_current_component_function } from '../context.js';
-import { Batch } from './batch.js';
+import { Batch, current_batch } from './batch.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -339,6 +339,7 @@ export function render_effect(fn, flags = 0) {
  * @param {Array<() => Promise<any>>} async
  */
 export function template_effect(fn, sync = [], async = [], d = derived) {
+	var batch = /** @type {Batch} */ (current_batch);
 	var parent = /** @type {Effect} */ (active_effect);
 
 	if (async.length > 0) {
@@ -347,8 +348,13 @@ export function template_effect(fn, sync = [], async = [], d = derived) {
 		Promise.all(async.map((expression) => async_derived(expression))).then((result) => {
 			if ((parent.f & DESTROYED) !== 0) return;
 
+			// TODO probably need to do this in async.js as well
+			batch.restore();
+
 			restore();
 			create_template_effect(fn, [...sync.map(d), ...result]);
+
+			batch.flush();
 		});
 	} else {
 		create_template_effect(fn, sync.map(d));
