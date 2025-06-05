@@ -1,4 +1,4 @@
-/** @import { ComponentContext, Effect } from '#client' */
+/** @import { Effect } from '#client' */
 import { DEV } from 'esm-env';
 import { FILENAME } from '../../constants.js';
 import { is_firefox } from './dom/operations.js';
@@ -7,7 +7,7 @@ import { define_property } from '../shared/utils.js';
 
 // Used for DEV time error handling
 /** @param {WeakSet<Error>} value */
-const handled_errors = new WeakSet();
+const adjusted_errors = new WeakSet();
 
 let is_throwing_error = false;
 
@@ -21,8 +21,6 @@ export function reset_is_throwing_error() {
  * @param {Effect | null} [previous_effect]
  */
 export function handle_error(error, effect, previous_effect = null) {
-	var component_context = effect.ctx;
-
 	if (is_throwing_error) {
 		if (previous_effect === null) {
 			is_throwing_error = false;
@@ -39,58 +37,8 @@ export function handle_error(error, effect, previous_effect = null) {
 		is_throwing_error = true;
 	}
 
-	if (DEV && component_context !== null && error instanceof Error && !handled_errors.has(error)) {
-		handled_errors.add(error);
-
-		const component_stack = [];
-
-		const effect_name = effect.fn?.name;
-
-		if (effect_name) {
-			component_stack.push(effect_name);
-		}
-
-		/** @type {ComponentContext | null} */
-		let current_context = component_context;
-
-		while (current_context !== null) {
-			/** @type {string} */
-			var filename = current_context.function?.[FILENAME];
-
-			if (filename) {
-				const file = filename.split('/').pop();
-				component_stack.push(file);
-			}
-
-			current_context = current_context.p;
-		}
-
-		const indent = is_firefox ? '  ' : '\t';
-		define_property(error, 'message', {
-			value:
-				error.message + `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`
-		});
-		define_property(error, 'component_stack', {
-			value: component_stack
-		});
-
-		const stack = error.stack;
-
-		// Filter out internal files from callstack
-		if (stack) {
-			const lines = stack.split('\n');
-			const new_lines = [];
-			for (let i = 0; i < lines.length; i++) {
-				const line = lines[i];
-				if (line.includes('svelte/src/internal')) {
-					continue;
-				}
-				new_lines.push(line);
-			}
-			define_property(error, 'stack', {
-				value: new_lines.join('\n')
-			});
-		}
+	if (DEV && error instanceof Error) {
+		adjust_error(error, effect);
 	}
 
 	invoke_error_boundary(error, effect);
@@ -135,4 +83,43 @@ function should_rethrow_error(effect) {
 		(effect.f & DESTROYED) === 0 &&
 		(effect.parent === null || (effect.parent.f & BOUNDARY_EFFECT) === 0)
 	);
+}
+
+/**
+ * Add useful information to the error message/stack
+ * @param {Error} error
+ * @param {Effect} effect
+ */
+function adjust_error(error, effect) {
+	if (adjusted_errors.has(error)) return;
+	adjusted_errors.add(error);
+
+	const component_stack = [effect.fn?.name ?? '<unknown>'];
+	const indent = is_firefox ? '  ' : '\t';
+
+	var context = effect.ctx;
+
+	while (context !== null) {
+		component_stack.push(context.function?.[FILENAME].split('/').pop());
+		context = context.p;
+	}
+
+	define_property(error, 'message', {
+		value: error.message + `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`
+	});
+
+	// TODO what is this for? can we get rid of it?
+	define_property(error, 'component_stack', {
+		value: component_stack
+	});
+
+	// Filter out internal files from callstack
+	if (error.stack) {
+		define_property(error, 'stack', {
+			value: error.stack
+				.split('\n')
+				.filter((line) => !line.includes('svelte/src/internal'))
+				.join('\n')
+		});
+	}
 }
