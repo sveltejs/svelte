@@ -271,10 +271,11 @@ export function reset_is_throwing_error() {
 /**
  * @param {unknown} error
  * @param {Effect} effect
- * @param {Effect | null} previous_effect
- * @param {ComponentContext | null} component_context
+ * @param {Effect | null} [previous_effect]
  */
-export function handle_error(error, effect, previous_effect, component_context) {
+export function handle_error(error, effect, previous_effect = null) {
+	var component_context = effect.ctx;
+
 	if (is_throwing_error) {
 		if (previous_effect === null) {
 			is_throwing_error = false;
@@ -558,7 +559,6 @@ export function update_effect(effect) {
 	set_signal_status(effect, CLEAN);
 
 	var previous_effect = active_effect;
-	var previous_component_context = component_context;
 	var was_updating_effect = is_updating_effect;
 
 	active_effect = effect;
@@ -602,7 +602,7 @@ export function update_effect(effect) {
 			dev_effect_stack.push(effect);
 		}
 	} catch (error) {
-		handle_error(error, effect, previous_effect, previous_component_context || effect.ctx);
+		handle_error(error, effect, previous_effect);
 	} finally {
 		is_updating_effect = was_updating_effect;
 		active_effect = previous_effect;
@@ -637,14 +637,14 @@ function infinite_loop_guard() {
 		if (last_scheduled_effect !== null) {
 			if (DEV) {
 				try {
-					handle_error(error, last_scheduled_effect, null, null);
+					handle_error(error, last_scheduled_effect);
 				} catch (e) {
 					// Only log the effect stack if the error is re-thrown
 					log_effect_stack();
 					throw e;
 				}
 			} else {
-				handle_error(error, last_scheduled_effect, null, null);
+				handle_error(error, last_scheduled_effect);
 			}
 		} else {
 			if (DEV) {
@@ -721,7 +721,7 @@ function flush_queued_effects(effects) {
 					}
 				}
 			} catch (error) {
-				handle_error(error, effect, null, effect.ctx);
+				handle_error(error, effect);
 			}
 		}
 	}
@@ -785,7 +785,7 @@ function process_effects(root) {
 						update_effect(effect);
 					}
 				} catch (error) {
-					handle_error(error, effect, null, effect.ctx);
+					handle_error(error, effect);
 				}
 			}
 

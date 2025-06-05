@@ -109,7 +109,7 @@ export function boundary(node, props, boundary_fn) {
 								);
 							});
 						} catch (error) {
-							handle_error(error, boundary, null, boundary.ctx);
+							handle_error(error, boundary);
 						}
 
 						reset_is_throwing_error();
