@@ -21,7 +21,6 @@ import {
 	update_reaction,
 	increment_write_version,
 	set_active_effect,
-	handle_error,
 	push_reaction_value,
 	is_destroying_effect
 } from '../runtime.js';
