@@ -2,14 +2,13 @@
 
 import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT } from '#client/constants';
 import { component_context, set_component_context } from '../../context.js';
+import { handle_error, reset_is_throwing_error } from '../../error-handling.js';
 import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
 import {
 	active_effect,
 	active_reaction,
-	handle_error,
 	set_active_effect,
-	set_active_reaction,
-	reset_is_throwing_error
+	set_active_reaction
 } from '../../runtime.js';
 import {
 	hydrate_next,
