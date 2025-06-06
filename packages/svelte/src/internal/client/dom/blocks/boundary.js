@@ -2,7 +2,7 @@
 
 import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT } from '#client/constants';
 import { component_context, set_component_context } from '../../context.js';
-import { reset_is_throwing_error } from '../../error-handling.js';
+import { invoke_error_boundary, reset_is_throwing_error } from '../../error-handling.js';
 import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
 import {
 	active_effect,
@@ -115,8 +115,8 @@ export function boundary(node, props, boundary_fn) {
 									() => reset
 								);
 							});
-						} catch {
-							// do nothing, handle_error has already been invoked
+						} catch (error) {
+							invoke_error_boundary(error, /** @type {Effect} */ (boundary.parent));
 						}
 
 						reset_is_throwing_error();

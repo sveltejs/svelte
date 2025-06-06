@@ -51,7 +51,7 @@ export function invoke_error_boundary(error, effect) {
 				current.fn(error);
 				return;
 			} catch {
-				// Remove boundary flag from effect
+				// Remove boundary flag from effect (TODO is this still useful?)
 				current.f ^= BOUNDARY_EFFECT;
 			}
 		}
