@@ -145,10 +145,6 @@ export function async_derived(fn, location) {
 		const handler = (value, error = undefined) => {
 			prev = null;
 
-			if ((parent.f & DESTROYED) !== 0) {
-				return;
-			}
-
 			from_async_derived = null;
 
 			if (should_suspend) {
