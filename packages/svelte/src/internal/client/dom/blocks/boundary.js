@@ -74,6 +74,7 @@ export function boundary(node, props, boundary_fn) {
 			}
 
 			var reset = () => {
+				// TODO does this make sense?
 				pause_effect(boundary_effect);
 
 				with_boundary(boundary, () => {
