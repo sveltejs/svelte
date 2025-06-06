@@ -5,11 +5,11 @@ export default test({
 	test({ assert, target }) {
 		let btn = target.querySelector('button');
 
-		btn?.click();
-		btn?.click();
-
 		assert.throws(() => {
-			flushSync();
+			flushSync(() => {
+				btn?.click();
+				btn?.click();
+			});
 		}, /test\n\n\tin {expression}\n/);
 	}
 });

@@ -1,7 +1,14 @@
 <script>
-	const { things } = $props();
+	const { count } = $props();
+
+	const d = $derived.by(() => {
+		if (count === 1) {
+			throw new Error('kaboom')
+		}
+		return count
+	});
 
 	$effect(() => {
-		things
-	})
+		d;
+	});
 </script>
