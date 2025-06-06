@@ -42,6 +42,7 @@ import { async_derived, derived } from './deriveds.js';
 import { capture } from '../dom/blocks/boundary.js';
 import { component_context, dev_current_component_function } from '../context.js';
 import { Batch, current_batch } from './batch.js';
+import { invoke_error_boundary } from '../error-handling.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -352,7 +353,12 @@ export function template_effect(fn, sync = [], async = [], d = derived) {
 			batch?.restore();
 
 			restore();
-			create_template_effect(fn, [...sync.map(d), ...result]);
+
+			try {
+				create_template_effect(fn, [...sync.map(d), ...result]);
+			} catch (error) {
+				invoke_error_boundary(error, parent);
+			}
 
 			batch?.flush();
 		});
