@@ -11,6 +11,7 @@ export default test({
 		await Promise.resolve();
 		await Promise.resolve();
 		await Promise.resolve();
+		await Promise.resolve();
 		flushSync();
 		assert.htmlEqual(
 			target.innerHTML,
