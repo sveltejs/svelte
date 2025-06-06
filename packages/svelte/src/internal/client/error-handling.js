@@ -6,10 +6,6 @@ import { BOUNDARY_EFFECT, EFFECT_RAN } from './constants.js';
 import { define_property } from '../shared/utils.js';
 import { active_effect } from './runtime.js';
 
-// Used for DEV time error handling
-/** @param {WeakSet<Error>} value */
-const adjusted_errors = new WeakSet();
-
 /**
  * @param {unknown} error
  */
@@ -55,8 +51,11 @@ export function invoke_error_boundary(error, effect) {
 	throw error;
 }
 
+/** @type {WeakSet<Error>} */
+const adjusted_errors = new WeakSet();
+
 /**
- * Add useful information to the error message/stack
+ * Add useful information to the error message/stack in development
  * @param {Error} error
  * @param {Effect} effect
  */
