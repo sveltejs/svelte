@@ -1,4 +1,4 @@
-/** @import { ComponentContext, Derived, Effect, Reaction, Signal, Source, Value } from '#client' */
+/** @import { Derived, Effect, Reaction, Signal, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import { define_property, get_descriptors, get_prototype_of, index_of } from '../shared/utils.js';
 import {
@@ -22,9 +22,7 @@ import {
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
-	BOUNDARY_EFFECT,
-	EFFECT_IS_UPDATING,
-	EFFECT_RAN
+	EFFECT_IS_UPDATING
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { internal_set, old_values } from './reactivity/sources.js';
@@ -40,7 +38,7 @@ import {
 	set_component_context,
 	set_dev_current_component_function
 } from './context.js';
-import { adjust_error, handle_error, invoke_error_boundary } from './error-handling.js';
+import { handle_error, invoke_error_boundary } from './error-handling.js';
 
 let is_flushing = false;
 
@@ -345,20 +343,7 @@ export function update_reaction(reaction) {
 
 		return result;
 	} catch (error) {
-		var effect = /** @type {Effect} */ (active_effect);
-
-		if (DEV && error instanceof Error) {
-			adjust_error(error, effect);
-		}
-
-		if ((effect.f & EFFECT_RAN) !== 0) {
-			invoke_error_boundary(error, effect);
-		} else if ((effect.f & BOUNDARY_EFFECT) !== 0) {
-			// invoke directly
-			effect.fn(error);
-		} else {
-			throw error;
-		}
+		handle_error(error);
 	} finally {
 		new_deps = previous_deps;
 		skipped_deps = previous_skipped_deps;
@@ -532,14 +517,14 @@ function infinite_loop_guard() {
 		if (last_scheduled_effect !== null) {
 			if (DEV) {
 				try {
-					handle_error(error, last_scheduled_effect);
+					invoke_error_boundary(error, last_scheduled_effect);
 				} catch (e) {
 					// Only log the effect stack if the error is re-thrown
 					log_effect_stack();
 					throw e;
 				}
 			} else {
-				handle_error(error, last_scheduled_effect);
+				invoke_error_boundary(error, last_scheduled_effect);
 			}
 		} else {
 			if (DEV) {

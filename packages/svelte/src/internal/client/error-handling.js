@@ -2,8 +2,9 @@
 import { DEV } from 'esm-env';
 import { FILENAME } from '../../constants.js';
 import { is_firefox } from './dom/operations.js';
-import { BOUNDARY_EFFECT } from './constants.js';
+import { BOUNDARY_EFFECT, EFFECT_RAN } from './constants.js';
 import { define_property } from '../shared/utils.js';
+import { active_effect } from './runtime.js';
 
 // Used for DEV time error handling
 /** @param {WeakSet<Error>} value */
@@ -11,14 +12,22 @@ const adjusted_errors = new WeakSet();
 
 /**
  * @param {unknown} error
- * @param {Effect} effect
  */
-export function handle_error(error, effect) {
+export function handle_error(error) {
+	var effect = /** @type {Effect} */ (active_effect);
+
 	if (DEV && error instanceof Error) {
 		adjust_error(error, effect);
 	}
 
-	invoke_error_boundary(error, effect);
+	if ((effect.f & EFFECT_RAN) !== 0) {
+		invoke_error_boundary(error, effect);
+	} else if ((effect.f & BOUNDARY_EFFECT) !== 0) {
+		// invoke directly
+		effect.fn(error);
+	} else {
+		throw error;
+	}
 }
 
 /**
@@ -52,7 +61,7 @@ export function invoke_error_boundary(error, effect) {
  * @param {Error} error
  * @param {Effect} effect
  */
-export function adjust_error(error, effect) {
+function adjust_error(error, effect) {
 	if (adjusted_errors.has(error)) return;
 	adjusted_errors.add(error);
 
