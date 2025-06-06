@@ -44,10 +44,7 @@ export function invoke_error_boundary(error, effect) {
 				// @ts-expect-error
 				current.fn(error);
 				return;
-			} catch {
-				// Remove boundary flag from effect (TODO is this still useful?)
-				current.f ^= BOUNDARY_EFFECT;
-			}
+			} catch {}
 		}
 
 		current = current.parent;
