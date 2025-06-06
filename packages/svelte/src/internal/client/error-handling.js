@@ -9,19 +9,11 @@ import { define_property } from '../shared/utils.js';
 /** @param {WeakSet<Error>} value */
 const adjusted_errors = new WeakSet();
 
-/** @type {null | unknown} */
-let current_error = null;
-
 /**
  * @param {unknown} error
  * @param {Effect} effect
  */
 export function handle_error(error, effect) {
-	if (error === current_error) {
-		// TODO is this necessary?
-		return;
-	}
-
 	if (DEV && error instanceof Error) {
 		adjust_error(error, effect);
 	}
