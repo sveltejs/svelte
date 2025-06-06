@@ -35,6 +35,7 @@ import { get_pending_boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { current_batch } from './batch.js';
+import { handle_error } from '../error-handling.js';
 
 /** @type {Effect | null} */
 export let from_async_derived = null;
