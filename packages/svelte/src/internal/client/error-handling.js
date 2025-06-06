@@ -62,22 +62,21 @@ function adjust_error(error, effect) {
 	if (adjusted_errors.has(error)) return;
 	adjusted_errors.add(error);
 
-	const component_stack = [effect.fn?.name || '<unknown>'];
-	const indent = is_firefox ? '  ' : '\t';
-
+	var indent = is_firefox ? '  ' : '\t';
+	var component_stack = `\n${indent}in ${effect.fn?.name || '<unknown>'}`;
 	var context = effect.ctx;
 
 	while (context !== null) {
-		component_stack.push(context.function?.[FILENAME].split('/').pop());
+		component_stack += `\n${indent}in ${context.function?.[FILENAME].split('/').pop()}`;
 		context = context.p;
 	}
 
 	define_property(error, 'message', {
-		value: error.message + `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`
+		value: error.message + `\n${component_stack}\n`
 	});
 
-	// Filter out internal files from callstack
 	if (error.stack) {
+		// Filter out internal modules
 		define_property(error, 'stack', {
 			value: error.stack
 				.split('\n')
