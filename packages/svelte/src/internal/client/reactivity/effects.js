@@ -332,16 +332,23 @@ export function render_effect(fn) {
  * @returns {Effect}
  */
 export function template_effect(fn, thunks = [], d = derived) {
-	const deriveds = thunks.map(d);
-	const effect = () => fn(...deriveds.map(get));
-
 	if (DEV) {
-		define_property(effect, 'name', {
-			value: '{expression}'
+		// wrap the effect so that we can decorate stack trace with `in {expression}`
+		// (TODO maybe there's a better approach?)
+		return render_effect(() => {
+			var outer = /** @type {Effect} */ (active_effect);
+			var inner = () => fn(...deriveds.map(get));
+
+			define_property(outer.fn, 'name', { value: '{expression}' });
+			define_property(inner, 'name', { value: '{expression}' });
+
+			const deriveds = thunks.map(d);
+			block(inner);
 		});
 	}
 
-	return block(effect);
+	const deriveds = thunks.map(d);
+	return block(() => fn(...deriveds.map(get)));
 }
 
 /**
