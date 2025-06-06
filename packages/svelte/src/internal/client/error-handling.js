@@ -81,7 +81,7 @@ export function adjust_error(error, effect) {
 	if (adjusted_errors.has(error)) return;
 	adjusted_errors.add(error);
 
-	const component_stack = [effect.fn?.name ?? '<unknown>'];
+	const component_stack = [effect.fn?.name || '<unknown>'];
 	const indent = is_firefox ? '  ' : '\t';
 
 	var context = effect.ctx;
