@@ -114,13 +114,8 @@ function create_effect(type, fn, sync, push = true) {
 	}
 
 	if (sync) {
-		try {
-			update_effect(effect);
-			effect.f |= EFFECT_RAN;
-		} catch (e) {
-			destroy_effect(effect);
-			throw e;
-		}
+		update_effect(effect);
+		effect.f |= EFFECT_RAN;
 	} else if (fn !== null) {
 		schedule_effect(effect);
 	}

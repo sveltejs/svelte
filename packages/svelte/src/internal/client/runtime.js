@@ -23,7 +23,8 @@ import {
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
 	BOUNDARY_EFFECT,
-	EFFECT_IS_UPDATING
+	EFFECT_IS_UPDATING,
+	EFFECT_RAN
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { internal_set, old_values } from './reactivity/sources.js';
@@ -39,7 +40,7 @@ import {
 	set_component_context,
 	set_dev_current_component_function
 } from './context.js';
-import { handle_error } from './error-handling.js';
+import { handle_error, invoke_error_boundary } from './error-handling.js';
 
 let is_flushing = false;
 
@@ -344,9 +345,18 @@ export function update_reaction(reaction) {
 
 		return result;
 	} catch (error) {
+		// TODO think we can just use active_effect here?
 		var effect = get_effect(reaction);
+
 		if (effect) {
-			handle_error(error, effect);
+			if ((effect.f & EFFECT_RAN) !== 0) {
+				invoke_error_boundary(error, effect);
+			} else if ((effect.f & BOUNDARY_EFFECT) !== 0) {
+				// invoke directly
+				effect.fn(error);
+			} else {
+				throw error;
+			}
 		} else {
 			throw error;
 		}

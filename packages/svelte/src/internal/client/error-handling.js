@@ -40,7 +40,7 @@ export function handle_error(error, effect, previous_effect = null) {
  * @param {unknown} error
  * @param {Effect} effect
  */
-function invoke_error_boundary(error, effect) {
+export function invoke_error_boundary(error, effect) {
 	/** @type {Effect | null} */
 	var current = effect;
 
