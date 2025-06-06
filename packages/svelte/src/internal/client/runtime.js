@@ -358,18 +358,6 @@ export function update_reaction(reaction) {
 	}
 }
 
-/** @param {Reaction} reaction */
-function get_effect(reaction) {
-	/** @type {Reaction | null;} */
-	var r = reaction;
-
-	while (r !== null && (r.f & DERIVED) !== 0) {
-		r = /** @type {Derived} */ (r).parent;
-	}
-
-	return /** @type {Effect | null} */ (r);
-}
-
 /**
  * @template V
  * @param {Reaction} signal
