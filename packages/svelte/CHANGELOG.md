@@ -1,5 +1,11 @@
 # svelte
 
+## 5.33.15
+
+### Patch Changes
+
+- fix: invoke parent boundary of deriveds that throw ([#16091](https://github.com/sveltejs/svelte/pull/16091))
+
 ## 5.33.14
 
 ### Patch Changes
