@@ -442,6 +442,12 @@ function is_pure_expression(expression) {
  * @param {ExpressionMetadata} metadata
  */
 export function build_legacy_expression_2(context, expression, metadata) {
+	const value = /** @type {Expression} */ (context.visit(expression));
+
+	if (!metadata.has_call && !metadata.has_member_expression && !metadata.has_assignment) {
+		return value;
+	}
+
 	const sequence = b.sequence([]);
 
 	for (const binding of metadata.dependencies) {
@@ -460,7 +466,6 @@ export function build_legacy_expression_2(context, expression, metadata) {
 		sequence.expressions.push(getter);
 	}
 
-	const value = /** @type {Expression} */ (context.visit(expression));
 	sequence.expressions.push(b.call('$.untrack', b.thunk(value)));
 
 	return sequence;
