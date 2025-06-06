@@ -21,9 +21,8 @@ let current_error = null;
 /**
  * @param {unknown} error
  * @param {Effect} effect
- * @param {Effect | null} [previous_effect]
  */
-export function handle_error(error, effect, previous_effect = null) {
+export function handle_error(error, effect) {
 	if (error === current_error) {
 		// TODO is this necessary?
 		return;
