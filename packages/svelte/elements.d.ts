@@ -463,6 +463,8 @@ export interface DOMAttributes<T extends EventTarget> {
 	'on:fullscreenerror'?: EventHandler<Event, T> | undefined | null;
 	onfullscreenerror?: EventHandler<Event, T> | undefined | null;
 	onfullscreenerrorcapture?: EventHandler<Event, T> | undefined | null;
+
+	xmlns?: string | undefined | null;
 }
 
 // All the WAI-ARIA 1.1 attributes from https://www.w3.org/TR/wai-aria-1.1/
@@ -773,7 +775,6 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	inert?: boolean | undefined | null;
 	popover?: 'auto' | 'manual' | '' | undefined | null;
 	writingsuggestions?: Booleanish | undefined | null;
-	xmlns?: string | undefined | null;
 
 	// Unknown
 	radiogroup?: string | undefined | null; // <command>, <menuitem>
@@ -1810,7 +1811,6 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	'xlink:type'?: string | undefined | null;
 	'xml:base'?: string | undefined | null;
 	'xml:lang'?: string | undefined | null;
-	xmlns?: string | undefined | null;
 	'xmlns:xlink'?: string | undefined | null;
 	'xml:space'?: string | undefined | null;
 	y1?: number | string | undefined | null;
