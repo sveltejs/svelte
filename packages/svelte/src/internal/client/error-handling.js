@@ -76,11 +76,6 @@ function adjust_error(error, effect) {
 		value: error.message + `\n${component_stack.map((name) => `\n${indent}in ${name}`).join('')}\n`
 	});
 
-	// TODO what is this for? can we get rid of it?
-	define_property(error, 'component_stack', {
-		value: component_stack
-	});
-
 	// Filter out internal files from callstack
 	if (error.stack) {
 		define_property(error, 'stack', {
