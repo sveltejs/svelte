@@ -248,11 +248,7 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 	}
 }
 
-/**
- * @template V
- * @param {Reaction} reaction
- * @returns {V}
- */
+/** @param {Reaction} reaction */
 export function update_reaction(reaction) {
 	var previous_deps = new_deps;
 	var previous_skipped_deps = skipped_deps;
