@@ -457,6 +457,7 @@ export function build_legacy_expression_2(context, expression, metadata) {
 
 		var getter = build_getter({ ...binding.node }, context.state);
 
+		// TODO do we need all this?
 		if (binding.kind === 'rest_prop') {
 			getter = b.call('Object.keys', getter);
 		} else if (binding.kind === 'bindable_prop') {
