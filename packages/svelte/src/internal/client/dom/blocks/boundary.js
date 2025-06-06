@@ -83,7 +83,14 @@ export function boundary(node, props, boundary_fn) {
 				});
 			};
 
-			onerror?.(error, reset);
+			var previous_reaction = active_reaction;
+
+			try {
+				set_active_reaction(null);
+				onerror?.(error, reset);
+			} finally {
+				set_active_reaction(previous_reaction);
+			}
 
 			if (boundary_effect) {
 				destroy_effect(boundary_effect);
