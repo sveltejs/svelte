@@ -77,7 +77,7 @@ function should_rethrow_error(effect) {
  * @param {Error} error
  * @param {Effect} effect
  */
-function adjust_error(error, effect) {
+export function adjust_error(error, effect) {
 	if (adjusted_errors.has(error)) return;
 	adjusted_errors.add(error);
 
