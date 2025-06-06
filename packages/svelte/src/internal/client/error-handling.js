@@ -37,22 +37,19 @@ export function handle_error(error) {
 
 /**
  * @param {unknown} error
- * @param {Effect} effect
+ * @param {Effect | null} effect
  */
 export function invoke_error_boundary(error, effect) {
-	/** @type {Effect | null} */
-	var current = effect;
-
-	while (current !== null) {
-		if ((current.f & BOUNDARY_EFFECT) !== 0) {
+	while (effect !== null) {
+		if ((effect.f & BOUNDARY_EFFECT) !== 0) {
 			try {
 				// @ts-expect-error
-				current.fn(error);
+				effect.fn(error);
 				return;
 			} catch {}
 		}
 
-		current = current.parent;
+		effect = effect.parent;
 	}
 
 	throw error;
