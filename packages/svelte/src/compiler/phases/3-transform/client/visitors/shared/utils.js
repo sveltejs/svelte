@@ -436,6 +436,37 @@ function is_pure_expression(expression) {
 }
 
 /**
+ *
+ * @param {ComponentContext} context
+ * @param {Expression} expression
+ * @param {ExpressionMetadata} metadata
+ */
+export function build_legacy_expression_2(context, expression, metadata) {
+	const sequence = b.sequence([]);
+
+	for (const binding of metadata.dependencies) {
+		if (binding.kind === 'normal') {
+			continue;
+		}
+
+		var getter = build_getter({ ...binding.node }, context.state);
+
+		if (binding.kind === 'rest_prop') {
+			getter = b.call('Object.keys', getter);
+		} else if (binding.kind === 'bindable_prop') {
+			getter = b.call('$.deep_read_state', getter);
+		}
+
+		sequence.expressions.push(getter);
+	}
+
+	const value = /** @type {Expression} */ (context.visit(expression));
+	sequence.expressions.push(b.call('$.untrack', b.thunk(value)));
+
+	return sequence;
+}
+
+/**
  * Serializes an expression with reactivity like in Svelte 4
  * @param {Expression} expression
  * @param {ComponentContext} context

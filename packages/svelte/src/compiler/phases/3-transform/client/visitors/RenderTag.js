@@ -3,7 +3,7 @@
 /** @import { ComponentContext } from '../types' */
 import { unwrap_optional } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { build_legacy_expression } from './shared/utils.js';
+import { build_legacy_expression_2 } from './shared/utils.js';
 
 /**
  * @param {AST.RenderTag} node
@@ -34,7 +34,11 @@ export function RenderTag(node, context) {
 
 	let snippet_function = context.state.analysis.runes
 		? /** @type {Expression} */ (context.visit(callee))
-		: build_legacy_expression(/** @type {Expression} */ (callee), context);
+		: build_legacy_expression_2(
+				context,
+				/** @type {Expression} */ (callee),
+				node.metadata.expression
+			);
 
 	if (node.metadata.dynamic) {
 		// If we have a chain expression then ensure a nullish snippet function gets turned into an empty one

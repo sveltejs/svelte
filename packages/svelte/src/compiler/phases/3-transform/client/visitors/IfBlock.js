@@ -2,7 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '#compiler/builders';
-import { build_legacy_expression } from './shared/utils.js';
+import { build_legacy_expression_2 } from './shared/utils.js';
 
 /**
  * @param {AST.IfBlock} node
@@ -34,7 +34,7 @@ export function IfBlock(node, context) {
 
 	const test = context.state.analysis.runes
 		? /** @type {Expression} */ (context.visit(node.test))
-		: build_legacy_expression(node.test, context);
+		: build_legacy_expression_2(context, node.test, node.metadata.expression);
 
 	/** @type {Expression[]} */
 	const args = [
