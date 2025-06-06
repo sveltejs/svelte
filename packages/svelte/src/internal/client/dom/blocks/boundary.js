@@ -2,7 +2,7 @@
 
 import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT } from '#client/constants';
 import { component_context, set_component_context } from '../../context.js';
-import { invoke_error_boundary, reset_is_throwing_error } from '../../error-handling.js';
+import { invoke_error_boundary } from '../../error-handling.js';
 import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
 import {
 	active_effect,
@@ -80,7 +80,6 @@ export function boundary(node, props, boundary_fn) {
 				with_boundary(boundary, () => {
 					is_creating_fallback = false;
 					boundary_effect = branch(() => boundary_fn(anchor));
-					reset_is_throwing_error();
 				});
 			};
 
@@ -119,7 +118,6 @@ export function boundary(node, props, boundary_fn) {
 							invoke_error_boundary(error, /** @type {Effect} */ (boundary.parent));
 						}
 
-						reset_is_throwing_error();
 						is_creating_fallback = false;
 					});
 				});
@@ -131,7 +129,6 @@ export function boundary(node, props, boundary_fn) {
 		}
 
 		boundary_effect = branch(() => boundary_fn(anchor));
-		reset_is_throwing_error();
 	}, EFFECT_TRANSPARENT | BOUNDARY_EFFECT);
 
 	if (hydrating) {

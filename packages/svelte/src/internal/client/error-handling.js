@@ -2,18 +2,12 @@
 import { DEV } from 'esm-env';
 import { FILENAME } from '../../constants.js';
 import { is_firefox } from './dom/operations.js';
-import { BOUNDARY_EFFECT, DESTROYED } from './constants.js';
+import { BOUNDARY_EFFECT } from './constants.js';
 import { define_property } from '../shared/utils.js';
 
 // Used for DEV time error handling
 /** @param {WeakSet<Error>} value */
 const adjusted_errors = new WeakSet();
-
-let is_throwing_error = false;
-
-export function reset_is_throwing_error() {
-	is_throwing_error = false;
-}
 
 /** @type {null | unknown} */
 let current_error = null;
@@ -58,18 +52,7 @@ export function invoke_error_boundary(error, effect) {
 		current = current.parent;
 	}
 
-	is_throwing_error = false;
 	throw error;
-}
-
-/**
- * @param {Effect} effect
- */
-function should_rethrow_error(effect) {
-	return (
-		(effect.f & DESTROYED) === 0 &&
-		(effect.parent === null || (effect.parent.f & BOUNDARY_EFFECT) === 0)
-	);
 }
 
 /**
