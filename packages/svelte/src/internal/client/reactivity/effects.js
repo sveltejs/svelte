@@ -361,13 +361,6 @@ export function template_effect(fn, sync = [], async = [], d = derived) {
  */
 function create_template_effect(fn, deriveds) {
 	var effect = () => fn(...deriveds.map(get));
-
-	if (DEV) {
-		define_property(effect, 'name', {
-			value: '{expression}'
-		});
-	}
-
 	create_effect(RENDER_EFFECT, effect, true);
 }
 
@@ -455,7 +448,11 @@ export function destroy_block_effect_children(signal) {
 export function destroy_effect(effect, remove_dom = true) {
 	var removed = false;
 
-	if ((remove_dom || (effect.f & HEAD_EFFECT) !== 0) && effect.nodes_start !== null) {
+	if (
+		(remove_dom || (effect.f & HEAD_EFFECT) !== 0) &&
+		effect.nodes_start !== null &&
+		effect.nodes_end !== null
+	) {
 		remove_effect_dom(effect.nodes_start, /** @type {TemplateNode} */ (effect.nodes_end));
 		removed = true;
 	}

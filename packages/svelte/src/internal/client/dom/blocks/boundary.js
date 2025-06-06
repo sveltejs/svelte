@@ -2,14 +2,13 @@
 
 import { BOUNDARY_EFFECT, EFFECT_PRESERVED, EFFECT_TRANSPARENT } from '#client/constants';
 import { component_context, set_component_context } from '../../context.js';
+import { invoke_error_boundary } from '../../error-handling.js';
 import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
 import {
 	active_effect,
 	active_reaction,
-	handle_error,
 	set_active_effect,
-	set_active_reaction,
-	reset_is_throwing_error
+	set_active_reaction
 } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -129,7 +128,11 @@ export class Boundary {
 					}
 				});
 			} else {
-				this.#main_effect = branch(() => children(this.#anchor));
+				try {
+					this.#main_effect = branch(() => children(this.#anchor));
+				} catch (error) {
+					this.error(error);
+				}
 
 				if (this.#pending_count > 0) {
 					this.#show_pending_snippet();
@@ -137,8 +140,6 @@ export class Boundary {
 					this.ran = true;
 				}
 			}
-
-			reset_is_throwing_error();
 		}, flags);
 
 		if (hydrating) {
@@ -239,12 +240,7 @@ export class Boundary {
 
 			this.#main_effect = this.#run(() => {
 				this.#is_creating_fallback = false;
-
-				try {
-					return branch(() => this.#children(this.#anchor));
-				} finally {
-					reset_is_throwing_error();
-				}
+				return branch(() => this.#children(this.#anchor));
 			});
 
 			if (this.#pending_count > 0) {
@@ -260,7 +256,14 @@ export class Boundary {
 			throw error;
 		}
 
-		onerror?.(error, reset);
+		var previous_reaction = active_reaction;
+
+		try {
+			set_active_reaction(null);
+			onerror?.(error, reset);
+		} finally {
+			set_active_reaction(previous_reaction);
+		}
 
 		if (this.#main_effect) {
 			destroy_effect(this.#main_effect);
@@ -297,10 +300,9 @@ export class Boundary {
 							);
 						});
 					} catch (error) {
-						handle_error(error, this.#effect, null, this.#effect.ctx);
+						invoke_error_boundary(error, /** @type {Effect} */ (this.#effect.parent));
 						return null;
 					} finally {
-						reset_is_throwing_error();
 						this.#is_creating_fallback = false;
 					}
 				});

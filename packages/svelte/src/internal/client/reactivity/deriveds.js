@@ -20,7 +20,6 @@ import {
 	update_reaction,
 	increment_write_version,
 	set_active_effect,
-	handle_error,
 	push_reaction_value,
 	is_destroying_effect
 } from '../runtime.js';
@@ -35,6 +34,7 @@ import { get_pending_boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { current_batch } from './batch.js';
+import { handle_error } from '../error-handling.js';
 
 /** @type {Effect | null} */
 export let from_async_derived = null;
@@ -157,8 +157,16 @@ export function async_derived(fn, location) {
 			if (ran) batch.restore();
 
 			if (error) {
+				// TODO instead of handling error here, mark the signal as bad and let it happen when it is read
 				if (error !== STALE_REACTION) {
-					handle_error(error, parent, null, parent.ctx);
+					var previous_effect = active_effect;
+
+					try {
+						set_active_effect(parent);
+						handle_error(error);
+					} finally {
+						set_active_effect(previous_effect);
+					}
 				}
 			} else {
 				internal_set(signal, value);
