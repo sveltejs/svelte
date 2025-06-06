@@ -15,26 +15,18 @@ export function reset_is_throwing_error() {
 	is_throwing_error = false;
 }
 
+/** @type {null | unknown} */
+let current_error = null;
+
 /**
  * @param {unknown} error
  * @param {Effect} effect
  * @param {Effect | null} [previous_effect]
  */
 export function handle_error(error, effect, previous_effect = null) {
-	if (is_throwing_error) {
-		if (previous_effect === null) {
-			is_throwing_error = false;
-		}
-
-		if (should_rethrow_error(effect)) {
-			throw error;
-		}
-
+	if (error === current_error) {
+		// TODO is this necessary?
 		return;
-	}
-
-	if (previous_effect !== null) {
-		is_throwing_error = true;
 	}
 
 	if (DEV && error instanceof Error) {
@@ -42,10 +34,6 @@ export function handle_error(error, effect, previous_effect = null) {
 	}
 
 	invoke_error_boundary(error, effect);
-
-	if (should_rethrow_error(effect)) {
-		throw error;
-	}
 }
 
 /**

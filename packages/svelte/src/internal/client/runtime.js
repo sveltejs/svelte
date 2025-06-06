@@ -343,6 +343,13 @@ export function update_reaction(reaction) {
 		}
 
 		return result;
+	} catch (error) {
+		var effect = get_effect(reaction);
+		if (effect) {
+			handle_error(error, effect);
+		} else {
+			throw error;
+		}
 	} finally {
 		new_deps = previous_deps;
 		skipped_deps = previous_skipped_deps;
@@ -355,6 +362,18 @@ export function update_reaction(reaction) {
 
 		reaction.f ^= EFFECT_IS_UPDATING;
 	}
+}
+
+/** @param {Reaction} reaction */
+function get_effect(reaction) {
+	/** @type {Reaction | null;} */
+	var r = reaction;
+
+	while (r !== null && (r.f & DERIVED) !== 0) {
+		r = /** @type {Derived} */ (r).parent;
+	}
+
+	return /** @type {Effect | null} */ (r);
 }
 
 /**
@@ -470,8 +489,6 @@ export function update_effect(effect) {
 		if (DEV) {
 			dev_effect_stack.push(effect);
 		}
-	} catch (error) {
-		handle_error(error, effect, previous_effect);
 	} finally {
 		is_updating_effect = was_updating_effect;
 		active_effect = previous_effect;
@@ -570,27 +587,23 @@ function flush_queued_effects(effects) {
 		var effect = effects[i];
 
 		if ((effect.f & (DESTROYED | INERT)) === 0) {
-			try {
-				if (check_dirtiness(effect)) {
-					update_effect(effect);
+			if (check_dirtiness(effect)) {
+				update_effect(effect);
 
-					// Effects with no dependencies or teardown do not get added to the effect tree.
-					// Deferred effects (e.g. `$effect(...)`) _are_ added to the tree because we
-					// don't know if we need to keep them until they are executed. Doing the check
-					// here (rather than in `update_effect`) allows us to skip the work for
-					// immediate effects.
-					if (effect.deps === null && effect.first === null && effect.nodes_start === null) {
-						if (effect.teardown === null) {
-							// remove this effect from the graph
-							unlink_effect(effect);
-						} else {
-							// keep the effect in the graph, but free up some memory
-							effect.fn = null;
-						}
+				// Effects with no dependencies or teardown do not get added to the effect tree.
+				// Deferred effects (e.g. `$effect(...)`) _are_ added to the tree because we
+				// don't know if we need to keep them until they are executed. Doing the check
+				// here (rather than in `update_effect`) allows us to skip the work for
+				// immediate effects.
+				if (effect.deps === null && effect.first === null && effect.nodes_start === null) {
+					if (effect.teardown === null) {
+						// remove this effect from the graph
+						unlink_effect(effect);
+					} else {
+						// keep the effect in the graph, but free up some memory
+						effect.fn = null;
 					}
 				}
-			} catch (error) {
-				handle_error(error, effect);
 			}
 		}
 	}
@@ -649,12 +662,8 @@ function process_effects(root) {
 			} else if (is_branch) {
 				effect.f ^= CLEAN;
 			} else {
-				try {
-					if (check_dirtiness(effect)) {
-						update_effect(effect);
-					}
-				} catch (error) {
-					handle_error(error, effect);
+				if (check_dirtiness(effect)) {
+					update_effect(effect);
 				}
 			}
 
