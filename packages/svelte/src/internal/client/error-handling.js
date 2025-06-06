@@ -20,13 +20,18 @@ export function handle_error(error) {
 		adjust_error(error, effect);
 	}
 
-	if ((effect.f & EFFECT_RAN) !== 0) {
-		invoke_error_boundary(error, effect);
-	} else if ((effect.f & BOUNDARY_EFFECT) !== 0) {
-		// invoke directly
+	if ((effect.f & EFFECT_RAN) === 0) {
+		// if the error occurred while creating this subtree, we let it
+		// bubble up until it hits a boundary that can handle it
+		if ((effect.f & BOUNDARY_EFFECT) === 0) {
+			throw error;
+		}
+
+		// @ts-expect-error
 		effect.fn(error);
 	} else {
-		throw error;
+		// otherwise we bubble up the effect tree ourselves
+		invoke_error_boundary(error, effect);
 	}
 }
 
