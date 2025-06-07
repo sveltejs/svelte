@@ -35,7 +35,7 @@ export default test({
 
 		assert.deepEqual(normalise_trace_logs(logs), [
 			{ log: 'iife', highlighted: false },
-			{ log: '$state', highlighted: true },
+			{ log: 'count — $state', highlighted: true },
 			{ log: 0 },
 			{ log: 'effect', highlighted: false }
 		]);
@@ -48,7 +48,7 @@ export default test({
 
 		assert.deepEqual(normalise_trace_logs(logs), [
 			{ log: 'iife', highlighted: false },
-			{ log: '$state', highlighted: true },
+			{ log: 'count — $state', highlighted: true },
 			{ log: 1 },
 			{ log: 'effect', highlighted: false }
 		]);

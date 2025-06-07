@@ -9,6 +9,7 @@ import { get_rune } from '../../../scope.js';
 import { get_prop_source, is_prop_source, is_state_source, should_proxy } from '../utils.js';
 import { is_hoisted_function } from '../../utils.js';
 import { get_value } from './shared/declarations.js';
+import { PROXY_REMOVE_PATH } from '#client/constants';
 
 /**
  * @param {VariableDeclaration} node
@@ -89,7 +90,12 @@ export function VariableDeclaration(node, context) {
 								binding.kind === 'bindable_prop' &&
 								should_proxy(initial, context.state.scope)
 							) {
-								initial = b.call('$.proxy', initial);
+								initial = b.call(
+									'$.proxy',
+									initial,
+									dev ? b.literal(id.name) : undefined,
+									dev ? b.literal(PROXY_REMOVE_PATH) : undefined
+								);
 							}
 
 							if (is_prop_source(binding, context.state)) {
@@ -128,11 +134,21 @@ export function VariableDeclaration(node, context) {
 					const binding = /** @type {import('#compiler').Binding} */ (
 						context.state.scope.get(id.name)
 					);
-					if (rune === '$state' && should_proxy(value, context.state.scope)) {
-						value = b.call('$.proxy', value);
+					const is_state = is_state_source(binding, context.state.analysis);
+					const is_proxy = should_proxy(value, context.state.scope);
+					if (rune === '$state' && is_proxy) {
+						value = b.call(
+							'$.proxy',
+							value,
+							dev ? b.literal(id.name) : undefined,
+							dev ? b.literal(PROXY_REMOVE_PATH) : undefined
+						);
 					}
-					if (is_state_source(binding, context.state.analysis)) {
+					if (is_state) {
 						value = b.call('$.state', value);
+					}
+					if (dev && is_state) {
+						value = b.call('$.tag', value, b.literal(id.name));
 					}
 					return value;
 				};
@@ -154,7 +170,11 @@ export function VariableDeclaration(node, context) {
 							context.state.transform[id.name] = { read: get_value };
 
 							const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
-							return b.declarator(id, b.call('$.derived', expression));
+							const call = b.call('$.derived', expression);
+							return b.declarator(
+								id,
+								dev ? b.call('$.tag', call, b.literal('[$state iterable]')) : call
+							);
 						}),
 						...paths.map((path) => {
 							const value = /** @type {Expression} */ (context.visit(path.expression));
@@ -176,8 +196,13 @@ export function VariableDeclaration(node, context) {
 				if (declarator.id.type === 'Identifier') {
 					let expression = /** @type {Expression} */ (context.visit(value));
 					if (rune === '$derived') expression = b.thunk(expression);
-
-					declarations.push(b.declarator(declarator.id, b.call('$.derived', expression)));
+					const call = b.call('$.derived', expression);
+					declarations.push(
+						b.declarator(
+							declarator.id,
+							dev ? b.call('$.tag', call, b.literal(declarator.id.name)) : call
+						)
+					);
 				} else {
 					const init = /** @type {CallExpression} */ (declarator.init);
 
@@ -189,8 +214,10 @@ export function VariableDeclaration(node, context) {
 
 						let expression = /** @type {Expression} */ (context.visit(value));
 						if (rune === '$derived') expression = b.thunk(expression);
-
-						declarations.push(b.declarator(id, b.call('$.derived', expression)));
+						const call = b.call('$.derived', expression);
+						declarations.push(
+							b.declarator(id, dev ? b.call('$.tag', call, b.literal('[$derived iterable]')) : call)
+						);
 					}
 
 					const { inserts, paths } = extract_paths(declarator.id, rhs);
@@ -200,12 +227,23 @@ export function VariableDeclaration(node, context) {
 						context.state.transform[id.name] = { read: get_value };
 
 						const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
-						declarations.push(b.declarator(id, b.call('$.derived', expression)));
+						const call = b.call('$.derived', expression);
+						declarations.push(
+							b.declarator(id, dev ? b.call('$.tag', call, b.literal('[$derived iterable]')) : call)
+						);
 					}
 
 					for (const path of paths) {
 						const expression = /** @type {Expression} */ (context.visit(path.expression));
-						declarations.push(b.declarator(path.node, b.call('$.derived', b.thunk(expression))));
+						const call = b.call('$.derived', b.thunk(expression));
+						declarations.push(
+							b.declarator(
+								path.node,
+								dev
+									? b.call('$.tag', call, b.literal(/** @type {Identifier} */ (path.node).name))
+									: call
+							)
+						);
 					}
 				}
 

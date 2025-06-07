@@ -35,7 +35,7 @@ export default test({
 
 		assert.deepEqual(normalise_trace_logs(logs), [
 			{ log: 'effect', highlighted: false },
-			{ log: '$state', highlighted: true },
+			{ log: 'checked — $state', highlighted: true },
 			{ log: false }
 		]);
 
@@ -53,19 +53,19 @@ export default test({
 
 		assert.deepEqual(normalise_trace_logs(logs), [
 			{ log: 'effect', highlighted: false },
-			{ log: '$state', highlighted: true },
+			{ log: 'checked — $state', highlighted: true },
 			{ log: true },
-			{ log: '$state', highlighted: true },
+			{ log: 'count — $state', highlighted: true },
 			{ log: 1 },
 			{ log: 'effect', highlighted: false },
-			{ log: '$state', highlighted: false },
+			{ log: 'checked — $state', highlighted: false },
 			{ log: true },
-			{ log: '$state', highlighted: true },
+			{ log: 'count — $state', highlighted: true },
 			{ log: 2 },
 			{ log: 'effect', highlighted: false },
-			{ log: '$state', highlighted: false },
+			{ log: 'checked — $state', highlighted: false },
 			{ log: true },
-			{ log: '$state', highlighted: true },
+			{ log: 'count — $state', highlighted: true },
 			{ log: 3 }
 		]);
 	}

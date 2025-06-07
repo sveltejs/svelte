@@ -43,11 +43,14 @@ function log_entry(signal, entry) {
 	const type = (signal.f & DERIVED) !== 0 ? '$derived' : '$state';
 	const current_reaction = /** @type {Reaction} */ (active_reaction);
 	const dirty = signal.wv > current_reaction.wv || current_reaction.wv === 0;
-
+	const { trace_name: name } = signal;
+	const style = dirty
+		? 'color: CornflowerBlue; font-weight: bold'
+		: 'color: grey; font-weight: normal';
 	// eslint-disable-next-line no-console
 	console.groupCollapsed(
-		`%c${type}`,
-		dirty ? 'color: CornflowerBlue; font-weight: bold' : 'color: grey; font-weight: bold',
+		typeof name === 'string' ? `%c${name} — ${type}` : `%c${type}`,
+		style,
 		typeof value === 'object' && value !== null && STATE_SYMBOL in value
 			? snapshot(value, true)
 			: value
@@ -176,4 +179,13 @@ export function get_stack(label) {
 		});
 	}
 	return error;
+}
+
+/**
+ * @param {Value} source
+ * @param {string} name
+ */
+export function tag(source, name) {
+	source.trace_name = name;
+	return source;
 }
