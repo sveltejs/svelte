@@ -2,6 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '#compiler/builders';
+import { build_legacy_expression } from './shared/utils.js';
 
 /**
  * @param {AST.KeyBlock} node
@@ -10,7 +11,9 @@ import * as b from '#compiler/builders';
 export function KeyBlock(node, context) {
 	context.state.template.push_comment();
 
-	const key = /** @type {Expression} */ (context.visit(node.expression));
+	const key = context.state.analysis.runes
+		? /** @type {Expression} */ (context.visit(node.expression))
+		: build_legacy_expression(node.expression, context);
 	const body = /** @type {Expression} */ (context.visit(node.fragment));
 
 	context.state.init.push(

@@ -3,6 +3,7 @@
 /** @import { ComponentContext } from '../types' */
 import { is_ignored } from '../../../../state.js';
 import * as b from '#compiler/builders';
+import { build_legacy_expression } from './shared/utils.js';
 
 /**
  * @param {AST.HtmlTag} node
@@ -11,7 +12,9 @@ import * as b from '#compiler/builders';
 export function HtmlTag(node, context) {
 	context.state.template.push_comment();
 
-	const expression = /** @type {Expression} */ (context.visit(node.expression));
+	const expression = context.state.analysis.runes
+		? /** @type {Expression} */ (context.visit(node.expression))
+		: build_legacy_expression(node.expression, context);
 
 	const is_svg = context.state.metadata.namespace === 'svg';
 	const is_mathml = context.state.metadata.namespace === 'mathml';
