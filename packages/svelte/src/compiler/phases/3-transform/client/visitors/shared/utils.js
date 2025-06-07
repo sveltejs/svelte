@@ -362,87 +362,17 @@ export function validate_mutation(node, context, expression) {
 }
 
 /**
- * Checks whether the expression contains assignments, function calls, or member accesses
- * @param {Expression|Pattern} expression
- * @returns {boolean}
- */
-function is_pure_expression(expression) {
-	// It's supposed that values do not have custom @@toPrimitive() or toString(),
-	// which may be implicitly called in expressions like `a + b`, `a & b`, `+a`, `str: ${a}`
-	switch (expression.type) {
-		case 'ArrayExpression':
-			return expression.elements.every(
-				(element) =>
-					element == null ||
-					(element.type === 'SpreadElement' ? false : is_pure_expression(element))
-			);
-		case 'BinaryExpression':
-			return (
-				expression.left.type !== 'PrivateIdentifier' &&
-				is_pure_expression(expression.left) &&
-				is_pure_expression(expression.right)
-			);
-		case 'ConditionalExpression':
-			return (
-				is_pure_expression(expression.test) &&
-				is_pure_expression(expression.consequent) &&
-				is_pure_expression(expression.alternate)
-			);
-		case 'Identifier':
-			return true;
-		case 'Literal':
-			return true;
-		case 'LogicalExpression':
-			return is_pure_expression(expression.left) && is_pure_expression(expression.right);
-		case 'MetaProperty':
-			return true; // new.target
-		case 'ObjectExpression':
-			return expression.properties.every(
-				(property) =>
-					property.type !== 'SpreadElement' &&
-					property.key.type !== 'PrivateIdentifier' &&
-					is_pure_expression(property.key) &&
-					is_pure_expression(property.value)
-			);
-		case 'SequenceExpression':
-			return expression.expressions.every(is_pure_expression);
-		case 'TemplateLiteral':
-			return expression.expressions.every(is_pure_expression);
-		case 'ThisExpression':
-			return true;
-		case 'UnaryExpression':
-			return is_pure_expression(expression.argument);
-		case 'YieldExpression':
-			return expression.argument == null || is_pure_expression(expression.argument);
-
-		case 'ArrayPattern':
-		case 'ArrowFunctionExpression':
-		case 'AssignmentExpression':
-		case 'AssignmentPattern':
-		case 'AwaitExpression':
-		case 'CallExpression':
-		case 'ChainExpression':
-		case 'ClassExpression':
-		case 'FunctionExpression':
-		case 'ImportExpression':
-		case 'MemberExpression':
-		case 'NewExpression':
-		case 'ObjectPattern':
-		case 'RestElement':
-		case 'TaggedTemplateExpression':
-		case 'UpdateExpression':
-			return false;
-	}
-}
-
-/**
  *
  * @param {ComponentContext} context
  * @param {Expression} expression
  * @param {ExpressionMetadata} metadata
  */
-export function build_legacy_expression_2(context, expression, metadata) {
+export function build_expression(context, expression, metadata) {
 	const value = /** @type {Expression} */ (context.visit(expression));
+
+	if (context.state.analysis.runes) {
+		return value;
+	}
 
 	if (!metadata.has_call && !metadata.has_member_expression && !metadata.has_assignment) {
 		return value;
@@ -470,62 +400,4 @@ export function build_legacy_expression_2(context, expression, metadata) {
 	sequence.expressions.push(b.call('$.untrack', b.thunk(value)));
 
 	return sequence;
-}
-
-/**
- * Serializes an expression with reactivity like in Svelte 4
- * @param {Expression} expression
- * @param {ComponentContext} context
- */
-export function build_legacy_expression(expression, context) {
-	// To recreate Svelte 4 behaviour, we track the dependencies
-	// the compiler can 'see', but we untrack the effect itself
-	const serialized_expression = /** @type {Expression} */ (context.visit(expression));
-	if (is_pure_expression(expression)) return serialized_expression;
-
-	/** @type {Expression[]} */
-	const sequence = [];
-
-	for (const [name, nodes] of context.state.scope.references) {
-		const binding = context.state.scope.get(name);
-
-		if (binding === null || (binding.kind === 'normal' && binding.declaration_kind !== 'import'))
-			continue;
-
-		let used = false;
-		for (const { node, path } of nodes) {
-			const expression_idx = path.indexOf(expression);
-			if (expression_idx < 0) continue;
-			// in Svelte 4, #if, #each and #await copy context, so assignments
-			// aren't propagated to the parent block / component root
-			const track_assignment = !path.find(
-				(node, i) =>
-					i < expression_idx - 1 && ['IfBlock', 'EachBlock', 'AwaitBlock'].includes(node.type)
-			);
-			if (track_assignment) {
-				used = true;
-				break;
-			}
-			const assignment = /** @type {AssignmentExpression|undefined} */ (
-				path.find((node, i) => i >= expression_idx && node.type === 'AssignmentExpression')
-			);
-			if (!assignment || (assignment.left !== node && !path.includes(assignment.left))) {
-				used = true;
-				break;
-			}
-		}
-		if (!used) continue;
-
-		let serialized = build_getter(b.id(name), context.state);
-
-		// If the binding is a prop, we need to deep read it because it could be fine-grained $state
-		// from a runes-component, where mutations don't trigger an update on the prop as a whole.
-		if (name === '$$props' || name === '$$restProps' || binding.kind === 'bindable_prop') {
-			serialized = b.call('$.deep_read_state', serialized);
-		}
-
-		sequence.push(serialized);
-	}
-
-	return b.sequence([...sequence, b.call('$.untrack', b.thunk(serialized_expression))]);
 }
