@@ -1,5 +1,13 @@
 # svelte
 
+## 5.33.16
+
+### Patch Changes
+
+- fix: visit expression when destructuring state declarations ([#16081](https://github.com/sveltejs/svelte/pull/16081))
+
+- fix: move xmlns attribute from SVGAttributes to to DOMAttributes ([#16080](https://github.com/sveltejs/svelte/pull/16080))
+
 ## 5.33.15
 
 ### Patch Changes
