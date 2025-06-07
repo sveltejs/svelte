@@ -1,5 +1,11 @@
 # svelte
 
+## 5.33.17
+
+### Patch Changes
+
+- chore: update acorn parser `ecmaVersion` to parse import attributes ([#16098](https://github.com/sveltejs/svelte/pull/16098))
+
 ## 5.33.16
 
 ### Patch Changes
