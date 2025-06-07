@@ -54,7 +54,7 @@ export function RenderTag(node, context) {
 
 	mark_subtree_dynamic(context.path);
 
-	context.visit(callee);
+	context.visit(callee, { ...context.state, expression: node.metadata.expression });
 
 	for (const arg of expression.arguments) {
 		const metadata = create_expression_metadata();

@@ -1,6 +1,6 @@
-/** @import { AssignmentExpression, Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression } from 'estree' */
+/** @import { AssignmentExpression, Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression, Pattern } from 'estree' */
 /** @import { AST, ExpressionMetadata } from '#compiler' */
-/** @import { ComponentClientTransformState, Context } from '../../types' */
+/** @import { ComponentClientTransformState, ComponentContext, Context } from '../../types' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
@@ -8,7 +8,7 @@ import { sanitize_template_string } from '../../../../../utils/sanitize_template
 import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator } from '../../../../../state.js';
-import { create_derived } from '../../utils.js';
+import { build_getter, create_derived } from '../../utils.js';
 
 /**
  * @param {ComponentClientTransformState} state
@@ -359,4 +359,42 @@ export function validate_mutation(node, context, expression) {
 		loc && b.literal(loc.line),
 		loc && b.literal(loc.column)
 	);
+}
+
+/**
+ *
+ * @param {ComponentContext} context
+ * @param {Expression} expression
+ * @param {ExpressionMetadata} metadata
+ */
+export function build_expression(context, expression, metadata) {
+	const value = /** @type {Expression} */ (context.visit(expression));
+
+	if (context.state.analysis.runes) {
+		return value;
+	}
+
+	if (!metadata.has_call && !metadata.has_member_expression && !metadata.has_assignment) {
+		return value;
+	}
+
+	const sequence = b.sequence([]);
+
+	for (const binding of metadata.references) {
+		if (binding.kind === 'normal') {
+			continue;
+		}
+
+		var getter = build_getter({ ...binding.node }, context.state);
+
+		if (binding.kind === 'bindable_prop') {
+			getter = b.call('$.deep_read_state', getter);
+		}
+
+		sequence.expressions.push(getter);
+	}
+
+	sequence.expressions.push(b.call('$.untrack', b.thunk(value)));
+
+	return sequence;
 }

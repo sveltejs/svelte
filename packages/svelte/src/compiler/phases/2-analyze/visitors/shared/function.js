@@ -13,6 +13,16 @@ export function visit_function(node, context) {
 		scope: context.state.scope
 	};
 
+	if (context.state.expression) {
+		for (const [name] of context.state.scope.references) {
+			const binding = context.state.scope.get(name);
+
+			if (binding && binding.scope.function_depth < context.state.scope.function_depth) {
+				context.state.expression.references.add(binding);
+			}
+		}
+	}
+
 	context.next({
 		...context.state,
 		function_depth: context.state.function_depth + 1,
