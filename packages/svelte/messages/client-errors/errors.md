@@ -72,6 +72,10 @@ See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-long
 
 > The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
 
+## set_context_after_init
+
+> `setContext` must be called when a component first initializes, not in a subsequent effect or after an `await` expression
+
 ## state_descriptors_fixed
 
 > Property descriptors defined on `$state` objects must contain `value` and always be `enumerable`, `configurable` and `writable`.

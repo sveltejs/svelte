@@ -9,6 +9,7 @@ export { create_ownership_validator } from './dev/ownership.js';
 export { check_target, legacy_api } from './dev/legacy.js';
 export { trace } from './dev/tracing.js';
 export { inspect } from './dev/inspect.js';
+export { async } from './dom/blocks/async.js';
 export { validate_snippet_args } from './dev/validation.js';
 export { await_block as await } from './dom/blocks/await.js';
 export { if_block as if } from './dom/blocks/if.js';
@@ -97,8 +98,13 @@ export {
 	props_id,
 	with_script
 } from './dom/template.js';
-export { user_derived as derived, derived_safe_equal } from './reactivity/deriveds.js';
 export {
+	async_derived,
+	user_derived as derived,
+	derived_safe_equal
+} from './reactivity/deriveds.js';
+export {
+	aborted,
 	effect_tracking,
 	effect_root,
 	legacy_pre_effect,
@@ -109,7 +115,15 @@ export {
 	user_effect,
 	user_pre_effect
 } from './reactivity/effects.js';
-export { mutable_source, mutate, set, state, update, update_pre } from './reactivity/sources.js';
+export {
+	mutable_source,
+	mutate,
+	pending,
+	set,
+	state,
+	update,
+	update_pre
+} from './reactivity/sources.js';
 export {
 	prop,
 	rest_props,
@@ -129,7 +143,7 @@ export {
 	update_store,
 	mark_store_binding
 } from './reactivity/store.js';
-export { boundary } from './dom/blocks/boundary.js';
+export { boundary, save, suspend } from './dom/blocks/boundary.js';
 export { set_text } from './render.js';
 export {
 	get,

@@ -19,28 +19,34 @@ export function IfBlock(node, context) {
 	let alternate_id;
 
 	if (node.alternate) {
-		alternate_id = context.state.scope.generate('alternate');
 		const alternate = /** @type {BlockStatement} */ (context.visit(node.alternate));
-		const nodes = node.alternate.nodes;
-
-		let alternate_args = [b.id('$$anchor')];
-		if (nodes.length === 1 && nodes[0].type === 'IfBlock' && nodes[0].elseif) {
-			alternate_args.push(b.id('$$elseif'));
-		}
-
-		statements.push(b.var(b.id(alternate_id), b.arrow(alternate_args, alternate)));
+		alternate_id = context.state.scope.generate('alternate');
+		statements.push(b.var(b.id(alternate_id), b.arrow([b.id('$$anchor')], alternate)));
 	}
+
+	const { has_await } = node.metadata.expression;
+
+	const expression = /** @type {Expression} */ (context.visit(node.test));
+	const test = has_await ? b.call('$.get', b.id('$$condition')) : expression;
 
 	/** @type {Expression[]} */
 	const args = [
-		node.elseif ? b.id('$$anchor') : context.state.node,
+		context.state.node,
 		b.arrow(
 			[b.id('$$render')],
 			b.block([
 				b.if(
-					/** @type {Expression} */ (context.visit(node.test)),
+					test,
 					b.stmt(b.call(b.id('$$render'), b.id(consequent_id))),
-					alternate_id ? b.stmt(b.call(b.id('$$render'), b.id(alternate_id), b.false)) : undefined
+					alternate_id
+						? b.stmt(
+								b.call(
+									b.id('$$render'),
+									b.id(alternate_id),
+									node.alternate ? b.literal(false) : undefined
+								)
+							)
+						: undefined
 				)
 			])
 		)
@@ -68,10 +74,23 @@ export function IfBlock(node, context) {
 		// ...even though they're logically equivalent. In the first case, the
 		// transition will only play when `y` changes, but in the second it
 		// should play when `x` or `y` change — both are considered 'local'
-		args.push(b.id('$$elseif'));
+		args.push(b.true);
 	}
 
 	statements.push(b.stmt(b.call('$.if', ...args)));
 
-	context.state.init.push(b.block(statements));
+	if (has_await) {
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.async',
+					context.state.node,
+					b.array([b.thunk(expression, true)]),
+					b.arrow([context.state.node, b.id('$$condition')], b.block(statements))
+				)
+			)
+		);
+	} else {
+		context.state.init.push(b.block(statements));
+	}
 }
