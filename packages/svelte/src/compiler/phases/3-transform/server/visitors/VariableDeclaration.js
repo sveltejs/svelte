@@ -197,9 +197,13 @@ function create_state_declarators(declarator, scope, value) {
 	}
 
 	const tmp = b.id(scope.generate('tmp'));
-	const { paths } = extract_paths(declarator.id, tmp);
+	const { paths, inserts } = extract_paths(declarator.id, tmp);
 	return [
 		b.declarator(tmp, value), // TODO inject declarator for opts, so we can use it below
+		...inserts.map(({ id, value }) => {
+			id.name = scope.generate('$$array');
+			return b.declarator(id, value);
+		}),
 		...paths.map((path) => {
 			const value = path.expression;
 			return b.declarator(path.node, value);
