@@ -62,6 +62,7 @@ export function create_attribute(name, start, end, value) {
 export function create_expression_metadata() {
 	return {
 		dependencies: new Set(),
+		references: new Set(),
 		has_state: false,
 		has_call: false,
 		has_member_expression: false,

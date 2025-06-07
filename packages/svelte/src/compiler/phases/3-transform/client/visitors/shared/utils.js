@@ -450,7 +450,7 @@ export function build_legacy_expression_2(context, expression, metadata) {
 
 	const sequence = b.sequence([]);
 
-	for (const binding of metadata.dependencies) {
+	for (const binding of metadata.references) {
 		if (binding.kind === 'normal') {
 			continue;
 		}
