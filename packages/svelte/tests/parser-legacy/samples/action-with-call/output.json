@@ -15,7 +15,6 @@
 						"end": 39,
 						"type": "Action",
 						"name": "tooltip",
-						"modifiers": [],
 						"expression": {
 							"type": "CallExpression",
 							"start": 21,
@@ -66,7 +65,8 @@
 								}
 							],
 							"optional": false
-						}
+						},
+						"modifiers": []
 					}
 				],
 				"children": []

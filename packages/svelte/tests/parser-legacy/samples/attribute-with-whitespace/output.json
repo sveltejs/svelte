@@ -15,7 +15,6 @@
 						"end": 23,
 						"type": "EventHandler",
 						"name": "click",
-						"modifiers": [],
 						"expression": {
 							"type": "Identifier",
 							"start": 19,
@@ -31,7 +30,8 @@
 								}
 							},
 							"name": "foo"
-						}
+						},
+						"modifiers": []
 					}
 				],
 				"children": [

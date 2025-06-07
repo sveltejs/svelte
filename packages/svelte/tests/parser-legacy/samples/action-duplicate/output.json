@@ -15,16 +15,16 @@
 						"end": 20,
 						"type": "Action",
 						"name": "autofocus",
-						"modifiers": [],
-						"expression": null
+						"expression": null,
+						"modifiers": []
 					},
 					{
 						"start": 21,
 						"end": 34,
 						"type": "Action",
 						"name": "autofocus",
-						"modifiers": [],
-						"expression": null
+						"expression": null,
+						"modifiers": []
 					}
 				],
 				"children": []
