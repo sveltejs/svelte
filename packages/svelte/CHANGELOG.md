@@ -1,5 +1,13 @@
 # svelte
 
+## 5.33.18
+
+### Patch Changes
+
+- chore: bump `esrap` dependency ([#16106](https://github.com/sveltejs/svelte/pull/16106))
+
+- fix: destructuring state in ssr ([#16102](https://github.com/sveltejs/svelte/pull/16102))
+
 ## 5.33.17
 
 ### Patch Changes
