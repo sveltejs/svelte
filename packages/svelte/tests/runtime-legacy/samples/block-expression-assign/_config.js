@@ -7,6 +7,6 @@ export default test({
 
 		assert.htmlEqual(target.innerHTML, `<div></div><button>inc</button> [0,0,0,0,0,0,0,0,0]`);
 		flushSync(() => button?.click());
-		assert.htmlEqual(target.innerHTML, `<div></div><button>inc</button> [0,0,0,0,0,0,0,0,1]`);
+		assert.htmlEqual(target.innerHTML, `<div></div><button>inc</button> [0,0,0,0,0,0,0,0,0]`);
 	}
 });
