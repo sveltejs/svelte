@@ -183,8 +183,14 @@ export function update_derived(derived) {
 	// cleanup function, or it will cache a stale value
 	if (is_destroying_effect) return;
 
-	var status =
-		(skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null ? MAYBE_DIRTY : CLEAN;
+	// only mark unowned deriveds as MAYBE_DIRTY if they have dependencies, otherwise they
+	// must be clean regardless of the value of the skip_reaction flag value set for the previous_reaction
+	// because not marking a regular derived as CLEAN will cause incosistent state when chaining
+	// multiple derivides in which the top-most derived is marked MAYBE_DIRTY and all the ones that depends
+	// on it are instead marked as CLEAN causing issues with properly updating the UI when the source state
+	// is updated because the MAYBE_DIRTY derived is skipped and as a consequence also
+	// the other deriveds (aka its reactions) are skipped as well.
+	var status = (derived.f & UNOWNED) !== 0 && derived.deps !== null ? MAYBE_DIRTY : CLEAN;
 
 	set_signal_status(derived, status);
 }
