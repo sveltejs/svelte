@@ -28,7 +28,6 @@ import {
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
-	BOUNDARY_EFFECT,
 	REACTION_IS_UPDATING,
 	EFFECT_IS_UPDATING,
 	EFFECT_ASYNC,
@@ -46,7 +45,6 @@ import {
 	update_derived
 } from './reactivity/deriveds.js';
 import * as e from './errors.js';
-import { FILENAME } from '../../constants.js';
 import { async_mode_flag, tracing_mode_flag } from '../flags/index.js';
 import { tracing_expressions, get_stack } from './dev/tracing.js';
 import {
@@ -56,19 +54,9 @@ import {
 	set_component_context,
 	set_dev_current_component_function
 } from './context.js';
-import { Boundary } from './dom/blocks/boundary.js';
 import * as w from './warnings.js';
-import { is_firefox } from './dom/operations.js';
 import { current_batch, Batch, batch_deriveds } from './reactivity/batch.js';
-import { log_effect_tree, root } from './dev/debug.js';
 import { handle_error, invoke_error_boundary } from './error-handling.js';
-
-// Used for DEV time error handling
-/** @param {WeakSet<Error>} value */
-const handled_errors = new WeakSet();
-let is_throwing_error = false;
-
-let is_flushing = false;
 
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
