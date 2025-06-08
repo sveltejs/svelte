@@ -570,7 +570,6 @@ export function flush_queued_root_effects() {
 			old_values.clear();
 		}
 	} finally {
-		is_flushing = false;
 		is_updating_effect = was_updating_effect;
 
 		last_scheduled_effect = null;
@@ -712,10 +711,8 @@ export function flushSync(fn) {
 	const batch = Batch.ensure();
 
 	if (fn) {
-		is_flushing = true;
 		flush_queued_root_effects();
 
-		is_flushing = true;
 		result = fn();
 	}
 
@@ -730,7 +727,6 @@ export function flushSync(fn) {
 			return /** @type {T} */ (result);
 		}
 
-		is_flushing = true;
 		flush_queued_root_effects();
 	}
 }
