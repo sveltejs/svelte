@@ -688,6 +688,13 @@ export function flushSync(fn) {
 		flush_tasks();
 
 		if (queued_root_effects.length === 0) {
+			// this would be reset in `flush_queued_root_effects` but since we are early returning here,
+			// we need to reset it here as well in case the first time there's 0 queued root effects
+			is_flushing = false;
+			last_scheduled_effect = null;
+			if (DEV) {
+				dev_effect_stack = [];
+			}
 			return /** @type {T} */ (result);
 		}
 
