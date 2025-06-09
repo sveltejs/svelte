@@ -11,7 +11,6 @@
 	});
 
 	let Thing = $derived.by(() => {
-		console.log("comp", config);
 		return config === "any" ? A : B;
 	});
 </script>
