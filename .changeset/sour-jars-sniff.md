@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: mark reactions of `MAYBE_DIRTY` reactions too
+fix: update untracked writes for `BLOCK_EFFECT`s too
