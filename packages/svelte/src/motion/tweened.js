@@ -1,5 +1,5 @@
 /** @import { Task } from '../internal/client/types' */
-/** @import { Tweened } from './public' */
+/** @import { MotionRecord, Tweened } from './public' */
 /** @import { TweenedOptions } from './private' */
 import { writable } from '../store/shared/index.js';
 import { raf } from '../internal/client/timing.js';
@@ -171,11 +171,15 @@ export function tweened(value, defaults = {}) {
  * <input type="range" bind:value={tween.target} />
  * <input type="range" bind:value={tween.current} disabled />
  * ```
- * @template T
+ * 
+ * Refer to the `MotionRecord` type to understand all possible value types that Tween can handle.
+ * @template {MotionRecord[string]} T
  * @since 5.8.0
  */
 export class Tween {
+	// @ts-expect-error Undefined doesn't satisfy the constraint of T.
 	#current = source(/** @type {T} */ (undefined));
+	// @ts-expect-error Undefined doesn't satisfy the constraint of T.
 	#target = source(/** @type {T} */ (undefined));
 
 	/** @type {TweenedOptions<T>} */
@@ -206,7 +210,9 @@ export class Tween {
 	 * 	const tween = Tween.of(() => number);
 	 * </script>
 	 * ```
-	 * @template U
+	 * 
+	 * Refer to the `MotionRecord` type to understand all possible value types that Tween can handle.
+	 * @template {MotionRecord[string]} U
 	 * @param {() => U} fn
 	 * @param {TweenedOptions<U>} [options]
 	 */
