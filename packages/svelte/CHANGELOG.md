@@ -1,5 +1,11 @@
 # svelte
 
+## 5.33.19
+
+### Patch Changes
+
+- fix: reset `is_flushing` if `flushSync` is called and there's no scheduled effect ([#16119](https://github.com/sveltejs/svelte/pull/16119))
+
 ## 5.33.18
 
 ### Patch Changes
