@@ -13,10 +13,13 @@ import { determine_slot } from '../../../../../utils/slot.js';
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
  * @param {string} component_name
  * @param {ComponentContext} context
- * @param {Expression} anchor
  * @returns {Statement}
  */
-export function build_component(node, component_name, context, anchor = context.state.node) {
+export function build_component(node, component_name, context) {
+	/**
+	 * @type {Expression}
+	 */
+	const anchor = context.state.node;
 	/** @type {Array<Property[] | Expression>} */
 	const props_and_spreads = [];
 	/** @type {Array<() => void>} */
@@ -411,7 +414,7 @@ export function build_component(node, component_name, context, anchor = context.
 			// TODO We can remove this ternary once we remove legacy mode, since in runes mode dynamic components
 			// will be handled separately through the `$.component` function, and then the component name will
 			// always be referenced through just the identifier here.
-			node.type === 'SvelteComponent'
+			node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic)
 				? component_name
 				: /** @type {Expression} */ (context.visit(b.member_id(component_name))),
 			node_id,
@@ -429,14 +432,18 @@ export function build_component(node, component_name, context, anchor = context.
 
 	const statements = [...snippet_declarations];
 
-	if (node.type === 'SvelteComponent') {
+	if (node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic)) {
 		const prev = fn;
 
 		fn = (node_id) => {
 			return b.call(
 				'$.component',
 				node_id,
-				b.thunk(/** @type {Expression} */ (context.visit(node.expression))),
+				b.thunk(
+					/** @type {Expression} */ (
+						context.visit(node.type === 'Component' ? b.member_id(node.name) : node.expression)
+					)
+				),
 				b.arrow(
 					[b.id('$$anchor'), b.id(component_name)],
 					b.block([...binding_initializers, b.stmt(prev(b.id('$$anchor')))])
