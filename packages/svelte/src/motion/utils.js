@@ -1,6 +1,6 @@
 /** @import { Source } from '#client' */
-import { DEV } from "esm-env";
-import { tag } from "../internal/client/dev/tracing.js";
+import { DEV } from 'esm-env';
+import { tag } from '../internal/client/dev/tracing.js';
 
 /**
  * @param {any} obj
