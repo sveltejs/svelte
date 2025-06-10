@@ -11,12 +11,15 @@ export default test({
 		// initial log, everything is highlighted
 
 		assert.deepEqual(normalise_trace_logs(logs), [
-			{ log: 'effect', highlighted: false },
+			{ log: 'effect' },
 			{ log: '$derived', highlighted: true },
+			{ log: 'double', highlighted: false },
 			{ log: 0 },
-			{ log: 'count — $state', highlighted: true },
+			{ log: '$state', highlighted: true },
+			{ log: 'count', highlighted: false },
 			{ log: 0 },
-			{ log: 'checked — $state', highlighted: true },
+			{ log: '$state', highlighted: true },
+			{ log: 'checked', highlighted: false },
 			{ log: false }
 		]);
 
@@ -29,12 +32,15 @@ export default test({
 		// count changed, derived and state are highlighted, last state is not
 
 		assert.deepEqual(normalise_trace_logs(logs), [
-			{ log: 'effect', highlighted: false },
-			{ log: 'double — $derived', highlighted: true },
+			{ log: 'effect' },
+			{ log: '$derived', highlighted: true },
+			{ log: 'double', highlighted: false },
 			{ log: 2 },
-			{ log: 'count — $state', highlighted: true },
+			{ log: '$state', highlighted: true },
+			{ log: 'count', highlighted: false },
 			{ log: 1 },
-			{ log: 'checked — $state', highlighted: false },
+			{ log: '$state', highlighted: false },
+			{ log: 'checked', highlighted: false },
 			{ log: false }
 		]);
 
@@ -47,12 +53,15 @@ export default test({
 		// checked changed, last state is highlighted, first two are not
 
 		assert.deepEqual(normalise_trace_logs(logs), [
-			{ log: 'effect', highlighted: false },
-			{ log: 'double — $derived', highlighted: false },
+			{ log: 'effect' },
+			{ log: '$derived', highlighted: false },
+			{ log: 'double', highlighted: false },
 			{ log: 2 },
-			{ log: 'count — $state', highlighted: false },
+			{ log: '$state', highlighted: false },
+			{ log: 'count', highlighted: false },
 			{ log: 1 },
-			{ log: 'checked — $state', highlighted: true },
+			{ log: '$state', highlighted: true },
+			{ log: 'checked', highlighted: false },
 			{ log: true }
 		]);
 
@@ -64,10 +73,12 @@ export default test({
 		// count change and derived it's >=4, checked is not in the dependencies anymore
 
 		assert.deepEqual(normalise_trace_logs(logs), [
-			{ log: 'effect', highlighted: false },
-			{ log: 'double — $derived', highlighted: true },
+			{ log: 'effect' },
+			{ log: '$derived', highlighted: true },
+			{ log: 'double', highlighted: false },
 			{ log: 4 },
-			{ log: 'count — $state', highlighted: true },
+			{ log: '$state', highlighted: true },
+			{ log: 'count', highlighted: false },
 			{ log: 2 }
 		]);
 	}

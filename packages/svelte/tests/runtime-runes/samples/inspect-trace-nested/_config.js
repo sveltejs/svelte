@@ -11,10 +11,11 @@ export default test({
 		// initial log, everything is highlighted
 
 		assert.deepEqual(normalise_trace_logs(logs), [
-			{ log: 'iife', highlighted: false },
-			{ log: 'count — $state', highlighted: true },
+			{ log: 'iife' },
+			{ log: '$state', highlighted: true },
+			{ log: 'count', highlighted: false },
 			{ log: 0 },
-			{ log: 'effect', highlighted: false }
+			{ log: 'effect' }
 		]);
 
 		logs.length = 0;
@@ -24,10 +25,11 @@ export default test({
 		flushSync();
 
 		assert.deepEqual(normalise_trace_logs(logs), [
-			{ log: 'iife', highlighted: false },
-			{ log: 'count — $state', highlighted: true },
+			{ log: 'iife' },
+			{ log: '$state', highlighted: true },
+			{ log: 'count', highlighted: false },
 			{ log: 1 },
-			{ log: 'effect', highlighted: false }
+			{ log: 'effect' }
 		]);
 	}
 });
