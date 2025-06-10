@@ -2,6 +2,7 @@
 import { derived } from '../internal/client/index.js';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { active_reaction, get, set_active_reaction } from '../internal/client/runtime.js';
+import { tag_if_necessary } from './utils.js';
 
 var inited = false;
 
@@ -38,7 +39,7 @@ var inited = false;
  * ```
  */
 export class SvelteDate extends Date {
-	#time = source(super.getTime());
+	#time = tag_if_necessary(source(super.getTime()), 'SvelteDate.#time');
 
 	/** @type {Map<keyof Date, Source<unknown>>} */
 	#deriveds = new Map();

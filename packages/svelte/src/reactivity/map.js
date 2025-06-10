@@ -2,7 +2,7 @@
 import { DEV } from 'esm-env';
 import { set, source } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
-import { increment } from './utils.js';
+import { increment, tag_if_necessary } from './utils.js';
 
 /**
  * A reactive version of the built-in [`Map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) object.
@@ -53,8 +53,8 @@ import { increment } from './utils.js';
 export class SvelteMap extends Map {
 	/** @type {Map<K, Source<number>>} */
 	#sources = new Map();
-	#version = source(0);
-	#size = source(0);
+	#version = tag_if_necessary(source(0), 'SvelteMap version');
+	#size = tag_if_necessary(source(0), 'SvelteMap.size');
 
 	/**
 	 * @param {Iterable<readonly [K, V]> | null | undefined} [value]
@@ -81,7 +81,10 @@ export class SvelteMap extends Map {
 		if (s === undefined) {
 			var ret = super.get(key);
 			if (ret !== undefined) {
-				s = source(0);
+				s = tag_if_necessary(
+					source(0),
+					`SvelteMap Entry [${typeof key === 'symbol' ? `Symbol(${key.description})` : key}]`
+				);
 				sources.set(key, s);
 			} else {
 				// We should always track the version in case
@@ -112,7 +115,10 @@ export class SvelteMap extends Map {
 		if (s === undefined) {
 			var ret = super.get(key);
 			if (ret !== undefined) {
-				s = source(0);
+				s = tag_if_necessary(
+					source(0),
+					`SvelteMap Entry [${typeof key === 'symbol' ? `Symbol(${key.description})` : key}]`
+				);
 				sources.set(key, s);
 			} else {
 				// We should always track the version in case
@@ -138,7 +144,13 @@ export class SvelteMap extends Map {
 		var version = this.#version;
 
 		if (s === undefined) {
-			sources.set(key, source(0));
+			sources.set(
+				key,
+				tag_if_necessary(
+					source(0),
+					`SvelteMap Entry [${typeof key === 'symbol' ? `Symbol(${key.description})` : key}]`
+				)
+			);
 			set(this.#size, super.size);
 			increment(version);
 		} else if (prev_res !== value) {
@@ -197,7 +209,13 @@ export class SvelteMap extends Map {
 		if (this.#size.v !== sources.size) {
 			for (var key of super.keys()) {
 				if (!sources.has(key)) {
-					sources.set(key, source(0));
+					sources.set(
+						key,
+						tag_if_necessary(
+							source(0),
+							`SvelteMap Entry [${typeof key === 'symbol' ? `Symbol(${key.description})` : key}]`
+						)
+					);
 				}
 			}
 		}

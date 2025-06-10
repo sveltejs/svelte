@@ -3,6 +3,7 @@ import { on } from '../../events/index.js';
 import { ReactiveValue } from '../reactive-value.js';
 import { get } from '../../internal/client/index.js';
 import { set, source } from '../../internal/client/reactivity/sources.js';
+import { tag_if_necessary } from '../utils.js';
 
 /**
  * `scrollX.current` is a reactive view of `window.scrollX`. On the server it is `undefined`.
@@ -128,7 +129,10 @@ export const online = new ReactiveValue(
  * @since 5.11.0
  */
 export const devicePixelRatio = /* @__PURE__ */ new (class DevicePixelRatio {
-	#dpr = source(BROWSER ? window.devicePixelRatio : undefined);
+	#dpr = tag_if_necessary(
+		source(BROWSER ? window.devicePixelRatio : undefined),
+		'window.devicePixelRatio'
+	);
 
 	#update() {
 		const off = on(

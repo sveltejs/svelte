@@ -4,7 +4,7 @@
 import { writable } from '../store/shared/index.js';
 import { loop } from '../internal/client/loop.js';
 import { raf } from '../internal/client/timing.js';
-import { is_date } from './utils.js';
+import { is_date, tag_if_necessary } from './utils.js';
 import { set, source } from '../internal/client/reactivity/sources.js';
 import { render_effect } from '../internal/client/reactivity/effects.js';
 import { get } from '../internal/client/runtime.js';
@@ -168,12 +168,12 @@ export function spring(value, opts = {}) {
  * @since 5.8.0
  */
 export class Spring {
-	#stiffness = source(0.15);
-	#damping = source(0.8);
-	#precision = source(0.01);
+	#stiffness = tag_if_necessary(source(0.15), 'Spring.stiffness');
+	#damping = tag_if_necessary(source(0.8), 'Spring.damping');
+	#precision = tag_if_necessary(source(0.01), 'Spring.precision');
 
-	#current = source(/** @type {T} */ (undefined));
-	#target = source(/** @type {T} */ (undefined));
+	#current = tag_if_necessary(source(/** @type {T} */ (undefined)), 'Spring.current');
+	#target = tag_if_necessary(source(/** @type {T} */ (undefined)), 'Spring.target');
 
 	#last_value = /** @type {T} */ (undefined);
 	#last_time = 0;

@@ -1,6 +1,7 @@
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 import { REPLACE, SvelteURLSearchParams } from './url-search-params.js';
+import { tag_if_necessary } from './utils.js';
 
 /** @type {SvelteURL | null} */
 let current_url = null;
@@ -38,14 +39,14 @@ export function get_current_url() {
  * ```
  */
 export class SvelteURL extends URL {
-	#protocol = source(super.protocol);
-	#username = source(super.username);
-	#password = source(super.password);
-	#hostname = source(super.hostname);
-	#port = source(super.port);
-	#pathname = source(super.pathname);
-	#hash = source(super.hash);
-	#search = source(super.search);
+	#protocol = tag_if_necessary(source(super.protocol), 'SvelteURL.protocol');
+	#username = tag_if_necessary(source(super.username), 'SvelteURL.username');
+	#password = tag_if_necessary(source(super.password), 'SvelteURL.password');
+	#hostname = tag_if_necessary(source(super.hostname), 'SvelteURL.hostname');
+	#port = tag_if_necessary(source(super.port), 'SvelteURL.port');
+	#pathname = tag_if_necessary(source(super.pathname), 'SvelteURL.pathname');
+	#hash = tag_if_necessary(source(super.hash), 'SvelteURL.hash');
+	#search = tag_if_necessary(source(super.search), 'SvelteURL.search');
 	#searchParams;
 
 	/**

@@ -2,7 +2,7 @@
 import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
-import { increment } from './utils.js';
+import { increment, tag_if_necessary } from './utils.js';
 
 var read_methods = ['forEach', 'isDisjointFrom', 'isSubsetOf', 'isSupersetOf'];
 var set_like_methods = ['difference', 'intersection', 'symmetricDifference', 'union'];
@@ -47,8 +47,8 @@ var inited = false;
 export class SvelteSet extends Set {
 	/** @type {Map<T, Source<boolean>>} */
 	#sources = new Map();
-	#version = source(0);
-	#size = source(0);
+	#version = tag_if_necessary(source(0), 'SvelteSet version');
+	#size = tag_if_necessary(source(0), 'SvelteSet.size');
 
 	/**
 	 * @param {Iterable<T> | null | undefined} [value]
@@ -110,7 +110,10 @@ export class SvelteSet extends Set {
 				return false;
 			}
 
-			s = source(true);
+			s = tag_if_necessary(
+				source(true),
+				`SvelteSet Entry [${typeof value === 'symbol' ? `Symbol(${value.description})` : value}]`
+			);
 			sources.set(value, s);
 		}
 

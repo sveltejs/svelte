@@ -1,7 +1,7 @@
 import { source } from '../internal/client/reactivity/sources.js';
 import { get } from '../internal/client/runtime.js';
 import { get_current_url } from './url.js';
-import { increment } from './utils.js';
+import { increment, tag_if_necessary } from './utils.js';
 
 export const REPLACE = Symbol();
 
@@ -32,7 +32,7 @@ export const REPLACE = Symbol();
  * ```
  */
 export class SvelteURLSearchParams extends URLSearchParams {
-	#version = source(0);
+	#version = tag_if_necessary(source(0), 'SvelteURLSearchParams version');
 	#url = get_current_url();
 
 	#updating = false;

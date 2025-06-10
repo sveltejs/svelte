@@ -5,7 +5,7 @@ import { writable } from '../store/shared/index.js';
 import { raf } from '../internal/client/timing.js';
 import { loop } from '../internal/client/loop.js';
 import { linear } from '../easing/index.js';
-import { is_date } from './utils.js';
+import { is_date, tag_if_necessary } from './utils.js';
 import { set, source } from '../internal/client/reactivity/sources.js';
 import { get, render_effect } from 'svelte/internal/client';
 
@@ -175,8 +175,8 @@ export function tweened(value, defaults = {}) {
  * @since 5.8.0
  */
 export class Tween {
-	#current = source(/** @type {T} */ (undefined));
-	#target = source(/** @type {T} */ (undefined));
+	#current = tag_if_necessary(source(/** @type {T} */ (undefined)), 'Tween.current');
+	#target = tag_if_necessary(source(/** @type {T} */ (undefined)), 'Tween.target');
 
 	/** @type {TweenedOptions<T>} */
 	#defaults;
