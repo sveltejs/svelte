@@ -1,7 +1,9 @@
 import { get, tick, untrack } from '../internal/client/runtime.js';
 import { effect_tracking, render_effect } from '../internal/client/reactivity/effects.js';
 import { source } from '../internal/client/reactivity/sources.js';
-import { increment, tag_if_necessary } from './utils.js';
+import { tag } from '../internal/client/dev/tracing.js';
+import { increment } from './utils.js';
+import { DEV } from 'esm-env';
 
 /**
  * Returns a `subscribe` function that, if called in an effect (including expressions in the template),
@@ -47,9 +49,13 @@ import { increment, tag_if_necessary } from './utils.js';
  */
 export function createSubscriber(start) {
 	let subscribers = 0;
-	let version = tag_if_necessary(source(0), 'createSubscriber version');
+	let version = source(0);
 	/** @type {(() => void) | void} */
 	let stop;
+
+	if (DEV) {
+		tag(version, 'createSubscriber version');
+	}
 
 	return () => {
 		if (effect_tracking()) {

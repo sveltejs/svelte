@@ -4,11 +4,13 @@
 import { writable } from '../store/shared/index.js';
 import { loop } from '../internal/client/loop.js';
 import { raf } from '../internal/client/timing.js';
-import { is_date, tag_if_necessary } from './utils.js';
+import { is_date } from './utils.js';
 import { set, source } from '../internal/client/reactivity/sources.js';
 import { render_effect } from '../internal/client/reactivity/effects.js';
+import { tag } from '../internal/client/dev/tracing.js';
 import { get } from '../internal/client/runtime.js';
 import { deferred, noop } from '../internal/shared/utils.js';
+import { DEV } from 'esm-env';
 
 /**
  * @template T
@@ -168,12 +170,12 @@ export function spring(value, opts = {}) {
  * @since 5.8.0
  */
 export class Spring {
-	#stiffness = tag_if_necessary(source(0.15), 'Spring.stiffness');
-	#damping = tag_if_necessary(source(0.8), 'Spring.damping');
-	#precision = tag_if_necessary(source(0.01), 'Spring.precision');
+	#stiffness = source(0.15);
+	#damping = source(0.8);
+	#precision = source(0.01);
 
-	#current = tag_if_necessary(source(/** @type {T} */ (undefined)), 'Spring.current');
-	#target = tag_if_necessary(source(/** @type {T} */ (undefined)), 'Spring.target');
+	#current;
+	#target;
 
 	#last_value = /** @type {T} */ (undefined);
 	#last_time = 0;
@@ -192,11 +194,20 @@ export class Spring {
 	 * @param {SpringOpts} [options]
 	 */
 	constructor(value, options = {}) {
-		this.#current.v = this.#target.v = value;
+		this.#current = DEV ? tag(source(value), 'Spring.current') : source(value);
+		this.#target = DEV ? tag(source(value), 'Spring.target') : source(value);
 
 		if (typeof options.stiffness === 'number') this.#stiffness.v = clamp(options.stiffness, 0, 1);
 		if (typeof options.damping === 'number') this.#damping.v = clamp(options.damping, 0, 1);
 		if (typeof options.precision === 'number') this.#precision.v = options.precision;
+
+		if (DEV) {
+			tag(this.#stiffness, 'Spring.stiffness');
+			tag(this.#damping, 'Spring.damping');
+			tag(this.#precision, 'Spring.precision');
+			tag(this.#current, 'Spring.current');
+			tag(this.#target, 'Spring.target');
+		}
 	}
 
 	/**

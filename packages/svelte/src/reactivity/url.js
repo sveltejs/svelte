@@ -1,7 +1,8 @@
+import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
+import { tag } from '../internal/client/dev/tracing.js';
 import { get } from '../internal/client/runtime.js';
 import { REPLACE, SvelteURLSearchParams } from './url-search-params.js';
-import { tag_if_necessary } from './utils.js';
 
 /** @type {SvelteURL | null} */
 let current_url = null;
@@ -39,14 +40,14 @@ export function get_current_url() {
  * ```
  */
 export class SvelteURL extends URL {
-	#protocol = tag_if_necessary(source(super.protocol), 'SvelteURL.protocol');
-	#username = tag_if_necessary(source(super.username), 'SvelteURL.username');
-	#password = tag_if_necessary(source(super.password), 'SvelteURL.password');
-	#hostname = tag_if_necessary(source(super.hostname), 'SvelteURL.hostname');
-	#port = tag_if_necessary(source(super.port), 'SvelteURL.port');
-	#pathname = tag_if_necessary(source(super.pathname), 'SvelteURL.pathname');
-	#hash = tag_if_necessary(source(super.hash), 'SvelteURL.hash');
-	#search = tag_if_necessary(source(super.search), 'SvelteURL.search');
+	#protocol = source(super.protocol);
+	#username = source(super.username);
+	#password = source(super.password);
+	#hostname = source(super.hostname);
+	#port = source(super.port);
+	#pathname = source(super.pathname);
+	#hash = source(super.hash);
+	#search = source(super.search);
 	#searchParams;
 
 	/**
@@ -56,6 +57,17 @@ export class SvelteURL extends URL {
 	constructor(url, base) {
 		url = new URL(url, base);
 		super(url);
+
+		if (DEV) {
+			tag(this.#protocol, 'SvelteURL.protocol');
+			tag(this.#username, 'SvelteURL.username');
+			tag(this.#password, 'SvelteURL.password');
+			tag(this.#hostname, 'SvelteURL.hostname');
+			tag(this.#port, 'SvelteURL.port');
+			tag(this.#pathname, 'SvelteURL.pathname');
+			tag(this.#hash, 'SvelteURL.hash');
+			tag(this.#search, 'SvelteURL.search');
+		}
 
 		current_url = this;
 		this.#searchParams = new SvelteURLSearchParams(url.searchParams);

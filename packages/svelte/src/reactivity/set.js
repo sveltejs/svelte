@@ -1,8 +1,9 @@
 /** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
+import { tag } from '../internal/client/dev/tracing.js';
 import { get } from '../internal/client/runtime.js';
-import { increment, tag_if_necessary } from './utils.js';
+import { increment } from './utils.js';
 
 var read_methods = ['forEach', 'isDisjointFrom', 'isSubsetOf', 'isSupersetOf'];
 var set_like_methods = ['difference', 'intersection', 'symmetricDifference', 'union'];
@@ -47,8 +48,8 @@ var inited = false;
 export class SvelteSet extends Set {
 	/** @type {Map<T, Source<boolean>>} */
 	#sources = new Map();
-	#version = tag_if_necessary(source(0), 'SvelteSet version');
-	#size = tag_if_necessary(source(0), 'SvelteSet.size');
+	#version = source(0);
+	#size = source(0);
 
 	/**
 	 * @param {Iterable<T> | null | undefined} [value]
@@ -56,8 +57,13 @@ export class SvelteSet extends Set {
 	constructor(value) {
 		super();
 
-		// If the value is invalid then the native exception will fire here
-		if (DEV) value = new Set(value);
+		if (DEV) {
+			// If the value is invalid then the native exception will fire here
+			value = new Set(value);
+
+			tag(this.#version, 'SvelteSet version');
+			tag(this.#size, 'SvelteSet.size');
+		}
 
 		if (value) {
 			for (var element of value) {
@@ -110,10 +116,13 @@ export class SvelteSet extends Set {
 				return false;
 			}
 
-			s = tag_if_necessary(
-				source(true),
-				`SvelteSet Entry [${typeof value === 'symbol' ? `Symbol(${value.description})` : value}]`
-			);
+			s = source(true);
+
+			if (DEV) {
+				var label = `SvelteSet Entry [${typeof value === 'symbol' ? `Symbol(${value.description})` : value}]`;
+				tag(s, label);
+			}
+
 			sources.set(value, s);
 		}
 
