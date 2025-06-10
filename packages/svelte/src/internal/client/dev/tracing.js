@@ -2,7 +2,7 @@
 import { UNINITIALIZED } from '../../../constants.js';
 import { snapshot } from '../../shared/clone.js';
 import { define_property } from '../../shared/utils.js';
-import { DERIVED, STATE_SYMBOL } from '#client/constants';
+import { DERIVED, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { effect_tracking } from '../reactivity/effects.js';
 import { active_reaction, captured_signals, set_captured_signals, untrack } from '../runtime.js';
 
@@ -43,7 +43,7 @@ function log_entry(signal, entry) {
 	const type = (signal.f & DERIVED) !== 0 ? '$derived' : '$state';
 	const current_reaction = /** @type {Reaction} */ (active_reaction);
 	const dirty = signal.wv > current_reaction.wv || current_reaction.wv === 0;
-	const { trace_name: name } = signal;
+	const { label: name } = signal;
 	const style = dirty
 		? 'color: CornflowerBlue; font-weight: bold'
 		: 'color: grey; font-weight: normal';
@@ -183,11 +183,23 @@ export function get_stack(label) {
 
 /**
  * @param {Value} source
- * @param {string} name
+ * @param {string} label
  */
-export function tag(source, name) {
-	source.trace_name = name;
+export function tag(source, label) {
+	source.label = label;
+	tag_proxy(source.v, label);
+
 	return source;
+}
+
+/**
+ * @param {unknown} value
+ * @param {string} label
+ */
+export function tag_proxy(value, label) {
+	// @ts-expect-error
+	value?.[PROXY_PATH_SYMBOL]?.(label);
+	return value;
 }
 
 /**

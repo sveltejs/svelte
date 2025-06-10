@@ -9,7 +9,6 @@ import { get_rune } from '../../../scope.js';
 import { get_prop_source, is_prop_source, is_state_source, should_proxy } from '../utils.js';
 import { is_hoisted_function } from '../../utils.js';
 import { get_value } from './shared/declarations.js';
-import { PROXY_REMOVE_PATH } from '#client/constants';
 
 /**
  * @param {VariableDeclaration} node
@@ -90,12 +89,11 @@ export function VariableDeclaration(node, context) {
 								binding.kind === 'bindable_prop' &&
 								should_proxy(initial, context.state.scope)
 							) {
-								initial = b.call(
-									'$.proxy',
-									initial,
-									dev ? b.literal(id.name) : undefined,
-									dev ? b.literal(PROXY_REMOVE_PATH) : undefined
-								);
+								initial = b.call('$.proxy', initial);
+
+								if (dev) {
+									initial = b.call('$.tag_proxy', initial, b.literal(id.name));
+								}
 							}
 
 							if (is_prop_source(binding, context.state)) {
@@ -136,20 +134,23 @@ export function VariableDeclaration(node, context) {
 					);
 					const is_state = is_state_source(binding, context.state.analysis);
 					const is_proxy = should_proxy(value, context.state.scope);
+
 					if (rune === '$state' && is_proxy) {
-						value = b.call(
-							'$.proxy',
-							value,
-							dev ? b.literal(id.name) : undefined,
-							dev ? b.literal(PROXY_REMOVE_PATH) : undefined
-						);
+						value = b.call('$.proxy', value);
+
+						if (dev && !is_state) {
+							value = b.call('$.tag_proxy', value, b.literal(id.name));
+						}
 					}
+
 					if (is_state) {
 						value = b.call('$.state', value);
+
+						if (dev) {
+							value = b.call('$.tag', value, b.literal(id.name));
+						}
 					}
-					if (dev && is_state) {
-						value = b.call('$.tag', value, b.literal(id.name));
-					}
+
 					return value;
 				};
 
