@@ -15,7 +15,6 @@
 						"end": 36,
 						"type": "Action",
 						"name": "tooltip",
-						"modifiers": [],
 						"expression": {
 							"type": "Literal",
 							"start": 21,
@@ -32,7 +31,8 @@
 							},
 							"value": "tooltip msg",
 							"raw": "'tooltip msg'"
-						}
+						},
+						"modifiers": []
 					}
 				],
 				"children": []
