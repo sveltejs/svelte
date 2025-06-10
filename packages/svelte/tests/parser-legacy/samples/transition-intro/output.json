@@ -15,7 +15,6 @@
 						"end": 30,
 						"type": "Transition",
 						"name": "style",
-						"modifiers": [],
 						"expression": {
 							"type": "ObjectExpression",
 							"start": 16,
@@ -85,6 +84,7 @@
 								}
 							]
 						},
+						"modifiers": [],
 						"intro": true,
 						"outro": false
 					}

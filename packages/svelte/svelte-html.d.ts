@@ -8,7 +8,7 @@ import * as svelteElements from './elements.js';
 /**
  * @internal do not use
  */
-type HTMLProps<Property extends keyof svelteElements.SvelteHTMLElements, Override> = Omit<
+type HTMLProps<Property extends string, Override> = Omit<
 	import('./elements.js').SvelteHTMLElements[Property],
 	keyof Override
 > &
@@ -250,7 +250,7 @@ declare global {
 			};
 			// don't type svelte:options, it would override the types in svelte/elements and it isn't extendable anyway
 
-			[name: string & {}]: { [name: string]: any };
+			[name: string]: { [name: string]: any };
 		}
 	}
 }

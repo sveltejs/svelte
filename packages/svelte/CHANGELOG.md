@@ -1,5 +1,47 @@
 # svelte
 
+## 5.33.18
+
+### Patch Changes
+
+- chore: bump `esrap` dependency ([#16106](https://github.com/sveltejs/svelte/pull/16106))
+
+- fix: destructuring state in ssr ([#16102](https://github.com/sveltejs/svelte/pull/16102))
+
+## 5.33.17
+
+### Patch Changes
+
+- chore: update acorn parser `ecmaVersion` to parse import attributes ([#16098](https://github.com/sveltejs/svelte/pull/16098))
+
+## 5.33.16
+
+### Patch Changes
+
+- fix: visit expression when destructuring state declarations ([#16081](https://github.com/sveltejs/svelte/pull/16081))
+
+- fix: move xmlns attribute from SVGAttributes to to DOMAttributes ([#16080](https://github.com/sveltejs/svelte/pull/16080))
+
+## 5.33.15
+
+### Patch Changes
+
+- fix: invoke parent boundary of deriveds that throw ([#16091](https://github.com/sveltejs/svelte/pull/16091))
+
+## 5.33.14
+
+### Patch Changes
+
+- Revert "feat: enable TS autocomplete for Svelte HTML element definitions" ([#16063](https://github.com/sveltejs/svelte/pull/16063))
+
+- fix: destructuring snippet arguments ([#16068](https://github.com/sveltejs/svelte/pull/16068))
+
+## 5.33.13
+
+### Patch Changes
+
+- fix: avoid recursion error in `EachBlock` visitor ([#16058](https://github.com/sveltejs/svelte/pull/16058))
+
 ## 5.33.12
 
 ### Patch Changes

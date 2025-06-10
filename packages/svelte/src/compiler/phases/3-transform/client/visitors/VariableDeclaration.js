@@ -164,7 +164,7 @@ export function VariableDeclaration(node, context) {
 					const { inserts, paths } = extract_paths(declarator.id, tmp);
 
 					declarations.push(
-						b.declarator(tmp, value),
+						b.declarator(tmp, /** @type {Expression} */ (context.visit(value))),
 						...inserts.map(({ id, value }) => {
 							id.name = context.state.scope.generate('$$array');
 							context.state.transform[id.name] = { read: get_value };

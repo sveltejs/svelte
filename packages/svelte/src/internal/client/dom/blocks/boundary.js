@@ -2,14 +2,13 @@
 
 import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT } from '#client/constants';
 import { component_context, set_component_context } from '../../context.js';
+import { invoke_error_boundary } from '../../error-handling.js';
 import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
 import {
 	active_effect,
 	active_reaction,
-	handle_error,
 	set_active_effect,
-	set_active_reaction,
-	reset_is_throwing_error
+	set_active_reaction
 } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -80,11 +79,17 @@ export function boundary(node, props, boundary_fn) {
 				with_boundary(boundary, () => {
 					is_creating_fallback = false;
 					boundary_effect = branch(() => boundary_fn(anchor));
-					reset_is_throwing_error();
 				});
 			};
 
-			onerror?.(error, reset);
+			var previous_reaction = active_reaction;
+
+			try {
+				set_active_reaction(null);
+				onerror?.(error, reset);
+			} finally {
+				set_active_reaction(previous_reaction);
+			}
 
 			if (boundary_effect) {
 				destroy_effect(boundary_effect);
@@ -109,10 +114,9 @@ export function boundary(node, props, boundary_fn) {
 								);
 							});
 						} catch (error) {
-							handle_error(error, boundary, null, boundary.ctx);
+							invoke_error_boundary(error, /** @type {Effect} */ (boundary.parent));
 						}
 
-						reset_is_throwing_error();
 						is_creating_fallback = false;
 					});
 				});
@@ -124,7 +128,6 @@ export function boundary(node, props, boundary_fn) {
 		}
 
 		boundary_effect = branch(() => boundary_fn(anchor));
-		reset_is_throwing_error();
 	}, EFFECT_TRANSPARENT | BOUNDARY_EFFECT);
 
 	if (hydrating) {

@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Statement, Expression } from 'estree' */
+/** @import { BlockStatement, Statement, Expression, FunctionDeclaration, VariableDeclaration, ArrowFunctionExpression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
@@ -34,62 +34,61 @@ export function SvelteBoundary(node, context) {
 	const nodes = [];
 
 	/** @type {Statement[]} */
-	const external_statements = [];
+	const const_tags = [];
 
 	/** @type {Statement[]} */
-	const internal_statements = [];
+	const hoisted = [];
 
-	const snippets_visits = [];
-
-	// Capture the `failed` implicit snippet prop
+	// const tags need to live inside the boundary, but might also be referenced in hoisted snippets.
+	// to resolve this we cheat: we duplicate const tags inside snippets
 	for (const child of node.fragment.nodes) {
-		if (child.type === 'SnippetBlock' && child.expression.name === 'failed') {
-			// we need to delay the visit of the snippets in case they access a ConstTag that is declared
-			// after the snippets so that the visitor for the const tag can be updated
-			snippets_visits.push(() => {
-				/** @type {Statement[]} */
-				const init = [];
-				context.visit(child, { ...context.state, init });
-				props.properties.push(b.prop('init', child.expression, child.expression));
-				external_statements.push(...init);
-			});
-		} else if (child.type === 'ConstTag') {
-			/** @type {Statement[]} */
-			const init = [];
-			context.visit(child, { ...context.state, init });
-
-			if (dev) {
-				// In dev we must separate the declarations from the code
-				// that eagerly evaluate the expression...
-				for (const statement of init) {
-					if (statement.type === 'VariableDeclaration') {
-						external_statements.push(statement);
-					} else {
-						internal_statements.push(statement);
-					}
-				}
-			} else {
-				external_statements.push(...init);
-			}
-		} else {
-			nodes.push(child);
+		if (child.type === 'ConstTag') {
+			context.visit(child, { ...context.state, init: const_tags });
 		}
 	}
 
-	snippets_visits.forEach((visit) => visit());
+	for (const child of node.fragment.nodes) {
+		if (child.type === 'ConstTag') {
+			continue;
+		}
+
+		if (child.type === 'SnippetBlock') {
+			/** @type {Statement[]} */
+			const statements = [];
+
+			context.visit(child, { ...context.state, init: statements });
+
+			const snippet = /** @type {VariableDeclaration} */ (statements[0]);
+
+			const snippet_fn = dev
+				? // @ts-expect-error we know this shape is correct
+					snippet.declarations[0].init.arguments[1]
+				: snippet.declarations[0].init;
+
+			snippet_fn.body.body.unshift(
+				...const_tags.filter((node) => node.type === 'VariableDeclaration')
+			);
+
+			hoisted.push(snippet);
+
+			if (child.expression.name === 'failed') {
+				props.properties.push(b.prop('init', child.expression, child.expression));
+			}
+
+			continue;
+		}
+
+		nodes.push(child);
+	}
 
 	const block = /** @type {BlockStatement} */ (context.visit({ ...node.fragment, nodes }));
 
-	if (dev && internal_statements.length) {
-		block.body.unshift(...internal_statements);
-	}
+	block.body.unshift(...const_tags);
 
 	const boundary = b.stmt(
 		b.call('$.boundary', context.state.node, props, b.arrow([b.id('$$anchor')], block))
 	);
 
 	context.state.template.push_comment();
-	context.state.init.push(
-		external_statements.length > 0 ? b.block([...external_statements, boundary]) : boundary
-	);
+	context.state.init.push(hoisted.length > 0 ? b.block([...hoisted, boundary]) : boundary);
 }

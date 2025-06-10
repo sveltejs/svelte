@@ -77,6 +77,9 @@ export function EachBlock(node, context) {
  * @returns {void}
  */
 function collect_transitive_dependencies(binding, bindings) {
+	if (bindings.has(binding)) {
+		return;
+	}
 	bindings.add(binding);
 
 	if (binding.kind === 'legacy_reactive') {

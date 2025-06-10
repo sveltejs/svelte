@@ -22,7 +22,6 @@
 						"end": 53,
 						"type": "Binding",
 						"name": "this",
-						"modifiers": [],
 						"expression": {
 							"type": "Identifier",
 							"start": 49,
@@ -38,7 +37,8 @@
 								}
 							},
 							"name": "foo"
-						}
+						},
+						"modifiers": []
 					}
 				],
 				"children": []
