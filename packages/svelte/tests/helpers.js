@@ -192,3 +192,28 @@ if (typeof window !== 'undefined') {
 }
 
 export const fragments = /** @type {'html' | 'tree'} */ (process.env.FRAGMENTS) ?? 'html';
+
+/**
+ * @param {any[]} logs
+ */
+export function normalise_trace_logs(logs) {
+	let normalised = [];
+	for (let i = 0; i < logs.length; i++) {
+		const log = logs[i];
+
+		if (typeof log === 'string' && log.includes('%c')) {
+			const split = log.split('%c');
+			console.log({ split });
+			normalised.push({
+				log: (split[0].length !== 0 ? split[0] : split[1]).trim(),
+				highlighted: logs[i + 1] === 'color: CornflowerBlue; font-weight: bold'
+			});
+			i++;
+		} else if (log instanceof Error) {
+			continue;
+		} else {
+			normalised.push({ log });
+		}
+	}
+	return normalised;
+}

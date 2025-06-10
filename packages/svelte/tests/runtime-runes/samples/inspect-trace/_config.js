@@ -1,29 +1,6 @@
 import { flushSync } from 'svelte';
 import { test } from '../../test';
-
-/**
- * @param {any[]} logs
- */
-function normalise_trace_logs(logs) {
-	let normalised = [];
-	for (let i = 0; i < logs.length; i++) {
-		const log = logs[i];
-
-		if (typeof log === 'string' && log.includes('%c')) {
-			const split = log.split('%c');
-			normalised.push({
-				log: (split[0].length !== 0 ? split[0] : split[1]).trim(),
-				highlighted: logs[i + 1] === 'color: CornflowerBlue; font-weight: bold'
-			});
-			i++;
-		} else if (log instanceof Error) {
-			continue;
-		} else {
-			normalised.push({ log });
-		}
-	}
-	return normalised;
-}
+import { normalise_trace_logs } from '../../../helpers.js';
 
 export default test({
 	compileOptions: {
@@ -35,7 +12,7 @@ export default test({
 
 		assert.deepEqual(normalise_trace_logs(logs), [
 			{ log: 'effect', highlighted: false },
-			{ log: 'double — $derived', highlighted: true },
+			{ log: '$derived', highlighted: true },
 			{ log: 0 },
 			{ log: 'count — $state', highlighted: true },
 			{ log: 0 },
