@@ -24,21 +24,20 @@ import { tracing_mode_flag } from '../flags/index.js';
  * @template T
  * @param {T} value
  * @param {string} [path]
- * @param {number} [path_preservation]
+ * @param {PROXY_CHANGE_PATH | PROXY_PRESERVE_PATH} path_preservation
  * @returns {T}
  */
 export function proxy(value, path, path_preservation = PROXY_PRESERVE_PATH) {
 	// if `DEV`, change the proxy `path` since we don't know if its still "owned" by its original source
 	if (
 		DEV &&
-		(path_preservation & PROXY_PRESERVE_PATH) === 0 &&
+		(path_preservation & PROXY_CHANGE_PATH) !== 0 &&
 		typeof value === 'object' &&
 		value !== null &&
 		STATE_SYMBOL in value &&
 		PROXY_PATH_SYMBOL in value
 	) {
-		value[PROXY_PATH_SYMBOL] =
-			(path_preservation & PROXY_CHANGE_PATH) === 0 ? '[$state proxy]' : path;
+		value[PROXY_PATH_SYMBOL] = path;
 	}
 	// if non-proxyable, or is already a proxy, return `value`
 	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {
