@@ -43,14 +43,15 @@ function log_entry(signal, entry) {
 	const type = (signal.f & DERIVED) !== 0 ? '$derived' : '$state';
 	const current_reaction = /** @type {Reaction} */ (active_reaction);
 	const dirty = signal.wv > current_reaction.wv || current_reaction.wv === 0;
-	const { label: name } = signal;
 	const style = dirty
 		? 'color: CornflowerBlue; font-weight: bold'
 		: 'color: grey; font-weight: normal';
+
 	// eslint-disable-next-line no-console
 	console.groupCollapsed(
-		typeof name === 'string' ? `%c${name} — ${type}` : `%c${type}`,
+		signal.label ? `%c${type}%c ${signal.label}` : `%c${type}%c`,
 		style,
+		dirty ? 'font-weight: normal' : style,
 		typeof value === 'object' && value !== null && STATE_SYMBOL in value
 			? snapshot(value, true)
 			: value
