@@ -67,13 +67,6 @@ export function proxy(value) {
 	/** Used in dev for $inspect.trace() */
 	var path = '';
 
-	/** @param {string | symbol} prop */
-	function to_trace_name(prop) {
-		if (typeof prop === 'symbol') return `${path}[Symbol(${prop.description ?? ''})]`;
-		if (regex_is_valid_identifier.test(prop)) return `${path}.${prop}`;
-		return /^\d+$/.test(prop) ? `${path}[${prop}]` : `${path}['${prop}']`;
-	}
-
 	/** @param {string} new_path */
 	function update_path(new_path) {
 		path = new_path;
@@ -82,7 +75,7 @@ export function proxy(value) {
 
 		// rename all child sources and child proxies
 		for (const [prop, source] of sources) {
-			var label = to_trace_name(prop);
+			var label = get_label(path, prop);
 
 			tag(source, label);
 			tag_proxy(source.v, label);
@@ -111,14 +104,14 @@ export function proxy(value) {
 				sources.set(prop, s);
 
 				if (DEV && typeof prop === 'string') {
-					tag(s, to_trace_name(prop));
+					tag(s, get_label(path, prop));
 				}
 			} else {
 				var p = with_parent(() => proxy(descriptor.value));
 				set(s, p);
 
 				if (DEV) {
-					tag_proxy(p, to_trace_name(prop));
+					tag_proxy(p, get_label(path, prop));
 				}
 			}
 
@@ -135,7 +128,7 @@ export function proxy(value) {
 					update_version(version);
 
 					if (DEV) {
-						tag(s, to_trace_name(prop));
+						tag(s, get_label(path, prop));
 					}
 				}
 			} else {
@@ -175,7 +168,7 @@ export function proxy(value) {
 					var s = source(p, stack);
 
 					if (DEV) {
-						var label = to_trace_name(prop);
+						var label = get_label(path, prop);
 						tag(s, label);
 						tag_proxy(p, label);
 					}
@@ -235,7 +228,7 @@ export function proxy(value) {
 						var s = source(p, stack);
 
 						if (DEV) {
-							var label = to_trace_name(prop);
+							var label = get_label(path, prop);
 							tag(s, label);
 							tag_proxy(p, label);
 						}
@@ -270,8 +263,11 @@ export function proxy(value) {
 						// else a later read of the property would result in a source being created with
 						// the value of the original item at that index.
 						other_s = with_parent(() => source(UNINITIALIZED, stack));
-						other_s = DEV ? tag(other_s, to_trace_name(i)) : other_s;
 						sources.set(i + '', other_s);
+
+						if (DEV) {
+							tag(other_s, get_label(path, i));
+						}
 					}
 				}
 			}
@@ -286,7 +282,7 @@ export function proxy(value) {
 					var p = with_parent(() => proxy(value));
 
 					if (DEV) {
-						var label = to_trace_name(prop);
+						var label = get_label(path, prop);
 						tag(s, label);
 						tag_proxy(p, label);
 					}
@@ -300,7 +296,7 @@ export function proxy(value) {
 				p = with_parent(() => proxy(value));
 
 				if (DEV) {
-					tag_proxy(p, to_trace_name(prop));
+					tag_proxy(p, get_label(path, prop));
 				}
 
 				set(s, p);
@@ -354,6 +350,16 @@ export function proxy(value) {
 			e.state_prototype_fixed();
 		}
 	});
+}
+
+/**
+ * @param {string} path
+ * @param {string | symbol} prop
+ */
+function get_label(path, prop) {
+	if (typeof prop === 'symbol') return `${path}[Symbol(${prop.description ?? ''})]`;
+	if (regex_is_valid_identifier.test(prop)) return `${path}.${prop}`;
+	return /^\d+$/.test(prop) ? `${path}[${prop}]` : `${path}['${prop}']`;
 }
 
 /**
