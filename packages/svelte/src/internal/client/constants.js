@@ -22,12 +22,6 @@ export const HEAD_EFFECT = 1 << 19;
 export const EFFECT_HAS_DERIVED = 1 << 20;
 export const EFFECT_IS_UPDATING = 1 << 21;
 
-// `$inspect.trace` proxy path flags
-/** Keep path the same */
-export const PROXY_PRESERVE_PATH = 1 << 1;
-/** Change proxy path to new "owner" */
-export const PROXY_CHANGE_PATH = 1 << 2;
-
 export const STATE_SYMBOL = Symbol('$state');
 export const LEGACY_PROPS = Symbol('legacy props');
 export const LOADING_ATTR_SYMBOL = Symbol('');

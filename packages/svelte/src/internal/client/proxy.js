@@ -9,12 +9,7 @@ import {
 	object_prototype
 } from '../shared/utils.js';
 import { state as source, set } from './reactivity/sources.js';
-import {
-	PROXY_CHANGE_PATH,
-	PROXY_PATH_SYMBOL,
-	PROXY_PRESERVE_PATH,
-	STATE_SYMBOL
-} from '#client/constants';
+import { PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 import { get_stack, tag } from './dev/tracing.js';
@@ -24,14 +19,14 @@ import { tracing_mode_flag } from '../flags/index.js';
  * @template T
  * @param {T} value
  * @param {string} [path]
- * @param {PROXY_CHANGE_PATH | PROXY_PRESERVE_PATH} path_preservation
+ * @param {boolean} change_path
  * @returns {T}
  */
-export function proxy(value, path, path_preservation = PROXY_PRESERVE_PATH) {
+export function proxy(value, path, change_path = false) {
 	// if `DEV`, change the proxy `path` since we don't know if its still "owned" by its original source
 	if (
 		DEV &&
-		(path_preservation & PROXY_CHANGE_PATH) !== 0 &&
+		change_path &&
 		typeof value === 'object' &&
 		value !== null &&
 		STATE_SYMBOL in value &&
@@ -270,7 +265,7 @@ export function proxy(value, path, path_preservation = PROXY_PRESERVE_PATH) {
 					s = DEV ? tag(s, to_trace_name(prop)) : s;
 					set(
 						s,
-						with_parent(() => proxy(value, to_trace_name(prop), PROXY_CHANGE_PATH))
+						with_parent(() => proxy(value, to_trace_name(prop), true))
 					);
 					sources.set(prop, s);
 				}
@@ -278,7 +273,7 @@ export function proxy(value, path, path_preservation = PROXY_PRESERVE_PATH) {
 				has = s.v !== UNINITIALIZED;
 				set(
 					s,
-					with_parent(() => proxy(value, to_trace_name(prop), PROXY_CHANGE_PATH))
+					with_parent(() => proxy(value, to_trace_name(prop), true))
 				);
 			}
 
