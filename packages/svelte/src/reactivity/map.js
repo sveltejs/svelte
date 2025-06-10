@@ -1,7 +1,7 @@
 /** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
 import { set, source } from '../internal/client/reactivity/sources.js';
-import { tag } from '../internal/client/dev/tracing.js';
+import { label, tag } from '../internal/client/dev/tracing.js';
 import { get } from '../internal/client/runtime.js';
 import { increment } from './utils.js';
 
@@ -90,8 +90,7 @@ export class SvelteMap extends Map {
 				s = source(0);
 
 				if (DEV) {
-					var label = `SvelteMap Entry [${typeof key === 'symbol' ? `Symbol(${key.description})` : key}]`;
-					tag(s, label);
+					tag(s, `SvelteMap get(${label(key)})`);
 				}
 
 				sources.set(key, s);
@@ -127,8 +126,7 @@ export class SvelteMap extends Map {
 				s = source(0);
 
 				if (DEV) {
-					var label = `SvelteMap Entry [${typeof key === 'symbol' ? `Symbol(${key.description})` : key}]`;
-					tag(s, label);
+					tag(s, `SvelteMap get(${label(key)})`);
 				}
 
 				sources.set(key, s);
@@ -159,8 +157,7 @@ export class SvelteMap extends Map {
 			s = source(0);
 
 			if (DEV) {
-				var label = `SvelteMap Entry [${typeof key === 'symbol' ? `Symbol(${key.description})` : key}]`;
-				tag(s, label);
+				tag(s, `SvelteMap get(${label(key)})`);
 			}
 
 			sources.set(key, s);
@@ -225,8 +222,7 @@ export class SvelteMap extends Map {
 					var s = source(0);
 
 					if (DEV) {
-						var label = `SvelteMap Entry [${typeof key === 'symbol' ? `Symbol(${key.description})` : key}]`;
-						tag(s, label);
+						tag(s, `SvelteMap get(${label(key)})`);
 					}
 
 					sources.set(key, s);

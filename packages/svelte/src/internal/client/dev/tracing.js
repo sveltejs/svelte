@@ -189,3 +189,13 @@ export function tag(source, name) {
 	source.trace_name = name;
 	return source;
 }
+
+/**
+ * @param {unknown} value
+ */
+export function label(value) {
+	if (typeof value === 'symbol') return `Symbol(${value.description})`;
+	if (typeof value === 'function') return '<function>';
+	if (typeof value === 'object' && value) return '<object>';
+	return String(value);
+}

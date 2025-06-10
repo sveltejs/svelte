@@ -1,7 +1,7 @@
 /** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
-import { tag } from '../internal/client/dev/tracing.js';
+import { label, tag } from '../internal/client/dev/tracing.js';
 import { get } from '../internal/client/runtime.js';
 import { increment } from './utils.js';
 
@@ -119,8 +119,7 @@ export class SvelteSet extends Set {
 			s = source(true);
 
 			if (DEV) {
-				var label = `SvelteSet Entry [${typeof value === 'symbol' ? `Symbol(${value.description})` : value}]`;
-				tag(s, label);
+				tag(s, `SvelteSet has(${label(value)})`);
 			}
 
 			sources.set(value, s);
