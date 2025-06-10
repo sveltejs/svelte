@@ -1,6 +1,7 @@
 /** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
 import { set, source } from '../internal/client/reactivity/sources.js';
+import { label, tag } from '../internal/client/dev/tracing.js';
 import { get } from '../internal/client/runtime.js';
 import { increment } from './utils.js';
 
@@ -62,8 +63,13 @@ export class SvelteMap extends Map {
 	constructor(value) {
 		super();
 
-		// If the value is invalid then the native exception will fire here
-		if (DEV) value = new Map(value);
+		if (DEV) {
+			// If the value is invalid then the native exception will fire here
+			value = new Map(value);
+
+			tag(this.#version, 'SvelteMap version');
+			tag(this.#size, 'SvelteMap.size');
+		}
 
 		if (value) {
 			for (var [key, v] of value) {
@@ -82,6 +88,11 @@ export class SvelteMap extends Map {
 			var ret = super.get(key);
 			if (ret !== undefined) {
 				s = source(0);
+
+				if (DEV) {
+					tag(s, `SvelteMap get(${label(key)})`);
+				}
+
 				sources.set(key, s);
 			} else {
 				// We should always track the version in case
@@ -113,6 +124,11 @@ export class SvelteMap extends Map {
 			var ret = super.get(key);
 			if (ret !== undefined) {
 				s = source(0);
+
+				if (DEV) {
+					tag(s, `SvelteMap get(${label(key)})`);
+				}
+
 				sources.set(key, s);
 			} else {
 				// We should always track the version in case
@@ -138,7 +154,13 @@ export class SvelteMap extends Map {
 		var version = this.#version;
 
 		if (s === undefined) {
-			sources.set(key, source(0));
+			s = source(0);
+
+			if (DEV) {
+				tag(s, `SvelteMap get(${label(key)})`);
+			}
+
+			sources.set(key, s);
 			set(this.#size, super.size);
 			increment(version);
 		} else if (prev_res !== value) {
@@ -197,12 +219,18 @@ export class SvelteMap extends Map {
 		if (this.#size.v !== sources.size) {
 			for (var key of super.keys()) {
 				if (!sources.has(key)) {
-					sources.set(key, source(0));
+					var s = source(0);
+
+					if (DEV) {
+						tag(s, `SvelteMap get(${label(key)})`);
+					}
+
+					sources.set(key, s);
 				}
 			}
 		}
 
-		for (var [, s] of this.#sources) {
+		for ([, s] of this.#sources) {
 			get(s);
 		}
 	}

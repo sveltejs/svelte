@@ -192,3 +192,44 @@ if (typeof window !== 'undefined') {
 }
 
 export const fragments = /** @type {'html' | 'tree'} */ (process.env.FRAGMENTS) ?? 'html';
+
+/**
+ * @param {any[]} logs
+ */
+export function normalise_trace_logs(logs) {
+	let normalised = [];
+
+	logs = logs.slice();
+
+	while (logs.length > 0) {
+		const log = logs.shift();
+
+		if (log instanceof Error) {
+			continue;
+		}
+
+		if (typeof log === 'string' && log.includes('%c')) {
+			const split = log.split('%c');
+
+			const first = /** @type {string} */ (split.shift()).trim();
+			if (first) normalised.push({ log: first });
+
+			while (split.length > 0) {
+				const log = /** @type {string} */ (split.shift()).trim();
+				const highlighted = logs.shift() === 'color: CornflowerBlue; font-weight: bold';
+
+				// omit timings, as they will differ between runs
+				if (/\(.+ms\)/.test(log)) continue;
+
+				normalised.push({
+					log,
+					highlighted
+				});
+			}
+		} else {
+			normalised.push({ log });
+		}
+	}
+
+	return normalised;
+}

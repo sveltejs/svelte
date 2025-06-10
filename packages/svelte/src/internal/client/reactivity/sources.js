@@ -31,7 +31,7 @@ import {
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
-import { get_stack } from '../dev/tracing.js';
+import { get_stack, tag_proxy } from '../dev/tracing.js';
 import { component_context, is_runes } from '../context.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
@@ -140,6 +140,10 @@ export function set(source, value, should_proxy = false) {
 	}
 
 	let new_value = should_proxy ? proxy(value) : value;
+
+	if (DEV) {
+		tag_proxy(new_value, /** @type {string} */ (source.label));
+	}
 
 	return internal_set(source, new_value);
 }

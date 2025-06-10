@@ -9,11 +9,14 @@ import {
 	object_prototype
 } from '../shared/utils.js';
 import { state as source, set } from './reactivity/sources.js';
-import { STATE_SYMBOL } from '#client/constants';
+import { PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
-import { get_stack } from './dev/tracing.js';
+import { get_stack, tag } from './dev/tracing.js';
 import { tracing_mode_flag } from '../flags/index.js';
+
+// TODO move all regexes into shared module?
+const regex_is_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
 
 /**
  * @template T
@@ -61,6 +64,21 @@ export function proxy(value) {
 		sources.set('length', source(/** @type {any[]} */ (value).length, stack));
 	}
 
+	/** Used in dev for $inspect.trace() */
+	var path = '';
+
+	/** @param {string} new_path */
+	function update_path(new_path) {
+		path = new_path;
+
+		tag(version, `${path} version`);
+
+		// rename all child sources and child proxies
+		for (const [prop, source] of sources) {
+			tag(source, get_label(path, prop));
+		}
+	}
+
 	return new Proxy(/** @type {any} */ (value), {
 		defineProperty(_, prop, descriptor) {
 			if (
@@ -76,17 +94,20 @@ export function proxy(value) {
 				e.state_descriptors_fixed();
 			}
 
-			var s = sources.get(prop);
+			with_parent(() => {
+				var s = sources.get(prop);
 
-			if (s === undefined) {
-				s = with_parent(() => source(descriptor.value, stack));
-				sources.set(prop, s);
-			} else {
-				set(
-					s,
-					with_parent(() => proxy(descriptor.value))
-				);
-			}
+				if (s === undefined) {
+					s = source(descriptor.value, stack);
+					sources.set(prop, s);
+
+					if (DEV && typeof prop === 'string') {
+						tag(s, get_label(path, prop));
+					}
+				} else {
+					set(s, descriptor.value, true);
+				}
+			});
 
 			return true;
 		},
@@ -96,11 +117,13 @@ export function proxy(value) {
 
 			if (s === undefined) {
 				if (prop in target) {
-					sources.set(
-						prop,
-						with_parent(() => source(UNINITIALIZED, stack))
-					);
+					const s = with_parent(() => source(UNINITIALIZED, stack));
+					sources.set(prop, s);
 					update_version(version);
+
+					if (DEV) {
+						tag(s, get_label(path, prop));
+					}
 				}
 			} else {
 				// When working with arrays, we need to also ensure we update the length when removing
@@ -125,12 +148,26 @@ export function proxy(value) {
 				return value;
 			}
 
+			if (DEV && prop === PROXY_PATH_SYMBOL) {
+				return update_path;
+			}
+
 			var s = sources.get(prop);
 			var exists = prop in target;
 
 			// create a source, but only if it's an own property and not a prototype property
 			if (s === undefined && (!exists || get_descriptor(target, prop)?.writable)) {
-				s = with_parent(() => source(proxy(exists ? target[prop] : UNINITIALIZED), stack));
+				s = with_parent(() => {
+					var p = proxy(exists ? target[prop] : UNINITIALIZED);
+					var s = source(p, stack);
+
+					if (DEV) {
+						tag(s, get_label(path, prop));
+					}
+
+					return s;
+				});
+
 				sources.set(prop, s);
 			}
 
@@ -178,7 +215,17 @@ export function proxy(value) {
 				(active_effect !== null && (!has || get_descriptor(target, prop)?.writable))
 			) {
 				if (s === undefined) {
-					s = with_parent(() => source(has ? proxy(target[prop]) : UNINITIALIZED, stack));
+					s = with_parent(() => {
+						var p = has ? proxy(target[prop]) : UNINITIALIZED;
+						var s = source(p, stack);
+
+						if (DEV) {
+							tag(s, get_label(path, prop));
+						}
+
+						return s;
+					});
+
 					sources.set(prop, s);
 				}
 
@@ -207,6 +254,10 @@ export function proxy(value) {
 						// the value of the original item at that index.
 						other_s = with_parent(() => source(UNINITIALIZED, stack));
 						sources.set(i + '', other_s);
+
+						if (DEV) {
+							tag(other_s, get_label(path, i));
+						}
 					}
 				}
 			}
@@ -217,19 +268,23 @@ export function proxy(value) {
 			// object property before writing to that property.
 			if (s === undefined) {
 				if (!has || get_descriptor(target, prop)?.writable) {
-					s = with_parent(() => source(undefined, stack));
-					set(
-						s,
-						with_parent(() => proxy(value))
-					);
+					s = with_parent(() => {
+						var s = source(undefined, stack);
+						set(s, proxy(value));
+						return s;
+					});
+
 					sources.set(prop, s);
+
+					if (DEV) {
+						tag(s, get_label(path, prop));
+					}
 				}
 			} else {
 				has = s.v !== UNINITIALIZED;
-				set(
-					s,
-					with_parent(() => proxy(value))
-				);
+
+				var p = with_parent(() => proxy(value));
+				set(s, p);
 			}
 
 			var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
@@ -280,6 +335,16 @@ export function proxy(value) {
 			e.state_prototype_fixed();
 		}
 	});
+}
+
+/**
+ * @param {string} path
+ * @param {string | symbol} prop
+ */
+function get_label(path, prop) {
+	if (typeof prop === 'symbol') return `${path}[Symbol(${prop.description ?? ''})]`;
+	if (regex_is_valid_identifier.test(prop)) return `${path}.${prop}`;
+	return /^\d+$/.test(prop) ? `${path}[${prop}]` : `${path}['${prop}']`;
 }
 
 /**
