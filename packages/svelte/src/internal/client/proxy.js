@@ -97,23 +97,20 @@ export function proxy(value) {
 				e.state_descriptors_fixed();
 			}
 
-			var s = sources.get(prop);
+			with_parent(() => {
+				var s = sources.get(prop);
 
-			if (s === undefined) {
-				s = with_parent(() => source(descriptor.value, stack));
-				sources.set(prop, s);
+				if (s === undefined) {
+					s = source(descriptor.value, stack);
+					sources.set(prop, s);
 
-				if (DEV && typeof prop === 'string') {
-					tag(s, get_label(path, prop));
+					if (DEV && typeof prop === 'string') {
+						tag(s, get_label(path, prop));
+					}
+				} else {
+					set(s, descriptor.value, true);
 				}
-			} else {
-				var p = with_parent(() => proxy(descriptor.value));
-				set(s, p);
-
-				if (DEV) {
-					tag_proxy(p, get_label(path, prop));
-				}
-			}
+			});
 
 			return true;
 		},
@@ -278,22 +275,24 @@ export function proxy(value) {
 			// object property before writing to that property.
 			if (s === undefined) {
 				if (!has || get_descriptor(target, prop)?.writable) {
-					s = with_parent(() => source(undefined, stack));
-					var p = with_parent(() => proxy(value));
+					s = with_parent(() => {
+						var s = source(undefined, stack);
+						set(s, proxy(value));
+						return s;
+					});
 
 					if (DEV) {
 						var label = get_label(path, prop);
 						tag(s, label);
-						tag_proxy(p, label);
+						tag_proxy(s.v, label);
 					}
 
-					set(s, p);
 					sources.set(prop, s);
 				}
 			} else {
 				has = s.v !== UNINITIALIZED;
 
-				p = with_parent(() => proxy(value));
+				var p = with_parent(() => proxy(value));
 
 				if (DEV) {
 					tag_proxy(p, get_label(path, prop));
