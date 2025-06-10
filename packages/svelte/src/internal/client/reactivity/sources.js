@@ -280,7 +280,7 @@ function mark_reactions(signal, status) {
 		set_signal_status(reaction, status);
 
 		// If the signal a) was previously clean or b) is an unowned derived, then mark it
-		if ((flags & (CLEAN | UNOWNED | MAYBE_DIRTY)) !== 0) {
+		if ((flags & (CLEAN | UNOWNED)) !== 0) {
 			if ((flags & DERIVED) !== 0) {
 				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
 			} else {
