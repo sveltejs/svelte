@@ -139,7 +139,7 @@ export function set(source, value, should_proxy = false) {
 		e.state_unsafe_mutation();
 	}
 
-	let new_value = should_proxy ? proxy(value, DEV ? source.trace_name : undefined) : value;
+	let new_value = should_proxy ? proxy(value, DEV ? source.label : undefined) : value;
 
 	return internal_set(source, new_value);
 }

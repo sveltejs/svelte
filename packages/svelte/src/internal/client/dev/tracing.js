@@ -43,7 +43,7 @@ function log_entry(signal, entry) {
 	const type = (signal.f & DERIVED) !== 0 ? '$derived' : '$state';
 	const current_reaction = /** @type {Reaction} */ (active_reaction);
 	const dirty = signal.wv > current_reaction.wv || current_reaction.wv === 0;
-	const { trace_name: name } = signal;
+	const { label: name } = signal;
 	const style = dirty
 		? 'color: CornflowerBlue; font-weight: bold'
 		: 'color: grey; font-weight: normal';
@@ -183,10 +183,10 @@ export function get_stack(label) {
 
 /**
  * @param {Value} source
- * @param {string} name
+ * @param {string} label
  */
-export function tag(source, name) {
-	source.trace_name = name;
+export function tag(source, label) {
+	source.label = label;
 	return source;
 }
 

@@ -21,7 +21,7 @@ export interface Value<V = unknown> extends Signal {
 	updated?: Error | null;
 	trace_need_increase?: boolean;
 	trace_v?: V;
-	trace_name?: string;
+	label?: string;
 	debug?: null | (() => void);
 }
 
