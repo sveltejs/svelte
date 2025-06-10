@@ -1,3 +1,4 @@
+/** @import { Source } from '#client' */
 import { DEV } from "esm-env";
 import { tag } from "../internal/client/dev/tracing.js";
 
@@ -11,7 +12,7 @@ export function is_date(obj) {
 
 
 /**
- * @template {import("#client").Source<any>} T
+ * @template {Source<any>} T
  * @param {T} source
  * @param {string} name
  * @returns {T}
