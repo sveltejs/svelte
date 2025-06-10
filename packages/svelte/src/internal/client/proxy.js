@@ -22,15 +22,9 @@ const regex_is_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
  * @template T
  * @param {T} value
  * @param {string} [path]
- * @param {boolean} change_path
  * @returns {T}
  */
-export function proxy(value, path, change_path = false) {
-	if (DEV && change_path) {
-		// @ts-expect-error
-		value?.[PROXY_PATH_SYMBOL]?.(path);
-	}
-
+export function proxy(value, path) {
 	// if non-proxyable, or is already a proxy, return `value`
 	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {
 		return value;
@@ -261,19 +255,28 @@ export function proxy(value, path, change_path = false) {
 			if (s === undefined) {
 				if (!has || get_descriptor(target, prop)?.writable) {
 					s = with_parent(() => source(undefined, stack));
-					s = DEV ? tag(s, to_trace_name(prop)) : s;
-					set(
-						s,
-						with_parent(() => proxy(value, to_trace_name(prop), true))
-					);
+					var p = with_parent(() => proxy(value, to_trace_name(prop)));
+
+					if (DEV) {
+						var label = to_trace_name(prop);
+						tag(s, label);
+						p?.[PROXY_PATH_SYMBOL]?.(label);
+					}
+
+					set(s, p);
 					sources.set(prop, s);
 				}
 			} else {
 				has = s.v !== UNINITIALIZED;
-				set(
-					s,
-					with_parent(() => proxy(value, to_trace_name(prop), true))
-				);
+
+				p = with_parent(() => proxy(value, to_trace_name(prop)));
+
+				if (DEV) {
+					label = to_trace_name(prop);
+					p?.[PROXY_PATH_SYMBOL]?.(label);
+				}
+
+				set(s, p);
 			}
 
 			var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
