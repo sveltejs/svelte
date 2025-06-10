@@ -12,7 +12,7 @@ import { state as source, set } from './reactivity/sources.js';
 import { PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
-import { get_stack, tag, tag_proxy } from './dev/tracing.js';
+import { get_stack, tag } from './dev/tracing.js';
 import { tracing_mode_flag } from '../flags/index.js';
 
 // TODO move all regexes into shared module?
@@ -75,10 +75,7 @@ export function proxy(value) {
 
 		// rename all child sources and child proxies
 		for (const [prop, source] of sources) {
-			var label = get_label(path, prop);
-
-			tag(source, label);
-			tag_proxy(source.v, label);
+			tag(source, get_label(path, prop));
 		}
 	}
 
@@ -165,9 +162,7 @@ export function proxy(value) {
 					var s = source(p, stack);
 
 					if (DEV) {
-						var label = get_label(path, prop);
-						tag(s, label);
-						tag_proxy(p, label);
+						tag(s, get_label(path, prop));
 					}
 
 					return s;
@@ -225,9 +220,7 @@ export function proxy(value) {
 						var s = source(p, stack);
 
 						if (DEV) {
-							var label = get_label(path, prop);
-							tag(s, label);
-							tag_proxy(p, label);
+							tag(s, get_label(path, prop));
 						}
 
 						return s;
@@ -281,23 +274,16 @@ export function proxy(value) {
 						return s;
 					});
 
-					if (DEV) {
-						var label = get_label(path, prop);
-						tag(s, label);
-						tag_proxy(s.v, label);
-					}
-
 					sources.set(prop, s);
+
+					if (DEV) {
+						tag(s, get_label(path, prop));
+					}
 				}
 			} else {
 				has = s.v !== UNINITIALIZED;
 
 				var p = with_parent(() => proxy(value));
-
-				if (DEV) {
-					tag_proxy(p, get_label(path, prop));
-				}
-
 				set(s, p);
 			}
 

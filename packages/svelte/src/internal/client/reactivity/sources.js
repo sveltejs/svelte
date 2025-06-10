@@ -141,7 +141,7 @@ export function set(source, value, should_proxy = false) {
 
 	let new_value = should_proxy ? proxy(value) : value;
 
-	if (DEV && should_proxy) {
+	if (DEV) {
 		tag_proxy(new_value, /** @type {string} */ (source.label));
 	}
 

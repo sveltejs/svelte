@@ -138,7 +138,7 @@ export function VariableDeclaration(node, context) {
 					if (rune === '$state' && is_proxy) {
 						value = b.call('$.proxy', value);
 
-						if (dev) {
+						if (dev && !is_state) {
 							value = b.call('$.tag_proxy', value, b.literal(id.name));
 						}
 					}

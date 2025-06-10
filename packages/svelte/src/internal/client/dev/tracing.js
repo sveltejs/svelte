@@ -187,6 +187,8 @@ export function get_stack(label) {
  */
 export function tag(source, label) {
 	source.label = label;
+	tag_proxy(source.v, label);
+
 	return source;
 }
 
