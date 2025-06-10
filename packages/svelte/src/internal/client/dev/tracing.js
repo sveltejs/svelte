@@ -2,7 +2,7 @@
 import { UNINITIALIZED } from '../../../constants.js';
 import { snapshot } from '../../shared/clone.js';
 import { define_property } from '../../shared/utils.js';
-import { DERIVED, STATE_SYMBOL } from '#client/constants';
+import { DERIVED, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { effect_tracking } from '../reactivity/effects.js';
 import { active_reaction, captured_signals, set_captured_signals, untrack } from '../runtime.js';
 
@@ -188,6 +188,16 @@ export function get_stack(label) {
 export function tag(source, name) {
 	source.trace_name = name;
 	return source;
+}
+
+/**
+ * @param {unknown} value
+ * @param {string} label
+ */
+export function tag_proxy(value, label) {
+	// @ts-expect-error
+	value?.[PROXY_PATH_SYMBOL]?.(label);
+	return value;
 }
 
 /**

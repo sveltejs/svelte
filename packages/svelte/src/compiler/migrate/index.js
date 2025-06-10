@@ -18,7 +18,7 @@ import {
 import { migrate_svelte_ignore } from '../utils/extract_svelte_ignore.js';
 import { validate_component_options } from '../validate-options.js';
 import { is_reserved, is_svg, is_void } from '../../utils.js';
-import { regex_is_valid_identifier } from '../../regexes.js';
+import { regex_is_valid_identifier } from '../phases/patterns.js';
 
 const regex_style_tags = /(<style[^>]+>)([\S\s]*?)(<\/style>)/g;
 const style_placeholder = '/*$$__STYLE_CONTENT__$$*/';

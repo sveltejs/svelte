@@ -89,7 +89,11 @@ export function VariableDeclaration(node, context) {
 								binding.kind === 'bindable_prop' &&
 								should_proxy(initial, context.state.scope)
 							) {
-								initial = b.call('$.proxy', initial, dev && b.literal(id.name));
+								initial = b.call('$.proxy', initial);
+
+								if (dev) {
+									initial = b.call('$.tag_proxy', initial, b.literal(id.name));
+								}
 							}
 
 							if (is_prop_source(binding, context.state)) {
@@ -132,7 +136,11 @@ export function VariableDeclaration(node, context) {
 					const is_proxy = should_proxy(value, context.state.scope);
 
 					if (rune === '$state' && is_proxy) {
-						value = b.call('$.proxy', value, dev && b.literal(id.name));
+						value = b.call('$.proxy', value);
+
+						if (dev) {
+							value = b.call('$.tag_proxy', value, b.literal(id.name));
+						}
 					}
 
 					if (is_state) {
