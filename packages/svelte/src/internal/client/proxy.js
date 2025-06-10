@@ -13,7 +13,6 @@ import {
 	PROXY_CHANGE_PATH,
 	PROXY_PATH_SYMBOL,
 	PROXY_PRESERVE_PATH,
-	PROXY_REMOVE_PATH,
 	STATE_SYMBOL
 } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';

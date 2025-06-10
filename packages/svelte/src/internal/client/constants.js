@@ -27,8 +27,6 @@ export const EFFECT_IS_UPDATING = 1 << 21;
 export const PROXY_PRESERVE_PATH = 1 << 1;
 /** Change proxy path to new "owner" */
 export const PROXY_CHANGE_PATH = 1 << 2;
-/** "Unown" proxy, so its path becomes `[$state proxy]` */
-export const PROXY_REMOVE_PATH = 1 << 3;
 
 export const STATE_SYMBOL = Symbol('$state');
 export const LEGACY_PROPS = Symbol('legacy props');
