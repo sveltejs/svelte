@@ -15,6 +15,9 @@ import * as e from './errors.js';
 import { get_stack, tag } from './dev/tracing.js';
 import { tracing_mode_flag } from '../flags/index.js';
 
+// TODO move all regexes into shared module?
+const regex_is_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
+
 /**
  * @template T
  * @param {T} value
@@ -23,17 +26,11 @@ import { tracing_mode_flag } from '../flags/index.js';
  * @returns {T}
  */
 export function proxy(value, path, change_path = false) {
-	// if `DEV`, change the proxy `path` since we don't know if its still "owned" by its original source
-	if (
-		DEV &&
-		change_path &&
-		typeof value === 'object' &&
-		value !== null &&
-		STATE_SYMBOL in value &&
-		PROXY_PATH_SYMBOL in value
-	) {
-		value[PROXY_PATH_SYMBOL] = path;
+	if (DEV && change_path) {
+		// @ts-expect-error
+		value?.[PROXY_PATH_SYMBOL]?.(path);
 	}
+
 	// if non-proxyable, or is already a proxy, return `value`
 	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {
 		return value;
@@ -52,16 +49,6 @@ export function proxy(value, path, change_path = false) {
 
 	var stack = DEV && tracing_mode_flag ? get_stack('CreatedAt') : null;
 	var reaction = active_reaction;
-	/** @type {(prop: any) => any} */
-	var to_trace_name = DEV
-		? (prop) => {
-				return typeof prop === 'symbol'
-					? `${path}[Symbol(${prop.description ?? ''})]`
-					: typeof prop === 'number' || Number(prop) === Number(prop)
-						? `${path}[${prop}]`
-						: `${path}.${prop}`;
-			}
-		: (prop) => undefined;
 
 	/**
 	 * @template T
@@ -83,6 +70,28 @@ export function proxy(value, path, change_path = false) {
 		// mutations to the array are properly synced with our proxy
 		const length_source = source(/** @type {any[]} */ (value).length, stack);
 		sources.set('length', DEV ? tag(length_source, to_trace_name('length')) : length_source);
+	}
+
+	/** @param {string | symbol} prop */
+	function to_trace_name(prop) {
+		if (typeof prop === 'symbol') return `${path}[Symbol(${prop.description ?? ''})]`;
+		if (regex_is_valid_identifier.test(prop)) return `${path}.${prop}`;
+		return /^\d+$/.test(prop) ? `${path}[${prop}]` : `${path}['${prop}']`;
+	}
+
+	/** @param {string} new_path */
+	function update_path(new_path) {
+		path = new_path;
+
+		tag(version, `${path} version`);
+
+		// rename all child sources and child proxies
+		for (const [prop, source] of sources) {
+			var label = to_trace_name(prop);
+
+			tag(source, label);
+			source.v?.[PROXY_PATH_SYMBOL]?.(label);
+		}
 	}
 
 	return new Proxy(/** @type {any} */ (value), {
@@ -147,8 +156,9 @@ export function proxy(value, path, change_path = false) {
 			if (prop === STATE_SYMBOL) {
 				return value;
 			}
+
 			if (DEV && prop === PROXY_PATH_SYMBOL) {
-				return path;
+				return update_path;
 			}
 
 			var s = sources.get(prop);
@@ -195,7 +205,7 @@ export function proxy(value, path, change_path = false) {
 		},
 
 		has(target, prop) {
-			if (prop === STATE_SYMBOL || (DEV && prop === PROXY_PATH_SYMBOL)) {
+			if (prop === STATE_SYMBOL) {
 				return true;
 			}
 
@@ -224,17 +234,6 @@ export function proxy(value, path, change_path = false) {
 		},
 
 		set(target, prop, value, receiver) {
-			if (DEV && prop === PROXY_PATH_SYMBOL) {
-				path = value;
-				tag(version, `${path} version`);
-				// rename all child sources and child proxies
-				for (const [prop, source] of sources) {
-					tag(source, to_trace_name(prop));
-					if (typeof source.v === 'object' && source.v !== null && PROXY_PATH_SYMBOL in source.v) {
-						source.v[PROXY_PATH_SYMBOL] = to_trace_name(prop);
-					}
-				}
-			}
 			var s = sources.get(prop);
 			var has = prop in target;
 
