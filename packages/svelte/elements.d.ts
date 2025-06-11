@@ -926,6 +926,17 @@ export interface HTMLButtonAttributes extends HTMLAttributes<HTMLButtonElement> 
 	value?: string | string[] | number | undefined | null;
 	popovertarget?: string | undefined | null;
 	popovertargetaction?: 'toggle' | 'show' | 'hide' | undefined | null;
+	command?:
+		| 'show-modal'
+		| 'close'
+		| 'request-close'
+		| 'show-popover'
+		| 'hide-popover'
+		| 'toggle-popover'
+		| (string & {})
+		| undefined
+		| null;
+	commandfor?: string | undefined | null;
 }
 
 export interface HTMLCanvasAttributes extends HTMLAttributes<HTMLCanvasElement> {

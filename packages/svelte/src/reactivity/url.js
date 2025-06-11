@@ -1,4 +1,6 @@
+import { DEV } from 'esm-env';
 import { source, set } from '../internal/client/reactivity/sources.js';
+import { tag } from '../internal/client/dev/tracing.js';
 import { get } from '../internal/client/runtime.js';
 import { REPLACE, SvelteURLSearchParams } from './url-search-params.js';
 
@@ -55,6 +57,17 @@ export class SvelteURL extends URL {
 	constructor(url, base) {
 		url = new URL(url, base);
 		super(url);
+
+		if (DEV) {
+			tag(this.#protocol, 'SvelteURL.protocol');
+			tag(this.#username, 'SvelteURL.username');
+			tag(this.#password, 'SvelteURL.password');
+			tag(this.#hostname, 'SvelteURL.hostname');
+			tag(this.#port, 'SvelteURL.port');
+			tag(this.#pathname, 'SvelteURL.pathname');
+			tag(this.#hash, 'SvelteURL.hash');
+			tag(this.#search, 'SvelteURL.search');
+		}
 
 		current_url = this;
 		this.#searchParams = new SvelteURLSearchParams(url.searchParams);

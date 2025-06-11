@@ -30,6 +30,7 @@ export const EFFECT_ASYNC = 1 << 25;
 export const ASYNC_ERROR = 1;
 
 export const STATE_SYMBOL = Symbol('$state');
+export const PROXY_PATH_SYMBOL = Symbol('proxy path');
 export const LEGACY_PROPS = Symbol('legacy props');
 export const LOADING_ATTR_SYMBOL = Symbol('');
 

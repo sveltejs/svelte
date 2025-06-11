@@ -7,8 +7,10 @@ import { raf } from '../internal/client/timing.js';
 import { is_date } from './utils.js';
 import { set, source } from '../internal/client/reactivity/sources.js';
 import { render_effect } from '../internal/client/reactivity/effects.js';
+import { tag } from '../internal/client/dev/tracing.js';
 import { get } from '../internal/client/runtime.js';
 import { deferred, noop } from '../internal/shared/utils.js';
+import { DEV } from 'esm-env';
 
 /**
  * @template T
@@ -172,8 +174,8 @@ export class Spring {
 	#damping = source(0.8);
 	#precision = source(0.01);
 
-	#current = source(/** @type {T} */ (undefined));
-	#target = source(/** @type {T} */ (undefined));
+	#current;
+	#target;
 
 	#last_value = /** @type {T} */ (undefined);
 	#last_time = 0;
@@ -192,11 +194,20 @@ export class Spring {
 	 * @param {SpringOpts} [options]
 	 */
 	constructor(value, options = {}) {
-		this.#current.v = this.#target.v = value;
+		this.#current = DEV ? tag(source(value), 'Spring.current') : source(value);
+		this.#target = DEV ? tag(source(value), 'Spring.target') : source(value);
 
 		if (typeof options.stiffness === 'number') this.#stiffness.v = clamp(options.stiffness, 0, 1);
 		if (typeof options.damping === 'number') this.#damping.v = clamp(options.damping, 0, 1);
 		if (typeof options.precision === 'number') this.#precision.v = options.precision;
+
+		if (DEV) {
+			tag(this.#stiffness, 'Spring.stiffness');
+			tag(this.#damping, 'Spring.damping');
+			tag(this.#precision, 'Spring.precision');
+			tag(this.#current, 'Spring.current');
+			tag(this.#target, 'Spring.target');
+		}
 	}
 
 	/**

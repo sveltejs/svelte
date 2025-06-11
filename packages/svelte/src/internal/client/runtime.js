@@ -57,6 +57,7 @@ import {
 import * as w from './warnings.js';
 import { current_batch, Batch, batch_deriveds } from './reactivity/batch.js';
 import { handle_error, invoke_error_boundary } from './error-handling.js';
+import { snapshot } from '../shared/clone.js';
 
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
@@ -480,19 +481,13 @@ export function update_effect(effect) {
 		effect.teardown = typeof teardown === 'function' ? teardown : null;
 		effect.wv = write_version;
 
-		var deps = effect.deps;
-
-		// In DEV, we need to handle a case where $inspect.trace() might
-		// incorrectly state a source dependency has not changed when it has.
-		// That's beacuse that source was changed by the same effect, causing
-		// the versions to match. We can avoid this by incrementing the version
-		if (DEV && tracing_mode_flag && (effect.f & DIRTY) !== 0 && deps !== null) {
-			for (let i = 0; i < deps.length; i++) {
-				var dep = deps[i];
-				if (dep.trace_need_increase) {
+		// In DEV, increment versions of any sources that were written to during the effect,
+		// so that they are correctly marked as dirty when the effect re-runs
+		if (DEV && tracing_mode_flag && (effect.f & DIRTY) !== 0 && effect.deps !== null) {
+			for (var dep of effect.deps) {
+				if (dep.set_during_effect) {
 					dep.wv = increment_write_version();
-					dep.trace_need_increase = undefined;
-					dep.trace_v = undefined;
+					dep.set_during_effect = false;
 				}
 			}
 		}
@@ -852,28 +847,39 @@ export function get(signal) {
 			}
 		}
 
+		recent_async_deriveds.delete(signal);
+
 		if (
 			tracing_mode_flag &&
+			!untracking &&
 			tracing_expressions !== null &&
 			active_reaction !== null &&
 			tracing_expressions.reaction === active_reaction
 		) {
 			// Used when mapping state between special blocks like `each`
-			if (signal.debug) {
-				signal.debug();
-			} else if (signal.created) {
-				var entry = tracing_expressions.entries.get(signal);
+			if (signal.trace) {
+				signal.trace();
+			} else {
+				var trace = get_stack('TracedAt');
 
-				if (entry === undefined) {
-					entry = { read: [] };
-					tracing_expressions.entries.set(signal, entry);
+				if (trace) {
+					var entry = tracing_expressions.entries.get(signal);
+
+					if (entry === undefined) {
+						entry = { traces: [] };
+						tracing_expressions.entries.set(signal, entry);
+					}
+
+					var last = entry.traces[entry.traces.length - 1];
+
+					// traces can be duplicated, e.g. by `snapshot` invoking both
+					// both `getOwnPropertyDescriptor` and `get` traps at once
+					if (trace.stack !== last?.stack) {
+						entry.traces.push(trace);
+					}
 				}
-
-				entry.read.push(get_stack('TracedAt'));
 			}
 		}
-
-		recent_async_deriveds.delete(signal);
 	}
 
 	if (is_destroying_effect && old_values.has(signal)) {

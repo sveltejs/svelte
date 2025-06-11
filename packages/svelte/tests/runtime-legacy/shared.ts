@@ -3,7 +3,7 @@ import { setImmediate } from 'node:timers/promises';
 import { globSync } from 'tinyglobby';
 import { createClassComponent } from 'svelte/legacy';
 import { proxy } from 'svelte/internal/client';
-import { flushSync, hydrate, mount, unmount } from 'svelte';
+import { flushSync, hydrate, mount, unmount, untrack } from 'svelte';
 import { render } from 'svelte/server';
 import { afterAll, assert, beforeAll } from 'vitest';
 import { compile_directory, fragments } from '../helpers.js';

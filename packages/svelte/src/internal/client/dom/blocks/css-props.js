@@ -26,8 +26,4 @@ export function css_props(element, get_styles) {
 			}
 		}
 	});
-
-	teardown(() => {
-		element.remove();
-	});
 }
