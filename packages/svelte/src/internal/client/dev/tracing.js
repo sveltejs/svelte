@@ -96,13 +96,12 @@ export function trace(label, fn) {
 			// eslint-disable-next-line no-console
 			console.group(`${label()} %c(${time}ms)`, 'color: grey');
 
-			var entries = tracing_expressions.entries;
+			for (const [signal, traces] of tracing_expressions.entries) {
+				log_entry(signal, traces);
+			}
 
 			tracing_expressions = null;
 
-			for (const [signal, traces] of entries) {
-				log_entry(signal, traces);
-			}
 			// eslint-disable-next-line no-console
 			console.groupEnd();
 		}
