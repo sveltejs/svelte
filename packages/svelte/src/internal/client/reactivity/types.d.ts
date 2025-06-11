@@ -17,11 +17,11 @@ export interface Value<V = unknown> extends Signal {
 	/** The latest value for this signal */
 	v: V;
 	/** Dev only */
+	label?: string;
 	created?: Error | null;
 	updated?: Error | null;
 	trace_need_increase?: boolean;
 	trace_v?: V;
-	label?: string;
 	trace?: null | (() => void);
 }
 
