@@ -169,6 +169,9 @@ export function internal_set(source, value) {
 			source.updated = get_stack('UpdatedAt');
 
 			if (active_effect !== null) {
+				// Signal that we should increment the write version
+				// after the current effect has run, so that it is
+				// marked dirty if the effect uses `$inspect.trace()`
 				source.trace_need_increase = true;
 			}
 		}
