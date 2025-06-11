@@ -454,7 +454,6 @@ export function update_effect(effect) {
 				if (dep.trace_need_increase) {
 					dep.wv = increment_write_version();
 					dep.trace_need_increase = undefined;
-					dep.trace_v = undefined;
 				}
 			}
 		}

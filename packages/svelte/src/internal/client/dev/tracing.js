@@ -20,7 +20,7 @@ export let tracing_expressions = null;
  * @param {TraceEntry} [entry]
  */
 function log_entry(signal, entry) {
-	const value = signal.trace_need_increase ? signal.trace_v : signal.v;
+	const value = signal.v;
 
 	if (value === UNINITIALIZED) {
 		return;
