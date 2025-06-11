@@ -70,6 +70,7 @@ export function source(v, stack) {
 		signal.created = stack ?? get_stack('CreatedAt');
 		signal.updated = null;
 		signal.set_during_effect = false;
+		signal.trace = null;
 	}
 
 	return signal;

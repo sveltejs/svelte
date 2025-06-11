@@ -29,6 +29,8 @@ export interface Value<V = unknown> extends Signal {
 	 * increment the write version so that it shows up as dirty when the effect re-runs
 	 */
 	set_during_effect?: boolean;
+	/** A function that retrieves the underlying source, used for each block item signals */
+	trace?: null | (() => void);
 }
 
 export interface Reaction extends Signal {
