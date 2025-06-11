@@ -37,6 +37,8 @@ import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 
 export let inspect_effects = new Set();
+
+/** @type {Map<Source, any>} */
 export const old_values = new Map();
 
 /**
@@ -66,7 +68,9 @@ export function source(v, stack) {
 
 	if (DEV && tracing_mode_flag) {
 		signal.created = stack ?? get_stack('CreatedAt');
-		signal.debug = null;
+		signal.updated = null;
+		signal.set_during_effect = false;
+		signal.trace = null;
 	}
 
 	return signal;
@@ -168,9 +172,9 @@ export function internal_set(source, value) {
 
 		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');
-			if (active_effect != null) {
-				source.trace_need_increase = true;
-				source.trace_v ??= old_value;
+
+			if (active_effect !== null) {
+				source.set_during_effect = true;
 			}
 		}
 
