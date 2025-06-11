@@ -6,7 +6,7 @@ import { DERIVED, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { effect_tracking } from '../reactivity/effects.js';
 import { active_reaction, captured_signals, set_captured_signals, untrack } from '../runtime.js';
 
-/** @type { any } */
+/** @type {{ reaction: Reaction | null, entries: Map<any, any> } | null} */
 export let tracing_expressions = null;
 
 /**
@@ -94,6 +94,7 @@ function log_entry(signal, entry) {
  */
 export function trace(label, fn) {
 	var previously_tracing_expressions = tracing_expressions;
+
 	try {
 		tracing_expressions = { entries: new Map(), reaction: active_reaction };
 
@@ -120,18 +121,6 @@ export function trace(label, fn) {
 			}
 			// eslint-disable-next-line no-console
 			console.groupEnd();
-		}
-
-		if (previously_tracing_expressions !== null && tracing_expressions !== null) {
-			for (const [signal, entry] of tracing_expressions.entries) {
-				var prev_entry = previously_tracing_expressions.get(signal);
-
-				if (prev_entry === undefined) {
-					previously_tracing_expressions.set(signal, entry);
-				} else {
-					prev_entry.read.push(...entry.read);
-				}
-			}
 		}
 
 		return value;
