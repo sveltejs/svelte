@@ -137,11 +137,6 @@ export let skip_reaction = false;
 /** @type {Set<Value> | null} */
 export let captured_signals = null;
 
-/** @param {Set<Value> | null} value */
-export function set_captured_signals(value) {
-	captured_signals = value;
-}
-
 export function increment_write_version() {
 	return ++write_version;
 }

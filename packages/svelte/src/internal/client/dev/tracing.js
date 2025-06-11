@@ -4,7 +4,7 @@ import { snapshot } from '../../shared/clone.js';
 import { define_property } from '../../shared/utils.js';
 import { DERIVED, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { effect_tracking } from '../reactivity/effects.js';
-import { active_reaction, captured_signals, set_captured_signals, untrack } from '../runtime.js';
+import { active_reaction } from '../runtime.js';
 
 /** @type {{ reaction: Reaction | null, entries: Map<Value, Error[]> } | null} */
 export let tracing_expressions = null;
