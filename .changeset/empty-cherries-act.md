@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-feat: add `command` and `commandfor` to `HTMLButtonAttributes`
+fix: add `command` and `commandfor` to `HTMLButtonAttributes`
