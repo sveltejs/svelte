@@ -782,7 +782,7 @@ export function get(signal) {
 		// Used when mapping state between special blocks like `each`
 		if (signal.debug) {
 			signal.debug();
-		} else if (signal.created) {
+		} else {
 			var trace = get_stack('TracedAt');
 
 			if (trace) {
