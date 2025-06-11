@@ -66,6 +66,8 @@ export function source(v, stack) {
 
 	if (DEV && tracing_mode_flag) {
 		signal.created = stack ?? get_stack('CreatedAt');
+		signal.updated = null;
+		signal.set_during_effect = false;
 	}
 
 	return signal;
@@ -169,10 +171,7 @@ export function internal_set(source, value) {
 			source.updated = get_stack('UpdatedAt');
 
 			if (active_effect !== null) {
-				// Signal that we should increment the write version
-				// after the current effect has run, so that it is
-				// marked dirty if the effect uses `$inspect.trace()`
-				source.trace_need_increase = true;
+				source.set_during_effect = true;
 			}
 		}
 

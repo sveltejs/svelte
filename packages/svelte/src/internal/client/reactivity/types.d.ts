@@ -16,11 +16,19 @@ export interface Value<V = unknown> extends Signal {
 	rv: number;
 	/** The latest value for this signal */
 	v: V;
-	/** Dev only */
+
+	// dev-only
+	/** A label (e.g. the `foo` in `let foo = $state(...)`) used for `$inspect.trace()` */
 	label?: string;
+	/** An error with a stack trace showing when the source was created */
 	created?: Error | null;
+	/** An error with a stack trace showing when the source was last updated */
 	updated?: Error | null;
-	trace_need_increase?: boolean;
+	/**
+	 * Whether or not the source was set while running an effect — if so, we need to
+	 * increment the write version so that it shows up as dirty when the effect re-runs
+	 */
+	set_during_effect?: boolean;
 }
 
 export interface Reaction extends Signal {
