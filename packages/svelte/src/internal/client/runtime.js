@@ -39,6 +39,7 @@ import {
 	set_dev_current_component_function
 } from './context.js';
 import { handle_error, invoke_error_boundary } from './error-handling.js';
+import { snapshot } from '../shared/clone.js';
 
 let is_flushing = false;
 
@@ -769,6 +770,7 @@ export function get(signal) {
 	if (
 		DEV &&
 		tracing_mode_flag &&
+		!untracking &&
 		tracing_expressions !== null &&
 		active_reaction !== null &&
 		tracing_expressions.reaction === active_reaction
