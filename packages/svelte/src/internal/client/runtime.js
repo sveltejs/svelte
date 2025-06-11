@@ -779,26 +779,21 @@ export function get(signal) {
 		active_reaction !== null &&
 		tracing_expressions.reaction === active_reaction
 	) {
-		// Used when mapping state between special blocks like `each`
-		if (signal.trace) {
-			signal.trace();
-		} else {
-			var trace = get_stack('TracedAt');
+		var trace = get_stack('TracedAt');
 
-			if (trace) {
-				var traces = tracing_expressions.entries.get(signal);
+		if (trace) {
+			var traces = tracing_expressions.entries.get(signal);
 
-				if (traces === undefined) {
-					tracing_expressions.entries.set(signal, (traces = []));
-				}
+			if (traces === undefined) {
+				tracing_expressions.entries.set(signal, (traces = []));
+			}
 
-				var last = traces.at(-1);
+			var last = traces.at(-1);
 
-				// traces can be duplicated, e.g. by `snapshot` invoking both
-				// both `getOwnPropertyDescriptor` and `get` traps at once
-				if (trace.stack !== last?.stack) {
-					traces.push(trace);
-				}
+			// traces can be duplicated, e.g. by `snapshot` invoking both
+			// both `getOwnPropertyDescriptor` and `get` traps at once
+			if (trace.stack !== last?.stack) {
+				traces.push(trace);
 			}
 		}
 	}

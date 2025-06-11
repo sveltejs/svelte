@@ -20,23 +20,6 @@ function log_entry(signal, traces = []) {
 		return;
 	}
 
-	if (signal.trace) {
-		var previous_captured_signals = captured_signals;
-		var captured = new Set();
-		set_captured_signals(captured);
-
-		try {
-			untrack(signal.trace);
-		} finally {
-			set_captured_signals(previous_captured_signals);
-		}
-
-		if (captured.size > 0) {
-			for (const dep of captured) log_entry(dep);
-			return;
-		}
-	}
-
 	const type = (signal.f & DERIVED) !== 0 ? '$derived' : '$state';
 	const current_reaction = /** @type {Reaction} */ (active_reaction);
 	const dirty = signal.wv > current_reaction.wv || current_reaction.wv === 0;

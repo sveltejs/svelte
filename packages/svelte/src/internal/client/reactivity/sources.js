@@ -66,7 +66,6 @@ export function source(v, stack) {
 
 	if (DEV && tracing_mode_flag) {
 		signal.created = stack ?? get_stack('CreatedAt');
-		signal.trace = null;
 	}
 
 	return signal;
