@@ -778,7 +778,7 @@ export function get(signal) {
 				tracing_expressions.entries.set(signal, entry);
 			}
 
-			var last = entry.traces.at(-1);
+			var last = entry.traces[entry.traces.length - 1];
 
 			// traces can be duplicated, e.g. by `snapshot` invoking both
 			// both `getOwnPropertyDescriptor` and `get` traps at once
