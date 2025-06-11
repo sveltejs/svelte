@@ -1,5 +1,19 @@
 # svelte
 
+## 5.34.0
+
+### Minor Changes
+
+- feat: add source name logging to `$inspect.trace` ([#16060](https://github.com/sveltejs/svelte/pull/16060))
+
+### Patch Changes
+
+- fix: add `command` and `commandfor` to `HTMLButtonAttributes` ([#16117](https://github.com/sveltejs/svelte/pull/16117))
+
+- fix: better `$inspect.trace()` output ([#16131](https://github.com/sveltejs/svelte/pull/16131))
+
+- fix: properly hydrate dynamic css props components and remove element removal ([#16118](https://github.com/sveltejs/svelte/pull/16118))
+
 ## 5.33.19
 
 ### Patch Changes
