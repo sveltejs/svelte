@@ -14,28 +14,25 @@ export let tracing_expressions = null;
  * @param {Error[]} [traces]
  */
 function log_entry(signal, traces = []) {
-	const debug = signal.trace;
 	const value = signal.trace_need_increase ? signal.trace_v : signal.v;
 
 	if (value === UNINITIALIZED) {
 		return;
 	}
 
-	if (debug) {
+	if (signal.trace) {
 		var previous_captured_signals = captured_signals;
 		var captured = new Set();
 		set_captured_signals(captured);
+
 		try {
-			untrack(() => {
-				debug();
-			});
+			untrack(signal.trace);
 		} finally {
 			set_captured_signals(previous_captured_signals);
 		}
+
 		if (captured.size > 0) {
-			for (const dep of captured) {
-				log_entry(dep);
-			}
+			for (const dep of captured) log_entry(dep);
 			return;
 		}
 	}
