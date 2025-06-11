@@ -37,6 +37,8 @@ import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 
 export let inspect_effects = new Set();
+
+/** @type {Map<Source, any>} */
 export const old_values = new Map();
 
 /**
