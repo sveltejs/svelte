@@ -6,14 +6,20 @@ import { DERIVED, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { effect_tracking } from '../reactivity/effects.js';
 import { active_reaction } from '../runtime.js';
 
-/** @type {{ reaction: Reaction | null, entries: Map<Value, Error[]> } | null} */
+/**
+ * @typedef {{
+ *   traces: Error[];
+ * }} TraceEntry
+ */
+
+/** @type {{ reaction: Reaction | null, entries: Map<Value, TraceEntry> } | null} */
 export let tracing_expressions = null;
 
 /**
  * @param {Value} signal
- * @param {Error[]} [traces]
+ * @param {TraceEntry} [entry]
  */
-function log_entry(signal, traces = []) {
+function log_entry(signal, entry) {
 	const value = signal.trace_need_increase ? signal.trace_v : signal.v;
 
 	if (value === UNINITIALIZED) {
@@ -54,9 +60,11 @@ function log_entry(signal, traces = []) {
 		console.log(signal.updated);
 	}
 
-	for (var trace of traces) {
-		// eslint-disable-next-line no-console
-		console.log(trace);
+	if (entry) {
+		for (var trace of entry.traces) {
+			// eslint-disable-next-line no-console
+			console.log(trace);
+		}
 	}
 
 	// eslint-disable-next-line no-console
