@@ -780,8 +780,8 @@ export function get(signal) {
 		tracing_expressions.reaction === active_reaction
 	) {
 		// Used when mapping state between special blocks like `each`
-		if (signal.debug) {
-			signal.debug();
+		if (signal.trace) {
+			signal.trace();
 		} else {
 			var trace = get_stack('TracedAt');
 

@@ -22,7 +22,7 @@ export interface Value<V = unknown> extends Signal {
 	trace_need_increase?: boolean;
 	trace_v?: V;
 	label?: string;
-	debug?: null | (() => void);
+	trace?: null | (() => void);
 }
 
 export interface Reaction extends Signal {
