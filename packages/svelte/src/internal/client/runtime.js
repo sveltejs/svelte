@@ -783,14 +783,23 @@ export function get(signal) {
 		if (signal.debug) {
 			signal.debug();
 		} else if (signal.created) {
-			var entry = tracing_expressions.entries.get(signal);
+			var trace = get_stack('TracedAt');
 
-			if (entry === undefined) {
-				entry = { read: [] };
-				tracing_expressions.entries.set(signal, entry);
+			if (trace) {
+				var traces = tracing_expressions.entries.get(signal);
+
+				if (traces === undefined) {
+					tracing_expressions.entries.set(signal, (traces = []));
+				}
+
+				var last = traces.at(-1);
+
+				// traces can be duplicated, e.g. by `snapshot` invoking both
+				// both `getOwnPropertyDescriptor` and `get` traps at once
+				if (trace.stack !== last?.stack) {
+					traces.push(trace);
+				}
 			}
-
-			entry.read.push(get_stack('TracedAt'));
 		}
 	}
 

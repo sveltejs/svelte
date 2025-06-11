@@ -6,14 +6,14 @@ import { DERIVED, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { effect_tracking } from '../reactivity/effects.js';
 import { active_reaction, captured_signals, set_captured_signals, untrack } from '../runtime.js';
 
-/** @type {{ reaction: Reaction | null, entries: Map<any, any> } | null} */
+/** @type {{ reaction: Reaction | null, entries: Map<Value, Error[]> } | null} */
 export let tracing_expressions = null;
 
 /**
- * @param { Value } signal
- * @param { { read: Error[] } } [entry]
+ * @param {Value} signal
+ * @param {Error[]} [traces]
  */
-function log_entry(signal, entry) {
+function log_entry(signal, traces = []) {
 	const debug = signal.debug;
 	const value = signal.trace_need_increase ? signal.trace_v : signal.v;
 
@@ -74,13 +74,9 @@ function log_entry(signal, entry) {
 		console.log(signal.updated);
 	}
 
-	const read = entry?.read;
-
-	if (read && read.length > 0) {
-		for (var stack of read) {
-			// eslint-disable-next-line no-console
-			console.log(stack);
-		}
+	for (var trace of traces) {
+		// eslint-disable-next-line no-console
+		console.log(trace);
 	}
 
 	// eslint-disable-next-line no-console
@@ -116,8 +112,8 @@ export function trace(label, fn) {
 
 			tracing_expressions = null;
 
-			for (const [signal, entry] of entries) {
-				log_entry(signal, entry);
+			for (const [signal, traces] of entries) {
+				log_entry(signal, traces);
 			}
 			// eslint-disable-next-line no-console
 			console.groupEnd();
