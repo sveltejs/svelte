@@ -10,7 +10,7 @@ export default function Function_prop_no_getter($$anchor) {
 
 	const plusOne = (num) => num + 1;
 
-	Button($$anchor, {
+	Button($$anchor, $.props({
 		onmousedown: () => $.set(count, $.get(count) + 1),
 		onmouseup,
 		onmouseenter: () => $.set(count, plusOne($.get(count)), true),
@@ -23,5 +23,5 @@ export default function Function_prop_no_getter($$anchor) {
 			$.append($$anchor, text);
 		},
 		$$slots: { default: true }
-	});
+	}));
 }
