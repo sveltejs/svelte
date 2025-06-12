@@ -1,5 +1,11 @@
 # svelte
 
+## 5.34.1
+
+### Patch Changes
+
+- fix: correctly tag private class state fields ([#16132](https://github.com/sveltejs/svelte/pull/16132))
+
 ## 5.34.0
 
 ### Minor Changes
