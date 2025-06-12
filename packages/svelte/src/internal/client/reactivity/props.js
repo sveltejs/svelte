@@ -239,7 +239,7 @@ const spread_props_handler = {
  * @param {Array<Record<string, unknown> | (() => Record<string, unknown>)>} props
  * @returns {any}
  */
-export function spread_props(...props) {
+export function props(...props) {
 	let destroyed = false;
 	teardown(() => (destroyed = true));
 	return new Proxy(
