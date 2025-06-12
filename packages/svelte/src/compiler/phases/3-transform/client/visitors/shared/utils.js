@@ -387,7 +387,11 @@ export function build_expression(context, expression, metadata, state = context.
 
 		var getter = build_getter({ ...binding.node }, state);
 
-		if (binding.kind === 'bindable_prop') {
+		if (
+			binding.kind === 'bindable_prop' ||
+			binding.node.name === '$$props' ||
+			binding.node.name === '$$restProps'
+		) {
 			getter = b.call('$.deep_read_state', getter);
 		}
 
