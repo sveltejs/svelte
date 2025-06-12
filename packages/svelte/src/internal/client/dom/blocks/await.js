@@ -2,7 +2,12 @@
 import { DEV } from 'esm-env';
 import { is_promise } from '../../../shared/utils.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
-import { internal_set, mutable_source, source } from '../../reactivity/sources.js';
+import {
+	internal_set,
+	mutable_source,
+	remove_from_legacy_sources,
+	source
+} from '../../reactivity/sources.js';
 import { flushSync, set_active_effect, set_active_reaction } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -62,6 +67,11 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 	var error_source = (runes ? source : mutable_source)(undefined);
 	var resolved = false;
 
+	function clean_sources() {
+		remove_from_legacy_sources(input_source);
+		remove_from_legacy_sources(error_source);
+	}
+
 	/**
 	 * @param {PENDING | THEN | CATCH} state
 	 * @param {boolean} restore
@@ -79,17 +89,29 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 		try {
 			if (state === PENDING && pending_fn) {
 				if (pending_effect) resume_effect(pending_effect);
-				else pending_effect = branch(() => pending_fn(anchor));
+				else
+					pending_effect = branch(() => {
+						pending_fn(anchor);
+						return clean_sources;
+					});
 			}
 
 			if (state === THEN && then_fn) {
 				if (then_effect) resume_effect(then_effect);
-				else then_effect = branch(() => then_fn(anchor, input_source));
+				else
+					then_effect = branch(() => {
+						then_fn(anchor, input_source);
+						return clean_sources;
+					});
 			}
 
 			if (state === CATCH && catch_fn) {
 				if (catch_effect) resume_effect(catch_effect);
-				else catch_effect = branch(() => catch_fn(anchor, error_source));
+				else
+					catch_effect = branch(() => {
+						catch_fn(anchor, error_source);
+						return clean_sources;
+					});
 			}
 
 			if (state !== PENDING && pending_effect) {
