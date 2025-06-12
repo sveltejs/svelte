@@ -78,7 +78,7 @@ export function ClassBody(node, context) {
 				? /** @type {CallExpression} */ (context.visit(definition.value, child_state))
 				: undefined;
 
-			if (dev) {
+			if (dev && field.node === definition) {
 				value = b.call('$.tag', value, b.literal(`${declaration.id?.name ?? '[class]'}.${name}`));
 			}
 
