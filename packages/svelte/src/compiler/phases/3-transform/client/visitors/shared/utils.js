@@ -381,7 +381,7 @@ export function build_expression(context, expression, metadata, state = context.
 	const sequence = b.sequence([]);
 
 	for (const binding of metadata.references) {
-		if (binding.kind === 'normal') {
+		if (binding.kind === 'normal' && binding.declaration_kind !== 'import') {
 			continue;
 		}
 
