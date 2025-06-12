@@ -17,7 +17,6 @@ import { LEGACY_DERIVED_PROP, LEGACY_PROPS, STATE_SYMBOL } from '#client/constan
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
-import { component_context } from '../context.js';
 import { teardown } from './effects.js';
 
 /**
@@ -161,8 +160,8 @@ export function legacy_rest_props(props, exclude) {
  * The proxy handler for spread props. Handles the incoming array of props
  * that looks like `() => { dynamic: props }, { static: prop }, ..` and wraps
  * them so that the whole thing is passed to the component as the `$$props` argument.
- * @typedef {Record<string | symbol, unknown>} T
- * @type {ProxyHandler<{ props: Array<T | (() => T)>, oldProps: T, destroyed: boolean }>}}
+ * @typedef {Record<string | symbol, unknown>} AnyProps
+ * @type {ProxyHandler<{ props: Array<AnyProps | (() => AnyProps)>, oldProps: AnyProps, destroyed: boolean }>}}
  */
 const spread_props_handler = {
 	get(target, key) {
@@ -242,13 +241,18 @@ const spread_props_handler = {
  */
 export function spread_props(...props) {
 	let destroyed = false;
-	teardown(() => {
-		destroyed = true;
-	});
+	teardown(() => (destroyed = true));
 	return new Proxy(
 		{
 			props,
-			oldProps: {},
+			oldProps: untrack(() => {
+				const oldProps = {};
+				for (let p of props) {
+					if (typeof p === 'function') p = p();
+					Object.assign(oldProps, p);
+				}
+				return oldProps;
+			}),
 			get destroyed() {
 				return destroyed;
 			}
