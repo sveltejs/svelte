@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: legacy mode: use coarse reactivity in the block's expressions
+fix: use compiler-driven reactivity in legacy mode template expressions
