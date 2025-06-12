@@ -389,6 +389,8 @@ export function build_expression(context, expression, metadata, state = context.
 
 		if (
 			binding.kind === 'bindable_prop' ||
+			binding.kind === 'template' ||
+			binding.declaration_kind === 'import' ||
 			binding.node.name === '$$props' ||
 			binding.node.name === '$$restProps'
 		) {
