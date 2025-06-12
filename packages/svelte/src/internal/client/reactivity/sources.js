@@ -113,6 +113,15 @@ export function mutable_source(initial_value, immutable = false) {
 }
 
 /**
+ * @param {Source} source
+ */
+export function remove_from_legacy_sources(source) {
+	if (component_context?.l?.s) {
+		component_context.l.s = component_context.l.s.filter((s) => s !== source);
+	}
+}
+
+/**
  * @template V
  * @param {Value<V>} source
  * @param {V} value

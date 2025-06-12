@@ -32,7 +32,12 @@ import {
 	pause_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
-import { source, mutable_source, internal_set } from '../../reactivity/sources.js';
+import {
+	source,
+	mutable_source,
+	internal_set,
+	remove_from_legacy_sources
+} from '../../reactivity/sources.js';
 import { array_from, is_array } from '../../../shared/utils.js';
 import { INERT } from '#client/constants';
 import { queue_micro_task } from '../task.js';
@@ -549,7 +554,16 @@ function create_item(
 	current_each_item = item;
 
 	try {
-		item.e = branch(() => render_fn(anchor, v, i, get_collection), hydrating);
+		item.e = branch(() => {
+			render_fn(anchor, v, i, get_collection);
+			// we only need to clean this up if the item is reactive and mutable
+			// because that's when we add the source to the context preventing garbage collection of it
+			if (reactive && mutable) {
+				return () => {
+					remove_from_legacy_sources(item.v);
+				};
+			}
+		}, hydrating);
 
 		item.e.prev = prev && prev.e;
 		item.e.next = next && next.e;
