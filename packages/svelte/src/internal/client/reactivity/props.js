@@ -17,6 +17,8 @@ import { LEGACY_DERIVED_PROP, LEGACY_PROPS, STATE_SYMBOL } from '#client/constan
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
+import { component_context } from '../context.js';
+import { teardown } from './effects.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -159,16 +161,17 @@ export function legacy_rest_props(props, exclude) {
  * The proxy handler for spread props. Handles the incoming array of props
  * that looks like `() => { dynamic: props }, { static: prop }, ..` and wraps
  * them so that the whole thing is passed to the component as the `$$props` argument.
- * @template {Record<string | symbol, unknown>} T
- * @type {ProxyHandler<{ props: Array<T | (() => T)> }>}}
+ * @typedef {Record<string | symbol, unknown>} T
+ * @type {ProxyHandler<{ props: Array<T | (() => T)>, oldProps: T, destroyed: boolean }>}}
  */
 const spread_props_handler = {
 	get(target, key) {
+		if (target.destroyed && key in target.oldProps) return target.oldProps[key]
 		let i = target.props.length;
 		while (i--) {
 			let p = target.props[i];
 			if (is_function(p)) p = p();
-			if (typeof p === 'object' && p !== null && key in p) return p[key];
+			if (typeof p === 'object' && p !== null && key in p) return (target.oldProps[key] = p[key]);
 		}
 	},
 	set(target, key, value) {
@@ -178,7 +181,7 @@ const spread_props_handler = {
 			if (is_function(p)) p = p();
 			const desc = get_descriptor(p, key);
 			if (desc && desc.set) {
-				desc.set(value);
+				desc.set(target.oldProps[key] = value);
 				return true;
 			}
 		}
@@ -238,7 +241,9 @@ const spread_props_handler = {
  * @returns {any}
  */
 export function spread_props(...props) {
-	return new Proxy({ props }, spread_props_handler);
+	let destroyed = false
+	teardown(() => { destroyed = true })
+	return new Proxy({ props, oldProps: {}, get destroyed() { return destroyed } }, spread_props_handler);
 }
 
 /**
