@@ -129,7 +129,7 @@ export function build_attribute_value(value, context, memoize = (value) => value
 		};
 	}
 
-	return build_template_chunk(value, context.visit, context.state, memoize);
+	return build_template_chunk(value, context, context.state, memoize);
 }
 
 /**

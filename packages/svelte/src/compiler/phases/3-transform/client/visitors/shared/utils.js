@@ -31,15 +31,15 @@ export function get_expression_id(expressions, value) {
 
 /**
  * @param {Array<AST.Text | AST.ExpressionTag>} values
- * @param {(node: AST.SvelteNode, state: any) => any} visit
+ * @param {ComponentContext} context
  * @param {ComponentClientTransformState} state
  * @param {(value: Expression, metadata: ExpressionMetadata) => Expression} memoize
  * @returns {{ value: Expression, has_state: boolean }}
  */
 export function build_template_chunk(
 	values,
-	visit,
-	state,
+	context,
+	state = context.state,
 	memoize = (value, metadata) =>
 		metadata.has_call ? get_expression_id(state.expressions, value) : value
 ) {
@@ -66,7 +66,7 @@ export function build_template_chunk(
 			state.scope.get('undefined')
 		) {
 			let value = memoize(
-				/** @type {Expression} */ (visit(node.expression, state)),
+				/** @type {Expression} */ (context.visit(node.expression, state)),
 				node.metadata.expression
 			);
 
