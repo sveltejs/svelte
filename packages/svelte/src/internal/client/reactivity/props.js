@@ -267,6 +267,13 @@ export function props(...props) {
 }
 
 /**
+ * @param {Derived} derived
+ */
+function is_paused_or_destroyed(derived) {
+	return (derived.f & (DESTROYED | INERT)) !== 0;
+}
+
+/**
  * This function is responsible for synchronizing a possibly bound prop with the inner component state.
  * It is used whenever the compiler sees that the component writes to the prop, or when it has a default prop_value.
  * @template V
@@ -399,6 +406,11 @@ export function prop(props, key, flags, fallback) {
 		return (inner_current_value.v = parent_value);
 	});
 
+	// Ensure we eagerly capture the initial value if it's bindable
+	if (bindable) {
+		get(current_value);
+	}
+
 	if (!immutable) current_value.equals = safe_equals;
 
 	return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
@@ -426,9 +438,17 @@ export function prop(props, key, flags, fallback) {
 					fallback_value = new_value;
 				}
 
+				if (is_paused_or_destroyed(current_value)) {
+					return value;
+				}
+
 				untrack(() => get(current_value)); // force a synchronisation immediately
 			}
 
+			return value;
+		}
+
+		if (is_paused_or_destroyed(current_value)) {
 			return value;
 		}
 
