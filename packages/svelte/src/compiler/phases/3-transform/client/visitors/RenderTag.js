@@ -20,7 +20,10 @@ export function RenderTag(node, context) {
 	/** @type {Expression[]} */
 	let args = [];
 	for (let i = 0; i < raw_args.length; i++) {
-		let thunk = b.thunk(/** @type {Expression} */ (context.visit(raw_args[i])));
+		let thunk = b.thunk(
+			build_expression(context, /** @type {Expression} */ (raw_args[i]), node.metadata.arguments[i])
+		);
+
 		const { has_call } = node.metadata.arguments[i];
 
 		if (has_call) {
