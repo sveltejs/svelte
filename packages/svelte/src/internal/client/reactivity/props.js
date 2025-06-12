@@ -10,14 +10,14 @@ import {
 import { get_descriptor, is_function } from '../../shared/utils.js';
 import { mutable_source, set, source, update } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
-import { get, captured_signals, untrack } from '../runtime.js';
+import { get, captured_signals, untrack, active_effect } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import { LEGACY_DERIVED_PROP, LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
-import { teardown } from './effects.js';
+import { component_context } from '../context.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -240,8 +240,23 @@ const spread_props_handler = {
  * @returns {any}
  */
 export function props(...props) {
-	let destroyed = false;
-	teardown(() => (destroyed = true));
+	let paused = false;
+	const context = component_context;
+	if (active_effect) {
+		(active_effect.transitions ??= []).push({
+			is_global: true,
+			in() {
+				paused = false;
+			},
+			out(callback) {
+				paused = true;
+				callback?.();
+			},
+			stop() {
+				paused = true;
+			}
+		});
+	}
 	return new Proxy(
 		{
 			props,
@@ -254,7 +269,7 @@ export function props(...props) {
 				return oldProps;
 			}),
 			get destroyed() {
-				return destroyed;
+				return (context?.d ?? false) || paused;
 			}
 		},
 		spread_props_handler
