@@ -5,8 +5,8 @@ export default test({
 	test({ assert, target }) {
 		const button = target.querySelector('button');
 
-		assert.htmlEqual(target.innerHTML, `<div></div><button>inc</button> 10 - 10`);
+		assert.htmlEqual(target.innerHTML, `<div></div><button data-foo="true">inc</button> 12 - 12`);
 		flushSync(() => button?.click());
-		assert.htmlEqual(target.innerHTML, `<div></div><button>inc</button> 11 - 10`);
+		assert.htmlEqual(target.innerHTML, `<div></div><button data-foo="true">inc</button> 13 - 12`);
 	}
 });

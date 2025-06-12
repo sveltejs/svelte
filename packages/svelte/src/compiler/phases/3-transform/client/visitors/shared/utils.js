@@ -66,7 +66,7 @@ export function build_template_chunk(
 			state.scope.get('undefined')
 		) {
 			let value = memoize(
-				/** @type {Expression} */ (context.visit(node.expression, state)),
+				build_expression(context, node.expression, node.metadata.expression, state),
 				node.metadata.expression
 			);
 
@@ -367,8 +367,8 @@ export function validate_mutation(node, context, expression) {
  * @param {Expression} expression
  * @param {ExpressionMetadata} metadata
  */
-export function build_expression(context, expression, metadata) {
-	const value = /** @type {Expression} */ (context.visit(expression));
+export function build_expression(context, expression, metadata, state = context.state) {
+	const value = /** @type {Expression} */ (context.visit(expression, state));
 
 	if (context.state.analysis.runes) {
 		return value;
@@ -385,7 +385,7 @@ export function build_expression(context, expression, metadata) {
 			continue;
 		}
 
-		var getter = build_getter({ ...binding.node }, context.state);
+		var getter = build_getter({ ...binding.node }, state);
 
 		if (binding.kind === 'bindable_prop') {
 			getter = b.call('$.deep_read_state', getter);

@@ -30,7 +30,7 @@
     {x}
 {/key}
 
-<button on:click={() => count1++}>inc</button>
+<button data-foo={fn(true)} on:click={() => count1++}>{fn('inc')}</button>
 {count1} - {count2}
 
 
