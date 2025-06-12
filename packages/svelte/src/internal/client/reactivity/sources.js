@@ -14,7 +14,6 @@ import {
 	reaction_sources,
 	check_dirtiness,
 	untracking,
-	is_destroying_effect,
 	push_reaction_value
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
@@ -37,9 +36,6 @@ import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 
 export let inspect_effects = new Set();
-
-/** @type {Map<Source, any>} */
-export const old_values = new Map();
 
 /**
  * @param {Set<any>} v
@@ -160,14 +156,6 @@ export function set(source, value, should_proxy = false) {
  */
 export function internal_set(source, value) {
 	if (!source.equals(value)) {
-		var old_value = source.v;
-
-		if (is_destroying_effect) {
-			old_values.set(source, value);
-		} else {
-			old_values.set(source, old_value);
-		}
-
 		source.v = value;
 
 		if (DEV && tracing_mode_flag) {

@@ -240,20 +240,19 @@ const spread_props_handler = {
  * @returns {any}
  */
 export function props(...props) {
-	let paused = false;
-	const context = component_context;
+	let destroyed = false;
 	if (active_effect) {
 		(active_effect.transitions ??= []).push({
 			is_global: true,
 			in() {
-				paused = false;
+				destroyed = false;
 			},
 			out(callback) {
-				paused = true;
+				destroyed = true;
 				callback?.();
 			},
 			stop() {
-				paused = true;
+				destroyed = true;
 			}
 		});
 	}
@@ -269,19 +268,11 @@ export function props(...props) {
 				return oldProps;
 			}),
 			get destroyed() {
-				return (context?.d ?? false) || paused;
+				return destroyed;
 			}
 		},
 		spread_props_handler
 	);
-}
-
-/**
- * @param {Derived} current_value
- * @returns {boolean}
- */
-function has_destroyed_component_ctx(current_value) {
-	return current_value.ctx?.d ?? false;
 }
 
 /**
@@ -417,11 +408,6 @@ export function prop(props, key, flags, fallback) {
 		return (inner_current_value.v = parent_value);
 	});
 
-	// Ensure we eagerly capture the initial value if it's bindable
-	if (bindable) {
-		get(current_value);
-	}
-
 	if (!immutable) current_value.equals = safe_equals;
 
 	return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
@@ -449,18 +435,10 @@ export function prop(props, key, flags, fallback) {
 					fallback_value = new_value;
 				}
 
-				if (has_destroyed_component_ctx(current_value)) {
-					return value;
-				}
-
 				untrack(() => get(current_value)); // force a synchronisation immediately
 			}
 
 			return value;
-		}
-
-		if (has_destroyed_component_ctx(current_value)) {
-			return current_value.v;
 		}
 
 		return get(current_value);
