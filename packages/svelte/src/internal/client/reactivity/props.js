@@ -166,7 +166,7 @@ export function legacy_rest_props(props, exclude) {
  */
 const spread_props_handler = {
 	get(target, key) {
-		if (target.destroyed && key in target.oldProps) return target.oldProps[key]
+		if (target.destroyed && key in target.oldProps) return target.oldProps[key];
 		let i = target.props.length;
 		while (i--) {
 			let p = target.props[i];
@@ -181,7 +181,7 @@ const spread_props_handler = {
 			if (is_function(p)) p = p();
 			const desc = get_descriptor(p, key);
 			if (desc && desc.set) {
-				desc.set(target.oldProps[key] = value);
+				desc.set((target.oldProps[key] = value));
 				return true;
 			}
 		}
@@ -241,9 +241,20 @@ const spread_props_handler = {
  * @returns {any}
  */
 export function spread_props(...props) {
-	let destroyed = false
-	teardown(() => { destroyed = true })
-	return new Proxy({ props, oldProps: {}, get destroyed() { return destroyed } }, spread_props_handler);
+	let destroyed = false;
+	teardown(() => {
+		destroyed = true;
+	});
+	return new Proxy(
+		{
+			props,
+			oldProps: {},
+			get destroyed() {
+				return destroyed;
+			}
+		},
+		spread_props_handler
+	);
 }
 
 /**
