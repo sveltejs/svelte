@@ -9,8 +9,8 @@ import {
 } from '../../../constants.js';
 import { get_descriptor, is_function } from '../../shared/utils.js';
 import { mutable_source, set, source, update } from './sources.js';
-import { derived, derived_safe_equal } from './deriveds.js';
-import { get, captured_signals, untrack, active_effect } from '../runtime.js';
+import { derived, derived_safe_equal, get_derived_parent_effect } from './deriveds.js';
+import { active_effect, captured_signals, get, untrack } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import {
@@ -23,7 +23,6 @@ import {
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
-import { component_context } from '../context.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -270,7 +269,9 @@ export function props(...props) {
  * @param {Derived} derived
  */
 function is_paused_or_destroyed(derived) {
-	return (derived.f & (DESTROYED | INERT)) !== 0;
+	const parent = get_derived_parent_effect(derived);
+	if (!parent) return false;
+	return (parent.f & (DESTROYED | INERT)) !== 0;
 }
 
 /**
@@ -449,7 +450,7 @@ export function prop(props, key, flags, fallback) {
 		}
 
 		if (is_paused_or_destroyed(current_value)) {
-			return value;
+			return current_value.v;
 		}
 
 		return get(current_value);
