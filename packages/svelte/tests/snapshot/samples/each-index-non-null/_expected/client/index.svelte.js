@@ -8,7 +8,7 @@ export default function Each_index_non_null($$anchor) {
 	var fragment = $.comment();
 	var node = $.first_child(fragment);
 
-	$.each(node, 0, () => [,,,,,], $.index, ($$anchor, $$item, i) => {
+	$.each(node, 0, () => Array(10), $.index, ($$anchor, $$item, i) => {
 		var p = root_1();
 
 		p.textContent = `index: ${i}`;
