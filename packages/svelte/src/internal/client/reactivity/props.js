@@ -13,7 +13,13 @@ import { derived, derived_safe_equal } from './deriveds.js';
 import { get, captured_signals, untrack, active_effect } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
-import { LEGACY_DERIVED_PROP, LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
+import {
+	DESTROYED,
+	INERT,
+	LEGACY_DERIVED_PROP,
+	LEGACY_PROPS,
+	STATE_SYMBOL
+} from '#client/constants';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
@@ -240,22 +246,7 @@ const spread_props_handler = {
  * @returns {any}
  */
 export function props(...props) {
-	let destroyed = false;
-	if (active_effect) {
-		(active_effect.transitions ??= []).push({
-			is_global: true,
-			in() {
-				destroyed = false;
-			},
-			out(callback) {
-				destroyed = true;
-				callback?.();
-			},
-			stop() {
-				destroyed = true;
-			}
-		});
-	}
+	const effect = active_effect;
 	return new Proxy(
 		{
 			props,
@@ -268,7 +259,7 @@ export function props(...props) {
 				return old_props;
 			}),
 			get destroyed() {
-				return destroyed;
+				return effect ? (effect.f & (DESTROYED | INERT)) !== 0 : false;
 			}
 		},
 		spread_props_handler
