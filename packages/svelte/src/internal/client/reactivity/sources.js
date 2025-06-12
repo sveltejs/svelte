@@ -116,7 +116,12 @@ export function mutable_source(initial_value, immutable = false) {
  * @param {Source} source
  */
 export function remove_from_legacy_sources(source) {
-	if (component_context?.l?.s) {
+	if (
+		legacy_mode_flag &&
+		component_context !== null &&
+		component_context.l !== null &&
+		component_context.l.s !== null
+	) {
 		component_context.l.s = component_context.l.s.filter((s) => s !== source);
 	}
 }
