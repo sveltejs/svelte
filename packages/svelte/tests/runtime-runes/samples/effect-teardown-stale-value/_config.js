@@ -14,7 +14,8 @@ export default test({
 			'up',
 			{ foo: false, bar: false },
 			'down',
-			{ foo: false, bar: false },
+			// TODO the test should be deleted as there's no more concept of "teardown stale value"
+			{ foo: true, bar: true },
 			'up',
 			{ foo: true, bar: true }
 		]);
