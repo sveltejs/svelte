@@ -161,16 +161,16 @@ export function legacy_rest_props(props, exclude) {
  * that looks like `() => { dynamic: props }, { static: prop }, ..` and wraps
  * them so that the whole thing is passed to the component as the `$$props` argument.
  * @typedef {Record<string | symbol, unknown>} AnyProps
- * @type {ProxyHandler<{ props: Array<AnyProps | (() => AnyProps)>, oldProps: AnyProps, destroyed: boolean }>}}
+ * @type {ProxyHandler<{ props: Array<AnyProps | (() => AnyProps)>, old_props: AnyProps, destroyed: boolean }>}}
  */
 const spread_props_handler = {
 	get(target, key) {
-		if (target.destroyed && key in target.oldProps) return target.oldProps[key];
+		if (target.destroyed && key in target.old_props) return target.old_props[key];
 		let i = target.props.length;
 		while (i--) {
 			let p = target.props[i];
 			if (is_function(p)) p = p();
-			if (typeof p === 'object' && p !== null && key in p) return (target.oldProps[key] = p[key]);
+			if (typeof p === 'object' && p !== null && key in p) return (target.old_props[key] = p[key]);
 		}
 	},
 	set(target, key, value) {
@@ -180,7 +180,7 @@ const spread_props_handler = {
 			if (is_function(p)) p = p();
 			const desc = get_descriptor(p, key);
 			if (desc && desc.set) {
-				desc.set((target.oldProps[key] = value));
+				desc.set((target.old_props[key] = value));
 				return true;
 			}
 		}
@@ -259,13 +259,13 @@ export function props(...props) {
 	return new Proxy(
 		{
 			props,
-			oldProps: untrack(() => {
-				const oldProps = {};
+			old_props: untrack(() => {
+				const old_props = {};
 				for (let p of props) {
 					if (typeof p === 'function') p = p();
-					Object.assign(oldProps, p);
+					Object.assign(old_props, p);
 				}
-				return oldProps;
+				return old_props;
 			}),
 			get destroyed() {
 				return destroyed;
