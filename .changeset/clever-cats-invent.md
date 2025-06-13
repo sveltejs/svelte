@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: typings for dimension bindings
+fix: add missing typings for some dimension bindings
