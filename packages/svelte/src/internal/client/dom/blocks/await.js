@@ -58,8 +58,12 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 	/** @type {Effect | null} */
 	var catch_effect;
 
-	var input_source = runes ? source(/** @type {V} */ (undefined)) : mutable_source(/** @type {V} */ (undefined), false, false);
-	var error_source = runes ? source(/** @type {V} */ (undefined)) : mutable_source(/** @type {V} */ (undefined), false, false);
+	var input_source = runes
+		? source(/** @type {V} */ (undefined))
+		: mutable_source(/** @type {V} */ (undefined), false, false);
+	var error_source = runes
+		? source(/** @type {V} */ (undefined))
+		: mutable_source(/** @type {V} */ (undefined), false, false);
 	var resolved = false;
 
 	/**
