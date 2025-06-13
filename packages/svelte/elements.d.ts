@@ -844,6 +844,10 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	readonly 'bind:borderBoxSize'?: Array<ResizeObserverSize> | undefined | null;
 	readonly 'bind:devicePixelContentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
 	readonly 'bind:focused'?: boolean | undefined | null;
+	readonly 'bind:clientWidth'?: number | undefined | null;
+	readonly 'bind:clientHeight'?: number | undefined | null;
+	readonly 'bind:offsetWidth'?: number | undefined | null;
+	readonly 'bind:offsetHeight'?: number | undefined | null;
 
 	// SvelteKit
 	'data-sveltekit-keepfocus'?: true | '' | 'off' | undefined | null;
