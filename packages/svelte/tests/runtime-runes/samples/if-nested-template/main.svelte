@@ -1,4 +1,6 @@
 <script>
+	import Component from './Component.svelte';
+
 	let outer = $state(true);
 	let inner = $state(123);
 
@@ -11,9 +13,8 @@
 	<div out:outro>
 		{#if inner}
 			{@const text = inner.toString()}
-			{text}
-			<br>
-			{inner.toString()}
+			{text} {inner.toString()}
+			<Component value={inner} />
 		{/if}
 	</div>
 {/if}
