@@ -22,7 +22,8 @@ import {
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
-	EFFECT_IS_UPDATING
+	EFFECT_IS_UPDATING,
+	TEMPLATE_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { internal_set, old_values } from './reactivity/sources.js';
@@ -151,9 +152,10 @@ export function increment_write_version() {
  * Determines whether a derived or effect is dirty.
  * If it is MAYBE_DIRTY, will set the status to CLEAN
  * @param {Reaction} reaction
+ * @param {boolean} [resuming]
  * @returns {boolean}
  */
-export function check_dirtiness(reaction) {
+export function check_dirtiness(reaction, resuming = false) {
 	var flags = reaction.f;
 
 	if ((flags & DIRTY) !== 0) {
@@ -203,6 +205,17 @@ export function check_dirtiness(reaction) {
 				dependency = dependencies[i];
 
 				if (check_dirtiness(/** @type {Derived} */ (dependency))) {
+					/* Don't execute deriveds of template effects when unpausing, for example when outer resumes
+
+					{#if outer}
+					  {#if inner}
+					  	{inner.func()}
+					  {/if}
+					{/if}
+
+					inner might be undefined, so don't eagerly execute `inner.func()`
+					 */
+					if (resuming && (reaction.f & TEMPLATE_EFFECT) !== 0) return true;
 					update_derived(/** @type {Derived} */ (dependency));
 				}
 

@@ -32,7 +32,8 @@ import {
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
 	EFFECT_HAS_DERIVED,
-	BOUNDARY_EFFECT
+	BOUNDARY_EFFECT,
+	TEMPLATE_EFFECT
 } from '#client/constants';
 import { set } from './sources.js';
 import * as e from '../errors.js';
@@ -329,6 +330,7 @@ export function render_effect(fn) {
 /**
  * @param {(...expressions: any) => void | (() => void)} fn
  * @param {Array<() => any>} thunks
+ * @param {<T>(fn: () => T) => Derived<T>} d
  * @returns {Effect}
  */
 export function template_effect(fn, thunks = [], d = derived) {
@@ -343,12 +345,12 @@ export function template_effect(fn, thunks = [], d = derived) {
 			define_property(inner, 'name', { value: '{expression}' });
 
 			const deriveds = thunks.map(d);
-			block(inner);
+			block(inner, TEMPLATE_EFFECT);
 		});
 	}
 
 	const deriveds = thunks.map(d);
-	return block(() => fn(...deriveds.map(get)));
+	return block(() => fn(...deriveds.map(get)), TEMPLATE_EFFECT);
 }
 
 /**
@@ -606,7 +608,7 @@ function resume_children(effect, local) {
 
 	// If a dependency of this effect changed while it was paused,
 	// schedule the effect to update
-	if (check_dirtiness(effect)) {
+	if (check_dirtiness(effect, true)) {
 		set_signal_status(effect, DIRTY);
 		schedule_effect(effect);
 	}
