@@ -32,8 +32,7 @@ import {
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
 	EFFECT_HAS_DERIVED,
-	BOUNDARY_EFFECT,
-	TEMPLATE_EFFECT
+	BOUNDARY_EFFECT
 } from '#client/constants';
 import { set } from './sources.js';
 import * as e from '../errors.js';
@@ -345,12 +344,12 @@ export function template_effect(fn, thunks = [], d = derived) {
 			define_property(inner, 'name', { value: '{expression}' });
 
 			const deriveds = thunks.map(d);
-			block(inner, TEMPLATE_EFFECT);
+			block(inner);
 		});
 	}
 
 	const deriveds = thunks.map(d);
-	return block(() => fn(...deriveds.map(get)), TEMPLATE_EFFECT);
+	return block(() => fn(...deriveds.map(get)));
 }
 
 /**

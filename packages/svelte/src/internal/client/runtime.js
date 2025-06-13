@@ -22,8 +22,7 @@ import {
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
-	EFFECT_IS_UPDATING,
-	TEMPLATE_EFFECT
+	EFFECT_IS_UPDATING
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { internal_set, old_values } from './reactivity/sources.js';
@@ -204,8 +203,8 @@ export function check_dirtiness(reaction, resuming = false) {
 			for (i = 0; i < length; i++) {
 				dependency = dependencies[i];
 
-				if (check_dirtiness(/** @type {Derived} */ (dependency))) {
-					/* Don't execute deriveds of template effects when unpausing, for example when outer resumes
+				if (check_dirtiness(/** @type {Derived} */ (dependency), resuming)) {
+					/* Don't execute deriveds when unpausing, for example when outer resumes
 
 					{#if outer}
 					  {#if inner}
@@ -215,7 +214,7 @@ export function check_dirtiness(reaction, resuming = false) {
 
 					inner might be undefined, so don't eagerly execute `inner.func()`
 					 */
-					if (resuming && (reaction.f & TEMPLATE_EFFECT) !== 0) return true;
+					if (resuming) return true;
 					update_derived(/** @type {Derived} */ (dependency));
 				}
 
