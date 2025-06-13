@@ -101,7 +101,7 @@ export function mutable_source(initial_value, immutable = false, trackable = tru
 
 	// bind the signal to the component context, in case we need to
 	// track updates to trigger beforeUpdate/afterUpdate callbacks
-	if (trackable && legacy_mode_flag && component_context !== null && component_context.l !== null) {
+	if (legacy_mode_flag && trackable && component_context !== null && component_context.l !== null) {
 		(component_context.l.s ??= []).push(s);
 	}
 
