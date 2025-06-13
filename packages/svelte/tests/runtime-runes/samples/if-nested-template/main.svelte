@@ -10,6 +10,9 @@
 {#if outer}
 	<div out:outro>
 		{#if inner}
+			{@const text = inner.toString()}
+			{text}
+			<br>
 			{inner.toString()}
 		{/if}
 	</div>

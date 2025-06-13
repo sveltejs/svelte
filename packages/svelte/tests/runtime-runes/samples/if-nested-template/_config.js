@@ -7,10 +7,10 @@ export default test({
 		const [div] = target.querySelectorAll('div');
 
 		flushSync(() => btn1?.click());
-		assert.htmlEqual(div.innerHTML, '123');
+		assert.htmlEqual(div.innerHTML, '123 <br> 123');
 		assert.equal(div.inert, true);
 
 		flushSync(() => btn2?.click());
-		assert.htmlEqual(div.innerHTML, '123');
+		assert.htmlEqual(div.innerHTML, '');
 	}
 });
