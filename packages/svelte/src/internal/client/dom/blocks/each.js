@@ -527,7 +527,7 @@ function create_item(
 	if (DEV && reactive) {
 		// For tracing purposes, we need to link the source signal we create with the
 		// collection + index so that tracing works as intended
-		/** @type {Value} */ (v).debug = () => {
+		/** @type {Value} */ (v).trace = () => {
 			var collection_index = typeof i === 'number' ? index : i.v;
 			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 			get_collection()[collection_index];

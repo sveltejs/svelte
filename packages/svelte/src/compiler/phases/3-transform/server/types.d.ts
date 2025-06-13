@@ -2,12 +2,10 @@ import type { Expression, Statement, ModuleDeclaration, LabeledStatement } from 
 import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
-import type { StateField } from '../client/types.js';
 
 export interface ServerTransformState extends TransformState {
 	/** The $: calls, which will be ordered in the end */
 	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
-	readonly private_derived: Map<string, StateField>;
 }
 
 export interface ComponentServerTransformState extends ServerTransformState {

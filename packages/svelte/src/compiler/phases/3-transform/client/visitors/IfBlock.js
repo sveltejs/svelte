@@ -8,7 +8,7 @@ import * as b from '#compiler/builders';
  * @param {ComponentContext} context
  */
 export function IfBlock(node, context) {
-	context.state.template.push('<!>');
+	context.state.template.push_comment();
 	const statements = [];
 
 	const consequent = /** @type {BlockStatement} */ (context.visit(node.consequent));

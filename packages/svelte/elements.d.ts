@@ -463,6 +463,8 @@ export interface DOMAttributes<T extends EventTarget> {
 	'on:fullscreenerror'?: EventHandler<Event, T> | undefined | null;
 	onfullscreenerror?: EventHandler<Event, T> | undefined | null;
 	onfullscreenerrorcapture?: EventHandler<Event, T> | undefined | null;
+
+	xmlns?: string | undefined | null;
 }
 
 // All the WAI-ARIA 1.1 attributes from https://www.w3.org/TR/wai-aria-1.1/
@@ -924,6 +926,17 @@ export interface HTMLButtonAttributes extends HTMLAttributes<HTMLButtonElement> 
 	value?: string | string[] | number | undefined | null;
 	popovertarget?: string | undefined | null;
 	popovertargetaction?: 'toggle' | 'show' | 'hide' | undefined | null;
+	command?:
+		| 'show-modal'
+		| 'close'
+		| 'request-close'
+		| 'show-popover'
+		| 'hide-popover'
+		| 'toggle-popover'
+		| (string & {})
+		| undefined
+		| null;
+	commandfor?: string | undefined | null;
 }
 
 export interface HTMLCanvasAttributes extends HTMLAttributes<HTMLCanvasElement> {
@@ -1115,8 +1128,8 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	// needs both casing variants because language tools does lowercase names of non-shorthand attributes
 	defaultValue?: any;
 	defaultvalue?: any;
-	defaultChecked?: any;
-	defaultchecked?: any;
+	defaultChecked?: boolean | undefined | null;
+	defaultchecked?: boolean | undefined | null;
 	width?: number | string | undefined | null;
 	webkitdirectory?: boolean | undefined | null;
 
@@ -1809,7 +1822,6 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	'xlink:type'?: string | undefined | null;
 	'xml:base'?: string | undefined | null;
 	'xml:lang'?: string | undefined | null;
-	xmlns?: string | undefined | null;
 	'xmlns:xlink'?: string | undefined | null;
 	'xml:space'?: string | undefined | null;
 	y1?: number | string | undefined | null;

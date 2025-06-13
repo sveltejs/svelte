@@ -5,7 +5,7 @@ function increment(_, counter) {
 	counter.count += 1;
 }
 
-var root = $.template(`<button> </button> <!> `, 1);
+var root = $.from_html(`<button> </button> <!> `, 1);
 
 export default function Await_block_scope($$anchor) {
 	let counter = $.proxy({ count: 0 });

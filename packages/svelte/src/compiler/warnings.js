@@ -96,6 +96,7 @@ export const codes = [
 	'options_removed_hydratable',
 	'options_removed_loop_guard_timeout',
 	'options_renamed_ssr_dom',
+	'custom_element_props_identifier',
 	'export_let_unused',
 	'legacy_component_creation',
 	'non_reactive_update',
@@ -114,6 +115,7 @@ export const codes = [
 	'bind_invalid_each_rest',
 	'block_empty',
 	'component_name_lowercase',
+	'element_implicitly_closed',
 	'element_invalid_self_closing_tag',
 	'event_directive_deprecated',
 	'node_invalid_placement_ssr',
@@ -592,6 +594,14 @@ export function options_renamed_ssr_dom(node) {
 }
 
 /**
+ * Using a rest element or a non-destructured declaration with `$props()` means that Svelte can't infer what properties to expose when creating a custom element. Consider destructuring all the props or explicitly specifying the `customElement.props` option.
+ * @param {null | NodeLike} node
+ */
+export function custom_element_props_identifier(node) {
+	w(node, 'custom_element_props_identifier', `Using a rest element or a non-destructured declaration with \`$props()\` means that Svelte can't infer what properties to expose when creating a custom element. Consider destructuring all the props or explicitly specifying the \`customElement.props\` option.\nhttps://svelte.dev/e/custom_element_props_identifier`);
+}
+
+/**
  * Component has unused export property '%name%'. If it is for external reference only, please consider using `export const %name%`
  * @param {null | NodeLike} node
  * @param {string} name
@@ -744,6 +754,16 @@ export function block_empty(node) {
  */
 export function component_name_lowercase(node, name) {
 	w(node, 'component_name_lowercase', `\`<${name}>\` will be treated as an HTML element unless it begins with a capital letter\nhttps://svelte.dev/e/component_name_lowercase`);
+}
+
+/**
+ * This element is implicitly closed by the following `%tag%`, which can cause an unexpected DOM structure. Add an explicit `%closing%` to avoid surprises.
+ * @param {null | NodeLike} node
+ * @param {string} tag
+ * @param {string} closing
+ */
+export function element_implicitly_closed(node, tag, closing) {
+	w(node, 'element_implicitly_closed', `This element is implicitly closed by the following \`${tag}\`, which can cause an unexpected DOM structure. Add an explicit \`${closing}\` to avoid surprises.\nhttps://svelte.dev/e/element_implicitly_closed`);
 }
 
 /**

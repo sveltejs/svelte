@@ -1,3 +1,4 @@
+/** @import { Effect } from '#client' */
 import { DEV } from 'esm-env';
 import { hydrating, set_hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
@@ -10,6 +11,7 @@ import { is_capture_event, is_delegated, normalize_attribute } from '../../../..
 import {
 	active_effect,
 	active_reaction,
+	get,
 	set_active_effect,
 	set_active_reaction
 } from '../../runtime.js';
@@ -18,6 +20,9 @@ import { clsx } from '../../../shared/attributes.js';
 import { set_class } from './class.js';
 import { set_style } from './style.js';
 import { ATTACHMENT_KEY, NAMESPACE_HTML } from '../../../../constants.js';
+import { block, branch, destroy_effect } from '../../reactivity/effects.js';
+import { derived } from '../../reactivity/deriveds.js';
+import { init_select, select_option } from './bindings/select.js';
 
 export const CLASS = Symbol('class');
 export const STYLE = Symbol('style');
@@ -447,13 +452,68 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 		set_hydrating(true);
 	}
 
-	for (let symbol of Object.getOwnPropertySymbols(next)) {
-		if (symbol.description === ATTACHMENT_KEY) {
-			attach(element, () => next[symbol]);
+	return current;
+}
+
+/**
+ * @param {Element & ElementCSSInlineStyle} element
+ * @param {(...expressions: any) => Record<string | symbol, any>} fn
+ * @param {Array<() => any>} thunks
+ * @param {string} [css_hash]
+ * @param {boolean} [skip_warning]
+ */
+export function attribute_effect(
+	element,
+	fn,
+	thunks = [],
+	css_hash,
+	skip_warning = false,
+	d = derived
+) {
+	const deriveds = thunks.map(d);
+
+	/** @type {Record<string | symbol, any> | undefined} */
+	var prev = undefined;
+
+	/** @type {Record<symbol, Effect>} */
+	var effects = {};
+
+	var is_select = element.nodeName === 'SELECT';
+	var inited = false;
+
+	block(() => {
+		var next = fn(...deriveds.map(get));
+
+		set_attributes(element, prev, next, css_hash, skip_warning);
+
+		if (inited && is_select && 'value' in next) {
+			select_option(/** @type {HTMLSelectElement} */ (element), next.value, false);
 		}
+
+		for (let symbol of Object.getOwnPropertySymbols(effects)) {
+			if (!next[symbol]) destroy_effect(effects[symbol]);
+		}
+
+		for (let symbol of Object.getOwnPropertySymbols(next)) {
+			var n = next[symbol];
+
+			if (symbol.description === ATTACHMENT_KEY && (!prev || n !== prev[symbol])) {
+				if (effects[symbol]) destroy_effect(effects[symbol]);
+				effects[symbol] = branch(() => attach(element, () => n));
+			}
+		}
+
+		prev = next;
+	});
+
+	if (is_select) {
+		init_select(
+			/** @type {HTMLSelectElement} */ (element),
+			() => /** @type {Record<string | symbol, any>} */ (prev).value
+		);
 	}
 
-	return current;
+	inited = true;
 }
 
 /**

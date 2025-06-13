@@ -212,13 +212,41 @@ It's possible to export a snippet from a `<script module>` block, but only if it
 
 > Cannot reassign or bind to snippet parameter
 
+## state_field_duplicate
+
+> `%name%` has already been declared on this class
+
+An assignment to a class field that uses a `$state` or `$derived` rune is considered a _state field declaration_. The declaration can happen in the class body...
+
+```js
+class Counter {
+	count = $state(0);
+}
+```
+
+...or inside the constructor...
+
+```js
+class Counter {
+	constructor() {
+		this.count = $state(0);
+	}
+}
+```
+
+...but it can only happen once.
+
+## state_field_invalid_assignment
+
+> Cannot assign to a state field before its declaration
+
 ## state_invalid_export
 
 > Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties
 
 ## state_invalid_placement
 
-> `%rune%(...)` can only be used as a variable declaration initializer or a class field
+> `%rune%(...)` can only be used as a variable declaration initializer, a class field declaration, or the first assignment to a class field at the top level of the constructor.
 
 ## state_invalidate_invalid_this_property
 

@@ -11,7 +11,7 @@ import { memoize_expression } from './shared/utils.js';
  */
 export function SlotElement(node, context) {
 	// <slot {a}>fallback</slot>  -->   $.slot($$slots.default, { get a() { .. } }, () => ...fallback);
-	context.state.template.push('<!>');
+	context.state.template.push_comment();
 
 	/** @type {Property[]} */
 	const props = [];

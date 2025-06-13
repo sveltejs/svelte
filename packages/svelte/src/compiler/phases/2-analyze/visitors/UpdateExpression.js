@@ -8,7 +8,7 @@ import { validate_assignment } from './shared/utils.js';
  * @param {Context} context
  */
 export function UpdateExpression(node, context) {
-	validate_assignment(node, node.argument, context.state);
+	validate_assignment(node, node.argument, context);
 
 	if (context.state.reactive_statement) {
 		const id = node.argument.type === 'MemberExpression' ? object(node.argument) : node.argument;

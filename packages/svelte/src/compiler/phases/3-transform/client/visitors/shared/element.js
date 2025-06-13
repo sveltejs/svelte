@@ -16,28 +16,30 @@ import { build_template_chunk, get_expression_id } from './utils.js';
  * @param {ComponentContext} context
  * @param {AST.RegularElement | AST.SvelteElement} element
  * @param {Identifier} element_id
- * @param {Identifier} attributes_id
  */
-export function build_set_attributes(
+export function build_attribute_effect(
 	attributes,
 	class_directives,
 	style_directives,
 	context,
 	element,
-	element_id,
-	attributes_id
+	element_id
 ) {
-	let is_dynamic = false;
-
 	/** @type {ObjectExpression['properties']} */
 	const values = [];
 
+	/** @type {Expression[]} */
+	const expressions = [];
+
+	/** @param {Expression} value */
+	function memoize(value) {
+		return b.id(`$${expressions.push(value) - 1}`);
+	}
+
 	for (const attribute of attributes) {
 		if (attribute.type === 'Attribute') {
-			const { value, has_state } = build_attribute_value(
-				attribute.value,
-				context,
-				(value, metadata) => (metadata.has_call ? get_expression_id(context.state, value) : value)
+			const { value } = build_attribute_value(attribute.value, context, (value, metadata) =>
+				metadata.has_call ? memoize(value) : value
 			);
 
 			if (
@@ -51,16 +53,11 @@ export function build_set_attributes(
 			} else {
 				values.push(b.init(attribute.name, value));
 			}
-
-			is_dynamic ||= has_state;
 		} else {
-			// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
-			is_dynamic = true;
-
 			let value = /** @type {Expression} */ (context.visit(attribute));
 
 			if (attribute.metadata.expression.has_call) {
-				value = get_expression_id(context.state, value);
+				value = memoize(value);
 			}
 
 			values.push(b.spread(value));
@@ -72,12 +69,9 @@ export function build_set_attributes(
 			b.prop(
 				'init',
 				b.array([b.id('$.CLASS')]),
-				build_class_directives_object(class_directives, context)
+				build_class_directives_object(class_directives, expressions, context)
 			)
 		);
-
-		is_dynamic ||=
-			class_directives.find((directive) => directive.metadata.expression.has_state) !== null;
 	}
 
 	if (style_directives.length) {
@@ -85,31 +79,28 @@ export function build_set_attributes(
 			b.prop(
 				'init',
 				b.array([b.id('$.STYLE')]),
-				build_style_directives_object(style_directives, context)
+				build_style_directives_object(style_directives, expressions, context)
 			)
 		);
-
-		is_dynamic ||= style_directives.some((directive) => directive.metadata.expression.has_state);
 	}
 
-	const call = b.call(
-		'$.set_attributes',
-		element_id,
-		is_dynamic ? attributes_id : b.null,
-		b.object(values),
-		element.metadata.scoped &&
-			context.state.analysis.css.hash !== '' &&
-			b.literal(context.state.analysis.css.hash),
-		is_ignored(element, 'hydration_attribute_changed') && b.true
+	context.state.init.push(
+		b.stmt(
+			b.call(
+				'$.attribute_effect',
+				element_id,
+				b.arrow(
+					expressions.map((_, i) => b.id(`$${i}`)),
+					b.object(values)
+				),
+				expressions.length > 0 && b.array(expressions.map((expression) => b.thunk(expression))),
+				element.metadata.scoped &&
+					context.state.analysis.css.hash !== '' &&
+					b.literal(context.state.analysis.css.hash),
+				is_ignored(element, 'hydration_attribute_changed') && b.true
+			)
+		)
 	);
-
-	if (is_dynamic) {
-		context.state.init.push(b.let(attributes_id));
-		const update = b.stmt(b.assignment('=', attributes_id, call));
-		context.state.update.push(update);
-	} else {
-		context.state.init.push(b.stmt(call));
-	}
 }
 
 /**
@@ -167,7 +158,7 @@ export function build_set_class(element, node_id, attribute, class_directives, c
 			value = b.call('$.clsx', value);
 		}
 
-		return metadata.has_call ? get_expression_id(context.state, value) : value;
+		return metadata.has_call ? get_expression_id(context.state.expressions, value) : value;
 	});
 
 	/** @type {Identifier | undefined} */
@@ -180,7 +171,7 @@ export function build_set_class(element, node_id, attribute, class_directives, c
 	let next;
 
 	if (class_directives.length) {
-		next = build_class_directives_object(class_directives, context);
+		next = build_class_directives_object(class_directives, context.state.expressions, context);
 		has_state ||= class_directives.some((d) => d.metadata.expression.has_state);
 
 		if (has_state) {
@@ -235,7 +226,7 @@ export function build_set_class(element, node_id, attribute, class_directives, c
  */
 export function build_set_style(node_id, attribute, style_directives, context) {
 	let { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call ? get_expression_id(context.state, value) : value
+		metadata.has_call ? get_expression_id(context.state.expressions, value) : value
 	);
 
 	/** @type {Identifier | undefined} */
@@ -248,7 +239,7 @@ export function build_set_style(node_id, attribute, style_directives, context) {
 	let next;
 
 	if (style_directives.length) {
-		next = build_style_directives_object(style_directives, context);
+		next = build_style_directives_object(style_directives, context.state.expressions, context);
 		has_state ||= style_directives.some((d) => d.metadata.expression.has_state);
 
 		if (has_state) {

@@ -432,6 +432,11 @@ export namespace AST {
 			 * This saves us from creating an extra comment and insertion being faster.
 			 */
 			is_controlled: boolean;
+			/**
+			 * Bindings this each block transitively depends on. In legacy mode, we
+			 * invalidate these bindings when mutations happen to each block items
+			 */
+			transitive_deps: Set<Binding>;
 		};
 	}
 
@@ -547,7 +552,13 @@ export namespace AST {
 		| AST.SvelteWindow
 		| AST.SvelteBoundary;
 
-	export type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
+	export type Tag =
+		| AST.AttachTag
+		| AST.ConstTag
+		| AST.DebugTag
+		| AST.ExpressionTag
+		| AST.HtmlTag
+		| AST.RenderTag;
 
 	export type TemplateNode =
 		| AST.Root

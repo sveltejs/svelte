@@ -9,7 +9,7 @@ import * as b from '#compiler/builders';
  * @param {ComponentContext} context
  */
 export function RenderTag(node, context) {
-	context.state.template.push('<!>');
+	context.state.template.push_comment();
 
 	const expression = unwrap_optional(node.expression);
 
