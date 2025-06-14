@@ -15,5 +15,8 @@ export function HtmlTag(node, context) {
 	// unfortunately this is necessary in order to fix invalid HTML
 	mark_subtree_dynamic(context.path);
 
-	context.next();
+	context.next({
+		...context.state,
+		expression: node.metadata.expression
+	});
 }

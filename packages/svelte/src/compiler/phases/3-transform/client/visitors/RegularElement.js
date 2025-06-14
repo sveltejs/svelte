@@ -1,6 +1,6 @@
 /** @import { ArrayExpression, Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression } from 'estree' */
 /** @import { AST } from '#compiler' */
-/** @import { ComponentClientTransformState, ComponentContext } from '../types' */
+/** @import { ComponentClientTransformState, ComponentContext, MemoizedExpression } from '../types' */
 /** @import { Scope } from '../../../scope' */
 import {
 	cannot_be_set_statically,
@@ -261,7 +261,12 @@ export function RegularElement(node, context) {
 					attribute.value,
 					context,
 					(value, metadata) =>
-						metadata.has_call ? get_expression_id(context.state.expressions, value) : value
+						metadata.has_call || metadata.has_await
+							? get_expression_id(
+									metadata.has_await ? context.state.async_expressions : context.state.expressions,
+									value
+								)
+							: value
 				);
 
 				const update = build_element_attribute_update(node, node_id, name, value, attributes);
@@ -327,7 +332,11 @@ export function RegularElement(node, context) {
 	// (e.g. `<span>{location}</span>`), set `textContent` programmatically
 	const use_text_content =
 		trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') &&
-		trimmed.every((node) => node.type === 'Text' || !node.metadata.expression.has_state) &&
+		trimmed.every(
+			(node) =>
+				node.type === 'Text' ||
+				(!node.metadata.expression.has_state && !node.metadata.expression.has_await)
+		) &&
 		trimmed.some((node) => node.type === 'ExpressionTag');
 
 	if (use_text_content) {
@@ -453,32 +462,48 @@ function setup_select_synchronization(value_binding, context) {
 
 /**
  * @param {AST.ClassDirective[]} class_directives
- * @param {Expression[]} expressions
+ * @param {MemoizedExpression[]} async_expressions
+ * @param {MemoizedExpression[]} expressions
  * @param {ComponentContext} context
  * @return {ObjectExpression | Identifier}
  */
-export function build_class_directives_object(class_directives, expressions, context) {
+export function build_class_directives_object(
+	class_directives,
+	async_expressions,
+	expressions,
+	context
+) {
 	let properties = [];
 	let has_call_or_state = false;
+	let has_async = false;
 
 	for (const d of class_directives) {
 		const expression = /** @type Expression */ (context.visit(d.expression));
 		properties.push(b.init(d.name, expression));
 		has_call_or_state ||= d.metadata.expression.has_call || d.metadata.expression.has_state;
+		has_async ||= d.metadata.expression.has_await;
 	}
 
 	const directives = b.object(properties);
 
-	return has_call_or_state ? get_expression_id(expressions, directives) : directives;
+	return has_call_or_state || has_async
+		? get_expression_id(has_async ? async_expressions : expressions, directives)
+		: directives;
 }
 
 /**
  * @param {AST.StyleDirective[]} style_directives
- * @param {Expression[]} expressions
+ * @param {MemoizedExpression[]} async_expressions
+ * @param {MemoizedExpression[]} expressions
  * @param {ComponentContext} context
  * @return {ObjectExpression | ArrayExpression}}
  */
-export function build_style_directives_object(style_directives, expressions, context) {
+export function build_style_directives_object(
+	style_directives,
+	async_expressions,
+	expressions,
+	context
+) {
 	let normal_properties = [];
 	let important_properties = [];
 
@@ -487,7 +512,9 @@ export function build_style_directives_object(style_directives, expressions, con
 			directive.value === true
 				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
 				: build_attribute_value(directive.value, context, (value, metadata) =>
-						metadata.has_call ? get_expression_id(expressions, value) : value
+						metadata.has_call
+							? get_expression_id(metadata.has_await ? async_expressions : expressions, value)
+							: value
 					).value;
 		const property = b.init(directive.name, expression);
 
@@ -622,11 +649,11 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 		element === 'select' && attribute.value !== true && !is_text_attribute(attribute);
 
 	const { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call
+		metadata.has_call || metadata.has_await
 			? // if is a select with value we will also invoke `init_select` which need a reference before the template effect so we memoize separately
 				is_select_with_value
-				? memoize_expression(state, value)
-				: get_expression_id(state.expressions, value)
+				? memoize_expression(context.state, value)
+				: get_expression_id(metadata.has_await ? state.async_expressions : state.expressions, value)
 			: value
 	);
 

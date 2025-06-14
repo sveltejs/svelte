@@ -34,6 +34,22 @@ function add() {
 }
 ```
 
+### await_reactivity_loss
+
+```
+Detected reactivity loss
+```
+
+TODO
+
+### await_waterfall
+
+```
+An async value (%location%) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app.
+```
+
+TODO
+
 ### binding_property_non_reactive
 
 ```

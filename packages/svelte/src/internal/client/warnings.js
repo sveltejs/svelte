@@ -19,6 +19,29 @@ export function assignment_value_stale(property, location) {
 }
 
 /**
+ * Detected reactivity loss
+ */
+export function await_reactivity_loss() {
+	if (DEV) {
+		console.warn(`%c[svelte] await_reactivity_loss\n%cDetected reactivity loss\nhttps://svelte.dev/e/await_reactivity_loss`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/await_reactivity_loss`);
+	}
+}
+
+/**
+ * An async value (%location%) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app.
+ * @param {string} location
+ */
+export function await_waterfall(location) {
+	if (DEV) {
+		console.warn(`%c[svelte] await_waterfall\n%cAn async value (${location}) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app.\nhttps://svelte.dev/e/await_waterfall`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/await_waterfall`);
+	}
+}
+
+/**
  * `%binding%` (%location%) is binding to a non-reactive property
  * @param {string} binding
  * @param {string | undefined | null} [location]

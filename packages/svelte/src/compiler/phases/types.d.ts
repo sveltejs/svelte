@@ -1,6 +1,7 @@
 import type { AST, Binding, StateField } from '#compiler';
 import type {
-	AssignmentExpression,
+	AwaitExpression,
+	CallExpression,
 	ClassBody,
 	Identifier,
 	LabeledStatement,
@@ -8,13 +9,12 @@ import type {
 	Program
 } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
-import type { StateCreationRuneName } from '../../utils.js';
-import type { AnalysisState } from './2-analyze/types.js';
 
 export interface Js {
 	ast: Program;
 	scope: Scope;
 	scopes: Map<AST.SvelteNode, Scope>;
+	has_await: boolean;
 }
 
 export interface Template {
@@ -42,6 +42,12 @@ export interface Analysis {
 
 	// TODO figure out if we can move this to ComponentAnalysis
 	accessors: boolean;
+
+	/** A set of deriveds that contain `await` expressions */
+	async_deriveds: Set<CallExpression>;
+
+	/** A set of `await` expressions that should preserve context */
+	context_preserving_awaits: Set<AwaitExpression>;
 }
 
 export interface ComponentAnalysis extends Analysis {
