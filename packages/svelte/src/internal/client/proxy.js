@@ -1,12 +1,13 @@
 /** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
-import { get, active_effect, active_reaction, set_active_reaction } from './runtime.js';
+import { get, active_effect, active_reaction, set_active_reaction, untrack } from './runtime.js';
 import {
 	array_prototype,
 	get_descriptor,
 	get_prototype_of,
 	is_array,
-	object_prototype
+	object_prototype,
+	define_property
 } from '../shared/utils.js';
 import { state as source, set } from './reactivity/sources.js';
 import { PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
@@ -17,6 +18,19 @@ import { tracing_mode_flag } from '../flags/index.js';
 
 // TODO move all regexes into shared module?
 const regex_is_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
+
+// Array methods that mutate the array, according to the ECMAScript specification
+const MUTATING_ARRAY_METHODS = new Set([
+	'push',
+	'pop',
+	'shift',
+	'unshift',
+	'splice',
+	'sort',
+	'reverse',
+	'copyWithin',
+	'fill'
+]);
 
 /**
  * @template T
@@ -42,6 +56,9 @@ export function proxy(value) {
 
 	var stack = DEV && tracing_mode_flag ? get_stack('CreatedAt') : null;
 	var reaction = active_reaction;
+
+	/** @type {Map<string, Function> | null} */
+	var proxied_array_mutating_methods_cache = is_proxied_array ? new Map() : null;
 
 	/**
 	 * @template T
@@ -174,6 +191,44 @@ export function proxy(value) {
 			if (s !== undefined) {
 				var v = get(s);
 				return v === UNINITIALIZED ? undefined : v;
+			}
+
+			// if this is a proxied array and the property is a mutating method, return a
+			// wrapper that executes the native method inside `untrack`, preventing the
+			// current reaction from accidentally depending on `length` (or other
+			// internals) that the algorithm reads.
+			if (is_proxied_array && typeof prop === 'string' && MUTATING_ARRAY_METHODS.has(prop)) {
+				/** @type {Map<string, Function>} */
+				const mutating_methods_cache = /** @type {Map<string, Function>} */ (proxied_array_mutating_methods_cache);
+
+				var cached_method = mutating_methods_cache.get(prop);
+
+				if (cached_method === undefined) {
+					/**
+					 * wrapper executes the native mutating method inside `untrack` so that
+					 * any implicit `length` reads are ignored.
+					 * @this any
+					 * @param {...any} args
+					 */
+					cached_method = function (...args) {
+						// preserve correct `this` binding and forward result.
+						// eslint-disable-next-line prefer-spread
+						return untrack(() => /** @type {any} */ (array_prototype)[prop].apply(this, args));
+					};
+
+					// give the wrapper a meaningful name for better debugging
+					try {
+						define_property(cached_method, 'name', {
+							value: `proxied_array_untracked_${/** @type {string} */ (prop)}`
+						});
+					} catch {
+						// property might be non-configurable in some engines
+					}
+
+					mutating_methods_cache.set(prop, cached_method);
+				}
+
+				return cached_method;
 			}
 
 			return Reflect.get(target, prop, receiver);
