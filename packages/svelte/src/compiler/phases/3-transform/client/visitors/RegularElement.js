@@ -414,6 +414,16 @@ function setup_select_synchronization(value_binding, context) {
 		bound = /** @type {Identifier | MemberExpression} */ (bound.object);
 	}
 
+	// guard against reactively-derived bindings to prevent circular dependencies
+	if (bound.type === 'Identifier') {
+		const binding = context.state.scope.get(bound.name);
+		if (binding && binding.kind === 'legacy_reactive') {
+			// skip synchronization for reactive-derived bindings,
+			// the reactive statement already handles updates properly
+			return;
+		}
+	}
+
 	/** @type {string[]} */
 	const names = [];
 
