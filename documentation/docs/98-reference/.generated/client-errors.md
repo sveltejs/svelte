@@ -116,6 +116,12 @@ The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
 Property descriptors defined on `$state` objects must contain `value` and always be `enumerable`, `configurable` and `writable`.
 ```
 
+### state_invalidate_invalid_source
+
+```
+The argument passed to `$state.invalidate` must be a variable or class field declared with `$state` or `$state.raw`, or a property of a `$state` object.
+```
+
 ### state_prototype_fixed
 
 ```

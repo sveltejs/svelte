@@ -9,7 +9,7 @@ import {
 	object_prototype
 } from '../shared/utils.js';
 import { state as source, set } from './reactivity/sources.js';
-import { PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
+import { PROXY_PATH_SYMBOL, PROXY_SOURCES, STATE_SYMBOL } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 import { get_stack, tag } from './dev/tracing.js';
@@ -148,6 +148,10 @@ export function proxy(value) {
 				return value;
 			}
 
+			if (prop === PROXY_SOURCES) {
+				return sources;
+      }
+
 			if (DEV && prop === PROXY_PATH_SYMBOL) {
 				return update_path;
 			}
@@ -203,7 +207,7 @@ export function proxy(value) {
 		},
 
 		has(target, prop) {
-			if (prop === STATE_SYMBOL) {
+			if (prop === STATE_SYMBOL || prop === PROXY_SOURCES) {
 				return true;
 			}
 
@@ -382,4 +386,23 @@ export function get_proxied_value(value) {
  */
 export function is(a, b) {
 	return Object.is(get_proxied_value(a), get_proxied_value(b));
+}
+
+/**
+ * @param {Record<string | symbol, any>} object
+ * @param {string | symbol} property
+ * @returns {Source | null}
+ */
+export function lookup_source(object, property) {
+	if (typeof object !== 'object' || object === null) return null;
+	if (STATE_SYMBOL in object) {
+		if (property in object) {
+			/** @type {Map<string | symbol, Source>} */
+			const sources = object[PROXY_SOURCES];
+			if (sources.has(property)) {
+				return /** @type {Source} */ (sources.get(property));
+			}
+		}
+	}
+	return null;
 }
