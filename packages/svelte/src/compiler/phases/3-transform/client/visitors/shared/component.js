@@ -4,8 +4,8 @@
 import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { build_bind_this, memoize_expression, validate_binding } from '../shared/utils.js';
-import { build_attribute_value } from '../shared/element.js';
+import { build_bind_this, memoize_expression, validate_binding } from './utils.js';
+import { build_attribute_value } from './element.js';
 import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
 
@@ -399,14 +399,10 @@ export function build_component(node, component_name, context) {
 		push_prop(b.init('$$legacy', b.true));
 	}
 
-	const props_expression =
-		props_and_spreads.length === 0 ||
-		(props_and_spreads.length === 1 && Array.isArray(props_and_spreads[0]))
-			? b.object(/** @type {Property[]} */ (props_and_spreads[0]) || [])
-			: b.call(
-					'$.spread_props',
-					...props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p))
-				);
+	const props_expression = b.call(
+		'$.props',
+		...props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p))
+	);
 
 	/** @param {Expression} node_id */
 	let fn = (node_id) => {
