@@ -97,7 +97,7 @@ export function state(v, stack) {
  * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function mutable_source(initial_value, immutable = false) {
+export function mutable_source(initial_value, immutable = false, trackable = true) {
 	const s = source(initial_value);
 	if (!immutable) {
 		s.equals = safe_equals;
@@ -105,7 +105,7 @@ export function mutable_source(initial_value, immutable = false) {
 
 	// bind the signal to the component context, in case we need to
 	// track updates to trigger beforeUpdate/afterUpdate callbacks
-	if (legacy_mode_flag && component_context !== null && component_context.l !== null) {
+	if (legacy_mode_flag && trackable && component_context !== null && component_context.l !== null) {
 		(component_context.l.s ??= []).push(s);
 	}
 

@@ -521,7 +521,7 @@ function create_item(
 	var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
 	var mutable = (flags & EACH_ITEM_IMMUTABLE) === 0;
 
-	var v = reactive ? (mutable ? mutable_source(value) : source(value)) : value;
+	var v = reactive ? (mutable ? mutable_source(value, false, false) : source(value)) : value;
 	var i = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
 
 	if (DEV && reactive) {
