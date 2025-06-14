@@ -603,11 +603,11 @@ function resume_children(effect, local) {
 	// effects can schedule themselves for execution
 	if ((effect.f & CLEAN) === 0) {
 		effect.f ^= CLEAN;
-	}
-
-	// If a dependency of this effect changed while it was paused,
-	// schedule the effect to update
-	if (check_dirtiness(effect, true)) {
+	} else {
+		// If a dependency of this effect changed while it was paused,
+		// schedule the effect to update. we don't use `check_dirtiness`
+		// here because we don't want to eagerly recompute a derived like
+		// `{#if foo}{foo.bar()}{/if}` if `foo` is now `undefined
 		set_signal_status(effect, DIRTY);
 		schedule_effect(effect);
 	}

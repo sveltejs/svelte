@@ -151,10 +151,9 @@ export function increment_write_version() {
  * Determines whether a derived or effect is dirty.
  * If it is MAYBE_DIRTY, will set the status to CLEAN
  * @param {Reaction} reaction
- * @param {boolean} [resuming]
  * @returns {boolean}
  */
-export function check_dirtiness(reaction, resuming = false) {
+export function check_dirtiness(reaction) {
 	var flags = reaction.f;
 
 	if ((flags & DIRTY) !== 0) {
@@ -203,18 +202,7 @@ export function check_dirtiness(reaction, resuming = false) {
 			for (i = 0; i < length; i++) {
 				dependency = dependencies[i];
 
-				if (check_dirtiness(/** @type {Derived} */ (dependency), resuming)) {
-					/* Don't execute deriveds when unpausing, for example when outer resumes
-
-					{#if outer}
-					  {#if inner}
-					  	{inner.func()}
-					  {/if}
-					{/if}
-
-					inner might be undefined, so don't eagerly execute `inner.func()`
-					 */
-					if (resuming) return true;
+				if (check_dirtiness(/** @type {Derived} */ (dependency))) {
 					update_derived(/** @type {Derived} */ (dependency));
 				}
 
