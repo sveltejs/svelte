@@ -599,15 +599,6 @@ function resume_children(effect, local) {
 	if ((effect.f & INERT) === 0) return;
 	effect.f ^= INERT;
 
-	// If a dependency of this effect changed while it was paused,
-	// schedule the effect to update. we don't use `check_dirtiness`
-	// here because we don't want to eagerly recompute a derived like
-	// `{#if foo}{foo.bar()}{/if}` if `foo` is now `undefined
-	if ((effect.f & CLEAN) !== 0) {
-		set_signal_status(effect, DIRTY);
-		schedule_effect(effect);
-	}
-
 	var child = effect.first;
 
 	while (child !== null) {
