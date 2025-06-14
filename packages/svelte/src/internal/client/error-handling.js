@@ -66,7 +66,8 @@ function adjust_error(error, effect) {
 	const message_descriptor = get_descriptor(error, 'message');
 
 	// if the message was already changed and it's not configurable we can't change it
-	// or it will throw a different error swallowing the original one
+	// or it will throw a different error swallowing the original error
+	if (message_descriptor && !message_descriptor.configurable) return;
 
 	var indent = is_firefox ? '  ' : '\t';
 	var component_stack = `\n${indent}in ${effect.fn?.name || '<unknown>'}`;
@@ -77,18 +78,9 @@ function adjust_error(error, effect) {
 		context = context.p;
 	}
 
-	if (!message_descriptor || message_descriptor.configurable) {
-		define_property(error, 'message', {
-			value: error.message + `\n${component_stack}\n`
-		});
-	} else {
-		// eslint-disable-next-line no-console
-		console.error(
-			"The following it's not a separate error: we usually modify the error message to show you this information but `message` was non configurable so we print them in a separate log.\n" +
-				error.message +
-				`\n${component_stack}\n`
-		);
-	}
+	define_property(error, 'message', {
+		value: error.message + `\n${component_stack}\n`
+	});
 
 	if (error.stack) {
 		// Filter out internal modules
