@@ -10,7 +10,7 @@ import {
 	define_property
 } from '../shared/utils.js';
 import { state as source, set } from './reactivity/sources.js';
-import { PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
+import { PROXY_PATH_SYMBOL, STATE_SYMBOL, DERIVED, BLOCK_EFFECT } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 import { get_stack, tag } from './dev/tracing.js';
@@ -199,7 +199,9 @@ export function proxy(value) {
 			// internals) that the algorithm reads.
 			if (is_proxied_array && typeof prop === 'string' && MUTATING_ARRAY_METHODS.has(prop)) {
 				/** @type {Map<string, Function>} */
-				const mutating_methods_cache = /** @type {Map<string, Function>} */ (proxied_array_mutating_methods_cache);
+				const mutating_methods_cache = /** @type {Map<string, Function>} */ (
+					proxied_array_mutating_methods_cache
+				);
 
 				var cached_method = mutating_methods_cache.get(prop);
 
@@ -212,8 +214,17 @@ export function proxy(value) {
 					 */
 					cached_method = function (...args) {
 						// preserve correct `this` binding and forward result.
-						// eslint-disable-next-line prefer-spread
-						return untrack(() => /** @type {any} */ (array_prototype)[prop].apply(this, args));
+						const fn = /** @type {any} */ (array_prototype)[prop];
+
+						// if we are inside a template expression/derived or block effect,
+						// keep tracking so the runtime can still detect unsafe mutations.
+						if (active_reaction !== null && (active_reaction.f & (DERIVED | BLOCK_EFFECT)) !== 0) {
+							return fn.apply(this, args);
+						}
+
+						// otherwise (ordinary user effect etc.) suppress dependency tracking
+						// so we avoid the self-invalidating loop.
+						return untrack(() => fn.apply(this, args));
 					};
 
 					// give the wrapper a meaningful name for better debugging
