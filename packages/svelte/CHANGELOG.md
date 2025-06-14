@@ -1,5 +1,29 @@
 # svelte
 
+## 5.34.3
+
+### Patch Changes
+
+- fix: don't eagerly execute deriveds on resume ([#16150](https://github.com/sveltejs/svelte/pull/16150))
+
+- fix: prevent memory leaking signals in legacy mode ([#16145](https://github.com/sveltejs/svelte/pull/16145))
+
+- fix: don't define `error.message` if it's not configurable ([#16149](https://github.com/sveltejs/svelte/pull/16149))
+
+## 5.34.2
+
+### Patch Changes
+
+- fix: add missing typings for some dimension bindings ([#16142](https://github.com/sveltejs/svelte/pull/16142))
+
+- fix: prune typescript class field declarations ([#16154](https://github.com/sveltejs/svelte/pull/16154))
+
+## 5.34.1
+
+### Patch Changes
+
+- fix: correctly tag private class state fields ([#16132](https://github.com/sveltejs/svelte/pull/16132))
+
 ## 5.34.0
 
 ### Minor Changes

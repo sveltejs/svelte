@@ -82,7 +82,7 @@ class Svelte4Component {
 		 * @param {unknown} value
 		 */
 		var add_source = (key, value) => {
-			var s = mutable_source(value);
+			var s = mutable_source(value, false, false);
 			sources.set(key, s);
 			return s;
 		};
