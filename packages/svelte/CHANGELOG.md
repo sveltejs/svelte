@@ -1,5 +1,15 @@
 # svelte
 
+## 5.34.3
+
+### Patch Changes
+
+- fix: don't eagerly execute deriveds on resume ([#16150](https://github.com/sveltejs/svelte/pull/16150))
+
+- fix: prevent memory leaking signals in legacy mode ([#16145](https://github.com/sveltejs/svelte/pull/16145))
+
+- fix: don't define `error.message` if it's not configurable ([#16149](https://github.com/sveltejs/svelte/pull/16149))
+
 ## 5.34.2
 
 ### Patch Changes
