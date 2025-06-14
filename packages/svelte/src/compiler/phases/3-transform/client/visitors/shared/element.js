@@ -7,7 +7,7 @@ import { is_ignored } from '../../../../../state.js';
 import { is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { build_class_directives_object, build_style_directives_object } from '../RegularElement.js';
-import { build_template_chunk, get_expression_id } from './utils.js';
+import { build_expression, build_template_chunk, get_expression_id } from './utils.js';
 
 /**
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
@@ -121,7 +121,7 @@ export function build_attribute_value(value, context, memoize = (value) => value
 			return { value: b.literal(chunk.data), has_state: false };
 		}
 
-		let expression = /** @type {Expression} */ (context.visit(chunk.expression));
+		let expression = build_expression(context, chunk.expression, chunk.metadata.expression);
 
 		return {
 			value: memoize(expression, chunk.metadata.expression),
@@ -129,7 +129,7 @@ export function build_attribute_value(value, context, memoize = (value) => value
 		};
 	}
 
-	return build_template_chunk(value, context.visit, context.state, memoize);
+	return build_template_chunk(value, context, context.state, memoize);
 }
 
 /**

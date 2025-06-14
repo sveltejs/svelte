@@ -1,4 +1,4 @@
-/** @import { Expression, Pattern } from 'estree' */
+/** @import { Pattern } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
@@ -6,6 +6,7 @@ import { extract_identifiers } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { create_derived } from '../utils.js';
 import { get_value } from './shared/declarations.js';
+import { build_expression } from './shared/utils.js';
 
 /**
  * @param {AST.ConstTag} node
@@ -15,15 +16,8 @@ export function ConstTag(node, context) {
 	const declaration = node.declaration.declarations[0];
 	// TODO we can almost certainly share some code with $derived(...)
 	if (declaration.id.type === 'Identifier') {
-		context.state.init.push(
-			b.const(
-				declaration.id,
-				create_derived(
-					context.state,
-					b.thunk(/** @type {Expression} */ (context.visit(declaration.init)))
-				)
-			)
-		);
+		const init = build_expression(context, declaration.init, node.metadata.expression);
+		context.state.init.push(b.const(declaration.id, create_derived(context.state, b.thunk(init))));
 
 		context.state.transform[declaration.id.name] = { read: get_value };
 
@@ -48,13 +42,15 @@ export function ConstTag(node, context) {
 
 		// TODO optimise the simple `{ x } = y` case — we can just return `y`
 		// instead of destructuring it only to return a new object
+		const init = build_expression(
+			{ ...context, state: child_state },
+			declaration.init,
+			node.metadata.expression
+		);
 		const fn = b.arrow(
 			[],
 			b.block([
-				b.const(
-					/** @type {Pattern} */ (context.visit(declaration.id, child_state)),
-					/** @type {Expression} */ (context.visit(declaration.init, child_state))
-				),
+				b.const(/** @type {Pattern} */ (context.visit(declaration.id, child_state)), init),
 				b.return(b.object(identifiers.map((node) => b.prop('init', node, node))))
 			])
 		);
