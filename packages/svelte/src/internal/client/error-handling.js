@@ -3,7 +3,7 @@ import { DEV } from 'esm-env';
 import { FILENAME } from '../../constants.js';
 import { is_firefox } from './dom/operations.js';
 import { BOUNDARY_EFFECT, EFFECT_RAN } from './constants.js';
-import { define_property } from '../shared/utils.js';
+import { define_property, get_descriptor } from '../shared/utils.js';
 import { active_effect } from './runtime.js';
 
 /**
@@ -62,6 +62,12 @@ const adjusted_errors = new WeakSet();
 function adjust_error(error, effect) {
 	if (adjusted_errors.has(error)) return;
 	adjusted_errors.add(error);
+
+	const message_descriptor = get_descriptor(error, 'message');
+
+	// if the message was already changed and it's not configurable we can't change it
+	// or it will throw a different error swallowing the original error
+	if (message_descriptor && !message_descriptor.configurable) return;
 
 	var indent = is_firefox ? '  ' : '\t';
 	var component_stack = `\n${indent}in ${effect.fn?.name || '<unknown>'}`;
