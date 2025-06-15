@@ -275,7 +275,7 @@ export function build_component(node, component_name, context) {
 				);
 			}
 
-			push_prop(b.prop('get', b.call('$.attachment'), expression, true));
+			push_prop(b.prop('init', b.call('$.attachment'), expression, true));
 		}
 	}
 
