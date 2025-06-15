@@ -414,13 +414,20 @@ function setup_select_synchronization(value_binding, context) {
 		bound = /** @type {Identifier | MemberExpression} */ (bound.object);
 	}
 
-	// guard against reactively-derived bindings to prevent circular dependencies
+	// Skip synchronisation if the bound identifier is *already* updated by a
+	// reactive statement (declared directly in `$:` or assigned inside one).
+	// In those cases the extra invalidate-helper would re-write its own
+	// source signal and create a circular update loop.
 	if (bound.type === 'Identifier') {
 		const binding = context.state.scope.get(bound.name);
-		if (binding && binding.kind === 'legacy_reactive') {
-			// skip synchronization for reactive-derived bindings,
-			// the reactive statement already handles updates properly
-			return;
+		if (binding) {
+			// 1) declared directly inside a `$:`
+			if (binding.kind === 'legacy_reactive') return;
+
+			// 2) declared elsewhere but *assigned* inside a `$:` block
+			for (const [, rs] of context.state.analysis.reactive_statements) {
+				if (rs.assignments.has(binding)) return;
+			}
 		}
 	}
 
