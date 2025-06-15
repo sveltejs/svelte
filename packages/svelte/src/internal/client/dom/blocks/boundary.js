@@ -19,6 +19,7 @@ import {
 	set_hydrate_node
 } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
+import * as w from '../../warnings.js';
 
 /**
  * @param {Effect} boundary
@@ -78,7 +79,13 @@ export function boundary(node, props, boundary_fn) {
 
 				with_boundary(boundary, () => {
 					is_creating_fallback = false;
-					boundary_effect = branch(() => boundary_fn(anchor));
+					try {
+						boundary_effect = branch(() => boundary_fn(anchor));
+					} catch (error) {
+						// If the new subtree immediately throws during mount, warn the dev.
+						w.reset_misuse();
+						throw error;
+					}
 				});
 			};
 

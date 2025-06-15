@@ -159,6 +159,17 @@ export function ownership_invalid_mutation(name, location, prop, parent) {
 }
 
 /**
+ * reset() was invoked and the `<svelte:boundary>` template threw during flush. Calling `reset` inside the `onerror` handler while the app state is still broken can cause the fresh template to crash during its first render; the error bypassed the <svelte:boundary> to avoid an infinite loop `error` → `reset` → `error`
+ */
+export function reset_misuse() {
+	if (DEV) {
+		console.warn(`%c[svelte] reset_misuse\n%creset() was invoked and the \`<svelte:boundary>\` template threw during flush. Calling \`reset\` inside the \`onerror\` handler while the app state is still broken can cause the fresh template to crash during its first render; the error bypassed the <svelte:boundary> to avoid an infinite loop \`error\` → \`reset\` → \`error\`\nhttps://svelte.dev/e/reset_misuse`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/reset_misuse`);
+	}
+}
+
+/**
  * The `value` property of a `<select multiple>` element should be an array, but it received a non-array value. The selection will be kept as is.
  */
 export function select_multiple_invalid_value() {
