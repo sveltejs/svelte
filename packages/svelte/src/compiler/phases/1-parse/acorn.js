@@ -76,7 +76,8 @@ export function parse_expression_at(source, comments, typescript, index) {
 
 	const { onComment, add_comments } = get_comment_handlers(
 		source,
-		/** @type {CommentWithLocation[]} */ (comments)
+		/** @type {CommentWithLocation[]} */ (comments),
+		index
 	);
 
 	const ast = parser.parseExpressionAt(source, index, {
@@ -97,8 +98,9 @@ export function parse_expression_at(source, comments, typescript, index) {
  * in JS code and so that `prettier-plugin-svelte` doesn't remove all comments when formatting.
  * @param {string} source
  * @param {CommentWithLocation[]} comments
+ * @param {number} index
  */
-function get_comment_handlers(source, comments) {
+function get_comment_handlers(source, comments, index = 0) {
 	return {
 		/**
 		 * @param {boolean} block
@@ -131,7 +133,9 @@ function get_comment_handlers(source, comments) {
 		add_comments(ast) {
 			if (comments.length === 0) return;
 
-			comments = comments.slice();
+			comments = comments
+				.filter((comment) => comment.start >= index)
+				.map(({ type, value, start, end }) => ({ type, value, start, end }));
 
 			walk(ast, null, {
 				_(node, { next, path }) {
