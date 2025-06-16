@@ -70,7 +70,7 @@ export function compileModule(source, options) {
 	const validated = validate_module_options(options, '');
 	state.reset(source, validated);
 
-	const analysis = analyze_module(parse_acorn(source, false), validated);
+	const analysis = analyze_module(source, validated);
 	return transform_module(analysis, source, validated);
 }
 

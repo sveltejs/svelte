@@ -6,13 +6,26 @@ import { tsPlugin } from '@sveltejs/acorn-typescript';
 const ParserWithTS = acorn.Parser.extend(tsPlugin());
 
 /**
+ * @typedef {Comment & {
+ *   start: number;
+ *   end: number;
+ * }} CommentWithLocation
+ */
+
+/**
  * @param {string} source
+ * @param {Comment[]} comments
  * @param {boolean} typescript
  * @param {boolean} [is_script]
  */
-export function parse(source, typescript, is_script) {
+export function parse(source, comments, typescript, is_script) {
 	const parser = typescript ? ParserWithTS : acorn.Parser;
-	const { onComment, add_comments } = get_comment_handlers(source);
+
+	const { onComment, add_comments } = get_comment_handlers(
+		source,
+		/** @type {CommentWithLocation[]} */ (comments)
+	);
+
 	// @ts-ignore
 	const parse_statement = parser.prototype.parseStatement;
 
@@ -53,13 +66,18 @@ export function parse(source, typescript, is_script) {
 
 /**
  * @param {string} source
+ * @param {Comment[]} comments
  * @param {boolean} typescript
  * @param {number} index
  * @returns {acorn.Expression & { leadingComments?: CommentWithLocation[]; trailingComments?: CommentWithLocation[]; }}
  */
-export function parse_expression_at(source, typescript, index) {
+export function parse_expression_at(source, comments, typescript, index) {
 	const parser = typescript ? ParserWithTS : acorn.Parser;
-	const { onComment, add_comments } = get_comment_handlers(source);
+
+	const { onComment, add_comments } = get_comment_handlers(
+		source,
+		/** @type {CommentWithLocation[]} */ (comments)
+	);
 
 	const ast = parser.parseExpressionAt(source, index, {
 		onComment,
@@ -78,18 +96,9 @@ export function parse_expression_at(source, typescript, index) {
  * to add them after the fact. They are needed in order to support `svelte-ignore` comments
  * in JS code and so that `prettier-plugin-svelte` doesn't remove all comments when formatting.
  * @param {string} source
+ * @param {CommentWithLocation[]} comments
  */
-function get_comment_handlers(source) {
-	/**
-	 * @typedef {Comment & {
-	 *   start: number;
-	 *   end: number;
-	 * }} CommentWithLocation
-	 */
-
-	/** @type {CommentWithLocation[]} */
-	const comments = [];
-
+function get_comment_handlers(source, comments) {
 	return {
 		/**
 		 * @param {boolean} block
@@ -97,7 +106,7 @@ function get_comment_handlers(source) {
 		 * @param {number} start
 		 * @param {number} end
 		 */
-		onComment: (block, value, start, end) => {
+		onComment: (block, value, start, end, start_loc, end_loc) => {
 			if (block && /\n/.test(value)) {
 				let a = start;
 				while (a > 0 && source[a - 1] !== '\n') a -= 1;
@@ -109,12 +118,20 @@ function get_comment_handlers(source) {
 				value = value.replace(new RegExp(`^${indentation}`, 'gm'), '');
 			}
 
-			comments.push({ type: block ? 'Block' : 'Line', value, start, end });
+			comments.push({
+				type: block ? 'Block' : 'Line',
+				value,
+				start,
+				end,
+				loc: { start: start_loc, end: end_loc }
+			});
 		},
 
 		/** @param {acorn.Node & { leadingComments?: CommentWithLocation[]; trailingComments?: CommentWithLocation[]; }} ast */
 		add_comments(ast) {
 			if (comments.length === 0) return;
+
+			comments = comments.slice();
 
 			walk(ast, null, {
 				_(node, { next, path }) {

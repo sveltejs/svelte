@@ -34,7 +34,12 @@ export function get_loose_identifier(parser, opening_token) {
  */
 export default function read_expression(parser, opening_token, disallow_loose) {
 	try {
-		const node = parse_expression_at(parser.template, parser.ts, parser.index);
+		const node = parse_expression_at(
+			parser.template,
+			parser.root.comments,
+			parser.ts,
+			parser.index
+		);
 
 		let num_parens = 0;
 

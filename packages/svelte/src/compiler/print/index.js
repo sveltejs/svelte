@@ -9,7 +9,8 @@ import ts from 'esrap/languages/ts';
 export function print(ast) {
 	// @ts-expect-error some bullshit
 	return esrap.print(ast, {
-		...ts(),
+		// @ts-expect-error some bullshit
+		...ts({ comments: ast.type === 'Root' ? ast.comments : [] }),
 		...visitors
 	});
 }
@@ -127,7 +128,13 @@ const visitors = {
 
 		context.write(`</${node.name}>`);
 	},
+	OnDirective(node, context) {
+		// TODO
+	},
 	TransitionDirective(node, context) {
+		// TODO
+	},
+	Comment(node, context) {
 		// TODO
 	}
 };

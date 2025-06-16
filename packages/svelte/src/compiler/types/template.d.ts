@@ -72,6 +72,8 @@ export namespace AST {
 		instance: Script | null;
 		/** The parsed `<script module>` element, if exists */
 		module: Script | null;
+		/** Comments found in <script> and {expressions} */
+		comments: import('estree').Comment[];
 		/** @internal */
 		metadata: {
 			/** Whether the component was parsed with typescript */
