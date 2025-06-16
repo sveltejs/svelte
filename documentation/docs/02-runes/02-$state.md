@@ -20,9 +20,7 @@ Unlike other frameworks you may have encountered, there is no API for interactin
 
 If `$state` is used with an array or a simple object, the result is a deeply reactive _state proxy_. [Proxies](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) allow Svelte to run code when you read or write properties, including via methods like `array.push(...)`, triggering granular updates.
 
-> [!NOTE] Classes like `Set` and `Map` will not be proxied, but Svelte provides reactive implementations for various built-ins like these that can be imported from [`svelte/reactivity`](./svelte-reactivity).
-
-State is proxified recursively until Svelte finds something other than an array or simple object. In a case like this...
+State is proxified recursively until Svelte finds something other than an array or simple object (like a class or an object created with `Object.create`). In a case like this...
 
 ```js
 let todos = $state([
@@ -67,16 +65,15 @@ todos[0].done = !todos[0].done;
 
 ### Classes
 
-You can also use `$state` in class fields (whether public or private):
+Class instances are not proxied. Instead, you can use `$state` in class fields (whether public or private), or as the first assignment to a property immediately inside the `constructor`:
 
 ```js
 // @errors: 7006 2554
 class Todo {
 	done = $state(false);
-	text = $state();
 
 	constructor(text) {
-		this.text = text;
+		this.text = $state(text);
 	}
 
 	reset() {
@@ -110,10 +107,9 @@ You can either use an inline function...
 // @errors: 7006 2554
 class Todo {
 	done = $state(false);
-	text = $state();
 
 	constructor(text) {
-		this.text = text;
+		this.text = $state(text);
 	}
 
 	+++reset = () => {+++
@@ -122,6 +118,8 @@ class Todo {
 	}
 }
 ```
+
+> Svelte provides reactive implementations of built-in classes like `Set` and `Map` that can be imported from [`svelte/reactivity`](svelte-reactivity).
 
 ## `$state.raw`
 
@@ -146,6 +144,8 @@ person = {
 ```
 
 This can improve performance with large arrays and objects that you weren't planning to mutate anyway, since it avoids the cost of making them reactive. Note that raw state can _contain_ reactive state (for example, a raw array of reactive objects).
+
+As with `$state`, you can declare class fields using `$state.raw`.
 
 ## `$state.snapshot`
 

@@ -10,7 +10,7 @@ const snippet = ($$anchor) => {
 	$.append($$anchor, text);
 };
 
-var root = $.template(`<!> `, 1);
+var root = $.from_html(`<!> `, 1);
 
 export default function Bind_component_snippet($$anchor) {
 	let value = $.state('');

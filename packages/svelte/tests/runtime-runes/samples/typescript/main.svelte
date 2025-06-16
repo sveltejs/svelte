@@ -14,6 +14,7 @@
 
 	class Foo<T> {
 		public name: string;
+		declare bar: string;
 		x = 'x' as const;
 		constructor(name: string) {
 			this.name = name;

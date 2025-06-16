@@ -215,6 +215,29 @@ export function build_element_attributes(node, context) {
 
 	if (has_spread) {
 		build_element_spread_attributes(node, attributes, style_directives, class_directives, context);
+		if (node.name === 'option') {
+			context.state.template.push(
+				b.call(
+					'$.maybe_selected',
+					b.id('$$payload'),
+					b.member(
+						build_spread_object(
+							node,
+							node.attributes.filter(
+								(attribute) =>
+									attribute.type === 'Attribute' ||
+									attribute.type === 'BindDirective' ||
+									attribute.type === 'SpreadAttribute'
+							),
+							context
+						),
+						'value',
+						false,
+						true
+					)
+				)
+			);
+		}
 	} else {
 		const css_hash = node.metadata.scoped ? context.state.analysis.css.hash : null;
 
@@ -249,6 +272,16 @@ export function build_element_attributes(node, context) {
 					);
 				}
 
+				if (node.name === 'option' && name === 'value') {
+					context.state.template.push(
+						b.call(
+							'$.maybe_selected',
+							b.id('$$payload'),
+							literal_value != null ? b.literal(/** @type {any} */ (literal_value)) : b.void0
+						)
+					);
+				}
+
 				continue;
 			}
 
@@ -273,6 +306,10 @@ export function build_element_attributes(node, context) {
 					b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
 				);
 			}
+
+			if (name === 'value' && node.name === 'option') {
+				context.state.template.push(b.call('$.maybe_selected', b.id('$$payload'), value));
+			}
 		}
 	}
 
@@ -287,7 +324,7 @@ export function build_element_attributes(node, context) {
 
 /**
  * @param {AST.RegularElement | AST.SvelteElement} element
- * @param {AST.Attribute} attribute
+ * @param {AST.Attribute | AST.BindDirective} attribute
  */
 function get_attribute_name(element, attribute) {
 	let name = attribute.name;
@@ -297,6 +334,36 @@ function get_attribute_name(element, attribute) {
 		// check for the lowercase variants of boolean attributes
 	}
 	return name;
+}
+
+/**
+ * @param {AST.RegularElement | AST.SvelteElement} element
+ * @param {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} attributes
+ * @param {ComponentContext} context
+ */
+export function build_spread_object(element, attributes, context) {
+	return b.object(
+		attributes.map((attribute) => {
+			if (attribute.type === 'Attribute') {
+				const name = get_attribute_name(element, attribute);
+				const value = build_attribute_value(
+					attribute.value,
+					context,
+					WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
+				);
+				return b.prop('init', b.key(name), value);
+			} else if (attribute.type === 'BindDirective') {
+				const name = get_attribute_name(element, attribute);
+				const value =
+					attribute.expression.type === 'SequenceExpression'
+						? b.call(attribute.expression.expressions[0])
+						: /** @type {Expression} */ (context.visit(attribute.expression));
+				return b.prop('init', b.key(name), value);
+			}
+
+			return b.spread(/** @type {Expression} */ (context.visit(attribute)));
+		})
+	);
 }
 
 /**
@@ -349,21 +416,7 @@ function build_element_spread_attributes(
 		flags |= ELEMENT_PRESERVE_ATTRIBUTE_CASE;
 	}
 
-	const object = b.object(
-		attributes.map((attribute) => {
-			if (attribute.type === 'Attribute') {
-				const name = get_attribute_name(element, attribute);
-				const value = build_attribute_value(
-					attribute.value,
-					context,
-					WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
-				);
-				return b.prop('init', b.key(name), value);
-			}
-
-			return b.spread(/** @type {Expression} */ (context.visit(attribute)));
-		})
-	);
+	const object = build_spread_object(element, attributes, context);
 
 	const css_hash =
 		element.metadata.scoped && context.state.analysis.css.hash

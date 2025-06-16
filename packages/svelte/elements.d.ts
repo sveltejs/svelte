@@ -31,6 +31,8 @@
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 2.8
 
+import type { Attachment } from 'svelte/attachments';
+
 // Note: We also allow `null` as a valid value because Svelte treats this the same as `undefined`
 
 type Booleanish = boolean | 'true' | 'false';
@@ -461,6 +463,8 @@ export interface DOMAttributes<T extends EventTarget> {
 	'on:fullscreenerror'?: EventHandler<Event, T> | undefined | null;
 	onfullscreenerror?: EventHandler<Event, T> | undefined | null;
 	onfullscreenerrorcapture?: EventHandler<Event, T> | undefined | null;
+
+	xmlns?: string | undefined | null;
 }
 
 // All the WAI-ARIA 1.1 attributes from https://www.w3.org/TR/wai-aria-1.1/
@@ -840,6 +844,10 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	readonly 'bind:borderBoxSize'?: Array<ResizeObserverSize> | undefined | null;
 	readonly 'bind:devicePixelContentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
 	readonly 'bind:focused'?: boolean | undefined | null;
+	readonly 'bind:clientWidth'?: number | undefined | null;
+	readonly 'bind:clientHeight'?: number | undefined | null;
+	readonly 'bind:offsetWidth'?: number | undefined | null;
+	readonly 'bind:offsetHeight'?: number | undefined | null;
 
 	// SvelteKit
 	'data-sveltekit-keepfocus'?: true | '' | 'off' | undefined | null;
@@ -860,6 +868,9 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 
 	// allow any data- attribute
 	[key: `data-${string}`]: any;
+
+	// allow any attachment and falsy values (by using false we prevent the usage of booleans values by themselves)
+	[key: symbol]: Attachment<T> | false | undefined | null;
 }
 
 export type HTMLAttributeAnchorTarget = '_self' | '_blank' | '_parent' | '_top' | (string & {});
@@ -919,6 +930,17 @@ export interface HTMLButtonAttributes extends HTMLAttributes<HTMLButtonElement> 
 	value?: string | string[] | number | undefined | null;
 	popovertarget?: string | undefined | null;
 	popovertargetaction?: 'toggle' | 'show' | 'hide' | undefined | null;
+	command?:
+		| 'show-modal'
+		| 'close'
+		| 'request-close'
+		| 'show-popover'
+		| 'hide-popover'
+		| 'toggle-popover'
+		| (string & {})
+		| undefined
+		| null;
+	commandfor?: string | undefined | null;
 }
 
 export interface HTMLCanvasAttributes extends HTMLAttributes<HTMLCanvasElement> {
@@ -1110,8 +1132,8 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	// needs both casing variants because language tools does lowercase names of non-shorthand attributes
 	defaultValue?: any;
 	defaultvalue?: any;
-	defaultChecked?: any;
-	defaultchecked?: any;
+	defaultChecked?: boolean | undefined | null;
+	defaultchecked?: boolean | undefined | null;
 	width?: number | string | undefined | null;
 	webkitdirectory?: boolean | undefined | null;
 
@@ -1804,7 +1826,6 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	'xlink:type'?: string | undefined | null;
 	'xml:base'?: string | undefined | null;
 	'xml:lang'?: string | undefined | null;
-	xmlns?: string | undefined | null;
 	'xmlns:xlink'?: string | undefined | null;
 	'xml:space'?: string | undefined | null;
 	y1?: number | string | undefined | null;

@@ -125,7 +125,7 @@ In many cases this is perfectly fine, but there is a risk: if you mutate the sta
 ```svelte
 <!--- file: App.svelte ---->
 <script>
-	import { myGlobalState } from 'svelte';
+	import { myGlobalState } from './state.svelte.js';
 
 	let { data } = $props();
 

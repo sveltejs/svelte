@@ -15,7 +15,6 @@
 						"end": 45,
 						"type": "EventHandler",
 						"name": "click",
-						"modifiers": [],
 						"expression": {
 							"type": "ArrowFunctionExpression",
 							"start": 19,
@@ -100,7 +99,8 @@
 									}
 								}
 							}
-						}
+						},
+						"modifiers": []
 					}
 				],
 				"children": [

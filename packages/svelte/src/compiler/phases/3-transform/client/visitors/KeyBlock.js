@@ -8,7 +8,7 @@ import * as b from '#compiler/builders';
  * @param {ComponentContext} context
  */
 export function KeyBlock(node, context) {
-	context.state.template.push('<!>');
+	context.state.template.push_comment();
 
 	const key = /** @type {Expression} */ (context.visit(node.expression));
 	const body = /** @type {Expression} */ (context.visit(node.fragment));

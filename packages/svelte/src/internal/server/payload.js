@@ -18,6 +18,7 @@ export class Payload {
 	css = new Set();
 	out = '';
 	uid = () => '';
+	select_value = undefined;
 
 	head = new HeadPayload();
 

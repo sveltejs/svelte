@@ -103,3 +103,16 @@ export function remove_nodes() {
 		node = next;
 	}
 }
+
+/**
+ *
+ * @param {TemplateNode} node
+ */
+export function read_hydration_instruction(node) {
+	if (!node || node.nodeType !== 8) {
+		w.hydration_mismatch();
+		throw HYDRATION_ERROR;
+	}
+
+	return /** @type {Comment} */ (node).data;
+}

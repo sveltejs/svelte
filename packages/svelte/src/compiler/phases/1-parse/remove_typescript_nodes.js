@@ -115,6 +115,19 @@ const visitors = {
 	TSDeclareFunction() {
 		return b.empty;
 	},
+	ClassBody(node, context) {
+		const body = [];
+		for (const _child of node.body) {
+			const child = context.visit(_child);
+			if (child.type !== 'PropertyDefinition' || !child.declare) {
+				body.push(child);
+			}
+		}
+		return {
+			...node,
+			body
+		};
+	},
 	ClassDeclaration(node, context) {
 		if (node.declare) {
 			return b.empty;

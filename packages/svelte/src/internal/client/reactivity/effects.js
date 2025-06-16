@@ -329,19 +329,27 @@ export function render_effect(fn) {
 /**
  * @param {(...expressions: any) => void | (() => void)} fn
  * @param {Array<() => any>} thunks
+ * @param {<T>(fn: () => T) => Derived<T>} d
  * @returns {Effect}
  */
 export function template_effect(fn, thunks = [], d = derived) {
-	const deriveds = thunks.map(d);
-	const effect = () => fn(...deriveds.map(get));
-
 	if (DEV) {
-		define_property(effect, 'name', {
-			value: '{expression}'
+		// wrap the effect so that we can decorate stack trace with `in {expression}`
+		// (TODO maybe there's a better approach?)
+		return render_effect(() => {
+			var outer = /** @type {Effect} */ (active_effect);
+			var inner = () => fn(...deriveds.map(get));
+
+			define_property(outer.fn, 'name', { value: '{expression}' });
+			define_property(inner, 'name', { value: '{expression}' });
+
+			const deriveds = thunks.map(d);
+			block(inner);
 		});
 	}
 
-	return block(effect);
+	const deriveds = thunks.map(d);
+	return block(() => fn(...deriveds.map(get)));
 }
 
 /**
@@ -426,7 +434,11 @@ export function destroy_block_effect_children(signal) {
 export function destroy_effect(effect, remove_dom = true) {
 	var removed = false;
 
-	if ((remove_dom || (effect.f & HEAD_EFFECT) !== 0) && effect.nodes_start !== null) {
+	if (
+		(remove_dom || (effect.f & HEAD_EFFECT) !== 0) &&
+		effect.nodes_start !== null &&
+		effect.nodes_end !== null
+	) {
 		remove_effect_dom(effect.nodes_start, /** @type {TemplateNode} */ (effect.nodes_end));
 		removed = true;
 	}
@@ -586,19 +598,6 @@ export function resume_effect(effect) {
 function resume_children(effect, local) {
 	if ((effect.f & INERT) === 0) return;
 	effect.f ^= INERT;
-
-	// Ensure the effect is marked as clean again so that any dirty child
-	// effects can schedule themselves for execution
-	if ((effect.f & CLEAN) === 0) {
-		effect.f ^= CLEAN;
-	}
-
-	// If a dependency of this effect changed while it was paused,
-	// schedule the effect to update
-	if (check_dirtiness(effect)) {
-		set_signal_status(effect, DIRTY);
-		schedule_effect(effect);
-	}
 
 	var child = effect.first;
 

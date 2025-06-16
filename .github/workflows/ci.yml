@@ -28,6 +28,8 @@ jobs:
             os: ubuntu-latest
           - node-version: 22
             os: ubuntu-latest
+          - node-version: 24
+            os: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4

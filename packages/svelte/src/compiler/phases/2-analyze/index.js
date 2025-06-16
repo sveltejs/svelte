@@ -18,6 +18,7 @@ import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
 import { ignore_map, ignore_stack, pop_ignore, push_ignore } from '../../state.js';
 import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
+import { AttachTag } from './visitors/AttachTag.js';
 import { Attribute } from './visitors/Attribute.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
 import { BindDirective } from './visitors/BindDirective.js';
@@ -43,9 +44,11 @@ import { ImportDeclaration } from './visitors/ImportDeclaration.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { LetDirective } from './visitors/LetDirective.js';
+import { Literal } from './visitors/Literal.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
 import { NewExpression } from './visitors/NewExpression.js';
 import { OnDirective } from './visitors/OnDirective.js';
+import { PropertyDefinition } from './visitors/PropertyDefinition.js';
 import { RegularElement } from './visitors/RegularElement.js';
 import { RenderTag } from './visitors/RenderTag.js';
 import { SlotElement } from './visitors/SlotElement.js';
@@ -63,6 +66,7 @@ import { SvelteSelf } from './visitors/SvelteSelf.js';
 import { SvelteWindow } from './visitors/SvelteWindow.js';
 import { SvelteBoundary } from './visitors/SvelteBoundary.js';
 import { TaggedTemplateExpression } from './visitors/TaggedTemplateExpression.js';
+import { TemplateElement } from './visitors/TemplateElement.js';
 import { Text } from './visitors/Text.js';
 import { TitleElement } from './visitors/TitleElement.js';
 import { TransitionDirective } from './visitors/TransitionDirective.js';
@@ -131,6 +135,7 @@ const visitors = {
 	},
 	ArrowFunctionExpression,
 	AssignmentExpression,
+	AttachTag,
 	Attribute,
 	AwaitBlock,
 	BindDirective,
@@ -156,9 +161,11 @@ const visitors = {
 	KeyBlock,
 	LabeledStatement,
 	LetDirective,
+	Literal,
 	MemberExpression,
 	NewExpression,
 	OnDirective,
+	PropertyDefinition,
 	RegularElement,
 	RenderTag,
 	SlotElement,
@@ -176,6 +183,7 @@ const visitors = {
 	SvelteWindow,
 	SvelteBoundary,
 	TaggedTemplateExpression,
+	TemplateElement,
 	Text,
 	TransitionDirective,
 	TitleElement,
@@ -250,7 +258,8 @@ export function analyze_module(ast, options) {
 		accessors: false,
 		runes: true,
 		immutable: true,
-		tracing: false
+		tracing: false,
+		classes: new Map()
 	};
 
 	walk(
@@ -259,7 +268,7 @@ export function analyze_module(ast, options) {
 			scope,
 			scopes,
 			analysis: /** @type {ComponentAnalysis} */ (analysis),
-			derived_state: [],
+			state_fields: new Map(),
 			// TODO the following are not needed for modules, but we have to pass them in order to avoid type error,
 			// and reducing the type would result in a lot of tedious type casts elsewhere - find a good solution one day
 			ast_type: /** @type {any} */ (null),
@@ -423,6 +432,7 @@ export function analyze_component(root, source, options) {
 		elements: [],
 		runes,
 		tracing: false,
+		classes: new Map(),
 		immutable: runes || options.immutable,
 		exports: [],
 		uses_props: false,
@@ -618,7 +628,7 @@ export function analyze_component(root, source, options) {
 				has_props_rune: false,
 				component_slots: new Set(),
 				expression: null,
-				derived_state: [],
+				state_fields: new Map(),
 				function_depth: scope.function_depth,
 				reactive_statement: null
 			};
@@ -685,7 +695,7 @@ export function analyze_component(root, source, options) {
 				reactive_statement: null,
 				component_slots: new Set(),
 				expression: null,
-				derived_state: [],
+				state_fields: new Map(),
 				function_depth: scope.function_depth
 			};
 

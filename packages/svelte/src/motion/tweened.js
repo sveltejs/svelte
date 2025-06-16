@@ -7,7 +7,9 @@ import { loop } from '../internal/client/loop.js';
 import { linear } from '../easing/index.js';
 import { is_date } from './utils.js';
 import { set, source } from '../internal/client/reactivity/sources.js';
+import { tag } from '../internal/client/dev/tracing.js';
 import { get, render_effect } from 'svelte/internal/client';
+import { DEV } from 'esm-env';
 
 /**
  * @template T
@@ -175,8 +177,8 @@ export function tweened(value, defaults = {}) {
  * @since 5.8.0
  */
 export class Tween {
-	#current = source(/** @type {T} */ (undefined));
-	#target = source(/** @type {T} */ (undefined));
+	#current;
+	#target;
 
 	/** @type {TweenedOptions<T>} */
 	#defaults;
@@ -189,8 +191,14 @@ export class Tween {
 	 * @param {TweenedOptions<T>} options
 	 */
 	constructor(value, options = {}) {
-		this.#current.v = this.#target.v = value;
+		this.#current = source(value);
+		this.#target = source(value);
 		this.#defaults = options;
+
+		if (DEV) {
+			tag(this.#current, 'Tween.current');
+			tag(this.#target, 'Tween.target');
+		}
 	}
 
 	/**

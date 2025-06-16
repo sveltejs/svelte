@@ -93,7 +93,16 @@ export default function element(parser) {
 				}
 			}
 
-			if (parent.type !== 'RegularElement' && !parser.loose) {
+			if (parent.type === 'RegularElement') {
+				if (!parser.last_auto_closed_tag || parser.last_auto_closed_tag.tag !== name) {
+					const end = parent.fragment.nodes[0]?.start ?? start;
+					w.element_implicitly_closed(
+						{ start: parent.start, end },
+						`</${name}>`,
+						`</${parent.name}>`
+					);
+				}
+			} else if (!parser.loose) {
 				if (parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name) {
 					e.element_invalid_closing_tag_autoclosed(start, name, parser.last_auto_closed_tag.reason);
 				} else {
@@ -186,6 +195,8 @@ export default function element(parser) {
 	parser.allow_whitespace();
 
 	if (parent.type === 'RegularElement' && closing_tag_omitted(parent.name, name)) {
+		const end = parent.fragment.nodes[0]?.start ?? start;
+		w.element_implicitly_closed({ start: parent.start, end }, `<${name}>`, `</${parent.name}>`);
 		parent.end = start;
 		parser.pop();
 		parser.last_auto_closed_tag = {
@@ -480,13 +491,34 @@ function read_static_attribute(parser) {
 
 /**
  * @param {Parser} parser
- * @returns {AST.Attribute | AST.SpreadAttribute | AST.Directive | null}
+ * @returns {AST.Attribute | AST.SpreadAttribute | AST.Directive | AST.AttachTag | null}
  */
 function read_attribute(parser) {
 	const start = parser.index;
 
 	if (parser.eat('{')) {
 		parser.allow_whitespace();
+
+		if (parser.eat('@attach')) {
+			parser.require_whitespace();
+
+			const expression = read_expression(parser);
+			parser.allow_whitespace();
+			parser.eat('}', true);
+
+			/** @type {AST.AttachTag} */
+			const attachment = {
+				type: 'AttachTag',
+				start,
+				end: parser.index,
+				expression,
+				metadata: {
+					expression: create_expression_metadata()
+				}
+			};
+
+			return attachment;
+		}
 
 		if (parser.eat('...')) {
 			const expression = read_expression(parser);

@@ -82,12 +82,14 @@ As with elements, `name={name}` can be replaced with the `{name}` shorthand.
 <Widget foo={bar} answer={42} text="hello" />
 ```
 
+## Spread attributes
+
 _Spread attributes_ allow many attributes or properties to be passed to an element or component at once.
 
-An element or component can have multiple spread attributes, interspersed with regular ones.
+An element or component can have multiple spread attributes, interspersed with regular ones. Order matters — if `things.a` exists it will take precedence over `a="b"`, while `c="d"` would take precedence over `things.c`:
 
 ```svelte
-<Widget {...things} />
+<Widget a="b" {...things} c="d" />
 ```
 
 ## Events

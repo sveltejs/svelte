@@ -2,6 +2,13 @@ import type { SourceMap } from 'magic-string';
 import type { Binding } from '../phases/scope.js';
 import type { AST, Namespace } from './template.js';
 import type { ICompileDiagnostic } from '../utils/compile_diagnostic.js';
+import type { StateCreationRuneName } from '../../utils.js';
+import type {
+	AssignmentExpression,
+	CallExpression,
+	PrivateIdentifier,
+	PropertyDefinition
+} from 'estree';
 
 /** The return value of `compile` from `svelte/compiler` */
 export interface CompileResult {
@@ -115,6 +122,16 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 * @default false
 	 */
 	preserveWhitespace?: boolean;
+	/**
+	 * Which strategy to use when cloning DOM fragments:
+	 *
+	 * - `html` populates a `<template>` with `innerHTML` and clones it. This is faster, but cannot be used if your app's [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP) includes [`require-trusted-types-for 'script'`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/require-trusted-types-for)
+	 * - `tree` creates the fragment one element at a time and _then_ clones it. This is slower, but works everywhere
+	 *
+	 * @default 'html'
+	 * @since 5.33
+	 */
+	fragments?: 'html' | 'tree';
 	/**
 	 * Set to `true` to force the compiler into runes mode, even if there are no indications of runes usage.
 	 * Set to `false` to force the compiler into ignoring runes, even if there are indications of runes usage.
@@ -248,7 +265,8 @@ export type BindingKind =
 	| 'snippet' // A snippet parameter
 	| 'store_sub' // A $store value
 	| 'legacy_reactive' // A `$:` declaration
-	| 'template'; // A binding declared in the template, e.g. in an `await` block or `const` tag
+	| 'template' // A binding declared in the template, e.g. in an `await` block or `const` tag
+	| 'static'; // A binding whose value is known to be static (i.e. each index)
 
 export type DeclarationKind =
 	| 'var'
@@ -267,6 +285,13 @@ export interface ExpressionMetadata {
 	has_state: boolean;
 	/** True if the expression involves a call expression (often, it will need to be wrapped in a derived) */
 	has_call: boolean;
+}
+
+export interface StateField {
+	type: StateCreationRuneName;
+	node: PropertyDefinition | AssignmentExpression;
+	key: PrivateIdentifier;
+	value: CallExpression;
 }
 
 export * from './template.js';

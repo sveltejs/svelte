@@ -13,10 +13,13 @@ import { determine_slot } from '../../../../../utils/slot.js';
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
  * @param {string} component_name
  * @param {ComponentContext} context
- * @param {Expression} anchor
  * @returns {Statement}
  */
-export function build_component(node, component_name, context, anchor = context.state.node) {
+export function build_component(node, component_name, context) {
+	/**
+	 * @type {Expression}
+	 */
+	const anchor = context.state.node;
 	/** @type {Array<Property[] | Expression>} */
 	const props_and_spreads = [];
 	/** @type {Array<() => void>} */
@@ -257,6 +260,22 @@ export function build_component(node, component_name, context, anchor = context.
 					);
 				}
 			}
+		} else if (attribute.type === 'AttachTag') {
+			const evaluated = context.state.scope.evaluate(attribute.expression);
+
+			let expression = /** @type {Expression} */ (context.visit(attribute.expression));
+
+			if (attribute.metadata.expression.has_state) {
+				expression = b.arrow(
+					[b.id('$$node')],
+					b.call(
+						evaluated.is_function ? expression : b.logical('||', expression, b.id('$.noop')),
+						b.id('$$node')
+					)
+				);
+			}
+
+			push_prop(b.prop('init', b.call('$.attachment'), expression, true));
 		}
 	}
 
@@ -395,7 +414,7 @@ export function build_component(node, component_name, context, anchor = context.
 			// TODO We can remove this ternary once we remove legacy mode, since in runes mode dynamic components
 			// will be handled separately through the `$.component` function, and then the component name will
 			// always be referenced through just the identifier here.
-			node.type === 'SvelteComponent'
+			node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic)
 				? component_name
 				: /** @type {Expression} */ (context.visit(b.member_id(component_name))),
 			node_id,
@@ -413,14 +432,18 @@ export function build_component(node, component_name, context, anchor = context.
 
 	const statements = [...snippet_declarations];
 
-	if (node.type === 'SvelteComponent') {
+	if (node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic)) {
 		const prev = fn;
 
 		fn = (node_id) => {
 			return b.call(
 				'$.component',
 				node_id,
-				b.thunk(/** @type {Expression} */ (context.visit(node.expression))),
+				b.thunk(
+					/** @type {Expression} */ (
+						context.visit(node.type === 'Component' ? b.member_id(node.name) : node.expression)
+					)
+				),
 				b.arrow(
 					[b.id('$$anchor'), b.id(component_name)],
 					b.block([...binding_initializers, b.stmt(prev(b.id('$$anchor')))])
@@ -432,11 +455,17 @@ export function build_component(node, component_name, context, anchor = context.
 	}
 
 	if (Object.keys(custom_css_props).length > 0) {
-		context.state.template.push(
-			context.state.metadata.namespace === 'svg'
-				? '<g><!></g>'
-				: '<svelte-css-wrapper style="display: contents"><!></svelte-css-wrapper>'
-		);
+		if (context.state.metadata.namespace === 'svg') {
+			// this boils down to <g><!></g>
+			context.state.template.push_element('g', node.start);
+		} else {
+			// this boils down to <svelte-css-wrapper style='display: contents'><!></svelte-css-wrapper>
+			context.state.template.push_element('svelte-css-wrapper', node.start);
+			context.state.template.set_prop('style', 'display: contents');
+		}
+
+		context.state.template.push_comment();
+		context.state.template.pop_element();
 
 		statements.push(
 			b.stmt(b.call('$.css_props', anchor, b.thunk(b.object(custom_css_props)))),
@@ -444,7 +473,7 @@ export function build_component(node, component_name, context, anchor = context.
 			b.stmt(b.call('$.reset', anchor))
 		);
 	} else {
-		context.state.template.push('<!>');
+		context.state.template.push_comment();
 		statements.push(b.stmt(fn(anchor)));
 	}
 

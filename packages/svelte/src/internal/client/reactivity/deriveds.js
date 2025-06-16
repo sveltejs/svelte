@@ -9,7 +9,8 @@ import {
 	update_reaction,
 	increment_write_version,
 	set_active_effect,
-	push_reaction_value
+	push_reaction_value,
+	is_destroying_effect
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -172,13 +173,18 @@ export function execute_derived(derived) {
  */
 export function update_derived(derived) {
 	var value = execute_derived(derived);
-	var status =
-		(skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null ? MAYBE_DIRTY : CLEAN;
-
-	set_signal_status(derived, status);
 
 	if (!derived.equals(value)) {
 		derived.v = value;
 		derived.wv = increment_write_version();
 	}
+
+	// don't mark derived clean if we're reading it inside a
+	// cleanup function, or it will cache a stale value
+	if (is_destroying_effect) return;
+
+	var status =
+		(skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null ? MAYBE_DIRTY : CLEAN;
+
+	set_signal_status(derived, status);
 }

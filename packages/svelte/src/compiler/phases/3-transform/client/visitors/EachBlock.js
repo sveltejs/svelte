@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Expression, Identifier, Pattern, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, Identifier, Pattern, SequenceExpression, Statement } from 'estree' */
 /** @import { AST, Binding } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
@@ -32,7 +32,7 @@ export function EachBlock(node, context) {
 	);
 
 	if (!each_node_meta.is_controlled) {
-		context.state.template.push('<!>');
+		context.state.template.push_comment();
 	}
 
 	let flags = 0;
@@ -106,16 +106,6 @@ export function EachBlock(node, context) {
 		}
 	}
 
-	// Legacy mode: find the parent each blocks which contain the arrays to invalidate
-	const indirect_dependencies = collect_parent_each_blocks(context).flatMap((block) => {
-		const array = /** @type {Expression} */ (context.visit(block.expression));
-		const transitive_dependencies = build_transitive_dependencies(
-			block.metadata.expression.dependencies,
-			context
-		);
-		return [array, ...transitive_dependencies];
-	});
-
 	/** @type {Identifier | null} */
 	let collection_id = null;
 
@@ -127,18 +117,6 @@ export function EachBlock(node, context) {
 			collection_id = context.state.scope.root.unique('$$array');
 			break;
 		}
-	}
-
-	if (collection_id) {
-		indirect_dependencies.push(b.call(collection_id));
-	} else {
-		indirect_dependencies.push(collection);
-
-		const transitive_dependencies = build_transitive_dependencies(
-			each_node_meta.expression.dependencies,
-			context
-		);
-		indirect_dependencies.push(...transitive_dependencies);
 	}
 
 	const child_state = {
@@ -181,19 +159,51 @@ export function EachBlock(node, context) {
 	/** @type {Statement[]} */
 	const declarations = [];
 
-	const invalidate = b.call(
-		'$.invalidate_inner_signals',
-		b.thunk(b.sequence(indirect_dependencies))
-	);
-
 	const invalidate_store = store_to_invalidate
 		? b.call('$.invalidate_store', b.id('$$stores'), b.literal(store_to_invalidate))
 		: undefined;
 
 	/** @type {Expression[]} */
 	const sequence = [];
-	if (!context.state.analysis.runes) sequence.push(invalidate);
-	if (invalidate_store) sequence.push(invalidate_store);
+
+	if (!context.state.analysis.runes) {
+		/** @type {Set<Identifier>} */
+		const transitive_deps = new Set();
+
+		if (collection_id) {
+			transitive_deps.add(collection_id);
+			child_state.transform[collection_id.name] = { read: b.call };
+		} else {
+			for (const binding of each_node_meta.transitive_deps) {
+				transitive_deps.add(binding.node);
+			}
+		}
+
+		for (const block of collect_parent_each_blocks(context)) {
+			for (const binding of block.metadata.transitive_deps) {
+				transitive_deps.add(binding.node);
+			}
+		}
+
+		if (transitive_deps.size > 0) {
+			const invalidate = b.call(
+				'$.invalidate_inner_signals',
+				b.thunk(
+					b.sequence(
+						[...transitive_deps].map(
+							(node) => /** @type {Expression} */ (context.visit({ ...node }, child_state))
+						)
+					)
+				)
+			);
+
+			sequence.push(invalidate);
+		}
+	}
+
+	if (invalidate_store) {
+		sequence.push(invalidate_store);
+	}
 
 	if (node.context?.type === 'Identifier') {
 		const binding = /** @type {Binding} */ (context.state.scope.get(node.context.name));
@@ -234,13 +244,21 @@ export function EachBlock(node, context) {
 	} else if (node.context) {
 		const unwrapped = (flags & EACH_ITEM_REACTIVE) !== 0 ? b.call('$.get', item) : item;
 
-		for (const path of extract_paths(node.context)) {
+		const { inserts, paths } = extract_paths(node.context, unwrapped);
+
+		for (const { id, value } of inserts) {
+			id.name = context.state.scope.generate('$$array');
+			child_state.transform[id.name] = { read: get_value };
+
+			const expression = /** @type {Expression} */ (context.visit(b.thunk(value), child_state));
+			declarations.push(b.var(id, b.call('$.derived', expression)));
+		}
+
+		for (const path of paths) {
 			const name = /** @type {Identifier} */ (path.node).name;
 			const needs_derived = path.has_default_value; // to ensure that default value is only called once
 
-			const fn = b.thunk(
-				/** @type {Expression} */ (context.visit(path.expression?.(unwrapped), child_state))
-			);
+			const fn = b.thunk(/** @type {Expression} */ (context.visit(path.expression, child_state)));
 
 			declarations.push(b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn));
 
@@ -249,7 +267,7 @@ export function EachBlock(node, context) {
 			child_state.transform[name] = {
 				read,
 				assign: (_, value) => {
-					const left = /** @type {Pattern} */ (path.update_expression(unwrapped));
+					const left = /** @type {Pattern} */ (path.update_expression);
 					return b.sequence([b.assignment('=', left, value), ...sequence]);
 				},
 				mutate: (_, mutation) => {
@@ -320,42 +338,4 @@ export function EachBlock(node, context) {
  */
 function collect_parent_each_blocks(context) {
 	return /** @type {AST.EachBlock[]} */ (context.path.filter((node) => node.type === 'EachBlock'));
-}
-
-/**
- * @param {Set<Binding>} references
- * @param {ComponentContext} context
- */
-function build_transitive_dependencies(references, context) {
-	/** @type {Set<Binding>} */
-	const dependencies = new Set();
-
-	for (const ref of references) {
-		const deps = collect_transitive_dependencies(ref);
-		for (const dep of deps) {
-			dependencies.add(dep);
-		}
-	}
-
-	return [...dependencies].map((dep) => build_getter({ ...dep.node }, context.state));
-}
-
-/**
- * @param {Binding} binding
- * @param {Set<Binding>} seen
- * @returns {Binding[]}
- */
-function collect_transitive_dependencies(binding, seen = new Set()) {
-	if (binding.kind !== 'legacy_reactive') return [];
-
-	for (const dep of binding.legacy_dependencies) {
-		if (!seen.has(dep)) {
-			seen.add(dep);
-			for (const transitive_dep of collect_transitive_dependencies(dep, seen)) {
-				seen.add(transitive_dep);
-			}
-		}
-	}
-
-	return [...seen];
 }

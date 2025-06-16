@@ -4,8 +4,10 @@
 import { get_rune } from '../../scope.js';
 import { ensure_no_module_import_conflict, validate_identifier_name } from './shared/utils.js';
 import * as e from '../../../errors.js';
+import * as w from '../../../warnings.js';
 import { extract_paths } from '../../../utils/ast.js';
 import { equal } from '../../../utils/assert.js';
+import * as b from '#compiler/builders';
 
 /**
  * @param {VariableDeclarator} node
@@ -17,7 +19,7 @@ export function VariableDeclarator(node, context) {
 	if (context.state.analysis.runes) {
 		const init = node.init;
 		const rune = get_rune(init, context.state.scope);
-		const paths = extract_paths(node.id);
+		const { paths } = extract_paths(node.id, b.id('dummy'));
 
 		for (const path of paths) {
 			validate_identifier_name(context.state.scope.get(/** @type {Identifier} */ (path.node).name));
@@ -50,6 +52,19 @@ export function VariableDeclarator(node, context) {
 		if (rune === '$props') {
 			if (node.id.type !== 'ObjectPattern' && node.id.type !== 'Identifier') {
 				e.props_invalid_identifier(node);
+			}
+
+			if (
+				context.state.analysis.custom_element &&
+				context.state.options.customElementOptions?.props == null
+			) {
+				let warn_on;
+				if (
+					node.id.type === 'Identifier' ||
+					(warn_on = node.id.properties.find((p) => p.type === 'RestElement')) != null
+				) {
+					w.custom_element_props_identifier(warn_on ?? node.id);
+				}
 			}
 
 			context.state.analysis.needs_props = true;

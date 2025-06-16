@@ -3,10 +3,6 @@ export type Store<V> = {
 	set(value: V): void;
 };
 
-export type SourceLocation =
-	| [line: number, column: number]
-	| [line: number, column: number, SourceLocation[]];
-
 export type Getters<T> = {
 	[K in keyof T]: () => T[K];
 };
