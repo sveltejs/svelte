@@ -345,7 +345,11 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 		}
 
 		var prev_value = current[key];
-		if (value === prev_value) continue;
+
+		// Skip if value is unchanged, unless it's `undefined` and the element still has the attribute
+		if (value === prev_value && !(value === undefined && element.hasAttribute(key))) {
+			continue;
+		}
 
 		current[key] = value;
 
