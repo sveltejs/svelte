@@ -4,21 +4,25 @@ import { CompileDiagnostic } from './utils/compile_diagnostic.js';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
 class InternalCompileError extends Error {
-	message = ''; // ensure this property is enumerable
+	message = '';
+
+	// ensure this property is enumerable
 	#diagnostic;
 
 	/**
-	 * @param {string} code
-	 * @param {string} message
-	 * @param {[number, number] | undefined} position
-	 */
+		 * @param {string} code
+		 * @param {string} message
+		 * @param {[number, number] | undefined} position
+		 */
 	constructor(code, message, position) {
 		super(message);
 		this.stack = ''; // avoid unnecessary noise; don't set it as a class property or it becomes enumerable
+
 		// We want to extend from Error so that various bundler plugins properly handle it.
 		// But we also want to share the same object shape with that of warnings, therefore
 		// we create an instance of the shared class an copy over its properties.
 		this.#diagnostic = new CompileDiagnostic(code, message, position);
+
 		Object.assign(this, this.#diagnostic);
 		this.name = 'CompileError';
 	}
@@ -816,7 +820,9 @@ export function bind_invalid_expression(node) {
  * @returns {never}
  */
 export function bind_invalid_name(node, name, explanation) {
-	e(node, 'bind_invalid_name', `${explanation ? `\`bind:${name}\` is not a valid binding. ${explanation}` : `\`bind:${name}\` is not a valid binding`}\nhttps://svelte.dev/e/bind_invalid_name`);
+	e(node, 'bind_invalid_name', `${explanation
+		? `\`bind:${name}\` is not a valid binding. ${explanation}`
+		: `\`bind:${name}\` is not a valid binding`}\nhttps://svelte.dev/e/bind_invalid_name`);
 }
 
 /**

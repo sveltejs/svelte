@@ -1,8 +1,9 @@
 import * as fs from 'node:fs';
 import { assert, it } from 'vitest';
-import { parse } from 'svelte/compiler';
+import { parse, print } from 'svelte/compiler';
 import { try_load_json } from '../helpers.js';
 import { suite, type BaseTest } from '../suite.js';
+import { walk } from 'zimmerframe';
 
 interface ParserTest extends BaseTest {}
 
@@ -30,6 +31,28 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 		const expected = try_load_json(`${cwd}/output.json`);
 		assert.deepEqual(actual, expected);
 	}
+
+	const printed = print(actual);
+	const reparsed = JSON.parse(
+		JSON.stringify(
+			parse(printed.code, {
+				modern: true,
+				loose: cwd.split('/').pop()!.startsWith('loose-')
+			})
+		)
+	);
+
+	fs.writeFileSync(`${cwd}/_actual.svelte`, JSON.stringify(printed.code, null, '\t'));
+
+	const actual_cleaned = walk(actual, null, {
+		_(node, context) {}
+	});
+
+	const reparsed_cleaned = walk(actual, null, {
+		_(node, context) {}
+	});
+
+	assert.deepEqual(actual_cleaned, reparsed_cleaned);
 });
 
 export { test };

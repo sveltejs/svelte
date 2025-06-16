@@ -572,7 +572,7 @@ export namespace AST {
 		| AST.Comment
 		| Block;
 
-	export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node;
+	export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node | Script;
 
 	export type { _CSS as CSS };
 }

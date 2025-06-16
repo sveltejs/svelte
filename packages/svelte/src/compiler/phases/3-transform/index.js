@@ -1,6 +1,7 @@
 /** @import { ValidatedCompileOptions, CompileResult, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { ComponentAnalysis, Analysis } from '../types' */
 import { print } from 'esrap';
+import ts from 'esrap/languages/ts';
 import { VERSION } from '../../../version.js';
 import { server_component, server_module } from './server/transform-server.js';
 import { client_component, client_module } from './client/transform-client.js';
@@ -34,7 +35,8 @@ export function transform_component(analysis, source, options) {
 
 	const js_source_name = get_source_name(options.filename, options.outputFilename, 'input.svelte');
 
-	const js = print(program, {
+	// @ts-ignore TODO
+	const js = print(program, ts(), {
 		// include source content; makes it easier/more robust looking up the source map code
 		// (else esrap does return null for source and sourceMapContent which may trip up tooling)
 		sourceMapContent: source,
@@ -94,7 +96,8 @@ export function transform_module(analysis, source, options) {
 	}
 
 	return {
-		js: print(program, {
+		// @ts-expect-error
+		js: print(program, ts(), {
 			// include source content; makes it easier/more robust looking up the source map code
 			// (else esrap does return null for source and sourceMapContent which may trip up tooling)
 			sourceMapContent: source,
