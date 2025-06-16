@@ -1,12 +1,12 @@
-/** @import { VariableDeclaration, VariableDeclarator, Expression, CallExpression, Pattern, Identifier, ObjectPattern, ArrayPattern, Property } from 'estree' */
+/** @import { VariableDeclaration, VariableDeclarator, Expression, CallExpression, Pattern, Identifier } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { Context } from '../types.js' */
 /** @import { ComponentAnalysis } from '../../../types.js' */
 /** @import { Scope } from '../../../scope.js' */
-import { walk } from 'zimmerframe';
-import { build_fallback, extract_identifiers, extract_paths } from '../../../../utils/ast.js';
+import { build_fallback, extract_paths } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
+import { walk } from 'zimmerframe';
 
 /**
  * @param {VariableDeclaration} node
@@ -17,9 +17,6 @@ export function VariableDeclaration(node, context) {
 	const declarations = [];
 
 	if (context.state.analysis.runes) {
-		/** @type {VariableDeclarator[]} */
-		const destructured_reassigns = [];
-
 		for (const declarator of node.declarations) {
 			const init = declarator.init;
 			const rune = get_rune(init, context.state.scope);
@@ -84,75 +81,29 @@ export function VariableDeclaration(node, context) {
 				continue;
 			}
 
-			const args = /** @type {CallExpression} */ (init).arguments;
-			const value = args.length > 0 ? /** @type {Expression} */ (context.visit(args[0])) : b.void0;
+			const value = init
+				? /** @type {Expression} */ (
+						context.visit(init, {
+							...context.state,
+							is_destructured_derived: declarator.id.type !== 'Identifier'
+						})
+					)
+				: b.void0;
 
-			const is_destructuring =
-				declarator.id.type === 'ObjectPattern' || declarator.id.type === 'ArrayPattern';
-
-			/**
-			 *
-			 * @param {()=>Expression} get_generated_init
-			 */
-			function add_destructured_reassign(get_generated_init) {
-				// to keep everything that the user destructure as a function we need to change the original
-				// assignment to a generated value and then reassign a variable with the original name
-				if (declarator.id.type === 'ObjectPattern' || declarator.id.type === 'ArrayPattern') {
-					const id = /** @type {ObjectPattern | ArrayPattern} */ (context.visit(declarator.id));
-					const modified = walk(
-						/**@type {Identifier|Property}*/ (/**@type {unknown}*/ (id)),
-						{},
-						{
-							Identifier(id, { path }) {
-								const parent = path.at(-1);
-								// we only want the identifiers for the value
-								if (parent?.type === 'Property' && parent.value !== id) return;
-								const generated = context.state.scope.generate(id.name);
-								destructured_reassigns.push(b.declarator(b.id(id.name), b.thunk(b.id(generated))));
-								return b.id(generated);
-							}
-						}
-					);
-					declarations.push(b.declarator(/**@type {Pattern}*/ (modified), get_generated_init()));
-				}
+			if (declarator.id.type === 'Identifier') {
+				declarations.push(b.declarator(declarator.id, value));
+				continue;
 			}
 
-			if (rune === '$derived.by') {
-				if (is_destructuring) {
-					add_destructured_reassign(() => b.call(value));
-					continue;
-				}
+			if (rune === '$derived' || rune === '$derived.by') {
 				declarations.push(
 					b.declarator(/** @type {Pattern} */ (context.visit(declarator.id)), value)
 				);
 				continue;
 			}
 
-			if (declarator.id.type === 'Identifier') {
-				if (is_destructuring && rune === '$derived') {
-					add_destructured_reassign(() => value);
-					continue;
-				}
-				declarations.push(
-					b.declarator(declarator.id, rune === '$derived' ? b.thunk(value) : value)
-				);
-				continue;
-			}
-
-			if (rune === '$derived') {
-				if (is_destructuring) {
-					add_destructured_reassign(() => value);
-					continue;
-				}
-				declarations.push(
-					b.declarator(/** @type {Pattern} */ (context.visit(declarator.id)), b.thunk(value))
-				);
-				continue;
-			}
-
 			declarations.push(...create_state_declarators(declarator, context.state.scope, value));
 		}
-		declarations.push(...destructured_reassigns);
 	} else {
 		for (const declarator of node.declarations) {
 			const bindings = /** @type {Binding[]} */ (context.state.scope.get_bindings(declarator));

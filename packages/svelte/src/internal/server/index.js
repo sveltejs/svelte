@@ -3,7 +3,7 @@
 /** @import { Store } from '#shared' */
 export { FILENAME, HMR } from '../../constants.js';
 import { attr, clsx, to_class, to_style } from '../shared/attributes.js';
-import { is_promise, noop } from '../shared/utils.js';
+import { access_path_on_object, is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
 	UNINITIALIZED,
@@ -18,6 +18,7 @@ import { validate_store } from '../shared/validate.js';
 import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
 import { reset_elements } from './dev.js';
 import { Payload } from './payload.js';
+import { is } from '../client/proxy.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
@@ -518,14 +519,54 @@ export { escape_html as escape };
 /**
  * @template T
  * @param {()=>T} fn
- * @returns {(new_value?: T) => (T | void)}
+ * @param {boolean} is_destructured
+ * @returns {((new_value?: T) => (T | void)) | Record<string, (new_value?: T) => (T | void)>}
  */
-export function derived(fn) {
+export function derived(fn, is_destructured = false) {
 	const get_value = once(fn);
 	/**
 	 * @type {T | undefined}
 	 */
 	let updated_value;
+
+	if (is_destructured) {
+		/**
+		 *
+		 * @param {(string | symbol)[]} path
+		 * @returns
+		 */
+		function recursive_proxy(path = []) {
+			return new Proxy(
+				/** @type {(new_value: any)=>any} */ (
+					function (new_value) {
+						if (arguments.length === 0) {
+							return (
+								access_path_on_object(/** @type {*} */ (updated_value), path) ??
+								access_path_on_object(/** @type {*} */ (get_value()), path)
+							);
+						}
+						var last_key = path[path.length - 1];
+						const to_update = access_path_on_object(
+							/** @type {*} */ (updated_value),
+							path.slice(0, -1),
+							(current, key) => {
+								current[key] = {};
+							}
+						);
+						/** @type {*} */ (to_update)[last_key] = new_value;
+						return /** @type {*} */ (to_update)[last_key];
+					}
+				),
+				{
+					get(_, key) {
+						return recursive_proxy([...path, key]);
+					}
+				}
+			);
+		}
+		updated_value = /** @type {T} */ ({});
+		return recursive_proxy();
+	}
 
 	return function (new_value) {
 		if (arguments.length === 0) {
