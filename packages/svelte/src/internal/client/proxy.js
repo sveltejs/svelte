@@ -266,10 +266,7 @@ export function proxy(value) {
 			// object property before writing to that property.
 			if (s === undefined) {
 				if (!has || get_descriptor(target, prop)?.writable) {
-					s = with_parent(() => {
-						var s = source(undefined, stack);
-						return s;
-					});
+					s = with_parent(() => source(undefined, stack));
 					set(s, proxy(value));
 
 					sources.set(prop, s);
