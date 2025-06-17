@@ -1,4 +1,5 @@
 /** @import { AST } from '#compiler'; */
+/** @import { _CSS } from '../types/css.js'; */
 /** @import { Visitors } from 'esrap' */
 import * as esrap from 'esrap';
 import ts from 'esrap/languages/ts';
@@ -16,7 +17,7 @@ export function print(ast) {
 	});
 }
 
-/** @type {Visitors<AST.SvelteNode>} */
+/** @type {Visitors<AST.SvelteNode | _CSS.Node, any>} */
 const visitors = {
 	Root(node, context) {
 		if (node.options) {
@@ -236,7 +237,7 @@ const visitors = {
 	},
 
 	Declaration(node, context) {
-		context.write('foo: bar;');
+		context.write(`${node.property}: ${node.value};`);
 	},
 
 	EachBlock(node, context) {
