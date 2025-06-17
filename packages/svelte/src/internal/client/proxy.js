@@ -93,21 +93,19 @@ export function proxy(value) {
 				// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy/Proxy/getOwnPropertyDescriptor#invariants
 				e.state_descriptors_fixed();
 			}
-
-			with_parent(() => {
-				var s = sources.get(prop);
-
-				if (s === undefined) {
-					s = source(descriptor.value, stack);
+			var s = sources.get(prop);
+			if (s === undefined) {
+				s = with_parent(() => {
+					var s = source(descriptor.value, stack);
 					sources.set(prop, s);
-
 					if (DEV && typeof prop === 'string') {
 						tag(s, get_label(path, prop));
 					}
-				} else {
-					set(s, descriptor.value, true);
-				}
-			});
+					return s;
+				});
+			} else {
+				set(s, descriptor.value, true);
+			}
 
 			return true;
 		},
@@ -268,11 +266,8 @@ export function proxy(value) {
 			// object property before writing to that property.
 			if (s === undefined) {
 				if (!has || get_descriptor(target, prop)?.writable) {
-					s = with_parent(() => {
-						var s = source(undefined, stack);
-						set(s, proxy(value));
-						return s;
-					});
+					s = with_parent(() => source(undefined, stack));
+					set(s, proxy(value));
 
 					sources.set(prop, s);
 
