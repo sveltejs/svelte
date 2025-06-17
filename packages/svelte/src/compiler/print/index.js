@@ -205,6 +205,15 @@ const visitors = {
 		context.write('}');
 	},
 
+	ClassDirective(node, context) {
+		context.write(`class:${node.name}`);
+		if (node.expression !== null) {
+			context.write('={');
+			context.visit(node.expression);
+			context.write('}');
+		}
+	},
+
 	ClassSelector(node, context) {
 		context.write(`.${node.name}`);
 	},
@@ -286,6 +295,15 @@ const visitors = {
 		// TODO handle alternate/else if
 
 		context.write('{/if}');
+	},
+
+	LetDirective(node, context) {
+		context.write(`let:${node.name}`);
+		if (node.expression !== null) {
+			context.write('={');
+			context.visit(node.expression);
+			context.write('}');
+		}
 	},
 
 	Nth(node, context) {
@@ -423,6 +441,18 @@ const visitors = {
 		context.write(')}');
 		context.visit(node.body);
 		context.write('{/snippet}');
+	},
+
+	StyleDirective(node, context) {
+		context.write(`style:${node.name}`);
+		for (const modifier of node.modifiers) {
+			context.write(`|${modifier}`);
+		}
+		if (node.expression !== null) {
+			context.write('={');
+			context.visit(node.expression);
+			context.write('}');
+		}
 	},
 
 	StyleSheet(node, context) {
