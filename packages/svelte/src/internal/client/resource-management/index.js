@@ -6,6 +6,7 @@ import { teardown } from '../reactivity/effects.js';
 export function dispose(...disposables) {
 	teardown(() => {
 		for (const disposable of disposables) {
+			// @ts-ignore Symbol.dispose may or may not exist as far as TypeScript is concerned
 			disposable?.[Symbol.dispose]();
 		}
 	});
@@ -18,6 +19,7 @@ export function dispose(...disposables) {
  * @param {any} value
  */
 export function disposable(value) {
+	// @ts-ignore Symbol.dispose may or may not exist as far as TypeScript is concerned
 	if (value != null && !value[Symbol.dispose]) {
 		throw new TypeError('Symbol(Symbol.dispose) is not a function');
 	}
