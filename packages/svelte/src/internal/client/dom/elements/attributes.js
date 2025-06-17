@@ -483,8 +483,8 @@ export function attribute_effect(
 
 	block(() => {
 		var next = fn(...deriveds.map(get));
-
-		set_attributes(element, prev, next, css_hash, skip_warning);
+		/** @type {Record<string | symbol, any>} */
+		var current = set_attributes(element, prev, next, css_hash, skip_warning);
 
 		if (inited && is_select && 'value' in next) {
 			select_option(/** @type {HTMLSelectElement} */ (element), next.value, false);
@@ -501,9 +501,11 @@ export function attribute_effect(
 				if (effects[symbol]) destroy_effect(effects[symbol]);
 				effects[symbol] = branch(() => attach(element, () => n));
 			}
+
+			current[symbol] = n;
 		}
 
-		prev = next;
+		prev = current;
 	});
 
 	if (is_select) {
