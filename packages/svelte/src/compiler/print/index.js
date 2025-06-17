@@ -293,7 +293,15 @@ const visitors = {
 	},
 
 	OnDirective(node, context) {
-		// TODO
+		context.write(`on:${node.name}`);
+		for (const modifier of node.modifiers) {
+			context.write(`|${modifier}`);
+		}
+		if (node.expression !== null) {
+			context.write('={');
+			context.visit(node.expression);
+			context.write('}');
+		}
 	},
 
 	PseudoClassSelector(node, context) {
@@ -469,5 +477,14 @@ const visitors = {
 
 	TypeSelector(node, context) {
 		context.write(node.name);
+	},
+
+	UseDirective(node, context) {
+		context.write(`use:${node.name}`);
+		if (node.expression !== null) {
+			context.write('={');
+			context.visit(node.expression);
+			context.write('}');
+		}
 	}
 };
