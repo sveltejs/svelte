@@ -261,7 +261,7 @@ const visitors = {
 
 	ConstTag(node, context) {
 		context.write('{@const ');
-		context.visit(node.declaration); // TODO does this work?
+		context.visit(node.declaration);
 		context.write('}');
 	},
 
@@ -477,6 +477,18 @@ const visitors = {
 		context.visit(node.block);
 	},
 
+	SelectorList(node, context) {
+		let started = false;
+		for (const selector of node.children) {
+			if (started) {
+				context.write(', ');
+			}
+
+			context.visit(selector);
+			started = true;
+		}
+	},
+
 	SlotElement(node, context) {
 		context.write('<slot');
 
@@ -566,6 +578,158 @@ const visitors = {
 		}
 
 		context.write('</style>');
+	},
+
+	SvelteBoundary(node, context) {
+		context.write('<svelte:boundary');
+
+		for (const attribute of node.attributes) {
+			// TODO handle multiline
+			context.write(' ');
+			context.visit(attribute);
+		}
+
+		if (node.fragment) {
+			context.write('>');
+			context.visit(node.fragment);
+			context.write(`</svelte:boundary>`);
+		} else {
+			context.write('/>');
+		}
+	},
+
+	SvelteComponent(node, context) {
+		context.write('<svelte:component');
+
+		context.write('this={');
+		context.visit(node.expression);
+		context.write('} ');
+
+		for (const attribute of node.attributes) {
+			// TODO handle multiline
+			context.write(' ');
+			context.visit(attribute);
+		}
+
+		if (node.fragment) {
+			context.write('>');
+			context.visit(node.fragment);
+			context.write(`</svelte:component>`);
+		} else {
+			context.write('/>');
+		}
+	},
+
+	SvelteDocument(node, context) {
+		context.write('<svelte:document');
+
+		for (const attribute of node.attributes) {
+			// TODO handle multiline
+			context.write(' ');
+			context.visit(attribute);
+		}
+
+		if (node.fragment) {
+			context.write('>');
+			context.visit(node.fragment);
+			context.write(`</svelte:document>`);
+		} else {
+			context.write('/>');
+		}
+	},
+
+	SvelteElement(node, context) {
+		context.write('<svelte:element');
+
+		context.write('this={');
+		context.visit(node.expression);
+		context.write('} ');
+
+		for (const attribute of node.attributes) {
+			// TODO handle multiline
+			context.write(' ');
+			context.visit(attribute);
+		}
+
+		if (node.fragment) {
+			context.write('>');
+			context.visit(node.fragment);
+			context.write(`</svelte:element>`);
+		} else {
+			context.write('/>');
+		}
+	},
+
+	SvelteFragment(node, context) {
+		context.write('<svelte:fragment');
+
+		for (const attribute of node.attributes) {
+			// TODO handle multiline
+			context.write(' ');
+			context.visit(attribute);
+		}
+
+		if (node.fragment) {
+			context.write('>');
+			context.visit(node.fragment);
+			context.write(`</svelte:fragment>`);
+		} else {
+			context.write('/>');
+		}
+	},
+
+	SvelteHead(node, context) {
+		context.write('<svelte:head');
+
+		for (const attribute of node.attributes) {
+			// TODO handle multiline
+			context.write(' ');
+			context.visit(attribute);
+		}
+
+		if (node.fragment) {
+			context.write('>');
+			context.visit(node.fragment);
+			context.write(`</svelte:head>`);
+		} else {
+			context.write('/>');
+		}
+	},
+
+	SvelteSelf(node, context) {
+		context.write('<svelte:self');
+
+		for (const attribute of node.attributes) {
+			// TODO handle multiline
+			context.write(' ');
+			context.visit(attribute);
+		}
+
+		if (node.fragment) {
+			context.write('>');
+			context.visit(node.fragment);
+			context.write(`</svelte:self>`);
+		} else {
+			context.write('/>');
+		}
+	},
+
+	SvelteWindow(node, context) {
+		context.write('<svelte:window');
+
+		for (const attribute of node.attributes) {
+			// TODO handle multiline
+			context.write(' ');
+			context.visit(attribute);
+		}
+
+		if (node.fragment) {
+			context.write('>');
+			context.visit(node.fragment);
+			context.write(`</svelte:window>`);
+		} else {
+			context.write('/>');
+		}
 	},
 
 	Text(node, context) {
