@@ -455,7 +455,16 @@ const visitors = {
 	},
 
 	TransitionDirective(node, context) {
-		// TODO
+		const directive = node.intro && node.outro ? 'transition' : node.intro ? 'in' : 'out';
+		context.write(`${directive}:${node.name}`);
+		for (const modifier of node.modifiers) {
+			context.write(`|${modifier}`);
+		}
+		if (node.expression !== null) {
+			context.write('={');
+			context.visit(node.expression);
+			context.write('}');
+		}
 	},
 
 	TypeSelector(node, context) {
