@@ -299,18 +299,20 @@ const visitors = {
 			context.write('}');
 
 			context.visit(node.consequent);
-			if (node.alternate !== null) {
-				if (
-					!(
-						node.alternate.nodes.length === 1 &&
-						node.alternate.nodes[0].type === 'IfBlock' &&
-						node.alternate.nodes[0].elseif
-					)
-				) {
-					context.write('{:else}');
-				}
-				context.visit(node.alternate);
+		}
+		if (node.alternate !== null) {
+			if (
+				!(
+					node.alternate.nodes.length === 1 &&
+					node.alternate.nodes[0].type === 'IfBlock' &&
+					node.alternate.nodes[0].elseif
+				)
+			) {
+				context.write('{:else}');
 			}
+			context.visit(node.alternate);
+		}
+		if (!node.elseif) {
 			context.write('{/if}');
 		}
 	},
