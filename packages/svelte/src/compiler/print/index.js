@@ -1,5 +1,4 @@
 /** @import { AST } from '#compiler'; */
-/** @import { _CSS } from '../types/css.js'; */
 /** @import { Visitors } from 'esrap' */
 import * as esrap from 'esrap';
 import ts from 'esrap/languages/ts';
@@ -17,7 +16,7 @@ export function print(ast) {
 	});
 }
 
-/** @type {Visitors<AST.SvelteNode | _CSS.Node, any>} */
+/** @type {Visitors<AST.SvelteNode | AST.CSS.Node, any>} */
 const visitors = {
 	Root(node, context) {
 		if (node.options) {
@@ -207,7 +206,10 @@ const visitors = {
 
 	ClassDirective(node, context) {
 		context.write(`class:${node.name}`);
-		if (node.expression !== null) {
+		if (
+			node.expression !== null &&
+			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
+		) {
 			context.write('={');
 			context.visit(node.expression);
 			context.write('}');
@@ -299,7 +301,10 @@ const visitors = {
 
 	LetDirective(node, context) {
 		context.write(`let:${node.name}`);
-		if (node.expression !== null) {
+		if (
+			node.expression !== null &&
+			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
+		) {
 			context.write('={');
 			context.visit(node.expression);
 			context.write('}');
@@ -315,7 +320,10 @@ const visitors = {
 		for (const modifier of node.modifiers) {
 			context.write(`|${modifier}`);
 		}
-		if (node.expression !== null) {
+		if (
+			node.expression !== null &&
+			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
+		) {
 			context.write('={');
 			context.visit(node.expression);
 			context.write('}');
@@ -443,12 +451,21 @@ const visitors = {
 		context.write('{/snippet}');
 	},
 
+	SpreadAttribute(node, context) {
+		context.write('{...');
+		context.visit(node.expression);
+		context.write('}');
+	},
+
 	StyleDirective(node, context) {
 		context.write(`style:${node.name}`);
 		for (const modifier of node.modifiers) {
 			context.write(`|${modifier}`);
 		}
-		if (node.expression !== null) {
+		if (
+			node.expression !== null &&
+			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
+		) {
 			context.write('={');
 			context.visit(node.expression);
 			context.write('}');
@@ -498,7 +515,10 @@ const visitors = {
 		for (const modifier of node.modifiers) {
 			context.write(`|${modifier}`);
 		}
-		if (node.expression !== null) {
+		if (
+			node.expression !== null &&
+			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
+		) {
 			context.write('={');
 			context.visit(node.expression);
 			context.write('}');
@@ -511,7 +531,10 @@ const visitors = {
 
 	UseDirective(node, context) {
 		context.write(`use:${node.name}`);
-		if (node.expression !== null) {
+		if (
+			node.expression !== null &&
+			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
+		) {
 			context.write('={');
 			context.visit(node.expression);
 			context.write('}');
