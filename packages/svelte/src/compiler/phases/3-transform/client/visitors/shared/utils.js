@@ -378,6 +378,7 @@ export function build_expression(context, expression, metadata, state = context.
 		return value;
 	}
 
+	// Legacy reactivity is coarse-grained, looking at the statically visible dependencies. Replicate that here
 	const sequence = b.sequence([]);
 
 	for (const binding of metadata.references) {
