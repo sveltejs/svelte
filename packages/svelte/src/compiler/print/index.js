@@ -288,15 +288,25 @@ const visitors = {
 	},
 
 	IfBlock(node, context) {
-		context.write('{#if ');
-		context.visit(node.test);
-		context.write('}');
+		if (node.elseif) {
+			context.write('{:else if ');
+			context.visit(node.test);
+			context.write('}');
+			context.visit(node.consequent);
+		} else {
+			context.write('{#if ');
+			context.visit(node.test);
+			context.write('}');
 
-		context.visit(node.consequent);
-
-		// TODO handle alternate/else if
-
-		context.write('{/if}');
+			context.visit(node.consequent);
+			if (node.alternate !== null) {
+				if (!(node.alternate.type === 'IfBlock' && node.alternate.elseif)) {
+					context.write('{:else}');
+				}
+				context.visit(node.alternate);
+			}
+			context.write('{/if}');
+		}
 	},
 
 	LetDirective(node, context) {
