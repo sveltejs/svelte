@@ -16,7 +16,7 @@ export function print(ast) {
 	});
 }
 
-/** @type {Visitors<AST.SvelteNode | AST.CSS.Node, any>} */
+/** @type {Visitors<AST.SvelteNode, any>} */
 const visitors = {
 	Root(node, context) {
 		if (node.options) {
@@ -352,6 +352,14 @@ const visitors = {
 		if (!node.elseif) {
 			context.write('{/if}');
 		}
+	},
+
+	KeyBlock(node, context) {
+		context.write('{#key ');
+		context.visit(node.expression);
+		context.write('}');
+		context.visit(node.fragment);
+		context.write('{/key}');
 	},
 
 	LetDirective(node, context) {
