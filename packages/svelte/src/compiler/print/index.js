@@ -300,7 +300,13 @@ const visitors = {
 
 			context.visit(node.consequent);
 			if (node.alternate !== null) {
-				if (!(node.alternate.type === 'IfBlock' && node.alternate.elseif)) {
+				if (
+					!(
+						node.alternate.nodes.length === 1 &&
+						node.alternate.nodes[0].type === 'IfBlock' &&
+						node.alternate.nodes[0].elseif
+					)
+				) {
 					context.write('{:else}');
 				}
 				context.visit(node.alternate);
