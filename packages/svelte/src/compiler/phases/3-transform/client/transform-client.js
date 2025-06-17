@@ -350,7 +350,7 @@ export function client_component(analysis, options) {
 	const push_args = [b.id('$$props'), b.literal(analysis.runes)];
 	if (dev) push_args.push(b.id(analysis.name));
 
-	const component_block = b.block([
+	let component_block = b.block([
 		...store_setup,
 		...legacy_reactive_declarations,
 		...group_binding_declarations,
@@ -361,10 +361,6 @@ export function client_component(analysis, options) {
 			: b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)),
 		.../** @type {ESTree.Statement[]} */ (template.body)
 	]);
-
-	if (analysis.disposable.length > 0) {
-		component_block.body.push(b.stmt(b.call('$.dispose', ...analysis.disposable)));
-	}
 
 	if (!analysis.runes) {
 		// Bind static exports to props so that people can access them with bind:x
@@ -494,6 +490,16 @@ export function client_component(analysis, options) {
 	}
 
 	body = [...imports, ...state.module_level_snippets, ...body];
+
+	if (analysis.disposable.length > 0) {
+		component_block = b.block([
+			b.declaration(
+				'var',
+				analysis.disposable.map((id) => b.declarator(id))
+			),
+			b.try(component_block.body, null, [b.stmt(b.call('$.dispose', ...analysis.disposable))])
+		]);
+	}
 
 	const component = b.function_declaration(
 		b.id(analysis.name),

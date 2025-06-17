@@ -351,14 +351,14 @@ export function VariableDeclaration(node, context) {
 			...node.declarations.map((declarator) => /** @type {Identifier} */ (declarator.id))
 		);
 
-		if (dev) {
-			declarations = declarations.map((declarator) => ({
-				...declarator,
-				init: b.call('$.disposable', /** @type {Expression} */ (declarator.init))
-			}));
-		}
+		const assignments = declarations.map((declarator) => {
+			let init = /** @type {Expression} */ (declarator.init);
+			if (dev) init = b.call('$.disposable', init);
 
-		kind = 'const';
+			return b.assignment('=', declarator.id, init);
+		});
+
+		return assignments.length === 1 ? assignments[0] : b.sequence(assignments);
 	}
 
 	return {
