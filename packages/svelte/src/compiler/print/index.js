@@ -81,6 +81,18 @@ const visitors = {
 		}
 	},
 
+	AnimateDirective(node, context) {
+		context.write(`animate:${node.name}`);
+		if (
+			node.expression !== null &&
+			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
+		) {
+			context.write('={');
+			context.visit(node.expression);
+			context.write('}');
+		}
+	},
+
 	Atrule(node, context) {
 		context.write(`@${node.name}`);
 		if (node.prelude) context.write(` ${node.prelude}`);
@@ -247,6 +259,25 @@ const visitors = {
 		}
 	},
 
+	ConstTag(node, context) {
+		context.write('{@const ');
+		context.visit(node.declaration); // TODO does this work?
+		context.write('}');
+	},
+
+	DebugTag(node, context) {
+		context.write('{@debug ');
+		let started = false;
+		for (const identifier of node.identifiers) {
+			if (started) {
+				context.write(', ');
+			}
+			context.visit(identifier);
+			started = true;
+		}
+		context.write('}');
+	},
+
 	Declaration(node, context) {
 		context.write(`${node.property}: ${node.value};`);
 	},
@@ -283,6 +314,12 @@ const visitors = {
 
 	ExpressionTag(node, context) {
 		context.write('{');
+		context.visit(node.expression);
+		context.write('}');
+	},
+
+	HtmlTag(node, context) {
+		context.write('{@html ');
 		context.visit(node.expression);
 		context.write('}');
 	},
