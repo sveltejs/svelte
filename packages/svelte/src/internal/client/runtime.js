@@ -84,8 +84,8 @@ export function set_active_effect(effect) {
 
 /**
  * When sources are created within a reaction, reading and writing
- * them should not cause a re-run
- * @type {null | Source[]}
+ * them within that reaction should not cause a re-run
+ * @type {null | [active_reaction: Reaction, sources: Source[]]}
  */
 export let reaction_sources = null;
 
@@ -93,9 +93,9 @@ export let reaction_sources = null;
 export function push_reaction_value(value) {
 	if (active_reaction !== null && active_reaction.f & EFFECT_IS_UPDATING) {
 		if (reaction_sources === null) {
-			reaction_sources = [value];
+			reaction_sources = [active_reaction, [value]];
 		} else {
-			reaction_sources.push(value);
+			reaction_sources[1].push(value);
 		}
 	}
 }
@@ -234,7 +234,7 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 	for (var i = 0; i < reactions.length; i++) {
 		var reaction = reactions[i];
 
-		if (reaction_sources?.includes(signal)) continue;
+		if (reaction_sources?.[1].includes(signal) && reaction_sources[0] === active_reaction) continue;
 
 		if ((reaction.f & DERIVED) !== 0) {
 			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
@@ -724,7 +724,7 @@ export function get(signal) {
 
 	// Register the dependency on the current reaction signal.
 	if (active_reaction !== null && !untracking) {
-		if (!reaction_sources?.includes(signal)) {
+		if (!reaction_sources?.[1].includes(signal) || reaction_sources[0] !== active_reaction) {
 			var deps = active_reaction.deps;
 			if (signal.rv < read_version) {
 				signal.rv = read_version;
