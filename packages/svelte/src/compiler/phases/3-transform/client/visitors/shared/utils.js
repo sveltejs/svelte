@@ -1,6 +1,6 @@
-/** @import { AssignmentExpression, Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression } from 'estree' */
+/** @import { AssignmentExpression, Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression, Pattern } from 'estree' */
 /** @import { AST, ExpressionMetadata } from '#compiler' */
-/** @import { ComponentClientTransformState, Context } from '../../types' */
+/** @import { ComponentClientTransformState, ComponentContext, Context } from '../../types' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
@@ -8,7 +8,7 @@ import { sanitize_template_string } from '../../../../../utils/sanitize_template
 import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator } from '../../../../../state.js';
-import { create_derived } from '../../utils.js';
+import { build_getter, create_derived } from '../../utils.js';
 
 /**
  * @param {ComponentClientTransformState} state
@@ -31,15 +31,15 @@ export function get_expression_id(expressions, value) {
 
 /**
  * @param {Array<AST.Text | AST.ExpressionTag>} values
- * @param {(node: AST.SvelteNode, state: any) => any} visit
+ * @param {ComponentContext} context
  * @param {ComponentClientTransformState} state
  * @param {(value: Expression, metadata: ExpressionMetadata) => Expression} memoize
  * @returns {{ value: Expression, has_state: boolean }}
  */
 export function build_template_chunk(
 	values,
-	visit,
-	state,
+	context,
+	state = context.state,
 	memoize = (value, metadata) =>
 		metadata.has_call ? get_expression_id(state.expressions, value) : value
 ) {
@@ -66,7 +66,7 @@ export function build_template_chunk(
 			state.scope.get('undefined')
 		) {
 			let value = memoize(
-				/** @type {Expression} */ (visit(node.expression, state)),
+				build_expression(context, node.expression, node.metadata.expression, state),
 				node.metadata.expression
 			);
 
@@ -359,4 +359,49 @@ export function validate_mutation(node, context, expression) {
 		loc && b.literal(loc.line),
 		loc && b.literal(loc.column)
 	);
+}
+
+/**
+ *
+ * @param {ComponentContext} context
+ * @param {Expression} expression
+ * @param {ExpressionMetadata} metadata
+ */
+export function build_expression(context, expression, metadata, state = context.state) {
+	const value = /** @type {Expression} */ (context.visit(expression, state));
+
+	if (context.state.analysis.runes) {
+		return value;
+	}
+
+	if (!metadata.has_call && !metadata.has_member_expression && !metadata.has_assignment) {
+		return value;
+	}
+
+	// Legacy reactivity is coarse-grained, looking at the statically visible dependencies. Replicate that here
+	const sequence = b.sequence([]);
+
+	for (const binding of metadata.references) {
+		if (binding.kind === 'normal' && binding.declaration_kind !== 'import') {
+			continue;
+		}
+
+		var getter = build_getter({ ...binding.node }, state);
+
+		if (
+			binding.kind === 'bindable_prop' ||
+			binding.kind === 'template' ||
+			binding.declaration_kind === 'import' ||
+			binding.node.name === '$$props' ||
+			binding.node.name === '$$restProps'
+		) {
+			getter = b.call('$.deep_read_state', getter);
+		}
+
+		sequence.expressions.push(getter);
+	}
+
+	sequence.expressions.push(b.call('$.untrack', b.thunk(value)));
+
+	return sequence;
 }

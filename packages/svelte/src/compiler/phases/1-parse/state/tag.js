@@ -63,7 +63,10 @@ function open(parser) {
 			end: -1,
 			test: read_expression(parser),
 			consequent: create_fragment(),
-			alternate: null
+			alternate: null,
+			metadata: {
+				expression: create_expression_metadata()
+			}
 		});
 
 		parser.allow_whitespace();
@@ -244,7 +247,10 @@ function open(parser) {
 			error: null,
 			pending: null,
 			then: null,
-			catch: null
+			catch: null,
+			metadata: {
+				expression: create_expression_metadata()
+			}
 		});
 
 		if (parser.eat('then')) {
@@ -326,7 +332,10 @@ function open(parser) {
 			start,
 			end: -1,
 			expression,
-			fragment: create_fragment()
+			fragment: create_fragment(),
+			metadata: {
+				expression: create_expression_metadata()
+			}
 		});
 
 		parser.stack.push(block);
@@ -461,7 +470,10 @@ function next(parser) {
 				elseif: true,
 				test: expression,
 				consequent: create_fragment(),
-				alternate: null
+				alternate: null,
+				metadata: {
+					expression: create_expression_metadata()
+				}
 			});
 
 			parser.stack.push(child);
@@ -624,7 +636,10 @@ function special(parser) {
 			type: 'HtmlTag',
 			start,
 			end: parser.index,
-			expression
+			expression,
+			metadata: {
+				expression: create_expression_metadata()
+			}
 		});
 
 		return;
@@ -699,6 +714,9 @@ function special(parser) {
 				declarations: [{ type: 'VariableDeclarator', id, init, start: id.start, end: init.end }],
 				start: start + 2, // start at const, not at @const
 				end: parser.index - 1
+			},
+			metadata: {
+				expression: create_expression_metadata()
 			}
 		});
 	}
@@ -725,6 +743,7 @@ function special(parser) {
 			end: parser.index,
 			expression: /** @type {AST.RenderTag['expression']} */ (expression),
 			metadata: {
+				expression: create_expression_metadata(),
 				dynamic: false,
 				arguments: [],
 				path: [],

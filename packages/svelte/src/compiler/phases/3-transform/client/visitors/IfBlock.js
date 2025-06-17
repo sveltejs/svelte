@@ -2,6 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '#compiler/builders';
+import { build_expression } from './shared/utils.js';
 
 /**
  * @param {AST.IfBlock} node
@@ -31,6 +32,8 @@ export function IfBlock(node, context) {
 		statements.push(b.var(b.id(alternate_id), b.arrow(alternate_args, alternate)));
 	}
 
+	const test = build_expression(context, node.test, node.metadata.expression);
+
 	/** @type {Expression[]} */
 	const args = [
 		node.elseif ? b.id('$$anchor') : context.state.node,
@@ -38,7 +41,7 @@ export function IfBlock(node, context) {
 			[b.id('$$render')],
 			b.block([
 				b.if(
-					/** @type {Expression} */ (context.visit(node.test)),
+					test,
 					b.stmt(b.call(b.id('$$render'), b.id(consequent_id))),
 					alternate_id ? b.stmt(b.call(b.id('$$render'), b.id(alternate_id), b.false)) : undefined
 				)
