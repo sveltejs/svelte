@@ -129,12 +129,12 @@ test('Effect', () => {
 		// effects normally run after a microtask,
 		// use flushSync to execute all pending effects synchronously
 		flushSync();
-		expect(log.value).toEqual([0]);
+		expect(log).toEqual([0]);
 
 		count = 1;
 		flushSync();
 
-		expect(log.value).toEqual([0, 1]);
+		expect(log).toEqual([0, 1]);
 	});
 
 	cleanup();
@@ -148,17 +148,13 @@ test('Effect', () => {
  */
 export function logger(getValue) {
 	/** @type {any[]} */
-	let log = $state([]);
+	let log = [];
 
 	$effect(() => {
 		log.push(getValue());
 	});
 
-	return {
-		get value() {
-			return log;
-		}
-	};
+	return log;
 }
 ```
 
