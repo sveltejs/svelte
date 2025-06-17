@@ -1,5 +1,13 @@
 # svelte
 
+## 5.34.4
+
+### Patch Changes
+
+- fix: don't set state withing `with_parent` in proxy ([#16176](https://github.com/sveltejs/svelte/pull/16176))
+
+- fix: use compiler-driven reactivity in legacy mode template expressions ([#16100](https://github.com/sveltejs/svelte/pull/16100))
+
 ## 5.34.3
 
 ### Patch Changes
