@@ -44,6 +44,7 @@ export function proxy(value) {
 	var reaction = active_reaction;
 
 	/**
+	 * Executes the proxy in the context of the reaction it was originally created in, if any
 	 * @template T
 	 * @param {() => T} fn
 	 */
