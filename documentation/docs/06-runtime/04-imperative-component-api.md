@@ -81,3 +81,46 @@ const app = hydrate(App, {
 ```
 
 As with `mount`, effects will not run during `hydrate` — use `flushSync()` immediately afterwards if you need them to.
+
+## `partial`
+
+`partial` lets you create *partial components* — components composed of other components. 
+To best explain partial components, here's an example without them:
+```svelte
+<script>
+	import Greeter from './greeter.svelte';
+</script>
+<Greeter greeting="Hello" name="world" />
+<Greeter greeting="Hello" name="Earth" />
+```
+There's some clear repetition here; the `greeting` prop has the same value twice. Using `partial` we can make this much more concise:
+```svelte
+<script>
+	import { partial } from 'svelte';
+	import Greeter from './greeter.svelte';
+	const Hello = partial(Greeter, { greeting: 'Hello' });
+</script>
+<Hello name="world" />
+<Hello name="Earth" />
+```
+Snippets can be used with partial components easily:
+```svelte
+<script>
+	import { partial } from 'svelte';
+	import Paragraph from './paragraph.svelte';
+	const Example = partial(Paragraph, { example });
+</script>
+{#snippet example()}
+	According to all known laws
+	of aviation,
+	there is no way a bee
+	should be able to fly.
+	Its wings are too small to get
+	its fat little body off the ground.
+	The bee, of course, flies anyway
+	because bees don't care
+	what humans think is impossible.
+{/snippet}
+<Example />
+<Example />
+```

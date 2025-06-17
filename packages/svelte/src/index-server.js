@@ -33,6 +33,8 @@ export function unmount() {
 	e.lifecycle_function_unavailable('unmount');
 }
 
+export { partial } from './index-client.js';
+
 export async function tick() {}
 
 export { getAllContexts, getContext, hasContext, setContext } from './internal/server/context.js';

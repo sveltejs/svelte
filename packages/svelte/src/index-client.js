@@ -1,5 +1,5 @@
 /** @import { ComponentContext, ComponentContextLegacy } from '#client' */
-/** @import { EventDispatcher } from './index.js' */
+/** @import { Component, EventDispatcher } from './index.js' */
 /** @import { NotFunction } from './internal/types.js' */
 import { untrack } from './internal/client/runtime.js';
 import { is_array } from './internal/shared/utils.js';
@@ -88,6 +88,60 @@ export function onDestroy(fn) {
 	}
 
 	onMount(() => () => untrack(fn));
+}
+
+/**
+ * Creates a partial component with the specified props.
+ * Example:
+ * ```svelte
+ * <script>
+ * 	import { partial } from 'svelte';
+ * 	import Greeter from './greeter.svelte';
+ *
+ * 	const Hello = partial(Greeter, { greeting: 'Hello' });
+ * </script>
+ *
+ * <Hello name="world" />
+ * <Hello name="Earth" />
+ * ```
+ * @template {Record<PropertyKey, any>} Props
+ * @param {Component<Props>} component
+ * @param {Partial<Props>} props
+ * @returns {Component<Partial<Props>>}
+ */
+export function partial(component, props) {
+	const initial_props = props;
+	return function (anchor, props) {
+		const merged = new Proxy(/** @type {Props} */ ({}), {
+			get(target, prop) {
+				if (prop in props) {
+					return props[prop];
+				}
+				return initial_props[prop];
+			},
+			set(target, prop, value) {
+				if (prop in props) {
+					//@ts-expect-error don't know why this won't work
+					props[prop] = value;
+				}
+				if (prop in initial_props) {
+					// @ts-expect-error ditto
+					initial_props[prop] = value;
+				}
+				return true;
+			},
+			ownKeys() {
+				const keys = Reflect.ownKeys(props);
+				for (const key of Reflect.ownKeys(initial_props)) {
+					if (!keys.includes(key)) {
+						keys.push(key);
+					}
+				}
+				return keys;
+			}
+		});
+		component(anchor, merged);
+	};
 }
 
 /**
