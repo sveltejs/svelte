@@ -495,12 +495,14 @@ export function attribute_effect(
 		}
 
 		for (let symbol of Object.getOwnPropertySymbols(next)) {
-			var n = (current[symbol] = next[symbol]);
+			var n = next[symbol];
 
 			if (symbol.description === ATTACHMENT_KEY && (!prev || n !== prev[symbol])) {
 				if (effects[symbol]) destroy_effect(effects[symbol]);
 				effects[symbol] = branch(() => attach(element, () => n));
 			}
+
+			current[symbol] = n;
 		}
 
 		prev = current;
