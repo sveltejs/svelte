@@ -8,21 +8,27 @@ var root = $.add_locations($.from_html(`<p> </p>`), Using_top_level[$.FILENAME],
 
 export default function Using_top_level($$anchor, $$props) {
 	$.check_target(new.target);
-	$.push($$props, true, Using_top_level);
 
-	const x = $.disposable({
-		message: $$props.message,
-		[Symbol.dispose]() {
-			console.log(...$.log_if_contains_state('log', `disposing ${$$props.message}`));
-		}
-	});
+	var x;
 
-	var p = root();
-	var text = $.child(p, true);
+	try {
+		$.push($$props, true, Using_top_level);
 
-	$.reset(p);
-	$.template_effect(() => $.set_text(text, x.message));
-	$.append($$anchor, p);
-	$.dispose(x);
-	return $.pop({ ...$.legacy_api() });
+		x = $.disposable({
+			message: $$props.message,
+			[Symbol.dispose]() {
+				console.log(...$.log_if_contains_state('log', `disposing ${$$props.message}`));
+			}
+		})
+
+		var p = root();
+		var text = $.child(p, true);
+
+		$.reset(p);
+		$.template_effect(() => $.set_text(text, x.message));
+		$.append($$anchor, p);
+		return $.pop({ ...$.legacy_api() });
+	} finally {
+		$.dispose(x);
+	}
 }
