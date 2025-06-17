@@ -8,13 +8,6 @@ import { build_component } from './shared/component.js';
  * @param {ComponentContext} context
  */
 export function Component(node, context) {
-	const component = build_component(
-		node,
-		// avoid shadowing the component variable by a variable used in $.component
-		node.metadata.dynamic
-			? '$$component_' + node.name.replaceAll(/[^a-zA-Z_$0-9]/g, '_')
-			: node.name,
-		context
-	);
+	const component = build_component(node, node.name, context);
 	context.state.init.push(component);
 }
