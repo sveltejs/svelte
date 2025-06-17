@@ -362,6 +362,10 @@ export function client_component(analysis, options) {
 		.../** @type {ESTree.Statement[]} */ (template.body)
 	]);
 
+	if (analysis.disposable.length > 0) {
+		component_block.body.push(b.stmt(b.call('$.dispose', ...analysis.disposable)));
+	}
+
 	if (!analysis.runes) {
 		// Bind static exports to props so that people can access them with bind:x
 		for (const { name, alias } of analysis.exports) {

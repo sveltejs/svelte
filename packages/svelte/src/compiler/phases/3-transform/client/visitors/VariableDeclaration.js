@@ -16,7 +16,7 @@ import { get_value } from './shared/declarations.js';
  */
 export function VariableDeclaration(node, context) {
 	/** @type {VariableDeclarator[]} */
-	const declarations = [];
+	let declarations = [];
 
 	if (context.state.analysis.runes) {
 		for (const declarator of node.declarations) {
@@ -343,8 +343,27 @@ export function VariableDeclaration(node, context) {
 		return b.empty;
 	}
 
+	let kind = node.kind;
+
+	// @ts-expect-error
+	if (kind === 'using' && context.state.is_instance && context.path.length === 1) {
+		context.state.analysis.disposable.push(
+			...node.declarations.map((declarator) => /** @type {Identifier} */ (declarator.id))
+		);
+
+		if (dev) {
+			declarations = declarations.map((declarator) => ({
+				...declarator,
+				init: b.call('$.disposable', /** @type {Expression} */ (declarator.init))
+			}));
+		}
+
+		kind = 'const';
+	}
+
 	return {
 		...node,
+		kind,
 		declarations
 	};
 }
