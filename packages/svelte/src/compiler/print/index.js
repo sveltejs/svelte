@@ -2,6 +2,7 @@
 /** @import { Visitors } from 'esrap' */
 import * as esrap from 'esrap';
 import ts from 'esrap/languages/ts';
+import { is_void } from '../../utils.js';
 
 /**
  * @param {AST.SvelteNode} ast
@@ -19,23 +20,33 @@ export function print(ast) {
 const visitors = {
 	Root(node, context) {
 		if (node.options) {
-			throw new Error('TODO');
+			context.write('<svelte:options');
+
+			for (const attribute of node.options.attributes) {
+				context.write(' ');
+				context.visit(attribute);
+			}
+
+			context.write(' />');
 		}
+
+		let started = false;
 
 		for (const item of [node.module, node.instance, node.fragment, node.css]) {
 			if (!item) continue;
 
-			context.margin();
-			context.newline();
+			if (started) {
+				context.margin();
+				context.newline();
+			}
+
 			context.visit(item);
+			started = true;
 		}
 	},
+
 	Script(node, context) {
 		context.write('<script');
-
-		if (node.context === 'module') {
-			context.write(' module');
-		}
 
 		for (const attribute of node.attributes) {
 			context.write(' ');
@@ -52,6 +63,7 @@ const visitors = {
 
 		context.write('</script>');
 	},
+
 	Fragment(node, context) {
 		for (let i = 0; i < node.nodes.length; i += 1) {
 			const child = node.nodes[i];
@@ -68,6 +80,25 @@ const visitors = {
 			}
 		}
 	},
+
+	Atrule(node, context) {
+		context.write(`@${node.name}`);
+		if (node.prelude) context.write(` ${node.prelude}`);
+
+		if (node.block) {
+			context.write(' ');
+			context.visit(node.block);
+		} else {
+			context.write(';');
+		}
+	},
+
+	AttachTag(node, context) {
+		context.write('{@attach ');
+		context.visit(node.expression);
+		context.write('}');
+	},
+
 	Attribute(node, context) {
 		context.write(node.name);
 
@@ -91,14 +122,159 @@ const visitors = {
 			context.visit(node.value);
 		}
 	},
-	Text(node, context) {
-		context.write(node.data);
+
+	AwaitBlock(node, context) {
+		context.write(`{#await `);
+		context.visit(node.expression);
+
+		if (node.pending) {
+			context.write('}');
+			context.visit(node.pending);
+			context.write('{:');
+		} else {
+			context.write(' ');
+		}
+
+		if (node.then) {
+			context.write(node.value ? 'then ' : 'then');
+			if (node.value) context.visit(node.value);
+			context.write('}');
+			context.visit(node.then);
+
+			if (node.catch) {
+				context.write('{:');
+			}
+		}
+
+		if (node.catch) {
+			context.write(node.value ? 'catch ' : 'catch');
+			if (node.error) context.visit(node.error);
+			context.write('}');
+			context.visit(node.catch);
+		}
+
+		context.write('{/await}');
 	},
+
+	BindDirective(node, context) {
+		context.write(`bind:${node.name}`);
+
+		if (node.expression.type === 'Identifier' && node.expression.name === node.name) {
+			// shorthand
+			return;
+		}
+
+		context.write('={');
+
+		if (node.expression.type === 'SequenceExpression') {
+			context.visit(node.expression.expressions[0]);
+			context.write(', ');
+			context.visit(node.expression.expressions[1]);
+		} else {
+			context.visit(node.expression);
+		}
+
+		context.write('}');
+	},
+
+	Block(node, context) {
+		context.write('{');
+
+		if (node.children.length > 0) {
+			context.indent();
+			context.newline();
+
+			let started = false;
+
+			for (const child of node.children) {
+				if (started) {
+					context.margin();
+					context.newline();
+				}
+
+				context.visit(child);
+
+				started = true;
+			}
+
+			context.dedent();
+			context.newline();
+		}
+
+		context.write('}');
+	},
+
+	ClassSelector(node, context) {
+		context.write(`.${node.name}`);
+	},
+
+	Comment(node, context) {
+		context.write('<!--' + node.data + '-->');
+	},
+
+	ComplexSelector(node, context) {
+		for (const selector of node.children) {
+			context.visit(selector);
+		}
+	},
+
+	Component(node, context) {
+		context.write(`<${node.name}`);
+
+		for (let i = 0; i < node.attributes.length; i += 1) {
+			context.write(' ');
+			context.visit(node.attributes[i]);
+		}
+
+		if (node.fragment.nodes.length > 0) {
+			context.write('>');
+			context.visit(node.fragment);
+			context.write(`</${node.name}>`);
+		} else {
+			context.write(' />');
+		}
+	},
+
+	Declaration(node, context) {
+		context.write('foo: bar;');
+	},
+
+	EachBlock(node, context) {
+		context.write('{#each ');
+		context.visit(node.expression);
+
+		if (node.context) {
+			context.write(' as ');
+			context.visit(node.context);
+		}
+
+		if (node.index) {
+			context.write(`, ${node.index}`);
+		}
+
+		if (node.key) {
+			context.write(' (');
+			context.visit(node.key);
+			context.write(')');
+		}
+
+		context.write('}');
+		context.visit(node.body);
+
+		if (node.fallback) {
+			context.write('{:else}');
+			context.visit(node.fallback);
+		}
+
+		context.write('{/each}');
+	},
+
 	ExpressionTag(node, context) {
 		context.write('{');
 		context.visit(node.expression);
 		context.write('}');
 	},
+
 	IfBlock(node, context) {
 		context.write('{#if ');
 		context.visit(node.test);
@@ -110,6 +286,41 @@ const visitors = {
 
 		context.write('{/if}');
 	},
+
+	Nth(node, context) {
+		context.write(node.value); // TODO is this right?
+	},
+
+	OnDirective(node, context) {
+		// TODO
+	},
+
+	PseudoClassSelector(node, context) {
+		context.write(`:${node.name}`);
+
+		if (node.args) {
+			context.write('(');
+
+			let started = false;
+
+			for (const arg of node.args.children) {
+				if (started) {
+					context.write(', ');
+				}
+
+				context.visit(arg);
+
+				started = true;
+			}
+
+			context.write(')');
+		}
+	},
+
+	PseudoElementSelector(node, context) {
+		context.write(`::${node.name}`);
+	},
+
 	RegularElement(node, context) {
 		context.write('<' + node.name);
 
@@ -119,22 +330,134 @@ const visitors = {
 			context.visit(attribute);
 		}
 
-		context.write('>');
+		if (is_void(node.name)) {
+			context.write(' />');
+		} else {
+			context.write('>');
 
-		// TODO handle void elements
-		if (node.fragment) {
-			context.visit(node.fragment);
+			if (node.fragment) {
+				context.visit(node.fragment);
+				context.write(`</${node.name}>`);
+			}
+		}
+	},
+
+	RelativeSelector(node, context) {
+		if (node.combinator) {
+			if (node.combinator.name === ' ') {
+				context.write(' ');
+			} else {
+				context.write(` ${node.combinator.name} `);
+			}
 		}
 
-		context.write(`</${node.name}>`);
+		for (const selector of node.selectors) {
+			context.visit(selector);
+		}
 	},
-	OnDirective(node, context) {
-		// TODO
+
+	RenderTag(node, context) {
+		context.write('{@render ');
+		context.visit(node.expression);
+		context.write('}');
 	},
+
+	Rule(node, context) {
+		let started = false;
+
+		for (const selector of node.prelude.children) {
+			if (started) {
+				context.write(',');
+				context.newline();
+			}
+
+			context.visit(selector);
+			started = true;
+		}
+
+		context.write(' ');
+		context.visit(node.block);
+	},
+
+	SlotElement(node, context) {
+		context.write('<slot');
+
+		for (let i = 0; i < node.attributes.length; i += 1) {
+			context.write(' ');
+			context.visit(node.attributes[i]);
+		}
+
+		if (node.fragment.nodes.length > 0) {
+			context.write('>');
+			context.visit(node.fragment);
+			context.write('</slot>');
+		} else {
+			context.write(' />');
+		}
+	},
+
+	SnippetBlock(node, context) {
+		context.write('{#snippet ');
+		context.visit(node.expression);
+
+		if (node.typeParams) {
+			context.write(`<${node.typeParams}>`);
+		}
+
+		context.write('(');
+
+		for (let i = 0; i < node.parameters.length; i += 1) {
+			if (i > 0) context.write(', ');
+			context.visit(node.parameters[i]);
+		}
+
+		context.write(')}');
+		context.visit(node.body);
+		context.write('{/snippet}');
+	},
+
+	StyleSheet(node, context) {
+		context.write('<style');
+
+		for (const attribute of node.attributes) {
+			context.write(' ');
+			context.visit(attribute);
+		}
+
+		context.write('>');
+
+		if (node.children.length > 0) {
+			context.indent();
+			context.newline();
+
+			let started = false;
+
+			for (const child of node.children) {
+				if (started) {
+					context.margin();
+					context.newline();
+				}
+
+				context.visit(child);
+				started = true;
+			}
+
+			context.dedent();
+			context.newline();
+		}
+
+		context.write('</style>');
+	},
+
+	Text(node, context) {
+		context.write(node.data);
+	},
+
 	TransitionDirective(node, context) {
 		// TODO
 	},
-	Comment(node, context) {
-		// TODO
+
+	TypeSelector(node, context) {
+		context.write(node.name);
 	}
 };
