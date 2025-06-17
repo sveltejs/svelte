@@ -1,6 +1,6 @@
 /** @import { ArrayExpression, Expression, Identifier, ObjectExpression } from 'estree' */
 /** @import { AST, ExpressionMetadata } from '#compiler' */
-/** @import { ComponentContext } from '../../types' */
+/** @import { ComponentContext, MemoizedExpression } from '../../types' */
 import { escape_html } from '../../../../../../escaping.js';
 import { normalize_attribute } from '../../../../../../utils.js';
 import { is_ignored } from '../../../../../state.js';
@@ -28,18 +28,18 @@ export function build_attribute_effect(
 	/** @type {ObjectExpression['properties']} */
 	const values = [];
 
-	/** @type {Expression[]} */
-	const expressions = [];
+	/** @type {MemoizedExpression[]} */
+	const async_expressions = [];
 
-	/** @param {Expression} value */
-	function memoize(value) {
-		return b.id(`$${expressions.push(value) - 1}`);
-	}
+	/** @type {MemoizedExpression[]} */
+	const expressions = [];
 
 	for (const attribute of attributes) {
 		if (attribute.type === 'Attribute') {
 			const { value } = build_attribute_value(attribute.value, context, (value, metadata) =>
-				metadata.has_call ? memoize(value) : value
+				metadata.has_call || metadata.has_await
+					? get_expression_id(metadata.has_await ? async_expressions : expressions, value)
+					: value
 			);
 
 			if (
@@ -56,8 +56,11 @@ export function build_attribute_effect(
 		} else {
 			let value = /** @type {Expression} */ (context.visit(attribute));
 
-			if (attribute.metadata.expression.has_call) {
-				value = memoize(value);
+			if (attribute.metadata.expression.has_call || attribute.metadata.expression.has_await) {
+				value = get_expression_id(
+					attribute.metadata.expression.has_await ? async_expressions : expressions,
+					value
+				);
 			}
 
 			values.push(b.spread(value));
@@ -69,7 +72,7 @@ export function build_attribute_effect(
 			b.prop(
 				'init',
 				b.array([b.id('$.CLASS')]),
-				build_class_directives_object(class_directives, expressions, context)
+				build_class_directives_object(class_directives, async_expressions, expressions, context)
 			)
 		);
 	}
@@ -79,7 +82,7 @@ export function build_attribute_effect(
 			b.prop(
 				'init',
 				b.array([b.id('$.STYLE')]),
-				build_style_directives_object(style_directives, expressions, context)
+				build_style_directives_object(style_directives, async_expressions, expressions, context)
 			)
 		);
 	}
@@ -90,10 +93,11 @@ export function build_attribute_effect(
 				'$.attribute_effect',
 				element_id,
 				b.arrow(
-					expressions.map((_, i) => b.id(`$${i}`)),
+					expressions.map(({ id }) => id),
 					b.object(values)
 				),
-				expressions.length > 0 && b.array(expressions.map((expression) => b.thunk(expression))),
+				// TODO need to handle async expressions too
+				expressions.length > 0 && b.array(expressions.map(({ expression }) => b.thunk(expression))),
 				element.metadata.scoped &&
 					context.state.analysis.css.hash !== '' &&
 					b.literal(context.state.analysis.css.hash),
@@ -125,7 +129,7 @@ export function build_attribute_value(value, context, memoize = (value) => value
 
 		return {
 			value: memoize(expression, chunk.metadata.expression),
-			has_state: chunk.metadata.expression.has_state
+			has_state: chunk.metadata.expression.has_state || chunk.metadata.expression.has_await
 		};
 	}
 
@@ -158,7 +162,12 @@ export function build_set_class(element, node_id, attribute, class_directives, c
 			value = b.call('$.clsx', value);
 		}
 
-		return metadata.has_call ? get_expression_id(context.state.expressions, value) : value;
+		return metadata.has_call || metadata.has_await
+			? get_expression_id(
+					metadata.has_await ? context.state.async_expressions : context.state.expressions,
+					value
+				)
+			: value;
 	});
 
 	/** @type {Identifier | undefined} */
@@ -171,7 +180,12 @@ export function build_set_class(element, node_id, attribute, class_directives, c
 	let next;
 
 	if (class_directives.length) {
-		next = build_class_directives_object(class_directives, context.state.expressions, context);
+		next = build_class_directives_object(
+			class_directives,
+			context.state.async_expressions,
+			context.state.expressions,
+			context
+		);
 		has_state ||= class_directives.some((d) => d.metadata.expression.has_state);
 
 		if (has_state) {
@@ -226,7 +240,12 @@ export function build_set_class(element, node_id, attribute, class_directives, c
  */
 export function build_set_style(node_id, attribute, style_directives, context) {
 	let { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call ? get_expression_id(context.state.expressions, value) : value
+		metadata.has_call
+			? get_expression_id(
+					metadata.has_await ? context.state.async_expressions : context.state.expressions,
+					value
+				)
+			: value
 	);
 
 	/** @type {Identifier | undefined} */
@@ -239,7 +258,12 @@ export function build_set_style(node_id, attribute, style_directives, context) {
 	let next;
 
 	if (style_directives.length) {
-		next = build_style_directives_object(style_directives, context.state.expressions, context);
+		next = build_style_directives_object(
+			style_directives,
+			context.state.async_expressions,
+			context.state.expressions,
+			context
+		);
 		has_state ||= style_directives.some((d) => d.metadata.expression.has_state);
 
 		if (has_state) {

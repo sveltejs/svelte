@@ -277,6 +277,21 @@ export function rune_outside_svelte(rune) {
 }
 
 /**
+ * `setContext` must be called when a component first initializes, not in a subsequent effect or after an `await` expression
+ * @returns {never}
+ */
+export function set_context_after_init() {
+	if (DEV) {
+		const error = new Error(`set_context_after_init\n\`setContext\` must be called when a component first initializes, not in a subsequent effect or after an \`await\` expression\nhttps://svelte.dev/e/set_context_after_init`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/set_context_after_init`);
+	}
+}
+
+/**
  * Property descriptors defined on `$state` objects must contain `value` and always be `enumerable`, `configurable` and `writable`.
  * @returns {never}
  */

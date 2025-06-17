@@ -71,7 +71,7 @@ export function SvelteBoundary(node, context) {
 
 			hoisted.push(snippet);
 
-			if (child.expression.name === 'failed') {
+			if (['failed', 'pending'].includes(child.expression.name)) {
 				props.properties.push(b.prop('init', child.expression, child.expression));
 			}
 
