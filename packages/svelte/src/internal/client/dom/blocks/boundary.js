@@ -74,7 +74,16 @@ export function boundary(node, props, boundary_fn) {
 				throw error;
 			}
 
+			var did_reset = false;
+
 			var reset = () => {
+				if (did_reset) {
+					w.svelte_boundary_reset_noop();
+					return;
+				}
+
+				did_reset = true;
+
 				pause_effect(boundary_effect);
 
 				with_boundary(boundary, () => {

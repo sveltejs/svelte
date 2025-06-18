@@ -44,6 +44,17 @@ export function console_log_state(method) {
 }
 
 /**
+ * A `<svelte:boundary>` `reset` function only resets the boundary the first time it is called
+ */
+export function svelte_boundary_reset_noop() {
+	if (DEV) {
+		console.warn(`%c[svelte] svelte_boundary_reset_noop\n%cA \`<svelte:boundary>\` \`reset\` function only resets the boundary the first time it is called\nhttps://svelte.dev/e/svelte_boundary_reset_noop`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/svelte_boundary_reset_noop`);
+	}
+}
+
+/**
  * %handler% should be a function. Did you mean to %suggestion%?
  * @param {string} handler
  * @param {string} suggestion
