@@ -3,10 +3,10 @@ import { setImmediate } from 'node:timers/promises';
 import { globSync } from 'tinyglobby';
 import { createClassComponent } from 'svelte/legacy';
 import { proxy } from 'svelte/internal/client';
-import { flushSync, hydrate, mount, unmount, untrack } from 'svelte';
+import { flushSync, hydrate, mount, unmount } from 'svelte';
 import { render } from 'svelte/server';
 import { afterAll, assert, beforeAll } from 'vitest';
-import { compile_directory, fragments } from '../helpers.js';
+import { async_mode, compile_directory, fragments } from '../helpers.js';
 import { assert_html_equal, assert_html_equal_with_options } from '../html_equal.js';
 import { raf } from '../animation-helpers.js';
 import type { CompileOptions } from '#compiler';
@@ -45,6 +45,8 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	mode?: Array<'server' | 'client' | 'hydrate'>;
 	/** Temporarily skip specific modes, without skipping the entire test */
 	skip_mode?: Array<'server' | 'client' | 'hydrate'>;
+	/** Skip if running with process.env.NO_ASYNC */
+	skip_no_async?: boolean;
 	html?: string;
 	ssrHtml?: string;
 	compileOptions?: Partial<CompileOptions>;
@@ -121,7 +123,11 @@ let console_error = console.error;
 export function runtime_suite(runes: boolean) {
 	return suite_with_variants<RuntimeTest, 'hydrate' | 'ssr' | 'dom', CompileOptions>(
 		['dom', 'hydrate', 'ssr'],
-		(variant, config) => {
+		(variant, config, test_name) => {
+			if (!async_mode && (config.skip_no_async || test_name.startsWith('async-'))) {
+				return true;
+			}
+
 			if (variant === 'hydrate') {
 				if (config.mode && !config.mode.includes('hydrate')) return 'no-test';
 				if (config.skip_mode?.includes('hydrate')) return true;
@@ -169,7 +175,7 @@ async function common_setup(cwd: string, runes: boolean | undefined, config: Run
 		dev: force_hmr ? true : undefined,
 		hmr: force_hmr ? true : undefined,
 		experimental: {
-			async: runes
+			async: runes && async_mode
 		},
 		fragments,
 		...config.compileOptions,

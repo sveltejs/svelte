@@ -57,7 +57,6 @@ import {
 import * as w from './warnings.js';
 import { current_batch, Batch, batch_deriveds } from './reactivity/batch.js';
 import { handle_error, invoke_error_boundary } from './error-handling.js';
-import { snapshot } from '../shared/clone.js';
 
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
@@ -259,7 +258,12 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 	for (var i = 0; i < reactions.length; i++) {
 		var reaction = reactions[i];
 
-		if (reaction_sources?.[1].includes(signal) && reaction_sources[0] === active_reaction) continue;
+		if (
+			!async_mode_flag &&
+			reaction_sources?.[1].includes(signal) &&
+			reaction_sources[0] === active_reaction
+		)
+			continue;
 
 		if ((reaction.f & DERIVED) !== 0) {
 			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
@@ -299,7 +303,9 @@ export function update_reaction(reaction) {
 	untracking = false;
 	read_version++;
 
-	reaction.f |= EFFECT_IS_UPDATING;
+	if (!async_mode_flag || (reaction.f & DERIVED) !== 0) {
+		reaction.f |= EFFECT_IS_UPDATING;
+	}
 
 	if (reaction.ac !== null) {
 		reaction.ac?.abort(STALE_REACTION);
@@ -383,7 +389,9 @@ export function update_reaction(reaction) {
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
 
-		reaction.f ^= EFFECT_IS_UPDATING;
+		if (!async_mode_flag || (reaction.f & DERIVED) !== 0) {
+			reaction.f ^= EFFECT_IS_UPDATING;
+		}
 	}
 }
 
@@ -776,7 +784,9 @@ export function get(signal) {
 
 		if (
 			!destroyed &&
-			(!reaction_sources?.[1].includes(signal) || reaction_sources[0] !== active_reaction)
+			((async_mode_flag && (active_reaction.f & DERIVED) === 0) ||
+				!reaction_sources?.[1].includes(signal) ||
+				reaction_sources[0] !== active_reaction)
 		) {
 			var deps = active_reaction.deps;
 

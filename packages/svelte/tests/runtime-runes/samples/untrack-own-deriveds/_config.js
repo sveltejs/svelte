@@ -2,6 +2,10 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
+	// In async mode we _do_ want to run effects that react to their own state changing, so we need to disable async mode here
+	compileOptions: {
+		experimental: { async: false }
+	},
 	test({ assert, target, logs }) {
 		const button = target.querySelector('button');
 

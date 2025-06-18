@@ -16,6 +16,7 @@ import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
 import { DESTROYED } from '../../src/internal/client/constants';
 import { noop } from 'svelte/internal/client';
+import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/internal/flags';
 
 /**
  * @param runes runes mode
@@ -1010,14 +1011,39 @@ describe('signals', () => {
 		};
 	});
 
-	test('effects do not depend on state they own', () => {
-		user_effect(() => {
-			const value = state(0);
-			set(value, $.get(value) + 1);
+	test('effects do depend on state they own', (runes) => {
+		// This behavior is important for use cases like a Resource class
+		// which shares its instance between multiple effects and triggers
+		// rerenders by self-invalidating its state.
+		const log: number[] = [];
+
+		let count: any;
+
+		if (runes) {
+			// We will make this the new default behavior once it's stable but until then
+			// we need to keep the old behavior to not break existing code.
+			enable_async_mode_flag();
+		}
+
+		effect(() => {
+			if (!count || $.get<number>(count) < 2) {
+				count ||= state(0);
+				log.push($.get(count));
+				set(count, $.get<number>(count) + 1);
+			}
 		});
 
 		return () => {
-			flushSync();
+			try {
+				flushSync();
+				if (runes) {
+					assert.deepEqual(log, [0, 1]);
+				} else {
+					assert.deepEqual(log, [0]);
+				}
+			} finally {
+				disable_async_mode_flag();
+			}
 		};
 	});
 

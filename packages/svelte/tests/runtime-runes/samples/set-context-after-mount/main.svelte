@@ -7,6 +7,7 @@
 		if (condition) {
 			try {
 				setContext('potato', {});
+				console.log('works without experimental async but really shouldnt')
 			} catch (e) {
 				console.log(e.message);
 			}
