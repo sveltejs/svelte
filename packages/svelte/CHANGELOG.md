@@ -1,5 +1,11 @@
 # svelte
 
+## 5.34.6
+
+### Patch Changes
+
+- fix: match class and style directives against attribute selector ([#16179](https://github.com/sveltejs/svelte/pull/16179))
+
 ## 5.34.5
 
 ### Patch Changes
