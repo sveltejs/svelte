@@ -47,6 +47,8 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	skip_mode?: Array<'server' | 'client' | 'hydrate'>;
 	/** Skip if running with process.env.NO_ASYNC */
 	skip_no_async?: boolean;
+	/** Skip if running without process.env.NO_ASYNC */
+	skip_async?: boolean;
 	html?: string;
 	ssrHtml?: string;
 	compileOptions?: Partial<CompileOptions>;
@@ -125,6 +127,10 @@ export function runtime_suite(runes: boolean) {
 		['dom', 'hydrate', 'ssr'],
 		(variant, config, test_name) => {
 			if (!async_mode && (config.skip_no_async || test_name.startsWith('async-'))) {
+				return true;
+			}
+
+			if (async_mode && config.skip_async) {
 				return true;
 			}
 
