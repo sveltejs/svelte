@@ -10,8 +10,7 @@ import { build_template_chunk } from './shared/utils.js';
 export function TitleElement(node, context) {
 	const { has_state, value } = build_template_chunk(
 		/** @type {any} */ (node.fragment.nodes),
-		context.visit,
-		context.state
+		context
 	);
 
 	const statement = b.stmt(b.assignment('=', b.id('$.document.title'), value));

@@ -2,6 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '#compiler/builders';
+import { build_expression } from './shared/utils.js';
 
 /**
  * @param {AST.IfBlock} node
@@ -25,8 +26,7 @@ export function IfBlock(node, context) {
 	}
 
 	const { has_await } = node.metadata.expression;
-
-	const expression = /** @type {Expression} */ (context.visit(node.test));
+	const expression = build_expression(context, node.test, node.metadata.expression);
 	const test = has_await ? b.call('$.get', b.id('$$condition')) : expression;
 
 	/** @type {Expression[]} */

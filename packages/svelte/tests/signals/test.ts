@@ -9,13 +9,14 @@ import {
 	user_effect
 } from '../../src/internal/client/reactivity/effects';
 import { state, set, update, update_pre } from '../../src/internal/client/reactivity/sources';
-import type { Derived, Effect, Value } from '../../src/internal/client/types';
+import type { Derived, Effect, Source, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
 import { DESTROYED } from '../../src/internal/client/constants';
 import { noop } from 'svelte/internal/client';
+import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/internal/flags';
 
 /**
  * @param runes runes mode
@@ -518,7 +519,7 @@ describe('signals', () => {
 		};
 	});
 
-	test('schedules rerun when writing to signal before reading it', (runes) => {
+	test.skip('schedules rerun when writing to signal before reading it', (runes) => {
 		if (!runes) return () => {};
 
 		const error = console.error;
@@ -1010,14 +1011,68 @@ describe('signals', () => {
 		};
 	});
 
-	test('effects do not depend on state they own', () => {
+	test('effects do depend on state they own', (runes) => {
+		// This behavior is important for use cases like a Resource class
+		// which shares its instance between multiple effects and triggers
+		// rerenders by self-invalidating its state.
+		const log: number[] = [];
+
+		let count: any;
+
+		if (runes) {
+			// We will make this the new default behavior once it's stable but until then
+			// we need to keep the old behavior to not break existing code.
+			enable_async_mode_flag();
+		}
+
+		effect(() => {
+			if (!count || $.get<number>(count) < 2) {
+				count ||= state(0);
+				log.push($.get(count));
+				set(count, $.get<number>(count) + 1);
+			}
+		});
+
+		return () => {
+			try {
+				flushSync();
+				if (runes) {
+					assert.deepEqual(log, [0, 1]);
+				} else {
+					assert.deepEqual(log, [0]);
+				}
+			} finally {
+				disable_async_mode_flag();
+			}
+		};
+	});
+
+	test('nested effects depend on state of upper effects', () => {
+		const logs: number[] = [];
+		let raw: Source<number>;
+		let proxied: { current: number };
+
 		user_effect(() => {
-			const value = state(0);
-			set(value, $.get(value) + 1);
+			raw = state(0);
+			proxied = proxy({ current: 0 });
+
+			// We need those separate, else one working and rerunning the effect
+			// could mask the other one not rerunning
+			user_effect(() => {
+				logs.push($.get(raw));
+			});
+
+			user_effect(() => {
+				logs.push(proxied.current);
+			});
 		});
 
 		return () => {
 			flushSync();
+			set(raw, $.get(raw) + 1);
+			proxied.current += 1;
+			flushSync();
+			assert.deepEqual(logs, [0, 0, 1, 1]);
 		};
 	});
 

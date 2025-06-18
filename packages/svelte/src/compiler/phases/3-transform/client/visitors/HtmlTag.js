@@ -1,8 +1,8 @@
-/** @import { Expression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { is_ignored } from '../../../../state.js';
 import * as b from '#compiler/builders';
+import { build_expression } from './shared/utils.js';
 
 /**
  * @param {AST.HtmlTag} node
@@ -12,8 +12,7 @@ export function HtmlTag(node, context) {
 	context.state.template.push_comment();
 
 	const { has_await } = node.metadata.expression;
-
-	const expression = /** @type {Expression} */ (context.visit(node.expression));
+	const expression = build_expression(context, node.expression, node.metadata.expression);
 	const html = has_await ? b.call('$.get', b.id('$$html')) : expression;
 
 	const is_svg = context.state.metadata.namespace === 'svg';

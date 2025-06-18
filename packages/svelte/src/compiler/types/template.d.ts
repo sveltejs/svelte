@@ -155,6 +155,10 @@ export namespace AST {
 		declaration: VariableDeclaration & {
 			declarations: [VariableDeclarator & { id: Pattern; init: Expression }];
 		};
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	/** A `{@debug ...}` tag */
@@ -169,6 +173,7 @@ export namespace AST {
 		expression: SimpleCallExpression | (ChainExpression & { expression: SimpleCallExpression });
 		/** @internal */
 		metadata: {
+			expression: ExpressionMetadata;
 			dynamic: boolean;
 			arguments: ExpressionMetadata[];
 			path: SvelteNode[];
@@ -470,6 +475,10 @@ export namespace AST {
 		pending: Fragment | null;
 		then: Fragment | null;
 		catch: Fragment | null;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	export interface KeyBlock extends BaseNode {

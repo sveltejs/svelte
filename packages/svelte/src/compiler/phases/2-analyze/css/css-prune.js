@@ -532,12 +532,7 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 			}
 
 			case 'ClassSelector': {
-				if (
-					!attribute_matches(element, 'class', name, '~=', false) &&
-					!element.attributes.some(
-						(attribute) => attribute.type === 'ClassDirective' && attribute.name === name
-					)
-				) {
+				if (!attribute_matches(element, 'class', name, '~=', false)) {
 					return false;
 				}
 
@@ -632,6 +627,16 @@ function attribute_matches(node, name, expected_value, operator, case_insensitiv
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'SpreadAttribute') return true;
 		if (attribute.type === 'BindDirective' && attribute.name === name) return true;
+
+		// match attributes against the corresponding directive but bail out on exact matching
+		if (attribute.type === 'StyleDirective' && name.toLowerCase() === 'style') return true;
+		if (attribute.type === 'ClassDirective' && name.toLowerCase() === 'class') {
+			if (operator == '~=') {
+				if (attribute.name === expected_value) return true;
+			} else {
+				return true;
+			}
+		}
 
 		if (attribute.type !== 'Attribute') continue;
 		if (attribute.name.toLowerCase() !== name.toLowerCase()) continue;

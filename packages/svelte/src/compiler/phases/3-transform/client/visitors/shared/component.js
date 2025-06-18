@@ -59,6 +59,15 @@ export function build_component(node, component_name, context) {
 	/** @type {ExpressionStatement[]} */
 	const binding_initializers = [];
 
+	const is_component_dynamic =
+		node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic);
+
+	// The variable name used for the component inside $.component()
+	const intermediate_name =
+		node.type === 'Component' && node.metadata.dynamic
+			? context.state.scope.generate(node.name)
+			: '$$component';
+
 	/**
 	 * If this component has a slot property, it is a named slot within another component. In this case
 	 * the slot scope applies to the component itself, too, and not just its children.
@@ -223,7 +232,7 @@ export function build_component(node, component_name, context) {
 							b.call(
 								'$$ownership_validator.binding',
 								b.literal(binding.node.name),
-								b.id(component_name),
+								b.id(is_component_dynamic ? intermediate_name : component_name),
 								b.thunk(expression)
 							)
 						)
@@ -299,7 +308,7 @@ export function build_component(node, component_name, context) {
 				);
 			}
 
-			push_prop(b.prop('get', b.call('$.attachment'), expression, true));
+			push_prop(b.prop('init', b.call('$.attachment'), expression, true));
 		}
 	}
 
@@ -438,8 +447,8 @@ export function build_component(node, component_name, context) {
 			// TODO We can remove this ternary once we remove legacy mode, since in runes mode dynamic components
 			// will be handled separately through the `$.component` function, and then the component name will
 			// always be referenced through just the identifier here.
-			node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic)
-				? component_name
+			is_component_dynamic
+				? intermediate_name
 				: /** @type {Expression} */ (context.visit(b.member_id(component_name))),
 			node_id,
 			props_expression
@@ -461,7 +470,7 @@ export function build_component(node, component_name, context) {
 		)
 	];
 
-	if (node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic)) {
+	if (is_component_dynamic) {
 		const prev = fn;
 
 		fn = (node_id) => {
@@ -470,11 +479,11 @@ export function build_component(node, component_name, context) {
 				node_id,
 				b.thunk(
 					/** @type {Expression} */ (
-						context.visit(node.type === 'Component' ? b.member_id(node.name) : node.expression)
+						context.visit(node.type === 'Component' ? b.member_id(component_name) : node.expression)
 					)
 				),
 				b.arrow(
-					[b.id('$$anchor'), b.id(component_name)],
+					[b.id('$$anchor'), b.id(intermediate_name)],
 					b.block([...binding_initializers, b.stmt(prev(b.id('$$anchor')))])
 				)
 			);

@@ -284,14 +284,20 @@ export type DeclarationKind =
 	| 'synthetic';
 
 export interface ExpressionMetadata {
-	/** All the bindings that are referenced inside this expression */
+	/** All the bindings that are referenced eagerly (not inside functions) in this expression */
 	dependencies: Set<Binding>;
+	/** All the bindings that are referenced inside this expression, including inside functions */
+	references: Set<Binding>;
 	/** True if the expression references state directly, or _might_ (via member/call expressions) */
 	has_state: boolean;
 	/** True if the expression involves a call expression (often, it will need to be wrapped in a derived) */
 	has_call: boolean;
 	/** True if the expression contains `await` */
 	has_await: boolean;
+	/** True if the expression includes a member expression */
+	has_member_expression: boolean;
+	/** True if the expression includes an assignment or an update */
+	has_assignment: boolean;
 }
 
 export interface StateField {

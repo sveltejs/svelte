@@ -4,7 +4,7 @@
 import { unwrap_optional } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { create_derived } from '../utils.js';
-import { get_expression_id } from './shared/utils.js';
+import { get_expression_id, build_expression } from './shared/utils.js';
 
 /**
  * @param {AST.RenderTag} node
@@ -28,7 +28,11 @@ export function RenderTag(node, context) {
 	const async_expressions = [];
 
 	for (let i = 0; i < raw_args.length; i++) {
-		let expression = /** @type {Expression} */ (context.visit(raw_args[i]));
+		let expression = build_expression(
+			context,
+			/** @type {Expression} */ (raw_args[i]),
+			node.metadata.arguments[i]
+		);
 		const { has_call, has_await } = node.metadata.arguments[i];
 
 		if (has_await || has_call) {
@@ -50,7 +54,11 @@ export function RenderTag(node, context) {
 		b.var(memo.id, create_derived(context.state, b.thunk(memo.expression)))
 	);
 
-	let snippet_function = /** @type {Expression} */ (context.visit(callee));
+	let snippet_function = build_expression(
+		context,
+		/** @type {Expression} */ (callee),
+		node.metadata.expression
+	);
 
 	if (node.metadata.dynamic) {
 		// If we have a chain expression then ensure a nullish snippet function gets turned into an empty one

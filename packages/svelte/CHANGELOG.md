@@ -1,5 +1,25 @@
 # svelte
 
+## 5.34.5
+
+### Patch Changes
+
+- fix: keep spread non-delegated event handlers up to date ([#16180](https://github.com/sveltejs/svelte/pull/16180))
+
+- fix: remove undefined attributes on hydration ([#16178](https://github.com/sveltejs/svelte/pull/16178))
+
+- fix: ensure sources within nested effects still register correctly ([#16193](https://github.com/sveltejs/svelte/pull/16193))
+
+- fix: avoid shadowing a variable in dynamic components ([#16185](https://github.com/sveltejs/svelte/pull/16185))
+
+## 5.34.4
+
+### Patch Changes
+
+- fix: don't set state withing `with_parent` in proxy ([#16176](https://github.com/sveltejs/svelte/pull/16176))
+
+- fix: use compiler-driven reactivity in legacy mode template expressions ([#16100](https://github.com/sveltejs/svelte/pull/16100))
+
 ## 5.34.3
 
 ### Patch Changes

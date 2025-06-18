@@ -345,7 +345,11 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 		}
 
 		var prev_value = current[key];
-		if (value === prev_value) continue;
+
+		// Skip if value is unchanged, unless it's `undefined` and the element still has the attribute
+		if (value === prev_value && !(value === undefined && element.hasAttribute(key))) {
+			continue;
+		}
 
 		current[key] = value;
 
@@ -483,8 +487,8 @@ export function attribute_effect(
 
 	block(() => {
 		var next = fn(...deriveds.map(get));
-
-		set_attributes(element, prev, next, css_hash, skip_warning);
+		/** @type {Record<string | symbol, any>} */
+		var current = set_attributes(element, prev, next, css_hash, skip_warning);
 
 		if (inited && is_select && 'value' in next) {
 			select_option(/** @type {HTMLSelectElement} */ (element), next.value, false);
@@ -501,9 +505,11 @@ export function attribute_effect(
 				if (effects[symbol]) destroy_effect(effects[symbol]);
 				effects[symbol] = branch(() => attach(element, () => n));
 			}
+
+			current[symbol] = n;
 		}
 
-		prev = next;
+		prev = current;
 	});
 
 	if (is_select) {
