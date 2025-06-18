@@ -320,3 +320,18 @@ export function state_unsafe_mutation() {
 		throw new Error(`https://svelte.dev/e/state_unsafe_mutation`);
 	}
 }
+
+/**
+ * A `<svelte:boundary>` `reset` function cannot be called while an error is still being handled
+ * @returns {never}
+ */
+export function svelte_boundary_reset_onerror() {
+	if (DEV) {
+		const error = new Error(`svelte_boundary_reset_onerror\nA \`<svelte:boundary>\` \`reset\` function cannot be called while an error is still being handled\nhttps://svelte.dev/e/svelte_boundary_reset_onerror`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/svelte_boundary_reset_onerror`);
+	}
+}

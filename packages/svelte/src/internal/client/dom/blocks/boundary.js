@@ -1,6 +1,6 @@
 /** @import { Effect, TemplateNode, } from '#client' */
 
-import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT } from '#client/constants';
+import { BOUNDARY_EFFECT, EFFECT_RAN, EFFECT_TRANSPARENT } from '#client/constants';
 import { component_context, set_component_context } from '../../context.js';
 import { handle_error, invoke_error_boundary } from '../../error-handling.js';
 import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
@@ -20,6 +20,7 @@ import {
 } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
 import * as w from '../../warnings.js';
+import * as e from '../../errors.js';
 
 /**
  * @param {Effect} boundary
@@ -96,8 +97,7 @@ export function boundary(node, props, boundary_fn) {
 				did_reset = true;
 
 				if (calling_on_error) {
-					w.reset_misuse();
-					throw error;
+					e.svelte_boundary_reset_onerror();
 				}
 
 				pause_effect(boundary_effect);
@@ -115,6 +115,12 @@ export function boundary(node, props, boundary_fn) {
 				calling_on_error = true;
 				onerror?.(error, reset);
 				calling_on_error = false;
+			} catch (error) {
+				if ((boundary.f & EFFECT_RAN) !== 0) {
+					invoke_error_boundary(error, /** @type {Effect} */ (boundary.parent));
+				} else {
+					throw error;
+				}
 			} finally {
 				set_active_reaction(previous_reaction);
 			}
