@@ -194,7 +194,7 @@ if (typeof window !== 'undefined') {
 
 export const fragments = /** @type {'html' | 'tree'} */ (process.env.FRAGMENTS) ?? 'html';
 
-export const async_mode = false; // process.env.SVELTE_NO_ASYNC !== 'true';
+export const async_mode = process.env.SVELTE_NO_ASYNC !== 'true';
 
 /**
  * @param {any[]} logs
