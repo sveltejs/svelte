@@ -2,7 +2,7 @@
 
 import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT } from '#client/constants';
 import { component_context, set_component_context } from '../../context.js';
-import { invoke_error_boundary } from '../../error-handling.js';
+import { handle_error, invoke_error_boundary } from '../../error-handling.js';
 import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
 import {
 	active_effect,
@@ -36,6 +36,8 @@ function with_boundary(boundary, fn) {
 
 	try {
 		fn();
+	} catch (e) {
+		handle_error(e);
 	} finally {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
@@ -74,7 +76,16 @@ export function boundary(node, props, boundary_fn) {
 				throw error;
 			}
 
+			if (boundary_effect) {
+				destroy_effect(boundary_effect);
+			} else if (hydrating) {
+				set_hydrate_node(hydrate_open);
+				next();
+				set_hydrate_node(remove_nodes());
+			}
+
 			var did_reset = false;
+			var calling_on_error = false;
 
 			var reset = () => {
 				if (did_reset) {
@@ -84,17 +95,16 @@ export function boundary(node, props, boundary_fn) {
 
 				did_reset = true;
 
+				if (calling_on_error) {
+					w.reset_misuse();
+					throw error;
+				}
+
 				pause_effect(boundary_effect);
 
 				with_boundary(boundary, () => {
 					is_creating_fallback = false;
-					try {
-						boundary_effect = branch(() => boundary_fn(anchor));
-					} catch (error) {
-						// If the new subtree immediately throws during mount, warn the dev.
-						w.reset_misuse();
-						throw error;
-					}
+					boundary_effect = branch(() => boundary_fn(anchor));
 				});
 			};
 
@@ -102,17 +112,11 @@ export function boundary(node, props, boundary_fn) {
 
 			try {
 				set_active_reaction(null);
+				calling_on_error = true;
 				onerror?.(error, reset);
+				calling_on_error = false;
 			} finally {
 				set_active_reaction(previous_reaction);
-			}
-
-			if (boundary_effect) {
-				destroy_effect(boundary_effect);
-			} else if (hydrating) {
-				set_hydrate_node(hydrate_open);
-				next();
-				set_hydrate_node(remove_nodes());
 			}
 
 			if (failed) {
