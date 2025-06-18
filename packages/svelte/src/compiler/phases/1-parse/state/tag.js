@@ -247,7 +247,10 @@ function open(parser) {
 			error: null,
 			pending: null,
 			then: null,
-			catch: null
+			catch: null,
+			metadata: {
+				expression: create_expression_metadata()
+			}
 		});
 
 		if (parser.eat('then')) {
@@ -711,6 +714,9 @@ function special(parser) {
 				declarations: [{ type: 'VariableDeclarator', id, init, start: id.start, end: init.end }],
 				start: start + 2, // start at const, not at @const
 				end: parser.index - 1
+			},
+			metadata: {
+				expression: create_expression_metadata()
 			}
 		});
 	}
@@ -737,6 +743,7 @@ function special(parser) {
 			end: parser.index,
 			expression: /** @type {AST.RenderTag['expression']} */ (expression),
 			metadata: {
+				expression: create_expression_metadata(),
 				dynamic: false,
 				arguments: [],
 				path: [],

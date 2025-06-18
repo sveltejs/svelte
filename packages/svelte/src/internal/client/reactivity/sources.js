@@ -143,7 +143,7 @@ export function set(source, value, should_proxy = false) {
 		!untracking &&
 		is_runes() &&
 		(active_reaction.f & (DERIVED | BLOCK_EFFECT | EFFECT_ASYNC)) !== 0 &&
-		!reaction_sources?.includes(source)
+		!(reaction_sources?.[1].includes(source) && reaction_sources[0] === active_reaction)
 	) {
 		e.state_unsafe_mutation();
 	}
