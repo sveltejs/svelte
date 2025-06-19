@@ -532,7 +532,12 @@ function relative_selector_might_apply_to_node(relative_selector, rule, element,
 			}
 
 			case 'ClassSelector': {
-				if (!attribute_matches(element, 'class', name, '~=', false)) {
+				if (
+					!attribute_matches(element, 'class', name, '~=', false) &&
+					!element.attributes.some(
+						(attribute) => attribute.type === 'ClassDirective' && attribute.name === name
+					)
+				) {
 					return false;
 				}
 
