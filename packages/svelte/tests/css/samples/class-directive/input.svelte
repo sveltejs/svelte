@@ -1,8 +1,9 @@
-<div class="zero" class:first={true} class:second={true}></div>
+<div class="zero" class:first={true}></div>
+<div class:second={true} class:third={true}></div>
 
 <style>
-  .first { color: green }
+  .zero.first { color: green }
   .second { color: green }
-  .zero.first.second { color: green }
-  .third { color: red }
+  .third { color: green }
+  .forth { color: red }
 </style>
