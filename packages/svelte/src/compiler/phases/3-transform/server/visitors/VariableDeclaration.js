@@ -81,22 +81,21 @@ export function VariableDeclaration(node, context) {
 				continue;
 			}
 
-			const args = /** @type {CallExpression} */ (init).arguments;
-			const value = args.length > 0 ? /** @type {Expression} */ (context.visit(args[0])) : b.void0;
-
-			if (rune === '$derived.by') {
-				declarations.push(
-					b.declarator(/** @type {Pattern} */ (context.visit(declarator.id)), b.call(value))
-				);
-				continue;
-			}
+			const value = init
+				? /** @type {Expression} */ (
+						context.visit(init, {
+							...context.state,
+							is_destructured_derived: declarator.id.type !== 'Identifier'
+						})
+					)
+				: b.void0;
 
 			if (declarator.id.type === 'Identifier') {
 				declarations.push(b.declarator(declarator.id, value));
 				continue;
 			}
 
-			if (rune === '$derived') {
+			if (rune === '$derived' || rune === '$derived.by') {
 				declarations.push(
 					b.declarator(/** @type {Pattern} */ (context.visit(declarator.id)), value)
 				);

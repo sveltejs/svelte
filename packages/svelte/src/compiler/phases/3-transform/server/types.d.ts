@@ -6,6 +6,7 @@ import type { ComponentAnalysis } from '../../types.js';
 export interface ServerTransformState extends TransformState {
 	/** The $: calls, which will be ordered in the end */
 	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
+	readonly is_destructured_derived?: boolean;
 }
 
 export interface ComponentServerTransformState extends ServerTransformState {
