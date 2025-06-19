@@ -1,3 +1,5 @@
-  .first.svelte-xyz { color: green }
+
+  .zero.first.svelte-xyz { color: green }
   .second.svelte-xyz { color: green }
-  /* (unused) .third { color: red }*/
+  .third.svelte-xyz { color: green }
+  /* (unused) .forth { color: red }*/

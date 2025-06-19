@@ -4,16 +4,16 @@ export default test({
 	warnings: [
 		{
 			code: 'css_unused_selector',
-			message: 'Unused CSS selector ".third"\nhttps://svelte.dev/e/css_unused_selector',
+			message: 'Unused CSS selector ".forth"\nhttps://svelte.dev/e/css_unused_selector',
 			start: {
-				line: 6,
+				line: 8,
 				column: 2,
-				character: 115
+				character: 190
 			},
 			end: {
-				line: 6,
+				line: 8,
 				column: 8,
-				character: 121
+				character: 196
 			}
 		}
 	]
