@@ -118,6 +118,7 @@ export {
 	update_pre_prop,
 	update_prop
 } from './reactivity/props.js';
+export { dispose, disposable } from './resource-management/index.js';
 export {
 	invalidate_store,
 	store_mutate,
