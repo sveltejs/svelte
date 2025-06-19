@@ -1,5 +1,11 @@
 # svelte
 
+## 5.34.7
+
+### Patch Changes
+
+- fix: address css class matching regression ([#16204](https://github.com/sveltejs/svelte/pull/16204))
+
 ## 5.34.6
 
 ### Patch Changes
