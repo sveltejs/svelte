@@ -10,6 +10,14 @@ export default test({
 		});
 
 		await Promise.resolve();
-		assert.deepEqual(logs, ['top level', 'inner', 0, 'destroy inner', 0, 'destroy outer', 0]);
+		assert.deepEqual(logs, [
+			'top level',
+			'inner',
+			0,
+			'destroy inner',
+			undefined,
+			'destroy outer',
+			undefined
+		]);
 	}
 });

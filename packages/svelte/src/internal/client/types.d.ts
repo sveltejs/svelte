@@ -14,8 +14,6 @@ export type ComponentContext = {
 	p: null | ComponentContext;
 	/** context */
 	c: null | Map<unknown, unknown>;
-	/** destroyed */
-	d: boolean;
 	/** deferred effects */
 	e: null | Array<{
 		fn: () => void | (() => void);

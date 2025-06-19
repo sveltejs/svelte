@@ -18,14 +18,14 @@ export default function Bind_component_snippet($$anchor) {
 	var fragment = root();
 	var node = $.first_child(fragment);
 
-	TextInput(node, {
+	TextInput(node, $.props({
 		get value() {
 			return $.get(value);
 		},
 		set value($$value) {
 			$.set(value, $$value, true);
 		}
-	});
+	}));
 
 	var text_1 = $.sibling(node);
 

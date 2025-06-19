@@ -9,11 +9,17 @@ import {
 } from '../../../constants.js';
 import { get_descriptor, is_function } from '../../shared/utils.js';
 import { mutable_source, set, source, update } from './sources.js';
-import { derived, derived_safe_equal } from './deriveds.js';
-import { get, captured_signals, untrack } from '../runtime.js';
+import { derived, derived_safe_equal, get_derived_parent_effect } from './deriveds.js';
+import { active_effect, captured_signals, get, untrack } from '../runtime.js';
 import { safe_equals } from './equality.js';
 import * as e from '../errors.js';
-import { LEGACY_DERIVED_PROP, LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
+import {
+	DESTROYED,
+	INERT,
+	LEGACY_DERIVED_PROP,
+	LEGACY_PROPS,
+	STATE_SYMBOL
+} from '#client/constants';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
@@ -159,16 +165,17 @@ export function legacy_rest_props(props, exclude) {
  * The proxy handler for spread props. Handles the incoming array of props
  * that looks like `() => { dynamic: props }, { static: prop }, ..` and wraps
  * them so that the whole thing is passed to the component as the `$$props` argument.
- * @template {Record<string | symbol, unknown>} T
- * @type {ProxyHandler<{ props: Array<T | (() => T)> }>}}
+ * @typedef {Record<string | symbol, unknown>} AnyProps
+ * @type {ProxyHandler<{ props: Array<AnyProps | (() => AnyProps)>, old_props: AnyProps, destroyed: boolean }>}}
  */
 const spread_props_handler = {
 	get(target, key) {
+		if (target.destroyed && key in target.old_props) return target.old_props[key];
 		let i = target.props.length;
 		while (i--) {
 			let p = target.props[i];
 			if (is_function(p)) p = p();
-			if (typeof p === 'object' && p !== null && key in p) return p[key];
+			if (typeof p === 'object' && p !== null && key in p) return (target.old_props[key] = p[key]);
 		}
 	},
 	set(target, key, value) {
@@ -178,7 +185,7 @@ const spread_props_handler = {
 			if (is_function(p)) p = p();
 			const desc = get_descriptor(p, key);
 			if (desc && desc.set) {
-				desc.set(value);
+				desc.set((target.old_props[key] = value));
 				return true;
 			}
 		}
@@ -237,16 +244,34 @@ const spread_props_handler = {
  * @param {Array<Record<string, unknown> | (() => Record<string, unknown>)>} props
  * @returns {any}
  */
-export function spread_props(...props) {
-	return new Proxy({ props }, spread_props_handler);
+export function props(...props) {
+	const effect = active_effect;
+	return new Proxy(
+		{
+			props,
+			old_props: untrack(() => {
+				const old_props = {};
+				for (let p of props) {
+					if (typeof p === 'function') p = p();
+					Object.assign(old_props, p);
+				}
+				return old_props;
+			}),
+			get destroyed() {
+				return effect ? (effect.f & (DESTROYED | INERT)) !== 0 : false;
+			}
+		},
+		spread_props_handler
+	);
 }
 
 /**
- * @param {Derived} current_value
- * @returns {boolean}
+ * @param {Derived} derived
  */
-function has_destroyed_component_ctx(current_value) {
-	return current_value.ctx?.d ?? false;
+function is_paused_or_destroyed(derived) {
+	const parent = get_derived_parent_effect(derived);
+	if (!parent) return false;
+	return (parent.f & (DESTROYED | INERT)) !== 0;
 }
 
 /**
@@ -414,7 +439,7 @@ export function prop(props, key, flags, fallback) {
 					fallback_value = new_value;
 				}
 
-				if (has_destroyed_component_ctx(current_value)) {
+				if (is_paused_or_destroyed(current_value)) {
 					return value;
 				}
 
@@ -424,7 +449,7 @@ export function prop(props, key, flags, fallback) {
 			return value;
 		}
 
-		if (has_destroyed_component_ctx(current_value)) {
+		if (is_paused_or_destroyed(current_value)) {
 			return current_value.v;
 		}
 
