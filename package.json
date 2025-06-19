@@ -42,5 +42,13 @@
     "typescript-eslint": "^8.24.0",
     "v8-natives": "^1.2.5",
     "vitest": "^2.1.9"
+  },
+  "pnpm": {
+    "overrides": {
+      "esrap": "link:../../esrap"
+    }
+  },
+  "dependencies": {
+    "esrap": "link:../../../../esrap"
   }
 }

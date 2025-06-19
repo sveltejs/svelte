@@ -1,12 +1,15 @@
 import * as fs from 'node:fs';
 import { assert, it } from 'vitest';
-import { parse } from 'svelte/compiler';
+import { parse, print } from 'svelte/compiler';
 import { try_load_json } from '../helpers.js';
 import { suite, type BaseTest } from '../suite.js';
+import { walk } from 'zimmerframe';
 
 interface ParserTest extends BaseTest {}
 
 const { test, run } = suite<ParserTest>(async (config, cwd) => {
+	const loose = cwd.split('/').pop()!.startsWith('loose-');
+
 	const input = fs
 		.readFileSync(`${cwd}/input.svelte`, 'utf-8')
 		.replace(/\s+$/, '')
@@ -21,6 +24,8 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 		)
 	);
 
+	delete actual.comments;
+
 	// run `UPDATE_SNAPSHOTS=true pnpm test parser` to update parser tests
 	if (process.env.UPDATE_SNAPSHOTS) {
 		fs.writeFileSync(`${cwd}/output.json`, JSON.stringify(actual, null, '\t'));
@@ -29,6 +34,38 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 
 		const expected = try_load_json(`${cwd}/output.json`);
 		assert.deepEqual(actual, expected);
+	}
+
+	if (!loose) {
+		const printed = print(actual);
+		const reparsed = JSON.parse(
+			JSON.stringify(
+				parse(printed.code, {
+					modern: true,
+					loose
+				})
+			)
+		);
+
+		fs.writeFileSync(`${cwd}/_actual.svelte`, printed.code);
+
+		const actual_cleaned = walk(actual, null, {
+			_(node, context) {
+				delete node.loc;
+				context.next();
+			}
+		});
+
+		delete reparsed.comments;
+
+		const reparsed_cleaned = walk(reparsed, null, {
+			_(node, context) {
+				delete node.loc;
+				context.next();
+			}
+		});
+
+		assert.deepEqual(actual_cleaned, reparsed_cleaned);
 	}
 });
 

@@ -59,7 +59,12 @@ export default function read_pattern(parser) {
 			space_with_newline.slice(0, first_space) + space_with_newline.slice(first_space + 1);
 
 		const expression = /** @type {any} */ (
-			parse_expression_at(`${space_with_newline}(${pattern_string} = 1)`, parser.ts, start - 1)
+			parse_expression_at(
+				`${space_with_newline}(${pattern_string} = 1)`,
+				parser.root.comments,
+				parser.ts,
+				start - 1
+			)
 		).left;
 
 		expression.typeAnnotation = read_type_annotation(parser);
@@ -96,13 +101,13 @@ function read_type_annotation(parser) {
 		// parameters as part of a sequence expression instead, and will then error on optional
 		// parameters (`?:`). Therefore replace that sequence with something that will not error.
 		parser.template.slice(parser.index).replace(/\?\s*:/g, ':');
-	let expression = parse_expression_at(template, parser.ts, a);
+	let expression = parse_expression_at(template, parser.root.comments, parser.ts, a);
 
 	// `foo: bar = baz` gets mangled — fix it
 	if (expression.type === 'AssignmentExpression') {
 		let b = expression.right.start;
 		while (template[b] !== '=') b -= 1;
-		expression = parse_expression_at(template.slice(0, b), parser.ts, a);
+		expression = parse_expression_at(template.slice(0, b), parser.root.comments, parser.ts, a);
 	}
 
 	// `array as item: string, index` becomes `string, index`, which is mistaken as a sequence expression - fix that
