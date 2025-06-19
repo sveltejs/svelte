@@ -1,0 +1,11 @@
+.sidebar.collapsed.svelte-xyz {
+		width: 60px;
+	}
+	
+	.collapsed.svelte-xyz .content:where(.svelte-xyz) {
+		opacity: 0;
+	}
+	
+	/* (unused) .unused {
+		color: red;
+	}*/
