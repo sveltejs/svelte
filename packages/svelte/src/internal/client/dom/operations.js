@@ -3,6 +3,7 @@ import { hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
 import { get_descriptor, is_extensible } from '../../shared/utils.js';
+import { TEXT_NODE } from '#client/constants';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
 /** @type {Window} */
@@ -113,7 +114,7 @@ export function child(node, is_text) {
 	// Child can be null if we have an element with a single child, like `<p>{text}</p>`, where `text` is empty
 	if (child === null) {
 		child = hydrate_node.appendChild(create_text());
-	} else if (is_text && child.nodeType !== 3) {
+	} else if (is_text && child.nodeType !== TEXT_NODE) {
 		var text = create_text();
 		child?.before(text);
 		set_hydrate_node(text);
@@ -143,7 +144,7 @@ export function first_child(fragment, is_text) {
 
 	// if an {expression} is empty during SSR, there might be no
 	// text node to hydrate — we must therefore create one
-	if (is_text && hydrate_node?.nodeType !== 3) {
+	if (is_text && hydrate_node?.nodeType !== TEXT_NODE) {
 		var text = create_text();
 
 		hydrate_node?.before(text);
@@ -174,11 +175,9 @@ export function sibling(node, count = 1, is_text = false) {
 		return next_sibling;
 	}
 
-	var type = next_sibling?.nodeType;
-
 	// if a sibling {expression} is empty during SSR, there might be no
 	// text node to hydrate — we must therefore create one
-	if (is_text && type !== 3) {
+	if (is_text && next_sibling?.nodeType !== TEXT_NODE) {
 		var text = create_text();
 		// If the next sibling is `null` and we're handling text then it's because
 		// the SSR content was empty for the text, so we need to generate a new text

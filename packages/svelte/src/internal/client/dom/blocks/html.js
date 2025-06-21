@@ -10,6 +10,7 @@ import { DEV } from 'esm-env';
 import { dev_current_component_function } from '../../context.js';
 import { get_first_child, get_next_sibling } from '../operations.js';
 import { active_effect } from '../../runtime.js';
+import { COMMENT_NODE } from '#client/constants';
 
 /**
  * @param {Element} element
@@ -67,7 +68,10 @@ export function html(node, get_value, svg = false, mathml = false, skip_warning 
 			var next = hydrate_next();
 			var last = next;
 
-			while (next !== null && (next.nodeType !== 8 || /** @type {Comment} */ (next).data !== '')) {
+			while (
+				next !== null &&
+				(next.nodeType !== COMMENT_NODE || /** @type {Comment} */ (next).data !== '')
+			) {
 				last = next;
 				next = /** @type {TemplateNode} */ (get_next_sibling(next));
 			}

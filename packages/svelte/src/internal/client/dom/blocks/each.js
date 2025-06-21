@@ -34,7 +34,7 @@ import {
 } from '../../reactivity/effects.js';
 import { source, mutable_source, internal_set } from '../../reactivity/sources.js';
 import { array_from, is_array } from '../../../shared/utils.js';
-import { INERT } from '#client/constants';
+import { COMMENT_NODE, INERT } from '#client/constants';
 import { queue_micro_task } from '../task.js';
 import { active_effect, get } from '../../runtime.js';
 import { DEV } from 'esm-env';
@@ -183,7 +183,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 			for (var i = 0; i < length; i++) {
 				if (
-					hydrate_node.nodeType === 8 &&
+					hydrate_node.nodeType === COMMENT_NODE &&
 					/** @type {Comment} */ (hydrate_node).data === HYDRATION_END
 				) {
 					// The server rendered fewer items than expected,

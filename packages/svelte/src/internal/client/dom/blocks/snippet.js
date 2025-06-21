@@ -1,7 +1,7 @@
 /** @import { Snippet } from 'svelte' */
 /** @import { Effect, TemplateNode } from '#client' */
 /** @import { Getters } from '#shared' */
-import { EFFECT_TRANSPARENT } from '#client/constants';
+import { EFFECT_TRANSPARENT, ELEMENT_NODE } from '#client/constants';
 import { branch, block, destroy_effect, teardown } from '../../reactivity/effects.js';
 import {
 	dev_current_component_function,
@@ -102,7 +102,7 @@ export function createRawSnippet(fn) {
 			var fragment = create_fragment_from_html(html);
 			element = /** @type {Element} */ (get_first_child(fragment));
 
-			if (DEV && (get_next_sibling(element) !== null || element.nodeType !== 1)) {
+			if (DEV && (get_next_sibling(element) !== null || element.nodeType !== ELEMENT_NODE)) {
 				w.invalid_raw_snippet_render();
 			}
 

@@ -1,5 +1,8 @@
 /** @import { assert } from 'vitest' */
 /** @import { CompileOptions, Warning } from '#compiler' */
+
+import { ELEMENT_NODE } from '#client/constants';
+
 /**
  * @param {any} a
  * @param {any} b
@@ -102,7 +105,7 @@ function normalize_children(node) {
 	}
 
 	for (let child of [...node.childNodes]) {
-		if (child.nodeType === 1 /* Element */) {
+		if (child.nodeType === ELEMENT_NODE) {
 			normalize_children(child);
 		}
 	}
