@@ -119,7 +119,7 @@ const visitors = {
 		context.write('=');
 
 		if (Array.isArray(node.value)) {
-			if (node.value.length > 1) {
+			if (node.value.length > 1 || node.value[0].type === 'Text') {
 				context.write('"');
 			}
 
@@ -127,7 +127,7 @@ const visitors = {
 				context.visit(chunk);
 			}
 
-			if (node.value.length > 1) {
+			if (node.value.length > 1 || node.value[0].type === 'Text') {
 				context.write('"');
 			}
 		} else {
