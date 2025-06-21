@@ -68,7 +68,10 @@ export function html(node, get_value, svg = false, mathml = false, skip_warning 
 			var next = hydrate_next();
 			var last = next;
 
-			while (next !== null && (next.nodeType !== COMMENT_NODE || /** @type {Comment} */ (next).data !== '')) {
+			while (
+				next !== null &&
+				(next.nodeType !== COMMENT_NODE || /** @type {Comment} */ (next).data !== '')
+			) {
 				last = next;
 				next = /** @type {TemplateNode} */ (get_next_sibling(next));
 			}

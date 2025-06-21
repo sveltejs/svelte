@@ -37,7 +37,8 @@ export function head(render_fn) {
 
 		while (
 			head_anchor !== null &&
-			(head_anchor.nodeType !== COMMENT_NODE || /** @type {Comment} */ (head_anchor).data !== HYDRATION_START)
+			(head_anchor.nodeType !== COMMENT_NODE ||
+				/** @type {Comment} */ (head_anchor).data !== HYDRATION_START)
 		) {
 			head_anchor = /** @type {TemplateNode} */ (get_next_sibling(head_anchor));
 		}
