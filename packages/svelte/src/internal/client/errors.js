@@ -307,12 +307,12 @@ export function state_prototype_fixed() {
 }
 
 /**
- * Updating state inside a derived or a template expression is forbidden. If the value should not be reactive, declare it without `$state`
+ * Updating state inside `$derived(...)`, `$inspect(...)` or a template expression is forbidden. If the value should not be reactive, declare it without `$state`
  * @returns {never}
  */
 export function state_unsafe_mutation() {
 	if (DEV) {
-		const error = new Error(`state_unsafe_mutation\nUpdating state inside a derived or a template expression is forbidden. If the value should not be reactive, declare it without \`$state\`\nhttps://svelte.dev/e/state_unsafe_mutation`);
+		const error = new Error(`state_unsafe_mutation\nUpdating state inside \`$derived(...)\`, \`$inspect(...)\` or a template expression is forbidden. If the value should not be reactive, declare it without \`$state\`\nhttps://svelte.dev/e/state_unsafe_mutation`);
 
 		error.name = 'Svelte error';
 		throw error;
