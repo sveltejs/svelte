@@ -98,9 +98,7 @@ function run() {
 			.readFileSync(new URL(`./templates/${name}.js`, import.meta.url), 'utf-8')
 			.replace(/\r\n/g, '\n');
 
-		/**
-		 * @type {any[]}
-		 */
+		/** @type {import('acorn').Comment[]} */
 		const comments = [];
 
 		let ast = acorn.parse(source, {
@@ -143,7 +141,9 @@ function run() {
 		const template_node = ast.body[index];
 		ast.body.splice(index, 1);
 
-		const jsdoc = comments.findLast((comment) => comment.start < template_node.start);
+		const jsdoc = /** @type {import('acorn').Comment} */ (
+			comments.findLast((comment) => comment.start < template_node.start)
+		);
 
 		const printed = esrap.print(
 			ast,
