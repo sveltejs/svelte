@@ -82,7 +82,7 @@ See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-long
 
 ## state_unsafe_mutation
 
-> Updating state inside a derived, a template expression or an inspect is forbidden. If the value should not be reactive, declare it without `$state`
+> Updating state inside `$derived(...)`, `$inspect(...)` or a template expression is forbidden. If the value should not be reactive, declare it without `$state`
 
 This error occurs when state is updated while evaluating a `$derived`. You might encounter it while trying to 'derive' two pieces of state in one go:
 
