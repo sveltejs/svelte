@@ -3,6 +3,7 @@
 /** @import { ComponentContext } from '../types' */
 import { unwrap_optional } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
+import { build_expression } from './shared/utils.js';
 
 /**
  * @param {AST.RenderTag} node
@@ -19,7 +20,10 @@ export function RenderTag(node, context) {
 	/** @type {Expression[]} */
 	let args = [];
 	for (let i = 0; i < raw_args.length; i++) {
-		let thunk = b.thunk(/** @type {Expression} */ (context.visit(raw_args[i])));
+		let thunk = b.thunk(
+			build_expression(context, /** @type {Expression} */ (raw_args[i]), node.metadata.arguments[i])
+		);
+
 		const { has_call } = node.metadata.arguments[i];
 
 		if (has_call) {
@@ -31,7 +35,11 @@ export function RenderTag(node, context) {
 		}
 	}
 
-	let snippet_function = /** @type {Expression} */ (context.visit(callee));
+	let snippet_function = build_expression(
+		context,
+		/** @type {Expression} */ (callee),
+		node.metadata.expression
+	);
 
 	if (node.metadata.dynamic) {
 		// If we have a chain expression then ensure a nullish snippet function gets turned into an empty one

@@ -20,7 +20,7 @@ import { current_each_item, set_current_each_item } from './each.js';
 import { active_effect } from '../../runtime.js';
 import { component_context } from '../../context.js';
 import { DEV } from 'esm-env';
-import { EFFECT_TRANSPARENT } from '#client/constants';
+import { EFFECT_TRANSPARENT, ELEMENT_NODE } from '#client/constants';
 import { assign_nodes } from '../template.js';
 import { is_raw_text_element } from '../../../../utils.js';
 
@@ -51,7 +51,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 	/** @type {null | Element} */
 	var element = null;
 
-	if (hydrating && hydrate_node.nodeType === 1) {
+	if (hydrating && hydrate_node.nodeType === ELEMENT_NODE) {
 		element = /** @type {Element} */ (hydrate_node);
 		hydrate_next();
 	}

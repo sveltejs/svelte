@@ -137,6 +137,10 @@ export namespace AST {
 	export interface HtmlTag extends BaseNode {
 		type: 'HtmlTag';
 		expression: Expression;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	/** An HTML comment */
@@ -153,6 +157,10 @@ export namespace AST {
 		declaration: VariableDeclaration & {
 			declarations: [VariableDeclarator & { id: Pattern; init: Expression }];
 		};
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	/** A `{@debug ...}` tag */
@@ -167,6 +175,7 @@ export namespace AST {
 		expression: SimpleCallExpression | (ChainExpression & { expression: SimpleCallExpression });
 		/** @internal */
 		metadata: {
+			expression: ExpressionMetadata;
 			dynamic: boolean;
 			arguments: ExpressionMetadata[];
 			path: SvelteNode[];
@@ -449,6 +458,10 @@ export namespace AST {
 		test: Expression;
 		consequent: Fragment;
 		alternate: Fragment | null;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	/** An `{#await ...}` block */
@@ -463,12 +476,20 @@ export namespace AST {
 		pending: Fragment | null;
 		then: Fragment | null;
 		catch: Fragment | null;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	export interface KeyBlock extends BaseNode {
 		type: 'KeyBlock';
 		expression: Expression;
 		fragment: Fragment;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	export interface SnippetBlock extends BaseNode {

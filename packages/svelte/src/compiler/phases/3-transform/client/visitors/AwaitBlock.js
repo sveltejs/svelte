@@ -1,10 +1,11 @@
-/** @import { BlockStatement, Expression, Pattern, Statement } from 'estree' */
+/** @import { BlockStatement, Pattern, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 import { extract_identifiers } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { create_derived } from '../utils.js';
 import { get_value } from './shared/declarations.js';
+import { build_expression } from './shared/utils.js';
 
 /**
  * @param {AST.AwaitBlock} node
@@ -14,7 +15,7 @@ export function AwaitBlock(node, context) {
 	context.state.template.push_comment();
 
 	// Visit {#await <expression>} first to ensure that scopes are in the correct order
-	const expression = b.thunk(/** @type {Expression} */ (context.visit(node.expression)));
+	const expression = b.thunk(build_expression(context, node.expression, node.metadata.expression));
 
 	let then_block;
 	let catch_block;

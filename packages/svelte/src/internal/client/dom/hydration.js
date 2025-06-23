@@ -1,5 +1,6 @@
 /** @import { TemplateNode } from '#client' */
 
+import { COMMENT_NODE } from '#client/constants';
 import {
 	HYDRATION_END,
 	HYDRATION_ERROR,
@@ -87,7 +88,7 @@ export function remove_nodes() {
 	var node = hydrate_node;
 
 	while (true) {
-		if (node.nodeType === 8) {
+		if (node.nodeType === COMMENT_NODE) {
 			var data = /** @type {Comment} */ (node).data;
 
 			if (data === HYDRATION_END) {
@@ -109,7 +110,7 @@ export function remove_nodes() {
  * @param {TemplateNode} node
  */
 export function read_hydration_instruction(node) {
-	if (!node || node.nodeType !== 8) {
+	if (!node || node.nodeType !== COMMENT_NODE) {
 		w.hydration_mismatch();
 		throw HYDRATION_ERROR;
 	}

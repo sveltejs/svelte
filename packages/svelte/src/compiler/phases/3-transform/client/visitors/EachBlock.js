@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Expression, Identifier, Pattern, SequenceExpression, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, Identifier, Pattern, Statement } from 'estree' */
 /** @import { AST, Binding } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
@@ -12,8 +12,8 @@ import {
 import { dev } from '../../../../state.js';
 import { extract_paths, object } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { build_getter } from '../utils.js';
 import { get_value } from './shared/declarations.js';
+import { build_expression } from './shared/utils.js';
 
 /**
  * @param {AST.EachBlock} node
@@ -24,11 +24,18 @@ export function EachBlock(node, context) {
 
 	// expression should be evaluated in the parent scope, not the scope
 	// created by the each block itself
-	const collection = /** @type {Expression} */ (
-		context.visit(node.expression, {
-			...context.state,
-			scope: /** @type {Scope} */ (context.state.scope.parent)
-		})
+	const parent_scope_state = {
+		...context.state,
+		scope: /** @type {Scope} */ (context.state.scope.parent)
+	};
+
+	const collection = build_expression(
+		{
+			...context,
+			state: parent_scope_state
+		},
+		node.expression,
+		node.metadata.expression
 	);
 
 	if (!each_node_meta.is_controlled) {

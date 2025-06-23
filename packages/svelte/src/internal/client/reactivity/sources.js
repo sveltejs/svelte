@@ -135,10 +135,12 @@ export function mutate(source, value) {
 export function set(source, value, should_proxy = false) {
 	if (
 		active_reaction !== null &&
-		!untracking &&
+		// since we are untracking the function inside `$inspect.with` we need to add this check
+		// to ensure we error if state is set inside an inspect effect
+		(!untracking || (active_reaction.f & INSPECT_EFFECT) !== 0) &&
 		is_runes() &&
-		(active_reaction.f & (DERIVED | BLOCK_EFFECT)) !== 0 &&
-		!reaction_sources?.includes(source)
+		(active_reaction.f & (DERIVED | BLOCK_EFFECT | INSPECT_EFFECT)) !== 0 &&
+		!(reaction_sources?.[1].includes(source) && reaction_sources[0] === active_reaction)
 	) {
 		e.state_unsafe_mutation();
 	}
