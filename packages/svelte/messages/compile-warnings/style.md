@@ -10,7 +10,7 @@ In some situations a selector may target an element that is not 'visible' to the
 <div class="post">{@html content}</div>
 
 <style>
-  .post :global {
+  :global(.post) {
     p {...}
   }
 </style>
