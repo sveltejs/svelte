@@ -10,10 +10,10 @@ class InternalCompileError extends Error {
 	#diagnostic;
 
 	/**
-		 * @param {string} code
-		 * @param {string} message
-		 * @param {[number, number] | undefined} position
-		 */
+	 * @param {string} code
+	 * @param {string} message
+	 * @param {[number, number] | undefined} position
+	 */
 	constructor(code, message, position) {
 		super(message);
 		this.stack = ''; // avoid unnecessary noise; don't set it as a class property or it becomes enumerable

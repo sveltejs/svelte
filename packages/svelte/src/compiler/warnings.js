@@ -8,10 +8,10 @@ class InternalCompileWarning extends CompileDiagnostic {
 	name = 'CompileWarning';
 
 	/**
-		 * @param {string} code
-		 * @param {string} message
-		 * @param {[number, number] | undefined} position
-		 */
+	 * @param {string} code
+	 * @param {string} message
+	 * @param {[number, number] | undefined} position
+	 */
 	constructor(code, message, position) {
 		super(code, message, position);
 	}

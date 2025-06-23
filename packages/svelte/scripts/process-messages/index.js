@@ -108,6 +108,12 @@ function run() {
 			onComment: comments
 		});
 
+		comments.forEach((comment) => {
+			if (comment.type === 'Block') {
+				comment.value = comment.value.replace(/^\t+/gm, '');
+			}
+		});
+
 		ast = walk(ast, null, {
 			// @ts-expect-error
 			Identifier(node, context) {
