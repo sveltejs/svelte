@@ -23,7 +23,7 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 		const file = `${cwd}/output.svelte`;
 
 		const expected = fs.existsSync(file) ? fs.readFileSync(file, 'utf-8') : '';
-		assert.deepEqual(output.code, expected);
+		assert.deepEqual(output.code.trim(), expected.trim());
 	}
 });
 

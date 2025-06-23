@@ -1,5 +1,5 @@
 /** @import { AST } from '#compiler'; */
-/** @import { Visitors } from 'esrap' */
+/** @import { Context, Visitors } from 'esrap' */
 import * as esrap from 'esrap';
 import ts from 'esrap/languages/ts';
 import { is_void } from '../../utils.js';
@@ -65,19 +65,70 @@ const visitors = {
 	},
 
 	Fragment(node, context) {
-		for (let i = 0; i < node.nodes.length; i += 1) {
-			const child = node.nodes[i];
+		const join = context.new();
 
-			if (child.type === 'Text') {
-				let data = child.data;
+		/** @type {Context[]} */
+		const contexts = [];
 
-				if (i === 0) data = data.trimStart();
-				if (i === node.nodes.length - 1) data = data.trimEnd();
+		let sequence = context.new();
 
-				context.write(data);
-			} else {
-				context.visit(child);
+		let multiline = false;
+
+		function flush() {
+			if (sequence.empty()) {
+				return;
 			}
+
+			contexts.push(sequence);
+			sequence = context.new();
+		}
+
+		for (let i = 0; i < node.nodes.length; i += 1) {
+			const child_node = node.nodes[i];
+			const prev = node.nodes[i - 1];
+			const next = node.nodes[i + 1];
+
+			const prev_is_text = prev && (prev.type === 'Text' || prev.type === 'ExpressionTag');
+			const next_is_text = next && (next.type === 'Text' || next.type === 'ExpressionTag');
+
+			if (child_node.type === 'Text' || child_node.type === 'ExpressionTag') {
+				if (child_node.type === 'Text') {
+					let { data } = child_node;
+
+					let a = !prev_is_text && data !== (data = data.trimStart());
+					let b = !next_is_text && data !== (data = data.trimEnd());
+
+					if (data === '') {
+						if (prev && next) sequence.append(join);
+					} else {
+						if (a && prev) sequence.append(join);
+						sequence.write(data);
+						if (b && next) sequence.append(join);
+					}
+				} else {
+					sequence.visit(child_node);
+				}
+			} else {
+				flush();
+				const child_context = context.new();
+				child_context.visit(child_node);
+
+				contexts.push(child_context);
+
+				multiline ||= child_context.multiline;
+			}
+		}
+
+		flush();
+
+		if (multiline) {
+			join.newline();
+		} else {
+			join.write(' ');
+		}
+
+		for (const child_context of contexts) {
+			context.append(child_context);
 		}
 	},
 
@@ -329,14 +380,24 @@ const visitors = {
 			context.write('{:else if ');
 			context.visit(node.test);
 			context.write('}');
+
+			context.indent();
+			context.newline();
 			context.visit(node.consequent);
+			context.dedent();
+			context.newline();
 		} else {
 			context.write('{#if ');
 			context.visit(node.test);
 			context.write('}');
 
+			context.indent();
+			context.newline();
 			context.visit(node.consequent);
+			context.dedent();
+			context.newline();
 		}
+
 		if (node.alternate !== null) {
 			if (
 				!(
@@ -347,8 +408,14 @@ const visitors = {
 			) {
 				context.write('{:else}');
 			}
+
+			context.indent();
+			context.newline();
 			context.visit(node.alternate);
+			context.dedent();
+			context.newline();
 		}
+
 		if (!node.elseif) {
 			context.write('{/if}');
 		}
