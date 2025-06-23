@@ -16,7 +16,7 @@ export function print(ast) {
 	});
 }
 
-/** @type {Visitors<AST.SvelteNode, any>} */
+/** @type {Visitors<AST.SvelteNode>} */
 const visitors = {
 	Root(node, context) {
 		if (node.options) {

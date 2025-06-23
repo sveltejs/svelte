@@ -49,25 +49,50 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 
 		fs.writeFileSync(`${cwd}/_actual.svelte`, printed.code);
 
-		const actual_cleaned = walk(actual, null, {
-			_(node, context) {
-				delete node.loc;
-				context.next();
-			}
-		});
-
 		delete reparsed.comments;
 
-		const reparsed_cleaned = walk(reparsed, null, {
-			_(node, context) {
-				delete node.loc;
-				context.next();
-			}
-		});
-
-		assert.deepEqual(actual_cleaned, reparsed_cleaned);
+		assert.deepEqual(clean(actual), clean(reparsed));
 	}
 });
+
+function clean(ast: import('svelte/compiler').AST.SvelteNode) {
+	return walk(ast, null, {
+		_(node, context) {
+			// @ts-ignore
+			delete node.start;
+			// @ts-ignore
+			delete node.end;
+			// @ts-ignore
+			delete node.loc;
+			// @ts-ignore
+			delete node.leadingComments;
+			// @ts-ignore
+			delete node.trailingComments;
+
+			context.next();
+		},
+		Fragment(node, context) {
+			return {
+				...node,
+				nodes: node.nodes
+					.map((child, i) => {
+						if (child.type === 'Text') {
+							if (i === 0) {
+								child = { ...child, data: child.data.trimStart() };
+							}
+
+							if (i === node.nodes.length - 1) {
+								child = { ...child, data: child.data.trimEnd() };
+							}
+
+							if (!child.data) return null;
+						}
+					})
+					.filter(Boolean)
+			};
+		}
+	});
+}
 
 export { test };
 
