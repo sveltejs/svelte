@@ -87,23 +87,23 @@ function clean(ast: AST.SvelteNode) {
 				let child = node.nodes[i];
 
 				if (child.type === 'Text') {
+					child = {
+						...child,
+						data: child.data.replace(/[^\S]+/g, ' '),
+						raw: child.raw.replace(/[^\S]+/g, ' ')
+					};
+
 					if (i === 0) {
-						child = {
-							...child,
-							data: child.data.trimStart(),
-							raw: child.raw.trimStart()
-						};
+						child.data = child.data.trimStart();
+						child.raw = child.raw.trimStart();
 					}
 
 					if (i === node.nodes.length - 1) {
-						child = {
-							...child,
-							data: child.data.trimEnd(),
-							raw: child.raw.trimEnd()
-						};
+						child.data = child.data.trimEnd();
+						child.raw = child.raw.trimEnd();
 					}
 
-					if (!child.data) continue;
+					if (child.data === '') continue;
 				}
 
 				nodes.push(context.visit(child));

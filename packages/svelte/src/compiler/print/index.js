@@ -16,6 +16,29 @@ export function print(ast) {
 	});
 }
 
+/**
+ * @param {Context} context
+ * @param {AST.SvelteNode} node
+ */
+function block(context, node, allow_inline = false) {
+	const child_context = context.new();
+	child_context.visit(node);
+
+	if (child_context.empty()) {
+		return;
+	}
+
+	if (allow_inline && !child_context.multiline) {
+		context.append(child_context);
+	} else {
+		context.indent();
+		context.newline();
+		context.append(child_context);
+		context.dedent();
+		context.newline();
+	}
+}
+
 /** @type {Visitors<AST.SvelteNode>} */
 const visitors = {
 	Root(node, context) {
@@ -54,81 +77,100 @@ const visitors = {
 		}
 
 		context.write('>');
-
-		context.indent();
-		context.newline();
-		context.visit(node.content);
-		context.dedent();
-		context.newline();
-
+		block(context, node.content);
 		context.write('</script>');
 	},
 
 	Fragment(node, context) {
-		const join = context.new();
+		/** @type {AST.SvelteNode[][]} */
+		const items = [];
 
-		/** @type {Context[]} */
-		const contexts = [];
+		/** @type {AST.SvelteNode[]} */
+		let sequence = [];
 
-		let sequence = context.new();
-
-		let multiline = false;
-
-		function flush() {
-			if (sequence.empty()) {
-				return;
-			}
-
-			contexts.push(sequence);
-			sequence = context.new();
-		}
+		const flush = () => {
+			items.push(sequence);
+			sequence = [];
+		};
 
 		for (let i = 0; i < node.nodes.length; i += 1) {
-			const child_node = node.nodes[i];
+			let child_node = node.nodes[i];
+
 			const prev = node.nodes[i - 1];
 			const next = node.nodes[i + 1];
 
-			const prev_is_text = prev && (prev.type === 'Text' || prev.type === 'ExpressionTag');
-			const next_is_text = next && (next.type === 'Text' || next.type === 'ExpressionTag');
+			if (child_node.type === 'Text') {
+				child_node = { ...child_node }; // always clone, so we can safely mutate
 
-			if (child_node.type === 'Text' || child_node.type === 'ExpressionTag') {
-				if (child_node.type === 'Text') {
-					let { data } = child_node;
+				child_node.data = child_node.data.replace(/[^\S]+/g, ' ');
 
-					let a = !prev_is_text && data !== (data = data.trimStart());
-					let b = !next_is_text && data !== (data = data.trimEnd());
+				// trim fragment
+				if (i === 0) {
+					child_node.data = child_node.data.trimStart();
+				}
 
-					if (data === '') {
-						if (prev && next) sequence.append(join);
-					} else {
-						if (a && prev) sequence.append(join);
-						sequence.write(data);
-						if (b && next) sequence.append(join);
+				if (i === node.nodes.length - 1) {
+					child_node.data = child_node.data.trimEnd();
+				}
+
+				if (child_node.data === '') {
+					continue;
+				}
+
+				if (child_node.data.startsWith(' ') && prev && prev.type !== 'ExpressionTag') {
+					flush();
+					child_node.data = child_node.data.trimStart();
+				}
+
+				if (child_node.data !== '') {
+					sequence.push({ ...child_node, data: child_node.data });
+
+					if (child_node.data.endsWith(' ') && next && next.type !== 'ExpressionTag') {
+						flush();
+						child_node.data = child_node.data.trimStart();
 					}
-				} else {
-					sequence.visit(child_node);
 				}
 			} else {
-				flush();
-				const child_context = context.new();
-				child_context.visit(child_node);
-
-				contexts.push(child_context);
-
-				multiline ||= child_context.multiline;
+				sequence.push(child_node);
 			}
 		}
 
 		flush();
 
-		if (multiline) {
-			join.newline();
-		} else {
-			join.write(' ');
-		}
+		let multiline = false;
+		let width = 0;
 
-		for (const child_context of contexts) {
-			context.append(child_context);
+		const child_contexts = items.map((sequence) => {
+			const child_context = context.new();
+
+			for (const node of sequence) {
+				child_context.visit(node);
+				multiline ||= child_context.multiline;
+			}
+
+			width += child_context.measure();
+
+			return child_context;
+		});
+
+		multiline ||= width > 30;
+
+		for (let i = 0; i < child_contexts.length; i += 1) {
+			const prev = child_contexts[i];
+			const next = child_contexts[i + 1];
+
+			context.append(prev);
+
+			if (next) {
+				if (prev.multiline || next.multiline) {
+					context.margin();
+					context.newline();
+				} else if (multiline) {
+					context.newline();
+				} else {
+					context.write(' ');
+				}
+			}
 		}
 	},
 
@@ -192,7 +234,7 @@ const visitors = {
 
 		if (node.pending) {
 			context.write('}');
-			context.visit(node.pending);
+			block(context, node.pending);
 			context.write('{:');
 		} else {
 			context.write(' ');
@@ -202,7 +244,8 @@ const visitors = {
 			context.write(node.value ? 'then ' : 'then');
 			if (node.value) context.visit(node.value);
 			context.write('}');
-			context.visit(node.then);
+
+			block(context, node.then);
 
 			if (node.catch) {
 				context.write('{:');
@@ -213,7 +256,8 @@ const visitors = {
 			context.write(node.value ? 'catch ' : 'catch');
 			if (node.error) context.visit(node.error);
 			context.write('}');
-			context.visit(node.catch);
+
+			block(context, node.catch);
 		}
 
 		context.write('{/await}');
@@ -303,7 +347,7 @@ const visitors = {
 
 		if (node.fragment.nodes.length > 0) {
 			context.write('>');
-			context.visit(node.fragment);
+			block(context, node.fragment, true);
 			context.write(`</${node.name}>`);
 		} else {
 			context.write(' />');
@@ -353,7 +397,8 @@ const visitors = {
 		}
 
 		context.write('}');
-		context.visit(node.body);
+
+		block(context, node.body);
 
 		if (node.fallback) {
 			context.write('{:else}');
@@ -381,21 +426,13 @@ const visitors = {
 			context.visit(node.test);
 			context.write('}');
 
-			context.indent();
-			context.newline();
-			context.visit(node.consequent);
-			context.dedent();
-			context.newline();
+			block(context, node.consequent);
 		} else {
 			context.write('{#if ');
 			context.visit(node.test);
 			context.write('}');
 
-			context.indent();
-			context.newline();
-			context.visit(node.consequent);
-			context.dedent();
-			context.newline();
+			block(context, node.consequent);
 		}
 
 		if (node.alternate !== null) {
@@ -409,11 +446,7 @@ const visitors = {
 				context.write('{:else}');
 			}
 
-			context.indent();
-			context.newline();
-			context.visit(node.alternate);
-			context.dedent();
-			context.newline();
+			block(context, node.alternate);
 		}
 
 		if (!node.elseif) {
@@ -425,7 +458,7 @@ const visitors = {
 		context.write('{#key ');
 		context.visit(node.expression);
 		context.write('}');
-		context.visit(node.fragment);
+		block(context, node.fragment);
 		context.write('{/key}');
 	},
 
@@ -487,24 +520,28 @@ const visitors = {
 	},
 
 	RegularElement(node, context) {
-		context.write('<' + node.name);
+		const child_context = context.new();
+
+		child_context.write('<' + node.name);
 
 		for (const attribute of node.attributes) {
 			// TODO handle multiline
-			context.write(' ');
-			context.visit(attribute);
+			child_context.write(' ');
+			child_context.visit(attribute);
 		}
 
 		if (is_void(node.name)) {
-			context.write(' />');
+			child_context.write(' />');
 		} else {
-			context.write('>');
+			child_context.write('>');
 
 			if (node.fragment) {
-				context.visit(node.fragment);
-				context.write(`</${node.name}>`);
+				block(child_context, node.fragment, child_context.measure() < 30);
+				child_context.write(`</${node.name}>`);
 			}
 		}
+
+		context.append(child_context);
 	},
 
 	RelativeSelector(node, context) {
@@ -566,7 +603,7 @@ const visitors = {
 
 		if (node.fragment.nodes.length > 0) {
 			context.write('>');
-			context.visit(node.fragment);
+			context.visit(node.fragment); // TODO block/inline
 			context.write('</slot>');
 		} else {
 			context.write(' />');
@@ -589,7 +626,7 @@ const visitors = {
 		}
 
 		context.write(')}');
-		context.visit(node.body);
+		block(context, node.body);
 		context.write('{/snippet}');
 	},
 
@@ -658,7 +695,7 @@ const visitors = {
 
 		if (node.fragment) {
 			context.write('>');
-			context.visit(node.fragment);
+			block(context, node.fragment, true);
 			context.write(`</svelte:boundary>`);
 		} else {
 			context.write('/>');
@@ -680,7 +717,7 @@ const visitors = {
 
 		if (node.fragment) {
 			context.write('>');
-			context.visit(node.fragment);
+			block(context, node.fragment, true);
 			context.write(`</svelte:component>`);
 		} else {
 			context.write('/>');
@@ -698,7 +735,7 @@ const visitors = {
 
 		if (node.fragment) {
 			context.write('>');
-			context.visit(node.fragment);
+			block(context, node.fragment, true);
 			context.write(`</svelte:document>`);
 		} else {
 			context.write('/>');
@@ -720,7 +757,7 @@ const visitors = {
 
 		if (node.fragment) {
 			context.write('>');
-			context.visit(node.fragment);
+			block(context, node.fragment, true);
 			context.write(`</svelte:element>`);
 		} else {
 			context.write('/>');
@@ -738,7 +775,7 @@ const visitors = {
 
 		if (node.fragment) {
 			context.write('>');
-			context.visit(node.fragment);
+			block(context, node.fragment, true);
 			context.write(`</svelte:fragment>`);
 		} else {
 			context.write('/>');
@@ -756,7 +793,7 @@ const visitors = {
 
 		if (node.fragment) {
 			context.write('>');
-			context.visit(node.fragment);
+			block(context, node.fragment, true);
 			context.write(`</svelte:head>`);
 		} else {
 			context.write('/>');
@@ -774,7 +811,7 @@ const visitors = {
 
 		if (node.fragment) {
 			context.write('>');
-			context.visit(node.fragment);
+			block(context, node.fragment, true);
 			context.write(`</svelte:self>`);
 		} else {
 			context.write('/>');
@@ -792,7 +829,7 @@ const visitors = {
 
 		if (node.fragment) {
 			context.write('>');
-			context.visit(node.fragment);
+			block(context, node.fragment, true);
 			context.write(`</svelte:window>`);
 		} else {
 			context.write('/>');
