@@ -4,9 +4,7 @@ import { CompileDiagnostic } from './utils/compile_diagnostic.js';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
 class InternalCompileError extends Error {
-	message = '';
-
-	// ensure this property is enumerable
+	message = ''; // ensure this property is enumerable
 	#diagnostic;
 
 	/**
