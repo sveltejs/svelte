@@ -4,6 +4,7 @@ import { parse, print } from 'svelte/compiler';
 import { try_load_json } from '../helpers.js';
 import { suite, type BaseTest } from '../suite.js';
 import { walk } from 'zimmerframe';
+import type { AST } from 'svelte/compiler';
 
 interface ParserTest extends BaseTest {}
 
@@ -55,7 +56,7 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 	}
 });
 
-function clean(ast: import('svelte/compiler').AST.SvelteNode) {
+function clean(ast: AST.SvelteNode) {
 	return walk(ast, null, {
 		_(node, context) {
 			// @ts-ignore
@@ -72,24 +73,27 @@ function clean(ast: import('svelte/compiler').AST.SvelteNode) {
 			context.next();
 		},
 		Fragment(node, context) {
-			return {
-				...node,
-				nodes: node.nodes
-					.map((child, i) => {
-						if (child.type === 'Text') {
-							if (i === 0) {
-								child = { ...child, data: child.data.trimStart() };
-							}
+			const nodes: AST.SvelteNode[] = [];
 
-							if (i === node.nodes.length - 1) {
-								child = { ...child, data: child.data.trimEnd() };
-							}
+			for (let i = 0; i < node.nodes.length; i += 1) {
+				let child = node.nodes[i];
 
-							if (!child.data) return null;
-						}
-					})
-					.filter(Boolean)
-			};
+				if (child.type === 'Text') {
+					if (i === 0) {
+						child = { ...child, data: child.data.trimStart() };
+					}
+
+					if (i === node.nodes.length - 1) {
+						child = { ...child, data: child.data.trimEnd() };
+					}
+
+					if (!child.data) continue;
+				}
+
+				nodes.push(context.visit(child));
+			}
+
+			return { ...node, nodes } as AST.Fragment;
 		}
 	});
 }
