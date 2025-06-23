@@ -72,6 +72,14 @@ function clean(ast: AST.SvelteNode) {
 
 			context.next();
 		},
+		StyleSheet(node, context) {
+			return {
+				type: node.type,
+				attributes: node.attributes.map((attribute) => context.visit(attribute)),
+				children: node.children.map((child) => context.visit(child)),
+				content: {}
+			} as AST.SvelteNode;
+		},
 		Fragment(node, context) {
 			const nodes: AST.SvelteNode[] = [];
 
@@ -80,11 +88,19 @@ function clean(ast: AST.SvelteNode) {
 
 				if (child.type === 'Text') {
 					if (i === 0) {
-						child = { ...child, data: child.data.trimStart() };
+						child = {
+							...child,
+							data: child.data.trimStart(),
+							raw: child.raw.trimStart()
+						};
 					}
 
 					if (i === node.nodes.length - 1) {
-						child = { ...child, data: child.data.trimEnd() };
+						child = {
+							...child,
+							data: child.data.trimEnd(),
+							raw: child.raw.trimEnd()
+						};
 					}
 
 					if (!child.data) continue;
