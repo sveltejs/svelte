@@ -73,7 +73,7 @@ export namespace AST {
 		/** The parsed `<script module>` element, if exists */
 		module: Script | null;
 		/** Comments found in <script> and {expressions} */
-		comments: import('estree').Comment[];
+		comments: Array<import('estree').Comment & { start: number; end: number }>;
 		/** @internal */
 		metadata: {
 			/** Whether the component was parsed with typescript */

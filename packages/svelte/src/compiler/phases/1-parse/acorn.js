@@ -107,6 +107,8 @@ function get_comment_handlers(source, comments, index = 0) {
 		 * @param {string} value
 		 * @param {number} start
 		 * @param {number} end
+		 * @param {import('acorn').Position} [start_loc]
+		 * @param {import('acorn').Position} [end_loc]
 		 */
 		onComment: (block, value, start, end, start_loc, end_loc) => {
 			if (block && /\n/.test(value)) {
@@ -125,7 +127,10 @@ function get_comment_handlers(source, comments, index = 0) {
 				value,
 				start,
 				end,
-				loc: { start: start_loc, end: end_loc }
+				loc: {
+					start: /** @type {import('acorn').Position} */ (start_loc),
+					end: /** @type {import('acorn').Position} */ (end_loc)
+				}
 			});
 		},
 

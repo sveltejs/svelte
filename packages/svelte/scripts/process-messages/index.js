@@ -147,7 +147,6 @@ function run() {
 
 		const printed = esrap.print(
 			ast,
-			// @ts-expect-error
 			ts({
 				comments: comments.filter((comment) => comment !== jsdoc)
 			})
@@ -358,7 +357,6 @@ function run() {
 					.join('\n')
 			};
 
-			// @ts-expect-error
 			const block = esrap.print({ ...ast, body: [clone] }, ts({ comments: [jsdoc_clone] })).code;
 
 			printed.code += `\n\n${block}`;

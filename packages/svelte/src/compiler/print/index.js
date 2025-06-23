@@ -10,7 +10,6 @@ import { is_void } from '../../utils.js';
 export function print(ast) {
 	// @ts-expect-error some bullshit
 	return esrap.print(ast, {
-		// @ts-expect-error some bullshit
 		...ts({ comments: ast.type === 'Root' ? ast.comments : [] }),
 		...visitors
 	});
@@ -641,13 +640,23 @@ const visitors = {
 		for (const modifier of node.modifiers) {
 			context.write(`|${modifier}`);
 		}
-		if (
-			node.expression !== null &&
-			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
-		) {
-			context.write('={');
-			context.visit(node.expression);
-			context.write('}');
+
+		if (node.value === true) {
+			return;
+		}
+
+		context.write('=');
+
+		if (Array.isArray(node.value)) {
+			context.write('"');
+
+			for (const tag of node.value) {
+				context.visit(tag);
+			}
+
+			context.write('"');
+		} else {
+			context.visit(node.value);
 		}
 	},
 
@@ -746,7 +755,7 @@ const visitors = {
 		context.write('<svelte:element');
 
 		context.write('this={');
-		context.visit(node.expression);
+		context.visit(node.tag);
 		context.write('} ');
 
 		for (const attribute of node.attributes) {
