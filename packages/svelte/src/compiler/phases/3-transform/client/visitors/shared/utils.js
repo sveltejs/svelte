@@ -370,7 +370,7 @@ export function validate_mutation(node, context, expression) {
 export function build_expression(context, expression, metadata, state = context.state) {
 	const value = /** @type {Expression} */ (context.visit(expression, state));
 
-	if (context.state.analysis.runes) {
+	if (context.state.analysis.runes || context.state.analysis.maybe_runes) {
 		return value;
 	}
 
