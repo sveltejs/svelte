@@ -12,12 +12,9 @@ export default test({
 	async test({ assert, target, raf }) {
 		const [reset, hello, goodbye] = target.querySelectorAll('button');
 
-		flushSync(() => hello.click());
+		hello.click();
 		raf.tick(0);
-		await Promise.resolve();
-		await Promise.resolve();
 		await tick();
-		flushSync();
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -28,7 +25,7 @@ export default test({
 			`
 		);
 
-		flushSync(() => reset.click());
+		reset.click();
 		raf.tick(0);
 		await tick();
 		assert.htmlEqual(
@@ -42,7 +39,7 @@ export default test({
 			`
 		);
 
-		flushSync(() => goodbye.click());
+		goodbye.click();
 		await Promise.resolve();
 		raf.tick(0);
 		await tick();

@@ -5,12 +5,8 @@ export default test({
 	async test({ assert, target }) {
 		const [a, b, reset1, reset2, resolve1, resolve2] = target.querySelectorAll('button');
 
-		flushSync(() => resolve1.click());
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
+		resolve1.click();
 		await tick();
-		flushSync();
 
 		const p = /** @type {HTMLElement} */ (target.querySelector('#test'));
 
@@ -21,21 +17,13 @@ export default test({
 		flushSync(() => reset2.click());
 		flushSync(() => b.click());
 
-		flushSync(() => resolve2.click());
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
+		resolve2.click();
 		await tick();
-		flushSync();
 
 		assert.htmlEqual(p.innerHTML, '1 + 2 = 3');
 
-		flushSync(() => resolve1.click());
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
+		resolve1.click();
 		await tick();
-		flushSync();
 
 		assert.htmlEqual(p.innerHTML, '2 + 3 = 5');
 	}

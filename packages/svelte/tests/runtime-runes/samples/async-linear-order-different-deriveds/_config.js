@@ -1,4 +1,4 @@
-import { flushSync, settled, tick } from 'svelte';
+import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -7,10 +7,7 @@ export default test({
 	async test({ assert, target }) {
 		const [both, a, b] = target.querySelectorAll('button');
 
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
+		await tick();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -21,12 +18,10 @@ export default test({
 			`
 		);
 
-		flushSync(() => both.click());
-		flushSync(() => b.click());
+		both.click();
+		b.click();
 
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
+		await tick();
 
 		assert.htmlEqual(
 			target.innerHTML,

@@ -1,16 +1,11 @@
-import { flushSync } from 'svelte';
+import { flushSync, tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
 	html: `<p>pending...</p>`,
 
 	async test({ assert, target }) {
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
+		await tick();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -30,10 +25,7 @@ export default test({
 
 		for (let i = 1; i < 5; i += 1) {
 			shift.click();
-			await Promise.resolve();
-			await Promise.resolve();
-			await Promise.resolve();
-			await Promise.resolve();
+			await tick();
 
 			assert.equal(p.innerHTML, `${i}: ${Math.min(i, 3)}`);
 		}

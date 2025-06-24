@@ -1,4 +1,4 @@
-import { flushSync, tick } from 'svelte';
+import { tick } from 'svelte';
 import { deferred } from '../../../../src/internal/shared/utils.js';
 import { test } from '../../test';
 
@@ -19,24 +19,21 @@ export default test({
 	async test({ assert, target }) {
 		const [reset, t, f] = target.querySelectorAll('button');
 
-		flushSync(() => t.click());
-		await Promise.resolve();
-		await Promise.resolve();
-		await tick();
-		flushSync();
-		assert.htmlEqual(
-			target.innerHTML,
-			'<button>reset</button><button>true</button><button>false</button><h1>yes</h1>'
-		);
-
-		flushSync(() => reset.click());
+		t.click();
 		await tick();
 		assert.htmlEqual(
 			target.innerHTML,
 			'<button>reset</button><button>true</button><button>false</button><h1>yes</h1>'
 		);
 
-		flushSync(() => f.click());
+		reset.click();
+		await tick();
+		assert.htmlEqual(
+			target.innerHTML,
+			'<button>reset</button><button>true</button><button>false</button><h1>yes</h1>'
+		);
+
+		f.click();
 		await tick();
 		assert.htmlEqual(
 			target.innerHTML,

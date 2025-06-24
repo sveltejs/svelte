@@ -1,4 +1,4 @@
-import { flushSync, tick } from 'svelte';
+import { flushSync, settled, tick } from 'svelte';
 import { deferred } from '../../../../src/internal/shared/utils.js';
 import { test } from '../../test';
 
@@ -19,6 +19,8 @@ export default test({
 
 	async test({ assert, target, component, logs }) {
 		d.resolve(42);
+
+		// TODO why is this necessary? why isn't `await tick()` enough?
 		await Promise.resolve();
 		await Promise.resolve();
 		await Promise.resolve();
@@ -32,9 +34,6 @@ export default test({
 		assert.htmlEqual(target.innerHTML, '<p>42</p>');
 
 		component.num = 2;
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
 		await tick();
 		assert.htmlEqual(target.innerHTML, '<p>84</p>');
 
@@ -44,8 +43,6 @@ export default test({
 		assert.htmlEqual(target.innerHTML, '<p>84</p>');
 
 		d.resolve(43);
-		await Promise.resolve();
-		await Promise.resolve();
 		await tick();
 		assert.htmlEqual(target.innerHTML, '<p>86</p>');
 
