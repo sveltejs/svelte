@@ -47,7 +47,7 @@ export function boundary(node, props, children) {
 
 export class Boundary {
 	inert = false;
-	ran = false;
+	pending = false;
 
 	/** @type {Boundary | null} */
 	parent;
@@ -96,6 +96,8 @@ export class Boundary {
 
 		this.parent = /** @type {Effect} */ (active_effect).b;
 
+		this.pending = !!this.#props.pending;
+
 		this.#effect = block(() => {
 			/** @type {Effect} */ (active_effect).b = this;
 
@@ -124,7 +126,8 @@ export class Boundary {
 						pause_effect(/** @type {Effect} */ (this.#pending_effect), () => {
 							this.#pending_effect = null;
 						});
-						this.ran = true;
+
+						this.pending = false;
 					}
 				});
 			} else {
@@ -137,7 +140,7 @@ export class Boundary {
 				if (this.#pending_count > 0) {
 					this.#show_pending_snippet();
 				} else {
-					this.ran = true;
+					this.pending = false;
 				}
 			}
 		}, flags);
@@ -149,14 +152,6 @@ export class Boundary {
 
 	has_pending_snippet() {
 		return !!this.#props.pending;
-	}
-
-	is_pending() {
-		if (!this.ran && this.#props.pending) {
-			return true;
-		}
-
-		return this.#pending_effect !== null && (this.#pending_effect.f & INERT) === 0;
 	}
 
 	/**
@@ -201,7 +196,7 @@ export class Boundary {
 	}
 
 	commit() {
-		this.ran = true;
+		this.pending = false;
 
 		if (this.#pending_effect) {
 			pause_effect(this.#pending_effect, () => {
@@ -244,7 +239,7 @@ export class Boundary {
 				});
 			}
 
-			this.ran = false;
+			this.pending = true;
 
 			this.#main_effect = this.#run(() => {
 				this.#is_creating_fallback = false;
@@ -254,7 +249,7 @@ export class Boundary {
 			if (this.#pending_count > 0) {
 				this.#show_pending_snippet();
 			} else {
-				this.ran = true;
+				this.pending = false;
 			}
 		};
 

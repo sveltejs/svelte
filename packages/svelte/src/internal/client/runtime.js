@@ -657,7 +657,7 @@ export function process_effects(batch, root) {
 				const boundary = effect.b;
 
 				if (check_dirtiness(effect)) {
-					var effects = boundary?.is_pending() ? batch.boundary_async_effects : batch.async_effects;
+					var effects = boundary?.pending ? batch.boundary_async_effects : batch.async_effects;
 					effects.push(effect);
 				}
 			} else if ((flags & BLOCK_EFFECT) !== 0) {
