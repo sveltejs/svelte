@@ -1,5 +1,6 @@
 /** @import { Derived, Effect, Source } from '#client' */
 import { CLEAN, DIRTY } from '#client/constants';
+import { deferred } from '../../shared/utils.js';
 import {
 	flush_queued_effects,
 	flush_queued_root_effects,
@@ -45,7 +46,7 @@ export class Batch {
 
 	/** @type {{ promise: Promise<void>, resolve: (value?: any) => void, reject: (reason: unknown) => void } | null} */
 	// TODO replace with Promise.withResolvers once supported widely enough
-	deferred = null;
+	#deferred = null;
 
 	/** @type {Effect[]} */
 	async_effects = [];
@@ -164,7 +165,7 @@ export class Batch {
 				flush_queued_effects(render_effects);
 				flush_queued_effects(effects);
 
-				this.deferred?.resolve();
+				this.#deferred?.resolve();
 			}
 		} else {
 			for (const e of this.render_effects) set_signal_status(e, CLEAN);
@@ -278,6 +279,10 @@ export class Batch {
 		}
 
 		return false;
+	}
+
+	settled() {
+		return (this.#deferred ??= deferred()).promise;
 	}
 
 	static ensure() {

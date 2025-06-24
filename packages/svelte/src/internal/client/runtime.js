@@ -1,12 +1,6 @@
 /** @import { Derived, Effect, Reaction, Signal, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
-import {
-	deferred,
-	define_property,
-	get_descriptors,
-	get_prototype_of,
-	index_of
-} from '../shared/utils.js';
+import { define_property, get_descriptors, get_prototype_of, index_of } from '../shared/utils.js';
 import {
 	destroy_block_effect_children,
 	destroy_effect_children,
@@ -759,7 +753,7 @@ export async function tick() {
  * @returns {Promise<void>}
  */
 export function settled() {
-	return (Batch.ensure().deferred ??= deferred()).promise;
+	return Batch.ensure().settled();
 }
 
 /**
