@@ -12,11 +12,11 @@ export default function Purity($$anchor) {
 		$.untrack(() => Math.max(0, Math.min(0, 100)))
 	);
 
-	var p_1 = $.sibling(p, 2);
+	var p_1 = $.sibling(p, 1, 2);
 
 	p_1.textContent = ($.untrack(() => location.href));
 
-	var node = $.sibling(p_1, 2);
+	var node = $.sibling(p_1, 0, 2);
 
 	Child(node, { prop: encodeURIComponent('hello') });
 	$.append($$anchor, fragment);

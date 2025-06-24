@@ -3,7 +3,8 @@ import { hydrate_node, hydrating, set_hydrate_node, set_hydrating } from '../hyd
 import { create_text, get_first_child, get_next_sibling } from '../operations.js';
 import { block } from '../../reactivity/effects.js';
 import { COMMENT_NODE, HEAD_EFFECT } from '#client/constants';
-import { HYDRATION_START } from '../../../../constants.js';
+import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../../../constants.js';
+import { hydration_mismatch } from '../../warnings.js';
 
 /**
  * @type {Node | undefined}
@@ -58,6 +59,41 @@ export function head(render_fn) {
 
 	try {
 		block(() => render_fn(anchor), HEAD_EFFECT);
+		if (hydrating) {
+			if (hydrate_node === null || /** @type {Comment} */ (hydrate_node).data !== HYDRATION_END) {
+				hydration_mismatch();
+				throw HYDRATION_ERROR;
+			}
+		}
+	} catch (error) {
+		// re-mount only this svelte:head
+		if (was_hydrating && head_anchor && error === HYDRATION_ERROR) {
+			// Here head_anchor is the node next after HYDRATION_START
+			/** @type {Node | null} */
+			let prev = head_anchor.previousSibling;
+			/** @type {Node | null} */
+			let next = head_anchor;
+			// remove nodes that failed to hydrate
+			while (
+				prev !== null &&
+				(prev.nodeType !== COMMENT_NODE || /** @type {Comment} */ (prev).data !== HYDRATION_END)
+			) {
+				document.head.removeChild(prev);
+				prev = next;
+				next = get_next_sibling(/** @type {Node} */ (next));
+			}
+			if (prev?.parentNode) document.head.removeChild(prev);
+			if (next !== null) {
+				// allow the next head block try to hydrate
+				head_anchor = set_hydrate_node(/** @type {TemplateNode} */ (next));
+			}
+
+			set_hydrating(false);
+			anchor = document.head.appendChild(create_text());
+			block(() => render_fn(anchor), HEAD_EFFECT);
+		} else {
+			throw error;
+		}
 	} finally {
 		if (was_hydrating) {
 			set_hydrating(true);
