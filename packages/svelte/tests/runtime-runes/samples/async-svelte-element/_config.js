@@ -1,4 +1,4 @@
-import { flushSync, tick } from 'svelte';
+import { tick } from 'svelte';
 import { deferred } from '../../../../src/internal/shared/utils.js';
 import { test } from '../../test';
 
@@ -18,10 +18,7 @@ export default test({
 
 	async test({ assert, target, component }) {
 		d.resolve('h1');
-		await Promise.resolve();
-		await Promise.resolve();
 		await tick();
-		flushSync();
 		assert.htmlEqual(target.innerHTML, '<h1>hello</h1>');
 
 		component.promise = (d = deferred()).promise;

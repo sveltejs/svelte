@@ -1,4 +1,4 @@
-import { flushSync, tick } from 'svelte';
+import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -17,9 +17,7 @@ export default test({
 			`
 		);
 
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
+		await tick();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -33,11 +31,10 @@ export default test({
 			`
 		);
 
-		flushSync(() => ok.click());
+		ok.click();
 
-		flushSync(() => b.click());
-		await Promise.resolve();
-		await Promise.resolve();
+		b.click();
+		await tick();
 
 		assert.htmlEqual(
 			target.innerHTML,

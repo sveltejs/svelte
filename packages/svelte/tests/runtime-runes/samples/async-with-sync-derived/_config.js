@@ -1,14 +1,11 @@
-import { flushSync, settled, tick } from 'svelte';
+import { flushSync, tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
 	html: `<p>loading...</p>`,
 
 	async test({ assert, target }) {
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
+		await tick();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -39,10 +36,7 @@ export default test({
 			`
 		);
 
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
+		await tick();
 
 		assert.htmlEqual(
 			target.innerHTML,
