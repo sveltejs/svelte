@@ -7,6 +7,7 @@ packages/**/config/*.js
 
 # packages/svelte
 packages/svelte/messages/**/*.md
+packages/svelte/scripts/_bundle.js
 packages/svelte/src/compiler/errors.js
 packages/svelte/src/compiler/warnings.js
 packages/svelte/src/internal/client/errors.js
@@ -25,8 +26,7 @@ packages/svelte/tests/hydration/samples/*/_expected.html
 packages/svelte/tests/hydration/samples/*/_override.html
 packages/svelte/types
 packages/svelte/compiler/index.js
-playgrounds/sandbox/input/**.svelte
-playgrounds/sandbox/output
+playgrounds/sandbox/src/*
 
 # sites/svelte.dev
 sites/svelte.dev/static/svelte-app.json
