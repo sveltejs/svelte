@@ -1,4 +1,4 @@
-import { flushSync, tick } from 'svelte';
+import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -9,29 +9,13 @@ export default test({
 		<p>pending</p>
 	`,
 
-	async test({ assert, target, component, errors, variant }) {
-		if (variant === 'hydrate') {
-			await Promise.resolve();
-		}
-
+	async test({ assert, target, errors }) {
 		const [toggle, resolve1, resolve2] = target.querySelectorAll('button');
 
-		flushSync(() => toggle.click());
+		toggle.click();
+		resolve1.click();
+		resolve2.click();
 
-		flushSync(() => resolve1.click());
-		await Promise.resolve();
-		await Promise.resolve();
-
-		flushSync(() => resolve2.click());
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
 		await tick();
 
 		assert.htmlEqual(

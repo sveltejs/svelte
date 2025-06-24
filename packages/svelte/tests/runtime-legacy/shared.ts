@@ -423,6 +423,12 @@ async function run_test_variant(
 			try {
 				if (config.test) {
 					flushSync();
+
+					if (variant === 'hydrate') {
+						// wait for pending boundaries to render
+						await Promise.resolve();
+					}
+
 					await config.test({
 						// @ts-expect-error TS doesn't get it
 						assert: {

@@ -1,12 +1,8 @@
-import { settled } from 'svelte';
+import { settled, tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
 	async test({ assert, target, logs, variant }) {
-		if (variant === 'hydrate') {
-			await Promise.resolve();
-		}
-
 		const [reset, resolve] = target.querySelectorAll('button');
 
 		reset.click();
@@ -14,12 +10,7 @@ export default test({
 		assert.deepEqual(logs, ['aborted']);
 
 		resolve.click();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
+		await tick();
 		assert.htmlEqual(
 			target.innerHTML,
 			`

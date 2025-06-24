@@ -1,4 +1,4 @@
-import { flushSync, tick } from 'svelte';
+import { flushSync, settled, tick } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -14,30 +14,20 @@ export default test({
 		const [resolve_a, resolve_b, reset, increment] = target.querySelectorAll('button');
 
 		flushSync(() => resolve_a.click());
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
-		flushSync();
+		await tick();
 
 		const p = target.querySelector('p');
 		ok(p);
 		assert.htmlEqual(p.innerHTML, '1a');
 
 		flushSync(() => increment.click());
-		await Promise.resolve();
-		await Promise.resolve();
 		await tick();
 		assert.htmlEqual(p.innerHTML, '2a');
 
-		flushSync(() => reset.click());
+		reset.click();
 		assert.htmlEqual(p.innerHTML, '2a');
 
-		flushSync(() => resolve_b.click());
-		await Promise.resolve();
-		await Promise.resolve();
+		resolve_b.click();
 		await tick();
 		assert.htmlEqual(p.innerHTML, '2b');
 

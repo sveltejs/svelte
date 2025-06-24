@@ -1,5 +1,5 @@
 import { flushSync, tick } from 'svelte';
-import { ok, test } from '../../test';
+import { test } from '../../test';
 
 export default test({
 	html: `
@@ -7,20 +7,9 @@ export default test({
 		<p>loading</p>
 	`,
 
-	async test({ assert, target, variant }) {
-		if (variant === 'hydrate') {
-			await Promise.resolve();
-		}
-
-		flushSync(() => {
-			target.querySelector('button')?.click();
-		});
-
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
+	async test({ assert, target }) {
+		target.querySelector('button')?.click();
 		await tick();
-		flushSync();
 
 		const [button1, button2] = target.querySelectorAll('button');
 
@@ -37,12 +26,8 @@ export default test({
 		flushSync(() => button2.click());
 		flushSync(() => button2.click());
 
-		flushSync(() => button1.click());
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
+		button1.click();
 		await tick();
-		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -54,12 +39,8 @@ export default test({
 			`
 		);
 
-		flushSync(() => button1.click());
-		await Promise.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
+		button1.click();
 		await tick();
-		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
