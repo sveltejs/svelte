@@ -744,6 +744,10 @@ export function flushSync(fn) {
  * @returns {Promise<void>}
  */
 export async function tick() {
+	if (async_mode_flag) {
+		return new Promise((f) => requestAnimationFrame(() => f()));
+	}
+
 	await Promise.resolve();
 	// By calling flushSync we guarantee that any pending state changes are applied after one tick.
 	// TODO look into whether we can make flushing subsequent updates synchronously in the future.

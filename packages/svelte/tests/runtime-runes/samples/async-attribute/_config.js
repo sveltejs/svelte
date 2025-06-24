@@ -9,7 +9,7 @@ export default test({
 		<p>pending</p>
 	`,
 
-	async test({ assert, target, component }) {
+	async test({ assert, target }) {
 		const [cool, neat, reset] = target.querySelectorAll('button');
 
 		flushSync(() => cool.click());
