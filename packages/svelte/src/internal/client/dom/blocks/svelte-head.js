@@ -59,12 +59,7 @@ export function head(render_fn) {
 
 	try {
 		block(() => render_fn(anchor), HEAD_EFFECT);
-		if (hydrating) {
-			if (hydrate_node === null || /** @type {Comment} */ (hydrate_node).data !== HYDRATION_END) {
-				hydration_mismatch();
-				throw HYDRATION_ERROR;
-			}
-		}
+		check_end();
 	} catch (error) {
 		// re-mount only this svelte:head
 		if (was_hydrating && head_anchor && error === HYDRATION_ERROR) {
@@ -100,5 +95,13 @@ export function head(render_fn) {
 			head_anchor = hydrate_node; // so that next head block starts from the correct node
 			set_hydrate_node(/** @type {TemplateNode} */ (previous_hydrate_node));
 		}
+	}
+}
+
+// treeshaking of hydrate node fails when this is directly in the try-catch
+function check_end() {
+	if (hydrating && /** @type {Comment|null} */ (hydrate_node)?.data !== HYDRATION_END) {
+		hydration_mismatch();
+		throw HYDRATION_ERROR;
 	}
 }
