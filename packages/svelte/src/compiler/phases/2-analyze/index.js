@@ -438,7 +438,9 @@ export function analyze_component(root, source, options) {
 			!runes &&
 			// if they explicitly disabled runes, use the legacy behavior
 			options.runes !== false &&
-			!module.scope.references.keys().some((name) => ['$$props', '$$restProps'].includes(name)) &&
+			![...module.scope.references.keys()].some((name) =>
+				['$$props', '$$restProps'].includes(name)
+			) &&
 			!instance.ast.body.some(
 				(node) =>
 					node.type === 'LabeledStatement' ||
