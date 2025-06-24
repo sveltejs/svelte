@@ -654,8 +654,11 @@ export function process_effects(batch, root) {
 
 		if (!skip && effect.fn !== null) {
 			if ((flags & EFFECT_ASYNC) !== 0) {
+				const boundary = effect.b;
+
 				if (check_dirtiness(effect)) {
-					batch.async_effects.push(effect);
+					var effects = boundary?.is_pending() ? batch.boundary_async_effects : batch.async_effects;
+					effects.push(effect);
 				}
 			} else if ((flags & BLOCK_EFFECT) !== 0) {
 				if (check_dirtiness(effect)) {

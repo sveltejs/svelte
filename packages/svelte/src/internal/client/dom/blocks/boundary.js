@@ -1,6 +1,6 @@
 /** @import { Effect, TemplateNode, } from '#client' */
 
-import { BOUNDARY_EFFECT, EFFECT_PRESERVED, EFFECT_TRANSPARENT } from '#client/constants';
+import { BOUNDARY_EFFECT, EFFECT_PRESERVED, EFFECT_TRANSPARENT, INERT } from '#client/constants';
 import { component_context, set_component_context } from '../../context.js';
 import { invoke_error_boundary } from '../../error-handling.js';
 import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
@@ -149,6 +149,14 @@ export class Boundary {
 
 	has_pending_snippet() {
 		return !!this.#props.pending;
+	}
+
+	is_pending() {
+		if (!this.ran && this.#props.pending) {
+			return true;
+		}
+
+		return this.#pending_effect !== null && (this.#pending_effect.f & INERT) === 0;
 	}
 
 	/**

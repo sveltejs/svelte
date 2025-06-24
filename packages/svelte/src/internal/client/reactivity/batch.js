@@ -52,6 +52,9 @@ export class Batch {
 	async_effects = [];
 
 	/** @type {Effect[]} */
+	boundary_async_effects = [];
+
+	/** @type {Effect[]} */
 	render_effects = [];
 
 	/** @type {Effect[]} */
@@ -188,7 +191,12 @@ export class Batch {
 			update_effect(effect);
 		}
 
+		for (const effect of this.boundary_async_effects) {
+			update_effect(effect);
+		}
+
 		this.async_effects = [];
+		this.boundary_async_effects = [];
 	}
 
 	/**
