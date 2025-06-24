@@ -1,6 +1,6 @@
 /** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
-import { source, set } from '../internal/client/reactivity/sources.js';
+import { source, set, state } from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
 import { get } from '../internal/client/runtime.js';
 import { increment } from './utils.js';
@@ -48,8 +48,8 @@ var inited = false;
 export class SvelteSet extends Set {
 	/** @type {Map<T, Source<boolean>>} */
 	#sources = new Map();
-	#version = source(0);
-	#size = source(0);
+	#version = state(0);
+	#size = state(0);
 
 	/**
 	 * @param {Iterable<T> | null | undefined} [value]
