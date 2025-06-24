@@ -1076,6 +1076,41 @@ describe('signals', () => {
 		};
 	});
 
+	test('nested effects depend on state of upper effects', () => {
+		const logs: number[] = [];
+
+		user_effect(() => {
+			const raw = state(0);
+			const proxied = proxy({ current: 0 });
+
+			// We need those separate, else one working and rerunning the effect
+			// could mask the other one not rerunning
+			user_effect(() => {
+				logs.push($.get(raw));
+			});
+
+			user_effect(() => {
+				logs.push(proxied.current);
+			});
+
+			// Important so that the updating effect is not running
+			// together with the reading effects
+			flushSync();
+
+			user_effect(() => {
+				$.untrack(() => {
+					set(raw, $.get(raw) + 1);
+					proxied.current += 1;
+				});
+			});
+		});
+
+		return () => {
+			flushSync();
+			assert.deepEqual(logs, [0, 0, 1, 1]);
+		};
+	});
+
 	test('proxy version state does not trigger self-dependency guard', () => {
 		return () => {
 			const s = proxy({ a: { b: 1 } });

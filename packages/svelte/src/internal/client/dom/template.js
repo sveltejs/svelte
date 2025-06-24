@@ -20,6 +20,7 @@ import {
 	TEMPLATE_USE_MATHML,
 	TEMPLATE_USE_SVG
 } from '../../../constants.js';
+import { COMMENT_NODE, DOCUMENT_FRAGMENT_NODE, TEXT_NODE } from '#client/constants';
 
 /**
  * @param {TemplateNode} start
@@ -264,7 +265,7 @@ function run_scripts(node) {
 	// scripts were SSR'd, in which case they will run
 	if (hydrating) return node;
 
-	const is_fragment = node.nodeType === 11;
+	const is_fragment = node.nodeType === DOCUMENT_FRAGMENT_NODE;
 	const scripts =
 		/** @type {HTMLElement} */ (node).tagName === 'SCRIPT'
 			? [/** @type {HTMLScriptElement} */ (node)]
@@ -305,7 +306,7 @@ export function text(value = '') {
 
 	var node = hydrate_node;
 
-	if (node.nodeType !== 3) {
+	if (node.nodeType !== TEXT_NODE) {
 		// if an {expression} is empty during SSR, we need to insert an empty text node
 		node.before((node = create_text()));
 		set_hydrate_node(node);
@@ -360,7 +361,7 @@ export function props_id() {
 	if (
 		hydrating &&
 		hydrate_node &&
-		hydrate_node.nodeType === 8 &&
+		hydrate_node.nodeType === COMMENT_NODE &&
 		hydrate_node.textContent?.startsWith(`#`)
 	) {
 		const id = hydrate_node.textContent.substring(1);

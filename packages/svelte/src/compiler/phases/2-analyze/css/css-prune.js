@@ -628,10 +628,11 @@ function attribute_matches(node, name, expected_value, operator, case_insensitiv
 		if (attribute.type === 'SpreadAttribute') return true;
 		if (attribute.type === 'BindDirective' && attribute.name === name) return true;
 
+		const name_lower = name.toLowerCase();
 		// match attributes against the corresponding directive but bail out on exact matching
-		if (attribute.type === 'StyleDirective' && name.toLowerCase() === 'style') return true;
-		if (attribute.type === 'ClassDirective' && name.toLowerCase() === 'class') {
-			if (operator == '~=') {
+		if (attribute.type === 'StyleDirective' && name_lower === 'style') return true;
+		if (attribute.type === 'ClassDirective' && name_lower === 'class') {
+			if (operator === '~=') {
 				if (attribute.name === expected_value) return true;
 			} else {
 				return true;
@@ -639,13 +640,21 @@ function attribute_matches(node, name, expected_value, operator, case_insensitiv
 		}
 
 		if (attribute.type !== 'Attribute') continue;
-		if (attribute.name.toLowerCase() !== name.toLowerCase()) continue;
+		if (attribute.name.toLowerCase() !== name_lower) continue;
 
 		if (attribute.value === true) return operator === null;
 		if (expected_value === null) return true;
 
 		if (is_text_attribute(attribute)) {
-			return test_attribute(operator, expected_value, case_insensitive, attribute.value[0].data);
+			const matches = test_attribute(
+				operator,
+				expected_value,
+				case_insensitive,
+				attribute.value[0].data
+			);
+			// continue if we still may match against a class/style directive
+			if (!matches && (name_lower === 'class' || name_lower === 'style')) continue;
+			return matches;
 		}
 
 		const chunks = get_attribute_chunks(attribute.value);
@@ -654,7 +663,7 @@ function attribute_matches(node, name, expected_value, operator, case_insensitiv
 		/** @type {string[]} */
 		let prev_values = [];
 		for (const chunk of chunks) {
-			const current_possible_values = get_possible_values(chunk, name === 'class');
+			const current_possible_values = get_possible_values(chunk, name_lower === 'class');
 
 			// impossible to find out all combinations
 			if (!current_possible_values) return true;
