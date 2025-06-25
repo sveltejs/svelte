@@ -369,9 +369,13 @@ export function update_reaction(reaction) {
 			}
 		}
 
+		if ((reaction.f & ASYNC_ERROR) !== 0) {
+			reaction.f ^= ASYNC_ERROR;
+		}
+
 		return result;
 	} catch (error) {
-		handle_error(error);
+		return handle_error(error);
 	} finally {
 		reaction.f ^= REACTION_IS_UPDATING;
 		new_deps = previous_deps;
