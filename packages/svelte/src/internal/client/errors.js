@@ -183,6 +183,21 @@ export function effect_update_depth_exceeded() {
 }
 
 /**
+ * Cannot use `flushSync` inside an effect
+ * @returns {never}
+ */
+export function flush_sync_in_effect() {
+	if (DEV) {
+		const error = new Error(`flush_sync_in_effect\nCannot use \`flushSync\` inside an effect\nhttps://svelte.dev/e/flush_sync_in_effect`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/flush_sync_in_effect`);
+	}
+}
+
+/**
  * Failed to hydrate the application
  * @returns {never}
  */
@@ -333,20 +348,5 @@ export function state_unsafe_mutation() {
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/state_unsafe_mutation`);
-	}
-}
-
-/**
- * Cannot use `flushSync` inside an effect
- * @returns {never}
- */
-export function flush_sync_in_effect() {
-	if (DEV) {
-		const error = new Error(`flush_sync_in_effect\nCannot use \`flushSync\` inside an effect\nhttps://svelte.dev/e/flush_sync_in_effect`);
-
-		error.name = 'Svelte error';
-		throw error;
-	} else {
-		throw new Error(`https://svelte.dev/e/flush_sync_in_effect`);
 	}
 }
