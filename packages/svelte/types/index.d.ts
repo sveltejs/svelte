@@ -1121,7 +1121,7 @@ declare module 'svelte/compiler' {
 			/** The parsed `<script module>` element, if exists */
 			module: Script | null;
 			/** Comments found in <script> and {expressions} */
-			comments: Array<import('estree').Comment & { start: number; end: number }>;
+			comments: JSComment[];
 		}
 
 		export interface SvelteOptions {
