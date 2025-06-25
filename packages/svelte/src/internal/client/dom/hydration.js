@@ -1,6 +1,6 @@
 /** @import { TemplateNode } from '#client' */
 
-import { COMMENT_NODE } from '#client/constants';
+import { COMMENT_NODE, TEXT_NODE } from '#client/constants';
 import {
 	HYDRATION_END,
 	HYDRATION_ERROR,
@@ -41,7 +41,13 @@ export function set_hydrate_node(node) {
 }
 
 export function hydrate_next() {
-	return set_hydrate_node(/** @type {TemplateNode} */ (get_next_sibling(hydrate_node)));
+	var node = set_hydrate_node(/** @type {TemplateNode} */(get_next_sibling(hydrate_node)));
+	while (hydrate_node.nodeType === TEXT_NODE && !hydrate_node.nodeValue?.trim()) {
+		var next_sibling = get_next_sibling(hydrate_node)
+		hydrate_node.parentElement?.removeChild(hydrate_node)
+		node = set_hydrate_node(/** @type {TemplateNode} */(next_sibling))
+	}
+	return node
 }
 
 /** @param {TemplateNode} node */
