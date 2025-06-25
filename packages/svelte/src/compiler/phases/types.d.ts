@@ -2,6 +2,7 @@ import type { AST, Binding, StateField } from '#compiler';
 import type {
 	AssignmentExpression,
 	ClassBody,
+	Comment,
 	Identifier,
 	LabeledStatement,
 	Node,
@@ -37,6 +38,7 @@ export interface Analysis {
 	runes: boolean;
 	immutable: boolean;
 	tracing: boolean;
+	comments: AST.JSComment[];
 
 	classes: Map<ClassBody, Map<string, StateField>>;
 
