@@ -1,11 +1,13 @@
 <script>
 	import Child from './Child.svelte';
 
-	let { promise } = $props();
+	let deferred = $state(Promise.withResolvers());
 </script>
 
+<button onclick={() => deferred.resolve('hello')}>hello</button>
+
 <svelte:boundary>
-	<Child {promise} />
+	<Child promise={deferred.promise} />
 
 	{#snippet pending()}
 		<p>pending</p>
