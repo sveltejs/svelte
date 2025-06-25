@@ -312,14 +312,7 @@ export function EachBlock(node, context) {
 		declarations.push(b.let(node.index, index));
 	}
 
-	if (dev && node.metadata.keyed) {
-		context.state.init.push(
-			b.stmt(b.call('$.validate_each_keys', b.thunk(collection), key_function))
-		);
-	}
-
 	const { has_await } = node.metadata.expression;
-
 	const thunk = b.thunk(collection, has_await);
 
 	const render_args = [b.id('$$anchor'), item];
@@ -342,20 +335,34 @@ export function EachBlock(node, context) {
 	}
 
 	if (has_await) {
+		const statements = [b.stmt(b.call('$.each', ...args))];
+		if (dev && node.metadata.keyed) {
+			statements.unshift(
+				b.stmt(
+					b.call(
+						'$.validate_each_keys',
+						b.thunk(b.call('$.get', b.id('$$collection'))),
+						key_function
+					)
+				)
+			);
+		}
 		context.state.init.push(
 			b.stmt(
 				b.call(
 					'$.async',
 					context.state.node,
 					b.array([thunk]),
-					b.arrow(
-						[context.state.node, b.id('$$collection')],
-						b.block([b.stmt(b.call('$.each', ...args))])
-					)
+					b.arrow([context.state.node, b.id('$$collection')], b.block(statements))
 				)
 			)
 		);
 	} else {
+		if (dev && node.metadata.keyed) {
+			context.state.init.push(
+				b.stmt(b.call('$.validate_each_keys', b.thunk(collection), key_function))
+			);
+		}
 		context.state.init.push(b.stmt(b.call('$.each', ...args)));
 	}
 }
