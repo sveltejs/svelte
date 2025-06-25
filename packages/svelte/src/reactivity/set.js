@@ -1,8 +1,8 @@
-/** @import { Source } from '#client' */
+/** @import { Reaction, Source } from '#client' */
 import { DEV } from 'esm-env';
 import { source, set, state } from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
-import { get, push_reaction_value } from '../internal/client/runtime.js';
+import { active_reaction, get } from '../internal/client/runtime.js';
 import { increment } from './utils.js';
 
 var read_methods = ['forEach', 'isDisjointFrom', 'isSubsetOf', 'isSupersetOf'];
@@ -51,11 +51,16 @@ export class SvelteSet extends Set {
 	#version = state(0);
 	#size = state(0);
 
+	/**@type {Reaction | null}*/
+	#initial_reaction = null;
+
 	/**
 	 * @param {Iterable<T> | null | undefined} [value]
 	 */
 	constructor(value) {
 		super();
+
+		this.#initial_reaction = active_reaction;
 
 		if (DEV) {
 			// If the value is invalid then the native exception will fire here
@@ -73,6 +78,22 @@ export class SvelteSet extends Set {
 		}
 
 		if (!inited) this.#init();
+	}
+
+	/**
+	 * If the active_reaction is the same as the reaction that created this SvelteMap,
+	 * we use state so that it will not be a dependency of the reaction. Otherwise we
+	 * use source so it will be.
+	 *
+	 * @template T
+	 * @param {T} value
+	 * @returns {Source<T>}
+	 */
+	#source(value) {
+		if (this.#initial_reaction === active_reaction) {
+			return state(value);
+		}
+		return source(value);
 	}
 
 	// We init as part of the first instance so that we can treeshake this class
@@ -107,7 +128,6 @@ export class SvelteSet extends Set {
 		var has = super.has(value);
 		var sources = this.#sources;
 		var s = sources.get(value);
-		var is_new = false;
 
 		if (s === undefined) {
 			if (!has) {
@@ -117,8 +137,7 @@ export class SvelteSet extends Set {
 				return false;
 			}
 
-			s = source(true);
-			is_new = true;
+			s = this.#source(true);
 
 			if (DEV) {
 				tag(s, `SvelteSet has(${label(value)})`);
@@ -128,9 +147,6 @@ export class SvelteSet extends Set {
 		}
 
 		get(s);
-		if (is_new) {
-			push_reaction_value(s);
-		}
 		return has;
 	}
 
