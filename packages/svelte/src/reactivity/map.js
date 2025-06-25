@@ -2,7 +2,7 @@
 import { DEV } from 'esm-env';
 import { set, source, state } from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
-import { get } from '../internal/client/runtime.js';
+import { get, push_reaction_value } from '../internal/client/runtime.js';
 import { increment } from './utils.js';
 
 /**
@@ -83,11 +83,13 @@ export class SvelteMap extends Map {
 	has(key) {
 		var sources = this.#sources;
 		var s = sources.get(key);
+		var is_new = false;
 
 		if (s === undefined) {
 			var ret = super.get(key);
 			if (ret !== undefined) {
 				s = source(0);
+				is_new = true;
 
 				if (DEV) {
 					tag(s, `SvelteMap get(${label(key)})`);
@@ -103,6 +105,12 @@ export class SvelteMap extends Map {
 		}
 
 		get(s);
+		if (is_new) {
+			// if it's a new source we want to push to the reactions values
+			// AFTER we read it so that the effect depends on it but we don't
+			// trigger an unsafe mutation (since it was created within the derived)
+			push_reaction_value(s);
+		}
 		return true;
 	}
 
@@ -119,11 +127,13 @@ export class SvelteMap extends Map {
 	get(key) {
 		var sources = this.#sources;
 		var s = sources.get(key);
+		var is_new = false;
 
 		if (s === undefined) {
 			var ret = super.get(key);
 			if (ret !== undefined) {
 				s = source(0);
+				is_new = true;
 
 				if (DEV) {
 					tag(s, `SvelteMap get(${label(key)})`);
@@ -139,6 +149,12 @@ export class SvelteMap extends Map {
 		}
 
 		get(s);
+		if (is_new) {
+			// if it's a new source we want to push to the reactions values
+			// AFTER we read it so that the effect depends on it but we don't
+			// trigger an unsafe mutation (since it was created within the derived)
+			push_reaction_value(s);
+		}
 		return super.get(key);
 	}
 
@@ -154,7 +170,7 @@ export class SvelteMap extends Map {
 		var version = this.#version;
 
 		if (s === undefined) {
-			s = source(0);
+			s = state(0);
 
 			if (DEV) {
 				tag(s, `SvelteMap get(${label(key)})`);
@@ -216,11 +232,12 @@ export class SvelteMap extends Map {
 		get(this.#version);
 
 		var sources = this.#sources;
+		var new_sources = new WeakSet();
 		if (this.#size.v !== sources.size) {
 			for (var key of super.keys()) {
 				if (!sources.has(key)) {
 					var s = source(0);
-
+					new_sources.add(s);
 					if (DEV) {
 						tag(s, `SvelteMap get(${label(key)})`);
 					}
@@ -232,6 +249,12 @@ export class SvelteMap extends Map {
 
 		for ([, s] of this.#sources) {
 			get(s);
+			if (new_sources.has(s)) {
+				// if it's a new source we want to push to the reactions values
+				// AFTER we read it so that the effect depends on it but we don't
+				// trigger an unsafe mutation (since it was created within the derived)
+				push_reaction_value(s);
+			}
 		}
 	}
 
