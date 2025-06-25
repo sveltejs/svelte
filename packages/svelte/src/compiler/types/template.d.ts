@@ -73,7 +73,7 @@ export namespace AST {
 		/** The parsed `<script module>` element, if exists */
 		module: Script | null;
 		/** Comments found in <script> and {expressions} */
-		comments: Array<import('estree').Comment & { start: number; end: number }>;
+		comments: JSComment[];
 		/** @internal */
 		metadata: {
 			/** Whether the component was parsed with typescript */
@@ -537,6 +537,17 @@ export namespace AST {
 		context: 'default' | 'module';
 		content: Program;
 		attributes: Attribute[];
+	}
+
+	export interface JSComment {
+		type: 'Line' | 'Block';
+		value: string;
+		start: number;
+		end: number;
+		loc: {
+			start: { line: number; column: number };
+			end: { line: number; column: number };
+		};
 	}
 
 	export type AttributeLike = Attribute | SpreadAttribute | Directive;

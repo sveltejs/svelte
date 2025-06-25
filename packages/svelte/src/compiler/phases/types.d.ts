@@ -38,7 +38,7 @@ export interface Analysis {
 	runes: boolean;
 	immutable: boolean;
 	tracing: boolean;
-	comments: Comment[];
+	comments: AST.JSComment[];
 
 	classes: Map<ClassBody, Map<string, StateField>>;
 

@@ -237,7 +237,7 @@ const RESERVED = ['$$props', '$$restProps', '$$slots'];
  * @returns {Analysis}
  */
 export function analyze_module(source, options) {
-	/** @type {Comment[]} */
+	/** @type {AST.JSComment[]} */
 	const comments = [];
 
 	const ast = parse(source, comments, false, false);

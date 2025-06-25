@@ -8,11 +8,13 @@ import { is_void } from '../../utils.js';
  * @param {AST.SvelteNode} ast
  */
 export function print(ast) {
-	// @ts-expect-error some bullshit
-	return esrap.print(ast, {
-		...ts({ comments: ast.type === 'Root' ? ast.comments : [] }),
-		...visitors
-	});
+	return esrap.print(
+		ast,
+		/** @type {Visitors<AST.SvelteNode>} */ ({
+			...ts({ comments: ast.type === 'Root' ? ast.comments : [] }),
+			...visitors
+		})
+	);
 }
 
 /**

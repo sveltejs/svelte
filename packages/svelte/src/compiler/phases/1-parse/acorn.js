@@ -1,4 +1,5 @@
 /** @import { Comment, Program } from 'estree' */
+/** @import { AST } from '#compiler' */
 import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
 import { tsPlugin } from '@sveltejs/acorn-typescript';
@@ -14,7 +15,7 @@ const ParserWithTS = acorn.Parser.extend(tsPlugin());
 
 /**
  * @param {string} source
- * @param {Comment[]} comments
+ * @param {AST.JSComment[]} comments
  * @param {boolean} typescript
  * @param {boolean} [is_script]
  */

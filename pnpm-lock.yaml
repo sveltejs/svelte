@@ -4,9 +4,16 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  esrap: link:../../esrap
+
 importers:
 
   .:
+    dependencies:
+      esrap:
+        specifier: link:../../esrap
+        version: link:../../esrap
     devDependencies:
       '@changesets/cli':
         specifier: ^2.27.8
@@ -87,8 +94,8 @@ importers:
         specifier: ^1.2.1
         version: 1.2.1
       esrap:
-        specifier: https://pkg.pr.new/sveltejs/esrap@2558e72
-        version: https://pkg.pr.new/sveltejs/esrap@2558e72
+        specifier: ^2.0.0
+        version: 2.0.0
       is-reference:
         specifier: ^3.0.3
         version: 3.0.3
@@ -1261,9 +1268,8 @@ packages:
     resolution: {integrity: sha512-YQLXUplAwJgCydQ78IMJywZCceoqk1oH01OERdSAJc/7U2AylwjhSCLDEtqwg811idIS/9fIU5GjG73IgjKMVg==}
     engines: {node: '>=0.10'}
 
-  esrap@https://pkg.pr.new/sveltejs/esrap@2558e72:
-    resolution: {tarball: https://pkg.pr.new/sveltejs/esrap@2558e72}
-    version: 1.4.9
+  esrap@2.0.0:
+    resolution: {integrity: sha512-zhw1TDqno99Ld5wOpe0t47rzVyxfGc1fvxNzPsqk4idUf5dcAePkAyfTceLJaSTytjiWDu26S5tI+grjvymXJA==}
 
   esrecurse@4.3.0:
     resolution: {integrity: sha512-KmfKL3b6G+RXvP8N1vr3Tq1kL/oCFgn2NYXEtqP8/L3pKapUA4G8cFVaoF3SU323CD4XypR/ffioHmkti6/Tag==}
@@ -3623,7 +3629,7 @@ snapshots:
     dependencies:
       estraverse: 5.3.0
 
-  esrap@https://pkg.pr.new/sveltejs/esrap@2558e72:
+  esrap@2.0.0:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
 

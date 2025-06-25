@@ -171,7 +171,7 @@
     "axobject-query": "^4.1.0",
     "clsx": "^2.1.1",
     "esm-env": "^1.2.1",
-    "esrap": "https://pkg.pr.new/sveltejs/esrap@2558e72",
+    "esrap": "^2.0.0",
     "is-reference": "^3.0.3",
     "locate-character": "^3.0.0",
     "magic-string": "^0.30.11",
