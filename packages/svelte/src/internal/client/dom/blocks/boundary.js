@@ -389,7 +389,7 @@ export function capture(track = true) {
 export function suspend() {
 	let boundary = get_pending_boundary();
 
-	boundary.update_pending_count(-1);
+	boundary.update_pending_count(1);
 
 	return function unsuspend() {
 		boundary.update_pending_count(-1);
