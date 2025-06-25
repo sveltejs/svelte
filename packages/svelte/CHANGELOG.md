@@ -1,5 +1,15 @@
 # svelte
 
+## 5.34.8
+
+### Patch Changes
+
+- fix: untrack `$inspect.with` and add check for unsafe mutation ([#16209](https://github.com/sveltejs/svelte/pull/16209))
+
+- fix: use fine grained for template if the component is not explicitly in legacy mode ([#16232](https://github.com/sveltejs/svelte/pull/16232))
+
+- lift unsafe_state_mutation constraints for SvelteSet, SvelteMap, SvelteDate, SvelteURL and SvelteURLSearchParams created inside the derived ([#16221](https://github.com/sveltejs/svelte/pull/16221))
+
 ## 5.34.7
 
 ### Patch Changes
