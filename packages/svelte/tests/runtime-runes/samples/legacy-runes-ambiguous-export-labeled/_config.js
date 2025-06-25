@@ -6,7 +6,7 @@ export default test({
 	compileOptions: {
 		runes: undefined
 	},
-	async test({ assert, target }) {
+	async test({ assert, target, logs }) {
 		const p = target.querySelector('p');
 		const btn = target.querySelector('button');
 		flushSync(() => {
