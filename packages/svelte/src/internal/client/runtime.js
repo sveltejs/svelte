@@ -706,6 +706,10 @@ export function process_effects(batch, root) {
  * @returns {T}
  */
 export function flushSync(fn) {
+	if (async_mode_flag && active_effect !== null) {
+		e.flush_sync_in_effect();
+	}
+
 	var result;
 
 	const batch = Batch.ensure();

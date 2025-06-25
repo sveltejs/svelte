@@ -74,6 +74,16 @@ Effect cannot be created inside a `$derived` value that was not itself created i
 Maximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops
 ```
 
+### flush_sync_in_effect
+
+```
+Cannot use `flushSync` inside an effect
+```
+
+The `flushSync()` function can be used to flush any pending effects synchronously. It cannot be used if effects are currently being flushed — in other words, you can call it after a state change but _not_ inside an effect.
+
+This restriction only applies when using the `experimental.async` option, which will be active by default in Svelte 6.
+
 ### hydration_failed
 
 ```

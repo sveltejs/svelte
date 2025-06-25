@@ -6,7 +6,8 @@ import {
 	effect,
 	effect_root,
 	render_effect,
-	user_effect
+	user_effect,
+	user_pre_effect
 } from '../../src/internal/client/reactivity/effects';
 import { state, set, update, update_pre } from '../../src/internal/client/reactivity/sources';
 import type { Derived, Effect, Source, Value } from '../../src/internal/client/types';
@@ -1079,17 +1080,17 @@ describe('signals', () => {
 	test('nested effects depend on state of upper effects', () => {
 		const logs: number[] = [];
 
-		user_effect(() => {
+		user_pre_effect(() => {
 			const raw = state(0);
 			const proxied = proxy({ current: 0 });
 
 			// We need those separate, else one working and rerunning the effect
 			// could mask the other one not rerunning
-			user_effect(() => {
+			user_pre_effect(() => {
 				logs.push($.get(raw));
 			});
 
-			user_effect(() => {
+			user_pre_effect(() => {
 				logs.push(proxied.current);
 			});
 
@@ -1097,7 +1098,7 @@ describe('signals', () => {
 			// together with the reading effects
 			flushSync();
 
-			user_effect(() => {
+			user_pre_effect(() => {
 				$.untrack(() => {
 					set(raw, $.get(raw) + 1);
 					proxied.current += 1;
