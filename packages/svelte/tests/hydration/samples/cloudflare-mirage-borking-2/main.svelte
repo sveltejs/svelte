@@ -1,4 +1,5 @@
 <script>
+	// https://github.com/sveltejs/svelte/issues/15819
 	const cond = true;
 </script>
 
