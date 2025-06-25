@@ -97,7 +97,10 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 				filename: input,
 				generate,
 				runes: argv.values.runes,
-				fragments: 'tree'
+				fragments: 'tree',
+				experimental: {
+					async: true
+				}
 			});
 
 			const output_js = `${cwd}/output/${generate}/${file}.tree.js`;
