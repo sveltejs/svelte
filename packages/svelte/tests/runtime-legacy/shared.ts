@@ -427,7 +427,7 @@ async function run_test_variant(
 				if (config.test) {
 					flushSync();
 
-					if (variant === 'hydrate') {
+					if (variant === 'hydrate' && cwd.includes('async-')) {
 						// wait for pending boundaries to render
 						await Promise.resolve();
 					}
