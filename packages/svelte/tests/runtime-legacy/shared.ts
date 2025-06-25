@@ -187,7 +187,10 @@ async function common_setup(cwd: string, runes: boolean | undefined, config: Run
 		...config.compileOptions,
 		immutable: config.immutable,
 		accessors: 'accessors' in config ? config.accessors : true,
-		runes
+		runes:
+			config.compileOptions && 'runes' in config.compileOptions
+				? config.compileOptions.runes
+				: runes
 	};
 
 	// load_compiled can be used for debugging a test. It means the compiler will not run on the input

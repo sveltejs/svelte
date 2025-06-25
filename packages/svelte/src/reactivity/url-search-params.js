@@ -1,5 +1,5 @@
 import { DEV } from 'esm-env';
-import { source } from '../internal/client/reactivity/sources.js';
+import { state } from '../internal/client/reactivity/sources.js';
 import { tag } from '../internal/client/dev/tracing.js';
 import { get } from '../internal/client/runtime.js';
 import { get_current_url } from './url.js';
@@ -34,7 +34,7 @@ export const REPLACE = Symbol();
  * ```
  */
 export class SvelteURLSearchParams extends URLSearchParams {
-	#version = DEV ? tag(source(0), 'SvelteURLSearchParams version') : source(0);
+	#version = DEV ? tag(state(0), 'SvelteURLSearchParams version') : state(0);
 	#url = get_current_url();
 
 	#updating = false;
