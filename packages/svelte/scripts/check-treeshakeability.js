@@ -131,9 +131,10 @@ function check_bundle(case_name, ...strings) {
 			failed = true;
 
 			let lines = bundle.slice(index - 500, index + 500).split('\n');
-			const target_line = lines.findIndex(line => line.includes(string));
+			const target_line = lines.findIndex((line) => line.includes(string));
 			// mark the failed line
-			lines = lines.map((line, i) => i === target_line ? `> ${line}` : `| ${line}`)
+			lines = lines
+				.map((line, i) => (i === target_line ? `> ${line}` : `| ${line}`))
 				.slice(target_line - 5, target_line + 6);
 			// eslint-disable-next-line no-console
 			console.error('The first failed line:\n' + lines.join('\n'));
