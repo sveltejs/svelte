@@ -17,7 +17,7 @@ export async function async(node, expressions, fn) {
 	var restore = capture();
 	var boundary = get_pending_boundary();
 
-	boundary.increment();
+	boundary.update_pending_count(1);
 
 	try {
 		const result = await Promise.all(expressions.map((fn) => async_derived(fn)));
@@ -29,6 +29,6 @@ export async function async(node, expressions, fn) {
 	} catch (error) {
 		boundary.error(error);
 	} finally {
-		boundary.decrement();
+		boundary.update_pending_count(-1);
 	}
 }

@@ -43,9 +43,6 @@ export let inspect_effects = new Set();
 /** @type {Map<Source, any>} */
 export const old_values = new Map();
 
-/** Internal representation of `$effect.pending()` */
-export let pending = source(false);
-
 /**
  * @param {Set<any>} v
  */
