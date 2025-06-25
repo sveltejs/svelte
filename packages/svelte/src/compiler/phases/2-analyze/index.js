@@ -431,6 +431,29 @@ export function analyze_component(root, source, options) {
 		template,
 		elements: [],
 		runes,
+		// if we are not in runes mode but we have no reserved references ($$props, $$restProps)
+		// and no `export let` we might be in a wannabe runes component that is using runes in an external
+		// module...we need to fallback to the runic behavior
+		maybe_runes:
+			!runes &&
+			// if they explicitly disabled runes, use the legacy behavior
+			options.runes !== false &&
+			![...module.scope.references.keys()].some((name) =>
+				['$$props', '$$restProps'].includes(name)
+			) &&
+			!instance.ast.body.some(
+				(node) =>
+					node.type === 'LabeledStatement' ||
+					(node.type === 'ExportNamedDeclaration' &&
+						((node.declaration &&
+							node.declaration.type === 'VariableDeclaration' &&
+							node.declaration.kind === 'let') ||
+							node.specifiers.some(
+								(specifier) =>
+									specifier.local.type === 'Identifier' &&
+									instance.scope.get(specifier.local.name)?.declaration_kind === 'let'
+							)))
+			),
 		tracing: false,
 		classes: new Map(),
 		immutable: runes || options.immutable,
