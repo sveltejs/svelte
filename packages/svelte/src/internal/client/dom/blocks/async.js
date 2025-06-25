@@ -1,5 +1,6 @@
 /** @import { Effect, TemplateNode, Value } from '#client' */
 import { DESTROYED } from '#client/constants';
+import { invoke_error_boundary } from '../../error-handling.js';
 import { async_derived } from '../../reactivity/deriveds.js';
 import { active_effect } from '../../runtime.js';
 import { capture, get_pending_boundary } from './boundary.js';
@@ -9,7 +10,7 @@ import { capture, get_pending_boundary } from './boundary.js';
  * @param {Array<() => Promise<any>>} expressions
  * @param {(anchor: TemplateNode, ...deriveds: Value[]) => void} fn
  */
-export function async(node, expressions, fn) {
+export async function async(node, expressions, fn) {
 	// TODO handle hydration
 
 	var parent = /** @type {Effect} */ (active_effect);
@@ -19,12 +20,16 @@ export function async(node, expressions, fn) {
 
 	boundary.increment();
 
-	Promise.all(expressions.map((fn) => async_derived(fn))).then((result) => {
+	try {
+		const result = await Promise.all(expressions.map((fn) => async_derived(fn)));
+
 		if ((parent.f & DESTROYED) !== 0) return;
 
 		restore();
 		fn(node, ...result);
-
+	} catch (error) {
+		invoke_error_boundary(error, parent);
+	} finally {
 		boundary.decrement();
-	});
+	}
 }
