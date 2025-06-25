@@ -1120,6 +1120,8 @@ declare module 'svelte/compiler' {
 			instance: Script | null;
 			/** The parsed `<script module>` element, if exists */
 			module: Script | null;
+			/** Comments found in <script> and {expressions} */
+			comments: JSComment[];
 		}
 
 		export interface SvelteOptions {
@@ -1437,6 +1439,17 @@ declare module 'svelte/compiler' {
 			attributes: Attribute[];
 		}
 
+		export interface JSComment {
+			type: 'Line' | 'Block';
+			value: string;
+			start: number;
+			end: number;
+			loc: {
+				start: { line: number; column: number };
+				end: { line: number; column: number };
+			};
+		}
+
 		export type AttributeLike = Attribute | SpreadAttribute | Directive;
 
 		export type Directive =
@@ -1493,7 +1506,7 @@ declare module 'svelte/compiler' {
 			| AST.Comment
 			| Block;
 
-		export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node;
+		export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node | Script;
 
 		export type { _CSS as CSS };
 	}
