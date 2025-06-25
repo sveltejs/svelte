@@ -3,7 +3,7 @@
 import { DEV } from 'esm-env';
 import { FILENAME } from '../../constants.js';
 import { is_firefox } from './dom/operations.js';
-import { ASYNC_ERROR, BOUNDARY_EFFECT, EFFECT_RAN } from './constants.js';
+import { ERROR_VALUE, BOUNDARY_EFFECT, EFFECT_RAN } from './constants.js';
 import { define_property, get_descriptor } from '../shared/utils.js';
 import { active_effect, active_reaction } from './runtime.js';
 
@@ -15,7 +15,7 @@ export function handle_error(error) {
 
 	// for unowned deriveds, don't throw until we read the value
 	if (effect === null) {
-		/** @type {Derived} */ (active_reaction).f |= ASYNC_ERROR;
+		/** @type {Derived} */ (active_reaction).f |= ERROR_VALUE;
 		return error;
 	}
 

@@ -2,7 +2,7 @@
 /** @import { Batch } from './batch.js'; */
 import { DEV } from 'esm-env';
 import {
-	ASYNC_ERROR,
+	ERROR_VALUE,
 	CLEAN,
 	DERIVED,
 	DESTROYED,
@@ -155,14 +155,14 @@ export function async_derived(fn, location) {
 
 			if (error) {
 				if (error !== STALE_REACTION) {
-					signal.f |= ASYNC_ERROR;
+					signal.f |= ERROR_VALUE;
 
 					// @ts-expect-error the error is the wrong type, but we don't care
 					internal_set(signal, error);
 				}
 			} else {
-				if ((signal.f & ASYNC_ERROR) !== 0) {
-					signal.f ^= ASYNC_ERROR;
+				if ((signal.f & ERROR_VALUE) !== 0) {
+					signal.f ^= ERROR_VALUE;
 				}
 
 				internal_set(signal, value);

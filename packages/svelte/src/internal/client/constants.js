@@ -27,7 +27,7 @@ export const EFFECT_PRESERVED = 1 << 23; // effects with this flag should not be
 export const REACTION_IS_UPDATING = 1 << 24;
 export const EFFECT_ASYNC = 1 << 25;
 
-export const ASYNC_ERROR = 1;
+export const ERROR_VALUE = 1 << 26;
 
 export const STATE_SYMBOL = Symbol('$state');
 export const PROXY_PATH_SYMBOL = Symbol('proxy path');

@@ -27,7 +27,7 @@ import {
 	EFFECT_ASYNC,
 	RENDER_EFFECT,
 	STALE_REACTION,
-	ASYNC_ERROR
+	ERROR_VALUE
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { internal_set, old_values } from './reactivity/sources.js';
@@ -369,8 +369,8 @@ export function update_reaction(reaction) {
 			}
 		}
 
-		if ((reaction.f & ASYNC_ERROR) !== 0) {
-			reaction.f ^= ASYNC_ERROR;
+		if ((reaction.f & ERROR_VALUE) !== 0) {
+			reaction.f ^= ERROR_VALUE;
 		}
 
 		return result;
@@ -921,7 +921,7 @@ export function get(signal) {
 		return batch_deriveds.get(derived);
 	}
 
-	if ((signal.f & ASYNC_ERROR) !== 0) {
+	if ((signal.f & ERROR_VALUE) !== 0) {
 		throw signal.v;
 	}
 
