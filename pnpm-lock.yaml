@@ -4,16 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  esrap: link:../../esrap
-
 importers:
 
   .:
-    dependencies:
-      esrap:
-        specifier: link:../../esrap
-        version: link:../../esrap
     devDependencies:
       '@changesets/cli':
         specifier: ^2.27.8
