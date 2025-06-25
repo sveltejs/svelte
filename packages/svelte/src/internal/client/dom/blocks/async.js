@@ -1,6 +1,5 @@
 /** @import { Effect, TemplateNode, Value } from '#client' */
 import { DESTROYED } from '#client/constants';
-import { invoke_error_boundary } from '../../error-handling.js';
 import { async_derived } from '../../reactivity/deriveds.js';
 import { active_effect } from '../../runtime.js';
 import { capture, get_pending_boundary } from './boundary.js';
@@ -28,7 +27,7 @@ export async function async(node, expressions, fn) {
 		restore();
 		fn(node, ...result);
 	} catch (error) {
-		invoke_error_boundary(error, parent);
+		boundary.error(error);
 	} finally {
 		boundary.decrement();
 	}
