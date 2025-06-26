@@ -475,19 +475,19 @@ export function build_class_directives_object(
 ) {
 	let properties = [];
 	let has_call_or_state = false;
-	let has_async = false;
+	let has_await = false;
 
 	for (const d of class_directives) {
 		const expression = /** @type Expression */ (context.visit(d.expression));
 		properties.push(b.init(d.name, expression));
 		has_call_or_state ||= d.metadata.expression.has_call || d.metadata.expression.has_state;
-		has_async ||= d.metadata.expression.has_await;
+		has_await ||= d.metadata.expression.has_await;
 	}
 
 	const directives = b.object(properties);
 
-	return has_call_or_state || has_async
-		? get_expression_id(has_async ? async_expressions : expressions, directives)
+	return has_call_or_state || has_await
+		? get_expression_id(has_await ? async_expressions : expressions, directives)
 		: directives;
 }
 
