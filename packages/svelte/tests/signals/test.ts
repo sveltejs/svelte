@@ -112,6 +112,50 @@ describe('signals', () => {
 		};
 	});
 
+	test('unowned deriveds are not added as reactions but trigger effects', () => {
+		var obj = state(undefined);
+
+		class C1 {
+			#v = state(0);
+			get v() {
+				return $.get(this.#v);
+			}
+			set v(v: number) {
+				set(this.#v, v);
+			}
+		}
+
+		return () => {
+			console.log('1');
+			let d = derived(() => $.get(obj)?.v || '-');
+
+			const log: number[] = [];
+			assert.equal($.get(d), '-');
+			console.log('2');
+
+			let destroy = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(d));
+				});
+			});
+
+			console.log('3');
+			set(obj, new C1());
+			flushSync();
+			console.log('4');
+			assert.equal($.get(d), '-');
+			$.get(obj)!.v = 1;
+			flushSync();
+			console.log('5');
+			assert.equal($.get(d), 1);
+			assert.deepEqual(log, ['-', 1]);
+			destroy();
+			// ensure we're not leaking reactions
+			assert.equal(obj.reactions, null);
+			assert.equal(d.reactions, null);
+		};
+	});
+
 	test('derived from state', () => {
 		const log: number[] = [];
 
