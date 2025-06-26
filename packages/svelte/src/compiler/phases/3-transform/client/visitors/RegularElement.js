@@ -462,16 +462,16 @@ function setup_select_synchronization(value_binding, context) {
 
 /**
  * @param {AST.ClassDirective[]} class_directives
+ * @param {ComponentContext} context
  * @param {MemoizedExpression[]} async_expressions
  * @param {MemoizedExpression[]} expressions
- * @param {ComponentContext} context
  * @return {ObjectExpression | Identifier}
  */
 export function build_class_directives_object(
 	class_directives,
-	async_expressions,
-	expressions,
-	context
+	context,
+	async_expressions = context.state.async_expressions,
+	expressions = context.state.expressions
 ) {
 	let properties = [];
 	let has_call_or_state = false;
@@ -493,16 +493,16 @@ export function build_class_directives_object(
 
 /**
  * @param {AST.StyleDirective[]} style_directives
+ * @param {ComponentContext} context
  * @param {MemoizedExpression[]} async_expressions
  * @param {MemoizedExpression[]} expressions
- * @param {ComponentContext} context
  * @return {ObjectExpression | ArrayExpression}}
  */
 export function build_style_directives_object(
 	style_directives,
-	async_expressions,
-	expressions,
-	context
+	context,
+	async_expressions = context.state.async_expressions,
+	expressions = context.state.expressions
 ) {
 	let normal_properties = [];
 	let important_properties = [];

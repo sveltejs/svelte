@@ -72,7 +72,7 @@ export function build_attribute_effect(
 			b.prop(
 				'init',
 				b.array([b.id('$.CLASS')]),
-				build_class_directives_object(class_directives, async_expressions, expressions, context)
+				build_class_directives_object(class_directives, context, async_expressions, expressions)
 			)
 		);
 	}
@@ -82,7 +82,7 @@ export function build_attribute_effect(
 			b.prop(
 				'init',
 				b.array([b.id('$.STYLE')]),
-				build_style_directives_object(style_directives, async_expressions, expressions, context)
+				build_style_directives_object(style_directives, context, async_expressions, expressions)
 			)
 		);
 	}
@@ -180,12 +180,7 @@ export function build_set_class(element, node_id, attribute, class_directives, c
 	let next;
 
 	if (class_directives.length) {
-		next = build_class_directives_object(
-			class_directives,
-			context.state.async_expressions,
-			context.state.expressions,
-			context
-		);
+		next = build_class_directives_object(class_directives, context);
 		has_state ||= class_directives.some((d) => d.metadata.expression.has_state);
 
 		if (has_state) {
@@ -258,12 +253,7 @@ export function build_set_style(node_id, attribute, style_directives, context) {
 	let next;
 
 	if (style_directives.length) {
-		next = build_style_directives_object(
-			style_directives,
-			context.state.async_expressions,
-			context.state.expressions,
-			context
-		);
+		next = build_style_directives_object(style_directives, context);
 		has_state ||= style_directives.some((d) => d.metadata.expression.has_state);
 
 		if (has_state) {
