@@ -96,8 +96,9 @@ export function build_attribute_effect(
 					expressions.map(({ id }) => id),
 					b.object(values)
 				),
-				// TODO need to handle async expressions too
 				expressions.length > 0 && b.array(expressions.map(({ expression }) => b.thunk(expression))),
+				async_expressions.length > 0 &&
+					b.array(async_expressions.map(({ expression }) => b.thunk(expression))),
 				element.metadata.scoped &&
 					context.state.analysis.css.hash !== '' &&
 					b.literal(context.state.analysis.css.hash),

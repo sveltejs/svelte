@@ -341,10 +341,10 @@ export function render_effect(fn, flags = 0) {
  * @param {<T>(fn: () => T) => Derived<T>} d
  */
 export function template_effect(fn, sync = [], async = [], d = derived) {
-	var batch = current_batch;
-	var parent = /** @type {Effect} */ (active_effect);
-
 	if (async.length > 0) {
+		var batch = current_batch;
+		var parent = /** @type {Effect} */ (active_effect);
+
 		var restore = capture();
 
 		Promise.all(async.map((expression) => async_derived(expression))).then((result) => {

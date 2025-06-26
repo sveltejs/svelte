@@ -1,4 +1,4 @@
-/** @import { Effect } from '#client' */
+/** @import { Effect, Value } from '#client' */
 import { DEV } from 'esm-env';
 import { hydrating, set_hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
@@ -462,20 +462,39 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 /**
  * @param {Element & ElementCSSInlineStyle} element
  * @param {(...expressions: any) => Record<string | symbol, any>} fn
- * @param {Array<() => any>} thunks
+ * @param {Array<() => any>} sync
+ * @param {Array<() => Promise<any>>} async
  * @param {string} [css_hash]
  * @param {boolean} [skip_warning]
  */
 export function attribute_effect(
 	element,
 	fn,
-	thunks = [],
+	sync = [],
+	async = [],
 	css_hash,
 	skip_warning = false,
 	d = derived
 ) {
-	const deriveds = thunks.map(d);
+	const deriveds = sync.map(d);
 
+	create_attribute_effect(element, fn, deriveds, css_hash, skip_warning);
+}
+
+/**
+ * @param {Element & ElementCSSInlineStyle} element
+ * @param {(...expressions: any) => Record<string | symbol, any>} fn
+ * @param {Value[]} deriveds
+ * @param {string} [css_hash]
+ * @param {boolean} [skip_warning]
+ */
+export function create_attribute_effect(
+	element,
+	fn,
+	deriveds = [],
+	css_hash,
+	skip_warning = false
+) {
 	/** @type {Record<string | symbol, any> | undefined} */
 	var prev = undefined;
 
