@@ -157,8 +157,7 @@ export function client_component(analysis, options) {
 		legacy_reactive_statements: new Map(),
 		metadata: {
 			namespace: options.namespace,
-			bound_contenteditable: false,
-			async: []
+			bound_contenteditable: false
 		},
 		events: new Set(),
 		preserve_whitespace: options.preserveWhitespace,

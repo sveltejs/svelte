@@ -69,8 +69,7 @@ export function Fragment(node, context) {
 		transform: { ...context.state.transform },
 		metadata: {
 			namespace,
-			bound_contenteditable: context.state.metadata.bound_contenteditable,
-			async: []
+			bound_contenteditable: context.state.metadata.bound_contenteditable
 		}
 	};
 

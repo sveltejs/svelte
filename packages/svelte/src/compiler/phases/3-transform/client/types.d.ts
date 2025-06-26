@@ -58,10 +58,6 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly metadata: {
 		namespace: Namespace;
 		bound_contenteditable: boolean;
-		/**
-		 * Synthetic async deriveds belonging to the current fragment
-		 */
-		async: Array<{ id: Identifier; expression: Expression }>;
 	};
 	readonly preserve_whitespace: boolean;
 
