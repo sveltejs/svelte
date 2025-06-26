@@ -7,6 +7,7 @@ import { block, branch, destroy_effect, pause_effect } from '../../reactivity/ef
 import {
 	active_effect,
 	active_reaction,
+	get,
 	set_active_effect,
 	set_active_reaction
 } from '../../runtime.js';
@@ -24,6 +25,8 @@ import * as e from '../../../shared/errors.js';
 import { DEV } from 'esm-env';
 import { from_async_derived, set_from_async_derived } from '../../reactivity/deriveds.js';
 import { Batch } from '../../reactivity/batch.js';
+import { source, update } from '../../reactivity/sources.js';
+import { tag } from '../../dev/tracing.js';
 
 /**
  * @typedef {{
@@ -82,6 +85,8 @@ export class Boundary {
 	#pending_count = 0;
 	#is_creating_fallback = false;
 
+	effect_pending = source(0);
+
 	/**
 	 * @param {TemplateNode} node
 	 * @param {BoundaryProps} props
@@ -97,6 +102,10 @@ export class Boundary {
 		this.parent = /** @type {Effect} */ (active_effect).b;
 
 		this.pending = !!this.#props.pending;
+
+		if (DEV) {
+			tag(this.effect_pending, '$effect.pending()');
+		}
 
 		this.#effect = block(() => {
 			/** @type {Effect} */ (active_effect).b = this;
@@ -210,19 +219,26 @@ export class Boundary {
 		}
 	}
 
-	increment() {
-		this.#pending_count++;
+	/** @param {1 | -1} d */
+	#update_pending_count(d) {
+		this.#pending_count += d;
+
+		if (this.#pending_count === 0) {
+			this.commit();
+		}
 	}
 
-	decrement() {
-		if (--this.#pending_count === 0) {
-			this.commit();
-
-			if (this.#main_effect !== null) {
-				// TODO do we also need to `resume_effect` here?
-				// schedule_effect(this.#main_effect);
-			}
+	/** @param {1 | -1} d */
+	update_pending_count(d) {
+		if (this.has_pending_snippet()) {
+			this.#update_pending_count(d);
+		} else if (this.parent) {
+			this.parent.#update_pending_count(d);
 		}
+
+		queueMicrotask(() => {
+			update(this.effect_pending, d);
+		});
 	}
 
 	/** @param {unknown} error */
@@ -373,10 +389,10 @@ export function capture(track = true) {
 export function suspend() {
 	let boundary = get_pending_boundary();
 
-	boundary.increment();
+	boundary.update_pending_count(1);
 
 	return function unsuspend() {
-		boundary.decrement();
+		boundary.update_pending_count(-1);
 	};
 }
 
@@ -400,4 +416,15 @@ function exit() {
 	set_active_effect(null);
 	set_active_reaction(null);
 	set_component_context(null);
+}
+
+export function pending() {
+	// TODO throw helpful error if called outside an effect
+	const boundary = /** @type {Effect} */ (active_effect).b;
+
+	if (boundary === null) {
+		return 0; // TODO eventually we will need this to be global
+	}
+
+	return get(boundary.effect_pending);
 }

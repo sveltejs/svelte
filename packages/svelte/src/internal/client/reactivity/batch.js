@@ -10,19 +10,12 @@ import {
 	set_signal_status,
 	update_effect
 } from '../runtime.js';
-import { raf } from '../timing.js';
-import { internal_set, pending } from './sources.js';
 
 /** @type {Set<Batch>} */
 const batches = new Set();
 
 /** @type {Batch | null} */
 export let current_batch = null;
-
-/** Update `$effect.pending()` */
-function update_pending() {
-	internal_set(pending, batches.size > 0);
-}
 
 /** @type {Map<Derived, any> | null} */
 export let batch_deriveds = null;
@@ -239,8 +232,6 @@ export class Batch {
 		}
 
 		this.#callbacks.clear();
-
-		raf.tick(update_pending);
 	}
 
 	increment() {
@@ -295,10 +286,6 @@ export class Batch {
 
 	static ensure() {
 		if (current_batch === null) {
-			if (batches.size === 0) {
-				raf.tick(update_pending);
-			}
-
 			const batch = (current_batch = new Batch());
 			batches.add(current_batch);
 
@@ -313,5 +300,15 @@ export class Batch {
 		}
 
 		return current_batch;
+	}
+}
+
+/**
+ * Forcibly remove all current batches
+ * TODO investigate why we need this in tests
+ */
+export function clear() {
+	for (const batch of batches) {
+		batch.remove();
 	}
 }
