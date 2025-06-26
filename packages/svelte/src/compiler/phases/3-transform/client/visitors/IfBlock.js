@@ -21,8 +21,8 @@ export function IfBlock(node, context) {
 
 	if (node.alternate) {
 		const alternate = /** @type {BlockStatement} */ (context.visit(node.alternate));
-		alternate_id = context.state.scope.generate('alternate');
-		statements.push(b.var(b.id(alternate_id), b.arrow([b.id('$$anchor')], alternate)));
+		alternate_id = b.id(context.state.scope.generate('alternate'));
+		statements.push(b.var(alternate_id, b.arrow([b.id('$$anchor')], alternate)));
 	}
 
 	const { has_await } = node.metadata.expression;
@@ -38,15 +38,8 @@ export function IfBlock(node, context) {
 				b.if(
 					test,
 					b.stmt(b.call(b.id('$$render'), b.id(consequent_id))),
-					alternate_id
-						? b.stmt(
-								b.call(
-									b.id('$$render'),
-									b.id(alternate_id),
-									node.alternate ? b.literal(false) : undefined
-								)
-							)
-						: undefined
+					alternate_id &&
+						b.stmt(b.call('$$render', alternate_id, node.alternate && b.literal(false)))
 				)
 			])
 		)

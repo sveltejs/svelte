@@ -101,7 +101,7 @@ export function labeled(name, body) {
 
 /**
  * @param {string | ESTree.Expression} callee
- * @param {...(ESTree.Expression | ESTree.SpreadElement | false | undefined)} args
+ * @param {...(ESTree.Expression | ESTree.SpreadElement | false | undefined | null)} args
  * @returns {ESTree.CallExpression}
  */
 export function call(callee, ...args) {
