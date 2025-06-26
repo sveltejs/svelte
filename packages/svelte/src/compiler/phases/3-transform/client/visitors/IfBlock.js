@@ -13,9 +13,9 @@ export function IfBlock(node, context) {
 	const statements = [];
 
 	const consequent = /** @type {BlockStatement} */ (context.visit(node.consequent));
-	const consequent_id = context.state.scope.generate('consequent');
+	const consequent_id = b.id(context.state.scope.generate('consequent'));
 
-	statements.push(b.var(b.id(consequent_id), b.arrow([b.id('$$anchor')], consequent)));
+	statements.push(b.var(consequent_id, b.arrow([b.id('$$anchor')], consequent)));
 
 	let alternate_id;
 
@@ -37,9 +37,8 @@ export function IfBlock(node, context) {
 			b.block([
 				b.if(
 					test,
-					b.stmt(b.call(b.id('$$render'), b.id(consequent_id))),
-					alternate_id &&
-						b.stmt(b.call('$$render', alternate_id, node.alternate && b.literal(false)))
+					b.stmt(b.call('$$render', consequent_id)),
+					alternate_id && b.stmt(b.call('$$render', alternate_id, b.literal(false)))
 				)
 			])
 		)
