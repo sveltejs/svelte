@@ -64,7 +64,7 @@ export function CallExpression(node, context) {
 			);
 
 		case '$effect.pending':
-			return b.call(b.id('$.pending'));
+			return b.call('$.pending');
 
 		case '$inspect':
 		case '$inspect().with':
