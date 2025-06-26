@@ -136,20 +136,21 @@ export function hydrate(component, options) {
 
 		return /**  @type {Exports} */ (instance);
 	} catch (error) {
-		if (error === HYDRATION_ERROR) {
-			if (options.recover === false) {
-				e.hydration_failed();
-			}
-
-			// If an error occured above, the operations might not yet have been initialised.
-			init_operations();
-			clear_text_content(target);
-
-			set_hydrating(false);
-			return mount(component, options);
+		if (error !== HYDRATION_ERROR) {
+			// eslint-disable-next-line no-console
+			console.error('Failed to hydrate: ', error);
 		}
 
-		throw error;
+		if (options.recover === false) {
+			e.hydration_failed();
+		}
+
+		// If an error occured above, the operations might not yet have been initialised.
+		init_operations();
+		clear_text_content(target);
+
+		set_hydrating(false);
+		return mount(component, options);
 	} finally {
 		set_hydrating(was_hydrating);
 		set_hydrate_node(previous_hydrate_node);
