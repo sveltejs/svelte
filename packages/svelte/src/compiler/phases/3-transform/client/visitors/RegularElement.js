@@ -666,7 +666,7 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 	);
 
 	if (is_select_with_value) {
-		state.init.push(b.stmt(b.call('$.init_select', node_id, b.thunk(value))));
+		state.init.push(b.stmt(b.call('$.init_select', node_id)));
 	}
 
 	if (has_state) {

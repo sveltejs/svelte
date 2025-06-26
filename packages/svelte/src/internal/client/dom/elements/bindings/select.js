@@ -53,16 +53,9 @@ export function select_option(select, value, mounting) {
  * inside an `#each` block.
  * @template V
  * @param {HTMLSelectElement} select
- * @param {() => V} [get_value]
  */
-export function init_select(select, get_value) {
-	let mounting = true;
+export function init_select(select) {
 	effect(() => {
-		if (get_value) {
-			select_option(select, untrack(get_value), mounting);
-		}
-		mounting = false;
-
 		var observer = new MutationObserver(() => {
 			// @ts-ignore
 			var value = select.__value;
