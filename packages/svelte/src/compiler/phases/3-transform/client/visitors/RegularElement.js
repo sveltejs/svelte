@@ -1,4 +1,4 @@
-/** @import { ArrayExpression, Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression } from 'estree' */
+/** @import { ArrayExpression, Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression, Property } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext, MemoizedExpression } from '../types' */
 /** @import { Scope } from '../../../scope' */
@@ -504,8 +504,9 @@ export function build_style_directives_object(
 	async_expressions = context.state.async_expressions,
 	expressions = context.state.expressions
 ) {
-	let normal_properties = [];
-	let important_properties = [];
+	const normal = b.object([]);
+	const important = b.object([]);
+
 	let has_call_or_state = false;
 	let has_await = false;
 
@@ -514,21 +515,15 @@ export function build_style_directives_object(
 			d.value === true
 				? build_getter({ name: d.name, type: 'Identifier' }, context.state)
 				: build_attribute_value(d.value, context).value;
-		const property = b.init(d.name, expression);
 
-		if (d.modifiers.includes('important')) {
-			important_properties.push(property);
-		} else {
-			normal_properties.push(property);
-		}
+		const object = d.modifiers.includes('important') ? important : normal;
+		object.properties.push(b.init(d.name, expression));
 
 		has_call_or_state ||= d.metadata.expression.has_call || d.metadata.expression.has_state;
 		has_await ||= d.metadata.expression.has_await;
 	}
 
-	const directives = important_properties.length
-		? b.array([b.object(normal_properties), b.object(important_properties)])
-		: b.object(normal_properties);
+	const directives = important.properties.length ? b.array([normal, important]) : normal;
 
 	return has_call_or_state || has_await
 		? get_expression_id(has_await ? async_expressions : expressions, directives)
