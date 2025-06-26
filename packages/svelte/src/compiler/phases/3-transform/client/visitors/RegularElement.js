@@ -393,13 +393,7 @@ export function RegularElement(node, context) {
 	if (!has_spread && needs_special_value_handling) {
 		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
 			if (attribute.name === 'value') {
-				build_element_special_value_attribute(
-					node.name,
-					node_id,
-					attribute,
-					context,
-					context.state
-				);
+				build_element_special_value_attribute(node.name, node_id, attribute, context);
 				break;
 			}
 		}
@@ -626,9 +620,9 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
  * @param {Identifier} node_id
  * @param {AST.Attribute} attribute
  * @param {ComponentContext} context
- * @param {ComponentClientTransformState} state
  */
-function build_element_special_value_attribute(element, node_id, attribute, context, state) {
+function build_element_special_value_attribute(element, node_id, attribute, context) {
+	const state = context.state;
 	const is_select_with_value =
 		// attribute.metadata.dynamic would give false negatives because even if the value does not change,
 		// the inner options could still change, so we need to always treat it as reactive
