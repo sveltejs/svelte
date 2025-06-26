@@ -13,10 +13,7 @@ import { get_expression_id, build_expression } from './shared/utils.js';
 export function RenderTag(node, context) {
 	context.state.template.push_comment();
 
-	const expression = unwrap_optional(node.expression);
-
-	const callee = expression.callee;
-	const raw_args = expression.arguments;
+	const call = unwrap_optional(node.expression);
 
 	/** @type {Expression[]} */
 	let args = [];
@@ -27,18 +24,16 @@ export function RenderTag(node, context) {
 	/** @type {MemoizedExpression[]} */
 	const async_expressions = [];
 
-	for (let i = 0; i < raw_args.length; i++) {
-		let expression = build_expression(
-			context,
-			/** @type {Expression} */ (raw_args[i]),
-			node.metadata.arguments[i]
-		);
-		const { has_call, has_await } = node.metadata.arguments[i];
+	for (let i = 0; i < call.arguments.length; i++) {
+		const arg = /** @type {Expression} */ (call.arguments[i]);
+		const metadata = node.metadata.arguments[i];
 
-		if (has_await || has_call) {
+		let expression = build_expression(context, arg, metadata);
+
+		if (metadata.has_await || metadata.has_call) {
 			expression = b.call(
 				'$.get',
-				get_expression_id(has_await ? async_expressions : expressions, expression)
+				get_expression_id(metadata.has_await ? async_expressions : expressions, expression)
 			);
 		}
 
@@ -50,13 +45,13 @@ export function RenderTag(node, context) {
 	});
 
 	/** @type {Statement[]} */
-	const statements = expressions.map((memo, i) =>
+	const statements = expressions.map((memo) =>
 		b.var(memo.id, create_derived(context.state, b.thunk(memo.expression)))
 	);
 
 	let snippet_function = build_expression(
 		context,
-		/** @type {Expression} */ (callee),
+		/** @type {Expression} */ (call.callee),
 		node.metadata.expression
 	);
 
