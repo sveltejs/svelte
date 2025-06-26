@@ -4,6 +4,7 @@ import { source, set, state } from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
 import { active_reaction, get } from '../internal/client/runtime.js';
 import { increment } from './utils.js';
+import { teardown } from '../internal/client/reactivity/effects.js';
 
 var read_methods = ['forEach', 'isDisjointFrom', 'isSubsetOf', 'isSupersetOf'];
 var set_like_methods = ['difference', 'intersection', 'symmetricDifference', 'union'];
@@ -60,7 +61,14 @@ export class SvelteSet extends Set {
 	constructor(value) {
 		super();
 
-		this.#initial_reaction = active_reaction;
+		if (active_reaction !== null) {
+			this.#initial_reaction = active_reaction;
+			// since we only need `initial_reaction` as long as we are in a derived/effect we can
+			// safely create a teardown function that will reset it to null and allow for GC
+			teardown(() => {
+				this.#initial_reaction = null;
+			});
+		}
 
 		if (DEV) {
 			// If the value is invalid then the native exception will fire here

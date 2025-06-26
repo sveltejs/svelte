@@ -4,6 +4,7 @@ import { set, source, state } from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
 import { active_reaction, get, push_reaction_value } from '../internal/client/runtime.js';
 import { increment } from './utils.js';
+import { teardown } from '../internal/client/reactivity/effects.js';
 
 /**
  * A reactive version of the built-in [`Map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) object.
@@ -65,7 +66,14 @@ export class SvelteMap extends Map {
 	constructor(value) {
 		super();
 
-		this.#initial_reaction = active_reaction;
+		if (active_reaction !== null) {
+			this.#initial_reaction = active_reaction;
+			// since we only need `initial_reaction` as long as we are in a derived/effect we can
+			// safely create a teardown function that will reset it to null and allow for GC
+			teardown(() => {
+				this.#initial_reaction = null;
+			});
+		}
 
 		if (DEV) {
 			// If the value is invalid then the native exception will fire here
