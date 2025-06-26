@@ -199,16 +199,16 @@ export function RegularElement(node, context) {
 
 	const node_id = context.state.node;
 
+	/** If true, needs `__value` for inputs */
+	const needs_special_value_handling =
+		node.name === 'option' ||
+		node.name === 'select' ||
+		bindings.has('group') ||
+		bindings.has('checked');
+
 	if (has_spread) {
 		build_attribute_effect(attributes, class_directives, style_directives, context, node, node_id);
 	} else {
-		/** If true, needs `__value` for inputs */
-		const needs_special_value_handling =
-			node.name === 'option' ||
-			node.name === 'select' ||
-			bindings.has('group') ||
-			bindings.has('checked');
-
 		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
 			if (is_event_attribute(attribute)) {
 				visit_event_attribute(attribute, context);
@@ -216,7 +216,6 @@ export function RegularElement(node, context) {
 			}
 
 			if (needs_special_value_handling && attribute.name === 'value') {
-				build_element_special_value_attribute(node.name, node_id, attribute, context);
 				continue;
 			}
 
@@ -389,6 +388,21 @@ export function RegularElement(node, context) {
 		// does not update the direction when set to auto. If we just re-assign the dir, this fixes it.
 		const dir = b.member(node_id, 'dir');
 		context.state.update.push(b.stmt(b.assignment('=', dir, dir)));
+	}
+
+	if (!has_spread && needs_special_value_handling) {
+		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
+			if (attribute.name === 'value') {
+				build_element_special_value_attribute(
+					node.name,
+					node_id,
+					attribute,
+					context,
+					context.state
+				);
+				break;
+			}
+		}
 	}
 
 	context.state.template.pop_element();
@@ -612,9 +626,9 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
  * @param {Identifier} node_id
  * @param {AST.Attribute} attribute
  * @param {ComponentContext} context
+ * @param {ComponentClientTransformState} state
  */
-function build_element_special_value_attribute(element, node_id, attribute, context) {
-	const state = context.state;
+function build_element_special_value_attribute(element, node_id, attribute, context, state) {
 	const is_select_with_value =
 		// attribute.metadata.dynamic would give false negatives because even if the value does not change,
 		// the inner options could still change, so we need to always treat it as reactive
