@@ -15,7 +15,7 @@ import { current_batch } from '../../reactivity/batch.js';
  * @param {(anchor: Node) => TemplateNode | void} render_fn
  * @returns {void}
  */
-export function key_block(node, get_key, render_fn) {
+export function key(node, get_key, render_fn) {
 	if (hydrating) {
 		hydrate_next();
 	}
