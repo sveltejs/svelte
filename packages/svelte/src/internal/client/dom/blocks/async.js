@@ -1,7 +1,7 @@
 /** @import { Effect, TemplateNode, Value } from '#client' */
 import { DESTROYED } from '#client/constants';
 import { async_derived } from '../../reactivity/deriveds.js';
-import { active_effect } from '../../runtime.js';
+import { active_effect, get } from '../../runtime.js';
 import { capture, get_pending_boundary } from './boundary.js';
 
 /**
@@ -20,12 +20,15 @@ export async function async(node, expressions, fn) {
 	boundary.update_pending_count(1);
 
 	try {
-		const result = await Promise.all(expressions.map((fn) => async_derived(fn)));
+		const deriveds = await Promise.all(expressions.map((fn) => async_derived(fn)));
+
+		// get deriveds eagerly to avoid creating blocks if they reject
+		for (const d of deriveds) get(d);
 
 		if ((parent.f & DESTROYED) !== 0) return;
 
 		restore();
-		fn(node, ...result);
+		fn(node, ...deriveds);
 	} catch (error) {
 		boundary.error(error);
 	} finally {
