@@ -25,7 +25,6 @@ import { process_children } from './shared/fragment.js';
 import {
 	build_render_statement,
 	build_template_chunk,
-	build_update_assignment,
 	get_expression_id,
 	memoize_expression
 } from './shared/utils.js';
@@ -657,17 +656,15 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 	}
 
 	if (has_state) {
-		const id = state.scope.generate(`${node_id.name}_value`);
-		build_update_assignment(
-			state,
-			id,
-			// `<option>` is a special case: The value property reflects to the DOM. If the value is set to undefined,
-			// that means the value should be set to the empty string. To be able to do that when the value is
-			// initially undefined, we need to set a value that is guaranteed to be different.
-			element === 'option' ? b.object([]) : undefined,
-			value,
-			update
-		);
+		const id = b.id(state.scope.generate(`${node_id.name}_value`));
+
+		// `<option>` is a special case: The value property reflects to the DOM. If the value is set to undefined,
+		// that means the value should be set to the empty string. To be able to do that when the value is
+		// initially undefined, we need to set a value that is guaranteed to be different.
+		const init = element === 'option' ? b.object([]) : undefined;
+
+		state.init.push(b.var(id, init));
+		state.update.push(b.if(b.binary('!==', id, b.assignment('=', id, value)), b.block([update])));
 	} else {
 		state.init.push(update);
 	}
