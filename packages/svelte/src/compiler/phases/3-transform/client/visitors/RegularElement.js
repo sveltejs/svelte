@@ -22,12 +22,7 @@ import {
 	build_set_style
 } from './shared/element.js';
 import { process_children } from './shared/fragment.js';
-import {
-	build_render_statement,
-	build_template_chunk,
-	get_expression_id,
-	memoize_expression
-} from './shared/utils.js';
+import { build_render_statement, build_template_chunk, get_expression_id } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
 
 /**
@@ -629,12 +624,7 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 		element === 'select' && attribute.value !== true && !is_text_attribute(attribute);
 
 	const { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call
-			? // if is a select with value we will also invoke `init_select` which need a reference before the template effect so we memoize separately
-				is_select_with_value
-				? memoize_expression(state, value)
-				: get_expression_id(state.expressions, value)
-			: value
+		metadata.has_call ? get_expression_id(state.expressions, value) : value
 	);
 
 	const evaluated = context.state.scope.evaluate(value);
