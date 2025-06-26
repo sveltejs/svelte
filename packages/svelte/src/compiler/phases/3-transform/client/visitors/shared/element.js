@@ -87,18 +87,24 @@ export function build_attribute_effect(
 		);
 	}
 
+	const all = [...expressions, ...async_expressions];
+
+	for (let i = 0; i < all.length; i += 1) {
+		all[i].id.name = `$${i}`;
+	}
+
 	context.state.init.push(
 		b.stmt(
 			b.call(
 				'$.attribute_effect',
 				element_id,
 				b.arrow(
-					expressions.map(({ id }) => id),
+					all.map(({ id }) => id),
 					b.object(values)
 				),
 				expressions.length > 0 && b.array(expressions.map(({ expression }) => b.thunk(expression))),
 				async_expressions.length > 0 &&
-					b.array(async_expressions.map(({ expression }) => b.thunk(expression))),
+					b.array(async_expressions.map(({ expression }) => b.thunk(expression, true))),
 				element.metadata.scoped &&
 					context.state.analysis.css.hash !== '' &&
 					b.literal(context.state.analysis.css.hash),
@@ -182,7 +188,9 @@ export function build_set_class(element, node_id, attribute, class_directives, c
 
 	if (class_directives.length) {
 		next = build_class_directives_object(class_directives, context);
-		has_state ||= class_directives.some((d) => d.metadata.expression.has_state);
+		has_state ||= class_directives.some(
+			(d) => d.metadata.expression.has_state || d.metadata.expression.has_await
+		);
 
 		if (has_state) {
 			previous_id = b.id(context.state.scope.generate('classes'));
@@ -255,7 +263,9 @@ export function build_set_style(node_id, attribute, style_directives, context) {
 
 	if (style_directives.length) {
 		next = build_style_directives_object(style_directives, context);
-		has_state ||= style_directives.some((d) => d.metadata.expression.has_state);
+		has_state ||= style_directives.some(
+			(d) => d.metadata.expression.has_state || d.metadata.expression.has_await
+		);
 
 		if (has_state) {
 			previous_id = b.id(context.state.scope.generate('styles'));

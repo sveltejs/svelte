@@ -496,7 +496,7 @@ export function build_class_directives_object(
  * @param {ComponentContext} context
  * @param {MemoizedExpression[]} async_expressions
  * @param {MemoizedExpression[]} expressions
- * @return {ObjectExpression | ArrayExpression}}
+ * @return {ObjectExpression | ArrayExpression | Identifier}}
  */
 export function build_style_directives_object(
 	style_directives,
@@ -506,28 +506,33 @@ export function build_style_directives_object(
 ) {
 	let normal_properties = [];
 	let important_properties = [];
+	let has_call_or_state = false;
+	let has_await = false;
 
-	for (const directive of style_directives) {
+	for (const d of style_directives) {
 		const expression =
-			directive.value === true
-				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
-				: build_attribute_value(directive.value, context, (value, metadata) =>
-						metadata.has_call
-							? get_expression_id(metadata.has_await ? async_expressions : expressions, value)
-							: value
-					).value;
-		const property = b.init(directive.name, expression);
+			d.value === true
+				? build_getter({ name: d.name, type: 'Identifier' }, context.state)
+				: build_attribute_value(d.value, context).value;
+		const property = b.init(d.name, expression);
 
-		if (directive.modifiers.includes('important')) {
+		if (d.modifiers.includes('important')) {
 			important_properties.push(property);
 		} else {
 			normal_properties.push(property);
 		}
+
+		has_call_or_state ||= d.metadata.expression.has_call || d.metadata.expression.has_state;
+		has_await ||= d.metadata.expression.has_await;
 	}
 
-	return important_properties.length
+	const directives = important_properties.length
 		? b.array([b.object(normal_properties), b.object(important_properties)])
 		: b.object(normal_properties);
+
+	return has_call_or_state || has_await
+		? get_expression_id(has_await ? async_expressions : expressions, directives)
+		: directives;
 }
 
 /**
