@@ -1,4 +1,4 @@
-/** @import { Effect, Value } from '#client' */
+/** @import { Effect } from '#client' */
 import { DEV } from 'esm-env';
 import { hydrating, set_hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
@@ -21,7 +21,6 @@ import { set_class } from './class.js';
 import { set_style } from './style.js';
 import { ATTACHMENT_KEY, NAMESPACE_HTML } from '../../../../constants.js';
 import { block, branch, destroy_effect, effect } from '../../reactivity/effects.js';
-import { derived } from '../../reactivity/deriveds.js';
 import { init_select, select_option } from './bindings/select.js';
 import { flatten } from '../../reactivity/async.js';
 
