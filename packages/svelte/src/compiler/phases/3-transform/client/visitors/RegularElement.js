@@ -665,10 +665,6 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 			: inner_assignment
 	);
 
-	if (is_select_with_value) {
-		state.init.push(b.stmt(b.call('$.init_select', node_id)));
-	}
-
 	if (has_state) {
 		const id = b.id(state.scope.generate(`${node_id.name}_value`));
 
@@ -681,5 +677,9 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 		state.update.push(b.if(b.binary('!==', id, b.assignment('=', id, value)), b.block([update])));
 	} else {
 		state.init.push(update);
+	}
+
+	if (is_select_with_value) {
+		state.init.push(b.stmt(b.call('$.init_select', node_id)));
 	}
 }

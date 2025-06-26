@@ -1,9 +1,9 @@
 import { effect } from '../../../reactivity/effects.js';
 import { listen_to_event_and_reset_event } from './shared.js';
-import { untrack } from '../../../runtime.js';
 import { is } from '../../../proxy.js';
 import { is_array } from '../../../../shared/utils.js';
 import * as w from '../../../warnings.js';
+import { queue_micro_task } from '../../task.js';
 
 /**
  * Selects the correct option(s) (depending on whether this is a multiple select)
@@ -51,11 +51,10 @@ export function select_option(select, value, mounting) {
  * current selection to the dom when it changes. Such
  * changes could for example occur when options are
  * inside an `#each` block.
- * @template V
  * @param {HTMLSelectElement} select
  */
 export function init_select(select) {
-	effect(() => {
+	queue_micro_task(() => {
 		var observer = new MutationObserver(() => {
 			// @ts-ignore
 			var value = select.__value;
