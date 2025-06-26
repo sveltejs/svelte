@@ -3,7 +3,6 @@ import { listen_to_event_and_reset_event } from './shared.js';
 import { is } from '../../../proxy.js';
 import { is_array } from '../../../../shared/utils.js';
 import * as w from '../../../warnings.js';
-import { queue_micro_task } from '../../task.js';
 
 /**
  * Selects the correct option(s) (depending on whether this is a multiple select)
