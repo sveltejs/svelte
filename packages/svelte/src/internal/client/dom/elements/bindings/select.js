@@ -1,4 +1,4 @@
-import { effect } from '../../../reactivity/effects.js';
+import { effect, teardown } from '../../../reactivity/effects.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 import { is } from '../../../proxy.js';
 import { is_array } from '../../../../shared/utils.js';
@@ -54,29 +54,26 @@ export function select_option(select, value, mounting) {
  * @param {HTMLSelectElement} select
  */
 export function init_select(select) {
-	queue_micro_task(() => {
-		var observer = new MutationObserver(() => {
-			// @ts-ignore
-			var value = select.__value;
-			select_option(select, value);
-			// Deliberately don't update the potential binding value,
-			// the model should be preserved unless explicitly changed
-		});
+	var observer = new MutationObserver(() => {
+		// @ts-ignore
+		select_option(select, select.__value);
+		// Deliberately don't update the potential binding value,
+		// the model should be preserved unless explicitly changed
+	});
 
-		observer.observe(select, {
-			// Listen to option element changes
-			childList: true,
-			subtree: true, // because of <optgroup>
-			// Listen to option element value attribute changes
-			// (doesn't get notified of select value changes,
-			// because that property is not reflected as an attribute)
-			attributes: true,
-			attributeFilter: ['value']
-		});
+	observer.observe(select, {
+		// Listen to option element changes
+		childList: true,
+		subtree: true, // because of <optgroup>
+		// Listen to option element value attribute changes
+		// (doesn't get notified of select value changes,
+		// because that property is not reflected as an attribute)
+		attributes: true,
+		attributeFilter: ['value']
+	});
 
-		return () => {
-			observer.disconnect();
-		};
+	teardown(() => {
+		observer.disconnect();
 	});
 }
 
@@ -128,7 +125,6 @@ export function bind_select_value(select, get, set = get) {
 		mounting = false;
 	});
 
-	// don't pass get_value, we already initialize it in the effect above
 	init_select(select);
 }
 

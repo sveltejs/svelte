@@ -515,11 +515,10 @@ export function attribute_effect(
 	if (is_select) {
 		var select = /** @type {HTMLSelectElement} */ (element);
 
-		queue_micro_task(() => {
+		effect(() => {
 			select_option(select, /** @type {Record<string | symbol, any>} */ (prev).value);
+			init_select(select);
 		});
-
-		init_select(select);
 	}
 
 	inited = true;
