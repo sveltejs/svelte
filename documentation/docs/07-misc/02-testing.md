@@ -147,7 +147,13 @@ test('Effect', () => {
  * @param {() => any} getValue
  */
 export function logger(getValue) {
-	/** @type {any[]} */
+	/**
+	 * must not be a `$state`
+	 * 
+	 * @see https://svelte.dev/docs/svelte/$effect#When-not-to-use-$effect-untrack
+	 * 
+	 * @type {any[]}
+	 **/
 	let log = [];
 
 	$effect(() => {

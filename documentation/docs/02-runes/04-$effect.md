@@ -321,4 +321,71 @@ Instead, use `oninput` callbacks or — better still — [function bindings](bin
 </label>
 ```
 
+### untrack
+
 If you absolutely have to update `$state` within an effect and run into an infinite loop because you read and write to the same `$state`, use [untrack](svelte#untrack).
+
+A common mistake is updating the a `$state` array inside effects (for example `arr.push(item)`). This causes an infinite loop because methods like `push` read the array's `length` property (making the effect depend on it) and also modify it (triggering the effect again):
+
+```svelte
+<script>
+	let count = $state(0);
+	let log = $state([]);
+	
+	$effect(() => {
+		// don't do this — infinite loop!
+		// push reads and writes array.length
+		log.push(count);
+		
+		// also not fine
+		// reading and writing log at the same time
+		// log = [...log, count];
+	});
+</script>
+```
+
+To fix this, wrap the mutation in `untrack`:
+
+```svelte
+<script>
+	+++ import { untrack } from 'svelte'; +++
+
+	let count = $state(0);
+	let log = $state([]);
+	
+	$effect(() => {
+		// reference the state we want to track
+		const value = count;
+		// do this instead
+		// wrap mutations in untrack
+		--- log.push(count); ---
+		+++ untrack(() => {
+			log.push(value);
+		}); +++
+	});
+</script>
+```
+
+This applies to all array methods that mutate the array: `push`, `pop`, `shift`, `unshift`, `splice`, etc. The same issue occurs when reassigning a `$state` variable based on its current value, such as `log = [...log, count]`.
+
+Alternatively, if you don't need the array to be reactive (i.e., changes to it don't need to update the UI), you can use a regular variable instead of `$state`:
+
+```svelte
+<script>
+	--- import { untrack } from 'svelte'; ---
+
+	let count = $state(0);
+	--- let log = $state([]); ---
+	+++ let log = []; +++
+	
+	$effect(() => {
+		// reference the state we want to track
+		const value = count;
+		// now you can safely mutate the regular variable
+		--- untrack(() => {
+			log.push(value);
+		}); ---
+		+++ log.push(count); +++
+	});
+</script>
+```
