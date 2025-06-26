@@ -155,8 +155,7 @@ export function build_render_statement(state) {
 					: b.block(state.update)
 			),
 			all.length > 0 && b.array(sync.map(({ expression }) => b.thunk(expression))),
-			async.length > 0 && b.array(async.map(({ expression }) => b.thunk(expression, true))),
-			!state.analysis.runes && sync.length > 0 && b.id('$.derived_safe_equal')
+			async.length > 0 && b.array(async.map(({ expression }) => b.thunk(expression, true)))
 		)
 	);
 }

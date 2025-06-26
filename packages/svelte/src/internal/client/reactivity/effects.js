@@ -1,4 +1,4 @@
-/** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager, Value } from '#client' */
+/** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
 import {
 	check_dirtiness,
 	active_effect,
@@ -38,11 +38,9 @@ import * as e from '../errors.js';
 import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
-import { async_derived, derived } from './deriveds.js';
-import { capture } from '../dom/blocks/boundary.js';
 import { component_context, dev_current_component_function } from '../context.js';
-import { Batch, current_batch } from './batch.js';
-import { invoke_error_boundary } from '../error-handling.js';
+import { Batch } from './batch.js';
+import { flatten } from './async.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -338,43 +336,11 @@ export function render_effect(fn, flags = 0) {
  * @param {(...expressions: any) => void | (() => void)} fn
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
- * @param {<T>(fn: () => T) => Derived<T>} d
  */
-export function template_effect(fn, sync = [], async = [], d = derived) {
-	if (async.length > 0) {
-		var batch = current_batch;
-		var parent = /** @type {Effect} */ (active_effect);
-
-		var restore = capture();
-
-		Promise.all(async.map((expression) => async_derived(expression))).then((result) => {
-			if ((parent.f & DESTROYED) !== 0) return;
-
-			// TODO probably need to do this in async.js as well
-			batch?.restore();
-
-			restore();
-
-			try {
-				create_template_effect(fn, [...sync.map(d), ...result]);
-			} catch (error) {
-				invoke_error_boundary(error, parent);
-			}
-
-			batch?.flush();
-		});
-	} else {
-		create_template_effect(fn, sync.map(d));
-	}
-}
-
-/**
- * @param {(...expressions: any) => void | (() => void)} fn
- * @param {Value[]} deriveds
- */
-function create_template_effect(fn, deriveds) {
-	var effect = () => fn(...deriveds.map(get));
-	create_effect(RENDER_EFFECT, effect, true);
+export function template_effect(fn, sync = [], async = []) {
+	flatten(sync, async, (values) => {
+		create_effect(RENDER_EFFECT, () => fn(...values.map(get)), true);
+	});
 }
 
 /**
