@@ -11,6 +11,7 @@ import { assert_html_equal, assert_html_equal_with_options } from '../html_equal
 import { raf } from '../animation-helpers.js';
 import type { CompileOptions } from '#compiler';
 import { suite_with_variants, type BaseTest } from '../suite.js';
+import { clear } from '../../src/internal/client/reactivity/batch.js';
 
 type Assert = typeof import('vitest').assert & {
 	htmlEqual(a: string, b: string, description?: string): void;
@@ -521,6 +522,8 @@ async function run_test_variant(
 		console.log = console_log;
 		console.warn = console_warn;
 		console.error = console_error;
+
+		clear();
 	}
 }
 
