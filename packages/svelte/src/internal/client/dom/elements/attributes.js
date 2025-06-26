@@ -20,7 +20,7 @@ import { clsx } from '../../../shared/attributes.js';
 import { set_class } from './class.js';
 import { set_style } from './style.js';
 import { ATTACHMENT_KEY, NAMESPACE_HTML } from '../../../../constants.js';
-import { block, branch, destroy_effect } from '../../reactivity/effects.js';
+import { block, branch, destroy_effect, effect } from '../../reactivity/effects.js';
 import { derived } from '../../reactivity/deriveds.js';
 import { init_select, select_option } from './bindings/select.js';
 import { flatten } from '../../reactivity/async.js';
@@ -514,10 +514,12 @@ export function attribute_effect(
 		});
 
 		if (is_select) {
-			init_select(
-				/** @type {HTMLSelectElement} */ (element),
-				() => /** @type {Record<string | symbol, any>} */ (prev).value
-			);
+			var select = /** @type {HTMLSelectElement} */ (element);
+
+			effect(() => {
+				select_option(select, /** @type {Record<string | symbol, any>} */ (prev).value);
+				init_select(select);
+			});
 		}
 
 		inited = true;

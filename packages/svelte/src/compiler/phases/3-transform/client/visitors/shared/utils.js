@@ -182,20 +182,6 @@ export function parse_directive_name(name) {
 }
 
 /**
- * @param {ComponentClientTransformState} state
- * @param {string} id
- * @param {Expression | undefined} init
- * @param {Expression} value
- * @param {ExpressionStatement} update
- */
-export function build_update_assignment(state, id, init, value, update) {
-	state.init.push(b.var(id, init));
-	state.update.push(
-		b.if(b.binary('!==', b.id(id), b.assignment('=', b.id(id), value)), b.block([update]))
-	);
-}
-
-/**
  * Serializes `bind:this` for components and elements.
  * @param {Identifier | MemberExpression | SequenceExpression} expression
  * @param {Expression} value
