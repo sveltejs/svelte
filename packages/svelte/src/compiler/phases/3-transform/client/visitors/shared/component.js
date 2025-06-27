@@ -8,7 +8,6 @@ import { build_bind_this, Memoizer, validate_binding } from '../shared/utils.js'
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
-import { create_derived } from '../../utils.js';
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
@@ -447,12 +446,7 @@ export function build_component(node, component_name, context) {
 		};
 	}
 
-	const statements = [
-		...snippet_declarations,
-		...memoizer.sync.map((memo) =>
-			b.let(memo.id, create_derived(context.state, b.thunk(memo.expression)))
-		)
-	];
+	const statements = [...snippet_declarations, ...memoizer.deriveds()];
 
 	if (is_component_dynamic) {
 		const prev = fn;
@@ -501,13 +495,15 @@ export function build_component(node, component_name, context) {
 
 	memoizer.apply();
 
-	if (memoizer.async.length > 0) {
+	const async_values = memoizer.async_values();
+
+	if (async_values) {
 		return b.stmt(
 			b.call(
 				'$.async',
 				anchor,
-				b.array(memoizer.async.map(({ expression }) => b.thunk(expression, true))),
-				b.arrow([b.id('$$anchor'), ...memoizer.async.map(({ id }) => id)], b.block(statements))
+				async_values,
+				b.arrow([b.id('$$anchor'), ...memoizer.async_ids()], b.block(statements))
 			)
 		);
 	}

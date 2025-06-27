@@ -78,21 +78,16 @@ export function build_attribute_effect(
 		);
 	}
 
-	const all = memoizer.apply();
+	memoizer.apply();
 
 	context.state.init.push(
 		b.stmt(
 			b.call(
 				'$.attribute_effect',
 				element_id,
-				b.arrow(
-					all.map(({ id }) => id),
-					b.object(values)
-				),
-				memoizer.sync.length > 0 &&
-					b.array(memoizer.sync.map(({ expression }) => b.thunk(expression))),
-				memoizer.async.length > 0 &&
-					b.array(memoizer.async.map(({ expression }) => b.thunk(expression, true))),
+				b.arrow(memoizer.all_ids(), b.object(values)),
+				memoizer.sync_values(),
+				memoizer.async_values(),
 				element.metadata.scoped &&
 					context.state.analysis.css.hash !== '' &&
 					b.literal(context.state.analysis.css.hash),

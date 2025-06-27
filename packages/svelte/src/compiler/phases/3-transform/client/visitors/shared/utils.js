@@ -12,10 +12,10 @@ import { build_getter } from '../../utils.js';
 
 export class Memoizer {
 	/** @type {Array<{ id: Identifier, expression: Expression }>} */
-	sync = [];
+	#sync = [];
 
 	/** @type {Array<{ id: Identifier, expression: Expression }>} */
-	async = [];
+	#async = [];
 
 	/**
 	 * @param {Expression} expression
@@ -24,19 +24,39 @@ export class Memoizer {
 	add(expression, has_await) {
 		const id = b.id(`#`); // filled in later
 
-		(has_await ? this.async : this.sync).push({ id, expression });
+		(has_await ? this.#async : this.#sync).push({ id, expression });
 
 		return id;
 	}
 
 	apply() {
-		const all = [...this.async, ...this.sync];
-
-		all.forEach((memo, i) => {
+		[...this.#async, ...this.#sync].forEach((memo, i) => {
 			memo.id.name = `$${i}`;
 		});
+	}
 
-		return all;
+	all_ids() {
+		return [...this.#async, ...this.#sync].map((memo) => memo.id);
+	}
+
+	async_ids() {
+		return this.#async.map((memo) => memo.id);
+	}
+
+	async_values() {
+		if (this.#async.length === 0) return;
+		return b.array(this.#async.map((memo) => b.thunk(memo.expression, true)));
+	}
+
+	deriveds(runes = true) {
+		return this.#sync.map((memo) =>
+			b.let(memo.id, b.call(runes ? '$.derived' : '$.derived_safe_equal', b.thunk(memo.expression)))
+		);
+	}
+
+	sync_values() {
+		if (this.#sync.length === 0) return;
+		return b.array(this.#sync.map((memo) => b.thunk(memo.expression)));
 	}
 }
 
@@ -143,20 +163,19 @@ export function build_template_chunk(
 export function build_render_statement(state) {
 	const { memoizer } = state;
 
-	const all = state.memoizer.apply();
+	state.memoizer.apply();
 
 	return b.stmt(
 		b.call(
 			'$.template_effect',
 			b.arrow(
-				all.map(({ id }) => id),
+				memoizer.all_ids(),
 				state.update.length === 1 && state.update[0].type === 'ExpressionStatement'
 					? state.update[0].expression
 					: b.block(state.update)
 			),
-			all.length > 0 && b.array(memoizer.sync.map(({ expression }) => b.thunk(expression))),
-			memoizer.async.length > 0 &&
-				b.array(memoizer.async.map(({ expression }) => b.thunk(expression, true)))
+			memoizer.sync_values(),
+			memoizer.async_values()
 		)
 	);
 }
