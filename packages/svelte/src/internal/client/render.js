@@ -137,7 +137,10 @@ export function hydrate(component, options) {
 		return /**  @type {Exports} */ (instance);
 	} catch (error) {
 		// re-throw Svelte errors - they are certainly not related to hydration
-		if (error instanceof Error && error.message.includes('https://svelte.dev/e/')) {
+		if (
+			error instanceof Error &&
+			error.message.split('\n').some((line) => line.startsWith('https://svelte.dev/e/'))
+		) {
 			throw error;
 		}
 		if (error !== HYDRATION_ERROR) {
