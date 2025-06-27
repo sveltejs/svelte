@@ -53,6 +53,11 @@ export class Memoizer {
 		if (this.async.length === 0) return;
 		return b.array(this.async.map((memo) => b.thunk(memo.expression, true)));
 	}
+
+	sync_values() {
+		if (this.sync.length === 0) return;
+		return b.array(this.sync.map((memo) => b.thunk(memo.expression)));
+	}
 }
 
 /**
@@ -169,7 +174,7 @@ export function build_render_statement(state) {
 					? state.update[0].expression
 					: b.block(state.update)
 			),
-			all.length > 0 && b.array(memoizer.sync.map(({ expression }) => b.thunk(expression))),
+			memoizer.sync_values(),
 			memoizer.async_values()
 		)
 	);

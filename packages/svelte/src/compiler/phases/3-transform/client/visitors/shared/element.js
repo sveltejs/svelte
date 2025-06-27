@@ -89,8 +89,7 @@ export function build_attribute_effect(
 					all.map(({ id }) => id),
 					b.object(values)
 				),
-				memoizer.sync.length > 0 &&
-					b.array(memoizer.sync.map(({ expression }) => b.thunk(expression))),
+				memoizer.sync_values(),
 				memoizer.async_values(),
 				element.metadata.scoped &&
 					context.state.analysis.css.hash !== '' &&
