@@ -3,6 +3,7 @@
 /** @import { ComponentContext } from '../types' */
 import { unwrap_optional } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
+import { create_derived } from '../utils.js';
 import { build_expression, Memoizer } from './shared/utils.js';
 
 /**
@@ -35,7 +36,9 @@ export function RenderTag(node, context) {
 	memoizer.apply();
 
 	/** @type {Statement[]} */
-	const statements = memoizer.deriveds();
+	const statements = memoizer.sync.map((memo) =>
+		b.var(memo.id, create_derived(context.state, b.thunk(memo.expression)))
+	);
 
 	let snippet_function = build_expression(
 		context,
@@ -64,16 +67,17 @@ export function RenderTag(node, context) {
 		);
 	}
 
-	const async_values = memoizer.async_values();
-
-	if (async_values) {
+	if (memoizer.async.length > 0) {
 		context.state.init.push(
 			b.stmt(
 				b.call(
 					'$.async',
 					context.state.node,
-					async_values,
-					b.arrow([context.state.node, ...memoizer.async_ids()], b.block(statements))
+					b.array(memoizer.async.map((memo) => b.thunk(memo.expression, true))),
+					b.arrow(
+						[context.state.node, ...memoizer.async.map((memo) => memo.id)],
+						b.block(statements)
+					)
 				)
 			)
 		);
