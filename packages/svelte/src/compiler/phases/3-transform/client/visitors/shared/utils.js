@@ -39,6 +39,12 @@ export class Memoizer {
 		return all;
 	}
 
+	deriveds(runes = true) {
+		return this.sync.map((memo) =>
+			b.let(memo.id, b.call(runes ? '$.derived' : '$.derived_safe_equal', b.thunk(memo.expression)))
+		);
+	}
+
 	async_ids() {
 		return this.async.map((memo) => memo.id);
 	}

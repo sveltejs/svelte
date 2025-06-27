@@ -447,12 +447,7 @@ export function build_component(node, component_name, context) {
 		};
 	}
 
-	const statements = [
-		...snippet_declarations,
-		...memoizer.sync.map((memo) =>
-			b.let(memo.id, create_derived(context.state, b.thunk(memo.expression)))
-		)
-	];
+	const statements = [...snippet_declarations, ...memoizer.deriveds(context.state.analysis.runes)];
 
 	if (is_component_dynamic) {
 		const prev = fn;

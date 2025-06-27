@@ -60,9 +60,7 @@ export function SlotElement(node, context) {
 	context.state.init.push(...lets);
 
 	/** @type {Statement[]} */
-	const statements = memoizer.sync.map((memo) =>
-		b.let(memo.id, create_derived(context.state, b.thunk(memo.expression)))
-	);
+	const statements = memoizer.deriveds(context.state.analysis.runes);
 
 	const props_expression =
 		spreads.length === 0 ? b.object(props) : b.call('$.spread_props', b.object(props), ...spreads);
