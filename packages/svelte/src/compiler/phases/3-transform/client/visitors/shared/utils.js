@@ -11,16 +11,6 @@ import { dev, is_ignored, locator } from '../../../../../state.js';
 import { build_getter, create_derived } from '../../utils.js';
 
 /**
- * @param {ComponentClientTransformState} state
- * @param {Expression} value
- */
-export function memoize_expression(state, value) {
-	const id = b.id(state.scope.generate('expression'));
-	state.init.push(b.const(id, create_derived(state, b.thunk(value))));
-	return b.call('$.get', id);
-}
-
-/**
  *
  * @param {MemoizedExpression[]} expressions
  * @param {Expression} expression

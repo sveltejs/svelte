@@ -4,7 +4,7 @@
 import * as b from '#compiler/builders';
 import { create_derived } from '../utils.js';
 import { build_attribute_value } from './shared/element.js';
-import { get_expression_id, memoize_expression } from './shared/utils.js';
+import { get_expression_id } from './shared/utils.js';
 
 /**
  * @param {AST.SlotElement} node
