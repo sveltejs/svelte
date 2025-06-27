@@ -2,7 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '#compiler/builders';
-import { build_expression } from './shared/utils.js';
+import { build_expression, with_dev_stack } from './shared/utils.js';
 
 /**
  * @param {AST.KeyBlock} node
@@ -15,6 +15,10 @@ export function KeyBlock(node, context) {
 	const body = /** @type {Expression} */ (context.visit(node.fragment));
 
 	context.state.init.push(
-		b.stmt(b.call('$.key', context.state.node, b.thunk(key), b.arrow([b.id('$$anchor')], body)))
+		with_dev_stack(
+			b.call('$.key', context.state.node, b.thunk(key), b.arrow([b.id('$$anchor')], body)),
+			node,
+			'key'
+		)
 	);
 }

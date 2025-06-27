@@ -5,7 +5,7 @@ import { extract_identifiers } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { create_derived } from '../utils.js';
 import { get_value } from './shared/declarations.js';
-import { build_expression } from './shared/utils.js';
+import { build_expression, with_dev_stack } from './shared/utils.js';
 
 /**
  * @param {AST.AwaitBlock} node
@@ -54,7 +54,7 @@ export function AwaitBlock(node, context) {
 	}
 
 	context.state.init.push(
-		b.stmt(
+		with_dev_stack(
 			b.call(
 				'$.await',
 				context.state.node,
@@ -64,7 +64,9 @@ export function AwaitBlock(node, context) {
 					: b.null,
 				then_block,
 				catch_block
-			)
+			),
+			node,
+			'await'
 		)
 	);
 }

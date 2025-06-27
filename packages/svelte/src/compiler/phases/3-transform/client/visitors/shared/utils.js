@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression, Pattern } from 'estree' */
+/** @import { AssignmentExpression, Expression, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression, Pattern, CallExpression, Statement } from 'estree' */
 /** @import { AST, ExpressionMetadata } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext, Context } from '../../types' */
 import { walk } from 'zimmerframe';
@@ -7,7 +7,7 @@ import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
-import { dev, is_ignored, locator } from '../../../../../state.js';
+import { dev, is_ignored, locator, filename } from '../../../../../state.js';
 import { build_getter, create_derived } from '../../utils.js';
 
 /**
@@ -393,4 +393,38 @@ export function build_expression(context, expression, metadata, state = context.
 	sequence.expressions.push(b.call('$.untrack', b.thunk(value)));
 
 	return sequence;
+}
+
+/**
+ * Wraps a statement/expression with dev stack tracking in dev mode
+ * @param {CallExpression} call_expression - The function call to wrap (e.g., $.if, $.each, etc.)
+ * @param {{ start?: number }} node - AST node for location info
+ * @param {'component' | 'if' | 'each' | 'await' | 'key'} type - Type of block/component
+ * @param {Record<string, number | string>} [additional] - Any additional properties to add to the dev stack entry
+ * @returns {Statement} - Statement with or without dev stack wrapping
+ */
+export function with_dev_stack(call_expression, node, type, additional) {
+	if (!dev) {
+		return b.stmt(call_expression);
+	}
+
+	const location = node.start && locator(node.start);
+	if (!location) {
+		return b.stmt(call_expression);
+	}
+
+	// Wrap with dev stack tracking
+	return b.stmt(
+		b.call(
+			'$.with_dev_stack',
+			b.arrow([], b.block([b.stmt(call_expression)])),
+			b.literal(type),
+			b.literal(filename),
+			b.literal(location.line),
+			b.literal(location.column),
+			additional
+				? b.object(Object.entries(additional).map(([key, value]) => b.init(key, b.literal(value))))
+				: b.null
+		)
+	);
 }
