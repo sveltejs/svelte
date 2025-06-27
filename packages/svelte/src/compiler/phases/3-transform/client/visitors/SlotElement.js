@@ -76,13 +76,15 @@ export function SlotElement(node, context) {
 		b.stmt(b.call('$.slot', context.state.node, b.id('$$props'), name, props_expression, fallback))
 	);
 
-	if (memoizer.async.length > 0) {
+	const async_values = memoizer.async_values();
+
+	if (async_values) {
 		context.state.init.push(
 			b.stmt(
 				b.call(
 					'$.async',
 					context.state.node,
-					b.array(memoizer.async.map((memo) => b.thunk(memo.expression, true))),
+					async_values,
 					b.arrow(
 						[context.state.node, ...memoizer.async.map((memo) => memo.id)],
 						b.block(statements)

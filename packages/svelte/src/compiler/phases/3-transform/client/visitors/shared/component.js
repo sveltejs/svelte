@@ -501,12 +501,14 @@ export function build_component(node, component_name, context) {
 
 	memoizer.apply();
 
-	if (memoizer.async.length > 0) {
+	const async_values = memoizer.async_values();
+
+	if (async_values) {
 		return b.stmt(
 			b.call(
 				'$.async',
 				anchor,
-				b.array(memoizer.async.map(({ expression }) => b.thunk(expression, true))),
+				async_values,
 				b.arrow([b.id('$$anchor'), ...memoizer.async.map(({ id }) => id)], b.block(statements))
 			)
 		);

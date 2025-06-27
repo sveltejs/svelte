@@ -91,8 +91,7 @@ export function build_attribute_effect(
 				),
 				memoizer.sync.length > 0 &&
 					b.array(memoizer.sync.map(({ expression }) => b.thunk(expression))),
-				memoizer.async.length > 0 &&
-					b.array(memoizer.async.map(({ expression }) => b.thunk(expression, true))),
+				memoizer.async_values(),
 				element.metadata.scoped &&
 					context.state.analysis.css.hash !== '' &&
 					b.literal(context.state.analysis.css.hash),
