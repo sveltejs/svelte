@@ -1,5 +1,5 @@
 /** @import { Expression, Node, Program } from 'estree' */
-/** @import { Binding, AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { Binding, AST, ValidatedCompileOptions, ValidatedModuleCompileOptions, ExpressionMetadata } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 import { walk } from 'zimmerframe';
@@ -76,6 +76,10 @@ import { UseDirective } from './visitors/UseDirective.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
 import is_reference from 'is-reference';
 import { mark_subtree_dynamic } from './visitors/shared/fragment.js';
+import { find_last_await, is_last_evaluated_expression } from './utils/awaits.js';
+
+/** @type {Array<ExpressionMetadata | null>} */
+const metadata_stack = [];
 
 /**
  * @type {Visitors}
@@ -127,8 +131,22 @@ const visitors = {
 
 		ignore_map.set(node, structuredClone(ignore_stack));
 
+		metadata_stack.push(state.expression);
+
 		const scope = state.scopes.get(node);
 		next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
+
+		metadata_stack.pop();
+
+		// if this node set `state.expression`, now that we've visited it we can determine
+		// which `await` expressions need to be wrapped in `$.save(...)`
+		if (state.expression && metadata_stack[metadata_stack.length - 1] === null) {
+			for (const { path, node } of state.expression.awaits) {
+				if (!is_last_evaluated_expression(path, node)) {
+					state.analysis.context_preserving_awaits.add(node);
+				}
+			}
+		}
 
 		if (ignores.length > 0) {
 			pop_ignore();

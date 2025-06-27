@@ -1,4 +1,5 @@
 /** @import * as ESTree from 'estree' */
+import { walk } from 'zimmerframe';
 import { regex_is_valid_identifier } from '../phases/patterns.js';
 import { sanitize_template_string } from './sanitize_template_string.js';
 
@@ -432,8 +433,20 @@ export function thunk(expression, async = false) {
  * @returns {ESTree.Expression}
  */
 export function unthunk(expression) {
+	// optimize `async () => await x()`, but not `async () => await x(await y)`
 	if (expression.async && expression.body.type === 'AwaitExpression') {
-		return unthunk(arrow(expression.params, expression.body.argument));
+		let has_await = false;
+
+		walk(expression.body.argument, null, {
+			AwaitExpression(node, context) {
+				has_await = true;
+				context.stop();
+			}
+		});
+
+		if (!has_await) {
+			return unthunk(arrow(expression.params, expression.body.argument));
+		}
 	}
 
 	if (
