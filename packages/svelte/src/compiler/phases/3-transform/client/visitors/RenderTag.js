@@ -37,7 +37,7 @@ export function RenderTag(node, context) {
 
 	/** @type {Statement[]} */
 	const statements = memoizer.sync.map((memo) =>
-		b.var(memo.id, create_derived(context.state, b.thunk(memo.expression)))
+		b.let(memo.id, create_derived(context.state, b.thunk(memo.expression)))
 	);
 
 	let snippet_function = build_expression(
