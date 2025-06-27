@@ -16,8 +16,7 @@ import { build_getter, create_derived } from '../../utils.js';
  * @param {Expression} expression
  */
 export function get_expression_id(expressions, expression) {
-	// TODO tidy this up
-	const id = b.id(`$${expressions.length}`);
+	const id = b.id(`#`); // filled in later
 	expressions.push({ id, expression });
 
 	return id;

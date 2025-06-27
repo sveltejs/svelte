@@ -61,6 +61,10 @@ export function SlotElement(node, context) {
 		}
 	}
 
+	[...async_expressions, ...expressions].forEach((memo, i) => {
+		memo.id.name = `$${i}`;
+	});
+
 	// Let bindings first, they can be used on attributes
 	context.state.init.push(...lets);
 
