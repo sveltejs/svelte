@@ -12,6 +12,7 @@ import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
 import type { Template } from './transform-template/template.js';
+import type { Memoizer } from './visitors/shared/utils.js';
 
 export interface ClientTransformState extends TransformState {
 	/**
@@ -49,10 +50,8 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly update: Statement[];
 	/** Stuff that happens after the render effect (control blocks, dynamic elements, bindings, actions, etc) */
 	readonly after_update: Statement[];
-	/** Expressions used inside the render effect */
-	readonly expressions: Array<{ id: Identifier; expression: Expression }>;
-	/** Expressions used inside the render effect */
-	readonly async_expressions: Array<{ id: Identifier; expression: Expression }>;
+	/** Memoized expressions */
+	readonly memoizer: Memoizer;
 	/** The HTML template string */
 	readonly template: Template;
 	readonly metadata: {
@@ -87,8 +86,3 @@ export type ComponentVisitors = import('zimmerframe').Visitors<
 	AST.SvelteNode,
 	ComponentClientTransformState
 >;
-
-export interface MemoizedExpression {
-	id: Identifier;
-	expression: Expression;
-}

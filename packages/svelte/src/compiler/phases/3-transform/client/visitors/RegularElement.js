@@ -22,7 +22,7 @@ import {
 	build_set_style
 } from './shared/element.js';
 import { process_children } from './shared/fragment.js';
-import { build_render_statement, build_template_chunk, get_expression_id } from './shared/utils.js';
+import { build_render_statement, build_template_chunk, Memoizer } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
 
 /**
@@ -255,10 +255,7 @@ export function RegularElement(node, context) {
 					context,
 					(value, metadata) =>
 						metadata.has_call || metadata.has_await
-							? get_expression_id(
-									metadata.has_await ? context.state.async_expressions : context.state.expressions,
-									value
-								)
+							? context.state.memoizer.add(value, metadata.has_await)
 							: value
 				);
 
@@ -465,15 +462,13 @@ function setup_select_synchronization(value_binding, context) {
 /**
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
- * @param {MemoizedExpression[]} async_expressions
- * @param {MemoizedExpression[]} expressions
+ * @param {Memoizer} memoizer
  * @return {ObjectExpression | Identifier}
  */
 export function build_class_directives_object(
 	class_directives,
 	context,
-	async_expressions = context.state.async_expressions,
-	expressions = context.state.expressions
+	memoizer = context.state.memoizer
 ) {
 	let properties = [];
 	let has_call_or_state = false;
@@ -488,23 +483,19 @@ export function build_class_directives_object(
 
 	const directives = b.object(properties);
 
-	return has_call_or_state || has_await
-		? get_expression_id(has_await ? async_expressions : expressions, directives)
-		: directives;
+	return has_call_or_state || has_await ? memoizer.add(directives, has_await) : directives;
 }
 
 /**
  * @param {AST.StyleDirective[]} style_directives
  * @param {ComponentContext} context
- * @param {MemoizedExpression[]} async_expressions
- * @param {MemoizedExpression[]} expressions
+ * @param {Memoizer} memoizer
  * @return {ObjectExpression | ArrayExpression | Identifier}}
  */
 export function build_style_directives_object(
 	style_directives,
 	context,
-	async_expressions = context.state.async_expressions,
-	expressions = context.state.expressions
+	memoizer = context.state.memoizer
 ) {
 	const normal = b.object([]);
 	const important = b.object([]);
@@ -527,9 +518,7 @@ export function build_style_directives_object(
 
 	const directives = important.properties.length ? b.array([normal, important]) : normal;
 
-	return has_call_or_state || has_await
-		? get_expression_id(has_await ? async_expressions : expressions, directives)
-		: directives;
+	return has_call_or_state || has_await ? memoizer.add(directives, has_await) : directives;
 }
 
 /**
@@ -651,9 +640,7 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 		element === 'select' && attribute.value !== true && !is_text_attribute(attribute);
 
 	const { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call || metadata.has_await
-			? get_expression_id(metadata.has_await ? state.async_expressions : state.expressions, value)
-			: value
+		metadata.has_call || metadata.has_await ? state.memoizer.add(value, metadata.has_await) : value
 	);
 
 	const evaluated = context.state.scope.evaluate(value);

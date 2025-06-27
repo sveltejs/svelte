@@ -1,10 +1,10 @@
 /** @import { Expression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
-/** @import { ComponentContext, MemoizedExpression } from '../types' */
+/** @import { ComponentContext } from '../types' */
 import { unwrap_optional } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { create_derived } from '../utils.js';
-import { get_expression_id, build_expression } from './shared/utils.js';
+import { build_expression, Memoizer } from './shared/utils.js';
 
 /**
  * @param {AST.RenderTag} node
@@ -18,11 +18,7 @@ export function RenderTag(node, context) {
 	/** @type {Expression[]} */
 	let args = [];
 
-	/** @type {MemoizedExpression[]} */
-	const expressions = [];
-
-	/** @type {MemoizedExpression[]} */
-	const async_expressions = [];
+	const memoizer = new Memoizer();
 
 	for (let i = 0; i < call.arguments.length; i++) {
 		const arg = /** @type {Expression} */ (call.arguments[i]);
@@ -31,21 +27,16 @@ export function RenderTag(node, context) {
 		let expression = build_expression(context, arg, metadata);
 
 		if (metadata.has_await || metadata.has_call) {
-			expression = b.call(
-				'$.get',
-				get_expression_id(metadata.has_await ? async_expressions : expressions, expression)
-			);
+			expression = b.call('$.get', memoizer.add(expression, metadata.has_await));
 		}
 
 		args.push(b.thunk(expression));
 	}
 
-	[...async_expressions, ...expressions].forEach((memo, i) => {
-		memo.id.name = `$${i}`;
-	});
+	memoizer.apply();
 
 	/** @type {Statement[]} */
-	const statements = expressions.map((memo) =>
+	const statements = memoizer.sync.map((memo) =>
 		b.var(memo.id, create_derived(context.state, b.thunk(memo.expression)))
 	);
 
@@ -76,15 +67,15 @@ export function RenderTag(node, context) {
 		);
 	}
 
-	if (async_expressions.length > 0) {
+	if (memoizer.async.length > 0) {
 		context.state.init.push(
 			b.stmt(
 				b.call(
 					'$.async',
 					context.state.node,
-					b.array(async_expressions.map((memo) => b.thunk(memo.expression, true))),
+					b.array(memoizer.async.map((memo) => b.thunk(memo.expression, true))),
 					b.arrow(
-						[context.state.node, ...async_expressions.map((memo) => memo.id)],
+						[context.state.node, ...memoizer.async.map((memo) => memo.id)],
 						b.block(statements)
 					)
 				)

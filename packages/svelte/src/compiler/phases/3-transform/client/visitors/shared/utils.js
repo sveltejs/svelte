@@ -1,6 +1,6 @@
 /** @import { AssignmentExpression, Expression, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression } from 'estree' */
 /** @import { AST, ExpressionMetadata } from '#compiler' */
-/** @import { ComponentClientTransformState, ComponentContext, Context, MemoizedExpression } from '../../types' */
+/** @import { ComponentClientTransformState, ComponentContext, Context } from '../../types' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
@@ -10,16 +10,34 @@ import is_reference from 'is-reference';
 import { dev, is_ignored, locator } from '../../../../../state.js';
 import { build_getter } from '../../utils.js';
 
-/**
- *
- * @param {MemoizedExpression[]} expressions
- * @param {Expression} expression
- */
-export function get_expression_id(expressions, expression) {
-	const id = b.id(`#`); // filled in later
-	expressions.push({ id, expression });
+export class Memoizer {
+	/** @type {Array<{ id: Identifier, expression: Expression }>} */
+	sync = [];
 
-	return id;
+	/** @type {Array<{ id: Identifier, expression: Expression }>} */
+	async = [];
+
+	/**
+	 * @param {Expression} expression
+	 * @param {boolean} has_await
+	 */
+	add(expression, has_await) {
+		const id = b.id(`#`); // filled in later
+
+		(has_await ? this.async : this.sync).push({ id, expression });
+
+		return id;
+	}
+
+	apply() {
+		const all = [...this.async, ...this.sync];
+
+		all.forEach((memo, i) => {
+			memo.id.name = `$${i}`;
+		});
+
+		return all;
+	}
 }
 
 /**
@@ -34,9 +52,7 @@ export function build_template_chunk(
 	context,
 	state = context.state,
 	memoize = (value, metadata) =>
-		metadata.has_call || metadata.has_await
-			? get_expression_id(metadata.has_await ? state.async_expressions : state.expressions, value)
-			: value
+		metadata.has_call || metadata.has_await ? state.memoizer.add(value, metadata.has_await) : value
 ) {
 	/** @type {Expression[]} */
 	const expressions = [];
@@ -125,14 +141,9 @@ export function build_template_chunk(
  * @param {ComponentClientTransformState} state
  */
 export function build_render_statement(state) {
-	const sync = state.expressions;
-	const async = state.async_expressions;
+	const { memoizer } = state;
 
-	const all = [...sync, ...async];
-
-	for (let i = 0; i < all.length; i += 1) {
-		all[i].id.name = `$${i}`;
-	}
+	const all = state.memoizer.apply();
 
 	return b.stmt(
 		b.call(
@@ -143,8 +154,9 @@ export function build_render_statement(state) {
 					? state.update[0].expression
 					: b.block(state.update)
 			),
-			all.length > 0 && b.array(sync.map(({ expression }) => b.thunk(expression))),
-			async.length > 0 && b.array(async.map(({ expression }) => b.thunk(expression, true)))
+			all.length > 0 && b.array(memoizer.sync.map(({ expression }) => b.thunk(expression))),
+			memoizer.async.length > 0 &&
+				b.array(memoizer.async.map(({ expression }) => b.thunk(expression, true)))
 		)
 	);
 }

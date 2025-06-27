@@ -59,6 +59,7 @@ import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { UseDirective } from './visitors/UseDirective.js';
 import { AttachTag } from './visitors/AttachTag.js';
 import { VariableDeclaration } from './visitors/VariableDeclaration.js';
+import { Memoizer } from './visitors/shared/utils.js';
 
 /** @type {Visitors} */
 const visitors = {
@@ -170,10 +171,9 @@ export function client_component(analysis, options) {
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		init: /** @type {any} */ (null),
 		update: /** @type {any} */ (null),
-		expressions: /** @type {any} */ (null),
-		async_expressions: /** @type {any} */ (null),
 		after_update: /** @type {any} */ (null),
-		template: /** @type {any} */ (null)
+		template: /** @type {any} */ (null),
+		memoizer: /** @type {any} */ (null)
 	};
 
 	const module = /** @type {ESTree.Program} */ (

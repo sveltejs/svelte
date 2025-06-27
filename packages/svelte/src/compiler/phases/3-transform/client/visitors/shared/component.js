@@ -1,10 +1,10 @@
 /** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
-/** @import { ComponentContext, MemoizedExpression } from '../../types.js' */
+/** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { build_bind_this, get_expression_id, validate_binding } from '../shared/utils.js';
+import { build_bind_this, Memoizer, validate_binding } from '../shared/utils.js';
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
@@ -44,11 +44,7 @@ export function build_component(node, component_name, context) {
 	/** @type {Record<string, Expression[]>} */
 	const events = {};
 
-	/** @type {MemoizedExpression[]} */
-	const expressions = [];
-
-	/** @type {MemoizedExpression[]} */
-	const async_expressions = [];
+	const memoizer = new Memoizer();
 
 	/** @type {Property[]} */
 	const custom_css_props = [];
@@ -139,13 +135,7 @@ export function build_component(node, component_name, context) {
 				props_and_spreads.push(
 					b.thunk(
 						attribute.metadata.expression.has_await || attribute.metadata.expression.has_call
-							? b.call(
-									'$.get',
-									get_expression_id(
-										attribute.metadata.expression.has_await ? async_expressions : expressions,
-										expression
-									)
-								)
+							? b.call('$.get', memoizer.add(expression, attribute.metadata.expression.has_await))
 							: expression
 					)
 				);
@@ -160,10 +150,7 @@ export function build_component(node, component_name, context) {
 						build_attribute_value(attribute.value, context, (value, metadata) => {
 							// TODO put the derived in the local block
 							return metadata.has_call || metadata.has_await
-								? b.call(
-										'$.get',
-										get_expression_id(metadata.has_await ? async_expressions : expressions, value)
-									)
+								? b.call('$.get', memoizer.add(value, metadata.has_await))
 								: value;
 						}).value
 					)
@@ -199,10 +186,7 @@ export function build_component(node, component_name, context) {
 						});
 
 					return should_wrap_in_derived
-						? b.call(
-								'$.get',
-								get_expression_id(metadata.has_await ? async_expressions : expressions, value)
-							)
+						? b.call('$.get', memoizer.add(value, metadata.has_await))
 						: value;
 				}
 			);
@@ -465,7 +449,7 @@ export function build_component(node, component_name, context) {
 
 	const statements = [
 		...snippet_declarations,
-		...expressions.map((memo) =>
+		...memoizer.sync.map((memo) =>
 			b.let(memo.id, create_derived(context.state, b.thunk(memo.expression)))
 		)
 	];
@@ -515,17 +499,15 @@ export function build_component(node, component_name, context) {
 		statements.push(b.stmt(fn(anchor)));
 	}
 
-	[...async_expressions, ...expressions].forEach((memo, i) => {
-		memo.id.name = `$${i}`;
-	});
+	memoizer.apply();
 
-	if (async_expressions.length > 0) {
+	if (memoizer.async.length > 0) {
 		return b.stmt(
 			b.call(
 				'$.async',
 				anchor,
-				b.array(async_expressions.map(({ expression }) => b.thunk(expression, true))),
-				b.arrow([b.id('$$anchor'), ...async_expressions.map(({ id }) => id)], b.block(statements))
+				b.array(memoizer.async.map(({ expression }) => b.thunk(expression, true))),
+				b.arrow([b.id('$$anchor'), ...memoizer.async.map(({ id }) => id)], b.block(statements))
 			)
 		);
 	}
