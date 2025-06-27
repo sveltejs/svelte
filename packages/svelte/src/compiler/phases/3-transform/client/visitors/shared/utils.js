@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression, Pattern } from 'estree' */
+/** @import { AssignmentExpression, Expression, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression } from 'estree' */
 /** @import { AST, ExpressionMetadata } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext, Context, MemoizedExpression } from '../../types' */
 import { walk } from 'zimmerframe';
@@ -8,7 +8,7 @@ import { sanitize_template_string } from '../../../../../utils/sanitize_template
 import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator } from '../../../../../state.js';
-import { build_getter, create_derived } from '../../utils.js';
+import { build_getter } from '../../utils.js';
 
 /**
  *
