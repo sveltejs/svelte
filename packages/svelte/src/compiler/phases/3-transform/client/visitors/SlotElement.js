@@ -1,9 +1,10 @@
-/** @import { BlockStatement, Expression, ExpressionStatement, Literal, Property } from 'estree' */
+/** @import { BlockStatement, Expression, ExpressionStatement, Literal, Property, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
-/** @import { ComponentContext } from '../types' */
+/** @import { ComponentContext, MemoizedExpression } from '../types' */
 import * as b from '#compiler/builders';
+import { create_derived } from '../utils.js';
 import { build_attribute_value } from './shared/element.js';
-import { memoize_expression } from './shared/utils.js';
+import { get_expression_id, memoize_expression } from './shared/utils.js';
 
 /**
  * @param {AST.SlotElement} node
@@ -22,7 +23,11 @@ export function SlotElement(node, context) {
 	/** @type {ExpressionStatement[]} */
 	const lets = [];
 
-	let is_default = true;
+	/** @type {MemoizedExpression[]} */
+	const expressions = [];
+
+	/** @type {MemoizedExpression[]} */
+	const async_expressions = [];
 
 	let name = b.literal('default');
 
@@ -33,12 +38,17 @@ export function SlotElement(node, context) {
 			const { value, has_state } = build_attribute_value(
 				attribute.value,
 				context,
-				(value, metadata) => (metadata.has_call ? memoize_expression(context.state, value) : value)
+				(value, metadata) =>
+					metadata.has_call || metadata.has_await
+						? b.call(
+								'$.get',
+								get_expression_id(metadata.has_await ? async_expressions : expressions, value)
+							)
+						: value
 			);
 
 			if (attribute.name === 'name') {
 				name = /** @type {Literal} */ (value);
-				is_default = false;
 			} else if (attribute.name !== 'slot') {
 				if (has_state) {
 					props.push(b.get(attribute.name, [b.return(value)]));
@@ -54,6 +64,11 @@ export function SlotElement(node, context) {
 	// Let bindings first, they can be used on attributes
 	context.state.init.push(...lets);
 
+	/** @type {Statement[]} */
+	const statements = expressions.map((memo) =>
+		b.var(memo.id, create_derived(context.state, b.thunk(memo.expression)))
+	);
+
 	const props_expression =
 		spreads.length === 0 ? b.object(props) : b.call('$.spread_props', b.object(props), ...spreads);
 
@@ -62,14 +77,25 @@ export function SlotElement(node, context) {
 			? b.null
 			: b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.fragment)));
 
-	const slot = b.call(
-		'$.slot',
-		context.state.node,
-		b.id('$$props'),
-		name,
-		props_expression,
-		fallback
+	statements.push(
+		b.stmt(b.call('$.slot', context.state.node, b.id('$$props'), name, props_expression, fallback))
 	);
 
-	context.state.init.push(b.stmt(slot));
+	if (async_expressions.length > 0) {
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.async',
+					context.state.node,
+					b.array(async_expressions.map((memo) => b.thunk(memo.expression, true))),
+					b.arrow(
+						[context.state.node, ...async_expressions.map((memo) => memo.id)],
+						b.block(statements)
+					)
+				)
+			)
+		);
+	} else {
+		context.state.init.push(statements.length === 1 ? statements[0] : b.block(statements));
+	}
 }
