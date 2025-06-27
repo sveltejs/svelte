@@ -453,9 +453,6 @@ export function client_component(analysis, options) {
 		if (analysis.custom_element) {
 			to_remove.push(b.literal('$$host'));
 		}
-		if (dev) {
-			to_remove.push(b.literal('$$dev'));
-		}
 
 		component_block.body.unshift(
 			b.const(

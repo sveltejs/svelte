@@ -413,7 +413,6 @@ export function with_dev_stack(call_expression, node, type, additional) {
 		return b.stmt(call_expression);
 	}
 
-	// Wrap with dev stack tracking
 	return b.stmt(
 		b.call(
 			'$.with_dev_stack',
