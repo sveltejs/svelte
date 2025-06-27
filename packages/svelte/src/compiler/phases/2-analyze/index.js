@@ -76,7 +76,7 @@ import { UseDirective } from './visitors/UseDirective.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
 import is_reference from 'is-reference';
 import { mark_subtree_dynamic } from './visitors/shared/fragment.js';
-import { find_last_await, is_last_evaluated_expression } from './utils/awaits.js';
+import { is_last_evaluated_expression } from './utils/awaits.js';
 
 /** @type {Array<ExpressionMetadata | null>} */
 const metadata_stack = [];
