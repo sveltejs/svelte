@@ -78,17 +78,14 @@ export function build_attribute_effect(
 		);
 	}
 
-	const all = memoizer.apply();
+	const ids = memoizer.apply();
 
 	context.state.init.push(
 		b.stmt(
 			b.call(
 				'$.attribute_effect',
 				element_id,
-				b.arrow(
-					all.map(({ id }) => id),
-					b.object(values)
-				),
+				b.arrow(ids, b.object(values)),
 				memoizer.sync_values(),
 				memoizer.async_values(),
 				element.metadata.scoped &&
