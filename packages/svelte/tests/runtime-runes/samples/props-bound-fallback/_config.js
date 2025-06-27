@@ -5,7 +5,6 @@ import { test } from '../../test';
 // uses a prop it does not write to but has a fallback value
 export default test({
 	accessors: false, // so that prop actually becomes $.prop and not $.prop_source
-	mode: ['server', 'client'],
 	html: `<button>0</button><span>0</span>`,
 
 	test({ assert, target }) {

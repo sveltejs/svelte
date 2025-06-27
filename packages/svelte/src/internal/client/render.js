@@ -136,6 +136,10 @@ export function hydrate(component, options) {
 
 		return /**  @type {Exports} */ (instance);
 	} catch (error) {
+		// re-throw Svelte errors - they are certainly not related to hydration
+		if (error instanceof Error && error.message.includes('https://svelte.dev/e/')) {
+			throw error;
+		}
 		if (error !== HYDRATION_ERROR) {
 			// eslint-disable-next-line no-console
 			console.error('Failed to hydrate: ', error);
