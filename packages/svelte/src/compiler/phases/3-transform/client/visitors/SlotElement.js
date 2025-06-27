@@ -85,10 +85,7 @@ export function SlotElement(node, context) {
 					'$.async',
 					context.state.node,
 					async_values,
-					b.arrow(
-						[context.state.node, ...memoizer.async.map((memo) => memo.id)],
-						b.block(statements)
-					)
+					b.arrow([context.state.node, ...memoizer.async_ids()], b.block(statements))
 				)
 			)
 		);

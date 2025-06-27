@@ -39,6 +39,10 @@ export class Memoizer {
 		return all;
 	}
 
+	async_ids() {
+		return this.async.map((memo) => memo.id);
+	}
+
 	async_values() {
 		if (this.async.length === 0) return;
 		return b.array(this.async.map((memo) => b.thunk(memo.expression, true)));

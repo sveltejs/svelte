@@ -509,7 +509,7 @@ export function build_component(node, component_name, context) {
 				'$.async',
 				anchor,
 				async_values,
-				b.arrow([b.id('$$anchor'), ...memoizer.async.map(({ id }) => id)], b.block(statements))
+				b.arrow([b.id('$$anchor'), ...memoizer.async_ids()], b.block(statements))
 			)
 		);
 	}
