@@ -36,7 +36,7 @@ export function parse(source, typescript, is_script) {
 		ast = parser.parse(source, {
 			onComment,
 			sourceType: 'module',
-			ecmaVersion: 16,
+			ecmaVersion: 'latest',
 			locations: true
 		});
 	} finally {
@@ -64,7 +64,7 @@ export function parse_expression_at(source, typescript, index) {
 	const ast = parser.parseExpressionAt(source, index, {
 		onComment,
 		sourceType: 'module',
-		ecmaVersion: 16,
+		ecmaVersion: 'latest',
 		locations: true
 	});
 

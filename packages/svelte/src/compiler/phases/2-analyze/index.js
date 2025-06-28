@@ -495,7 +495,8 @@ export function analyze_component(root, source, options) {
 		source,
 		undefined_exports: new Map(),
 		snippet_renderers: new Map(),
-		snippets: new Set()
+		snippets: new Set(),
+		disposable: []
 	};
 
 	if (!runes) {

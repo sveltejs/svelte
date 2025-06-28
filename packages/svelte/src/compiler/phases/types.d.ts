@@ -101,6 +101,10 @@ export interface ComponentAnalysis extends Analysis {
 	 * Every snippet that is declared locally
 	 */
 	snippets: Set<AST.SnippetBlock>;
+	/**
+	 * An array of any `using` declarations
+	 */
+	disposable: Identifier[];
 }
 
 declare module 'estree' {

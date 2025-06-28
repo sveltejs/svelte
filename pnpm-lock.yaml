@@ -67,13 +67,13 @@ importers:
         version: 1.5.0
       '@sveltejs/acorn-typescript':
         specifier: ^1.0.5
-        version: 1.0.5(acorn@8.14.0)
+        version: 1.0.5(acorn@8.15.0)
       '@types/estree':
         specifier: ^1.0.5
         version: 1.0.6
       acorn:
-        specifier: ^8.12.1
-        version: 8.14.0
+        specifier: ^8.15.0
+        version: 8.15.0
       aria-query:
         specifier: ^5.3.1
         version: 5.3.1
@@ -908,13 +908,13 @@ packages:
     peerDependencies:
       acorn: ^6.0.0 || ^7.0.0 || ^8.0.0
 
-  acorn@8.14.0:
-    resolution: {integrity: sha512-cl669nCJTZBsL97OF4kUQm5g5hC2uihk0NxY3WENAC0TYdILVkAyHymAntgxGkl7K+t0cXIrH5siy5S4XkFycA==}
+  acorn@8.14.1:
+    resolution: {integrity: sha512-OvQ/2pUDKmgfCg++xsTX1wGxfTaszcHVcTctW4UJB4hibJx2HXxxO5UmVgyjMa+ZDsiaf5wWLXYpRWMmBI0QHg==}
     engines: {node: '>=0.4.0'}
     hasBin: true
 
-  acorn@8.14.1:
-    resolution: {integrity: sha512-OvQ/2pUDKmgfCg++xsTX1wGxfTaszcHVcTctW4UJB4hibJx2HXxxO5UmVgyjMa+ZDsiaf5wWLXYpRWMmBI0QHg==}
+  acorn@8.15.0:
+    resolution: {integrity: sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg==}
     engines: {node: '>=0.4.0'}
     hasBin: true
 
@@ -2990,9 +2990,9 @@ snapshots:
       eslint-visitor-keys: 3.4.3
       espree: 9.6.1
 
-  '@sveltejs/acorn-typescript@1.0.5(acorn@8.14.0)':
+  '@sveltejs/acorn-typescript@1.0.5(acorn@8.15.0)':
     dependencies:
-      acorn: 8.14.0
+      acorn: 8.15.0
 
   '@sveltejs/eslint-config@8.1.0(@stylistic/eslint-plugin-js@1.8.0(eslint@9.9.1))(eslint-config-prettier@9.1.0(eslint@9.9.1))(eslint-plugin-n@17.16.1(eslint@9.9.1)(typescript@5.5.4))(eslint-plugin-svelte@2.38.0(eslint@9.9.1)(svelte@packages+svelte))(eslint@9.9.1)(typescript-eslint@8.26.0(eslint@9.9.1)(typescript@5.5.4))(typescript@5.5.4)':
     dependencies:
@@ -3231,17 +3231,13 @@ snapshots:
       loupe: 3.1.3
       tinyrainbow: 1.2.0
 
-  acorn-jsx@5.3.2(acorn@8.14.0):
-    dependencies:
-      acorn: 8.14.0
-
   acorn-jsx@5.3.2(acorn@8.14.1):
     dependencies:
       acorn: 8.14.1
 
-  acorn@8.14.0: {}
-
   acorn@8.14.1: {}
+
+  acorn@8.15.0: {}
 
   agent-base@7.1.1:
     dependencies:
@@ -3606,8 +3602,8 @@ snapshots:
 
   espree@10.1.0:
     dependencies:
-      acorn: 8.14.0
-      acorn-jsx: 5.3.2(acorn@8.14.0)
+      acorn: 8.14.1
+      acorn-jsx: 5.3.2(acorn@8.14.1)
       eslint-visitor-keys: 4.2.0
 
   espree@9.6.1:
@@ -4457,7 +4453,7 @@ snapshots:
   terser@5.27.0:
     dependencies:
       '@jridgewell/source-map': 0.3.6
-      acorn: 8.14.0
+      acorn: 8.15.0
       commander: 2.20.3
       source-map-support: 0.5.21
 

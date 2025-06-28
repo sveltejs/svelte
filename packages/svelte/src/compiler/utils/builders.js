@@ -635,6 +635,35 @@ export function throw_error(str) {
 	};
 }
 
+/**
+ * @param {ESTree.Statement[]} body
+ * @param {ESTree.CatchClause | null} handler
+ * @param {ESTree.Statement[] | null} finalizer
+ * @returns {ESTree.TryStatement}
+ */
+function try_builder(body, handler, finalizer) {
+	return {
+		type: 'TryStatement',
+		block: block(body),
+		handler,
+		finalizer: finalizer && block(finalizer)
+	};
+}
+
+/**
+ *
+ * @param {ESTree.Pattern | null} param
+ * @param {ESTree.Statement[]} body
+ * @returns {ESTree.CatchClause}
+ */
+function catch_clause(param, body) {
+	return {
+		type: 'CatchClause',
+		param,
+		body: block(body)
+	};
+}
+
 export {
 	await_builder as await,
 	let_builder as let,
@@ -648,7 +677,9 @@ export {
 	if_builder as if,
 	this_instance as this,
 	null_instance as null,
-	debugger_builder as debugger
+	debugger_builder as debugger,
+	try_builder as try,
+	catch_clause as catch
 };
 
 /**
