@@ -1,5 +1,5 @@
 /** @import { Expression, Node, Program } from 'estree' */
-/** @import { Binding, AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { Binding, AST, ValidatedCompileOptions, ValidatedModuleCompileOptions, ExpressionMetadata } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 import { walk } from 'zimmerframe';
@@ -21,6 +21,7 @@ import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AttachTag } from './visitors/AttachTag.js';
 import { Attribute } from './visitors/Attribute.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
+import { AwaitExpression } from './visitors/AwaitExpression.js';
 import { BindDirective } from './visitors/BindDirective.js';
 import { CallExpression } from './visitors/CallExpression.js';
 import { ClassBody } from './visitors/ClassBody.js';
@@ -75,6 +76,10 @@ import { UseDirective } from './visitors/UseDirective.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
 import is_reference from 'is-reference';
 import { mark_subtree_dynamic } from './visitors/shared/fragment.js';
+import { is_last_evaluated_expression } from './utils/awaits.js';
+
+/** @type {Array<ExpressionMetadata | null>} */
+const metadata_stack = [];
 
 /**
  * @type {Visitors}
@@ -126,8 +131,22 @@ const visitors = {
 
 		ignore_map.set(node, structuredClone(ignore_stack));
 
+		metadata_stack.push(state.expression);
+
 		const scope = state.scopes.get(node);
 		next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
+
+		metadata_stack.pop();
+
+		// if this node set `state.expression`, now that we've visited it we can determine
+		// which `await` expressions need to be wrapped in `$.save(...)`
+		if (state.expression && metadata_stack[metadata_stack.length - 1] === null) {
+			for (const { path, node } of state.expression.awaits) {
+				if (!is_last_evaluated_expression(path, node)) {
+					state.analysis.context_preserving_awaits.add(node);
+				}
+			}
+		}
 
 		if (ignores.length > 0) {
 			pop_ignore();
@@ -138,6 +157,7 @@ const visitors = {
 	AttachTag,
 	Attribute,
 	AwaitBlock,
+	AwaitExpression,
 	BindDirective,
 	CallExpression,
 	ClassBody,
@@ -209,9 +229,14 @@ function js(script, root, allow_reactive_declarations, parent) {
 		body: []
 	};
 
-	const { scope, scopes } = create_scopes(ast, root, allow_reactive_declarations, parent);
+	const { scope, scopes, has_await } = create_scopes(
+		ast,
+		root,
+		allow_reactive_declarations,
+		parent
+	);
 
-	return { ast, scope, scopes };
+	return { ast, scope, scopes, has_await };
 }
 
 /**
@@ -236,7 +261,7 @@ const RESERVED = ['$$props', '$$restProps', '$$slots'];
  * @returns {Analysis}
  */
 export function analyze_module(ast, options) {
-	const { scope, scopes } = create_scopes(ast, new ScopeRoot(), false, null);
+	const { scope, scopes, has_await } = create_scopes(ast, new ScopeRoot(), false, null);
 
 	for (const [name, references] of scope.references) {
 		if (name[0] !== '$' || RESERVED.includes(name)) continue;
@@ -253,12 +278,14 @@ export function analyze_module(ast, options) {
 
 	/** @type {Analysis} */
 	const analysis = {
-		module: { ast, scope, scopes },
+		module: { ast, scope, scopes, has_await },
 		name: options.filename,
 		accessors: false,
 		runes: true,
 		immutable: true,
 		tracing: false,
+		async_deriveds: new Set(),
+		context_preserving_awaits: new Set(),
 		classes: new Map()
 	};
 
@@ -298,7 +325,12 @@ export function analyze_component(root, source, options) {
 	const module = js(root.module, scope_root, false, null);
 	const instance = js(root.instance, scope_root, true, module.scope);
 
-	const { scope, scopes } = create_scopes(root.fragment, scope_root, false, instance.scope);
+	const { scope, scopes, has_await } = create_scopes(
+		root.fragment,
+		scope_root,
+		false,
+		instance.scope
+	);
 
 	/** @type {Template} */
 	const template = { ast: root.fragment, scope, scopes };
@@ -406,7 +438,9 @@ export function analyze_component(root, source, options) {
 
 	const component_name = get_component_name(options.filename);
 
-	const runes = options.runes ?? Array.from(module.scope.references.keys()).some(is_rune);
+	const runes =
+		options.runes ??
+		(has_await || instance.has_await || Array.from(module.scope.references.keys()).some(is_rune));
 
 	if (!runes) {
 		for (let check of synthetic_stores_legacy_check) {
@@ -495,7 +529,9 @@ export function analyze_component(root, source, options) {
 		source,
 		undefined_exports: new Map(),
 		snippet_renderers: new Map(),
-		snippets: new Set()
+		snippets: new Set(),
+		async_deriveds: new Set(),
+		context_preserving_awaits: new Set()
 	};
 
 	if (!runes) {

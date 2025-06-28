@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression, Pattern } from 'estree' */
+/** @import { AssignmentExpression, Expression, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression } from 'estree' */
 /** @import { AST, ExpressionMetadata } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext, Context } from '../../types' */
 import { walk } from 'zimmerframe';
@@ -8,25 +8,53 @@ import { sanitize_template_string } from '../../../../../utils/sanitize_template
 import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator } from '../../../../../state.js';
-import { build_getter, create_derived } from '../../utils.js';
+import { build_getter } from '../../utils.js';
 
-/**
- * @param {ComponentClientTransformState} state
- * @param {Expression} value
- */
-export function memoize_expression(state, value) {
-	const id = b.id(state.scope.generate('expression'));
-	state.init.push(b.const(id, create_derived(state, b.thunk(value))));
-	return b.call('$.get', id);
-}
+export class Memoizer {
+	/** @type {Array<{ id: Identifier, expression: Expression }>} */
+	#sync = [];
 
-/**
- * Pushes `value` into `expressions` and returns a new id
- * @param {Expression[]} expressions
- * @param {Expression} value
- */
-export function get_expression_id(expressions, value) {
-	return b.id(`$${expressions.push(value) - 1}`);
+	/** @type {Array<{ id: Identifier, expression: Expression }>} */
+	#async = [];
+
+	/**
+	 * @param {Expression} expression
+	 * @param {boolean} has_await
+	 */
+	add(expression, has_await) {
+		const id = b.id('#'); // filled in later
+
+		(has_await ? this.#async : this.#sync).push({ id, expression });
+
+		return id;
+	}
+
+	apply() {
+		return [...this.#async, ...this.#sync].map((memo, i) => {
+			memo.id.name = `$${i}`;
+			return memo.id;
+		});
+	}
+
+	deriveds(runes = true) {
+		return this.#sync.map((memo) =>
+			b.let(memo.id, b.call(runes ? '$.derived' : '$.derived_safe_equal', b.thunk(memo.expression)))
+		);
+	}
+
+	async_ids() {
+		return this.#async.map((memo) => memo.id);
+	}
+
+	async_values() {
+		if (this.#async.length === 0) return;
+		return b.array(this.#async.map((memo) => b.thunk(memo.expression, true)));
+	}
+
+	sync_values() {
+		if (this.#sync.length === 0) return;
+		return b.array(this.#sync.map((memo) => b.thunk(memo.expression)));
+	}
 }
 
 /**
@@ -41,7 +69,7 @@ export function build_template_chunk(
 	context,
 	state = context.state,
 	memoize = (value, metadata) =>
-		metadata.has_call ? get_expression_id(state.expressions, value) : value
+		metadata.has_call || metadata.has_await ? state.memoizer.add(value, metadata.has_await) : value
 ) {
 	/** @type {Expression[]} */
 	const expressions = [];
@@ -50,6 +78,7 @@ export function build_template_chunk(
 	const quasis = [quasi];
 
 	let has_state = false;
+	let has_await = false;
 
 	for (let i = 0; i < values.length; i++) {
 		const node = values[i];
@@ -72,7 +101,8 @@ export function build_template_chunk(
 
 			const evaluated = state.scope.evaluate(value);
 
-			has_state ||= node.metadata.expression.has_state && !evaluated.is_known;
+			has_await ||= node.metadata.expression.has_await;
+			has_state ||= has_await || (node.metadata.expression.has_state && !evaluated.is_known);
 
 			if (values.length === 1) {
 				// If we have a single expression, then pass that in directly to possibly avoid doing
@@ -128,18 +158,21 @@ export function build_template_chunk(
  * @param {ComponentClientTransformState} state
  */
 export function build_render_statement(state) {
+	const { memoizer } = state;
+
+	const ids = state.memoizer.apply();
+
 	return b.stmt(
 		b.call(
 			'$.template_effect',
 			b.arrow(
-				state.expressions.map((_, i) => b.id(`$${i}`)),
+				ids,
 				state.update.length === 1 && state.update[0].type === 'ExpressionStatement'
 					? state.update[0].expression
 					: b.block(state.update)
 			),
-			state.expressions.length > 0 &&
-				b.array(state.expressions.map((expression) => b.thunk(expression))),
-			state.expressions.length > 0 && !state.analysis.runes && b.id('$.derived_safe_equal')
+			memoizer.sync_values(),
+			memoizer.async_values()
 		)
 	);
 }

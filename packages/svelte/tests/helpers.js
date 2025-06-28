@@ -86,7 +86,8 @@ export async function compile_directory(
 				const compiled = compileModule(text, {
 					filename: opts.filename,
 					generate: opts.generate,
-					dev: opts.dev
+					dev: opts.dev,
+					experimental: opts.experimental
 				});
 				write(out, compiled.js.code.replace(`v${VERSION}`, 'VERSION'));
 			} else {
@@ -192,6 +193,8 @@ if (typeof window !== 'undefined') {
 }
 
 export const fragments = /** @type {'html' | 'tree'} */ (process.env.FRAGMENTS) ?? 'html';
+
+export const async_mode = process.env.SVELTE_NO_ASYNC !== 'true';
 
 /**
  * @param {any[]} logs

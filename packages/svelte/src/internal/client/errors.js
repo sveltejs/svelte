@@ -183,6 +183,21 @@ export function effect_update_depth_exceeded() {
 }
 
 /**
+ * Cannot use `flushSync` inside an effect
+ * @returns {never}
+ */
+export function flush_sync_in_effect() {
+	if (DEV) {
+		const error = new Error(`flush_sync_in_effect\nCannot use \`flushSync\` inside an effect\nhttps://svelte.dev/e/flush_sync_in_effect`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/flush_sync_in_effect`);
+	}
+}
+
+/**
  * Failed to hydrate the application
  * @returns {never}
  */
@@ -273,6 +288,21 @@ export function rune_outside_svelte(rune) {
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/rune_outside_svelte`);
+	}
+}
+
+/**
+ * `setContext` must be called when a component first initializes, not in a subsequent effect or after an `await` expression
+ * @returns {never}
+ */
+export function set_context_after_init() {
+	if (DEV) {
+		const error = new Error(`set_context_after_init\n\`setContext\` must be called when a component first initializes, not in a subsequent effect or after an \`await\` expression\nhttps://svelte.dev/e/set_context_after_init`);
+
+		error.name = 'Svelte error';
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/set_context_after_init`);
 	}
 }
 
