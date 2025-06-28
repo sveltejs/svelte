@@ -1,4 +1,4 @@
-/** @import { ComponentContext } from '#client' */
+/** @import { ComponentContext, DevStackEntry } from '#client' */
 
 import { DEV } from 'esm-env';
 import { lifecycle_outside_component } from '../shared/errors.js';
@@ -18,6 +18,44 @@ export let component_context = null;
 /** @param {ComponentContext | null} context */
 export function set_component_context(context) {
 	component_context = context;
+}
+
+/** @type {DevStackEntry | null} */
+export let dev_stack = null;
+
+/** @param {DevStackEntry | null} stack */
+export function set_dev_stack(stack) {
+	dev_stack = stack;
+}
+
+/**
+ * Execute a callback with a new dev stack entry
+ * @param {() => any} callback - Function to execute
+ * @param {DevStackEntry['type']} type - Type of block/component
+ * @param {string} file - Source file
+ * @param {number} line - Line number
+ * @param {number} column - Column number
+ * @param {Record<string, any>} [additional] - Any additional properties to add to the dev stack entry
+ * @returns {any}
+ */
+export function with_dev_stack(callback, type, file, line, column, additional) {
+	/** @type {DevStackEntry} */
+	const new_entry = {
+		type,
+		file,
+		line,
+		column,
+		parent: dev_stack,
+		...additional
+	};
+	const previous_stack = dev_stack;
+	dev_stack = new_entry;
+
+	try {
+		return callback();
+	} finally {
+		dev_stack = previous_stack;
+	}
 }
 
 /**

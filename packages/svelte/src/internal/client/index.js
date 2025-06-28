@@ -1,6 +1,6 @@
 export { createAttachmentKey as attachment } from '../../attachments/index.js';
 export { FILENAME, HMR, NAMESPACE_SVG } from '../../constants.js';
-export { push, pop } from './context.js';
+export { push, pop, with_dev_stack } from './context.js';
 export { assign, assign_and, assign_or, assign_nullish } from './dev/assign.js';
 export { cleanup_styles } from './dev/css.js';
 export { add_locations } from './dev/elements.js';

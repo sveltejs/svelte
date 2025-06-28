@@ -5,7 +5,9 @@ import { EFFECT_TRANSPARENT, ELEMENT_NODE } from '#client/constants';
 import { branch, block, destroy_effect, teardown } from '../../reactivity/effects.js';
 import {
 	dev_current_component_function,
-	set_dev_current_component_function
+	dev_stack,
+	set_dev_current_component_function,
+	set_dev_stack
 } from '../../context.js';
 import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
 import { create_fragment_from_html } from '../reconciler.js';
@@ -61,14 +63,18 @@ export function snippet(node, get_snippet, ...args) {
  * @param {(node: TemplateNode, ...args: any[]) => void} fn
  */
 export function wrap_snippet(component, fn) {
+	var original_stack = dev_stack;
 	const snippet = (/** @type {TemplateNode} */ node, /** @type {any[]} */ ...args) => {
 		var previous_component_function = dev_current_component_function;
+		var previous_stack = dev_stack;
 		set_dev_current_component_function(component);
+		set_dev_stack(original_stack);
 
 		try {
 			return fn(node, ...args);
 		} finally {
 			set_dev_current_component_function(previous_component_function);
+			set_dev_stack(previous_stack);
 		}
 	};
 

@@ -18,7 +18,7 @@ import {
 import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
 import { active_effect } from '../../runtime.js';
-import { component_context } from '../../context.js';
+import { component_context, dev_stack } from '../../context.js';
 import { DEV } from 'esm-env';
 import { EFFECT_TRANSPARENT, ELEMENT_NODE } from '#client/constants';
 import { assign_nodes } from '../template.js';
@@ -107,6 +107,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				if (DEV && location) {
 					// @ts-expect-error
 					element.__svelte_meta = {
+						parent: dev_stack,
 						loc: {
 							file: filename,
 							line: location[0],

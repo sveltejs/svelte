@@ -2,6 +2,7 @@
 import { COMMENT_NODE, DOCUMENT_FRAGMENT_NODE, ELEMENT_NODE } from '#client/constants';
 import { HYDRATION_END, HYDRATION_START, HYDRATION_START_ELSE } from '../../../constants.js';
 import { hydrating } from '../dom/hydration.js';
+import { dev_stack } from '../context.js';
 
 /**
  * @param {any} fn
@@ -28,6 +29,7 @@ export function add_locations(fn, filename, locations) {
 function assign_location(element, filename, location) {
 	// @ts-expect-error
 	element.__svelte_meta = {
+		parent: dev_stack,
 		loc: { file: filename, line: location[0], column: location[1] }
 	};
 
