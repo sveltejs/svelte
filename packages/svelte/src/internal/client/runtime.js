@@ -325,7 +325,12 @@ export function update_reaction(reaction) {
 				reaction.deps = deps = new_deps;
 			}
 
-			if (!skip_reaction) {
+			if (
+				!skip_reaction ||
+				// Deriveds that already have reactions can cleanup, so we still add them as reactions
+				((flags & DERIVED) !== 0 &&
+					/** @type {import('#client').Derived} */ (reaction).reactions !== null)
+			) {
 				for (i = skipped_deps; i < deps.length; i++) {
 					(deps[i].reactions ??= []).push(reaction);
 				}
