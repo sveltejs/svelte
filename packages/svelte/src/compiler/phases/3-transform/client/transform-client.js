@@ -362,6 +362,9 @@ export function client_component(analysis, options) {
 		.../** @type {ESTree.Statement[]} */ (template.body)
 	]);
 
+	// trick esrap into including comments
+	component_block.loc = instance.loc;
+
 	if (!analysis.runes) {
 		// Bind static exports to props so that people can access them with bind:x
 		for (const { name, alias } of analysis.exports) {

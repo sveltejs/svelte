@@ -451,6 +451,7 @@ export function convert(source, ast) {
 			SpreadAttribute(node) {
 				return { ...node, type: 'Spread' };
 			},
+			// @ts-ignore
 			StyleSheet(node, context) {
 				return {
 					...node,

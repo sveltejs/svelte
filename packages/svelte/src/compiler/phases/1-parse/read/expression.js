@@ -34,12 +34,24 @@ export function get_loose_identifier(parser, opening_token) {
  */
 export default function read_expression(parser, opening_token, disallow_loose) {
 	try {
-		const node = parse_expression_at(parser.template, parser.ts, parser.index);
+		let comment_index = parser.root.comments.length;
+
+		const node = parse_expression_at(
+			parser.template,
+			parser.root.comments,
+			parser.ts,
+			parser.index
+		);
 
 		let num_parens = 0;
 
-		if (node.leadingComments !== undefined && node.leadingComments.length > 0) {
-			parser.index = node.leadingComments.at(-1).end;
+		let i = parser.root.comments.length;
+		while (i-- > comment_index) {
+			const comment = parser.root.comments[i];
+			if (comment.end < node.start) {
+				parser.index = comment.end;
+				break;
+			}
 		}
 
 		for (let i = parser.index; i < /** @type {number} */ (node.start); i += 1) {
@@ -47,9 +59,9 @@ export default function read_expression(parser, opening_token, disallow_loose) {
 		}
 
 		let index = /** @type {number} */ (node.end);
-		if (node.trailingComments !== undefined && node.trailingComments.length > 0) {
-			index = node.trailingComments.at(-1).end;
-		}
+
+		const last_comment = parser.root.comments.at(-1);
+		if (last_comment && last_comment.end > index) index = last_comment.end;
 
 		while (num_parens > 0) {
 			const char = parser.template[index];

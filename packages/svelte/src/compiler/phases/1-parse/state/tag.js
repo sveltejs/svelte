@@ -398,7 +398,12 @@ function open(parser) {
 
 		let function_expression = matched
 			? /** @type {ArrowFunctionExpression} */ (
-					parse_expression_at(prelude + `${params} => {}`, parser.ts, params_start)
+					parse_expression_at(
+						prelude + `${params} => {}`,
+						parser.root.comments,
+						parser.ts,
+						params_start
+					)
 				)
 			: { params: [] };
 
