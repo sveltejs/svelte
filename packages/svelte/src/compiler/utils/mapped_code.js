@@ -398,10 +398,13 @@ export function merge_with_preprocessor_map(result, options, source_name) {
 		// map may contain a different file name. Patch our map beforehand to align sources so merging
 		// with the preprocessor map works correctly.
 		result.map.sources = [file_basename];
-		result.map = apply_preprocessor_sourcemap(
-			file_basename,
+		Object.assign(
 			result.map,
-			/** @type {any} */ (options.sourcemap)
+			apply_preprocessor_sourcemap(
+				file_basename,
+				result.map,
+				/** @type {any} */ (options.sourcemap)
+			)
 		);
 		// After applying the preprocessor map, we need to do the inverse and make the sources
 		// relative to the input file again in case the output code is in a different directory.
