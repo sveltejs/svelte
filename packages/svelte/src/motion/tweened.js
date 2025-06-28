@@ -6,7 +6,7 @@ import { raf } from '../internal/client/timing.js';
 import { loop } from '../internal/client/loop.js';
 import { linear } from '../easing/index.js';
 import { is_date } from './utils.js';
-import { set, source } from '../internal/client/reactivity/sources.js';
+import { set, state } from '../internal/client/reactivity/sources.js';
 import { tag } from '../internal/client/dev/tracing.js';
 import { get, render_effect } from 'svelte/internal/client';
 import { DEV } from 'esm-env';
@@ -191,8 +191,8 @@ export class Tween {
 	 * @param {TweenedOptions<T>} options
 	 */
 	constructor(value, options = {}) {
-		this.#current = source(value);
-		this.#target = source(value);
+		this.#current = state(value);
+		this.#target = state(value);
 		this.#defaults = options;
 
 		if (DEV) {
