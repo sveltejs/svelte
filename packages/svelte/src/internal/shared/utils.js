@@ -116,3 +116,25 @@ export function to_array(value, n) {
 
 	return array;
 }
+
+/**
+ *
+ * @param {Record<string|symbol, any>} obj
+ * @param {(string | symbol)[]} path
+ * @param {(current: Record<string|symbol, any>, key:string|symbol)=>void} [on_undefined]
+ * @returns
+ */
+export function access_path_on_object(obj, path, on_undefined) {
+	if (obj == null) return undefined;
+
+	let current = obj;
+	for (const key of path) {
+		if (current == null) return undefined;
+		if (current[key] == null && on_undefined) {
+			on_undefined(current, key);
+		}
+		current = /** @type {*} */ (current)[key];
+	}
+
+	return current;
+}
