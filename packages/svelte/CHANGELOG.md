@@ -1,5 +1,11 @@
 # svelte
 
+## 5.34.9
+
+### Patch Changes
+
+- fix: ensure unowned deriveds can add themselves as reactions while connected ([#16249](https://github.com/sveltejs/svelte/pull/16249))
+
 ## 5.34.8
 
 ### Patch Changes
