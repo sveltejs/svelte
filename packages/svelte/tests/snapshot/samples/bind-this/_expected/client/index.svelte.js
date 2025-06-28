@@ -3,5 +3,5 @@ import 'svelte/internal/flags/legacy';
 import * as $ from 'svelte/internal/client';
 
 export default function Bind_this($$anchor) {
-	$.bind_this(Foo($$anchor, { $$legacy: true }), ($$value) => foo = $$value, () => foo);
+	$.bind_this(Foo($$anchor, $.props({ $$legacy: true })), ($$value) => foo = $$value, () => foo);
 }

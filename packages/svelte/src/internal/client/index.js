@@ -114,7 +114,7 @@ export {
 	prop,
 	rest_props,
 	legacy_rest_props,
-	spread_props,
+	props,
 	update_pre_prop,
 	update_prop
 } from './reactivity/props.js';
