@@ -1,8 +1,8 @@
 /** @import { Effect, TemplateNode, } from '#client' */
 
-import { BOUNDARY_EFFECT, EFFECT_TRANSPARENT } from '#client/constants';
+import { BOUNDARY_EFFECT, EFFECT_RAN, EFFECT_TRANSPARENT } from '#client/constants';
 import { component_context, set_component_context } from '../../context.js';
-import { invoke_error_boundary } from '../../error-handling.js';
+import { handle_error, invoke_error_boundary } from '../../error-handling.js';
 import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
 import {
 	active_effect,
@@ -19,6 +19,8 @@ import {
 	set_hydrate_node
 } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
+import * as w from '../../warnings.js';
+import * as e from '../../errors.js';
 
 /**
  * @param {Effect} boundary
@@ -35,6 +37,8 @@ function with_boundary(boundary, fn) {
 
 	try {
 		fn();
+	} catch (e) {
+		handle_error(e);
 	} finally {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
@@ -73,7 +77,29 @@ export function boundary(node, props, boundary_fn) {
 				throw error;
 			}
 
+			if (boundary_effect) {
+				destroy_effect(boundary_effect);
+			} else if (hydrating) {
+				set_hydrate_node(hydrate_open);
+				next();
+				set_hydrate_node(remove_nodes());
+			}
+
+			var did_reset = false;
+			var calling_on_error = false;
+
 			var reset = () => {
+				if (did_reset) {
+					w.svelte_boundary_reset_noop();
+					return;
+				}
+
+				did_reset = true;
+
+				if (calling_on_error) {
+					e.svelte_boundary_reset_onerror();
+				}
+
 				pause_effect(boundary_effect);
 
 				with_boundary(boundary, () => {
@@ -86,17 +112,17 @@ export function boundary(node, props, boundary_fn) {
 
 			try {
 				set_active_reaction(null);
+				calling_on_error = true;
 				onerror?.(error, reset);
+				calling_on_error = false;
+			} catch (error) {
+				if ((boundary.f & EFFECT_RAN) !== 0) {
+					invoke_error_boundary(error, /** @type {Effect} */ (boundary.parent));
+				} else {
+					throw error;
+				}
 			} finally {
 				set_active_reaction(previous_reaction);
-			}
-
-			if (boundary_effect) {
-				destroy_effect(boundary_effect);
-			} else if (hydrating) {
-				set_hydrate_node(hydrate_open);
-				next();
-				set_hydrate_node(remove_nodes());
 			}
 
 			if (failed) {

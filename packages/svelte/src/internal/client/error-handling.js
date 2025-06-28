@@ -42,7 +42,13 @@ export function invoke_error_boundary(error, effect) {
 				// @ts-expect-error
 				effect.fn(error);
 				return;
-			} catch {}
+			} catch (e) {
+				if (DEV && e instanceof Error) {
+					adjust_error(e, effect);
+				}
+
+				error = e;
+			}
 		}
 
 		effect = effect.parent;
