@@ -185,8 +185,12 @@ export function update_derived(derived) {
 		// that also happens before user_effect teardown.
 		//
 		// store old value only if not inside a teardown function
-		// because in legacy mode, bindable props are deriveds
-		// and they are executed during teardown.
+		// because we only need to save the old values before
+		// the cleanup is triggered othewise accessing
+		// a derived during cleanup will return the incorrect
+		// value in case the derived wasn't in the deps of the effect,
+		// or the teardown was executed because the component was
+		// destroyed.
 		if (!is_destroying_effect) {
 			var old_value = derived.v;
 			old_values.set(derived, old_value);
