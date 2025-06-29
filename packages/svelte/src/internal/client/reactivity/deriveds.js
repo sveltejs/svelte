@@ -15,7 +15,7 @@ import {
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import { destroy_effect } from './effects.js';
-import { inspect_effects, set_inspect_effects } from './sources.js';
+import { inspect_effects, old_values, set_inspect_effects } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
@@ -175,6 +175,23 @@ export function update_derived(derived) {
 	var value = execute_derived(derived);
 
 	if (!derived.equals(value)) {
+		// store old value before updating
+		// so that user_effect teardown functions
+		// can access the previous value.
+		// this is needed because derived updates happen early during
+		// effects dependency resolution (before cleanup),
+		// unlike direct state/derived updates, and this
+		// can happen also during template_effect execution
+		// that also happens before user_effect teardown.
+		//
+		// store old value only if not inside a teardown function
+		// because in legacy mode, bindable props are deriveds
+		// and they are executed during teardown.
+		if (!is_destroying_effect) {
+			var old_value = derived.v;
+			old_values.set(derived, old_value);
+		}
+
 		derived.v = value;
 		derived.wv = increment_write_version();
 	}
