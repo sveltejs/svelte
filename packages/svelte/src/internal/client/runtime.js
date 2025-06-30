@@ -306,11 +306,6 @@ export function update_reaction(reaction) {
 		reaction.ac = null;
 	}
 
-	if (reaction.ac !== null) {
-		reaction.ac.abort(STALE_REACTION);
-		reaction.ac = null;
-	}
-
 	try {
 		reaction.f |= REACTION_IS_UPDATING;
 		var result = /** @type {Function} */ (0, reaction.fn)();
