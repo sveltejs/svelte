@@ -39,8 +39,6 @@ export function is_last_evaluated_expression(path, node) {
 	while (i--) {
 		const parent = /** @type {Expression | Property | SpreadElement} */ (path[i]);
 
-		console.log(parent.start, parent.type);
-
 		// @ts-expect-error we could probably use a neater/more robust mechanism
 		if (parent.metadata) {
 			return true;
