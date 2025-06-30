@@ -3,7 +3,6 @@
 /** @import { AST } from './public.js' */
 import { walk as zimmerframe_walk } from 'zimmerframe';
 import { convert } from './legacy.js';
-import { parse as parse_acorn } from './phases/1-parse/acorn.js';
 import { parse as _parse } from './phases/1-parse/index.js';
 import { remove_typescript_nodes } from './phases/1-parse/remove_typescript_nodes.js';
 import { analyze_component, analyze_module } from './phases/2-analyze/index.js';

@@ -22,13 +22,7 @@ import {
 	build_set_style
 } from './shared/element.js';
 import { process_children } from './shared/fragment.js';
-import {
-	build_render_statement,
-	build_template_chunk,
-	build_update_assignment,
-	get_expression_id,
-	memoize_expression
-} from './shared/utils.js';
+import { build_render_statement, build_template_chunk, get_expression_id } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
 
 /**
@@ -200,16 +194,16 @@ export function RegularElement(node, context) {
 
 	const node_id = context.state.node;
 
+	/** If true, needs `__value` for inputs */
+	const needs_special_value_handling =
+		node.name === 'option' ||
+		node.name === 'select' ||
+		bindings.has('group') ||
+		bindings.has('checked');
+
 	if (has_spread) {
 		build_attribute_effect(attributes, class_directives, style_directives, context, node, node_id);
 	} else {
-		/** If true, needs `__value` for inputs */
-		const needs_special_value_handling =
-			node.name === 'option' ||
-			node.name === 'select' ||
-			bindings.has('group') ||
-			bindings.has('checked');
-
 		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
 			if (is_event_attribute(attribute)) {
 				visit_event_attribute(attribute, context);
@@ -217,7 +211,6 @@ export function RegularElement(node, context) {
 			}
 
 			if (needs_special_value_handling && attribute.name === 'value') {
-				build_element_special_value_attribute(node.name, node_id, attribute, context);
 				continue;
 			}
 
@@ -390,6 +383,15 @@ export function RegularElement(node, context) {
 		// does not update the direction when set to auto. If we just re-assign the dir, this fixes it.
 		const dir = b.member(node_id, 'dir');
 		context.state.update.push(b.stmt(b.assignment('=', dir, dir)));
+	}
+
+	if (!has_spread && needs_special_value_handling) {
+		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
+			if (attribute.name === 'value') {
+				build_element_special_value_attribute(node.name, node_id, attribute, context);
+				break;
+			}
+		}
 	}
 
 	context.state.template.pop_element();
@@ -622,12 +624,7 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 		element === 'select' && attribute.value !== true && !is_text_attribute(attribute);
 
 	const { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call
-			? // if is a select with value we will also invoke `init_select` which need a reference before the template effect so we memoize separately
-				is_select_with_value
-				? memoize_expression(state, value)
-				: get_expression_id(state.expressions, value)
-			: value
+		metadata.has_call ? get_expression_id(state.expressions, value) : value
 	);
 
 	const evaluated = context.state.scope.evaluate(value);
@@ -652,23 +649,21 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 			: inner_assignment
 	);
 
-	if (is_select_with_value) {
-		state.init.push(b.stmt(b.call('$.init_select', node_id, b.thunk(value))));
-	}
-
 	if (has_state) {
-		const id = state.scope.generate(`${node_id.name}_value`);
-		build_update_assignment(
-			state,
-			id,
-			// `<option>` is a special case: The value property reflects to the DOM. If the value is set to undefined,
-			// that means the value should be set to the empty string. To be able to do that when the value is
-			// initially undefined, we need to set a value that is guaranteed to be different.
-			element === 'option' ? b.object([]) : undefined,
-			value,
-			update
-		);
+		const id = b.id(state.scope.generate(`${node_id.name}_value`));
+
+		// `<option>` is a special case: The value property reflects to the DOM. If the value is set to undefined,
+		// that means the value should be set to the empty string. To be able to do that when the value is
+		// initially undefined, we need to set a value that is guaranteed to be different.
+		const init = element === 'option' ? b.object([]) : undefined;
+
+		state.init.push(b.var(id, init));
+		state.update.push(b.if(b.binary('!==', id, b.assignment('=', id, value)), b.block([update])));
 	} else {
 		state.init.push(update);
+	}
+
+	if (is_select_with_value) {
+		state.init.push(b.stmt(b.call('$.init_select', node_id)));
 	}
 }
