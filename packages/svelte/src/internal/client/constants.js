@@ -27,7 +27,8 @@ export const LEGACY_PROPS = Symbol('legacy props');
 export const LOADING_ATTR_SYMBOL = Symbol('');
 export const PROXY_PATH_SYMBOL = Symbol('proxy path');
 
-export const STALE_REACTION = Symbol('stale reaction');
+// allow users to ignore aborted signal errors if `reason.stale`
+export const STALE_REACTION = { stale: true };
 
 export const ELEMENT_NODE = 1;
 export const TEXT_NODE = 3;
