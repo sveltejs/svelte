@@ -69,7 +69,7 @@ if (DEV) {
  */
 export function getAbortSignal() {
 	if (active_reaction === null) {
-		throw new Error('TODO getAbortSignal can only be called inside a reaction');
+		e.get_abort_signal_outside_reaction();
 	}
 
 	return (active_reaction.ac ??= new AbortController()).signal;
