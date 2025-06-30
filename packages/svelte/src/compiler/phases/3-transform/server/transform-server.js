@@ -244,6 +244,9 @@ export function server_component(analysis, options) {
 		.../** @type {Statement[]} */ (template.body)
 	]);
 
+	// trick esrap into including comments
+	component_block.loc = instance.loc;
+
 	if (analysis.props_id) {
 		// need to be placed on first line of the component for hydration
 		component_block.body.unshift(

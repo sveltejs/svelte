@@ -3,6 +3,7 @@
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 import { walk } from 'zimmerframe';
+import { parse } from '../1-parse/acorn.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { extract_identifiers } from '../../utils/ast.js';
@@ -256,11 +257,16 @@ function get_component_name(filename) {
 const RESERVED = ['$$props', '$$restProps', '$$slots'];
 
 /**
- * @param {Program} ast
+ * @param {string} source
  * @param {ValidatedModuleCompileOptions} options
  * @returns {Analysis}
  */
-export function analyze_module(ast, options) {
+export function analyze_module(source, options) {
+	/** @type {AST.JSComment[]} */
+	const comments = [];
+
+	const ast = parse(source, comments, false, false);
+
 	const { scope, scopes, has_await } = create_scopes(ast, new ScopeRoot(), false, null);
 
 	for (const [name, references] of scope.references) {
@@ -286,6 +292,7 @@ export function analyze_module(ast, options) {
 		tracing: false,
 		async_deriveds: new Set(),
 		context_preserving_awaits: new Set(),
+		comments,
 		classes: new Map()
 	};
 
@@ -463,6 +470,7 @@ export function analyze_component(root, source, options) {
 		module,
 		instance,
 		template,
+		comments: root.comments,
 		elements: [],
 		runes,
 		// if we are not in runes mode but we have no reserved references ($$props, $$restProps)

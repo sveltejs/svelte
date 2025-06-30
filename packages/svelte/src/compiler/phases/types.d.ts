@@ -3,6 +3,7 @@ import type {
 	AwaitExpression,
 	CallExpression,
 	ClassBody,
+	Comment,
 	Identifier,
 	LabeledStatement,
 	Node,
@@ -37,6 +38,7 @@ export interface Analysis {
 	runes: boolean;
 	immutable: boolean;
 	tracing: boolean;
+	comments: AST.JSComment[];
 
 	classes: Map<ClassBody, Map<string, StateField>>;
 

@@ -26,6 +26,7 @@ export function invalid_default_snippet() {
 		const error = new Error(`invalid_default_snippet\nCannot use \`{@render children(...)}\` if the parent component uses \`let:\` directives. Consider using a named snippet instead\nhttps://svelte.dev/e/invalid_default_snippet`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/invalid_default_snippet`);
@@ -41,6 +42,7 @@ export function invalid_snippet_arguments() {
 		const error = new Error(`invalid_snippet_arguments\nA snippet function was passed invalid arguments. Snippets should only be instantiated via \`{@render ...}\`\nhttps://svelte.dev/e/invalid_snippet_arguments`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/invalid_snippet_arguments`);
@@ -57,6 +59,7 @@ export function lifecycle_outside_component(name) {
 		const error = new Error(`lifecycle_outside_component\n\`${name}(...)\` can only be used during component initialisation\nhttps://svelte.dev/e/lifecycle_outside_component`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/lifecycle_outside_component`);
@@ -72,6 +75,7 @@ export function snippet_without_render_tag() {
 		const error = new Error(`snippet_without_render_tag\nAttempted to render a snippet without a \`{@render}\` block. This would cause the snippet code to be stringified instead of its content being rendered to the DOM. To fix this, change \`{snippet}\` to \`{@render snippet()}\`.\nhttps://svelte.dev/e/snippet_without_render_tag`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/snippet_without_render_tag`);
@@ -88,6 +92,7 @@ export function store_invalid_shape(name) {
 		const error = new Error(`store_invalid_shape\n\`${name}\` is not a store with a \`subscribe\` method\nhttps://svelte.dev/e/store_invalid_shape`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/store_invalid_shape`);
@@ -103,6 +108,7 @@ export function svelte_element_invalid_this_value() {
 		const error = new Error(`svelte_element_invalid_this_value\nThe \`this\` prop on \`<svelte:element>\` must be a string, if defined\nhttps://svelte.dev/e/svelte_element_invalid_this_value`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/svelte_element_invalid_this_value`);
