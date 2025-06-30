@@ -25,7 +25,7 @@ export function is_last_evaluated_expression(path, node) {
 			case 'AssignmentExpression':
 			case 'BinaryExpression':
 			case 'LogicalExpression':
-				if (node === parent.left) return false; // TODO is this right for assignment expressions?
+				if (node === parent.left) return false;
 				break;
 
 			case 'CallExpression':
