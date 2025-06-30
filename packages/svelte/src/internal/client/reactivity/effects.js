@@ -107,7 +107,8 @@ function create_effect(type, fn, sync, push = true) {
 		prev: null,
 		teardown: null,
 		transitions: null,
-		wv: 0
+		wv: 0,
+		ac: null
 	};
 
 	if (DEV) {
