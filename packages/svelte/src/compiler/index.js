@@ -96,6 +96,7 @@ export function compileModule(source, options) {
  * @returns {Record<string, any>}
  */
 
+// TODO 6.0 remove unused `filename`
 /**
  * The parse function parses a component, returning only its abstract syntax tree.
  *
@@ -104,14 +105,15 @@ export function compileModule(source, options) {
  *
  * The `loose` option, available since 5.13.0, tries to always return an AST even if the input will not successfully compile.
  *
+ * The `filename` option is unused and will be removed in Svelte 6.0.
+ *
  * @param {string} source
  * @param {{ filename?: string; rootDir?: string; modern?: boolean; loose?: boolean }} [options]
  * @returns {AST.Root | LegacyRoot}
  */
-export function parse(source, { filename, rootDir, modern, loose } = {}) {
+export function parse(source, { modern, loose } = {}) {
 	source = remove_bom(source);
 	state.reset_warning_filter(() => false);
-	state.reset(source, { filename: filename ?? '(unknown)', rootDir });
 
 	const ast = _parse(source, loose);
 	return to_public_ast(source, ast, modern);

@@ -30,6 +30,12 @@ export let dev;
 
 export let locator = getLocator('', { offsetLine: 1 });
 
+/** @param {string} value */
+export function set_source(value) {
+	source = value;
+	locator = getLocator(source, { offsetLine: 1 });
+}
+
 /**
  * @param {AST.SvelteNode & { start?: number | undefined }} node
  */
@@ -100,7 +106,7 @@ export function reset(_source, options) {
 		filename = filename.replace(root_dir, '').replace(/^[/\\]/, '');
 	}
 
-	locator = getLocator(source, { offsetLine: 1 });
+	set_source(source);
 	warnings = [];
 	ignore_stack = [];
 	ignore_map.clear();
