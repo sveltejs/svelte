@@ -278,7 +278,7 @@ export function update_reaction(reaction) {
 	reaction.f |= EFFECT_IS_UPDATING;
 
 	if (reaction.ac !== null) {
-		reaction.ac?.abort(STALE_REACTION);
+		reaction.ac.abort(STALE_REACTION);
 		reaction.ac = null;
 	}
 
