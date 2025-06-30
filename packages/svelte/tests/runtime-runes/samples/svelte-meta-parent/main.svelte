@@ -1,7 +1,7 @@
 <script>
 	import Child from "./child.svelte";
 	import Passthrough from "./passthrough.svelte";
-
+	let x = { y: Child }
 	let key = 'test';
 </script>
 
@@ -30,3 +30,5 @@
 <Passthrough>
 	<Child />
 </Passthrough>
+
+<x.y />

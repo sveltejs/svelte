@@ -6,12 +6,11 @@ export default test({
 	compileOptions: {
 		dev: true
 	},
-
-	html: `<p>no parent</p><p>if</p><p>each</p><p>loading</p><p>key</p><p>hi</p><p>hi</p>`,
+	html: `<p>no parent</p><p>if</p><p>each</p><p>loading</p><p>key</p><p>hi</p><p>hi</p><p>hi</p>`,
 
 	async test({ target, assert }) {
 		await tick();
-		const [main, if_, each, await_, key, child1, child2] = target.querySelectorAll('p');
+		const [main, if_, each, await_, key, child1, child2, child3] = target.querySelectorAll('p');
 
 		// @ts-expect-error
 		assert.deepEqual(main.__svelte_meta.parent, null);
@@ -77,6 +76,16 @@ export default test({
 				column: 0,
 				parent: null
 			}
+		});
+
+		// @ts-expect-error
+		assert.deepEqual(child3.__svelte_meta.parent, {
+			file: 'main.svelte',
+			type: 'component',
+			componentTag: 'x.y',
+			line: 34,
+			column: 0,
+			parent: null
 		});
 	}
 });

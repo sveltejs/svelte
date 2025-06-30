@@ -489,9 +489,7 @@ export function build_component(node, component_name, context) {
 	} else {
 		context.state.template.push_comment();
 
-		statements.push(
-			add_svelte_meta(fn(anchor), node, 'component', { componentTag: component_name })
-		);
+		statements.push(add_svelte_meta(fn(anchor), node, 'component', { componentTag: node.name }));
 	}
 
 	return statements.length > 1 ? b.block(statements) : statements[0];
