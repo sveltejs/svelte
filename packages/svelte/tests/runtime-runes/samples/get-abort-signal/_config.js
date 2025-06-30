@@ -7,7 +7,11 @@ export default test({
 		await new Promise((f) => setTimeout(f, 50));
 
 		if (variant === 'hydrate') {
-			assert.deepEqual(logs, ['aborted', { stale: true }]);
+			assert.deepEqual(logs, [
+				'aborted',
+				'StaleReactionError',
+				'The reaction that called `getAbortSignal()` was re-run or destroyed'
+			]);
 		}
 
 		logs.length = 0;
@@ -21,6 +25,10 @@ export default test({
 		await new Promise((f) => setTimeout(f, 50));
 		assert.htmlEqual(target.innerHTML, '<button>increment</button><p>2</p>');
 
-		assert.deepEqual(logs, ['aborted', { stale: true }]);
+		assert.deepEqual(logs, [
+			'aborted',
+			'StaleReactionError',
+			'The reaction that called `getAbortSignal()` was re-run or destroyed'
+		]);
 	}
 });

@@ -11,7 +11,7 @@
 		await new Promise((f) => setTimeout(f));
 
 		if (signal.aborted) {
-			console.log('aborted', signal.reason);
+			console.log('aborted', signal.reason.name, signal.reason.message);
 		}
 
 		return c;
