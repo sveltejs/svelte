@@ -7,7 +7,7 @@ import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
-import { dev, is_ignored, locator, filename } from '../../../../../state.js';
+import { dev, is_ignored, locator, component_name } from '../../../../../state.js';
 import { build_getter, create_derived } from '../../utils.js';
 
 /**
@@ -403,7 +403,7 @@ export function build_expression(context, expression, metadata, state = context.
  * @param {Record<string, number | string>} [additional] - Any additional properties to add to the dev stack entry
  * @returns {Statement} - Statement with or without dev stack wrapping
  */
-export function with_dev_stack(call_expression, node, type, additional) {
+export function add_svelte_meta(call_expression, node, type, additional) {
 	if (!dev) {
 		return b.stmt(call_expression);
 	}
@@ -415,10 +415,10 @@ export function with_dev_stack(call_expression, node, type, additional) {
 
 	return b.stmt(
 		b.call(
-			'$.with_dev_stack',
+			'$.add_svelte_meta',
 			b.arrow([], call_expression),
 			b.literal(type),
-			b.literal(filename),
+			b.id(component_name),
 			b.literal(location.line),
 			b.literal(location.column),
 			additional && b.object(Object.entries(additional).map(([k, v]) => b.init(k, b.literal(v))))

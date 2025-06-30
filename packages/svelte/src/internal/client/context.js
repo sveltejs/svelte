@@ -11,6 +11,7 @@ import {
 } from './runtime.js';
 import { effect, teardown } from './reactivity/effects.js';
 import { legacy_mode_flag } from '../flags/index.js';
+import { FILENAME } from '../../constants.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;
@@ -32,18 +33,18 @@ export function set_dev_stack(stack) {
  * Execute a callback with a new dev stack entry
  * @param {() => any} callback - Function to execute
  * @param {DevStackEntry['type']} type - Type of block/component
- * @param {string} file - Source file
+ * @param {any} component - Component function
  * @param {number} line - Line number
  * @param {number} column - Column number
  * @param {Record<string, any>} [additional] - Any additional properties to add to the dev stack entry
  * @returns {any}
  */
-export function with_dev_stack(callback, type, file, line, column, additional) {
+export function add_svelte_meta(callback, type, component, line, column, additional) {
 	const parent = dev_stack;
 
 	dev_stack = {
 		type,
-		file,
+		file: component[FILENAME],
 		line,
 		column,
 		parent,

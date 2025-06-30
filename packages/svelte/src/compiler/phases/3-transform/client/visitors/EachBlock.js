@@ -13,7 +13,7 @@ import { dev } from '../../../../state.js';
 import { extract_paths, object } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { get_value } from './shared/declarations.js';
-import { build_expression, with_dev_stack } from './shared/utils.js';
+import { build_expression, add_svelte_meta } from './shared/utils.js';
 
 /**
  * @param {AST.EachBlock} node
@@ -337,7 +337,7 @@ export function EachBlock(node, context) {
 		);
 	}
 
-	context.state.init.push(with_dev_stack(b.call('$.each', ...args), node, 'each'));
+	context.state.init.push(add_svelte_meta(b.call('$.each', ...args), node, 'each'));
 }
 
 /**

@@ -8,7 +8,7 @@ import {
 	build_bind_this,
 	memoize_expression,
 	validate_binding,
-	with_dev_stack
+	add_svelte_meta
 } from '../shared/utils.js';
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
@@ -490,7 +490,7 @@ export function build_component(node, component_name, context) {
 		context.state.template.push_comment();
 
 		statements.push(
-			with_dev_stack(fn(anchor), node, 'component', { componentTag: component_name })
+			add_svelte_meta(fn(anchor), node, 'component', { componentTag: component_name })
 		);
 	}
 
