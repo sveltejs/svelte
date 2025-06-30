@@ -21,6 +21,9 @@ export interface ClientTransformState extends TransformState {
 	 */
 	readonly in_constructor: boolean;
 
+	/** `true` if we're transforming the contents of `<script>` */
+	readonly is_instance: boolean;
+
 	readonly transform: Record<
 		string,
 		{
@@ -41,7 +44,6 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly options: ValidatedCompileOptions;
 	readonly hoisted: Array<Statement | ModuleDeclaration>;
 	readonly events: Set<string>;
-	readonly is_instance: boolean;
 	readonly store_to_invalidate?: string;
 
 	/** Stuff that happens before the render effect(s) */

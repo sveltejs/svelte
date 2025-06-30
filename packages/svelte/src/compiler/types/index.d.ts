@@ -299,8 +299,6 @@ export interface ExpressionMetadata {
 	has_member_expression: boolean;
 	/** True if the expression includes an assignment or an update */
 	has_assignment: boolean;
-	/** An array of await expressions, so we can figure out which ones need context preservation */
-	awaits: Array<{ node: AwaitExpression; path: AST.SvelteNode[] }>;
 }
 
 export interface StateField {

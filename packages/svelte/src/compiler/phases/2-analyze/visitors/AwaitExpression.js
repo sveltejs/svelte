@@ -7,20 +7,15 @@ import * as e from '../../../errors.js';
  * @param {Context} context
  */
 export function AwaitExpression(node, context) {
-	const tla = context.state.ast_type === 'instance' && context.state.function_depth === 1;
-
-	if (tla) {
-		context.state.analysis.context_preserving_awaits.add(node);
-	}
-
-	let suspend = tla;
+	let suspend = context.state.ast_type === 'instance' && context.state.function_depth === 1;
 
 	if (context.state.expression) {
-		context.state.expression.awaits.push({ node, path: context.path.slice() });
 		context.state.expression.has_await = true;
 		suspend = true;
 	}
 
+	// disallow top-level `await` or `await` in template expressions
+	// unless a) in runes mode and b) opted into `experimental.async`
 	if (suspend) {
 		if (!context.state.options.experimental.async) {
 			e.experimental_async(node);

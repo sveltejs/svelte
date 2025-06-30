@@ -702,7 +702,8 @@ export function client_module(analysis, options) {
 		scopes: analysis.module.scopes,
 		state_fields: new Map(),
 		transform: {},
-		in_constructor: false
+		in_constructor: false,
+		is_instance: false
 	};
 
 	const module = /** @type {ESTree.Program} */ (

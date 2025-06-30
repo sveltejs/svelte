@@ -77,10 +77,6 @@ import { UseDirective } from './visitors/UseDirective.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
 import is_reference from 'is-reference';
 import { mark_subtree_dynamic } from './visitors/shared/fragment.js';
-import { is_last_evaluated_expression } from './utils/awaits.js';
-
-/** @type {Array<ExpressionMetadata | null>} */
-const metadata_stack = [];
 
 /**
  * @type {Visitors}
@@ -132,22 +128,8 @@ const visitors = {
 
 		ignore_map.set(node, structuredClone(ignore_stack));
 
-		metadata_stack.push(state.expression);
-
 		const scope = state.scopes.get(node);
 		next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
-
-		metadata_stack.pop();
-
-		// if this node set `state.expression`, now that we've visited it we can determine
-		// which `await` expressions need to be wrapped in `$.save(...)`
-		if (state.expression && metadata_stack[metadata_stack.length - 1] === null) {
-			for (const { path, node } of state.expression.awaits) {
-				if (!is_last_evaluated_expression(path, node)) {
-					state.analysis.context_preserving_awaits.add(node);
-				}
-			}
-		}
 
 		if (ignores.length > 0) {
 			pop_ignore();
@@ -291,7 +273,6 @@ export function analyze_module(source, options) {
 		immutable: true,
 		tracing: false,
 		async_deriveds: new Set(),
-		context_preserving_awaits: new Set(),
 		comments,
 		classes: new Map()
 	};
@@ -538,8 +519,7 @@ export function analyze_component(root, source, options) {
 		undefined_exports: new Map(),
 		snippet_renderers: new Map(),
 		snippets: new Set(),
-		async_deriveds: new Set(),
-		context_preserving_awaits: new Set()
+		async_deriveds: new Set()
 	};
 
 	if (!runes) {
