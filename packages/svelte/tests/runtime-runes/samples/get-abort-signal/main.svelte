@@ -4,11 +4,17 @@
 	let count = $state(0);
 
 	let delayed_count = $derived.by(async () => {
-		const response = await fetch(`data:text/plain;charset=utf-8,${count}`, {
-			signal: getAbortSignal()
-		});
+		let c = count;
 
-		return await response.json();
+		const signal = getAbortSignal();
+
+		await new Promise((f) => setTimeout(f));
+
+		if (signal.aborted) {
+			console.log('aborted', signal.reason);
+		}
+
+		return c;
 	});
 </script>
 

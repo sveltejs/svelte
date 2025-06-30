@@ -2,6 +2,7 @@
 import { current_component } from './internal/server/context.js';
 import { noop } from './internal/shared/utils.js';
 import * as e from './internal/server/errors.js';
+import { STALE_REACTION } from '#client/constants';
 
 /** @param {() => void} fn */
 export function onDestroy(fn) {
@@ -42,7 +43,7 @@ export function getAbortSignal() {
 	if (controller === null) {
 		const c = (controller = new AbortController());
 		queueMicrotask(() => {
-			c.abort();
+			c.abort(STALE_REACTION);
 			controller = null;
 		});
 	}
