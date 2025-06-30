@@ -77,8 +77,9 @@ export function pop_ignore() {
  *
  * @param {(warning: Warning) => boolean} fn
  */
-export function reset_warning_filter(fn = () => true) {
+export function reset_warnings(fn = () => true) {
 	warning_filter = fn;
+	warnings = [];
 }
 
 /**
@@ -91,11 +92,9 @@ export function is_ignored(node, code) {
 }
 
 /**
- * @param {string} _source
  * @param {{ dev?: boolean; filename: string; rootDir?: string }} options
  */
-export function reset(_source, options) {
-	source = _source;
+export function reset(options) {
 	const root_dir = options.rootDir?.replace(/\\/g, '/');
 	filename = options.filename.replace(/\\/g, '/');
 
@@ -106,8 +105,6 @@ export function reset(_source, options) {
 		filename = filename.replace(root_dir, '').replace(/^[/\\]/, '');
 	}
 
-	set_source(source);
-	warnings = [];
 	ignore_stack = [];
 	ignore_map.clear();
 }

@@ -9,7 +9,7 @@ import { parse } from '../phases/1-parse/index.js';
 import { regex_valid_component_name } from '../phases/1-parse/state/element.js';
 import { analyze_component } from '../phases/2-analyze/index.js';
 import { get_rune } from '../phases/scope.js';
-import { reset, reset_warning_filter } from '../state.js';
+import { reset, reset_warnings } from '../state.js';
 import {
 	extract_identifiers,
 	extract_all_identifiers_from_expression,
@@ -134,8 +134,8 @@ export function migrate(source, { filename, use_ts } = {}) {
 			return start + style_placeholder + end;
 		});
 
-		reset_warning_filter(() => false);
-		reset(source, { filename: filename ?? '(unknown)' });
+		reset_warnings(() => false);
+		reset({ filename: filename ?? '(unknown)' });
 
 		let parsed = parse(source);
 

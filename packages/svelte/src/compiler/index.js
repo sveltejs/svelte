@@ -20,9 +20,8 @@ export { default as preprocess } from './preprocess/index.js';
  */
 export function compile(source, options) {
 	source = remove_bom(source);
-	state.reset_warning_filter(options.warningFilter);
+	state.reset_warnings(options.warningFilter);
 	const validated = validate_component_options(options, '');
-	state.reset(source, validated);
 
 	let parsed = _parse(source);
 
@@ -64,9 +63,8 @@ export function compile(source, options) {
  */
 export function compileModule(source, options) {
 	source = remove_bom(source);
-	state.reset_warning_filter(options.warningFilter);
+	state.reset_warnings(options.warningFilter);
 	const validated = validate_module_options(options, '');
-	state.reset(source, validated);
 
 	const analysis = analyze_module(source, validated);
 	return transform_module(analysis, source, validated);
@@ -113,7 +111,7 @@ export function compileModule(source, options) {
  */
 export function parse(source, { modern, loose } = {}) {
 	source = remove_bom(source);
-	state.reset_warning_filter(() => false);
+	state.reset_warnings(() => false);
 
 	const ast = _parse(source, loose);
 	return to_public_ast(source, ast, modern);

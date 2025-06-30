@@ -76,6 +76,7 @@ import { UseDirective } from './visitors/UseDirective.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
 import is_reference from 'is-reference';
 import { mark_subtree_dynamic } from './visitors/shared/fragment.js';
+import * as state from '../../state.js';
 
 /**
  * @type {Visitors}
@@ -240,6 +241,7 @@ export function analyze_module(source, options) {
 	/** @type {AST.JSComment[]} */
 	const comments = [];
 
+	state.set_source(source);
 	const ast = parse(source, comments, false, false);
 
 	const { scope, scopes } = create_scopes(ast, new ScopeRoot(), false, null);
@@ -268,6 +270,8 @@ export function analyze_module(source, options) {
 		comments,
 		classes: new Map()
 	};
+
+	state.reset(options);
 
 	walk(
 		/** @type {Node} */ (ast),
@@ -505,6 +509,8 @@ export function analyze_component(root, source, options) {
 		snippet_renderers: new Map(),
 		snippets: new Set()
 	};
+
+	state.reset(options);
 
 	if (!runes) {
 		// every exported `let` or `var` declaration becomes a prop, everything else becomes an export
