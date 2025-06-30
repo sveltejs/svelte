@@ -35,6 +35,7 @@ export interface ReactiveStatement {
 export interface Analysis {
 	module: Js;
 	name: string; // TODO should this be filename? it's used in `compileModule` as well as `compile`
+	/** @deprecated use `runes` from `state.js` instead */
 	runes: boolean;
 	immutable: boolean;
 	tracing: boolean;

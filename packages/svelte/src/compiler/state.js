@@ -28,6 +28,8 @@ export let source;
  */
 export let dev;
 
+export let runes = false;
+
 export let locator = getLocator('', { offsetLine: 1 });
 
 /** @param {string} value */
@@ -92,13 +94,19 @@ export function is_ignored(node, code) {
 }
 
 /**
- * @param {{ dev: boolean; filename: string; rootDir?: string }} state
+ * @param {{
+ *   dev: boolean;
+ *   filename: string;
+ *   rootDir?: string;
+ *   runes: boolean;
+ * }} state
  */
 export function reset(state) {
 	const root_dir = state.rootDir?.replace(/\\/g, '/');
 	filename = state.filename.replace(/\\/g, '/');
 
 	dev = !!state.dev;
+	runes = !!state.runes;
 
 	if (typeof root_dir === 'string' && filename.startsWith(root_dir)) {
 		// make filename relative to rootDir

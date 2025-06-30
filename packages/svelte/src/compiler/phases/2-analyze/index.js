@@ -274,7 +274,8 @@ export function analyze_module(source, options) {
 	state.reset({
 		dev: options.dev,
 		filename: options.filename,
-		rootDir: options.rootDir
+		rootDir: options.rootDir,
+		runes: true
 	});
 
 	walk(
@@ -517,7 +518,8 @@ export function analyze_component(root, source, options) {
 	state.reset({
 		dev: options.dev,
 		filename: options.filename,
-		rootDir: options.rootDir
+		rootDir: options.rootDir,
+		runes: true
 	});
 
 	if (!runes) {
