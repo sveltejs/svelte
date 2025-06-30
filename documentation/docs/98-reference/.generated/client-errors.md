@@ -74,6 +74,12 @@ Effect cannot be created inside a `$derived` value that was not itself created i
 Maximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops
 ```
 
+### get_abort_signal_outside_reaction
+
+```
+`getAbortSignal()` can only be called inside an effect or derived
+```
+
 ### hydration_failed
 
 ```

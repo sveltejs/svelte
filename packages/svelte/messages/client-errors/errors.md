@@ -48,6 +48,10 @@ See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-long
 
 > Maximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops
 
+## get_abort_signal_outside_reaction
+
+> `getAbortSignal()` can only be called inside an effect or derived
+
 ## hydration_failed
 
 > Failed to hydrate the application

@@ -22,7 +22,8 @@ import {
 	ROOT_EFFECT,
 	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
-	EFFECT_IS_UPDATING
+	EFFECT_IS_UPDATING,
+	STALE_REACTION
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { internal_set, old_values } from './reactivity/sources.js';
@@ -275,6 +276,11 @@ export function update_reaction(reaction) {
 	read_version++;
 
 	reaction.f |= EFFECT_IS_UPDATING;
+
+	if (reaction.ac !== null) {
+		reaction.ac.abort(STALE_REACTION);
+		reaction.ac = null;
+	}
 
 	try {
 		var result = /** @type {Function} */ (0, reaction.fn)();

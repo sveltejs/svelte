@@ -196,6 +196,22 @@ export function effect_update_depth_exceeded() {
 }
 
 /**
+ * `getAbortSignal()` can only be called inside an effect or derived
+ * @returns {never}
+ */
+export function get_abort_signal_outside_reaction() {
+	if (DEV) {
+		const error = new Error(`get_abort_signal_outside_reaction\n\`getAbortSignal()\` can only be called inside an effect or derived\nhttps://svelte.dev/e/get_abort_signal_outside_reaction`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/get_abort_signal_outside_reaction`);
+	}
+}
+
+/**
  * Failed to hydrate the application
  * @returns {never}
  */
