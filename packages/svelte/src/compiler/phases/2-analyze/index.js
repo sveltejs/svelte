@@ -271,7 +271,11 @@ export function analyze_module(source, options) {
 		classes: new Map()
 	};
 
-	state.reset(options);
+	state.reset({
+		dev: options.dev,
+		filename: options.filename,
+		rootDir: options.rootDir
+	});
 
 	walk(
 		/** @type {Node} */ (ast),
@@ -510,7 +514,11 @@ export function analyze_component(root, source, options) {
 		snippets: new Set()
 	};
 
-	state.reset(options);
+	state.reset({
+		dev: options.dev,
+		filename: options.filename,
+		rootDir: options.rootDir
+	});
 
 	if (!runes) {
 		// every exported `let` or `var` declaration becomes a prop, everything else becomes an export

@@ -92,13 +92,13 @@ export function is_ignored(node, code) {
 }
 
 /**
- * @param {{ dev?: boolean; filename: string; rootDir?: string }} options
+ * @param {{ dev: boolean; filename: string; rootDir?: string }} state
  */
-export function reset(options) {
-	const root_dir = options.rootDir?.replace(/\\/g, '/');
-	filename = options.filename.replace(/\\/g, '/');
+export function reset(state) {
+	const root_dir = state.rootDir?.replace(/\\/g, '/');
+	filename = state.filename.replace(/\\/g, '/');
 
-	dev = !!options.dev;
+	dev = !!state.dev;
 
 	if (typeof root_dir === 'string' && filename.startsWith(root_dir)) {
 		// make filename relative to rootDir
