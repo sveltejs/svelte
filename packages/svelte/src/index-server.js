@@ -2,7 +2,6 @@
 import { current_component } from './internal/server/context.js';
 import { noop } from './internal/shared/utils.js';
 import * as e from './internal/server/errors.js';
-import { STALE_REACTION } from '#client/constants';
 
 /** @param {() => void} fn */
 export function onDestroy(fn) {
@@ -36,20 +35,7 @@ export function unmount() {
 
 export async function tick() {}
 
-/** @type {AbortController | null} */
-let controller = null;
-
-export function getAbortSignal() {
-	if (controller === null) {
-		const c = (controller = new AbortController());
-		queueMicrotask(() => {
-			c.abort(STALE_REACTION);
-			controller = null;
-		});
-	}
-
-	return controller.signal;
-}
+export { getAbortSignal } from './internal/server/abort-signal.js';
 
 export { getAllContexts, getContext, hasContext, setContext } from './internal/server/context.js';
 
