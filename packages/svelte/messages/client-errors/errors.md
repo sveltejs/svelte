@@ -56,6 +56,10 @@ The `flushSync()` function can be used to flush any pending effects synchronousl
 
 This restriction only applies when using the `experimental.async` option, which will be active by default in Svelte 6.
 
+## get_abort_signal_outside_reaction
+
+> `getAbortSignal()` can only be called inside an effect or derived
+
 ## hydration_failed
 
 > Failed to hydrate the application

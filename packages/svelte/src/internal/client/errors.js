@@ -204,9 +204,26 @@ export function flush_sync_in_effect() {
 		const error = new Error(`flush_sync_in_effect\nCannot use \`flushSync\` inside an effect\nhttps://svelte.dev/e/flush_sync_in_effect`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/flush_sync_in_effect`);
+	}
+}
+
+/**
+ * `getAbortSignal()` can only be called inside an effect or derived
+ * @returns {never}
+ */
+export function get_abort_signal_outside_reaction() {
+	if (DEV) {
+		const error = new Error(`get_abort_signal_outside_reaction\n\`getAbortSignal()\` can only be called inside an effect or derived\nhttps://svelte.dev/e/get_abort_signal_outside_reaction`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/get_abort_signal_outside_reaction`);
 	}
 }
 
@@ -319,6 +336,7 @@ export function set_context_after_init() {
 		const error = new Error(`set_context_after_init\n\`setContext\` must be called when a component first initializes, not in a subsequent effect or after an \`await\` expression\nhttps://svelte.dev/e/set_context_after_init`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/set_context_after_init`);

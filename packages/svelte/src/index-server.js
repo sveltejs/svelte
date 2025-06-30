@@ -37,20 +37,7 @@ export async function tick() {}
 
 export async function settled() {}
 
-/** @type {AbortController | null} */
-let controller = null;
-
-export function getAbortSignal() {
-	if (controller === null) {
-		const c = (controller = new AbortController());
-		queueMicrotask(() => {
-			c.abort();
-			controller = null;
-		});
-	}
-
-	return controller.signal;
-}
+export { getAbortSignal } from './internal/server/abort-signal.js';
 
 export { getAllContexts, getContext, hasContext, setContext } from './internal/server/context.js';
 

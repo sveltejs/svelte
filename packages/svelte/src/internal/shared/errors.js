@@ -11,6 +11,7 @@ export function await_outside_boundary() {
 		const error = new Error(`await_outside_boundary\nCannot await outside a \`<svelte:boundary>\` with a \`pending\` snippet\nhttps://svelte.dev/e/await_outside_boundary`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/await_outside_boundary`);
