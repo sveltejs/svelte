@@ -54,8 +54,7 @@ export function SlotElement(node, context) {
 	// Let bindings first, they can be used on attributes
 	context.state.init.push(...lets);
 
-	const props_expression =
-		spreads.length === 0 ? b.object(props) : b.call('$.spread_props', b.object(props), ...spreads);
+	const props_expression = b.call('$.props', b.object(props), ...spreads);
 
 	const fallback =
 		node.fragment.nodes.length === 0
