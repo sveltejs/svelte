@@ -8,7 +8,6 @@ import { build_bind_this, Memoizer, validate_binding } from '../shared/utils.js'
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
-import { create_derived } from '../../utils.js';
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
