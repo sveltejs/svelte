@@ -3,7 +3,6 @@
 /** @import { ComponentContext } from '../types' */
 import { unwrap_optional } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { create_derived } from '../utils.js';
 import { build_expression, Memoizer } from './shared/utils.js';
 
 /**

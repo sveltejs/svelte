@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Statement, Expression, FunctionDeclaration, VariableDeclaration, ArrowFunctionExpression } from 'estree' */
+/** @import { BlockStatement, Statement, Expression, VariableDeclaration } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';

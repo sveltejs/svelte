@@ -2,7 +2,6 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '#compiler/builders';
-import { create_derived } from '../utils.js';
 import { build_attribute_value } from './shared/element.js';
 import { Memoizer } from './shared/utils.js';
 
