@@ -135,7 +135,6 @@ export function migrate(source, { filename, use_ts } = {}) {
 		});
 
 		reset_warnings(() => false);
-		reset({ dev: false, filename: filename ?? '(unknown)' });
 
 		let parsed = parse(source);
 
