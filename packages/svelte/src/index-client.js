@@ -1,7 +1,7 @@
 /** @import { ComponentContext, ComponentContextLegacy } from '#client' */
 /** @import { EventDispatcher } from './index.js' */
 /** @import { NotFunction } from './internal/types.js' */
-import { untrack } from './internal/client/runtime.js';
+import { active_reaction, untrack } from './internal/client/runtime.js';
 import { is_array } from './internal/shared/utils.js';
 import { user_effect } from './internal/client/index.js';
 import * as e from './internal/client/errors.js';
@@ -42,6 +42,37 @@ if (DEV) {
 	throw_rune_error('$inspect');
 	throw_rune_error('$props');
 	throw_rune_error('$bindable');
+}
+
+/**
+ * Returns an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that aborts when the current [derived](https://svelte.dev/docs/svelte/$derived) or [effect](https://svelte.dev/docs/svelte/$effect) re-runs or is destroyed.
+ *
+ * Must be called while a derived or effect is running.
+ *
+ * ```svelte
+ * <script>
+ * 	import { getAbortSignal } from 'svelte';
+ *
+ * 	let { id } = $props();
+ *
+ * 	async function getData(id) {
+ * 		const response = await fetch(`/items/${id}`, {
+ * 			signal: getAbortSignal()
+ * 		});
+ *
+ * 		return await response.json();
+ * 	}
+ *
+ * 	const data = $derived(await getData(id));
+ * </script>
+ * ```
+ */
+export function getAbortSignal() {
+	if (active_reaction === null) {
+		throw new Error('TODO getAbortSignal can only be called inside a reaction');
+	}
+
+	return (active_reaction.ac ??= new AbortController()).signal;
 }
 
 /**
