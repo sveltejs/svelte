@@ -14,15 +14,8 @@ export function AwaitExpression(node, context) {
 	const save = tla || !is_last_evaluated_expression(context.path, node);
 
 	if (dev || save) {
-		return b.call(
-			b.await(
-				b.call(
-					'$.save',
-					node.argument && /** @type {Expression} */ (context.visit(node.argument)),
-					!save && b.false
-				)
-			)
-		);
+		const expression = /** @type {Expression} */ (context.visit(node.argument));
+		return b.call(b.await(b.call('$.save', expression, !save && b.false)));
 	}
 
 	return context.next();
