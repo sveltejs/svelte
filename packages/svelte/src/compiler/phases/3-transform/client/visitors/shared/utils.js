@@ -156,10 +156,8 @@ export function build_template_chunk(
  * @param {ComponentClientTransformState} state
  */
 export function build_render_statement(state) {
-	const { memoizer } = state;
-
 	const ids = state.memoizer.apply();
-	const values = memoizer.sync_values();
+	const values = state.memoizer.sync_values();
 
 	return b.stmt(
 		b.call(
