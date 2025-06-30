@@ -16,6 +16,7 @@ export default function Bind_component_snippet($$payload) {
 			get value() {
 				return value;
 			},
+
 			set value($$value) {
 				value = $$value;
 				$$settled = false;

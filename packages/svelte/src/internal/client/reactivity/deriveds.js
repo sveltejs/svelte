@@ -53,7 +53,8 @@ export function derived(fn) {
 		rv: 0,
 		v: /** @type {V} */ (null),
 		wv: 0,
-		parent: parent_derived ?? active_effect
+		parent: parent_derived ?? active_effect,
+		ac: null
 	};
 
 	if (DEV && tracing_mode_flag) {

@@ -22,6 +22,7 @@ export default function Bind_component_snippet($$anchor) {
 		get value() {
 			return $.get(value);
 		},
+
 		set value($$value) {
 			$.set(value, $$value, true);
 		}

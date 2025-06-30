@@ -1,8 +1,9 @@
-/** @import { Expression, Node, Program } from 'estree' */
+/** @import { Comment, Expression, Node, Program } from 'estree' */
 /** @import { Binding, AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 import { walk } from 'zimmerframe';
+import { parse } from '../1-parse/acorn.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { extract_identifiers } from '../../utils/ast.js';
@@ -75,6 +76,7 @@ import { UseDirective } from './visitors/UseDirective.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
 import is_reference from 'is-reference';
 import { mark_subtree_dynamic } from './visitors/shared/fragment.js';
+import * as state from '../../state.js';
 
 /**
  * @type {Visitors}
@@ -231,11 +233,17 @@ function get_component_name(filename) {
 const RESERVED = ['$$props', '$$restProps', '$$slots'];
 
 /**
- * @param {Program} ast
+ * @param {string} source
  * @param {ValidatedModuleCompileOptions} options
  * @returns {Analysis}
  */
-export function analyze_module(ast, options) {
+export function analyze_module(source, options) {
+	/** @type {AST.JSComment[]} */
+	const comments = [];
+
+	state.set_source(source);
+	const ast = parse(source, comments, false, false);
+
 	const { scope, scopes } = create_scopes(ast, new ScopeRoot(), false, null);
 
 	for (const [name, references] of scope.references) {
@@ -259,8 +267,16 @@ export function analyze_module(ast, options) {
 		runes: true,
 		immutable: true,
 		tracing: false,
+		comments,
 		classes: new Map()
 	};
+
+	state.reset({
+		dev: options.dev,
+		filename: options.filename,
+		rootDir: options.rootDir,
+		runes: true
+	});
 
 	walk(
 		/** @type {Node} */ (ast),
@@ -429,6 +445,7 @@ export function analyze_component(root, source, options) {
 		module,
 		instance,
 		template,
+		comments: root.comments,
 		elements: [],
 		runes,
 		// if we are not in runes mode but we have no reserved references ($$props, $$restProps)
@@ -497,6 +514,14 @@ export function analyze_component(root, source, options) {
 		snippet_renderers: new Map(),
 		snippets: new Set()
 	};
+
+	state.reset({
+		component_name: analysis.name,
+		dev: options.dev,
+		filename: options.filename,
+		rootDir: options.rootDir,
+		runes: true
+	});
 
 	if (!runes) {
 		// every exported `let` or `var` declaration becomes a prop, everything else becomes an export
