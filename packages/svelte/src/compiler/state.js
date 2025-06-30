@@ -16,6 +16,8 @@ export let warnings = [];
  */
 export let filename;
 
+export let component_name = '<unknown>';
+
 /**
  * The original source code
  * @type {string}
@@ -97,6 +99,7 @@ export function is_ignored(node, code) {
  * @param {{
  *   dev: boolean;
  *   filename: string;
+ *   component_name?: string;
  *   rootDir?: string;
  *   runes: boolean;
  * }} state
@@ -105,8 +108,9 @@ export function reset(state) {
 	const root_dir = state.rootDir?.replace(/\\/g, '/');
 	filename = state.filename.replace(/\\/g, '/');
 
-	dev = !!state.dev;
-	runes = !!state.runes;
+	dev = state.dev;
+	runes = state.runes;
+	component_name = state.component_name ?? '(unknown)';
 
 	if (typeof root_dir === 'string' && filename.startsWith(root_dir)) {
 		// make filename relative to rootDir

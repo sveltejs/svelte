@@ -516,6 +516,7 @@ export function analyze_component(root, source, options) {
 	};
 
 	state.reset({
+		component_name: analysis.name,
 		dev: options.dev,
 		filename: options.filename,
 		rootDir: options.rootDir,
