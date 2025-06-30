@@ -6,7 +6,7 @@ import * as b from '#compiler/builders';
 import { clean_nodes, infer_namespace } from '../../utils.js';
 import { transform_template } from '../transform-template/index.js';
 import { process_children } from './shared/fragment.js';
-import { build_render_statement } from './shared/utils.js';
+import { build_render_statement, Memoizer } from './shared/utils.js';
 import { Template } from '../transform-template/template.js';
 
 /**
@@ -64,8 +64,8 @@ export function Fragment(node, context) {
 		...context.state,
 		init: [],
 		update: [],
-		expressions: [],
 		after_update: [],
+		memoizer: new Memoizer(),
 		template: new Template(),
 		transform: { ...context.state.transform },
 		metadata: {

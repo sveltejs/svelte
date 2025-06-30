@@ -20,13 +20,38 @@ export function memoize_expression(state, value) {
 	return b.call('$.get', id);
 }
 
-/**
- * Pushes `value` into `expressions` and returns a new id
- * @param {Expression[]} expressions
- * @param {Expression} value
- */
-export function get_expression_id(expressions, value) {
-	return b.id(`$${expressions.push(value) - 1}`);
+export class Memoizer {
+	/** @type {Array<{ id: Identifier, expression: Expression }>} */
+	#sync = [];
+
+	/**
+	 * @param {Expression} expression
+	 */
+	add(expression) {
+		const id = b.id('#'); // filled in later
+
+		this.#sync.push({ id, expression });
+
+		return id;
+	}
+
+	apply() {
+		return this.#sync.map((memo, i) => {
+			memo.id.name = `$${i}`;
+			return memo.id;
+		});
+	}
+
+	deriveds(runes = true) {
+		return this.#sync.map((memo) =>
+			b.let(memo.id, b.call(runes ? '$.derived' : '$.derived_safe_equal', b.thunk(memo.expression)))
+		);
+	}
+
+	sync_values() {
+		if (this.#sync.length === 0) return;
+		return b.array(this.#sync.map((memo) => b.thunk(memo.expression)));
+	}
 }
 
 /**
@@ -40,8 +65,7 @@ export function build_template_chunk(
 	values,
 	context,
 	state = context.state,
-	memoize = (value, metadata) =>
-		metadata.has_call ? get_expression_id(state.expressions, value) : value
+	memoize = (value, metadata) => (metadata.has_call ? state.memoizer.add(value) : value)
 ) {
 	/** @type {Expression[]} */
 	const expressions = [];
@@ -128,18 +152,22 @@ export function build_template_chunk(
  * @param {ComponentClientTransformState} state
  */
 export function build_render_statement(state) {
+	const { memoizer } = state;
+
+	const ids = state.memoizer.apply();
+	const values = memoizer.sync_values();
+
 	return b.stmt(
 		b.call(
 			'$.template_effect',
 			b.arrow(
-				state.expressions.map((_, i) => b.id(`$${i}`)),
+				ids,
 				state.update.length === 1 && state.update[0].type === 'ExpressionStatement'
 					? state.update[0].expression
 					: b.block(state.update)
 			),
-			state.expressions.length > 0 &&
-				b.array(state.expressions.map((expression) => b.thunk(expression))),
-			state.expressions.length > 0 && !state.analysis.runes && b.id('$.derived_safe_equal')
+			values,
+			values && !state.analysis.runes && b.id('$.derived_safe_equal')
 		)
 	);
 }

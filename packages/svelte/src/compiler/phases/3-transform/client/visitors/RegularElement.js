@@ -22,7 +22,7 @@ import {
 	build_set_style
 } from './shared/element.js';
 import { process_children } from './shared/fragment.js';
-import { build_render_statement, build_template_chunk, get_expression_id } from './shared/utils.js';
+import { build_render_statement, build_template_chunk, Memoizer } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
 
 /**
@@ -253,8 +253,7 @@ export function RegularElement(node, context) {
 				const { value, has_state } = build_attribute_value(
 					attribute.value,
 					context,
-					(value, metadata) =>
-						metadata.has_call ? get_expression_id(context.state.expressions, value) : value
+					(value, metadata) => (metadata.has_call ? context.state.memoizer.add(value) : value)
 				);
 
 				const update = build_element_attribute_update(node, node_id, name, value, attributes);
@@ -455,11 +454,15 @@ function setup_select_synchronization(value_binding, context) {
 
 /**
  * @param {AST.ClassDirective[]} class_directives
- * @param {Expression[]} expressions
  * @param {ComponentContext} context
+ * @param {Memoizer} memoizer
  * @return {ObjectExpression | Identifier}
  */
-export function build_class_directives_object(class_directives, expressions, context) {
+export function build_class_directives_object(
+	class_directives,
+	context,
+	memoizer = context.state.memoizer
+) {
 	let properties = [];
 	let has_call_or_state = false;
 
@@ -471,38 +474,40 @@ export function build_class_directives_object(class_directives, expressions, con
 
 	const directives = b.object(properties);
 
-	return has_call_or_state ? get_expression_id(expressions, directives) : directives;
+	return has_call_or_state ? memoizer.add(directives) : directives;
 }
 
 /**
  * @param {AST.StyleDirective[]} style_directives
- * @param {Expression[]} expressions
  * @param {ComponentContext} context
- * @return {ObjectExpression | ArrayExpression}}
+ * @param {Memoizer} memoizer
+ * @return {ObjectExpression | ArrayExpression | Identifier}}
  */
-export function build_style_directives_object(style_directives, expressions, context) {
-	let normal_properties = [];
-	let important_properties = [];
+export function build_style_directives_object(
+	style_directives,
+	context,
+	memoizer = context.state.memoizer
+) {
+	const normal = b.object([]);
+	const important = b.object([]);
 
-	for (const directive of style_directives) {
+	let has_call_or_state = false;
+
+	for (const d of style_directives) {
 		const expression =
-			directive.value === true
-				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
-				: build_attribute_value(directive.value, context, (value, metadata) =>
-						metadata.has_call ? get_expression_id(expressions, value) : value
-					).value;
-		const property = b.init(directive.name, expression);
+			d.value === true
+				? build_getter({ name: d.name, type: 'Identifier' }, context.state)
+				: build_attribute_value(d.value, context).value;
 
-		if (directive.modifiers.includes('important')) {
-			important_properties.push(property);
-		} else {
-			normal_properties.push(property);
-		}
+		const object = d.modifiers.includes('important') ? important : normal;
+		object.properties.push(b.init(d.name, expression));
+
+		has_call_or_state ||= d.metadata.expression.has_call || d.metadata.expression.has_state;
 	}
 
-	return important_properties.length
-		? b.array([b.object(normal_properties), b.object(important_properties)])
-		: b.object(normal_properties);
+	const directives = important.properties.length ? b.array([normal, important]) : normal;
+
+	return has_call_or_state ? memoizer.add(directives) : directives;
 }
 
 /**
@@ -624,7 +629,7 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 		element === 'select' && attribute.value !== true && !is_text_attribute(attribute);
 
 	const { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call ? get_expression_id(state.expressions, value) : value
+		metadata.has_call ? state.memoizer.add(value) : value
 	);
 
 	const evaluated = context.state.scope.evaluate(value);
