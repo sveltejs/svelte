@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-feat: add parent hierarchy to \_\_svelte_meta objects at dev time
+feat: add parent hierarchy to `__svelte_meta` objects

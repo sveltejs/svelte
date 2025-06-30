@@ -39,22 +39,21 @@ export function set_dev_stack(stack) {
  * @returns {any}
  */
 export function with_dev_stack(callback, type, file, line, column, additional) {
-	/** @type {DevStackEntry} */
-	const new_entry = {
+	const parent = dev_stack;
+
+	dev_stack = {
 		type,
 		file,
 		line,
 		column,
-		parent: dev_stack,
+		parent,
 		...additional
 	};
-	const previous_stack = dev_stack;
-	dev_stack = new_entry;
 
 	try {
 		return callback();
 	} finally {
-		dev_stack = previous_stack;
+		dev_stack = parent;
 	}
 }
 

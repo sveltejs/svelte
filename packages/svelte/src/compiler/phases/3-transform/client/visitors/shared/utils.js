@@ -416,14 +416,12 @@ export function with_dev_stack(call_expression, node, type, additional) {
 	return b.stmt(
 		b.call(
 			'$.with_dev_stack',
-			b.arrow([], b.block([b.stmt(call_expression)])),
+			b.arrow([], call_expression),
 			b.literal(type),
 			b.literal(filename),
 			b.literal(location.line),
 			b.literal(location.column),
-			additional
-				? b.object(Object.entries(additional).map(([key, value]) => b.init(key, b.literal(value))))
-				: b.null
+			additional && b.object(Object.entries(additional).map(([k, v]) => b.init(k, b.literal(v))))
 		)
 	);
 }
