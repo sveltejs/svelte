@@ -15,9 +15,13 @@ function create_trusted_html(html) {
 	return /** @type {string} */ (policy?.createHTML(html) ?? html);
 }
 
-/** @param {string} html */
-export function create_fragment_from_html(html) {
+/**
+ * @param {string} html
+ * @param {boolean} untrusted
+ */
+export function create_fragment_from_html(html, untrusted = false) {
 	var elem = document.createElement('template');
-	elem.innerHTML = create_trusted_html(html.replaceAll('<!>', '<!---->')); // XHTML compliance
+	html = html.replaceAll('<!>', '<!---->'); // XHTML compliance
+	elem.innerHTML = untrusted ? html : create_trusted_html(html);
 	return elem.content;
 }
