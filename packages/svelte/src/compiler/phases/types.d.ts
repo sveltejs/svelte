@@ -34,7 +34,9 @@ export interface ReactiveStatement {
  */
 export interface Analysis {
 	module: Js;
+	/** @deprecated use `component_name` from `state.js` instead */
 	name: string; // TODO should this be filename? it's used in `compileModule` as well as `compile`
+	/** @deprecated use `runes` from `state.js` instead */
 	runes: boolean;
 	immutable: boolean;
 	tracing: boolean;
@@ -93,6 +95,7 @@ export interface ComponentAnalysis extends Analysis {
 		keyframes: string[];
 		has_global: boolean;
 	};
+	/** @deprecated use `source` from `state.js` instead */
 	source: string;
 	undefined_exports: Map<string, Node>;
 	/**

@@ -160,7 +160,7 @@ export function build_template_chunk(
 export function build_render_statement(state) {
 	const { memoizer } = state;
 
-	const ids = state.memoizer.apply();
+	const ids = memoizer.apply();
 
 	return b.stmt(
 		b.call(

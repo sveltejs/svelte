@@ -506,7 +506,7 @@ export function build_style_directives_object(
 	for (const d of style_directives) {
 		const expression =
 			d.value === true
-				? build_getter({ name: d.name, type: 'Identifier' }, context.state)
+				? build_getter(b.id(d.name), context.state)
 				: build_attribute_value(d.value, context).value;
 
 		const object = d.modifiers.includes('important') ? important : normal;
