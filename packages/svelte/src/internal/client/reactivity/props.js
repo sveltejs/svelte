@@ -373,27 +373,16 @@ export function prop(props, key, flags, fallback) {
 	}
 
 	return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
-		// legacy nonsense — need to ensure the source is invalidated when necessary
-		// also needed for when handling inspect logic so we can inspect the correct source signal
-		if (captured_signals !== null) {
-			// invoke getters so that signals are picked up by `invalidate_inner_signals`
-			getter();
-			get(current_value);
-		}
-
 		if (arguments.length > 0) {
 			const new_value = mutation ? get(current_value) : runes && bindable ? proxy(value) : value;
 
 			if (!current_value.equals(new_value)) {
 				set(current_value, new_value);
+
 				// To ensure the fallback value is consistent when used with proxies, we
 				// update the local fallback_value, but only if the fallback is actively used
 				if (fallback_used && fallback_value !== undefined) {
 					fallback_value = new_value;
-				}
-
-				if (has_destroyed_component_ctx(current_value)) {
-					return value;
 				}
 
 				untrack(() => get(current_value)); // force a synchronisation immediately
@@ -402,6 +391,7 @@ export function prop(props, key, flags, fallback) {
 			return value;
 		}
 
+		// TODO is this still necessary post-#16263?
 		if (has_destroyed_component_ctx(current_value)) {
 			return current_value.v;
 		}
