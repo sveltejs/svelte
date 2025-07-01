@@ -40,6 +40,7 @@ import {
 } from './context.js';
 import { handle_error, invoke_error_boundary } from './error-handling.js';
 import { snapshot } from '../shared/clone.js';
+import { UNINITIALIZED } from '../../constants.js';
 
 let is_flushing = false;
 
@@ -818,7 +819,13 @@ export function get(signal) {
 		if (is_derived) {
 			derived = /** @type {Derived} */ (signal);
 
-			var value = (derived.f & CLEAN) !== 0 ? execute_derived(derived) : derived.v;
+			var value = derived.v;
+
+			// if the derived is dirty, or depends on the values that just changed, re-execute
+			if ((derived.f & CLEAN) !== 0 || depends_on_old_values(derived)) {
+				value = execute_derived(derived);
+			}
+
 			old_values.set(derived, value);
 
 			return value;
@@ -826,6 +833,24 @@ export function get(signal) {
 	}
 
 	return signal.v;
+}
+
+/** @param {Derived} derived */
+function depends_on_old_values(derived) {
+	if (derived.v === UNINITIALIZED) return true; // we don't know, so assume the worst
+	if (derived.deps === null) return false;
+
+	for (const dep of derived.deps) {
+		if (old_values.has(dep)) {
+			return true;
+		}
+
+		if ((dep.f & DERIVED) !== 0 && depends_on_old_values(/** @type {Derived} */ (dep))) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**

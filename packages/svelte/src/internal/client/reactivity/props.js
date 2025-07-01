@@ -1,3 +1,4 @@
+/** @import { ComponentContext } from '#client' */
 /** @import { Derived, Source } from './types.js' */
 import { DEV } from 'esm-env';
 import {
@@ -5,7 +6,8 @@ import {
 	PROPS_IS_IMMUTABLE,
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_RUNES,
-	PROPS_IS_UPDATED
+	PROPS_IS_UPDATED,
+	UNINITIALIZED
 } from '../../../constants.js';
 import { get_descriptor, is_function } from '../../shared/utils.js';
 import { set, source, update } from './sources.js';
