@@ -362,52 +362,30 @@ export function prop(props, key, flags, fallback) {
 	// hard mode. this is where it gets ugly — the value in the child should
 	// synchronize with the parent, but it should also be possible to temporarily
 	// set the value to something else locally.
-	var from_child = false;
-	var was_from_child = false;
 
 	// The derived returns the current value. The underlying mutable
 	// source is written to from various places to persist this value.
-	var inner_current_value = mutable_source(prop_value);
-	var current_value = derived(() => {
-		var parent_value = getter();
-		var child_value = get(inner_current_value);
-
-		if (from_child) {
-			from_child = false;
-			was_from_child = true;
-			return child_value;
-		}
-
-		was_from_child = false;
-		return (inner_current_value.v = parent_value);
-	});
+	var current_value = (immutable ? derived : derived_safe_equal)(getter);
 
 	// Ensure we eagerly capture the initial value if it's bindable
 	if (bindable) {
 		get(current_value);
 	}
 
-	if (!immutable) current_value.equals = safe_equals;
-
 	return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
 		// legacy nonsense — need to ensure the source is invalidated when necessary
 		// also needed for when handling inspect logic so we can inspect the correct source signal
 		if (captured_signals !== null) {
-			// set this so that we don't reset to the parent value if `d`
-			// is invalidated because of `invalidate_inner_signals` (rather
-			// than because the parent or child value changed)
-			from_child = was_from_child;
 			// invoke getters so that signals are picked up by `invalidate_inner_signals`
 			getter();
-			get(inner_current_value);
+			get(current_value);
 		}
 
 		if (arguments.length > 0) {
 			const new_value = mutation ? get(current_value) : runes && bindable ? proxy(value) : value;
 
 			if (!current_value.equals(new_value)) {
-				from_child = true;
-				set(inner_current_value, new_value);
+				set(current_value, new_value);
 				// To ensure the fallback value is consistent when used with proxies, we
 				// update the local fallback_value, but only if the fallback is actively used
 				if (fallback_used && fallback_value !== undefined) {
