@@ -189,7 +189,7 @@ export type SourceLocation =
 
 export interface DevStackEntry {
 	file: string;
-	type: 'component' | 'if' | 'each' | 'await' | 'key';
+	type: 'component' | 'if' | 'each' | 'await' | 'key' | 'render';
 	line: number;
 	column: number;
 	parent: DevStackEntry | null;

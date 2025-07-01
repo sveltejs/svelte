@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, Expression, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression, Pattern, CallExpression, Statement } from 'estree' */
+/** @import { AssignmentExpression, Expression, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression, ExpressionStatement } from 'estree' */
 /** @import { AST, ExpressionMetadata } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext, Context } from '../../types' */
 import { walk } from 'zimmerframe';
@@ -397,26 +397,26 @@ export function build_expression(context, expression, metadata, state = context.
 
 /**
  * Wraps a statement/expression with dev stack tracking in dev mode
- * @param {CallExpression} call_expression - The function call to wrap (e.g., $.if, $.each, etc.)
+ * @param {Expression} expression - The function call to wrap (e.g., $.if, $.each, etc.)
  * @param {{ start?: number }} node - AST node for location info
- * @param {'component' | 'if' | 'each' | 'await' | 'key'} type - Type of block/component
+ * @param {'component' | 'if' | 'each' | 'await' | 'key' | 'render'} type - Type of block/component
  * @param {Record<string, number | string>} [additional] - Any additional properties to add to the dev stack entry
- * @returns {Statement} - Statement with or without dev stack wrapping
+ * @returns {ExpressionStatement} - Statement with or without dev stack wrapping
  */
-export function add_svelte_meta(call_expression, node, type, additional) {
+export function add_svelte_meta(expression, node, type, additional) {
 	if (!dev) {
-		return b.stmt(call_expression);
+		return b.stmt(expression);
 	}
 
-	const location = node.start && locator(node.start);
+	const location = node.start !== undefined && locator(node.start);
 	if (!location) {
-		return b.stmt(call_expression);
+		return b.stmt(expression);
 	}
 
 	return b.stmt(
 		b.call(
 			'$.add_svelte_meta',
-			b.arrow([], call_expression),
+			b.arrow([], expression),
 			b.literal(type),
 			b.id(component_name),
 			b.literal(location.line),

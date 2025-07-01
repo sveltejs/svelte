@@ -1,5 +1,9 @@
 <script>
-    let { children } = $props();
+	let { children, named } = $props();
 </script>
 
-{@render children()}
+{@render children?.()}
+
+{#if true}
+	{@render named?.()}
+{/if}
