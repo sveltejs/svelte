@@ -1,17 +1,20 @@
 <script>
 	let count = $state(1);
-	let derived_value = $derived(count * count);
+	let squared = $derived(count * count);
 
 	$effect(() => {
-		console.log(`$effect: ${derived_value}`);
+		console.log(`count: ${count}`);
+
 		return () => {
-			console.log(`$effect teardown: ${derived_value}`);
+			console.log(`squared: ${squared}`);
 		};
 	});
 </script>
 
-<button id="increment" onclick={() => count++}>Increment s</button>
-<button id="overwrite" onclick={() => (derived_value = 7)}>Overwrite derived_value</button>
+<button onclick={() => count++}>increment</button>
 
 <p>count: {count}</p>
-<p>derived_value: {derived_value}</p>
+
+{#if count % 2 === 0}
+	<p id="squared">squared: {squared}</p>
+{/if}

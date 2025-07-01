@@ -26,7 +26,7 @@ import {
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { internal_set, old_values } from './reactivity/sources.js';
-import { destroy_derived_effects, update_derived } from './reactivity/deriveds.js';
+import { destroy_derived_effects, execute_derived, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
 
 import { tracing_mode_flag } from '../flags/index.js';
@@ -764,7 +764,7 @@ export function get(signal) {
 		}
 	}
 
-	if (is_derived) {
+	if (is_derived && !is_destroying_effect) {
 		derived = /** @type {Derived} */ (signal);
 
 		if (check_dirtiness(derived)) {
@@ -805,8 +805,19 @@ export function get(signal) {
 		}
 	}
 
-	if (is_destroying_effect && old_values.has(signal)) {
-		return old_values.get(signal);
+	if (is_destroying_effect) {
+		if (old_values.has(signal)) {
+			return old_values.get(signal);
+		}
+
+		if (is_derived) {
+			derived = /** @type {Derived} */ (signal);
+
+			var value = execute_derived(derived);
+			old_values.set(derived, value);
+
+			return value;
+		}
 	}
 
 	return signal.v;
