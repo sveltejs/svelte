@@ -8,12 +8,11 @@ import {
 	PROPS_IS_UPDATED
 } from '../../../constants.js';
 import { get_descriptor, is_function } from '../../shared/utils.js';
-import { mutable_source, set, source, update } from './sources.js';
+import { set, source, update } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
-import { get, captured_signals, untrack } from '../runtime.js';
-import { safe_equals } from './equality.js';
+import { get, untrack } from '../runtime.js';
 import * as e from '../errors.js';
-import { LEGACY_DERIVED_PROP, LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
+import { LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
@@ -260,89 +259,84 @@ function has_destroyed_component_ctx(current_value) {
  * @returns {(() => V | ((arg: V) => V) | ((arg: V, mutation: boolean) => V))}
  */
 export function prop(props, key, flags, fallback) {
-	var immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
 	var runes = !legacy_mode_flag || (flags & PROPS_IS_RUNES) !== 0;
 	var bindable = (flags & PROPS_IS_BINDABLE) !== 0;
 	var lazy = (flags & PROPS_IS_LAZY_INITIAL) !== 0;
-	var is_store_sub = false;
-	var prop_value;
-
-	if (bindable) {
-		[prop_value, is_store_sub] = capture_store_binding(() => /** @type {V} */ (props[key]));
-	} else {
-		prop_value = /** @type {V} */ (props[key]);
-	}
-
-	// Can be the case when someone does `mount(Component, props)` with `let props = $state({...})`
-	// or `createClassComponent(Component, props)`
-	var is_entry_props = STATE_SYMBOL in props || LEGACY_PROPS in props;
-
-	var setter =
-		(bindable &&
-			(get_descriptor(props, key)?.set ??
-				(is_entry_props && key in props && ((v) => (props[key] = v))))) ||
-		undefined;
 
 	var fallback_value = /** @type {V} */ (fallback);
 	var fallback_dirty = true;
-	var fallback_used = false;
 
 	var get_fallback = () => {
-		fallback_used = true;
 		if (fallback_dirty) {
 			fallback_dirty = false;
-			if (lazy) {
-				fallback_value = untrack(/** @type {() => V} */ (fallback));
-			} else {
-				fallback_value = /** @type {V} */ (fallback);
-			}
+
+			fallback_value = lazy
+				? untrack(/** @type {() => V} */ (fallback))
+				: /** @type {V} */ (fallback);
 		}
 
 		return fallback_value;
 	};
 
-	if (prop_value === undefined && fallback !== undefined) {
-		if (setter && runes) {
-			e.props_invalid_value(key);
-		}
+	/** @type {((v: V) => void) | undefined} */
+	var setter;
 
-		prop_value = get_fallback();
-		if (setter) setter(prop_value);
+	if (bindable) {
+		// Can be the case when someone does `mount(Component, props)` with `let props = $state({...})`
+		// or `createClassComponent(Component, props)`
+		var is_entry_props = STATE_SYMBOL in props || LEGACY_PROPS in props;
+
+		setter =
+			get_descriptor(props, key)?.set ??
+			(is_entry_props && key in props ? (v) => (props[key] = v) : undefined);
+	}
+
+	var initial_value;
+	var is_store_sub = false;
+
+	if (bindable) {
+		[initial_value, is_store_sub] = capture_store_binding(() => /** @type {V} */ (props[key]));
+	} else {
+		initial_value = /** @type {V} */ (props[key]);
+	}
+
+	if (initial_value === undefined && fallback !== undefined) {
+		initial_value = get_fallback();
+
+		if (setter) {
+			if (runes) e.props_invalid_value(key);
+			setter(initial_value);
+		}
 	}
 
 	/** @type {() => V} */
 	var getter;
+
 	if (runes) {
 		getter = () => {
 			var value = /** @type {V} */ (props[key]);
 			if (value === undefined) return get_fallback();
 			fallback_dirty = true;
-			fallback_used = false;
 			return value;
 		};
 	} else {
-		// Svelte 4 did not trigger updates when a primitive value was updated to the same value.
-		// Replicate that behavior through using a derived
-		var derived_getter = (immutable ? derived : derived_safe_equal)(
-			() => /** @type {V} */ (props[key])
-		);
-		derived_getter.f |= LEGACY_DERIVED_PROP;
 		getter = () => {
-			var value = get(derived_getter);
+			var value = /** @type {V} */ (props[key]);
 			if (value !== undefined) fallback_value = /** @type {V} */ (undefined);
 			return value === undefined ? fallback_value : value;
 		};
 	}
 
-	// easy mode — prop is never written to
-	if ((flags & PROPS_IS_UPDATED) === 0 && runes) {
+	// prop is never written to — we only need a getter
+	if (runes && (flags & PROPS_IS_UPDATED) === 0) {
 		return getter;
 	}
 
-	// intermediate mode — prop is written to, but the parent component had
-	// `bind:foo` which means we can just call `$$props.foo = value` directly
+	// prop is written to, but the parent component had `bind:foo` which
+	// means we can just call `$$props.foo = value` directly
 	if (setter) {
 		var legacy_parent = props.$$legacy;
+
 		return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
 			if (arguments.length > 0) {
 				// We don't want to notify if the value was mutated and the parent is in runes mode.
@@ -352,82 +346,39 @@ export function prop(props, key, flags, fallback) {
 				if (!runes || !mutation || legacy_parent || is_store_sub) {
 					/** @type {Function} */ (setter)(mutation ? getter() : value);
 				}
+
 				return value;
-			} else {
-				return getter();
 			}
+
+			return getter();
 		};
 	}
 
-	// hard mode. this is where it gets ugly — the value in the child should
-	// synchronize with the parent, but it should also be possible to temporarily
-	// set the value to something else locally.
-	var from_child = false;
-	var was_from_child = false;
+	// prop is written to, but there's no binding, which means we
+	// create a derived that we can write to locally
+	var d = ((flags & PROPS_IS_IMMUTABLE) !== 0 ? derived : derived_safe_equal)(getter);
 
-	// The derived returns the current value. The underlying mutable
-	// source is written to from various places to persist this value.
-	var inner_current_value = mutable_source(prop_value);
-	var current_value = derived(() => {
-		var parent_value = getter();
-		var child_value = get(inner_current_value);
-
-		if (from_child) {
-			from_child = false;
-			was_from_child = true;
-			return child_value;
-		}
-
-		was_from_child = false;
-		return (inner_current_value.v = parent_value);
-	});
-
-	// Ensure we eagerly capture the initial value if it's bindable
-	if (bindable) {
-		get(current_value);
-	}
-
-	if (!immutable) current_value.equals = safe_equals;
+	// Capture the initial value if it's bindable
+	if (bindable) get(d);
 
 	return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
-		// legacy nonsense — need to ensure the source is invalidated when necessary
-		// also needed for when handling inspect logic so we can inspect the correct source signal
-		if (captured_signals !== null) {
-			// set this so that we don't reset to the parent value if `d`
-			// is invalidated because of `invalidate_inner_signals` (rather
-			// than because the parent or child value changed)
-			from_child = was_from_child;
-			// invoke getters so that signals are picked up by `invalidate_inner_signals`
-			getter();
-			get(inner_current_value);
-		}
-
 		if (arguments.length > 0) {
-			const new_value = mutation ? get(current_value) : runes && bindable ? proxy(value) : value;
+			const new_value = mutation ? get(d) : runes && bindable ? proxy(value) : value;
 
-			if (!current_value.equals(new_value)) {
-				from_child = true;
-				set(inner_current_value, new_value);
-				// To ensure the fallback value is consistent when used with proxies, we
-				// update the local fallback_value, but only if the fallback is actively used
-				if (fallback_used && fallback_value !== undefined) {
-					fallback_value = new_value;
-				}
+			set(d, new_value);
 
-				if (has_destroyed_component_ctx(current_value)) {
-					return value;
-				}
-
-				untrack(() => get(current_value)); // force a synchronisation immediately
+			if (fallback_value !== undefined) {
+				fallback_value = new_value;
 			}
 
 			return value;
 		}
 
-		if (has_destroyed_component_ctx(current_value)) {
-			return current_value.v;
+		// TODO is this still necessary post-#16263?
+		if (has_destroyed_component_ctx(d)) {
+			return d.v;
 		}
 
-		return get(current_value);
+		return get(d);
 	};
 }

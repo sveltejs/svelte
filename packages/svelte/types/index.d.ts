@@ -349,6 +349,30 @@ declare module 'svelte' {
 				props: Props;
 			});
 	/**
+	 * Returns an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that aborts when the current [derived](https://svelte.dev/docs/svelte/$derived) or [effect](https://svelte.dev/docs/svelte/$effect) re-runs or is destroyed.
+	 *
+	 * Must be called while a derived or effect is running.
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { getAbortSignal } from 'svelte';
+	 *
+	 * 	let { id } = $props();
+	 *
+	 * 	async function getData(id) {
+	 * 		const response = await fetch(`/items/${id}`, {
+	 * 			signal: getAbortSignal()
+	 * 		});
+	 *
+	 * 		return await response.json();
+	 * 	}
+	 *
+	 * 	const data = $derived(await getData(id));
+	 * </script>
+	 * ```
+	 */
+	export function getAbortSignal(): AbortSignal;
+	/**
 	 * `onMount`, like [`$effect`](https://svelte.dev/docs/svelte/$effect), schedules a function to run as soon as the component has been mounted to the DOM.
 	 * Unlike `$effect`, the provided function only runs once.
 	 *
@@ -1120,6 +1144,8 @@ declare module 'svelte/compiler' {
 			instance: Script | null;
 			/** The parsed `<script module>` element, if exists */
 			module: Script | null;
+			/** Comments found in <script> and {expressions} */
+			comments: JSComment[];
 		}
 
 		export interface SvelteOptions {
@@ -1437,6 +1463,17 @@ declare module 'svelte/compiler' {
 			attributes: Attribute[];
 		}
 
+		export interface JSComment {
+			type: 'Line' | 'Block';
+			value: string;
+			start: number;
+			end: number;
+			loc: {
+				start: { line: number; column: number };
+				end: { line: number; column: number };
+			};
+		}
+
 		export type AttributeLike = Attribute | SpreadAttribute | Directive;
 
 		export type Directive =
@@ -1493,7 +1530,7 @@ declare module 'svelte/compiler' {
 			| AST.Comment
 			| Block;
 
-		export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node;
+		export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node | Script;
 
 		export type { _CSS as CSS };
 	}
