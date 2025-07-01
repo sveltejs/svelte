@@ -1,20 +1,18 @@
 /** @import { TrustedTypePolicy } from 'trusted-types' */
 
-/** @type {Pick<TrustedTypePolicy, 'createHTML'> | undefined} */
-let policy;
-
-if (globalThis?.window?.trustedTypes) {
-	policy = globalThis.window.trustedTypes.createPolicy('svelte-trusted-html', {
+const policy = /* @__PURE__ */ globalThis?.window?.trustedTypes?.createPolicy(
+	'svelte-trusted-html',
+	{
 		/** @param {string} html */
 		createHTML: (html) => {
 			return html;
 		}
-	});
-}
+	}
+);
 
 /** @param {string} html */
 function create_trusted_html(html) {
-	return /** @type {string} */(policy?.createHTML(html) ?? html);
+	return /** @type {string} */ (policy?.createHTML(html) ?? html);
 }
 
 /** @param {string} html */
