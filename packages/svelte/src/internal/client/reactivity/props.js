@@ -285,9 +285,6 @@ export function prop(props, key, flags, fallback) {
 	/** @type {((v: V) => void) | undefined} */
 	var setter;
 
-	/** @type {() => V} */
-	var getter;
-
 	if (bindable) {
 		// Can be the case when someone does `mount(Component, props)` with `let props = $state({...})`
 		// or `createClassComponent(Component, props)`
@@ -316,6 +313,9 @@ export function prop(props, key, flags, fallback) {
 		}
 	}
 
+	/** @type {() => V} */
+	var getter;
+
 	if (runes) {
 		getter = () => {
 			var value = /** @type {V} */ (props[key]);
@@ -332,15 +332,16 @@ export function prop(props, key, flags, fallback) {
 		};
 	}
 
-	// easy mode — prop is never written to
-	if ((flags & PROPS_IS_UPDATED) === 0 && runes) {
+	// prop is never written to — we only need a getter
+	if (runes && (flags & PROPS_IS_UPDATED) === 0) {
 		return getter;
 	}
 
-	// intermediate mode — prop is written to, but the parent component had
-	// `bind:foo` which means we can just call `$$props.foo = value` directly
+	// prop is written to, but the parent component had `bind:foo` which
+	// means we can just call `$$props.foo = value` directly
 	if (setter) {
 		var legacy_parent = props.$$legacy;
+
 		return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
 			if (arguments.length > 0) {
 				// We don't want to notify if the value was mutated and the parent is in runes mode.
@@ -350,31 +351,26 @@ export function prop(props, key, flags, fallback) {
 				if (!runes || !mutation || legacy_parent || is_store_sub) {
 					/** @type {Function} */ (setter)(mutation ? getter() : value);
 				}
+
 				return value;
-			} else {
-				return getter();
 			}
+
+			return getter();
 		};
 	}
 
-	// hard mode. this is where it gets ugly — the value in the child should
-	// synchronize with the parent, but it should also be possible to temporarily
-	// set the value to something else locally.
+	// prop is written to, but there's no binding, which means we
+	// create a derived that we can write to locally
+	var d = (immutable ? derived : derived_safe_equal)(getter);
 
-	// The derived returns the current value. The underlying mutable
-	// source is written to from various places to persist this value.
-	var current_value = (immutable ? derived : derived_safe_equal)(getter);
-
-	// Ensure we eagerly capture the initial value if it's bindable
-	if (bindable) {
-		get(current_value);
-	}
+	// Capture the initial value if it's bindable
+	if (bindable) get(d);
 
 	return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
 		if (arguments.length > 0) {
-			const new_value = mutation ? get(current_value) : runes && bindable ? proxy(value) : value;
+			const new_value = mutation ? get(d) : runes && bindable ? proxy(value) : value;
 
-			set(current_value, new_value);
+			set(d, new_value);
 
 			// To ensure the fallback value is consistent when used with proxies, we
 			// update the local fallback_value, but only if the fallback is actively used
@@ -386,10 +382,10 @@ export function prop(props, key, flags, fallback) {
 		}
 
 		// TODO is this still necessary post-#16263?
-		if (has_destroyed_component_ctx(current_value)) {
-			return current_value.v;
+		if (has_destroyed_component_ctx(d)) {
+			return d.v;
 		}
 
-		return get(current_value);
+		return get(d);
 	};
 }
