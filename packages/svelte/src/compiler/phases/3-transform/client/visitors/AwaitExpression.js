@@ -14,7 +14,7 @@ export function AwaitExpression(node, context) {
 		// preserve context if this is a top-level await in `<script>`
 		(context.state.is_instance && context.state.scope.function_depth === 1) ||
 		// or if this is a derived/template expression
-		(is_reactive_expression(context) && !is_last_evaluated_expression(context.path, node));
+		(is_reactive_expression(context) && !is_last_evaluated_expression(context, node));
 
 	if (dev || save) {
 		const expression = /** @type {Expression} */ (context.visit(node.argument));
@@ -28,6 +28,10 @@ export function AwaitExpression(node, context) {
  * @param {Context} context
  */
 function is_reactive_expression(context) {
+	if (context.state.in_derived) {
+		return true;
+	}
+
 	let i = context.path.length;
 
 	while (i--) {
@@ -41,10 +45,6 @@ function is_reactive_expression(context) {
 			return false;
 		}
 
-		if (parent.type === 'CallExpression' && get_rune(parent, context.state.scope) === '$derived') {
-			return true;
-		}
-
 		// @ts-expect-error we could probably use a neater/more robust mechanism
 		if (parent.metadata) {
 			return true;
@@ -55,14 +55,14 @@ function is_reactive_expression(context) {
 }
 
 /**
- * @param {AST.SvelteNode[]} path
+ * @param {Context} context
  * @param {Expression | SpreadElement | Property} node
  */
-function is_last_evaluated_expression(path, node) {
-	let i = path.length;
+function is_last_evaluated_expression(context, node) {
+	let i = context.path.length;
 
 	while (i--) {
-		const parent = /** @type {Expression | Property | SpreadElement} */ (path[i]);
+		const parent = /** @type {Expression | Property | SpreadElement} */ (context.path[i]);
 
 		// @ts-expect-error we could probably use a neater/more robust mechanism
 		if (parent.metadata) {

@@ -8,5 +8,8 @@ export interface TransformState {
 	readonly scope: Scope;
 	readonly scopes: Map<AST.SvelteNode, Scope>;
 
+	/** True if we're directly inside a `$derived(...)` expression (but not `$derived.by(...)`) */
+	readonly in_derived: boolean;
+
 	readonly state_fields: Map<string, StateField>;
 }

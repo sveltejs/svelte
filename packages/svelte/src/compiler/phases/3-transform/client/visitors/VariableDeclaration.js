@@ -199,29 +199,23 @@ export function VariableDeclaration(node, context) {
 				);
 
 				if (declarator.id.type === 'Identifier') {
+					let expression = /** @type {Expression} */ (
+						context.visit(value, {
+							...context.state,
+							in_derived: rune === '$derived'
+						})
+					);
+
 					if (is_async) {
 						const location = dev && is_ignored(init, 'await_waterfall') && locate_node(init);
-						const expression = /** @type {Expression} */ (context.visit(value));
-
-						declarations.push(
-							b.declarator(
-								declarator.id,
-								b.call(
-									b.await(
-										b.call(
-											'$.save',
-											b.call(
-												'$.async_derived',
-												b.thunk(expression, true),
-												location ? b.literal(location) : undefined
-											)
-										)
-									)
-								)
-							)
+						const call = b.call(
+							'$.async_derived',
+							b.thunk(expression, true),
+							location ? b.literal(location) : undefined
 						);
+
+						declarations.push(b.declarator(declarator.id, b.call(b.await(b.call('$.save', call)))));
 					} else {
-						let expression = /** @type {Expression} */ (context.visit(value));
 						if (rune === '$derived') expression = b.thunk(expression);
 
 						let call = b.call('$.derived', expression);
