@@ -818,7 +818,7 @@ export function get(signal) {
 		if (is_derived) {
 			derived = /** @type {Derived} */ (signal);
 
-			var value = execute_derived(derived);
+			var value = (derived.f & CLEAN) !== 0 ? execute_derived(derived) : derived.v;
 			old_values.set(derived, value);
 
 			return value;
