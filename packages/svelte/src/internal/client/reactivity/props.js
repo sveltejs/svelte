@@ -374,14 +374,12 @@ export function prop(props, key, flags, fallback) {
 		if (arguments.length > 0) {
 			const new_value = mutation ? get(current_value) : runes && bindable ? proxy(value) : value;
 
-			if (!current_value.equals(new_value)) {
-				set(current_value, new_value);
+			set(current_value, new_value);
 
-				// To ensure the fallback value is consistent when used with proxies, we
-				// update the local fallback_value, but only if the fallback is actively used
-				if (fallback_used && fallback_value !== undefined) {
-					fallback_value = new_value;
-				}
+			// To ensure the fallback value is consistent when used with proxies, we
+			// update the local fallback_value, but only if the fallback is actively used
+			if (fallback_used && fallback_value !== undefined) {
+				fallback_value = new_value;
 			}
 
 			return value;
