@@ -328,7 +328,7 @@ export function prop(props, key, flags, fallback) {
 	}
 
 	// prop is never written to — we only need a getter
-	if (runes && (flags & PROPS_IS_UPDATED) === 0) {
+	if ((flags & PROPS_IS_UPDATED) === 0) {
 		return getter;
 	}
 
