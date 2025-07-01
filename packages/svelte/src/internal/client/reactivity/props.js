@@ -382,8 +382,6 @@ export function prop(props, key, flags, fallback) {
 				if (fallback_used && fallback_value !== undefined) {
 					fallback_value = new_value;
 				}
-
-				untrack(() => get(current_value)); // force a synchronisation immediately
 			}
 
 			return value;
