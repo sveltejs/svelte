@@ -277,11 +277,17 @@ export function prop(props, key, flags, fallback) {
 	// or `createClassComponent(Component, props)`
 	var is_entry_props = STATE_SYMBOL in props || LEGACY_PROPS in props;
 
-	var setter =
-		(bindable &&
-			(get_descriptor(props, key)?.set ??
-				(is_entry_props && key in props && ((v) => (props[key] = v))))) ||
-		undefined;
+	/** @type {((v: V) => void) | undefined} */
+	var setter;
+
+	/** @type {() => V} */
+	var getter;
+
+	if (bindable) {
+		setter =
+			get_descriptor(props, key)?.set ??
+			(is_entry_props && key in props ? (v) => (props[key] = v) : undefined);
+	}
 
 	var fallback_value = /** @type {V} */ (fallback);
 	var fallback_dirty = true;
@@ -307,11 +313,9 @@ export function prop(props, key, flags, fallback) {
 		}
 
 		prop_value = get_fallback();
-		if (setter) setter(prop_value);
+		setter?.(prop_value);
 	}
 
-	/** @type {() => V} */
-	var getter;
 	if (runes) {
 		getter = () => {
 			var value = /** @type {V} */ (props[key]);
