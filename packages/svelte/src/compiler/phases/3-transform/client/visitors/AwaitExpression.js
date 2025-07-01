@@ -82,7 +82,6 @@ export function is_last_evaluated_expression(path, node) {
 				break;
 
 			default:
-				console.log('bailing', parent.start, parent.type);
 				return false;
 		}
 
