@@ -264,18 +264,24 @@ export function prop(props, key, flags, fallback) {
 	var runes = !legacy_mode_flag || (flags & PROPS_IS_RUNES) !== 0;
 	var bindable = (flags & PROPS_IS_BINDABLE) !== 0;
 	var lazy = (flags & PROPS_IS_LAZY_INITIAL) !== 0;
-	var is_store_sub = false;
-	var prop_value;
 
-	if (bindable) {
-		[prop_value, is_store_sub] = capture_store_binding(() => /** @type {V} */ (props[key]));
-	} else {
-		prop_value = /** @type {V} */ (props[key]);
-	}
+	var fallback_value = /** @type {V} */ (fallback);
+	var fallback_dirty = true;
+	var fallback_used = false;
 
-	// Can be the case when someone does `mount(Component, props)` with `let props = $state({...})`
-	// or `createClassComponent(Component, props)`
-	var is_entry_props = STATE_SYMBOL in props || LEGACY_PROPS in props;
+	var get_fallback = () => {
+		fallback_used = true;
+
+		if (fallback_dirty) {
+			fallback_dirty = false;
+
+			fallback_value = lazy
+				? untrack(/** @type {() => V} */ (fallback))
+				: /** @type {V} */ (fallback);
+		}
+
+		return fallback_value;
+	};
 
 	/** @type {((v: V) => void) | undefined} */
 	var setter;
@@ -284,36 +290,31 @@ export function prop(props, key, flags, fallback) {
 	var getter;
 
 	if (bindable) {
+		// Can be the case when someone does `mount(Component, props)` with `let props = $state({...})`
+		// or `createClassComponent(Component, props)`
+		var is_entry_props = STATE_SYMBOL in props || LEGACY_PROPS in props;
+
 		setter =
 			get_descriptor(props, key)?.set ??
 			(is_entry_props && key in props ? (v) => (props[key] = v) : undefined);
 	}
 
-	var fallback_value = /** @type {V} */ (fallback);
-	var fallback_dirty = true;
-	var fallback_used = false;
+	var initial_value;
+	var is_store_sub = false;
 
-	var get_fallback = () => {
-		fallback_used = true;
-		if (fallback_dirty) {
-			fallback_dirty = false;
-			if (lazy) {
-				fallback_value = untrack(/** @type {() => V} */ (fallback));
-			} else {
-				fallback_value = /** @type {V} */ (fallback);
-			}
+	if (bindable) {
+		[initial_value, is_store_sub] = capture_store_binding(() => /** @type {V} */ (props[key]));
+	} else {
+		initial_value = /** @type {V} */ (props[key]);
+	}
+
+	if (initial_value === undefined && fallback !== undefined) {
+		initial_value = get_fallback();
+
+		if (setter) {
+			if (runes) e.props_invalid_value(key);
+			setter(initial_value);
 		}
-
-		return fallback_value;
-	};
-
-	if (prop_value === undefined && fallback !== undefined) {
-		if (setter && runes) {
-			e.props_invalid_value(key);
-		}
-
-		prop_value = get_fallback();
-		setter?.(prop_value);
 	}
 
 	if (runes) {
