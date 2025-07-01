@@ -20,7 +20,6 @@ import {
 	STATE_SYMBOL,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
 	EFFECT_IS_UPDATING,
 	STALE_REACTION
@@ -863,17 +862,7 @@ export function invalidate_inner_signals(fn) {
 	var captured = capture_signals(() => untrack(fn));
 
 	for (var signal of captured) {
-		// Go one level up because derived signals created as part of props in legacy mode
-		if ((signal.f & LEGACY_DERIVED_PROP) !== 0) {
-			for (const dep of /** @type {Derived} */ (signal).deps || []) {
-				if ((dep.f & DERIVED) === 0) {
-					// Use internal_set instead of set here and below to avoid mutation validation
-					internal_set(dep, dep.v);
-				}
-			}
-		} else {
-			internal_set(signal, signal.v);
-		}
+		internal_set(signal, signal.v);
 	}
 }
 

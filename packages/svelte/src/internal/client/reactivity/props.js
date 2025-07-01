@@ -8,12 +8,11 @@ import {
 	PROPS_IS_UPDATED
 } from '../../../constants.js';
 import { get_descriptor, is_function } from '../../shared/utils.js';
-import { mutable_source, set, source, update } from './sources.js';
+import { set, source, update } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
-import { get, captured_signals, untrack } from '../runtime.js';
-import { safe_equals } from './equality.js';
+import { get, untrack } from '../runtime.js';
 import * as e from '../errors.js';
-import { LEGACY_DERIVED_PROP, LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
+import { LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
@@ -326,14 +325,8 @@ export function prop(props, key, flags, fallback) {
 			return value;
 		};
 	} else {
-		// Svelte 4 did not trigger updates when a primitive value was updated to the same value.
-		// Replicate that behavior through using a derived
-		var derived_getter = (immutable ? derived : derived_safe_equal)(
-			() => /** @type {V} */ (props[key])
-		);
-		derived_getter.f |= LEGACY_DERIVED_PROP;
 		getter = () => {
-			var value = get(derived_getter);
+			var value = /** @type {V} */ (props[key]);
 			if (value !== undefined) fallback_value = /** @type {V} */ (undefined);
 			return value === undefined ? fallback_value : value;
 		};
