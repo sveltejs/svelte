@@ -322,13 +322,21 @@ export function prop(props, key, flags, fallback) {
 	} else {
 		getter = () => {
 			var value = /** @type {V} */ (props[key]);
-			if (value !== undefined) fallback_value = /** @type {V} */ (undefined);
+
+			if (value !== undefined) {
+				// in legacy mode, we don't revert to the fallback value
+				// if the prop goes from defined to undefined. The easiest
+				// way to model this is to make the fallback undefined
+				// as soon as the prop has a value
+				fallback_value = /** @type {V} */ (undefined);
+			}
+
 			return value === undefined ? fallback_value : value;
 		};
 	}
 
 	// prop is never written to — we only need a getter
-	if (runes && (flags & PROPS_IS_UPDATED) === 0) {
+	if ((flags & PROPS_IS_UPDATED) === 0) {
 		return getter;
 	}
 
@@ -374,7 +382,6 @@ export function prop(props, key, flags, fallback) {
 			return value;
 		}
 
-		// TODO is this still necessary post-#16263?
 		if (has_destroyed_component_ctx(d)) {
 			return d.v;
 		}
