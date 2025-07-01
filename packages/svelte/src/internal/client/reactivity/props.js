@@ -265,11 +265,8 @@ export function prop(props, key, flags, fallback) {
 
 	var fallback_value = /** @type {V} */ (fallback);
 	var fallback_dirty = true;
-	var fallback_used = false;
 
 	var get_fallback = () => {
-		fallback_used = true;
-
 		if (fallback_dirty) {
 			fallback_dirty = false;
 
@@ -320,7 +317,6 @@ export function prop(props, key, flags, fallback) {
 			var value = /** @type {V} */ (props[key]);
 			if (value === undefined) return get_fallback();
 			fallback_dirty = true;
-			fallback_used = false;
 			return value;
 		};
 	} else {
@@ -371,9 +367,7 @@ export function prop(props, key, flags, fallback) {
 
 			set(d, new_value);
 
-			// To ensure the fallback value is consistent when used with proxies, we
-			// update the local fallback_value, but only if the fallback is actively used
-			if (fallback_used && fallback_value !== undefined) {
+			if (fallback_value !== undefined) {
 				fallback_value = new_value;
 			}
 
