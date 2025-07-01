@@ -259,7 +259,6 @@ function has_destroyed_component_ctx(current_value) {
  * @returns {(() => V | ((arg: V) => V) | ((arg: V, mutation: boolean) => V))}
  */
 export function prop(props, key, flags, fallback) {
-	var immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
 	var runes = !legacy_mode_flag || (flags & PROPS_IS_RUNES) !== 0;
 	var bindable = (flags & PROPS_IS_BINDABLE) !== 0;
 	var lazy = (flags & PROPS_IS_LAZY_INITIAL) !== 0;
@@ -361,7 +360,7 @@ export function prop(props, key, flags, fallback) {
 
 	// prop is written to, but there's no binding, which means we
 	// create a derived that we can write to locally
-	var d = (immutable ? derived : derived_safe_equal)(getter);
+	var d = ((flags & PROPS_IS_IMMUTABLE) !== 0 ? derived : derived_safe_equal)(getter);
 
 	// Capture the initial value if it's bindable
 	if (bindable) get(d);
