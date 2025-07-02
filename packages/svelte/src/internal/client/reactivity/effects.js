@@ -32,6 +32,7 @@ import {
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
 	EFFECT_PRESERVED,
+	BOUNDARY_EFFECT,
 	STALE_REACTION
 } from '#client/constants';
 import * as e from '../errors.js';
@@ -139,7 +140,7 @@ function create_effect(type, fn, sync, push = true) {
 		effect.first === null &&
 		effect.nodes_start === null &&
 		effect.teardown === null &&
-		(effect.f & EFFECT_PRESERVED) === 0;
+		(effect.f & (EFFECT_PRESERVED | BOUNDARY_EFFECT)) === 0; // TODO think we can remove `| BOUNDARY_EFFECT` once the relevant PR is merged
 
 	if (!inert && push) {
 		if (parent !== null) {
