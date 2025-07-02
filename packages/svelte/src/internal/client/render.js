@@ -30,7 +30,6 @@ import * as w from './warnings.js';
 import * as e from './errors.js';
 import { assign_nodes } from './dom/template.js';
 import { is_passive_event } from '../../utils.js';
-import { async_mode_flag } from '../flags/index.js';
 import { COMMENT_NODE } from './constants.js';
 
 /**
