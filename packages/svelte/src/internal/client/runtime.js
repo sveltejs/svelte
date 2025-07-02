@@ -303,7 +303,7 @@ export function update_reaction(reaction) {
 	}
 
 	if (reaction.ac !== null) {
-		reaction.ac?.abort(STALE_REACTION);
+		reaction.ac.abort(STALE_REACTION);
 		reaction.ac = null;
 	}
 
