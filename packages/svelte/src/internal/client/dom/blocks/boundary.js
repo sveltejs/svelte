@@ -194,21 +194,3 @@ export class Boundary {
 		}
 	}
 }
-
-/**
- *
- * @param {Effect} effect
- * @param {DocumentFragment} fragment
- */
-function move_effect(effect, fragment) {
-	var node = effect.nodes_start;
-	var end = effect.nodes_end;
-
-	while (node !== null) {
-		/** @type {TemplateNode | null} */
-		var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
-
-		fragment.append(node);
-		node = next;
-	}
-}
