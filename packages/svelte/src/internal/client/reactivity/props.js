@@ -364,7 +364,7 @@ export function prop(props, key, flags, fallback) {
 	}
 
 	// prop is never written to — we only need a getter
-	if ((flags & PROPS_IS_UPDATED) === 0) {
+	if (runes && (flags & PROPS_IS_UPDATED) === 0) {
 		return getter;
 	}
 
@@ -390,8 +390,10 @@ export function prop(props, key, flags, fallback) {
 		};
 	}
 
-	// prop is written to, but there's no binding, which means we
-	// create a derived that we can write to locally
+	// Either prop is written to, but there's no binding, which means we
+	// create a derived that we can write to locally.
+	// Or we are in legacy mode where we always create a derived to replicate that
+	// Svelte 4 did not trigger updates when a primitive value was updated to the same value.
 	var overridden = false;
 
 	var d = ((flags & PROPS_IS_IMMUTABLE) !== 0 ? derived : derived_safe_equal)(() => {
@@ -403,10 +405,6 @@ export function prop(props, key, flags, fallback) {
 	if (bindable) get(d);
 
 	var parent_effect = /** @type {Effect} */ (active_effect);
-
-	if (!parent_effect) {
-		console.trace();
-	}
 
 	return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
 		if (arguments.length > 0) {
