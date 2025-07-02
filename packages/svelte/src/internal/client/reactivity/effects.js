@@ -31,7 +31,7 @@ import {
 	INSPECT_EFFECT,
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
-	EFFECT_HAS_DERIVED,
+	EFFECT_PRESERVED,
 	BOUNDARY_EFFECT,
 	STALE_REACTION
 } from '#client/constants';
@@ -135,7 +135,7 @@ function create_effect(type, fn, sync, push = true) {
 		effect.first === null &&
 		effect.nodes_start === null &&
 		effect.teardown === null &&
-		(effect.f & (EFFECT_HAS_DERIVED | BOUNDARY_EFFECT)) === 0;
+		(effect.f & (EFFECT_PRESERVED | BOUNDARY_EFFECT)) === 0;
 
 	if (!inert && push) {
 		if (parent !== null) {
