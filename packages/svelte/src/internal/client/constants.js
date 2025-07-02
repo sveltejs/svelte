@@ -5,26 +5,26 @@ export const BLOCK_EFFECT = 1 << 4;
 export const BRANCH_EFFECT = 1 << 5;
 export const ROOT_EFFECT = 1 << 6;
 export const BOUNDARY_EFFECT = 1 << 7;
-export const UNOWNED = 1 << 9;
-export const DISCONNECTED = 1 << 10;
-export const CLEAN = 1 << 11;
-export const DIRTY = 1 << 12;
-export const MAYBE_DIRTY = 1 << 13;
-export const INERT = 1 << 14;
-export const DESTROYED = 1 << 15;
-export const EFFECT_RAN = 1 << 16;
+export const UNOWNED = 1 << 8;
+export const DISCONNECTED = 1 << 9;
+export const CLEAN = 1 << 10;
+export const DIRTY = 1 << 11;
+export const MAYBE_DIRTY = 1 << 12;
+export const INERT = 1 << 13;
+export const DESTROYED = 1 << 14;
+export const EFFECT_RAN = 1 << 15;
 /** 'Transparent' effects do not create a transition boundary */
-export const EFFECT_TRANSPARENT = 1 << 17;
-export const INSPECT_EFFECT = 1 << 19;
-export const HEAD_EFFECT = 1 << 20;
-export const EFFECT_IS_UPDATING = 1 << 21;
-export const EFFECT_PRESERVED = 1 << 22; // effects with this flag should not be pruned
+export const EFFECT_TRANSPARENT = 1 << 16;
+export const INSPECT_EFFECT = 1 << 17;
+export const HEAD_EFFECT = 1 << 18;
+export const EFFECT_IS_UPDATING = 1 << 19;
+export const EFFECT_PRESERVED = 1 << 20; // effects with this flag should not be pruned
 
 // Flags used for async
-export const REACTION_IS_UPDATING = 1 << 24;
-export const EFFECT_ASYNC = 1 << 25;
+export const REACTION_IS_UPDATING = 1 << 21;
+export const EFFECT_ASYNC = 1 << 22;
 
-export const ERROR_VALUE = 1 << 26;
+export const ERROR_VALUE = 1 << 23;
 
 export const STATE_SYMBOL = Symbol('$state');
 export const PROXY_PATH_SYMBOL = Symbol('proxy path');
