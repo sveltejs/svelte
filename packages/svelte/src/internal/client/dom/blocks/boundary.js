@@ -236,7 +236,7 @@ export class Boundary {
 			this.parent.#update_pending_count(d);
 		}
 
-		queue_micro_task(() => {
+		queueMicrotask(() => {
 			update(this.effect_pending, d);
 		});
 	}
