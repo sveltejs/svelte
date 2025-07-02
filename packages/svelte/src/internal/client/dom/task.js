@@ -24,8 +24,6 @@ function run_idle_tasks() {
 	run_all(tasks);
 }
 
-export { queue_micro_task as queue_boundary_micro_task };
-
 /**
  * @param {() => void} fn
  */

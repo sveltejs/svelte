@@ -20,7 +20,7 @@ import {
 	set_hydrate_node
 } from '../hydration.js';
 import { get_next_sibling } from '../operations.js';
-import { queue_boundary_micro_task } from '../task.js';
+import { queue_micro_task } from '../task.js';
 import * as e from '../../../shared/errors.js';
 import { DEV } from 'esm-env';
 import { from_async_derived, set_from_async_derived } from '../../reactivity/deriveds.js';
@@ -236,7 +236,7 @@ export class Boundary {
 			this.parent.#update_pending_count(d);
 		}
 
-		queueMicrotask(() => {
+		queue_micro_task(() => {
 			update(this.effect_pending, d);
 		});
 	}
@@ -306,7 +306,7 @@ export class Boundary {
 		}
 
 		if (failed) {
-			queue_boundary_micro_task(() => {
+			queue_micro_task(() => {
 				this.#failed_effect = this.#run(() => {
 					this.#is_creating_fallback = true;
 
@@ -381,7 +381,7 @@ export function capture(track = true) {
 		}
 
 		// prevent the active effect from outstaying its welcome
-		queue_boundary_micro_task(exit);
+		queue_micro_task(exit);
 	};
 }
 
