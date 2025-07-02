@@ -235,8 +235,12 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 	for (var i = 0; i < reactions.length; i++) {
 		var reaction = reactions[i];
 
-		if (source_ownership?.sources.includes(signal) && source_ownership.reaction === active_reaction)
+		if (
+			source_ownership?.reaction === active_reaction &&
+			source_ownership.sources.includes(signal)
+		) {
 			continue;
+		}
 
 		if ((reaction.f & DERIVED) !== 0) {
 			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
@@ -741,8 +745,8 @@ export function get(signal) {
 	// Register the dependency on the current reaction signal.
 	if (active_reaction !== null && !untracking) {
 		if (
-			!source_ownership?.sources.includes(signal) ||
-			source_ownership.reaction !== active_reaction
+			source_ownership?.reaction !== active_reaction ||
+			!source_ownership?.sources.includes(signal)
 		) {
 			var deps = active_reaction.deps;
 			if (signal.rv < read_version) {
