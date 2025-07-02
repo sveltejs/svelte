@@ -306,11 +306,8 @@ export class Batch {
 }
 
 /**
- * Forcibly remove all current batches
- * TODO investigate why we need this in tests
+ * Forcibly remove all current batches, to prevent cross-talk between tests
  */
 export function clear() {
-	for (const batch of batches) {
-		batch.remove();
-	}
+	batches.clear();
 }
