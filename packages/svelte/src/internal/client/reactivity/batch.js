@@ -140,15 +140,12 @@ export class Batch {
 							batch.#callbacks.add(fn);
 						}
 
-						this.#remove();
 						break;
 					}
 				}
 			}
 
-			if (merged) {
-				this.#remove();
-			} else {
+			if (!merged) {
 				var render_effects = this.render_effects;
 				var effects = this.effects;
 
@@ -203,10 +200,6 @@ export class Batch {
 		this.#current.set(source, source.v);
 	}
 
-	#remove() {
-		batches.delete(this);
-	}
-
 	restore() {
 		current_batch = this;
 	}
@@ -221,7 +214,7 @@ export class Batch {
 		}
 
 		if (this.#pending === 0) {
-			this.#remove();
+			batches.delete(this);
 		}
 
 		current_batch = null;
