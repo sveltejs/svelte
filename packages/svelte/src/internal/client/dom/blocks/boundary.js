@@ -41,9 +41,6 @@ export function boundary(node, props, children) {
 }
 
 export class Boundary {
-	/** @type {Boundary | null} */
-	parent;
-
 	/** @type {TemplateNode} */
 	#anchor;
 
@@ -78,8 +75,6 @@ export class Boundary {
 		this.#children = children;
 
 		this.#hydrate_open = hydrate_node;
-
-		this.parent = /** @type {Effect} */ (active_effect).b;
 
 		this.#effect = block(() => {
 			/** @type {Effect} */ (active_effect).b = this;
