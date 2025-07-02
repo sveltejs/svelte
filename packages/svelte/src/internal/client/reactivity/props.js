@@ -1,5 +1,5 @@
 /** @import { ComponentContext } from '#client' */
-/** @import { Derived, Source } from './types.js' */
+/** @import { Derived, Effect, Source } from './types.js' */
 import { DEV } from 'esm-env';
 import {
 	PROPS_IS_BINDABLE,
@@ -12,9 +12,15 @@ import {
 import { get_descriptor, is_function } from '../../shared/utils.js';
 import { set, source, update } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
-import { get, is_destroying_effect, untrack } from '../runtime.js';
+import {
+	active_effect,
+	get,
+	is_destroying_effect,
+	set_active_effect,
+	untrack
+} from '../runtime.js';
 import * as e from '../errors.js';
-import { LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
+import { DESTROYED, LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
@@ -94,7 +100,7 @@ export function rest_props(props, exclude, name) {
 
 /**
  * The proxy handler for legacy $$restProps and $$props
- * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol>, special: Record<string | symbol, (v?: unknown) => unknown>, version: Source<number> }>}}
+ * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol>, special: Record<string | symbol, (v?: unknown) => unknown>, version: Source<number>, parent_effect: Effect }>}}
  */
 const legacy_rest_props_handler = {
 	get(target, key) {
@@ -104,17 +110,25 @@ const legacy_rest_props_handler = {
 	},
 	set(target, key, value) {
 		if (!(key in target.special)) {
-			// Handle props that can temporarily get out of sync with the parent
-			/** @type {Record<string, (v?: unknown) => unknown>} */
-			target.special[key] = prop(
-				{
-					get [key]() {
-						return target.props[key];
-					}
-				},
-				/** @type {string} */ (key),
-				PROPS_IS_UPDATED
-			);
+			var previous_effect = active_effect;
+
+			try {
+				set_active_effect(target.parent_effect);
+
+				// Handle props that can temporarily get out of sync with the parent
+				/** @type {Record<string, (v?: unknown) => unknown>} */
+				target.special[key] = prop(
+					{
+						get [key]() {
+							return target.props[key];
+						}
+					},
+					/** @type {string} */ (key),
+					PROPS_IS_UPDATED
+				);
+			} finally {
+				set_active_effect(previous_effect);
+			}
 		}
 
 		target.special[key](value);
@@ -153,7 +167,19 @@ const legacy_rest_props_handler = {
  * @returns {Record<string, unknown>}
  */
 export function legacy_rest_props(props, exclude) {
-	return new Proxy({ props, exclude, special: {}, version: source(0) }, legacy_rest_props_handler);
+	return new Proxy(
+		{
+			props,
+			exclude,
+			special: {},
+			version: source(0),
+			// TODO this is only necessary because we need to track component
+			// destruction inside `prop`, because of `bind:this`, but it
+			// seems likely that we can simplify `bind:this` instead
+			parent_effect: /** @type {Effect} */ (active_effect)
+		},
+		legacy_rest_props_handler
+	);
 }
 
 /**
@@ -376,6 +402,12 @@ export function prop(props, key, flags, fallback) {
 	// Capture the initial value if it's bindable
 	if (bindable) get(d);
 
+	var parent_effect = /** @type {Effect} */ (active_effect);
+
+	if (!parent_effect) {
+		console.trace();
+	}
+
 	return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
 		if (arguments.length > 0) {
 			const new_value = mutation ? get(d) : runes && bindable ? proxy(value) : value;
@@ -390,10 +422,12 @@ export function prop(props, key, flags, fallback) {
 			return value;
 		}
 
-		// special case — avoid recalculating the derived if
-		// we're in a teardown function and the prop
-		// was overridden locally
-		if (is_destroying_effect && overridden) {
+		// special case — avoid recalculating the derived if we're in a
+		// teardown function and the prop was overridden locally, or the
+		// component was already destroyed (this latter part is necessary
+		// because `bind:this` can read props after the component has
+		// been destroyed. TODO simplify `bind:this`
+		if ((is_destroying_effect && overridden) || (parent_effect.f & DESTROYED) !== 0) {
 			return d.v;
 		}
 
