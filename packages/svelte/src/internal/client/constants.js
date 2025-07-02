@@ -19,6 +19,7 @@ export const INSPECT_EFFECT = 1 << 18;
 export const HEAD_EFFECT = 1 << 19;
 export const EFFECT_HAS_DERIVED = 1 << 20;
 export const EFFECT_IS_UPDATING = 1 << 21;
+export const USER_EFFECT = 1 << 22;
 
 export const STATE_SYMBOL = Symbol('$state');
 export const LEGACY_PROPS = Symbol('legacy props');
