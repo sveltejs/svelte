@@ -85,7 +85,7 @@ export interface Effect extends Reaction {
 	last: null | Effect;
 	/** Parent effect */
 	parent: Effect | null;
-	/** THe boundary this effect belongs to */
+	/** The boundary this effect belongs to */
 	b: Boundary | null;
 	/** Dev only */
 	component_function?: any;
