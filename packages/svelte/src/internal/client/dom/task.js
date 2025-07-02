@@ -7,21 +7,12 @@ const request_idle_callback =
 		: requestIdleCallback;
 
 /** @type {Array<() => void>} */
-let boundary_micro_tasks = [];
-
-/** @type {Array<() => void>} */
 let micro_tasks = [];
 
 /** @type {Array<() => void>} */
 let idle_tasks = [];
 
-function run_boundary_micro_tasks() {
-	var tasks = boundary_micro_tasks;
-	boundary_micro_tasks = [];
-	run_all(tasks);
-}
-
-function run_post_micro_tasks() {
+function run_micro_tasks() {
 	var tasks = micro_tasks;
 	micro_tasks = [];
 	run_all(tasks);
@@ -33,29 +24,13 @@ function run_idle_tasks() {
 	run_all(tasks);
 }
 
-function run_micro_tasks() {
-	run_boundary_micro_tasks();
-	run_post_micro_tasks();
-}
-
-/**
- * @param {() => void} fn
- */
-export function queue_boundary_micro_task(fn) {
-	if (boundary_micro_tasks.length === 0 && micro_tasks.length === 0) {
-		queueMicrotask(run_micro_tasks);
-	}
-
-	// TODO do we need to differentiate between `boundary_micro_tasks` and `micro_tasks`?
-	// nothing breaks if we push everything to `micro_tasks`
-	boundary_micro_tasks.push(fn);
-}
+export { queue_micro_task as queue_boundary_micro_task };
 
 /**
  * @param {() => void} fn
  */
 export function queue_micro_task(fn) {
-	if (boundary_micro_tasks.length === 0 && micro_tasks.length === 0) {
+	if (micro_tasks.length === 0) {
 		queueMicrotask(run_micro_tasks);
 	}
 
@@ -77,7 +52,7 @@ export function queue_idle_task(fn) {
  * Synchronously run any queued tasks.
  */
 export function flush_tasks() {
-	if (boundary_micro_tasks.length > 0 || micro_tasks.length > 0) {
+	if (micro_tasks.length > 0) {
 		run_micro_tasks();
 	}
 
