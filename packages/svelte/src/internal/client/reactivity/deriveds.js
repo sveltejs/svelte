@@ -30,7 +30,7 @@ import { destroy_effect, render_effect } from './effects.js';
 import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
-import { Boundary, get_pending_boundary } from '../dom/blocks/boundary.js';
+import { Boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { current_batch } from './batch.js';
