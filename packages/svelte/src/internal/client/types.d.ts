@@ -185,4 +185,13 @@ export type SourceLocation =
 	| [line: number, column: number]
 	| [line: number, column: number, SourceLocation[]];
 
+export interface DevStackEntry {
+	file: string;
+	type: 'component' | 'if' | 'each' | 'await' | 'key' | 'render';
+	line: number;
+	column: number;
+	parent: DevStackEntry | null;
+	componentTag?: string;
+}
+
 export * from './reactivity/types';

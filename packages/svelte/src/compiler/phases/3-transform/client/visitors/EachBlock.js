@@ -13,7 +13,7 @@ import { dev } from '../../../../state.js';
 import { extract_paths, object } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { get_value } from './shared/declarations.js';
-import { build_expression } from './shared/utils.js';
+import { build_expression, add_svelte_meta } from './shared/utils.js';
 
 /**
  * @param {AST.EachBlock} node
@@ -335,7 +335,7 @@ export function EachBlock(node, context) {
 	}
 
 	if (has_await) {
-		const statements = [b.stmt(b.call('$.each', ...args))];
+		const statements = [add_svelte_meta(b.call('$.each', ...args), node, 'each')];
 		if (dev && node.metadata.keyed) {
 			statements.unshift(
 				b.stmt(
@@ -363,7 +363,7 @@ export function EachBlock(node, context) {
 				b.stmt(b.call('$.validate_each_keys', b.thunk(collection), key_function))
 			);
 		}
-		context.state.init.push(b.stmt(b.call('$.each', ...args)));
+		context.state.init.push(add_svelte_meta(b.call('$.each', ...args), node, 'each'));
 	}
 }
 

@@ -1,4 +1,10 @@
-import type { ComponentContext, Dom, Equals, TemplateNode, TransitionManager } from '#client';
+import type {
+	ComponentContext,
+	DevStackEntry,
+	Equals,
+	TemplateNode,
+	TransitionManager
+} from '#client';
 import type { Boundary } from '../dom/blocks/boundary';
 
 export interface Signal {
@@ -83,6 +89,8 @@ export interface Effect extends Reaction {
 	b: Boundary | null;
 	/** Dev only */
 	component_function?: any;
+	/** Dev only. Only set for certain block effects. Contains a reference to the stack that represents the render tree */
+	dev_stack?: DevStackEntry | null;
 }
 
 export type Source<V = unknown> = Value<V>;

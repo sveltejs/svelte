@@ -2,7 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '#compiler/builders';
-import { build_expression } from './shared/utils.js';
+import { build_expression, add_svelte_meta } from './shared/utils.js';
 
 /**
  * @param {AST.KeyBlock} node
@@ -17,16 +17,22 @@ export function KeyBlock(node, context) {
 	const key = b.thunk(has_await ? b.call('$.get', b.id('$$key')) : expression);
 	const body = /** @type {Expression} */ (context.visit(node.fragment));
 
-	let call = b.call('$.key', context.state.node, key, b.arrow([b.id('$$anchor')], body));
+	let statement = add_svelte_meta(
+		b.call('$.key', context.state.node, key, b.arrow([b.id('$$anchor')], body)),
+		node,
+		'key'
+	);
 
 	if (has_await) {
-		call = b.call(
-			'$.async',
-			context.state.node,
-			b.array([b.thunk(expression, true)]),
-			b.arrow([context.state.node, b.id('$$key')], b.block([b.stmt(call)]))
+		statement = b.stmt(
+			b.call(
+				'$.async',
+				context.state.node,
+				b.array([b.thunk(expression, true)]),
+				b.arrow([context.state.node, b.id('$$key')], b.block([statement]))
+			)
 		);
 	}
 
-	context.state.init.push(b.stmt(call));
+	context.state.init.push(statement);
 }

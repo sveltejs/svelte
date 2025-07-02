@@ -2,7 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import * as b from '#compiler/builders';
-import { build_expression } from './shared/utils.js';
+import { build_expression, add_svelte_meta } from './shared/utils.js';
 
 /**
  * @param {AST.IfBlock} node
@@ -69,7 +69,7 @@ export function IfBlock(node, context) {
 		args.push(b.true);
 	}
 
-	statements.push(b.stmt(b.call('$.if', ...args)));
+	statements.push(add_svelte_meta(b.call('$.if', ...args), node, 'if'));
 
 	if (has_await) {
 		context.state.init.push(

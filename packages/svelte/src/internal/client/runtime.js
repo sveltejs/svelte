@@ -20,7 +20,6 @@ import {
 	STATE_SYMBOL,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
 	REACTION_IS_UPDATING,
 	EFFECT_IS_UPDATING,
@@ -44,9 +43,11 @@ import { tracing_expressions, get_stack } from './dev/tracing.js';
 import {
 	component_context,
 	dev_current_component_function,
+	dev_stack,
 	is_runes,
 	set_component_context,
-	set_dev_current_component_function
+	set_dev_current_component_function,
+	set_dev_stack
 } from './context.js';
 import * as w from './warnings.js';
 import { current_batch, Batch, batch_deriveds } from './reactivity/batch.js';
@@ -478,6 +479,9 @@ export function update_effect(effect) {
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
 		set_dev_current_component_function(effect.component_function);
+		var previous_stack = /** @type {any} */ (dev_stack);
+		// only block effects have a dev stack, keep the current one otherwise
+		set_dev_stack(effect.dev_stack ?? dev_stack);
 	}
 
 	try {
@@ -512,6 +516,7 @@ export function update_effect(effect) {
 
 		if (DEV) {
 			set_dev_current_component_function(previous_component_fn);
+			set_dev_stack(previous_stack);
 		}
 	}
 }
@@ -978,17 +983,7 @@ export function invalidate_inner_signals(fn) {
 	var captured = capture_signals(() => untrack(fn));
 
 	for (var signal of captured) {
-		// Go one level up because derived signals created as part of props in legacy mode
-		if ((signal.f & LEGACY_DERIVED_PROP) !== 0) {
-			for (const dep of /** @type {Derived} */ (signal).deps || []) {
-				if ((dep.f & DERIVED) === 0) {
-					// Use internal_set instead of set here and below to avoid mutation validation
-					internal_set(dep, dep.v);
-				}
-			}
-		} else {
-			internal_set(signal, signal.v);
-		}
+		internal_set(signal, signal.v);
 	}
 }
 

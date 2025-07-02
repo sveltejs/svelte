@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, Expression, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression } from 'estree' */
+/** @import { AssignmentExpression, Expression, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression, ExpressionStatement } from 'estree' */
 /** @import { AST, ExpressionMetadata } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext, Context } from '../../types' */
 import { walk } from 'zimmerframe';
@@ -7,7 +7,7 @@ import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
-import { dev, is_ignored, locator } from '../../../../../state.js';
+import { dev, is_ignored, locator, component_name } from '../../../../../state.js';
 import { build_getter } from '../../utils.js';
 
 export class Memoizer {
@@ -426,4 +426,35 @@ export function build_expression(context, expression, metadata, state = context.
 	sequence.expressions.push(b.call('$.untrack', b.thunk(value)));
 
 	return sequence;
+}
+
+/**
+ * Wraps a statement/expression with dev stack tracking in dev mode
+ * @param {Expression} expression - The function call to wrap (e.g., $.if, $.each, etc.)
+ * @param {{ start?: number }} node - AST node for location info
+ * @param {'component' | 'if' | 'each' | 'await' | 'key' | 'render'} type - Type of block/component
+ * @param {Record<string, number | string>} [additional] - Any additional properties to add to the dev stack entry
+ * @returns {ExpressionStatement} - Statement with or without dev stack wrapping
+ */
+export function add_svelte_meta(expression, node, type, additional) {
+	if (!dev) {
+		return b.stmt(expression);
+	}
+
+	const location = node.start !== undefined && locator(node.start);
+	if (!location) {
+		return b.stmt(expression);
+	}
+
+	return b.stmt(
+		b.call(
+			'$.add_svelte_meta',
+			b.arrow([], expression),
+			b.literal(type),
+			b.id(component_name),
+			b.literal(location.line),
+			b.literal(location.column),
+			additional && b.object(Object.entries(additional).map(([k, v]) => b.init(k, b.literal(v))))
+		)
+	);
 }
