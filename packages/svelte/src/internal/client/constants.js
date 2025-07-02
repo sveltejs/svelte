@@ -17,7 +17,7 @@ export const EFFECT_RAN = 1 << 15;
 export const EFFECT_TRANSPARENT = 1 << 16;
 export const INSPECT_EFFECT = 1 << 18;
 export const HEAD_EFFECT = 1 << 19;
-export const EFFECT_HAS_DERIVED = 1 << 20;
+export const EFFECT_PRESERVED = 1 << 20;
 export const EFFECT_IS_UPDATING = 1 << 21;
 
 export const STATE_SYMBOL = Symbol('$state');
