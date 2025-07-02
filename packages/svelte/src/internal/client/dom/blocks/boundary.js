@@ -1,5 +1,4 @@
 /** @import { Effect, TemplateNode, } from '#client' */
-
 import { BOUNDARY_EFFECT, EFFECT_PRESERVED, EFFECT_TRANSPARENT } from '#client/constants';
 import { component_context, set_component_context } from '../../context.js';
 import { invoke_error_boundary } from '../../error-handling.js';
@@ -18,7 +17,6 @@ import {
 	remove_nodes,
 	set_hydrate_node
 } from '../hydration.js';
-import { get_next_sibling } from '../operations.js';
 import { queue_micro_task } from '../task.js';
 
 /**
