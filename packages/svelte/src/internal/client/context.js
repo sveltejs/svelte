@@ -3,7 +3,6 @@
 import { DEV } from 'esm-env';
 import { lifecycle_outside_component } from '../shared/errors.js';
 import * as e from './errors.js';
-import { source } from './reactivity/sources.js';
 import {
 	active_effect,
 	active_reaction,
