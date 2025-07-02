@@ -1,4 +1,4 @@
-/** @import { ComponentContext } from '#client' */
+/** @import { ComponentContext, DevStackEntry } from '#client' */
 
 import { DEV } from 'esm-env';
 import { lifecycle_outside_component } from '../shared/errors.js';
@@ -11,6 +11,7 @@ import {
 } from './runtime.js';
 import { effect, teardown } from './reactivity/effects.js';
 import { legacy_mode_flag } from '../flags/index.js';
+import { FILENAME } from '../../constants.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;
@@ -18,6 +19,43 @@ export let component_context = null;
 /** @param {ComponentContext | null} context */
 export function set_component_context(context) {
 	component_context = context;
+}
+
+/** @type {DevStackEntry | null} */
+export let dev_stack = null;
+
+/** @param {DevStackEntry | null} stack */
+export function set_dev_stack(stack) {
+	dev_stack = stack;
+}
+
+/**
+ * Execute a callback with a new dev stack entry
+ * @param {() => any} callback - Function to execute
+ * @param {DevStackEntry['type']} type - Type of block/component
+ * @param {any} component - Component function
+ * @param {number} line - Line number
+ * @param {number} column - Column number
+ * @param {Record<string, any>} [additional] - Any additional properties to add to the dev stack entry
+ * @returns {any}
+ */
+export function add_svelte_meta(callback, type, component, line, column, additional) {
+	const parent = dev_stack;
+
+	dev_stack = {
+		type,
+		file: component[FILENAME],
+		line,
+		column,
+		parent,
+		...additional
+	};
+
+	try {
+		return callback();
+	} finally {
+		dev_stack = parent;
+	}
 }
 
 /**

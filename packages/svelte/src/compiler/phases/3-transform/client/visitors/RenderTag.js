@@ -3,7 +3,7 @@
 /** @import { ComponentContext } from '../types' */
 import { unwrap_optional } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { build_expression } from './shared/utils.js';
+import { add_svelte_meta, build_expression } from './shared/utils.js';
 
 /**
  * @param {AST.RenderTag} node
@@ -48,16 +48,22 @@ export function RenderTag(node, context) {
 		}
 
 		context.state.init.push(
-			b.stmt(b.call('$.snippet', context.state.node, b.thunk(snippet_function), ...args))
+			add_svelte_meta(
+				b.call('$.snippet', context.state.node, b.thunk(snippet_function), ...args),
+				node,
+				'render'
+			)
 		);
 	} else {
 		context.state.init.push(
-			b.stmt(
+			add_svelte_meta(
 				(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
 					snippet_function,
 					context.state.node,
 					...args
-				)
+				),
+				node,
+				'render'
 			)
 		);
 	}

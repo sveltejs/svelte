@@ -16,6 +16,9 @@ export let warnings = [];
  */
 export let filename;
 
+/**
+ * The name of the component that is used in the `export default function ...` statement.
+ */
 export let component_name = '<unknown>';
 
 /**
