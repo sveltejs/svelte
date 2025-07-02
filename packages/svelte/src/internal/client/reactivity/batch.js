@@ -216,6 +216,8 @@ export class Batch {
 		flush_queued_root_effects();
 
 		if (current_batch !== this) {
+			// this can happen if a `flushSync` occurred during `flush_queued_root_effects`,
+			// which is permitted in legacy mode despite being a terrible idea
 			return;
 		}
 
