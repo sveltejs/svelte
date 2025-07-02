@@ -41,7 +41,7 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { derived } from './deriveds.js';
-import { component_context, dev_current_component_function } from '../context.js';
+import { component_context, dev_current_component_function, dev_stack } from '../context.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -359,7 +359,11 @@ export function template_effect(fn, thunks = [], d = derived) {
  * @param {number} flags
  */
 export function block(fn, flags = 0) {
-	return create_effect(RENDER_EFFECT | BLOCK_EFFECT | flags, fn, true);
+	var effect = create_effect(RENDER_EFFECT | BLOCK_EFFECT | flags, fn, true);
+	if (DEV) {
+		effect.dev_stack = dev_stack;
+	}
+	return effect;
 }
 
 /**

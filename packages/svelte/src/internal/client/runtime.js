@@ -34,12 +34,13 @@ import { tracing_expressions, get_stack } from './dev/tracing.js';
 import {
 	component_context,
 	dev_current_component_function,
+	dev_stack,
 	is_runes,
 	set_component_context,
-	set_dev_current_component_function
+	set_dev_current_component_function,
+	set_dev_stack
 } from './context.js';
 import { handle_error, invoke_error_boundary } from './error-handling.js';
-import { snapshot } from '../shared/clone.js';
 import { UNINITIALIZED } from '../../constants.js';
 
 let is_flushing = false;
@@ -445,6 +446,9 @@ export function update_effect(effect) {
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
 		set_dev_current_component_function(effect.component_function);
+		var previous_stack = /** @type {any} */ (dev_stack);
+		// only block effects have a dev stack, keep the current one otherwise
+		set_dev_stack(effect.dev_stack ?? dev_stack);
 	}
 
 	try {
@@ -479,6 +483,7 @@ export function update_effect(effect) {
 
 		if (DEV) {
 			set_dev_current_component_function(previous_component_fn);
+			set_dev_stack(previous_stack);
 		}
 	}
 }
