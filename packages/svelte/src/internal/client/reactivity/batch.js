@@ -114,7 +114,6 @@ export class Batch {
 
 						for (const [source, value] of this.#current) {
 							batch.#current.set(source, value);
-							// TODO what about batch.#previous?
 						}
 
 						for (const e of this.render_effects) {
