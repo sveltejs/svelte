@@ -9,7 +9,7 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from './runtime.js';
-import { effect, teardown } from './reactivity/effects.js';
+import { create_user_effect, teardown } from './reactivity/effects.js';
 import { legacy_mode_flag } from '../flags/index.js';
 import { FILENAME } from '../../constants.js';
 
@@ -191,7 +191,7 @@ export function pop(component) {
 					var component_effect = component_effects[i];
 					set_active_effect(component_effect.effect);
 					set_active_reaction(component_effect.reaction);
-					effect(component_effect.fn);
+					create_user_effect(component_effect.fn);
 				}
 			} finally {
 				set_active_effect(previous_effect);
