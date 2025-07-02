@@ -12,7 +12,7 @@ import {
 import { get_descriptor, is_function } from '../../shared/utils.js';
 import { set, source, update } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
-import { get, untrack } from '../runtime.js';
+import { get, is_destroying_effect, untrack } from '../runtime.js';
 import * as e from '../errors.js';
 import { LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
 import { proxy } from '../proxy.js';
@@ -366,7 +366,12 @@ export function prop(props, key, flags, fallback) {
 
 	// prop is written to, but there's no binding, which means we
 	// create a derived that we can write to locally
-	var d = ((flags & PROPS_IS_IMMUTABLE) !== 0 ? derived : derived_safe_equal)(getter);
+	var overridden = false;
+
+	var d = ((flags & PROPS_IS_IMMUTABLE) !== 0 ? derived : derived_safe_equal)(() => {
+		overridden = false;
+		return getter();
+	});
 
 	// Capture the initial value if it's bindable
 	if (bindable) get(d);
@@ -376,6 +381,7 @@ export function prop(props, key, flags, fallback) {
 			const new_value = mutation ? get(d) : runes && bindable ? proxy(value) : value;
 
 			set(d, new_value);
+			overridden = true;
 
 			if (fallback_value !== undefined) {
 				fallback_value = new_value;
@@ -384,7 +390,10 @@ export function prop(props, key, flags, fallback) {
 			return value;
 		}
 
-		if (has_destroyed_component_ctx(d)) {
+		// special case — avoid recalculating the derived if
+		// we're in a teardown function and the prop
+		// was overridden locally
+		if (is_destroying_effect && overridden) {
 			return d.v;
 		}
 
