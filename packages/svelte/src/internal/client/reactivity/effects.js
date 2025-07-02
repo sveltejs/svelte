@@ -104,6 +104,7 @@ function create_effect(type, fn, sync, push = true) {
 		last: null,
 		next: null,
 		parent,
+		b: parent && parent.b,
 		prev: null,
 		teardown: null,
 		transitions: null,
