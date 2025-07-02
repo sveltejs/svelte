@@ -163,7 +163,6 @@ export function set(source, value, should_proxy = false) {
  * @returns {V}
  */
 export function internal_set(source, value) {
-
 	if (!source.equals(value)) {
 		var old_value = source.v;
 
