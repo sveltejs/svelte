@@ -802,12 +802,10 @@ export function get(signal) {
 		// we don't add the dependency, because that would create a memory leak
 		var destroyed = active_effect !== null && (active_effect.f & DESTROYED) !== 0;
 
-		if (
-			!destroyed &&
-			((async_mode_flag && (active_reaction.f & DERIVED) === 0) ||
-				source_ownership?.reaction !== active_reaction ||
-				!source_ownership?.sources.includes(signal))
-		) {
+		var is_owned_by_reaction =
+			source_ownership?.reaction === active_reaction && source_ownership.sources.includes(signal);
+
+		if (!destroyed && !is_owned_by_reaction) {
 			var deps = active_reaction.deps;
 
 			if ((active_reaction.f & REACTION_IS_UPDATING) !== 0) {
