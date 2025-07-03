@@ -380,6 +380,17 @@ export function get_pending_boundary() {
 	return boundary;
 }
 
+/**
+ * Captures the current effect context so that we can restore it after
+ * some asynchronous work has happened if `track` is true (so that e.g.
+ * `await a + b` causes `b` to be registered as a dependency).
+ *
+ * If `track` is false, we just take a note of which async derived
+ * brought us here, so that we can emit a `async_reactivity_loss`
+ * warning when it's appropriate to do so.
+ *
+ * @param {boolean} track
+ */
 export function capture(track = true) {
 	var previous_effect = active_effect;
 	var previous_reaction = active_reaction;
@@ -417,6 +428,9 @@ export function suspend() {
 }
 
 /**
+ * Wraps an `await` expression in such a way that the effect context that was
+ * active before the expression evaluated can be reapplied afterwards —
+ * `await a + b` becomes `(await $.save(a))() + b`
  * @template T
  * @param {Promise<T>} promise
  * @param {boolean} [track]
