@@ -100,17 +100,17 @@ export function set_active_effect(effect) {
 /**
  * When sources are created within a reaction, reading and writing
  * them within that reaction should not cause a re-run
- * @type {null | [active_reaction: Reaction, sources: Source[]]}
+ * @type {null | { reaction: Reaction, sources: Source[] }}
  */
-export let reaction_sources = null;
+export let source_ownership = null;
 
 /** @param {Value} value */
 export function push_reaction_value(value) {
 	if (active_reaction !== null && active_reaction.f & EFFECT_IS_UPDATING) {
-		if (reaction_sources === null) {
-			reaction_sources = [active_reaction, [value]];
+		if (source_ownership === null) {
+			source_ownership = { reaction: active_reaction, sources: [value] };
 		} else {
-			reaction_sources[1].push(value);
+			source_ownership.sources.push(value);
 		}
 	}
 }
@@ -255,10 +255,11 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 
 		if (
 			!async_mode_flag &&
-			reaction_sources?.[1].includes(signal) &&
-			reaction_sources[0] === active_reaction
-		)
+			source_ownership?.reaction === active_reaction &&
+			source_ownership.sources.includes(signal)
+		) {
 			continue;
+		}
 
 		if ((reaction.f & DERIVED) !== 0) {
 			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
@@ -280,7 +281,7 @@ export function update_reaction(reaction) {
 	var previous_untracked_writes = untracked_writes;
 	var previous_reaction = active_reaction;
 	var previous_skip_reaction = skip_reaction;
-	var previous_reaction_sources = reaction_sources;
+	var previous_reaction_sources = source_ownership;
 	var previous_component_context = component_context;
 	var previous_untracking = untracking;
 
@@ -293,7 +294,7 @@ export function update_reaction(reaction) {
 		(flags & UNOWNED) !== 0 && (untracking || !is_updating_effect || active_reaction === null);
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 
-	reaction_sources = null;
+	source_ownership = null;
 	set_component_context(reaction.ctx);
 	untracking = false;
 	read_version++;
@@ -389,7 +390,7 @@ export function update_reaction(reaction) {
 		untracked_writes = previous_untracked_writes;
 		active_reaction = previous_reaction;
 		skip_reaction = previous_skip_reaction;
-		reaction_sources = previous_reaction_sources;
+		source_ownership = previous_reaction_sources;
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
 
@@ -804,8 +805,8 @@ export function get(signal) {
 		if (
 			!destroyed &&
 			((async_mode_flag && (active_reaction.f & DERIVED) === 0) ||
-				!reaction_sources?.[1].includes(signal) ||
-				reaction_sources[0] !== active_reaction)
+				source_ownership?.reaction !== active_reaction ||
+				!source_ownership?.sources.includes(signal))
 		) {
 			var deps = active_reaction.deps;
 
