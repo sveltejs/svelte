@@ -1,3 +1,13 @@
+## async_derived_orphan
+
+> Cannot create a `$derived(...)` with an `await` expression outside of an effect tree
+
+In Svelte there are two types of reaction — [`$derived`](https://svelte.dev/docs/svelte/$derived) and [`$effect`](https://svelte.dev/docs/svelte/$effect). Deriveds can be created anywhere, because they run _lazily_ and can be [garbage collected](https://developer.mozilla.org/en-US/docs/Glossary/Garbage_collection) if nothing references them. Effects, by contrast, keep running eagerly whenever their dependencies change, until they are destroyed.
+
+Because of this, effects can only be created inside other effects (or [effect roots](https://svelte.dev/docs/svelte/$effect#$effect.root), such as the one that is created when you first mount a component) so that Svelte knows when to destroy them.
+
+Some sleight of hand occurs when a derived contains an `await` expression: Since waiting until we read `{await getPromise()}` to call `getPromise` would be too late, we use an effect to instead call it proactively, notifying Svelte when the value is available. But since we're using an effect, we can only create asynchronous deriveds inside another effect.
+
 ## bind_invalid_checkbox_value
 
 > Using `bind:value` together with a checkbox input is not allowed. Use `bind:checked` instead

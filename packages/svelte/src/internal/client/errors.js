@@ -390,3 +390,19 @@ export function state_unsafe_mutation() {
 		throw new Error(`https://svelte.dev/e/state_unsafe_mutation`);
 	}
 }
+
+/**
+ * Cannot create a `$derived(...)` with an `await` expression outside of an effect tree
+ * @returns {never}
+ */
+export function async_derived_orphan() {
+	if (DEV) {
+		const error = new Error(`async_derived_orphan\nCannot create a \`$derived(...)\` with an \`await\` expression outside of an effect tree\nhttps://svelte.dev/e/async_derived_orphan`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/async_derived_orphan`);
+	}
+}

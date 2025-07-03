@@ -100,7 +100,7 @@ export function async_derived(fn, location) {
 	let parent = /** @type {Effect | null} */ (active_effect);
 
 	if (parent === null) {
-		throw new Error('TODO cannot create unowned async derived');
+		e.async_derived_orphan();
 	}
 
 	var boundary = /** @type {Boundary} */ (parent.b);
