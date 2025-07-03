@@ -245,7 +245,7 @@ async function run_test_variant(
 		if (str.slice(0, i).includes('warnings') || config.warnings) {
 			// eslint-disable-next-line no-console
 			console.warn = (...args) => {
-				if (args[0].startsWith('%c[svelte]')) {
+				if (typeof args[0] === 'string' && args[0].startsWith('%c[svelte]')) {
 					// TODO convert this to structured data, for more robust comparison?
 
 					let message = args[0];
