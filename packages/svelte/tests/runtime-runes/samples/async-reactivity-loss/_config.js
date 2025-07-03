@@ -10,7 +10,7 @@ export default test({
 
 	async test({ assert, target, warnings }) {
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<button>a</button><button>b</button><h1>3</h1>');
+		assert.htmlEqual(target.innerHTML, '<button>a</button><button>b</button><h1>3</h1><p>3</p>');
 
 		assert.equal(
 			warnings[0],

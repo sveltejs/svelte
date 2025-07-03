@@ -12,6 +12,7 @@
 
 <svelte:boundary>
 	<h1>{await a_plus_b()}</h1>
+	<p>{await a + await b}</p>
 
 	{#snippet pending()}
 		<p>pending</p>
