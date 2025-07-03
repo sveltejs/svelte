@@ -376,8 +376,10 @@ export function capture(track = true) {
 			set_active_effect(previous_effect);
 			set_active_reaction(previous_reaction);
 			set_component_context(previous_component_context);
-		} else if (DEV) {
-			set_from_async_derived(was_from_async_derived);
+		}
+
+		if (DEV) {
+			set_from_async_derived(track ? null : was_from_async_derived);
 		}
 
 		// prevent the active effect from outstaying its welcome
@@ -416,6 +418,7 @@ function exit() {
 	set_active_effect(null);
 	set_active_reaction(null);
 	set_component_context(null);
+	if (DEV) set_from_async_derived(null);
 }
 
 export function pending() {

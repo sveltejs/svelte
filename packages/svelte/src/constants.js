@@ -43,6 +43,7 @@ export const NAMESPACE_MATHML = 'http://www.w3.org/1998/Math/MathML';
 // can be ignored and we want to keep the validation for svelte-ignore in place
 export const IGNORABLE_RUNTIME_WARNINGS = /** @type {const} */ ([
 	'await_waterfall',
+	'await_reactivity_loss',
 	'state_snapshot_uncloneable',
 	'binding_property_non_reactive',
 	'hydration_attribute_changed',
