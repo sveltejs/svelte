@@ -877,8 +877,9 @@ export function get(signal) {
 			if (!tracking && !was_read) {
 				w.await_reactivity_loss(/** @type {string} */ (signal.label));
 
+				var trace = get_stack('TracedAt');
 				// eslint-disable-next-line no-console
-				console.warn(get_stack('TracedAt'));
+				if (trace) console.warn(trace);
 			}
 		}
 
@@ -895,7 +896,7 @@ export function get(signal) {
 			if (signal.trace) {
 				signal.trace();
 			} else {
-				var trace = get_stack('TracedAt');
+				trace = get_stack('TracedAt');
 
 				if (trace) {
 					var entry = tracing_expressions.entries.get(signal);
