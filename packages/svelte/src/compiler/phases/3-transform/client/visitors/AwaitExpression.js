@@ -1,6 +1,6 @@
 /** @import { AwaitExpression, Expression, Property, SpreadElement } from 'estree' */
 /** @import { Context } from '../types' */
-import { dev } from '../../../../state.js';
+import { dev, is_ignored } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
 
 /**
@@ -8,18 +8,26 @@ import * as b from '../../../../utils/builders.js';
  * @param {Context} context
  */
 export function AwaitExpression(node, context) {
-	const save =
-		// preserve context if this is a top-level await in `<script>`
-		(context.state.is_instance && context.state.scope.function_depth === 1) ||
-		// or if this is a derived/template expression
-		(is_reactive_expression(context) && !is_last_evaluated_expression(context, node));
+	const argument = /** @type {Expression} */ (context.visit(node.argument));
 
-	if (dev || save) {
-		const expression = /** @type {Expression} */ (context.visit(node.argument));
-		return b.call(b.await(b.call('$.save', expression, !save && b.false)));
+	const tla = context.state.is_instance && context.state.scope.function_depth === 1;
+
+	// preserve context for
+	//   a) top-level await and
+	//   b) awaits that precede other expressions in template or `$derived(...)`
+	if (tla || is_reactive_expression(context)) {
+		if (tla || !is_last_evaluated_expression(context, node)) {
+			return b.call(b.await(b.call('$.save', argument)));
+		}
 	}
 
-	return context.next();
+	// in dev, note which values are read inside a reactive expression,
+	// but don't track them
+	else if (dev && !is_ignored(node, 'await_reactivity_loss')) {
+		return b.call(b.await(b.call('$.save', argument, b.false)));
+	}
+
+	return argument === node.argument ? node : { ...node, argument };
 }
 
 /**

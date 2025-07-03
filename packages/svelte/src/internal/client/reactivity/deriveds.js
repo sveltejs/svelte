@@ -116,7 +116,13 @@ export function async_derived(fn, location) {
 
 	render_effect(() => {
 		if (DEV) from_async_derived = active_effect;
-		var p = fn();
+
+		try {
+			var p = fn();
+		} catch (error) {
+			p = Promise.reject(error);
+		}
+
 		if (DEV) from_async_derived = null;
 
 		promise =
