@@ -875,7 +875,10 @@ export function get(signal) {
 			var was_read = from_async_derived.deps !== null && from_async_derived.deps.includes(signal);
 
 			if (!tracking && !was_read) {
-				w.await_reactivity_loss();
+				w.await_reactivity_loss(/** @type {string} */ (signal.label));
+
+				// eslint-disable-next-line no-console
+				console.warn(get_stack('TracedAt'));
 			}
 		}
 

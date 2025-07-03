@@ -19,23 +19,24 @@ export function assignment_value_stale(property, location) {
 }
 
 /**
- * Detected reactivity loss
+ * Detected reactivity loss when reading `%name%`. This happens when state is read in an async function after an earlier `await`
+ * @param {string} name
  */
-export function await_reactivity_loss() {
+export function await_reactivity_loss(name) {
 	if (DEV) {
-		console.warn(`%c[svelte] await_reactivity_loss\n%cDetected reactivity loss\nhttps://svelte.dev/e/await_reactivity_loss`, bold, normal);
+		console.warn(`%c[svelte] await_reactivity_loss\n%cDetected reactivity loss when reading \`${name}\`. This happens when state is read in an async function after an earlier \`await\`\nhttps://svelte.dev/e/await_reactivity_loss`, bold, normal);
 	} else {
 		console.warn(`https://svelte.dev/e/await_reactivity_loss`);
 	}
 }
 
 /**
- * An async value (%location%) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app.
+ * An async value (%location%) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app
  * @param {string} location
  */
 export function await_waterfall(location) {
 	if (DEV) {
-		console.warn(`%c[svelte] await_waterfall\n%cAn async value (${location}) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app.\nhttps://svelte.dev/e/await_waterfall`, bold, normal);
+		console.warn(`%c[svelte] await_waterfall\n%cAn async value (${location}) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app\nhttps://svelte.dev/e/await_waterfall`, bold, normal);
 	} else {
 		console.warn(`https://svelte.dev/e/await_waterfall`);
 	}
