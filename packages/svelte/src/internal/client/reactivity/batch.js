@@ -5,6 +5,7 @@ import {
 	flush_queued_effects,
 	flush_queued_root_effects,
 	process_effects,
+	queued_root_effects,
 	schedule_effect,
 	set_queued_root_effects,
 	set_signal_status,
@@ -174,7 +175,7 @@ export class Batch {
 				this.render_effects = [];
 				this.effects = [];
 
-				this.commit();
+				this.#commit();
 
 				flush_queued_effects(render_effects);
 				flush_queued_effects(effects);
@@ -227,7 +228,11 @@ export class Batch {
 	}
 
 	flush() {
-		flush_queued_root_effects();
+		if (queued_root_effects.length > 0) {
+			flush_queued_root_effects();
+		} else {
+			this.#commit();
+		}
 
 		if (current_batch !== this) {
 			// this can happen if a `flushSync` occurred during `flush_queued_root_effects`,
@@ -242,7 +247,7 @@ export class Batch {
 		current_batch = null;
 	}
 
-	commit() {
+	#commit() {
 		for (const fn of this.#callbacks) {
 			fn();
 		}
@@ -270,8 +275,6 @@ export class Batch {
 
 			this.render_effects = [];
 			this.effects = [];
-
-			this.commit();
 		}
 	}
 

@@ -68,7 +68,7 @@ export function set_is_destroying_effect(value) {
 // Handle effect queues
 
 /** @type {Effect[]} */
-let queued_root_effects = [];
+export let queued_root_effects = [];
 
 /** @param {Effect[]} v */
 export function set_queued_root_effects(v) {
