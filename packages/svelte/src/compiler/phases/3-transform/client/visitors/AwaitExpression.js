@@ -1,9 +1,7 @@
-/** @import { AST } from '#compiler' */
 /** @import { AwaitExpression, Expression, Property, SpreadElement } from 'estree' */
 /** @import { Context } from '../types' */
 import { dev } from '../../../../state.js';
 import * as b from '../../../../utils/builders.js';
-import { get_rune } from '../../../scope.js';
 
 /**
  * @param {AwaitExpression} node
