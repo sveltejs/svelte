@@ -1,5 +1,4 @@
-/** @import { Effect, TemplateNode, } from '#client' */
-
+/** @import { Effect, Source, TemplateNode, } from '#client' */
 import { BOUNDARY_EFFECT, EFFECT_PRESERVED, EFFECT_TRANSPARENT } from '#client/constants';
 import { component_context, set_component_context } from '../../context.js';
 import { invoke_error_boundary } from '../../error-handling.js';
@@ -25,8 +24,9 @@ import * as e from '../../../shared/errors.js';
 import { DEV } from 'esm-env';
 import { from_async_derived, set_from_async_derived } from '../../reactivity/deriveds.js';
 import { Batch } from '../../reactivity/batch.js';
-import { source, update } from '../../reactivity/sources.js';
+import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
+import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
 
 /**
  * @typedef {{
@@ -85,7 +85,22 @@ export class Boundary {
 	#pending_count = 0;
 	#is_creating_fallback = false;
 
-	effect_pending = source(0);
+	/**
+	 * @type {Source<number> | null}
+	 */
+	#effect_pending = null;
+
+	#effect_pending_subscriber = createSubscriber(() => {
+		this.#effect_pending = source(this.#pending_count);
+
+		if (DEV) {
+			tag(this.#effect_pending, '$effect.pending()');
+		}
+
+		return () => {
+			this.#effect_pending = null;
+		};
+	});
 
 	/**
 	 * @param {TemplateNode} node
@@ -102,10 +117,6 @@ export class Boundary {
 		this.parent = /** @type {Effect} */ (active_effect).b;
 
 		this.pending = !!this.#props.pending;
-
-		if (DEV) {
-			tag(this.effect_pending, '$effect.pending()');
-		}
 
 		this.#effect = block(() => {
 			/** @type {Effect} */ (active_effect).b = this;
@@ -237,8 +248,15 @@ export class Boundary {
 		}
 
 		queueMicrotask(() => {
-			update(this.effect_pending, d);
+			if (this.#effect_pending) {
+				internal_set(this.#effect_pending, this.#pending_count);
+			}
 		});
+	}
+
+	get_effect_pending() {
+		this.#effect_pending_subscriber();
+		return get(/** @type {Source<number>} */ (this.#effect_pending));
 	}
 
 	/** @param {unknown} error */
@@ -429,5 +447,5 @@ export function pending() {
 		return 0; // TODO eventually we will need this to be global
 	}
 
-	return get(boundary.effect_pending);
+	return boundary.get_effect_pending();
 }
