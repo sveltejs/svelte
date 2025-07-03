@@ -1,5 +1,11 @@
 # svelte
 
+## 5.35.2
+
+### Patch Changes
+
+- fix: bump esrap ([#16295](https://github.com/sveltejs/svelte/pull/16295))
+
 ## 5.35.1
 
 ### Patch Changes
