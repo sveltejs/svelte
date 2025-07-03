@@ -1,41 +1,38 @@
 import { tick } from 'svelte';
-import { deferred } from '../../../../src/internal/shared/utils.js';
 import { test } from '../../test';
-
-/** @type {ReturnType<typeof deferred>} */
-let d;
 
 export default test({
 	compileOptions: {
 		dev: true
 	},
-	html: `<p>pending</p>`,
 
-	get props() {
-		d = deferred();
+	html: `
+		<button>reset</button>
+		<button>one</button>
+		<button>two</button>
+		<button>three</button>
+		<p>pending</p>
+	`,
 
-		return {
-			promise: d.promise
-		};
-	},
+	async test({ assert, target }) {
+		const [reset, one, two, three] = target.querySelectorAll('button');
 
-	async test({ assert, target, component }) {
-		d.resolve(['a', 'b', 'c']);
+		one.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>a</p><p>b</p><p>c</p>');
 
-		d = deferred();
-		component.promise = d.promise;
+		const [div] = target.querySelectorAll('div');
+		assert.htmlEqual(div.innerHTML, '<p>a</p><p>b</p><p>c</p>');
+
+		reset.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>a</p><p>b</p><p>c</p>');
+		assert.htmlEqual(div.innerHTML, '<p>a</p><p>b</p><p>c</p>');
 
-		d.resolve(['d', 'e', 'f', 'g']);
+		two.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>d</p><p>e</p><p>f</p><p>g</p>');
+		assert.htmlEqual(div.innerHTML, '<p>d</p><p>e</p><p>f</p><p>g</p>');
 
-		d = deferred();
-		component.promise = d.promise;
-		d.resolve(['d', 'e', 'f', 'd']);
+		reset.click();
+		three.click();
 		await tick();
 		assert.fail('should not allow duplicate keys');
 	},
