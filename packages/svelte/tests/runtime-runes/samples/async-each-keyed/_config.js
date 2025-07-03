@@ -32,6 +32,7 @@ export default test({
 		assert.htmlEqual(div.innerHTML, '<p>d</p><p>e</p><p>f</p><p>g</p>');
 
 		reset.click();
+		await tick();
 		three.click();
 		await tick();
 		assert.fail('should not allow duplicate keys');
