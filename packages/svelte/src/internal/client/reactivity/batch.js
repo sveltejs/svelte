@@ -26,19 +26,37 @@ let uid = 1;
 export class Batch {
 	id = uid++;
 
-	/** @type {Map<Source, any>} */
-	#previous = new Map();
-
-	/** @type {Map<Source, any>} */
+	/**
+	 * The current values of any sources that are updated in this batch
+	 * They keys of this map are identical to `this.#previous`
+	 * @type {Map<Source, any>}
+	 */
 	#current = new Map();
 
-	/** @type {Set<() => void>} */
+	/**
+	 * The values of any sources that are updated in this batch _before_ those updates took place.
+	 * They keys of this map are identical to `this.#current`
+	 * @type {Map<Source, any>}
+	 */
+	#previous = new Map();
+
+	/**
+	 * When the batch is committed (and the DOM is updated), we need to remove old branches
+	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks
+	 * @type {Set<() => void>}
+	 */
 	#callbacks = new Set();
 
+	/**
+	 * The number of async effects that are currently in flight
+	 */
 	#pending = 0;
 
-	/** @type {{ promise: Promise<void>, resolve: (value?: any) => void, reject: (reason: unknown) => void } | null} */
-	// TODO replace with Promise.withResolvers once supported widely enough
+	/**
+	 * A deferred that resolves when the batch is committed, used with `settled()`
+	 * TODO replace with Promise.withResolvers once supported widely enough
+	 * @type {{ promise: Promise<void>, resolve: (value?: any) => void, reject: (reason: unknown) => void } | null}
+	 */
 	#deferred = null;
 
 	/** @type {Effect[]} */
@@ -53,7 +71,11 @@ export class Batch {
 	/** @type {Effect[]} */
 	effects = [];
 
-	/** @type {Set<Effect>} */
+	/**
+	 * A set of branches that still exist, but will be destroyed when this batch
+	 * is committed — we skip over these during `process`
+	 * @type {Set<Effect>}
+	 */
 	skipped_effects = new Set();
 
 	/**
