@@ -1542,6 +1542,10 @@ declare module 'svelte/compiler' {
 	export function preprocess(source: string, preprocessor: PreprocessorGroup | PreprocessorGroup[], options?: {
 		filename?: string;
 	} | undefined): Promise<Processed>;
+	export function print(ast: AST.SvelteNode): {
+		code: string;
+		map: any;
+	};
 	/**
 	 * The current version, as set in package.json.
 	 * */

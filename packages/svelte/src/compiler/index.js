@@ -10,6 +10,7 @@ import { transform_component, transform_module } from './phases/3-transform/inde
 import { validate_component_options, validate_module_options } from './validate-options.js';
 import * as state from './state.js';
 export { default as preprocess } from './preprocess/index.js';
+export { print } from './print/index.js';
 
 /**
  * `compile` converts your `.svelte` source code into a JavaScript module that exports a component
