@@ -1,5 +1,11 @@
 # svelte
 
+## 5.35.3
+
+### Patch Changes
+
+- fix: do not proxify the value assigned to a derived ([#16302](https://github.com/sveltejs/svelte/pull/16302))
+
 ## 5.35.2
 
 ### Patch Changes
