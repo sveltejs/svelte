@@ -19,6 +19,7 @@ import { inspect_effects, set_inspect_effects } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
+import { UNINITIALIZED } from '../../../constants.js';
 
 /**
  * @template V
@@ -51,7 +52,7 @@ export function derived(fn) {
 		fn,
 		reactions: null,
 		rv: 0,
-		v: /** @type {V} */ (null),
+		v: /** @type {V} */ (UNINITIALIZED),
 		wv: 0,
 		parent: parent_derived ?? active_effect,
 		ac: null
