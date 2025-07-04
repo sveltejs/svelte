@@ -177,6 +177,19 @@ export function ownership_invalid_mutation(name, location, prop, parent) {
 }
 
 /**
+ * The variable `%name%` is created and read within `%reaction%`. `%reaction%` will not depend on it.
+ * @param {string} name
+ * @param {string} reaction
+ */
+export function reading_just_created_state(name, reaction) {
+	if (DEV) {
+		console.warn(`%c[svelte] reading_just_created_state\n%cThe variable \`${name}\` is created and read within \`${reaction}\`. \`${reaction}\` will not depend on it.\nhttps://svelte.dev/e/reading_just_created_state`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/reading_just_created_state`);
+	}
+}
+
+/**
  * The `value` property of a `<select multiple>` element should be an array, but it received a non-array value. The selection will be kept as is.
  */
 export function select_multiple_invalid_value() {
