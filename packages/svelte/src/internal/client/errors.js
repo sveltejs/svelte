@@ -2,6 +2,8 @@
 
 import { DEV } from 'esm-env';
 
+export *  from '../shared/errors.js';
+
 /**
  * Cannot create a `$derived(...)` with an `await` expression outside of an effect tree
  * @returns {never}
@@ -192,6 +194,22 @@ export function effect_orphan(rune) {
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/effect_orphan`);
+	}
+}
+
+/**
+ * `$effect.pending()` can only be called inside an effect or derived
+ * @returns {never}
+ */
+export function effect_pending_outside_reaction() {
+	if (DEV) {
+		const error = new Error(`effect_pending_outside_reaction\n\`$effect.pending()\` can only be called inside an effect or derived\nhttps://svelte.dev/e/effect_pending_outside_reaction`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/effect_pending_outside_reaction`);
 	}
 }
 

@@ -54,6 +54,10 @@ See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-long
 
 > `%rune%` can only be used inside an effect (e.g. during component initialisation)
 
+## effect_pending_outside_reaction
+
+> `$effect.pending()` can only be called inside an effect or derived
+
 ## effect_update_depth_exceeded
 
 > Maximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops

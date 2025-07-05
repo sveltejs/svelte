@@ -20,7 +20,7 @@ import {
 } from '../hydration.js';
 import { get_next_sibling } from '../operations.js';
 import { queue_micro_task } from '../task.js';
-import * as e from '../../../shared/errors.js';
+import * as e from '../../errors.js';
 import { DEV } from 'esm-env';
 import { from_async_derived, set_from_async_derived } from '../../reactivity/deriveds.js';
 import { Batch } from '../../reactivity/batch.js';
@@ -454,8 +454,11 @@ function exit() {
 }
 
 export function pending() {
-	// TODO throw helpful error if called outside an effect
-	const boundary = /** @type {Effect} */ (active_effect).b;
+	if (active_effect === null) {
+		e.effect_pending_outside_reaction();
+	}
+
+	var boundary = active_effect.b;
 
 	if (boundary === null) {
 		return 0; // TODO eventually we will need this to be global

@@ -80,6 +80,12 @@ Effect cannot be created inside a `$derived` value that was not itself created i
 `%rune%` can only be used inside an effect (e.g. during component initialisation)
 ```
 
+### effect_pending_outside_reaction
+
+```
+`$effect.pending()` can only be called inside an effect or derived
+```
+
 ### effect_update_depth_exceeded
 
 ```
