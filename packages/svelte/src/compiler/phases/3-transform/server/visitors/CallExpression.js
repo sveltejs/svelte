@@ -26,7 +26,7 @@ export function CallExpression(node, context) {
 	}
 
 	if (rune === '$effect.pending') {
-		return b.false;
+		return b.literal(0);
 	}
 
 	if (rune === '$state' || rune === '$state.raw') {
