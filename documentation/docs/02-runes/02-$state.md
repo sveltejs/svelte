@@ -63,6 +63,17 @@ let { done, text } = todos[0];
 todos[0].done = !todos[0].done;
 ```
 
+However, if you destructure a reactive value with `$derived`, the references will now be reactive:
+
+```js
+let todos = [{ done: false, text: 'add more todos' }];
+// ---cut---
+let { done, text } = $derived(todos[0]);
+
+// this will now affect the value of `done`
+todos[0].done = !todos[0].done;
+```
+
 ### Classes
 
 Class instances are not proxied. Instead, you can use `$state` in class fields (whether public or private), or as the first assignment to a property immediately inside the `constructor`:
