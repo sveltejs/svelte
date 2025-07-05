@@ -5,7 +5,6 @@ import type { ICompileDiagnostic } from '../utils/compile_diagnostic.js';
 import type { StateCreationRuneName } from '../../utils.js';
 import type {
 	AssignmentExpression,
-	AwaitExpression,
 	CallExpression,
 	PrivateIdentifier,
 	PropertyDefinition
