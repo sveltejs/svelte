@@ -1,9 +1,7 @@
 import type { AST, Binding, StateField } from '#compiler';
 import type {
-	AwaitExpression,
 	CallExpression,
 	ClassBody,
-	Comment,
 	Identifier,
 	LabeledStatement,
 	Node,
