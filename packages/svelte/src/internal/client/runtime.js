@@ -871,8 +871,7 @@ export function get(signal) {
 	if (DEV) {
 		if (current_async_effect) {
 			var tracking = (current_async_effect.f & REACTION_IS_UPDATING) !== 0;
-			var was_read =
-				current_async_effect.deps !== null && current_async_effect.deps.includes(signal);
+			var was_read = current_async_effect.deps?.includes(signal);
 
 			if (!tracking && !was_read) {
 				w.await_reactivity_loss(/** @type {string} */ (signal.label));
