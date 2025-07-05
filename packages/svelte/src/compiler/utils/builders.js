@@ -438,7 +438,7 @@ export function unthunk(expression) {
 		let has_await = false;
 
 		walk(expression.body.argument, null, {
-			AwaitExpression(node, context) {
+			AwaitExpression(_node, context) {
 				has_await = true;
 				context.stop();
 			}
