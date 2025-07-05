@@ -33,7 +33,7 @@ import { internal_set, old_values } from './reactivity/sources.js';
 import {
 	destroy_derived_effects,
 	execute_derived,
-	from_async_derived,
+	current_async_effect,
 	recent_async_deriveds,
 	update_derived
 } from './reactivity/deriveds.js';
@@ -869,9 +869,10 @@ export function get(signal) {
 	}
 
 	if (DEV) {
-		if (from_async_derived) {
-			var tracking = (from_async_derived.f & REACTION_IS_UPDATING) !== 0;
-			var was_read = from_async_derived.deps !== null && from_async_derived.deps.includes(signal);
+		if (current_async_effect) {
+			var tracking = (current_async_effect.f & REACTION_IS_UPDATING) !== 0;
+			var was_read =
+				current_async_effect.deps !== null && current_async_effect.deps.includes(signal);
 
 			if (!tracking && !was_read) {
 				w.await_reactivity_loss(/** @type {string} */ (signal.label));

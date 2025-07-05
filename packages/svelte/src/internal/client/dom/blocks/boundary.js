@@ -22,7 +22,7 @@ import { get_next_sibling } from '../operations.js';
 import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
 import { DEV } from 'esm-env';
-import { from_async_derived, set_from_async_derived } from '../../reactivity/deriveds.js';
+import { current_async_effect, set_from_async_derived } from '../../reactivity/deriveds.js';
 import { Batch } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
@@ -397,7 +397,7 @@ export function capture(track = true) {
 	var previous_component_context = component_context;
 
 	if (DEV && !track) {
-		var was_from_async_derived = from_async_derived;
+		var previous_async_effect = current_async_effect;
 	}
 
 	return function restore() {
@@ -408,7 +408,7 @@ export function capture(track = true) {
 		}
 
 		if (DEV) {
-			set_from_async_derived(track ? null : was_from_async_derived);
+			set_from_async_derived(track ? null : previous_async_effect);
 		}
 
 		// prevent the active effect from outstaying its welcome

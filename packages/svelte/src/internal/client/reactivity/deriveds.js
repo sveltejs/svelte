@@ -36,11 +36,11 @@ import { UNINITIALIZED } from '../../../constants.js';
 import { current_batch } from './batch.js';
 
 /** @type {Effect | null} */
-export let from_async_derived = null;
+export let current_async_effect = null;
 
 /** @param {Effect | null} v */
 export function set_from_async_derived(v) {
-	from_async_derived = v;
+	current_async_effect = v;
 }
 
 export const recent_async_deriveds = new Set();
@@ -115,7 +115,7 @@ export function async_derived(fn, location) {
 	var should_suspend = !active_reaction;
 
 	render_effect(() => {
-		if (DEV) from_async_derived = active_effect;
+		if (DEV) current_async_effect = active_effect;
 
 		try {
 			var p = fn();
@@ -123,7 +123,7 @@ export function async_derived(fn, location) {
 			p = Promise.reject(error);
 		}
 
-		if (DEV) from_async_derived = null;
+		if (DEV) current_async_effect = null;
 
 		promise =
 			prev === null
@@ -150,7 +150,7 @@ export function async_derived(fn, location) {
 		const handler = (value, error = undefined) => {
 			prev = null;
 
-			from_async_derived = null;
+			current_async_effect = null;
 
 			if (!pending) batch.restore();
 
