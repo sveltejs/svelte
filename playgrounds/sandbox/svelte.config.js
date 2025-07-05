@@ -1,5 +1,9 @@
 export default {
 	compilerOptions: {
-		hmr: true
+		hmr: false,
+
+		experimental: {
+			async: true
+		}
 	}
 };

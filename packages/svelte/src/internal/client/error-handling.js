@@ -1,20 +1,26 @@
-/** @import { Effect } from '#client' */
+/** @import { Derived, Effect } from '#client' */
 /** @import { Boundary } from './dom/blocks/boundary.js' */
 import { DEV } from 'esm-env';
 import { FILENAME } from '../../constants.js';
 import { is_firefox } from './dom/operations.js';
-import { BOUNDARY_EFFECT, EFFECT_RAN } from './constants.js';
+import { ERROR_VALUE, BOUNDARY_EFFECT, EFFECT_RAN } from './constants.js';
 import { define_property, get_descriptor } from '../shared/utils.js';
-import { active_effect } from './runtime.js';
+import { active_effect, active_reaction } from './runtime.js';
 
 /**
  * @param {unknown} error
  */
 export function handle_error(error) {
-	var effect = /** @type {Effect} */ (active_effect);
+	var effect = active_effect;
+
+	// for unowned deriveds, don't throw until we read the value
+	if (effect === null) {
+		/** @type {Derived} */ (active_reaction).f |= ERROR_VALUE;
+		return error;
+	}
 
 	if (DEV && error instanceof Error) {
-		adjust_error(error, effect);
+		// adjust_error(error, effect);
 	}
 
 	if ((effect.f & EFFECT_RAN) === 0) {

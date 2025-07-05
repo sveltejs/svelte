@@ -1,6 +1,17 @@
-/** @import { Derived, Effect } from '#client' */
+/** @import { Derived, Effect, Source } from '#client' */
+/** @import { Batch } from './batch.js'; */
 import { DEV } from 'esm-env';
-import { CLEAN, DERIVED, DIRTY, EFFECT_PRESERVED, MAYBE_DIRTY, UNOWNED } from '#client/constants';
+import {
+	ERROR_VALUE,
+	CLEAN,
+	DERIVED,
+	DIRTY,
+	EFFECT_ASYNC,
+	EFFECT_PRESERVED,
+	MAYBE_DIRTY,
+	STALE_REACTION,
+	UNOWNED
+} from '#client/constants';
 import {
 	active_reaction,
 	active_effect,
@@ -14,11 +25,25 @@ import {
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
-import { destroy_effect } from './effects.js';
-import { inspect_effects, set_inspect_effects } from './sources.js';
+import * as w from '../warnings.js';
+import { destroy_effect, render_effect } from './effects.js';
+import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
+import { Boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
+import { UNINITIALIZED } from '../../../constants.js';
+import { current_batch } from './batch.js';
+
+/** @type {Effect | null} */
+export let from_async_derived = null;
+
+/** @param {Effect | null} v */
+export function set_from_async_derived(v) {
+	from_async_derived = v;
+}
+
+export const recent_async_deriveds = new Set();
 
 /**
  * @template V
@@ -62,6 +87,128 @@ export function derived(fn) {
 	}
 
 	return signal;
+}
+
+/**
+ * @template V
+ * @param {() => V | Promise<V>} fn
+ * @param {string} [location] If provided, print a warning if the value is not read immediately after update
+ * @returns {Promise<Source<V>>}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function async_derived(fn, location) {
+	let parent = /** @type {Effect | null} */ (active_effect);
+
+	if (parent === null) {
+		e.async_derived_orphan();
+	}
+
+	var boundary = /** @type {Boundary} */ (parent.b);
+
+	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
+	var signal = source(/** @type {V} */ (UNINITIALIZED));
+
+	/** @type {Promise<V> | null} */
+	var prev = null;
+
+	// only suspend in async deriveds created on initialisation
+	var should_suspend = !active_reaction;
+
+	render_effect(() => {
+		if (DEV) from_async_derived = active_effect;
+
+		try {
+			var p = fn();
+		} catch (error) {
+			p = Promise.reject(error);
+		}
+
+		if (DEV) from_async_derived = null;
+
+		promise =
+			prev === null
+				? Promise.resolve(p)
+				: prev.then(
+						() => p,
+						() => p
+					);
+
+		prev = promise;
+
+		var batch = /** @type {Batch} */ (current_batch);
+		var pending = boundary.pending;
+
+		if (should_suspend) {
+			boundary.update_pending_count(1);
+			if (!pending) batch.increment();
+		}
+
+		/**
+		 * @param {any} value
+		 * @param {unknown} error
+		 */
+		const handler = (value, error = undefined) => {
+			prev = null;
+
+			from_async_derived = null;
+
+			if (should_suspend) {
+				boundary.update_pending_count(-1);
+				if (!pending) batch.decrement();
+			}
+
+			if (!pending) batch.restore();
+
+			if (error) {
+				if (error !== STALE_REACTION) {
+					signal.f |= ERROR_VALUE;
+
+					// @ts-expect-error the error is the wrong type, but we don't care
+					internal_set(signal, error);
+				}
+			} else {
+				if ((signal.f & ERROR_VALUE) !== 0) {
+					signal.f ^= ERROR_VALUE;
+				}
+
+				internal_set(signal, value);
+
+				if (DEV && location !== undefined) {
+					recent_async_deriveds.add(signal);
+
+					setTimeout(() => {
+						if (recent_async_deriveds.has(signal)) {
+							w.await_waterfall(location);
+							recent_async_deriveds.delete(signal);
+						}
+					});
+				}
+			}
+
+			if (!pending) batch.flush();
+		};
+
+		promise.then(handler, (e) => handler(null, e || 'unknown'));
+	}, EFFECT_ASYNC | EFFECT_PRESERVED);
+
+	return new Promise((fulfil) => {
+		/** @param {Promise<V>} p */
+		function next(p) {
+			function go() {
+				if (p === promise) {
+					fulfil(signal);
+				} else {
+					// if the effect re-runs before the initial promise
+					// resolves, delay resolution until we have a value
+					next(promise);
+				}
+			}
+
+			p.then(go, go);
+		}
+
+		next(promise);
+	});
 }
 
 /**

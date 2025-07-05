@@ -27,12 +27,14 @@ import {
 	UNOWNED,
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
-	ROOT_EFFECT
+	ROOT_EFFECT,
+	EFFECT_ASYNC
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack, tag_proxy } from '../dev/tracing.js';
 import { component_context, is_runes } from '../context.js';
+import { Batch } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 
@@ -139,7 +141,7 @@ export function set(source, value, should_proxy = false) {
 		// to ensure we error if state is set inside an inspect effect
 		(!untracking || (active_reaction.f & INSPECT_EFFECT) !== 0) &&
 		is_runes() &&
-		(active_reaction.f & (DERIVED | BLOCK_EFFECT | INSPECT_EFFECT)) !== 0 &&
+		(active_reaction.f & (DERIVED | BLOCK_EFFECT | EFFECT_ASYNC | INSPECT_EFFECT)) !== 0 &&
 		!(source_ownership?.reaction === active_reaction && source_ownership.sources.includes(source))
 	) {
 		e.state_unsafe_mutation();
@@ -171,6 +173,9 @@ export function internal_set(source, value) {
 		}
 
 		source.v = value;
+
+		const batch = Batch.ensure();
+		batch.capture(source, old_value);
 
 		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');
@@ -262,9 +267,10 @@ export function update_pre(source, d = 1) {
 /**
  * @param {Value} signal
  * @param {number} status should be DIRTY or MAYBE_DIRTY
+ * @param {boolean} partial should skip async/block effects
  * @returns {void}
  */
-function mark_reactions(signal, status) {
+export function mark_reactions(signal, status, partial = false) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -275,9 +281,6 @@ function mark_reactions(signal, status) {
 		var reaction = reactions[i];
 		var flags = reaction.f;
 
-		// Skip any effects that are already dirty
-		if ((flags & DIRTY) !== 0) continue;
-
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === active_effect) continue;
 
@@ -287,15 +290,19 @@ function mark_reactions(signal, status) {
 			continue;
 		}
 
-		set_signal_status(reaction, status);
+		if (partial && (flags & (EFFECT_ASYNC | BLOCK_EFFECT)) !== 0) {
+			continue;
+		}
 
-		// If the signal a) was previously clean or b) is an unowned derived, then mark it
-		if ((flags & (CLEAN | UNOWNED)) !== 0) {
-			if ((flags & DERIVED) !== 0) {
-				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
-			} else {
-				schedule_effect(/** @type {Effect} */ (reaction));
-			}
+		if (status === DIRTY || (flags & DIRTY) === 0) {
+			// don't make a DIRTY signal MAYBE_DIRTY
+			set_signal_status(reaction, status);
+		}
+
+		if ((flags & DERIVED) !== 0) {
+			mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY, partial);
+		} else {
+			schedule_effect(/** @type {Effect} */ (reaction));
 		}
 	}
 }

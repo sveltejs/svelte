@@ -453,6 +453,11 @@ declare module 'svelte' {
 	 * */
 	export function tick(): Promise<void>;
 	/**
+	 * Returns a promise that resolves once any state changes, and asynchronous work resulting from them,
+	 * have resolved and the DOM has been updated
+	 * */
+	export function settled(): Promise<void>;
+	/**
 	 * When used inside a [`$derived`](https://svelte.dev/docs/svelte/$derived) or [`$effect`](https://svelte.dev/docs/svelte/$effect),
 	 * any state read inside `fn` will not be treated as a dependency.
 	 *
@@ -1111,6 +1116,11 @@ declare module 'svelte/compiler' {
 		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 		 */
 		warningFilter?: (warning: Warning) => boolean;
+		/** Experimental options */
+		experimental?: {
+			/** Allow `await` keyword in deriveds, template expressions, and the top level of components */
+			async?: boolean;
+		};
 	}
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
@@ -3021,6 +3031,11 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 		 */
 		warningFilter?: (warning: Warning_1) => boolean;
+		/** Experimental options */
+		experimental?: {
+			/** Allow `await` keyword in deriveds, template expressions, and the top level of components */
+			async?: boolean;
+		};
 	}
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`

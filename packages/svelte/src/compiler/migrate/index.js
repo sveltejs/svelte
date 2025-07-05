@@ -145,7 +145,10 @@ export function migrate(source, { filename, use_ts } = {}) {
 			...validate_component_options({}, ''),
 			...parsed_options,
 			customElementOptions,
-			filename: filename ?? '(unknown)'
+			filename: filename ?? '(unknown)',
+			experimental: {
+				async: true
+			}
 		};
 
 		const str = new MagicString(source);

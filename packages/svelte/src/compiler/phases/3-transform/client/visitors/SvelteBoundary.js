@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Statement, Expression, FunctionDeclaration, VariableDeclaration, ArrowFunctionExpression } from 'estree' */
+/** @import { BlockStatement, Statement, Expression, VariableDeclaration } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
@@ -71,7 +71,7 @@ export function SvelteBoundary(node, context) {
 
 			hoisted.push(snippet);
 
-			if (child.expression.name === 'failed') {
+			if (['failed', 'pending'].includes(child.expression.name)) {
 				props.properties.push(b.prop('init', child.expression, child.expression));
 			}
 

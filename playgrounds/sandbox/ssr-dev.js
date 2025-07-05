@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import polka from 'polka';
 import { createServer as createViteServer } from 'vite';
 import { render } from 'svelte/server';
+import './ssr-common.js';
 
 const PORT = process.env.PORT || '5173';
 

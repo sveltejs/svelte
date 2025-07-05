@@ -14,6 +14,12 @@
 			import { mount, hydrate, unmount } from 'svelte';
 			import App from '/src/App.svelte';
 
+			globalThis.delayed = (v, ms = 1000) => {
+				return new Promise((f) => {
+					setTimeout(() => f(v), ms);
+				});
+			};
+
 			const root = document.getElementById('root');
 			const render = root.firstChild?.nextSibling ? hydrate : mount;
 

@@ -66,7 +66,8 @@ export function create_expression_metadata() {
 		has_state: false,
 		has_call: false,
 		has_member_expression: false,
-		has_assignment: false
+		has_assignment: false,
+		has_await: false
 	};
 }
 
