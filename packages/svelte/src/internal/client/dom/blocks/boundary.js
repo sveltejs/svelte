@@ -196,22 +196,15 @@ export class Boundary {
 	}
 
 	#show_pending_snippet() {
-		const pending = this.#props.pending;
+		const pending = /** @type {(anchor: Node) => void} */ (this.#props.pending);
 
-		if (pending !== undefined) {
-			// TODO can this be false?
-			if (this.#main_effect !== null) {
-				this.#offscreen_fragment = document.createDocumentFragment();
-				move_effect(this.#main_effect, this.#offscreen_fragment);
-			}
+		if (this.#main_effect !== null) {
+			this.#offscreen_fragment = document.createDocumentFragment();
+			move_effect(this.#main_effect, this.#offscreen_fragment);
+		}
 
-			if (this.#pending_effect === null) {
-				this.#pending_effect = branch(() => pending(this.#anchor));
-			}
-		} else if (this.parent) {
-			throw new Error('TODO show pending snippet on parent');
-		} else {
-			throw new Error('no pending snippet to show');
+		if (this.#pending_effect === null) {
+			this.#pending_effect = branch(() => pending(this.#anchor));
 		}
 	}
 
