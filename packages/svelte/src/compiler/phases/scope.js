@@ -941,6 +941,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			// automatically opt into runes mode on encountering
 			// blocking awaits, without doing an additional walk
 			// before the analysis occurs
+			// TODO remove this in Svelte 7.0 or whenever we get rid of legacy support
 			has_await ||= context.path.every(
 				({ type }) =>
 					type !== 'ArrowFunctionExpression' &&
