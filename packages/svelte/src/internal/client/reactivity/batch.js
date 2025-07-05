@@ -1,6 +1,7 @@
 /** @import { Derived, Effect, Source } from '#client' */
 import { CLEAN, DIRTY } from '#client/constants';
 import { deferred } from '../../shared/utils.js';
+import { get_pending_boundary } from '../dom/blocks/boundary.js';
 import {
 	flush_queued_effects,
 	flush_queued_root_effects,
@@ -275,6 +276,8 @@ export class Batch {
 
 			this.render_effects = [];
 			this.effects = [];
+
+			this.flush();
 		}
 	}
 
@@ -320,6 +323,20 @@ export class Batch {
 
 		return current_batch;
 	}
+}
+
+export function suspend() {
+	var boundary = get_pending_boundary();
+	var batch = /** @type {Batch} */ (current_batch);
+	var pending = boundary.pending;
+
+	boundary.update_pending_count(1);
+	if (!pending) batch.increment();
+
+	return function unsuspend() {
+		boundary.update_pending_count(-1);
+		if (!pending) batch.decrement();
+	};
 }
 
 /**

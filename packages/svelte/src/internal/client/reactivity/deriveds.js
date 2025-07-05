@@ -152,11 +152,6 @@ export function async_derived(fn, location) {
 
 			from_async_derived = null;
 
-			if (should_suspend) {
-				boundary.update_pending_count(-1);
-				if (!pending) batch.decrement();
-			}
-
 			if (!pending) batch.restore();
 
 			if (error) {
@@ -185,7 +180,10 @@ export function async_derived(fn, location) {
 				}
 			}
 
-			if (!pending) batch.flush();
+			if (should_suspend) {
+				boundary.update_pending_count(-1);
+				if (!pending) batch.decrement();
+			}
 		};
 
 		promise.then(handler, (e) => handler(null, e || 'unknown'));

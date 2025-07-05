@@ -416,17 +416,6 @@ export function capture(track = true) {
 	};
 }
 
-// TODO we should probably be incrementing the current batch, not the boundary?
-export function suspend() {
-	let boundary = get_pending_boundary();
-
-	boundary.update_pending_count(1);
-
-	return function unsuspend() {
-		boundary.update_pending_count(-1);
-	};
-}
-
 /**
  * Wraps an `await` expression in such a way that the effect context that was
  * active before the expression evaluated can be reapplied afterwards —
