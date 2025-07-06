@@ -514,9 +514,10 @@ export function attribute_effect(
 
 	if (is_select) {
 		var select = /** @type {HTMLSelectElement} */ (element);
-
+		var mounting = true;
 		effect(() => {
-			select_option(select, /** @type {Record<string | symbol, any>} */ (prev).value);
+			select_option(select, /** @type {Record<string | symbol, any>} */ (prev).value, mounting);
+			mounting = false;
 			init_select(select);
 		});
 	}
