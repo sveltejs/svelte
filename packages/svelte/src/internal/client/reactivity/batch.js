@@ -224,7 +224,7 @@ export class Batch {
 		this.#current.set(source, source.v);
 	}
 
-	restore() {
+	activate() {
 		current_batch = this;
 	}
 

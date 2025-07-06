@@ -152,7 +152,7 @@ export function async_derived(fn, location) {
 
 			current_async_effect = null;
 
-			if (!pending) batch.restore();
+			if (!pending) batch.activate();
 
 			if (error) {
 				if (error !== STALE_REACTION) {

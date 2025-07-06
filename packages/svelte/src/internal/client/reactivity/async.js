@@ -29,7 +29,7 @@ export function flatten(sync, async, fn) {
 			.then((result) => {
 				if ((parent.f & DESTROYED) !== 0) return;
 
-				batch?.restore();
+				batch?.activate();
 
 				restore();
 
