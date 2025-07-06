@@ -11,7 +11,6 @@ import { get_pending_boundary } from './boundary.js';
 export function async(node, expressions, fn) {
 	var boundary = get_pending_boundary();
 
-	// TODO why is this necessary? doesn't it happen inside `async_derived` inside `flatten`?
 	boundary.update_pending_count(1);
 
 	flatten([], expressions, (values) => {
