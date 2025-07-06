@@ -35,8 +35,7 @@ export default test({
 		await tick();
 		three.click();
 		await tick();
-		assert.fail('should not allow duplicate keys');
-	},
 
-	runtime_error: 'each_key_duplicate'
+		assert.include(target.innerHTML, '<p>each_key_duplicate');
+	}
 });

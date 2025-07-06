@@ -14,6 +14,10 @@
 		{/each}
 	</div>
 
+	{#snippet failed(e)}
+		<p>{e.message}</p>
+	{/snippet}
+
 	{#snippet pending()}
 		<p>pending</p>
 	{/snippet}
