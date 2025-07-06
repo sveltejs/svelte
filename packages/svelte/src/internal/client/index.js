@@ -98,7 +98,7 @@ export {
 	props_id,
 	with_script
 } from './dom/template.js';
-export { suspend } from './reactivity/batch.js';
+export { flushSync as flush, suspend } from './reactivity/batch.js';
 export {
 	async_derived,
 	user_derived as derived,
@@ -142,7 +142,6 @@ export {
 	get,
 	safe_get,
 	invalidate_inner_signals,
-	flushSync as flush,
 	tick,
 	untrack,
 	exclude_from_object,

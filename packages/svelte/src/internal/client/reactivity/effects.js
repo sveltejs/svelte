@@ -7,7 +7,6 @@ import {
 	get,
 	is_destroying_effect,
 	remove_reactions,
-	schedule_effect,
 	set_active_reaction,
 	set_is_destroying_effect,
 	set_signal_status,
@@ -40,7 +39,7 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
-import { Batch } from './batch.js';
+import { Batch, schedule_effect } from './batch.js';
 import { flatten } from './async.js';
 
 /**

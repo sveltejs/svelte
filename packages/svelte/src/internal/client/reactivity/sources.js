@@ -5,7 +5,6 @@ import {
 	active_effect,
 	untracked_writes,
 	get,
-	schedule_effect,
 	set_untracked_writes,
 	set_signal_status,
 	untrack,
@@ -34,7 +33,7 @@ import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack, tag_proxy } from '../dev/tracing.js';
 import { component_context, is_runes } from '../context.js';
-import { Batch } from './batch.js';
+import { Batch, schedule_effect } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 

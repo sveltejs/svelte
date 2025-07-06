@@ -1,17 +1,36 @@
 /** @import { Derived, Effect, Source } from '#client' */
-import { CLEAN, DIRTY } from '#client/constants';
-import { deferred } from '../../shared/utils.js';
+import {
+	BLOCK_EFFECT,
+	BRANCH_EFFECT,
+	CLEAN,
+	DESTROYED,
+	DIRTY,
+	EFFECT,
+	EFFECT_ASYNC,
+	INERT,
+	RENDER_EFFECT,
+	ROOT_EFFECT
+} from '#client/constants';
+import { async_mode_flag } from '../../flags/index.js';
+import { deferred, define_property } from '../../shared/utils.js';
 import { get_pending_boundary } from '../dom/blocks/boundary.js';
 import {
-	flush_queued_effects,
-	flush_queued_root_effects,
-	process_effects,
+	active_effect,
+	check_dirtiness,
+	dev_effect_stack,
+	is_updating_effect,
 	queued_root_effects,
-	schedule_effect,
+	set_is_updating_effect,
 	set_queued_root_effects,
 	set_signal_status,
 	update_effect
 } from '../runtime.js';
+import * as e from '../errors.js';
+import { flush_tasks } from '../dom/task.js';
+import { DEV } from 'esm-env';
+import { invoke_error_boundary } from '../error-handling.js';
+import { old_values } from './sources.js';
+import { unlink_effect } from './effects.js';
 
 /** @type {Set<Batch>} */
 const batches = new Set();
@@ -21,6 +40,9 @@ export let current_batch = null;
 
 /** @type {Map<Derived, any> | null} */
 export let batch_deriveds = null;
+
+/** @type {Effect | null} */
+let last_scheduled_effect = null;
 
 /** TODO handy for debugging, but we should probably eventually delete it */
 let uid = 1;
@@ -326,6 +348,242 @@ export class Batch {
 		}
 
 		return current_batch;
+	}
+}
+
+/**
+ * Synchronously flush any pending updates.
+ * Returns void if no callback is provided, otherwise returns the result of calling the callback.
+ * @template [T=void]
+ * @param {(() => T) | undefined} [fn]
+ * @returns {T}
+ */
+export function flushSync(fn) {
+	if (async_mode_flag && active_effect !== null) {
+		e.flush_sync_in_effect();
+	}
+
+	var result;
+
+	const batch = Batch.ensure();
+
+	if (fn) {
+		flush_queued_root_effects();
+
+		result = fn();
+	}
+
+	while (true) {
+		flush_tasks();
+
+		if (queued_root_effects.length === 0) {
+			if (batch === current_batch) {
+				batch.flush();
+			}
+
+			// this would be reset in `flush_queued_root_effects` but since we are early returning here,
+			// we need to reset it here as well in case the first time there's 0 queued root effects
+			last_scheduled_effect = null;
+
+			if (DEV) {
+				dev_effect_stack.length = 0;
+			}
+
+			return /** @type {T} */ (result);
+		}
+
+		flush_queued_root_effects();
+	}
+}
+
+function log_effect_stack() {
+	// eslint-disable-next-line no-console
+	console.error(
+		'Last ten effects were: ',
+		dev_effect_stack.slice(-10).map((d) => d.fn)
+	);
+	dev_effect_stack.length = 0;
+}
+
+function infinite_loop_guard() {
+	try {
+		e.effect_update_depth_exceeded();
+	} catch (error) {
+		if (DEV) {
+			// stack is garbage, ignore. Instead add a console.error message.
+			define_property(error, 'stack', {
+				value: ''
+			});
+		}
+		// Try and handle the error so it can be caught at a boundary, that's
+		// if there's an effect available from when it was last scheduled
+		if (last_scheduled_effect !== null) {
+			if (DEV) {
+				try {
+					invoke_error_boundary(error, last_scheduled_effect);
+				} catch (e) {
+					// Only log the effect stack if the error is re-thrown
+					log_effect_stack();
+					throw e;
+				}
+			} else {
+				invoke_error_boundary(error, last_scheduled_effect);
+			}
+		} else {
+			if (DEV) {
+				log_effect_stack();
+			}
+			throw error;
+		}
+	}
+}
+
+export function flush_queued_root_effects() {
+	var was_updating_effect = is_updating_effect;
+	var batch = /** @type {Batch} */ (current_batch);
+
+	try {
+		var flush_count = 0;
+		set_is_updating_effect(true);
+
+		while (queued_root_effects.length > 0) {
+			if (flush_count++ > 1000) {
+				infinite_loop_guard();
+			}
+
+			batch.process(queued_root_effects);
+
+			old_values.clear();
+		}
+	} finally {
+		set_is_updating_effect(was_updating_effect);
+
+		last_scheduled_effect = null;
+		if (DEV) {
+			dev_effect_stack.length = 0;
+		}
+	}
+}
+
+/**
+ * @param {Array<Effect>} effects
+ * @returns {void}
+ */
+export function flush_queued_effects(effects) {
+	var length = effects.length;
+	if (length === 0) return;
+
+	for (var i = 0; i < length; i++) {
+		var effect = effects[i];
+
+		if ((effect.f & (DESTROYED | INERT)) === 0) {
+			if (check_dirtiness(effect)) {
+				update_effect(effect);
+
+				// Effects with no dependencies or teardown do not get added to the effect tree.
+				// Deferred effects (e.g. `$effect(...)`) _are_ added to the tree because we
+				// don't know if we need to keep them until they are executed. Doing the check
+				// here (rather than in `update_effect`) allows us to skip the work for
+				// immediate effects.
+				if (effect.deps === null && effect.first === null && effect.nodes_start === null) {
+					if (effect.teardown === null) {
+						// remove this effect from the graph
+						unlink_effect(effect);
+					} else {
+						// keep the effect in the graph, but free up some memory
+						effect.fn = null;
+					}
+				}
+			}
+		}
+	}
+}
+
+/**
+ * @param {Effect} signal
+ * @returns {void}
+ */
+export function schedule_effect(signal) {
+	var effect = (last_scheduled_effect = signal);
+
+	while (effect.parent !== null) {
+		effect = effect.parent;
+		var flags = effect.f;
+
+		if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
+			if ((flags & CLEAN) === 0) return;
+			effect.f ^= CLEAN;
+		}
+	}
+
+	queued_root_effects.push(effect);
+}
+
+/**
+ *
+ * This function both runs render effects and collects user effects in topological order
+ * from the starting effect passed in. Effects will be collected when they match the filtered
+ * bitwise flag passed in only. The collected effects array will be populated with all the user
+ * effects to be flushed.
+ *
+ * @param {Batch} batch
+ * @param {Effect} root
+ */
+export function process_effects(batch, root) {
+	root.f ^= CLEAN;
+
+	var effect = root.first;
+
+	while (effect !== null) {
+		var flags = effect.f;
+		var is_branch = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0;
+		var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
+
+		var skip = is_skippable_branch || (flags & INERT) !== 0 || batch.skipped_effects.has(effect);
+
+		if (!skip && effect.fn !== null) {
+			if ((flags & EFFECT_ASYNC) !== 0) {
+				const boundary = effect.b;
+
+				if (check_dirtiness(effect)) {
+					var effects = boundary?.pending ? batch.boundary_async_effects : batch.async_effects;
+					effects.push(effect);
+				}
+			} else if ((flags & BLOCK_EFFECT) !== 0) {
+				if (check_dirtiness(effect)) {
+					update_effect(effect);
+				}
+			} else if (is_branch) {
+				effect.f ^= CLEAN;
+			} else if ((flags & RENDER_EFFECT) !== 0) {
+				// we need to branch here because in legacy mode we run render effects
+				// before running block effects
+				if (async_mode_flag) {
+					batch.render_effects.push(effect);
+				} else {
+					if (check_dirtiness(effect)) {
+						update_effect(effect);
+					}
+				}
+			} else if ((flags & EFFECT) !== 0) {
+				batch.effects.push(effect);
+			}
+
+			var child = effect.first;
+
+			if (child !== null) {
+				effect = child;
+				continue;
+			}
+		}
+
+		var parent = effect.parent;
+		effect = effect.next;
+
+		while (effect === null && parent !== null) {
+			effect = parent.next;
+			parent = parent.parent;
+		}
 	}
 }
 
