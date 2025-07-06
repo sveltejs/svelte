@@ -228,6 +228,10 @@ export class Batch {
 		current_batch = this;
 	}
 
+	deactivate() {
+		current_batch = null;
+	}
+
 	flush() {
 		if (queued_root_effects.length > 0) {
 			flush_queued_root_effects();

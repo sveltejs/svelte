@@ -39,7 +39,7 @@ export function flatten(sync, async, fn) {
 					invoke_error_boundary(error, parent);
 				}
 
-				batch?.flush();
+				batch?.deactivate();
 			})
 			.catch((error) => {
 				boundary.error(error);
