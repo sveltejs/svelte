@@ -142,7 +142,7 @@ export class Batch {
 		}
 
 		for (const root of root_effects) {
-			process_effects(this, root);
+			this.process_root(root);
 		}
 
 		if (this.async_effects.length === 0 && this.#pending === 0) {
@@ -232,6 +232,67 @@ export class Batch {
 
 		this.async_effects = [];
 		this.boundary_async_effects = [];
+	}
+
+	/**
+	 * @param {Effect} root
+	 */
+	process_root(root) {
+		root.f ^= CLEAN;
+
+		var effect = root.first;
+
+		while (effect !== null) {
+			var flags = effect.f;
+			var is_branch = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0;
+			var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
+
+			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.skipped_effects.has(effect);
+
+			if (!skip && effect.fn !== null) {
+				if ((flags & EFFECT_ASYNC) !== 0) {
+					const boundary = effect.b;
+
+					if (check_dirtiness(effect)) {
+						var effects = boundary?.pending ? this.boundary_async_effects : this.async_effects;
+						effects.push(effect);
+					}
+				} else if ((flags & BLOCK_EFFECT) !== 0) {
+					if (check_dirtiness(effect)) {
+						update_effect(effect);
+					}
+				} else if (is_branch) {
+					effect.f ^= CLEAN;
+				} else if ((flags & RENDER_EFFECT) !== 0) {
+					// we need to branch here because in legacy mode we run render effects
+					// before running block effects
+					if (async_mode_flag) {
+						this.render_effects.push(effect);
+					} else {
+						if (check_dirtiness(effect)) {
+							update_effect(effect);
+						}
+					}
+				} else if ((flags & EFFECT) !== 0) {
+					this.effects.push(effect);
+				}
+
+				var child = effect.first;
+
+				if (child !== null) {
+					effect = child;
+					continue;
+				}
+			}
+
+			var parent = effect.parent;
+			effect = effect.next;
+
+			while (effect === null && parent !== null) {
+				effect = parent.next;
+				parent = parent.parent;
+			}
+		}
 	}
 
 	/**
@@ -516,74 +577,6 @@ export function schedule_effect(signal) {
 	}
 
 	queued_root_effects.push(effect);
-}
-
-/**
- *
- * This function both runs render effects and collects user effects in topological order
- * from the starting effect passed in. Effects will be collected when they match the filtered
- * bitwise flag passed in only. The collected effects array will be populated with all the user
- * effects to be flushed.
- *
- * @param {Batch} batch
- * @param {Effect} root
- */
-export function process_effects(batch, root) {
-	root.f ^= CLEAN;
-
-	var effect = root.first;
-
-	while (effect !== null) {
-		var flags = effect.f;
-		var is_branch = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0;
-		var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
-
-		var skip = is_skippable_branch || (flags & INERT) !== 0 || batch.skipped_effects.has(effect);
-
-		if (!skip && effect.fn !== null) {
-			if ((flags & EFFECT_ASYNC) !== 0) {
-				const boundary = effect.b;
-
-				if (check_dirtiness(effect)) {
-					var effects = boundary?.pending ? batch.boundary_async_effects : batch.async_effects;
-					effects.push(effect);
-				}
-			} else if ((flags & BLOCK_EFFECT) !== 0) {
-				if (check_dirtiness(effect)) {
-					update_effect(effect);
-				}
-			} else if (is_branch) {
-				effect.f ^= CLEAN;
-			} else if ((flags & RENDER_EFFECT) !== 0) {
-				// we need to branch here because in legacy mode we run render effects
-				// before running block effects
-				if (async_mode_flag) {
-					batch.render_effects.push(effect);
-				} else {
-					if (check_dirtiness(effect)) {
-						update_effect(effect);
-					}
-				}
-			} else if ((flags & EFFECT) !== 0) {
-				batch.effects.push(effect);
-			}
-
-			var child = effect.first;
-
-			if (child !== null) {
-				effect = child;
-				continue;
-			}
-		}
-
-		var parent = effect.parent;
-		effect = effect.next;
-
-		while (effect === null && parent !== null) {
-			effect = parent.next;
-			parent = parent.parent;
-		}
-	}
 }
 
 export function suspend() {
