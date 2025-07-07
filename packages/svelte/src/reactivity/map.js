@@ -182,7 +182,7 @@ export class SvelteMap extends Map {
 		var version = this.#version;
 
 		if (s === undefined) {
-			s = state(0);
+			s = this.#source(0);
 
 			if (DEV) {
 				tag(s, `SvelteMap get(${label(key)})`);
