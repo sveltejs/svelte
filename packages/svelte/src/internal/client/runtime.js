@@ -29,6 +29,7 @@ import { flush_tasks } from './dom/task.js';
 import { internal_set, old_values } from './reactivity/sources.js';
 import { destroy_derived_effects, update_derived } from './reactivity/deriveds.js';
 import * as e from './errors.js';
+import * as w from './warnings.js';
 
 import { tracing_mode_flag } from '../flags/index.js';
 import { tracing_expressions, get_stack } from './dev/tracing.js';
@@ -778,6 +779,13 @@ export function get(signal) {
 					new_deps.push(signal);
 				}
 			}
+		} else {
+			w.reading_just_created_state(
+				signal.label ?? '$state',
+				(active_reaction.f & DERIVED) !== 0
+					? `${/** @type {Derived} */ (active_reaction).label ?? '$derived'}`
+					: '$effect'
+			);
 		}
 	} else if (
 		is_derived &&

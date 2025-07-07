@@ -200,6 +200,12 @@ Consider the following code:
 
 To fix it, either create callback props to communicate changes, or mark `person` as [`$bindable`]($bindable).
 
+### reading_just_created_state
+
+```
+The variable `%name%` is created and read within `%reaction%`. `%reaction%` will not depend on it.
+```
+
 ### select_multiple_invalid_value
 
 ```
