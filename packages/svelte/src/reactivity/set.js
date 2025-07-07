@@ -52,7 +52,7 @@ export class SvelteSet extends Set {
 	#version = state(0);
 	#size = state(0);
 
-	/**@type {Reaction | null}*/
+	/**@type {WeakRef<Reaction> | null}*/
 	#initial_reaction = null;
 
 	/**
@@ -62,12 +62,10 @@ export class SvelteSet extends Set {
 		super();
 
 		if (active_reaction !== null) {
-			this.#initial_reaction = active_reaction;
-			// since we only need `initial_reaction` as long as we are in a derived/effect we can
-			// safely create a teardown function that will reset it to null and allow for GC
-			teardown(() => {
-				this.#initial_reaction = null;
-			});
+			// we use a WeakRef (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakRef)
+			// so that if this Map is somehow stored outside of the active reaction,
+			// it will not prevent the reaction from being garbage collected.
+			this.#initial_reaction = new WeakRef(active_reaction);
 		}
 
 		if (DEV) {
@@ -98,7 +96,7 @@ export class SvelteSet extends Set {
 	 * @returns {Source<T>}
 	 */
 	#source(value) {
-		if (this.#initial_reaction === active_reaction) {
+		if (this.#initial_reaction !== null && this.#initial_reaction.deref() === active_reaction) {
 			return state(value);
 		}
 		return source(value);
