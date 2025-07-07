@@ -45,6 +45,7 @@ import {
 import * as w from './warnings.js';
 import { Batch, batch_deriveds, flushSync, schedule_effect } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
+import { UNINITIALIZED } from '../../constants.js';
 
 export let is_updating_effect = false;
 
@@ -617,7 +618,7 @@ export function get(signal) {
 	// if this is a derived, we may need to update it, but
 	// not if `batch_deriveds` is not null (meaning we're
 	// currently time travelling))
-	if (is_derived && batch_deriveds === null) {
+	if (is_derived && !is_destroying_effect && batch_deriveds === null) {
 		derived = /** @type {Derived} */ (signal);
 
 		if (check_dirtiness(derived)) {
@@ -674,8 +675,25 @@ export function get(signal) {
 		}
 	}
 
-	if (is_destroying_effect && old_values.has(signal)) {
-		return old_values.get(signal);
+	if (is_destroying_effect) {
+		if (old_values.has(signal)) {
+			return old_values.get(signal);
+		}
+
+		if (is_derived) {
+			derived = /** @type {Derived} */ (signal);
+
+			var value = derived.v;
+
+			// if the derived is dirty, or depends on the values that just changed, re-execute
+			if ((derived.f & CLEAN) !== 0 || depends_on_old_values(derived)) {
+				value = execute_derived(derived);
+			}
+
+			old_values.set(derived, value);
+
+			return value;
+		}
 	}
 
 	// if we're time travelling, we don't want to update the
@@ -696,6 +714,24 @@ export function get(signal) {
 	}
 
 	return signal.v;
+}
+
+/** @param {Derived} derived */
+function depends_on_old_values(derived) {
+	if (derived.v === UNINITIALIZED) return true; // we don't know, so assume the worst
+	if (derived.deps === null) return false;
+
+	for (const dep of derived.deps) {
+		if (old_values.has(dep)) {
+			return true;
+		}
+
+		if ((dep.f & DERIVED) !== 0 && depends_on_old_values(/** @type {Derived} */ (dep))) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**

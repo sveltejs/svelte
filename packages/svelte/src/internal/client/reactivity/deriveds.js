@@ -76,7 +76,7 @@ export function derived(fn) {
 		fn,
 		reactions: null,
 		rv: 0,
-		v: /** @type {V} */ (null),
+		v: /** @type {V} */ (UNINITIALIZED),
 		wv: 0,
 		parent: parent_derived ?? active_effect,
 		ac: null

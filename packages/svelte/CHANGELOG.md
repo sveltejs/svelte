@@ -1,5 +1,11 @@
 # svelte
 
+## 5.35.4
+
+### Patch Changes
+
+- fix: abort and reschedule effect processing after state change in user effect ([#16280](https://github.com/sveltejs/svelte/pull/16280))
+
 ## 5.35.3
 
 ### Patch Changes
