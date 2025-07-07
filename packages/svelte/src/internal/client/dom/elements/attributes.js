@@ -491,7 +491,7 @@ export function attribute_effect(
 			var current = set_attributes(element, prev, next, css_hash, skip_warning);
 
 			if (inited && is_select && 'value' in next) {
-				select_option(/** @type {HTMLSelectElement} */ (element), next.value, false);
+				select_option(/** @type {HTMLSelectElement} */ (element), next.value);
 			}
 
 			for (let symbol of Object.getOwnPropertySymbols(effects)) {
@@ -516,7 +516,7 @@ export function attribute_effect(
 			var select = /** @type {HTMLSelectElement} */ (element);
 
 			effect(() => {
-				select_option(select, /** @type {Record<string | symbol, any>} */ (prev).value);
+				select_option(select, /** @type {Record<string | symbol, any>} */ (prev).value, true);
 				init_select(select);
 			});
 		}
