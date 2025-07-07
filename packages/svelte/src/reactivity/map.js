@@ -2,7 +2,7 @@
 import { DEV } from 'esm-env';
 import { set, source, state } from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
-import { active_reaction, get, push_reaction_value } from '../internal/client/runtime.js';
+import { active_reaction, get } from '../internal/client/runtime.js';
 import { increment } from './utils.js';
 import { teardown } from '../internal/client/reactivity/effects.js';
 
