@@ -9,9 +9,9 @@ import * as w from '../../../warnings.js';
  * @template V
  * @param {HTMLSelectElement} select
  * @param {V} value
- * @param {boolean} [mounting]
+ * @param {boolean} mounting
  */
-export function select_option(select, value, mounting) {
+export function select_option(select, value, mounting = false) {
 	if (select.multiple) {
 		// If value is null or undefined, keep the selection as is
 		if (value == undefined) {
