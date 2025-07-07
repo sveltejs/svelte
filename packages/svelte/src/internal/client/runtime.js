@@ -22,7 +22,8 @@ import {
 	ROOT_EFFECT,
 	DISCONNECTED,
 	EFFECT_IS_UPDATING,
-	STALE_REACTION
+	STALE_REACTION,
+	USER_EFFECT
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { internal_set, old_values } from './reactivity/sources.js';
@@ -581,6 +582,8 @@ function flush_queued_effects(effects) {
 
 		if ((effect.f & (DESTROYED | INERT)) === 0) {
 			if (check_dirtiness(effect)) {
+				var wv = write_version;
+
 				update_effect(effect);
 
 				// Effects with no dependencies or teardown do not get added to the effect tree.
@@ -597,8 +600,18 @@ function flush_queued_effects(effects) {
 						effect.fn = null;
 					}
 				}
+
+				// if state is written in a user effect, abort and re-schedule, lest we run
+				// effects that should be removed as a result of the state change
+				if (write_version > wv && (effect.f & USER_EFFECT) !== 0) {
+					break;
+				}
 			}
 		}
+	}
+
+	for (; i < length; i += 1) {
+		schedule_effect(effects[i]);
 	}
 }
 
