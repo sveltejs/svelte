@@ -6,15 +6,78 @@ import { increment } from './utils.js';
 import { DEV } from 'esm-env';
 
 /**
- * Returns a `subscribe` function that, if called in an effect (including expressions in the template),
- * calls its `start` callback with an `update` function. Whenever `update` is called, the effect re-runs.
+ * Returns a `subscribe` function that bridges external, non-reactive changes
+ * to Svelte's reactivity system. It's ideal for integrating with browser APIs,
+ * WebSockets, or any event-based source outside of Svelte's control.
  *
- * If `start` returns a function, it will be called when the effect is destroyed.
+ * Call the returned `subscribe()` function inside a getter to make that getter
+ * reactive. When the external source changes, you call an `update` function,
+ * which in turn causes any effects that depend on the getter to re-run.
  *
- * If `subscribe` is called in multiple effects, `start` will only be called once as long as the effects
- * are active, and the returned teardown function will only be called when all effects are destroyed.
+ * @param {(update: () => void) => (() => void) | void} start
+ *   A callback that runs when the subscription is first activated by an effect.
+ *   It receives an `update` function, which you should call to signal that
+ *   the external data source has changed. The `start` callback can optionally
+ *   return a `cleanup` function, which will be called when the last effect
+ *   that depends on it is destroyed.
+ * @returns {() => void}
+ *   A `subscribe` function that you call inside a getter to establish the
+ *   reactive connection.
  *
- * It's best understood with an example. Here's an implementation of [`MediaQuery`](https://svelte.dev/docs/svelte/svelte-reactivity#MediaQuery):
+ * @example
+ * ### The Generic Pattern
+ *
+ * This pattern shows how to create a reusable utility that encapsulates the
+ * external state and subscription logic.
+ *
+ * ```js
+ * import { createSubscriber } from 'svelte/reactivity';
+ *
+ * export function createReactiveExternalState() {
+ * 	let state = someInitialValue;
+ *
+ * 	const subscribe = createSubscriber((update) => {
+ * 		// Set up your external listener (DOM event, WebSocket, timer, etc.)
+ * 		const cleanup = setupListener(() => {
+ * 			state = newValue; // Update your state
+ * 			update(); // Call this to trigger Svelte reactivity
+ * 		});
+ *
+ * 		// Return cleanup function
+ * 		return () => cleanup();
+ * 	});
+ *
+ * 	return {
+ * 		get current() {
+ * 			subscribe(); // This "paints" the getter as reactive
+ * 			return state;
+ * 		}
+ * 	};
+ * }
+ * ```
+ *
+ * ### Implementation Details
+ *
+ * Internally, `createSubscriber` creates a hidden reactive `$state` variable
+ * that acts as a version number. Calling the `update` function increments this
+ * version. When the `subscribe` function is called within an effect, it reads
+ * this version number, creating a dependency. This mechanism ensures that
+ * getters become reactive to the external changes you signal.
+ *
+ * This approach is highly efficient:
+ * - **Lazy:** The `start` callback is only executed when the getter is first
+ *   used inside an active effect.
+ * - **Automatic Cleanup:** The returned cleanup function is automatically
+ *   called when the last subscribing effect is destroyed.
+ * - **Shared:** If multiple effects depend on the same getter, the `start`
+ *   callback is still only called once.
+ *
+ * It's best understood with more examples.
+ *
+ * @example
+ * ### MediaQuery
+ *
+ * Here's a practical implementation of a reactive `MediaQuery` utility class.
  *
  * ```js
  * import { createSubscriber } from 'svelte/reactivity';
@@ -39,12 +102,58 @@ import { DEV } from 'esm-env';
  * 	get current() {
  * 		this.#subscribe();
  *
- * 		// Return the current state of the query, whether or not we're in an effect
+ * 		// Return the current state, whether or not we're in an effect
  * 		return this.#query.matches;
  * 	}
  * }
  * ```
- * @param {(update: () => void) => (() => void) | void} start
+ *
+ * @example
+ * ### Mouse Position
+ *
+ * This example creates a utility that reactively tracks mouse coordinates.
+ *
+ * ```js
+ * import { createSubscriber } from 'svelte/reactivity';
+ * import { on } from 'svelte/events';
+ *
+ * export function createMousePosition() {
+ * 	let x = 0;
+ * 	let y = 0;
+ *
+ * 	const subscribe = createSubscriber((update) => {
+ * 		const handleMouseMove = (event) => {
+ * 			x = event.clientX;
+ * 			y = event.clientY;
+ * 			update(); // Trigger reactivity
+ * 		};
+ *
+ * 		const off = on(window, 'mousemove', handleMouseMove);
+ * 		return () => off();
+ * 	});
+ *
+ * 	return {
+ * 		get x() {
+ * 			subscribe(); // Makes x reactive
+ * 			return x;
+ * 		},
+ * 		get y() {
+ * 			subscribe(); // Makes y reactive
+ * 			return y;
+ * 		}
+ * 	};
+ * }
+ * ```
+ *
+ * ### When to use `createSubscriber`
+ *
+ * - To synchronize Svelte's reactivity with external event sources like DOM
+ *   events, `postMessage`, or WebSockets.
+ * - To create reactive wrappers around browser APIs (`matchMedia`,
+ *   `IntersectionObserver`, etc.).
+ * - When you have a value that is read from an external source and you need
+ *   components to update when that value changes. It is a more direct
+ *   alternative to using `$state` and `$effect` for this specific purpose.
  * @since 5.7.0
  */
 export function createSubscriber(start) {
@@ -72,7 +181,7 @@ export function createSubscriber(start) {
 					tick().then(() => {
 						// Only count down after timeout, else we would reach 0 before our own render effect reruns,
 						// but reach 1 again when the tick callback of the prior teardown runs. That would mean we
-						// re-subcribe unnecessarily and create a memory leak because the old subscription is never cleaned up.
+						// re-subscribe unnecessarily and create a memory leak because the old subscription is never cleaned up.
 						subscribers -= 1;
 
 						if (subscribers === 0) {
