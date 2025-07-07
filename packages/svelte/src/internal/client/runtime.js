@@ -21,7 +21,6 @@ import {
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	DISCONNECTED,
-	EFFECT_IS_UPDATING,
 	STALE_REACTION,
 	USER_EFFECT
 } from './constants.js';
@@ -94,7 +93,7 @@ export let source_ownership = null;
 
 /** @param {Value} value */
 export function push_reaction_value(value) {
-	if (active_reaction !== null && active_reaction.f & EFFECT_IS_UPDATING) {
+	if (active_reaction !== null) {
 		if (source_ownership === null) {
 			source_ownership = { reaction: active_reaction, sources: [value] };
 		} else {
@@ -282,8 +281,6 @@ export function update_reaction(reaction) {
 	untracking = false;
 	read_version++;
 
-	reaction.f |= EFFECT_IS_UPDATING;
-
 	if (reaction.ac !== null) {
 		reaction.ac.abort(STALE_REACTION);
 		reaction.ac = null;
@@ -368,8 +365,6 @@ export function update_reaction(reaction) {
 		source_ownership = previous_reaction_sources;
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
-
-		reaction.f ^= EFFECT_IS_UPDATING;
 	}
 }
 
