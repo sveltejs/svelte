@@ -31,7 +31,7 @@ import {
 	INSPECT_EFFECT,
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
-	EFFECT_HAS_DERIVED,
+	EFFECT_PRESERVED,
 	BOUNDARY_EFFECT,
 	STALE_REACTION,
 	USER_EFFECT
@@ -42,7 +42,7 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { derived } from './deriveds.js';
-import { component_context, dev_current_component_function } from '../context.js';
+import { component_context, dev_current_component_function, dev_stack } from '../context.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -105,6 +105,7 @@ function create_effect(type, fn, sync, push = true) {
 		last: null,
 		next: null,
 		parent,
+		b: parent && parent.b,
 		prev: null,
 		teardown: null,
 		transitions: null,
@@ -136,7 +137,7 @@ function create_effect(type, fn, sync, push = true) {
 		effect.first === null &&
 		effect.nodes_start === null &&
 		effect.teardown === null &&
-		(effect.f & (EFFECT_HAS_DERIVED | BOUNDARY_EFFECT)) === 0;
+		(effect.f & (EFFECT_PRESERVED | BOUNDARY_EFFECT)) === 0;
 
 	if (!inert && push) {
 		if (parent !== null) {
@@ -366,7 +367,11 @@ export function template_effect(fn, thunks = [], d = derived) {
  * @param {number} flags
  */
 export function block(fn, flags = 0) {
-	return create_effect(RENDER_EFFECT | BLOCK_EFFECT | flags, fn, true);
+	var effect = create_effect(RENDER_EFFECT | BLOCK_EFFECT | flags, fn, true);
+	if (DEV) {
+		effect.dev_stack = dev_stack;
+	}
+	return effect;
 }
 
 /**

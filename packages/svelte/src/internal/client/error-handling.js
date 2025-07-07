@@ -1,4 +1,5 @@
 /** @import { Effect } from '#client' */
+/** @import { Boundary } from './dom/blocks/boundary.js' */
 import { DEV } from 'esm-env';
 import { FILENAME } from '../../constants.js';
 import { is_firefox } from './dom/operations.js';
@@ -39,8 +40,7 @@ export function invoke_error_boundary(error, effect) {
 	while (effect !== null) {
 		if ((effect.f & BOUNDARY_EFFECT) !== 0) {
 			try {
-				// @ts-expect-error
-				effect.fn(error);
+				/** @type {Boundary} */ (effect.b).error(error);
 				return;
 			} catch {}
 		}
