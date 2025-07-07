@@ -84,16 +84,16 @@ export class Batch {
 	#deferred = null;
 
 	/** @type {Effect[]} */
-	async_effects = [];
+	#async_effects = [];
 
 	/** @type {Effect[]} */
-	boundary_async_effects = [];
+	#boundary_async_effects = [];
 
 	/** @type {Effect[]} */
-	render_effects = [];
+	#render_effects = [];
 
 	/** @type {Effect[]} */
-	effects = [];
+	#effects = [];
 
 	/**
 	 * A set of branches that still exist, but will be destroyed when this batch
@@ -145,7 +145,7 @@ export class Batch {
 			this.process_root(root);
 		}
 
-		if (this.async_effects.length === 0 && this.#pending === 0) {
+		if (this.#async_effects.length === 0 && this.#pending === 0) {
 			var merged = false;
 
 			// if there are older batches with overlapping
@@ -162,19 +162,19 @@ export class Batch {
 							batch.#current.set(source, value);
 						}
 
-						for (const e of this.render_effects) {
+						for (const e of this.#render_effects) {
 							set_signal_status(e, CLEAN);
 							// TODO use sets instead of arrays
-							if (!batch.render_effects.includes(e)) {
-								batch.render_effects.push(e);
+							if (!batch.#render_effects.includes(e)) {
+								batch.#render_effects.push(e);
 							}
 						}
 
-						for (const e of this.effects) {
+						for (const e of this.#effects) {
 							set_signal_status(e, CLEAN);
 							// TODO use sets instead of arrays
-							if (!batch.effects.includes(e)) {
-								batch.effects.push(e);
+							if (!batch.#effects.includes(e)) {
+								batch.#effects.push(e);
 							}
 						}
 
@@ -192,11 +192,11 @@ export class Batch {
 			}
 
 			if (!merged) {
-				var render_effects = this.render_effects;
-				var effects = this.effects;
+				var render_effects = this.#render_effects;
+				var effects = this.#effects;
 
-				this.render_effects = [];
-				this.effects = [];
+				this.#render_effects = [];
+				this.#effects = [];
 
 				this.#commit();
 
@@ -206,8 +206,8 @@ export class Batch {
 				this.#deferred?.resolve();
 			}
 		} else {
-			for (const e of this.render_effects) set_signal_status(e, CLEAN);
-			for (const e of this.effects) set_signal_status(e, CLEAN);
+			for (const e of this.#render_effects) set_signal_status(e, CLEAN);
+			for (const e of this.#effects) set_signal_status(e, CLEAN);
 		}
 
 		if (current_values) {
@@ -222,16 +222,16 @@ export class Batch {
 			batch_deriveds = null;
 		}
 
-		for (const effect of this.async_effects) {
+		for (const effect of this.#async_effects) {
 			update_effect(effect);
 		}
 
-		for (const effect of this.boundary_async_effects) {
+		for (const effect of this.#boundary_async_effects) {
 			update_effect(effect);
 		}
 
-		this.async_effects = [];
-		this.boundary_async_effects = [];
+		this.#async_effects = [];
+		this.#boundary_async_effects = [];
 	}
 
 	/**
@@ -254,7 +254,7 @@ export class Batch {
 					const boundary = effect.b;
 
 					if (check_dirtiness(effect)) {
-						var effects = boundary?.pending ? this.boundary_async_effects : this.async_effects;
+						var effects = boundary?.pending ? this.#boundary_async_effects : this.#async_effects;
 						effects.push(effect);
 					}
 				} else if ((flags & BLOCK_EFFECT) !== 0) {
@@ -267,14 +267,14 @@ export class Batch {
 					// we need to branch here because in legacy mode we run render effects
 					// before running block effects
 					if (async_mode_flag) {
-						this.render_effects.push(effect);
+						this.#render_effects.push(effect);
 					} else {
 						if (check_dirtiness(effect)) {
 							update_effect(effect);
 						}
 					}
 				} else if ((flags & EFFECT) !== 0) {
-					this.effects.push(effect);
+					this.#effects.push(effect);
 				}
 
 				var child = effect.first;
@@ -377,18 +377,18 @@ export class Batch {
 		this.#pending -= 1;
 
 		if (this.#pending === 0) {
-			for (const e of this.render_effects) {
+			for (const e of this.#render_effects) {
 				set_signal_status(e, DIRTY);
 				schedule_effect(e);
 			}
 
-			for (const e of this.effects) {
+			for (const e of this.#effects) {
 				set_signal_status(e, DIRTY);
 				schedule_effect(e);
 			}
 
-			this.render_effects = [];
-			this.effects = [];
+			this.#render_effects = [];
+			this.#effects = [];
 
 			this.flush();
 		}
