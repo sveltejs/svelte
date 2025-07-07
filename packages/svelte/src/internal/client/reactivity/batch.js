@@ -106,7 +106,7 @@ export class Batch {
 	 *
 	 * @param {Effect[]} root_effects
 	 */
-	process(root_effects) {
+	#process(root_effects) {
 		set_queued_root_effects([]);
 
 		/** @type {Map<Source, { v: unknown, wv: number }> | null} */
@@ -142,7 +142,7 @@ export class Batch {
 		}
 
 		for (const root of root_effects) {
-			this.process_root(root);
+			this.#process_root(root);
 		}
 
 		if (this.#async_effects.length === 0 && this.#pending === 0) {
@@ -237,7 +237,7 @@ export class Batch {
 	/**
 	 * @param {Effect} root
 	 */
-	process_root(root) {
+	#process_root(root) {
 		root.f ^= CLEAN;
 
 		var effect = root.first;
@@ -347,7 +347,7 @@ export class Batch {
 					infinite_loop_guard();
 				}
 
-				this.process(queued_root_effects);
+				this.#process(queued_root_effects);
 
 				old_values.clear();
 			}
@@ -397,22 +397,6 @@ export class Batch {
 	/** @param {() => void} fn */
 	add_callback(fn) {
 		this.#callbacks.add(fn);
-	}
-
-	/** @param {Effect} effect */
-	skips(effect) {
-		/** @type {Effect | null} */
-		var e = effect;
-
-		while (e !== null) {
-			if (this.skipped_effects.has(e)) {
-				return true;
-			}
-
-			e = e.parent;
-		}
-
-		return false;
 	}
 
 	settled() {
