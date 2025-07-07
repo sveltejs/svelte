@@ -2,7 +2,7 @@
 import { DEV } from 'esm-env';
 import { set, source, state } from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
-import { active_reaction, get } from '../internal/client/runtime.js';
+import { active_reaction, get, onupdated } from '../internal/client/runtime.js';
 import { increment } from './utils.js';
 import { teardown } from '../internal/client/reactivity/effects.js';
 
@@ -68,9 +68,10 @@ export class SvelteMap extends Map {
 
 		if (active_reaction !== null) {
 			this.#initial_reaction = active_reaction;
+
 			// since we only need `initial_reaction` as long as we are in a derived/effect we can
 			// safely create a teardown function that will reset it to null and allow for GC
-			teardown(() => {
+			onupdated(() => {
 				this.#initial_reaction = null;
 			});
 		}

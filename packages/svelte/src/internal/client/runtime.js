@@ -1,6 +1,12 @@
 /** @import { Derived, Effect, Reaction, Signal, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
-import { define_property, get_descriptors, get_prototype_of, index_of } from '../shared/utils.js';
+import {
+	define_property,
+	get_descriptors,
+	get_prototype_of,
+	index_of,
+	run_all
+} from '../shared/utils.js';
 import {
 	destroy_block_effect_children,
 	destroy_effect_children,
@@ -54,6 +60,17 @@ export let is_destroying_effect = false;
 /** @param {boolean} value */
 export function set_is_destroying_effect(value) {
 	is_destroying_effect = value;
+}
+
+/** @type {Array<() => void> | null} */
+let updated_callbacks = null;
+
+/**
+ * Run `fn` when the current reaction finishes updating
+ * @param {() => void} fn
+ */
+export function onupdated(fn) {
+	(updated_callbacks ??= []).push(fn);
 }
 
 // Handle effect queues
@@ -265,6 +282,7 @@ export function update_reaction(reaction) {
 	var previous_reaction_sources = source_ownership;
 	var previous_component_context = component_context;
 	var previous_untracking = untracking;
+	var previous_updated_callbacks = updated_callbacks;
 
 	var flags = reaction.f;
 
@@ -358,6 +376,10 @@ export function update_reaction(reaction) {
 	} catch (error) {
 		handle_error(error);
 	} finally {
+		if (updated_callbacks !== null) {
+			run_all(updated_callbacks);
+		}
+
 		new_deps = previous_deps;
 		skipped_deps = previous_skipped_deps;
 		untracked_writes = previous_untracked_writes;
@@ -366,6 +388,7 @@ export function update_reaction(reaction) {
 		source_ownership = previous_reaction_sources;
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
+		updated_callbacks = previous_updated_callbacks;
 
 		reaction.f ^= EFFECT_IS_UPDATING;
 	}
