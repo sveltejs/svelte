@@ -20,9 +20,9 @@ import {
 	STATE_SYMBOL,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	LEGACY_DERIVED_PROP,
 	DISCONNECTED,
-	EFFECT_IS_UPDATING
+	EFFECT_IS_UPDATING,
+	STALE_REACTION
 } from './constants.js';
 import { flush_tasks } from './dom/task.js';
 import { internal_set, old_values } from './reactivity/sources.js';
@@ -34,12 +34,13 @@ import { tracing_expressions, get_stack } from './dev/tracing.js';
 import {
 	component_context,
 	dev_current_component_function,
+	dev_stack,
 	is_runes,
 	set_component_context,
-	set_dev_current_component_function
+	set_dev_current_component_function,
+	set_dev_stack
 } from './context.js';
 import { handle_error, invoke_error_boundary } from './error-handling.js';
-import { snapshot } from '../shared/clone.js';
 
 let is_flushing = false;
 
@@ -85,17 +86,17 @@ export function set_active_effect(effect) {
 /**
  * When sources are created within a reaction, reading and writing
  * them within that reaction should not cause a re-run
- * @type {null | [active_reaction: Reaction, sources: Source[]]}
+ * @type {null | { reaction: Reaction, sources: Source[] }}
  */
-export let reaction_sources = null;
+export let source_ownership = null;
 
 /** @param {Value} value */
 export function push_reaction_value(value) {
 	if (active_reaction !== null && active_reaction.f & EFFECT_IS_UPDATING) {
-		if (reaction_sources === null) {
-			reaction_sources = [active_reaction, [value]];
+		if (source_ownership === null) {
+			source_ownership = { reaction: active_reaction, sources: [value] };
 		} else {
-			reaction_sources[1].push(value);
+			source_ownership.sources.push(value);
 		}
 	}
 }
@@ -234,7 +235,12 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 	for (var i = 0; i < reactions.length; i++) {
 		var reaction = reactions[i];
 
-		if (reaction_sources?.[1].includes(signal) && reaction_sources[0] === active_reaction) continue;
+		if (
+			source_ownership?.reaction === active_reaction &&
+			source_ownership.sources.includes(signal)
+		) {
+			continue;
+		}
 
 		if ((reaction.f & DERIVED) !== 0) {
 			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
@@ -256,7 +262,7 @@ export function update_reaction(reaction) {
 	var previous_untracked_writes = untracked_writes;
 	var previous_reaction = active_reaction;
 	var previous_skip_reaction = skip_reaction;
-	var previous_reaction_sources = reaction_sources;
+	var previous_reaction_sources = source_ownership;
 	var previous_component_context = component_context;
 	var previous_untracking = untracking;
 
@@ -269,12 +275,17 @@ export function update_reaction(reaction) {
 		(flags & UNOWNED) !== 0 && (untracking || !is_updating_effect || active_reaction === null);
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 
-	reaction_sources = null;
+	source_ownership = null;
 	set_component_context(reaction.ctx);
 	untracking = false;
 	read_version++;
 
 	reaction.f |= EFFECT_IS_UPDATING;
+
+	if (reaction.ac !== null) {
+		reaction.ac.abort(STALE_REACTION);
+		reaction.ac = null;
+	}
 
 	try {
 		var result = /** @type {Function} */ (0, reaction.fn)();
@@ -294,7 +305,12 @@ export function update_reaction(reaction) {
 				reaction.deps = deps = new_deps;
 			}
 
-			if (!skip_reaction) {
+			if (
+				!skip_reaction ||
+				// Deriveds that already have reactions can cleanup, so we still add them as reactions
+				((flags & DERIVED) !== 0 &&
+					/** @type {import('#client').Derived} */ (reaction).reactions !== null)
+			) {
 				for (i = skipped_deps; i < deps.length; i++) {
 					(deps[i].reactions ??= []).push(reaction);
 				}
@@ -347,7 +363,7 @@ export function update_reaction(reaction) {
 		untracked_writes = previous_untracked_writes;
 		active_reaction = previous_reaction;
 		skip_reaction = previous_skip_reaction;
-		reaction_sources = previous_reaction_sources;
+		source_ownership = previous_reaction_sources;
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
 
@@ -434,6 +450,9 @@ export function update_effect(effect) {
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
 		set_dev_current_component_function(effect.component_function);
+		var previous_stack = /** @type {any} */ (dev_stack);
+		// only block effects have a dev stack, keep the current one otherwise
+		set_dev_stack(effect.dev_stack ?? dev_stack);
 	}
 
 	try {
@@ -468,6 +487,7 @@ export function update_effect(effect) {
 
 		if (DEV) {
 			set_dev_current_component_function(previous_component_fn);
+			set_dev_stack(previous_stack);
 		}
 	}
 }
@@ -724,7 +744,10 @@ export function get(signal) {
 
 	// Register the dependency on the current reaction signal.
 	if (active_reaction !== null && !untracking) {
-		if (!reaction_sources?.[1].includes(signal) || reaction_sources[0] !== active_reaction) {
+		if (
+			source_ownership?.reaction !== active_reaction ||
+			!source_ownership?.sources.includes(signal)
+		) {
 			var deps = active_reaction.deps;
 			if (signal.rv < read_version) {
 				signal.rv = read_version;
@@ -852,17 +875,7 @@ export function invalidate_inner_signals(fn) {
 	var captured = capture_signals(() => untrack(fn));
 
 	for (var signal of captured) {
-		// Go one level up because derived signals created as part of props in legacy mode
-		if ((signal.f & LEGACY_DERIVED_PROP) !== 0) {
-			for (const dep of /** @type {Derived} */ (signal).deps || []) {
-				if ((dep.f & DERIVED) === 0) {
-					// Use internal_set instead of set here and below to avoid mutation validation
-					internal_set(dep, dep.v);
-				}
-			}
-		} else {
-			internal_set(signal, signal.v);
-		}
+		internal_set(signal, signal.v);
 	}
 }
 

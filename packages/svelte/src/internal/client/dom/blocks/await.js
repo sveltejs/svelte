@@ -16,9 +16,11 @@ import { queue_micro_task } from '../task.js';
 import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
 import {
 	component_context,
+	dev_stack,
 	is_runes,
 	set_component_context,
-	set_dev_current_component_function
+	set_dev_current_component_function,
+	set_dev_stack
 } from '../../context.js';
 
 const PENDING = 0;
@@ -45,6 +47,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 
 	/** @type {any} */
 	var component_function = DEV ? component_context?.function : null;
+	var dev_original_stack = DEV ? dev_stack : null;
 
 	/** @type {V | Promise<V> | typeof UNINITIALIZED} */
 	var input = UNINITIALIZED;
@@ -75,7 +78,10 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 			set_active_effect(effect);
 			set_active_reaction(effect); // TODO do we need both?
 			set_component_context(active_component_context);
-			if (DEV) set_dev_current_component_function(component_function);
+			if (DEV) {
+				set_dev_current_component_function(component_function);
+				set_dev_stack(dev_original_stack);
+			}
 		}
 
 		try {
@@ -107,7 +113,11 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 			}
 		} finally {
 			if (restore) {
-				if (DEV) set_dev_current_component_function(null);
+				if (DEV) {
+					set_dev_current_component_function(null);
+					set_dev_stack(null);
+				}
+
 				set_component_context(null);
 				set_active_reaction(null);
 				set_active_effect(null);

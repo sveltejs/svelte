@@ -1,6 +1,6 @@
 /** @import { Derived, Effect } from '#client' */
 import { DEV } from 'esm-env';
-import { CLEAN, DERIVED, DIRTY, EFFECT_HAS_DERIVED, MAYBE_DIRTY, UNOWNED } from '#client/constants';
+import { CLEAN, DERIVED, DIRTY, EFFECT_PRESERVED, MAYBE_DIRTY, UNOWNED } from '#client/constants';
 import {
 	active_reaction,
 	active_effect,
@@ -38,7 +38,7 @@ export function derived(fn) {
 	} else {
 		// Since deriveds are evaluated lazily, any effects created inside them are
 		// created too late to ensure that the parent effect is added to the tree
-		active_effect.f |= EFFECT_HAS_DERIVED;
+		active_effect.f |= EFFECT_PRESERVED;
 	}
 
 	/** @type {Derived<V>} */
@@ -53,7 +53,8 @@ export function derived(fn) {
 		rv: 0,
 		v: /** @type {V} */ (null),
 		wv: 0,
-		parent: parent_derived ?? active_effect
+		parent: parent_derived ?? active_effect,
+		ac: null
 	};
 
 	if (DEV && tracing_mode_flag) {

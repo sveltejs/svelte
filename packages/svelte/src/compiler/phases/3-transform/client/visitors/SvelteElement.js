@@ -10,7 +10,7 @@ import {
 	build_attribute_effect,
 	build_set_class
 } from './shared/element.js';
-import { build_render_statement } from './shared/utils.js';
+import { build_render_statement, Memoizer } from './shared/utils.js';
 
 /**
  * @param {AST.SvelteElement} node
@@ -46,8 +46,8 @@ export function SvelteElement(node, context) {
 			node: element_id,
 			init: [],
 			update: [],
-			expressions: [],
-			after_update: []
+			after_update: [],
+			memoizer: new Memoizer()
 		}
 	};
 

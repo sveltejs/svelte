@@ -18,6 +18,7 @@ import { validate_store } from '../shared/validate.js';
 import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
 import { reset_elements } from './dev.js';
 import { Payload } from './payload.js';
+import { abort } from './abort-signal.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
@@ -66,50 +67,54 @@ export let on_destroy = [];
  * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
-	const payload = new Payload(options.idPrefix ? options.idPrefix + '-' : '');
+	try {
+		const payload = new Payload(options.idPrefix ? options.idPrefix + '-' : '');
 
-	const prev_on_destroy = on_destroy;
-	on_destroy = [];
-	payload.out += BLOCK_OPEN;
+		const prev_on_destroy = on_destroy;
+		on_destroy = [];
+		payload.out += BLOCK_OPEN;
 
-	let reset_reset_element;
+		let reset_reset_element;
 
-	if (DEV) {
-		// prevent parent/child element state being corrupted by a bad render
-		reset_reset_element = reset_elements();
+		if (DEV) {
+			// prevent parent/child element state being corrupted by a bad render
+			reset_reset_element = reset_elements();
+		}
+
+		if (options.context) {
+			push();
+			/** @type {Component} */ (current_component).c = options.context;
+		}
+
+		// @ts-expect-error
+		component(payload, options.props ?? {}, {}, {});
+
+		if (options.context) {
+			pop();
+		}
+
+		if (reset_reset_element) {
+			reset_reset_element();
+		}
+
+		payload.out += BLOCK_CLOSE;
+		for (const cleanup of on_destroy) cleanup();
+		on_destroy = prev_on_destroy;
+
+		let head = payload.head.out + payload.head.title;
+
+		for (const { hash, code } of payload.css) {
+			head += `<style id="${hash}">${code}</style>`;
+		}
+
+		return {
+			head,
+			html: payload.out,
+			body: payload.out
+		};
+	} finally {
+		abort();
 	}
-
-	if (options.context) {
-		push();
-		/** @type {Component} */ (current_component).c = options.context;
-	}
-
-	// @ts-expect-error
-	component(payload, options.props ?? {}, {}, {});
-
-	if (options.context) {
-		pop();
-	}
-
-	if (reset_reset_element) {
-		reset_reset_element();
-	}
-
-	payload.out += BLOCK_CLOSE;
-	for (const cleanup of on_destroy) cleanup();
-	on_destroy = prev_on_destroy;
-
-	let head = payload.head.out + payload.head.title;
-
-	for (const { hash, code } of payload.css) {
-		head += `<style id="${hash}">${code}</style>`;
-	}
-
-	return {
-		head,
-		html: payload.out,
-		body: payload.out
-	};
 }
 
 /**
