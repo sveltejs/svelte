@@ -256,13 +256,13 @@ export class Batch {
 
 	flush() {
 		if (queued_root_effects.length > 0) {
-			flush_queued_root_effects();
+			this.flush_effects();
 		} else {
 			this.#commit();
 		}
 
 		if (current_batch !== this) {
-			// this can happen if a `flushSync` occurred during `flush_queued_root_effects`,
+			// this can happen if a `flushSync` occurred during `this.flush_effects()`,
 			// which is permitted in legacy mode despite being a terrible idea
 			return;
 		}
@@ -272,6 +272,32 @@ export class Batch {
 		}
 
 		current_batch = null;
+	}
+
+	flush_effects() {
+		var was_updating_effect = is_updating_effect;
+
+		try {
+			var flush_count = 0;
+			set_is_updating_effect(true);
+
+			while (queued_root_effects.length > 0) {
+				if (flush_count++ > 1000) {
+					infinite_loop_guard();
+				}
+
+				this.process(queued_root_effects);
+
+				old_values.clear();
+			}
+		} finally {
+			set_is_updating_effect(was_updating_effect);
+
+			last_scheduled_effect = null;
+			if (DEV) {
+				dev_effect_stack.length = 0;
+			}
+		}
 	}
 
 	#commit() {
@@ -368,7 +394,7 @@ export function flushSync(fn) {
 	const batch = Batch.ensure();
 
 	if (fn) {
-		flush_queued_root_effects();
+		batch.flush_effects();
 
 		result = fn();
 	}
@@ -381,7 +407,7 @@ export function flushSync(fn) {
 				batch.flush();
 			}
 
-			// this would be reset in `flush_queued_root_effects` but since we are early returning here,
+			// this would be reset in `batch.flush_effects()` but since we are early returning here,
 			// we need to reset it here as well in case the first time there's 0 queued root effects
 			last_scheduled_effect = null;
 
@@ -392,7 +418,7 @@ export function flushSync(fn) {
 			return /** @type {T} */ (result);
 		}
 
-		flush_queued_root_effects();
+		batch.flush_effects();
 	}
 }
 
@@ -434,33 +460,6 @@ function infinite_loop_guard() {
 				log_effect_stack();
 			}
 			throw error;
-		}
-	}
-}
-
-export function flush_queued_root_effects() {
-	var was_updating_effect = is_updating_effect;
-	var batch = /** @type {Batch} */ (current_batch);
-
-	try {
-		var flush_count = 0;
-		set_is_updating_effect(true);
-
-		while (queued_root_effects.length > 0) {
-			if (flush_count++ > 1000) {
-				infinite_loop_guard();
-			}
-
-			batch.process(queued_root_effects);
-
-			old_values.clear();
-		}
-	} finally {
-		set_is_updating_effect(was_updating_effect);
-
-		last_scheduled_effect = null;
-		if (DEV) {
-			dev_effect_stack.length = 0;
 		}
 	}
 }
