@@ -9,7 +9,8 @@ import {
 	EFFECT_ASYNC,
 	INERT,
 	RENDER_EFFECT,
-	ROOT_EFFECT
+	ROOT_EFFECT,
+	USER_EFFECT
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
@@ -23,7 +24,8 @@ import {
 	set_is_updating_effect,
 	set_queued_root_effects,
 	set_signal_status,
-	update_effect
+	update_effect,
+	write_version
 } from '../runtime.js';
 import * as e from '../errors.js';
 import { flush_tasks } from '../dom/task.js';
@@ -513,7 +515,7 @@ function infinite_loop_guard() {
  * @param {Array<Effect>} effects
  * @returns {void}
  */
-export function flush_queued_effects(effects) {
+function flush_queued_effects(effects) {
 	var length = effects.length;
 	if (length === 0) return;
 
@@ -522,6 +524,8 @@ export function flush_queued_effects(effects) {
 
 		if ((effect.f & (DESTROYED | INERT)) === 0) {
 			if (check_dirtiness(effect)) {
+				var wv = write_version;
+
 				update_effect(effect);
 
 				// Effects with no dependencies or teardown do not get added to the effect tree.
@@ -538,8 +542,18 @@ export function flush_queued_effects(effects) {
 						effect.fn = null;
 					}
 				}
+
+				// if state is written in a user effect, abort and re-schedule, lest we run
+				// effects that should be removed as a result of the state change
+				if (write_version > wv && (effect.f & USER_EFFECT) !== 0) {
+					break;
+				}
 			}
 		}
+	}
+
+	for (; i < length; i += 1) {
+		schedule_effect(effects[i]);
 	}
 }
 

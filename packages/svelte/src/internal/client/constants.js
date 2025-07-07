@@ -19,12 +19,13 @@ export const INSPECT_EFFECT = 1 << 17;
 export const HEAD_EFFECT = 1 << 18;
 export const EFFECT_PRESERVED = 1 << 19;
 export const EFFECT_IS_UPDATING = 1 << 20;
+export const USER_EFFECT = 1 << 21;
 
 // Flags used for async
-export const REACTION_IS_UPDATING = 1 << 21;
-export const EFFECT_ASYNC = 1 << 22;
+export const REACTION_IS_UPDATING = 1 << 22;
+export const EFFECT_ASYNC = 1 << 23;
 
-export const ERROR_VALUE = 1 << 23;
+export const ERROR_VALUE = 1 << 24;
 
 export const STATE_SYMBOL = Symbol('$state');
 export const LEGACY_PROPS = Symbol('legacy props');

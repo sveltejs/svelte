@@ -32,7 +32,8 @@ import {
 	MAYBE_DIRTY,
 	EFFECT_PRESERVED,
 	BOUNDARY_EFFECT,
-	STALE_REACTION
+	STALE_REACTION,
+	USER_EFFECT
 } from '#client/constants';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
@@ -203,9 +204,15 @@ export function user_effect(fn) {
 			reaction: active_reaction
 		});
 	} else {
-		var signal = effect(fn);
-		return signal;
+		return create_user_effect(fn);
 	}
+}
+
+/**
+ * @param {() => void | (() => void)} fn
+ */
+export function create_user_effect(fn) {
+	return create_effect(EFFECT | USER_EFFECT, fn, false);
 }
 
 /**
@@ -220,7 +227,7 @@ export function user_pre_effect(fn) {
 			value: '$effect.pre'
 		});
 	}
-	return render_effect(fn);
+	return create_effect(RENDER_EFFECT | USER_EFFECT, fn, true);
 }
 
 /** @param {() => void | (() => void)} fn */
