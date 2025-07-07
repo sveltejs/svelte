@@ -16,7 +16,7 @@ export default test({
 		// it works differently: https://github.com/sveltejs/svelte/pull/15564
 		assert.deepEqual(
 			logs,
-			async_mode ? ['init 0', 'cleanup 2', null, 'init 2', 'cleanup 4', null, 'init 4'] : ['init 0']
+			async_mode ? ['init 0', 'cleanup 0', null, 'init 2', 'cleanup 2', null, 'init 4'] : ['init 0']
 		);
 	}
 });
