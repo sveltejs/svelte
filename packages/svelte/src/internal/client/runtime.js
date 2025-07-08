@@ -155,7 +155,7 @@ export function increment_write_version() {
  * @param {Reaction} reaction
  * @returns {boolean}
  */
-export function check_dirtiness(reaction) {
+export function is_dirty(reaction) {
 	var flags = reaction.f;
 
 	if ((flags & DIRTY) !== 0) {
@@ -208,7 +208,7 @@ export function check_dirtiness(reaction) {
 			for (i = 0; i < length; i++) {
 				dependency = dependencies[i];
 
-				if (check_dirtiness(/** @type {Derived} */ (dependency))) {
+				if (is_dirty(/** @type {Derived} */ (dependency))) {
 					update_derived(/** @type {Derived} */ (dependency));
 				}
 
@@ -607,7 +607,7 @@ export function get(signal) {
 	if (is_derived && !is_destroying_effect && batch_deriveds === null) {
 		derived = /** @type {Derived} */ (signal);
 
-		if (check_dirtiness(derived)) {
+		if (is_dirty(derived)) {
 			update_derived(derived);
 		}
 	}

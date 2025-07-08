@@ -1,6 +1,6 @@
 /** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
 import {
-	check_dirtiness,
+	is_dirty,
 	active_effect,
 	active_reaction,
 	update_effect,
@@ -323,7 +323,7 @@ export function legacy_pre_effect_reset() {
 				set_signal_status(effect, MAYBE_DIRTY);
 			}
 
-			if (check_dirtiness(effect)) {
+			if (is_dirty(effect)) {
 				update_effect(effect);
 			}
 
@@ -614,7 +614,7 @@ function resume_children(effect, local) {
 	effect.f ^= INERT;
 
 	// If a dependency of this effect changed while it was paused,
-	// schedule the effect to update. we don't use `check_dirtiness`
+	// schedule the effect to update. we don't use `is_dirty`
 	// here because we don't want to eagerly recompute a derived like
 	// `{#if foo}{foo.bar()}{/if}` if `foo` is now `undefined
 	if ((effect.f & CLEAN) === 0) {

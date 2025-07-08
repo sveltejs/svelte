@@ -16,7 +16,7 @@ import { deferred, define_property } from '../../shared/utils.js';
 import { get_pending_boundary } from '../dom/blocks/boundary.js';
 import {
 	active_effect,
-	check_dirtiness,
+	is_dirty,
 	is_updating_effect,
 	set_is_updating_effect,
 	set_signal_status,
@@ -273,7 +273,7 @@ export class Batch {
 					this.#effects.push(effect);
 				} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
 					this.#render_effects.push(effect);
-				} else if (check_dirtiness(effect)) {
+				} else if (is_dirty(effect)) {
 					if ((flags & EFFECT_ASYNC) !== 0) {
 						var effects = effect.b?.pending ? this.#boundary_async_effects : this.#async_effects;
 						effects.push(effect);
@@ -530,7 +530,7 @@ function flush_queued_effects(effects) {
 		var effect = effects[i];
 
 		if ((effect.f & (DESTROYED | INERT)) === 0) {
-			if (check_dirtiness(effect)) {
+			if (is_dirty(effect)) {
 				var wv = write_version;
 
 				update_effect(effect);
