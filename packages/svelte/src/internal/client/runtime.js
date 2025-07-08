@@ -19,7 +19,6 @@ import {
 	ROOT_EFFECT,
 	DISCONNECTED,
 	REACTION_IS_UPDATING,
-	EFFECT_IS_UPDATING,
 	STALE_REACTION,
 	ERROR_VALUE
 } from './constants.js';
@@ -94,7 +93,7 @@ export let source_ownership = null;
 
 /** @param {Value} value */
 export function push_reaction_value(value) {
-	if (active_reaction !== null && active_reaction.f & EFFECT_IS_UPDATING) {
+	if (active_reaction !== null && (!async_mode_flag || (active_reaction.f & DERIVED) !== 0)) {
 		if (source_ownership === null) {
 			source_ownership = { reaction: active_reaction, sources: [value] };
 		} else {
@@ -287,10 +286,6 @@ export function update_reaction(reaction) {
 	untracking = false;
 	read_version++;
 
-	if (!async_mode_flag || (reaction.f & DERIVED) !== 0) {
-		reaction.f |= EFFECT_IS_UPDATING;
-	}
-
 	if (reaction.ac !== null) {
 		reaction.ac.abort(STALE_REACTION);
 		reaction.ac = null;
@@ -381,10 +376,6 @@ export function update_reaction(reaction) {
 		source_ownership = previous_reaction_sources;
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
-
-		if (!async_mode_flag || (reaction.f & DERIVED) !== 0) {
-			reaction.f ^= EFFECT_IS_UPDATING;
-		}
 	}
 }
 
