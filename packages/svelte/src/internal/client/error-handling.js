@@ -30,8 +30,7 @@ export function handle_error(error) {
 			throw error;
 		}
 
-		// @ts-expect-error
-		effect.fn(error);
+		/** @type {Boundary} */ (effect.b).error(error);
 	} else {
 		// otherwise we bubble up the effect tree ourselves
 		invoke_error_boundary(error, effect);
