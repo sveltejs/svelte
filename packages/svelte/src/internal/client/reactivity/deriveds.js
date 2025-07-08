@@ -6,7 +6,6 @@ import {
 	CLEAN,
 	DERIVED,
 	DIRTY,
-	EFFECT_ASYNC,
 	EFFECT_PRESERVED,
 	MAYBE_DIRTY,
 	STALE_REACTION,
@@ -26,7 +25,7 @@ import {
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import { destroy_effect, render_effect } from './effects.js';
+import { async_effect, destroy_effect, render_effect } from './effects.js';
 import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
@@ -114,7 +113,7 @@ export function async_derived(fn, location) {
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
 
-	render_effect(() => {
+	async_effect(() => {
 		if (DEV) current_async_effect = active_effect;
 
 		try {
@@ -187,7 +186,7 @@ export function async_derived(fn, location) {
 		};
 
 		promise.then(handler, (e) => handler(null, e || 'unknown'));
-	}, EFFECT_ASYNC | EFFECT_PRESERVED);
+	});
 
 	return new Promise((fulfil) => {
 		/** @param {Promise<V>} p */

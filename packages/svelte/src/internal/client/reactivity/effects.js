@@ -33,7 +33,8 @@ import {
 	EFFECT_PRESERVED,
 	BOUNDARY_EFFECT,
 	STALE_REACTION,
-	USER_EFFECT
+	USER_EFFECT,
+	EFFECT_ASYNC
 } from '#client/constants';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
@@ -329,6 +330,14 @@ export function legacy_pre_effect_reset() {
 			token.ran = false;
 		}
 	});
+}
+
+/**
+ * @param {() => void | (() => void)} fn
+ * @returns {Effect}
+ */
+export function async_effect(fn) {
+	return create_effect(EFFECT_ASYNC | EFFECT_PRESERVED, fn, true);
 }
 
 /**
