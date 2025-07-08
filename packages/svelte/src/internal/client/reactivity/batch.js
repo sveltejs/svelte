@@ -1,6 +1,5 @@
 /** @import { Derived, Effect, Source } from '#client' */
 import {
-	BLOCK_EFFECT,
 	BRANCH_EFFECT,
 	CLEAN,
 	DESTROYED,
