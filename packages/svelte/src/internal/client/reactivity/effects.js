@@ -355,7 +355,7 @@ export function template_effect(fn, sync = [], async = []) {
  * @param {number} flags
  */
 export function block(fn, flags = 0) {
-	var effect = create_effect(RENDER_EFFECT | BLOCK_EFFECT | flags, fn, true);
+	var effect = create_effect(BLOCK_EFFECT | flags, fn, true);
 	if (DEV) {
 		effect.dev_stack = dev_stack;
 	}
@@ -367,7 +367,7 @@ export function block(fn, flags = 0) {
  * @param {boolean} [push]
  */
 export function branch(fn, push = true) {
-	return create_effect(RENDER_EFFECT | BRANCH_EFFECT, fn, true, push);
+	return create_effect(BRANCH_EFFECT, fn, true, push);
 }
 
 /**

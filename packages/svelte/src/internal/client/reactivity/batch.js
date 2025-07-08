@@ -271,7 +271,9 @@ export class Batch {
 			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.skipped_effects.has(effect);
 
 			if (!skip && effect.fn !== null) {
-				if ((flags & EFFECT_ASYNC) !== 0) {
+				if (is_branch) {
+					effect.f ^= CLEAN;
+				} else if ((flags & EFFECT_ASYNC) !== 0) {
 					const boundary = effect.b;
 
 					if (check_dirtiness(effect)) {
@@ -282,8 +284,6 @@ export class Batch {
 					if (check_dirtiness(effect)) {
 						update_effect(effect);
 					}
-				} else if (is_branch) {
-					effect.f ^= CLEAN;
 				} else if ((flags & RENDER_EFFECT) !== 0) {
 					// we need to branch here because in legacy mode we run render effects
 					// before running block effects
