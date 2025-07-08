@@ -124,13 +124,8 @@ export function async_derived(fn, location) {
 
 		if (DEV) current_async_effect = null;
 
-		promise =
-			prev === null
-				? Promise.resolve(p)
-				: prev.then(
-						() => p,
-						() => p
-					);
+		var r = () => p;
+		promise = prev?.then(r, r) ?? Promise.resolve(p);
 
 		prev = promise;
 
