@@ -179,18 +179,12 @@ export class Batch {
 
 						for (const e of this.#render_effects) {
 							set_signal_status(e, CLEAN);
-							// TODO use sets instead of arrays
-							if (!batch.#render_effects.includes(e)) {
-								batch.#render_effects.push(e);
-							}
+							batch.#render_effects.push(e);
 						}
 
 						for (const e of this.#effects) {
 							set_signal_status(e, CLEAN);
-							// TODO use sets instead of arrays
-							if (!batch.#effects.includes(e)) {
-								batch.#effects.push(e);
-							}
+							batch.#effects.push(e);
 						}
 
 						for (const e of this.skipped_effects) {
