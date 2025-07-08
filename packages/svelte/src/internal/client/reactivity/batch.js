@@ -160,61 +160,23 @@ export class Batch {
 			this.#process_root(root);
 		}
 
+		// if we didn't start any new async work, and no async work
+		// is outstanding from a previous flush, commit
 		if (this.#async_effects.length === 0 && this.#pending === 0) {
-			var merged = false;
+			var render_effects = this.#render_effects;
+			var effects = this.#effects;
 
-			// if there are older batches with overlapping
-			// state, we can't commit this batch. instead,
-			// we merge it into the older batches
-			for (const batch of batches) {
-				if (batch === this) break;
+			this.#render_effects = [];
+			this.#effects = [];
 
-				for (const [source] of batch.#current) {
-					if (this.#current.has(source)) {
-						merged = true;
+			this.#commit();
 
-						for (const [source, value] of this.#current) {
-							batch.#current.set(source, value);
-						}
+			flush_queued_effects(render_effects);
+			flush_queued_effects(effects);
 
-						for (const e of this.#render_effects) {
-							set_signal_status(e, CLEAN);
-							batch.#render_effects.push(e);
-						}
-
-						for (const e of this.#effects) {
-							set_signal_status(e, CLEAN);
-							batch.#effects.push(e);
-						}
-
-						for (const e of this.skipped_effects) {
-							batch.skipped_effects.add(e);
-						}
-
-						for (const fn of this.#callbacks) {
-							batch.#callbacks.add(fn);
-						}
-
-						break;
-					}
-				}
-			}
-
-			if (!merged) {
-				var render_effects = this.#render_effects;
-				var effects = this.#effects;
-
-				this.#render_effects = [];
-				this.#effects = [];
-
-				this.#commit();
-
-				flush_queued_effects(render_effects);
-				flush_queued_effects(effects);
-
-				this.#deferred?.resolve();
-			}
+			this.#deferred?.resolve();
 		} else {
+			// otherwise mark effects clean so they get scheduled on the next run
 			for (const e of this.#render_effects) set_signal_status(e, CLEAN);
 			for (const e of this.#effects) set_signal_status(e, CLEAN);
 		}
