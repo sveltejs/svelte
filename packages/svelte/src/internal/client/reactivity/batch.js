@@ -273,29 +273,17 @@ export class Batch {
 			if (!skip && effect.fn !== null) {
 				if (is_branch) {
 					effect.f ^= CLEAN;
-				} else if ((flags & EFFECT_ASYNC) !== 0) {
-					const boundary = effect.b;
-
-					if (check_dirtiness(effect)) {
-						var effects = boundary?.pending ? this.#boundary_async_effects : this.#async_effects;
-						effects.push(effect);
-					}
-				} else if ((flags & BLOCK_EFFECT) !== 0) {
-					if (check_dirtiness(effect)) {
-						update_effect(effect);
-					}
-				} else if ((flags & RENDER_EFFECT) !== 0) {
-					// we need to branch here because in legacy mode we run render effects
-					// before running block effects
-					if (async_mode_flag) {
-						this.#render_effects.push(effect);
-					} else {
-						if (check_dirtiness(effect)) {
-							update_effect(effect);
-						}
-					}
 				} else if ((flags & EFFECT) !== 0) {
 					this.#effects.push(effect);
+				} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
+					this.#render_effects.push(effect);
+				} else if (check_dirtiness(effect)) {
+					if ((flags & EFFECT_ASYNC) !== 0) {
+						var effects = effect.b?.pending ? this.#boundary_async_effects : this.#async_effects;
+						effects.push(effect);
+					} else {
+						update_effect(effect);
+					}
 				}
 
 				var child = effect.first;
