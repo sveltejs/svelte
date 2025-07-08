@@ -53,12 +53,7 @@ let queued_root_effects = [];
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
 
-/** TODO handy for debugging, but we should probably eventually delete it */
-let uid = 1;
-
 export class Batch {
-	id = uid++;
-
 	/**
 	 * The current values of any sources that are updated in this batch
 	 * They keys of this map are identical to `this.#previous`
