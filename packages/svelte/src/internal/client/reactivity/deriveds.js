@@ -9,7 +9,8 @@ import {
 	EFFECT_PRESERVED,
 	MAYBE_DIRTY,
 	STALE_REACTION,
-	UNOWNED
+	UNOWNED,
+	DESTROYED
 } from '#client/constants';
 import {
 	active_reaction,
@@ -143,6 +144,10 @@ export function async_derived(fn, location) {
 		 */
 		const handler = (value, error = undefined) => {
 			prev = null;
+
+			if ((parent.f & DESTROYED) !== 0) {
+				batch.neuter();
+			}
 
 			current_async_effect = null;
 

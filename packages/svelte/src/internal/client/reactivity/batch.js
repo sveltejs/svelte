@@ -88,6 +88,12 @@ export class Batch {
 	#deferred = null;
 
 	/**
+	 * True if an async effect inside this batch resolved and
+	 * its parent branch was already deleted
+	 */
+	#neutered = false;
+
+	/**
 	 * Async effects (created inside `async_derived`) encountered during processing.
 	 * These run after the rest of the batch has updated, since they should
 	 * always have the latest values
@@ -278,10 +284,14 @@ export class Batch {
 		current_batch = null;
 	}
 
+	neuter() {
+		this.#neutered = true;
+	}
+
 	flush() {
 		if (queued_root_effects.length > 0) {
 			this.flush_effects();
-		} else {
+		} else if (!this.#neutered) {
 			this.#commit();
 		}
 
