@@ -43,7 +43,13 @@ import {
 	set_dev_stack
 } from './context.js';
 import * as w from './warnings.js';
-import { Batch, batch_deriveds, flushSync, schedule_effect } from './reactivity/batch.js';
+import {
+	Batch,
+	batch_deriveds,
+	dev_effect_stack,
+	flushSync,
+	schedule_effect
+} from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
 
@@ -60,9 +66,6 @@ export let is_destroying_effect = false;
 export function set_is_destroying_effect(value) {
 	is_destroying_effect = value;
 }
-
-/** @type {Effect[]} Stack of effects, dev only */
-export let dev_effect_stack = [];
 
 /** @type {null | Reaction} */
 export let active_reaction = null;

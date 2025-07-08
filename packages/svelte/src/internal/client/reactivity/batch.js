@@ -17,7 +17,6 @@ import { get_pending_boundary } from '../dom/blocks/boundary.js';
 import {
 	active_effect,
 	check_dirtiness,
-	dev_effect_stack,
 	is_updating_effect,
 	set_is_updating_effect,
 	set_signal_status,
@@ -44,6 +43,9 @@ export let current_batch = null;
  * @type {Map<Derived, any> | null}
  */
 export let batch_deriveds = null;
+
+/** @type {Effect[]} Stack of effects, dev only */
+export let dev_effect_stack = [];
 
 /** @type {Effect[]} */
 let queued_root_effects = [];
@@ -365,7 +367,7 @@ export class Batch {
 
 			last_scheduled_effect = null;
 			if (DEV) {
-				dev_effect_stack.length = 0;
+				dev_effect_stack = [];
 			}
 		}
 	}
@@ -469,7 +471,7 @@ export function flushSync(fn) {
 			last_scheduled_effect = null;
 
 			if (DEV) {
-				dev_effect_stack.length = 0;
+				dev_effect_stack = [];
 			}
 
 			return /** @type {T} */ (result);
@@ -485,7 +487,7 @@ function log_effect_stack() {
 		'Last ten effects were: ',
 		dev_effect_stack.slice(-10).map((d) => d.fn)
 	);
-	dev_effect_stack.length = 0;
+	dev_effect_stack = [];
 }
 
 function infinite_loop_guard() {
