@@ -85,16 +85,32 @@ export class Batch {
 	 */
 	#deferred = null;
 
-	/** @type {Effect[]} */
+	/**
+	 * Async effects (created inside `async_derived`) encountered during processing.
+	 * These run after the rest of the batch has updated, since they should
+	 * always have the latest values
+	 * @type {Effect[]}
+	 */
 	#async_effects = [];
 
-	/** @type {Effect[]} */
+	/**
+	 * The same as `#async_effects`, but for effects inside a newly-created
+	 * `<svelte:boundary>` — these do not prevent the batch from committing
+	 * @type {Effect[]}
+	 */
 	#boundary_async_effects = [];
 
-	/** @type {Effect[]} */
+	/**
+	 * Template effects and `$effect.pre` effects, which run when
+	 * a batch is committed
+	 * @type {Effect[]}
+	 */
 	#render_effects = [];
 
-	/** @type {Effect[]} */
+	/**
+	 * The same as `#render_effects`, but for `$effect` (which runs after)
+	 * @type {Effect[]}
+	 */
 	#effects = [];
 
 	/**
