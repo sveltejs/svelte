@@ -61,14 +61,6 @@ export function set_is_destroying_effect(value) {
 	is_destroying_effect = value;
 }
 
-/** @type {Effect[]} */
-export let queued_root_effects = [];
-
-/** @param {Effect[]} v */
-export function set_queued_root_effects(v) {
-	queued_root_effects = v;
-}
-
 /** @type {Effect[]} Stack of effects, dev only */
 export let dev_effect_stack = [];
 

@@ -20,9 +20,7 @@ import {
 	check_dirtiness,
 	dev_effect_stack,
 	is_updating_effect,
-	queued_root_effects,
 	set_is_updating_effect,
-	set_queued_root_effects,
 	set_signal_status,
 	update_effect,
 	write_version
@@ -40,8 +38,16 @@ const batches = new Set();
 /** @type {Batch | null} */
 export let current_batch = null;
 
-/** @type {Map<Derived, any> | null} */
+/**
+ * When time travelling, we re-evaluate deriveds based on the temporary
+ * values of their dependencies rather than their actual values, and cache
+ * the results in this map rather than on the deriveds themselves
+ * @type {Map<Derived, any> | null}
+ */
 export let batch_deriveds = null;
+
+/** @type {Effect[]} */
+let queued_root_effects = [];
 
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
@@ -125,20 +131,15 @@ export class Batch {
 	 * @param {Effect[]} root_effects
 	 */
 	#process(root_effects) {
-		set_queued_root_effects([]);
+		queued_root_effects = [];
 
 		/** @type {Map<Source, { v: unknown, wv: number }> | null} */
 		var current_values = null;
-		var time_travelling = false;
 
-		for (const batch of batches) {
-			if (batch !== this) {
-				time_travelling = true;
-				break;
-			}
-		}
-
-		if (time_travelling) {
+		// if there are multiple batches, we are 'time travelling' —
+		// we need to undo the changes belonging to any batch
+		// other than the current one
+		if (batches.size > 1) {
 			current_values = new Map();
 			batch_deriveds = new Map();
 
@@ -253,6 +254,8 @@ export class Batch {
 	}
 
 	/**
+	 * Traverse the effect tree, executing effects or stashing
+	 * them for later execution as appropriate
 	 * @param {Effect} root
 	 */
 	#process_root(root) {
@@ -314,6 +317,8 @@ export class Batch {
 	}
 
 	/**
+	 * Associate a change to a given source with the current
+	 * batch, noting its previous and current values
 	 * @param {Source} source
 	 * @param {any} value
 	 */
@@ -366,7 +371,6 @@ export class Batch {
 				}
 
 				this.#process(queued_root_effects);
-
 				old_values.clear();
 			}
 		} finally {
@@ -379,6 +383,9 @@ export class Batch {
 		}
 	}
 
+	/**
+	 * Append and remove branches to/from the DOM
+	 */
 	#commit() {
 		for (const fn of this.#callbacks) {
 			fn();
