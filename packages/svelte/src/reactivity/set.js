@@ -1,10 +1,9 @@
-/** @import { Reaction, Source } from '#client' */
+/** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
 import { source, set, state } from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
-import { active_reaction, get, update_version } from '../internal/client/runtime.js';
+import { get, update_version } from '../internal/client/runtime.js';
 import { increment } from './utils.js';
-import { teardown } from '../internal/client/reactivity/effects.js';
 
 var read_methods = ['forEach', 'isDisjointFrom', 'isSubsetOf', 'isSupersetOf'];
 var set_like_methods = ['difference', 'intersection', 'symmetricDifference', 'union'];
@@ -51,17 +50,13 @@ export class SvelteSet extends Set {
 	#sources = new Map();
 	#version = state(0);
 	#size = state(0);
-	#update_version = -1;
+	#update_version = update_version || -1;
 
 	/**
 	 * @param {Iterable<T> | null | undefined} [value]
 	 */
 	constructor(value) {
 		super();
-
-		if (active_reaction !== null) {
-			this.#update_version = update_version;
-		}
 
 		if (DEV) {
 			// If the value is invalid then the native exception will fire here
@@ -91,10 +86,7 @@ export class SvelteSet extends Set {
 	 * @returns {Source<T>}
 	 */
 	#source(value) {
-		if (this.#update_version === update_version) {
-			return state(value);
-		}
-		return source(value);
+		return update_version === this.#update_version ? state(value) : source(value);
 	}
 
 	// We init as part of the first instance so that we can treeshake this class

@@ -1,10 +1,9 @@
-/** @import { Reaction, Source } from '#client' */
+/** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
 import { set, source, state } from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
-import { active_reaction, get, update_version } from '../internal/client/runtime.js';
+import { get, update_version } from '../internal/client/runtime.js';
 import { increment } from './utils.js';
-import { teardown } from '../internal/client/reactivity/effects.js';
 
 /**
  * A reactive version of the built-in [`Map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) object.
@@ -57,17 +56,13 @@ export class SvelteMap extends Map {
 	#sources = new Map();
 	#version = state(0);
 	#size = state(0);
-	#update_version = -1;
+	#update_version = update_version || -1;
 
 	/**
 	 * @param {Iterable<readonly [K, V]> | null | undefined} [value]
 	 */
 	constructor(value) {
 		super();
-
-		if (active_reaction !== null) {
-			this.#update_version = update_version;
-		}
 
 		if (DEV) {
 			// If the value is invalid then the native exception will fire here
@@ -95,11 +90,7 @@ export class SvelteMap extends Map {
 	 * @returns {Source<T>}
 	 */
 	#source(value) {
-		if (update_version === this.#update_version) {
-			return state(value);
-		}
-
-		return source(value);
+		return update_version === this.#update_version ? state(value) : source(value);
 	}
 
 	/** @param {K} key */
