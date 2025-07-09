@@ -2,7 +2,7 @@
 import { DEV } from 'esm-env';
 import { set, source, state } from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
-import { active_reaction, get } from '../internal/client/runtime.js';
+import { active_reaction, get, update_version } from '../internal/client/runtime.js';
 import { increment } from './utils.js';
 import { teardown } from '../internal/client/reactivity/effects.js';
 
@@ -57,8 +57,7 @@ export class SvelteMap extends Map {
 	#sources = new Map();
 	#version = state(0);
 	#size = state(0);
-	/**@type {WeakRef<Reaction> | null} */
-	#initial_reaction = null;
+	#update_version = -1;
 
 	/**
 	 * @param {Iterable<readonly [K, V]> | null | undefined} [value]
@@ -67,10 +66,7 @@ export class SvelteMap extends Map {
 		super();
 
 		if (active_reaction !== null) {
-			// we use a WeakRef (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakRef)
-			// so that if this Map is somehow stored outside of the active reaction,
-			// it will not prevent the reaction from being garbage collected.
-			this.#initial_reaction = new WeakRef(active_reaction);
+			this.#update_version = update_version;
 		}
 
 		if (DEV) {
@@ -99,9 +95,10 @@ export class SvelteMap extends Map {
 	 * @returns {Source<T>}
 	 */
 	#source(value) {
-		if (this.#initial_reaction !== null && this.#initial_reaction.deref() === active_reaction) {
+		if (update_version === this.#update_version) {
 			return state(value);
 		}
+
 		return source(value);
 	}
 
