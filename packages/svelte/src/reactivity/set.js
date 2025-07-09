@@ -77,9 +77,9 @@ export class SvelteSet extends Set {
 	}
 
 	/**
-	 * If the active_reaction is the same as the reaction that created this SvelteMap,
-	 * we use state so that it will not be a dependency of the reaction. Otherwise we
-	 * use source so it will be.
+	 * If the source is being created inside the same reaction as the SvelteSet instance,
+	 * we use `state` so that it will not be a dependency of the reaction. Otherwise we
+	 * use `source` so it will be.
 	 *
 	 * @template T
 	 * @param {T} value
