@@ -184,7 +184,7 @@ export function pop(component) {
 	component_context = context.p;
 
 	if (DEV) {
-		dev_current_component_function = context.p?.function ?? null;
+		dev_current_component_function = component_context?.function ?? null;
 	}
 
 	return component ?? /** @type {T} */ ({});
