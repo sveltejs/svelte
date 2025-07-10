@@ -33,7 +33,7 @@ import { tracing_mode_flag } from '../../flags/index.js';
 import { Boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { current_batch } from './batch.js';
+import { batch_deriveds, current_batch } from './batch.js';
 
 /** @type {Effect | null} */
 export let current_async_effect = null;
@@ -328,8 +328,12 @@ export function update_derived(derived) {
 	// cleanup function, or it will cache a stale value
 	if (is_destroying_effect) return;
 
-	var status =
-		(skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null ? MAYBE_DIRTY : CLEAN;
+	if (batch_deriveds !== null) {
+		batch_deriveds.set(derived, derived.v);
+	} else {
+		var status =
+			(skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null ? MAYBE_DIRTY : CLEAN;
 
-	set_signal_status(derived, status);
+		set_signal_status(derived, status);
+	}
 }
