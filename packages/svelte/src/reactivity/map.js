@@ -1,9 +1,8 @@
 /** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
-import { set, source, state } from '../internal/client/reactivity/sources.js';
+import { set, source, state, increment } from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
 import { get, update_version } from '../internal/client/runtime.js';
-import { increment } from './utils.js';
 
 /**
  * A reactive version of the built-in [`Map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) object.
