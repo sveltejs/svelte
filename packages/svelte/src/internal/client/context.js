@@ -175,29 +175,28 @@ export function push(props, runes = false, fn) {
  * @returns {T}
  */
 export function pop(component) {
-	if (component_context !== null) {
-		var effects = component_context.e;
+	var context = /** @type {ComponentContext} */ (component_context);
+	var effects = context.e;
 
-		if (effects !== null) {
-			component_context.e = null;
+	if (effects !== null) {
+		context.e = null;
 
-			for (var fn of effects) {
-				create_user_effect(fn);
-			}
-		}
-
-		if (component !== undefined) {
-			component_context.x = component;
-		}
-
-		component_context = component_context.p;
-
-		if (DEV) {
-			dev_current_component_function = component_context?.function ?? null;
+		for (var fn of effects) {
+			create_user_effect(fn);
 		}
 	}
 
-	return component || /** @type {T} */ ({});
+	if (component !== undefined) {
+		context.x = component;
+	}
+
+	component_context = context.p;
+
+	if (DEV) {
+		dev_current_component_function = component_context?.function ?? null;
+	}
+
+	return component ?? /** @type {T} */ ({});
 }
 
 /** @returns {boolean} */
