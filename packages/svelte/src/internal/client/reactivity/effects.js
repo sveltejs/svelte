@@ -189,8 +189,7 @@ export function user_effect(fn) {
 		active_reaction === null &&
 		active_effect !== null &&
 		(active_effect.f & BRANCH_EFFECT) !== 0 &&
-		component_context !== null &&
-		!component_context.m;
+		(active_effect.f & EFFECT_RAN) === 0;
 
 	if (DEV) {
 		define_property(fn, 'name', {
