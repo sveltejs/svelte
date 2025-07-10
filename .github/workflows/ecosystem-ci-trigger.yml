@@ -10,7 +10,7 @@ jobs:
     if: github.repository == 'sveltejs/svelte' && github.event.issue.pull_request && startsWith(github.event.comment.body, '/ecosystem-ci run')
     permissions:
       issues: write # to add / delete reactions
-      pull-requests: read # to read PR data
+      pull-requests: write # to read PR data, and to add labels
       actions: read # to check workflow status
       contents: read # to clone the repo
     steps:
