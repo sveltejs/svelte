@@ -175,8 +175,8 @@ export function pop(component) {
 	if (effects !== null) {
 		context.e = null;
 
-		for (var effect of effects) {
-			create_user_effect(effect.fn);
+		for (var fn of effects) {
+			create_user_effect(fn);
 		}
 	}
 

@@ -200,11 +200,7 @@ export function user_effect(fn) {
 
 	if (defer) {
 		var context = /** @type {ComponentContext} */ (component_context);
-		(context.e ??= []).push({
-			fn,
-			effect: active_effect,
-			reaction: active_reaction
-		});
+		(context.e ??= []).push(fn);
 	} else {
 		return create_user_effect(fn);
 	}
