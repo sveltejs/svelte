@@ -183,24 +183,23 @@ export function teardown(fn) {
 export function user_effect(fn) {
 	validate_effect('$effect');
 
-	// Non-nested `$effect(...)` in a component should be deferred
-	// until the component is mounted
-	var defer =
-		active_reaction === null &&
-		active_effect !== null &&
-		(active_effect.f & BRANCH_EFFECT) !== 0 &&
-		(active_effect.f & EFFECT_RAN) === 0;
-
 	if (DEV) {
 		define_property(fn, 'name', {
 			value: '$effect'
 		});
 	}
 
+	// Non-nested `$effect(...)` in a component should be deferred
+	// until the component is mounted
+	var flags = /** @type {Effect} */ (active_effect).f;
+	var defer = !active_reaction && (flags & BRANCH_EFFECT) !== 0 && (flags & EFFECT_RAN) === 0;
+
 	if (defer) {
+		// Top-level `$effect(...)` in an unmounted component — defer until mount
 		var context = /** @type {ComponentContext} */ (component_context);
 		(context.e ??= []).push(fn);
 	} else {
+		// Everything else — create immediately
 		return create_user_effect(fn);
 	}
 }
