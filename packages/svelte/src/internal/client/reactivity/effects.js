@@ -182,10 +182,7 @@ export function user_effect(fn) {
 	// Non-nested `$effect(...)` in a component should be deferred
 	// until the component is mounted
 	var defer =
-		active_effect !== null &&
-		(active_effect.f & BRANCH_EFFECT) !== 0 &&
-		component_context !== null &&
-		!component_context.m;
+		active_effect !== null && (active_effect.f & BRANCH_EFFECT) !== 0 && active_reaction === null;
 
 	if (DEV) {
 		define_property(fn, 'name', {

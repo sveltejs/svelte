@@ -144,7 +144,6 @@ export function push(props, runes = false, fn) {
 		c: null,
 		d: false,
 		e: null,
-		m: false,
 		s: props,
 		x: null,
 		l: null

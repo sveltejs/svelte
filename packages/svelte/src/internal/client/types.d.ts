@@ -18,8 +18,6 @@ export type ComponentContext = {
 	d: boolean;
 	/** deferred effects */
 	e: null | Array<() => void | (() => void)>;
-	/** mounted */
-	m: boolean;
 	/**
 	 * props — needed for legacy mode lifecycle functions, and for `createEventDispatcher`
 	 * @deprecated remove in 6.0
