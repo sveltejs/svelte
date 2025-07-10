@@ -603,10 +603,7 @@ export function get(signal) {
 		}
 	}
 
-	// if this is a derived, we may need to update it, but
-	// not if `batch_deriveds` is not null (meaning we're
-	// currently time travelling))
-	if (is_derived && !is_destroying_effect && batch_deriveds === null) {
+	if (is_derived && !is_destroying_effect) {
 		derived = /** @type {Derived} */ (signal);
 
 		if (is_dirty(derived)) {
@@ -682,19 +679,6 @@ export function get(signal) {
 
 			return value;
 		}
-	}
-
-	// if we're time travelling, we don't want to update the
-	// intrinsic value of the derived — we want to compute it
-	// once and stash it for the duration of batch processing
-	if (is_derived && batch_deriveds !== null) {
-		derived = /** @type {Derived} */ (signal);
-
-		if (!batch_deriveds.has(derived)) {
-			batch_deriveds.set(derived, execute_derived(derived));
-		}
-
-		return batch_deriveds.get(derived);
 	}
 
 	if ((signal.f & ERROR_VALUE) !== 0) {
