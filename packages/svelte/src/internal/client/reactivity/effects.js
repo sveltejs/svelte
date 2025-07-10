@@ -185,15 +185,12 @@ export function user_effect(fn) {
 		});
 	}
 
-	// Non-nested `$effect(...)` in a component should be deferred
-	// until the component is mounted
-	var defer =
-		active_effect !== null && (active_effect.f & BRANCH_EFFECT) !== 0 && active_reaction === null;
-
-	if (defer) {
+	if (!active_reaction && active_effect && (active_effect.f & BRANCH_EFFECT) !== 0) {
+		// Top-level `$effect(...)` in a component — defer until mount
 		var context = /** @type {ComponentContext} */ (component_context);
 		(context.e ??= []).push(fn);
 	} else {
+		// Everything else — create immediately
 		return create_user_effect(fn);
 	}
 }
