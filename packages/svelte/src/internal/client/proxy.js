@@ -49,13 +49,13 @@ export function proxy(value) {
 	 * @param {() => T} fn
 	 */
 	var with_parent = (fn) => {
-		var previous_source_ownership = current_sources;
+		var previous_sources = current_sources;
 		set_current_sources(parent_sources);
 
 		/** @type {T} */
 		var result = fn();
 
-		set_current_sources(previous_source_ownership);
+		set_current_sources(previous_sources);
 		return result;
 	};
 
