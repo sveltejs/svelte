@@ -177,16 +177,18 @@ export function push(props, runes = false, fn) {
  */
 export function pop(component) {
 	if (component_context !== null) {
-		if (component !== undefined) {
-			component_context.x = component;
-		}
+		var effects = component_context.e;
 
-		const effects = component_context.e;
 		if (effects !== null) {
 			component_context.e = null;
+
 			for (var fn of effects) {
 				create_user_effect(fn);
 			}
+		}
+
+		if (component !== undefined) {
+			component_context.x = component;
 		}
 
 		component_context.m = true;
