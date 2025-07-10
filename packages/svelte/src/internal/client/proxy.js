@@ -1,6 +1,6 @@
 /** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
-import { get, active_effect, active_reaction, set_active_reaction } from './runtime.js';
+import { get, active_effect, current_sources, set_current_sources } from './runtime.js';
 import {
 	array_prototype,
 	get_descriptor,
@@ -41,7 +41,7 @@ export function proxy(value) {
 	var version = source(0);
 
 	var stack = DEV && tracing_mode_flag ? get_stack('CreatedAt') : null;
-	var reaction = active_reaction;
+	var parent_sources = current_sources;
 
 	/**
 	 * Executes the proxy in the context of the reaction it was originally created in, if any
@@ -49,13 +49,13 @@ export function proxy(value) {
 	 * @param {() => T} fn
 	 */
 	var with_parent = (fn) => {
-		var previous_reaction = active_reaction;
-		set_active_reaction(reaction);
+		var previous_source_ownership = current_sources;
+		set_current_sources(parent_sources);
 
 		/** @type {T} */
 		var result = fn();
 
-		set_active_reaction(previous_reaction);
+		set_current_sources(previous_source_ownership);
 		return result;
 	};
 

@@ -88,17 +88,24 @@ export function set_active_effect(effect) {
 /**
  * When sources are created within a reaction, reading and writing
  * them within that reaction should not cause a re-run
- * @type {null | { reaction: Reaction, sources: Source[] }}
+ * @type {null | Source[]}
  */
-export let source_ownership = null;
+export let current_sources = null;
+
+/**
+ * @param {null | Source[]} value
+ */
+export function set_current_sources(value) {
+	current_sources = value;
+}
 
 /** @param {Value} value */
 export function push_reaction_value(value) {
 	if (active_reaction !== null && active_reaction.f & EFFECT_IS_UPDATING) {
-		if (source_ownership === null) {
-			source_ownership = { reaction: active_reaction, sources: [value] };
+		if (current_sources === null) {
+			current_sources = [value];
 		} else {
-			source_ownership.sources.push(value);
+			current_sources.push(value);
 		}
 	}
 }
@@ -236,7 +243,7 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
-	if (source_ownership?.reaction === active_reaction && source_ownership.sources.includes(signal)) {
+	if (current_sources?.includes(signal)) {
 		return;
 	}
 
@@ -263,7 +270,7 @@ export function update_reaction(reaction) {
 	var previous_untracked_writes = untracked_writes;
 	var previous_reaction = active_reaction;
 	var previous_skip_reaction = skip_reaction;
-	var previous_reaction_sources = source_ownership;
+	var previous_sources = current_sources;
 	var previous_component_context = component_context;
 	var previous_untracking = untracking;
 	var previous_update_version = update_version;
@@ -277,7 +284,7 @@ export function update_reaction(reaction) {
 		(flags & UNOWNED) !== 0 && (untracking || !is_updating_effect || active_reaction === null);
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 
-	source_ownership = null;
+	current_sources = null;
 	set_component_context(reaction.ctx);
 	untracking = false;
 	update_version = ++read_version;
@@ -365,7 +372,7 @@ export function update_reaction(reaction) {
 		untracked_writes = previous_untracked_writes;
 		active_reaction = previous_reaction;
 		skip_reaction = previous_skip_reaction;
-		source_ownership = previous_reaction_sources;
+		current_sources = previous_sources;
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
 		update_version = previous_update_version;
@@ -759,10 +766,7 @@ export function get(signal) {
 
 	// Register the dependency on the current reaction signal.
 	if (active_reaction !== null && !untracking) {
-		if (
-			source_ownership?.reaction !== active_reaction ||
-			!source_ownership?.sources.includes(signal)
-		) {
+		if (!current_sources?.includes(signal)) {
 			var deps = active_reaction.deps;
 			if (signal.rv < read_version) {
 				signal.rv = read_version;
