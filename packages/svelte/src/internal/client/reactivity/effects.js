@@ -179,16 +179,16 @@ export function teardown(fn) {
 export function user_effect(fn) {
 	validate_effect('$effect');
 
-	// Non-nested `$effect(...)` in a component should be deferred
-	// until the component is mounted
-	var defer =
-		active_effect !== null && (active_effect.f & BRANCH_EFFECT) !== 0 && active_reaction === null;
-
 	if (DEV) {
 		define_property(fn, 'name', {
 			value: '$effect'
 		});
 	}
+
+	// Non-nested `$effect(...)` in a component should be deferred
+	// until the component is mounted
+	var defer =
+		active_effect !== null && (active_effect.f & BRANCH_EFFECT) !== 0 && active_reaction === null;
 
 	if (defer) {
 		var context = /** @type {ComponentContext} */ (component_context);
