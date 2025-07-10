@@ -1,17 +1,12 @@
-/** @import { ComponentContext, DevStackEntry } from '#client' */
-
+/** @import { ComponentContext, DevStackEntry, Effect } from '#client' */
 import { DEV } from 'esm-env';
 import { lifecycle_outside_component } from '../shared/errors.js';
 import * as e from './errors.js';
-import {
-	active_effect,
-	active_reaction,
-	set_active_effect,
-	set_active_reaction
-} from './runtime.js';
-import { create_user_effect, teardown } from './reactivity/effects.js';
+import { active_effect, active_reaction } from './runtime.js';
+import { create_user_effect } from './reactivity/effects.js';
 import { async_mode_flag, legacy_mode_flag } from '../flags/index.js';
 import { FILENAME } from '../../constants.js';
+import { BRANCH_EFFECT, EFFECT_RAN } from './constants.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;
@@ -105,7 +100,10 @@ export function setContext(key, context) {
 	const context_map = get_or_init_context_map('setContext');
 
 	if (async_mode_flag) {
-		if (/** @type {ComponentContext} */ (component_context).m) {
+		var flags = /** @type {Effect} */ (active_effect).f;
+		var valid = !active_reaction && (flags & BRANCH_EFFECT) !== 0 && (flags & EFFECT_RAN) === 0;
+
+		if (!valid) {
 			e.set_context_after_init();
 		}
 	}
@@ -150,7 +148,6 @@ export function push(props, runes = false, fn) {
 		p: component_context,
 		c: null,
 		e: null,
-		m: false,
 		s: props,
 		x: null,
 		l: legacy_mode_flag && !runes ? { s: null, u: null, $: [] } : null
@@ -183,8 +180,6 @@ export function pop(component) {
 	if (component !== undefined) {
 		context.x = component;
 	}
-
-	context.m = true;
 
 	component_context = context.p;
 
