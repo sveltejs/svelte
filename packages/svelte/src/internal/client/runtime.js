@@ -236,15 +236,12 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
+	if (source_ownership?.reaction === active_reaction && source_ownership.sources.includes(signal)) {
+		return;
+	}
+
 	for (var i = 0; i < reactions.length; i++) {
 		var reaction = reactions[i];
-
-		if (
-			source_ownership?.reaction === active_reaction &&
-			source_ownership.sources.includes(signal)
-		) {
-			continue;
-		}
 
 		if ((reaction.f & DERIVED) !== 0) {
 			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
