@@ -275,10 +275,9 @@ export function increment(source) {
 /**
  * @param {Value} signal
  * @param {number} status should be DIRTY or MAYBE_DIRTY
- * @param {boolean} partial should skip async/block effects
  * @returns {void}
  */
-export function mark_reactions(signal, status, partial = false) {
+export function mark_reactions(signal, status) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -298,17 +297,13 @@ export function mark_reactions(signal, status, partial = false) {
 			continue;
 		}
 
-		if (partial && (flags & (EFFECT_ASYNC | BLOCK_EFFECT)) !== 0) {
-			continue;
-		}
-
 		if (status === DIRTY || (flags & DIRTY) === 0) {
 			// don't make a DIRTY signal MAYBE_DIRTY
 			set_signal_status(reaction, status);
 		}
 
 		if ((flags & DERIVED) !== 0) {
-			mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY, partial);
+			mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
 		} else {
 			schedule_effect(/** @type {Effect} */ (reaction));
 		}
