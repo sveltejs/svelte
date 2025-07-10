@@ -260,6 +260,14 @@ export function update_pre(source, d = 1) {
 }
 
 /**
+ * Silently (without using `get`) increment a source
+ * @param {Source<number>} source
+ */
+export function increment(source) {
+	set(source, source.v + 1);
+}
+
+/**
  * @param {Value} signal
  * @param {number} status should be DIRTY or MAYBE_DIRTY
  * @returns {void}

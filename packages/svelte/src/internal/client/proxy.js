@@ -8,7 +8,7 @@ import {
 	is_array,
 	object_prototype
 } from '../shared/utils.js';
-import { state as source, set } from './reactivity/sources.js';
+import { state as source, set, increment } from './reactivity/sources.js';
 import { PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
@@ -118,7 +118,7 @@ export function proxy(value) {
 				if (prop in target) {
 					const s = with_parent(() => source(UNINITIALIZED, stack));
 					sources.set(prop, s);
-					update_version(version);
+					increment(version);
 
 					if (DEV) {
 						tag(s, get_label(path, prop));
@@ -136,7 +136,7 @@ export function proxy(value) {
 					}
 				}
 				set(s, UNINITIALIZED);
-				update_version(version);
+				increment(version);
 			}
 
 			return true;
@@ -304,7 +304,7 @@ export function proxy(value) {
 					}
 				}
 
-				update_version(version);
+				increment(version);
 			}
 
 			return true;
@@ -341,14 +341,6 @@ function get_label(path, prop) {
 	if (typeof prop === 'symbol') return `${path}[Symbol(${prop.description ?? ''})]`;
 	if (regex_is_valid_identifier.test(prop)) return `${path}.${prop}`;
 	return /^\d+$/.test(prop) ? `${path}[${prop}]` : `${path}['${prop}']`;
-}
-
-/**
- * @param {Source<number>} signal
- * @param {1 | -1} [d]
- */
-function update_version(signal, d = 1) {
-	set(signal, signal.v + d);
 }
 
 /**
