@@ -92,13 +92,6 @@ export function set_active_effect(effect) {
  */
 export let current_sources = null;
 
-/**
- * @param {null | Source[]} value
- */
-export function set_current_sources(value) {
-	current_sources = value;
-}
-
 /** @param {Value} value */
 export function push_reaction_value(value) {
 	if (active_reaction !== null && active_reaction.f & EFFECT_IS_UPDATING) {
@@ -142,6 +135,11 @@ let write_version = 1;
 let read_version = 0;
 
 export let update_version = read_version;
+
+/** @param {number} value */
+export function set_update_version(value) {
+	update_version = value;
+}
 
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the reaction.
