@@ -133,6 +133,8 @@ export let write_version = 1;
 /** @type {number} Used to version each read of a source of derived to avoid duplicating depedencies inside a reaction */
 let read_version = 0;
 
+export let update_version = read_version;
+
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the reaction.
 export let skip_reaction = false;
@@ -237,16 +239,16 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
+	if (
+		!async_mode_flag &&
+		source_ownership?.reaction === active_reaction &&
+		source_ownership.sources.includes(signal)
+	) {
+		return;
+	}
+
 	for (var i = 0; i < reactions.length; i++) {
 		var reaction = reactions[i];
-
-		if (
-			!async_mode_flag &&
-			source_ownership?.reaction === active_reaction &&
-			source_ownership.sources.includes(signal)
-		) {
-			continue;
-		}
 
 		if ((reaction.f & DERIVED) !== 0) {
 			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
@@ -271,6 +273,7 @@ export function update_reaction(reaction) {
 	var previous_reaction_sources = source_ownership;
 	var previous_component_context = component_context;
 	var previous_untracking = untracking;
+	var previous_update_version = update_version;
 
 	var flags = reaction.f;
 
@@ -284,7 +287,7 @@ export function update_reaction(reaction) {
 	source_ownership = null;
 	set_component_context(reaction.ctx);
 	untracking = false;
-	read_version++;
+	update_version = ++read_version;
 
 	if (reaction.ac !== null) {
 		reaction.ac.abort(STALE_REACTION);
@@ -376,6 +379,7 @@ export function update_reaction(reaction) {
 		source_ownership = previous_reaction_sources;
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
+		update_version = previous_update_version;
 	}
 }
 

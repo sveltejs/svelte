@@ -146,20 +146,15 @@ export function getAllContexts() {
  * @returns {void}
  */
 export function push(props, runes = false, fn) {
-	var ctx = (component_context = {
+	component_context = {
 		p: component_context,
 		c: null,
-		d: false,
 		e: null,
 		m: false,
 		s: props,
 		x: null,
 		l: legacy_mode_flag && !runes ? { s: null, u: null, $: [] } : null
-	});
-
-	teardown(() => {
-		/** @type {ComponentContext} */ (ctx).d = true;
-	});
+	};
 
 	if (DEV) {
 		// component function
