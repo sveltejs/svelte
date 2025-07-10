@@ -1,5 +1,13 @@
 # svelte
 
+## 5.35.6
+
+### Patch Changes
+
+- chore: simplify reaction/source ownership tracking ([#16333](https://github.com/sveltejs/svelte/pull/16333))
+
+- chore: simplify internal component `pop()` ([#16331](https://github.com/sveltejs/svelte/pull/16331))
+
 ## 5.35.5
 
 ### Patch Changes
