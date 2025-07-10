@@ -269,14 +269,6 @@ export function spread_props(...props) {
 }
 
 /**
- * @param {Derived} current_value
- * @returns {boolean}
- */
-function has_destroyed_component_ctx(current_value) {
-	return current_value.ctx?.d ?? false;
-}
-
-/**
  * This function is responsible for synchronizing a possibly bound prop with the inner component state.
  * It is used whenever the compiler sees that the component writes to the prop, or when it has a default prop_value.
  * @template V

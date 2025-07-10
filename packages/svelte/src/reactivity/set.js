@@ -1,9 +1,8 @@
 /** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
-import { source, set, state } from '../internal/client/reactivity/sources.js';
+import { source, set, state, increment } from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
 import { get, update_version } from '../internal/client/runtime.js';
-import { increment } from './utils.js';
 
 var read_methods = ['forEach', 'isDisjointFrom', 'isSubsetOf', 'isSupersetOf'];
 var set_like_methods = ['difference', 'intersection', 'symmetricDifference', 'union'];
