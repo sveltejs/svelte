@@ -10,7 +10,8 @@ import {
 	MAYBE_DIRTY,
 	STALE_REACTION,
 	UNOWNED,
-	DESTROYED
+	DESTROYED,
+	EFFECT_ASYNC
 } from '#client/constants';
 import {
 	active_reaction,
@@ -187,6 +188,12 @@ export function async_derived(fn, location) {
 
 		promise.then(handler, (e) => handler(null, e || 'unknown'));
 	});
+
+	if (DEV) {
+		// add a flag that lets this be printed as a derived
+		// when using `$inspect.trace()`
+		signal.f |= EFFECT_ASYNC;
+	}
 
 	return new Promise((fulfil) => {
 		/** @param {Promise<V>} p */

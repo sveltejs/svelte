@@ -208,13 +208,16 @@ export function VariableDeclaration(node, context) {
 
 					if (is_async) {
 						const location = dev && is_ignored(init, 'await_waterfall') && locate_node(init);
-						const call = b.call(
+						let call = b.call(
 							'$.async_derived',
 							b.thunk(expression, true),
 							location ? b.literal(location) : undefined
 						);
 
-						declarations.push(b.declarator(declarator.id, b.call(b.await(b.call('$.save', call)))));
+						call = b.call(b.await(b.call('$.save', call)));
+						if (dev) call = b.call('$.tag', call, b.literal(declarator.id.name));
+
+						declarations.push(b.declarator(declarator.id, call));
 					} else {
 						if (rune === '$derived') expression = b.thunk(expression);
 
