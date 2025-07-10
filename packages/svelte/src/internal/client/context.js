@@ -176,36 +176,28 @@ export function push(props, runes = false, fn) {
  * @returns {T}
  */
 export function pop(component) {
-	const context_stack_item = component_context;
-	if (context_stack_item !== null) {
+	if (component_context !== null) {
 		if (component !== undefined) {
-			context_stack_item.x = component;
+			component_context.x = component;
 		}
-		const component_effects = context_stack_item.e;
-		if (component_effects !== null) {
-			var previous_effect = active_effect;
-			var previous_reaction = active_reaction;
-			context_stack_item.e = null;
-			try {
-				for (var i = 0; i < component_effects.length; i++) {
-					var component_effect = component_effects[i];
-					set_active_effect(component_effect.effect);
-					set_active_reaction(component_effect.reaction);
-					create_user_effect(component_effect.fn);
-				}
-			} finally {
-				set_active_effect(previous_effect);
-				set_active_reaction(previous_reaction);
+
+		const effects = component_context.e;
+		if (effects !== null) {
+			component_context.e = null;
+			for (var fn of effects) {
+				create_user_effect(fn);
 			}
 		}
-		component_context = context_stack_item.p;
+
+		component_context.m = true;
+
+		component_context = component_context.p;
+
 		if (DEV) {
-			dev_current_component_function = context_stack_item.p?.function ?? null;
+			dev_current_component_function = component_context?.function ?? null;
 		}
-		context_stack_item.m = true;
 	}
-	// Micro-optimization: Don't set .a above to the empty object
-	// so it can be garbage-collected when the return here is unused
+
 	return component || /** @type {T} */ ({});
 }
 

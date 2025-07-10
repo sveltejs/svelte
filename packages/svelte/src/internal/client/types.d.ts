@@ -17,11 +17,7 @@ export type ComponentContext = {
 	/** destroyed */
 	d: boolean;
 	/** deferred effects */
-	e: null | Array<{
-		fn: () => void | (() => void);
-		effect: null | Effect;
-		reaction: null | Reaction;
-	}>;
+	e: null | Array<() => void | (() => void)>;
 	/** mounted */
 	m: boolean;
 	/**
