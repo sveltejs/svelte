@@ -11,7 +11,7 @@ import {
 	untrack,
 	increment_write_version,
 	update_effect,
-	source_ownership,
+	current_sources,
 	check_dirtiness,
 	untracking,
 	is_destroying_effect,
@@ -140,7 +140,7 @@ export function set(source, value, should_proxy = false) {
 		(!untracking || (active_reaction.f & INSPECT_EFFECT) !== 0) &&
 		is_runes() &&
 		(active_reaction.f & (DERIVED | BLOCK_EFFECT | INSPECT_EFFECT)) !== 0 &&
-		!(source_ownership?.reaction === active_reaction && source_ownership.sources.includes(source))
+		!current_sources?.includes(source)
 	) {
 		e.state_unsafe_mutation();
 	}
