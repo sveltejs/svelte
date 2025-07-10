@@ -190,8 +190,6 @@ export function pop(component) {
 			component_context.x = component;
 		}
 
-		component_context.m = true;
-
 		component_context = component_context.p;
 
 		if (DEV) {
