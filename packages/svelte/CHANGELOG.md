@@ -1,5 +1,13 @@
 # svelte
 
+## 5.35.7
+
+### Patch Changes
+
+- fix: silence autofocus a11y warning inside `<dialog>` ([#16341](https://github.com/sveltejs/svelte/pull/16341))
+
+- chore: replace inline regex with variable ([#16340](https://github.com/sveltejs/svelte/pull/16340))
+
 ## 5.35.6
 
 ### Patch Changes
