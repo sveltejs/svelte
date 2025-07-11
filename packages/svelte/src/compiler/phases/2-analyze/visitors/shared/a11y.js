@@ -999,7 +999,9 @@ export function check_element(node, context) {
 	const is_labelled = attribute_map.has('aria-label') || attribute_map.has('aria-labelledby');
 
 	if (node.name === 'a' || node.name === 'button') {
-		const is_hidden = get_static_value(attribute_map.get('aria-hidden')) === 'true';
+		const is_hidden =
+			get_static_value(attribute_map.get('aria-hidden')) === 'true' ||
+			get_static_value(attribute_map.get('inert'));
 
 		if (!has_spread && !is_hidden && !is_labelled && !has_content(node)) {
 			w.a11y_consider_explicit_label(node);
