@@ -1013,7 +1013,7 @@ export function check_element(node, context) {
 		if (href) {
 			const href_value = get_static_text_value(href);
 			if (href_value !== null) {
-				if (href_value === '' || href_value === '#' || regex_js_code.test(href_value)) {
+				if (href_value === '' || href_value === '#' || regex_js_prefix.test(href_value)) {
 					w.a11y_invalid_attribute(href, href_value, href.name);
 				}
 			}
