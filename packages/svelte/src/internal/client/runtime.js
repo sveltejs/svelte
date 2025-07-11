@@ -603,14 +603,6 @@ export function get(signal) {
 		}
 	}
 
-	if (is_derived && !is_destroying_effect) {
-		derived = /** @type {Derived} */ (signal);
-
-		if (is_dirty(derived)) {
-			update_derived(derived);
-		}
-	}
-
 	if (DEV) {
 		if (current_async_effect) {
 			var tracking = (current_async_effect.f & REACTION_IS_UPDATING) !== 0;
@@ -678,6 +670,16 @@ export function get(signal) {
 			old_values.set(derived, value);
 
 			return value;
+		}
+	} else if (is_derived) {
+		derived = /** @type {Derived} */ (signal);
+
+		if (batch_deriveds?.has(derived)) {
+			return batch_deriveds.get(derived);
+		}
+
+		if (is_dirty(derived)) {
+			update_derived(derived);
 		}
 	}
 
