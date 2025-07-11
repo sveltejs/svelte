@@ -1,5 +1,6 @@
 /** @import { Derived, Effect, Source } from '#client' */
 import {
+	BLOCK_EFFECT,
 	BRANCH_EFFECT,
 	CLEAN,
 	DESTROYED,
@@ -52,6 +53,8 @@ let queued_root_effects = [];
 
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
+
+let is_flushing = false;
 
 export class Batch {
 	/**
@@ -310,6 +313,7 @@ export class Batch {
 
 	flush_effects() {
 		var was_updating_effect = is_updating_effect;
+		is_flushing = true;
 
 		try {
 			var flush_count = 0;
@@ -324,6 +328,7 @@ export class Batch {
 				old_values.clear();
 			}
 		} finally {
+			is_flushing = false;
 			set_is_updating_effect(was_updating_effect);
 
 			last_scheduled_effect = null;
@@ -540,6 +545,12 @@ export function schedule_effect(signal) {
 	while (effect.parent !== null) {
 		effect = effect.parent;
 		var flags = effect.f;
+
+		// if the effect is being scheduled because a parent (each/await/etc) block
+		// updated an internal source, bail out or we'll cause a second flush
+		if (is_flushing && effect === active_effect && (flags & BLOCK_EFFECT) !== 0) {
+			return;
+		}
 
 		if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
 			if ((flags & CLEAN) === 0) return;
