@@ -526,32 +526,32 @@ export function check_element(node, context) {
 				}
 				break;
 			}
-            // no-access-key
-            case 'accesskey': {
-                w.a11y_accesskey(attribute);
-                break;
-            }
-            // no-autofocus
-            case 'autofocus': {
-                w.a11y_autofocus(attribute);
-                break;
-            }
-            // scope
-            case 'scope': {
-                if (!is_dynamic_element && node.name !== 'th') {
-                    w.a11y_misplaced_scope(attribute);
-                }
-                break;
-            }
-            // tabindex-no-positive
-            case 'tabindex': {
-                const value = get_static_value(attribute);
-			    // @ts-ignore todo is tabindex=true correct case?
-                if (!isNaN(value) && +value > 0) {
-                    w.a11y_positive_tabindex(attribute);
-                }
-                break;
-            }
+			// no-access-key
+			case 'accesskey': {
+				w.a11y_accesskey(attribute);
+				break;
+			}
+			// no-autofocus
+			case 'autofocus': {
+				w.a11y_autofocus(attribute);
+				break;
+			}
+			// scope
+			case 'scope': {
+				if (!is_dynamic_element && node.name !== 'th') {
+					w.a11y_misplaced_scope(attribute);
+				}
+				break;
+			}
+			// tabindex-no-positive
+			case 'tabindex': {
+				const value = get_static_value(attribute);
+				// @ts-ignore todo is tabindex=true correct case?
+				if (!isNaN(value) && +value > 0) {
+					w.a11y_positive_tabindex(attribute);
+				}
+				break;
+			}
 		}
 	}
 
@@ -659,144 +659,144 @@ export function check_element(node, context) {
 	// element-specific checks
 	const is_labelled = attribute_map.has('aria-label') || attribute_map.has('aria-labelledby');
 
-    switch(node.name) {
-        case 'a':
-        case 'button': {
-            const is_hidden = get_static_value(attribute_map.get('aria-hidden')) === 'true';
-            if (!has_spread && !is_hidden && !is_labelled && !has_content(node)) {
-                w.a11y_consider_explicit_label(node);
-            }
-            if (node.name === 'button') {
-                break;
-            }
-            const href = attribute_map.get('href') || attribute_map.get('xlink:href');
-            if (href) {
-                const href_value = get_static_text_value(href);
-                if (href_value !== null) {
-                    if (href_value === '' || href_value === '#' || /^\W*javascript:/i.test(href_value)) {
-                        w.a11y_invalid_attribute(href, href_value, href.name);
-                    }
-                }
-            } else if (!has_spread) {
-                const id_attribute = get_static_value(attribute_map.get('id'));
-                const name_attribute = get_static_value(attribute_map.get('name'));
-                const aria_disabled_attribute = get_static_value(attribute_map.get('aria-disabled'));
-                if (!id_attribute && !name_attribute && aria_disabled_attribute !== 'true') {
-                    warn_missing_attribute(node, ['href']);
-                }
-            }
-            break;
-        }
-        case 'input': {
-            const type = attribute_map.get('type');
-            const type_value = get_static_text_value(type);
-            if (type_value === 'image' && !has_spread) {
-                const required_attributes = ['alt', 'aria-label', 'aria-labelledby'];
-                const has_attribute = required_attributes.some((name) => attribute_map.has(name));
-                if (!has_attribute) {
-                    warn_missing_attribute(node, required_attributes, 'input type="image"');
-                }
-            }
-            // autocomplete-valid
-            const autocomplete = attribute_map.get('autocomplete');
-            if (type && autocomplete) {
-                const autocomplete_value = get_static_value(autocomplete);
-                if (!is_valid_autocomplete(autocomplete_value)) {
-                    w.a11y_autocomplete_valid(
-                        autocomplete,
-                        /** @type {string} */ (autocomplete_value),
-                        type_value ?? '...'
-                    );
-                }
-            }
-            break;
-        }
-        case 'img': {
-            const alt_attribute = get_static_text_value(attribute_map.get('alt'));
-            const aria_hidden = get_static_value(attribute_map.get('aria-hidden'));
-            if (alt_attribute && !aria_hidden && !has_spread) {
-                if (/\b(image|picture|photo)\b/i.test(alt_attribute)) {
-                    w.a11y_img_redundant_alt(node);
-                }
-            }
-            break;
-        }
-        case 'label': {
-            /** @param {AST.TemplateNode} node */
-            const has_input_child = (node) => {
-                let has = false;
-                walk(
-                    node,
-                    {},
-                    {
-                        _(node, { next }) {
-                            if (
-                                node.type === 'SvelteElement' ||
-                                node.type === 'SlotElement' ||
-                                node.type === 'Component' ||
-                                node.type === 'RenderTag' ||
-                                (node.type === 'RegularElement' &&
-                                    (a11y_labelable.includes(node.name) || node.name === 'slot'))
-                            ) {
-                                has = true;
-                            } else {
-                                next();
-                            }
-                        }
-                    }
-                );
-                return has;
-            };
-            if (!has_spread && !attribute_map.has('for') && !has_input_child(node)) {
-                w.a11y_label_has_associated_control(node);
-            }
-            break;
-        }
-        case 'video': {
-            const aria_hidden_attribute = attribute_map.get('aria-hidden');
-            const aria_hidden_exist = aria_hidden_attribute && get_static_value(aria_hidden_attribute);
-            if (attribute_map.has('muted') || aria_hidden_exist === 'true' || has_spread) {
-                return;
-            }
-            let has_caption = false;
-            const track = /** @type {AST.RegularElement | undefined} */ (
-                node.fragment.nodes.find((i) => i.type === 'RegularElement' && i.name === 'track')
-            );
-            if (track) {
-                has_caption = track.attributes.some(
-                    (a) =>
-                        a.type === 'SpreadAttribute' ||
-                        (a.type === 'Attribute' && a.name === 'kind' && get_static_value(a) === 'captions')
-                );
-            }
-            if (!has_caption) {
-                w.a11y_media_has_caption(node);
-            }
-            break;
-        }
-        case 'figcaption': {
-            if (!is_parent(context.path, ['figure'])) {
-                w.a11y_figcaption_parent(node);
-            }
-            break;
-        }
-        case 'figure': {
-            const children = node.fragment.nodes.filter((node) => {
-                if (node.type === 'Comment') return false;
-                if (node.type === 'Text') return regex_not_whitespace.test(node.data);
-                return true;
-            });
-            const index = children.findIndex(
-                (child) => child.type === 'RegularElement' && child.name === 'figcaption'
-            );
-            if (index !== -1 && index !== 0 && index !== children.length - 1) {
-                w.a11y_figcaption_index(children[index]);
-            }
-            break;
-        }
-    }
+	switch (node.name) {
+		case 'a':
+		case 'button': {
+			const is_hidden = get_static_value(attribute_map.get('aria-hidden')) === 'true';
+			if (!has_spread && !is_hidden && !is_labelled && !has_content(node)) {
+				w.a11y_consider_explicit_label(node);
+			}
+			if (node.name === 'button') {
+				break;
+			}
+			const href = attribute_map.get('href') || attribute_map.get('xlink:href');
+			if (href) {
+				const href_value = get_static_text_value(href);
+				if (href_value !== null) {
+					if (href_value === '' || href_value === '#' || /^\W*javascript:/i.test(href_value)) {
+						w.a11y_invalid_attribute(href, href_value, href.name);
+					}
+				}
+			} else if (!has_spread) {
+				const id_attribute = get_static_value(attribute_map.get('id'));
+				const name_attribute = get_static_value(attribute_map.get('name'));
+				const aria_disabled_attribute = get_static_value(attribute_map.get('aria-disabled'));
+				if (!id_attribute && !name_attribute && aria_disabled_attribute !== 'true') {
+					warn_missing_attribute(node, ['href']);
+				}
+			}
+			break;
+		}
+		case 'input': {
+			const type = attribute_map.get('type');
+			const type_value = get_static_text_value(type);
+			if (type_value === 'image' && !has_spread) {
+				const required_attributes = ['alt', 'aria-label', 'aria-labelledby'];
+				const has_attribute = required_attributes.some((name) => attribute_map.has(name));
+				if (!has_attribute) {
+					warn_missing_attribute(node, required_attributes, 'input type="image"');
+				}
+			}
+			// autocomplete-valid
+			const autocomplete = attribute_map.get('autocomplete');
+			if (type && autocomplete) {
+				const autocomplete_value = get_static_value(autocomplete);
+				if (!is_valid_autocomplete(autocomplete_value)) {
+					w.a11y_autocomplete_valid(
+						autocomplete,
+						/** @type {string} */ (autocomplete_value),
+						type_value ?? '...'
+					);
+				}
+			}
+			break;
+		}
+		case 'img': {
+			const alt_attribute = get_static_text_value(attribute_map.get('alt'));
+			const aria_hidden = get_static_value(attribute_map.get('aria-hidden'));
+			if (alt_attribute && !aria_hidden && !has_spread) {
+				if (/\b(image|picture|photo)\b/i.test(alt_attribute)) {
+					w.a11y_img_redundant_alt(node);
+				}
+			}
+			break;
+		}
+		case 'label': {
+			/** @param {AST.TemplateNode} node */
+			const has_input_child = (node) => {
+				let has = false;
+				walk(
+					node,
+					{},
+					{
+						_(node, { next }) {
+							if (
+								node.type === 'SvelteElement' ||
+								node.type === 'SlotElement' ||
+								node.type === 'Component' ||
+								node.type === 'RenderTag' ||
+								(node.type === 'RegularElement' &&
+									(a11y_labelable.includes(node.name) || node.name === 'slot'))
+							) {
+								has = true;
+							} else {
+								next();
+							}
+						}
+					}
+				);
+				return has;
+			};
+			if (!has_spread && !attribute_map.has('for') && !has_input_child(node)) {
+				w.a11y_label_has_associated_control(node);
+			}
+			break;
+		}
+		case 'video': {
+			const aria_hidden_attribute = attribute_map.get('aria-hidden');
+			const aria_hidden_exist = aria_hidden_attribute && get_static_value(aria_hidden_attribute);
+			if (attribute_map.has('muted') || aria_hidden_exist === 'true' || has_spread) {
+				return;
+			}
+			let has_caption = false;
+			const track = /** @type {AST.RegularElement | undefined} */ (
+				node.fragment.nodes.find((i) => i.type === 'RegularElement' && i.name === 'track')
+			);
+			if (track) {
+				has_caption = track.attributes.some(
+					(a) =>
+						a.type === 'SpreadAttribute' ||
+						(a.type === 'Attribute' && a.name === 'kind' && get_static_value(a) === 'captions')
+				);
+			}
+			if (!has_caption) {
+				w.a11y_media_has_caption(node);
+			}
+			break;
+		}
+		case 'figcaption': {
+			if (!is_parent(context.path, ['figure'])) {
+				w.a11y_figcaption_parent(node);
+			}
+			break;
+		}
+		case 'figure': {
+			const children = node.fragment.nodes.filter((node) => {
+				if (node.type === 'Comment') return false;
+				if (node.type === 'Text') return regex_not_whitespace.test(node.data);
+				return true;
+			});
+			const index = children.findIndex(
+				(child) => child.type === 'RegularElement' && child.name === 'figcaption'
+			);
+			if (index !== -1 && index !== 0 && index !== children.length - 1) {
+				w.a11y_figcaption_index(children[index]);
+			}
+			break;
+		}
+	}
 
-    if (!has_spread && node.name !== 'a') {
+	if (!has_spread && node.name !== 'a') {
 		const required_attributes = a11y_required_attributes[node.name];
 		if (required_attributes) {
 			const has_attribute = required_attributes.some((name) => attribute_map.has(name));
@@ -869,72 +869,72 @@ function validate_aria_attribute_value(attribute, name, schema, value) {
 	if (value === null) return;
 	if (value === true) value = '';
 
-    switch(type) {
-        case 'id':
-        case 'string': {
-            if (value === '') {
-		        w.a11y_incorrect_aria_attribute_type(attribute, name, 'non-empty string');
-            }
-            break;
-        }
-        case 'number': {
-            if (value === '' || isNaN(+value)) {
-                w.a11y_incorrect_aria_attribute_type(attribute, name, 'number');
-            }
-            break;
-        }
-        case 'boolean': {
-            if (value !== 'true' && value !== 'false') {
-                w.a11y_incorrect_aria_attribute_type_boolean(attribute, name);
-            }
-            break;
-        }
-        case 'idlist': {
-            if (value === '') {
-                w.a11y_incorrect_aria_attribute_type_idlist(attribute, name);
-            }
-            break;
-        }
-        case 'integer': {
-            if (value === '' || !Number.isInteger(+value)) {
-                w.a11y_incorrect_aria_attribute_type_integer(attribute, name);
-            }
-            break;
-        }
-        case 'token': {
-            const values = (schema.values ?? []).map((value) => value.toString());
-            if (!values.includes(value.toLowerCase())) {
-                w.a11y_incorrect_aria_attribute_type_token(
-                    attribute,
-                    name,
-                    list(values.map((v) => `"${v}"`))
-                );
-            }
-            break;
-        }
-        case 'tokenlist': {
-            const values = (schema.values ?? []).map((value) => value.toString());
-            if (
-                value
-                    .toLowerCase()
-                    .split(regex_whitespaces)
-                    .some((value) => !values.includes(value))
-            ) {
-                w.a11y_incorrect_aria_attribute_type_tokenlist(
-                    attribute,
-                    name,
-                    list(values.map((v) => `"${v}"`))
-                );
-            }
-            break;
-        }
-        case 'tristate': {
-            if (value !== 'true' && value !== 'false' && value !== 'mixed') {
-                w.a11y_incorrect_aria_attribute_type_tristate(attribute, name);
-            }
-            break;
-        }
-    }
+	switch (type) {
+		case 'id':
+		case 'string': {
+			if (value === '') {
+				w.a11y_incorrect_aria_attribute_type(attribute, name, 'non-empty string');
+			}
+			break;
+		}
+		case 'number': {
+			if (value === '' || isNaN(+value)) {
+				w.a11y_incorrect_aria_attribute_type(attribute, name, 'number');
+			}
+			break;
+		}
+		case 'boolean': {
+			if (value !== 'true' && value !== 'false') {
+				w.a11y_incorrect_aria_attribute_type_boolean(attribute, name);
+			}
+			break;
+		}
+		case 'idlist': {
+			if (value === '') {
+				w.a11y_incorrect_aria_attribute_type_idlist(attribute, name);
+			}
+			break;
+		}
+		case 'integer': {
+			if (value === '' || !Number.isInteger(+value)) {
+				w.a11y_incorrect_aria_attribute_type_integer(attribute, name);
+			}
+			break;
+		}
+		case 'token': {
+			const values = (schema.values ?? []).map((value) => value.toString());
+			if (!values.includes(value.toLowerCase())) {
+				w.a11y_incorrect_aria_attribute_type_token(
+					attribute,
+					name,
+					list(values.map((v) => `"${v}"`))
+				);
+			}
+			break;
+		}
+		case 'tokenlist': {
+			const values = (schema.values ?? []).map((value) => value.toString());
+			if (
+				value
+					.toLowerCase()
+					.split(regex_whitespaces)
+					.some((value) => !values.includes(value))
+			) {
+				w.a11y_incorrect_aria_attribute_type_tokenlist(
+					attribute,
+					name,
+					list(values.map((v) => `"${v}"`))
+				);
+			}
+			break;
+		}
+		case 'tristate': {
+			if (value !== 'true' && value !== 'false' && value !== 'mixed') {
+				w.a11y_incorrect_aria_attribute_type_tristate(attribute, name);
+			}
+			break;
+		}
+	}
 }
 
 /**
