@@ -125,6 +125,13 @@ export class Batch {
 	#effects = [];
 
 	/**
+	 * Block effects, which may need to re-run on subsequent flushes
+	 * in order to update internal sources (e.g. each block items)
+	 * @type {Effect[]}
+	 */
+	#block_effects = [];
+
+	/**
 	 * A set of branches that still exist, but will be destroyed when this batch
 	 * is committed — we skip over these during `process`
 	 * @type {Set<Effect>}
@@ -177,6 +184,7 @@ export class Batch {
 
 			this.#render_effects = [];
 			this.#effects = [];
+			this.#block_effects = [];
 
 			this.#commit();
 
@@ -188,6 +196,7 @@ export class Batch {
 			// otherwise mark effects clean so they get scheduled on the next run
 			for (const e of this.#render_effects) set_signal_status(e, CLEAN);
 			for (const e of this.#effects) set_signal_status(e, CLEAN);
+			for (const e of this.#block_effects) set_signal_status(e, CLEAN);
 		}
 
 		if (current_values) {
@@ -243,6 +252,7 @@ export class Batch {
 						var effects = effect.b?.pending ? this.#boundary_async_effects : this.#async_effects;
 						effects.push(effect);
 					} else {
+						if ((effect.f & BLOCK_EFFECT) !== 0) this.#block_effects.push(effect);
 						update_effect(effect);
 					}
 				}
@@ -363,6 +373,11 @@ export class Batch {
 			}
 
 			for (const e of this.#effects) {
+				set_signal_status(e, DIRTY);
+				schedule_effect(e);
+			}
+
+			for (const e of this.#block_effects) {
 				set_signal_status(e, DIRTY);
 				schedule_effect(e);
 			}
