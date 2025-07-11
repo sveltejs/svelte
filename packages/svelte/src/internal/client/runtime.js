@@ -45,6 +45,7 @@ import { handle_error, invoke_error_boundary } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
 
 let is_flushing = false;
+let is_flushing_root_effects = false;
 
 /** @type {Effect | null} */
 let last_scheduled_effect = null;
@@ -548,6 +549,7 @@ function flush_queued_root_effects() {
 	try {
 		var flush_count = 0;
 		is_updating_effect = true;
+		is_flushing_root_effects = true;
 
 		while (queued_root_effects.length > 0) {
 			if (flush_count++ > 1000) {
@@ -568,6 +570,7 @@ function flush_queued_root_effects() {
 	} finally {
 		is_flushing = false;
 		is_updating_effect = was_updating_effect;
+		is_flushing_root_effects = false;
 
 		last_scheduled_effect = null;
 		if (DEV) {
@@ -637,6 +640,10 @@ export function schedule_effect(signal) {
 	while (effect.parent !== null) {
 		effect = effect.parent;
 		var flags = effect.f;
+
+		if (effect === active_effect && (flags & BLOCK_EFFECT) !== 0 && is_flushing_root_effects) {
+			return;
+		}
 
 		if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
 			if ((flags & CLEAN) === 0) return;
