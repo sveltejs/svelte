@@ -36,7 +36,9 @@ import { roles as roles_map, aria } from 'aria-query';
 import { AXObjectRoles, elementAXObjects } from 'axobject-query';
 import {
 	regex_heading_tags,
+	regex_js_prefix,
 	regex_not_whitespace,
+	regex_redundant_img_alt,
 	regex_starts_with_vowel,
 	regex_whitespaces
 } from '../../../../patterns.js';
@@ -533,7 +535,9 @@ export function check_element(node, context) {
 			}
 			// no-autofocus
 			case 'autofocus': {
-				w.a11y_autofocus(attribute);
+				if (node.name !== 'dialog' && !is_parent(context.path, ['dialog'])) {
+					w.a11y_autofocus(attribute);
+				}
 				break;
 			}
 			// scope
@@ -673,7 +677,7 @@ export function check_element(node, context) {
 			if (href) {
 				const href_value = get_static_text_value(href);
 				if (href_value !== null) {
-					if (href_value === '' || href_value === '#' || /^\W*javascript:/i.test(href_value)) {
+					if (href_value === '' || href_value === '#' || regex_js_prefix.test(href_value)) {
 						w.a11y_invalid_attribute(href, href_value, href.name);
 					}
 				}
@@ -715,7 +719,7 @@ export function check_element(node, context) {
 			const alt_attribute = get_static_text_value(attribute_map.get('alt'));
 			const aria_hidden = get_static_value(attribute_map.get('aria-hidden'));
 			if (alt_attribute && !aria_hidden && !has_spread) {
-				if (/\b(image|picture|photo)\b/i.test(alt_attribute)) {
+				if (regex_redundant_img_alt.test(alt_attribute)) {
 					w.a11y_img_redundant_alt(node);
 				}
 			}
