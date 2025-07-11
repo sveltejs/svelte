@@ -875,7 +875,7 @@ export function check_element(node, context) {
 		}
 
 		// no-autofocus
-		if (name === 'autofocus') {
+		if (name === 'autofocus' && node.name !== 'dialog' && !is_parent(context.path, ['dialog'])) {
 			w.a11y_autofocus(attribute);
 		}
 
