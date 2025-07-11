@@ -6,7 +6,7 @@ import { roles as roles_map, aria, elementRoles } from 'aria-query';
 import { AXObjects, AXObjectRoles, elementAXObjects } from 'axobject-query';
 import {
 	regex_heading_tags,
-	regex_js_code,
+	regex_js_prefix,
 	regex_not_whitespace,
 	regex_redundant_img_alt,
 	regex_starts_with_vowel,
