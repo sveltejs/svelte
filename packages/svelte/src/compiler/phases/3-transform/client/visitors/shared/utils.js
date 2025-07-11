@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, Expression, ExpressionStatement, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression, Pattern } from 'estree' */
+/** @import { AssignmentExpression, Expression, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression, ExpressionStatement } from 'estree' */
 /** @import { AST, ExpressionMetadata } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext, Context } from '../../types' */
 import { walk } from 'zimmerframe';
@@ -7,7 +7,7 @@ import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
-import { dev, is_ignored, locator } from '../../../../../state.js';
+import { dev, is_ignored, locator, component_name } from '../../../../../state.js';
 import { build_getter, create_derived } from '../../utils.js';
 
 /**
@@ -21,12 +21,41 @@ export function memoize_expression(state, value) {
 }
 
 /**
- * Pushes `value` into `expressions` and returns a new id
- * @param {Expression[]} expressions
- * @param {Expression} value
+ * A utility for extracting complex expressions (such as call expressions)
+ * from templates and replacing them with `$0`, `$1` etc
  */
-export function get_expression_id(expressions, value) {
-	return b.id(`$${expressions.push(value) - 1}`);
+export class Memoizer {
+	/** @type {Array<{ id: Identifier, expression: Expression }>} */
+	#sync = [];
+
+	/**
+	 * @param {Expression} expression
+	 */
+	add(expression) {
+		const id = b.id('#'); // filled in later
+
+		this.#sync.push({ id, expression });
+
+		return id;
+	}
+
+	apply() {
+		return this.#sync.map((memo, i) => {
+			memo.id.name = `$${i}`;
+			return memo.id;
+		});
+	}
+
+	deriveds(runes = true) {
+		return this.#sync.map((memo) =>
+			b.let(memo.id, b.call(runes ? '$.derived' : '$.derived_safe_equal', b.thunk(memo.expression)))
+		);
+	}
+
+	sync_values() {
+		if (this.#sync.length === 0) return;
+		return b.array(this.#sync.map((memo) => b.thunk(memo.expression)));
+	}
 }
 
 /**
@@ -40,8 +69,7 @@ export function build_template_chunk(
 	values,
 	context,
 	state = context.state,
-	memoize = (value, metadata) =>
-		metadata.has_call ? get_expression_id(state.expressions, value) : value
+	memoize = (value, metadata) => (metadata.has_call ? state.memoizer.add(value) : value)
 ) {
 	/** @type {Expression[]} */
 	const expressions = [];
@@ -128,18 +156,20 @@ export function build_template_chunk(
  * @param {ComponentClientTransformState} state
  */
 export function build_render_statement(state) {
+	const ids = state.memoizer.apply();
+	const values = state.memoizer.sync_values();
+
 	return b.stmt(
 		b.call(
 			'$.template_effect',
 			b.arrow(
-				state.expressions.map((_, i) => b.id(`$${i}`)),
+				ids,
 				state.update.length === 1 && state.update[0].type === 'ExpressionStatement'
 					? state.update[0].expression
 					: b.block(state.update)
 			),
-			state.expressions.length > 0 &&
-				b.array(state.expressions.map((expression) => b.thunk(expression))),
-			state.expressions.length > 0 && !state.analysis.runes && b.id('$.derived_safe_equal')
+			values,
+			values && !state.analysis.runes && b.id('$.derived_safe_equal')
 		)
 	);
 }
@@ -163,20 +193,6 @@ export function parse_directive_name(name) {
 	}
 
 	return expression;
-}
-
-/**
- * @param {ComponentClientTransformState} state
- * @param {string} id
- * @param {Expression | undefined} init
- * @param {Expression} value
- * @param {ExpressionStatement} update
- */
-export function build_update_assignment(state, id, init, value, update) {
-	state.init.push(b.var(id, init));
-	state.update.push(
-		b.if(b.binary('!==', b.id(id), b.assignment('=', b.id(id), value)), b.block([update]))
-	);
 }
 
 /**
@@ -407,4 +423,35 @@ export function build_expression(context, expression, metadata, state = context.
 	sequence.expressions.push(b.call('$.untrack', b.thunk(value)));
 
 	return sequence;
+}
+
+/**
+ * Wraps a statement/expression with dev stack tracking in dev mode
+ * @param {Expression} expression - The function call to wrap (e.g., $.if, $.each, etc.)
+ * @param {{ start?: number }} node - AST node for location info
+ * @param {'component' | 'if' | 'each' | 'await' | 'key' | 'render'} type - Type of block/component
+ * @param {Record<string, number | string>} [additional] - Any additional properties to add to the dev stack entry
+ * @returns {ExpressionStatement} - Statement with or without dev stack wrapping
+ */
+export function add_svelte_meta(expression, node, type, additional) {
+	if (!dev) {
+		return b.stmt(expression);
+	}
+
+	const location = node.start !== undefined && locator(node.start);
+	if (!location) {
+		return b.stmt(expression);
+	}
+
+	return b.stmt(
+		b.call(
+			'$.add_svelte_meta',
+			b.arrow([], expression),
+			b.literal(type),
+			b.id(component_name),
+			b.literal(location.line),
+			b.literal(location.column),
+			additional && b.object(Object.entries(additional).map(([k, v]) => b.init(k, b.literal(v))))
+		)
+	);
 }

@@ -1,8 +1,7 @@
 import { get, tick, untrack } from '../internal/client/runtime.js';
 import { effect_tracking, render_effect } from '../internal/client/reactivity/effects.js';
-import { source } from '../internal/client/reactivity/sources.js';
+import { source, increment } from '../internal/client/reactivity/sources.js';
 import { tag } from '../internal/client/dev/tracing.js';
-import { increment } from './utils.js';
 import { DEV } from 'esm-env';
 
 /**

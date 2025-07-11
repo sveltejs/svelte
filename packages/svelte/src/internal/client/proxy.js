@@ -1,6 +1,13 @@
 /** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
-import { get, active_effect, active_reaction, set_active_reaction } from './runtime.js';
+import {
+	get,
+	active_effect,
+	update_version,
+	active_reaction,
+	set_update_version,
+	set_active_reaction
+} from './runtime.js';
 import {
 	array_prototype,
 	get_descriptor,
@@ -8,7 +15,7 @@ import {
 	is_array,
 	object_prototype
 } from '../shared/utils.js';
-import { state as source, set } from './reactivity/sources.js';
+import { state as source, set, increment } from './reactivity/sources.js';
 import { PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
@@ -41,7 +48,7 @@ export function proxy(value) {
 	var version = source(0);
 
 	var stack = DEV && tracing_mode_flag ? get_stack('CreatedAt') : null;
-	var reaction = active_reaction;
+	var parent_version = update_version;
 
 	/**
 	 * Executes the proxy in the context of the reaction it was originally created in, if any
@@ -49,13 +56,23 @@ export function proxy(value) {
 	 * @param {() => T} fn
 	 */
 	var with_parent = (fn) => {
-		var previous_reaction = active_reaction;
-		set_active_reaction(reaction);
+		if (update_version === parent_version) {
+			return fn();
+		}
 
-		/** @type {T} */
+		// child source is being created after the initial proxy —
+		// prevent it from being associated with the current reaction
+		var reaction = active_reaction;
+		var version = update_version;
+
+		set_active_reaction(null);
+		set_update_version(parent_version);
+
 		var result = fn();
 
-		set_active_reaction(previous_reaction);
+		set_active_reaction(reaction);
+		set_update_version(version);
+
 		return result;
 	};
 
@@ -118,7 +135,7 @@ export function proxy(value) {
 				if (prop in target) {
 					const s = with_parent(() => source(UNINITIALIZED, stack));
 					sources.set(prop, s);
-					update_version(version);
+					increment(version);
 
 					if (DEV) {
 						tag(s, get_label(path, prop));
@@ -136,7 +153,7 @@ export function proxy(value) {
 					}
 				}
 				set(s, UNINITIALIZED);
-				update_version(version);
+				increment(version);
 			}
 
 			return true;
@@ -304,7 +321,7 @@ export function proxy(value) {
 					}
 				}
 
-				update_version(version);
+				increment(version);
 			}
 
 			return true;
@@ -341,14 +358,6 @@ function get_label(path, prop) {
 	if (typeof prop === 'symbol') return `${path}[Symbol(${prop.description ?? ''})]`;
 	if (regex_is_valid_identifier.test(prop)) return `${path}.${prop}`;
 	return /^\d+$/.test(prop) ? `${path}[${prop}]` : `${path}['${prop}']`;
-}
-
-/**
- * @param {Source<number>} signal
- * @param {1 | -1} [d]
- */
-function update_version(signal, d = 1) {
-	set(signal, signal.v + d);
 }
 
 /**

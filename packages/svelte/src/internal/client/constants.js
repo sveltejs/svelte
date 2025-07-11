@@ -15,17 +15,22 @@ export const DESTROYED = 1 << 14;
 export const EFFECT_RAN = 1 << 15;
 /** 'Transparent' effects do not create a transition boundary */
 export const EFFECT_TRANSPARENT = 1 << 16;
-/** Svelte 4 legacy mode props need to be handled with deriveds and be recognized elsewhere, hence the dedicated flag */
-export const LEGACY_DERIVED_PROP = 1 << 17;
-export const INSPECT_EFFECT = 1 << 18;
-export const HEAD_EFFECT = 1 << 19;
-export const EFFECT_HAS_DERIVED = 1 << 20;
-export const EFFECT_IS_UPDATING = 1 << 21;
+export const INSPECT_EFFECT = 1 << 17;
+export const HEAD_EFFECT = 1 << 18;
+export const EFFECT_PRESERVED = 1 << 19;
+export const EFFECT_IS_UPDATING = 1 << 20;
+export const USER_EFFECT = 1 << 21;
 
 export const STATE_SYMBOL = Symbol('$state');
 export const LEGACY_PROPS = Symbol('legacy props');
 export const LOADING_ATTR_SYMBOL = Symbol('');
 export const PROXY_PATH_SYMBOL = Symbol('proxy path');
+
+/** allow users to ignore aborted signal errors if `reason.name === 'StaleReactionError` */
+export const STALE_REACTION = new (class StaleReactionError extends Error {
+	name = 'StaleReactionError';
+	message = 'The reaction that called `getAbortSignal()` was re-run or destroyed';
+})();
 
 export const ELEMENT_NODE = 1;
 export const TEXT_NODE = 3;

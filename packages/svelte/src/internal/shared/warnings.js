@@ -25,11 +25,15 @@ export function dynamic_void_element_content(tag) {
  */
 export function state_snapshot_uncloneable(properties) {
 	if (DEV) {
-		console.warn(`%c[svelte] state_snapshot_uncloneable\n%c${properties
-			? `The following properties cannot be cloned with \`$state.snapshot\` — the return value contains the originals:
+		console.warn(
+			`%c[svelte] state_snapshot_uncloneable\n%c${properties
+				? `The following properties cannot be cloned with \`$state.snapshot\` — the return value contains the originals:
 
 ${properties}`
-			: 'Value cannot be cloned with `$state.snapshot` — the original value was returned'}\nhttps://svelte.dev/e/state_snapshot_uncloneable`, bold, normal);
+				: 'Value cannot be cloned with `$state.snapshot` — the original value was returned'}\nhttps://svelte.dev/e/state_snapshot_uncloneable`,
+			bold,
+			normal
+		);
 	} else {
 		console.warn(`https://svelte.dev/e/state_snapshot_uncloneable`);
 	}

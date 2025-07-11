@@ -1,6 +1,6 @@
 /** @import { Derived, Effect } from '#client' */
 import { DEV } from 'esm-env';
-import { CLEAN, DERIVED, DIRTY, EFFECT_HAS_DERIVED, MAYBE_DIRTY, UNOWNED } from '#client/constants';
+import { CLEAN, DERIVED, DIRTY, EFFECT_PRESERVED, MAYBE_DIRTY, UNOWNED } from '#client/constants';
 import {
 	active_reaction,
 	active_effect,
@@ -19,6 +19,7 @@ import { inspect_effects, set_inspect_effects } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';
 import { component_context } from '../context.js';
+import { UNINITIALIZED } from '../../../constants.js';
 
 /**
  * @template V
@@ -38,7 +39,7 @@ export function derived(fn) {
 	} else {
 		// Since deriveds are evaluated lazily, any effects created inside them are
 		// created too late to ensure that the parent effect is added to the tree
-		active_effect.f |= EFFECT_HAS_DERIVED;
+		active_effect.f |= EFFECT_PRESERVED;
 	}
 
 	/** @type {Derived<V>} */
@@ -51,9 +52,10 @@ export function derived(fn) {
 		fn,
 		reactions: null,
 		rv: 0,
-		v: /** @type {V} */ (null),
+		v: /** @type {V} */ (UNINITIALIZED),
 		wv: 0,
-		parent: parent_derived ?? active_effect
+		parent: parent_derived ?? active_effect,
+		ac: null
 	};
 
 	if (DEV && tracing_mode_flag) {

@@ -8,7 +8,7 @@ export default test({
 	},
 
 	test({ assert, target }) {
-		const [button1, button2] = target.querySelectorAll('button');
+		const [button1, button2, button3, button4] = target.querySelectorAll('button');
 
 		assert.throws(() => {
 			button1?.click();
@@ -17,6 +17,16 @@ export default test({
 
 		assert.doesNotThrow(() => {
 			button2?.click();
+			flushSync();
+		});
+
+		assert.throws(() => {
+			button3?.click();
+			flushSync();
+		}, /state_unsafe_mutation/);
+
+		assert.doesNotThrow(() => {
+			button4?.click();
 			flushSync();
 		});
 	}

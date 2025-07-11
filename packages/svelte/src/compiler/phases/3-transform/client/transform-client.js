@@ -168,9 +168,9 @@ export function client_component(analysis, options) {
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		init: /** @type {any} */ (null),
 		update: /** @type {any} */ (null),
-		expressions: /** @type {any} */ (null),
 		after_update: /** @type {any} */ (null),
-		template: /** @type {any} */ (null)
+		template: /** @type {any} */ (null),
+		memoizer: /** @type {any} */ (null)
 	};
 
 	const module = /** @type {ESTree.Program} */ (
@@ -361,6 +361,9 @@ export function client_component(analysis, options) {
 			: b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)),
 		.../** @type {ESTree.Statement[]} */ (template.body)
 	]);
+
+	// trick esrap into including comments
+	component_block.loc = instance.loc;
 
 	if (!analysis.runes) {
 		// Bind static exports to props so that people can access them with bind:x

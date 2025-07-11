@@ -4,7 +4,12 @@
 import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { build_bind_this, memoize_expression, validate_binding } from '../shared/utils.js';
+import {
+	build_bind_this,
+	memoize_expression,
+	validate_binding,
+	add_svelte_meta
+} from '../shared/utils.js';
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
@@ -483,7 +488,8 @@ export function build_component(node, component_name, context) {
 		);
 	} else {
 		context.state.template.push_comment();
-		statements.push(b.stmt(fn(anchor)));
+
+		statements.push(add_svelte_meta(fn(anchor), node, 'component', { componentTag: node.name }));
 	}
 
 	return statements.length > 1 ? b.block(statements) : statements[0];

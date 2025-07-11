@@ -14,16 +14,8 @@ export type ComponentContext = {
 	p: null | ComponentContext;
 	/** context */
 	c: null | Map<unknown, unknown>;
-	/** destroyed */
-	d: boolean;
 	/** deferred effects */
-	e: null | Array<{
-		fn: () => void | (() => void);
-		effect: null | Effect;
-		reaction: null | Reaction;
-	}>;
-	/** mounted */
-	m: boolean;
+	e: null | Array<() => void | (() => void)>;
 	/**
 	 * props — needed for legacy mode lifecycle functions, and for `createEventDispatcher`
 	 * @deprecated remove in 6.0
@@ -186,5 +178,14 @@ export type ProxyStateObject<T = Record<string | symbol, any>> = T & {
 export type SourceLocation =
 	| [line: number, column: number]
 	| [line: number, column: number, SourceLocation[]];
+
+export interface DevStackEntry {
+	file: string;
+	type: 'component' | 'if' | 'each' | 'await' | 'key' | 'render';
+	line: number;
+	column: number;
+	parent: DevStackEntry | null;
+	componentTag?: string;
+}
 
 export * from './reactivity/types';

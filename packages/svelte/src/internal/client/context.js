@@ -1,4 +1,4 @@
-/** @import { ComponentContext } from '#client' */
+/** @import { ComponentContext, DevStackEntry } from '#client' */
 
 import { DEV } from 'esm-env';
 import { lifecycle_outside_component } from '../shared/errors.js';
@@ -9,8 +9,9 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from './runtime.js';
-import { effect, teardown } from './reactivity/effects.js';
+import { create_user_effect, teardown } from './reactivity/effects.js';
 import { legacy_mode_flag } from '../flags/index.js';
+import { FILENAME } from '../../constants.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;
@@ -18,6 +19,43 @@ export let component_context = null;
 /** @param {ComponentContext | null} context */
 export function set_component_context(context) {
 	component_context = context;
+}
+
+/** @type {DevStackEntry | null} */
+export let dev_stack = null;
+
+/** @param {DevStackEntry | null} stack */
+export function set_dev_stack(stack) {
+	dev_stack = stack;
+}
+
+/**
+ * Execute a callback with a new dev stack entry
+ * @param {() => any} callback - Function to execute
+ * @param {DevStackEntry['type']} type - Type of block/component
+ * @param {any} component - Component function
+ * @param {number} line - Line number
+ * @param {number} column - Column number
+ * @param {Record<string, any>} [additional] - Any additional properties to add to the dev stack entry
+ * @returns {any}
+ */
+export function add_svelte_meta(callback, type, component, line, column, additional) {
+	const parent = dev_stack;
+
+	dev_stack = {
+		type,
+		file: component[FILENAME],
+		line,
+		column,
+		parent,
+		...additional
+	};
+
+	try {
+		return callback();
+	} finally {
+		dev_stack = parent;
+	}
 }
 
 /**
@@ -101,16 +139,14 @@ export function getAllContexts() {
  * @returns {void}
  */
 export function push(props, runes = false, fn) {
-	var ctx = (component_context = {
+	component_context = {
 		p: component_context,
 		c: null,
-		d: false,
 		e: null,
-		m: false,
 		s: props,
 		x: null,
 		l: null
-	});
+	};
 
 	if (legacy_mode_flag && !runes) {
 		component_context.l = {
@@ -120,10 +156,6 @@ export function push(props, runes = false, fn) {
 			r2: source(false)
 		};
 	}
-
-	teardown(() => {
-		/** @type {ComponentContext} */ (ctx).d = true;
-	});
 
 	if (DEV) {
 		// component function
@@ -138,37 +170,28 @@ export function push(props, runes = false, fn) {
  * @returns {T}
  */
 export function pop(component) {
-	const context_stack_item = component_context;
-	if (context_stack_item !== null) {
-		if (component !== undefined) {
-			context_stack_item.x = component;
+	var context = /** @type {ComponentContext} */ (component_context);
+	var effects = context.e;
+
+	if (effects !== null) {
+		context.e = null;
+
+		for (var fn of effects) {
+			create_user_effect(fn);
 		}
-		const component_effects = context_stack_item.e;
-		if (component_effects !== null) {
-			var previous_effect = active_effect;
-			var previous_reaction = active_reaction;
-			context_stack_item.e = null;
-			try {
-				for (var i = 0; i < component_effects.length; i++) {
-					var component_effect = component_effects[i];
-					set_active_effect(component_effect.effect);
-					set_active_reaction(component_effect.reaction);
-					effect(component_effect.fn);
-				}
-			} finally {
-				set_active_effect(previous_effect);
-				set_active_reaction(previous_reaction);
-			}
-		}
-		component_context = context_stack_item.p;
-		if (DEV) {
-			dev_current_component_function = context_stack_item.p?.function ?? null;
-		}
-		context_stack_item.m = true;
 	}
-	// Micro-optimization: Don't set .a above to the empty object
-	// so it can be garbage-collected when the return here is unused
-	return component || /** @type {T} */ ({});
+
+	if (component !== undefined) {
+		context.x = component;
+	}
+
+	component_context = context.p;
+
+	if (DEV) {
+		dev_current_component_function = component_context?.function ?? null;
+	}
+
+	return component ?? /** @type {T} */ ({});
 }
 
 /** @returns {boolean} */

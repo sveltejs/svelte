@@ -31,8 +31,10 @@ import {
 	INSPECT_EFFECT,
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
-	EFFECT_HAS_DERIVED,
-	BOUNDARY_EFFECT
+	EFFECT_PRESERVED,
+	BOUNDARY_EFFECT,
+	STALE_REACTION,
+	USER_EFFECT
 } from '#client/constants';
 import { set } from './sources.js';
 import * as e from '../errors.js';
@@ -40,7 +42,7 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { derived } from './deriveds.js';
-import { component_context, dev_current_component_function } from '../context.js';
+import { component_context, dev_current_component_function, dev_stack } from '../context.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -103,10 +105,12 @@ function create_effect(type, fn, sync, push = true) {
 		last: null,
 		next: null,
 		parent,
+		b: parent && parent.b,
 		prev: null,
 		teardown: null,
 		transitions: null,
-		wv: 0
+		wv: 0,
+		ac: null
 	};
 
 	if (DEV) {
@@ -133,7 +137,7 @@ function create_effect(type, fn, sync, push = true) {
 		effect.first === null &&
 		effect.nodes_start === null &&
 		effect.teardown === null &&
-		(effect.f & (EFFECT_HAS_DERIVED | BOUNDARY_EFFECT)) === 0;
+		(effect.f & (EFFECT_PRESERVED | BOUNDARY_EFFECT)) === 0;
 
 	if (!inert && push) {
 		if (parent !== null) {
@@ -175,31 +179,27 @@ export function teardown(fn) {
 export function user_effect(fn) {
 	validate_effect('$effect');
 
-	// Non-nested `$effect(...)` in a component should be deferred
-	// until the component is mounted
-	var defer =
-		active_effect !== null &&
-		(active_effect.f & BRANCH_EFFECT) !== 0 &&
-		component_context !== null &&
-		!component_context.m;
-
 	if (DEV) {
 		define_property(fn, 'name', {
 			value: '$effect'
 		});
 	}
 
-	if (defer) {
+	if (!active_reaction && active_effect && (active_effect.f & BRANCH_EFFECT) !== 0) {
+		// Top-level `$effect(...)` in a component — defer until mount
 		var context = /** @type {ComponentContext} */ (component_context);
-		(context.e ??= []).push({
-			fn,
-			effect: active_effect,
-			reaction: active_reaction
-		});
+		(context.e ??= []).push(fn);
 	} else {
-		var signal = effect(fn);
-		return signal;
+		// Everything else — create immediately
+		return create_user_effect(fn);
 	}
+}
+
+/**
+ * @param {() => void | (() => void)} fn
+ */
+export function create_user_effect(fn) {
+	return create_effect(EFFECT | USER_EFFECT, fn, false);
 }
 
 /**
@@ -214,7 +214,7 @@ export function user_pre_effect(fn) {
 			value: '$effect.pre'
 		});
 	}
-	return render_effect(fn);
+	return create_effect(RENDER_EFFECT | USER_EFFECT, fn, true);
 }
 
 /** @param {() => void | (() => void)} fn */
@@ -357,7 +357,11 @@ export function template_effect(fn, thunks = [], d = derived) {
  * @param {number} flags
  */
 export function block(fn, flags = 0) {
-	return create_effect(RENDER_EFFECT | BLOCK_EFFECT | flags, fn, true);
+	var effect = create_effect(RENDER_EFFECT | BLOCK_EFFECT | flags, fn, true);
+	if (DEV) {
+		effect.dev_stack = dev_stack;
+	}
+	return effect;
 }
 
 /**
@@ -397,6 +401,8 @@ export function destroy_effect_children(signal, remove_dom = false) {
 	signal.first = signal.last = null;
 
 	while (effect !== null) {
+		effect.ac?.abort(STALE_REACTION);
+
 		var next = effect.next;
 
 		if ((effect.f & ROOT_EFFECT) !== 0) {
@@ -478,6 +484,7 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.fn =
 		effect.nodes_start =
 		effect.nodes_end =
+		effect.ac =
 			null;
 }
 
