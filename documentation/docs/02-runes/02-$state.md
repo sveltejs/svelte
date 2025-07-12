@@ -63,6 +63,12 @@ let { done, text } = todos[0];
 todos[0].done = !todos[0].done;
 ```
 
+### State for Collections
+
+Arrays aren't the only structure you might want to use when setting reactive state for a collection of items. The temptation is to reach for Javascript built-in classes like `Set`, `Map`, `URL` and wrap them in `state()`, but this approach won't work.
+
+Use Svelte's own reactive versions instead. You can import `SvelteSet`, `SvelteMap`, `SvelteURL` and other reactive classes in [`svelte/reactivity`](svelte-reactivity).
+
 ### Classes
 
 Class instances are not proxied. Instead, you can use `$state` in class fields (whether public or private), or as the first assignment to a property immediately inside the `constructor`:
