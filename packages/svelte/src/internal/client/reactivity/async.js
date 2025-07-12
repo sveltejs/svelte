@@ -27,8 +27,6 @@ export function flatten(sync, async, fn) {
 
 		Promise.all(async.map((expression) => async_derived(expression)))
 			.then((result) => {
-				if ((parent.f & DESTROYED) !== 0) return;
-
 				batch?.activate();
 
 				restore();
@@ -36,7 +34,10 @@ export function flatten(sync, async, fn) {
 				try {
 					fn([...sync.map(d), ...result]);
 				} catch (error) {
-					invoke_error_boundary(error, parent);
+					// ignore errors in blocks that have already been destroyed
+					if ((parent.f & DESTROYED) === 0) {
+						invoke_error_boundary(error, parent);
+					}
 				}
 
 				batch?.deactivate();

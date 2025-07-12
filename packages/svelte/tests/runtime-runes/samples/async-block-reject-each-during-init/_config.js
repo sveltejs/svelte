@@ -2,23 +2,24 @@ import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	async test({ assert, target }) {
-		const [increment, shift] = target.querySelectorAll('button');
+	async test({ assert, target, errors }) {
+		const [increment, resolve, reject] = target.querySelectorAll('button');
 
 		increment.click();
 		await tick();
 
-		shift.click();
+		reject.click();
 		await tick();
 
-		shift.click();
+		resolve.click();
 		await tick();
 
 		assert.htmlEqual(
 			target.innerHTML,
 			`
 				<button>increment</button>
-				<button>shift</button>
+				<button>resolve</button>
+				<button>reject</button>
 				<p>false</p>
 				<p>1</p>
 			`

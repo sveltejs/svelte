@@ -14,10 +14,13 @@ export function async(node, expressions, fn) {
 	boundary.update_pending_count(1);
 
 	flatten([], expressions, (values) => {
-		// get values eagerly to avoid creating blocks if they reject
-		for (const d of values) get(d);
+		try {
+			// get values eagerly to avoid creating blocks if they reject
+			for (const d of values) get(d);
 
-		fn(node, ...values);
-		boundary.update_pending_count(-1);
+			fn(node, ...values);
+		} finally {
+			boundary.update_pending_count(-1);
+		}
 	});
 }
