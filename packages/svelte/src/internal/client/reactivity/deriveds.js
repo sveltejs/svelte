@@ -169,7 +169,7 @@ export function async_derived(fn, location) {
 
 					setTimeout(() => {
 						if (recent_async_deriveds.has(signal)) {
-							w.await_waterfall(location);
+							w.await_waterfall(/** @type {string} */ (signal.label), location);
 							recent_async_deriveds.delete(signal);
 						}
 					});

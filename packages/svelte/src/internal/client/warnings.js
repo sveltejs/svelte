@@ -31,12 +31,13 @@ export function await_reactivity_loss(name) {
 }
 
 /**
- * An async value (%location%) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app
+ * An async derived, `%name%` (%location%) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app
+ * @param {string} name
  * @param {string} location
  */
-export function await_waterfall(location) {
+export function await_waterfall(name, location) {
 	if (DEV) {
-		console.warn(`%c[svelte] await_waterfall\n%cAn async value (${location}) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app\nhttps://svelte.dev/e/await_waterfall`, bold, normal);
+		console.warn(`%c[svelte] await_waterfall\n%cAn async derived, \`${name}\` (${location}) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app\nhttps://svelte.dev/e/await_waterfall`, bold, normal);
 	} else {
 		console.warn(`https://svelte.dev/e/await_waterfall`);
 	}
