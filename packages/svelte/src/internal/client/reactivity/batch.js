@@ -304,7 +304,7 @@ export class Batch {
 	flush() {
 		if (queued_root_effects.length > 0) {
 			this.flush_effects();
-		} else if (!this.#neutered) {
+		} else {
 			this.#commit();
 		}
 
@@ -352,8 +352,10 @@ export class Batch {
 	 * Append and remove branches to/from the DOM
 	 */
 	#commit() {
-		for (const fn of this.#callbacks) {
-			fn();
+		if (!this.#neutered) {
+			for (const fn of this.#callbacks) {
+				fn();
+			}
 		}
 
 		this.#callbacks.clear();
