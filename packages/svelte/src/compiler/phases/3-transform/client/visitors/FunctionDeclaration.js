@@ -8,7 +8,7 @@ import * as b from '#compiler/builders';
  * @param {ComponentContext} context
  */
 export function FunctionDeclaration(node, context) {
-	const state = { ...context.state, in_constructor: false };
+	const state = { ...context.state, in_constructor: false, in_derived: false };
 
 	if (node.metadata?.hoisted === true) {
 		const params = build_hoisted_params(node, context);

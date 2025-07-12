@@ -1,4 +1,4 @@
-/** @import { Effect, TemplateNode, } from '#client' */
+/** @import { Effect, Source, TemplateNode, } from '#client' */
 import { BOUNDARY_EFFECT, EFFECT_PRESERVED, EFFECT_TRANSPARENT } from '#client/constants';
 import { component_context, set_component_context } from '../../context.js';
 import { invoke_error_boundary } from '../../error-handling.js';
@@ -6,6 +6,7 @@ import { block, branch, destroy_effect, pause_effect } from '../../reactivity/ef
 import {
 	active_effect,
 	active_reaction,
+	get,
 	set_active_effect,
 	set_active_reaction
 } from '../../runtime.js';
@@ -17,12 +18,21 @@ import {
 	remove_nodes,
 	set_hydrate_node
 } from '../hydration.js';
+import { get_next_sibling } from '../operations.js';
 import { queue_micro_task } from '../task.js';
+import * as e from '../../errors.js';
+import { DEV } from 'esm-env';
+import { current_async_effect, set_from_async_derived } from '../../reactivity/deriveds.js';
+import { Batch } from '../../reactivity/batch.js';
+import { internal_set, source } from '../../reactivity/sources.js';
+import { tag } from '../../dev/tracing.js';
+import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
 
 /**
  * @typedef {{
  * 	 onerror?: (error: unknown, reset: () => void) => void;
  *   failed?: (anchor: Node, error: () => unknown, reset: () => () => void) => void;
+ *   pending?: (anchor: Node) => void;
  * }} BoundaryProps
  */
 
@@ -39,6 +49,12 @@ export function boundary(node, props, children) {
 }
 
 export class Boundary {
+	inert = false;
+	pending = false;
+
+	/** @type {Boundary | null} */
+	parent;
+
 	/** @type {TemplateNode} */
 	#anchor;
 
@@ -58,9 +74,33 @@ export class Boundary {
 	#main_effect = null;
 
 	/** @type {Effect | null} */
+	#pending_effect = null;
+
+	/** @type {Effect | null} */
 	#failed_effect = null;
 
+	/** @type {DocumentFragment | null} */
+	#offscreen_fragment = null;
+
+	#pending_count = 0;
 	#is_creating_fallback = false;
+
+	/**
+	 * @type {Source<number> | null}
+	 */
+	#effect_pending = null;
+
+	#effect_pending_subscriber = createSubscriber(() => {
+		this.#effect_pending = source(this.#pending_count);
+
+		if (DEV) {
+			tag(this.#effect_pending, '$effect.pending()');
+		}
+
+		return () => {
+			this.#effect_pending = null;
+		};
+	});
 
 	/**
 	 * @param {TemplateNode} node
@@ -74,6 +114,10 @@ export class Boundary {
 
 		this.#hydrate_open = hydrate_node;
 
+		this.parent = /** @type {Effect} */ (active_effect).b;
+
+		this.pending = !!this.#props.pending;
+
 		this.#effect = block(() => {
 			/** @type {Effect} */ (active_effect).b = this;
 
@@ -81,16 +125,53 @@ export class Boundary {
 				hydrate_next();
 			}
 
-			try {
-				this.#main_effect = branch(() => children(this.#anchor));
-			} catch (error) {
-				this.error(error);
+			const pending = this.#props.pending;
+
+			if (hydrating && pending) {
+				this.#pending_effect = branch(() => pending(this.#anchor));
+
+				// future work: when we have some form of async SSR, we will
+				// need to use hydration boundary comments to report whether
+				// the pending or main block was rendered for a given
+				// boundary, and hydrate accordingly
+				queueMicrotask(() => {
+					this.#main_effect = this.#run(() => {
+						Batch.ensure();
+						return branch(() => this.#children(this.#anchor));
+					});
+
+					if (this.#pending_count > 0) {
+						this.#show_pending_snippet();
+					} else {
+						pause_effect(/** @type {Effect} */ (this.#pending_effect), () => {
+							this.#pending_effect = null;
+						});
+
+						this.pending = false;
+					}
+				});
+			} else {
+				try {
+					this.#main_effect = branch(() => children(this.#anchor));
+				} catch (error) {
+					this.error(error);
+				}
+
+				if (this.#pending_count > 0) {
+					this.#show_pending_snippet();
+				} else {
+					this.pending = false;
+				}
 			}
 		}, flags);
 
 		if (hydrating) {
 			this.#anchor = hydrate_node;
 		}
+	}
+
+	has_pending_snippet() {
+		return !!this.#props.pending;
 	}
 
 	/**
@@ -114,22 +195,89 @@ export class Boundary {
 		}
 	}
 
+	#show_pending_snippet() {
+		const pending = /** @type {(anchor: Node) => void} */ (this.#props.pending);
+
+		if (this.#main_effect !== null) {
+			this.#offscreen_fragment = document.createDocumentFragment();
+			move_effect(this.#main_effect, this.#offscreen_fragment);
+		}
+
+		if (this.#pending_effect === null) {
+			this.#pending_effect = branch(() => pending(this.#anchor));
+		}
+	}
+
+	commit() {
+		this.pending = false;
+
+		if (this.#pending_effect) {
+			pause_effect(this.#pending_effect, () => {
+				this.#pending_effect = null;
+			});
+		}
+
+		if (this.#offscreen_fragment) {
+			this.#anchor.before(this.#offscreen_fragment);
+			this.#offscreen_fragment = null;
+		}
+	}
+
+	/** @param {1 | -1} d */
+	#update_pending_count(d) {
+		this.#pending_count += d;
+
+		if (this.#pending_count === 0) {
+			this.commit();
+		}
+	}
+
+	/** @param {1 | -1} d */
+	update_pending_count(d) {
+		if (this.has_pending_snippet()) {
+			this.#update_pending_count(d);
+		} else if (this.parent) {
+			this.parent.#update_pending_count(d);
+		}
+
+		queueMicrotask(() => {
+			if (this.#effect_pending) {
+				internal_set(this.#effect_pending, this.#pending_count);
+			}
+		});
+	}
+
+	get_effect_pending() {
+		this.#effect_pending_subscriber();
+		return get(/** @type {Source<number>} */ (this.#effect_pending));
+	}
+
 	/** @param {unknown} error */
 	error(error) {
 		var onerror = this.#props.onerror;
 		let failed = this.#props.failed;
 
 		const reset = () => {
+			this.#pending_count = 0;
+
 			if (this.#failed_effect !== null) {
 				pause_effect(this.#failed_effect, () => {
 					this.#failed_effect = null;
 				});
 			}
 
+			this.pending = true;
+
 			this.#main_effect = this.#run(() => {
 				this.#is_creating_fallback = false;
 				return branch(() => this.#children(this.#anchor));
 			});
+
+			if (this.#pending_count > 0) {
+				this.#show_pending_snippet();
+			} else {
+				this.pending = false;
+			}
 		};
 
 		// If we have nothing to capture the error, or if we hit an error while
@@ -150,6 +298,11 @@ export class Boundary {
 		if (this.#main_effect) {
 			destroy_effect(this.#main_effect);
 			this.#main_effect = null;
+		}
+
+		if (this.#pending_effect) {
+			destroy_effect(this.#pending_effect);
+			this.#pending_effect = null;
 		}
 
 		if (this.#failed_effect) {
@@ -186,4 +339,112 @@ export class Boundary {
 			});
 		}
 	}
+}
+
+/**
+ *
+ * @param {Effect} effect
+ * @param {DocumentFragment} fragment
+ */
+function move_effect(effect, fragment) {
+	var node = effect.nodes_start;
+	var end = effect.nodes_end;
+
+	while (node !== null) {
+		/** @type {TemplateNode | null} */
+		var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
+
+		fragment.append(node);
+		node = next;
+	}
+}
+
+export function get_pending_boundary() {
+	var boundary = /** @type {Effect} */ (active_effect).b;
+
+	while (boundary !== null && !boundary.has_pending_snippet()) {
+		boundary = boundary.parent;
+	}
+
+	if (boundary === null) {
+		e.await_outside_boundary();
+	}
+
+	return boundary;
+}
+
+/**
+ * Captures the current effect context so that we can restore it after
+ * some asynchronous work has happened if `track` is true (so that e.g.
+ * `await a + b` causes `b` to be registered as a dependency).
+ *
+ * If `track` is false, we just take a note of which async derived
+ * brought us here, so that we can emit a `async_reactivity_loss`
+ * warning when it's appropriate to do so.
+ *
+ * @param {boolean} track
+ */
+export function capture(track = true) {
+	var previous_effect = active_effect;
+	var previous_reaction = active_reaction;
+	var previous_component_context = component_context;
+
+	if (DEV && !track) {
+		var previous_async_effect = current_async_effect;
+	}
+
+	return function restore() {
+		if (track) {
+			set_active_effect(previous_effect);
+			set_active_reaction(previous_reaction);
+			set_component_context(previous_component_context);
+		}
+
+		if (DEV) {
+			set_from_async_derived(track ? null : previous_async_effect);
+		}
+
+		// prevent the active effect from outstaying its welcome
+		queue_micro_task(exit);
+	};
+}
+
+/**
+ * Wraps an `await` expression in such a way that the effect context that was
+ * active before the expression evaluated can be reapplied afterwards —
+ * `await a + b` becomes `(await $.save(a))() + b`
+ * @template T
+ * @param {Promise<T>} promise
+ * @param {boolean} [track]
+ * @returns {Promise<() => T>}
+ */
+export async function save(promise, track = true) {
+	var restore = capture(track);
+	var value = await promise;
+
+	return () => {
+		restore();
+		return value;
+	};
+}
+
+function exit() {
+	set_active_effect(null);
+	set_active_reaction(null);
+	set_component_context(null);
+	if (DEV) set_from_async_derived(null);
+}
+
+export function pending() {
+	if (active_effect === null) {
+		e.effect_pending_outside_reaction();
+	}
+
+	var boundary = active_effect.b;
+
+	if (boundary === null) {
+		return 0; // TODO eventually we will need this to be global
+	}
+
+	return boundary.get_effect_pending();
 }

@@ -43,9 +43,7 @@ export type ComponentContext = {
 			m: Array<() => any>;
 		};
 		/** `$:` statements */
-		r1: any[];
-		/** This tracks whether `$:` statements have run in the current cycle, to ensure they only run once */
-		r2: Source<boolean>;
+		$: any[];
 	};
 	/**
 	 * dev mode only: the component function

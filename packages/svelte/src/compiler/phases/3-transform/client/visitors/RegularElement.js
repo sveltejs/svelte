@@ -253,7 +253,10 @@ export function RegularElement(node, context) {
 				const { value, has_state } = build_attribute_value(
 					attribute.value,
 					context,
-					(value, metadata) => (metadata.has_call ? context.state.memoizer.add(value) : value)
+					(value, metadata) =>
+						metadata.has_call || metadata.has_await
+							? context.state.memoizer.add(value, metadata.has_await)
+							: value
 				);
 
 				const update = build_element_attribute_update(node, node_id, name, value, attributes);
@@ -319,7 +322,11 @@ export function RegularElement(node, context) {
 	// (e.g. `<span>{location}</span>`), set `textContent` programmatically
 	const use_text_content =
 		trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') &&
-		trimmed.every((node) => node.type === 'Text' || !node.metadata.expression.has_state) &&
+		trimmed.every(
+			(node) =>
+				node.type === 'Text' ||
+				(!node.metadata.expression.has_state && !node.metadata.expression.has_await)
+		) &&
 		trimmed.some((node) => node.type === 'ExpressionTag');
 
 	if (use_text_content) {
@@ -465,16 +472,18 @@ export function build_class_directives_object(
 ) {
 	let properties = [];
 	let has_call_or_state = false;
+	let has_await = false;
 
 	for (const d of class_directives) {
 		const expression = /** @type Expression */ (context.visit(d.expression));
 		properties.push(b.init(d.name, expression));
 		has_call_or_state ||= d.metadata.expression.has_call || d.metadata.expression.has_state;
+		has_await ||= d.metadata.expression.has_await;
 	}
 
 	const directives = b.object(properties);
 
-	return has_call_or_state ? memoizer.add(directives) : directives;
+	return has_call_or_state || has_await ? memoizer.add(directives, has_await) : directives;
 }
 
 /**
@@ -492,6 +501,7 @@ export function build_style_directives_object(
 	const important = b.object([]);
 
 	let has_call_or_state = false;
+	let has_await = false;
 
 	for (const d of style_directives) {
 		const expression =
@@ -503,11 +513,12 @@ export function build_style_directives_object(
 		object.properties.push(b.init(d.name, expression));
 
 		has_call_or_state ||= d.metadata.expression.has_call || d.metadata.expression.has_state;
+		has_await ||= d.metadata.expression.has_await;
 	}
 
 	const directives = important.properties.length ? b.array([normal, important]) : normal;
 
-	return has_call_or_state ? memoizer.add(directives) : directives;
+	return has_call_or_state || has_await ? memoizer.add(directives, has_await) : directives;
 }
 
 /**
@@ -629,7 +640,7 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 		element === 'select' && attribute.value !== true && !is_text_attribute(attribute);
 
 	const { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call ? state.memoizer.add(value) : value
+		metadata.has_call || metadata.has_await ? state.memoizer.add(value, metadata.has_await) : value
 	);
 
 	const evaluated = context.state.scope.evaluate(value);

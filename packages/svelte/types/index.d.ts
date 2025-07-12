@@ -435,6 +435,11 @@ declare module 'svelte' {
 	 * */
 	export function afterUpdate(fn: () => void): void;
 	/**
+	 * Synchronously flush any pending updates.
+	 * Returns void if no callback is provided, otherwise returns the result of calling the callback.
+	 * */
+	export function flushSync<T = void>(fn?: (() => T) | undefined): T;
+	/**
 	 * Create a snippet programmatically
 	 * */
 	export function createRawSnippet<Params extends unknown[]>(fn: (...params: Getters<Params>) => {
@@ -443,29 +448,6 @@ declare module 'svelte' {
 	}): Snippet<Params>;
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
-	/**
-	 * Synchronously flush any pending updates.
-	 * Returns void if no callback is provided, otherwise returns the result of calling the callback.
-	 * */
-	export function flushSync<T = void>(fn?: (() => T) | undefined): T;
-	/**
-	 * Returns a promise that resolves once any pending state changes have been applied.
-	 * */
-	export function tick(): Promise<void>;
-	/**
-	 * When used inside a [`$derived`](https://svelte.dev/docs/svelte/$derived) or [`$effect`](https://svelte.dev/docs/svelte/$effect),
-	 * any state read inside `fn` will not be treated as a dependency.
-	 *
-	 * ```ts
-	 * $effect(() => {
-	 *   // this will run when `data` changes, but not when `time` changes
-	 *   save(data, {
-	 *     timestamp: untrack(() => time)
-	 *   });
-	 * });
-	 * ```
-	 * */
-	export function untrack<T>(fn: () => T): T;
 	/**
 	 * Retrieves the context that belongs to the closest parent component with the specified `key`.
 	 * Must be called during component initialisation.
@@ -539,6 +521,29 @@ declare module 'svelte' {
 	export function unmount(component: Record<string, any>, options?: {
 		outro?: boolean;
 	} | undefined): Promise<void>;
+	/**
+	 * Returns a promise that resolves once any pending state changes have been applied.
+	 * */
+	export function tick(): Promise<void>;
+	/**
+	 * Returns a promise that resolves once any state changes, and asynchronous work resulting from them,
+	 * have resolved and the DOM has been updated
+	 * */
+	export function settled(): Promise<void>;
+	/**
+	 * When used inside a [`$derived`](https://svelte.dev/docs/svelte/$derived) or [`$effect`](https://svelte.dev/docs/svelte/$effect),
+	 * any state read inside `fn` will not be treated as a dependency.
+	 *
+	 * ```ts
+	 * $effect(() => {
+	 *   // this will run when `data` changes, but not when `time` changes
+	 *   save(data, {
+	 *     timestamp: untrack(() => time)
+	 *   });
+	 * });
+	 * ```
+	 * */
+	export function untrack<T>(fn: () => T): T;
 	type Getters<T> = {
 		[K in keyof T]: () => T[K];
 	};
@@ -1111,6 +1116,11 @@ declare module 'svelte/compiler' {
 		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 		 */
 		warningFilter?: (warning: Warning) => boolean;
+		/** Experimental options */
+		experimental?: {
+			/** Allow `await` keyword in deriveds, template expressions, and the top level of components */
+			async?: boolean;
+		};
 	}
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
@@ -3021,6 +3031,11 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 		 */
 		warningFilter?: (warning: Warning_1) => boolean;
+		/** Experimental options */
+		experimental?: {
+			/** Allow `await` keyword in deriveds, template expressions, and the top level of components */
+			async?: boolean;
+		};
 	}
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`

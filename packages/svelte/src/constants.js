@@ -42,6 +42,8 @@ export const NAMESPACE_MATHML = 'http://www.w3.org/1998/Math/MathML';
 // we use a list of ignorable runtime warnings because not every runtime warning
 // can be ignored and we want to keep the validation for svelte-ignore in place
 export const IGNORABLE_RUNTIME_WARNINGS = /** @type {const} */ ([
+	'await_waterfall',
+	'await_reactivity_loss',
 	'state_snapshot_uncloneable',
 	'binding_property_non_reactive',
 	'hydration_attribute_changed',

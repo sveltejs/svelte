@@ -3,6 +3,7 @@ import path from 'node:path';
 import polka from 'polka';
 import { render } from 'svelte/server';
 import App from './src/App.svelte';
+import './ssr-common.js';
 
 const { head, body } = render(App);
 

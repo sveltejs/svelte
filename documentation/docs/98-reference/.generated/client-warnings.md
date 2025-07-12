@@ -34,6 +34,48 @@ function add() {
 }
 ```
 
+### await_reactivity_loss
+
+```
+Detected reactivity loss when reading `%name%`. This happens when state is read in an async function after an earlier `await`
+```
+
+Svelte's signal-based reactivity works by tracking which bits of state are read when a template or `$derived(...)` expression executes. If an expression contains an `await`, Svelte transforms it such that any state _after_ the `await` is also tracked — in other words, in a case like this...
+
+```js
+let total = $derived(await a + b);
+```
+
+...both `a` and `b` are tracked, even though `b` is only read once `a` has resolved, after the initial execution.
+
+This does _not_ apply to an `await` that is not 'visible' inside the expression. In a case like this...
+
+```js
+async function sum() {
+	return await a + b;
+}
+
+let total = $derived(await sum());
+```
+
+...`total` will depend on `a` (which is read immediately) but not `b` (which is not). The solution is to pass the values into the function:
+
+```js
+async function sum(a, b) {
+	return await a + b;
+}
+
+let total = $derived(await sum(a, b));
+```
+
+### await_waterfall
+
+```
+An async value (%location%) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app
+```
+
+TODO
+
 ### binding_property_non_reactive
 
 ```

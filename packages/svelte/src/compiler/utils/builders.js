@@ -1,4 +1,5 @@
 /** @import * as ESTree from 'estree' */
+import { walk } from 'zimmerframe';
 import { regex_is_valid_identifier } from '../phases/patterns.js';
 import { sanitize_template_string } from './sanitize_template_string.js';
 
@@ -30,16 +31,17 @@ export function assignment_pattern(left, right) {
 /**
  * @param {Array<ESTree.Pattern>} params
  * @param {ESTree.BlockStatement | ESTree.Expression} body
+ * @param {boolean} async
  * @returns {ESTree.ArrowFunctionExpression}
  */
-export function arrow(params, body) {
+export function arrow(params, body, async = false) {
 	return {
 		type: 'ArrowFunctionExpression',
 		params,
 		body,
 		expression: body.type !== 'BlockStatement',
 		generator: false,
-		async: false,
+		async,
 		metadata: /** @type {any} */ (null) // should not be used by codegen
 	};
 }
@@ -100,7 +102,7 @@ export function labeled(name, body) {
 
 /**
  * @param {string | ESTree.Expression} callee
- * @param {...(ESTree.Expression | ESTree.SpreadElement | false | undefined)} args
+ * @param {...(ESTree.Expression | ESTree.SpreadElement | false | undefined | null)} args
  * @returns {ESTree.CallExpression}
  */
 export function call(callee, ...args) {
@@ -216,16 +218,17 @@ export function export_default(declaration) {
  * @param {ESTree.Identifier} id
  * @param {ESTree.Pattern[]} params
  * @param {ESTree.BlockStatement} body
+ * @param {boolean} async
  * @returns {ESTree.FunctionDeclaration}
  */
-export function function_declaration(id, params, body) {
+export function function_declaration(id, params, body, async = false) {
 	return {
 		type: 'FunctionDeclaration',
 		id,
 		params,
 		body,
 		generator: false,
-		async: false,
+		async,
 		metadata: /** @type {any} */ (null) // should not be used by codegen
 	};
 }
@@ -421,19 +424,32 @@ export function template(elements, expressions) {
  * @returns {ESTree.Expression}
  */
 export function thunk(expression, async = false) {
-	const fn = arrow([], expression);
-	if (async) fn.async = true;
-	return unthunk(fn);
+	return unthunk(arrow([], expression, async));
 }
 
 /**
  * Replace "(arg) => func(arg)" to "func"
- * @param {ESTree.Expression} expression
+ * @param {ESTree.ArrowFunctionExpression} expression
  * @returns {ESTree.Expression}
  */
 export function unthunk(expression) {
+	// optimize `async () => await x()`, but not `async () => await x(await y)`
+	if (expression.async && expression.body.type === 'AwaitExpression') {
+		let has_await = false;
+
+		walk(expression.body.argument, null, {
+			AwaitExpression(_node, context) {
+				has_await = true;
+				context.stop();
+			}
+		});
+
+		if (!has_await) {
+			return unthunk(arrow(expression.params, expression.body.argument));
+		}
+	}
+
 	if (
-		expression.type === 'ArrowFunctionExpression' &&
 		expression.async === false &&
 		expression.body.type === 'CallExpression' &&
 		expression.body.callee.type === 'Identifier' &&

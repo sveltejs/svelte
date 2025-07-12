@@ -1,3 +1,5 @@
+export * from '../shared/errors.js';
+
 /**
  * MESSAGE
  * @param {string} PARAMETER

@@ -171,6 +171,15 @@ export function effect_invalid_placement(node) {
 }
 
 /**
+ * Cannot use `await` in deriveds and template expressions, or at the top level of a component, unless the `experimental.async` compiler option is `true`
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function experimental_async(node) {
+	e(node, 'experimental_async', `Cannot use \`await\` in deriveds and template expressions, or at the top level of a component, unless the \`experimental.async\` compiler option is \`true\`\nhttps://svelte.dev/e/experimental_async`);
+}
+
+/**
  * `%name%` is not defined
  * @param {null | number | NodeLike} node
  * @param {string} name
@@ -233,6 +242,15 @@ export function inspect_trace_invalid_placement(node) {
  */
 export function invalid_arguments_usage(node) {
 	e(node, 'invalid_arguments_usage', `The arguments keyword cannot be used within the template or at the top level of a component\nhttps://svelte.dev/e/invalid_arguments_usage`);
+}
+
+/**
+ * Cannot use `await` in deriveds and template expressions, or at the top level of a component, unless in runes mode
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function legacy_await_invalid(node) {
+	e(node, 'legacy_await_invalid', `Cannot use \`await\` in deriveds and template expressions, or at the top level of a component, unless in runes mode\nhttps://svelte.dev/e/legacy_await_invalid`);
 }
 
 /**

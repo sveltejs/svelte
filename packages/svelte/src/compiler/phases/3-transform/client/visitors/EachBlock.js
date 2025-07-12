@@ -312,11 +312,8 @@ export function EachBlock(node, context) {
 		declarations.push(b.let(node.index, index));
 	}
 
-	if (dev && node.metadata.keyed) {
-		context.state.init.push(
-			b.stmt(b.call('$.validate_each_keys', b.thunk(collection), key_function))
-		);
-	}
+	const { has_await } = node.metadata.expression;
+	const thunk = b.thunk(collection, has_await);
 
 	const render_args = [b.id('$$anchor'), item];
 	if (uses_index || collection_id) render_args.push(index);
@@ -326,7 +323,7 @@ export function EachBlock(node, context) {
 	const args = [
 		context.state.node,
 		b.literal(flags),
-		b.thunk(collection),
+		has_await ? b.thunk(b.call('$.get', b.id('$$collection'))) : thunk,
 		key_function,
 		b.arrow(render_args, b.block(declarations.concat(block.body)))
 	];
@@ -337,7 +334,37 @@ export function EachBlock(node, context) {
 		);
 	}
 
-	context.state.init.push(add_svelte_meta(b.call('$.each', ...args), node, 'each'));
+	if (has_await) {
+		const statements = [add_svelte_meta(b.call('$.each', ...args), node, 'each')];
+		if (dev && node.metadata.keyed) {
+			statements.unshift(
+				b.stmt(
+					b.call(
+						'$.validate_each_keys',
+						b.thunk(b.call('$.get', b.id('$$collection'))),
+						key_function
+					)
+				)
+			);
+		}
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.async',
+					context.state.node,
+					b.array([thunk]),
+					b.arrow([context.state.node, b.id('$$collection')], b.block(statements))
+				)
+			)
+		);
+	} else {
+		if (dev && node.metadata.keyed) {
+			context.state.init.push(
+				b.stmt(b.call('$.validate_each_keys', b.thunk(collection), key_function))
+			);
+		}
+		context.state.init.push(add_svelte_meta(b.call('$.each', ...args), node, 'each'));
+	}
 }
 
 /**
