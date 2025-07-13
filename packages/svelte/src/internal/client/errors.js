@@ -2,6 +2,8 @@
 
 import { DEV } from 'esm-env';
 
+export *  from '../shared/errors.js';
+
 /**
  * Using `bind:value` together with a checkbox input is not allowed. Use `bind:checked` instead
  * @returns {never}
