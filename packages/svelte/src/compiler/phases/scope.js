@@ -18,9 +18,9 @@ import { validate_identifier_name } from './2-analyze/visitors/shared/utils.js';
 
 const UNKNOWN = Symbol('unknown');
 /** Includes `BigInt` */
-export const NUMBER = Symbol('number');
-export const STRING = Symbol('string');
-export const FUNCTION = Symbol('string');
+const NUMBER = Symbol('number');
+const STRING = Symbol('string');
+const FUNCTION = Symbol('string');
 
 /** @type {Record<string, [type: NUMBER | STRING | UNKNOWN, fn?: Function]>} */
 const globals = {
