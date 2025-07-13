@@ -141,7 +141,7 @@ function create_effect(type, fn, sync, push = true) {
 		effect.first === null &&
 		effect.nodes_start === null &&
 		effect.teardown === null &&
-		(effect.f & (EFFECT_PRESERVED | BOUNDARY_EFFECT)) === 0; // TODO think we can remove `| BOUNDARY_EFFECT` once the relevant PR is merged
+		(effect.f & EFFECT_PRESERVED) === 0;
 
 	if (!inert && push) {
 		if (parent !== null) {
