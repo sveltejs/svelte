@@ -1,6 +1,6 @@
 /** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
 import {
-	check_dirtiness,
+	is_dirty,
 	active_effect,
 	active_reaction,
 	update_effect,
@@ -307,7 +307,7 @@ export function legacy_pre_effect_reset() {
 				set_signal_status(effect, MAYBE_DIRTY);
 			}
 
-			if (check_dirtiness(effect)) {
+			if (is_dirty(effect)) {
 				update_effect(effect);
 			}
 
