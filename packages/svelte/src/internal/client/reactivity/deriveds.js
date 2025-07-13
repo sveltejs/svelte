@@ -10,7 +10,6 @@ import {
 	MAYBE_DIRTY,
 	STALE_REACTION,
 	UNOWNED,
-	DESTROYED,
 	ASYNC
 } from '#client/constants';
 import {
@@ -27,7 +26,7 @@ import {
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import { async_effect, destroy_effect, render_effect } from './effects.js';
+import { async_effect, destroy_effect } from './effects.js';
 import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { tracing_mode_flag } from '../../flags/index.js';

@@ -173,7 +173,7 @@ export class Batch {
 		}
 
 		for (const root of root_effects) {
-			this.#process_root(root);
+			this.#traverse_effect_tree(root);
 		}
 
 		// if we didn't start any new async work, and no async work
@@ -228,7 +228,7 @@ export class Batch {
 	 * them for later execution as appropriate
 	 * @param {Effect} root
 	 */
-	#process_root(root) {
+	#traverse_effect_tree(root) {
 		root.f ^= CLEAN;
 
 		var effect = root.first;
