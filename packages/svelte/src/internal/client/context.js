@@ -1,15 +1,8 @@
 /** @import { ComponentContext, DevStackEntry } from '#client' */
-
 import { DEV } from 'esm-env';
 import * as e from './errors.js';
 import { source } from './reactivity/sources.js';
-import {
-	active_effect,
-	active_reaction,
-	set_active_effect,
-	set_active_reaction
-} from './runtime.js';
-import { create_user_effect, teardown } from './reactivity/effects.js';
+import { create_user_effect } from './reactivity/effects.js';
 import { legacy_mode_flag } from '../flags/index.js';
 import { FILENAME } from '../../constants.js';
 
