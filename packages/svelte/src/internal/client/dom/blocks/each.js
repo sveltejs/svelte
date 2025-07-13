@@ -67,18 +67,18 @@ export function index(_, i) {
  * Pause multiple effects simultaneously, and coordinate their
  * subsequent destruction. Used in each blocks
  * @param {EachState} state
- * @param {EachItem[]} to_destroy
+ * @param {EachItem[]} items
  * @param {null | Node} controlled_anchor
  */
-function pause_effects(state, to_destroy, controlled_anchor) {
+function pause_effects(state, items, controlled_anchor) {
 	var items_map = state.items;
 
 	/** @type {TransitionManager[]} */
 	var transitions = [];
-	var length = to_destroy.length;
+	var length = items.length;
 
 	for (var i = 0; i < length; i++) {
-		pause_children(to_destroy[i].e, transitions, true);
+		pause_children(items[i].e, transitions, true);
 	}
 
 	var is_controlled = length > 0 && transitions.length === 0 && controlled_anchor !== null;
@@ -91,12 +91,12 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 		clear_text_content(parent_node);
 		parent_node.append(/** @type {Element} */ (controlled_anchor));
 		items_map.clear();
-		link(state, to_destroy[0].prev, to_destroy[length - 1].next);
+		link(state, items[0].prev, items[length - 1].next);
 	}
 
 	run_out_transitions(transitions, () => {
 		for (var i = 0; i < length; i++) {
-			var item = to_destroy[i];
+			var item = items[i];
 			if (!is_controlled) {
 				items_map.delete(item.k);
 				link(state, item.prev, item.next);
