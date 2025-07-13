@@ -300,15 +300,15 @@ function mark_reactions(signal, status) {
 			continue;
 		}
 
-		if (status === DIRTY || (flags & DIRTY) === 0) {
-			// don't make a DIRTY signal MAYBE_DIRTY
-			set_signal_status(reaction, status);
-		}
+		set_signal_status(reaction, status);
 
-		if ((flags & DERIVED) !== 0) {
-			mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
-		} else {
-			schedule_effect(/** @type {Effect} */ (reaction));
+		// If the signal a) was previously clean or b) is an unowned derived, then mark it
+		if ((flags & (CLEAN | UNOWNED)) !== 0) {
+			if ((flags & DERIVED) !== 0) {
+				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
+			} else {
+				schedule_effect(/** @type {Effect} */ (reaction));
+			}
 		}
 	}
 }
