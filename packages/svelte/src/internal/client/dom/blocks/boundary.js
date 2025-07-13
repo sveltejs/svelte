@@ -49,7 +49,6 @@ export function boundary(node, props, children) {
 }
 
 export class Boundary {
-	inert = false;
 	pending = false;
 
 	/** @type {Boundary | null} */
@@ -85,9 +84,7 @@ export class Boundary {
 	#pending_count = 0;
 	#is_creating_fallback = false;
 
-	/**
-	 * @type {Source<number> | null}
-	 */
+	/** @type {Source<number> | null} */
 	#effect_pending = null;
 
 	#effect_pending_subscriber = createSubscriber(() => {
@@ -208,27 +205,23 @@ export class Boundary {
 		}
 	}
 
-	commit() {
-		this.pending = false;
-
-		if (this.#pending_effect) {
-			pause_effect(this.#pending_effect, () => {
-				this.#pending_effect = null;
-			});
-		}
-
-		if (this.#offscreen_fragment) {
-			this.#anchor.before(this.#offscreen_fragment);
-			this.#offscreen_fragment = null;
-		}
-	}
-
 	/** @param {1 | -1} d */
 	#update_pending_count(d) {
 		this.#pending_count += d;
 
 		if (this.#pending_count === 0) {
-			this.commit();
+			this.pending = false;
+
+			if (this.#pending_effect) {
+				pause_effect(this.#pending_effect, () => {
+					this.#pending_effect = null;
+				});
+			}
+
+			if (this.#offscreen_fragment) {
+				this.#anchor.before(this.#offscreen_fragment);
+				this.#offscreen_fragment = null;
+			}
 		}
 	}
 
