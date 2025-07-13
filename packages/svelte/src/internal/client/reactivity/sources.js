@@ -12,7 +12,7 @@ import {
 	increment_write_version,
 	update_effect,
 	current_sources,
-	check_dirtiness,
+	is_dirty,
 	untracking,
 	is_destroying_effect,
 	push_reaction_value
@@ -218,7 +218,7 @@ export function internal_set(source, value) {
 				if ((effect.f & CLEAN) !== 0) {
 					set_signal_status(effect, MAYBE_DIRTY);
 				}
-				if (check_dirtiness(effect)) {
+				if (is_dirty(effect)) {
 					update_effect(effect);
 				}
 			}

@@ -163,7 +163,7 @@ export function increment_write_version() {
  * @param {Reaction} reaction
  * @returns {boolean}
  */
-export function check_dirtiness(reaction) {
+export function is_dirty(reaction) {
 	var flags = reaction.f;
 
 	if ((flags & DIRTY) !== 0) {
@@ -212,7 +212,7 @@ export function check_dirtiness(reaction) {
 			for (i = 0; i < length; i++) {
 				dependency = dependencies[i];
 
-				if (check_dirtiness(/** @type {Derived} */ (dependency))) {
+				if (is_dirty(/** @type {Derived} */ (dependency))) {
 					update_derived(/** @type {Derived} */ (dependency));
 				}
 
@@ -588,7 +588,7 @@ function flush_queued_effects(effects) {
 		var effect = effects[i];
 
 		if ((effect.f & (DESTROYED | INERT)) === 0) {
-			if (check_dirtiness(effect)) {
+			if (is_dirty(effect)) {
 				var wv = write_version;
 
 				update_effect(effect);
@@ -675,7 +675,7 @@ function process_effects(root) {
 			} else if (is_branch) {
 				effect.f ^= CLEAN;
 			} else {
-				if (check_dirtiness(effect)) {
+				if (is_dirty(effect)) {
 					update_effect(effect);
 				}
 			}
@@ -802,7 +802,7 @@ export function get(signal) {
 	if (is_derived && !is_destroying_effect) {
 		derived = /** @type {Derived} */ (signal);
 
-		if (check_dirtiness(derived)) {
+		if (is_dirty(derived)) {
 			update_derived(derived);
 		}
 	}
