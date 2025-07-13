@@ -288,6 +288,9 @@ function mark_reactions(signal, status) {
 		var reaction = reactions[i];
 		var flags = reaction.f;
 
+		// Skip any effects that are already dirty
+		if ((flags & DIRTY) !== 0) continue;
+
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === active_effect) continue;
 
