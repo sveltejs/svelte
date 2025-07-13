@@ -2,7 +2,7 @@ import { settled, tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	async test({ assert, target, logs, variant }) {
+	async test({ assert, target, logs }) {
 		const [reset, resolve] = target.querySelectorAll('button');
 
 		reset.click();

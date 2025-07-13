@@ -1,20 +1,8 @@
 import { tick } from 'svelte';
-import { deferred } from '../../../../src/internal/shared/utils.js';
 import { test } from '../../test';
-
-/** @type {ReturnType<typeof deferred>} */
-let d;
 
 export default test({
 	html: `<button>reset</button><button>true</button><button>false</button><p>pending</p>`,
-
-	get props() {
-		d = deferred();
-
-		return {
-			promise: d.promise
-		};
-	},
 
 	async test({ assert, target }) {
 		const [reset, t, f] = target.querySelectorAll('button');

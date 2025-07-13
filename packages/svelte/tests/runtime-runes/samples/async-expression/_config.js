@@ -1,4 +1,4 @@
-import { flushSync, tick } from 'svelte';
+import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({

@@ -1,46 +1,46 @@
 import { tick } from 'svelte';
-import { deferred } from '../../../../src/internal/shared/utils.js';
 import { test } from '../../test';
 
-/** @type {ReturnType<typeof deferred>} */
-let d;
-
 export default test({
-	html: `<p>pending</p>`,
+	html: `
+		<button>reset</button>
+		<button>1</button>
+		<button>2</button>
+		<p>pending</p>
+	`,
 
-	get props() {
-		d = deferred();
+	async test({ assert, target }) {
+		const [reset, one, two] = target.querySelectorAll('button');
 
-		return {
-			promise: d.promise
-		};
-	},
+		const html = `
+			<button>reset</button>
+			<button>1</button>
+			<button>2</button>
+			<h1>hello</h1>
+		`;
 
-	async test({ assert, target, component }) {
-		d.resolve(1);
+		one.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<h1>hello</h1>');
+		assert.htmlEqual(target.innerHTML, html);
 
 		const h1 = target.querySelector('h1');
 
-		d = deferred();
-		component.promise = d.promise;
+		reset.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<h1>hello</h1>');
+		assert.htmlEqual(target.innerHTML, html);
 
-		d.resolve(1);
+		one.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<h1>hello</h1>');
+		assert.htmlEqual(target.innerHTML, html);
 		assert.equal(target.querySelector('h1'), h1);
 
-		d = deferred();
-		component.promise = d.promise;
+		reset.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<h1>hello</h1>');
+		assert.htmlEqual(target.innerHTML, html);
 
-		d.resolve(2);
+		two.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<h1>hello</h1>');
+		assert.htmlEqual(target.innerHTML, html);
 		assert.notEqual(target.querySelector('h1'), h1);
 	}
 });

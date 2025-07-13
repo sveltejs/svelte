@@ -2,7 +2,7 @@ import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	async test({ assert, target, errors }) {
+	async test({ assert, target }) {
 		const [increment, resolve, reject] = target.querySelectorAll('button');
 
 		increment.click();

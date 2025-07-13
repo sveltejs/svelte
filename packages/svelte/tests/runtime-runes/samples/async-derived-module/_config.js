@@ -1,4 +1,4 @@
-import { flushSync, settled, tick } from 'svelte';
+import { flushSync, tick } from 'svelte';
 import { deferred } from '../../../../src/internal/shared/utils.js';
 import { test } from '../../test';
 

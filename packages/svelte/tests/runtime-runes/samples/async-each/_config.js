@@ -1,33 +1,48 @@
 import { tick } from 'svelte';
-import { deferred } from '../../../../src/internal/shared/utils.js';
 import { test } from '../../test';
 
-/** @type {ReturnType<typeof deferred>} */
-let d;
-
 export default test({
-	html: `<p>pending</p>`,
+	html: `
+		<button>reset</button>
+		<button>abc</button>
+		<button>defg</button>
+		<p>pending</p>
+	`,
 
-	get props() {
-		d = deferred();
+	async test({ assert, target }) {
+		const [reset, abc, defg] = target.querySelectorAll('button');
 
-		return {
-			promise: d.promise
-		};
-	},
-
-	async test({ assert, target, component }) {
-		d.resolve(['a', 'b', 'c']);
+		abc.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>a</p><p>b</p><p>c</p>');
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<button>reset</button>
+				<button>abc</button>
+				<button>defg</button>
+				<p>a</p><p>b</p><p>c</p>`
+		);
 
-		d = deferred();
-		component.promise = d.promise;
+		reset.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>a</p><p>b</p><p>c</p>');
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<button>reset</button>
+				<button>abc</button>
+				<button>defg</button>
+				<p>a</p><p>b</p><p>c</p>`
+		);
 
-		d.resolve(['d', 'e', 'f', 'g']);
+		defg.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>d</p><p>e</p><p>f</p><p>g</p>');
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<button>reset</button>
+				<button>abc</button>
+				<button>defg</button>
+				<p>d</p><p>e</p><p>f</p><p>g</p>`
+		);
 	}
 });
