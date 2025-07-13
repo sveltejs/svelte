@@ -1,7 +1,7 @@
 /** @import { ComponentContext, DevStackEntry } from '#client' */
 
 import { DEV } from 'esm-env';
-import { lifecycle_outside_component } from '../shared/errors.js';
+import * as e from './errors.js';
 import { source } from './reactivity/sources.js';
 import {
 	active_effect,
@@ -205,7 +205,7 @@ export function is_runes() {
  */
 function get_or_init_context_map(name) {
 	if (component_context === null) {
-		lifecycle_outside_component(name);
+		e.lifecycle_outside_component(name);
 	}
 
 	return (component_context.c ??= new Map(get_parent_context(component_context) || undefined));
