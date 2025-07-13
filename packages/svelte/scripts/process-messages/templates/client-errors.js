@@ -1,6 +1,8 @@
 import { DEV } from 'esm-env';
 export * from '../shared/errors.js';
 
+export * from '../shared/errors.js';
+
 /**
  * MESSAGE
  * @param {string} PARAMETER

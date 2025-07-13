@@ -1,6 +1,5 @@
 /** @import { ComponentContext, DevStackEntry, Effect } from '#client' */
 import { DEV } from 'esm-env';
-import { lifecycle_outside_component } from '../shared/errors.js';
 import * as e from './errors.js';
 import { active_effect, active_reaction } from './runtime.js';
 import { create_user_effect } from './reactivity/effects.js';
@@ -201,7 +200,7 @@ export function is_runes() {
  */
 function get_or_init_context_map(name) {
 	if (component_context === null) {
-		lifecycle_outside_component(name);
+		e.lifecycle_outside_component(name);
 	}
 
 	return (component_context.c ??= new Map(get_parent_context(component_context) || undefined));

@@ -5,8 +5,8 @@ import { mutable_source, set } from '../internal/client/reactivity/sources.js';
 import { hydrate, mount, unmount } from '../internal/client/render.js';
 import { active_effect, get, set_signal_status } from '../internal/client/runtime.js';
 import { flushSync } from '../internal/client/reactivity/batch.js';
-import { lifecycle_outside_component } from '../internal/shared/errors.js';
 import { define_property, is_array } from '../internal/shared/utils.js';
+import * as e from '../internal/client/errors.js';
 import * as w from '../internal/client/warnings.js';
 import { DEV } from 'esm-env';
 import { FILENAME } from '../constants.js';
@@ -248,7 +248,7 @@ export function handlers(...handlers) {
 export function createBubbler() {
 	const active_component_context = component_context;
 	if (active_component_context === null) {
-		lifecycle_outside_component('createBubbler');
+		e.lifecycle_outside_component('createBubbler');
 	}
 
 	return (/**@type {string}*/ type) => (/**@type {Event}*/ event) => {
