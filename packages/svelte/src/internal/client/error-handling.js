@@ -7,14 +7,16 @@ import { BOUNDARY_EFFECT, EFFECT_RAN } from './constants.js';
 import { define_property, get_descriptor } from '../shared/utils.js';
 import { active_effect } from './runtime.js';
 
+const adjustments = new WeakMap();
+
 /**
  * @param {unknown} error
  */
 export function handle_error(error) {
 	var effect = /** @type {Effect} */ (active_effect);
 
-	if (DEV && error instanceof Error) {
-		adjust_error(error, effect);
+	if (DEV && error instanceof Error && !adjustments.has(error)) {
+		adjustments.set(error, get_adjustments(error, effect));
 	}
 
 	if ((effect.f & EFFECT_RAN) === 0) {
@@ -48,21 +50,19 @@ export function invoke_error_boundary(error, effect) {
 		effect = effect.parent;
 	}
 
+	if (error instanceof Error) {
+		apply_adjustments(error);
+	}
+
 	throw error;
 }
-
-/** @type {WeakSet<Error>} */
-const adjusted_errors = new WeakSet();
 
 /**
  * Add useful information to the error message/stack in development
  * @param {Error} error
  * @param {Effect} effect
  */
-function adjust_error(error, effect) {
-	if (adjusted_errors.has(error)) return;
-	adjusted_errors.add(error);
-
+function get_adjustments(error, effect) {
 	const message_descriptor = get_descriptor(error, 'message');
 
 	// if the message was already changed and it's not configurable we can't change it
@@ -78,17 +78,28 @@ function adjust_error(error, effect) {
 		context = context.p;
 	}
 
-	define_property(error, 'message', {
-		value: error.message + `\n${component_stack}\n`
-	});
+	return {
+		message: error.message + `\n${component_stack}\n`,
+		stack: error.stack
+			?.split('\n')
+			.filter((line) => !line.includes('svelte/src/internal'))
+			.join('\n')
+	};
+}
 
-	if (error.stack) {
-		// Filter out internal modules
+/**
+ * @param {Error} error
+ */
+function apply_adjustments(error) {
+	const adjusted = adjustments.get(error);
+
+	if (adjusted) {
+		define_property(error, 'message', {
+			value: adjusted.message
+		});
+
 		define_property(error, 'stack', {
-			value: error.stack
-				.split('\n')
-				.filter((line) => !line.includes('svelte/src/internal'))
-				.join('\n')
+			value: adjusted.stack
 		});
 	}
 }
