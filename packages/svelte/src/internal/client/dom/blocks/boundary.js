@@ -398,6 +398,7 @@ export function capture(track = true) {
 		}
 
 		// prevent the active effect from outstaying its welcome
+		// TODO this feels brittle
 		queue_micro_task(exit);
 	};
 }
