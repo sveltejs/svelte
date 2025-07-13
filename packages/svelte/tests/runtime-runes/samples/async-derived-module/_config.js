@@ -1,24 +1,19 @@
 import { flushSync, tick } from 'svelte';
-import { deferred } from '../../../../src/internal/shared/utils.js';
 import { test } from '../../test';
 
-/** @type {ReturnType<typeof deferred>} */
-let d;
-
 export default test({
-	html: `<p>pending</p>`,
+	html: `
+		<button>reset</button>
+		<button>a</button>
+		<button>b</button>
+		<button>increment</button>
+		<p>pending</p>
+	`,
 
-	get props() {
-		d = deferred();
+	async test({ assert, target, logs }) {
+		const [reset, a, b, increment] = target.querySelectorAll('button');
 
-		return {
-			promise: d.promise,
-			num: 1
-		};
-	},
-
-	async test({ assert, target, component, logs }) {
-		d.resolve(42);
+		a.click();
 
 		// TODO why is this necessary? why isn't `await tick()` enough?
 		await Promise.resolve();
@@ -31,20 +26,55 @@ export default test({
 		await Promise.resolve();
 		flushSync();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>42</p>');
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<button>reset</button>
+				<button>a</button>
+				<button>b</button>
+				<button>increment</button>
+				<p>42</p>
+			`
+		);
 
-		component.num = 2;
+		increment.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>84</p>');
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<button>reset</button>
+				<button>a</button>
+				<button>b</button>
+				<button>increment</button>
+				<p>84</p>
+			`
+		);
 
-		d = deferred();
-		component.promise = d.promise;
+		reset.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>84</p>');
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<button>reset</button>
+				<button>a</button>
+				<button>b</button>
+				<button>increment</button>
+				<p>84</p>
+			`
+		);
 
-		d.resolve(43);
+		b.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<p>86</p>');
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<button>reset</button>
+				<button>a</button>
+				<button>b</button>
+				<button>increment</button>
+				<p>86</p>
+			`
+		);
 
 		assert.deepEqual(logs, [
 			'outside boundary 1',
