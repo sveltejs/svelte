@@ -6,7 +6,7 @@ import {
 	DESTROYED,
 	DIRTY,
 	EFFECT,
-	EFFECT_ASYNC,
+	ASYNC,
 	INERT,
 	RENDER_EFFECT,
 	ROOT_EFFECT,
@@ -248,7 +248,7 @@ export class Batch {
 				} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
 					this.#render_effects.push(effect);
 				} else if (is_dirty(effect)) {
-					if ((flags & EFFECT_ASYNC) !== 0) {
+					if ((flags & ASYNC) !== 0) {
 						var effects = effect.b?.pending ? this.#boundary_async_effects : this.#async_effects;
 						effects.push(effect);
 					} else {

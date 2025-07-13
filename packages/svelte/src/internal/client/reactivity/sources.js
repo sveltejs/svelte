@@ -27,7 +27,7 @@ import {
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	EFFECT_ASYNC
+	ASYNC
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -140,7 +140,7 @@ export function set(source, value, should_proxy = false) {
 		// to ensure we error if state is set inside an inspect effect
 		(!untracking || (active_reaction.f & INSPECT_EFFECT) !== 0) &&
 		is_runes() &&
-		(active_reaction.f & (DERIVED | BLOCK_EFFECT | EFFECT_ASYNC | INSPECT_EFFECT)) !== 0 &&
+		(active_reaction.f & (DERIVED | BLOCK_EFFECT | ASYNC | INSPECT_EFFECT)) !== 0 &&
 		!current_sources?.includes(source)
 	) {
 		e.state_unsafe_mutation();

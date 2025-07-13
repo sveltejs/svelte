@@ -11,7 +11,7 @@ import {
 	STALE_REACTION,
 	UNOWNED,
 	DESTROYED,
-	EFFECT_ASYNC
+	ASYNC
 } from '#client/constants';
 import {
 	active_reaction,
@@ -194,7 +194,7 @@ export function async_derived(fn, location) {
 	if (DEV) {
 		// add a flag that lets this be printed as a derived
 		// when using `$inspect.trace()`
-		signal.f |= EFFECT_ASYNC;
+		signal.f |= ASYNC;
 	}
 
 	return new Promise((fulfil) => {

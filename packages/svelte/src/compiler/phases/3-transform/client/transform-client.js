@@ -59,7 +59,6 @@ import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { UseDirective } from './visitors/UseDirective.js';
 import { AttachTag } from './visitors/AttachTag.js';
 import { VariableDeclaration } from './visitors/VariableDeclaration.js';
-import { Memoizer } from './visitors/shared/utils.js';
 
 /** @type {Visitors} */
 const visitors = {
