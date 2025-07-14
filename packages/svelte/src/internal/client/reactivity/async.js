@@ -65,33 +65,21 @@ export function flatten(sync, async, fn) {
 
 /**
  * Captures the current effect context so that we can restore it after
- * some asynchronous work has happened if `track` is true (so that e.g.
- * `await a + b` causes `b` to be registered as a dependency).
- *
- * If `track` is false, we just take a note of which async derived
- * brought us here, so that we can emit a `async_reactivity_loss`
- * warning when it's appropriate to do so.
- *
- * @param {boolean} track
+ * some asynchronous work has happened (so that e.g. `await a + b`
+ * causes `b` to be registered as a dependency).
  */
-export function capture(track = true) {
+function capture() {
 	var previous_effect = active_effect;
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
 
-	if (DEV && !track) {
-		var previous_async_effect = current_async_effect;
-	}
-
 	return function restore() {
-		if (track) {
-			set_active_effect(previous_effect);
-			set_active_reaction(previous_reaction);
-			set_component_context(previous_component_context);
-		}
+		set_active_effect(previous_effect);
+		set_active_reaction(previous_reaction);
+		set_component_context(previous_component_context);
 
 		if (DEV) {
-			set_from_async_derived(track ? null : previous_async_effect);
+			set_from_async_derived(null);
 		}
 
 		// prevent the active effect from outstaying its welcome
@@ -106,15 +94,31 @@ export function capture(track = true) {
  * `await a + b` becomes `(await $.save(a))() + b`
  * @template T
  * @param {Promise<T>} promise
- * @param {boolean} [track]
  * @returns {Promise<() => T>}
  */
-export async function save(promise, track = true) {
-	var restore = capture(track);
+export async function save(promise) {
+	var restore = capture();
 	var value = await promise;
 
 	return () => {
 		restore();
+		return value;
+	};
+}
+
+/**
+ * Reset `current_async_effect` after the `promise` resolves, so
+ * that we can emit `await_reactivity_loss` warnings
+ * @template T
+ * @param {Promise<T>} promise
+ * @returns {Promise<() => T>}
+ */
+export async function track_reactivity_loss(promise) {
+	var previous_async_effect = current_async_effect;
+	var value = await promise;
+
+	return () => {
+		set_from_async_derived(previous_async_effect);
 		return value;
 	};
 }
