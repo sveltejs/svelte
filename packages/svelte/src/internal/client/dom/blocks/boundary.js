@@ -366,69 +366,6 @@ export function get_pending_boundary() {
 	return boundary;
 }
 
-/**
- * Captures the current effect context so that we can restore it after
- * some asynchronous work has happened if `track` is true (so that e.g.
- * `await a + b` causes `b` to be registered as a dependency).
- *
- * If `track` is false, we just take a note of which async derived
- * brought us here, so that we can emit a `async_reactivity_loss`
- * warning when it's appropriate to do so.
- *
- * @param {boolean} track
- */
-export function capture(track = true) {
-	var previous_effect = active_effect;
-	var previous_reaction = active_reaction;
-	var previous_component_context = component_context;
-
-	if (DEV && !track) {
-		var previous_async_effect = current_async_effect;
-	}
-
-	return function restore() {
-		if (track) {
-			set_active_effect(previous_effect);
-			set_active_reaction(previous_reaction);
-			set_component_context(previous_component_context);
-		}
-
-		if (DEV) {
-			set_from_async_derived(track ? null : previous_async_effect);
-		}
-
-		// prevent the active effect from outstaying its welcome
-		// TODO this feels brittle
-		queue_micro_task(exit);
-	};
-}
-
-/**
- * Wraps an `await` expression in such a way that the effect context that was
- * active before the expression evaluated can be reapplied afterwards —
- * `await a + b` becomes `(await $.save(a))() + b`
- * @template T
- * @param {Promise<T>} promise
- * @param {boolean} [track]
- * @returns {Promise<() => T>}
- */
-export async function save(promise, track = true) {
-	var restore = capture(track);
-	var value = await promise;
-
-	return () => {
-		restore();
-		return value;
-	};
-}
-
-function exit() {
-	set_active_effect(null);
-	set_active_reaction(null);
-	set_component_context(null);
-	if (DEV) set_from_async_derived(null);
-}
-
 export function pending() {
 	if (active_effect === null) {
 		e.effect_pending_outside_reaction();

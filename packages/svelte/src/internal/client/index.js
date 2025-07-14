@@ -98,6 +98,7 @@ export {
 	props_id,
 	with_script
 } from './dom/template.js';
+export { save } from './reactivity/async.js';
 export { flushSync as flush, suspend } from './reactivity/batch.js';
 export {
 	async_derived,
@@ -136,7 +137,7 @@ export {
 	update_store,
 	mark_store_binding
 } from './reactivity/store.js';
-export { boundary, pending, save } from './dom/blocks/boundary.js';
+export { boundary, pending } from './dom/blocks/boundary.js';
 export { set_text } from './render.js';
 export {
 	get,
