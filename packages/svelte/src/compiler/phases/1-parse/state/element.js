@@ -295,6 +295,8 @@ export default function element(parser) {
 		} else {
 			element.tag = get_attribute_expression(definition);
 		}
+
+		element.metadata.expression = create_expression_metadata();
 	}
 
 	if (is_top_level_script_or_style) {

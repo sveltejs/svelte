@@ -33,7 +33,10 @@ export function SlotElement(node, context) {
 			const { value, has_state } = build_attribute_value(
 				attribute.value,
 				context,
-				(value, metadata) => (metadata.has_call ? b.call('$.get', memoizer.add(value)) : value)
+				(value, metadata) =>
+					metadata.has_call || metadata.has_await
+						? b.call('$.get', memoizer.add(value, metadata.has_await))
+						: value
 			);
 
 			if (attribute.name === 'name') {
@@ -70,5 +73,20 @@ export function SlotElement(node, context) {
 		b.stmt(b.call('$.slot', context.state.node, b.id('$$props'), name, props_expression, fallback))
 	);
 
-	context.state.init.push(statements.length === 1 ? statements[0] : b.block(statements));
+	const async_values = memoizer.async_values();
+
+	if (async_values) {
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.async',
+					context.state.node,
+					async_values,
+					b.arrow([context.state.node, ...memoizer.async_ids()], b.block(statements))
+				)
+			)
+		);
+	} else {
+		context.state.init.push(statements.length === 1 ? statements[0] : b.block(statements));
+	}
 }

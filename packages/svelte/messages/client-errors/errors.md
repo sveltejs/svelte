@@ -1,3 +1,13 @@
+## async_derived_orphan
+
+> Cannot create a `$derived(...)` with an `await` expression outside of an effect tree
+
+In Svelte there are two types of reaction — [`$derived`](/docs/svelte/$derived) and [`$effect`](/docs/svelte/$effect). Deriveds can be created anywhere, because they run _lazily_ and can be [garbage collected](https://developer.mozilla.org/en-US/docs/Glossary/Garbage_collection) if nothing references them. Effects, by contrast, keep running eagerly whenever their dependencies change, until they are destroyed.
+
+Because of this, effects can only be created inside other effects (or [effect roots](/docs/svelte/$effect#$effect.root), such as the one that is created when you first mount a component) so that Svelte knows when to destroy them.
+
+Some sleight of hand occurs when a derived contains an `await` expression: Since waiting until we read `{await getPromise()}` to call `getPromise` would be too late, we use an effect to instead call it proactively, notifying Svelte when the value is available. But since we're using an effect, we can only create asynchronous deriveds inside another effect.
+
 ## bind_invalid_checkbox_value
 
 > Using `bind:value` together with a checkbox input is not allowed. Use `bind:checked` instead
@@ -44,9 +54,21 @@ See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-long
 
 > `%rune%` can only be used inside an effect (e.g. during component initialisation)
 
+## effect_pending_outside_reaction
+
+> `$effect.pending()` can only be called inside an effect or derived
+
 ## effect_update_depth_exceeded
 
 > Maximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops
+
+## flush_sync_in_effect
+
+> Cannot use `flushSync` inside an effect
+
+The `flushSync()` function can be used to flush any pending effects synchronously. It cannot be used if effects are currently being flushed — in other words, you can call it after a state change but _not_ inside an effect.
+
+This restriction only applies when using the `experimental.async` option, which will be active by default in Svelte 6.
 
 ## get_abort_signal_outside_reaction
 
@@ -75,6 +97,12 @@ See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-long
 ## rune_outside_svelte
 
 > The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
+
+## set_context_after_init
+
+> `setContext` must be called when a component first initializes, not in a subsequent effect or after an `await` expression
+
+This restriction only applies when using the `experimental.async` option, which will be active by default in Svelte 6.
 
 ## state_descriptors_fixed
 

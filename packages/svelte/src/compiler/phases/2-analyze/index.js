@@ -1,4 +1,4 @@
-/** @import { Comment, Expression, Node, Program } from 'estree' */
+/** @import { Expression, Node, Program } from 'estree' */
 /** @import { Binding, AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
@@ -22,6 +22,7 @@ import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AttachTag } from './visitors/AttachTag.js';
 import { Attribute } from './visitors/Attribute.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
+import { AwaitExpression } from './visitors/AwaitExpression.js';
 import { BindDirective } from './visitors/BindDirective.js';
 import { CallExpression } from './visitors/CallExpression.js';
 import { ClassBody } from './visitors/ClassBody.js';
@@ -140,6 +141,7 @@ const visitors = {
 	AttachTag,
 	Attribute,
 	AwaitBlock,
+	AwaitExpression,
 	BindDirective,
 	CallExpression,
 	ClassBody,
@@ -211,9 +213,14 @@ function js(script, root, allow_reactive_declarations, parent) {
 		body: []
 	};
 
-	const { scope, scopes } = create_scopes(ast, root, allow_reactive_declarations, parent);
+	const { scope, scopes, has_await } = create_scopes(
+		ast,
+		root,
+		allow_reactive_declarations,
+		parent
+	);
 
-	return { ast, scope, scopes };
+	return { ast, scope, scopes, has_await };
 }
 
 /**
@@ -244,7 +251,7 @@ export function analyze_module(source, options) {
 	state.set_source(source);
 	const ast = parse(source, comments, false, false);
 
-	const { scope, scopes } = create_scopes(ast, new ScopeRoot(), false, null);
+	const { scope, scopes, has_await } = create_scopes(ast, new ScopeRoot(), false, null);
 
 	for (const [name, references] of scope.references) {
 		if (name[0] !== '$' || RESERVED.includes(name)) continue;
@@ -261,12 +268,13 @@ export function analyze_module(source, options) {
 
 	/** @type {Analysis} */
 	const analysis = {
-		module: { ast, scope, scopes },
+		module: { ast, scope, scopes, has_await },
 		name: options.filename,
 		accessors: false,
 		runes: true,
 		immutable: true,
 		tracing: false,
+		async_deriveds: new Set(),
 		comments,
 		classes: new Map()
 	};
@@ -314,7 +322,12 @@ export function analyze_component(root, source, options) {
 	const module = js(root.module, scope_root, false, null);
 	const instance = js(root.instance, scope_root, true, module.scope);
 
-	const { scope, scopes } = create_scopes(root.fragment, scope_root, false, instance.scope);
+	const { scope, scopes, has_await } = create_scopes(
+		root.fragment,
+		scope_root,
+		false,
+		instance.scope
+	);
 
 	/** @type {Template} */
 	const template = { ast: root.fragment, scope, scopes };
@@ -422,7 +435,9 @@ export function analyze_component(root, source, options) {
 
 	const component_name = get_component_name(options.filename);
 
-	const runes = options.runes ?? Array.from(module.scope.references.keys()).some(is_rune);
+	const runes =
+		options.runes ??
+		(has_await || instance.has_await || Array.from(module.scope.references.keys()).some(is_rune));
 
 	if (!runes) {
 		for (let check of synthetic_stores_legacy_check) {
@@ -512,7 +527,8 @@ export function analyze_component(root, source, options) {
 		source,
 		undefined_exports: new Map(),
 		snippet_renderers: new Map(),
-		snippets: new Set()
+		snippets: new Set(),
+		async_deriveds: new Set()
 	};
 
 	state.reset({

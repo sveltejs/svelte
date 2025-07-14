@@ -59,6 +59,9 @@
     "./internal/disclose-version": {
       "default": "./src/internal/disclose-version.js"
     },
+    "./internal/flags/async": {
+      "default": "./src/internal/flags/async.js"
+    },
     "./internal/flags/legacy": {
       "default": "./src/internal/flags/legacy.js"
     },

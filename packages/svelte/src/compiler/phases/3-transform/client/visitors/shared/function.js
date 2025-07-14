@@ -9,7 +9,7 @@ import { build_hoisted_params } from '../../utils.js';
 export const visit_function = (node, context) => {
 	const metadata = node.metadata;
 
-	let state = { ...context.state, in_constructor: false };
+	let state = { ...context.state, in_constructor: false, in_derived: false };
 
 	if (node.type === 'FunctionExpression') {
 		const parent = /** @type {Node} */ (context.path.at(-1));

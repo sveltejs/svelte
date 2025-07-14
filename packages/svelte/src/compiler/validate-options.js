@@ -41,7 +41,11 @@ const common = {
 		return input;
 	}),
 
-	warningFilter: fun(() => true)
+	warningFilter: fun(() => true),
+
+	experimental: object({
+		async: boolean(false)
+	})
 };
 
 export const validate_module_options =

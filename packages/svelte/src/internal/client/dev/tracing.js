@@ -2,7 +2,7 @@
 import { UNINITIALIZED } from '../../../constants.js';
 import { snapshot } from '../../shared/clone.js';
 import { define_property } from '../../shared/utils.js';
-import { DERIVED, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
+import { DERIVED, ASYNC, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { effect_tracking } from '../reactivity/effects.js';
 import { active_reaction, captured_signals, set_captured_signals, untrack } from '../runtime.js';
 
@@ -26,7 +26,7 @@ function log_entry(signal, entry) {
 		return;
 	}
 
-	const type = (signal.f & DERIVED) !== 0 ? '$derived' : '$state';
+	const type = (signal.f & (DERIVED | ASYNC)) !== 0 ? '$derived' : '$state';
 	const current_reaction = /** @type {Reaction} */ (active_reaction);
 	const dirty = signal.wv > current_reaction.wv || current_reaction.wv === 0;
 	const style = dirty

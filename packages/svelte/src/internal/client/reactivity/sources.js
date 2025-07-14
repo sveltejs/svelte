@@ -5,7 +5,6 @@ import {
 	active_effect,
 	untracked_writes,
 	get,
-	schedule_effect,
 	set_untracked_writes,
 	set_signal_status,
 	untrack,
@@ -27,12 +26,14 @@ import {
 	UNOWNED,
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
-	ROOT_EFFECT
+	ROOT_EFFECT,
+	ASYNC
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack, tag_proxy } from '../dev/tracing.js';
 import { component_context, is_runes } from '../context.js';
+import { Batch, schedule_effect } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 
@@ -139,7 +140,7 @@ export function set(source, value, should_proxy = false) {
 		// to ensure we error if state is set inside an inspect effect
 		(!untracking || (active_reaction.f & INSPECT_EFFECT) !== 0) &&
 		is_runes() &&
-		(active_reaction.f & (DERIVED | BLOCK_EFFECT | INSPECT_EFFECT)) !== 0 &&
+		(active_reaction.f & (DERIVED | BLOCK_EFFECT | ASYNC | INSPECT_EFFECT)) !== 0 &&
 		!current_sources?.includes(source)
 	) {
 		e.state_unsafe_mutation();
@@ -171,6 +172,9 @@ export function internal_set(source, value) {
 		}
 
 		source.v = value;
+
+		const batch = Batch.ensure();
+		batch.capture(source, old_value);
 
 		if (DEV && tracing_mode_flag) {
 			source.updated = get_stack('UpdatedAt');
@@ -218,6 +222,7 @@ export function internal_set(source, value) {
 				if ((effect.f & CLEAN) !== 0) {
 					set_signal_status(effect, MAYBE_DIRTY);
 				}
+
 				if (is_dirty(effect)) {
 					update_effect(effect);
 				}

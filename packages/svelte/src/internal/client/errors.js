@@ -5,6 +5,22 @@ import { DEV } from 'esm-env';
 export *  from '../shared/errors.js';
 
 /**
+ * Cannot create a `$derived(...)` with an `await` expression outside of an effect tree
+ * @returns {never}
+ */
+export function async_derived_orphan() {
+	if (DEV) {
+		const error = new Error(`async_derived_orphan\nCannot create a \`$derived(...)\` with an \`await\` expression outside of an effect tree\nhttps://svelte.dev/e/async_derived_orphan`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/async_derived_orphan`);
+	}
+}
+
+/**
  * Using `bind:value` together with a checkbox input is not allowed. Use `bind:checked` instead
  * @returns {never}
  */
@@ -182,6 +198,22 @@ export function effect_orphan(rune) {
 }
 
 /**
+ * `$effect.pending()` can only be called inside an effect or derived
+ * @returns {never}
+ */
+export function effect_pending_outside_reaction() {
+	if (DEV) {
+		const error = new Error(`effect_pending_outside_reaction\n\`$effect.pending()\` can only be called inside an effect or derived\nhttps://svelte.dev/e/effect_pending_outside_reaction`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/effect_pending_outside_reaction`);
+	}
+}
+
+/**
  * Maximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops
  * @returns {never}
  */
@@ -194,6 +226,22 @@ export function effect_update_depth_exceeded() {
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/effect_update_depth_exceeded`);
+	}
+}
+
+/**
+ * Cannot use `flushSync` inside an effect
+ * @returns {never}
+ */
+export function flush_sync_in_effect() {
+	if (DEV) {
+		const error = new Error(`flush_sync_in_effect\nCannot use \`flushSync\` inside an effect\nhttps://svelte.dev/e/flush_sync_in_effect`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/flush_sync_in_effect`);
 	}
 }
 
@@ -310,6 +358,22 @@ export function rune_outside_svelte(rune) {
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/rune_outside_svelte`);
+	}
+}
+
+/**
+ * `setContext` must be called when a component first initializes, not in a subsequent effect or after an `await` expression
+ * @returns {never}
+ */
+export function set_context_after_init() {
+	if (DEV) {
+		const error = new Error(`set_context_after_init\n\`setContext\` must be called when a component first initializes, not in a subsequent effect or after an \`await\` expression\nhttps://svelte.dev/e/set_context_after_init`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/set_context_after_init`);
 	}
 }
 

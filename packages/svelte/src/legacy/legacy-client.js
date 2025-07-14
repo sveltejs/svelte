@@ -3,13 +3,15 @@ import { DIRTY, LEGACY_PROPS, MAYBE_DIRTY } from '../internal/client/constants.j
 import { user_pre_effect } from '../internal/client/reactivity/effects.js';
 import { mutable_source, set } from '../internal/client/reactivity/sources.js';
 import { hydrate, mount, unmount } from '../internal/client/render.js';
-import { active_effect, flushSync, get, set_signal_status } from '../internal/client/runtime.js';
+import { active_effect, get, set_signal_status } from '../internal/client/runtime.js';
+import { flushSync } from '../internal/client/reactivity/batch.js';
 import { define_property, is_array } from '../internal/shared/utils.js';
 import * as e from '../internal/client/errors.js';
 import * as w from '../internal/client/warnings.js';
 import { DEV } from 'esm-env';
 import { FILENAME } from '../constants.js';
 import { component_context, dev_current_component_function } from '../internal/client/context.js';
+import { async_mode_flag } from '../internal/flags/index.js';
 
 /**
  * Takes the same options as a Svelte 4 component and the component function and returns a Svelte 4 compatible component.
@@ -119,8 +121,9 @@ class Svelte4Component {
 			recover: options.recover
 		});
 
-		// We don't flushSync for custom element wrappers or if the user doesn't want it
-		if (!options?.props?.$$host || options.sync === false) {
+		// We don't flushSync for custom element wrappers or if the user doesn't want it,
+		// or if we're in async mode since `flushSync()` will fail
+		if (!async_mode_flag && (!options?.props?.$$host || options.sync === false)) {
 			flushSync();
 		}
 

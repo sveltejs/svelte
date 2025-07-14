@@ -1,4 +1,5 @@
 /** @import { EachItem, EachState, Effect, MaybeSource, Source, TemplateNode, TransitionManager, Value } from '#client' */
+/** @import { Batch } from '../../reactivity/batch.js'; */
 import {
 	EACH_INDEX_REACTIVE,
 	EACH_IS_ANIMATED,
@@ -21,7 +22,8 @@ import {
 	clear_text_content,
 	create_text,
 	get_first_child,
-	get_next_sibling
+	get_next_sibling,
+	should_defer_append
 } from '../operations.js';
 import {
 	block,
@@ -39,6 +41,7 @@ import { queue_micro_task } from '../task.js';
 import { active_effect, get } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
+import { current_batch } from '../../reactivity/batch.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -66,9 +69,10 @@ export function index(_, i) {
  * @param {EachState} state
  * @param {EachItem[]} items
  * @param {null | Node} controlled_anchor
- * @param {Map<any, EachItem>} items_map
  */
-function pause_effects(state, items, controlled_anchor, items_map) {
+function pause_effects(state, items, controlled_anchor) {
+	var items_map = state.items;
+
 	/** @type {TransitionManager[]} */
 	var transitions = [];
 	var length = items.length;
@@ -137,6 +141,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 	var was_empty = false;
 
+	/** @type {Map<any, EachItem>} */
+	var offscreen_items = new Map();
+
 	// TODO: ideally we could use derived for runes mode but because of the ability
 	// to use a store which can be mutated, we can't do that here as mutating a store
 	// will still result in the collection array being the same from the store
@@ -146,8 +153,45 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		return is_array(collection) ? collection : collection == null ? [] : array_from(collection);
 	});
 
+	/** @type {V[]} */
+	var array;
+
+	/** @type {Effect} */
+	var each_effect;
+
+	function commit() {
+		reconcile(
+			each_effect,
+			array,
+			state,
+			offscreen_items,
+			anchor,
+			render_fn,
+			flags,
+			get_key,
+			get_collection
+		);
+
+		if (fallback_fn !== null) {
+			if (array.length === 0) {
+				if (fallback) {
+					resume_effect(fallback);
+				} else {
+					fallback = branch(() => fallback_fn(anchor));
+				}
+			} else if (fallback !== null) {
+				pause_effect(fallback, () => {
+					fallback = null;
+				});
+			}
+		}
+	}
+
 	block(() => {
-		var array = get(each_array);
+		// store a reference to the effect so that we can update the start/end nodes in reconciliation
+		each_effect ??= /** @type {Effect} */ (active_effect);
+
+		array = get(each_array);
 		var length = array.length;
 
 		if (was_empty && length === 0) {
@@ -219,21 +263,56 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			}
 		}
 
-		if (!hydrating) {
-			reconcile(array, state, anchor, render_fn, flags, get_key, get_collection);
-		}
+		if (hydrating) {
+			if (length === 0 && fallback_fn) {
+				fallback = branch(() => fallback_fn(anchor));
+			}
+		} else {
+			if (should_defer_append()) {
+				var keys = new Set();
+				var batch = /** @type {Batch} */ (current_batch);
 
-		if (fallback_fn !== null) {
-			if (length === 0) {
-				if (fallback) {
-					resume_effect(fallback);
-				} else {
-					fallback = branch(() => fallback_fn(anchor));
+				for (i = 0; i < length; i += 1) {
+					value = array[i];
+					key = get_key(value, i);
+
+					var existing = state.items.get(key) ?? offscreen_items.get(key);
+
+					if (existing) {
+						// update before reconciliation, to trigger any async updates
+						if ((flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0) {
+							update_item(existing, value, i, flags);
+						}
+					} else {
+						item = create_item(
+							null,
+							state,
+							null,
+							null,
+							value,
+							key,
+							i,
+							render_fn,
+							flags,
+							get_collection,
+							true
+						);
+
+						offscreen_items.set(key, item);
+					}
+
+					keys.add(key);
 				}
-			} else if (fallback !== null) {
-				pause_effect(fallback, () => {
-					fallback = null;
-				});
+
+				for (const [key, item] of state.items) {
+					if (!keys.has(key)) {
+						batch.skipped_effects.add(item.e);
+					}
+				}
+
+				batch.add_callback(commit);
+			} else {
+				commit();
 			}
 		}
 
@@ -259,8 +338,10 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 /**
  * Add, remove, or reorder items output by an each block as its input changes
  * @template V
+ * @param {Effect} each_effect
  * @param {Array<V>} array
  * @param {EachState} state
+ * @param {Map<any, EachItem>} offscreen_items
  * @param {Element | Comment | Text} anchor
  * @param {(anchor: Node, item: MaybeSource<V>, index: number | Source<number>, collection: () => V[]) => void} render_fn
  * @param {number} flags
@@ -268,7 +349,17 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
  * @param {() => V[]} get_collection
  * @returns {void}
  */
-function reconcile(array, state, anchor, render_fn, flags, get_key, get_collection) {
+function reconcile(
+	each_effect,
+	array,
+	state,
+	offscreen_items,
+	anchor,
+	render_fn,
+	flags,
+	get_key,
+	get_collection
+) {
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 	var should_update = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 
@@ -320,23 +411,39 @@ function reconcile(array, state, anchor, render_fn, flags, get_key, get_collecti
 	for (i = 0; i < length; i += 1) {
 		value = array[i];
 		key = get_key(value, i);
+
 		item = items.get(key);
 
 		if (item === undefined) {
-			var child_anchor = current ? /** @type {TemplateNode} */ (current.e.nodes_start) : anchor;
+			var pending = offscreen_items.get(key);
 
-			prev = create_item(
-				child_anchor,
-				state,
-				prev,
-				prev === null ? state.first : prev.next,
-				value,
-				key,
-				i,
-				render_fn,
-				flags,
-				get_collection
-			);
+			if (pending !== undefined) {
+				offscreen_items.delete(key);
+				items.set(key, pending);
+
+				var next = prev ? prev.next : current;
+
+				link(state, prev, pending);
+				link(state, pending, next);
+
+				move(pending, next, anchor);
+				prev = pending;
+			} else {
+				var child_anchor = current ? /** @type {TemplateNode} */ (current.e.nodes_start) : anchor;
+
+				prev = create_item(
+					child_anchor,
+					state,
+					prev,
+					prev === null ? state.first : prev.next,
+					value,
+					key,
+					i,
+					render_fn,
+					flags,
+					get_collection
+				);
+			}
 
 			items.set(key, prev);
 
@@ -455,7 +562,7 @@ function reconcile(array, state, anchor, render_fn, flags, get_key, get_collecti
 				}
 			}
 
-			pause_effects(state, to_destroy, controlled_anchor, items);
+			pause_effects(state, to_destroy, controlled_anchor);
 		}
 	}
 
@@ -468,8 +575,14 @@ function reconcile(array, state, anchor, render_fn, flags, get_key, get_collecti
 		});
 	}
 
-	/** @type {Effect} */ (active_effect).first = state.first && state.first.e;
-	/** @type {Effect} */ (active_effect).last = prev && prev.e;
+	each_effect.first = state.first && state.first.e;
+	each_effect.last = prev && prev.e;
+
+	for (var unused of offscreen_items.values()) {
+		destroy_effect(unused.e);
+	}
+
+	offscreen_items.clear();
 }
 
 /**
@@ -493,7 +606,7 @@ function update_item(item, value, index, type) {
 
 /**
  * @template V
- * @param {Node} anchor
+ * @param {Node | null} anchor
  * @param {EachState} state
  * @param {EachItem | null} prev
  * @param {EachItem | null} next
@@ -503,6 +616,7 @@ function update_item(item, value, index, type) {
  * @param {(anchor: Node, item: V | Source<V>, index: number | Value<number>, collection: () => V[]) => void} render_fn
  * @param {number} flags
  * @param {() => V[]} get_collection
+ * @param {boolean} [deferred]
  * @returns {EachItem}
  */
 function create_item(
@@ -515,7 +629,8 @@ function create_item(
 	index,
 	render_fn,
 	flags,
-	get_collection
+	get_collection,
+	deferred
 ) {
 	var previous_each_item = current_each_item;
 	var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
@@ -549,13 +664,20 @@ function create_item(
 	current_each_item = item;
 
 	try {
-		item.e = branch(() => render_fn(anchor, v, i, get_collection), hydrating);
+		if (anchor === null) {
+			var fragment = document.createDocumentFragment();
+			fragment.append((anchor = create_text()));
+		}
+
+		item.e = branch(() => render_fn(/** @type {Node} */ (anchor), v, i, get_collection), hydrating);
 
 		item.e.prev = prev && prev.e;
 		item.e.next = next && next.e;
 
 		if (prev === null) {
-			state.first = item;
+			if (!deferred) {
+				state.first = item;
+			}
 		} else {
 			prev.next = item;
 			prev.e.next = item.e;
@@ -583,7 +705,7 @@ function move(item, next, anchor) {
 	var dest = next ? /** @type {TemplateNode} */ (next.e.nodes_start) : anchor;
 	var node = /** @type {TemplateNode} */ (item.e.nodes_start);
 
-	while (node !== end) {
+	while (node !== null && node !== end) {
 		var next_node = /** @type {TemplateNode} */ (get_next_sibling(node));
 		dest.before(node);
 		node = next_node;

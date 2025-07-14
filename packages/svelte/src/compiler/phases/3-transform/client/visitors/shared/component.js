@@ -129,11 +129,12 @@ export function build_component(node, component_name, context) {
 			(events[attribute.name] ||= []).push(handler);
 		} else if (attribute.type === 'SpreadAttribute') {
 			const expression = /** @type {Expression} */ (context.visit(attribute));
+
 			if (attribute.metadata.expression.has_state) {
 				props_and_spreads.push(
 					b.thunk(
-						attribute.metadata.expression.has_call
-							? b.call('$.get', memoizer.add(expression))
+						attribute.metadata.expression.has_await || attribute.metadata.expression.has_call
+							? b.call('$.get', memoizer.add(expression, attribute.metadata.expression.has_await))
 							: expression
 					)
 				);
@@ -147,7 +148,9 @@ export function build_component(node, component_name, context) {
 						attribute.name,
 						build_attribute_value(attribute.value, context, (value, metadata) => {
 							// TODO put the derived in the local block
-							return metadata.has_call ? b.call('$.get', memoizer.add(value)) : value;
+							return metadata.has_call || metadata.has_await
+								? b.call('$.get', memoizer.add(value, metadata.has_await))
+								: value;
 						}).value
 					)
 				);
@@ -166,20 +169,24 @@ export function build_component(node, component_name, context) {
 				attribute.value,
 				context,
 				(value, metadata) => {
-					if (!metadata.has_state) return value;
+					if (!metadata.has_state && !metadata.has_await) return value;
 
 					// When we have a non-simple computation, anything other than an Identifier or Member expression,
 					// then there's a good chance it needs to be memoized to avoid over-firing when read within the
 					// child component (e.g. `active={i === index}`)
-					const should_wrap_in_derived = get_attribute_chunks(attribute.value).some((n) => {
-						return (
-							n.type === 'ExpressionTag' &&
-							n.expression.type !== 'Identifier' &&
-							n.expression.type !== 'MemberExpression'
-						);
-					});
+					const should_wrap_in_derived =
+						metadata.has_await ||
+						get_attribute_chunks(attribute.value).some((n) => {
+							return (
+								n.type === 'ExpressionTag' &&
+								n.expression.type !== 'Identifier' &&
+								n.expression.type !== 'MemberExpression'
+							);
+						});
 
-					return should_wrap_in_derived ? b.call('$.get', memoizer.add(value)) : value;
+					return should_wrap_in_derived
+						? b.call('$.get', memoizer.add(value, metadata.has_await))
+						: value;
 				}
 			);
 
@@ -488,6 +495,19 @@ export function build_component(node, component_name, context) {
 	}
 
 	memoizer.apply();
+
+	const async_values = memoizer.async_values();
+
+	if (async_values) {
+		return b.stmt(
+			b.call(
+				'$.async',
+				anchor,
+				async_values,
+				b.arrow([b.id('$$anchor'), ...memoizer.async_ids()], b.block(statements))
+			)
+		);
+	}
 
 	return statements.length > 1 ? b.block(statements) : statements[0];
 }

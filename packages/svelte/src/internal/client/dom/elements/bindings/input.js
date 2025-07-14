@@ -64,6 +64,15 @@ export function bind_value(input, get, set = get) {
 
 		var value = get();
 
+		if (input === document.activeElement) {
+			// Never rewrite the contents of a focused input. We can get here if, for example,
+			// an update is deferred because of async work depending on the input:
+			//
+			// <input bind:value={query}>
+			// <p>{await find(query)}</p>
+			return;
+		}
+
 		if (is_numberlike_input(input) && value === to_number(input.value)) {
 			// handles 0 vs 00 case (see https://github.com/sveltejs/svelte/issues/9959)
 			return;
