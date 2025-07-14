@@ -48,6 +48,7 @@ import { walk } from 'zimmerframe';
 import fuzzymatch from '../../../../1-parse/utils/fuzzymatch.js';
 import { is_content_editable_binding } from '../../../../../../utils.js';
 import * as w from '../../../../../warnings.js';
+
 /**
  * @param {ARIARoleDefinitionKey} role
  */

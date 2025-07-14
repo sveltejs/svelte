@@ -2,10 +2,12 @@
 import { roles as roles_map, elementRoles } from 'aria-query';
 // @ts-expect-error package doesn't provide typings
 import { AXObjects, elementAXObjects } from 'axobject-query';
+
 export const aria_attributes =
 	'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby description details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(
 		' '
 	);
+
 /** @type {Record<string, string[]>} */
 export const a11y_required_attributes = {
 	a: ['href'],
@@ -17,6 +19,7 @@ export const a11y_required_attributes = {
 	img: ['alt'],
 	object: ['title', 'aria-label', 'aria-labelledby']
 };
+
 export const a11y_distracting_elements = ['blink', 'marquee'];
 
 // this excludes `<a>` and `<button>` because they are handled separately
@@ -29,6 +32,7 @@ export const a11y_required_content = [
 	'h5',
 	'h6'
 ];
+
 export const a11y_labelable = [
 	'button',
 	'input',
@@ -39,6 +43,7 @@ export const a11y_labelable = [
 	'select',
 	'textarea'
 ];
+
 export const a11y_interactive_handlers = [
 	// Keyboard events
 	'keypress',
@@ -64,6 +69,7 @@ export const a11y_interactive_handlers = [
 	'mouseover',
 	'mouseup'
 ];
+
 export const a11y_recommended_interactive_handlers = [
 	'click',
 	'mousedown',
@@ -72,10 +78,12 @@ export const a11y_recommended_interactive_handlers = [
 	'keydown',
 	'keyup'
 ];
+
 export const a11y_nested_implicit_semantics = new Map([
 	['header', 'banner'],
 	['footer', 'contentinfo']
 ]);
+
 export const a11y_implicit_semantics = new Map([
 	['a', 'link'],
 	['area', 'link'],
@@ -121,11 +129,13 @@ export const a11y_implicit_semantics = new Map([
 	['tr', 'row'],
 	['ul', 'list']
 ]);
+
 export const menuitem_type_to_implicit_role = new Map([
 	['command', 'menuitem'],
 	['checkbox', 'menuitemcheckbox'],
 	['radio', 'menuitemradio']
 ]);
+
 export const input_type_to_implicit_role = new Map([
 	['button', 'button'],
 	['image', 'button'],
@@ -160,6 +170,7 @@ export const combobox_if_list = ['email', 'search', 'tel', 'text', 'url'];
 
 // https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofilling-form-controls:-the-autocomplete-attribute
 export const address_type_tokens = ['shipping', 'billing'];
+
 export const autofill_field_name_tokens = [
 	'',
 	'on',
@@ -209,7 +220,9 @@ export const autofill_field_name_tokens = [
 	'url',
 	'photo'
 ];
+
 export const contact_type_tokens = ['home', 'work', 'mobile', 'fax', 'pager'];
+
 export const autofill_contact_field_name_tokens = [
 	'tel',
 	'tel-country-code',
@@ -232,8 +245,11 @@ export const ElementInteractivity = /** @type {const} */ ({
 export const invisible_elements = ['meta', 'html', 'script', 'style'];
 
 export const aria_roles = roles_map.keys();
+
 export const abstract_roles = aria_roles.filter((role) => roles_map.get(role)?.abstract);
+
 const non_abstract_roles = aria_roles.filter((name) => !abstract_roles.includes(name));
+
 export const non_interactive_roles = non_abstract_roles
 	.filter((name) => {
 		const role = roles_map.get(name);
@@ -252,6 +268,7 @@ export const non_interactive_roles = non_abstract_roles
 		// value is always `readonly`, so we treat it as a non-interactive role.
 		'progressbar'
 	);
+
 export const interactive_roles = non_abstract_roles.filter(
 	(name) =>
 		!non_interactive_roles.includes(name) &&
@@ -280,11 +297,9 @@ elementRoles.entries().forEach(([schema, roles]) => {
 		interactive_element_role_schemas.push(schema);
 	}
 });
+
 const interactive_ax_objects = [...AXObjects.keys()].filter(
 	(name) => AXObjects.get(name).type === 'widget'
-);
-const non_interactive_ax_objects = [...AXObjects.keys()].filter((name) =>
-	['windows', 'structure'].includes(AXObjects.get(name).type)
 );
 
 /**
@@ -300,6 +315,10 @@ elementAXObjects.entries().forEach(
 			interactive_element_ax_object_schemas.push(schema);
 		}
 	}
+);
+
+const non_interactive_ax_objects = [...AXObjects.keys()].filter((name) =>
+	['windows', 'structure'].includes(AXObjects.get(name).type)
 );
 
 /**
