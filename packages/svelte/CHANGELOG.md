@@ -1,5 +1,17 @@
 # svelte
 
+## 5.36.0
+
+### Minor Changes
+
+- feat: support `await` in components when using the `experimental.async` compiler option ([#15844](https://github.com/sveltejs/svelte/pull/15844))
+
+### Patch Changes
+
+- fix: silence a11y warning for inert elements ([#16339](https://github.com/sveltejs/svelte/pull/16339))
+
+- chore: clean up a11y analysis code ([#16345](https://github.com/sveltejs/svelte/pull/16345))
+
 ## 5.35.7
 
 ### Patch Changes
