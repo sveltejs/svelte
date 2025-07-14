@@ -34,6 +34,7 @@ import { Boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_deriveds, current_batch } from './batch.js';
+import { unset_context } from './async.js';
 
 /** @type {Effect | null} */
 export let current_async_effect = null;
@@ -179,6 +180,8 @@ export function async_derived(fn, location) {
 				boundary.update_pending_count(-1);
 				if (!pending) batch.decrement();
 			}
+
+			unset_context();
 		};
 
 		promise.then(handler, (e) => handler(null, e || 'unknown'));

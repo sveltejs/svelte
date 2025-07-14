@@ -57,6 +57,7 @@ export function flatten(sync, async, fn) {
 			}
 
 			batch?.deactivate();
+			unset_context();
 		})
 		.catch((error) => {
 			boundary.error(error);
@@ -81,10 +82,6 @@ function capture() {
 		if (DEV) {
 			set_from_async_derived(null);
 		}
-
-		// prevent the active effect from outstaying its welcome
-		// TODO this feels brittle
-		queue_micro_task(unset_context);
 	};
 }
 
@@ -123,7 +120,7 @@ export async function track_reactivity_loss(promise) {
 	};
 }
 
-function unset_context() {
+export function unset_context() {
 	set_active_effect(null);
 	set_active_reaction(null);
 	set_component_context(null);
