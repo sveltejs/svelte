@@ -66,18 +66,12 @@ export function invoke_error_boundary(error, effect) {
 	throw error;
 }
 
-/** @type {WeakSet<Error>} */
-const adjusted_errors = new WeakSet();
-
 /**
  * Add useful information to the error message/stack in development
  * @param {Error} error
  * @param {Effect} effect
  */
 function get_adjustments(error, effect) {
-	if (adjusted_errors.has(error)) return;
-	adjusted_errors.add(error);
-
 	const message_descriptor = get_descriptor(error, 'message');
 
 	// if the message was already changed and it's not configurable we can't change it
