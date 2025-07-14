@@ -96,7 +96,7 @@ export function capture(track = true) {
 
 		// prevent the active effect from outstaying its welcome
 		// TODO this feels brittle
-		queue_micro_task(exit);
+		queue_micro_task(unset_context);
 	};
 }
 
@@ -119,7 +119,7 @@ export async function save(promise, track = true) {
 	};
 }
 
-function exit() {
+function unset_context() {
 	set_active_effect(null);
 	set_active_reaction(null);
 	set_component_context(null);
