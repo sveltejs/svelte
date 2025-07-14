@@ -19,7 +19,6 @@ import {
 	derived_safe_equal,
 	set_from_async_derived
 } from './deriveds.js';
-import { queue_micro_task } from '../dom/task.js';
 
 /**
  *

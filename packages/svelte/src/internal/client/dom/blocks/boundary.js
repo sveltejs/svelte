@@ -22,7 +22,6 @@ import { get_next_sibling } from '../operations.js';
 import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
 import { DEV } from 'esm-env';
-import { current_async_effect, set_from_async_derived } from '../../reactivity/deriveds.js';
 import { Batch } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
