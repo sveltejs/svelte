@@ -10,6 +10,10 @@ import is_reference from 'is-reference';
 import { dev, is_ignored, locator, component_name } from '../../../../../state.js';
 import { build_getter } from '../../utils.js';
 
+/**
+ * A utility for extracting complex expressions (such as call expressions)
+ * from templates and replacing them with `$0`, `$1` etc
+ */
 export class Memoizer {
 	/** @type {Array<{ id: Identifier, expression: Expression }>} */
 	#sync = [];
