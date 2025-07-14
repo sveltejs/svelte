@@ -278,60 +278,42 @@ export const interactive_roles = non_abstract_roles.filter(
 
 export const presentation_roles = ['presentation', 'none'];
 
-/**
- * @type {ARIARoleRelationConcept[]}
- */
+/** @type {ARIARoleRelationConcept[]} */
 export const non_interactive_element_role_schemas = [];
-elementRoles.entries().forEach(([schema, roles]) => {
+
+/** @type {ARIARoleRelationConcept[]} */
+export const interactive_element_role_schemas = [];
+
+for (const [schema, roles] of elementRoles.entries()) {
 	if ([...roles].every((role) => role !== 'generic' && non_interactive_roles.includes(role))) {
 		non_interactive_element_role_schemas.push(schema);
 	}
-});
 
-/**
- * @type {ARIARoleRelationConcept[]}
- */
-export const interactive_element_role_schemas = [];
-elementRoles.entries().forEach(([schema, roles]) => {
 	if ([...roles].every((role) => interactive_roles.includes(role))) {
 		interactive_element_role_schemas.push(schema);
 	}
-});
+}
 
 const interactive_ax_objects = [...AXObjects.keys()].filter(
 	(name) => AXObjects.get(name).type === 'widget'
 );
 
-/**
- * @type {ARIARoleRelationConcept[]}
- */
+/** @type {ARIARoleRelationConcept[]} */
 export const interactive_element_ax_object_schemas = [];
-elementAXObjects.entries().forEach(
-	/**
-	 * @param {any} _
-	 */
-	([schema, ax_object]) => {
-		if ([...ax_object].every((role) => interactive_ax_objects.includes(role))) {
-			interactive_element_ax_object_schemas.push(schema);
-		}
-	}
-);
+
+/** @type {ARIARoleRelationConcept[]} */
+export const non_interactive_element_ax_object_schemas = [];
 
 const non_interactive_ax_objects = [...AXObjects.keys()].filter((name) =>
 	['windows', 'structure'].includes(AXObjects.get(name).type)
 );
 
-/**
- * @type {ARIARoleRelationConcept[]}
- */
-export const non_interactive_element_ax_object_schemas = [];
-elementAXObjects.entries().forEach(
-	/**
-	 * @param {any} _
-	 */
-	([schema, ax_object]) => {
-		if ([...ax_object].every((role) => non_interactive_ax_objects.includes(role))) {
-			non_interactive_element_ax_object_schemas.push(schema);
-		}
+for (const [schema, ax_object] of elementAXObjects.entries()) {
+	if ([...ax_object].every((role) => interactive_ax_objects.includes(role))) {
+		interactive_element_ax_object_schemas.push(schema);
 	}
-);
+
+	if ([...ax_object].every((role) => non_interactive_ax_objects.includes(role))) {
+		non_interactive_element_ax_object_schemas.push(schema);
+	}
+}
