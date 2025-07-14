@@ -83,7 +83,13 @@ export class Boundary {
 	#pending_count = 0;
 	#is_creating_fallback = false;
 
-	/** @type {Source<number> | null} */
+	/**
+	 * A source containing the number of pending async deriveds/expressions.
+	 * Only created if `$effect.pending()` is used inside the boundary,
+	 * otherwise updating the source results in needless `Batch.ensure()`
+	 * calls followed by no-op flushes
+	 * @type {Source<number> | null}
+	 */
 	#effect_pending = null;
 
 	#effect_pending_subscriber = createSubscriber(() => {
