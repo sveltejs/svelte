@@ -51,7 +51,7 @@ import * as w from '../../../../../warnings.js';
 /**
  * @param {ARIARoleDefinitionKey} role
  */
-export function is_presentation_role(role) {
+function is_presentation_role(role) {
 	return presentation_roles.includes(role);
 }
 
@@ -59,7 +59,7 @@ export function is_presentation_role(role) {
  * @param {string} tag_name
  * @param {Map<string, AST.Attribute>} attribute_map
  */
-export function is_hidden_from_screen_reader(tag_name, attribute_map) {
+function is_hidden_from_screen_reader(tag_name, attribute_map) {
 	if (tag_name === 'input') {
 		const type = get_static_value(attribute_map.get('type'));
 		if (type === 'hidden') {
@@ -77,7 +77,7 @@ export function is_hidden_from_screen_reader(tag_name, attribute_map) {
 /**
  * @param {Map<string, AST.Attribute>} attribute_map
  */
-export function has_disabled_attribute(attribute_map) {
+function has_disabled_attribute(attribute_map) {
 	const disabled_attr_value = get_static_value(attribute_map.get('disabled'));
 	if (disabled_attr_value) {
 		return true;
@@ -98,7 +98,7 @@ export function has_disabled_attribute(attribute_map) {
  * @param {Map<string, AST.Attribute>} attribute_map
  * @returns {ElementInteractivity[keyof ElementInteractivity]}
  */
-export function element_interactivity(tag_name, attribute_map) {
+function element_interactivity(tag_name, attribute_map) {
 	if (
 		interactive_element_role_schemas.some((schema) => match_schema(schema, tag_name, attribute_map))
 	) {
@@ -134,7 +134,7 @@ export function element_interactivity(tag_name, attribute_map) {
  * @param {Map<string, AST.Attribute>} attribute_map
  * @returns {boolean}
  */
-export function is_interactive_element(tag_name, attribute_map) {
+function is_interactive_element(tag_name, attribute_map) {
 	return element_interactivity(tag_name, attribute_map) === ElementInteractivity.Interactive;
 }
 
@@ -143,7 +143,7 @@ export function is_interactive_element(tag_name, attribute_map) {
  * @param {Map<string, AST.Attribute>} attribute_map
  * @returns {boolean}
  */
-export function is_non_interactive_element(tag_name, attribute_map) {
+function is_non_interactive_element(tag_name, attribute_map) {
 	return element_interactivity(tag_name, attribute_map) === ElementInteractivity.NonInteractive;
 }
 
@@ -152,7 +152,7 @@ export function is_non_interactive_element(tag_name, attribute_map) {
  * @param {Map<string, AST.Attribute>} attribute_map
  * @returns {boolean}
  */
-export function is_static_element(tag_name, attribute_map) {
+function is_static_element(tag_name, attribute_map) {
 	return element_interactivity(tag_name, attribute_map) === ElementInteractivity.Static;
 }
 
@@ -161,7 +161,7 @@ export function is_static_element(tag_name, attribute_map) {
  * @param {string} tag_name
  * @param {Map<string, AST.Attribute>} attribute_map
  */
-export function is_semantic_role_element(role, tag_name, attribute_map) {
+function is_semantic_role_element(role, tag_name, attribute_map) {
 	for (const [schema, ax_object] of elementAXObjects.entries()) {
 		if (
 			schema.name === tag_name &&
@@ -191,7 +191,7 @@ export function is_semantic_role_element(role, tag_name, attribute_map) {
 /**
  * @param {null | true | string} autocomplete
  */
-export function is_valid_autocomplete(autocomplete) {
+function is_valid_autocomplete(autocomplete) {
 	if (autocomplete === true) {
 		return false;
 	} else if (!autocomplete) {
@@ -223,7 +223,7 @@ export function is_valid_autocomplete(autocomplete) {
 }
 
 /** @param {Map<string, AST.Attribute>} attribute_map */
-export function input_implicit_role(attribute_map) {
+function input_implicit_role(attribute_map) {
 	const type_attribute = attribute_map.get('type');
 	if (!type_attribute) return;
 	const type = get_static_text_value(type_attribute);
@@ -236,7 +236,7 @@ export function input_implicit_role(attribute_map) {
 }
 
 /** @param {Map<string, AST.Attribute>} attribute_map */
-export function menuitem_implicit_role(attribute_map) {
+function menuitem_implicit_role(attribute_map) {
 	const type_attribute = attribute_map.get('type');
 	if (!type_attribute) return;
 	const type = get_static_text_value(type_attribute);
@@ -248,7 +248,7 @@ export function menuitem_implicit_role(attribute_map) {
  * @param {string} name
  * @param {Map<string, AST.Attribute>} attribute_map
  */
-export function get_implicit_role(name, attribute_map) {
+function get_implicit_role(name, attribute_map) {
 	if (name === 'menuitem') {
 		return menuitem_implicit_role(attribute_map);
 	} else if (name === 'input') {
@@ -261,28 +261,28 @@ export function get_implicit_role(name, attribute_map) {
 /**
  * @param {ARIARoleDefinitionKey} role
  */
-export function is_non_interactive_roles(role) {
+function is_non_interactive_roles(role) {
 	return non_interactive_roles.includes(role);
 }
 
 /**
  * @param {ARIARoleDefinitionKey} role
  */
-export function is_interactive_roles(role) {
+function is_interactive_roles(role) {
 	return interactive_roles.includes(role);
 }
 
 /**
  * @param {ARIARoleDefinitionKey} role
  */
-export function is_abstract_role(role) {
+function is_abstract_role(role) {
 	return abstract_roles.includes(role);
 }
 
 /**
  * @param {AST.Attribute | undefined} attribute
  */
-export function get_static_text_value(attribute) {
+function get_static_text_value(attribute) {
 	const value = get_static_value(attribute);
 	if (value === true) return null;
 	return value;
@@ -291,7 +291,7 @@ export function get_static_text_value(attribute) {
 /**
  * @param {AST.Attribute | undefined} attribute
  */
-export function get_static_value(attribute) {
+function get_static_value(attribute) {
 	if (!attribute) return null;
 	if (attribute.value === true) return true;
 	if (is_text_attribute(attribute)) return attribute.value[0].data;
@@ -301,7 +301,7 @@ export function get_static_value(attribute) {
 /**
  * @param {AST.RegularElement | AST.SvelteElement} element
  */
-export function has_content(element) {
+function has_content(element) {
 	for (const node of element.fragment.nodes) {
 		if (node.type === 'Text') {
 			if (node.data.trim() === '') {
