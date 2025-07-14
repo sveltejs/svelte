@@ -8,17 +8,7 @@ import { sanitize_template_string } from '../../../../../utils/sanitize_template
 import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator, component_name } from '../../../../../state.js';
-import { build_getter, create_derived } from '../../utils.js';
-
-/**
- * @param {ComponentClientTransformState} state
- * @param {Expression} value
- */
-export function memoize_expression(state, value) {
-	const id = b.id(state.scope.generate('expression'));
-	state.init.push(b.const(id, create_derived(state, b.thunk(value))));
-	return b.call('$.get', id);
-}
+import { build_getter } from '../../utils.js';
 
 /**
  * A utility for extracting complex expressions (such as call expressions)
