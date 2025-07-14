@@ -50,286 +50,6 @@ import { is_content_editable_binding } from '../../../../../../utils.js';
 import * as w from '../../../../../warnings.js';
 
 /**
- * @param {ARIARoleDefinitionKey} role
- */
-function is_presentation_role(role) {
-	return presentation_roles.includes(role);
-}
-
-/**
- * @param {string} tag_name
- * @param {Map<string, AST.Attribute>} attribute_map
- */
-function is_hidden_from_screen_reader(tag_name, attribute_map) {
-	if (tag_name === 'input') {
-		const type = get_static_value(attribute_map.get('type'));
-		if (type === 'hidden') {
-			return true;
-		}
-	}
-
-	const aria_hidden = attribute_map.get('aria-hidden');
-	if (!aria_hidden) return false;
-	const aria_hidden_value = get_static_value(aria_hidden);
-	if (aria_hidden_value === null) return true;
-	return aria_hidden_value === true || aria_hidden_value === 'true';
-}
-
-/**
- * @param {Map<string, AST.Attribute>} attribute_map
- */
-function has_disabled_attribute(attribute_map) {
-	const disabled_attr_value = get_static_value(attribute_map.get('disabled'));
-	if (disabled_attr_value) {
-		return true;
-	}
-
-	const aria_disabled_attr = attribute_map.get('aria-disabled');
-	if (aria_disabled_attr) {
-		const aria_disabled_attr_value = get_static_value(aria_disabled_attr);
-		if (aria_disabled_attr_value === 'true') {
-			return true;
-		}
-	}
-	return false;
-}
-
-/**
- * @param {string} tag_name
- * @param {Map<string, AST.Attribute>} attribute_map
- * @returns {ElementInteractivity[keyof ElementInteractivity]}
- */
-function element_interactivity(tag_name, attribute_map) {
-	if (
-		interactive_element_role_schemas.some((schema) => match_schema(schema, tag_name, attribute_map))
-	) {
-		return ElementInteractivity.Interactive;
-	}
-	if (
-		tag_name !== 'header' &&
-		non_interactive_element_role_schemas.some((schema) =>
-			match_schema(schema, tag_name, attribute_map)
-		)
-	) {
-		return ElementInteractivity.NonInteractive;
-	}
-	if (
-		interactive_element_ax_object_schemas.some((schema) =>
-			match_schema(schema, tag_name, attribute_map)
-		)
-	) {
-		return ElementInteractivity.Interactive;
-	}
-	if (
-		non_interactive_element_ax_object_schemas.some((schema) =>
-			match_schema(schema, tag_name, attribute_map)
-		)
-	) {
-		return ElementInteractivity.NonInteractive;
-	}
-	return ElementInteractivity.Static;
-}
-
-/**
- * @param {string} tag_name
- * @param {Map<string, AST.Attribute>} attribute_map
- * @returns {boolean}
- */
-function is_interactive_element(tag_name, attribute_map) {
-	return element_interactivity(tag_name, attribute_map) === ElementInteractivity.Interactive;
-}
-
-/**
- * @param {string} tag_name
- * @param {Map<string, AST.Attribute>} attribute_map
- * @returns {boolean}
- */
-function is_non_interactive_element(tag_name, attribute_map) {
-	return element_interactivity(tag_name, attribute_map) === ElementInteractivity.NonInteractive;
-}
-
-/**
- * @param {string} tag_name
- * @param {Map<string, AST.Attribute>} attribute_map
- * @returns {boolean}
- */
-function is_static_element(tag_name, attribute_map) {
-	return element_interactivity(tag_name, attribute_map) === ElementInteractivity.Static;
-}
-
-/**
- * @param {ARIARoleDefinitionKey} role
- * @param {string} tag_name
- * @param {Map<string, AST.Attribute>} attribute_map
- */
-function is_semantic_role_element(role, tag_name, attribute_map) {
-	for (const [schema, ax_object] of elementAXObjects.entries()) {
-		if (
-			schema.name === tag_name &&
-			(!schema.attributes ||
-				schema.attributes.every(
-					/** @param {any} attr */
-					(attr) =>
-						attribute_map.has(attr.name) &&
-						get_static_value(attribute_map.get(attr.name)) === attr.value
-				))
-		) {
-			for (const name of ax_object) {
-				const roles = AXObjectRoles.get(name);
-				if (roles) {
-					for (const { name } of roles) {
-						if (name === role) {
-							return true;
-						}
-					}
-				}
-			}
-		}
-	}
-	return false;
-}
-
-/**
- * @param {null | true | string} autocomplete
- */
-function is_valid_autocomplete(autocomplete) {
-	if (autocomplete === true) {
-		return false;
-	} else if (!autocomplete) {
-		return true; // dynamic value
-	}
-	const tokens = autocomplete.trim().toLowerCase().split(regex_whitespaces);
-	if (typeof tokens[0] === 'string' && tokens[0].startsWith('section-')) {
-		tokens.shift();
-	}
-	if (address_type_tokens.includes(tokens[0])) {
-		tokens.shift();
-	}
-	if (autofill_field_name_tokens.includes(tokens[0])) {
-		tokens.shift();
-	} else {
-		if (contact_type_tokens.includes(tokens[0])) {
-			tokens.shift();
-		}
-		if (autofill_contact_field_name_tokens.includes(tokens[0])) {
-			tokens.shift();
-		} else {
-			return false;
-		}
-	}
-	if (tokens[0] === 'webauthn') {
-		tokens.shift();
-	}
-	return tokens.length === 0;
-}
-
-/** @param {Map<string, AST.Attribute>} attribute_map */
-function input_implicit_role(attribute_map) {
-	const type_attribute = attribute_map.get('type');
-	if (!type_attribute) return;
-	const type = get_static_text_value(type_attribute);
-	if (!type) return;
-	const list_attribute_exists = attribute_map.has('list');
-	if (list_attribute_exists && combobox_if_list.includes(type)) {
-		return 'combobox';
-	}
-	return input_type_to_implicit_role.get(type);
-}
-
-/** @param {Map<string, AST.Attribute>} attribute_map */
-function menuitem_implicit_role(attribute_map) {
-	const type_attribute = attribute_map.get('type');
-	if (!type_attribute) return;
-	const type = get_static_text_value(type_attribute);
-	if (!type) return;
-	return menuitem_type_to_implicit_role.get(type);
-}
-
-/**
- * @param {string} name
- * @param {Map<string, AST.Attribute>} attribute_map
- */
-function get_implicit_role(name, attribute_map) {
-	if (name === 'menuitem') {
-		return menuitem_implicit_role(attribute_map);
-	} else if (name === 'input') {
-		return input_implicit_role(attribute_map);
-	} else {
-		return a11y_implicit_semantics.get(name);
-	}
-}
-
-/**
- * @param {ARIARoleDefinitionKey} role
- */
-function is_non_interactive_roles(role) {
-	return non_interactive_roles.includes(role);
-}
-
-/**
- * @param {ARIARoleDefinitionKey} role
- */
-function is_interactive_roles(role) {
-	return interactive_roles.includes(role);
-}
-
-/**
- * @param {ARIARoleDefinitionKey} role
- */
-function is_abstract_role(role) {
-	return abstract_roles.includes(role);
-}
-
-/**
- * @param {AST.Attribute | undefined} attribute
- */
-function get_static_text_value(attribute) {
-	const value = get_static_value(attribute);
-	if (value === true) return null;
-	return value;
-}
-
-/**
- * @param {AST.Attribute | undefined} attribute
- */
-function get_static_value(attribute) {
-	if (!attribute) return null;
-	if (attribute.value === true) return true;
-	if (is_text_attribute(attribute)) return attribute.value[0].data;
-	return null;
-}
-
-/**
- * @param {AST.RegularElement | AST.SvelteElement} element
- */
-function has_content(element) {
-	for (const node of element.fragment.nodes) {
-		if (node.type === 'Text') {
-			if (node.data.trim() === '') {
-				continue;
-			}
-		}
-
-		if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
-			if (
-				node.name === 'img' &&
-				node.attributes.some((node) => node.type === 'Attribute' && node.name === 'alt')
-			) {
-				return true;
-			}
-
-			if (!has_content(node)) {
-				continue;
-			}
-		}
-
-		// assume everything else has content — this will result in false positives
-		// (e.g. an empty `{#if ...}{/if}`) but that's probably fine
-		return true;
-	}
-}
-
-/**
  * @param {AST.RegularElement | AST.SvelteElement} node
  * @param {Context} context
  */
@@ -825,6 +545,286 @@ export function check_element(node, context) {
 		!has_content(node)
 	) {
 		w.a11y_missing_content(node, node.name);
+	}
+}
+
+/**
+ * @param {ARIARoleDefinitionKey} role
+ */
+function is_presentation_role(role) {
+	return presentation_roles.includes(role);
+}
+
+/**
+ * @param {string} tag_name
+ * @param {Map<string, AST.Attribute>} attribute_map
+ */
+function is_hidden_from_screen_reader(tag_name, attribute_map) {
+	if (tag_name === 'input') {
+		const type = get_static_value(attribute_map.get('type'));
+		if (type === 'hidden') {
+			return true;
+		}
+	}
+
+	const aria_hidden = attribute_map.get('aria-hidden');
+	if (!aria_hidden) return false;
+	const aria_hidden_value = get_static_value(aria_hidden);
+	if (aria_hidden_value === null) return true;
+	return aria_hidden_value === true || aria_hidden_value === 'true';
+}
+
+/**
+ * @param {Map<string, AST.Attribute>} attribute_map
+ */
+function has_disabled_attribute(attribute_map) {
+	const disabled_attr_value = get_static_value(attribute_map.get('disabled'));
+	if (disabled_attr_value) {
+		return true;
+	}
+
+	const aria_disabled_attr = attribute_map.get('aria-disabled');
+	if (aria_disabled_attr) {
+		const aria_disabled_attr_value = get_static_value(aria_disabled_attr);
+		if (aria_disabled_attr_value === 'true') {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * @param {string} tag_name
+ * @param {Map<string, AST.Attribute>} attribute_map
+ * @returns {ElementInteractivity[keyof ElementInteractivity]}
+ */
+function element_interactivity(tag_name, attribute_map) {
+	if (
+		interactive_element_role_schemas.some((schema) => match_schema(schema, tag_name, attribute_map))
+	) {
+		return ElementInteractivity.Interactive;
+	}
+	if (
+		tag_name !== 'header' &&
+		non_interactive_element_role_schemas.some((schema) =>
+			match_schema(schema, tag_name, attribute_map)
+		)
+	) {
+		return ElementInteractivity.NonInteractive;
+	}
+	if (
+		interactive_element_ax_object_schemas.some((schema) =>
+			match_schema(schema, tag_name, attribute_map)
+		)
+	) {
+		return ElementInteractivity.Interactive;
+	}
+	if (
+		non_interactive_element_ax_object_schemas.some((schema) =>
+			match_schema(schema, tag_name, attribute_map)
+		)
+	) {
+		return ElementInteractivity.NonInteractive;
+	}
+	return ElementInteractivity.Static;
+}
+
+/**
+ * @param {string} tag_name
+ * @param {Map<string, AST.Attribute>} attribute_map
+ * @returns {boolean}
+ */
+function is_interactive_element(tag_name, attribute_map) {
+	return element_interactivity(tag_name, attribute_map) === ElementInteractivity.Interactive;
+}
+
+/**
+ * @param {string} tag_name
+ * @param {Map<string, AST.Attribute>} attribute_map
+ * @returns {boolean}
+ */
+function is_non_interactive_element(tag_name, attribute_map) {
+	return element_interactivity(tag_name, attribute_map) === ElementInteractivity.NonInteractive;
+}
+
+/**
+ * @param {string} tag_name
+ * @param {Map<string, AST.Attribute>} attribute_map
+ * @returns {boolean}
+ */
+function is_static_element(tag_name, attribute_map) {
+	return element_interactivity(tag_name, attribute_map) === ElementInteractivity.Static;
+}
+
+/**
+ * @param {ARIARoleDefinitionKey} role
+ * @param {string} tag_name
+ * @param {Map<string, AST.Attribute>} attribute_map
+ */
+function is_semantic_role_element(role, tag_name, attribute_map) {
+	for (const [schema, ax_object] of elementAXObjects.entries()) {
+		if (
+			schema.name === tag_name &&
+			(!schema.attributes ||
+				schema.attributes.every(
+					/** @param {any} attr */
+					(attr) =>
+						attribute_map.has(attr.name) &&
+						get_static_value(attribute_map.get(attr.name)) === attr.value
+				))
+		) {
+			for (const name of ax_object) {
+				const roles = AXObjectRoles.get(name);
+				if (roles) {
+					for (const { name } of roles) {
+						if (name === role) {
+							return true;
+						}
+					}
+				}
+			}
+		}
+	}
+	return false;
+}
+
+/**
+ * @param {null | true | string} autocomplete
+ */
+function is_valid_autocomplete(autocomplete) {
+	if (autocomplete === true) {
+		return false;
+	} else if (!autocomplete) {
+		return true; // dynamic value
+	}
+	const tokens = autocomplete.trim().toLowerCase().split(regex_whitespaces);
+	if (typeof tokens[0] === 'string' && tokens[0].startsWith('section-')) {
+		tokens.shift();
+	}
+	if (address_type_tokens.includes(tokens[0])) {
+		tokens.shift();
+	}
+	if (autofill_field_name_tokens.includes(tokens[0])) {
+		tokens.shift();
+	} else {
+		if (contact_type_tokens.includes(tokens[0])) {
+			tokens.shift();
+		}
+		if (autofill_contact_field_name_tokens.includes(tokens[0])) {
+			tokens.shift();
+		} else {
+			return false;
+		}
+	}
+	if (tokens[0] === 'webauthn') {
+		tokens.shift();
+	}
+	return tokens.length === 0;
+}
+
+/** @param {Map<string, AST.Attribute>} attribute_map */
+function input_implicit_role(attribute_map) {
+	const type_attribute = attribute_map.get('type');
+	if (!type_attribute) return;
+	const type = get_static_text_value(type_attribute);
+	if (!type) return;
+	const list_attribute_exists = attribute_map.has('list');
+	if (list_attribute_exists && combobox_if_list.includes(type)) {
+		return 'combobox';
+	}
+	return input_type_to_implicit_role.get(type);
+}
+
+/** @param {Map<string, AST.Attribute>} attribute_map */
+function menuitem_implicit_role(attribute_map) {
+	const type_attribute = attribute_map.get('type');
+	if (!type_attribute) return;
+	const type = get_static_text_value(type_attribute);
+	if (!type) return;
+	return menuitem_type_to_implicit_role.get(type);
+}
+
+/**
+ * @param {string} name
+ * @param {Map<string, AST.Attribute>} attribute_map
+ */
+function get_implicit_role(name, attribute_map) {
+	if (name === 'menuitem') {
+		return menuitem_implicit_role(attribute_map);
+	} else if (name === 'input') {
+		return input_implicit_role(attribute_map);
+	} else {
+		return a11y_implicit_semantics.get(name);
+	}
+}
+
+/**
+ * @param {ARIARoleDefinitionKey} role
+ */
+function is_non_interactive_roles(role) {
+	return non_interactive_roles.includes(role);
+}
+
+/**
+ * @param {ARIARoleDefinitionKey} role
+ */
+function is_interactive_roles(role) {
+	return interactive_roles.includes(role);
+}
+
+/**
+ * @param {ARIARoleDefinitionKey} role
+ */
+function is_abstract_role(role) {
+	return abstract_roles.includes(role);
+}
+
+/**
+ * @param {AST.Attribute | undefined} attribute
+ */
+function get_static_text_value(attribute) {
+	const value = get_static_value(attribute);
+	if (value === true) return null;
+	return value;
+}
+
+/**
+ * @param {AST.Attribute | undefined} attribute
+ */
+function get_static_value(attribute) {
+	if (!attribute) return null;
+	if (attribute.value === true) return true;
+	if (is_text_attribute(attribute)) return attribute.value[0].data;
+	return null;
+}
+
+/**
+ * @param {AST.RegularElement | AST.SvelteElement} element
+ */
+function has_content(element) {
+	for (const node of element.fragment.nodes) {
+		if (node.type === 'Text') {
+			if (node.data.trim() === '') {
+				continue;
+			}
+		}
+
+		if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
+			if (
+				node.name === 'img' &&
+				node.attributes.some((node) => node.type === 'Attribute' && node.name === 'alt')
+			) {
+				return true;
+			}
+
+			if (!has_content(node)) {
+				continue;
+			}
+		}
+
+		// assume everything else has content — this will result in false positives
+		// (e.g. an empty `{#if ...}{/if}`) but that's probably fine
+		return true;
 	}
 }
 
