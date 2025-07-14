@@ -233,7 +233,7 @@ export const invisible_elements = ['meta', 'html', 'script', 'style'];
 
 export const aria_roles = roles_map.keys();
 export const abstract_roles = aria_roles.filter((role) => roles_map.get(role)?.abstract);
-export const non_abstract_roles = aria_roles.filter((name) => !abstract_roles.includes(name));
+const non_abstract_roles = aria_roles.filter((name) => !abstract_roles.includes(name));
 export const non_interactive_roles = non_abstract_roles
 	.filter((name) => {
 		const role = roles_map.get(name);
@@ -280,10 +280,10 @@ elementRoles.entries().forEach(([schema, roles]) => {
 		interactive_element_role_schemas.push(schema);
 	}
 });
-export const interactive_ax_objects = [...AXObjects.keys()].filter(
+const interactive_ax_objects = [...AXObjects.keys()].filter(
 	(name) => AXObjects.get(name).type === 'widget'
 );
-export const non_interactive_ax_objects = [...AXObjects.keys()].filter((name) =>
+const non_interactive_ax_objects = [...AXObjects.keys()].filter((name) =>
 	['windows', 'structure'].includes(AXObjects.get(name).type)
 );
 
