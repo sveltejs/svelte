@@ -101,7 +101,7 @@ let b = $derived(await two());
 
 In addition to the nearest boundary's [`pending`](svelte-boundary#Properties-pending) snippet, you can indicate that asynchronous work is ongoing with [`$effect.pending()`]($effect#$effect.pending).
 
-You can also use [`settled()`] to get a promise that resolves when the current update is complete:
+You can also use [`settled()`](svelte#settled) to get a promise that resolves when the current update is complete:
 
 ```js
 let color = 'red';
