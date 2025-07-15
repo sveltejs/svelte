@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-add `pending` snippet to svelte:boundary types
+fix: add `pending` snippet to `<svelte:boundary>` types
