@@ -528,7 +528,8 @@ declare module 'svelte' {
 	/**
 	 * Returns a promise that resolves once any state changes, and asynchronous work resulting from them,
 	 * have resolved and the DOM has been updated
-	 * */
+	 * @since 5.36
+	 */
 	export function settled(): Promise<void>;
 	/**
 	 * When used inside a [`$derived`](https://svelte.dev/docs/svelte/$derived) or [`$effect`](https://svelte.dev/docs/svelte/$effect),
@@ -1116,9 +1117,15 @@ declare module 'svelte/compiler' {
 		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 		 */
 		warningFilter?: (warning: Warning) => boolean;
-		/** Experimental options */
+		/**
+		 * Experimental options
+		 * @since 5.36
+		 */
 		experimental?: {
-			/** Allow `await` keyword in deriveds, template expressions, and the top level of components */
+			/**
+			 * Allow `await` keyword in deriveds, template expressions, and the top level of components
+			 * @since 5.36
+			 */
 			async?: boolean;
 		};
 	}
@@ -3031,9 +3038,15 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 		 */
 		warningFilter?: (warning: Warning_1) => boolean;
-		/** Experimental options */
+		/**
+		 * Experimental options
+		 * @since 5.36
+		 */
 		experimental?: {
-			/** Allow `await` keyword in deriveds, template expressions, and the top level of components */
+			/**
+			 * Allow `await` keyword in deriveds, template expressions, and the top level of components
+			 * @since 5.36
+			 */
 			async?: boolean;
 		};
 	}
