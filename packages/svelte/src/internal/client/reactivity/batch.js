@@ -299,6 +299,8 @@ export class Batch {
 
 	deactivate() {
 		current_batch = null;
+
+		flush_pending_update();
 	}
 
 	neuter() {
@@ -322,13 +324,7 @@ export class Batch {
 			batches.delete(this);
 		}
 
-		current_batch = null;
-
-		for (const update of effect_pending_updates) {
-			effect_pending_updates.delete(update);
-			update();
-			break;
-		}
+		this.deactivate();
 	}
 
 	flush_effects() {
@@ -426,6 +422,18 @@ export class Batch {
 		}
 
 		return current_batch;
+	}
+}
+
+function flush_pending_update() {
+	for (const update of effect_pending_updates) {
+		effect_pending_updates.delete(update);
+		update();
+
+		if (current_batch !== null) {
+			// only do one at a time
+			break;
+		}
 	}
 }
 
