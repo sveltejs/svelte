@@ -62,7 +62,13 @@ When an `await` expression depends on a particular piece of state, changes to th
 <p>{a} + {b} = {await add(a, b)}</p>
 ```
 
-...if you increment `a`, the contents of the `<p>` will _not_ immediately update to read `2 + 2 = 3` — instead, the text will update when `add(a, b)` resolves.
+...if you increment `a`, the contents of the `<p>` will _not_ immediately update to read this —
+
+```html
+<p>2 + 2 = 3</p>
+```
+
+— instead, the text will update to `2 + 2 = 4` when `add(a, b)` resolves.
 
 Updates can overlap — a fast update will be reflected in the UI while an earlier slow update is still ongoing.
 
