@@ -1,3 +1,4 @@
+/** @import { Batch } from '../../../reactivity/batch.js' */
 import { DEV } from 'esm-env';
 import { render_effect, teardown } from '../../../reactivity/effects.js';
 import { listen_to_event_and_reset_event } from './shared.js';
@@ -7,7 +8,7 @@ import { queue_micro_task } from '../../task.js';
 import { hydrating } from '../../hydration.js';
 import { untrack } from '../../../runtime.js';
 import { is_runes } from '../../../context.js';
-import { Batch, current_batch } from '../../../reactivity/batch.js';
+import { current_batch } from '../../../reactivity/batch.js';
 
 /**
  * @param {HTMLInputElement} input
