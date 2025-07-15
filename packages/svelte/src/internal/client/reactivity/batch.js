@@ -49,6 +49,9 @@ export let batch_deriveds = null;
 /** @type {Effect[]} Stack of effects, dev only */
 export let dev_effect_stack = [];
 
+/** @type {Set<() => void>} */
+export let effect_pending_updates = new Set();
+
 /** @type {Effect[]} */
 let queued_root_effects = [];
 
@@ -320,6 +323,12 @@ export class Batch {
 		}
 
 		current_batch = null;
+
+		for (const update of effect_pending_updates) {
+			effect_pending_updates.delete(update);
+			update();
+			break;
+		}
 	}
 
 	flush_effects() {

@@ -22,10 +22,11 @@ import { get_next_sibling } from '../operations.js';
 import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
 import { DEV } from 'esm-env';
-import { Batch } from '../../reactivity/batch.js';
+import { Batch, effect_pending_updates } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
+import { raf } from '../../timing.js';
 
 /**
  * @typedef {{
@@ -91,6 +92,12 @@ export class Boundary {
 	 * @type {Source<number> | null}
 	 */
 	#effect_pending = null;
+
+	#effect_pending_update = () => {
+		if (this.#effect_pending) {
+			internal_set(this.#effect_pending, this.#pending_count);
+		}
+	};
 
 	#effect_pending_subscriber = createSubscriber(() => {
 		this.#effect_pending = source(this.#pending_count);
@@ -238,11 +245,7 @@ export class Boundary {
 			this.parent.#update_pending_count(d);
 		}
 
-		queueMicrotask(() => {
-			if (this.#effect_pending) {
-				internal_set(this.#effect_pending, this.#pending_count);
-			}
-		});
+		effect_pending_updates.add(this.#effect_pending_update);
 	}
 
 	get_effect_pending() {
