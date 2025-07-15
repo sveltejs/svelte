@@ -394,6 +394,8 @@ export class Batch {
 			this.#effects = [];
 
 			this.flush();
+		} else {
+			this.deactivate();
 		}
 	}
 
