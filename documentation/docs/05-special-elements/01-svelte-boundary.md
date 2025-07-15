@@ -42,6 +42,22 @@ If a `failed` snippet is provided, it will be rendered with the error that was t
 >
 > ...or implicitly by declaring it directly inside the boundary, as in the example above.
 
+### `pending`
+
+As of Svelte 5.36, boundaries with a `pending` snippet can contain [`await`](await) expressions. This snippet will be shown when the boundary is first created, and will remain visible until all the `await` expressions inside the boundary have resolved ([demo](/playground/untitled#H4sIAAAAAAAAE21QQW6DQAz8ytY9BKQVpFdKkPqDHnorPWzAaSwt3tWugUaIv1eE0KpKD5as8YxnNBOw6RAKKOOAVrA4up5bEy6VGknOyiO3xJ8qMnmPAhpOZDFC8T6BXPyiXADQ258X77P1FWg4moj_4Y1jQZZ49W0CealqruXUcyPkWLVozQXbZDC2R606spYiNo7bqA7qab_fp2paFLUElD6wYhzVa3AdRUySgNHZAVN1qDZaLRHljTp0vSTJ9XJjrSbpX5f0eZXN6zLXXOa_QfmurIVU-moyoyH5ib87o7XuYZfOZe6vnGWmx1uZW7lJOq9upa-sMwuUZdkmmfIbfQ1xZwwaBL8ECgk9zh8axJAdiVsoTsZGnL8Bg4tX_OMBAAA=)):
+
+```svelte
+<svelte:boundary>
+	<p>{await delayed('hello!')}</p>
+
+	{#snippet pending()}
+		<p>loading...</p>
+	{/snippet}
+</svelte:boundary>
+```
+
+> In the [playground](/playground), your app is rendered inside a boundary with an empty pending snippet, so that you can use `await` without having to create one.
+
 ### `onerror`
 
 If an `onerror` function is provided, it will be called with the same two `error` and `reset` arguments. This is useful for tracking the error with an error reporting service...
