@@ -1,5 +1,11 @@
 # svelte
 
+## 5.36.1
+
+### Patch Changes
+
+- fix: only skip updating bound `<input>` if the input was the source of the change ([#16373](https://github.com/sveltejs/svelte/pull/16373))
+
 ## 5.36.0
 
 ### Minor Changes
