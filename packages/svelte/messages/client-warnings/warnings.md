@@ -37,6 +37,9 @@ function add() {
 Svelte's signal-based reactivity works by tracking which bits of state are read when a template or `$derived(...)` expression executes. If an expression contains an `await`, Svelte transforms it such that any state _after_ the `await` is also tracked — in other words, in a case like this...
 
 ```js
+let a = Promise.resolve(1);
+let b = 2;
+// ---cut---
 let total = $derived(await a + b);
 ```
 
@@ -45,6 +48,9 @@ let total = $derived(await a + b);
 This does _not_ apply to an `await` that is not 'visible' inside the expression. In a case like this...
 
 ```js
+let a = Promise.resolve(1);
+let b = 2;
+// ---cut---
 async function sum() {
 	return await a + b;
 }
@@ -55,6 +61,13 @@ let total = $derived(await sum());
 ...`total` will depend on `a` (which is read immediately) but not `b` (which is not). The solution is to pass the values into the function:
 
 ```js
+let a = Promise.resolve(1);
+let b = 2;
+// ---cut---
+/**
+ * @param {Promise<number>} a
+ * @param {number} b
+ */
 async function sum(a, b) {
 	return await a + b;
 }
@@ -69,6 +82,9 @@ let total = $derived(await sum(a, b));
 In a case like this...
 
 ```js
+async function one() { return 1 }
+async function two() { return 2 }
+// ---cut---
 let a = $derived(await one());
 let b = $derived(await two());
 ```
@@ -80,6 +96,9 @@ let b = $derived(await two());
 You can solve this by creating the promises first and _then_ awaiting them:
 
 ```js
+async function one() { return 1 }
+async function two() { return 2 }
+// ---cut---
 let aPromise = $derived(one());
 let bPromise = $derived(two());
 
