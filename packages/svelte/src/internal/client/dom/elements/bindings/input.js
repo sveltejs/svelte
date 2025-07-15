@@ -7,6 +7,7 @@ import { queue_micro_task } from '../../task.js';
 import { hydrating } from '../../hydration.js';
 import { untrack } from '../../../runtime.js';
 import { is_runes } from '../../../context.js';
+import { Batch, current_batch } from '../../../reactivity/batch.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -16,6 +17,8 @@ import { is_runes } from '../../../context.js';
  */
 export function bind_value(input, get, set = get) {
 	var runes = is_runes();
+
+	var batches = new WeakSet();
 
 	listen_to_event_and_reset_event(input, 'input', (is_reset) => {
 		if (DEV && input.type === 'checkbox') {
@@ -27,6 +30,10 @@ export function bind_value(input, get, set = get) {
 		var value = is_reset ? input.defaultValue : input.value;
 		value = is_numberlike_input(input) ? to_number(value) : value;
 		set(value);
+
+		if (current_batch !== null) {
+			batches.add(current_batch);
+		}
 
 		// In runes mode, respect any validation in accessors (doesn't apply in legacy mode,
 		// because we use mutable state which ensures the render effect always runs)
@@ -54,6 +61,10 @@ export function bind_value(input, get, set = get) {
 		(untrack(get) == null && input.value)
 	) {
 		set(is_numberlike_input(input) ? to_number(input.value) : input.value);
+
+		if (current_batch !== null) {
+			batches.add(current_batch);
+		}
 	}
 
 	render_effect(() => {
@@ -64,7 +75,7 @@ export function bind_value(input, get, set = get) {
 
 		var value = get();
 
-		if (input === document.activeElement) {
+		if (input === document.activeElement && batches.has(/** @type {Batch} */ (current_batch))) {
 			// Never rewrite the contents of a focused input. We can get here if, for example,
 			// an update is deferred because of async work depending on the input:
 			//
