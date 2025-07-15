@@ -26,7 +26,6 @@ import { Batch, effect_pending_updates } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
-import { raf } from '../../timing.js';
 
 /**
  * @typedef {{
