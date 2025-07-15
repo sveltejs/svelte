@@ -2080,6 +2080,7 @@ export interface SvelteHTMLElements {
 	'svelte:boundary': {
 		onerror?: (error: unknown, reset: () => void) => void;
 		failed?: import('svelte').Snippet<[error: unknown, reset: () => void]>;
+		pending?: import('svelte').Snippet;
 	};
 
 	[name: string]: { [name: string]: any };
