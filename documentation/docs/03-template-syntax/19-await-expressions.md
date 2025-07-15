@@ -14,7 +14,7 @@ This feature is currently experimental, and you must opt in by adding the `exper
 /// file: svelte.config.js
 export default {
 	compilerOptions: {
-		experimenntal: {
+		experimental: {
 			async: true
 		}
 	}
