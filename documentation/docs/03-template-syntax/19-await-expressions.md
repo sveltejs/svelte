@@ -8,7 +8,7 @@ As of Svelte 5.36, you can use the `await` keyword inside your components in thr
 - inside `$derived(...)` declarations
 - inside your markup
 
-This feature is currently experimental, and you must opt in by adding the `experimental.async` option wherever you [configure](https://svelte.dev/docs/kit/configuration) Svelte, usually `svelte.config.js`:
+This feature is currently experimental, and you must opt in by adding the `experimental.async` option wherever you [configure](/docs/kit/configuration) Svelte, usually `svelte.config.js`:
 
 ```js
 /// file: svelte.config.js
