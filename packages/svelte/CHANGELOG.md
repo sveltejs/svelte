@@ -1,5 +1,13 @@
 # svelte
 
+## 5.36.2
+
+### Patch Changes
+
+- fix: add `$effect.pending()` to types ([#16376](https://github.com/sveltejs/svelte/pull/16376))
+
+- fix: add `pending` snippet to `<svelte:boundary>` types ([#16379](https://github.com/sveltejs/svelte/pull/16379))
+
 ## 5.36.1
 
 ### Patch Changes
