@@ -526,6 +526,7 @@ export async function tick() {
  * Returns a promise that resolves once any state changes, and asynchronous work resulting from them,
  * have resolved and the DOM has been updated
  * @returns {Promise<void>}
+ * @since 5.36
  */
 export function settled() {
 	return Batch.ensure().settled();
