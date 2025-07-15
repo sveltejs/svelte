@@ -38,7 +38,7 @@ As of Svelte 5.36, boundaries with a `pending` snippet can contain [`await`](awa
 
 The `pending` snippet will _not_ be shown for subsequent async updates — for these, you can use [`$effect.pending()`]($effect#$effect.pending).
 
-> In the [playground](/playground), your app is rendered inside a boundary with an empty pending snippet, so that you can use `await` without having to create one.
+> [!NOTE] In the [playground](/playground), your app is rendered inside a boundary with an empty pending snippet, so that you can use `await` without having to create one.
 
 
 ### `failed`

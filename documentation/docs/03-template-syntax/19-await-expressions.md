@@ -39,7 +39,7 @@ Currently, you can only use `await` inside a [`<svelte:boundary>`](svelte-bounda
 
 This restriction will be lifted once Svelte supports asynchronous server-side rendering (see [caveats](#Caveats)).
 
-> In the [playground](/playground), your app is rendered inside a boundary with an empty pending snippet, so that you can use `await` without having to create one.
+> [!NOTE] In the [playground](/playground), your app is rendered inside a boundary with an empty pending snippet, so that you can use `await` without having to create one.
 
 ## Synchronized updates
 
