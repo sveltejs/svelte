@@ -16,7 +16,7 @@ Boundaries allow you to 'wall off' parts of your app, so that you can:
 
 If a boundary handles an error (with a `failed` snippet or `onerror` handler, or both) its existing content will be removed.
 
-> Errors occurring outside the rendering process (for example, in event handlers or after a `setTimeout` or async work) are _not_ caught by error boundaries.
+> [!NOTE] Errors occurring outside the rendering process (for example, in event handlers or after a `setTimeout` or async work) are _not_ caught by error boundaries.
 
 ## Properties
 
