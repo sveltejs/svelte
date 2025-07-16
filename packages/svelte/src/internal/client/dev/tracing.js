@@ -56,8 +56,10 @@ function log_entry(signal, entry) {
 	}
 
 	if (dirty && signal.updated) {
-		// eslint-disable-next-line no-console
-		console.log(signal.updated);
+		for (const updated of signal.updated.values()) {
+			// eslint-disable-next-line no-console
+			console.log(updated.error);
+		}
 	}
 
 	if (entry) {
@@ -120,44 +122,46 @@ export function trace(label, fn) {
 
 /**
  * @param {string} label
+ * @returns {Error & { stack: string } | null}
  */
 export function get_stack(label) {
 	let error = Error();
 	const stack = error.stack;
 
-	if (stack) {
-		const lines = stack.split('\n');
-		const new_lines = ['\n'];
+	if (!stack) return null;
 
-		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i];
+	const lines = stack.split('\n');
+	const new_lines = ['\n'];
 
-			if (line === 'Error') {
-				continue;
-			}
-			if (line.includes('validate_each_keys')) {
-				return null;
-			}
-			if (line.includes('svelte/src/internal')) {
-				continue;
-			}
-			new_lines.push(line);
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i];
+
+		if (line === 'Error') {
+			continue;
 		}
-
-		if (new_lines.length === 1) {
+		if (line.includes('validate_each_keys')) {
 			return null;
 		}
-
-		define_property(error, 'stack', {
-			value: new_lines.join('\n')
-		});
-
-		define_property(error, 'name', {
-			// 'Error' suffix is required for stack traces to be rendered properly
-			value: `${label}Error`
-		});
+		if (line.includes('svelte/src/internal')) {
+			continue;
+		}
+		new_lines.push(line);
 	}
-	return error;
+
+	if (new_lines.length === 1) {
+		return null;
+	}
+
+	define_property(error, 'stack', {
+		value: new_lines.join('\n')
+	});
+
+	define_property(error, 'name', {
+		// 'Error' suffix is required for stack traces to be rendered properly
+		value: `${label}Error`
+	});
+
+	return /** @type {Error & { stack: string }} */ (error);
 }
 
 /**

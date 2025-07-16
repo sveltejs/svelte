@@ -345,6 +345,28 @@ export class Batch {
 
 			while (queued_root_effects.length > 0) {
 				if (flush_count++ > 1000) {
+					if (DEV) {
+						var updates = new Map();
+
+						for (const source of this.#current.keys()) {
+							for (const [stack, update] of source.updated ?? []) {
+								var entry = updates.get(stack);
+
+								if (!entry) {
+									entry = { error: update.error, count: 0 };
+									updates.set(stack, entry);
+								}
+
+								entry.count += update.count;
+							}
+						}
+
+						for (const [stack, update] of updates) {
+							// eslint-disable-next-line no-console
+							console.error(update.error);
+						}
+					}
+
 					infinite_loop_guard();
 				}
 

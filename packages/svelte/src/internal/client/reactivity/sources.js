@@ -182,8 +182,22 @@ export function internal_set(source, value) {
 		const batch = Batch.ensure();
 		batch.capture(source, old_value);
 
-		if (DEV && tracing_mode_flag) {
-			source.updated = get_stack('UpdatedAt');
+		if (DEV) {
+			if (tracing_mode_flag || active_effect !== null) {
+				const error = get_stack('UpdatedAt');
+
+				if (error !== null) {
+					source.updated ??= new Map();
+					let entry = source.updated.get(error.stack);
+
+					if (!entry) {
+						entry = { error, count: 0 };
+						source.updated.set(error.stack, entry);
+					}
+
+					entry.count++;
+				}
+			}
 
 			if (active_effect !== null) {
 				source.set_during_effect = true;
