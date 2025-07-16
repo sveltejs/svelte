@@ -416,12 +416,12 @@ export class Batch {
 		return (this.#deferred ??= deferred()).promise;
 	}
 
-	static ensure(in_flush_sync = false) {
+	static ensure(autoflush = true) {
 		if (current_batch === null) {
 			const batch = (current_batch = new Batch());
 			batches.add(current_batch);
 
-			if (!in_flush_sync) {
+			if (autoflush) {
 				queueMicrotask(() => {
 					if (current_batch !== batch) {
 						// a flushSync happened in the meantime
@@ -451,7 +451,7 @@ export function flushSync(fn) {
 
 	var result;
 
-	const batch = Batch.ensure(true);
+	const batch = Batch.ensure(false);
 
 	if (fn) {
 		batch.flush_effects();
