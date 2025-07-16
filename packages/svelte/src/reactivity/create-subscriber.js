@@ -6,10 +6,13 @@ import { DEV } from 'esm-env';
 import { queue_micro_task } from '../internal/client/dom/task.js';
 
 /**
- * Returns a `subscribe` function that, if called in an effect (including expressions in the template),
- * calls its `start` callback with an `update` function. Whenever `update` is called, the effect re-runs.
+ * Returns a `subscribe` function that integrates external event-based systems with Svelte's reactivity.
+ * It's particularly useful for integrating with web APIs like `MediaQuery`, `IntersectionObserver`, or `WebSocket`.
  *
- * If `start` returns a function, it will be called when the effect is destroyed.
+ * If `subscribe` is called inside an effect (including indirectly, for example inside a getter),
+ * the `start` callback will be called with an `update` function. Whenever `update` is called, the effect re-runs.
+ *
+ * If `start` returns a cleanup function, it will be called when the effect is destroyed.
  *
  * If `subscribe` is called in multiple effects, `start` will only be called once as long as the effects
  * are active, and the returned teardown function will only be called when all effects are destroyed.
@@ -37,6 +40,7 @@ import { queue_micro_task } from '../internal/client/dom/task.js';
  * 	}
  *
  * 	get current() {
+ * 		// This makes the getter reactive, if read in an effect
  * 		this.#subscribe();
  *
  * 		// Return the current state of the query, whether or not we're in an effect
