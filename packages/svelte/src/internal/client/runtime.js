@@ -42,13 +42,7 @@ import {
 	set_dev_stack
 } from './context.js';
 import * as w from './warnings.js';
-import {
-	Batch,
-	batch_deriveds,
-	dev_effect_stack,
-	flushSync,
-	schedule_effect
-} from './reactivity/batch.js';
+import { Batch, batch_deriveds, flushSync, schedule_effect } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
 
@@ -490,10 +484,6 @@ export function update_effect(effect) {
 					dep.set_during_effect = false;
 				}
 			}
-		}
-
-		if (DEV) {
-			dev_effect_stack.push(effect);
 		}
 	} finally {
 		is_updating_effect = was_updating_effect;
