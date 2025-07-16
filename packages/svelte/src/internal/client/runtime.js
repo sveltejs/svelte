@@ -606,7 +606,7 @@ export function get(signal) {
 
 	if (DEV) {
 		if (current_async_effect) {
-			var tracking = (current_async_effect.f & REACTION_IS_UPDATING) !== 0;
+			var tracking = (current_async_effect.f & REACTION_IS_UPDATING) !== 0 && !untracking;
 			var was_read = current_async_effect.deps?.includes(signal);
 
 			if (!tracking && !was_read) {
