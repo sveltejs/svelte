@@ -59,6 +59,7 @@ let queued_root_effects = [];
 let last_scheduled_effect = null;
 
 let is_flushing = false;
+let in_flush_sync = false;
 
 export class Batch {
 	/**
@@ -421,14 +422,16 @@ export class Batch {
 			const batch = (current_batch = new Batch());
 			batches.add(current_batch);
 
-			queueMicrotask(() => {
-				if (current_batch !== batch) {
-					// a flushSync happened in the meantime
-					return;
-				}
+			if (!in_flush_sync) {
+				queueMicrotask(() => {
+					if (current_batch !== batch) {
+						// a flushSync happened in the meantime
+						return;
+					}
 
-				batch.flush();
-			});
+					batch.flush();
+				});
+			}
 		}
 
 		return current_batch;
@@ -443,6 +446,8 @@ export class Batch {
  * @returns {T}
  */
 export function flushSync(fn) {
+	in_flush_sync = true;
+
 	if (async_mode_flag && active_effect !== null) {
 		e.flush_sync_in_effect();
 	}
@@ -472,6 +477,8 @@ export function flushSync(fn) {
 			if (DEV) {
 				dev_effect_stack = [];
 			}
+
+			in_flush_sync = false;
 
 			return /** @type {T} */ (result);
 		}
