@@ -279,9 +279,8 @@ export function analyze_module(source, options) {
 		classes: new Map()
 	};
 
-	state.reset({
+	state.adjust({
 		dev: options.dev,
-		filename: options.filename,
 		rootDir: options.rootDir,
 		runes: true
 	});
@@ -531,12 +530,11 @@ export function analyze_component(root, source, options) {
 		async_deriveds: new Set()
 	};
 
-	state.reset({
+	state.adjust({
 		component_name: analysis.name,
 		dev: options.dev,
-		filename: options.filename,
 		rootDir: options.rootDir,
-		runes: true
+		runes
 	});
 
 	if (!runes) {
