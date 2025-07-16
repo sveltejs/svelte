@@ -20,6 +20,9 @@ const filter = process.env.FILTER
 		)
 	: /./;
 
+// this defaults to 10, which is too low for some of our tests
+Error.stackTraceLimit = 100;
+
 export function suite<Test extends BaseTest>(fn: (config: Test, test_dir: string) => void) {
 	return {
 		test: (config: Test) => config,

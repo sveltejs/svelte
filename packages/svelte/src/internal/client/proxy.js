@@ -15,7 +15,13 @@ import {
 	is_array,
 	object_prototype
 } from '../shared/utils.js';
-import { state as source, set, increment } from './reactivity/sources.js';
+import {
+	state as source,
+	set,
+	increment,
+	flush_inspect_effects,
+	set_inspect_effects_deferred
+} from './reactivity/sources.js';
 import { PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
@@ -80,6 +86,9 @@ export function proxy(value) {
 		// We need to create the length source eagerly to ensure that
 		// mutations to the array are properly synced with our proxy
 		sources.set('length', source(/** @type {any[]} */ (value).length, stack));
+		if (DEV) {
+			value = /** @type {any} */ (inspectable_array(/** @type {any[]} */ (value)));
+		}
 	}
 
 	/** Used in dev for $inspect.trace() */
@@ -142,16 +151,6 @@ export function proxy(value) {
 					}
 				}
 			} else {
-				// When working with arrays, we need to also ensure we update the length when removing
-				// an indexed property
-				if (is_proxied_array && typeof prop === 'string') {
-					var ls = /** @type {Source<number>} */ (sources.get('length'));
-					var n = Number(prop);
-
-					if (Number.isInteger(n) && n < ls.v) {
-						set(ls, n);
-					}
-				}
 				set(s, UNINITIALIZED);
 				increment(version);
 			}
@@ -387,4 +386,43 @@ export function get_proxied_value(value) {
  */
 export function is(a, b) {
 	return Object.is(get_proxied_value(a), get_proxied_value(b));
+}
+
+const ARRAY_MUTATING_METHODS = new Set([
+	'copyWithin',
+	'fill',
+	'pop',
+	'push',
+	'reverse',
+	'shift',
+	'sort',
+	'splice',
+	'unshift'
+]);
+
+/**
+ * Wrap array mutating methods so $inspect is triggered only once and
+ * to prevent logging an array in intermediate state (e.g. with an empty slot)
+ * @param {any[]} array
+ */
+function inspectable_array(array) {
+	return new Proxy(array, {
+		get(target, prop, receiver) {
+			var value = Reflect.get(target, prop, receiver);
+			if (!ARRAY_MUTATING_METHODS.has(/** @type {string} */ (prop))) {
+				return value;
+			}
+
+			/**
+			 * @this {any[]}
+			 * @param {any[]} args
+			 */
+			return function (...args) {
+				set_inspect_effects_deferred();
+				var result = value.apply(this, args);
+				flush_inspect_effects();
+				return result;
+			};
+		}
+	});
 }
