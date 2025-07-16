@@ -37,8 +37,8 @@ declare global {
 		): Key extends keyof ElementTagNameMap
 			? ElementTagNameMap[Key]
 			: Key extends keyof SVGElementTagNameMap
-				? SVGElementTagNameMap[Key]
-				: any;
+			? SVGElementTagNameMap[Key]
+			: any;
 		function createElement<Elements extends IntrinsicElements, Key extends keyof Elements, T>(
 			// "undefined | null" because of <svelte:element>
 			element: Key | undefined | null,
@@ -47,14 +47,14 @@ declare global {
 		): Key extends keyof ElementTagNameMap
 			? ElementTagNameMap[Key]
 			: Key extends keyof SVGElementTagNameMap
-				? SVGElementTagNameMap[Key]
-				: any;
+			? SVGElementTagNameMap[Key]
+			: any;
 
 		// For backwards-compatibility and ease-of-use, in case someone enhanced the typings from import('svelte/elements').HTMLAttributes/SVGAttributes
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		interface HTMLAttributes<T extends EventTarget = any> {}
+		interface HTMLAttributes<T extends EventTarget = any> { }
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		interface SVGAttributes<T extends EventTarget = any> {}
+		interface SVGAttributes<T extends EventTarget = any> { }
 
 		/**
 		 * Avoid using this interface directly. Instead use the `SvelteHTMLElements` interface exported by `svelte/elements`
@@ -247,6 +247,7 @@ declare global {
 			'svelte:boundary': {
 				onerror?: (error: unknown, reset: () => void) => void;
 				failed?: import('svelte').Snippet<[error: unknown, reset: () => void]>;
+				pending?: import('svelte').Snippet;
 			};
 			// don't type svelte:options, it would override the types in svelte/elements and it isn't extendable anyway
 
