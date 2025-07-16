@@ -89,6 +89,8 @@ $effect(() => {
 Note that it's fine for an effect to re-run itself as long as it 'settles':
 
 ```js
+let array = ['a', 'b', 'c'];
+// ---cut---
 $effect(() => {
 	// this is okay, because sorting an already-sorted array
 	// won't result in a mutation
