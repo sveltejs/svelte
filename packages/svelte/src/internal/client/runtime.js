@@ -609,7 +609,7 @@ export function get(signal) {
 			var tracking = (current_async_effect.f & REACTION_IS_UPDATING) !== 0;
 			var was_read = current_async_effect.deps?.includes(signal);
 
-			if (!tracking && !was_read) {
+			if (!tracking && !untracking && !was_read) {
 				w.await_reactivity_loss(/** @type {string} */ (signal.label));
 
 				var trace = get_stack('TracedAt');
