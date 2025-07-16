@@ -13,7 +13,7 @@ export default test({
 		b2.click();
 		await Promise.resolve();
 
-		assert.ok(logs[0].stack.startsWith('Error:'));
+		assert.ok(logs[0].stack.startsWith('Error:') && logs[0].stack.includes('HTMLButtonElement.'));
 		assert.deepEqual(logs[1], 1);
 	}
 });
