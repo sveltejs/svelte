@@ -12,6 +12,13 @@ export default test({
 		flushSync();
 
 		assert.ok(errors.length > 0);
-		assert.deepEqual(logs, ['init', 'a', 'init', 'b']);
+		assert.deepEqual(logs, [
+			'init',
+			'a',
+			'init',
+			'b',
+			'an error occurred when reading values inside an `$inspect`: ',
+			+'an error occurred when reading values inside an `$inspect`: '
+		]);
 	}
 });
