@@ -89,8 +89,46 @@ Effect cannot be created inside a `$derived` value that was not itself created i
 ### effect_update_depth_exceeded
 
 ```
-Maximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops
+Maximum update depth exceeded. This typically indicates that an effect reads and writes the same piece of state
 ```
+
+If an effect updates some state that it also depends on, it will re-run, potentially in a loop:
+
+```js
+let count = $state(0);
+
+$effect(() => {
+	// this both reads and writes `count`,
+	// so will run in an infinite loop
+	count += 1;
+});
+```
+
+(Svelte intervenes before this can crash your browser tab.)
+
+The same applies to array mutations, since these both read and write to the array:
+
+```js
+let array = $state([]);
+
+$effect(() => {
+	array.push('hello');
+});
+```
+
+Note that it's fine for an effect to re-run itself as long as it 'settles':
+
+```js
+let array = ['a', 'b', 'c'];
+// ---cut---
+$effect(() => {
+	// this is okay, because sorting an already-sorted array
+	// won't result in a mutation
+	array.sort();
+});
+```
+
+Often when encountering this issue, the value in question shouldn't be state (for example, if you are pushing to a `logs` array in an effect, make `logs` a normal array rather than `$state([])`). In the rare cases where you really _do_ need to write to state in an effect — [which you should avoid]($effect#When-not-to-use-$effect) — you can read the state with [untrack](svelte#untrack) to avoid adding it as a dependency.
 
 ### flush_sync_in_effect
 

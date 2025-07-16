@@ -46,9 +46,6 @@ export let current_batch = null;
  */
 export let batch_deriveds = null;
 
-/** @type {Effect[]} Stack of effects, dev only */
-export let dev_effect_stack = [];
-
 /** @type {Set<() => void>} */
 export let effect_pending_updates = new Set();
 
@@ -345,6 +342,28 @@ export class Batch {
 
 			while (queued_root_effects.length > 0) {
 				if (flush_count++ > 1000) {
+					if (DEV) {
+						var updates = new Map();
+
+						for (const source of this.#current.keys()) {
+							for (const [stack, update] of source.updated ?? []) {
+								var entry = updates.get(stack);
+
+								if (!entry) {
+									entry = { error: update.error, count: 0 };
+									updates.set(stack, entry);
+								}
+
+								entry.count += update.count;
+							}
+						}
+
+						for (const update of updates.values()) {
+							// eslint-disable-next-line no-console
+							console.error(update.error);
+						}
+					}
+
 					infinite_loop_guard();
 				}
 
@@ -356,9 +375,6 @@ export class Batch {
 			set_is_updating_effect(was_updating_effect);
 
 			last_scheduled_effect = null;
-			if (DEV) {
-				dev_effect_stack = [];
-			}
 		}
 	}
 
@@ -471,10 +487,6 @@ export function flushSync(fn) {
 			// we need to reset it here as well in case the first time there's 0 queued root effects
 			last_scheduled_effect = null;
 
-			if (DEV) {
-				dev_effect_stack = [];
-			}
-
 			return /** @type {T} */ (result);
 		}
 
@@ -482,45 +494,18 @@ export function flushSync(fn) {
 	}
 }
 
-function log_effect_stack() {
-	// eslint-disable-next-line no-console
-	console.error(
-		'Last ten effects were: ',
-		dev_effect_stack.slice(-10).map((d) => d.fn)
-	);
-	dev_effect_stack = [];
-}
-
 function infinite_loop_guard() {
 	try {
 		e.effect_update_depth_exceeded();
 	} catch (error) {
 		if (DEV) {
-			// stack is garbage, ignore. Instead add a console.error message.
-			define_property(error, 'stack', {
-				value: ''
-			});
+			// stack contains no useful information, replace it
+			define_property(error, 'stack', { value: '' });
 		}
-		// Try and handle the error so it can be caught at a boundary, that's
-		// if there's an effect available from when it was last scheduled
-		if (last_scheduled_effect !== null) {
-			if (DEV) {
-				try {
-					invoke_error_boundary(error, last_scheduled_effect);
-				} catch (e) {
-					// Only log the effect stack if the error is re-thrown
-					log_effect_stack();
-					throw e;
-				}
-			} else {
-				invoke_error_boundary(error, last_scheduled_effect);
-			}
-		} else {
-			if (DEV) {
-				log_effect_stack();
-			}
-			throw error;
-		}
+
+		// Best effort: invoke the boundary nearest the most recent
+		// effect and hope that it's relevant to the infinite loop
+		invoke_error_boundary(error, last_scheduled_effect);
 	}
 }
 
