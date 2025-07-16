@@ -358,7 +358,7 @@ export class Batch {
 							}
 						}
 
-						for (const [stack, update] of updates) {
+						for (const update of updates.values()) {
 							// eslint-disable-next-line no-console
 							console.error(update.error);
 						}
@@ -499,18 +499,13 @@ function infinite_loop_guard() {
 		e.effect_update_depth_exceeded();
 	} catch (error) {
 		if (DEV) {
-			// stack is garbage, ignore. Instead add a console.error message.
-			define_property(error, 'stack', {
-				value: ''
-			});
+			// stack contains no useful information, replace it
+			define_property(error, 'stack', { value: '' });
 		}
-		// Try and handle the error so it can be caught at a boundary, that's
-		// if there's an effect available from when it was last scheduled
-		if (last_scheduled_effect !== null) {
-			invoke_error_boundary(error, last_scheduled_effect);
-		} else {
-			throw error;
-		}
+
+		// Best effort: invoke the boundary nearest the most recent
+		// effect and hope that it's relevant to the infinite loop
+		invoke_error_boundary(error, last_scheduled_effect);
 	}
 }
 
