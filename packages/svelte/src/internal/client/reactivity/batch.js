@@ -416,19 +416,21 @@ export class Batch {
 		return (this.#deferred ??= deferred()).promise;
 	}
 
-	static ensure() {
+	static ensure(autoflush = true) {
 		if (current_batch === null) {
 			const batch = (current_batch = new Batch());
 			batches.add(current_batch);
 
-			queueMicrotask(() => {
-				if (current_batch !== batch) {
-					// a flushSync happened in the meantime
-					return;
-				}
+			if (autoflush) {
+				queueMicrotask(() => {
+					if (current_batch !== batch) {
+						// a flushSync happened in the meantime
+						return;
+					}
 
-				batch.flush();
-			});
+					batch.flush();
+				});
+			}
 		}
 
 		return current_batch;
@@ -449,7 +451,7 @@ export function flushSync(fn) {
 
 	var result;
 
-	const batch = Batch.ensure();
+	const batch = Batch.ensure(false);
 
 	if (fn) {
 		batch.flush_effects();
