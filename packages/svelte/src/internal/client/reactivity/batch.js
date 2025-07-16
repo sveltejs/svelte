@@ -59,7 +59,6 @@ let queued_root_effects = [];
 let last_scheduled_effect = null;
 
 let is_flushing = false;
-let in_flush_sync = false;
 
 export class Batch {
 	/**
@@ -417,7 +416,7 @@ export class Batch {
 		return (this.#deferred ??= deferred()).promise;
 	}
 
-	static ensure() {
+	static ensure(in_flush_sync = false) {
 		if (current_batch === null) {
 			const batch = (current_batch = new Batch());
 			batches.add(current_batch);
@@ -446,15 +445,13 @@ export class Batch {
  * @returns {T}
  */
 export function flushSync(fn) {
-	in_flush_sync = true;
-
 	if (async_mode_flag && active_effect !== null) {
 		e.flush_sync_in_effect();
 	}
 
 	var result;
 
-	const batch = Batch.ensure();
+	const batch = Batch.ensure(true);
 
 	if (fn) {
 		batch.flush_effects();
@@ -477,8 +474,6 @@ export function flushSync(fn) {
 			if (DEV) {
 				dev_effect_stack = [];
 			}
-
-			in_flush_sync = false;
 
 			return /** @type {T} */ (result);
 		}
