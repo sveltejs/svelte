@@ -96,7 +96,15 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 			}
 		}
 
-		if (next_tag && next_tag !== current_tag) {
+		if (next_tag === 'contents') {
+			// Don't mount anything; just execute render_fn directly with anchor
+			effect = branch(() => {
+				if (render_fn) {
+					render_fn(anchor.parentNode, anchor);
+				}
+				/** @type {Effect} */ (active_effect).nodes_end = anchor;
+			});
+		} else if (next_tag && next_tag !== current_tag) {
 			effect = branch(() => {
 				element = hydrating
 					? /** @type {Element} */ (element)
