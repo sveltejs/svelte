@@ -24,8 +24,11 @@ export function inspect(get_value, inspector = console.log) {
 		try {
 			value = get_value();
 		} catch (error) {
-			// eslint-disable-next-line no-console
+			/* eslint-disable no-console */
+			console.group(`an error occurred when reading values inside an \`$inspect\`: `);
 			console.error(error);
+			console.groupEnd();
+			/* eslint-enable no-console */
 		}
 
 		if (value !== UNINITIALIZED) {
