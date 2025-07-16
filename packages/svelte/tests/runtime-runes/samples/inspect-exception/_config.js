@@ -18,7 +18,7 @@ export default test({
 			'init',
 			'b',
 			'an error occurred when reading values inside an `$inspect`: ',
-			+'an error occurred when reading values inside an `$inspect`: '
+			'an error occurred when reading values inside an `$inspect`: '
 		]);
 	}
 });
