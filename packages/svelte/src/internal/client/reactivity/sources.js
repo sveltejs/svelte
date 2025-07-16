@@ -49,6 +49,12 @@ export function set_inspect_effects(v) {
 	inspect_effects = v;
 }
 
+let inspect_effects_deferred = false;
+
+export function set_inspect_effects_deferred() {
+	inspect_effects_deferred = true;
+}
+
 /**
  * @template V
  * @param {V} v
@@ -213,26 +219,32 @@ export function internal_set(source, value) {
 			}
 		}
 
-		if (DEV && inspect_effects.size > 0) {
-			const inspects = Array.from(inspect_effects);
-
-			for (const effect of inspects) {
-				// Mark clean inspect-effects as maybe dirty and then check their dirtiness
-				// instead of just updating the effects - this way we avoid overfiring.
-				if ((effect.f & CLEAN) !== 0) {
-					set_signal_status(effect, MAYBE_DIRTY);
-				}
-
-				if (is_dirty(effect)) {
-					update_effect(effect);
-				}
-			}
-
-			inspect_effects.clear();
+		if (DEV && inspect_effects.size > 0 && !inspect_effects_deferred) {
+			flush_inspect_effects();
 		}
 	}
 
 	return value;
+}
+
+export function flush_inspect_effects() {
+	inspect_effects_deferred = false;
+
+	const inspects = Array.from(inspect_effects);
+
+	for (const effect of inspects) {
+		// Mark clean inspect-effects as maybe dirty and then check their dirtiness
+		// instead of just updating the effects - this way we avoid overfiring.
+		if ((effect.f & CLEAN) !== 0) {
+			set_signal_status(effect, MAYBE_DIRTY);
+		}
+
+		if (is_dirty(effect)) {
+			update_effect(effect);
+		}
+	}
+
+	inspect_effects.clear();
 }
 
 /**

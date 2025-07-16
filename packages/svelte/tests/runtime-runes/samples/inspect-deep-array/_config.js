@@ -13,17 +13,6 @@ export default test({
 			button?.click();
 		});
 
-		assert.deepEqual(logs, [
-			'init',
-			[1, 2, 3, 7],
-			'update',
-			[2, 2, 3, 7],
-			'update',
-			[2, 3, 3, 7],
-			'update',
-			[2, 3, 7, 7],
-			'update',
-			[2, 3, 7]
-		]);
+		assert.deepEqual(logs, ['init', [1, 2, 3, 7], 'update', [2, 3, 7]]);
 	}
 });
