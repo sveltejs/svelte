@@ -109,10 +109,10 @@ $effect(() => {
 The same applies to array mutations, since these both read and write to the array:
 
 ```js
-let array = $state([]);
+let array = $state(['hello']);
 
 $effect(() => {
-	array.push('hello');
+	array.push('goodbye');
 });
 ```
 
