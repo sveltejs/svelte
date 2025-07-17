@@ -239,18 +239,6 @@ declare global {
 			use: HTMLProps<'use', SVGAttributes>;
 			view: HTMLProps<'view', SVGAttributes>;
 
-			// Svelte specific
-			'svelte:window': HTMLProps<'svelte:window', HTMLAttributes>;
-			'svelte:body': HTMLProps<'svelte:body', HTMLAttributes>;
-			'svelte:document': HTMLProps<'svelte:document', HTMLAttributes>;
-			'svelte:fragment': { slot?: string };
-			'svelte:head': { [name: string]: any };
-			'svelte:boundary': {
-				onerror?: (error: unknown, reset: () => void) => void;
-				failed?: import('svelte').Snippet<[error: unknown, reset: () => void]>;
-			};
-			// don't type svelte:options, it would override the types in svelte/elements and it isn't extendable anyway
-
 			[name: string]: { [name: string]: any };
 		}
 	}
