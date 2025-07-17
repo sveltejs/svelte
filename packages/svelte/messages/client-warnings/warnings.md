@@ -288,7 +288,7 @@ This `reset` function should only be called once. After that, it has no effect â
 <button onclick={reset}>reset</button>
 
 <svelte:boundary onerror={(e, r) => (reset = r)}>
-	<!-- contents >
+	<!-- contents -->
 
 	{#snippet failed(e)}
 		<p>oops! {e.message}</p>
