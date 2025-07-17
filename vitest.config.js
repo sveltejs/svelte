@@ -35,5 +35,12 @@ export default defineConfig({
 			'packages/svelte/tests/runtime-browser/test-ssr.ts'
 		],
 		exclude: [...configDefaults.exclude, '**/samples/**'],
+		coverage: {
+			provider: 'v8',
+			reporter: ['lcov', 'html'],
+			include: ['packages/svelte/src/**'],
+			reportsDirectory: 'coverage/',
+			reportOnFailure: true
+		}
 	}
 });
