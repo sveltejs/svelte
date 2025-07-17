@@ -39,7 +39,7 @@ export default defineConfig({
 			provider: 'v8',
 			reporter: ['lcov', 'html'],
 			include: ['packages/svelte/src/**'],
-			reportsDirectory: 'coverage/',
+			reportsDirectory: 'coverage',
 			reportOnFailure: true
 		}
 	}
