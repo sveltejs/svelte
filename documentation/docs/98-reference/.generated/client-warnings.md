@@ -312,6 +312,32 @@ Reactive `$state(...)` proxies and the values they proxy have different identiti
 
 To resolve this, ensure you're comparing values where both values were created with `$state(...)`, or neither were. Note that `$state.raw(...)` will _not_ create a state proxy.
 
+### svelte_boundary_reset_noop
+
+```
+A `<svelte:boundary>` `reset` function only resets the boundary the first time it is called
+```
+
+When an error occurs while rendering the contents of a [`<svelte:boundary>`](https://svelte.dev/docs/svelte/svelte-boundary), the `onerror` handler is called with the error plus a `reset` function that attempts to re-render the contents.
+
+This `reset` function should only be called once. After that, it has no effect — in a case like this, where a reference to `reset` is stored outside the boundary, clicking the button while `<Contents />` is rendered will _not_ cause the contents to be rendered again.
+
+```svelte
+<script>
+	let reset;
+</script>
+
+<button onclick={reset}>reset</button>
+
+<svelte:boundary onerror={(e, r) => (reset = r)}>
+	<!-- contents -->
+
+	{#snippet failed(e)}
+		<p>oops! {e.message}</p>
+	{/snippet}
+</svelte:boundary>
+```
+
 ### transition_slide_display
 
 ```

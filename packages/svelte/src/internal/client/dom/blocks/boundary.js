@@ -1,7 +1,12 @@
 /** @import { Effect, Source, TemplateNode, } from '#client' */
-import { BOUNDARY_EFFECT, EFFECT_PRESERVED, EFFECT_TRANSPARENT } from '#client/constants';
+import {
+	BOUNDARY_EFFECT,
+	EFFECT_PRESERVED,
+	EFFECT_RAN,
+	EFFECT_TRANSPARENT
+} from '#client/constants';
 import { component_context, set_component_context } from '../../context.js';
-import { invoke_error_boundary } from '../../error-handling.js';
+import { handle_error, invoke_error_boundary } from '../../error-handling.js';
 import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
 import {
 	active_effect,
@@ -21,6 +26,7 @@ import {
 import { get_next_sibling } from '../operations.js';
 import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
+import * as w from '../../warnings.js';
 import { DEV } from 'esm-env';
 import { Batch, effect_pending_updates } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
@@ -196,6 +202,9 @@ export class Boundary {
 
 		try {
 			return fn();
+		} catch (e) {
+			handle_error(e);
+			return null;
 		} finally {
 			set_active_effect(previous_effect);
 			set_active_reaction(previous_reaction);
@@ -257,7 +266,42 @@ export class Boundary {
 		var onerror = this.#props.onerror;
 		let failed = this.#props.failed;
 
+		if (this.#main_effect) {
+			destroy_effect(this.#main_effect);
+			this.#main_effect = null;
+		}
+
+		if (this.#pending_effect) {
+			destroy_effect(this.#pending_effect);
+			this.#pending_effect = null;
+		}
+
+		if (this.#failed_effect) {
+			destroy_effect(this.#failed_effect);
+			this.#failed_effect = null;
+		}
+
+		if (hydrating) {
+			set_hydrate_node(this.#hydrate_open);
+			next();
+			set_hydrate_node(remove_nodes());
+		}
+
+		var did_reset = false;
+		var calling_on_error = false;
+
 		const reset = () => {
+			if (did_reset) {
+				w.svelte_boundary_reset_noop();
+				return;
+			}
+
+			did_reset = true;
+
+			if (calling_on_error) {
+				e.svelte_boundary_reset_onerror();
+			}
+
 			this.#pending_count = 0;
 
 			if (this.#failed_effect !== null) {
@@ -290,30 +334,13 @@ export class Boundary {
 
 		try {
 			set_active_reaction(null);
+			calling_on_error = true;
 			onerror?.(error, reset);
+			calling_on_error = false;
+		} catch (error) {
+			invoke_error_boundary(error, this.#effect && this.#effect.parent);
 		} finally {
 			set_active_reaction(previous_reaction);
-		}
-
-		if (this.#main_effect) {
-			destroy_effect(this.#main_effect);
-			this.#main_effect = null;
-		}
-
-		if (this.#pending_effect) {
-			destroy_effect(this.#pending_effect);
-			this.#pending_effect = null;
-		}
-
-		if (this.#failed_effect) {
-			destroy_effect(this.#failed_effect);
-			this.#failed_effect = null;
-		}
-
-		if (hydrating) {
-			set_hydrate_node(this.#hydrate_open);
-			next();
-			set_hydrate_node(remove_nodes());
 		}
 
 		if (failed) {

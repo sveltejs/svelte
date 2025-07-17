@@ -238,3 +238,23 @@ let odd = $derived(!even);
 ```
 
 If side-effects are unavoidable, use [`$effect`]($effect) instead.
+
+### svelte_boundary_reset_onerror
+
+```
+A `<svelte:boundary>` `reset` function cannot be called while an error is still being handled
+```
+
+If a [`<svelte:boundary>`](https://svelte.dev/docs/svelte/svelte-boundary) has an `onerror` function, it must not call the provided `reset` function synchronously since the boundary is still in a broken state. Typically, `reset()` is called later, once the error has been resolved.
+
+If it's possible to resolve the error inside the `onerror` callback, you must at least wait for the boundary to settle before calling `reset()`, for example using [`tick`](https://svelte.dev/docs/svelte/lifecycle-hooks#tick):
+
+```svelte
+<svelte:boundary onerror={async (error, reset) => {
+	fixTheError();
+	+++await tick();+++
+	reset();
+}}>
+
+</svelte:boundary>
+```

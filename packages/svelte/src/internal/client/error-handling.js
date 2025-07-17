@@ -53,7 +53,9 @@ export function invoke_error_boundary(error, effect) {
 			try {
 				/** @type {Boundary} */ (effect.b).error(error);
 				return;
-			} catch {}
+			} catch (e) {
+				error = e;
+			}
 		}
 
 		effect = effect.parent;
