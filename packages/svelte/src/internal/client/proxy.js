@@ -22,7 +22,8 @@ import {
 	flush_inspect_effects,
 	set_inspect_effects_deferred,
 	batch_onchange,
-	state
+	state,
+	onchange_batch
 } from './reactivity/sources.js';
 import { PROXY_PATH_SYMBOL, STATE_SYMBOL, PROXY_ONCHANGE_SYMBOL } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
@@ -325,7 +326,7 @@ export function proxy(value, onchange) {
 			// if we are changing the length of the array we batch all the changes
 			// to the sources and the original value by calling batch_onchange and immediately
 			// invoking it...otherwise we just invoke an identity function
-			(is_proxied_array && prop === 'length' ? batch_onchange : identity)(() => {
+			(is_proxied_array && prop === 'length' && !onchange_batch ? batch_onchange : identity)(() => {
 				// variable.length = value -> clear all signals with index >= value
 				if (is_proxied_array && prop === 'length') {
 					for (var i = value; i < /** @type {Source<number>} */ (s).v; i += 1) {
@@ -361,9 +362,8 @@ export function proxy(value, onchange) {
 				if (s === undefined) {
 					if (!has || get_descriptor(target, prop)?.writable) {
 						s = with_parent(() => source(undefined, onchange, stack));
-						set(s, proxy(value, onchange));
-
 						sources.set(prop, s);
+						set(s, proxy(value, onchange));
 
 						if (DEV) {
 							tag(s, get_label(path, prop));
@@ -373,13 +373,13 @@ export function proxy(value, onchange) {
 					has = s.v !== UNINITIALIZED;
 
 					var p = with_parent(() => proxy(value, onchange));
-					set(s, p);
-
 					// when we set a property if the source is a proxy we remove the current onchange from
 					// the proxy `onchanges` so that it doesn't trigger it anymore
 					if (onchange && typeof s.v === 'object' && s.v !== null && STATE_SYMBOL in s.v) {
 						s.v[PROXY_ONCHANGE_SYMBOL](onchange, true);
 					}
+
+					set(s, p);
 				}
 			})();
 

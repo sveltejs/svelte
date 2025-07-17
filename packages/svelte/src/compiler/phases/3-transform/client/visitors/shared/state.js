@@ -1,11 +1,11 @@
 /** @import { Expression, Property } from 'estree' */
-/** @import { ComponentContext } from '../../types' */
+/** @import { ComponentContext, Context } from '../../types' */
 import * as b from '../../../../../utils/builders.js';
 
 /**
  * Extract the `onchange` callback from the options passed to `$state`
  * @param {Expression} options
- * @param {ComponentContext} context
+ * @param {ComponentContext | Context} context
  * @returns {Expression | undefined}
  */
 export function get_onchange(options, context) {

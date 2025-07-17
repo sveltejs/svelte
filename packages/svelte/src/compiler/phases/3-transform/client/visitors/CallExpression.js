@@ -5,6 +5,7 @@ import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 import { transform_inspect_rune } from '../../utils.js';
 import { should_proxy } from '../utils.js';
+import { get_onchange } from './shared/state.js';
 
 /**
  * @param {CallExpression} node
@@ -24,6 +25,7 @@ export function CallExpression(node, context) {
 		case '$state':
 		case '$state.raw': {
 			let arg = node.arguments[0];
+			let onchange = get_onchange(/** @type {Expression} */ (node.arguments[1]), context);
 
 			/** @type {Expression | undefined} */
 			let value = undefined;
@@ -35,11 +37,11 @@ export function CallExpression(node, context) {
 					rune === '$state' &&
 					should_proxy(/** @type {Expression} */ (arg), context.state.scope)
 				) {
-					value = b.call('$.proxy', value);
+					return b.call('$.assignable_proxy', value, onchange);
 				}
 			}
 
-			return b.call('$.state', value);
+			return b.call('$.state', value, onchange);
 		}
 
 		case '$derived':

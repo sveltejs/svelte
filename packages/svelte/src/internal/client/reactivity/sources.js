@@ -57,7 +57,7 @@ export function set_inspect_effects_deferred() {
 }
 
 /** @type {null | Set<() => void>} */
-let onchange_batch = null;
+export let onchange_batch = null;
 
 /**
  * @param {Function} fn
@@ -271,6 +271,15 @@ export function internal_set(source, value) {
 		if (DEV && inspect_effects.size > 0 && !inspect_effects_deferred) {
 			flush_inspect_effects();
 		}
+
+		var onchange = source.o;
+		if (onchange) {
+			if (onchange_batch) {
+				onchange_batch.add(onchange);
+			} else {
+				onchange();
+			}
+		}
 	}
 
 	return value;
@@ -294,14 +303,6 @@ export function flush_inspect_effects() {
 	}
 
 	inspect_effects.clear();
-	var onchange = source.o;
-	if (onchange) {
-		if (onchange_batch) {
-			onchange_batch.add(onchange);
-		} else {
-			onchange();
-		}
-	}
 }
 
 /**

@@ -140,7 +140,7 @@ export function VariableDeclaration(node, context) {
 					const is_proxy = should_proxy(value, context.state.scope);
 
 					if (rune === '$state' && is_proxy) {
-						value = b.call('$.proxy', value, onchange);
+						value = b.call(is_state ? '$.assignable_proxy' : '$.proxy', value, onchange);
 
 						if (dev && !is_state) {
 							value = b.call('$.tag_proxy', value, b.literal(id.name));
@@ -148,7 +148,9 @@ export function VariableDeclaration(node, context) {
 					}
 
 					if (is_state) {
-						value = b.call('$.state', value, onchange);
+						if (!(rune === '$state' && is_proxy)) {
+							value = b.call('$.state', value, onchange);
+						}
 
 						if (dev) {
 							value = b.call('$.tag', value, b.literal(id.name));
