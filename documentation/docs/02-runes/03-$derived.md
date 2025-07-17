@@ -105,6 +105,8 @@ let { a, b, c } = $derived(stuff());
 ...is roughly equivalent to this:
 
 ```js
+function stuff() { return { a: 1, b: 2, c: 3 } }
+// ---cut---
 let _stuff = $derived(stuff());
 let a = $derived(_stuff.a);
 let b = $derived(_stuff.b);
