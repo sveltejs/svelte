@@ -111,7 +111,6 @@ export function build_template(template, out = b.id('$$payload.out'), operator =
 
 	const flush = () => {
 		if (operator === 'push') {
-			// For array push, we need to call push method instead of assignment
 			statements.push(
 				b.stmt(
 					b.call(
@@ -124,7 +123,6 @@ export function build_template(template, out = b.id('$$payload.out'), operator =
 				)
 			);
 		} else {
-			// For other operators, use assignment
 			statements.push(
 				b.stmt(
 					b.assignment(
