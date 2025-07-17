@@ -12,5 +12,5 @@ export default function Text_nodes_deriveds($$payload) {
 		return count2;
 	}
 
-	$$payload.out += `<p>${$.escape(text1())}${$.escape(text2())}</p>`;
+	$$payload.out.push(`<p>${$.escape(text1())}${$.escape(text2())}</p>`);
 }

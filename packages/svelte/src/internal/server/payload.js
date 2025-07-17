@@ -1,11 +1,12 @@
 export class HeadPayload {
 	/** @type {Set<{ hash: string; code: string }>} */
 	css = new Set();
-	out = '';
+	/** @type {string[]} */
+	out = [];
 	uid = () => '';
 	title = '';
 
-	constructor(css = new Set(), out = '', title = '', uid = () => '') {
+	constructor(css = new Set(), /** @type {string[]} */ out = [], title = '', uid = () => '') {
 		this.css = css;
 		this.out = out;
 		this.title = title;
@@ -16,7 +17,8 @@ export class HeadPayload {
 export class Payload {
 	/** @type {Set<{ hash: string; code: string }>} */
 	css = new Set();
-	out = '';
+	/** @type {string[]} */
+	out = [];
 	uid = () => '';
 	select_value = undefined;
 
@@ -36,12 +38,12 @@ export class Payload {
 export function copy_payload({ out, css, head, uid }) {
 	const payload = new Payload();
 
-	payload.out = out;
+	payload.out = [...out];
 	payload.css = new Set(css);
 	payload.uid = uid;
 
 	payload.head = new HeadPayload();
-	payload.head.out = head.out;
+	payload.head.out = [...head.out];
 	payload.head.css = new Set(head.css);
 	payload.head.title = head.title;
 	payload.head.uid = head.uid;
@@ -56,7 +58,7 @@ export function copy_payload({ out, css, head, uid }) {
  * @returns {void}
  */
 export function assign_payload(p1, p2) {
-	p1.out = p2.out;
+	p1.out = [...p2.out];
 	p1.css = p2.css;
 	p1.head = p2.head;
 	p1.uid = p2.uid;
