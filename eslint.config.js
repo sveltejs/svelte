@@ -80,7 +80,8 @@ export default [
 		files: ['packages/svelte/src/**/*'],
 		ignores: ['packages/svelte/src/compiler/**/*'],
 		rules: {
-			'custom/no_compiler_imports': 'error'
+			'custom/no_compiler_imports': 'error',
+			'svelte/no-svelte-internal': 'off'
 		}
 	},
 	{
