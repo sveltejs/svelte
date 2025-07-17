@@ -166,6 +166,20 @@ export function effect_tracking() {
 }
 
 /**
+ * Internal representation of `$effect.active()`
+ * @returns {boolean}
+ */
+export function effect_active() {
+	if (active_reaction === null && active_effect === null) {
+		return false;
+	}
+	if (is_destroying_effect) {
+		return false;
+	}
+	return true;
+}
+
+/**
  * @param {() => void} fn
  */
 export function teardown(fn) {

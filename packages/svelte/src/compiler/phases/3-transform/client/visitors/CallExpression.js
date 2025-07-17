@@ -17,6 +17,9 @@ export function CallExpression(node, context) {
 		case '$host':
 			return b.id('$$props.$$host');
 
+		case '$effect.active':
+			return b.call('$.effect_active');
+
 		case '$effect.tracking':
 			return b.call('$.effect_tracking');
 
