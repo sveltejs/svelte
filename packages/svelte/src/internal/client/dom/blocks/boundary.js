@@ -338,11 +338,7 @@ export class Boundary {
 			onerror?.(error, reset);
 			calling_on_error = false;
 		} catch (error) {
-			if (this.#effect !== null) {
-				invoke_error_boundary(error, this.#effect.parent);
-			} else {
-				throw error;
-			}
+			invoke_error_boundary(error, this.#effect && this.#effect.parent);
 		} finally {
 			set_active_reaction(previous_reaction);
 		}
