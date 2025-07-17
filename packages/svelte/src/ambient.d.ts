@@ -266,6 +266,13 @@ declare namespace $effect {
 	export function pre(fn: () => void | (() => void)): void;
 
 	/**
+	 * Returns the number of promises that are pending in the current boundary, not including child boundaries.
+	 *
+	 * https://svelte.dev/docs/svelte/$effect#$effect.pending
+	 */
+	export function pending(): number;
+
+	/**
 	 * The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template.
 	 *
 	 * Example:
@@ -298,13 +305,13 @@ declare namespace $effect {
 	 *   let count = $state(0);
 	 *
 	 *   const cleanup = $effect.root(() => {
-	 *	    $effect(() => {
-	 *				console.log(count);
-	 *			})
+	 *     $effect(() => {
+	 *       console.log(count);
+	 *     })
 	 *
-	 *      return () => {
-	 *        console.log('effect root cleanup');
-	 * 			}
+	 *     return () => {
+	 *       console.log('effect root cleanup');
+	 *     }
 	 *   });
 	 * </script>
 	 *

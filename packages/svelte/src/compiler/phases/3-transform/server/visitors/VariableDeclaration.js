@@ -1,6 +1,7 @@
 /** @import { VariableDeclaration, VariableDeclarator, Expression, CallExpression, Pattern, Identifier } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { Context } from '../types.js' */
+/** @import { ComponentAnalysis } from '../../../types.js' */
 /** @import { Scope } from '../../../scope.js' */
 import { build_fallback, extract_paths } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
@@ -50,20 +51,26 @@ export function VariableDeclaration(node, context) {
 						}
 					}
 				});
+
+				// if `$$slots` is declared separately, deconflict
+				const slots_name = /** @type {ComponentAnalysis} */ (context.state.analysis).uses_slots
+					? b.id('$$slots_')
+					: b.id('$$slots');
+
 				if (id.type === 'ObjectPattern' && has_rest) {
 					// If a rest pattern is used within an object pattern, we need to ensure we don't expose $$slots or $$events
 					id.properties.splice(
 						id.properties.length - 1,
 						0,
 						// @ts-ignore
-						b.prop('init', b.id('$$slots'), b.id('$$slots')),
+						b.prop('init', b.id('$$slots'), slots_name),
 						b.prop('init', b.id('$$events'), b.id('$$events'))
 					);
 				} else if (id.type === 'Identifier') {
 					// If $props is referenced as an identifier, we need to ensure we don't expose $$slots or $$events as properties
 					// on the identifier reference
 					id = b.object_pattern([
-						b.prop('init', b.id('$$slots'), b.id('$$slots')),
+						b.prop('init', b.id('$$slots'), slots_name),
 						b.prop('init', b.id('$$events'), b.id('$$events')),
 						b.rest(b.id(id.name))
 					]);
@@ -113,21 +120,29 @@ export function VariableDeclaration(node, context) {
 				if (declarator.id.type !== 'Identifier') {
 					// Turn export let into props. It's really really weird because export let { x: foo, z: [bar]} = ..
 					// means that foo and bar are the props (i.e. the leafs are the prop names), not x and z.
-					const tmp = context.state.scope.generate('tmp');
-					const paths = extract_paths(declarator.id);
+					const tmp = b.id(context.state.scope.generate('tmp'));
+					const { inserts, paths } = extract_paths(declarator.id, tmp);
+
 					declarations.push(
 						b.declarator(
-							b.id(tmp),
+							tmp,
 							/** @type {Expression} */ (context.visit(/** @type {Expression} */ (declarator.init)))
 						)
 					);
+
+					for (const { id, value } of inserts) {
+						id.name = context.state.scope.generate('$$array');
+						declarations.push(b.declarator(id, value));
+					}
+
 					for (const path of paths) {
-						const value = path.expression?.(b.id(tmp));
+						const value = path.expression;
 						const name = /** @type {Identifier} */ (path.node).name;
 						const binding = /** @type {Binding} */ (context.state.scope.get(name));
 						const prop = b.member(b.id('$$props'), b.literal(binding.prop_alias ?? name), true);
 						declarations.push(b.declarator(path.node, build_fallback(prop, value)));
 					}
+
 					continue;
 				}
 
@@ -181,12 +196,16 @@ function create_state_declarators(declarator, scope, value) {
 		return [b.declarator(declarator.id, value)];
 	}
 
-	const tmp = scope.generate('tmp');
-	const paths = extract_paths(declarator.id);
+	const tmp = b.id(scope.generate('tmp'));
+	const { paths, inserts } = extract_paths(declarator.id, tmp);
 	return [
-		b.declarator(b.id(tmp), value), // TODO inject declarator for opts, so we can use it below
+		b.declarator(tmp, value), // TODO inject declarator for opts, so we can use it below
+		...inserts.map(({ id, value }) => {
+			id.name = scope.generate('$$array');
+			return b.declarator(id, value);
+		}),
 		...paths.map((path) => {
-			const value = path.expression?.(b.id(tmp));
+			const value = path.expression;
 			return b.declarator(path.node, value);
 		})
 	];

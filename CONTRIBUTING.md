@@ -105,10 +105,10 @@ Test samples are kept in `/test/xxx/samples` folder.
    pnpm test validator
    ```
 
-1. To filter tests _within_ a test suite, use `pnpm test <suite-name> -- -t <test-name>`, for example:
+1. To filter tests _within_ a test suite, use `pnpm test <suite-name> -t <test-name>`, for example:
 
    ```bash
-   pnpm test validator -- -t a11y-alt-text
+   pnpm test validator -t a11y-alt-text
    ```
 
    (You can also do `FILTER=<test-name> pnpm test <suite-name>` which removes other tests rather than simply skipping them — this will result in faster and more compact test results, but it's non-idiomatic. Choose your fighter.)

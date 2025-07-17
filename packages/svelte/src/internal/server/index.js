@@ -18,6 +18,7 @@ import { validate_store } from '../shared/validate.js';
 import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
 import { reset_elements } from './dev.js';
 import { Payload } from './payload.js';
+import { abort } from './abort-signal.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
@@ -66,50 +67,54 @@ export let on_destroy = [];
  * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
-	const payload = new Payload(options.idPrefix ? options.idPrefix + '-' : '');
+	try {
+		const payload = new Payload(options.idPrefix ? options.idPrefix + '-' : '');
 
-	const prev_on_destroy = on_destroy;
-	on_destroy = [];
-	payload.out += BLOCK_OPEN;
+		const prev_on_destroy = on_destroy;
+		on_destroy = [];
+		payload.out += BLOCK_OPEN;
 
-	let reset_reset_element;
+		let reset_reset_element;
 
-	if (DEV) {
-		// prevent parent/child element state being corrupted by a bad render
-		reset_reset_element = reset_elements();
+		if (DEV) {
+			// prevent parent/child element state being corrupted by a bad render
+			reset_reset_element = reset_elements();
+		}
+
+		if (options.context) {
+			push();
+			/** @type {Component} */ (current_component).c = options.context;
+		}
+
+		// @ts-expect-error
+		component(payload, options.props ?? {}, {}, {});
+
+		if (options.context) {
+			pop();
+		}
+
+		if (reset_reset_element) {
+			reset_reset_element();
+		}
+
+		payload.out += BLOCK_CLOSE;
+		for (const cleanup of on_destroy) cleanup();
+		on_destroy = prev_on_destroy;
+
+		let head = payload.head.out + payload.head.title;
+
+		for (const { hash, code } of payload.css) {
+			head += `<style id="${hash}">${code}</style>`;
+		}
+
+		return {
+			head,
+			html: payload.out,
+			body: payload.out
+		};
+	} finally {
+		abort();
 	}
-
-	if (options.context) {
-		push();
-		/** @type {Component} */ (current_component).c = options.context;
-	}
-
-	// @ts-expect-error
-	component(payload, options.props ?? {}, {}, {});
-
-	if (options.context) {
-		pop();
-	}
-
-	if (reset_reset_element) {
-		reset_reset_element();
-	}
-
-	payload.out += BLOCK_CLOSE;
-	for (const cleanup of on_destroy) cleanup();
-	on_destroy = prev_on_destroy;
-
-	let head = payload.head.out + payload.head.title;
-
-	for (const { hash, code } of payload.css) {
-		head += `<style id="${hash}">${code}</style>`;
-	}
-
-	return {
-		head,
-		html: payload.out,
-		body: payload.out
-	};
 }
 
 /**
@@ -504,7 +509,7 @@ export { assign_payload, copy_payload } from './payload.js';
 
 export { snapshot } from '../shared/clone.js';
 
-export { fallback } from '../shared/utils.js';
+export { fallback, to_array } from '../shared/utils.js';
 
 export {
 	invalid_default_snippet,
@@ -514,3 +519,53 @@ export {
 } from '../shared/validate.js';
 
 export { escape_html as escape };
+
+export { await_outside_boundary } from '../shared/errors.js';
+
+/**
+ * @template T
+ * @param {()=>T} fn
+ * @returns {(new_value?: T) => (T | void)}
+ */
+export function derived(fn) {
+	const get_value = once(fn);
+	/**
+	 * @type {T | undefined}
+	 */
+	let updated_value;
+
+	return function (new_value) {
+		if (arguments.length === 0) {
+			return updated_value ?? get_value();
+		}
+		updated_value = new_value;
+		return updated_value;
+	};
+}
+
+/**
+ *
+ * @param {Payload} payload
+ * @param {*} value
+ */
+export function maybe_selected(payload, value) {
+	return value === payload.select_value ? ' selected' : '';
+}
+
+/**
+ * @param {Payload} payload
+ * @param {() => void} children
+ * @returns {void}
+ */
+export function valueless_option(payload, children) {
+	var i = payload.out.length;
+
+	children();
+
+	var body = payload.out.slice(i);
+
+	if (body.replace(/<!---->/g, '') === payload.select_value) {
+		// replace '>' with ' selected>' (closing tag will be added later)
+		payload.out = payload.out.slice(0, i - 1) + ' selected>' + body;
+	}
+}

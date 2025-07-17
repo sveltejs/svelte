@@ -43,14 +43,21 @@ export function SnippetBlock(node, context) {
 		let arg_alias = `$$arg${i}`;
 		args.push(b.id(arg_alias));
 
-		const paths = extract_paths(argument);
+		const { inserts, paths } = extract_paths(argument, b.maybe_call(b.id(arg_alias)));
+
+		for (const { id, value } of inserts) {
+			id.name = context.state.scope.generate('$$array');
+			transform[id.name] = { read: get_value };
+
+			declarations.push(
+				b.var(id, b.call('$.derived', /** @type {Expression} */ (context.visit(b.thunk(value)))))
+			);
+		}
 
 		for (const path of paths) {
 			const name = /** @type {Identifier} */ (path.node).name;
 			const needs_derived = path.has_default_value; // to ensure that default value is only called once
-			const fn = b.thunk(
-				/** @type {Expression} */ (context.visit(path.expression?.(b.maybe_call(b.id(arg_alias)))))
-			);
+			const fn = b.thunk(/** @type {Expression} */ (context.visit(path.expression, child_state)));
 
 			declarations.push(b.let(path.node, needs_derived ? b.call('$.derived_safe_equal', fn) : fn));
 

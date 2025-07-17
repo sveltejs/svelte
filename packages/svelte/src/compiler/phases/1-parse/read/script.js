@@ -16,7 +16,7 @@ const ALLOWED_ATTRIBUTES = ['context', 'generics', 'lang', 'module'];
 /**
  * @param {Parser} parser
  * @param {number} start
- * @param {Array<AST.Attribute | AST.SpreadAttribute | AST.Directive>} attributes
+ * @param {Array<AST.Attribute | AST.SpreadAttribute | AST.Directive | AST.AttachTag>} attributes
  * @returns {AST.Script}
  */
 export function read_script(parser, start, attributes) {
@@ -34,7 +34,7 @@ export function read_script(parser, start, attributes) {
 	let ast;
 
 	try {
-		ast = acorn.parse(source, parser.ts, true);
+		ast = acorn.parse(source, parser.root.comments, parser.ts, true);
 	} catch (err) {
 		parser.acorn_error(err);
 	}

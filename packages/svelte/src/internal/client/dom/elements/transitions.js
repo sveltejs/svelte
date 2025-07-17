@@ -209,21 +209,14 @@ export function transition(flags, element, get_fn, get_params) {
 	var outro;
 
 	function get_options() {
-		var previous_reaction = active_reaction;
-		var previous_effect = active_effect;
-		set_active_reaction(null);
-		set_active_effect(null);
-		try {
+		return without_reactive_context(() => {
 			// If a transition is still ongoing, we use the existing options rather than generating
 			// new ones. This ensures that reversible transitions reverse smoothly, rather than
 			// jumping to a new spot because (for example) a different `duration` was used
 			return (current_options ??= get_fn()(element, get_params?.() ?? /** @type {P} */ ({}), {
 				direction
 			}));
-		} finally {
-			set_active_reaction(previous_reaction);
-			set_active_effect(previous_effect);
-		}
+		});
 	}
 
 	/** @type {TransitionManager} */
@@ -381,9 +374,15 @@ function animate(element, options, counterpart, t2, on_finish) {
 	// create a dummy animation that lasts as long as the delay (but with whatever devtools
 	// multiplier is in effect). in the common case that it is `0`, we keep it anyway so that
 	// the CSS keyframes aren't created until the DOM is updated
-	var animation = element.animate(keyframes, { duration: delay });
+	//
+	// fill forwards to prevent the element from rendering without styles applied
+	// see https://github.com/sveltejs/svelte/issues/14732
+	var animation = element.animate(keyframes, { duration: delay, fill: 'forwards' });
 
 	animation.onfinish = () => {
+		// remove dummy animation from the stack to prevent conflict with main animation
+		animation.cancel();
+
 		// for bidirectional transitions, we start from the current position,
 		// rather than doing a full intro/outro
 		var t1 = counterpart?.t() ?? 1 - t2;

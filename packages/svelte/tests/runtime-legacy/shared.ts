@@ -6,11 +6,12 @@ import { proxy } from 'svelte/internal/client';
 import { flushSync, hydrate, mount, unmount } from 'svelte';
 import { render } from 'svelte/server';
 import { afterAll, assert, beforeAll } from 'vitest';
-import { compile_directory } from '../helpers.js';
-import { setup_html_equal } from '../html_equal.js';
+import { async_mode, compile_directory, fragments } from '../helpers.js';
+import { assert_html_equal, assert_html_equal_with_options } from '../html_equal.js';
 import { raf } from '../animation-helpers.js';
 import type { CompileOptions } from '#compiler';
 import { suite_with_variants, type BaseTest } from '../suite.js';
+import { clear } from '../../src/internal/client/reactivity/batch.js';
 
 type Assert = typeof import('vitest').assert & {
 	htmlEqual(a: string, b: string, description?: string): void;
@@ -25,12 +26,30 @@ type Assert = typeof import('vitest').assert & {
 	): void;
 };
 
+// TODO remove this shim when we can
+// @ts-expect-error
+Promise.withResolvers = () => {
+	let resolve;
+	let reject;
+
+	const promise = new Promise((f, r) => {
+		resolve = f;
+		reject = r;
+	});
+
+	return { promise, resolve, reject };
+};
+
 export interface RuntimeTest<Props extends Record<string, any> = Record<string, any>>
 	extends BaseTest {
 	/** Use e.g. `mode: ['client']` to indicate that this test should never run in server/hydrate modes */
 	mode?: Array<'server' | 'client' | 'hydrate'>;
 	/** Temporarily skip specific modes, without skipping the entire test */
 	skip_mode?: Array<'server' | 'client' | 'hydrate'>;
+	/** Skip if running with process.env.NO_ASYNC */
+	skip_no_async?: boolean;
+	/** Skip if running without process.env.NO_ASYNC */
+	skip_async?: boolean;
 	html?: string;
 	ssrHtml?: string;
 	compileOptions?: Partial<CompileOptions>;
@@ -86,10 +105,6 @@ function unhandled_rejection_handler(err: Error) {
 
 const listeners = process.rawListeners('unhandledRejection');
 
-const { assert_html_equal, assert_html_equal_with_options } = setup_html_equal({
-	removeDataSvelte: true
-});
-
 beforeAll(() => {
 	// @ts-expect-error TODO huh?
 	process.prependListener('unhandledRejection', unhandled_rejection_handler);
@@ -111,7 +126,15 @@ let console_error = console.error;
 export function runtime_suite(runes: boolean) {
 	return suite_with_variants<RuntimeTest, 'hydrate' | 'ssr' | 'dom', CompileOptions>(
 		['dom', 'hydrate', 'ssr'],
-		(variant, config) => {
+		(variant, config, test_name) => {
+			if (!async_mode && (config.skip_no_async || test_name.startsWith('async-'))) {
+				return true;
+			}
+
+			if (async_mode && config.skip_async) {
+				return true;
+			}
+
 			if (variant === 'hydrate') {
 				if (config.mode && !config.mode.includes('hydrate')) return 'no-test';
 				if (config.skip_mode?.includes('hydrate')) return true;
@@ -158,10 +181,17 @@ async function common_setup(cwd: string, runes: boolean | undefined, config: Run
 		rootDir: cwd,
 		dev: force_hmr ? true : undefined,
 		hmr: force_hmr ? true : undefined,
+		experimental: {
+			async: runes && async_mode
+		},
+		fragments,
 		...config.compileOptions,
 		immutable: config.immutable,
 		accessors: 'accessors' in config ? config.accessors : true,
-		runes
+		runes:
+			config.compileOptions && 'runes' in config.compileOptions
+				? config.compileOptions.runes
+				: runes
 	};
 
 	// load_compiled can be used for debugging a test. It means the compiler will not run on the input
@@ -215,7 +245,7 @@ async function run_test_variant(
 		if (str.slice(0, i).includes('warnings') || config.warnings) {
 			// eslint-disable-next-line no-console
 			console.warn = (...args) => {
-				if (args[0].startsWith('%c[svelte]')) {
+				if (typeof args[0] === 'string' && args[0].startsWith('%c[svelte]')) {
 					// TODO convert this to structured data, for more robust comparison?
 
 					let message = args[0];
@@ -351,7 +381,7 @@ async function run_test_variant(
 				// @ts-expect-error
 				globalThis.__svelte.uid = 1;
 
-				if (manual_hydrate) {
+				if (manual_hydrate && variant === 'hydrate') {
 					hydrate_fn = () => {
 						instance = hydrate(mod.default, {
 							target,
@@ -397,6 +427,12 @@ async function run_test_variant(
 			try {
 				if (config.test) {
 					flushSync();
+
+					if (variant === 'hydrate' && cwd.includes('async-')) {
+						// wait for pending boundaries to render
+						await Promise.resolve();
+					}
+
 					await config.test({
 						// @ts-expect-error TS doesn't get it
 						assert: {
@@ -453,10 +489,11 @@ async function run_test_variant(
 					'Expected component to unmount and leave nothing behind after it was destroyed'
 				);
 
-				// TODO: This seems useless, unhandledRejection is only triggered on the next task
-				// by which time the test has already finished and the next test resets it to null above
+				// uncaught errors like during template effects flush
 				if (unhandled_rejection) {
-					throw unhandled_rejection; // eslint-disable-line no-unsafe-finally
+					if (!config.expect_unhandled_rejections) {
+						throw unhandled_rejection; // eslint-disable-line no-unsafe-finally
+					}
 				}
 			}
 		}
@@ -469,10 +506,6 @@ async function run_test_variant(
 			throw err;
 		}
 	} finally {
-		console.log = console_log;
-		console.warn = console_warn;
-		console.error = console_error;
-
 		config.after_test?.();
 
 		// Free up the microtask queue
@@ -486,6 +519,12 @@ async function run_test_variant(
 				process.on('unhandledRejection', listener);
 			});
 		}
+
+		console.log = console_log;
+		console.warn = console_warn;
+		console.error = console_error;
+
+		clear();
 	}
 }
 

@@ -2,6 +2,13 @@ import type { SourceMap } from 'magic-string';
 import type { Binding } from '../phases/scope.js';
 import type { AST, Namespace } from './template.js';
 import type { ICompileDiagnostic } from '../utils/compile_diagnostic.js';
+import type { StateCreationRuneName } from '../../utils.js';
+import type {
+	AssignmentExpression,
+	CallExpression,
+	PrivateIdentifier,
+	PropertyDefinition
+} from 'estree';
 
 /** The return value of `compile` from `svelte/compiler` */
 export interface CompileResult {
@@ -116,6 +123,16 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 */
 	preserveWhitespace?: boolean;
 	/**
+	 * Which strategy to use when cloning DOM fragments:
+	 *
+	 * - `html` populates a `<template>` with `innerHTML` and clones it. This is faster, but cannot be used if your app's [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP) includes [`require-trusted-types-for 'script'`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/require-trusted-types-for)
+	 * - `tree` creates the fragment one element at a time and _then_ clones it. This is slower, but works everywhere
+	 *
+	 * @default 'html'
+	 * @since 5.33
+	 */
+	fragments?: 'html' | 'tree';
+	/**
 	 * Set to `true` to force the compiler into runes mode, even if there are no indications of runes usage.
 	 * Set to `false` to force the compiler into ignoring runes, even if there are indications of runes usage.
 	 * Set to `undefined` (the default) to infer runes mode from the component code.
@@ -207,6 +224,17 @@ export interface ModuleCompileOptions {
 	 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 	 */
 	warningFilter?: (warning: Warning) => boolean;
+	/**
+	 * Experimental options
+	 * @since 5.36
+	 */
+	experimental?: {
+		/**
+		 * Allow `await` keyword in deriveds, template expressions, and the top level of components
+		 * @since 5.36
+		 */
+		async?: boolean;
+	};
 }
 
 // The following two somewhat scary looking types ensure that certain types are required but can be undefined still
@@ -248,7 +276,8 @@ export type BindingKind =
 	| 'snippet' // A snippet parameter
 	| 'store_sub' // A $store value
 	| 'legacy_reactive' // A `$:` declaration
-	| 'template'; // A binding declared in the template, e.g. in an `await` block or `const` tag
+	| 'template' // A binding declared in the template, e.g. in an `await` block or `const` tag
+	| 'static'; // A binding whose value is known to be static (i.e. each index)
 
 export type DeclarationKind =
 	| 'var'
@@ -261,12 +290,27 @@ export type DeclarationKind =
 	| 'synthetic';
 
 export interface ExpressionMetadata {
-	/** All the bindings that are referenced inside this expression */
+	/** All the bindings that are referenced eagerly (not inside functions) in this expression */
 	dependencies: Set<Binding>;
+	/** All the bindings that are referenced inside this expression, including inside functions */
+	references: Set<Binding>;
 	/** True if the expression references state directly, or _might_ (via member/call expressions) */
 	has_state: boolean;
 	/** True if the expression involves a call expression (often, it will need to be wrapped in a derived) */
 	has_call: boolean;
+	/** True if the expression contains `await` */
+	has_await: boolean;
+	/** True if the expression includes a member expression */
+	has_member_expression: boolean;
+	/** True if the expression includes an assignment or an update */
+	has_assignment: boolean;
+}
+
+export interface StateField {
+	type: StateCreationRuneName;
+	node: PropertyDefinition | AssignmentExpression;
+	key: PrivateIdentifier;
+	value: CallExpression;
 }
 
 export * from './template.js';

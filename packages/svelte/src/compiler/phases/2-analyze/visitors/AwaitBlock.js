@@ -41,5 +41,8 @@ export function AwaitBlock(node, context) {
 
 	mark_subtree_dynamic(context.path);
 
-	context.next();
+	context.visit(node.expression, { ...context.state, expression: node.metadata.expression });
+	if (node.pending) context.visit(node.pending);
+	if (node.then) context.visit(node.then);
+	if (node.catch) context.visit(node.catch);
 }

@@ -9,6 +9,6 @@ export default test({
 		flushSync();
 
 		assert.deepEqual(logs, ['error caught']);
-		assert.htmlEqual(target.innerHTML, `<div>Fallback!</div><button>+</button>`);
+		assert.htmlEqual(target.innerHTML, `<div>oh no!</div><button>+</button>`);
 	}
 });

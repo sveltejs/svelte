@@ -1,4 +1,11 @@
-import type { ComponentContext, Dom, Equals, TemplateNode, TransitionManager } from '#client';
+import type {
+	ComponentContext,
+	DevStackEntry,
+	Equals,
+	TemplateNode,
+	TransitionManager
+} from '#client';
+import type { Boundary } from '../dom/blocks/boundary';
 
 export interface Signal {
 	/** Flags bitmask */
@@ -23,11 +30,21 @@ export interface Value<V = unknown> extends Signal {
 	/** onchange callback */
 	o?: () => void;
 	/** Dev only */
+
+	// dev-only
+	/** A label (e.g. the `foo` in `let foo = $state(...)`) used for `$inspect.trace()` */
+	label?: string;
+	/** An error with a stack trace showing when the source was created */
 	created?: Error | null;
-	updated?: Error | null;
-	trace_need_increase?: boolean;
-	trace_v?: V;
-	debug?: null | (() => void);
+	/** An map of errors with stack traces showing when the source was updated, keyed by the stack trace */
+	updated?: Map<string, { error: Error; count: number }> | null;
+	/**
+	 * Whether or not the source was set while running an effect — if so, we need to
+	 * increment the write version so that it shows up as dirty when the effect re-runs
+	 */
+	set_during_effect?: boolean;
+	/** A function that retrieves the underlying source, used for each block item signals */
+	trace?: null | (() => void);
 }
 
 export interface Reaction extends Signal {
@@ -37,6 +54,8 @@ export interface Reaction extends Signal {
 	fn: null | Function;
 	/** Signals that this signal reads from */
 	deps: null | Value[];
+	/** An AbortController that aborts when the signal is destroyed */
+	ac: null | AbortController;
 }
 
 export interface Derived<V = unknown> extends Value<V>, Reaction {
@@ -73,8 +92,12 @@ export interface Effect extends Reaction {
 	last: null | Effect;
 	/** Parent effect */
 	parent: Effect | null;
+	/** The boundary this effect belongs to */
+	b: Boundary | null;
 	/** Dev only */
 	component_function?: any;
+	/** Dev only. Only set for certain block effects. Contains a reference to the stack that represents the render tree */
+	dev_stack?: DevStackEntry | null;
 }
 
 export type Source<V = unknown> = Value<V>;

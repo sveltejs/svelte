@@ -1,17 +1,14 @@
 /** @import { ArrayExpression, Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression } from 'estree' */
 /** @import { AST } from '#compiler' */
-/** @import { SourceLocation } from '#shared' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
 import {
 	cannot_be_set_statically,
 	is_boolean_attribute,
 	is_dom_property,
-	is_load_error_element,
-	is_void
+	is_load_error_element
 } from '../../../../../utils.js';
-import { escape_html } from '../../../../../escaping.js';
-import { dev, is_ignored, locator } from '../../../../state.js';
+import { is_ignored } from '../../../../state.js';
 import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { is_custom_element_node } from '../../../nodes.js';
@@ -20,18 +17,12 @@ import { build_getter } from '../utils.js';
 import {
 	get_attribute_name,
 	build_attribute_value,
-	build_set_attributes,
+	build_attribute_effect,
 	build_set_class,
 	build_set_style
 } from './shared/element.js';
 import { process_children } from './shared/fragment.js';
-import {
-	build_render_statement,
-	build_template_chunk,
-	build_update_assignment,
-	get_expression_id,
-	memoize_expression
-} from './shared/utils.js';
+import { build_render_statement, build_template_chunk, Memoizer } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
 
 /**
@@ -39,40 +30,24 @@ import { visit_event_attribute } from './shared/events.js';
  * @param {ComponentContext} context
  */
 export function RegularElement(node, context) {
-	/** @type {SourceLocation} */
-	let location = [-1, -1];
-
-	if (dev) {
-		const loc = locator(node.start);
-		if (loc) {
-			location[0] = loc.line;
-			location[1] = loc.column;
-			context.state.locations.push(location);
-		}
-	}
+	context.state.template.push_element(node.name, node.start);
 
 	if (node.name === 'noscript') {
-		context.state.template.push('<noscript></noscript>');
+		context.state.template.pop_element();
 		return;
 	}
 
 	const is_custom_element = is_custom_element_node(node);
 
-	if (node.name === 'video' || is_custom_element) {
-		// cloneNode is faster, but it does not instantiate the underlying class of the
-		// custom element until the template is connected to the dom, which would
-		// cause problems when setting properties on the custom element.
-		// Therefore we need to use importNode instead, which doesn't have this caveat.
-		// Additionally, Webkit browsers need importNode for video elements for autoplay
-		// to work correctly.
-		context.state.metadata.context.template_needs_import_node = true;
-	}
+	// cloneNode is faster, but it does not instantiate the underlying class of the
+	// custom element until the template is connected to the dom, which would
+	// cause problems when setting properties on the custom element.
+	// Therefore we need to use importNode instead, which doesn't have this caveat.
+	// Additionally, Webkit browsers need importNode for video elements for autoplay
+	// to work correctly.
+	context.state.template.needs_import_node ||= node.name === 'video' || is_custom_element;
 
-	if (node.name === 'script') {
-		context.state.metadata.context.template_contains_script_tag = true;
-	}
-
-	context.state.template.push(`<${node.name}`);
+	context.state.template.contains_script_tag ||= node.name === 'script';
 
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
 	const attributes = [];
@@ -83,7 +58,7 @@ export function RegularElement(node, context) {
 	/** @type {AST.StyleDirective[]} */
 	const style_directives = [];
 
-	/** @type {Array<AST.AnimateDirective | AST.BindDirective | AST.OnDirective | AST.TransitionDirective | AST.UseDirective>} */
+	/** @type {Array<AST.AnimateDirective | AST.BindDirective | AST.OnDirective | AST.TransitionDirective | AST.UseDirective | AST.AttachTag>} */
 	const other_directives = [];
 
 	/** @type {ExpressionStatement[]} */
@@ -110,7 +85,7 @@ export function RegularElement(node, context) {
 					const { value } = build_attribute_value(attribute.value, context);
 
 					if (value.type === 'Literal' && typeof value.value === 'string') {
-						context.state.template.push(` is="${escape_html(value.value, true)}"`);
+						context.state.template.set_prop('is', value.value);
 						continue;
 					}
 				}
@@ -151,6 +126,10 @@ export function RegularElement(node, context) {
 
 			case 'UseDirective':
 				has_use = true;
+				other_directives.push(attribute);
+				break;
+
+			case 'AttachTag':
 				other_directives.push(attribute);
 				break;
 		}
@@ -215,46 +194,16 @@ export function RegularElement(node, context) {
 
 	const node_id = context.state.node;
 
+	/** If true, needs `__value` for inputs */
+	const needs_special_value_handling =
+		node.name === 'option' ||
+		node.name === 'select' ||
+		bindings.has('group') ||
+		bindings.has('checked');
+
 	if (has_spread) {
-		const attributes_id = b.id(context.state.scope.generate('attributes'));
-
-		build_set_attributes(
-			attributes,
-			class_directives,
-			style_directives,
-			context,
-			node,
-			node_id,
-			attributes_id
-		);
-
-		// If value binding exists, that one takes care of calling $.init_select
-		if (node.name === 'select' && !bindings.has('value')) {
-			context.state.init.push(
-				b.stmt(b.call('$.init_select', node_id, b.thunk(b.member(attributes_id, 'value'))))
-			);
-
-			context.state.update.push(
-				b.if(
-					b.binary('in', b.literal('value'), attributes_id),
-					b.block([
-						// This ensures a one-way street to the DOM in case it's <select {value}>
-						// and not <select bind:value>. We need it in addition to $.init_select
-						// because the select value is not reflected as an attribute, so the
-						// mutation observer wouldn't notice.
-						b.stmt(b.call('$.select_option', node_id, b.member(attributes_id, 'value')))
-					])
-				)
-			);
-		}
+		build_attribute_effect(attributes, class_directives, style_directives, context, node, node_id);
 	} else {
-		/** If true, needs `__value` for inputs */
-		const needs_special_value_handling =
-			node.name === 'option' ||
-			node.name === 'select' ||
-			bindings.has('group') ||
-			bindings.has('checked');
-
 		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
 			if (is_event_attribute(attribute)) {
 				visit_event_attribute(attribute, context);
@@ -262,7 +211,6 @@ export function RegularElement(node, context) {
 			}
 
 			if (needs_special_value_handling && attribute.name === 'value') {
-				build_element_special_value_attribute(node.name, node_id, attribute, context);
 				continue;
 			}
 
@@ -286,12 +234,9 @@ export function RegularElement(node, context) {
 				}
 
 				if (name !== 'class' || value) {
-					context.state.template.push(
-						` ${attribute.name}${
-							is_boolean_attribute(name) && value === true
-								? ''
-								: `="${value === true ? '' : escape_html(value, true)}"`
-						}`
+					context.state.template.set_prop(
+						attribute.name,
+						is_boolean_attribute(name) && value === true ? undefined : value === true ? '' : value
 					);
 				}
 			} else if (name === 'autofocus') {
@@ -308,7 +253,10 @@ export function RegularElement(node, context) {
 				const { value, has_state } = build_attribute_value(
 					attribute.value,
 					context,
-					(value, metadata) => (metadata.has_call ? get_expression_id(context.state, value) : value)
+					(value, metadata) =>
+						metadata.has_call || metadata.has_await
+							? context.state.memoizer.add(value, metadata.has_await)
+							: value
 				);
 
 				const update = build_element_attribute_update(node, node_id, name, value, attributes);
@@ -324,8 +272,6 @@ export function RegularElement(node, context) {
 	) {
 		context.state.after_update.push(b.stmt(b.call('$.replay_events', node_id)));
 	}
-
-	context.state.template.push('>');
 
 	const metadata = {
 		...context.state.metadata,
@@ -348,7 +294,6 @@ export function RegularElement(node, context) {
 	const state = {
 		...context.state,
 		metadata,
-		locations: [],
 		scope: /** @type {Scope} */ (context.state.scopes.get(node.fragment)),
 		preserve_whitespace:
 			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea'
@@ -377,11 +322,15 @@ export function RegularElement(node, context) {
 	// (e.g. `<span>{location}</span>`), set `textContent` programmatically
 	const use_text_content =
 		trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') &&
-		trimmed.every((node) => node.type === 'Text' || !node.metadata.expression.has_state) &&
+		trimmed.every(
+			(node) =>
+				node.type === 'Text' ||
+				(!node.metadata.expression.has_state && !node.metadata.expression.has_await)
+		) &&
 		trimmed.some((node) => node.type === 'ExpressionTag');
 
 	if (use_text_content) {
-		const { value } = build_template_chunk(trimmed, context.visit, child_state);
+		const { value } = build_template_chunk(trimmed, context, child_state);
 		const empty_string = value.type === 'Literal' && value.value === '';
 
 		if (!empty_string) {
@@ -442,14 +391,16 @@ export function RegularElement(node, context) {
 		context.state.update.push(b.stmt(b.assignment('=', dir, dir)));
 	}
 
-	if (state.locations.length > 0) {
-		// @ts-expect-error
-		location.push(state.locations);
+	if (!has_spread && needs_special_value_handling) {
+		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
+			if (attribute.name === 'value') {
+				build_element_special_value_attribute(node.name, node_id, attribute, context);
+				break;
+			}
+		}
 	}
 
-	if (!is_void(node.name)) {
-		context.state.template.push(`</${node.name}>`);
-	}
+	context.state.template.pop_element();
 }
 
 /**
@@ -511,56 +462,68 @@ function setup_select_synchronization(value_binding, context) {
 /**
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
+ * @param {Memoizer} memoizer
  * @return {ObjectExpression | Identifier}
  */
-export function build_class_directives_object(class_directives, context) {
+export function build_class_directives_object(
+	class_directives,
+	context,
+	memoizer = context.state.memoizer
+) {
 	let properties = [];
 	let has_call_or_state = false;
+	let has_await = false;
 
 	for (const d of class_directives) {
 		const expression = /** @type Expression */ (context.visit(d.expression));
 		properties.push(b.init(d.name, expression));
 		has_call_or_state ||= d.metadata.expression.has_call || d.metadata.expression.has_state;
+		has_await ||= d.metadata.expression.has_await;
 	}
 
 	const directives = b.object(properties);
 
-	return has_call_or_state ? get_expression_id(context.state, directives) : directives;
+	return has_call_or_state || has_await ? memoizer.add(directives, has_await) : directives;
 }
 
 /**
  * @param {AST.StyleDirective[]} style_directives
  * @param {ComponentContext} context
- * @return {ObjectExpression | ArrayExpression}}
+ * @param {Memoizer} memoizer
+ * @return {ObjectExpression | ArrayExpression | Identifier}}
  */
-export function build_style_directives_object(style_directives, context) {
-	let normal_properties = [];
-	let important_properties = [];
+export function build_style_directives_object(
+	style_directives,
+	context,
+	memoizer = context.state.memoizer
+) {
+	const normal = b.object([]);
+	const important = b.object([]);
 
-	for (const directive of style_directives) {
+	let has_call_or_state = false;
+	let has_await = false;
+
+	for (const d of style_directives) {
 		const expression =
-			directive.value === true
-				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
-				: build_attribute_value(directive.value, context, (value, metadata) =>
-						metadata.has_call ? get_expression_id(context.state, value) : value
-					).value;
-		const property = b.init(directive.name, expression);
+			d.value === true
+				? build_getter(b.id(d.name), context.state)
+				: build_attribute_value(d.value, context).value;
 
-		if (directive.modifiers.includes('important')) {
-			important_properties.push(property);
-		} else {
-			normal_properties.push(property);
-		}
+		const object = d.modifiers.includes('important') ? important : normal;
+		object.properties.push(b.init(d.name, expression));
+
+		has_call_or_state ||= d.metadata.expression.has_call || d.metadata.expression.has_state;
+		has_await ||= d.metadata.expression.has_await;
 	}
 
-	return important_properties.length
-		? b.array([b.object(normal_properties), b.object(important_properties)])
-		: b.object(normal_properties);
+	const directives = important.properties.length ? b.array([normal, important]) : normal;
+
+	return has_call_or_state || has_await ? memoizer.add(directives, has_await) : directives;
 }
 
 /**
  * Serializes an assignment to an element property by adding relevant statements to either only
- * the init or the the init and update arrays, depending on whether or not the value is dynamic.
+ * the init or the init and update arrays, depending on whether or not the value is dynamic.
  * Resulting code for static looks something like this:
  * ```js
  * element.property = value;
@@ -677,12 +640,7 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 		element === 'select' && attribute.value !== true && !is_text_attribute(attribute);
 
 	const { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call
-			? // if is a select with value we will also invoke `init_select` which need a reference before the template effect so we memoize separately
-				is_select_with_value
-				? memoize_expression(state, value)
-				: get_expression_id(state, value)
-			: value
+		metadata.has_call || metadata.has_await ? state.memoizer.add(value, metadata.has_await) : value
 	);
 
 	const evaluated = context.state.scope.evaluate(value);
@@ -707,23 +665,21 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 			: inner_assignment
 	);
 
-	if (is_select_with_value) {
-		state.init.push(b.stmt(b.call('$.init_select', node_id, b.thunk(value))));
-	}
-
 	if (has_state) {
-		const id = state.scope.generate(`${node_id.name}_value`);
-		build_update_assignment(
-			state,
-			id,
-			// `<option>` is a special case: The value property reflects to the DOM. If the value is set to undefined,
-			// that means the value should be set to the empty string. To be able to do that when the value is
-			// initially undefined, we need to set a value that is guaranteed to be different.
-			element === 'option' ? b.object([]) : undefined,
-			value,
-			update
-		);
+		const id = b.id(state.scope.generate(`${node_id.name}_value`));
+
+		// `<option>` is a special case: The value property reflects to the DOM. If the value is set to undefined,
+		// that means the value should be set to the empty string. To be able to do that when the value is
+		// initially undefined, we need to set a value that is guaranteed to be different.
+		const init = element === 'option' ? b.object([]) : undefined;
+
+		state.init.push(b.var(id, init));
+		state.update.push(b.if(b.binary('!==', id, b.assignment('=', id, value)), b.block([update])));
 	} else {
 		state.init.push(update);
+	}
+
+	if (is_select_with_value) {
+		state.init.push(b.stmt(b.call('$.init_select', node_id)));
 	}
 }

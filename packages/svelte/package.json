@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.27.2",
+  "version": "5.36.6",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -34,6 +34,10 @@
       "types": "./types/index.d.ts",
       "default": "./src/animate/index.js"
     },
+    "./attachments": {
+      "types": "./types/index.d.ts",
+      "default": "./src/attachments/index.js"
+    },
     "./compiler": {
       "types": "./types/index.d.ts",
       "require": "./compiler/index.js",
@@ -54,6 +58,9 @@
     },
     "./internal/disclose-version": {
       "default": "./src/internal/disclose-version.js"
+    },
+    "./internal/flags/async": {
+      "default": "./src/internal/flags/async.js"
     },
     "./internal/flags/legacy": {
       "default": "./src/internal/flags/legacy.js"
@@ -132,7 +139,7 @@
   ],
   "scripts": {
     "build": "node scripts/process-messages && rollup -c && pnpm generate:types && node scripts/check-treeshakeability.js",
-    "dev": "node scripts/process-messages && rollup -cw",
+    "dev": "node scripts/process-messages -w & rollup -cw",
     "check": "tsc --project tsconfig.runtime.json && tsc && cd ./tests/types && tsc",
     "check:watch": "tsc --watch",
     "generate:version": "node ./scripts/generate-version.js",
@@ -160,14 +167,14 @@
   "dependencies": {
     "@ampproject/remapping": "^2.3.0",
     "@jridgewell/sourcemap-codec": "^1.5.0",
+    "@sveltejs/acorn-typescript": "^1.0.5",
     "@types/estree": "^1.0.5",
     "acorn": "^8.12.1",
-    "@sveltejs/acorn-typescript": "^1.0.5",
     "aria-query": "^5.3.1",
     "axobject-query": "^4.1.0",
     "clsx": "^2.1.1",
     "esm-env": "^1.2.1",
-    "esrap": "^1.4.6",
+    "esrap": "^2.1.0",
     "is-reference": "^3.0.3",
     "locate-character": "^3.0.0",
     "magic-string": "^0.30.11",

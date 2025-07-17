@@ -5,15 +5,19 @@ import { dev, locator } from '../../../../state.js';
 import { is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { determine_namespace_for_children } from '../../utils.js';
-import { build_attribute_value, build_set_attributes, build_set_class } from './shared/element.js';
-import { build_render_statement } from './shared/utils.js';
+import {
+	build_attribute_value,
+	build_attribute_effect,
+	build_set_class
+} from './shared/element.js';
+import { build_render_statement, Memoizer } from './shared/utils.js';
 
 /**
  * @param {AST.SvelteElement} node
  * @param {ComponentContext} context
  */
 export function SvelteElement(node, context) {
-	context.state.template.push(`<!>`);
+	context.state.template.push_comment();
 
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
 	const attributes = [];
@@ -28,7 +32,7 @@ export function SvelteElement(node, context) {
 	const style_directives = [];
 
 	/** @type {ExpressionStatement[]} */
-	const lets = [];
+	const statements = [];
 
 	// Create a temporary context which picks up the init/update statements.
 	// They'll then be added to the function parameter of $.element
@@ -42,8 +46,8 @@ export function SvelteElement(node, context) {
 			node: element_id,
 			init: [],
 			update: [],
-			expressions: [],
-			after_update: []
+			after_update: [],
+			memoizer: new Memoizer()
 		}
 	};
 
@@ -60,7 +64,7 @@ export function SvelteElement(node, context) {
 		} else if (attribute.type === 'StyleDirective') {
 			style_directives.push(attribute);
 		} else if (attribute.type === 'LetDirective') {
-			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+			statements.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
 		} else if (attribute.type === 'OnDirective') {
 			const handler = /** @type {Expression} */ (context.visit(attribute, inner_context.state));
 			inner_context.state.after_update.push(b.stmt(handler));
@@ -68,9 +72,6 @@ export function SvelteElement(node, context) {
 			context.visit(attribute, inner_context.state);
 		}
 	}
-
-	// Let bindings first, they can be used on attributes
-	context.state.init.push(...lets); // create computeds in the outer context; the dynamic element is the single child of this slot
 
 	if (
 		attributes.length === 1 &&
@@ -80,29 +81,22 @@ export function SvelteElement(node, context) {
 	) {
 		build_set_class(node, element_id, attributes[0], class_directives, inner_context, false);
 	} else if (attributes.length) {
-		const attributes_id = b.id(context.state.scope.generate('attributes'));
-
 		// Always use spread because we don't know whether the element is a custom element or not,
 		// therefore we need to do the "how to set an attribute" logic at runtime.
-		build_set_attributes(
+		build_attribute_effect(
 			attributes,
 			class_directives,
 			style_directives,
 			inner_context,
 			node,
-			element_id,
-			attributes_id
+			element_id
 		);
 	}
 
-	const get_tag = b.thunk(/** @type {Expression} */ (context.visit(node.tag)));
+	const { has_await } = node.metadata.expression;
 
-	if (dev) {
-		if (node.fragment.nodes.length > 0) {
-			context.state.init.push(b.stmt(b.call('$.validate_void_dynamic_element', get_tag)));
-		}
-		context.state.init.push(b.stmt(b.call('$.validate_dynamic_element_tag', get_tag)));
-	}
+	const expression = /** @type {Expression} */ (context.visit(node.tag));
+	const get_tag = b.thunk(has_await ? b.call('$.get', b.id('$$tag')) : expression);
 
 	/** @type {Statement[]} */
 	const inner = inner_context.state.init;
@@ -122,9 +116,16 @@ export function SvelteElement(node, context) {
 		).body
 	);
 
+	if (dev) {
+		if (node.fragment.nodes.length > 0) {
+			statements.push(b.stmt(b.call('$.validate_void_dynamic_element', get_tag)));
+		}
+		statements.push(b.stmt(b.call('$.validate_dynamic_element_tag', get_tag)));
+	}
+
 	const location = dev && locator(node.start);
 
-	context.state.init.push(
+	statements.push(
 		b.stmt(
 			b.call(
 				'$.element',
@@ -137,4 +138,19 @@ export function SvelteElement(node, context) {
 			)
 		)
 	);
+
+	if (has_await) {
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.async',
+					context.state.node,
+					b.array([b.thunk(expression, true)]),
+					b.arrow([context.state.node, b.id('$$tag')], b.block(statements))
+				)
+			)
+		);
+	} else {
+		context.state.init.push(statements.length === 1 ? statements[0] : b.block(statements));
+	}
 }

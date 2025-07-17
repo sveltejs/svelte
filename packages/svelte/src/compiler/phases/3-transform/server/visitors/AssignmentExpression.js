@@ -3,6 +3,8 @@
 /** @import { Context, ServerTransformState } from '../types.js' */
 import * as b from '#compiler/builders';
 import { build_assignment_value } from '../../../../utils/ast.js';
+import { get_name } from '../../../nodes.js';
+import { get_rune } from '../../../scope.js';
 import { visit_assignment_expression } from '../../shared/assignments.js';
 
 /**
@@ -22,6 +24,43 @@ export function AssignmentExpression(node, context) {
  * @returns {Expression | null}
  */
 function build_assignment(operator, left, right, context) {
+	if (
+		context.state.analysis.runes &&
+		left.type === 'MemberExpression' &&
+		left.object.type === 'ThisExpression' &&
+		!left.computed
+	) {
+		const name = get_name(left.property);
+		const field = name && context.state.state_fields.get(name);
+
+		// special case — state declaration in class constructor
+		if (field && field.node.type === 'AssignmentExpression' && left === field.node.left) {
+			const rune = get_rune(right, context.state.scope);
+
+			if (rune) {
+				const key =
+					left.property.type === 'PrivateIdentifier' || rune === '$state' || rune === '$state.raw'
+						? left.property
+						: field.key;
+
+				return b.assignment(
+					operator,
+					b.member(b.this, key, key.type === 'Literal'),
+					/** @type {Expression} */ (context.visit(right))
+				);
+			}
+		} else if (
+			field &&
+			(field.type === '$derived' || field.type === '$derived.by') &&
+			left.property.type === 'PrivateIdentifier'
+		) {
+			let value = /** @type {Expression} */ (
+				context.visit(build_assignment_value(operator, left, right))
+			);
+			return b.call(b.member(b.this, name), value);
+		}
+	}
+
 	let object = left;
 
 	while (object.type === 'MemberExpression') {

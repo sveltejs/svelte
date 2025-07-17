@@ -104,7 +104,8 @@
 						},
 						"value": "svelte",
 						"raw": "'svelte'"
-					}
+					},
+					"attributes": []
 				},
 				{
 					"type": "ExpressionStatement",
@@ -257,7 +258,8 @@
 															},
 															"value": "./foo.js",
 															"raw": "'./foo.js'"
-														}
+														},
+														"options": null
 													},
 													"property": {
 														"type": "Identifier",

@@ -7,6 +7,7 @@ import { get_parent } from '../../../utils/ast.js';
 import { is_pure, is_safe_identifier } from './shared/utils.js';
 import { dev, locate_node, source } from '../../../state.js';
 import * as b from '#compiler/builders';
+import { create_expression_metadata } from '../../nodes.js';
 
 /**
  * @param {CallExpression} node
@@ -114,12 +115,13 @@ export function CallExpression(node, context) {
 		case '$state':
 		case '$state.raw':
 		case '$derived':
-		case '$derived.by':
-			if (
-				(parent.type !== 'VariableDeclarator' ||
-					get_parent(context.path, -3).type === 'ConstTag') &&
-				!(parent.type === 'PropertyDefinition' && !parent.static && !parent.computed)
-			) {
+		case '$derived.by': {
+			const valid =
+				is_variable_declaration(parent, context) ||
+				is_class_property_definition(parent) ||
+				is_class_property_assignment_at_constructor_root(parent, context);
+
+			if (!valid) {
 				e.state_invalid_placement(node, rune);
 			}
 
@@ -132,6 +134,7 @@ export function CallExpression(node, context) {
 			}
 
 			break;
+		}
 
 		case '$effect':
 		case '$effect.pre':
@@ -159,6 +162,13 @@ export function CallExpression(node, context) {
 		case '$effect.root':
 			if (node.arguments.length !== 1) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+			}
+
+			break;
+
+		case '$effect.pending':
+			if (context.state.expression) {
+				context.state.expression.has_state = true;
 			}
 
 			break;
@@ -227,7 +237,19 @@ export function CallExpression(node, context) {
 	}
 
 	// `$inspect(foo)` or `$derived(foo) should not trigger the `static-state-reference` warning
-	if (rune === '$inspect' || rune === '$derived') {
+	if (rune === '$derived') {
+		const expression = create_expression_metadata();
+
+		context.next({
+			...context.state,
+			function_depth: context.state.function_depth + 1,
+			expression
+		});
+
+		if (expression.has_await) {
+			context.state.analysis.async_deriveds.add(node);
+		}
+	} else if (rune === '$inspect') {
 		context.next({ ...context.state, function_depth: context.state.function_depth + 1 });
 	} else {
 		context.next();
@@ -271,4 +293,41 @@ function get_function_label(nodes) {
 	if (parent.type === 'VariableDeclarator' && parent.id.type === 'Identifier') {
 		return parent.id.name;
 	}
+}
+
+/**
+ * @param {AST.SvelteNode} parent
+ * @param {Context} context
+ */
+function is_variable_declaration(parent, context) {
+	return parent.type === 'VariableDeclarator' && get_parent(context.path, -3).type !== 'ConstTag';
+}
+
+/**
+ * @param {AST.SvelteNode} parent
+ */
+function is_class_property_definition(parent) {
+	return parent.type === 'PropertyDefinition' && !parent.static && !parent.computed;
+}
+
+/**
+ * @param {AST.SvelteNode} node
+ * @param {Context} context
+ */
+function is_class_property_assignment_at_constructor_root(node, context) {
+	if (
+		node.type === 'AssignmentExpression' &&
+		node.operator === '=' &&
+		node.left.type === 'MemberExpression' &&
+		node.left.object.type === 'ThisExpression' &&
+		((node.left.property.type === 'Identifier' && !node.left.computed) ||
+			node.left.property.type === 'PrivateIdentifier' ||
+			node.left.property.type === 'Literal')
+	) {
+		// MethodDefinition (-5) -> FunctionExpression (-4) -> BlockStatement (-3) -> ExpressionStatement (-2) -> AssignmentExpression (-1)
+		const parent = get_parent(context.path, -5);
+		return parent?.type === 'MethodDefinition' && parent.kind === 'constructor';
+	}
+
+	return false;
 }

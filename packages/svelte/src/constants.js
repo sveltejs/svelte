@@ -17,6 +17,8 @@ export const TRANSITION_GLOBAL = 1 << 2;
 
 export const TEMPLATE_FRAGMENT = 1;
 export const TEMPLATE_USE_IMPORT_NODE = 1 << 1;
+export const TEMPLATE_USE_SVG = 1 << 2;
+export const TEMPLATE_USE_MATHML = 1 << 3;
 
 export const HYDRATION_START = '[';
 /** used to indicate that an `{:else}...` block was rendered */
@@ -40,6 +42,8 @@ export const NAMESPACE_MATHML = 'http://www.w3.org/1998/Math/MathML';
 // we use a list of ignorable runtime warnings because not every runtime warning
 // can be ignored and we want to keep the validation for svelte-ignore in place
 export const IGNORABLE_RUNTIME_WARNINGS = /** @type {const} */ ([
+	'await_waterfall',
+	'await_reactivity_loss',
 	'state_snapshot_uncloneable',
 	'binding_property_non_reactive',
 	'hydration_attribute_changed',
@@ -55,3 +59,5 @@ export const IGNORABLE_RUNTIME_WARNINGS = /** @type {const} */ ([
  * TODO this is currently unused
  */
 export const ELEMENTS_WITHOUT_TEXT = ['audio', 'datalist', 'dl', 'optgroup', 'select', 'video'];
+
+export const ATTACHMENT_KEY = '@attach';

@@ -1,17 +1,19 @@
+export { createAttachmentKey as attachment } from '../../attachments/index.js';
 export { FILENAME, HMR, NAMESPACE_SVG } from '../../constants.js';
-export { push, pop } from './context.js';
+export { push, pop, add_svelte_meta } from './context.js';
 export { assign, assign_and, assign_or, assign_nullish } from './dev/assign.js';
 export { cleanup_styles } from './dev/css.js';
 export { add_locations } from './dev/elements.js';
 export { hmr } from './dev/hmr.js';
 export { create_ownership_validator } from './dev/ownership.js';
 export { check_target, legacy_api } from './dev/legacy.js';
-export { trace } from './dev/tracing.js';
+export { trace, tag, tag_proxy } from './dev/tracing.js';
 export { inspect } from './dev/inspect.js';
+export { async } from './dom/blocks/async.js';
 export { validate_snippet_args } from './dev/validation.js';
 export { await_block as await } from './dom/blocks/await.js';
 export { if_block as if } from './dom/blocks/if.js';
-export { key_block as key } from './dom/blocks/key.js';
+export { key } from './dom/blocks/key.js';
 export { css_props } from './dom/blocks/css-props.js';
 export { index, each } from './dom/blocks/each.js';
 export { html } from './dom/blocks/html.js';
@@ -22,10 +24,12 @@ export { element } from './dom/blocks/svelte-element.js';
 export { head } from './dom/blocks/svelte-head.js';
 export { append_styles } from './dom/css.js';
 export { action } from './dom/elements/actions.js';
+export { attach } from './dom/elements/attachments.js';
 export {
 	remove_input_defaults,
 	set_attribute,
 	set_attributes,
+	attribute_effect,
 	set_custom_element_data,
 	set_xlink_attribute,
 	set_value,
@@ -86,16 +90,23 @@ export {
 export {
 	append,
 	comment,
-	ns_template,
-	svg_template_with_script,
-	mathml_template,
-	template,
-	template_with_script,
+	from_html,
+	from_mathml,
+	from_svg,
+	from_tree,
 	text,
-	props_id
+	props_id,
+	with_script
 } from './dom/template.js';
-export { user_derived as derived, derived_safe_equal } from './reactivity/deriveds.js';
+export { save, track_reactivity_loss } from './reactivity/async.js';
+export { flushSync as flush, suspend } from './reactivity/batch.js';
 export {
+	async_derived,
+	user_derived as derived,
+	derived_safe_equal
+} from './reactivity/deriveds.js';
+export {
+	aborted,
 	effect_tracking,
 	effect_root,
 	legacy_pre_effect,
@@ -126,13 +137,12 @@ export {
 	update_store,
 	mark_store_binding
 } from './reactivity/store.js';
-export { boundary } from './dom/blocks/boundary.js';
+export { boundary, pending } from './dom/blocks/boundary.js';
 export { set_text } from './render.js';
 export {
 	get,
 	safe_get,
 	invalidate_inner_signals,
-	flushSync as flush,
 	tick,
 	untrack,
 	exclude_from_object,
@@ -152,7 +162,7 @@ export {
 } from './dom/operations.js';
 export { attr, clsx } from '../shared/attributes.js';
 export { snapshot } from '../shared/clone.js';
-export { noop, fallback } from '../shared/utils.js';
+export { noop, fallback, to_array } from '../shared/utils.js';
 export {
 	invalid_default_snippet,
 	validate_dynamic_element_tag,

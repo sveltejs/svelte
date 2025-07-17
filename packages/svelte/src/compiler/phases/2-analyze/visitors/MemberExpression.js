@@ -15,8 +15,9 @@ export function MemberExpression(node, context) {
 		}
 	}
 
-	if (context.state.expression && !is_pure(node, context)) {
-		context.state.expression.has_state = true;
+	if (context.state.expression) {
+		context.state.expression.has_member_expression = true;
+		context.state.expression.has_state ||= !is_pure(node, context);
 	}
 
 	if (!is_safe_identifier(node, context.state.scope)) {

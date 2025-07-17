@@ -1,4 +1,4 @@
-/** @import { ArrowFunctionExpression, BinaryOperator, ClassDeclaration, Expression, FunctionDeclaration, FunctionExpression, Identifier, ImportDeclaration, MemberExpression, LogicalOperator, Node, Pattern, UnaryOperator, VariableDeclarator } from 'estree' */
+/** @import { ArrowFunctionExpression, BinaryOperator, ClassDeclaration, Expression, FunctionDeclaration, FunctionExpression, Identifier, ImportDeclaration, MemberExpression, LogicalOperator, Node, Pattern, UnaryOperator, VariableDeclarator, Super } from 'estree' */
 /** @import { Context, Visitor } from 'zimmerframe' */
 /** @import { AST, BindingKind, DeclarationKind } from '#compiler' */
 import is_reference from 'is-reference';
@@ -20,6 +20,70 @@ const UNKNOWN = Symbol('unknown');
 /** Includes `BigInt` */
 const NUMBER = Symbol('number');
 const STRING = Symbol('string');
+const FUNCTION = Symbol('string');
+
+/** @type {Record<string, [type: NUMBER | STRING | UNKNOWN, fn?: Function]>} */
+const globals = {
+	BigInt: [NUMBER],
+	'Math.min': [NUMBER, Math.min],
+	'Math.max': [NUMBER, Math.max],
+	'Math.random': [NUMBER],
+	'Math.floor': [NUMBER, Math.floor],
+	// @ts-ignore
+	'Math.f16round': [NUMBER, Math.f16round],
+	'Math.round': [NUMBER, Math.round],
+	'Math.abs': [NUMBER, Math.abs],
+	'Math.acos': [NUMBER, Math.acos],
+	'Math.asin': [NUMBER, Math.asin],
+	'Math.atan': [NUMBER, Math.atan],
+	'Math.atan2': [NUMBER, Math.atan2],
+	'Math.ceil': [NUMBER, Math.ceil],
+	'Math.cos': [NUMBER, Math.cos],
+	'Math.sin': [NUMBER, Math.sin],
+	'Math.tan': [NUMBER, Math.tan],
+	'Math.exp': [NUMBER, Math.exp],
+	'Math.log': [NUMBER, Math.log],
+	'Math.pow': [NUMBER, Math.pow],
+	'Math.sqrt': [NUMBER, Math.sqrt],
+	'Math.clz32': [NUMBER, Math.clz32],
+	'Math.imul': [NUMBER, Math.imul],
+	'Math.sign': [NUMBER, Math.sign],
+	'Math.log10': [NUMBER, Math.log10],
+	'Math.log2': [NUMBER, Math.log2],
+	'Math.log1p': [NUMBER, Math.log1p],
+	'Math.expm1': [NUMBER, Math.expm1],
+	'Math.cosh': [NUMBER, Math.cosh],
+	'Math.sinh': [NUMBER, Math.sinh],
+	'Math.tanh': [NUMBER, Math.tanh],
+	'Math.acosh': [NUMBER, Math.acosh],
+	'Math.asinh': [NUMBER, Math.asinh],
+	'Math.atanh': [NUMBER, Math.atanh],
+	'Math.trunc': [NUMBER, Math.trunc],
+	'Math.fround': [NUMBER, Math.fround],
+	'Math.cbrt': [NUMBER, Math.cbrt],
+	Number: [NUMBER, Number],
+	'Number.isInteger': [NUMBER, Number.isInteger],
+	'Number.isFinite': [NUMBER, Number.isFinite],
+	'Number.isNaN': [NUMBER, Number.isNaN],
+	'Number.isSafeInteger': [NUMBER, Number.isSafeInteger],
+	'Number.parseFloat': [NUMBER, Number.parseFloat],
+	'Number.parseInt': [NUMBER, Number.parseInt],
+	String: [STRING, String],
+	'String.fromCharCode': [STRING, String.fromCharCode],
+	'String.fromCodePoint': [STRING, String.fromCodePoint]
+};
+
+/** @type {Record<string, any>} */
+const global_constants = {
+	'Math.PI': Math.PI,
+	'Math.E': Math.E,
+	'Math.LN10': Math.LN10,
+	'Math.LN2': Math.LN2,
+	'Math.LOG10E': Math.LOG10E,
+	'Math.LOG2E': Math.LOG2E,
+	'Math.SQRT2': Math.SQRT2,
+	'Math.SQRT1_2': Math.SQRT1_2
+};
 
 export class Binding {
 	/** @type {Scope} */
@@ -107,7 +171,7 @@ export class Binding {
 
 class Evaluation {
 	/** @type {Set<any>} */
-	values = new Set();
+	values;
 
 	/**
 	 * True if there is exactly one possible value
@@ -138,6 +202,13 @@ class Evaluation {
 	is_number = true;
 
 	/**
+	 * True if the value is known to be a function
+	 * @readonly
+	 * @type {boolean}
+	 */
+	is_function = true;
+
+	/**
 	 * @readonly
 	 * @type {any}
 	 */
@@ -146,9 +217,14 @@ class Evaluation {
 	/**
 	 *
 	 * @param {Scope} scope
-	 * @param {Expression} expression
+	 * @param {Expression | FunctionDeclaration} expression
+	 * @param {Set<any>} values
 	 */
-	constructor(scope, expression) {
+	constructor(scope, expression, values) {
+		current_evaluations.set(expression, this);
+
+		this.values = values;
+
 		switch (expression.type) {
 			case 'Literal': {
 				this.values.add(expression.value);
@@ -172,15 +248,18 @@ class Evaluation {
 						binding.kind === 'rest_prop' ||
 						binding.kind === 'bindable_prop';
 
-					if (!binding.updated && binding.initial !== null && !is_prop) {
-						const evaluation = binding.scope.evaluate(/** @type {Expression} */ (binding.initial));
-						for (const value of evaluation.values) {
-							this.values.add(value);
-						}
+					if (binding.initial?.type === 'EachBlock' && binding.initial.index === expression.name) {
+						this.values.add(NUMBER);
 						break;
 					}
 
-					// TODO each index is always defined
+					if (!binding.updated && binding.initial !== null && !is_prop) {
+						binding.scope.evaluate(/** @type {Expression} */ (binding.initial), this.values);
+						break;
+					}
+				} else if (expression.name === 'undefined') {
+					this.values.add(undefined);
+					break;
 				}
 
 				// TODO glean what we can from reassignments
@@ -336,6 +415,108 @@ class Evaluation {
 				break;
 			}
 
+			case 'CallExpression': {
+				const keypath = get_global_keypath(expression.callee, scope);
+
+				if (keypath) {
+					if (is_rune(keypath)) {
+						const arg = /** @type {Expression | undefined} */ (expression.arguments[0]);
+
+						switch (keypath) {
+							case '$state':
+							case '$state.raw':
+							case '$derived':
+								if (arg) {
+									scope.evaluate(arg, this.values);
+								} else {
+									this.values.add(undefined);
+								}
+								break;
+
+							case '$props.id':
+								this.values.add(STRING);
+								break;
+
+							case '$effect.tracking':
+								this.values.add(false);
+								this.values.add(true);
+								break;
+
+							case '$derived.by':
+								if (arg?.type === 'ArrowFunctionExpression' && arg.body.type !== 'BlockStatement') {
+									scope.evaluate(arg.body, this.values);
+									break;
+								}
+
+								this.values.add(UNKNOWN);
+								break;
+
+							default: {
+								this.values.add(UNKNOWN);
+							}
+						}
+
+						break;
+					}
+
+					if (
+						Object.hasOwn(globals, keypath) &&
+						expression.arguments.every((arg) => arg.type !== 'SpreadElement')
+					) {
+						const [type, fn] = globals[keypath];
+						const values = expression.arguments.map((arg) => scope.evaluate(arg));
+
+						if (fn && values.every((e) => e.is_known)) {
+							this.values.add(fn(...values.map((e) => e.value)));
+						} else {
+							this.values.add(type);
+						}
+
+						break;
+					}
+				}
+
+				this.values.add(UNKNOWN);
+				break;
+			}
+
+			case 'TemplateLiteral': {
+				let result = expression.quasis[0].value.cooked;
+
+				for (let i = 0; i < expression.expressions.length; i += 1) {
+					const e = scope.evaluate(expression.expressions[i]);
+
+					if (e.is_known) {
+						result += e.value + expression.quasis[i + 1].value.cooked;
+					} else {
+						this.values.add(STRING);
+						break;
+					}
+				}
+
+				this.values.add(result);
+				break;
+			}
+
+			case 'MemberExpression': {
+				const keypath = get_global_keypath(expression, scope);
+
+				if (keypath && Object.hasOwn(global_constants, keypath)) {
+					this.values.add(global_constants[keypath]);
+					break;
+				}
+
+				this.values.add(UNKNOWN);
+				break;
+			}
+
+			case 'ArrowFunctionExpression':
+			case 'FunctionExpression':
+			case 'FunctionDeclaration': {
+				this.values.add(FUNCTION);
+				break;
+			}
+
 			default: {
 				this.values.add(UNKNOWN);
 			}
@@ -352,6 +533,10 @@ class Evaluation {
 				this.is_number = false;
 			}
 
+			if (value !== FUNCTION) {
+				this.is_function = false;
+			}
+
 			if (value == null || value === UNKNOWN) {
 				this.is_defined = false;
 			}
@@ -360,6 +545,8 @@ class Evaluation {
 		if (this.values.size > 1 || typeof this.value === 'symbol') {
 			this.is_known = false;
 		}
+
+		current_evaluations.delete(expression);
 	}
 }
 
@@ -548,12 +735,22 @@ export class Scope {
 	 * Only call this once scope has been fully generated in a first pass,
 	 * else this evaluates on incomplete data and may yield wrong results.
 	 * @param {Expression} expression
-	 * @param {Set<any>} values
+	 * @param {Set<any>} [values]
 	 */
 	evaluate(expression, values = new Set()) {
-		return new Evaluation(this, expression);
+		const current = current_evaluations.get(expression);
+		if (current) return current;
+
+		return new Evaluation(this, expression, values);
 	}
 }
+
+/**
+ * Track which expressions are currently being evaluated — this allows
+ * us to prevent cyclical evaluations without passing the map around
+ * @type {Map<Expression | FunctionDeclaration, Evaluation>}
+ */
+const current_evaluations = new Map();
 
 /** @type {Record<BinaryOperator, (left: any, right: any) => any>} */
 const binary = {
@@ -736,7 +933,25 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		}
 	};
 
+	let has_await = false;
+
 	walk(ast, state, {
+		AwaitExpression(node, context) {
+			// this doesn't _really_ belong here, but it allows us to
+			// automatically opt into runes mode on encountering
+			// blocking awaits, without doing an additional walk
+			// before the analysis occurs
+			// TODO remove this in Svelte 7.0 or whenever we get rid of legacy support
+			has_await ||= context.path.every(
+				({ type }) =>
+					type !== 'ArrowFunctionExpression' &&
+					type !== 'FunctionExpression' &&
+					type !== 'FunctionDeclaration'
+			);
+
+			context.next();
+		},
+
 		// references
 		Identifier(node, { path, state }) {
 			const parent = path.at(-1);
@@ -956,7 +1171,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				const is_keyed =
 					node.key &&
 					(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index);
-				scope.declare(b.id(node.index), is_keyed ? 'template' : 'normal', 'const', node);
+				scope.declare(b.id(node.index), is_keyed ? 'template' : 'static', 'const', node);
 			}
 			if (node.key) visit(node.key, { scope });
 
@@ -972,7 +1187,9 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				contains_group_binding: false,
 				index: scope.root.unique('$$index'),
 				declarations: scope.declarations,
-				is_controlled: false
+				is_controlled: false,
+				// filled in during analysis
+				transitive_deps: new Set()
 			};
 		},
 
@@ -1091,6 +1308,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	}
 
 	return {
+		has_await,
 		scope,
 		scopes
 	};
@@ -1115,7 +1333,19 @@ export function get_rune(node, scope) {
 	if (!node) return null;
 	if (node.type !== 'CallExpression') return null;
 
-	let n = node.callee;
+	const keypath = get_global_keypath(node.callee, scope);
+
+	if (!keypath || !is_rune(keypath)) return null;
+	return keypath;
+}
+
+/**
+ * Returns the name of the rune if the given expression is a `CallExpression` using a rune.
+ * @param {Expression | Super} node
+ * @param {Scope} scope
+ */
+function get_global_keypath(node, scope) {
+	let n = node;
 
 	let joined = '';
 
@@ -1133,12 +1363,8 @@ export function get_rune(node, scope) {
 
 	if (n.type !== 'Identifier') return null;
 
-	joined = n.name + joined;
-
-	if (!is_rune(joined)) return null;
-
 	const binding = scope.get(n.name);
 	if (binding !== null) return null; // rune name, but references a variable or store
 
-	return joined;
+	return n.name + joined;
 }

@@ -73,10 +73,13 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 		}
 
 		const compiled = compile(source, {
-			dev: true,
+			dev: false,
 			filename: input,
 			generate,
-			runes: argv.values.runes
+			runes: argv.values.runes,
+			experimental: {
+				async: true
+			}
 		});
 
 		for (const warning of compiled.warnings) {
@@ -85,8 +88,27 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 		}
 
 		write(output_js, compiled.js.code + '\n//# sourceMappingURL=' + path.basename(output_map));
-
 		write(output_map, compiled.js.map.toString());
+
+		// generate with fragments: 'tree'
+		if (generate === 'client') {
+			const compiled = compile(source, {
+				dev: false,
+				filename: input,
+				generate,
+				runes: argv.values.runes,
+				fragments: 'tree',
+				experimental: {
+					async: true
+				}
+			});
+
+			const output_js = `${cwd}/output/${generate}/${file}.tree.js`;
+			const output_map = `${cwd}/output/${generate}/${file}.tree.js.map`;
+
+			write(output_js, compiled.js.code + '\n//# sourceMappingURL=' + path.basename(output_map));
+			write(output_map, compiled.js.map.toString());
+		}
 
 		if (compiled.css) {
 			write(output_css, compiled.css.code);
@@ -98,9 +120,12 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 		const source = fs.readFileSync(input, 'utf-8');
 
 		const compiled = compileModule(source, {
-			dev: true,
+			dev: false,
 			filename: input,
-			generate
+			generate,
+			experimental: {
+				async: true
+			}
 		});
 
 		const output_js = `${cwd}/output/${generate}/${file}`;

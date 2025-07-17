@@ -17,5 +17,11 @@ export function IfBlock(node, context) {
 
 	mark_subtree_dynamic(context.path);
 
-	context.next();
+	context.visit(node.test, {
+		...context.state,
+		expression: node.metadata.expression
+	});
+
+	context.visit(node.consequent);
+	if (node.alternate) context.visit(node.alternate);
 }

@@ -3,8 +3,14 @@
 	let checkbox = $state(true);
 	let radio_group = $state('a');
 	let checkbox_group = $state(['a']);
-	let select = $state('b');
+	// this will be ssrd
+	let select = $state('a');
 	let textarea = $state('textarea');
+
+	$effect(()=>{
+		// changing the value of `select` on mount
+		select = 'b';
+	})
 </script>
 
 <p>{JSON.stringify({ text, checkbox, radio_group, checkbox_group, select, textarea })}</p>

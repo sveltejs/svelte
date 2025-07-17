@@ -15,10 +15,12 @@ class InternalCompileError extends Error {
 	constructor(code, message, position) {
 		super(message);
 		this.stack = ''; // avoid unnecessary noise; don't set it as a class property or it becomes enumerable
+
 		// We want to extend from Error so that various bundler plugins properly handle it.
 		// But we also want to share the same object shape with that of warnings, therefore
 		// we create an instance of the shared class an copy over its properties.
 		this.#diagnostic = new CompileDiagnostic(code, message, position);
+
 		Object.assign(this, this.#diagnostic);
 		this.name = 'CompileError';
 	}
@@ -169,6 +171,15 @@ export function effect_invalid_placement(node) {
 }
 
 /**
+ * Cannot use `await` in deriveds and template expressions, or at the top level of a component, unless the `experimental.async` compiler option is `true`
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function experimental_async(node) {
+	e(node, 'experimental_async', `Cannot use \`await\` in deriveds and template expressions, or at the top level of a component, unless the \`experimental.async\` compiler option is \`true\`\nhttps://svelte.dev/e/experimental_async`);
+}
+
+/**
  * `%name%` is not defined
  * @param {null | number | NodeLike} node
  * @param {string} name
@@ -231,6 +242,15 @@ export function inspect_trace_invalid_placement(node) {
  */
 export function invalid_arguments_usage(node) {
 	e(node, 'invalid_arguments_usage', `The arguments keyword cannot be used within the template or at the top level of a component\nhttps://svelte.dev/e/invalid_arguments_usage`);
+}
+
+/**
+ * Cannot use `await` in deriveds and template expressions, or at the top level of a component, unless in runes mode
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function legacy_await_invalid(node) {
+	e(node, 'legacy_await_invalid', `Cannot use \`await\` in deriveds and template expressions, or at the top level of a component, unless in runes mode\nhttps://svelte.dev/e/legacy_await_invalid`);
 }
 
 /**
@@ -462,6 +482,25 @@ export function snippet_parameter_assignment(node) {
 }
 
 /**
+ * `%name%` has already been declared on this class
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function state_field_duplicate(node, name) {
+	e(node, 'state_field_duplicate', `\`${name}\` has already been declared on this class\nhttps://svelte.dev/e/state_field_duplicate`);
+}
+
+/**
+ * Cannot assign to a state field before its declaration
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function state_field_invalid_assignment(node) {
+	e(node, 'state_field_invalid_assignment', `Cannot assign to a state field before its declaration\nhttps://svelte.dev/e/state_field_invalid_assignment`);
+}
+
+/**
  * Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -471,13 +510,13 @@ export function state_invalid_export(node) {
 }
 
 /**
- * `%rune%(...)` can only be used as a variable declaration initializer or a class field
+ * `%rune%(...)` can only be used as a variable declaration initializer, a class field declaration, or the first assignment to a class field at the top level of the constructor.
  * @param {null | number | NodeLike} node
  * @param {string} rune
  * @returns {never}
  */
 export function state_invalid_placement(node, rune) {
-	e(node, 'state_invalid_placement', `\`${rune}(...)\` can only be used as a variable declaration initializer or a class field\nhttps://svelte.dev/e/state_invalid_placement`);
+	e(node, 'state_invalid_placement', `\`${rune}(...)\` can only be used as a variable declaration initializer, a class field declaration, or the first assignment to a class field at the top level of the constructor.\nhttps://svelte.dev/e/state_invalid_placement`);
 }
 
 /**
@@ -579,6 +618,15 @@ export function css_global_block_invalid_modifier(node) {
  */
 export function css_global_block_invalid_modifier_start(node) {
 	e(node, 'css_global_block_invalid_modifier_start', `A \`:global\` selector can only be modified if it is a descendant of other selectors\nhttps://svelte.dev/e/css_global_block_invalid_modifier_start`);
+}
+
+/**
+ * A `:global` selector cannot be inside a pseudoclass
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function css_global_block_invalid_placement(node) {
+	e(node, 'css_global_block_invalid_placement', `A \`:global\` selector cannot be inside a pseudoclass\nhttps://svelte.dev/e/css_global_block_invalid_placement`);
 }
 
 /**
@@ -788,7 +836,9 @@ export function bind_invalid_expression(node) {
  * @returns {never}
  */
 export function bind_invalid_name(node, name, explanation) {
-	e(node, 'bind_invalid_name', `${explanation ? `\`bind:${name}\` is not a valid binding. ${explanation}` : `\`bind:${name}\` is not a valid binding`}\nhttps://svelte.dev/e/bind_invalid_name`);
+	e(node, 'bind_invalid_name', `${explanation
+		? `\`bind:${name}\` is not a valid binding. ${explanation}`
+		: `\`bind:${name}\` is not a valid binding`}\nhttps://svelte.dev/e/bind_invalid_name`);
 }
 
 /**

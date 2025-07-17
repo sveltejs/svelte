@@ -3,7 +3,6 @@
 /** @import { AST } from './public.js' */
 import { walk as zimmerframe_walk } from 'zimmerframe';
 import { convert } from './legacy.js';
-import { parse as parse_acorn } from './phases/1-parse/acorn.js';
 import { parse as _parse } from './phases/1-parse/index.js';
 import { remove_typescript_nodes } from './phases/1-parse/remove_typescript_nodes.js';
 import { analyze_component, analyze_module } from './phases/2-analyze/index.js';
@@ -21,9 +20,8 @@ export { default as preprocess } from './preprocess/index.js';
  */
 export function compile(source, options) {
 	source = remove_bom(source);
-	state.reset_warning_filter(options.warningFilter);
+	state.reset({ warning: options.warningFilter, filename: options.filename });
 	const validated = validate_component_options(options, '');
-	state.reset(source, validated);
 
 	let parsed = _parse(source);
 
@@ -43,6 +41,11 @@ export function compile(source, options) {
 			instance: parsed.instance && remove_typescript_nodes(parsed.instance),
 			module: parsed.module && remove_typescript_nodes(parsed.module)
 		};
+		if (combined_options.customElementOptions?.extend) {
+			combined_options.customElementOptions.extend = remove_typescript_nodes(
+				combined_options.customElementOptions?.extend
+			);
+		}
 	}
 
 	const analysis = analyze_component(parsed, source, combined_options);
@@ -60,11 +63,10 @@ export function compile(source, options) {
  */
 export function compileModule(source, options) {
 	source = remove_bom(source);
-	state.reset_warning_filter(options.warningFilter);
+	state.reset({ warning: options.warningFilter, filename: options.filename });
 	const validated = validate_module_options(options, '');
-	state.reset(source, validated);
 
-	const analysis = analyze_module(parse_acorn(source, false), validated);
+	const analysis = analyze_module(source, validated);
 	return transform_module(analysis, source, validated);
 }
 
@@ -92,6 +94,7 @@ export function compileModule(source, options) {
  * @returns {Record<string, any>}
  */
 
+// TODO 6.0 remove unused `filename`
 /**
  * The parse function parses a component, returning only its abstract syntax tree.
  *
@@ -100,14 +103,15 @@ export function compileModule(source, options) {
  *
  * The `loose` option, available since 5.13.0, tries to always return an AST even if the input will not successfully compile.
  *
+ * The `filename` option is unused and will be removed in Svelte 6.0.
+ *
  * @param {string} source
  * @param {{ filename?: string; rootDir?: string; modern?: boolean; loose?: boolean }} [options]
  * @returns {AST.Root | LegacyRoot}
  */
-export function parse(source, { filename, rootDir, modern, loose } = {}) {
+export function parse(source, { modern, loose } = {}) {
 	source = remove_bom(source);
-	state.reset_warning_filter(() => false);
-	state.reset(source, { filename: filename ?? '(unknown)', rootDir });
+	state.reset({ warning: () => false, filename: undefined });
 
 	const ast = _parse(source, loose);
 	return to_public_ast(source, ast, modern);

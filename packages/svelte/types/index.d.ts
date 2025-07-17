@@ -349,6 +349,30 @@ declare module 'svelte' {
 				props: Props;
 			});
 	/**
+	 * Returns an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that aborts when the current [derived](https://svelte.dev/docs/svelte/$derived) or [effect](https://svelte.dev/docs/svelte/$effect) re-runs or is destroyed.
+	 *
+	 * Must be called while a derived or effect is running.
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { getAbortSignal } from 'svelte';
+	 *
+	 * 	let { id } = $props();
+	 *
+	 * 	async function getData(id) {
+	 * 		const response = await fetch(`/items/${id}`, {
+	 * 			signal: getAbortSignal()
+	 * 		});
+	 *
+	 * 		return await response.json();
+	 * 	}
+	 *
+	 * 	const data = $derived(await getData(id));
+	 * </script>
+	 * ```
+	 */
+	export function getAbortSignal(): AbortSignal;
+	/**
 	 * `onMount`, like [`$effect`](https://svelte.dev/docs/svelte/$effect), schedules a function to run as soon as the component has been mounted to the DOM.
 	 * Unlike `$effect`, the provided function only runs once.
 	 *
@@ -410,6 +434,11 @@ declare module 'svelte' {
 	 * @deprecated Use [`$effect`](https://svelte.dev/docs/svelte/$effect) instead
 	 * */
 	export function afterUpdate(fn: () => void): void;
+	/**
+	 * Synchronously flush any pending updates.
+	 * Returns void if no callback is provided, otherwise returns the result of calling the callback.
+	 * */
+	export function flushSync<T = void>(fn?: (() => T) | undefined): T;
 	type Getters<T> = {
 		[K in keyof T]: () => T[K];
 	};
@@ -425,29 +454,6 @@ declare module 'svelte' {
 	}): Snippet<Params>;
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
-	/**
-	 * Synchronously flush any pending updates.
-	 * Returns void if no callback is provided, otherwise returns the result of calling the callback.
-	 * */
-	export function flushSync<T = void>(fn?: (() => T) | undefined): T;
-	/**
-	 * Returns a promise that resolves once any pending state changes have been applied.
-	 * */
-	export function tick(): Promise<void>;
-	/**
-	 * When used inside a [`$derived`](https://svelte.dev/docs/svelte/$derived) or [`$effect`](https://svelte.dev/docs/svelte/$effect),
-	 * any state read inside `fn` will not be treated as a dependency.
-	 *
-	 * ```ts
-	 * $effect(() => {
-	 *   // this will run when `data` changes, but not when `time` changes
-	 *   save(data, {
-	 *     timestamp: untrack(() => time)
-	 *   });
-	 * });
-	 * ```
-	 * */
-	export function untrack<T>(fn: () => T): T;
 	/**
 	 * Retrieves the context that belongs to the closest parent component with the specified `key`.
 	 * Must be called during component initialisation.
@@ -521,6 +527,30 @@ declare module 'svelte' {
 	export function unmount(component: Record<string, any>, options?: {
 		outro?: boolean;
 	} | undefined): Promise<void>;
+	/**
+	 * Returns a promise that resolves once any pending state changes have been applied.
+	 * */
+	export function tick(): Promise<void>;
+	/**
+	 * Returns a promise that resolves once any state changes, and asynchronous work resulting from them,
+	 * have resolved and the DOM has been updated
+	 * @since 5.36
+	 */
+	export function settled(): Promise<void>;
+	/**
+	 * When used inside a [`$derived`](https://svelte.dev/docs/svelte/$derived) or [`$effect`](https://svelte.dev/docs/svelte/$effect),
+	 * any state read inside `fn` will not be treated as a dependency.
+	 *
+	 * ```ts
+	 * $effect(() => {
+	 *   // this will run when `data` changes, but not when `time` changes
+	 *   save(data, {
+	 *     timestamp: untrack(() => time)
+	 *   });
+	 * });
+	 * ```
+	 * */
+	export function untrack<T>(fn: () => T): T;
 
 	export {};
 }
@@ -623,6 +653,145 @@ declare module 'svelte/animate' {
 		from: DOMRect;
 		to: DOMRect;
 	}, params?: FlipParams): AnimationConfig;
+
+	export {};
+}
+
+declare module 'svelte/attachments' {
+	/**
+	 * An [attachment](https://svelte.dev/docs/svelte/@attach) is a function that runs when an element is mounted
+	 * to the DOM, and optionally returns a function that is called when the element is later removed.
+	 *
+	 * It can be attached to an element with an `{@attach ...}` tag, or by spreading an object containing
+	 * a property created with [`createAttachmentKey`](https://svelte.dev/docs/svelte/svelte-attachments#createAttachmentKey).
+	 */
+	export interface Attachment<T extends EventTarget = Element> {
+		(element: T): void | (() => void);
+	}
+	/**
+	 * Creates an object key that will be recognised as an attachment when the object is spread onto an element,
+	 * as a programmatic alternative to using `{@attach ...}`. This can be useful for library authors, though
+	 * is generally not needed when building an app.
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { createAttachmentKey } from 'svelte/attachments';
+	 *
+	 * 	const props = {
+	 * 		class: 'cool',
+	 * 		onclick: () => alert('clicked'),
+	 * 		[createAttachmentKey()]: (node) => {
+	 * 			node.textContent = 'attached!';
+	 * 		}
+	 * 	};
+	 * </script>
+	 *
+	 * <button {...props}>click me</button>
+	 * ```
+	 * @since 5.29
+	 */
+	export function createAttachmentKey(): symbol;
+	/**
+	 * Converts an [action](https://svelte.dev/docs/svelte/use) into an [attachment](https://svelte.dev/docs/svelte/@attach) keeping the same behavior.
+	 * It's useful if you want to start using attachments on components but you have actions provided by a library.
+	 *
+	 * Note that the second argument, if provided, must be a function that _returns_ the argument to the
+	 * action function, not the argument itself.
+	 *
+	 * ```svelte
+	 * <!-- with an action -->
+	 * <div use:foo={bar}>...</div>
+	 *
+	 * <!-- with an attachment -->
+	 * <div {@attach fromAction(foo, () => bar)}>...</div>
+	 * ```
+	 * */
+	export function fromAction<E extends EventTarget, T extends unknown>(action: Action<E, T> | ((element: E, arg: T) => void | ActionReturn<T>), fn: () => T): Attachment<E>;
+	/**
+	 * Converts an [action](https://svelte.dev/docs/svelte/use) into an [attachment](https://svelte.dev/docs/svelte/@attach) keeping the same behavior.
+	 * It's useful if you want to start using attachments on components but you have actions provided by a library.
+	 *
+	 * Note that the second argument, if provided, must be a function that _returns_ the argument to the
+	 * action function, not the argument itself.
+	 *
+	 * ```svelte
+	 * <!-- with an action -->
+	 * <div use:foo={bar}>...</div>
+	 *
+	 * <!-- with an attachment -->
+	 * <div {@attach fromAction(foo, () => bar)}>...</div>
+	 * ```
+	 * */
+	export function fromAction<E extends EventTarget>(action: Action<E, void> | ((element: E) => void | ActionReturn<void>)): Attachment<E>;
+	/**
+	 * Actions can return an object containing the two properties defined in this interface. Both are optional.
+	 * - update: An action can have a parameter. This method will be called whenever that parameter changes,
+	 *   immediately after Svelte has applied updates to the markup. `ActionReturn` and `ActionReturn<undefined>` both
+	 *   mean that the action accepts no parameters.
+	 * - destroy: Method that is called after the element is unmounted
+	 *
+	 * Additionally, you can specify which additional attributes and events the action enables on the applied element.
+	 * This applies to TypeScript typings only and has no effect at runtime.
+	 *
+	 * Example usage:
+	 * ```ts
+	 * interface Attributes {
+	 * 	newprop?: string;
+	 * 	'on:event': (e: CustomEvent<boolean>) => void;
+	 * }
+	 *
+	 * export function myAction(node: HTMLElement, parameter: Parameter): ActionReturn<Parameter, Attributes> {
+	 * 	// ...
+	 * 	return {
+	 * 		update: (updatedParameter) => {...},
+	 * 		destroy: () => {...}
+	 * 	};
+	 * }
+	 * ```
+	 */
+	interface ActionReturn<
+		Parameter = undefined,
+		Attributes extends Record<string, any> = Record<never, any>
+	> {
+		update?: (parameter: Parameter) => void;
+		destroy?: () => void;
+		/**
+		 * ### DO NOT USE THIS
+		 * This exists solely for type-checking and has no effect at runtime.
+		 * Set this through the `Attributes` generic instead.
+		 */
+		$$_attributes?: Attributes;
+	}
+
+	/**
+	 * Actions are functions that are called when an element is created.
+	 * You can use this interface to type such actions.
+	 * The following example defines an action that only works on `<div>` elements
+	 * and optionally accepts a parameter which it has a default value for:
+	 * ```ts
+	 * export const myAction: Action<HTMLDivElement, { someProperty: boolean } | undefined> = (node, param = { someProperty: true }) => {
+	 *   // ...
+	 * }
+	 * ```
+	 * `Action<HTMLDivElement>` and `Action<HTMLDivElement, undefined>` both signal that the action accepts no parameters.
+	 *
+	 * You can return an object with methods `update` and `destroy` from the function and type which additional attributes and events it has.
+	 * See interface `ActionReturn` for more details.
+	 */
+	interface Action<
+		Element = HTMLElement,
+		Parameter = undefined,
+		Attributes extends Record<string, any> = Record<never, any>
+	> {
+		<Node extends Element>(
+			...args: undefined extends Parameter
+				? [node: Node, parameter?: Parameter]
+				: [node: Node, parameter: Parameter]
+		): void | ActionReturn<Parameter, Attributes>;
+	}
+
+	// Implementation notes:
+	// - undefined extends X instead of X extends undefined makes this work better with both strict and nonstrict mode
 
 	export {};
 }
@@ -850,6 +1019,16 @@ declare module 'svelte/compiler' {
 		 */
 		preserveWhitespace?: boolean;
 		/**
+		 * Which strategy to use when cloning DOM fragments:
+		 *
+		 * - `html` populates a `<template>` with `innerHTML` and clones it. This is faster, but cannot be used if your app's [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP) includes [`require-trusted-types-for 'script'`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/require-trusted-types-for)
+		 * - `tree` creates the fragment one element at a time and _then_ clones it. This is slower, but works everywhere
+		 *
+		 * @default 'html'
+		 * @since 5.33
+		 */
+		fragments?: 'html' | 'tree';
+		/**
 		 * Set to `true` to force the compiler into runes mode, even if there are no indications of runes usage.
 		 * Set to `false` to force the compiler into ignoring runes, even if there are indications of runes usage.
 		 * Set to `undefined` (the default) to infer runes mode from the component code.
@@ -941,6 +1120,17 @@ declare module 'svelte/compiler' {
 		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 		 */
 		warningFilter?: (warning: Warning) => boolean;
+		/**
+		 * Experimental options
+		 * @since 5.36
+		 */
+		experimental?: {
+			/**
+			 * Allow `await` keyword in deriveds, template expressions, and the top level of components
+			 * @since 5.36
+			 */
+			async?: boolean;
+		};
 	}
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
@@ -974,6 +1164,8 @@ declare module 'svelte/compiler' {
 			instance: Script | null;
 			/** The parsed `<script module>` element, if exists */
 			module: Script | null;
+			/** Comments found in <script> and {expressions} */
+			comments: JSComment[];
 		}
 
 		export interface SvelteOptions {
@@ -1058,6 +1250,12 @@ declare module 'svelte/compiler' {
 			expression: SimpleCallExpression | (ChainExpression & { expression: SimpleCallExpression });
 		}
 
+		/** A `{@attach foo(...)} tag */
+		export interface AttachTag extends BaseNode {
+			type: 'AttachTag';
+			expression: Expression;
+		}
+
 		/** An `animate:` directive */
 		export interface AnimateDirective extends BaseNode {
 			type: 'AnimateDirective';
@@ -1140,7 +1338,7 @@ declare module 'svelte/compiler' {
 
 		interface BaseElement extends BaseNode {
 			name: string;
-			attributes: Array<Attribute | SpreadAttribute | Directive>;
+			attributes: Array<Attribute | SpreadAttribute | Directive | AttachTag>;
 			fragment: Fragment;
 		}
 
@@ -1260,6 +1458,7 @@ declare module 'svelte/compiler' {
 			type: 'SnippetBlock';
 			expression: Identifier;
 			parameters: Pattern[];
+			typeParams?: string;
 			body: Fragment;
 		}
 
@@ -1282,6 +1481,17 @@ declare module 'svelte/compiler' {
 			context: 'default' | 'module';
 			content: Program;
 			attributes: Attribute[];
+		}
+
+		export interface JSComment {
+			type: 'Line' | 'Block';
+			value: string;
+			start: number;
+			end: number;
+			loc: {
+				start: { line: number; column: number };
+				end: { line: number; column: number };
+			};
 		}
 
 		export type AttributeLike = Attribute | SpreadAttribute | Directive;
@@ -1320,7 +1530,13 @@ declare module 'svelte/compiler' {
 			| AST.SvelteWindow
 			| AST.SvelteBoundary;
 
-		export type Tag = AST.ExpressionTag | AST.HtmlTag | AST.ConstTag | AST.DebugTag | AST.RenderTag;
+		export type Tag =
+			| AST.AttachTag
+			| AST.ConstTag
+			| AST.DebugTag
+			| AST.ExpressionTag
+			| AST.HtmlTag
+			| AST.RenderTag;
 
 		export type TemplateNode =
 			| AST.Root
@@ -1330,10 +1546,11 @@ declare module 'svelte/compiler' {
 			| AST.Attribute
 			| AST.SpreadAttribute
 			| Directive
+			| AST.AttachTag
 			| AST.Comment
 			| Block;
 
-		export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node;
+		export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node | Script;
 
 		export type { _CSS as CSS };
 	}
@@ -2121,10 +2338,13 @@ declare module 'svelte/reactivity' {
 		constructor(query: string, fallback?: boolean | undefined);
 	}
 	/**
-	 * Returns a `subscribe` function that, if called in an effect (including expressions in the template),
-	 * calls its `start` callback with an `update` function. Whenever `update` is called, the effect re-runs.
+	 * Returns a `subscribe` function that integrates external event-based systems with Svelte's reactivity.
+	 * It's particularly useful for integrating with web APIs like `MediaQuery`, `IntersectionObserver`, or `WebSocket`.
 	 *
-	 * If `start` returns a function, it will be called when the effect is destroyed.
+	 * If `subscribe` is called inside an effect (including indirectly, for example inside a getter),
+	 * the `start` callback will be called with an `update` function. Whenever `update` is called, the effect re-runs.
+	 *
+	 * If `start` returns a cleanup function, it will be called when the effect is destroyed.
 	 *
 	 * If `subscribe` is called in multiple effects, `start` will only be called once as long as the effects
 	 * are active, and the returned teardown function will only be called when all effects are destroyed.
@@ -2152,6 +2372,7 @@ declare module 'svelte/reactivity' {
 	 * 	}
 	 *
 	 * 	get current() {
+	 * 		// This makes the getter reactive, if read in an effect
 	 * 		this.#subscribe();
 	 *
 	 * 		// Return the current state of the query, whether or not we're in an effect
@@ -2723,6 +2944,16 @@ declare module 'svelte/types/compiler/interfaces' {
 		 */
 		preserveWhitespace?: boolean;
 		/**
+		 * Which strategy to use when cloning DOM fragments:
+		 *
+		 * - `html` populates a `<template>` with `innerHTML` and clones it. This is faster, but cannot be used if your app's [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP) includes [`require-trusted-types-for 'script'`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/require-trusted-types-for)
+		 * - `tree` creates the fragment one element at a time and _then_ clones it. This is slower, but works everywhere
+		 *
+		 * @default 'html'
+		 * @since 5.33
+		 */
+		fragments?: 'html' | 'tree';
+		/**
 		 * Set to `true` to force the compiler into runes mode, even if there are no indications of runes usage.
 		 * Set to `false` to force the compiler into ignoring runes, even if there are indications of runes usage.
 		 * Set to `undefined` (the default) to infer runes mode from the component code.
@@ -2814,6 +3045,17 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 		 */
 		warningFilter?: (warning: Warning_1) => boolean;
+		/**
+		 * Experimental options
+		 * @since 5.36
+		 */
+		experimental?: {
+			/**
+			 * Allow `await` keyword in deriveds, template expressions, and the top level of components
+			 * @since 5.36
+			 */
+			async?: boolean;
+		};
 	}
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
@@ -3101,6 +3343,13 @@ declare namespace $effect {
 	export function pre(fn: () => void | (() => void)): void;
 
 	/**
+	 * Returns the number of promises that are pending in the current boundary, not including child boundaries.
+	 *
+	 * https://svelte.dev/docs/svelte/$effect#$effect.pending
+	 */
+	export function pending(): number;
+
+	/**
 	 * The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template.
 	 *
 	 * Example:
@@ -3133,13 +3382,13 @@ declare namespace $effect {
 	 *   let count = $state(0);
 	 *
 	 *   const cleanup = $effect.root(() => {
-	 *	    $effect(() => {
-	 *				console.log(count);
-	 *			})
+	 *     $effect(() => {
+	 *       console.log(count);
+	 *     })
 	 *
-	 *      return () => {
-	 *        console.log('effect root cleanup');
-	 * 			}
+	 *     return () => {
+	 *       console.log('effect root cleanup');
+	 *     }
 	 *   });
 	 * </script>
 	 *

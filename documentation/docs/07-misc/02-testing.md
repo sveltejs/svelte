@@ -6,9 +6,9 @@ Testing helps you write and maintain your code and guard against regressions. Te
 
 ## Unit and integration testing using Vitest
 
-Unit tests allow you to test small isolated parts of your code. Integration tests allow you to test parts of your application to see if they work together. If you're using Vite (including via SvelteKit), we recommend using [Vitest](https://vitest.dev/).
+Unit tests allow you to test small isolated parts of your code. Integration tests allow you to test parts of your application to see if they work together. If you're using Vite (including via SvelteKit), we recommend using [Vitest](https://vitest.dev/). You can use the Svelte CLI to [setup Vitest](/docs/cli/vitest) either during project creation or later on.
 
-To get started, install Vitest:
+To setup Vitest manually, first install it:
 
 ```bash
 npm install -D vitest
@@ -129,12 +129,12 @@ test('Effect', () => {
 		// effects normally run after a microtask,
 		// use flushSync to execute all pending effects synchronously
 		flushSync();
-		expect(log.value).toEqual([0]);
+		expect(log).toEqual([0]);
 
 		count = 1;
 		flushSync();
 
-		expect(log.value).toEqual([0, 1]);
+		expect(log).toEqual([0, 1]);
 	});
 
 	cleanup();
@@ -148,17 +148,13 @@ test('Effect', () => {
  */
 export function logger(getValue) {
 	/** @type {any[]} */
-	let log = $state([]);
+	let log = [];
 
 	$effect(() => {
 		log.push(getValue());
 	});
 
-	return {
-		get value() {
-			return log;
-		}
-	};
+	return log;
 }
 ```
 
@@ -254,9 +250,9 @@ When writing component tests that involve two-way bindings, context or snippet p
 
 E2E (short for 'end to end') tests allow you to test your full application through the eyes of the user. This section uses [Playwright](https://playwright.dev/) as an example, but you can also use other solutions like [Cypress](https://www.cypress.io/) or [NightwatchJS](https://nightwatchjs.org/).
 
-To get started with Playwright, either install it via [the VS Code extension](https://playwright.dev/docs/getting-started-vscode), or install it from the command line using `npm init playwright`. It is also part of the setup CLI when you run `npx sv create`.
+You can use the Svelte CLI to [setup Playwright](/docs/cli/playwright) either during project creation or later on. You can also [set it up with `npm init playwright`](https://playwright.dev/docs/intro). Additionally, you may also want to install an IDE plugin such as [the VS Code extension](https://playwright.dev/docs/getting-started-vscode) to be able to execute tests from inside your IDE.
 
-After you've done that, you should have a `tests` folder and a Playwright config. You may need to adjust that config to tell Playwright what to do before running the tests - mainly starting your application at a certain port:
+If you've run `npm init playwright` or are not using Vite, you may need to adjust the Playwright config to tell Playwright what to do before running the tests - mainly starting your application at a certain port. For example:
 
 ```js
 /// file: playwright.config.js

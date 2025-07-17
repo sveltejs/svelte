@@ -26,12 +26,8 @@ export const root_event_handles = new Set();
 export function replay_events(dom) {
 	if (!hydrating) return;
 
-	if (dom.onload) {
-		dom.removeAttribute('onload');
-	}
-	if (dom.onerror) {
-		dom.removeAttribute('onerror');
-	}
+	dom.removeAttribute('onload');
+	dom.removeAttribute('onerror');
 	// @ts-expect-error
 	const event = dom.__e;
 	if (event !== undefined) {
@@ -116,8 +112,15 @@ export function event(event_name, dom, handler, capture, passive) {
 	var options = { capture, passive };
 	var target_handler = create_event(event_name, dom, handler, options);
 
-	// @ts-ignore
-	if (dom === document.body || dom === window || dom === document) {
+	if (
+		dom === document.body ||
+		// @ts-ignore
+		dom === window ||
+		// @ts-ignore
+		dom === document ||
+		// Firefox has quirky behavior, it can happen that we still get "canplay" events when the element is already removed
+		dom instanceof HTMLMediaElement
+	) {
 		teardown(() => {
 			dom.removeEventListener(event_name, target_handler, options);
 		});

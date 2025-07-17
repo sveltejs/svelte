@@ -8,7 +8,7 @@ import { validate_assignment } from './shared/utils.js';
  * @param {Context} context
  */
 export function AssignmentExpression(node, context) {
-	validate_assignment(node, node.left, context.state);
+	validate_assignment(node, node.left, context);
 
 	if (context.state.reactive_statement) {
 		const id = node.left.type === 'MemberExpression' ? object(node.left) : node.left;
@@ -21,6 +21,10 @@ export function AssignmentExpression(node, context) {
 				}
 			}
 		}
+	}
+
+	if (context.state.expression) {
+		context.state.expression.has_assignment = true;
 	}
 
 	context.next();

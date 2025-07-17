@@ -378,7 +378,8 @@ export function convert(source, ast) {
 					end: node.end,
 					expression: node.expression,
 					parameters: node.parameters,
-					children: node.body.nodes.map((child) => visit(child))
+					children: node.body.nodes.map((child) => visit(child)),
+					typeParams: node.typeParams
 				};
 			},
 			// @ts-expect-error
@@ -450,6 +451,7 @@ export function convert(source, ast) {
 			SpreadAttribute(node) {
 				return { ...node, type: 'Spread' };
 			},
+			// @ts-ignore
 			StyleSheet(node, context) {
 				return {
 					...node,

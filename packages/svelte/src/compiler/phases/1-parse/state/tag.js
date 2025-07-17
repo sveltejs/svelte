@@ -8,8 +8,11 @@ import { parse_expression_at } from '../acorn.js';
 import read_pattern from '../read/context.js';
 import read_expression, { get_loose_identifier } from '../read/expression.js';
 import { create_fragment } from '../utils/create.js';
+import { match_bracket } from '../utils/bracket.js';
 
 const regex_whitespace_with_closing_curly_brace = /^\s*}/;
+
+const pointy_bois = { '<': '>' };
 
 /** @param {Parser} parser */
 export default function tag(parser) {
@@ -60,7 +63,10 @@ function open(parser) {
 			end: -1,
 			test: read_expression(parser),
 			consequent: create_fragment(),
-			alternate: null
+			alternate: null,
+			metadata: {
+				expression: create_expression_metadata()
+			}
 		});
 
 		parser.allow_whitespace();
@@ -241,7 +247,10 @@ function open(parser) {
 			error: null,
 			pending: null,
 			then: null,
-			catch: null
+			catch: null,
+			metadata: {
+				expression: create_expression_metadata()
+			}
 		});
 
 		if (parser.eat('then')) {
@@ -323,7 +332,10 @@ function open(parser) {
 			start,
 			end: -1,
 			expression,
-			fragment: create_fragment()
+			fragment: create_fragment(),
+			metadata: {
+				expression: create_expression_metadata()
+			}
 		});
 
 		parser.stack.push(block);
@@ -351,6 +363,22 @@ function open(parser) {
 
 		const params_start = parser.index;
 
+		// snippets could have a generic signature, e.g. `#snippet foo<T>(...)`
+		/** @type {string | undefined} */
+		let type_params;
+
+		// if we match a generic opening
+		if (parser.ts && parser.match('<')) {
+			const start = parser.index;
+			const end = match_bracket(parser, start, pointy_bois);
+
+			type_params = parser.template.slice(start + 1, end - 1);
+
+			parser.index = end;
+		}
+
+		parser.allow_whitespace();
+
 		const matched = parser.eat('(', true, false);
 
 		if (matched) {
@@ -370,7 +398,12 @@ function open(parser) {
 
 		let function_expression = matched
 			? /** @type {ArrowFunctionExpression} */ (
-					parse_expression_at(prelude + `${params} => {}`, parser.ts, params_start)
+					parse_expression_at(
+						prelude + `${params} => {}`,
+						parser.root.comments,
+						parser.ts,
+						params_start
+					)
 				)
 			: { params: [] };
 
@@ -388,6 +421,7 @@ function open(parser) {
 				end: name_end,
 				name
 			},
+			typeParams: type_params,
 			parameters: function_expression.params,
 			body: create_fragment(),
 			metadata: {
@@ -441,7 +475,10 @@ function next(parser) {
 				elseif: true,
 				test: expression,
 				consequent: create_fragment(),
-				alternate: null
+				alternate: null,
+				metadata: {
+					expression: create_expression_metadata()
+				}
 			});
 
 			parser.stack.push(child);
@@ -604,7 +641,10 @@ function special(parser) {
 			type: 'HtmlTag',
 			start,
 			end: parser.index,
-			expression
+			expression,
+			metadata: {
+				expression: create_expression_metadata()
+			}
 		});
 
 		return;
@@ -679,6 +719,9 @@ function special(parser) {
 				declarations: [{ type: 'VariableDeclarator', id, init, start: id.start, end: init.end }],
 				start: start + 2, // start at const, not at @const
 				end: parser.index - 1
+			},
+			metadata: {
+				expression: create_expression_metadata()
 			}
 		});
 	}
@@ -705,6 +748,7 @@ function special(parser) {
 			end: parser.index,
 			expression: /** @type {AST.RenderTag['expression']} */ (expression),
 			metadata: {
+				expression: create_expression_metadata(),
 				dynamic: false,
 				arguments: [],
 				path: [],

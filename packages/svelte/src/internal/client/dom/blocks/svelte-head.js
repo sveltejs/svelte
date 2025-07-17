@@ -2,7 +2,7 @@
 import { hydrate_node, hydrating, set_hydrate_node, set_hydrating } from '../hydration.js';
 import { create_text, get_first_child, get_next_sibling } from '../operations.js';
 import { block } from '../../reactivity/effects.js';
-import { HEAD_EFFECT } from '#client/constants';
+import { COMMENT_NODE, HEAD_EFFECT } from '#client/constants';
 import { HYDRATION_START } from '../../../../constants.js';
 
 /**
@@ -37,7 +37,8 @@ export function head(render_fn) {
 
 		while (
 			head_anchor !== null &&
-			(head_anchor.nodeType !== 8 || /** @type {Comment} */ (head_anchor).data !== HYDRATION_START)
+			(head_anchor.nodeType !== COMMENT_NODE ||
+				/** @type {Comment} */ (head_anchor).data !== HYDRATION_START)
 		) {
 			head_anchor = /** @type {TemplateNode} */ (get_next_sibling(head_anchor));
 		}

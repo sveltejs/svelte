@@ -50,6 +50,7 @@ declare global {
 				? SVGElementTagNameMap[Key]
 				: any;
 
+		// TODO remove HTMLAttributes/SVGAttributes/IntrinsicElements in Svelte 6
 		// For backwards-compatibility and ease-of-use, in case someone enhanced the typings from import('svelte/elements').HTMLAttributes/SVGAttributes
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		interface HTMLAttributes<T extends EventTarget = any> {}

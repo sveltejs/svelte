@@ -1,3 +1,4 @@
+/** @import { Expression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { AnalysisState, Context } from '../../types' */
 import * as e from '../../../../errors.js';
@@ -74,7 +75,8 @@ export function visit_component(node, context) {
 			attribute.type !== 'SpreadAttribute' &&
 			attribute.type !== 'LetDirective' &&
 			attribute.type !== 'OnDirective' &&
-			attribute.type !== 'BindDirective'
+			attribute.type !== 'BindDirective' &&
+			attribute.type !== 'AttachTag'
 		) {
 			e.component_invalid_directive(attribute);
 		}
@@ -91,15 +93,10 @@ export function visit_component(node, context) {
 				validate_attribute(attribute, node);
 
 				if (is_expression_attribute(attribute)) {
-					const expression = get_attribute_expression(attribute);
-					if (expression.type === 'SequenceExpression') {
-						let i = /** @type {number} */ (expression.start);
-						while (--i > 0) {
-							const char = context.state.analysis.source[i];
-							if (char === '(') break; // parenthesized sequence expressions are ok
-							if (char === '{') e.attribute_invalid_sequence_expression(expression);
-						}
-					}
+					disallow_unparenthesized_sequences(
+						get_attribute_expression(attribute),
+						context.state.analysis.source
+					);
 				}
 			}
 
@@ -112,6 +109,10 @@ export function visit_component(node, context) {
 
 		if (attribute.type === 'BindDirective' && attribute.name !== 'this') {
 			context.state.analysis.uses_component_bindings = true;
+		}
+
+		if (attribute.type === 'AttachTag') {
+			disallow_unparenthesized_sequences(attribute.expression, context.state.analysis.source);
 		}
 	}
 
@@ -156,5 +157,20 @@ export function visit_component(node, context) {
 		};
 
 		context.visit({ ...node.fragment, nodes: nodes[slot_name] }, state);
+	}
+}
+
+/**
+ * @param {Expression} expression
+ * @param {string} source
+ */
+function disallow_unparenthesized_sequences(expression, source) {
+	if (expression.type === 'SequenceExpression') {
+		let i = /** @type {number} */ (expression.start);
+		while (--i > 0) {
+			const char = source[i];
+			if (char === '(') break; // parenthesized sequence expressions are ok
+			if (char === '{') e.attribute_invalid_sequence_expression(expression);
+		}
 	}
 }
