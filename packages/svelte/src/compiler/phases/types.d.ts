@@ -1,6 +1,6 @@
 import type { AST, Binding, StateField } from '#compiler';
 import type {
-	AssignmentExpression,
+	CallExpression,
 	ClassBody,
 	Identifier,
 	LabeledStatement,
@@ -8,13 +8,12 @@ import type {
 	Program
 } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
-import type { StateCreationRuneName } from '../../utils.js';
-import type { AnalysisState } from './2-analyze/types.js';
 
 export interface Js {
 	ast: Program;
 	scope: Scope;
 	scopes: Map<AST.SvelteNode, Scope>;
+	has_await: boolean;
 }
 
 export interface Template {
@@ -33,15 +32,21 @@ export interface ReactiveStatement {
  */
 export interface Analysis {
 	module: Js;
+	/** @deprecated use `component_name` from `state.js` instead */
 	name: string; // TODO should this be filename? it's used in `compileModule` as well as `compile`
+	/** @deprecated use `runes` from `state.js` instead */
 	runes: boolean;
 	immutable: boolean;
 	tracing: boolean;
+	comments: AST.JSComment[];
 
 	classes: Map<ClassBody, Map<string, StateField>>;
 
 	// TODO figure out if we can move this to ComponentAnalysis
 	accessors: boolean;
+
+	/** A set of deriveds that contain `await` expressions */
+	async_deriveds: Set<CallExpression>;
 }
 
 export interface ComponentAnalysis extends Analysis {
@@ -51,6 +56,7 @@ export interface ComponentAnalysis extends Analysis {
 	/** Used for CSS pruning and scoping */
 	elements: Array<AST.RegularElement | AST.SvelteElement>;
 	runes: boolean;
+	maybe_runes: boolean;
 	tracing: boolean;
 	exports: Array<{ name: string; alias: string | null }>;
 	/** Whether the component uses `$$props` */
@@ -87,6 +93,7 @@ export interface ComponentAnalysis extends Analysis {
 		keyframes: string[];
 		has_global: boolean;
 	};
+	/** @deprecated use `source` from `state.js` instead */
 	source: string;
 	undefined_exports: Map<string, Node>;
 	/**

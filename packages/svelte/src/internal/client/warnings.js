@@ -19,13 +19,44 @@ export function assignment_value_stale(property, location) {
 }
 
 /**
+ * Detected reactivity loss when reading `%name%`. This happens when state is read in an async function after an earlier `await`
+ * @param {string} name
+ */
+export function await_reactivity_loss(name) {
+	if (DEV) {
+		console.warn(`%c[svelte] await_reactivity_loss\n%cDetected reactivity loss when reading \`${name}\`. This happens when state is read in an async function after an earlier \`await\`\nhttps://svelte.dev/e/await_reactivity_loss`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/await_reactivity_loss`);
+	}
+}
+
+/**
+ * An async derived, `%name%` (%location%) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app
+ * @param {string} name
+ * @param {string} location
+ */
+export function await_waterfall(name, location) {
+	if (DEV) {
+		console.warn(`%c[svelte] await_waterfall\n%cAn async derived, \`${name}\` (${location}) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app\nhttps://svelte.dev/e/await_waterfall`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/await_waterfall`);
+	}
+}
+
+/**
  * `%binding%` (%location%) is binding to a non-reactive property
  * @param {string} binding
  * @param {string | undefined | null} [location]
  */
 export function binding_property_non_reactive(binding, location) {
 	if (DEV) {
-		console.warn(`%c[svelte] binding_property_non_reactive\n%c${location ? `\`${binding}\` (${location}) is binding to a non-reactive property` : `\`${binding}\` is binding to a non-reactive property`}\nhttps://svelte.dev/e/binding_property_non_reactive`, bold, normal);
+		console.warn(
+			`%c[svelte] binding_property_non_reactive\n%c${location
+				? `\`${binding}\` (${location}) is binding to a non-reactive property`
+				: `\`${binding}\` is binding to a non-reactive property`}\nhttps://svelte.dev/e/binding_property_non_reactive`,
+			bold,
+			normal
+		);
 	} else {
 		console.warn(`https://svelte.dev/e/binding_property_non_reactive`);
 	}
@@ -76,7 +107,13 @@ export function hydration_attribute_changed(attribute, html, value) {
  */
 export function hydration_html_changed(location) {
 	if (DEV) {
-		console.warn(`%c[svelte] hydration_html_changed\n%c${location ? `The value of an \`{@html ...}\` block ${location} changed between server and client renders. The client value will be ignored in favour of the server value` : 'The value of an `{@html ...}` block changed between server and client renders. The client value will be ignored in favour of the server value'}\nhttps://svelte.dev/e/hydration_html_changed`, bold, normal);
+		console.warn(
+			`%c[svelte] hydration_html_changed\n%c${location
+				? `The value of an \`{@html ...}\` block ${location} changed between server and client renders. The client value will be ignored in favour of the server value`
+				: 'The value of an `{@html ...}` block changed between server and client renders. The client value will be ignored in favour of the server value'}\nhttps://svelte.dev/e/hydration_html_changed`,
+			bold,
+			normal
+		);
 	} else {
 		console.warn(`https://svelte.dev/e/hydration_html_changed`);
 	}
@@ -88,7 +125,13 @@ export function hydration_html_changed(location) {
  */
 export function hydration_mismatch(location) {
 	if (DEV) {
-		console.warn(`%c[svelte] hydration_mismatch\n%c${location ? `Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near ${location}` : 'Hydration failed because the initial UI does not match what was rendered on the server'}\nhttps://svelte.dev/e/hydration_mismatch`, bold, normal);
+		console.warn(
+			`%c[svelte] hydration_mismatch\n%c${location
+				? `Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near ${location}`
+				: 'Hydration failed because the initial UI does not match what was rendered on the server'}\nhttps://svelte.dev/e/hydration_mismatch`,
+			bold,
+			normal
+		);
 	} else {
 		console.warn(`https://svelte.dev/e/hydration_mismatch`);
 	}

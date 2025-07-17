@@ -15,10 +15,12 @@ class InternalCompileError extends Error {
 	constructor(code, message, position) {
 		super(message);
 		this.stack = ''; // avoid unnecessary noise; don't set it as a class property or it becomes enumerable
+
 		// We want to extend from Error so that various bundler plugins properly handle it.
 		// But we also want to share the same object shape with that of warnings, therefore
 		// we create an instance of the shared class an copy over its properties.
 		this.#diagnostic = new CompileDiagnostic(code, message, position);
+
 		Object.assign(this, this.#diagnostic);
 		this.name = 'CompileError';
 	}
@@ -169,6 +171,15 @@ export function effect_invalid_placement(node) {
 }
 
 /**
+ * Cannot use `await` in deriveds and template expressions, or at the top level of a component, unless the `experimental.async` compiler option is `true`
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function experimental_async(node) {
+	e(node, 'experimental_async', `Cannot use \`await\` in deriveds and template expressions, or at the top level of a component, unless the \`experimental.async\` compiler option is \`true\`\nhttps://svelte.dev/e/experimental_async`);
+}
+
+/**
  * `%name%` is not defined
  * @param {null | number | NodeLike} node
  * @param {string} name
@@ -231,6 +242,15 @@ export function inspect_trace_invalid_placement(node) {
  */
 export function invalid_arguments_usage(node) {
 	e(node, 'invalid_arguments_usage', `The arguments keyword cannot be used within the template or at the top level of a component\nhttps://svelte.dev/e/invalid_arguments_usage`);
+}
+
+/**
+ * Cannot use `await` in deriveds and template expressions, or at the top level of a component, unless in runes mode
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function legacy_await_invalid(node) {
+	e(node, 'legacy_await_invalid', `Cannot use \`await\` in deriveds and template expressions, or at the top level of a component, unless in runes mode\nhttps://svelte.dev/e/legacy_await_invalid`);
 }
 
 /**
@@ -816,7 +836,9 @@ export function bind_invalid_expression(node) {
  * @returns {never}
  */
 export function bind_invalid_name(node, name, explanation) {
-	e(node, 'bind_invalid_name', `${explanation ? `\`bind:${name}\` is not a valid binding. ${explanation}` : `\`bind:${name}\` is not a valid binding`}\nhttps://svelte.dev/e/bind_invalid_name`);
+	e(node, 'bind_invalid_name', `${explanation
+		? `\`bind:${name}\` is not a valid binding. ${explanation}`
+		: `\`bind:${name}\` is not a valid binding`}\nhttps://svelte.dev/e/bind_invalid_name`);
 }
 
 /**

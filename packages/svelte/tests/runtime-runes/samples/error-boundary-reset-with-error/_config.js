@@ -8,15 +8,14 @@ export default test({
 		flushSync(() => toggle.click());
 		assert.htmlEqual(
 			target.innerHTML,
-			// TODO the synthetic stack shouldn't be part of the message here
-			`<button>toggle</button><p>yikes! in {expression} in undefined</p><button>reset</button>`
+			`<button>toggle</button><p>yikes!</p><button>reset</button>`
 		);
 
 		const [, reset] = target.querySelectorAll('button');
 		flushSync(() => reset.click());
 		assert.htmlEqual(
 			target.innerHTML,
-			`<button>toggle</button><p>yikes! in {expression} in undefined</p><button>reset</button>`
+			`<button>toggle</button><p>yikes!</p><button>reset</button>`
 		);
 
 		flushSync(() => toggle.click());

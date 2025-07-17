@@ -49,12 +49,13 @@ export default [
 		},
 		rules: {
 			'@typescript-eslint/await-thenable': 'error',
-			'@typescript-eslint/prefer-promise-reject-errors': 'error',
 			'@typescript-eslint/require-await': 'error',
 			'no-console': 'error',
 			'lube/svelte-naming-convention': ['error', { fixSameNames: true }],
 			// eslint isn't that well-versed with JSDoc to know that `foo: /** @type{..} */ (foo)` isn't a violation of this rule, so turn it off
 			'object-shorthand': 'off',
+			// eslint is being a dummy here too
+			'@typescript-eslint/prefer-promise-reject-errors': 'off',
 			'no-var': 'off',
 
 			// TODO: enable these rules and run `pnpm lint:fix`
@@ -87,6 +88,7 @@ export default [
 			'**/*.d.ts',
 			'**/tests',
 			'packages/svelte/scripts/process-messages/templates/*.js',
+			'packages/svelte/scripts/_bundle.js',
 			'packages/svelte/src/compiler/errors.js',
 			'packages/svelte/src/internal/client/errors.js',
 			'packages/svelte/src/internal/client/warnings.js',

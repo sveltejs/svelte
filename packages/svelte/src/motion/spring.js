@@ -5,7 +5,7 @@ import { writable } from '../store/shared/index.js';
 import { loop } from '../internal/client/loop.js';
 import { raf } from '../internal/client/timing.js';
 import { is_date } from './utils.js';
-import { set, source } from '../internal/client/reactivity/sources.js';
+import { set, state } from '../internal/client/reactivity/sources.js';
 import { render_effect } from '../internal/client/reactivity/effects.js';
 import { tag } from '../internal/client/dev/tracing.js';
 import { get } from '../internal/client/runtime.js';
@@ -170,9 +170,9 @@ export function spring(value, opts = {}) {
  * @since 5.8.0
  */
 export class Spring {
-	#stiffness = source(0.15);
-	#damping = source(0.8);
-	#precision = source(0.01);
+	#stiffness = state(0.15);
+	#damping = state(0.8);
+	#precision = state(0.01);
 
 	#current;
 	#target;
@@ -194,8 +194,8 @@ export class Spring {
 	 * @param {SpringOpts} [options]
 	 */
 	constructor(value, options = {}) {
-		this.#current = DEV ? tag(source(value), 'Spring.current') : source(value);
-		this.#target = DEV ? tag(source(value), 'Spring.target') : source(value);
+		this.#current = DEV ? tag(state(value), 'Spring.current') : state(value);
+		this.#target = DEV ? tag(state(value), 'Spring.target') : state(value);
 
 		if (typeof options.stiffness === 'number') this.#stiffness.v = clamp(options.stiffness, 0, 1);
 		if (typeof options.damping === 'number') this.#damping.v = clamp(options.damping, 0, 1);

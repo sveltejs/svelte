@@ -6,7 +6,7 @@ import * as b from '#compiler/builders';
 import { clean_nodes, infer_namespace } from '../../utils.js';
 import { transform_template } from '../transform-template/index.js';
 import { process_children } from './shared/fragment.js';
-import { build_render_statement } from './shared/utils.js';
+import { build_render_statement, Memoizer } from './shared/utils.js';
 import { Template } from '../transform-template/template.js';
 
 /**
@@ -47,9 +47,7 @@ export function Fragment(node, context) {
 	const is_single_element = trimmed.length === 1 && trimmed[0].type === 'RegularElement';
 	const is_single_child_not_needing_template =
 		trimmed.length === 1 &&
-		(trimmed[0].type === 'SvelteFragment' ||
-			trimmed[0].type === 'TitleElement' ||
-			(trimmed[0].type === 'IfBlock' && trimmed[0].elseif));
+		(trimmed[0].type === 'SvelteFragment' || trimmed[0].type === 'TitleElement');
 
 	const template_name = context.state.scope.root.unique('root'); // TODO infer name from parent
 
@@ -64,8 +62,8 @@ export function Fragment(node, context) {
 		...context.state,
 		init: [],
 		update: [],
-		expressions: [],
 		after_update: [],
+		memoizer: new Memoizer(),
 		template: new Template(),
 		transform: { ...context.state.transform },
 		metadata: {

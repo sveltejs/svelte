@@ -16,8 +16,8 @@ import { build_template_chunk } from './utils.js';
  * @param {boolean} is_element
  * @param {ComponentContext} context
  */
-export function process_children(nodes, initial, is_element, { visit, state }) {
-	const within_bound_contenteditable = state.metadata.bound_contenteditable;
+export function process_children(nodes, initial, is_element, context) {
+	const within_bound_contenteditable = context.state.metadata.bound_contenteditable;
 	let prev = initial;
 	let skipped = 0;
 
@@ -48,8 +48,8 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 		let id = expression;
 
 		if (id.type !== 'Identifier') {
-			id = b.id(state.scope.generate(name));
-			state.init.push(b.var(id, expression));
+			id = b.id(context.state.scope.generate(name));
+			context.state.init.push(b.var(id, expression));
 		}
 
 		prev = () => id;
@@ -64,13 +64,13 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	function flush_sequence(sequence) {
 		if (sequence.every((node) => node.type === 'Text')) {
 			skipped += 1;
-			state.template.push_text(sequence);
+			context.state.template.push_text(sequence);
 			return;
 		}
 
-		state.template.push_text([{ type: 'Text', data: ' ', raw: ' ', start: -1, end: -1 }]);
+		context.state.template.push_text([{ type: 'Text', data: ' ', raw: ' ', start: -1, end: -1 }]);
 
-		const { has_state, value } = build_template_chunk(sequence, visit, state);
+		const { has_state, value } = build_template_chunk(sequence, context);
 
 		// if this is a standalone `{expression}`, make sure we handle the case where
 		// no text node was created because the expression was empty during SSR
@@ -80,9 +80,9 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 		const update = b.stmt(b.call('$.set_text', id, value));
 
 		if (has_state && !within_bound_contenteditable) {
-			state.update.push(update);
+			context.state.update.push(update);
 		} else {
-			state.init.push(b.stmt(b.assignment('=', b.member(id, 'nodeValue'), value)));
+			context.state.init.push(b.stmt(b.assignment('=', b.member(id, 'nodeValue'), value)));
 		}
 	}
 
@@ -95,18 +95,18 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 				sequence = [];
 			}
 
-			let child_state = state;
+			let child_state = context.state;
 
-			if (is_static_element(node, state)) {
+			if (is_static_element(node, context.state)) {
 				skipped += 1;
 			} else if (node.type === 'EachBlock' && nodes.length === 1 && is_element) {
 				node.metadata.is_controlled = true;
 			} else {
 				const id = flush_node(false, node.type === 'RegularElement' ? node.name : 'node');
-				child_state = { ...state, node: id };
+				child_state = { ...context.state, node: id };
 			}
 
-			visit(node, child_state);
+			context.visit(node, child_state);
 		}
 	}
 
@@ -118,7 +118,7 @@ export function process_children(nodes, initial, is_element, { visit, state }) {
 	// traverse to the last (n - 1) one when hydrating
 	if (skipped > 1) {
 		skipped -= 1;
-		state.init.push(b.stmt(b.call('$.next', skipped !== 1 && b.literal(skipped))));
+		context.state.init.push(b.stmt(b.call('$.next', skipped !== 1 && b.literal(skipped))));
 	}
 }
 
