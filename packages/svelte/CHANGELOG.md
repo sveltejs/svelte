@@ -1,5 +1,11 @@
 # svelte
 
+## 5.36.7
+
+### Patch Changes
+
+- fix: allow instrinsic `<svelte:...>` elements to inherit from `SvelteHTMLElements` ([#16424](https://github.com/sveltejs/svelte/pull/16424))
+
 ## 5.36.6
 
 ### Patch Changes
