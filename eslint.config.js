@@ -103,7 +103,7 @@ export default [
 			'*.config.js',
 			// documentation can contain invalid examples
 			'documentation',
-			'tmp/**',
+			'tmp/**'
 		]
 	}
 ];
