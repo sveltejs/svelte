@@ -99,12 +99,16 @@ let selected = $derived(items[index]);
 If you use destructuring with a `$derived` declaration, the resulting variables will all be reactive — this...
 
 ```js
+function stuff() { return { a: 1, b: 2, c: 3 } }
+// ---cut---
 let { a, b, c } = $derived(stuff());
 ```
 
 ...is roughly equivalent to this:
 
 ```js
+function stuff() { return { a: 1, b: 2, c: 3 } }
+// ---cut---
 let _stuff = $derived(stuff());
 let a = $derived(_stuff.a);
 let b = $derived(_stuff.b);
