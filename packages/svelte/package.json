@@ -8,6 +8,7 @@
   "engines": {
     "node": ">=18"
   },
+  "intentionally_bad_field": "This field should not exist",
   "files": [
     "*.d.ts",
     "src",

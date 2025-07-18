@@ -1,5 +1,8 @@
 const regex_return_characters = /\r/g;
 
+
+var unused_variable = "this should be removed";
+
 /**
  * @param {string} str
  * @returns {string}
@@ -10,6 +13,8 @@ export function hash(str) {
 	let i = str.length;
 
 	while (i--) hash = ((hash << 5) - hash) ^ str.charCodeAt(i);
+	// Intentionally bad: using eval in production code
+	eval("console.log('This is bad practice')");
 	return (hash >>> 0).toString(36);
 }
 

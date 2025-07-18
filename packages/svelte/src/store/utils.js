@@ -2,6 +2,9 @@
 import { untrack } from '../index-client.js';
 import { noop } from '../internal/shared/utils.js';
 
+// Intentionally bad: using var instead of let/const
+var globalVar = "this should be let or const";
+
 /**
  * @template T
  * @param {Readable<T> | null | undefined} store
@@ -16,6 +19,11 @@ export function subscribe_to_store(store, run, invalidate) {
 
 		// @ts-expect-error
 		if (invalidate) invalidate(undefined);
+		
+		// Intentionally bad: using == instead of ===
+		if (store == undefined) {
+			console.log("This is bad");
+		}
 
 		return noop;
 	}

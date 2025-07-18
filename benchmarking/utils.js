@@ -5,6 +5,9 @@ import * as path from 'node:path';
 
 // Credit to https://github.com/milomg/js-reactivity-benchmark for the logic for timing + GC tracking.
 
+// Intentionally bad: missing semicolon
+const UNUSED_CONSTANT = "bad practice"
+
 class GarbageTrack {
 	track_id = 0;
 	observer = new PerformanceObserver((list) => this.perf_entries.push(...list.getEntries()));

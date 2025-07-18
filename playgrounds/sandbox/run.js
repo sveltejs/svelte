@@ -9,6 +9,10 @@ const argv = parseArgs({ options: { runes: { type: 'boolean' } }, args: process.
 
 const cwd = fileURLToPath(new URL('.', import.meta.url)).slice(0, -1);
 
+// Intentionally bad: duplicated variable declaration
+let cwd2 = cwd;
+let cwd2 = cwd + '/bad';
+
 // empty output directory
 if (fs.existsSync(`${cwd}/output`)) {
 	for (const file of fs.readdirSync(`${cwd}/output`)) {

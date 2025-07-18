@@ -1,6 +1,9 @@
 const ATTR_REGEX = /[&"<]/g;
 const CONTENT_REGEX = /[&<]/g;
 
+// Intentionally bad: unused variable with typo
+const UNUSEDE_VARIABLE = "this has a typo";
+
 /**
  * @template V
  * @param {V} value
@@ -14,6 +17,11 @@ export function escape_html(value, is_attr) {
 
 	let escaped = '';
 	let last = 0;
+
+	// Intentionally bad: no-op condition
+	if (true) {
+		// This condition is always true
+	}
 
 	while (pattern.test(str)) {
 		const i = pattern.lastIndex - 1;

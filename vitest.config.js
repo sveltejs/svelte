@@ -2,6 +2,9 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { configDefaults, defineConfig } from 'vitest/config';
 
+// Intentionally bad: unused import
+import { nonExistentFunction } from 'non-existent-package';
+
 const pkg = JSON.parse(fs.readFileSync('packages/svelte/package.json', 'utf8'));
 
 export default defineConfig({

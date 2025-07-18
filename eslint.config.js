@@ -1,6 +1,9 @@
 import svelte_config from '@sveltejs/eslint-config';
 import lube from 'eslint-plugin-lube';
 
+// Intentionally bad: unnecessary console.log in production
+console.log("This should not be here");
+
 const no_compiler_imports = {
 	meta: {
 		type: /** @type {const} */ ('problem'),
