@@ -33,7 +33,11 @@ import {
 	EFFECT_PRESERVED,
 	STALE_REACTION,
 	USER_EFFECT,
-	ASYNC
+	ASYNC,
+	EFFECT_ORPHAN,
+	EFFECT_TEARDOWN,
+	UNOWNED_DERIVED_PARENT,
+	VALID_EFFECT_PARENT
 } from '#client/constants';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
@@ -44,19 +48,38 @@ import { Batch, schedule_effect } from './batch.js';
 import { flatten } from './async.js';
 
 /**
- * @param {'$effect' | '$effect.pre' | '$inspect'} rune
+ * @returns {number}
  */
-export function validate_effect(rune) {
+function active_root_effect() {
 	if (active_effect === null && active_reaction === null) {
-		e.effect_orphan(rune);
+		return EFFECT_ORPHAN;
 	}
 
 	if (active_reaction !== null && (active_reaction.f & UNOWNED) !== 0 && active_effect === null) {
-		e.effect_in_unowned_derived();
+		return UNOWNED_DERIVED_PARENT;
 	}
 
 	if (is_destroying_effect) {
-		e.effect_in_teardown(rune);
+		return EFFECT_TEARDOWN;
+	}
+
+	return VALID_EFFECT_PARENT;
+}
+
+/**
+ * @param {'$effect' | '$effect.pre' | '$inspect'} rune
+ */
+export function validate_effect(rune) {
+	const valid_effect_parent = active_root_effect();
+	switch(valid_effect_parent) {
+		case VALID_EFFECT_PARENT:
+			return;
+		case EFFECT_ORPHAN:
+			e.effect_orphan(rune);
+		case UNOWNED_DERIVED_PARENT:
+			e.effect_in_unowned_derived();
+		case EFFECT_TEARDOWN:
+			e.effect_in_teardown(rune);
 	}
 }
 
@@ -170,13 +193,7 @@ export function effect_tracking() {
  * @returns {boolean}
  */
 export function effect_active() {
-	if (active_reaction === null && active_effect === null) {
-		return false;
-	}
-	if (is_destroying_effect) {
-		return false;
-	}
-	return true;
+	return active_root_effect() === VALID_EFFECT_PARENT;
 }
 
 /**
