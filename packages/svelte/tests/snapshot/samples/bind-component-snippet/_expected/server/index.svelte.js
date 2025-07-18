@@ -2,7 +2,7 @@ import * as $ from 'svelte/internal/server';
 import TextInput from './Child.svelte';
 
 function snippet($$payload) {
-	$$payload.out += `<!---->Something`;
+	$$payload.out.push(`<!---->Something`);
 }
 
 export default function Bind_component_snippet($$payload) {
@@ -23,7 +23,7 @@ export default function Bind_component_snippet($$payload) {
 			}
 		});
 
-		$$payload.out += `<!----> value: ${$.escape(value)}`;
+		$$payload.out.push(`<!----> value: ${$.escape(value)}`);
 	}
 
 	do {
