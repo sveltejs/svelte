@@ -80,7 +80,8 @@ export default [
 		files: ['packages/svelte/src/**/*'],
 		ignores: ['packages/svelte/src/compiler/**/*'],
 		rules: {
-			'custom/no_compiler_imports': 'error'
+			'custom/no_compiler_imports': 'error',
+			'svelte/no-svelte-internal': 'off'
 		}
 	},
 	{
@@ -102,11 +103,7 @@ export default [
 			'*.config.js',
 			// documentation can contain invalid examples
 			'documentation',
-			// contains a fork of the REPL which doesn't adhere to eslint rules
-			'sites/svelte-5-preview/**',
-			'tmp/**',
-			// wasn't checked previously, reenable at some point
-			'sites/svelte.dev/**'
+			'tmp/**'
 		]
 	}
 ];

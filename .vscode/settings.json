@@ -1,6 +1,3 @@
 {
-	"search.exclude": {
-		"sites/svelte-5-preview/static/*": true
-	},
 	"typescript.tsdk": "node_modules/typescript/lib"
 }

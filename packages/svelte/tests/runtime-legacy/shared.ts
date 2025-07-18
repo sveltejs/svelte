@@ -489,10 +489,11 @@ async function run_test_variant(
 					'Expected component to unmount and leave nothing behind after it was destroyed'
 				);
 
-				// TODO: This seems useless, unhandledRejection is only triggered on the next task
-				// by which time the test has already finished and the next test resets it to null above
+				// uncaught errors like during template effects flush
 				if (unhandled_rejection) {
-					throw unhandled_rejection; // eslint-disable-line no-unsafe-finally
+					if (!config.expect_unhandled_rejections) {
+						throw unhandled_rejection; // eslint-disable-line no-unsafe-finally
+					}
 				}
 			}
 		}

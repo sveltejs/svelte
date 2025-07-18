@@ -225,6 +225,17 @@ export function state_proxy_equality_mismatch(operator) {
 }
 
 /**
+ * A `<svelte:boundary>` `reset` function only resets the boundary the first time it is called
+ */
+export function svelte_boundary_reset_noop() {
+	if (DEV) {
+		console.warn(`%c[svelte] svelte_boundary_reset_noop\n%cA \`<svelte:boundary>\` \`reset\` function only resets the boundary the first time it is called\nhttps://svelte.dev/e/svelte_boundary_reset_noop`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/svelte_boundary_reset_noop`);
+	}
+}
+
+/**
  * The `slide` transition does not work correctly for elements with `display: %value%`
  * @param {string} value
  */

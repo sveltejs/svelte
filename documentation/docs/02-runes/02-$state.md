@@ -119,7 +119,9 @@ class Todo {
 }
 ```
 
-> [NOTE!] Svelte provides reactive implementations of built-in classes like `Set` and `Map` that can be imported from [`svelte/reactivity`](svelte-reactivity).
+### Built-in classes
+
+Svelte provides reactive implementations of built-in classes like `Set`, `Map`, `Date` and `URL` that can be imported from [`svelte/reactivity`](svelte-reactivity).
 
 ## `$state.raw`
 
