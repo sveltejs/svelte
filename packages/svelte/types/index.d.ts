@@ -434,17 +434,17 @@ declare module 'svelte' {
 	 * @deprecated Use [`$effect`](https://svelte.dev/docs/svelte/$effect) instead
 	 * */
 	export function afterUpdate(fn: () => void): void;
-	/**
-	 * Synchronously flush any pending updates.
-	 * Returns void if no callback is provided, otherwise returns the result of calling the callback.
-	 * */
-	export function flushSync<T = void>(fn?: (() => T) | undefined): T;
 	type Getters<T> = {
 		[K in keyof T]: () => T[K];
 	};
 	export interface StateOptions {
 		onchange?: () => unknown;
 	}
+	/**
+	 * Synchronously flush any pending updates.
+	 * Returns void if no callback is provided, otherwise returns the result of calling the callback.
+	 * */
+	export function flushSync<T = void>(fn?: (() => T) | undefined): T;
 	/**
 	 * Create a snippet programmatically
 	 * */
