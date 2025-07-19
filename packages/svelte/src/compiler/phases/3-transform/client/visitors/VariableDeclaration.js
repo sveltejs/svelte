@@ -171,19 +171,14 @@ export function VariableDeclaration(node, context) {
 							context.state.transform[id.name] = { read: get_value };
 
 							const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
-							const call = b.call('$.derived', expression);
-							return b.declarator(
-								id,
-								dev
-									? b.call(
-											'$.tag',
-											call,
-											b.literal(
-												`[$state ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`
-											)
-										)
-									: call
-							);
+							let call = b.call('$.derived', expression);
+
+							if (dev) {
+								const label = `[$state ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`;
+								call = b.call('$.tag', call, b.literal(label));
+							}
+
+							return b.declarator(id, call);
 						}),
 						...paths.map((path) => {
 							const value = /** @type {Expression} */ (context.visit(path.expression));
@@ -242,12 +237,15 @@ export function VariableDeclaration(node, context) {
 							in_derived: rune === '$derived'
 						})
 					);
+
 					let rhs = value;
 
 					if (rune !== '$derived' || init.arguments[0].type !== 'Identifier') {
 						const id = b.id(context.state.scope.generate('$$d'));
-						rhs = b.call('$.get', id);
 						let call = b.call('$.derived', rune === '$derived' ? b.thunk(expression) : expression);
+
+						rhs = b.call('$.get', id);
+
 						if (is_async) {
 							const location = dev && !is_ignored(init, 'await_waterfall') && locate_node(init);
 							call = b.call(
@@ -257,15 +255,12 @@ export function VariableDeclaration(node, context) {
 							);
 							call = b.call(b.await(b.call('$.save', call)));
 						}
+
 						if (dev) {
-							call = b.call(
-								'$.tag',
-								call,
-								b.literal(
-									`[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`
-								)
-							);
+							const label = `[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`;
+							call = b.call('$.tag', call, b.literal(label));
 						}
+
 						declarations.push(b.declarator(id, call));
 					}
 
