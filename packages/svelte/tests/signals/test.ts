@@ -4,6 +4,7 @@ import * as $ from '../../src/internal/client/runtime';
 import { push, pop } from '../../src/internal/client/context';
 import {
 	effect,
+	effect_active,
 	effect_root,
 	render_effect,
 	user_effect,
@@ -1388,6 +1389,43 @@ describe('signals', () => {
 			assert.deepEqual(log, [false, true, false]);
 
 			destroy();
+		};
+	});
+
+	test('$effect.active()', () => {
+		const log: Array<string | boolean> = [];
+
+		return () => {
+			log.push('effect orphan', effect_active());
+			const destroy = effect_root(() => {
+				log.push('effect root', effect_active());
+				effect(() => {
+					log.push('effect', effect_active());
+				});
+				$.get(
+					derived(() => {
+						log.push('derived', effect_active());
+						return 1;
+					})
+				);
+				return () => {
+					log.push('effect teardown', effect_active());
+				};
+			});
+			flushSync();
+			destroy();
+			assert.deepEqual(log, [
+				'effect orphan',
+				false,
+				'effect root',
+				true,
+				'derived',
+				true,
+				'effect',
+				true,
+				'effect teardown',
+				false
+			]);
 		};
 	});
 });
