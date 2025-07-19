@@ -48,6 +48,8 @@ import { Batch, schedule_effect } from './batch.js';
 import { flatten } from './async.js';
 
 /**
+ * If an effect can be created in the current context, `VALID_EFFECT_PARENT` is returned. 
+ * If not, a value indicating why is returned. 
  * @returns {number}
  */
 function active_root_effect() {
