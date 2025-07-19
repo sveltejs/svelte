@@ -174,7 +174,15 @@ export function VariableDeclaration(node, context) {
 							const call = b.call('$.derived', expression);
 							return b.declarator(
 								id,
-								dev ? b.call('$.tag', call, b.literal('[$state iterable]')) : call
+								dev
+									? b.call(
+											'$.tag',
+											call,
+											b.literal(
+												`[$state ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`
+											)
+										)
+									: call
 							);
 						}),
 						...paths.map((path) => {
@@ -228,19 +236,37 @@ export function VariableDeclaration(node, context) {
 					}
 				} else {
 					const init = /** @type {CallExpression} */ (declarator.init);
-
+					let expression = /** @type {Expression} */ (
+						context.visit(value, {
+							...context.state,
+							in_derived: rune === '$derived'
+						})
+					);
 					let rhs = value;
 
 					if (rune !== '$derived' || init.arguments[0].type !== 'Identifier') {
 						const id = b.id(context.state.scope.generate('$$d'));
 						rhs = b.call('$.get', id);
-
-						let expression = /** @type {Expression} */ (context.visit(value));
-						if (rune === '$derived') expression = b.thunk(expression);
-						const call = b.call('$.derived', expression);
-						declarations.push(
-							b.declarator(id, dev ? b.call('$.tag', call, b.literal('[$derived iterable]')) : call)
-						);
+						let call = b.call('$.derived', rune === '$derived' ? b.thunk(expression) : expression);
+						if (is_async) {
+							const location = dev && !is_ignored(init, 'await_waterfall') && locate_node(init);
+							call = b.call(
+								'$.async_derived',
+								b.thunk(expression, true),
+								location ? b.literal(location) : undefined
+							);
+							call = b.call(b.await(b.call('$.save', call)));
+						}
+						if (dev) {
+							call = b.call(
+								'$.tag',
+								call,
+								b.literal(
+									`[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`
+								)
+							);
+						}
+						declarations.push(b.declarator(id, call));
 					}
 
 					const { inserts, paths } = extract_paths(declarator.id, rhs);
@@ -252,7 +278,18 @@ export function VariableDeclaration(node, context) {
 						const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
 						const call = b.call('$.derived', expression);
 						declarations.push(
-							b.declarator(id, dev ? b.call('$.tag', call, b.literal('[$derived iterable]')) : call)
+							b.declarator(
+								id,
+								dev
+									? b.call(
+											'$.tag',
+											call,
+											b.literal(
+												`[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`
+											)
+										)
+									: call
+							)
 						);
 					}
 
