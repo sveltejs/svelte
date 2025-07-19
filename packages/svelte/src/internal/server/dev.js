@@ -40,7 +40,7 @@ function print_error(payload, message) {
 
 	// eslint-disable-next-line no-console
 	console.error(message);
-	payload.head.out += `<script>console.error(${JSON.stringify(message)})</script>`;
+	payload.head.out.push(`<script>console.error(${JSON.stringify(message)})</script>`);
 }
 
 export function reset_elements() {

@@ -532,7 +532,9 @@ function flush_queued_effects(effects) {
 				// here (rather than in `update_effect`) allows us to skip the work for
 				// immediate effects.
 				if (effect.deps === null && effect.first === null && effect.nodes_start === null) {
-					if (effect.teardown === null) {
+					// if there's no teardown or abort controller we completely unlink
+					// the effect from the graph
+					if (effect.teardown === null && effect.ac === null) {
 						// remove this effect from the graph
 						unlink_effect(effect);
 					} else {
