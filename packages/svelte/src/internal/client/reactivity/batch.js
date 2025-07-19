@@ -49,6 +49,19 @@ export let batch_deriveds = null;
 /** @type {Set<() => void>} */
 export let effect_pending_updates = new Set();
 
+/** @type {Array<() => void>} */
+let tasks = [];
+
+function dequeue() {
+	const task = /** @type {() => void} */ (tasks.shift());
+
+	if (tasks.length > 0) {
+		queueMicrotask(dequeue);
+	}
+
+	task();
+}
+
 /** @type {Effect[]} */
 let queued_root_effects = [];
 
@@ -438,7 +451,7 @@ export class Batch {
 			batches.add(current_batch);
 
 			if (autoflush) {
-				queueMicrotask(() => {
+				Batch.enqueue(() => {
 					if (current_batch !== batch) {
 						// a flushSync happened in the meantime
 						return;
@@ -450,6 +463,15 @@ export class Batch {
 		}
 
 		return current_batch;
+	}
+
+	/** @param {() => void} task */
+	static enqueue(task) {
+		if (tasks.length === 0) {
+			queueMicrotask(dequeue);
+		}
+
+		tasks.unshift(task);
 	}
 }
 
