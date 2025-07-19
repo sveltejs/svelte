@@ -1,5 +1,19 @@
 # svelte
 
+## 5.36.9
+
+### Patch Changes
+
+- fix: don't reexecute derived with no dependencies on teardown ([#16438](https://github.com/sveltejs/svelte/pull/16438))
+
+- fix: disallow `export { foo as default }` in `<script module>` ([#16447](https://github.com/sveltejs/svelte/pull/16447))
+
+- fix: move ownership validation into async component body ([#16449](https://github.com/sveltejs/svelte/pull/16449))
+
+- fix: allow async destructured deriveds ([#16444](https://github.com/sveltejs/svelte/pull/16444))
+
+- fix: move store setup/cleanup outside of async component body ([#16443](https://github.com/sveltejs/svelte/pull/16443))
+
 ## 5.36.8
 
 ### Patch Changes
