@@ -1,5 +1,11 @@
 # svelte
 
+## 5.36.9
+
+### Patch Changes
+
+- fix: don't reexecute derived with no dependencies on teardown ([#16438](https://github.com/sveltejs/svelte/pull/16438))
+
 ## 5.36.8
 
 ### Patch Changes
