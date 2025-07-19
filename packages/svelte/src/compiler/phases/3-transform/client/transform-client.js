@@ -364,6 +364,12 @@ export function client_component(analysis, options) {
 			: b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined))
 	]);
 
+	if (analysis.needs_mutation_validation) {
+		component_block.body.unshift(
+			b.var('$$ownership_validator', b.call('$.create_ownership_validator', b.id('$$props')))
+		);
+	}
+
 	const should_inject_context =
 		dev ||
 		analysis.needs_context ||
@@ -431,12 +437,6 @@ export function client_component(analysis, options) {
 
 		component_block.body.unshift(
 			b.stmt(b.call('$.append_styles', b.id('$$anchor'), b.id('$$css')))
-		);
-	}
-
-	if (analysis.needs_mutation_validation) {
-		component_block.body.unshift(
-			b.var('$$ownership_validator', b.call('$.create_ownership_validator', b.id('$$props')))
 		);
 	}
 
