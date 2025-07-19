@@ -615,7 +615,11 @@ export function suspend() {
 
 	return function unsuspend() {
 		boundary.update_pending_count(-1);
-		if (!pending) batch.decrement();
+
+		if (!pending) {
+			batch.activate();
+			batch.decrement();
+		}
 
 		unset_context();
 	};
