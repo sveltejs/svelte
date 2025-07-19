@@ -1,5 +1,11 @@
 # svelte
 
+## 5.36.10
+
+### Patch Changes
+
+- fix: prevent batches from getting intertwined ([#16446](https://github.com/sveltejs/svelte/pull/16446))
+
 ## 5.36.9
 
 ### Patch Changes
