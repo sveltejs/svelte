@@ -271,21 +271,14 @@ export function VariableDeclaration(node, context) {
 						context.state.transform[id.name] = { read: get_value };
 
 						const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
-						const call = b.call('$.derived', expression);
-						declarations.push(
-							b.declarator(
-								id,
-								dev
-									? b.call(
-											'$.tag',
-											call,
-											b.literal(
-												`[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`
-											)
-										)
-									: call
-							)
-						);
+						let call = b.call('$.derived', expression);
+
+						if (dev) {
+							const label = `[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`;
+							call = b.call('$.tag', call, b.literal(label));
+						}
+
+						declarations.push(b.declarator(id, call));
 					}
 
 					for (const path of paths) {
