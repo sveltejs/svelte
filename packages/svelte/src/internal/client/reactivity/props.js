@@ -393,6 +393,10 @@ export function prop(props, key, flags, fallback) {
 		return getter();
 	});
 
+	if (DEV) {
+		d.label = key;
+	}
+
 	// Capture the initial value if it's bindable
 	if (bindable) get(d);
 
