@@ -192,8 +192,13 @@ function get_delegated_event(event_name, handler, context) {
 			return unhoisted;
 		}
 
-		// If we are referencing a binding that is shadowed in another scope then bail out.
-		if (local_binding !== null && binding !== null && local_binding.node !== binding.node) {
+		// If we are referencing a binding that is shadowed in another scope then bail out (unless it's declared within the function).
+		if (
+			local_binding !== null &&
+			binding !== null &&
+			local_binding.node !== binding.node &&
+			scope.declarations.get(reference) !== binding
+		) {
 			return unhoisted;
 		}
 

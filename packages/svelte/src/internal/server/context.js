@@ -1,7 +1,7 @@
 /** @import { Component } from '#server' */
 import { DEV } from 'esm-env';
 import { on_destroy } from './index.js';
-import * as e from '../shared/errors.js';
+import * as e from './errors.js';
 
 /** @type {Component | null} */
 export var current_component = null;

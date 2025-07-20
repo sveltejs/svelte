@@ -20,7 +20,7 @@ Unlike other frameworks you may have encountered, there is no API for interactin
 
 If `$state` is used with an array or a simple object, the result is a deeply reactive _state proxy_. [Proxies](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) allow Svelte to run code when you read or write properties, including via methods like `array.push(...)`, triggering granular updates.
 
-State is proxified recursively until Svelte finds something other than an array or simple object (like a class). In a case like this...
+State is proxified recursively until Svelte finds something other than an array or simple object (like a class or an object created with `Object.create`). In a case like this...
 
 ```js
 let todos = $state([
@@ -50,7 +50,7 @@ todos.push({
 });
 ```
 
-> [!NOTE] When you update properties of proxies, the original object is _not_ mutated.
+> [!NOTE] When you update properties of proxies, the original object is _not_ mutated. If you need to use your own proxy handlers in a state proxy, [you should wrap the object _after_ wrapping it in `$state`](https://svelte.dev/playground/hello-world?version=latest#H4sIAAAAAAAACpWR3WoDIRCFX2UqhWyIJL3erAulL9C7XnQLMe5ksbUqOpsfln33YuyGFNJC8UKdc2bOhw7Myk9kJXsJ0nttO9jcR5KEG9AWJDwHdzwxznbaYGTl68Do5JM_FRifuh-9X8Y9Gkq1rYx4q66cJbQUWcmqqIL2VDe2IYMEbvuOikBADi-GJDSkXG-phId0G-frye2DO2psQYDFQ0Ys8gQO350dUkEydEg82T0GOs0nsSG9g2IqgxACZueo2ZUlpdvoDC6N64qsg1QKY8T2bpZp8gpIfbCQ85Zn50Ud82HkeY83uDjspenxv3jXcSDyjPWf9L1vJf0GH666J-jLu1ery4dV257IWXBWGa0-xFDMQdTTn2ScxWKsn86ROsLwQxqrVR5QM84Ij8TKFD2-cUZSm4O2LSt30kQcvwCgCmfZnAIAAA==).
 
 Note that if you destructure a reactive value, the references are not reactive — as in normal JavaScript, they are evaluated at the point of destructuring:
 
@@ -119,7 +119,9 @@ class Todo {
 }
 ```
 
-> Svelte provides reactive implementations of built-in classes like `Set` and `Map` that can be imported from [`svelte/reactivity`](svelte-reactivity).
+### Built-in classes
+
+Svelte provides reactive implementations of built-in classes like `Set`, `Map`, `Date` and `URL` that can be imported from [`svelte/reactivity`](svelte-reactivity).
 
 ## `$state.raw`
 

@@ -4,7 +4,7 @@
 import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { build_bind_this, memoize_expression, validate_binding } from '../shared/utils.js';
+import { add_svelte_meta, build_bind_this, Memoizer, validate_binding } from '../shared/utils.js';
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
@@ -13,10 +13,13 @@ import { determine_slot } from '../../../../../utils/slot.js';
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
  * @param {string} component_name
  * @param {ComponentContext} context
- * @param {Expression} anchor
  * @returns {Statement}
  */
-export function build_component(node, component_name, context, anchor = context.state.node) {
+export function build_component(node, component_name, context) {
+	/**
+	 * @type {Expression}
+	 */
+	const anchor = context.state.node;
 	/** @type {Array<Property[] | Expression>} */
 	const props_and_spreads = [];
 	/** @type {Array<() => void>} */
@@ -40,6 +43,8 @@ export function build_component(node, component_name, context, anchor = context.
 	/** @type {Record<string, Expression[]>} */
 	const events = {};
 
+	const memoizer = new Memoizer();
+
 	/** @type {Property[]} */
 	const custom_css_props = [];
 
@@ -48,6 +53,15 @@ export function build_component(node, component_name, context, anchor = context.
 
 	/** @type {ExpressionStatement[]} */
 	const binding_initializers = [];
+
+	const is_component_dynamic =
+		node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic);
+
+	// The variable name used for the component inside $.component()
+	const intermediate_name =
+		node.type === 'Component' && node.metadata.dynamic
+			? context.state.scope.generate(node.name)
+			: '$$component';
 
 	/**
 	 * If this component has a slot property, it is a named slot within another component. In this case
@@ -115,16 +129,15 @@ export function build_component(node, component_name, context, anchor = context.
 			(events[attribute.name] ||= []).push(handler);
 		} else if (attribute.type === 'SpreadAttribute') {
 			const expression = /** @type {Expression} */ (context.visit(attribute));
+
 			if (attribute.metadata.expression.has_state) {
-				let value = expression;
-
-				if (attribute.metadata.expression.has_call) {
-					const id = b.id(context.state.scope.generate('spread_element'));
-					context.state.init.push(b.var(id, b.call('$.derived', b.thunk(value))));
-					value = b.call('$.get', id);
-				}
-
-				props_and_spreads.push(b.thunk(value));
+				props_and_spreads.push(
+					b.thunk(
+						attribute.metadata.expression.has_await || attribute.metadata.expression.has_call
+							? b.call('$.get', memoizer.add(expression, attribute.metadata.expression.has_await))
+							: expression
+					)
+				);
 			} else {
 				props_and_spreads.push(expression);
 			}
@@ -133,10 +146,12 @@ export function build_component(node, component_name, context, anchor = context.
 				custom_css_props.push(
 					b.init(
 						attribute.name,
-						build_attribute_value(attribute.value, context, (value, metadata) =>
+						build_attribute_value(attribute.value, context, (value, metadata) => {
 							// TODO put the derived in the local block
-							metadata.has_call ? memoize_expression(context.state, value) : value
-						).value
+							return metadata.has_call || metadata.has_await
+								? b.call('$.get', memoizer.add(value, metadata.has_await))
+								: value;
+						}).value
 					)
 				);
 				continue;
@@ -154,20 +169,24 @@ export function build_component(node, component_name, context, anchor = context.
 				attribute.value,
 				context,
 				(value, metadata) => {
-					if (!metadata.has_state) return value;
+					if (!metadata.has_state && !metadata.has_await) return value;
 
 					// When we have a non-simple computation, anything other than an Identifier or Member expression,
 					// then there's a good chance it needs to be memoized to avoid over-firing when read within the
 					// child component (e.g. `active={i === index}`)
-					const should_wrap_in_derived = get_attribute_chunks(attribute.value).some((n) => {
-						return (
-							n.type === 'ExpressionTag' &&
-							n.expression.type !== 'Identifier' &&
-							n.expression.type !== 'MemberExpression'
-						);
-					});
+					const should_wrap_in_derived =
+						metadata.has_await ||
+						get_attribute_chunks(attribute.value).some((n) => {
+							return (
+								n.type === 'ExpressionTag' &&
+								n.expression.type !== 'Identifier' &&
+								n.expression.type !== 'MemberExpression'
+							);
+						});
 
-					return should_wrap_in_derived ? memoize_expression(context.state, value) : value;
+					return should_wrap_in_derived
+						? b.call('$.get', memoizer.add(value, metadata.has_await))
+						: value;
 				}
 			);
 
@@ -196,7 +215,7 @@ export function build_component(node, component_name, context, anchor = context.
 							b.call(
 								'$$ownership_validator.binding',
 								b.literal(binding.node.name),
-								b.id(component_name),
+								b.id(is_component_dynamic ? intermediate_name : component_name),
 								b.thunk(expression)
 							)
 						)
@@ -272,7 +291,7 @@ export function build_component(node, component_name, context, anchor = context.
 				);
 			}
 
-			push_prop(b.prop('get', b.call('$.attachment'), expression, true));
+			push_prop(b.prop('init', b.call('$.attachment'), expression, true));
 		}
 	}
 
@@ -411,8 +430,8 @@ export function build_component(node, component_name, context, anchor = context.
 			// TODO We can remove this ternary once we remove legacy mode, since in runes mode dynamic components
 			// will be handled separately through the `$.component` function, and then the component name will
 			// always be referenced through just the identifier here.
-			node.type === 'SvelteComponent'
-				? component_name
+			is_component_dynamic
+				? intermediate_name
 				: /** @type {Expression} */ (context.visit(b.member_id(component_name))),
 			node_id,
 			props_expression
@@ -427,18 +446,22 @@ export function build_component(node, component_name, context, anchor = context.
 		};
 	}
 
-	const statements = [...snippet_declarations];
+	const statements = [...snippet_declarations, ...memoizer.deriveds(context.state.analysis.runes)];
 
-	if (node.type === 'SvelteComponent') {
+	if (is_component_dynamic) {
 		const prev = fn;
 
 		fn = (node_id) => {
 			return b.call(
 				'$.component',
 				node_id,
-				b.thunk(/** @type {Expression} */ (context.visit(node.expression))),
+				b.thunk(
+					/** @type {Expression} */ (
+						context.visit(node.type === 'Component' ? b.member_id(component_name) : node.expression)
+					)
+				),
 				b.arrow(
-					[b.id('$$anchor'), b.id(component_name)],
+					[b.id('$$anchor'), b.id(intermediate_name)],
 					b.block([...binding_initializers, b.stmt(prev(b.id('$$anchor')))])
 				)
 			);
@@ -467,7 +490,23 @@ export function build_component(node, component_name, context, anchor = context.
 		);
 	} else {
 		context.state.template.push_comment();
-		statements.push(b.stmt(fn(anchor)));
+
+		statements.push(add_svelte_meta(fn(anchor), node, 'component', { componentTag: node.name }));
+	}
+
+	memoizer.apply();
+
+	const async_values = memoizer.async_values();
+
+	if (async_values) {
+		return b.stmt(
+			b.call(
+				'$.async',
+				anchor,
+				async_values,
+				b.arrow([b.id('$$anchor'), ...memoizer.async_ids()], b.block(statements))
+			)
+		);
 	}
 
 	return statements.length > 1 ? b.block(statements) : statements[0];

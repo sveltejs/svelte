@@ -349,6 +349,30 @@ declare module 'svelte' {
 				props: Props;
 			});
 	/**
+	 * Returns an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that aborts when the current [derived](https://svelte.dev/docs/svelte/$derived) or [effect](https://svelte.dev/docs/svelte/$effect) re-runs or is destroyed.
+	 *
+	 * Must be called while a derived or effect is running.
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { getAbortSignal } from 'svelte';
+	 *
+	 * 	let { id } = $props();
+	 *
+	 * 	async function getData(id) {
+	 * 		const response = await fetch(`/items/${id}`, {
+	 * 			signal: getAbortSignal()
+	 * 		});
+	 *
+	 * 		return await response.json();
+	 * 	}
+	 *
+	 * 	const data = $derived(await getData(id));
+	 * </script>
+	 * ```
+	 */
+	export function getAbortSignal(): AbortSignal;
+	/**
 	 * `onMount`, like [`$effect`](https://svelte.dev/docs/svelte/$effect), schedules a function to run as soon as the component has been mounted to the DOM.
 	 * Unlike `$effect`, the provided function only runs once.
 	 *
@@ -411,6 +435,11 @@ declare module 'svelte' {
 	 * */
 	export function afterUpdate(fn: () => void): void;
 	/**
+	 * Synchronously flush any pending updates.
+	 * Returns void if no callback is provided, otherwise returns the result of calling the callback.
+	 * */
+	export function flushSync<T = void>(fn?: (() => T) | undefined): T;
+	/**
 	 * Create a snippet programmatically
 	 * */
 	export function createRawSnippet<Params extends unknown[]>(fn: (...params: Getters<Params>) => {
@@ -419,29 +448,6 @@ declare module 'svelte' {
 	}): Snippet<Params>;
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
-	/**
-	 * Synchronously flush any pending updates.
-	 * Returns void if no callback is provided, otherwise returns the result of calling the callback.
-	 * */
-	export function flushSync<T = void>(fn?: (() => T) | undefined): T;
-	/**
-	 * Returns a promise that resolves once any pending state changes have been applied.
-	 * */
-	export function tick(): Promise<void>;
-	/**
-	 * When used inside a [`$derived`](https://svelte.dev/docs/svelte/$derived) or [`$effect`](https://svelte.dev/docs/svelte/$effect),
-	 * any state read inside `fn` will not be treated as a dependency.
-	 *
-	 * ```ts
-	 * $effect(() => {
-	 *   // this will run when `data` changes, but not when `time` changes
-	 *   save(data, {
-	 *     timestamp: untrack(() => time)
-	 *   });
-	 * });
-	 * ```
-	 * */
-	export function untrack<T>(fn: () => T): T;
 	/**
 	 * Retrieves the context that belongs to the closest parent component with the specified `key`.
 	 * Must be called during component initialisation.
@@ -515,6 +521,30 @@ declare module 'svelte' {
 	export function unmount(component: Record<string, any>, options?: {
 		outro?: boolean;
 	} | undefined): Promise<void>;
+	/**
+	 * Returns a promise that resolves once any pending state changes have been applied.
+	 * */
+	export function tick(): Promise<void>;
+	/**
+	 * Returns a promise that resolves once any state changes, and asynchronous work resulting from them,
+	 * have resolved and the DOM has been updated
+	 * @since 5.36
+	 */
+	export function settled(): Promise<void>;
+	/**
+	 * When used inside a [`$derived`](https://svelte.dev/docs/svelte/$derived) or [`$effect`](https://svelte.dev/docs/svelte/$effect),
+	 * any state read inside `fn` will not be treated as a dependency.
+	 *
+	 * ```ts
+	 * $effect(() => {
+	 *   // this will run when `data` changes, but not when `time` changes
+	 *   save(data, {
+	 *     timestamp: untrack(() => time)
+	 *   });
+	 * });
+	 * ```
+	 * */
+	export function untrack<T>(fn: () => T): T;
 	type Getters<T> = {
 		[K in keyof T]: () => T[K];
 	};
@@ -1087,6 +1117,17 @@ declare module 'svelte/compiler' {
 		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 		 */
 		warningFilter?: (warning: Warning) => boolean;
+		/**
+		 * Experimental options
+		 * @since 5.36
+		 */
+		experimental?: {
+			/**
+			 * Allow `await` keyword in deriveds, template expressions, and the top level of components
+			 * @since 5.36
+			 */
+			async?: boolean;
+		};
 	}
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
@@ -1120,6 +1161,8 @@ declare module 'svelte/compiler' {
 			instance: Script | null;
 			/** The parsed `<script module>` element, if exists */
 			module: Script | null;
+			/** Comments found in <script> and {expressions} */
+			comments: JSComment[];
 		}
 
 		export interface SvelteOptions {
@@ -1437,6 +1480,17 @@ declare module 'svelte/compiler' {
 			attributes: Attribute[];
 		}
 
+		export interface JSComment {
+			type: 'Line' | 'Block';
+			value: string;
+			start: number;
+			end: number;
+			loc: {
+				start: { line: number; column: number };
+				end: { line: number; column: number };
+			};
+		}
+
 		export type AttributeLike = Attribute | SpreadAttribute | Directive;
 
 		export type Directive =
@@ -1493,7 +1547,7 @@ declare module 'svelte/compiler' {
 			| AST.Comment
 			| Block;
 
-		export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node;
+		export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node | Script;
 
 		export type { _CSS as CSS };
 	}
@@ -2281,10 +2335,13 @@ declare module 'svelte/reactivity' {
 		constructor(query: string, fallback?: boolean | undefined);
 	}
 	/**
-	 * Returns a `subscribe` function that, if called in an effect (including expressions in the template),
-	 * calls its `start` callback with an `update` function. Whenever `update` is called, the effect re-runs.
+	 * Returns a `subscribe` function that integrates external event-based systems with Svelte's reactivity.
+	 * It's particularly useful for integrating with web APIs like `MediaQuery`, `IntersectionObserver`, or `WebSocket`.
 	 *
-	 * If `start` returns a function, it will be called when the effect is destroyed.
+	 * If `subscribe` is called inside an effect (including indirectly, for example inside a getter),
+	 * the `start` callback will be called with an `update` function. Whenever `update` is called, the effect re-runs.
+	 *
+	 * If `start` returns a cleanup function, it will be called when the effect is destroyed.
 	 *
 	 * If `subscribe` is called in multiple effects, `start` will only be called once as long as the effects
 	 * are active, and the returned teardown function will only be called when all effects are destroyed.
@@ -2312,6 +2369,7 @@ declare module 'svelte/reactivity' {
 	 * 	}
 	 *
 	 * 	get current() {
+	 * 		// This makes the getter reactive, if read in an effect
 	 * 		this.#subscribe();
 	 *
 	 * 		// Return the current state of the query, whether or not we're in an effect
@@ -2984,6 +3042,17 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 		 */
 		warningFilter?: (warning: Warning_1) => boolean;
+		/**
+		 * Experimental options
+		 * @since 5.36
+		 */
+		experimental?: {
+			/**
+			 * Allow `await` keyword in deriveds, template expressions, and the top level of components
+			 * @since 5.36
+			 */
+			async?: boolean;
+		};
 	}
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
@@ -3261,6 +3330,13 @@ declare namespace $effect {
 	export function pre(fn: () => void | (() => void)): void;
 
 	/**
+	 * Returns the number of promises that are pending in the current boundary, not including child boundaries.
+	 *
+	 * https://svelte.dev/docs/svelte/$effect#$effect.pending
+	 */
+	export function pending(): number;
+
+	/**
 	 * The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template.
 	 *
 	 * Example:
@@ -3293,13 +3369,13 @@ declare namespace $effect {
 	 *   let count = $state(0);
 	 *
 	 *   const cleanup = $effect.root(() => {
-	 *	    $effect(() => {
-	 *				console.log(count);
-	 *			})
+	 *     $effect(() => {
+	 *       console.log(count);
+	 *     })
 	 *
-	 *      return () => {
-	 *        console.log('effect root cleanup');
-	 * 			}
+	 *     return () => {
+	 *       console.log('effect root cleanup');
+	 *     }
 	 *   });
 	 * </script>
 	 *

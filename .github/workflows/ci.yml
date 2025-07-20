@@ -43,6 +43,23 @@ jobs:
       - run: pnpm test
         env:
           CI: true
+  TestNoAsync:
+    permissions: {}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm playwright install chromium
+      - run: pnpm test runtime-runes
+        env:
+          CI: true
+          SVELTE_NO_ASYNC: true
   Lint:
     permissions: {}
     runs-on: ubuntu-latest

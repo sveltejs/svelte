@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Expression, Identifier, Pattern, SequenceExpression, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, Identifier, Pattern, Statement } from 'estree' */
 /** @import { AST, Binding } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
@@ -12,8 +12,8 @@ import {
 import { dev } from '../../../../state.js';
 import { extract_paths, object } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { build_getter } from '../utils.js';
 import { get_value } from './shared/declarations.js';
+import { build_expression, add_svelte_meta } from './shared/utils.js';
 
 /**
  * @param {AST.EachBlock} node
@@ -24,11 +24,18 @@ export function EachBlock(node, context) {
 
 	// expression should be evaluated in the parent scope, not the scope
 	// created by the each block itself
-	const collection = /** @type {Expression} */ (
-		context.visit(node.expression, {
-			...context.state,
-			scope: /** @type {Scope} */ (context.state.scope.parent)
-		})
+	const parent_scope_state = {
+		...context.state,
+		scope: /** @type {Scope} */ (context.state.scope.parent)
+	};
+
+	const collection = build_expression(
+		{
+			...context,
+			state: parent_scope_state
+		},
+		node.expression,
+		node.metadata.expression
 	);
 
 	if (!each_node_meta.is_controlled) {
@@ -305,11 +312,9 @@ export function EachBlock(node, context) {
 		declarations.push(b.let(node.index, index));
 	}
 
-	if (dev && node.metadata.keyed) {
-		context.state.init.push(
-			b.stmt(b.call('$.validate_each_keys', b.thunk(collection), key_function))
-		);
-	}
+	const { has_await } = node.metadata.expression;
+	const get_collection = b.thunk(collection, has_await);
+	const thunk = has_await ? b.thunk(b.call('$.get', b.id('$$collection'))) : get_collection;
 
 	const render_args = [b.id('$$anchor'), item];
 	if (uses_index || collection_id) render_args.push(index);
@@ -319,7 +324,7 @@ export function EachBlock(node, context) {
 	const args = [
 		context.state.node,
 		b.literal(flags),
-		b.thunk(collection),
+		thunk,
 		key_function,
 		b.arrow(render_args, b.block(declarations.concat(block.body)))
 	];
@@ -330,7 +335,26 @@ export function EachBlock(node, context) {
 		);
 	}
 
-	context.state.init.push(b.stmt(b.call('$.each', ...args)));
+	const statements = [add_svelte_meta(b.call('$.each', ...args), node, 'each')];
+
+	if (dev && node.metadata.keyed) {
+		statements.unshift(b.stmt(b.call('$.validate_each_keys', thunk, key_function)));
+	}
+
+	if (has_await) {
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.async',
+					context.state.node,
+					b.array([get_collection]),
+					b.arrow([context.state.node, b.id('$$collection')], b.block(statements))
+				)
+			)
+		);
+	} else {
+		context.state.init.push(...statements);
+	}
 }
 
 /**

@@ -844,6 +844,10 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	readonly 'bind:borderBoxSize'?: Array<ResizeObserverSize> | undefined | null;
 	readonly 'bind:devicePixelContentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
 	readonly 'bind:focused'?: boolean | undefined | null;
+	readonly 'bind:clientWidth'?: number | undefined | null;
+	readonly 'bind:clientHeight'?: number | undefined | null;
+	readonly 'bind:offsetWidth'?: number | undefined | null;
+	readonly 'bind:offsetHeight'?: number | undefined | null;
 
 	// SvelteKit
 	'data-sveltekit-keepfocus'?: true | '' | 'off' | undefined | null;
@@ -926,6 +930,17 @@ export interface HTMLButtonAttributes extends HTMLAttributes<HTMLButtonElement> 
 	value?: string | string[] | number | undefined | null;
 	popovertarget?: string | undefined | null;
 	popovertargetaction?: 'toggle' | 'show' | 'hide' | undefined | null;
+	command?:
+		| 'show-modal'
+		| 'close'
+		| 'request-close'
+		| 'show-popover'
+		| 'hide-popover'
+		| 'toggle-popover'
+		| (string & {})
+		| undefined
+		| null;
+	commandfor?: string | undefined | null;
 }
 
 export interface HTMLCanvasAttributes extends HTMLAttributes<HTMLCanvasElement> {
@@ -2065,6 +2080,7 @@ export interface SvelteHTMLElements {
 	'svelte:boundary': {
 		onerror?: (error: unknown, reset: () => void) => void;
 		failed?: import('svelte').Snippet<[error: unknown, reset: () => void]>;
+		pending?: import('svelte').Snippet;
 	};
 
 	[name: string]: { [name: string]: any };

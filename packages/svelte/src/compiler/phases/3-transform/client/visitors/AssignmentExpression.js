@@ -67,11 +67,20 @@ function build_assignment(operator, left, right, context) {
 						in_constructor: rune !== '$derived' && rune !== '$derived.by'
 					};
 
-					return b.assignment(
-						operator,
-						b.member(b.this, field.key),
-						/** @type {Expression} */ (context.visit(right, child_state))
-					);
+					let value = /** @type {Expression} */ (context.visit(right, child_state));
+
+					if (dev) {
+						const declaration = context.path.findLast(
+							(parent) => parent.type === 'ClassDeclaration' || parent.type === 'ClassExpression'
+						);
+						value = b.call(
+							'$.tag',
+							value,
+							b.literal(`${declaration?.id?.name ?? '[class]'}.${name}`)
+						);
+					}
+
+					return b.assignment(operator, b.member(b.this, field.key), value);
 				}
 			}
 
@@ -128,6 +137,7 @@ function build_assignment(operator, left, right, context) {
 				binding.kind !== 'prop' &&
 				binding.kind !== 'bindable_prop' &&
 				binding.kind !== 'raw_state' &&
+				binding.kind !== 'derived' &&
 				binding.kind !== 'store_sub' &&
 				context.state.analysis.runes &&
 				should_proxy(right, context.state.scope) &&

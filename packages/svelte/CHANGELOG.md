@@ -1,5 +1,257 @@
 # svelte
 
+## 5.36.10
+
+### Patch Changes
+
+- fix: prevent batches from getting intertwined ([#16446](https://github.com/sveltejs/svelte/pull/16446))
+
+## 5.36.9
+
+### Patch Changes
+
+- fix: don't reexecute derived with no dependencies on teardown ([#16438](https://github.com/sveltejs/svelte/pull/16438))
+
+- fix: disallow `export { foo as default }` in `<script module>` ([#16447](https://github.com/sveltejs/svelte/pull/16447))
+
+- fix: move ownership validation into async component body ([#16449](https://github.com/sveltejs/svelte/pull/16449))
+
+- fix: allow async destructured deriveds ([#16444](https://github.com/sveltejs/svelte/pull/16444))
+
+- fix: move store setup/cleanup outside of async component body ([#16443](https://github.com/sveltejs/svelte/pull/16443))
+
+## 5.36.8
+
+### Patch Changes
+
+- fix: keep effect in the graph if it has an abort controller ([#16430](https://github.com/sveltejs/svelte/pull/16430))
+
+- chore: Switch `payload.out` to an array ([#16428](https://github.com/sveltejs/svelte/pull/16428))
+
+## 5.36.7
+
+### Patch Changes
+
+- fix: allow instrinsic `<svelte:...>` elements to inherit from `SvelteHTMLElements` ([#16424](https://github.com/sveltejs/svelte/pull/16424))
+
+## 5.36.6
+
+### Patch Changes
+
+- fix: delegate functions with shadowed variables if declared locally ([#16417](https://github.com/sveltejs/svelte/pull/16417))
+
+- fix: handle error in correct boundary after reset ([#16171](https://github.com/sveltejs/svelte/pull/16171))
+
+- fix: make `<svelte:boundary>` reset function a noop after the first call ([#16171](https://github.com/sveltejs/svelte/pull/16171))
+
+## 5.36.5
+
+### Patch Changes
+
+- fix: silence `$inspect` errors when the effect is about to be destroyed ([#16391](https://github.com/sveltejs/svelte/pull/16391))
+
+- fix: more informative error when effects run in an infinite loop ([#16405](https://github.com/sveltejs/svelte/pull/16405))
+
+## 5.36.4
+
+### Patch Changes
+
+- fix: avoid microtask in flushSync ([#16394](https://github.com/sveltejs/svelte/pull/16394))
+
+- fix: ensure compiler state is reset before compilation ([#16396](https://github.com/sveltejs/svelte/pull/16396))
+
+## 5.36.3
+
+### Patch Changes
+
+- fix: don't log `await_reactivity_loss` warning when signal is read in `untrack` ([#16385](https://github.com/sveltejs/svelte/pull/16385))
+
+- fix: better handle $inspect on array mutations ([#16389](https://github.com/sveltejs/svelte/pull/16389))
+
+- fix: leave proxied array `length` untouched when deleting properties ([#16389](https://github.com/sveltejs/svelte/pull/16389))
+
+- fix: update `$effect.pending()` immediately after a batch is removed ([#16382](https://github.com/sveltejs/svelte/pull/16382))
+
+## 5.36.2
+
+### Patch Changes
+
+- fix: add `$effect.pending()` to types ([#16376](https://github.com/sveltejs/svelte/pull/16376))
+
+- fix: add `pending` snippet to `<svelte:boundary>` types ([#16379](https://github.com/sveltejs/svelte/pull/16379))
+
+## 5.36.1
+
+### Patch Changes
+
+- fix: only skip updating bound `<input>` if the input was the source of the change ([#16373](https://github.com/sveltejs/svelte/pull/16373))
+
+## 5.36.0
+
+### Minor Changes
+
+- feat: support `await` in components when using the `experimental.async` compiler option ([#15844](https://github.com/sveltejs/svelte/pull/15844))
+
+### Patch Changes
+
+- fix: silence a11y warning for inert elements ([#16339](https://github.com/sveltejs/svelte/pull/16339))
+
+- chore: clean up a11y analysis code ([#16345](https://github.com/sveltejs/svelte/pull/16345))
+
+## 5.35.7
+
+### Patch Changes
+
+- fix: silence autofocus a11y warning inside `<dialog>` ([#16341](https://github.com/sveltejs/svelte/pull/16341))
+
+- fix: don't show adjusted error messages in boundaries ([#16360](https://github.com/sveltejs/svelte/pull/16360))
+
+- chore: replace inline regex with variable ([#16340](https://github.com/sveltejs/svelte/pull/16340))
+
+## 5.35.6
+
+### Patch Changes
+
+- chore: simplify reaction/source ownership tracking ([#16333](https://github.com/sveltejs/svelte/pull/16333))
+
+- chore: simplify internal component `pop()` ([#16331](https://github.com/sveltejs/svelte/pull/16331))
+
+## 5.35.5
+
+### Patch Changes
+
+- fix: associate sources in Spring/Tween/SvelteMap/SvelteSet with correct reaction ([#16325](https://github.com/sveltejs/svelte/pull/16325))
+
+- fix: re-evaluate derived props during teardown ([#16278](https://github.com/sveltejs/svelte/pull/16278))
+
+## 5.35.4
+
+### Patch Changes
+
+- fix: abort and reschedule effect processing after state change in user effect ([#16280](https://github.com/sveltejs/svelte/pull/16280))
+
+## 5.35.3
+
+### Patch Changes
+
+- fix: account for mounting when `select_option` in `attribute_effect` ([#16309](https://github.com/sveltejs/svelte/pull/16309))
+
+- fix: do not proxify the value assigned to a derived ([#16302](https://github.com/sveltejs/svelte/pull/16302))
+
+## 5.35.2
+
+### Patch Changes
+
+- fix: bump esrap ([#16295](https://github.com/sveltejs/svelte/pull/16295))
+
+## 5.35.1
+
+### Patch Changes
+
+- feat: add parent hierarchy to `__svelte_meta` objects ([#16255](https://github.com/sveltejs/svelte/pull/16255))
+
+## 5.35.0
+
+### Minor Changes
+
+- feat: add `getAbortSignal()` ([#16266](https://github.com/sveltejs/svelte/pull/16266))
+
+### Patch Changes
+
+- chore: simplify props ([#16270](https://github.com/sveltejs/svelte/pull/16270))
+
+## 5.34.9
+
+### Patch Changes
+
+- fix: ensure unowned deriveds can add themselves as reactions while connected ([#16249](https://github.com/sveltejs/svelte/pull/16249))
+
+## 5.34.8
+
+### Patch Changes
+
+- fix: untrack `$inspect.with` and add check for unsafe mutation ([#16209](https://github.com/sveltejs/svelte/pull/16209))
+
+- fix: use fine grained for template if the component is not explicitly in legacy mode ([#16232](https://github.com/sveltejs/svelte/pull/16232))
+
+- lift unsafe_state_mutation constraints for SvelteSet, SvelteMap, SvelteDate, SvelteURL and SvelteURLSearchParams created inside the derived ([#16221](https://github.com/sveltejs/svelte/pull/16221))
+
+## 5.34.7
+
+### Patch Changes
+
+- fix: address css class matching regression ([#16204](https://github.com/sveltejs/svelte/pull/16204))
+
+## 5.34.6
+
+### Patch Changes
+
+- fix: match class and style directives against attribute selector ([#16179](https://github.com/sveltejs/svelte/pull/16179))
+
+## 5.34.5
+
+### Patch Changes
+
+- fix: keep spread non-delegated event handlers up to date ([#16180](https://github.com/sveltejs/svelte/pull/16180))
+
+- fix: remove undefined attributes on hydration ([#16178](https://github.com/sveltejs/svelte/pull/16178))
+
+- fix: ensure sources within nested effects still register correctly ([#16193](https://github.com/sveltejs/svelte/pull/16193))
+
+- fix: avoid shadowing a variable in dynamic components ([#16185](https://github.com/sveltejs/svelte/pull/16185))
+
+## 5.34.4
+
+### Patch Changes
+
+- fix: don't set state withing `with_parent` in proxy ([#16176](https://github.com/sveltejs/svelte/pull/16176))
+
+- fix: use compiler-driven reactivity in legacy mode template expressions ([#16100](https://github.com/sveltejs/svelte/pull/16100))
+
+## 5.34.3
+
+### Patch Changes
+
+- fix: don't eagerly execute deriveds on resume ([#16150](https://github.com/sveltejs/svelte/pull/16150))
+
+- fix: prevent memory leaking signals in legacy mode ([#16145](https://github.com/sveltejs/svelte/pull/16145))
+
+- fix: don't define `error.message` if it's not configurable ([#16149](https://github.com/sveltejs/svelte/pull/16149))
+
+## 5.34.2
+
+### Patch Changes
+
+- fix: add missing typings for some dimension bindings ([#16142](https://github.com/sveltejs/svelte/pull/16142))
+
+- fix: prune typescript class field declarations ([#16154](https://github.com/sveltejs/svelte/pull/16154))
+
+## 5.34.1
+
+### Patch Changes
+
+- fix: correctly tag private class state fields ([#16132](https://github.com/sveltejs/svelte/pull/16132))
+
+## 5.34.0
+
+### Minor Changes
+
+- feat: add source name logging to `$inspect.trace` ([#16060](https://github.com/sveltejs/svelte/pull/16060))
+
+### Patch Changes
+
+- fix: add `command` and `commandfor` to `HTMLButtonAttributes` ([#16117](https://github.com/sveltejs/svelte/pull/16117))
+
+- fix: better `$inspect.trace()` output ([#16131](https://github.com/sveltejs/svelte/pull/16131))
+
+- fix: properly hydrate dynamic css props components and remove element removal ([#16118](https://github.com/sveltejs/svelte/pull/16118))
+
+## 5.33.19
+
+### Patch Changes
+
+- fix: reset `is_flushing` if `flushSync` is called and there's no scheduled effect ([#16119](https://github.com/sveltejs/svelte/pull/16119))
+
 ## 5.33.18
 
 ### Patch Changes

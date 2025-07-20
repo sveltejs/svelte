@@ -30,6 +30,7 @@ import * as w from './warnings.js';
 import * as e from './errors.js';
 import { assign_nodes } from './dom/template.js';
 import { is_passive_event } from '../../utils.js';
+import { COMMENT_NODE } from './constants.js';
 
 /**
  * This is normally true — block effects should run their intro transitions —
@@ -107,7 +108,7 @@ export function hydrate(component, options) {
 		var anchor = /** @type {TemplateNode} */ (get_first_child(target));
 		while (
 			anchor &&
-			(anchor.nodeType !== 8 || /** @type {Comment} */ (anchor).data !== HYDRATION_START)
+			(anchor.nodeType !== COMMENT_NODE || /** @type {Comment} */ (anchor).data !== HYDRATION_START)
 		) {
 			anchor = /** @type {TemplateNode} */ (get_next_sibling(anchor));
 		}
@@ -124,7 +125,7 @@ export function hydrate(component, options) {
 
 		if (
 			hydrate_node === null ||
-			hydrate_node.nodeType !== 8 ||
+			hydrate_node.nodeType !== COMMENT_NODE ||
 			/** @type {Comment} */ (hydrate_node).data !== HYDRATION_END
 		) {
 			w.hydration_mismatch();
