@@ -138,11 +138,11 @@ export {
 	mark_store_binding
 } from './reactivity/store.js';
 export { boundary, pending } from './dom/blocks/boundary.js';
+export { invalidate_inner_signals } from './legacy.js';
 export { set_text } from './render.js';
 export {
 	get,
 	safe_get,
-	invalidate_inner_signals,
 	tick,
 	untrack,
 	exclude_from_object,
