@@ -1,5 +1,15 @@
 # svelte
 
+## 5.36.11
+
+### Patch Changes
+
+- fix: always mark reactions of deriveds ([#16457](https://github.com/sveltejs/svelte/pull/16457))
+
+- fix: add labels to `@const` tags and props ([#16454](https://github.com/sveltejs/svelte/pull/16454))
+
+- fix: tag stores for `$inspect.trace()` ([#16452](https://github.com/sveltejs/svelte/pull/16452))
+
 ## 5.36.10
 
 ### Patch Changes
