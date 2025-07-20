@@ -26,7 +26,7 @@ function log_entry(signal, entry) {
 		return;
 	}
 
-	const type = (signal.f & (DERIVED | ASYNC)) !== 0 ? '$derived' : '$state';
+	const type = get_type(signal);
 	const current_reaction = /** @type {Reaction} */ (active_reaction);
 	const dirty = signal.wv > current_reaction.wv || current_reaction.wv === 0;
 	const style = dirty
@@ -71,6 +71,15 @@ function log_entry(signal, entry) {
 
 	// eslint-disable-next-line no-console
 	console.groupEnd();
+}
+
+/**
+ * @param {Value} signal
+ * @returns {'$state' | '$derived' | 'store'}
+ */
+function get_type(signal) {
+	if ((signal.f & (DERIVED | ASYNC)) !== 0) return '$derived';
+	return signal.label?.startsWith('$') ? 'store' : '$state';
 }
 
 /**
