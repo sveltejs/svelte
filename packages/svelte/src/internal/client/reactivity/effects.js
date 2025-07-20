@@ -33,11 +33,7 @@ import {
 	EFFECT_PRESERVED,
 	STALE_REACTION,
 	USER_EFFECT,
-	ASYNC,
-	EFFECT_ORPHAN,
-	EFFECT_TEARDOWN,
-	UNOWNED_DERIVED_PARENT,
-	VALID_EFFECT_PARENT
+	ASYNC
 } from '#client/constants';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
@@ -46,6 +42,11 @@ import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
 import { Batch, schedule_effect } from './batch.js';
 import { flatten } from './async.js';
+
+const VALID_EFFECT_PARENT = 0;
+const EFFECT_ORPHAN = 1;
+const UNOWNED_DERIVED_PARENT = 2;
+const EFFECT_TEARDOWN = 3;
 
 /**
  * If an effect can be created in the current context, `VALID_EFFECT_PARENT` is returned.
