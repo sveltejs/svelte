@@ -1,5 +1,11 @@
 # svelte
 
+## 5.36.12
+
+### Patch Changes
+
+- chore: move `capture_signals` to legacy module ([#16456](https://github.com/sveltejs/svelte/pull/16456))
+
 ## 5.36.11
 
 ### Patch Changes
