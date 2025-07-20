@@ -48,8 +48,8 @@ import { Batch, schedule_effect } from './batch.js';
 import { flatten } from './async.js';
 
 /**
- * If an effect can be created in the current context, `VALID_EFFECT_PARENT` is returned. 
- * If not, a value indicating why is returned. 
+ * If an effect can be created in the current context, `VALID_EFFECT_PARENT` is returned.
+ * If not, a value indicating why is returned.
  * @returns {number}
  */
 function active_root_effect() {
@@ -73,15 +73,18 @@ function active_root_effect() {
  */
 export function validate_effect(rune) {
 	const valid_effect_parent = active_root_effect();
-	switch(valid_effect_parent) {
+	switch (valid_effect_parent) {
 		case VALID_EFFECT_PARENT:
 			return;
 		case EFFECT_ORPHAN:
 			e.effect_orphan(rune);
+			break;
 		case UNOWNED_DERIVED_PARENT:
 			e.effect_in_unowned_derived();
+			break;
 		case EFFECT_TEARDOWN:
 			e.effect_in_teardown(rune);
+			break;
 	}
 }
 
