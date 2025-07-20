@@ -314,9 +314,6 @@ function mark_reactions(signal, status) {
 		var reaction = reactions[i];
 		var flags = reaction.f;
 
-		// Skip any effects that are already dirty
-		if ((flags & DIRTY) !== 0) continue;
-
 		// In legacy mode, skip the current effect to prevent infinite loops
 		if (!runes && reaction === active_effect) continue;
 
@@ -326,15 +323,15 @@ function mark_reactions(signal, status) {
 			continue;
 		}
 
-		set_signal_status(reaction, status);
+		// don't set a DIRTY reaction to MAYBE_DIRTY
+		if ((flags & DIRTY) === 0) {
+			set_signal_status(reaction, status);
+		}
 
-		// If the signal a) was previously clean or b) is an unowned derived, then mark it
-		if ((flags & (CLEAN | UNOWNED)) !== 0) {
-			if ((flags & DERIVED) !== 0) {
-				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
-			} else {
-				schedule_effect(/** @type {Effect} */ (reaction));
-			}
+		if ((flags & DERIVED) !== 0) {
+			mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
+		} else if ((flags & DIRTY) === 0) {
+			schedule_effect(/** @type {Effect} */ (reaction));
 		}
 	}
 }
