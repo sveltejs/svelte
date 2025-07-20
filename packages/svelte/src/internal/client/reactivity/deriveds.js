@@ -337,7 +337,9 @@ export function update_derived(derived) {
 
 	// don't mark derived clean if we're reading it inside a
 	// cleanup function, or it will cache a stale value
-	if (is_destroying_effect) return;
+	if (is_destroying_effect) {
+		return;
+	}
 
 	if (batch_deriveds !== null) {
 		batch_deriveds.set(derived, derived.v);
