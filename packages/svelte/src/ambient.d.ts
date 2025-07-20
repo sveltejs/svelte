@@ -240,12 +240,12 @@ declare namespace $effect {
 	/**
 	 * The `$effect.active` rune is an advanced feature that indicates whether an effect or async `$derived` can be created in the current context.
 	 * Effects and async deriveds can only be created in root effects, which are created during component setup, or can be programmatically created via `$effect.root`.
-	 * 
+	 *
 	 * Example:
 	 * ```svelte
 	 * <script>
 	 *   console.log('in component setup', $effect.active()); // true
-	 * 
+	 *
 	 *   function onclick() {
 	 *     console.log('after component setup', $effect.active()); // false
 	 *   }
@@ -261,7 +261,7 @@ declare namespace $effect {
 	 * <button {onclick}>Click me!</button>
 	 * <button {ondblclick}>Click me twice!</button>
 	 * ```
-	 * 
+	 *
 	 * https://svelte.dev/docs/svelte/$effect#$effect.active
 	 */
 	export function active(): boolean;
