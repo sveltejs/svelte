@@ -1,5 +1,11 @@
 # svelte
 
+## 5.36.13
+
+### Patch Changes
+
+- fix: ensure subscriptions are picked up correctly by deriveds ([#16466](https://github.com/sveltejs/svelte/pull/16466))
+
 ## 5.36.12
 
 ### Patch Changes
