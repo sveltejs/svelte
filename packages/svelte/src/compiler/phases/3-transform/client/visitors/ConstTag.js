@@ -19,7 +19,8 @@ export function ConstTag(node, context) {
 		const init = build_expression(context, declaration.init, node.metadata.expression);
 		let expression = create_derived(
 			context.state,
-			is_expression_async(init) ? b.arrow([], init, true) : b.thunk(init)
+			is_expression_async(init) ? b.arrow([], init, true) : b.thunk(init),
+			is_expression_async(init)
 		);
 
 		if (dev) {
@@ -65,7 +66,7 @@ export function ConstTag(node, context) {
 			is_expression_async(init)
 		);
 
-		let expression = create_derived(context.state, fn);
+		let expression = create_derived(context.state, fn, is_expression_async(init));
 
 		if (dev) {
 			expression = b.call('$.tag', expression, b.literal('[@const]'));
