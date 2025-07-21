@@ -2,4 +2,4 @@
 'svelte': minor
 ---
 
-feat: add `$effect.active` rune
+feat: add `$effect.allowed` rune

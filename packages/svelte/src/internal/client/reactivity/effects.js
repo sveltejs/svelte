@@ -53,7 +53,7 @@ const EFFECT_TEARDOWN = 3;
  * If not, a value indicating why is returned.
  * @returns {number}
  */
-function active_root_effect() {
+function valid_effect_creation_context() {
 	if (active_effect === null && active_reaction === null) {
 		return EFFECT_ORPHAN;
 	}
@@ -73,7 +73,7 @@ function active_root_effect() {
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
  */
 export function validate_effect(rune) {
-	const valid_effect_parent = active_root_effect();
+	const valid_effect_parent = valid_effect_creation_context();
 	switch (valid_effect_parent) {
 		case VALID_EFFECT_PARENT:
 			return;
@@ -195,11 +195,11 @@ export function effect_tracking() {
 }
 
 /**
- * Internal representation of `$effect.active()`
+ * Internal representation of `$effect.allowed()`
  * @returns {boolean}
  */
-export function effect_active() {
-	return active_root_effect() === VALID_EFFECT_PARENT;
+export function effect_allowed() {
+	return valid_effect_creation_context() === VALID_EFFECT_PARENT;
 }
 
 /**

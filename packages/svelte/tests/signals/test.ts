@@ -4,7 +4,7 @@ import * as $ from '../../src/internal/client/runtime';
 import { push, pop } from '../../src/internal/client/context';
 import {
 	effect,
-	effect_active,
+	effect_allowed,
 	effect_root,
 	render_effect,
 	user_effect,
@@ -1392,24 +1392,24 @@ describe('signals', () => {
 		};
 	});
 
-	test('$effect.active()', () => {
+	test('$effect.allowed()', () => {
 		const log: Array<string | boolean> = [];
 
 		return () => {
-			log.push('effect orphan', effect_active());
+			log.push('effect orphan', effect_allowed());
 			const destroy = effect_root(() => {
-				log.push('effect root', effect_active());
+				log.push('effect root', effect_allowed());
 				effect(() => {
-					log.push('effect', effect_active());
+					log.push('effect', effect_allowed());
 				});
 				$.get(
 					derived(() => {
-						log.push('derived', effect_active());
+						log.push('derived', effect_allowed());
 						return 1;
 					})
 				);
 				return () => {
-					log.push('effect teardown', effect_active());
+					log.push('effect teardown', effect_allowed());
 				};
 			});
 			flushSync();

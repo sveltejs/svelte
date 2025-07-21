@@ -442,7 +442,7 @@ const RUNES = /** @type {const} */ ([
 	'$props.id',
 	'$bindable',
 	'$effect',
-	'$effect.active',
+	'$effect.allowed',
 	'$effect.pre',
 	'$effect.tracking',
 	'$effect.root',
