@@ -2,7 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
-import { extract_identifiers } from '../../../../utils/ast.js';
+import { extract_identifiers, is_expression_async } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { create_derived } from '../utils.js';
 import { get_value } from './shared/declarations.js';
@@ -17,7 +17,7 @@ export function ConstTag(node, context) {
 	// TODO we can almost certainly share some code with $derived(...)
 	if (declaration.id.type === 'Identifier') {
 		const init = build_expression(context, declaration.init, node.metadata.expression);
-		let expression = create_derived(context.state, b.thunk(init));
+		let expression = create_derived(context.state, b.thunk(init, is_expression_async(init)));
 
 		if (dev) {
 			expression = b.call('$.tag', expression, b.literal(declaration.id.name));
@@ -58,7 +58,8 @@ export function ConstTag(node, context) {
 			b.block([
 				b.const(/** @type {Pattern} */ (context.visit(declaration.id, child_state)), init),
 				b.return(b.object(identifiers.map((node) => b.prop('init', node, node))))
-			])
+			]),
+			is_expression_async(init)
 		);
 
 		let expression = create_derived(context.state, fn);
