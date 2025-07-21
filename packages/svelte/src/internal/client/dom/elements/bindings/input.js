@@ -1,4 +1,3 @@
-/** @import { Batch } from '../../../reactivity/batch.js' */
 import { DEV } from 'esm-env';
 import { render_effect, teardown } from '../../../reactivity/effects.js';
 import { listen_to_event_and_reset_event } from './shared.js';
@@ -19,8 +18,6 @@ import { current_batch } from '../../../reactivity/batch.js';
 export function bind_value(input, get, set = get) {
 	var runes = is_runes();
 
-	var batches = new WeakSet();
-
 	listen_to_event_and_reset_event(input, 'input', (is_reset) => {
 		if (DEV && input.type === 'checkbox') {
 			// TODO should this happen in prod too?
@@ -31,10 +28,6 @@ export function bind_value(input, get, set = get) {
 		var value = is_reset ? input.defaultValue : input.value;
 		value = is_numberlike_input(input) ? to_number(value) : value;
 		set(value);
-
-		if (current_batch !== null) {
-			batches.add(current_batch);
-		}
 
 		// In runes mode, respect any validation in accessors (doesn't apply in legacy mode,
 		// because we use mutable state which ensures the render effect always runs)
@@ -62,10 +55,6 @@ export function bind_value(input, get, set = get) {
 		(untrack(get) == null && input.value)
 	) {
 		set(is_numberlike_input(input) ? to_number(input.value) : input.value);
-
-		if (current_batch !== null) {
-			batches.add(current_batch);
-		}
 	}
 
 	render_effect(() => {
@@ -76,9 +65,9 @@ export function bind_value(input, get, set = get) {
 
 		var value = get();
 
-		if (input === document.activeElement && batches.has(/** @type {Batch} */ (current_batch))) {
-			// Never rewrite the contents of a focused input. We can get here if, for example,
-			// an update is deferred because of async work depending on the input:
+		if (input === document.activeElement && current_batch?.flushing_async) {
+			// Never rewrite the contents of a focused input when flushing async work.
+			// We can get here if, for example, an update is deferred because of async work depending on the input:
 			//
 			// <input bind:value={query}>
 			// <p>{await find(query)}</p>

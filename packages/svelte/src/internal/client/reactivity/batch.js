@@ -153,6 +153,11 @@ export class Batch {
 	skipped_effects = new Set();
 
 	/**
+	 * True while a batch that had asynchronous work (i.e. a pending count) is being flushed.
+	 */
+	flushing_async = false;
+
+	/**
 	 *
 	 * @param {Effect[]} root_effects
 	 */
@@ -412,6 +417,8 @@ export class Batch {
 		this.#pending -= 1;
 
 		if (this.#pending === 0) {
+			this.flushing_async = true;
+
 			for (const e of this.#render_effects) {
 				set_signal_status(e, DIRTY);
 				schedule_effect(e);
@@ -431,6 +438,8 @@ export class Batch {
 			this.#effects = [];
 
 			this.flush();
+
+			this.flushing_async = true;
 		} else {
 			this.deactivate();
 		}
