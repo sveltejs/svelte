@@ -291,6 +291,9 @@ export function should_proxy(node, scope) {
  * @param {ComponentClientTransformState} state
  * @param {Expression} arg
  */
-export function create_derived(state, arg) {
-	return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', arg);
+export function create_derived(state, arg, async = false) {
+	return b.call(
+		state.analysis.runes ? `$.${async ? 'async_' : ''}derived` : '$.derived_safe_equal',
+		arg
+	);
 }
