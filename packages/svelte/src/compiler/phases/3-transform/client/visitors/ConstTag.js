@@ -17,7 +17,10 @@ export function ConstTag(node, context) {
 	// TODO we can almost certainly share some code with $derived(...)
 	if (declaration.id.type === 'Identifier') {
 		const init = build_expression(context, declaration.init, node.metadata.expression);
-		let expression = create_derived(context.state, b.thunk(init, is_expression_async(init)));
+		let expression = create_derived(
+			context.state,
+			is_expression_async(init) ? b.arrow([], init, true) : b.thunk(init)
+		);
 
 		if (dev) {
 			expression = b.call('$.tag', expression, b.literal(declaration.id.name));
