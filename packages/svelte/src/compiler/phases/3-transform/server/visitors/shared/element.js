@@ -11,6 +11,7 @@ import {
 import { regex_starts_with_newline } from '../../../../patterns.js';
 import * as b from '#compiler/builders';
 import {
+	ELEMENT_IS_INPUT,
 	ELEMENT_IS_NAMESPACED,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE
 } from '../../../../../../constants.js';
@@ -401,6 +402,8 @@ function build_element_spread_attributes(
 		flags |= ELEMENT_IS_NAMESPACED | ELEMENT_PRESERVE_ATTRIBUTE_CASE;
 	} else if (is_custom_element_node(element)) {
 		flags |= ELEMENT_PRESERVE_ATTRIBUTE_CASE;
+	} else if (element.type === 'RegularElement' && element.name === 'input') {
+		flags |= ELEMENT_IS_INPUT;
 	}
 
 	const object = build_spread_object(element, attributes, context);
