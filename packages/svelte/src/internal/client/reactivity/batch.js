@@ -195,14 +195,14 @@ export class Batch {
 		// if we didn't start any new async work, and no async work
 		// is outstanding from a previous flush, commit
 		if (this.#async_effects.length === 0 && this.#pending === 0) {
+			this.#commit();
+
 			var render_effects = this.#render_effects;
 			var effects = this.#effects;
 
 			this.#render_effects = [];
 			this.#effects = [];
 			this.#block_effects = [];
-
-			this.#commit();
 
 			flush_queued_effects(render_effects);
 			flush_queued_effects(effects);
@@ -544,60 +544,59 @@ function flush_queued_effects(effects) {
 	var length = effects.length;
 	if (length === 0) return;
 
-	for (var i = 0; i < length; i++) {
-		var effect = effects[i];
+	var i = 0;
 
-		if ((effect.f & (DESTROYED | INERT)) === 0) {
-			if (is_dirty(effect)) {
-				var wv = write_version;
-				var current_size = /** @type {Batch} */ (current_batch).current.size;
+	while (i < length) {
+		var effect = effects[i++];
 
-				update_effect(effect);
+		if ((effect.f & (DESTROYED | INERT)) === 0 && is_dirty(effect)) {
+			var wv = write_version;
+			var current_size = /** @type {Batch} */ (current_batch).current.size;
 
-				// Effects with no dependencies or teardown do not get added to the effect tree.
-				// Deferred effects (e.g. `$effect(...)`) _are_ added to the tree because we
-				// don't know if we need to keep them until they are executed. Doing the check
-				// here (rather than in `update_effect`) allows us to skip the work for
-				// immediate effects.
-				if (effect.deps === null && effect.first === null && effect.nodes_start === null) {
-					// if there's no teardown or abort controller we completely unlink
-					// the effect from the graph
-					if (effect.teardown === null && effect.ac === null) {
-						// remove this effect from the graph
-						unlink_effect(effect);
-					} else {
-						// keep the effect in the graph, but free up some memory
-						effect.fn = null;
-					}
+			update_effect(effect);
+
+			// Effects with no dependencies or teardown do not get added to the effect tree.
+			// Deferred effects (e.g. `$effect(...)`) _are_ added to the tree because we
+			// don't know if we need to keep them until they are executed. Doing the check
+			// here (rather than in `update_effect`) allows us to skip the work for
+			// immediate effects.
+			if (effect.deps === null && effect.first === null && effect.nodes_start === null) {
+				// if there's no teardown or abort controller we completely unlink
+				// the effect from the graph
+				if (effect.teardown === null && effect.ac === null) {
+					// remove this effect from the graph
+					unlink_effect(effect);
+				} else {
+					// keep the effect in the graph, but free up some memory
+					effect.fn = null;
 				}
+			}
 
-				// if state is written in a user effect, abort and re-schedule, lest we run
-				// effects that should be removed as a result of the state change
-				if (write_version > wv && (effect.f & USER_EFFECT) !== 0) {
-					// Work needs to happen in a separate batch, else prior sources would be mixed with
-					// newly updated sources, which could lead to infinite loops when effects run over and over again.
-					// We need to bring over the just written sources though to correctly mark the right reactions as dirty.
-					var old_batch = /** @type {Batch} */ (current_batch);
-					batches.delete(old_batch);
-					current_batch = null;
-					var new_batch = Batch.ensure(!flushing_sync);
-					var current_idx = 0;
-					// We're taking advantage of the spec here which says that entries in a Map are traversed by insertion order
-					for (const source of old_batch.current) {
-						if (current_idx >= current_size) {
-							new_batch.capture(source[0], source[1]);
-						}
-						current_idx++;
+			// if state is written in a user effect, abort and re-schedule, lest we run
+			// effects that should be removed as a result of the state change
+			if (write_version > wv && (effect.f & USER_EFFECT) !== 0) {
+				// Work needs to happen in a separate batch, else prior sources would be mixed with
+				// newly updated sources, which could lead to infinite loops when effects run over and over again.
+				// We need to bring over the just written sources though to correctly mark the right reactions as dirty.
+				var old_batch = /** @type {Batch} */ (current_batch);
+				batches.delete(old_batch);
+				current_batch = null;
+				var new_batch = Batch.ensure(!flushing_sync);
+				var current_idx = 0;
+				// We're taking advantage of the spec here which says that entries in a Map are traversed by insertion order
+				for (const source of old_batch.current) {
+					if (current_idx >= current_size) {
+						new_batch.capture(source[0], source[1]);
 					}
-					i++;
-					break;
+					current_idx++;
 				}
+				break;
 			}
 		}
 	}
 
-	for (; i < length; i += 1) {
-		schedule_effect(effects[i]);
+	while (i < length) {
+		schedule_effect(effects[i++]);
 	}
 }
 
