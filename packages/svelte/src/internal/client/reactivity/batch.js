@@ -341,13 +341,13 @@ export class Batch {
 
 	flush() {
 		if (queued_root_effects.length > 0) {
-			this.flush_effects();
+			flush_effects();
 		} else {
 			this.#commit();
 		}
 
 		if (current_batch !== this) {
-			// this can happen if a `flushSync` occurred during `this.flush_effects()`,
+			// this can happen if a `flushSync` occurred during `flush_effects()`,
 			// which is permitted in legacy mode despite being a terrible idea
 			return;
 		}
@@ -357,10 +357,6 @@ export class Batch {
 		}
 
 		this.deactivate();
-	}
-
-	flush_effects() {
-		flush_effects();
 	}
 
 	/**
@@ -454,11 +450,10 @@ export function flushSync(fn) {
 	try {
 		var result;
 
-		const batch = Batch.ensure();
+		var batch = Batch.ensure();
 
 		if (fn) {
-			batch.flush_effects();
-
+			flush_effects();
 			result = fn();
 		}
 
@@ -473,7 +468,7 @@ export function flushSync(fn) {
 
 				// TODO this feels wrong
 				if (queued_root_effects.length === 0) {
-					// this would be reset in `batch.flush_effects()` but since we are early returning here,
+					// this would be reset in `flush_effects()` but since we are early returning here,
 					// we need to reset it here as well in case the first time there's 0 queued root effects
 					last_scheduled_effect = null;
 
@@ -481,7 +476,7 @@ export function flushSync(fn) {
 				}
 			}
 
-			batch.flush_effects();
+			flush_effects();
 		}
 	} finally {
 		is_flushing_sync = prev_flushing_sync;
