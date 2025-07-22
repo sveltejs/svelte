@@ -33,7 +33,7 @@ import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack, tag_proxy } from '../dev/tracing.js';
 import { component_context, is_runes } from '../context.js';
-import { Batch, schedule_effect } from './batch.js';
+import { Batch, flushing_sync, schedule_effect } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 
@@ -179,7 +179,7 @@ export function internal_set(source, value) {
 
 		source.v = value;
 
-		const batch = Batch.ensure();
+		const batch = Batch.ensure(!flushing_sync);
 		batch.capture(source, old_value);
 
 		if (DEV) {

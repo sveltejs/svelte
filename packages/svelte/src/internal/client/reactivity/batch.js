@@ -70,7 +70,7 @@ let last_scheduled_effect = null;
 
 let is_flushing = false;
 
-let flushing_sync = false;
+export let flushing_sync = false;
 
 export class Batch {
 	/**
@@ -204,8 +204,21 @@ export class Batch {
 			this.#effects = [];
 			this.#block_effects = [];
 
+			// If sources are written to, then work needs to happen in a separate batch, else prior sources would be mixed with
+			// newly updated sources, which could lead to infinite loops when effects run over and over again.
+			current_batch = null;
+
 			flush_queued_effects(render_effects);
 			flush_queued_effects(effects);
+
+			// Reinstate the current batch if there was no new one created, as `process()` runs in a loop in `flush_effects()`.
+			// That method expects `current_batch` to be set, and could run the loop again if effects result in new effects
+			// being scheduled but without writes happening in which case no new batch is created.
+			if (current_batch === null) {
+				current_batch = this;
+			} else {
+				batches.delete(this);
+			}
 
 			this.#deferred?.resolve();
 		} else {
@@ -551,7 +564,6 @@ function flush_queued_effects(effects) {
 
 		if ((effect.f & (DESTROYED | INERT)) === 0 && is_dirty(effect)) {
 			var wv = write_version;
-			var current_size = /** @type {Batch} */ (current_batch).current.size;
 
 			update_effect(effect);
 
@@ -575,21 +587,6 @@ function flush_queued_effects(effects) {
 			// if state is written in a user effect, abort and re-schedule, lest we run
 			// effects that should be removed as a result of the state change
 			if (write_version > wv && (effect.f & USER_EFFECT) !== 0) {
-				// Work needs to happen in a separate batch, else prior sources would be mixed with
-				// newly updated sources, which could lead to infinite loops when effects run over and over again.
-				// We need to bring over the just written sources though to correctly mark the right reactions as dirty.
-				var old_batch = /** @type {Batch} */ (current_batch);
-				batches.delete(old_batch);
-				current_batch = null;
-				var new_batch = Batch.ensure(!flushing_sync);
-				var current_idx = 0;
-				// We're taking advantage of the spec here which says that entries in a Map are traversed by insertion order
-				for (const source of old_batch.current) {
-					if (current_idx >= current_size) {
-						new_batch.capture(source[0], source[1]);
-					}
-					current_idx++;
-				}
 				break;
 			}
 		}
