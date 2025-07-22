@@ -2,7 +2,7 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	async test({ assert, target, logs }) {
+	async test({ target }) {
 		const [open, close] = target.querySelectorAll('button');
 
 		flushSync(() => open.click());
