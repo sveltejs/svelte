@@ -323,6 +323,20 @@ export function execute_derived(derived) {
 	return value;
 }
 
+// in process_effects if state is written to in a user effect we reschedule the rest of the
+// tree. However if a derived is updated in an effect we also increase the write version
+// so we need to keep track of how many deriveds were written to in the effect so
+// that we can subtract that from the write version before rescheduling unnnecessarily
+let derived_writes = 0;
+
+export function get_derived_writes() {
+	return derived_writes;
+}
+
+export function reset_derived_writes() {
+	derived_writes = 0;
+}
+
 /**
  * @param {Derived} derived
  * @returns {void}
@@ -333,6 +347,7 @@ export function update_derived(derived) {
 	if (!derived.equals(value)) {
 		derived.v = value;
 		derived.wv = increment_write_version();
+		derived_writes++;
 	}
 
 	// don't mark derived clean if we're reading it inside a

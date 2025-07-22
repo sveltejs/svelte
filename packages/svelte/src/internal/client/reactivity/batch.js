@@ -31,6 +31,7 @@ import { invoke_error_boundary } from '../error-handling.js';
 import { old_values } from './sources.js';
 import { unlink_effect } from './effects.js';
 import { unset_context } from './async.js';
+import { get_derived_writes, reset_derived_writes } from './deriveds.js';
 
 /** @type {Set<Batch>} */
 const batches = new Set();
@@ -546,6 +547,12 @@ function flush_queued_effects(effects) {
 			if (is_dirty(effect)) {
 				var wv = write_version;
 
+				// updating a derived for also increase the write version but that doesn't mean
+				// state was written to in the user effect...so we reset the derived writes
+				// before running the effect so that we can subtract the amount of derived writes
+				// from the write version when we detect if state was written to in the user effect
+				reset_derived_writes();
+
 				update_effect(effect);
 
 				// Effects with no dependencies or teardown do not get added to the effect tree.
@@ -567,7 +574,7 @@ function flush_queued_effects(effects) {
 
 				// if state is written in a user effect, abort and re-schedule, lest we run
 				// effects that should be removed as a result of the state change
-				if (write_version > wv && (effect.f & USER_EFFECT) !== 0) {
+				if (write_version - get_derived_writes() > wv && (effect.f & USER_EFFECT) !== 0) {
 					break;
 				}
 			}
