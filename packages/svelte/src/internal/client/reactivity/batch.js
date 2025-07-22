@@ -563,7 +563,7 @@ function flush_queued_effects(effects) {
 		var effect = effects[i++];
 
 		if ((effect.f & (DESTROYED | INERT)) === 0 && is_dirty(effect)) {
-			var wv = write_version;
+			var n = current_batch ? current_batch.current.size : 0;
 
 			update_effect(effect);
 
@@ -586,7 +586,11 @@ function flush_queued_effects(effects) {
 
 			// if state is written in a user effect, abort and re-schedule, lest we run
 			// effects that should be removed as a result of the state change
-			if (write_version > wv && (effect.f & USER_EFFECT) !== 0) {
+			if (
+				current_batch !== null &&
+				current_batch.current.size > n &&
+				(effect.f & USER_EFFECT) !== 0
+			) {
 				break;
 			}
 		}
