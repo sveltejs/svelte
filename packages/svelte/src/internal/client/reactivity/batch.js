@@ -472,11 +472,14 @@ export function flushSync(fn) {
 					batch.flush();
 				}
 
-				// this would be reset in `batch.flush_effects()` but since we are early returning here,
-				// we need to reset it here as well in case the first time there's 0 queued root effects
-				last_scheduled_effect = null;
+				// TODO this feels wrong
+				if (queued_root_effects.length === 0) {
+					// this would be reset in `batch.flush_effects()` but since we are early returning here,
+					// we need to reset it here as well in case the first time there's 0 queued root effects
+					last_scheduled_effect = null;
 
-				return /** @type {T} */ (result);
+					return /** @type {T} */ (result);
+				}
 			}
 
 			batch.flush_effects();
