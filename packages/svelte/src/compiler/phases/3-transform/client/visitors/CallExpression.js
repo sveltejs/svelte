@@ -44,10 +44,11 @@ export function CallExpression(node, context) {
 
 		case '$derived':
 		case '$derived.by': {
-			let fn = /** @type {Expression} */ (context.visit(node.arguments[0]));
-			if (rune === '$derived') fn = b.thunk(fn);
+			let fn = /** @type {Expression} */ (
+				context.visit(node.arguments[0], { ...context.state, in_derived: rune === '$derived' })
+			);
 
-			return b.call('$.derived', fn);
+			return b.call('$.derived', rune === '$derived' ? b.thunk(fn) : fn);
 		}
 
 		case '$state.snapshot':
@@ -62,6 +63,9 @@ export function CallExpression(node, context) {
 				'$.effect_root',
 				.../** @type {Expression[]} */ (node.arguments.map((arg) => context.visit(arg)))
 			);
+
+		case '$effect.pending':
+			return b.call('$.pending');
 
 		case '$inspect':
 		case '$inspect().with':

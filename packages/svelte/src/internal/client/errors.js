@@ -2,6 +2,24 @@
 
 import { DEV } from 'esm-env';
 
+export *  from '../shared/errors.js';
+
+/**
+ * Cannot create a `$derived(...)` with an `await` expression outside of an effect tree
+ * @returns {never}
+ */
+export function async_derived_orphan() {
+	if (DEV) {
+		const error = new Error(`async_derived_orphan\nCannot create a \`$derived(...)\` with an \`await\` expression outside of an effect tree\nhttps://svelte.dev/e/async_derived_orphan`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/async_derived_orphan`);
+	}
+}
+
 /**
  * Using `bind:value` together with a checkbox input is not allowed. Use `bind:checked` instead
  * @returns {never}
@@ -180,18 +198,50 @@ export function effect_orphan(rune) {
 }
 
 /**
- * Maximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops
+ * `$effect.pending()` can only be called inside an effect or derived
+ * @returns {never}
+ */
+export function effect_pending_outside_reaction() {
+	if (DEV) {
+		const error = new Error(`effect_pending_outside_reaction\n\`$effect.pending()\` can only be called inside an effect or derived\nhttps://svelte.dev/e/effect_pending_outside_reaction`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/effect_pending_outside_reaction`);
+	}
+}
+
+/**
+ * Maximum update depth exceeded. This typically indicates that an effect reads and writes the same piece of state
  * @returns {never}
  */
 export function effect_update_depth_exceeded() {
 	if (DEV) {
-		const error = new Error(`effect_update_depth_exceeded\nMaximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops\nhttps://svelte.dev/e/effect_update_depth_exceeded`);
+		const error = new Error(`effect_update_depth_exceeded\nMaximum update depth exceeded. This typically indicates that an effect reads and writes the same piece of state\nhttps://svelte.dev/e/effect_update_depth_exceeded`);
 
 		error.name = 'Svelte error';
 
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/effect_update_depth_exceeded`);
+	}
+}
+
+/**
+ * Cannot use `flushSync` inside an effect
+ * @returns {never}
+ */
+export function flush_sync_in_effect() {
+	if (DEV) {
+		const error = new Error(`flush_sync_in_effect\nCannot use \`flushSync\` inside an effect\nhttps://svelte.dev/e/flush_sync_in_effect`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/flush_sync_in_effect`);
 	}
 }
 
@@ -312,6 +362,22 @@ export function rune_outside_svelte(rune) {
 }
 
 /**
+ * `setContext` must be called when a component first initializes, not in a subsequent effect or after an `await` expression
+ * @returns {never}
+ */
+export function set_context_after_init() {
+	if (DEV) {
+		const error = new Error(`set_context_after_init\n\`setContext\` must be called when a component first initializes, not in a subsequent effect or after an \`await\` expression\nhttps://svelte.dev/e/set_context_after_init`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/set_context_after_init`);
+	}
+}
+
+/**
  * Property descriptors defined on `$state` objects must contain `value` and always be `enumerable`, `configurable` and `writable`.
  * @returns {never}
  */
@@ -356,5 +422,21 @@ export function state_unsafe_mutation() {
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/state_unsafe_mutation`);
+	}
+}
+
+/**
+ * A `<svelte:boundary>` `reset` function cannot be called while an error is still being handled
+ * @returns {never}
+ */
+export function svelte_boundary_reset_onerror() {
+	if (DEV) {
+		const error = new Error(`svelte_boundary_reset_onerror\nA \`<svelte:boundary>\` \`reset\` function cannot be called while an error is still being handled\nhttps://svelte.dev/e/svelte_boundary_reset_onerror`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/svelte_boundary_reset_onerror`);
 	}
 }

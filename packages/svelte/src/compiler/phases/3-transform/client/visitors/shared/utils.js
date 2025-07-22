@@ -8,17 +8,7 @@ import { sanitize_template_string } from '../../../../../utils/sanitize_template
 import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator, component_name } from '../../../../../state.js';
-import { build_getter, create_derived } from '../../utils.js';
-
-/**
- * @param {ComponentClientTransformState} state
- * @param {Expression} value
- */
-export function memoize_expression(state, value) {
-	const id = b.id(state.scope.generate('expression'));
-	state.init.push(b.const(id, create_derived(state, b.thunk(value))));
-	return b.call('$.get', id);
-}
+import { build_getter } from '../../utils.js';
 
 /**
  * A utility for extracting complex expressions (such as call expressions)
@@ -28,19 +18,23 @@ export class Memoizer {
 	/** @type {Array<{ id: Identifier, expression: Expression }>} */
 	#sync = [];
 
+	/** @type {Array<{ id: Identifier, expression: Expression }>} */
+	#async = [];
+
 	/**
 	 * @param {Expression} expression
+	 * @param {boolean} has_await
 	 */
-	add(expression) {
+	add(expression, has_await) {
 		const id = b.id('#'); // filled in later
 
-		this.#sync.push({ id, expression });
+		(has_await ? this.#async : this.#sync).push({ id, expression });
 
 		return id;
 	}
 
 	apply() {
-		return this.#sync.map((memo, i) => {
+		return [...this.#async, ...this.#sync].map((memo, i) => {
 			memo.id.name = `$${i}`;
 			return memo.id;
 		});
@@ -50,6 +44,15 @@ export class Memoizer {
 		return this.#sync.map((memo) =>
 			b.let(memo.id, b.call(runes ? '$.derived' : '$.derived_safe_equal', b.thunk(memo.expression)))
 		);
+	}
+
+	async_ids() {
+		return this.#async.map((memo) => memo.id);
+	}
+
+	async_values() {
+		if (this.#async.length === 0) return;
+		return b.array(this.#async.map((memo) => b.thunk(memo.expression, true)));
 	}
 
 	sync_values() {
@@ -69,7 +72,8 @@ export function build_template_chunk(
 	values,
 	context,
 	state = context.state,
-	memoize = (value, metadata) => (metadata.has_call ? state.memoizer.add(value) : value)
+	memoize = (value, metadata) =>
+		metadata.has_call || metadata.has_await ? state.memoizer.add(value, metadata.has_await) : value
 ) {
 	/** @type {Expression[]} */
 	const expressions = [];
@@ -78,6 +82,7 @@ export function build_template_chunk(
 	const quasis = [quasi];
 
 	let has_state = false;
+	let has_await = false;
 
 	for (let i = 0; i < values.length; i++) {
 		const node = values[i];
@@ -100,7 +105,8 @@ export function build_template_chunk(
 
 			const evaluated = state.scope.evaluate(value);
 
-			has_state ||= node.metadata.expression.has_state && !evaluated.is_known;
+			has_await ||= node.metadata.expression.has_await;
+			has_state ||= has_await || (node.metadata.expression.has_state && !evaluated.is_known);
 
 			if (values.length === 1) {
 				// If we have a single expression, then pass that in directly to possibly avoid doing
@@ -156,8 +162,9 @@ export function build_template_chunk(
  * @param {ComponentClientTransformState} state
  */
 export function build_render_statement(state) {
-	const ids = state.memoizer.apply();
-	const values = state.memoizer.sync_values();
+	const { memoizer } = state;
+
+	const ids = memoizer.apply();
 
 	return b.stmt(
 		b.call(
@@ -168,8 +175,8 @@ export function build_render_statement(state) {
 					? state.update[0].expression
 					: b.block(state.update)
 			),
-			values,
-			values && !state.analysis.runes && b.id('$.derived_safe_equal')
+			memoizer.sync_values(),
+			memoizer.async_values()
 		)
 	);
 }

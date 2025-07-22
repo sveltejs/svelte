@@ -224,6 +224,17 @@ export interface ModuleCompileOptions {
 	 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 	 */
 	warningFilter?: (warning: Warning) => boolean;
+	/**
+	 * Experimental options
+	 * @since 5.36
+	 */
+	experimental?: {
+		/**
+		 * Allow `await` keyword in deriveds, template expressions, and the top level of components
+		 * @since 5.36
+		 */
+		async?: boolean;
+	};
 }
 
 // The following two somewhat scary looking types ensure that certain types are required but can be undefined still
@@ -287,6 +298,8 @@ export interface ExpressionMetadata {
 	has_state: boolean;
 	/** True if the expression involves a call expression (often, it will need to be wrapped in a derived) */
 	has_call: boolean;
+	/** True if the expression contains `await` */
+	has_await: boolean;
 	/** True if the expression includes a member expression */
 	has_member_expression: boolean;
 	/** True if the expression includes an assignment or an update */

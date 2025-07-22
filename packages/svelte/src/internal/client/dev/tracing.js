@@ -2,9 +2,9 @@
 import { UNINITIALIZED } from '../../../constants.js';
 import { snapshot } from '../../shared/clone.js';
 import { define_property } from '../../shared/utils.js';
-import { DERIVED, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
+import { DERIVED, ASYNC, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { effect_tracking } from '../reactivity/effects.js';
-import { active_reaction, captured_signals, set_captured_signals, untrack } from '../runtime.js';
+import { active_reaction, untrack } from '../runtime.js';
 
 /**
  * @typedef {{
@@ -26,7 +26,7 @@ function log_entry(signal, entry) {
 		return;
 	}
 
-	const type = (signal.f & DERIVED) !== 0 ? '$derived' : '$state';
+	const type = get_type(signal);
 	const current_reaction = /** @type {Reaction} */ (active_reaction);
 	const dirty = signal.wv > current_reaction.wv || current_reaction.wv === 0;
 	const style = dirty
@@ -56,8 +56,10 @@ function log_entry(signal, entry) {
 	}
 
 	if (dirty && signal.updated) {
-		// eslint-disable-next-line no-console
-		console.log(signal.updated);
+		for (const updated of signal.updated.values()) {
+			// eslint-disable-next-line no-console
+			console.log(updated.error);
+		}
 	}
 
 	if (entry) {
@@ -69,6 +71,15 @@ function log_entry(signal, entry) {
 
 	// eslint-disable-next-line no-console
 	console.groupEnd();
+}
+
+/**
+ * @param {Value} signal
+ * @returns {'$state' | '$derived' | 'store'}
+ */
+function get_type(signal) {
+	if ((signal.f & (DERIVED | ASYNC)) !== 0) return '$derived';
+	return signal.label?.startsWith('$') ? 'store' : '$state';
 }
 
 /**
@@ -120,44 +131,46 @@ export function trace(label, fn) {
 
 /**
  * @param {string} label
+ * @returns {Error & { stack: string } | null}
  */
 export function get_stack(label) {
 	let error = Error();
 	const stack = error.stack;
 
-	if (stack) {
-		const lines = stack.split('\n');
-		const new_lines = ['\n'];
+	if (!stack) return null;
 
-		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i];
+	const lines = stack.split('\n');
+	const new_lines = ['\n'];
 
-			if (line === 'Error') {
-				continue;
-			}
-			if (line.includes('validate_each_keys')) {
-				return null;
-			}
-			if (line.includes('svelte/src/internal')) {
-				continue;
-			}
-			new_lines.push(line);
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i];
+
+		if (line === 'Error') {
+			continue;
 		}
-
-		if (new_lines.length === 1) {
+		if (line.includes('validate_each_keys')) {
 			return null;
 		}
-
-		define_property(error, 'stack', {
-			value: new_lines.join('\n')
-		});
-
-		define_property(error, 'name', {
-			// 'Error' suffix is required for stack traces to be rendered properly
-			value: `${label}Error`
-		});
+		if (line.includes('svelte/src/internal')) {
+			continue;
+		}
+		new_lines.push(line);
 	}
-	return error;
+
+	if (new_lines.length === 1) {
+		return null;
+	}
+
+	define_property(error, 'stack', {
+		value: new_lines.join('\n')
+	});
+
+	define_property(error, 'name', {
+		// 'Error' suffix is required for stack traces to be rendered properly
+		value: `${label}Error`
+	});
+
+	return /** @type {Error & { stack: string }} */ (error);
 }
 
 /**

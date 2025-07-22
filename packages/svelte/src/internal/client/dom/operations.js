@@ -1,9 +1,11 @@
-/** @import { TemplateNode } from '#client' */
+/** @import { Effect, TemplateNode } from '#client' */
 import { hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
 import { get_descriptor, is_extensible } from '../../shared/utils.js';
-import { TEXT_NODE } from '#client/constants';
+import { active_effect } from '../runtime.js';
+import { async_mode_flag } from '../../flags/index.js';
+import { TEXT_NODE, EFFECT_RAN } from '#client/constants';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
 /** @type {Window} */
@@ -202,6 +204,19 @@ export function sibling(node, count = 1, is_text = false) {
  */
 export function clear_text_content(node) {
 	node.textContent = '';
+}
+
+/**
+ * Returns `true` if we're updating the current block, for example `condition` in
+ * an `{#if condition}` block just changed. In this case, the branch should be
+ * appended (or removed) at the same time as other updates within the
+ * current `<svelte:boundary>`
+ */
+export function should_defer_append() {
+	if (!async_mode_flag) return false;
+
+	var flags = /** @type {Effect} */ (active_effect).f;
+	return (flags & EFFECT_RAN) !== 0;
 }
 
 /**

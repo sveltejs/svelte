@@ -33,23 +33,23 @@ const INVALID_ATTR_NAME_CHAR_REGEX =
  * @returns {void}
  */
 export function element(payload, tag, attributes_fn = noop, children_fn = noop) {
-	payload.out += '<!---->';
+	payload.out.push('<!---->');
 
 	if (tag) {
-		payload.out += `<${tag}`;
+		payload.out.push(`<${tag}`);
 		attributes_fn();
-		payload.out += `>`;
+		payload.out.push(`>`);
 
 		if (!is_void(tag)) {
 			children_fn();
 			if (!is_raw_text_element(tag)) {
-				payload.out += EMPTY_COMMENT;
+				payload.out.push(EMPTY_COMMENT);
 			}
-			payload.out += `</${tag}>`;
+			payload.out.push(`</${tag}>`);
 		}
 	}
 
-	payload.out += '<!---->';
+	payload.out.push('<!---->');
 }
 
 /**
@@ -72,7 +72,7 @@ export function render(component, options = {}) {
 
 		const prev_on_destroy = on_destroy;
 		on_destroy = [];
-		payload.out += BLOCK_OPEN;
+		payload.out.push(BLOCK_OPEN);
 
 		let reset_reset_element;
 
@@ -97,20 +97,22 @@ export function render(component, options = {}) {
 			reset_reset_element();
 		}
 
-		payload.out += BLOCK_CLOSE;
+		payload.out.push(BLOCK_CLOSE);
 		for (const cleanup of on_destroy) cleanup();
 		on_destroy = prev_on_destroy;
 
-		let head = payload.head.out + payload.head.title;
+		let head = payload.head.out.join('') + payload.head.title;
 
 		for (const { hash, code } of payload.css) {
 			head += `<style id="${hash}">${code}</style>`;
 		}
 
+		const body = payload.out.join('');
+
 		return {
 			head,
-			html: payload.out,
-			body: payload.out
+			html: body,
+			body: body
 		};
 	} finally {
 		abort();
@@ -124,9 +126,9 @@ export function render(component, options = {}) {
  */
 export function head(payload, fn) {
 	const head_payload = payload.head;
-	head_payload.out += BLOCK_OPEN;
+	head_payload.out.push(BLOCK_OPEN);
 	fn(head_payload);
-	head_payload.out += BLOCK_CLOSE;
+	head_payload.out.push(BLOCK_CLOSE);
 }
 
 /**
@@ -141,21 +143,21 @@ export function css_props(payload, is_html, props, component, dynamic = false) {
 	const styles = style_object_to_string(props);
 
 	if (is_html) {
-		payload.out += `<svelte-css-wrapper style="display: contents; ${styles}">`;
+		payload.out.push(`<svelte-css-wrapper style="display: contents; ${styles}">`);
 	} else {
-		payload.out += `<g style="${styles}">`;
+		payload.out.push(`<g style="${styles}">`);
 	}
 
 	if (dynamic) {
-		payload.out += '<!---->';
+		payload.out.push('<!---->');
 	}
 
 	component();
 
 	if (is_html) {
-		payload.out += `<!----></svelte-css-wrapper>`;
+		payload.out.push(`<!----></svelte-css-wrapper>`);
 	} else {
-		payload.out += `<!----></g>`;
+		payload.out.push(`<!----></g>`);
 	}
 }
 
@@ -440,13 +442,13 @@ export function bind_props(props_parent, props_now) {
  */
 function await_block(payload, promise, pending_fn, then_fn) {
 	if (is_promise(promise)) {
-		payload.out += BLOCK_OPEN;
+		payload.out.push(BLOCK_OPEN);
 		promise.then(null, noop);
 		if (pending_fn !== null) {
 			pending_fn();
 		}
 	} else if (then_fn !== null) {
-		payload.out += BLOCK_OPEN_ELSE;
+		payload.out.push(BLOCK_OPEN_ELSE);
 		then_fn(promise);
 	}
 }
@@ -493,7 +495,7 @@ export function once(get_value) {
  */
 export function props_id(payload) {
 	const uid = payload.uid();
-	payload.out += '<!--#' + uid + '-->';
+	payload.out.push('<!--#' + uid + '-->');
 	return uid;
 }
 
@@ -519,6 +521,8 @@ export {
 } from '../shared/validate.js';
 
 export { escape_html as escape };
+
+export { await_outside_boundary } from '../shared/errors.js';
 
 /**
  * @template T
@@ -560,10 +564,13 @@ export function valueless_option(payload, children) {
 
 	children();
 
-	var body = payload.out.slice(i);
+	var body = payload.out.slice(i).join('');
 
 	if (body.replace(/<!---->/g, '') === payload.select_value) {
 		// replace '>' with ' selected>' (closing tag will be added later)
-		payload.out = payload.out.slice(0, i - 1) + ' selected>' + body;
+		var last_item = payload.out[i - 1];
+		payload.out[i - 1] = last_item.slice(0, -1) + ' selected>';
+		// Remove the old items after position i and add the body as a single item
+		payload.out.splice(i, payload.out.length - i, body);
 	}
 }

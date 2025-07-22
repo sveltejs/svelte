@@ -5,7 +5,6 @@ import { active_reaction, untrack } from './internal/client/runtime.js';
 import { is_array } from './internal/shared/utils.js';
 import { user_effect } from './internal/client/index.js';
 import * as e from './internal/client/errors.js';
-import { lifecycle_outside_component } from './internal/shared/errors.js';
 import { legacy_mode_flag } from './internal/flags/index.js';
 import { component_context } from './internal/client/context.js';
 import { DEV } from 'esm-env';
@@ -91,7 +90,7 @@ export function getAbortSignal() {
  */
 export function onMount(fn) {
 	if (component_context === null) {
-		lifecycle_outside_component('onMount');
+		e.lifecycle_outside_component('onMount');
 	}
 
 	if (legacy_mode_flag && component_context.l !== null) {
@@ -115,7 +114,7 @@ export function onMount(fn) {
  */
 export function onDestroy(fn) {
 	if (component_context === null) {
-		lifecycle_outside_component('onDestroy');
+		e.lifecycle_outside_component('onDestroy');
 	}
 
 	onMount(() => () => untrack(fn));
@@ -158,7 +157,7 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
 export function createEventDispatcher() {
 	const active_component_context = component_context;
 	if (active_component_context === null) {
-		lifecycle_outside_component('createEventDispatcher');
+		e.lifecycle_outside_component('createEventDispatcher');
 	}
 
 	return (type, detail, options) => {
@@ -196,7 +195,7 @@ export function createEventDispatcher() {
  */
 export function beforeUpdate(fn) {
 	if (component_context === null) {
-		lifecycle_outside_component('beforeUpdate');
+		e.lifecycle_outside_component('beforeUpdate');
 	}
 
 	if (component_context.l === null) {
@@ -219,7 +218,7 @@ export function beforeUpdate(fn) {
  */
 export function afterUpdate(fn) {
 	if (component_context === null) {
-		lifecycle_outside_component('afterUpdate');
+		e.lifecycle_outside_component('afterUpdate');
 	}
 
 	if (component_context.l === null) {
@@ -238,8 +237,8 @@ function init_update_callbacks(context) {
 	return (l.u ??= { a: [], b: [], m: [] });
 }
 
-export { flushSync } from './internal/client/runtime.js';
+export { flushSync } from './internal/client/reactivity/batch.js';
 export { getContext, getAllContexts, hasContext, setContext } from './internal/client/context.js';
 export { hydrate, mount, unmount } from './internal/client/render.js';
-export { tick, untrack } from './internal/client/runtime.js';
+export { tick, untrack, settled } from './internal/client/runtime.js';
 export { createRawSnippet } from './internal/client/dom/blocks/snippet.js';

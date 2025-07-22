@@ -1,5 +1,3 @@
-/** @import { TemplateNode } from '#client' */
-/** @import { Getters } from '#shared' */
 import { is_void } from '../../utils.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';

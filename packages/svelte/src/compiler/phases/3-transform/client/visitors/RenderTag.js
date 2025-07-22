@@ -1,9 +1,9 @@
-/** @import { Expression } from 'estree' */
+/** @import { Expression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { unwrap_optional } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { add_svelte_meta, build_expression } from './shared/utils.js';
+import { add_svelte_meta, build_expression, Memoizer } from './shared/utils.js';
 
 /**
  * @param {AST.RenderTag} node
@@ -12,32 +12,34 @@ import { add_svelte_meta, build_expression } from './shared/utils.js';
 export function RenderTag(node, context) {
 	context.state.template.push_comment();
 
-	const expression = unwrap_optional(node.expression);
-
-	const callee = expression.callee;
-	const raw_args = expression.arguments;
+	const call = unwrap_optional(node.expression);
 
 	/** @type {Expression[]} */
 	let args = [];
-	for (let i = 0; i < raw_args.length; i++) {
-		let thunk = b.thunk(
-			build_expression(context, /** @type {Expression} */ (raw_args[i]), node.metadata.arguments[i])
-		);
 
-		const { has_call } = node.metadata.arguments[i];
+	const memoizer = new Memoizer();
 
-		if (has_call) {
-			const id = b.id(context.state.scope.generate('render_arg'));
-			context.state.init.push(b.var(id, b.call('$.derived_safe_equal', thunk)));
-			args.push(b.thunk(b.call('$.get', id)));
-		} else {
-			args.push(thunk);
+	for (let i = 0; i < call.arguments.length; i++) {
+		const arg = /** @type {Expression} */ (call.arguments[i]);
+		const metadata = node.metadata.arguments[i];
+
+		let expression = build_expression(context, arg, metadata);
+
+		if (metadata.has_await || metadata.has_call) {
+			expression = b.call('$.get', memoizer.add(expression, metadata.has_await));
 		}
+
+		args.push(b.thunk(expression));
 	}
+
+	memoizer.apply();
+
+	/** @type {Statement[]} */
+	const statements = memoizer.deriveds(context.state.analysis.runes);
 
 	let snippet_function = build_expression(
 		context,
-		/** @type {Expression} */ (callee),
+		/** @type {Expression} */ (call.callee),
 		node.metadata.expression
 	);
 
@@ -47,7 +49,7 @@ export function RenderTag(node, context) {
 			snippet_function = b.logical('??', snippet_function, b.id('$.noop'));
 		}
 
-		context.state.init.push(
+		statements.push(
 			add_svelte_meta(
 				b.call('$.snippet', context.state.node, b.thunk(snippet_function), ...args),
 				node,
@@ -55,7 +57,7 @@ export function RenderTag(node, context) {
 			)
 		);
 	} else {
-		context.state.init.push(
+		statements.push(
 			add_svelte_meta(
 				(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
 					snippet_function,
@@ -66,5 +68,22 @@ export function RenderTag(node, context) {
 				'render'
 			)
 		);
+	}
+
+	const async_values = memoizer.async_values();
+
+	if (async_values) {
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.async',
+					context.state.node,
+					memoizer.async_values(),
+					b.arrow([context.state.node, ...memoizer.async_ids()], b.block(statements))
+				)
+			)
+		);
+	} else {
+		context.state.init.push(statements.length === 1 ? statements[0] : b.block(statements));
 	}
 }

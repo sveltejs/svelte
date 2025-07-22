@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.35.5",
+  "version": "5.36.13",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -58,6 +58,9 @@
     },
     "./internal/disclose-version": {
       "default": "./src/internal/disclose-version.js"
+    },
+    "./internal/flags/async": {
+      "default": "./src/internal/flags/async.js"
     },
     "./internal/flags/legacy": {
       "default": "./src/internal/flags/legacy.js"

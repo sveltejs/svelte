@@ -20,7 +20,7 @@ export { default as preprocess } from './preprocess/index.js';
  */
 export function compile(source, options) {
 	source = remove_bom(source);
-	state.reset_warnings(options.warningFilter);
+	state.reset({ warning: options.warningFilter, filename: options.filename });
 	const validated = validate_component_options(options, '');
 
 	let parsed = _parse(source);
@@ -63,7 +63,7 @@ export function compile(source, options) {
  */
 export function compileModule(source, options) {
 	source = remove_bom(source);
-	state.reset_warnings(options.warningFilter);
+	state.reset({ warning: options.warningFilter, filename: options.filename });
 	const validated = validate_module_options(options, '');
 
 	const analysis = analyze_module(source, validated);
@@ -111,7 +111,7 @@ export function compileModule(source, options) {
  */
 export function parse(source, { modern, loose } = {}) {
 	source = remove_bom(source);
-	state.reset_warnings(() => false);
+	state.reset({ warning: () => false, filename: undefined });
 
 	const ast = _parse(source, loose);
 	return to_public_ast(source, ast, modern);

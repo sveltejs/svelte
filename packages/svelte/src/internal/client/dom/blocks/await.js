@@ -3,7 +3,7 @@ import { DEV } from 'esm-env';
 import { is_promise } from '../../../shared/utils.js';
 import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
 import { internal_set, mutable_source, source } from '../../reactivity/sources.js';
-import { flushSync, set_active_effect, set_active_reaction } from '../../runtime.js';
+import { set_active_effect, set_active_reaction } from '../../runtime.js';
 import {
 	hydrate_next,
 	hydrate_node,
@@ -22,6 +22,7 @@ import {
 	set_dev_current_component_function,
 	set_dev_stack
 } from '../../context.js';
+import { flushSync } from '../../reactivity/batch.js';
 
 const PENDING = 0;
 const THEN = 1;

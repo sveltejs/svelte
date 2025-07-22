@@ -94,6 +94,27 @@ let selected = $derived(items[index]);
 
 ...you can change (or `bind:` to) properties of `selected` and it will affect the underlying `items` array. If `items` was _not_ deeply reactive, mutating `selected` would have no effect.
 
+## Destructuring
+
+If you use destructuring with a `$derived` declaration, the resulting variables will all be reactive — this...
+
+```js
+function stuff() { return { a: 1, b: 2, c: 3 } }
+// ---cut---
+let { a, b, c } = $derived(stuff());
+```
+
+...is roughly equivalent to this:
+
+```js
+function stuff() { return { a: 1, b: 2, c: 3 } }
+// ---cut---
+let _stuff = $derived(stuff());
+let a = $derived(_stuff.a);
+let b = $derived(_stuff.b);
+let c = $derived(_stuff.c);
+```
+
 ## Update propagation
 
 Svelte uses something called _push-pull reactivity_ — when state is updated, everything that depends on the state (whether directly or indirectly) is immediately notified of the change (the 'push'), but derived values are not re-evaluated until they are actually read (the 'pull').

@@ -4,12 +4,7 @@
 import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import {
-	build_bind_this,
-	memoize_expression,
-	validate_binding,
-	add_svelte_meta
-} from '../shared/utils.js';
+import { add_svelte_meta, build_bind_this, Memoizer, validate_binding } from '../shared/utils.js';
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
@@ -47,6 +42,8 @@ export function build_component(node, component_name, context) {
 
 	/** @type {Record<string, Expression[]>} */
 	const events = {};
+
+	const memoizer = new Memoizer();
 
 	/** @type {Property[]} */
 	const custom_css_props = [];
@@ -132,16 +129,15 @@ export function build_component(node, component_name, context) {
 			(events[attribute.name] ||= []).push(handler);
 		} else if (attribute.type === 'SpreadAttribute') {
 			const expression = /** @type {Expression} */ (context.visit(attribute));
+
 			if (attribute.metadata.expression.has_state) {
-				let value = expression;
-
-				if (attribute.metadata.expression.has_call) {
-					const id = b.id(context.state.scope.generate('spread_element'));
-					context.state.init.push(b.var(id, b.call('$.derived', b.thunk(value))));
-					value = b.call('$.get', id);
-				}
-
-				props_and_spreads.push(b.thunk(value));
+				props_and_spreads.push(
+					b.thunk(
+						attribute.metadata.expression.has_await || attribute.metadata.expression.has_call
+							? b.call('$.get', memoizer.add(expression, attribute.metadata.expression.has_await))
+							: expression
+					)
+				);
 			} else {
 				props_and_spreads.push(expression);
 			}
@@ -150,10 +146,12 @@ export function build_component(node, component_name, context) {
 				custom_css_props.push(
 					b.init(
 						attribute.name,
-						build_attribute_value(attribute.value, context, (value, metadata) =>
+						build_attribute_value(attribute.value, context, (value, metadata) => {
 							// TODO put the derived in the local block
-							metadata.has_call ? memoize_expression(context.state, value) : value
-						).value
+							return metadata.has_call || metadata.has_await
+								? b.call('$.get', memoizer.add(value, metadata.has_await))
+								: value;
+						}).value
 					)
 				);
 				continue;
@@ -171,20 +169,24 @@ export function build_component(node, component_name, context) {
 				attribute.value,
 				context,
 				(value, metadata) => {
-					if (!metadata.has_state) return value;
+					if (!metadata.has_state && !metadata.has_await) return value;
 
 					// When we have a non-simple computation, anything other than an Identifier or Member expression,
 					// then there's a good chance it needs to be memoized to avoid over-firing when read within the
 					// child component (e.g. `active={i === index}`)
-					const should_wrap_in_derived = get_attribute_chunks(attribute.value).some((n) => {
-						return (
-							n.type === 'ExpressionTag' &&
-							n.expression.type !== 'Identifier' &&
-							n.expression.type !== 'MemberExpression'
-						);
-					});
+					const should_wrap_in_derived =
+						metadata.has_await ||
+						get_attribute_chunks(attribute.value).some((n) => {
+							return (
+								n.type === 'ExpressionTag' &&
+								n.expression.type !== 'Identifier' &&
+								n.expression.type !== 'MemberExpression'
+							);
+						});
 
-					return should_wrap_in_derived ? memoize_expression(context.state, value) : value;
+					return should_wrap_in_derived
+						? b.call('$.get', memoizer.add(value, metadata.has_await))
+						: value;
 				}
 			);
 
@@ -444,7 +446,7 @@ export function build_component(node, component_name, context) {
 		};
 	}
 
-	const statements = [...snippet_declarations];
+	const statements = [...snippet_declarations, ...memoizer.deriveds(context.state.analysis.runes)];
 
 	if (is_component_dynamic) {
 		const prev = fn;
@@ -490,6 +492,21 @@ export function build_component(node, component_name, context) {
 		context.state.template.push_comment();
 
 		statements.push(add_svelte_meta(fn(anchor), node, 'component', { componentTag: node.name }));
+	}
+
+	memoizer.apply();
+
+	const async_values = memoizer.async_values();
+
+	if (async_values) {
+		return b.stmt(
+			b.call(
+				'$.async',
+				anchor,
+				async_values,
+				b.arrow([b.id('$$anchor'), ...memoizer.async_ids()], b.block(statements))
+			)
+		);
 	}
 
 	return statements.length > 1 ? b.block(statements) : statements[0];

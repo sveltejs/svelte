@@ -1,17 +1,11 @@
-/** @import { ComponentContext, DevStackEntry } from '#client' */
-
+/** @import { ComponentContext, DevStackEntry, Effect } from '#client' */
 import { DEV } from 'esm-env';
-import { lifecycle_outside_component } from '../shared/errors.js';
-import { source } from './reactivity/sources.js';
-import {
-	active_effect,
-	active_reaction,
-	set_active_effect,
-	set_active_reaction
-} from './runtime.js';
-import { create_user_effect, teardown } from './reactivity/effects.js';
-import { legacy_mode_flag } from '../flags/index.js';
+import * as e from './errors.js';
+import { active_effect, active_reaction } from './runtime.js';
+import { create_user_effect } from './reactivity/effects.js';
+import { async_mode_flag, legacy_mode_flag } from '../flags/index.js';
 import { FILENAME } from '../../constants.js';
+import { BRANCH_EFFECT, EFFECT_RAN } from './constants.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;
@@ -103,6 +97,16 @@ export function getContext(key) {
  */
 export function setContext(key, context) {
 	const context_map = get_or_init_context_map('setContext');
+
+	if (async_mode_flag) {
+		var flags = /** @type {Effect} */ (active_effect).f;
+		var valid = !active_reaction && (flags & BRANCH_EFFECT) !== 0 && (flags & EFFECT_RAN) === 0;
+
+		if (!valid) {
+			e.set_context_after_init();
+		}
+	}
+
 	context_map.set(key, context);
 	return context;
 }
@@ -145,17 +149,8 @@ export function push(props, runes = false, fn) {
 		e: null,
 		s: props,
 		x: null,
-		l: null
+		l: legacy_mode_flag && !runes ? { s: null, u: null, $: [] } : null
 	};
-
-	if (legacy_mode_flag && !runes) {
-		component_context.l = {
-			s: null,
-			u: null,
-			r1: [],
-			r2: source(false)
-		};
-	}
 
 	if (DEV) {
 		// component function
@@ -205,7 +200,7 @@ export function is_runes() {
  */
 function get_or_init_context_map(name) {
 	if (component_context === null) {
-		lifecycle_outside_component(name);
+		e.lifecycle_outside_component(name);
 	}
 
 	return (component_context.c ??= new Map(get_parent_context(component_context) || undefined));

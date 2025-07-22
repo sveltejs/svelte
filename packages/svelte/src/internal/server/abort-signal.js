@@ -1,7 +1,7 @@
 import { STALE_REACTION } from '#client/constants';
 
 /** @type {AbortController | null} */
-export let controller = null;
+let controller = null;
 
 export function abort() {
 	controller?.abort(STALE_REACTION);
