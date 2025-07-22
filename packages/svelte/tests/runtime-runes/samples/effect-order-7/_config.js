@@ -12,6 +12,8 @@ export default test({
 		const [open, close] = target.querySelectorAll('button');
 
 		flushSync(() => open.click());
+
+		// if the effect queue isn't aborted after the state change, this will throw
 		flushSync(() => close.click());
 	}
 });
