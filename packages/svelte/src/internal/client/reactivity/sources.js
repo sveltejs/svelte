@@ -301,9 +301,10 @@ export function increment(source) {
 /**
  * @param {Value} signal
  * @param {number} status should be DIRTY or MAYBE_DIRTY
+ * @param {boolean} schedule_async
  * @returns {void}
  */
-function mark_reactions(signal, status) {
+export function mark_reactions(signal, status, schedule_async = true) {
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
@@ -324,13 +325,13 @@ function mark_reactions(signal, status) {
 		}
 
 		// don't set a DIRTY reaction to MAYBE_DIRTY
-		if ((flags & DIRTY) === 0) {
+		if ((flags & DIRTY) === 0 && (schedule_async || (flags & ASYNC) === 0)) {
 			set_signal_status(reaction, status);
 		}
 
 		if ((flags & DERIVED) !== 0) {
 			mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
-		} else if ((flags & DIRTY) === 0) {
+		} else if ((flags & DIRTY) === 0 && (schedule_async || (flags & ASYNC) === 0)) {
 			schedule_effect(/** @type {Effect} */ (reaction));
 		}
 	}
