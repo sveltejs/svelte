@@ -70,7 +70,7 @@ let last_scheduled_effect = null;
 
 let is_flushing = false;
 
-export let flushing_sync = false;
+let flushing_sync = false;
 
 export class Batch {
 	/**
@@ -407,12 +407,12 @@ export class Batch {
 		return (this.#deferred ??= deferred()).promise;
 	}
 
-	static ensure(autoflush = true) {
+	static ensure() {
 		if (current_batch === null) {
 			const batch = (current_batch = new Batch());
 			batches.add(current_batch);
 
-			if (autoflush) {
+			if (!flushing_sync) {
 				Batch.enqueue(() => {
 					if (current_batch !== batch) {
 						// a flushSync happened in the meantime
@@ -455,7 +455,7 @@ export function flushSync(fn) {
 	try {
 		var result;
 
-		const batch = Batch.ensure(false);
+		const batch = Batch.ensure();
 
 		if (fn) {
 			batch.flush_effects();
