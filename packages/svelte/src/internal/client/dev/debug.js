@@ -63,6 +63,13 @@ export function log_effect_tree(effect, depth = 0) {
 
 		// eslint-disable-next-line no-console
 		console.log(callsite);
+	} else {
+		// eslint-disable-next-line no-console
+		console.groupCollapsed(`%cfn`, `font-weight: normal`);
+		// eslint-disable-next-line no-console
+		console.log(effect.fn);
+		// eslint-disable-next-line no-console
+		console.groupEnd();
 	}
 
 	if (effect.deps !== null) {
