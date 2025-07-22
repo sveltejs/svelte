@@ -69,7 +69,7 @@ let last_scheduled_effect = null;
 
 let is_flushing = false;
 
-let flushing_sync = false;
+let is_flushing_sync = false;
 
 export class Batch {
 	/**
@@ -411,7 +411,7 @@ export class Batch {
 			const batch = (current_batch = new Batch());
 			batches.add(current_batch);
 
-			if (!flushing_sync) {
+			if (!is_flushing_sync) {
 				Batch.enqueue(() => {
 					if (current_batch !== batch) {
 						// a flushSync happened in the meantime
@@ -448,8 +448,8 @@ export function flushSync(fn) {
 		e.flush_sync_in_effect();
 	}
 
-	var prev_flushing_sync = flushing_sync;
-	flushing_sync = true;
+	var prev_flushing_sync = is_flushing_sync;
+	is_flushing_sync = true;
 
 	try {
 		var result;
@@ -484,7 +484,7 @@ export function flushSync(fn) {
 			batch.flush_effects();
 		}
 	} finally {
-		flushing_sync = prev_flushing_sync;
+		is_flushing_sync = prev_flushing_sync;
 	}
 }
 
