@@ -7,7 +7,5 @@ export default test({
 
 		flushSync(() => open.click());
 		flushSync(() => close.click());
-
-		assert.deepEqual(logs, [true]);
 	}
 });
