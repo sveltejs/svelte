@@ -21,8 +21,7 @@ import {
 	is_updating_effect,
 	set_is_updating_effect,
 	set_signal_status,
-	update_effect,
-	write_version
+	update_effect
 } from '../runtime.js';
 import * as e from '../errors.js';
 import { flush_tasks } from '../dom/task.js';
