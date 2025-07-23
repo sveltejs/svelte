@@ -444,7 +444,7 @@ export function flushSync(fn) {
 		e.flush_sync_in_effect();
 	}
 
-	var prev_flushing_sync = is_flushing_sync;
+	var was_flushing_sync = is_flushing_sync;
 	is_flushing_sync = true;
 
 	try {
@@ -474,7 +474,7 @@ export function flushSync(fn) {
 			flush_effects();
 		}
 	} finally {
-		is_flushing_sync = prev_flushing_sync;
+		is_flushing_sync = was_flushing_sync;
 	}
 }
 
