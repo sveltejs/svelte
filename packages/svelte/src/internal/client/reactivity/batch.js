@@ -461,7 +461,7 @@ export function flushSync(fn) {
 			if (queued_root_effects.length === 0) {
 				current_batch?.flush();
 
-				// TODO this feels wrong
+				// we need to check again, in case we just updated an `$effect.pending()`
 				if (queued_root_effects.length === 0) {
 					// this would be reset in `flush_effects()` but since we are early returning here,
 					// we need to reset it here as well in case the first time there's 0 queued root effects
