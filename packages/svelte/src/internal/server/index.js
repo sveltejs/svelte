@@ -68,7 +68,7 @@ export let on_destroy = [];
  */
 export function render(component, options = {}) {
 	try {
-		const payload = new Payload(options.idPrefix ? options.idPrefix + '-' : '');
+		const payload = new Payload({ id_prefix: options.idPrefix ? options.idPrefix + '-' : '' });
 
 		const prev_on_destroy = on_destroy;
 		on_destroy = [];
@@ -107,7 +107,7 @@ export function render(component, options = {}) {
 			head += `<style id="${hash}">${code}</style>`;
 		}
 
-		const body = payload.out.join('');
+		const body = payload.collect();
 
 		return {
 			head,
@@ -569,6 +569,9 @@ export function valueless_option(payload, children) {
 	if (body.replace(/<!---->/g, '') === payload.select_value) {
 		// replace '>' with ' selected>' (closing tag will be added later)
 		var last_item = payload.out[i - 1];
+		if (typeof last_item !== 'string') {
+			throw new Error('TODO something very bad has happened, this should be very impossible');
+		}
 		payload.out[i - 1] = last_item.slice(0, -1) + ' selected>';
 		// Remove the old items after position i and add the body as a single item
 		payload.out.splice(i, payload.out.length - i, body);

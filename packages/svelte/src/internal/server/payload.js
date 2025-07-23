@@ -1,3 +1,5 @@
+import { deferred } from '../shared/utils';
+
 export class HeadPayload {
 	/** @type {Set<{ hash: string; code: string }>} */
 	css = new Set();
@@ -16,17 +18,109 @@ export class HeadPayload {
 
 export class Payload {
 	/** @type {Set<{ hash: string; code: string }>} */
-	css = new Set();
-	/** @type {string[]} */
+	css;
+	/** @type {(string | ChildPayload)[]} */
 	out = [];
-	uid = () => '';
+	/** @type {() => string} */
+	uid;
+	/** @type {string | undefined} */
 	select_value = undefined;
+	/** @type {HeadPayload} */
+	head;
+	/** @type {'sync' | 'async'} */
+	mode;
+	/** @type {Promise<string>[]} */
+	tail = [];
 
-	head = new HeadPayload();
+	/**
+	 * @param {{ id_prefix?: string, mode?: 'sync' | 'async', head?: HeadPayload, uid?: () => string, out?: (string | ChildPayload)[], css?: Set<{ hash: string; code: string }>, select_value?: any }} args
+	 */
+	constructor({
+		id_prefix = '',
+		mode = 'sync',
+		head = new HeadPayload(),
+		uid = props_id_generator(id_prefix),
+		css = new Set()
+	} = {}) {
+		this.uid = uid;
+		this.head = head;
+		this.mode = mode;
+		this.css = css;
+	}
 
-	constructor(id_prefix = '') {
-		this.uid = props_id_generator(id_prefix);
-		this.head.uid = this.uid;
+	/**
+	 * Create a child scope. `front` represents the initial, synchronous code, and `back` represents all code from the first `await` onwards.
+	 * Typically a child will be created for each component.
+	 * @param {{ front: (args: { payload: Payload }) => void, back: (args: { payload: Payload }) => Promise<void> }} args
+	 * @returns {void}
+	 */
+	child({ front, back }) {
+		const child = new ChildPayload(this);
+		front({ payload: child });
+		// TODO: boundary stuff? Or does this go inside the `back` function?
+		back({ payload: child }).then(() => child.deferred.resolve());
+	}
+
+	/**
+	 * Waits for all child payloads to finish their blocking asynchronous work, then returns the generated HTML.
+	 * @returns {Promise<string>}
+	 */
+	async collect_async() {
+		// TODO throw in `sync` mode
+		/** @type {Promise<void>[]} */
+		const promises = [];
+
+		/**
+		 * @param {(string | ChildPayload)[]} items
+		 */
+		function collect_promises(items) {
+			for (const item of items) {
+				if (item instanceof ChildPayload) {
+					promises.push(item.deferred.promise);
+					collect_promises(item.out);
+				}
+			}
+		}
+
+		collect_promises(this.out);
+		await Promise.all(promises);
+		return this.collect();
+	}
+
+	/**
+	 * Collect all of the code from the `out` array and return it as a string. If in `async` mode, wait on
+	 * `finished` prior to collecting.
+	 * @returns {string}
+	 */
+	collect() {
+		// TODO throw in `async` mode
+		let html = '';
+		for (const item of this.out) {
+			if (typeof item === 'string') {
+				html += item;
+			} else {
+				html += item.collect();
+			}
+		}
+		return html;
+	}
+}
+
+class ChildPayload extends Payload {
+	deferred = /** @type {ReturnType<typeof deferred<void>>} */ (deferred());
+
+	/**
+	 * @param {Payload} parent
+	 */
+	constructor(parent) {
+		super({
+			mode: parent.mode,
+			head: parent.head,
+			uid: parent.uid,
+			css: parent.css
+		});
+		this.root = parent;
+		parent.out.push(this);
 	}
 }
 
