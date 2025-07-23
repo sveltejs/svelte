@@ -82,7 +82,6 @@ export function compileModule(source, options) {
  * @returns {AST.Root}
  */
 
-// TODO 6.0 remove unused `filename`
 /**
  * The parse function parses a component, returning only its abstract syntax tree.
  *
@@ -95,6 +94,7 @@ export function compileModule(source, options) {
  * @returns {Record<string, any>}
  */
 
+// TODO 6.0 remove unused `filename`
 /**
  * The parse function parses a component, returning only its abstract syntax tree.
  *
@@ -123,8 +123,6 @@ export function parse(source, { modern, loose } = {}) {
  * @param {boolean | undefined} modern
  */
 function to_public_ast(source, ast, modern) {
-	/** @type {AST.Root} */
-	const rrrrr = parse('hi', { modern: true }); // ensure that the modern AST is available
 	if (modern) {
 		const clean = (/** @type {any} */ node) => {
 			delete node.metadata;
