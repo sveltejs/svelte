@@ -996,7 +996,7 @@ export interface HTMLFieldsetAttributes extends HTMLAttributes<HTMLFieldSetEleme
 }
 
 export interface HTMLFormAttributes extends HTMLAttributes<HTMLFormElement> {
-	acceptcharset?: string | undefined | null;
+	'accept-charset'?: 'utf-8' | (string & {}) | undefined | null;
 	action?: string | undefined | null;
 	autocomplete?: AutoFillBase | undefined | null;
 	enctype?:
