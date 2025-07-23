@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-chore: rename form accept-charset attribute
+fix: rename form accept-charset attribute
