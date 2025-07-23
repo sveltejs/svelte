@@ -489,10 +489,11 @@ function flush_effects() {
 
 	try {
 		var flush_count = 0;
-		var batch = /** @type {Batch} */ (current_batch);
 		set_is_updating_effect(true);
 
 		while (queued_root_effects.length > 0) {
+			var batch = /** @type {Batch} */ (current_batch);
+
 			if (flush_count++ > 1000) {
 				if (DEV) {
 					var updates = new Map();
@@ -519,7 +520,6 @@ function flush_effects() {
 				infinite_loop_guard();
 			}
 
-			batch = /** @type {Batch} */ (current_batch);
 			batch.process(queued_root_effects);
 			old_values.clear();
 		}
