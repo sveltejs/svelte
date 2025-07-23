@@ -361,21 +361,23 @@ export function prop(props, key, flags, fallback) {
 	// means we can just call `$$props.foo = value` directly
 	if (setter) {
 		var legacy_parent = props.$$legacy;
-		return /** @type {() => V} */ (function (/** @type {V} */ value, /** @type {boolean} */ mutation) {
-			if (arguments.length > 0) {
-				// We don't want to notify if the value was mutated and the parent is in runes mode.
-				// In that case the state proxy (if it exists) should take care of the notification.
-				// If the parent is not in runes mode, we need to notify on mutation, too, that the prop
-				// has changed because the parent will not be able to detect the change otherwise.
-				if (!runes || !mutation || legacy_parent || is_store_sub) {
-					/** @type {Function} */ (setter)(mutation ? getter() : value);
+		return /** @type {() => V} */ (
+			function (/** @type {V} */ value, /** @type {boolean} */ mutation) {
+				if (arguments.length > 0) {
+					// We don't want to notify if the value was mutated and the parent is in runes mode.
+					// In that case the state proxy (if it exists) should take care of the notification.
+					// If the parent is not in runes mode, we need to notify on mutation, too, that the prop
+					// has changed because the parent will not be able to detect the change otherwise.
+					if (!runes || !mutation || legacy_parent || is_store_sub) {
+						/** @type {Function} */ (setter)(mutation ? getter() : value);
+					}
+
+					return value;
 				}
 
-				return value;
+				return getter();
 			}
-
-			return getter();
-		});
+		);
 	}
 
 	// Either prop is written to, but there's no binding, which means we
@@ -397,30 +399,32 @@ export function prop(props, key, flags, fallback) {
 	if (bindable) get(d);
 
 	var parent_effect = /** @type {Effect} */ (active_effect);
-	
-	return /** @type {() => V} */(function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
-		if (arguments.length > 0) {
-			const new_value = mutation ? get(d) : runes && bindable ? proxy(value) : value;
 
-			set(d, new_value);
-			overridden = true;
+	return /** @type {() => V} */ (
+		function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
+			if (arguments.length > 0) {
+				const new_value = mutation ? get(d) : runes && bindable ? proxy(value) : value;
 
-			if (fallback_value !== undefined) {
-				fallback_value = new_value;
+				set(d, new_value);
+				overridden = true;
+
+				if (fallback_value !== undefined) {
+					fallback_value = new_value;
+				}
+
+				return value;
 			}
 
-			return value;
-		}
+			// special case — avoid recalculating the derived if we're in a
+			// teardown function and the prop was overridden locally, or the
+			// component was already destroyed (this latter part is necessary
+			// because `bind:this` can read props after the component has
+			// been destroyed. TODO simplify `bind:this`
+			if ((is_destroying_effect && overridden) || (parent_effect.f & DESTROYED) !== 0) {
+				return d.v;
+			}
 
-		// special case — avoid recalculating the derived if we're in a
-		// teardown function and the prop was overridden locally, or the
-		// component was already destroyed (this latter part is necessary
-		// because `bind:this` can read props after the component has
-		// been destroyed. TODO simplify `bind:this`
-		if ((is_destroying_effect && overridden) || (parent_effect.f & DESTROYED) !== 0) {
-			return d.v;
+			return get(d);
 		}
-
-		return get(d);
-	});
+	);
 }
