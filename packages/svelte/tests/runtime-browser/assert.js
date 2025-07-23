@@ -1,5 +1,6 @@
 /** @import { assert } from 'vitest' */
-import { parse } from 'svelte/compiler';
+/** @import { CompileOptions, Warning } from '#compiler' */
+
 import { ELEMENT_NODE } from '#client/constants';
 
 /**
@@ -19,8 +20,6 @@ export function deepEqual(a, b, message) {
  * @returns {boolean}
  */
 function is_equal(a, b) {
-	const input = '\uFEFF<div></div>';
-	const actual = parse(input, { modern: true });
 	if (a && typeof a === 'object') {
 		const is_array = Array.isArray(a);
 		if (Array.isArray(b) !== is_array) return false;
