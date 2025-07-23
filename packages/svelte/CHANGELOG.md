@@ -1,5 +1,17 @@
 # svelte
 
+## 5.36.14
+
+### Patch Changes
+
+- fix: keep input in sync when binding updated via effect ([#16482](https://github.com/sveltejs/svelte/pull/16482))
+
+- fix: rename form accept-charset attribute ([#16478](https://github.com/sveltejs/svelte/pull/16478))
+
+- fix: prevent infinite async loop ([#16482](https://github.com/sveltejs/svelte/pull/16482))
+
+- fix: exclude derived writes from effect abort and rescheduling ([#16482](https://github.com/sveltejs/svelte/pull/16482))
+
 ## 5.36.13
 
 ### Patch Changes
