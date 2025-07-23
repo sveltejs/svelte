@@ -450,8 +450,6 @@ export function flushSync(fn) {
 	try {
 		var result;
 
-		var batch = Batch.ensure();
-
 		if (fn) {
 			flush_effects();
 			result = fn();
@@ -461,10 +459,7 @@ export function flushSync(fn) {
 			flush_tasks();
 
 			if (queued_root_effects.length === 0) {
-				// TODO this might need adjustment
-				if (batch === current_batch) {
-					batch.flush();
-				}
+				current_batch?.flush();
 
 				// TODO this feels wrong
 				if (queued_root_effects.length === 0) {
@@ -492,7 +487,7 @@ function flush_effects() {
 		set_is_updating_effect(true);
 
 		while (queued_root_effects.length > 0) {
-			var batch = /** @type {Batch} */ (current_batch);
+			var batch = Batch.ensure();
 
 			if (flush_count++ > 1000) {
 				if (DEV) {
