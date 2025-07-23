@@ -184,8 +184,7 @@ export function legacy_rest_props(props, exclude) {
  * The proxy handler for spread props. Handles the incoming array of props
  * that looks like `() => { dynamic: props }, { static: prop }, ..` and wraps
  * them so that the whole thing is passed to the component as the `$$props` argument.
- * @template {Record<string | symbol, unknown>} T
- * @type {ProxyHandler<{ props: Array<T | (() => T)> }>}}
+ * @type {ProxyHandler<{ props: Array<Record<string | symbol, unknown> | (() => Record<string | symbol, unknown>)> }>}}
  */
 const spread_props_handler = {
 	get(target, key) {
@@ -362,8 +361,7 @@ export function prop(props, key, flags, fallback) {
 	// means we can just call `$$props.foo = value` directly
 	if (setter) {
 		var legacy_parent = props.$$legacy;
-
-		return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
+		return /** @type {() => V} */ (function (/** @type {V} */ value, /** @type {boolean} */ mutation) {
 			if (arguments.length > 0) {
 				// We don't want to notify if the value was mutated and the parent is in runes mode.
 				// In that case the state proxy (if it exists) should take care of the notification.
@@ -377,7 +375,7 @@ export function prop(props, key, flags, fallback) {
 			}
 
 			return getter();
-		};
+		});
 	}
 
 	// Either prop is written to, but there's no binding, which means we
@@ -399,8 +397,8 @@ export function prop(props, key, flags, fallback) {
 	if (bindable) get(d);
 
 	var parent_effect = /** @type {Effect} */ (active_effect);
-
-	return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
+	
+	return /** @type {() => V} */(function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
 		if (arguments.length > 0) {
 			const new_value = mutation ? get(d) : runes && bindable ? proxy(value) : value;
 
@@ -424,5 +422,5 @@ export function prop(props, key, flags, fallback) {
 		}
 
 		return get(d);
-	};
+	});
 }

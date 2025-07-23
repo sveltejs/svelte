@@ -599,7 +599,7 @@ function has_disabled_attribute(attribute_map) {
 /**
  * @param {string} tag_name
  * @param {Map<string, AST.Attribute>} attribute_map
- * @returns {ElementInteractivity[keyof ElementInteractivity]}
+ * @returns {typeof ElementInteractivity[keyof typeof ElementInteractivity]}
  */
 function element_interactivity(tag_name, attribute_map) {
 	if (

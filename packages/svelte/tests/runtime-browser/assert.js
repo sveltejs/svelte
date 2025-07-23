@@ -1,6 +1,5 @@
 /** @import { assert } from 'vitest' */
-/** @import { CompileOptions, Warning } from '#compiler' */
-
+import { parse } from 'svelte/compiler';
 import { ELEMENT_NODE } from '#client/constants';
 
 /**
@@ -20,6 +19,8 @@ export function deepEqual(a, b, message) {
  * @returns {boolean}
  */
 function is_equal(a, b) {
+	const input = '\uFEFF<div></div>';
+	const actual = parse(input, { modern: true });
 	if (a && typeof a === 'object') {
 		const is_array = Array.isArray(a);
 		if (Array.isArray(b) !== is_array) return false;
@@ -87,15 +88,15 @@ function normalize_html(window, html) {
 /** @param {any} node */
 function normalize_children(node) {
 	// sort attributes
-	const attributes = Array.from(node.attributes).sort((a, b) => {
+	const attributes = Array.from(node.attributes).sort((/** @type {any} */ a,/** @type {any} */ b) => {
 		return a.name < b.name ? -1 : 1;
 	});
 
-	attributes.forEach((attr) => {
+	attributes.forEach((/** @type{any} */ attr) => {
 		node.removeAttribute(attr.name);
 	});
 
-	attributes.forEach((attr) => {
+	attributes.forEach((/** @type{any} */ attr) => {
 		node.setAttribute(attr.name, attr.value);
 	});
 
