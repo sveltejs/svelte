@@ -10,7 +10,8 @@ import {
 	INERT,
 	RENDER_EFFECT,
 	ROOT_EFFECT,
-	USER_EFFECT
+	USER_EFFECT,
+	MAYBE_DIRTY
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
@@ -27,7 +28,7 @@ import * as e from '../errors.js';
 import { flush_tasks } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
-import { mark_reactions, old_values } from './sources.js';
+import { old_values } from './sources.js';
 import { unlink_effect } from './effects.js';
 import { unset_context } from './async.js';
 
@@ -147,6 +148,18 @@ export class Batch {
 	#block_effects = [];
 
 	/**
+	 * Deferred effects (which run after async work has completed) that are DIRTY
+	 * @type {Effect[]}
+	 */
+	#dirty_effects = [];
+
+	/**
+	 * Deferred effects that are MAYBE_DIRTY
+	 * @type {Effect[]}
+	 */
+	#maybe_dirty_effects = [];
+
+	/**
 	 * A set of branches that still exist, but will be destroyed when this batch
 	 * is committed — we skip over these during `process`
 	 * @type {Set<Effect>}
@@ -221,10 +234,9 @@ export class Batch {
 
 			this.#deferred?.resolve();
 		} else {
-			// otherwise mark effects clean so they get scheduled on the next run
-			for (const e of this.#render_effects) set_signal_status(e, CLEAN);
-			for (const e of this.#effects) set_signal_status(e, CLEAN);
-			for (const e of this.#block_effects) set_signal_status(e, CLEAN);
+			this.#defer_effects(this.#render_effects);
+			this.#defer_effects(this.#effects);
+			this.#defer_effects(this.#block_effects);
 		}
 
 		if (current_values) {
@@ -271,15 +283,15 @@ export class Batch {
 			if (!skip && effect.fn !== null) {
 				if (is_branch) {
 					effect.f ^= CLEAN;
-				} else if ((flags & EFFECT) !== 0) {
-					this.#effects.push(effect);
-				} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
-					this.#render_effects.push(effect);
-				} else if (is_dirty(effect)) {
-					if ((flags & ASYNC) !== 0) {
+				} else if ((flags & CLEAN) === 0) {
+					if ((flags & EFFECT) !== 0) {
+						this.#effects.push(effect);
+					} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
+						this.#render_effects.push(effect);
+					} else if ((flags & ASYNC) !== 0) {
 						var effects = effect.b?.pending ? this.#boundary_async_effects : this.#async_effects;
 						effects.push(effect);
-					} else {
+					} else if (is_dirty(effect)) {
 						if ((effect.f & BLOCK_EFFECT) !== 0) this.#block_effects.push(effect);
 						update_effect(effect);
 					}
@@ -301,6 +313,21 @@ export class Batch {
 				parent = parent.parent;
 			}
 		}
+	}
+
+	/**
+	 * @param {Effect[]} effects
+	 */
+	#defer_effects(effects) {
+		for (const e of effects) {
+			const target = (e.f & DIRTY) !== 0 ? this.#dirty_effects : this.#maybe_dirty_effects;
+			target.push(e);
+
+			// mark as clean so they get scheduled if they depend on pending async state
+			set_signal_status(e, CLEAN);
+		}
+
+		effects.length = 0;
 	}
 
 	/**
@@ -380,8 +407,14 @@ export class Batch {
 		this.#pending -= 1;
 
 		if (this.#pending === 0) {
-			for (const source of this.current.keys()) {
-				mark_reactions(source, DIRTY, false);
+			for (const e of this.#dirty_effects) {
+				set_signal_status(e, DIRTY);
+				schedule_effect(e);
+			}
+
+			for (const e of this.#maybe_dirty_effects) {
+				set_signal_status(e, MAYBE_DIRTY);
+				schedule_effect(e);
 			}
 
 			this.#render_effects = [];
