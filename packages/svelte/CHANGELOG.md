@@ -1,5 +1,11 @@
 # svelte
 
+## 5.36.15
+
+### Patch Changes
+
+- fix: preserve dirty status of deferred effects ([#16487](https://github.com/sveltejs/svelte/pull/16487))
+
 ## 5.36.14
 
 ### Patch Changes
