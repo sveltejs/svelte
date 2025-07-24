@@ -38,8 +38,12 @@ const batches = new Set();
 /** @type {Batch | null} */
 export let current_batch = null;
 
-/** @type {Batch | null} */
-export let previous_batch = current_batch;
+/**
+ * This is needed to avoid overwriting inputs in non-async mode
+ * TODO 6.0 remove this, as non-async mode will go away
+ * @type {Batch | null}
+ */
+export let previous_batch = null;
 
 /**
  * When time travelling, we re-evaluate deriveds based on the temporary
@@ -174,6 +178,8 @@ export class Batch {
 	 */
 	process(root_effects) {
 		queued_root_effects = [];
+
+		previous_batch = null;
 
 		/** @type {Map<Source, { v: unknown, wv: number }> | null} */
 		var current_values = null;

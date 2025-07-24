@@ -76,13 +76,18 @@ export function bind_value(input, get, set = get) {
 
 		var value = get();
 
-		if (input === document.activeElement && batches.has(/** @type {Batch} */ (previous_batch))) {
+		if (input === document.activeElement) {
+			// we need both, because in non-async mode, render effects run before previous_batch is set
+			var batch = /** @type {Batch} */ (previous_batch ?? current_batch);
+
 			// Never rewrite the contents of a focused input. We can get here if, for example,
 			// an update is deferred because of async work depending on the input:
 			//
 			// <input bind:value={query}>
 			// <p>{await find(query)}</p>
-			return;
+			if (batches.has(batch)) {
+				return;
+			}
 		}
 
 		if (is_numberlike_input(input) && value === to_number(input.value)) {
