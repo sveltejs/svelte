@@ -10,7 +10,8 @@ import {
 	INERT,
 	RENDER_EFFECT,
 	ROOT_EFFECT,
-	USER_EFFECT
+	USER_EFFECT,
+	MAYBE_DIRTY
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
@@ -147,6 +148,18 @@ export class Batch {
 	#block_effects = [];
 
 	/**
+	 * Deferred effects (which run after async work has completed) that are DIRTY
+	 * @type {Effect[]}
+	 */
+	#dirty_effects = [];
+
+	/**
+	 * Deferred effects that are MAYBE_DIRTY
+	 * @type {Effect[]}
+	 */
+	#maybe_dirty_effects = [];
+
+	/**
 	 * A set of branches that still exist, but will be destroyed when this batch
 	 * is committed — we skip over these during `process`
 	 * @type {Set<Effect>}
@@ -221,10 +234,9 @@ export class Batch {
 
 			this.#deferred?.resolve();
 		} else {
-			// otherwise mark effects clean so they get scheduled on the next run
-			for (const e of this.#render_effects) set_signal_status(e, CLEAN);
-			for (const e of this.#effects) set_signal_status(e, CLEAN);
-			for (const e of this.#block_effects) set_signal_status(e, CLEAN);
+			this.#defer_effects(this.#render_effects);
+			this.#defer_effects(this.#effects);
+			this.#defer_effects(this.#block_effects);
 		}
 
 		if (current_values) {
@@ -308,6 +320,21 @@ export class Batch {
 	}
 
 	/**
+	 * @param {Effect[]} effects
+	 */
+	#defer_effects(effects) {
+		for (const e of effects) {
+			const target = (e.f & DIRTY) !== 0 ? this.#dirty_effects : this.#maybe_dirty_effects;
+			target.push(e);
+
+			// mark as clean so they get scheduled if they depend on pending async state
+			set_signal_status(e, CLEAN);
+		}
+
+		effects.length = 0;
+	}
+
+	/**
 	 * Associate a change to a given source with the current
 	 * batch, noting its previous and current values
 	 * @param {Source} source
@@ -384,18 +411,13 @@ export class Batch {
 		this.#pending -= 1;
 
 		if (this.#pending === 0) {
-			for (const e of this.#render_effects) {
+			for (const e of this.#dirty_effects) {
 				set_signal_status(e, DIRTY);
 				schedule_effect(e);
 			}
 
-			for (const e of this.#effects) {
-				set_signal_status(e, DIRTY);
-				schedule_effect(e);
-			}
-
-			for (const e of this.#block_effects) {
-				set_signal_status(e, DIRTY);
+			for (const e of this.#maybe_dirty_effects) {
+				set_signal_status(e, MAYBE_DIRTY);
 				schedule_effect(e);
 			}
 
