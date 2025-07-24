@@ -38,6 +38,9 @@ const batches = new Set();
 /** @type {Batch | null} */
 export let current_batch = null;
 
+/** @type {Batch | null} */
+export let previous_batch = current_batch;
+
 /**
  * When time travelling, we re-evaluate deriveds based on the temporary
  * values of their dependencies rather than their actual values, and cache
@@ -72,7 +75,10 @@ let is_flushing = false;
 
 let is_flushing_sync = false;
 
+let uid = 1;
 export class Batch {
+	id = uid++;
+
 	/**
 	 * The current values of any sources that are updated in this batch
 	 * They keys of this map are identical to `this.#previous`
@@ -218,6 +224,7 @@ export class Batch {
 
 			// If sources are written to, then work needs to happen in a separate batch, else prior sources would be mixed with
 			// newly updated sources, which could lead to infinite loops when effects run over and over again.
+			previous_batch = current_batch;
 			current_batch = null;
 
 			flush_queued_effects(render_effects);
@@ -350,6 +357,7 @@ export class Batch {
 
 	deactivate() {
 		current_batch = null;
+		previous_batch = null;
 
 		for (const update of effect_pending_updates) {
 			effect_pending_updates.delete(update);

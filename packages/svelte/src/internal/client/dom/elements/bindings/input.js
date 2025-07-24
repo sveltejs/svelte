@@ -8,7 +8,7 @@ import { queue_micro_task } from '../../task.js';
 import { hydrating } from '../../hydration.js';
 import { untrack } from '../../../runtime.js';
 import { is_runes } from '../../../context.js';
-import { current_batch } from '../../../reactivity/batch.js';
+import { current_batch, previous_batch } from '../../../reactivity/batch.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -76,7 +76,7 @@ export function bind_value(input, get, set = get) {
 
 		var value = get();
 
-		if (input === document.activeElement && batches.has(/** @type {Batch} */ (current_batch))) {
+		if (input === document.activeElement && batches.has(/** @type {Batch} */ (previous_batch))) {
 			// Never rewrite the contents of a focused input. We can get here if, for example,
 			// an update is deferred because of async work depending on the input:
 			//
