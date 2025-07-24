@@ -27,7 +27,7 @@ import * as e from '../errors.js';
 import { flush_tasks } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
-import { mark_reactions, old_values } from './sources.js';
+import { old_values } from './sources.js';
 import { unlink_effect } from './effects.js';
 import { unset_context } from './async.js';
 
