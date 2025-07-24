@@ -148,7 +148,11 @@ function create_effect(type, fn, sync, push = true) {
 		}
 
 		// if we're in a derived, add the effect there too
-		if (active_reaction !== null && (active_reaction.f & DERIVED) !== 0) {
+		if (
+			active_reaction !== null &&
+			(active_reaction.f & DERIVED) !== 0 &&
+			(type & ROOT_EFFECT) === 0
+		) {
 			var derived = /** @type {Derived} */ (active_reaction);
 			(derived.effects ??= []).push(effect);
 		}
