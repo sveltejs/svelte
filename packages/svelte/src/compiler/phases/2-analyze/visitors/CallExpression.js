@@ -150,6 +150,7 @@ export function CallExpression(node, context) {
 
 			break;
 
+		case '$effect.allowed':
 		case '$effect.tracking':
 			if (node.arguments.length !== 0) {
 				e.rune_invalid_arguments(node, rune);

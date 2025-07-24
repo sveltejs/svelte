@@ -43,20 +43,49 @@ import { component_context, dev_current_component_function, dev_stack } from '..
 import { Batch, schedule_effect } from './batch.js';
 import { flatten } from './async.js';
 
+const VALID_EFFECT_PARENT = 0;
+const EFFECT_ORPHAN = 1;
+const UNOWNED_DERIVED_PARENT = 2;
+const EFFECT_TEARDOWN = 3;
+
+/**
+ * If an effect can be created in the current context, `VALID_EFFECT_PARENT` is returned.
+ * If not, a value indicating why is returned.
+ * @returns {number}
+ */
+function valid_effect_creation_context() {
+	if (active_effect === null && active_reaction === null) {
+		return EFFECT_ORPHAN;
+	}
+
+	if (active_reaction !== null && (active_reaction.f & UNOWNED) !== 0 && active_effect === null) {
+		return UNOWNED_DERIVED_PARENT;
+	}
+
+	if (is_destroying_effect) {
+		return EFFECT_TEARDOWN;
+	}
+
+	return VALID_EFFECT_PARENT;
+}
+
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
  */
 export function validate_effect(rune) {
-	if (active_effect === null && active_reaction === null) {
-		e.effect_orphan(rune);
-	}
-
-	if (active_reaction !== null && (active_reaction.f & UNOWNED) !== 0 && active_effect === null) {
-		e.effect_in_unowned_derived();
-	}
-
-	if (is_destroying_effect) {
-		e.effect_in_teardown(rune);
+	const valid_effect_parent = valid_effect_creation_context();
+	switch (valid_effect_parent) {
+		case VALID_EFFECT_PARENT:
+			return;
+		case EFFECT_ORPHAN:
+			e.effect_orphan(rune);
+			break;
+		case UNOWNED_DERIVED_PARENT:
+			e.effect_in_unowned_derived();
+			break;
+		case EFFECT_TEARDOWN:
+			e.effect_in_teardown(rune);
+			break;
 	}
 }
 
@@ -163,6 +192,14 @@ function create_effect(type, fn, sync, push = true) {
  */
 export function effect_tracking() {
 	return active_reaction !== null && !untracking;
+}
+
+/**
+ * Internal representation of `$effect.allowed()`
+ * @returns {boolean}
+ */
+export function effect_allowed() {
+	return valid_effect_creation_context() === VALID_EFFECT_PARENT;
 }
 
 /**
