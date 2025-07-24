@@ -5,3 +5,4 @@
 
 <input {...text} />
 <input type="checkbox" {...checkbox} />
+<input value="b" {...text} />

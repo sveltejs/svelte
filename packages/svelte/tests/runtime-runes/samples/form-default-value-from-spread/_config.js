@@ -5,5 +5,6 @@ export default test({
 	html: `
 		<input value="a">
 		<input type="checkbox" checked>
+		<input value="b">
 `
 });

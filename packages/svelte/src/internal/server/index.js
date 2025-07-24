@@ -205,8 +205,10 @@ export function spread_attributes(attrs, css_hash, classes, styles, flags = 0) {
 		if (!ignore_defaults) {
 			if (name === 'defaultvalue') {
 				name = 'value';
+				if (attrs[name]) continue;
 			} else if (name === 'defaultchecked') {
 				name = 'checked';
+				if (attrs[name]) continue;
 			}
 		}
 
