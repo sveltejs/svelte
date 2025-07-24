@@ -323,14 +323,16 @@ function mark_reactions(signal, status) {
 			continue;
 		}
 
+		var not_dirty = (flags & DIRTY) === 0;
+
 		// don't set a DIRTY reaction to MAYBE_DIRTY
-		if ((flags & DIRTY) === 0) {
+		if (not_dirty) {
 			set_signal_status(reaction, status);
 		}
 
 		if ((flags & DERIVED) !== 0) {
 			mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
-		} else {
+		} else if (not_dirty) {
 			schedule_effect(/** @type {Effect} */ (reaction));
 		}
 	}
