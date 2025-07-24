@@ -272,9 +272,13 @@ export class Batch {
 				if (is_branch) {
 					effect.f ^= CLEAN;
 				} else if ((flags & EFFECT) !== 0) {
-					this.#effects.push(effect);
+					if ((flags & CLEAN) === 0) {
+						this.#effects.push(effect);
+					}
 				} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
-					this.#render_effects.push(effect);
+					if ((flags & CLEAN) === 0) {
+						this.#render_effects.push(effect);
+					}
 				} else if (is_dirty(effect)) {
 					if ((flags & ASYNC) !== 0) {
 						var effects = effect.b?.pending ? this.#boundary_async_effects : this.#async_effects;
@@ -380,8 +384,19 @@ export class Batch {
 		this.#pending -= 1;
 
 		if (this.#pending === 0) {
-			for (const source of this.current.keys()) {
-				mark_reactions(source, DIRTY, false);
+			for (const e of this.#render_effects) {
+				set_signal_status(e, DIRTY);
+				schedule_effect(e);
+			}
+
+			for (const e of this.#effects) {
+				set_signal_status(e, DIRTY);
+				schedule_effect(e);
+			}
+
+			for (const e of this.#block_effects) {
+				set_signal_status(e, DIRTY);
+				schedule_effect(e);
 			}
 
 			this.#render_effects = [];
