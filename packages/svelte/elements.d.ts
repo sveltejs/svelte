@@ -1553,6 +1553,7 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	height?: number | string | undefined | null;
 	id?: string | undefined | null;
 	lang?: string | undefined | null;
+	part?: string | undefined | null;
 	max?: number | string | undefined | null;
 	media?: string | undefined | null;
 	// On the `textPath` element
