@@ -1,5 +1,13 @@
 # svelte
 
+## 5.36.17
+
+### Patch Changes
+
+- fix: throw on duplicate class field declarations ([#16502](https://github.com/sveltejs/svelte/pull/16502))
+
+- fix: add types for `part` attribute to svg attributes ([#16499](https://github.com/sveltejs/svelte/pull/16499))
+
 ## 5.36.16
 
 ### Patch Changes
