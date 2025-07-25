@@ -57,6 +57,13 @@ export function ClassBody(node, context) {
 				e.state_field_duplicate(node, name);
 			}
 
+			const _key = (key.type === 'PrivateIdentifier' ? '#' : '') + name;
+			const field = fields.get(_key);
+
+			if (field.length > 1 || (field.length === 1 && field[0] !== 'prop')) {
+				e.duplicate_class_field(node, _key);
+			}
+
 			state_fields.set(name, {
 				node,
 				type: rune,
