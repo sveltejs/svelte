@@ -33,6 +33,9 @@ export function ClassBody(node, context) {
 	/** @type {Map<string, StateField>} */
 	const state_fields = new Map();
 
+	/** @type {Map<string, Array<MethodDefinition['kind'] | 'prop'>>} */
+	const fields = new Map();
+
 	context.state.analysis.classes.set(node, state_fields);
 
 	/** @type {MethodDefinition | null} */
@@ -67,10 +70,41 @@ export function ClassBody(node, context) {
 	for (const child of node.body) {
 		if (child.type === 'PropertyDefinition' && !child.computed && !child.static) {
 			handle(child, child.key, child.value);
+			const key = (child.key.type === 'PrivateIdentifier' ? '#' : '') + get_name(child.key);
+			const field = fields.get(key);
+			if (!field) {
+				fields.set(key, ['prop']);
+				continue;
+			}
+			field.push('prop');
 		}
 
-		if (child.type === 'MethodDefinition' && child.kind === 'constructor') {
-			constructor = child;
+		if (child.type === 'MethodDefinition') {
+			if (child.kind === 'constructor') {
+				constructor = child;
+			} else if (!child.computed) {
+				const key = (child.key.type === 'PrivateIdentifier' ? '#' : '') + get_name(child.key);
+				const field = fields.get(key);
+				if (!field) {
+					fields.set(key, [child.kind]);
+					continue;
+				}
+				if (child.kind === 'get') {
+					if (field.length === 1 && field[0] === 'set') {
+						field.push('get');
+						continue;
+					}
+				} else if (child.kind === 'set') {
+					if (field.length === 1 && field[0] === 'get') {
+						field.push('set');
+						continue;
+					}
+				} else {
+					field.push(child.kind);
+					continue;
+				}
+				e.duplicate_class_field(child, key);
+			}
 		}
 	}
 
