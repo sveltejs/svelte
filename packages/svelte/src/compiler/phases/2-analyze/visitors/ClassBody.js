@@ -33,7 +33,7 @@ export function ClassBody(node, context) {
 	/** @type {Map<string, StateField>} */
 	const state_fields = new Map();
 
-	/** @type {Map<string, Array<MethodDefinition['kind'] | 'prop'>>} */
+	/** @type {Map<string, Array<MethodDefinition['kind'] | 'prop' | 'assigned_prop'>>} */
 	const fields = new Map();
 
 	context.state.analysis.classes.set(node, state_fields);
@@ -60,7 +60,8 @@ export function ClassBody(node, context) {
 			const _key = (key.type === 'PrivateIdentifier' ? '#' : '') + name;
 			const field = fields.get(_key);
 
-			if (field) {
+			// if there's already a method or assigned field, error
+			if (field && !(field.length === 1 && field[0] === 'prop')) {
 				e.duplicate_class_field(node, _key);
 			}
 
@@ -80,7 +81,7 @@ export function ClassBody(node, context) {
 			const key = (child.key.type === 'PrivateIdentifier' ? '#' : '') + get_name(child.key);
 			const field = fields.get(key);
 			if (!field) {
-				fields.set(key, ['prop']);
+				fields.set(key, [child.value ? 'assigned_prop' : 'prop']);
 				continue;
 			}
 			e.duplicate_class_field(child, key);
@@ -96,7 +97,11 @@ export function ClassBody(node, context) {
 					fields.set(key, [child.kind]);
 					continue;
 				}
-				if (field.includes(child.kind) || field.includes('prop')) {
+				if (
+					field.includes(child.kind) ||
+					field.includes('prop') ||
+					field.includes('assigned_prop')
+				) {
 					e.duplicate_class_field(child, key);
 				}
 				if (child.kind === 'get') {
