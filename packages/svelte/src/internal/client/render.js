@@ -169,6 +169,7 @@ const document_listeners = new Map();
 function _mount(Component, { target, anchor, props = {}, events, context, intro = true }) {
 	init_operations();
 
+	/** @type {Set<string>} */
 	var registered_events = new Set();
 
 	/** @param {Array<string>} events */

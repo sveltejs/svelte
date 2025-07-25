@@ -43,6 +43,7 @@ export function create_deferred() {
 	/** @param {any} [reason] */
 	let reject = (reason) => {};
 
+	/** @type {Promise<any>} */
 	const promise = new Promise((f, r) => {
 		resolve = f;
 		reject = r;
