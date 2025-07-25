@@ -76,7 +76,7 @@ export function ClassBody(node, context) {
 				fields.set(key, ['prop']);
 				continue;
 			}
-			field.push('prop');
+			e.duplicate_class_field(child, key);
 		}
 
 		if (child.type === 'MethodDefinition') {
@@ -88,6 +88,9 @@ export function ClassBody(node, context) {
 				if (!field) {
 					fields.set(key, [child.kind]);
 					continue;
+				}
+				if (field.includes(child.kind) || field.includes('prop')) {
+					e.duplicate_class_field(child, key);
 				}
 				if (child.kind === 'get') {
 					if (field.length === 1 && field[0] === 'set') {
