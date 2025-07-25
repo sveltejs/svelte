@@ -60,7 +60,7 @@ export function ClassBody(node, context) {
 			const _key = (key.type === 'PrivateIdentifier' ? '#' : '') + name;
 			const field = fields.get(_key);
 
-			if (field.length > 1 || (field.length === 1 && field[0] !== 'prop')) {
+			if (field && (field.length > 1 || (field.length === 1 && field[0] !== 'prop'))) {
 				e.duplicate_class_field(node, _key);
 			}
 
