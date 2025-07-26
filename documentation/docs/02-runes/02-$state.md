@@ -147,6 +147,22 @@ person = {
 
 This can improve performance with large arrays and objects that you weren't planning to mutate anyway, since it avoids the cost of making them reactive. Note that raw state can _contain_ reactive state (for example, a raw array of reactive objects).
 
+## State options
+
+Both `$state` and `$state.raw` accept an optional second argument that includes an `onchange` function.
+
+This function is called synchronously whenever the value is reassigned or (for `$state`) mutated, allowing you to respond to changes before [effects]($effect) run. It's useful for — for example — persisting data, or validating it:
+
+```js
+let count = $state(0, {
+	onchange() {
+		count = Math.min(count, 10);
+	}
+});
+```
+
+> The `onchange` function is [untracked](svelte#untrack).
+
 As with `$state`, you can declare class fields using `$state.raw`.
 
 ## `$state.snapshot`

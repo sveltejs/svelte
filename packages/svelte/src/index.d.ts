@@ -352,4 +352,6 @@ export type MountOptions<Props extends Record<string, any> = Record<string, any>
 			props: Props;
 		});
 
+export { StateOptions } from './internal/client/types.js';
+
 export * from './index-client.js';
