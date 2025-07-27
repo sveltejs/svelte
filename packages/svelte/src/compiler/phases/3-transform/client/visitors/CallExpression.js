@@ -83,7 +83,7 @@ export function CallExpression(node, context) {
 			node.callee.property.name
 		) &&
 		node.arguments.some(
-			(arg) => arg.type === 'SpreadElement' || !context.state.scope.evaluate(arg).values.has(UNKNOWN)
+			(arg) => arg.type === 'SpreadElement' || context.state.scope.evaluate(arg).values.has(UNKNOWN)
 		)
 	) {
 		return b.call(
