@@ -16,7 +16,7 @@ import { is_reserved, is_rune } from '../../utils.js';
 import { determine_slot } from '../utils/slot.js';
 import { validate_identifier_name } from './2-analyze/visitors/shared/utils.js';
 
-const UNKNOWN = Symbol('unknown');
+export const UNKNOWN = Symbol('unknown');
 /** Includes `BigInt` */
 const NUMBER = Symbol('number');
 const STRING = Symbol('string');
