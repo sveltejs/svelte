@@ -127,14 +127,14 @@ export function visit_component(node, context) {
 		context.visit(attribute, attribute.type === 'LetDirective' ? default_state : context.state);
 	}
 
-	/** @type {AST.Comment[]} */
+	/** @type {AST.TemplateComment[]} */
 	let comments = [];
 
 	/** @type {Record<string, AST.Fragment['nodes']>} */
 	const nodes = { default: [] };
 
 	for (const child of node.fragment.nodes) {
-		if (child.type === 'Comment') {
+		if (child.type === 'TemplateComment') {
 			comments.push(child);
 			continue;
 		}

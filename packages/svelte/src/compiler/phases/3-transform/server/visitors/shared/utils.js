@@ -28,7 +28,7 @@ export const empty_comment = b.literal(EMPTY_COMMENT);
  * @param {ComponentContext} context
  */
 export function process_children(nodes, { visit, state }) {
-	/** @type {Array<AST.Text | AST.Comment | AST.ExpressionTag>} */
+	/** @type {Array<AST.Text | AST.TemplateComment | AST.ExpressionTag>} */
 	let sequence = [];
 
 	function flush() {
@@ -41,9 +41,9 @@ export function process_children(nodes, { visit, state }) {
 		for (let i = 0; i < sequence.length; i++) {
 			const node = sequence[i];
 
-			if (node.type === 'Text' || node.type === 'Comment') {
+			if (node.type === 'Text' || node.type === 'TemplateComment') {
 				quasi.value.cooked +=
-					node.type === 'Comment' ? `<!--${node.data}-->` : escape_html(node.data);
+					node.type === 'TemplateComment' ? `<!--${node.data}-->` : escape_html(node.data);
 			} else {
 				const evaluated = state.scope.evaluate(node.expression);
 
@@ -68,7 +68,7 @@ export function process_children(nodes, { visit, state }) {
 	for (let i = 0; i < nodes.length; i += 1) {
 		const node = nodes[i];
 
-		if (node.type === 'Text' || node.type === 'Comment' || node.type === 'ExpressionTag') {
+		if (node.type === 'Text' || node.type === 'TemplateComment' || node.type === 'ExpressionTag') {
 			sequence.push(node);
 		} else {
 			if (sequence.length > 0) {

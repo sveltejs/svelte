@@ -34,7 +34,7 @@ export function Text(node, context) {
 			for (const child of parent.nodes) {
 				if (child === node) break;
 
-				if (child.type === 'Comment') {
+				if (child.type === 'TemplateComment') {
 					is_ignored ||= extract_svelte_ignore(
 						child.start + 4,
 						child.data,

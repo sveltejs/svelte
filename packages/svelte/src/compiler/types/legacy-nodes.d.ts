@@ -210,7 +210,7 @@ export interface LegacyWindow extends BaseElement {
 }
 
 export interface LegacyComment extends BaseNode {
-	type: 'Comment';
+	type: 'TemplateComment';
 	/** the contents of the comment */
 	data: string;
 	/** any svelte-ignore directives — <!-- svelte-ignore a b c --> would result in ['a', 'b', 'c'] */

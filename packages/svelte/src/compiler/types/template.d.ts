@@ -43,7 +43,7 @@ export namespace AST {
 
 	export interface Fragment {
 		type: 'Fragment';
-		nodes: Array<Text | Tag | ElementLike | Block | Comment>;
+		nodes: Array<Text | Tag | ElementLike | Block | TemplateComment>;
 		/** @internal */
 		metadata: {
 			/**
@@ -144,9 +144,8 @@ export namespace AST {
 	}
 
 	/** An HTML comment */
-	// TODO rename to disambiguate
-	export interface Comment extends BaseNode {
-		type: 'Comment';
+	export interface TemplateComment extends BaseNode {
+		type: 'TemplateComment';
 		/** the contents of the comment */
 		data: string;
 	}
@@ -247,7 +246,17 @@ export namespace AST {
 		name: string;
 		/** The 'y' in `on:x={y}` */
 		expression: null | Expression;
-		modifiers: string[]; // TODO specify
+		modifiers: Array<
+			| 'capture'
+			| 'nonpassive'
+			| 'once'
+			| 'passive'
+			| 'preventDefault'
+			| 'self'
+			| 'stopImmediatePropagation'
+			| 'stopPropagation'
+			| 'trusted'
+		>;
 		/** @internal */
 		metadata: {
 			expression: ExpressionMetadata;
@@ -604,7 +613,7 @@ export namespace AST {
 		| AST.SpreadAttribute
 		| Directive
 		| AST.AttachTag
-		| AST.Comment
+		| AST.TemplateComment
 		| Block;
 
 	export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node | Script;

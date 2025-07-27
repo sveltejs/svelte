@@ -8,7 +8,7 @@
 		"type": "Fragment",
 		"nodes": [
 			{
-				"type": "Comment",
+				"type": "TemplateComment",
 				"start": 0,
 				"end": 27,
 				"data": "should not error out"

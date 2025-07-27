@@ -1145,7 +1145,7 @@ declare module 'svelte/compiler' {
 
 		export interface Fragment {
 			type: 'Fragment';
-			nodes: Array<Text | Tag | ElementLike | Block | Comment>;
+			nodes: Array<Text | Tag | ElementLike | Block | TemplateComment>;
 		}
 
 		export interface Root extends BaseNode {
@@ -1220,9 +1220,8 @@ declare module 'svelte/compiler' {
 		}
 
 		/** An HTML comment */
-		// TODO rename to disambiguate
-		export interface Comment extends BaseNode {
-			type: 'Comment';
+		export interface TemplateComment extends BaseNode {
+			type: 'TemplateComment';
 			/** the contents of the comment */
 			data: string;
 		}
@@ -1296,7 +1295,17 @@ declare module 'svelte/compiler' {
 			name: string;
 			/** The 'y' in `on:x={y}` */
 			expression: null | Expression;
-			modifiers: string[];
+			modifiers: Array<
+				| 'capture'
+				| 'nonpassive'
+				| 'once'
+				| 'passive'
+				| 'preventDefault'
+				| 'self'
+				| 'stopImmediatePropagation'
+				| 'stopPropagation'
+				| 'trusted'
+			>;
 		}
 
 		/** A `style:` directive */
@@ -1544,7 +1553,7 @@ declare module 'svelte/compiler' {
 			| AST.SpreadAttribute
 			| Directive
 			| AST.AttachTag
-			| AST.Comment
+			| AST.TemplateComment
 			| Block;
 
 		export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node | Script;
@@ -1599,7 +1608,7 @@ declare module 'svelte/compiler' {
 				end: number;
 				styles: string;
 				/** Possible comment atop the style tag */
-				comment: AST.Comment | null;
+				comment: AST.TemplateComment | null;
 			};
 		}
 

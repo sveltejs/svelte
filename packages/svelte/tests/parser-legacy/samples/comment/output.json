@@ -5,7 +5,7 @@
 		"end": 18,
 		"children": [
 			{
-				"type": "Comment",
+				"type": "TemplateComment",
 				"start": 0,
 				"end": 18,
 				"data": " a comment ",

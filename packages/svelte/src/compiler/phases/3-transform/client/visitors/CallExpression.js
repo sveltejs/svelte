@@ -82,7 +82,7 @@ export function CallExpression(node, context) {
 		['debug', 'dir', 'error', 'group', 'groupCollapsed', 'info', 'log', 'trace', 'warn'].includes(
 			node.callee.property.name
 		) &&
-		node.arguments.some((arg) => arg.type !== 'Literal') // TODO more cases?
+		node.arguments.some((arg) => arg.type === 'SpreadElement' || !context.state.scope.evaluate(arg).is_known)
 	) {
 		return b.call(
 			node.callee,

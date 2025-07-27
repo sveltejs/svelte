@@ -71,7 +71,7 @@ export function SnippetBlock(node, context) {
 				(node) =>
 					node.type !== 'SnippetBlock' &&
 					(node.type !== 'Text' || node.data.trim()) &&
-					node.type !== 'Comment'
+					node.type !== 'TemplateComment'
 			)
 		) {
 			e.snippet_conflict(node);

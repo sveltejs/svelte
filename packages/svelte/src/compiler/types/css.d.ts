@@ -15,7 +15,7 @@ export namespace _CSS {
 			end: number;
 			styles: string;
 			/** Possible comment atop the style tag */
-			comment: AST.Comment | null;
+			comment: AST.TemplateComment | null;
 		};
 	}
 

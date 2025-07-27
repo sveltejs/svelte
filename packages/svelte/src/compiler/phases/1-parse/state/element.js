@@ -59,7 +59,7 @@ export default function element(parser) {
 		parser.eat('-->', true);
 
 		parser.append({
-			type: 'Comment',
+			type: 'TemplateComment',
 			start,
 			end: parser.index,
 			data
@@ -302,7 +302,7 @@ export default function element(parser) {
 	if (is_top_level_script_or_style) {
 		parser.eat('>', true);
 
-		/** @type {AST.Comment | null} */
+		/** @type {AST.TemplateComment | null} */
 		let prev_comment = null;
 		for (let i = current.fragment.nodes.length - 1; i >= 0; i--) {
 			const node = current.fragment.nodes[i];
@@ -311,7 +311,7 @@ export default function element(parser) {
 				break;
 			}
 
-			if (node.type === 'Comment') {
+			if (node.type === 'TemplateComment') {
 				prev_comment = node;
 				break;
 			} else if (node.type !== 'Text' || node.data.trim()) {
