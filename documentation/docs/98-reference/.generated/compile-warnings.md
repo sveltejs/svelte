@@ -683,7 +683,7 @@ Some templating languages (including Svelte) will 'fix' HTML by turning `<span /
 
 To automate this, run the dedicated migration:
 
-```bash
+```sh
 npx sv migrate self-closing-tags
 ```
 
