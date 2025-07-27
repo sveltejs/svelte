@@ -370,14 +370,6 @@ export default function element(parser) {
 				// ... or we're followed by whitespace, for example near the end of the template,
 				// which we want to take in so that language tools has more room to work with
 				parser.allow_whitespace();
-				if (parser.index === parser.template.length) {
-					while (
-						parser.index < parser.template_untrimmed.length &&
-						regex_whitespace.test(parser.template_untrimmed[parser.index])
-					) {
-						parser.index++;
-					}
-				}
 			}
 		}
 	}
