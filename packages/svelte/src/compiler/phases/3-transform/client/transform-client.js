@@ -621,8 +621,9 @@ export function client_component(analysis, options) {
 		);
 	}
 
-	if (analysis.custom_element) {
-		const ce = analysis.custom_element;
+	const ce = options.customElementOptions ?? options.customElement;
+
+	if (ce) {
 		const ce_props = typeof ce === 'boolean' ? {} : ce.props || {};
 
 		/** @type {ESTree.Property[]} */

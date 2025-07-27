@@ -451,6 +451,8 @@ export function analyze_component(root, source, options) {
 		}
 	}
 
+	const is_custom_element = !!options.customElementOptions || options.customElement;
+
 	// TODO remove all the ?? stuff, we don't need it now that we're validating the config
 	/** @type {ComponentAnalysis} */
 	const analysis = {
@@ -500,13 +502,13 @@ export function analyze_component(root, source, options) {
 		needs_props: false,
 		event_directive_node: null,
 		uses_event_attributes: false,
-		custom_element: options.customElementOptions ?? options.customElement,
-		inject_styles: options.css === 'injected' || options.customElement,
-		accessors: options.customElement
-			? true
-			: (runes ? false : !!options.accessors) ||
-				// because $set method needs accessors
-				options.compatibility?.componentApi === 4,
+		custom_element: is_custom_element,
+		inject_styles: options.css === 'injected' || is_custom_element,
+		accessors:
+			is_custom_element ||
+			(runes ? false : !!options.accessors) ||
+			// because $set method needs accessors
+			options.compatibility?.componentApi === 4,
 		reactive_statements: new Map(),
 		binding_groups: new Map(),
 		slot_names: new Map(),
