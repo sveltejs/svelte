@@ -1,5 +1,15 @@
 # svelte
 
+## 5.37.0
+
+### Minor Changes
+
+- feat: ignore component options in `compileModule` ([#16362](https://github.com/sveltejs/svelte/pull/16362))
+
+### Patch Changes
+
+- fix: always mark props as stateful ([#16504](https://github.com/sveltejs/svelte/pull/16504))
+
 ## 5.36.17
 
 ### Patch Changes
