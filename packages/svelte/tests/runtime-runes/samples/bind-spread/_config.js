@@ -9,9 +9,8 @@ export default test({
 
 		assert.htmlEqual(target.innerHTML, `<input type="checkbox" >`.repeat(checkboxes.length));
 
-		flushSync(() => {
-			checkboxes.forEach((checkbox) => checkbox.click());
-		});
+		checkboxes.forEach((checkbox) => checkbox.click());
+
 		assert.deepEqual(logs, [
 			'getArrayBindings',
 			'getObjectBindings',
