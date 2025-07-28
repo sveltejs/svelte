@@ -6,7 +6,7 @@ import { is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { binding_properties } from '../../../bindings.js';
 import { build_attribute_value } from './shared/element.js';
-import { build_bind_this, validate_binding } from './shared/utils.js';
+import { build_bind_this, validate_binding, handle_spread_binding } from './shared/utils.js';
 
 /**
  * @param {AST.BindDirective} node
@@ -17,16 +17,9 @@ export function BindDirective(node, context) {
 	
 	// Handle SpreadElement by creating a variable declaration before visiting
 	if (node.expression.type === 'SpreadElement') {
-		// Generate a unique variable name for this spread binding
-		const id = b.id(context.state.scope.generate('$$bindings'));
-		
-		// Store the spread expression in a variable at the component init level
-		const spread_expression = /** @type {Expression} */ (context.visit(node.expression.argument));
-		context.state.init.push(b.const(id, spread_expression));
-		
-		// Use member access to get getter and setter
-		get = b.member(id, b.literal(0), true);
-		set = b.member(id, b.literal(1), true);
+		const { get: getter, set: setter } = handle_spread_binding(node.expression, context.state, context.visit);
+		get = getter;
+		set = setter;
 	} else {
 		const expression = /** @type {Expression} */ (context.visit(node.expression));
 

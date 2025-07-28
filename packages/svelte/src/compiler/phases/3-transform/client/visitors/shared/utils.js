@@ -203,6 +203,25 @@ export function parse_directive_name(name) {
 }
 
 /**
+ * Handles SpreadElement by creating a variable declaration and returning getter/setter expressions
+ * @param {SpreadElement} spread_expression
+ * @param {ComponentClientTransformState} state
+ * @param {function} visit
+ * @returns {{get: Expression, set: Expression}}
+ */
+export function handle_spread_binding(spread_expression, state, visit) {
+	// Generate a unique variable name for this spread binding
+	const id = b.id(state.scope.generate('$$bindings'));
+
+	const visited_expression = /** @type {Expression} */ (visit(spread_expression.argument));
+	state.init.push(b.const(id, visited_expression));
+
+	const get = b.member(id, b.literal(0), true);
+	const set = b.member(id, b.literal(1), true);
+	return { get, set };
+}
+
+/**
  * Serializes `bind:this` for components and elements.
  * @param {Identifier | MemberExpression | SequenceExpression | SpreadElement} expression
  * @param {Expression} value
@@ -210,16 +229,7 @@ export function parse_directive_name(name) {
  */
 export function build_bind_this(expression, value, { state, visit }) {
 	if (expression.type === 'SpreadElement') {
-		// Generate a unique variable name for this spread binding
-		const id = b.id(state.scope.generate('$$bindings'));
-		
-		// Store the spread expression in a variable at the component init level
-		const spread_expression = /** @type {Expression} */ (visit(expression.argument));
-		state.init.push(b.const(id, spread_expression));
-		
-		// Use member access to get getter and setter
-		const get = b.member(id, b.literal(0), true);
-		const set = b.member(id, b.literal(1), true);
+		const { get, set } = handle_spread_binding(expression, state, visit);
 		return b.call('$.bind_this', value, set, get);
 	}
 
@@ -304,7 +314,10 @@ export function build_bind_this(expression, value, { state, visit }) {
  * @param {MemberExpression} expression
  */
 export function validate_binding(state, binding, expression) {
-	if (binding.expression.type === 'SequenceExpression' || binding.expression.type === 'SpreadElement') {
+	if (
+		binding.expression.type === 'SequenceExpression' ||
+		binding.expression.type === 'SpreadElement'
+	) {
 		return;
 	}
 	// If we are referencing a $store.foo then we don't need to add validation
