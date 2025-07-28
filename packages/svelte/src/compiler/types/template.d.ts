@@ -15,7 +15,8 @@ import type {
 	Program,
 	ChainExpression,
 	SimpleCallExpression,
-	SequenceExpression
+	SequenceExpression,
+	SpreadElement
 } from 'estree';
 import type { Scope } from '../phases/scope';
 import type { _CSS } from './css';
@@ -211,7 +212,7 @@ export namespace AST {
 		/** The 'x' in `bind:x` */
 		name: string;
 		/** The y in `bind:x={y}` */
-		expression: Identifier | MemberExpression | SequenceExpression;
+		expression: Identifier | MemberExpression | SequenceExpression | SpreadElement;
 		/** @internal */
 		metadata: {
 			binding_group_name: Identifier;

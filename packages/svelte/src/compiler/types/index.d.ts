@@ -304,6 +304,8 @@ export interface ExpressionMetadata {
 	has_member_expression: boolean;
 	/** True if the expression includes an assignment or an update */
 	has_assignment: boolean;
+	/** True if the expression includes a spread element */
+	has_spread: boolean;
 }
 
 export interface StateField {

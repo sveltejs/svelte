@@ -13,51 +13,66 @@ import { build_bind_this, validate_binding } from './shared/utils.js';
  * @param {ComponentContext} context
  */
 export function BindDirective(node, context) {
-	const expression = /** @type {Expression} */ (context.visit(node.expression));
+	let get, set;
+	
+	// Handle SpreadElement by creating a variable declaration before visiting
+	if (node.expression.type === 'SpreadElement') {
+		// Generate a unique variable name for this spread binding
+		const id = b.id(context.state.scope.generate('$$bindings'));
+		
+		// Store the spread expression in a variable at the component init level
+		const spread_expression = /** @type {Expression} */ (context.visit(node.expression.argument));
+		context.state.init.push(b.const(id, spread_expression));
+		
+		// Use member access to get getter and setter
+		get = b.member(id, b.literal(0), true);
+		set = b.member(id, b.literal(1), true);
+	} else {
+		const expression = /** @type {Expression} */ (context.visit(node.expression));
+
+		if (expression.type === 'SequenceExpression') {
+			[get, set] = expression.expressions;
+		} else {
+			if (
+				dev &&
+				context.state.analysis.runes &&
+				expression.type === 'MemberExpression' &&
+				(node.name !== 'this' ||
+					context.path.some(
+						({ type }) =>
+							type === 'IfBlock' ||
+							type === 'EachBlock' ||
+							type === 'AwaitBlock' ||
+							type === 'KeyBlock'
+					)) &&
+				!is_ignored(node, 'binding_property_non_reactive')
+			) {
+				validate_binding(context.state, node, expression);
+			}
+
+			get = b.thunk(expression);
+
+			/** @type {Expression | undefined} */
+			set = b.unthunk(
+				b.arrow(
+					[b.id('$$value')],
+					/** @type {Expression} */ (
+						context.visit(
+							b.assignment('=', /** @type {Pattern} */ (node.expression), b.id('$$value'))
+						)
+					)
+				)
+			);
+
+			if (get === set) {
+				set = undefined;
+			}
+		}
+	}
+
 	const property = binding_properties[node.name];
 
 	const parent = /** @type {AST.SvelteNode} */ (context.path.at(-1));
-
-	let get, set;
-
-	if (expression.type === 'SequenceExpression') {
-		[get, set] = expression.expressions;
-	} else {
-		if (
-			dev &&
-			context.state.analysis.runes &&
-			expression.type === 'MemberExpression' &&
-			(node.name !== 'this' ||
-				context.path.some(
-					({ type }) =>
-						type === 'IfBlock' ||
-						type === 'EachBlock' ||
-						type === 'AwaitBlock' ||
-						type === 'KeyBlock'
-				)) &&
-			!is_ignored(node, 'binding_property_non_reactive')
-		) {
-			validate_binding(context.state, node, expression);
-		}
-
-		get = b.thunk(expression);
-
-		/** @type {Expression | undefined} */
-		set = b.unthunk(
-			b.arrow(
-				[b.id('$$value')],
-				/** @type {Expression} */ (
-					context.visit(
-						b.assignment('=', /** @type {Pattern} */ (node.expression), b.id('$$value'))
-					)
-				)
-			)
-		);
-
-		if (get === set) {
-			set = undefined;
-		}
-	}
 
 	/** @type {CallExpression} */
 	let call;
@@ -222,7 +237,7 @@ export function BindDirective(node, context) {
 
 					if (value !== undefined) {
 						group_getter = b.thunk(
-							b.block([b.stmt(build_attribute_value(value, context).value), b.return(expression)])
+							b.block([b.stmt(build_attribute_value(value, context).value), b.return(get)])
 						);
 					}
 				}
