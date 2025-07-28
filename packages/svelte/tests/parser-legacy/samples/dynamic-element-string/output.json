@@ -21,7 +21,7 @@
 				"data": "\n"
 			},
 			{
-				"type": "TemplateComment",
+				"type": "Comment",
 				"start": 45,
 				"end": 69,
 				"data": " prettier-ignore ",
@@ -83,7 +83,7 @@
 				"data": "\n"
 			},
 			{
-				"type": "TemplateComment",
+				"type": "Comment",
 				"start": 162,
 				"end": 186,
 				"data": " prettier-ignore ",

@@ -165,7 +165,7 @@ export function clean_nodes(
 	const regular = [];
 
 	for (const node of nodes) {
-		if (node.type === 'TemplateComment' && !preserve_comments) {
+		if (node.type === 'Comment' && !preserve_comments) {
 			continue;
 		}
 
@@ -285,7 +285,7 @@ export function clean_nodes(
 	// and would still call node.replaceWith() on the script tag, it would be a no-op because the script tag has no parent.
 	if (trimmed.length === 1 && first.type === 'RegularElement' && first.name === 'script') {
 		trimmed.push({
-			type: 'TemplateComment',
+			type: 'Comment',
 			data: '',
 			start: -1,
 			end: -1

@@ -510,7 +510,7 @@ export function check_element(node, context) {
 		}
 		case 'figure': {
 			const children = node.fragment.nodes.filter((node) => {
-				if (node.type === 'TemplateComment') return false;
+				if (node.type === 'Comment') return false;
 				if (node.type === 'Text') return regex_not_whitespace.test(node.data);
 				return true;
 			});

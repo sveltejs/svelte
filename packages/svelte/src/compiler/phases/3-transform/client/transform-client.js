@@ -19,6 +19,7 @@ import { BlockStatement } from './visitors/BlockStatement.js';
 import { BreakStatement } from './visitors/BreakStatement.js';
 import { CallExpression } from './visitors/CallExpression.js';
 import { ClassBody } from './visitors/ClassBody.js';
+import { Comment } from './visitors/Comment.js';
 import { Component } from './visitors/Component.js';
 import { ConstTag } from './visitors/ConstTag.js';
 import { DebugTag } from './visitors/DebugTag.js';
@@ -52,7 +53,6 @@ import { SvelteBoundary } from './visitors/SvelteBoundary.js';
 import { SvelteHead } from './visitors/SvelteHead.js';
 import { SvelteSelf } from './visitors/SvelteSelf.js';
 import { SvelteWindow } from './visitors/SvelteWindow.js';
-import { TemplateComment } from './visitors/TemplateComment.js';
 import { TitleElement } from './visitors/TitleElement.js';
 import { TransitionDirective } from './visitors/TransitionDirective.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
@@ -96,6 +96,7 @@ const visitors = {
 	BreakStatement,
 	CallExpression,
 	ClassBody,
+	Comment,
 	Component,
 	ConstTag,
 	DebugTag,
@@ -129,7 +130,6 @@ const visitors = {
 	SvelteHead,
 	SvelteSelf,
 	SvelteWindow,
-	TemplateComment,
 	TitleElement,
 	TransitionDirective,
 	UpdateExpression,

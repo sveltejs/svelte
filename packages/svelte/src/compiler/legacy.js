@@ -190,7 +190,7 @@ export function convert(source, ast) {
 			ClassDirective(node) {
 				return { ...node, type: 'Class' };
 			},
-			TemplateComment(node) {
+			Comment(node) {
 				return {
 					...node,
 					ignores: extract_svelte_ignore(node.start, node.data, false)

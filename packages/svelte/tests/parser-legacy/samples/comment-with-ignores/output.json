@@ -5,7 +5,7 @@
 		"end": 31,
 		"children": [
 			{
-				"type": "TemplateComment",
+				"type": "Comment",
 				"start": 0,
 				"end": 31,
 				"data": " svelte-ignore foo, bar ",

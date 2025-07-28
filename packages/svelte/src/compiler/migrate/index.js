@@ -1362,7 +1362,7 @@ const template = {
 			);
 		}
 	},
-	TemplateComment(node, { state }) {
+	Comment(node, { state }) {
 		const migrated = migrate_svelte_ignore(node.data);
 		if (migrated !== node.data) {
 			state.str.overwrite(node.start + '<!--'.length, node.end - '-->'.length, migrated);
