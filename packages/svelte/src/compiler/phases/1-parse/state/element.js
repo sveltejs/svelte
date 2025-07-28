@@ -618,6 +618,15 @@ function read_attribute(parser) {
 			e.directive_missing_name({ start, end: start + colon_index + 1 }, name);
 		}
 
+		if (
+			type !== 'BindDirective' &&
+			value !== true &&
+			'metadata' in value &&
+			value.metadata.expression.has_spread
+		) {
+			e.directive_invalid_value(value.start);
+		}
+
 		if (type === 'StyleDirective') {
 			return {
 				start,
@@ -646,6 +655,17 @@ function read_attribute(parser) {
 				// TODO throw a parser error in a future version here if this `[ExpressionTag]` instead of `ExpressionTag`,
 				// which means stringified value, which isn't allowed for some directives?
 				expression = first_value.expression;
+				
+				// Handle spread syntax in bind directives
+				if (type === 'BindDirective' && first_value.metadata.expression.has_spread) {
+					// Create a SpreadElement to represent ...array syntax
+					expression = {
+						type: 'SpreadElement',
+						start: first_value.start,
+						end: first_value.end,
+						argument: expression
+					};
+				}
 			}
 		}
 
@@ -812,6 +832,13 @@ function read_sequence(parser, done, location) {
 			flush(parser.index - 1);
 
 			parser.allow_whitespace();
+
+			const has_spread = parser.match('...');
+			if (has_spread) {
+				parser.eat('...', true);
+				parser.allow_whitespace();
+			}
+
 			const expression = read_expression(parser);
 			parser.allow_whitespace();
 			parser.eat('}', true);
@@ -826,6 +853,8 @@ function read_sequence(parser, done, location) {
 					expression: create_expression_metadata()
 				}
 			};
+
+			chunk.metadata.expression.has_spread = has_spread;
 
 			chunks.push(chunk);
 
