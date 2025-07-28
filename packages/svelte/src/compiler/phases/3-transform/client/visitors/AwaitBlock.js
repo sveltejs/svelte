@@ -15,10 +15,9 @@ export function AwaitBlock(node, context) {
 	context.state.template.push_comment();
 
 	// Visit {#await <expression>} first to ensure that scopes are in the correct order
-	const unthunked = build_expression(context, node.expression, node.metadata.expression);
 	const expression = b.thunk(
-		unthunked,
-		context.state.options.experimental.async && is_expression_async(unthunked)
+		build_expression(context, node.expression, node.metadata.expression),
+		node.metadata.expression.has_await
 	);
 
 	let then_block;
