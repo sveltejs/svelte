@@ -31,19 +31,13 @@ const IS_CUSTOM_ELEMENT = Symbol('is custom element');
 const IS_HTML = Symbol('is html');
 
 /**
- * The value/checked attribute in the template actually corresponds to the defaultValue property,
- * so we need to remove it upon hydration to avoid a bug when someone resets the form value,
- * unless the property is presented in the spreaded objects and is handled by `set_attributes()`
+ * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need to remove
+ * it upon hydration to avoid a bug when someone resets the form value
  * @param {HTMLInputElement} input
- * @param {Record<string, any>} [spread]
  * @returns {void}
  */
-export function remove_input_defaults(input, spread) {
+export function remove_input_defaults(input) {
 	if (!hydrating) return;
-
-	if (spread && (input.type === 'checkbox' ? 'defaultChecked' : 'defaultValue') in spread) {
-		return;
-	}
 
 	var already_removed = false;
 
@@ -274,10 +268,30 @@ export function set_custom_element_data(node, prop, value) {
  * @param {Record<string | symbol, any> | undefined} prev
  * @param {Record<string | symbol, any>} next New attributes - this function mutates this object
  * @param {string} [css_hash]
+ * @param {boolean} [should_remove_defaults]
  * @param {boolean} [skip_warning]
  * @returns {Record<string, any>}
  */
-export function set_attributes(element, prev, next, css_hash, skip_warning = false) {
+export function set_attributes(
+	element,
+	prev,
+	next,
+	css_hash,
+	should_remove_defaults = false,
+	skip_warning = false
+) {
+	// prettier-ignore
+	if (
+		hydrating &&
+		should_remove_defaults &&
+		element.tagName === 'INPUT' &&
+		(/** @type {HTMLInputElement} */ (element).type === 'checkbox'
+			? !('defaultChecked' in next)
+			: !('defaultValue' in next))
+	) {
+		remove_input_defaults(/** @type {HTMLInputElement} */ (element));
+	}
+
 	var attributes = get_attributes(element);
 
 	var is_custom_element = attributes[IS_CUSTOM_ELEMENT];
@@ -471,6 +485,7 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
  * @param {string} [css_hash]
+ * @param {boolean} [should_remove_defaults]
  * @param {boolean} [skip_warning]
  */
 export function attribute_effect(
@@ -479,6 +494,7 @@ export function attribute_effect(
 	sync = [],
 	async = [],
 	css_hash,
+	should_remove_defaults = false,
 	skip_warning = false
 ) {
 	flatten(sync, async, (values) => {
@@ -494,7 +510,14 @@ export function attribute_effect(
 		block(() => {
 			var next = fn(...values.map(get));
 			/** @type {Record<string | symbol, any>} */
-			var current = set_attributes(element, prev, next, css_hash, skip_warning);
+			var current = set_attributes(
+				element,
+				prev,
+				next,
+				css_hash,
+				should_remove_defaults,
+				skip_warning
+			);
 
 			if (inited && is_select && 'value' in next) {
 				select_option(/** @type {HTMLSelectElement} */ (element), next.value);
