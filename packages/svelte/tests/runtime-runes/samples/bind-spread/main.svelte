@@ -9,9 +9,15 @@
 		}
 	];
 
-	function getBindings() {
-		console.log('getBindings');
+	function getArrayBindings() {
+		console.log('getArrayBindings');
 		return check_bindings;
+	}
+
+	function getObjectBindings() {
+		console.log('getObjectBindings');
+		const [get, set] = check_bindings;
+		return { get, set };
 	}
 </script>
 
@@ -20,5 +26,6 @@
 
 <input type="checkbox" bind:checked={...check_bindings} />
 
-<!-- <input type="checkbox" bind:checked={...check_bindings} /> -->
-<input type="checkbox" bind:checked={...getBindings()} />
+<input type="checkbox" bind:checked={...getArrayBindings()} />
+
+<input type="checkbox" bind:checked={...getObjectBindings()} />

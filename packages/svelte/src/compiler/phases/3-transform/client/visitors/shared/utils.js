@@ -9,6 +9,7 @@ import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator, component_name } from '../../../../../state.js';
 import { build_getter } from '../../utils.js';
+import { handle_spread_binding } from '../../../shared/spread_bindings.js';
 
 /**
  * A utility for extracting complex expressions (such as call expressions)
@@ -200,25 +201,6 @@ export function parse_directive_name(name) {
 	}
 
 	return expression;
-}
-
-/**
- * Handles SpreadElement by creating a variable declaration and returning getter/setter expressions
- * @param {SpreadElement} spread_expression
- * @param {ComponentClientTransformState} state
- * @param {function} visit
- * @returns {{get: Expression, set: Expression}}
- */
-export function handle_spread_binding(spread_expression, state, visit) {
-	// Generate a unique variable name for this spread binding
-	const id = b.id(state.scope.generate('$$bindings'));
-
-	const visited_expression = /** @type {Expression} */ (visit(spread_expression.argument));
-	state.init.push(b.const(id, visited_expression));
-
-	const get = b.member(id, b.literal(0), true);
-	const set = b.member(id, b.literal(1), true);
-	return { get, set };
 }
 
 /**
