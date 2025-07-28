@@ -16,7 +16,7 @@ import { is_reserved, is_rune } from '../../utils.js';
 import { determine_slot } from '../utils/slot.js';
 import { validate_identifier_name } from './2-analyze/visitors/shared/utils.js';
 
-export const UNKNOWN = Symbol('unknown');
+const UNKNOWN = Symbol('unknown');
 /** Includes `BigInt` */
 const NUMBER = Symbol('number');
 const STRING = Symbol('string');
@@ -179,6 +179,13 @@ class Evaluation {
 	 * @type {boolean}
 	 */
 	is_known = true;
+
+	/**
+	 * True if the possible values contains `UNKNOWN`
+	 * @readonly
+	 * @type {boolean}
+	 */
+	has_unknown = false;
 
 	/**
 	 * True if the value is known to not be null/undefined
@@ -539,6 +546,10 @@ class Evaluation {
 
 			if (value == null || value === UNKNOWN) {
 				this.is_defined = false;
+			}
+
+			if (value === UNKNOWN) {
+				this.has_unknown = true;
 			}
 		}
 
