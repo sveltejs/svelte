@@ -181,6 +181,13 @@ class Evaluation {
 	is_known = true;
 
 	/**
+	 * True if the possible values contains `UNKNOWN`
+	 * @readonly
+	 * @type {boolean}
+	 */
+	has_unknown = false;
+
+	/**
 	 * True if the value is known to not be null/undefined
 	 * @readonly
 	 * @type {boolean}
@@ -539,6 +546,10 @@ class Evaluation {
 
 			if (value == null || value === UNKNOWN) {
 				this.is_defined = false;
+			}
+
+			if (value === UNKNOWN) {
+				this.has_unknown = true;
 			}
 		}
 

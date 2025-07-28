@@ -247,7 +247,17 @@ export namespace AST {
 		name: string;
 		/** The 'y' in `on:x={y}` */
 		expression: null | Expression;
-		modifiers: string[]; // TODO specify
+		modifiers: Array<
+			| 'capture'
+			| 'nonpassive'
+			| 'once'
+			| 'passive'
+			| 'preventDefault'
+			| 'self'
+			| 'stopImmediatePropagation'
+			| 'stopPropagation'
+			| 'trusted'
+		>;
 		/** @internal */
 		metadata: {
 			expression: ExpressionMetadata;
