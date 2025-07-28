@@ -6,7 +6,8 @@ import { is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { binding_properties } from '../../../bindings.js';
 import { build_attribute_value } from './shared/element.js';
-import { build_bind_this, validate_binding, handle_spread_binding } from './shared/utils.js';
+import { build_bind_this, validate_binding } from './shared/utils.js';
+import { handle_spread_binding } from '../../shared/spread_bindings.js';
 
 /**
  * @param {AST.BindDirective} node
@@ -14,10 +15,14 @@ import { build_bind_this, validate_binding, handle_spread_binding } from './shar
  */
 export function BindDirective(node, context) {
 	let get, set;
-	
+
 	// Handle SpreadElement by creating a variable declaration before visiting
 	if (node.expression.type === 'SpreadElement') {
-		const { get: getter, set: setter } = handle_spread_binding(node.expression, context.state, context.visit);
+		const { get: getter, set: setter } = handle_spread_binding(
+			node.expression,
+			context.state,
+			context.visit
+		);
 		get = getter;
 		set = setter;
 	} else {
