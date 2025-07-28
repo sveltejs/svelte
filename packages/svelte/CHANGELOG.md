@@ -1,5 +1,19 @@
 # svelte
 
+## 5.37.1
+
+### Patch Changes
+
+- chore: remove some todos ([#16515](https://github.com/sveltejs/svelte/pull/16515))
+
+- fix: allow await expressions inside `{#await ...}` argument ([#16514](https://github.com/sveltejs/svelte/pull/16514))
+
+- fix: `append_styles` in an effect to make them available on mount ([#16509](https://github.com/sveltejs/svelte/pull/16509))
+
+- chore: remove `parser.template_untrimmed` ([#16511](https://github.com/sveltejs/svelte/pull/16511))
+
+- fix: always inject styles when compiling as a custom element ([#16509](https://github.com/sveltejs/svelte/pull/16509))
+
 ## 5.37.0
 
 ### Minor Changes
