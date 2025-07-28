@@ -172,7 +172,16 @@ export function RegularElement(node, context) {
 				bindings.has('group') ||
 				(!bindings.has('group') && has_value_attribute))
 		) {
-			context.state.init.push(b.stmt(b.call('$.remove_input_defaults', context.state.node)));
+			const spreads = has_spread
+				? b.object(
+						attributes
+							.filter((attr) => attr.type === 'SpreadAttribute')
+							.map((attr) => b.spread(attr.expression))
+					)
+				: null;
+			context.state.init.push(
+				b.stmt(b.call('$.remove_input_defaults', context.state.node, spreads))
+			);
 		}
 	}
 

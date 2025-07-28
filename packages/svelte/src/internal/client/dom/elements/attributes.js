@@ -31,13 +31,19 @@ const IS_CUSTOM_ELEMENT = Symbol('is custom element');
 const IS_HTML = Symbol('is html');
 
 /**
- * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
- * to remove it upon hydration to avoid a bug when someone resets the form value.
+ * The value/checked attribute in the template actually corresponds to the defaultValue property,
+ * so we need to remove it upon hydration to avoid a bug when someone resets the form value,
+ * unless the property is presented in the spreaded objects and is handled by `set_attributes()`
  * @param {HTMLInputElement} input
+ * @param {Record<string, any>} [spread]
  * @returns {void}
  */
-export function remove_input_defaults(input) {
+export function remove_input_defaults(input, spread) {
 	if (!hydrating) return;
+
+	if (spread && (input.type === 'checkbox' ? 'defaultChecked' : 'defaultValue') in spread) {
+		return;
+	}
 
 	var already_removed = false;
 
