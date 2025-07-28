@@ -28,4 +28,6 @@
 
 <input type="checkbox" bind:checked={...getArrayBindings()} />
 
+<input type="checkbox" bind:checked={...(() => check_bindings)()} />
+
 <input type="checkbox" bind:checked={...getObjectBindings()} />
