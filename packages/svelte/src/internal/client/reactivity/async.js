@@ -150,6 +150,7 @@ export async function* for_await_track_reactivity_loss(async_iterator) {
 	} finally {
 		// If the iterator had a normal completion and `return` is defined on the iterator, call it and return the value
 		if (normal_completion && async_iterator.return !== undefined) {
+			// eslint-disable-next-line no-unsafe-finally
 			return /** @type {TReturn} */ (
 				(await track_reactivity_loss(async_iterator.return()))().value
 			);
