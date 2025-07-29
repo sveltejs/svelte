@@ -218,16 +218,16 @@ export function export_default(declaration) {
  * @param {ESTree.VariableDeclaration | ESTree.Pattern} left
  * @param {ESTree.Expression} right
  * @param {ESTree.Statement} body
- * @param {boolean} [await]
+ * @param {boolean} [_await]
  * @returns {ESTree.ForOfStatement}
  */
-export function for_of(left, right, body, await = false) {
+export function for_of(left, right, body, _await = false) {
 	return {
 		type: 'ForOfStatement',
 		left,
 		right,
 		body,
-		await
+		await: _await
 	};
 }
 
