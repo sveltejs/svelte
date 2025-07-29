@@ -158,13 +158,11 @@ export function BindDirective(node, context) {
 		return;
 	}
 
-	// Handle spread syntax for bind directives: bind:value={...bindings}
 	if (node.expression.type === 'SpreadElement') {
 		if (node.name === 'group') {
 			e.bind_group_invalid_expression(node);
 		}
 
-		// Validate that the spread is applied to a valid expression that returns an array
 		const argument = node.expression.argument;
 		if (
 			argument.type !== 'Identifier' &&
