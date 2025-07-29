@@ -1,15 +1,13 @@
 /** @import { Expression, SpreadElement } from 'estree' */
-/** @import { Context } from 'zimmerframe' */
-/** @import { ComponentClientTransformState } from '../client/types.js' */
-/** @import { ComponentServerTransformState } from '../server/types.js' */
-/** @import { AST } from '#compiler' */
+/** @import { ComponentContext as ClientContext } from '../client/types.js' */
+/** @import { ComponentContext as ServerContext } from '../server/types.js' */
 import * as b from '#compiler/builders';
 import { dev, source } from '../../../state.js';
 
 /**
  * Initializes spread bindings for a SpreadElement in a bind directive.
  * @param {SpreadElement} spread_expression
- * @param {Context<AST.SvelteNode, ComponentClientTransformState> | Context<AST.SvelteNode, ComponentServerTransformState>} context
+ * @param {ClientContext | ServerContext} context
  * @returns {{ get: Expression, set: Expression }}
  */
 export function init_spread_bindings(spread_expression, { state, visit }) {
