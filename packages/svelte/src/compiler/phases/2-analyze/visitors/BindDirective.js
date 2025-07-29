@@ -167,8 +167,8 @@ export function BindDirective(node, context) {
 		// Validate that the spread is applied to a valid expression that returns an array
 		const argument = node.expression.argument;
 		if (
-			argument.type !== 'Identifier' && 
-			argument.type !== 'MemberExpression' && 
+			argument.type !== 'Identifier' &&
+			argument.type !== 'MemberExpression' &&
 			argument.type !== 'CallExpression'
 		) {
 			e.bind_invalid_expression(node);

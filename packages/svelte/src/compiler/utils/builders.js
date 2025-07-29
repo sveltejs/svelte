@@ -649,13 +649,13 @@ function return_builder(argument = null) {
 }
 
 /**
- * @param {string} str
+ * @param {string | ESTree.TemplateLiteral} str
  * @returns {ESTree.ThrowStatement}
  */
 export function throw_error(str) {
 	return {
 		type: 'ThrowStatement',
-		argument: new_builder('Error', literal(str))
+		argument: new_builder('Error', typeof str === 'string' ? literal(str) : str)
 	};
 }
 

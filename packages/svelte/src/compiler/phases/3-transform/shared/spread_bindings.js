@@ -1,49 +1,32 @@
-/** @import { CallExpression, Expression, SpreadElement, Super } from 'estree' */
+/** @import { Expression, SpreadElement } from 'estree' */
+/** @import { Context } from 'zimmerframe' */
 /** @import { ComponentClientTransformState } from '../client/types.js' */
 /** @import { ComponentServerTransformState } from '../server/types.js' */
+/** @import { AST } from '#compiler' */
 import * as b from '#compiler/builders';
+import { dev, source } from '../../../state.js';
 
 /**
- * Handles SpreadElement by creating a variable declaration and returning getter/setter expressions
+ * Initializes spread bindings for a SpreadElement in a bind directive.
  * @param {SpreadElement} spread_expression
- * @param {ComponentClientTransformState | ComponentServerTransformState} state
- * @param {function} visit
- * @returns {{get: Expression, set: Expression}}
+ * @param {Context<AST.SvelteNode, ComponentClientTransformState> | Context<AST.SvelteNode, ComponentServerTransformState>} context
+ * @returns {{ get: Expression, set: Expression }}
  */
-export function handle_spread_binding(spread_expression, state, visit) {
-	// Generate a unique variable name for this spread binding
-	const id = b.id(state.scope.generate('$$bindings'));
-
+export function init_spread_bindings(spread_expression, { state, visit }) {
 	const visited_expression = /** @type {Expression} */ (visit(spread_expression.argument));
-	state.init.push(b.const(id, visited_expression));
+	const expression_text = dev
+		? b.literal(source.slice(spread_expression.argument.start, spread_expression.argument.end))
+		: undefined;
 
-	const noop = b.arrow([], b.block([]));
-
-	// Generate helper variables for clearer error messages
-	const get = b.id(state.scope.generate(id.name + '_get'));
-	const set = b.id(state.scope.generate(id.name + '_set'));
-
-	const getter = b.logical(
-		'??',
-		b.conditional(
-			b.call('Array.isArray', id),
-			b.member(id, b.literal(0), true),
-			b.member(id, b.id('get'))
-		),
-		noop
+	const id = state.scope.generate('$$spread_binding');
+	const get = b.id(id + '_get');
+	const set = b.id(id + '_set');
+	state.init.push(
+		b.const(
+			b.array_pattern([get, set]),
+			b.call('$.validate_spread_bindings', visited_expression, expression_text)
+		)
 	);
-	const setter = b.logical(
-		'??',
-		b.conditional(
-			b.call('Array.isArray', id),
-			b.member(id, b.literal(1), true),
-			b.member(id, b.id('set'))
-		),
-		noop
-	);
-
-	state.init.push(b.const(get, getter));
-	state.init.push(b.const(set, setter));
 
 	return { get, set };
 }

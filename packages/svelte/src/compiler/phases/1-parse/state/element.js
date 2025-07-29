@@ -1,4 +1,4 @@
-/** @import { Expression } from 'estree' */
+/** @import { Expression, SpreadElement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import { is_void } from '../../../../utils.js';
@@ -643,7 +643,7 @@ function read_attribute(parser) {
 
 		const first_value = value === true ? undefined : Array.isArray(value) ? value[0] : value;
 
-		/** @type {Expression | null} */
+		/** @type {Expression | SpreadElement | null} */
 		let expression = null;
 
 		if (first_value) {
@@ -655,10 +655,8 @@ function read_attribute(parser) {
 				// TODO throw a parser error in a future version here if this `[ExpressionTag]` instead of `ExpressionTag`,
 				// which means stringified value, which isn't allowed for some directives?
 				expression = first_value.expression;
-				
-				// Handle spread syntax in bind directives
+
 				if (type === 'BindDirective' && first_value.metadata.expression.has_spread) {
-					// Create a SpreadElement to represent ...array syntax
 					expression = {
 						type: 'SpreadElement',
 						start: first_value.start,
