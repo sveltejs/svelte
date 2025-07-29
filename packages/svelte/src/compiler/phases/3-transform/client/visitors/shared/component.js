@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, Statement, SpreadElement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
@@ -8,6 +8,7 @@ import { add_svelte_meta, build_bind_this, Memoizer, validate_binding } from '..
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
+import { init_spread_bindings } from '../../../shared/spread_bindings.js';
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
@@ -48,7 +49,7 @@ export function build_component(node, component_name, context) {
 	/** @type {Property[]} */
 	const custom_css_props = [];
 
-	/** @type {Identifier | MemberExpression | SequenceExpression | null} */
+	/** @type {Identifier | MemberExpression | SequenceExpression | SpreadElement | null} */
 	let bind_this = null;
 
 	/** @type {ExpressionStatement[]} */
@@ -196,84 +197,100 @@ export function build_component(node, component_name, context) {
 				push_prop(b.init(attribute.name, value));
 			}
 		} else if (attribute.type === 'BindDirective') {
-			const expression = /** @type {Expression} */ (context.visit(attribute.expression));
+			if (attribute.expression.type === 'SpreadElement') {
+				const { get, set } = init_spread_bindings(attribute.expression, context);
 
-			if (
-				dev &&
-				attribute.name !== 'this' &&
-				!is_ignored(node, 'ownership_invalid_binding') &&
-				// bind:x={() => x.y, y => x.y = y} will be handled by the assignment expression binding validation
-				attribute.expression.type !== 'SequenceExpression'
-			) {
-				const left = object(attribute.expression);
-				const binding = left && context.state.scope.get(left.name);
-
-				if (binding?.kind === 'bindable_prop' || binding?.kind === 'prop') {
-					context.state.analysis.needs_mutation_validation = true;
-					binding_initializers.push(
-						b.stmt(
-							b.call(
-								'$$ownership_validator.binding',
-								b.literal(binding.node.name),
-								b.id(is_component_dynamic ? intermediate_name : component_name),
-								b.thunk(expression)
-							)
-						)
-					);
-				}
-			}
-
-			if (expression.type === 'SequenceExpression') {
 				if (attribute.name === 'this') {
 					bind_this = attribute.expression;
 				} else {
-					const [get, set] = expression.expressions;
-					const get_id = b.id(context.state.scope.generate('bind_get'));
-					const set_id = b.id(context.state.scope.generate('bind_set'));
-
-					context.state.init.push(b.var(get_id, get));
-					context.state.init.push(b.var(set_id, set));
-
-					push_prop(b.get(attribute.name, [b.return(b.call(get_id))]));
-					push_prop(b.set(attribute.name, [b.stmt(b.call(set_id, b.id('$$value')))]));
+					push_prop(b.get(attribute.name, [b.return(b.call(get))]), true);
+					push_prop(b.set(attribute.name, [b.stmt(b.call(set, b.id('$$value')))]), true);
 				}
 			} else {
+				const expression = /** @type {Expression} */ (context.visit(attribute.expression));
+
 				if (
 					dev &&
-					expression.type === 'MemberExpression' &&
-					context.state.analysis.runes &&
-					!is_ignored(node, 'binding_property_non_reactive')
+					attribute.name !== 'this' &&
+					!is_ignored(node, 'ownership_invalid_binding') &&
+					// bind:x={() => x.y, y => x.y = y} will be handled by the assignment expression binding validation
+					attribute.expression.type !== 'SequenceExpression'
 				) {
-					validate_binding(context.state, attribute, expression);
+					const left = object(attribute.expression);
+					const binding = left && context.state.scope.get(left.name);
+
+					if (binding?.kind === 'bindable_prop' || binding?.kind === 'prop') {
+						context.state.analysis.needs_mutation_validation = true;
+						binding_initializers.push(
+							b.stmt(
+								b.call(
+									'$$ownership_validator.binding',
+									b.literal(binding.node.name),
+									b.id(is_component_dynamic ? intermediate_name : component_name),
+									b.thunk(expression)
+								)
+							)
+						);
+					}
 				}
 
-				if (attribute.name === 'this') {
-					bind_this = attribute.expression;
-				} else {
-					const is_store_sub =
-						attribute.expression.type === 'Identifier' &&
-						context.state.scope.get(attribute.expression.name)?.kind === 'store_sub';
-
-					// Delay prop pushes so bindings come at the end, to avoid spreads overwriting them
-					if (is_store_sub) {
-						push_prop(
-							b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)]),
-							true
-						);
+				if (expression.type === 'SequenceExpression') {
+					if (attribute.name === 'this') {
+						bind_this = attribute.expression;
 					} else {
-						push_prop(b.get(attribute.name, [b.return(expression)]), true);
+						const [get, set] = expression.expressions;
+						const get_id = b.id(context.state.scope.generate('bind_get'));
+						const set_id = b.id(context.state.scope.generate('bind_set'));
+
+						context.state.init.push(b.var(get_id, get));
+						context.state.init.push(b.var(set_id, set));
+
+						push_prop(b.get(attribute.name, [b.return(b.call(get_id))]));
+						push_prop(b.set(attribute.name, [b.stmt(b.call(set_id, b.id('$$value')))]));
+					}
+				} else {
+					if (
+						dev &&
+						expression.type === 'MemberExpression' &&
+						context.state.analysis.runes &&
+						!is_ignored(node, 'binding_property_non_reactive')
+					) {
+						validate_binding(context.state, attribute, expression);
 					}
 
-					const assignment = b.assignment(
-						'=',
-						/** @type {Pattern} */ (attribute.expression),
-						b.id('$$value')
-					);
+					if (attribute.name === 'this') {
+						bind_this = attribute.expression;
+					} else {
+						const is_store_sub =
+							attribute.expression.type === 'Identifier' &&
+							context.state.scope.get(attribute.expression.name)?.kind === 'store_sub';
 
-					push_prop(
-						b.set(attribute.name, [b.stmt(/** @type {Expression} */ (context.visit(assignment)))]),
-						true
-					);
+						// Delay prop pushes so bindings come at the end, to avoid spreads overwriting them
+						if (is_store_sub) {
+							push_prop(
+								b.get(attribute.name, [
+									b.stmt(b.call('$.mark_store_binding')),
+									b.return(expression)
+								]),
+								true
+							);
+						} else {
+							push_prop(b.get(attribute.name, [b.return(expression)]), true);
+						}
+
+						const assignment = b.assignment(
+							'=',
+							/** @type {Pattern} */ (attribute.expression),
+							b.id('$$value')
+						);
+
+						push_prop(
+							b.set(attribute.name, [
+								b.stmt(/** @type {Expression} */ (context.visit(assignment)))
+							]),
+							true
+						);
+					}
 				}
 			}
 		} else if (attribute.type === 'AttachTag') {
