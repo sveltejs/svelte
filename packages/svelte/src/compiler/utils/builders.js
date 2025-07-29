@@ -215,6 +215,23 @@ export function export_default(declaration) {
 }
 
 /**
+ * @param {ESTree.VariableDeclaration | ESTree.Pattern} left
+ * @param {ESTree.Expression} right
+ * @param {ESTree.Statement} body
+ * @param {boolean} [await]
+ * @returns {ESTree.ForOfStatement}
+ */
+export function for_of(left, right, body, await = false) {
+	return {
+		type: 'ForOfStatement',
+		left,
+		right,
+		body,
+		await
+	};
+}
+
+/**
  * @param {ESTree.Identifier} id
  * @param {ESTree.Pattern[]} params
  * @param {ESTree.BlockStatement} body

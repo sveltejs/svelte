@@ -119,6 +119,44 @@ export async function track_reactivity_loss(promise) {
 	};
 }
 
+/**
+ * Used in `for await` loops in DEV, so
+ * that we can emit `await_reactivity_loss` warnings
+ * after each `async_iterator` result resolves and
+ * after the `async_iterator` return resolves (if it runs)
+ * @template T
+ * @template TReturn
+ * @param {AsyncIterator<T, TReturn>} async_iterator
+ * @returns {AsyncGenerator<T, TReturn | undefined>}
+ */
+export async function* for_await_track_reactivity_loss(async_iterator) {
+	// This is based on the algorithms described in ECMA-262:
+	// ForIn/OfBodyEvaluation
+	// https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#sec-runtime-semantics-forin-div-ofbodyevaluation-lhs-stmt-iterator-lhskind-labelset
+	// AsyncIteratorClose
+	// https://tc39.es/ecma262/multipage/abstract-operations.html#sec-asynciteratorclose
+
+	/** Whether the completion of the iterator was "normal", meaning it wasn't ended via `break` or a similar method */
+	let normal_completion = false;
+	try {
+		while (true) {
+			const { done, value } = (await track_reactivity_loss(async_iterator.next()))();
+			if (done) {
+				normal_completion = true;
+				break;
+			}
+			yield value;
+		}
+	} finally {
+		// If the iterator had a normal completion and `return` is defined on the iterator, call it and return the value
+		if (normal_completion && async_iterator.return !== undefined) {
+			return /** @type {TReturn} */ (
+				(await track_reactivity_loss(async_iterator.return()))().value
+			);
+		}
+	}
+}
+
 export function unset_context() {
 	set_active_effect(null);
 	set_active_reaction(null);

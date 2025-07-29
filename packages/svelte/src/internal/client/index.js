@@ -98,7 +98,11 @@ export {
 	props_id,
 	with_script
 } from './dom/template.js';
-export { save, track_reactivity_loss } from './reactivity/async.js';
+export {
+	for_await_track_reactivity_loss,
+	save,
+	track_reactivity_loss
+} from './reactivity/async.js';
 export { flushSync as flush, suspend } from './reactivity/batch.js';
 export {
 	async_derived,
