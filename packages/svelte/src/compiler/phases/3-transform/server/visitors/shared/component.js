@@ -5,6 +5,7 @@ import { empty_comment, build_attribute_value } from './utils.js';
 import * as b from '#compiler/builders';
 import { is_element_node } from '../../../../nodes.js';
 import { dev } from '../../../../../state.js';
+import { init_spread_bindings } from '../../../shared/spread_bindings.js';
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
@@ -93,7 +94,17 @@ export function build_inline_component(node, expression, context) {
 			const value = build_attribute_value(attribute.value, context, false, true);
 			push_prop(b.prop('init', b.key(attribute.name), value));
 		} else if (attribute.type === 'BindDirective' && attribute.name !== 'this') {
-			if (attribute.expression.type === 'SequenceExpression') {
+			if (attribute.expression.type === 'SpreadElement') {
+				const { get, set } = init_spread_bindings(attribute.expression, context);
+
+				push_prop(b.get(attribute.name, [b.return(b.call(get))]));
+				push_prop(
+					b.set(attribute.name, [
+						b.stmt(b.call(set, b.id('$$value'))),
+						b.stmt(b.assignment('=', b.id('$$settled'), b.false))
+					])
+				);
+			} else if (attribute.expression.type === 'SequenceExpression') {
 				const [get, set] = /** @type {SequenceExpression} */ (context.visit(attribute.expression))
 					.expressions;
 				const get_id = b.id(context.state.scope.generate('bind_get'));
