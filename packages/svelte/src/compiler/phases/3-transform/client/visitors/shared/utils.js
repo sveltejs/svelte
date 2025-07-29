@@ -9,7 +9,7 @@ import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator, component_name } from '../../../../../state.js';
 import { build_getter } from '../../utils.js';
-import { handle_spread_binding } from '../../../shared/spread_bindings.js';
+import { init_spread_bindings } from '../../../shared/spread_bindings.js';
 
 /**
  * A utility for extracting complex expressions (such as call expressions)
@@ -209,9 +209,10 @@ export function parse_directive_name(name) {
  * @param {Expression} value
  * @param {import('zimmerframe').Context<AST.SvelteNode, ComponentClientTransformState>} context
  */
-export function build_bind_this(expression, value, { state, visit }) {
+export function build_bind_this(expression, value, context) {
+	const { state, visit } = context;
 	if (expression.type === 'SpreadElement') {
-		const { get, set } = handle_spread_binding(expression, state, visit);
+		const { get, set } = init_spread_bindings(expression, context);
 		return b.call('$.bind_this', value, set, get);
 	}
 

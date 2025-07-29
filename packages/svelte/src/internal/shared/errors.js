@@ -115,3 +115,20 @@ export function svelte_element_invalid_this_value() {
 		throw new Error(`https://svelte.dev/e/svelte_element_invalid_this_value`);
 	}
 }
+
+/**
+ * `%name%%member%` must be a function or `undefined`
+ * @param {string} name
+ * @returns {never}
+ */
+export function invalid_spread_bindings(name) {
+	if (DEV) {
+		const error = new Error(`invalid_spread_bindings\n\`${name}\` must be a function or \`undefined\`\nhttps://svelte.dev/e/invalid_spread_bindings`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/invalid_spread_bindings`);
+	}
+}
