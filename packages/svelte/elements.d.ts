@@ -465,6 +465,13 @@ export interface DOMAttributes<T extends EventTarget> {
 	onfullscreenerrorcapture?: EventHandler<Event, T> | undefined | null;
 
 	xmlns?: string | undefined | null;
+
+	readonly 'bind:contentRect'?: DOMRectReadOnly | undefined | null;
+	readonly 'bind:contentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
+	readonly 'bind:borderBoxSize'?: Array<ResizeObserverSize> | undefined | null;
+	readonly 'bind:devicePixelContentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
+	readonly 'bind:clientWidth'?: number | undefined | null;
+	readonly 'bind:clientHeight'?: number | undefined | null;
 }
 
 // All the WAI-ARIA 1.1 attributes from https://www.w3.org/TR/wai-aria-1.1/
@@ -839,13 +846,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	 */
 	'bind:innerText'?: string | undefined | null;
 
-	readonly 'bind:contentRect'?: DOMRectReadOnly | undefined | null;
-	readonly 'bind:contentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
-	readonly 'bind:borderBoxSize'?: Array<ResizeObserverSize> | undefined | null;
-	readonly 'bind:devicePixelContentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
 	readonly 'bind:focused'?: boolean | undefined | null;
-	readonly 'bind:clientWidth'?: number | undefined | null;
-	readonly 'bind:clientHeight'?: number | undefined | null;
 	readonly 'bind:offsetWidth'?: number | undefined | null;
 	readonly 'bind:offsetHeight'?: number | undefined | null;
 
