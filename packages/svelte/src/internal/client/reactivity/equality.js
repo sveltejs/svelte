@@ -1,9 +1,9 @@
 /** @import { Equals } from '#client' */
 
 /** @type {Equals} */
-export const equals = function (value) {
+export function equals(value) {
 	return value === this.v;
-};
+}
 
 /**
  * @param {unknown} a
@@ -26,6 +26,6 @@ export function not_equal(a, b) {
 }
 
 /** @type {Equals} */
-export const safe_equals = function (value) {
+export function safe_equals(value) {
 	return !safe_not_equal(value, this.v);
-};
+}
