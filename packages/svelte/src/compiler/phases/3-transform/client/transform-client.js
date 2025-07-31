@@ -26,8 +26,8 @@ import { DebugTag } from './visitors/DebugTag.js';
 import { EachBlock } from './visitors/EachBlock.js';
 import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
 import { ExpressionStatement } from './visitors/ExpressionStatement.js';
-import { Fragment } from './visitors/Fragment.js';
 import { ForOfStatement } from './visitors/ForOfStatement.js';
+import { Fragment } from './visitors/Fragment.js';
 import { FunctionDeclaration } from './visitors/FunctionDeclaration.js';
 import { FunctionExpression } from './visitors/FunctionExpression.js';
 import { HtmlTag } from './visitors/HtmlTag.js';
@@ -104,8 +104,8 @@ const visitors = {
 	EachBlock,
 	ExportNamedDeclaration,
 	ExpressionStatement,
-	Fragment,
 	ForOfStatement,
+	Fragment,
 	FunctionDeclaration,
 	FunctionExpression,
 	HtmlTag,
