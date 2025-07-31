@@ -141,12 +141,7 @@ export function delegate(events) {
 	}
 }
 
-// used to store the reference to the currently propagated event
-// to prevent garbage collection between microtasks in Firefox
-// If the event object is GCed too early, the expando __root property
-// set on the event object is lost, causing the event delegation
-// to process the event twice
-let last_propagated_event = null;
+let event_propagation_root = new WeakMap();
 
 /**
  * @this {EventTarget}
@@ -160,16 +155,13 @@ export function handle_event_propagation(event) {
 	var path = event.composedPath?.() || [];
 	var current_target = /** @type {null | Element} */ (path[0] || event.target);
 
-	last_propagated_event = event;
-
 	// composedPath contains list of nodes the event has propagated through.
-	// We check __root to skip all nodes below it in case this is a
-	// parent of the __root node, which indicates that there's nested
+	// We check to skip all nodes below it in case this is a
+	// parent of the event_propagation_root node, which indicates that there's nested
 	// mounted apps. In this case we don't want to trigger events multiple times.
 	var path_idx = 0;
 
-	// @ts-expect-error is added below
-	var handled_at = event.__root;
+	var handled_at = event_propagation_root.get(event);
 
 	if (handled_at) {
 		var at_idx = path.indexOf(handled_at);
@@ -180,8 +172,7 @@ export function handle_event_propagation(event) {
 			// This is the fallback document listener or a window listener, but the event was already handled
 			// -> ignore, but set handle_at to document/window so that we're resetting the event
 			// chain in case someone manually dispatches the same event object again.
-			// @ts-expect-error
-			event.__root = handler_element;
+			event_propagation_root.set(event, handler_element);
 			return;
 		}
 
@@ -285,8 +276,7 @@ export function handle_event_propagation(event) {
 			throw throw_error;
 		}
 	} finally {
-		// @ts-expect-error is used above
-		event.__root = handler_element;
+		event_propagation_root.set(event, handler_element);
 		// @ts-ignore remove proxy on currentTarget
 		delete event.currentTarget;
 		set_active_reaction(previous_reaction);
