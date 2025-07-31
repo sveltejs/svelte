@@ -57,10 +57,7 @@ export function ClassBody(node, context) {
 				e.state_field_duplicate(node, name);
 			}
 
-			const _key =
-				(node.type === 'AssignmentExpression' || !node.static ? '' : '@') +
-				(key.type === 'PrivateIdentifier' ? '#' : '') +
-				name;
+			const _key = (node.type === 'AssignmentExpression' || !node.static ? '' : '@') + name;
 			const field = fields.get(_key);
 
 			// if there's already a method or assigned field, error
@@ -81,7 +78,7 @@ export function ClassBody(node, context) {
 	for (const child of node.body) {
 		if (child.type === 'PropertyDefinition' && !child.computed && !child.static) {
 			handle(child, child.key, child.value);
-			const key = (child.key.type === 'PrivateIdentifier' ? '#' : '') + get_name(child.key);
+			const key = /** @type {string} */ (get_name(child.key));
 			const field = fields.get(key);
 			if (!field) {
 				fields.set(key, [child.value ? 'assigned_prop' : 'prop']);
@@ -94,10 +91,7 @@ export function ClassBody(node, context) {
 			if (child.kind === 'constructor') {
 				constructor = child;
 			} else if (!child.computed) {
-				const key =
-					(child.static ? '@' : '') +
-					(child.key.type === 'PrivateIdentifier' ? '#' : '') +
-					get_name(child.key);
+				const key = (child.static ? '@' : '') + get_name(child.key);
 				const field = fields.get(key);
 				if (!field) {
 					fields.set(key, [child.kind]);
