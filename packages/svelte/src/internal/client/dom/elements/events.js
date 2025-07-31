@@ -146,6 +146,7 @@ export function delegate(events) {
 // If the event object is GCed too early, the expando __root property
 // set on the event object is lost, causing the event delegation
 // to process the event twice
+/** @type {Event | null} */
 let last_propagated_event = null;
 
 /**
@@ -182,6 +183,7 @@ export function handle_event_propagation(event) {
 			// chain in case someone manually dispatches the same event object again.
 			// @ts-expect-error
 			event.__root = handler_element;
+			last_propagated_event = null;
 			return;
 		}
 
