@@ -787,14 +787,13 @@ export function analyze_component(root, source, options) {
 		if (node.type === 'ExportNamedDeclaration' && node.specifiers !== null && node.source == null) {
 			for (const specifier of node.specifiers) {
 				if (specifier.local.type !== 'Identifier') continue;
-
-				const binding = analysis.module.scope.get(specifier.local.name);
+				const name = specifier.local.name;
+				const binding = analysis.module.scope.get(name);
 				if (!binding) {
-					const template_binding = analysis.template.scope.get(specifier.local.name);
-					if (template_binding?.kind === 'snippet') {
+					if ([...analysis.snippets].find((snippet) => snippet.expression.name === name)) {
 						e.snippet_invalid_export(specifier);
 					} else {
-						e.export_undefined(specifier, specifier.local.name);
+						e.export_undefined(specifier, name);
 					}
 				}
 			}
