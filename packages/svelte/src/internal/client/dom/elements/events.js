@@ -168,8 +168,11 @@ export function handle_event_propagation(event) {
 	// mounted apps. In this case we don't want to trigger events multiple times.
 	var path_idx = 0;
 
+	// the `last_propagated_event === event` check is redundant, but
+	// without it the variable will be DCE'd and things will
+	// fail mysteriously in Firefox
 	// @ts-expect-error is added below
-	var handled_at = event.__root;
+	var handled_at = last_propagated_event === event && event.__root;
 
 	if (handled_at) {
 		var at_idx = path.indexOf(handled_at);
