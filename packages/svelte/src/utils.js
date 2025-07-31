@@ -452,7 +452,7 @@ const RUNES = /** @type {const} */ ([
 	'$host'
 ]);
 
-/** @typedef {RUNES[number]} RuneName */
+/** @typedef {typeof RUNES[number]} RuneName */
 
 /**
  * @param {string} name
@@ -462,7 +462,7 @@ export function is_rune(name) {
 	return RUNES.includes(/** @type {RuneName} */ (name));
 }
 
-/** @typedef {STATE_CREATION_RUNES[number]} StateCreationRuneName */
+/** @typedef {typeof STATE_CREATION_RUNES[number]} StateCreationRuneName */
 
 /**
  * @param {string} name
@@ -477,7 +477,7 @@ const RAW_TEXT_ELEMENTS = /** @type {const} */ (['textarea', 'script', 'style', 
 
 /** @param {string} name */
 export function is_raw_text_element(name) {
-	return RAW_TEXT_ELEMENTS.includes(/** @type {RAW_TEXT_ELEMENTS[number]} */ (name));
+	return RAW_TEXT_ELEMENTS.includes(/** @type {typeof RAW_TEXT_ELEMENTS[number]} */ (name));
 }
 
 /**

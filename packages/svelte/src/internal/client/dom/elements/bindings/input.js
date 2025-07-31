@@ -245,6 +245,7 @@ export function bind_checked(input, get, set = get) {
  * @returns {V[]}
  */
 function get_binding_group_value(group, __value, checked) {
+	/** @type {Set<V>} */
 	var value = new Set();
 
 	for (var i = 0; i < group.length; i += 1) {

@@ -22,7 +22,7 @@ const NUMBER = Symbol('number');
 const STRING = Symbol('string');
 const FUNCTION = Symbol('string');
 
-/** @type {Record<string, [type: NUMBER | STRING | UNKNOWN, fn?: Function]>} */
+/** @type {Record<string, [type: typeof NUMBER | typeof  STRING | typeof  UNKNOWN, fn?: Function]>} */
 const globals = {
 	BigInt: [NUMBER],
 	'Math.min': [NUMBER, Math.min],

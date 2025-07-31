@@ -64,7 +64,7 @@ export function hmr(original, get_source) {
 	// @ts-expect-error
 	wrapper[FILENAME] = original[FILENAME];
 
-	// @ts-expect-error
+	// @ts-ignore
 	wrapper[HMR] = {
 		// When we accept an update, we set the original source to the new component
 		original,
