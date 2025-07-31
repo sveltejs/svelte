@@ -790,8 +790,8 @@ export function analyze_component(root, source, options) {
 
 				const binding = analysis.module.scope.get(specifier.local.name);
 				if (!binding) {
-					const instance_binding = analysis.instance.scope.get(specifier.local.name);
-					if (instance_binding?.kind === 'snippet') {
+					const template_binding = analysis.template.scope.get(specifier.local.name);
+					if (template_binding?.kind === 'snippet') {
 						e.snippet_invalid_export(specifier);
 					} else {
 						e.export_undefined(specifier, specifier.local.name);
