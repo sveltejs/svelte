@@ -141,6 +141,13 @@ export function delegate(events) {
 	}
 }
 
+// used to store the reference to the currently propagated event
+// to prevent garbage collection between microtasks in Firefox
+// If the event object is GCed too early, the expando __root property
+// set on the event object is lost, causing the event delegation
+// to process the event twice
+let last_propagated_event = null;
+
 /**
  * @this {EventTarget}
  * @param {Event} event
@@ -152,6 +159,8 @@ export function handle_event_propagation(event) {
 	var event_name = event.type;
 	var path = event.composedPath?.() || [];
 	var current_target = /** @type {null | Element} */ (path[0] || event.target);
+
+	last_propagated_event = event;
 
 	// composedPath contains list of nodes the event has propagated through.
 	// We check __root to skip all nodes below it in case this is a
