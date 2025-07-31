@@ -143,7 +143,7 @@ export function delegate(events) {
 
 // used to store the reference to the currently propagated event
 // to prevent garbage collection between microtasks in Firefox
-// If the event object is GCed to early, the expando __root property
+// If the event object is GCed too early, the expando __root property
 // set on the event object is lost, causing the event delegation
 // to process the event twice
 let last_propagated_event = null;
