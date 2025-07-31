@@ -464,14 +464,15 @@ export interface DOMAttributes<T extends EventTarget> {
 	onfullscreenerror?: EventHandler<Event, T> | undefined | null;
 	onfullscreenerrorcapture?: EventHandler<Event, T> | undefined | null;
 
-	xmlns?: string | undefined | null;
-
+	// Dimensions
 	readonly 'bind:contentRect'?: DOMRectReadOnly | undefined | null;
 	readonly 'bind:contentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
 	readonly 'bind:borderBoxSize'?: Array<ResizeObserverSize> | undefined | null;
 	readonly 'bind:devicePixelContentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
 	readonly 'bind:clientWidth'?: number | undefined | null;
 	readonly 'bind:clientHeight'?: number | undefined | null;
+
+	xmlns?: string | undefined | null;
 }
 
 // All the WAI-ARIA 1.1 attributes from https://www.w3.org/TR/wai-aria-1.1/
