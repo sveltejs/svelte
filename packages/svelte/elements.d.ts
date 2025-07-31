@@ -464,6 +464,14 @@ export interface DOMAttributes<T extends EventTarget> {
 	onfullscreenerror?: EventHandler<Event, T> | undefined | null;
 	onfullscreenerrorcapture?: EventHandler<Event, T> | undefined | null;
 
+	// Dimensions
+	readonly 'bind:contentRect'?: DOMRectReadOnly | undefined | null;
+	readonly 'bind:contentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
+	readonly 'bind:borderBoxSize'?: Array<ResizeObserverSize> | undefined | null;
+	readonly 'bind:devicePixelContentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
+	readonly 'bind:clientWidth'?: number | undefined | null;
+	readonly 'bind:clientHeight'?: number | undefined | null;
+
 	xmlns?: string | undefined | null;
 }
 
@@ -839,13 +847,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	 */
 	'bind:innerText'?: string | undefined | null;
 
-	readonly 'bind:contentRect'?: DOMRectReadOnly | undefined | null;
-	readonly 'bind:contentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
-	readonly 'bind:borderBoxSize'?: Array<ResizeObserverSize> | undefined | null;
-	readonly 'bind:devicePixelContentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
 	readonly 'bind:focused'?: boolean | undefined | null;
-	readonly 'bind:clientWidth'?: number | undefined | null;
-	readonly 'bind:clientHeight'?: number | undefined | null;
 	readonly 'bind:offsetWidth'?: number | undefined | null;
 	readonly 'bind:offsetHeight'?: number | undefined | null;
 
