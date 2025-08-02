@@ -99,13 +99,13 @@ export function Fragment(node, context) {
 		const template = transform_template(state, namespace, flags);
 		state.hoisted.push(b.var(template_name, template));
 
-		state.init.unshift(b.var(id, b.call(template_name)));
+		state.init.push(b.var(id, b.call(template_name)));
 		close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 	} else if (is_single_child_not_needing_template) {
 		context.visit(trimmed[0], state);
 	} else if (trimmed.length === 1 && trimmed[0].type === 'Text') {
 		const id = b.id(context.state.scope.generate('text'));
-		state.init.unshift(b.var(id, b.call('$.text', b.literal(trimmed[0].data))));
+		state.init.push(b.var(id, b.call('$.text', b.literal(trimmed[0].data))));
 		close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 	} else if (trimmed.length > 0) {
 		const id = b.id(context.state.scope.generate('fragment'));
@@ -123,7 +123,7 @@ export function Fragment(node, context) {
 				state
 			});
 
-			state.init.unshift(b.var(id, b.call('$.text')));
+			state.init.push(b.var(id, b.call('$.text')));
 			close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 		} else {
 			if (is_standalone) {
