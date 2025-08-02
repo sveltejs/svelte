@@ -37,6 +37,7 @@ import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
 import { ExportSpecifier } from './visitors/ExportSpecifier.js';
 import { ExpressionStatement } from './visitors/ExpressionStatement.js';
 import { ExpressionTag } from './visitors/ExpressionTag.js';
+import { Fragment } from './visitors/Fragment.js';
 import { FunctionDeclaration } from './visitors/FunctionDeclaration.js';
 import { FunctionExpression } from './visitors/FunctionExpression.js';
 import { HtmlTag } from './visitors/HtmlTag.js';
@@ -156,6 +157,7 @@ const visitors = {
 	ExportSpecifier,
 	ExpressionStatement,
 	ExpressionTag,
+	Fragment,
 	FunctionDeclaration,
 	FunctionExpression,
 	HtmlTag,
@@ -300,6 +302,10 @@ export function analyze_module(source, options) {
 			function_depth: 0,
 			has_props_rune: false,
 			options: /** @type {ValidatedCompileOptions} */ (options),
+			fragment: {
+				has_await: false,
+				node: null
+			},
 			parent_element: null,
 			reactive_statement: null
 		},
@@ -688,6 +694,10 @@ export function analyze_component(root, source, options) {
 				analysis,
 				options,
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
+				fragment: {
+					has_await: false,
+					node: ast === template.ast ? template.ast : null
+				},
 				parent_element: null,
 				has_props_rune: false,
 				component_slots: new Set(),
@@ -753,6 +763,10 @@ export function analyze_component(root, source, options) {
 				scopes,
 				analysis,
 				options,
+				fragment: {
+					has_await: false,
+					node: ast === template.ast ? template.ast : null
+				},
 				parent_element: null,
 				has_props_rune: false,
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',

@@ -48,8 +48,10 @@ export function Fragment(node, context) {
 	const is_single_child_not_needing_template =
 		trimmed.length === 1 &&
 		(trimmed[0].type === 'SvelteFragment' || trimmed[0].type === 'TitleElement');
+	const has_await = context.state.init !== null && (node.metadata.has_await || false);
 
 	const template_name = context.state.scope.root.unique('root'); // TODO infer name from parent
+	const unsuspend = b.id('$$unsuspend');
 
 	/** @type {Statement[]} */
 	const body = [];
@@ -61,6 +63,7 @@ export function Fragment(node, context) {
 	const state = {
 		...context.state,
 		init: [],
+		consts: [],
 		update: [],
 		after_update: [],
 		memoizer: new Memoizer(),
@@ -78,7 +81,7 @@ export function Fragment(node, context) {
 
 	if (is_text_first) {
 		// skip over inserted comment
-		body.push(b.stmt(b.call('$.next')));
+		state.init.unshift(b.stmt(b.call('$.next')));
 	}
 
 	if (is_single_element) {
@@ -96,13 +99,13 @@ export function Fragment(node, context) {
 		const template = transform_template(state, namespace, flags);
 		state.hoisted.push(b.var(template_name, template));
 
-		body.push(b.var(id, b.call(template_name)));
+		state.init.unshift(b.var(id, b.call(template_name)));
 		close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 	} else if (is_single_child_not_needing_template) {
 		context.visit(trimmed[0], state);
 	} else if (trimmed.length === 1 && trimmed[0].type === 'Text') {
 		const id = b.id(context.state.scope.generate('text'));
-		body.push(b.var(id, b.call('$.text', b.literal(trimmed[0].data))));
+		state.init.unshift(b.var(id, b.call('$.text', b.literal(trimmed[0].data))));
 		close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 	} else if (trimmed.length > 0) {
 		const id = b.id(context.state.scope.generate('fragment'));
@@ -120,7 +123,7 @@ export function Fragment(node, context) {
 				state
 			});
 
-			body.push(b.var(id, b.call('$.text')));
+			state.init.unshift(b.var(id, b.call('$.text')));
 			close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 		} else {
 			if (is_standalone) {
@@ -140,17 +143,27 @@ export function Fragment(node, context) {
 
 				if (state.template.nodes.length === 1 && state.template.nodes[0].type === 'comment') {
 					// special case — we can use `$.comment` instead of creating a unique template
-					body.push(b.var(id, b.call('$.comment')));
+					state.init.unshift(b.var(id, b.call('$.comment')));
 				} else {
 					const template = transform_template(state, namespace, flags);
 					state.hoisted.push(b.var(template_name, template));
 
-					body.push(b.var(id, b.call(template_name)));
+					state.init.unshift(b.var(id, b.call(template_name)));
 				}
 
 				close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 			}
 		}
+	}
+
+	if (has_await) {
+		body.push(b.var(unsuspend, b.call('$.suspend')));
+	}
+
+	body.push(...state.consts);
+
+	if (has_await) {
+		body.push(b.if(b.call('$.aborted'), b.return()));
 	}
 
 	body.push(...state.init);
@@ -166,6 +179,10 @@ export function Fragment(node, context) {
 		// could contain element insertions into the template, which the close statement needs to
 		// know of when constructing the list of current inner elements.
 		body.push(close);
+	}
+
+	if (has_await) {
+		body.push(b.stmt(b.call(unsuspend)));
 	}
 
 	return b.block(body);

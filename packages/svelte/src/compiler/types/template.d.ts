@@ -19,6 +19,9 @@ import type {
 } from 'estree';
 import type { Scope } from '../phases/scope';
 import type { _CSS } from './css';
+import type { FragmentAnalysis } from '../phases/2-analyze/types';
+
+type FragmentMetadata = Omit<FragmentAnalysis, 'node'>;
 
 /**
  * - `html`    — the default, for e.g. `<div>` or `<span>`
@@ -45,7 +48,7 @@ export namespace AST {
 		type: 'Fragment';
 		nodes: Array<Text | Tag | ElementLike | Block | Comment>;
 		/** @internal */
-		metadata: {
+		metadata: Partial<FragmentMetadata> & {
 			/**
 			 * Fragments declare their own scopes. A transparent fragment is one whose scope
 			 * is not represented by a scope in the resulting JavaScript (e.g. an element scope),

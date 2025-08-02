@@ -43,7 +43,7 @@ export function SvelteBoundary(node, context) {
 	// to resolve this we cheat: we duplicate const tags inside snippets
 	for (const child of node.fragment.nodes) {
 		if (child.type === 'ConstTag') {
-			context.visit(child, { ...context.state, init: const_tags });
+			context.visit(child, { ...context.state, consts: const_tags });
 		}
 	}
 

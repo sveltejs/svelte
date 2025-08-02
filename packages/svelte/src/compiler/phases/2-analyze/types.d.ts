@@ -8,6 +8,7 @@ export interface AnalysisState {
 	analysis: ComponentAnalysis;
 	options: ValidatedCompileOptions;
 	ast_type: 'instance' | 'template' | 'module';
+	fragment: FragmentAnalysis;
 	/**
 	 * Tag name of the parent element. `null` if the parent is `svelte:element`, `#snippet`, a component or the root.
 	 * Parent doesn't necessarily mean direct path predecessor because there could be `#each`, `#if` etc in-between.
@@ -26,6 +27,11 @@ export interface AnalysisState {
 
 	// legacy stuff
 	reactive_statement: null | ReactiveStatement;
+}
+
+export interface FragmentAnalysis {
+	has_await: boolean;
+	node: AST.Fragment | null;
 }
 
 export type Context<State extends AnalysisState = AnalysisState> = import('zimmerframe').Context<

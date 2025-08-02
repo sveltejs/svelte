@@ -290,7 +290,19 @@ export function should_proxy(node, scope) {
  * Svelte legacy mode should use safe equals in most places, runes mode shouldn't
  * @param {ComponentClientTransformState} state
  * @param {Expression} arg
+ * @param {boolean} [async]
  */
-export function create_derived(state, arg) {
-	return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', arg);
+export function create_derived(state, arg, async = false) {
+	if (async) {
+		return b.call(
+			b.await(
+				b.call(
+					'$.save',
+					b.call('$.async_derived', arg.type === 'ArrowFunctionExpression' ? b.async(arg) : arg)
+				)
+			)
+		);
+	} else {
+		return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', arg);
+	}
 }
