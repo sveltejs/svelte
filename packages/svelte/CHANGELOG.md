@@ -1,5 +1,11 @@
 # svelte
 
+## 5.37.3
+
+### Patch Changes
+
+- fix: reset attribute cache after setting corresponding property ([#16543](https://github.com/sveltejs/svelte/pull/16543))
+
 ## 5.37.2
 
 ### Patch Changes
