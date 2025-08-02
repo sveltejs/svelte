@@ -13,7 +13,8 @@ export function AwaitExpression(node, context) {
 		context.state.expression.has_await = true;
 		if (
 			context.state.fragment.node &&
-			!context.path.find((node) => node.type === 'ExpressionTag')
+			// TODO there's probably a better way to do this
+			context.path.find((node) => node.type === 'ConstTag')
 		) {
 			context.state.fragment.has_await = true;
 		}
