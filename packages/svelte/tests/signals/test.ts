@@ -1414,8 +1414,8 @@ describe('signals', () => {
 			flushSync();
 			assert.equal(updates, 3);
 			destroy();
-     };
-  });
+		};
+	});
 
 	test('$effect.root inside deriveds stay alive independently', () => {
 		const log: any[] = [];
