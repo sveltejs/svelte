@@ -402,6 +402,7 @@ export function state_invalidate_invalid_source() {
 		const error = new Error(`state_invalidate_invalid_source\nThe argument passed to \`$state.invalidate\` must be a variable or class field declared with \`$state\` or \`$state.raw\`, or a property of a \`$state\` object.\nhttps://svelte.dev/e/state_invalidate_invalid_source`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/state_invalidate_invalid_source`);
