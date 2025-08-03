@@ -27,7 +27,7 @@ export function CallExpression(node, context) {
 
 	if (rune === '$state.invalidate') {
 		return b.void0;
-  }
+	}
 
 	if (rune === '$effect.pending') {
 		return b.literal(0);

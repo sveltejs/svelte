@@ -165,7 +165,7 @@ export function proxy(value) {
 
 			if (prop === PROXY_SOURCES) {
 				return sources;
-      }
+			}
 
 			if (DEV && prop === PROXY_PATH_SYMBOL) {
 				return update_path;

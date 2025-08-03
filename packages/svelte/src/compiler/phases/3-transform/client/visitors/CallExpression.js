@@ -6,6 +6,7 @@ import { get_rune } from '../../../scope.js';
 import { transform_inspect_rune } from '../../utils.js';
 import * as e from '../../../../errors.js';
 import { should_proxy } from '../utils.js';
+import { get_name } from '../../../nodes.js';
 
 /**
  * @param {CallExpression} node
@@ -83,21 +84,14 @@ export function CallExpression(node, context) {
 			} else if (node.arguments[0].type === 'MemberExpression') {
 				const { object, property } = node.arguments[0];
 				if (object.type === 'ThisExpression') {
-					let field;
-					switch (property.type) {
-						case 'Identifier':
-							field = context.state.public_state.get(property.name);
-							break;
-						case 'PrivateIdentifier':
-							field = context.state.private_state.get(property.name);
-							break;
-					}
-					if (!field || (field.kind !== 'state' && field.kind !== 'raw_state')) {
+					const name = /** @type {string} */ (get_name(property));
+					const field = context.state.state_fields.get(name);
+					if (!field || (field.type !== '$state' && field.type !== '$state.raw')) {
 						e.state_invalidate_nonreactive_argument(node);
 					}
 					return b.call(
 						attach_locations(/** @type {Expression} */ (node.callee), b.id('$.invalidate')),
-						attach_locations(node.arguments[0], b.member(object, field.id))
+						attach_locations(node.arguments[0], b.member(object, field.key))
 					);
 				}
 				/** @type {Expression[]} */

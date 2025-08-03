@@ -430,7 +430,6 @@ export function is_mathml(name) {
 
 const STATE_CREATION_RUNES = /** @type {const} */ ([
 	'$state',
-	'$state.invalidate',
 	'$state.raw',
 	'$derived',
 	'$derived.by'
@@ -438,6 +437,7 @@ const STATE_CREATION_RUNES = /** @type {const} */ ([
 
 const RUNES = /** @type {const} */ ([
 	...STATE_CREATION_RUNES,
+	'$state.invalidate',
 	'$state.snapshot',
 	'$props',
 	'$props.id',
