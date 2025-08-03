@@ -5,7 +5,7 @@
 	export let index;
 	export let n;
 
-	function logRender () {
+	function logRender (n) {
 		order.push(`${index}: render ${n}`);
 		return index;
 	}
@@ -24,5 +24,5 @@
 </script>
 
 <li>
-	{logRender()}
+	{logRender(n)}
 </li>

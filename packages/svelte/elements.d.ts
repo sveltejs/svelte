@@ -464,6 +464,14 @@ export interface DOMAttributes<T extends EventTarget> {
 	onfullscreenerror?: EventHandler<Event, T> | undefined | null;
 	onfullscreenerrorcapture?: EventHandler<Event, T> | undefined | null;
 
+	// Dimensions
+	readonly 'bind:contentRect'?: DOMRectReadOnly | undefined | null;
+	readonly 'bind:contentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
+	readonly 'bind:borderBoxSize'?: Array<ResizeObserverSize> | undefined | null;
+	readonly 'bind:devicePixelContentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
+	readonly 'bind:clientWidth'?: number | undefined | null;
+	readonly 'bind:clientHeight'?: number | undefined | null;
+
 	xmlns?: string | undefined | null;
 }
 
@@ -839,11 +847,9 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	 */
 	'bind:innerText'?: string | undefined | null;
 
-	readonly 'bind:contentRect'?: DOMRectReadOnly | undefined | null;
-	readonly 'bind:contentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
-	readonly 'bind:borderBoxSize'?: Array<ResizeObserverSize> | undefined | null;
-	readonly 'bind:devicePixelContentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
 	readonly 'bind:focused'?: boolean | undefined | null;
+	readonly 'bind:offsetWidth'?: number | undefined | null;
+	readonly 'bind:offsetHeight'?: number | undefined | null;
 
 	// SvelteKit
 	'data-sveltekit-keepfocus'?: true | '' | 'off' | undefined | null;
@@ -992,7 +998,7 @@ export interface HTMLFieldsetAttributes extends HTMLAttributes<HTMLFieldSetEleme
 }
 
 export interface HTMLFormAttributes extends HTMLAttributes<HTMLFormElement> {
-	acceptcharset?: string | undefined | null;
+	'accept-charset'?: 'utf-8' | (string & {}) | undefined | null;
 	action?: string | undefined | null;
 	autocomplete?: AutoFillBase | undefined | null;
 	enctype?:
@@ -1549,6 +1555,7 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	height?: number | string | undefined | null;
 	id?: string | undefined | null;
 	lang?: string | undefined | null;
+	part?: string | undefined | null;
 	max?: number | string | undefined | null;
 	media?: string | undefined | null;
 	// On the `textPath` element
@@ -2076,6 +2083,7 @@ export interface SvelteHTMLElements {
 	'svelte:boundary': {
 		onerror?: (error: unknown, reset: () => void) => void;
 		failed?: import('svelte').Snippet<[error: unknown, reset: () => void]>;
+		pending?: import('svelte').Snippet;
 	};
 
 	[name: string]: { [name: string]: any };

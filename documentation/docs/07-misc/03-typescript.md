@@ -83,7 +83,7 @@ If you're using tools like Rollup or Webpack instead, install their respective S
 
 When using TypeScript, make sure your `tsconfig.json` is setup correctly.
 
-- Use a [`target`](https://www.typescriptlang.org/tsconfig/#target) of at least `ES2022`, or a `target` of at least `ES2015` alongside [`useDefineForClassFields`](https://www.typescriptlang.org/tsconfig/#useDefineForClassFields). This ensures that rune declarations on class fields are not messed with, which would break the Svelte compiler
+- Use a [`target`](https://www.typescriptlang.org/tsconfig/#target) of at least `ES2015` so classes are not compiled to functions
 - Set [`verbatimModuleSyntax`](https://www.typescriptlang.org/tsconfig/#verbatimModuleSyntax) to `true` so that imports are left as-is
 - Set [`isolatedModules`](https://www.typescriptlang.org/tsconfig/#isolatedModules) to `true` so that each file is looked at in isolation. TypeScript has a few features which require cross-file analysis and compilation, which the Svelte compiler and tooling like Vite don't do. 
 
@@ -254,39 +254,24 @@ To declare that a variable expects the constructor or instance type of a compone
 
 Svelte provides a best effort of all the HTML DOM types that exist. Sometimes you may want to use experimental attributes or custom events coming from an action. In these cases, TypeScript will throw a type error, saying that it does not know these types. If it's a non-experimental standard attribute/event, this may very well be a missing typing from our [HTML typings](https://github.com/sveltejs/svelte/blob/main/packages/svelte/elements.d.ts). In that case, you are welcome to open an issue and/or a PR fixing it.
 
-In case this is a custom or experimental attribute/event, you can enhance the typings like this:
-
-```ts
-/// file: additional-svelte-typings.d.ts
-declare namespace svelteHTML {
-	// enhance elements
-	interface IntrinsicElements {
-		'my-custom-element': { someattribute: string; 'on:event': (e: CustomEvent<any>) => void };
-	}
-	// enhance attributes
-	interface HTMLAttributes<T> {
-		// If you want to use the beforeinstallprompt event
-		onbeforeinstallprompt?: (event: any) => any;
-		// If you want to use myCustomAttribute={..} (note: all lowercase)
-		mycustomattribute?: any; // You can replace any with something more specific if you like
-	}
-}
-```
-
-Then make sure that `d.ts` file is referenced in your `tsconfig.json`. If it reads something like `"include": ["src/**/*"]` and your `d.ts` file is inside `src`, it should work. You may need to reload for the changes to take effect.
-
-You can also declare the typings by augmenting the `svelte/elements` module like this:
+In case this is a custom or experimental attribute/event, you can enhance the typings by augmenting the `svelte/elements` module like this:
 
 ```ts
 /// file: additional-svelte-typings.d.ts
 import { HTMLButtonAttributes } from 'svelte/elements';
 
 declare module 'svelte/elements' {
+	// add a new element
 	export interface SvelteHTMLElements {
 		'custom-button': HTMLButtonAttributes;
 	}
 
-	// allows for more granular control over what element to add the typings to
+	// add a new global attribute that is available on all html elements
+	export interface HTMLAttributes<T> {
+		globalattribute?: string;
+	}
+
+	// add a new attribute for button elements
 	export interface HTMLButtonAttributes {
 		veryexperimentalattribute?: string;
 	}
@@ -294,3 +279,5 @@ declare module 'svelte/elements' {
 
 export {}; // ensure this is not an ambient module, else types will be overridden instead of augmented
 ```
+
+Then make sure that the `d.ts` file is referenced in your `tsconfig.json`. If it reads something like `"include": ["src/**/*"]` and your `d.ts` file is inside `src`, it should work. You may need to reload for the changes to take effect.

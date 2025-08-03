@@ -11,6 +11,17 @@ export function ExportNamedDeclaration(node, context) {
 	// visit children, so bindings are correctly initialised
 	context.next();
 
+	if (
+		context.state.ast_type &&
+		node.specifiers.some((specifier) =>
+			specifier.exported.type === 'Identifier'
+				? specifier.exported.name === 'default'
+				: specifier.exported.value === 'default'
+		)
+	) {
+		e.module_illegal_default_export(node);
+	}
+
 	if (node.declaration?.type === 'VariableDeclaration') {
 		// in runes mode, forbid `export let`
 		if (

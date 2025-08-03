@@ -6,6 +6,7 @@ import { define_property, noop } from '../../shared/utils.js';
 import { get } from '../runtime.js';
 import { teardown } from './effects.js';
 import { mutable_source, set } from './sources.js';
+import { DEV } from 'esm-env';
 
 /**
  * Whether or not the prop currently being read is a store binding, as in
@@ -32,6 +33,10 @@ export function store_get(store, store_name, stores) {
 		source: mutable_source(undefined),
 		unsubscribe: noop
 	});
+
+	if (DEV) {
+		entry.source.label = store_name;
+	}
 
 	// if the component that setup this is already unmounted we don't want to register a subscription
 	if (entry.store !== store && !(IS_UNMOUNTED in stores)) {

@@ -29,6 +29,10 @@ export function CallExpression(node, context) {
 		return b.void0;
   }
 
+	if (rune === '$effect.pending') {
+		return b.literal(0);
+	}
+
 	if (rune === '$state' || rune === '$state.raw') {
 		return node.arguments[0] ? context.visit(node.arguments[0]) : b.void0;
 	}

@@ -8,7 +8,7 @@ import * as w from './warnings.js';
  * @typedef {(input: Input, keypath: string) => Required<Output>} Validator
  */
 
-const common = {
+const common_options = {
 	filename: string('(unknown)'),
 
 	// default to process.cwd() where it exists to replicate svelte4 behavior (and make Deno work with this as well)
@@ -41,113 +41,127 @@ const common = {
 		return input;
 	}),
 
-	warningFilter: fun(() => true)
+	warningFilter: fun(() => true),
+
+	experimental: object({
+		async: boolean(false)
+	})
+};
+
+const component_options = {
+	accessors: deprecate(w.options_deprecated_accessors, boolean(false)),
+
+	css: validator('external', (input) => {
+		if (input === true || input === false) {
+			throw_error(
+				'The boolean options have been removed from the css option. Use "external" instead of false and "injected" instead of true'
+			);
+		}
+		if (input === 'none') {
+			throw_error(
+				'css: "none" is no longer a valid option. If this was crucial for you, please open an issue on GitHub with your use case.'
+			);
+		}
+
+		if (input !== 'external' && input !== 'injected') {
+			throw_error(`css should be either "external" (default, recommended) or "injected"`);
+		}
+
+		return input;
+	}),
+
+	cssHash: fun(({ css, hash }) => {
+		return `svelte-${hash(css)}`;
+	}),
+
+	// TODO this is a sourcemap option, would be good to put under a sourcemap namespace
+	cssOutputFilename: string(undefined),
+
+	customElement: boolean(false),
+
+	discloseVersion: boolean(true),
+
+	immutable: deprecate(w.options_deprecated_immutable, boolean(false)),
+
+	legacy: removed(
+		'The legacy option has been removed. If you are using this because of legacy.componentApi, use compatibility.componentApi instead'
+	),
+
+	compatibility: object({
+		componentApi: list([4, 5], 5)
+	}),
+
+	loopGuardTimeout: warn_removed(w.options_removed_loop_guard_timeout),
+
+	name: string(undefined),
+
+	namespace: list(['html', 'mathml', 'svg']),
+
+	modernAst: boolean(false),
+
+	outputFilename: string(undefined),
+
+	preserveComments: boolean(false),
+
+	fragments: list(['html', 'tree']),
+
+	preserveWhitespace: boolean(false),
+
+	runes: boolean(undefined),
+
+	hmr: boolean(false),
+
+	sourcemap: validator(undefined, (input) => {
+		// Source maps can take on a variety of values, including string, JSON, map objects from magic-string and source-map,
+		// so there's no good way to check type validity here
+		return input;
+	}),
+
+	enableSourcemap: warn_removed(w.options_removed_enable_sourcemap),
+
+	hydratable: warn_removed(w.options_removed_hydratable),
+
+	format: removed(
+		'The format option has been removed in Svelte 4, the compiler only outputs ESM now. Remove "format" from your compiler options. ' +
+			'If you did not set this yourself, bump the version of your bundler plugin (vite-plugin-svelte/rollup-plugin-svelte/svelte-loader)'
+	),
+
+	tag: removed(
+		'The tag option has been removed in Svelte 5. Use `<svelte:options customElement="tag-name" />` inside the component instead. ' +
+			'If that does not solve your use case, please open an issue on GitHub with details.'
+	),
+
+	sveltePath: removed(
+		'The sveltePath option has been removed in Svelte 5. ' +
+			'If this option was crucial for you, please open an issue on GitHub with your use case.'
+	),
+
+	// These two were primarily created for svelte-preprocess (https://github.com/sveltejs/svelte/pull/6194),
+	// but with new TypeScript compilation modes strictly separating types it's not necessary anymore
+	errorMode: removed(
+		'The errorMode option has been removed. If you are using this through svelte-preprocess with TypeScript, ' +
+			'use the https://www.typescriptlang.org/tsconfig#verbatimModuleSyntax setting instead'
+	),
+
+	varsReport: removed(
+		'The vars option has been removed. If you are using this through svelte-preprocess with TypeScript, ' +
+			'use the https://www.typescriptlang.org/tsconfig#verbatimModuleSyntax setting instead'
+	)
 };
 
 export const validate_module_options =
 	/** @type {Validator<ModuleCompileOptions, ValidatedModuleCompileOptions>} */ (
 		object({
-			...common
+			...common_options,
+			...Object.fromEntries(Object.keys(component_options).map((key) => [key, () => {}]))
 		})
 	);
 
 export const validate_component_options =
 	/** @type {Validator<CompileOptions, ValidatedCompileOptions>} */ (
 		object({
-			...common,
-
-			accessors: deprecate(w.options_deprecated_accessors, boolean(false)),
-
-			css: validator('external', (input) => {
-				if (input === true || input === false) {
-					throw_error(
-						'The boolean options have been removed from the css option. Use "external" instead of false and "injected" instead of true'
-					);
-				}
-				if (input === 'none') {
-					throw_error(
-						'css: "none" is no longer a valid option. If this was crucial for you, please open an issue on GitHub with your use case.'
-					);
-				}
-
-				if (input !== 'external' && input !== 'injected') {
-					throw_error(`css should be either "external" (default, recommended) or "injected"`);
-				}
-
-				return input;
-			}),
-
-			cssHash: fun(({ css, hash }) => {
-				return `svelte-${hash(css)}`;
-			}),
-
-			// TODO this is a sourcemap option, would be good to put under a sourcemap namespace
-			cssOutputFilename: string(undefined),
-
-			customElement: boolean(false),
-
-			discloseVersion: boolean(true),
-
-			immutable: deprecate(w.options_deprecated_immutable, boolean(false)),
-
-			legacy: removed(
-				'The legacy option has been removed. If you are using this because of legacy.componentApi, use compatibility.componentApi instead'
-			),
-
-			compatibility: object({
-				componentApi: list([4, 5], 5)
-			}),
-
-			loopGuardTimeout: warn_removed(w.options_removed_loop_guard_timeout),
-
-			name: string(undefined),
-
-			namespace: list(['html', 'mathml', 'svg']),
-
-			modernAst: boolean(false),
-
-			outputFilename: string(undefined),
-
-			preserveComments: boolean(false),
-
-			fragments: list(['html', 'tree']),
-
-			preserveWhitespace: boolean(false),
-
-			runes: boolean(undefined),
-
-			hmr: boolean(false),
-
-			sourcemap: validator(undefined, (input) => {
-				// Source maps can take on a variety of values, including string, JSON, map objects from magic-string and source-map,
-				// so there's no good way to check type validity here
-				return input;
-			}),
-
-			enableSourcemap: warn_removed(w.options_removed_enable_sourcemap),
-			hydratable: warn_removed(w.options_removed_hydratable),
-			format: removed(
-				'The format option has been removed in Svelte 4, the compiler only outputs ESM now. Remove "format" from your compiler options. ' +
-					'If you did not set this yourself, bump the version of your bundler plugin (vite-plugin-svelte/rollup-plugin-svelte/svelte-loader)'
-			),
-			tag: removed(
-				'The tag option has been removed in Svelte 5. Use `<svelte:options customElement="tag-name" />` inside the component instead. ' +
-					'If that does not solve your use case, please open an issue on GitHub with details.'
-			),
-			sveltePath: removed(
-				'The sveltePath option has been removed in Svelte 5. ' +
-					'If this option was crucial for you, please open an issue on GitHub with your use case.'
-			),
-			// These two were primarily created for svelte-preprocess (https://github.com/sveltejs/svelte/pull/6194),
-			// but with new TypeScript compilation modes strictly separating types it's not necessary anymore
-			errorMode: removed(
-				'The errorMode option has been removed. If you are using this through svelte-preprocess with TypeScript, ' +
-					'use the https://www.typescriptlang.org/tsconfig#verbatimModuleSyntax setting instead'
-			),
-			varsReport: removed(
-				'The vars option has been removed. If you are using this through svelte-preprocess with TypeScript, ' +
-					'use the https://www.typescriptlang.org/tsconfig#verbatimModuleSyntax setting instead'
-			)
+			...common_options,
+			...component_options
 		})
 	);
 
@@ -242,19 +256,6 @@ function validator(fallback, fn) {
 }
 
 /**
- * @param {number} fallback
- * @returns {Validator}
- */
-function number(fallback) {
-	return validator(fallback, (input, keypath) => {
-		if (typeof input !== 'number') {
-			throw_error(`${keypath} should be a number, if specified`);
-		}
-		return input;
-	});
-}
-
-/**
  * @param {string | undefined} fallback
  * @param {boolean} allow_empty
  * @returns {Validator}
@@ -267,20 +268,6 @@ function string(fallback, allow_empty = true) {
 
 		if (!allow_empty && input === '') {
 			throw_error(`${keypath} cannot be empty`);
-		}
-
-		return input;
-	});
-}
-
-/**
- * @param {string[]} fallback
- * @returns {Validator}
- */
-function string_array(fallback) {
-	return validator(fallback, (input, keypath) => {
-		if (input && !Array.isArray(input)) {
-			throw_error(`${keypath} should be a string array, if specified`);
 		}
 
 		return input;

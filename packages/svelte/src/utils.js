@@ -428,7 +428,7 @@ export function is_mathml(name) {
 	return MATHML_ELEMENTS.includes(name);
 }
 
-export const STATE_CREATION_RUNES = /** @type {const} */ ([
+const STATE_CREATION_RUNES = /** @type {const} */ ([
 	'$state',
 	'$state.invalidate',
 	'$state.raw',
@@ -446,6 +446,7 @@ const RUNES = /** @type {const} */ ([
 	'$effect.pre',
 	'$effect.tracking',
 	'$effect.root',
+	'$effect.pending',
 	'$inspect',
 	'$inspect().with',
 	'$inspect.trace',
