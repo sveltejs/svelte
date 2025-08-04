@@ -28,7 +28,7 @@ export default function Bind_component_snippet($$anchor) {
 		}
 	});
 
-	var text_1 = $.sibling(node, 3);
+	var text_1 = $.sibling(node);
 
 	$.template_effect(() => $.set_text(text_1, ` value: ${$.get(value) ?? ''}`));
 	$.append($$anchor, fragment);

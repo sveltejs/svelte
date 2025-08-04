@@ -6,7 +6,6 @@ import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.
 import * as b from '#compiler/builders';
 import { is_custom_element_node } from '../../../../nodes.js';
 import { build_template_chunk } from './utils.js';
-import { ELEMENT_NODE, TEXT_NODE } from '#client/constants';
 
 /**
  * Processes an array of template nodes, joining sibling text/expression nodes
@@ -26,11 +25,8 @@ export function process_children(nodes, initial, is_element, context) {
 	/** @type {Sequence} */
 	let sequence = [];
 
-	/**
-	 * @param {boolean} is_text
-	 * @param {number} node_type
-	 **/
-	function get_node(is_text, node_type) {
+	/** @param {boolean} is_text */
+	function get_node(is_text) {
 		if (skipped === 0) {
 			return prev(is_text);
 		}
@@ -38,7 +34,6 @@ export function process_children(nodes, initial, is_element, context) {
 		return b.call(
 			'$.sibling',
 			prev(false),
-			b.literal(node_type),
 			(is_text || skipped !== 1) && b.literal(skipped),
 			is_text && b.true
 		);
@@ -49,10 +44,7 @@ export function process_children(nodes, initial, is_element, context) {
 	 * @param {string} name
 	 */
 	function flush_node(is_text, name) {
-		const expression = get_node(
-			is_text,
-			name === 'text' ? TEXT_NODE : name === 'node' ? 0 : ELEMENT_NODE
-		);
+		const expression = get_node(is_text);
 		let id = expression;
 
 		if (id.type !== 'Identifier') {

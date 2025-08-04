@@ -3,11 +3,9 @@ import { hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import { DEV } from 'esm-env';
 import { init_array_prototype_warnings } from '../dev/equality.js';
 import { get_descriptor, is_extensible } from '../../shared/utils.js';
-import { COMMENT_NODE, TEXT_NODE, EFFECT_RAN } from '#client/constants';
-import { HYDRATION_END, HYDRATION_ERROR } from '../../../constants.js';
-import { hydration_mismatch } from '../warnings.js';
 import { active_effect } from '../runtime.js';
 import { async_mode_flag } from '../../flags/index.js';
+import { TEXT_NODE, EFFECT_RAN } from '#client/constants';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
 /** @type {Window} */
@@ -162,40 +160,26 @@ export function first_child(fragment, is_text) {
 /**
  * Don't mark this as side-effect-free, hydration needs to walk all nodes
  * @param {TemplateNode} node
- * @param {number} node_type
  * @param {number} count
- * @param {boolean} add_text
+ * @param {boolean} is_text
  * @returns {Node | null}
  */
-export function sibling(node, node_type, count = 1, add_text = false) {
-	var next_sibling = hydrating ? hydrate_node : node;
+export function sibling(node, count = 1, is_text = false) {
+	let next_sibling = hydrating ? hydrate_node : node;
 	var last_sibling;
 
 	while (count--) {
 		last_sibling = next_sibling;
 		next_sibling = /** @type {TemplateNode} */ (get_next_sibling(next_sibling));
-		if (
-			(next_sibling === null && !add_text) ||
-			(next_sibling?.nodeType === COMMENT_NODE &&
-				/** @type {Comment} */ (next_sibling).data === HYDRATION_END)
-		) {
-			hydration_mismatch();
-			throw HYDRATION_ERROR;
-		}
 	}
 
 	if (!hydrating) {
 		return next_sibling;
 	}
 
-	if (hydrating && node_type !== 0 && !add_text && next_sibling?.nodeType !== node_type) {
-		hydration_mismatch();
-		throw HYDRATION_ERROR;
-	}
-
 	// if a sibling {expression} is empty during SSR, there might be no
 	// text node to hydrate — we must therefore create one
-	if (add_text && next_sibling?.nodeType !== TEXT_NODE) {
+	if (is_text && next_sibling?.nodeType !== TEXT_NODE) {
 		var text = create_text();
 		// If the next sibling is `null` and we're handling text then it's because
 		// the SSR content was empty for the text, so we need to generate a new text
@@ -210,7 +194,7 @@ export function sibling(node, node_type, count = 1, add_text = false) {
 	}
 
 	set_hydrate_node(next_sibling);
-	return next_sibling;
+	return /** @type {TemplateNode} */ (next_sibling);
 }
 
 /**

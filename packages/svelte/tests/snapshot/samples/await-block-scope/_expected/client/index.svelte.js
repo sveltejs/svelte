@@ -19,11 +19,11 @@ export default function Await_block_scope($$anchor) {
 
 	$.reset(button);
 
-	var node = $.sibling(button, 0, 2);
+	var node = $.sibling(button, 2);
 
 	$.await(node, () => $.get(promise), null, ($$anchor, counter) => {});
 
-	var text_1 = $.sibling(node, 3);
+	var text_1 = $.sibling(node);
 
 	$.template_effect(() => {
 		$.set_text(text, `clicks: ${counter.count ?? ''}`);
