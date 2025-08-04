@@ -7,7 +7,7 @@ import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../../../con
 import { hydration_mismatch } from '../../warnings.js';
 
 /**
- * @type {Node | undefined}
+ * @type {Node | null | undefined}
  */
 let head_anchor;
 
@@ -33,7 +33,7 @@ export function head(render_fn) {
 
 		// There might be multiple head blocks in our app, so we need to account for each one needing independent hydration.
 		if (head_anchor === undefined) {
-			head_anchor = /** @type {TemplateNode} */ (get_first_child(document.head));
+			head_anchor = get_first_child(document.head);
 		}
 
 		while (
@@ -41,7 +41,7 @@ export function head(render_fn) {
 			(head_anchor.nodeType !== COMMENT_NODE ||
 				/** @type {Comment} */ (head_anchor).data !== HYDRATION_START)
 		) {
-			head_anchor = /** @type {TemplateNode} */ (get_next_sibling(head_anchor));
+			head_anchor = get_next_sibling(head_anchor);
 		}
 
 		// If we can't find an opening hydration marker, skip hydration (this can happen
@@ -61,26 +61,28 @@ export function head(render_fn) {
 		block(() => render_fn(anchor), HEAD_EFFECT);
 		check_end();
 	} catch (error) {
-		// re-mount only this svelte:head
+		// Remount only this svelte:head
 		if (was_hydrating && head_anchor && error === HYDRATION_ERROR) {
 			// Here head_anchor is the node next after HYDRATION_START
 			/** @type {Node | null} */
-			let prev = head_anchor.previousSibling;
-			/** @type {Node | null} */
-			let next = head_anchor;
-			// remove nodes that failed to hydrate
-			while (
-				prev !== null &&
-				(prev.nodeType !== COMMENT_NODE || /** @type {Comment} */ (prev).data !== HYDRATION_END)
-			) {
-				document.head.removeChild(prev);
-				prev = next;
-				next = get_next_sibling(/** @type {Node} */ (next));
+			let node = head_anchor.previousSibling;
+			// Remove nodes that failed to hydrate
+			while (node !== null) {
+				const removed = node;
+				node = get_next_sibling(node);
+				document.head.removeChild(removed);
+				if (
+					removed.nodeType === COMMENT_NODE &&
+					/** @type {Comment} */ (removed).data === HYDRATION_END
+				) {
+					break;
+				}
 			}
-			if (prev?.parentNode) document.head.removeChild(prev);
-			if (next !== null) {
-				// allow the next head block try to hydrate
-				head_anchor = set_hydrate_node(/** @type {TemplateNode} */ (next));
+			// Setup hydration for the next svelte:head
+			if (node === null) {
+				head_anchor = null;
+			} else {
+				head_anchor = set_hydrate_node(/** @type {TemplateNode} */ (node));
 			}
 
 			set_hydrating(false);
