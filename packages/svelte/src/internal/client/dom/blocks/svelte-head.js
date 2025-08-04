@@ -62,20 +62,25 @@ export function head(render_fn) {
 		check_end();
 	} catch (error) {
 		// Remount only this svelte:head
-		if (was_hydrating && head_anchor && error === HYDRATION_ERROR) {
+		if (was_hydrating && head_anchor != null) {
+			hydration_mismatch();
 			// Here head_anchor is the node next after HYDRATION_START
 			/** @type {Node | null} */
-			let node = head_anchor.previousSibling;
+			var node = head_anchor.previousSibling;
 			// Remove nodes that failed to hydrate
+			var depth = 0;
 			while (node !== null) {
-				const removed = node;
+				var prev = /** @type {TemplateNode} */ (node);
 				node = get_next_sibling(node);
-				document.head.removeChild(removed);
-				if (
-					removed.nodeType === COMMENT_NODE &&
-					/** @type {Comment} */ (removed).data === HYDRATION_END
-				) {
-					break;
+				prev.remove();
+				if (prev.nodeType === COMMENT_NODE) {
+					var data = /** @type {Comment} */ (prev).data;
+					if (data === HYDRATION_END) {
+						depth -= 1;
+						if (depth === 0) break;
+					} else if (data === HYDRATION_START) {
+						depth += 1;
+					}
 				}
 			}
 			// Setup hydration for the next svelte:head
