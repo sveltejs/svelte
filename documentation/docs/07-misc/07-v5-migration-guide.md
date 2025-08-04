@@ -245,7 +245,7 @@ In Svelte 4, you can add event modifiers to handlers:
 <button on:click|once|preventDefault={handler}>...</button>
 ```
 
-Modifiers are specific to `on:` and as such do not work with modern event handlers. Adding things like `event.preventDefault()` inside the handler itself is preferable, since all the logic lives in one place rather than being split between handler and modifiers.
+Modifiers are specific to `on:` and thus do not work with modern event handlers. Adding things like `event.preventDefault()` inside the handler itself is preferable, since all the logic lives in one place rather than being split between handler and modifiers.
 
 Since event handlers are just functions, you can create your own wrappers as necessary:
 
@@ -340,7 +340,7 @@ When spreading props, local event handlers must go _after_ the spread, or they r
 
 ## Snippets instead of slots
 
-In Svelte 4, content can be passed to components using slots. Svelte 5 replaces them with snippets which are more powerful and flexible, and as such slots are deprecated in Svelte 5.
+In Svelte 4, content can be passed to components using slots. Svelte 5 replaces them with snippets, which are more powerful and flexible, and so slots have been deprecated in Svelte 5.
 
 They continue to work, however, and you can pass snippets to a component that uses slots:
 
@@ -835,7 +835,7 @@ Assignments to destructured parts of a `@const` declaration are no longer allowe
 
 ### :is(...), :has(...), and :where(...) are scoped
 
-Previously, Svelte did not analyse selectors inside `:is(...)`, `:has(...)`, and `:where(...)`, effectively treating them as global. Svelte 5 analyses them in the context of the current component. As such, some selectors may now be treated as unused if they were relying on this treatment. To fix this, use `:global(...)` inside the `:is(...)/:has(...)/:where(...)` selectors.
+Previously, Svelte did not analyse selectors inside `:is(...)`, `:has(...)`, and `:where(...)`, effectively treating them as global. Svelte 5 analyses them in the context of the current component. Thus, some selectors may now be treated as unused if they were relying on this treatment. To fix this, use `:global(...)` inside the `:is(...)/:has(...)/:where(...)` selectors.
 
 When using Tailwind's `@apply` directive, add a `:global` selector to preserve rules that use Tailwind-generated `:is(...)` selectors:
 
