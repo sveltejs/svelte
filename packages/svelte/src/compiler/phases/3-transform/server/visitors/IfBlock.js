@@ -10,29 +10,20 @@ import { block_close, block_open } from './shared/utils.js';
  * @param {ComponentContext} context
  */
 export function IfBlock(node, context) {
+	const test = /** @type {Expression} */ (context.visit(node.test));
 	const consequent = /** @type {BlockStatement} */ (context.visit(node.consequent));
-	consequent.body.unshift(b.stmt(b.assignment('+=', b.id('$$payload.out'), block_open)));
-	let if_statement = b.if(/** @type {Expression} */ (context.visit(node.test)), consequent);
 
-	context.state.template.push(if_statement, block_close);
+	const alternate = node.alternate
+		? /** @type {BlockStatement} */ (context.visit(node.alternate))
+		: b.block([]);
 
-	let index = 1;
-	let alt = node.alternate;
-	while (alt && alt.nodes.length === 1 && alt.nodes[0].type === 'IfBlock' && alt.nodes[0].elseif) {
-		const elseif = alt.nodes[0];
-		const alternate = /** @type {BlockStatement} */ (context.visit(elseif.consequent));
-		alternate.body.unshift(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(`<!--[${index++}-->`)))
-		);
-		if_statement = if_statement.alternate = b.if(
-			/** @type {Expression} */ (context.visit(elseif.test)),
-			alternate
-		);
-		alt = elseif.alternate;
-	}
-
-	if_statement.alternate = alt ? /** @type {BlockStatement} */ (context.visit(alt)) : b.block([]);
-	if_statement.alternate.body.unshift(
-		b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN_ELSE)))
+	consequent.body.unshift(
+		b.stmt(b.call(b.member(b.id('$$payload.out'), b.id('push')), block_open))
 	);
+
+	alternate.body.unshift(
+		b.stmt(b.call(b.member(b.id('$$payload.out'), b.id('push')), b.literal(BLOCK_OPEN_ELSE)))
+	);
+
+	context.state.template.push(b.if(test, consequent, alternate), block_close);
 }

@@ -3,6 +3,7 @@
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 import { walk } from 'zimmerframe';
+import { parse } from '../1-parse/acorn.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { extract_identifiers } from '../../utils/ast.js';
@@ -21,6 +22,7 @@ import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AttachTag } from './visitors/AttachTag.js';
 import { Attribute } from './visitors/Attribute.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
+import { AwaitExpression } from './visitors/AwaitExpression.js';
 import { BindDirective } from './visitors/BindDirective.js';
 import { CallExpression } from './visitors/CallExpression.js';
 import { ClassBody } from './visitors/ClassBody.js';
@@ -75,6 +77,7 @@ import { UseDirective } from './visitors/UseDirective.js';
 import { VariableDeclarator } from './visitors/VariableDeclarator.js';
 import is_reference from 'is-reference';
 import { mark_subtree_dynamic } from './visitors/shared/fragment.js';
+import * as state from '../../state.js';
 
 /**
  * @type {Visitors}
@@ -138,6 +141,7 @@ const visitors = {
 	AttachTag,
 	Attribute,
 	AwaitBlock,
+	AwaitExpression,
 	BindDirective,
 	CallExpression,
 	ClassBody,
@@ -209,9 +213,14 @@ function js(script, root, allow_reactive_declarations, parent) {
 		body: []
 	};
 
-	const { scope, scopes } = create_scopes(ast, root, allow_reactive_declarations, parent);
+	const { scope, scopes, has_await } = create_scopes(
+		ast,
+		root,
+		allow_reactive_declarations,
+		parent
+	);
 
-	return { ast, scope, scopes };
+	return { ast, scope, scopes, has_await };
 }
 
 /**
@@ -231,12 +240,18 @@ function get_component_name(filename) {
 const RESERVED = ['$$props', '$$restProps', '$$slots'];
 
 /**
- * @param {Program} ast
+ * @param {string} source
  * @param {ValidatedModuleCompileOptions} options
  * @returns {Analysis}
  */
-export function analyze_module(ast, options) {
-	const { scope, scopes } = create_scopes(ast, new ScopeRoot(), false, null);
+export function analyze_module(source, options) {
+	/** @type {AST.JSComment[]} */
+	const comments = [];
+
+	state.set_source(source);
+	const ast = parse(source, comments, false, false);
+
+	const { scope, scopes, has_await } = create_scopes(ast, new ScopeRoot(), false, null);
 
 	for (const [name, references] of scope.references) {
 		if (name[0] !== '$' || RESERVED.includes(name)) continue;
@@ -253,14 +268,22 @@ export function analyze_module(ast, options) {
 
 	/** @type {Analysis} */
 	const analysis = {
-		module: { ast, scope, scopes },
+		module: { ast, scope, scopes, has_await },
 		name: options.filename,
 		accessors: false,
 		runes: true,
 		immutable: true,
 		tracing: false,
+		async_deriveds: new Set(),
+		comments,
 		classes: new Map()
 	};
+
+	state.adjust({
+		dev: options.dev,
+		rootDir: options.rootDir,
+		runes: true
+	});
 
 	walk(
 		/** @type {Node} */ (ast),
@@ -298,7 +321,12 @@ export function analyze_component(root, source, options) {
 	const module = js(root.module, scope_root, false, null);
 	const instance = js(root.instance, scope_root, true, module.scope);
 
-	const { scope, scopes } = create_scopes(root.fragment, scope_root, false, instance.scope);
+	const { scope, scopes, has_await } = create_scopes(
+		root.fragment,
+		scope_root,
+		false,
+		instance.scope
+	);
 
 	/** @type {Template} */
 	const template = { ast: root.fragment, scope, scopes };
@@ -406,7 +434,9 @@ export function analyze_component(root, source, options) {
 
 	const component_name = get_component_name(options.filename);
 
-	const runes = options.runes ?? Array.from(module.scope.references.keys()).some(is_rune);
+	const runes =
+		options.runes ??
+		(has_await || instance.has_await || Array.from(module.scope.references.keys()).some(is_rune));
 
 	if (!runes) {
 		for (let check of synthetic_stores_legacy_check) {
@@ -421,6 +451,8 @@ export function analyze_component(root, source, options) {
 		}
 	}
 
+	const is_custom_element = !!options.customElementOptions || options.customElement;
+
 	// TODO remove all the ?? stuff, we don't need it now that we're validating the config
 	/** @type {ComponentAnalysis} */
 	const analysis = {
@@ -429,8 +461,32 @@ export function analyze_component(root, source, options) {
 		module,
 		instance,
 		template,
+		comments: root.comments,
 		elements: [],
 		runes,
+		// if we are not in runes mode but we have no reserved references ($$props, $$restProps)
+		// and no `export let` we might be in a wannabe runes component that is using runes in an external
+		// module...we need to fallback to the runic behavior
+		maybe_runes:
+			!runes &&
+			// if they explicitly disabled runes, use the legacy behavior
+			options.runes !== false &&
+			![...module.scope.references.keys()].some((name) =>
+				['$$props', '$$restProps'].includes(name)
+			) &&
+			!instance.ast.body.some(
+				(node) =>
+					node.type === 'LabeledStatement' ||
+					(node.type === 'ExportNamedDeclaration' &&
+						((node.declaration &&
+							node.declaration.type === 'VariableDeclaration' &&
+							node.declaration.kind === 'let') ||
+							node.specifiers.some(
+								(specifier) =>
+									specifier.local.type === 'Identifier' &&
+									instance.scope.get(specifier.local.name)?.declaration_kind === 'let'
+							)))
+			),
 		tracing: false,
 		classes: new Map(),
 		immutable: runes || options.immutable,
@@ -446,13 +502,13 @@ export function analyze_component(root, source, options) {
 		needs_props: false,
 		event_directive_node: null,
 		uses_event_attributes: false,
-		custom_element: options.customElementOptions ?? options.customElement,
-		inject_styles: options.css === 'injected' || options.customElement,
-		accessors: options.customElement
-			? true
-			: (runes ? false : !!options.accessors) ||
-				// because $set method needs accessors
-				options.compatibility?.componentApi === 4,
+		custom_element: is_custom_element,
+		inject_styles: options.css === 'injected' || is_custom_element,
+		accessors:
+			is_custom_element ||
+			(runes ? false : !!options.accessors) ||
+			// because $set method needs accessors
+			options.compatibility?.componentApi === 4,
 		reactive_statements: new Map(),
 		binding_groups: new Map(),
 		slot_names: new Map(),
@@ -472,8 +528,16 @@ export function analyze_component(root, source, options) {
 		source,
 		undefined_exports: new Map(),
 		snippet_renderers: new Map(),
-		snippets: new Set()
+		snippets: new Set(),
+		async_deriveds: new Set()
 	};
+
+	state.adjust({
+		component_name: analysis.name,
+		dev: options.dev,
+		rootDir: options.rootDir,
+		runes
+	});
 
 	if (!runes) {
 		// every exported `let` or `var` declaration becomes a prop, everything else becomes an export

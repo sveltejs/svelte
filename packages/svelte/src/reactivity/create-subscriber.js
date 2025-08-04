@@ -1,15 +1,18 @@
 import { get, tick, untrack } from '../internal/client/runtime.js';
 import { effect_tracking, render_effect } from '../internal/client/reactivity/effects.js';
-import { source } from '../internal/client/reactivity/sources.js';
+import { source, increment } from '../internal/client/reactivity/sources.js';
 import { tag } from '../internal/client/dev/tracing.js';
-import { increment } from './utils.js';
 import { DEV } from 'esm-env';
+import { queue_micro_task } from '../internal/client/dom/task.js';
 
 /**
- * Returns a `subscribe` function that, if called in an effect (including expressions in the template),
- * calls its `start` callback with an `update` function. Whenever `update` is called, the effect re-runs.
+ * Returns a `subscribe` function that integrates external event-based systems with Svelte's reactivity.
+ * It's particularly useful for integrating with web APIs like `MediaQuery`, `IntersectionObserver`, or `WebSocket`.
  *
- * If `start` returns a function, it will be called when the effect is destroyed.
+ * If `subscribe` is called inside an effect (including indirectly, for example inside a getter),
+ * the `start` callback will be called with an `update` function. Whenever `update` is called, the effect re-runs.
+ *
+ * If `start` returns a cleanup function, it will be called when the effect is destroyed.
  *
  * If `subscribe` is called in multiple effects, `start` will only be called once as long as the effects
  * are active, and the returned teardown function will only be called when all effects are destroyed.
@@ -37,6 +40,7 @@ import { DEV } from 'esm-env';
  * 	}
  *
  * 	get current() {
+ * 		// This makes the getter reactive, if read in an effect
  * 		this.#subscribe();
  *
  * 		// Return the current state of the query, whether or not we're in an effect
@@ -69,8 +73,8 @@ export function createSubscriber(start) {
 				subscribers += 1;
 
 				return () => {
-					tick().then(() => {
-						// Only count down after timeout, else we would reach 0 before our own render effect reruns,
+					queue_micro_task(() => {
+						// Only count down after a microtask, else we would reach 0 before our own render effect reruns,
 						// but reach 1 again when the tick callback of the prior teardown runs. That would mean we
 						// re-subcribe unnecessarily and create a memory leak because the old subscription is never cleaned up.
 						subscribers -= 1;
@@ -78,6 +82,10 @@ export function createSubscriber(start) {
 						if (subscribers === 0) {
 							stop?.();
 							stop = undefined;
+							// Increment the version to ensure any dependent deriveds are marked dirty when the subscription is picked up again later.
+							// If we didn't do this then the comparison of write versions would determine that the derived has a later version than
+							// the subscriber, and it would not be re-run.
+							increment(version);
 						}
 					});
 				};

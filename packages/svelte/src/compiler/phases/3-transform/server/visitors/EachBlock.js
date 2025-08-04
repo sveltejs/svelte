@@ -44,12 +44,12 @@ export function EachBlock(node, context) {
 	);
 
 	if (node.fallback) {
-		const open = b.stmt(b.assignment('+=', b.id('$$payload.out'), block_open));
+		const open = b.stmt(b.call(b.member(b.id('$$payload.out'), b.id('push')), block_open));
 
 		const fallback = /** @type {BlockStatement} */ (context.visit(node.fallback));
 
 		fallback.body.unshift(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal(BLOCK_OPEN_ELSE)))
+			b.stmt(b.call(b.member(b.id('$$payload.out'), b.id('push')), b.literal(BLOCK_OPEN_ELSE)))
 		);
 
 		state.template.push(

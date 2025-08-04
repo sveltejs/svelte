@@ -72,6 +72,8 @@ export namespace AST {
 		instance: Script | null;
 		/** The parsed `<script module>` element, if exists */
 		module: Script | null;
+		/** Comments found in <script> and {expressions} */
+		comments: JSComment[];
 		/** @internal */
 		metadata: {
 			/** Whether the component was parsed with typescript */
@@ -245,7 +247,17 @@ export namespace AST {
 		name: string;
 		/** The 'y' in `on:x={y}` */
 		expression: null | Expression;
-		modifiers: string[]; // TODO specify
+		modifiers: Array<
+			| 'capture'
+			| 'nonpassive'
+			| 'once'
+			| 'passive'
+			| 'preventDefault'
+			| 'self'
+			| 'stopImmediatePropagation'
+			| 'stopPropagation'
+			| 'trusted'
+		>;
 		/** @internal */
 		metadata: {
 			expression: ExpressionMetadata;
@@ -364,6 +376,7 @@ export namespace AST {
 		tag: Expression;
 		/** @internal */
 		metadata: {
+			expression: ExpressionMetadata;
 			/**
 			 * `true` if this is an svg element. The boolean may not be accurate because
 			 * the tag is dynamic, but we do our best to infer it from the template.
@@ -537,6 +550,17 @@ export namespace AST {
 		attributes: Attribute[];
 	}
 
+	export interface JSComment {
+		type: 'Line' | 'Block';
+		value: string;
+		start: number;
+		end: number;
+		loc: {
+			start: { line: number; column: number };
+			end: { line: number; column: number };
+		};
+	}
+
 	export type AttributeLike = Attribute | SpreadAttribute | Directive;
 
 	export type Directive =
@@ -593,7 +617,7 @@ export namespace AST {
 		| AST.Comment
 		| Block;
 
-	export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node;
+	export type SvelteNode = Node | TemplateNode | AST.Fragment | _CSS.Node | Script;
 
 	export type { _CSS as CSS };
 }

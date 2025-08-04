@@ -19,10 +19,10 @@ import { attach } from './attachments.js';
 import { clsx } from '../../../shared/attributes.js';
 import { set_class } from './class.js';
 import { set_style } from './style.js';
-import { ATTACHMENT_KEY, NAMESPACE_HTML } from '../../../../constants.js';
-import { block, branch, destroy_effect } from '../../reactivity/effects.js';
-import { derived } from '../../reactivity/deriveds.js';
+import { ATTACHMENT_KEY, NAMESPACE_HTML, UNINITIALIZED } from '../../../../constants.js';
+import { block, branch, destroy_effect, effect } from '../../reactivity/effects.js';
 import { init_select, select_option } from './bindings/select.js';
+import { flatten } from '../../reactivity/async.js';
 
 export const CLASS = Symbol('class');
 export const STYLE = Symbol('style');
@@ -446,6 +446,8 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 			) {
 				// @ts-ignore
 				element[name] = value;
+				// remove it from attributes's cache
+				if (name in attributes) attributes[name] = UNINITIALIZED;
 			} else if (typeof value !== 'function') {
 				set_attribute(element, name, value, skip_warning);
 			}
@@ -462,64 +464,67 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 /**
  * @param {Element & ElementCSSInlineStyle} element
  * @param {(...expressions: any) => Record<string | symbol, any>} fn
- * @param {Array<() => any>} thunks
+ * @param {Array<() => any>} sync
+ * @param {Array<() => Promise<any>>} async
  * @param {string} [css_hash]
  * @param {boolean} [skip_warning]
  */
 export function attribute_effect(
 	element,
 	fn,
-	thunks = [],
+	sync = [],
+	async = [],
 	css_hash,
-	skip_warning = false,
-	d = derived
+	skip_warning = false
 ) {
-	const deriveds = thunks.map(d);
+	flatten(sync, async, (values) => {
+		/** @type {Record<string | symbol, any> | undefined} */
+		var prev = undefined;
 
-	/** @type {Record<string | symbol, any> | undefined} */
-	var prev = undefined;
+		/** @type {Record<symbol, Effect>} */
+		var effects = {};
 
-	/** @type {Record<symbol, Effect>} */
-	var effects = {};
+		var is_select = element.nodeName === 'SELECT';
+		var inited = false;
 
-	var is_select = element.nodeName === 'SELECT';
-	var inited = false;
+		block(() => {
+			var next = fn(...values.map(get));
+			/** @type {Record<string | symbol, any>} */
+			var current = set_attributes(element, prev, next, css_hash, skip_warning);
 
-	block(() => {
-		var next = fn(...deriveds.map(get));
-		/** @type {Record<string | symbol, any>} */
-		var current = set_attributes(element, prev, next, css_hash, skip_warning);
-
-		if (inited && is_select && 'value' in next) {
-			select_option(/** @type {HTMLSelectElement} */ (element), next.value, false);
-		}
-
-		for (let symbol of Object.getOwnPropertySymbols(effects)) {
-			if (!next[symbol]) destroy_effect(effects[symbol]);
-		}
-
-		for (let symbol of Object.getOwnPropertySymbols(next)) {
-			var n = next[symbol];
-
-			if (symbol.description === ATTACHMENT_KEY && (!prev || n !== prev[symbol])) {
-				if (effects[symbol]) destroy_effect(effects[symbol]);
-				effects[symbol] = branch(() => attach(element, () => n));
+			if (inited && is_select && 'value' in next) {
+				select_option(/** @type {HTMLSelectElement} */ (element), next.value);
 			}
 
-			current[symbol] = n;
+			for (let symbol of Object.getOwnPropertySymbols(effects)) {
+				if (!next[symbol]) destroy_effect(effects[symbol]);
+			}
+
+			for (let symbol of Object.getOwnPropertySymbols(next)) {
+				var n = next[symbol];
+
+				if (symbol.description === ATTACHMENT_KEY && (!prev || n !== prev[symbol])) {
+					if (effects[symbol]) destroy_effect(effects[symbol]);
+					effects[symbol] = branch(() => attach(element, () => n));
+				}
+
+				current[symbol] = n;
+			}
+
+			prev = current;
+		});
+
+		if (is_select) {
+			var select = /** @type {HTMLSelectElement} */ (element);
+
+			effect(() => {
+				select_option(select, /** @type {Record<string | symbol, any>} */ (prev).value, true);
+				init_select(select);
+			});
 		}
 
-		prev = current;
+		inited = true;
 	});
-
-	if (is_select) {
-		init_select(
-			/** @type {HTMLSelectElement} */ (element),
-			() => /** @type {Record<string | symbol, any>} */ (prev).value
-		);
-	}
-
-	inited = true;
 }
 
 /**

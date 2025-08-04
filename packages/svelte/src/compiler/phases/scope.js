@@ -18,9 +18,9 @@ import { validate_identifier_name } from './2-analyze/visitors/shared/utils.js';
 
 const UNKNOWN = Symbol('unknown');
 /** Includes `BigInt` */
-export const NUMBER = Symbol('number');
-export const STRING = Symbol('string');
-export const FUNCTION = Symbol('string');
+const NUMBER = Symbol('number');
+const STRING = Symbol('string');
+const FUNCTION = Symbol('string');
 
 /** @type {Record<string, [type: NUMBER | STRING | UNKNOWN, fn?: Function]>} */
 const globals = {
@@ -179,6 +179,13 @@ class Evaluation {
 	 * @type {boolean}
 	 */
 	is_known = true;
+
+	/**
+	 * True if the possible values contains `UNKNOWN`
+	 * @readonly
+	 * @type {boolean}
+	 */
+	has_unknown = false;
 
 	/**
 	 * True if the value is known to not be null/undefined
@@ -539,6 +546,10 @@ class Evaluation {
 
 			if (value == null || value === UNKNOWN) {
 				this.is_defined = false;
+			}
+
+			if (value === UNKNOWN) {
+				this.has_unknown = true;
 			}
 		}
 
@@ -933,7 +944,25 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		}
 	};
 
+	let has_await = false;
+
 	walk(ast, state, {
+		AwaitExpression(node, context) {
+			// this doesn't _really_ belong here, but it allows us to
+			// automatically opt into runes mode on encountering
+			// blocking awaits, without doing an additional walk
+			// before the analysis occurs
+			// TODO remove this in Svelte 7.0 or whenever we get rid of legacy support
+			has_await ||= context.path.every(
+				({ type }) =>
+					type !== 'ArrowFunctionExpression' &&
+					type !== 'FunctionExpression' &&
+					type !== 'FunctionDeclaration'
+			);
+
+			context.next();
+		},
+
 		// references
 		Identifier(node, { path, state }) {
 			const parent = path.at(-1);
@@ -1290,6 +1319,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	}
 
 	return {
+		has_await,
 		scope,
 		scopes
 	};

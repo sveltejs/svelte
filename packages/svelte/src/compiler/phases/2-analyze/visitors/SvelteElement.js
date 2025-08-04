@@ -2,7 +2,7 @@
 /** @import { Context } from '../types' */
 import { NAMESPACE_MATHML, NAMESPACE_SVG } from '../../../../constants.js';
 import { is_text_attribute } from '../../../utils/ast.js';
-import { check_element } from './shared/a11y.js';
+import { check_element } from './shared/a11y/index.js';
 import { validate_element } from './shared/element.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 
@@ -62,5 +62,17 @@ export function SvelteElement(node, context) {
 
 	mark_subtree_dynamic(context.path);
 
-	context.next({ ...context.state, parent_element: null });
+	context.visit(node.tag, {
+		...context.state,
+		expression: node.metadata.expression
+	});
+
+	for (const attribute of node.attributes) {
+		context.visit(attribute);
+	}
+
+	context.visit(node.fragment, {
+		...context.state,
+		parent_element: null
+	});
 }

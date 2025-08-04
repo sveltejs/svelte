@@ -1,6 +1,5 @@
-import { effect } from '../../../reactivity/effects.js';
+import { effect, teardown } from '../../../reactivity/effects.js';
 import { listen_to_event_and_reset_event } from './shared.js';
-import { untrack } from '../../../runtime.js';
 import { is } from '../../../proxy.js';
 import { is_array } from '../../../../shared/utils.js';
 import * as w from '../../../warnings.js';
@@ -10,9 +9,9 @@ import * as w from '../../../warnings.js';
  * @template V
  * @param {HTMLSelectElement} select
  * @param {V} value
- * @param {boolean} [mounting]
+ * @param {boolean} mounting
  */
-export function select_option(select, value, mounting) {
+export function select_option(select, value, mounting = false) {
 	if (select.multiple) {
 		// If value is null or undefined, keep the selection as is
 		if (value == undefined) {
@@ -51,40 +50,29 @@ export function select_option(select, value, mounting) {
  * current selection to the dom when it changes. Such
  * changes could for example occur when options are
  * inside an `#each` block.
- * @template V
  * @param {HTMLSelectElement} select
- * @param {() => V} [get_value]
  */
-export function init_select(select, get_value) {
-	let mounting = true;
-	effect(() => {
-		if (get_value) {
-			select_option(select, untrack(get_value), mounting);
-		}
-		mounting = false;
+export function init_select(select) {
+	var observer = new MutationObserver(() => {
+		// @ts-ignore
+		select_option(select, select.__value);
+		// Deliberately don't update the potential binding value,
+		// the model should be preserved unless explicitly changed
+	});
 
-		var observer = new MutationObserver(() => {
-			// @ts-ignore
-			var value = select.__value;
-			select_option(select, value);
-			// Deliberately don't update the potential binding value,
-			// the model should be preserved unless explicitly changed
-		});
+	observer.observe(select, {
+		// Listen to option element changes
+		childList: true,
+		subtree: true, // because of <optgroup>
+		// Listen to option element value attribute changes
+		// (doesn't get notified of select value changes,
+		// because that property is not reflected as an attribute)
+		attributes: true,
+		attributeFilter: ['value']
+	});
 
-		observer.observe(select, {
-			// Listen to option element changes
-			childList: true,
-			subtree: true, // because of <optgroup>
-			// Listen to option element value attribute changes
-			// (doesn't get notified of select value changes,
-			// because that property is not reflected as an attribute)
-			attributes: true,
-			attributeFilter: ['value']
-		});
-
-		return () => {
-			observer.disconnect();
-		};
+	teardown(() => {
+		observer.disconnect();
 	});
 }
 
@@ -136,7 +124,6 @@ export function bind_select_value(select, get, set = get) {
 		mounting = false;
 	});
 
-	// don't pass get_value, we already initialize it in the effect above
 	init_select(select);
 }
 
