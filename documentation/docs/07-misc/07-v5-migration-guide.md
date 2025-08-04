@@ -599,7 +599,7 @@ Note that `mount` and `hydrate` are _not_ synchronous, so things like `onMount` 
 
 ### Server API changes
 
-Similarly, components no longer have a `render` method when compiled for server side rendering. Instead, pass the function to `render` from `svelte/server`:
+Similarly, components no longer have a `render` method when compiled for server-side rendering. Instead, pass the function to `render` from `svelte/server`:
 
 ```js
 +++import { render } from 'svelte/server';+++
@@ -803,7 +803,7 @@ Note that Svelte 5 will also warn if you have a single expression wrapped in quo
 
 ### HTML structure is stricter
 
-In Svelte 4, you were allowed to write HTML code that would be repaired by the browser when server side rendering it. For example you could write this...
+In Svelte 4, you were allowed to write HTML code that would be repaired by the browser when server-side rendering it. For example you could write this...
 
 ```svelte
 <table>
@@ -964,7 +964,7 @@ Since these mismatches are extremely rare, Svelte 5 assumes that the values are 
 
 ### Hydration works differently
 
-Svelte 5 makes use of comments during server side rendering which are used for more robust and efficient hydration on the client. As such, you shouldn't remove comments from your HTML output if you intend to hydrate it, and if you manually authored HTML to be hydrated by a Svelte component, you need to adjust that HTML to include said comments at the correct positions.
+Svelte 5 makes use of comments during server-side rendering which are used for more robust and efficient hydration on the client. Thus, you shouldn't remove comments from your HTML output if you intend to hydrate it, and if you manually authored HTML to be hydrated by a Svelte component, you need to adjust that HTML to include said comments at the correct positions.
 
 ### `onevent` attributes are delegated
 
