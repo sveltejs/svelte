@@ -126,21 +126,25 @@ export async function track_reactivity_loss(promise) {
  * after the `async_iterator` return resolves (if it runs)
  * @template T
  * @template TReturn
- * @param {AsyncIterator<T, TReturn>} async_iterator
+ * @param {Iterable<T, TReturn> | AsyncIterable<T, TReturn>} iterable
  * @returns {AsyncGenerator<T, TReturn | undefined>}
  */
-export async function* for_await_track_reactivity_loss(async_iterator) {
+export async function* for_await_track_reactivity_loss(iterable) {
 	// This is based on the algorithms described in ECMA-262:
 	// ForIn/OfBodyEvaluation
 	// https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#sec-runtime-semantics-forin-div-ofbodyevaluation-lhs-stmt-iterator-lhskind-labelset
 	// AsyncIteratorClose
 	// https://tc39.es/ecma262/multipage/abstract-operations.html#sec-asynciteratorclose
 
+	/** @type {AsyncIterator<T, TReturn>} */
+	// @ts-ignore
+	const iterator = iterable[Symbol.asyncIterator]?.() ?? iterable[Symbol.iterator]?.();
+
 	/** Whether the completion of the iterator was "normal", meaning it wasn't ended via `break` or a similar method */
 	let normal_completion = false;
 	try {
 		while (true) {
-			const { done, value } = (await track_reactivity_loss(async_iterator.next()))();
+			const { done, value } = (await track_reactivity_loss(iterator.next()))();
 			if (done) {
 				normal_completion = true;
 				break;
@@ -149,11 +153,9 @@ export async function* for_await_track_reactivity_loss(async_iterator) {
 		}
 	} finally {
 		// If the iterator had a normal completion and `return` is defined on the iterator, call it and return the value
-		if (normal_completion && async_iterator.return !== undefined) {
+		if (normal_completion && iterator.return !== undefined) {
 			// eslint-disable-next-line no-unsafe-finally
-			return /** @type {TReturn} */ (
-				(await track_reactivity_loss(async_iterator.return()))().value
-			);
+			return /** @type {TReturn} */ ((await track_reactivity_loss(iterator.return()))().value);
 		}
 	}
 }
