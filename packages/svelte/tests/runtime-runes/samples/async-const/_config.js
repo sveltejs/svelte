@@ -8,8 +8,8 @@ export default test({
 		assert.htmlEqual(
 			target.innerHTML,
 			`
-            <h1>Hello, world!</h1>
-            <input type="text"/>
+				<h1>Hello, world!</h1>
+				<input type="text"/>
 			`
 		);
 	}
