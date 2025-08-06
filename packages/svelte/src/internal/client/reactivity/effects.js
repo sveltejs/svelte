@@ -407,9 +407,13 @@ export function destroy_effect_children(signal, remove_dom = false) {
 	signal.first = signal.last = null;
 
 	while (effect !== null) {
-		without_reactive_context(() => {
-			/** @type {Effect} */ (effect).ac?.abort(STALE_REACTION);
-		});
+		const controller = effect.ac;
+
+		if (controller !== null) {
+			without_reactive_context(() => {
+				controller.abort(STALE_REACTION);
+			});
+		}
 
 		var next = effect.next;
 

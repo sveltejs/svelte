@@ -282,6 +282,7 @@ export function update_reaction(reaction) {
 		without_reactive_context(() => {
 			/** @type {AbortController} */ (reaction.ac).abort(STALE_REACTION);
 		});
+
 		reaction.ac = null;
 	}
 
