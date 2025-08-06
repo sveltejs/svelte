@@ -57,15 +57,6 @@ export function assignment(operator, left, right) {
 }
 
 /**
- * @template T
- * @param {T & ESTree.BaseFunction} func
- * @returns {T & ESTree.BaseFunction}
- */
-export function async(func) {
-	return { ...func, async: true };
-}
-
-/**
  * @param {ESTree.Expression} argument
  * @returns {ESTree.AwaitExpression}
  */
