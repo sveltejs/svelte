@@ -42,6 +42,7 @@ import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
 import { Batch, schedule_effect } from './batch.js';
 import { flatten } from './async.js';
+import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -406,7 +407,13 @@ export function destroy_effect_children(signal, remove_dom = false) {
 	signal.first = signal.last = null;
 
 	while (effect !== null) {
-		effect.ac?.abort(STALE_REACTION);
+		const controller = effect.ac;
+
+		if (controller !== null) {
+			without_reactive_context(() => {
+				controller.abort(STALE_REACTION);
+			});
+		}
 
 		var next = effect.next;
 
