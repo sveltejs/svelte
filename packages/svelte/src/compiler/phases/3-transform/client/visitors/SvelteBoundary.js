@@ -95,7 +95,11 @@ export function SvelteBoundary(node, context) {
 
 	const block = /** @type {BlockStatement} */ (context.visit({ ...node.fragment, nodes }));
 
-	block.body.unshift(...const_tags);
+	if (!node.fragment.metadata.has_await) {
+		block.body.unshift(...const_tags);
+	} else {
+		block.body.splice(1, 0, ...const_tags);
+	}
 
 	const boundary = b.stmt(
 		b.call(
