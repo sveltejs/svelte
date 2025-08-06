@@ -3,7 +3,9 @@ import { raf as svelte_raf } from 'svelte/internal/client';
 import { queue_micro_task } from '../src/internal/client/dom/task.js';
 
 export const raf = {
+	/** @type {Set<Animation>} */
 	animations: new Set(),
+	/** @type {Set<(n: number) => void>} */
 	ticks: new Set(),
 	tick,
 	time: 0,
@@ -54,14 +56,24 @@ class Animation {
 
 	/**
 	 * @param {HTMLElement} target
-	 * @param {Keyframe[]} keyframes
-	 * @param {{ duration: number, delay: number }} options
+	 * @param {Keyframe[] | PropertyIndexedKeyframes | null} keyframes
+	 * @param {number | KeyframeAnimationOptions | undefined} options
 	 */
-	constructor(target, keyframes, { duration, delay }) {
+	constructor(target, keyframes, options) {
 		this.target = target;
-		this.#keyframes = keyframes;
-		this.#duration = Math.round(duration);
-		this.#delay = delay ?? 0;
+		this.#keyframes = Array.isArray(keyframes) ? keyframes : [];
+		if (typeof options === 'number') {
+			this.#duration = options;
+			this.#delay = 0;
+		} else {
+			const { duration = 0, delay = 0 } = options ?? {};
+			if (typeof duration === 'object') {
+				this.#duration = 0;
+			} else {
+				this.#duration = Math.round(+duration);
+			}
+			this.#delay = delay;
+		}
 
 		this._update();
 	}
@@ -189,6 +201,7 @@ function interpolate(a, b, p) {
  * @param {{duration: number, delay: number}} options
  * @returns {globalThis.Animation}
  */
+// @ts-ignore
 HTMLElement.prototype.animate = function (keyframes, options) {
 	const animation = new Animation(this, keyframes, options);
 	raf.animations.add(animation);
@@ -196,6 +209,7 @@ HTMLElement.prototype.animate = function (keyframes, options) {
 	return animation;
 };
 
+// @ts-ignore
 HTMLElement.prototype.getAnimations = function () {
 	return Array.from(raf.animations).filter((animation) => animation.target === this);
 };

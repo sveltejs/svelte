@@ -284,7 +284,8 @@ export function update_reaction(reaction) {
 
 	try {
 		reaction.f |= REACTION_IS_UPDATING;
-		var result = /** @type {Function} */ (0, reaction.fn)();
+		var fn = /** @type {Function} */ (reaction.fn);
+		var result = fn();
 		var deps = reaction.deps;
 
 		if (new_deps !== null) {

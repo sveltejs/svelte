@@ -28,6 +28,8 @@ const PENDING = 0;
 const THEN = 1;
 const CATCH = 2;
 
+/** @typedef {typeof PENDING | typeof THEN | typeof CATCH} AwaitState */
+
 /**
  * @template V
  * @param {TemplateNode} node
@@ -67,9 +69,8 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 		: mutable_source(/** @type {V} */ (undefined), false, false);
 	var error_source = runes ? source(undefined) : mutable_source(undefined, false, false);
 	var resolved = false;
-
 	/**
-	 * @param {PENDING | THEN | CATCH} state
+	 * @param {AwaitState} state
 	 * @param {boolean} restore
 	 */
 	function update(state, restore) {

@@ -297,7 +297,7 @@ export function analyze_module(source, options) {
 			// TODO the following are not needed for modules, but we have to pass them in order to avoid type error,
 			// and reducing the type would result in a lot of tedious type casts elsewhere - find a good solution one day
 			ast_type: /** @type {any} */ (null),
-			component_slots: new Set(),
+			component_slots: /** @type {Set<string>} */ (new Set()),
 			expression: null,
 			function_depth: 0,
 			has_props_rune: false,
