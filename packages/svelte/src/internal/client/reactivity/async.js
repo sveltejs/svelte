@@ -140,6 +140,10 @@ export async function* for_await_track_reactivity_loss(iterable) {
 	// @ts-ignore
 	const iterator = iterable[Symbol.asyncIterator]?.() ?? iterable[Symbol.iterator]?.();
 
+	if (iterator === undefined) {
+		throw new TypeError('value is not async iterable');
+	}
+
 	/** Whether the completion of the iterator was "normal", meaning it wasn't ended via `break` or a similar method */
 	let normal_completion = false;
 	try {
