@@ -15,11 +15,7 @@ export function AwaitExpression(node, context) {
 	// preserve context for
 	//   a) top-level await and
 	//   b) awaits that precede other expressions in template or `$derived(...)`
-	if (
-		tla ||
-		(is_reactive_expression(context) &&
-			(!is_last_evaluated_expression(context, node) || context.path.at(-1)?.type === 'ConstTag'))
-	) {
+	if (tla || (is_reactive_expression(context) && !is_last_evaluated_expression(context, node))) {
 		return b.call(b.await(b.call('$.save', argument)));
 	}
 
