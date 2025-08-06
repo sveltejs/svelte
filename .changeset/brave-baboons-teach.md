@@ -2,4 +2,4 @@
 'svelte': minor
 ---
 
-feat: async fragments
+feat: allow `await` inside `@const` declarations
