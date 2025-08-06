@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Statement, Expression, VariableDeclaration } from 'estree' */
+/** @import { BlockStatement, Statement, Expression, VariableDeclaration, ArrowFunctionExpression, FunctionDeclaration } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev } from '../../../../state.js';
@@ -60,14 +60,26 @@ export function SvelteBoundary(node, context) {
 
 			const snippet = /** @type {VariableDeclaration} */ (statements[0]);
 
+			/** @type {FunctionDeclaration | (ArrowFunctionExpression & { body: BlockStatement})} */
 			const snippet_fn = dev
 				? // @ts-expect-error we know this shape is correct
 					snippet.declarations[0].init.arguments[1]
 				: snippet.declarations[0].init;
 
-			snippet_fn.body.body.unshift(
-				...const_tags.filter((node) => node.type === 'VariableDeclaration')
-			);
+			if (node.fragment.metadata.has_await) {
+				// we have to make sure the `$.suspend` goes before everything else
+				snippet_fn.body.body.splice(
+					dev ? 2 : 1,
+					0,
+					...const_tags.filter((node) => node.type === 'VariableDeclaration')
+				);
+			} else {
+				snippet_fn.body.body.splice(
+					dev ? 1 : 0,
+					0,
+					...const_tags.filter((node) => node.type === 'VariableDeclaration')
+				);
+			}
 
 			hoisted.push(snippet);
 
