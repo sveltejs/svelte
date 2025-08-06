@@ -588,14 +588,14 @@ export function method(kind, key, params, body, computed = false, is_static = fa
  * @param {ESTree.BlockStatement} body
  * @returns {ESTree.FunctionExpression}
  */
-function function_builder(id, params, body) {
+function function_builder(id, params, body, async = false) {
 	return {
 		type: 'FunctionExpression',
 		id,
 		params,
 		body,
 		generator: false,
-		async: false,
+		async,
 		metadata: /** @type {any} */ (null) // should not be used by codegen
 	};
 }

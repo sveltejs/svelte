@@ -56,6 +56,7 @@ export namespace AST {
 			 * Whether or not we need to traverse into the fragment during mount/hydrate
 			 */
 			dynamic: boolean;
+			has_await: boolean;
 		};
 	}
 
