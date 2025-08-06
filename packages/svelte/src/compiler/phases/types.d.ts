@@ -95,7 +95,6 @@ export interface ComponentAnalysis extends Analysis {
 	};
 	/** @deprecated use `source` from `state.js` instead */
 	source: string;
-	undefined_exports: Map<string, Node>;
 	/**
 	 * Every render tag/component, and whether it could be definitively resolved or not
 	 */
