@@ -48,7 +48,7 @@ export function Fragment(node, context) {
 	const is_single_child_not_needing_template =
 		trimmed.length === 1 &&
 		(trimmed[0].type === 'SvelteFragment' || trimmed[0].type === 'TitleElement');
-	const has_await = context.state.init !== null && (node.metadata.has_await || false);
+	const has_await = context.path.at(-1)?.type !== 'Root' && node.metadata.has_await;
 
 	const template_name = context.state.scope.root.unique('root'); // TODO infer name from parent
 	const unsuspend = b.id('$$unsuspend');
