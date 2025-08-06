@@ -15,14 +15,21 @@ export function IfBlock(node, context) {
 	const consequent = /** @type {BlockStatement} */ (context.visit(node.consequent));
 	const consequent_id = b.id(context.state.scope.generate('consequent'));
 
-	statements.push(b.var(consequent_id, b.arrow([b.id('$$anchor')], consequent)));
+	statements.push(
+		b.var(
+			consequent_id,
+			b.arrow([b.id('$$anchor')], consequent, node.consequent.metadata.has_await)
+		)
+	);
 
 	let alternate_id;
 
 	if (node.alternate) {
 		const alternate = /** @type {BlockStatement} */ (context.visit(node.alternate));
 		alternate_id = b.id(context.state.scope.generate('alternate'));
-		statements.push(b.var(alternate_id, b.arrow([b.id('$$anchor')], alternate)));
+		statements.push(
+			b.var(alternate_id, b.arrow([b.id('$$anchor')], alternate, node.alternate.metadata.has_await))
+		);
 	}
 
 	const { has_await } = node.metadata.expression;

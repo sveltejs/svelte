@@ -86,7 +86,12 @@ export function SvelteBoundary(node, context) {
 	block.body.unshift(...const_tags);
 
 	const boundary = b.stmt(
-		b.call('$.boundary', context.state.node, props, b.arrow([b.id('$$anchor')], block))
+		b.call(
+			'$.boundary',
+			context.state.node,
+			props,
+			b.arrow([b.id('$$anchor')], block, node.fragment.metadata.has_await)
+		)
 	);
 
 	context.state.template.push_comment();
