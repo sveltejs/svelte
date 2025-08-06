@@ -1,5 +1,19 @@
 # svelte
 
+## 5.38.0
+
+### Minor Changes
+
+- feat: allow `await` inside `@const` declarations ([#16542](https://github.com/sveltejs/svelte/pull/16542))
+
+### Patch Changes
+
+- fix: remount at any hydration error ([#16248](https://github.com/sveltejs/svelte/pull/16248))
+
+- chore: emit `await_reactivity_loss` in `for await` loops ([#16521](https://github.com/sveltejs/svelte/pull/16521))
+
+- fix: emit `snippet_invalid_export` instead of `undefined_export` for exported snippets ([#16539](https://github.com/sveltejs/svelte/pull/16539))
+
 ## 5.37.3
 
 ### Patch Changes
