@@ -21,11 +21,8 @@ export function ConstTag(node, context) {
 			declaration.init,
 			node.metadata.expression
 		);
-		let expression = create_derived(
-			context.state,
-			b.thunk(init),
-			node.metadata.expression.has_await
-		);
+
+		let expression = create_derived(context.state, init, node.metadata.expression.has_await);
 
 		if (dev) {
 			expression = b.call('$.tag', expression, b.literal(declaration.id.name));
@@ -65,15 +62,13 @@ export function ConstTag(node, context) {
 			declaration.init,
 			node.metadata.expression
 		);
-		const fn = b.arrow(
-			[],
-			b.block([
-				b.const(/** @type {Pattern} */ (context.visit(declaration.id, child_state)), init),
-				b.return(b.object(identifiers.map((node) => b.prop('init', node, node))))
-			])
-		);
 
-		let expression = create_derived(context.state, fn, node.metadata.expression.has_await);
+		const block = b.block([
+			b.const(/** @type {Pattern} */ (context.visit(declaration.id, child_state)), init),
+			b.return(b.object(identifiers.map((node) => b.prop('init', node, node))))
+		]);
+
+		let expression = create_derived(context.state, block, node.metadata.expression.has_await);
 
 		if (dev) {
 			expression = b.call('$.tag', expression, b.literal('[@const]'));

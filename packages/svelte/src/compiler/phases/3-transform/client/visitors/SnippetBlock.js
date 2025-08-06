@@ -81,7 +81,7 @@ export function SnippetBlock(node, context) {
 		? b.call(
 				'$.wrap_snippet',
 				b.id(context.state.analysis.name),
-				has_await ? b.async(b.function(null, args, body)) : b.function(null, args, body)
+				b.function(null, args, body, has_await)
 			)
 		: b.arrow(args, body, has_await);
 

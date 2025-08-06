@@ -96,13 +96,13 @@ function create_derived_block_argument(node, context) {
 		b.return(b.object(identifiers.map((identifier) => b.prop('init', identifier, identifier))))
 	]);
 
-	const declarations = [b.var(value, create_derived(context.state, b.thunk(block)))];
+	const declarations = [b.var(value, create_derived(context.state, block))];
 
 	for (const id of identifiers) {
 		context.state.transform[id.name] = { read: get_value };
 
 		declarations.push(
-			b.var(id, create_derived(context.state, b.thunk(b.member(b.call('$.get', value), id))))
+			b.var(id, create_derived(context.state, b.member(b.call('$.get', value), id)))
 		);
 	}
 
