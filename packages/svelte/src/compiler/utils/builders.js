@@ -57,15 +57,6 @@ export function assignment(operator, left, right) {
 }
 
 /**
- * @template T
- * @param {T & ESTree.BaseFunction} func
- * @returns {T & ESTree.BaseFunction}
- */
-export function async(func) {
-	return { ...func, async: true };
-}
-
-/**
  * @param {ESTree.Expression} argument
  * @returns {ESTree.AwaitExpression}
  */
@@ -212,6 +203,23 @@ export const empty = {
  */
 export function export_default(declaration) {
 	return { type: 'ExportDefaultDeclaration', declaration };
+}
+
+/**
+ * @param {ESTree.VariableDeclaration | ESTree.Pattern} left
+ * @param {ESTree.Expression} right
+ * @param {ESTree.Statement} body
+ * @param {boolean} [_await]
+ * @returns {ESTree.ForOfStatement}
+ */
+export function for_of(left, right, body, _await = false) {
+	return {
+		type: 'ForOfStatement',
+		left,
+		right,
+		body,
+		await: _await
+	};
 }
 
 /**

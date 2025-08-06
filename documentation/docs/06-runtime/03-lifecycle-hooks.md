@@ -41,7 +41,7 @@ If a function is returned from `onMount`, it will be called when the component i
 </script>
 ```
 
-> [!NOTE] This behaviour will only work when the function passed to `onMount` _synchronously_ returns a value. `async` functions always return a `Promise`, and as such cannot _synchronously_ return a function.
+> [!NOTE] This behaviour will only work when the function passed to `onMount` is _synchronous_. `async` functions always return a `Promise`.
 
 ## `onDestroy`
 
