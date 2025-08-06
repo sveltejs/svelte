@@ -392,7 +392,7 @@ In legacy mode, it was possible to reassign or bind to the each block argument i
 {/each}
 ```
 
-This turned out to be buggy and unpredictable, particularly when working with derived values (such as `array.map(...)`), and thus is forbidden in runes mode. You can achieve the same outcome by using the index instead:
+This turned out to be buggy and unpredictable, particularly when working with derived values (such as `array.map(...)`), and as such is forbidden in runes mode. You can achieve the same outcome by using the index instead:
 
 ```svelte
 <script>
