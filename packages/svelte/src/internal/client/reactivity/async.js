@@ -126,7 +126,7 @@ export async function track_reactivity_loss(promise) {
  * after the `async_iterator` return resolves (if it runs)
  * @template T
  * @template TReturn
- * @param {Iterable<T, TReturn> | AsyncIterable<T, TReturn>} iterable
+ * @param {Iterable<T> | AsyncIterable<T>} iterable
  * @returns {AsyncGenerator<T, TReturn | undefined>}
  */
 export async function* for_await_track_reactivity_loss(iterable) {
