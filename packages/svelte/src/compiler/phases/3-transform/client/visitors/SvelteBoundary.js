@@ -69,13 +69,13 @@ export function SvelteBoundary(node, context) {
 			if (node.fragment.metadata.has_await) {
 				// we have to make sure the `$.suspend` goes before everything else
 				snippet_fn.body.body.splice(
-					dev ? 2 : 1,
+					dev ? 3 : 2,
 					0,
 					...const_tags.filter((node) => node.type === 'VariableDeclaration')
 				);
 			} else {
 				snippet_fn.body.body.splice(
-					dev ? 1 : 0,
+					dev ? 2 : 1,
 					0,
 					...const_tags.filter((node) => node.type === 'VariableDeclaration')
 				);
