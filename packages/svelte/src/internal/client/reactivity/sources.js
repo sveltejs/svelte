@@ -27,14 +27,15 @@ import {
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	ASYNC
+	ASYNC,
+	PROXY_ONCHANGE_SYMBOL
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack, tag_proxy } from '../dev/tracing.js';
+import { proxy } from '../proxy.js';
 import { component_context, is_runes } from '../context.js';
 import { Batch, schedule_effect } from './batch.js';
-import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 
 /** @type {Set<any>} */
@@ -56,14 +57,41 @@ export function set_inspect_effects_deferred() {
 	inspect_effects_deferred = true;
 }
 
+/** @type {null | Set<() => void>} */
+export let onchange_batch = null;
+
+/**
+ * @param {Function} fn
+ */
+export function batch_onchange(fn) {
+	// @ts-expect-error
+	return function (...args) {
+		let previous_onchange_batch = onchange_batch;
+
+		try {
+			onchange_batch = new Set();
+
+			// @ts-expect-error
+			return fn.apply(this, args);
+		} finally {
+			for (const onchange of /** @type {Set<() => void>} */ (onchange_batch)) {
+				onchange();
+			}
+
+			onchange_batch = previous_onchange_batch;
+		}
+	};
+}
+
 /**
  * @template V
  * @param {V} v
+ * @param {() => void} [o]
  * @param {Error | null} [stack]
  * @returns {Source<V>}
  */
 // TODO rename this to `state` throughout the codebase
-export function source(v, stack) {
+export function source(v, o, stack) {
 	/** @type {Value} */
 	var signal = {
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
@@ -71,7 +99,8 @@ export function source(v, stack) {
 		reactions: null,
 		equals,
 		rv: 0,
-		wv: 0
+		wv: 0,
+		o
 	};
 
 	if (DEV && tracing_mode_flag) {
@@ -87,11 +116,12 @@ export function source(v, stack) {
 /**
  * @template V
  * @param {V} v
+ * @param {() => void} [o]
  * @param {Error | null} [stack]
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function state(v, stack) {
-	const s = source(v, stack);
+export function state(v, o, stack) {
+	const s = source(v, o, stack);
 
 	push_reaction_value(s);
 
@@ -153,7 +183,7 @@ export function set(source, value, should_proxy = false) {
 		e.state_unsafe_mutation();
 	}
 
-	let new_value = should_proxy ? proxy(value) : value;
+	let new_value = should_proxy ? proxy(value, source.o) : value;
 
 	if (DEV) {
 		tag_proxy(new_value, /** @type {string} */ (source.label));
@@ -171,6 +201,11 @@ export function set(source, value, should_proxy = false) {
 export function internal_set(source, value) {
 	if (!source.equals(value)) {
 		var old_value = source.v;
+
+		if (typeof old_value === 'object' && old_value != null && source.o) {
+			// @ts-ignore
+			old_value[PROXY_ONCHANGE_SYMBOL]?.(source.o, true);
+		}
 
 		if (is_destroying_effect) {
 			old_values.set(source, value);
@@ -236,6 +271,15 @@ export function internal_set(source, value) {
 
 		if (DEV && inspect_effects.size > 0 && !inspect_effects_deferred) {
 			flush_inspect_effects();
+		}
+
+		var onchange = source.o;
+		if (onchange) {
+			if (onchange_batch) {
+				onchange_batch.add(onchange);
+			} else {
+				onchange();
+			}
 		}
 	}
 

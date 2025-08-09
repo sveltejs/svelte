@@ -5,6 +5,7 @@ import * as b from '#compiler/builders';
 import { dev } from '../../../../state.js';
 import { get_parent } from '../../../../utils/ast.js';
 import { get_name } from '../../../nodes.js';
+import { get_onchange } from './shared/state.js';
 
 /**
  * @param {ClassBody} node
