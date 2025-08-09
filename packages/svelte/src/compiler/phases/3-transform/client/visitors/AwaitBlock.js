@@ -37,7 +37,11 @@ export function AwaitBlock(node, context) {
 		const declarations = argument?.declarations ?? [];
 		const block = /** @type {BlockStatement} */ (then_context.visit(node.then, then_context.state));
 
-		then_block = b.arrow(args, b.block([...declarations, ...block.body]));
+		then_block = b.arrow(
+			args,
+			b.block([...declarations, ...block.body]),
+			node.then.metadata.has_await
+		);
 	}
 
 	if (node.catch) {
@@ -53,7 +57,11 @@ export function AwaitBlock(node, context) {
 			catch_context.visit(node.catch, catch_context.state)
 		);
 
-		catch_block = b.arrow(args, b.block([...declarations, ...block.body]));
+		catch_block = b.arrow(
+			args,
+			b.block([...declarations, ...block.body]),
+			node.catch.metadata.has_await
+		);
 	}
 
 	context.state.init.push(
@@ -63,7 +71,11 @@ export function AwaitBlock(node, context) {
 				context.state.node,
 				expression,
 				node.pending
-					? b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.pending)))
+					? b.arrow(
+							[b.id('$$anchor')],
+							/** @type {BlockStatement} */ (context.visit(node.pending)),
+							node.pending.metadata.has_await
+						)
 					: b.null,
 				then_block,
 				catch_block

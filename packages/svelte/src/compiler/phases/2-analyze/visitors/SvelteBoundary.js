@@ -24,4 +24,11 @@ export function SvelteBoundary(node, context) {
 	}
 
 	context.next();
+	if (node.fragment.metadata.has_await) {
+		for (const child of node.fragment.nodes) {
+			if (child.type === 'SnippetBlock') {
+				child.body.metadata.has_await = true;
+			}
+		}
+	}
 }
