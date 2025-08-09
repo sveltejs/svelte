@@ -28,6 +28,7 @@ export const HYDRATION_ERROR = {};
 
 export const ELEMENT_IS_NAMESPACED = 1;
 export const ELEMENT_PRESERVE_ATTRIBUTE_CASE = 1 << 1;
+export const ELEMENT_IS_INPUT = 1 << 2;
 
 export const UNINITIALIZED = Symbol();
 
