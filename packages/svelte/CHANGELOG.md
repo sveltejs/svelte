@@ -1,5 +1,13 @@
 # svelte
 
+## 5.38.1
+
+### Patch Changes
+
+- fix: wrap `abort` in `without_reactive_context` ([#16570](https://github.com/sveltejs/svelte/pull/16570))
+
+- fix: add `hint` as a possible value for `popover` attribute ([#16581](https://github.com/sveltejs/svelte/pull/16581))
+
 ## 5.38.0
 
 ### Minor Changes
