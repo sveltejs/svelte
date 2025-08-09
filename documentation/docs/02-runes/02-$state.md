@@ -166,6 +166,54 @@ To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snaps
 
 This is handy when you want to pass some state to an external library or API that doesn't expect a proxy, such as `structuredClone`.
 
+## `$state.invalidate`
+
+In the case that you aren't using a proxied `$state` via use of `$state.raw` or a class instance, you may need to tell Svelte a `$state` has changed. You can do so via `$state.invalidate`:
+
+```svelte
+<script>
+	import Counter from 'external-class';
+
+	let counter = $state(new Counter());
+
+	function increment() {
+		counter.increment(); // `counter`'s internal state has changed, but Svelte doesn't know that yet
+		$state.invalidate(counter);
+	}
+</script>
+<button onclick={increment}>
+	Count is {counter.count}
+</button>
+```
+
+`$state.invalidate` can also be used with reactive class fields, and properties of `$state` objects:
+
+```js
+class Box {
+	value;
+
+	constructor(initial) {
+		this.value = initial;
+	}
+}
+
+class Counter {
+	count = $state(new Box(0));
+
+	increment() {
+		this.count.value += 1;
+		$state.invalidate(this.count);
+	}
+}
+
+let counter = $state({count: new Box(0)});
+
+function increment() {
+	counter.count.value += 1;
+	$state.invalidate(counter.count);
+}
+```
+
 ## Passing state into functions
 
 JavaScript is a _pass-by-value_ language — when you call a function, the arguments are the _values_ rather than the _variables_. In other words:

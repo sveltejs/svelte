@@ -437,6 +437,7 @@ const STATE_CREATION_RUNES = /** @type {const} */ ([
 
 const RUNES = /** @type {const} */ ([
 	...STATE_CREATION_RUNES,
+	'$state.invalidate',
 	'$state.snapshot',
 	'$props',
 	'$props.id',
