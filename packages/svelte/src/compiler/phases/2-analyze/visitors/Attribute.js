@@ -7,6 +7,7 @@ import {
 	get_attribute_expression,
 	is_event_attribute
 } from '../../../utils/ast.js';
+import { is_custom_element_node } from '../../nodes.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
@@ -59,7 +60,6 @@ export function Attribute(node, context) {
 		}
 
 		if (is_event_attribute(node)) {
-			const parent = context.path.at(-1);
 			if (parent?.type === 'RegularElement' || parent?.type === 'SvelteElement') {
 				context.state.analysis.uses_event_attributes = true;
 			}
@@ -67,7 +67,14 @@ export function Attribute(node, context) {
 			const expression = get_attribute_expression(node);
 			const delegated_event = get_delegated_event(node.name.slice(2), expression, context);
 
-			if (delegated_event !== null) {
+			if (
+				delegated_event !== null &&
+				// We can't assume that the events from within the shadow root bubble beyond it.
+				// If someone dispatches them without the composed option, they won't. Also
+				// people could repurpose the event names to do something else, or call stopPropagation
+				// on the shadow root so it doesn't bubble beyond it.
+				!(parent?.type === 'RegularElement' && is_custom_element_node(parent))
+			) {
 				if (delegated_event.hoisted) {
 					delegated_event.function.metadata.hoisted = true;
 				}

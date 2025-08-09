@@ -56,7 +56,10 @@ export function create_event(event_name, dom, handler, options = {}) {
 			// Only call in the bubble phase, else delegated events would be called before the capturing events
 			handle_event_propagation.call(dom, event);
 		}
-		if (!event.cancelBubble) {
+
+		// @ts-expect-error Use this instead of cancelBubble, because cancelBubble is also true if
+		// we're the last element on which the event will be handled.
+		if (!event.__cancelled || event.__cancelled === dom) {
 			return without_reactive_context(() => {
 				return handler?.call(this, event);
 			});
@@ -185,6 +188,8 @@ export function handle_event_propagation(event) {
 			// chain in case someone manually dispatches the same event object again.
 			// @ts-expect-error
 			event.__root = handler_element;
+			// @ts-expect-error
+			event.__cancelled = null;
 			return;
 		}
 
@@ -230,6 +235,7 @@ export function handle_event_propagation(event) {
 	set_active_effect(null);
 
 	try {
+		var cancelled = event.cancelBubble;
 		/**
 		 * @type {unknown}
 		 */
@@ -273,6 +279,10 @@ export function handle_event_propagation(event) {
 				}
 			}
 			if (event.cancelBubble || parent_element === handler_element || parent_element === null) {
+				if (!cancelled && event.cancelBubble) {
+					// @ts-expect-error
+					event.__cancelled = current_target;
+				}
 				break;
 			}
 			current_target = parent_element;
