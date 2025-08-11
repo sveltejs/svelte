@@ -11,7 +11,8 @@ import {
 	RENDER_EFFECT,
 	ROOT_EFFECT,
 	USER_EFFECT,
-	MAYBE_DIRTY
+	MAYBE_DIRTY,
+	EFFECT_RAN
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
@@ -599,6 +600,7 @@ function flush_queued_effects(effects) {
 
 		if ((effect.f & (DESTROYED | INERT)) === 0 && is_dirty(effect)) {
 			var n = current_batch ? current_batch.current.size : 0;
+			var ran = effect.f & EFFECT_RAN;
 
 			update_effect(effect);
 
@@ -622,6 +624,7 @@ function flush_queued_effects(effects) {
 			// if state is written in a user effect, abort and re-schedule, lest we run
 			// effects that should be removed as a result of the state change
 			if (
+				// ran &&
 				current_batch !== null &&
 				current_batch.current.size > n &&
 				(effect.f & USER_EFFECT) !== 0
