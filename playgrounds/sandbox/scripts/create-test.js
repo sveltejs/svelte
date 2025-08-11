@@ -25,8 +25,42 @@ target_folder = path.join(
 	target_folder.split('/')[1]
 );
 
-// Create target directory if it doesn't exist
-if (!fs.existsSync(target_folder)) {
+const exists = fs.existsSync(target_folder);
+
+// Check if target folder already exists and ask for confirmation
+if (exists) {
+	console.log(`Target folder "${target_folder}" already exists.`);
+	process.stdout.write('Do you want to override the existing test? (Y/n): ');
+
+	// Read user input synchronously
+	const stdin = process.stdin;
+	stdin.setRawMode(true);
+	stdin.resume();
+	stdin.setEncoding('utf8');
+
+	const response = await new Promise((resolve) => {
+		stdin.on('data', (key) => {
+			stdin.setRawMode(false);
+			stdin.pause();
+			process.stdout.write('\n');
+			resolve(key);
+		});
+	});
+
+	if (response.toLowerCase() === 'n') {
+		console.log('Operation cancelled.');
+		process.exit(0);
+	}
+
+	// Clear the existing target folder except for _config.js
+	const files = fs.readdirSync(target_folder);
+	for (const file of files) {
+		if (file !== '_config.js') {
+			const filePath = path.join(target_folder, file);
+			fs.rmSync(filePath, { recursive: true, force: true });
+		}
+	}
+} else {
 	fs.mkdirSync(target_folder, { recursive: true });
 }
 
@@ -103,17 +137,19 @@ for (const file_path of collected_files) {
 }
 
 // Create empty _config.js
-const config_path = path.join(target_folder, '_config.js');
-fs.writeFileSync(
-	config_path,
-	`import { test } from '../../test';
+if (!exists) {
+	const config_path = path.join(target_folder, '_config.js');
+	fs.writeFileSync(
+		config_path,
+		`import { test } from '../../test';
 
 export default test({
 	async test({ assert, target }) {
 	}
 });
 `
-);
-console.log(`Created: ${config_path}`);
+	);
+	console.log(`Created: ${config_path}`);
+}
 
 console.log(`\nTest files created in: ${target_folder}`);
