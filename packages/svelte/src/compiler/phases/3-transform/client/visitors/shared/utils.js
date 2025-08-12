@@ -212,7 +212,7 @@ export function parse_directive_name(name) {
 export function build_bind_this(expression, value, context) {
 	const { state, visit } = context;
 	if (expression.type === 'SpreadElement') {
-		const { get, set } = init_spread_bindings(expression, context);
+		const { get, set } = init_spread_bindings(expression.argument, context);
 		return b.call('$.bind_this', value, set, get);
 	}
 
@@ -297,10 +297,7 @@ export function build_bind_this(expression, value, context) {
  * @param {MemberExpression} expression
  */
 export function validate_binding(state, binding, expression) {
-	if (
-		binding.expression.type === 'SequenceExpression' ||
-		binding.expression.type === 'SpreadElement'
-	) {
+	if (binding.expression.type === 'SequenceExpression' || binding.metadata.spread_binding) {
 		return;
 	}
 	// If we are referencing a $store.foo then we don't need to add validation

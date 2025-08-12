@@ -94,7 +94,7 @@ export function build_inline_component(node, expression, context) {
 			const value = build_attribute_value(attribute.value, context, false, true);
 			push_prop(b.prop('init', b.key(attribute.name), value));
 		} else if (attribute.type === 'BindDirective' && attribute.name !== 'this') {
-			if (attribute.expression.type === 'SpreadElement') {
+			if (attribute.metadata.spread_binding) {
 				const { get, set } = init_spread_bindings(attribute.expression, context);
 
 				push_prop(b.get(attribute.name, [b.return(b.call(get))]));

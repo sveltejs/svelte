@@ -795,7 +795,7 @@ declare module 'svelte/attachments' {
 
 declare module 'svelte/compiler' {
 	import type { SourceMap } from 'magic-string';
-	import type { ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, Expression, Identifier, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression, SpreadElement } from 'estree';
+	import type { ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, Expression, Identifier, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
 	import type { Location } from 'locate-character';
 	/**
 	 * `compile` converts your `.svelte` source code into a JavaScript module that exports a component
@@ -1268,7 +1268,7 @@ declare module 'svelte/compiler' {
 			/** The 'x' in `bind:x` */
 			name: string;
 			/** The y in `bind:x={y}` */
-			expression: Identifier | MemberExpression | SequenceExpression | SpreadElement;
+			expression: Identifier | MemberExpression | SequenceExpression;
 		}
 
 		/** A `class:` directive */

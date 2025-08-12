@@ -1,4 +1,4 @@
-/** @import { Expression, SpreadElement } from 'estree' */
+/** @import { Expression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import { is_void } from '../../../../utils.js';
@@ -618,15 +618,6 @@ function read_attribute(parser) {
 			e.directive_missing_name({ start, end: start + colon_index + 1 }, name);
 		}
 
-		if (
-			type !== 'BindDirective' &&
-			value !== true &&
-			'metadata' in value &&
-			value.metadata.expression.has_spread
-		) {
-			e.directive_invalid_value(value.start);
-		}
-
 		if (type === 'StyleDirective') {
 			return {
 				start,
@@ -643,7 +634,7 @@ function read_attribute(parser) {
 
 		const first_value = value === true ? undefined : Array.isArray(value) ? value[0] : value;
 
-		/** @type {Expression | SpreadElement | null} */
+		/** @type {Expression | null} */
 		let expression = null;
 
 		if (first_value) {
@@ -655,29 +646,26 @@ function read_attribute(parser) {
 				// TODO throw a parser error in a future version here if this `[ExpressionTag]` instead of `ExpressionTag`,
 				// which means stringified value, which isn't allowed for some directives?
 				expression = first_value.expression;
-
-				if (type === 'BindDirective' && first_value.metadata.expression.has_spread) {
-					expression = {
-						type: 'SpreadElement',
-						start: first_value.start,
-						end: first_value.end,
-						argument: expression
-					};
-				}
 			}
 		}
 
-		/** @type {AST.Directive} */
-		const directive = {
+		const directive = /** @type {AST.Directive} */ ({
 			start,
 			end,
 			type,
 			name: directive_name,
+			modifiers: [],
 			expression,
 			metadata: {
 				expression: create_expression_metadata()
 			}
-		};
+		});
+		if (first_value?.metadata.expression.has_spread) {
+			if (directive.type !== 'BindDirective') {
+				e.directive_invalid_value(first_value.start);
+			}
+			directive.metadata.spread_binding = true;
+		}
 
 		// @ts-expect-error we do this separately from the declaration to avoid upsetting typescript
 		directive.modifiers = modifiers;
