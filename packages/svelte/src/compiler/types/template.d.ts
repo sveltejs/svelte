@@ -15,8 +15,7 @@ import type {
 	Program,
 	ChainExpression,
 	SimpleCallExpression,
-	SequenceExpression,
-	SpreadElement
+	SequenceExpression
 } from 'estree';
 import type { Scope } from '../phases/scope';
 import type { _CSS } from './css';
