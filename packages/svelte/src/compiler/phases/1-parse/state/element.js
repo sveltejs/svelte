@@ -654,7 +654,6 @@ function read_attribute(parser) {
 			end,
 			type,
 			name: directive_name,
-			modifiers: [],
 			expression,
 			metadata: {
 				expression: create_expression_metadata()
