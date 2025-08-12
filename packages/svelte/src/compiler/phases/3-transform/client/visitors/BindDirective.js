@@ -14,6 +14,11 @@ import { init_spread_bindings } from '../../shared/spread_bindings.js';
  * @param {ComponentContext} context
  */
 export function BindDirective(node, context) {
+	const expression = /** @type {Expression} */ (context.visit(node.expression));
+	const property = binding_properties[node.name];
+
+	const parent = /** @type {AST.SvelteNode} */ (context.path.at(-1));
+
 	let get, set;
 
 	// Handle SpreadElement by creating a variable declaration before visiting
@@ -21,52 +26,44 @@ export function BindDirective(node, context) {
 		const { get: getter, set: setter } = init_spread_bindings(node.expression, context);
 		get = getter;
 		set = setter;
+	} else if (expression.type === 'SequenceExpression') {
+		[get, set] = expression.expressions;
 	} else {
-		const expression = /** @type {Expression} */ (context.visit(node.expression));
+		if (
+			dev &&
+			context.state.analysis.runes &&
+			expression.type === 'MemberExpression' &&
+			(node.name !== 'this' ||
+				context.path.some(
+					({ type }) =>
+						type === 'IfBlock' ||
+						type === 'EachBlock' ||
+						type === 'AwaitBlock' ||
+						type === 'KeyBlock'
+				)) &&
+			!is_ignored(node, 'binding_property_non_reactive')
+		) {
+			validate_binding(context.state, node, expression);
+		}
 
-		if (expression.type === 'SequenceExpression') {
-			[get, set] = expression.expressions;
-		} else {
-			if (
-				dev &&
-				context.state.analysis.runes &&
-				expression.type === 'MemberExpression' &&
-				(node.name !== 'this' ||
-					context.path.some(
-						({ type }) =>
-							type === 'IfBlock' ||
-							type === 'EachBlock' ||
-							type === 'AwaitBlock' ||
-							type === 'KeyBlock'
-					)) &&
-				!is_ignored(node, 'binding_property_non_reactive')
-			) {
-				validate_binding(context.state, node, expression);
-			}
+		get = b.thunk(expression);
 
-			get = b.thunk(expression);
-
-			/** @type {Expression | undefined} */
-			set = b.unthunk(
-				b.arrow(
-					[b.id('$$value')],
-					/** @type {Expression} */ (
-						context.visit(
-							b.assignment('=', /** @type {Pattern} */ (node.expression), b.id('$$value'))
-						)
+		/** @type {Expression | undefined} */
+		set = b.unthunk(
+			b.arrow(
+				[b.id('$$value')],
+				/** @type {Expression} */ (
+					context.visit(
+						b.assignment('=', /** @type {Pattern} */ (node.expression), b.id('$$value'))
 					)
 				)
-			);
+			)
+		);
 
-			if (get === set) {
-				set = undefined;
-			}
+		if (get === set) {
+			set = undefined;
 		}
 	}
-
-	const property = binding_properties[node.name];
-
-	const parent = /** @type {AST.SvelteNode} */ (context.path.at(-1));
 
 	/** @type {CallExpression} */
 	let call;
@@ -231,7 +228,7 @@ export function BindDirective(node, context) {
 
 					if (value !== undefined) {
 						group_getter = b.thunk(
-							b.block([b.stmt(build_attribute_value(value, context).value), b.return(get)])
+							b.block([b.stmt(build_attribute_value(value, context).value), b.return(b.call(get))])
 						);
 					}
 				}
