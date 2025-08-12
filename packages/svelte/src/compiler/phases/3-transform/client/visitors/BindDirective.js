@@ -228,7 +228,7 @@ export function BindDirective(node, context) {
 
 					if (value !== undefined) {
 						group_getter = b.thunk(
-							b.block([b.stmt(build_attribute_value(value, context).value), b.return(b.call(get))])
+							b.block([b.stmt(build_attribute_value(value, context).value), b.return(expression)])
 						);
 					}
 				}
