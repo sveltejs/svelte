@@ -40,6 +40,22 @@ In the case of readonly bindings like [dimension bindings](#Dimensions), the `ge
 > [!NOTE]
 > Function bindings are available in Svelte 5.9.0 and newer.
 
+If you already have a tuple [get, set] or an object with `get` and/or `set` functions, you can use the spread syntax to bind them directly, instead of destructuring them beforehand.
+This is especially handy when using helpers that return getter/setter pairs.
+
+```svelte
+<script>
+	function bindLowerCase(value) {
+		return [
+			() => value.toLowerCase(),
+			(v) => value = v.toLowerCase()
+		];
+	}
+</script>
+
+<input bind:value={...bindLowerCase(value)} />
+```
+
 ## `<input bind:value>`
 
 A `bind:value` directive on an `<input>` element binds the input's `value` property:
