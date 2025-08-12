@@ -21,8 +21,7 @@ export function BindDirective(node, context) {
 
 	let get, set;
 
-	// Handle SpreadElement by creating a variable declaration before visiting
-	if (node.expression.type === 'SpreadElement') {
+	if (node.metadata.spread_binding) {
 		const { get: getter, set: setter } = init_spread_bindings(node.expression, context);
 		get = getter;
 		set = setter;

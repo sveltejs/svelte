@@ -7,7 +7,8 @@ import type {
 	MemberExpression,
 	ObjectExpression,
 	Pattern,
-	SequenceExpression
+	SequenceExpression,
+	SpreadElement
 } from 'estree';
 
 interface BaseNode {
@@ -50,7 +51,7 @@ export interface LegacyBinding extends BaseNode {
 	/** The 'x' in `bind:x` */
 	name: string;
 	/** The y in `bind:x={y}` */
-	expression: Identifier | MemberExpression | SequenceExpression;
+	expression: Identifier | MemberExpression | SequenceExpression | SpreadElement;
 }
 
 export interface LegacyBody extends BaseElement {

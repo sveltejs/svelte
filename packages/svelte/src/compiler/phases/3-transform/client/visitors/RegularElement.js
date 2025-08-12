@@ -428,7 +428,7 @@ function setup_select_synchronization(value_binding, context) {
 
 	let bound = value_binding.expression;
 
-	if (bound.type === 'SequenceExpression') {
+	if (bound.type === 'SequenceExpression' || value_binding.metadata.spread_binding) {
 		return;
 	}
 

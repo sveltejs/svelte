@@ -212,11 +212,12 @@ export namespace AST {
 		/** The 'x' in `bind:x` */
 		name: string;
 		/** The y in `bind:x={y}` */
-		expression: Identifier | MemberExpression | SequenceExpression | SpreadElement;
+		expression: Identifier | MemberExpression | SequenceExpression;
 		/** @internal */
 		metadata: {
 			binding_group_name: Identifier;
 			parent_each_blocks: EachBlock[];
+			spread_binding: boolean;
 		};
 	}
 

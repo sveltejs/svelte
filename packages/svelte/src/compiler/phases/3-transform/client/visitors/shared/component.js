@@ -197,11 +197,14 @@ export function build_component(node, component_name, context) {
 				push_prop(b.init(attribute.name, value));
 			}
 		} else if (attribute.type === 'BindDirective') {
-			if (attribute.expression.type === 'SpreadElement') {
+			if (attribute.metadata.spread_binding) {
 				const { get, set } = init_spread_bindings(attribute.expression, context);
 
 				if (attribute.name === 'this') {
-					bind_this = attribute.expression;
+					bind_this = {
+						type: 'SpreadElement',
+						argument: attribute.expression
+					};
 				} else {
 					push_prop(b.get(attribute.name, [b.return(b.call(get))]), true);
 					push_prop(b.set(attribute.name, [b.stmt(b.call(set, b.id('$$value')))]), true);

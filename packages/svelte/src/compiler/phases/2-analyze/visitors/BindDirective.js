@@ -158,18 +158,9 @@ export function BindDirective(node, context) {
 		return;
 	}
 
-	if (node.expression.type === 'SpreadElement') {
+	if (node.metadata.spread_binding) {
 		if (node.name === 'group') {
 			e.bind_group_invalid_expression(node);
-		}
-
-		const argument = node.expression.argument;
-		if (
-			argument.type !== 'Identifier' &&
-			argument.type !== 'MemberExpression' &&
-			argument.type !== 'CallExpression'
-		) {
-			e.bind_invalid_expression(node);
 		}
 
 		mark_subtree_dynamic(context.path);
@@ -261,7 +252,8 @@ export function BindDirective(node, context) {
 
 		node.metadata = {
 			binding_group_name: group_name,
-			parent_each_blocks: each_blocks
+			parent_each_blocks: each_blocks,
+			spread_binding: false
 		};
 	}
 
