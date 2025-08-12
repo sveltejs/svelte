@@ -520,7 +520,7 @@ export { assign_payload, copy_payload } from './payload.js';
 
 export { snapshot } from '../shared/clone.js';
 
-export { fallback, to_array, noop } from '../shared/utils.js';
+export { fallback, to_array } from '../shared/utils.js';
 
 export {
 	invalid_default_snippet,
