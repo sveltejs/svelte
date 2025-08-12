@@ -253,7 +253,7 @@ export function BindDirective(node, context) {
 		node.metadata = {
 			binding_group_name: group_name,
 			parent_each_blocks: each_blocks,
-			spread_binding: false
+			spread_binding: node.metadata.spread_binding
 		};
 	}
 

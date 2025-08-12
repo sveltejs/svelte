@@ -818,9 +818,8 @@ function read_sequence(parser, done, location) {
 
 			parser.allow_whitespace();
 
-			const has_spread = parser.match('...');
+			const has_spread = parser.eat('...');
 			if (has_spread) {
-				parser.eat('...', true);
 				parser.allow_whitespace();
 			}
 
