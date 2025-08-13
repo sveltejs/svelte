@@ -173,10 +173,10 @@ export class Batch {
 	skipped_effects = new Set();
 
 	/**
-	 *
 	 * @param {Effect[]} root_effects
+	 * @param {boolean} block_effects_only
 	 */
-	process(root_effects) {
+	process(root_effects, block_effects_only = false) {
 		queued_root_effects = [];
 
 		previous_batch = null;
@@ -187,7 +187,7 @@ export class Batch {
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to undo the changes belonging to any batch
 		// other than the current one
-		if (batches.size > 1) {
+		if (batches.size > (block_effects_only ? 2 : 1)) {
 			current_values = new Map();
 			batch_deriveds = new Map();
 
@@ -209,7 +209,12 @@ export class Batch {
 		}
 
 		for (const root of root_effects) {
-			this.#traverse_effect_tree(root);
+			this.#traverse_effect_tree(root, block_effects_only);
+		}
+
+		if (block_effects_only) {
+			queued_root_effects = root_effects;
+			return;
 		}
 
 		// if we didn't start any new async work, and no async work
@@ -276,9 +281,12 @@ export class Batch {
 	 * Traverse the effect tree, executing effects or stashing
 	 * them for later execution as appropriate
 	 * @param {Effect} root
+	 * @param {boolean} block_effects_only
 	 */
-	#traverse_effect_tree(root) {
-		root.f ^= CLEAN;
+	#traverse_effect_tree(root, block_effects_only) {
+		if (!block_effects_only) {
+			root.f ^= CLEAN;
+		}
 
 		var effect = root.first;
 
@@ -290,7 +298,11 @@ export class Batch {
 			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.skipped_effects.has(effect);
 
 			if (!skip && effect.fn !== null) {
-				if (is_branch) {
+				if (block_effects_only) {
+					if ((flags & BLOCK_EFFECT) !== 0 && (flags & CLEAN) === 0) {
+						update_effect(effect);
+					}
+				} else if (is_branch) {
 					effect.f ^= CLEAN;
 				} else if ((flags & CLEAN) === 0) {
 					if ((flags & EFFECT) !== 0) {
@@ -394,6 +406,12 @@ export class Batch {
 		}
 
 		this.deactivate();
+	}
+
+	flush_block_effects() {
+		if (queued_root_effects.length > 0) {
+			this.process(queued_root_effects, true);
+		}
 	}
 
 	/**
@@ -626,13 +644,9 @@ function flush_queued_effects(effects) {
 				current_batch.current.size > n &&
 				(effect.f & USER_EFFECT) !== 0
 			) {
-				break;
+				current_batch.flush_block_effects();
 			}
 		}
-	}
-
-	while (i < length) {
-		schedule_effect(effects[i++]);
 	}
 }
 
