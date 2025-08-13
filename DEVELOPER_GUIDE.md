@@ -176,3 +176,83 @@ const visitors = {
 ```
 
 This means that in every visitor we can access the `scope` property and ask information about every variable by name.
+
+Let's see an example of how this is used in the `Component` visitor
+
+```ts
+export function Component(node, context) {
+	const binding = context.state.scope.get(
+		node.name.includes('.') ? node.name.slice(0, node.name.indexOf('.')) : node.name
+	);
+
+	node.metadata.dynamic =
+		context.state.analysis.runes && // Svelte 4 required you to use svelte:component to switch components
+		binding !== null &&
+		(binding.kind !== 'normal' || node.name.includes('.'));
+
+	visit_component(node, context);
+}
+```
+
+We invoke `scope.get` passing `node.name` (or the substring that goes from the start to the first `.` in case the component looks like this `<Component.Value />`)... what we get back is a `Binding` which contains the information about where the variable for that component was declared (or imported).
+
+If we are in runes mode, the binding is not null and the binding.kind not `normal` (which means a regular non stateful variable) then we set the `metadata.dynamic` for this component to `true`...we will use this during the transformation phase to generate the proper code to remount the component when the variable changes.
+
+The analysis phase is also the moment most of the compiler warnings/errors are emitted. For example if we notice that some top level reference starts with `$$` (which is prohibited) we throw a `global_reference_invalid`
+
+```ts
+for (const [name, references] of module.scope.references) {
+	if (name[0] !== '$' || RESERVED.includes(name)) continue;
+	if (name === '$' || name[1] === '$') {
+		e.global_reference_invalid(references[0].node, name);
+	}
+	// rest of the code to also create synthetic bindings for the store, omitted for brevity
+}
+```
+
+Or if you try to assign to a variable that was not declared with state and it's used in the template we console.warn a `non_reactive_update` (you can also see the scopes in use once again)
+
+```ts
+// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
+for (const scope of [module.scope, instance.scope]) {
+	outer: for (const [name, binding] of scope.declarations) {
+		if (binding.kind === 'normal' && binding.reassigned) {
+			inner: for (const { path } of binding.references) {
+				if (path[0].type !== 'Fragment') continue;
+				for (let i = 1; i < path.length; i += 1) {
+					const type = path[i].type;
+					if (
+						type === 'FunctionDeclaration' ||
+						type === 'FunctionExpression' ||
+						type === 'ArrowFunctionExpression'
+					) {
+						continue inner;
+					}
+					// bind:this doesn't need to be a state reference if it will never change
+					if (
+						type === 'BindDirective' &&
+						/** @type {AST.BindDirective} */ path[i].name === 'this'
+					) {
+						for (let j = i - 1; j >= 0; j -= 1) {
+							const type = path[j].type;
+							if (
+								type === 'IfBlock' ||
+								type === 'EachBlock' ||
+								type === 'AwaitBlock' ||
+								type === 'KeyBlock'
+							) {
+								w.non_reactive_update(binding.node, name);
+								continue outer;
+							}
+						}
+						continue inner;
+					}
+				}
+
+				w.non_reactive_update(binding.node, name);
+				continue outer;
+			}
+		}
+	}
+}
+```
