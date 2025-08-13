@@ -1,5 +1,4 @@
 /** @import { AST } from '#compiler' */
-/** @import { Comment } from 'estree' */
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment.js';

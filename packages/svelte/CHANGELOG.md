@@ -1,5 +1,61 @@
 # svelte
 
+## 5.38.1
+
+### Patch Changes
+
+- fix: wrap `abort` in `without_reactive_context` ([#16570](https://github.com/sveltejs/svelte/pull/16570))
+
+- fix: add `hint` as a possible value for `popover` attribute ([#16581](https://github.com/sveltejs/svelte/pull/16581))
+
+- fix: skip effects inside dynamic component that is about to be destroyed ([#16601](https://github.com/sveltejs/svelte/pull/16601))
+
+## 5.38.0
+
+### Minor Changes
+
+- feat: allow `await` inside `@const` declarations ([#16542](https://github.com/sveltejs/svelte/pull/16542))
+
+### Patch Changes
+
+- fix: remount at any hydration error ([#16248](https://github.com/sveltejs/svelte/pull/16248))
+
+- chore: emit `await_reactivity_loss` in `for await` loops ([#16521](https://github.com/sveltejs/svelte/pull/16521))
+
+- fix: emit `snippet_invalid_export` instead of `undefined_export` for exported snippets ([#16539](https://github.com/sveltejs/svelte/pull/16539))
+
+## 5.37.3
+
+### Patch Changes
+
+- fix: reset attribute cache after setting corresponding property ([#16543](https://github.com/sveltejs/svelte/pull/16543))
+
+## 5.37.2
+
+### Patch Changes
+
+- fix: double event processing in firefox due to event object being garbage collected ([#16527](https://github.com/sveltejs/svelte/pull/16527))
+
+- fix: add bindable dimension attributes types to SVG and MathML elements ([#16525](https://github.com/sveltejs/svelte/pull/16525))
+
+- fix: correctly differentiate static fields before emitting `duplicate_class_field` ([#16526](https://github.com/sveltejs/svelte/pull/16526))
+
+- fix: prevent last_propagated_event from being DCE'd ([#16538](https://github.com/sveltejs/svelte/pull/16538))
+
+## 5.37.1
+
+### Patch Changes
+
+- chore: remove some todos ([#16515](https://github.com/sveltejs/svelte/pull/16515))
+
+- fix: allow await expressions inside `{#await ...}` argument ([#16514](https://github.com/sveltejs/svelte/pull/16514))
+
+- fix: `append_styles` in an effect to make them available on mount ([#16509](https://github.com/sveltejs/svelte/pull/16509))
+
+- chore: remove `parser.template_untrimmed` ([#16511](https://github.com/sveltejs/svelte/pull/16511))
+
+- fix: always inject styles when compiling as a custom element ([#16509](https://github.com/sveltejs/svelte/pull/16509))
+
 ## 5.37.0
 
 ### Minor Changes

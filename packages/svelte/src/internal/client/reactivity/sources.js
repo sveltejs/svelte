@@ -37,6 +37,7 @@ import { Batch, schedule_effect } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 
+/** @type {Set<any>} */
 export let inspect_effects = new Set();
 
 /** @type {Map<Source, any>} */

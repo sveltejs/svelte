@@ -62,8 +62,10 @@ export function component(node, get_component, render_fn) {
 			if (defer) {
 				offscreen_fragment = document.createDocumentFragment();
 				offscreen_fragment.append((target = create_text()));
+				if (effect) {
+					/** @type {Batch} */ (current_batch).skipped_effects.add(effect);
+				}
 			}
-
 			pending_effect = branch(() => render_fn(target, component));
 		}
 

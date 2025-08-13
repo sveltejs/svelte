@@ -12,7 +12,7 @@ The `<svelte:options>` element provides a place to specify per-component compile
 - `runes={false}` — forces a component into _legacy mode_
 - `namespace="..."` — the namespace where this component will be used, can be "html" (the default), "svg" or "mathml"
 - `customElement={...}` — the [options](custom-elements#Component-options) to use when compiling this component as a custom element. If a string is passed, it is used as the `tag` option
-- `css="injected"` — the component will inject its styles inline: During server side rendering, it's injected as a `<style>` tag in the `head`, during client side rendering, it's loaded via JavaScript
+- `css="injected"` — the component will inject its styles inline: During server-side rendering, it's injected as a `<style>` tag in the `head`, during client side rendering, it's loaded via JavaScript
 
 > [!LEGACY] Deprecated options
 > Svelte 4 also included the following options. They are deprecated in Svelte 5 and non-functional in runes mode.

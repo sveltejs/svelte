@@ -30,7 +30,7 @@ See [the SvelteKit documentation](https://svelte.dev/docs/kit) to learn more.
 
 ## Changelog
 
-[The Changelog for this package is available on GitHub](https://github.com/sveltejs/svelte/blob/master/packages/svelte/CHANGELOG.md).
+[The Changelog for this package is available on GitHub](https://github.com/sveltejs/svelte/blob/main/packages/svelte/CHANGELOG.md).
 
 ## Supporting Svelte
 
