@@ -46,7 +46,7 @@ If you want to familiarize yourself with the Svelte AST, you can go [to the play
 
 ## Phase 2: Analysis
 
-Once we have a AST we need to perform analysis on it. During this phase we will collect information about which variables are used, where are they used, if they are stores etc etc. This information will be later used during the third phase to properly transform and optimizing your component (for example if you declare a stateful variable but never reassign to it or never use it in a reactive context we will not bother with creating a stateful variable at all).
+Once we have a AST we need to perform analysis on it. During this phase we will collect information about which variables are used, where are they used, if they are stores, etc. This information will be used later during the third phase to transform and optimize your component (for example if you declare a stateful variable but never reassign to it or never use it in a reactive context we will not bother with creating a stateful variable at all).
 
 The very first thing to do is to create the scopes for every variable. What this operation does is to create a map from a node to a specific set of references, declarations and declarators. This is useful because if you have a situation like this
 
@@ -75,9 +75,9 @@ Depending on where you read `count` it will refer to a different variable that h
 This is done by walking the AST and manually create a `new Scope` class every time we encounter a node that creates one.
 
 <details>
-	<summary>What does walking the AST means?</summary>
+	<summary>What does walking the AST mean?</summary>
 	
-	As we've seen, the AST is basically a giant Javascript object with a `type` property to indicate the node type and a series of extra properties.
+	As we've seen, the AST is basically a giant JavaScript object with a `type` property to indicate the node type and a series of extra properties.
 
     For example, a `$state(1)` node will look like this (excluding position information):
 
@@ -120,9 +120,9 @@ walk(ast, state, {
 
 What this snippet of code is doing is:
 
-- checking if the function declaration has an identifier (basically if it's a named or anonymous function)
-- if it has one it's declaring a new variable in the current scope
-- creating a new scope (since in Javascript when you create a function you are creating a new lexical scope) with the current scope as the parent
+- checking if the function declaration has an identifier (i.e. if it's a named function - not an anonymous function)
+- if it does have an identifier, it's declaring a new variable in the current scope
+- creating a new scope (since in JavaScript when you create a function you are creating a new lexical scope) with the current scope as the parent
 - declare every argument of the function in the newly created scope
 - invoking the next method that will continue the AST traversal, with the brand new scope as the current scope
 
@@ -196,7 +196,7 @@ export function Component(node, context) {
 
 We invoke `scope.get` passing `node.name` (or the substring that goes from the start to the first `.` in case the component looks like this `<Component.Value />`)... what we get back is a `Binding` which contains the information about where the variable for that component was declared (or imported).
 
-If we are in runes mode, the binding is not null and the binding.kind not `normal` (which means a regular non stateful variable) then we set the `metadata.dynamic` for this component to `true`...we will use this during the transformation phase to generate the proper code to remount the component when the variable changes.
+If we are in runes mode, the `binding` is not `null`, and the `binding.kind` is not `normal` (which means a regular non stateful variable) then we set the `metadata.dynamic` for this component to `true`. We will use this during the transformation phase to generate the proper code to remount the component when the variable changes.
 
 The analysis phase is also the moment most of the compiler warnings/errors are emitted. For example if we notice that some top level reference starts with `$$` (which is prohibited) we throw a `global_reference_invalid`
 
