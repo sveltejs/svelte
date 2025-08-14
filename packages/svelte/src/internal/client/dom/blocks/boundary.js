@@ -59,6 +59,18 @@ export class Boundary {
 	/** @type {Boundary | null} */
 	parent;
 
+	/**
+	 * The associated batch to this boundary while the boundary pending; set by the one interacting with the boundary when entering pending state.
+	 * Will be `null` once the boundary is no longer pending.
+	 *
+	 * Needed because `current_batch` isn't guaranteed to exist: E.g. when component A has top level await, then renders component B
+	 * which also has top level await, `current_batch` can be null when a flush from component A happens before
+	 * suspend() in component B is called. We hence save it on the boundary instead.
+	 *
+	 * @type {Batch | null}
+	 */
+	batch = null;
+
 	/** @type {TemplateNode} */
 	#anchor;
 
@@ -231,6 +243,7 @@ export class Boundary {
 
 		if (this.#pending_count === 0) {
 			this.pending = false;
+			this.batch = null;
 
 			if (this.#pending_effect) {
 				pause_effect(this.#pending_effect, () => {

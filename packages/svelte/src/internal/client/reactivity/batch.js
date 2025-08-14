@@ -664,7 +664,7 @@ export function schedule_effect(signal) {
 
 export function suspend() {
 	var boundary = get_pending_boundary();
-	var batch = /** @type {Batch} */ (current_batch);
+	var batch = (boundary.batch ??= /** @type {Batch} */ (current_batch));
 	var pending = boundary.pending;
 
 	boundary.update_pending_count(1);

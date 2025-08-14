@@ -131,7 +131,7 @@ export function async_derived(fn, location) {
 
 		prev = promise;
 
-		var batch = /** @type {Batch} */ (current_batch);
+		var batch = (boundary.batch ??= /** @type {Batch} */ (current_batch));
 		var pending = boundary.pending;
 
 		if (should_suspend) {
