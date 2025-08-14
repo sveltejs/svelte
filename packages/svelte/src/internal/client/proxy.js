@@ -96,7 +96,6 @@ export function proxy(value) {
 	let updating = false;
 	/** @param {string} new_path */
 	function update_path(new_path) {
-		console.log({ new_path, updating, stack: new Error().stack });
 		if (updating) return;
 		updating = true;
 		path = new_path;
@@ -288,13 +287,13 @@ export function proxy(value) {
 			if (s === undefined) {
 				if (!has || get_descriptor(target, prop)?.writable) {
 					s = with_parent(() => source(undefined, stack));
-					set(s, proxy(value));
-
-					sources.set(prop, s);
 
 					if (DEV) {
 						tag(s, get_label(path, prop));
 					}
+					set(s, proxy(value));
+
+					sources.set(prop, s);
 				}
 			} else {
 				has = s.v !== UNINITIALIZED;
