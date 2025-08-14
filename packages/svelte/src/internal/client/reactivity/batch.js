@@ -619,8 +619,8 @@ function flush_queued_effects(effects) {
 				}
 			}
 
-			// if an effect is invalidated by a user effect, abort and re-schedule, lest we
-			// run effects that should be removed as a result of the state change
+			// if a state change in a user effect invalidates a _different_ effect,
+			// abort and reschedule in case that effect now needs to be destroyed
 			if (schedule_version > sv && (effect.f & USER_EFFECT) !== 0) {
 				break;
 			}
