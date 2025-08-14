@@ -4,9 +4,7 @@
     filesState.files = nodes;
     function test() {
         $inspect.trace();
-        console.log('before assignment');
         filesState.files.items[0].parent = filesState.files;
-        console.log('after assignment');
     }
     $effect(test);
 </script>
