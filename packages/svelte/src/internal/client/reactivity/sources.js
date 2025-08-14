@@ -300,6 +300,11 @@ export function increment(source) {
 }
 
 /**
+ * We increment this value when an effect is scheduled as a result of a state change
+ */
+export let schedule_version = 0;
+
+/**
  * @param {Value} signal
  * @param {number} status should be DIRTY or MAYBE_DIRTY
  * @returns {void}
@@ -334,6 +339,7 @@ function mark_reactions(signal, status) {
 		if ((flags & DERIVED) !== 0) {
 			mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
 		} else if (not_dirty) {
+			schedule_version += 1;
 			schedule_effect(/** @type {Effect} */ (reaction));
 		}
 	}
