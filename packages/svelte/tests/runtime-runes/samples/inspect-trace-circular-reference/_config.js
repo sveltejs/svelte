@@ -16,8 +16,8 @@ export default test({
 			{ log: 'filesState.files', highlighted: false },
 			{ log: files },
 			{ log: '$state', highlighted: true },
-			{ log: 'filesState.files.items[0].parent', highlighted: false },
-			{ log: files },
+			{ log: 'filesState.files.items[0].parent.items', highlighted: false },
+			{ log: files.items },
 			{ log: '$state', highlighted: true },
 			{ log: 'filesState.files.items[0].parent.items[0]', highlighted: false },
 			{ log: files.items[0] }
