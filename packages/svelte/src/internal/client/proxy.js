@@ -34,13 +34,9 @@ const regex_is_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
 /**
  * @template T
  * @param {T} value
- * @param {WeakSet<Source>} [owned_sources]
  * @returns {T}
  */
-export function proxy(value, owned_sources) {
-	if (DEV) {
-		owned_sources ??= new WeakSet();
-	}
+export function proxy(value) {
 	// if non-proxyable, or is already a proxy, return `value`
 	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {
 		return value;
@@ -97,16 +93,11 @@ export function proxy(value, owned_sources) {
 
 	/** Used in dev for $inspect.trace() */
 	var path = '';
-
-	/**
-	 * @param {string} new_path
-	 * @param {Source} updater the source causing the path update
-	 */
-	function update_path(new_path, updater) {
-		// there's a circular reference somewhere, don't update the path to avoid recursion
-		if (owned_sources?.has(updater)) {
-			return;
-		}
+	let updating = false;
+	/** @param {string} new_path */
+	function update_path(new_path) {
+		if (updating) return;
+		updating = true;
 		path = new_path;
 
 		tag(version, `${path} version`);
@@ -115,6 +106,7 @@ export function proxy(value, owned_sources) {
 		for (const [prop, source] of sources) {
 			tag(source, get_label(path, prop));
 		}
+		updating = false;
 	}
 
 	return new Proxy(/** @type {any} */ (value), {
@@ -138,7 +130,6 @@ export function proxy(value, owned_sources) {
 					sources.set(prop, s);
 					if (DEV && typeof prop === 'string') {
 						tag(s, get_label(path, prop));
-						owned_sources?.add(s);
 					}
 					return s;
 				});
@@ -160,7 +151,6 @@ export function proxy(value, owned_sources) {
 
 					if (DEV) {
 						tag(s, get_label(path, prop));
-						owned_sources?.add(s);
 					}
 				}
 			} else {
@@ -186,12 +176,11 @@ export function proxy(value, owned_sources) {
 			// create a source, but only if it's an own property and not a prototype property
 			if (s === undefined && (!exists || get_descriptor(target, prop)?.writable)) {
 				s = with_parent(() => {
-					var p = proxy(exists ? target[prop] : UNINITIALIZED, DEV ? owned_sources : undefined);
+					var p = proxy(exists ? target[prop] : UNINITIALIZED);
 					var s = source(p, stack);
 
 					if (DEV) {
 						tag(s, get_label(path, prop));
-						owned_sources?.add(s);
 					}
 
 					return s;
@@ -245,12 +234,11 @@ export function proxy(value, owned_sources) {
 			) {
 				if (s === undefined) {
 					s = with_parent(() => {
-						var p = has ? proxy(target[prop], DEV ? owned_sources : undefined) : UNINITIALIZED;
+						var p = has ? proxy(target[prop]) : UNINITIALIZED;
 						var s = source(p, stack);
 
 						if (DEV) {
 							tag(s, get_label(path, prop));
-							owned_sources?.add(s);
 						}
 
 						return s;
@@ -287,7 +275,6 @@ export function proxy(value, owned_sources) {
 
 						if (DEV) {
 							tag(other_s, get_label(path, i));
-							owned_sources?.add(other_s);
 						}
 					}
 				}
@@ -300,19 +287,18 @@ export function proxy(value, owned_sources) {
 			if (s === undefined) {
 				if (!has || get_descriptor(target, prop)?.writable) {
 					s = with_parent(() => source(undefined, stack));
-					set(s, proxy(value, DEV ? owned_sources : undefined));
+					set(s, proxy(value));
 
 					sources.set(prop, s);
 
 					if (DEV) {
 						tag(s, get_label(path, prop));
-						owned_sources?.add(s);
 					}
 				}
 			} else {
 				has = s.v !== UNINITIALIZED;
 
-				var p = with_parent(() => proxy(value, DEV ? owned_sources : undefined));
+				var p = with_parent(() => proxy(value));
 				set(s, p);
 			}
 

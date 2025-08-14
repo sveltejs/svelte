@@ -179,7 +179,7 @@ export function get_stack(label) {
  */
 export function tag(source, label) {
 	source.label = label;
-	tag_proxy(source.v, label, source);
+	tag_proxy(source.v, label);
 
 	return source;
 }
@@ -187,11 +187,10 @@ export function tag(source, label) {
 /**
  * @param {unknown} value
  * @param {string} label
- * @param {Value} source
  */
-export function tag_proxy(value, label, source) {
+export function tag_proxy(value, label) {
 	// @ts-expect-error
-	value?.[PROXY_PATH_SYMBOL]?.(label, source);
+	value?.[PROXY_PATH_SYMBOL]?.(label);
 	return value;
 }
 
