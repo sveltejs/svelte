@@ -26,7 +26,7 @@ export function inspect(get_value, inspector = console.log) {
 			return;
 		}
 
-		var snap = snapshot(value, true, true);
+		var snap = snapshot(value, true);
 		untrack(() => {
 			inspector(initial ? 'init' : 'update', ...snap);
 		});

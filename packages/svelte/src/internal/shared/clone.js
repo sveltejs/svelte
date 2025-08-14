@@ -15,15 +15,15 @@ const empty = [];
  * @template T
  * @param {T} value
  * @param {boolean} [skip_warning]
- * @param {boolean} [only_deproxy]
+ * @param {boolean} [no_tojson] 
  * @returns {Snapshot<T>}
  */
-export function snapshot(value, skip_warning = false, only_deproxy = false) {
+export function snapshot(value, skip_warning = false, no_tojson = false) {
 	if (DEV && !skip_warning) {
 		/** @type {string[]} */
 		const paths = [];
 
-		const copy = clone(value, new Map(), '', paths);
+		const copy = clone(value, new Map(), '', paths, null, no_tojson);
 		if (paths.length === 1 && paths[0] === '') {
 			// value could not be cloned
 			w.state_snapshot_uncloneable();
@@ -41,7 +41,7 @@ export function snapshot(value, skip_warning = false, only_deproxy = false) {
 		return copy;
 	}
 
-	return clone(value, new Map(), '', empty, null, only_deproxy);
+	return clone(value, new Map(), '', empty, null, no_tojson);
 }
 
 /**
@@ -51,18 +51,16 @@ export function snapshot(value, skip_warning = false, only_deproxy = false) {
  * @param {string} path
  * @param {string[]} paths
  * @param {null | T} [original] The original value, if `value` was produced from a `toJSON` call
- * @param {boolean} [only_deproxy] Don't clone objects that aren't proxies
+ * @param {boolean} [no_tojson] 
  * @returns {Snapshot<T>}
  */
-function clone(value, cloned, path, paths, original = null, only_deproxy = false) {
+function clone(value, cloned, path, paths, original = null, no_tojson = false) {
 	if (typeof value === 'object' && value !== null) {
 		var unwrapped = cloned.get(value);
 		if (unwrapped !== undefined) return unwrapped;
 
-		if (value instanceof Map)
-			return /** @type {Snapshot<T>} */ (only_deproxy ? value : new Map(value));
-		if (value instanceof Set)
-			return /** @type {Snapshot<T>} */ (only_deproxy ? value : new Set(value));
+		if (value instanceof Map) return /** @type {Snapshot<T>} */ (new Map(value));
+		if (value instanceof Set) return /** @type {Snapshot<T>} */ (new Set(value));
 
 		if (is_array(value)) {
 			var copy = /** @type {Snapshot<any>} */ (Array(value.length));
@@ -75,7 +73,7 @@ function clone(value, cloned, path, paths, original = null, only_deproxy = false
 			for (var i = 0; i < value.length; i += 1) {
 				var element = value[i];
 				if (i in value) {
-					copy[i] = clone(element, cloned, DEV ? `${path}[${i}]` : path, paths, null, only_deproxy);
+					copy[i] = clone(element, cloned, DEV ? `${path}[${i}]` : path, paths, null, no_tojson);
 				}
 			}
 
@@ -92,61 +90,31 @@ function clone(value, cloned, path, paths, original = null, only_deproxy = false
 			}
 
 			for (var key in value) {
-				copy[key] = clone(
-					// @ts-expect-error
-					value[key],
-					cloned,
-					DEV ? `${path}.${key}` : path,
-					paths,
-					null,
-					only_deproxy
-				);
+				// @ts-expect-error
+				copy[key] = clone(value[key], cloned, DEV ? `${path}.${key}` : path, paths, null, no_tojson);
 			}
 
 			return copy;
 		}
 
 		if (value instanceof Date) {
-			if (only_deproxy) {
-				structuredClone(value);
-			} else {
-				return /** @type {Snapshot<T>} */ (structuredClone(value));
-			}
+			return /** @type {Snapshot<T>} */ (structuredClone(value));
 		}
 
-		if (typeof (/** @type {T & { toJSON?: any } } */ (value).toJSON) === 'function') {
-			if (!only_deproxy) {
-				return clone(
-					/** @type {T & { toJSON(): any } } */ (value).toJSON(),
-					cloned,
-					DEV ? `${path}.toJSON()` : path,
-					paths,
-					// Associate the instance with the toJSON clone
-					value
-				);
-			} else {
-				// we still want to read each property
-				clone(
-					/** @type {T & { toJSON(): any } } */ (value).toJSON(),
-					cloned,
-					DEV ? `${path}.toJSON()` : path,
-					paths,
-					// Associate the instance with the toJSON clone
-					value
-				);
-			}
+		if (typeof (/** @type {T & { toJSON?: any } } */ (value).toJSON) === 'function' && !no_tojson) {
+			return clone(
+				/** @type {T & { toJSON(): any } } */ (value).toJSON(),
+				cloned,
+				DEV ? `${path}.toJSON()` : path,
+				paths,
+				// Associate the instance with the toJSON clone
+				value
+			);
 		}
 	}
 
 	if (value instanceof EventTarget) {
 		// can't be cloned
-		return /** @type {Snapshot<T>} */ (value);
-	}
-
-	if (only_deproxy) {
-		try {
-			structuredClone(value);
-		} catch {}
 		return /** @type {Snapshot<T>} */ (value);
 	}
 
