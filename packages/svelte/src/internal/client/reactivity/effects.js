@@ -134,20 +134,19 @@ function create_effect(type, fn, sync, push = true) {
 	}
 
 	if (push) {
-		var e = /** @type {Effect | null} */ (effect);
+		/** @type {Effect | null} */
+		var e = effect;
 
 		// if an effect has already ran and doesn't need to be kept in the tree
 		// (because it won't re-run, has no DOM, and has no teardown etc)
 		// then we skip it and go to its child (if any)
 		if (
-			e !== null &&
+			sync &&
 			e.deps === null &&
 			e.teardown === null &&
 			e.nodes_start === null &&
 			e.first === e.last &&
 			(e.f & EFFECT_RAN) !== 0 &&
-			(e.f & ROOT_EFFECT) === 0 &&
-			(e.f & BRANCH_EFFECT) === 0 &&
 			(e.f & EFFECT_PRESERVED) === 0
 		) {
 			e = e.first;
@@ -253,7 +252,7 @@ export function inspect_effect(fn) {
  */
 export function effect_root(fn) {
 	Batch.ensure();
-	const effect = create_effect(ROOT_EFFECT, fn, true);
+	const effect = create_effect(ROOT_EFFECT | EFFECT_PRESERVED, fn, true);
 
 	return () => {
 		destroy_effect(effect);
@@ -267,7 +266,7 @@ export function effect_root(fn) {
  */
 export function component_root(fn) {
 	Batch.ensure();
-	const effect = create_effect(ROOT_EFFECT, fn, true);
+	const effect = create_effect(ROOT_EFFECT | EFFECT_PRESERVED, fn, true);
 
 	return (options = {}) => {
 		return new Promise((fulfil) => {
@@ -386,7 +385,7 @@ export function block(fn, flags = 0) {
  * @param {boolean} [push]
  */
 export function branch(fn, push = true) {
-	return create_effect(BRANCH_EFFECT, fn, true, push);
+	return create_effect(BRANCH_EFFECT | EFFECT_PRESERVED, fn, true, push);
 }
 
 /**
