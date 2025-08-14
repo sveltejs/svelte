@@ -9,6 +9,7 @@ import { get_rune } from '../../../scope.js';
 import { get_prop_source, is_prop_source, is_state_source, should_proxy } from '../utils.js';
 import { is_hoisted_function } from '../../utils.js';
 import { get_value } from './shared/declarations.js';
+import { get_onchange } from './shared/state.js';
 
 /**
  * @param {VariableDeclaration} node
@@ -123,12 +124,15 @@ export function VariableDeclaration(node, context) {
 			const args = /** @type {CallExpression} */ (init).arguments;
 			const value = /** @type {Expression} */ (args[0]) ?? b.void0; // TODO do we need the void 0? can we just omit it altogether?
 
+			const onchange = get_onchange(/** @type {Expression} */ (args[1]), context);
+
 			if (rune === '$state' || rune === '$state.raw') {
 				/**
 				 * @param {Identifier} id
 				 * @param {Expression} value
+				 * @param {Expression} [onchange]
 				 */
-				const create_state_declarator = (id, value) => {
+				const create_state_declarator = (id, value, onchange) => {
 					const binding = /** @type {import('#compiler').Binding} */ (
 						context.state.scope.get(id.name)
 					);
@@ -136,7 +140,7 @@ export function VariableDeclaration(node, context) {
 					const is_proxy = should_proxy(value, context.state.scope);
 
 					if (rune === '$state' && is_proxy) {
-						value = b.call('$.proxy', value);
+						value = b.call(is_state ? '$.assignable_proxy' : '$.proxy', value, onchange);
 
 						if (dev && !is_state) {
 							value = b.call('$.tag_proxy', value, b.literal(id.name));
@@ -144,7 +148,9 @@ export function VariableDeclaration(node, context) {
 					}
 
 					if (is_state) {
-						value = b.call('$.state', value);
+						if (!(rune === '$state' && is_proxy)) {
+							value = b.call('$.state', value, onchange);
+						}
 
 						if (dev) {
 							value = b.call('$.tag', value, b.literal(id.name));
@@ -158,7 +164,10 @@ export function VariableDeclaration(node, context) {
 					const expression = /** @type {Expression} */ (context.visit(value));
 
 					declarations.push(
-						b.declarator(declarator.id, create_state_declarator(declarator.id, expression))
+						b.declarator(
+							declarator.id,
+							create_state_declarator(declarator.id, expression, onchange)
+						)
 					);
 				} else {
 					const tmp = b.id(context.state.scope.generate('tmp'));
@@ -186,7 +195,7 @@ export function VariableDeclaration(node, context) {
 							return b.declarator(
 								path.node,
 								binding?.kind === 'state' || binding?.kind === 'raw_state'
-									? create_state_declarator(binding.node, value)
+									? create_state_declarator(binding.node, value, onchange)
 									: value
 							);
 						})

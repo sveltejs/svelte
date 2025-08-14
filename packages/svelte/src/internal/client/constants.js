@@ -27,6 +27,7 @@ export const ASYNC = 1 << 22;
 export const ERROR_VALUE = 1 << 23;
 
 export const STATE_SYMBOL = Symbol('$state');
+export const PROXY_ONCHANGE_SYMBOL = Symbol('proxy onchange');
 export const LEGACY_PROPS = Symbol('legacy props');
 export const LOADING_ATTR_SYMBOL = Symbol('');
 export const PROXY_PATH_SYMBOL = Symbol('proxy path');

@@ -127,8 +127,10 @@ export function CallExpression(node, context) {
 
 			if ((rune === '$derived' || rune === '$derived.by') && node.arguments.length !== 1) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
-			} else if (node.arguments.length > 1) {
-				e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
+			} else if (rune === '$state' || rune === '$state.raw') {
+				if (node.arguments.length > 2) {
+					e.rune_invalid_arguments_length(node, rune, 'at most two arguments');
+				}
 			}
 
 			break;

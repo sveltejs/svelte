@@ -299,8 +299,8 @@ export function client_component(analysis, options) {
 		}
 
 		if (binding?.kind === 'state' || binding?.kind === 'raw_state') {
-			const value = binding.kind === 'state' ? b.call('$.proxy', b.id('$$value')) : b.id('$$value');
-			return [getter, b.set(alias ?? name, [b.stmt(b.call('$.set', b.id(name), value))])];
+			const call = b.call('$.set', b.id(name), b.id('$$value'), binding.kind === 'state' && b.true);
+			return [getter, b.set(alias ?? name, [b.stmt(call)])];
 		}
 
 		return getter;

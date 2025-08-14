@@ -14,6 +14,10 @@ export interface Signal {
 	wv: number;
 }
 
+export interface StateOptions {
+	onchange?: () => unknown;
+}
+
 export interface Value<V = unknown> extends Signal {
 	/** Equality function */
 	equals: Equals;
@@ -23,6 +27,9 @@ export interface Value<V = unknown> extends Signal {
 	rv: number;
 	/** The latest value for this signal */
 	v: V;
+	/** onchange callback */
+	o?: () => void;
+	/** Dev only */
 
 	// dev-only
 	/** A label (e.g. the `foo` in `let foo = $state(...)`) used for `$inspect.trace()` */
