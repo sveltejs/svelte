@@ -96,7 +96,7 @@ export function proxy(value) {
 	let updating = false;
 	/** @param {string} new_path */
 	function update_path(new_path) {
-		console.log({new_path});
+		console.log({ new_path, updating, stack: new Error().stack });
 		if (updating) return;
 		updating = true;
 		path = new_path;
