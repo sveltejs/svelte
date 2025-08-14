@@ -133,29 +133,31 @@ function create_effect(type, fn, sync, push = true) {
 		schedule_effect(effect);
 	}
 
-	// if an effect has no dependencies, no DOM and no teardown function,
-	// don't bother adding it to the effect tree
-	var inert =
-		sync &&
-		effect.deps === null &&
-		effect.first === null &&
-		effect.nodes_start === null &&
-		effect.teardown === null &&
-		(effect.f & EFFECT_PRESERVED) === 0;
+	if (push) {
+		// if an effect has no dependencies, no DOM and no teardown function,
+		// don't bother adding it to the effect tree
+		var inert =
+			sync &&
+			effect.deps === null &&
+			effect.first === null &&
+			effect.nodes_start === null &&
+			effect.teardown === null &&
+			(effect.f & EFFECT_PRESERVED) === 0;
 
-	if (!inert && push) {
-		if (parent !== null) {
-			push_effect(effect, parent);
-		}
+		if (!inert) {
+			if (parent !== null) {
+				push_effect(effect, parent);
+			}
 
-		// if we're in a derived, add the effect there too
-		if (
-			active_reaction !== null &&
-			(active_reaction.f & DERIVED) !== 0 &&
-			(type & ROOT_EFFECT) === 0
-		) {
-			var derived = /** @type {Derived} */ (active_reaction);
-			(derived.effects ??= []).push(effect);
+			// if we're in a derived, add the effect there too
+			if (
+				active_reaction !== null &&
+				(active_reaction.f & DERIVED) !== 0 &&
+				(type & ROOT_EFFECT) === 0
+			) {
+				var derived = /** @type {Derived} */ (active_reaction);
+				(derived.effects ??= []).push(effect);
+			}
 		}
 	}
 
