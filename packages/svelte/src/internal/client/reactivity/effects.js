@@ -145,8 +145,7 @@ function create_effect(type, fn, sync, push = true) {
 			e.deps === null &&
 			e.teardown === null &&
 			e.nodes_start === null &&
-			e.first === e.last &&
-			(e.f & EFFECT_RAN) !== 0 &&
+			e.first === e.last && // either `null`, or a singular child
 			(e.f & EFFECT_PRESERVED) === 0
 		) {
 			e = e.first;
