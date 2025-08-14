@@ -648,7 +648,6 @@ function resume_children(effect, local) {
 	}
 }
 
-export function aborted() {
-	var effect = /** @type {Effect} */ (active_effect);
+export function aborted(effect = /** @type {Effect} */ (active_effect)) {
 	return (effect.f & DESTROYED) !== 0;
 }

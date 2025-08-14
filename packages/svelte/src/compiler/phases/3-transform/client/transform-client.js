@@ -402,9 +402,20 @@ export function client_component(analysis, options) {
 			params,
 			b.block([
 				b.var('$$unsuspend', b.call('$.suspend')),
-				...component_block.body,
-				b.if(b.call('$.aborted'), b.return()),
-				.../** @type {ESTree.Statement[]} */ (template.body),
+				b.var('$$active', b.id('$.active_effect')),
+				b.try_catch(
+					b.block([
+						...component_block.body,
+						b.if(b.call('$.aborted'), b.return()),
+						.../** @type {ESTree.Statement[]} */ (template.body)
+					]),
+					b.block([
+						b.if(
+							b.unary('!', b.call('$.aborted', b.id('$$active'))),
+							b.stmt(b.call('$.invoke_error_boundary', b.id('$$error'), b.id('$$active')))
+						)
+					])
+				),
 				b.stmt(b.call('$$unsuspend'))
 			]),
 			true

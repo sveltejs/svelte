@@ -151,7 +151,8 @@ export {
 	untrack,
 	exclude_from_object,
 	deep_read,
-	deep_read_state
+	deep_read_state,
+	active_effect
 } from './runtime.js';
 export { validate_binding, validate_each_keys } from './validate.js';
 export { raf } from './timing.js';
@@ -176,3 +177,4 @@ export {
 } from '../shared/validate.js';
 export { strict_equals, equals } from './dev/equality.js';
 export { log_if_contains_state } from './dev/console-log.js';
+export { invoke_error_boundary } from './error-handling.js';
