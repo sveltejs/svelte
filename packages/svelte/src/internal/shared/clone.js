@@ -15,7 +15,7 @@ const empty = [];
  * @template T
  * @param {T} value
  * @param {boolean} [skip_warning]
- * @param {boolean} [no_tojson] 
+ * @param {boolean} [no_tojson]
  * @returns {Snapshot<T>}
  */
 export function snapshot(value, skip_warning = false, no_tojson = false) {
@@ -51,7 +51,7 @@ export function snapshot(value, skip_warning = false, no_tojson = false) {
  * @param {string} path
  * @param {string[]} paths
  * @param {null | T} [original] The original value, if `value` was produced from a `toJSON` call
- * @param {boolean} [no_tojson] 
+ * @param {boolean} [no_tojson]
  * @returns {Snapshot<T>}
  */
 function clone(value, cloned, path, paths, original = null, no_tojson = false) {
@@ -90,8 +90,15 @@ function clone(value, cloned, path, paths, original = null, no_tojson = false) {
 			}
 
 			for (var key in value) {
-				// @ts-expect-error
-				copy[key] = clone(value[key], cloned, DEV ? `${path}.${key}` : path, paths, null, no_tojson);
+				copy[key] = clone(
+					// @ts-expect-error
+					value[key],
+					cloned,
+					DEV ? `${path}.${key}` : path,
+					paths,
+					null,
+					no_tojson
+				);
 			}
 
 			return copy;
