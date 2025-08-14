@@ -139,17 +139,17 @@ function create_effect(type, fn, sync, push = true) {
 		// if an effect has already ran and doesn't need to be kept in the tree
 		// (because it won't re-run, has no DOM, and has no teardown etc)
 		// then we skip it and go to its child (if any)
-		while (
+		if (
 			e !== null &&
 			e.deps === null &&
 			e.teardown === null &&
 			e.nodes_start === null &&
+			e.first === e.last &&
 			(e.f & EFFECT_RAN) !== 0 &&
 			(e.f & ROOT_EFFECT) === 0 &&
 			(e.f & BRANCH_EFFECT) === 0 &&
 			(e.f & EFFECT_PRESERVED) === 0
 		) {
-			if (e.first !== e.last) break;
 			e = e.first;
 		}
 
