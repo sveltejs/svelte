@@ -134,19 +134,28 @@ function create_effect(type, fn, sync, push = true) {
 	}
 
 	if (push) {
-		// if an effect has no dependencies, no DOM and no teardown function,
-		// don't bother adding it to the effect tree
-		var inert =
-			sync &&
-			effect.deps === null &&
-			effect.first === null &&
-			effect.nodes_start === null &&
-			effect.teardown === null &&
-			(effect.f & EFFECT_PRESERVED) === 0;
+		var e = /** @type {Effect | null} */ (effect);
 
-		if (!inert) {
+		// if an effect has already ran and doesn't need to be kept in the tree
+		// (because it won't re-run, has no DOM, and has no teardown etc)
+		// then we skip it and go to its child (if any)
+		while (
+			e !== null &&
+			e.deps === null &&
+			e.teardown === null &&
+			e.nodes_start === null &&
+			(e.f & EFFECT_RAN) !== 0 &&
+			(e.f & ROOT_EFFECT) === 0 &&
+			(e.f & BRANCH_EFFECT) === 0 &&
+			(e.f & EFFECT_PRESERVED) === 0
+		) {
+			if (e.first !== e.last) break;
+			e = e.first;
+		}
+
+		if (e !== null) {
 			if (parent !== null) {
-				push_effect(effect, parent);
+				push_effect(e, parent);
 			}
 
 			// if we're in a derived, add the effect there too
@@ -156,7 +165,7 @@ function create_effect(type, fn, sync, push = true) {
 				(type & ROOT_EFFECT) === 0
 			) {
 				var derived = /** @type {Derived} */ (active_reaction);
-				(derived.effects ??= []).push(effect);
+				(derived.effects ??= []).push(e);
 			}
 		}
 	}
