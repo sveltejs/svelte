@@ -184,9 +184,12 @@ export class Batch {
 		/** @type {Map<Source, { v: unknown, wv: number }> | null} */
 		var current_values = null;
 
-		// if there are multiple batches, we are 'time travelling' —
+		// If there are multiple batches, we are 'time travelling' —
 		// we need to undo the changes belonging to any batch
-		// other than the current one
+		// other than the current one.
+		// In case of block_effects_only we've already created a new batch
+		// due to an effect writing to a source, and we're eagerly flushing
+		// that batch while the old one is still active, hence > 2 in that case.
 		if (batches.size > (block_effects_only ? 2 : 1)) {
 			current_values = new Map();
 			batch_deriveds = new Map();
@@ -214,6 +217,7 @@ export class Batch {
 
 		if (block_effects_only) {
 			queued_root_effects = root_effects;
+			this.#commit();
 			return;
 		}
 
@@ -304,12 +308,15 @@ export class Batch {
 					}
 				} else if (is_branch) {
 					effect.f ^= CLEAN;
+				} else if ((flags & EFFECT) !== 0) {
+					// Push into effects regardly of dirty status, so that one effect making
+					// a subsequent effect dirty will not cause it to be postponed until the next flush
+					this.#effects.push(effect);
+				} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
+					// Same as for #effects
+					this.#render_effects.push(effect);
 				} else if ((flags & CLEAN) === 0) {
-					if ((flags & EFFECT) !== 0) {
-						this.#effects.push(effect);
-					} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
-						this.#render_effects.push(effect);
-					} else if ((flags & ASYNC) !== 0) {
+					if ((flags & ASYNC) !== 0) {
 						var effects = effect.b?.pending ? this.#boundary_async_effects : this.#async_effects;
 						effects.push(effect);
 					} else if (is_dirty(effect)) {
@@ -410,6 +417,7 @@ export class Batch {
 
 	flush_block_effects() {
 		if (queued_root_effects.length > 0) {
+			old_values.clear();
 			this.process(queued_root_effects, true);
 		}
 	}
