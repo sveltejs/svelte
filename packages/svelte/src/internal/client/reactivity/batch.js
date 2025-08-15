@@ -231,14 +231,16 @@ export class Batch {
 		if (this.#async_effects.length === 0 && this.#pending === 0) {
 			if (superseeded_batches.length > 0) {
 				const own = [...this.#callbacks.keys()].map((c) => c());
-				for (const batch of superseeded_batches) {
-					// A superseeded batch could have callbacks for e.g. destroying if blocks
-					// that are not part of the current batch because it already happened in the prior one,
-					// and the corresponding block effect therefore returning early because nothing was changed from its
-					// point of view, therefore not adding a callback to the current batch, so we gotta call them here.
+				// A superseeded batch could have callbacks for e.g. destroying if blocks
+				// that are not part of the current batch because it already happened in the prior one,
+				// and the corresponding block effect therefore returning early because nothing was changed from its
+				// point of view, therefore not adding a callback to the current batch, so we gotta call them here.
+				// We do it from newest to oldest to ensure the correct callback is applied.
+				for (const batch of superseeded_batches.reverse()) {
 					for (const [effect, cb] of batch.#callbacks) {
 						if (!own.includes(effect())) {
 							cb();
+							own.push(effect());
 						}
 					}
 					batch.remove();
