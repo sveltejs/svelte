@@ -33,7 +33,8 @@ import {
 	EFFECT_PRESERVED,
 	STALE_REACTION,
 	USER_EFFECT,
-	ASYNC
+	ASYNC,
+	HAS_EFFECTS
 } from '#client/constants';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
@@ -156,6 +157,7 @@ function create_effect(type, fn, sync, push = true) {
 		) {
 			var derived = /** @type {Derived} */ (active_reaction);
 			(derived.effects ??= []).push(effect);
+			derived.f |= HAS_EFFECTS;
 		}
 	}
 

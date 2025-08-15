@@ -25,6 +25,7 @@ export const REACTION_IS_UPDATING = 1 << 21;
 export const ASYNC = 1 << 22;
 
 export const ERROR_VALUE = 1 << 23;
+export const HAS_EFFECTS = 1 << 24;
 
 export const STATE_SYMBOL = Symbol('$state');
 export const LEGACY_PROPS = Symbol('legacy props');
