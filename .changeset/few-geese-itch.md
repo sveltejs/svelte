@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: do not defer unmounting of component
+fix: destroy dynamic component instance before creating new one
