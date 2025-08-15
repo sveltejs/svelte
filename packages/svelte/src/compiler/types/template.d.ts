@@ -216,6 +216,7 @@ export namespace AST {
 		metadata: {
 			binding_group_name: Identifier;
 			parent_each_blocks: EachBlock[];
+			spread_binding: boolean;
 		};
 	}
 

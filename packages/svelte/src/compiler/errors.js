@@ -830,12 +830,12 @@ export function bind_group_invalid_snippet_parameter(node) {
 }
 
 /**
- * Can only bind to an Identifier or MemberExpression or a `{get, set}` pair
+ * Can only bind to an Identifier, a MemberExpression, a SpreadElement, or a `{get, set}` pair
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function bind_invalid_expression(node) {
-	e(node, 'bind_invalid_expression', `Can only bind to an Identifier or MemberExpression or a \`{get, set}\` pair\nhttps://svelte.dev/e/bind_invalid_expression`);
+	e(node, 'bind_invalid_expression', `Can only bind to an Identifier, a MemberExpression, a SpreadElement, or a \`{get, set}\` pair\nhttps://svelte.dev/e/bind_invalid_expression`);
 }
 
 /**
