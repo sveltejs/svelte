@@ -78,6 +78,12 @@ let last_scheduled_effect = null;
 let is_flushing = false;
 
 let is_flushing_sync = false;
+
+/** @type {Map<Effect, number>} */
+let effect_execution_count = new Map();
+
+let flush_count = 0;
+
 export class Batch {
 	/**
 	 * The current values of any sources that are updated in this batch
@@ -526,7 +532,7 @@ function flush_effects() {
 	is_flushing = true;
 
 	try {
-		var flush_count = 0;
+		flush_count = 0;
 		set_is_updating_effect(true);
 
 		while (queued_root_effects.length > 0) {
@@ -564,6 +570,7 @@ function flush_effects() {
 	} finally {
 		is_flushing = false;
 		set_is_updating_effect(was_updating_effect);
+		effect_execution_count.clear();
 
 		last_scheduled_effect = null;
 	}
@@ -626,6 +633,17 @@ function flush_queued_effects(effects) {
 				current_batch.current.size > n &&
 				(effect.f & USER_EFFECT) !== 0
 			) {
+				var execution_count = (effect_execution_count.get(effect) ?? 0) + 1;
+				effect_execution_count.set(effect, execution_count);
+
+				// If many effects are executed, they cause another flush loop, which could
+				// lead to false-positives in the infinite loop detection. Therefore decrease
+				// the counter unless the individual effect has been executed many times, which
+				// indeed hints at an infinite loop.
+				if (execution_count < 1000) {
+					flush_count--;
+				}
+
 				break;
 			}
 		}
