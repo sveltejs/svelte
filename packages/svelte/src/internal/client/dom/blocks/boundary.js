@@ -28,7 +28,7 @@ import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { DEV } from 'esm-env';
-import { Batch, effect_pending_updates } from '../../reactivity/batch.js';
+import { Batch, current_batch, effect_pending_updates } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
@@ -69,7 +69,7 @@ export class Boundary {
 	 *
 	 * @type {Batch | null}
 	 */
-	batch = null;
+	#batch = null;
 
 	/** @type {TemplateNode} */
 	#anchor;
@@ -200,6 +200,13 @@ export class Boundary {
 		return !!this.#props.pending;
 	}
 
+	get_batch() {
+		if (current_batch) {
+			this.#batch = current_batch;
+		}
+		return /** @type {Batch} */ (this.#batch);
+	}
+
 	/**
 	 * @param {() => Effect | null} fn
 	 */
@@ -243,7 +250,7 @@ export class Boundary {
 
 		if (this.#pending_count === 0) {
 			this.pending = false;
-			this.batch = null;
+			this.#batch = null;
 
 			if (this.#pending_effect) {
 				pause_effect(this.#pending_effect, () => {

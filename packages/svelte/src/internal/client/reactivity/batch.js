@@ -184,6 +184,14 @@ export class Batch {
 		/** @type {Map<Source, { v: unknown, wv: number }> | null} */
 		var current_values = null;
 
+		/**
+		 * A batch is superseeded if all of its sources are also in the current batch.
+		 * If the current batch commits, we don't need the old batch anymore.
+		 * This also prevents memory leaks since the old batch will never be committed.
+		 * @type {Batch[]}
+		 */
+		var superseeded_batches = [];
+
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to undo the changes belonging to any batch
 		// other than the current one
@@ -196,15 +204,25 @@ export class Batch {
 				source.v = current;
 			}
 
+			let is_prior_batch = true;
+
 			for (const batch of batches) {
-				if (batch === this) continue;
+				if (batch === this) {
+					is_prior_batch = false;
+					continue;
+				}
+
+				let superseeded = is_prior_batch;
 
 				for (const [source, previous] of batch.#previous) {
 					if (!current_values.has(source)) {
+						superseeded = false;
 						current_values.set(source, { v: source.v, wv: source.wv });
 						source.v = previous;
 					}
 				}
+
+				if (superseeded) superseeded_batches.push(batch);
 			}
 		}
 
@@ -215,6 +233,10 @@ export class Batch {
 		// if we didn't start any new async work, and no async work
 		// is outstanding from a previous flush, commit
 		if (this.#async_effects.length === 0 && this.#pending === 0) {
+			for (const batch of superseeded_batches) {
+				batch.remove();
+			}
+
 			this.#commit();
 
 			var render_effects = this.#render_effects;
@@ -374,6 +396,11 @@ export class Batch {
 
 	neuter() {
 		this.#neutered = true;
+	}
+
+	remove() {
+		this.neuter();
+		batches.delete(this);
 	}
 
 	flush() {
@@ -664,7 +691,7 @@ export function schedule_effect(signal) {
 
 export function suspend() {
 	var boundary = get_pending_boundary();
-	var batch = (boundary.batch ??= /** @type {Batch} */ (current_batch));
+	var batch = boundary.get_batch();
 	var pending = boundary.pending;
 
 	boundary.update_pending_count(1);

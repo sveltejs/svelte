@@ -1,5 +1,4 @@
 /** @import { Derived, Effect, Source } from '#client' */
-/** @import { Batch } from './batch.js'; */
 import { DEV } from 'esm-env';
 import {
 	ERROR_VALUE,
@@ -33,7 +32,7 @@ import { tracing_mode_flag } from '../../flags/index.js';
 import { Boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_deriveds, current_batch } from './batch.js';
+import { batch_deriveds } from './batch.js';
 import { unset_context } from './async.js';
 
 /** @type {Effect | null} */
@@ -131,7 +130,7 @@ export function async_derived(fn, location) {
 
 		prev = promise;
 
-		var batch = (boundary.batch ??= /** @type {Batch} */ (current_batch));
+		var batch = boundary.get_batch();
 		var pending = boundary.pending;
 
 		if (should_suspend) {
