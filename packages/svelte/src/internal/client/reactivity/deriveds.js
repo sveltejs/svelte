@@ -184,12 +184,6 @@ export function async_derived(fn, location) {
 		};
 
 		promise.then(handler, (e) => handler(null, e || 'unknown'));
-
-		if (batch) {
-			return () => {
-				queueMicrotask(() => batch.neuter());
-			};
-		}
 	});
 
 	if (DEV) {

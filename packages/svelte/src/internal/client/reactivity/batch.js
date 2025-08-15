@@ -95,10 +95,12 @@ export class Batch {
 
 	/**
 	 * When the batch is committed (and the DOM is updated), we need to remove old branches
-	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks
-	 * @type {Set<() => void>}
+	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks.
+	 * Key is a function that returns the block effect because #callbacks will be called before
+	 * the block effect reference exists, so we need to capture it in a closure.
+	 * @type {Map<() => Effect, () => void>}
 	 */
-	#callbacks = new Set();
+	#callbacks = new Map();
 
 	/**
 	 * The number of async effects that are currently in flight
@@ -111,12 +113,6 @@ export class Batch {
 	 * @type {{ promise: Promise<void>, resolve: (value?: any) => void, reject: (reason: unknown) => void } | null}
 	 */
 	#deferred = null;
-
-	/**
-	 * True if an async effect inside this batch resolved and
-	 * its parent branch was already deleted
-	 */
-	#neutered = false;
 
 	/**
 	 * Async effects (created inside `async_derived`) encountered during processing.
@@ -233,8 +229,20 @@ export class Batch {
 		// if we didn't start any new async work, and no async work
 		// is outstanding from a previous flush, commit
 		if (this.#async_effects.length === 0 && this.#pending === 0) {
-			for (const batch of superseeded_batches) {
-				batch.remove();
+			if (superseeded_batches.length > 0) {
+				const own = [...this.#callbacks.keys()].map((c) => c());
+				for (const batch of superseeded_batches) {
+					// A superseeded batch could have callbacks for e.g. destroying if blocks
+					// that are not part of the current batch because it already happened in the prior one,
+					// and the corresponding block effect therefore returning early because nothing was changed from its
+					// point of view, therefore not adding a callback to the current batch, so we gotta call them here.
+					for (const [effect, cb] of batch.#callbacks) {
+						if (!own.includes(effect())) {
+							cb();
+						}
+					}
+					batch.remove();
+				}
 			}
 
 			this.#commit();
@@ -394,12 +402,13 @@ export class Batch {
 		}
 	}
 
-	neuter() {
-		this.#neutered = true;
-	}
-
 	remove() {
-		this.neuter();
+		this.#callbacks.clear();
+		this.#maybe_dirty_effects =
+			this.#dirty_effects =
+			this.#boundary_async_effects =
+			this.#async_effects =
+				[];
 		batches.delete(this);
 	}
 
@@ -427,10 +436,8 @@ export class Batch {
 	 * Append and remove branches to/from the DOM
 	 */
 	#commit() {
-		if (!this.#neutered) {
-			for (const fn of this.#callbacks) {
-				fn();
-			}
+		for (const fn of this.#callbacks.values()) {
+			fn();
 		}
 
 		this.#callbacks.clear();
@@ -463,9 +470,12 @@ export class Batch {
 		}
 	}
 
-	/** @param {() => void} fn */
-	add_callback(fn) {
-		this.#callbacks.add(fn);
+	/**
+	 * @param {() => Effect} effect
+	 * @param {() => void} fn
+	 */
+	add_callback(effect, fn) {
+		this.#callbacks.set(effect, fn);
 	}
 
 	settled() {
