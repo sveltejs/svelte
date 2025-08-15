@@ -152,6 +152,8 @@ function create_effect(type, fn, sync, push = true) {
 		}
 
 		if (e !== null) {
+			e.parent = parent;
+
 			if (parent !== null) {
 				push_effect(e, parent);
 			}
