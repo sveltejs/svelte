@@ -5,7 +5,7 @@
 
 	// this runs after the effect in B, because child effects run first
 	$effect(() => {
-		console.log(boolean, closed);
+		console.log({ boolean, closed });
 	});
 </script>
 
