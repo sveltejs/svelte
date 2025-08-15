@@ -14,7 +14,7 @@ export function SnippetBlock(node, context) {
 	// TODO hoist where possible
 	/** @type {(Identifier | AssignmentPattern)[]} */
 	const args = [b.id('$$anchor')];
-	const has_await = node.body.metadata.has_await || false;
+	const has_await = node.body.metadata.has_await;
 
 	/** @type {BlockStatement} */
 	let body;

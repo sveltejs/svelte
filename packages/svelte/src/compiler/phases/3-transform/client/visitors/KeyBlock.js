@@ -18,7 +18,12 @@ export function KeyBlock(node, context) {
 	const body = /** @type {Expression} */ (context.visit(node.fragment));
 
 	let statement = add_svelte_meta(
-		b.call('$.key', context.state.node, key, b.arrow([b.id('$$anchor')], body)),
+		b.call(
+			'$.key',
+			context.state.node,
+			key,
+			b.arrow([b.id('$$anchor')], body, node.fragment.metadata.has_await)
+		),
 		node,
 		'key'
 	);

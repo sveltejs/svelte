@@ -326,12 +326,16 @@ export function EachBlock(node, context) {
 		b.literal(flags),
 		thunk,
 		key_function,
-		b.arrow(render_args, b.block(declarations.concat(block.body)))
+		b.arrow(render_args, b.block(declarations.concat(block.body)), node.body.metadata.has_await)
 	];
 
 	if (node.fallback) {
 		args.push(
-			b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.fallback)))
+			b.arrow(
+				[b.id('$$anchor')],
+				/** @type {BlockStatement} */ (context.visit(node.fallback)),
+				node.fallback.metadata.has_await
+			)
 		);
 	}
 
