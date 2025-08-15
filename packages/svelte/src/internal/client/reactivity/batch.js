@@ -95,10 +95,12 @@ export class Batch {
 
 	/**
 	 * When the batch is committed (and the DOM is updated), we need to remove old branches
-	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks
-	 * @type {Set<() => void>}
+	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks.
+	 * Key is a function that returns the block effect because #callbacks will be called before
+	 * the block effect reference exists, so we need to capture it in a closure.
+	 * @type {Map<() => Effect, () => void>}
 	 */
-	#callbacks = new Set();
+	#callbacks = new Map();
 
 	/**
 	 * The number of async effects that are currently in flight
@@ -111,12 +113,6 @@ export class Batch {
 	 * @type {{ promise: Promise<void>, resolve: (value?: any) => void, reject: (reason: unknown) => void } | null}
 	 */
 	#deferred = null;
-
-	/**
-	 * True if an async effect inside this batch resolved and
-	 * its parent branch was already deleted
-	 */
-	#neutered = false;
 
 	/**
 	 * Async effects (created inside `async_derived`) encountered during processing.
@@ -184,6 +180,14 @@ export class Batch {
 		/** @type {Map<Source, { v: unknown, wv: number }> | null} */
 		var current_values = null;
 
+		/**
+		 * A batch is superseeded if all of its sources are also in the current batch.
+		 * If the current batch commits, we don't need the old batch anymore.
+		 * This also prevents memory leaks since the old batch will never be committed.
+		 * @type {Batch[]}
+		 */
+		var superseeded_batches = [];
+
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to undo the changes belonging to any batch
 		// other than the current one
@@ -196,15 +200,25 @@ export class Batch {
 				source.v = current;
 			}
 
+			let is_prior_batch = true;
+
 			for (const batch of batches) {
-				if (batch === this) continue;
+				if (batch === this) {
+					is_prior_batch = false;
+					continue;
+				}
+
+				let superseeded = is_prior_batch;
 
 				for (const [source, previous] of batch.#previous) {
 					if (!current_values.has(source)) {
+						superseeded = false;
 						current_values.set(source, { v: source.v, wv: source.wv });
 						source.v = previous;
 					}
 				}
+
+				if (superseeded) superseeded_batches.push(batch);
 			}
 		}
 
@@ -215,6 +229,24 @@ export class Batch {
 		// if we didn't start any new async work, and no async work
 		// is outstanding from a previous flush, commit
 		if (this.#async_effects.length === 0 && this.#pending === 0) {
+			if (superseeded_batches.length > 0) {
+				const own = [...this.#callbacks.keys()].map((c) => c());
+				// A superseeded batch could have callbacks for e.g. destroying if blocks
+				// that are not part of the current batch because it already happened in the prior one,
+				// and the corresponding block effect therefore returning early because nothing was changed from its
+				// point of view, therefore not adding a callback to the current batch, so we gotta call them here.
+				// We do it from newest to oldest to ensure the correct callback is applied.
+				for (const batch of superseeded_batches.reverse()) {
+					for (const [effect, cb] of batch.#callbacks) {
+						if (!own.includes(effect())) {
+							cb();
+							own.push(effect());
+						}
+					}
+					batch.remove();
+				}
+			}
+
 			this.#commit();
 
 			var render_effects = this.#render_effects;
@@ -372,8 +404,14 @@ export class Batch {
 		}
 	}
 
-	neuter() {
-		this.#neutered = true;
+	remove() {
+		this.#callbacks.clear();
+		this.#maybe_dirty_effects =
+			this.#dirty_effects =
+			this.#boundary_async_effects =
+			this.#async_effects =
+				[];
+		batches.delete(this);
 	}
 
 	flush() {
@@ -400,10 +438,8 @@ export class Batch {
 	 * Append and remove branches to/from the DOM
 	 */
 	#commit() {
-		if (!this.#neutered) {
-			for (const fn of this.#callbacks) {
-				fn();
-			}
+		for (const fn of this.#callbacks.values()) {
+			fn();
 		}
 
 		this.#callbacks.clear();
@@ -436,9 +472,12 @@ export class Batch {
 		}
 	}
 
-	/** @param {() => void} fn */
-	add_callback(fn) {
-		this.#callbacks.add(fn);
+	/**
+	 * @param {() => Effect} effect
+	 * @param {() => void} fn
+	 */
+	add_callback(effect, fn) {
+		this.#callbacks.set(effect, fn);
 	}
 
 	settled() {
@@ -664,7 +703,7 @@ export function schedule_effect(signal) {
 
 export function suspend() {
 	var boundary = get_pending_boundary();
-	var batch = /** @type {Batch} */ (current_batch);
+	var batch = boundary.get_batch();
 	var pending = boundary.pending;
 
 	boundary.update_pending_count(1);

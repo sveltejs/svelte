@@ -124,7 +124,7 @@ export function if_block(node, fn, elseif = false) {
 			if (active) batch.skipped_effects.delete(active);
 			if (inactive) batch.skipped_effects.add(inactive);
 
-			batch.add_callback(commit);
+			batch.add_callback(() => b, commit);
 		} else {
 			commit();
 		}
@@ -135,7 +135,7 @@ export function if_block(node, fn, elseif = false) {
 		}
 	};
 
-	block(() => {
+	var b = block(() => {
 		has_branch = false;
 		fn(set_branch);
 		if (!has_branch) {

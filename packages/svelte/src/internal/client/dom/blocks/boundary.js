@@ -28,7 +28,7 @@ import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { DEV } from 'esm-env';
-import { Batch, effect_pending_updates } from '../../reactivity/batch.js';
+import { Batch, current_batch, effect_pending_updates } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
@@ -58,6 +58,18 @@ export class Boundary {
 
 	/** @type {Boundary | null} */
 	parent;
+
+	/**
+	 * The associated batch to this boundary while the boundary pending; set by the one interacting with the boundary when entering pending state.
+	 * Will be `null` once the boundary is no longer pending.
+	 *
+	 * Needed because `current_batch` isn't guaranteed to exist: E.g. when component A has top level await, then renders component B
+	 * which also has top level await, `current_batch` can be null when a flush from component A happens before
+	 * suspend() in component B is called. We hence save it on the boundary instead.
+	 *
+	 * @type {Batch | null}
+	 */
+	#batch = null;
 
 	/** @type {TemplateNode} */
 	#anchor;
@@ -188,6 +200,13 @@ export class Boundary {
 		return !!this.#props.pending;
 	}
 
+	get_batch() {
+		if (current_batch) {
+			this.#batch = current_batch;
+		}
+		return /** @type {Batch} */ (this.#batch);
+	}
+
 	/**
 	 * @param {() => Effect | null} fn
 	 */
@@ -231,6 +250,7 @@ export class Boundary {
 
 		if (this.#pending_count === 0) {
 			this.pending = false;
+			this.#batch = null;
 
 			if (this.#pending_effect) {
 				pause_effect(this.#pending_effect, () => {
