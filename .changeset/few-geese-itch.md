@@ -1,5 +1,5 @@
 ---
-'svelte': minor
+'svelte': patch
 ---
 
-Do not defer unmounting of component
+fix: do not defer unmounting of component
