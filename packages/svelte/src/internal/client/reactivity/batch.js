@@ -173,10 +173,10 @@ export class Batch {
 	skipped_effects = new Set();
 
 	/**
-	 *
 	 * @param {Effect[]} root_effects
+	 * @param {boolean} block_effects_only
 	 */
-	process(root_effects) {
+	process(root_effects, block_effects_only = false) {
 		queued_root_effects = [];
 
 		previous_batch = null;
@@ -184,10 +184,13 @@ export class Batch {
 		/** @type {Map<Source, { v: unknown, wv: number }> | null} */
 		var current_values = null;
 
-		// if there are multiple batches, we are 'time travelling' —
+		// If there are multiple batches, we are 'time travelling' —
 		// we need to undo the changes belonging to any batch
-		// other than the current one
-		if (batches.size > 1) {
+		// other than the current one.
+		// In case of block_effects_only we've already created a new batch
+		// due to an effect writing to a source, and we're eagerly flushing
+		// that batch while the old one is still active, hence > 2 in that case.
+		if (batches.size > (block_effects_only ? 2 : 1)) {
 			current_values = new Map();
 			batch_deriveds = new Map();
 
@@ -209,7 +212,13 @@ export class Batch {
 		}
 
 		for (const root of root_effects) {
-			this.#traverse_effect_tree(root);
+			this.#traverse_effect_tree(root, block_effects_only);
+		}
+
+		if (block_effects_only) {
+			queued_root_effects = root_effects;
+			this.#commit();
+			return;
 		}
 
 		// if we didn't start any new async work, and no async work
@@ -276,9 +285,12 @@ export class Batch {
 	 * Traverse the effect tree, executing effects or stashing
 	 * them for later execution as appropriate
 	 * @param {Effect} root
+	 * @param {boolean} block_effects_only
 	 */
-	#traverse_effect_tree(root) {
-		root.f ^= CLEAN;
+	#traverse_effect_tree(root, block_effects_only) {
+		if (!block_effects_only) {
+			root.f ^= CLEAN;
+		}
 
 		var effect = root.first;
 
@@ -290,14 +302,21 @@ export class Batch {
 			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.skipped_effects.has(effect);
 
 			if (!skip && effect.fn !== null) {
-				if (is_branch) {
+				if (block_effects_only) {
+					if ((flags & BLOCK_EFFECT) !== 0 && (flags & CLEAN) === 0) {
+						update_effect(effect);
+					}
+				} else if (is_branch) {
 					effect.f ^= CLEAN;
+				} else if ((flags & EFFECT) !== 0) {
+					// Push into effects regardly of dirty status, so that one effect making
+					// a subsequent effect dirty will not cause it to be postponed until the next flush
+					this.#effects.push(effect);
+				} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
+					// Same as for #effects
+					this.#render_effects.push(effect);
 				} else if ((flags & CLEAN) === 0) {
-					if ((flags & EFFECT) !== 0) {
-						this.#effects.push(effect);
-					} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
-						this.#render_effects.push(effect);
-					} else if ((flags & ASYNC) !== 0) {
+					if ((flags & ASYNC) !== 0) {
 						var effects = effect.b?.pending ? this.#boundary_async_effects : this.#async_effects;
 						effects.push(effect);
 					} else if (is_dirty(effect)) {
@@ -394,6 +413,13 @@ export class Batch {
 		}
 
 		this.deactivate();
+	}
+
+	flush_block_effects() {
+		if (queued_root_effects.length > 0) {
+			old_values.clear();
+			this.process(queued_root_effects, true);
+		}
 	}
 
 	/**
@@ -626,13 +652,9 @@ function flush_queued_effects(effects) {
 				current_batch.current.size > n &&
 				(effect.f & USER_EFFECT) !== 0
 			) {
-				break;
+				current_batch.flush_block_effects();
 			}
 		}
-	}
-
-	while (i < length) {
-		schedule_effect(effects[i++]);
 	}
 }
 
