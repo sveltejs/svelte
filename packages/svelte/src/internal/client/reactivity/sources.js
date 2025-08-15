@@ -300,7 +300,8 @@ export function increment(source) {
 }
 
 /**
- * We increment this value when an effect is scheduled as a result of a state change
+ * We increment this value when a block effect is scheduled as a result of a state change,
+ * as its currently-scheduled child effects may need to be destroyed
  */
 export let schedule_version = 0;
 
@@ -339,7 +340,7 @@ function mark_reactions(signal, status) {
 		if ((flags & DERIVED) !== 0) {
 			mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
 		} else if (not_dirty) {
-			schedule_version += 1;
+			if ((flags & BLOCK_EFFECT) !== 0) schedule_version += 1;
 			schedule_effect(/** @type {Effect} */ (reaction));
 		}
 	}
