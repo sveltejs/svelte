@@ -8,4 +8,6 @@
 	});
 </script>
 
- <span>{@render children()}</span>
+{#if inited}
+	<span>{@render children()}</span>
+{/if}
