@@ -241,7 +241,7 @@ export function set_custom_element_data(node, prop, value) {
 			(setters_cache.has(node.nodeName) ||
 			// customElements may not be available in browser extension contexts
 			!customElements ||
-			customElements.get(node.tagName.toLowerCase())
+			customElements.get(node.getAttribute('is') || node.tagName.toLowerCase())
 				? get_setters(node).includes(prop)
 				: value && typeof value === 'object')
 		) {
