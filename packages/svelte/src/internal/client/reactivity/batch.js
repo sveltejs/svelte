@@ -292,12 +292,12 @@ export class Batch {
 			if (!skip && effect.fn !== null) {
 				if (is_branch) {
 					effect.f ^= CLEAN;
+				} else if ((flags & EFFECT) !== 0) {
+					this.#effects.push(effect);
+				} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
+					this.#render_effects.push(effect);
 				} else if ((flags & CLEAN) === 0) {
-					if ((flags & EFFECT) !== 0) {
-						this.#effects.push(effect);
-					} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
-						this.#render_effects.push(effect);
-					} else if ((flags & ASYNC) !== 0) {
+					if ((flags & ASYNC) !== 0) {
 						var effects = effect.b?.pending ? this.#boundary_async_effects : this.#async_effects;
 						effects.push(effect);
 					} else if (is_dirty(effect)) {
