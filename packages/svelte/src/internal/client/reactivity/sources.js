@@ -33,7 +33,7 @@ import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack, tag_proxy } from '../dev/tracing.js';
 import { component_context, is_runes } from '../context.js';
-import { Batch, schedule_effect } from './batch.js';
+import { Batch, eager_block_effects, schedule_effect } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 
@@ -334,6 +334,12 @@ function mark_reactions(signal, status) {
 		if ((flags & DERIVED) !== 0) {
 			mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
 		} else if (not_dirty) {
+			if ((flags & BLOCK_EFFECT) !== 0) {
+				if (eager_block_effects !== null) {
+					eager_block_effects.push(/** @type {Effect} */ (reaction));
+				}
+			}
+
 			schedule_effect(/** @type {Effect} */ (reaction));
 		}
 	}
