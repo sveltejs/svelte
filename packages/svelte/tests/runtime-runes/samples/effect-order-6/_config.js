@@ -8,6 +8,6 @@ export default test({
 		flushSync(() => open.click());
 		flushSync(() => close.click());
 
-		assert.deepEqual(logs, [true]);
+		assert.deepEqual(logs, [{ boolean: true, closed: false }]);
 	}
 });
