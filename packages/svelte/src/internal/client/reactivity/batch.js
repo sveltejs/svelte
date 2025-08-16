@@ -584,6 +584,9 @@ function infinite_loop_guard() {
 	}
 }
 
+/** @type {Effect[] | null} */
+export let eager_block_effects = null;
+
 /**
  * @param {Array<Effect>} effects
  * @returns {void}
@@ -599,6 +602,8 @@ function flush_queued_effects(effects) {
 
 		if ((effect.f & (DESTROYED | INERT)) === 0 && is_dirty(effect)) {
 			var sv = schedule_version;
+
+			eager_block_effects = [];
 
 			update_effect(effect);
 
@@ -619,13 +624,23 @@ function flush_queued_effects(effects) {
 				}
 			}
 
+			if (eager_block_effects.length > 0) {
+				for (const e of eager_block_effects) {
+					update_effect(e);
+				}
+
+				eager_block_effects = [];
+			}
+
 			// if a state change in a user effect invalidates a _different_ effect,
 			// abort and reschedule in case that effect now needs to be destroyed
 			if (schedule_version > sv && (effect.f & USER_EFFECT) !== 0) {
-				break;
+				// break;
 			}
 		}
 	}
+
+	eager_block_effects = null;
 
 	while (i < length) {
 		schedule_effect(effects[i++]);
