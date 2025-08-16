@@ -1,6 +1,15 @@
 <script>
 	import A from './A.svelte';
-	import Child, { open } from './Child.svelte';
+
+	let object = $state();
+
+	function open() {
+		object = { boolean: true };
+	}
+
+	function close() {
+		object = undefined;
+	}
 
 	let closed = $state(false);
 </script>
@@ -15,8 +24,6 @@
 
 <hr>
 
-<Child>
-	{#snippet children(nested)}
-		<A {closed} boolean={nested.boolean} />
-	{/snippet}
-</Child>
+{#if object}
+	<A {close} {closed} boolean={object.boolean} />
+{/if}
