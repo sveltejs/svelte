@@ -25,6 +25,10 @@ export function CallExpression(node, context) {
 		return b.arrow([], b.block([]));
 	}
 
+	if (rune === '$state.invalidate') {
+		return b.void0;
+	}
+
 	if (rune === '$effect.pending') {
 		return b.literal(0);
 	}

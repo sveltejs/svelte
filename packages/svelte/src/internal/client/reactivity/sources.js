@@ -263,6 +263,81 @@ export function flush_inspect_effects() {
 }
 
 /**
+ * @param {Source | null} source
+ */
+export function invalidate(source) {
+	if (source === null || (source.f & DERIVED) !== 0) {
+		e.state_invalidate_invalid_source();
+	}
+	if (
+		active_reaction !== null &&
+		// since we are untracking the function inside `$inspect.with` we need to add this check
+		// to ensure we error if state is set inside an inspect effect
+		(!untracking || (active_reaction.f & INSPECT_EFFECT) !== 0) &&
+		is_runes() &&
+		(active_reaction.f & (DERIVED | BLOCK_EFFECT | ASYNC | INSPECT_EFFECT)) !== 0 &&
+		!current_sources?.includes(source)
+	) {
+		e.state_unsafe_mutation();
+	}
+
+	if (DEV) {
+		if (tracing_mode_flag || active_effect !== null) {
+			const error = get_stack('UpdatedAt');
+
+			if (error !== null) {
+				source.updated ??= new Map();
+				let entry = source.updated.get(error.stack);
+
+				if (!entry) {
+					entry = { error, count: 0 };
+					source.updated.set(error.stack, entry);
+				}
+
+				entry.count++;
+			}
+		}
+
+		if (active_effect !== null) {
+			source.set_during_effect = true;
+		}
+	}
+
+	if ((source.f & DERIVED) !== 0) {
+		// if we are assigning to a dirty derived we set it to clean/maybe dirty but we also eagerly execute it to track the dependencies
+		if ((source.f & DIRTY) !== 0) {
+			execute_derived(/** @type {Derived} */ (source));
+		}
+		set_signal_status(source, (source.f & UNOWNED) === 0 ? CLEAN : MAYBE_DIRTY);
+	}
+
+	source.wv = increment_write_version();
+
+	mark_reactions(source, DIRTY);
+
+	// It's possible that the current reaction might not have up-to-date dependencies
+	// whilst it's actively running. So in the case of ensuring it registers the reaction
+	// properly for itself, we need to ensure the current effect actually gets
+	// scheduled. i.e: `$effect(() => x++)`
+	if (
+		is_runes() &&
+		active_effect !== null &&
+		(active_effect.f & CLEAN) !== 0 &&
+		(active_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0
+	) {
+		if (untracked_writes === null) {
+			set_untracked_writes([source]);
+		} else {
+			untracked_writes.push(source);
+		}
+	}
+
+	if (DEV && inspect_effects.size > 0 && !inspect_effects_deferred) {
+		flush_inspect_effects();
+	}
+}
+
+/**
  * @template {number | bigint} T
  * @param {Source<T>} source
  * @param {1 | -1} [d]
