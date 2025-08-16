@@ -28,7 +28,7 @@ import * as e from '../errors.js';
 import { flush_tasks } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
-import { old_values } from './sources.js';
+import { old_values, schedule_version } from './sources.js';
 import { unlink_effect } from './effects.js';
 import { unset_context } from './async.js';
 
@@ -292,12 +292,12 @@ export class Batch {
 			if (!skip && effect.fn !== null) {
 				if (is_branch) {
 					effect.f ^= CLEAN;
+				} else if ((flags & EFFECT) !== 0) {
+					this.#effects.push(effect);
+				} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
+					this.#render_effects.push(effect);
 				} else if ((flags & CLEAN) === 0) {
-					if ((flags & EFFECT) !== 0) {
-						this.#effects.push(effect);
-					} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
-						this.#render_effects.push(effect);
-					} else if ((flags & ASYNC) !== 0) {
+					if ((flags & ASYNC) !== 0) {
 						var effects = effect.b?.pending ? this.#boundary_async_effects : this.#async_effects;
 						effects.push(effect);
 					} else if (is_dirty(effect)) {
@@ -598,7 +598,7 @@ function flush_queued_effects(effects) {
 		var effect = effects[i++];
 
 		if ((effect.f & (DESTROYED | INERT)) === 0 && is_dirty(effect)) {
-			var n = current_batch ? current_batch.current.size : 0;
+			var sv = schedule_version;
 
 			update_effect(effect);
 
@@ -619,13 +619,9 @@ function flush_queued_effects(effects) {
 				}
 			}
 
-			// if state is written in a user effect, abort and re-schedule, lest we run
-			// effects that should be removed as a result of the state change
-			if (
-				current_batch !== null &&
-				current_batch.current.size > n &&
-				(effect.f & USER_EFFECT) !== 0
-			) {
+			// if a state change in a user effect invalidates a _different_ effect,
+			// abort and reschedule in case that effect now needs to be destroyed
+			if (schedule_version > sv && (effect.f & USER_EFFECT) !== 0) {
 				break;
 			}
 		}
