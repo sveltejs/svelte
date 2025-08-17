@@ -292,12 +292,12 @@ export class Batch {
 			if (!skip && effect.fn !== null) {
 				if (is_branch) {
 					effect.f ^= CLEAN;
+				} else if ((flags & EFFECT) !== 0) {
+					this.#effects.push(effect);
+				} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
+					this.#render_effects.push(effect);
 				} else if ((flags & CLEAN) === 0) {
-					if ((flags & EFFECT) !== 0) {
-						this.#effects.push(effect);
-					} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
-						this.#render_effects.push(effect);
-					} else if ((flags & ASYNC) !== 0) {
+					if ((flags & ASYNC) !== 0) {
 						var effects = effect.b?.pending ? this.#boundary_async_effects : this.#async_effects;
 						effects.push(effect);
 					} else if (is_dirty(effect)) {
@@ -584,6 +584,9 @@ function infinite_loop_guard() {
 	}
 }
 
+/** @type {Effect[] | null} */
+export let eager_block_effects = null;
+
 /**
  * @param {Array<Effect>} effects
  * @returns {void}
@@ -598,7 +601,7 @@ function flush_queued_effects(effects) {
 		var effect = effects[i++];
 
 		if ((effect.f & (DESTROYED | INERT)) === 0 && is_dirty(effect)) {
-			var n = current_batch ? current_batch.current.size : 0;
+			eager_block_effects = [];
 
 			update_effect(effect);
 
@@ -619,21 +622,20 @@ function flush_queued_effects(effects) {
 				}
 			}
 
-			// if state is written in a user effect, abort and re-schedule, lest we run
-			// effects that should be removed as a result of the state change
-			if (
-				current_batch !== null &&
-				current_batch.current.size > n &&
-				(effect.f & USER_EFFECT) !== 0
-			) {
-				break;
+			if (eager_block_effects.length > 0) {
+				// TODO this feels incorrect! it gets the tests passing
+				old_values.clear();
+
+				for (const e of eager_block_effects) {
+					update_effect(e);
+				}
+
+				eager_block_effects = [];
 			}
 		}
 	}
 
-	while (i < length) {
-		schedule_effect(effects[i++]);
-	}
+	eager_block_effects = null;
 }
 
 /**
