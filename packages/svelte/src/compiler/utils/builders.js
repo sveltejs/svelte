@@ -659,24 +659,6 @@ export function throw_error(str) {
 	};
 }
 
-/**
- * @param {ESTree.BlockStatement} body
- * @param {ESTree.BlockStatement} handler
- * @returns {ESTree.TryStatement}
- */
-export function try_catch(body, handler) {
-	return {
-		type: 'TryStatement',
-		block: body,
-		handler: {
-			type: 'CatchClause',
-			param: id('$$error'),
-			body: handler
-		},
-		finalizer: null
-	};
-}
-
 export {
 	await_builder as await,
 	let_builder as let,

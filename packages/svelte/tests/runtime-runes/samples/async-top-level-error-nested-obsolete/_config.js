@@ -7,8 +7,9 @@ export default test({
 	async test({ assert, target }) {
 		const [reject] = target.querySelectorAll('button');
 
+		await tick();
 		reject.click();
 		await tick();
-		assert.htmlEqual(target.innerHTML, '<button>reject</button> <p>failed</p>');
+		assert.htmlEqual(target.innerHTML, '<button>reject</button> <p>route: other</p>');
 	}
 });
