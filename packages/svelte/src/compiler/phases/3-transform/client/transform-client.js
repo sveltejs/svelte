@@ -375,20 +375,19 @@ export function client_component(analysis, options) {
 
 		component_block.body.push(b.stmt(b.call(`$.async_body`, b.arrow([], body, true))));
 	} else {
-		component_block.body.push(
-			.../** @type {ESTree.Statement[]} */ (instance.body),
-			.../** @type {ESTree.Statement[]} */ (template.body)
-		);
+		component_block.body.push(.../** @type {ESTree.Statement[]} */ (instance.body));
+
+		if (!analysis.runes && analysis.needs_context) {
+			component_block.body.push(b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)));
+		}
+
+		component_block.body.push(.../** @type {ESTree.Statement[]} */ (template.body));
 	}
 
 	if (analysis.needs_mutation_validation) {
 		component_block.body.unshift(
 			b.var('$$ownership_validator', b.call('$.create_ownership_validator', b.id('$$props')))
 		);
-	}
-
-	if (!analysis.runes && analysis.needs_context) {
-		component_block.body.push(b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)));
 	}
 
 	const should_inject_context =
