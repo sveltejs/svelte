@@ -1,6 +1,5 @@
 export { createAttachmentKey as attachment } from '../../attachments/index.js';
 export { FILENAME, HMR, NAMESPACE_SVG } from '../../constants.js';
-export { async_body } from './async_body.js';
 export { push, pop, add_svelte_meta } from './context.js';
 export { assign, assign_and, assign_or, assign_nullish } from './dev/assign.js';
 export { cleanup_styles } from './dev/css.js';
@@ -100,6 +99,7 @@ export {
 	with_script
 } from './dom/template.js';
 export {
+	async_body,
 	for_await_track_reactivity_loss,
 	save,
 	track_reactivity_loss

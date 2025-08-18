@@ -11,7 +11,7 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from '../runtime.js';
-import { current_batch } from './batch.js';
+import { current_batch, suspend } from './batch.js';
 import {
 	async_derived,
 	current_async_effect,
@@ -19,6 +19,7 @@ import {
 	derived_safe_equal,
 	set_from_async_derived
 } from './deriveds.js';
+import { aborted } from './effects.js';
 
 /**
  *
@@ -169,4 +170,22 @@ export function unset_context() {
 	set_active_reaction(null);
 	set_component_context(null);
 	if (DEV) set_from_async_derived(null);
+}
+
+/**
+ * @param {() => Promise<void>} fn
+ */
+export async function async_body(fn) {
+	const unsuspend = suspend();
+	const active = /** @type {Effect} */ (active_effect);
+
+	try {
+		await fn();
+	} catch (error) {
+		if (!aborted(active)) {
+			invoke_error_boundary(error, active);
+		}
+	} finally {
+		unsuspend();
+	}
 }
