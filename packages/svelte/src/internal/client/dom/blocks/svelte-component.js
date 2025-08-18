@@ -34,6 +34,11 @@ export function component(node, get_component, render_fn) {
 	var pending_effect = null;
 
 	function commit() {
+		if (effect) {
+			pause_effect(effect);
+			effect = null;
+		}
+
 		if (offscreen_fragment) {
 			// remove the anchor
 			/** @type {Text} */ (offscreen_fragment.lastChild).remove();
@@ -50,11 +55,6 @@ export function component(node, get_component, render_fn) {
 		if (component === (component = get_component())) return;
 
 		var defer = should_defer_append();
-
-		if (effect) {
-			pause_effect(effect);
-			effect = null;
-		}
 
 		if (component) {
 			var target = anchor;
