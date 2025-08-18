@@ -359,15 +359,30 @@ export function client_component(analysis, options) {
 	if (dev) push_args.push(b.id(analysis.name));
 
 	let component_block = b.block([
+		store_init,
 		...store_setup,
 		...legacy_reactive_declarations,
 		...group_binding_declarations,
-		...state.instance_level_snippets,
-		.../** @type {ESTree.Statement[]} */ (instance.body),
-		analysis.runes || !analysis.needs_context
-			? b.empty
-			: b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined))
+		...state.instance_level_snippets
 	]);
+
+	if (analysis.instance.has_await) {
+		const body = b.block([
+			.../** @type {ESTree.Statement[]} */ (instance.body),
+			b.if(b.call('$.aborted'), b.return()),
+			.../** @type {ESTree.Statement[]} */ (template.body)
+		]);
+
+		component_block.body.push(b.stmt(b.call(`$.async_body`, b.arrow([], body, true))));
+	} else {
+		component_block.body.push(.../** @type {ESTree.Statement[]} */ (instance.body));
+
+		if (!analysis.runes && analysis.needs_context) {
+			component_block.body.push(b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)));
+		}
+
+		component_block.body.push(.../** @type {ESTree.Statement[]} */ (template.body));
+	}
 
 	if (analysis.needs_mutation_validation) {
 		component_block.body.unshift(
@@ -388,41 +403,6 @@ export function client_component(analysis, options) {
 		analysis.uses_rest_props ||
 		analysis.uses_slots ||
 		analysis.slot_names.size > 0;
-
-	if (analysis.instance.has_await) {
-		const params = [b.id('$$anchor')];
-		if (should_inject_props) {
-			params.push(b.id('$$props'));
-		}
-		if (store_setup.length > 0) {
-			params.push(b.id('$$stores'));
-		}
-		const body = b.function_declaration(
-			b.id('$$body'),
-			params,
-			b.block([
-				b.var('$$unsuspend', b.call('$.suspend')),
-				...component_block.body,
-				b.if(b.call('$.aborted'), b.return()),
-				.../** @type {ESTree.Statement[]} */ (template.body),
-				b.stmt(b.call('$$unsuspend'))
-			]),
-			true
-		);
-
-		state.hoisted.push(body);
-
-		component_block = b.block([
-			b.var('fragment', b.call('$.comment')),
-			b.var('node', b.call('$.first_child', b.id('fragment'))),
-			store_init,
-			b.stmt(b.call(body.id, b.id('node'), ...params.slice(1))),
-			b.stmt(b.call('$.append', b.id('$$anchor'), b.id('fragment')))
-		]);
-	} else {
-		component_block.body.unshift(store_init);
-		component_block.body.push(.../** @type {ESTree.Statement[]} */ (template.body));
-	}
 
 	// trick esrap into including comments
 	component_block.loc = instance.loc;
