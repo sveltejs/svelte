@@ -1,5 +1,15 @@
 # svelte
 
+## 5.38.2
+
+### Patch Changes
+
+- perf: run blocks eagerly during flush instead of aborting ([#16631](https://github.com/sveltejs/svelte/pull/16631))
+
+- fix: don't clone non-proxies in `$inspect` ([#16617](https://github.com/sveltejs/svelte/pull/16617))
+
+- fix: avoid recursion error when tagging circular references ([#16622](https://github.com/sveltejs/svelte/pull/16622))
+
 ## 5.38.1
 
 ### Patch Changes
