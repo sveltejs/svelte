@@ -986,6 +986,16 @@ export function const_tag_invalid_placement(node) {
 }
 
 /**
+ * The `{@const %name% = ...}` declaration is not available in this snippet 
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function const_tag_invalid_reference(node, name) {
+	e(node, 'const_tag_invalid_reference', `The \`{@const ${name} = ...}\` declaration is not available in this snippet \nhttps://svelte.dev/e/const_tag_invalid_reference`);
+}
+
+/**
  * {@debug ...} arguments must be identifiers, not arbitrary expressions
  * @param {null | number | NodeLike} node
  * @returns {never}

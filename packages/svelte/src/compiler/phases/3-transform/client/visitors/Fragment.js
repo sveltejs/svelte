@@ -51,7 +51,6 @@ export function Fragment(node, context) {
 	const has_await = context.state.init !== null && (node.metadata.has_await || false);
 
 	const template_name = context.state.scope.root.unique('root'); // TODO infer name from parent
-	const unsuspend = b.id('$$unsuspend');
 
 	/** @type {Statement[]} */
 	const body = [];
@@ -151,10 +150,6 @@ export function Fragment(node, context) {
 		}
 	}
 
-	if (has_await) {
-		body.push(b.var(unsuspend, b.call('$.suspend')));
-	}
-
 	body.push(...state.consts);
 
 	if (has_await) {
@@ -182,8 +177,8 @@ export function Fragment(node, context) {
 	}
 
 	if (has_await) {
-		body.push(b.stmt(b.call(unsuspend)));
+		return b.block([b.stmt(b.call('$.async_body', b.arrow([], b.block(body), true)))]);
+	} else {
+		return b.block(body);
 	}
-
-	return b.block(body);
 }
