@@ -30,7 +30,7 @@
 				}
 			}
 		}, {
-			extends: "div"
+			extends: 'div'
 		});
 	}
 </script>
