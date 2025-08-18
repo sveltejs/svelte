@@ -51,7 +51,8 @@ export function component(node, get_component, render_fn) {
 
 		var defer = should_defer_append();
 
-		if (effect) {
+		// For sync context: immediately pause the old effect
+		if (!defer && effect) {
 			pause_effect(effect);
 			effect = null;
 		}
