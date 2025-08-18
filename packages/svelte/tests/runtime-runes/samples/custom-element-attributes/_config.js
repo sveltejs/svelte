@@ -21,7 +21,7 @@ export default test({
 		assert.equal(value1.shadowRoot?.innerHTML, '<span>test</span>');
 		assert.equal(value2.shadowRoot?.innerHTML, '<span>test</span>');
 
-		const value_builtin = target.querySelectorAll('div');
+		const value_builtin = target.querySelector('div');
 		assert.equal(value_builtin.shadowRoot?.innerHTML, '<span>test</span>');
 	}
 });
