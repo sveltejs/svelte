@@ -364,6 +364,12 @@ The $ name is reserved, and cannot be used for variables and imports
 The $ prefix is reserved, and cannot be used for variables and imports
 ```
 
+### duplicate_class_field
+
+```
+`%name%` has already been declared
+```
+
 ### each_item_invalid_assignment
 
 ```

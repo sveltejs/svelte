@@ -87,7 +87,7 @@ export function pop_ignore() {
 
 /**
  * @param {AST.SvelteNode | NodeLike} node
- * @param {import('../constants.js').IGNORABLE_RUNTIME_WARNINGS[number]} code
+ * @param {typeof import('../constants.js').IGNORABLE_RUNTIME_WARNINGS[number]} code
  * @returns
  */
 export function is_ignored(node, code) {

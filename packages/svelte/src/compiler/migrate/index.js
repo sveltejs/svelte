@@ -1707,14 +1707,14 @@ function extract_type_and_comment(declarator, state, path) {
 }
 
 // Ensure modifiers are applied in the same order as Svelte 4
-const modifier_order = [
+const modifier_order = /** @type {const} */ ([
 	'preventDefault',
 	'stopPropagation',
 	'stopImmediatePropagation',
 	'self',
 	'trusted',
 	'once'
-];
+]);
 
 /**
  * @param {AST.RegularElement | AST.SvelteElement | AST.SvelteWindow | AST.SvelteDocument | AST.SvelteBody} element

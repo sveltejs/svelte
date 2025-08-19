@@ -1,5 +1,115 @@
 # svelte
 
+## 5.38.2
+
+### Patch Changes
+
+- perf: run blocks eagerly during flush instead of aborting ([#16631](https://github.com/sveltejs/svelte/pull/16631))
+
+- fix: don't clone non-proxies in `$inspect` ([#16617](https://github.com/sveltejs/svelte/pull/16617))
+
+- fix: avoid recursion error when tagging circular references ([#16622](https://github.com/sveltejs/svelte/pull/16622))
+
+## 5.38.1
+
+### Patch Changes
+
+- fix: wrap `abort` in `without_reactive_context` ([#16570](https://github.com/sveltejs/svelte/pull/16570))
+
+- fix: add `hint` as a possible value for `popover` attribute ([#16581](https://github.com/sveltejs/svelte/pull/16581))
+
+- fix: skip effects inside dynamic component that is about to be destroyed ([#16601](https://github.com/sveltejs/svelte/pull/16601))
+
+## 5.38.0
+
+### Minor Changes
+
+- feat: allow `await` inside `@const` declarations ([#16542](https://github.com/sveltejs/svelte/pull/16542))
+
+### Patch Changes
+
+- fix: remount at any hydration error ([#16248](https://github.com/sveltejs/svelte/pull/16248))
+
+- chore: emit `await_reactivity_loss` in `for await` loops ([#16521](https://github.com/sveltejs/svelte/pull/16521))
+
+- fix: emit `snippet_invalid_export` instead of `undefined_export` for exported snippets ([#16539](https://github.com/sveltejs/svelte/pull/16539))
+
+## 5.37.3
+
+### Patch Changes
+
+- fix: reset attribute cache after setting corresponding property ([#16543](https://github.com/sveltejs/svelte/pull/16543))
+
+## 5.37.2
+
+### Patch Changes
+
+- fix: double event processing in firefox due to event object being garbage collected ([#16527](https://github.com/sveltejs/svelte/pull/16527))
+
+- fix: add bindable dimension attributes types to SVG and MathML elements ([#16525](https://github.com/sveltejs/svelte/pull/16525))
+
+- fix: correctly differentiate static fields before emitting `duplicate_class_field` ([#16526](https://github.com/sveltejs/svelte/pull/16526))
+
+- fix: prevent last_propagated_event from being DCE'd ([#16538](https://github.com/sveltejs/svelte/pull/16538))
+
+## 5.37.1
+
+### Patch Changes
+
+- chore: remove some todos ([#16515](https://github.com/sveltejs/svelte/pull/16515))
+
+- fix: allow await expressions inside `{#await ...}` argument ([#16514](https://github.com/sveltejs/svelte/pull/16514))
+
+- fix: `append_styles` in an effect to make them available on mount ([#16509](https://github.com/sveltejs/svelte/pull/16509))
+
+- chore: remove `parser.template_untrimmed` ([#16511](https://github.com/sveltejs/svelte/pull/16511))
+
+- fix: always inject styles when compiling as a custom element ([#16509](https://github.com/sveltejs/svelte/pull/16509))
+
+## 5.37.0
+
+### Minor Changes
+
+- feat: ignore component options in `compileModule` ([#16362](https://github.com/sveltejs/svelte/pull/16362))
+
+### Patch Changes
+
+- fix: always mark props as stateful ([#16504](https://github.com/sveltejs/svelte/pull/16504))
+
+## 5.36.17
+
+### Patch Changes
+
+- fix: throw on duplicate class field declarations ([#16502](https://github.com/sveltejs/svelte/pull/16502))
+
+- fix: add types for `part` attribute to svg attributes ([#16499](https://github.com/sveltejs/svelte/pull/16499))
+
+## 5.36.16
+
+### Patch Changes
+
+- fix: don't update a focused input with values from its own past ([#16491](https://github.com/sveltejs/svelte/pull/16491))
+
+- fix: don't destroy effect roots created inside of deriveds ([#16492](https://github.com/sveltejs/svelte/pull/16492))
+
+## 5.36.15
+
+### Patch Changes
+
+- fix: preserve dirty status of deferred effects ([#16487](https://github.com/sveltejs/svelte/pull/16487))
+
+## 5.36.14
+
+### Patch Changes
+
+- fix: keep input in sync when binding updated via effect ([#16482](https://github.com/sveltejs/svelte/pull/16482))
+
+- fix: rename form accept-charset attribute ([#16478](https://github.com/sveltejs/svelte/pull/16478))
+
+- fix: prevent infinite async loop ([#16482](https://github.com/sveltejs/svelte/pull/16482))
+
+- fix: exclude derived writes from effect abort and rescheduling ([#16482](https://github.com/sveltejs/svelte/pull/16482))
+
 ## 5.36.13
 
 ### Patch Changes

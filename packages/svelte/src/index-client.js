@@ -160,10 +160,14 @@ export function createEventDispatcher() {
 		e.lifecycle_outside_component('createEventDispatcher');
 	}
 
+	/**
+	 * @param [detail]
+	 * @param [options]
+	 */
 	return (type, detail, options) => {
 		const events = /** @type {Record<string, Function | Function[]>} */ (
 			active_component_context.s.$$events
-		)?.[/** @type {any} */ (type)];
+		)?.[/** @type {string} */ (type)];
 
 		if (events) {
 			const callbacks = is_array(events) ? events.slice() : [events];

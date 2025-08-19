@@ -6,7 +6,8 @@ import type {
 	Expression,
 	AssignmentExpression,
 	UpdateExpression,
-	VariableDeclaration
+	VariableDeclaration,
+	Declaration
 } from 'estree';
 import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
@@ -57,6 +58,8 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly update: Statement[];
 	/** Stuff that happens after the render effect (control blocks, dynamic elements, bindings, actions, etc) */
 	readonly after_update: Statement[];
+	/** Transformed `{@const }` declarations */
+	readonly consts: Statement[];
 	/** Memoized expressions */
 	readonly memoizer: Memoizer;
 	/** The HTML template string */

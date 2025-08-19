@@ -46,9 +46,6 @@ export function LetDirective(node, context) {
 			read: (node) => b.call('$.get', node)
 		};
 
-		return b.const(
-			name,
-			create_derived(context.state, b.thunk(b.member(b.id('$$slotProps'), node.name)))
-		);
+		return b.const(name, create_derived(context.state, b.member(b.id('$$slotProps'), node.name)));
 	}
 }

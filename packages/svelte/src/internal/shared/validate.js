@@ -35,7 +35,7 @@ export function validate_store(store, name) {
 }
 
 /**
- * @template {() => unknown} T
+ * @template {(...args: any[]) => unknown} T
  * @param {T} fn
  */
 export function prevent_snippet_stringification(fn) {
