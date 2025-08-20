@@ -16,7 +16,6 @@ import { current_batch, previous_batch } from '../../../reactivity/batch.js';
  * @returns {void}
  */
 export function bind_value(input, get, set = get) {
-
 	var batches = new WeakSet();
 
 	listen_to_event_and_reset_event(input, 'input', (is_reset) => {
@@ -33,7 +32,6 @@ export function bind_value(input, get, set = get) {
 		if (current_batch !== null) {
 			batches.add(current_batch);
 		}
-
 	});
 
 	if (
