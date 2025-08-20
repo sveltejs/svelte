@@ -237,7 +237,11 @@ export function build_inline_component(node, expression, context) {
 				b.stmt(
 					b.call(
 						'$$payload.child',
-						b.arrow([], b.block(block.body), context.state.analysis.suspends)
+						b.arrow(
+							[b.object_pattern([b.init('$$payload', b.id('$$payload'))])],
+							b.block(block.body),
+							context.state.analysis.suspends
+						)
 					)
 				)
 			])

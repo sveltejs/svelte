@@ -242,7 +242,7 @@ export function server_component(analysis, options) {
 			b.call(
 				'$$payload.child',
 				b.arrow(
-					[],
+					[b.object_pattern([b.init('$$payload', b.id('$$payload'))])],
 					b.block([
 						.../** @type {Statement[]} */ (instance.body),
 						.../** @type {Statement[]} */ (template.body)

@@ -12,8 +12,18 @@ export function SnippetBlock(node, context) {
 	let fn = b.function_declaration(
 		node.expression,
 		[b.id('$$payload'), ...node.parameters],
-		/** @type {BlockStatement} */ (context.visit(node.body)),
-		node.metadata.has_await
+		b.block([
+			b.stmt(
+				b.call(
+					'$$payload.child',
+					b.arrow(
+						[b.object_pattern([b.init('$$payload', b.id('$$payload'))])],
+						/** @type {BlockStatement} */ (context.visit(node.body)),
+						context.state.analysis.suspends
+					)
+				)
+			)
+		])
 	);
 
 	// @ts-expect-error - TODO remove this hack once $$render_inner for legacy bindings is gone
