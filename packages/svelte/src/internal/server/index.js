@@ -101,7 +101,7 @@ export function render(component, options = {}) {
 		for (const cleanup of on_destroy) cleanup();
 		on_destroy = prev_on_destroy;
 
-		let head = payload.head.out.join('') + payload.head.title;
+		let head = payload.head.collect() + payload.head.title;
 
 		for (const { hash, code } of payload.css) {
 			head += `<style id="${hash}">${code}</style>`;

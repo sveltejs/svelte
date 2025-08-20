@@ -10,7 +10,6 @@ import { dev, filename } from '../../../state.js';
 import { render_stylesheet } from '../css/index.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
-import { AwaitExpression } from './visitors/AwaitExpression.js';
 import { CallExpression } from './visitors/CallExpression.js';
 import { ClassBody } from './visitors/ClassBody.js';
 import { Component } from './visitors/Component.js';
@@ -45,7 +44,6 @@ import { SvelteBoundary } from './visitors/SvelteBoundary.js';
 const global_visitors = {
 	_: set_scope,
 	AssignmentExpression,
-	AwaitExpression,
 	CallExpression,
 	ClassBody,
 	ExpressionStatement,
@@ -240,8 +238,19 @@ export function server_component(analysis, options) {
 	}
 
 	const component_block = b.block([
-		.../** @type {Statement[]} */ (instance.body),
-		.../** @type {Statement[]} */ (template.body)
+		b.stmt(
+			b.call(
+				'$$payload.child',
+				b.arrow(
+					[],
+					b.block([
+						.../** @type {Statement[]} */ (instance.body),
+						.../** @type {Statement[]} */ (template.body)
+					]),
+					analysis.suspends
+				)
+			)
+		)
 	]);
 
 	// trick esrap into including comments

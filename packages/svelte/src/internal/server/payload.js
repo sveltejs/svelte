@@ -1,131 +1,195 @@
-import { deferred } from '../shared/utils';
-
-export class HeadPayload {
-	/** @type {Set<{ hash: string; code: string }>} */
-	css = new Set();
-	/** @type {string[]} */
+/**
+ * A base class for payloads. Payloads are basically a tree of `string | Payload`s, where each
+ * `Payload` in the tree represents work that may or may not have completed. A payload can be
+ * {@link collect}ed to aggregate the content from itself and all of its children, but this will
+ * throw if any of the children are performing asynchronous work. A payload can also be collected
+ * asynchronously with {@link collect_async}, which will wait for all children to complete before
+ * collecting their contents.
+ *
+ * @template {Record<PropertyKey, unknown>} TState
+ */
+class BasePayload {
+	/**
+	 * The contents of the payload.
+	 * @type {(string | BasePayload<TState>)[]}
+	 */
 	out = [];
-	uid = () => '';
-	title = '';
 
-	constructor(
-		/** @type {Set<{ hash: string; code: string }>} */ css = new Set(),
-		/** @type {string[]} */ out = [],
-		title = '',
-		uid = () => ''
-	) {
-		this.css = css;
-		this.out = out;
-		this.title = title;
-		this.uid = uid;
+	/**
+	 * A promise that resolves when this payload's blocking asynchronous work is done.
+	 * If this promise is not resolved, it is not safe to collect the payload from `out`.
+	 * @type {Promise<void> | undefined}
+	 */
+	promise;
+
+	/**
+	 * Internal state. This is the easiest way to represent the additional state each payload kind
+	 * needs to add to itself while still giving the base payload the ability to copy itself.
+	 * @protected
+	 * @type {TState}
+	 */
+	_state;
+
+	/**
+	 * Create a new payload, copying the state from the parent payload.
+	 * @param {TState} parent_state
+	 */
+	constructor(parent_state) {
+		this._state = parent_state;
+	}
+
+	/**
+	 * Create a child payload. The child payload inherits the state from the parent,
+	 * but has its own `out` array and `promise` property. The child payload is automatically
+	 * inserted into the parent payload's `out` array.
+	 * @param {(args: { $$payload: BasePayload<TState> }) => void | Promise<void>} render
+	 * @returns {void}
+	 */
+	child(render) {
+		const child = new BasePayload(this._state);
+		this.out.push(child);
+		const result = render({ $$payload: child });
+		if (result instanceof Promise) {
+			child.promise = result;
+		}
+	}
+
+	/**
+	 * Waits for all child payloads to finish their blocking asynchronous work, then returns the generated content.
+	 * @returns {Promise<string>}
+	 */
+	async collect_async() {
+		// TODO: Should probably use `Promise.allSettled` here just so we can report detailed errors
+		await Promise.all(this.#collect_promises(this.out));
+		return this.#collect_content();
+	}
+
+	/**
+	 * Collect all of the code from the `out` array and return it as a string.
+	 * @returns {string}
+	 */
+	collect() {
+		const promises = this.#collect_promises(this.out);
+		if (promises.length > 0) {
+			// TODO is there a good way to report where this is? Probably by using some sort of loc or stack trace in `child` creation
+			throw new Error('Encountered an asynchronous component while rendering synchronously');
+		}
+
+		return this.#collect_content();
+	}
+
+	/**
+	 * @param {(string | BasePayload<TState>)[]} items
+	 * @param {Promise<void>[]} [promises]
+	 * @returns {Promise<void>[]}
+	 */
+	#collect_promises(items, promises = this.promise ? [this.promise] : []) {
+		for (const item of items) {
+			if (item instanceof BasePayload && item.promise) {
+				promises.push(item.promise);
+				this.#collect_promises(item.out, promises);
+			}
+		}
+		return promises;
+	}
+
+	/**
+	 * Collect all of the code from the `out` array and return it as a string.
+	 * @returns {string}
+	 */
+	#collect_content() {
+		// TODO throw in `async` mode
+		let content = '';
+		for (const item of this.out) {
+			if (typeof item === 'string') {
+				content += item;
+			} else {
+				content += item.#collect_content();
+			}
+		}
+		return content;
 	}
 }
 
-export class Payload {
-	/** @type {Set<{ hash: string; code: string }>} */
-	css;
-	/** @type {(string | ChildPayload)[]} */
-	out = [];
-	/** @type {() => string} */
-	uid;
-	/** @type {string | undefined} */
-	select_value = undefined;
-	/** @type {HeadPayload} */
-	head;
-	/** @type {'sync' | 'async'} */
-	mode;
-	/** @type {Promise<string>[]} */
-	tail = [];
+/**
+ * @extends {BasePayload<{
+ * 	css: Set<{ hash: string; code: string }>,
+ * 	title: { value: string },
+ * 	uid: () => string
+ * }>}
+ */
+export class HeadPayload extends BasePayload {
+	get css() {
+		return this._state.css;
+	}
+
+	get uid() {
+		return this._state.uid;
+	}
+
+	// title is boxed so that it gets globally shared between all parent/child heads
+	get title() {
+		return this._state.title.value;
+	}
+	set title(value) {
+		this._state.title.value = value;
+	}
 
 	/**
-	 * @param {{ id_prefix?: string, mode?: 'sync' | 'async', head?: HeadPayload, uid?: () => string, out?: (string | ChildPayload)[], css?: Set<{ hash: string; code: string }>, select_value?: any }} args
+	 * @param {{ css?: Set<{ hash: string; code: string }>, title?: { value: string }, uid?: () => string }} args
+	 */
+	constructor({ css = new Set(), title = { value: '' }, uid = () => '' } = {}) {
+		super({
+			css,
+			title,
+			uid
+		});
+	}
+}
+
+/**
+ * @extends {BasePayload<{
+ * 	css: Set<{ hash: string; code: string }>,
+ * 	uid: () => string,
+ * 	select_value: any,
+ * 	head: HeadPayload,
+ * }>}
+ */
+export class Payload extends BasePayload {
+	get css() {
+		return this._state.css;
+	}
+
+	get uid() {
+		return this._state.uid;
+	}
+
+	get head() {
+		return this._state.head;
+	}
+
+	get select_value() {
+		return this._state.select_value;
+	}
+	set select_value(value) {
+		this._state.select_value = value;
+	}
+
+	/**
+	 * @param {{ id_prefix?: string, head?: HeadPayload, uid?: () => string, css?: Set<{ hash: string; code: string }>, select_value?: any }} args
 	 */
 	constructor({
 		id_prefix = '',
-		mode = 'sync',
 		head = new HeadPayload(),
 		uid = props_id_generator(id_prefix),
 		css = new Set()
 	} = {}) {
-		this.uid = uid;
-		this.head = head;
-		this.mode = mode;
-		this.css = css;
-	}
-
-	/**
-	 * Create a child scope. `front` represents the initial, synchronous code, and `back` represents all code from the first `await` onwards.
-	 * Typically a child will be created for each component.
-	 * @param {{ front: (args: { payload: Payload }) => void, back: (args: { payload: Payload }) => Promise<void> }} args
-	 * @returns {void}
-	 */
-	child({ front, back }) {
-		const child = new ChildPayload(this);
-		front({ payload: child });
-		// TODO: boundary stuff? Or does this go inside the `back` function?
-		back({ payload: child }).then(() => child.deferred.resolve());
-	}
-
-	/**
-	 * Waits for all child payloads to finish their blocking asynchronous work, then returns the generated HTML.
-	 * @returns {Promise<string>}
-	 */
-	async collect_async() {
-		// TODO throw in `sync` mode
-		/** @type {Promise<void>[]} */
-		const promises = [];
-
-		/**
-		 * @param {(string | ChildPayload)[]} items
-		 */
-		function collect_promises(items) {
-			for (const item of items) {
-				if (item instanceof ChildPayload) {
-					promises.push(item.deferred.promise);
-					collect_promises(item.out);
-				}
-			}
-		}
-
-		collect_promises(this.out);
-		await Promise.all(promises);
-		return this.collect();
-	}
-
-	/**
-	 * Collect all of the code from the `out` array and return it as a string. If in `async` mode, wait on
-	 * `finished` prior to collecting.
-	 * @returns {string}
-	 */
-	collect() {
-		// TODO throw in `async` mode
-		let html = '';
-		for (const item of this.out) {
-			if (typeof item === 'string') {
-				html += item;
-			} else {
-				html += item.collect();
-			}
-		}
-		return html;
-	}
-}
-
-class ChildPayload extends Payload {
-	deferred = /** @type {ReturnType<typeof deferred<void>>} */ (deferred());
-
-	/**
-	 * @param {Payload} parent
-	 */
-	constructor(parent) {
 		super({
-			mode: parent.mode,
-			head: parent.head,
-			uid: parent.uid,
-			css: parent.css
+			uid,
+			head,
+			css,
+			select_value: undefined
 		});
-		this.root = parent;
-		parent.out.push(this);
 	}
 }
 
@@ -135,17 +199,18 @@ class ChildPayload extends Payload {
  * @returns {Payload}
  */
 export function copy_payload({ out, css, head, uid }) {
-	const payload = new Payload();
+	const payload = new Payload({
+		css: new Set(css),
+		uid,
+		head: new HeadPayload({
+			css: new Set(head.css),
+			title: head.title,
+			uid: head.uid
+		})
+	});
 
 	payload.out = [...out];
-	payload.css = new Set(css);
-	payload.uid = uid;
-
-	payload.head = new HeadPayload();
 	payload.head.out = [...head.out];
-	payload.head.css = new Set(head.css);
-	payload.head.title = head.title;
-	payload.head.uid = head.uid;
 
 	return payload;
 }
@@ -158,9 +223,13 @@ export function copy_payload({ out, css, head, uid }) {
  */
 export function assign_payload(p1, p2) {
 	p1.out = [...p2.out];
-	p1.css = p2.css;
-	p1.head = p2.head;
-	p1.uid = p2.uid;
+	// this is all legacy code so typescript can go cry in a corner -- I don't want to write setters for all of these because they really shouldn't be settable
+	// @ts-expect-error
+	p1._state.css = p2.css;
+	// @ts-expect-error
+	p1._state.head = p2.head;
+	// @ts-expect-error
+	p1._state.uid = p2.uid;
 }
 
 /**

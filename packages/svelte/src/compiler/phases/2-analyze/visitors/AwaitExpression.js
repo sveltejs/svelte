@@ -23,6 +23,10 @@ export function AwaitExpression(node, context) {
 		suspend = true;
 	}
 
+	if (context.state.snippet) {
+		context.state.snippet.metadata.has_await = true;
+	}
+
 	// disallow top-level `await` or `await` in template expressions
 	// unless a) in runes mode and b) opted into `experimental.async`
 	if (suspend) {
@@ -33,6 +37,8 @@ export function AwaitExpression(node, context) {
 		if (!context.state.analysis.runes) {
 			e.legacy_await_invalid(node);
 		}
+
+		context.state.analysis.suspends = true;
 	}
 
 	context.next();

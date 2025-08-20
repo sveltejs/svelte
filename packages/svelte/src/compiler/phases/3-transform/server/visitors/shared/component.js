@@ -227,7 +227,21 @@ export function build_inline_component(node, expression, context) {
 			params.push(pattern);
 		}
 
-		const slot_fn = b.arrow(params, b.block(block.body));
+		const slot_fn = b.arrow(
+			params,
+			// TODO: This will always produce correct results because it will always produce async functions
+			// if the current component is an async component, but it may produce async functions where they're
+			// not necessary -- eg. when the component is asynchronous but the child content is not.
+			// May or may not be worth optimizing.
+			b.block([
+				b.stmt(
+					b.call(
+						'$$payload.child',
+						b.arrow([], b.block(block.body), context.state.analysis.suspends)
+					)
+				)
+			])
+		);
 
 		if (slot_name === 'default' && !has_children_prop) {
 			if (

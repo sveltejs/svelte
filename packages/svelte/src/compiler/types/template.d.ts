@@ -513,6 +513,7 @@ export namespace AST {
 		/** @internal */
 		metadata: {
 			can_hoist: boolean;
+			has_await: boolean;
 			/** The set of components/render tags that could render this snippet,
 			 * used for CSS pruning */
 			sites: Set<Component | SvelteComponent | SvelteSelf | RenderTag>;
