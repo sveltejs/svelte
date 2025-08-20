@@ -14,6 +14,7 @@ import type { CompileOptions } from '#compiler';
 
 interface SSRTest extends BaseTest {
 	compileOptions?: Partial<CompileOptions>;
+	load_compiled?: boolean;
 	props?: Record<string, any>;
 	id_prefix?: string;
 	withoutNormalizeHtml?: boolean;
@@ -24,7 +25,9 @@ interface SSRTest extends BaseTest {
 let console_error = console.error;
 
 const { test, run } = suite<SSRTest>(async (config, test_dir) => {
-	await compile_directory(test_dir, 'server', config.compileOptions);
+	if (!config.load_compiled) {
+		await compile_directory(test_dir, 'server', config.compileOptions);
+	}
 
 	const errors: string[] = [];
 
