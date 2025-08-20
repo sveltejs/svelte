@@ -1,3 +1,5 @@
+// TODO I think this will be better using some sort of mixin, eg add_async_tree(Payload, clone)
+
 /**
  * A base class for payloads. Payloads are basically a tree of `string | Payload`s, where each
  * `Payload` in the tree represents work that may or may not have completed. A payload can be
@@ -201,7 +203,7 @@ export class Payload extends BasePayload {
  * @param {Payload} to_copy
  * @returns {Payload}
  */
-export function copy_payload({ out, css, head, uid }) {
+export function copy_payload({ promise, out, css, head, uid }) {
 	const payload = new Payload({
 		css: new Set(css),
 		uid,
@@ -213,7 +215,9 @@ export function copy_payload({ out, css, head, uid }) {
 		})
 	});
 
+	payload.promise = promise;
 	payload.out = [...out];
+	payload.head.promise = head.promise;
 	payload.head.out = [...head.out];
 
 	return payload;
@@ -231,9 +235,16 @@ export function assign_payload(p1, p2) {
 	// @ts-expect-error
 	p1._state.css = p2.css;
 	// @ts-expect-error
-	p1._state.head = p2.head;
+	p1._state.head._state.css = p2.head.css;
+	// @ts-expect-error
+	p1._state.head._state.title.value = p2.head.title;
+	// @ts-expect-error
+	p1._state.head._state.uid = p2.head.uid;
+	p1.head.promise = p2.head.promise;
+	p1.head.out = [...p2.head.out];
 	// @ts-expect-error
 	p1._state.uid = p2.uid;
+	p1.promise = p2.promise;
 }
 
 /**
