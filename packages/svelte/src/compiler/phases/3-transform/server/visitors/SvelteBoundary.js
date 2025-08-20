@@ -12,21 +12,11 @@ import { build_attribute_value } from './shared/utils.js';
 export function SvelteBoundary(node, context) {
 	context.state.template.push(b.literal(BLOCK_OPEN));
 
-	// if this has a `pending` snippet, render it
-	const pending_attribute = /** @type {AST.Attribute} */ (
-		node.attributes.find((node) => node.type === 'Attribute' && node.name === 'pending')
-	);
-
-	const pending_snippet = /** @type {AST.SnippetBlock} */ (
-		node.fragment.nodes.find(
-			(node) => node.type === 'SnippetBlock' && node.expression.name === 'pending'
-		)
-	);
-
-	if (pending_attribute) {
-		const value = build_attribute_value(pending_attribute.value, context, false, true);
+	const pending_snippet = node.metadata.pending;
+	if (pending_snippet?.type === 'Attribute') {
+		const value = build_attribute_value(pending_snippet.value, context, false, true);
 		context.state.template.push(b.call(value, b.id('$$payload')));
-	} else if (pending_snippet) {
+	} else if (pending_snippet?.type === 'SnippetBlock') {
 		context.state.template.push(
 			/** @type {BlockStatement} */ (context.visit(pending_snippet.body))
 		);

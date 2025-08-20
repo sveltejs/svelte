@@ -564,7 +564,9 @@ export function valueless_option(payload, children) {
 
 	children();
 
-	var body = payload.out.slice(i).join('');
+	// TODO this seems really likely to break in async world; we really need to find a better way to do this
+	// @ts-expect-error
+	var body = collect_body(payload.out.slice(i));
 
 	if (body.replace(/<!---->/g, '') === payload.select_value) {
 		// replace '>' with ' selected>' (closing tag will be added later)
@@ -576,4 +578,20 @@ export function valueless_option(payload, children) {
 		// Remove the old items after position i and add the body as a single item
 		payload.out.splice(i, payload.out.length - i, body);
 	}
+}
+
+/**
+ * @param {(string | Payload)[]} out_fragment
+ * @returns {string}
+ */
+function collect_body(out_fragment) {
+	let body = '';
+	for (const item of out_fragment) {
+		if (typeof item === 'string') {
+			body += item;
+		} else {
+			body += collect_body(/** @type {(string | Payload)[]} */ (item.out));
+		}
+	}
+	return body;
 }

@@ -37,9 +37,11 @@ export function AwaitExpression(node, context) {
 		if (!context.state.analysis.runes) {
 			e.legacy_await_invalid(node);
 		}
-
-		context.state.analysis.suspends = true;
 	}
+
+	// the await will only block if there's no `pending` snippet
+	context.state.analysis.has_blocking_await ||=
+		suspend && !context.state.boundary?.metadata.pending;
 
 	context.next();
 }

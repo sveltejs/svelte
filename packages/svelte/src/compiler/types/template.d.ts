@@ -401,6 +401,10 @@ export namespace AST {
 	export interface SvelteBoundary extends BaseElement {
 		type: 'SvelteBoundary';
 		name: 'svelte:boundary';
+		/** @internal */
+		metadata: {
+			pending: SnippetBlock | Attribute | null;
+		};
 	}
 
 	export interface SvelteHead extends BaseElement {

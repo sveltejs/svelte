@@ -46,7 +46,8 @@ class BasePayload {
 	 * @returns {void}
 	 */
 	child(render) {
-		const child = new BasePayload(this._state);
+		// @ts-expect-error dynamic constructor invocation for subclass instance creation
+		const child = new this.constructor(this._state);
 		this.out.push(child);
 		const result = render({ $$payload: child });
 		if (result instanceof Promise) {
@@ -85,8 +86,10 @@ class BasePayload {
 	 */
 	#collect_promises(items, promises = this.promise ? [this.promise] : []) {
 		for (const item of items) {
-			if (item instanceof BasePayload && item.promise) {
-				promises.push(item.promise);
+			if (item instanceof BasePayload) {
+				if (item.promise) {
+					promises.push(item.promise);
+				}
 				this.#collect_promises(item.out, promises);
 			}
 		}
@@ -204,7 +207,8 @@ export function copy_payload({ out, css, head, uid }) {
 		uid,
 		head: new HeadPayload({
 			css: new Set(head.css),
-			title: head.title,
+			// @ts-expect-error
+			title: head._state.title,
 			uid: head.uid
 		})
 	});

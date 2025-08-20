@@ -106,8 +106,8 @@ export interface ComponentAnalysis extends Analysis {
 	 * Every snippet that is declared locally
 	 */
 	snippets: Set<AST.SnippetBlock>;
-	/** Whether the component uses `await` in a context that would cause suspense. */
-	suspends: boolean;
+	/** Whether the component uses `await` in a context that would require an `await` on the server. */
+	has_blocking_await: boolean;
 }
 
 declare module 'estree' {

@@ -14,6 +14,10 @@ export function SvelteBoundary(node, context) {
 			e.svelte_boundary_invalid_attribute(attribute);
 		}
 
+		if (attribute.name === 'pending') {
+			node.metadata.pending = attribute;
+		}
+
 		if (
 			attribute.value === true ||
 			(Array.isArray(attribute.value) &&
@@ -23,5 +27,12 @@ export function SvelteBoundary(node, context) {
 		}
 	}
 
-	context.next();
+	node.metadata.pending ??=
+		/** @type {AST.SnippetBlock | undefined} */ (
+			node.fragment.nodes.find(
+				(node) => node.type === 'SnippetBlock' && node.expression.name === 'pending'
+			)
+		) ?? null;
+
+	context.next({ ...context.state, boundary: node });
 }
