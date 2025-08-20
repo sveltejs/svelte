@@ -46,7 +46,15 @@ If you want to familiarize yourself with the Svelte AST, you can go [to the play
 
 ## Phase 2: Analysis
 
-Once we have a AST we need to perform analysis on it. During this phase we will collect information about which variables are used, where are they used, if they are stores, etc. This information will be used later during the third phase to transform and optimize your component (for example if you declare a stateful variable but never reassign to it or never use it in a reactive context we will not bother with creating a stateful variable at all).
+Once we have a AST we need to perform analysis on it. During this phase we will:
+
+- create the scopes for the component
+- throw compiler warnings and errors (for things like wrong usage of runes, wrong usage of globals etc)
+- detect which branches of the template are completely static or dynamic
+- detect which snippets are hoistable
+- analyze the css to determine unused css
+
+This information will be used later during the third phase to transform and optimize your component (for example if you declare a stateful variable but never reassign to it or never use it in a reactive context we will not bother with creating a stateful variable at all).
 
 The very first thing to do is to create the scopes for every variable. What this operation does is to create a map from a node to a specific set of references, declarations and declarators. This is useful because if you have a situation like this
 
@@ -256,3 +264,7 @@ for (const scope of [module.scope, instance.scope]) {
 	}
 }
 ```
+
+### CSS Analysis
+
+While we didn't go deep in how the analysis works for every single step of the analysis it's worth exploring the CSS analysis a bit more in depth. This phase in itself is subdivided in three phases: we first analyze the css, during this phase we validate the structure of svelte specific css (eg. the `:global` selector) is valid also marking every node within global as `used`. We then proceed to `prune` the css. In this phase we match every selector with the html structure...if a selector doesn't match any element we `prune` it away either by commenting it out in dev (so that the users can actually see what's being removed) or by completely remove it in prod. Finally we walk the css AST once more to warn about all the `unused` css nodes accessing the metadata we collected in those two phases.
