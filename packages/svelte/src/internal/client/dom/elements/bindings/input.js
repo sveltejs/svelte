@@ -7,6 +7,7 @@ import { is } from '../../../proxy.js';
 import { queue_micro_task } from '../../task.js';
 import { hydrating } from '../../hydration.js';
 import { untrack } from '../../../runtime.js';
+import { is_runes } from '../../../context.js';
 import { current_batch, previous_batch } from '../../../reactivity/batch.js';
 
 /**
@@ -16,6 +17,8 @@ import { current_batch, previous_batch } from '../../../reactivity/batch.js';
  * @returns {void}
  */
 export function bind_value(input, get, set = get) {
+	var runes = is_runes();
+
 	var batches = new WeakSet();
 
 	listen_to_event_and_reset_event(input, 'input', (is_reset) => {
@@ -27,8 +30,26 @@ export function bind_value(input, get, set = get) {
 		/** @type {any} */
 		var value = is_reset ? input.defaultValue : input.value;
 		value = is_numberlike_input(input) ? to_number(value) : value;
-		set(value);
 
+		// handle both async and normal set callback
+		Promise.resolve(set(value)).then(() => {
+			// In runes mode, respect any validation in accessors (doesn't apply in legacy mode,
+			// because we use mutable state which ensures the render effect always runs)
+			if (runes && value !== (value = get())) {
+				var start = input.selectionStart;
+				var end = input.selectionEnd;
+
+				// the value is coerced on assignment
+				input.value = value ?? '';
+
+				// Restore selection
+				if (end !== null) {
+					input.selectionStart = start;
+					input.selectionEnd = Math.min(end, input.value.length);
+				}
+			}
+		});
+		// This ensures that the current batch is tracked for any changes related to the input event and is done at end
 		if (current_batch !== null) {
 			batches.add(current_batch);
 		}
