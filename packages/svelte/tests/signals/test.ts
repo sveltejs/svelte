@@ -1441,4 +1441,50 @@ describe('signals', () => {
 			assert.deepEqual(log, ['inner destroyed', 'inner destroyed']);
 		};
 	});
+
+	test('derived effects reconnect correctly', () => {
+		const log: string[] = [];
+		let a: Derived<number>;
+
+		return () => {
+			const destroy1 = effect_root(() => {
+				a = derived(() => {
+					user_effect(() => {
+						log.push('effect-executed');
+					});
+					return 42;
+				});
+			});
+
+			const destroy2 = effect_root(() => {
+				render_effect(() => {
+					$.get(a);
+				});
+			});
+
+			assert.equal(log.length, 0);
+			assert.equal(a?.effects?.length, 1);
+
+			destroy2();
+			flushSync();
+
+			assert.equal(a?.effects, null);
+			assert.equal(log.length, 0);
+
+			const destroy3 = effect_root(() => {
+				render_effect(() => {
+					const value = $.get(a);
+					assert.equal(value, 42);
+				});
+			});
+
+			flushSync();
+
+			assert.equal(log.length, 1);
+			assert.equal(a?.effects?.length, 1);
+
+			destroy3();
+			destroy1();
+		};
+	});
 });
