@@ -194,6 +194,18 @@ export class HeadPayload extends BasePayload {
 		head_payload.out = [...this.out];
 		return head_payload;
 	}
+
+	/**
+	 * @param {HeadPayload} other
+	 */
+	subsume(other) {
+		// @ts-expect-error
+		this.out = [...other.out];
+		this.promise = other.promise;
+		this.#css = other.#css;
+		this.#title = other.#title;
+		this.#uid = other.#uid;
+	}
 }
 
 /**
@@ -250,29 +262,18 @@ export class Payload extends BasePayload {
 		payload.out = [...this.out];
 		return payload;
 	}
-}
 
-/**
- * Assigns second payload to first -- legacy nonsense
- * @param {Payload} p1
- * @param {Payload} p2
- * @returns {void}
- */
-export function assign_payload(p1, p2) {
-	p1.out = [...p2.out];
-	p1.promise = p2.promise;
-	p1.css.clear();
-	for (const entry of p2.css) {
-		p1.css.add(entry);
+	/**
+	 * @param {Payload} other
+	 */
+	subsume(other) {
+		// @ts-expect-error
+		this.out = [...other.out];
+		this.promise = other.promise;
+		this.#css = other.#css;
+		this.#uid = other.#uid;
+		this.#head.subsume(other.#head);
 	}
-
-	p1.head.out = [...p2.head.out];
-	p1.head.promise = p2.head.promise;
-	p1.head.css.clear();
-	for (const entry of p2.head.css) {
-		p1.head.css.add(entry);
-	}
-	p1.head.title.value = p2.head.title.value;
 }
 
 /**

@@ -199,7 +199,7 @@ export function server_component(analysis, options) {
 					b.stmt(b.call('$$render_inner', b.id('$$inner_payload')))
 				])
 			),
-			b.stmt(b.call('$.assign_payload', b.id('$$payload'), b.id('$$inner_payload')))
+			b.stmt(b.call('$$payload.subsume', b.id('$$inner_payload')))
 		];
 	}
 

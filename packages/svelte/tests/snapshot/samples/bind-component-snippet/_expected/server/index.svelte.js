@@ -31,10 +31,10 @@ export default function Bind_component_snippet($$payload) {
 
 		do {
 			$$settled = true;
-			$$inner_payload = $.copy_payload($$payload);
+			$$inner_payload = $$payload.copy();
 			$$render_inner($$inner_payload);
 		} while (!$$settled);
 
-		$.assign_payload($$payload, $$inner_payload);
+		$$payload.subsume($$inner_payload);
 	});
 }

@@ -513,8 +513,6 @@ export { push, pop } from './context.js';
 
 export { push_element, pop_element, validate_snippet_args } from './dev.js';
 
-export { assign_payload } from './payload.js';
-
 export { snapshot } from '../shared/clone.js';
 
 export { fallback, to_array } from '../shared/utils.js';
@@ -573,28 +571,21 @@ export function valueless_option(payload, children) {
 
 	// post-children, `payload` has child content, possibly also with some number of hydration comments.
 	// we can compact this last chunk of content to see if it matches the select value...
-	let match = false;
 	payload.compact({
 		start: i,
 		fn: (body) => {
 			if (body.replace(/<!---->/g, '') === payload.select_value) {
-				match = true;
+				// ...and if it does match the select value, we can compact the part of the payload representing the `<option ...>`
+				// to add the `selected` attribute to the end.
+				payload.compact({
+					start: i - 1,
+					end: i,
+					fn: (body) => {
+						return body.slice(0, -1) + ' selected>';
+					}
+				});
 			}
 			return body;
-		}
-	});
-
-	if (!match) {
-		return;
-	}
-
-	// ...and if it does match the select value, we can compact the part of the payload representing the `<option ...>`
-	// to add the `selected` attribute to the end.
-	payload.compact({
-		start: i - 1,
-		end: i,
-		fn: (body) => {
-			return body.slice(0, -1) + ' selected>';
 		}
 	});
 }
