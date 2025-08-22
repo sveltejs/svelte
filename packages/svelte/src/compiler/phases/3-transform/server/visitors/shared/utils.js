@@ -1,4 +1,4 @@
-/** @import { AssignmentOperator, Expression, Identifier, Node, Statement } from 'estree' */
+/** @import { AssignmentOperator, Expression, Identifier, Node, Statement, BlockStatement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ServerTransformState } from '../../types.js' */
 
@@ -256,4 +256,18 @@ export function build_getter(node, state) {
 	}
 
 	return node;
+}
+
+/**
+ * @param {BlockStatement | Expression} body
+ * @param {boolean} async
+ * @returns {Statement}
+ */
+export function wrap_in_child_payload(body, async) {
+	return b.stmt(
+		b.call(
+			'$$payload.child',
+			b.arrow([b.object_pattern([b.init('$$payload', b.id('$$payload'))])], body, async)
+		)
+	);
 }

@@ -101,7 +101,14 @@ export function render(component, options = {}) {
 		for (const cleanup of on_destroy) cleanup();
 		on_destroy = prev_on_destroy;
 
-		let head = payload.head.collect() + payload.head.title;
+		let head = payload.head.collect();
+
+		if (typeof payload.head.title.value !== 'string') {
+			throw new Error(
+				'TODO -- should encorporate this into the collect/collect_async logic somewhere'
+			);
+		}
+		head += payload.head.title.value;
 
 		for (const { hash, code } of payload.css) {
 			head += `<style id="${hash}">${code}</style>`;
@@ -125,10 +132,9 @@ export function render(component, options = {}) {
  * @returns {void}
  */
 export function head(payload, fn) {
-	const head_payload = payload.head;
-	head_payload.out.push(BLOCK_OPEN);
-	fn(head_payload);
-	head_payload.out.push(BLOCK_CLOSE);
+	payload.head.out.push(BLOCK_OPEN);
+	payload.head.child(({ $$payload }) => fn($$payload));
+	payload.head.out.push(BLOCK_CLOSE);
 }
 
 /**
@@ -507,7 +513,7 @@ export { push, pop } from './context.js';
 
 export { push_element, pop_element, validate_snippet_args } from './dev.js';
 
-export { assign_payload, copy_payload } from './payload.js';
+export { assign_payload } from './payload.js';
 
 export { snapshot } from '../shared/clone.js';
 
@@ -562,36 +568,33 @@ export function maybe_selected(payload, value) {
 export function valueless_option(payload, children) {
 	var i = payload.out.length;
 
+	// prior to children, `payload` has some combination of string/unresolved payload that ends in `<option ...>`
 	children();
 
-	// TODO this seems really likely to break in async world; we really need to find a better way to do this
-	// @ts-expect-error
-	var body = collect_body(payload.out.slice(i));
-
-	if (body.replace(/<!---->/g, '') === payload.select_value) {
-		// replace '>' with ' selected>' (closing tag will be added later)
-		var last_item = payload.out[i - 1];
-		if (typeof last_item !== 'string') {
-			throw new Error('TODO something very bad has happened, this should be very impossible');
+	// post-children, `payload` has child content, possibly also with some number of hydration comments.
+	// we can compact this last chunk of content to see if it matches the select value...
+	let match = false;
+	payload.compact({
+		start: i,
+		fn: (body) => {
+			if (body.replace(/<!---->/g, '') === payload.select_value) {
+				match = true;
+			}
+			return body;
 		}
-		payload.out[i - 1] = last_item.slice(0, -1) + ' selected>';
-		// Remove the old items after position i and add the body as a single item
-		payload.out.splice(i, payload.out.length - i, body);
-	}
-}
+	});
 
-/**
- * @param {(string | Payload)[]} out_fragment
- * @returns {string}
- */
-function collect_body(out_fragment) {
-	let body = '';
-	for (const item of out_fragment) {
-		if (typeof item === 'string') {
-			body += item;
-		} else {
-			body += collect_body(/** @type {(string | Payload)[]} */ (item.out));
-		}
+	if (!match) {
+		return;
 	}
-	return body;
+
+	// ...and if it does match the select value, we can compact the part of the payload representing the `<option ...>`
+	// to add the `selected` attribute to the end.
+	payload.compact({
+		start: i - 1,
+		end: i,
+		fn: (body) => {
+			return body.slice(0, -1) + ' selected>';
+		}
+	});
 }

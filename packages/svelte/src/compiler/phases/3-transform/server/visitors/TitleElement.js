@@ -13,5 +13,20 @@ export function TitleElement(node, context) {
 	process_children(node.fragment.nodes, { ...context, state: { ...context.state, template } });
 	template.push(b.literal('</title>'));
 
-	context.state.init.push(...build_template(template, b.id('$$payload.title'), '='));
+	if (!node.metadata.has_await) {
+		context.state.init.push(...build_template(template, b.id('$$payload.title.value'), '='));
+	} else {
+		const async_template = b.thunk(
+			// TODO I'm sure there is a better way to do this
+			b.block([
+				b.let('title'),
+				...build_template(template, b.id('title'), '='),
+				b.return(b.id('title'))
+			]),
+			true
+		);
+		context.state.init.push(
+			b.stmt(b.assignment('=', b.id('$$payload.title.value'), b.call(async_template)))
+		);
+	}
 }

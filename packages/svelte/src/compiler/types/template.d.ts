@@ -325,6 +325,10 @@ export namespace AST {
 	export interface TitleElement extends BaseElement {
 		type: 'TitleElement';
 		name: 'title';
+		/** @internal */
+		metadata: {
+			has_await: boolean;
+		};
 	}
 
 	export interface SlotElement extends BaseElement {

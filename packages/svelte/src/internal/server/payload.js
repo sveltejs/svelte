@@ -1,4 +1,5 @@
-// TODO I think this will be better using some sort of mixin, eg add_async_tree(Payload, clone)
+// Optimization: Right now, the state from parents is copied into the children. _Technically_ we could save the state on the root
+// and simply have the children inherit that state and re-expose it through getters. This could save memory but probably isn't worth it.
 
 /**
  * A base class for payloads. Payloads are basically a tree of `string | Payload`s, where each
@@ -8,12 +9,18 @@
  * asynchronously with {@link collect_async}, which will wait for all children to complete before
  * collecting their contents.
  *
- * @template {Record<PropertyKey, unknown>} TState
+ * @template {new (parent: Partial<InstanceType<TSubclass>>) => {}} TSubclass
  */
 class BasePayload {
 	/**
+	 * This is the magical type that represents the instance type of a subclass of this type.
+	 * How does it work? idk man but it does
+	 * @typedef {this & InstanceType<TSubclass>} Instance
+	 */
+
+	/**
 	 * The contents of the payload.
-	 * @type {(string | BasePayload<TState>)[]}
+	 * @type {(string | Instance)[]}
 	 */
 	out = [];
 
@@ -25,35 +32,48 @@ class BasePayload {
 	promise;
 
 	/**
-	 * Internal state. This is the easiest way to represent the additional state each payload kind
-	 * needs to add to itself while still giving the base payload the ability to copy itself.
-	 * @protected
-	 * @type {TState}
-	 */
-	_state;
-
-	/**
-	 * Create a new payload, copying the state from the parent payload.
-	 * @param {TState} parent_state
-	 */
-	constructor(parent_state) {
-		this._state = parent_state;
-	}
-
-	/**
 	 * Create a child payload. The child payload inherits the state from the parent,
 	 * but has its own `out` array and `promise` property. The child payload is automatically
 	 * inserted into the parent payload's `out` array.
-	 * @param {(args: { $$payload: BasePayload<TState> }) => void | Promise<void>} render
+	 * @param {(args: { $$payload: Instance }) => void | Promise<void>} render
 	 * @returns {void}
 	 */
 	child(render) {
-		// @ts-expect-error dynamic constructor invocation for subclass instance creation
-		const child = new this.constructor(this._state);
+		const child = this.#create_child_instance();
 		this.out.push(child);
 		const result = render({ $$payload: child });
 		if (result instanceof Promise) {
 			child.promise = result;
+		}
+	}
+
+	/**
+	 * Compact everything between `start` and `end` into a single payload, then call `fn` with the result of that payload.
+	 * The compacted payload will be sync if all of the children are sync and {@link fn} is sync, otherwise it will be async.
+	 * @param {{ start: number, end?: number, fn: (value: string) => string | Promise<string> }} args
+	 */
+	compact({ start, end = this.out.length, fn }) {
+		const child = this.#create_child_instance();
+		const to_compact = this.out.splice(start, end - start, child);
+		const promises = BasePayload.#collect_promises(to_compact, []);
+
+		/** @param {string | Promise<string>} res */
+		const push_result = (res) => {
+			if (typeof res === 'string') {
+				child.out.push(res);
+			} else {
+				child.promise = res.then((resolved) => {
+					child.out.push(resolved);
+				});
+			}
+		};
+
+		if (promises.length > 0) {
+			child.promise = Promise.all(promises)
+				.then(() => fn(BasePayload.#collect_content(to_compact)))
+				.then(push_result);
+		} else {
+			push_result(fn(BasePayload.#collect_content(to_compact)));
 		}
 	}
 
@@ -63,8 +83,8 @@ class BasePayload {
 	 */
 	async collect_async() {
 		// TODO: Should probably use `Promise.allSettled` here just so we can report detailed errors
-		await Promise.all(this.#collect_promises(this.out));
-		return this.#collect_content();
+		await Promise.all(BasePayload.#collect_promises(this.out, this.promise ? [this.promise] : []));
+		return BasePayload.#collect_content(this.out);
 	}
 
 	/**
@@ -72,27 +92,27 @@ class BasePayload {
 	 * @returns {string}
 	 */
 	collect() {
-		const promises = this.#collect_promises(this.out);
+		const promises = BasePayload.#collect_promises(this.out, this.promise ? [this.promise] : []);
 		if (promises.length > 0) {
 			// TODO is there a good way to report where this is? Probably by using some sort of loc or stack trace in `child` creation
 			throw new Error('Encountered an asynchronous component while rendering synchronously');
 		}
 
-		return this.#collect_content();
+		return BasePayload.#collect_content(this.out);
 	}
 
 	/**
-	 * @param {(string | BasePayload<TState>)[]} items
-	 * @param {Promise<void>[]} [promises]
+	 * @param {(string | Instance)[]} items
+	 * @param {Promise<void>[]} promises
 	 * @returns {Promise<void>[]}
 	 */
-	#collect_promises(items, promises = this.promise ? [this.promise] : []) {
+	static #collect_promises(items, promises) {
 		for (const item of items) {
-			if (item instanceof BasePayload) {
+			if (typeof item !== 'string') {
 				if (item.promise) {
 					promises.push(item.promise);
 				}
-				this.#collect_promises(item.out, promises);
+				BasePayload.#collect_promises(item.out, promises);
 			}
 		}
 		return promises;
@@ -100,84 +120,108 @@ class BasePayload {
 
 	/**
 	 * Collect all of the code from the `out` array and return it as a string.
+	 * @param {(string | Instance)[]} items
 	 * @returns {string}
 	 */
-	#collect_content() {
+	static #collect_content(items) {
 		// TODO throw in `async` mode
 		let content = '';
-		for (const item of this.out) {
+		for (const item of items) {
 			if (typeof item === 'string') {
 				content += item;
 			} else {
-				content += item.#collect_content();
+				content += BasePayload.#collect_content(item.out);
 			}
 		}
 		return content;
 	}
+
+	/** @returns {Instance} */
+	#create_child_instance() {
+		// @ts-expect-error - This lets us create an instance of the subclass of this class. Type-danger is constrained by the fact that TSubclass must accept an instance of itself in its constructor.
+		return new this.constructor(this);
+	}
 }
 
 /**
- * @extends {BasePayload<{
- * 	css: Set<{ hash: string; code: string }>,
- * 	title: { value: string },
- * 	uid: () => string
- * }>}
+ * @extends {BasePayload<typeof HeadPayload>}
  */
 export class HeadPayload extends BasePayload {
+	/** @type {Set<{ hash: string; code: string }>} */
+	#css;
+
+	/** @type {() => string} */
+	#uid;
+
+	/**
+	 * This is a string or a promise so that the last write "wins" synchronously,
+	 * as opposed to writes coming in whenever it happens to during async work.
+	 * It's boxed so that the same value is shared across all children.
+	 * @type {{ value: string | Promise<string>}}
+	 */
+	#title;
+
 	get css() {
-		return this._state.css;
+		return this.#css;
 	}
 
 	get uid() {
-		return this._state.uid;
+		return this.#uid;
 	}
 
-	// title is boxed so that it gets globally shared between all parent/child heads
 	get title() {
-		return this._state.title.value;
-	}
-	set title(value) {
-		this._state.title.value = value;
+		return this.#title;
 	}
 
 	/**
-	 * @param {{ css?: Set<{ hash: string; code: string }>, title?: { value: string }, uid?: () => string }} args
+	 * @param {{ css?: Set<{ hash: string; code: string }>, title?: { value: string | Promise<string> }, uid?: () => string }} args
 	 */
 	constructor({ css = new Set(), title = { value: '' }, uid = () => '' } = {}) {
-		super({
-			css,
-			title,
-			uid
+		super();
+		this.#css = css;
+		this.#title = title;
+		this.#uid = uid;
+	}
+
+	copy() {
+		const head_payload = new HeadPayload({
+			css: new Set(this.#css),
+			title: this.title,
+			uid: this.#uid
 		});
+
+		head_payload.promise = this.promise;
+		head_payload.out = [...this.out];
+		return head_payload;
 	}
 }
 
 /**
- * @extends {BasePayload<{
- * 	css: Set<{ hash: string; code: string }>,
- * 	uid: () => string,
- * 	select_value: any,
- * 	head: HeadPayload,
- * }>}
+ * @extends {BasePayload<typeof Payload>}
  */
 export class Payload extends BasePayload {
+	/** @type {() => string} */
+	#uid;
+
+	/** @type {Set<{ hash: string; code: string }>} */
+	#css;
+
+	/** @type {HeadPayload} */
+	#head;
+
+	/** @type {string} */
+	select_value = '';
+
 	get css() {
-		return this._state.css;
+		return this.#css;
 	}
 
 	get uid() {
-		return this._state.uid;
+		return this.#uid;
 	}
 
 	get head() {
-		return this._state.head;
-	}
-
-	get select_value() {
-		return this._state.select_value;
-	}
-	set select_value(value) {
-		this._state.select_value = value;
+		return this.#head;
 	}
 
 	/**
@@ -189,62 +233,46 @@ export class Payload extends BasePayload {
 		uid = props_id_generator(id_prefix),
 		css = new Set()
 	} = {}) {
-		super({
-			uid,
-			head,
-			css,
-			select_value: undefined
+		super();
+		this.#uid = uid;
+		this.#css = css;
+		this.#head = head;
+	}
+
+	copy() {
+		const payload = new Payload({
+			css: new Set(this.#css),
+			uid: this.#uid,
+			head: this.#head.copy()
 		});
+
+		payload.promise = this.promise;
+		payload.out = [...this.out];
+		return payload;
 	}
 }
 
 /**
- * Used in legacy mode to handle bindings
- * @param {Payload} to_copy
- * @returns {Payload}
- */
-export function copy_payload({ promise, out, css, head, uid }) {
-	const payload = new Payload({
-		css: new Set(css),
-		uid,
-		head: new HeadPayload({
-			css: new Set(head.css),
-			// @ts-expect-error
-			title: head._state.title,
-			uid: head.uid
-		})
-	});
-
-	payload.promise = promise;
-	payload.out = [...out];
-	payload.head.promise = head.promise;
-	payload.head.out = [...head.out];
-
-	return payload;
-}
-
-/**
- * Assigns second payload to first
+ * Assigns second payload to first -- legacy nonsense
  * @param {Payload} p1
  * @param {Payload} p2
  * @returns {void}
  */
 export function assign_payload(p1, p2) {
 	p1.out = [...p2.out];
-	// this is all legacy code so typescript can go cry in a corner -- I don't want to write setters for all of these because they really shouldn't be settable
-	// @ts-expect-error
-	p1._state.css = p2.css;
-	// @ts-expect-error
-	p1._state.head._state.css = p2.head.css;
-	// @ts-expect-error
-	p1._state.head._state.title.value = p2.head.title;
-	// @ts-expect-error
-	p1._state.head._state.uid = p2.head.uid;
-	p1.head.promise = p2.head.promise;
-	p1.head.out = [...p2.head.out];
-	// @ts-expect-error
-	p1._state.uid = p2.uid;
 	p1.promise = p2.promise;
+	p1.css.clear();
+	for (const entry of p2.css) {
+		p1.css.add(entry);
+	}
+
+	p1.head.out = [...p2.head.out];
+	p1.head.promise = p2.head.promise;
+	p1.head.css.clear();
+	for (const entry of p2.head.css) {
+		p1.head.css.add(entry);
+	}
+	p1.head.title.value = p2.head.title.value;
 }
 
 /**

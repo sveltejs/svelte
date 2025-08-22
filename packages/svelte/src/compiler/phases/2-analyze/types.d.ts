@@ -10,6 +10,7 @@ export interface AnalysisState {
 	ast_type: 'instance' | 'template' | 'module';
 	fragment: AST.Fragment | null;
 	snippet: AST.SnippetBlock | null;
+	title: AST.TitleElement | null;
 	boundary: AST.SvelteBoundary | null;
 	/**
 	 * Tag name of the parent element. `null` if the parent is `svelte:element`, `#snippet`, a component or the root.

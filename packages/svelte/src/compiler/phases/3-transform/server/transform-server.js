@@ -195,9 +195,7 @@ export function server_component(analysis, options) {
 				b.unary('!', b.id('$$settled')),
 				b.block([
 					b.stmt(b.assignment('=', b.id('$$settled'), b.true)),
-					b.stmt(
-						b.assignment('=', b.id('$$inner_payload'), b.call('$.copy_payload', b.id('$$payload')))
-					),
+					b.stmt(b.assignment('=', b.id('$$inner_payload'), b.call('$$payload.copy'))),
 					b.stmt(b.call('$$render_inner', b.id('$$inner_payload')))
 				])
 			),

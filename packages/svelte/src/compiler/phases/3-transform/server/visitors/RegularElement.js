@@ -1,4 +1,4 @@
-/** @import { Expression } from 'estree' */
+/** @import { Expression, Statement } from 'estree' */
 /** @import { Location } from 'locate-character' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../types.js' */
@@ -8,7 +8,12 @@ import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_element_attributes, build_spread_object } from './shared/element.js';
-import { process_children, build_template, build_attribute_value } from './shared/utils.js';
+import {
+	process_children,
+	build_template,
+	build_attribute_value,
+	wrap_in_child_payload
+} from './shared/utils.js';
 
 /**
  * @param {AST.RegularElement} node
@@ -73,6 +78,7 @@ export function RegularElement(node, context) {
 	}
 
 	let select_with_value = false;
+	const template_start = state.template.length;
 
 	if (node.name === 'select') {
 		const value = node.attributes.find(
@@ -176,6 +182,22 @@ export function RegularElement(node, context) {
 
 	if (select_with_value) {
 		state.template.push(b.stmt(b.assignment('=', b.id('$$payload.select_value'), b.void0)));
+
+		// we need to create a child scope so that the `select_value` only applies children of this select element
+		// in an async world, we could technically have two adjacent select elements with async children, in which case
+		// the second element's select_value would override the first element's select_value if the children of the first
+		// element hadn't resolved prior to hitting the second element.
+		// TODO is this cast safe?
+		const elements = state.template.splice(template_start, Infinity);
+		state.template.push(
+			wrap_in_child_payload(
+				b.block(build_template(elements)),
+				// TODO this will always produce correct results (because it will produce an async function if the surrounding component is async)
+				// but it will false-positive and create unnecessary async functions (eg. when the component is async but the select element is not)
+				// we could probably optimize by checking if the select element is async. Might be worth it.
+				context.state.analysis.has_blocking_await
+			)
+		);
 	}
 
 	if (!node_is_void) {

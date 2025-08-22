@@ -240,7 +240,7 @@ export function build_inline_component(node, expression, context) {
 						b.arrow(
 							[b.object_pattern([b.init('$$payload', b.id('$$payload'))])],
 							b.block(block.body),
-							context.state.analysis.suspends
+							context.state.analysis.has_blocking_await
 						)
 					)
 				)
