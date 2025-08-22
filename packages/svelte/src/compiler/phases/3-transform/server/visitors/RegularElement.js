@@ -181,8 +181,6 @@ export function RegularElement(node, context) {
 	}
 
 	if (select_with_value) {
-		state.template.push(b.stmt(b.assignment('=', b.id('$$payload.select_value'), b.void0)));
-
 		// we need to create a child scope so that the `select_value` only applies children of this select element
 		// in an async world, we could technically have two adjacent select elements with async children, in which case
 		// the second element's select_value would override the first element's select_value if the children of the first

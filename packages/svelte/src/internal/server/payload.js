@@ -221,8 +221,8 @@ export class Payload extends BasePayload {
 	/** @type {HeadPayload} */
 	#head;
 
-	/** @type {string} */
-	select_value = '';
+	/** @type {string | undefined} */
+	select_value;
 
 	get css() {
 		return this.#css;
@@ -237,18 +237,20 @@ export class Payload extends BasePayload {
 	}
 
 	/**
-	 * @param {{ id_prefix?: string, head?: HeadPayload, uid?: () => string, css?: Set<{ hash: string; code: string }>, select_value?: any }} args
+	 * @param {{ id_prefix?: string, head?: HeadPayload, uid?: () => string, css?: Set<{ hash: string; code: string }>, select_value?: string | undefined }} args
 	 */
 	constructor({
 		id_prefix = '',
 		head = new HeadPayload(),
 		uid = props_id_generator(id_prefix),
-		css = new Set()
+		css = new Set(),
+		select_value
 	} = {}) {
 		super();
 		this.#uid = uid;
 		this.#css = css;
 		this.#head = head;
+		this.select_value = select_value;
 	}
 
 	copy() {
@@ -258,6 +260,7 @@ export class Payload extends BasePayload {
 			head: this.#head.copy()
 		});
 
+		payload.select_value = this.select_value;
 		payload.promise = this.promise;
 		payload.out = [...this.out];
 		return payload;
@@ -270,6 +273,7 @@ export class Payload extends BasePayload {
 		// @ts-expect-error
 		this.out = [...other.out];
 		this.promise = other.promise;
+		this.select_value = other.select_value;
 		this.#css = other.#css;
 		this.#uid = other.#uid;
 		this.#head.subsume(other.#head);
