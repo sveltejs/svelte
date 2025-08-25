@@ -680,6 +680,10 @@ export function suspend() {
 			batch.decrement();
 		}
 
+		if (batch === current_batch) {
+			batch.deactivate();
+		}
+
 		unset_context();
 	};
 }
