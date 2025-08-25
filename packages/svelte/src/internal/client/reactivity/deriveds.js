@@ -120,6 +120,9 @@ export function async_derived(fn, location) {
 
 		try {
 			var p = fn();
+			// Make sure to always access the then property to read any signals
+			// it might access, so that we track them as dependencies.
+			if (prev) Promise.resolve(p).catch(() => {}); // avoid unhandled rejection
 		} catch (error) {
 			p = Promise.reject(error);
 		}
