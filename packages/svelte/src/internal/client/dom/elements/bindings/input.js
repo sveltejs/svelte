@@ -17,8 +17,6 @@ import { current_batch, previous_batch } from '../../../reactivity/batch.js';
  * @returns {void}
  */
 export function bind_value(input, get, set = get) {
-	var runes = is_runes();
-
 	var batches = new WeakSet();
 
 	listen_to_event_and_reset_event(input, 'input', async (is_reset) => {
@@ -41,9 +39,8 @@ export function bind_value(input, get, set = get) {
 		// update the input and reset the selection state
 		await tick();
 
-		// In runes mode, respect any validation in accessors (doesn't apply in legacy mode,
-		// because we use mutable state which ensures the render effect always runs)
-		if (runes && value !== (value = get())) {
+		// Respect any validation in accessors
+		if (value !== (value = get())) {
 			var start = input.selectionStart;
 			var end = input.selectionEnd;
 
