@@ -517,7 +517,8 @@ export {
 	invalid_default_snippet,
 	validate_dynamic_element_tag,
 	validate_void_dynamic_element,
-	prevent_snippet_stringification
+	prevent_snippet_stringification,
+	validate_spread_bindings
 } from '../shared/validate.js';
 
 export { escape_html as escape };
