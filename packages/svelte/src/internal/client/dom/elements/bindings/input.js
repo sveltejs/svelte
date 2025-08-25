@@ -6,7 +6,7 @@ import * as e from '../../../errors.js';
 import { is } from '../../../proxy.js';
 import { queue_micro_task } from '../../task.js';
 import { hydrating } from '../../hydration.js';
-import { untrack } from '../../../runtime.js';
+import { tick, untrack } from '../../../runtime.js';
 import { is_runes } from '../../../context.js';
 import { current_batch, previous_batch } from '../../../reactivity/batch.js';
 
@@ -21,7 +21,7 @@ export function bind_value(input, get, set = get) {
 
 	var batches = new WeakSet();
 
-	listen_to_event_and_reset_event(input, 'input', (is_reset) => {
+	listen_to_event_and_reset_event(input, 'input', async (is_reset) => {
 		if (DEV && input.type === 'checkbox') {
 			// TODO should this happen in prod too?
 			e.bind_invalid_checkbox_value();
@@ -34,6 +34,24 @@ export function bind_value(input, get, set = get) {
 
 		if (current_batch !== null) {
 			batches.add(current_batch);
+		}
+
+		await tick();
+
+		// In runes mode, respect any validation in accessors (doesn't apply in legacy mode,
+		// because we use mutable state which ensures the render effect always runs)
+		if (runes && value !== (value = get())) {
+			var start = input.selectionStart;
+			var end = input.selectionEnd;
+
+			// the value is coerced on assignment
+			input.value = value ?? '';
+
+			// Restore selection
+			if (end !== null) {
+				input.selectionStart = start;
+				input.selectionEnd = Math.min(end, input.value.length);
+			}
 		}
 	});
 
@@ -88,17 +106,8 @@ export function bind_value(input, get, set = get) {
 		// don't set the value of the input if it's the same to allow
 		// minlength to work properly
 		if (value !== input.value) {
-			var start = input.selectionStart;
-			var end = input.selectionEnd;
-
 			// @ts-expect-error the value is coerced on assignment
 			input.value = value ?? '';
-
-			// Restore selection
-			if (end !== null) {
-				input.selectionStart = start;
-				input.selectionEnd = Math.min(end, input.value.length);
-			}
 		}
 	});
 }
