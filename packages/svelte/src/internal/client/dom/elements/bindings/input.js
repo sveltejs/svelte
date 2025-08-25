@@ -88,13 +88,6 @@ export function bind_value(input, get, set = get) {
 		// don't set the value of the input if it's the same to allow
 		// minlength to work properly
 		if (value !== input.value) {
-			// @ts-expect-error the value is coerced on assignment
-			input.value = value ?? '';
-		}
-
-		// In runes mode, respect any validation in accessors (doesn't apply in legacy mode,
-		// because we use mutable state which ensures the render effect always runs)
-		if (runes && value !== input.value) {
 			var start = input.selectionStart;
 			var end = input.selectionEnd;
 
