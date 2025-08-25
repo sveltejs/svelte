@@ -30,26 +30,28 @@ export function bind_value(input, get, set = get) {
 		/** @type {any} */
 		var value = is_reset ? input.defaultValue : input.value;
 		value = is_numberlike_input(input) ? to_number(value) : value;
-		set(value);
 
+		// handle both async and normal set callback
+		Promise.resolve(set(value)).then(() => {
+			// In runes mode, respect any validation in accessors (doesn't apply in legacy mode,
+			// because we use mutable state which ensures the render effect always runs)
+			if (runes && value !== (value = get())) {
+				var start = input.selectionStart;
+				var end = input.selectionEnd;
+
+				// the value is coerced on assignment
+				input.value = value ?? '';
+
+				// Restore selection
+				if (end !== null) {
+					input.selectionStart = start;
+					input.selectionEnd = Math.min(end, input.value.length);
+				}
+			}
+		});
+		// This ensures that the current batch is tracked for any changes related to the input event and is done at end
 		if (current_batch !== null) {
 			batches.add(current_batch);
-		}
-
-		// In runes mode, respect any validation in accessors (doesn't apply in legacy mode,
-		// because we use mutable state which ensures the render effect always runs)
-		if (runes && value !== (value = get())) {
-			var start = input.selectionStart;
-			var end = input.selectionEnd;
-
-			// the value is coerced on assignment
-			input.value = value ?? '';
-
-			// Restore selection
-			if (end !== null) {
-				input.selectionStart = start;
-				input.selectionEnd = Math.min(end, input.value.length);
-			}
 		}
 	});
 
