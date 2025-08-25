@@ -1,9 +1,9 @@
-/** @import { ArrowFunctionExpression, CallExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, VariableDeclarator } from 'estree' */
+/** @import { ArrowFunctionExpression, CallExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, MemberExpression, VariableDeclarator } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import { get_rune } from '../../scope.js';
 import * as e from '../../../errors.js';
-import { get_parent } from '../../../utils/ast.js';
+import { get_parent, object, unwrap_optional } from '../../../utils/ast.js';
 import { is_pure, is_safe_identifier } from './shared/utils.js';
 import { dev, locate_node, source } from '../../../state.js';
 import * as b from '#compiler/builders';
@@ -111,6 +111,62 @@ export function CallExpression(node, context) {
 
 			break;
 		}
+		/* eslint-disable no-fallthrough */
+		case '$state.invalidate':
+			if (node.arguments.length !== 1) {
+				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+			} else {
+				let arg = node.arguments[0];
+				if (arg.type !== 'Identifier' && arg.type !== 'MemberExpression') {
+					e.state_invalidate_nonreactive_argument(node);
+				}
+				if (arg.type === 'MemberExpression') {
+					if (arg.object.type !== 'ThisExpression') {
+						const obj = object((arg = /** @type {MemberExpression} */ (context.visit(arg))));
+						if (obj?.type === 'Identifier') {
+							// there isn't really a good way to tell because of stuff like `notproxied = proxied`
+							break;
+						} else if (obj?.type !== 'ThisExpression') {
+							e.state_invalidate_nonreactive_argument(node);
+						}
+					} else if (arg.computed) {
+						e.state_invalidate_invalid_this_property(node);
+					}
+					const class_body = context.path.findLast((parent) => parent.type === 'ClassBody');
+					if (!class_body) {
+						e.state_invalidate_invalid_this_property(node);
+					}
+					const possible_this_bindings = context.path.filter((parent, index) => {
+						return (
+							parent.type === 'FunctionDeclaration' ||
+							(parent.type === 'FunctionExpression' &&
+								context.path[index - 1]?.type !== 'MethodDefinition')
+						);
+					});
+					if (possible_this_bindings.length === 0) {
+						break;
+					}
+					const class_index = context.path.indexOf(class_body);
+					const last_possible_this_index = context.path.indexOf(
+						/** @type {AST.SvelteNode} */ (possible_this_bindings.at(-1))
+					);
+					if (class_index < last_possible_this_index) {
+						e.state_invalidate_invalid_this_property(node);
+					}
+					// we can't really do anything else yet, so we just wait for the transformation phase
+					// where we know which class fields are reactive (and what their private aliases are)
+					break;
+				} else {
+					let binding = context.state.scope.get(arg.name);
+					if (binding) {
+						if (binding.kind === 'raw_state' || binding.kind === 'state') {
+							binding.reassigned = true;
+							break;
+						}
+					}
+				}
+				e.state_invalidate_nonreactive_argument(node);
+			}
 
 		case '$state':
 		case '$state.raw':
