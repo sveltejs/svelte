@@ -678,7 +678,7 @@ export function suspend() {
 		if (!pending) {
 			batch.activate();
 			batch.decrement();
-		} else if (batch === current_batch) {
+		} else {
 			batch.deactivate();
 		}
 
