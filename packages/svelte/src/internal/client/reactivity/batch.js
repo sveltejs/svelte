@@ -10,7 +10,6 @@ import {
 	INERT,
 	RENDER_EFFECT,
 	ROOT_EFFECT,
-	USER_EFFECT,
 	MAYBE_DIRTY
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
@@ -405,6 +404,9 @@ export class Batch {
 	}
 
 	remove() {
+		// Cleanup to
+		// - prevent memory leaks which could happen if a batch is tied to a never-ending promise
+		// - prevent effects from rerunning for outdated-and-now-no-longer-pending batches
 		this.#callbacks.clear();
 		this.#maybe_dirty_effects =
 			this.#dirty_effects =
@@ -705,7 +707,7 @@ export function schedule_effect(signal) {
 
 export function suspend() {
 	var boundary = get_pending_boundary();
-	var batch = boundary.get_batch();
+	var batch = /** @type {Batch} */ (current_batch);
 	var pending = boundary.pending;
 
 	boundary.update_pending_count(1);
