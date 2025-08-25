@@ -36,6 +36,9 @@ export function bind_value(input, get, set = get) {
 			batches.add(current_batch);
 		}
 
+		// Because `{#each ...}` blocks work by updating sources inside the flush,
+		// we need to wait a tick before checking to see if we should forcibly
+		// update the input and reset the selection state
 		await tick();
 
 		// In runes mode, respect any validation in accessors (doesn't apply in legacy mode,
