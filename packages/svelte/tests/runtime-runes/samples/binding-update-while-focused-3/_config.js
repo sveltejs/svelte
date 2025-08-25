@@ -12,6 +12,7 @@ export default test({
 		input.dispatchEvent(new InputEvent('input', { bubbles: true }));
 
 		await tick();
+		await tick();
 
 		assert.equal(input.value, 'AB');
 		assert.htmlEqual(target.innerHTML, `<input /><p>AB</p>`);
@@ -20,6 +21,7 @@ export default test({
 		input.value = 'ABc';
 		input.dispatchEvent(new InputEvent('input', { bubbles: true }));
 
+		await tick();
 		await tick();
 
 		assert.equal(input.value, 'ABC');
