@@ -76,8 +76,8 @@ let queued_root_effects = [];
 let last_scheduled_effect = null;
 
 let is_flushing = false;
-
 let is_flushing_sync = false;
+
 export class Batch {
 	/**
 	 * The current values of any sources that are updated in this batch
@@ -678,6 +678,8 @@ export function suspend() {
 		if (!pending) {
 			batch.activate();
 			batch.decrement();
+		} else {
+			batch.deactivate();
 		}
 
 		unset_context();

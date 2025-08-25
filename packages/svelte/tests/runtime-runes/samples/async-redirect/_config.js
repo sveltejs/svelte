@@ -29,6 +29,7 @@ export default test({
 				<button>c</button>
 				<button>ok</button>
 				<p>c</p>
+				<p>b or c</p>
 			`
 		);
 
@@ -46,6 +47,7 @@ export default test({
 				<button>c</button>
 				<button>ok</button>
 				<p>b</p>
+				<p>b or c</p>
 			`
 		);
 	}
