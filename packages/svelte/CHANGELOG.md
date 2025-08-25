@@ -1,5 +1,11 @@
 # svelte
 
+## 5.38.4
+
+### Patch Changes
+
+- fix: place instance-level snippets inside async body ([#16666](https://github.com/sveltejs/svelte/pull/16666))
+
 ## 5.38.3
 
 ### Patch Changes
