@@ -362,12 +362,12 @@ export function client_component(analysis, options) {
 		store_init,
 		...store_setup,
 		...legacy_reactive_declarations,
-		...group_binding_declarations,
-		...state.instance_level_snippets
+		...group_binding_declarations
 	]);
 
 	if (analysis.instance.has_await) {
 		const body = b.block([
+			...state.instance_level_snippets,
 			.../** @type {ESTree.Statement[]} */ (instance.body),
 			b.if(b.call('$.aborted'), b.return()),
 			.../** @type {ESTree.Statement[]} */ (template.body)
@@ -375,7 +375,10 @@ export function client_component(analysis, options) {
 
 		component_block.body.push(b.stmt(b.call(`$.async_body`, b.arrow([], body, true))));
 	} else {
-		component_block.body.push(.../** @type {ESTree.Statement[]} */ (instance.body));
+		component_block.body.push(
+			...state.instance_level_snippets,
+			.../** @type {ESTree.Statement[]} */ (instance.body)
+		);
 
 		if (!analysis.runes && analysis.needs_context) {
 			component_block.body.push(b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)));
