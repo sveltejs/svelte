@@ -1,5 +1,29 @@
 # svelte
 
+## 5.38.3
+
+### Patch Changes
+
+- fix: ensure correct order of template effect values ([#16655](https://github.com/sveltejs/svelte/pull/16655))
+
+- fix: allow async `{@const}` in more places ([#16643](https://github.com/sveltejs/svelte/pull/16643))
+
+- fix: properly catch top level await errors ([#16619](https://github.com/sveltejs/svelte/pull/16619))
+
+- perf: prune effects without dependencies ([#16625](https://github.com/sveltejs/svelte/pull/16625))
+
+- fix: only emit `for_await_track_reactivity_loss` in async mode ([#16644](https://github.com/sveltejs/svelte/pull/16644))
+
+## 5.38.2
+
+### Patch Changes
+
+- perf: run blocks eagerly during flush instead of aborting ([#16631](https://github.com/sveltejs/svelte/pull/16631))
+
+- fix: don't clone non-proxies in `$inspect` ([#16617](https://github.com/sveltejs/svelte/pull/16617))
+
+- fix: avoid recursion error when tagging circular references ([#16622](https://github.com/sveltejs/svelte/pull/16622))
+
 ## 5.38.1
 
 ### Patch Changes

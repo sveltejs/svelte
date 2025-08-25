@@ -11,7 +11,7 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from '../runtime.js';
-import { current_batch } from './batch.js';
+import { current_batch, suspend } from './batch.js';
 import {
 	async_derived,
 	current_async_effect,
@@ -19,6 +19,7 @@ import {
 	derived_safe_equal,
 	set_from_async_derived
 } from './deriveds.js';
+import { aborted } from './effects.js';
 
 /**
  *
@@ -72,11 +73,13 @@ function capture() {
 	var previous_effect = active_effect;
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
+	var previous_batch = current_batch;
 
 	return function restore() {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
+		previous_batch?.activate();
 
 		if (DEV) {
 			set_from_async_derived(null);
@@ -169,4 +172,22 @@ export function unset_context() {
 	set_active_reaction(null);
 	set_component_context(null);
 	if (DEV) set_from_async_derived(null);
+}
+
+/**
+ * @param {() => Promise<void>} fn
+ */
+export async function async_body(fn) {
+	var unsuspend = suspend();
+	var active = /** @type {Effect} */ (active_effect);
+
+	try {
+		await fn();
+	} catch (error) {
+		if (!aborted(active)) {
+			invoke_error_boundary(error, active);
+		}
+	} finally {
+		unsuspend();
+	}
 }

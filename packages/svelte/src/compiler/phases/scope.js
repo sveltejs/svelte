@@ -122,7 +122,7 @@ export class Binding {
 
 	/**
 	 * Additional metadata, varies per binding type
-	 * @type {null | { inside_rest?: boolean }}
+	 * @type {null | { inside_rest?: boolean; is_template_declaration?: boolean }}
 	 */
 	metadata = null;
 
@@ -1121,6 +1121,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 						node.kind,
 						declarator.init
 					);
+					binding.metadata = { is_template_declaration: true };
 					bindings.push(binding);
 				}
 			}
