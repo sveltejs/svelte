@@ -1,10 +1,5 @@
 /** @import { Effect, Source, TemplateNode, } from '#client' */
-import {
-	BOUNDARY_EFFECT,
-	EFFECT_PRESERVED,
-	EFFECT_RAN,
-	EFFECT_TRANSPARENT
-} from '#client/constants';
+import { BOUNDARY_EFFECT, EFFECT_PRESERVED, EFFECT_TRANSPARENT } from '#client/constants';
 import { component_context, set_component_context } from '../../context.js';
 import { handle_error, invoke_error_boundary } from '../../error-handling.js';
 import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
@@ -28,7 +23,7 @@ import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { DEV } from 'esm-env';
-import { Batch, current_batch, effect_pending_updates } from '../../reactivity/batch.js';
+import { Batch, effect_pending_updates } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
