@@ -4,8 +4,6 @@
 
 <svelte:boundary>
 	{@const x = a}
-	{#snippet failed()}
-		{x}
-	{/snippet}
+	{x}
 	<FlakyComponent />
 </svelte:boundary>

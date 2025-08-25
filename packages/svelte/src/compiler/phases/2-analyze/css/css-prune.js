@@ -9,8 +9,8 @@ import {
 import { regex_ends_with_whitespace, regex_starts_with_whitespace } from '../../patterns.js';
 import { get_attribute_chunks, is_text_attribute } from '../../../utils/ast.js';
 
-/** @typedef {NODE_PROBABLY_EXISTS | NODE_DEFINITELY_EXISTS} NodeExistsValue */
-/** @typedef {FORWARD | BACKWARD} Direction */
+/** @typedef {typeof NODE_PROBABLY_EXISTS | typeof NODE_DEFINITELY_EXISTS} NodeExistsValue */
+/** @typedef {typeof FORWARD | typeof BACKWARD} Direction */
 
 const NODE_PROBABLY_EXISTS = 0;
 const NODE_DEFINITELY_EXISTS = 1;

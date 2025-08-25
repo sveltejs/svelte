@@ -2,7 +2,7 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	html: '<button></button><p>2</p>',
+	html: '<button>increment</button><p>2</p>',
 	mode: ['client'],
 	test({ target, assert }) {
 		const btn = target.querySelector('button');

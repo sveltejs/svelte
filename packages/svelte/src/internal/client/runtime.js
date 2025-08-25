@@ -46,6 +46,7 @@ import { Batch, batch_deriveds, flushSync, schedule_effect } from './reactivity/
 import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
+import { without_reactive_context } from './dom/elements/bindings/shared.js';
 
 export let is_updating_effect = false;
 
@@ -278,13 +279,17 @@ export function update_reaction(reaction) {
 	update_version = ++read_version;
 
 	if (reaction.ac !== null) {
-		reaction.ac.abort(STALE_REACTION);
+		without_reactive_context(() => {
+			/** @type {AbortController} */ (reaction.ac).abort(STALE_REACTION);
+		});
+
 		reaction.ac = null;
 	}
 
 	try {
 		reaction.f |= REACTION_IS_UPDATING;
-		var result = /** @type {Function} */ (0, reaction.fn)();
+		var fn = /** @type {Function} */ (reaction.fn);
+		var result = fn();
 		var deps = reaction.deps;
 
 		if (new_deps !== null) {

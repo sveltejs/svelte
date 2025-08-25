@@ -22,7 +22,7 @@ const NUMBER = Symbol('number');
 const STRING = Symbol('string');
 const FUNCTION = Symbol('string');
 
-/** @type {Record<string, [type: NUMBER | STRING | UNKNOWN, fn?: Function]>} */
+/** @type {Record<string, [type: typeof NUMBER | typeof  STRING | typeof  UNKNOWN, fn?: Function]>} */
 const globals = {
 	BigInt: [NUMBER],
 	'Math.min': [NUMBER, Math.min],
@@ -122,7 +122,7 @@ export class Binding {
 
 	/**
 	 * Additional metadata, varies per binding type
-	 * @type {null | { inside_rest?: boolean }}
+	 * @type {null | { inside_rest?: boolean; is_template_declaration?: boolean }}
 	 */
 	metadata = null;
 
@@ -179,6 +179,13 @@ class Evaluation {
 	 * @type {boolean}
 	 */
 	is_known = true;
+
+	/**
+	 * True if the possible values contains `UNKNOWN`
+	 * @readonly
+	 * @type {boolean}
+	 */
+	has_unknown = false;
 
 	/**
 	 * True if the value is known to not be null/undefined
@@ -539,6 +546,10 @@ class Evaluation {
 
 			if (value == null || value === UNKNOWN) {
 				this.is_defined = false;
+			}
+
+			if (value === UNKNOWN) {
+				this.has_unknown = true;
 			}
 		}
 
@@ -1110,6 +1121,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 						node.kind,
 						declarator.init
 					);
+					binding.metadata = { is_template_declaration: true };
 					bindings.push(binding);
 				}
 			}

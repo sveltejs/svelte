@@ -101,13 +101,13 @@ Test samples are kept in `/test/xxx/samples` folder.
 1. To run test, run `pnpm test`.
 1. To run a particular test suite, use `pnpm test <suite-name>`, for example:
 
-   ```bash
+   ```sh
    pnpm test validator
    ```
 
 1. To filter tests _within_ a test suite, use `pnpm test <suite-name> -t <test-name>`, for example:
 
-   ```bash
+   ```sh
    pnpm test validator -t a11y-alt-text
    ```
 

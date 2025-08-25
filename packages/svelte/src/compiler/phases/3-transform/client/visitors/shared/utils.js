@@ -34,7 +34,7 @@ export class Memoizer {
 	}
 
 	apply() {
-		return [...this.#async, ...this.#sync].map((memo, i) => {
+		return [...this.#sync, ...this.#async].map((memo, i) => {
 			memo.id.name = `$${i}`;
 			return memo.id;
 		});

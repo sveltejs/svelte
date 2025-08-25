@@ -8,7 +8,7 @@ import { queue_micro_task } from '../../task.js';
 import { hydrating } from '../../hydration.js';
 import { untrack } from '../../../runtime.js';
 import { is_runes } from '../../../context.js';
-import { current_batch } from '../../../reactivity/batch.js';
+import { current_batch, previous_batch } from '../../../reactivity/batch.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -76,13 +76,18 @@ export function bind_value(input, get, set = get) {
 
 		var value = get();
 
-		if (input === document.activeElement && batches.has(/** @type {Batch} */ (current_batch))) {
+		if (input === document.activeElement) {
+			// we need both, because in non-async mode, render effects run before previous_batch is set
+			var batch = /** @type {Batch} */ (previous_batch ?? current_batch);
+
 			// Never rewrite the contents of a focused input. We can get here if, for example,
 			// an update is deferred because of async work depending on the input:
 			//
 			// <input bind:value={query}>
 			// <p>{await find(query)}</p>
-			return;
+			if (batches.has(batch)) {
+				return;
+			}
 		}
 
 		if (is_numberlike_input(input) && value === to_number(input.value)) {
@@ -240,6 +245,7 @@ export function bind_checked(input, get, set = get) {
  * @returns {V[]}
  */
 function get_binding_group_value(group, __value, checked) {
+	/** @type {Set<V>} */
 	var value = new Set();
 
 	for (var i = 0; i < group.length; i += 1) {
