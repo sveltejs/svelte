@@ -33,6 +33,10 @@
 		<p>c</p>
 	{/if}
 
+	{#if route === 'b' || route === 'c'}
+		<p>b or c</p>
+	{/if}
+
 	{#snippet pending()}
 		<p>pending...</p>
 	{/snippet}
