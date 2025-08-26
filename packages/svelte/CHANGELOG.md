@@ -1,5 +1,11 @@
 # svelte
 
+## 5.38.6
+
+### Patch Changes
+
+- fix: don't fail on `flushSync` while flushing effects ([#16674](https://github.com/sveltejs/svelte/pull/16674))
+
 ## 5.38.5
 
 ### Patch Changes
