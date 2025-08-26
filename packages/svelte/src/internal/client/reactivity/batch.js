@@ -187,7 +187,7 @@ export class Batch {
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to undo the changes belonging to any batch
 		// other than the current one
-		if (batches.size > 1) {
+		if (async_mode_flag && batches.size > 1) {
 			current_values = new Map();
 			batch_deriveds = new Map();
 
@@ -484,6 +484,7 @@ export class Batch {
  */
 export function flushSync(fn) {
 	if (async_mode_flag && active_effect !== null) {
+		// We disallow this because it creates super-hard to reason about stack trace and because it's generally a bad idea
 		e.flush_sync_in_effect();
 	}
 
@@ -622,7 +623,9 @@ function flush_queued_effects(effects) {
 				}
 			}
 
-			if (eager_block_effects.length > 0) {
+			// If update_effect() has a flushSync() in it, we may have flushed another flush_queued_effects(),
+			// which already handled this logic and did set eager_block_effects to null.
+			if (eager_block_effects?.length > 0) {
 				// TODO this feels incorrect! it gets the tests passing
 				old_values.clear();
 
