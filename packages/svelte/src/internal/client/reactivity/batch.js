@@ -187,8 +187,7 @@ export class Batch {
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to undo the changes belonging to any batch
 		// other than the current one
-		// TODO this is wrong when flushSync is called while another batch is active, can be two when there's actually no time traveling
-		if (batches.size > 1) {
+		if (async_mode_flag && batches.size > 1) {
 			current_values = new Map();
 			batch_deriveds = new Map();
 
@@ -485,8 +484,8 @@ export class Batch {
  */
 export function flushSync(fn) {
 	if (async_mode_flag && active_effect !== null) {
-		// TODO why do we disallow this?
-		// e.flush_sync_in_effect();
+		// We disallow this because it creates super-hard to reason about stack trace and because it's generally a bad idea
+		e.flush_sync_in_effect();
 	}
 
 	var was_flushing_sync = is_flushing_sync;

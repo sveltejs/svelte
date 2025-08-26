@@ -1268,7 +1268,7 @@ export interface HTMLMetaAttributes extends HTMLAttributes<HTMLMetaElement> {
 	charset?: string | undefined | null;
 	content?: string | undefined | null;
 	'http-equiv'?:
-	  | 'accept-ch'
+		| 'accept-ch'
 		| 'content-security-policy'
 		| 'content-type'
 		| 'default-style'
