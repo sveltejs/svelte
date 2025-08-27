@@ -1,22 +1,21 @@
-/** @typedef {{ type: 'head' | 'body', content: string }} TNode */
-/** @typedef {{ [key in TNode['type']]: string }} AccumulatedContent */
+/** @typedef {'head' | 'body'} PayloadType */
+/** @typedef {{ [key in PayloadType]: string }} AccumulatedContent */
 /** @typedef {{ start: number, end: number, fn: (content: AccumulatedContent) => AccumulatedContent | Promise<AccumulatedContent> }} Compaction */
 
-// TODO we test for `instanceof AsyncContentTree` in some tight loops -- we might optimize
-// by giving the tree a symbol property and checking that instead if we can actually notice any impact
-
 /**
- * /**
- * A base class for payloads. Payloads are basically a tree of `string | Payload`s, where each
- * `Payload` in the tree represents work that may or may not have completed. A payload can be
- * {@link collect}ed to aggregate the content from itself and all of its children, but this will
- * throw if any of the children are performing asynchronous work. A payload can also be collected
- * asynchronously with {@link collect_async}, which will wait for all children to complete before
- * collecting their contents.
+ * Payloads are basically a tree of `string | Payload`s, where each `Payload` in the tree represents
+ * work that may or may not have completed. A payload can be {@link collect}ed to aggregate the
+ * content from itself and all of its children, but this will throw if any of the children are
+ * performing asynchronous work. A payload can also be collected asynchronously with
+ * {@link collect_async}, which will wait for all children to complete before collecting their
+ * contents.
+ *
+ * The `string` values within a payload are always associated with the {@link type} of that payload. To switch types,
+ * call {@link child} with a different `type` argument.
  */
 export class Payload {
 	/**
-	 * @type {TNode['type']}
+	 * @type {PayloadType}
 	 */
 	type;
 
@@ -25,7 +24,7 @@ export class Payload {
 
 	/**
 	 * The contents of the payload.
-	 * @type {(TNode | Payload)[]}
+	 * @type {(string | Payload)[]}
 	 */
 	out = [];
 
@@ -55,7 +54,7 @@ export class Payload {
 	 * @param {TreeState} [global]
 	 * @param {{ select_value: string | undefined }} [local]
 	 * @param {Payload | undefined} [parent]
-	 * @param {TNode['type']} [type]
+	 * @param {PayloadType} [type]
 	 */
 	constructor(global = new TreeState(), local = { select_value: undefined }, parent, type) {
 		this.global = global;
@@ -69,7 +68,7 @@ export class Payload {
 	 * but has its own `out` array and `promise` property. The child payload is automatically
 	 * inserted into the parent payload's `out` array.
 	 * @param {(tree: Payload) => void | Promise<void>} render
-	 * @param {TNode['type']} [type]
+	 * @param {PayloadType} [type]
 	 * @returns {void}
 	 */
 	child(render, type) {
@@ -81,13 +80,9 @@ export class Payload {
 		}
 	}
 
-	/**
-	 * This is a convenience function that allows pushing strings, and will automatically use the configured `type` of this
-	 * payload. It's fine to push content of a different type to the `out` array; it's just more annoying to write.
-	 * @param {string} content
-	 */
+	/** @param {string} content */
 	push(content) {
-		this.out.push({ type: this.type, content });
+		this.out.push(content);
 	}
 
 	/**
@@ -100,25 +95,24 @@ export class Payload {
 		const to_compact = this.out.splice(start, end - start, child);
 		const promises = Payload.#collect_promises(to_compact, []);
 
-		/** @param {AccumulatedContent | Promise<AccumulatedContent>} res */
-		const push_result = (res) => {
+		const push_result = () => {
+			const res = fn(Payload.#collect_content(to_compact, this.type));
 			if (res instanceof Promise) {
-				child.promise = res.then((resolved) => {
+				const promise = res.then((resolved) => {
 					Payload.#push_accumulated_content(child, resolved);
 				});
+				return promise;
 			} else {
 				Payload.#push_accumulated_content(child, res);
 			}
 		};
 
 		if (promises.length > 0) {
-			// we have to wait for the accumulated work associated with all branches to complete,
+			// we have to wait for the accumulated work associated with all pruned branches to complete,
 			// then we can accumulate their content to compact it.
-			child.promise = Promise.all(promises)
-				.then(() => fn(Payload.#collect_content(to_compact)))
-				.then(push_result);
+			child.promise = Promise.all(promises).then(push_result);
 		} else {
-			push_result(fn(Payload.#collect_content(to_compact)));
+			push_result();
 		}
 	}
 
@@ -136,26 +130,27 @@ export class Payload {
 	async collect_async() {
 		// TODO: Should probably use `Promise.allSettled` here just so we can report detailed errors
 		await Promise.all(Payload.#collect_promises(this.out, this.promise ? [this.promise] : []));
-		return Payload.#collect_content(this.out);
+		return Payload.#collect_content(this.out, this.type);
 	}
 
 	/**
-	 * Collect all of the code from the `out` array and return it as a string.
+	 * Collect all of the code from the `out` array and return it as a string. Throws if any of the children are
+	 * performing asynchronous work.
 	 * @returns {AccumulatedContent}
 	 */
 	collect() {
 		const promises = Payload.#collect_promises(this.out, this.promise ? [this.promise] : []);
 		if (promises.length > 0) {
-			// TODO is there a good way to report where this is? Probably by using some sort of loc or stack trace in `child` creation
+			// TODO is there a good way to report where this is? Probably by using some sort of loc or stack trace in `child` creation.
 			throw new Error('Encountered an asynchronous component while rendering synchronously');
 		}
 
-		return Payload.#collect_content(this.out);
+		return Payload.#collect_content(this.out, this.type);
 	}
 
 	copy() {
 		const copy = new Payload(this.global, this.local, this.parent, this.type);
-		copy.out = this.out.map((item) => (item instanceof Payload ? item.copy() : item));
+		copy.out = this.out.map((item) => (typeof item === 'string' ? item : item.copy()));
 		copy.promise = this.promise;
 		return copy;
 	}
@@ -167,7 +162,7 @@ export class Payload {
 		this.global.subsume(other.global);
 		this.local = other.local;
 		this.out = other.out.map((item) => {
-			if (item instanceof Payload) {
+			if (typeof item !== 'string') {
 				item.subsume(item);
 			}
 			return item;
@@ -177,34 +172,34 @@ export class Payload {
 	}
 
 	/**
-	 * @param {(TNode | Payload)[]} items
+	 * @param {(string | Payload)[]} items
 	 * @param {Promise<void>[]} promises
 	 * @returns {Promise<void>[]}
 	 */
 	static #collect_promises(items, promises) {
 		for (const item of items) {
-			if (item instanceof Payload) {
-				if (item.promise) {
-					promises.push(item.promise);
-				}
-				Payload.#collect_promises(item.out, promises);
+			if (typeof item === 'string') continue;
+			if (item.promise) {
+				promises.push(item.promise);
 			}
+			Payload.#collect_promises(item.out, promises);
 		}
 		return promises;
 	}
 
 	/**
 	 * Collect all of the code from the `out` array and return it as a string.
-	 * @param {(TNode | Payload)[]} items
+	 * @param {(string | Payload)[]} items
+	 * @param {PayloadType} current_type
 	 * @param {AccumulatedContent} content
 	 * @returns {AccumulatedContent}
 	 */
-	static #collect_content(items, content = { head: '', body: '' }) {
+	static #collect_content(items, current_type, content = { head: '', body: '' }) {
 		for (const item of items) {
-			if (item instanceof Payload) {
-				Payload.#collect_content(item.out, content);
+			if (typeof item === 'string') {
+				content[current_type] += item;
 			} else {
-				content[item.type] += item.content;
+				Payload.#collect_content(item.out, item.type, content);
 			}
 		}
 		return content;
@@ -216,7 +211,10 @@ export class Payload {
 	 */
 	static #push_accumulated_content(tree, accumulated_content) {
 		for (const [type, content] of Object.entries(accumulated_content)) {
-			tree.out.push({ type: /** @type {TNode['type']} */ (type), content });
+			if (!content) continue;
+			const child = new Payload(tree.global, tree.local, tree, /** @type {PayloadType} */ (type));
+			child.push(content);
+			tree.out.push(child);
 		}
 	}
 }

@@ -191,9 +191,11 @@ export async function render_async(component, options = {}) {
  * @returns {void}
  */
 export function head(payload, fn) {
-	payload.out.push({ type: 'head', content: BLOCK_OPEN });
-	payload.child(fn, 'head');
-	payload.out.push({ type: 'head', content: BLOCK_CLOSE });
+	payload.child((payload) => {
+		payload.push(BLOCK_OPEN);
+		payload.child(fn);
+		payload.push(BLOCK_CLOSE);
+	}, 'head');
 }
 
 /**
