@@ -92,7 +92,7 @@ export function RegularElement(node, context) {
 				b.stmt(
 					b.assignment(
 						'=',
-						b.id('$$payload.select_value'),
+						b.id('$$payload.local.select_value'),
 						b.member(
 							build_spread_object(
 								node,
@@ -113,7 +113,7 @@ export function RegularElement(node, context) {
 			);
 		} else if (value) {
 			select_with_value = true;
-			const left = b.id('$$payload.select_value');
+			const left = b.id('$$payload.local.select_value');
 			if (value.type === 'Attribute') {
 				state.template.push(
 					b.stmt(b.assignment('=', left, build_attribute_value(value.value, context)))
@@ -151,7 +151,11 @@ export function RegularElement(node, context) {
 				b.call(
 					'$.valueless_option',
 					b.id('$$payload'),
-					b.thunk(b.block([...inner_state.init, ...build_template(inner_state.template)]))
+					b.arrow(
+						[b.id('$$payload')],
+						b.block([...inner_state.init, ...build_template(inner_state.template)]),
+						context.state.analysis.has_blocking_await
+					)
 				)
 			)
 		);

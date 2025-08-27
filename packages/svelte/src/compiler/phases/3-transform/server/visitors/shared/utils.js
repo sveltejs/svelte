@@ -99,7 +99,7 @@ function is_statement(node) {
  * @param {AssignmentOperator | 'push'} operator
  * @returns {Statement[]}
  */
-export function build_template(template, out = b.id('$$payload.out'), operator = 'push') {
+export function build_template(template, out = b.id('$$payload'), operator = 'push') {
 	/** @type {string[]} */
 	let strings = [];
 
@@ -264,10 +264,5 @@ export function build_getter(node, state) {
  * @returns {Statement}
  */
 export function wrap_in_child_payload(body, async) {
-	return b.stmt(
-		b.call(
-			'$$payload.child',
-			b.arrow([b.object_pattern([b.init('$$payload', b.id('$$payload'))])], body, async)
-		)
-	);
+	return b.stmt(b.call('$$payload.child', b.arrow([b.id('$$payload')], body, async)));
 }

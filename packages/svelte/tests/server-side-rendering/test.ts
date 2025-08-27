@@ -6,8 +6,13 @@
 
 import * as fs from 'node:fs';
 import { assert } from 'vitest';
-import { render } from 'svelte/server';
-import { compile_directory, should_update_expected, try_read_file } from '../helpers.js';
+import { render, renderAsync } from 'svelte/server';
+import {
+	async_mode,
+	compile_directory,
+	should_update_expected,
+	try_read_file
+} from '../helpers.js';
 import { assert_html_equal_with_options } from '../html_equal.js';
 import { suite, type BaseTest } from '../suite.js';
 import type { CompileOptions } from '#compiler';
@@ -25,8 +30,16 @@ interface SSRTest extends BaseTest {
 let console_error = console.error;
 
 const { test, run } = suite<SSRTest>(async (config, test_dir) => {
+	const compile_options = {
+		experimental: {
+			async: async_mode,
+			...config.compileOptions?.experimental
+		},
+		...config.compileOptions
+	};
+
 	if (!config.load_compiled) {
-		await compile_directory(test_dir, 'server', config.compileOptions);
+		await compile_directory(test_dir, 'server', compile_options);
 	}
 
 	const errors: string[] = [];
@@ -37,7 +50,10 @@ const { test, run } = suite<SSRTest>(async (config, test_dir) => {
 
 	const Component = (await import(`${test_dir}/_output/server/main.svelte.js`)).default;
 	const expected_html = try_read_file(`${test_dir}/_expected.html`);
-	const rendered = render(Component, { props: config.props || {}, idPrefix: config.id_prefix });
+	const rendered = await (compile_options.experimental.async ? renderAsync : render)(Component, {
+		props: config.props || {},
+		idPrefix: config.id_prefix
+	});
 	const { body, head } = rendered;
 
 	fs.writeFileSync(`${test_dir}/_output/rendered.html`, body);
@@ -48,7 +64,7 @@ const { test, run } = suite<SSRTest>(async (config, test_dir) => {
 
 	try {
 		assert_html_equal_with_options(body, expected_html || '', {
-			preserveComments: config.compileOptions?.preserveComments,
+			preserveComments: compile_options.preserveComments,
 			withoutNormalizeHtml: config.withoutNormalizeHtml
 		});
 	} catch (error: any) {

@@ -240,7 +240,7 @@ export function server_component(analysis, options) {
 			b.call(
 				'$$payload.child',
 				b.arrow(
-					[b.object_pattern([b.init('$$payload', b.id('$$payload'))])],
+					[b.id('$$payload')],
 					b.block([
 						.../** @type {Statement[]} */ (instance.body),
 						.../** @type {Statement[]} */ (template.body)
@@ -304,7 +304,7 @@ export function server_component(analysis, options) {
 		const code = b.literal(render_stylesheet(analysis.source, analysis, options).code);
 
 		body.push(b.const('$$css', b.object([b.init('hash', hash), b.init('code', code)])));
-		component_block.body.unshift(b.stmt(b.call('$$payload.css.add', b.id('$$css'))));
+		component_block.body.unshift(b.stmt(b.call('$$payload.global.css.add', b.id('$$css'))));
 	}
 
 	let should_inject_props =

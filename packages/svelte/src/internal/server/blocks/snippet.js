@@ -15,7 +15,7 @@ export function createRawSnippet(fn) {
 	// @ts-expect-error the types are a lie
 	return (/** @type {Payload} */ payload, /** @type {Params} */ ...args) => {
 		var getters = /** @type {Getters<Params>} */ (args.map((value) => () => value));
-		payload.out.push(
+		payload.push(
 			fn(...getters)
 				.render()
 				.trim()

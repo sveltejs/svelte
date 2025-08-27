@@ -3,7 +3,7 @@ import * as $ from 'svelte/internal/server';
 export default function Props_identifier($$payload, $$props) {
 	$.push();
 
-	$$payload.child(({ $$payload }) => {
+	$$payload.child(($$payload) => {
 		let { $$slots, $$events, ...props } = $$props;
 
 		props.a;

@@ -1,26 +1,31 @@
-// Optimization: Right now, the state from parents is copied into the children. _Technically_ we could save the state on the root
-// and simply have the children inherit that state and re-expose it through getters. This could save memory but probably isn't worth it.
+/** @typedef {{ type: 'head' | 'body', content: string }} TNode */
+/** @typedef {{ [key in TNode['type']]: string }} AccumulatedContent */
+/** @typedef {{ start: number, end: number, fn: (content: AccumulatedContent) => AccumulatedContent | Promise<AccumulatedContent> }} Compaction */
+
+// TODO we test for `instanceof AsyncContentTree` in some tight loops -- we might optimize
+// by giving the tree a symbol property and checking that instead if we can actually notice any impact
 
 /**
+ * /**
  * A base class for payloads. Payloads are basically a tree of `string | Payload`s, where each
  * `Payload` in the tree represents work that may or may not have completed. A payload can be
  * {@link collect}ed to aggregate the content from itself and all of its children, but this will
  * throw if any of the children are performing asynchronous work. A payload can also be collected
  * asynchronously with {@link collect_async}, which will wait for all children to complete before
  * collecting their contents.
- *
- * @template {new (parent: Partial<InstanceType<TSubclass>>) => {}} TSubclass
  */
-class BasePayload {
+export class Payload {
 	/**
-	 * This is the magical type that represents the instance type of a subclass of this type.
-	 * How does it work? idk man but it does
-	 * @typedef {this & InstanceType<TSubclass>} Instance
+	 * @type {TNode['type']}
 	 */
+	type;
+
+	/** @type {Payload | undefined} */
+	parent;
 
 	/**
 	 * The contents of the payload.
-	 * @type {(string | Instance)[]}
+	 * @type {(TNode | Payload)[]}
 	 */
 	out = [];
 
@@ -32,87 +37,157 @@ class BasePayload {
 	promise;
 
 	/**
+	 * State which is associated with the content tree as a whole.
+	 * It will be re-exposed, uncopied, on all children.
+	 * @type {TreeState}
+	 * @readonly
+	 */
+	global;
+
+	/**
+	 * State that is local to the branch it is declared in.
+	 * It will be shallow-copied to all children.
+	 * @type {{ select_value: string | undefined }}
+	 */
+	local;
+
+	/**
+	 * @param {TreeState} [global]
+	 * @param {{ select_value: string | undefined }} [local]
+	 * @param {Payload | undefined} [parent]
+	 * @param {TNode['type']} [type]
+	 */
+	constructor(global = new TreeState(), local = { select_value: undefined }, parent, type) {
+		this.global = global;
+		this.local = { ...local };
+		this.parent = parent;
+		this.type = type ?? parent?.type ?? 'body';
+	}
+
+	/**
 	 * Create a child payload. The child payload inherits the state from the parent,
 	 * but has its own `out` array and `promise` property. The child payload is automatically
 	 * inserted into the parent payload's `out` array.
-	 * @param {(args: { $$payload: Instance }) => void | Promise<void>} render
+	 * @param {(tree: Payload) => void | Promise<void>} render
+	 * @param {TNode['type']} [type]
 	 * @returns {void}
 	 */
-	child(render) {
-		const child = this.#create_child_instance();
+	child(render, type) {
+		const child = new Payload(this.global, this.local, this, type);
 		this.out.push(child);
-		const result = render({ $$payload: child });
+		const result = render(child);
 		if (result instanceof Promise) {
 			child.promise = result;
 		}
 	}
 
 	/**
+	 * This is a convenience function that allows pushing strings, and will automatically use the configured `type` of this
+	 * payload. It's fine to push content of a different type to the `out` array; it's just more annoying to write.
+	 * @param {string} content
+	 */
+	push(content) {
+		this.out.push({ type: this.type, content });
+	}
+
+	/**
 	 * Compact everything between `start` and `end` into a single payload, then call `fn` with the result of that payload.
 	 * The compacted payload will be sync if all of the children are sync and {@link fn} is sync, otherwise it will be async.
-	 * @param {{ start: number, end?: number, fn: (value: string) => string | Promise<string> }} args
+	 * @param {{ start: number, end?: number, fn: (content: AccumulatedContent) => AccumulatedContent | Promise<AccumulatedContent> }} args
 	 */
 	compact({ start, end = this.out.length, fn }) {
-		const child = this.#create_child_instance();
+		const child = new Payload(this.global, this.local, this);
 		const to_compact = this.out.splice(start, end - start, child);
-		const promises = BasePayload.#collect_promises(to_compact, []);
+		const promises = Payload.#collect_promises(to_compact, []);
 
-		/** @param {string | Promise<string>} res */
+		/** @param {AccumulatedContent | Promise<AccumulatedContent>} res */
 		const push_result = (res) => {
-			if (typeof res === 'string') {
-				child.out.push(res);
-			} else {
+			if (res instanceof Promise) {
 				child.promise = res.then((resolved) => {
-					child.out.push(resolved);
+					Payload.#push_accumulated_content(child, resolved);
 				});
+			} else {
+				Payload.#push_accumulated_content(child, res);
 			}
 		};
 
 		if (promises.length > 0) {
+			// we have to wait for the accumulated work associated with all branches to complete,
+			// then we can accumulate their content to compact it.
 			child.promise = Promise.all(promises)
-				.then(() => fn(BasePayload.#collect_content(to_compact)))
+				.then(() => fn(Payload.#collect_content(to_compact)))
 				.then(push_result);
 		} else {
-			push_result(fn(BasePayload.#collect_content(to_compact)));
+			push_result(fn(Payload.#collect_content(to_compact)));
 		}
 	}
 
 	/**
+	 * @returns {number[]}
+	 */
+	get_path() {
+		return this.parent ? [...this.parent.get_path(), this.parent.out.indexOf(this)] : [];
+	}
+
+	/**
 	 * Waits for all child payloads to finish their blocking asynchronous work, then returns the generated content.
-	 * @returns {Promise<string>}
+	 * @returns {Promise<AccumulatedContent>}
 	 */
 	async collect_async() {
 		// TODO: Should probably use `Promise.allSettled` here just so we can report detailed errors
-		await Promise.all(BasePayload.#collect_promises(this.out, this.promise ? [this.promise] : []));
-		return BasePayload.#collect_content(this.out);
+		await Promise.all(Payload.#collect_promises(this.out, this.promise ? [this.promise] : []));
+		return Payload.#collect_content(this.out);
 	}
 
 	/**
 	 * Collect all of the code from the `out` array and return it as a string.
-	 * @returns {string}
+	 * @returns {AccumulatedContent}
 	 */
 	collect() {
-		const promises = BasePayload.#collect_promises(this.out, this.promise ? [this.promise] : []);
+		const promises = Payload.#collect_promises(this.out, this.promise ? [this.promise] : []);
 		if (promises.length > 0) {
 			// TODO is there a good way to report where this is? Probably by using some sort of loc or stack trace in `child` creation
 			throw new Error('Encountered an asynchronous component while rendering synchronously');
 		}
 
-		return BasePayload.#collect_content(this.out);
+		return Payload.#collect_content(this.out);
+	}
+
+	copy() {
+		const copy = new Payload(this.global, this.local, this.parent, this.type);
+		copy.out = this.out.map((item) => (item instanceof Payload ? item.copy() : item));
+		copy.promise = this.promise;
+		return copy;
 	}
 
 	/**
-	 * @param {(string | Instance)[]} items
+	 * @param {Payload} other
+	 */
+	subsume(other) {
+		this.global.subsume(other.global);
+		this.local = other.local;
+		this.out = other.out.map((item) => {
+			if (item instanceof Payload) {
+				item.subsume(item);
+			}
+			return item;
+		});
+		this.promise = other.promise;
+		this.type = other.type;
+	}
+
+	/**
+	 * @param {(TNode | Payload)[]} items
 	 * @param {Promise<void>[]} promises
 	 * @returns {Promise<void>[]}
 	 */
 	static #collect_promises(items, promises) {
 		for (const item of items) {
-			if (typeof item !== 'string') {
+			if (item instanceof Payload) {
 				if (item.promise) {
 					promises.push(item.promise);
 				}
-				BasePayload.#collect_promises(item.out, promises);
+				Payload.#collect_promises(item.out, promises);
 			}
 		}
 		return promises;
@@ -120,109 +195,41 @@ class BasePayload {
 
 	/**
 	 * Collect all of the code from the `out` array and return it as a string.
-	 * @param {(string | Instance)[]} items
-	 * @returns {string}
+	 * @param {(TNode | Payload)[]} items
+	 * @param {AccumulatedContent} content
+	 * @returns {AccumulatedContent}
 	 */
-	static #collect_content(items) {
-		// TODO throw in `async` mode
-		let content = '';
+	static #collect_content(items, content = { head: '', body: '' }) {
 		for (const item of items) {
-			if (typeof item === 'string') {
-				content += item;
+			if (item instanceof Payload) {
+				Payload.#collect_content(item.out, content);
 			} else {
-				content += BasePayload.#collect_content(item.out);
+				content[item.type] += item.content;
 			}
 		}
 		return content;
 	}
 
-	/** @returns {Instance} */
-	#create_child_instance() {
-		// @ts-expect-error - This lets us create an instance of the subclass of this class. Type-danger is constrained by the fact that TSubclass must accept an instance of itself in its constructor.
-		return new this.constructor(this);
+	/**
+	 * @param {Payload} tree
+	 * @param {AccumulatedContent} accumulated_content
+	 */
+	static #push_accumulated_content(tree, accumulated_content) {
+		for (const [type, content] of Object.entries(accumulated_content)) {
+			tree.out.push({ type: /** @type {TNode['type']} */ (type), content });
+		}
 	}
 }
 
-/**
- * @extends {BasePayload<typeof HeadPayload>}
- */
-export class HeadPayload extends BasePayload {
-	/** @type {Set<{ hash: string; code: string }>} */
-	#css;
-
-	/** @type {() => string} */
-	#uid;
-
-	/**
-	 * This is a string or a promise so that the last write "wins" synchronously,
-	 * as opposed to writes coming in whenever it happens to during async work.
-	 * It's boxed so that the same value is shared across all children.
-	 * @type {{ value: string | Promise<string>}}
-	 */
-	#title;
-
-	get css() {
-		return this.#css;
-	}
-
-	get uid() {
-		return this.#uid;
-	}
-
-	get title() {
-		return this.#title;
-	}
-
-	/**
-	 * @param {{ css?: Set<{ hash: string; code: string }>, title?: { value: string | Promise<string> }, uid?: () => string }} args
-	 */
-	constructor({ css = new Set(), title = { value: '' }, uid = () => '' } = {}) {
-		super();
-		this.#css = css;
-		this.#title = title;
-		this.#uid = uid;
-	}
-
-	copy() {
-		const head_payload = new HeadPayload({
-			css: new Set(this.#css),
-			title: this.title,
-			uid: this.#uid
-		});
-
-		head_payload.promise = this.promise;
-		head_payload.out = [...this.out];
-		return head_payload;
-	}
-
-	/**
-	 * @param {HeadPayload} other
-	 */
-	subsume(other) {
-		// @ts-expect-error
-		this.out = [...other.out];
-		this.promise = other.promise;
-		this.#css = other.#css;
-		this.#title = other.#title;
-		this.#uid = other.#uid;
-	}
-}
-
-/**
- * @extends {BasePayload<typeof Payload>}
- */
-export class Payload extends BasePayload {
+export class TreeState {
 	/** @type {() => string} */
 	#uid;
 
 	/** @type {Set<{ hash: string; code: string }>} */
 	#css;
 
-	/** @type {HeadPayload} */
+	/** @type {TreeHeadState} */
 	#head;
-
-	/** @type {string | undefined} */
-	select_value;
 
 	get css() {
 		return this.#css;
@@ -237,46 +244,103 @@ export class Payload extends BasePayload {
 	}
 
 	/**
-	 * @param {{ id_prefix?: string, head?: HeadPayload, uid?: () => string, css?: Set<{ hash: string; code: string }>, select_value?: string | undefined }} args
+	 * @param {string} [id_prefix]
 	 */
-	constructor({
-		id_prefix = '',
-		head = new HeadPayload(),
-		uid = props_id_generator(id_prefix),
-		css = new Set(),
-		select_value
-	} = {}) {
-		super();
-		this.#uid = uid;
-		this.#css = css;
-		this.#head = head;
-		this.select_value = select_value;
+	constructor(id_prefix = '') {
+		this.#uid = props_id_generator(id_prefix);
+		this.#css = new Set();
+		this.#head = new TreeHeadState(this.#uid);
 	}
 
 	copy() {
-		const payload = new Payload({
-			css: new Set(this.#css),
-			uid: this.#uid,
-			head: this.#head.copy()
-		});
-
-		payload.select_value = this.select_value;
-		payload.promise = this.promise;
-		payload.out = [...this.out];
-		return payload;
+		const state = new TreeState();
+		state.#css = new Set(this.#css);
+		state.#head = this.#head.copy();
+		state.#uid = this.#uid;
+		return state;
 	}
 
 	/**
-	 * @param {Payload} other
+	 * @param {TreeState} other
 	 */
 	subsume(other) {
-		// @ts-expect-error
-		this.out = [...other.out];
-		this.promise = other.promise;
-		this.select_value = other.select_value;
 		this.#css = other.#css;
 		this.#uid = other.#uid;
 		this.#head.subsume(other.#head);
+	}
+}
+
+export class TreeHeadState {
+	/** @type {Set<{ hash: string; code: string }>} */
+	#css = new Set();
+
+	/** @type {() => string} */
+	#uid = () => '';
+
+	/**
+	 * @type {{ path: number[], value: string }}
+	 */
+	#title = { path: [], value: '' };
+
+	get css() {
+		return this.#css;
+	}
+
+	get uid() {
+		return this.#uid;
+	}
+
+	get title() {
+		return this.#title;
+	}
+	set title(value) {
+		// perform a depth-first (lexicographic) comparison using the path. Reject sets
+		// from earlier than or equal to the current value.
+		const contender_path = value.path;
+		const current_path = this.#title.path;
+
+		const max_len = Math.max(contender_path.length, current_path.length);
+		for (let i = 0; i < max_len; i++) {
+			const contender_segment = contender_path[i];
+			const current_segment = current_path[i];
+
+			// contender shorter than current and all previous segments equal -> earlier
+			if (contender_segment === undefined) return;
+			// current shorter than contender and all previous segments equal -> contender is later
+			if (current_segment === undefined || contender_segment > current_segment) {
+				this.#title.path = value.path;
+				this.#title.value = value.value;
+				return;
+			}
+			if (contender_segment < current_segment) return;
+			// else equal -> continue
+		}
+		// paths are equal -> keep current value (do nothing)
+	}
+
+	/**
+	 * @param {() => string} uid
+	 */
+	constructor(uid) {
+		this.#uid = uid;
+		this.#css = new Set();
+		this.#title = { path: [], value: '' };
+	}
+
+	copy() {
+		const head_state = new TreeHeadState(this.#uid);
+		head_state.#css = new Set(this.#css);
+		head_state.#title = this.title;
+		return head_state;
+	}
+
+	/**
+	 * @param {TreeHeadState} other
+	 */
+	subsume(other) {
+		this.#css = other.#css;
+		this.#title = other.#title;
+		this.#uid = other.#uid;
 	}
 }
 

@@ -17,7 +17,7 @@ export function SnippetBlock(node, context) {
 				b.call(
 					'$$payload.child',
 					b.arrow(
-						[b.object_pattern([b.init('$$payload', b.id('$$payload'))])],
+						[b.id('$$payload')],
 						/** @type {BlockStatement} */ (context.visit(node.body)),
 						node.metadata.has_await
 					)

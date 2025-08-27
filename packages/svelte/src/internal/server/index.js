@@ -17,7 +17,7 @@ import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN, BLOCK_OPEN_ELSE } from './hydra
 import { validate_store } from '../shared/validate.js';
 import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
 import { reset_elements } from './dev.js';
-import { Payload } from './payload.js';
+import { Payload, TreeState } from './payload.js';
 import { abort } from './abort-signal.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
@@ -33,23 +33,23 @@ const INVALID_ATTR_NAME_CHAR_REGEX =
  * @returns {void}
  */
 export function element(payload, tag, attributes_fn = noop, children_fn = noop) {
-	payload.out.push('<!---->');
+	payload.push('<!---->');
 
 	if (tag) {
-		payload.out.push(`<${tag}`);
+		payload.push(`<${tag}`);
 		attributes_fn();
-		payload.out.push(`>`);
+		payload.push(`>`);
 
 		if (!is_void(tag)) {
 			children_fn();
 			if (!is_raw_text_element(tag)) {
-				payload.out.push(EMPTY_COMMENT);
+				payload.push(EMPTY_COMMENT);
 			}
-			payload.out.push(`</${tag}>`);
+			payload.push(`</${tag}>`);
 		}
 	}
 
-	payload.out.push('<!---->');
+	payload.push('<!---->');
 }
 
 /**
@@ -68,11 +68,11 @@ export let on_destroy = [];
  */
 export function render(component, options = {}) {
 	try {
-		const payload = new Payload({ id_prefix: options.idPrefix ? options.idPrefix + '-' : '' });
+		const payload = new Payload(new TreeState(options.idPrefix ? options.idPrefix + '-' : ''));
 
 		const prev_on_destroy = on_destroy;
 		on_destroy = [];
-		payload.out.push(BLOCK_OPEN);
+		payload.push(BLOCK_OPEN);
 
 		let reset_reset_element;
 
@@ -97,24 +97,83 @@ export function render(component, options = {}) {
 			reset_reset_element();
 		}
 
-		payload.out.push(BLOCK_CLOSE);
+		payload.push(BLOCK_CLOSE);
 		for (const cleanup of on_destroy) cleanup();
 		on_destroy = prev_on_destroy;
 
-		let head = payload.head.collect();
+		let { head, body } = payload.collect();
+		head += payload.global.head.title.value;
 
-		if (typeof payload.head.title.value !== 'string') {
-			throw new Error(
-				'TODO -- should encorporate this into the collect/collect_async logic somewhere'
-			);
-		}
-		head += payload.head.title.value;
-
-		for (const { hash, code } of payload.css) {
+		for (const { hash, code } of payload.global.css) {
 			head += `<style id="${hash}">${code}</style>`;
 		}
 
-		const body = payload.collect();
+		return {
+			head,
+			html: body,
+			body: body
+		};
+	} finally {
+		abort();
+	}
+}
+
+/**
+ * TODO THIS NEEDS TO ACTUALLY BE DONE
+ * Array of `onDestroy` callbacks that should be called at the end of the server render function
+ * @type {Function[]}
+ */
+export let async_on_destroy = [];
+
+/**
+ * Only available on the server and when compiling with the `server` option.
+ * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
+ * @template {Record<string, any>} Props
+ * @param {import('svelte').Component<Props> | ComponentType<SvelteComponent<Props>>} component
+ * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} [options]
+ * @returns {Promise<RenderOutput>}
+ */
+export async function render_async(component, options = {}) {
+	try {
+		const payload = new Payload(new TreeState(options.idPrefix ? options.idPrefix + '-' : ''));
+
+		const prev_on_destroy = async_on_destroy;
+		async_on_destroy = [];
+		payload.push(BLOCK_OPEN);
+
+		let reset_reset_element;
+
+		if (DEV) {
+			// prevent parent/child element state being corrupted by a bad render
+			reset_reset_element = reset_elements();
+		}
+
+		if (options.context) {
+			push();
+			/** @type {Component} */ (current_component).c = options.context;
+		}
+
+		// @ts-expect-error
+		component(payload, options.props ?? {}, {}, {});
+
+		if (options.context) {
+			pop();
+		}
+
+		if (reset_reset_element) {
+			reset_reset_element();
+		}
+
+		payload.push(BLOCK_CLOSE);
+		for (const cleanup of async_on_destroy) cleanup();
+		async_on_destroy = prev_on_destroy;
+
+		let { head, body } = await payload.collect_async();
+		head += payload.global.head.title.value;
+
+		for (const { hash, code } of payload.global.css) {
+			head += `<style id="${hash}">${code}</style>`;
+		}
 
 		return {
 			head,
@@ -128,13 +187,13 @@ export function render(component, options = {}) {
 
 /**
  * @param {Payload} payload
- * @param {(head_payload: Payload['head']) => void} fn
+ * @param {(payload: Payload) => Promise<void> | void} fn
  * @returns {void}
  */
 export function head(payload, fn) {
-	payload.head.out.push(BLOCK_OPEN);
-	payload.head.child(({ $$payload }) => fn($$payload));
-	payload.head.out.push(BLOCK_CLOSE);
+	payload.out.push({ type: 'head', content: BLOCK_OPEN });
+	payload.child(fn, 'head');
+	payload.out.push({ type: 'head', content: BLOCK_CLOSE });
 }
 
 /**
@@ -149,21 +208,21 @@ export function css_props(payload, is_html, props, component, dynamic = false) {
 	const styles = style_object_to_string(props);
 
 	if (is_html) {
-		payload.out.push(`<svelte-css-wrapper style="display: contents; ${styles}">`);
+		payload.push(`<svelte-css-wrapper style="display: contents; ${styles}">`);
 	} else {
-		payload.out.push(`<g style="${styles}">`);
+		payload.push(`<g style="${styles}">`);
 	}
 
 	if (dynamic) {
-		payload.out.push('<!---->');
+		payload.push('<!---->');
 	}
 
 	component();
 
 	if (is_html) {
-		payload.out.push(`<!----></svelte-css-wrapper>`);
+		payload.push(`<!----></svelte-css-wrapper>`);
 	} else {
-		payload.out.push(`<!----></g>`);
+		payload.push(`<!----></g>`);
 	}
 }
 
@@ -448,13 +507,13 @@ export function bind_props(props_parent, props_now) {
  */
 function await_block(payload, promise, pending_fn, then_fn) {
 	if (is_promise(promise)) {
-		payload.out.push(BLOCK_OPEN);
+		payload.push(BLOCK_OPEN);
 		promise.then(null, noop);
 		if (pending_fn !== null) {
 			pending_fn();
 		}
 	} else if (then_fn !== null) {
-		payload.out.push(BLOCK_OPEN_ELSE);
+		payload.push(BLOCK_OPEN_ELSE);
 		then_fn(promise);
 	}
 }
@@ -500,8 +559,8 @@ export function once(get_value) {
  * @returns {string}
  */
 export function props_id(payload) {
-	const uid = payload.uid();
-	payload.out.push('<!--#' + uid + '-->');
+	const uid = payload.global.uid();
+	payload.push('<!--#' + uid + '-->');
 	return uid;
 }
 
@@ -555,37 +614,37 @@ export function derived(fn) {
  * @param {*} value
  */
 export function maybe_selected(payload, value) {
-	return value === payload.select_value ? ' selected' : '';
+	return value === payload.local.select_value ? ' selected' : '';
 }
 
 /**
  * @param {Payload} payload
- * @param {() => void} children
+ * @param {(payload: Payload) => void | Promise<void>} children
  * @returns {void}
  */
 export function valueless_option(payload, children) {
 	var i = payload.out.length;
 
 	// prior to children, `payload` has some combination of string/unresolved payload that ends in `<option ...>`
-	children();
+	payload.child((payload) => children(payload));
 
 	// post-children, `payload` has child content, possibly also with some number of hydration comments.
 	// we can compact this last chunk of content to see if it matches the select value...
 	payload.compact({
 		start: i,
-		fn: (body) => {
-			if (body.replace(/<!---->/g, '') === payload.select_value) {
+		fn: (content) => {
+			if (content.body.replace(/<!---->/g, '') === payload.local.select_value) {
 				// ...and if it does match the select value, we can compact the part of the payload representing the `<option ...>`
 				// to add the `selected` attribute to the end.
 				payload.compact({
 					start: i - 1,
 					end: i,
-					fn: (body) => {
-						return body.slice(0, -1) + ' selected>';
+					fn: (content) => {
+						return { body: content.body.slice(0, -1) + ' selected>', head: content.head };
 					}
 				});
 			}
-			return body;
+			return content;
 		}
 	});
 }

@@ -13,20 +13,30 @@ export function TitleElement(node, context) {
 	process_children(node.fragment.nodes, { ...context, state: { ...context.state, template } });
 	template.push(b.literal('</title>'));
 
-	if (!node.metadata.has_await) {
-		context.state.init.push(...build_template(template, b.id('$$payload.title.value'), '='));
-	} else {
-		const async_template = b.thunk(
-			// TODO I'm sure there is a better way to do this
-			b.block([
-				b.let('title'),
-				...build_template(template, b.id('title'), '='),
-				b.return(b.id('title'))
-			]),
-			true
-		);
-		context.state.init.push(
-			b.stmt(b.assignment('=', b.id('$$payload.title.value'), b.call(async_template)))
-		);
-	}
+	context.state.init.push(
+		b.stmt(
+			b.call(
+				'$$payload.child',
+				// this nonsense is necessary so that the write to the title is as tightly scoped to a specific location
+				// in the async tree as possible. This lets us use `get_path` to compare this assignment to other assignments
+				// so that we can overwrite earlier assignments with later ones.
+				b.arrow(
+					[b.id('$$payload')],
+					b.block([
+						b.const('path', b.call('$$payload.get_path')),
+						b.let('title'),
+						...build_template(template, b.id('title'), '='),
+						b.stmt(
+							b.assignment(
+								'=',
+								b.id('$$payload.global.head.title'),
+								b.object([b.init('path', b.id('path')), b.init('value', b.id('title'))])
+							)
+						)
+					]),
+					node.metadata.has_await
+				)
+			)
+		)
+	);
 }
