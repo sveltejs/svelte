@@ -25,7 +25,7 @@ export function key(node, get_key, render_fn) {
 	/** @type {V | typeof UNINITIALIZED} */
 	var key = UNINITIALIZED;
 
-	/** @type {Effect} */
+	/** @type {Effect | null} */
 	var effect;
 
 	/** @type {Effect} */
@@ -37,10 +37,6 @@ export function key(node, get_key, render_fn) {
 	var changed = is_runes() ? not_equal : safe_not_equal;
 
 	function commit() {
-		if (effect) {
-			pause_effect(effect);
-		}
-
 		if (offscreen_fragment !== null) {
 			// remove the anchor
 			/** @type {Text} */ (offscreen_fragment.lastChild).remove();
@@ -54,6 +50,12 @@ export function key(node, get_key, render_fn) {
 
 	block(() => {
 		if (changed(key, (key = get_key()))) {
+			// Pause and cleanup the old effect before creating a new one
+			// This ensures proper component lifecycle ordering (destroy -> create -> mount)
+			if (effect) {
+				pause_effect(effect);
+				effect = null;
+			}
 			var target = anchor;
 
 			var defer = should_defer_append();
@@ -63,6 +65,7 @@ export function key(node, get_key, render_fn) {
 				offscreen_fragment.append((target = create_text()));
 			}
 
+			// Create the new effect with the component
 			pending_effect = branch(() => render_fn(target));
 
 			if (defer) {
