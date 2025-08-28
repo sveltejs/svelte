@@ -35,9 +35,9 @@ export class Payload {
 	 * Asynchronous work associated with this payload. `initial` is the promise from the function
 	 * this payload was passed to (if that function was async), and `followup` is any any additional
 	 * work from `compact` calls that needs to complete prior to collecting this payload's content.
-	 * @type {{ initial: Promise<void> | undefined, followup: Promise<void>[] | undefined }}
+	 * @type {{ initial: Promise<void> | undefined, followup: Promise<void>[] }}
 	 */
-	promises = { initial: undefined, followup: undefined };
+	promises = { initial: undefined, followup: [] };
 
 	/**
 	 * State which is associated with the content tree as a whole.
@@ -114,7 +114,7 @@ export class Payload {
 				.then((transformed_content) =>
 					Payload.#push_accumulated_content(child, transformed_content)
 				);
-			(this.promises.followup ??= []).push(followup);
+			this.promises.followup.push(followup);
 		} else {
 			Payload.#push_accumulated_content(child, fn(content));
 		}
@@ -194,7 +194,7 @@ export class Payload {
 			} else {
 				flush();
 
-				if (item.promises.initial) {
+				if (item.promises.initial || item.promises.followup.length) {
 					has_async = true;
 					segments.push(
 						Payload.#collect_content_async([item], current_type, { head: '', body: '' })
@@ -238,7 +238,7 @@ export class Payload {
 					// we can't do anything until it's done and we know our `out` array is complete.
 					await item.promises.initial;
 				}
-				for (const followup of item.promises.followup ?? []) {
+				for (const followup of item.promises.followup) {
 					// this is sequential because `compact` could synchronously queue up additional followup work
 					await followup;
 				}
