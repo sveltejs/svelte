@@ -128,3 +128,4 @@ Custom elements can be a useful way to package components for consumption in a n
 - Polyfills are required to support older browsers
 - You can use Svelte's context feature between regular Svelte components within a custom element, but you can't use them across custom elements. In other words, you can't use `setContext` on a parent custom element and read that with `getContext` in a child custom element.
 - Don't declare properties or attributes starting with `on`, as their usage will be interpreted as an event listener. In other words, Svelte treats `<custom-element oneworld={true}></custom-element>` as `customElement.addEventListener('eworld', true)` (and not as `customElement.oneworld = true`)
+- If you would like to dispatch custom events or just access the host element then you can use the [\$host](https://svelte.dev/docs/svelte/$host) rune.
