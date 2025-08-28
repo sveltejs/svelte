@@ -348,6 +348,8 @@ export namespace AST {
 			has_spread: boolean;
 			scoped: boolean;
 			path: SvelteNode[];
+			/** Synthetic value attribute for <option> with single expression child, used for client-only handling */
+			synthetic_value_node: ExpressionTag | null;
 		};
 	}
 
@@ -541,6 +543,8 @@ export namespace AST {
 			delegated: null | DelegatedEvent;
 			/** May be `true` if this is a `class` attribute that needs `clsx` */
 			needs_clsx: boolean;
+			/** true if this attribute was synthesized for client-only option value handling */
+			synthetic_option_value?: boolean;
 		};
 	}
 

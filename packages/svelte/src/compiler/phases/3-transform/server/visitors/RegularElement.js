@@ -143,22 +143,33 @@ export function RegularElement(node, context) {
 					attribute.name === 'value')
 		)
 	) {
-		const inner_state = { ...state, template: [], init: [] };
-		process_children(trimmed, { ...context, state: inner_state });
-
-		state.template.push(
-			b.stmt(
-				b.call(
-					'$.valueless_option',
-					b.id('$$payload'),
-					b.arrow(
-						[b.id('$$payload')],
-						b.block([...inner_state.init, ...build_template(inner_state.template)]),
-						context.state.analysis.has_blocking_await
+		if (node.metadata.synthetic_value_node) {
+			state.template.push(
+				b.stmt(
+					b.call(
+						'$.simple_valueless_option',
+						b.id('$$payload'),
+						node.metadata.synthetic_value_node.expression
 					)
 				)
-			)
-		);
+			);
+		} else {
+			const inner_state = { ...state, template: [], init: [] };
+			process_children(trimmed, { ...context, state: inner_state });
+			state.template.push(
+				b.stmt(
+					b.call(
+						'$.valueless_option',
+						b.id('$$payload'),
+						b.arrow(
+							[b.id('$$payload')],
+							b.block([...inner_state.init, ...build_template(inner_state.template)]),
+							context.state.analysis.has_blocking_await
+						)
+					)
+				)
+			);
+		}
 	} else if (body !== null) {
 		// if this is a `<textarea>` value or a contenteditable binding, we only add
 		// the body if the attribute/binding is falsy

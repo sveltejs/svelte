@@ -613,19 +613,23 @@ export function derived(fn) {
 /**
  *
  * @param {Payload} payload
- * @param {*} value
+ * @param {unknown} value
  */
 export function maybe_selected(payload, value) {
 	return value === payload.local.select_value ? ' selected' : '';
 }
 
 /**
+ * When an `option` element has no `value` attribute, we need to treat the child
+ * content as its `value` to determine whether we should apply the `selected` attribute.
+ * This has to be done at runtime, for hopefully obvious reasons. It is also complicated,
+ * for sad reasons.
  * @param {Payload} payload
- * @param {(payload: Payload) => void | Promise<void>} children
+ * @param {((payload: Payload) => void | Promise<void>)} children
  * @returns {void}
  */
 export function valueless_option(payload, children) {
-	var i = payload.length;
+	const i = payload.length;
 
 	// prior to children, `payload` has some combination of string/unresolved payload that ends in `<option ...>`
 	payload.child(children);
@@ -649,4 +653,24 @@ export function valueless_option(payload, children) {
 			return content;
 		}
 	});
+}
+
+/**
+ * In the special case where an `option` element has no `value` attribute but
+ * the children of the `option` element are a single expression, we can simplify
+ * by running the children and passing the resulting value, which means
+ * we don't have to do all of the same parsing nonsense. It also means we can avoid
+ * coercing everything to a string.
+ * @param {Payload} payload
+ * @param {unknown} child_value
+ */
+export function simple_valueless_option(payload, child_value) {
+	if (child_value === payload.local.select_value) {
+		payload.compact({
+			start: payload.length - 1,
+			fn: (content) => ({ body: content.body.slice(0, -1) + ' selected>', head: content.head })
+		});
+	}
+
+	payload.push(escape_html(child_value));
 }
