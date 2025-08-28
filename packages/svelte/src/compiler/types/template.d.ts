@@ -543,8 +543,6 @@ export namespace AST {
 			delegated: null | DelegatedEvent;
 			/** May be `true` if this is a `class` attribute that needs `clsx` */
 			needs_clsx: boolean;
-			/** true if this attribute was synthesized for client-only option value handling */
-			synthetic_option_value?: boolean;
 		};
 	}
 

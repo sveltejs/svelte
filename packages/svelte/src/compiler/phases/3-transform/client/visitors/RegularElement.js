@@ -400,11 +400,10 @@ export function RegularElement(node, context) {
 				synthetic_node.end,
 				[synthetic_node]
 			);
-			// TODO idk if necessary
-			synthetic_attribute.metadata.synthetic_option_value = true;
 			// this node is an `option` that didn't have a `value` attribute, but had
-			// a single-expression child, so we synthesize a value for it
-			build_element_special_value_attribute(node.name, node_id, synthetic_attribute, context);
+			// a single-expression child, so we treat the value of that expression as
+			// the value of the option
+			build_element_special_value_attribute(node.name, node_id, synthetic_attribute, context, true);
 		} else {
 			for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
 				if (attribute.name === 'value') {
@@ -646,8 +645,15 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
  * @param {Identifier} node_id
  * @param {AST.Attribute} attribute
  * @param {ComponentContext} context
+ * @param {boolean} [synthetic] - true if this should not sync to the DOM
  */
-function build_element_special_value_attribute(element, node_id, attribute, context) {
+function build_element_special_value_attribute(
+	element,
+	node_id,
+	attribute,
+	context,
+	synthetic = false
+) {
 	const state = context.state;
 	const is_select_with_value =
 		// attribute.metadata.dynamic would give false negatives because even if the value does not change,
@@ -660,9 +666,6 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 
 	const evaluated = context.state.scope.evaluate(value);
 	const assignment = b.assignment('=', b.member(node_id, '__value'), value);
-
-	const is_synthetic_option =
-		element === 'option' && attribute.metadata.synthetic_option_value === true;
 
 	const set_value_assignment = b.assignment(
 		'=',
@@ -680,7 +683,7 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 					// mutation observer wouldn't notice.
 					b.call('$.select_option', node_id, value)
 				])
-			: is_synthetic_option
+			: synthetic
 				? assignment
 				: set_value_assignment
 	);
