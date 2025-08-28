@@ -168,7 +168,7 @@ export async function render_async(component, options = {}) {
 		for (const cleanup of async_on_destroy) cleanup();
 		async_on_destroy = prev_on_destroy;
 
-		let { head, body } = await payload.collect_async();
+		let { head, body } = await payload;
 		head += payload.global.head.title.value;
 
 		for (const { hash, code } of payload.global.css) {
@@ -625,10 +625,10 @@ export function maybe_selected(payload, value) {
  * @returns {void}
  */
 export function valueless_option(payload, children) {
-	var i = payload.out.length;
+	var i = payload.length;
 
 	// prior to children, `payload` has some combination of string/unresolved payload that ends in `<option ...>`
-	payload.child((payload) => children(payload));
+	payload.child(children);
 
 	// post-children, `payload` has child content, possibly also with some number of hydration comments.
 	// we can compact this last chunk of content to see if it matches the select value...
