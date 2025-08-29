@@ -40,7 +40,7 @@ export function can_be_parallelized(expression, scope, analysis) {
 	let should_stop = false;
 	/** @type {Set<string>} */
 	const references = new Set();
-	walk(expression, null, {
+	walk(/** @type {Node} */ (expression), null, {
 		ArrowFunctionExpression(_, { stop }) {
 			has_closures = true;
 			stop();
