@@ -6,6 +6,7 @@ import { get_descriptor, is_extensible } from '../../shared/utils.js';
 import { active_effect } from '../runtime.js';
 import { async_mode_flag } from '../../flags/index.js';
 import { TEXT_NODE, EFFECT_RAN } from '#client/constants';
+import { eager_block_effects } from '../reactivity/batch.js';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
 /** @type {Window} */
@@ -214,6 +215,7 @@ export function clear_text_content(node) {
  */
 export function should_defer_append() {
 	if (!async_mode_flag) return false;
+	if (eager_block_effects !== null) return false;
 
 	var flags = /** @type {Effect} */ (active_effect).f;
 	return (flags & EFFECT_RAN) !== 0;

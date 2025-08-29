@@ -3,14 +3,14 @@
 import * as b from '#compiler/builders';
 import { build_event, build_event_handler } from './shared/events.js';
 
-const modifiers = [
+const modifiers = /** @type {const} */ ([
 	'stopPropagation',
 	'stopImmediatePropagation',
 	'preventDefault',
 	'self',
 	'trusted',
 	'once'
-];
+]);
 
 /**
  * @param {AST.OnDirective} node

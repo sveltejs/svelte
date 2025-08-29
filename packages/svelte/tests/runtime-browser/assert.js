@@ -87,15 +87,17 @@ function normalize_html(window, html) {
 /** @param {any} node */
 function normalize_children(node) {
 	// sort attributes
-	const attributes = Array.from(node.attributes).sort((a, b) => {
-		return a.name < b.name ? -1 : 1;
-	});
+	const attributes = Array.from(node.attributes).sort(
+		(/** @type {any} */ a, /** @type {any} */ b) => {
+			return a.name < b.name ? -1 : 1;
+		}
+	);
 
-	attributes.forEach((attr) => {
+	attributes.forEach((/** @type{any} */ attr) => {
 		node.removeAttribute(attr.name);
 	});
 
-	attributes.forEach((attr) => {
+	attributes.forEach((/** @type{any} */ attr) => {
 		node.setAttribute(attr.name, attr.value);
 	});
 

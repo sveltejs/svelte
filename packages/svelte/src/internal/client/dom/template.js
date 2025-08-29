@@ -156,7 +156,7 @@ export function from_mathml(content, flags) {
 
 /**
  * @param {TemplateStructure[]} structure
- * @param {NAMESPACE_SVG | NAMESPACE_MATHML | undefined} [ns]
+ * @param {typeof NAMESPACE_SVG | typeof NAMESPACE_MATHML | undefined} [ns]
  */
 function fragment_from_tree(structure, ns) {
 	var fragment = create_fragment();

@@ -120,6 +120,9 @@ export function async_derived(fn, location) {
 
 		try {
 			var p = fn();
+			// Make sure to always access the then property to read any signals
+			// it might access, so that we track them as dependencies.
+			if (prev) Promise.resolve(p).catch(() => {}); // avoid unhandled rejection
 		} catch (error) {
 			p = Promise.reject(error);
 		}
@@ -337,7 +340,9 @@ export function update_derived(derived) {
 
 	// don't mark derived clean if we're reading it inside a
 	// cleanup function, or it will cache a stale value
-	if (is_destroying_effect) return;
+	if (is_destroying_effect) {
+		return;
+	}
 
 	if (batch_deriveds !== null) {
 		batch_deriveds.set(derived, derived.v);

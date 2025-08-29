@@ -26,6 +26,7 @@ import { DebugTag } from './visitors/DebugTag.js';
 import { EachBlock } from './visitors/EachBlock.js';
 import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
 import { ExpressionStatement } from './visitors/ExpressionStatement.js';
+import { ForOfStatement } from './visitors/ForOfStatement.js';
 import { Fragment } from './visitors/Fragment.js';
 import { FunctionDeclaration } from './visitors/FunctionDeclaration.js';
 import { FunctionExpression } from './visitors/FunctionExpression.js';
@@ -103,6 +104,7 @@ const visitors = {
 	EachBlock,
 	ExportNamedDeclaration,
 	ExpressionStatement,
+	ForOfStatement,
 	Fragment,
 	FunctionDeclaration,
 	FunctionExpression,
@@ -170,6 +172,7 @@ export function client_component(analysis, options) {
 
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		init: /** @type {any} */ (null),
+		consts: /** @type {any} */ (null),
 		update: /** @type {any} */ (null),
 		after_update: /** @type {any} */ (null),
 		template: /** @type {any} */ (null),
@@ -209,7 +212,8 @@ export function client_component(analysis, options) {
 
 	/** @type {ESTree.Statement[]} */
 	const store_setup = [];
-
+	/** @type {ESTree.Statement} */
+	let store_init = b.empty;
 	/** @type {ESTree.VariableDeclaration[]} */
 	const legacy_reactive_declarations = [];
 
@@ -227,8 +231,9 @@ export function client_component(analysis, options) {
 		if (binding.kind === 'store_sub') {
 			if (store_setup.length === 0) {
 				needs_store_cleanup = true;
-				store_setup.push(
-					b.const(b.array_pattern([b.id('$$stores'), b.id('$$cleanup')]), b.call('$.setup_stores'))
+				store_init = b.const(
+					b.array_pattern([b.id('$$stores'), b.id('$$cleanup')]),
+					b.call('$.setup_stores')
 				);
 			}
 
@@ -354,15 +359,39 @@ export function client_component(analysis, options) {
 	if (dev) push_args.push(b.id(analysis.name));
 
 	let component_block = b.block([
+		store_init,
 		...store_setup,
 		...legacy_reactive_declarations,
-		...group_binding_declarations,
-		...state.instance_level_snippets,
-		.../** @type {ESTree.Statement[]} */ (instance.body),
-		analysis.runes || !analysis.needs_context
-			? b.empty
-			: b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined))
+		...group_binding_declarations
 	]);
+
+	if (analysis.instance.has_await) {
+		const body = b.block([
+			...state.instance_level_snippets,
+			.../** @type {ESTree.Statement[]} */ (instance.body),
+			b.if(b.call('$.aborted'), b.return()),
+			.../** @type {ESTree.Statement[]} */ (template.body)
+		]);
+
+		component_block.body.push(b.stmt(b.call(`$.async_body`, b.arrow([], body, true))));
+	} else {
+		component_block.body.push(
+			...state.instance_level_snippets,
+			.../** @type {ESTree.Statement[]} */ (instance.body)
+		);
+
+		if (!analysis.runes && analysis.needs_context) {
+			component_block.body.push(b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)));
+		}
+
+		component_block.body.push(.../** @type {ESTree.Statement[]} */ (template.body));
+	}
+
+	if (analysis.needs_mutation_validation) {
+		component_block.body.unshift(
+			b.var('$$ownership_validator', b.call('$.create_ownership_validator', b.id('$$props')))
+		);
+	}
 
 	const should_inject_context =
 		dev ||
@@ -377,32 +406,6 @@ export function client_component(analysis, options) {
 		analysis.uses_rest_props ||
 		analysis.uses_slots ||
 		analysis.slot_names.size > 0;
-
-	if (analysis.instance.has_await) {
-		const body = b.function_declaration(
-			b.id('$$body'),
-			should_inject_props ? [b.id('$$anchor'), b.id('$$props')] : [b.id('$$anchor')],
-			b.block([
-				b.var('$$unsuspend', b.call('$.suspend')),
-				...component_block.body,
-				b.if(b.call('$.aborted'), b.return()),
-				.../** @type {ESTree.Statement[]} */ (template.body),
-				b.stmt(b.call('$$unsuspend'))
-			]),
-			true
-		);
-
-		state.hoisted.push(body);
-
-		component_block = b.block([
-			b.var('fragment', b.call('$.comment')),
-			b.var('node', b.call('$.first_child', b.id('fragment'))),
-			b.stmt(b.call(body.id, b.id('node'), should_inject_props && b.id('$$props'))),
-			b.stmt(b.call('$.append', b.id('$$anchor'), b.id('fragment')))
-		]);
-	} else {
-		component_block.body.push(.../** @type {ESTree.Statement[]} */ (template.body));
-	}
 
 	// trick esrap into including comments
 	component_block.loc = instance.loc;
@@ -431,12 +434,6 @@ export function client_component(analysis, options) {
 
 		component_block.body.unshift(
 			b.stmt(b.call('$.append_styles', b.id('$$anchor'), b.id('$$css')))
-		);
-	}
-
-	if (analysis.needs_mutation_validation) {
-		component_block.body.unshift(
-			b.var('$$ownership_validator', b.call('$.create_ownership_validator', b.id('$$props')))
 		);
 	}
 
@@ -610,8 +607,9 @@ export function client_component(analysis, options) {
 		);
 	}
 
-	if (analysis.custom_element) {
-		const ce = analysis.custom_element;
+	const ce = options.customElementOptions ?? options.customElement;
+
+	if (ce) {
 		const ce_props = typeof ce === 'boolean' ? {} : ce.props || {};
 
 		/** @type {ESTree.Property[]} */

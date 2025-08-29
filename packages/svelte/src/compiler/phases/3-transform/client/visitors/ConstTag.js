@@ -16,15 +16,26 @@ export function ConstTag(node, context) {
 	const declaration = node.declaration.declarations[0];
 	// TODO we can almost certainly share some code with $derived(...)
 	if (declaration.id.type === 'Identifier') {
-		const init = build_expression(context, declaration.init, node.metadata.expression);
-		context.state.init.push(b.const(declaration.id, create_derived(context.state, b.thunk(init))));
+		const init = build_expression(
+			{ ...context, state: { ...context.state, in_derived: true } },
+			declaration.init,
+			node.metadata.expression
+		);
+
+		let expression = create_derived(context.state, init, node.metadata.expression.has_await);
+
+		if (dev) {
+			expression = b.call('$.tag', expression, b.literal(declaration.id.name));
+		}
+
+		context.state.consts.push(b.const(declaration.id, expression));
 
 		context.state.transform[declaration.id.name] = { read: get_value };
 
 		// we need to eagerly evaluate the expression in order to hit any
 		// 'Cannot access x before initialization' errors
 		if (dev) {
-			context.state.init.push(b.stmt(b.call('$.get', declaration.id)));
+			context.state.consts.push(b.stmt(b.call('$.get', declaration.id)));
 		}
 	} else {
 		const identifiers = extract_identifiers(declaration.id);
@@ -38,7 +49,11 @@ export function ConstTag(node, context) {
 			delete transform[node.name];
 		}
 
-		const child_state = { ...context.state, transform };
+		const child_state = /** @type {ComponentContext['state']} */ ({
+			...context.state,
+			transform,
+			in_derived: true
+		});
 
 		// TODO optimise the simple `{ x } = y` case — we can just return `y`
 		// instead of destructuring it only to return a new object
@@ -47,20 +62,24 @@ export function ConstTag(node, context) {
 			declaration.init,
 			node.metadata.expression
 		);
-		const fn = b.arrow(
-			[],
-			b.block([
-				b.const(/** @type {Pattern} */ (context.visit(declaration.id, child_state)), init),
-				b.return(b.object(identifiers.map((node) => b.prop('init', node, node))))
-			])
-		);
 
-		context.state.init.push(b.const(tmp, create_derived(context.state, fn)));
+		const block = b.block([
+			b.const(/** @type {Pattern} */ (context.visit(declaration.id, child_state)), init),
+			b.return(b.object(identifiers.map((node) => b.prop('init', node, node))))
+		]);
+
+		let expression = create_derived(context.state, block, node.metadata.expression.has_await);
+
+		if (dev) {
+			expression = b.call('$.tag', expression, b.literal('[@const]'));
+		}
+
+		context.state.consts.push(b.const(tmp, expression));
 
 		// we need to eagerly evaluate the expression in order to hit any
 		// 'Cannot access x before initialization' errors
 		if (dev) {
-			context.state.init.push(b.stmt(b.call('$.get', tmp)));
+			context.state.consts.push(b.stmt(b.call('$.get', tmp)));
 		}
 
 		for (const node of identifiers) {

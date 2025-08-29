@@ -153,6 +153,16 @@ export function dollar_prefix_invalid(node) {
 }
 
 /**
+ * `%name%` has already been declared
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function duplicate_class_field(node, name) {
+	e(node, 'duplicate_class_field', `\`${name}\` has already been declared\nhttps://svelte.dev/e/duplicate_class_field`);
+}
+
+/**
  * Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`, or `bind:value={array[i]}` instead of `bind:value={entry}`)
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -973,6 +983,16 @@ export function const_tag_invalid_expression(node) {
  */
 export function const_tag_invalid_placement(node) {
 	e(node, 'const_tag_invalid_placement', `\`{@const}\` must be the immediate child of \`{#snippet}\`, \`{#if}\`, \`{:else if}\`, \`{:else}\`, \`{#each}\`, \`{:then}\`, \`{:catch}\`, \`<svelte:fragment>\`, \`<svelte:boundary\` or \`<Component>\`\nhttps://svelte.dev/e/const_tag_invalid_placement`);
+}
+
+/**
+ * The `{@const %name% = ...}` declaration is not available in this snippet 
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function const_tag_invalid_reference(node, name) {
+	e(node, 'const_tag_invalid_reference', `The \`{@const ${name} = ...}\` declaration is not available in this snippet \nhttps://svelte.dev/e/const_tag_invalid_reference`);
 }
 
 /**

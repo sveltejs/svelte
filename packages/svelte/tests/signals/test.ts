@@ -1428,4 +1428,55 @@ describe('signals', () => {
 			]);
 		};
 	});
+
+  test('$effect.root inside deriveds stay alive independently', () => {
+		const log: any[] = [];
+		const c = state(0);
+		const cleanup: any[] = [];
+		const inner_states: any[] = [];
+
+		const d = derived(() => {
+			const destroy = effect_root(() => {
+				const x = state(0);
+				inner_states.push(x);
+
+				effect(() => {
+					log.push('inner ' + $.get(x));
+					return () => {
+						log.push('inner destroyed');
+					};
+				});
+			});
+
+			cleanup.push(destroy);
+
+			return $.get(c);
+		});
+
+		return () => {
+			log.push($.get(d));
+			flushSync();
+
+			assert.deepEqual(log, [0, 'inner 0']);
+			log.length = 0;
+
+			set(inner_states[0], 1);
+			flushSync();
+
+			assert.deepEqual(log, ['inner destroyed', 'inner 1']);
+			log.length = 0;
+
+			set(c, 1);
+			log.push($.get(d));
+			flushSync();
+
+			assert.deepEqual(log, [1, 'inner 0']);
+			log.length = 0;
+
+			cleanup.forEach((fn) => fn());
+			flushSync();
+
+			assert.deepEqual(log, ['inner destroyed', 'inner destroyed']);
+		};
+	});
 });

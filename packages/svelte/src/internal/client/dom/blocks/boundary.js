@@ -148,7 +148,7 @@ export class Boundary {
 				// need to use hydration boundary comments to report whether
 				// the pending or main block was rendered for a given
 				// boundary, and hydrate accordingly
-				queueMicrotask(() => {
+				Batch.enqueue(() => {
 					this.#main_effect = this.#run(() => {
 						Batch.ensure();
 						return branch(() => this.#children(this.#anchor));

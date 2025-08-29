@@ -1296,7 +1296,17 @@ declare module 'svelte/compiler' {
 			name: string;
 			/** The 'y' in `on:x={y}` */
 			expression: null | Expression;
-			modifiers: string[];
+			modifiers: Array<
+				| 'capture'
+				| 'nonpassive'
+				| 'once'
+				| 'passive'
+				| 'preventDefault'
+				| 'self'
+				| 'stopImmediatePropagation'
+				| 'stopPropagation'
+				| 'trusted'
+			>;
 		}
 
 		/** A `style:` directive */
@@ -3303,7 +3313,7 @@ declare namespace $derived {
  *
  * If you return a function from the effect, it will be called right before the effect is run again, or when the component is unmounted.
  *
- * Does not run during server side rendering.
+ * Does not run during server-side rendering.
  *
  * https://svelte.dev/docs/svelte/$effect
  * @param fn The function to execute
@@ -3350,7 +3360,7 @@ declare namespace $effect {
 	 *
 	 * If you return a function from the effect, it will be called right before the effect is run again, or when the component is unmounted.
 	 *
-	 * Does not run during server side rendering.
+	 * Does not run during server-side rendering.
 	 *
 	 * https://svelte.dev/docs/svelte/$effect#$effect.pre
 	 * @param fn The function to execute

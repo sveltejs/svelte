@@ -35,11 +35,6 @@ export function SnippetBlock(node, context) {
 	if (can_hoist) {
 		const binding = /** @type {Binding} */ (context.state.scope.get(name));
 		context.state.analysis.module.scope.declarations.set(name, binding);
-	} else {
-		const undefined_export = context.state.analysis.undefined_exports.get(name);
-		if (undefined_export) {
-			e.snippet_invalid_export(undefined_export);
-		}
 	}
 
 	node.metadata.can_hoist = can_hoist;

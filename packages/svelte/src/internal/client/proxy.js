@@ -93,9 +93,11 @@ export function proxy(value) {
 
 	/** Used in dev for $inspect.trace() */
 	var path = '';
-
+	let updating = false;
 	/** @param {string} new_path */
 	function update_path(new_path) {
+		if (updating) return;
+		updating = true;
 		path = new_path;
 
 		tag(version, `${path} version`);
@@ -104,6 +106,7 @@ export function proxy(value) {
 		for (const [prop, source] of sources) {
 			tag(source, get_label(path, prop));
 		}
+		updating = false;
 	}
 
 	return new Proxy(/** @type {any} */ (value), {
@@ -284,13 +287,13 @@ export function proxy(value) {
 			if (s === undefined) {
 				if (!has || get_descriptor(target, prop)?.writable) {
 					s = with_parent(() => source(undefined, stack));
-					set(s, proxy(value));
-
-					sources.set(prop, s);
 
 					if (DEV) {
 						tag(s, get_label(path, prop));
 					}
+					set(s, proxy(value));
+
+					sources.set(prop, s);
 				}
 			} else {
 				has = s.v !== UNINITIALIZED;

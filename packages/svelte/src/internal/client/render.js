@@ -136,20 +136,28 @@ export function hydrate(component, options) {
 
 		return /**  @type {Exports} */ (instance);
 	} catch (error) {
-		if (error === HYDRATION_ERROR) {
-			if (options.recover === false) {
-				e.hydration_failed();
-			}
-
-			// If an error occured above, the operations might not yet have been initialised.
-			init_operations();
-			clear_text_content(target);
-
-			set_hydrating(false);
-			return mount(component, options);
+		// re-throw Svelte errors - they are certainly not related to hydration
+		if (
+			error instanceof Error &&
+			error.message.split('\n').some((line) => line.startsWith('https://svelte.dev/e/'))
+		) {
+			throw error;
+		}
+		if (error !== HYDRATION_ERROR) {
+			// eslint-disable-next-line no-console
+			console.warn('Failed to hydrate: ', error);
 		}
 
-		throw error;
+		if (options.recover === false) {
+			e.hydration_failed();
+		}
+
+		// If an error occured above, the operations might not yet have been initialised.
+		init_operations();
+		clear_text_content(target);
+
+		set_hydrating(false);
+		return mount(component, options);
 	} finally {
 		set_hydrating(was_hydrating);
 		set_hydrate_node(previous_hydrate_node);
@@ -169,6 +177,7 @@ const document_listeners = new Map();
 function _mount(Component, { target, anchor, props = {}, events, context, intro = true }) {
 	init_operations();
 
+	/** @type {Set<string>} */
 	var registered_events = new Set();
 
 	/** @param {Array<string>} events */

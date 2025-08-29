@@ -1,4 +1,4 @@
-/** @import { ArrowFunctionExpression, AssignmentExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, Node, Pattern, UpdateExpression } from 'estree' */
+/** @import { ArrowFunctionExpression, AssignmentExpression, BlockStatement, Expression, FunctionDeclaration, FunctionExpression, Identifier, Node, Pattern, UpdateExpression } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { ClientTransformState, ComponentClientTransformState, ComponentContext } from './types.js' */
 /** @import { Analysis } from '../../types.js' */
@@ -289,8 +289,15 @@ export function should_proxy(node, scope) {
 /**
  * Svelte legacy mode should use safe equals in most places, runes mode shouldn't
  * @param {ComponentClientTransformState} state
- * @param {Expression} arg
+ * @param {Expression | BlockStatement} expression
+ * @param {boolean} [async]
  */
-export function create_derived(state, arg) {
-	return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', arg);
+export function create_derived(state, expression, async = false) {
+	const thunk = b.thunk(expression, async);
+
+	if (async) {
+		return b.call(b.await(b.call('$.save', b.call('$.async_derived', thunk))));
+	} else {
+		return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', thunk);
+	}
 }

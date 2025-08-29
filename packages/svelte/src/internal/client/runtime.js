@@ -22,7 +22,7 @@ import {
 	STALE_REACTION,
 	ERROR_VALUE
 } from './constants.js';
-import { internal_set, old_values } from './reactivity/sources.js';
+import { old_values } from './reactivity/sources.js';
 import {
 	destroy_derived_effects,
 	execute_derived,
@@ -45,6 +45,8 @@ import * as w from './warnings.js';
 import { Batch, batch_deriveds, flushSync, schedule_effect } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
+import { captured_signals } from './legacy.js';
+import { without_reactive_context } from './dom/elements/bindings/shared.js';
 
 export let is_updating_effect = false;
 
@@ -137,14 +139,6 @@ export function set_update_version(value) {
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the reaction.
 export let skip_reaction = false;
-// Handle collecting all signals which are read during a specific time frame
-/** @type {Set<Value> | null} */
-export let captured_signals = null;
-
-/** @param {Set<Value> | null} value */
-export function set_captured_signals(value) {
-	captured_signals = value;
-}
 
 export function increment_write_version() {
 	return ++write_version;
@@ -285,13 +279,17 @@ export function update_reaction(reaction) {
 	update_version = ++read_version;
 
 	if (reaction.ac !== null) {
-		reaction.ac.abort(STALE_REACTION);
+		without_reactive_context(() => {
+			/** @type {AbortController} */ (reaction.ac).abort(STALE_REACTION);
+		});
+
 		reaction.ac = null;
 	}
 
 	try {
 		reaction.f |= REACTION_IS_UPDATING;
-		var result = /** @type {Function} */ (0, reaction.fn)();
+		var fn = /** @type {Function} */ (reaction.fn);
+		var result = fn();
 		var deps = reaction.deps;
 
 		if (new_deps !== null) {
@@ -531,9 +529,7 @@ export function get(signal) {
 	var flags = signal.f;
 	var is_derived = (flags & DERIVED) !== 0;
 
-	if (captured_signals !== null) {
-		captured_signals.add(signal);
-	}
+	captured_signals?.add(signal);
 
 	// Register the dependency on the current reaction signal.
 	if (active_reaction !== null && !untracking) {
@@ -711,45 +707,6 @@ function depends_on_old_values(derived) {
  */
 export function safe_get(signal) {
 	return signal && get(signal);
-}
-
-/**
- * Capture an array of all the signals that are read when `fn` is called
- * @template T
- * @param {() => T} fn
- */
-function capture_signals(fn) {
-	var previous_captured_signals = captured_signals;
-	captured_signals = new Set();
-
-	var captured = captured_signals;
-	var signal;
-
-	try {
-		untrack(fn);
-		if (previous_captured_signals !== null) {
-			for (signal of captured_signals) {
-				previous_captured_signals.add(signal);
-			}
-		}
-	} finally {
-		captured_signals = previous_captured_signals;
-	}
-
-	return captured;
-}
-
-/**
- * Invokes a function and captures all signals that are read during the invocation,
- * then invalidates them.
- * @param {() => any} fn
- */
-export function invalidate_inner_signals(fn) {
-	var captured = capture_signals(() => untrack(fn));
-
-	for (var signal of captured) {
-		internal_set(signal, signal.v);
-	}
 }
 
 /**

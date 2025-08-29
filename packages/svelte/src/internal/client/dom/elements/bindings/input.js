@@ -6,9 +6,9 @@ import * as e from '../../../errors.js';
 import { is } from '../../../proxy.js';
 import { queue_micro_task } from '../../task.js';
 import { hydrating } from '../../hydration.js';
-import { untrack } from '../../../runtime.js';
+import { tick, untrack } from '../../../runtime.js';
 import { is_runes } from '../../../context.js';
-import { current_batch } from '../../../reactivity/batch.js';
+import { current_batch, previous_batch } from '../../../reactivity/batch.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -17,11 +17,9 @@ import { current_batch } from '../../../reactivity/batch.js';
  * @returns {void}
  */
 export function bind_value(input, get, set = get) {
-	var runes = is_runes();
-
 	var batches = new WeakSet();
 
-	listen_to_event_and_reset_event(input, 'input', (is_reset) => {
+	listen_to_event_and_reset_event(input, 'input', async (is_reset) => {
 		if (DEV && input.type === 'checkbox') {
 			// TODO should this happen in prod too?
 			e.bind_invalid_checkbox_value();
@@ -36,9 +34,13 @@ export function bind_value(input, get, set = get) {
 			batches.add(current_batch);
 		}
 
-		// In runes mode, respect any validation in accessors (doesn't apply in legacy mode,
-		// because we use mutable state which ensures the render effect always runs)
-		if (runes && value !== (value = get())) {
+		// Because `{#each ...}` blocks work by updating sources inside the flush,
+		// we need to wait a tick before checking to see if we should forcibly
+		// update the input and reset the selection state
+		await tick();
+
+		// Respect any validation in accessors
+		if (value !== (value = get())) {
 			var start = input.selectionStart;
 			var end = input.selectionEnd;
 
@@ -76,13 +78,18 @@ export function bind_value(input, get, set = get) {
 
 		var value = get();
 
-		if (input === document.activeElement && batches.has(/** @type {Batch} */ (current_batch))) {
+		if (input === document.activeElement) {
+			// we need both, because in non-async mode, render effects run before previous_batch is set
+			var batch = /** @type {Batch} */ (previous_batch ?? current_batch);
+
 			// Never rewrite the contents of a focused input. We can get here if, for example,
 			// an update is deferred because of async work depending on the input:
 			//
 			// <input bind:value={query}>
 			// <p>{await find(query)}</p>
-			return;
+			if (batches.has(batch)) {
+				return;
+			}
 		}
 
 		if (is_numberlike_input(input) && value === to_number(input.value)) {
@@ -240,6 +247,7 @@ export function bind_checked(input, get, set = get) {
  * @returns {V[]}
  */
 function get_binding_group_value(group, __value, checked) {
+	/** @type {Set<V>} */
 	var value = new Set();
 
 	for (var i = 0; i < group.length; i += 1) {

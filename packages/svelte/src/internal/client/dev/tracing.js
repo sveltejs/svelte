@@ -4,7 +4,7 @@ import { snapshot } from '../../shared/clone.js';
 import { define_property } from '../../shared/utils.js';
 import { DERIVED, ASYNC, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { effect_tracking } from '../reactivity/effects.js';
-import { active_reaction, captured_signals, set_captured_signals, untrack } from '../runtime.js';
+import { active_reaction, untrack } from '../runtime.js';
 
 /**
  * @typedef {{
@@ -26,7 +26,7 @@ function log_entry(signal, entry) {
 		return;
 	}
 
-	const type = (signal.f & (DERIVED | ASYNC)) !== 0 ? '$derived' : '$state';
+	const type = get_type(signal);
 	const current_reaction = /** @type {Reaction} */ (active_reaction);
 	const dirty = signal.wv > current_reaction.wv || current_reaction.wv === 0;
 	const style = dirty
@@ -71,6 +71,15 @@ function log_entry(signal, entry) {
 
 	// eslint-disable-next-line no-console
 	console.groupEnd();
+}
+
+/**
+ * @param {Value} signal
+ * @returns {'$state' | '$derived' | 'store'}
+ */
+function get_type(signal) {
+	if ((signal.f & (DERIVED | ASYNC)) !== 0) return '$derived';
+	return signal.label?.startsWith('$') ? 'store' : '$state';
 }
 
 /**

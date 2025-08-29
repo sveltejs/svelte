@@ -98,7 +98,12 @@ export {
 	props_id,
 	with_script
 } from './dom/template.js';
-export { save, track_reactivity_loss } from './reactivity/async.js';
+export {
+	async_body,
+	for_await_track_reactivity_loss,
+	save,
+	track_reactivity_loss
+} from './reactivity/async.js';
 export { flushSync as flush, suspend } from './reactivity/batch.js';
 export {
 	async_derived,
@@ -139,16 +144,17 @@ export {
 	mark_store_binding
 } from './reactivity/store.js';
 export { boundary, pending } from './dom/blocks/boundary.js';
+export { invalidate_inner_signals } from './legacy.js';
 export { set_text } from './render.js';
 export {
 	get,
 	safe_get,
-	invalidate_inner_signals,
 	tick,
 	untrack,
 	exclude_from_object,
 	deep_read,
-	deep_read_state
+	deep_read_state,
+	active_effect
 } from './runtime.js';
 export { validate_binding, validate_each_keys } from './validate.js';
 export { raf } from './timing.js';
@@ -173,3 +179,4 @@ export {
 } from '../shared/validate.js';
 export { strict_equals, equals } from './dev/equality.js';
 export { log_if_contains_state } from './dev/console-log.js';
+export { invoke_error_boundary } from './error-handling.js';

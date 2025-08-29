@@ -6,7 +6,12 @@ export class HeadPayload {
 	uid = () => '';
 	title = '';
 
-	constructor(css = new Set(), /** @type {string[]} */ out = [], title = '', uid = () => '') {
+	constructor(
+		/** @type {Set<{ hash: string; code: string }>} */ css = new Set(),
+		/** @type {string[]} */ out = [],
+		title = '',
+		uid = () => ''
+	) {
 		this.css = css;
 		this.out = out;
 		this.title = title;

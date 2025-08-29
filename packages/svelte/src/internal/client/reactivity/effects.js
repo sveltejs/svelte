@@ -42,6 +42,7 @@ import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
 import { Batch, schedule_effect } from './batch.js';
 import { flatten } from './async.js';
+import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 
 const VALID_EFFECT_PARENT = 0;
 const EFFECT_ORPHAN = 1;
@@ -161,25 +162,40 @@ function create_effect(type, fn, sync, push = true) {
 		schedule_effect(effect);
 	}
 
-	// if an effect has no dependencies, no DOM and no teardown function,
-	// don't bother adding it to the effect tree
-	var inert =
-		sync &&
-		effect.deps === null &&
-		effect.first === null &&
-		effect.nodes_start === null &&
-		effect.teardown === null &&
-		(effect.f & EFFECT_PRESERVED) === 0;
+	if (push) {
+		/** @type {Effect | null} */
+		var e = effect;
 
-	if (!inert && push) {
-		if (parent !== null) {
-			push_effect(effect, parent);
+		// if an effect has already ran and doesn't need to be kept in the tree
+		// (because it won't re-run, has no DOM, and has no teardown etc)
+		// then we skip it and go to its child (if any)
+		if (
+			sync &&
+			e.deps === null &&
+			e.teardown === null &&
+			e.nodes_start === null &&
+			e.first === e.last && // either `null`, or a singular child
+			(e.f & EFFECT_PRESERVED) === 0
+		) {
+			e = e.first;
 		}
 
-		// if we're in a derived, add the effect there too
-		if (active_reaction !== null && (active_reaction.f & DERIVED) !== 0) {
-			var derived = /** @type {Derived} */ (active_reaction);
-			(derived.effects ??= []).push(effect);
+		if (e !== null) {
+			e.parent = parent;
+
+			if (parent !== null) {
+				push_effect(e, parent);
+			}
+
+			// if we're in a derived, add the effect there too
+			if (
+				active_reaction !== null &&
+				(active_reaction.f & DERIVED) !== 0 &&
+				(type & ROOT_EFFECT) === 0
+			) {
+				var derived = /** @type {Derived} */ (active_reaction);
+				(derived.effects ??= []).push(e);
+			}
 		}
 	}
 
@@ -274,7 +290,7 @@ export function inspect_effect(fn) {
  */
 export function effect_root(fn) {
 	Batch.ensure();
-	const effect = create_effect(ROOT_EFFECT, fn, true);
+	const effect = create_effect(ROOT_EFFECT | EFFECT_PRESERVED, fn, true);
 
 	return () => {
 		destroy_effect(effect);
@@ -288,7 +304,7 @@ export function effect_root(fn) {
  */
 export function component_root(fn) {
 	Batch.ensure();
-	const effect = create_effect(ROOT_EFFECT, fn, true);
+	const effect = create_effect(ROOT_EFFECT | EFFECT_PRESERVED, fn, true);
 
 	return (options = {}) => {
 		return new Promise((fulfil) => {
@@ -407,7 +423,7 @@ export function block(fn, flags = 0) {
  * @param {boolean} [push]
  */
 export function branch(fn, push = true) {
-	return create_effect(BRANCH_EFFECT, fn, true, push);
+	return create_effect(BRANCH_EFFECT | EFFECT_PRESERVED, fn, true, push);
 }
 
 /**
@@ -439,7 +455,13 @@ export function destroy_effect_children(signal, remove_dom = false) {
 	signal.first = signal.last = null;
 
 	while (effect !== null) {
-		effect.ac?.abort(STALE_REACTION);
+		const controller = effect.ac;
+
+		if (controller !== null) {
+			without_reactive_context(() => {
+				controller.abort(STALE_REACTION);
+			});
+		}
 
 		var next = effect.next;
 
@@ -674,7 +696,6 @@ function resume_children(effect, local) {
 	}
 }
 
-export function aborted() {
-	var effect = /** @type {Effect} */ (active_effect);
+export function aborted(effect = /** @type {Effect} */ (active_effect)) {
 	return (effect.f & DESTROYED) !== 0;
 }

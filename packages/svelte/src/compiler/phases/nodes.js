@@ -24,6 +24,15 @@ export function is_element_node(node) {
 }
 
 /**
+ * Returns true for all component-like nodes
+ * @param {AST.SvelteNode} node
+ * @returns {node is AST.Component |  AST.SvelteComponent | AST.SvelteSelf}
+ */
+export function is_component_node(node) {
+	return ['Component', 'SvelteComponent', 'SvelteSelf'].includes(node.type);
+}
+
+/**
  * @param {AST.RegularElement | AST.SvelteElement} node
  * @returns {boolean}
  */

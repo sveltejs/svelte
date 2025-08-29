@@ -1,7 +1,5 @@
 <script>
-	import { close } from './Child.svelte';
-
-	let { closed } = $props();
+	let { closed, close } = $props();
 
 	$effect(() => {
 		if (closed) close();

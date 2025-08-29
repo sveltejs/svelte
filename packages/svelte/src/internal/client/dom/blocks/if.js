@@ -36,7 +36,7 @@ export function if_block(node, fn, elseif = false) {
 	/** @type {Effect | null} */
 	var alternate_effect = null;
 
-	/** @type {UNINITIALIZED | boolean | null} */
+	/** @type {typeof UNINITIALIZED | boolean | null} */
 	var condition = UNINITIALIZED;
 
 	var flags = elseif ? EFFECT_TRANSPARENT : 0;

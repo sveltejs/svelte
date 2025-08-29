@@ -191,7 +191,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		// store a reference to the effect so that we can update the start/end nodes in reconciliation
 		each_effect ??= /** @type {Effect} */ (active_effect);
 
-		array = get(each_array);
+		array = /** @type {V[]} */ (get(each_array));
 		var length = array.length;
 
 		if (was_empty && length === 0) {

@@ -37,6 +37,7 @@ import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
 import { ExportSpecifier } from './visitors/ExportSpecifier.js';
 import { ExpressionStatement } from './visitors/ExpressionStatement.js';
 import { ExpressionTag } from './visitors/ExpressionTag.js';
+import { Fragment } from './visitors/Fragment.js';
 import { FunctionDeclaration } from './visitors/FunctionDeclaration.js';
 import { FunctionExpression } from './visitors/FunctionExpression.js';
 import { HtmlTag } from './visitors/HtmlTag.js';
@@ -156,6 +157,7 @@ const visitors = {
 	ExportSpecifier,
 	ExpressionStatement,
 	ExpressionTag,
+	Fragment,
 	FunctionDeclaration,
 	FunctionExpression,
 	HtmlTag,
@@ -295,11 +297,12 @@ export function analyze_module(source, options) {
 			// TODO the following are not needed for modules, but we have to pass them in order to avoid type error,
 			// and reducing the type would result in a lot of tedious type casts elsewhere - find a good solution one day
 			ast_type: /** @type {any} */ (null),
-			component_slots: new Set(),
+			component_slots: /** @type {Set<string>} */ (new Set()),
 			expression: null,
 			function_depth: 0,
 			has_props_rune: false,
 			options: /** @type {ValidatedCompileOptions} */ (options),
+			fragment: null,
 			parent_element: null,
 			reactive_statement: null
 		},
@@ -451,6 +454,8 @@ export function analyze_component(root, source, options) {
 		}
 	}
 
+	const is_custom_element = !!options.customElementOptions || options.customElement;
+
 	// TODO remove all the ?? stuff, we don't need it now that we're validating the config
 	/** @type {ComponentAnalysis} */
 	const analysis = {
@@ -500,13 +505,13 @@ export function analyze_component(root, source, options) {
 		needs_props: false,
 		event_directive_node: null,
 		uses_event_attributes: false,
-		custom_element: options.customElementOptions ?? options.customElement,
-		inject_styles: options.css === 'injected' || options.customElement,
-		accessors: options.customElement
-			? true
-			: (runes ? false : !!options.accessors) ||
-				// because $set method needs accessors
-				options.compatibility?.componentApi === 4,
+		custom_element: is_custom_element,
+		inject_styles: options.css === 'injected' || is_custom_element,
+		accessors:
+			is_custom_element ||
+			(runes ? false : !!options.accessors) ||
+			// because $set method needs accessors
+			options.compatibility?.componentApi === 4,
 		reactive_statements: new Map(),
 		binding_groups: new Map(),
 		slot_names: new Map(),
@@ -524,7 +529,6 @@ export function analyze_component(root, source, options) {
 			has_global: false
 		},
 		source,
-		undefined_exports: new Map(),
 		snippet_renderers: new Map(),
 		snippets: new Set(),
 		async_deriveds: new Set()
@@ -686,6 +690,7 @@ export function analyze_component(root, source, options) {
 				analysis,
 				options,
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
+				fragment: ast === template.ast ? ast : null,
 				parent_element: null,
 				has_props_rune: false,
 				component_slots: new Set(),
@@ -751,6 +756,7 @@ export function analyze_component(root, source, options) {
 				scopes,
 				analysis,
 				options,
+				fragment: ast === template.ast ? ast : null,
 				parent_element: null,
 				has_props_rune: false,
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
@@ -785,9 +791,15 @@ export function analyze_component(root, source, options) {
 		if (node.type === 'ExportNamedDeclaration' && node.specifiers !== null && node.source == null) {
 			for (const specifier of node.specifiers) {
 				if (specifier.local.type !== 'Identifier') continue;
-
-				const binding = analysis.module.scope.get(specifier.local.name);
-				if (!binding) e.export_undefined(specifier, specifier.local.name);
+				const name = specifier.local.name;
+				const binding = analysis.module.scope.get(name);
+				if (!binding) {
+					if ([...analysis.snippets].find((snippet) => snippet.expression.name === name)) {
+						e.snippet_invalid_export(specifier);
+					} else {
+						e.export_undefined(specifier, name);
+					}
+				}
 			}
 		}
 	}

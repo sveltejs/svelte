@@ -11,7 +11,8 @@
     "prod": "npm run build && node dist/server/ssr-prod",
     "preview": "vite preview",
     "download": "node scripts/download.js",
-    "hash": "node scripts/hash.js"
+    "hash": "node scripts/hash.js",
+    "create-test": "node scripts/create-test.js"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^4.0.0-next.6",

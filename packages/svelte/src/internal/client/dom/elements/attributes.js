@@ -19,7 +19,7 @@ import { attach } from './attachments.js';
 import { clsx } from '../../../shared/attributes.js';
 import { set_class } from './class.js';
 import { set_style } from './style.js';
-import { ATTACHMENT_KEY, NAMESPACE_HTML } from '../../../../constants.js';
+import { ATTACHMENT_KEY, NAMESPACE_HTML, UNINITIALIZED } from '../../../../constants.js';
 import { block, branch, destroy_effect, effect } from '../../reactivity/effects.js';
 import { init_select, select_option } from './bindings/select.js';
 import { flatten } from '../../reactivity/async.js';
@@ -238,10 +238,10 @@ export function set_custom_element_data(node, prop, value) {
 			// Don't compute setters for custom elements while they aren't registered yet,
 			// because during their upgrade/instantiation they might add more setters.
 			// Instead, fall back to a simple "an object, then set as property" heuristic.
-			(setters_cache.has(node.nodeName) ||
+			(setters_cache.has(node.getAttribute('is') || node.nodeName) ||
 			// customElements may not be available in browser extension contexts
 			!customElements ||
-			customElements.get(node.tagName.toLowerCase())
+			customElements.get(node.getAttribute('is') || node.tagName.toLowerCase())
 				? get_setters(node).includes(prop)
 				: value && typeof value === 'object')
 		) {
@@ -446,6 +446,8 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 			) {
 				// @ts-ignore
 				element[name] = value;
+				// remove it from attributes's cache
+				if (name in attributes) attributes[name] = UNINITIALIZED;
 			} else if (typeof value !== 'function') {
 				set_attribute(element, name, value, skip_warning);
 			}
@@ -544,9 +546,10 @@ var setters_cache = new Map();
 
 /** @param {Element} element */
 function get_setters(element) {
-	var setters = setters_cache.get(element.nodeName);
+	var cache_key = element.getAttribute('is') || element.nodeName;
+	var setters = setters_cache.get(cache_key);
 	if (setters) return setters;
-	setters_cache.set(element.nodeName, (setters = []));
+	setters_cache.set(cache_key, (setters = []));
 
 	var descriptors;
 	var proto = element; // In the case of custom elements there might be setters on the instance

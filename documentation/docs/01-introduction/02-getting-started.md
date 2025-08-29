@@ -4,7 +4,7 @@ title: Getting started
 
 We recommend using [SvelteKit](../kit), which lets you [build almost anything](../kit/project-types). It's the official application framework from the Svelte team and powered by [Vite](https://vite.dev/). Create a new project with:
 
-```bash
+```sh
 npx sv create myapp
 cd myapp
 npm install
