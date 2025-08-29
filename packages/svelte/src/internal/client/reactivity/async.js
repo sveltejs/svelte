@@ -196,5 +196,9 @@ export async function async_body(fn) {
  * @returns {Promise<Array<T>>}
  */
 export function all(...promises) {
-	return Promise.all(promises.map((promise) => save(promise).then((restore) => restore())));
+	return Promise.all(
+		promises.map((promise) =>
+			promise instanceof Promise ? save(promise).then((restore) => restore()) : promise
+		)
+	);
 }
