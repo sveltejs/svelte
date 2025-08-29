@@ -358,7 +358,11 @@ export function client_component(analysis, options) {
 	const push_args = [b.id('$$props'), b.literal(analysis.runes)];
 	if (dev) push_args.push(b.id(analysis.name));
 
-	let component_block = b.block([...legacy_reactive_declarations, ...group_binding_declarations]);
+	let component_block = b.block([
+		store_init,
+		...legacy_reactive_declarations,
+		...group_binding_declarations
+	]);
 
 	const should_inject_context =
 		dev ||
@@ -371,7 +375,6 @@ export function client_component(analysis, options) {
 			component_block.body.push(b.var('$$exports'));
 		}
 		const body = b.block([
-			store_init,
 			...store_setup,
 			...state.instance_level_snippets,
 			.../** @type {ESTree.Statement[]} */ (instance.body),
@@ -382,10 +385,6 @@ export function client_component(analysis, options) {
 			.../** @type {ESTree.Statement[]} */ (template.body)
 		]);
 
-		if (needs_store_cleanup) {
-			body.body.push(b.stmt(b.call('$$cleanup')));
-		}
-
 		component_block.body.push(b.stmt(b.call(`$.async_body`, b.arrow([], body, true))));
 	} else {
 		component_block.body.push(
@@ -395,7 +394,7 @@ export function client_component(analysis, options) {
 		if (should_inject_context && component_returned_object.length > 0) {
 			component_block.body.push(b.var('$$exports', b.object(component_returned_object)));
 		}
-		component_block.body.unshift(store_init, ...store_setup);
+		component_block.body.unshift(...store_setup);
 
 		if (!analysis.runes && analysis.needs_context) {
 			component_block.body.push(b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)));
@@ -465,7 +464,7 @@ export function client_component(analysis, options) {
 		component_block.body.push(to_push);
 	}
 
-	if (needs_store_cleanup && !analysis.instance.has_await) {
+	if (needs_store_cleanup) {
 		component_block.body.push(b.stmt(b.call('$$cleanup')));
 	}
 
