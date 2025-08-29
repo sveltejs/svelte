@@ -466,10 +466,10 @@ export function client_component(analysis, options) {
 
 	if (needs_store_cleanup) {
 		component_block.body.push(b.stmt(b.call('$$cleanup')));
-	}
 
-	if (needs_store_cleanup && component_returned_object.length > 0) {
-		component_block.body.push(b.return(b.id('$$pop')));
+		if (component_returned_object.length > 0) {
+			component_block.body.push(b.return(b.id('$$pop')));
+		}
 	}
 
 	if (analysis.uses_rest_props) {
