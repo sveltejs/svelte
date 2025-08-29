@@ -211,7 +211,9 @@ export function VariableDeclaration(node, context) {
 					is_async &&
 					context.state.analysis.instance &&
 					context.state.scope === context.state.analysis.instance.scope &&
-					!dev
+					!dev &&
+					// TODO make it work without this
+					declarator.id.type === 'Identifier'
 				) {
 					parallelize = can_be_parallelized(value, context.state.scope, context.state.analysis);
 				}
