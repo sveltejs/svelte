@@ -370,6 +370,10 @@ export function client_component(analysis, options) {
 			.../** @type {ESTree.Statement[]} */ (template.body)
 		]);
 
+		if (needs_store_cleanup) {
+			body.body.push(b.stmt(b.call('$$cleanup')));
+		}
+
 		component_block.body.push(b.stmt(b.call(`$.async_body`, b.arrow([], body, true))));
 	} else {
 		component_block.body.push(
@@ -452,11 +456,12 @@ export function client_component(analysis, options) {
 		component_block.body.push(to_push);
 	}
 
-	if (needs_store_cleanup) {
+	if (needs_store_cleanup && !analysis.instance.has_await) {
 		component_block.body.push(b.stmt(b.call('$$cleanup')));
-		if (component_returned_object.length > 0) {
-			component_block.body.push(b.return(b.id('$$pop')));
-		}
+	}
+
+	if (needs_store_cleanup && component_returned_object.length > 0) {
+		component_block.body.push(b.return(b.id('$$pop')));
 	}
 
 	if (analysis.uses_rest_props) {
