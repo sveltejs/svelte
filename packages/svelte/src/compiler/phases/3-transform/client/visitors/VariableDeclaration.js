@@ -230,7 +230,7 @@ export function VariableDeclaration(node, context) {
 					if (is_async) {
 						const location = dev && !is_ignored(init, 'await_waterfall') && locate_node(init);
 						let call = b.call(
-							'$.async_derived' + (parallelize ? '_p' : ''),
+							'$.async_derived',
 							b.thunk(expression, true),
 							location ? b.literal(location) : undefined
 						);
