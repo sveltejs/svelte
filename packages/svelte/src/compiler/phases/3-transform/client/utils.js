@@ -65,6 +65,10 @@ export function can_be_parallelized(expression, scope, analysis) {
 		NewExpression(node, { stop }) {
 			should_stop = true;
 			stop();
+		},
+		StaticBlock(node, { stop }) {
+			has_closures = true;
+			stop();
 		}
 	});
 	if (has_closures || should_stop) {
