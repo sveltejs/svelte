@@ -153,7 +153,7 @@ export function Program(node, context) {
 				);
 			} else {
 				const pattern = b.array_pattern(chunk.declarators.map(({ id }) => id));
-				const init = b.call('$.all', b.array(chunk.declarators.map(({ init }) => init)));
+				const init = b.call('$.all', ...chunk.declarators.map(({ init }) => init));
 				body.push(b.declaration(chunk.kind, [b.declarator(pattern, b.await(init))]));
 			}
 		}
