@@ -144,9 +144,18 @@ export function Program(node, context) {
 		const chunk = context.state.parallelized_derived_chunks?.at(-1);
 		body.push(transformed);
 		if (chunk && chunk.position === i) {
-			const pattern = b.array_pattern(chunk.declarators.map(({ id }) => id));
-			const init = b.call('$.all', b.array(chunk.declarators.map(({ init }) => init)));
-			body.push(b.declaration(chunk.kind, [b.declarator(pattern, b.await(init))]));
+			if (chunk.declarators.length === 1) {
+				const declarator = chunk.declarators[0];
+				body.push(
+					b.declaration(chunk.kind, [
+						b.declarator(declarator.id, b.call(b.await(b.call('$.save', declarator.init))))
+					])
+				);
+			} else {
+				const pattern = b.array_pattern(chunk.declarators.map(({ id }) => id));
+				const init = b.call('$.all', b.array(chunk.declarators.map(({ init }) => init)));
+				body.push(b.declaration(chunk.kind, [b.declarator(pattern, b.await(init))]));
+			}
 		}
 	}
 	return {
