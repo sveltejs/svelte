@@ -4,13 +4,13 @@ title: Custom elements
 
 <!-- - [basically what we have today](https://svelte.dev/docs/custom-elements-api) -->
 
-Svelte components can also be compiled to custom elements (aka web components) using the `customElement: true` compiler option. You should specify a tag name for the component using the `<svelte:options>` [element](svelte-options). Within the custom element you can also access the host element and do things such as dispatching events using the [\$host](https://svelte.dev/docs/svelte/$host) rune.
+Svelte components can also be compiled to custom elements (aka web components) using the `customElement: true` compiler option. You should specify a tag name for the component using the `<svelte:options>` [element](svelte-options). Within the custom element you can access the host element via the [\$host](https://svelte.dev/docs/svelte/$host) rune.
 
 ```svelte
 <svelte:options customElement="my-element" />
 
 <script>
-	let { name = 'world' } = $props();
+ let { name = 'world' } = $props();
 </script>
 
 <h1>Hello {name}!</h1>
@@ -30,9 +30,9 @@ Once a custom element has been defined, it can be used as a regular DOM element:
 
 ```js
 document.body.innerHTML = `
-	<my-element>
-		<p>This is some slotted content</p>
-	</my-element>
+ <my-element>
+  <p>This is some slotted content</p>
+ </my-element>
 `;
 ```
 
@@ -49,13 +49,13 @@ console.log(el.name);
 el.name = 'everybody';
 ```
 
-Note that you need to list out all properties explicitly, i.e. doing `let props = $props()` without declaring `props` in the [component options](#Component-options) means that Svelte can't know which props to expose as properties on the DOM element.
+Note that you need to list out all properties explicitly, i.e. doing `let props = $props()` without declaring `props` in the [component options](#component-options) means that Svelte can't know which props to expose as properties on the DOM element.
 
 ## Component lifecycle
 
 Custom elements are created from Svelte components using a wrapper approach. This means the inner Svelte component has no knowledge that it is a custom element. The custom element wrapper takes care of handling its lifecycle appropriately.
 
-When a custom element is created, the Svelte component it wraps is _not_ created right away. It is only created in the next tick after the `connectedCallback` is invoked. Properties assigned to the custom element before it is inserted into the DOM are temporarily saved and then set on component creation, so their values are not lost. The same does not work for invoking exported functions on the custom element though, they are only available after the element has mounted. If you need to invoke functions before component creation, you can work around it by using the [`extend` option](#Component-options).
+When a custom element is created, the Svelte component it wraps is _not_ created right away. It is only created in the next tick after the `connectedCallback` is invoked. Properties assigned to the custom element before it is inserted into the DOM are temporarily saved and then set on component creation, so their values are not lost. The same does not work for invoking exported functions on the custom element though, they are only available after the element has mounted. If you need to invoke functions before component creation, you can work around it by using the [`extend` option](#component-options).
 
 When a custom element written with Svelte is created or updated, the shadow DOM will reflect the value in the next tick, not immediately. This way updates can be batched, and DOM moves which temporarily (but synchronously) detach the element from the DOM don't lead to unmounting the inner component.
 
@@ -76,39 +76,39 @@ When constructing a custom element, you can tailor several aspects by defining `
 
 ```svelte
 <svelte:options
-	customElement={{
-		tag: 'custom-element',
-		shadow: 'none',
-		props: {
-			name: { reflect: true, type: 'Number', attribute: 'element-index' }
-		},
-		extend: (customElementConstructor) => {
-			// Extend the class so we can let it participate in HTML forms
-			return class extends customElementConstructor {
-				static formAssociated = true;
+ customElement={{
+  tag: 'custom-element',
+  shadow: 'none',
+  props: {
+   name: { reflect: true, type: 'Number', attribute: 'element-index' }
+  },
+  extend: (customElementConstructor) => {
+   // Extend the class so we can let it participate in HTML forms
+   return class extends customElementConstructor {
+    static formAssociated = true;
 
-				constructor() {
-					super();
-					this.attachedInternals = this.attachInternals();
-				}
+    constructor() {
+     super();
+     this.attachedInternals = this.attachInternals();
+    }
 
-				// Add the function here, not below in the component so that
-				// it's always available, not just when the inner Svelte component
-				// is mounted
-				randomIndex() {
-					this.elementIndex = Math.random();
-				}
-			};
-		}
-	}}
+    // Add the function here, not below in the component so that
+    // it's always available, not just when the inner Svelte component
+    // is mounted
+    randomIndex() {
+     this.elementIndex = Math.random();
+    }
+   };
+  }
+ }}
 />
 
 <script>
-	let { elementIndex, attachedInternals } = $props();
-	// ...
-	function check() {
-		attachedInternals.checkValidity();
-	}
+ let { elementIndex, attachedInternals } = $props();
+ // ...
+ function check() {
+  attachedInternals.checkValidity();
+ }
 </script>
 
 ...
