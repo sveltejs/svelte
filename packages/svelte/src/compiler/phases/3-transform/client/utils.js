@@ -37,6 +37,7 @@ export function is_state_source(binding, analysis) {
  */
 export function can_be_parallelized(expression, scope, analysis) {
 	let has_closures = false;
+	let should_stop = false;
 	/** @type {Set<string>} */
 	const references = new Set();
 	walk(expression, null, {
@@ -52,9 +53,21 @@ export function can_be_parallelized(expression, scope, analysis) {
 			if (is_reference(node, /** @type {Node} */ (path.at(-1)))) {
 				references.add(node.name);
 			}
+		},
+		MemberExpression(node, { stop }) {
+			should_stop = true;
+			stop();
+		},
+		CallExpression(node, { stop }) {
+			should_stop = true;
+			stop();
+		},
+		NewExpression(node, { stop }) {
+			should_stop = true;
+			stop();
 		}
 	});
-	if (has_closures) {
+	if (has_closures || should_stop) {
 		return false;
 	}
 	for (const reference of references) {
