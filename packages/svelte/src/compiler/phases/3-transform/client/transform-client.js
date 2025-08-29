@@ -358,15 +358,12 @@ export function client_component(analysis, options) {
 	const push_args = [b.id('$$props'), b.literal(analysis.runes)];
 	if (dev) push_args.push(b.id(analysis.name));
 
-	let component_block = b.block([
-		store_init,
-		...store_setup,
-		...legacy_reactive_declarations,
-		...group_binding_declarations
-	]);
+	let component_block = b.block([...legacy_reactive_declarations, ...group_binding_declarations]);
 
 	if (analysis.instance.has_await) {
 		const body = b.block([
+			store_init,
+			...store_setup,
 			...state.instance_level_snippets,
 			.../** @type {ESTree.Statement[]} */ (instance.body),
 			b.if(b.call('$.aborted'), b.return()),
@@ -379,6 +376,7 @@ export function client_component(analysis, options) {
 			...state.instance_level_snippets,
 			.../** @type {ESTree.Statement[]} */ (instance.body)
 		);
+		component_block.body.unshift(store_init, ...store_setup);
 
 		if (!analysis.runes && analysis.needs_context) {
 			component_block.body.push(b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)));
