@@ -63,7 +63,7 @@ import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 
 /** @type {Visitors} */
 const visitors = {
-	_: function set_scope(node, { next, state }) {
+	_: function set_scope(node, { path, next, state }) {
 		const scope = state.scopes.get(node);
 
 		if (scope && scope !== state.scope) {
@@ -83,6 +83,9 @@ const visitors = {
 			next({ ...state, transform, scope });
 		} else {
 			next();
+		}
+		if (node.type !== 'VariableDeclaration' && path.at(-1)?.type === 'Program' && state.analysis.instance) {
+			state.current_parallelized_chunk = null;
 		}
 	},
 	AnimateDirective,
@@ -176,7 +179,9 @@ export function client_component(analysis, options) {
 		update: /** @type {any} */ (null),
 		after_update: /** @type {any} */ (null),
 		template: /** @type {any} */ (null),
-		memoizer: /** @type {any} */ (null)
+		memoizer: /** @type {any} */ (null),
+		parallelized_derived_chunks: [],
+		current_parallelized_chunk: null
 	};
 
 	const module = /** @type {ESTree.Program} */ (

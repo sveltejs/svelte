@@ -5,10 +5,10 @@ import * as b from '#compiler/builders';
 import { add_state_transformers } from './shared/declarations.js';
 
 /**
- * @param {Program} _
+ * @param {Program} node
  * @param {ComponentContext} context
  */
-export function Program(_, context) {
+export function Program(node, context) {
 	if (!context.state.analysis.runes) {
 		context.state.transform['$$props'] = {
 			read: (node) => ({ ...node, name: '$$sanitized_props' })
@@ -137,5 +137,20 @@ export function Program(_, context) {
 
 	add_state_transformers(context);
 
-	context.next();
+	/** @type {Program['body']} */
+	const body = [];
+	for (let i = 0; i < node.body.length; i++) {
+		const transformed = /** @type {Program['body'][number]} */ (context.visit(node.body[i]));
+		const chunk = context.state.parallelized_derived_chunks?.at(-1);
+		body.push(transformed);
+		if (chunk && chunk.position === i) {
+			const pattern = b.array_pattern(chunk.declarators.map(({ id }) => id));
+			const init = b.call('$.all', b.array(chunk.declarators.map(({ init }) => init)));
+			body.push(b.declaration(chunk.kind, [b.declarator(pattern, b.await(init))]));
+		}
+	}
+	return {
+		...node,
+		body
+	};
 }

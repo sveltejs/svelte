@@ -1,12 +1,18 @@
-/** @import { CallExpression, Expression, Identifier, Literal, VariableDeclaration, VariableDeclarator } from 'estree' */
+/** @import { CallExpression, Expression, Identifier, Literal, Program, VariableDeclaration, VariableDeclarator } from 'estree' */
 /** @import { Binding } from '#compiler' */
-/** @import { ComponentContext } from '../types' */
+/** @import { ComponentContext, ParallelizedChunk } from '../types' */
 import { dev, is_ignored, locate_node } from '../../../../state.js';
 import { extract_paths } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import * as assert from '../../../../utils/assert.js';
 import { get_rune } from '../../../scope.js';
-import { get_prop_source, is_prop_source, is_state_source, should_proxy } from '../utils.js';
+import {
+	can_be_parallelized,
+	get_prop_source,
+	is_prop_source,
+	is_state_source,
+	should_proxy
+} from '../utils.js';
 import { is_hoisted_function } from '../../utils.js';
 import { get_value } from './shared/declarations.js';
 
@@ -200,6 +206,18 @@ export function VariableDeclaration(node, context) {
 				const is_async = context.state.analysis.async_deriveds.has(
 					/** @type {CallExpression} */ (init)
 				);
+				let parallelize = false;
+				if (
+					is_async &&
+					context.state.analysis.instance &&
+					context.state.scope === context.state.analysis.instance.scope &&
+					!dev
+				) {
+					parallelize = can_be_parallelized(value, context.state.scope, context.state.analysis);
+				}
+
+				/** @type {VariableDeclarator[]} */
+				const derived_declarators = [];
 
 				if (declarator.id.type === 'Identifier') {
 					let expression = /** @type {Expression} */ (
@@ -212,7 +230,7 @@ export function VariableDeclaration(node, context) {
 					if (is_async) {
 						const location = dev && !is_ignored(init, 'await_waterfall') && locate_node(init);
 						let call = b.call(
-							'$.async_derived',
+							'$.async_derived' + (parallelize ? '_p' : ''),
 							b.thunk(expression, true),
 							location ? b.literal(location) : undefined
 						);
@@ -220,14 +238,14 @@ export function VariableDeclaration(node, context) {
 						call = b.call(b.await(b.call('$.save', call)));
 						if (dev) call = b.call('$.tag', call, b.literal(declarator.id.name));
 
-						declarations.push(b.declarator(declarator.id, call));
+						derived_declarators.push(b.declarator(declarator.id, call));
 					} else {
 						if (rune === '$derived') expression = b.thunk(expression);
 
 						let call = b.call('$.derived', expression);
 						if (dev) call = b.call('$.tag', call, b.literal(declarator.id.name));
 
-						declarations.push(b.declarator(declarator.id, call));
+						derived_declarators.push(b.declarator(declarator.id, call));
 					}
 				} else {
 					const init = /** @type {CallExpression} */ (declarator.init);
@@ -253,7 +271,9 @@ export function VariableDeclaration(node, context) {
 								b.thunk(expression, true),
 								location ? b.literal(location) : undefined
 							);
-							call = b.call(b.await(b.call('$.save', call)));
+							if (!parallelize) {
+								call = b.call(b.await(b.call('$.save', call)));
+							}
 						}
 
 						if (dev) {
@@ -261,7 +281,7 @@ export function VariableDeclaration(node, context) {
 							call = b.call('$.tag', call, b.literal(label));
 						}
 
-						declarations.push(b.declarator(id, call));
+						derived_declarators.push(b.declarator(id, call));
 					}
 
 					const { inserts, paths } = extract_paths(declarator.id, rhs);
@@ -278,13 +298,13 @@ export function VariableDeclaration(node, context) {
 							call = b.call('$.tag', call, b.literal(label));
 						}
 
-						declarations.push(b.declarator(id, call));
+						derived_declarators.push(b.declarator(id, call));
 					}
 
 					for (const path of paths) {
 						const expression = /** @type {Expression} */ (context.visit(path.expression));
 						const call = b.call('$.derived', b.thunk(expression));
-						declarations.push(
+						derived_declarators.push(
 							b.declarator(
 								path.node,
 								dev
@@ -292,6 +312,32 @@ export function VariableDeclaration(node, context) {
 									: call
 							)
 						);
+					}
+				}
+
+				if (!parallelize) {
+					declarations.push(...derived_declarators);
+				} else if (derived_declarators.length > 0) {
+					/** @type {ParallelizedChunk['declarators']} */
+					const declarators = derived_declarators.map(({ id, init }) => ({
+						id,
+						init: /** @type {Expression} */ (init)
+					}));
+					if (
+						context.state.current_parallelized_chunk &&
+						context.state.current_parallelized_chunk.kind === node.kind &&
+						context.state.current_parallelized_chunk.position ===
+							/** @type {Program} */ (context.path.at(-1)).body.indexOf(node)
+					) {
+						context.state.current_parallelized_chunk.declarators.push(...declarators);
+					} else {
+						const chunk = {
+							kind: node.kind,
+							declarators,
+							position: /** @type {Program} */ (context.path.at(-1)).body.indexOf(node)
+						};
+						context.state.current_parallelized_chunk = chunk;
+						context.state.parallelized_derived_chunks.push(chunk);
 					}
 				}
 

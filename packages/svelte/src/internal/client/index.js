@@ -99,6 +99,7 @@ export {
 	with_script
 } from './dom/template.js';
 export {
+	all,
 	async_body,
 	for_await_track_reactivity_loss,
 	save,

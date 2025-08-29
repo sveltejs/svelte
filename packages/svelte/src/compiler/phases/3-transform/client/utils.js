@@ -1,7 +1,7 @@
-/** @import { ArrowFunctionExpression, AssignmentExpression, BlockStatement, Expression, FunctionDeclaration, FunctionExpression, Identifier, Node, Pattern, UpdateExpression } from 'estree' */
+/** @import { ArrowFunctionExpression, AssignmentExpression, BlockStatement, CallExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, Node, Pattern, UpdateExpression } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { ClientTransformState, ComponentClientTransformState, ComponentContext } from './types.js' */
-/** @import { Analysis } from '../../types.js' */
+/** @import { Analysis, ComponentAnalysis } from '../../types.js' */
 /** @import { Scope } from '../../scope.js' */
 import * as b from '#compiler/builders';
 import { is_simple_expression } from '../../../utils/ast.js';
@@ -15,6 +15,7 @@ import {
 import { dev } from '../../../state.js';
 import { walk } from 'zimmerframe';
 import { validate_mutation } from './visitors/shared/utils.js';
+import is_reference from 'is-reference';
 
 /**
  * @param {Binding} binding
@@ -26,6 +27,60 @@ export function is_state_source(binding, analysis) {
 		(binding.kind === 'state' || binding.kind === 'raw_state') &&
 		(!analysis.immutable || binding.reassigned || analysis.accessors)
 	);
+}
+
+/**
+ * @param {Expression} expression
+ * @param {Scope} scope
+ * @param {Analysis | ComponentAnalysis} analysis
+ * @returns {boolean}
+ */
+export function can_be_parallelized(expression, scope, analysis) {
+	let has_closures = false;
+	/** @type {Set<string>} */
+	const references = new Set();
+	walk(expression, null, {
+		ArrowFunctionExpression(_, { stop }) {
+			has_closures = true;
+			stop();
+		},
+		FunctionExpression(_, { stop }) {
+			has_closures = true;
+			stop();
+		},
+		Identifier(node, { path }) {
+			if (is_reference(node, /** @type {Node} */ (path.at(-1)))) {
+				references.add(node.name);
+			}
+		}
+	});
+	if (has_closures) {
+		return false;
+	}
+	for (const reference of references) {
+		const binding = scope.get(reference);
+		if (!binding || binding.declaration_kind === 'import') {
+			return false;
+		}
+		if ('template' in analysis) {
+			if (binding.scope !== analysis.instance.scope) {
+				return false;
+			}
+		} else if (binding.scope !== analysis.module.scope) {
+			return false;
+		}
+
+		if (binding.kind === 'derived') {
+			const init = /** @type {CallExpression} */ (binding.initial);
+			if (analysis.async_deriveds.has(init)) {
+				return false;
+			}
+		}
+		if (!binding.mutated && !binding.reassigned) {
+			continue;
+		}
+	}
+	return true;
 }
 
 /**

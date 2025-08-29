@@ -189,3 +189,12 @@ export async function async_body(fn) {
 		unsuspend();
 	}
 }
+
+/**
+ * @template T
+ * @param {Array<Promise<T>>} promises
+ * @returns {Promise<Array<T>>}
+ */
+export function all(...promises) {
+	return Promise.all(promises.map((promise) => save(promise).then((restore) => restore())));
+}
