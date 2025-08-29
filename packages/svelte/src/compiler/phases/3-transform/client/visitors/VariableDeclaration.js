@@ -235,7 +235,7 @@ export function VariableDeclaration(node, context) {
 							location ? b.literal(location) : undefined
 						);
 
-						call = b.call(b.await(b.call('$.save', call)));
+						if (!parallelize) call = b.call(b.await(b.call('$.save', call)));
 						if (dev) call = b.call('$.tag', call, b.literal(declarator.id.name));
 
 						derived_declarators.push(b.declarator(declarator.id, call));
