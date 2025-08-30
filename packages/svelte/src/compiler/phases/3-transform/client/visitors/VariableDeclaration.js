@@ -268,7 +268,8 @@ export function VariableDeclaration(node, context) {
 						...context.state.scope.get_bindings(declarator)
 					]);
 				}
-				const type = parallelize ? (dev ? 'promise_all' : 'all') : null;
+				// const type = parallelize ? (dev ? 'promise_all' : 'all') : null;
+				const type = 'all';
 
 				/** @type {VariableDeclarator[]} */
 				const derived_declarators = [];
