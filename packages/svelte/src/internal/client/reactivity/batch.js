@@ -94,9 +94,7 @@ export class Batch {
 
 	/**
 	 * When the batch is committed (and the DOM is updated), we need to remove old branches
-	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks.
-	 * Key is a function that returns the block effect because #callbacks will be called before
-	 * the block effect reference exists, so we need to capture it in a closure.
+	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks
 	 * @type {Map<Effect, () => void>}
 	 */
 	#callbacks = new Map();
