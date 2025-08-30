@@ -152,17 +152,12 @@ export function Program(node, context) {
 					chunk.position + offset,
 					0,
 					b.declaration(chunk.kind, [
-						b.declarator(
-							declarator.id,
-							chunk.type === 'promise_all'
-								? b.await(declarator.init)
-								: b.call(b.await(b.call('$.save', declarator.init)))
-						)
+						b.declarator(declarator.id, b.call(b.await(b.call('$.save', declarator.init))))
 					])
 				);
 			} else {
 				const pattern = b.array_pattern(chunk.declarators.map(({ id }) => id));
-				const init = b.call(`$.${chunk.type}`, ...chunk.declarators.map(({ init }) => init));
+				const init = b.call(`$.all`, ...chunk.declarators.map(({ init }) => init));
 				body.splice(
 					chunk.position + offset,
 					0,

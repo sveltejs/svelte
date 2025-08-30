@@ -71,8 +71,7 @@ export function VariableDeclaration(node, context) {
 						];
 						if (
 							context.state.current_parallelized_chunk &&
-							context.state.current_parallelized_chunk.kind === node.kind &&
-							context.state.current_parallelized_chunk.type === 'all'
+							context.state.current_parallelized_chunk.kind === node.kind
 						) {
 							context.state.current_parallelized_chunk.declarators.push(...declarators);
 							context.state.current_parallelized_chunk.bindings.push(...bindings);
@@ -85,8 +84,7 @@ export function VariableDeclaration(node, context) {
 								kind: node.kind,
 								declarators,
 								position: /** @type {Program} */ (context.path.at(-1)).body.indexOf(node),
-								bindings,
-								type: 'all'
+								bindings
 							};
 							context.state.current_parallelized_chunk = chunk;
 							context.state.parallelized_chunks.push(chunk);
@@ -268,8 +266,6 @@ export function VariableDeclaration(node, context) {
 						...context.state.scope.get_bindings(declarator)
 					]);
 				}
-				// const type = parallelize ? (dev ? 'promise_all' : 'all') : null;
-				const type = 'all';
 
 				/** @type {VariableDeclarator[]} */
 				const derived_declarators = [];
@@ -383,8 +379,7 @@ export function VariableDeclaration(node, context) {
 					}));
 					if (
 						context.state.current_parallelized_chunk &&
-						context.state.current_parallelized_chunk.kind === node.kind &&
-						context.state.current_parallelized_chunk.type === type
+						context.state.current_parallelized_chunk.kind === node.kind
 					) {
 						context.state.current_parallelized_chunk.declarators.push(...declarators);
 						context.state.current_parallelized_chunk.bindings.push(...bindings);
@@ -397,8 +392,7 @@ export function VariableDeclaration(node, context) {
 							kind: node.kind,
 							declarators,
 							position: /** @type {Program} */ (context.path.at(-1)).body.indexOf(node),
-							bindings,
-							type: /** @type {ParallelizedChunk['type']} */ (type)
+							bindings
 						};
 						context.state.current_parallelized_chunk = chunk;
 						context.state.parallelized_chunks.push(chunk);

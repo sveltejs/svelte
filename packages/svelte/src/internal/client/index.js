@@ -102,7 +102,6 @@ export {
 	all,
 	async_body,
 	for_await_track_reactivity_loss,
-	promise_all,
 	save,
 	track_reactivity_loss
 } from './reactivity/async.js';

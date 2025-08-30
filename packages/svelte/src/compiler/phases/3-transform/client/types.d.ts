@@ -97,7 +97,6 @@ export interface ParallelizedChunk {
 	/** index in instance body */
 	position: number;
 	bindings: Binding[];
-	type: 'promise_all' | 'all';
 }
 
 export type Context = import('zimmerframe').Context<AST.SvelteNode, ClientTransformState>;
