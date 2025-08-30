@@ -51,11 +51,12 @@ export function VariableDeclaration(node, context) {
 					init?.type === 'AwaitExpression' &&
 					context.state.analysis.instance?.scope === context.state.scope
 				) {
+					const current_chunk = context.state.current_parallelized_chunk;
 					const parallelize = can_be_parallelized(
 						init.argument,
 						context.state.scope,
 						context.state.analysis,
-						[...(context.state.current_parallelized_chunk?.bindings ?? []), ...bindings]
+						[...(current_chunk?.bindings ?? []), ...bindings]
 					);
 					if (parallelize) {
 						const { id, init: visited_init } = /** @type {VariableDeclarator} */ (
@@ -68,15 +69,10 @@ export function VariableDeclaration(node, context) {
 							id,
 							init: /** @type {Expression} */ (visited_init)
 						};
-						if (
-							context.state.current_parallelized_chunk &&
-							context.state.current_parallelized_chunk.kind === node.kind
-						) {
-							context.state.current_parallelized_chunk.declarators.push(_declarator);
-							context.state.current_parallelized_chunk.bindings.push(...bindings);
-							context.state.current_parallelized_chunk.position = /** @type {Program} */ (
-								parent
-							).body.indexOf(node);
+						if (current_chunk && current_chunk.kind === node.kind) {
+							current_chunk.declarators.push(_declarator);
+							current_chunk.bindings.push(...bindings);
+							current_chunk.position = /** @type {Program} */ (parent).body.indexOf(node);
 						} else {
 							/** @type {ParallelizedChunk} */
 							const chunk = {
@@ -251,6 +247,7 @@ export function VariableDeclaration(node, context) {
 					/** @type {CallExpression} */ (init)
 				);
 				let parallelize = false;
+				const current_chunk = context.state.current_parallelized_chunk;
 				if (
 					is_async &&
 					context.state.analysis.instance &&
@@ -259,7 +256,7 @@ export function VariableDeclaration(node, context) {
 					declarator.id.type === 'Identifier'
 				) {
 					parallelize = can_be_parallelized(value, context.state.scope, context.state.analysis, [
-						...(context.state.current_parallelized_chunk?.bindings ?? []),
+						...(current_chunk?.bindings ?? []),
 						...context.state.scope.get_bindings(declarator)
 					]);
 				}
@@ -369,18 +366,14 @@ export function VariableDeclaration(node, context) {
 				if (!parallelize) {
 					declarations.push(...derived_declarators);
 				} else if (derived_declarators.length > 0) {
-					/** @type {ParallelizedChunk['declarators']} */
 					const declarators = derived_declarators.map(({ id, init }) => ({
 						id,
 						init: /** @type {Expression} */ (init)
 					}));
-					if (
-						context.state.current_parallelized_chunk &&
-						context.state.current_parallelized_chunk.kind === node.kind
-					) {
-						context.state.current_parallelized_chunk.declarators.push(...declarators);
-						context.state.current_parallelized_chunk.bindings.push(...bindings);
-						context.state.current_parallelized_chunk.position = position;
+					if (current_chunk && current_chunk.kind === node.kind) {
+						current_chunk.declarators.push(...declarators);
+						current_chunk.bindings.push(...bindings);
+						current_chunk.position = position;
 					} else {
 						/** @type {ParallelizedChunk} */
 						const chunk = {
