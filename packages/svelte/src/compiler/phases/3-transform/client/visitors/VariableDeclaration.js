@@ -46,7 +46,7 @@ export function VariableDeclaration(node, context) {
 					continue;
 				}
 				if (
-					init.type === 'AwaitExpression' &&
+					init?.type === 'AwaitExpression' &&
 					context.state.analysis.instance?.scope === context.state.scope
 				) {
 					const parallelize = can_be_parallelized(
