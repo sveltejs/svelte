@@ -185,6 +185,17 @@ export function tag(source, label) {
 }
 
 /**
+ * @template T
+ * @param {Promise<Value<T>>} promise
+ * @param {string} label
+ * @returns {Promise<Value<T>>}
+ */
+export async function tag_async(promise, label) {
+	const source = await promise;
+	return tag(source, label);
+}
+
+/**
  * @param {unknown} value
  * @param {string} label
  */

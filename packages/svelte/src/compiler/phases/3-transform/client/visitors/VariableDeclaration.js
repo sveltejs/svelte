@@ -71,7 +71,8 @@ export function VariableDeclaration(node, context) {
 						];
 						if (
 							context.state.current_parallelized_chunk &&
-							context.state.current_parallelized_chunk.kind === node.kind
+							context.state.current_parallelized_chunk.kind === node.kind &&
+							context.state.current_parallelized_chunk.type === 'all'
 						) {
 							context.state.current_parallelized_chunk.declarators.push(...declarators);
 							context.state.current_parallelized_chunk.bindings.push(...bindings);
@@ -79,11 +80,13 @@ export function VariableDeclaration(node, context) {
 								context.path.at(-1)
 							).body.indexOf(node);
 						} else {
+							/** @type {ParallelizedChunk} */
 							const chunk = {
 								kind: node.kind,
 								declarators,
 								position: /** @type {Program} */ (context.path.at(-1)).body.indexOf(node),
-								bindings
+								bindings,
+								type: 'all'
 							};
 							context.state.current_parallelized_chunk = chunk;
 							context.state.parallelized_chunks.push(chunk);
@@ -257,7 +260,6 @@ export function VariableDeclaration(node, context) {
 					is_async &&
 					context.state.analysis.instance &&
 					context.state.scope === context.state.analysis.instance.scope &&
-					!dev &&
 					// TODO make it work without this
 					declarator.id.type === 'Identifier'
 				) {
@@ -266,6 +268,7 @@ export function VariableDeclaration(node, context) {
 						...context.state.scope.get_bindings(declarator)
 					]);
 				}
+				const type = parallelize ? (dev ? 'promise_all' : 'all') : null;
 
 				/** @type {VariableDeclarator[]} */
 				const derived_declarators = [];
@@ -289,7 +292,13 @@ export function VariableDeclaration(node, context) {
 						);
 
 						if (!parallelize) call = b.call(b.await(b.call('$.save', call)));
-						if (dev) call = b.call('$.tag', call, b.literal(declarator.id.name));
+						if (dev) {
+							call = b.call(
+								'$.tag' + (parallelize ? '_async' : ''),
+								call,
+								b.literal(declarator.id.name)
+							);
+						}
 						bindings.push(/** @type {Binding} */ (context.state.scope.get(declarator.id.name)));
 						derived_declarators.push(b.declarator(declarator.id, call));
 					} else {
@@ -373,7 +382,8 @@ export function VariableDeclaration(node, context) {
 					}));
 					if (
 						context.state.current_parallelized_chunk &&
-						context.state.current_parallelized_chunk.kind === node.kind
+						context.state.current_parallelized_chunk.kind === node.kind &&
+						context.state.current_parallelized_chunk.type === type
 					) {
 						context.state.current_parallelized_chunk.declarators.push(...declarators);
 						context.state.current_parallelized_chunk.bindings.push(...bindings);
@@ -381,11 +391,13 @@ export function VariableDeclaration(node, context) {
 							context.path.at(-1)
 						).body.indexOf(node);
 					} else {
+						/** @type {ParallelizedChunk} */
 						const chunk = {
 							kind: node.kind,
 							declarators,
 							position: /** @type {Program} */ (context.path.at(-1)).body.indexOf(node),
-							bindings
+							bindings,
+							type: /** @type {ParallelizedChunk['type']} */ (type)
 						};
 						context.state.current_parallelized_chunk = chunk;
 						context.state.parallelized_chunks.push(chunk);

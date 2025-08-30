@@ -7,7 +7,7 @@ export { add_locations } from './dev/elements.js';
 export { hmr } from './dev/hmr.js';
 export { create_ownership_validator } from './dev/ownership.js';
 export { check_target, legacy_api } from './dev/legacy.js';
-export { trace, tag, tag_proxy } from './dev/tracing.js';
+export { trace, tag, tag_async, tag_proxy } from './dev/tracing.js';
 export { inspect } from './dev/inspect.js';
 export { async } from './dom/blocks/async.js';
 export { validate_snippet_args } from './dev/validation.js';
@@ -102,6 +102,7 @@ export {
 	all,
 	async_body,
 	for_await_track_reactivity_loss,
+	promise_all,
 	save,
 	track_reactivity_loss
 } from './reactivity/async.js';

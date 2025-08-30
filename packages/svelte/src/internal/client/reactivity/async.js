@@ -202,3 +202,5 @@ export function all(...promises) {
 		)
 	);
 }
+
+export const promise_all = Promise.all;
