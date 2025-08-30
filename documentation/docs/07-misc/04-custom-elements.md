@@ -4,7 +4,7 @@ title: Custom elements
 
 <!-- - [basically what we have today](https://svelte.dev/docs/custom-elements-api) -->
 
-Svelte components can also be compiled to custom elements (aka web components) using the `customElement: true` compiler option. You should specify a tag name for the component using the `<svelte:options>` [element](svelte-options). Within the custom element you can access the host element via the [\$host](https://svelte.dev/docs/svelte/$host) rune.
+Svelte components can also be compiled to custom elements (aka web components) using the `customElement: true` compiler option. You should specify a tag name for the component using the `<svelte:options>` [element](svelte-options). Within the custom element you can access the host element via the [`$host`](https://svelte.dev/docs/svelte/$host) rune.
 
 ```svelte
 <svelte:options customElement="my-element" />
