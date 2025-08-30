@@ -143,27 +143,29 @@ export function Program(node, context) {
 		const transformed = /** @type {Program['body'][number]} */ (context.visit(node.body[i]));
 		body.push(transformed);
 	}
-	let offset = 0;
-	for (const chunk of context.state.parallelized_chunks) {
-		if (chunk.declarators.length === 1) {
-			const declarator = chunk.declarators[0];
-			body.splice(
-				chunk.position + offset,
-				0,
-				b.declaration(chunk.kind, [
-					b.declarator(declarator.id, b.call(b.await(b.call('$.save', declarator.init))))
-				])
-			);
-		} else {
-			const pattern = b.array_pattern(chunk.declarators.map(({ id }) => id));
-			const init = b.call('$.all', ...chunk.declarators.map(({ init }) => init));
-			body.splice(
-				chunk.position + offset,
-				0,
-				b.declaration(chunk.kind, [b.declarator(pattern, b.await(init))])
-			);
+	if (context.state.parallelized_chunks) {
+		let offset = 0;
+		for (const chunk of context.state.parallelized_chunks) {
+			if (chunk.declarators.length === 1) {
+				const declarator = chunk.declarators[0];
+				body.splice(
+					chunk.position + offset,
+					0,
+					b.declaration(chunk.kind, [
+						b.declarator(declarator.id, b.call(b.await(b.call('$.save', declarator.init))))
+					])
+				);
+			} else {
+				const pattern = b.array_pattern(chunk.declarators.map(({ id }) => id));
+				const init = b.call('$.all', ...chunk.declarators.map(({ init }) => init));
+				body.splice(
+					chunk.position + offset,
+					0,
+					b.declaration(chunk.kind, [b.declarator(pattern, b.await(init))])
+				);
+			}
+			offset++;
 		}
-		offset++;
 	}
 	return {
 		...node,
