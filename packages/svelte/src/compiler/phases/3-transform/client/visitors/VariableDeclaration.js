@@ -346,6 +346,7 @@ export function VariableDeclaration(node, context) {
 							const label = `[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`;
 							call = b.call('$.tag', call, b.literal(label));
 						}
+						derived_declarators.push(b.declarator(id, call));
 					}
 
 					for (const path of paths) {
