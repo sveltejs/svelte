@@ -141,7 +141,7 @@ export function Program(node, context) {
 	const body = [];
 	for (let i = 0; i < node.body.length; i++) {
 		const transformed = /** @type {Program['body'][number]} */ (context.visit(node.body[i]));
-		const chunk = context.state.parallelized_derived_chunks?.at(-1);
+		const chunk = context.state.parallelized_chunks?.at(-1);
 		body.push(transformed);
 		if (chunk && chunk.position === i) {
 			if (chunk.declarators.length === 1) {

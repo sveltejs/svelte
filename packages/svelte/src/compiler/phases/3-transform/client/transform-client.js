@@ -184,7 +184,7 @@ export function client_component(analysis, options) {
 		after_update: /** @type {any} */ (null),
 		template: /** @type {any} */ (null),
 		memoizer: /** @type {any} */ (null),
-		parallelized_derived_chunks: [],
+		parallelized_chunks: [],
 		current_parallelized_chunk: null
 	};
 

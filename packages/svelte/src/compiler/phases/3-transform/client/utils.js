@@ -33,9 +33,10 @@ export function is_state_source(binding, analysis) {
  * @param {Expression} expression
  * @param {Scope} scope
  * @param {Analysis | ComponentAnalysis} analysis
+ * @param {Binding[]} bindings bindings currently being parallelized (and cannot be accessed)
  * @returns {boolean}
  */
-export function can_be_parallelized(expression, scope, analysis) {
+export function can_be_parallelized(expression, scope, analysis, bindings) {
 	let has_closures = false;
 	/** @type {Set<string>} */
 	const references = new Set();
@@ -67,6 +68,10 @@ export function can_be_parallelized(expression, scope, analysis) {
 				return false;
 			}
 		} else if (binding.scope !== analysis.module.scope) {
+			return false;
+		}
+
+		if (bindings.includes(binding)) {
 			return false;
 		}
 

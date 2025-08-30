@@ -45,6 +45,52 @@ export function VariableDeclaration(node, context) {
 
 					continue;
 				}
+				if (
+					init.type === 'AwaitExpression' &&
+					context.state.analysis.instance?.scope === context.state.scope
+				) {
+					const parallelize = can_be_parallelized(
+						init.argument,
+						context.state.scope,
+						context.state.analysis,
+						context.state.current_parallelized_chunk?.bindings ?? []
+					);
+					if (parallelize) {
+						const bindings = context.state.scope.get_bindings(declarator);
+						const visited = /** @type {VariableDeclarator} */ (
+							context.visit({
+								...declarator,
+								init: init.argument
+							})
+						);
+						const declarators = [
+							{
+								id: visited.id,
+								init: /** @type {Expression} */ (visited.init)
+							}
+						];
+						if (
+							context.state.current_parallelized_chunk &&
+							context.state.current_parallelized_chunk.kind === node.kind
+						) {
+							context.state.current_parallelized_chunk.declarators.push(...declarators);
+							context.state.current_parallelized_chunk.bindings.push(...bindings);
+							context.state.current_parallelized_chunk.position = /** @type {Program} */ (
+								context.path.at(-1)
+							).body.indexOf(node);
+						} else {
+							const chunk = {
+								kind: node.kind,
+								declarators,
+								position: /** @type {Program} */ (context.path.at(-1)).body.indexOf(node),
+								bindings
+							};
+							context.state.current_parallelized_chunk = chunk;
+							context.state.parallelized_chunks.push(chunk);
+						}
+						continue;
+					}
+				}
 				declarations.push(/** @type {VariableDeclarator} */ (context.visit(declarator)));
 				continue;
 			}
@@ -215,11 +261,18 @@ export function VariableDeclaration(node, context) {
 					// TODO make it work without this
 					declarator.id.type === 'Identifier'
 				) {
-					parallelize = can_be_parallelized(value, context.state.scope, context.state.analysis);
+					parallelize = can_be_parallelized(
+						value,
+						context.state.scope,
+						context.state.analysis,
+						context.state.current_parallelized_chunk?.bindings ?? []
+					);
 				}
 
 				/** @type {VariableDeclarator[]} */
 				const derived_declarators = [];
+				/** @type {Binding[]} */
+				const bindings = [];
 
 				if (declarator.id.type === 'Identifier') {
 					let expression = /** @type {Expression} */ (
@@ -239,15 +292,13 @@ export function VariableDeclaration(node, context) {
 
 						if (!parallelize) call = b.call(b.await(b.call('$.save', call)));
 						if (dev) call = b.call('$.tag', call, b.literal(declarator.id.name));
-
+						bindings.push(/** @type {Binding} */ (context.state.scope.get(declarator.id.name)));
 						derived_declarators.push(b.declarator(declarator.id, call));
 					} else {
 						if (rune === '$derived') expression = b.thunk(expression);
 
 						let call = b.call('$.derived', expression);
 						if (dev) call = b.call('$.tag', call, b.literal(declarator.id.name));
-
-						derived_declarators.push(b.declarator(declarator.id, call));
 					}
 				} else {
 					const init = /** @type {CallExpression} */ (declarator.init);
@@ -273,17 +324,13 @@ export function VariableDeclaration(node, context) {
 								b.thunk(expression, true),
 								location ? b.literal(location) : undefined
 							);
-							if (!parallelize) {
-								call = b.call(b.await(b.call('$.save', call)));
-							}
+							call = b.call(b.await(b.call('$.save', call)));
 						}
 
 						if (dev) {
 							const label = `[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`;
 							call = b.call('$.tag', call, b.literal(label));
 						}
-
-						derived_declarators.push(b.declarator(id, call));
 					}
 
 					const { inserts, paths } = extract_paths(declarator.id, rhs);
@@ -299,8 +346,6 @@ export function VariableDeclaration(node, context) {
 							const label = `[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`;
 							call = b.call('$.tag', call, b.literal(label));
 						}
-
-						derived_declarators.push(b.declarator(id, call));
 					}
 
 					for (const path of paths) {
@@ -327,19 +372,22 @@ export function VariableDeclaration(node, context) {
 					}));
 					if (
 						context.state.current_parallelized_chunk &&
-						context.state.current_parallelized_chunk.kind === node.kind &&
-						context.state.current_parallelized_chunk.position ===
-							/** @type {Program} */ (context.path.at(-1)).body.indexOf(node)
+						context.state.current_parallelized_chunk.kind === node.kind
 					) {
 						context.state.current_parallelized_chunk.declarators.push(...declarators);
+						context.state.current_parallelized_chunk.bindings.push(...bindings);
+						context.state.current_parallelized_chunk.position = /** @type {Program} */ (
+							context.path.at(-1)
+						).body.indexOf(node);
 					} else {
 						const chunk = {
 							kind: node.kind,
 							declarators,
-							position: /** @type {Program} */ (context.path.at(-1)).body.indexOf(node)
+							position: /** @type {Program} */ (context.path.at(-1)).body.indexOf(node),
+							bindings
 						};
 						context.state.current_parallelized_chunk = chunk;
-						context.state.parallelized_derived_chunks.push(chunk);
+						context.state.parallelized_chunks.push(chunk);
 					}
 				}
 

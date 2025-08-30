@@ -9,7 +9,7 @@ import type {
 	VariableDeclaration,
 	Pattern
 } from 'estree';
-import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
+import type { AST, Binding, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
 import type { Template } from './transform-template/template.js';
@@ -83,7 +83,8 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly instance_level_snippets: VariableDeclaration[];
 	/** Snippets hoisted to the module */
 	readonly module_level_snippets: VariableDeclaration[];
-	readonly parallelized_derived_chunks: ParallelizedChunk[];
+	/** async deriveds and certain awaited variables are chunked so they can be parallelized via `Promise.all` */
+	readonly parallelized_chunks: ParallelizedChunk[];
 	current_parallelized_chunk: ParallelizedChunk | null;
 }
 
@@ -95,6 +96,7 @@ export interface ParallelizedChunk {
 	kind: VariableDeclaration['kind'];
 	/** index in instance body */
 	position: number;
+	bindings: Binding[];
 }
 
 export type Context = import('zimmerframe').Context<AST.SvelteNode, ClientTransformState>;
