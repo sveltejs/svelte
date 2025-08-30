@@ -97,7 +97,7 @@ export class Batch {
 	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks.
 	 * Key is a function that returns the block effect because #callbacks will be called before
 	 * the block effect reference exists, so we need to capture it in a closure.
-	 * @type {Map<() => Effect, () => void>}
+	 * @type {Map<Effect, () => void>}
 	 */
 	#callbacks = new Map();
 
@@ -229,7 +229,7 @@ export class Batch {
 		// is outstanding from a previous flush, commit
 		if (this.#async_effects.length === 0 && this.#pending === 0) {
 			if (superseded_batches.length > 0) {
-				const own = [...this.#callbacks.keys()].map((c) => c());
+				const own = [...this.#callbacks.keys()];
 				// A superseded batch could have callbacks for e.g. destroying if blocks
 				// that are not part of the current batch because it already happened in the prior one,
 				// and the corresponding block effect therefore returning early because nothing was changed from its
@@ -237,9 +237,9 @@ export class Batch {
 				// We do it from newest to oldest to ensure the correct callback is applied.
 				for (const batch of superseded_batches.reverse()) {
 					for (const [effect, cb] of batch.#callbacks) {
-						if (!own.includes(effect())) {
+						if (!own.includes(effect)) {
 							cb();
-							own.push(effect());
+							own.push(effect);
 						}
 					}
 					batch.remove();
@@ -475,11 +475,10 @@ export class Batch {
 	}
 
 	/**
-	 * @param {() => Effect} effect
 	 * @param {() => void} fn
 	 */
-	add_callback(effect, fn) {
-		this.#callbacks.set(effect, fn);
+	add_callback(fn) {
+		this.#callbacks.set(/** @type {Effect} */ (active_effect), fn);
 	}
 
 	settled() {

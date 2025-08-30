@@ -52,7 +52,7 @@ export function key(node, get_key, render_fn) {
 		effect = pending_effect;
 	}
 
-	var b = block(() => {
+	block(() => {
 		if (changed(key, (key = get_key()))) {
 			var target = anchor;
 
@@ -66,7 +66,7 @@ export function key(node, get_key, render_fn) {
 			pending_effect = branch(() => render_fn(target));
 
 			if (defer) {
-				/** @type {Batch} */ (current_batch).add_callback(() => b, commit);
+				/** @type {Batch} */ (current_batch).add_callback(commit);
 			} else {
 				commit();
 			}

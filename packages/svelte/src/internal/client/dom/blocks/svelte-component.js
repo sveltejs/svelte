@@ -51,7 +51,7 @@ export function component(node, get_component, render_fn) {
 		pending_effect = null;
 	}
 
-	var b = block(() => {
+	block(() => {
 		if (component === (component = get_component())) return;
 
 		var defer = should_defer_append();
@@ -70,7 +70,7 @@ export function component(node, get_component, render_fn) {
 		}
 
 		if (defer) {
-			/** @type {Batch} */ (current_batch).add_callback(() => b, commit);
+			/** @type {Batch} */ (current_batch).add_callback(commit);
 		} else {
 			commit();
 		}

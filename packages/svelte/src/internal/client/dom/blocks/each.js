@@ -187,7 +187,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		}
 	}
 
-	var b = block(() => {
+	block(() => {
 		// store a reference to the effect so that we can update the start/end nodes in reconciliation
 		each_effect ??= /** @type {Effect} */ (active_effect);
 
@@ -310,7 +310,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					}
 				}
 
-				batch.add_callback(() => b, commit);
+				batch.add_callback(commit);
 			} else {
 				commit();
 			}
