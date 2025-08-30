@@ -1,4 +1,4 @@
-/** @import { CallExpression, Expression, Identifier, Literal, Program, VariableDeclaration, VariableDeclarator } from 'estree' */
+/** @import { CallExpression, Expression, Identifier, Literal, Node, Program, VariableDeclaration, VariableDeclarator } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { ComponentContext, ParallelizedChunk } from '../types' */
 import { dev, is_ignored, locate_node } from '../../../../state.js';
@@ -23,12 +23,14 @@ import { get_value } from './shared/declarations.js';
 export function VariableDeclaration(node, context) {
 	/** @type {VariableDeclarator[]} */
 	const declarations = [];
+	const parent = /** @type {Node} */ (context.path.at(-1));
+	const position = /** @type {Program} */ (parent).body?.indexOf?.(node);
 
 	if (context.state.analysis.runes) {
 		for (const declarator of node.declarations) {
 			const init = /** @type {Expression} */ (declarator.init);
 			const rune = get_rune(init, context.state.scope);
-
+			const bindings = context.state.scope.get_bindings(declarator);
 			if (
 				!rune ||
 				rune === '$effect.tracking' ||
@@ -53,40 +55,34 @@ export function VariableDeclaration(node, context) {
 						init.argument,
 						context.state.scope,
 						context.state.analysis,
-						[
-							...(context.state.current_parallelized_chunk?.bindings ?? []),
-							...context.state.scope.get_bindings(declarator)
-						]
+						[...(context.state.current_parallelized_chunk?.bindings ?? []), ...bindings]
 					);
 					if (parallelize) {
-						const bindings = context.state.scope.get_bindings(declarator);
-						const visited = /** @type {VariableDeclarator} */ (
+						const { id, init: visited_init } = /** @type {VariableDeclarator} */ (
 							context.visit({
 								...declarator,
 								init: init.argument
 							})
 						);
-						const declarators = [
-							{
-								id: visited.id,
-								init: /** @type {Expression} */ (visited.init)
-							}
-						];
+						const _declarator = {
+							id,
+							init: /** @type {Expression} */ (visited_init)
+						};
 						if (
 							context.state.current_parallelized_chunk &&
 							context.state.current_parallelized_chunk.kind === node.kind
 						) {
-							context.state.current_parallelized_chunk.declarators.push(...declarators);
+							context.state.current_parallelized_chunk.declarators.push(_declarator);
 							context.state.current_parallelized_chunk.bindings.push(...bindings);
 							context.state.current_parallelized_chunk.position = /** @type {Program} */ (
-								context.path.at(-1)
+								parent
 							).body.indexOf(node);
 						} else {
 							/** @type {ParallelizedChunk} */
 							const chunk = {
 								kind: node.kind,
-								declarators,
-								position: /** @type {Program} */ (context.path.at(-1)).body.indexOf(node),
+								declarators: [_declarator],
+								position,
 								bindings
 							};
 							context.state.current_parallelized_chunk = chunk;
@@ -185,9 +181,7 @@ export function VariableDeclaration(node, context) {
 				 * @param {Expression} value
 				 */
 				const create_state_declarator = (id, value) => {
-					const binding = /** @type {import('#compiler').Binding} */ (
-						context.state.scope.get(id.name)
-					);
+					const binding = /** @type {Binding} */ (context.state.scope.get(id.name));
 					const is_state = is_state_source(binding, context.state.analysis);
 					const is_proxy = should_proxy(value, context.state.scope);
 
@@ -386,15 +380,13 @@ export function VariableDeclaration(node, context) {
 					) {
 						context.state.current_parallelized_chunk.declarators.push(...declarators);
 						context.state.current_parallelized_chunk.bindings.push(...bindings);
-						context.state.current_parallelized_chunk.position = /** @type {Program} */ (
-							context.path.at(-1)
-						).body.indexOf(node);
+						context.state.current_parallelized_chunk.position = position;
 					} else {
 						/** @type {ParallelizedChunk} */
 						const chunk = {
 							kind: node.kind,
 							declarators,
-							position: /** @type {Program} */ (context.path.at(-1)).body.indexOf(node),
+							position,
 							bindings
 						};
 						context.state.current_parallelized_chunk = chunk;
@@ -407,7 +399,7 @@ export function VariableDeclaration(node, context) {
 		}
 	} else {
 		for (const declarator of node.declarations) {
-			const bindings = /** @type {Binding[]} */ (context.state.scope.get_bindings(declarator));
+			const bindings = context.state.scope.get_bindings(declarator);
 			const has_state = bindings.some((binding) => binding.kind === 'state');
 			const has_props = bindings.some((binding) => binding.kind === 'bindable_prop');
 
@@ -510,13 +502,9 @@ export function VariableDeclaration(node, context) {
  * @param {Expression} value
  */
 function create_state_declarators(declarator, context, value) {
+	const immutable = context.state.analysis.immutable ? b.true : undefined;
 	if (declarator.id.type === 'Identifier') {
-		return [
-			b.declarator(
-				declarator.id,
-				b.call('$.mutable_source', value, context.state.analysis.immutable ? b.true : undefined)
-			)
-		];
+		return [b.declarator(declarator.id, b.call('$.mutable_source', value, immutable))];
 	}
 
 	const tmp = b.id(context.state.scope.generate('tmp'));
@@ -531,15 +519,13 @@ function create_state_declarators(declarator, context, value) {
 			const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
 			return b.declarator(id, b.call('$.derived', expression));
 		}),
-		...paths.map((path) => {
-			const value = /** @type {Expression} */ (context.visit(path.expression));
-			const binding = context.state.scope.get(/** @type {Identifier} */ (path.node).name);
+		...paths.map(({ expression, node }) => {
+			const value = /** @type {Expression} */ (context.visit(expression));
+			const binding = context.state.scope.get(/** @type {Identifier} */ (node).name);
 
 			return b.declarator(
-				path.node,
-				binding?.kind === 'state'
-					? b.call('$.mutable_source', value, context.state.analysis.immutable ? b.true : undefined)
-					: value
+				node,
+				binding?.kind === 'state' ? b.call('$.mutable_source', value, immutable) : value
 			);
 		})
 	];
