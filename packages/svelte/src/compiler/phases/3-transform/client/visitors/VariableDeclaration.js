@@ -53,7 +53,10 @@ export function VariableDeclaration(node, context) {
 						init.argument,
 						context.state.scope,
 						context.state.analysis,
-						context.state.current_parallelized_chunk?.bindings ?? []
+						[
+							...(context.state.current_parallelized_chunk?.bindings ?? []),
+							...context.state.scope.get_bindings(declarator)
+						]
 					);
 					if (parallelize) {
 						const bindings = context.state.scope.get_bindings(declarator);

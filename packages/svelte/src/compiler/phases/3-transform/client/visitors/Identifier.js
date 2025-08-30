@@ -1,12 +1,12 @@
 /** @import { Identifier, Node } from 'estree' */
-/** @import { Context } from '../types' */
+/** @import { ComponentContext } from '../types' */
 import is_reference from 'is-reference';
 import * as b from '#compiler/builders';
 import { build_getter } from '../utils.js';
 
 /**
  * @param {Identifier} node
- * @param {Context} context
+ * @param {ComponentContext} context
  */
 export function Identifier(node, context) {
 	const parent = /** @type {Node} */ (context.path.at(-1));
@@ -34,6 +34,9 @@ export function Identifier(node, context) {
 			) {
 				return b.id('$$props');
 			}
+		}
+		if (binding && context.state.current_parallelized_chunk?.bindings?.includes(binding)) {
+			context.state.current_parallelized_chunk = null;
 		}
 
 		return build_getter(node, context.state);
