@@ -177,14 +177,6 @@ export class Batch {
 		/** @type {Map<Source, { v: unknown, wv: number }> | null} */
 		var current_values = null;
 
-		/**
-		 * A batch is superseded if all of its sources are also in the current batch.
-		 * If the current batch commits, we don't need the old batch anymore.
-		 * This also prevents memory leaks since the old batch will never be committed.
-		 * @type {Batch[]}
-		 */
-		var superseded_batches = [];
-
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to undo the changes belonging to any batch
 		// other than the current one
@@ -197,25 +189,17 @@ export class Batch {
 				source.v = current;
 			}
 
-			let is_prior_batch = true;
-
 			for (const batch of batches) {
 				if (batch === this) {
-					is_prior_batch = false;
 					continue;
 				}
 
-				let superseded = is_prior_batch;
-
 				for (const [source, previous] of batch.#previous) {
 					if (!current_values.has(source)) {
-						superseded = false;
 						current_values.set(source, { v: source.v, wv: source.wv });
 						source.v = previous;
 					}
 				}
-
-				if (superseded) superseded_batches.push(batch);
 			}
 		}
 
@@ -226,21 +210,21 @@ export class Batch {
 		// if we didn't start any new async work, and no async work
 		// is outstanding from a previous flush, commit
 		if (this.#async_effects.length === 0 && this.#pending === 0) {
-			if (superseded_batches.length > 0) {
-				const own = [...this.#callbacks.keys()];
-				// A superseded batch could have callbacks for e.g. destroying if blocks
-				// that are not part of the current batch because it already happened in the prior one,
-				// and the corresponding block effect therefore returning early because nothing was changed from its
-				// point of view, therefore not adding a callback to the current batch, so we gotta call them here.
-				// We do it from newest to oldest to ensure the correct callback is applied.
-				for (const batch of superseded_batches.reverse()) {
-					for (const [effect, cb] of batch.#callbacks) {
-						if (!own.includes(effect)) {
-							cb();
-							own.push(effect);
+			for (const batch of batches) {
+				if (batch === this) break;
+
+				for (const effects of [batch.#dirty_effects, batch.#maybe_dirty_effects]) {
+					let i = effects.length;
+					while (i--) {
+						// if an effect in an earlier batch only depends on state that
+						// is part of this batch, we can delete it from the other batch
+						const effect = effects[i];
+						const has_other_deps = effect.deps?.some((value) => !this.current.has(value));
+
+						if (!has_other_deps) {
+							effects.splice(i, 1); // TODO should probably be a `Set` if we're going to do this
 						}
 					}
-					batch.remove();
 				}
 			}
 
