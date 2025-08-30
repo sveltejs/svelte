@@ -297,6 +297,7 @@ export function VariableDeclaration(node, context) {
 
 						let call = b.call('$.derived', expression);
 						if (dev) call = b.call('$.tag', call, b.literal(declarator.id.name));
+						derived_declarators.push(b.declarator(declarator.id, call));
 					}
 				} else {
 					const init = /** @type {CallExpression} */ (declarator.init);
@@ -329,6 +330,7 @@ export function VariableDeclaration(node, context) {
 							const label = `[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`;
 							call = b.call('$.tag', call, b.literal(label));
 						}
+						derived_declarators.push(b.declarator(id, call));
 					}
 
 					const { inserts, paths } = extract_paths(declarator.id, rhs);
