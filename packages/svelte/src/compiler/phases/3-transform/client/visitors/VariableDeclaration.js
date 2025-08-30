@@ -261,12 +261,10 @@ export function VariableDeclaration(node, context) {
 					// TODO make it work without this
 					declarator.id.type === 'Identifier'
 				) {
-					parallelize = can_be_parallelized(
-						value,
-						context.state.scope,
-						context.state.analysis,
-						context.state.current_parallelized_chunk?.bindings ?? []
-					);
+					parallelize = can_be_parallelized(value, context.state.scope, context.state.analysis, [
+						...(context.state.current_parallelized_chunk?.bindings ?? []),
+						...context.state.scope.get_bindings(declarator)
+					]);
 				}
 
 				/** @type {VariableDeclarator[]} */
