@@ -2,7 +2,7 @@
 /** @import { Binding } from '#compiler' */
 /** @import { ComponentContext, ParallelizedChunk } from '../types' */
 import { dev, is_ignored, locate_node } from '../../../../state.js';
-import { extract_paths } from '../../../../utils/ast.js';
+import { extract_paths, is_expression_async } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import * as assert from '../../../../utils/assert.js';
 import { get_rune } from '../../../scope.js';
@@ -49,7 +49,8 @@ export function VariableDeclaration(node, context) {
 				}
 				if (
 					init?.type === 'AwaitExpression' &&
-					context.state.analysis.instance?.scope === context.state.scope
+					context.state.analysis.instance?.scope === context.state.scope &&
+					!is_expression_async(init.argument)
 				) {
 					const current_chunk = context.state.current_parallelized_chunk;
 					const parallelize = can_be_parallelized(
@@ -182,6 +183,7 @@ export function VariableDeclaration(node, context) {
 					declarator.id.type === 'Identifier' &&
 					context.state.analysis.instance?.scope === context.state.scope &&
 					value.type === 'AwaitExpression' &&
+					!is_expression_async(value.argument) &&
 					can_be_parallelized(value.argument, context.state.scope, context.state.analysis, [
 						...(current_chunk?.bindings ?? []),
 						...bindings
@@ -317,10 +319,12 @@ export function VariableDeclaration(node, context) {
 				const current_chunk = context.state.current_parallelized_chunk;
 				if (
 					is_async &&
+					init.type === 'AwaitExpression' &&
 					context.state.analysis.instance &&
 					context.state.scope === context.state.analysis.instance.scope &&
 					// TODO make it work without this
-					declarator.id.type === 'Identifier'
+					declarator.id.type === 'Identifier' &&
+					!is_expression_async(init.argument)
 				) {
 					parallelize = can_be_parallelized(value, context.state.scope, context.state.analysis, [
 						...(current_chunk?.bindings ?? []),

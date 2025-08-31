@@ -1,6 +1,7 @@
 /** @import { Expression, ExpressionStatement, Node, Program } from 'estree' */
 /** @import { ComponentContext, ParallelizedChunk } from '../types' */
 import * as b from '#compiler/builders';
+import { is_expression_async } from '../../../../utils/ast.js';
 import { get_rune } from '../../../scope.js';
 import { can_be_parallelized } from '../utils.js';
 
@@ -30,6 +31,7 @@ export function ExpressionStatement(node, context) {
 	}
 	if (
 		node.expression.type === 'AwaitExpression' &&
+		!is_expression_async(node.expression.argument) &&
 		context.state.analysis.instance?.scope === context.state.scope
 	) {
 		const current_chunk = context.state.current_parallelized_chunk;
