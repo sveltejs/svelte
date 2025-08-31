@@ -100,7 +100,7 @@ export function call(callee, ...args) {
 	if (typeof callee === 'string') callee = id(callee);
 	args = args.slice();
 
-	// replacing missing arguments with `undefined`, unless they're at the end in which case remove them
+	// replacing missing arguments with `void(0)`, unless they're at the end in which case remove them
 	let i = args.length;
 	let popping = true;
 	while (i--) {
