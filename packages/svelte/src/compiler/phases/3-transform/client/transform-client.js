@@ -362,22 +362,41 @@ export function client_component(analysis, options) {
 
 	let component_block = b.block([
 		store_init,
-		...store_setup,
 		...legacy_reactive_declarations,
-		...group_binding_declarations,
-		...state.instance_level_snippets
+		...group_binding_declarations
 	]);
 
+	const should_inject_context =
+		dev ||
+		analysis.needs_context ||
+		analysis.reactive_statements.size > 0 ||
+		component_returned_object.length > 0;
+
 	if (analysis.instance.has_await) {
+		if (should_inject_context && component_returned_object.length > 0) {
+			component_block.body.push(b.var('$$exports'));
+		}
 		const body = b.block([
+			...store_setup,
+			...state.instance_level_snippets,
 			.../** @type {ESTree.Statement[]} */ (instance.body),
+			...(should_inject_context && component_returned_object.length > 0
+				? [b.stmt(b.assignment('=', b.id('$$exports'), b.object(component_returned_object)))]
+				: []),
 			b.if(b.call('$.aborted'), b.return()),
 			.../** @type {ESTree.Statement[]} */ (template.body)
 		]);
 
 		component_block.body.push(b.stmt(b.call(`$.async_body`, b.arrow([], body, true))));
 	} else {
-		component_block.body.push(.../** @type {ESTree.Statement[]} */ (instance.body));
+		component_block.body.push(
+			...state.instance_level_snippets,
+			.../** @type {ESTree.Statement[]} */ (instance.body)
+		);
+		if (should_inject_context && component_returned_object.length > 0) {
+			component_block.body.push(b.var('$$exports', b.object(component_returned_object)));
+		}
+		component_block.body.unshift(...store_setup);
 
 		if (!analysis.runes && analysis.needs_context) {
 			component_block.body.push(b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)));
@@ -391,12 +410,6 @@ export function client_component(analysis, options) {
 			b.var('$$ownership_validator', b.call('$.create_ownership_validator', b.id('$$props')))
 		);
 	}
-
-	const should_inject_context =
-		dev ||
-		analysis.needs_context ||
-		analysis.reactive_statements.size > 0 ||
-		component_returned_object.length > 0;
 
 	let should_inject_props =
 		should_inject_context ||
@@ -444,7 +457,7 @@ export function client_component(analysis, options) {
 		let to_push;
 
 		if (component_returned_object.length > 0) {
-			let pop_call = b.call('$.pop', b.object(component_returned_object));
+			let pop_call = b.call('$.pop', b.id('$$exports'));
 			to_push = needs_store_cleanup ? b.var('$$pop', pop_call) : b.return(pop_call);
 		} else {
 			to_push = b.stmt(b.call('$.pop'));
@@ -455,6 +468,7 @@ export function client_component(analysis, options) {
 
 	if (needs_store_cleanup) {
 		component_block.body.push(b.stmt(b.call('$$cleanup')));
+
 		if (component_returned_object.length > 0) {
 			component_block.body.push(b.return(b.id('$$pop')));
 		}

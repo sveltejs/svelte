@@ -1,5 +1,31 @@
 # svelte
 
+## 5.38.6
+
+### Patch Changes
+
+- fix: don't fail on `flushSync` while flushing effects ([#16674](https://github.com/sveltejs/svelte/pull/16674))
+
+## 5.38.5
+
+### Patch Changes
+
+- fix: ensure async deriveds always get dependencies from thennable ([#16672](https://github.com/sveltejs/svelte/pull/16672))
+
+## 5.38.4
+
+### Patch Changes
+
+- fix: place instance-level snippets inside async body ([#16666](https://github.com/sveltejs/svelte/pull/16666))
+
+- fix: Add check for builtin custom elements in `set_custom_element_data` ([#16592](https://github.com/sveltejs/svelte/pull/16592))
+
+- fix: restore batch along with effect context ([#16668](https://github.com/sveltejs/svelte/pull/16668))
+
+- fix: wait until changes propagate before updating input selection state ([#16649](https://github.com/sveltejs/svelte/pull/16649))
+
+- fix: add "Accept-CH" as valid value for `http-equiv` ([#16671](https://github.com/sveltejs/svelte/pull/16671))
+
 ## 5.38.3
 
 ### Patch Changes
