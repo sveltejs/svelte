@@ -101,6 +101,7 @@ export {
 export {
 	all,
 	async_body,
+	async_compose,
 	for_await_track_reactivity_loss,
 	save,
 	track_reactivity_loss

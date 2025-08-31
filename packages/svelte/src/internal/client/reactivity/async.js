@@ -202,3 +202,15 @@ export function all(...promises) {
 		)
 	);
 }
+
+/**
+ * @param {Promise<any>} promise
+ * @param {Array<(arg: any) => any>} fns
+ */
+export async function async_compose(promise, ...fns) {
+	let res = await promise;
+	for (const fn of fns) {
+		res = fn(res);
+	}
+	return res;
+}

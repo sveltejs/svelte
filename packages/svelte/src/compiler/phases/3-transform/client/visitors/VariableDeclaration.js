@@ -176,45 +176,83 @@ export function VariableDeclaration(node, context) {
 			const value = /** @type {Expression} */ (args[0]) ?? b.void0; // TODO do we need the void 0? can we just omit it altogether?
 
 			if (rune === '$state' || rune === '$state.raw') {
+				const state_declarators = [];
+				const current_chunk = context.state.current_parallelized_chunk;
+				const parallelize =
+					declarator.id.type === 'Identifier' &&
+					context.state.analysis.instance?.scope === context.state.scope &&
+					value.type === 'AwaitExpression' &&
+					can_be_parallelized(value.argument, context.state.scope, context.state.analysis, [
+						...(current_chunk?.bindings ?? []),
+						...bindings
+					]);
 				/**
 				 * @param {Identifier} id
+				 * @param {Expression} visited
 				 * @param {Expression} value
 				 */
-				const create_state_declarator = (id, value) => {
+				const create_state_declarator = (id, visited, value) => {
 					const binding = /** @type {Binding} */ (context.state.scope.get(id.name));
 					const is_state = is_state_source(binding, context.state.analysis);
-					const is_proxy = should_proxy(value, context.state.scope);
+					const is_proxy = should_proxy(visited, context.state.scope);
+					const compose = [];
+					if (parallelize) {
+						if (rune === '$state' && is_proxy) {
+							compose.push(b.id('$.proxy'));
 
-					if (rune === '$state' && is_proxy) {
-						value = b.call('$.proxy', value);
+							if (dev && !is_state) {
+								compose.push(
+									b.arrow([b.id('proxy')], b.call('$.tag_proxy', b.id('proxy'), b.literal(id.name)))
+								);
+							}
+						}
 
-						if (dev && !is_state) {
-							value = b.call('$.tag_proxy', value, b.literal(id.name));
+						if (is_state) {
+							compose.push(b.id('$.state'));
+							if (dev) {
+								compose.push(
+									b.arrow([b.id('source')], b.call('$.tag', b.id('source'), b.literal(id.name)))
+								);
+							}
+						}
+					} else {
+						if (rune === '$state' && is_proxy) {
+							value = b.call('$.proxy', value);
+
+							if (dev && !is_state) {
+								value = b.call('$.tag_proxy', value, b.literal(id.name));
+							}
+						}
+
+						if (is_state) {
+							value = b.call('$.state', value);
+
+							if (dev) {
+								value = b.call('$.tag', value, b.literal(id.name));
+							}
 						}
 					}
 
-					if (is_state) {
-						value = b.call('$.state', value);
-
-						if (dev) {
-							value = b.call('$.tag', value, b.literal(id.name));
-						}
-					}
-
-					return value;
+					return parallelize && value.type === 'AwaitExpression'
+						? b.call(
+								'$.async_compose',
+								/** @type {Expression} */ (context.visit(value.argument)),
+								...compose
+							)
+						: visited;
 				};
 
 				if (declarator.id.type === 'Identifier') {
 					const expression = /** @type {Expression} */ (context.visit(value));
 
-					declarations.push(
-						b.declarator(declarator.id, create_state_declarator(declarator.id, expression))
+					state_declarators.push(
+						b.declarator(declarator.id, create_state_declarator(declarator.id, expression, value))
 					);
 				} else {
 					const tmp = b.id(context.state.scope.generate('tmp'));
 					const { inserts, paths } = extract_paths(declarator.id, tmp);
 
-					declarations.push(
+					state_declarators.push(
 						b.declarator(tmp, /** @type {Expression} */ (context.visit(value))),
 						...inserts.map(({ id, value }) => {
 							id.name = context.state.scope.generate('$$array');
@@ -236,11 +274,35 @@ export function VariableDeclaration(node, context) {
 							return b.declarator(
 								path.node,
 								binding?.kind === 'state' || binding?.kind === 'raw_state'
-									? create_state_declarator(binding.node, value)
+									? create_state_declarator(binding.node, value, path.expression)
 									: value
 							);
 						})
 					);
+				}
+				if (!parallelize) {
+					declarations.push(...state_declarators);
+				} else {
+					const declarators = state_declarators.map(({ id, init }) => ({
+						id,
+						init: /** @type {Expression} */ (init)
+					}));
+					if (current_chunk && (current_chunk.kind === node.kind || current_chunk.kind === null)) {
+						current_chunk.declarators.push(...declarators);
+						current_chunk.bindings.push(...bindings);
+						current_chunk.position = position;
+						current_chunk.kind = node.kind;
+					} else {
+						/** @type {ParallelizedChunk} */
+						const chunk = {
+							kind: node.kind,
+							declarators,
+							position,
+							bindings
+						};
+						context.state.current_parallelized_chunk = chunk;
+						context.state.parallelized_chunks.push(chunk);
+					}
 				}
 
 				continue;
