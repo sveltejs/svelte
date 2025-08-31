@@ -60,7 +60,7 @@ export function ExpressionStatement(node, context) {
 				context.state.current_parallelized_chunk = chunk;
 				context.state.parallelized_chunks.push(chunk);
 			}
-			return;
+			return b.empty;
 		}
 	}
 
