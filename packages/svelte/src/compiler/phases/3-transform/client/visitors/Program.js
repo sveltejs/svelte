@@ -165,14 +165,18 @@ export function Program(node, context) {
 				}
 			} else {
 				const pattern = b.array_pattern(chunk.declarators.map(({ id }) => id));
-				const init = b.call('$.all', ...chunk.declarators.map(({ init }) => init));
-				body.splice(
-					chunk.position + offset,
-					0,
-					b.declaration(chunk.kind ?? 'const', [
-						b.declarator(pattern, b.call(b.await(b.call('$.save', init))))
-					])
+				const init = b.call(
+					b.await(b.call('$.save', b.call('$.all', ...chunk.declarators.map(({ init }) => init))))
 				);
+				if (pattern.elements.every((element) => element === null)) {
+					body.splice(chunk.position + offset, 0, b.stmt(init));
+				} else {
+					body.splice(
+						chunk.position + offset,
+						0,
+						b.declaration(chunk.kind ?? 'const', [b.declarator(pattern, init)])
+					);
+				}
 			}
 			offset++;
 		}
