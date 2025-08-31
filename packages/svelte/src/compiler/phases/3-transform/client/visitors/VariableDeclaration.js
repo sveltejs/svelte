@@ -1,4 +1,4 @@
-/** @import { CallExpression, Expression, Identifier, Literal, Node, Program, VariableDeclaration, VariableDeclarator } from 'estree' */
+/** @import { AwaitExpression, CallExpression, Expression, Identifier, Literal, Node, Program, VariableDeclaration, VariableDeclarator } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { ComponentContext, ParallelizedChunk } from '../types' */
 import { dev, is_ignored, locate_node } from '../../../../state.js';
@@ -217,8 +217,15 @@ export function VariableDeclaration(node, context) {
 								);
 							}
 						}
+						return b.call(
+							'$.async_compose',
+							/** @type {Expression} */ (
+								context.visit(/** @type {AwaitExpression} */ (value).argument)
+							),
+							...compose
+						);
 					} else {
-						value = visited;
+						let value = visited;
 						if (rune === '$state' && is_proxy) {
 							value = b.call('$.proxy', value);
 
@@ -234,15 +241,8 @@ export function VariableDeclaration(node, context) {
 								value = b.call('$.tag', value, b.literal(id.name));
 							}
 						}
+						return value;
 					}
-
-					return parallelize && value.type === 'AwaitExpression'
-						? b.call(
-								'$.async_compose',
-								/** @type {Expression} */ (context.visit(value.argument)),
-								...compose
-							)
-						: visited;
 				};
 
 				if (declarator.id.type === 'Identifier') {
