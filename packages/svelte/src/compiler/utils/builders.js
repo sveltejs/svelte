@@ -108,7 +108,7 @@ export function call(callee, ...args) {
 			if (popping) {
 				args.pop();
 			} else {
-				args[i] = id('undefined');
+				args[i] = void0;
 			}
 		} else {
 			popping = false;
