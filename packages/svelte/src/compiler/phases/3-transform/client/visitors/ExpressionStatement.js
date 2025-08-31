@@ -42,7 +42,7 @@ export function ExpressionStatement(node, context) {
 		if (parallelize) {
 			const declarator = {
 				id: null,
-				init: /** @type {Expression} */ (context.visit(node.expression))
+				init: /** @type {Expression} */ (context.visit(node.expression.argument))
 			};
 			if (current_chunk) {
 				current_chunk.declarators.push(declarator);
