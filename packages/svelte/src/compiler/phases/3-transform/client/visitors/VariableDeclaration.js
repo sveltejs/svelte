@@ -319,12 +319,10 @@ export function VariableDeclaration(node, context) {
 				const current_chunk = context.state.current_parallelized_chunk;
 				if (
 					is_async &&
-					init.type === 'AwaitExpression' &&
 					context.state.analysis.instance &&
 					context.state.scope === context.state.analysis.instance.scope &&
 					// TODO make it work without this
-					declarator.id.type === 'Identifier' &&
-					!is_expression_async(init.argument)
+					declarator.id.type === 'Identifier'
 				) {
 					parallelize = can_be_parallelized(value, context.state.scope, context.state.analysis, [
 						...(current_chunk?.bindings ?? []),
