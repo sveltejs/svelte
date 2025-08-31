@@ -169,7 +169,9 @@ export function Program(node, context) {
 				body.splice(
 					chunk.position + offset,
 					0,
-					b.declaration(chunk.kind ?? 'const', [b.declarator(pattern, b.await(init))])
+					b.declaration(chunk.kind ?? 'const', [
+						b.declarator(pattern, b.call(b.await(b.call('$.save', init))))
+					])
 				);
 			}
 			offset++;
