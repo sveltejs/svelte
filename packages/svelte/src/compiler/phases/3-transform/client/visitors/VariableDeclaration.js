@@ -216,6 +216,7 @@ export function VariableDeclaration(node, context) {
 							}
 						}
 					} else {
+						value = visited;
 						if (rune === '$state' && is_proxy) {
 							value = b.call('$.proxy', value);
 
