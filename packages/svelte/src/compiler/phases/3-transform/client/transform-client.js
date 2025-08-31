@@ -63,7 +63,7 @@ import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 
 /** @type {Visitors} */
 const visitors = {
-	_: function set_scope(node, { path, next, state }) {
+	_: function set_scope(node, { next, state }) {
 		const scope = state.scopes.get(node);
 
 		if (scope && scope !== state.scope) {
