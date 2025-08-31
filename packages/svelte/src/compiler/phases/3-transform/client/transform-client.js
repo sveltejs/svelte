@@ -84,13 +84,6 @@ const visitors = {
 		} else {
 			next();
 		}
-		if (
-			node.type !== 'VariableDeclaration' &&
-			path.at(-1)?.type === 'Program' &&
-			state.analysis.instance
-		) {
-			state.current_parallelized_chunk = null;
-		}
 	},
 	AnimateDirective,
 	ArrowFunctionExpression,
