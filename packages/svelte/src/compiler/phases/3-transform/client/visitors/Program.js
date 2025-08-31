@@ -148,20 +148,28 @@ export function Program(node, context) {
 		for (const chunk of context.state.parallelized_chunks) {
 			if (chunk.declarators.length === 1) {
 				const declarator = chunk.declarators[0];
-				body.splice(
-					chunk.position + offset,
-					0,
-					b.declaration(chunk.kind, [
-						b.declarator(declarator.id, b.call(b.await(b.call('$.save', declarator.init))))
-					])
-				);
+				if (declarator.id === null || chunk.kind === null) {
+					body.splice(
+						chunk.position + offset,
+						0,
+						b.stmt(b.call(b.await(b.call('$.save', declarator.init))))
+					);
+				} else {
+					body.splice(
+						chunk.position + offset,
+						0,
+						b.declaration(chunk.kind, [
+							b.declarator(declarator.id, b.call(b.await(b.call('$.save', declarator.init))))
+						])
+					);
+				}
 			} else {
 				const pattern = b.array_pattern(chunk.declarators.map(({ id }) => id));
-				const init = b.call(`$.all`, ...chunk.declarators.map(({ init }) => init));
+				const init = b.call('$.all', ...chunk.declarators.map(({ init }) => init));
 				body.splice(
 					chunk.position + offset,
 					0,
-					b.declaration(chunk.kind, [b.declarator(pattern, b.await(init))])
+					b.declaration(chunk.kind ?? 'const', [b.declarator(pattern, b.await(init))])
 				);
 			}
 			offset++;

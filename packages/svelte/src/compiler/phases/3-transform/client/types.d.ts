@@ -90,10 +90,10 @@ export interface ComponentClientTransformState extends ClientTransformState {
 
 export interface ParallelizedChunk {
 	declarators: Array<{
-		id: Pattern;
+		id: Pattern | null;
 		init: Expression;
 	}>;
-	kind: VariableDeclaration['kind'];
+	kind: VariableDeclaration['kind'] | null;
 	/** index in instance body */
 	position: number;
 	bindings: Binding[];

@@ -69,10 +69,14 @@ export function VariableDeclaration(node, context) {
 							id,
 							init: /** @type {Expression} */ (visited_init)
 						};
-						if (current_chunk && current_chunk.kind === node.kind) {
+						if (
+							current_chunk &&
+							(current_chunk.kind === node.kind || current_chunk.kind === null)
+						) {
 							current_chunk.declarators.push(_declarator);
 							current_chunk.bindings.push(...bindings);
 							current_chunk.position = /** @type {Program} */ (parent).body.indexOf(node);
+							current_chunk.kind = node.kind;
 						} else {
 							/** @type {ParallelizedChunk} */
 							const chunk = {
@@ -370,10 +374,11 @@ export function VariableDeclaration(node, context) {
 						id,
 						init: /** @type {Expression} */ (init)
 					}));
-					if (current_chunk && current_chunk.kind === node.kind) {
+					if (current_chunk && (current_chunk.kind === node.kind || current_chunk.kind === null)) {
 						current_chunk.declarators.push(...declarators);
 						current_chunk.bindings.push(...bindings);
 						current_chunk.position = position;
+						current_chunk.kind = node.kind;
 					} else {
 						/** @type {ParallelizedChunk} */
 						const chunk = {
