@@ -98,9 +98,6 @@ export function can_be_parallelized(expression, scope, analysis, bindings) {
 				return false;
 			}
 		}
-		if (!binding.mutated && !binding.reassigned) {
-			continue;
-		}
 	}
 	return true;
 }
