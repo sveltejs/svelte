@@ -297,6 +297,9 @@ export class Boundary {
 				e.svelte_boundary_reset_onerror();
 			}
 
+			// If the failure happened while flushing effects, current_batch can be null
+			Batch.ensure();
+
 			this.#pending_count = 0;
 
 			if (this.#failed_effect !== null) {
