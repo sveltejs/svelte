@@ -592,7 +592,8 @@ export function client_component(analysis, options) {
 				)
 			)
 		);
-	} else if (dev) {
+	} else {
+		// Always check for invalid constructor usage, not just in dev mode
 		component_block.body.unshift(b.stmt(b.call('$.check_target', b.id('new.target'))));
 	}
 
