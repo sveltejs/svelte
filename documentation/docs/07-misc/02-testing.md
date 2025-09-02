@@ -287,25 +287,25 @@ You can create stories for component variations and test interactions with the [
 ```svelte
 /// file: LoginForm.stories.svelte
 <script module>
-  import { defineMeta } from '@storybook/addon-svelte-csf';
-  import { expect, fn } from 'storybook/test';
- 
-  import LoginForm from './LoginForm.svelte';
- 
-  const { Story } = defineMeta({
+	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { expect, fn } from 'storybook/test';
+
+	import LoginForm from './LoginForm.svelte';
+
+	const { Story } = defineMeta({
 		component: LoginForm,
 		args: {
 			// 👇 Pass a mock function to the `onSubmit` prop
 			onSubmit: fn(),
 		}
-  });
+	});
 </script>
  
 <Story name="Empty Form" />
  
 <Story
-  name="Filled Form"
-  play={async ({ args, canvas, userEvent }) => {
+	name="Filled Form"
+	play={async ({ args, canvas, userEvent }) => {
 		// 👇 Simulate a user filling out the form
 		await userEvent.type(canvas.getByTestId('email'), 'email@provider.com');
 		await userEvent.type(canvas.getByTestId('password'), 'a-random-password');
@@ -316,11 +316,13 @@ You can create stories for component variations and test interactions with the [
 
 		// 👇 Assert that the success message is shown
 		await expect(canvas.getByText('You’re in!')).toBeInTheDocument();
-  }}
+	}}
 />
 ```
 
 When you view that story or run that test in Storybook, you can see each step of the simulated behavior and the assertions made against the component. If anything goes wrong, you can step back-and-forth through the test to pinpoint exactly where the issue occurred.
+
+To learn more about Storybook's mocking, accessibility testing, interactions debugging, and coverage tools, please see the [Storybook testing docs](https://storybook.js.org/docs/writing-tests?ref=svelte-docs&renderer=svelte).
 
 ## E2E tests using Playwright
 
