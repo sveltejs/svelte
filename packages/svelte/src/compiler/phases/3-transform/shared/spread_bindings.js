@@ -31,6 +31,9 @@ export function init_spread_bindings(spread_expression, { state, visit }) {
 	const binding = is_server ? b.call(id) : b.call('$.get', id);
 
 	const get = b.thunk(b.call(b.member(binding, b.literal(0), true)));
-	const set = b.thunk(b.call(b.member(binding, b.literal(1), true), b.id('$$value')));
+	const set = b.arrow(
+		[b.id('$$value')],
+		b.call(b.member(binding, b.literal(1), true), b.id('$$value'))
+	);
 	return { get, set };
 }
