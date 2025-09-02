@@ -276,15 +276,6 @@ That `add` command will install and register the Vitest addon. It will also insp
 
 When you run Storybook, you will see a test widget in the bottom of your sidebar, from where you can run your tests. Each story is automatically transformed into a test. The results will be shown in the sidebar and you can debug your tests using Storybook's tools and the browser devtools. You can also integrate [accessibility tests](https://storybook.js.org/docs/writing-tests/accessibility?ref=svelte-docs&renderer=svelte), which will run alongside your component tests.
 
-<figure>
-	<video autoplay loop muted style="max-width: 100%; height: auto;">
-		<source type="video/mp4" src="/media/storybook-test-overview.mp4">
-	</video>
-	<figcaption>
-		Running component tests in Storybook, filtering the sidebar to test failures, turning on watch mode, and using the interactions debugger to fix the failure
-	</figcaption>
-</figure>
-
 You can also run those component tests in the terminal (and in CI) using the Vitest CLI.:
 
 ```sh
