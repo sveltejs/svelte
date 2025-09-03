@@ -379,7 +379,7 @@ export class Batch {
 	flush() {
 		if (queued_root_effects.length > 0) {
 			flush_effects();
-		} else {
+		} else if (this.#pending === 0) {
 			this.#commit();
 		}
 
@@ -417,20 +417,22 @@ export class Batch {
 		this.#pending -= 1;
 
 		if (this.#pending === 0) {
-			for (const e of this.#dirty_effects) {
-				set_signal_status(e, DIRTY);
-				schedule_effect(e);
-			}
+			Batch.enqueue(() => {
+				for (const e of this.#dirty_effects) {
+					set_signal_status(e, DIRTY);
+					schedule_effect(e);
+				}
 
-			for (const e of this.#maybe_dirty_effects) {
-				set_signal_status(e, MAYBE_DIRTY);
-				schedule_effect(e);
-			}
+				for (const e of this.#maybe_dirty_effects) {
+					set_signal_status(e, MAYBE_DIRTY);
+					schedule_effect(e);
+				}
 
-			this.#render_effects = [];
-			this.#effects = [];
+				this.#render_effects = [];
+				this.#effects = [];
 
-			this.flush();
+				this.flush();
+			});
 		} else {
 			this.deactivate();
 		}
@@ -670,20 +672,14 @@ export function schedule_effect(signal) {
 export function suspend() {
 	var boundary = get_pending_boundary();
 	var batch = /** @type {Batch} */ (current_batch);
-	var pending = boundary.pending;
 
 	boundary.update_pending_count(1);
-	if (!pending) batch.increment();
+	batch.increment();
 
 	return function unsuspend() {
 		boundary.update_pending_count(-1);
-
-		if (!pending) {
-			batch.activate();
-			batch.decrement();
-		} else {
-			batch.deactivate();
-		}
+		batch.activate();
+		batch.decrement();
 
 		unset_context();
 	};
@@ -694,4 +690,5 @@ export function suspend() {
  */
 export function clear() {
 	batches.clear();
+	tasks.length = 0;
 }

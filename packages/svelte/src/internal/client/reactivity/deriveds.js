@@ -135,11 +135,10 @@ export function async_derived(fn, location) {
 		prev = promise;
 
 		var batch = /** @type {Batch} */ (current_batch);
-		var pending = boundary.pending;
 
 		if (should_suspend) {
 			boundary.update_pending_count(1);
-			if (!pending) batch.increment();
+			batch.increment();
 		}
 
 		/**
@@ -151,7 +150,7 @@ export function async_derived(fn, location) {
 
 			current_async_effect = null;
 
-			if (!pending) batch.activate();
+			batch.activate();
 
 			if (error) {
 				if (error !== STALE_REACTION) {
@@ -181,7 +180,7 @@ export function async_derived(fn, location) {
 
 			if (should_suspend) {
 				boundary.update_pending_count(-1);
-				if (!pending) batch.decrement();
+				batch.decrement();
 			}
 
 			unset_context();
