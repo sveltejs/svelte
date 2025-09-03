@@ -250,39 +250,11 @@ When writing component tests that involve two-way bindings, context or snippet p
 
 _With Storybook_
 
-[Storybook](https://storybook.js.org?ref=svelte-docs) is the industry standard for developing and documenting UI components, and it can also be used to test your components. A storybook is made up of [stories](https://storybook.js.org/docs/writing-stories?ref=svelte-docs&renderer=svelte)—isolated examples of your components in different states and with simulated interactions. These stories can also function as [component tests](https://storybook.js.org/docs/writing-tests?ref=svelte-docs&renderer=svelte), with no additional code needed. They're run with Vitest's browser mode, which renders your components in a real browser for the most realistic testing environment.
+[Storybook](https://storybook.js.org) is a tool for developing and documenting UI components, and it can also be used to test your components. They're run with Vitest's browser mode, which renders your components in a real browser for the most realistic testing environment.
 
-To get started, first install Storybook ([using Svelte's CLI](/docs/cli/storybook)) in your project if you haven't already:
+To get started, first install Storybook ([using Svelte's CLI](/docs/cli/storybook)) in your project via `npx sv add storybook` and choose the recommended configuration that includes testing features. Else follow the [Storybooks docs](https://storybook.js.org/docs/get-started/frameworks/svelte-vite#getting-started) on getting started.
 
-```sh
-npx sv add storybook
-```
-
-When prompted, choose the recommended configuration that includes testing features.
-
-If you already have Storybook set up, but are not yet using the testing features, first upgrade to the latest version:
-
-```sh
-npx storybook@latest upgrade
-```
-
-Then, install and configure Storybook's Vitest addon:
-
-```sh
-npx storybook add @storybook/addon-vitest
-```
-
-That `add` command will install and register the Vitest addon. It will also inspect your project's Vite and Vitest setup, and install and configure them with sensible defaults, if necessary. You may need to adjust the [configuration](https://storybook.js.org/docs/writing-tests/integrations/vitest-addon?ref=svelte-docs&renderer=svelte#options) to fit your project's needs.
-
-When you run Storybook, you will see a test widget in the bottom of your sidebar, from where you can run your tests. Each story is automatically transformed into a test. The results will be shown in the sidebar and you can debug your tests using Storybook's tools and the browser devtools. You can also integrate [accessibility tests](https://storybook.js.org/docs/writing-tests/accessibility?ref=svelte-docs&renderer=svelte), which will run alongside your component tests.
-
-You can also run those component tests in the terminal (and in CI) using the Vitest CLI.:
-
-```sh
-npx vitest --project storybook
-```
-
-You can create stories for component variations and test interactions with the [play function](https://storybook.js.org/docs/writing-tests/interaction-testing?ref=svelte-docs&renderer=svelte#writing-interaction-tests), which allows you to simulate behavior and make assertions using the Testing Library and Vitest APIs. Here's an example of two stories that can be tested, one that renders an empty Form component and one that simulates a user filling out the form:
+You can then create stories for component variations and test interactions with the [play function](https://storybook.js.org/docs/writing-tests/interaction-testing?renderer=svelte#writing-interaction-tests), which allows you to simulate behavior and make assertions using the Testing Library and Vitest APIs. Here's an example of two stories that can be tested, one that renders an empty Form component and one that simulates a user filling out the form:
 
 ```svelte
 /// file: LoginForm.stories.svelte
@@ -295,7 +267,7 @@ You can create stories for component variations and test interactions with the [
 	const { Story } = defineMeta({
 		component: LoginForm,
 		args: {
-			// 👇 Pass a mock function to the `onSubmit` prop
+			// Pass a mock function to the `onSubmit` prop
 			onSubmit: fn(),
 		}
 	});
@@ -306,23 +278,19 @@ You can create stories for component variations and test interactions with the [
 <Story
 	name="Filled Form"
 	play={async ({ args, canvas, userEvent }) => {
-		// 👇 Simulate a user filling out the form
+		// Simulate a user filling out the form
 		await userEvent.type(canvas.getByTestId('email'), 'email@provider.com');
 		await userEvent.type(canvas.getByTestId('password'), 'a-random-password');
 		await userEvent.click(canvas.getByRole('button'));
 
-		// 👇 Assert that the `onSubmit` function was called
+		// Run assertions
 		await expect(args.onSubmit).toHaveBeenCalledTimes(1);
-
-		// 👇 Assert that the success message is shown
 		await expect(canvas.getByText('You’re in!')).toBeInTheDocument();
 	}}
 />
 ```
 
-When you view that story or run that test in Storybook, you can see each step of the simulated behavior and the assertions made against the component. If anything goes wrong, you can step back-and-forth through the test to pinpoint exactly where the issue occurred.
-
-To learn more about Storybook's mocking, accessibility testing, interactions debugging, and coverage tools, please see the [Storybook testing docs](https://storybook.js.org/docs/writing-tests?ref=svelte-docs&renderer=svelte).
+To learn more about Storybook's mocking, accessibility testing, interactions debugging, and coverage tools, please see the [Storybook testing docs](https://storybook.js.org/docs/writing-tests?renderer=svelte).
 
 ## E2E tests using Playwright
 
