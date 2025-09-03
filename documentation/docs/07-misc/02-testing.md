@@ -252,7 +252,7 @@ _With Storybook_
 
 [Storybook](https://storybook.js.org) is a tool for developing and documenting UI components, and it can also be used to test your components. They're run with Vitest's browser mode, which renders your components in a real browser for the most realistic testing environment.
 
-To get started, first install Storybook ([using Svelte's CLI](/docs/cli/storybook)) in your project via `npx sv add storybook` and choose the recommended configuration that includes testing features. Else follow the [Storybooks docs](https://storybook.js.org/docs/get-started/frameworks/svelte-vite#getting-started) on getting started.
+To get started, first install Storybook ([using Svelte's CLI](/docs/cli/storybook)) in your project via `npx sv add storybook` and choose the recommended configuration that includes testing features. Else follow the [Storybook docs](https://storybook.js.org/docs/get-started/frameworks/svelte-vite#getting-started) on getting started.
 
 You can then create stories for component variations and test interactions with the [play function](https://storybook.js.org/docs/writing-tests/interaction-testing?renderer=svelte#writing-interaction-tests), which allows you to simulate behavior and make assertions using the Testing Library and Vitest APIs. Here's an example of two stories that can be tested, one that renders an empty Form component and one that simulates a user filling out the form:
 
