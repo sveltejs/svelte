@@ -1,5 +1,15 @@
 # svelte
 
+## 5.38.7
+
+### Patch Changes
+
+- fix: replace `undefined` with `void(0)` in CallExpressions ([#16693](https://github.com/sveltejs/svelte/pull/16693))
+
+- fix: ensure batch exists when resetting a failed boundary ([#16698](https://github.com/sveltejs/svelte/pull/16698))
+
+- fix: place store setup inside async body ([#16687](https://github.com/sveltejs/svelte/pull/16687))
+
 ## 5.38.6
 
 ### Patch Changes
