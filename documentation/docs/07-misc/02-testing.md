@@ -164,8 +164,6 @@ It is possible to test your components in isolation, which allows you to render 
 
 > [!NOTE] Before writing component tests, think about whether you actually need to test the component, or if it's more about the logic _inside_ the component. If so, consider extracting out that logic to test it in isolation, without the overhead of a component.
 
-_With Vitest and jsdom_
-
 To get started, install jsdom (a library that shims DOM APIs):
 
 ```sh
@@ -248,11 +246,11 @@ test('Component', async () => {
 
 When writing component tests that involve two-way bindings, context or snippet props, it's best to create a wrapper component for your specific test and interact with that. `@testing-library/svelte` contains some [examples](https://testing-library.com/docs/svelte-testing-library/example).
 
-_With Storybook_
+### Component testing with Storybook
 
 [Storybook](https://storybook.js.org) is a tool for developing and documenting UI components, and it can also be used to test your components. They're run with Vitest's browser mode, which renders your components in a real browser for the most realistic testing environment.
 
-To get started, first install Storybook ([using Svelte's CLI](/docs/cli/storybook)) in your project via `npx sv add storybook` and choose the recommended configuration that includes testing features. If you're already using Storybook, follow the [Storybook testing docs](https://storybook.js.org/docs/writing-tests?renderer=svelte) to get started.
+To get started, first install Storybook ([using Svelte's CLI](/docs/cli/storybook)) in your project via `npx sv add storybook` and choose the recommended configuration that includes testing features. If you're already using Storybook, and for more information on Storybook's testing capabilities, follow the [Storybook testing docs](https://storybook.js.org/docs/writing-tests?renderer=svelte) to get started.
 
 You can create stories for component variations and test interactions with the [play function](https://storybook.js.org/docs/writing-tests/interaction-testing?renderer=svelte#writing-interaction-tests), which allows you to simulate behavior and make assertions using the Testing Library and Vitest APIs. Here's an example of two stories that can be tested, one that renders an empty LoginForm component and one that simulates a user filling out the form:
 
@@ -289,8 +287,6 @@ You can create stories for component variations and test interactions with the [
 	}}
 />
 ```
-
-To learn more about Storybook's mocking, accessibility testing, interactions debugging, and coverage tools, please see the [Storybook testing docs](https://storybook.js.org/docs/writing-tests?renderer=svelte).
 
 ## E2E tests using Playwright
 
