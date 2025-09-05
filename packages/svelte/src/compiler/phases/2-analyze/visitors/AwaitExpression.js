@@ -1,6 +1,7 @@
 /** @import { AwaitExpression } from 'estree' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
+import * as b from '#compiler/builders';
 
 /**
  * @param {AwaitExpression} node
@@ -19,8 +20,21 @@ export function AwaitExpression(node, context) {
 		suspend = true;
 	}
 
-	if (context.state.snippet) {
-		context.state.snippet.metadata.has_await = true;
+	// Only set has_await on the boundary when we're in a template expression context
+	// (not in event handlers or other non-template contexts)
+	if (context.state.async_hoist_boundary && context.state.expression) {
+		context.state.async_hoist_boundary.metadata.is_async = true;
+		const len = context.state.async_hoist_boundary.metadata.hoisted_promises.promises.push(
+			node.argument
+		);
+		context.state.analysis.hoisted_promises.set(
+			node.argument,
+			b.member(
+				b.id(context.state.async_hoist_boundary.metadata.hoisted_promises.name),
+				b.literal(len - 1),
+				true
+			)
+		);
 	}
 
 	if (context.state.title) {

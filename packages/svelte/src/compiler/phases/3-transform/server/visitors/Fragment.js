@@ -42,5 +42,25 @@ export function Fragment(node, context) {
 
 	process_children(trimmed, { ...context, state });
 
+	if (node.metadata.hoisted_promises.promises.length > 0) {
+		return b.block([
+			b.const(
+				node.metadata.hoisted_promises.name,
+				b.array(node.metadata.hoisted_promises.promises)
+			),
+			...state.init,
+			b.stmt(
+				b.call(
+					'$$payload.child',
+					b.arrow(
+						[b.id('$$payload')],
+						b.block(build_template(state.template)),
+						node.metadata.is_async
+					)
+				)
+			)
+		]);
+	}
+
 	return b.block([...state.init, ...build_template(state.template)]);
 }

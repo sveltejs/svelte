@@ -2,9 +2,7 @@ import * as $ from 'svelte/internal/server';
 import TextInput from './Child.svelte';
 
 function snippet($$payload) {
-	$$payload.child(($$payload) => {
-		$$payload.push(`<!---->Something`);
-	});
+	$$payload.push(`<!---->Something`);
 }
 
 export default function Bind_component_snippet($$payload) {

@@ -57,6 +57,11 @@ export namespace AST {
 			 */
 			dynamic: boolean;
 			has_await: boolean;
+			/**
+			 * True when this fragment has a top-level `await` expression.
+			 */
+			is_async: boolean;
+			hoisted_promises: { name: string; promises: Expression[] };
 		};
 	}
 
@@ -523,7 +528,6 @@ export namespace AST {
 		/** @internal */
 		metadata: {
 			can_hoist: boolean;
-			has_await: boolean;
 			/** The set of components/render tags that could render this snippet,
 			 * used for CSS pruning */
 			sites: Set<Component | SvelteComponent | SvelteSelf | RenderTag>;

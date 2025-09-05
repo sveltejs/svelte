@@ -11,7 +11,9 @@ export function create_fragment(transparent = false) {
 		metadata: {
 			transparent,
 			dynamic: false,
-			has_await: false
+			has_await: false,
+			// name is added later, after we've done scope analysis
+			hoisted_promises: { name: '', promises: [] }
 		}
 	};
 }

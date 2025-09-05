@@ -2,9 +2,10 @@ import type { AST, Binding, StateField } from '#compiler';
 import type {
 	CallExpression,
 	ClassBody,
+	Expression,
 	Identifier,
 	LabeledStatement,
-	Node,
+	MemberExpression,
 	Program
 } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
@@ -108,6 +109,7 @@ export interface ComponentAnalysis extends Analysis {
 	snippets: Set<AST.SnippetBlock>;
 	/** Whether the component uses `await` in a context that would require an `await` on the server. */
 	has_blocking_await: boolean;
+	hoisted_promises: Map<Expression, MemberExpression>;
 }
 
 declare module 'estree' {

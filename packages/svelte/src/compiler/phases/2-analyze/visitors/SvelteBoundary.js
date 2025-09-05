@@ -34,5 +34,9 @@ export function SvelteBoundary(node, context) {
 			)
 		) ?? null;
 
-	context.next({ ...context.state, boundary: node });
+	context.next({
+		...context.state,
+		boundary: node,
+		async_hoist_boundary: node.fragment
+	});
 }
