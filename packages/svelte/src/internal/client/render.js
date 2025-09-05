@@ -301,7 +301,7 @@ let mounted_components = new WeakMap();
  * @returns {Promise<void>}
  */
 export function unmount(component, options) {
-	const fn = mounted_components.get(component);
+	const fn = mounted_components.get(component[STATE_SYMBOL]);
 
 	if (fn) {
 		mounted_components.delete(component);
