@@ -115,7 +115,7 @@ export function async_derived(fn, location) {
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
 
-	async_effect(() => {
+	var effect = async_effect(() => {
 		if (DEV) current_async_effect = active_effect;
 
 		try {
@@ -153,7 +153,7 @@ export function async_derived(fn, location) {
 			batch.activate();
 
 			if (error) {
-				if (error !== STALE_REACTION) {
+				if (error !== STALE_REACTION && !batch.branch_obsolete(effect)) {
 					signal.f |= ERROR_VALUE;
 
 					// @ts-expect-error the error is the wrong type, but we don't care

@@ -344,6 +344,48 @@ export class Batch {
 		current_batch = this;
 	}
 
+	/**
+	 * Check if the branch this effect is in is obsolete in a later batch.
+	 * That is, if the branch exists in this batch but will be destroyed in a later batch.
+	 * @param {Effect} effect
+	 */
+	branch_obsolete(effect) {
+		/** @type {Effect[]} */
+		let alive = [];
+		/** @type {Effect[]} */
+		let skipped = [];
+		/** @type {Effect | null} */
+		let current = effect;
+
+		while (current !== null) {
+			if ((current.f & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0) {
+				alive.push(current);
+				if (this.skipped_effects.has(current)) {
+					skipped.push(...alive);
+					alive = [];
+				}
+			}
+			current = current.parent;
+		}
+
+		let check = false;
+		for (const b of batches) {
+			if (b === this) {
+				check = true;
+			} else if (check) {
+				if (
+					alive.some((branch) => b.skipped_effects.has(branch)) ||
+					// TODO do we even have to check skipped here? how would an async_derived run for a branch that was already skipped?
+					(skipped.length > 0 && !skipped.some((branch) => b.skipped_effects.has(branch)))
+				) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
 	deactivate() {
 		current_batch = null;
 		previous_batch = null;
