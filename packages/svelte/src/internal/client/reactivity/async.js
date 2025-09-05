@@ -191,3 +191,28 @@ export async function async_body(fn) {
 		unsuspend();
 	}
 }
+
+/**
+ * @template T
+ * @param {Array<Promise<T>>} promises
+ * @returns {Promise<Array<T>>}
+ */
+export function all(...promises) {
+	return Promise.all(
+		promises.map((promise) =>
+			promise instanceof Promise ? save(promise).then((restore) => restore()) : promise
+		)
+	);
+}
+
+/**
+ * @param {Promise<any>} promise
+ * @param {Array<(arg: any) => any>} fns
+ */
+export async function async_compose(promise, ...fns) {
+	let res = await promise;
+	for (const fn of fns) {
+		res = fn(res);
+	}
+	return res;
+}

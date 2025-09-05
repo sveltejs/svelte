@@ -176,7 +176,9 @@ export function client_component(analysis, options) {
 		update: /** @type {any} */ (null),
 		after_update: /** @type {any} */ (null),
 		template: /** @type {any} */ (null),
-		memoizer: /** @type {any} */ (null)
+		memoizer: /** @type {any} */ (null),
+		parallelized_chunks: [],
+		current_parallelized_chunk: null
 	};
 
 	const module = /** @type {ESTree.Program} */ (
