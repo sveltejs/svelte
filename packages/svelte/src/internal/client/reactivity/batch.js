@@ -25,7 +25,7 @@ import {
 	update_effect
 } from '../runtime.js';
 import * as e from '../errors.js';
-import { flush_tasks } from '../dom/task.js';
+import { flush_tasks, has_pending_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
 import { old_values } from './sources.js';
@@ -56,19 +56,6 @@ export let batch_deriveds = null;
 /** @type {Set<() => void>} */
 export let effect_pending_updates = new Set();
 
-/** @type {Array<() => void>} */
-let tasks = [];
-
-function dequeue() {
-	const task = /** @type {() => void} */ (tasks.shift());
-
-	if (tasks.length > 0) {
-		queueMicrotask(dequeue);
-	}
-
-	task();
-}
-
 /** @type {Effect[]} */
 let queued_root_effects = [];
 
@@ -76,7 +63,7 @@ let queued_root_effects = [];
 let last_scheduled_effect = null;
 
 let is_flushing = false;
-let is_flushing_sync = false;
+export let is_flushing_sync = false;
 
 export class Batch {
 	/**
@@ -357,6 +344,48 @@ export class Batch {
 		current_batch = this;
 	}
 
+	/**
+	 * Check if the branch this effect is in is obsolete in a later batch.
+	 * That is, if the branch exists in this batch but will be destroyed in a later batch.
+	 * @param {Effect} effect
+	 */
+	branch_obsolete(effect) {
+		/** @type {Effect[]} */
+		let alive = [];
+		/** @type {Effect[]} */
+		let skipped = [];
+		/** @type {Effect | null} */
+		let current = effect;
+
+		while (current !== null) {
+			if ((current.f & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0) {
+				alive.push(current);
+				if (this.skipped_effects.has(current)) {
+					skipped.push(...alive);
+					alive = [];
+				}
+			}
+			current = current.parent;
+		}
+
+		let check = false;
+		for (const b of batches) {
+			if (b === this) {
+				check = true;
+			} else if (check) {
+				if (
+					alive.some((branch) => b.skipped_effects.has(branch)) ||
+					// TODO do we even have to check skipped here? how would an async_derived run for a branch that was already skipped?
+					(skipped.length > 0 && !skipped.some((branch) => b.skipped_effects.has(branch)))
+				) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
 	deactivate() {
 		current_batch = null;
 		previous_batch = null;
@@ -379,7 +408,7 @@ export class Batch {
 	flush() {
 		if (queued_root_effects.length > 0) {
 			flush_effects();
-		} else {
+		} else if (this.#pending === 0) {
 			this.#commit();
 		}
 
@@ -417,20 +446,24 @@ export class Batch {
 		this.#pending -= 1;
 
 		if (this.#pending === 0) {
-			for (const e of this.#dirty_effects) {
-				set_signal_status(e, DIRTY);
-				schedule_effect(e);
-			}
+			Batch.enqueue(() => {
+				this.activate();
 
-			for (const e of this.#maybe_dirty_effects) {
-				set_signal_status(e, MAYBE_DIRTY);
-				schedule_effect(e);
-			}
+				for (const e of this.#dirty_effects) {
+					set_signal_status(e, DIRTY);
+					schedule_effect(e);
+				}
 
-			this.#render_effects = [];
-			this.#effects = [];
+				for (const e of this.#maybe_dirty_effects) {
+					set_signal_status(e, MAYBE_DIRTY);
+					schedule_effect(e);
+				}
 
-			this.flush();
+				this.#render_effects = [];
+				this.#effects = [];
+
+				this.flush();
+			});
 		} else {
 			this.deactivate();
 		}
@@ -467,11 +500,7 @@ export class Batch {
 
 	/** @param {() => void} task */
 	static enqueue(task) {
-		if (tasks.length === 0) {
-			queueMicrotask(dequeue);
-		}
-
-		tasks.unshift(task);
+		queue_micro_task(task);
 	}
 }
 
@@ -502,7 +531,7 @@ export function flushSync(fn) {
 		while (true) {
 			flush_tasks();
 
-			if (queued_root_effects.length === 0) {
+			if (queued_root_effects.length === 0 && !has_pending_tasks()) {
 				current_batch?.flush();
 
 				// we need to check again, in case we just updated an `$effect.pending()`
@@ -670,20 +699,14 @@ export function schedule_effect(signal) {
 export function suspend() {
 	var boundary = get_pending_boundary();
 	var batch = /** @type {Batch} */ (current_batch);
-	var pending = boundary.pending;
 
 	boundary.update_pending_count(1);
-	if (!pending) batch.increment();
+	batch.increment();
 
 	return function unsuspend() {
 		boundary.update_pending_count(-1);
-
-		if (!pending) {
-			batch.activate();
-			batch.decrement();
-		} else {
-			batch.deactivate();
-		}
+		batch.activate();
+		batch.decrement();
 
 		unset_context();
 	};

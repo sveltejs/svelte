@@ -115,7 +115,7 @@ export function async_derived(fn, location) {
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
 
-	async_effect(() => {
+	var effect = async_effect(() => {
 		if (DEV) current_async_effect = active_effect;
 
 		try {
@@ -135,11 +135,10 @@ export function async_derived(fn, location) {
 		prev = promise;
 
 		var batch = /** @type {Batch} */ (current_batch);
-		var pending = boundary.pending;
 
 		if (should_suspend) {
 			boundary.update_pending_count(1);
-			if (!pending) batch.increment();
+			batch.increment();
 		}
 
 		/**
@@ -151,10 +150,10 @@ export function async_derived(fn, location) {
 
 			current_async_effect = null;
 
-			if (!pending) batch.activate();
+			batch.activate();
 
 			if (error) {
-				if (error !== STALE_REACTION) {
+				if (error !== STALE_REACTION && !batch.branch_obsolete(effect)) {
 					signal.f |= ERROR_VALUE;
 
 					// @ts-expect-error the error is the wrong type, but we don't care
@@ -181,7 +180,7 @@ export function async_derived(fn, location) {
 
 			if (should_suspend) {
 				boundary.update_pending_count(-1);
-				if (!pending) batch.decrement();
+				batch.decrement();
 			}
 
 			unset_context();

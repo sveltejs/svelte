@@ -5,6 +5,8 @@ export default test({
 	async test({ assert, target }) {
 		const [b1, b2, b3] = target.querySelectorAll('button');
 
+		await Promise.resolve();
+
 		// not flushing means we wait a tick before showing the pending state ...
 		b2.click();
 		await Promise.resolve();
@@ -45,6 +47,7 @@ export default test({
 		);
 
 		// when not flushing ...
+		await Promise.resolve();
 		b3.click();
 		await Promise.resolve();
 		assert.htmlEqual(

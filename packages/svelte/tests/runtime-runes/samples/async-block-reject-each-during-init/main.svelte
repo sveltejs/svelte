@@ -3,7 +3,7 @@
 
 	let deferreds = [];
 
-	function push() {
+	function push(_just_so_that_template_is_reactive_) {
 		const deferred = Promise.withResolvers();
 		deferreds.push(deferred);
 		return deferred.promise;
@@ -17,10 +17,19 @@
 <svelte:boundary>
 	{#if count % 2 === 0}
 		<p>true</p>
-		{#each await push() as count}<p>{count}</p>{/each}
+		{#each await push(count) as count}<p>{count}</p>{/each}
 	{:else}
 		<p>false</p>
-		{#each await push() as count}<p>{count}</p>{/each}
+		{#each await push(count) as count}<p>{count}</p>{/each}
+	{/if}
+	
+	{#if count % 2 === 0}
+		<p>true</p>
+		{#each await push(count) as count}<p>{count}</p>{/each}
+	{/if}
+	{#if count % 2 === 1}
+		<p>false</p>
+		{#each await push(count) as count}<p>{count}</p>{/each}
 	{/if}
 
 	{#snippet pending()}
