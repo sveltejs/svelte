@@ -37,17 +37,16 @@ export function is_state_source(binding, analysis) {
  * @returns {boolean}
  */
 export function can_be_parallelized(expression, scope, analysis, bindings) {
-	let has_closures = false;
 	let should_stop = false;
 	/** @type {Set<string>} */
 	const references = new Set();
 	walk(/** @type {Node} */ (expression), null, {
 		ArrowFunctionExpression(_, { stop }) {
-			has_closures = true;
+			should_stop = true;
 			stop();
 		},
 		FunctionExpression(_, { stop }) {
-			has_closures = true;
+			should_stop = true;
 			stop();
 		},
 		Identifier(node, { path }) {
@@ -68,11 +67,11 @@ export function can_be_parallelized(expression, scope, analysis, bindings) {
 			stop();
 		},
 		StaticBlock(node, { stop }) {
-			has_closures = true;
+			should_stop = true;
 			stop();
 		}
 	});
-	if (has_closures || should_stop) {
+	if (should_stop) {
 		return false;
 	}
 	for (const reference of references) {
@@ -80,12 +79,13 @@ export function can_be_parallelized(expression, scope, analysis, bindings) {
 		if (!binding || binding.declaration_kind === 'import') {
 			return false;
 		}
-		if ('template' in analysis) {
+		if (binding.scope !== analysis.module.scope) {
+			if (!('template' in analysis)) {
+				return false;
+			}
 			if (binding.scope !== analysis.instance.scope) {
 				return false;
 			}
-		} else if (binding.scope !== analysis.module.scope) {
-			return false;
 		}
 
 		if (bindings.includes(binding)) {
