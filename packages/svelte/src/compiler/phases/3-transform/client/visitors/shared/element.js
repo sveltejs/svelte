@@ -16,6 +16,7 @@ import { build_expression, build_template_chunk, Memoizer } from './utils.js';
  * @param {ComponentContext} context
  * @param {AST.RegularElement | AST.SvelteElement} element
  * @param {Identifier} element_id
+ * @param {boolean} [should_remove_defaults]
  */
 export function build_attribute_effect(
 	attributes,
@@ -23,7 +24,8 @@ export function build_attribute_effect(
 	style_directives,
 	context,
 	element,
-	element_id
+	element_id,
+	should_remove_defaults = false
 ) {
 	/** @type {ObjectExpression['properties']} */
 	const values = [];
@@ -91,6 +93,7 @@ export function build_attribute_effect(
 				element.metadata.scoped &&
 					context.state.analysis.css.hash !== '' &&
 					b.literal(context.state.analysis.css.hash),
+				should_remove_defaults && b.true,
 				is_ignored(element, 'hydration_attribute_changed') && b.true
 			)
 		)
