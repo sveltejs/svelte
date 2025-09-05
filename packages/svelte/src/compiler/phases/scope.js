@@ -1032,7 +1032,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		Component: (node, context) => {
-			context.state.scope.reference(b.id(node.name), context.path);
+			context.state.scope.reference(b.id(node.name.split('.')[0]), context.path);
 			Component(node, context);
 		},
 		SvelteSelf: Component,
