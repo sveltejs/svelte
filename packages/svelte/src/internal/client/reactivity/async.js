@@ -182,9 +182,6 @@ export async function async_body(fn, is_component = false) {
 	var unsuspend = suspend();
 	var active = /** @type {Effect} */ (active_effect);
 	var ctx = is_component ? component_context : null;
-	if (ctx !== null) {
-		ctx.a = true;
-	}
 
 	try {
 		await fn();

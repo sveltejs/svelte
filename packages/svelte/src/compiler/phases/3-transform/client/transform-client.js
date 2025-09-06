@@ -355,7 +355,11 @@ export function client_component(analysis, options) {
 		component_returned_object.push(b.spread(b.call(b.id('$.legacy_api'))));
 	}
 
-	const push_args = [b.id('$$props'), b.literal(analysis.runes)];
+	const push_args = [
+		b.id('$$props'),
+		b.literal(analysis.runes),
+		b.literal(analysis.instance.has_await)
+	];
 	if (dev) push_args.push(b.id(analysis.name));
 
 	let component_block = b.block([
@@ -368,7 +372,8 @@ export function client_component(analysis, options) {
 		dev ||
 		analysis.needs_context ||
 		analysis.reactive_statements.size > 0 ||
-		component_returned_object.length > 0;
+		component_returned_object.length > 0 ||
+		analysis.instance.has_await;
 
 	if (analysis.instance.has_await) {
 		if (should_inject_context && component_returned_object.length > 0) {

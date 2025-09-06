@@ -139,15 +139,16 @@ export function getAllContexts() {
 /**
  * @param {Record<string, unknown>} props
  * @param {any} runes
+ * @param {boolean} [has_async_body]
  * @param {Function} [fn]
  * @returns {void}
  */
-export function push(props, runes = false, fn) {
+export function push(props, runes = false, has_async_body = false, fn) {
 	component_context = {
 		p: component_context,
 		c: null,
 		e: null,
-		a: false,
+		a: has_async_body,
 		s: props,
 		x: null,
 		l: legacy_mode_flag && !runes ? { s: null, u: null, $: [] } : null
