@@ -2,7 +2,7 @@
 
 import { DESTROYED } from '#client/constants';
 import { DEV } from 'esm-env';
-import { component_context, is_runes, set_component_context } from '../context.js';
+import { component_context, is_runes, pop, set_component_context } from '../context.js';
 import { get_pending_boundary } from '../dom/blocks/boundary.js';
 import { invoke_error_boundary } from '../error-handling.js';
 import {
@@ -19,7 +19,7 @@ import {
 	derived_safe_equal,
 	set_from_async_derived
 } from './deriveds.js';
-import { aborted } from './effects.js';
+import { aborted, create_user_effect } from './effects.js';
 
 /**
  *
@@ -167,19 +167,24 @@ export async function* for_await_track_reactivity_loss(iterable) {
 	}
 }
 
-export function unset_context() {
+/**
+ * @param {boolean} [is_component_body]
+ */
+export function unset_context(is_component_body = false) {
 	set_active_effect(null);
 	set_active_reaction(null);
-	set_component_context(null);
+	if (!is_component_body) set_component_context(null);
 	if (DEV) set_from_async_derived(null);
 }
 
 /**
  * @param {() => Promise<void>} fn
+ * @param {boolean} [is_component]
  */
-export async function async_body(fn) {
+export async function async_body(fn, is_component = false) {
 	var unsuspend = suspend();
 	var active = /** @type {Effect} */ (active_effect);
+	var ctx = is_component ? component_context : null;
 
 	try {
 		await fn();
@@ -188,6 +193,12 @@ export async function async_body(fn) {
 			invoke_error_boundary(error, active);
 		}
 	} finally {
-		unsuspend();
+		unsuspend(is_component);
+		console.log(ctx, component_context, ctx === component_context);
+		if (ctx !== null) {
+			console.log('hi');
+			ctx.a = false;
+			pop();
+		}
 	}
 }
