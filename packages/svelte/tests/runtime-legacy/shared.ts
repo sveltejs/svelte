@@ -130,7 +130,8 @@ export function runtime_suite(runes: boolean) {
 	return suite_with_variants<RuntimeTest, 'hydrate' | 'ssr' | 'dom', CompileOptions>(
 		['dom', 'hydrate', 'ssr'],
 		(variant, config, test_name) => {
-			if (config.requiredMinimumNodeVersion && NODE_MAJOR_VERSION < config.requiredMinimumNodeVersion) {
+			const { requiredMinimumNodeVersion } = config; 
+			if (requiredMinimumNodeVersion && NODE_MAJOR_VERSION < requiredMinimumNodeVersion) {
 				return 'no-test';
 			}
 
