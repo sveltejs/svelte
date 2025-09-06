@@ -130,10 +130,15 @@ export function runtime_suite(runes: boolean) {
 	return suite_with_variants<RuntimeTest, 'hydrate' | 'ssr' | 'dom', CompileOptions>(
 		['dom', 'hydrate', 'ssr'],
 		(variant, config, test_name) => {
+			if (config.requiredNodeVersion) {
+				console.log({
+					requiredNodeVersion: config.requiredNodeVersion,
+					NODE_MAJOR_VERSION
+				})
+			}
 			if (config.requiredNodeVersion && NODE_MAJOR_VERSION < config.requiredNodeVersion) {
 				return true;
 			}
-
 
 			if (!async_mode && (config.skip_no_async || test_name.startsWith('async-'))) {
 				return true;
