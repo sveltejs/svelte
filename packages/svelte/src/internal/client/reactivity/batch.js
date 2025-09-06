@@ -675,7 +675,7 @@ export function suspend() {
 	boundary.update_pending_count(1);
 	if (!pending) batch.increment();
 
-	return function unsuspend() {
+	return function unsuspend(is_component_body = false) {
 		boundary.update_pending_count(-1);
 
 		if (!pending) {
@@ -685,7 +685,7 @@ export function suspend() {
 			batch.deactivate();
 		}
 
-		unset_context();
+		unset_context(is_component_body);
 	};
 }
 

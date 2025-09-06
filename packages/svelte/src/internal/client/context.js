@@ -172,8 +172,8 @@ export function pop(component) {
 		return component ?? /** @type {T} */ ({});
 	}
 	var effects = context.e;
-
-	if (effects !== null && context.a === false) {
+	console.log(effects);
+	if (effects !== null) {
 		context.e = null;
 
 		for (var fn of effects) {

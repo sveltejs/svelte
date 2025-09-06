@@ -167,10 +167,13 @@ export async function* for_await_track_reactivity_loss(iterable) {
 	}
 }
 
-export function unset_context() {
+/**
+ * @param {boolean} [is_component_body]
+ */
+export function unset_context(is_component_body = false) {
 	set_active_effect(null);
 	set_active_reaction(null);
-	set_component_context(null);
+	if (!is_component_body) set_component_context(null);
 	if (DEV) set_from_async_derived(null);
 }
 
@@ -190,12 +193,12 @@ export async function async_body(fn, is_component = false) {
 			invoke_error_boundary(error, active);
 		}
 	} finally {
+		unsuspend(is_component);
 		console.log(ctx);
 		if (ctx !== null) {
 			console.log('hi');
 			ctx.a = false;
 			pop();
 		}
-		unsuspend();
 	}
 }
