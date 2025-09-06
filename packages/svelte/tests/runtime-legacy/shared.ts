@@ -13,6 +13,8 @@ import type { CompileOptions } from '#compiler';
 import { suite_with_variants, type BaseTest } from '../suite.js';
 import { clear } from '../../src/internal/client/reactivity/batch.js';
 
+const NODE_MAJOR_VERSION = parseInt(process.version.split('.')[0].slice(1));
+
 type Assert = typeof import('vitest').assert & {
 	htmlEqual(a: string, b: string, description?: string): void;
 	htmlEqualWithOptions(
@@ -95,6 +97,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	expect_unhandled_rejections?: boolean;
 	withoutNormalizeHtml?: boolean | 'only-strip-comments';
 	recover?: boolean;
+	requiredNodeVersion?: 18 | 20 | 22 | 24;
 }
 
 let unhandled_rejection: Error | null = null;
@@ -127,6 +130,11 @@ export function runtime_suite(runes: boolean) {
 	return suite_with_variants<RuntimeTest, 'hydrate' | 'ssr' | 'dom', CompileOptions>(
 		['dom', 'hydrate', 'ssr'],
 		(variant, config, test_name) => {
+			if (config.requiredNodeVersion && NODE_MAJOR_VERSION < config.requiredNodeVersion) {
+				return true;
+			}
+
+
 			if (!async_mode && (config.skip_no_async || test_name.startsWith('async-'))) {
 				return true;
 			}
