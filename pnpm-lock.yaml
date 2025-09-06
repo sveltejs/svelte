@@ -75,7 +75,7 @@ importers:
         specifier: ^1.0.5
         version: 1.0.8
       acorn:
-        specifier: ^8.12.1
+        specifier: ^8.15.0
         version: 8.15.0
       aria-query:
         specifier: ^5.3.1
