@@ -190,12 +190,12 @@ export async function async_body(fn, is_component = false) {
 			invoke_error_boundary(error, active);
 		}
 	} finally {
-		unsuspend();
 		console.log(ctx);
 		if (ctx !== null) {
 			console.log('hi');
 			ctx.a = false;
 			pop();
 		}
+		unsuspend();
 	}
 }
