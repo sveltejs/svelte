@@ -194,7 +194,7 @@ export async function async_body(fn, is_component = false) {
 		}
 	} finally {
 		unsuspend(is_component);
-		console.log(ctx);
+		console.log(ctx, component_context, ctx === component_context);
 		if (ctx !== null) {
 			console.log('hi');
 			ctx.a = false;
