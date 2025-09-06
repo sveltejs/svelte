@@ -2,7 +2,7 @@
 
 import { DESTROYED } from '#client/constants';
 import { DEV } from 'esm-env';
-import { component_context, is_runes, set_component_context } from '../context.js';
+import { component_context, is_runes, pop, set_component_context } from '../context.js';
 import { get_pending_boundary } from '../dom/blocks/boundary.js';
 import { invoke_error_boundary } from '../error-handling.js';
 import {
@@ -195,14 +195,8 @@ export async function async_body(fn, is_component = false) {
 	} finally {
 		unsuspend();
 		if (ctx !== null && ctx.e !== null) {
-			var prev = component_context;
-			var effects = ctx.e;
-			set_component_context(ctx);
-			for (var effect of effects) {
-				create_user_effect(effect);
-			}
-			set_component_context(prev);
-			ctx = prev = null;
+			ctx.a = false;
+			pop();
 		}
 	}
 }

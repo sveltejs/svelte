@@ -167,6 +167,9 @@ export function push(props, runes = false, fn) {
  */
 export function pop(component) {
 	var context = /** @type {ComponentContext} */ (component_context);
+	if (context.a) {
+		return component ?? /** @type {T} */ ({});
+	}
 	var effects = context.e;
 
 	if (effects !== null && context.a === false) {
