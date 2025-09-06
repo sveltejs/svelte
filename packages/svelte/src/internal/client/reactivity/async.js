@@ -19,7 +19,7 @@ import {
 	derived_safe_equal,
 	set_from_async_derived
 } from './deriveds.js';
-import { aborted } from './effects.js';
+import { aborted, create_user_effect } from './effects.js';
 
 /**
  *
@@ -176,10 +176,15 @@ export function unset_context() {
 
 /**
  * @param {() => Promise<void>} fn
+ * @param {boolean} [is_component]
  */
-export async function async_body(fn) {
+export async function async_body(fn, is_component = false) {
 	var unsuspend = suspend();
 	var active = /** @type {Effect} */ (active_effect);
+	var ctx = is_component ? component_context : null;
+	if (ctx !== null) {
+		ctx.a = true;
+	}
 
 	try {
 		await fn();
@@ -189,5 +194,15 @@ export async function async_body(fn) {
 		}
 	} finally {
 		unsuspend();
+		if (ctx !== null && ctx.e !== null) {
+			var prev = component_context;
+			var effects = ctx.e;
+			set_component_context(ctx);
+			for (var effect of effects) {
+				create_user_effect(effect);
+			}
+			set_component_context(prev);
+			ctx = prev = null;
+		}
 	}
 }

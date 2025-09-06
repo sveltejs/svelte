@@ -147,6 +147,7 @@ export function push(props, runes = false, fn) {
 		p: component_context,
 		c: null,
 		e: null,
+		a: false,
 		s: props,
 		x: null,
 		l: legacy_mode_flag && !runes ? { s: null, u: null, $: [] } : null
@@ -168,7 +169,7 @@ export function pop(component) {
 	var context = /** @type {ComponentContext} */ (component_context);
 	var effects = context.e;
 
-	if (effects !== null) {
+	if (effects !== null && context.a === false) {
 		context.e = null;
 
 		for (var fn of effects) {
