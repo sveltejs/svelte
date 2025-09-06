@@ -97,7 +97,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	expect_unhandled_rejections?: boolean;
 	withoutNormalizeHtml?: boolean | 'only-strip-comments';
 	recover?: boolean;
-	requiredNodeVersion?: 18 | 20 | 22 | 24;
+	requiredMinimumNodeVersion?: 18 | 20 | 22 | 24;
 }
 
 let unhandled_rejection: Error | null = null;
@@ -130,7 +130,7 @@ export function runtime_suite(runes: boolean) {
 	return suite_with_variants<RuntimeTest, 'hydrate' | 'ssr' | 'dom', CompileOptions>(
 		['dom', 'hydrate', 'ssr'],
 		(variant, config, test_name) => {
-			if (config.requiredNodeVersion && NODE_MAJOR_VERSION < config.requiredNodeVersion) {
+			if (config.requiredMinimumNodeVersion && NODE_MAJOR_VERSION < config.requiredMinimumNodeVersion) {
 				return 'no-test';
 			}
 
