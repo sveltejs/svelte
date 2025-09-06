@@ -169,7 +169,8 @@
 						"kind": "const"
 					},
 					"specifiers": [],
-					"source": null
+					"source": null,
+					"attributes": []
 				}
 			],
 			"sourceType": "module"

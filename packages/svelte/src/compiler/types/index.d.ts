@@ -283,6 +283,8 @@ export type DeclarationKind =
 	| 'var'
 	| 'let'
 	| 'const'
+	| 'using'
+	| 'await using'
 	| 'function'
 	| 'import'
 	| 'param'

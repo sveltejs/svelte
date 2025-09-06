@@ -619,7 +619,8 @@ export function import_all(as, source) {
 	return {
 		type: 'ImportDeclaration',
 		source: literal(source),
-		specifiers: [import_namespace(as)]
+		specifiers: [import_namespace(as)],
+		attributes: []
 	};
 }
 
@@ -636,7 +637,8 @@ export function imports(parts, source) {
 			type: 'ImportSpecifier',
 			imported: id(p[0]),
 			local: id(p[1])
-		}))
+		})),
+		attributes: []
 	};
 }
 
