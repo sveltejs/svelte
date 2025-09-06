@@ -42,6 +42,7 @@ import { active_effect, get } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
 import { current_batch } from '../../reactivity/batch.js';
+import { each_key_duplicate } from '../../errors.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -472,6 +473,21 @@ function reconcile(
 					// more efficient to move later items to the front
 					var start = stashed[0];
 					var j;
+
+					// full key uniqueness check is dev-only,
+					// key duplicates cause crushing only due to `matched` being empty
+					if (matched.length === 0) {
+						var map = new Map();
+						for (j = 0; j < length; j += 1) {
+							var k = get_key(array[j], j);
+							if (map.has(k)) {
+								k = String(k);
+								if (k.startsWith('[object ')) k = null;
+								each_key_duplicate(String(j), String(map.get(k)), k);
+							}
+							map.set(k, j);
+						}
+					}
 
 					prev = start.prev;
 
