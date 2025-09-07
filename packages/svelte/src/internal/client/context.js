@@ -141,7 +141,6 @@ export function getAllContexts() {
  * @param {any} runes
  * @param {boolean} [has_async_body]
  * @param {Function} [fn]
- * @returns {void}
  */
 export function push(props, runes = false, has_async_body = false, fn) {
 	component_context = {
@@ -159,22 +158,29 @@ export function push(props, runes = false, has_async_body = false, fn) {
 		component_context.function = fn;
 		dev_current_component_function = fn;
 	}
+
+	return component_context;
 }
 
 /**
  * @template {Record<string, any>} T
+ * @param {ComponentContext} context
  * @param {T} [component]
  * @returns {T}
  */
-export function pop(component) {
-	var context = /** @type {ComponentContext} */ (component_context);
-	if (context.a) {
+export function pop(context, component) {
+	var ctx = /** @type {ComponentContext} */ (component_context);
+	if (context !== ctx) {
+		console.log('h');
 		return component ?? /** @type {T} */ ({});
 	}
-	var effects = context.e;
+	if (ctx.a) {
+		return component ?? /** @type {T} */ ({});
+	}
+	var effects = ctx.e;
 	console.log(effects);
 	if (effects !== null) {
-		context.e = null;
+		ctx.e = null;
 
 		for (var fn of effects) {
 			create_user_effect(fn);
@@ -182,10 +188,10 @@ export function pop(component) {
 	}
 
 	if (component !== undefined) {
-		context.x = component;
+		ctx.x = component;
 	}
 
-	component_context = context.p;
+	component_context = ctx.p;
 
 	if (DEV) {
 		dev_current_component_function = component_context?.function ?? null;

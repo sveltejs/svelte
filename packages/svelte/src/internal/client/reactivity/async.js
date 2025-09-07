@@ -201,7 +201,7 @@ export async function async_body(fn, is_component = false) {
 			console.log('hi');
 			ctx.a = false;
 			running_deferred_effects = true;
-			pop();
+			pop(ctx);
 			running_deferred_effects = false;
 		}
 	}

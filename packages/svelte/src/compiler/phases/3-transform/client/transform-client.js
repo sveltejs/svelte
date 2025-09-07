@@ -455,15 +455,15 @@ export function client_component(analysis, options) {
 	// we want the cleanup function for the stores to run as the very last thing
 	// so that it can effectively clean up the store subscription even after the user effects runs
 	if (should_inject_context) {
-		component_block.body.unshift(b.stmt(b.call('$.push', ...push_args)));
+		component_block.body.unshift(b.var('$$component', b.call('$.push', ...push_args)));
 
 		let to_push;
 
 		if (component_returned_object.length > 0) {
-			let pop_call = b.call('$.pop', b.id('$$exports'));
+			let pop_call = b.call('$.pop', b.id('$$component'), b.id('$$exports'));
 			to_push = needs_store_cleanup ? b.var('$$pop', pop_call) : b.return(pop_call);
 		} else {
-			to_push = b.stmt(b.call('$.pop'));
+			to_push = b.stmt(b.call('$.pop', b.id('$$component')));
 		}
 
 		component_block.body.push(to_push);
