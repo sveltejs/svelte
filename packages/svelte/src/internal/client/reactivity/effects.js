@@ -212,7 +212,7 @@ export function user_effect(fn) {
 		(flags & BRANCH_EFFECT) !== 0 &&
 		(flags & EFFECT_RAN) === 0 &&
 		!running_deferred_effects;
-
+	console.log({ defer, flags, component_context });
 	if (defer) {
 		// Top-level `$effect(...)` in an unmounted component — defer until mount
 		var context = /** @type {ComponentContext} */ (component_context);
