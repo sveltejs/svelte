@@ -179,7 +179,8 @@ export function pop(context, component) {
 		return component ?? /** @type {T} */ ({});
 	}
 	var effects = ctx.e;
-	console.log(effects);
+	console.log('effects', effects);
+	console.log('context', context);
 	if (effects !== null) {
 		ctx.e = null;
 
