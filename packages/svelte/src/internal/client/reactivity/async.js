@@ -177,6 +177,8 @@ export function unset_context(is_component_body = false) {
 	if (DEV) set_from_async_derived(null);
 }
 
+export let running_deferred_effects = false;
+
 /**
  * @param {() => Promise<void>} fn
  * @param {boolean} [is_component]
@@ -198,7 +200,9 @@ export async function async_body(fn, is_component = false) {
 		if (ctx !== null) {
 			console.log('hi');
 			ctx.a = false;
+			running_deferred_effects = true;
 			pop();
+			running_deferred_effects = false;
 		}
 	}
 }

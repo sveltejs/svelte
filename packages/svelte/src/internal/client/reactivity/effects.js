@@ -41,7 +41,7 @@ import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
 import { Batch, schedule_effect } from './batch.js';
-import { flatten } from './async.js';
+import { flatten, running_deferred_effects } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 
 /**
@@ -207,7 +207,11 @@ export function user_effect(fn) {
 	// Non-nested `$effect(...)` in a component should be deferred
 	// until the component is mounted
 	var flags = /** @type {Effect} */ (active_effect).f;
-	var defer = !active_reaction && (flags & BRANCH_EFFECT) !== 0 && (flags & EFFECT_RAN) === 0;
+	var defer =
+		!active_reaction &&
+		(flags & BRANCH_EFFECT) !== 0 &&
+		(flags & EFFECT_RAN) === 0 &&
+		!running_deferred_effects;
 
 	if (defer) {
 		// Top-level `$effect(...)` in an unmounted component — defer until mount
