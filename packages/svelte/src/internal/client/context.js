@@ -175,6 +175,7 @@ export function pop(context, component) {
 		return component ?? /** @type {T} */ ({});
 	}
 	if (ctx.a) {
+		console.log('suspended');
 		return component ?? /** @type {T} */ ({});
 	}
 	var effects = ctx.e;
