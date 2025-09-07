@@ -214,6 +214,7 @@ export function user_effect(fn) {
 		!running_deferred_effects;
 	console.log({ defer, flags, component_context });
 	if (defer) {
+		console.log('deferring');
 		// Top-level `$effect(...)` in an unmounted component — defer until mount
 		var context = /** @type {ComponentContext} */ (component_context);
 		(context.e ??= []).push(fn);
