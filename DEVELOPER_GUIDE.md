@@ -268,3 +268,119 @@ for (const scope of [module.scope, instance.scope]) {
 ### CSS Analysis
 
 While we didn't go deep in how the analysis works for every single step of the analysis it's worth exploring the CSS analysis a bit more in depth. This phase in itself is subdivided in three phases: we first analyze the css, during this phase we validate the structure of svelte specific css (eg. the `:global` selector) is valid also marking every node within global as `used`. We then proceed to `prune` the css. In this phase we match every selector with the html structure...if a selector doesn't match any element we `prune` it away either by commenting it out in dev (so that the users can actually see what's being removed) or by completely remove it in prod. Finally we walk the css AST once more to warn about all the `unused` css nodes accessing the metadata we collected in those two phases.
+
+## Phase 3: Transform
+
+After the analysis phase we can now move to the last compilation phase: the transform. However this phase is really two phases: svelte components generate completely different code based on the `compilerOption.generate` option...the function is small enough that we can just dump it here
+
+```ts
+export function transform_component(analysis, source, options) {
+	if (options.generate === false) {
+		return {
+			js: /** @type {any} */ null,
+			css: null,
+			warnings: state.warnings, // set afterwards
+			metadata: {
+				runes: analysis.runes
+			},
+			ast: /** @type {any} */ null // set afterwards
+		};
+	}
+
+	const program =
+		options.generate === 'server'
+			? server_component(analysis, options)
+			: client_component(analysis, options);
+
+	const js_source_name = get_source_name(options.filename, options.outputFilename, 'input.svelte');
+
+	const js = print(/** @type {Node} */ program, ts({ comments: analysis.comments }), {
+		// include source content; makes it easier/more robust looking up the source map code
+		// (else esrap does return null for source and sourceMapContent which may trip up tooling)
+		sourceMapContent: source,
+		sourceMapSource: js_source_name
+	});
+
+	merge_with_preprocessor_map(js, options, js_source_name);
+
+	const css =
+		analysis.css.ast && !analysis.inject_styles
+			? render_stylesheet(source, analysis, options)
+			: null;
+
+	return {
+		js,
+		css,
+		warnings: state.warnings, // set afterwards. TODO apply preprocessor sourcemap
+		metadata: {
+			runes: analysis.runes
+		},
+		ast: /** @type {any} */ null // set afterwards
+	};
+}
+```
+
+As you can see the key part of this function is this bit here
+
+```ts
+const program =
+	options.generate === 'server'
+		? server_component(analysis, options)
+		: client_component(analysis, options);
+```
+
+Here we just delegate to it's own method to generate either a client component or a server component. Before we jump into exploring those two let's take a look at the output of the compilation of a very simple counter component.
+
+```svelte
+<script>
+	let count = $state(0);
+</script>
+
+<button onclick={() => (count += 1)}>
+	clicks: {count}
+</button>
+```
+
+here's the compiled output for the client
+
+```ts
+import 'svelte/internal/disclose-version';
+import 'svelte/internal/flags/async';
+import * as $ from 'svelte/internal/client';
+
+var on_click = (_, count) => $.set(count, $.get(count) + 1);
+var root = $.from_html(`<button> </button>`);
+
+export default function App($$anchor) {
+	let count = $.state(0);
+	var button = root();
+
+	button.__click = [on_click, count];
+
+	var text = $.child(button);
+
+	$.reset(button);
+	$.template_effect(() => $.set_text(text, `clicks: ${$.get(count) ?? ''}`));
+	$.append($$anchor, button);
+}
+
+$.delegate(['click']);
+```
+
+and here's the one for the server
+
+```ts
+import * as $ from 'svelte/internal/server';
+
+export default function App($$payload) {
+	let count = 0;
+
+	$$payload.out.push(`<button>clicks: ${$.escape(count)}</button>`);
+}
+```
+
+As you can see the server mostly concern itself with generating the html for the component, runes are basically removed, event listeners just vanish. It makes sense because on the server we don't add any listener, we just produce the html that will be hydrated by the client component.
+
+Let's start from the simpler of the two...
+
+### Transform server component
