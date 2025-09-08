@@ -4,7 +4,7 @@ import { globSync } from 'tinyglobby';
 import { createClassComponent } from 'svelte/legacy';
 import { proxy } from 'svelte/internal/client';
 import { flushSync, hydrate, mount, unmount } from 'svelte';
-import { render } from 'svelte/server';
+import { render, renderAsync } from 'svelte/server';
 import { afterAll, assert, beforeAll } from 'vitest';
 import { async_mode, compile_directory, fragments } from '../helpers.js';
 import { assert_html_equal, assert_html_equal_with_options } from '../html_equal.js';
@@ -314,10 +314,16 @@ async function run_test_variant(
 			config.before_test?.();
 			// ssr into target
 			const SsrSvelteComponent = (await import(`${cwd}/_output/server/main.svelte.js`)).default;
-			const { html, head } = render(SsrSvelteComponent, {
-				props: config.server_props ?? config.props ?? {},
-				idPrefix: config.id_prefix
-			});
+			const rendered = async_mode
+				? await renderAsync(SsrSvelteComponent, {
+						props: config.server_props ?? config.props ?? {},
+						idPrefix: config.id_prefix
+					})
+				: render(SsrSvelteComponent, {
+						props: config.server_props ?? config.props ?? {},
+						idPrefix: config.id_prefix
+					});
+			const { html, head } = rendered;
 
 			fs.writeFileSync(`${cwd}/_output/rendered.html`, html);
 			target.innerHTML = html;

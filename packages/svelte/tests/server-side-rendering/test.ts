@@ -50,10 +50,15 @@ const { test, run } = suite<SSRTest>(async (config, test_dir) => {
 
 	const Component = (await import(`${test_dir}/_output/server/main.svelte.js`)).default;
 	const expected_html = try_read_file(`${test_dir}/_expected.html`);
-	const rendered = await (compile_options.experimental.async ? renderAsync : render)(Component, {
-		props: config.props || {},
-		idPrefix: config.id_prefix
-	});
+	const rendered = async_mode
+		? await renderAsync(Component, {
+				props: config.props || {},
+				idPrefix: config.id_prefix
+			})
+		: render(Component, {
+				props: config.props || {},
+				idPrefix: config.id_prefix
+			});
 	const { body, head } = rendered;
 
 	fs.writeFileSync(`${test_dir}/_output/rendered.html`, body);

@@ -1,10 +1,11 @@
 /** @import { Effect, Source, TemplateNode, } from '#client' */
 import {
 	BOUNDARY_EFFECT,
+	COMMENT_NODE,
 	EFFECT_PRESERVED,
-	EFFECT_RAN,
 	EFFECT_TRANSPARENT
 } from '#client/constants';
+import { HYDRATION_START_ELSE } from '../../../../constants.js';
 import { component_context, set_component_context } from '../../context.js';
 import { handle_error, invoke_error_boundary } from '../../error-handling.js';
 import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
@@ -132,6 +133,8 @@ export class Boundary {
 	#cascading_pending_count = 0;
 
 	#is_creating_fallback = false;
+	/** @type {boolean} */
+	#server_rendered_pending = false;
 
 	/**
 	 * A source containing the number of pending async deriveds/expressions.
@@ -172,6 +175,8 @@ export class Boundary {
 
 		this.#hydrate_open = hydrate_node;
 
+		this.#server_rendered_pending = this.#detect_server_state();
+
 		this.parent = /** @type {Effect} */ (active_effect).b;
 
 		this.pending = !!this.#props.pending;
@@ -183,34 +188,15 @@ export class Boundary {
 				hydrate_next();
 			}
 
-			const pending = this.#props.pending;
-
-			if (hydrating && pending) {
-				this.#pending_effect = branch(() => pending(this.#anchor));
-
-				// future work: when we have some form of async SSR, we will
-				// need to use hydration boundary comments to report whether
-				// the pending or main block was rendered for a given
-				// boundary, and hydrate accordingly
-				Batch.enqueue(() => {
-					this.#main_effect = this.#run(() => {
-						Batch.ensure();
-						return branch(() => this.#children(this.#anchor));
-					});
-
-					if (this.#cascading_pending_count > 0) {
-						this.#show_pending_snippet();
-					} else {
-						pause_effect(/** @type {Effect} */ (this.#pending_effect), () => {
-							this.#pending_effect = null;
-						});
-
-						this.pending = false;
-					}
-				});
+			if (hydrating) {
+				if (this.#server_rendered_pending) {
+					this.#hydrate_pending_content();
+				} else {
+					this.#hydrate_resolved_content();
+				}
 			} else {
 				try {
-					this.#main_effect = branch(() => children(this.#anchor));
+					this.#main_effect = branch(() => this.#children(this.#anchor));
 				} catch (error) {
 					this.error(error);
 				}
@@ -226,6 +212,59 @@ export class Boundary {
 		if (hydrating) {
 			this.#anchor = hydrate_node;
 		}
+	}
+
+	#detect_server_state() {
+		if (!hydrating || !this.#hydrate_open) return false;
+
+		const comment = this.#hydrate_open;
+		if (comment.nodeType === COMMENT_NODE) {
+			return /** @type {Comment} */ (comment).data === HYDRATION_START_ELSE;
+		}
+
+		return false;
+	}
+
+	#hydrate_resolved_content() {
+		// Server already rendered resolved content, so hydrate it directly
+		try {
+			this.#main_effect = branch(() => this.#children(this.#anchor));
+		} catch (error) {
+			this.error(error);
+		}
+
+		// Since server rendered resolved content, we never show pending state
+		// Even if client-side async operations are still running, the content is already displayed
+		this.pending = false;
+	}
+
+	#hydrate_pending_content() {
+		const pending = this.#props.pending;
+		if (!pending) {
+			return;
+		}
+		this.#pending_effect = branch(() => pending(this.#anchor));
+
+		// future work: when we have some form of async SSR, we will
+		// need to use hydration boundary comments to report whether
+		// the pending or main block was rendered for a given
+		// boundary, and hydrate accordingly
+		Batch.enqueue(() => {
+			this.#main_effect = this.#run(() => {
+				Batch.ensure();
+				return branch(() => this.#children(this.#anchor));
+			});
+
+			if (this.#cascading_pending_count > 0) {
+				this.#show_pending_snippet();
+			} else {
+				pause_effect(/** @type {Effect} */ (this.#pending_effect), () => {
+					this.#pending_effect = null;
+				});
+
+				this.pending = false;
+			}
+		});
 	}
 
 	has_pending_snippet() {
@@ -292,16 +331,17 @@ export class Boundary {
 	/**
 	 * @param {number} d
 	 * @param {boolean} safe
+	 * @param {boolean} first
 	 */
-	update_pending_count(d, safe = false) {
-		this.#pending_count = Math.max(this.#pending_count + d, 0);
+	update_pending_count(d, safe = false, first = true) {
+		if (first) {
+			this.#pending_count = Math.max(this.#pending_count + d, 0);
+		}
 
 		if (this.has_pending_snippet()) {
 			this.#update_cascading_pending_count(d);
 		} else if (this.parent) {
-			this.parent.update_pending_count(d, safe);
-		} else if (this.parent === null && !safe) {
-			e.await_outside_boundary();
+			this.parent.update_pending_count(d, safe, false);
 		}
 
 		effect_pending_updates.add(this.#effect_pending_update);

@@ -93,7 +93,7 @@ export function push_element(payload, tag, line, column) {
 }
 
 export function pop_element() {
-	parent = /** @type {Element} */ (parent).parent;
+	parent = /** @type {Element} */ (parent)?.parent;
 }
 
 /**

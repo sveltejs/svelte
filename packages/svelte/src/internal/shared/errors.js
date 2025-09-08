@@ -3,12 +3,12 @@
 import { DEV } from 'esm-env';
 
 /**
- * Cannot await outside a `<svelte:boundary>` with a `pending` snippet
+ * Cannot await outside a `<svelte:boundary>`.
  * @returns {never}
  */
 export function await_outside_boundary() {
 	if (DEV) {
-		const error = new Error(`await_outside_boundary\nCannot await outside a \`<svelte:boundary>\` with a \`pending\` snippet\nhttps://svelte.dev/e/await_outside_boundary`);
+		const error = new Error(`await_outside_boundary\nCannot await outside a \`<svelte:boundary>\`.\nhttps://svelte.dev/e/await_outside_boundary`);
 
 		error.name = 'Svelte error';
 
