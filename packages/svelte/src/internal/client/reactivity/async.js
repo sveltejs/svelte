@@ -71,11 +71,13 @@ function capture() {
 	var previous_effect = active_effect;
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
+	var previous_batch = current_batch;
 
 	return function restore() {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
+		previous_batch?.activate();
 
 		if (DEV) {
 			set_from_async_derived(null);
@@ -174,8 +176,8 @@ export function unset_context() {
  * @param {() => Promise<void>} fn
  */
 export async function async_body(fn) {
-	const unsuspend = suspend();
-	const active = /** @type {Effect} */ (active_effect);
+	var unsuspend = suspend();
+	var active = /** @type {Effect} */ (active_effect);
 
 	try {
 		await fn();

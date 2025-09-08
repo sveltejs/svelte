@@ -1,5 +1,55 @@
 # svelte
 
+## 5.38.7
+
+### Patch Changes
+
+- fix: replace `undefined` with `void(0)` in CallExpressions ([#16693](https://github.com/sveltejs/svelte/pull/16693))
+
+- fix: ensure batch exists when resetting a failed boundary ([#16698](https://github.com/sveltejs/svelte/pull/16698))
+
+- fix: place store setup inside async body ([#16687](https://github.com/sveltejs/svelte/pull/16687))
+
+## 5.38.6
+
+### Patch Changes
+
+- fix: don't fail on `flushSync` while flushing effects ([#16674](https://github.com/sveltejs/svelte/pull/16674))
+
+## 5.38.5
+
+### Patch Changes
+
+- fix: ensure async deriveds always get dependencies from thennable ([#16672](https://github.com/sveltejs/svelte/pull/16672))
+
+## 5.38.4
+
+### Patch Changes
+
+- fix: place instance-level snippets inside async body ([#16666](https://github.com/sveltejs/svelte/pull/16666))
+
+- fix: Add check for builtin custom elements in `set_custom_element_data` ([#16592](https://github.com/sveltejs/svelte/pull/16592))
+
+- fix: restore batch along with effect context ([#16668](https://github.com/sveltejs/svelte/pull/16668))
+
+- fix: wait until changes propagate before updating input selection state ([#16649](https://github.com/sveltejs/svelte/pull/16649))
+
+- fix: add "Accept-CH" as valid value for `http-equiv` ([#16671](https://github.com/sveltejs/svelte/pull/16671))
+
+## 5.38.3
+
+### Patch Changes
+
+- fix: ensure correct order of template effect values ([#16655](https://github.com/sveltejs/svelte/pull/16655))
+
+- fix: allow async `{@const}` in more places ([#16643](https://github.com/sveltejs/svelte/pull/16643))
+
+- fix: properly catch top level await errors ([#16619](https://github.com/sveltejs/svelte/pull/16619))
+
+- perf: prune effects without dependencies ([#16625](https://github.com/sveltejs/svelte/pull/16625))
+
+- fix: only emit `for_await_track_reactivity_loss` in async mode ([#16644](https://github.com/sveltejs/svelte/pull/16644))
+
 ## 5.38.2
 
 ### Patch Changes

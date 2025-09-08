@@ -18,13 +18,12 @@
 <button onclick={() => shift()}>shift</button>
 
 <svelte:boundary>
-
-<svelte:boundary>
-	<p>{await push(value)}</p>
-	<p>{await push(value)}</p>
-	<p>{await push(value)}</p>
-	<p>inner pending: {$effect.pending()}</p>
-</svelte:boundary>
+	<svelte:boundary>
+		<p>{await push(value)}</p>
+		<p>{await push(value)}</p>
+		<p>{await push(value)}</p>
+		<p>inner pending: {$effect.pending()}</p>
+	</svelte:boundary>
 	<p>outer pending: {$effect.pending()}</p>
 
 	{#snippet pending()}

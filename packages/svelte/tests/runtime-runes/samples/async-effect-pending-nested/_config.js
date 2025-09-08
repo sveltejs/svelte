@@ -5,7 +5,14 @@ export default test({
 	async test({ assert, target }) {
 		const [increment, shift] = target.querySelectorAll('button');
 
-		assert.htmlEqual(target.innerHTML, `<p>loading...</p>`);
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<button>increment</button>
+				<button>shift</button>
+				<p>loading...</p>
+			`
+		);
 
 		shift.click();
 		shift.click();

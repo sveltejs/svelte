@@ -393,6 +393,9 @@ export class Boundary {
 				e.svelte_boundary_reset_onerror();
 			}
 
+			// If the failure happened while flushing effects, current_batch can be null
+			Batch.ensure();
+
 			// this ensures we modify the cascading_pending_count of the correct parent
 			// by the number we're decreasing this boundary by
 			this.update_pending_count(-this.#pending_count, true);
