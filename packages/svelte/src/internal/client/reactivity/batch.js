@@ -699,14 +699,25 @@ export function schedule_effect(signal) {
 export function suspend() {
 	var boundary = get_pending_boundary();
 	var batch = /** @type {Batch} */ (current_batch);
+	// In case the pending snippet is shown, we want to update the UI immediately
+	// and not have the batch be blocked on async work,
+	// since the async work is happening "hidden" behind the pending snippet.
+	var ignore_async = boundary.pending;
 
 	boundary.update_pending_count(1);
-	batch.increment();
+	if (!ignore_async) batch.increment();
 
 	return function unsuspend() {
 		boundary.update_pending_count(-1);
 		batch.activate();
-		batch.decrement();
+		if (ignore_async) {
+			// Template could have created new effects (for example via attachments) which need to be flushed
+			Batch.enqueue(() => {
+				batch.flush();
+			});
+		} else {
+			batch.decrement();
+		}
 
 		unset_context();
 	};

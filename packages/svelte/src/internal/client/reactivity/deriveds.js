@@ -1,5 +1,4 @@
 /** @import { Derived, Effect, Source } from '#client' */
-/** @import { Batch } from './batch.js'; */
 import { DEV } from 'esm-env';
 import {
 	ERROR_VALUE,
@@ -33,7 +32,7 @@ import { tracing_mode_flag } from '../../flags/index.js';
 import { Boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_deriveds, current_batch } from './batch.js';
+import { Batch, batch_deriveds, current_batch } from './batch.js';
 import { unset_context } from './async.js';
 
 /** @type {Effect | null} */
@@ -135,10 +134,14 @@ export function async_derived(fn, location) {
 		prev = promise;
 
 		var batch = /** @type {Batch} */ (current_batch);
+		// In case the pending snippet is shown, we want to update the UI immediately
+		// and not have the batch be blocked on async work,
+		// since the async work is happening "hidden" behind the pending snippet.
+		var ignore_async = boundary.pending;
 
 		if (should_suspend) {
 			boundary.update_pending_count(1);
-			batch.increment();
+			if (!ignore_async) batch.increment();
 		}
 
 		/**
@@ -180,7 +183,14 @@ export function async_derived(fn, location) {
 
 			if (should_suspend) {
 				boundary.update_pending_count(-1);
-				batch.decrement();
+				if (ignore_async) {
+					// Template could have created new effects (for example via attachments) which need to be flushed
+					Batch.enqueue(() => {
+						batch.flush();
+					});
+				} else {
+					batch.decrement();
+				}
 			}
 
 			unset_context();
