@@ -4,6 +4,7 @@ import { DEV } from 'esm-env';
 import {
 	clear_text_content,
 	create_text,
+	first_child,
 	get_first_child,
 	get_next_sibling,
 	init_operations
@@ -28,7 +29,7 @@ import {
 import { reset_head_anchor } from './dom/blocks/svelte-head.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
-import { assign_nodes } from './dom/template.js';
+import { append, assign_nodes, comment } from './dom/template.js';
 import { is_passive_event } from '../../utils.js';
 import { COMMENT_NODE } from './constants.js';
 import { boundary } from './dom/blocks/boundary.js';
@@ -219,8 +220,8 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 	var unmount = component_root(() => {
 		var anchor_node = anchor ?? target.appendChild(create_text());
 
-		boundary(anchor_node, {}, (anchor_node) =>
-			branch(() => {
+		branch(() => {
+			boundary(/** @type {TemplateNode} */ (anchor_node), { pending: () => {} }, (anchor_node) => {
 				if (context) {
 					push({});
 					var ctx = /** @type {ComponentContext} */ (component_context);
@@ -248,8 +249,8 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 				if (context) {
 					pop();
 				}
-			})
-		);
+			});
+		});
 
 		return () => {
 			for (var event_name of registered_events) {

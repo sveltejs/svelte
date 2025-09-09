@@ -131,10 +131,10 @@ export function child(node, is_text) {
 /**
  * Don't mark this as side-effect-free, hydration needs to walk all nodes
  * @param {DocumentFragment | TemplateNode[]} fragment
- * @param {boolean} is_text
+ * @param {boolean} [is_text]
  * @returns {Node | null}
  */
-export function first_child(fragment, is_text) {
+export function first_child(fragment, is_text = false) {
 	if (!hydrating) {
 		// when not hydrating, `fragment` is a `DocumentFragment` (the result of calling `open_frag`)
 		var first = /** @type {DocumentFragment} */ (get_first_child(/** @type {Node} */ (fragment)));
