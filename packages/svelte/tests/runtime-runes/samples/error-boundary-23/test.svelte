@@ -14,7 +14,6 @@
 		{count} / {test}
 </svelte:boundary>
 
-
 <svelte:boundary onerror={(e) => {console.log('error caught 2')}}>
 		<div>Count: {count}</div>
 		<button onclick={() => count++}>Increment</button>
