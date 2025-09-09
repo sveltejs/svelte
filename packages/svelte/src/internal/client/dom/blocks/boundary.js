@@ -262,7 +262,12 @@ export class Boundary {
 		}
 	}
 
-	/** @param {1 | -1} d */
+	/**
+	 * Update the source that powers `$effect.pending()` inside this boundary,
+	 * and controls when the current `pending` snippet (if any) is removed.
+	 * Do not call from inside the class
+	 * @param {1 | -1} d
+	 */
 	update_pending_count(d) {
 		this.#update_pending_count(d);
 
