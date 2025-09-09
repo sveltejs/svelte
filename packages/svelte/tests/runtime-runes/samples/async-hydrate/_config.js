@@ -1,4 +1,4 @@
-import { flushSync, settled } from 'svelte';
+import { settled } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -8,16 +8,13 @@ export default test({
 		<p>hello</p>
 	`,
 
-	async test({ assert, target, variant }) {
-		if (variant === 'dom') {
-			await settled();
-		}
+	async test({ assert, target }) {
 		const p = target.querySelector('p');
 		ok(p);
 		assert.htmlEqual(p.outerHTML, '<p>Loading...</p>');
 
-		await settled();
-		flushSync();
-		assert.htmlEqual(p.outerHTML, '<p>hello</p>');
+		const p2 = target.querySelector('p');
+		ok(p2);
+		assert.htmlEqual(p2.outerHTML, '<p>hello</p>');
 	}
 });
