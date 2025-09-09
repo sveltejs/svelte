@@ -1,6 +1,6 @@
 /** @import { Component } from '#server' */
 import { DEV } from 'esm-env';
-import { on_destroy } from './index.js';
+import { async_on_destroy, on_destroy } from './index.js';
 import * as e from './errors.js';
 
 /** @type {Component | null} */
@@ -72,6 +72,8 @@ export function pop() {
 
 	if (ondestroy) {
 		on_destroy.push(...ondestroy);
+		// TODO this is probably actually broken
+		async_on_destroy.push(...ondestroy);
 	}
 
 	current_component = component.p;

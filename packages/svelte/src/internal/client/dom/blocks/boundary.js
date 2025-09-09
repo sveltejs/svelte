@@ -91,7 +91,7 @@ export class Boundary {
 	#pending_count = 0;
 
 	#is_creating_fallback = false;
-	/** @type {boolean} */
+
 	#server_rendered_pending = false;
 
 	/**
@@ -144,9 +144,6 @@ export class Boundary {
 
 			if (hydrating) {
 				hydrate_next();
-			}
-
-			if (hydrating) {
 				if (this.#server_rendered_pending) {
 					this.#hydrate_pending_content();
 				} else {
@@ -215,7 +212,7 @@ export class Boundary {
 					this.#pending_effect = null;
 				});
 
-				this.pending = false;
+				this.#pending = false;
 			}
 		});
 	}

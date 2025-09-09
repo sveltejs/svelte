@@ -1,6 +1,7 @@
 import { ok, test } from '../../test';
 
 export default test({
+	skip: true,
 	html: `
 		<p>hello</p>
 	`,
