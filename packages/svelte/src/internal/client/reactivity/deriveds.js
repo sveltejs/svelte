@@ -137,7 +137,7 @@ export function async_derived(fn, location) {
 		// In case the pending snippet is shown, we want to update the UI immediately
 		// and not have the batch be blocked on async work,
 		// since the async work is happening "hidden" behind the pending snippet.
-		var ignore_async = boundary.pending;
+		var ignore_async = boundary.is_pending();
 
 		if (should_suspend) {
 			boundary.update_pending_count(1);

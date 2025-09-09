@@ -49,10 +49,10 @@ export function boundary(node, props, children) {
 }
 
 export class Boundary {
-	pending = false;
-
 	/** @type {Boundary | null} */
 	parent;
+
+	#pending = false;
 
 	/** @type {TemplateNode} */
 	#anchor;
@@ -81,6 +81,7 @@ export class Boundary {
 	/** @type {DocumentFragment | null} */
 	#offscreen_fragment = null;
 
+	#local_pending_count = 0;
 	#pending_count = 0;
 	#is_creating_fallback = false;
 
@@ -95,12 +96,12 @@ export class Boundary {
 
 	#effect_pending_update = () => {
 		if (this.#effect_pending) {
-			internal_set(this.#effect_pending, this.#pending_count);
+			internal_set(this.#effect_pending, this.#local_pending_count);
 		}
 	};
 
 	#effect_pending_subscriber = createSubscriber(() => {
-		this.#effect_pending = source(this.#pending_count);
+		this.#effect_pending = source(this.#local_pending_count);
 
 		if (DEV) {
 			tag(this.#effect_pending, '$effect.pending()');
@@ -125,7 +126,7 @@ export class Boundary {
 
 		this.parent = /** @type {Effect} */ (active_effect).b;
 
-		this.pending = !!this.#props.pending;
+		this.#pending = !!this.#props.pending;
 
 		this.#effect = block(() => {
 			/** @type {Effect} */ (active_effect).b = this;
@@ -156,7 +157,7 @@ export class Boundary {
 							this.#pending_effect = null;
 						});
 
-						this.pending = false;
+						this.#pending = false;
 					}
 				});
 			} else {
@@ -169,7 +170,7 @@ export class Boundary {
 				if (this.#pending_count > 0) {
 					this.#show_pending_snippet();
 				} else {
-					this.pending = false;
+					this.#pending = false;
 				}
 			}
 		}, flags);
@@ -177,6 +178,14 @@ export class Boundary {
 		if (hydrating) {
 			this.#anchor = hydrate_node;
 		}
+	}
+
+	/**
+	 * Returns `true` if the effect exists inside a boundary whose pending snippet is shown
+	 * @returns {boolean}
+	 */
+	is_pending() {
+		return this.#pending || (!!this.parent && this.parent.is_pending());
 	}
 
 	has_pending_snippet() {
@@ -220,12 +229,25 @@ export class Boundary {
 		}
 	}
 
-	/** @param {1 | -1} d */
+	/**
+	 * Updates the pending count associated with the currently visible pending snippet,
+	 * if any, such that we can replace the snippet with content once work is done
+	 * @param {1 | -1} d
+	 */
 	#update_pending_count(d) {
+		if (!this.has_pending_snippet()) {
+			if (this.parent) {
+				this.parent.#update_pending_count(d);
+				return;
+			}
+
+			e.await_outside_boundary();
+		}
+
 		this.#pending_count += d;
 
 		if (this.#pending_count === 0) {
-			this.pending = false;
+			this.#pending = false;
 
 			if (this.#pending_effect) {
 				pause_effect(this.#pending_effect, () => {
@@ -240,14 +262,16 @@ export class Boundary {
 		}
 	}
 
-	/** @param {1 | -1} d */
+	/**
+	 * Update the source that powers `$effect.pending()` inside this boundary,
+	 * and controls when the current `pending` snippet (if any) is removed.
+	 * Do not call from inside the class
+	 * @param {1 | -1} d
+	 */
 	update_pending_count(d) {
-		if (this.has_pending_snippet()) {
-			this.#update_pending_count(d);
-		} else if (this.parent) {
-			this.parent.#update_pending_count(d);
-		}
+		this.#update_pending_count(d);
 
+		this.#local_pending_count += d;
 		effect_pending_updates.add(this.#effect_pending_update);
 	}
 
@@ -297,6 +321,9 @@ export class Boundary {
 				e.svelte_boundary_reset_onerror();
 			}
 
+			// If the failure happened while flushing effects, current_batch can be null
+			Batch.ensure();
+
 			this.#pending_count = 0;
 
 			if (this.#failed_effect !== null) {
@@ -305,7 +332,7 @@ export class Boundary {
 				});
 			}
 
-			this.pending = true;
+			this.#pending = true;
 
 			this.#main_effect = this.#run(() => {
 				this.#is_creating_fallback = false;
@@ -315,7 +342,7 @@ export class Boundary {
 			if (this.#pending_count > 0) {
 				this.#show_pending_snippet();
 			} else {
-				this.pending = false;
+				this.#pending = false;
 			}
 		};
 
@@ -381,12 +408,8 @@ function move_effect(effect, fragment) {
 	}
 }
 
-export function get_pending_boundary() {
-	var boundary = /** @type {Effect} */ (active_effect).b;
-
-	while (boundary !== null && !boundary.has_pending_snippet()) {
-		boundary = boundary.parent;
-	}
+export function get_boundary() {
+	const boundary = /** @type {Effect} */ (active_effect).b;
 
 	if (boundary === null) {
 		e.await_outside_boundary();
