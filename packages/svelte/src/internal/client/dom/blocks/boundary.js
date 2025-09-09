@@ -238,9 +238,10 @@ export class Boundary {
 		if (!this.has_pending_snippet()) {
 			if (this.parent) {
 				this.parent.#update_pending_count(d);
+				return;
 			}
 
-			return;
+			e.await_outside_boundary();
 		}
 
 		this.#pending_count += d;
@@ -403,13 +404,7 @@ function move_effect(effect, fragment) {
 }
 
 export function get_boundary() {
-	var boundary = /** @type {Effect} */ (active_effect).b;
-
-	if (boundary === null) {
-		e.await_outside_boundary();
-	}
-
-	return boundary;
+	return /** @type {Effect} */ (active_effect).b;
 }
 
 export function pending() {
