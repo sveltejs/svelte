@@ -104,6 +104,8 @@ export function render(component, options = {}) {
 		let { head, body } = payload.collect();
 		head += payload.global.head.title.value;
 
+		body = BLOCK_OPEN + body + BLOCK_CLOSE; // this inserts a fake boundary so hydration matches
+
 		for (const { hash, code } of payload.global.css) {
 			head += `<style id="${hash}">${code}</style>`;
 		}
@@ -170,6 +172,8 @@ export async function render_async(component, options = {}) {
 
 		let { head, body } = await payload;
 		head += payload.global.head.title.value;
+
+		body = BLOCK_OPEN + body + BLOCK_CLOSE; // this inserts a fake boundary so hydration matches
 
 		for (const { hash, code } of payload.global.css) {
 			head += `<style id="${hash}">${code}</style>`;

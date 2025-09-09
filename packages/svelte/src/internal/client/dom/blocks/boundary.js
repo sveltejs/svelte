@@ -275,10 +275,10 @@ export class Boundary {
 		if (!this.has_pending_snippet()) {
 			if (this.parent) {
 				this.parent.#update_pending_count(d);
-				return;
 			}
 
-			e.await_outside_boundary();
+			// if there's no parent, we're in a scope with no pending snippet
+			return;
 		}
 
 		this.#pending_count += d;
