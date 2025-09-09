@@ -297,7 +297,10 @@ export class Batch {
 					this.#render_effects.push(effect);
 				} else if ((flags & CLEAN) === 0) {
 					if ((flags & ASYNC) !== 0) {
-						var effects = effect.b?.pending ? this.#boundary_async_effects : this.#async_effects;
+						var effects = effect.b?.is_pending()
+							? this.#boundary_async_effects
+							: this.#async_effects;
+
 						effects.push(effect);
 					} else if (is_dirty(effect)) {
 						if ((effect.f & BLOCK_EFFECT) !== 0) this.#block_effects.push(effect);
@@ -669,7 +672,7 @@ export function schedule_effect(signal) {
 export function suspend() {
 	var boundary = get_boundary();
 	var batch = /** @type {Batch} */ (current_batch);
-	var pending = boundary.pending;
+	var pending = boundary.is_pending();
 
 	boundary.update_pending_count(1);
 	if (!pending) batch.increment();

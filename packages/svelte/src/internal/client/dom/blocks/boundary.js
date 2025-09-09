@@ -58,30 +58,7 @@ export class Boundary {
 	/** @type {Boundary | null} */
 	parent;
 
-	/**
-	 * Whether this boundary is inside a boundary (including this one) that's showing a pending snippet.
-	 * @type {boolean}
-	 */
-	get pending() {
-		if (this.has_pending_snippet()) {
-			return this.#pending;
-		}
-
-		// intentionally not throwing here, as the answer to "am I in a pending snippet" is false when
-		// there's no pending snippet at all
-		return this.parent?.pending ?? false;
-	}
-
-	set pending(value) {
-		if (this.has_pending_snippet()) {
-			this.#pending = value;
-		} else if (this.parent) {
-			this.parent.pending = value;
-		} else if (value) {
-			e.await_outside_boundary();
-		}
-		// if we're trying to set it to `false` and yeeting that into the void, it's fine
-	}
+	#pending = false;
 
 	/** @type {TemplateNode} */
 	#anchor;
@@ -110,27 +87,8 @@ export class Boundary {
 	/** @type {DocumentFragment | null} */
 	#offscreen_fragment = null;
 
-	/**
-	 * Whether this boundary is inside a boundary (including this one) that's showing a pending snippet.
-	 * Derived from {@link props.pending} and {@link cascading_pending_count}.
-	 */
-	#pending = false;
-
-	/**
-	 * The number of pending async deriveds/expressions within this boundary, not counting any parent or child boundaries.
-	 * This controls `$effect.pending` for this boundary.
-	 *
-	 * Don't ever set this directly; use {@link update_pending_count} instead.
-	 */
+	#local_pending_count = 0;
 	#pending_count = 0;
-
-	/**
-	 * Like {@link #pending_count}, but treats boundaries with no `pending` snippet as porous.
-	 * This controls the pending snippet for this boundary.
-	 *
-	 * Don't ever set this directly; use {@link update_pending_count} instead.
-	 */
-	#cascading_pending_count = 0;
 
 	#is_creating_fallback = false;
 	/** @type {boolean} */
@@ -147,12 +105,12 @@ export class Boundary {
 
 	#effect_pending_update = () => {
 		if (this.#effect_pending) {
-			internal_set(this.#effect_pending, this.#pending_count);
+			internal_set(this.#effect_pending, this.#local_pending_count);
 		}
 	};
 
 	#effect_pending_subscriber = createSubscriber(() => {
-		this.#effect_pending = source(this.#pending_count);
+		this.#effect_pending = source(this.#local_pending_count);
 
 		if (DEV) {
 			tag(this.#effect_pending, '$effect.pending()');
@@ -179,7 +137,7 @@ export class Boundary {
 
 		this.parent = /** @type {Effect} */ (active_effect).b;
 
-		this.pending = !!this.#props.pending;
+		this.#pending = !!this.#props.pending;
 
 		this.#effect = block(() => {
 			/** @type {Effect} */ (active_effect).b = this;
@@ -201,10 +159,10 @@ export class Boundary {
 					this.error(error);
 				}
 
-				if (this.#cascading_pending_count > 0) {
+				if (this.#pending_count > 0) {
 					this.#show_pending_snippet();
 				} else {
-					this.pending = false;
+					this.#pending = false;
 				}
 			}
 		}, flags);
@@ -235,7 +193,7 @@ export class Boundary {
 
 		// Since server rendered resolved content, we never show pending state
 		// Even if client-side async operations are still running, the content is already displayed
-		this.pending = false;
+		this.#pending = false;
 	}
 
 	#hydrate_pending_content() {
@@ -255,7 +213,7 @@ export class Boundary {
 				return branch(() => this.#children(this.#anchor));
 			});
 
-			if (this.#cascading_pending_count > 0) {
+			if (this.#pending_count > 0) {
 				this.#show_pending_snippet();
 			} else {
 				pause_effect(/** @type {Effect} */ (this.#pending_effect), () => {
@@ -265,6 +223,14 @@ export class Boundary {
 				this.pending = false;
 			}
 		});
+	}
+
+	/**
+	 * Returns `true` if the effect exists inside a boundary whose pending snippet is shown
+	 * @returns {boolean}
+	 */
+	is_pending() {
+		return this.#pending || (!!this.parent && this.parent.is_pending());
 	}
 
 	has_pending_snippet() {
@@ -308,12 +274,25 @@ export class Boundary {
 		}
 	}
 
-	/** @param {number} d */
-	#update_cascading_pending_count(d) {
-		this.#cascading_pending_count = Math.max(this.#cascading_pending_count + d, 0);
+	/**
+	 * Updates the pending count associated with the currently visible pending snippet,
+	 * if any, such that we can replace the snippet with content once work is done
+	 * @param {1 | -1} d
+	 */
+	#update_pending_count(d) {
+		if (!this.has_pending_snippet()) {
+			if (this.parent) {
+				this.parent.#update_pending_count(d);
+				return;
+			}
 
-		if (this.#cascading_pending_count === 0) {
-			this.pending = false;
+			e.await_outside_boundary();
+		}
+
+		this.#pending_count += d;
+
+		if (this.#pending_count === 0) {
+			this.#pending = false;
 
 			if (this.#pending_effect) {
 				pause_effect(this.#pending_effect, () => {
@@ -329,21 +308,15 @@ export class Boundary {
 	}
 
 	/**
-	 * @param {number} d
-	 * @param {boolean} safe
-	 * @param {boolean} first
+	 * Update the source that powers `$effect.pending()` inside this boundary,
+	 * and controls when the current `pending` snippet (if any) is removed.
+	 * Do not call from inside the class
+	 * @param {1 | -1} d
 	 */
-	update_pending_count(d, safe = false, first = true) {
-		if (first) {
-			this.#pending_count = Math.max(this.#pending_count + d, 0);
-		}
+	update_pending_count(d) {
+		this.#update_pending_count(d);
 
-		if (this.has_pending_snippet()) {
-			this.#update_cascading_pending_count(d);
-		} else if (this.parent) {
-			this.parent.update_pending_count(d, safe, false);
-		}
-
+		this.#local_pending_count += d;
 		effect_pending_updates.add(this.#effect_pending_update);
 	}
 
@@ -396,9 +369,7 @@ export class Boundary {
 			// If the failure happened while flushing effects, current_batch can be null
 			Batch.ensure();
 
-			// this ensures we modify the cascading_pending_count of the correct parent
-			// by the number we're decreasing this boundary by
-			this.update_pending_count(-this.#pending_count, true);
+			this.#local_pending_count = 0;
 
 			if (this.#failed_effect !== null) {
 				pause_effect(this.#failed_effect, () => {
@@ -408,17 +379,17 @@ export class Boundary {
 
 			// we intentionally do not try to find the nearest pending boundary. If this boundary has one, we'll render it on reset
 			// but it would be really weird to show the parent's boundary on a child reset.
-			this.pending = this.has_pending_snippet();
+			this.#pending = this.has_pending_snippet();
 
 			this.#main_effect = this.#run(() => {
 				this.#is_creating_fallback = false;
 				return branch(() => this.#children(this.#anchor));
 			});
 
-			if (this.#cascading_pending_count > 0) {
+			if (this.#pending_count > 0) {
 				this.#show_pending_snippet();
 			} else {
-				this.pending = false;
+				this.#pending = false;
 			}
 		};
 
