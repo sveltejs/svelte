@@ -481,9 +481,10 @@ function reconcile(
 						for (j = 0; j < length; j += 1) {
 							var k = get_key(array[j], j);
 							if (map.has(k)) {
-								k = String(k);
-								if (k.startsWith('[object ')) k = null;
-								each_key_duplicate(String(j), String(map.get(k)), k);
+								/** @type {string|null} */
+								var key_name = String(k);
+								if (key_name.startsWith('[object ')) key_name = null;
+								each_key_duplicate(String(j), String(map.get(k)), key_name);
 							}
 							map.set(k, j);
 						}
