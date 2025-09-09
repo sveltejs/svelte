@@ -10,14 +10,14 @@ export default function Async_if_hoisting($$anchor) {
 		var consequent = ($$anchor) => {
 			var text = $.text();
 
-			$.template_effect(($0) => $.set_text(text, $0), undefined, [() => Promise.resolve('yes yes yes')]);
+			$.template_effect(($0) => $.set_text(text, $0), void 0, [() => Promise.resolve('yes yes yes')]);
 			$.append($$anchor, text);
 		};
 
 		var alternate = ($$anchor) => {
 			var text_1 = $.text();
 
-			$.template_effect(($0) => $.set_text(text_1, $0), undefined, [() => Promise.reject('no no no')]);
+			$.template_effect(($0) => $.set_text(text_1, $0), void 0, [() => Promise.reject('no no no')]);
 			$.append($$anchor, text_1);
 		};
 

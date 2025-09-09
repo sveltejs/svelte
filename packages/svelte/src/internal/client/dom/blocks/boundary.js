@@ -154,7 +154,7 @@ export class Boundary {
 				}
 			} else {
 				try {
-					this.#main_effect = branch(() => this.#children(this.#anchor));
+					this.#main_effect = branch(() => children(this.#anchor));
 				} catch (error) {
 					this.error(error);
 				}
@@ -184,7 +184,6 @@ export class Boundary {
 	}
 
 	#hydrate_resolved_content() {
-		// Server already rendered resolved content, so hydrate it directly
 		try {
 			this.#main_effect = branch(() => this.#children(this.#anchor));
 		} catch (error) {
@@ -203,10 +202,6 @@ export class Boundary {
 		}
 		this.#pending_effect = branch(() => pending(this.#anchor));
 
-		// future work: when we have some form of async SSR, we will
-		// need to use hydration boundary comments to report whether
-		// the pending or main block was rendered for a given
-		// boundary, and hydrate accordingly
 		Batch.enqueue(() => {
 			this.#main_effect = this.#run(() => {
 				Batch.ensure();
