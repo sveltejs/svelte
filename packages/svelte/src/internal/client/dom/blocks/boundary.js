@@ -54,7 +54,9 @@ export class Boundary {
 
 	/**
 	 * Whether this boundary is inside a boundary (including this one) that's showing a pending snippet.
+	 * TODO the `returns` annotation is probably incorrect (it's a getter) but TSGo is currently failing
 	 * @type {boolean}
+	 * @returns {boolean}
 	 */
 	get pending() {
 		if (this.has_pending_snippet()) {
