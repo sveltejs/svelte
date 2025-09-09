@@ -81,6 +81,7 @@ export class Boundary {
 	/** @type {DocumentFragment | null} */
 	#offscreen_fragment = null;
 
+	#local_pending_count = 0;
 	#pending_count = 0;
 	#is_creating_fallback = false;
 
@@ -95,12 +96,12 @@ export class Boundary {
 
 	#effect_pending_update = () => {
 		if (this.#effect_pending) {
-			internal_set(this.#effect_pending, this.#pending_count);
+			internal_set(this.#effect_pending, this.#local_pending_count);
 		}
 	};
 
 	#effect_pending_subscriber = createSubscriber(() => {
-		this.#effect_pending = source(this.#pending_count);
+		this.#effect_pending = source(this.#local_pending_count);
 
 		if (DEV) {
 			tag(this.#effect_pending, '$effect.pending()');
@@ -179,6 +180,14 @@ export class Boundary {
 		}
 	}
 
+	/**
+	 * Returns `true` if the effect exists inside a boundary whose pending snippet is shown
+	 * @returns {boolean}
+	 */
+	is_pending() {
+		return this.pending || (!!this.parent && this.parent.is_pending());
+	}
+
 	has_pending_snippet() {
 		return !!this.#props.pending;
 	}
@@ -220,8 +229,20 @@ export class Boundary {
 		}
 	}
 
-	/** @param {1 | -1} d */
+	/**
+	 * Updates the pending count associated with the currently visible pending snippet,
+	 * if any, such that we can replace the snippet with content once work is done
+	 * @param {1 | -1} d
+	 */
 	#update_pending_count(d) {
+		if (!this.has_pending_snippet()) {
+			if (this.parent) {
+				this.parent.#update_pending_count(d);
+			}
+
+			return;
+		}
+
 		this.#pending_count += d;
 
 		if (this.#pending_count === 0) {
@@ -242,12 +263,9 @@ export class Boundary {
 
 	/** @param {1 | -1} d */
 	update_pending_count(d) {
-		if (this.has_pending_snippet()) {
-			this.#update_pending_count(d);
-		} else if (this.parent) {
-			this.parent.#update_pending_count(d);
-		}
+		this.#update_pending_count(d);
 
+		this.#local_pending_count += d;
 		effect_pending_updates.add(this.#effect_pending_update);
 	}
 
@@ -384,12 +402,8 @@ function move_effect(effect, fragment) {
 	}
 }
 
-export function get_pending_boundary() {
+export function get_boundary() {
 	var boundary = /** @type {Effect} */ (active_effect).b;
-
-	while (boundary !== null && !boundary.has_pending_snippet()) {
-		boundary = boundary.parent;
-	}
 
 	if (boundary === null) {
 		e.await_outside_boundary();
