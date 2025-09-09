@@ -49,10 +49,10 @@ export function boundary(node, props, children) {
 }
 
 export class Boundary {
-	pending = false;
-
 	/** @type {Boundary | null} */
 	parent;
+
+	#pending = false;
 
 	/** @type {TemplateNode} */
 	#anchor;
@@ -126,7 +126,7 @@ export class Boundary {
 
 		this.parent = /** @type {Effect} */ (active_effect).b;
 
-		this.pending = !!this.#props.pending;
+		this.#pending = !!this.#props.pending;
 
 		this.#effect = block(() => {
 			/** @type {Effect} */ (active_effect).b = this;
@@ -157,7 +157,7 @@ export class Boundary {
 							this.#pending_effect = null;
 						});
 
-						this.pending = false;
+						this.#pending = false;
 					}
 				});
 			} else {
@@ -170,7 +170,7 @@ export class Boundary {
 				if (this.#pending_count > 0) {
 					this.#show_pending_snippet();
 				} else {
-					this.pending = false;
+					this.#pending = false;
 				}
 			}
 		}, flags);
@@ -185,7 +185,7 @@ export class Boundary {
 	 * @returns {boolean}
 	 */
 	is_pending() {
-		return this.pending || (!!this.parent && this.parent.is_pending());
+		return this.#pending || (!!this.parent && this.parent.is_pending());
 	}
 
 	has_pending_snippet() {
@@ -246,7 +246,7 @@ export class Boundary {
 		this.#pending_count += d;
 
 		if (this.#pending_count === 0) {
-			this.pending = false;
+			this.#pending = false;
 
 			if (this.#pending_effect) {
 				pause_effect(this.#pending_effect, () => {
@@ -326,7 +326,7 @@ export class Boundary {
 				});
 			}
 
-			this.pending = true;
+			this.#pending = true;
 
 			this.#main_effect = this.#run(() => {
 				this.#is_creating_fallback = false;
@@ -336,7 +336,7 @@ export class Boundary {
 			if (this.#pending_count > 0) {
 				this.#show_pending_snippet();
 			} else {
-				this.pending = false;
+				this.#pending = false;
 			}
 		};
 
