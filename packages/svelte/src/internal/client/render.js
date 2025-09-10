@@ -220,8 +220,12 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 	var unmount = component_root(() => {
 		var anchor_node = anchor ?? target.appendChild(create_text());
 
-		branch(() => {
-			boundary(/** @type {TemplateNode} */ (anchor_node), { pending: () => {} }, (anchor_node) => {
+		boundary(
+			/** @type {TemplateNode} */ (anchor_node),
+			{
+				pending: () => {}
+			},
+			(anchor_node) => {
 				if (context) {
 					push({});
 					var ctx = /** @type {ComponentContext} */ (component_context);
@@ -249,8 +253,8 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 				if (context) {
 					pop();
 				}
-			});
-		});
+			}
+		);
 
 		return () => {
 			for (var event_name of registered_events) {

@@ -398,17 +398,12 @@ async function run_test_variant(
 					};
 				} else {
 					const render = variant === 'hydrate' ? hydrate : mount;
-					// catch and log error from this function
-					try {
-						instance = render(mod.default, {
-							target,
-							props,
-							intro: config.intro,
-							recover: config.recover ?? false
-						});
-					} catch (error) {
-						console.log(error);
-					}
+					instance = render(mod.default, {
+						target,
+						props,
+						intro: config.intro,
+						recover: config.recover ?? false
+					});
 				}
 			} else {
 				instance = createClassComponent({
