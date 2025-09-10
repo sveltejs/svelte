@@ -57,7 +57,7 @@ export default test({
 		{ str: 'replace_me_script', strGenerated: 'done_replace_script_2' },
 		{ str: 'done_replace_script_2', idxGenerated: 1 }
 	],
-	css: [{ str: '.replace_me_style', strGenerated: '.done_replace_style_2.svelte-o6vre' }],
+	css: [{ str: '.replace_me_style', strGenerated: '.done_replace_style_2.svelte-fk9pdp' }],
 	test({ assert, code_preprocessed, code_css }) {
 		assert.equal(
 			code_preprocessed.includes('\n/*# sourceMappingURL=data:application/json;base64,'),
