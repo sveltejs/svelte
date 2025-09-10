@@ -259,14 +259,6 @@ export class Boundary {
 				this.#anchor.before(this.#offscreen_fragment);
 				this.#offscreen_fragment = null;
 			}
-
-			const batch = current_batch;
-
-			if (batch) {
-				queue_micro_task(() => {
-					batch.flush();
-				});
-			}
 		}
 	}
 

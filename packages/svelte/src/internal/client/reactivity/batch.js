@@ -685,7 +685,7 @@ export function suspend() {
 			batch.activate();
 			batch.decrement();
 		} else {
-			batch.deactivate();
+			batch.flush();
 		}
 
 		unset_context();
