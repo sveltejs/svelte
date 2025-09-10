@@ -520,7 +520,7 @@ export function analyze_component(root, source, options) {
 			hash: root.css
 				? options.cssHash({
 						css: root.css.content.styles,
-						filename: options.filename,
+						filename: state.filename,
 						name: component_name,
 						hash
 					})
