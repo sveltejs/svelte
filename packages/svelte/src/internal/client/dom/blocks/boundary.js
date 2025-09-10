@@ -23,7 +23,7 @@ import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { DEV } from 'esm-env';
-import { Batch, effect_pending_updates } from '../../reactivity/batch.js';
+import { Batch, current_batch, effect_pending_updates } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
@@ -258,6 +258,14 @@ export class Boundary {
 			if (this.#offscreen_fragment) {
 				this.#anchor.before(this.#offscreen_fragment);
 				this.#offscreen_fragment = null;
+			}
+
+			const batch = current_batch;
+
+			if (batch) {
+				queue_micro_task(() => {
+					batch.flush();
+				});
 			}
 		}
 	}
