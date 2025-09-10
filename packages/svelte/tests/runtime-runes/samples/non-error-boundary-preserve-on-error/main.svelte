@@ -1,7 +1,19 @@
 <script lang="ts">
-	import Throws from './Throws.svelte';
+	let should_throw = $state(false);
+
+	function throw_error() {
+		throw new Error('oops');
+	}
 </script>
 
+<button onclick={() => should_throw = true}>
+	throw
+</button>
+
 <svelte:boundary>
-	<Throws />
+	<p>some content</p>
+
+	{#if should_throw}
+		{throw_error()}
+	{/if}
 </svelte:boundary>
