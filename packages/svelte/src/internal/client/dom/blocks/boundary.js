@@ -285,6 +285,12 @@ export class Boundary {
 		var onerror = this.#props.onerror;
 		let failed = this.#props.failed;
 
+		// If we have nothing to capture the error, or if we hit an error while
+		// rendering the fallback, re-throw for another boundary to handle
+		if (this.#is_creating_fallback || (!onerror && !failed)) {
+			throw error;
+		}
+
 		if (this.#main_effect) {
 			destroy_effect(this.#main_effect);
 			this.#main_effect = null;
@@ -345,12 +351,6 @@ export class Boundary {
 				this.#pending = false;
 			}
 		};
-
-		// If we have nothing to capture the error, or if we hit an error while
-		// rendering the fallback, re-throw for another boundary to handle
-		if (this.#is_creating_fallback || (!onerror && !failed)) {
-			throw error;
-		}
 
 		var previous_reaction = active_reaction;
 
