@@ -3,6 +3,7 @@ import { test } from '../../test';
 export default test({
 	async test({ assert, target, logs }) {
 		const [b1, b2, b3, b4] = target.querySelectorAll('button');
+		await Promise.resolve();
 		b1.click();
 		await Promise.resolve();
 		b2.click();

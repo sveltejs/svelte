@@ -1,4 +1,5 @@
 import { run_all } from '../../shared/utils.js';
+import { is_flushing_sync } from '../reactivity/batch.js';
 
 // Fallback for when requestIdleCallback is not available
 const request_idle_callback =
@@ -24,11 +25,15 @@ function run_idle_tasks() {
 	run_all(tasks);
 }
 
+export function has_pending_tasks() {
+	return micro_tasks.length > 0 || idle_tasks.length > 0;
+}
+
 /**
  * @param {() => void} fn
  */
 export function queue_micro_task(fn) {
-	if (micro_tasks.length === 0) {
+	if (micro_tasks.length === 0 && !is_flushing_sync) {
 		queueMicrotask(run_micro_tasks);
 	}
 

@@ -3,6 +3,11 @@
 	export let route = $state({ current: 'home' });
 </script>
 
+<script>
+	// reset from earlier tests
+	route.current = 'home'
+</script>
+
 <button onclick={() => route.reject()}>reject</button>
 
 <svelte:boundary>
