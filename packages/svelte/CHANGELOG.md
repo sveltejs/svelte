@@ -1,5 +1,11 @@
 # svelte
 
+## 5.38.8
+
+### Patch Changes
+
+- fix: send `$effect.pending` count to the correct boundary ([#16732](https://github.com/sveltejs/svelte/pull/16732))
+
 ## 5.38.7
 
 ### Patch Changes
