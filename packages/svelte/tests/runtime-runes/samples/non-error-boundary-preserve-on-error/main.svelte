@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Throws from './Throws.svelte';
+	import Throws from './Throws.svelte';
 </script>
 
 <svelte:boundary>
-  <Throws />
+	<Throws />
 </svelte:boundary>
