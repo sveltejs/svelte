@@ -71,7 +71,7 @@ const component_options = {
 	}),
 
 	cssHash: fun(({ css, filename, hash }) => {
-		return `svelte-${hash(filename ?? css)}`;
+		return `svelte-${hash(filename === '(unknown)' ? css : filename ?? css)}`;
 	}),
 
 	// TODO this is a sourcemap option, would be good to put under a sourcemap namespace
