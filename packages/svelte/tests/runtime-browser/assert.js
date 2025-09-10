@@ -74,6 +74,7 @@ function normalize_html(window, html) {
 		node.innerHTML = html
 			.replace(/<!--.*?-->/g, '')
 			.replace(/>[\s\r\n]+</g, '><')
+			.replace(/svelte-\w+/g, 'svelte-xyz123')
 			.trim();
 
 		normalize_children(node);

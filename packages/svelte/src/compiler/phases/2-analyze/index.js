@@ -456,10 +456,19 @@ export function analyze_component(root, source, options) {
 
 	const is_custom_element = !!options.customElementOptions || options.customElement;
 
+	const name = module.scope.generate(options.name ?? component_name);
+
+	state.adjust({
+		component_name: name,
+		dev: options.dev,
+		rootDir: options.rootDir,
+		runes
+	});
+
 	// TODO remove all the ?? stuff, we don't need it now that we're validating the config
 	/** @type {ComponentAnalysis} */
 	const analysis = {
-		name: module.scope.generate(options.name ?? component_name),
+		name,
 		root: scope_root,
 		module,
 		instance,
@@ -520,7 +529,7 @@ export function analyze_component(root, source, options) {
 			hash: root.css
 				? options.cssHash({
 						css: root.css.content.styles,
-						filename: options.filename,
+						filename: state.filename,
 						name: component_name,
 						hash
 					})
@@ -533,13 +542,6 @@ export function analyze_component(root, source, options) {
 		snippets: new Set(),
 		async_deriveds: new Set()
 	};
-
-	state.adjust({
-		component_name: analysis.name,
-		dev: options.dev,
-		rootDir: options.rootDir,
-		runes
-	});
 
 	if (!runes) {
 		// every exported `let` or `var` declaration becomes a prop, everything else becomes an export
