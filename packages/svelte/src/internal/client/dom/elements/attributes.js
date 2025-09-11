@@ -272,7 +272,7 @@ export function set_custom_element_data(node, prop, value) {
  * @param {boolean} [skip_warning]
  * @returns {Record<string, any>}
  */
-export function set_attributes(
+function set_attributes(
 	element,
 	prev,
 	next,
