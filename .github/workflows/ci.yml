@@ -57,7 +57,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm playwright install chromium
       - run: pnpm test runtime-runes
-      - run: pnpm test server-side-rendering
         env:
           CI: true
           SVELTE_NO_ASYNC: true

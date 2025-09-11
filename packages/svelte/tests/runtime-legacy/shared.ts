@@ -43,9 +43,9 @@ Promise.withResolvers = () => {
 export interface RuntimeTest<Props extends Record<string, any> = Record<string, any>>
 	extends BaseTest {
 	/** Use e.g. `mode: ['client']` to indicate that this test should never run in server/hydrate modes */
-	mode?: Array<'server' | 'client' | 'hydrate'>;
+	mode?: Array<'server' | 'async-server' | 'client' | 'hydrate'>;
 	/** Temporarily skip specific modes, without skipping the entire test */
-	skip_mode?: Array<'server' | 'client' | 'hydrate'>;
+	skip_mode?: Array<'server' | 'async-server' | 'client' | 'hydrate'>;
 	/** Skip if running with process.env.NO_ASYNC */
 	skip_no_async?: boolean;
 	/** Skip if running without process.env.NO_ASYNC */
@@ -83,7 +83,11 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 		errors: any[];
 		hydrate: Function;
 	}) => void | Promise<void>;
-	test_ssr?: (args: { logs: any[]; assert: Assert }) => void | Promise<void>;
+	test_ssr?: (args: {
+		logs: any[];
+		assert: Assert;
+		variant: 'ssr' | 'async-ssr';
+	}) => void | Promise<void>;
 	accessors?: boolean;
 	immutable?: boolean;
 	intro?: boolean;
@@ -124,7 +128,7 @@ let console_warn = console.warn;
 let console_error = console.error;
 
 export function runtime_suite(runes: boolean) {
-	return suite_with_variants<RuntimeTest, 'hydrate' | 'ssr' | 'dom', CompileOptions>(
+	return suite_with_variants<RuntimeTest, 'hydrate' | 'ssr' | 'async-ssr' | 'dom', CompileOptions>(
 		['dom', 'hydrate', 'ssr'],
 		(variant, config, test_name) => {
 			if (!async_mode && (config.skip_no_async || test_name.startsWith('async-'))) {
@@ -160,6 +164,21 @@ export function runtime_suite(runes: boolean) {
 					return 'no-test';
 				}
 				if (config.skip_mode?.includes('server')) return true;
+			}
+
+			if (variant === 'async-ssr') {
+				if (
+					(config.mode && !config.mode.includes('async-server')) ||
+					(!config.test_ssr &&
+						config.html === undefined &&
+						config.ssrHtml === undefined &&
+						config.error === undefined &&
+						config.runtime_error === undefined &&
+						!config.mode?.includes('async-server'))
+				) {
+					return 'no-test';
+				}
+				if (config.skip_mode?.includes('async-server')) return true;
 			}
 
 			return false;
@@ -207,7 +226,7 @@ async function common_setup(cwd: string, runes: boolean | undefined, config: Run
 async function run_test_variant(
 	cwd: string,
 	config: RuntimeTest,
-	variant: 'dom' | 'hydrate' | 'ssr',
+	variant: 'dom' | 'hydrate' | 'ssr' | 'async-ssr',
 	compileOptions: CompileOptions,
 	runes: boolean
 ) {
@@ -310,26 +329,28 @@ async function run_test_variant(
 
 		let snapshot = undefined;
 
-		if (variant === 'hydrate' || variant === 'ssr') {
+		if (variant === 'hydrate' || variant === 'ssr' || variant === 'async-ssr') {
 			config.before_test?.();
 			// ssr into target
 			const SsrSvelteComponent = (await import(`${cwd}/_output/server/main.svelte.js`)).default;
-			const rendered = async_mode
-				? await renderAsync(SsrSvelteComponent, {
-						props: config.server_props ?? config.props ?? {},
-						idPrefix: config.id_prefix
-					})
-				: render(SsrSvelteComponent, {
-						props: config.server_props ?? config.props ?? {},
-						idPrefix: config.id_prefix
-					});
+			const rendered =
+				variant === 'async-ssr' || variant === 'hydrate'
+					? await renderAsync(SsrSvelteComponent, {
+							props: config.server_props ?? config.props ?? {},
+							idPrefix: config.id_prefix
+						})
+					: render(SsrSvelteComponent, {
+							props: config.server_props ?? config.props ?? {},
+							idPrefix: config.id_prefix
+						});
 			const { html, head } = rendered;
 
-			fs.writeFileSync(`${cwd}/_output/rendered.html`, html);
+			const prefix = variant === 'async-ssr' ? 'async_' : '';
+			fs.writeFileSync(`${cwd}/_output/${prefix}rendered.html`, html);
 			target.innerHTML = html;
 
 			if (head) {
-				fs.writeFileSync(`${cwd}/_output/rendered_head.html`, head);
+				fs.writeFileSync(`${cwd}/_output/${prefix}rendered_head.html`, head);
 				window.document.head.innerHTML = window.document.head.innerHTML + head;
 			}
 
@@ -344,7 +365,7 @@ async function run_test_variant(
 			target.innerHTML = '';
 		}
 
-		if (variant === 'ssr') {
+		if (variant === 'ssr' || variant === 'async-ssr') {
 			if (config.ssrHtml) {
 				assert_html_equal_with_options(target.innerHTML, config.ssrHtml, {
 					preserveComments:
@@ -367,7 +388,8 @@ async function run_test_variant(
 						...assert,
 						htmlEqual: assert_html_equal,
 						htmlEqualWithOptions: assert_html_equal_with_options
-					}
+					},
+					variant
 				});
 			}
 		} else {

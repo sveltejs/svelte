@@ -68,7 +68,9 @@ export let on_destroy = [];
  */
 export function render(component, options = {}) {
 	try {
-		const payload = new Payload(new TreeState(options.idPrefix ? options.idPrefix + '-' : ''));
+		const payload = new Payload(
+			new TreeState('sync', options.idPrefix ? options.idPrefix + '-' : '')
+		);
 
 		const prev_on_destroy = on_destroy;
 		on_destroy = [];
@@ -137,7 +139,9 @@ export let async_on_destroy = [];
  */
 export async function render_async(component, options = {}) {
 	try {
-		const payload = new Payload(new TreeState(options.idPrefix ? options.idPrefix + '-' : ''));
+		const payload = new Payload(
+			new TreeState('async', options.idPrefix ? options.idPrefix + '-' : '')
+		);
 
 		const prev_on_destroy = async_on_destroy;
 		async_on_destroy = [];

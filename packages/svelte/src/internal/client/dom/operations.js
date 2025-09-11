@@ -130,7 +130,7 @@ export function child(node, is_text) {
 
 /**
  * Don't mark this as side-effect-free, hydration needs to walk all nodes
- * @param {DocumentFragment | TemplateNode[]} fragment
+ * @param {DocumentFragment | TemplateNode | TemplateNode[]} fragment
  * @param {boolean} [is_text]
  * @returns {Node | null}
  */

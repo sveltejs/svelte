@@ -2,6 +2,8 @@ import { tick } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
+	skip_mode: ['server'],
+
 	ssrHtml: '<p>hello</p>',
 
 	html: '',

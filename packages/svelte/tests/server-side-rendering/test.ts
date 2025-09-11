@@ -26,6 +26,20 @@ interface SSRTest extends BaseTest {
 	errors?: string[];
 }
 
+// TODO remove this shim when we can
+// @ts-expect-error
+Promise.withResolvers = () => {
+	let resolve;
+	let reject;
+
+	const promise = new Promise((f, r) => {
+		resolve = f;
+		reject = r;
+	});
+
+	return { promise, resolve, reject };
+};
+
 // eslint-disable-next-line no-console
 let console_error = console.error;
 
