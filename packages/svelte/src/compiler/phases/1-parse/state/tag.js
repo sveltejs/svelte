@@ -426,7 +426,6 @@ function open(parser) {
 			body: create_fragment(),
 			metadata: {
 				can_hoist: false,
-				has_await: false,
 				sites: new Set()
 			}
 		});

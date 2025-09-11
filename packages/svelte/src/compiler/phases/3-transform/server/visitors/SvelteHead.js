@@ -17,7 +17,7 @@ export function SvelteHead(node, context) {
 				b.id('$$payload'),
 				// same thing as elsewhere; this will create more async functions than necessary but should never be _wrong_
 				// because the component rendering this head block will always be async if the head block is async
-				b.arrow([b.id('$$payload')], block, context.state.analysis.has_blocking_await)
+				b.arrow([b.id('$$payload')], block, context.state.analysis.suspends_without_fallback)
 			)
 		)
 	);

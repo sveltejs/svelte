@@ -164,7 +164,7 @@ export function RegularElement(node, context) {
 						b.arrow(
 							[b.id('$$payload')],
 							b.block([...inner_state.init, ...build_template(inner_state.template)]),
-							context.state.analysis.has_blocking_await
+							context.state.analysis.suspends_without_fallback
 						)
 					)
 				)
@@ -208,7 +208,7 @@ export function RegularElement(node, context) {
 				// TODO this will always produce correct results (because it will produce an async function if the surrounding component is async)
 				// but it will false-positive and create unnecessary async functions (eg. when the component is async but the select element is not)
 				// we could probably optimize by checking if the select element is async. Might be worth it.
-				context.state.analysis.has_blocking_await
+				context.state.analysis.suspends_without_fallback
 			)
 		);
 	}

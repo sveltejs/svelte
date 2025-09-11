@@ -538,7 +538,7 @@ export function analyze_component(root, source, options) {
 		snippet_renderers: new Map(),
 		snippets: new Set(),
 		async_deriveds: new Set(),
-		has_blocking_await: false,
+		suspends_without_fallback: false,
 		hoisted_promises: new Map()
 	};
 

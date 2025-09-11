@@ -108,7 +108,7 @@ export interface ComponentAnalysis extends Analysis {
 	 */
 	snippets: Set<AST.SnippetBlock>;
 	/** Whether the component uses `await` in a context that would require an `await` on the server. */
-	has_blocking_await: boolean;
+	suspends_without_fallback: boolean;
 	hoisted_promises: Map<Expression, MemberExpression>;
 }
 

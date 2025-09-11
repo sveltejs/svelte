@@ -247,7 +247,7 @@ export function server_component(analysis, options) {
 						.../** @type {Statement[]} */ (instance.body),
 						.../** @type {Statement[]} */ (template.body)
 					]),
-					analysis.has_blocking_await
+					analysis.suspends_without_fallback
 				)
 			)
 		)

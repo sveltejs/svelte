@@ -240,7 +240,7 @@ export function build_inline_component(node, expression, context) {
 						b.arrow(
 							[b.id('$$payload')],
 							b.block(block.body),
-							context.state.analysis.has_blocking_await
+							context.state.analysis.suspends_without_fallback
 						)
 					)
 				)
