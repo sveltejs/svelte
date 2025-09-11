@@ -52,11 +52,7 @@ export function Fragment(node, context) {
 			b.stmt(
 				b.call(
 					'$$payload.child',
-					b.arrow(
-						[b.id('$$payload')],
-						b.block(build_template(state.template)),
-						node.metadata.is_async
-					)
+					b.arrow([b.id('$$payload')], b.block(build_template(state.template)), true)
 				)
 			)
 		]);

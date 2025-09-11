@@ -57,10 +57,6 @@ export namespace AST {
 			 */
 			dynamic: boolean;
 			has_await: boolean;
-			/**
-			 * True when this fragment has a top-level `await` expression.
-			 */
-			is_async: boolean;
 			hoisted_promises: { name: string; promises: Expression[] };
 		};
 	}

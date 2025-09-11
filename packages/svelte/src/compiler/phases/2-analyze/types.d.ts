@@ -9,7 +9,6 @@ export interface AnalysisState {
 	options: ValidatedCompileOptions;
 	ast_type: 'instance' | 'template' | 'module';
 	fragment: AST.Fragment | null;
-	snippet: AST.SnippetBlock | null;
 	title: AST.TitleElement | null;
 	boundary: AST.SvelteBoundary | null;
 	/**

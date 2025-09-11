@@ -26,7 +26,6 @@ export function SnippetBlock(node, context) {
 	context.next({
 		...context.state,
 		parent_element: null,
-		snippet: node,
 		async_hoist_boundary: node.body
 	});
 
