@@ -285,9 +285,7 @@ function set_attributes(
 		hydrating &&
 		should_remove_defaults &&
 		element.tagName === 'INPUT' &&
-		(/** @type {HTMLInputElement} */ (element).type === 'checkbox'
-			? !('defaultChecked' in next)
-			: !('defaultValue' in next))
+		!(/** @type {HTMLInputElement} */ (element).type === 'checkbox' ? 'defaultChecked' : 'defaultValue' in next)
 	) {
 		remove_input_defaults(/** @type {HTMLInputElement} */ (element));
 	}
