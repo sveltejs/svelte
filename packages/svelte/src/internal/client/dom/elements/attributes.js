@@ -280,14 +280,13 @@ function set_attributes(
 	should_remove_defaults = false,
 	skip_warning = false
 ) {
-	// prettier-ignore
-	if (
-		hydrating &&
-		should_remove_defaults &&
-		element.tagName === 'INPUT' &&
-		!(/** @type {HTMLInputElement} */ (element).type === 'checkbox' ? 'defaultChecked' : 'defaultValue' in next)
-	) {
-		remove_input_defaults(/** @type {HTMLInputElement} */ (element));
+	if (hydrating && should_remove_defaults && element.tagName === 'INPUT') {
+		var input = /** @type {HTMLInputElement} */ (element);
+		var attribute = input.type === 'checkbox' ? 'defaultChecked' : 'defaultValue';
+
+		if (!(attribute in next)) {
+			remove_input_defaults(input);
+		}
 	}
 
 	var attributes = get_attributes(element);
