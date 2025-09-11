@@ -19,6 +19,7 @@ import {
 	set_from_async_derived
 } from './deriveds.js';
 import { aborted } from './effects.js';
+import { get_boundary } from '../dom/blocks/boundary.js';
 
 /**
  *
