@@ -1,5 +1,11 @@
 # svelte
 
+## 5.38.10
+
+### Patch Changes
+
+- fix: flush effects scheduled during boundary's pending phase ([#16738](https://github.com/sveltejs/svelte/pull/16738))
+
 ## 5.38.9
 
 ### Patch Changes
