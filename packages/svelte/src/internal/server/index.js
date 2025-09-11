@@ -203,11 +203,8 @@ export function spread_attributes(attrs, css_hash, classes, styles, flags = 0) {
 		}
 
 		if (is_input) {
-			if (name === 'defaultvalue') {
-				name = 'value';
-				if (attrs[name]) continue;
-			} else if (name === 'defaultchecked') {
-				name = 'checked';
+			if (name === 'defaultvalue' || name === 'defaultchecked') {
+				name = name === 'defaultvalue' ? 'value' : 'checked';
 				if (attrs[name]) continue;
 			}
 		}
