@@ -17,7 +17,6 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@v1
       - name: Checkout Repo
         uses: actions/checkout@v4
         with:
