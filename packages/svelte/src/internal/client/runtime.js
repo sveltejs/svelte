@@ -20,7 +20,8 @@ import {
 	DISCONNECTED,
 	REACTION_IS_UPDATING,
 	STALE_REACTION,
-	ERROR_VALUE
+	ERROR_VALUE,
+	HAS_EFFECTS
 } from './constants.js';
 import { old_values } from './reactivity/sources.js';
 import {
@@ -670,6 +671,13 @@ export function get(signal) {
 		}
 
 		if (is_dirty(derived)) {
+			update_derived(derived);
+		} else if ((derived.f & HAS_EFFECTS) !== 0 && derived.effects === null) {
+			// Recreate effects they have been destroyed without turning the derived dirty.
+			// Clear flag first in case the derived would now no longer create an effect
+			// because it's executing a different if-branch for example. Will be readded
+			// via create_effect if there turns out to be one.
+			derived.f ^= HAS_EFFECTS;
 			update_derived(derived);
 		}
 	}
