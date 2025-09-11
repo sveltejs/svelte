@@ -653,28 +653,6 @@ export function schedule_effect(signal) {
 	queued_root_effects.push(effect);
 }
 
-export function suspend() {
-	var boundary = get_boundary();
-	var batch = /** @type {Batch} */ (current_batch);
-	var pending = boundary.is_pending();
-
-	boundary.update_pending_count(1);
-	if (!pending) batch.increment();
-
-	return function unsuspend() {
-		boundary.update_pending_count(-1);
-
-		if (!pending) {
-			batch.activate();
-			batch.decrement();
-		} else {
-			batch.flush();
-		}
-
-		unset_context();
-	};
-}
-
 /**
  * Forcibly remove all current batches, to prevent cross-talk between tests
  */

@@ -11,7 +11,7 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from '../runtime.js';
-import { current_batch, suspend } from './batch.js';
+import { Batch, current_batch } from './batch.js';
 import {
 	async_derived,
 	current_async_effect,
@@ -178,7 +178,13 @@ export function unset_context() {
  * @param {() => Promise<void>} fn
  */
 export async function async_body(fn) {
-	var unsuspend = suspend();
+	var boundary = get_boundary();
+	var batch = /** @type {Batch} */ (current_batch);
+	var pending = boundary.is_pending();
+
+	boundary.update_pending_count(1);
+	if (!pending) batch.increment();
+
 	var active = /** @type {Effect} */ (active_effect);
 
 	try {
@@ -188,6 +194,15 @@ export async function async_body(fn) {
 			invoke_error_boundary(error, active);
 		}
 	} finally {
-		unsuspend();
+		boundary.update_pending_count(-1);
+
+		if (!pending) {
+			batch.activate();
+			batch.decrement();
+		} else {
+			batch.flush();
+		}
+
+		unset_context();
 	}
 }
