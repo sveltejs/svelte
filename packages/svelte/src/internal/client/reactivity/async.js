@@ -196,11 +196,11 @@ export async function async_body(fn) {
 	} finally {
 		boundary.update_pending_count(-1);
 
-		if (!pending) {
+		if (pending) {
+			batch.flush();
+		} else {
 			batch.activate();
 			batch.decrement();
-		} else {
-			batch.flush();
 		}
 
 		unset_context();
