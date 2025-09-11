@@ -32,7 +32,7 @@ const IS_HTML = Symbol('is html');
 
 /**
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need to remove
- * it upon hydration to avoid a bug when someone resets the form value
+ * to remove it upon hydration to avoid a bug when someone resets the form value.
  * @param {HTMLInputElement} input
  * @returns {void}
  */
