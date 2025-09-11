@@ -8,7 +8,8 @@ import { subscribe_to_store } from '../../store/utils.js';
 import {
 	UNINITIALIZED,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
-	ELEMENT_IS_NAMESPACED
+	ELEMENT_IS_NAMESPACED,
+	ELEMENT_IS_INPUT
 } from '../../constants.js';
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
@@ -262,6 +263,7 @@ export function spread_attributes(attrs, css_hash, classes, styles, flags = 0) {
 
 	const is_html = (flags & ELEMENT_IS_NAMESPACED) === 0;
 	const lowercase = (flags & ELEMENT_PRESERVE_ATTRIBUTE_CASE) === 0;
+	const is_input = (flags & ELEMENT_IS_INPUT) !== 0;
 
 	for (name in attrs) {
 		// omit functions, internal svelte properties and invalid attribute names
@@ -273,6 +275,13 @@ export function spread_attributes(attrs, css_hash, classes, styles, flags = 0) {
 
 		if (lowercase) {
 			name = name.toLowerCase();
+		}
+
+		if (is_input) {
+			if (name === 'defaultvalue' || name === 'defaultchecked') {
+				name = name === 'defaultvalue' ? 'value' : 'checked';
+				if (attrs[name]) continue;
+			}
 		}
 
 		attr_str += attr(name, value, is_html && is_boolean_attribute(name));

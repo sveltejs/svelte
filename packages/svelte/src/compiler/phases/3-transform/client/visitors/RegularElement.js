@@ -72,6 +72,7 @@ export function RegularElement(node, context) {
 
 	let has_spread = node.metadata.has_spread;
 	let has_use = false;
+	let should_remove_defaults = false;
 
 	for (const attribute of node.attributes) {
 		switch (attribute.type) {
@@ -172,7 +173,12 @@ export function RegularElement(node, context) {
 				bindings.has('group') ||
 				(!bindings.has('group') && has_value_attribute))
 		) {
-			context.state.init.push(b.stmt(b.call('$.remove_input_defaults', context.state.node)));
+			if (has_spread) {
+				// remove_input_defaults will be called inside set_attributes
+				should_remove_defaults = true;
+			} else {
+				context.state.init.push(b.stmt(b.call('$.remove_input_defaults', context.state.node)));
+			}
 		}
 	}
 
@@ -202,7 +208,15 @@ export function RegularElement(node, context) {
 		bindings.has('checked');
 
 	if (has_spread) {
-		build_attribute_effect(attributes, class_directives, style_directives, context, node, node_id);
+		build_attribute_effect(
+			attributes,
+			class_directives,
+			style_directives,
+			context,
+			node,
+			node_id,
+			should_remove_defaults
+		);
 	} else {
 		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
 			if (is_event_attribute(attribute)) {

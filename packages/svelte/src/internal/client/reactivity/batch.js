@@ -24,7 +24,7 @@ import {
 	update_effect
 } from '../runtime.js';
 import * as e from '../errors.js';
-import { flush_tasks } from '../dom/task.js';
+import { flush_tasks, has_pending_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
 import { old_values } from './sources.js';
@@ -55,19 +55,6 @@ export let batch_deriveds = null;
 /** @type {Set<() => void>} */
 export let effect_pending_updates = new Set();
 
-/** @type {Array<() => void>} */
-let tasks = [];
-
-function dequeue() {
-	const task = /** @type {() => void} */ (tasks.shift());
-
-	if (tasks.length > 0) {
-		queueMicrotask(dequeue);
-	}
-
-	task();
-}
-
 /** @type {Effect[]} */
 let queued_root_effects = [];
 
@@ -75,7 +62,7 @@ let queued_root_effects = [];
 let last_scheduled_effect = null;
 
 let is_flushing = false;
-let is_flushing_sync = false;
+export let is_flushing_sync = false;
 
 export class Batch {
 	/**
@@ -469,11 +456,7 @@ export class Batch {
 
 	/** @param {() => void} task */
 	static enqueue(task) {
-		if (tasks.length === 0) {
-			queueMicrotask(dequeue);
-		}
-
-		tasks.unshift(task);
+		queue_micro_task(task);
 	}
 }
 
@@ -504,7 +487,7 @@ export function flushSync(fn) {
 		while (true) {
 			flush_tasks();
 
-			if (queued_root_effects.length === 0) {
+			if (queued_root_effects.length === 0 && !has_pending_tasks()) {
 				current_batch?.flush();
 
 				// we need to check again, in case we just updated an `$effect.pending()`
@@ -667,28 +650,6 @@ export function schedule_effect(signal) {
 	}
 
 	queued_root_effects.push(effect);
-}
-
-export function suspend() {
-	var boundary = get_boundary();
-	var batch = /** @type {Batch} */ (current_batch);
-	var pending = boundary.is_pending();
-
-	boundary.update_pending_count(1);
-	if (!pending) batch.increment();
-
-	return function unsuspend() {
-		boundary.update_pending_count(-1);
-
-		if (!pending) {
-			batch.activate();
-			batch.decrement();
-		} else {
-			batch.deactivate();
-		}
-
-		unset_context();
-	};
 }
 
 /**

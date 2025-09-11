@@ -1,5 +1,31 @@
 # svelte
 
+## 5.38.10
+
+### Patch Changes
+
+- fix: flush effects scheduled during boundary's pending phase ([#16738](https://github.com/sveltejs/svelte/pull/16738))
+
+## 5.38.9
+
+### Patch Changes
+
+- chore: generate CSS hash using the filename ([#16740](https://github.com/sveltejs/svelte/pull/16740))
+
+- fix: correctly analyze `<object.property>` components ([#16711](https://github.com/sveltejs/svelte/pull/16711))
+
+- fix: clean up scheduling system ([#16741](https://github.com/sveltejs/svelte/pull/16741))
+
+- fix: transform input defaults from spread ([#16481](https://github.com/sveltejs/svelte/pull/16481))
+
+- fix: don't destroy contents of `svelte:boundary` unless the boundary is an error boundary ([#16746](https://github.com/sveltejs/svelte/pull/16746))
+
+## 5.38.8
+
+### Patch Changes
+
+- fix: send `$effect.pending` count to the correct boundary ([#16732](https://github.com/sveltejs/svelte/pull/16732))
+
 ## 5.38.7
 
 ### Patch Changes
