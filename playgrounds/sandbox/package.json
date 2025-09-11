@@ -19,7 +19,7 @@
     "polka": "^1.0.0-next.25",
     "svelte": "workspace:*",
     "tinyglobby": "^0.2.12",
-    "vite": "^5.4.19",
+    "vite": "^5.4.20",
     "vite-plugin-inspect": "^0.8.4"
   }
 }
