@@ -105,7 +105,7 @@ export interface CompileOptions extends ModuleCompileOptions {
 	css?: 'injected' | 'external';
 	/**
 	 * A function that takes a `{ hash, css, name, filename }` argument and returns the string that is used as a classname for scoped CSS.
-	 * It defaults to returning `svelte-${hash(css)}`.
+	 * It defaults to returning `svelte-${hash(filename ?? css)}`.
 	 *
 	 * @default undefined
 	 */
