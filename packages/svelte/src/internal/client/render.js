@@ -4,7 +4,6 @@ import { DEV } from 'esm-env';
 import {
 	clear_text_content,
 	create_text,
-	first_child,
 	get_first_child,
 	get_next_sibling,
 	init_operations
@@ -12,7 +11,7 @@ import {
 import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
 import { active_effect } from './runtime.js';
 import { push, pop, component_context } from './context.js';
-import { component_root, branch } from './reactivity/effects.js';
+import { component_root } from './reactivity/effects.js';
 import {
 	hydrate_next,
 	hydrate_node,
@@ -29,7 +28,7 @@ import {
 import { reset_head_anchor } from './dom/blocks/svelte-head.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
-import { append, assign_nodes, comment } from './dom/template.js';
+import { assign_nodes } from './dom/template.js';
 import { is_passive_event } from '../../utils.js';
 import { COMMENT_NODE } from './constants.js';
 import { boundary } from './dom/blocks/boundary.js';

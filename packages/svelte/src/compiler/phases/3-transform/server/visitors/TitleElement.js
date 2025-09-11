@@ -1,7 +1,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '#compiler/builders';
-import { process_children, build_template } from './shared/utils.js';
+import { process_children, build_template, call_child_payload } from './shared/utils.js';
 
 /**
  * @param {AST.TitleElement} node
@@ -14,29 +14,20 @@ export function TitleElement(node, context) {
 	template.push(b.literal('</title>'));
 
 	context.state.init.push(
-		b.stmt(
-			b.call(
-				'$$payload.child',
-				// this nonsense is necessary so that the write to the title is as tightly scoped to a specific location
-				// in the async tree as possible. This lets us use `get_path` to compare this assignment to other assignments
-				// so that we can overwrite earlier assignments with later ones.
-				b.arrow(
-					[b.id('$$payload')],
-					b.block([
-						b.const('path', b.call('$$payload.get_path')),
-						b.let('title'),
-						...build_template(template, b.id('title'), '='),
-						b.stmt(
-							b.assignment(
-								'=',
-								b.id('$$payload.global.head.title'),
-								b.object([b.init('path', b.id('path')), b.init('value', b.id('title'))])
-							)
-						)
-					]),
-					node.metadata.has_await
+		call_child_payload(
+			b.block([
+				b.const('path', b.call('$$payload.get_path')),
+				b.let('title'),
+				...build_template(template, b.id('title'), '='),
+				b.stmt(
+					b.assignment(
+						'=',
+						b.id('$$payload.global.head.title'),
+						b.object([b.init('path', b.id('path')), b.init('value', b.id('title'))])
+					)
 				)
-			)
+			]),
+			node.metadata.has_await
 		)
 	);
 }

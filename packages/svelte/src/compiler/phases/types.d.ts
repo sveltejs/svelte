@@ -107,7 +107,7 @@ export interface ComponentAnalysis extends Analysis {
 	 * Every snippet that is declared locally
 	 */
 	snippets: Set<AST.SnippetBlock>;
-	/** Whether the component uses `await` in a context that would require an `await` on the server. */
+	/** Whether the component uses `await` in a context that causes suspense outside of any boundary with a pending snippet. */
 	suspends_without_fallback: boolean;
 	hoisted_promises: Map<Expression, MemberExpression>;
 }

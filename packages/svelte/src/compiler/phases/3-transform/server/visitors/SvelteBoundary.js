@@ -28,8 +28,7 @@ export function SvelteBoundary(node, context) {
 			);
 		}
 	} else {
-		// No pending snippet - render main content (may be async or sync)
-		context.state.template.push(b.literal(BLOCK_OPEN)); // <!--[-->
+		context.state.template.push(b.literal(BLOCK_OPEN));
 		context.state.template.push(/** @type {BlockStatement} */ (context.visit(node.fragment)));
 	}
 

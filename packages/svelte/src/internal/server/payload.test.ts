@@ -2,7 +2,7 @@ import { assert, expect, test } from 'vitest';
 import { Payload, TreeState, TreeHeadState } from './payload.js';
 
 test('collects synchronous body content by default', () => {
-	const payload = new Payload();
+	const payload = new Payload(new TreeState('sync'));
 	payload.push('a');
 	payload.child(($$payload) => {
 		$$payload.push('b');
@@ -15,7 +15,7 @@ test('collects synchronous body content by default', () => {
 });
 
 test('child type switches content area (head vs body)', () => {
-	const payload = new Payload();
+	const payload = new Payload(new TreeState('sync'));
 	payload.push('a');
 	payload.child(($$payload) => {
 		$$payload.push('<title>T</title>');
@@ -28,7 +28,7 @@ test('child type switches content area (head vs body)', () => {
 });
 
 test('child inherits parent type when not specified', () => {
-	const parent = new Payload(undefined, undefined, undefined, 'head');
+	const parent = new Payload(new TreeState('sync'), undefined, undefined, 'head');
 	parent.push('<meta name="x"/>');
 	parent.child(($$payload) => {
 		$$payload.push('<style>/* css */</style>');
@@ -39,7 +39,7 @@ test('child inherits parent type when not specified', () => {
 });
 
 test('get_path returns the path indexes to a payload', () => {
-	const root = new Payload();
+	const root = new Payload(new TreeState('sync'));
 	let child_a: InstanceType<typeof Payload> | undefined;
 	let child_b: InstanceType<typeof Payload> | undefined;
 	let child_b_0: InstanceType<typeof Payload> | undefined;
@@ -62,8 +62,19 @@ test('get_path returns the path indexes to a payload', () => {
 	assert.deepEqual(child_b_0!.get_path(), [1, 0]);
 });
 
-test('awaiting payload resolves async children; collect throws on async', async () => {
-	const payload = new Payload();
+test('creating an async child in a sync context throws', () => {
+	const payload = new Payload(new TreeState('sync'));
+	payload.push('a');
+	expect(() =>
+		payload.child(async ($$payload) => {
+			await Promise.resolve();
+			$$payload.push('x');
+		})
+	).toThrow('Encountered an asynchronous component while rendering synchronously');
+});
+
+test('awaiting payload resolves async children', async () => {
+	const payload = new Payload(new TreeState('async'));
 	payload.push('a');
 	payload.child(async ($$payload) => {
 		await Promise.resolve();
@@ -71,17 +82,13 @@ test('awaiting payload resolves async children; collect throws on async', async 
 	});
 	payload.push('y');
 
-	expect(() => payload.collect()).toThrow(
-		'Encountered an asynchronous component while rendering synchronously'
-	);
-
 	const { body, head } = await payload;
 	assert.equal(head, '');
 	assert.equal(body, 'axy');
 });
 
 test('then() allows awaiting payload to get aggregated content', async () => {
-	const payload = new Payload();
+	const payload = new Payload(new TreeState('async'));
 	payload.push('1');
 	payload.child(async ($$payload) => {
 		await Promise.resolve();
@@ -94,7 +101,7 @@ test('then() allows awaiting payload to get aggregated content', async () => {
 });
 
 test('compact synchronously aggregates a range and can transform into head/body', () => {
-	const payload = new Payload();
+	const payload = new Payload(new TreeState('sync'));
 	payload.push('a');
 	payload.push('b');
 	payload.push('c');
@@ -112,7 +119,7 @@ test('compact synchronously aggregates a range and can transform into head/body'
 });
 
 test('compact schedules followup when compaction input is async', async () => {
-	const payload = new Payload();
+	const payload = new Payload(new TreeState('async'));
 	payload.push('a');
 	payload.child(async ($$payload) => {
 		await Promise.resolve();
@@ -131,7 +138,7 @@ test('compact schedules followup when compaction input is async', async () => {
 });
 
 test('copy creates a deep copy of the tree and shares promises reference', () => {
-	const payload = new Payload();
+	const payload = new Payload(new TreeState('sync'));
 	let child_ref: InstanceType<typeof Payload> | undefined;
 	payload.child(($$payload) => {
 		child_ref = $$payload;
@@ -154,7 +161,7 @@ test('copy creates a deep copy of the tree and shares promises reference', () =>
 });
 
 test('local state is shallow-copied to children', () => {
-	const root = new Payload();
+	const root = new Payload(new TreeState('sync'));
 	root.local.select_value = 'A';
 	let child: InstanceType<typeof Payload> | undefined;
 	root.child(($$payload) => {
@@ -167,11 +174,11 @@ test('local state is shallow-copied to children', () => {
 });
 
 test('subsume replaces tree content and state from other', () => {
-	const a = new Payload(undefined, undefined, undefined, 'head');
+	const a = new Payload(new TreeState('async'), undefined, undefined, 'head');
 	a.push('<meta />');
 	a.local.select_value = 'A';
 
-	const b = new Payload();
+	const b = new Payload(new TreeState('async'));
 	b.child(async ($$payload) => {
 		await Promise.resolve();
 		$$payload.push('body');
@@ -183,21 +190,35 @@ test('subsume replaces tree content and state from other', () => {
 
 	a.subsume(b);
 
-	// content now matches b and is async
-	expect(() => a.collect()).toThrow(
-		'Encountered an asynchronous component while rendering synchronously'
-	);
 	assert.equal(a.type, 'body');
 	assert.equal(a.local.select_value, 'B');
 	assert.strictEqual(a.promises, b.promises);
 
 	// global state transferred
-	assert.ok(a.global.css.has({ hash: 'h', code: 'c' }) || [...a.global.css][0]?.hash === 'h');
+	assert.ok([...a.global.css][0]?.hash === 'h');
 	assert.equal(a.global.head.title.value, 'Title');
 });
 
+test('subsume refuses to switch modes', () => {
+	const a = new Payload(new TreeState('sync'), undefined, undefined, 'head');
+	a.push('<meta />');
+	a.local.select_value = 'A';
+
+	const b = new Payload(new TreeState('async'));
+	b.child(async ($$payload) => {
+		await Promise.resolve();
+		$$payload.push('body');
+	});
+	b.global.css.add({ hash: 'h', code: 'c' });
+	b.global.head.title = { path: [1], value: 'Title' };
+	b.local.select_value = 'B';
+	b.promises.initial = Promise.resolve();
+
+	expect(() => a.subsume(b)).toThrow('invariant: a payload cannot switch modes');
+});
+
 test('TreeState uid generator uses prefix and is shared by copy()', () => {
-	const state = new TreeState('id-');
+	const state = new TreeState('sync', 'id-');
 	assert.equal(state.uid(), 'id-s1');
 	const state_copy = state.copy();
 	assert.equal(state_copy.uid(), 'id-s2');

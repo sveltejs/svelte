@@ -263,6 +263,6 @@ export function build_getter(node, state) {
  * @param {boolean} async
  * @returns {Statement}
  */
-export function wrap_in_child_payload(body, async) {
+export function call_child_payload(body, async) {
 	return b.stmt(b.call('$$payload.child', b.arrow([b.id('$$payload')], body, async)));
 }

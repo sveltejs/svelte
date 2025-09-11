@@ -55,12 +55,12 @@ export class Payload {
 	local;
 
 	/**
-	 * @param {TreeState} [global]
+	 * @param {TreeState} global
 	 * @param {{ select_value: string | undefined }} [local]
 	 * @param {Payload | undefined} [parent]
 	 * @param {PayloadType} [type]
 	 */
-	constructor(global = new TreeState(), local = { select_value: undefined }, parent, type) {
+	constructor(global, local = { select_value: undefined }, parent, type) {
 		this.global = global;
 		this.local = { ...local };
 		this.parent = parent;
@@ -79,6 +79,12 @@ export class Payload {
 		this.#out.push(child);
 		const result = render(child);
 		if (result instanceof Promise) {
+			if (this.global.mode === 'sync') {
+				// TODO more-proper error
+				throw new Error('Encountered an asynchronous component while rendering synchronously');
+			}
+			// just to avoid unhandled promise rejections -- we'll end up throwing in `then` if something fails
+			result.catch(() => {});
 			child.promises.initial = result;
 		}
 	}
@@ -135,8 +141,11 @@ export class Payload {
 	collect() {
 		const content = Payload.#collect_content(this.#out, this.type);
 		if (content instanceof Promise) {
-			// TODO is there a good way to report where this is? Probably by using some sort of loc or stack trace in `child` creation.
-			throw new Error('Encountered an asynchronous component while rendering synchronously');
+			// TODO improve message
+			// guess you could also end up here if you called `collect` in an async context but... just don't bro
+			throw new Error(
+				'invariant: should never reach this, as child throws when it encounters async work in a synchronous context'
+			);
 		}
 
 		return content;
@@ -153,6 +162,11 @@ export class Payload {
 	 * @param {Payload} other
 	 */
 	subsume(other) {
+		if (this.global.mode !== other.global.mode) {
+			// TODO message - this should be impossible though
+			throw new Error('invariant: a payload cannot switch modes');
+		}
+
 		this.global.subsume(other.global);
 		this.local = other.local;
 		this.#out = other.#out.map((item) => {
@@ -287,6 +301,9 @@ export class TreeState {
 	/** @type {TreeHeadState} */
 	#head;
 
+	/** @type {'sync' | 'async'} */
+	#mode;
+
 	get css() {
 		return this.#css;
 	}
@@ -299,17 +316,23 @@ export class TreeState {
 		return this.#head;
 	}
 
+	get mode() {
+		return this.#mode;
+	}
+
 	/**
+	 * @param {'sync' | 'async'} mode
 	 * @param {string} [id_prefix]
 	 */
-	constructor(id_prefix = '') {
+	constructor(mode, id_prefix = '') {
 		this.#uid = props_id_generator(id_prefix);
 		this.#css = new Set();
 		this.#head = new TreeHeadState(this.#uid);
+		this.#mode = mode;
 	}
 
 	copy() {
-		const state = new TreeState();
+		const state = new TreeState(this.#mode);
 		state.#css = new Set(this.#css);
 		state.#head = this.#head.copy();
 		state.#uid = this.#uid;
@@ -323,6 +346,7 @@ export class TreeState {
 		this.#css = other.#css;
 		this.#uid = other.#uid;
 		this.#head.subsume(other.#head);
+		this.#mode = other.#mode;
 	}
 }
 

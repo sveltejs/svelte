@@ -2,7 +2,12 @@
 /** @import { ComponentContext, ComponentServerTransformState } from '../types.js' */
 import { clean_nodes, infer_namespace } from '../../utils.js';
 import * as b from '#compiler/builders';
-import { empty_comment, process_children, build_template } from './shared/utils.js';
+import {
+	empty_comment,
+	process_children,
+	build_template,
+	call_child_payload
+} from './shared/utils.js';
 
 /**
  * @param {AST.Fragment} node
@@ -49,12 +54,7 @@ export function Fragment(node, context) {
 				b.array(node.metadata.hoisted_promises.promises)
 			),
 			...state.init,
-			b.stmt(
-				b.call(
-					'$$payload.child',
-					b.arrow([b.id('$$payload')], b.block(build_template(state.template)), true)
-				)
-			)
+			call_child_payload(b.block(build_template(state.template)), true)
 		]);
 	}
 

@@ -1,7 +1,7 @@
 /** @import { BlockStatement, Expression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
-import { empty_comment, build_attribute_value } from './utils.js';
+import { empty_comment, build_attribute_value, call_child_payload } from './utils.js';
 import * as b from '#compiler/builders';
 import { is_element_node } from '../../../../nodes.js';
 import { dev } from '../../../../../state.js';
@@ -234,16 +234,7 @@ export function build_inline_component(node, expression, context) {
 			// not necessary -- eg. when the component is asynchronous but the child content is not.
 			// May or may not be worth optimizing.
 			b.block([
-				b.stmt(
-					b.call(
-						'$$payload.child',
-						b.arrow(
-							[b.id('$$payload')],
-							b.block(block.body),
-							context.state.analysis.suspends_without_fallback
-						)
-					)
-				)
+				call_child_payload(b.block(block.body), context.state.analysis.suspends_without_fallback)
 			])
 		);
 

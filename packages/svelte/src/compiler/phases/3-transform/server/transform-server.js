@@ -40,6 +40,7 @@ import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 import { SvelteBoundary } from './visitors/SvelteBoundary.js';
+import { call_child_payload } from './visitors/shared/utils.js';
 
 /** @type {Visitors} */
 const global_visitors = {
@@ -238,18 +239,12 @@ export function server_component(analysis, options) {
 	}
 
 	const component_block = b.block([
-		b.stmt(
-			b.call(
-				'$$payload.child',
-				b.arrow(
-					[b.id('$$payload')],
-					b.block([
-						.../** @type {Statement[]} */ (instance.body),
-						.../** @type {Statement[]} */ (template.body)
-					]),
-					analysis.suspends_without_fallback
-				)
-			)
+		call_child_payload(
+			b.block([
+				.../** @type {Statement[]} */ (instance.body),
+				.../** @type {Statement[]} */ (template.body)
+			]),
+			analysis.suspends_without_fallback
 		)
 	]);
 

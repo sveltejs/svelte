@@ -12,7 +12,7 @@ import {
 	process_children,
 	build_template,
 	build_attribute_value,
-	wrap_in_child_payload
+	call_child_payload
 } from './shared/utils.js';
 
 /**
@@ -203,7 +203,7 @@ export function RegularElement(node, context) {
 		// TODO is this cast safe?
 		const elements = state.template.splice(template_start, Infinity);
 		state.template.push(
-			wrap_in_child_payload(
+			call_child_payload(
 				b.block(build_template(elements)),
 				// TODO this will always produce correct results (because it will produce an async function if the surrounding component is async)
 				// but it will false-positive and create unnecessary async functions (eg. when the component is async but the select element is not)
