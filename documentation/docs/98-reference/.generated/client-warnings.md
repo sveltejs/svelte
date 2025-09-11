@@ -312,6 +312,27 @@ Reactive `$state(...)` proxies and the values they proxy have different identiti
 
 To resolve this, ensure you're comparing values where both values were created with `$state(...)`, or neither were. Note that `$state.raw(...)` will _not_ create a state proxy.
 
+### state_proxy_unmount
+
+```
+Tried to unmount a state proxy, rather than a component
+```
+
+`unmount` was called with a state proxy:
+
+```js
+import { mount, unmount } from 'svelte';
+import Component from './Component.svelte';
+let target = document.body;
+// ---cut---
+let component = $state(mount(Component, { target }));
+
+// later...
+unmount(component);
+```
+
+Avoid using `$state` here. If `component` _does_ need to be reactive for some reason, use `$state.raw` instead.
+
 ### svelte_boundary_reset_noop
 
 ```
