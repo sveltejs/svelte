@@ -188,7 +188,7 @@ export function spread_attributes(attrs, css_hash, classes, styles, flags = 0) {
 
 	const is_html = (flags & ELEMENT_IS_NAMESPACED) === 0;
 	const lowercase = (flags & ELEMENT_PRESERVE_ATTRIBUTE_CASE) === 0;
-	const ignore_defaults = (flags & ELEMENT_IS_INPUT) === 0;
+	const is_input = (flags & ELEMENT_IS_INPUT) !== 0;
 
 	for (name in attrs) {
 		// omit functions, internal svelte properties and invalid attribute names
@@ -202,7 +202,7 @@ export function spread_attributes(attrs, css_hash, classes, styles, flags = 0) {
 			name = name.toLowerCase();
 		}
 
-		if (!ignore_defaults) {
+		if (is_input) {
 			if (name === 'defaultvalue') {
 				name = 'value';
 				if (attrs[name]) continue;
