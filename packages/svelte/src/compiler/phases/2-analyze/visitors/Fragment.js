@@ -14,9 +14,7 @@ export function Fragment(node, context) {
 	// and it works, so for now I'm doing it like this
 	node.metadata.is_async = node.metadata.hoisted_promises.promises.length > 0;
 
-	if (node.metadata.hoisted_promises.promises.length > 1) {
-		node.metadata.hoisted_promises.name = context.state.scope.generate('promises');
-	} else {
+	if (node.metadata.hoisted_promises.promises.length === 1) {
 		// if there's only one promise in this fragment, we don't need to de-waterfall it
 		context.state.analysis.hoisted_promises.delete(node.metadata.hoisted_promises.promises[0]);
 		node.metadata.hoisted_promises.promises.length = 0;

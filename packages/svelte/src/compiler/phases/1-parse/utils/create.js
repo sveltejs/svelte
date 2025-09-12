@@ -1,4 +1,5 @@
 /** @import { AST } from '#compiler' */
+import * as b from '#compiler/builders';
 
 /**
  * @param {any} transparent
@@ -13,7 +14,7 @@ export function create_fragment(transparent = false) {
 			dynamic: false,
 			has_await: false,
 			// name is added later, after we've done scope analysis
-			hoisted_promises: { name: '', promises: [] }
+			hoisted_promises: { id: b.id('$$promises'), promises: [] }
 		}
 	};
 }

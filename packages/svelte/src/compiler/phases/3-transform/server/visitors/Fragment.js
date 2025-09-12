@@ -49,10 +49,7 @@ export function Fragment(node, context) {
 
 	if (node.metadata.hoisted_promises.promises.length > 0) {
 		return b.block([
-			b.const(
-				node.metadata.hoisted_promises.name,
-				b.array(node.metadata.hoisted_promises.promises)
-			),
+			b.const(node.metadata.hoisted_promises.id, b.array(node.metadata.hoisted_promises.promises)),
 			...state.init,
 			call_child_payload(b.block(build_template(state.template)), true)
 		]);

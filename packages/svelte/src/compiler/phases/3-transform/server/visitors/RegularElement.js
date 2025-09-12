@@ -195,7 +195,7 @@ export function RegularElement(node, context) {
 		if (node.fragment.metadata.hoisted_promises.promises.length > 0) {
 			state.template.push(
 				b.const(
-					node.fragment.metadata.hoisted_promises.name,
+					node.fragment.metadata.hoisted_promises.id,
 					b.array(node.fragment.metadata.hoisted_promises.promises)
 				)
 			);

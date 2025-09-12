@@ -57,7 +57,7 @@ export namespace AST {
 			 */
 			dynamic: boolean;
 			has_await: boolean;
-			hoisted_promises: { name: string; promises: Expression[] };
+			hoisted_promises: { id: Identifier; promises: Expression[] };
 		};
 	}
 

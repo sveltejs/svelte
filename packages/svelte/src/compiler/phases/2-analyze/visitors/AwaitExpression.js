@@ -21,11 +21,7 @@ export function AwaitExpression(node, context) {
 			const len = context.state.fragment.metadata.hoisted_promises.promises.push(node.argument);
 			context.state.analysis.hoisted_promises.set(
 				node.argument,
-				b.member(
-					b.id(context.state.fragment.metadata.hoisted_promises.name),
-					b.literal(len - 1),
-					true
-				)
+				b.member(context.state.fragment.metadata.hoisted_promises.id, b.literal(len - 1), true)
 			);
 		}
 
