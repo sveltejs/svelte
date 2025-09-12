@@ -1,16 +1,14 @@
 import * as $ from 'svelte/internal/server';
 
 export default function Await_block_scope($$payload) {
-	$$payload.child(($$payload) => {
-		let counter = { count: 0 };
-		const promise = Promise.resolve(counter);
+	let counter = { count: 0 };
+	const promise = Promise.resolve(counter);
 
-		function increment() {
-			counter.count += 1;
-		}
+	function increment() {
+		counter.count += 1;
+	}
 
-		$$payload.push(`<button>clicks: ${$.escape(counter.count)}</button> `);
-		$.await($$payload, promise, () => {}, (counter) => {});
-		$$payload.push(`<!--]--> ${$.escape(counter.count)}`);
-	});
+	$$payload.push(`<button>clicks: ${$.escape(counter.count)}</button> `);
+	$.await($$payload, promise, () => {}, (counter) => {});
+	$$payload.push(`<!--]--> ${$.escape(counter.count)}`);
 }

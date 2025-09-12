@@ -43,7 +43,7 @@ export function AwaitExpression(node, context) {
 			e.legacy_await_invalid(node);
 		}
 
-		context.state.analysis.suspends_without_fallback ||= !context.state.boundary?.metadata.pending;
+		context.state.analysis.suspends_without_fallback ||= context.state.ast_type === 'instance';
 	}
 
 	context.next();

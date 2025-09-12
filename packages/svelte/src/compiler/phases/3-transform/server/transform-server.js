@@ -238,15 +238,15 @@ export function server_component(analysis, options) {
 		template.body.push(b.stmt(b.call('$.bind_props', b.id('$$props'), b.object(props))));
 	}
 
-	const component_block = b.block([
-		call_child_payload(
-			b.block([
-				.../** @type {Statement[]} */ (instance.body),
-				.../** @type {Statement[]} */ (template.body)
-			]),
-			analysis.suspends_without_fallback
-		)
+	let component_block = b.block([
+		.../** @type {Statement[]} */ (instance.body),
+		.../** @type {Statement[]} */ (template.body)
 	]);
+
+	// TODO 'suspends_without_fallback' is probably a misnomer now
+	if (analysis.suspends_without_fallback) {
+		component_block = b.block([call_child_payload(component_block, true)]);
+	}
 
 	// trick esrap into including comments
 	component_block.loc = instance.loc;

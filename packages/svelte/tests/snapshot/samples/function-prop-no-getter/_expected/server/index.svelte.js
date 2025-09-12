@@ -1,27 +1,25 @@
 import * as $ from 'svelte/internal/server';
 
 export default function Function_prop_no_getter($$payload) {
-	$$payload.child(($$payload) => {
-		let count = 0;
+	let count = 0;
 
-		function onmouseup() {
-			count += 2;
-		}
+	function onmouseup() {
+		count += 2;
+	}
 
-		const plusOne = (num) => num + 1;
+	const plusOne = (num) => num + 1;
 
-		Button($$payload, {
-			onmousedown: () => count += 1,
-			onmouseup,
-			onmouseenter: () => count = plusOne(count),
+	Button($$payload, {
+		onmousedown: () => count += 1,
+		onmouseup,
+		onmouseenter: () => count = plusOne(count),
 
-			children: ($$payload) => {
-				$$payload.child(($$payload) => {
-					$$payload.push(`<!---->clicks: ${$.escape(count)}`);
-				});
-			},
+		children: ($$payload) => {
+			$$payload.child(($$payload) => {
+				$$payload.push(`<!---->clicks: ${$.escape(count)}`);
+			});
+		},
 
-			$$slots: { default: true }
-		});
+		$$slots: { default: true }
 	});
 }
