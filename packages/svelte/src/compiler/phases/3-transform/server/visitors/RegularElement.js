@@ -176,7 +176,7 @@ export function RegularElement(node, context) {
 						b.arrow(
 							[b.id('$$payload')],
 							b.block([...inner_state.init, ...build_template(inner_state.template)]),
-							context.state.analysis.suspends_without_fallback
+							node.fragment.metadata.is_async
 						)
 					)
 				)
