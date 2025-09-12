@@ -192,16 +192,11 @@ export function RegularElement(node, context) {
 			)
 		);
 	} else {
-		if (node.fragment.metadata.hoisted_promises.promises.length > 0) {
-			state.template.push(
-				b.const(
-					node.fragment.metadata.hoisted_promises.id,
-					b.array(node.fragment.metadata.hoisted_promises.promises)
-				)
-			);
+		if (node.fragment.metadata.is_async) {
+			state.template.push(/** @type {Statement} */ (context.visit(node.fragment)));
+		} else {
+			process_children(trimmed, { ...context, state });
 		}
-
-		process_children(trimmed, { ...context, state });
 	}
 
 	if (select_with_value) {
