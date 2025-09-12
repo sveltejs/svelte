@@ -2,6 +2,7 @@
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 import * as b from '#compiler/builders';
+import { filename } from '../../../state.js';
 
 /**
  * @param {AwaitExpression} node
@@ -17,14 +18,12 @@ export function AwaitExpression(node, context) {
 			context.state.fragment.metadata.has_await = true;
 		}
 
-		if (context.state.async_hoist_boundary) {
-			const len = context.state.async_hoist_boundary.metadata.hoisted_promises.promises.push(
-				node.argument
-			);
+		if (context.state.fragment) {
+			const len = context.state.fragment.metadata.hoisted_promises.promises.push(node.argument);
 			context.state.analysis.hoisted_promises.set(
 				node.argument,
 				b.member(
-					b.id(context.state.async_hoist_boundary.metadata.hoisted_promises.name),
+					b.id(context.state.fragment.metadata.hoisted_promises.name),
 					b.literal(len - 1),
 					true
 				)

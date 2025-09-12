@@ -192,6 +192,15 @@ export function RegularElement(node, context) {
 			)
 		);
 	} else {
+		if (node.fragment.metadata.hoisted_promises.promises.length > 0) {
+			state.template.push(
+				b.const(
+					node.fragment.metadata.hoisted_promises.name,
+					b.array(node.fragment.metadata.hoisted_promises.promises)
+				)
+			);
+		}
+
 		process_children(trimmed, { ...context, state });
 	}
 
