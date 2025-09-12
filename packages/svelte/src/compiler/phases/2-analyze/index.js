@@ -131,9 +131,6 @@ const visitors = {
 		ignore_map.set(node, structuredClone(ignore_stack));
 
 		const scope = state.scopes.get(node);
-		if (node.type === 'Fragment') {
-			node.metadata.hoisted_promises.name = state.scope.generate('promises');
-		}
 		next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
 
 		if (ignores.length > 0) {
