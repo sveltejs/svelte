@@ -23,11 +23,7 @@ export function SnippetBlock(node, context) {
 		}
 	}
 
-	context.next({
-		...context.state,
-		parent_element: null,
-		async_hoist_boundary: node.body
-	});
+	context.next({ ...context.state, parent_element: null });
 
 	const can_hoist =
 		context.path.length === 1 &&

@@ -1,18 +1,16 @@
 import * as $ from 'svelte/internal/server';
 
 export default function Text_nodes_deriveds($$payload) {
-	$$payload.child(($$payload) => {
-		let count1 = 0;
-		let count2 = 0;
+	let count1 = 0;
+	let count2 = 0;
 
-		function text1() {
-			return count1;
-		}
+	function text1() {
+		return count1;
+	}
 
-		function text2() {
-			return count2;
-		}
+	function text2() {
+		return count2;
+	}
 
-		$$payload.push(`<p>${$.escape(text1())}${$.escape(text2())}</p>`);
-	});
+	$$payload.push(`<p>${$.escape(text1())}${$.escape(text2())}</p>`);
 }

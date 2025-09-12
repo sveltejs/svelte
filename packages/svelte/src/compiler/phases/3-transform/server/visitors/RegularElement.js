@@ -78,6 +78,7 @@ export function RegularElement(node, context) {
 	}
 
 	let select_with_value = false;
+	let select_with_value_async = false;
 	const template_start = state.template.length;
 
 	if (node.name === 'select') {
@@ -86,8 +87,12 @@ export function RegularElement(node, context) {
 				(attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
 				attribute.name === 'value'
 		);
-		if (node.attributes.some((attribute) => attribute.type === 'SpreadAttribute')) {
+
+		const spread = node.attributes.find((attribute) => attribute.type === 'SpreadAttribute');
+		if (spread) {
 			select_with_value = true;
+			select_with_value_async ||= spread.metadata.expression.has_await;
+
 			state.template.push(
 				b.stmt(
 					b.assignment(
@@ -113,6 +118,13 @@ export function RegularElement(node, context) {
 			);
 		} else if (value) {
 			select_with_value = true;
+
+			if (value.type === 'Attribute' && value.value !== true) {
+				select_with_value_async ||= (Array.isArray(value.value) ? value.value : [value.value]).some(
+					(tag) => tag.type === 'ExpressionTag' && tag.metadata.expression.has_await
+				);
+			}
+
 			const left = b.id('$$payload.local.select_value');
 			if (value.type === 'Attribute') {
 				state.template.push(
@@ -164,7 +176,7 @@ export function RegularElement(node, context) {
 						b.arrow(
 							[b.id('$$payload')],
 							b.block([...inner_state.init, ...build_template(inner_state.template)]),
-							context.state.analysis.suspends_without_fallback
+							node.fragment.metadata.is_async
 						)
 					)
 				)
@@ -192,7 +204,11 @@ export function RegularElement(node, context) {
 			)
 		);
 	} else {
-		process_children(trimmed, { ...context, state });
+		if (node.fragment.metadata.is_async) {
+			state.template.push(/** @type {Statement} */ (context.visit(node.fragment)));
+		} else {
+			process_children(trimmed, { ...context, state });
+		}
 	}
 
 	if (select_with_value) {
@@ -208,7 +224,7 @@ export function RegularElement(node, context) {
 				// TODO this will always produce correct results (because it will produce an async function if the surrounding component is async)
 				// but it will false-positive and create unnecessary async functions (eg. when the component is async but the select element is not)
 				// we could probably optimize by checking if the select element is async. Might be worth it.
-				context.state.analysis.suspends_without_fallback
+				select_with_value_async
 			)
 		);
 	}

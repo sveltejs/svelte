@@ -233,9 +233,7 @@ export function build_inline_component(node, expression, context) {
 			// if the current component is an async component, but it may produce async functions where they're
 			// not necessary -- eg. when the component is asynchronous but the child content is not.
 			// May or may not be worth optimizing.
-			b.block([
-				call_child_payload(b.block(block.body), context.state.analysis.suspends_without_fallback)
-			])
+			b.block([call_child_payload(b.block(block.body), node.fragment.metadata.is_async)])
 		);
 
 		if (slot_name === 'default' && !has_children_prop) {

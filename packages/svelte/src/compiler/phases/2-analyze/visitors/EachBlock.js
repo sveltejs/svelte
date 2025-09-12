@@ -35,16 +35,10 @@ export function EachBlock(node, context) {
 		scope: /** @type {Scope} */ (context.state.scope.parent)
 	});
 
-	context.visit(node.body, {
-		...context.state,
-		async_hoist_boundary: node.body
-	});
+	context.visit(node.body);
 	if (node.key) context.visit(node.key);
 	if (node.fallback) {
-		context.visit(node.fallback, {
-			...context.state,
-			async_hoist_boundary: node.fallback
-		});
+		context.visit(node.fallback);
 	}
 
 	if (!context.state.analysis.runes) {

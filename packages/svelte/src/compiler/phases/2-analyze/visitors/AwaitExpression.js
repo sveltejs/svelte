@@ -17,17 +17,11 @@ export function AwaitExpression(node, context) {
 			context.state.fragment.metadata.has_await = true;
 		}
 
-		if (context.state.async_hoist_boundary) {
-			const len = context.state.async_hoist_boundary.metadata.hoisted_promises.promises.push(
-				node.argument
-			);
+		if (context.state.fragment) {
+			const len = context.state.fragment.metadata.hoisted_promises.promises.push(node.argument);
 			context.state.analysis.hoisted_promises.set(
 				node.argument,
-				b.member(
-					b.id(context.state.async_hoist_boundary.metadata.hoisted_promises.name),
-					b.literal(len - 1),
-					true
-				)
+				b.member(context.state.fragment.metadata.hoisted_promises.id, b.literal(len - 1), true)
 			);
 		}
 
@@ -48,8 +42,6 @@ export function AwaitExpression(node, context) {
 		if (!context.state.analysis.runes) {
 			e.legacy_await_invalid(node);
 		}
-
-		context.state.analysis.suspends_without_fallback ||= !context.state.boundary?.metadata.pending;
 	}
 
 	context.next();
