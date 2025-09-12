@@ -477,17 +477,7 @@ function reconcile(
 					// full key uniqueness check is dev-only,
 					// key duplicates cause crushing only due to `matched` being empty
 					if (matched.length === 0) {
-						var map = new Map();
-						for (j = 0; j < length; j += 1) {
-							var k = get_key(array[j], j);
-							if (map.has(k)) {
-								/** @type {string|null} */
-								var key_name = String(k);
-								if (key_name.startsWith('[object ')) key_name = null;
-								each_key_duplicate(String(j), String(map.get(k)), key_name);
-							}
-							map.set(k, j);
-						}
+						each_key_duplicate('', '', '');
 					}
 
 					prev = start.prev;
