@@ -14,7 +14,8 @@ export default function Async_each_hoisting($$payload) {
 			let item = each_array[$$index];
 
 			$$payload.child(async ($$payload) => {
-				$$payload.push(`<!---->${$.escape(await item)}`);
+				$$payload.push(`<!---->`);
+				$$payload.push(async () => $.escape(await item));
 			});
 		}
 

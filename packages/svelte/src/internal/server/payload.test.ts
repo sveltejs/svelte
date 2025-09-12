@@ -251,3 +251,101 @@ test('TreeHeadState title ordering favors later lexicographic paths', () => {
 	head.title = { path: [2], value: 'F' };
 	assert.equal(head.title.value, 'E');
 });
+
+test('push accepts async functions in async context', async () => {
+	const payload = new Payload(new TreeState('async'));
+	payload.push('a');
+	payload.push(async () => {
+		await Promise.resolve();
+		return 'b';
+	});
+	payload.push('c');
+
+	const { head, body } = await payload;
+	assert.equal(head, '');
+	assert.equal(body, 'abc');
+});
+
+test('push handles async functions with different timing', async () => {
+	const payload = new Payload(new TreeState('async'));
+
+	// Fast async function
+	payload.push(async () => {
+		await Promise.resolve();
+		return 'fast';
+	});
+
+	// Slow async function
+	payload.push(async () => {
+		await new Promise((resolve) => setTimeout(resolve, 10));
+		return 'slow';
+	});
+
+	// Regular string
+	payload.push('sync');
+
+	const { head, body } = await payload;
+	assert.equal(head, '');
+	assert.equal(body, 'fastslowsync');
+});
+
+test('push async functions work with head content type', async () => {
+	const payload = new Payload(new TreeState('async'), undefined, undefined, 'head');
+	payload.push(async () => {
+		await Promise.resolve();
+		return '<title>Async Title</title>';
+	});
+
+	const { head, body } = await payload;
+	assert.equal(body, '');
+	assert.equal(head, '<title>Async Title</title>');
+});
+
+test('push async functions can be mixed with child payloads', async () => {
+	const payload = new Payload(new TreeState('async'));
+	payload.push('start-');
+
+	payload.push(async () => {
+		await Promise.resolve();
+		return 'async-';
+	});
+
+	payload.child(($$payload) => {
+		$$payload.push('child-');
+	});
+
+	payload.push('-end');
+
+	const { head, body } = await payload;
+	assert.equal(head, '');
+	assert.equal(body, 'start-async-child--end');
+});
+
+test('push async functions work with compact operations', async () => {
+	const payload = new Payload(new TreeState('async'));
+	payload.push('a');
+	payload.push(async () => {
+		await Promise.resolve();
+		return 'b';
+	});
+	payload.push('c');
+
+	payload.compact({
+		start: 0,
+		fn: (content) => ({ head: '', body: content.body.toUpperCase() })
+	});
+
+	const { head, body } = await payload;
+	assert.equal(head, '');
+	assert.equal(body, 'ABC');
+});
+
+test('push async functions are not supported in sync context', () => {
+	const payload = new Payload(new TreeState('sync'));
+	payload.push('a');
+
+	expect(() => {
+		payload.push(() => Promise.resolve('b'));
+		payload.collect();
+	}).toThrow();
+});

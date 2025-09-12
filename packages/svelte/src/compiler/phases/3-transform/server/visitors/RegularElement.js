@@ -161,7 +161,10 @@ export function RegularElement(node, context) {
 					b.call(
 						'$.simple_valueless_option',
 						b.id('$$payload'),
-						node.metadata.synthetic_value_node.expression
+						b.thunk(
+							node.metadata.synthetic_value_node.expression,
+							node.metadata.synthetic_value_node.metadata.expression.has_await
+						)
 					)
 				)
 			);
@@ -216,16 +219,9 @@ export function RegularElement(node, context) {
 		// in an async world, we could technically have two adjacent select elements with async children, in which case
 		// the second element's select_value would override the first element's select_value if the children of the first
 		// element hadn't resolved prior to hitting the second element.
-		// TODO is this cast safe?
 		const elements = state.template.splice(template_start, Infinity);
 		state.template.push(
-			call_child_payload(
-				b.block(build_template(elements)),
-				// TODO this will always produce correct results (because it will produce an async function if the surrounding component is async)
-				// but it will false-positive and create unnecessary async functions (eg. when the component is async but the select element is not)
-				// we could probably optimize by checking if the select element is async. Might be worth it.
-				select_with_value_async
-			)
+			call_child_payload(b.block(build_template(elements)), select_with_value_async)
 		);
 	}
 

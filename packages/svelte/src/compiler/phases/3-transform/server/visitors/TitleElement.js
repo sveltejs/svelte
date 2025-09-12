@@ -11,7 +11,7 @@ export function TitleElement(node, context) {
 	if (node.fragment.metadata.hoisted_promises.promises.length > 0) {
 		context.state.init.push(
 			b.const(
-				node.fragment.metadata.hoisted_promises.name,
+				node.fragment.metadata.hoisted_promises.id,
 				b.array(node.fragment.metadata.hoisted_promises.promises)
 			)
 		);
@@ -23,20 +23,12 @@ export function TitleElement(node, context) {
 	template.push(b.literal('</title>'));
 
 	context.state.init.push(
-		call_child_payload(
-			b.block([
-				b.const('path', b.call('$$payload.get_path')),
-				b.let('title'),
-				...build_template(template, b.id('title'), '='),
-				b.stmt(
-					b.assignment(
-						'=',
-						b.id('$$payload.global.head.title'),
-						b.object([b.init('path', b.id('path')), b.init('value', b.id('title'))])
-					)
-				)
-			]),
-			node.metadata.has_await
+		b.stmt(
+			b.call(
+				'$.build_title',
+				b.id('$$payload'),
+				b.thunk(b.block(build_template(template)), node.metadata.has_await)
+			)
 		)
 	);
 }

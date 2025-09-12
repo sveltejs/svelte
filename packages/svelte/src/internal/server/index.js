@@ -1,6 +1,7 @@
 /** @import { ComponentType, SvelteComponent } from 'svelte' */
 /** @import { Component, RenderOutput } from '#server' */
 /** @import { Store } from '#shared' */
+/** @import { AccumulatedContent } from './payload.js' */
 export { FILENAME, HMR } from '../../constants.js';
 import { attr, clsx, to_class, to_style } from '../shared/attributes.js';
 import { is_promise, noop } from '../shared/utils.js';
@@ -679,15 +680,68 @@ export function valueless_option(payload, children) {
  * we don't have to do all of the same parsing nonsense. It also means we can avoid
  * coercing everything to a string.
  * @param {Payload} payload
- * @param {unknown} child_value
+ * @param {(() => unknown)} child
  */
-export function simple_valueless_option(payload, child_value) {
-	if (child_value === payload.local.select_value) {
-		payload.compact({
-			start: payload.length - 1,
-			fn: (content) => ({ body: content.body.slice(0, -1) + ' selected>', head: content.head })
-		});
-	}
+export function simple_valueless_option(payload, child) {
+	const result = child();
 
-	payload.push(escape_html(child_value));
+	/**
+	 * @param {AccumulatedContent} content
+	 * @param {unknown} child_value
+	 * @returns {AccumulatedContent}
+	 */
+	const mark_selected = (content, child_value) => {
+		if (child_value === payload.local.select_value) {
+			return { body: content.body.slice(0, -1) + ' selected>', head: content.head };
+		}
+		return content;
+	};
+
+	payload.compact({
+		start: payload.length - 1,
+		fn: (content) => {
+			if (result instanceof Promise) {
+				return result.then((child_value) => mark_selected(content, child_value));
+			}
+			return mark_selected(content, result);
+		}
+	});
+
+	payload.child((child_payload) => {
+		if (result instanceof Promise) {
+			return result.then((child_value) => {
+				child_payload.push(escape_html(child_value));
+			});
+		}
+		child_payload.push(escape_html(result));
+	});
+}
+
+/**
+ * Since your document can only have one `title`, we have to have some sort of algorithm for determining
+ * which one "wins". To do this, we perform a depth-first comparison of where the title was encountered --
+ * later ones "win" over earlier ones, regardless of what order the promises resolve in. To accomodate this, we:
+ * - Figure out where we are in the content tree (`get_path`)
+ * - Render the title in its own child so that it has a defined "slot" in the payload
+ * - Compact that spot so that we get the entire rendered contents of the title
+ * - Attempt to set the global title (this is where the "wins" logic based on the path happens)
+ *
+ * TODO we could optimize this by not even rendering the title if the path wouldn't be accepted
+ *
+ * @param {Payload} payload
+ * @param {((payload: Payload) => void | Promise<void>)} children
+ */
+export function build_title(payload, children) {
+	const path = payload.get_path();
+	const i = payload.length;
+	payload.child(children);
+	payload.compact({
+		start: i,
+		fn: ({ head }) => {
+			payload.global.head.title = { path, value: head };
+			// since we can only ever render the title in this chunk, and title rendering is handled specially,
+			// we can just ditch the results after we've saved them globally
+			return { head: '', body: '' };
+		}
+	});
 }

@@ -32,6 +32,10 @@ export function process_children(nodes, { visit, state }) {
 	let sequence = [];
 
 	function flush() {
+		if (sequence.length === 0) {
+			return;
+		}
+
 		let quasi = b.quasi('', false);
 		const quasis = [quasi];
 
@@ -63,26 +67,25 @@ export function process_children(nodes, { visit, state }) {
 		}
 
 		state.template.push(b.template(quasis, expressions));
+		sequence = [];
 	}
 
-	for (let i = 0; i < nodes.length; i += 1) {
-		const node = nodes[i];
-
-		if (node.type === 'Text' || node.type === 'Comment' || node.type === 'ExpressionTag') {
+	for (const node of nodes) {
+		if (node.type === 'ExpressionTag' && node.metadata.expression.has_await) {
+			flush();
+			const visited = /** @type {Expression} */ (visit(node.expression));
+			state.template.push(
+				b.stmt(b.call('$$payload.push', b.thunk(b.call('$.escape', visited), true)))
+			);
+		} else if (node.type === 'Text' || node.type === 'Comment' || node.type === 'ExpressionTag') {
 			sequence.push(node);
 		} else {
-			if (sequence.length > 0) {
-				flush();
-				sequence = [];
-			}
-
+			flush();
 			visit(node, { ...state });
 		}
 	}
 
-	if (sequence.length > 0) {
-		flush();
-	}
+	flush();
 }
 
 /**

@@ -5,6 +5,9 @@
  * @template T
  * @typedef {T | Promise<T>} MaybePromise<T>
  */
+/**
+ * @typedef {string | Payload | Promise<string>} PayloadItem
+ */
 
 /**
  * Payloads are basically a tree of `string | Payload`s, where each `Payload` in the tree represents
@@ -18,7 +21,7 @@
 export class Payload {
 	/**
 	 * The contents of the payload.
-	 * @type {(string | Payload)[]}
+	 * @type {PayloadItem[]}
 	 */
 	#out = [];
 
@@ -50,6 +53,9 @@ export class Payload {
 	/**
 	 * State that is local to the branch it is declared in.
 	 * It will be shallow-copied to all children.
+	 *
+	 * TODO I think this needs to be async-compatible if we don't want waterfall-y options but I'm willing
+	 * to live with it for now
 	 * @type {{ select_value: string | undefined }}
 	 */
 	local;
@@ -98,16 +104,20 @@ export class Payload {
 	}
 
 	/**
-	 * @param {string} content
+	 * @param {string | (() => Promise<string>)} content
 	 */
 	push(content) {
-		this.#out.push(content);
+		if (typeof content === 'function') {
+			this.#out.push(content());
+		} else {
+			this.#out.push(content);
+		}
 	}
 
 	/**
 	 * Compact everything between `start` and `end` into a single payload, then call `fn` with the result of that payload.
 	 * The compacted payload will be sync if all of the children are sync and {@link fn} is sync, otherwise it will be async.
-	 * @param {{ start: number, end?: number, fn: (content: AccumulatedContent) => AccumulatedContent }} args
+	 * @param {{ start: number, end?: number, fn: (content: AccumulatedContent) => AccumulatedContent | Promise<AccumulatedContent> }} args
 	 */
 	compact({ start, end = this.#out.length, fn }) {
 		const child = new Payload(this.global, this.local, this);
@@ -122,7 +132,15 @@ export class Payload {
 				);
 			this.promises.followup.push(followup);
 		} else {
-			Payload.#push_accumulated_content(child, fn(content));
+			const transformed_content = fn(content);
+			if (transformed_content instanceof Promise) {
+				const followup = transformed_content.then((content) =>
+					Payload.#push_accumulated_content(child, content)
+				);
+				this.promises.followup.push(followup);
+			} else {
+				Payload.#push_accumulated_content(child, transformed_content);
+			}
 		}
 	}
 
@@ -153,7 +171,7 @@ export class Payload {
 
 	copy() {
 		const copy = new Payload(this.global, this.local, this.parent, this.type);
-		copy.#out = this.#out.map((item) => (typeof item === 'string' ? item : item.copy()));
+		copy.#out = this.#out.map((item) => (item instanceof Payload ? item.copy() : item));
 		copy.promises = this.promises;
 		return copy;
 	}
@@ -170,7 +188,7 @@ export class Payload {
 		this.global.subsume(other.global);
 		this.local = other.local;
 		this.#out = other.#out.map((item) => {
-			if (typeof item !== 'string') {
+			if (item instanceof Payload) {
 				item.subsume(item);
 			}
 			return item;
@@ -185,7 +203,7 @@ export class Payload {
 
 	/**
 	 * Collect all of the code from the `out` array and return it as a string, or a promise resolving to a string.
-	 * @param {(string | Payload)[]} items
+	 * @param {PayloadItem[]} items
 	 * @param {PayloadType} current_type
 	 * @param {AccumulatedContent} content
 	 * @returns {MaybePromise<AccumulatedContent>}
@@ -208,13 +226,20 @@ export class Payload {
 			} else {
 				flush();
 
-				if (item.promises.initial || item.promises.followup.length) {
+				if (item instanceof Promise) {
 					has_async = true;
 					segments.push(
-						Payload.#collect_content_async([item], current_type, { head: '', body: '' })
+						item.then((resolved) => {
+							const content = { head: '', body: '' };
+							content[current_type] = resolved;
+							return content;
+						})
 					);
+				} else if (item.promises.initial || item.promises.followup.length) {
+					has_async = true;
+					segments.push(Payload.#collect_content_async([item], current_type));
 				} else {
-					const sub = Payload.#collect_content(item.#out, item.type, { head: '', body: '' });
+					const sub = Payload.#collect_content(item.#out, item.type);
 					if (sub instanceof Promise) {
 						has_async = true;
 					}
@@ -237,16 +262,15 @@ export class Payload {
 
 	/**
 	 * Collect all of the code from the `out` array and return it as a string.
-	 * @param {(string | Payload)[]} items
+	 * @param {PayloadItem[]} items
 	 * @param {PayloadType} current_type
 	 * @param {AccumulatedContent} content
 	 * @returns {Promise<AccumulatedContent>}
 	 */
 	static async #collect_content_async(items, current_type, content = { head: '', body: '' }) {
+		// no danger to sequentially awaiting stuff in here; all of the work is already kicked off
 		for (const item of items) {
-			if (typeof item === 'string') {
-				content[current_type] += item;
-			} else {
+			if (item instanceof Payload) {
 				if (item.promises.initial) {
 					// this represents the async function that's modifying this payload.
 					// we can't do anything until it's done and we know our `out` array is complete.
@@ -257,6 +281,8 @@ export class Payload {
 					await followup;
 				}
 				await Payload.#collect_content_async(item.#out, item.type, content);
+			} else {
+				content[current_type] += await item;
 			}
 		}
 		return content;
