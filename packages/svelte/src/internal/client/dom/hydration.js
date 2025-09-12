@@ -1,6 +1,6 @@
 /** @import { TemplateNode } from '#client' */
 
-import { COMMENT_NODE } from '#client/constants';
+import { COMMENT_NODE, TEXT_NODE } from '#client/constants';
 import {
 	HYDRATION_END,
 	HYDRATION_ERROR,
@@ -40,8 +40,30 @@ export function set_hydrate_node(node) {
 	return (hydrate_node = node);
 }
 
-export function hydrate_next() {
-	return set_hydrate_node(/** @type {TemplateNode} */ (get_next_sibling(hydrate_node)));
+/**
+ * Moove to the next node to be hydrated. Empty text nodes will be skipped,
+ * unless `allow_text` is set to true.
+ *
+ * Skipping whitespace helps to sucessful hydrate even if some middleware added
+ * arbitrary whitespace into the html. This was at least twice an issue:
+ *
+ * - https://github.com/sveltejs/svelte/issues/15819
+ * - https://github.com/sveltejs/svelte/issues/16242
+ *
+ * Removing empty text nodes should be finde, as required text nodes will be
+ * added on demand. Doing so is necessary because an empty text on the server
+ * side will result in a missing text nodes as well.
+ *
+ * @param {boolean} allow_text
+ */
+export function hydrate_next(allow_text = false) {
+	var node = set_hydrate_node(/** @type {TemplateNode} */(get_next_sibling(hydrate_node)));
+	while (!allow_text && node.nodeType === TEXT_NODE && !node.nodeValue?.trim()) {
+		var next_sibling = get_next_sibling(hydrate_node)
+		hydrate_node.parentElement?.removeChild(hydrate_node)
+		node = set_hydrate_node(/** @type {TemplateNode} */(next_sibling))
+	}
+	return node
 }
 
 /** @param {TemplateNode} node */
