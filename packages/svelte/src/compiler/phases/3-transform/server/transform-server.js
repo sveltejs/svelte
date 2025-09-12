@@ -243,8 +243,7 @@ export function server_component(analysis, options) {
 		.../** @type {Statement[]} */ (template.body)
 	]);
 
-	// TODO 'suspends_without_fallback' is probably a misnomer now
-	if (analysis.suspends_without_fallback) {
+	if (analysis.instance.has_await) {
 		component_block = b.block([call_child_payload(component_block, true)]);
 	}
 
