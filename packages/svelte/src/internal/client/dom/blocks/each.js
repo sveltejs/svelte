@@ -475,7 +475,7 @@ function reconcile(
 					var j;
 
 					// full key uniqueness check is dev-only,
-					// key duplicates cause crushing only due to `matched` being empty
+					// key duplicates cause crash only due to `matched` being empty
 					if (matched.length === 0) {
 						each_key_duplicate('', '', '');
 					}
