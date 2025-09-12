@@ -2,7 +2,6 @@
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
 import * as b from '#compiler/builders';
-import { filename } from '../../../state.js';
 
 /**
  * @param {AwaitExpression} node
