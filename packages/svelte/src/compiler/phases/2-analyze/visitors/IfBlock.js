@@ -22,14 +22,8 @@ export function IfBlock(node, context) {
 		expression: node.metadata.expression
 	});
 
-	context.visit(node.consequent, {
-		...context.state,
-		async_hoist_boundary: node.consequent
-	});
+	context.visit(node.consequent);
 	if (node.alternate) {
-		context.visit(node.alternate, {
-			...context.state,
-			async_hoist_boundary: node.alternate
-		});
+		context.visit(node.alternate);
 	}
 }

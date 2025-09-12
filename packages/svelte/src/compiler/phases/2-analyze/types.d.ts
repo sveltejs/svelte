@@ -12,14 +12,6 @@ export interface AnalysisState {
 	title: AST.TitleElement | null;
 	boundary: AST.SvelteBoundary | null;
 	/**
-	 * The "anchor" fragment for any hoisted promises. This is the root fragment when
-	 * walking starts and until another boundary fragment is encountered, like a
-	 * consequent or alternate of an `#if` or `#each` block. When this fragment is emitted
-	 * during server transformation, the promise expressions will be hoisted out of the fragment
-	 * and placed right above it in an array.
-	 */
-	async_hoist_boundary: AST.Fragment | null;
-	/**
 	 * Tag name of the parent element. `null` if the parent is `svelte:element`, `#snippet`, a component or the root.
 	 * Parent doesn't necessarily mean direct path predecessor because there could be `#each`, `#if` etc in-between.
 	 */

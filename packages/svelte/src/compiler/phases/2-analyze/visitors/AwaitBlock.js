@@ -44,22 +44,7 @@ export function AwaitBlock(node, context) {
 	// this one doesn't get the new state because it still hoists to the existing scope
 	context.visit(node.expression, { ...context.state, expression: node.metadata.expression });
 
-	if (node.pending) {
-		context.visit(node.pending, {
-			...context.state,
-			async_hoist_boundary: node.pending
-		});
-	}
-	if (node.then) {
-		context.visit(node.then, {
-			...context.state,
-			async_hoist_boundary: node.then
-		});
-	}
-	if (node.catch) {
-		context.visit(node.catch, {
-			...context.state,
-			async_hoist_boundary: node.catch
-		});
-	}
+	if (node.pending) context.visit(node.pending);
+	if (node.then) context.visit(node.then);
+	if (node.catch) context.visit(node.catch);
 }
