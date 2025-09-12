@@ -29,7 +29,7 @@ export class Payload {
 	type;
 
 	/** @type {Payload | undefined} */
-	parent;
+	#parent;
 
 	/**
 	 * Asynchronous work associated with this payload. `initial` is the promise from the function
