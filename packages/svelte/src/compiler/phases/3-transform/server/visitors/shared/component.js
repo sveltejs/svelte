@@ -1,7 +1,7 @@
 /** @import { BlockStatement, Expression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
-import { empty_comment, build_attribute_value } from './utils.js';
+import { empty_comment, build_attribute_value, call_child_payload } from './utils.js';
 import * as b from '#compiler/builders';
 import { is_element_node } from '../../../../nodes.js';
 import { dev } from '../../../../../state.js';
@@ -227,7 +227,14 @@ export function build_inline_component(node, expression, context) {
 			params.push(pattern);
 		}
 
-		const slot_fn = b.arrow(params, b.block(block.body));
+		const slot_fn = b.arrow(
+			params,
+			// TODO: This will always produce correct results because it will always produce async functions
+			// if the current component is an async component, but it may produce async functions where they're
+			// not necessary -- eg. when the component is asynchronous but the child content is not.
+			// May or may not be worth optimizing.
+			b.block([call_child_payload(b.block(block.body), node.fragment.metadata.is_async)])
+		);
 
 		if (slot_name === 'default' && !has_children_prop) {
 			if (

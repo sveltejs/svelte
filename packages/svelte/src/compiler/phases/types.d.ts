@@ -2,9 +2,10 @@ import type { AST, Binding, StateField } from '#compiler';
 import type {
 	CallExpression,
 	ClassBody,
+	Expression,
 	Identifier,
 	LabeledStatement,
-	Node,
+	MemberExpression,
 	Program
 } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
@@ -106,6 +107,7 @@ export interface ComponentAnalysis extends Analysis {
 	 * Every snippet that is declared locally
 	 */
 	snippets: Set<AST.SnippetBlock>;
+	hoisted_promises: Map<Expression, MemberExpression>;
 }
 
 declare module 'estree' {

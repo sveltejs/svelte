@@ -1,8 +1,14 @@
 /** @import { AST } from '#compiler' */
+/** @import { Statement } from 'estree' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../types.js' */
 import { clean_nodes, infer_namespace } from '../../utils.js';
 import * as b from '#compiler/builders';
-import { empty_comment, process_children, build_template } from './shared/utils.js';
+import {
+	empty_comment,
+	process_children,
+	build_template,
+	call_child_payload
+} from './shared/utils.js';
 
 /**
  * @param {AST.Fragment} node
@@ -41,6 +47,22 @@ export function Fragment(node, context) {
 	}
 
 	process_children(trimmed, { ...context, state });
+
+	if (node.metadata.is_async) {
+		/** @type {Statement[]} */
+		const statements = [];
+
+		if (node.metadata.hoisted_promises.promises.length > 0) {
+			statements.push(
+				b.const(node.metadata.hoisted_promises.id, b.array(node.metadata.hoisted_promises.promises))
+			);
+		}
+
+		statements.push(...state.init);
+		statements.push(...build_template(state.template));
+
+		return b.block([call_child_payload(b.block(statements), true)]);
+	}
 
 	return b.block([...state.init, ...build_template(state.template)]);
 }

@@ -1,6 +1,7 @@
 /** @import { AwaitExpression } from 'estree' */
 /** @import { Context } from '../types' */
 import * as e from '../../../errors.js';
+import * as b from '#compiler/builders';
 
 /**
  * @param {AwaitExpression} node
@@ -12,15 +13,23 @@ export function AwaitExpression(node, context) {
 	if (context.state.expression) {
 		context.state.expression.has_await = true;
 
-		if (
-			context.state.fragment &&
-			// TODO there's probably a better way to do this
-			context.path.some((node) => node.type === 'ConstTag')
-		) {
+		if (context.state.fragment && context.path.some((node) => node.type === 'ConstTag')) {
 			context.state.fragment.metadata.has_await = true;
 		}
 
+		if (context.state.fragment) {
+			// const len = context.state.fragment.metadata.hoisted_promises.promises.push(node.argument);
+			// context.state.analysis.hoisted_promises.set(
+			// 	node.argument,
+			// 	b.member(context.state.fragment.metadata.hoisted_promises.id, b.literal(len - 1), true)
+			// );
+		}
+
 		suspend = true;
+	}
+
+	if (context.state.title) {
+		context.state.title.metadata.has_await = true;
 	}
 
 	// disallow top-level `await` or `await` in template expressions

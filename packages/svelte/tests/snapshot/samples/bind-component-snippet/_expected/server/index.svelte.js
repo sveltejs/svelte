@@ -2,7 +2,7 @@ import * as $ from 'svelte/internal/server';
 import TextInput from './Child.svelte';
 
 function snippet($$payload) {
-	$$payload.out.push(`<!---->Something`);
+	$$payload.push(`<!---->Something`);
 }
 
 export default function Bind_component_snippet($$payload) {
@@ -23,14 +23,14 @@ export default function Bind_component_snippet($$payload) {
 			}
 		});
 
-		$$payload.out.push(`<!----> value: ${$.escape(value)}`);
+		$$payload.push(`<!----> value: ${$.escape(value)}`);
 	}
 
 	do {
 		$$settled = true;
-		$$inner_payload = $.copy_payload($$payload);
+		$$inner_payload = $$payload.copy();
 		$$render_inner($$inner_payload);
 	} while (!$$settled);
 
-	$.assign_payload($$payload, $$inner_payload);
+	$$payload.subsume($$inner_payload);
 }

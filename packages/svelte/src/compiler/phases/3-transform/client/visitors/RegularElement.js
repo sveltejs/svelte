@@ -11,7 +11,7 @@ import {
 import { is_ignored } from '../../../../state.js';
 import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { is_custom_element_node } from '../../../nodes.js';
+import { create_attribute, is_custom_element_node } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_getter } from '../utils.js';
 import {
@@ -406,10 +406,24 @@ export function RegularElement(node, context) {
 	}
 
 	if (!has_spread && needs_special_value_handling) {
-		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
-			if (attribute.name === 'value') {
-				build_element_special_value_attribute(node.name, node_id, attribute, context);
-				break;
+		if (node.metadata.synthetic_value_node) {
+			const synthetic_node = node.metadata.synthetic_value_node;
+			const synthetic_attribute = create_attribute(
+				'value',
+				synthetic_node.start,
+				synthetic_node.end,
+				[synthetic_node]
+			);
+			// this node is an `option` that didn't have a `value` attribute, but had
+			// a single-expression child, so we treat the value of that expression as
+			// the value of the option
+			build_element_special_value_attribute(node.name, node_id, synthetic_attribute, context, true);
+		} else {
+			for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
+				if (attribute.name === 'value') {
+					build_element_special_value_attribute(node.name, node_id, attribute, context);
+					break;
+				}
 			}
 		}
 	}
@@ -645,8 +659,15 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
  * @param {Identifier} node_id
  * @param {AST.Attribute} attribute
  * @param {ComponentContext} context
+ * @param {boolean} [synthetic] - true if this should not sync to the DOM
  */
-function build_element_special_value_attribute(element, node_id, attribute, context) {
+function build_element_special_value_attribute(
+	element,
+	node_id,
+	attribute,
+	context,
+	synthetic = false
+) {
 	const state = context.state;
 	const is_select_with_value =
 		// attribute.metadata.dynamic would give false negatives because even if the value does not change,
@@ -660,7 +681,7 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 	const evaluated = context.state.scope.evaluate(value);
 	const assignment = b.assignment('=', b.member(node_id, '__value'), value);
 
-	const inner_assignment = b.assignment(
+	const set_value_assignment = b.assignment(
 		'=',
 		b.member(node_id, 'value'),
 		evaluated.is_defined ? assignment : b.logical('??', assignment, b.literal(''))
@@ -669,14 +690,16 @@ function build_element_special_value_attribute(element, node_id, attribute, cont
 	const update = b.stmt(
 		is_select_with_value
 			? b.sequence([
-					inner_assignment,
+					set_value_assignment,
 					// This ensures a one-way street to the DOM in case it's <select {value}>
 					// and not <select bind:value>. We need it in addition to $.init_select
 					// because the select value is not reflected as an attribute, so the
 					// mutation observer wouldn't notice.
 					b.call('$.select_option', node_id, value)
 				])
-			: inner_assignment
+			: synthetic
+				? assignment
+				: set_value_assignment
 	);
 
 	if (has_state) {

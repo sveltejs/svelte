@@ -303,6 +303,8 @@ export function analyze_module(source, options) {
 			has_props_rune: false,
 			options: /** @type {ValidatedCompileOptions} */ (options),
 			fragment: null,
+			title: null,
+			boundary: null,
 			parent_element: null,
 			reactive_statement: null
 		},
@@ -540,7 +542,8 @@ export function analyze_component(root, source, options) {
 		source,
 		snippet_renderers: new Map(),
 		snippets: new Set(),
-		async_deriveds: new Set()
+		async_deriveds: new Set(),
+		hoisted_promises: new Map()
 	};
 
 	if (!runes) {
@@ -693,6 +696,8 @@ export function analyze_component(root, source, options) {
 				options,
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
 				fragment: ast === template.ast ? ast : null,
+				title: null,
+				boundary: null,
 				parent_element: null,
 				has_props_rune: false,
 				component_slots: new Set(),
@@ -759,6 +764,8 @@ export function analyze_component(root, source, options) {
 				analysis,
 				options,
 				fragment: ast === template.ast ? ast : null,
+				title: null,
+				boundary: null,
 				parent_element: null,
 				has_props_rune: false,
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',

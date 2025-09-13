@@ -57,6 +57,9 @@ export namespace AST {
 			 */
 			dynamic: boolean;
 			has_await: boolean;
+			/** TODO document */
+			is_async: boolean;
+			hoisted_promises: { id: Identifier; promises: Expression[] };
 		};
 	}
 
@@ -325,6 +328,10 @@ export namespace AST {
 	export interface TitleElement extends BaseElement {
 		type: 'TitleElement';
 		name: 'title';
+		/** @internal */
+		metadata: {
+			has_await: boolean;
+		};
 	}
 
 	export interface SlotElement extends BaseElement {
@@ -344,6 +351,8 @@ export namespace AST {
 			has_spread: boolean;
 			scoped: boolean;
 			path: SvelteNode[];
+			/** Synthetic value attribute for <option> with single expression child, used for client-only handling */
+			synthetic_value_node: ExpressionTag | null;
 		};
 	}
 
@@ -401,6 +410,10 @@ export namespace AST {
 	export interface SvelteBoundary extends BaseElement {
 		type: 'SvelteBoundary';
 		name: 'svelte:boundary';
+		/** @internal */
+		metadata: {
+			pending: SnippetBlock | Attribute | null;
+		};
 	}
 
 	export interface SvelteHead extends BaseElement {

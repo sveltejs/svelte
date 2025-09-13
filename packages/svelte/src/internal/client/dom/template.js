@@ -316,6 +316,9 @@ export function text(value = '') {
 	return node;
 }
 
+/**
+ * @returns {TemplateNode | DocumentFragment}
+ */
 export function comment() {
 	// we're not delegating to `template` here for performance reasons
 	if (hydrating) {

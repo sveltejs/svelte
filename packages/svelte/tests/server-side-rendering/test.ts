@@ -6,25 +6,55 @@
 
 import * as fs from 'node:fs';
 import { assert } from 'vitest';
-import { render } from 'svelte/server';
-import { compile_directory, should_update_expected, try_read_file } from '../helpers.js';
+import { render, renderAsync } from 'svelte/server';
+import {
+	async_mode,
+	compile_directory,
+	should_update_expected,
+	try_read_file
+} from '../helpers.js';
 import { assert_html_equal_with_options } from '../html_equal.js';
 import { suite, type BaseTest } from '../suite.js';
 import type { CompileOptions } from '#compiler';
 
 interface SSRTest extends BaseTest {
 	compileOptions?: Partial<CompileOptions>;
+	load_compiled?: boolean;
 	props?: Record<string, any>;
 	id_prefix?: string;
 	withoutNormalizeHtml?: boolean;
 	errors?: string[];
 }
 
+// TODO remove this shim when we can
+// @ts-expect-error
+Promise.withResolvers = () => {
+	let resolve;
+	let reject;
+
+	const promise = new Promise((f, r) => {
+		resolve = f;
+		reject = r;
+	});
+
+	return { promise, resolve, reject };
+};
+
 // eslint-disable-next-line no-console
 let console_error = console.error;
 
 const { test, run } = suite<SSRTest>(async (config, test_dir) => {
-	await compile_directory(test_dir, 'server', config.compileOptions);
+	const compile_options = {
+		experimental: {
+			async: async_mode,
+			...config.compileOptions?.experimental
+		},
+		...config.compileOptions
+	};
+
+	if (!config.load_compiled) {
+		await compile_directory(test_dir, 'server', compile_options);
+	}
 
 	const errors: string[] = [];
 
@@ -34,7 +64,15 @@ const { test, run } = suite<SSRTest>(async (config, test_dir) => {
 
 	const Component = (await import(`${test_dir}/_output/server/main.svelte.js`)).default;
 	const expected_html = try_read_file(`${test_dir}/_expected.html`);
-	const rendered = render(Component, { props: config.props || {}, idPrefix: config.id_prefix });
+	const rendered = async_mode
+		? await renderAsync(Component, {
+				props: config.props || {},
+				idPrefix: config.id_prefix
+			})
+		: render(Component, {
+				props: config.props || {},
+				idPrefix: config.id_prefix
+			});
 	const { body, head } = rendered;
 
 	fs.writeFileSync(`${test_dir}/_output/rendered.html`, body);
@@ -45,7 +83,7 @@ const { test, run } = suite<SSRTest>(async (config, test_dir) => {
 
 	try {
 		assert_html_equal_with_options(body, expected_html || '', {
-			preserveComments: config.compileOptions?.preserveComments,
+			preserveComments: compile_options.preserveComments,
 			withoutNormalizeHtml: config.withoutNormalizeHtml
 		});
 	} catch (error: any) {

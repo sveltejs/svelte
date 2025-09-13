@@ -177,7 +177,8 @@ export default function element(parser) {
 						mathml: false,
 						scoped: false,
 						has_spread: false,
-						path: []
+						path: [],
+						synthetic_value_node: null
 					}
 				}
 			: /** @type {AST.ElementLike} */ ({

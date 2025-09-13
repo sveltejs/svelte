@@ -10,7 +10,6 @@ import {
 	INERT,
 	RENDER_EFFECT,
 	ROOT_EFFECT,
-	USER_EFFECT,
 	MAYBE_DIRTY
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
