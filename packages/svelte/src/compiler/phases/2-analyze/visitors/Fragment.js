@@ -12,7 +12,7 @@ export function Fragment(node, context) {
 	// a child fragment), which is necessary for ensuring that a `SnippetBlock` creates an
 	// async function in SSR. It feels like this is probably duplicative, but it's late
 	// and it works, so for now I'm doing it like this
-	node.metadata.is_async = node.metadata.hoisted_promises.promises.length > 0;
+	node.metadata.is_async ||= node.metadata.hoisted_promises.promises.length > 0;
 
 	if (node.metadata.hoisted_promises.promises.length === 1) {
 		// if there's only one promise in this fragment, we don't need to de-waterfall it

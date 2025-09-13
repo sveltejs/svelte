@@ -41,8 +41,11 @@ export function AwaitBlock(node, context) {
 
 	mark_subtree_dynamic(context.path);
 
-	// this one doesn't get the new state because it still hoists to the existing scope
 	context.visit(node.expression, { ...context.state, expression: node.metadata.expression });
+
+	if (node.metadata.expression.has_await && context.state.fragment) {
+		context.state.fragment.metadata.is_async = true;
+	}
 
 	if (node.pending) context.visit(node.pending);
 	if (node.then) context.visit(node.then);

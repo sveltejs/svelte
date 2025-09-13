@@ -32,7 +32,7 @@ export class Payload {
 	type;
 
 	/** @type {Payload | undefined} */
-	parent;
+	#parent;
 
 	/**
 	 * Asynchronous work associated with this payload. `initial` is the promise from the function
@@ -69,7 +69,7 @@ export class Payload {
 	constructor(global, local = { select_value: undefined }, parent, type) {
 		this.global = global;
 		this.local = { ...local };
-		this.parent = parent;
+		this.#parent = parent;
 		this.type = type ?? parent?.type ?? 'body';
 	}
 
@@ -108,6 +108,10 @@ export class Payload {
 	 */
 	push(content) {
 		if (typeof content === 'function') {
+			if (this.global.mode === 'sync') {
+				// TODO more-proper error
+				throw new Error('Encountered an asynchronous component while rendering synchronously');
+			}
 			this.#out.push(content());
 		} else {
 			this.#out.push(content);
@@ -148,7 +152,7 @@ export class Payload {
 	 * @returns {number[]}
 	 */
 	get_path() {
-		return this.parent ? [...this.parent.get_path(), this.parent.#out.indexOf(this)] : [];
+		return this.#parent ? [...this.#parent.get_path(), this.#parent.#out.indexOf(this)] : [];
 	}
 
 	/**
@@ -170,7 +174,7 @@ export class Payload {
 	}
 
 	copy() {
-		const copy = new Payload(this.global, this.local, this.parent, this.type);
+		const copy = new Payload(this.global, this.local, this.#parent, this.type);
 		copy.#out = this.#out.map((item) => (item instanceof Payload ? item.copy() : item));
 		copy.promises = this.promises;
 		return copy;

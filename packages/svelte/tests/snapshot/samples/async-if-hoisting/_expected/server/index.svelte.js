@@ -4,16 +4,10 @@ export default function Async_if_hoisting($$payload) {
 	$$payload.child(async ($$payload) => {
 		if (await Promise.resolve(true)) {
 			$$payload.push('<!--[-->');
-
-			$$payload.child(async ($$payload) => {
-				$$payload.push(async () => $.escape(await Promise.resolve('yes yes yes')));
-			});
+			$$payload.push(async () => $.escape(await Promise.resolve('yes yes yes')));
 		} else {
 			$$payload.push('<!--[!-->');
-
-			$$payload.child(async ($$payload) => {
-				$$payload.push(async () => $.escape(await Promise.reject('no no no')));
-			});
+			$$payload.push(async () => $.escape(await Promise.reject('no no no')));
 		}
 
 		$$payload.push(`<!--]-->`);

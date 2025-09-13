@@ -18,11 +18,11 @@ export function AwaitExpression(node, context) {
 		}
 
 		if (context.state.fragment) {
-			const len = context.state.fragment.metadata.hoisted_promises.promises.push(node.argument);
-			context.state.analysis.hoisted_promises.set(
-				node.argument,
-				b.member(context.state.fragment.metadata.hoisted_promises.id, b.literal(len - 1), true)
-			);
+			// const len = context.state.fragment.metadata.hoisted_promises.promises.push(node.argument);
+			// context.state.analysis.hoisted_promises.set(
+			// 	node.argument,
+			// 	b.member(context.state.fragment.metadata.hoisted_promises.id, b.literal(len - 1), true)
+			// );
 		}
 
 		suspend = true;
