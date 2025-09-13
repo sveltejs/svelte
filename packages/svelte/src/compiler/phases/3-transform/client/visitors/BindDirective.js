@@ -7,6 +7,7 @@ import * as b from '#compiler/builders';
 import { binding_properties } from '../../../bindings.js';
 import { build_attribute_value } from './shared/element.js';
 import { build_bind_this, validate_binding } from './shared/utils.js';
+import { init_spread_bindings } from '../../shared/spread_bindings.js';
 
 /**
  * @param {AST.BindDirective} node
@@ -20,7 +21,11 @@ export function BindDirective(node, context) {
 
 	let get, set;
 
-	if (expression.type === 'SequenceExpression') {
+	if (node.metadata.spread_binding) {
+		const { get: getter, set: setter } = init_spread_bindings(node.expression, context);
+		get = getter;
+		set = setter;
+	} else if (expression.type === 'SequenceExpression') {
 		[get, set] = expression.expressions;
 	} else {
 		if (

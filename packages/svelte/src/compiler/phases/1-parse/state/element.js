@@ -649,8 +649,7 @@ function read_attribute(parser) {
 			}
 		}
 
-		/** @type {AST.Directive} */
-		const directive = {
+		const directive = /** @type {AST.Directive} */ ({
 			start,
 			end,
 			type,
@@ -659,7 +658,13 @@ function read_attribute(parser) {
 			metadata: {
 				expression: create_expression_metadata()
 			}
-		};
+		});
+		if (first_value?.metadata.expression.has_spread) {
+			if (directive.type !== 'BindDirective') {
+				e.directive_invalid_value(first_value.start);
+			}
+			directive.metadata.spread_binding = true;
+		}
 
 		// @ts-expect-error we do this separately from the declaration to avoid upsetting typescript
 		directive.modifiers = modifiers;
@@ -812,6 +817,12 @@ function read_sequence(parser, done, location) {
 			flush(parser.index - 1);
 
 			parser.allow_whitespace();
+
+			const has_spread = parser.eat('...');
+			if (has_spread) {
+				parser.allow_whitespace();
+			}
+
 			const expression = read_expression(parser);
 			parser.allow_whitespace();
 			parser.eat('}', true);
@@ -826,6 +837,8 @@ function read_sequence(parser, done, location) {
 					expression: create_expression_metadata()
 				}
 			};
+
+			chunk.metadata.expression.has_spread = has_spread;
 
 			chunks.push(chunk);
 
