@@ -43,6 +43,7 @@ import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
 import { current_batch } from '../../reactivity/batch.js';
 import { each_key_duplicate } from '../../errors.js';
+import { validate_each_keys } from '../../validate.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -201,6 +202,11 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			return;
 		}
 		was_empty = length === 0;
+
+		// skip if #each block isn't keyed
+		if (DEV && get_key !== index) {
+			validate_each_keys(array, get_key);
+		}
 
 		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
