@@ -1,6 +1,5 @@
 import { flushSync } from 'svelte';
 import { test } from '../../test';
-import { assert_ok } from '../../../suite';
 
 export default test({
 	async test({ assert, target, logs }) {

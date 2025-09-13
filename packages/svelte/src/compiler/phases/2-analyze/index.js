@@ -716,7 +716,9 @@ export function analyze_component(root, source, options) {
 							if (
 								type === 'FunctionDeclaration' ||
 								type === 'FunctionExpression' ||
-								type === 'ArrowFunctionExpression'
+								type === 'ArrowFunctionExpression' ||
+								(type === 'BindDirective' &&
+									/** @type {AST.BindDirective} */ (path[i]).metadata.spread_binding)
 							) {
 								continue inner;
 							}

@@ -11,11 +11,7 @@ export default test({
 
 		checkboxes.forEach((checkbox) => checkbox.click());
 
-		assert.deepEqual(logs, [
-			'getArrayBindings',
-			'getObjectBindings',
-			...repeatArray(checkboxes.length, ['check', false])
-		]);
+		assert.deepEqual(logs, ['getBindings', ...repeatArray(checkboxes.length, ['check', false])]);
 	}
 });
 

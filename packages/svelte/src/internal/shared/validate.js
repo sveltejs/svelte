@@ -53,16 +53,15 @@ export function prevent_snippet_stringification(fn) {
  * @return {[() => unknown, (value: unknown) => void]}
  */
 export function validate_spread_bindings(spread_object, name) {
-	const is_array = Array.isArray(spread_object);
-	const getter = is_array ? spread_object[0] : spread_object.get;
-	const setter = is_array ? spread_object[1] : spread_object.set;
+	const getter = spread_object[0];
+	const setter = spread_object[1];
 
 	if (typeof getter !== 'function' && getter != null) {
-		e.invalid_spread_bindings(name + (is_array ? '[0]' : '.get'));
+		e.invalid_spread_bindings(name + '[0]');
 	}
 	if (typeof setter !== 'function' && setter != null) {
-		e.invalid_spread_bindings(name + (is_array ? '[1]' : '.set'));
+		e.invalid_spread_bindings(name + '[1]');
 	}
 
-	return [getter ?? noop, setter ?? noop];
+	return [getter, setter];
 }
