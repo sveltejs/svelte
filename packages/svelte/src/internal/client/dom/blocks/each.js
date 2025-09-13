@@ -42,6 +42,8 @@ import { active_effect, get } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
 import { current_batch } from '../../reactivity/batch.js';
+import { each_key_duplicate } from '../../errors.js';
+import { validate_each_keys } from '../../validate.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -200,6 +202,11 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			return;
 		}
 		was_empty = length === 0;
+
+		// skip if #each block isn't keyed
+		if (DEV && get_key !== index) {
+			validate_each_keys(array, get_key);
+		}
 
 		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
@@ -472,6 +479,12 @@ function reconcile(
 					// more efficient to move later items to the front
 					var start = stashed[0];
 					var j;
+
+					// full key uniqueness check is dev-only,
+					// key duplicates cause crash only due to `matched` being empty
+					if (matched.length === 0) {
+						each_key_duplicate('', '', '');
+					}
 
 					prev = start.prev;
 
