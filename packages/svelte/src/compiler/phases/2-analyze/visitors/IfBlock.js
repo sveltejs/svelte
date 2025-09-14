@@ -27,7 +27,5 @@ export function IfBlock(node, context) {
 	}
 
 	context.visit(node.consequent);
-	if (node.alternate) {
-		context.visit(node.alternate);
-	}
+	if (node.alternate) context.visit(node.alternate);
 }

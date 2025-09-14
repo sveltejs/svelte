@@ -42,9 +42,7 @@ export function EachBlock(node, context) {
 
 	context.visit(node.body);
 	if (node.key) context.visit(node.key);
-	if (node.fallback) {
-		context.visit(node.fallback);
-	}
+	if (node.fallback) context.visit(node.fallback);
 
 	if (!context.state.analysis.runes) {
 		let mutated =
