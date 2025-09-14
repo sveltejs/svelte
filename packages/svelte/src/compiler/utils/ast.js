@@ -609,3 +609,19 @@ export function build_assignment_value(operator, left, right) {
 			? b.logical(/** @type {ESTree.LogicalOperator} */ (operator.slice(0, -1)), left, right)
 			: b.binary(/** @type {ESTree.BinaryOperator} */ (operator.slice(0, -1)), left, right);
 }
+
+/**
+ * @param {ESTree.Expression} expression
+ */
+export function has_await(expression) {
+	let has_await = false;
+
+	walk(expression, null, {
+		AwaitExpression(_node, context) {
+			has_await = true;
+			context.stop();
+		}
+	});
+
+	return has_await;
+}
