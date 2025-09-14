@@ -370,6 +370,7 @@ function reconcile(
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 	var should_update = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 
+	var count = 0;
 	var length = array.length;
 	var items = state.items;
 	var first = state.first;
@@ -458,6 +459,7 @@ function reconcile(
 			stashed = [];
 
 			current = prev.next;
+			count += 1;
 			continue;
 		}
 
@@ -519,6 +521,7 @@ function reconcile(
 					link(state, prev, item);
 
 					prev = item;
+					count += 1;
 				}
 
 				continue;
@@ -547,6 +550,14 @@ function reconcile(
 		matched.push(item);
 		prev = item;
 		current = item.next;
+		count += 1;
+	}
+
+	if (count !== length) {
+		// full key uniqueness check is dev-only,
+		// if keys duplication didn't cause a crash,
+		// the rendered list will be shorter then the array
+		each_key_duplicate('', '', '');
 	}
 
 	if (current !== null || seen !== undefined) {
