@@ -1,9 +1,8 @@
 /** @import { BlockStatement, Expression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
-import { BLOCK_OPEN_ELSE } from '../../../../../internal/server/hydration.js';
 import * as b from '#compiler/builders';
-import { block_close, block_open } from './shared/utils.js';
+import { block_close, block_open, block_open_else } from './shared/utils.js';
 
 /**
  * @param {AST.EachBlock} node
@@ -49,7 +48,7 @@ export function EachBlock(node, context) {
 		const fallback = /** @type {BlockStatement} */ (context.visit(node.fallback));
 
 		fallback.body.unshift(
-			b.stmt(b.call(b.member(b.id('$$payload'), b.id('push')), b.literal(BLOCK_OPEN_ELSE)))
+			b.stmt(b.call(b.member(b.id('$$payload'), b.id('push')), block_open_else))
 		);
 
 		state.template.push(

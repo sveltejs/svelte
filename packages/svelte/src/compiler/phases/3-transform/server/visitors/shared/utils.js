@@ -6,6 +6,7 @@ import { escape_html } from '../../../../../../escaping.js';
 import {
 	BLOCK_CLOSE,
 	BLOCK_OPEN,
+	BLOCK_OPEN_ELSE,
 	EMPTY_COMMENT
 } from '../../../../../../internal/server/hydration.js';
 import * as b from '#compiler/builders';
@@ -14,6 +15,9 @@ import { regex_whitespaces_strict } from '../../../../patterns.js';
 
 /** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
 export const block_open = b.literal(BLOCK_OPEN);
+
+/** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
+export const block_open_else = b.literal(BLOCK_OPEN_ELSE);
 
 /** Closes an if/each block, so that we can remove nodes in the case of a mismatch. Also serves as an anchor for these blocks */
 export const block_close = b.literal(BLOCK_CLOSE);
