@@ -1,5 +1,5 @@
 /** @import { AssignmentOperator, Expression, Identifier, Node, Statement, BlockStatement } from 'estree' */
-/** @import { AST } from '#compiler' */
+/** @import { AST, ExpressionMetadata } from '#compiler' */
 /** @import { ComponentContext, ServerTransformState } from '../../types.js' */
 
 import { escape_html } from '../../../../../../escaping.js';
@@ -183,13 +183,15 @@ export function build_template(template, out = b.id('$$payload'), operator = 'pu
  * @param {ComponentContext} context
  * @param {boolean} trim_whitespace
  * @param {boolean} is_component
+ * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
  * @returns {Expression}
  */
 export function build_attribute_value(
 	value,
 	context,
 	trim_whitespace = false,
-	is_component = false
+	is_component = false,
+	transform = (expression) => expression
 ) {
 	if (value === true) {
 		return b.true;
@@ -206,7 +208,10 @@ export function build_attribute_value(
 			return b.literal(is_component ? data : escape_html(data, true));
 		}
 
-		return /** @type {Expression} */ (context.visit(chunk.expression));
+		return transform(
+			/** @type {Expression} */ (context.visit(chunk.expression)),
+			chunk.metadata.expression
+		);
 	}
 
 	let quasi = b.quasi('', false);
@@ -224,7 +229,13 @@ export function build_attribute_value(
 				: node.data;
 		} else {
 			expressions.push(
-				b.call('$.stringify', /** @type {Expression} */ (context.visit(node.expression)))
+				b.call(
+					'$.stringify',
+					transform(
+						/** @type {Expression} */ (context.visit(node.expression)),
+						node.metadata.expression
+					)
+				)
 			);
 
 			quasi = b.quasi('', i + 1 === value.length);
@@ -268,4 +279,23 @@ export function build_getter(node, state) {
  */
 export function call_child_payload(body, async) {
 	return b.stmt(b.call('$$payload.child', b.arrow([b.id('$$payload')], body, async)));
+}
+
+export class PromiseOptimiser {
+	/** @type {Expression[]} */
+	expressions = [];
+
+	/**
+	 *
+	 * @param {Expression} expression
+	 * @param {ExpressionMetadata} metadata
+	 */
+	transform = (expression, metadata) => {
+		if (metadata.has_await) {
+			const length = this.expressions.push(expression);
+			return b.member(b.id('$$promises'), b.literal(length - 1), true);
+		}
+
+		return expression;
+	};
 }

@@ -1,10 +1,16 @@
 /** @import { BlockStatement, Expression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
-import { empty_comment, build_attribute_value, call_child_payload } from './utils.js';
+import {
+	empty_comment,
+	build_attribute_value,
+	call_child_payload,
+	PromiseOptimiser
+} from './utils.js';
 import * as b from '#compiler/builders';
 import { is_element_node } from '../../../../nodes.js';
 import { dev } from '../../../../../state.js';
+import { get_attribute_chunks } from '../../../../../utils/ast.js';
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
@@ -72,16 +78,26 @@ export function build_inline_component(node, expression, context) {
 		}
 	}
 
+	const optimiser = new PromiseOptimiser();
+
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
 			if (!slot_scope_applies_to_itself) {
 				lets.default.push(attribute);
 			}
 		} else if (attribute.type === 'SpreadAttribute') {
-			props_and_spreads.push(/** @type {Expression} */ (context.visit(attribute)));
+			let expression = /** @type {Expression} */ (context.visit(attribute));
+			props_and_spreads.push(optimiser.transform(expression, attribute.metadata.expression));
 		} else if (attribute.type === 'Attribute') {
+			const value = build_attribute_value(
+				attribute.value,
+				context,
+				false,
+				true,
+				optimiser.transform
+			);
+
 			if (attribute.name.startsWith('--')) {
-				const value = build_attribute_value(attribute.value, context, false, true);
 				custom_css_props.push(b.init(attribute.name, value));
 				continue;
 			}
@@ -90,7 +106,6 @@ export function build_inline_component(node, expression, context) {
 				has_children_prop = true;
 			}
 
-			const value = build_attribute_value(attribute.value, context, false, true);
 			push_prop(b.prop('init', b.key(attribute.name), value));
 		} else if (attribute.type === 'BindDirective' && attribute.name !== 'this') {
 			if (attribute.expression.type === 'SequenceExpression') {
