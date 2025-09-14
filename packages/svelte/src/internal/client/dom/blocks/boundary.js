@@ -333,7 +333,7 @@ export class Boundary {
 		}
 
 		if (hydrating) {
-			set_hydrate_node(this.#hydrate_open);
+			set_hydrate_node(/** @type {TemplateNode} */ (this.#hydrate_open));
 			next();
 			set_hydrate_node(remove_nodes());
 		}
