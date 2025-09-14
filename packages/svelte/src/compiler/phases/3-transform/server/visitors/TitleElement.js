@@ -8,15 +8,6 @@ import { process_children, build_template, call_child_payload } from './shared/u
  * @param {ComponentContext} context
  */
 export function TitleElement(node, context) {
-	if (node.fragment.metadata.hoisted_promises.promises.length > 0) {
-		context.state.init.push(
-			b.const(
-				node.fragment.metadata.hoisted_promises.id,
-				b.array(node.fragment.metadata.hoisted_promises.promises)
-			)
-		);
-	}
-
 	// title is guaranteed to contain only text/expression tag children
 	const template = [b.literal('<title>')];
 	process_children(node.fragment.nodes, { ...context, state: { ...context.state, template } });

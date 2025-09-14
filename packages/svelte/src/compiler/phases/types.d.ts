@@ -107,7 +107,6 @@ export interface ComponentAnalysis extends Analysis {
 	 * Every snippet that is declared locally
 	 */
 	snippets: Set<AST.SnippetBlock>;
-	hoisted_promises: Map<Expression, MemberExpression>;
 }
 
 declare module 'estree' {

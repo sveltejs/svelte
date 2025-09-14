@@ -12,9 +12,7 @@ export function create_fragment(transparent = false) {
 		metadata: {
 			transparent,
 			dynamic: false,
-			has_await: false,
-			// name is added later, after we've done scope analysis
-			hoisted_promises: { id: b.id('$$promises'), promises: [] }
+			has_await: false
 		}
 	};
 }
