@@ -448,13 +448,7 @@ function move_effect(effect, fragment) {
 }
 
 export function get_boundary() {
-	var boundary = /** @type {Effect} */ (active_effect).b;
-
-	if (boundary === null) {
-		e.await_outside_boundary();
-	}
-
-	return boundary;
+	return /** @type {Boundary} */ (/** @type {Effect} */ (active_effect).b);
 }
 
 export function pending() {
