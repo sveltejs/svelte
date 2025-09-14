@@ -305,22 +305,17 @@ export class PromiseOptimiser {
 			return b.const('$$0', this.expressions[0]);
 		}
 
+		const promises = b.array(
+			this.expressions.map((expression) => {
+				return expression.type === 'AwaitExpression' && !has_await(expression.argument)
+					? expression.argument
+					: b.call(b.thunk(expression, true));
+			})
+		);
+
 		return b.const(
 			b.array_pattern(this.expressions.map((_, i) => b.id(`$$${i}`))),
-			b.await(
-				b.call(
-					'Promise.all',
-					b.array(
-						this.expressions.map((expression) => {
-							if (expression.type === 'AwaitExpression' && !has_await(expression.argument)) {
-								return expression.argument;
-							}
-
-							return b.call(b.thunk(expression, true));
-						})
-					)
-				)
-			)
+			b.await(b.call('Promise.all', promises))
 		);
 	}
 }
