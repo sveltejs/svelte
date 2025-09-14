@@ -11,6 +11,7 @@ import {
 import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_whitespaces_strict } from '../../../../patterns.js';
+import { has_await } from '../../../../../utils/ast.js';
 
 /** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
 export const block_open = b.literal(BLOCK_OPEN);
@@ -293,9 +294,33 @@ export class PromiseOptimiser {
 	transform = (expression, metadata) => {
 		if (metadata.has_await) {
 			const length = this.expressions.push(expression);
-			return b.member(b.id('$$promises'), b.literal(length - 1), true);
+			return b.id(`$$${length - 1}`);
 		}
 
 		return expression;
 	};
+
+	apply() {
+		if (this.expressions.length === 1) {
+			return b.const('$$0', this.expressions[0]);
+		}
+
+		return b.const(
+			b.array_pattern(this.expressions.map((_, i) => b.id(`$$${i}`))),
+			b.await(
+				b.call(
+					'Promise.all',
+					b.array(
+						this.expressions.map((expression) => {
+							if (expression.type === 'AwaitExpression' && !has_await(expression.argument)) {
+								return expression.argument;
+							}
+
+							return b.call(b.thunk(expression, true));
+						})
+					)
+				)
+			)
+		);
+	}
 }

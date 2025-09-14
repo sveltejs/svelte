@@ -313,27 +313,29 @@ export function build_inline_component(node, expression, context) {
 		node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic);
 
 	if (custom_css_props.length > 0) {
-		context.state.template.push(
-			b.stmt(
-				b.call(
-					'$.css_props',
-					b.id('$$payload'),
-					b.literal(context.state.namespace === 'svg' ? false : true),
-					b.object(custom_css_props),
-					b.thunk(b.block([statement])),
-					dynamic && b.true
-				)
+		statement = b.stmt(
+			b.call(
+				'$.css_props',
+				b.id('$$payload'),
+				b.literal(context.state.namespace === 'svg' ? false : true),
+				b.object(custom_css_props),
+				b.thunk(b.block([statement])),
+				dynamic && b.true
 			)
 		);
-	} else {
-		if (dynamic) {
-			context.state.template.push(empty_comment);
-		}
+	}
 
-		context.state.template.push(statement);
+	if (optimiser.expressions.length > 0) {
+		statement = call_child_payload(b.block([optimiser.apply(), statement]), true);
+	}
 
-		if (!context.state.skip_hydration_boundaries) {
-			context.state.template.push(empty_comment);
-		}
+	if (dynamic && custom_css_props.length === 0) {
+		context.state.template.push(empty_comment);
+	}
+
+	context.state.template.push(statement);
+
+	if (!context.state.skip_hydration_boundaries && custom_css_props.length === 0) {
+		context.state.template.push(empty_comment);
 	}
 }
