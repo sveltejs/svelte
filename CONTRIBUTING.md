@@ -90,9 +90,9 @@ A good test plan has the exact commands you ran and their output, provides scree
 
 #### Writing tests
 
-All tests are located in `/tests` folder.
+All tests are located in the `/tests` folder.
 
-Test samples are kept in `/tests/xxx/samples` folder.
+Test samples are kept in `/tests/xxx/samples` folders.
 
 #### Running tests
 
