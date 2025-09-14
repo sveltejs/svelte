@@ -59,7 +59,6 @@ export namespace AST {
 			has_await: boolean;
 			/** TODO document */
 			is_async: boolean;
-			hoisted_promises: { id: Identifier; promises: Expression[] };
 		};
 	}
 

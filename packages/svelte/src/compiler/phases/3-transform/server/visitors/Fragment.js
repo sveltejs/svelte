@@ -52,12 +52,6 @@ export function Fragment(node, context) {
 		/** @type {Statement[]} */
 		const statements = [];
 
-		if (node.metadata.hoisted_promises.promises.length > 0) {
-			statements.push(
-				b.const(node.metadata.hoisted_promises.id, b.array(node.metadata.hoisted_promises.promises))
-			);
-		}
-
 		statements.push(...state.init);
 		statements.push(...build_template(state.template));
 

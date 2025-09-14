@@ -2,7 +2,12 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '#compiler/builders';
-import { empty_comment, build_attribute_value } from './shared/utils.js';
+import {
+	empty_comment,
+	build_attribute_value,
+	PromiseOptimiser,
+	call_child_payload
+} from './shared/utils.js';
 
 /**
  * @param {AST.SlotElement} node
@@ -15,13 +20,22 @@ export function SlotElement(node, context) {
 	/** @type {Expression[]} */
 	const spreads = [];
 
+	const optimiser = new PromiseOptimiser();
+
 	let name = b.literal('default');
 
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'SpreadAttribute') {
-			spreads.push(/** @type {Expression} */ (context.visit(attribute)));
+			let expression = /** @type {Expression} */ (context.visit(attribute));
+			spreads.push(optimiser.transform(expression, attribute.metadata.expression));
 		} else if (attribute.type === 'Attribute') {
-			const value = build_attribute_value(attribute.value, context, false, true);
+			const value = build_attribute_value(
+				attribute.value,
+				context,
+				false,
+				true,
+				optimiser.transform
+			);
 
 			if (attribute.name === 'name') {
 				name = /** @type {Literal} */ (value);
@@ -50,5 +64,10 @@ export function SlotElement(node, context) {
 		fallback
 	);
 
-	context.state.template.push(empty_comment, b.stmt(slot), empty_comment);
+	const statement =
+		optimiser.expressions.length > 0
+			? call_child_payload(b.block([optimiser.apply(), b.stmt(slot)]), true)
+			: b.stmt(slot);
+
+	context.state.template.push(empty_comment, statement, empty_comment);
 }
