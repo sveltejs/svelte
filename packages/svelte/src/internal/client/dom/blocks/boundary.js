@@ -63,8 +63,8 @@ export class Boundary {
 	/** @type {TemplateNode} */
 	#anchor;
 
-	/** @type {TemplateNode} */
-	#hydrate_open;
+	/** @type {TemplateNode | null} */
+	#hydrate_open = hydrating ? hydrate_node : null;
 
 	/** @type {BoundaryProps} */
 	#props;
@@ -91,8 +91,6 @@ export class Boundary {
 	#pending_count = 0;
 
 	#is_creating_fallback = false;
-
-	#server_rendered_pending = false;
 
 	/**
 	 * A source containing the number of pending async deriveds/expressions.
@@ -131,10 +129,6 @@ export class Boundary {
 		this.#props = props;
 		this.#children = children;
 
-		this.#hydrate_open = hydrate_node;
-
-		this.#server_rendered_pending = this.#detect_server_state();
-
 		this.parent = /** @type {Effect} */ (active_effect).b;
 
 		this.#pending = !!this.#props.pending;
@@ -143,8 +137,14 @@ export class Boundary {
 			/** @type {Effect} */ (active_effect).b = this;
 
 			if (hydrating) {
+				const comment = this.#hydrate_open;
 				hydrate_next();
-				if (this.#server_rendered_pending) {
+
+				const server_rendered_pending =
+					/** @type {Comment} */ (comment).nodeType === COMMENT_NODE &&
+					/** @type {Comment} */ (comment).data === HYDRATION_START_ELSE;
+
+				if (server_rendered_pending) {
 					this.#hydrate_pending_content();
 				} else {
 					this.#hydrate_resolved_content();
@@ -167,17 +167,6 @@ export class Boundary {
 		if (hydrating) {
 			this.#anchor = hydrate_node;
 		}
-	}
-
-	#detect_server_state() {
-		if (!hydrating || !this.#hydrate_open) return false;
-
-		const comment = this.#hydrate_open;
-		if (comment.nodeType === COMMENT_NODE) {
-			return /** @type {Comment} */ (comment).data === HYDRATION_START_ELSE;
-		}
-
-		return false;
 	}
 
 	#hydrate_resolved_content() {
