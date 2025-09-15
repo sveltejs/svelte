@@ -1,5 +1,4 @@
 /** @import { AST } from '#compiler' */
-import * as b from '#compiler/builders';
 
 /**
  * @param {any} transparent

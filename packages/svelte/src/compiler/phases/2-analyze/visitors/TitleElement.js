@@ -17,5 +17,5 @@ export function TitleElement(node, context) {
 		}
 	}
 
-	context.visit(node.fragment);
+	context.next();
 }
