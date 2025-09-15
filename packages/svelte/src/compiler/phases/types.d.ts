@@ -5,7 +5,6 @@ import type {
 	Expression,
 	Identifier,
 	LabeledStatement,
-	MemberExpression,
 	Program
 } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
