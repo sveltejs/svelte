@@ -273,6 +273,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		if (hydrating) {
 			if (length === 0 && fallback_fn) {
 				fallback = branch(() => fallback_fn(anchor));
+			} else if (length > state.items.size) {
+				each_key_duplicate('', '', '');
 			}
 		} else {
 			if (should_defer_append()) {
