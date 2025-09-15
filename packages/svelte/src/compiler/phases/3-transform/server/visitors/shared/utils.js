@@ -103,11 +103,9 @@ function is_statement(node) {
 
 /**
  * @param {Array<Statement | Expression>} template
- * @param {Identifier} out
- * @param {AssignmentOperator | 'push'} operator
  * @returns {Statement[]}
  */
-export function build_template(template, out = b.id('$$payload'), operator = 'push') {
+export function build_template(template) {
 	/** @type {string[]} */
 	let strings = [];
 
@@ -118,32 +116,18 @@ export function build_template(template, out = b.id('$$payload'), operator = 'pu
 	const statements = [];
 
 	const flush = () => {
-		if (operator === 'push') {
-			statements.push(
-				b.stmt(
-					b.call(
-						b.member(out, b.id('push')),
-						b.template(
-							strings.map((cooked, i) => b.quasi(cooked, i === strings.length - 1)),
-							expressions
-						)
+		statements.push(
+			b.stmt(
+				b.call(
+					b.id('$$payload.push'),
+					b.template(
+						strings.map((cooked, i) => b.quasi(cooked, i === strings.length - 1)),
+						expressions
 					)
 				)
-			);
-		} else {
-			statements.push(
-				b.stmt(
-					b.assignment(
-						operator,
-						out,
-						b.template(
-							strings.map((cooked, i) => b.quasi(cooked, i === strings.length - 1)),
-							expressions
-						)
-					)
-				)
-			);
-		}
+			)
+		);
+
 		strings = [];
 		expressions = [];
 	};

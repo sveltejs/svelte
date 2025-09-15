@@ -45,7 +45,7 @@ export function EachBlock(node, context) {
 	);
 
 	if (node.fallback) {
-		const open = b.stmt(b.call(b.member(b.id('$$payload'), b.id('push')), block_open));
+		const open = b.stmt(b.call(b.id('$$payload.push'), block_open));
 
 		const fallback = /** @type {BlockStatement} */ (context.visit(node.fallback));
 
