@@ -20,10 +20,6 @@ export function AwaitExpression(node, context) {
 		suspend = true;
 	}
 
-	if (context.state.title) {
-		context.state.title.metadata.has_await = true;
-	}
-
 	// disallow top-level `await` or `await` in template expressions
 	// unless a) in runes mode and b) opted into `experimental.async`
 	if (suspend) {

@@ -17,5 +17,5 @@ export function TitleElement(node, context) {
 		}
 	}
 
-	context.visit(node.fragment, { ...context.state, title: node });
+	context.visit(node.fragment);
 }
