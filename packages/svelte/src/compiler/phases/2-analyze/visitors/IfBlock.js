@@ -22,10 +22,6 @@ export function IfBlock(node, context) {
 		expression: node.metadata.expression
 	});
 
-	if (node.metadata.expression.has_await && context.state.fragment) {
-		context.state.fragment.metadata.is_async = true;
-	}
-
 	context.visit(node.consequent);
 	if (node.alternate) context.visit(node.alternate);
 }

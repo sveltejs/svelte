@@ -178,8 +178,7 @@ export function RegularElement(node, context) {
 						b.id('$$payload'),
 						b.arrow(
 							[b.id('$$payload')],
-							b.block([...inner_state.init, ...build_template(inner_state.template)]),
-							node.fragment.metadata.is_async
+							b.block([...inner_state.init, ...build_template(inner_state.template)])
 						)
 					)
 				)
@@ -207,11 +206,7 @@ export function RegularElement(node, context) {
 			)
 		);
 	} else {
-		if (node.fragment.metadata.is_async) {
-			state.template.push(/** @type {Statement} */ (context.visit(node.fragment)));
-		} else {
-			process_children(trimmed, { ...context, state });
-		}
+		process_children(trimmed, { ...context, state });
 	}
 
 	if (select_with_value) {

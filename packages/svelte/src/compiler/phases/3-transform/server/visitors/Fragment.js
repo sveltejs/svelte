@@ -48,15 +48,5 @@ export function Fragment(node, context) {
 
 	process_children(trimmed, { ...context, state });
 
-	if (node.metadata.is_async) {
-		/** @type {Statement[]} */
-		const statements = [];
-
-		statements.push(...state.init);
-		statements.push(...build_template(state.template));
-
-		return b.block([call_child_payload(b.block(statements), true)]);
-	}
-
 	return b.block([...state.init, ...build_template(state.template)]);
 }

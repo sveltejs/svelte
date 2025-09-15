@@ -43,10 +43,6 @@ export function AwaitBlock(node, context) {
 
 	context.visit(node.expression, { ...context.state, expression: node.metadata.expression });
 
-	if (node.metadata.expression.has_await && context.state.fragment) {
-		context.state.fragment.metadata.is_async = true;
-	}
-
 	if (node.pending) context.visit(node.pending);
 	if (node.then) context.visit(node.then);
 	if (node.catch) context.visit(node.catch);
