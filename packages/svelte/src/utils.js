@@ -154,7 +154,6 @@ const DOM_BOOLEAN_ATTRIBUTES = [
 	'default',
 	'disabled',
 	'formnovalidate',
-	'hidden',
 	'indeterminate',
 	'inert',
 	'ismap',
