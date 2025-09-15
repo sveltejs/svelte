@@ -1,11 +1,5 @@
 import type { AST, Binding, StateField } from '#compiler';
-import type {
-	CallExpression,
-	ClassBody,
-	Identifier,
-	LabeledStatement,
-	Program
-} from 'estree';
+import type { CallExpression, ClassBody, Identifier, LabeledStatement, Program } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
 
 export interface Js {

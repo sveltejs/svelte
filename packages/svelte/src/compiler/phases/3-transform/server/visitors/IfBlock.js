@@ -18,9 +18,7 @@ export function IfBlock(node, context) {
 
 	consequent.body.unshift(b.stmt(b.call(b.id('$$payload.push'), block_open)));
 
-	alternate.body.unshift(
-		b.stmt(b.call(b.id('$$payload.push'), block_open_else))
-	);
+	alternate.body.unshift(b.stmt(b.call(b.id('$$payload.push'), block_open_else)));
 
 	/** @type {Statement} */
 	let statement = b.if(test, consequent, alternate);
