@@ -2,7 +2,6 @@ import type { AST, Binding, StateField } from '#compiler';
 import type {
 	CallExpression,
 	ClassBody,
-	Expression,
 	Identifier,
 	LabeledStatement,
 	Program
