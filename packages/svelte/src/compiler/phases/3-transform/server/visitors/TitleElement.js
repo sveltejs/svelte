@@ -14,12 +14,6 @@ export function TitleElement(node, context) {
 	template.push(b.literal('</title>'));
 
 	context.state.init.push(
-		b.stmt(
-			b.call(
-				'$.build_title',
-				b.id('$$payload'),
-				b.thunk(b.block(build_template(template)), node.metadata.has_await)
-			)
-		)
+		b.stmt(b.call('$.build_title', b.id('$$payload'), b.thunk(b.block(build_template(template)))))
 	);
 }
