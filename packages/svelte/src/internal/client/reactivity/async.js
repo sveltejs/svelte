@@ -3,6 +3,7 @@
 import { DESTROYED } from '#client/constants';
 import { DEV } from 'esm-env';
 import { component_context, is_runes, set_component_context } from '../context.js';
+import { get_boundary } from '../dom/blocks/boundary.js';
 import { invoke_error_boundary } from '../error-handling.js';
 import {
 	active_effect,
@@ -19,7 +20,6 @@ import {
 	set_from_async_derived
 } from './deriveds.js';
 import { aborted } from './effects.js';
-import { get_boundary } from '../dom/blocks/boundary.js';
 
 /**
  *
