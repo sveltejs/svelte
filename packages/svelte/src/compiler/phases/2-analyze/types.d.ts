@@ -9,7 +9,6 @@ export interface AnalysisState {
 	options: ValidatedCompileOptions;
 	ast_type: 'instance' | 'template' | 'module';
 	fragment: AST.Fragment | null;
-	title: AST.TitleElement | null;
 	/**
 	 * Tag name of the parent element. `null` if the parent is `svelte:element`, `#snippet`, a component or the root.
 	 * Parent doesn't necessarily mean direct path predecessor because there could be `#each`, `#if` etc in-between.
