@@ -278,7 +278,8 @@ export function analyze_module(source, options) {
 		tracing: false,
 		async_deriveds: new Set(),
 		comments,
-		classes: new Map()
+		classes: new Map(),
+		pickled_awaits: new Set()
 	};
 
 	state.adjust({
@@ -304,7 +305,8 @@ export function analyze_module(source, options) {
 			options: /** @type {ValidatedCompileOptions} */ (options),
 			fragment: null,
 			parent_element: null,
-			reactive_statement: null
+			reactive_statement: null,
+			in_derived: false
 		},
 		visitors
 	);
@@ -540,7 +542,8 @@ export function analyze_component(root, source, options) {
 		source,
 		snippet_renderers: new Map(),
 		snippets: new Set(),
-		async_deriveds: new Set()
+		async_deriveds: new Set(),
+		pickled_awaits: new Set()
 	};
 
 	if (!runes) {
@@ -699,7 +702,8 @@ export function analyze_component(root, source, options) {
 				expression: null,
 				state_fields: new Map(),
 				function_depth: scope.function_depth,
-				reactive_statement: null
+				reactive_statement: null,
+				in_derived: false
 			};
 
 			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);
@@ -766,7 +770,8 @@ export function analyze_component(root, source, options) {
 				component_slots: new Set(),
 				expression: null,
 				state_fields: new Map(),
-				function_depth: scope.function_depth
+				function_depth: scope.function_depth,
+				in_derived: false
 			};
 
 			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);

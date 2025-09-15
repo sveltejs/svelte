@@ -27,6 +27,11 @@ export interface AnalysisState {
 
 	// legacy stuff
 	reactive_statement: null | ReactiveStatement;
+
+	/**
+	 * True if we're directly inside a `$derived(...)` expression (but not `$derived.by(...)`)
+	 */
+	in_derived: boolean;
 }
 
 export type Context<State extends AnalysisState = AnalysisState> = import('zimmerframe').Context<

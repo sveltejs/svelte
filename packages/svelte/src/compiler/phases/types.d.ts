@@ -1,5 +1,12 @@
 import type { AST, Binding, StateField } from '#compiler';
-import type { CallExpression, ClassBody, Identifier, LabeledStatement, Program } from 'estree';
+import type {
+	AwaitExpression,
+	CallExpression,
+	ClassBody,
+	Identifier,
+	LabeledStatement,
+	Program
+} from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
 
 export interface Js {
@@ -40,6 +47,8 @@ export interface Analysis {
 
 	/** A set of deriveds that contain `await` expressions */
 	async_deriveds: Set<CallExpression>;
+	/** Awaits needing context preservation */
+	pickled_awaits: Set<AwaitExpression>;
 }
 
 export interface ComponentAnalysis extends Analysis {
