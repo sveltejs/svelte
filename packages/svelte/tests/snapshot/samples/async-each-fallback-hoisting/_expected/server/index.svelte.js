@@ -18,7 +18,7 @@ export default function Async_each_fallback_hoisting($$payload) {
 			$$payload.push(`<!---->`);
 			$$payload.push(async () => $.escape(await Promise.resolve(4)));
 		}
-
-		$$payload.push(`<!--]-->`);
 	});
+
+	$$payload.push(`<!--]-->`);
 }

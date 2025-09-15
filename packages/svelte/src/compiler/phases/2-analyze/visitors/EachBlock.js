@@ -35,11 +35,6 @@ export function EachBlock(node, context) {
 		scope: /** @type {Scope} */ (context.state.scope.parent)
 	});
 
-	// TODO it should be impossible to be in the template and not have a fragment...
-	if (node.metadata.expression.has_await && context.state.fragment) {
-		context.state.fragment.metadata.is_async = true;
-	}
-
 	context.visit(node.body);
 	if (node.key) context.visit(node.key);
 	if (node.fallback) context.visit(node.fallback);

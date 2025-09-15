@@ -2,7 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '#compiler/builders';
-import { block_close, block_open, block_open_else } from './shared/utils.js';
+import { block_close, block_open, block_open_else, call_child_payload } from './shared/utils.js';
 
 /**
  * @param {AST.EachBlock} node
@@ -17,7 +17,9 @@ export function EachBlock(node, context) {
 		each_node_meta.contains_group_binding || !node.index ? each_node_meta.index : b.id(node.index);
 
 	const array_id = state.scope.root.unique('each_array');
-	state.init.push(b.const(array_id, b.call('$.ensure_array_like', collection)));
+
+	/** @type {Statement} */
+	let block = b.block([b.const(array_id, b.call('$.ensure_array_like', collection))]);
 
 	/** @type {Statement[]} */
 	const each = [];
@@ -47,19 +49,23 @@ export function EachBlock(node, context) {
 
 		const fallback = /** @type {BlockStatement} */ (context.visit(node.fallback));
 
-		fallback.body.unshift(
-			b.stmt(b.call(b.member(b.id('$$payload'), b.id('push')), block_open_else))
-		);
+		fallback.body.unshift(b.stmt(b.call(b.id('$$payload.push'), block_open_else)));
 
-		state.template.push(
+		block.body.push(
 			b.if(
 				b.binary('!==', b.member(array_id, 'length'), b.literal(0)),
 				b.block([open, for_loop]),
 				fallback
-			),
-			block_close
+			)
 		);
 	} else {
-		state.template.push(block_open, for_loop, block_close);
+		state.template.push(block_open);
+		block.body.push(for_loop);
+	}
+
+	if (node.metadata.expression.has_await) {
+		state.template.push(call_child_payload(block, true), block_close);
+	} else {
+		state.template.push(...block.body, block_close);
 	}
 }

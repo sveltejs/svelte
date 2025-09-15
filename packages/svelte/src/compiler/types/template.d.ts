@@ -57,8 +57,6 @@ export namespace AST {
 			 */
 			dynamic: boolean;
 			has_await: boolean;
-			/** TODO document */
-			is_async: boolean;
 		};
 	}
 

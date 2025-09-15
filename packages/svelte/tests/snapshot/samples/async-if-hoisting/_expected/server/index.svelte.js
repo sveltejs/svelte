@@ -9,7 +9,7 @@ export default function Async_if_hoisting($$payload) {
 			$$payload.push('<!--[!-->');
 			$$payload.push(async () => $.escape(await Promise.reject('no no no')));
 		}
-
-		$$payload.push(`<!--]-->`);
 	});
+
+	$$payload.push(`<!--]-->`);
 }
