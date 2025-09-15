@@ -14,7 +14,6 @@ import {
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
-import { get_boundary } from '../dom/blocks/boundary.js';
 import {
 	active_effect,
 	is_dirty,
@@ -29,7 +28,6 @@ import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
 import { old_values } from './sources.js';
 import { unlink_effect } from './effects.js';
-import { unset_context } from './async.js';
 
 /** @type {Set<Batch>} */
 const batches = new Set();
