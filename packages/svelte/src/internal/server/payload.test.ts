@@ -73,21 +73,7 @@ test('creating an async child in a sync context throws', () => {
 	).toThrow('Encountered an asynchronous component while rendering synchronously');
 });
 
-test('awaiting payload resolves async children', async () => {
-	const payload = new Payload(new TreeState('async'));
-	payload.push('a');
-	payload.child(async ($$payload) => {
-		await Promise.resolve();
-		$$payload.push('x');
-	});
-	payload.push('y');
-
-	const { body, head } = await payload;
-	assert.equal(head, '');
-	assert.equal(body, 'axy');
-});
-
-test('then() allows awaiting payload to get aggregated content', async () => {
+test('collect_async allows awaiting payload to get aggregated content', async () => {
 	const payload = new Payload(new TreeState('async'));
 	payload.push('1');
 	payload.child(async ($$payload) => {
@@ -96,7 +82,7 @@ test('then() allows awaiting payload to get aggregated content', async () => {
 	});
 	payload.push('3');
 
-	const result = await payload;
+	const result = await payload.collect_async();
 	assert.deepEqual(result, { head: '', body: '123' });
 });
 
@@ -132,7 +118,7 @@ test('compact schedules followup when compaction input is async', async () => {
 		fn: (content) => ({ body: content.body.toLowerCase(), head: '' })
 	});
 
-	const { body, head } = await payload;
+	const { body, head } = await payload.collect_async();
 	assert.equal(head, '');
 	assert.equal(body, 'axb');
 });
@@ -261,7 +247,7 @@ test('push accepts async functions in async context', async () => {
 	});
 	payload.push('c');
 
-	const { head, body } = await payload;
+	const { head, body } = await payload.collect_async();
 	assert.equal(head, '');
 	assert.equal(body, 'abc');
 });
@@ -284,7 +270,7 @@ test('push handles async functions with different timing', async () => {
 	// Regular string
 	payload.push('sync');
 
-	const { head, body } = await payload;
+	const { head, body } = await payload.collect_async();
 	assert.equal(head, '');
 	assert.equal(body, 'fastslowsync');
 });
@@ -296,7 +282,7 @@ test('push async functions work with head content type', async () => {
 		return '<title>Async Title</title>';
 	});
 
-	const { head, body } = await payload;
+	const { head, body } = await payload.collect_async();
 	assert.equal(body, '');
 	assert.equal(head, '<title>Async Title</title>');
 });
@@ -316,7 +302,7 @@ test('push async functions can be mixed with child payloads', async () => {
 
 	payload.push('-end');
 
-	const { head, body } = await payload;
+	const { head, body } = await payload.collect_async();
 	assert.equal(head, '');
 	assert.equal(body, 'start-async-child--end');
 });
@@ -335,7 +321,7 @@ test('push async functions work with compact operations', async () => {
 		fn: (content) => ({ head: '', body: content.body.toUpperCase() })
 	});
 
-	const { head, body } = await payload;
+	const { head, body } = await payload.collect_async();
 	assert.equal(head, '');
 	assert.equal(body, 'ABC');
 });

@@ -96,14 +96,6 @@ export class Payload {
 	}
 
 	/**
-	 * @param {(value: { head: string, body: string }) => void} onfulfilled
-	 */
-	async then(onfulfilled) {
-		const content = await Payload.#collect_content([this], this.type);
-		return onfulfilled(content);
-	}
-
-	/**
 	 * @param {string | (() => Promise<string>)} content
 	 */
 	push(content) {
@@ -126,25 +118,11 @@ export class Payload {
 	compact({ start, end = this.#out.length, fn }) {
 		const child = new Payload(this.global, this.local, this);
 		const to_compact = this.#out.splice(start, end - start, child);
-		const content = Payload.#collect_content(to_compact, this.type);
 
-		if (content instanceof Promise) {
-			const followup = content
-				.then((content) => fn(content))
-				.then((transformed_content) =>
-					Payload.#push_accumulated_content(child, transformed_content)
-				);
-			this.promises.followup.push(followup);
+		if (this.global.mode === 'sync') {
+			Payload.#compact(fn, child, to_compact, this.type);
 		} else {
-			const transformed_content = fn(content);
-			if (transformed_content instanceof Promise) {
-				const followup = transformed_content.then((content) =>
-					Payload.#push_accumulated_content(child, content)
-				);
-				this.promises.followup.push(followup);
-			} else {
-				Payload.#push_accumulated_content(child, transformed_content);
-			}
+			this.promises.followup.push(Payload.#compact_async(fn, child, to_compact, this.type));
 		}
 	}
 
@@ -161,16 +139,15 @@ export class Payload {
 	 * @returns {AccumulatedContent}
 	 */
 	collect() {
-		const content = Payload.#collect_content(this.#out, this.type);
-		if (content instanceof Promise) {
-			// TODO improve message
-			// guess you could also end up here if you called `collect` in an async context but... just don't bro
-			throw new Error(
-				'invariant: should never reach this, as child throws when it encounters async work in a synchronous context'
-			);
-		}
+		return Payload.#collect_content([this], this.type);
+	}
 
-		return content;
+	/**
+	 * Collect all of the code from the `out` array and return it as a string.
+	 * @returns {Promise<AccumulatedContent>}
+	 */
+	collect_async() {
+		return Payload.#collect_content_async([this], this.type);
 	}
 
 	copy() {
@@ -206,62 +183,51 @@ export class Payload {
 	}
 
 	/**
+	 * @param {(content: AccumulatedContent) => AccumulatedContent | Promise<AccumulatedContent>} fn
+	 * @param {Payload} child
+	 * @param {PayloadItem[]} to_compact
+	 * @param {PayloadType} type
+	 */
+	static #compact(fn, child, to_compact, type) {
+		const content = Payload.#collect_content(to_compact, type);
+		const transformed_content = fn(content);
+		if (transformed_content instanceof Promise) {
+			throw new Error('invariant: should never reach this');
+		} else {
+			Payload.#push_accumulated_content(child, transformed_content);
+		}
+	}
+
+	/**
+	 * @param {(content: AccumulatedContent) => AccumulatedContent | Promise<AccumulatedContent>} fn
+	 * @param {Payload} child
+	 * @param {PayloadItem[]} to_compact
+	 * @param {PayloadType} type
+	 */
+	static async #compact_async(fn, child, to_compact, type) {
+		const content = await Payload.#collect_content_async(to_compact, type);
+		const transformed_content = await fn(content);
+		Payload.#push_accumulated_content(child, transformed_content);
+	}
+
+	/**
 	 * Collect all of the code from the `out` array and return it as a string, or a promise resolving to a string.
 	 * @param {PayloadItem[]} items
 	 * @param {PayloadType} current_type
 	 * @param {AccumulatedContent} content
-	 * @returns {MaybePromise<AccumulatedContent>}
+	 * @returns {AccumulatedContent}
 	 */
 	static #collect_content(items, current_type, content = { head: '', body: '' }) {
-		/** @type {MaybePromise<AccumulatedContent>[]} */
-		const segments = [];
-		let has_async = false;
-
-		const flush = () => {
-			if (content.head || content.body) {
-				segments.push(content);
-				content = { head: '', body: '' };
-			}
-		};
-
 		for (const item of items) {
 			if (typeof item === 'string') {
 				content[current_type] += item;
+			} else if (item instanceof Payload) {
+				Payload.#collect_content(item.#out, item.type, content);
 			} else {
-				flush();
-
-				if (item instanceof Promise) {
-					has_async = true;
-					segments.push(
-						item.then((resolved) => {
-							const content = { head: '', body: '' };
-							content[current_type] = resolved;
-							return content;
-						})
-					);
-				} else if (item.promises.initial || item.promises.followup.length) {
-					has_async = true;
-					segments.push(Payload.#collect_content_async([item], current_type));
-				} else {
-					const sub = Payload.#collect_content(item.#out, item.type);
-					if (sub instanceof Promise) {
-						has_async = true;
-					}
-					segments.push(sub);
-				}
+				throw new Error('invariant: should never reach this');
 			}
 		}
-
-		flush();
-
-		if (has_async) {
-			return Promise.all(segments).then((content_array) =>
-				Payload.#squash_accumulated_content(content_array)
-			);
-		}
-
-		// No async segments — combine synchronously
-		return Payload.#squash_accumulated_content(/** @type {AccumulatedContent[]} */ (segments));
+		return content;
 	}
 
 	/**
@@ -303,21 +269,6 @@ export class Payload {
 			child.push(content);
 			tree.#out.push(child);
 		}
-	}
-
-	/**
-	 * @param {AccumulatedContent[]} content_array
-	 * @returns {AccumulatedContent}
-	 */
-	static #squash_accumulated_content(content_array) {
-		return content_array.reduce(
-			(acc, content) => {
-				acc.head += content.head;
-				acc.body += content.body;
-				return acc;
-			},
-			{ head: '', body: '' }
-		);
 	}
 }
 
