@@ -1,11 +1,12 @@
 /** @import { SSRContext } from '#server' */
+/** @import { Payload } from './internal/server/payload.js' */
 import { ssr_context } from './internal/server/context.js';
 import { noop } from './internal/shared/utils.js';
 import * as e from './internal/server/errors.js';
 
 /** @param {() => void} fn */
 export function onDestroy(fn) {
-	/** @type {SSRContext} */ (ssr_context).r.on_destroy(fn);
+	/** @type {Payload} */ (/** @type {SSRContext} */ (ssr_context).r).on_destroy(fn);
 }
 
 export {
