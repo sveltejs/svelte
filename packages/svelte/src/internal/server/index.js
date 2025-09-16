@@ -554,7 +554,7 @@ export { attr, clsx };
 
 export { html } from './blocks/html.js';
 
-export { push, pop, save } from './context.js';
+export { save } from './context.js';
 
 export { push_element, pop_element, validate_snippet_args } from './dev.js';
 
