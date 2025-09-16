@@ -9,7 +9,7 @@
  * @typedef {string | Payload} PayloadItem
  */
 
-import { pop, push, set_ssr_context, ssr_context } from './context';
+import { pop, push, set_ssr_context, ssr_context } from './context.js';
 
 /**
  * Payloads are basically a tree of `string | Payload`s, where each `Payload` in the tree represents
