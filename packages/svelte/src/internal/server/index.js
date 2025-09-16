@@ -1,5 +1,5 @@
 /** @import { ComponentType, SvelteComponent } from 'svelte' */
-/** @import { Component, RenderOutput } from '#server' */
+/** @import { RenderOutput, SSRContext } from '#server' */
 /** @import { Store } from '#shared' */
 /** @import { AccumulatedContent } from './payload.js' */
 export { FILENAME, HMR } from '../../constants.js';
@@ -14,11 +14,10 @@ import {
 } from '../../constants.js';
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
-import { current_component, pop, push } from './context.js';
+import { ssr_context, pop, push, set_ssr_context } from './context.js';
 import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN, BLOCK_OPEN_ELSE } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
 import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
-import { reset_elements } from './dev.js';
 import { Payload, TreeState } from './payload.js';
 import { abort } from './abort-signal.js';
 
@@ -69,6 +68,8 @@ export let on_destroy = [];
  * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
+	var previous_context = ssr_context;
+
 	try {
 		const payload = new Payload(
 			new TreeState('sync', options.idPrefix ? options.idPrefix + '-' : '')
@@ -78,16 +79,9 @@ export function render(component, options = {}) {
 		on_destroy = [];
 		payload.push(BLOCK_OPEN);
 
-		let reset_reset_element;
-
-		if (DEV) {
-			// prevent parent/child element state being corrupted by a bad render
-			reset_reset_element = reset_elements();
-		}
-
 		if (options.context) {
 			push();
-			/** @type {Component} */ (current_component).c = options.context;
+			/** @type {SSRContext} */ (ssr_context).c = options.context;
 		}
 
 		// @ts-expect-error
@@ -95,10 +89,6 @@ export function render(component, options = {}) {
 
 		if (options.context) {
 			pop();
-		}
-
-		if (reset_reset_element) {
-			reset_reset_element();
 		}
 
 		payload.push(BLOCK_CLOSE);
@@ -121,6 +111,7 @@ export function render(component, options = {}) {
 		};
 	} finally {
 		abort();
+		set_ssr_context(previous_context);
 	}
 }
 
@@ -140,6 +131,8 @@ export let async_on_destroy = [];
  * @returns {Promise<RenderOutput>}
  */
 export async function render_async(component, options = {}) {
+	var previous_context = ssr_context;
+
 	try {
 		const payload = new Payload(
 			new TreeState('async', options.idPrefix ? options.idPrefix + '-' : '')
@@ -149,16 +142,9 @@ export async function render_async(component, options = {}) {
 		async_on_destroy = [];
 		payload.push(BLOCK_OPEN);
 
-		let reset_reset_element;
-
-		if (DEV) {
-			// prevent parent/child element state being corrupted by a bad render
-			reset_reset_element = reset_elements();
-		}
-
 		if (options.context) {
 			push();
-			/** @type {Component} */ (current_component).c = options.context;
+			/** @type {SSRContext} */ (ssr_context).c = options.context;
 		}
 
 		// @ts-expect-error
@@ -166,10 +152,6 @@ export async function render_async(component, options = {}) {
 
 		if (options.context) {
 			pop();
-		}
-
-		if (reset_reset_element) {
-			reset_reset_element();
 		}
 
 		payload.push(BLOCK_CLOSE);
@@ -192,6 +174,7 @@ export async function render_async(component, options = {}) {
 		};
 	} finally {
 		abort();
+		set_ssr_context(previous_context);
 	}
 }
 

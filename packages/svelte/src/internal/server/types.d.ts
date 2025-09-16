@@ -1,14 +1,16 @@
-export interface Component {
+import type { Element } from './dev';
+
+export interface SSRContext {
 	/** parent */
-	p: null | Component;
-	/** context */
+	p: null | SSRContext;
+	/** component context */
 	c: null | Map<unknown, unknown>;
 	/** ondestroy */
 	d: null | Array<() => void>;
-	/**
-	 * dev mode only: the component function
-	 */
+	/** dev mode only: the current component function */
 	function?: any;
+	/** dev mode only: the current element */
+	element?: Element;
 }
 
 export interface RenderOutput {
