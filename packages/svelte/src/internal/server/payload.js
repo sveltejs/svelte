@@ -181,72 +181,8 @@ export class Payload {
 	 * @returns {Iterable<() => void>}
 	 */
 	*collect_on_destroy() {
-		const payload_children = this.#out.filter((child) => child instanceof Payload);
-
-		// First, do a depth-first search to find and process all component bodies
-		// This includes components nested inside regular payloads
-		for (const child of payload_children) {
-			yield* this.#collect_component_callbacks(child);
-		}
-
-		// Then, if this is a component body, yield its own callbacks
-		if (this.#is_component_body && this.#on_destroy) {
-			for (const fn of this.#on_destroy) {
-				yield fn;
-			}
-		}
-
-		// Finally, collect callbacks from regular (porous) payloads
-		for (const child of payload_children) {
-			if (!child.#is_component_body) {
-				yield* this.#collect_regular_callbacks(child);
-			}
-		}
-
-		// If this is NOT a component body, yield callbacks after all processing
-		if (!this.#is_component_body && this.#on_destroy) {
-			for (const fn of this.#on_destroy) {
-				yield fn;
-			}
-		}
-	}
-
-	/**
-	 * Helper method to collect only component body callbacks in depth-first order
-	 * @param {Payload} payload
-	 * @returns {Iterable<() => void>}
-	 */
-	*#collect_component_callbacks(payload) {
-		if (payload.#is_component_body) {
-			// This is a component body - process it
-			yield* payload.collect_on_destroy();
-		} else {
-			// This is a regular payload - look for nested components
-			const children = payload.#out.filter((child) => child instanceof Payload);
-			for (const child of children) {
-				yield* this.#collect_component_callbacks(child);
-			}
-		}
-	}
-
-	/**
-	 * Helper method to collect callbacks from regular (porous) payloads
-	 * @param {Payload} payload
-	 * @returns {Iterable<() => void>}
-	 */
-	*#collect_regular_callbacks(payload) {
-		if (payload.#on_destroy) {
-			for (const fn of payload.#on_destroy) {
-				yield fn;
-			}
-		}
-
-		// Recursively collect from regular payload children
-		const children = payload.#out
-			.filter((child) => child instanceof Payload)
-			.filter((child) => !child.#is_component_body);
-		for (const child of children) {
-			yield* this.#collect_regular_callbacks(child);
+		for (const component of this.#traverse_components()) {
+			yield* component.#collect_ondestroy();
 		}
 	}
 
@@ -295,6 +231,37 @@ export class Payload {
 			throw new Error('invariant: should never reach this');
 		} else {
 			Payload.#push_accumulated_content(child, transformed_content);
+		}
+	}
+
+	/**
+	 * Performs a depth-first search of payloads, yielding the deepest components first, then additional components as we backtrack up the tree.
+	 * @returns {Iterable<Payload>}
+	 */
+	*#traverse_components() {
+		for (const child of this.#out) {
+			if (typeof child !== 'string') {
+				yield* child.#traverse_components();
+			}
+		}
+		if (this.#is_component_body) {
+			yield this;
+		}
+	}
+
+	/**
+	 * @returns {Iterable<() => void>}
+	 */
+	*#collect_ondestroy() {
+		if (this.#on_destroy) {
+			for (const fn of this.#on_destroy) {
+				yield fn;
+			}
+		}
+		for (const child of this.#out) {
+			if (child instanceof Payload && !child.#is_component_body) {
+				yield* child.#collect_ondestroy();
+			}
 		}
 	}
 
