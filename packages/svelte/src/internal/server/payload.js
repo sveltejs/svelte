@@ -1,3 +1,6 @@
+import { pop, push, set_ssr_context, ssr_context } from './context.js';
+import * as e from './errors.js';
+
 /** @typedef {'head' | 'body'} PayloadType */
 /** @typedef {{ [key in PayloadType]: string }} AccumulatedContent */
 /** @typedef {{ start: number, end: number, fn: (content: AccumulatedContent) => AccumulatedContent | Promise<AccumulatedContent> }} Compaction */
@@ -8,8 +11,6 @@
 /**
  * @typedef {string | Payload} PayloadItem
  */
-
-import { pop, push, set_ssr_context, ssr_context } from './context.js';
 
 /**
  * Payloads are basically a tree of `string | Payload`s, where each `Payload` in the tree represents
@@ -198,8 +199,9 @@ export class Payload {
 	 */
 	subsume(other) {
 		if (this.global.mode !== other.global.mode) {
-			// TODO message - this should be impossible though
-			throw new Error('invariant: a payload cannot switch modes');
+			throw new Error(
+				"invariant: A payload cannot switch modes. If you're seeing this, there's a compiler bug. File an issue!"
+			);
 		}
 
 		this.global.subsume(other.global);
@@ -228,7 +230,9 @@ export class Payload {
 		const content = Payload.#collect_content(to_compact, type);
 		const transformed_content = fn(content);
 		if (transformed_content instanceof Promise) {
-			throw new Error('invariant: should never reach this');
+			throw new Error(
+				"invariant: Somehow you've encountered asynchronous work while rendering synchronously. If you're seeing this, there's a compiler bug. File an issue!"
+			);
 		} else {
 			Payload.#push_accumulated_content(child, transformed_content);
 		}
@@ -281,8 +285,7 @@ export class Payload {
 		const result = render(child_payload);
 		if (result instanceof Promise) {
 			if (this.global.mode === 'sync') {
-				// TODO more-proper error
-				throw new Error('Encountered an asynchronous component while rendering synchronously');
+				e.async_in_sync();
 			}
 			// just to avoid unhandled promise rejections -- we'll end up throwing in `collect_async` if something fails
 			result.catch(() => {});

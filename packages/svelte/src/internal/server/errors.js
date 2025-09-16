@@ -3,6 +3,18 @@
 export *  from '../shared/errors.js';
 
 /**
+ * Encountered asynchronous work while rendering synchronously.
+ * @returns {never}
+ */
+export function async_in_sync() {
+	const error = new Error(`async_in_sync\nEncountered asynchronous work while rendering synchronously.\nhttps://svelte.dev/e/async_in_sync`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
  * `%name%(...)` is not available on the server
  * @param {string} name
  * @returns {never}
