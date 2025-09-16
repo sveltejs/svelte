@@ -44,9 +44,7 @@ export function CallExpression(node, context) {
 
 		case '$derived':
 		case '$derived.by': {
-			let fn = /** @type {Expression} */ (
-				context.visit(node.arguments[0], { ...context.state, in_derived: rune === '$derived' })
-			);
+			let fn = /** @type {Expression} */ (context.visit(node.arguments[0]));
 
 			return b.call('$.derived', rune === '$derived' ? b.thunk(fn) : fn);
 		}

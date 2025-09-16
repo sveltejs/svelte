@@ -96,3 +96,22 @@ function get_parent_context(component_context) {
 
 	return null;
 }
+
+/**
+ * Wraps an `await` expression in such a way that the component context that was
+ * active before the expression evaluated can be reapplied afterwards —
+ * `await a + b()` becomes `(await $.save(a))() + b()`, meaning `b()` will have access
+ * to the context of its component.
+ * @template T
+ * @param {Promise<T>} promise
+ * @returns {Promise<() => T>}
+ */
+export async function save(promise) {
+	var previous_component = current_component;
+	var value = await promise;
+
+	return () => {
+		current_component = previous_component;
+		return value;
+	};
+}

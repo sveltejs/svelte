@@ -176,7 +176,7 @@ export async function render_async(component, options = {}) {
 		for (const cleanup of async_on_destroy) cleanup();
 		async_on_destroy = prev_on_destroy;
 
-		let { head, body } = await payload;
+		let { head, body } = await payload.collect_async();
 		head += payload.global.head.title.value;
 
 		body = BLOCK_OPEN + body + BLOCK_CLOSE; // this inserts a fake boundary so hydration matches
@@ -588,7 +588,7 @@ export { attr, clsx };
 
 export { html } from './blocks/html.js';
 
-export { push, pop } from './context.js';
+export { push, pop, save } from './context.js';
 
 export { push_element, pop_element, validate_snippet_args } from './dev.js';
 
