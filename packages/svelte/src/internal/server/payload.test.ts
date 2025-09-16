@@ -70,7 +70,7 @@ test('creating an async child in a sync context throws', () => {
 			await Promise.resolve();
 			$$payload.push('x');
 		})
-	).toThrow('Encountered an asynchronous component while rendering synchronously');
+	).toThrow('async_in_sync');
 });
 
 test('collect_async allows awaiting payload to get aggregated content', async () => {
@@ -200,7 +200,9 @@ test('subsume refuses to switch modes', () => {
 	b.local.select_value = 'B';
 	b.promises.initial = Promise.resolve();
 
-	expect(() => a.subsume(b)).toThrow('invariant: a payload cannot switch modes');
+	expect(() => a.subsume(b)).toThrow(
+		"invariant: A payload cannot switch modes. If you're seeing this, there's a compiler bug. File an issue!"
+	);
 });
 
 test('TreeState uid generator uses prefix and is shared by copy()', () => {

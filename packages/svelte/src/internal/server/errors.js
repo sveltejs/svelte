@@ -15,6 +15,18 @@ export function async_in_sync() {
 }
 
 /**
+ * Attempted to use `renderAsync` without `experimental.async` enabled
+ * @returns {never}
+ */
+export function missing_experimental_flag() {
+	const error = new Error(`missing_experimental_flag\nAttempted to use \`renderAsync\` without \`experimental.async\` enabled\nhttps://svelte.dev/e/missing_experimental_flag`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
  * `%name%(...)` is not available on the server
  * @param {string} name
  * @returns {never}

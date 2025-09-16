@@ -59,6 +59,8 @@ const { test, run } = suite_with_variants<SSRTest, 'sync' | 'async', CompileOpti
 			...config.compileOptions
 		};
 
+		console.log(compile_options);
+
 		if (!config.load_compiled) {
 			await compile_directory(test_dir, 'server', compile_options);
 		}

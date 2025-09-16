@@ -20,6 +20,8 @@ import { validate_store } from '../shared/validate.js';
 import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
 import { Payload, TreeState } from './payload.js';
 import { abort } from './abort-signal.js';
+import { async_mode_flag } from '../flags/index.js';
+import * as e from './errors.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
@@ -116,6 +118,10 @@ export function render(component, options = {}) {
  * @returns {Promise<RenderOutput>}
  */
 export async function render_async(component, options = {}) {
+	if (!async_mode_flag) {
+		e.missing_experimental_flag();
+	}
+
 	var previous_context = ssr_context;
 
 	try {

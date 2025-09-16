@@ -167,6 +167,7 @@ export function runtime_suite(runes: boolean) {
 			}
 
 			if (variant === 'async-ssr') {
+				if (!runes) return 'no-test';
 				if (
 					(config.mode && !config.mode.includes('async-server')) ||
 					(!config.test_ssr &&
@@ -334,7 +335,7 @@ async function run_test_variant(
 			// ssr into target
 			const SsrSvelteComponent = (await import(`${cwd}/_output/server/main.svelte.js`)).default;
 			const rendered =
-				variant === 'async-ssr' || variant === 'hydrate'
+				variant === 'async-ssr' || (variant === 'hydrate' && compileOptions.experimental?.async)
 					? await renderAsync(SsrSvelteComponent, {
 							props: config.server_props ?? config.props ?? {},
 							idPrefix: config.id_prefix
