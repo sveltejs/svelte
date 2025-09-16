@@ -5,8 +5,7 @@ import * as e from './internal/server/errors.js';
 
 /** @param {() => void} fn */
 export function onDestroy(fn) {
-	var context = /** @type {SSRContext} */ (ssr_context);
-	(context.d ??= []).push(fn);
+	/** @type {SSRContext} */ (ssr_context).r.on_destroy(fn);
 }
 
 export {

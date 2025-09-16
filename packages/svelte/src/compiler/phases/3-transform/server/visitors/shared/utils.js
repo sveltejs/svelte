@@ -270,6 +270,17 @@ export function call_child_payload(body, async) {
 	return b.stmt(b.call('$$payload.child', b.arrow([b.id('$$payload')], body, async)));
 }
 
+/**
+ * @param {BlockStatement | Expression} body
+ * @param {Identifier | false} component_fn_id
+ * @returns {Statement}
+ */
+export function call_component_payload(body, component_fn_id) {
+	return b.stmt(
+		b.call('$$payload.component', b.arrow([b.id('$$payload')], body, false), component_fn_id)
+	);
+}
+
 export class PromiseOptimiser {
 	/** @type {Expression[]} */
 	expressions = [];

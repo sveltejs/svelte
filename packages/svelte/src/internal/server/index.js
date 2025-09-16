@@ -54,12 +54,6 @@ export function element(payload, tag, attributes_fn = noop, children_fn = noop) 
 }
 
 /**
- * Array of `onDestroy` callbacks that should be called at the end of the server render function
- * @type {Function[]}
- */
-export let on_destroy = [];
-
-/**
  * Only available on the server and when compiling with the `server` option.
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
  * @template {Record<string, any>} Props
@@ -75,8 +69,6 @@ export function render(component, options = {}) {
 			new TreeState('sync', options.idPrefix ? options.idPrefix + '-' : '')
 		);
 
-		const prev_on_destroy = on_destroy;
-		on_destroy = [];
 		payload.push(BLOCK_OPEN);
 
 		if (options.context) {
@@ -92,10 +84,9 @@ export function render(component, options = {}) {
 		}
 
 		payload.push(BLOCK_CLOSE);
-		for (const cleanup of on_destroy) cleanup();
-		on_destroy = prev_on_destroy;
 
 		let { head, body } = payload.collect();
+		for (const cleanup of payload.collect_on_destroy()) cleanup();
 		head += payload.global.head.title.value;
 
 		body = BLOCK_OPEN + body + BLOCK_CLOSE; // this inserts a fake boundary so hydration matches
@@ -116,13 +107,6 @@ export function render(component, options = {}) {
 }
 
 /**
- * TODO THIS NEEDS TO ACTUALLY BE DONE
- * Array of `onDestroy` callbacks that should be called at the end of the server render function
- * @type {Function[]}
- */
-export let async_on_destroy = [];
-
-/**
  * Only available on the server and when compiling with the `server` option.
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
  * @template {Record<string, any>} Props
@@ -138,8 +122,6 @@ export async function render_async(component, options = {}) {
 			new TreeState('async', options.idPrefix ? options.idPrefix + '-' : '')
 		);
 
-		const prev_on_destroy = async_on_destroy;
-		async_on_destroy = [];
 		payload.push(BLOCK_OPEN);
 
 		if (options.context) {
@@ -155,10 +137,9 @@ export async function render_async(component, options = {}) {
 		}
 
 		payload.push(BLOCK_CLOSE);
-		for (const cleanup of async_on_destroy) cleanup();
-		async_on_destroy = prev_on_destroy;
 
 		let { head, body } = await payload.collect_async();
+		for (const cleanup of payload.collect_on_destroy()) cleanup();
 		head += payload.global.head.title.value;
 
 		body = BLOCK_OPEN + body + BLOCK_CLOSE; // this inserts a fake boundary so hydration matches

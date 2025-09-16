@@ -129,7 +129,7 @@ let console_error = console.error;
 
 export function runtime_suite(runes: boolean) {
 	return suite_with_variants<RuntimeTest, 'hydrate' | 'ssr' | 'async-ssr' | 'dom', CompileOptions>(
-		['dom', 'hydrate', 'ssr'],
+		['dom', 'hydrate', 'ssr', 'async-ssr'],
 		(variant, config, test_name) => {
 			if (!async_mode && (config.skip_no_async || test_name.startsWith('async-'))) {
 				return true;

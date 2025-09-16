@@ -1,12 +1,13 @@
 import type { Element } from './dev';
+import type { Payload } from './payload';
 
 export interface SSRContext {
 	/** parent */
 	p: null | SSRContext;
 	/** component context */
 	c: null | Map<unknown, unknown>;
-	/** ondestroy */
-	d: null | Array<() => void>;
+	/** payload (renderer) */
+	r: null | Payload;
 	/** dev mode only: the current component function */
 	function?: any;
 	/** dev mode only: the current element */

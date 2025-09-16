@@ -6,7 +6,7 @@ import { walk } from 'zimmerframe';
 import { set_scope } from '../../scope.js';
 import { extract_identifiers } from '../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { dev, filename } from '../../../state.js';
+import { component_name, dev, filename } from '../../../state.js';
 import { render_stylesheet } from '../css/index.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
@@ -40,7 +40,7 @@ import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 import { SvelteBoundary } from './visitors/SvelteBoundary.js';
-import { call_child_payload } from './visitors/shared/utils.js';
+import { call_child_payload, call_component_payload } from './visitors/shared/utils.js';
 
 /** @type {Visitors} */
 const global_visitors = {
@@ -260,8 +260,9 @@ export function server_component(analysis, options) {
 	let should_inject_context = dev || analysis.needs_context;
 
 	if (should_inject_context) {
-		component_block.body.unshift(b.stmt(b.call('$.push', dev && b.id(analysis.name))));
-		component_block.body.push(b.stmt(b.call('$.pop')));
+		component_block = b.block([
+			call_component_payload(component_block, dev && b.id(component_name))
+		]);
 	}
 
 	if (analysis.uses_rest_props) {

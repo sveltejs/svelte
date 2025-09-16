@@ -335,3 +335,34 @@ test('push async functions are not supported in sync context', () => {
 		payload.collect();
 	}).toThrow();
 });
+
+test('collect_on_destroy yields callbacks in the correct order', async () => {
+	const payload = new Payload(new TreeState('async'));
+	const destroyed: string[] = [];
+	payload.component((payload) => {
+		payload.on_destroy(() => destroyed.push('a'));
+		// children should not alter relative order
+		payload.child(async ($$payload) => {
+			await Promise.resolve();
+			$$payload.on_destroy(() => destroyed.push('b'));
+			$$payload.on_destroy(() => destroyed.push('b*'));
+
+			// but child components should
+			$$payload.component(($$inner) => {
+				$$inner.on_destroy(() => destroyed.push('c'));
+			});
+		});
+		payload.child((payload) => {
+			payload.on_destroy(() => destroyed.push('d'));
+		});
+		payload.component((payload) => {
+			payload.on_destroy(() => destroyed.push('e'));
+		});
+	});
+
+	await payload.collect_async();
+	for (const callback of payload.collect_on_destroy()) {
+		callback();
+	}
+	assert.deepEqual(destroyed, ['c', 'e', 'a', 'b', 'b*', 'd']);
+});

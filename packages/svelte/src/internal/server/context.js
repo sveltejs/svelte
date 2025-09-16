@@ -1,6 +1,5 @@
 /** @import { SSRContext } from '#server' */
 import { DEV } from 'esm-env';
-import { async_on_destroy, on_destroy } from './index.js';
 import * as e from './errors.js';
 
 /** @type {SSRContext | null} */
@@ -63,7 +62,7 @@ function get_or_init_context_map(name) {
  * @param {Function} [fn]
  */
 export function push(fn) {
-	ssr_context = { p: ssr_context, c: null, d: null };
+	ssr_context = { p: ssr_context, c: null, r: null };
 
 	if (DEV) {
 		ssr_context.function = fn;
@@ -72,17 +71,7 @@ export function push(fn) {
 }
 
 export function pop() {
-	var context = /** @type {SSRContext} */ (ssr_context);
-
-	var ondestroy = context.d;
-
-	if (ondestroy) {
-		on_destroy.push(...ondestroy);
-		// TODO this is probably actually broken
-		async_on_destroy.push(...ondestroy);
-	}
-
-	ssr_context = context.p;
+	ssr_context = /** @type {SSRContext} */ (ssr_context).p;
 }
 
 /**

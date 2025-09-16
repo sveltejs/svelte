@@ -6,8 +6,10 @@
  * @typedef {T | Promise<T>} MaybePromise<T>
  */
 /**
- * @typedef {string | Payload | Promise<string>} PayloadItem
+ * @typedef {string | Payload} PayloadItem
  */
+
+import { pop, push, set_ssr_context, ssr_context } from './context';
 
 /**
  * Payloads are basically a tree of `string | Payload`s, where each `Payload` in the tree represents
@@ -24,6 +26,18 @@ export class Payload {
 	 * @type {PayloadItem[]}
 	 */
 	#out = [];
+
+	/**
+	 * Any `onDestroy` callbacks registered during execution of this payload.
+	 * @type {(() => void)[] | undefined}
+	 */
+	#on_destroy = undefined;
+
+	/**
+	 * Whether this payload is a component body.
+	 * @type {boolean}
+	 */
+	#is_component_body = false;
 
 	/**
 	 * The type of string content that this payload is accumulating.
@@ -82,17 +96,22 @@ export class Payload {
 	 */
 	child(render, type) {
 		const child = new Payload(this.global, this.local, this, type);
-		this.#out.push(child);
-		const result = render(child);
-		if (result instanceof Promise) {
-			if (this.global.mode === 'sync') {
-				// TODO more-proper error
-				throw new Error('Encountered an asynchronous component while rendering synchronously');
-			}
-			// just to avoid unhandled promise rejections -- we'll end up throwing in `then` if something fails
-			result.catch(() => {});
-			child.promises.initial = result;
-		}
+		this.#run_child(child, render);
+	}
+
+	/**
+	 * Create a component payload. The component payload inherits the state from the parent,
+	 * but has its own content. It is treated as an ordering boundary for ondestroy callbacks.
+	 * @param {(tree: Payload) => MaybePromise<void>} render
+	 * @param {Function} [fn]
+	 * @returns {void}
+	 */
+	component(render, fn) {
+		push(fn);
+		const child = new Payload(this.global, this.local, this);
+		child.#is_component_body = true;
+		this.#run_child(child, render);
+		pop();
 	}
 
 	/**
@@ -100,11 +119,7 @@ export class Payload {
 	 */
 	push(content) {
 		if (typeof content === 'function') {
-			if (this.global.mode === 'sync') {
-				// TODO more-proper error
-				throw new Error('Encountered an asynchronous component while rendering synchronously');
-			}
-			this.#out.push(content());
+			this.child(async (payload) => payload.push(await content()));
 		} else {
 			this.#out.push(content);
 		}
@@ -124,6 +139,13 @@ export class Payload {
 		} else {
 			this.promises.followup.push(Payload.#compact_async(fn, child, to_compact, this.type));
 		}
+	}
+
+	/**
+	 * @param {() => void} fn
+	 */
+	on_destroy(fn) {
+		(this.#on_destroy ??= []).push(fn);
 	}
 
 	/**
@@ -148,6 +170,84 @@ export class Payload {
 	 */
 	collect_async() {
 		return Payload.#collect_content_async([this], this.type);
+	}
+
+	/**
+	 * Collect all of the `onDestroy` callbacks regsitered during rendering. In an async context, this is only safe to call
+	 * after awaiting `collect_async`.
+	 *
+	 * Child payloads are "porous" and don't affect execution order, but component body payloads
+	 * create ordering boundaries. Within a payload, callbacks run in order until hitting a component boundary.
+	 * @returns {Iterable<() => void>}
+	 */
+	*collect_on_destroy() {
+		const payload_children = this.#out.filter((child) => child instanceof Payload);
+
+		// First, do a depth-first search to find and process all component bodies
+		// This includes components nested inside regular payloads
+		for (const child of payload_children) {
+			yield* this.#collect_component_callbacks(child);
+		}
+
+		// Then, if this is a component body, yield its own callbacks
+		if (this.#is_component_body && this.#on_destroy) {
+			for (const fn of this.#on_destroy) {
+				yield fn;
+			}
+		}
+
+		// Finally, collect callbacks from regular (porous) payloads
+		for (const child of payload_children) {
+			if (!child.#is_component_body) {
+				yield* this.#collect_regular_callbacks(child);
+			}
+		}
+
+		// If this is NOT a component body, yield callbacks after all processing
+		if (!this.#is_component_body && this.#on_destroy) {
+			for (const fn of this.#on_destroy) {
+				yield fn;
+			}
+		}
+	}
+
+	/**
+	 * Helper method to collect only component body callbacks in depth-first order
+	 * @param {Payload} payload
+	 * @returns {Iterable<() => void>}
+	 */
+	*#collect_component_callbacks(payload) {
+		if (payload.#is_component_body) {
+			// This is a component body - process it
+			yield* payload.collect_on_destroy();
+		} else {
+			// This is a regular payload - look for nested components
+			const children = payload.#out.filter((child) => child instanceof Payload);
+			for (const child of children) {
+				yield* this.#collect_component_callbacks(child);
+			}
+		}
+	}
+
+	/**
+	 * Helper method to collect callbacks from regular (porous) payloads
+	 * @param {Payload} payload
+	 * @returns {Iterable<() => void>}
+	 */
+	*#collect_regular_callbacks(payload) {
+		if (payload.#on_destroy) {
+			for (const fn of payload.#on_destroy) {
+				yield fn;
+			}
+		}
+
+		// Recursively collect from regular payload children
+		const children = payload.#out
+			.filter((child) => child instanceof Payload)
+			.filter((child) => !child.#is_component_body);
+		for (const child of children) {
+			yield* this.#collect_regular_callbacks(child);
+		}
 	}
 
 	copy() {
@@ -199,6 +299,31 @@ export class Payload {
 	}
 
 	/**
+	 * @param {Payload} child_payload
+	 * @param {(tree: Payload) => MaybePromise<void>} render
+	 * @returns {void}
+	 */
+	#run_child(child_payload, render) {
+		this.#out.push(child_payload);
+		set_ssr_context({
+			...ssr_context,
+			p: ssr_context?.p ?? null,
+			c: ssr_context?.c ?? null,
+			r: child_payload
+		});
+		const result = render(child_payload);
+		if (result instanceof Promise) {
+			if (this.global.mode === 'sync') {
+				// TODO more-proper error
+				throw new Error('Encountered an asynchronous component while rendering synchronously');
+			}
+			// just to avoid unhandled promise rejections -- we'll end up throwing in `collect_async` if something fails
+			result.catch(() => {});
+			child_payload.promises.initial = result;
+		}
+	}
+
+	/**
 	 * @param {(content: AccumulatedContent) => AccumulatedContent | Promise<AccumulatedContent>} fn
 	 * @param {Payload} child
 	 * @param {PayloadItem[]} to_compact
@@ -223,8 +348,6 @@ export class Payload {
 				content[current_type] += item;
 			} else if (item instanceof Payload) {
 				Payload.#collect_content(item.#out, item.type, content);
-			} else {
-				throw new Error('invariant: should never reach this');
 			}
 		}
 		return content;
@@ -240,7 +363,9 @@ export class Payload {
 	static async #collect_content_async(items, current_type, content = { head: '', body: '' }) {
 		// no danger to sequentially awaiting stuff in here; all of the work is already kicked off
 		for (const item of items) {
-			if (item instanceof Payload) {
+			if (typeof item === 'string') {
+				content[current_type] += item;
+			} else {
 				if (item.promises.initial) {
 					// this represents the async function that's modifying this payload.
 					// we can't do anything until it's done and we know our `out` array is complete.
@@ -251,8 +376,6 @@ export class Payload {
 					await followup;
 				}
 				await Payload.#collect_content_async(item.#out, item.type, content);
-			} else {
-				content[current_type] += await item;
 			}
 		}
 		return content;
