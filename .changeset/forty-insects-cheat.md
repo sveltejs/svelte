@@ -2,4 +2,4 @@
 'svelte': minor
 ---
 
-feat: async SSR
+feat: experimental async SSR
