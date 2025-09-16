@@ -74,6 +74,7 @@ export function render(component, options = {}) {
 		if (options.context) {
 			push();
 			/** @type {SSRContext} */ (ssr_context).c = options.context;
+			/** @type {SSRContext} */ (ssr_context).r = payload;
 		}
 
 		// @ts-expect-error
@@ -98,7 +99,7 @@ export function render(component, options = {}) {
 		return {
 			head,
 			html: body,
-			body: body
+			body
 		};
 	} finally {
 		abort();
@@ -127,6 +128,7 @@ export async function render_async(component, options = {}) {
 		if (options.context) {
 			push();
 			/** @type {SSRContext} */ (ssr_context).c = options.context;
+			/** @type {SSRContext} */ (ssr_context).r = payload;
 		}
 
 		// @ts-expect-error
@@ -151,7 +153,7 @@ export async function render_async(component, options = {}) {
 		return {
 			head,
 			html: body,
-			body: body
+			body
 		};
 	} finally {
 		abort();
