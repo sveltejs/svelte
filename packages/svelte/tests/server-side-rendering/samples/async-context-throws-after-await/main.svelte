@@ -1,10 +1,7 @@
 <script>
-  import { setContext } from 'svelte';
+	import { setContext } from 'svelte';
 
-  await Promise.resolve('hi');
+	await Promise.resolve('hi');
 
-  setContext('key', 'value');
+	setContext('key', 'value');
 </script>
-
-
-
