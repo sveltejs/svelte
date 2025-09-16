@@ -98,17 +98,6 @@ function get_parent_context(component_context) {
 }
 
 /**
- * Capture the current component context so that we can restore it after an async operation completes.
- */
-function capture() {
-	var previous_component = current_component;
-
-	return function restore() {
-		current_component = previous_component;
-	};
-}
-
-/**
  * Wraps an `await` expression in such a way that the component context that was
  * active before the expression evaluated can be reapplied afterwards —
  * `await a + b()` becomes `(await $.save(a))() + b()`, meaning `b()` will have access
@@ -118,11 +107,11 @@ function capture() {
  * @returns {Promise<() => T>}
  */
 export async function save(promise) {
-	var restore = capture();
+	var previous_component = current_component;
 	var value = await promise;
 
 	return () => {
-		restore();
+		current_component = previous_component;
 		return value;
 	};
 }
