@@ -11,6 +11,7 @@ import { compile_directory, should_update_expected, try_read_file } from '../hel
 import { assert_html_equal_with_options } from '../html_equal.js';
 import { suite_with_variants, type BaseTest } from '../suite.js';
 import type { CompileOptions } from '#compiler';
+import { seen } from '../../src/internal/server/dev.js';
 
 interface SSRTest extends BaseTest {
 	mode?: ('sync' | 'async')[];
@@ -68,6 +69,8 @@ const { test, run } = suite_with_variants<SSRTest, 'sync' | 'async', CompileOpti
 		const Component = (await import(`${test_dir}/_output/server/main.svelte.js`)).default;
 		const expected_html = try_read_file(`${test_dir}/_expected.html`);
 		const is_async = variant === 'async';
+
+		seen?.clear();
 
 		let rendered;
 		try {

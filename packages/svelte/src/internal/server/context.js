@@ -1,10 +1,15 @@
-/** @import { Component } from '#server' */
+/** @import { SSRContext } from '#server' */
 import { DEV } from 'esm-env';
 import { async_on_destroy, on_destroy } from './index.js';
 import * as e from './errors.js';
 
-/** @type {Component | null} */
-export var current_component = null;
+/** @type {SSRContext | null} */
+export var ssr_context = null;
+
+/** @param {SSRContext | null} v */
+export function set_ssr_context(v) {
+	ssr_context = v;
+}
 
 /**
  * @template T
@@ -47,28 +52,29 @@ export function getAllContexts() {
  * @returns {Map<unknown, unknown>}
  */
 function get_or_init_context_map(name) {
-	if (current_component === null) {
+	if (ssr_context === null) {
 		e.lifecycle_outside_component(name);
 	}
 
-	return (current_component.c ??= new Map(get_parent_context(current_component) || undefined));
+	return (ssr_context.c ??= new Map(get_parent_context(ssr_context) || undefined));
 }
 
 /**
  * @param {Function} [fn]
  */
 export function push(fn) {
-	current_component = { p: current_component, c: null, d: null };
+	ssr_context = { p: ssr_context, c: null, d: null };
+
 	if (DEV) {
-		// component function
-		current_component.function = fn;
+		ssr_context.function = fn;
+		ssr_context.element = ssr_context.p?.element;
 	}
 }
 
 export function pop() {
-	var component = /** @type {Component} */ (current_component);
+	var context = /** @type {SSRContext} */ (ssr_context);
 
-	var ondestroy = component.d;
+	var ondestroy = context.d;
 
 	if (ondestroy) {
 		on_destroy.push(...ondestroy);
@@ -76,11 +82,11 @@ export function pop() {
 		async_on_destroy.push(...ondestroy);
 	}
 
-	current_component = component.p;
+	ssr_context = context.p;
 }
 
 /**
- * @param {Component} component_context
+ * @param {SSRContext} component_context
  * @returns {Map<unknown, unknown> | null}
  */
 function get_parent_context(component_context) {
@@ -107,11 +113,11 @@ function get_parent_context(component_context) {
  * @returns {Promise<() => T>}
  */
 export async function save(promise) {
-	var previous_component = current_component;
+	var previous_context = ssr_context;
 	var value = await promise;
 
 	return () => {
-		current_component = previous_component;
+		ssr_context = previous_context;
 		return value;
 	};
 }
