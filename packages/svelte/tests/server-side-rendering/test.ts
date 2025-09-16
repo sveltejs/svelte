@@ -67,18 +67,19 @@ const { test, run } = suite_with_variants<SSRTest, 'sync' | 'async', CompileOpti
 	async (config, test_dir, variant, compile_options) => {
 		const Component = (await import(`${test_dir}/_output/server/main.svelte.js`)).default;
 		const expected_html = try_read_file(`${test_dir}/_expected.html`);
+		const is_async = variant === 'async';
+
 		let rendered;
 		try {
-			rendered =
-				variant === 'async'
-					? await renderAsync(Component, {
-							props: config.props || {},
-							idPrefix: config.id_prefix
-						})
-					: render(Component, {
-							props: config.props || {},
-							idPrefix: config.id_prefix
-						});
+			rendered = is_async
+				? await renderAsync(Component, {
+						props: config.props || {},
+						idPrefix: config.id_prefix
+					})
+				: render(Component, {
+						props: config.props || {},
+						idPrefix: config.id_prefix
+					});
 		} catch (error) {
 			if (config.error) {
 				assert.deepEqual((error as Error).message, config.error);
@@ -90,11 +91,16 @@ const { test, run } = suite_with_variants<SSRTest, 'sync' | 'async', CompileOpti
 
 		const { body, head } = rendered;
 
-		const prefix = variant === 'async' ? 'async_' : '';
-		fs.writeFileSync(`${test_dir}/_output/${prefix}rendered.html`, body);
+		fs.writeFileSync(
+			`${test_dir}/_output/${is_async ? 'async_rendered.html' : 'rendered.html'}`,
+			body
+		);
 
 		if (head) {
-			fs.writeFileSync(`${test_dir}/_output/${prefix}rendered_head.html`, head);
+			fs.writeFileSync(
+				`${test_dir}/_output/${is_async ? 'async_rendered_head.html' : 'rendered_head.html'}`,
+				head
+			);
 		}
 
 		try {
