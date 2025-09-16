@@ -381,6 +381,10 @@ export function server_component(analysis, options) {
 		);
 	}
 
+	if (options.experimental.async) {
+		body.unshift(b.imports([], 'svelte/internal/flags/async'));
+	}
+
 	return {
 		type: 'Program',
 		sourceType: 'module',

@@ -1,3 +1,4 @@
+import 'svelte/internal/flags/async';
 import * as $ from 'svelte/internal/server';
 
 export default function Async_each_fallback_hoisting($$payload) {
