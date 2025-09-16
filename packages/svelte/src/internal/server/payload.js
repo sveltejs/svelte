@@ -69,8 +69,6 @@ export class Payload {
 	 * State that is local to the branch it is declared in.
 	 * It will be shallow-copied to all children.
 	 *
-	 * TODO I think this needs to be async-compatible if we don't want waterfall-y options but I'm willing
-	 * to live with it for now
 	 * @type {{ select_value: string | undefined }}
 	 */
 	local;

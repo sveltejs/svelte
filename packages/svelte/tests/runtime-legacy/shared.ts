@@ -167,7 +167,7 @@ export function runtime_suite(runes: boolean) {
 			}
 
 			if (variant === 'async-ssr') {
-				if (!runes) return 'no-test';
+				if (!runes || !async_mode) return 'no-test';
 				if (
 					(config.mode && !config.mode.includes('async-server')) ||
 					(!config.test_ssr &&
