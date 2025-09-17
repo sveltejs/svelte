@@ -15,6 +15,18 @@ export function await_invalid() {
 }
 
 /**
+ * The `html` property of server render results has been sunset. Use `body` instead.
+ * @returns {never}
+ */
+export function html_sunset() {
+	const error = new Error(`html_sunset\nThe \`html\` property of server render results has been sunset. Use \`body\` instead.\nhttps://svelte.dev/e/html_sunset`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
  * `%name%(...)` is not available on the server
  * @param {string} name
  * @returns {never}

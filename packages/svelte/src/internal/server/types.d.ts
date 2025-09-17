@@ -23,11 +23,4 @@ export interface SyncRenderOutput {
 	body: string;
 }
 
-export type RenderOutput = SyncRenderOutput & Thenable<SyncRenderOutput>;
-
-interface Thenable<T> {
-	then<TResult1 = T, TResult2 = never>(
-		onfulfilled?: ((value: T) => TResult1 | Thenable<TResult1>) | undefined | null,
-		onrejected?: ((reason: any) => TResult2 | Thenable<TResult2>) | undefined | null
-	): Promise<TResult1 | TResult2>;
-}
+export type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;

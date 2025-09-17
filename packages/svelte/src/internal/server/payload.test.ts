@@ -200,7 +200,7 @@ describe('async', () => {
 		disable_async_mode_flag();
 	});
 
-	test('collect_async allows awaiting payload to get aggregated content', async () => {
+	test('awaiting payload gets async content', async () => {
 		const component = (payload: Payload) => {
 			payload.push('1');
 			payload.child(async ($$payload) => {
@@ -213,7 +213,7 @@ describe('async', () => {
 		const result = await Payload.render(component as unknown as Component);
 		expect(result.head).toBe('');
 		expect(result.body).toBe('<!--[--><!--[-->123<!--]--><!--]-->');
-		expect(result.html).toBe('<!--[--><!--[-->123<!--]--><!--]-->');
+		expect(() => result.html).toThrow('html_sunset');
 	});
 
 	test('compact schedules followup when compaction input is async', async () => {
@@ -334,7 +334,7 @@ describe('async', () => {
 		expect(() => Payload.render(component as unknown as Component).head).toThrow('await_invalid');
 	});
 
-	test('collect_on_destroy yields callbacks in the correct order', async () => {
+	test('on_destroy yields callbacks in the correct order', async () => {
 		const destroyed: string[] = [];
 		const component = (payload: Payload) => {
 			payload.component((payload) => {

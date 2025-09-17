@@ -3,3 +3,13 @@
 > Encountered asynchronous work while rendering synchronously.
 
 You (or the framework you're using) called [`render(...)`](svelte-server#render) with a component containing an `await` expression. Either `await` the result of `render` or wrap the `await` (or the component containing it) in a [`<svelte:boundary>`](svelte-boundary) with a `pending` snippet.
+
+## html_sunset
+
+> The `html` property of server render results has been sunset. Use `body` instead.
+
+## lifecycle_function_unavailable
+
+> `%name%(...)` is not available on the server
+
+Certain methods such as `mount` cannot be invoked while running in a server context. Avoid calling them eagerly, i.e. not during render.

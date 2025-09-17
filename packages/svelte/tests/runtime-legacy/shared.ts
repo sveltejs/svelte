@@ -342,11 +342,11 @@ async function run_test_variant(
 				variant === 'async-ssr' || (variant === 'hydrate' && compileOptions.experimental?.async)
 					? await render_result
 					: render_result;
-			const { html, head } = rendered;
+			const { body, head } = rendered;
 
 			const prefix = variant === 'async-ssr' ? 'async_' : '';
-			fs.writeFileSync(`${cwd}/_output/${prefix}rendered.html`, html);
-			target.innerHTML = html;
+			fs.writeFileSync(`${cwd}/_output/${prefix}rendered.html`, body);
+			target.innerHTML = body;
 
 			if (head) {
 				fs.writeFileSync(`${cwd}/_output/${prefix}rendered_head.html`, head);

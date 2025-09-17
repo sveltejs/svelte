@@ -1,5 +1,5 @@
 /** @import { Component } from 'svelte' */
-/** @import { RenderOutput, SSRContext, SyncRenderOutput, Thenable } from './types.js' */
+/** @import { RenderOutput, SSRContext, SyncRenderOutput } from './types.js' */
 import { async_mode_flag } from '../flags/index.js';
 import { abort } from './abort-signal.js';
 import { pop, push, set_ssr_context, ssr_context } from './context.js';
@@ -271,10 +271,15 @@ export class Payload {
 							return Promise.resolve(user_result);
 						}
 						async ??= Payload.#render_async(component, options);
-						return async.then(
-							(result) => onfulfilled({ head: result.head, body: result.body, html: result.body }),
-							onrejected
-						);
+						return async.then((result) => {
+							Object.defineProperty(result, 'html', {
+								// eslint-disable-next-line getter-return
+								get: () => {
+									e.html_sunset();
+								}
+							});
+							return onfulfilled(/** @type {SyncRenderOutput} */ (result));
+						}, onrejected);
 					}
 			}
 		});
