@@ -159,12 +159,12 @@ test('subsume refuses to switch modes', () => {
 	);
 });
 
-test('TreeState uid generator uses prefix', () => {
+test('SSRState uid generator uses prefix', () => {
 	const state = new SSRState('sync', 'id-');
 	expect(state.uid()).toBe('id-s1');
 });
 
-test('TreeState title ordering favors later lexicographic paths', () => {
+test('SSRState title ordering favors later lexicographic paths', () => {
 	const state = new SSRState('sync');
 
 	state.set_title('A', [1]);
