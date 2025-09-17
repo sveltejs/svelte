@@ -184,6 +184,9 @@ export class Payload {
 		}
 	}
 
+	/**
+	 * @deprecated this is needed for legacy component bindings
+	 */
 	copy() {
 		const copy = new Payload(this.global, this.local, this.#parent, this.type);
 		copy.#out = this.#out.map((item) => (item instanceof Payload ? item.copy() : item));
@@ -193,6 +196,7 @@ export class Payload {
 
 	/**
 	 * @param {Payload} other
+	 * @deprecated this is needed for legacy component bindings
 	 */
 	subsume(other) {
 		if (this.global.mode !== other.global.mode) {
