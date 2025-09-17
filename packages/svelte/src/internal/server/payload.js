@@ -408,27 +408,23 @@ export class TreeHeadState {
 	 * @param {number[]} path
 	 */
 	set_title(value, path) {
-		// perform a depth-first (lexicographic) comparison using the path. Reject sets
-		// from earlier than or equal to the current value.
-		const current_path = this.#title.path;
+		const current = this.#title.path;
 
-		const max_len = Math.max(path.length, current_path.length);
-		for (let i = 0; i < max_len; i++) {
-			const contender_segment = path[i];
-			const current_segment = current_path[i];
+		let i = 0;
+		let l = Math.min(path.length, current.length);
 
-			// contender shorter than current and all previous segments equal -> earlier
-			if (contender_segment === undefined) return;
-			// current shorter than contender and all previous segments equal -> contender is later
-			if (current_segment === undefined || contender_segment > current_segment) {
-				this.#title.path = path;
-				this.#title.value = value;
-				return;
-			}
-			if (contender_segment < current_segment) return;
-			// else equal -> continue
+		// skip identical prefixes - [1, 2, 3, ...] === [1, 2, 3, ...]
+		while (i < l && path[i] === current[i]) i += 1;
+
+		if (path[i] === undefined) return;
+
+		// replace title if
+		// - incoming path is longer - [7, 8, 9] > [7, 8]
+		// - incoming path is later  - [7, 8, 9] > [7, 8, 8]
+		if (current[i] === undefined || path[i] > current[i]) {
+			this.#title.path = path;
+			this.#title.value = value;
 		}
-		// paths are equal -> keep current value (do nothing)
 	}
 
 	/**
