@@ -94,7 +94,7 @@ function close(head, body, payload) {
 		cleanup();
 	}
 
-	head += payload.global.head.title.value;
+	head += payload.global.head.get_title();
 
 	body = BLOCK_OPEN + body + BLOCK_CLOSE; // this inserts a fake boundary so hydration matches
 
@@ -698,7 +698,7 @@ export function build_title(payload, children) {
 	payload.compact({
 		start: i,
 		fn: ({ head }) => {
-			payload.global.head.title = { path, value: head };
+			payload.global.head.set_title(head, path);
 			// since we can only ever render the title in this chunk, and title rendering is handled specially,
 			// we can just ditch the results after we've saved them globally
 			return { head: '', body: '' };

@@ -170,7 +170,7 @@ test('subsume replaces tree content and state from other', () => {
 		$$payload.push('body');
 	});
 	b.global.css.add({ hash: 'h', code: 'c' });
-	b.global.head.title = { path: [1], value: 'Title' };
+	b.global.head.set_title('Title', [1]);
 	b.local.select_value = 'B';
 	b.promises.initial = Promise.resolve();
 
@@ -192,7 +192,7 @@ test('subsume refuses to switch modes', () => {
 		$$payload.push('body');
 	});
 	b.global.css.add({ hash: 'h', code: 'c' });
-	b.global.head.title = { path: [1], value: 'Title' };
+	b.global.head.set_title('Title', [1]);
 	b.local.select_value = 'B';
 	b.promises.initial = Promise.resolve();
 
@@ -209,28 +209,28 @@ test('TreeState uid generator uses prefix', () => {
 test('TreeHeadState title ordering favors later lexicographic paths', () => {
 	const head = new TreeHeadState(() => '');
 
-	head.title = { path: [1], value: 'A' };
-	assert.equal(head.title.value, 'A');
+	head.set_title('A', [1]);
+	assert.equal(head.get_title(), 'A');
 
 	// equal path -> unchanged
-	head.title = { path: [1], value: 'B' };
-	assert.equal(head.title.value, 'A');
+	head.set_title('B', [1]);
+	assert.equal(head.get_title(), 'A');
 
 	// earlier -> unchanged
-	head.title = { path: [0, 9], value: 'C' };
-	assert.equal(head.title.value, 'A');
+	head.set_title('C', [0, 9]);
+	assert.equal(head.get_title(), 'A');
 
 	// later -> update
-	head.title = { path: [2], value: 'D' };
-	assert.equal(head.title.value, 'D');
+	head.set_title('D', [2]);
+	assert.equal(head.get_title(), 'D');
 
 	// longer but same prefix -> update
-	head.title = { path: [2, 0], value: 'E' };
-	assert.equal(head.title.value, 'E');
+	head.set_title('E', [2, 0]);
+	assert.equal(head.get_title(), 'E');
 
 	// shorter (earlier) than current with same prefix -> unchanged
-	head.title = { path: [2], value: 'F' };
-	assert.equal(head.title.value, 'E');
+	head.set_title('F', [2]);
+	assert.equal(head.get_title(), 'E');
 });
 
 test('push accepts async functions in async context', async () => {
