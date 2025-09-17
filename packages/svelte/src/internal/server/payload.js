@@ -386,28 +386,21 @@ export class TreeState {
 }
 
 export class TreeHeadState {
-	/** @type {Set<{ hash: string; code: string }>} */
-	#css = new Set();
+	/** @readonly @type {Set<{ hash: string; code: string }>} */
+	css = new Set();
 
-	/** @type {() => string} */
-	#uid = () => '';
+	/** @readonly @type {() => string} */
+	uid = () => '';
 
 	/**
 	 * @type {{ path: number[], value: string }}
 	 */
 	#title = { path: [], value: '' };
 
-	get css() {
-		return this.#css;
-	}
-
-	get uid() {
-		return this.#uid;
-	}
-
 	get title() {
 		return this.#title;
 	}
+
 	set title(value) {
 		// perform a depth-first (lexicographic) comparison using the path. Reject sets
 		// from earlier than or equal to the current value.
@@ -437,8 +430,7 @@ export class TreeHeadState {
 	 * @param {() => string} uid
 	 */
 	constructor(uid) {
-		this.#uid = uid;
-		this.#css = new Set();
+		this.uid = uid;
 		this.#title = { path: [], value: '' };
 	}
 }
