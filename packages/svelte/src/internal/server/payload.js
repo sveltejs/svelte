@@ -381,14 +381,11 @@ export class TreeState {
 	constructor(mode, id_prefix = '') {
 		this.mode = mode;
 		this.uid = props_id_generator(id_prefix);
-		this.head = new TreeHeadState(this.uid);
+		this.head = new TreeHeadState();
 	}
 }
 
 export class TreeHeadState {
-	/** @readonly @type {() => string} */
-	uid = () => '';
-
 	/**
 	 * @type {{ path: number[], value: string }}
 	 */
@@ -422,14 +419,6 @@ export class TreeHeadState {
 			this.#title.path = path;
 			this.#title.value = value;
 		}
-	}
-
-	/**
-	 * @param {() => string} uid
-	 */
-	constructor(uid) {
-		this.uid = uid;
-		this.#title = { path: [], value: '' };
 	}
 }
 
