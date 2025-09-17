@@ -213,7 +213,7 @@ describe('async', () => {
 		const result = await Payload.render(component as unknown as Component);
 		expect(result.head).toBe('');
 		expect(result.body).toBe('<!--[--><!--[-->123<!--]--><!--]-->');
-		expect(() => result.html).toThrow('html_sunset');
+		expect(() => result.html).toThrow('html_deprecated');
 	});
 
 	test('compact schedules followup when compaction input is async', async () => {

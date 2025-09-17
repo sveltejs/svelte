@@ -275,7 +275,7 @@ export class Payload {
 							Object.defineProperty(result, 'html', {
 								// eslint-disable-next-line getter-return
 								get: () => {
-									e.html_sunset();
+									e.html_deprecated();
 								}
 							});
 							return onfulfilled(/** @type {SyncRenderOutput} */ (result));
