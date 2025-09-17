@@ -441,22 +441,6 @@ export class TreeHeadState {
 		this.#css = new Set();
 		this.#title = { path: [], value: '' };
 	}
-
-	copy() {
-		const head_state = new TreeHeadState(this.#uid);
-		head_state.#css = new Set(this.#css);
-		head_state.#title = this.title;
-		return head_state;
-	}
-
-	/**
-	 * @param {TreeHeadState} other
-	 */
-	subsume(other) {
-		this.#css = other.#css;
-		this.#title = other.#title;
-		this.#uid = other.#uid;
-	}
 }
 
 /**
