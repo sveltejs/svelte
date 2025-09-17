@@ -15,11 +15,11 @@ export function await_invalid() {
 }
 
 /**
- * The `html` property of server render results has been sunset. Use `body` instead.
+ * The `html` property of server render results has been deprecated. Use `body` instead.
  * @returns {never}
  */
-export function html_sunset() {
-	const error = new Error(`html_sunset\nThe \`html\` property of server render results has been sunset. Use \`body\` instead.\nhttps://svelte.dev/e/html_sunset`);
+export function html_deprecated() {
+	const error = new Error(`html_deprecated\nThe \`html\` property of server render results has been deprecated. Use \`body\` instead.\nhttps://svelte.dev/e/html_deprecated`);
 
 	error.name = 'Svelte error';
 
