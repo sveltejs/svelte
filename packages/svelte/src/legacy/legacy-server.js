@@ -1,6 +1,6 @@
 /** @import { SvelteComponent } from '../index.js' */
 import { asClassComponent as as_class_component, createClassComponent } from './legacy-client.js';
-import { render, render_async } from '../internal/server/index.js';
+import { render } from '../internal/server/index.js';
 
 // By having this as a separate entry point for server environments, we save the client bundle from having to include the server runtime
 
@@ -31,21 +31,9 @@ export function asClassComponent(component) {
 			html: result.body
 		};
 	};
-	/** @type {(props?: {}, opts?: { $$slots?: {}; context?: Map<any, any>; }) => Promise<{ html: any; css: { code: string; map: any; }; head: string; }> } */
-	const _render_async = async (props, { context } = {}) => {
-		// @ts-expect-error the typings are off, but this will work if the component is compiled in SSR mode
-		const result = await render_async(component, { props, context });
-		return {
-			css: { code: '', map: null },
-			head: result.head,
-			html: result.body
-		};
-	};
 
 	// @ts-expect-error this is present for SSR
 	component_constructor.render = _render;
-	// @ts-expect-error this is present for SSR
-	component_constructor.renderAsync = _render_async;
 
 	// @ts-ignore
 	return component_constructor;
