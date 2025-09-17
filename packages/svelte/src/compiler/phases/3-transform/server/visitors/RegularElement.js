@@ -1,4 +1,4 @@
-/** @import { Expression } from 'estree' */
+/** @import { Expression, Statement } from 'estree' */
 /** @import { Location } from 'locate-character' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../types.js' */
@@ -8,7 +8,12 @@ import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_element_attributes, build_spread_object } from './shared/element.js';
-import { process_children, build_template, build_attribute_value } from './shared/utils.js';
+import {
+	process_children,
+	build_template,
+	build_attribute_value,
+	call_child_payload
+} from './shared/utils.js';
 
 /**
  * @param {AST.RegularElement} node
@@ -73,6 +78,8 @@ export function RegularElement(node, context) {
 	}
 
 	let select_with_value = false;
+	let select_with_value_async = false;
+	const template_start = state.template.length;
 
 	if (node.name === 'select') {
 		const value = node.attributes.find(
@@ -80,13 +87,17 @@ export function RegularElement(node, context) {
 				(attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
 				attribute.name === 'value'
 		);
-		if (node.attributes.some((attribute) => attribute.type === 'SpreadAttribute')) {
+
+		const spread = node.attributes.find((attribute) => attribute.type === 'SpreadAttribute');
+		if (spread) {
 			select_with_value = true;
+			select_with_value_async ||= spread.metadata.expression.has_await;
+
 			state.template.push(
 				b.stmt(
 					b.assignment(
 						'=',
-						b.id('$$payload.select_value'),
+						b.id('$$payload.local.select_value'),
 						b.member(
 							build_spread_object(
 								node,
@@ -107,7 +118,14 @@ export function RegularElement(node, context) {
 			);
 		} else if (value) {
 			select_with_value = true;
-			const left = b.id('$$payload.select_value');
+
+			if (value.type === 'Attribute' && value.value !== true) {
+				select_with_value_async ||= (Array.isArray(value.value) ? value.value : [value.value]).some(
+					(tag) => tag.type === 'ExpressionTag' && tag.metadata.expression.has_await
+				);
+			}
+
+			const left = b.id('$$payload.local.select_value');
 			if (value.type === 'Attribute') {
 				state.template.push(
 					b.stmt(b.assignment('=', left, build_attribute_value(value.value, context)))
@@ -137,18 +155,35 @@ export function RegularElement(node, context) {
 					attribute.name === 'value')
 		)
 	) {
-		const inner_state = { ...state, template: [], init: [] };
-		process_children(trimmed, { ...context, state: inner_state });
-
-		state.template.push(
-			b.stmt(
-				b.call(
-					'$.valueless_option',
-					b.id('$$payload'),
-					b.thunk(b.block([...inner_state.init, ...build_template(inner_state.template)]))
+		if (node.metadata.synthetic_value_node) {
+			state.template.push(
+				b.stmt(
+					b.call(
+						'$.simple_valueless_option',
+						b.id('$$payload'),
+						b.thunk(
+							node.metadata.synthetic_value_node.expression,
+							node.metadata.synthetic_value_node.metadata.expression.has_await
+						)
+					)
 				)
-			)
-		);
+			);
+		} else {
+			const inner_state = { ...state, template: [], init: [] };
+			process_children(trimmed, { ...context, state: inner_state });
+			state.template.push(
+				b.stmt(
+					b.call(
+						'$.valueless_option',
+						b.id('$$payload'),
+						b.arrow(
+							[b.id('$$payload')],
+							b.block([...inner_state.init, ...build_template(inner_state.template)])
+						)
+					)
+				)
+			);
+		}
 	} else if (body !== null) {
 		// if this is a `<textarea>` value or a contenteditable binding, we only add
 		// the body if the attribute/binding is falsy
@@ -175,7 +210,14 @@ export function RegularElement(node, context) {
 	}
 
 	if (select_with_value) {
-		state.template.push(b.stmt(b.assignment('=', b.id('$$payload.select_value'), b.void0)));
+		// we need to create a child scope so that the `select_value` only applies children of this select element
+		// in an async world, we could technically have two adjacent select elements with async children, in which case
+		// the second element's select_value would override the first element's select_value if the children of the first
+		// element hadn't resolved prior to hitting the second element.
+		const elements = state.template.splice(template_start, Infinity);
+		state.template.push(
+			call_child_payload(b.block(build_template(elements)), select_with_value_async)
+		);
 	}
 
 	if (!node_is_void) {

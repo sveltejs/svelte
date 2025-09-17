@@ -1,5 +1,5 @@
-/** @import { AwaitExpression } from 'estree' */
-/** @import { Context } from '../types.js' */
+/** @import { AwaitExpression, Expression } from 'estree' */
+/** @import { Context } from '../types' */
 import * as b from '../../../../utils/builders.js';
 
 /**
@@ -7,19 +7,11 @@ import * as b from '../../../../utils/builders.js';
  * @param {Context} context
  */
 export function AwaitExpression(node, context) {
-	// if `await` is inside a function, or inside `<script module>`,
-	// allow it, otherwise error
-	if (
-		context.state.scope.function_depth === 0 ||
-		context.path.some(
-			(node) =>
-				node.type === 'ArrowFunctionExpression' ||
-				node.type === 'FunctionDeclaration' ||
-				node.type === 'FunctionExpression'
-		)
-	) {
-		return context.next();
+	const argument = /** @type {Expression} */ (context.visit(node.argument));
+
+	if (context.state.analysis.pickled_awaits.has(node)) {
+		return b.call(b.await(b.call('$.save', argument)));
 	}
 
-	return b.call('$.await_outside_boundary');
+	return argument === node.argument ? node : { ...node, argument };
 }

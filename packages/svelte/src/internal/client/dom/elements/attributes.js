@@ -268,10 +268,27 @@ export function set_custom_element_data(node, prop, value) {
  * @param {Record<string | symbol, any> | undefined} prev
  * @param {Record<string | symbol, any>} next New attributes - this function mutates this object
  * @param {string} [css_hash]
+ * @param {boolean} [should_remove_defaults]
  * @param {boolean} [skip_warning]
  * @returns {Record<string, any>}
  */
-export function set_attributes(element, prev, next, css_hash, skip_warning = false) {
+function set_attributes(
+	element,
+	prev,
+	next,
+	css_hash,
+	should_remove_defaults = false,
+	skip_warning = false
+) {
+	if (hydrating && should_remove_defaults && element.tagName === 'INPUT') {
+		var input = /** @type {HTMLInputElement} */ (element);
+		var attribute = input.type === 'checkbox' ? 'defaultChecked' : 'defaultValue';
+
+		if (!(attribute in next)) {
+			remove_input_defaults(input);
+		}
+	}
+
 	var attributes = get_attributes(element);
 
 	var is_custom_element = attributes[IS_CUSTOM_ELEMENT];
@@ -467,6 +484,7 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
  * @param {string} [css_hash]
+ * @param {boolean} [should_remove_defaults]
  * @param {boolean} [skip_warning]
  */
 export function attribute_effect(
@@ -475,6 +493,7 @@ export function attribute_effect(
 	sync = [],
 	async = [],
 	css_hash,
+	should_remove_defaults = false,
 	skip_warning = false
 ) {
 	flatten(sync, async, (values) => {
@@ -490,7 +509,14 @@ export function attribute_effect(
 		block(() => {
 			var next = fn(...values.map(get));
 			/** @type {Record<string | symbol, any>} */
-			var current = set_attributes(element, prev, next, css_hash, skip_warning);
+			var current = set_attributes(
+				element,
+				prev,
+				next,
+				css_hash,
+				should_remove_defaults,
+				skip_warning
+			);
 
 			if (inited && is_select && 'value' in next) {
 				select_option(/** @type {HTMLSelectElement} */ (element), next.value);

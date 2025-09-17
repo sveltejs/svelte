@@ -344,6 +344,8 @@ export namespace AST {
 			has_spread: boolean;
 			scoped: boolean;
 			path: SvelteNode[];
+			/** Synthetic value attribute for <option> with single expression child, used for client-only handling */
+			synthetic_value_node: ExpressionTag | null;
 		};
 	}
 

@@ -13,5 +13,7 @@ export function TitleElement(node, context) {
 	process_children(node.fragment.nodes, { ...context, state: { ...context.state, template } });
 	template.push(b.literal('</title>'));
 
-	context.state.init.push(...build_template(template, b.id('$$payload.title'), '='));
+	context.state.init.push(
+		b.stmt(b.call('$.build_title', b.id('$$payload'), b.thunk(b.block(build_template(template)))))
+	);
 }

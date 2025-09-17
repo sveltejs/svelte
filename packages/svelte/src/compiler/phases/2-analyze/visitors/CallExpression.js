@@ -241,6 +241,7 @@ export function CallExpression(node, context) {
 		context.next({
 			...context.state,
 			function_depth: context.state.function_depth + 1,
+			in_derived: true,
 			expression
 		});
 

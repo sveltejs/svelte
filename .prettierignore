@@ -15,6 +15,7 @@ packages/svelte/src/internal/client/warnings.js
 packages/svelte/src/internal/shared/errors.js
 packages/svelte/src/internal/shared/warnings.js
 packages/svelte/src/internal/server/errors.js
+packages/svelte/src/internal/server/warnings.js
 packages/svelte/tests/migrate/samples/*/output.svelte
 packages/svelte/tests/**/*.svelte
 packages/svelte/tests/**/_expected*

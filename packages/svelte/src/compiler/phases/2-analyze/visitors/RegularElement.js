@@ -70,7 +70,7 @@ export function RegularElement(node, context) {
 		)
 	) {
 		const child = node.fragment.nodes[0];
-		node.attributes.push(create_attribute('value', child.start, child.end, [child]));
+		node.metadata.synthetic_value_node = child;
 	}
 
 	const binding = context.state.scope.get(node.name);

@@ -2493,7 +2493,7 @@ declare module 'svelte/server' {
 					}
 				]
 	): RenderOutput;
-	interface RenderOutput {
+	interface SyncRenderOutput {
 		/** HTML that goes into the `<head>` */
 		head: string;
 		/** @deprecated use `body` instead */
@@ -2501,6 +2501,8 @@ declare module 'svelte/server' {
 		/** HTML that goes somewhere into the `<body>` */
 		body: string;
 	}
+
+	type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;
 
 	export {};
 }

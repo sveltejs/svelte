@@ -1,30 +1,29 @@
-/** @import { Component } from '#server' */
+/** @import { SSRContext } from '#server' */
 import { FILENAME } from '../../constants.js';
 import {
 	is_tag_valid_with_ancestor,
 	is_tag_valid_with_parent
 } from '../../html-tree-validation.js';
-import { current_component } from './context.js';
+import { set_ssr_context, ssr_context } from './context.js';
 import * as e from './errors.js';
-import { HeadPayload, Payload } from './payload.js';
+import { Payload } from './payload.js';
 
+// TODO move this
 /**
  * @typedef {{
  * 	tag: string;
- * 	parent: null | Element;
- *  filename: null | string;
+ * 	parent: undefined | Element;
+ *  filename: undefined | string;
  *  line: number;
  *  column: number;
  * }} Element
  */
 
 /**
- * @type {Element | null}
+ * This is exported so that it can be cleared between tests
+ * @type {Set<string>}
  */
-let parent = null;
-
-/** @type {Set<string>} */
-let seen;
+export let seen;
 
 /**
  * @param {Payload} payload
@@ -40,15 +39,10 @@ function print_error(payload, message) {
 
 	// eslint-disable-next-line no-console
 	console.error(message);
-	payload.head.out.push(`<script>console.error(${JSON.stringify(message)})</script>`);
-}
-
-export function reset_elements() {
-	let old_parent = parent;
-	parent = null;
-	return () => {
-		parent = old_parent;
-	};
+	payload.child(
+		(payload) => payload.push(`<script>console.error(${JSON.stringify(message)})</script>`),
+		'head'
+	);
 }
 
 /**
@@ -58,10 +52,12 @@ export function reset_elements() {
  * @param {number} column
  */
 export function push_element(payload, tag, line, column) {
-	var filename = /** @type {Component} */ (current_component).function[FILENAME];
-	var child = { tag, parent, filename, line, column };
+	var context = /** @type {SSRContext} */ (ssr_context);
+	var filename = context.function[FILENAME];
+	var parent = context.element;
+	var element = { tag, parent, filename, line, column };
 
-	if (parent !== null) {
+	if (parent !== undefined) {
 		var ancestor = parent.parent;
 		var ancestors = [parent.tag];
 
@@ -86,11 +82,11 @@ export function push_element(payload, tag, line, column) {
 		}
 	}
 
-	parent = child;
+	set_ssr_context({ ...context, p: context, element });
 }
 
 export function pop_element() {
-	parent = /** @type {Element} */ (parent).parent;
+	set_ssr_context(/** @type {SSRContext} */ (ssr_context).p);
 }
 
 /**
@@ -100,7 +96,7 @@ export function validate_snippet_args(payload) {
 	if (
 		typeof payload !== 'object' ||
 		// for some reason typescript consider the type of payload as never after the first instanceof
-		!(payload instanceof Payload || /** @type {any} */ (payload) instanceof HeadPayload)
+		!(payload instanceof Payload)
 	) {
 		e.invalid_snippet_arguments();
 	}

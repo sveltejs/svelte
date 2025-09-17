@@ -202,12 +202,7 @@ export function VariableDeclaration(node, context) {
 				);
 
 				if (declarator.id.type === 'Identifier') {
-					let expression = /** @type {Expression} */ (
-						context.visit(value, {
-							...context.state,
-							in_derived: rune === '$derived'
-						})
-					);
+					let expression = /** @type {Expression} */ (context.visit(value));
 
 					if (is_async) {
 						const location = dev && !is_ignored(init, 'await_waterfall') && locate_node(init);
@@ -231,12 +226,7 @@ export function VariableDeclaration(node, context) {
 					}
 				} else {
 					const init = /** @type {CallExpression} */ (declarator.init);
-					let expression = /** @type {Expression} */ (
-						context.visit(value, {
-							...context.state,
-							in_derived: rune === '$derived'
-						})
-					);
+					let expression = /** @type {Expression} */ (context.visit(value));
 
 					let rhs = value;
 

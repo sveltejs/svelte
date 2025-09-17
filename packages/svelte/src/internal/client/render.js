@@ -11,7 +11,7 @@ import {
 import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
 import { active_effect } from './runtime.js';
 import { push, pop, component_context } from './context.js';
-import { component_root, branch } from './reactivity/effects.js';
+import { component_root } from './reactivity/effects.js';
 import {
 	hydrate_next,
 	hydrate_node,
@@ -31,6 +31,7 @@ import * as e from './errors.js';
 import { assign_nodes } from './dom/template.js';
 import { is_passive_event } from '../../utils.js';
 import { COMMENT_NODE, STATE_SYMBOL } from './constants.js';
+import { boundary } from './dom/blocks/boundary.js';
 
 /**
  * This is normally true — block effects should run their intro transitions —
@@ -218,35 +219,41 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 	var unmount = component_root(() => {
 		var anchor_node = anchor ?? target.appendChild(create_text());
 
-		branch(() => {
-			if (context) {
-				push({});
-				var ctx = /** @type {ComponentContext} */ (component_context);
-				ctx.c = context;
-			}
+		boundary(
+			/** @type {TemplateNode} */ (anchor_node),
+			{
+				pending: () => {}
+			},
+			(anchor_node) => {
+				if (context) {
+					push({});
+					var ctx = /** @type {ComponentContext} */ (component_context);
+					ctx.c = context;
+				}
 
-			if (events) {
-				// We can't spread the object or else we'd lose the state proxy stuff, if it is one
-				/** @type {any} */ (props).$$events = events;
-			}
+				if (events) {
+					// We can't spread the object or else we'd lose the state proxy stuff, if it is one
+					/** @type {any} */ (props).$$events = events;
+				}
 
-			if (hydrating) {
-				assign_nodes(/** @type {TemplateNode} */ (anchor_node), null);
-			}
+				if (hydrating) {
+					assign_nodes(/** @type {TemplateNode} */ (anchor_node), null);
+				}
 
-			should_intro = intro;
-			// @ts-expect-error the public typings are not what the actual function looks like
-			component = Component(anchor_node, props) || {};
-			should_intro = true;
+				should_intro = intro;
+				// @ts-expect-error the public typings are not what the actual function looks like
+				component = Component(anchor_node, props) || {};
+				should_intro = true;
 
-			if (hydrating) {
-				/** @type {Effect} */ (active_effect).nodes_end = hydrate_node;
-			}
+				if (hydrating) {
+					/** @type {Effect} */ (active_effect).nodes_end = hydrate_node;
+				}
 
-			if (context) {
-				pop();
+				if (context) {
+					pop();
+				}
 			}
-		});
+		);
 
 		return () => {
 			for (var event_name of registered_events) {

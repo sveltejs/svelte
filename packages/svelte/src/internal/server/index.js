@@ -1,6 +1,7 @@
-/** @import { ComponentType, SvelteComponent } from 'svelte' */
-/** @import { Component, RenderOutput } from '#server' */
+/** @import { ComponentType, SvelteComponent, Component } from 'svelte' */
+/** @import { RenderOutput, SSRContext } from '#server' */
 /** @import { Store } from '#shared' */
+/** @import { AccumulatedContent } from './payload.js' */
 export { FILENAME, HMR } from '../../constants.js';
 import { attr, clsx, to_class, to_style } from '../shared/attributes.js';
 import { is_promise, noop } from '../shared/utils.js';
@@ -8,17 +9,19 @@ import { subscribe_to_store } from '../../store/utils.js';
 import {
 	UNINITIALIZED,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
-	ELEMENT_IS_NAMESPACED
+	ELEMENT_IS_NAMESPACED,
+	ELEMENT_IS_INPUT
 } from '../../constants.js';
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
-import { current_component, pop, push } from './context.js';
+import { ssr_context, pop, push, set_ssr_context } from './context.js';
 import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN, BLOCK_OPEN_ELSE } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
 import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
-import { reset_elements } from './dev.js';
-import { Payload } from './payload.js';
+import { Payload, SSRState } from './payload.js';
 import { abort } from './abort-signal.js';
+import { async_mode_flag } from '../flags/index.js';
+import * as e from './errors.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
@@ -33,102 +36,48 @@ const INVALID_ATTR_NAME_CHAR_REGEX =
  * @returns {void}
  */
 export function element(payload, tag, attributes_fn = noop, children_fn = noop) {
-	payload.out.push('<!---->');
+	payload.push('<!---->');
 
 	if (tag) {
-		payload.out.push(`<${tag}`);
+		payload.push(`<${tag}`);
 		attributes_fn();
-		payload.out.push(`>`);
+		payload.push(`>`);
 
 		if (!is_void(tag)) {
 			children_fn();
 			if (!is_raw_text_element(tag)) {
-				payload.out.push(EMPTY_COMMENT);
+				payload.push(EMPTY_COMMENT);
 			}
-			payload.out.push(`</${tag}>`);
+			payload.push(`</${tag}>`);
 		}
 	}
 
-	payload.out.push('<!---->');
+	payload.push('<!---->');
 }
-
-/**
- * Array of `onDestroy` callbacks that should be called at the end of the server render function
- * @type {Function[]}
- */
-export let on_destroy = [];
 
 /**
  * Only available on the server and when compiling with the `server` option.
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
  * @template {Record<string, any>} Props
- * @param {import('svelte').Component<Props> | ComponentType<SvelteComponent<Props>>} component
+ * @param {Component<Props> | ComponentType<SvelteComponent<Props>>} component
  * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} [options]
  * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
-	try {
-		const payload = new Payload(options.idPrefix ? options.idPrefix + '-' : '');
-
-		const prev_on_destroy = on_destroy;
-		on_destroy = [];
-		payload.out.push(BLOCK_OPEN);
-
-		let reset_reset_element;
-
-		if (DEV) {
-			// prevent parent/child element state being corrupted by a bad render
-			reset_reset_element = reset_elements();
-		}
-
-		if (options.context) {
-			push();
-			/** @type {Component} */ (current_component).c = options.context;
-		}
-
-		// @ts-expect-error
-		component(payload, options.props ?? {}, {}, {});
-
-		if (options.context) {
-			pop();
-		}
-
-		if (reset_reset_element) {
-			reset_reset_element();
-		}
-
-		payload.out.push(BLOCK_CLOSE);
-		for (const cleanup of on_destroy) cleanup();
-		on_destroy = prev_on_destroy;
-
-		let head = payload.head.out.join('') + payload.head.title;
-
-		for (const { hash, code } of payload.css) {
-			head += `<style id="${hash}">${code}</style>`;
-		}
-
-		const body = payload.out.join('');
-
-		return {
-			head,
-			html: body,
-			body: body
-		};
-	} finally {
-		abort();
-	}
+	return Payload.render(/** @type {Component<Props>} */ (component), options);
 }
 
 /**
  * @param {Payload} payload
- * @param {(head_payload: Payload['head']) => void} fn
+ * @param {(payload: Payload) => Promise<void> | void} fn
  * @returns {void}
  */
 export function head(payload, fn) {
-	const head_payload = payload.head;
-	head_payload.out.push(BLOCK_OPEN);
-	fn(head_payload);
-	head_payload.out.push(BLOCK_CLOSE);
+	payload.child((payload) => {
+		payload.push(BLOCK_OPEN);
+		payload.child(fn);
+		payload.push(BLOCK_CLOSE);
+	}, 'head');
 }
 
 /**
@@ -143,21 +92,21 @@ export function css_props(payload, is_html, props, component, dynamic = false) {
 	const styles = style_object_to_string(props);
 
 	if (is_html) {
-		payload.out.push(`<svelte-css-wrapper style="display: contents; ${styles}">`);
+		payload.push(`<svelte-css-wrapper style="display: contents; ${styles}">`);
 	} else {
-		payload.out.push(`<g style="${styles}">`);
+		payload.push(`<g style="${styles}">`);
 	}
 
 	if (dynamic) {
-		payload.out.push('<!---->');
+		payload.push('<!---->');
 	}
 
 	component();
 
 	if (is_html) {
-		payload.out.push(`<!----></svelte-css-wrapper>`);
+		payload.push(`<!----></svelte-css-wrapper>`);
 	} else {
-		payload.out.push(`<!----></g>`);
+		payload.push(`<!----></g>`);
 	}
 }
 
@@ -187,6 +136,7 @@ export function spread_attributes(attrs, css_hash, classes, styles, flags = 0) {
 
 	const is_html = (flags & ELEMENT_IS_NAMESPACED) === 0;
 	const lowercase = (flags & ELEMENT_PRESERVE_ATTRIBUTE_CASE) === 0;
+	const is_input = (flags & ELEMENT_IS_INPUT) !== 0;
 
 	for (name in attrs) {
 		// omit functions, internal svelte properties and invalid attribute names
@@ -198,6 +148,13 @@ export function spread_attributes(attrs, css_hash, classes, styles, flags = 0) {
 
 		if (lowercase) {
 			name = name.toLowerCase();
+		}
+
+		if (is_input) {
+			if (name === 'defaultvalue' || name === 'defaultchecked') {
+				name = name === 'defaultvalue' ? 'value' : 'checked';
+				if (attrs[name]) continue;
+			}
 		}
 
 		attr_str += attr(name, value, is_html && is_boolean_attribute(name));
@@ -442,13 +399,13 @@ export function bind_props(props_parent, props_now) {
  */
 function await_block(payload, promise, pending_fn, then_fn) {
 	if (is_promise(promise)) {
-		payload.out.push(BLOCK_OPEN);
+		payload.push(BLOCK_OPEN);
 		promise.then(null, noop);
 		if (pending_fn !== null) {
 			pending_fn();
 		}
 	} else if (then_fn !== null) {
-		payload.out.push(BLOCK_OPEN_ELSE);
+		payload.push(BLOCK_OPEN_ELSE);
 		then_fn(promise);
 	}
 }
@@ -494,8 +451,8 @@ export function once(get_value) {
  * @returns {string}
  */
 export function props_id(payload) {
-	const uid = payload.uid();
-	payload.out.push('<!--#' + uid + '-->');
+	const uid = payload.global.uid();
+	payload.push('<!--#' + uid + '-->');
 	return uid;
 }
 
@@ -503,11 +460,9 @@ export { attr, clsx };
 
 export { html } from './blocks/html.js';
 
-export { push, pop } from './context.js';
+export { save } from './context.js';
 
 export { push_element, pop_element, validate_snippet_args } from './dev.js';
-
-export { assign_payload, copy_payload } from './payload.js';
 
 export { snapshot } from '../shared/clone.js';
 
@@ -521,8 +476,6 @@ export {
 } from '../shared/validate.js';
 
 export { escape_html as escape };
-
-export { await_outside_boundary } from '../shared/errors.js';
 
 /**
  * @template T
@@ -548,29 +501,117 @@ export function derived(fn) {
 /**
  *
  * @param {Payload} payload
- * @param {*} value
+ * @param {unknown} value
  */
 export function maybe_selected(payload, value) {
-	return value === payload.select_value ? ' selected' : '';
+	return value === payload.local.select_value ? ' selected' : '';
 }
 
 /**
+ * When an `option` element has no `value` attribute, we need to treat the child
+ * content as its `value` to determine whether we should apply the `selected` attribute.
+ * This has to be done at runtime, for hopefully obvious reasons. It is also complicated,
+ * for sad reasons.
  * @param {Payload} payload
- * @param {() => void} children
+ * @param {((payload: Payload) => void | Promise<void>)} children
  * @returns {void}
  */
 export function valueless_option(payload, children) {
-	var i = payload.out.length;
+	const i = payload.length;
 
-	children();
+	// prior to children, `payload` has some combination of string/unresolved payload that ends in `<option ...>`
+	payload.child(children);
 
-	var body = payload.out.slice(i).join('');
+	// post-children, `payload` has child content, possibly also with some number of hydration comments.
+	// we can compact this last chunk of content to see if it matches the select value...
+	payload.compact({
+		start: i,
+		fn: (content) => {
+			if (content.body.replace(/<!---->/g, '') === payload.local.select_value) {
+				// ...and if it does match the select value, we can compact the part of the payload representing the `<option ...>`
+				// to add the `selected` attribute to the end.
+				payload.compact({
+					start: i - 1,
+					end: i,
+					fn: (content) => {
+						return { body: content.body.slice(0, -1) + ' selected>', head: content.head };
+					}
+				});
+			}
+			return content;
+		}
+	});
+}
 
-	if (body.replace(/<!---->/g, '') === payload.select_value) {
-		// replace '>' with ' selected>' (closing tag will be added later)
-		var last_item = payload.out[i - 1];
-		payload.out[i - 1] = last_item.slice(0, -1) + ' selected>';
-		// Remove the old items after position i and add the body as a single item
-		payload.out.splice(i, payload.out.length - i, body);
-	}
+/**
+ * In the special case where an `option` element has no `value` attribute but
+ * the children of the `option` element are a single expression, we can simplify
+ * by running the children and passing the resulting value, which means
+ * we don't have to do all of the same parsing nonsense. It also means we can avoid
+ * coercing everything to a string.
+ * @param {Payload} payload
+ * @param {(() => unknown)} child
+ */
+export function simple_valueless_option(payload, child) {
+	const result = child();
+
+	/**
+	 * @param {AccumulatedContent} content
+	 * @param {unknown} child_value
+	 * @returns {AccumulatedContent}
+	 */
+	const mark_selected = (content, child_value) => {
+		if (child_value === payload.local.select_value) {
+			return { body: content.body.slice(0, -1) + ' selected>', head: content.head };
+		}
+		return content;
+	};
+
+	payload.compact({
+		start: payload.length - 1,
+		fn: (content) => {
+			if (result instanceof Promise) {
+				return result.then((child_value) => mark_selected(content, child_value));
+			}
+			return mark_selected(content, result);
+		}
+	});
+
+	payload.child((child_payload) => {
+		if (result instanceof Promise) {
+			return result.then((child_value) => {
+				child_payload.push(escape_html(child_value));
+			});
+		}
+		child_payload.push(escape_html(result));
+	});
+}
+
+/**
+ * Since your document can only have one `title`, we have to have some sort of algorithm for determining
+ * which one "wins". To do this, we perform a depth-first comparison of where the title was encountered --
+ * later ones "win" over earlier ones, regardless of what order the promises resolve in. To accomodate this, we:
+ * - Figure out where we are in the content tree (`get_path`)
+ * - Render the title in its own child so that it has a defined "slot" in the payload
+ * - Compact that spot so that we get the entire rendered contents of the title
+ * - Attempt to set the global title (this is where the "wins" logic based on the path happens)
+ *
+ * TODO we could optimize this by not even rendering the title if the path wouldn't be accepted
+ *
+ * @param {Payload} payload
+ * @param {((payload: Payload) => void | Promise<void>)} children
+ */
+export function build_title(payload, children) {
+	const path = payload.get_path();
+	const i = payload.length;
+	payload.child(children);
+	payload.compact({
+		start: i,
+		fn: ({ head }) => {
+			payload.global.set_title(head, path);
+			// since we can only ever render the title in this chunk, and title rendering is handled specially,
+			// we can just ditch the results after we've saved them globally
+			return { head: '', body: '' };
+		}
+	});
 }

@@ -28,7 +28,6 @@ export { attach } from './dom/elements/attachments.js';
 export {
 	remove_input_defaults,
 	set_attribute,
-	set_attributes,
 	attribute_effect,
 	set_custom_element_data,
 	set_xlink_attribute,
@@ -104,7 +103,7 @@ export {
 	save,
 	track_reactivity_loss
 } from './reactivity/async.js';
-export { flushSync as flush, suspend } from './reactivity/batch.js';
+export { flushSync as flush } from './reactivity/batch.js';
 export {
 	async_derived,
 	user_derived as derived,
