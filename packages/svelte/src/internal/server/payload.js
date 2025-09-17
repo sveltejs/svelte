@@ -93,7 +93,8 @@ export class Payload {
 	 */
 	child(fn, type) {
 		const child = new Payload(this.global, this, type);
-		this.#run_child(child, fn);
+		this.#out.push(child);
+		child.#run(fn);
 	}
 
 	/**
@@ -106,8 +107,9 @@ export class Payload {
 	component(fn, component_fn) {
 		push(component_fn);
 		const child = new Payload(this.global, this);
+		this.#out.push(child);
 		child.#is_component_body = true;
-		this.#run_child(child, fn);
+		child.#run(fn);
 		pop();
 	}
 
@@ -269,26 +271,24 @@ export class Payload {
 	}
 
 	/**
-	 * @param {Payload} child_payload
 	 * @param {(tree: Payload) => MaybePromise<void>} fn
 	 * @returns {void}
 	 */
-	#run_child(child_payload, fn) {
-		this.#out.push(child_payload);
+	#run(fn) {
 		set_ssr_context({
 			...ssr_context,
 			p: ssr_context?.p ?? null,
 			c: ssr_context?.c ?? null,
-			r: child_payload
+			r: this
 		});
-		const result = fn(child_payload);
+		const result = fn(this);
 		if (result instanceof Promise) {
 			if (this.global.mode === 'sync') {
 				e.await_invalid();
 			}
 			// just to avoid unhandled promise rejections -- we'll end up throwing in `collect_async` if something fails
 			result.catch(() => {});
-			child_payload.promises.initial = result;
+			this.promises.initial = result;
 		}
 	}
 
