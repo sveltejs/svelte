@@ -30,46 +30,49 @@ export function asClassComponent(component) {
 		// @ts-expect-error the typings are off, but this will work if the component is compiled in SSR mode
 		const result = render(component, { props, context });
 
-		const munged = Object.defineProperties(/** @type {LegacyRenderResult} */ ({}), {
-			css: {
-				value: { code: '', map: null }
-			},
-			head: {
-				get: () => result.head
-			},
-			html: {
-				get: () => result.body
-			},
-			then: {
-				/**
-				 * this is not type-safe, but honestly it's the best I can do right now, and it's a straightforward function.
-				 *
-				 * @template TResult1
-				 * @template [TResult2=never]
-				 * @param { (value: LegacyRenderResult) => TResult1 } onfulfilled
-				 * @param { (reason: unknown) => TResult2 } onrejected
-				 */
-				value: (onfulfilled, onrejected) => {
-					if (!async_mode_flag) {
-						w.experimental_async_ssr();
-						const user_result = onfulfilled({
-							css: munged.css,
-							head: munged.head,
-							html: munged.html
-						});
-						return Promise.resolve(user_result);
-					}
+		const munged = Object.defineProperties(
+			/** @type {LegacyRenderResult & PromiseLike<LegacyRenderResult>} */ ({}),
+			{
+				css: {
+					value: { code: '', map: null }
+				},
+				head: {
+					get: () => result.head
+				},
+				html: {
+					get: () => result.body
+				},
+				then: {
+					/**
+					 * this is not type-safe, but honestly it's the best I can do right now, and it's a straightforward function.
+					 *
+					 * @template TResult1
+					 * @template [TResult2=never]
+					 * @param { (value: LegacyRenderResult) => TResult1 } onfulfilled
+					 * @param { (reason: unknown) => TResult2 } onrejected
+					 */
+					value: (onfulfilled, onrejected) => {
+						if (!async_mode_flag) {
+							w.experimental_async_ssr();
+							const user_result = onfulfilled({
+								css: munged.css,
+								head: munged.head,
+								html: munged.html
+							});
+							return Promise.resolve(user_result);
+						}
 
-					return result.then((result) => {
-						return onfulfilled({
-							css: munged.css,
-							head: result.head,
-							html: result.body
-						});
-					}, onrejected);
+						return result.then((result) => {
+							return onfulfilled({
+								css: munged.css,
+								head: result.head,
+								html: result.body
+							});
+						}, onrejected);
+					}
 				}
 			}
-		});
+		);
 
 		return munged;
 	};
