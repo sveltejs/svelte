@@ -59,7 +59,7 @@ export class Payload {
 	/**
 	 * State which is associated with the content tree as a whole.
 	 * It will be re-exposed, uncopied, on all children.
-	 * @type {TreeState}
+	 * @type {SSRState}
 	 * @readonly
 	 */
 	global;
@@ -73,7 +73,7 @@ export class Payload {
 	local;
 
 	/**
-	 * @param {TreeState} global
+	 * @param {SSRState} global
 	 * @param {{ select_value: string | undefined }} [local]
 	 * @param {Payload | undefined} [parent]
 	 * @param {PayloadType} [type]
@@ -361,7 +361,7 @@ export class Payload {
 	}
 }
 
-export class TreeState {
+export class SSRState {
 	/** @readonly @type {'sync' | 'async'} */
 	mode;
 

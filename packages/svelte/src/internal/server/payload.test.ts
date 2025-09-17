@@ -1,8 +1,8 @@
 import { assert, expect, test } from 'vitest';
-import { Payload, TreeState } from './payload.js';
+import { Payload, SSRState } from './payload.js';
 
 test('collects synchronous body content by default', () => {
-	const payload = new Payload(new TreeState('sync'));
+	const payload = new Payload(new SSRState('sync'));
 	payload.push('a');
 	payload.child(($$payload) => {
 		$$payload.push('b');
@@ -15,7 +15,7 @@ test('collects synchronous body content by default', () => {
 });
 
 test('child type switches content area (head vs body)', () => {
-	const payload = new Payload(new TreeState('sync'));
+	const payload = new Payload(new SSRState('sync'));
 	payload.push('a');
 	payload.child(($$payload) => {
 		$$payload.push('<title>T</title>');
@@ -28,7 +28,7 @@ test('child type switches content area (head vs body)', () => {
 });
 
 test('child inherits parent type when not specified', () => {
-	const parent = new Payload(new TreeState('sync'), undefined, undefined, 'head');
+	const parent = new Payload(new SSRState('sync'), undefined, undefined, 'head');
 	parent.push('<meta name="x"/>');
 	parent.child(($$payload) => {
 		$$payload.push('<style>/* css */</style>');
@@ -39,7 +39,7 @@ test('child inherits parent type when not specified', () => {
 });
 
 test('get_path returns the path indexes to a payload', () => {
-	const root = new Payload(new TreeState('sync'));
+	const root = new Payload(new SSRState('sync'));
 	let child_a: InstanceType<typeof Payload> | undefined;
 	let child_b: InstanceType<typeof Payload> | undefined;
 	let child_b_0: InstanceType<typeof Payload> | undefined;
@@ -63,7 +63,7 @@ test('get_path returns the path indexes to a payload', () => {
 });
 
 test('creating an async child in a sync context throws', () => {
-	const payload = new Payload(new TreeState('sync'));
+	const payload = new Payload(new SSRState('sync'));
 	payload.push('a');
 	expect(() =>
 		payload.child(async ($$payload) => {
@@ -74,7 +74,7 @@ test('creating an async child in a sync context throws', () => {
 });
 
 test('collect_async allows awaiting payload to get aggregated content', async () => {
-	const payload = new Payload(new TreeState('async'));
+	const payload = new Payload(new SSRState('async'));
 	payload.push('1');
 	payload.child(async ($$payload) => {
 		await Promise.resolve();
@@ -87,7 +87,7 @@ test('collect_async allows awaiting payload to get aggregated content', async ()
 });
 
 test('compact synchronously aggregates a range and can transform into head/body', () => {
-	const payload = new Payload(new TreeState('sync'));
+	const payload = new Payload(new SSRState('sync'));
 	payload.push('a');
 	payload.push('b');
 	payload.push('c');
@@ -105,7 +105,7 @@ test('compact synchronously aggregates a range and can transform into head/body'
 });
 
 test('compact schedules followup when compaction input is async', async () => {
-	const payload = new Payload(new TreeState('async'));
+	const payload = new Payload(new SSRState('async'));
 	payload.push('a');
 	payload.child(async ($$payload) => {
 		await Promise.resolve();
@@ -124,7 +124,7 @@ test('compact schedules followup when compaction input is async', async () => {
 });
 
 test('copy creates a deep copy of the tree and shares promises reference', () => {
-	const payload = new Payload(new TreeState('sync'));
+	const payload = new Payload(new SSRState('sync'));
 	let child_ref: InstanceType<typeof Payload> | undefined;
 	payload.child(($$payload) => {
 		child_ref = $$payload;
@@ -147,7 +147,7 @@ test('copy creates a deep copy of the tree and shares promises reference', () =>
 });
 
 test('local state is shallow-copied to children', () => {
-	const root = new Payload(new TreeState('sync'));
+	const root = new Payload(new SSRState('sync'));
 	root.local.select_value = 'A';
 	let child: InstanceType<typeof Payload> | undefined;
 	root.child(($$payload) => {
@@ -160,11 +160,11 @@ test('local state is shallow-copied to children', () => {
 });
 
 test('subsume replaces tree content and state from other', () => {
-	const a = new Payload(new TreeState('async'), undefined, undefined, 'head');
+	const a = new Payload(new SSRState('async'), undefined, undefined, 'head');
 	a.push('<meta />');
 	a.local.select_value = 'A';
 
-	const b = new Payload(new TreeState('async'));
+	const b = new Payload(new SSRState('async'));
 	b.child(async ($$payload) => {
 		await Promise.resolve();
 		$$payload.push('body');
@@ -182,11 +182,11 @@ test('subsume replaces tree content and state from other', () => {
 });
 
 test('subsume refuses to switch modes', () => {
-	const a = new Payload(new TreeState('sync'), undefined, undefined, 'head');
+	const a = new Payload(new SSRState('sync'), undefined, undefined, 'head');
 	a.push('<meta />');
 	a.local.select_value = 'A';
 
-	const b = new Payload(new TreeState('async'));
+	const b = new Payload(new SSRState('async'));
 	b.child(async ($$payload) => {
 		await Promise.resolve();
 		$$payload.push('body');
@@ -202,12 +202,12 @@ test('subsume refuses to switch modes', () => {
 });
 
 test('TreeState uid generator uses prefix', () => {
-	const state = new TreeState('sync', 'id-');
+	const state = new SSRState('sync', 'id-');
 	assert.equal(state.uid(), 'id-s1');
 });
 
 test('TreeState title ordering favors later lexicographic paths', () => {
-	const state = new TreeState('sync');
+	const state = new SSRState('sync');
 
 	state.set_title('A', [1]);
 	assert.equal(state.get_title(), 'A');
@@ -234,7 +234,7 @@ test('TreeState title ordering favors later lexicographic paths', () => {
 });
 
 test('push accepts async functions in async context', async () => {
-	const payload = new Payload(new TreeState('async'));
+	const payload = new Payload(new SSRState('async'));
 	payload.push('a');
 	payload.push(async () => {
 		await Promise.resolve();
@@ -248,7 +248,7 @@ test('push accepts async functions in async context', async () => {
 });
 
 test('push handles async functions with different timing', async () => {
-	const payload = new Payload(new TreeState('async'));
+	const payload = new Payload(new SSRState('async'));
 
 	// Fast async function
 	payload.push(async () => {
@@ -271,7 +271,7 @@ test('push handles async functions with different timing', async () => {
 });
 
 test('push async functions work with head content type', async () => {
-	const payload = new Payload(new TreeState('async'), undefined, undefined, 'head');
+	const payload = new Payload(new SSRState('async'), undefined, undefined, 'head');
 	payload.push(async () => {
 		await Promise.resolve();
 		return '<title>Async Title</title>';
@@ -283,7 +283,7 @@ test('push async functions work with head content type', async () => {
 });
 
 test('push async functions can be mixed with child payloads', async () => {
-	const payload = new Payload(new TreeState('async'));
+	const payload = new Payload(new SSRState('async'));
 	payload.push('start-');
 
 	payload.push(async () => {
@@ -303,7 +303,7 @@ test('push async functions can be mixed with child payloads', async () => {
 });
 
 test('push async functions work with compact operations', async () => {
-	const payload = new Payload(new TreeState('async'));
+	const payload = new Payload(new SSRState('async'));
 	payload.push('a');
 	payload.push(async () => {
 		await Promise.resolve();
@@ -322,7 +322,7 @@ test('push async functions work with compact operations', async () => {
 });
 
 test('push async functions are not supported in sync context', () => {
-	const payload = new Payload(new TreeState('sync'));
+	const payload = new Payload(new SSRState('sync'));
 	payload.push('a');
 
 	expect(() => {
@@ -332,7 +332,7 @@ test('push async functions are not supported in sync context', () => {
 });
 
 test('collect_on_destroy yields callbacks in the correct order', async () => {
-	const payload = new Payload(new TreeState('async'));
+	const payload = new Payload(new SSRState('async'));
 	const destroyed: string[] = [];
 	payload.component((payload) => {
 		payload.on_destroy(() => destroyed.push('a'));

@@ -18,7 +18,7 @@ import { ssr_context, pop, push, set_ssr_context } from './context.js';
 import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN, BLOCK_OPEN_ELSE } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
 import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
-import { Payload, TreeState } from './payload.js';
+import { Payload, SSRState } from './payload.js';
 import { abort } from './abort-signal.js';
 import { async_mode_flag } from '../flags/index.js';
 import * as e from './errors.js';
@@ -62,7 +62,7 @@ export function element(payload, tag, attributes_fn = noop, children_fn = noop) 
  * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} [options]
  */
 function open(mode, component, options = {}) {
-	const payload = new Payload(new TreeState(mode, options.idPrefix ? options.idPrefix + '-' : ''));
+	const payload = new Payload(new SSRState(mode, options.idPrefix ? options.idPrefix + '-' : ''));
 
 	payload.push(BLOCK_OPEN);
 
