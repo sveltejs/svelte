@@ -386,9 +386,6 @@ export class TreeState {
 }
 
 export class TreeHeadState {
-	/** @readonly @type {Set<{ hash: string; code: string }>} */
-	css = new Set();
-
 	/** @readonly @type {() => string} */
 	uid = () => '';
 
