@@ -75,11 +75,11 @@ export function pop() {
 }
 
 /**
- * @param {SSRContext} component_context
+ * @param {SSRContext} ssr_context
  * @returns {Map<unknown, unknown> | null}
  */
-function get_parent_context(component_context) {
-	let parent = component_context.p;
+function get_parent_context(ssr_context) {
+	let parent = ssr_context.p;
 
 	while (parent !== null) {
 		const context_map = parent.c;

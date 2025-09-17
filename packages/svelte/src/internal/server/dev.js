@@ -86,7 +86,7 @@ export function push_element(payload, tag, line, column) {
 }
 
 export function pop_element() {
-	set_ssr_context(ssr_context?.p ?? null);
+	set_ssr_context(/** @type {SSRContext} */ (ssr_context).p);
 }
 
 /**

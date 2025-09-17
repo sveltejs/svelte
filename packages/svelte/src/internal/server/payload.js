@@ -100,14 +100,18 @@ export class Payload {
 		const child = new Payload(this.global, this, type);
 		this.#out.push(child);
 
+		const parent = ssr_context;
+
 		set_ssr_context({
 			...ssr_context,
-			p: ssr_context?.p ?? null,
-			c: ssr_context?.c ?? null,
+			p: parent,
+			c: null,
 			r: child
 		});
 
 		const result = fn(child);
+
+		set_ssr_context(parent);
 
 		if (result instanceof Promise) {
 			if (child.global.mode === 'sync') {
