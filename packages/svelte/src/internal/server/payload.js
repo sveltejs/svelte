@@ -283,7 +283,7 @@ export class Payload {
 		const result = render(child_payload);
 		if (result instanceof Promise) {
 			if (this.global.mode === 'sync') {
-				e.async_in_sync();
+				e.await_invalid();
 			}
 			// just to avoid unhandled promise rejections -- we'll end up throwing in `collect_async` if something fails
 			result.catch(() => {});

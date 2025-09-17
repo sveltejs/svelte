@@ -70,7 +70,7 @@ test('creating an async child in a sync context throws', () => {
 			await Promise.resolve();
 			$$payload.push('x');
 		})
-	).toThrow('async_in_sync');
+	).toThrow('await_invalid');
 });
 
 test('collect_async allows awaiting payload to get aggregated content', async () => {

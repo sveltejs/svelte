@@ -119,7 +119,7 @@ export function render(component, options = {}) {
  */
 export async function render_async(component, options = {}) {
 	if (!async_mode_flag) {
-		e.missing_experimental_flag();
+		e.experimental_async_ssr();
 	}
 
 	var previous_context = ssr_context;
