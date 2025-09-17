@@ -3,7 +3,6 @@ import * as e from './errors.js';
 
 /** @typedef {'head' | 'body'} PayloadType */
 /** @typedef {{ [key in PayloadType]: string }} AccumulatedContent */
-/** @typedef {{ start: number, end: number, fn: (content: AccumulatedContent) => AccumulatedContent | Promise<AccumulatedContent> }} Compaction */
 /**
  * @template T
  * @typedef {T | Promise<T>} MaybePromise<T>
