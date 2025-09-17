@@ -87,27 +87,27 @@ export class Payload {
 	/**
 	 * Create a child payload. The child payload inherits the state from the parent,
 	 * but has its own content.
-	 * @param {(tree: Payload) => MaybePromise<void>} render
+	 * @param {(tree: Payload) => MaybePromise<void>} fn
 	 * @param {PayloadType} [type]
 	 * @returns {void}
 	 */
-	child(render, type) {
+	child(fn, type) {
 		const child = new Payload(this.global, this, type);
-		this.#run_child(child, render);
+		this.#run_child(child, fn);
 	}
 
 	/**
 	 * Create a component payload. The component payload inherits the state from the parent,
 	 * but has its own content. It is treated as an ordering boundary for ondestroy callbacks.
-	 * @param {(tree: Payload) => MaybePromise<void>} render
-	 * @param {Function} [fn]
+	 * @param {(tree: Payload) => MaybePromise<void>} fn
+	 * @param {Function} [component_fn]
 	 * @returns {void}
 	 */
-	component(render, fn) {
-		push(fn);
+	component(fn, component_fn) {
+		push(component_fn);
 		const child = new Payload(this.global, this);
 		child.#is_component_body = true;
-		this.#run_child(child, render);
+		this.#run_child(child, fn);
 		pop();
 	}
 
@@ -270,10 +270,10 @@ export class Payload {
 
 	/**
 	 * @param {Payload} child_payload
-	 * @param {(tree: Payload) => MaybePromise<void>} render
+	 * @param {(tree: Payload) => MaybePromise<void>} fn
 	 * @returns {void}
 	 */
-	#run_child(child_payload, render) {
+	#run_child(child_payload, fn) {
 		this.#out.push(child_payload);
 		set_ssr_context({
 			...ssr_context,
@@ -281,7 +281,7 @@ export class Payload {
 			c: ssr_context?.c ?? null,
 			r: child_payload
 		});
-		const result = render(child_payload);
+		const result = fn(child_payload);
 		if (result instanceof Promise) {
 			if (this.global.mode === 'sync') {
 				e.await_invalid();
