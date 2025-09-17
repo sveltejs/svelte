@@ -74,13 +74,12 @@ export class Payload {
 
 	/**
 	 * @param {SSRState} global
-	 * @param {{ select_value: string | undefined }} [local]
 	 * @param {Payload | undefined} [parent]
 	 * @param {PayloadType} [type]
 	 */
-	constructor(global, local = { select_value: undefined }, parent, type) {
+	constructor(global, parent, type) {
 		this.global = global;
-		this.local = { ...local };
+		this.local = parent ? { ...parent.local } : { select_value: undefined };
 		this.#parent = parent;
 		this.type = type ?? parent?.type ?? 'body';
 	}
@@ -93,7 +92,7 @@ export class Payload {
 	 * @returns {void}
 	 */
 	child(render, type) {
-		const child = new Payload(this.global, this.local, this, type);
+		const child = new Payload(this.global, this, type);
 		this.#run_child(child, render);
 	}
 
@@ -106,7 +105,7 @@ export class Payload {
 	 */
 	component(render, fn) {
 		push(fn);
-		const child = new Payload(this.global, this.local, this);
+		const child = new Payload(this.global, this);
 		child.#is_component_body = true;
 		this.#run_child(child, render);
 		pop();
@@ -129,7 +128,7 @@ export class Payload {
 	 * @param {{ start: number, end?: number, fn: (content: AccumulatedContent) => AccumulatedContent | Promise<AccumulatedContent> }} args
 	 */
 	compact({ start, end = this.#out.length, fn }) {
-		const child = new Payload(this.global, this.local, this);
+		const child = new Payload(this.global, this);
 		const to_compact = this.#out.splice(start, end - start, child);
 
 		if (this.global.mode === 'sync') {
@@ -188,7 +187,7 @@ export class Payload {
 	 * @deprecated this is needed for legacy component bindings
 	 */
 	copy() {
-		const copy = new Payload(this.global, this.local, this.#parent, this.type);
+		const copy = new Payload(this.global, this.#parent, this.type);
 		copy.#out = this.#out.map((item) => (item instanceof Payload ? item.copy() : item));
 		copy.promises = this.promises;
 		return copy;
@@ -358,7 +357,7 @@ export class Payload {
 	static #push_accumulated_content(tree, accumulated_content) {
 		for (const [type, content] of Object.entries(accumulated_content)) {
 			if (!content) continue;
-			const child = new Payload(tree.global, tree.local, tree, /** @type {PayloadType} */ (type));
+			const child = new Payload(tree.global, tree, /** @type {PayloadType} */ (type));
 			child.push(content);
 			tree.#out.push(child);
 		}

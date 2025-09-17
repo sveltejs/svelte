@@ -28,7 +28,7 @@ test('child type switches content area (head vs body)', () => {
 });
 
 test('child inherits parent type when not specified', () => {
-	const parent = new Payload(new SSRState('sync'), undefined, undefined, 'head');
+	const parent = new Payload(new SSRState('sync'), undefined, 'head');
 	parent.push('<meta name="x"/>');
 	parent.child(($$payload) => {
 		$$payload.push('<style>/* css */</style>');
@@ -160,7 +160,7 @@ test('local state is shallow-copied to children', () => {
 });
 
 test('subsume replaces tree content and state from other', () => {
-	const a = new Payload(new SSRState('async'), undefined, undefined, 'head');
+	const a = new Payload(new SSRState('async'), undefined, 'head');
 	a.push('<meta />');
 	a.local.select_value = 'A';
 
@@ -182,7 +182,7 @@ test('subsume replaces tree content and state from other', () => {
 });
 
 test('subsume refuses to switch modes', () => {
-	const a = new Payload(new SSRState('sync'), undefined, undefined, 'head');
+	const a = new Payload(new SSRState('sync'), undefined, 'head');
 	a.push('<meta />');
 	a.local.select_value = 'A';
 
@@ -271,7 +271,7 @@ test('push handles async functions with different timing', async () => {
 });
 
 test('push async functions work with head content type', async () => {
-	const payload = new Payload(new SSRState('async'), undefined, undefined, 'head');
+	const payload = new Payload(new SSRState('async'), undefined, 'head');
 	payload.push(async () => {
 		await Promise.resolve();
 		return '<title>Async Title</title>';
