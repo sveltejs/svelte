@@ -40,7 +40,7 @@ import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 import { SvelteBoundary } from './visitors/SvelteBoundary.js';
-import { call_child_payload, call_component_payload } from './visitors/shared/utils.js';
+import { call_child_renderer, call_component_renderer } from './visitors/shared/utils.js';
 
 /** @type {Visitors} */
 const global_visitors = {
@@ -188,21 +188,21 @@ export function server_component(analysis, options) {
 		template.body = [
 			...snippets,
 			b.let('$$settled', b.true),
-			b.let('$$inner_payload'),
+			b.let('$$inner_renderer'),
 			b.function_declaration(
 				b.id('$$render_inner'),
-				[b.id('$$payload')],
+				[b.id(' $$renderer')],
 				b.block(/** @type {Statement[]} */ (rest))
 			),
 			b.do_while(
 				b.unary('!', b.id('$$settled')),
 				b.block([
 					b.stmt(b.assignment('=', b.id('$$settled'), b.true)),
-					b.stmt(b.assignment('=', b.id('$$inner_payload'), b.call('$$payload.copy'))),
-					b.stmt(b.call('$$render_inner', b.id('$$inner_payload')))
+					b.stmt(b.assignment('=', b.id('$$inner_renderer'), b.call(' $$renderer.copy'))),
+					b.stmt(b.call('$$render_inner', b.id('$$inner_renderer')))
 				])
 			),
-			b.stmt(b.call('$$payload.subsume', b.id('$$inner_payload')))
+			b.stmt(b.call(' $$renderer.subsume', b.id('$$inner_renderer')))
 		];
 	}
 
@@ -244,7 +244,7 @@ export function server_component(analysis, options) {
 	]);
 
 	if (analysis.instance.has_await) {
-		component_block = b.block([call_child_payload(component_block, true)]);
+		component_block = b.block([call_child_renderer(component_block, true)]);
 	}
 
 	// trick esrap into including comments
@@ -253,7 +253,7 @@ export function server_component(analysis, options) {
 	if (analysis.props_id) {
 		// need to be placed on first line of the component for hydration
 		component_block.body.unshift(
-			b.const(analysis.props_id, b.call('$.props_id', b.id('$$payload')))
+			b.const(analysis.props_id, b.call('$.props_id', b.id(' $$renderer')))
 		);
 	}
 
@@ -261,7 +261,7 @@ export function server_component(analysis, options) {
 
 	if (should_inject_context) {
 		component_block = b.block([
-			call_component_payload(component_block, dev && b.id(component_name))
+			call_component_renderer(component_block, dev && b.id(component_name))
 		]);
 	}
 
@@ -301,7 +301,7 @@ export function server_component(analysis, options) {
 		const code = b.literal(render_stylesheet(analysis.source, analysis, options).code);
 
 		body.push(b.const('$$css', b.object([b.init('hash', hash), b.init('code', code)])));
-		component_block.body.unshift(b.stmt(b.call('$$payload.global.css.add', b.id('$$css'))));
+		component_block.body.unshift(b.stmt(b.call(' $$renderer.global.css.add', b.id('$$css'))));
 	}
 
 	let should_inject_props =
@@ -315,7 +315,7 @@ export function server_component(analysis, options) {
 
 	const component_function = b.function_declaration(
 		b.id(analysis.name),
-		should_inject_props ? [b.id('$$payload'), b.id('$$props')] : [b.id('$$payload')],
+		should_inject_props ? [b.id(' $$renderer'), b.id('$$props')] : [b.id(' $$renderer')],
 		component_block
 	);
 

@@ -6,7 +6,7 @@ import {
 	empty_comment,
 	build_attribute_value,
 	PromiseOptimiser,
-	call_child_payload
+	call_child_renderer
 } from './shared/utils.js';
 
 /**
@@ -57,7 +57,7 @@ export function SlotElement(node, context) {
 
 	const slot = b.call(
 		'$.slot',
-		b.id('$$payload'),
+		b.id(' $$renderer'),
 		b.id('$$props'),
 		name,
 		props_expression,
@@ -66,7 +66,7 @@ export function SlotElement(node, context) {
 
 	const statement =
 		optimiser.expressions.length > 0
-			? call_child_payload(b.block([optimiser.apply(), b.stmt(slot)]), true)
+			? call_child_renderer(b.block([optimiser.apply(), b.stmt(slot)]), true)
 			: b.stmt(slot);
 
 	context.state.template.push(empty_comment, statement, empty_comment);

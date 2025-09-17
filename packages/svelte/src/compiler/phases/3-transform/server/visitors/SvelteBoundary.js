@@ -24,7 +24,7 @@ export function SvelteBoundary(node, context) {
 		const pending = pending_attribute
 			? b.call(
 					build_attribute_value(pending_attribute.value, context, false, true),
-					b.id('$$payload')
+					b.id(' $$renderer')
 				)
 			: /** @type {BlockStatement} */ (context.visit(pending_snippet.body));
 

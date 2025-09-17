@@ -7,57 +7,57 @@ import * as e from './errors.js';
 import * as w from './warnings.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 
-/** @typedef {'head' | 'body'} PayloadType */
-/** @typedef {{ [key in PayloadType]: string }} AccumulatedContent */
+/** @typedef {'head' | 'body'} RendererType */
+/** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
 /**
  * @template T
  * @typedef {T | Promise<T>} MaybePromise<T>
  */
 /**
- * @typedef {string | Payload} PayloadItem
+ * @typedef {string | Renderer} RendererItem
  */
 
 /**
- * Payloads are basically a tree of `string | Payload`s, where each `Payload` in the tree represents
- * work that may or may not have completed. A payload can be {@link collect}ed to aggregate the
+ * Renderers are basically a tree of `string | Renderer`s, where each `Renderer` in the tree represents
+ * work that may or may not have completed. A renderer can be {@link collect}ed to aggregate the
  * content from itself and all of its children, but this will throw if any of the children are
- * performing asynchronous work. To asynchronously collect a payload, just `await` it.
+ * performing asynchronous work. To asynchronously collect a renderer, just `await` it.
  *
- * The `string` values within a payload are always associated with the {@link type} of that payload. To switch types,
+ * The `string` values within a renderer are always associated with the {@link type} of that renderer. To switch types,
  * call {@link child} with a different `type` argument.
  */
-export class Payload {
+export class Renderer {
 	/**
-	 * The contents of the payload.
-	 * @type {PayloadItem[]}
+	 * The contents of the renderer.
+	 * @type {RendererItem[]}
 	 */
 	#out = [];
 
 	/**
-	 * Any `onDestroy` callbacks registered during execution of this payload.
+	 * Any `onDestroy` callbacks registered during execution of this renderer.
 	 * @type {(() => void)[] | undefined}
 	 */
 	#on_destroy = undefined;
 
 	/**
-	 * Whether this payload is a component body.
+	 * Whether this renderer is a component body.
 	 * @type {boolean}
 	 */
 	#is_component_body = false;
 
 	/**
-	 * The type of string content that this payload is accumulating.
-	 * @type {PayloadType}
+	 * The type of string content that this renderer is accumulating.
+	 * @type {RendererType}
 	 */
 	type;
 
-	/** @type {Payload | undefined} */
+	/** @type {Renderer | undefined} */
 	#parent;
 
 	/**
-	 * Asynchronous work associated with this payload. `initial` is the promise from the function
-	 * this payload was passed to (if that function was async), and `followup` is any any additional
-	 * work from `compact` calls that needs to complete prior to collecting this payload's content.
+	 * Asynchronous work associated with this renderer. `initial` is the promise from the function
+	 * this renderer was passed to (if that function was async), and `followup` is any any additional
+	 * work from `compact` calls that needs to complete prior to collecting this renderer's content.
 	 * @type {{ initial: Promise<void> | undefined, followup: Promise<void>[] }}
 	 */
 	promises = { initial: undefined, followup: [] };
@@ -80,8 +80,8 @@ export class Payload {
 
 	/**
 	 * @param {SSRState} global
-	 * @param {Payload | undefined} [parent]
-	 * @param {PayloadType} [type]
+	 * @param {Renderer | undefined} [parent]
+	 * @param {RendererType} [type]
 	 */
 	constructor(global, parent, type) {
 		this.global = global;
@@ -91,13 +91,13 @@ export class Payload {
 	}
 
 	/**
-	 * Create a child payload. The child payload inherits the state from the parent,
+	 * Create a child renderer. The child renderer inherits the state from the parent,
 	 * but has its own content.
-	 * @param {(payload: Payload) => MaybePromise<void>} fn
-	 * @param {PayloadType} [type]
+	 * @param {(renderer: Renderer) => MaybePromise<void>} fn
+	 * @param {RendererType} [type]
 	 */
 	child(fn, type) {
-		const child = new Payload(this.global, this, type);
+		const child = new Renderer(this.global, this, type);
 		this.#out.push(child);
 
 		const parent = ssr_context;
@@ -126,9 +126,9 @@ export class Payload {
 	}
 
 	/**
-	 * Create a component payload. The component payload inherits the state from the parent,
+	 * Create a component renderer. The component renderer inherits the state from the parent,
 	 * but has its own content. It is treated as an ordering boundary for ondestroy callbacks.
-	 * @param {(payload: Payload) => MaybePromise<void>} fn
+	 * @param {(renderer: Renderer) => MaybePromise<void>} fn
 	 * @param {Function} [component_fn]
 	 * @returns {void}
 	 */
@@ -144,25 +144,25 @@ export class Payload {
 	 */
 	push(content) {
 		if (typeof content === 'function') {
-			this.child(async (payload) => payload.push(await content()));
+			this.child(async (renderer) => renderer.push(await content()));
 		} else {
 			this.#out.push(content);
 		}
 	}
 
 	/**
-	 * Compact everything between `start` and `end` into a single payload, then call `fn` with the result of that payload.
-	 * The compacted payload will be sync if all of the children are sync and {@link fn} is sync, otherwise it will be async.
+	 * Compact everything between `start` and `end` into a single renderer, then call `fn` with the result of that renderer.
+	 * The compacted renderer will be sync if all of the children are sync and {@link fn} is sync, otherwise it will be async.
 	 * @param {{ start: number, end?: number, fn: (content: AccumulatedContent) => AccumulatedContent | Promise<AccumulatedContent> }} args
 	 */
 	compact({ start, end = this.#out.length, fn }) {
-		const child = new Payload(this.global, this);
+		const child = new Renderer(this.global, this);
 		const to_compact = this.#out.splice(start, end - start, child);
 
 		if (this.global.mode === 'sync') {
-			Payload.#compact(fn, child, to_compact, this.type);
+			Renderer.#compact(fn, child, to_compact, this.type);
 		} else {
-			this.promises.followup.push(Payload.#compact_async(fn, child, to_compact, this.type));
+			this.promises.followup.push(Renderer.#compact_async(fn, child, to_compact, this.type));
 		}
 	}
 
@@ -184,26 +184,26 @@ export class Payload {
 	 * @deprecated this is needed for legacy component bindings
 	 */
 	copy() {
-		const copy = new Payload(this.global, this.#parent, this.type);
-		copy.#out = this.#out.map((item) => (item instanceof Payload ? item.copy() : item));
+		const copy = new Renderer(this.global, this.#parent, this.type);
+		copy.#out = this.#out.map((item) => (item instanceof Renderer ? item.copy() : item));
 		copy.promises = this.promises;
 		return copy;
 	}
 
 	/**
-	 * @param {Payload} other
+	 * @param {Renderer} other
 	 * @deprecated this is needed for legacy component bindings
 	 */
 	subsume(other) {
 		if (this.global.mode !== other.global.mode) {
 			throw new Error(
-				"invariant: A payload cannot switch modes. If you're seeing this, there's a compiler bug. File an issue!"
+				"invariant: A renderer cannot switch modes. If you're seeing this, there's a compiler bug. File an issue!"
 			);
 		}
 
 		this.local = other.local;
 		this.#out = other.#out.map((item) => {
-			if (item instanceof Payload) {
+			if (item instanceof Renderer) {
 				item.subsume(item);
 			}
 			return item;
@@ -236,17 +236,17 @@ export class Payload {
 		Object.defineProperties(result, {
 			html: {
 				get: () => {
-					return (sync ??= Payload.#render(component, options)).body;
+					return (sync ??= Renderer.#render(component, options)).body;
 				}
 			},
 			head: {
 				get: () => {
-					return (sync ??= Payload.#render(component, options)).head;
+					return (sync ??= Renderer.#render(component, options)).head;
 				}
 			},
 			body: {
 				get: () => {
-					return (sync ??= Payload.#render(component, options)).body;
+					return (sync ??= Renderer.#render(component, options)).body;
 				}
 			},
 			then: {
@@ -262,7 +262,7 @@ export class Payload {
 					(onfulfilled, onrejected) => {
 						if (!async_mode_flag) {
 							w.experimental_async_ssr();
-							const result = (sync ??= Payload.#render(component, options));
+							const result = (sync ??= Renderer.#render(component, options));
 							const user_result = onfulfilled({
 								head: result.head,
 								body: result.body,
@@ -270,7 +270,7 @@ export class Payload {
 							});
 							return Promise.resolve(user_result);
 						}
-						async ??= Payload.#render_async(component, options);
+						async ??= Renderer.#render_async(component, options);
 						return async.then((result) => {
 							Object.defineProperty(result, 'html', {
 								// eslint-disable-next-line getter-return
@@ -291,8 +291,8 @@ export class Payload {
 	 * Collect all of the `onDestroy` callbacks regsitered during rendering. In an async context, this is only safe to call
 	 * after awaiting `collect_async`.
 	 *
-	 * Child payloads are "porous" and don't affect execution order, but component body payloads
-	 * create ordering boundaries. Within a payload, callbacks run in order until hitting a component boundary.
+	 * Child renderers are "porous" and don't affect execution order, but component body renderers
+	 * create ordering boundaries. Within a renderer, callbacks run in order until hitting a component boundary.
 	 * @returns {Iterable<() => void>}
 	 */
 	*#collect_on_destroy() {
@@ -302,8 +302,8 @@ export class Payload {
 	}
 
 	/**
-	 * Performs a depth-first search of payloads, yielding the deepest components first, then additional components as we backtrack up the tree.
-	 * @returns {Iterable<Payload>}
+	 * Performs a depth-first search of renderers, yielding the deepest components first, then additional components as we backtrack up the tree.
+	 * @returns {Iterable<Renderer>}
 	 */
 	*#traverse_components() {
 		for (const child of this.#out) {
@@ -326,7 +326,7 @@ export class Payload {
 			}
 		}
 		for (const child of this.#out) {
-			if (child instanceof Payload && !child.#is_component_body) {
+			if (child instanceof Renderer && !child.#is_component_body) {
 				yield* child.#collect_ondestroy();
 			}
 		}
@@ -343,10 +343,10 @@ export class Payload {
 	static #render(component, options) {
 		var previous_context = ssr_context;
 		try {
-			const payload = Payload.#open_render('sync', component, options);
+			const renderer = Renderer.#open_render('sync', component, options);
 
-			const content = Payload.#collect_content([payload], payload.type);
-			return Payload.#close_render(content, payload);
+			const content = Renderer.#collect_content([renderer], renderer.type);
+			return Renderer.#close_render(content, renderer);
 		} finally {
 			abort();
 			set_ssr_context(previous_context);
@@ -364,10 +364,10 @@ export class Payload {
 	static async #render_async(component, options) {
 		var previous_context = ssr_context;
 		try {
-			const payload = Payload.#open_render('async', component, options);
+			const renderer = Renderer.#open_render('async', component, options);
 
-			const content = await Payload.#collect_content_async([payload], payload.type);
-			return Payload.#close_render(content, payload);
+			const content = await Renderer.#collect_content_async([renderer], renderer.type);
+			return Renderer.#close_render(content, renderer);
 		} finally {
 			abort();
 			set_ssr_context(previous_context);
@@ -376,38 +376,38 @@ export class Payload {
 
 	/**
 	 * @param {(content: AccumulatedContent) => AccumulatedContent | Promise<AccumulatedContent>} fn
-	 * @param {Payload} child
-	 * @param {PayloadItem[]} to_compact
-	 * @param {PayloadType} type
+	 * @param {Renderer} child
+	 * @param {RendererItem[]} to_compact
+	 * @param {RendererType} type
 	 */
 	static #compact(fn, child, to_compact, type) {
-		const content = Payload.#collect_content(to_compact, type);
+		const content = Renderer.#collect_content(to_compact, type);
 		const transformed_content = fn(content);
 		if (transformed_content instanceof Promise) {
 			throw new Error(
 				"invariant: Somehow you've encountered asynchronous work while rendering synchronously. If you're seeing this, there's a compiler bug. File an issue!"
 			);
 		} else {
-			Payload.#push_accumulated_content(child, transformed_content);
+			Renderer.#push_accumulated_content(child, transformed_content);
 		}
 	}
 
 	/**
 	 * @param {(content: AccumulatedContent) => AccumulatedContent | Promise<AccumulatedContent>} fn
-	 * @param {Payload} child
-	 * @param {PayloadItem[]} to_compact
-	 * @param {PayloadType} type
+	 * @param {Renderer} child
+	 * @param {RendererItem[]} to_compact
+	 * @param {RendererType} type
 	 */
 	static async #compact_async(fn, child, to_compact, type) {
-		const content = await Payload.#collect_content_async(to_compact, type);
+		const content = await Renderer.#collect_content_async(to_compact, type);
 		const transformed_content = await fn(content);
-		Payload.#push_accumulated_content(child, transformed_content);
+		Renderer.#push_accumulated_content(child, transformed_content);
 	}
 
 	/**
 	 * Collect all of the code from the `out` array and return it as a string, or a promise resolving to a string.
-	 * @param {PayloadItem[]} items
-	 * @param {PayloadType} current_type
+	 * @param {RendererItem[]} items
+	 * @param {RendererType} current_type
 	 * @param {AccumulatedContent} content
 	 * @returns {AccumulatedContent}
 	 */
@@ -415,8 +415,8 @@ export class Payload {
 		for (const item of items) {
 			if (typeof item === 'string') {
 				content[current_type] += item;
-			} else if (item instanceof Payload) {
-				Payload.#collect_content(item.#out, item.type, content);
+			} else if (item instanceof Renderer) {
+				Renderer.#collect_content(item.#out, item.type, content);
 			}
 		}
 		return content;
@@ -424,8 +424,8 @@ export class Payload {
 
 	/**
 	 * Collect all of the code from the `out` array and return it as a string.
-	 * @param {PayloadItem[]} items
-	 * @param {PayloadType} current_type
+	 * @param {RendererItem[]} items
+	 * @param {RendererType} current_type
 	 * @param {AccumulatedContent} content
 	 * @returns {Promise<AccumulatedContent>}
 	 */
@@ -436,7 +436,7 @@ export class Payload {
 				content[current_type] += item;
 			} else {
 				if (item.promises.initial) {
-					// this represents the async function that's modifying this payload.
+					// this represents the async function that's modifying this renderer.
 					// we can't do anything until it's done and we know our `out` array is complete.
 					await item.promises.initial;
 				}
@@ -444,20 +444,20 @@ export class Payload {
 					// this is sequential because `compact` could synchronously queue up additional followup work
 					await followup;
 				}
-				await Payload.#collect_content_async(item.#out, item.type, content);
+				await Renderer.#collect_content_async(item.#out, item.type, content);
 			}
 		}
 		return content;
 	}
 
 	/**
-	 * @param {Payload} tree
+	 * @param {Renderer} tree
 	 * @param {AccumulatedContent} accumulated_content
 	 */
 	static #push_accumulated_content(tree, accumulated_content) {
 		for (const [type, content] of Object.entries(accumulated_content)) {
 			if (!content) continue;
-			const child = new Payload(tree.global, tree, /** @type {PayloadType} */ (type));
+			const child = new Renderer(tree.global, tree, /** @type {RendererType} */ (type));
 			child.push(content);
 			tree.#out.push(child);
 		}
@@ -468,45 +468,47 @@ export class Payload {
 	 * @param {'sync' | 'async'} mode
 	 * @param {import('svelte').Component<Props>} component
 	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} options
-	 * @returns {Payload}
+	 * @returns {Renderer}
 	 */
 	static #open_render(mode, component, options) {
-		const payload = new Payload(new SSRState(mode, options.idPrefix ? options.idPrefix + '-' : ''));
+		const renderer = new Renderer(
+			new SSRState(mode, options.idPrefix ? options.idPrefix + '-' : '')
+		);
 
-		payload.push(BLOCK_OPEN);
+		renderer.push(BLOCK_OPEN);
 
 		if (options.context) {
 			push();
 			/** @type {SSRContext} */ (ssr_context).c = options.context;
-			/** @type {SSRContext} */ (ssr_context).r = payload;
+			/** @type {SSRContext} */ (ssr_context).r = renderer;
 		}
 
 		// @ts-expect-error
-		component(payload, options.props ?? {});
+		component(renderer, options.props ?? {});
 
 		if (options.context) {
 			pop();
 		}
 
-		payload.push(BLOCK_CLOSE);
+		renderer.push(BLOCK_CLOSE);
 
-		return payload;
+		return renderer;
 	}
 
 	/**
 	 * @param {AccumulatedContent} content
-	 * @param {Payload} payload
+	 * @param {Renderer} renderer
 	 */
-	static #close_render(content, payload) {
-		for (const cleanup of payload.#collect_on_destroy()) {
+	static #close_render(content, renderer) {
+		for (const cleanup of renderer.#collect_on_destroy()) {
 			cleanup();
 		}
 
-		let head = content.head + payload.global.get_title();
+		let head = content.head + renderer.global.get_title();
 
 		const body = BLOCK_OPEN + content.body + BLOCK_CLOSE; // this inserts a fake boundary so hydration matches
 
-		for (const { hash, code } of payload.global.css) {
+		for (const { hash, code } of renderer.global.css) {
 			head += `<style id="${hash}">${code}</style>`;
 		}
 

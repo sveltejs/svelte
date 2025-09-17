@@ -1,23 +1,23 @@
 import 'svelte/internal/flags/async';
 import * as $ from 'svelte/internal/server';
 
-export default function Async_each_hoisting($$payload) {
+export default function Async_each_hoisting( $$renderer) {
 	const first = Promise.resolve(1);
 	const second = Promise.resolve(2);
 	const third = Promise.resolve(3);
 
-	$$payload.push(`<!--[-->`);
+	 $$renderer.push(`<!--[-->`);
 
-	$$payload.child(async ($$payload) => {
+	 $$renderer.child(async ( $$renderer) => {
 		const each_array = $.ensure_array_like(await Promise.resolve([first, second, third]));
 
 		for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
 			let item = each_array[$$index];
 
-			$$payload.push(`<!---->`);
-			$$payload.push(async () => $.escape(await item));
+			 $$renderer.push(`<!---->`);
+			 $$renderer.push(async () => $.escape(await item));
 		}
 	});
 
-	$$payload.push(`<!--]-->`);
+	 $$renderer.push(`<!--]-->`);
 }
