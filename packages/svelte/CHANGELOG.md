@@ -1,5 +1,13 @@
 # svelte
 
+## 5.39.1
+
+### Patch Changes
+
+- fix: issue `state_proxy_unmount` warning when unmounting a state proxy ([#16747](https://github.com/sveltejs/svelte/pull/16747))
+
+- fix: add `then` to class component `render` output ([#16783](https://github.com/sveltejs/svelte/pull/16783))
+
 ## 5.39.0
 
 ### Minor Changes
