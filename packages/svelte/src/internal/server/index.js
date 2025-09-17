@@ -56,6 +56,60 @@ export function element(payload, tag, attributes_fn = noop, children_fn = noop) 
 }
 
 /**
+ * @template {Record<string, any>} Props
+ * @param {'sync' | 'async'} mode
+ * @param {import('svelte').Component<Props> | ComponentType<SvelteComponent<Props>>} component
+ * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} [options]
+ */
+function open(mode, component, options = {}) {
+	const payload = new Payload(new TreeState(mode, options.idPrefix ? options.idPrefix + '-' : ''));
+
+	payload.push(BLOCK_OPEN);
+
+	if (options.context) {
+		push();
+		/** @type {SSRContext} */ (ssr_context).c = options.context;
+		/** @type {SSRContext} */ (ssr_context).r = payload;
+	}
+
+	// @ts-expect-error
+	component(payload, options.props ?? {});
+
+	if (options.context) {
+		pop();
+	}
+
+	payload.push(BLOCK_CLOSE);
+
+	return payload;
+}
+
+/**
+ * @param {string} head
+ * @param {string} body
+ * @param {Payload} payload
+ */
+function close(head, body, payload) {
+	for (const cleanup of payload.collect_on_destroy()) {
+		cleanup();
+	}
+
+	head += payload.global.head.title.value;
+
+	body = BLOCK_OPEN + body + BLOCK_CLOSE; // this inserts a fake boundary so hydration matches
+
+	for (const { hash, code } of payload.global.css) {
+		head += `<style id="${hash}">${code}</style>`;
+	}
+
+	return {
+		head,
+		html: body,
+		body
+	};
+}
+
+/**
  * Only available on the server and when compiling with the `server` option.
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
  * @template {Record<string, any>} Props
@@ -67,42 +121,10 @@ export function render(component, options = {}) {
 	var previous_context = ssr_context;
 
 	try {
-		const payload = new Payload(
-			new TreeState('sync', options.idPrefix ? options.idPrefix + '-' : '')
-		);
-
-		payload.push(BLOCK_OPEN);
-
-		if (options.context) {
-			push();
-			/** @type {SSRContext} */ (ssr_context).c = options.context;
-			/** @type {SSRContext} */ (ssr_context).r = payload;
-		}
-
-		// @ts-expect-error
-		component(payload, options.props ?? {});
-
-		if (options.context) {
-			pop();
-		}
-
-		payload.push(BLOCK_CLOSE);
+		const payload = open('sync', component, options);
 
 		let { head, body } = payload.collect();
-		for (const cleanup of payload.collect_on_destroy()) cleanup();
-		head += payload.global.head.title.value;
-
-		body = BLOCK_OPEN + body + BLOCK_CLOSE; // this inserts a fake boundary so hydration matches
-
-		for (const { hash, code } of payload.global.css) {
-			head += `<style id="${hash}">${code}</style>`;
-		}
-
-		return {
-			head,
-			html: body,
-			body
-		};
+		return close(head, body, payload);
 	} finally {
 		abort();
 		set_ssr_context(previous_context);
@@ -125,42 +147,10 @@ export async function render_async(component, options = {}) {
 	var previous_context = ssr_context;
 
 	try {
-		const payload = new Payload(
-			new TreeState('async', options.idPrefix ? options.idPrefix + '-' : '')
-		);
-
-		payload.push(BLOCK_OPEN);
-
-		if (options.context) {
-			push();
-			/** @type {SSRContext} */ (ssr_context).c = options.context;
-			/** @type {SSRContext} */ (ssr_context).r = payload;
-		}
-
-		// @ts-expect-error
-		component(payload, options.props ?? {});
-
-		if (options.context) {
-			pop();
-		}
-
-		payload.push(BLOCK_CLOSE);
+		const payload = open('async', component, options);
 
 		let { head, body } = await payload.collect_async();
-		for (const cleanup of payload.collect_on_destroy()) cleanup();
-		head += payload.global.head.title.value;
-
-		body = BLOCK_OPEN + body + BLOCK_CLOSE; // this inserts a fake boundary so hydration matches
-
-		for (const { hash, code } of payload.global.css) {
-			head += `<style id="${hash}">${code}</style>`;
-		}
-
-		return {
-			head,
-			html: body,
-			body
-		};
+		return close(head, body, payload);
 	} finally {
 		abort();
 		set_ssr_context(previous_context);
