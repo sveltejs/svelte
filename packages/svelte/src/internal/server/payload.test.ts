@@ -1,5 +1,5 @@
 import { assert, expect, test } from 'vitest';
-import { Payload, TreeState, TreeHeadState } from './payload.js';
+import { Payload, TreeState } from './payload.js';
 
 test('collects synchronous body content by default', () => {
 	const payload = new Payload(new TreeState('sync'));
@@ -170,7 +170,7 @@ test('subsume replaces tree content and state from other', () => {
 		$$payload.push('body');
 	});
 	b.global.css.add({ hash: 'h', code: 'c' });
-	b.global.head.set_title('Title', [1]);
+	b.global.set_title('Title', [1]);
 	b.local.select_value = 'B';
 	b.promises.initial = Promise.resolve();
 
@@ -192,7 +192,7 @@ test('subsume refuses to switch modes', () => {
 		$$payload.push('body');
 	});
 	b.global.css.add({ hash: 'h', code: 'c' });
-	b.global.head.set_title('Title', [1]);
+	b.global.set_title('Title', [1]);
 	b.local.select_value = 'B';
 	b.promises.initial = Promise.resolve();
 
@@ -206,31 +206,31 @@ test('TreeState uid generator uses prefix', () => {
 	assert.equal(state.uid(), 'id-s1');
 });
 
-test('TreeHeadState title ordering favors later lexicographic paths', () => {
-	const head = new TreeHeadState(() => '');
+test('TreeState title ordering favors later lexicographic paths', () => {
+	const state = new TreeState('sync');
 
-	head.set_title('A', [1]);
-	assert.equal(head.get_title(), 'A');
+	state.set_title('A', [1]);
+	assert.equal(state.get_title(), 'A');
 
 	// equal path -> unchanged
-	head.set_title('B', [1]);
-	assert.equal(head.get_title(), 'A');
+	state.set_title('B', [1]);
+	assert.equal(state.get_title(), 'A');
 
 	// earlier -> unchanged
-	head.set_title('C', [0, 9]);
-	assert.equal(head.get_title(), 'A');
+	state.set_title('C', [0, 9]);
+	assert.equal(state.get_title(), 'A');
 
 	// later -> update
-	head.set_title('D', [2]);
-	assert.equal(head.get_title(), 'D');
+	state.set_title('D', [2]);
+	assert.equal(state.get_title(), 'D');
 
 	// longer but same prefix -> update
-	head.set_title('E', [2, 0]);
-	assert.equal(head.get_title(), 'E');
+	state.set_title('E', [2, 0]);
+	assert.equal(state.get_title(), 'E');
 
 	// shorter (earlier) than current with same prefix -> unchanged
-	head.set_title('F', [2]);
-	assert.equal(head.get_title(), 'E');
+	state.set_title('F', [2]);
+	assert.equal(state.get_title(), 'E');
 });
 
 test('push accepts async functions in async context', async () => {

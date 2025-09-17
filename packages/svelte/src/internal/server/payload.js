@@ -368,11 +368,11 @@ export class TreeState {
 	/** @readonly @type {() => string} */
 	uid;
 
-	/** @readonly @type {TreeHeadState} */
-	head;
-
 	/** @readonly @type {Set<{ hash: string; code: string }>} */
 	css = new Set();
+
+	/** @type {{ path: number[], value: string }} */
+	#title = { path: [], value: '' };
 
 	/**
 	 * @param {'sync' | 'async'} mode
@@ -380,16 +380,10 @@ export class TreeState {
 	 */
 	constructor(mode, id_prefix = '') {
 		this.mode = mode;
-		this.uid = props_id_generator(id_prefix);
-		this.head = new TreeHeadState();
-	}
-}
 
-export class TreeHeadState {
-	/**
-	 * @type {{ path: number[], value: string }}
-	 */
-	#title = { path: [], value: '' };
+		let uid = 1;
+		this.uid = () => `${id_prefix}s${uid++}`;
+	}
 
 	get_title() {
 		return this.#title.value;
@@ -420,14 +414,4 @@ export class TreeHeadState {
 			this.#title.value = value;
 		}
 	}
-}
-
-/**
- * Creates an ID generator
- * @param {string} prefix
- * @returns {() => string}
- */
-function props_id_generator(prefix) {
-	let uid = 1;
-	return () => `${prefix}s${uid++}`;
 }
