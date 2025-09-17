@@ -179,10 +179,6 @@ test('subsume replaces tree content and state from other', () => {
 	assert.equal(a.type, 'body');
 	assert.equal(a.local.select_value, 'B');
 	assert.strictEqual(a.promises, b.promises);
-
-	// global state transferred
-	assert.ok([...a.global.css][0]?.hash === 'h');
-	assert.equal(a.global.head.title.value, 'Title');
 });
 
 test('subsume refuses to switch modes', () => {

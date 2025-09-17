@@ -201,7 +201,6 @@ export class Payload {
 			);
 		}
 
-		this.global.subsume(other.global);
 		this.local = other.local;
 		this.#out = other.#out.map((item) => {
 			if (item instanceof Payload) {
@@ -400,16 +399,6 @@ export class TreeState {
 		this.#css = new Set();
 		this.#head = new TreeHeadState(this.#uid);
 		this.#mode = mode;
-	}
-
-	/**
-	 * @param {TreeState} other
-	 */
-	subsume(other) {
-		this.#css = other.#css;
-		this.#uid = other.#uid;
-		this.#head.subsume(other.#head);
-		this.#mode = other.#mode;
 	}
 }
 
