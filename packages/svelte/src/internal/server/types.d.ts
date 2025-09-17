@@ -29,5 +29,5 @@ interface Thenable<T> {
 	then<TResult1 = T, TResult2 = never>(
 		onfulfilled?: ((value: T) => TResult1 | Thenable<TResult1>) | undefined | null,
 		onrejected?: ((reason: any) => TResult2 | Thenable<TResult2>) | undefined | null
-	): Thenable<TResult1 | TResult2>;
+	): Promise<TResult1 | TResult2>;
 }
