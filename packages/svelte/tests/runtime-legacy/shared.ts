@@ -4,7 +4,7 @@ import { globSync } from 'tinyglobby';
 import { createClassComponent } from 'svelte/legacy';
 import { proxy } from 'svelte/internal/client';
 import { flushSync, hydrate, mount, unmount } from 'svelte';
-import { render, renderAsync } from 'svelte/server';
+import { render } from 'svelte/server';
 import { afterAll, assert, beforeAll } from 'vitest';
 import { async_mode, compile_directory, fragments } from '../helpers.js';
 import { assert_html_equal, assert_html_equal_with_options } from '../html_equal.js';
@@ -334,16 +334,14 @@ async function run_test_variant(
 			config.before_test?.();
 			// ssr into target
 			const SsrSvelteComponent = (await import(`${cwd}/_output/server/main.svelte.js`)).default;
+			const render_result = render(SsrSvelteComponent, {
+				props: config.server_props ?? config.props ?? {},
+				idPrefix: config.id_prefix
+			});
 			const rendered =
 				variant === 'async-ssr' || (variant === 'hydrate' && compileOptions.experimental?.async)
-					? await renderAsync(SsrSvelteComponent, {
-							props: config.server_props ?? config.props ?? {},
-							idPrefix: config.id_prefix
-						})
-					: render(SsrSvelteComponent, {
-							props: config.server_props ?? config.props ?? {},
-							idPrefix: config.id_prefix
-						});
+					? await render_result
+					: render_result;
 			const { html, head } = rendered;
 
 			const prefix = variant === 'async-ssr' ? 'async_' : '';

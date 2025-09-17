@@ -6,7 +6,7 @@
 
 import * as fs from 'node:fs';
 import { assert } from 'vitest';
-import { render, renderAsync } from 'svelte/server';
+import { render } from 'svelte/server';
 import { compile_directory, should_update_expected, try_read_file } from '../helpers.js';
 import { assert_html_equal_with_options } from '../html_equal.js';
 import { suite_with_variants, type BaseTest } from '../suite.js';
@@ -74,15 +74,11 @@ const { test, run } = suite_with_variants<SSRTest, 'sync' | 'async', CompileOpti
 
 		let rendered;
 		try {
-			rendered = is_async
-				? await renderAsync(Component, {
-						props: config.props || {},
-						idPrefix: config.id_prefix
-					})
-				: render(Component, {
-						props: config.props || {},
-						idPrefix: config.id_prefix
-					});
+			const render_result = render(Component, {
+				props: config.props || {},
+				idPrefix: config.id_prefix
+			});
+			rendered = is_async ? await render_result : render_result;
 		} catch (error) {
 			if (config.error) {
 				assert.deepEqual((error as Error).message, config.error);

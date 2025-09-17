@@ -1,4 +1,4 @@
-/** @import { ComponentType, SvelteComponent } from 'svelte' */
+/** @import { ComponentType, SvelteComponent, Component } from 'svelte' */
 /** @import { RenderOutput, SSRContext } from '#server' */
 /** @import { Store } from '#shared' */
 /** @import { AccumulatedContent } from './payload.js' */
@@ -56,105 +56,15 @@ export function element(payload, tag, attributes_fn = noop, children_fn = noop) 
 }
 
 /**
- * @template {Record<string, any>} Props
- * @param {'sync' | 'async'} mode
- * @param {import('svelte').Component<Props> | ComponentType<SvelteComponent<Props>>} component
- * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} [options]
- */
-function open(mode, component, options = {}) {
-	const payload = new Payload(new SSRState(mode, options.idPrefix ? options.idPrefix + '-' : ''));
-
-	payload.push(BLOCK_OPEN);
-
-	if (options.context) {
-		push();
-		/** @type {SSRContext} */ (ssr_context).c = options.context;
-		/** @type {SSRContext} */ (ssr_context).r = payload;
-	}
-
-	// @ts-expect-error
-	component(payload, options.props ?? {});
-
-	if (options.context) {
-		pop();
-	}
-
-	payload.push(BLOCK_CLOSE);
-
-	return payload;
-}
-
-/**
- * @param {string} head
- * @param {string} body
- * @param {Payload} payload
- */
-function close(head, body, payload) {
-	for (const cleanup of payload.collect_on_destroy()) {
-		cleanup();
-	}
-
-	head += payload.global.get_title();
-
-	body = BLOCK_OPEN + body + BLOCK_CLOSE; // this inserts a fake boundary so hydration matches
-
-	for (const { hash, code } of payload.global.css) {
-		head += `<style id="${hash}">${code}</style>`;
-	}
-
-	return {
-		head,
-		html: body,
-		body
-	};
-}
-
-/**
  * Only available on the server and when compiling with the `server` option.
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
  * @template {Record<string, any>} Props
- * @param {import('svelte').Component<Props> | ComponentType<SvelteComponent<Props>>} component
+ * @param {Component<Props> | ComponentType<SvelteComponent<Props>>} component
  * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} [options]
  * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
-	var previous_context = ssr_context;
-
-	try {
-		const payload = open('sync', component, options);
-
-		let { head, body } = payload.collect();
-		return close(head, body, payload);
-	} finally {
-		abort();
-		set_ssr_context(previous_context);
-	}
-}
-
-/**
- * Only available on the server and when compiling with the `server` option.
- * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
- * @template {Record<string, any>} Props
- * @param {import('svelte').Component<Props> | ComponentType<SvelteComponent<Props>>} component
- * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} [options]
- * @returns {Promise<RenderOutput>}
- */
-export async function render_async(component, options = {}) {
-	if (!async_mode_flag) {
-		e.experimental_async_ssr();
-	}
-
-	var previous_context = ssr_context;
-
-	try {
-		const payload = open('async', component, options);
-
-		let { head, body } = await payload.collect_async();
-		return close(head, body, payload);
-	} finally {
-		abort();
-		set_ssr_context(previous_context);
-	}
+	return Payload.render(/** @type {Component<Props>} */ (component), options);
 }
 
 /**

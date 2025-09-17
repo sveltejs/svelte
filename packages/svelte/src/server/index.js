@@ -1,1 +1,1 @@
-export { render, render_async as renderAsync } from '../internal/server/index.js';
+export { render } from '../internal/server/index.js';

@@ -15,18 +15,6 @@ export function await_invalid() {
 }
 
 /**
- * Attempted to use `renderAsync` without `experimental.async` enabled
- * @returns {never}
- */
-export function experimental_async_ssr() {
-	const error = new Error(`experimental_async_ssr\nAttempted to use \`renderAsync\` without \`experimental.async\` enabled\nhttps://svelte.dev/e/experimental_async_ssr`);
-
-	error.name = 'Svelte error';
-
-	throw error;
-}
-
-/**
  * `%name%(...)` is not available on the server
  * @param {string} name
  * @returns {never}

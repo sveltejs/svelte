@@ -1,5 +1,11 @@
+/** @import { Component } from 'svelte' */
+/** @import { RenderOutput, SSRContext, SyncRenderOutput } from './types.js' */
+import { async_mode_flag } from '../flags/index.js';
+import { abort } from './abort-signal.js';
 import { pop, push, set_ssr_context, ssr_context } from './context.js';
 import * as e from './errors.js';
+import * as w from './warnings.js';
+import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 
 /** @typedef {'head' | 'body'} PayloadType */
 /** @typedef {{ [key in PayloadType]: string }} AccumulatedContent */
@@ -87,7 +93,7 @@ export class Payload {
 	/**
 	 * Create a child payload. The child payload inherits the state from the parent,
 	 * but has its own content.
-	 * @param {(tree: Payload) => MaybePromise<void>} fn
+	 * @param {(payload: Payload) => MaybePromise<void>} fn
 	 * @param {PayloadType} [type]
 	 */
 	child(fn, type) {
@@ -118,7 +124,7 @@ export class Payload {
 	/**
 	 * Create a component payload. The component payload inherits the state from the parent,
 	 * but has its own content. It is treated as an ordering boundary for ondestroy callbacks.
-	 * @param {(tree: Payload) => MaybePromise<void>} fn
+	 * @param {(payload: Payload) => MaybePromise<void>} fn
 	 * @param {Function} [component_fn]
 	 * @returns {void}
 	 */
@@ -171,37 +177,6 @@ export class Payload {
 	}
 
 	/**
-	 * Collect all of the code from the `out` array and return it as a string. Throws if any of the children are
-	 * performing asynchronous work.
-	 * @returns {AccumulatedContent}
-	 */
-	collect() {
-		return Payload.#collect_content([this], this.type);
-	}
-
-	/**
-	 * Collect all of the code from the `out` array and return it as a string.
-	 * @returns {Promise<AccumulatedContent>}
-	 */
-	collect_async() {
-		return Payload.#collect_content_async([this], this.type);
-	}
-
-	/**
-	 * Collect all of the `onDestroy` callbacks regsitered during rendering. In an async context, this is only safe to call
-	 * after awaiting `collect_async`.
-	 *
-	 * Child payloads are "porous" and don't affect execution order, but component body payloads
-	 * create ordering boundaries. Within a payload, callbacks run in order until hitting a component boundary.
-	 * @returns {Iterable<() => void>}
-	 */
-	*collect_on_destroy() {
-		for (const component of this.#traverse_components()) {
-			yield* component.#collect_ondestroy();
-		}
-	}
-
-	/**
 	 * @deprecated this is needed for legacy component bindings
 	 */
 	copy() {
@@ -238,20 +213,69 @@ export class Payload {
 	}
 
 	/**
-	 * @param {(content: AccumulatedContent) => AccumulatedContent | Promise<AccumulatedContent>} fn
-	 * @param {Payload} child
-	 * @param {PayloadItem[]} to_compact
-	 * @param {PayloadType} type
+	 * Only available on the server and when compiling with the `server` option.
+	 * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
+	 * @template {Record<string, any>} Props
+	 * @param {Component<Props>} component
+	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} [options]
+	 * @returns {RenderOutput}
 	 */
-	static #compact(fn, child, to_compact, type) {
-		const content = Payload.#collect_content(to_compact, type);
-		const transformed_content = fn(content);
-		if (transformed_content instanceof Promise) {
-			throw new Error(
-				"invariant: Somehow you've encountered asynchronous work while rendering synchronously. If you're seeing this, there's a compiler bug. File an issue!"
-			);
-		} else {
-			Payload.#push_accumulated_content(child, transformed_content);
+	static render(component, options = {}) {
+		/** @type {SyncRenderOutput | undefined} */
+		let sync;
+		/** @type {Promise<SyncRenderOutput> | undefined} */
+		let async;
+
+		const result = /** @type {RenderOutput} */ ({});
+		// making these properties non-enumerable so that console.logging
+		// doesn't trigger a sync render
+		Object.defineProperties(result, {
+			html: {
+				get: () => {
+					return (sync ??= Payload.#render(component, options)).body;
+				}
+			},
+			head: {
+				get: () => {
+					return (sync ??= Payload.#render(component, options)).head;
+				}
+			},
+			body: {
+				get: () => {
+					return (sync ??= Payload.#render(component, options)).body;
+				}
+			},
+			then: {
+				value:
+					/**
+					 * @param { (value: SyncRenderOutput) => void } onfulfilled
+					 * @param { (reason: unknown) => void } onrejected
+					 */
+					(onfulfilled, onrejected) => {
+						if (!async_mode_flag) {
+							w.experimental_async_ssr();
+							return onfulfilled((sync ??= Payload.#render(component, options)));
+						}
+						async ??= Payload.#render_async(component, options);
+						async.then(onfulfilled, onrejected);
+					}
+			}
+		});
+
+		return result;
+	}
+
+	/**
+	 * Collect all of the `onDestroy` callbacks regsitered during rendering. In an async context, this is only safe to call
+	 * after awaiting `collect_async`.
+	 *
+	 * Child payloads are "porous" and don't affect execution order, but component body payloads
+	 * create ordering boundaries. Within a payload, callbacks run in order until hitting a component boundary.
+	 * @returns {Iterable<() => void>}
+	 */
+	*#collect_on_destroy() {
+		for (const component of this.#traverse_components()) {
+			yield* component.#collect_ondestroy();
 		}
 	}
 
@@ -283,6 +307,66 @@ export class Payload {
 			if (child instanceof Payload && !child.#is_component_body) {
 				yield* child.#collect_ondestroy();
 			}
+		}
+	}
+
+	/**
+	 * Render a component. Throws if any of the children are performing asynchronous work.
+	 *
+	 * @template {Record<string, any>} Props
+	 * @param {Component<Props>} component
+	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} options
+	 * @returns {SyncRenderOutput}
+	 */
+	static #render(component, options) {
+		var previous_context = ssr_context;
+		try {
+			const payload = Payload.#open_render('sync', component, options);
+
+			const content = Payload.#collect_content([payload], payload.type);
+			return Payload.#close_render(content, payload);
+		} finally {
+			abort();
+			set_ssr_context(previous_context);
+		}
+	}
+
+	/**
+	 * Render a component.
+	 *
+	 * @template {Record<string, any>} Props
+	 * @param {Component<Props>} component
+	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} options
+	 * @returns {Promise<SyncRenderOutput>}
+	 */
+	static async #render_async(component, options) {
+		var previous_context = ssr_context;
+		try {
+			const payload = Payload.#open_render('async', component, options);
+
+			const content = await Payload.#collect_content_async([payload], payload.type);
+			return Payload.#close_render(content, payload);
+		} finally {
+			abort();
+			set_ssr_context(previous_context);
+		}
+	}
+
+	/**
+	 * @param {(content: AccumulatedContent) => AccumulatedContent | Promise<AccumulatedContent>} fn
+	 * @param {Payload} child
+	 * @param {PayloadItem[]} to_compact
+	 * @param {PayloadType} type
+	 */
+	static #compact(fn, child, to_compact, type) {
+		const content = Payload.#collect_content(to_compact, type);
+		const transformed_content = fn(content);
+		if (transformed_content instanceof Promise) {
+			throw new Error(
+				"invariant: Somehow you've encountered asynchronous work while rendering synchronously. If you're seeing this, there's a compiler bug. File an issue!"
+			);
+		} else {
+			Payload.#push_accumulated_content(child, transformed_content);
 		}
 	}
 
@@ -355,6 +439,60 @@ export class Payload {
 			child.push(content);
 			tree.#out.push(child);
 		}
+	}
+
+	/**
+	 * @template {Record<string, any>} Props
+	 * @param {'sync' | 'async'} mode
+	 * @param {import('svelte').Component<Props>} component
+	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} options
+	 * @returns {Payload}
+	 */
+	static #open_render(mode, component, options) {
+		const payload = new Payload(new SSRState(mode, options.idPrefix ? options.idPrefix + '-' : ''));
+
+		payload.push(BLOCK_OPEN);
+
+		if (options.context) {
+			push();
+			/** @type {SSRContext} */ (ssr_context).c = options.context;
+			/** @type {SSRContext} */ (ssr_context).r = payload;
+		}
+
+		// @ts-expect-error
+		component(payload, options.props ?? {});
+
+		if (options.context) {
+			pop();
+		}
+
+		payload.push(BLOCK_CLOSE);
+
+		return payload;
+	}
+
+	/**
+	 * @param {AccumulatedContent} content
+	 * @param {Payload} payload
+	 */
+	static #close_render(content, payload) {
+		for (const cleanup of payload.#collect_on_destroy()) {
+			cleanup();
+		}
+
+		let head = content.head + payload.global.get_title();
+
+		const body = BLOCK_OPEN + content.body + BLOCK_CLOSE; // this inserts a fake boundary so hydration matches
+
+		for (const { hash, code } of payload.global.css) {
+			head += `<style id="${hash}">${code}</style>`;
+		}
+
+		return {
+			head,
+			html: body,
+			body
+		};
 	}
 }
 
