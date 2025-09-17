@@ -362,43 +362,26 @@ export class Payload {
 }
 
 export class TreeState {
-	/** @type {() => string} */
-	#uid;
+	/** @readonly @type {'sync' | 'async'} */
+	mode;
 
-	/** @type {Set<{ hash: string; code: string }>} */
-	#css;
+	/** @readonly @type {() => string} */
+	uid;
 
-	/** @type {TreeHeadState} */
-	#head;
+	/** @readonly @type {TreeHeadState} */
+	head;
 
-	/** @type {'sync' | 'async'} */
-	#mode;
-
-	get css() {
-		return this.#css;
-	}
-
-	get uid() {
-		return this.#uid;
-	}
-
-	get head() {
-		return this.#head;
-	}
-
-	get mode() {
-		return this.#mode;
-	}
+	/** @readonly @type {Set<{ hash: string; code: string }>} */
+	css = new Set();
 
 	/**
 	 * @param {'sync' | 'async'} mode
 	 * @param {string} [id_prefix]
 	 */
 	constructor(mode, id_prefix = '') {
-		this.#uid = props_id_generator(id_prefix);
-		this.#css = new Set();
-		this.#head = new TreeHeadState(this.#uid);
-		this.#mode = mode;
+		this.mode = mode;
+		this.uid = props_id_generator(id_prefix);
+		this.head = new TreeHeadState(this.uid);
 	}
 }
 
