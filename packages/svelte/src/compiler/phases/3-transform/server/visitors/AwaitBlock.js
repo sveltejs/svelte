@@ -2,7 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '#compiler/builders';
-import { block_close, call_child_payload } from './shared/utils.js';
+import { block_close, call_child_renderer } from './shared/utils.js';
 
 /**
  * @param {AST.AwaitBlock} node
@@ -13,7 +13,7 @@ export function AwaitBlock(node, context) {
 	let statement = b.stmt(
 		b.call(
 			'$.await',
-			b.id('$$payload'),
+			b.id(' $$renderer'),
 			/** @type {Expression} */ (context.visit(node.expression)),
 			b.thunk(
 				node.pending ? /** @type {BlockStatement} */ (context.visit(node.pending)) : b.block([])
@@ -26,7 +26,7 @@ export function AwaitBlock(node, context) {
 	);
 
 	if (node.metadata.expression.has_await) {
-		statement = call_child_payload(b.block([statement]), true);
+		statement = call_child_renderer(b.block([statement]), true);
 	}
 
 	context.state.template.push(statement, block_close);

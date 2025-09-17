@@ -6,7 +6,7 @@ import {
 } from '../../html-tree-validation.js';
 import { set_ssr_context, ssr_context } from './context.js';
 import * as e from './errors.js';
-import { Payload } from './payload.js';
+import { Renderer } from './renderer.js';
 
 // TODO move this
 /**
@@ -26,10 +26,10 @@ import { Payload } from './payload.js';
 export let seen;
 
 /**
- * @param {Payload} payload
+ * @param {Renderer} renderer
  * @param {string} message
  */
-function print_error(payload, message) {
+function print_error(renderer, message) {
 	message =
 		`node_invalid_placement_ssr: ${message}\n\n` +
 		'This can cause content to shift around as the browser repairs the HTML, and will likely result in a `hydration_mismatch` warning.';
@@ -39,19 +39,19 @@ function print_error(payload, message) {
 
 	// eslint-disable-next-line no-console
 	console.error(message);
-	payload.child(
-		(payload) => payload.push(`<script>console.error(${JSON.stringify(message)})</script>`),
+	renderer.child(
+		(renderer) => renderer.push(`<script>console.error(${JSON.stringify(message)})</script>`),
 		'head'
 	);
 }
 
 /**
- * @param {Payload} payload
+ * @param {Renderer} renderer
  * @param {string} tag
  * @param {number} line
  * @param {number} column
  */
-export function push_element(payload, tag, line, column) {
+export function push_element(renderer, tag, line, column) {
 	var context = /** @type {SSRContext} */ (ssr_context);
 	var filename = context.function[FILENAME];
 	var parent = context.element;
@@ -67,7 +67,7 @@ export function push_element(payload, tag, line, column) {
 			: undefined;
 
 		const message = is_tag_valid_with_parent(tag, parent.tag, child_loc, parent_loc);
-		if (message) print_error(payload, message);
+		if (message) print_error(renderer, message);
 
 		while (ancestor != null) {
 			ancestors.push(ancestor.tag);
@@ -76,7 +76,7 @@ export function push_element(payload, tag, line, column) {
 				: undefined;
 
 			const message = is_tag_valid_with_ancestor(tag, ancestors, child_loc, ancestor_loc);
-			if (message) print_error(payload, message);
+			if (message) print_error(renderer, message);
 
 			ancestor = ancestor.parent;
 		}
@@ -90,13 +90,13 @@ export function pop_element() {
 }
 
 /**
- * @param {Payload} payload
+ * @param {Renderer} renderer
  */
-export function validate_snippet_args(payload) {
+export function validate_snippet_args(renderer) {
 	if (
-		typeof payload !== 'object' ||
-		// for some reason typescript consider the type of payload as never after the first instanceof
-		!(payload instanceof Payload)
+		typeof renderer !== 'object' ||
+		// for some reason typescript consider the type of renderer as never after the first instanceof
+		!(renderer instanceof Renderer)
 	) {
 		e.invalid_snippet_arguments();
 	}

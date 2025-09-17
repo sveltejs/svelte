@@ -1,68 +1,68 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
-import { Payload, SSRState } from './payload.js';
+import { Renderer, SSRState } from './renderer.js';
 import type { Component } from 'svelte';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../flags/index.js';
 
 test('collects synchronous body content by default', () => {
-	const component = (payload: Payload) => {
-		payload.push('a');
-		payload.child(($$payload) => {
-			$$payload.push('b');
+	const component = (renderer: Renderer) => {
+		renderer.push('a');
+		renderer.child(($$renderer) => {
+			$$renderer.push('b');
 		});
-		payload.push('c');
+		renderer.push('c');
 	};
 
-	const { head, body } = Payload.render(component as unknown as Component);
+	const { head, body } = Renderer.render(component as unknown as Component);
 	expect(head).toBe('');
 	expect(body).toBe('<!--[--><!--[-->abc<!--]--><!--]-->');
 });
 
 test('child type switches content area (head vs body)', () => {
-	const component = (payload: Payload) => {
-		payload.push('a');
-		payload.child(($$payload) => {
-			$$payload.push('<title>T</title>');
+	const component = (renderer: Renderer) => {
+		renderer.push('a');
+		renderer.child(($$renderer) => {
+			$$renderer.push('<title>T</title>');
 		}, 'head');
-		payload.push('b');
+		renderer.push('b');
 	};
 
-	const { head, body } = Payload.render(component as unknown as Component);
+	const { head, body } = Renderer.render(component as unknown as Component);
 	expect(head).toBe('<title>T</title>');
 	expect(body).toBe('<!--[--><!--[-->ab<!--]--><!--]-->');
 });
 
 test('child inherits parent type when not specified', () => {
-	const component = (payload: Payload) => {
-		payload.child((payload) => {
-			payload.push('<meta name="x"/>');
-			payload.child((payload) => {
-				payload.push('<style>/* css */</style>');
+	const component = (renderer: Renderer) => {
+		renderer.child((renderer) => {
+			renderer.push('<meta name="x"/>');
+			renderer.child((renderer) => {
+				renderer.push('<style>/* css */</style>');
 			});
 		}, 'head');
 	};
 
-	const { head, body } = Payload.render(component as unknown as Component);
+	const { head, body } = Renderer.render(component as unknown as Component);
 	expect(body).toBe('<!--[--><!--[--><!--]--><!--]-->');
 	expect(head).toBe('<meta name="x"/><style>/* css */</style>');
 });
 
-test('get_path returns the path indexes to a payload', () => {
-	const root = new Payload(new SSRState('sync'));
-	let child_a: InstanceType<typeof Payload> | undefined;
-	let child_b: InstanceType<typeof Payload> | undefined;
-	let child_b_0: InstanceType<typeof Payload> | undefined;
+test('get_path returns the path indexes to a renderer', () => {
+	const root = new Renderer(new SSRState('sync'));
+	let child_a: InstanceType<typeof Renderer> | undefined;
+	let child_b: InstanceType<typeof Renderer> | undefined;
+	let child_b_0: InstanceType<typeof Renderer> | undefined;
 
-	root.child(($$payload) => {
-		child_a = $$payload;
-		$$payload.push('A');
+	root.child(($$renderer) => {
+		child_a = $$renderer;
+		$$renderer.push('A');
 	});
-	root.child(($$payload) => {
-		child_b = $$payload;
-		$$payload.child(($$inner) => {
+	root.child(($$renderer) => {
+		child_b = $$renderer;
+		$$renderer.child(($$inner) => {
 			child_b_0 = $$inner;
 			$$inner.push('B0');
 		});
-		$$payload.push('B1');
+		$$renderer.push('B1');
 	});
 
 	expect(child_a!.get_path()).toEqual([0]);
@@ -71,26 +71,26 @@ test('get_path returns the path indexes to a payload', () => {
 });
 
 test('creating an async child in a sync context throws', () => {
-	const component = (payload: Payload) => {
-		payload.push('a');
-		payload.child(async ($$payload) => {
+	const component = (renderer: Renderer) => {
+		renderer.push('a');
+		renderer.child(async ($$renderer) => {
 			await Promise.resolve();
-			$$payload.push('x');
+			$$renderer.push('x');
 		});
 	};
 
-	expect(() => Payload.render(component as unknown as Component).head).toThrow('await_invalid');
-	expect(() => Payload.render(component as unknown as Component).html).toThrow('await_invalid');
-	expect(() => Payload.render(component as unknown as Component).body).toThrow('await_invalid');
+	expect(() => Renderer.render(component as unknown as Component).head).toThrow('await_invalid');
+	expect(() => Renderer.render(component as unknown as Component).html).toThrow('await_invalid');
+	expect(() => Renderer.render(component as unknown as Component).body).toThrow('await_invalid');
 });
 
 test('compact synchronously aggregates a range and can transform into head/body', () => {
-	const component = (payload: Payload) => {
-		const start = payload.length;
-		payload.push('a');
-		payload.push('b');
-		payload.push('c');
-		payload.compact({
+	const component = (renderer: Renderer) => {
+		const start = renderer.length;
+		renderer.push('a');
+		renderer.push('b');
+		renderer.push('c');
+		renderer.compact({
 			start,
 			end: start + 2,
 			fn: (content) => {
@@ -99,17 +99,17 @@ test('compact synchronously aggregates a range and can transform into head/body'
 		});
 	};
 
-	const { head, body } = Payload.render(component as unknown as Component);
+	const { head, body } = Renderer.render(component as unknown as Component);
 	expect(head).toBe('<h>H</h>');
 	expect(body).toBe('<!--[--><!--[-->abdc<!--]--><!--]-->');
 });
 
 test('local state is shallow-copied to children', () => {
-	const root = new Payload(new SSRState('sync'));
+	const root = new Renderer(new SSRState('sync'));
 	root.local.select_value = 'A';
-	let child: InstanceType<typeof Payload> | undefined;
-	root.child(($$payload) => {
-		child = $$payload;
+	let child: InstanceType<typeof Renderer> | undefined;
+	root.child(($$renderer) => {
+		child = $$renderer;
 	});
 
 	expect(child!.local.select_value).toBe('A');
@@ -118,14 +118,14 @@ test('local state is shallow-copied to children', () => {
 });
 
 test('subsume replaces tree content and state from other', () => {
-	const a = new Payload(new SSRState('async'), undefined, 'head');
+	const a = new Renderer(new SSRState('async'), undefined, 'head');
 	a.push('<meta />');
 	a.local.select_value = 'A';
 
-	const b = new Payload(new SSRState('async'));
-	b.child(async ($$payload) => {
+	const b = new Renderer(new SSRState('async'));
+	b.child(async ($$renderer) => {
 		await Promise.resolve();
-		$$payload.push('body');
+		$$renderer.push('body');
 	});
 	b.global.css.add({ hash: 'h', code: 'c' });
 	b.global.set_title('Title', [1]);
@@ -140,14 +140,14 @@ test('subsume replaces tree content and state from other', () => {
 });
 
 test('subsume refuses to switch modes', () => {
-	const a = new Payload(new SSRState('sync'), undefined, 'head');
+	const a = new Renderer(new SSRState('sync'), undefined, 'head');
 	a.push('<meta />');
 	a.local.select_value = 'A';
 
-	const b = new Payload(new SSRState('async'));
-	b.child(async ($$payload) => {
+	const b = new Renderer(new SSRState('async'));
+	b.child(async ($$renderer) => {
 		await Promise.resolve();
-		$$payload.push('body');
+		$$renderer.push('body');
 	});
 	b.global.css.add({ hash: 'h', code: 'c' });
 	b.global.set_title('Title', [1]);
@@ -155,7 +155,7 @@ test('subsume refuses to switch modes', () => {
 	b.promises.initial = Promise.resolve();
 
 	expect(() => a.subsume(b)).toThrow(
-		"invariant: A payload cannot switch modes. If you're seeing this, there's a compiler bug. File an issue!"
+		"invariant: A renderer cannot switch modes. If you're seeing this, there's a compiler bug. File an issue!"
 	);
 });
 
@@ -200,31 +200,31 @@ describe('async', () => {
 		disable_async_mode_flag();
 	});
 
-	test('awaiting payload gets async content', async () => {
-		const component = (payload: Payload) => {
-			payload.push('1');
-			payload.child(async ($$payload) => {
+	test('awaiting renderer gets async content', async () => {
+		const component = (renderer: Renderer) => {
+			renderer.push('1');
+			renderer.child(async ($$renderer) => {
 				await Promise.resolve();
-				$$payload.push('2');
+				$$renderer.push('2');
 			});
-			payload.push('3');
+			renderer.push('3');
 		};
 
-		const result = await Payload.render(component as unknown as Component);
+		const result = await Renderer.render(component as unknown as Component);
 		expect(result.head).toBe('');
 		expect(result.body).toBe('<!--[--><!--[-->123<!--]--><!--]-->');
 		expect(() => result.html).toThrow('html_deprecated');
 	});
 
 	test('compact schedules followup when compaction input is async', async () => {
-		const component = (payload: Payload) => {
-			payload.push('a');
-			payload.child(async ($$payload) => {
+		const component = (renderer: Renderer) => {
+			renderer.push('a');
+			renderer.child(async ($$renderer) => {
 				await Promise.resolve();
-				$$payload.push('X');
+				$$renderer.push('X');
 			});
-			payload.push('b');
-			payload.compact({
+			renderer.push('b');
+			renderer.compact({
 				start: 0,
 				fn: async (content) => ({
 					body: content.body.toLowerCase(),
@@ -233,132 +233,132 @@ describe('async', () => {
 			});
 		};
 
-		const { body, head } = await Payload.render(component as unknown as Component);
+		const { body, head } = await Renderer.render(component as unknown as Component);
 		expect(head).toBe('');
 		expect(body).toBe('<!--[--><!--[-->axb<!--]--><!--]-->');
 	});
 
 	test('push accepts async functions in async context', async () => {
-		const component = (payload: Payload) => {
-			payload.push('a');
-			payload.push(async () => {
+		const component = (renderer: Renderer) => {
+			renderer.push('a');
+			renderer.push(async () => {
 				await Promise.resolve();
 				return 'b';
 			});
-			payload.push('c');
+			renderer.push('c');
 		};
 
-		const { head, body } = await Payload.render(component as unknown as Component);
+		const { head, body } = await Renderer.render(component as unknown as Component);
 		expect(head).toBe('');
 		expect(body).toBe('<!--[--><!--[-->abc<!--]--><!--]-->');
 	});
 
 	test('push handles async functions with different timing', async () => {
-		const component = (payload: Payload) => {
-			payload.push(async () => {
+		const component = (renderer: Renderer) => {
+			renderer.push(async () => {
 				await Promise.resolve();
 				return 'fast';
 			});
-			payload.push(async () => {
+			renderer.push(async () => {
 				await new Promise((resolve) => setTimeout(resolve, 10));
 				return 'slow';
 			});
-			payload.push('sync');
+			renderer.push('sync');
 		};
 
-		const { head, body } = await Payload.render(component as unknown as Component);
+		const { head, body } = await Renderer.render(component as unknown as Component);
 		expect(head).toBe('');
 		expect(body).toBe('<!--[--><!--[-->fastslowsync<!--]--><!--]-->');
 	});
 
 	test('push async functions work with head content type', async () => {
-		const component = (payload: Payload) => {
-			payload.child(($$payload) => {
-				$$payload.push(async () => {
+		const component = (renderer: Renderer) => {
+			renderer.child(($$renderer) => {
+				$$renderer.push(async () => {
 					await Promise.resolve();
 					return '<title>Async Title</title>';
 				});
 			}, 'head');
 		};
 
-		const { head, body } = await Payload.render(component as unknown as Component);
+		const { head, body } = await Renderer.render(component as unknown as Component);
 		expect(body).toBe('<!--[--><!--[--><!--]--><!--]-->');
 		expect(head).toBe('<title>Async Title</title>');
 	});
 
-	test('push async functions can be mixed with child payloads', async () => {
-		const component = (payload: Payload) => {
-			payload.push('start-');
-			payload.push(async () => {
+	test('push async functions can be mixed with child renderers', async () => {
+		const component = (renderer: Renderer) => {
+			renderer.push('start-');
+			renderer.push(async () => {
 				await Promise.resolve();
 				return 'async-';
 			});
-			payload.child(($$payload) => {
-				$$payload.push('child-');
+			renderer.child(($$renderer) => {
+				$$renderer.push('child-');
 			});
-			payload.push('-end');
+			renderer.push('-end');
 		};
 
-		const { head, body } = await Payload.render(component as unknown as Component);
+		const { head, body } = await Renderer.render(component as unknown as Component);
 		expect(head).toBe('');
 		expect(body).toBe('<!--[--><!--[-->start-async-child--end<!--]--><!--]-->');
 	});
 
 	test('push async functions work with compact operations', async () => {
-		const component = (payload: Payload) => {
-			payload.push('a');
-			payload.push(async () => {
+		const component = (renderer: Renderer) => {
+			renderer.push('a');
+			renderer.push(async () => {
 				await Promise.resolve();
 				return 'b';
 			});
-			payload.push('c');
-			payload.compact({
+			renderer.push('c');
+			renderer.compact({
 				start: 0,
 				fn: (content) => ({ head: '', body: content.body.toUpperCase() })
 			});
 		};
 
-		const { head, body } = await Payload.render(component as unknown as Component);
+		const { head, body } = await Renderer.render(component as unknown as Component);
 		expect(head).toBe('');
 		expect(body).toBe('<!--[--><!--[-->ABC<!--]--><!--]-->');
 	});
 
 	test('push async functions are not supported in sync context', () => {
-		const component = (payload: Payload) => {
-			payload.push('a');
-			payload.push(() => Promise.resolve('b'));
+		const component = (renderer: Renderer) => {
+			renderer.push('a');
+			renderer.push(() => Promise.resolve('b'));
 		};
 
-		expect(() => Payload.render(component as unknown as Component).body).toThrow('await_invalid');
-		expect(() => Payload.render(component as unknown as Component).html).toThrow('await_invalid');
-		expect(() => Payload.render(component as unknown as Component).head).toThrow('await_invalid');
+		expect(() => Renderer.render(component as unknown as Component).body).toThrow('await_invalid');
+		expect(() => Renderer.render(component as unknown as Component).html).toThrow('await_invalid');
+		expect(() => Renderer.render(component as unknown as Component).head).toThrow('await_invalid');
 	});
 
 	test('on_destroy yields callbacks in the correct order', async () => {
 		const destroyed: string[] = [];
-		const component = (payload: Payload) => {
-			payload.component((payload) => {
-				payload.on_destroy(() => destroyed.push('a'));
+		const component = (renderer: Renderer) => {
+			renderer.component((renderer) => {
+				renderer.on_destroy(() => destroyed.push('a'));
 				// children should not alter relative order
-				payload.child(async (payload) => {
+				renderer.child(async (renderer) => {
 					await Promise.resolve();
-					payload.on_destroy(() => destroyed.push('b'));
-					payload.on_destroy(() => destroyed.push('b*'));
+					renderer.on_destroy(() => destroyed.push('b'));
+					renderer.on_destroy(() => destroyed.push('b*'));
 				});
 				// but child components should
-				payload.component((payload) => {
-					payload.on_destroy(() => destroyed.push('c'));
+				renderer.component((renderer) => {
+					renderer.on_destroy(() => destroyed.push('c'));
 				});
-				payload.child((payload) => {
-					payload.on_destroy(() => destroyed.push('d'));
+				renderer.child((renderer) => {
+					renderer.on_destroy(() => destroyed.push('d'));
 				});
-				payload.component((payload) => {
-					payload.on_destroy(() => destroyed.push('e'));
+				renderer.component((renderer) => {
+					renderer.on_destroy(() => destroyed.push('e'));
 				});
 			});
 		};
 
-		await Payload.render(component as unknown as Component);
+		await Renderer.render(component as unknown as Component);
 		expect(destroyed).toEqual(['c', 'e', 'a', 'b', 'b*', 'd']);
 	});
 });

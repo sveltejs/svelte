@@ -4,7 +4,7 @@
 import {
 	empty_comment,
 	build_attribute_value,
-	call_child_payload,
+	call_child_renderer,
 	PromiseOptimiser
 } from './utils.js';
 import * as b from '#compiler/builders';
@@ -215,7 +215,7 @@ export function build_inline_component(node, expression, context) {
 		if (block.body.length === 0) continue;
 
 		/** @type {Pattern[]} */
-		const params = [b.id('$$payload')];
+		const params = [b.id(' $$renderer')];
 
 		if (lets[slot_name].length > 0) {
 			const pattern = b.object_pattern(
@@ -292,7 +292,7 @@ export function build_inline_component(node, expression, context) {
 	let statement = b.stmt(
 		(node.type === 'SvelteComponent' ? b.maybe_call : b.call)(
 			expression,
-			b.id('$$payload'),
+			b.id(' $$renderer'),
 			props_expression
 		)
 	);
@@ -308,7 +308,7 @@ export function build_inline_component(node, expression, context) {
 		statement = b.stmt(
 			b.call(
 				'$.css_props',
-				b.id('$$payload'),
+				b.id(' $$renderer'),
 				b.literal(context.state.namespace === 'svg' ? false : true),
 				b.object(custom_css_props),
 				b.thunk(b.block([statement])),
@@ -318,7 +318,7 @@ export function build_inline_component(node, expression, context) {
 	}
 
 	if (optimiser.expressions.length > 0) {
-		statement = call_child_payload(b.block([optimiser.apply(), statement]), true);
+		statement = call_child_renderer(b.block([optimiser.apply(), statement]), true);
 	}
 
 	if (dynamic && custom_css_props.length === 0) {

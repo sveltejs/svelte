@@ -12,7 +12,7 @@ import {
 	process_children,
 	build_template,
 	build_attribute_value,
-	call_child_payload
+	call_child_renderer
 } from './shared/utils.js';
 
 /**
@@ -68,7 +68,7 @@ export function RegularElement(node, context) {
 			b.stmt(
 				b.call(
 					'$.push_element',
-					b.id('$$payload'),
+					b.id(' $$renderer'),
 					b.literal(node.name),
 					b.literal(location.line),
 					b.literal(location.column)
@@ -97,7 +97,7 @@ export function RegularElement(node, context) {
 				b.stmt(
 					b.assignment(
 						'=',
-						b.id('$$payload.local.select_value'),
+						b.id(' $$renderer.local.select_value'),
 						b.member(
 							build_spread_object(
 								node,
@@ -125,7 +125,7 @@ export function RegularElement(node, context) {
 				);
 			}
 
-			const left = b.id('$$payload.local.select_value');
+			const left = b.id(' $$renderer.local.select_value');
 			if (value.type === 'Attribute') {
 				state.template.push(
 					b.stmt(b.assignment('=', left, build_attribute_value(value.value, context)))
@@ -160,7 +160,7 @@ export function RegularElement(node, context) {
 				b.stmt(
 					b.call(
 						'$.simple_valueless_option',
-						b.id('$$payload'),
+						b.id(' $$renderer'),
 						b.thunk(
 							node.metadata.synthetic_value_node.expression,
 							node.metadata.synthetic_value_node.metadata.expression.has_await
@@ -175,9 +175,9 @@ export function RegularElement(node, context) {
 				b.stmt(
 					b.call(
 						'$.valueless_option',
-						b.id('$$payload'),
+						b.id(' $$renderer'),
 						b.arrow(
-							[b.id('$$payload')],
+							[b.id(' $$renderer')],
 							b.block([...inner_state.init, ...build_template(inner_state.template)])
 						)
 					)
@@ -216,7 +216,7 @@ export function RegularElement(node, context) {
 		// element hadn't resolved prior to hitting the second element.
 		const elements = state.template.splice(template_start, Infinity);
 		state.template.push(
-			call_child_payload(b.block(build_template(elements)), select_with_value_async)
+			call_child_renderer(b.block(build_template(elements)), select_with_value_async)
 		);
 	}
 

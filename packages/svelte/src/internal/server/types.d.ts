@@ -1,13 +1,13 @@
 import type { Element } from './dev';
-import type { Payload } from './payload';
+import type { Renderer } from './renderer';
 
 export interface SSRContext {
 	/** parent */
 	p: null | SSRContext;
 	/** component context */
 	c: null | Map<unknown, unknown>;
-	/** payload (renderer) */
-	r: null | Payload;
+	/** renderer */
+	r: null | Renderer;
 	/** dev mode only: the current component function */
 	function?: any;
 	/** dev mode only: the current element */
