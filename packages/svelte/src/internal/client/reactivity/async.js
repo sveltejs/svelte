@@ -39,7 +39,6 @@ export function flatten(sync, async, fn) {
 	var parent = /** @type {Effect} */ (active_effect);
 
 	var restore = capture();
-	var boundary = get_boundary();
 
 	Promise.all(async.map((expression) => async_derived(expression)))
 		.then((result) => {
@@ -60,7 +59,7 @@ export function flatten(sync, async, fn) {
 			unset_context();
 		})
 		.catch((error) => {
-			boundary.error(error);
+			invoke_error_boundary(error, parent);
 		});
 }
 

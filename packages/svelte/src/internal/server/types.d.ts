@@ -1,17 +1,20 @@
-export interface Component {
+import type { Element } from './dev';
+import type { Payload } from './payload';
+
+export interface SSRContext {
 	/** parent */
-	p: null | Component;
-	/** context */
+	p: null | SSRContext;
+	/** component context */
 	c: null | Map<unknown, unknown>;
-	/** ondestroy */
-	d: null | Array<() => void>;
-	/**
-	 * dev mode only: the component function
-	 */
+	/** payload (renderer) */
+	r: null | Payload;
+	/** dev mode only: the current component function */
 	function?: any;
+	/** dev mode only: the current element */
+	element?: Element;
 }
 
-export interface RenderOutput {
+export interface SyncRenderOutput {
 	/** HTML that goes into the `<head>` */
 	head: string;
 	/** @deprecated use `body` instead */
@@ -19,3 +22,5 @@ export interface RenderOutput {
 	/** HTML that goes somewhere into the `<body>` */
 	body: string;
 }
+
+export type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;

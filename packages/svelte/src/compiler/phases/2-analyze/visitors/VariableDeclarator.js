@@ -49,6 +49,12 @@ export function VariableDeclarator(node, context) {
 			}
 		}
 
+		if (rune === '$derived') {
+			context.visit(node.id);
+			context.visit(/** @type {Expression} */ (node.init), { ...context.state, in_derived: true });
+			return;
+		}
+
 		if (rune === '$props') {
 			if (node.id.type !== 'ObjectPattern' && node.id.type !== 'Identifier') {
 				e.props_invalid_identifier(node);

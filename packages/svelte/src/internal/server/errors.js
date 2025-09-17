@@ -3,6 +3,30 @@
 export *  from '../shared/errors.js';
 
 /**
+ * Encountered asynchronous work while rendering synchronously.
+ * @returns {never}
+ */
+export function await_invalid() {
+	const error = new Error(`await_invalid\nEncountered asynchronous work while rendering synchronously.\nhttps://svelte.dev/e/await_invalid`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
+ * The `html` property of server render results has been deprecated. Use `body` instead.
+ * @returns {never}
+ */
+export function html_deprecated() {
+	const error = new Error(`html_deprecated\nThe \`html\` property of server render results has been deprecated. Use \`body\` instead.\nhttps://svelte.dev/e/html_deprecated`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
  * `%name%(...)` is not available on the server
  * @param {string} name
  * @returns {never}

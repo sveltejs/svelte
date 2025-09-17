@@ -31,6 +31,7 @@ export function asClassComponent(component) {
 			html: result.body
 		};
 	};
+
 	// @ts-expect-error this is present for SSR
 	component_constructor.render = _render;
 

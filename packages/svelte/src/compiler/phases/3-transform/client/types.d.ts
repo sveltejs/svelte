@@ -6,8 +6,7 @@ import type {
 	Expression,
 	AssignmentExpression,
 	UpdateExpression,
-	VariableDeclaration,
-	Declaration
+	VariableDeclaration
 } from 'estree';
 import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
@@ -21,11 +20,6 @@ export interface ClientTransformState extends TransformState {
 	 * us to rewrite `this.foo` as `this.#foo.value`
 	 */
 	readonly in_constructor: boolean;
-
-	/**
-	 * True if we're directly inside a `$derived(...)` expression (but not `$derived.by(...)`)
-	 */
-	readonly in_derived: boolean;
 
 	/** `true` if we're transforming the contents of `<script>` */
 	readonly is_instance: boolean;

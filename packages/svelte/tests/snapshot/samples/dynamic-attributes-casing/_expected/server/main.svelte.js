@@ -6,5 +6,5 @@ export default function Main($$payload) {
 
 	let y = () => 'test';
 
-	$$payload.out.push(`<div${$.attr('foobar', x)}></div> <svg${$.attr('viewBox', x)}></svg> <custom-element${$.attr('foobar', x)}></custom-element> <div${$.attr('foobar', y())}></div> <svg${$.attr('viewBox', y())}></svg> <custom-element${$.attr('foobar', y())}></custom-element>`);
+	$$payload.push(`<div${$.attr('foobar', x)}></div> <svg${$.attr('viewBox', x)}></svg> <custom-element${$.attr('foobar', x)}></custom-element> <div${$.attr('foobar', y())}></div> <svg${$.attr('viewBox', y())}></svg> <custom-element${$.attr('foobar', y())}></custom-element>`);
 }
