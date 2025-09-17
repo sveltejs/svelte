@@ -6,7 +6,7 @@
 Encountered asynchronous work while rendering synchronously.
 ```
 
-You (or the framework you're using) used `render` with an async component. Either use `renderAsync` or wrap the async component in a `svelte:boundary` with a `pending` snippet.
+You (or the framework you're using) called [`render(...)`](svelte-server#render) with a component containing an `await` expression. Either use `renderAsync(...)` or wrap the `await` (or the component containing it) in a [`<svelte:boundary>`](svelte-boundary) with a `pending` snippet.
 
 ### experimental_async_ssr
 
@@ -14,7 +14,7 @@ You (or the framework you're using) used `render` with an async component. Eithe
 Attempted to use `renderAsync` without `experimental.async` enabled
 ```
 
-Set `experimental.async: true` in your compiler options to use async server rendering.
+Set `experimental.async: true` in your compiler options (usually in `svelte.config.js`) to use async server rendering.
 
 ### lifecycle_function_unavailable
 
