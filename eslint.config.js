@@ -94,6 +94,7 @@ export default [
 			'packages/svelte/src/internal/client/errors.js',
 			'packages/svelte/src/internal/client/warnings.js',
 			'packages/svelte/src/internal/shared/warnings.js',
+			'packages/svelte/src/internal/server/warnings.js',
 			'packages/svelte/compiler/index.js',
 			// stuff we don't want to lint
 			'benchmarking/**',
