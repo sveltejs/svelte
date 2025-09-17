@@ -225,9 +225,9 @@ export class Payload {
 	 * @returns {RenderOutput}
 	 */
 	static render(component, options = {}) {
-		/** @type {SyncRenderOutput | undefined} */
+		/** @type {AccumulatedContent | undefined} */
 		let sync;
-		/** @type {Promise<SyncRenderOutput> | undefined} */
+		/** @type {Promise<AccumulatedContent> | undefined} */
 		let async;
 
 		const result = /** @type {RenderOutput} */ ({});
@@ -254,20 +254,27 @@ export class Payload {
 					/**
 					 * this is not type-safe, but honestly it's the best I can do right now, and it's a straightforward function.
 					 *
-					 * @param { (value: SyncRenderOutput) => void } onfulfilled
-					 * @param { (reason: unknown) => void } onrejected
+					 * @template TResult1
+					 * @template [TResult2=never]
+					 * @param { (value: SyncRenderOutput) => TResult1 } onfulfilled
+					 * @param { (reason: unknown) => TResult2 } onrejected
 					 */
 					(onfulfilled, onrejected) => {
 						if (!async_mode_flag) {
 							w.experimental_async_ssr();
-							onfulfilled((sync ??= Payload.#render(component, options)));
-							return Promise.resolve(sync);
+							const result = (sync ??= Payload.#render(component, options));
+							const user_result = onfulfilled({
+								head: result.head,
+								body: result.body,
+								html: result.body
+							});
+							return Promise.resolve(user_result);
 						}
 						async ??= Payload.#render_async(component, options);
-						return async.then((result) => {
-							onfulfilled(result);
-							return result;
-						}, onrejected);
+						return async.then(
+							(result) => onfulfilled({ head: result.head, body: result.body, html: result.body }),
+							onrejected
+						);
 					}
 			}
 		});
@@ -326,7 +333,7 @@ export class Payload {
 	 * @template {Record<string, any>} Props
 	 * @param {Component<Props>} component
 	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} options
-	 * @returns {SyncRenderOutput}
+	 * @returns {AccumulatedContent}
 	 */
 	static #render(component, options) {
 		var previous_context = ssr_context;
@@ -347,7 +354,7 @@ export class Payload {
 	 * @template {Record<string, any>} Props
 	 * @param {Component<Props>} component
 	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} options
-	 * @returns {Promise<SyncRenderOutput>}
+	 * @returns {Promise<AccumulatedContent>}
 	 */
 	static async #render_async(component, options) {
 		var previous_context = ssr_context;
@@ -500,7 +507,6 @@ export class Payload {
 
 		return {
 			head,
-			html: body,
 			body
 		};
 	}
