@@ -402,14 +402,6 @@ export class TreeState {
 		this.#mode = mode;
 	}
 
-	copy() {
-		const state = new TreeState(this.#mode);
-		state.#css = new Set(this.#css);
-		state.#head = this.#head.copy();
-		state.#uid = this.#uid;
-		return state;
-	}
-
 	/**
 	 * @param {TreeState} other
 	 */

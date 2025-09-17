@@ -205,12 +205,9 @@ test('subsume refuses to switch modes', () => {
 	);
 });
 
-test('TreeState uid generator uses prefix and is shared by copy()', () => {
+test('TreeState uid generator uses prefix', () => {
 	const state = new TreeState('sync', 'id-');
 	assert.equal(state.uid(), 'id-s1');
-	const state_copy = state.copy();
-	assert.equal(state_copy.uid(), 'id-s2');
-	assert.equal(state.uid(), 'id-s3');
 });
 
 test('TreeHeadState title ordering favors later lexicographic paths', () => {
