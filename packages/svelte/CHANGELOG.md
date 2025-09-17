@@ -1,5 +1,15 @@
 # svelte
 
+## 5.39.0
+
+### Minor Changes
+
+- feat: experimental async SSR ([#16748](https://github.com/sveltejs/svelte/pull/16748))
+
+### Patch Changes
+
+- fix: correctly SSR hidden="until-found" ([#16773](https://github.com/sveltejs/svelte/pull/16773))
+
 ## 5.38.10
 
 ### Patch Changes
