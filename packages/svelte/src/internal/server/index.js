@@ -1,5 +1,5 @@
 /** @import { ComponentType, SvelteComponent, Component } from 'svelte' */
-/** @import { RenderOutput, SSRContext } from '#server' */
+/** @import { RenderOutput } from '#server' */
 /** @import { Store } from '#shared' */
 /** @import { AccumulatedContent } from './payload.js' */
 export { FILENAME, HMR } from '../../constants.js';
@@ -14,14 +14,10 @@ import {
 } from '../../constants.js';
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
-import { ssr_context, pop, push, set_ssr_context } from './context.js';
 import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN, BLOCK_OPEN_ELSE } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
 import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
-import { Payload, SSRState } from './payload.js';
-import { abort } from './abort-signal.js';
-import { async_mode_flag } from '../flags/index.js';
-import * as e from './errors.js';
+import { Payload } from './payload.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
