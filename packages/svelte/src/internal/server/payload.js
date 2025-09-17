@@ -89,12 +89,30 @@ export class Payload {
 	 * but has its own content.
 	 * @param {(tree: Payload) => MaybePromise<void>} fn
 	 * @param {PayloadType} [type]
-	 * @returns {void}
 	 */
 	child(fn, type) {
 		const child = new Payload(this.global, this, type);
 		this.#out.push(child);
-		child.#run(fn);
+
+		set_ssr_context({
+			...ssr_context,
+			p: ssr_context?.p ?? null,
+			c: ssr_context?.c ?? null,
+			r: child
+		});
+
+		const result = fn(child);
+
+		if (result instanceof Promise) {
+			if (child.global.mode === 'sync') {
+				e.await_invalid();
+			}
+			// just to avoid unhandled promise rejections -- we'll end up throwing in `collect_async` if something fails
+			result.catch(() => {});
+			child.promises.initial = result;
+		}
+
+		return child;
 	}
 
 	/**
@@ -106,10 +124,8 @@ export class Payload {
 	 */
 	component(fn, component_fn) {
 		push(component_fn);
-		const child = new Payload(this.global, this);
-		this.#out.push(child);
+		const child = this.child(fn);
 		child.#is_component_body = true;
-		child.#run(fn);
 		pop();
 	}
 
@@ -267,28 +283,6 @@ export class Payload {
 			if (child instanceof Payload && !child.#is_component_body) {
 				yield* child.#collect_ondestroy();
 			}
-		}
-	}
-
-	/**
-	 * @param {(tree: Payload) => MaybePromise<void>} fn
-	 * @returns {void}
-	 */
-	#run(fn) {
-		set_ssr_context({
-			...ssr_context,
-			p: ssr_context?.p ?? null,
-			c: ssr_context?.c ?? null,
-			r: this
-		});
-		const result = fn(this);
-		if (result instanceof Promise) {
-			if (this.global.mode === 'sync') {
-				e.await_invalid();
-			}
-			// just to avoid unhandled promise rejections -- we'll end up throwing in `collect_async` if something fails
-			result.catch(() => {});
-			this.promises.initial = result;
 		}
 	}
 
