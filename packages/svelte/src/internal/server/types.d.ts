@@ -23,10 +23,11 @@ export interface SyncRenderOutput {
 	body: string;
 }
 
-export interface RenderOutput extends SyncRenderOutput {
-	/** Render the component asynchronously by `await`ing or calling `then` on the result of `render`. */
-	then: (
-		onfulfilled: (value: SyncRenderOutput) => void,
-		onrejected: (reason: unknown) => void
-	) => void;
+export type RenderOutput = SyncRenderOutput & Thenable<SyncRenderOutput>;
+
+interface Thenable<T> {
+	then<TResult1 = T, TResult2 = never>(
+		onfulfilled?: ((value: T) => TResult1 | Thenable<TResult1>) | undefined | null,
+		onrejected?: ((reason: any) => TResult2 | Thenable<TResult2>) | undefined | null
+	): Thenable<TResult1 | TResult2>;
 }

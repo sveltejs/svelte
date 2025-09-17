@@ -1,5 +1,5 @@
 /** @import { Component } from 'svelte' */
-/** @import { RenderOutput, SSRContext, SyncRenderOutput } from './types.js' */
+/** @import { RenderOutput, SSRContext, SyncRenderOutput, Thenable } from './types.js' */
 import { async_mode_flag } from '../flags/index.js';
 import { abort } from './abort-signal.js';
 import { pop, push, set_ssr_context, ssr_context } from './context.js';
@@ -248,16 +248,22 @@ export class Payload {
 			then: {
 				value:
 					/**
+					 * this is not type-safe, but honestly it's the best I can do right now, and it's a straightforward function.
+					 *
 					 * @param { (value: SyncRenderOutput) => void } onfulfilled
 					 * @param { (reason: unknown) => void } onrejected
 					 */
 					(onfulfilled, onrejected) => {
 						if (!async_mode_flag) {
 							w.experimental_async_ssr();
-							return onfulfilled((sync ??= Payload.#render(component, options)));
+							onfulfilled((sync ??= Payload.#render(component, options)));
+							return Promise.resolve(sync);
 						}
 						async ??= Payload.#render_async(component, options);
-						async.then(onfulfilled, onrejected);
+						return async.then((result) => {
+							onfulfilled(result);
+							return result;
+						}, onrejected);
 					}
 			}
 		});
