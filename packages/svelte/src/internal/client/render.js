@@ -30,7 +30,7 @@ import * as w from './warnings.js';
 import * as e from './errors.js';
 import { assign_nodes } from './dom/template.js';
 import { is_passive_event } from '../../utils.js';
-import { COMMENT_NODE } from './constants.js';
+import { COMMENT_NODE, STATE_SYMBOL } from './constants.js';
 import { boundary } from './dom/blocks/boundary.js';
 
 /**
@@ -316,7 +316,11 @@ export function unmount(component, options) {
 	}
 
 	if (DEV) {
-		w.lifecycle_double_unmount();
+		if (STATE_SYMBOL in component) {
+			w.state_proxy_unmount();
+		} else {
+			w.lifecycle_double_unmount();
+		}
 	}
 
 	return Promise.resolve();
