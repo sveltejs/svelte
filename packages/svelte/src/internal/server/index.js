@@ -80,7 +80,7 @@ export function render(component, options = {}) {
 		}
 
 		// @ts-expect-error
-		component(payload, options.props ?? {}, {}, {});
+		component(payload, options.props ?? {});
 
 		if (options.context) {
 			pop();
@@ -138,7 +138,7 @@ export async function render_async(component, options = {}) {
 		}
 
 		// @ts-expect-error
-		component(payload, options.props ?? {}, {}, {});
+		component(payload, options.props ?? {});
 
 		if (options.context) {
 			pop();
