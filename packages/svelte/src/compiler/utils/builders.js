@@ -364,7 +364,14 @@ export function prop(kind, key, value, computed = false) {
  * @returns {ESTree.PropertyDefinition}
  */
 export function prop_def(key, value, computed = false, is_static = false) {
-	return { type: 'PropertyDefinition', key, value, computed, static: is_static };
+	return {
+		type: 'PropertyDefinition',
+		decorators: [],
+		key,
+		value,
+		computed,
+		static: is_static
+	};
 }
 
 /**
@@ -565,6 +572,7 @@ function for_builder(init, test, update, body) {
 export function method(kind, key, params, body, computed = false, is_static = false) {
 	return {
 		type: 'MethodDefinition',
+		decorators: [],
 		key,
 		kind,
 		value: function_builder(null, params, block(body)),
@@ -610,6 +618,7 @@ function if_builder(test, consequent, alternate) {
 export function import_all(as, source) {
 	return {
 		type: 'ImportDeclaration',
+		attributes: [],
 		source: literal(source),
 		specifiers: [import_namespace(as)]
 	};
@@ -623,6 +632,7 @@ export function import_all(as, source) {
 export function imports(parts, source) {
 	return {
 		type: 'ImportDeclaration',
+		attributes: [],
 		source: literal(source),
 		specifiers: parts.map((p) => ({
 			type: 'ImportSpecifier',

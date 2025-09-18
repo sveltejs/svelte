@@ -283,11 +283,16 @@ export type DeclarationKind =
 	| 'var'
 	| 'let'
 	| 'const'
+	| 'using'
+	| 'await using'
 	| 'function'
 	| 'import'
 	| 'param'
 	| 'rest_param'
-	| 'synthetic';
+	| 'synthetic'
+	// TODO not yet implemented, but needed for TypeScript reasons
+	| 'using'
+	| 'await using';
 
 export interface ExpressionMetadata {
 	/** All the bindings that are referenced eagerly (not inside functions) in this expression */

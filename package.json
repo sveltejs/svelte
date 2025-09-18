@@ -30,6 +30,7 @@
     "@sveltejs/eslint-config": "^8.3.3",
     "@svitejs/changesets-changelog-github-compact": "^1.1.0",
     "@types/node": "^20.11.5",
+    "@types/picomatch": "^4.0.2",
     "@vitest/coverage-v8": "^2.1.9",
     "eslint": "^9.9.1",
     "eslint-plugin-lube": "^0.4.3",

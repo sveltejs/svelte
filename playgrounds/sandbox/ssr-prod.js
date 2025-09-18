@@ -5,7 +5,7 @@ import { render } from 'svelte/server';
 import App from './src/App.svelte';
 import './ssr-common.js';
 
-const { head, body } = render(App);
+const { head, body } = await render(App);
 
 const rendered = fs
 	.readFileSync(path.resolve('./dist/client/index.html'), 'utf-8')
