@@ -108,13 +108,13 @@ export function css_props(renderer, is_html, props, component, dynamic = false) 
 
 /**
  * @param {Record<string, unknown>} attrs
- * @param {string | null} css_hash
+ * @param {string} [css_hash]
  * @param {Record<string, boolean>} [classes]
  * @param {Record<string, string>} [styles]
  * @param {number} [flags]
  * @returns {string}
  */
-export function spread_attributes(attrs, css_hash, classes, styles, flags = 0) {
+export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 	if (styles) {
 		attrs.style = to_style(attrs.style, styles);
 	}

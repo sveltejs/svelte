@@ -12,7 +12,8 @@ import {
 	process_children,
 	build_template,
 	build_attribute_value,
-	call_child_renderer
+	call_child_renderer,
+	PromiseOptimiser
 } from './shared/utils.js';
 
 /**
@@ -32,8 +33,10 @@ export function RegularElement(node, context) {
 
 	const node_is_void = is_void(node.name);
 
+	const optimiser = new PromiseOptimiser();
+
 	context.state.template.push(b.literal(`<${node.name}`));
-	const body = build_element_attributes(node, { ...context, state });
+	const body = build_element_attributes(node, { ...context, state }, optimiser.transform);
 	context.state.template.push(b.literal(node_is_void ? '/>' : '>')); // add `/>` for XHTML compliance
 
 	if ((node.name === 'script' || node.name === 'style') && node.fragment.nodes.length === 1) {
@@ -93,26 +96,26 @@ export function RegularElement(node, context) {
 			select_with_value = true;
 			select_with_value_async ||= spread.metadata.expression.has_await;
 
+			const { object, has_await } = build_spread_object(
+				node,
+				node.attributes.filter(
+					(attribute) =>
+						attribute.type === 'Attribute' ||
+						attribute.type === 'BindDirective' ||
+						attribute.type === 'SpreadAttribute'
+				),
+				context,
+				optimiser.transform
+			);
+
+			// TODO use has_await
+
 			state.template.push(
 				b.stmt(
 					b.assignment(
 						'=',
 						b.id('$$renderer.local.select_value'),
-						b.member(
-							build_spread_object(
-								node,
-								node.attributes.filter(
-									(attribute) =>
-										attribute.type === 'Attribute' ||
-										attribute.type === 'BindDirective' ||
-										attribute.type === 'SpreadAttribute'
-								),
-								context
-							),
-							'value',
-							false,
-							true
-						)
+						b.member(object, 'value', false, true)
 					)
 				)
 			);
@@ -128,7 +131,13 @@ export function RegularElement(node, context) {
 			const left = b.id('$$renderer.local.select_value');
 			if (value.type === 'Attribute') {
 				state.template.push(
-					b.stmt(b.assignment('=', left, build_attribute_value(value.value, context)))
+					b.stmt(
+						b.assignment(
+							'=',
+							left,
+							build_attribute_value(value.value, context, false, false, optimiser.transform)
+						)
+					)
 				);
 			} else if (value.type === 'BindDirective') {
 				state.template.push(
