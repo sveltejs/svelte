@@ -45,11 +45,11 @@ export function EachBlock(node, context) {
 	);
 
 	if (node.fallback) {
-		const open = b.stmt(b.call(b.id(' $$renderer.push'), block_open));
+		const open = b.stmt(b.call(b.id('$$renderer.push'), block_open));
 
 		const fallback = /** @type {BlockStatement} */ (context.visit(node.fallback));
 
-		fallback.body.unshift(b.stmt(b.call(b.id(' $$renderer.push'), block_open_else)));
+		fallback.body.unshift(b.stmt(b.call(b.id('$$renderer.push'), block_open_else)));
 
 		block.body.push(
 			b.if(

@@ -1,7 +1,7 @@
 import * as $ from 'svelte/internal/server';
 
 export default function Class_state_field_constructor_assignment($$renderer, $$props) {
-	 $$renderer.component(($$renderer) => {
+	$$renderer.component(($$renderer) => {
 		class Foo {
 			a = 0;
 			#b;

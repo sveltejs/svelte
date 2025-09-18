@@ -198,11 +198,11 @@ export function server_component(analysis, options) {
 				b.unary('!', b.id('$$settled')),
 				b.block([
 					b.stmt(b.assignment('=', b.id('$$settled'), b.true)),
-					b.stmt(b.assignment('=', b.id('$$inner_renderer'), b.call(' $$renderer.copy'))),
+					b.stmt(b.assignment('=', b.id('$$inner_renderer'), b.call('$$renderer.copy'))),
 					b.stmt(b.call('$$render_inner', b.id('$$inner_renderer')))
 				])
 			),
-			b.stmt(b.call(' $$renderer.subsume', b.id('$$inner_renderer')))
+			b.stmt(b.call('$$renderer.subsume', b.id('$$inner_renderer')))
 		];
 	}
 
@@ -301,7 +301,7 @@ export function server_component(analysis, options) {
 		const code = b.literal(render_stylesheet(analysis.source, analysis, options).code);
 
 		body.push(b.const('$$css', b.object([b.init('hash', hash), b.init('code', code)])));
-		component_block.body.unshift(b.stmt(b.call(' $$renderer.global.css.add', b.id('$$css'))));
+		component_block.body.unshift(b.stmt(b.call('$$renderer.global.css.add', b.id('$$css'))));
 	}
 
 	let should_inject_props =

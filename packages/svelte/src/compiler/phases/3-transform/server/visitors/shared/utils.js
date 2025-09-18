@@ -80,7 +80,7 @@ export function process_children(nodes, { visit, state }) {
 			flush();
 			const visited = /** @type {Expression} */ (visit(node.expression));
 			state.template.push(
-				b.stmt(b.call(' $$renderer.push', b.thunk(b.call('$.escape', visited), true)))
+				b.stmt(b.call('$$renderer.push', b.thunk(b.call('$.escape', visited), true)))
 			);
 		} else if (node.type === 'Text' || node.type === 'Comment' || node.type === 'ExpressionTag') {
 			sequence.push(node);
@@ -119,7 +119,7 @@ export function build_template(template) {
 		statements.push(
 			b.stmt(
 				b.call(
-					b.id(' $$renderer.push'),
+					b.id('$$renderer.push'),
 					b.template(
 						strings.map((cooked, i) => b.quasi(cooked, i === strings.length - 1)),
 						expressions
@@ -267,7 +267,7 @@ export function build_getter(node, state) {
  * @returns {Statement}
  */
 export function call_child_renderer(body, async) {
-	return b.stmt(b.call(' $$renderer.child', b.arrow([b.id('$$renderer')], body, async)));
+	return b.stmt(b.call('$$renderer.child', b.arrow([b.id('$$renderer')], body, async)));
 }
 
 /**
@@ -277,7 +277,7 @@ export function call_child_renderer(body, async) {
  */
 export function call_component_renderer(body, component_fn_id) {
 	return b.stmt(
-		b.call(' $$renderer.component', b.arrow([b.id('$$renderer')], body, false), component_fn_id)
+		b.call('$$renderer.component', b.arrow([b.id('$$renderer')], body, false), component_fn_id)
 	);
 }
 
