@@ -1,18 +1,18 @@
 import * as $ from 'svelte/internal/server';
 import TextInput from './Child.svelte';
 
-function snippet( $$renderer) {
+function snippet($$renderer) {
 	 $$renderer.push(`<!---->Something`);
 }
 
-export default function Bind_component_snippet( $$renderer) {
+export default function Bind_component_snippet($$renderer) {
 	let value = '';
 	const _snippet = snippet;
 	let $$settled = true;
 	let $$inner_renderer;
 
-	function $$render_inner( $$renderer) {
-		TextInput( $$renderer, {
+	function $$render_inner($$renderer) {
+		TextInput($$renderer, {
 			get value() {
 				return value;
 			},

@@ -1,8 +1,8 @@
 import 'svelte/internal/flags/async';
 import * as $ from 'svelte/internal/server';
 
-export default function Async_each_fallback_hoisting( $$renderer) {
-	 $$renderer.child(async ( $$renderer) => {
+export default function Async_each_fallback_hoisting($$renderer) {
+	 $$renderer.child(async ($$renderer) => {
 		const each_array = $.ensure_array_like(await Promise.resolve([]));
 
 		if (each_array.length !== 0) {

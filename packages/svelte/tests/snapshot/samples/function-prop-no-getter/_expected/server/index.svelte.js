@@ -1,6 +1,6 @@
 import * as $ from 'svelte/internal/server';
 
-export default function Function_prop_no_getter( $$renderer) {
+export default function Function_prop_no_getter($$renderer) {
 	let count = 0;
 
 	function onmouseup() {
@@ -9,12 +9,12 @@ export default function Function_prop_no_getter( $$renderer) {
 
 	const plusOne = (num) => num + 1;
 
-	Button( $$renderer, {
+	Button($$renderer, {
 		onmousedown: () => count += 1,
 		onmouseup,
 		onmouseenter: () => count = plusOne(count),
 
-		children: ( $$renderer) => {
+		children: ($$renderer) => {
 			 $$renderer.push(`<!---->clicks: ${$.escape(count)}`);
 		},
 
