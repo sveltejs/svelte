@@ -9,7 +9,7 @@ export default function Async_each_hoisting($$renderer) {
 	 $$renderer.push(`<!--[-->`);
 
 	 $$renderer.child(async ($$renderer) => {
-		const each_array = $.ensure_array_like(await Promise.resolve([first, second, third]));
+		const each_array = $.ensure_array_like((await $.save(Promise.resolve([first, second, third])))());
 
 		for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
 			let item = each_array[$$index];

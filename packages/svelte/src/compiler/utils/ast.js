@@ -625,3 +625,11 @@ export function has_await(expression) {
 
 	return has_await;
 }
+
+/**
+ * Turns `await ...` to `(await $.save(...))()`
+ * @param {ESTree.Expression} expression
+ */
+export function save(expression) {
+	return b.call(b.await(b.call('$.save', expression)));
+}
