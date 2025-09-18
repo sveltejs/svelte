@@ -5,8 +5,7 @@ import {
 	empty_comment,
 	build_attribute_value,
 	create_async_block,
-	PromiseOptimiser,
-	create_async_block
+	PromiseOptimiser
 } from './utils.js';
 import * as b from '#compiler/builders';
 import { is_element_node } from '../../../../nodes.js';
