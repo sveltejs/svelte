@@ -91,13 +91,22 @@ export class Renderer {
 	}
 
 	/**
+	 * @param {(renderer: Renderer) => void} fn
+	 */
+	head(fn) {
+		const head = new Renderer(this.global, this, 'head');
+		this.#out.push(head);
+
+		head.child(fn);
+	}
+
+	/**
 	 * Create a child renderer. The child renderer inherits the state from the parent,
 	 * but has its own content.
 	 * @param {(renderer: Renderer) => MaybePromise<void>} fn
-	 * @param {RendererType} [type]
 	 */
-	child(fn, type) {
-		const child = new Renderer(this.global, this, type);
+	child(fn) {
+		const child = new Renderer(this.global, this);
 		this.#out.push(child);
 
 		const parent = ssr_context;

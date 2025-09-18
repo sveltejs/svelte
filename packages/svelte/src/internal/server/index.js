@@ -69,11 +69,11 @@ export function render(component, options = {}) {
  * @returns {void}
  */
 export function head(renderer, fn) {
-	renderer.child((renderer) => {
+	renderer.head((renderer) => {
 		renderer.push(BLOCK_OPEN);
 		renderer.child(fn);
 		renderer.push(BLOCK_CLOSE);
-	}, 'head');
+	});
 }
 
 /**

@@ -20,9 +20,9 @@ test('collects synchronous body content by default', () => {
 test('child type switches content area (head vs body)', () => {
 	const component = (renderer: Renderer) => {
 		renderer.push('a');
-		renderer.child(($$renderer) => {
+		renderer.head(($$renderer) => {
 			$$renderer.push('<title>T</title>');
-		}, 'head');
+		});
 		renderer.push('b');
 	};
 
@@ -33,12 +33,12 @@ test('child type switches content area (head vs body)', () => {
 
 test('child inherits parent type when not specified', () => {
 	const component = (renderer: Renderer) => {
-		renderer.child((renderer) => {
+		renderer.head((renderer) => {
 			renderer.push('<meta name="x"/>');
 			renderer.child((renderer) => {
 				renderer.push('<style>/* css */</style>');
 			});
-		}, 'head');
+		});
 	};
 
 	const { head, body } = Renderer.render(component as unknown as Component);
@@ -273,12 +273,12 @@ describe('async', () => {
 
 	test('push async functions work with head content type', async () => {
 		const component = (renderer: Renderer) => {
-			renderer.child(($$renderer) => {
+			renderer.head(($$renderer) => {
 				$$renderer.push(async () => {
 					await Promise.resolve();
 					return '<title>Async Title</title>';
 				});
-			}, 'head');
+			});
 		};
 
 		const { head, body } = await Renderer.render(component as unknown as Component);
