@@ -57,7 +57,7 @@ export function SlotElement(node, context) {
 
 	const slot = b.call(
 		'$.slot',
-		b.id(' $$renderer'),
+		b.id('$$renderer'),
 		b.id('$$props'),
 		name,
 		props_expression,

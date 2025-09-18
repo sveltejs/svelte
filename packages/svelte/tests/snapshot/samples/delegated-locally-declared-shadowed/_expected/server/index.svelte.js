@@ -1,6 +1,6 @@
 import * as $ from 'svelte/internal/server';
 
-export default function Delegated_locally_declared_shadowed( $$renderer) {
+export default function Delegated_locally_declared_shadowed($$renderer) {
 	 $$renderer.push(`<!--[-->`);
 
 	const each_array = $.ensure_array_like({ length: 1 });

@@ -191,7 +191,7 @@ export function server_component(analysis, options) {
 			b.let('$$inner_renderer'),
 			b.function_declaration(
 				b.id('$$render_inner'),
-				[b.id(' $$renderer')],
+				[b.id('$$renderer')],
 				b.block(/** @type {Statement[]} */ (rest))
 			),
 			b.do_while(
@@ -253,7 +253,7 @@ export function server_component(analysis, options) {
 	if (analysis.props_id) {
 		// need to be placed on first line of the component for hydration
 		component_block.body.unshift(
-			b.const(analysis.props_id, b.call('$.props_id', b.id(' $$renderer')))
+			b.const(analysis.props_id, b.call('$.props_id', b.id('$$renderer')))
 		);
 	}
 
@@ -315,7 +315,7 @@ export function server_component(analysis, options) {
 
 	const component_function = b.function_declaration(
 		b.id(analysis.name),
-		should_inject_props ? [b.id(' $$renderer'), b.id('$$props')] : [b.id(' $$renderer')],
+		should_inject_props ? [b.id('$$renderer'), b.id('$$props')] : [b.id('$$renderer')],
 		component_block
 	);
 

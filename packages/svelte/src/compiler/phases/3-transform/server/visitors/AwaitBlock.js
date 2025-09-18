@@ -13,7 +13,7 @@ export function AwaitBlock(node, context) {
 	let statement = b.stmt(
 		b.call(
 			'$.await',
-			b.id(' $$renderer'),
+			b.id('$$renderer'),
 			/** @type {Expression} */ (context.visit(node.expression)),
 			b.thunk(
 				node.pending ? /** @type {BlockStatement} */ (context.visit(node.pending)) : b.block([])

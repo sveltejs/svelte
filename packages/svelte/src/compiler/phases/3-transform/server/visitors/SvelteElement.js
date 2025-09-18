@@ -45,7 +45,7 @@ export function SvelteElement(node, context) {
 			b.stmt(
 				b.call(
 					'$.push_element',
-					b.id(' $$renderer'),
+					b.id('$$renderer'),
 					tag,
 					b.literal(location.line),
 					b.literal(location.column)
@@ -61,7 +61,7 @@ export function SvelteElement(node, context) {
 		b.stmt(
 			b.call(
 				'$.element',
-				b.id(' $$renderer'),
+				b.id('$$renderer'),
 				tag,
 				attributes.body.length > 0 && b.thunk(attributes),
 				children.body.length > 0 && b.thunk(children)

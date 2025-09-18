@@ -68,7 +68,7 @@ export function RegularElement(node, context) {
 			b.stmt(
 				b.call(
 					'$.push_element',
-					b.id(' $$renderer'),
+					b.id('$$renderer'),
 					b.literal(node.name),
 					b.literal(location.line),
 					b.literal(location.column)
@@ -160,7 +160,7 @@ export function RegularElement(node, context) {
 				b.stmt(
 					b.call(
 						'$.simple_valueless_option',
-						b.id(' $$renderer'),
+						b.id('$$renderer'),
 						b.thunk(
 							node.metadata.synthetic_value_node.expression,
 							node.metadata.synthetic_value_node.metadata.expression.has_await
@@ -175,9 +175,9 @@ export function RegularElement(node, context) {
 				b.stmt(
 					b.call(
 						'$.valueless_option',
-						b.id(' $$renderer'),
+						b.id('$$renderer'),
 						b.arrow(
-							[b.id(' $$renderer')],
+							[b.id('$$renderer')],
 							b.block([...inner_state.init, ...build_template(inner_state.template)])
 						)
 					)

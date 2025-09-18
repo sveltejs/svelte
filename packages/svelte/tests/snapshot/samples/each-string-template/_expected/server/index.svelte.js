@@ -1,6 +1,6 @@
 import * as $ from 'svelte/internal/server';
 
-export default function Each_string_template( $$renderer) {
+export default function Each_string_template($$renderer) {
 	 $$renderer.push(`<!--[-->`);
 
 	const each_array = $.ensure_array_like(['foo', 'bar', 'baz']);

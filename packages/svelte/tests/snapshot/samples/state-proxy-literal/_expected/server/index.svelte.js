@@ -1,6 +1,6 @@
 import * as $ from 'svelte/internal/server';
 
-export default function State_proxy_literal( $$renderer) {
+export default function State_proxy_literal($$renderer) {
 	let str = '';
 	let tpl = ``;
 
