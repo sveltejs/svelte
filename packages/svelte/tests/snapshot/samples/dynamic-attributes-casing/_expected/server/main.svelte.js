@@ -1,6 +1,6 @@
 import * as $ from 'svelte/internal/server';
 
-export default function Main( $$renderer) {
+export default function Main($$renderer) {
 	// needs to be a snapshot test because jsdom does auto-correct the attribute casing
 	let x = 'test';
 

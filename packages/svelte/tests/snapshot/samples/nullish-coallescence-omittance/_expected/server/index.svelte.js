@@ -1,6 +1,6 @@
 import * as $ from 'svelte/internal/server';
 
-export default function Nullish_coallescence_omittance( $$renderer) {
+export default function Nullish_coallescence_omittance($$renderer) {
 	let name = 'world';
 	let count = 0;
 
