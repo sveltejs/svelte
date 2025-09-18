@@ -6,7 +6,7 @@ import {
 	empty_comment,
 	build_attribute_value,
 	PromiseOptimiser,
-	call_child_renderer
+	create_async_block
 } from './shared/utils.js';
 
 /**
@@ -66,7 +66,7 @@ export function SlotElement(node, context) {
 
 	const statement =
 		optimiser.expressions.length > 0
-			? call_child_renderer(b.block([optimiser.apply(), b.stmt(slot)]), true)
+			? create_async_block(b.block([optimiser.apply(), b.stmt(slot)]))
 			: b.stmt(slot);
 
 	context.state.template.push(empty_comment, statement, empty_comment);

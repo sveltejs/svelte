@@ -4,8 +4,9 @@
 import {
 	empty_comment,
 	build_attribute_value,
-	call_child_renderer,
-	PromiseOptimiser
+	create_async_block,
+	PromiseOptimiser,
+	create_async_block
 } from './utils.js';
 import * as b from '#compiler/builders';
 import { is_element_node } from '../../../../nodes.js';
@@ -318,7 +319,7 @@ export function build_inline_component(node, expression, context) {
 	}
 
 	if (optimiser.expressions.length > 0) {
-		statement = call_child_renderer(b.block([optimiser.apply(), statement]), true);
+		statement = create_async_block(b.block([optimiser.apply(), statement]));
 	}
 
 	if (dynamic && custom_css_props.length === 0) {

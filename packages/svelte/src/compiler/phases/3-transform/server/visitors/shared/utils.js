@@ -272,6 +272,13 @@ export function call_child_renderer(body, async) {
 
 /**
  * @param {BlockStatement | Expression} body
+ */
+export function create_async_block(body) {
+	return b.stmt(b.call('$$renderer.async', b.arrow([b.id('$$renderer')], body, true)));
+}
+
+/**
+ * @param {BlockStatement | Expression} body
  * @param {Identifier | false} component_fn_id
  * @returns {Statement}
  */

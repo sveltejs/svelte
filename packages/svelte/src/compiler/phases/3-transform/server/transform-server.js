@@ -40,7 +40,7 @@ import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 import { SvelteBoundary } from './visitors/SvelteBoundary.js';
-import { call_child_renderer, call_component_renderer } from './visitors/shared/utils.js';
+import { call_component_renderer, create_async_block } from './visitors/shared/utils.js';
 
 /** @type {Visitors} */
 const global_visitors = {
@@ -244,7 +244,7 @@ export function server_component(analysis, options) {
 	]);
 
 	if (analysis.instance.has_await) {
-		component_block = b.block([call_child_renderer(component_block, true)]);
+		component_block = b.block([create_async_block(component_block)]);
 	}
 
 	// trick esrap into including comments

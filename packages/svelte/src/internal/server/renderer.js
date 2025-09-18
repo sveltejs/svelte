@@ -102,12 +102,22 @@ export class Renderer {
 	}
 
 	/**
+	 * @param {(renderer: Renderer) => void} fn
+	 */
+	async(fn) {
+		this.#out.push(BLOCK_OPEN);
+		this.child(fn);
+		this.#out.push(BLOCK_CLOSE);
+	}
+
+	/**
 	 * Create a child renderer. The child renderer inherits the state from the parent,
 	 * but has its own content.
 	 * @param {(renderer: Renderer) => MaybePromise<void>} fn
 	 */
 	child(fn) {
 		const child = new Renderer(this.global, this);
+		this.#out.push(child);
 
 		const parent = ssr_context;
 
@@ -129,12 +139,6 @@ export class Renderer {
 			// just to avoid unhandled promise rejections -- we'll end up throwing in `collect_async` if something fails
 			result.catch(() => {});
 			child.promises.initial = result;
-
-			// add hydration boundaries that `$.async` handles in the client
-			this.#out.push(BLOCK_OPEN, child, BLOCK_CLOSE);
-		} else {
-			// TODO should we always put hydration boundaries around the child?
-			this.#out.push(child);
 		}
 
 		return child;
