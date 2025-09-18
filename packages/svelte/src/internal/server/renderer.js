@@ -81,22 +81,23 @@ export class Renderer {
 	/**
 	 * @param {SSRState} global
 	 * @param {Renderer | undefined} [parent]
-	 * @param {RendererType} [type]
 	 */
-	constructor(global, parent, type) {
+	constructor(global, parent) {
+		this.#parent = parent;
+
 		this.global = global;
 		this.local = parent ? { ...parent.local } : { select_value: undefined };
-		this.#parent = parent;
-		this.type = type ?? parent?.type ?? 'body';
+		this.type = parent ? parent.type : 'body';
 	}
 
 	/**
 	 * @param {(renderer: Renderer) => void} fn
 	 */
 	head(fn) {
-		const head = new Renderer(this.global, this, 'head');
-		this.#out.push(head);
+		const head = new Renderer(this.global, this);
+		head.type = 'head';
 
+		this.#out.push(head);
 		head.child(fn);
 	}
 
@@ -193,7 +194,7 @@ export class Renderer {
 	 * @deprecated this is needed for legacy component bindings
 	 */
 	copy() {
-		const copy = new Renderer(this.global, this.#parent, this.type);
+		const copy = new Renderer(this.global, this.#parent);
 		copy.#out = this.#out.map((item) => (item instanceof Renderer ? item.copy() : item));
 		copy.promises = this.promises;
 		return copy;
@@ -466,7 +467,8 @@ export class Renderer {
 	static #push_accumulated_content(tree, accumulated_content) {
 		for (const [type, content] of Object.entries(accumulated_content)) {
 			if (!content) continue;
-			const child = new Renderer(tree.global, tree, /** @type {RendererType} */ (type));
+			const child = new Renderer(tree.global, tree);
+			child.type = /** @type {RendererType} */ (type);
 			child.push(content);
 			tree.#out.push(child);
 		}

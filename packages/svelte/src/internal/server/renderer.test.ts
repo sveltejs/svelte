@@ -118,7 +118,9 @@ test('local state is shallow-copied to children', () => {
 });
 
 test('subsume replaces tree content and state from other', () => {
-	const a = new Renderer(new SSRState('async'), undefined, 'head');
+	const a = new Renderer(new SSRState('async'));
+	a.type = 'head';
+
 	a.push('<meta />');
 	a.local.select_value = 'A';
 
@@ -140,7 +142,9 @@ test('subsume replaces tree content and state from other', () => {
 });
 
 test('subsume refuses to switch modes', () => {
-	const a = new Renderer(new SSRState('sync'), undefined, 'head');
+	const a = new Renderer(new SSRState('sync'));
+	a.type = 'head';
+
 	a.push('<meta />');
 	a.local.select_value = 'A';
 
