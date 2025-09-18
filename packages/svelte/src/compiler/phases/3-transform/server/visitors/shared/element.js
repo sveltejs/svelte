@@ -207,7 +207,7 @@ export function build_element_attributes(node, context) {
 			context.state.template.push(
 				b.call(
 					'$.maybe_selected',
-					b.id(' $$renderer'),
+					b.id('$$renderer'),
 					b.member(
 						build_spread_object(
 							node,
@@ -264,7 +264,7 @@ export function build_element_attributes(node, context) {
 					context.state.template.push(
 						b.call(
 							'$.maybe_selected',
-							b.id(' $$renderer'),
+							b.id('$$renderer'),
 							literal_value != null ? b.literal(/** @type {any} */ (literal_value)) : b.void0
 						)
 					);
@@ -296,7 +296,7 @@ export function build_element_attributes(node, context) {
 			}
 
 			if (name === 'value' && node.name === 'option') {
-				context.state.template.push(b.call('$.maybe_selected', b.id(' $$renderer'), value));
+				context.state.template.push(b.call('$.maybe_selected', b.id('$$renderer'), value));
 			}
 		}
 	}
