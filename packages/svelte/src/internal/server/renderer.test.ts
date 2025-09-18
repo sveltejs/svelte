@@ -20,9 +20,9 @@ test('collects synchronous body content by default', () => {
 test('child type switches content area (head vs body)', () => {
 	const component = (renderer: Renderer) => {
 		renderer.push('a');
-		renderer.child(($$renderer) => {
+		renderer.head(($$renderer) => {
 			$$renderer.push('<title>T</title>');
-		}, 'head');
+		});
 		renderer.push('b');
 	};
 
@@ -33,12 +33,12 @@ test('child type switches content area (head vs body)', () => {
 
 test('child inherits parent type when not specified', () => {
 	const component = (renderer: Renderer) => {
-		renderer.child((renderer) => {
+		renderer.head((renderer) => {
 			renderer.push('<meta name="x"/>');
 			renderer.child((renderer) => {
 				renderer.push('<style>/* css */</style>');
 			});
-		}, 'head');
+		});
 	};
 
 	const { head, body } = Renderer.render(component as unknown as Component);
@@ -118,7 +118,9 @@ test('local state is shallow-copied to children', () => {
 });
 
 test('subsume replaces tree content and state from other', () => {
-	const a = new Renderer(new SSRState('async'), undefined, 'head');
+	const a = new Renderer(new SSRState('async'));
+	a.type = 'head';
+
 	a.push('<meta />');
 	a.local.select_value = 'A';
 
@@ -140,7 +142,9 @@ test('subsume replaces tree content and state from other', () => {
 });
 
 test('subsume refuses to switch modes', () => {
-	const a = new Renderer(new SSRState('sync'), undefined, 'head');
+	const a = new Renderer(new SSRState('sync'));
+	a.type = 'head';
+
 	a.push('<meta />');
 	a.local.select_value = 'A';
 
@@ -273,12 +277,12 @@ describe('async', () => {
 
 	test('push async functions work with head content type', async () => {
 		const component = (renderer: Renderer) => {
-			renderer.child(($$renderer) => {
+			renderer.head(($$renderer) => {
 				$$renderer.push(async () => {
 					await Promise.resolve();
 					return '<title>Async Title</title>';
 				});
-			}, 'head');
+			});
 		};
 
 		const { head, body } = await Renderer.render(component as unknown as Component);
