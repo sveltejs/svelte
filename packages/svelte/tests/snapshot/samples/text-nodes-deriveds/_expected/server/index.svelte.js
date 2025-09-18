@@ -12,5 +12,5 @@ export default function Text_nodes_deriveds($$renderer) {
 		return count2;
 	}
 
-	 $$renderer.push(`<p>${$.escape(text1())}${$.escape(text2())}</p>`);
+	$$renderer.push(`<p>${$.escape(text1())}${$.escape(text2())}</p>`);
 }
