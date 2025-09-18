@@ -3,7 +3,7 @@ import * as $ from 'svelte/internal/server';
 
 export default function Async_each_fallback_hoisting( $$renderer) {
 	 $$renderer.child(async ( $$renderer) => {
-		const each_array = $.ensure_array_like(await Promise.resolve([]));
+		const each_array = $.ensure_array_like((await $.save(Promise.resolve([])))());
 
 		if (each_array.length !== 0) {
 			 $$renderer.push('<!--[-->');
