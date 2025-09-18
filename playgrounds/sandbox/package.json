@@ -17,11 +17,12 @@
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^6.2.0",
+    "@types/node": "^24.5.2",
     "polka": "^1.0.0-next.25",
     "svelte": "workspace:*",
     "tinyglobby": "^0.2.12",
     "vite": "^7.1.5",
     "vite-plugin-devtools-json": "^1.0.0",
-    "vite-plugin-inspect": "^0.8.4"
+    "vite-plugin-inspect": "^11.3.3"
   }
 }
