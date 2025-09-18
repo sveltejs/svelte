@@ -2,7 +2,7 @@
 /** @import { Binding } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev, is_ignored, locate_node } from '../../../../state.js';
-import { extract_paths } from '../../../../utils/ast.js';
+import { extract_paths, save } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import * as assert from '../../../../utils/assert.js';
 import { get_rune } from '../../../scope.js';
@@ -212,7 +212,7 @@ export function VariableDeclaration(node, context) {
 							location ? b.literal(location) : undefined
 						);
 
-						call = b.call(b.await(b.call('$.save', call)));
+						call = save(call);
 						if (dev) call = b.call('$.tag', call, b.literal(declarator.id.name));
 
 						declarations.push(b.declarator(declarator.id, call));
@@ -243,7 +243,7 @@ export function VariableDeclaration(node, context) {
 								b.thunk(expression, true),
 								location ? b.literal(location) : undefined
 							);
-							call = b.call(b.await(b.call('$.save', call)));
+							call = save(call);
 						}
 
 						if (dev) {

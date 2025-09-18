@@ -1,5 +1,6 @@
 /** @import { AwaitExpression, Expression } from 'estree' */
 /** @import { Context } from '../types' */
+import { save } from '../../../../utils/ast.js';
 import * as b from '../../../../utils/builders.js';
 
 /**
@@ -10,7 +11,7 @@ export function AwaitExpression(node, context) {
 	const argument = /** @type {Expression} */ (context.visit(node.argument));
 
 	if (context.state.analysis.pickled_awaits.has(node)) {
-		return b.call(b.await(b.call('$.save', argument)));
+		return save(argument);
 	}
 
 	return argument === node.argument ? node : { ...node, argument };
