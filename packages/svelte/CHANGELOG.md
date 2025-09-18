@@ -1,5 +1,13 @@
 # svelte
 
+## 5.39.2
+
+### Patch Changes
+
+- fix: preserve SSR context when block expressions contain `await` ([#16791](https://github.com/sveltejs/svelte/pull/16791))
+
+- chore: bump some devDependencies ([#16787](https://github.com/sveltejs/svelte/pull/16787))
+
 ## 5.39.1
 
 ### Patch Changes
