@@ -16,9 +16,9 @@ export function IfBlock(node, context) {
 		? /** @type {BlockStatement} */ (context.visit(node.alternate))
 		: b.block([]);
 
-	consequent.body.unshift(b.stmt(b.call(b.id(' $$renderer.push'), block_open)));
+	consequent.body.unshift(b.stmt(b.call(b.id('$$renderer.push'), block_open)));
 
-	alternate.body.unshift(b.stmt(b.call(b.id(' $$renderer.push'), block_open_else)));
+	alternate.body.unshift(b.stmt(b.call(b.id('$$renderer.push'), block_open_else)));
 
 	/** @type {Statement} */
 	let statement = b.if(test, consequent, alternate);

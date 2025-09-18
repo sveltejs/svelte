@@ -97,7 +97,7 @@ export function RegularElement(node, context) {
 				b.stmt(
 					b.assignment(
 						'=',
-						b.id(' $$renderer.local.select_value'),
+						b.id('$$renderer.local.select_value'),
 						b.member(
 							build_spread_object(
 								node,
@@ -125,7 +125,7 @@ export function RegularElement(node, context) {
 				);
 			}
 
-			const left = b.id(' $$renderer.local.select_value');
+			const left = b.id('$$renderer.local.select_value');
 			if (value.type === 'Attribute') {
 				state.template.push(
 					b.stmt(b.assignment('=', left, build_attribute_value(value.value, context)))
