@@ -98,7 +98,6 @@ export class Renderer {
 	 */
 	child(fn, type) {
 		const child = new Renderer(this.global, this, type);
-		this.#out.push(child);
 
 		const parent = ssr_context;
 
@@ -120,6 +119,12 @@ export class Renderer {
 			// just to avoid unhandled promise rejections -- we'll end up throwing in `collect_async` if something fails
 			result.catch(() => {});
 			child.promises.initial = result;
+
+			// add hydration boundaries that `$.async` handles in the client
+			this.#out.push(BLOCK_OPEN, child, BLOCK_CLOSE);
+		} else {
+			// TODO should we always put hydration boundaries around the child?
+			this.#out.push(child);
 		}
 
 		return child;
