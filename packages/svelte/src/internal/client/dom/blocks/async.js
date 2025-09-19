@@ -7,7 +7,7 @@ import {
 	hydrating,
 	set_hydrate_node,
 	set_hydrating,
-	remove_nodes
+	skip_nodes
 } from '../hydration.js';
 import { get_boundary } from './boundary.js';
 
@@ -27,7 +27,7 @@ export function async(node, expressions, fn) {
 		hydrate_next();
 
 		var previous_hydrate_node = hydrate_node;
-		var end = remove_nodes(false);
+		var end = skip_nodes(false);
 		set_hydrate_node(end);
 	}
 

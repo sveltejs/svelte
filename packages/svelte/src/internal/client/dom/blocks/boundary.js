@@ -21,7 +21,7 @@ import {
 	hydrate_node,
 	hydrating,
 	next,
-	remove_nodes,
+	skip_nodes,
 	set_hydrate_node
 } from '../hydration.js';
 import { get_next_sibling } from '../operations.js';
@@ -335,7 +335,7 @@ export class Boundary {
 		if (hydrating) {
 			set_hydrate_node(/** @type {TemplateNode} */ (this.#hydrate_open));
 			next();
-			set_hydrate_node(remove_nodes());
+			set_hydrate_node(skip_nodes());
 		}
 
 		var did_reset = false;

@@ -84,7 +84,7 @@ export function next(count = 1) {
  * Skips or removes (depending on {@link remove}) all nodes starting at `hydrate_node` up until the next hydration end comment
  * @param {boolean} remove
  */
-export function remove_nodes(remove = true) {
+export function skip_nodes(remove = true) {
 	var depth = 0;
 	var node = hydrate_node;
 

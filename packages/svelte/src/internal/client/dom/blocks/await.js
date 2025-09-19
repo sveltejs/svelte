@@ -8,7 +8,7 @@ import {
 	hydrate_next,
 	hydrate_node,
 	hydrating,
-	remove_nodes,
+	skip_nodes,
 	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
@@ -140,7 +140,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 
 		if (mismatch) {
 			// Hydration mismatch: remove everything inside the anchor and start fresh
-			anchor = remove_nodes();
+			anchor = skip_nodes();
 
 			set_hydrate_node(anchor);
 			set_hydrating(false);
