@@ -13,7 +13,8 @@ import {
 	build_template,
 	build_attribute_value,
 	call_child_renderer,
-	PromiseOptimiser
+	PromiseOptimiser,
+	create_async_block
 } from './shared/utils.js';
 
 /**

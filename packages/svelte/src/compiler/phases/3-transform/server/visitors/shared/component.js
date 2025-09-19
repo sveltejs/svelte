@@ -5,7 +5,8 @@ import {
 	empty_comment,
 	build_attribute_value,
 	create_async_block,
-	PromiseOptimiser
+	PromiseOptimiser,
+	build_template
 } from './utils.js';
 import * as b from '#compiler/builders';
 import { is_element_node } from '../../../../nodes.js';
@@ -318,16 +319,23 @@ export function build_inline_component(node, expression, context) {
 	}
 
 	if (optimiser.expressions.length > 0) {
-		statement = create_async_block(b.block([optimiser.apply(), statement]));
+		statement = create_async_block(
+			b.block([optimiser.apply(), statement, ...build_template([empty_comment])])
+		);
 	}
 
+	// TODO in the async case this probably needs to go inside the async block?
 	if (dynamic && custom_css_props.length === 0) {
 		context.state.template.push(empty_comment);
 	}
 
 	context.state.template.push(statement);
 
-	if (!context.state.skip_hydration_boundaries && custom_css_props.length === 0) {
+	if (
+		!context.state.skip_hydration_boundaries &&
+		custom_css_props.length === 0 &&
+		optimiser.expressions.length === 0
+	) {
 		context.state.template.push(empty_comment);
 	}
 }
