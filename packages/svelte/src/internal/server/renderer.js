@@ -172,7 +172,7 @@ export class Renderer {
 
 	/**
 	 * @param {Record<string, any>} attrs
-	 * @param {any} body
+	 * @param {string | number | boolean | ((renderer: Renderer) => void)} body
 	 */
 	option(attrs, body) {
 		this.#out.push(`<option${attributes(attrs)}`);
