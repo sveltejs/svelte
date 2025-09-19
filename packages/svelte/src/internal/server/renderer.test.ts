@@ -14,7 +14,7 @@ test('collects synchronous body content by default', () => {
 
 	const { head, body } = Renderer.render(component as unknown as Component);
 	expect(head).toBe('');
-	expect(body).toBe('<!--[--><!--[-->abc<!--]--><!--]-->');
+	expect(body).toBe('<!--[-->abc<!--]-->');
 });
 
 test('child type switches content area (head vs body)', () => {
@@ -28,7 +28,7 @@ test('child type switches content area (head vs body)', () => {
 
 	const { head, body } = Renderer.render(component as unknown as Component);
 	expect(head).toBe('<title>T</title>');
-	expect(body).toBe('<!--[--><!--[-->ab<!--]--><!--]-->');
+	expect(body).toBe('<!--[-->ab<!--]-->');
 });
 
 test('child inherits parent type when not specified', () => {
@@ -42,7 +42,7 @@ test('child inherits parent type when not specified', () => {
 	};
 
 	const { head, body } = Renderer.render(component as unknown as Component);
-	expect(body).toBe('<!--[--><!--[--><!--]--><!--]-->');
+	expect(body).toBe('<!--[--><!--]-->');
 	expect(head).toBe('<meta name="x"/><style>/* css */</style>');
 });
 
@@ -101,7 +101,7 @@ test('compact synchronously aggregates a range and can transform into head/body'
 
 	const { head, body } = Renderer.render(component as unknown as Component);
 	expect(head).toBe('<h>H</h>');
-	expect(body).toBe('<!--[--><!--[-->abdc<!--]--><!--]-->');
+	expect(body).toBe('<!--[-->abdc<!--]-->');
 });
 
 test('local state is shallow-copied to children', () => {
@@ -216,7 +216,7 @@ describe('async', () => {
 
 		const result = await Renderer.render(component as unknown as Component);
 		expect(result.head).toBe('');
-		expect(result.body).toBe('<!--[--><!--[-->123<!--]--><!--]-->');
+		expect(result.body).toBe('<!--[-->123<!--]-->');
 		expect(() => result.html).toThrow('html_deprecated');
 	});
 
@@ -239,7 +239,7 @@ describe('async', () => {
 
 		const { body, head } = await Renderer.render(component as unknown as Component);
 		expect(head).toBe('');
-		expect(body).toBe('<!--[--><!--[-->axb<!--]--><!--]-->');
+		expect(body).toBe('<!--[-->axb<!--]-->');
 	});
 
 	test('push accepts async functions in async context', async () => {
@@ -254,7 +254,7 @@ describe('async', () => {
 
 		const { head, body } = await Renderer.render(component as unknown as Component);
 		expect(head).toBe('');
-		expect(body).toBe('<!--[--><!--[-->abc<!--]--><!--]-->');
+		expect(body).toBe('<!--[-->abc<!--]-->');
 	});
 
 	test('push handles async functions with different timing', async () => {
@@ -272,7 +272,7 @@ describe('async', () => {
 
 		const { head, body } = await Renderer.render(component as unknown as Component);
 		expect(head).toBe('');
-		expect(body).toBe('<!--[--><!--[-->fastslowsync<!--]--><!--]-->');
+		expect(body).toBe('<!--[-->fastslowsync<!--]-->');
 	});
 
 	test('push async functions work with head content type', async () => {
@@ -286,7 +286,7 @@ describe('async', () => {
 		};
 
 		const { head, body } = await Renderer.render(component as unknown as Component);
-		expect(body).toBe('<!--[--><!--[--><!--]--><!--]-->');
+		expect(body).toBe('<!--[--><!--]-->');
 		expect(head).toBe('<title>Async Title</title>');
 	});
 
@@ -305,7 +305,7 @@ describe('async', () => {
 
 		const { head, body } = await Renderer.render(component as unknown as Component);
 		expect(head).toBe('');
-		expect(body).toBe('<!--[--><!--[-->start-async-child--end<!--]--><!--]-->');
+		expect(body).toBe('<!--[-->start-async-child--end<!--]-->');
 	});
 
 	test('push async functions work with compact operations', async () => {
@@ -324,7 +324,7 @@ describe('async', () => {
 
 		const { head, body } = await Renderer.render(component as unknown as Component);
 		expect(head).toBe('');
-		expect(body).toBe('<!--[--><!--[-->ABC<!--]--><!--]-->');
+		expect(body).toBe('<!--[-->ABC<!--]-->');
 	});
 
 	test('push async functions are not supported in sync context', () => {

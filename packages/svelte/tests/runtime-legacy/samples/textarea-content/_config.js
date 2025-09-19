@@ -4,7 +4,7 @@ export default test({
 	withoutNormalizeHtml: true,
 	// Unable to test `html` with `<textarea>` content
 	// as the textarea#value will not show within `innerHtml`
-	ssrHtml: `<!--[--><!--[--><textarea id="textarea">  A
+	ssrHtml: `<!--[--><textarea id="textarea">  A
   B
 </textarea> <div id="div-with-textarea"><textarea>    A
     B
@@ -14,7 +14,7 @@ newline after leading space</textarea></div> <textarea id="textarea-with-multipl
 
 multiple leading newlines</textarea> <div id="div-with-textarea-with-multiple-leading-newlines"><textarea>
 
-multiple leading newlines</textarea></div><!--]--><!--]-->`,
+multiple leading newlines</textarea></div><!--]-->`,
 	test({ assert, target }) {
 		// Test for <textarea> tag
 		const elementTextarea = /** @type {HTMLTextAreaElement} */ (target.querySelector('#textarea'));
