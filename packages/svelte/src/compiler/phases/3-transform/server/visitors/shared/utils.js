@@ -262,15 +262,17 @@ export function build_getter(node, state) {
 }
 
 /**
+ * Creates a `$$renderer.child(...)` expression statement
  * @param {BlockStatement | Expression} body
  * @param {boolean} async
  * @returns {Statement}
  */
-export function call_child_renderer(body, async) {
+export function create_child_block(body, async) {
 	return b.stmt(b.call('$$renderer.child', b.arrow([b.id('$$renderer')], body, async)));
 }
 
 /**
+ * Creates a `$$renderer.async(...)` expression statement
  * @param {BlockStatement | Expression} body
  */
 export function create_async_block(body) {

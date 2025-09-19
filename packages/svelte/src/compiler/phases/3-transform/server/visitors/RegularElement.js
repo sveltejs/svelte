@@ -12,7 +12,7 @@ import {
 	process_children,
 	build_template,
 	build_attribute_value,
-	call_child_renderer,
+	create_child_block,
 	PromiseOptimiser
 } from './shared/utils.js';
 
@@ -50,7 +50,7 @@ export function RegularElement(node, context) {
 		// TODO this is a real edge case, would be good to DRY this out
 		if (optimiser.expressions.length > 0) {
 			context.state.template.push(
-				call_child_renderer(
+				create_child_block(
 					b.block([optimiser.apply(), ...state.init, ...build_template(state.template)]),
 					true
 				)
@@ -128,7 +128,7 @@ export function RegularElement(node, context) {
 
 		if (optimiser.expressions.length > 0) {
 			context.state.template.push(
-				call_child_renderer(b.block([optimiser.apply(), ...state.init, statement]), true)
+				create_child_block(b.block([optimiser.apply(), ...state.init, statement]), true)
 			);
 		} else {
 			context.state.template.push(...state.init, statement);
@@ -171,7 +171,7 @@ export function RegularElement(node, context) {
 
 		if (optimiser.expressions.length > 0) {
 			context.state.template.push(
-				call_child_renderer(b.block([optimiser.apply(), ...state.init, statement]), true)
+				create_child_block(b.block([optimiser.apply(), ...state.init, statement]), true)
 			);
 		} else {
 			context.state.template.push(...state.init, statement);
@@ -215,7 +215,7 @@ export function RegularElement(node, context) {
 
 	if (optimiser.expressions.length > 0) {
 		context.state.template.push(
-			call_child_renderer(
+			create_child_block(
 				b.block([optimiser.apply(), ...state.init, ...build_template(state.template)]),
 				true
 			)

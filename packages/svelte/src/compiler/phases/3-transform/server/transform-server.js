@@ -41,7 +41,7 @@ import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 import { SvelteBoundary } from './visitors/SvelteBoundary.js';
 import {
-	call_child_renderer,
+	create_child_block,
 	call_component_renderer,
 	create_async_block
 } from './visitors/shared/utils.js';
@@ -248,7 +248,7 @@ export function server_component(analysis, options) {
 	]);
 
 	if (analysis.instance.has_await) {
-		component_block = b.block([call_child_renderer(component_block, true)]);
+		component_block = b.block([create_child_block(component_block, true)]);
 	}
 
 	// trick esrap into including comments

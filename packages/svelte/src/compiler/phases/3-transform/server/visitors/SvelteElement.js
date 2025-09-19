@@ -6,7 +6,7 @@ import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { determine_namespace_for_children } from '../../utils.js';
 import { build_element_attributes } from './shared/element.js';
-import { build_template, call_child_renderer, PromiseOptimiser } from './shared/utils.js';
+import { build_template, create_child_block, PromiseOptimiser } from './shared/utils.js';
 
 /**
  * @param {AST.SvelteElement} node
@@ -71,7 +71,7 @@ export function SvelteElement(node, context) {
 	);
 
 	if (optimiser.expressions.length > 0) {
-		statement = call_child_renderer(b.block([optimiser.apply(), statement]), true);
+		statement = create_child_block(b.block([optimiser.apply(), statement]), true);
 	}
 
 	context.state.template.push(statement);
