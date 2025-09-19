@@ -3,10 +3,11 @@
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '#compiler/builders';
 import {
-	empty_comment,
 	build_attribute_value,
 	PromiseOptimiser,
-	create_async_block
+	create_async_block,
+	block_open,
+	block_close
 } from './shared/utils.js';
 
 /**
@@ -69,5 +70,5 @@ export function SlotElement(node, context) {
 			? create_async_block(b.block([optimiser.apply(), b.stmt(slot)]))
 			: b.stmt(slot);
 
-	context.state.template.push(empty_comment, statement, empty_comment);
+	context.state.template.push(block_open, statement, block_close);
 }
