@@ -12,7 +12,8 @@ import {
 	process_children,
 	build_template,
 	build_attribute_value,
-	call_child_renderer
+	call_child_renderer,
+	PromiseOptimiser
 } from './shared/utils.js';
 
 /**
@@ -27,20 +28,37 @@ export function RegularElement(node, context) {
 		...context.state,
 		namespace,
 		preserve_whitespace:
-			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea'
+			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea',
+		init: [],
+		template: []
 	};
 
 	const node_is_void = is_void(node.name);
 
-	context.state.template.push(b.literal(`<${node.name}`));
-	const body = build_element_attributes(node, { ...context, state });
-	context.state.template.push(b.literal(node_is_void ? '/>' : '>')); // add `/>` for XHTML compliance
+	const optimiser = new PromiseOptimiser();
+
+	state.template.push(b.literal(`<${node.name}`));
+	const body = build_element_attributes(node, { ...context, state }, optimiser.transform);
+	state.template.push(b.literal(node_is_void ? '/>' : '>')); // add `/>` for XHTML compliance
 
 	if ((node.name === 'script' || node.name === 'style') && node.fragment.nodes.length === 1) {
-		context.state.template.push(
+		state.template.push(
 			b.literal(/** @type {AST.Text} */ (node.fragment.nodes[0]).data),
 			b.literal(`</${node.name}>`)
 		);
+
+		// TODO this is a real edge case, would be good to DRY this out
+		if (optimiser.expressions.length > 0) {
+			context.state.template.push(
+				call_child_renderer(
+					b.block([optimiser.apply(), ...state.init, ...build_template(state.template)]),
+					true
+				)
+			);
+		} else {
+			context.state.init.push(...state.init);
+			context.state.template.push(...state.template);
+		}
 
 		return;
 	}
@@ -93,26 +111,24 @@ export function RegularElement(node, context) {
 			select_with_value = true;
 			select_with_value_async ||= spread.metadata.expression.has_await;
 
+			const object = build_spread_object(
+				node,
+				node.attributes.filter(
+					(attribute) =>
+						attribute.type === 'Attribute' ||
+						attribute.type === 'BindDirective' ||
+						attribute.type === 'SpreadAttribute'
+				),
+				context,
+				optimiser.transform
+			);
+
 			state.template.push(
 				b.stmt(
 					b.assignment(
 						'=',
 						b.id('$$renderer.local.select_value'),
-						b.member(
-							build_spread_object(
-								node,
-								node.attributes.filter(
-									(attribute) =>
-										attribute.type === 'Attribute' ||
-										attribute.type === 'BindDirective' ||
-										attribute.type === 'SpreadAttribute'
-								),
-								context
-							),
-							'value',
-							false,
-							true
-						)
+						b.member(object, 'value', false, true)
 					)
 				)
 			);
@@ -128,7 +144,13 @@ export function RegularElement(node, context) {
 			const left = b.id('$$renderer.local.select_value');
 			if (value.type === 'Attribute') {
 				state.template.push(
-					b.stmt(b.assignment('=', left, build_attribute_value(value.value, context)))
+					b.stmt(
+						b.assignment(
+							'=',
+							left,
+							build_attribute_value(value.value, context, false, false, optimiser.transform)
+						)
+					)
 				);
 			} else if (value.type === 'BindDirective') {
 				state.template.push(
@@ -226,5 +248,17 @@ export function RegularElement(node, context) {
 
 	if (dev) {
 		state.template.push(b.stmt(b.call('$.pop_element')));
+	}
+
+	if (optimiser.expressions.length > 0) {
+		context.state.template.push(
+			call_child_renderer(
+				b.block([optimiser.apply(), ...state.init, ...build_template(state.template)]),
+				true
+			)
+		);
+	} else {
+		context.state.init.push(...state.init);
+		context.state.template.push(...state.template);
 	}
 }

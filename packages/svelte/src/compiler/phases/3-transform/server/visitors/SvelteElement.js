@@ -6,7 +6,7 @@ import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { determine_namespace_for_children } from '../../utils.js';
 import { build_element_attributes } from './shared/element.js';
-import { build_template } from './shared/utils.js';
+import { build_template, PromiseOptimiser } from './shared/utils.js';
 
 /**
  * @param {AST.SvelteElement} node
@@ -37,7 +37,10 @@ export function SvelteElement(node, context) {
 		init: []
 	};
 
-	build_element_attributes(node, { ...context, state });
+	// TODO use this
+	const optimiser = new PromiseOptimiser();
+
+	build_element_attributes(node, { ...context, state }, optimiser.transform);
 
 	if (dev) {
 		const location = /** @type {Location} */ (locator(node.start));

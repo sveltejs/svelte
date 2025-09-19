@@ -175,13 +175,7 @@ export function build_template(template) {
  * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
  * @returns {Expression}
  */
-export function build_attribute_value(
-	value,
-	context,
-	trim_whitespace = false,
-	is_component = false,
-	transform = (expression) => expression
-) {
+export function build_attribute_value(value, context, trim_whitespace, is_component, transform) {
 	if (value === true) {
 		return b.true;
 	}
