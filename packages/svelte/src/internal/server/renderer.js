@@ -205,8 +205,7 @@ export class Renderer {
 				body(r);
 
 				if (this.global.mode === 'async') {
-					const content = { head: '', body: '' };
-					return Renderer.#collect_content_async([r], 'body', content).then(() => {
+					return r.#collect_content_async().then((content) => {
 						close(renderer, content.body.replaceAll('<!---->', ''), content);
 					});
 				} else {
@@ -235,8 +234,7 @@ export class Renderer {
 			fn(r);
 
 			if (renderer.global.mode === 'async') {
-				const content = { head: '', body: '' };
-				return Renderer.#collect_content_async([r], 'body', content).then(() => {
+				return r.#collect_content_async().then((content) => {
 					close(content.head);
 				});
 			} else {
@@ -457,7 +455,7 @@ export class Renderer {
 		try {
 			const renderer = Renderer.#open_render('async', component, options);
 
-			const content = await Renderer.#collect_content_async([renderer], renderer.type);
+			const content = await renderer.#collect_content_async();
 			return Renderer.#close_render(content, renderer);
 		} finally {
 			abort();
@@ -484,26 +482,21 @@ export class Renderer {
 
 	/**
 	 * Collect all of the code from the `out` array and return it as a string.
-	 * @param {RendererItem[]} items
-	 * @param {RendererType} current_type
 	 * @param {AccumulatedContent} content
 	 * @returns {Promise<AccumulatedContent>}
 	 */
-	static async #collect_content_async(items, current_type, content = { head: '', body: '' }) {
-		// no danger to sequentially awaiting stuff in here; all of the work is already kicked off
-		for (const item of items) {
-			if (typeof item === 'string') {
-				content[current_type] += item;
-			} else {
-				if (item.promise) {
-					// this represents the async function that's modifying this renderer.
-					// we can't do anything until it's done and we know our `out` array is complete.
-					await item.promise;
-				}
+	async #collect_content_async(content = { head: '', body: '' }) {
+		await this.promise;
 
-				await Renderer.#collect_content_async(item.#out, item.type, content);
+		// no danger to sequentially awaiting stuff in here; all of the work is already kicked off
+		for (const item of this.#out) {
+			if (typeof item === 'string') {
+				content[this.type] += item;
+			} else if (item instanceof Renderer) {
+				await item.#collect_content_async(content);
 			}
 		}
+
 		return content;
 	}
 
