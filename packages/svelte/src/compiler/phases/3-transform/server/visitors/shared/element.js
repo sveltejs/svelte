@@ -318,8 +318,6 @@ export function build_spread_object(element, attributes, context, transform) {
 					WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 				);
 
-				// TODO check has_await
-
 				return b.prop('init', b.key(name), value);
 			} else if (attribute.type === 'BindDirective') {
 				const name = get_attribute_name(element, attribute);
