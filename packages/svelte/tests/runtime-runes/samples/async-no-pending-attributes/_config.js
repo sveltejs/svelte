@@ -17,7 +17,7 @@ export default test({
 				<p>sauce</p>
 
 				<p class="neato">neato</p>
-				<p>potato</p>
+				<p>burrito</p>
 			`
 		);
 	}

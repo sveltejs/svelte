@@ -9,4 +9,4 @@
 <Child thing={await 'sauce'} />
 
 <p {...{}} class={await 'neato'}>neato</p>
-<Child {...{}} thing={await 'potato'} />
+<Child {...{}} thing={await 'burrito'} />
