@@ -322,7 +322,6 @@ export function build_inline_component(node, expression, context) {
 		statement = create_async_block(b.block([optimiser.apply(), statement]));
 	}
 
-	// TODO in the async case this probably needs to go inside the async block?
 	if (dynamic && custom_css_props.length === 0) {
 		context.state.template.push(empty_comment);
 	}
