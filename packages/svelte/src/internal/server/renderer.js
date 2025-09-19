@@ -6,6 +6,7 @@ import { pop, push, set_ssr_context, ssr_context } from './context.js';
 import * as e from './errors.js';
 import * as w from './warnings.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
+import { attributes } from './index.js';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
@@ -156,6 +157,19 @@ export class Renderer {
 		const child = this.child(fn);
 		child.#is_component_body = true;
 		pop();
+	}
+
+	/**
+	 * @param {Record<string, any>} attrs
+	 * @param {(renderer: Renderer) => void} fn
+	 */
+	select({ value, ...attrs }, fn) {
+		this.push(`<select${attributes(attrs)}>`);
+		this.child((renderer) => {
+			renderer.local.select_value = value;
+			fn(renderer);
+		});
+		this.push('</select>');
 	}
 
 	/**
