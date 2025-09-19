@@ -64,10 +64,7 @@ export function build_element_attributes(node, context, transform) {
 						attribute.value[0].data = '\n' + attribute.value[0].data;
 					}
 
-					content = b.call(
-						'$.escape',
-						build_attribute_value(attribute.value, context, false, false, transform)
-					);
+					content = b.call('$.escape', build_attribute_value(attribute.value, context, transform));
 				} else if (node.name !== 'select') {
 					// omit value attribute for select elements, it's irrelevant for the initially selected value and has no
 					// effect on the selected value after the user interacts with the select element (the value _property_ does, but not the attribute)
@@ -155,12 +152,12 @@ export function build_element_attributes(node, context, transform) {
 							expression: is_checkbox
 								? b.call(
 										b.member(attribute.expression, 'includes'),
-										build_attribute_value(value_attribute.value, context, false, false, transform)
+										build_attribute_value(value_attribute.value, context, transform)
 									)
 								: b.binary(
 										'===',
 										attribute.expression,
-										build_attribute_value(value_attribute.value, context, false, false, transform)
+										build_attribute_value(value_attribute.value, context, transform)
 									),
 							metadata: {
 								expression: create_expression_metadata()
@@ -249,9 +246,8 @@ export function build_element_attributes(node, context, transform) {
 					build_attribute_value(
 						attribute.value,
 						context,
-						WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name),
-						false,
-						transform
+						transform,
+						WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 					)
 				).value;
 
@@ -287,9 +283,8 @@ export function build_element_attributes(node, context, transform) {
 			const value = build_attribute_value(
 				attribute.value,
 				context,
-				WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name),
-				false,
-				transform
+				transform,
+				WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 			);
 
 			// pre-escape and inline literal attributes :
@@ -353,9 +348,8 @@ export function build_spread_object(element, attributes, context, transform) {
 				const value = build_attribute_value(
 					attribute.value,
 					context,
-					WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name),
-					false,
-					transform
+					transform,
+					WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 				);
 
 				// TODO check has_await
@@ -429,7 +423,7 @@ function build_element_spread_attributes(
 				directive.name,
 				directive.value === true
 					? b.id(directive.name)
-					: build_attribute_value(directive.value, context, true, false, transform)
+					: build_attribute_value(directive.value, context, transform, true)
 			);
 		});
 
@@ -517,7 +511,7 @@ function build_attr_style(style_directives, expression, context, transform) {
 			const expression =
 				directive.value === true
 					? b.id(directive.name)
-					: build_attribute_value(directive.value, context, true, false, transform);
+					: build_attribute_value(directive.value, context, transform, true);
 
 			let name = directive.name;
 			if (name[0] !== '-' || name[1] !== '-') {

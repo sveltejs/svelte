@@ -148,7 +148,7 @@ export function RegularElement(node, context) {
 						b.assignment(
 							'=',
 							left,
-							build_attribute_value(value.value, context, false, false, optimiser.transform)
+							build_attribute_value(value.value, context, optimiser.transform)
 						)
 					)
 				);

@@ -92,9 +92,9 @@ export function build_inline_component(node, expression, context) {
 			const value = build_attribute_value(
 				attribute.value,
 				context,
+				optimiser.transform,
 				false,
-				true,
-				optimiser.transform
+				true
 			);
 
 			if (attribute.name.startsWith('--')) {

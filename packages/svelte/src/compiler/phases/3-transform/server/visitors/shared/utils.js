@@ -170,12 +170,18 @@ export function build_template(template) {
  *
  * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
+ * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
  * @param {boolean} trim_whitespace
  * @param {boolean} is_component
- * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
  * @returns {Expression}
  */
-export function build_attribute_value(value, context, trim_whitespace, is_component, transform) {
+export function build_attribute_value(
+	value,
+	context,
+	transform,
+	trim_whitespace = false,
+	is_component = false
+) {
 	if (value === true) {
 		return b.true;
 	}

@@ -26,9 +26,9 @@ export function SvelteBoundary(node, context) {
 					build_attribute_value(
 						pending_attribute.value,
 						context,
+						(expression) => expression,
 						false,
-						true,
-						(expression) => expression
+						true
 					),
 					b.id('$$renderer')
 				)

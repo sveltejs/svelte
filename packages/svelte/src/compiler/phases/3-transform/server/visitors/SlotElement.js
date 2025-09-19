@@ -33,9 +33,9 @@ export function SlotElement(node, context) {
 			const value = build_attribute_value(
 				attribute.value,
 				context,
+				optimiser.transform,
 				false,
-				true,
-				optimiser.transform
+				true
 			);
 
 			if (attribute.name === 'name') {
