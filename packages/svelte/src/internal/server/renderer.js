@@ -211,7 +211,7 @@ export class Renderer {
 						close(renderer, content.body.replaceAll('<!---->', ''), content);
 					});
 				} else {
-					Renderer.#collect_content([r], 'body', content);
+					Renderer.#collect_content(r, content);
 					close(renderer, content.body.replaceAll('<!---->', ''), content);
 				}
 			});
@@ -242,7 +242,7 @@ export class Renderer {
 					close(content.head);
 				});
 			} else {
-				Renderer.#collect_content([r], 'body', content);
+				Renderer.#collect_content(r, content);
 				close(content.head);
 			}
 		});
@@ -438,7 +438,7 @@ export class Renderer {
 		try {
 			const renderer = Renderer.#open_render('sync', component, options);
 
-			const content = Renderer.#collect_content([renderer], renderer.type);
+			const content = Renderer.#collect_content(renderer);
 			return Renderer.#close_render(content, renderer);
 		} finally {
 			abort();
@@ -469,19 +469,19 @@ export class Renderer {
 
 	/**
 	 * Collect all of the code from the `out` array and return it as a string, or a promise resolving to a string.
-	 * @param {RendererItem[]} items
-	 * @param {RendererType} current_type
+	 * @param {Renderer} renderer
 	 * @param {AccumulatedContent} content
 	 * @returns {AccumulatedContent}
 	 */
-	static #collect_content(items, current_type, content = { head: '', body: '' }) {
-		for (const item of items) {
+	static #collect_content(renderer, content = { head: '', body: '' }) {
+		for (const item of renderer.#out) {
 			if (typeof item === 'string') {
-				content[current_type] += item;
+				content[renderer.type] += item;
 			} else if (item instanceof Renderer) {
-				Renderer.#collect_content(item.#out, item.type, content);
+				Renderer.#collect_content(item, content);
 			}
 		}
+
 		return content;
 	}
 
