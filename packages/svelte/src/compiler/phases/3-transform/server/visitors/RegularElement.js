@@ -141,41 +141,53 @@ export function RegularElement(node, context) {
 		node.name === 'option' &&
 		!node.attributes.some(
 			(attribute) =>
-				attribute.type === 'SpreadAttribute' ||
-				((attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
-					attribute.name === 'value')
+				(attribute.type === 'Attribute' && attribute.name === 'value') ||
+				attribute.type === 'SpreadAttribute'
 		)
 	) {
+		const attributes = build_spread_object(
+			node,
+			node.attributes.filter(
+				(attribute) =>
+					attribute.type === 'Attribute' ||
+					attribute.type === 'BindDirective' ||
+					attribute.type === 'SpreadAttribute'
+			),
+			context,
+			optimiser.transform
+		);
+
+		let body;
+
 		if (node.metadata.synthetic_value_node) {
-			state.template.push(
-				b.stmt(
-					b.call(
-						'$.simple_valueless_option',
-						b.id('$$renderer'),
-						b.thunk(
-							node.metadata.synthetic_value_node.expression,
-							node.metadata.synthetic_value_node.metadata.expression.has_await
-						)
-					)
-				)
+			body = optimiser.transform(
+				node.metadata.synthetic_value_node.expression,
+				node.metadata.synthetic_value_node.metadata.expression
 			);
 		} else {
 			const inner_state = { ...state, template: [], init: [] };
 			process_children(trimmed, { ...context, state: inner_state });
-			state.template.push(
-				b.stmt(
-					b.call(
-						'$.valueless_option',
-						b.id('$$renderer'),
-						b.arrow(
-							[b.id('$$renderer')],
-							b.block([...inner_state.init, ...build_template(inner_state.template)])
-						)
-					)
-				)
+
+			body = b.arrow(
+				[b.id('$$renderer')],
+				b.block([...state.init, ...build_template(inner_state.template)])
 			);
 		}
-	} else if (body !== null) {
+
+		const statement = b.stmt(b.call('$$renderer.option', attributes, body));
+
+		if (optimiser.expressions.length > 0) {
+			context.state.template.push(
+				call_child_renderer(b.block([optimiser.apply(), ...state.init, statement]), true)
+			);
+		} else {
+			context.state.template.push(...state.init, statement);
+		}
+
+		return;
+	}
+
+	if (body !== null) {
 		// if this is a `<textarea>` value or a contenteditable binding, we only add
 		// the body if the attribute/binding is falsy
 		const inner_state = { ...state, template: [], init: [] };

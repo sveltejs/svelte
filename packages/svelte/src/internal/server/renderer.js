@@ -173,6 +173,56 @@ export class Renderer {
 	}
 
 	/**
+	 * @param {Record<string, any>} attrs
+	 * @param {any} body
+	 */
+	option(attrs, body) {
+		this.#out.push(`<option${attributes(attrs)}`);
+
+		/**
+		 * @param {Renderer} renderer
+		 * @param {any} value
+		 * @param {{ head?: string, body: any }} content
+		 */
+		const close = (renderer, value, { head, body }) => {
+			if ('value' in attrs) {
+				value = attrs.value;
+			}
+
+			if (value === this.local.select_value) {
+				renderer.#out.push(' selected');
+			}
+
+			renderer.#out.push(`>${body}</option>`);
+
+			// super edge case, but may as well handle it
+			if (head) {
+				renderer.head((child) => child.push(head));
+			}
+		};
+
+		if (typeof body === 'function') {
+			this.child((renderer) => {
+				const r = new Renderer(this.global, this);
+				body(r);
+
+				const content = { head: '', body: '' };
+
+				if (this.global.mode === 'async') {
+					return Renderer.#collect_content_async([r], 'body', content).then(() => {
+						close(renderer, content.body.replaceAll('<!---->', ''), content);
+					});
+				} else {
+					Renderer.#collect_content([r], 'body', content);
+					close(renderer, content.body.replaceAll('<!---->', ''), content);
+				}
+			});
+		} else {
+			close(this, body, { body });
+		}
+	}
+
+	/**
 	 * @param {string | (() => Promise<string>)} content
 	 */
 	push(content) {
