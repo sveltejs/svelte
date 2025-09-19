@@ -516,8 +516,7 @@ export class Renderer {
 		}
 
 		let head = content.head + renderer.global.get_title();
-
-		const body = BLOCK_OPEN + content.body + BLOCK_CLOSE; // this inserts a fake boundary so hydration matches
+		let body = content.body;
 
 		for (const { hash, code } of renderer.global.css) {
 			head += `<style id="${hash}">${code}</style>`;
