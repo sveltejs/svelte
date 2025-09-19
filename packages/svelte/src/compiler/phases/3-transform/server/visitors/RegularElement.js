@@ -137,14 +137,7 @@ export function RegularElement(node, context) {
 		return;
 	}
 
-	if (
-		node.name === 'option' &&
-		!node.attributes.some(
-			(attribute) =>
-				(attribute.type === 'Attribute' && attribute.name === 'value') ||
-				attribute.type === 'SpreadAttribute'
-		)
-	) {
+	if (node.name === 'option') {
 		const attributes = build_spread_object(
 			node,
 			node.attributes.filter(

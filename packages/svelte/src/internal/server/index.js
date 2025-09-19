@@ -495,15 +495,6 @@ export function derived(fn) {
 }
 
 /**
- *
- * @param {Renderer} renderer
- * @param {unknown} value
- */
-export function maybe_selected(renderer, value) {
-	return value === renderer.local.select_value ? ' selected' : '';
-}
-
-/**
  * Since your document can only have one `title`, we have to have some sort of algorithm for determining
  * which one "wins". To do this, we perform a depth-first comparison of where the title was encountered --
  * later ones "win" over earlier ones, regardless of what order the promises resolve in. To accomodate this, we:

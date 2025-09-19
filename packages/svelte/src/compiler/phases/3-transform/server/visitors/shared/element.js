@@ -212,26 +212,6 @@ export function build_element_attributes(node, context, transform) {
 			context,
 			transform
 		);
-
-		if (node.name === 'option') {
-			// TODO this is all wrong, it inlines the spread twice
-
-			const object = build_spread_object(
-				node,
-				node.attributes.filter(
-					(attribute) =>
-						attribute.type === 'Attribute' ||
-						attribute.type === 'BindDirective' ||
-						attribute.type === 'SpreadAttribute'
-				),
-				context,
-				transform
-			);
-
-			context.state.template.push(
-				b.call('$.maybe_selected', b.id('$$renderer'), b.member(object, 'value', false, true))
-			);
-		}
 	} else {
 		const css_hash = node.metadata.scoped ? context.state.analysis.css.hash : null;
 
@@ -267,16 +247,6 @@ export function build_element_attributes(node, context, transform) {
 					);
 				}
 
-				if (node.name === 'option' && name === 'value') {
-					context.state.template.push(
-						b.call(
-							'$.maybe_selected',
-							b.id('$$renderer'),
-							literal_value != null ? b.literal(/** @type {any} */ (literal_value)) : b.void0
-						)
-					);
-				}
-
 				continue;
 			}
 
@@ -303,10 +273,6 @@ export function build_element_attributes(node, context, transform) {
 				context.state.template.push(
 					b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
 				);
-			}
-
-			if (name === 'value' && node.name === 'option') {
-				context.state.template.push(b.call('$.maybe_selected', b.id('$$renderer'), value));
 			}
 		}
 	}
