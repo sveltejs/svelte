@@ -108,13 +108,13 @@ export function css_props(renderer, is_html, props, component, dynamic = false) 
 
 /**
  * @param {Record<string, unknown>} attrs
- * @param {string | null} css_hash
+ * @param {string} [css_hash]
  * @param {Record<string, boolean>} [classes]
  * @param {Record<string, string>} [styles]
  * @param {number} [flags]
  * @returns {string}
  */
-export function spread_attributes(attrs, css_hash, classes, styles, flags = 0) {
+export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 	if (styles) {
 		attrs.style = to_style(attrs.style, styles);
 	}
@@ -492,122 +492,4 @@ export function derived(fn) {
 		updated_value = new_value;
 		return updated_value;
 	};
-}
-
-/**
- *
- * @param {Renderer} renderer
- * @param {unknown} value
- */
-export function maybe_selected(renderer, value) {
-	return value === renderer.local.select_value ? ' selected' : '';
-}
-
-/**
- * When an `option` element has no `value` attribute, we need to treat the child
- * content as its `value` to determine whether we should apply the `selected` attribute.
- * This has to be done at runtime, for hopefully obvious reasons. It is also complicated,
- * for sad reasons.
- * @param {Renderer} renderer
- * @param {((renderer: Renderer) => void | Promise<void>)} children
- * @returns {void}
- */
-export function valueless_option(renderer, children) {
-	const i = renderer.length;
-
-	// prior to children, `renderer` has some combination of string/unresolved renderer that ends in `<option ...>`
-	renderer.child(children);
-
-	// post-children, `renderer` has child content, possibly also with some number of hydration comments.
-	// we can compact this last chunk of content to see if it matches the select value...
-	renderer.compact({
-		start: i,
-		fn: (content) => {
-			if (content.body.replace(/<!---->/g, '') === renderer.local.select_value) {
-				// ...and if it does match the select value, we can compact the part of the renderer representing the `<option ...>`
-				// to add the `selected` attribute to the end.
-				renderer.compact({
-					start: i - 1,
-					end: i,
-					fn: (content) => {
-						return { body: content.body.slice(0, -1) + ' selected>', head: content.head };
-					}
-				});
-			}
-			return content;
-		}
-	});
-}
-
-/**
- * In the special case where an `option` element has no `value` attribute but
- * the children of the `option` element are a single expression, we can simplify
- * by running the children and passing the resulting value, which means
- * we don't have to do all of the same parsing nonsense. It also means we can avoid
- * coercing everything to a string.
- * @param {Renderer} renderer
- * @param {(() => unknown)} child
- */
-export function simple_valueless_option(renderer, child) {
-	const result = child();
-
-	/**
-	 * @param {AccumulatedContent} content
-	 * @param {unknown} child_value
-	 * @returns {AccumulatedContent}
-	 */
-	const mark_selected = (content, child_value) => {
-		if (child_value === renderer.local.select_value) {
-			return { body: content.body.slice(0, -1) + ' selected>', head: content.head };
-		}
-		return content;
-	};
-
-	renderer.compact({
-		start: renderer.length - 1,
-		fn: (content) => {
-			if (result instanceof Promise) {
-				return result.then((child_value) => mark_selected(content, child_value));
-			}
-			return mark_selected(content, result);
-		}
-	});
-
-	renderer.child((child_renderer) => {
-		if (result instanceof Promise) {
-			return result.then((child_value) => {
-				child_renderer.push(escape_html(child_value));
-			});
-		}
-		child_renderer.push(escape_html(result));
-	});
-}
-
-/**
- * Since your document can only have one `title`, we have to have some sort of algorithm for determining
- * which one "wins". To do this, we perform a depth-first comparison of where the title was encountered --
- * later ones "win" over earlier ones, regardless of what order the promises resolve in. To accomodate this, we:
- * - Figure out where we are in the content tree (`get_path`)
- * - Render the title in its own child so that it has a defined "slot" in the renderer
- * - Compact that spot so that we get the entire rendered contents of the title
- * - Attempt to set the global title (this is where the "wins" logic based on the path happens)
- *
- * TODO we could optimize this by not even rendering the title if the path wouldn't be accepted
- *
- * @param {Renderer} renderer
- * @param {((renderer: Renderer) => void | Promise<void>)} children
- */
-export function build_title(renderer, children) {
-	const path = renderer.get_path();
-	const i = renderer.length;
-	renderer.child(children);
-	renderer.compact({
-		start: i,
-		fn: ({ head }) => {
-			renderer.global.set_title(head, path);
-			// since we can only ever render the title in this chunk, and title rendering is handled specially,
-			// we can just ditch the results after we've saved them globally
-			return { head: '', body: '' };
-		}
-	});
 }

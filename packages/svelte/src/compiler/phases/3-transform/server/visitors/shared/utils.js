@@ -170,17 +170,17 @@ export function build_template(template) {
  *
  * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
+ * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
  * @param {boolean} trim_whitespace
  * @param {boolean} is_component
- * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
  * @returns {Expression}
  */
 export function build_attribute_value(
 	value,
 	context,
+	transform,
 	trim_whitespace = false,
-	is_component = false,
-	transform = (expression) => expression
+	is_component = false
 ) {
 	if (value === true) {
 		return b.true;
@@ -262,12 +262,21 @@ export function build_getter(node, state) {
 }
 
 /**
+ * Creates a `$$renderer.child(...)` expression statement
  * @param {BlockStatement | Expression} body
  * @param {boolean} async
  * @returns {Statement}
  */
-export function call_child_renderer(body, async) {
+export function create_child_block(body, async) {
 	return b.stmt(b.call('$$renderer.child', b.arrow([b.id('$$renderer')], body, async)));
+}
+
+/**
+ * Creates a `$$renderer.async(...)` expression statement
+ * @param {BlockStatement | Expression} body
+ */
+export function create_async_block(body) {
+	return b.stmt(b.call('$$renderer.async', b.arrow([b.id('$$renderer')], body, true)));
 }
 
 /**

@@ -6,7 +6,7 @@ import {
 	hydrate_node,
 	hydrating,
 	read_hydration_instruction,
-	remove_nodes,
+	skip_nodes,
 	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
@@ -93,7 +93,7 @@ export function if_block(node, fn, elseif = false) {
 			if (!!condition === is_else) {
 				// Hydration mismatch: remove everything inside the anchor and start fresh.
 				// This could happen with `{#if browser}...{/if}`, for example
-				anchor = remove_nodes();
+				anchor = skip_nodes();
 
 				set_hydrate_node(anchor);
 				set_hydrating(false);

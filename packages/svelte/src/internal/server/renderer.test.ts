@@ -84,26 +84,6 @@ test('creating an async child in a sync context throws', () => {
 	expect(() => Renderer.render(component as unknown as Component).body).toThrow('await_invalid');
 });
 
-test('compact synchronously aggregates a range and can transform into head/body', () => {
-	const component = (renderer: Renderer) => {
-		const start = renderer.length;
-		renderer.push('a');
-		renderer.push('b');
-		renderer.push('c');
-		renderer.compact({
-			start,
-			end: start + 2,
-			fn: (content) => {
-				return { head: '<h>H</h>', body: content.body + 'd' };
-			}
-		});
-	};
-
-	const { head, body } = Renderer.render(component as unknown as Component);
-	expect(head).toBe('<h>H</h>');
-	expect(body).toBe('<!--[-->abdc<!--]-->');
-});
-
 test('local state is shallow-copied to children', () => {
 	const root = new Renderer(new SSRState('sync'));
 	root.local.select_value = 'A';
@@ -132,13 +112,13 @@ test('subsume replaces tree content and state from other', () => {
 	b.global.css.add({ hash: 'h', code: 'c' });
 	b.global.set_title('Title', [1]);
 	b.local.select_value = 'B';
-	b.promises.initial = Promise.resolve();
+	b.promise = Promise.resolve();
 
 	a.subsume(b);
 
 	expect(a.type).toBe('body');
 	expect(a.local.select_value).toBe('B');
-	expect(a.promises).toBe(b.promises);
+	expect(a.promise).toBe(b.promise);
 });
 
 test('subsume refuses to switch modes', () => {
@@ -156,7 +136,7 @@ test('subsume refuses to switch modes', () => {
 	b.global.css.add({ hash: 'h', code: 'c' });
 	b.global.set_title('Title', [1]);
 	b.local.select_value = 'B';
-	b.promises.initial = Promise.resolve();
+	b.promise = Promise.resolve();
 
 	expect(() => a.subsume(b)).toThrow(
 		"invariant: A renderer cannot switch modes. If you're seeing this, there's a compiler bug. File an issue!"
@@ -195,6 +175,38 @@ test('SSRState title ordering favors later lexicographic paths', () => {
 	expect(state.get_title()).toBe('E');
 });
 
+test('selects an option with an explicit value', () => {
+	const component = (renderer: Renderer) => {
+		renderer.select({ value: 2 }, (renderer) => {
+			renderer.option({ value: 1 }, (renderer) => renderer.push('one'));
+			renderer.option({ value: 2 }, (renderer) => renderer.push('two'));
+			renderer.option({ value: 3 }, (renderer) => renderer.push('three'));
+		});
+	};
+
+	const { head, body } = Renderer.render(component as unknown as Component);
+	expect(head).toBe('');
+	expect(body).toBe(
+		'<!--[--><select><option value="1">one</option><option value="2" selected>two</option><option value="3">three</option></select><!--]-->'
+	);
+});
+
+test('selects an option with an implicit value', () => {
+	const component = (renderer: Renderer) => {
+		renderer.select({ value: 'two' }, (renderer) => {
+			renderer.option({}, (renderer) => renderer.push('one'));
+			renderer.option({}, (renderer) => renderer.push('two'));
+			renderer.option({}, (renderer) => renderer.push('three'));
+		});
+	};
+
+	const { head, body } = Renderer.render(component as unknown as Component);
+	expect(head).toBe('');
+	expect(body).toBe(
+		'<!--[--><select><option>one</option><option selected>two</option><option>three</option></select><!--]-->'
+	);
+});
+
 describe('async', () => {
 	beforeAll(() => {
 		enable_async_mode_flag();
@@ -218,28 +230,6 @@ describe('async', () => {
 		expect(result.head).toBe('');
 		expect(result.body).toBe('<!--[-->123<!--]-->');
 		expect(() => result.html).toThrow('html_deprecated');
-	});
-
-	test('compact schedules followup when compaction input is async', async () => {
-		const component = (renderer: Renderer) => {
-			renderer.push('a');
-			renderer.child(async ($$renderer) => {
-				await Promise.resolve();
-				$$renderer.push('X');
-			});
-			renderer.push('b');
-			renderer.compact({
-				start: 0,
-				fn: async (content) => ({
-					body: content.body.toLowerCase(),
-					head: await Promise.resolve('')
-				})
-			});
-		};
-
-		const { body, head } = await Renderer.render(component as unknown as Component);
-		expect(head).toBe('');
-		expect(body).toBe('<!--[-->axb<!--]-->');
 	});
 
 	test('push accepts async functions in async context', async () => {
@@ -306,25 +296,6 @@ describe('async', () => {
 		const { head, body } = await Renderer.render(component as unknown as Component);
 		expect(head).toBe('');
 		expect(body).toBe('<!--[-->start-async-child--end<!--]-->');
-	});
-
-	test('push async functions work with compact operations', async () => {
-		const component = (renderer: Renderer) => {
-			renderer.push('a');
-			renderer.push(async () => {
-				await Promise.resolve();
-				return 'b';
-			});
-			renderer.push('c');
-			renderer.compact({
-				start: 0,
-				fn: (content) => ({ head: '', body: content.body.toUpperCase() })
-			});
-		};
-
-		const { head, body } = await Renderer.render(component as unknown as Component);
-		expect(head).toBe('');
-		expect(body).toBe('<!--[-->ABC<!--]-->');
 	});
 
 	test('push async functions are not supported in sync context', () => {

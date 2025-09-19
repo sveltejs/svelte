@@ -4,8 +4,9 @@
 import {
 	empty_comment,
 	build_attribute_value,
-	call_child_renderer,
-	PromiseOptimiser
+	create_async_block,
+	PromiseOptimiser,
+	build_template
 } from './utils.js';
 import * as b from '#compiler/builders';
 import { is_element_node } from '../../../../nodes.js';
@@ -91,9 +92,9 @@ export function build_inline_component(node, expression, context) {
 			const value = build_attribute_value(
 				attribute.value,
 				context,
+				optimiser.transform,
 				false,
-				true,
-				optimiser.transform
+				true
 			);
 
 			if (attribute.name.startsWith('--')) {
@@ -318,7 +319,7 @@ export function build_inline_component(node, expression, context) {
 	}
 
 	if (optimiser.expressions.length > 0) {
-		statement = call_child_renderer(b.block([optimiser.apply(), statement]), true);
+		statement = create_async_block(b.block([optimiser.apply(), statement]));
 	}
 
 	if (dynamic && custom_css_props.length === 0) {
@@ -327,7 +328,11 @@ export function build_inline_component(node, expression, context) {
 
 	context.state.template.push(statement);
 
-	if (!context.state.skip_hydration_boundaries && custom_css_props.length === 0) {
+	if (
+		!context.state.skip_hydration_boundaries &&
+		custom_css_props.length === 0 &&
+		optimiser.expressions.length === 0
+	) {
 		context.state.template.push(empty_comment);
 	}
 }

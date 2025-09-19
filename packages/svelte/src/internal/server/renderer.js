@@ -6,6 +6,7 @@ import { pop, push, set_ssr_context, ssr_context } from './context.js';
 import * as e from './errors.js';
 import * as w from './warnings.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
+import { attributes } from './index.js';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
@@ -55,12 +56,10 @@ export class Renderer {
 	#parent;
 
 	/**
-	 * Asynchronous work associated with this renderer. `initial` is the promise from the function
-	 * this renderer was passed to (if that function was async), and `followup` is any any additional
-	 * work from `compact` calls that needs to complete prior to collecting this renderer's content.
-	 * @type {{ initial: Promise<void> | undefined, followup: Promise<void>[] }}
+	 * Asynchronous work associated with this renderer
+	 * @type {Promise<void> | undefined}
 	 */
-	promises = { initial: undefined, followup: [] };
+	promise = undefined;
 
 	/**
 	 * State which is associated with the content tree as a whole.
@@ -102,6 +101,15 @@ export class Renderer {
 	}
 
 	/**
+	 * @param {(renderer: Renderer) => void} fn
+	 */
+	async(fn) {
+		this.#out.push(BLOCK_OPEN);
+		this.child(fn);
+		this.#out.push(BLOCK_CLOSE);
+	}
+
+	/**
 	 * Create a child renderer. The child renderer inherits the state from the parent,
 	 * but has its own content.
 	 * @param {(renderer: Renderer) => MaybePromise<void>} fn
@@ -129,7 +137,7 @@ export class Renderer {
 			}
 			// just to avoid unhandled promise rejections -- we'll end up throwing in `collect_async` if something fails
 			result.catch(() => {});
-			child.promises.initial = result;
+			child.promise = result;
 		}
 
 		return child;
@@ -150,6 +158,93 @@ export class Renderer {
 	}
 
 	/**
+	 * @param {Record<string, any>} attrs
+	 * @param {(renderer: Renderer) => void} fn
+	 */
+	select({ value, ...attrs }, fn) {
+		this.push(`<select${attributes(attrs)}>`);
+		this.child((renderer) => {
+			renderer.local.select_value = value;
+			fn(renderer);
+		});
+		this.push('</select>');
+	}
+
+	/**
+	 * @param {Record<string, any>} attrs
+	 * @param {string | number | boolean | ((renderer: Renderer) => void)} body
+	 */
+	option(attrs, body) {
+		this.#out.push(`<option${attributes(attrs)}`);
+
+		/**
+		 * @param {Renderer} renderer
+		 * @param {any} value
+		 * @param {{ head?: string, body: any }} content
+		 */
+		const close = (renderer, value, { head, body }) => {
+			if ('value' in attrs) {
+				value = attrs.value;
+			}
+
+			if (value === this.local.select_value) {
+				renderer.#out.push(' selected');
+			}
+
+			renderer.#out.push(`>${body}</option>`);
+
+			// super edge case, but may as well handle it
+			if (head) {
+				renderer.head((child) => child.push(head));
+			}
+		};
+
+		if (typeof body === 'function') {
+			this.child((renderer) => {
+				const r = new Renderer(this.global, this);
+				body(r);
+
+				if (this.global.mode === 'async') {
+					return r.#collect_content_async().then((content) => {
+						close(renderer, content.body.replaceAll('<!---->', ''), content);
+					});
+				} else {
+					const content = r.#collect_content();
+					close(renderer, content.body.replaceAll('<!---->', ''), content);
+				}
+			});
+		} else {
+			close(this, body, { body });
+		}
+	}
+
+	/**
+	 * @param {(renderer: Renderer) => void} fn
+	 */
+	title(fn) {
+		const path = this.get_path();
+
+		/** @param {string} head */
+		const close = (head) => {
+			this.global.set_title(head, path);
+		};
+
+		this.child((renderer) => {
+			const r = new Renderer(renderer.global, renderer);
+			fn(r);
+
+			if (renderer.global.mode === 'async') {
+				return r.#collect_content_async().then((content) => {
+					close(content.head);
+				});
+			} else {
+				const content = r.#collect_content();
+				close(content.head);
+			}
+		});
+	}
+
+	/**
 	 * @param {string | (() => Promise<string>)} content
 	 */
 	push(content) {
@@ -157,22 +252,6 @@ export class Renderer {
 			this.child(async (renderer) => renderer.push(await content()));
 		} else {
 			this.#out.push(content);
-		}
-	}
-
-	/**
-	 * Compact everything between `start` and `end` into a single renderer, then call `fn` with the result of that renderer.
-	 * The compacted renderer will be sync if all of the children are sync and {@link fn} is sync, otherwise it will be async.
-	 * @param {{ start: number, end?: number, fn: (content: AccumulatedContent) => AccumulatedContent | Promise<AccumulatedContent> }} args
-	 */
-	compact({ start, end = this.#out.length, fn }) {
-		const child = new Renderer(this.global, this);
-		const to_compact = this.#out.splice(start, end - start, child);
-
-		if (this.global.mode === 'sync') {
-			Renderer.#compact(fn, child, to_compact, this.type);
-		} else {
-			this.promises.followup.push(Renderer.#compact_async(fn, child, to_compact, this.type));
 		}
 	}
 
@@ -196,7 +275,7 @@ export class Renderer {
 	copy() {
 		const copy = new Renderer(this.global, this.#parent);
 		copy.#out = this.#out.map((item) => (item instanceof Renderer ? item.copy() : item));
-		copy.promises = this.promises;
+		copy.promise = this.promise;
 		return copy;
 	}
 
@@ -218,7 +297,7 @@ export class Renderer {
 			}
 			return item;
 		});
-		this.promises = other.promises;
+		this.promise = other.promise;
 		this.type = other.type;
 	}
 
@@ -355,7 +434,7 @@ export class Renderer {
 		try {
 			const renderer = Renderer.#open_render('sync', component, options);
 
-			const content = Renderer.#collect_content([renderer], renderer.type);
+			const content = renderer.#collect_content();
 			return Renderer.#close_render(content, renderer);
 		} finally {
 			abort();
@@ -376,7 +455,7 @@ export class Renderer {
 		try {
 			const renderer = Renderer.#open_render('async', component, options);
 
-			const content = await Renderer.#collect_content_async([renderer], renderer.type);
+			const content = await renderer.#collect_content_async();
 			return Renderer.#close_render(content, renderer);
 		} finally {
 			abort();
@@ -385,93 +464,40 @@ export class Renderer {
 	}
 
 	/**
-	 * @param {(content: AccumulatedContent) => AccumulatedContent | Promise<AccumulatedContent>} fn
-	 * @param {Renderer} child
-	 * @param {RendererItem[]} to_compact
-	 * @param {RendererType} type
-	 */
-	static #compact(fn, child, to_compact, type) {
-		const content = Renderer.#collect_content(to_compact, type);
-		const transformed_content = fn(content);
-		if (transformed_content instanceof Promise) {
-			throw new Error(
-				"invariant: Somehow you've encountered asynchronous work while rendering synchronously. If you're seeing this, there's a compiler bug. File an issue!"
-			);
-		} else {
-			Renderer.#push_accumulated_content(child, transformed_content);
-		}
-	}
-
-	/**
-	 * @param {(content: AccumulatedContent) => AccumulatedContent | Promise<AccumulatedContent>} fn
-	 * @param {Renderer} child
-	 * @param {RendererItem[]} to_compact
-	 * @param {RendererType} type
-	 */
-	static async #compact_async(fn, child, to_compact, type) {
-		const content = await Renderer.#collect_content_async(to_compact, type);
-		const transformed_content = await fn(content);
-		Renderer.#push_accumulated_content(child, transformed_content);
-	}
-
-	/**
 	 * Collect all of the code from the `out` array and return it as a string, or a promise resolving to a string.
-	 * @param {RendererItem[]} items
-	 * @param {RendererType} current_type
 	 * @param {AccumulatedContent} content
 	 * @returns {AccumulatedContent}
 	 */
-	static #collect_content(items, current_type, content = { head: '', body: '' }) {
-		for (const item of items) {
+	#collect_content(content = { head: '', body: '' }) {
+		for (const item of this.#out) {
 			if (typeof item === 'string') {
-				content[current_type] += item;
+				content[this.type] += item;
 			} else if (item instanceof Renderer) {
-				Renderer.#collect_content(item.#out, item.type, content);
+				item.#collect_content(content);
 			}
 		}
+
 		return content;
 	}
 
 	/**
 	 * Collect all of the code from the `out` array and return it as a string.
-	 * @param {RendererItem[]} items
-	 * @param {RendererType} current_type
 	 * @param {AccumulatedContent} content
 	 * @returns {Promise<AccumulatedContent>}
 	 */
-	static async #collect_content_async(items, current_type, content = { head: '', body: '' }) {
+	async #collect_content_async(content = { head: '', body: '' }) {
+		await this.promise;
+
 		// no danger to sequentially awaiting stuff in here; all of the work is already kicked off
-		for (const item of items) {
+		for (const item of this.#out) {
 			if (typeof item === 'string') {
-				content[current_type] += item;
-			} else {
-				if (item.promises.initial) {
-					// this represents the async function that's modifying this renderer.
-					// we can't do anything until it's done and we know our `out` array is complete.
-					await item.promises.initial;
-				}
-				for (const followup of item.promises.followup) {
-					// this is sequential because `compact` could synchronously queue up additional followup work
-					await followup;
-				}
-				await Renderer.#collect_content_async(item.#out, item.type, content);
+				content[this.type] += item;
+			} else if (item instanceof Renderer) {
+				await item.#collect_content_async(content);
 			}
 		}
-		return content;
-	}
 
-	/**
-	 * @param {Renderer} tree
-	 * @param {AccumulatedContent} accumulated_content
-	 */
-	static #push_accumulated_content(tree, accumulated_content) {
-		for (const [type, content] of Object.entries(accumulated_content)) {
-			if (!content) continue;
-			const child = new Renderer(tree.global, tree);
-			child.type = /** @type {RendererType} */ (type);
-			child.push(content);
-			tree.#out.push(child);
-		}
+		return content;
 	}
 
 	/**

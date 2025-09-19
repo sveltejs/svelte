@@ -1,4 +1,4 @@
-/** @import { Expression, Statement } from 'estree' */
+/** @import { Expression } from 'estree' */
 /** @import { Location } from 'locate-character' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../types.js' */
@@ -12,7 +12,8 @@ import {
 	process_children,
 	build_template,
 	build_attribute_value,
-	call_child_renderer
+	create_child_block,
+	PromiseOptimiser
 } from './shared/utils.js';
 
 /**
@@ -27,20 +28,37 @@ export function RegularElement(node, context) {
 		...context.state,
 		namespace,
 		preserve_whitespace:
-			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea'
+			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea',
+		init: [],
+		template: []
 	};
 
 	const node_is_void = is_void(node.name);
 
-	context.state.template.push(b.literal(`<${node.name}`));
-	const body = build_element_attributes(node, { ...context, state });
-	context.state.template.push(b.literal(node_is_void ? '/>' : '>')); // add `/>` for XHTML compliance
+	const optimiser = new PromiseOptimiser();
+
+	state.template.push(b.literal(`<${node.name}`));
+	const body = build_element_attributes(node, { ...context, state }, optimiser.transform);
+	state.template.push(b.literal(node_is_void ? '/>' : '>')); // add `/>` for XHTML compliance
 
 	if ((node.name === 'script' || node.name === 'style') && node.fragment.nodes.length === 1) {
-		context.state.template.push(
+		state.template.push(
 			b.literal(/** @type {AST.Text} */ (node.fragment.nodes[0]).data),
 			b.literal(`</${node.name}>`)
 		);
+
+		// TODO this is a real edge case, would be good to DRY this out
+		if (optimiser.expressions.length > 0) {
+			context.state.template.push(
+				create_child_block(
+					b.block([optimiser.apply(), ...state.init, ...build_template(state.template)]),
+					true
+				)
+			);
+		} else {
+			context.state.init.push(...state.init);
+			context.state.template.push(...state.template);
+		}
 
 		return;
 	}
@@ -77,114 +95,92 @@ export function RegularElement(node, context) {
 		);
 	}
 
-	let select_with_value = false;
-	let select_with_value_async = false;
-	const template_start = state.template.length;
-
-	if (node.name === 'select') {
-		const value = node.attributes.find(
-			(attribute) =>
-				(attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
-				attribute.name === 'value'
-		);
-
-		const spread = node.attributes.find((attribute) => attribute.type === 'SpreadAttribute');
-		if (spread) {
-			select_with_value = true;
-			select_with_value_async ||= spread.metadata.expression.has_await;
-
-			state.template.push(
-				b.stmt(
-					b.assignment(
-						'=',
-						b.id('$$renderer.local.select_value'),
-						b.member(
-							build_spread_object(
-								node,
-								node.attributes.filter(
-									(attribute) =>
-										attribute.type === 'Attribute' ||
-										attribute.type === 'BindDirective' ||
-										attribute.type === 'SpreadAttribute'
-								),
-								context
-							),
-							'value',
-							false,
-							true
-						)
-					)
-				)
-			);
-		} else if (value) {
-			select_with_value = true;
-
-			if (value.type === 'Attribute' && value.value !== true) {
-				select_with_value_async ||= (Array.isArray(value.value) ? value.value : [value.value]).some(
-					(tag) => tag.type === 'ExpressionTag' && tag.metadata.expression.has_await
-				);
-			}
-
-			const left = b.id('$$renderer.local.select_value');
-			if (value.type === 'Attribute') {
-				state.template.push(
-					b.stmt(b.assignment('=', left, build_attribute_value(value.value, context)))
-				);
-			} else if (value.type === 'BindDirective') {
-				state.template.push(
-					b.stmt(
-						b.assignment(
-							'=',
-							left,
-							value.expression.type === 'SequenceExpression'
-								? /** @type {Expression} */ (context.visit(b.call(value.expression.expressions[0])))
-								: /** @type {Expression} */ (context.visit(value.expression))
-						)
-					)
-				);
-			}
-		}
-	}
-
 	if (
-		node.name === 'option' &&
-		!node.attributes.some(
+		node.name === 'select' &&
+		node.attributes.some(
 			(attribute) =>
-				attribute.type === 'SpreadAttribute' ||
 				((attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
-					attribute.name === 'value')
+					attribute.name === 'value') ||
+				attribute.type === 'SpreadAttribute'
 		)
 	) {
+		const attributes = build_spread_object(
+			node,
+			node.attributes.filter(
+				(attribute) =>
+					attribute.type === 'Attribute' ||
+					attribute.type === 'BindDirective' ||
+					attribute.type === 'SpreadAttribute'
+			),
+			context,
+			optimiser.transform
+		);
+
+		const inner_state = { ...state, template: [], init: [] };
+		process_children(trimmed, { ...context, state: inner_state });
+
+		const fn = b.arrow(
+			[b.id('$$renderer')],
+			b.block([...state.init, ...build_template(inner_state.template)])
+		);
+
+		const statement = b.stmt(b.call('$$renderer.select', attributes, fn));
+
+		if (optimiser.expressions.length > 0) {
+			context.state.template.push(
+				create_child_block(b.block([optimiser.apply(), ...state.init, statement]), true)
+			);
+		} else {
+			context.state.template.push(...state.init, statement);
+		}
+
+		return;
+	}
+
+	if (node.name === 'option') {
+		const attributes = build_spread_object(
+			node,
+			node.attributes.filter(
+				(attribute) =>
+					attribute.type === 'Attribute' ||
+					attribute.type === 'BindDirective' ||
+					attribute.type === 'SpreadAttribute'
+			),
+			context,
+			optimiser.transform
+		);
+
+		let body;
+
 		if (node.metadata.synthetic_value_node) {
-			state.template.push(
-				b.stmt(
-					b.call(
-						'$.simple_valueless_option',
-						b.id('$$renderer'),
-						b.thunk(
-							node.metadata.synthetic_value_node.expression,
-							node.metadata.synthetic_value_node.metadata.expression.has_await
-						)
-					)
-				)
+			body = optimiser.transform(
+				node.metadata.synthetic_value_node.expression,
+				node.metadata.synthetic_value_node.metadata.expression
 			);
 		} else {
 			const inner_state = { ...state, template: [], init: [] };
 			process_children(trimmed, { ...context, state: inner_state });
-			state.template.push(
-				b.stmt(
-					b.call(
-						'$.valueless_option',
-						b.id('$$renderer'),
-						b.arrow(
-							[b.id('$$renderer')],
-							b.block([...inner_state.init, ...build_template(inner_state.template)])
-						)
-					)
-				)
+
+			body = b.arrow(
+				[b.id('$$renderer')],
+				b.block([...state.init, ...build_template(inner_state.template)])
 			);
 		}
-	} else if (body !== null) {
+
+		const statement = b.stmt(b.call('$$renderer.option', attributes, body));
+
+		if (optimiser.expressions.length > 0) {
+			context.state.template.push(
+				create_child_block(b.block([optimiser.apply(), ...state.init, statement]), true)
+			);
+		} else {
+			context.state.template.push(...state.init, statement);
+		}
+
+		return;
+	}
+
+	if (body !== null) {
 		// if this is a `<textarea>` value or a contenteditable binding, we only add
 		// the body if the attribute/binding is falsy
 		const inner_state = { ...state, template: [], init: [] };
@@ -209,22 +205,23 @@ export function RegularElement(node, context) {
 		process_children(trimmed, { ...context, state });
 	}
 
-	if (select_with_value) {
-		// we need to create a child scope so that the `select_value` only applies children of this select element
-		// in an async world, we could technically have two adjacent select elements with async children, in which case
-		// the second element's select_value would override the first element's select_value if the children of the first
-		// element hadn't resolved prior to hitting the second element.
-		const elements = state.template.splice(template_start, Infinity);
-		state.template.push(
-			call_child_renderer(b.block(build_template(elements)), select_with_value_async)
-		);
-	}
-
 	if (!node_is_void) {
 		state.template.push(b.literal(`</${node.name}>`));
 	}
 
 	if (dev) {
 		state.template.push(b.stmt(b.call('$.pop_element')));
+	}
+
+	if (optimiser.expressions.length > 0) {
+		context.state.template.push(
+			create_child_block(
+				b.block([optimiser.apply(), ...state.init, ...build_template(state.template)]),
+				true
+			)
+		);
+	} else {
+		context.state.init.push(...state.init);
+		context.state.template.push(...state.template);
 	}
 }
