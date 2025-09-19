@@ -493,32 +493,3 @@ export function derived(fn) {
 		return updated_value;
 	};
 }
-
-/**
- * Since your document can only have one `title`, we have to have some sort of algorithm for determining
- * which one "wins". To do this, we perform a depth-first comparison of where the title was encountered --
- * later ones "win" over earlier ones, regardless of what order the promises resolve in. To accomodate this, we:
- * - Figure out where we are in the content tree (`get_path`)
- * - Render the title in its own child so that it has a defined "slot" in the renderer
- * - Compact that spot so that we get the entire rendered contents of the title
- * - Attempt to set the global title (this is where the "wins" logic based on the path happens)
- *
- * TODO we could optimize this by not even rendering the title if the path wouldn't be accepted
- *
- * @param {Renderer} renderer
- * @param {((renderer: Renderer) => void | Promise<void>)} children
- */
-export function build_title(renderer, children) {
-	const path = renderer.get_path();
-	const i = renderer.length;
-	renderer.child(children);
-	renderer.compact({
-		start: i,
-		fn: ({ head }) => {
-			renderer.global.set_title(head, path);
-			// since we can only ever render the title in this chunk, and title rendering is handled specially,
-			// we can just ditch the results after we've saved them globally
-			return { head: '', body: '' };
-		}
-	});
-}

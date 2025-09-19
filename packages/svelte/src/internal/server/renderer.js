@@ -223,6 +223,34 @@ export class Renderer {
 	}
 
 	/**
+	 * @param {(renderer: Renderer) => void} fn
+	 */
+	title(fn) {
+		const path = this.get_path();
+
+		/** @param {string} head */
+		const close = (head) => {
+			this.global.set_title(head, path);
+		};
+
+		this.child((renderer) => {
+			const r = new Renderer(renderer.global, renderer);
+			fn(r);
+
+			const content = { head: '', body: '' };
+
+			if (renderer.global.mode === 'async') {
+				return Renderer.#collect_content_async([r], 'body', content).then(() => {
+					close(content.head);
+				});
+			} else {
+				Renderer.#collect_content([r], 'body', content);
+				close(content.head);
+			}
+		});
+	}
+
+	/**
 	 * @param {string | (() => Promise<string>)} content
 	 */
 	push(content) {
