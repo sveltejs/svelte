@@ -95,77 +95,46 @@ export function RegularElement(node, context) {
 		);
 	}
 
-	let select_with_value = false;
-	let select_with_value_async = false;
-	const template_start = state.template.length;
-
-	if (node.name === 'select') {
-		const value = node.attributes.find(
+	if (
+		node.name === 'select' &&
+		node.attributes.some(
 			(attribute) =>
-				(attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
-				attribute.name === 'value'
+				((attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
+					attribute.name === 'value') ||
+				attribute.type === 'SpreadAttribute'
+		)
+	) {
+		const attributes = build_spread_object(
+			node,
+			node.attributes.filter(
+				(attribute) =>
+					attribute.type === 'Attribute' ||
+					attribute.type === 'BindDirective' ||
+					attribute.type === 'SpreadAttribute'
+			),
+			context,
+			optimiser.transform
 		);
 
-		const spread = node.attributes.find((attribute) => attribute.type === 'SpreadAttribute');
-		if (spread) {
-			select_with_value = true;
-			select_with_value_async ||= spread.metadata.expression.has_await;
+		const inner_state = { ...state, template: [], init: [] };
+		process_children(trimmed, { ...context, state: inner_state });
 
-			const object = build_spread_object(
-				node,
-				node.attributes.filter(
-					(attribute) =>
-						attribute.type === 'Attribute' ||
-						attribute.type === 'BindDirective' ||
-						attribute.type === 'SpreadAttribute'
-				),
-				context,
-				optimiser.transform
+		const fn = b.arrow(
+			[b.id('$$renderer')],
+			b.block([...state.init, ...build_template(inner_state.template)])
+		);
+
+		const statement = b.stmt(b.call('$$renderer.select', attributes, fn));
+
+		if (optimiser.expressions.length > 0) {
+			context.state.template.push(
+				call_child_renderer(b.block([optimiser.apply(), ...state.init, statement]), true)
 			);
-
-			state.template.push(
-				b.stmt(
-					b.assignment(
-						'=',
-						b.id('$$renderer.local.select_value'),
-						b.member(object, 'value', false, true)
-					)
-				)
-			);
-		} else if (value) {
-			select_with_value = true;
-
-			if (value.type === 'Attribute' && value.value !== true) {
-				select_with_value_async ||= (Array.isArray(value.value) ? value.value : [value.value]).some(
-					(tag) => tag.type === 'ExpressionTag' && tag.metadata.expression.has_await
-				);
-			}
-
-			const left = b.id('$$renderer.local.select_value');
-			if (value.type === 'Attribute') {
-				state.template.push(
-					b.stmt(
-						b.assignment(
-							'=',
-							left,
-							build_attribute_value(value.value, context, optimiser.transform)
-						)
-					)
-				);
-			} else if (value.type === 'BindDirective') {
-				state.template.push(
-					b.stmt(
-						b.assignment(
-							'=',
-							left,
-							value.expression.type === 'SequenceExpression'
-								? /** @type {Expression} */ (context.visit(b.call(value.expression.expressions[0])))
-								: /** @type {Expression} */ (context.visit(value.expression))
-						)
-					)
-				);
-			}
+		} else {
+			context.state.template.push(...state.init, statement);
 		}
+
+		return;
 	}
 
 	if (
@@ -229,17 +198,6 @@ export function RegularElement(node, context) {
 		);
 	} else {
 		process_children(trimmed, { ...context, state });
-	}
-
-	if (select_with_value) {
-		// we need to create a child scope so that the `select_value` only applies children of this select element
-		// in an async world, we could technically have two adjacent select elements with async children, in which case
-		// the second element's select_value would override the first element's select_value if the children of the first
-		// element hadn't resolved prior to hitting the second element.
-		const elements = state.template.splice(template_start, Infinity);
-		state.template.push(
-			call_child_renderer(b.block(build_template(elements)), select_with_value_async)
-		);
 	}
 
 	if (!node_is_void) {
