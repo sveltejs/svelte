@@ -57,11 +57,10 @@ export class Renderer {
 
 	/**
 	 * Asynchronous work associated with this renderer. `initial` is the promise from the function
-	 * this renderer was passed to (if that function was async), and `followup` is any any additional
-	 * work from `compact` calls that needs to complete prior to collecting this renderer's content.
-	 * @type {{ initial: Promise<void> | undefined, followup: Promise<void>[] }}
+	 * this renderer was passed to (if that function was async)
+	 * @type {{ initial: Promise<void> | undefined }}
 	 */
-	promises = { initial: undefined, followup: [] };
+	promises = { initial: undefined };
 
 	/**
 	 * State which is associated with the content tree as a whole.
@@ -258,22 +257,6 @@ export class Renderer {
 			this.child(async (renderer) => renderer.push(await content()));
 		} else {
 			this.#out.push(content);
-		}
-	}
-
-	/**
-	 * Compact everything between `start` and `end` into a single renderer, then call `fn` with the result of that renderer.
-	 * The compacted renderer will be sync if all of the children are sync and {@link fn} is sync, otherwise it will be async.
-	 * @param {{ start: number, end?: number, fn: (content: AccumulatedContent) => AccumulatedContent | Promise<AccumulatedContent> }} args
-	 */
-	compact({ start, end = this.#out.length, fn }) {
-		const child = new Renderer(this.global, this);
-		const to_compact = this.#out.splice(start, end - start, child);
-
-		if (this.global.mode === 'sync') {
-			Renderer.#compact(fn, child, to_compact, this.type);
-		} else {
-			this.promises.followup.push(Renderer.#compact_async(fn, child, to_compact, this.type));
 		}
 	}
 
@@ -486,36 +469,6 @@ export class Renderer {
 	}
 
 	/**
-	 * @param {(content: AccumulatedContent) => AccumulatedContent | Promise<AccumulatedContent>} fn
-	 * @param {Renderer} child
-	 * @param {RendererItem[]} to_compact
-	 * @param {RendererType} type
-	 */
-	static #compact(fn, child, to_compact, type) {
-		const content = Renderer.#collect_content(to_compact, type);
-		const transformed_content = fn(content);
-		if (transformed_content instanceof Promise) {
-			throw new Error(
-				"invariant: Somehow you've encountered asynchronous work while rendering synchronously. If you're seeing this, there's a compiler bug. File an issue!"
-			);
-		} else {
-			Renderer.#push_accumulated_content(child, transformed_content);
-		}
-	}
-
-	/**
-	 * @param {(content: AccumulatedContent) => AccumulatedContent | Promise<AccumulatedContent>} fn
-	 * @param {Renderer} child
-	 * @param {RendererItem[]} to_compact
-	 * @param {RendererType} type
-	 */
-	static async #compact_async(fn, child, to_compact, type) {
-		const content = await Renderer.#collect_content_async(to_compact, type);
-		const transformed_content = await fn(content);
-		Renderer.#push_accumulated_content(child, transformed_content);
-	}
-
-	/**
 	 * Collect all of the code from the `out` array and return it as a string, or a promise resolving to a string.
 	 * @param {RendererItem[]} items
 	 * @param {RendererType} current_type
@@ -551,28 +504,11 @@ export class Renderer {
 					// we can't do anything until it's done and we know our `out` array is complete.
 					await item.promises.initial;
 				}
-				for (const followup of item.promises.followup) {
-					// this is sequential because `compact` could synchronously queue up additional followup work
-					await followup;
-				}
+
 				await Renderer.#collect_content_async(item.#out, item.type, content);
 			}
 		}
 		return content;
-	}
-
-	/**
-	 * @param {Renderer} tree
-	 * @param {AccumulatedContent} accumulated_content
-	 */
-	static #push_accumulated_content(tree, accumulated_content) {
-		for (const [type, content] of Object.entries(accumulated_content)) {
-			if (!content) continue;
-			const child = new Renderer(tree.global, tree);
-			child.type = /** @type {RendererType} */ (type);
-			child.push(content);
-			tree.#out.push(child);
-		}
 	}
 
 	/**

@@ -84,26 +84,6 @@ test('creating an async child in a sync context throws', () => {
 	expect(() => Renderer.render(component as unknown as Component).body).toThrow('await_invalid');
 });
 
-test('compact synchronously aggregates a range and can transform into head/body', () => {
-	const component = (renderer: Renderer) => {
-		const start = renderer.length;
-		renderer.push('a');
-		renderer.push('b');
-		renderer.push('c');
-		renderer.compact({
-			start,
-			end: start + 2,
-			fn: (content) => {
-				return { head: '<h>H</h>', body: content.body + 'd' };
-			}
-		});
-	};
-
-	const { head, body } = Renderer.render(component as unknown as Component);
-	expect(head).toBe('<h>H</h>');
-	expect(body).toBe('<!--[-->abdc<!--]-->');
-});
-
 test('local state is shallow-copied to children', () => {
 	const root = new Renderer(new SSRState('sync'));
 	root.local.select_value = 'A';
@@ -220,28 +200,6 @@ describe('async', () => {
 		expect(() => result.html).toThrow('html_deprecated');
 	});
 
-	test('compact schedules followup when compaction input is async', async () => {
-		const component = (renderer: Renderer) => {
-			renderer.push('a');
-			renderer.child(async ($$renderer) => {
-				await Promise.resolve();
-				$$renderer.push('X');
-			});
-			renderer.push('b');
-			renderer.compact({
-				start: 0,
-				fn: async (content) => ({
-					body: content.body.toLowerCase(),
-					head: await Promise.resolve('')
-				})
-			});
-		};
-
-		const { body, head } = await Renderer.render(component as unknown as Component);
-		expect(head).toBe('');
-		expect(body).toBe('<!--[-->axb<!--]-->');
-	});
-
 	test('push accepts async functions in async context', async () => {
 		const component = (renderer: Renderer) => {
 			renderer.push('a');
@@ -306,25 +264,6 @@ describe('async', () => {
 		const { head, body } = await Renderer.render(component as unknown as Component);
 		expect(head).toBe('');
 		expect(body).toBe('<!--[-->start-async-child--end<!--]-->');
-	});
-
-	test('push async functions work with compact operations', async () => {
-		const component = (renderer: Renderer) => {
-			renderer.push('a');
-			renderer.push(async () => {
-				await Promise.resolve();
-				return 'b';
-			});
-			renderer.push('c');
-			renderer.compact({
-				start: 0,
-				fn: (content) => ({ head: '', body: content.body.toUpperCase() })
-			});
-		};
-
-		const { head, body } = await Renderer.render(component as unknown as Component);
-		expect(head).toBe('');
-		expect(body).toBe('<!--[-->ABC<!--]-->');
 	});
 
 	test('push async functions are not supported in sync context', () => {
