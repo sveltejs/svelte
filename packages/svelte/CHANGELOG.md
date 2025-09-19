@@ -1,5 +1,13 @@
 # svelte
 
+## 5.39.3
+
+### Patch Changes
+
+- fix: remove outer hydration markers ([#16800](https://github.com/sveltejs/svelte/pull/16800))
+
+- fix: async hydration ([#16797](https://github.com/sveltejs/svelte/pull/16797))
+
 ## 5.39.2
 
 ### Patch Changes
