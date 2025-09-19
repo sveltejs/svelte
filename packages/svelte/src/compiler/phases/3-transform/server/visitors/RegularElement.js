@@ -1,4 +1,4 @@
-/** @import { Expression, Statement } from 'estree' */
+/** @import { Expression } from 'estree' */
 /** @import { Location } from 'locate-character' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../types.js' */
@@ -13,8 +13,7 @@ import {
 	build_template,
 	build_attribute_value,
 	call_child_renderer,
-	PromiseOptimiser,
-	create_async_block
+	PromiseOptimiser
 } from './shared/utils.js';
 
 /**
