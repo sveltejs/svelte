@@ -219,7 +219,7 @@ export function build_element_attributes(node, context, transform) {
 		if (node.name === 'option') {
 			// TODO this is all wrong, it inlines the spread twice
 
-			const { object, has_await } = build_spread_object(
+			const object = build_spread_object(
 				node,
 				node.attributes.filter(
 					(attribute) =>
@@ -230,8 +230,6 @@ export function build_element_attributes(node, context, transform) {
 				context,
 				transform
 			);
-
-			// TODO use has_await?
 
 			context.state.template.push(
 				b.call('$.maybe_selected', b.id('$$renderer'), b.member(object, 'value', false, true))
@@ -348,8 +346,6 @@ function get_attribute_name(element, attribute) {
  * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
  */
 export function build_spread_object(element, attributes, context, transform) {
-	let has_await = false;
-
 	const object = b.object(
 		attributes.map((attribute) => {
 			if (attribute.type === 'Attribute') {
@@ -375,13 +371,16 @@ export function build_spread_object(element, attributes, context, transform) {
 				return b.prop('init', b.key(name), value);
 			}
 
-			has_await ||= attribute.metadata.expression.has_await;
-
-			return b.spread(/** @type {Expression} */ (context.visit(attribute)));
+			return b.spread(
+				transform(
+					/** @type {Expression} */ (context.visit(attribute)),
+					attribute.metadata.expression
+				)
+			);
 		})
 	);
 
-	return { object, has_await };
+	return object;
 }
 
 /**
@@ -445,23 +444,18 @@ function build_element_spread_attributes(
 		flags |= ELEMENT_IS_INPUT;
 	}
 
-	const spread = build_spread_object(element, attributes, context, transform);
+	const object = build_spread_object(element, attributes, context, transform);
 
 	const css_hash =
 		element.metadata.scoped && context.state.analysis.css.hash
 			? b.literal(context.state.analysis.css.hash)
 			: undefined;
 
-	const args = [spread.object, css_hash, classes, styles, flags ? b.literal(flags) : undefined];
+	const args = [object, css_hash, classes, styles, flags ? b.literal(flags) : undefined];
 
 	let call = b.call('$.attributes', ...args);
 
-	if (spread.has_await) {
-		call = b.call('$$renderer.push', b.thunk(call, true));
-		context.state.template.push(b.stmt(call));
-	} else {
-		context.state.template.push(call);
-	}
+	context.state.template.push(call);
 }
 
 /**

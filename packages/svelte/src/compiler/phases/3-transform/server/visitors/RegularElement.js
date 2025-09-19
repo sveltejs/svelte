@@ -28,22 +28,37 @@ export function RegularElement(node, context) {
 		...context.state,
 		namespace,
 		preserve_whitespace:
-			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea'
+			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea',
+		init: [],
+		template: []
 	};
 
 	const node_is_void = is_void(node.name);
 
 	const optimiser = new PromiseOptimiser();
 
-	context.state.template.push(b.literal(`<${node.name}`));
+	state.template.push(b.literal(`<${node.name}`));
 	const body = build_element_attributes(node, { ...context, state }, optimiser.transform);
-	context.state.template.push(b.literal(node_is_void ? '/>' : '>')); // add `/>` for XHTML compliance
+	state.template.push(b.literal(node_is_void ? '/>' : '>')); // add `/>` for XHTML compliance
 
 	if ((node.name === 'script' || node.name === 'style') && node.fragment.nodes.length === 1) {
-		context.state.template.push(
+		state.template.push(
 			b.literal(/** @type {AST.Text} */ (node.fragment.nodes[0]).data),
 			b.literal(`</${node.name}>`)
 		);
+
+		// TODO this is a real edge case, would be good to DRY this out
+		if (optimiser.expressions.length > 0) {
+			context.state.template.push(
+				call_child_renderer(
+					b.block([optimiser.apply(), ...state.init, ...build_template(state.template)]),
+					true
+				)
+			);
+		} else {
+			context.state.init.push(...state.init);
+			context.state.template.push(...state.template);
+		}
 
 		return;
 	}
@@ -96,7 +111,7 @@ export function RegularElement(node, context) {
 			select_with_value = true;
 			select_with_value_async ||= spread.metadata.expression.has_await;
 
-			const { object, has_await } = build_spread_object(
+			const object = build_spread_object(
 				node,
 				node.attributes.filter(
 					(attribute) =>
@@ -107,8 +122,6 @@ export function RegularElement(node, context) {
 				context,
 				optimiser.transform
 			);
-
-			// TODO use has_await
 
 			state.template.push(
 				b.stmt(
@@ -235,5 +248,17 @@ export function RegularElement(node, context) {
 
 	if (dev) {
 		state.template.push(b.stmt(b.call('$.pop_element')));
+	}
+
+	if (optimiser.expressions.length > 0) {
+		context.state.template.push(
+			call_child_renderer(
+				b.block([optimiser.apply(), ...state.init, ...build_template(state.template)]),
+				true
+			)
+		);
+	} else {
+		context.state.init.push(...state.init);
+		context.state.template.push(...state.template);
 	}
 }
