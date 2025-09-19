@@ -319,9 +319,7 @@ export function build_inline_component(node, expression, context) {
 	}
 
 	if (optimiser.expressions.length > 0) {
-		statement = create_async_block(
-			b.block([optimiser.apply(), statement, ...build_template([empty_comment])])
-		);
+		statement = create_async_block(b.block([optimiser.apply(), statement]));
 	}
 
 	// TODO in the async case this probably needs to go inside the async block?
