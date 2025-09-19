@@ -56,11 +56,10 @@ export class Renderer {
 	#parent;
 
 	/**
-	 * Asynchronous work associated with this renderer. `initial` is the promise from the function
-	 * this renderer was passed to (if that function was async)
-	 * @type {{ initial: Promise<void> | undefined }}
+	 * Asynchronous work associated with this renderer
+	 * @type {Promise<void> | undefined}
 	 */
-	promises = { initial: undefined };
+	promise = undefined;
 
 	/**
 	 * State which is associated with the content tree as a whole.
@@ -138,7 +137,7 @@ export class Renderer {
 			}
 			// just to avoid unhandled promise rejections -- we'll end up throwing in `collect_async` if something fails
 			result.catch(() => {});
-			child.promises.initial = result;
+			child.promise = result;
 		}
 
 		return child;
@@ -280,7 +279,7 @@ export class Renderer {
 	copy() {
 		const copy = new Renderer(this.global, this.#parent);
 		copy.#out = this.#out.map((item) => (item instanceof Renderer ? item.copy() : item));
-		copy.promises = this.promises;
+		copy.promise = this.promise;
 		return copy;
 	}
 
@@ -302,7 +301,7 @@ export class Renderer {
 			}
 			return item;
 		});
-		this.promises = other.promises;
+		this.promise = other.promise;
 		this.type = other.type;
 	}
 
@@ -499,10 +498,10 @@ export class Renderer {
 			if (typeof item === 'string') {
 				content[current_type] += item;
 			} else {
-				if (item.promises.initial) {
+				if (item.promise) {
 					// this represents the async function that's modifying this renderer.
 					// we can't do anything until it's done and we know our `out` array is complete.
-					await item.promises.initial;
+					await item.promise;
 				}
 
 				await Renderer.#collect_content_async(item.#out, item.type, content);

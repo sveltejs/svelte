@@ -112,13 +112,13 @@ test('subsume replaces tree content and state from other', () => {
 	b.global.css.add({ hash: 'h', code: 'c' });
 	b.global.set_title('Title', [1]);
 	b.local.select_value = 'B';
-	b.promises.initial = Promise.resolve();
+	b.promise = Promise.resolve();
 
 	a.subsume(b);
 
 	expect(a.type).toBe('body');
 	expect(a.local.select_value).toBe('B');
-	expect(a.promises).toBe(b.promises);
+	expect(a.promise).toBe(b.promise);
 });
 
 test('subsume refuses to switch modes', () => {
@@ -136,7 +136,7 @@ test('subsume refuses to switch modes', () => {
 	b.global.css.add({ hash: 'h', code: 'c' });
 	b.global.set_title('Title', [1]);
 	b.local.select_value = 'B';
-	b.promises.initial = Promise.resolve();
+	b.promise = Promise.resolve();
 
 	expect(() => a.subsume(b)).toThrow(
 		"invariant: A renderer cannot switch modes. If you're seeing this, there's a compiler bug. File an issue!"
