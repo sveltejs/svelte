@@ -204,14 +204,13 @@ export class Renderer {
 				const r = new Renderer(this.global, this);
 				body(r);
 
-				const content = { head: '', body: '' };
-
 				if (this.global.mode === 'async') {
+					const content = { head: '', body: '' };
 					return Renderer.#collect_content_async([r], 'body', content).then(() => {
 						close(renderer, content.body.replaceAll('<!---->', ''), content);
 					});
 				} else {
-					Renderer.#collect_content(r, content);
+					const content = r.#collect_content();
 					close(renderer, content.body.replaceAll('<!---->', ''), content);
 				}
 			});
@@ -235,14 +234,13 @@ export class Renderer {
 			const r = new Renderer(renderer.global, renderer);
 			fn(r);
 
-			const content = { head: '', body: '' };
-
 			if (renderer.global.mode === 'async') {
+				const content = { head: '', body: '' };
 				return Renderer.#collect_content_async([r], 'body', content).then(() => {
 					close(content.head);
 				});
 			} else {
-				Renderer.#collect_content(r, content);
+				const content = r.#collect_content();
 				close(content.head);
 			}
 		});
@@ -438,7 +436,7 @@ export class Renderer {
 		try {
 			const renderer = Renderer.#open_render('sync', component, options);
 
-			const content = Renderer.#collect_content(renderer);
+			const content = renderer.#collect_content();
 			return Renderer.#close_render(content, renderer);
 		} finally {
 			abort();
@@ -469,16 +467,15 @@ export class Renderer {
 
 	/**
 	 * Collect all of the code from the `out` array and return it as a string, or a promise resolving to a string.
-	 * @param {Renderer} renderer
 	 * @param {AccumulatedContent} content
 	 * @returns {AccumulatedContent}
 	 */
-	static #collect_content(renderer, content = { head: '', body: '' }) {
-		for (const item of renderer.#out) {
+	#collect_content(content = { head: '', body: '' }) {
+		for (const item of this.#out) {
 			if (typeof item === 'string') {
-				content[renderer.type] += item;
+				content[this.type] += item;
 			} else if (item instanceof Renderer) {
-				Renderer.#collect_content(item, content);
+				item.#collect_content(content);
 			}
 		}
 
