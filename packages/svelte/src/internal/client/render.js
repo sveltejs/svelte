@@ -120,18 +120,8 @@ export function hydrate(component, options) {
 
 		set_hydrating(true);
 		set_hydrate_node(/** @type {Comment} */ (anchor));
-		hydrate_next();
 
 		const instance = _mount(component, { ...options, anchor });
-
-		if (
-			hydrate_node === null ||
-			hydrate_node.nodeType !== COMMENT_NODE ||
-			/** @type {Comment} */ (hydrate_node).data !== HYDRATION_END
-		) {
-			w.hydration_mismatch();
-			throw HYDRATION_ERROR;
-		}
 
 		set_hydrating(false);
 
@@ -247,6 +237,15 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 
 				if (hydrating) {
 					/** @type {Effect} */ (active_effect).nodes_end = hydrate_node;
+
+					if (
+						hydrate_node === null ||
+						hydrate_node.nodeType !== COMMENT_NODE ||
+						/** @type {Comment} */ (hydrate_node).data !== HYDRATION_END
+					) {
+						w.hydration_mismatch();
+						throw HYDRATION_ERROR;
+					}
 				}
 
 				if (context) {
