@@ -42,6 +42,8 @@ import { active_effect, get } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
 import { current_batch } from '../../reactivity/batch.js';
+import { each_key_duplicate } from '../../errors.js';
+import { validate_each_keys } from '../../validate.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -201,6 +203,11 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		}
 		was_empty = length === 0;
 
+		// skip if #each block isn't keyed
+		if (DEV && get_key !== index) {
+			validate_each_keys(array, get_key);
+		}
+
 		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
 
@@ -266,6 +273,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		if (hydrating) {
 			if (length === 0 && fallback_fn) {
 				fallback = branch(() => fallback_fn(anchor));
+			} else if (length > state.items.size) {
+				each_key_duplicate('', '', '');
 			}
 		} else {
 			if (should_defer_append()) {
@@ -363,6 +372,7 @@ function reconcile(
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 	var should_update = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 
+	var count = 0;
 	var length = array.length;
 	var items = state.items;
 	var first = state.first;
@@ -451,6 +461,7 @@ function reconcile(
 			stashed = [];
 
 			current = prev.next;
+			count += 1;
 			continue;
 		}
 
@@ -472,6 +483,12 @@ function reconcile(
 					// more efficient to move later items to the front
 					var start = stashed[0];
 					var j;
+
+					// full key uniqueness check is dev-only,
+					// key duplicates cause crash only due to `matched` being empty
+					if (matched.length === 0) {
+						each_key_duplicate('', '', '');
+					}
 
 					prev = start.prev;
 
@@ -506,6 +523,7 @@ function reconcile(
 					link(state, prev, item);
 
 					prev = item;
+					count += 1;
 				}
 
 				continue;
@@ -534,6 +552,14 @@ function reconcile(
 		matched.push(item);
 		prev = item;
 		current = item.next;
+		count += 1;
+	}
+
+	if (count !== length) {
+		// full key uniqueness check is dev-only,
+		// if keys duplication didn't cause a crash,
+		// the rendered list will be shorter then the array
+		each_key_duplicate('', '', '');
 	}
 
 	if (current !== null || seen !== undefined) {
