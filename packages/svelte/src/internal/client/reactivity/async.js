@@ -68,9 +68,9 @@ export function flatten(sync, async, fn) {
 			batch?.deactivate();
 			unset_context();
 
-			if (was_hydrating) {
-				set_hydrating(false);
-			}
+			// conceptually this is part of unset_context, but we need
+			// the `if` block for treeshaking to work
+			if (was_hydrating) set_hydrating(false);
 		})
 		.catch((error) => {
 			invoke_error_boundary(error, parent);
@@ -212,19 +212,18 @@ export async function async_body(fn) {
 	var active = /** @type {Effect} */ (active_effect);
 
 	var was_hydrating = hydrating;
+	var next_hydrate_node = undefined;
 
 	if (was_hydrating) {
 		hydrate_next();
-
-		var previous_hydrate_node = hydrate_node;
-		var end = skip_nodes(false);
+		next_hydrate_node = skip_nodes(false);
 	}
 
 	try {
 		var promise = fn();
 	} finally {
-		if (was_hydrating) {
-			set_hydrate_node(end);
+		if (next_hydrate_node) {
+			set_hydrate_node(next_hydrate_node);
 		}
 	}
 
@@ -244,10 +243,10 @@ export async function async_body(fn) {
 			batch.decrement();
 		}
 
-		if (was_hydrating) {
-			set_hydrating(false);
-		}
-
 		unset_context();
+
+		// conceptually this is part of unset_context, but we need
+		// the `if` block for treeshaking to work
+		if (was_hydrating) set_hydrating(false);
 	}
 }
