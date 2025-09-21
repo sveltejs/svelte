@@ -20,6 +20,14 @@ import {
 	set_from_async_derived
 } from './deriveds.js';
 import { aborted } from './effects.js';
+import {
+	hydrate_next,
+	hydrate_node,
+	hydrating,
+	set_hydrate_node,
+	set_hydrating,
+	skip_nodes
+} from '../dom/hydration.js';
 
 /**
  *
@@ -40,6 +48,8 @@ export function flatten(sync, async, fn) {
 
 	var restore = capture();
 
+	var was_hydrating = hydrating;
+
 	Promise.all(async.map((expression) => async_derived(expression)))
 		.then((result) => {
 			batch?.activate();
@@ -53,6 +63,10 @@ export function flatten(sync, async, fn) {
 				if ((parent.f & DESTROYED) === 0) {
 					invoke_error_boundary(error, parent);
 				}
+			}
+
+			if (was_hydrating) {
+				set_hydrating(false);
 			}
 
 			batch?.deactivate();
@@ -74,11 +88,22 @@ function capture() {
 	var previous_component_context = component_context;
 	var previous_batch = current_batch;
 
+	var was_hydrating = hydrating;
+
+	if (was_hydrating) {
+		var previous_hydrate_node = hydrate_node;
+	}
+
 	return function restore() {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
 		previous_batch?.activate();
+
+		if (was_hydrating) {
+			set_hydrating(true);
+			set_hydrate_node(previous_hydrate_node);
+		}
 
 		if (DEV) {
 			set_from_async_derived(null);
@@ -186,13 +211,34 @@ export async function async_body(fn) {
 
 	var active = /** @type {Effect} */ (active_effect);
 
+	var was_hydrating = hydrating;
+	var next_hydrate_node = undefined;
+
+	if (was_hydrating) {
+		hydrate_next();
+		next_hydrate_node = skip_nodes(false);
+	}
+
 	try {
-		await fn();
+		var promise = fn();
+	} finally {
+		if (next_hydrate_node) {
+			set_hydrate_node(next_hydrate_node);
+			hydrate_next();
+		}
+	}
+
+	try {
+		await promise;
 	} catch (error) {
 		if (!aborted(active)) {
 			invoke_error_boundary(error, active);
 		}
 	} finally {
+		if (was_hydrating) {
+			set_hydrating(false);
+		}
+
 		boundary.update_pending_count(-1);
 
 		if (pending) {
