@@ -65,12 +65,12 @@ export function flatten(sync, async, fn) {
 				}
 			}
 
+			if (was_hydrating) {
+				set_hydrating(false);
+			}
+
 			batch?.deactivate();
 			unset_context();
-
-			// conceptually this is part of unset_context, but we need
-			// the `if` block for treeshaking to work
-			if (was_hydrating) set_hydrating(false);
 		})
 		.catch((error) => {
 			invoke_error_boundary(error, parent);
@@ -235,6 +235,10 @@ export async function async_body(fn) {
 			invoke_error_boundary(error, active);
 		}
 	} finally {
+		if (was_hydrating) {
+			set_hydrating(false);
+		}
+
 		boundary.update_pending_count(-1);
 
 		if (pending) {
@@ -245,9 +249,5 @@ export async function async_body(fn) {
 		}
 
 		unset_context();
-
-		// conceptually this is part of unset_context, but we need
-		// the `if` block for treeshaking to work
-		if (was_hydrating) set_hydrating(false);
 	}
 }
