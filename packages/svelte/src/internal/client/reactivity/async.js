@@ -48,6 +48,8 @@ export function flatten(sync, async, fn) {
 
 	var restore = capture();
 
+	var was_hydrating = hydrating;
+
 	Promise.all(async.map((expression) => async_derived(expression)))
 		.then((result) => {
 			batch?.activate();
@@ -65,6 +67,10 @@ export function flatten(sync, async, fn) {
 
 			batch?.deactivate();
 			unset_context();
+
+			if (was_hydrating) {
+				set_hydrating(false);
+			}
 		})
 		.catch((error) => {
 			invoke_error_boundary(error, parent);
