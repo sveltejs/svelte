@@ -1,5 +1,11 @@
 # svelte
 
+## 5.39.4
+
+### Patch Changes
+
+- fix: restore hydration state after `await` in `<script>` ([#16806](https://github.com/sveltejs/svelte/pull/16806))
+
 ## 5.39.3
 
 ### Patch Changes
