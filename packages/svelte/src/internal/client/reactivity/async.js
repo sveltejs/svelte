@@ -224,6 +224,7 @@ export async function async_body(fn) {
 	} finally {
 		if (next_hydrate_node) {
 			set_hydrate_node(next_hydrate_node);
+			hydrate_next();
 		}
 	}
 
