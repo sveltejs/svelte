@@ -1,12 +1,12 @@
 /** @import { Location } from 'locate-character' */
-/** @import { BlockStatement, Expression } from 'estree' */
+/** @import { BlockStatement, Expression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { determine_namespace_for_children } from '../../utils.js';
 import { build_element_attributes } from './shared/element.js';
-import { build_template } from './shared/utils.js';
+import { build_template, create_child_block, PromiseOptimiser } from './shared/utils.js';
 
 /**
  * @param {AST.SvelteElement} node
@@ -37,7 +37,9 @@ export function SvelteElement(node, context) {
 		init: []
 	};
 
-	build_element_attributes(node, { ...context, state });
+	const optimiser = new PromiseOptimiser();
+
+	build_element_attributes(node, { ...context, state }, optimiser.transform);
 
 	if (dev) {
 		const location = /** @type {Location} */ (locator(node.start));
@@ -45,7 +47,7 @@ export function SvelteElement(node, context) {
 			b.stmt(
 				b.call(
 					'$.push_element',
-					b.id('$$payload'),
+					b.id('$$renderer'),
 					tag,
 					b.literal(location.line),
 					b.literal(location.column)
@@ -57,17 +59,22 @@ export function SvelteElement(node, context) {
 	const attributes = b.block([...state.init, ...build_template(state.template)]);
 	const children = /** @type {BlockStatement} */ (context.visit(node.fragment, state));
 
-	context.state.template.push(
-		b.stmt(
-			b.call(
-				'$.element',
-				b.id('$$payload'),
-				tag,
-				attributes.body.length > 0 && b.thunk(attributes),
-				children.body.length > 0 && b.thunk(children)
-			)
+	/** @type {Statement} */
+	let statement = b.stmt(
+		b.call(
+			'$.element',
+			b.id('$$renderer'),
+			tag,
+			attributes.body.length > 0 && b.thunk(attributes),
+			children.body.length > 0 && b.thunk(children)
 		)
 	);
+
+	if (optimiser.expressions.length > 0) {
+		statement = create_child_block(b.block([optimiser.apply(), statement]), true);
+	}
+
+	context.state.template.push(statement);
 
 	if (dev) {
 		context.state.template.push(b.stmt(b.call('$.pop_element')));

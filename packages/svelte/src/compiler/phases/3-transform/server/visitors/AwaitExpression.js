@@ -1,25 +1,40 @@
-/** @import { AwaitExpression } from 'estree' */
-/** @import { Context } from '../types.js' */
-import * as b from '../../../../utils/builders.js';
+/** @import { AwaitExpression, Expression } from 'estree' */
+/** @import { Context } from '../types' */
+import { save } from '../../../../utils/ast.js';
 
 /**
  * @param {AwaitExpression} node
  * @param {Context} context
  */
 export function AwaitExpression(node, context) {
-	// if `await` is inside a function, or inside `<script module>`,
-	// allow it, otherwise error
-	if (
-		context.state.scope.function_depth === 0 ||
-		context.path.some(
-			(node) =>
-				node.type === 'ArrowFunctionExpression' ||
-				node.type === 'FunctionDeclaration' ||
-				node.type === 'FunctionExpression'
-		)
-	) {
-		return context.next();
+	const argument = /** @type {Expression} */ (context.visit(node.argument));
+
+	if (context.state.analysis.pickled_awaits.has(node)) {
+		return save(argument);
 	}
 
-	return b.call('$.await_outside_boundary');
+	// we also need to restore context after block expressions
+	let i = context.path.length;
+	while (i--) {
+		const parent = context.path[i];
+
+		if (
+			parent.type === 'ArrowFunctionExpression' ||
+			parent.type === 'FunctionExpression' ||
+			parent.type === 'FunctionDeclaration'
+		) {
+			break;
+		}
+
+		// @ts-ignore
+		if (parent.metadata) {
+			if (parent.type !== 'ExpressionTag' && parent.type !== 'Fragment') {
+				return save(argument);
+			}
+
+			break;
+		}
+	}
+
+	return argument === node.argument ? node : { ...node, argument };
 }

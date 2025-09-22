@@ -15,7 +15,6 @@ jobs:
       contents: read # to clone the repo
     steps:
       - name: monitor action permissions
-        uses: GitHubSecurityLab/actions-permissions/monitor@v1
       - name: check user authorization # user needs triage permission
         uses: actions/github-script@v7
         id: check-permissions

@@ -1,19 +1,24 @@
-/** @import { AssignmentOperator, Expression, Identifier, Node, Statement } from 'estree' */
-/** @import { AST } from '#compiler' */
+/** @import { AssignmentOperator, Expression, Identifier, Node, Statement, BlockStatement } from 'estree' */
+/** @import { AST, ExpressionMetadata } from '#compiler' */
 /** @import { ComponentContext, ServerTransformState } from '../../types.js' */
 
 import { escape_html } from '../../../../../../escaping.js';
 import {
 	BLOCK_CLOSE,
 	BLOCK_OPEN,
+	BLOCK_OPEN_ELSE,
 	EMPTY_COMMENT
 } from '../../../../../../internal/server/hydration.js';
 import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_whitespaces_strict } from '../../../../patterns.js';
+import { has_await } from '../../../../../utils/ast.js';
 
 /** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
 export const block_open = b.literal(BLOCK_OPEN);
+
+/** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
+export const block_open_else = b.literal(BLOCK_OPEN_ELSE);
 
 /** Closes an if/each block, so that we can remove nodes in the case of a mismatch. Also serves as an anchor for these blocks */
 export const block_close = b.literal(BLOCK_CLOSE);
@@ -32,6 +37,10 @@ export function process_children(nodes, { visit, state }) {
 	let sequence = [];
 
 	function flush() {
+		if (sequence.length === 0) {
+			return;
+		}
+
 		let quasi = b.quasi('', false);
 		const quasis = [quasi];
 
@@ -63,26 +72,25 @@ export function process_children(nodes, { visit, state }) {
 		}
 
 		state.template.push(b.template(quasis, expressions));
+		sequence = [];
 	}
 
-	for (let i = 0; i < nodes.length; i += 1) {
-		const node = nodes[i];
-
-		if (node.type === 'Text' || node.type === 'Comment' || node.type === 'ExpressionTag') {
+	for (const node of nodes) {
+		if (node.type === 'ExpressionTag' && node.metadata.expression.has_await) {
+			flush();
+			const visited = /** @type {Expression} */ (visit(node.expression));
+			state.template.push(
+				b.stmt(b.call('$$renderer.push', b.thunk(b.call('$.escape', visited), true)))
+			);
+		} else if (node.type === 'Text' || node.type === 'Comment' || node.type === 'ExpressionTag') {
 			sequence.push(node);
 		} else {
-			if (sequence.length > 0) {
-				flush();
-				sequence = [];
-			}
-
+			flush();
 			visit(node, { ...state });
 		}
 	}
 
-	if (sequence.length > 0) {
-		flush();
-	}
+	flush();
 }
 
 /**
@@ -95,11 +103,9 @@ function is_statement(node) {
 
 /**
  * @param {Array<Statement | Expression>} template
- * @param {Identifier} out
- * @param {AssignmentOperator | 'push'} operator
  * @returns {Statement[]}
  */
-export function build_template(template, out = b.id('$$payload.out'), operator = 'push') {
+export function build_template(template) {
 	/** @type {string[]} */
 	let strings = [];
 
@@ -110,32 +116,18 @@ export function build_template(template, out = b.id('$$payload.out'), operator =
 	const statements = [];
 
 	const flush = () => {
-		if (operator === 'push') {
-			statements.push(
-				b.stmt(
-					b.call(
-						b.member(out, b.id('push')),
-						b.template(
-							strings.map((cooked, i) => b.quasi(cooked, i === strings.length - 1)),
-							expressions
-						)
+		statements.push(
+			b.stmt(
+				b.call(
+					b.id('$$renderer.push'),
+					b.template(
+						strings.map((cooked, i) => b.quasi(cooked, i === strings.length - 1)),
+						expressions
 					)
 				)
-			);
-		} else {
-			statements.push(
-				b.stmt(
-					b.assignment(
-						operator,
-						out,
-						b.template(
-							strings.map((cooked, i) => b.quasi(cooked, i === strings.length - 1)),
-							expressions
-						)
-					)
-				)
-			);
-		}
+			)
+		);
+
 		strings = [];
 		expressions = [];
 	};
@@ -178,6 +170,7 @@ export function build_template(template, out = b.id('$$payload.out'), operator =
  *
  * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
+ * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
  * @param {boolean} trim_whitespace
  * @param {boolean} is_component
  * @returns {Expression}
@@ -185,6 +178,7 @@ export function build_template(template, out = b.id('$$payload.out'), operator =
 export function build_attribute_value(
 	value,
 	context,
+	transform,
 	trim_whitespace = false,
 	is_component = false
 ) {
@@ -203,7 +197,10 @@ export function build_attribute_value(
 			return b.literal(is_component ? data : escape_html(data, true));
 		}
 
-		return /** @type {Expression} */ (context.visit(chunk.expression));
+		return transform(
+			/** @type {Expression} */ (context.visit(chunk.expression)),
+			chunk.metadata.expression
+		);
 	}
 
 	let quasi = b.quasi('', false);
@@ -221,7 +218,13 @@ export function build_attribute_value(
 				: node.data;
 		} else {
 			expressions.push(
-				b.call('$.stringify', /** @type {Expression} */ (context.visit(node.expression)))
+				b.call(
+					'$.stringify',
+					transform(
+						/** @type {Expression} */ (context.visit(node.expression)),
+						node.metadata.expression
+					)
+				)
 			);
 
 			quasi = b.quasi('', i + 1 === value.length);
@@ -256,4 +259,71 @@ export function build_getter(node, state) {
 	}
 
 	return node;
+}
+
+/**
+ * Creates a `$$renderer.child(...)` expression statement
+ * @param {BlockStatement | Expression} body
+ * @param {boolean} async
+ * @returns {Statement}
+ */
+export function create_child_block(body, async) {
+	return b.stmt(b.call('$$renderer.child', b.arrow([b.id('$$renderer')], body, async)));
+}
+
+/**
+ * Creates a `$$renderer.async(...)` expression statement
+ * @param {BlockStatement | Expression} body
+ */
+export function create_async_block(body) {
+	return b.stmt(b.call('$$renderer.async', b.arrow([b.id('$$renderer')], body, true)));
+}
+
+/**
+ * @param {BlockStatement | Expression} body
+ * @param {Identifier | false} component_fn_id
+ * @returns {Statement}
+ */
+export function call_component_renderer(body, component_fn_id) {
+	return b.stmt(
+		b.call('$$renderer.component', b.arrow([b.id('$$renderer')], body, false), component_fn_id)
+	);
+}
+
+export class PromiseOptimiser {
+	/** @type {Expression[]} */
+	expressions = [];
+
+	/**
+	 *
+	 * @param {Expression} expression
+	 * @param {ExpressionMetadata} metadata
+	 */
+	transform = (expression, metadata) => {
+		if (metadata.has_await) {
+			const length = this.expressions.push(expression);
+			return b.id(`$$${length - 1}`);
+		}
+
+		return expression;
+	};
+
+	apply() {
+		if (this.expressions.length === 1) {
+			return b.const('$$0', this.expressions[0]);
+		}
+
+		const promises = b.array(
+			this.expressions.map((expression) => {
+				return expression.type === 'AwaitExpression' && !has_await(expression.argument)
+					? expression.argument
+					: b.call(b.thunk(expression, true));
+			})
+		);
+
+		return b.const(
+			b.array_pattern(this.expressions.map((_, i) => b.id(`$$${i}`))),
+			b.await(b.call('Promise.all', promises))
+		);
+	}
 }

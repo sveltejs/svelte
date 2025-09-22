@@ -4,7 +4,7 @@
 /** @import { Analysis } from '../../types.js' */
 /** @import { Scope } from '../../scope.js' */
 import * as b from '#compiler/builders';
-import { is_simple_expression } from '../../../utils/ast.js';
+import { is_simple_expression, save } from '../../../utils/ast.js';
 import {
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_IMMUTABLE,
@@ -296,7 +296,7 @@ export function create_derived(state, expression, async = false) {
 	const thunk = b.thunk(expression, async);
 
 	if (async) {
-		return b.call(b.await(b.call('$.save', b.call('$.async_derived', thunk))));
+		return save(b.call('$.async_derived', thunk));
 	} else {
 		return b.call(state.analysis.runes ? '$.derived' : '$.derived_safe_equal', thunk);
 	}

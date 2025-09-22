@@ -1,5 +1,51 @@
 # svelte
 
+## 5.39.4
+
+### Patch Changes
+
+- fix: restore hydration state after `await` in `<script>` ([#16806](https://github.com/sveltejs/svelte/pull/16806))
+
+## 5.39.3
+
+### Patch Changes
+
+- fix: remove outer hydration markers ([#16800](https://github.com/sveltejs/svelte/pull/16800))
+
+- fix: async hydration ([#16797](https://github.com/sveltejs/svelte/pull/16797))
+
+## 5.39.2
+
+### Patch Changes
+
+- fix: preserve SSR context when block expressions contain `await` ([#16791](https://github.com/sveltejs/svelte/pull/16791))
+
+- chore: bump some devDependencies ([#16787](https://github.com/sveltejs/svelte/pull/16787))
+
+## 5.39.1
+
+### Patch Changes
+
+- fix: issue `state_proxy_unmount` warning when unmounting a state proxy ([#16747](https://github.com/sveltejs/svelte/pull/16747))
+
+- fix: add `then` to class component `render` output ([#16783](https://github.com/sveltejs/svelte/pull/16783))
+
+## 5.39.0
+
+### Minor Changes
+
+- feat: experimental async SSR ([#16748](https://github.com/sveltejs/svelte/pull/16748))
+
+### Patch Changes
+
+- fix: correctly SSR hidden="until-found" ([#16773](https://github.com/sveltejs/svelte/pull/16773))
+
+## 5.38.10
+
+### Patch Changes
+
+- fix: flush effects scheduled during boundary's pending phase ([#16738](https://github.com/sveltejs/svelte/pull/16738))
+
 ## 5.38.9
 
 ### Patch Changes

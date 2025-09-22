@@ -35,5 +35,9 @@ export function ConstTag(node, context) {
 	const declaration = node.declaration.declarations[0];
 
 	context.visit(declaration.id);
-	context.visit(declaration.init, { ...context.state, expression: node.metadata.expression });
+	context.visit(declaration.init, {
+		...context.state,
+		expression: node.metadata.expression,
+		in_derived: true
+	});
 }

@@ -11,7 +11,7 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from '../runtime.js';
-import { current_batch, suspend } from './batch.js';
+import { Batch, current_batch } from './batch.js';
 import {
 	async_derived,
 	current_async_effect,
@@ -20,6 +20,14 @@ import {
 	set_from_async_derived
 } from './deriveds.js';
 import { aborted } from './effects.js';
+import {
+	hydrate_next,
+	hydrate_node,
+	hydrating,
+	set_hydrate_node,
+	set_hydrating,
+	skip_nodes
+} from '../dom/hydration.js';
 
 /**
  *
@@ -39,7 +47,8 @@ export function flatten(sync, async, fn) {
 	var parent = /** @type {Effect} */ (active_effect);
 
 	var restore = capture();
-	var boundary = get_boundary();
+
+	var was_hydrating = hydrating;
 
 	Promise.all(async.map((expression) => async_derived(expression)))
 		.then((result) => {
@@ -56,11 +65,15 @@ export function flatten(sync, async, fn) {
 				}
 			}
 
+			if (was_hydrating) {
+				set_hydrating(false);
+			}
+
 			batch?.deactivate();
 			unset_context();
 		})
 		.catch((error) => {
-			boundary.error(error);
+			invoke_error_boundary(error, parent);
 		});
 }
 
@@ -75,11 +88,22 @@ function capture() {
 	var previous_component_context = component_context;
 	var previous_batch = current_batch;
 
+	var was_hydrating = hydrating;
+
+	if (was_hydrating) {
+		var previous_hydrate_node = hydrate_node;
+	}
+
 	return function restore() {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
 		previous_batch?.activate();
+
+		if (was_hydrating) {
+			set_hydrating(true);
+			set_hydrate_node(previous_hydrate_node);
+		}
 
 		if (DEV) {
 			set_from_async_derived(null);
@@ -178,16 +202,52 @@ export function unset_context() {
  * @param {() => Promise<void>} fn
  */
 export async function async_body(fn) {
-	var unsuspend = suspend();
+	var boundary = get_boundary();
+	var batch = /** @type {Batch} */ (current_batch);
+	var pending = boundary.is_pending();
+
+	boundary.update_pending_count(1);
+	if (!pending) batch.increment();
+
 	var active = /** @type {Effect} */ (active_effect);
 
+	var was_hydrating = hydrating;
+	var next_hydrate_node = undefined;
+
+	if (was_hydrating) {
+		hydrate_next();
+		next_hydrate_node = skip_nodes(false);
+	}
+
 	try {
-		await fn();
+		var promise = fn();
+	} finally {
+		if (next_hydrate_node) {
+			set_hydrate_node(next_hydrate_node);
+			hydrate_next();
+		}
+	}
+
+	try {
+		await promise;
 	} catch (error) {
 		if (!aborted(active)) {
 			invoke_error_boundary(error, active);
 		}
 	} finally {
-		unsuspend();
+		if (was_hydrating) {
+			set_hydrating(false);
+		}
+
+		boundary.update_pending_count(-1);
+
+		if (pending) {
+			batch.flush();
+		} else {
+			batch.activate();
+			batch.decrement();
+		}
+
+		unset_context();
 	}
 }

@@ -10,12 +10,10 @@ import {
 	INERT,
 	RENDER_EFFECT,
 	ROOT_EFFECT,
-	USER_EFFECT,
 	MAYBE_DIRTY
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
-import { get_boundary } from '../dom/blocks/boundary.js';
 import {
 	active_effect,
 	is_dirty,
@@ -30,7 +28,6 @@ import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
 import { old_values } from './sources.js';
 import { unlink_effect } from './effects.js';
-import { unset_context } from './async.js';
 
 /** @type {Set<Batch>} */
 const batches = new Set();
@@ -651,28 +648,6 @@ export function schedule_effect(signal) {
 	}
 
 	queued_root_effects.push(effect);
-}
-
-export function suspend() {
-	var boundary = get_boundary();
-	var batch = /** @type {Batch} */ (current_batch);
-	var pending = boundary.is_pending();
-
-	boundary.update_pending_count(1);
-	if (!pending) batch.increment();
-
-	return function unsuspend() {
-		boundary.update_pending_count(-1);
-
-		if (!pending) {
-			batch.activate();
-			batch.decrement();
-		} else {
-			batch.flush();
-		}
-
-		unset_context();
-	};
 }
 
 /**

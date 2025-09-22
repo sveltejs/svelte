@@ -225,6 +225,17 @@ export function state_proxy_equality_mismatch(operator) {
 }
 
 /**
+ * Tried to unmount a state proxy, rather than a component
+ */
+export function state_proxy_unmount() {
+	if (DEV) {
+		console.warn(`%c[svelte] state_proxy_unmount\n%cTried to unmount a state proxy, rather than a component\nhttps://svelte.dev/e/state_proxy_unmount`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/state_proxy_unmount`);
+	}
+}
+
+/**
  * A `<svelte:boundary>` `reset` function only resets the boundary the first time it is called
  */
 export function svelte_boundary_reset_noop() {

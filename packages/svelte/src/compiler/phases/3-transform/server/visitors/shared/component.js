@@ -1,7 +1,13 @@
 /** @import { BlockStatement, Expression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
-import { empty_comment, build_attribute_value } from './utils.js';
+import {
+	empty_comment,
+	build_attribute_value,
+	create_async_block,
+	PromiseOptimiser,
+	build_template
+} from './utils.js';
 import * as b from '#compiler/builders';
 import { is_element_node } from '../../../../nodes.js';
 import { dev } from '../../../../../state.js';
@@ -72,16 +78,26 @@ export function build_inline_component(node, expression, context) {
 		}
 	}
 
+	const optimiser = new PromiseOptimiser();
+
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
 			if (!slot_scope_applies_to_itself) {
 				lets.default.push(attribute);
 			}
 		} else if (attribute.type === 'SpreadAttribute') {
-			props_and_spreads.push(/** @type {Expression} */ (context.visit(attribute)));
+			let expression = /** @type {Expression} */ (context.visit(attribute));
+			props_and_spreads.push(optimiser.transform(expression, attribute.metadata.expression));
 		} else if (attribute.type === 'Attribute') {
+			const value = build_attribute_value(
+				attribute.value,
+				context,
+				optimiser.transform,
+				false,
+				true
+			);
+
 			if (attribute.name.startsWith('--')) {
-				const value = build_attribute_value(attribute.value, context, false, true);
 				custom_css_props.push(b.init(attribute.name, value));
 				continue;
 			}
@@ -90,7 +106,6 @@ export function build_inline_component(node, expression, context) {
 				has_children_prop = true;
 			}
 
-			const value = build_attribute_value(attribute.value, context, false, true);
 			push_prop(b.prop('init', b.key(attribute.name), value));
 		} else if (attribute.type === 'BindDirective' && attribute.name !== 'this') {
 			if (attribute.expression.type === 'SequenceExpression') {
@@ -201,7 +216,7 @@ export function build_inline_component(node, expression, context) {
 		if (block.body.length === 0) continue;
 
 		/** @type {Pattern[]} */
-		const params = [b.id('$$payload')];
+		const params = [b.id('$$renderer')];
 
 		if (lets[slot_name].length > 0) {
 			const pattern = b.object_pattern(
@@ -278,7 +293,7 @@ export function build_inline_component(node, expression, context) {
 	let statement = b.stmt(
 		(node.type === 'SvelteComponent' ? b.maybe_call : b.call)(
 			expression,
-			b.id('$$payload'),
+			b.id('$$renderer'),
 			props_expression
 		)
 	);
@@ -291,27 +306,33 @@ export function build_inline_component(node, expression, context) {
 		node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic);
 
 	if (custom_css_props.length > 0) {
-		context.state.template.push(
-			b.stmt(
-				b.call(
-					'$.css_props',
-					b.id('$$payload'),
-					b.literal(context.state.namespace === 'svg' ? false : true),
-					b.object(custom_css_props),
-					b.thunk(b.block([statement])),
-					dynamic && b.true
-				)
+		statement = b.stmt(
+			b.call(
+				'$.css_props',
+				b.id('$$renderer'),
+				b.literal(context.state.namespace === 'svg' ? false : true),
+				b.object(custom_css_props),
+				b.thunk(b.block([statement])),
+				dynamic && b.true
 			)
 		);
-	} else {
-		if (dynamic) {
-			context.state.template.push(empty_comment);
-		}
+	}
 
-		context.state.template.push(statement);
+	if (optimiser.expressions.length > 0) {
+		statement = create_async_block(b.block([optimiser.apply(), statement]));
+	}
 
-		if (!context.state.skip_hydration_boundaries) {
-			context.state.template.push(empty_comment);
-		}
+	if (dynamic && custom_css_props.length === 0) {
+		context.state.template.push(empty_comment);
+	}
+
+	context.state.template.push(statement);
+
+	if (
+		!context.state.skip_hydration_boundaries &&
+		custom_css_props.length === 0 &&
+		optimiser.expressions.length === 0
+	) {
+		context.state.template.push(empty_comment);
 	}
 }

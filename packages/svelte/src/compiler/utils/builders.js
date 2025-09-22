@@ -2,6 +2,7 @@
 import { walk } from 'zimmerframe';
 import { regex_is_valid_identifier } from '../phases/patterns.js';
 import { sanitize_template_string } from './sanitize_template_string.js';
+import { has_await } from './ast.js';
 
 /**
  * @param {Array<ESTree.Expression | ESTree.SpreadElement | null>} elements
@@ -363,7 +364,14 @@ export function prop(kind, key, value, computed = false) {
  * @returns {ESTree.PropertyDefinition}
  */
 export function prop_def(key, value, computed = false, is_static = false) {
-	return { type: 'PropertyDefinition', key, value, computed, static: is_static };
+	return {
+		type: 'PropertyDefinition',
+		decorators: [],
+		key,
+		value,
+		computed,
+		static: is_static
+	};
 }
 
 /**
@@ -443,16 +451,7 @@ export function thunk(expression, async = false) {
 export function unthunk(expression) {
 	// optimize `async () => await x()`, but not `async () => await x(await y)`
 	if (expression.async && expression.body.type === 'AwaitExpression') {
-		let has_await = false;
-
-		walk(expression.body.argument, null, {
-			AwaitExpression(_node, context) {
-				has_await = true;
-				context.stop();
-			}
-		});
-
-		if (!has_await) {
+		if (!has_await(expression.body.argument)) {
 			return unthunk(arrow(expression.params, expression.body.argument));
 		}
 	}
@@ -573,6 +572,7 @@ function for_builder(init, test, update, body) {
 export function method(kind, key, params, body, computed = false, is_static = false) {
 	return {
 		type: 'MethodDefinition',
+		decorators: [],
 		key,
 		kind,
 		value: function_builder(null, params, block(body)),
@@ -618,6 +618,7 @@ function if_builder(test, consequent, alternate) {
 export function import_all(as, source) {
 	return {
 		type: 'ImportDeclaration',
+		attributes: [],
 		source: literal(source),
 		specifiers: [import_namespace(as)]
 	};
@@ -631,6 +632,7 @@ export function import_all(as, source) {
 export function imports(parts, source) {
 	return {
 		type: 'ImportDeclaration',
+		attributes: [],
 		source: literal(source),
 		specifiers: parts.map((p) => ({
 			type: 'ImportSpecifier',

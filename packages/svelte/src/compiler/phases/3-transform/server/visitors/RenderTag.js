@@ -23,7 +23,7 @@ export function RenderTag(node, context) {
 		b.stmt(
 			(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
 				snippet_function,
-				b.id('$$payload'),
+				b.id('$$renderer'),
 				...snippet_args
 			)
 		)
