@@ -1,4 +1,4 @@
-/** @import { Expression } from 'estree' */
+/** @import { Expression, ObjectExpression } from 'estree' */
 /** @import { Location } from 'locate-character' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../types.js' */
@@ -7,6 +7,8 @@ import { is_void } from '../../../../../utils.js';
 import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
+import { is_custom_element_node } from '../../../nodes.js';
+import { ELEMENT_IS_NAMESPACED, ELEMENT_PRESERVE_ATTRIBUTE_CASE } from '../../../../../constants.js';
 import { build_element_attributes, build_spread_object } from './shared/element.js';
 import {
 	process_children,
@@ -104,17 +106,78 @@ export function RegularElement(node, context) {
 				attribute.type === 'SpreadAttribute'
 		)
 	) {
-		const attributes = build_spread_object(
+		/** @type {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} */
+		const select_attributes = [];
+		/** @type {AST.ClassDirective[]} */
+		const class_directives = [];
+		/** @type {AST.StyleDirective[]} */
+		const style_directives = [];
+
+		for (const attribute of node.attributes) {
+			if (
+				attribute.type === 'Attribute' ||
+				attribute.type === 'BindDirective' ||
+				attribute.type === 'SpreadAttribute'
+			) {
+				select_attributes.push(attribute);
+			} else if (attribute.type === 'ClassDirective') {
+				class_directives.push(attribute);
+			} else if (attribute.type === 'StyleDirective') {
+				style_directives.push(attribute);
+			}
+		}
+
+		const attributes_expression = build_spread_object(
 			node,
-			node.attributes.filter(
-				(attribute) =>
-					attribute.type === 'Attribute' ||
-					attribute.type === 'BindDirective' ||
-					attribute.type === 'SpreadAttribute'
-			),
+			select_attributes,
 			context,
 			optimiser.transform
 		);
+
+		/** @type {ObjectExpression | undefined} */
+		let classes;
+		if (class_directives.length) {
+			const properties = class_directives.map((directive) =>
+				b.init(
+					directive.name,
+					directive.expression.type === 'Identifier' && directive.expression.name === directive.name
+						? b.id(directive.name)
+						: /** @type {Expression} */ (context.visit(directive.expression))
+				)
+			);
+
+			classes = b.object(properties);
+		}
+
+		/** @type {ObjectExpression | undefined} */
+		let styles;
+		if (style_directives.length > 0) {
+			const properties = style_directives.map((directive) =>
+				b.init(
+					directive.name,
+					directive.value === true
+						? b.id(directive.name)
+						: build_attribute_value(directive.value, context, optimiser.transform, true)
+				)
+			);
+
+			styles = b.object(properties);
+		}
+
+		let flags = 0;
+
+		if (node.metadata.svg || node.metadata.mathml) {
+			flags |= ELEMENT_IS_NAMESPACED | ELEMENT_PRESERVE_ATTRIBUTE_CASE;
+		} else if (is_custom_element_node(node)) {
+			flags |= ELEMENT_PRESERVE_ATTRIBUTE_CASE;
+		}
+
+		const css_hash =
+			node.metadata.scoped && context.state.analysis.css.hash
+				? b.literal(context.state.analysis.css.hash)
+				: undefined;
+
+		const flag_literal = flags ? b.literal(flags) : undefined;
 
 		const inner_state = { ...state, template: [], init: [] };
 		process_children(trimmed, { ...context, state: inner_state });
@@ -124,7 +187,9 @@ export function RegularElement(node, context) {
 			b.block([...state.init, ...build_template(inner_state.template)])
 		);
 
-		const statement = b.stmt(b.call('$$renderer.select', attributes, fn));
+		const statement = b.stmt(
+			b.call('$$renderer.select', attributes_expression, css_hash, classes, styles, flag_literal, fn)
+		);
 
 		if (optimiser.expressions.length > 0) {
 			context.state.template.push(

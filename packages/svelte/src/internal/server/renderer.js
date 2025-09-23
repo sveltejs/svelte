@@ -158,14 +158,47 @@ export class Renderer {
 	}
 
 	/**
+	 * @overload
 	 * @param {Record<string, any>} attrs
 	 * @param {(renderer: Renderer) => void} fn
+	 * @returns {void}
 	 */
-	select({ value, ...attrs }, fn) {
-		this.push(`<select${attributes(attrs)}>`);
+	/**
+	 * @overload
+	 * @param {Record<string, any>} attrs
+	 * @param {string | undefined} css_hash
+	 * @param {Record<string, boolean> | undefined} classes
+	 * @param {Record<string, string> | undefined} styles
+	 * @param {number | undefined} flags
+	 * @param {(renderer: Renderer) => void} fn
+	 * @returns {void}
+	 */
+	/**
+	 * @param {Record<string, any>} attrs
+	 * @param {...any} rest
+	 * @returns {void}
+	 */
+	select(attrs, ...rest) {
+		const callback = /** @type {(renderer: Renderer) => void} */ (rest.pop() ?? (() => {}));
+		/** @type {[
+			string | undefined,
+			Record<string, boolean> | undefined,
+			Record<string, string> | undefined,
+			number | undefined
+		]} */
+		const [css_hash, classes, styles, flags] = /** @type {[
+			string | undefined,
+			Record<string, boolean> | undefined,
+			Record<string, string> | undefined,
+			number | undefined
+		]} */ (rest);
+
+		const { value, ...select_attrs } = attrs;
+
+		this.push(`<select${attributes(select_attrs, css_hash, classes, styles, flags)}>`);
 		this.child((renderer) => {
 			renderer.local.select_value = value;
-			fn(renderer);
+			callback(renderer);
 		});
 		this.push('</select>');
 	}
