@@ -23,24 +23,6 @@ export default {
 
 The experimental flag will be removed in Svelte 6.
 
-## Boundaries
-
-Currently, you can only use `await` inside a [`<svelte:boundary>`](svelte-boundary) with a `pending` snippet:
-
-```svelte
-<svelte:boundary>
-	<MyApp />
-
-	{#snippet pending()}
-		<p>loading...</p>
-	{/snippet}
-</svelte:boundary>
-```
-
-This restriction will be lifted once Svelte supports asynchronous server-side rendering (see [caveats](#Caveats)).
-
-> [!NOTE] In the [playground](/playground), your app is rendered inside a boundary with an empty pending snippet, so that you can use `await` without having to create one.
-
 ## Synchronized updates
 
 When an `await` expression depends on a particular piece of state, changes to that state will not be reflected in the UI until the asynchronous work has completed, so that the UI is not left in an inconsistent state. In other words, in an example like [this](/playground/untitled#H4sIAAAAAAAAE42QsWrDQBBEf2VZUkhYRE4gjSwJ0qVMkS6XYk9awcFpJe5Wdoy4fw-ycdykSPt2dpiZFYVGxgrf2PsJTlPwPWTcO-U-xwIH5zli9bminudNtwEsbl-v8_wYj-x1Y5Yi_8W7SZRFI1ZYxy64WVsjRj0rEDTwEJWUs6f8cKP2Tp8vVIxSPEsHwyKdukmA-j6jAmwO63Y1SidyCsIneA_T6CJn2ZBD00Jk_XAjT4tmQwEv-32eH6AsgYK6wXWOPPTs6Xy1CaxLECDYgb3kSUbq8p5aaifzorCt0RiUZbQcDIJ10ldH8gs3K6X2Xzqbro5zu1KCHaw2QQPrtclvwVSXc2sEC1T-Vqw0LJy-ClRy_uSkx2ogHzn9ADZ1CubKAQAA)...
@@ -99,7 +81,9 @@ let b = $derived(await two());
 
 ## Indicating loading states
 
-In addition to the nearest boundary's [`pending`](svelte-boundary#Properties-pending) snippet, you can indicate that asynchronous work is ongoing with [`$effect.pending()`]($effect#$effect.pending).
+To render placeholder UI, you can wrap content in a `<svelte:boundary>` with a [`pending`](svelte-boundary#Properties-pending) snippet. This will be shown when the boundary is first created, but not for subsequent updates, which are globally coordinated.
+
+Within an existing boundary, you can indicate that asynchronous work is ongoing with [`$effect.pending()`]($effect#$effect.pending).
 
 You can also use [`settled()`](svelte#settled) to get a promise that resolves when the current update is complete:
 
@@ -132,6 +116,24 @@ async function onclick() {
 ## Error handling
 
 Errors in `await` expressions will bubble to the nearest [error boundary](svelte-boundary).
+
+## Server-side rendering
+
+Svelte supports asynchronous server-side rendering (SSR) with the `render(...)` API. To use it, simply await the return value:
+
+```js
+/// file: server.js
+import { render } from 'svelte/server';
+import App from './App.svelte';
+
+const { head, body } = +++await+++ render(App);
+```
+
+> [!NOTE] If you're using a framework like SvelteKit, this is done on your behalf.
+
+If a `<svelte:boundary>` with a `pending` snippet is encountered during SSR, that snippet will be rendered while the rest of the content is ignored. Outside a `pending` snippet, any `await` expressions will be resolved by the time `await render(...)` returns.
+
+> [!NOTE] In future, we plan to add a streaming implementation that renders the content in the background.
 
 ## Caveats
 
