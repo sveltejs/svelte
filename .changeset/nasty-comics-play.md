@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: SSR scoped classes for <select value> elements
+fix: SSR regression of processing attributes of `<select>` and `<option>`
