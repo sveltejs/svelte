@@ -1,4 +1,4 @@
-/** @import { Expression, ObjectExpression } from 'estree' */
+/** @import { Expression } from 'estree' */
 /** @import { Location } from 'locate-character' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../types.js' */

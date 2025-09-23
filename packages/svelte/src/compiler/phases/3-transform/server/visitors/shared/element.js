@@ -377,7 +377,7 @@ function build_element_spread_attributes(
  * @param {AST.RegularElement | AST.SvelteElement} element
  * @param {ComponentContext} context
  * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
- * @returns {[ObjectExpression,Literal | undefined, ObjectExpression | undefined, ObjectExpression | undefined, Literal | undefined ]}
+ * @returns {[ObjectExpression,Literal | undefined, ObjectExpression | undefined, ObjectExpression | undefined, Literal | undefined]}
  */
 export function prepare_element_spread_object(element, context, transform) {
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} */
@@ -419,7 +419,7 @@ export function prepare_element_spread_object(element, context, transform) {
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
  * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
- * @returns {[ObjectExpression,Literal | undefined, ObjectExpression | undefined, ObjectExpression | undefined, Literal | undefined ]}
+ * @returns {[ObjectExpression,Literal | undefined, ObjectExpression | undefined, ObjectExpression | undefined, Literal | undefined]}
  */
 export function prepare_element_spread(
 	element,
@@ -433,7 +433,7 @@ export function prepare_element_spread(
 	let classes;
 	/** @type {ObjectExpression | undefined} */
 	let styles;
-	let flags_num = 0;
+	let flags = 0;
 
 	if (class_directives.length) {
 		const properties = class_directives.map((directive) =>
@@ -460,11 +460,11 @@ export function prepare_element_spread(
 	}
 
 	if (element.metadata.svg || element.metadata.mathml) {
-		flags_num |= ELEMENT_IS_NAMESPACED | ELEMENT_PRESERVE_ATTRIBUTE_CASE;
+		flags |= ELEMENT_IS_NAMESPACED | ELEMENT_PRESERVE_ATTRIBUTE_CASE;
 	} else if (is_custom_element_node(element)) {
-		flags_num |= ELEMENT_PRESERVE_ATTRIBUTE_CASE;
+		flags |= ELEMENT_PRESERVE_ATTRIBUTE_CASE;
 	} else if (element.type === 'RegularElement' && element.name === 'input') {
-		flags_num |= ELEMENT_IS_INPUT;
+		flags |= ELEMENT_IS_INPUT;
 	}
 
 	const object = build_spread_object(element, attributes, context, transform);
@@ -472,9 +472,8 @@ export function prepare_element_spread(
 		element.metadata.scoped && context.state.analysis.css.hash
 			? b.literal(context.state.analysis.css.hash)
 			: undefined;
-	const flags = flags_num ? b.literal(flags_num) : undefined;
 
-	return [object, css_hash, classes, styles, flags];
+	return [object, css_hash, classes, styles, flags ? b.literal(flags) : undefined];
 }
 
 /**
