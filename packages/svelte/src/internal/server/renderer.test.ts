@@ -211,13 +211,10 @@ test('select merges scoped css hash with static class', () => {
 	const component = (renderer: Renderer) => {
 		renderer.select(
 			{ class: 'foo', value: 'foo' },
-			'svelte-hash',
-			undefined,
-			undefined,
-			undefined,
 			(renderer) => {
 				renderer.option({ value: 'foo' }, (renderer) => renderer.push('foo'));
-			}
+			},
+			'svelte-hash'
 		);
 	};
 
