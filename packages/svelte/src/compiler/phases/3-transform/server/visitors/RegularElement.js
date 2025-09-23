@@ -8,7 +8,10 @@ import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { is_custom_element_node } from '../../../nodes.js';
-import { ELEMENT_IS_NAMESPACED, ELEMENT_PRESERVE_ATTRIBUTE_CASE } from '../../../../../constants.js';
+import {
+	ELEMENT_IS_NAMESPACED,
+	ELEMENT_PRESERVE_ATTRIBUTE_CASE
+} from '../../../../../constants.js';
 import { build_element_attributes, build_spread_object } from './shared/element.js';
 import {
 	process_children,
@@ -188,7 +191,15 @@ export function RegularElement(node, context) {
 		);
 
 		const statement = b.stmt(
-			b.call('$$renderer.select', attributes_expression, css_hash, classes, styles, flag_literal, fn)
+			b.call(
+				'$$renderer.select',
+				attributes_expression,
+				css_hash,
+				classes,
+				styles,
+				flag_literal,
+				fn
+			)
 		);
 
 		if (optimiser.expressions.length > 0) {
