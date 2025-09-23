@@ -180,9 +180,13 @@ export class Renderer {
 	/**
 	 * @param {Record<string, any>} attrs
 	 * @param {string | number | boolean | ((renderer: Renderer) => void)} body
+	 * @param {string | undefined} [css_hash]
+	 * @param {Record<string, boolean> | undefined} [classes]
+	 * @param {Record<string, string> | undefined} [styles]
+	 * @param {number | undefined} [flags]
 	 */
-	option(attrs, body) {
-		this.#out.push(`<option${attributes(attrs)}`);
+	option(attrs, body, css_hash, classes, styles, flags) {
+		this.#out.push(`<option${attributes(attrs, css_hash, classes, styles, flags)}`);
 
 		/**
 		 * @param {Renderer} renderer

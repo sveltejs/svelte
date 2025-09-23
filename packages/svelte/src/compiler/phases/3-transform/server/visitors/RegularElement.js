@@ -41,9 +41,7 @@ export function RegularElement(node, context) {
 
 	const optimiser = new PromiseOptimiser();
 
-	state.template.push(b.literal(`<${node.name}`));
-
-	// If this element needs special handling (like <select value>),
+	// If this element needs special handling (like <select value> / <option>),
 	// avoid calling build_element_attributes here to prevent evaluating/awaiting
 	// attribute expressions twice. We'll handle attributes in the special branch.
 	const is_select_special =
@@ -54,9 +52,13 @@ export function RegularElement(node, context) {
 					attribute.name === 'value') ||
 				attribute.type === 'SpreadAttribute'
 		);
+	const is_option_special = node.name === 'option';
+	const is_special = is_select_special || is_option_special;
 
 	let body = /** @type {Expression | null} */ (null);
-	if (!is_select_special) {
+	if (!is_special) {
+		// only open the tag in the non-special path
+		state.template.push(b.literal(`<${node.name}`));
 		body = build_element_attributes(node, { ...context, state }, optimiser.transform);
 		state.template.push(b.literal(node_is_void ? '/>' : '>')); // add `/>` for XHTML compliance
 	}
@@ -170,14 +172,32 @@ export function RegularElement(node, context) {
 	}
 
 	if (node.name === 'option') {
-		const attributes = build_spread_object(
+		/** @type {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} */
+		const option_attributes = [];
+		/** @type {AST.ClassDirective[]} */
+		const class_directives = [];
+		/** @type {AST.StyleDirective[]} */
+		const style_directives = [];
+
+		for (const attribute of node.attributes) {
+			if (
+				attribute.type === 'Attribute' ||
+				attribute.type === 'BindDirective' ||
+				attribute.type === 'SpreadAttribute'
+			) {
+				option_attributes.push(attribute);
+			} else if (attribute.type === 'ClassDirective') {
+				class_directives.push(attribute);
+			} else if (attribute.type === 'StyleDirective') {
+				style_directives.push(attribute);
+			}
+		}
+
+		const { object, css_hash, classes, styles, flags } = prepare_element_spread(
 			node,
-			node.attributes.filter(
-				(attribute) =>
-					attribute.type === 'Attribute' ||
-					attribute.type === 'BindDirective' ||
-					attribute.type === 'SpreadAttribute'
-			),
+			option_attributes,
+			style_directives,
+			class_directives,
 			context,
 			optimiser.transform
 		);
@@ -199,7 +219,9 @@ export function RegularElement(node, context) {
 			);
 		}
 
-		const statement = b.stmt(b.call('$$renderer.option', attributes, body));
+		const statement = b.stmt(
+			b.call('$$renderer.option', object, body, css_hash, classes, styles, flags)
+		);
 
 		if (optimiser.expressions.length > 0) {
 			context.state.template.push(
