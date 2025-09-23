@@ -4,7 +4,6 @@ import { test } from '../../test';
 export default test({
 	// In non-async mode we're not reacting to deriveds read in the same context they're defined in
 	skip_no_async: true,
-	solo: true,
 	test({ assert, target, logs }) {
 		const [a, b] = target.querySelectorAll('button');
 
