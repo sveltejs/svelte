@@ -29,7 +29,7 @@ import * as w from '../warnings.js';
 import { async_effect, destroy_effect } from './effects.js';
 import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
-import { tracing_mode_flag } from '../../flags/index.js';
+import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { Boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
@@ -231,7 +231,7 @@ export function async_derived(fn, location) {
 export function user_derived(fn) {
 	const d = derived(fn);
 
-	push_reaction_value(d);
+	if (!async_mode_flag) push_reaction_value(d);
 
 	return d;
 }
