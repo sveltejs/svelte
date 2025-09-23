@@ -1,5 +1,13 @@
 # svelte
 
+## 5.39.5
+
+### Patch Changes
+
+- fix: allow `{@html await ...}` and snippets with async content on the server ([#16817](https://github.com/sveltejs/svelte/pull/16817))
+
+- fix: use nginx SSI-compatible comments for `$props.id()` ([#16820](https://github.com/sveltejs/svelte/pull/16820))
+
 ## 5.39.4
 
 ### Patch Changes
