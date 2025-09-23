@@ -83,7 +83,7 @@ let b = $derived(await two());
 
 To render placeholder UI, you can wrap content in a `<svelte:boundary>` with a [`pending`](svelte-boundary#Properties-pending) snippet. This will be shown when the boundary is first created, but not for subsequent updates, which are globally coordinated.
 
-Within an existing boundary, you can indicate that asynchronous work is ongoing with [`$effect.pending()`]($effect#$effect.pending).
+To indicate that asynchronous work is ongoing within an _existing_ boundary, you can conditionally render UI based on the value of [`$effect.pending()`]($effect#$effect.pending).
 
 You can also use [`settled()`](svelte#settled) to get a promise that resolves when the current update is complete:
 
