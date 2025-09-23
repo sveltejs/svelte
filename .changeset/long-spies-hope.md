@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: allow `{@html await ...}` on the server
+fix: allow `{@html await ...}` and snippets with async content on the server
