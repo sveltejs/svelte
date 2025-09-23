@@ -358,7 +358,7 @@ function build_element_spread_attributes(
 	context,
 	transform
 ) {
-	const { object, css_hash, classes, styles, flags } = prepare_element_spread(
+	const args = prepare_element_spread(
 		element,
 		/** @type {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} */ (attributes),
 		style_directives,
@@ -367,9 +367,48 @@ function build_element_spread_attributes(
 		transform
 	);
 
-	let call = b.call('$.attributes', object, css_hash, classes, styles, flags);
+	let call = b.call('$.attributes', ...args);
 
 	context.state.template.push(call);
+}
+
+/**
+ * Prepare args for $.attributes(...): compute object, css_hash, classes, styles and flags.
+ * @param {AST.RegularElement | AST.SvelteElement} element
+ * @param {ComponentContext} context
+ * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
+ * @returns {[ObjectExpression,Literal | undefined, ObjectExpression | undefined, ObjectExpression | undefined, Literal | undefined ]}
+ */
+export function prepare_element_spread_object(element, context, transform) {
+	/** @type {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} */
+	const select_attributes = [];
+	/** @type {AST.ClassDirective[]} */
+	const class_directives = [];
+	/** @type {AST.StyleDirective[]} */
+	const style_directives = [];
+
+	for (const attribute of element.attributes) {
+		if (
+			attribute.type === 'Attribute' ||
+			attribute.type === 'BindDirective' ||
+			attribute.type === 'SpreadAttribute'
+		) {
+			select_attributes.push(attribute);
+		} else if (attribute.type === 'ClassDirective') {
+			class_directives.push(attribute);
+		} else if (attribute.type === 'StyleDirective') {
+			style_directives.push(attribute);
+		}
+	}
+
+	return prepare_element_spread(
+		element,
+		select_attributes,
+		style_directives,
+		class_directives,
+		context,
+		transform
+	);
 }
 
 /**
@@ -380,7 +419,7 @@ function build_element_spread_attributes(
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
  * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
- * @returns {{ object: ObjectExpression, css_hash: Literal | undefined, classes: ObjectExpression | undefined, styles: ObjectExpression | undefined, flags: Literal | undefined }}
+ * @returns {[ObjectExpression,Literal | undefined, ObjectExpression | undefined, ObjectExpression | undefined, Literal | undefined ]}
  */
 export function prepare_element_spread(
 	element,
@@ -435,7 +474,7 @@ export function prepare_element_spread(
 			: undefined;
 	const flags = flags_num ? b.literal(flags_num) : undefined;
 
-	return { object, css_hash, classes, styles, flags };
+	return [object, css_hash, classes, styles, flags];
 }
 
 /**

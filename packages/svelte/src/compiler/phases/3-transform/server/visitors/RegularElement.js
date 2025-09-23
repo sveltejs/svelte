@@ -7,15 +7,10 @@ import { is_void } from '../../../../../utils.js';
 import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
-import {
-	build_element_attributes,
-	build_spread_object,
-	prepare_element_spread
-} from './shared/element.js';
+import { build_element_attributes, prepare_element_spread_object } from './shared/element.js';
 import {
 	process_children,
 	build_template,
-	build_attribute_value,
 	create_child_block,
 	PromiseOptimiser
 } from './shared/utils.js';
@@ -118,36 +113,6 @@ export function RegularElement(node, context) {
 	}
 
 	if (is_select_special) {
-		/** @type {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} */
-		const select_attributes = [];
-		/** @type {AST.ClassDirective[]} */
-		const class_directives = [];
-		/** @type {AST.StyleDirective[]} */
-		const style_directives = [];
-
-		for (const attribute of node.attributes) {
-			if (
-				attribute.type === 'Attribute' ||
-				attribute.type === 'BindDirective' ||
-				attribute.type === 'SpreadAttribute'
-			) {
-				select_attributes.push(attribute);
-			} else if (attribute.type === 'ClassDirective') {
-				class_directives.push(attribute);
-			} else if (attribute.type === 'StyleDirective') {
-				style_directives.push(attribute);
-			}
-		}
-
-		const { object, css_hash, classes, styles, flags } = prepare_element_spread(
-			node,
-			select_attributes,
-			style_directives,
-			class_directives,
-			context,
-			optimiser.transform
-		);
-
 		const inner_state = { ...state, template: [], init: [] };
 		process_children(trimmed, { ...context, state: inner_state });
 
@@ -156,9 +121,9 @@ export function RegularElement(node, context) {
 			b.block([...state.init, ...build_template(inner_state.template)])
 		);
 
-		const statement = b.stmt(
-			b.call('$$renderer.select', object, fn, css_hash, classes, styles, flags)
-		);
+		const [attributes, ...rest] = prepare_element_spread_object(node, context, optimiser.transform);
+
+		const statement = b.stmt(b.call('$$renderer.select', attributes, fn, ...rest));
 
 		if (optimiser.expressions.length > 0) {
 			context.state.template.push(
@@ -171,37 +136,7 @@ export function RegularElement(node, context) {
 		return;
 	}
 
-	if (node.name === 'option') {
-		/** @type {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} */
-		const option_attributes = [];
-		/** @type {AST.ClassDirective[]} */
-		const class_directives = [];
-		/** @type {AST.StyleDirective[]} */
-		const style_directives = [];
-
-		for (const attribute of node.attributes) {
-			if (
-				attribute.type === 'Attribute' ||
-				attribute.type === 'BindDirective' ||
-				attribute.type === 'SpreadAttribute'
-			) {
-				option_attributes.push(attribute);
-			} else if (attribute.type === 'ClassDirective') {
-				class_directives.push(attribute);
-			} else if (attribute.type === 'StyleDirective') {
-				style_directives.push(attribute);
-			}
-		}
-
-		const { object, css_hash, classes, styles, flags } = prepare_element_spread(
-			node,
-			option_attributes,
-			style_directives,
-			class_directives,
-			context,
-			optimiser.transform
-		);
-
+	if (is_option_special) {
 		let body;
 
 		if (node.metadata.synthetic_value_node) {
@@ -219,9 +154,9 @@ export function RegularElement(node, context) {
 			);
 		}
 
-		const statement = b.stmt(
-			b.call('$$renderer.option', object, body, css_hash, classes, styles, flags)
-		);
+		const [attributes, ...rest] = prepare_element_spread_object(node, context, optimiser.transform);
+
+		const statement = b.stmt(b.call('$$renderer.option', attributes, body, ...rest));
 
 		if (optimiser.expressions.length > 0) {
 			context.state.template.push(
