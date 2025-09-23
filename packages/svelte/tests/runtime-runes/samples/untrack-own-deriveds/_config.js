@@ -14,9 +14,10 @@ export default test({
 			`
 				<button>increment</button>
 				<p>1/2</p
+				<p>1/2</p
 			`
 		);
 
-		assert.deepEqual(logs, [0, 0]);
+		assert.deepEqual(logs, [0, 0, 0, 0]);
 	}
 });
