@@ -448,7 +448,7 @@ export function once(get_value) {
  */
 export function props_id(renderer) {
 	const uid = renderer.global.uid();
-	renderer.push('<!--#' + uid + '-->');
+	renderer.push('<!--$' + uid + '-->');
 	return uid;
 }
 
