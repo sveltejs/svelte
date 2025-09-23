@@ -358,62 +358,84 @@ function build_element_spread_attributes(
 	context,
 	transform
 ) {
-	let classes;
-	let styles;
-	let flags = 0;
+	const { object, css_hash, classes, styles, flags } = prepare_element_spread(
+		element,
+		/** @type {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} */ (attributes),
+		style_directives,
+		class_directives,
+		context,
+		transform
+	);
 
-	let has_await = false;
+	let call = b.call('$.attributes', object, css_hash, classes, styles, flags);
+
+	context.state.template.push(call);
+}
+
+/**
+ * Prepare args for $.attributes(...): compute object, css_hash, classes, styles and flags.
+ * @param {AST.RegularElement | AST.SvelteElement} element
+ * @param {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} attributes
+ * @param {AST.StyleDirective[]} style_directives
+ * @param {AST.ClassDirective[]} class_directives
+ * @param {ComponentContext} context
+ * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
+ * @returns {{ object: ObjectExpression, css_hash: Literal | undefined, classes: ObjectExpression | undefined, styles: ObjectExpression | undefined, flags: Literal | undefined }}
+ */
+export function prepare_element_spread(
+	element,
+	attributes,
+	style_directives,
+	class_directives,
+	context,
+	transform
+) {
+	/** @type {ObjectExpression | undefined} */
+	let classes;
+	/** @type {ObjectExpression | undefined} */
+	let styles;
+	let flags_num = 0;
 
 	if (class_directives.length) {
-		const properties = class_directives.map((directive) => {
-			has_await ||= directive.metadata.expression.has_await;
-
-			return b.init(
+		const properties = class_directives.map((directive) =>
+			b.init(
 				directive.name,
 				directive.expression.type === 'Identifier' && directive.expression.name === directive.name
 					? b.id(directive.name)
 					: /** @type {Expression} */ (context.visit(directive.expression))
-			);
-		});
-
+			)
+		);
 		classes = b.object(properties);
 	}
 
 	if (style_directives.length > 0) {
-		const properties = style_directives.map((directive) => {
-			has_await ||= directive.metadata.expression.has_await;
-
-			return b.init(
+		const properties = style_directives.map((directive) =>
+			b.init(
 				directive.name,
 				directive.value === true
 					? b.id(directive.name)
 					: build_attribute_value(directive.value, context, transform, true)
-			);
-		});
-
+			)
+		);
 		styles = b.object(properties);
 	}
 
 	if (element.metadata.svg || element.metadata.mathml) {
-		flags |= ELEMENT_IS_NAMESPACED | ELEMENT_PRESERVE_ATTRIBUTE_CASE;
+		flags_num |= ELEMENT_IS_NAMESPACED | ELEMENT_PRESERVE_ATTRIBUTE_CASE;
 	} else if (is_custom_element_node(element)) {
-		flags |= ELEMENT_PRESERVE_ATTRIBUTE_CASE;
+		flags_num |= ELEMENT_PRESERVE_ATTRIBUTE_CASE;
 	} else if (element.type === 'RegularElement' && element.name === 'input') {
-		flags |= ELEMENT_IS_INPUT;
+		flags_num |= ELEMENT_IS_INPUT;
 	}
 
 	const object = build_spread_object(element, attributes, context, transform);
-
 	const css_hash =
 		element.metadata.scoped && context.state.analysis.css.hash
 			? b.literal(context.state.analysis.css.hash)
 			: undefined;
+	const flags = flags_num ? b.literal(flags_num) : undefined;
 
-	const args = [object, css_hash, classes, styles, flags ? b.literal(flags) : undefined];
-
-	let call = b.call('$.attributes', ...args);
-
-	context.state.template.push(call);
+	return { object, css_hash, classes, styles, flags };
 }
 
 /**

@@ -7,12 +7,11 @@ import { is_void } from '../../../../../utils.js';
 import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
-import { is_custom_element_node } from '../../../nodes.js';
 import {
-	ELEMENT_IS_NAMESPACED,
-	ELEMENT_PRESERVE_ATTRIBUTE_CASE
-} from '../../../../../constants.js';
-import { build_element_attributes, build_spread_object } from './shared/element.js';
+	build_element_attributes,
+	build_spread_object,
+	prepare_element_spread
+} from './shared/element.js';
 import {
 	process_children,
 	build_template,
@@ -43,8 +42,24 @@ export function RegularElement(node, context) {
 	const optimiser = new PromiseOptimiser();
 
 	state.template.push(b.literal(`<${node.name}`));
-	const body = build_element_attributes(node, { ...context, state }, optimiser.transform);
-	state.template.push(b.literal(node_is_void ? '/>' : '>')); // add `/>` for XHTML compliance
+
+	// If this element needs special handling (like <select value>),
+	// avoid calling build_element_attributes here to prevent evaluating/awaiting
+	// attribute expressions twice. We'll handle attributes in the special branch.
+	const is_select_special =
+		node.name === 'select' &&
+		node.attributes.some(
+			(attribute) =>
+				((attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
+					attribute.name === 'value') ||
+				attribute.type === 'SpreadAttribute'
+		);
+
+	let body = /** @type {Expression | null} */ (null);
+	if (!is_select_special) {
+		body = build_element_attributes(node, { ...context, state }, optimiser.transform);
+		state.template.push(b.literal(node_is_void ? '/>' : '>')); // add `/>` for XHTML compliance
+	}
 
 	if ((node.name === 'script' || node.name === 'style') && node.fragment.nodes.length === 1) {
 		state.template.push(
@@ -100,15 +115,7 @@ export function RegularElement(node, context) {
 		);
 	}
 
-	if (
-		node.name === 'select' &&
-		node.attributes.some(
-			(attribute) =>
-				((attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
-					attribute.name === 'value') ||
-				attribute.type === 'SpreadAttribute'
-		)
-	) {
+	if (is_select_special) {
 		/** @type {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} */
 		const select_attributes = [];
 		/** @type {AST.ClassDirective[]} */
@@ -130,57 +137,14 @@ export function RegularElement(node, context) {
 			}
 		}
 
-		const attributes_expression = build_spread_object(
+		const { object, css_hash, classes, styles, flags } = prepare_element_spread(
 			node,
 			select_attributes,
+			style_directives,
+			class_directives,
 			context,
 			optimiser.transform
 		);
-
-		/** @type {ObjectExpression | undefined} */
-		let classes;
-		if (class_directives.length) {
-			const properties = class_directives.map((directive) =>
-				b.init(
-					directive.name,
-					directive.expression.type === 'Identifier' && directive.expression.name === directive.name
-						? b.id(directive.name)
-						: /** @type {Expression} */ (context.visit(directive.expression))
-				)
-			);
-
-			classes = b.object(properties);
-		}
-
-		/** @type {ObjectExpression | undefined} */
-		let styles;
-		if (style_directives.length > 0) {
-			const properties = style_directives.map((directive) =>
-				b.init(
-					directive.name,
-					directive.value === true
-						? b.id(directive.name)
-						: build_attribute_value(directive.value, context, optimiser.transform, true)
-				)
-			);
-
-			styles = b.object(properties);
-		}
-
-		let flags = 0;
-
-		if (node.metadata.svg || node.metadata.mathml) {
-			flags |= ELEMENT_IS_NAMESPACED | ELEMENT_PRESERVE_ATTRIBUTE_CASE;
-		} else if (is_custom_element_node(node)) {
-			flags |= ELEMENT_PRESERVE_ATTRIBUTE_CASE;
-		}
-
-		const css_hash =
-			node.metadata.scoped && context.state.analysis.css.hash
-				? b.literal(context.state.analysis.css.hash)
-				: undefined;
-
-		const flag_literal = flags ? b.literal(flags) : undefined;
 
 		const inner_state = { ...state, template: [], init: [] };
 		process_children(trimmed, { ...context, state: inner_state });
@@ -191,15 +155,7 @@ export function RegularElement(node, context) {
 		);
 
 		const statement = b.stmt(
-			b.call(
-				'$$renderer.select',
-				attributes_expression,
-				css_hash,
-				classes,
-				styles,
-				flag_literal,
-				fn
-			)
+			b.call('$$renderer.select', object, fn, css_hash, classes, styles, flags)
 		);
 
 		if (optimiser.expressions.length > 0) {
