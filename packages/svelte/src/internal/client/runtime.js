@@ -500,7 +500,13 @@ export function update_effect(effect) {
  */
 export async function tick() {
 	if (async_mode_flag) {
-		return new Promise((f) => requestAnimationFrame(() => f()));
+		return new Promise((f) => {
+			// Race them against each other - in almost all cases requestAnimationFrame will fire first,
+			// but e.g. in case the window is not focused or a view transition happens, requestAnimationFrame
+			// will be delayed and setTimeout helps us resolve fast enough in that case
+			requestAnimationFrame(() => f());
+			setTimeout(() => f());
+		});
 	}
 
 	await Promise.resolve();
