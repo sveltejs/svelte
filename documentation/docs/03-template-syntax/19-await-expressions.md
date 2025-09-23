@@ -131,7 +131,7 @@ const { head, body } = +++await+++ render(App);
 
 > [!NOTE] If you're using a framework like SvelteKit, this is done on your behalf.
 
-If a `<svelte:boundary>` with a `pending` snippet is encountered during SSR, that snippet will be rendered while the rest of the content is ignored. Outside a `pending` snippet, any `await` expressions will be resolved by the time `await render(...)` returns.
+If a `<svelte:boundary>` with a `pending` snippet is encountered during SSR, that snippet will be rendered while the rest of the content is ignored. All `await` expressions encountered outside boundaries with `pending` snippets will resolve and render their contents prior to `await render(...)` returning.
 
 > [!NOTE] In the future, we plan to add a streaming implementation that renders the content in the background.
 
