@@ -44,6 +44,7 @@ import { derived_safe_equal } from '../../reactivity/deriveds.js';
 import { current_batch } from '../../reactivity/batch.js';
 import { each_key_duplicate } from '../../errors.js';
 import { validate_each_keys } from '../../validate.js';
+import { invoke_error_boundary } from '../../error-handling.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -487,7 +488,14 @@ function reconcile(
 					// full key uniqueness check is dev-only,
 					// key duplicates cause crash only due to `matched` being empty
 					if (matched.length === 0) {
-						each_key_duplicate('', '', '');
+						// reconcile can be called in the batch's callbacks which are
+						// executed outside of the effect tree, so error are not caught
+						try {
+							each_key_duplicate('', '', '');
+						} catch (error) {
+							invoke_error_boundary(error, each_effect);
+							return;
+						}
 					}
 
 					prev = start.prev;
@@ -555,11 +563,17 @@ function reconcile(
 		count += 1;
 	}
 
+	// Full key uniqueness check is dev-only. If keys duplication didn't cause a crash,
+	// the rendered list will be shorter then the source array
 	if (count !== length) {
-		// full key uniqueness check is dev-only,
-		// if keys duplication didn't cause a crash,
-		// the rendered list will be shorter then the array
-		each_key_duplicate('', '', '');
+		// reconcile can be called in the batch's callbacks which are
+		// executed outside of the effect tree, so error are not caught
+		try {
+			each_key_duplicate('', '', '');
+		} catch (error) {
+			invoke_error_boundary(error, each_effect);
+			return;
+		}
 	}
 
 	if (current !== null || seen !== undefined) {
