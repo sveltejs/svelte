@@ -1,5 +1,17 @@
 # svelte
 
+## 5.39.6
+
+### Patch Changes
+
+- fix: depend on reads of deriveds created within reaction (async mode) ([#16823](https://github.com/sveltejs/svelte/pull/16823))
+
+- fix: SSR regression of processing attributes of `<select>` and `<option>` ([#16821](https://github.com/sveltejs/svelte/pull/16821))
+
+- fix: async `class:` + spread attributes were compiled into sync server-side code ([#16834](https://github.com/sveltejs/svelte/pull/16834))
+
+- fix: ensure tick resolves within a macrotask ([#16825](https://github.com/sveltejs/svelte/pull/16825))
+
 ## 5.39.5
 
 ### Patch Changes
