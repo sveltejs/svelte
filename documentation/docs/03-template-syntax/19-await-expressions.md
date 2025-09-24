@@ -83,7 +83,7 @@ let b = $derived(await two());
 
 To render placeholder UI, you can wrap content in a `<svelte:boundary>` with a [`pending`](svelte-boundary#Properties-pending) snippet. This will be shown when the boundary is first created, but not for subsequent updates, which are globally coordinated.
 
-After the contents of a boundary have resolved for the first time and replaced the `pending` snippet, you can detect subsequent async work with [`$effect.pending()`]($effect#$effect.pending). This is what you would use display a "we're asynchronously validating your input" spinner next to a form field, for example.
+After the contents of a boundary have resolved for the first time and have replaced the `pending` snippet, you can detect subsequent async work with [`$effect.pending()`]($effect#$effect.pending). This is what you would use to display a "we're asynchronously validating your input" spinner next to a form field, for example.
 
 You can also use [`settled()`](svelte#settled) to get a promise that resolves when the current update is complete:
 
