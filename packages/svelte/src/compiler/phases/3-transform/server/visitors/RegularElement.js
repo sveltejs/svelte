@@ -7,11 +7,10 @@ import { is_void } from '../../../../../utils.js';
 import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
-import { build_element_attributes, build_spread_object } from './shared/element.js';
+import { build_element_attributes, prepare_element_spread_object } from './shared/element.js';
 import {
 	process_children,
 	build_template,
-	build_attribute_value,
 	create_child_block,
 	PromiseOptimiser
 } from './shared/utils.js';
@@ -37,9 +36,27 @@ export function RegularElement(node, context) {
 
 	const optimiser = new PromiseOptimiser();
 
-	state.template.push(b.literal(`<${node.name}`));
-	const body = build_element_attributes(node, { ...context, state }, optimiser.transform);
-	state.template.push(b.literal(node_is_void ? '/>' : '>')); // add `/>` for XHTML compliance
+	// If this element needs special handling (like <select value> / <option>),
+	// avoid calling build_element_attributes here to prevent evaluating/awaiting
+	// attribute expressions twice. We'll handle attributes in the special branch.
+	const is_select_special =
+		node.name === 'select' &&
+		node.attributes.some(
+			(attribute) =>
+				((attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
+					attribute.name === 'value') ||
+				attribute.type === 'SpreadAttribute'
+		);
+	const is_option_special = node.name === 'option';
+	const is_special = is_select_special || is_option_special;
+
+	let body = /** @type {Expression | null} */ (null);
+	if (!is_special) {
+		// only open the tag in the non-special path
+		state.template.push(b.literal(`<${node.name}`));
+		body = build_element_attributes(node, { ...context, state }, optimiser.transform);
+		state.template.push(b.literal(node_is_void ? '/>' : '>')); // add `/>` for XHTML compliance
+	}
 
 	if ((node.name === 'script' || node.name === 'style') && node.fragment.nodes.length === 1) {
 		state.template.push(
@@ -95,27 +112,7 @@ export function RegularElement(node, context) {
 		);
 	}
 
-	if (
-		node.name === 'select' &&
-		node.attributes.some(
-			(attribute) =>
-				((attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
-					attribute.name === 'value') ||
-				attribute.type === 'SpreadAttribute'
-		)
-	) {
-		const attributes = build_spread_object(
-			node,
-			node.attributes.filter(
-				(attribute) =>
-					attribute.type === 'Attribute' ||
-					attribute.type === 'BindDirective' ||
-					attribute.type === 'SpreadAttribute'
-			),
-			context,
-			optimiser.transform
-		);
-
+	if (is_select_special) {
 		const inner_state = { ...state, template: [], init: [] };
 		process_children(trimmed, { ...context, state: inner_state });
 
@@ -124,7 +121,9 @@ export function RegularElement(node, context) {
 			b.block([...state.init, ...build_template(inner_state.template)])
 		);
 
-		const statement = b.stmt(b.call('$$renderer.select', attributes, fn));
+		const [attributes, ...rest] = prepare_element_spread_object(node, context, optimiser.transform);
+
+		const statement = b.stmt(b.call('$$renderer.select', attributes, fn, ...rest));
 
 		if (optimiser.expressions.length > 0) {
 			context.state.template.push(
@@ -137,19 +136,7 @@ export function RegularElement(node, context) {
 		return;
 	}
 
-	if (node.name === 'option') {
-		const attributes = build_spread_object(
-			node,
-			node.attributes.filter(
-				(attribute) =>
-					attribute.type === 'Attribute' ||
-					attribute.type === 'BindDirective' ||
-					attribute.type === 'SpreadAttribute'
-			),
-			context,
-			optimiser.transform
-		);
-
+	if (is_option_special) {
 		let body;
 
 		if (node.metadata.synthetic_value_node) {
@@ -167,7 +154,9 @@ export function RegularElement(node, context) {
 			);
 		}
 
-		const statement = b.stmt(b.call('$$renderer.option', attributes, body));
+		const [attributes, ...rest] = prepare_element_spread_object(node, context, optimiser.transform);
+
+		const statement = b.stmt(b.call('$$renderer.option', attributes, body, ...rest));
 
 		if (optimiser.expressions.length > 0) {
 			context.state.template.push(

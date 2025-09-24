@@ -160,9 +160,16 @@ export class Renderer {
 	/**
 	 * @param {Record<string, any>} attrs
 	 * @param {(renderer: Renderer) => void} fn
+	 * @param {string | undefined} [css_hash]
+	 * @param {Record<string, boolean> | undefined} [classes]
+	 * @param {Record<string, string> | undefined} [styles]
+	 * @param {number | undefined} [flags]
+	 * @returns {void}
 	 */
-	select({ value, ...attrs }, fn) {
-		this.push(`<select${attributes(attrs)}>`);
+	select(attrs, fn, css_hash, classes, styles, flags) {
+		const { value, ...select_attrs } = attrs;
+
+		this.push(`<select${attributes(select_attrs, css_hash, classes, styles, flags)}>`);
 		this.child((renderer) => {
 			renderer.local.select_value = value;
 			fn(renderer);
@@ -173,9 +180,13 @@ export class Renderer {
 	/**
 	 * @param {Record<string, any>} attrs
 	 * @param {string | number | boolean | ((renderer: Renderer) => void)} body
+	 * @param {string | undefined} [css_hash]
+	 * @param {Record<string, boolean> | undefined} [classes]
+	 * @param {Record<string, string> | undefined} [styles]
+	 * @param {number | undefined} [flags]
 	 */
-	option(attrs, body) {
-		this.#out.push(`<option${attributes(attrs)}`);
+	option(attrs, body, css_hash, classes, styles, flags) {
+		this.#out.push(`<option${attributes(attrs, css_hash, classes, styles, flags)}`);
 
 		/**
 		 * @param {Renderer} renderer

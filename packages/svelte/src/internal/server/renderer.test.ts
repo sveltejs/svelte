@@ -207,6 +207,24 @@ test('selects an option with an implicit value', () => {
 	);
 });
 
+test('select merges scoped css hash with static class', () => {
+	const component = (renderer: Renderer) => {
+		renderer.select(
+			{ class: 'foo', value: 'foo' },
+			(renderer) => {
+				renderer.option({ value: 'foo' }, (renderer) => renderer.push('foo'));
+			},
+			'svelte-hash'
+		);
+	};
+
+	const { head, body } = Renderer.render(component as unknown as Component);
+	expect(head).toBe('');
+	expect(body).toBe(
+		'<!--[--><select class="foo svelte-hash"><option value="foo" selected>foo</option></select><!--]-->'
+	);
+});
+
 describe('async', () => {
 	beforeAll(() => {
 		enable_async_mode_flag();
