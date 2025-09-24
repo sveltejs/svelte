@@ -143,7 +143,7 @@ export function hydrate(component, options) {
 			e.hydration_failed();
 		}
 
-		// If an error occured above, the operations might not yet have been initialised.
+		// If an error occurred above, the operations might not yet have been initialised.
 		init_operations();
 		clear_text_content(target);
 
