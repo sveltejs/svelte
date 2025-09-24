@@ -441,9 +441,13 @@ export function prepare_element_spread(
 				directive.name,
 				directive.expression.type === 'Identifier' && directive.expression.name === directive.name
 					? b.id(directive.name)
-					: /** @type {Expression} */ (context.visit(directive.expression))
+					: transform(
+							/** @type {Expression} */ (context.visit(directive.expression)),
+							directive.metadata.expression
+						)
 			)
 		);
+
 		classes = b.object(properties);
 	}
 

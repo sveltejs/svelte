@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "prepare": "node scripts/create-app-svelte.js",
-    "dev": "vite --host",
-    "ssr": "node --conditions=development ./ssr-dev.js",
+    "dev": "SVELTE_INSPECTOR_OPTIONS=false vite --host",
+    "ssr": "SVELTE_INSPECTOR_OPTIONS=false node --conditions=development ./ssr-dev.js",
     "build": "vite build --outDir dist/client && vite build --outDir dist/server --ssr ssr-prod.js",
     "prod": "npm run build && node dist/server/ssr-prod",
     "preview": "vite preview",
