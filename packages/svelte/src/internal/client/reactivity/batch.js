@@ -23,7 +23,7 @@ import {
 	update_effect
 } from '../runtime.js';
 import * as e from '../errors.js';
-import { flush_tasks, has_pending_tasks, queue_micro_task } from '../dom/task.js';
+import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
 import { old_values } from './sources.js';
@@ -466,14 +466,17 @@ export function flushSync(fn) {
 		var result;
 
 		if (fn) {
-			flush_effects();
+			if (current_batch !== null) {
+				flush_effects();
+			}
+
 			result = fn();
 		}
 
 		while (true) {
 			flush_tasks();
 
-			if (queued_root_effects.length === 0 && !has_pending_tasks()) {
+			if (queued_root_effects.length === 0) {
 				current_batch?.flush();
 
 				// we need to check again, in case we just updated an `$effect.pending()`
