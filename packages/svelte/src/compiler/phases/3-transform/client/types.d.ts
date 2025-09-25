@@ -24,6 +24,8 @@ export interface ClientTransformState extends TransformState {
 	/** `true` if we're transforming the contents of `<script>` */
 	readonly is_instance: boolean;
 
+	effect_pending: Map<Expression, Identifier>;
+
 	readonly transform: Record<
 		string,
 		{
