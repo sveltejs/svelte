@@ -355,18 +355,16 @@ export class Batch {
 	}
 
 	flush() {
-		this.activate();
-
 		if (queued_root_effects.length > 0) {
+			this.activate();
 			flush_effects();
+
+			if (current_batch !== null && current_batch !== this) {
+				// this can happen if a new batch was created during `flush_effects()`
+				return;
+			}
 		} else if (this.#pending === 0) {
 			this.#commit();
-		}
-
-		if (current_batch !== null && current_batch !== this) {
-			// this can happen if a `flushSync` occurred during `flush_effects()`,
-			// which is permitted in legacy mode despite being a terrible idea
-			return;
 		}
 
 		this.deactivate();
