@@ -212,7 +212,6 @@ export class Batch {
 			// newly updated sources, which could lead to infinite loops when effects run over and over again.
 			previous_batch = current_batch;
 			current_batch = null;
-			batches.delete(this);
 
 			flush_queued_effects(render_effects);
 			flush_queued_effects(effects);
@@ -360,7 +359,7 @@ export class Batch {
 
 		if (queued_root_effects.length > 0) {
 			flush_effects();
-		} else {
+		} else if (this.#pending === 0) {
 			this.#commit();
 		}
 
@@ -368,10 +367,6 @@ export class Batch {
 			// this can happen if a `flushSync` occurred during `flush_effects()`,
 			// which is permitted in legacy mode despite being a terrible idea
 			return;
-		}
-
-		if (this.#pending === 0) {
-			batches.delete(this);
 		}
 
 		this.deactivate();
@@ -388,6 +383,7 @@ export class Batch {
 		}
 
 		this.#callbacks.clear();
+		batches.delete(this);
 	}
 
 	increment() {
