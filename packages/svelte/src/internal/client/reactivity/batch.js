@@ -212,18 +212,10 @@ export class Batch {
 			// newly updated sources, which could lead to infinite loops when effects run over and over again.
 			previous_batch = current_batch;
 			current_batch = null;
+			batches.delete(this);
 
 			flush_queued_effects(render_effects);
 			flush_queued_effects(effects);
-
-			// Reinstate the current batch if there was no new one created, as `process()` runs in a loop in `flush_effects()`.
-			// That method expects `current_batch` to be set, and could run the loop again if effects result in new effects
-			// being scheduled but without writes happening in which case no new batch is created.
-			if (current_batch === null) {
-				current_batch = this;
-			} else {
-				batches.delete(this);
-			}
 
 			this.#deferred?.resolve();
 		} else {
@@ -370,7 +362,7 @@ export class Batch {
 			this.#commit();
 		}
 
-		if (current_batch !== this) {
+		if (current_batch !== null && current_batch !== this) {
 			// this can happen if a `flushSync` occurred during `flush_effects()`,
 			// which is permitted in legacy mode despite being a terrible idea
 			return;
