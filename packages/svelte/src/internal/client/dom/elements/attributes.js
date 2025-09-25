@@ -6,7 +6,7 @@ import { create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
 import { LOADING_ATTR_SYMBOL } from '#client/constants';
-import { queue_idle_task } from '../task.js';
+import { queue_micro_task } from '../task.js';
 import { is_capture_event, is_delegated, normalize_attribute } from '../../../../utils.js';
 import {
 	active_effect,
@@ -65,7 +65,7 @@ export function remove_input_defaults(input) {
 
 	// @ts-expect-error
 	input.__on_r = remove_defaults;
-	queue_idle_task(remove_defaults);
+	queue_micro_task(remove_defaults);
 	add_form_reset_listener();
 }
 
