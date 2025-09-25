@@ -244,7 +244,6 @@ export async function async_body(fn) {
 		if (pending) {
 			batch.flush();
 		} else {
-			batch.activate();
 			batch.decrement();
 		}
 

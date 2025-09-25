@@ -356,6 +356,8 @@ export class Batch {
 	}
 
 	flush() {
+		this.activate();
+
 		if (queued_root_effects.length > 0) {
 			flush_effects();
 		} else {
