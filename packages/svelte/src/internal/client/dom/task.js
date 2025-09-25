@@ -10,10 +10,6 @@ function run_micro_tasks() {
 	run_all(tasks);
 }
 
-export function has_pending_tasks() {
-	return micro_tasks.length > 0;
-}
-
 /**
  * @param {() => void} fn
  */
@@ -40,7 +36,7 @@ export function queue_micro_task(fn) {
  * Synchronously run any queued tasks.
  */
 export function flush_tasks() {
-	if (micro_tasks.length > 0) {
+	while (micro_tasks.length > 0) {
 		run_micro_tasks();
 	}
 }

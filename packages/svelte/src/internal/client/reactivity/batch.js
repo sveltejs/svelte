@@ -23,7 +23,7 @@ import {
 	update_effect
 } from '../runtime.js';
 import * as e from '../errors.js';
-import { flush_tasks, has_pending_tasks, queue_micro_task } from '../dom/task.js';
+import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
 import { old_values } from './sources.js';
@@ -216,15 +216,6 @@ export class Batch {
 			flush_queued_effects(render_effects);
 			flush_queued_effects(effects);
 
-			// Reinstate the current batch if there was no new one created, as `process()` runs in a loop in `flush_effects()`.
-			// That method expects `current_batch` to be set, and could run the loop again if effects result in new effects
-			// being scheduled but without writes happening in which case no new batch is created.
-			if (current_batch === null) {
-				current_batch = this;
-			} else {
-				batches.delete(this);
-			}
-
 			this.#deferred?.resolve();
 		} else {
 			this.#defer_effects(this.#render_effects);
@@ -365,19 +356,15 @@ export class Batch {
 
 	flush() {
 		if (queued_root_effects.length > 0) {
+			this.activate();
 			flush_effects();
-		} else {
+
+			if (current_batch !== null && current_batch !== this) {
+				// this can happen if a new batch was created during `flush_effects()`
+				return;
+			}
+		} else if (this.#pending === 0) {
 			this.#commit();
-		}
-
-		if (current_batch !== this) {
-			// this can happen if a `flushSync` occurred during `flush_effects()`,
-			// which is permitted in legacy mode despite being a terrible idea
-			return;
-		}
-
-		if (this.#pending === 0) {
-			batches.delete(this);
 		}
 
 		this.deactivate();
@@ -394,6 +381,7 @@ export class Batch {
 		}
 
 		this.#callbacks.clear();
+		batches.delete(this);
 	}
 
 	increment() {
@@ -478,14 +466,17 @@ export function flushSync(fn) {
 		var result;
 
 		if (fn) {
-			flush_effects();
+			if (current_batch !== null) {
+				flush_effects();
+			}
+
 			result = fn();
 		}
 
 		while (true) {
 			flush_tasks();
 
-			if (queued_root_effects.length === 0 && !has_pending_tasks()) {
+			if (queued_root_effects.length === 0) {
 				current_batch?.flush();
 
 				// we need to check again, in case we just updated an `$effect.pending()`
