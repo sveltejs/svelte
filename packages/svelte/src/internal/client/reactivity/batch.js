@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Source } from '#client' */
+/** @import { Derived, Effect, Source, Value } from '#client' */
 import {
 	BLOCK_EFFECT,
 	BRANCH_EFFECT,
@@ -10,10 +10,11 @@ import {
 	INERT,
 	RENDER_EFFECT,
 	ROOT_EFFECT,
-	MAYBE_DIRTY
+	MAYBE_DIRTY,
+	DERIVED
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
-import { deferred, define_property } from '../../shared/utils.js';
+import { deferred, define_property, noop } from '../../shared/utils.js';
 import {
 	active_effect,
 	is_dirty,
@@ -165,32 +166,7 @@ export class Batch {
 
 		previous_batch = null;
 
-		/** @type {Map<Source, { v: unknown, wv: number }> | null} */
-		var current_values = null;
-
-		// if there are multiple batches, we are 'time travelling' —
-		// we need to undo the changes belonging to any batch
-		// other than the current one
-		if (async_mode_flag && batches.size > 1) {
-			current_values = new Map();
-			batch_deriveds = new Map();
-
-			for (const [source, current] of this.current) {
-				current_values.set(source, { v: source.v, wv: source.wv });
-				source.v = current;
-			}
-
-			for (const batch of batches) {
-				if (batch === this) continue;
-
-				for (const [source, previous] of batch.#previous) {
-					if (!current_values.has(source)) {
-						current_values.set(source, { v: source.v, wv: source.wv });
-						source.v = previous;
-					}
-				}
-			}
-		}
+		var revert = Batch.apply(this);
 
 		for (const root of root_effects) {
 			this.#traverse_effect_tree(root);
@@ -221,29 +197,20 @@ export class Batch {
 			this.#defer_effects(this.#render_effects);
 			this.#defer_effects(this.#effects);
 			this.#defer_effects(this.#block_effects);
-		}
 
-		if (current_values) {
-			for (const [source, { v, wv }] of current_values) {
-				// reset the source to the current value (unless
-				// it got a newer value as a result of effects running)
-				if (source.wv <= wv) {
-					source.v = v;
-				}
+			for (const effect of this.#async_effects) {
+				update_effect(effect);
 			}
 
-			batch_deriveds = null;
+			this.#async_effects = [];
 		}
 
-		for (const effect of this.#async_effects) {
-			update_effect(effect);
-		}
+		revert();
 
 		for (const effect of this.#boundary_async_effects) {
 			update_effect(effect);
 		}
 
-		this.#async_effects = [];
 		this.#boundary_async_effects = [];
 	}
 
@@ -381,6 +348,51 @@ export class Batch {
 		}
 
 		this.#callbacks.clear();
+
+		/**
+		 * @param {Value} value
+		 * @param {Set<Effect>} effects
+		 */
+		function get_async_effects(value, effects) {
+			if (value.reactions !== null) {
+				for (const reaction of value.reactions) {
+					const flags = reaction.f;
+
+					if ((flags & DERIVED) !== 0) {
+						get_async_effects(/** @type {Derived} */ (reaction), effects);
+					} else if ((flags & ASYNC) !== 0) {
+						effects.add(/** @type {Effect} */ (reaction));
+					}
+				}
+			}
+		}
+
+		if (batches.size > 1) {
+			const effects = new Set();
+
+			for (const source of this.current.keys()) {
+				// TODO do we also need block effects?
+				get_async_effects(source, effects);
+			}
+
+			this.#previous.clear();
+
+			for (const batch of batches) {
+				if (batch === this) {
+					continue;
+				}
+
+				current_batch = batch;
+				const revert = Batch.apply(batch);
+				for (const e of effects) {
+					update_effect(e);
+				}
+				revert();
+			}
+
+			current_batch = null;
+		}
+
 		batches.delete(this);
 	}
 
@@ -443,6 +455,56 @@ export class Batch {
 	/** @param {() => void} task */
 	static enqueue(task) {
 		queue_micro_task(task);
+	}
+
+	/**
+	 * @param {Batch} current_batch
+	 */
+	static apply(current_batch) {
+		if (!async_mode_flag || batches.size === 1) {
+			return noop;
+		}
+
+		/** @type {Map<Source, { v: unknown, wv: number }> | null} */
+		var current_values = null;
+
+		// if there are multiple batches, we are 'time travelling' —
+		// we need to undo the changes belonging to any batch
+		// other than the current one
+		if (async_mode_flag && batches.size > 1) {
+			current_values = new Map();
+			batch_deriveds = new Map();
+
+			for (const [source, current] of current_batch.current) {
+				current_values.set(source, { v: source.v, wv: source.wv });
+				source.v = current;
+			}
+
+			for (const batch of batches) {
+				if (batch === current_batch) continue;
+
+				for (const [source, previous] of batch.#previous) {
+					if (!current_values.has(source)) {
+						current_values.set(source, { v: source.v, wv: source.wv });
+						source.v = previous;
+					}
+				}
+			}
+		}
+
+		return () => {
+			if (current_values) {
+				for (const [source, { v, wv }] of current_values) {
+					// reset the source to the current value (unless
+					// it got a newer value as a result of effects running)
+					if (source.wv <= wv) {
+						source.v = v;
+					}
+				}
+
+				batch_deriveds = null;
+			}
+		};
 	}
 }
 

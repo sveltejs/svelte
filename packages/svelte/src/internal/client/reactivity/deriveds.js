@@ -109,30 +109,25 @@ export function async_derived(fn, location) {
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 
-	/** @type {Promise<V> | null} */
-	var prev = null;
-
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
+
+	/** @type {Map<Batch, Promise<V>>} */
+	var promises = new Map();
 
 	async_effect(() => {
 		if (DEV) current_async_effect = active_effect;
 
+		/** @type {Promise<V>} */
+		var current;
+
 		try {
-			var p = fn();
-			// Make sure to always access the then property to read any signals
-			// it might access, so that we track them as dependencies.
-			if (prev) Promise.resolve(p).catch(() => {}); // avoid unhandled rejection
+			current = promise = Promise.resolve(fn());
 		} catch (error) {
-			p = Promise.reject(error);
+			current = promise = Promise.reject(error);
 		}
 
 		if (DEV) current_async_effect = null;
-
-		var r = () => p;
-		promise = prev?.then(r, r) ?? Promise.resolve(p);
-
-		prev = promise;
 
 		var batch = /** @type {Batch} */ (current_batch);
 		var pending = boundary.is_pending();
@@ -142,40 +137,42 @@ export function async_derived(fn, location) {
 			if (!pending) batch.increment();
 		}
 
+		promises.set(batch, promise);
+
 		/**
 		 * @param {any} value
 		 * @param {unknown} error
 		 */
 		const handler = (value, error = undefined) => {
-			prev = null;
-
 			current_async_effect = null;
 
 			if (!pending) batch.activate();
 
-			if (error) {
-				if (error !== STALE_REACTION) {
-					signal.f |= ERROR_VALUE;
+			if (current === promises.get(batch)) {
+				if (error) {
+					if (error !== STALE_REACTION) {
+						signal.f |= ERROR_VALUE;
 
-					// @ts-expect-error the error is the wrong type, but we don't care
-					internal_set(signal, error);
-				}
-			} else {
-				if ((signal.f & ERROR_VALUE) !== 0) {
-					signal.f ^= ERROR_VALUE;
-				}
+						// @ts-expect-error the error is the wrong type, but we don't care
+						internal_set(signal, error);
+					}
+				} else {
+					if ((signal.f & ERROR_VALUE) !== 0) {
+						signal.f ^= ERROR_VALUE;
+					}
 
-				internal_set(signal, value);
+					internal_set(signal, value);
 
-				if (DEV && location !== undefined) {
-					recent_async_deriveds.add(signal);
+					if (DEV && location !== undefined) {
+						recent_async_deriveds.add(signal);
 
-					setTimeout(() => {
-						if (recent_async_deriveds.has(signal)) {
-							w.await_waterfall(/** @type {string} */ (signal.label), location);
-							recent_async_deriveds.delete(signal);
-						}
-					});
+						setTimeout(() => {
+							if (recent_async_deriveds.has(signal)) {
+								w.await_waterfall(/** @type {string} */ (signal.label), location);
+								recent_async_deriveds.delete(signal);
+							}
+						});
+					}
 				}
 			}
 
