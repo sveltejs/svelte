@@ -186,7 +186,7 @@ export class Batch {
 
 			// If sources are written to, then work needs to happen in a separate batch, else prior sources would be mixed with
 			// newly updated sources, which could lead to infinite loops when effects run over and over again.
-			previous_batch = current_batch;
+			previous_batch = this;
 			current_batch = null;
 
 			flush_queued_effects(render_effects);
