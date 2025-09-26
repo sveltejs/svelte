@@ -1,5 +1,11 @@
 # svelte
 
+## 5.39.7
+
+### Patch Changes
+
+- chore: simplify batch logic ([#16847](https://github.com/sveltejs/svelte/pull/16847))
+
 ## 5.39.6
 
 ### Patch Changes
