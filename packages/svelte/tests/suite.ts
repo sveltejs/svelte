@@ -41,20 +41,18 @@ export function suite<Test extends BaseTest>(fn: (config: Test, test_dir: string
 				}
 			});
 
-			if (production_tests.length) {
-				let mocked = false;
-				for (const [it, name, test] of production_tests) {
-					it(name, () => {
-						if (!mocked) {
-							vi.doMock('esm-env', async (importEnv) => ({
-								...(await importEnv()),
-								DEV: false
-							}));
-							mocked = true;
-						}
-						return test();
-					});
-				}
+			let mocked = false;
+			for (const [it, name, test] of production_tests) {
+				it(name, () => {
+					if (!mocked) {
+						vi.doMock('esm-env', async (importEnv) => ({
+							...(await importEnv()),
+							DEV: false
+						}));
+						mocked = true;
+					}
+					return test();
+				});
 			}
 		}
 	};
@@ -99,20 +97,18 @@ export function suite_with_variants<Test extends BaseTest, Variants extends stri
 				}
 			});
 
-			if (production_tests.length) {
-				let mocked = false;
-				for (const [it, name, test] of production_tests) {
-					it(name, () => {
-						if (!mocked) {
-							vi.doMock('esm-env', async (importEnv) => ({
-								...(await importEnv()),
-								DEV: false
-							}));
-							mocked = true;
-						}
-						return test();
-					});
-				}
+			let mocked = false;
+			for (const [it, name, test] of production_tests) {
+				it(name, () => {
+					if (!mocked) {
+						vi.doMock('esm-env', async (importEnv) => ({
+							...(await importEnv()),
+							DEV: false
+						}));
+						mocked = true;
+					}
+					return test();
+				});
 			}
 		}
 	};
