@@ -255,6 +255,30 @@ const destroy = $effect.root(() => {
 destroy();
 ```
 
+## `$effect.allowed`
+
+The `$effect.allowed` rune is an advanced feature that indicates whether or not an effect or [async `$derived`](await-expressions) can be created in the current context. To improve performance and memory efficiency, effects and async deriveds can only be created when a root effect is active. Root effects are created during component setup, but they can also be programmatically created via `$effect.root`. 
+
+```svelte
+<script>
+	console.log('in component setup', $effect.allowed()); // true
+
+	function onclick() {
+		console.log('after component setup', $effect.allowed()); // false
+	}
+	function ondblclick() {
+		$effect.root(() => {
+			console.log('in root effect', $effect.allowed()); // true
+			return () => {
+				console.log('in effect teardown', $effect.allowed()); // false
+			}
+		})();
+	}
+</script>
+<button {onclick}>Click me!</button>
+<button {ondblclick}>Click me twice!</button>
+```
+
 ## When not to use `$effect`
 
 In general, `$effect` is best considered something of an escape hatch — useful for things like analytics and direct DOM manipulation — rather than a tool you should use frequently. In particular, avoid using it to synchronise state. Instead of this...
