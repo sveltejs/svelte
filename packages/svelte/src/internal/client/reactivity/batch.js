@@ -349,26 +349,26 @@ export class Batch {
 
 		this.#callbacks.clear();
 
-		/**
-		 * @param {Value} value
-		 * @param {Set<Effect>} effects
-		 */
-		function get_async_effects(value, effects) {
-			if (value.reactions !== null) {
-				for (const reaction of value.reactions) {
-					const flags = reaction.f;
-
-					if ((flags & DERIVED) !== 0) {
-						get_async_effects(/** @type {Derived} */ (reaction), effects);
-					} else if ((flags & ASYNC) !== 0) {
-						effects.add(/** @type {Effect} */ (reaction));
-					}
-				}
-			}
-		}
-
 		if (batches.size > 1) {
 			const effects = new Set();
+
+			/**
+			 * @param {Value} value
+			 * @param {Set<Effect>} effects
+			 */
+			const get_async_effects = (value, effects) => {
+				if (value.reactions !== null) {
+					for (const reaction of value.reactions) {
+						const flags = reaction.f;
+
+						if ((flags & DERIVED) !== 0) {
+							get_async_effects(/** @type {Derived} */ (reaction), effects);
+						} else if ((flags & ASYNC) !== 0) {
+							effects.add(/** @type {Effect} */ (reaction));
+						}
+					}
+				}
+			};
 
 			for (const source of this.current.keys()) {
 				// TODO do we also need block effects?
