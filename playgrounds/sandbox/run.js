@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { globSync } from 'tinyglobby';
-import { compile, compileModule, parse, migrate } from 'svelte/compiler';
+import { compile, compileModule, parse, print, migrate } from 'svelte/compiler';
 
 const argv = parseArgs({ options: { runes: { type: 'boolean' } }, args: process.argv.slice(2) });
 
@@ -70,6 +70,10 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 			} catch (e) {
 				console.warn(`Error migrating ${file}`, e);
 			}
+
+			const printed = print(ast);
+
+			write(`${cwd}/output/printed/${file}`, printed.code);
 		}
 
 		const compiled = compile(source, {
