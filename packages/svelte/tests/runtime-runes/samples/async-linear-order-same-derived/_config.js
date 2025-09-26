@@ -20,7 +20,7 @@ export default test({
 		resolve2.click();
 		await tick();
 
-		assert.htmlEqual(p.innerHTML, '1 + 2 = 3');
+		assert.htmlEqual(p.innerHTML, '1 + 3 = 4');
 
 		resolve1.click();
 		await tick();
