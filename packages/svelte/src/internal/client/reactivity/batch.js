@@ -350,8 +350,6 @@ export class Batch {
 		this.#callbacks.clear();
 
 		if (batches.size > 1) {
-			const effects = new Set();
-
 			/**
 			 * @param {Value} value
 			 * @param {Set<Effect>} effects
@@ -370,24 +368,32 @@ export class Batch {
 				}
 			};
 
-			for (const source of this.current.keys()) {
-				// TODO do we also need block effects?
-				get_async_effects(source, effects);
-			}
-
 			this.#previous.clear();
+
+			let is_earlier = true;
 
 			for (const batch of batches) {
 				if (batch === this) {
+					is_earlier = true;
 					continue;
 				}
 
-				current_batch = batch;
-				const revert = Batch.apply(batch);
-				for (const e of effects) {
-					update_effect(e);
+				const effects = new Set();
+
+				for (const source of this.current.keys()) {
+					if (is_earlier && batch.current.has(source)) continue;
+					// TODO do we also need block effects?
+					get_async_effects(source, effects);
 				}
-				revert();
+
+				if (effects.size > 0) {
+					current_batch = batch;
+					const revert = Batch.apply(batch);
+					for (const e of effects) {
+						update_effect(e);
+					}
+					revert();
+				}
 			}
 
 			current_batch = null;
