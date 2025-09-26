@@ -63,6 +63,17 @@ export function CallExpression(node, context) {
 			);
 
 		case '$effect.pending':
+			if (node.arguments[0]) {
+				const id = b.id(`$$pending_${context.state.effect_pending.size}`);
+
+				context.state.effect_pending.set(
+					/** @type {Expression} */ (context.visit(node.arguments[0])),
+					id
+				);
+
+				return b.call('$.get', id);
+			}
+
 			return b.call('$.pending');
 
 		case '$inspect':
