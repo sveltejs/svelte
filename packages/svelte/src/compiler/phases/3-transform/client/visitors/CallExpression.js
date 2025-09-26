@@ -1,16 +1,33 @@
-/** @import { CallExpression, Expression } from 'estree' */
+/** @import { CallExpression, Expression, Identifier, MemberExpression, Node } from 'estree' */
 /** @import { Context } from '../types' */
 import { dev, is_ignored } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 import { transform_inspect_rune } from '../../utils.js';
+import * as e from '../../../../errors.js';
 import { should_proxy } from '../utils.js';
+import { get_name } from '../../../nodes.js';
 
 /**
  * @param {CallExpression} node
  * @param {Context} context
  */
 export function CallExpression(node, context) {
+	/**
+	 * Some nodes that get replaced should keep their locations (for better source maps and such)
+	 * @template {Node} N
+	 * @param {N} node
+	 * @param {N} replacement
+	 * @returns {N}
+	 */
+	function attach_locations(node, replacement) {
+		return {
+			...replacement,
+			start: node.start,
+			end: node.end,
+			loc: node.loc
+		};
+	}
 	const rune = get_rune(node, context.state.scope);
 
 	switch (rune) {
@@ -55,6 +72,42 @@ export function CallExpression(node, context) {
 				/** @type {Expression} */ (context.visit(node.arguments[0])),
 				is_ignored(node, 'state_snapshot_uncloneable') && b.true
 			);
+		/* eslint-disable no-fallthrough */
+		case '$state.invalidate':
+			if (node.arguments[0].type === 'Identifier') {
+				return b.call(
+					attach_locations(/** @type {Expression} */ (node.callee), b.id('$.invalidate')),
+					node.arguments[0]
+				);
+			} else if (node.arguments[0].type === 'MemberExpression') {
+				const { object, property } = node.arguments[0];
+				if (object.type === 'ThisExpression') {
+					const name = /** @type {string} */ (get_name(property));
+					const field = context.state.state_fields.get(name);
+					if (!field || (field.type !== '$state' && field.type !== '$state.raw')) {
+						e.state_invalidate_nonreactive_argument(node);
+					}
+					return b.call(
+						attach_locations(/** @type {Expression} */ (node.callee), b.id('$.invalidate')),
+						attach_locations(node.arguments[0], b.member(object, field.key))
+					);
+				}
+				/** @type {Expression[]} */
+				const source_args = /** @type {Expression[]} */ ([
+					context.visit(object),
+					node.arguments[0].computed
+						? context.visit(property)
+						: b.literal(/** @type {Identifier} */ (property).name)
+				]);
+				const arg = b.call('$.lookup_source', ...source_args);
+				return b.call(
+					attach_locations(/** @type {Expression} */ (node.callee), b.id('$.invalidate')),
+					attach_locations(
+						/** @type {Expression} */ (node.arguments[0]),
+						/** @type {Expression} */ (arg)
+					)
+				);
+			}
 
 		case '$effect.root':
 			return b.call(
