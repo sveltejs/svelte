@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: allow await in svelte boundary without pending
+fix: allow await in svelte:boundary without pending
