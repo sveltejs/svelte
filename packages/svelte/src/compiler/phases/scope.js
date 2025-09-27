@@ -260,6 +260,11 @@ class Evaluation {
 						break;
 					}
 
+					if (binding.initial?.type === 'SnippetBlock') {
+						this.is_defined = true;
+						break;
+					}
+
 					if (!binding.updated && binding.initial !== null && !is_prop) {
 						binding.scope.evaluate(/** @type {Expression} */ (binding.initial), this.values);
 						break;
