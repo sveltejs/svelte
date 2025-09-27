@@ -262,6 +262,7 @@ class Evaluation {
 
 					if (binding.initial?.type === 'SnippetBlock') {
 						this.is_defined = true;
+						this.is_known = false;
 						break;
 					}
 
