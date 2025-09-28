@@ -1,5 +1,6 @@
 ---
 title: Imperative component API
+use_cases: "legacy: Svelte 3/4 component API, programmatic component control"
 ---
 
 In Svelte 3 and 4, the API for interacting with a component is different than in Svelte 5. Note that this page does _not_ apply to legacy mode components in a Svelte 5 application.
