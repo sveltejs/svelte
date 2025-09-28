@@ -1,5 +1,6 @@
 ---
 title: <svelte:self>
+use_cases: "legacy: recursive components, self-referencing"
 ---
 
 The `<svelte:self>` element allows a component to include itself, recursively.

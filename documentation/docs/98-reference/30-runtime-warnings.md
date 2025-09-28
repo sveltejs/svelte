@@ -1,5 +1,6 @@
 ---
 title: 'Runtime warnings'
+use_cases: "warning reference, performance optimization, best practices"
 ---
 
 ## Client warnings

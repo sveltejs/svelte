@@ -1,5 +1,6 @@
 ---
 title: <svelte:fragment>
+use_cases: "legacy: wrapper-free slots, multiple slot elements"
 ---
 
 The `<svelte:fragment>` element allows you to place content in a [named slot](legacy-slots) without wrapping it in a container DOM element. This keeps the flow layout of your document intact.

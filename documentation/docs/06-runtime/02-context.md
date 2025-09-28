@@ -1,5 +1,6 @@
 ---
 title: Context
+use_cases: "component communication, dependency injection, avoiding prop drilling, theme providers"
 ---
 
 Context allows components to access values owned by parent components without passing them down as props (potentially through many layers of intermediate components, known as 'prop-drilling'). The parent component sets context with `setContext(key, value)`...

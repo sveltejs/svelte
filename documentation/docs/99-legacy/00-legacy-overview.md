@@ -1,5 +1,6 @@
 ---
 title: Overview
+use_cases: "Svelte 3/4 documentation, legacy syntax, migration reference"
 ---
 
 Svelte 5 introduced some significant changes to Svelte's API, including [runes](what-are-runes), [snippets](snippet) and event attributes. As a result, some Svelte 3/4 features are deprecated (though supported for now, unless otherwise specified) and will eventually be removed. We recommend that you incrementally [migrate your existing code](v5-migration-guide).
