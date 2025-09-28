@@ -1,5 +1,6 @@
 ---
 title: <svelte:boundary>
+use_cases: "error boundaries, async loading states, error handling, resilient UIs"
 ---
 
 ```svelte

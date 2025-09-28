@@ -1,5 +1,6 @@
 ---
 title: {#snippet ...}
+use_cases: "reusable markup, component composition, render props, slot alternatives, template patterns"
 ---
 
 ```svelte

@@ -1,5 +1,6 @@
 ---
 title: <svelte:options>
+use_cases: "component configuration, custom elements setup, compiler options, namespace settings"
 ---
 
 ```svelte

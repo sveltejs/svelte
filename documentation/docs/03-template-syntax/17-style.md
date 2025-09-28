@@ -1,5 +1,6 @@
 ---
 title: style:
+use_cases: "dynamic styles, inline CSS, responsive design, theming, style calculations"
 ---
 
 The `style:` directive provides a shorthand for setting multiple styles on an element.

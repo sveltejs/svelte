@@ -1,5 +1,6 @@
 ---
 title: class
+use_cases: "dynamic CSS classes, conditional styling, state-based styles, utility classes"
 ---
 
 There are two ways to set classes on elements: the `class` attribute, and the `class:` directive.

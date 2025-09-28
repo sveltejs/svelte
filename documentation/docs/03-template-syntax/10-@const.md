@@ -1,5 +1,6 @@
 ---
 title: {@const ...}
+use_cases: "template calculations, local variables in loops, derived values in blocks"
 ---
 
 The `{@const ...}` tag defines a local constant.

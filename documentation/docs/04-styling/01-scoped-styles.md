@@ -1,5 +1,6 @@
 ---
 title: Scoped styles
+use_cases: "always: component-specific styles, CSS encapsulation, preventing style conflicts"
 ---
 
 Svelte components can include a `<style>` element containing CSS that belongs to the component. This CSS is _scoped_ by default, meaning that styles will not apply to any elements on the page outside the component in question.

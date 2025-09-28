@@ -1,5 +1,6 @@
 ---
 title: Overview
+use_cases: "always: understanding Svelte fundamentals, component-based architecture, reactive UI framework basics"
 ---
 
 Svelte is a framework for building user interfaces on the web. It uses a compiler to turn declarative components written in HTML, CSS and JavaScript...

@@ -1,5 +1,6 @@
 ---
 title: transition:
+use_cases: "animations, page transitions, element enter/leave effects, smooth UI changes"
 ---
 
 A _transition_ is triggered by an element entering or leaving the DOM as a result of a state change.
