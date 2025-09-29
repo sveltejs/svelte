@@ -471,45 +471,40 @@ export class Batch {
 			return noop;
 		}
 
-		/** @type {Map<Source, { v: unknown, wv: number }> | null} */
-		var current_values = null;
-
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to undo the changes belonging to any batch
 		// other than the current one
-		if (async_mode_flag && batches.size > 1) {
-			current_values = new Map();
-			batch_deriveds = new Map();
 
-			for (const [source, current] of current_batch.current) {
-				current_values.set(source, { v: source.v, wv: source.wv });
-				source.v = current;
-			}
+		/** @type {Map<Source, { v: unknown, wv: number }>} */
+		var current_values = new Map();
+		batch_deriveds = new Map();
 
-			for (const batch of batches) {
-				if (batch === current_batch) continue;
+		for (const [source, current] of current_batch.current) {
+			current_values.set(source, { v: source.v, wv: source.wv });
+			source.v = current;
+		}
 
-				for (const [source, previous] of batch.#previous) {
-					if (!current_values.has(source)) {
-						current_values.set(source, { v: source.v, wv: source.wv });
-						source.v = previous;
-					}
+		for (const batch of batches) {
+			if (batch === current_batch) continue;
+
+			for (const [source, previous] of batch.#previous) {
+				if (!current_values.has(source)) {
+					current_values.set(source, { v: source.v, wv: source.wv });
+					source.v = previous;
 				}
 			}
 		}
 
 		return () => {
-			if (current_values) {
-				for (const [source, { v, wv }] of current_values) {
-					// reset the source to the current value (unless
-					// it got a newer value as a result of effects running)
-					if (source.wv <= wv) {
-						source.v = v;
-					}
+			for (const [source, { v, wv }] of current_values) {
+				// reset the source to the current value (unless
+				// it got a newer value as a result of effects running)
+				if (source.wv <= wv) {
+					source.v = v;
 				}
-
-				batch_deriveds = null;
 			}
+
+			batch_deriveds = null;
 		};
 	}
 }
