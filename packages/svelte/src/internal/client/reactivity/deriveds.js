@@ -35,6 +35,7 @@ import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_deriveds, current_batch } from './batch.js';
 import { unset_context } from './async.js';
+import { deferred } from '../../shared/utils.js';
 
 /** @type {Effect | null} */
 export let current_async_effect = null;
@@ -115,16 +116,19 @@ export function async_derived(fn, location) {
 	/** @type {Map<Batch, Promise<V>>} */
 	var promises = new Map();
 
+	/** @type {Map<Batch, PromiseWithResolvers<V>>} */
+	var deferreds = new Map();
+
 	async_effect(() => {
 		if (DEV) current_async_effect = active_effect;
 
-		/** @type {Promise<V>} */
-		var current;
+		var d = deferred();
+		promise = d.promise;
 
 		try {
-			current = promise = Promise.resolve(fn());
+			Promise.resolve(fn()).then(d.resolve, d.reject);
 		} catch (error) {
-			current = promise = Promise.reject(error);
+			d.reject(error);
 		}
 
 		if (DEV) current_async_effect = null;
@@ -134,7 +138,12 @@ export function async_derived(fn, location) {
 
 		if (should_suspend) {
 			boundary.update_pending_count(1);
-			if (!pending) batch.increment();
+			if (!pending) {
+				batch.increment();
+
+				deferreds.get(batch)?.reject(STALE_REACTION);
+				deferreds.set(batch, d);
+			}
 		}
 
 		promises.set(batch, promise);
@@ -148,31 +157,29 @@ export function async_derived(fn, location) {
 
 			if (!pending) batch.activate();
 
-			if (current === promises.get(batch)) {
-				if (error) {
-					if (error !== STALE_REACTION) {
-						signal.f |= ERROR_VALUE;
+			if (error) {
+				if (error !== STALE_REACTION) {
+					signal.f |= ERROR_VALUE;
 
-						// @ts-expect-error the error is the wrong type, but we don't care
-						internal_set(signal, error);
-					}
-				} else {
-					if ((signal.f & ERROR_VALUE) !== 0) {
-						signal.f ^= ERROR_VALUE;
-					}
+					// @ts-expect-error the error is the wrong type, but we don't care
+					internal_set(signal, error);
+				}
+			} else {
+				if ((signal.f & ERROR_VALUE) !== 0) {
+					signal.f ^= ERROR_VALUE;
+				}
 
-					internal_set(signal, value);
+				internal_set(signal, value);
 
-					if (DEV && location !== undefined) {
-						recent_async_deriveds.add(signal);
+				if (DEV && location !== undefined) {
+					recent_async_deriveds.add(signal);
 
-						setTimeout(() => {
-							if (recent_async_deriveds.has(signal)) {
-								w.await_waterfall(/** @type {string} */ (signal.label), location);
-								recent_async_deriveds.delete(signal);
-							}
-						});
-					}
+					setTimeout(() => {
+						if (recent_async_deriveds.has(signal)) {
+							w.await_waterfall(/** @type {string} */ (signal.label), location);
+							recent_async_deriveds.delete(signal);
+						}
+					});
 				}
 			}
 
@@ -184,7 +191,7 @@ export function async_derived(fn, location) {
 			unset_context();
 		};
 
-		promise.then(handler, (e) => handler(null, e || 'unknown'));
+		d.promise.then(handler, (e) => handler(null, e || 'unknown'));
 
 		if (batch) {
 			return () => {
