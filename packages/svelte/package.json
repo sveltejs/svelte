@@ -158,7 +158,7 @@
     "@types/aria-query": "^5.0.4",
     "@types/node": "^20.11.5",
     "dts-buddy": "^0.5.5",
-    "esbuild": "^0.21.5",
+    "esbuild": "^0.25.10",
     "rollup": "^4.22.4",
     "source-map": "^0.7.4",
     "tinyglobby": "^0.2.12",
