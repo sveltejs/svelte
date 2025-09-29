@@ -190,11 +190,9 @@ export function async_derived(fn, location) {
 	});
 
 	teardown(() => {
-		queueMicrotask(() => {
-			for (const d of deferreds.values()) {
-				d.reject(STALE_REACTION);
-			}
-		});
+		for (const d of deferreds.values()) {
+			d.reject(STALE_REACTION);
+		}
 	});
 
 	if (DEV) {
