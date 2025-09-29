@@ -319,6 +319,10 @@ export class Batch {
 
 		this.#callbacks.clear();
 
+		// If there are other pending batches, they now need to be 'rebased' —
+		// in other words, we re-run block/async effects with the newly
+		// committed state, unless the batch in question has a more
+		// recent value for a given source
 		if (batches.size > 1) {
 			this.#previous.clear();
 
