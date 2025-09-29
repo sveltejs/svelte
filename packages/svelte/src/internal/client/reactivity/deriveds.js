@@ -116,7 +116,7 @@ export function async_derived(fn, location) {
 	/** @type {Map<Batch, Promise<V>>} */
 	var promises = new Map();
 
-	/** @type {Map<Batch, PromiseWithResolvers<V>>} */
+	/** @type {Map<Batch, ReturnType<typeof deferred>>} */
 	var deferreds = new Map();
 
 	async_effect(() => {
