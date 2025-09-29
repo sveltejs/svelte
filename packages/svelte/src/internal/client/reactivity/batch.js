@@ -104,16 +104,8 @@ export class Batch {
 	#neutered = false;
 
 	/**
-	 * Async effects (created inside `async_derived`) encountered during processing.
-	 * These run after the rest of the batch has updated, since they should
-	 * always have the latest values
-	 * @type {Effect[]}
-	 */
-	#async_effects = [];
-
-	/**
-	 * The same as `#async_effects`, but for effects inside a newly-created
-	 * `<svelte:boundary>` — these do not prevent the batch from committing
+	 * Async effects inside a newly-created `<svelte:boundary>`
+	 * — these do not prevent the batch from committing
 	 * @type {Effect[]}
 	 */
 	#boundary_async_effects = [];
@@ -174,7 +166,7 @@ export class Batch {
 
 		// if we didn't start any new async work, and no async work
 		// is outstanding from a previous flush, commit
-		if (this.#async_effects.length === 0 && this.#pending === 0) {
+		if (this.#pending === 0) {
 			this.#commit();
 
 			var render_effects = this.#render_effects;
@@ -197,12 +189,6 @@ export class Batch {
 			this.#defer_effects(this.#render_effects);
 			this.#defer_effects(this.#effects);
 			this.#defer_effects(this.#block_effects);
-
-			for (const effect of this.#async_effects) {
-				update_effect(effect);
-			}
-
-			this.#async_effects = [];
 		}
 
 		revert();
@@ -239,12 +225,8 @@ export class Batch {
 				} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
 					this.#render_effects.push(effect);
 				} else if ((flags & CLEAN) === 0) {
-					if ((flags & ASYNC) !== 0) {
-						var effects = effect.b?.is_pending()
-							? this.#boundary_async_effects
-							: this.#async_effects;
-
-						effects.push(effect);
+					if ((flags & ASYNC) !== 0 && effect.b?.is_pending()) {
+						this.#boundary_async_effects.push(effect);
 					} else if (is_dirty(effect)) {
 						if ((effect.f & BLOCK_EFFECT) !== 0) this.#block_effects.push(effect);
 						update_effect(effect);
