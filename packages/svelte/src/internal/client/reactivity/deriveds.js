@@ -26,7 +26,7 @@ import {
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import { async_effect, destroy_effect } from './effects.js';
+import { async_effect, destroy_effect, teardown } from './effects.js';
 import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -192,12 +192,14 @@ export function async_derived(fn, location) {
 		};
 
 		d.promise.then(handler, (e) => handler(null, e || 'unknown'));
+	});
 
-		if (batch) {
-			return () => {
-				queueMicrotask(() => batch.neuter());
-			};
-		}
+	teardown(() => {
+		queueMicrotask(() => {
+			for (const d of deferreds.values()) {
+				d.reject(STALE_REACTION);
+			}
+		});
 	});
 
 	if (DEV) {

@@ -98,12 +98,6 @@ export class Batch {
 	#deferred = null;
 
 	/**
-	 * True if an async effect inside this batch resolved and
-	 * its parent branch was already deleted
-	 */
-	#neutered = false;
-
-	/**
 	 * Async effects inside a newly-created `<svelte:boundary>`
 	 * — these do not prevent the batch from committing
 	 * @type {Effect[]}
@@ -299,10 +293,6 @@ export class Batch {
 		}
 	}
 
-	neuter() {
-		this.#neutered = true;
-	}
-
 	flush() {
 		if (queued_root_effects.length > 0) {
 			this.activate();
@@ -323,10 +313,8 @@ export class Batch {
 	 * Append and remove branches to/from the DOM
 	 */
 	#commit() {
-		if (!this.#neutered) {
-			for (const fn of this.#callbacks) {
-				fn();
-			}
+		for (const fn of this.#callbacks) {
+			fn();
 		}
 
 		this.#callbacks.clear();
