@@ -113,9 +113,6 @@ export function async_derived(fn, location) {
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
 
-	/** @type {Map<Batch, Promise<V>>} */
-	var promises = new Map();
-
 	/** @type {Map<Batch, ReturnType<typeof deferred>>} */
 	var deferreds = new Map();
 
@@ -145,8 +142,6 @@ export function async_derived(fn, location) {
 				deferreds.set(batch, d);
 			}
 		}
-
-		promises.set(batch, promise);
 
 		/**
 		 * @param {any} value
