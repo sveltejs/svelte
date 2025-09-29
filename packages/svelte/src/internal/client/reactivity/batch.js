@@ -332,24 +332,6 @@ export class Batch {
 		this.#callbacks.clear();
 
 		if (batches.size > 1) {
-			/**
-			 * @param {Value} value
-			 * @param {Set<Effect>} effects
-			 */
-			const get_async_effects = (value, effects) => {
-				if (value.reactions !== null) {
-					for (const reaction of value.reactions) {
-						const flags = reaction.f;
-
-						if ((flags & DERIVED) !== 0) {
-							get_async_effects(/** @type {Derived} */ (reaction), effects);
-						} else if ((flags & ASYNC) !== 0) {
-							effects.add(/** @type {Effect} */ (reaction));
-						}
-					}
-				}
-			};
-
 			this.#previous.clear();
 
 			let is_earlier = true;
@@ -360,20 +342,20 @@ export class Batch {
 					continue;
 				}
 
-				const effects = new Set();
-
 				for (const source of this.current.keys()) {
 					if (is_earlier && batch.current.has(source)) continue;
-					// TODO do we also need block effects?
-					get_async_effects(source, effects);
+					mark_effects(source);
 				}
 
-				if (effects.size > 0) {
+				if (queued_root_effects.length > 0) {
 					current_batch = batch;
 					const revert = Batch.apply(batch);
-					for (const e of effects) {
-						update_effect(e);
+
+					for (const root of queued_root_effects) {
+						batch.#traverse_effect_tree(root);
 					}
+
+					queued_root_effects = [];
 					revert();
 				}
 			}
@@ -658,6 +640,26 @@ function flush_queued_effects(effects) {
 	}
 
 	eager_block_effects = null;
+}
+
+/**
+ * This is similar to `mark_reactions`, but it only marks async/block effects
+ * so that these can re-run after another batch has been committed
+ * @param {Value} value
+ */
+function mark_effects(value) {
+	if (value.reactions !== null) {
+		for (const reaction of value.reactions) {
+			const flags = reaction.f;
+
+			if ((flags & DERIVED) !== 0) {
+				mark_effects(/** @type {Derived} */ (reaction));
+			} else if ((flags & (ASYNC | BLOCK_EFFECT)) !== 0) {
+				set_signal_status(reaction, DIRTY);
+				schedule_effect(/** @type {Effect} */ (reaction));
+			}
+		}
+	}
 }
 
 /**
