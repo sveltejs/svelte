@@ -43,7 +43,7 @@ export function SvelteBoundary(node, context) {
 		context.state.template.push(block_open_else, pending, block_close);
 	} else {
 		const block = /** @type {BlockStatement} */ (context.visit(node.fragment));
-		const statement = node.fragment.metadata.has_await 
+		const statement = node.fragment.metadata.has_await
 			? create_async_block(b.block([block]))
 			: block;
 		context.state.template.push(block_open, statement, block_close);
