@@ -67,7 +67,11 @@ export function BindDirective(node, context) {
 					}
 				} else {
 					if (node.name === 'checked' && type?.value[0].data !== 'checkbox') {
-						e.bind_invalid_target(node, node.name, '<input type="checkbox">');
+						e.bind_invalid_target(
+							node,
+							node.name,
+							`<input type="checkbox"> - for <input type="radio">, use 'group' binding`
+						);
 					}
 
 					if (node.name === 'files' && type?.value[0].data !== 'file') {

@@ -95,7 +95,7 @@ Since 5.6.0, if an `<input>` has a `defaultValue` and is part of a form, it will
 
 ## `<input bind:checked>`
 
-Checkbox and radio inputs can be bound with `bind:checked`:
+Checkbox can be bound with `bind:checked`:
 
 ```svelte
 <label>
@@ -116,6 +116,8 @@ Since 5.6.0, if an `<input>` has a `defaultChecked` attribute and is part of a f
 	<input type="reset" value="Reset">
 </form>
 ```
+
+> [!NOTE] Use `group:bind` for radio inputs instead of `bind:checked`.
 
 ## `<input bind:indeterminate>`
 
