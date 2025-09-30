@@ -1,5 +1,19 @@
 # svelte
 
+## 5.39.7
+
+### Patch Changes
+
+- chore: simplify batch logic ([#16847](https://github.com/sveltejs/svelte/pull/16847))
+
+- fix: rebase pending batches when other batches are committed ([#16866](https://github.com/sveltejs/svelte/pull/16866))
+
+- fix: wrap async `children` in `$$renderer.async` ([#16862](https://github.com/sveltejs/svelte/pull/16862))
+
+- fix: silence label warning for buttons and anchor tags with title attributes ([#16872](https://github.com/sveltejs/svelte/pull/16872))
+
+- fix: coerce nullish `<title>` to empty string ([#16863](https://github.com/sveltejs/svelte/pull/16863))
+
 ## 5.39.6
 
 ### Patch Changes
