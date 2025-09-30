@@ -376,9 +376,6 @@ export class Batch {
 				schedule_effect(e);
 			}
 
-			this.#render_effects = [];
-			this.#effects = [];
-
 			this.flush();
 		} else {
 			this.deactivate();
