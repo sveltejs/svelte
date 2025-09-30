@@ -113,16 +113,19 @@ export function async_derived(fn, location) {
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
 
-	/** @type {Map<Batch, ReturnType<typeof deferred>>} */
+	/** @type {Map<Batch, ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Map();
 
 	async_effect(() => {
 		if (DEV) current_async_effect = active_effect;
 
+		/** @type {ReturnType<typeof deferred<V>>} */
 		var d = deferred();
 		promise = d.promise;
 
 		try {
+			// If this code is changed at some point, make sure to still access the then property
+			// of fn() to read any signals it might access, so that we track them as dependencies.
 			Promise.resolve(fn()).then(d.resolve, d.reject);
 		} catch (error) {
 			d.reject(error);
