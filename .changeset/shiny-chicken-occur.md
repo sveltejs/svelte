@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: missing title warning for buttons and anchor tags
+fix: silence label warning for buttons and anchor tags with title attributes
