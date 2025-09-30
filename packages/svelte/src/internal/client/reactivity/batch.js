@@ -330,12 +330,22 @@ export class Batch {
 
 			for (const batch of batches) {
 				if (batch === this) {
-					is_earlier = true;
+					is_earlier = false;
 					continue;
 				}
 
-				for (const source of this.current.keys()) {
-					if (is_earlier && batch.current.has(source)) continue;
+				for (const [source, value] of this.current) {
+					if (batch.current.has(source)) {
+						if (is_earlier) {
+							// bring the value up to date
+							batch.current.set(source, value);
+						} else {
+							// later batch has more recent value,
+							// no need to re-run these effects
+							continue;
+						}
+					}
+
 					mark_effects(source);
 				}
 
