@@ -4,7 +4,7 @@ import * as $ from 'svelte/internal/client';
 var on_click = (_, count) => $.update(count);
 var root = $.from_html(`<h1></h1> <b></b> <button> </button> <h1></h1>`, 1);
 
-export default function Nullish_coallescence_omittance($$anchor) {
+export default function Nullish_coalescence_omittance($$anchor) {
 	let name = 'world';
 	let count = $.state(0);
 	var fragment = root();
