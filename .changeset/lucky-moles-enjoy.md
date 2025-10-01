@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-preserve tuple type in `$state.snapshot`
+fix: preserve tuple type in `$state.snapshot`
