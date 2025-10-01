@@ -12,8 +12,19 @@ export function TitleElement(node, context) {
 		/** @type {any} */ (node.fragment.nodes),
 		context
 	);
+	const evaluated = context.state.scope.evaluate(value);
 
-	const statement = b.stmt(b.assignment('=', b.id('$.document.title'), value));
+	const statement = b.stmt(
+		b.assignment(
+			'=',
+			b.id('$.document.title'),
+			evaluated.is_known
+				? b.literal(evaluated.value)
+				: evaluated.is_defined
+					? value
+					: b.logical('??', value, b.literal(''))
+		)
+	);
 
 	if (has_state) {
 		context.state.update.push(statement);

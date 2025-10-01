@@ -4,6 +4,9 @@
 <button aria-label="Valid empty button"></button>
 <a href="/#" aria-label="Valid empty link"></a>
 
+<button title="Valid empty button"></button>
+<a href="/#" title="Valid empty link"></a>
+
 <button aria-hidden='true'></button>
 <button inert></button>
 <a href="/#" aria-hidden='true'><b></b></a>
