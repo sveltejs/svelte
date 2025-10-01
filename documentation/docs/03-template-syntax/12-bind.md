@@ -95,7 +95,7 @@ Since 5.6.0, if an `<input>` has a `defaultValue` and is part of a form, it will
 
 ## `<input bind:checked>`
 
-Checkbox can be bound with `bind:checked`:
+Checkbox inputs can be bound with `bind:checked`:
 
 ```svelte
 <label>

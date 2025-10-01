@@ -70,7 +70,7 @@ export function BindDirective(node, context) {
 						e.bind_invalid_target(
 							node,
 							node.name,
-							`<input type="checkbox"> - for <input type="radio">, use 'group' binding`
+							`<input type="checkbox">${type?.value[0].data === 'radio' ? ` — for <input type="radio">, use 'group' binding` : ''}`
 						);
 					}
 
