@@ -117,7 +117,7 @@ Since 5.6.0, if an `<input>` has a `defaultChecked` attribute and is part of a f
 </form>
 ```
 
-> [!NOTE] Use `group:bind` for radio inputs instead of `bind:checked`.
+> [!NOTE] Use `bind:group` for radio inputs instead of `bind:checked`.
 
 ## `<input bind:indeterminate>`
 
