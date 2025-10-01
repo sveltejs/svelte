@@ -1,5 +1,17 @@
 # svelte
 
+## 5.39.8
+
+### Patch Changes
+
+- fix: check boundary `pending` attribute at runtime on server ([#16855](https://github.com/sveltejs/svelte/pull/16855))
+
+- fix: preserve tuple type in `$state.snapshot` ([#16864](https://github.com/sveltejs/svelte/pull/16864))
+
+- fix: allow await in svelte:boundary without pending ([#16857](https://github.com/sveltejs/svelte/pull/16857))
+
+- fix: update `bind:checked` error message to clarify usage with radio inputs ([#16874](https://github.com/sveltejs/svelte/pull/16874))
+
 ## 5.39.7
 
 ### Patch Changes
