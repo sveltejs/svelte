@@ -12,6 +12,10 @@ export function IfBlock(node, context) {
 	context.state.template.push_comment();
 	const statements = [];
 
+	const { has_await } = node.metadata.expression;
+	const expression = build_expression(context, node.test, node.metadata.expression);
+	const test = has_await ? b.call('$.get', b.id('$$condition')) : expression;
+
 	const consequent = /** @type {BlockStatement} */ (context.visit(node.consequent));
 	const consequent_id = b.id(context.state.scope.generate('consequent'));
 
@@ -24,10 +28,6 @@ export function IfBlock(node, context) {
 		alternate_id = b.id(context.state.scope.generate('alternate'));
 		statements.push(b.var(alternate_id, b.arrow([b.id('$$anchor')], alternate)));
 	}
-
-	const { has_await } = node.metadata.expression;
-	const expression = build_expression(context, node.test, node.metadata.expression);
-	const test = has_await ? b.call('$.get', b.id('$$condition')) : expression;
 
 	/** @type {Expression[]} */
 	const args = [

@@ -1,5 +1,5 @@
 /** @import { AssignmentExpression, Expression, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression, ExpressionStatement } from 'estree' */
-/** @import { AST, ExpressionMetadata } from '#compiler' */
+/** @import { AST, Binding, ExpressionMetadata } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext, Context } from '../../types' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
@@ -9,6 +9,42 @@ import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator, component_name } from '../../../../../state.js';
 import { build_getter } from '../../utils.js';
+
+/**
+ * @param {import('estree').Node | null | undefined} node
+ * @returns {node is import('estree').Function}
+ */
+function is_function(node) {
+	return Boolean(
+		node &&
+			(node.type === 'ArrowFunctionExpression' ||
+				node.type === 'FunctionExpression' ||
+				node.type === 'FunctionDeclaration')
+	);
+}
+
+/**
+ * Determines whether repeated reads of a binding within a single expression
+ * should be memoized to avoid inconsistent results.
+ * @param {Binding | null} binding
+ * @returns {binding is Binding}
+ */
+function should_memoize_binding(binding) {
+	if (binding === null) return false;
+
+	switch (binding.kind) {
+		case 'state':
+		case 'raw_state':
+		case 'derived':
+		case 'legacy_reactive':
+		case 'template':
+			return true;
+		default:
+			return false;
+	}
+}
+/** @type {WeakMap<any, Map<string, { id: Identifier; getter: (node: Identifier) => Expression }>>} */
+const memoized_reads_by_scope = new WeakMap();
 
 /**
  * A utility for extracting complex expressions (such as call expressions)
@@ -391,7 +427,103 @@ export function validate_mutation(node, context, expression) {
  * @param {ExpressionMetadata} metadata
  */
 export function build_expression(context, expression, metadata, state = context.state) {
-	const value = /** @type {Expression} */ (context.visit(expression, state));
+	/** @type {import('../../types.js').ComponentClientTransformState} */
+	let child_state = state;
+	/** @type {import('estree').Statement[]} */
+	const assignments = [];
+	/** @type {Set<string> | null} */
+	let memoized_ids = null;
+
+	if (state.analysis.runes && !metadata.has_await) {
+		const component_state = /** @type {ComponentClientTransformState} */ (context.state);
+		/** @type {Map<Binding, number>} */
+		const counts = new Map();
+
+		walk(expression, null, {
+			Identifier(node, { path }) {
+				const parent = /** @type {Expression} */ (path.at(-1));
+				if (!is_reference(node, parent)) return;
+
+				// avoid memoizing reads that occur within nested functions, since those
+				// must re-evaluate when the function executes later
+				if (path.some((ancestor, i) => i < path.length - 1 && is_function(ancestor))) {
+					return;
+				}
+
+				const binding = state.scope.get(node.name);
+				if (!should_memoize_binding(binding)) return;
+
+				counts.set(binding, (counts.get(binding) ?? 0) + 1);
+			}
+		});
+
+		memoized_ids = new Set();
+
+		for (const [binding, count] of counts) {
+			if (count <= 1) continue;
+			const name = binding.node?.name;
+			if (!name) continue;
+
+			const original = state.transform[name];
+			if (!original?.read) continue;
+
+			let scope_records = memoized_reads_by_scope.get(binding.scope);
+			if (!scope_records) {
+				scope_records = new Map();
+				memoized_reads_by_scope.set(binding.scope, scope_records);
+			}
+
+			if (child_state === state) {
+				child_state = {
+					...state,
+					transform: { ...state.transform }
+				};
+			}
+
+			let record = scope_records.get(name);
+
+			if (!record) {
+				const memo_id = b.id(state.scope.generate(`${name}_value`));
+				record = {
+					id: memo_id,
+					getter: original.read
+				};
+				scope_records.set(name, record);
+				component_state.init.push(b.let(memo_id));
+			}
+			memoized_ids.add(record.id.name);
+
+			const previous = child_state.transform[name];
+			child_state.transform[name] = {
+				...previous,
+				read() {
+					return record.id;
+				},
+				assign: previous?.assign,
+				mutate: previous?.mutate,
+				update: previous?.update
+			};
+
+			assignments.push(b.stmt(b.assignment('=', record.id, record.getter(b.id(name)))));
+		}
+	}
+
+	let value = /** @type {Expression} */ (context.visit(expression, child_state));
+
+	if (memoized_ids !== null && memoized_ids.size > 0) {
+		const memoized = memoized_ids;
+		walk(value, null, {
+			MemberExpression(node) {
+				if (node.object.type === 'Identifier' && memoized.has(node.object.name)) {
+					node.optional = true;
+				}
+			}
+		});
+	}
+
+	if (assignments.length > 0) {
+		value = b.call(b.arrow([], b.block([...assignments, b.return(value)])));
+	}
 
 	// Components not explicitly in legacy mode might be expected to be in runes mode (especially since we didn't
 	// adjust this behavior until recently, which broke people's existing components), so we also bail in this case.
