@@ -65,7 +65,7 @@ There will be a blog post about this eventually, but in the meantime, check out 
 
 ## Is there a UI component library?
 
-There are several UI component libraries as well as standalone components. Find them under the [design systems section of the components page](https://sveltesociety.dev/packages?category=design-system) on the Svelte Society website.
+There are several [UI component libraries](/packages#component-libraries) as well as standalone components listed on [the packages page](/packages).
 
 ## How do I test Svelte apps?
 
