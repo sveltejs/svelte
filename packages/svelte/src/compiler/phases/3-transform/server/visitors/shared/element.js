@@ -22,6 +22,7 @@ import {
 	is_load_error_element
 } from '../../../../../../utils.js';
 import { escape_html } from '../../../../../../escaping.js';
+import { init_spread_bindings } from '../../../shared/spread_bindings.js';
 
 const WHITESPACE_INSENSITIVE_ATTRIBUTES = ['class', 'style'];
 
@@ -121,7 +122,10 @@ export function build_element_attributes(node, context, transform) {
 
 			let expression = /** @type {Expression} */ (context.visit(attribute.expression));
 
-			if (expression.type === 'SequenceExpression') {
+			if (attribute.metadata.spread_binding) {
+				const { get } = init_spread_bindings(attribute.expression, context);
+				expression = b.call(get);
+			} else if (expression.type === 'SequenceExpression') {
 				expression = b.call(expression.expressions[0]);
 			}
 
@@ -129,7 +133,11 @@ export function build_element_attributes(node, context, transform) {
 				content = expression;
 			} else if (attribute.name === 'value' && node.name === 'textarea') {
 				content = b.call('$.escape', expression);
-			} else if (attribute.name === 'group' && attribute.expression.type !== 'SequenceExpression') {
+			} else if (
+				attribute.name === 'group' &&
+				attribute.expression.type !== 'SequenceExpression' &&
+				!attribute.metadata.spread_binding
+			) {
 				const value_attribute = /** @type {AST.Attribute | undefined} */ (
 					node.attributes.find((attr) => attr.type === 'Attribute' && attr.name === 'value')
 				);

@@ -1,4 +1,4 @@
-/** @import { AssignmentExpression, Expression, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression, ExpressionStatement } from 'estree' */
+/** @import { AssignmentExpression, Expression, Identifier, MemberExpression, SequenceExpression, SpreadElement, Literal, Super, UpdateExpression, ExpressionStatement } from 'estree' */
 /** @import { AST, ExpressionMetadata } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext, Context } from '../../types' */
 import { walk } from 'zimmerframe';
@@ -9,6 +9,7 @@ import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator, component_name } from '../../../../../state.js';
 import { build_getter } from '../../utils.js';
+import { init_spread_bindings } from '../../../shared/spread_bindings.js';
 
 /**
  * A utility for extracting complex expressions (such as call expressions)
@@ -204,11 +205,17 @@ export function parse_directive_name(name) {
 
 /**
  * Serializes `bind:this` for components and elements.
- * @param {Identifier | MemberExpression | SequenceExpression} expression
+ * @param {Identifier | MemberExpression | SequenceExpression | SpreadElement} expression
  * @param {Expression} value
  * @param {import('zimmerframe').Context<AST.SvelteNode, ComponentClientTransformState>} context
  */
-export function build_bind_this(expression, value, { state, visit }) {
+export function build_bind_this(expression, value, context) {
+	const { state, visit } = context;
+	if (expression.type === 'SpreadElement') {
+		const { get, set } = init_spread_bindings(expression.argument, context);
+		return b.call('$.bind_this', value, set, get);
+	}
+
 	if (expression.type === 'SequenceExpression') {
 		const [get, set] = /** @type {SequenceExpression} */ (visit(expression)).expressions;
 		return b.call('$.bind_this', value, set, get);
@@ -290,7 +297,7 @@ export function build_bind_this(expression, value, { state, visit }) {
  * @param {MemberExpression} expression
  */
 export function validate_binding(state, binding, expression) {
-	if (binding.expression.type === 'SequenceExpression') {
+	if (binding.expression.type === 'SequenceExpression' || binding.metadata.spread_binding) {
 		return;
 	}
 	// If we are referencing a $store.foo then we don't need to add validation
