@@ -3,6 +3,7 @@
 /** @import { ClientTransformState, ComponentClientTransformState, ComponentContext } from './types.js' */
 /** @import { Analysis, ComponentAnalysis } from '../../types.js' */
 /** @import { Scope } from '../../scope.js' */
+/** @import { Visitor } from 'zimmerframe' */
 import * as b from '#compiler/builders';
 import { is_simple_expression } from '../../../utils/ast.js';
 import {
@@ -40,35 +41,22 @@ export function can_be_parallelized(expression, scope, analysis, bindings) {
 	let should_stop = false;
 	/** @type {Set<string>} */
 	const references = new Set();
+	/** @type {Visitor<Node, null, Node>} */
+	function stop(_, { stop }) {
+		should_stop = true;
+		stop();
+	}
 	walk(/** @type {Node} */ (expression), null, {
-		ArrowFunctionExpression(_, { stop }) {
-			should_stop = true;
-			stop();
-		},
-		FunctionExpression(_, { stop }) {
-			should_stop = true;
-			stop();
-		},
+		ArrowFunctionExpression: stop,
+		FunctionExpression: stop,
+		MemberExpression: stop,
+		CallExpression: stop,
+		NewExpression: stop,
+		StaticBlock: stop,
 		Identifier(node, { path }) {
 			if (is_reference(node, /** @type {Node} */ (path.at(-1)))) {
 				references.add(node.name);
 			}
-		},
-		MemberExpression(node, { stop }) {
-			should_stop = true;
-			stop();
-		},
-		CallExpression(node, { stop }) {
-			should_stop = true;
-			stop();
-		},
-		NewExpression(node, { stop }) {
-			should_stop = true;
-			stop();
-		},
-		StaticBlock(node, { stop }) {
-			should_stop = true;
-			stop();
 		}
 	});
 	if (should_stop) {
@@ -76,7 +64,7 @@ export function can_be_parallelized(expression, scope, analysis, bindings) {
 	}
 	for (const reference of references) {
 		const binding = scope.get(reference);
-		if (!binding || binding.declaration_kind === 'import') {
+		if (binding === null || binding.declaration_kind === 'import') {
 			return false;
 		}
 		if (binding.scope !== analysis.module.scope) {
@@ -92,6 +80,8 @@ export function can_be_parallelized(expression, scope, analysis, bindings) {
 			return false;
 		}
 
+		// we assume that async deriveds will be parallelized here
+		// TODO can we confirm this instead of relying on assumptions?
 		if (binding.kind === 'derived') {
 			const init = /** @type {CallExpression} */ (binding.initial);
 			if (analysis.async_deriveds.has(init)) {
