@@ -1,5 +1,6 @@
 ---
 title: Basic markup
+use_cases: "always: HTML templates, component structure, attributes, events, text interpolation"
 ---
 
 Markup inside a Svelte component can be thought of as HTML++.

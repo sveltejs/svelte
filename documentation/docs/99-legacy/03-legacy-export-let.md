@@ -1,5 +1,6 @@
 ---
 title: export let
+use_cases: "legacy: component props, Svelte 3/4 props"
 ---
 
 In runes mode, [component props](basic-markup#Component-props) are declared with the [`$props`]($props) rune, allowing parent components to pass in data.
