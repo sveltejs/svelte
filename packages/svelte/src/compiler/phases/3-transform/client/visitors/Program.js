@@ -5,10 +5,10 @@ import * as b from '#compiler/builders';
 import { add_state_transformers } from './shared/declarations.js';
 
 /**
- * @param {Program} _
+ * @param {Program} node
  * @param {ComponentContext} context
  */
-export function Program(_, context) {
+export function Program(node, context) {
 	if (!context.state.analysis.runes) {
 		context.state.transform['$$props'] = {
 			read: (node) => ({ ...node, name: '$$sanitized_props' })
@@ -137,5 +137,52 @@ export function Program(_, context) {
 
 	add_state_transformers(context);
 
-	context.next();
+	/** @type {Program['body']} */
+	const body = [];
+	for (let i = 0; i < node.body.length; i++) {
+		const transformed = /** @type {Program['body'][number]} */ (context.visit(node.body[i]));
+		body.push(transformed);
+	}
+	if (context.state.parallelized_chunks) {
+		let offset = 0;
+		for (const chunk of context.state.parallelized_chunks) {
+			if (chunk.declarators.length === 1) {
+				const declarator = chunk.declarators[0];
+				if (declarator.id === null || chunk.kind === null) {
+					body.splice(
+						chunk.position + offset,
+						0,
+						b.stmt(b.call(b.await(b.call('$.save', declarator.init))))
+					);
+				} else {
+					body.splice(
+						chunk.position + offset,
+						0,
+						b.declaration(chunk.kind, [
+							b.declarator(declarator.id, b.call(b.await(b.call('$.save', declarator.init))))
+						])
+					);
+				}
+			} else {
+				const pattern = b.array_pattern(chunk.declarators.map(({ id }) => id));
+				const init = b.call(
+					b.await(b.call('$.save', b.call('$.all', ...chunk.declarators.map(({ init }) => init))))
+				);
+				if (pattern.elements.every((element) => element === null)) {
+					body.splice(chunk.position + offset, 0, b.stmt(init));
+				} else {
+					body.splice(
+						chunk.position + offset,
+						0,
+						b.declaration(chunk.kind ?? 'const', [b.declarator(pattern, init)])
+					);
+				}
+			}
+			offset++;
+		}
+	}
+	return {
+		...node,
+		body
+	};
 }
