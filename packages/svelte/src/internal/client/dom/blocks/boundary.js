@@ -8,7 +8,13 @@ import {
 import { HYDRATION_START_ELSE } from '../../../../constants.js';
 import { component_context, set_component_context } from '../../context.js';
 import { handle_error, invoke_error_boundary } from '../../error-handling.js';
-import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
+import {
+	block,
+	branch,
+	destroy_effect,
+	inspect_effect,
+	pause_effect
+} from '../../reactivity/effects.js';
 import {
 	active_effect,
 	active_reaction,
@@ -33,6 +39,7 @@ import { Batch, current_batch, effect_pending_updates } from '../../reactivity/b
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
+import { untrack } from 'svelte';
 
 /**
  * @typedef {{
@@ -440,7 +447,10 @@ export function get_boundary() {
 	return /** @type {Boundary} */ (/** @type {Effect} */ (active_effect).b);
 }
 
-export function pending() {
+/**
+ * @param {(() => any) | void} fn
+ */
+export function pending(fn) {
 	if (active_effect === null) {
 		e.effect_pending_outside_reaction();
 	}
@@ -449,6 +459,26 @@ export function pending() {
 
 	if (boundary === null) {
 		return 0; // TODO eventually we will need this to be global
+	}
+
+	if (fn) {
+		const signal = source(untrack(fn));
+
+		inspect_effect(() => {
+			const value = fn();
+			let stale = false;
+
+			queue_micro_task(() => {
+				if (stale) return;
+				internal_set(signal, value);
+			});
+
+			return () => {
+				stale = true;
+			};
+		});
+
+		return signal;
 	}
 
 	return boundary.get_effect_pending();
