@@ -26,7 +26,14 @@ export function ConstTag(node, context) {
 
 		context.state.consts.push(b.const(declaration.id, expression));
 
-		context.state.transform[declaration.id.name] = { read: get_value };
+		const snapshot = context.state.guard_snapshots?.get(declaration.id.name);
+		context.state.transform[declaration.id.name] = snapshot
+			? {
+					read() {
+						return snapshot.id;
+					}
+				}
+			: { read: get_value };
 
 		// we need to eagerly evaluate the expression in order to hit any
 		// 'Cannot access x before initialization' errors
@@ -78,9 +85,16 @@ export function ConstTag(node, context) {
 		}
 
 		for (const node of identifiers) {
-			context.state.transform[node.name] = {
-				read: (node) => b.member(b.call('$.get', tmp), node)
-			};
+			const snapshot = context.state.guard_snapshots?.get(node.name);
+			context.state.transform[node.name] = snapshot
+				? {
+						read() {
+							return snapshot.id;
+						}
+					}
+				: {
+						read: (node) => b.member(b.call('$.get', tmp), node)
+					};
 		}
 	}
 }

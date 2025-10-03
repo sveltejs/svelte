@@ -37,6 +37,10 @@ export interface ClientTransformState extends TransformState {
 			update?: (node: UpdateExpression) => Expression;
 		}
 	>;
+
+	readonly guard_snapshots?: Map<string, { readonly id: Identifier }>;
+
+	readonly collect_guard_snapshots?: Map<string, { readonly id: Identifier }>;
 }
 
 export interface ComponentClientTransformState extends ClientTransformState {

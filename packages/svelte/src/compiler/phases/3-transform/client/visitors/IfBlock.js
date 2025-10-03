@@ -13,10 +13,47 @@ export function IfBlock(node, context) {
 	const statements = [];
 
 	const { has_await } = node.metadata.expression;
-	const expression = build_expression(context, node.test, node.metadata.expression);
+	const guard_snapshots = new Map();
+	const expression = build_expression(context, node.test, node.metadata.expression, {
+		...context.state,
+		collect_guard_snapshots: guard_snapshots
+	});
 	const test = has_await ? b.call('$.get', b.id('$$condition')) : expression;
 
-	const consequent = /** @type {BlockStatement} */ (context.visit(node.consequent));
+	let branch_state = context.state;
+
+	if (guard_snapshots.size > 0) {
+		const snapshots = new Map(context.state.guard_snapshots ?? undefined);
+		const transform = { ...context.state.transform };
+
+		for (const [name, snapshot] of guard_snapshots) {
+			snapshots.set(name, snapshot);
+
+			const base = transform[name] ?? context.state.transform[name];
+			transform[name] = {
+				...base,
+				read() {
+					return snapshot.id;
+				},
+				assign: base?.assign,
+				mutate: base?.mutate,
+				update: base?.update
+			};
+		}
+
+		branch_state = {
+			...context.state,
+			collect_guard_snapshots: undefined,
+			guard_snapshots: snapshots,
+			transform
+		};
+	}
+
+	const consequent = /** @type {BlockStatement} */ (
+		branch_state === context.state
+			? context.visit(node.consequent)
+			: context.visit(node.consequent, branch_state)
+	);
 	const consequent_id = b.id(context.state.scope.generate('consequent'));
 
 	statements.push(b.var(consequent_id, b.arrow([b.id('$$anchor')], consequent)));
@@ -24,7 +61,11 @@ export function IfBlock(node, context) {
 	let alternate_id;
 
 	if (node.alternate) {
-		const alternate = /** @type {BlockStatement} */ (context.visit(node.alternate));
+		const alternate = /** @type {BlockStatement} */ (
+			branch_state === context.state
+				? context.visit(node.alternate)
+				: context.visit(node.alternate, branch_state)
+		);
 		alternate_id = b.id(context.state.scope.generate('alternate'));
 		statements.push(b.var(alternate_id, b.arrow([b.id('$$anchor')], alternate)));
 	}

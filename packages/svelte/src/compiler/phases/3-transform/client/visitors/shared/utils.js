@@ -43,6 +43,23 @@ function should_memoize_binding(binding) {
 			return false;
 	}
 }
+
+/**
+ * @param {Binding | null} binding
+ * @returns {boolean}
+ */
+function should_snapshot_guard(binding) {
+	if (binding === null) return false;
+
+	switch (binding.kind) {
+		case 'derived':
+		case 'legacy_reactive':
+		case 'template':
+			return true;
+		default:
+			return false;
+	}
+}
 /** @type {WeakMap<any, Map<string, { id: Identifier; getter: (node: Identifier) => Expression }>>} */
 const memoized_reads_by_scope = new WeakMap();
 
@@ -459,13 +476,17 @@ export function build_expression(context, expression, metadata, state = context.
 
 		memoized_ids = new Set();
 
+		const guard_snapshots = state.collect_guard_snapshots;
+
 		for (const [binding, count] of counts) {
-			if (count <= 1) continue;
 			const name = binding.node?.name;
 			if (!name) continue;
 
 			const original = state.transform[name];
 			if (!original?.read) continue;
+
+			const capture_for_guard = Boolean(guard_snapshots && should_snapshot_guard(binding));
+			if (count <= 1 && !capture_for_guard) continue;
 
 			let scope_records = memoized_reads_by_scope.get(binding.scope);
 			if (!scope_records) {
@@ -505,17 +526,45 @@ export function build_expression(context, expression, metadata, state = context.
 			};
 
 			assignments.push(b.stmt(b.assignment('=', record.id, record.getter(b.id(name)))));
+
+			if (guard_snapshots && capture_for_guard) {
+				guard_snapshots.set(name, { id: record.id });
+			}
 		}
 	}
 
 	let value = /** @type {Expression} */ (context.visit(expression, child_state));
 
-	if (memoized_ids !== null && memoized_ids.size > 0) {
-		const memoized = memoized_ids;
+	const optional_sources = new Set();
+
+	if (memoized_ids !== null) {
+		for (const name of memoized_ids) optional_sources.add(name);
+	}
+
+	if (state.guard_snapshots) {
+		for (const snapshot of state.guard_snapshots.values()) {
+			optional_sources.add(snapshot.id.name);
+		}
+	}
+
+	if (optional_sources.size > 0) {
 		walk(value, null, {
 			MemberExpression(node) {
-				if (node.object.type === 'Identifier' && memoized.has(node.object.name)) {
-					node.optional = true;
+				let root = node.object;
+				while (root && root.type === 'MemberExpression') {
+					root = root.object;
+				}
+
+				if (root?.type === 'Identifier' && optional_sources.has(root.name)) {
+					/** @type {import('estree').MemberExpression | null} */
+					let current = node;
+					while (current) {
+						current.optional = true;
+						const next = /** @type {import('estree').Expression | import('estree').Super} */ (
+							current.object
+						);
+						current = next.type === 'MemberExpression' ? next : null;
+					}
 				}
 			}
 		});
