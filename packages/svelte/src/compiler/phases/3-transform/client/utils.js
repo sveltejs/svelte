@@ -54,7 +54,7 @@ export function can_be_parallelized(expression, scope, analysis, bindings) {
 		NewExpression: stop,
 		StaticBlock: stop,
 		Identifier(node, { path }) {
-			// @ts-expect-error wtf
+			// @ts-ignore this errors for me for some reason
 			if (is_reference(node, /** @type {Node} */ (path.at(-1)))) {
 				references.add(node.name);
 			}
