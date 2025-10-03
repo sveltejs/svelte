@@ -47,7 +47,9 @@ export function VariableDeclaration(node, context) {
 
 					continue;
 				}
+				const kind = node.kind;
 				if (
+					kind !== 'using' && kind !== 'await using' &&
 					init?.type === 'AwaitExpression' &&
 					context.state.analysis.instance?.scope === context.state.scope &&
 					!is_expression_async(init.argument)
@@ -72,16 +74,16 @@ export function VariableDeclaration(node, context) {
 						};
 						if (
 							current_chunk &&
-							(current_chunk.kind === node.kind || current_chunk.kind === null)
+							(current_chunk.kind === kind || current_chunk.kind === null)
 						) {
 							current_chunk.declarators.push(_declarator);
 							current_chunk.bindings.push(...bindings);
 							current_chunk.position = /** @type {Program} */ (parent).body.indexOf(node);
-							current_chunk.kind = node.kind;
+							current_chunk.kind = kind;
 						} else {
 							/** @type {ParallelizedChunk} */
 							const chunk = {
-								kind: node.kind,
+								kind,
 								declarators: [_declarator],
 								position,
 								bindings
@@ -179,11 +181,13 @@ export function VariableDeclaration(node, context) {
 			if (rune === '$state' || rune === '$state.raw') {
 				const state_declarators = [];
 				const current_chunk = context.state.current_parallelized_chunk;
+				const kind = node.kind;
 				const parallelize =
 					declarator.id.type === 'Identifier' &&
 					context.state.analysis.instance?.scope === context.state.scope &&
 					value.type === 'AwaitExpression' &&
 					!is_expression_async(value.argument) &&
+					kind !== 'using' && kind !== 'await using' &&
 					can_be_parallelized(value.argument, context.state.scope, context.state.analysis, [
 						...(current_chunk?.bindings ?? []),
 						...bindings
@@ -294,11 +298,11 @@ export function VariableDeclaration(node, context) {
 						current_chunk.declarators.push(...declarators);
 						current_chunk.bindings.push(...bindings);
 						current_chunk.position = position;
-						current_chunk.kind = node.kind;
+						current_chunk.kind = kind;
 					} else {
 						/** @type {ParallelizedChunk} */
 						const chunk = {
-							kind: node.kind,
+							kind,
 							declarators,
 							position,
 							bindings
@@ -322,13 +326,15 @@ export function VariableDeclaration(node, context) {
 					context.state.analysis.instance &&
 					context.state.scope === context.state.analysis.instance.scope &&
 					// TODO make it work without this
-					declarator.id.type === 'Identifier'
+					declarator.id.type === 'Identifier' &&
+					node.kind !== 'await using' && node.kind !== 'using'
 				) {
 					parallelize = can_be_parallelized(value, context.state.scope, context.state.analysis, [
 						...(current_chunk?.bindings ?? []),
 						...context.state.scope.get_bindings(declarator)
 					]);
 				}
+				const kind = /** @type {ParallelizedChunk['kind']} */ (node.kind);
 
 				/** @type {VariableDeclarator[]} */
 				const derived_declarators = [];
@@ -428,15 +434,15 @@ export function VariableDeclaration(node, context) {
 						id,
 						init: /** @type {Expression} */ (init)
 					}));
-					if (current_chunk && (current_chunk.kind === node.kind || current_chunk.kind === null)) {
+					if (current_chunk && (current_chunk.kind === kind || current_chunk.kind === null)) {
 						current_chunk.declarators.push(...declarators);
 						current_chunk.bindings.push(...bindings);
 						current_chunk.position = position;
-						current_chunk.kind = node.kind;
+						current_chunk.kind = kind;
 					} else {
 						/** @type {ParallelizedChunk} */
 						const chunk = {
-							kind: node.kind,
+							kind,
 							declarators,
 							position,
 							bindings

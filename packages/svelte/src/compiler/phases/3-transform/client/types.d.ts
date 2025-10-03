@@ -88,7 +88,7 @@ export interface ParallelizedChunk {
 		id: Pattern | null;
 		init: Expression;
 	}>;
-	kind: VariableDeclaration['kind'] | null;
+	kind: 'var' | 'let' | 'const' | null;
 	/** index in instance body */
 	position: number;
 	bindings: Binding[];
