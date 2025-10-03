@@ -184,6 +184,13 @@ export function async_derived(fn, location) {
 			if (should_suspend) {
 				boundary.update_pending_count(-1);
 				if (!pending) batch.decrement();
+			} else {
+				// Ensure effects depending on this async derived run promptly when we didn't suspend
+				// and there is no pending boundary — commit queued work immediately.
+				if (!pending) {
+					batch.flush();
+					batch.deactivate();
+				}
 			}
 
 			unset_context();
