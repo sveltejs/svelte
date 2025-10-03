@@ -49,7 +49,8 @@ export function VariableDeclaration(node, context) {
 				}
 				const kind = node.kind;
 				if (
-					kind !== 'using' && kind !== 'await using' &&
+					kind !== 'using' &&
+					kind !== 'await using' &&
 					init?.type === 'AwaitExpression' &&
 					context.state.analysis.instance?.scope === context.state.scope &&
 					!is_expression_async(init.argument)
@@ -72,10 +73,7 @@ export function VariableDeclaration(node, context) {
 							id,
 							init: /** @type {Expression} */ (visited_init)
 						};
-						if (
-							current_chunk &&
-							(current_chunk.kind === kind || current_chunk.kind === null)
-						) {
+						if (current_chunk && (current_chunk.kind === kind || current_chunk.kind === null)) {
 							current_chunk.declarators.push(_declarator);
 							current_chunk.bindings.push(...bindings);
 							current_chunk.position = /** @type {Program} */ (parent).body.indexOf(node);
@@ -187,7 +185,8 @@ export function VariableDeclaration(node, context) {
 					context.state.analysis.instance?.scope === context.state.scope &&
 					value.type === 'AwaitExpression' &&
 					!is_expression_async(value.argument) &&
-					kind !== 'using' && kind !== 'await using' &&
+					kind !== 'using' &&
+					kind !== 'await using' &&
 					can_be_parallelized(value.argument, context.state.scope, context.state.analysis, [
 						...(current_chunk?.bindings ?? []),
 						...bindings
@@ -327,7 +326,8 @@ export function VariableDeclaration(node, context) {
 					context.state.scope === context.state.analysis.instance.scope &&
 					// TODO make it work without this
 					declarator.id.type === 'Identifier' &&
-					node.kind !== 'await using' && node.kind !== 'using'
+					node.kind !== 'await using' &&
+					node.kind !== 'using'
 				) {
 					parallelize = can_be_parallelized(value, context.state.scope, context.state.analysis, [
 						...(current_chunk?.bindings ?? []),
