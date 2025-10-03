@@ -1,9 +1,8 @@
-/** @import { BlockStatement, Expression } from 'estree' */
+/** @import { BlockStatement, Expression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
-import { BLOCK_OPEN_ELSE } from '../../../../../internal/server/hydration.js';
 import * as b from '#compiler/builders';
-import { block_close, block_open } from './shared/utils.js';
+import { block_close, block_open, block_open_else, create_async_block } from './shared/utils.js';
 
 /**
  * @param {AST.IfBlock} node
@@ -17,13 +16,16 @@ export function IfBlock(node, context) {
 		? /** @type {BlockStatement} */ (context.visit(node.alternate))
 		: b.block([]);
 
-	consequent.body.unshift(
-		b.stmt(b.call(b.member(b.id('$$payload.out'), b.id('push')), block_open))
-	);
+	consequent.body.unshift(b.stmt(b.call(b.id('$$renderer.push'), block_open)));
 
-	alternate.body.unshift(
-		b.stmt(b.call(b.member(b.id('$$payload.out'), b.id('push')), b.literal(BLOCK_OPEN_ELSE)))
-	);
+	alternate.body.unshift(b.stmt(b.call(b.id('$$renderer.push'), block_open_else)));
 
-	context.state.template.push(b.if(test, consequent, alternate), block_close);
+	/** @type {Statement} */
+	let statement = b.if(test, consequent, alternate);
+
+	if (node.metadata.expression.has_await) {
+		statement = create_async_block(b.block([statement]));
+	}
+
+	context.state.template.push(statement, block_close);
 }

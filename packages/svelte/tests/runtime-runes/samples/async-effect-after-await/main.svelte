@@ -1,9 +1,9 @@
 <script>
-	import App from './src/App.svelte';
+	import Child from './Child.svelte';
 </script>
 
 <svelte:boundary>
-	<App />
+	<Child />
 
 	{#snippet pending()}{/snippet}
 </svelte:boundary>

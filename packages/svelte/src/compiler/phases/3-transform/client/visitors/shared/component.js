@@ -130,7 +130,7 @@ export function build_component(node, component_name, context) {
 		} else if (attribute.type === 'SpreadAttribute') {
 			const expression = /** @type {Expression} */ (context.visit(attribute));
 
-			if (attribute.metadata.expression.has_state) {
+			if (attribute.metadata.expression.has_state || attribute.metadata.expression.has_await) {
 				props_and_spreads.push(
 					b.thunk(
 						attribute.metadata.expression.has_await || attribute.metadata.expression.has_call

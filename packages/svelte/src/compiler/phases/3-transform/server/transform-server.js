@@ -6,7 +6,7 @@ import { walk } from 'zimmerframe';
 import { set_scope } from '../../scope.js';
 import { extract_identifiers } from '../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { dev, filename } from '../../../state.js';
+import { component_name, dev, filename } from '../../../state.js';
 import { render_stylesheet } from '../css/index.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
@@ -40,6 +40,7 @@ import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 import { SvelteBoundary } from './visitors/SvelteBoundary.js';
+import { call_component_renderer, create_async_block } from './visitors/shared/utils.js';
 
 /** @type {Visitors} */
 const global_visitors = {
@@ -187,23 +188,21 @@ export function server_component(analysis, options) {
 		template.body = [
 			...snippets,
 			b.let('$$settled', b.true),
-			b.let('$$inner_payload'),
+			b.let('$$inner_renderer'),
 			b.function_declaration(
 				b.id('$$render_inner'),
-				[b.id('$$payload')],
+				[b.id('$$renderer')],
 				b.block(/** @type {Statement[]} */ (rest))
 			),
 			b.do_while(
 				b.unary('!', b.id('$$settled')),
 				b.block([
 					b.stmt(b.assignment('=', b.id('$$settled'), b.true)),
-					b.stmt(
-						b.assignment('=', b.id('$$inner_payload'), b.call('$.copy_payload', b.id('$$payload')))
-					),
-					b.stmt(b.call('$$render_inner', b.id('$$inner_payload')))
+					b.stmt(b.assignment('=', b.id('$$inner_renderer'), b.call('$$renderer.copy'))),
+					b.stmt(b.call('$$render_inner', b.id('$$inner_renderer')))
 				])
 			),
-			b.stmt(b.call('$.assign_payload', b.id('$$payload'), b.id('$$inner_payload')))
+			b.stmt(b.call('$$renderer.subsume', b.id('$$inner_renderer')))
 		];
 	}
 
@@ -239,10 +238,14 @@ export function server_component(analysis, options) {
 		template.body.push(b.stmt(b.call('$.bind_props', b.id('$$props'), b.object(props))));
 	}
 
-	const component_block = b.block([
+	let component_block = b.block([
 		.../** @type {Statement[]} */ (instance.body),
 		.../** @type {Statement[]} */ (template.body)
 	]);
+
+	if (analysis.instance.has_await) {
+		component_block = b.block([create_async_block(component_block)]);
+	}
 
 	// trick esrap into including comments
 	component_block.loc = instance.loc;
@@ -250,15 +253,16 @@ export function server_component(analysis, options) {
 	if (analysis.props_id) {
 		// need to be placed on first line of the component for hydration
 		component_block.body.unshift(
-			b.const(analysis.props_id, b.call('$.props_id', b.id('$$payload')))
+			b.const(analysis.props_id, b.call('$.props_id', b.id('$$renderer')))
 		);
 	}
 
 	let should_inject_context = dev || analysis.needs_context;
 
 	if (should_inject_context) {
-		component_block.body.unshift(b.stmt(b.call('$.push', dev && b.id(analysis.name))));
-		component_block.body.push(b.stmt(b.call('$.pop')));
+		component_block = b.block([
+			call_component_renderer(component_block, dev && b.id(component_name))
+		]);
 	}
 
 	if (analysis.uses_rest_props) {
@@ -297,7 +301,7 @@ export function server_component(analysis, options) {
 		const code = b.literal(render_stylesheet(analysis.source, analysis, options).code);
 
 		body.push(b.const('$$css', b.object([b.init('hash', hash), b.init('code', code)])));
-		component_block.body.unshift(b.stmt(b.call('$$payload.css.add', b.id('$$css'))));
+		component_block.body.unshift(b.stmt(b.call('$$renderer.global.css.add', b.id('$$css'))));
 	}
 
 	let should_inject_props =
@@ -311,7 +315,7 @@ export function server_component(analysis, options) {
 
 	const component_function = b.function_declaration(
 		b.id(analysis.name),
-		should_inject_props ? [b.id('$$payload'), b.id('$$props')] : [b.id('$$payload')],
+		should_inject_props ? [b.id('$$renderer'), b.id('$$props')] : [b.id('$$renderer')],
 		component_block
 	);
 
@@ -375,6 +379,10 @@ export function server_component(analysis, options) {
 				b.assignment('=', b.member(b.id(analysis.name), '$.FILENAME', true), b.literal(filename))
 			)
 		);
+	}
+
+	if (options.experimental.async) {
+		body.unshift(b.imports([], 'svelte/internal/flags/async'));
 	}
 
 	return {

@@ -1,12 +1,12 @@
-/** @import { Component } from '#server' */
-import { current_component } from './internal/server/context.js';
+/** @import { SSRContext } from '#server' */
+/** @import { Renderer } from './internal/server/renderer.js' */
+import { ssr_context } from './internal/server/context.js';
 import { noop } from './internal/shared/utils.js';
 import * as e from './internal/server/errors.js';
 
 /** @param {() => void} fn */
 export function onDestroy(fn) {
-	var context = /** @type {Component} */ (current_component);
-	(context.d ??= []).push(fn);
+	/** @type {Renderer} */ (/** @type {SSRContext} */ (ssr_context).r).on_destroy(fn);
 }
 
 export {

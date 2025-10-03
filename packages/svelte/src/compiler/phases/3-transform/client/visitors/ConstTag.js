@@ -16,11 +16,7 @@ export function ConstTag(node, context) {
 	const declaration = node.declaration.declarations[0];
 	// TODO we can almost certainly share some code with $derived(...)
 	if (declaration.id.type === 'Identifier') {
-		const init = build_expression(
-			{ ...context, state: { ...context.state, in_derived: true } },
-			declaration.init,
-			node.metadata.expression
-		);
+		const init = build_expression(context, declaration.init, node.metadata.expression);
 
 		let expression = create_derived(context.state, init, node.metadata.expression.has_await);
 
@@ -51,8 +47,7 @@ export function ConstTag(node, context) {
 
 		const child_state = /** @type {ComponentContext['state']} */ ({
 			...context.state,
-			transform,
-			in_derived: true
+			transform
 		});
 
 		// TODO optimise the simple `{ x } = y` case — we can just return `y`

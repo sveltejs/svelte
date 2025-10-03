@@ -278,7 +278,8 @@ export function analyze_module(source, options) {
 		tracing: false,
 		async_deriveds: new Set(),
 		comments,
-		classes: new Map()
+		classes: new Map(),
+		pickled_awaits: new Set()
 	};
 
 	state.adjust({
@@ -304,7 +305,8 @@ export function analyze_module(source, options) {
 			options: /** @type {ValidatedCompileOptions} */ (options),
 			fragment: null,
 			parent_element: null,
-			reactive_statement: null
+			reactive_statement: null,
+			in_derived: false
 		},
 		visitors
 	);
@@ -456,10 +458,19 @@ export function analyze_component(root, source, options) {
 
 	const is_custom_element = !!options.customElementOptions || options.customElement;
 
+	const name = module.scope.generate(options.name ?? component_name);
+
+	state.adjust({
+		component_name: name,
+		dev: options.dev,
+		rootDir: options.rootDir,
+		runes
+	});
+
 	// TODO remove all the ?? stuff, we don't need it now that we're validating the config
 	/** @type {ComponentAnalysis} */
 	const analysis = {
-		name: module.scope.generate(options.name ?? component_name),
+		name,
 		root: scope_root,
 		module,
 		instance,
@@ -520,7 +531,7 @@ export function analyze_component(root, source, options) {
 			hash: root.css
 				? options.cssHash({
 						css: root.css.content.styles,
-						filename: options.filename,
+						filename: state.filename,
 						name: component_name,
 						hash
 					})
@@ -531,15 +542,9 @@ export function analyze_component(root, source, options) {
 		source,
 		snippet_renderers: new Map(),
 		snippets: new Set(),
-		async_deriveds: new Set()
+		async_deriveds: new Set(),
+		pickled_awaits: new Set()
 	};
-
-	state.adjust({
-		component_name: analysis.name,
-		dev: options.dev,
-		rootDir: options.rootDir,
-		runes
-	});
 
 	if (!runes) {
 		// every exported `let` or `var` declaration becomes a prop, everything else becomes an export
@@ -697,7 +702,8 @@ export function analyze_component(root, source, options) {
 				expression: null,
 				state_fields: new Map(),
 				function_depth: scope.function_depth,
-				reactive_statement: null
+				reactive_statement: null,
+				in_derived: false
 			};
 
 			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);
@@ -764,7 +770,8 @@ export function analyze_component(root, source, options) {
 				component_slots: new Set(),
 				expression: null,
 				state_fields: new Map(),
-				function_depth: scope.function_depth
+				function_depth: scope.function_depth,
+				in_derived: false
 			};
 
 			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);

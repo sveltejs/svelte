@@ -11,6 +11,6 @@ export function SvelteHead(node, context) {
 	const block = /** @type {BlockStatement} */ (context.visit(node.fragment));
 
 	context.state.template.push(
-		b.stmt(b.call('$.head', b.id('$$payload'), b.arrow([b.id('$$payload')], block)))
+		b.stmt(b.call('$.head', b.id('$$renderer'), b.arrow([b.id('$$renderer')], block)))
 	);
 }

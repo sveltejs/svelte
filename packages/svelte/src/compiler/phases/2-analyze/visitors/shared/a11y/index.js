@@ -382,7 +382,10 @@ export function check_element(node, context) {
 	}
 
 	// element-specific checks
-	const is_labelled = attribute_map.has('aria-label') || attribute_map.has('aria-labelledby');
+	const is_labelled =
+		attribute_map.has('aria-label') ||
+		attribute_map.has('aria-labelledby') ||
+		attribute_map.has('title');
 
 	switch (node.name) {
 		case 'a':

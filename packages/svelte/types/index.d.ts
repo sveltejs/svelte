@@ -998,7 +998,7 @@ declare module 'svelte/compiler' {
 		css?: 'injected' | 'external';
 		/**
 		 * A function that takes a `{ hash, css, name, filename }` argument and returns the string that is used as a classname for scoped CSS.
-		 * It defaults to returning `svelte-${hash(css)}`.
+		 * It defaults to returning `svelte-${hash(filename ?? css)}`.
 		 *
 		 * @default undefined
 		 */
@@ -2493,7 +2493,7 @@ declare module 'svelte/server' {
 					}
 				]
 	): RenderOutput;
-	interface RenderOutput {
+	interface SyncRenderOutput {
 		/** HTML that goes into the `<head>` */
 		head: string;
 		/** @deprecated use `body` instead */
@@ -2501,6 +2501,8 @@ declare module 'svelte/server' {
 		/** HTML that goes somewhere into the `<body>` */
 		body: string;
 	}
+
+	type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;
 
 	export {};
 }
@@ -2933,7 +2935,7 @@ declare module 'svelte/types/compiler/interfaces' {
 		css?: 'injected' | 'external';
 		/**
 		 * A function that takes a `{ hash, css, name, filename }` argument and returns the string that is used as a classname for scoped CSS.
-		 * It defaults to returning `svelte-${hash(css)}`.
+		 * It defaults to returning `svelte-${hash(filename ?? css)}`.
 		 *
 		 * @default undefined
 		 */
@@ -3169,13 +3171,15 @@ declare namespace $state {
 			? NonReactive<T>
 			: T extends { toJSON(): infer R }
 				? R
-				: T extends Array<infer U>
-					? Array<Snapshot<U>>
-					: T extends object
-						? T extends { [key: string]: any }
-							? { [K in keyof T]: Snapshot<T[K]> }
-							: never
-						: never;
+				: T extends readonly unknown[]
+					? { [K in keyof T]: Snapshot<T[K]> }
+					: T extends Array<infer U>
+						? Array<Snapshot<U>>
+						: T extends object
+							? T extends { [key: string]: any }
+								? { [K in keyof T]: Snapshot<T[K]> }
+								: never
+							: never;
 
 	/**
 	 * Declares state that is _not_ made deeply reactive — instead of mutating it,

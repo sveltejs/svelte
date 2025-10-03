@@ -2,7 +2,7 @@
 /** @import { Binding } from '#compiler' */
 /** @import { ComponentContext, ParallelizedChunk } from '../types' */
 import { dev, is_ignored, locate_node } from '../../../../state.js';
-import { extract_paths, is_expression_async } from '../../../../utils/ast.js';
+import { extract_paths, is_expression_async, save } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import * as assert from '../../../../utils/assert.js';
 import { get_rune } from '../../../scope.js';
@@ -336,12 +336,7 @@ export function VariableDeclaration(node, context) {
 				const bindings = [];
 
 				if (declarator.id.type === 'Identifier') {
-					let expression = /** @type {Expression} */ (
-						context.visit(value, {
-							...context.state,
-							in_derived: rune === '$derived'
-						})
-					);
+					let expression = /** @type {Expression} */ (context.visit(value));
 
 					if (is_async) {
 						const location = dev && !is_ignored(init, 'await_waterfall') && locate_node(init);
@@ -350,8 +345,7 @@ export function VariableDeclaration(node, context) {
 							b.thunk(expression, true),
 							location ? b.literal(location) : undefined
 						);
-
-						if (!parallelize) call = b.call(b.await(b.call('$.save', call)));
+						if (!parallelize) call = save(call);
 						if (dev) {
 							call = b.call(
 								'$.tag' + (parallelize ? '_async' : ''),
@@ -370,12 +364,7 @@ export function VariableDeclaration(node, context) {
 					}
 				} else {
 					const init = /** @type {CallExpression} */ (declarator.init);
-					let expression = /** @type {Expression} */ (
-						context.visit(value, {
-							...context.state,
-							in_derived: rune === '$derived'
-						})
-					);
+					let expression = /** @type {Expression} */ (context.visit(value));
 
 					let rhs = value;
 
@@ -392,7 +381,7 @@ export function VariableDeclaration(node, context) {
 								b.thunk(expression, true),
 								location ? b.literal(location) : undefined
 							);
-							call = b.call(b.await(b.call('$.save', call)));
+							call = save(call);
 						}
 
 						if (dev) {

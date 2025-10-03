@@ -316,6 +316,9 @@ export function text(value = '') {
 	return node;
 }
 
+/**
+ * @returns {TemplateNode | DocumentFragment}
+ */
 export function comment() {
 	// we're not delegating to `template` here for performance reasons
 	if (hydrating) {
@@ -362,7 +365,7 @@ export function props_id() {
 		hydrating &&
 		hydrate_node &&
 		hydrate_node.nodeType === COMMENT_NODE &&
-		hydrate_node.textContent?.startsWith(`#`)
+		hydrate_node.textContent?.startsWith(`$`)
 	) {
 		const id = hydrate_node.textContent.substring(1);
 		hydrate_next();

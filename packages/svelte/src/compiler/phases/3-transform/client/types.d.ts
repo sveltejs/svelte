@@ -22,11 +22,6 @@ export interface ClientTransformState extends TransformState {
 	 */
 	readonly in_constructor: boolean;
 
-	/**
-	 * True if we're directly inside a `$derived(...)` expression (but not `$derived.by(...)`)
-	 */
-	readonly in_derived: boolean;
-
 	/** `true` if we're transforming the contents of `<script>` */
 	readonly is_instance: boolean;
 

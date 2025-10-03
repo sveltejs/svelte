@@ -105,7 +105,7 @@ export interface CompileOptions extends ModuleCompileOptions {
 	css?: 'injected' | 'external';
 	/**
 	 * A function that takes a `{ hash, css, name, filename }` argument and returns the string that is used as a classname for scoped CSS.
-	 * It defaults to returning `svelte-${hash(css)}`.
+	 * It defaults to returning `svelte-${hash(filename ?? css)}`.
 	 *
 	 * @default undefined
 	 */
@@ -283,11 +283,16 @@ export type DeclarationKind =
 	| 'var'
 	| 'let'
 	| 'const'
+	| 'using'
+	| 'await using'
 	| 'function'
 	| 'import'
 	| 'param'
 	| 'rest_param'
-	| 'synthetic';
+	| 'synthetic'
+	// TODO not yet implemented, but needed for TypeScript reasons
+	| 'using'
+	| 'await using';
 
 export interface ExpressionMetadata {
 	/** All the bindings that are referenced eagerly (not inside functions) in this expression */

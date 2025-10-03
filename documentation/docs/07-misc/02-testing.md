@@ -4,7 +4,7 @@ title: Testing
 
 Testing helps you write and maintain your code and guard against regressions. Testing frameworks help you with that, allowing you to describe assertions or expectations about how your code should behave. Svelte is unopinionated about which testing framework you use — you can write unit tests, integration tests, and end-to-end tests using solutions like [Vitest](https://vitest.dev/), [Jasmine](https://jasmine.github.io/), [Cypress](https://www.cypress.io/) and [Playwright](https://playwright.dev/).
 
-## Unit and integration testing using Vitest
+## Unit and component tests with Vitest
 
 Unit tests allow you to test small isolated parts of your code. Integration tests allow you to test parts of your application to see if they work together. If you're using Vite (including via SvelteKit), we recommend using [Vitest](https://vitest.dev/). You can use the Svelte CLI to [setup Vitest](/docs/cli/vitest) either during project creation or later on.
 
@@ -160,9 +160,9 @@ export function logger(getValue) {
 
 ### Component testing
 
-It is possible to test your components in isolation using Vitest.
+It is possible to test your components in isolation, which allows you to render them in a browser (real or simulated), simulate behavior, and make assertions, without spinning up your whole app.
 
-> [!NOTE] Before writing component tests, think about whether you actually need to test the component, or if it's more about the logic _inside_ the component. If so, consider extracting out that logic to test it in isolation, without the overhead of a component
+> [!NOTE] Before writing component tests, think about whether you actually need to test the component, or if it's more about the logic _inside_ the component. If so, consider extracting out that logic to test it in isolation, without the overhead of a component.
 
 To get started, install jsdom (a library that shims DOM APIs):
 
@@ -246,7 +246,49 @@ test('Component', async () => {
 
 When writing component tests that involve two-way bindings, context or snippet props, it's best to create a wrapper component for your specific test and interact with that. `@testing-library/svelte` contains some [examples](https://testing-library.com/docs/svelte-testing-library/example).
 
-## E2E tests using Playwright
+## Component tests with Storybook
+
+[Storybook](https://storybook.js.org) is a tool for developing and documenting UI components, and it can also be used to test your components. They're run with Vitest's browser mode, which renders your components in a real browser for the most realistic testing environment.
+
+To get started, first install Storybook ([using Svelte's CLI](/docs/cli/storybook)) in your project via `npx sv add storybook` and choose the recommended configuration that includes testing features. If you're already using Storybook, and for more information on Storybook's testing capabilities, follow the [Storybook testing docs](https://storybook.js.org/docs/writing-tests?renderer=svelte) to get started.
+
+You can create stories for component variations and test interactions with the [play function](https://storybook.js.org/docs/writing-tests/interaction-testing?renderer=svelte#writing-interaction-tests), which allows you to simulate behavior and make assertions using the Testing Library and Vitest APIs. Here's an example of two stories that can be tested, one that renders an empty LoginForm component and one that simulates a user filling out the form:
+
+```svelte
+/// file: LoginForm.stories.svelte
+<script module>
+	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { expect, fn } from 'storybook/test';
+
+	import LoginForm from './LoginForm.svelte';
+
+	const { Story } = defineMeta({
+		component: LoginForm,
+		args: {
+			// Pass a mock function to the `onSubmit` prop
+			onSubmit: fn(),
+		}
+	});
+</script>
+ 
+<Story name="Empty Form" />
+ 
+<Story
+	name="Filled Form"
+	play={async ({ args, canvas, userEvent }) => {
+		// Simulate a user filling out the form
+		await userEvent.type(canvas.getByTestId('email'), 'email@provider.com');
+		await userEvent.type(canvas.getByTestId('password'), 'a-random-password');
+		await userEvent.click(canvas.getByRole('button'));
+
+		// Run assertions
+		await expect(args.onSubmit).toHaveBeenCalledTimes(1);
+		await expect(canvas.getByText('You’re in!')).toBeInTheDocument();
+	}}
+/>
+```
+
+## End-to-end tests with Playwright
 
 E2E (short for 'end to end') tests allow you to test your full application through the eyes of the user. This section uses [Playwright](https://playwright.dev/) as an example, but you can also use other solutions like [Cypress](https://www.cypress.io/) or [NightwatchJS](https://nightwatchjs.org/).
 

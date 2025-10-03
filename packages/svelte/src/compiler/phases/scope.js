@@ -260,6 +260,12 @@ class Evaluation {
 						break;
 					}
 
+					if (binding.initial?.type === 'SnippetBlock') {
+						this.is_defined = true;
+						this.is_known = false;
+						break;
+					}
+
 					if (!binding.updated && binding.initial !== null && !is_prop) {
 						binding.scope.evaluate(/** @type {Expression} */ (binding.initial), this.values);
 						break;
@@ -1032,7 +1038,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		Component: (node, context) => {
-			context.state.scope.reference(b.id(node.name), context.path);
+			context.state.scope.reference(b.id(node.name.split('.')[0]), context.path);
 			Component(node, context);
 		},
 		SvelteSelf: Component,

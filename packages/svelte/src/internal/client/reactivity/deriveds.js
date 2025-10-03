@@ -26,15 +26,16 @@ import {
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import { async_effect, destroy_effect } from './effects.js';
+import { async_effect, destroy_effect, teardown } from './effects.js';
 import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
-import { tracing_mode_flag } from '../../flags/index.js';
+import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { Boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_deriveds, current_batch } from './batch.js';
 import { unset_context } from './async.js';
+import { deferred } from '../../shared/utils.js';
 
 /** @type {Effect | null} */
 export let current_async_effect = null;
@@ -109,37 +110,40 @@ export function async_derived(fn, location) {
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 
-	/** @type {Promise<V> | null} */
-	var prev = null;
-
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
+
+	/** @type {Map<Batch, ReturnType<typeof deferred<V>>>} */
+	var deferreds = new Map();
 
 	async_effect(() => {
 		if (DEV) current_async_effect = active_effect;
 
+		/** @type {ReturnType<typeof deferred<V>>} */
+		var d = deferred();
+		promise = d.promise;
+
 		try {
-			var p = fn();
-			// Make sure to always access the then property to read any signals
-			// it might access, so that we track them as dependencies.
-			if (prev) Promise.resolve(p).catch(() => {}); // avoid unhandled rejection
+			// If this code is changed at some point, make sure to still access the then property
+			// of fn() to read any signals it might access, so that we track them as dependencies.
+			Promise.resolve(fn()).then(d.resolve, d.reject);
 		} catch (error) {
-			p = Promise.reject(error);
+			d.reject(error);
 		}
 
 		if (DEV) current_async_effect = null;
 
-		var r = () => p;
-		promise = prev?.then(r, r) ?? Promise.resolve(p);
-
-		prev = promise;
-
 		var batch = /** @type {Batch} */ (current_batch);
-		var pending = boundary.pending;
+		var pending = boundary.is_pending();
 
 		if (should_suspend) {
 			boundary.update_pending_count(1);
-			if (!pending) batch.increment();
+			if (!pending) {
+				batch.increment();
+
+				deferreds.get(batch)?.reject(STALE_REACTION);
+				deferreds.set(batch, d);
+			}
 		}
 
 		/**
@@ -147,8 +151,6 @@ export function async_derived(fn, location) {
 		 * @param {unknown} error
 		 */
 		const handler = (value, error = undefined) => {
-			prev = null;
-
 			current_async_effect = null;
 
 			if (!pending) batch.activate();
@@ -187,12 +189,12 @@ export function async_derived(fn, location) {
 			unset_context();
 		};
 
-		promise.then(handler, (e) => handler(null, e || 'unknown'));
+		d.promise.then(handler, (e) => handler(null, e || 'unknown'));
+	});
 
-		if (batch) {
-			return () => {
-				queueMicrotask(() => batch.neuter());
-			};
+	teardown(() => {
+		for (const d of deferreds.values()) {
+			d.reject(STALE_REACTION);
 		}
 	});
 
@@ -231,7 +233,7 @@ export function async_derived(fn, location) {
 export function user_derived(fn) {
 	const d = derived(fn);
 
-	push_reaction_value(d);
+	if (!async_mode_flag) push_reaction_value(d);
 
 	return d;
 }

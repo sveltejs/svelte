@@ -166,7 +166,6 @@ export function client_component(analysis, options) {
 		state_fields: new Map(),
 		transform: {},
 		in_constructor: false,
-		in_derived: false,
 		instance_level_snippets: [],
 		module_level_snippets: [],
 
@@ -714,7 +713,6 @@ export function client_module(analysis, options) {
 		state_fields: new Map(),
 		transform: {},
 		in_constructor: false,
-		in_derived: false,
 		is_instance: false
 	};
 

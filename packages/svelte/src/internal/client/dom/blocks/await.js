@@ -8,7 +8,7 @@ import {
 	hydrate_next,
 	hydrate_node,
 	hydrating,
-	remove_nodes,
+	skip_nodes,
 	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
@@ -22,7 +22,7 @@ import {
 	set_dev_current_component_function,
 	set_dev_stack
 } from '../../context.js';
-import { flushSync } from '../../reactivity/batch.js';
+import { flushSync, is_flushing_sync } from '../../reactivity/batch.js';
 
 const PENDING = 0;
 const THEN = 1;
@@ -126,7 +126,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 
 				// without this, the DOM does not update until two ticks after the promise
 				// resolves, which is unexpected behaviour (and somewhat irksome to test)
-				flushSync();
+				if (!is_flushing_sync) flushSync();
 			}
 		}
 	}
@@ -140,7 +140,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 
 		if (mismatch) {
 			// Hydration mismatch: remove everything inside the anchor and start fresh
-			anchor = remove_nodes();
+			anchor = skip_nodes();
 
 			set_hydrate_node(anchor);
 			set_hydrating(false);

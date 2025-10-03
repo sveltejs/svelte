@@ -1,5 +1,5 @@
 /** @import { ArrayExpression, Expression, Literal, ObjectExpression } from 'estree' */
-/** @import { AST } from '#compiler' */
+/** @import { AST, ExpressionMetadata } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../../types.js' */
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import { binding_properties } from '../../../../bindings.js';
@@ -11,6 +11,7 @@ import {
 import { regex_starts_with_newline } from '../../../../patterns.js';
 import * as b from '#compiler/builders';
 import {
+	ELEMENT_IS_INPUT,
 	ELEMENT_IS_NAMESPACED,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE
 } from '../../../../../../constants.js';
@@ -29,8 +30,9 @@ const WHITESPACE_INSENSITIVE_ATTRIBUTES = ['class', 'style'];
  * their output to be the child content instead. In this case, an object is returned.
  * @param {AST.RegularElement | AST.SvelteElement} node
  * @param {import('zimmerframe').Context<AST.SvelteNode, ComponentServerTransformState>} context
+ * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
  */
-export function build_element_attributes(node, context) {
+export function build_element_attributes(node, context, transform) {
 	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
 	const attributes = [];
 
@@ -61,7 +63,8 @@ export function build_element_attributes(node, context) {
 						// also see related code in analysis phase
 						attribute.value[0].data = '\n' + attribute.value[0].data;
 					}
-					content = b.call('$.escape', build_attribute_value(attribute.value, context));
+
+					content = b.call('$.escape', build_attribute_value(attribute.value, context, transform));
 				} else if (node.name !== 'select') {
 					// omit value attribute for select elements, it's irrelevant for the initially selected value and has no
 					// effect on the selected value after the user interacts with the select element (the value _property_ does, but not the attribute)
@@ -149,12 +152,12 @@ export function build_element_attributes(node, context) {
 							expression: is_checkbox
 								? b.call(
 										b.member(attribute.expression, 'includes'),
-										build_attribute_value(value_attribute.value, context)
+										build_attribute_value(value_attribute.value, context, transform)
 									)
 								: b.binary(
 										'===',
 										attribute.expression,
-										build_attribute_value(value_attribute.value, context)
+										build_attribute_value(value_attribute.value, context, transform)
 									),
 							metadata: {
 								expression: create_expression_metadata()
@@ -201,30 +204,14 @@ export function build_element_attributes(node, context) {
 	}
 
 	if (has_spread) {
-		build_element_spread_attributes(node, attributes, style_directives, class_directives, context);
-		if (node.name === 'option') {
-			context.state.template.push(
-				b.call(
-					'$.maybe_selected',
-					b.id('$$payload'),
-					b.member(
-						build_spread_object(
-							node,
-							node.attributes.filter(
-								(attribute) =>
-									attribute.type === 'Attribute' ||
-									attribute.type === 'BindDirective' ||
-									attribute.type === 'SpreadAttribute'
-							),
-							context
-						),
-						'value',
-						false,
-						true
-					)
-				)
-			);
-		}
+		build_element_spread_attributes(
+			node,
+			attributes,
+			style_directives,
+			class_directives,
+			context,
+			transform
+		);
 	} else {
 		const css_hash = node.metadata.scoped ? context.state.analysis.css.hash : null;
 
@@ -239,6 +226,7 @@ export function build_element_attributes(node, context) {
 					build_attribute_value(
 						attribute.value,
 						context,
+						transform,
 						WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 					)
 				).value;
@@ -259,22 +247,13 @@ export function build_element_attributes(node, context) {
 					);
 				}
 
-				if (node.name === 'option' && name === 'value') {
-					context.state.template.push(
-						b.call(
-							'$.maybe_selected',
-							b.id('$$payload'),
-							literal_value != null ? b.literal(/** @type {any} */ (literal_value)) : b.void0
-						)
-					);
-				}
-
 				continue;
 			}
 
 			const value = build_attribute_value(
 				attribute.value,
 				context,
+				transform,
 				WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 			);
 
@@ -285,17 +264,15 @@ export function build_element_attributes(node, context) {
 				}
 				context.state.template.push(b.literal(` ${name}="${escape_html(value.value, true)}"`));
 			} else if (name === 'class') {
-				context.state.template.push(build_attr_class(class_directives, value, context, css_hash));
+				context.state.template.push(
+					build_attr_class(class_directives, value, context, css_hash, transform)
+				);
 			} else if (name === 'style') {
-				context.state.template.push(build_attr_style(style_directives, value, context));
+				context.state.template.push(build_attr_style(style_directives, value, context, transform));
 			} else {
 				context.state.template.push(
 					b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
 				);
-			}
-
-			if (name === 'value' && node.name === 'option') {
-				context.state.template.push(b.call('$.maybe_selected', b.id('$$payload'), value));
 			}
 		}
 	}
@@ -327,17 +304,20 @@ function get_attribute_name(element, attribute) {
  * @param {AST.RegularElement | AST.SvelteElement} element
  * @param {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} attributes
  * @param {ComponentContext} context
+ * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
  */
-export function build_spread_object(element, attributes, context) {
-	return b.object(
+export function build_spread_object(element, attributes, context, transform) {
+	const object = b.object(
 		attributes.map((attribute) => {
 			if (attribute.type === 'Attribute') {
 				const name = get_attribute_name(element, attribute);
 				const value = build_attribute_value(
 					attribute.value,
 					context,
+					transform,
 					WHITESPACE_INSENSITIVE_ATTRIBUTES.includes(name)
 				);
+
 				return b.prop('init', b.key(name), value);
 			} else if (attribute.type === 'BindDirective') {
 				const name = get_attribute_name(element, attribute);
@@ -345,12 +325,20 @@ export function build_spread_object(element, attributes, context) {
 					attribute.expression.type === 'SequenceExpression'
 						? b.call(attribute.expression.expressions[0])
 						: /** @type {Expression} */ (context.visit(attribute.expression));
+
 				return b.prop('init', b.key(name), value);
 			}
 
-			return b.spread(/** @type {Expression} */ (context.visit(attribute)));
+			return b.spread(
+				transform(
+					/** @type {Expression} */ (context.visit(attribute)),
+					attribute.metadata.expression
+				)
+			);
 		})
 	);
+
+	return object;
 }
 
 /**
@@ -360,15 +348,90 @@ export function build_spread_object(element, attributes, context) {
  * @param {AST.StyleDirective[]} style_directives
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
+ * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
  */
 function build_element_spread_attributes(
 	element,
 	attributes,
 	style_directives,
 	class_directives,
-	context
+	context,
+	transform
 ) {
+	const args = prepare_element_spread(
+		element,
+		/** @type {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} */ (attributes),
+		style_directives,
+		class_directives,
+		context,
+		transform
+	);
+
+	let call = b.call('$.attributes', ...args);
+
+	context.state.template.push(call);
+}
+
+/**
+ * Prepare args for $.attributes(...): compute object, css_hash, classes, styles and flags.
+ * @param {AST.RegularElement | AST.SvelteElement} element
+ * @param {ComponentContext} context
+ * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
+ * @returns {[ObjectExpression,Literal | undefined, ObjectExpression | undefined, ObjectExpression | undefined, Literal | undefined]}
+ */
+export function prepare_element_spread_object(element, context, transform) {
+	/** @type {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} */
+	const select_attributes = [];
+	/** @type {AST.ClassDirective[]} */
+	const class_directives = [];
+	/** @type {AST.StyleDirective[]} */
+	const style_directives = [];
+
+	for (const attribute of element.attributes) {
+		if (
+			attribute.type === 'Attribute' ||
+			attribute.type === 'BindDirective' ||
+			attribute.type === 'SpreadAttribute'
+		) {
+			select_attributes.push(attribute);
+		} else if (attribute.type === 'ClassDirective') {
+			class_directives.push(attribute);
+		} else if (attribute.type === 'StyleDirective') {
+			style_directives.push(attribute);
+		}
+	}
+
+	return prepare_element_spread(
+		element,
+		select_attributes,
+		style_directives,
+		class_directives,
+		context,
+		transform
+	);
+}
+
+/**
+ * Prepare args for $.attributes(...): compute object, css_hash, classes, styles and flags.
+ * @param {AST.RegularElement | AST.SvelteElement} element
+ * @param {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} attributes
+ * @param {AST.StyleDirective[]} style_directives
+ * @param {AST.ClassDirective[]} class_directives
+ * @param {ComponentContext} context
+ * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
+ * @returns {[ObjectExpression,Literal | undefined, ObjectExpression | undefined, ObjectExpression | undefined, Literal | undefined]}
+ */
+export function prepare_element_spread(
+	element,
+	attributes,
+	style_directives,
+	class_directives,
+	context,
+	transform
+) {
+	/** @type {ObjectExpression | undefined} */
 	let classes;
+	/** @type {ObjectExpression | undefined} */
 	let styles;
 	let flags = 0;
 
@@ -378,9 +441,13 @@ function build_element_spread_attributes(
 				directive.name,
 				directive.expression.type === 'Identifier' && directive.expression.name === directive.name
 					? b.id(directive.name)
-					: /** @type {Expression} */ (context.visit(directive.expression))
+					: transform(
+							/** @type {Expression} */ (context.visit(directive.expression)),
+							directive.metadata.expression
+						)
 			)
 		);
+
 		classes = b.object(properties);
 	}
 
@@ -390,10 +457,9 @@ function build_element_spread_attributes(
 				directive.name,
 				directive.value === true
 					? b.id(directive.name)
-					: build_attribute_value(directive.value, context, true)
+					: build_attribute_value(directive.value, context, transform, true)
 			)
 		);
-
 		styles = b.object(properties);
 	}
 
@@ -401,17 +467,17 @@ function build_element_spread_attributes(
 		flags |= ELEMENT_IS_NAMESPACED | ELEMENT_PRESERVE_ATTRIBUTE_CASE;
 	} else if (is_custom_element_node(element)) {
 		flags |= ELEMENT_PRESERVE_ATTRIBUTE_CASE;
+	} else if (element.type === 'RegularElement' && element.name === 'input') {
+		flags |= ELEMENT_IS_INPUT;
 	}
 
-	const object = build_spread_object(element, attributes, context);
-
+	const object = build_spread_object(element, attributes, context, transform);
 	const css_hash =
 		element.metadata.scoped && context.state.analysis.css.hash
 			? b.literal(context.state.analysis.css.hash)
-			: b.null;
+			: undefined;
 
-	const args = [object, css_hash, classes, styles, flags ? b.literal(flags) : undefined];
-	context.state.template.push(b.call('$.spread_attributes', ...args));
+	return [object, css_hash, classes, styles, flags ? b.literal(flags) : undefined];
 }
 
 /**
@@ -420,8 +486,9 @@ function build_element_spread_attributes(
  * @param {Expression} expression
  * @param {ComponentContext} context
  * @param {string | null} hash
+ * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
  */
-function build_attr_class(class_directives, expression, context, hash) {
+function build_attr_class(class_directives, expression, context, hash, transform) {
 	/** @type {ObjectExpression | undefined} */
 	let directives;
 
@@ -431,7 +498,10 @@ function build_attr_class(class_directives, expression, context, hash) {
 				b.prop(
 					'init',
 					b.literal(directive.name),
-					/** @type {Expression} */ (context.visit(directive.expression, context.state))
+					transform(
+						/** @type {Expression} */ (context.visit(directive.expression, context.state)),
+						directive.metadata.expression
+					)
 				)
 			)
 		);
@@ -454,9 +524,10 @@ function build_attr_class(class_directives, expression, context, hash) {
  *
  * @param {AST.StyleDirective[]} style_directives
  * @param {Expression} expression
- * @param {ComponentContext} context
+ * @param {ComponentContext} context,
+ * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
  */
-function build_attr_style(style_directives, expression, context) {
+function build_attr_style(style_directives, expression, context, transform) {
 	/** @type {ArrayExpression | ObjectExpression | undefined} */
 	let directives;
 
@@ -468,7 +539,7 @@ function build_attr_style(style_directives, expression, context) {
 			const expression =
 				directive.value === true
 					? b.id(directive.name)
-					: build_attribute_value(directive.value, context, true);
+					: build_attribute_value(directive.value, context, transform, true);
 
 			let name = directive.name;
 			if (name[0] !== '-' || name[1] !== '-') {
