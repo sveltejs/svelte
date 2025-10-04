@@ -13,6 +13,15 @@ Svelte is a new way to build web applications. It's a compiler that takes your d
 
 Learn more at the [Svelte website](https://svelte.dev), or stop by the [Discord chatroom](https://svelte.dev/chat).
 
+### How does `svelte` work?
+
+Check out this interactive walkthrough of the `svelte` codebase on CodeCanvas [here](https://www.code-canvas.com/?session=unauthenticatedGithub&repo=svelte&owner=sveltejs&branch=main&OnboardingTutorial=true).
+
+To update the diagram, follow the quick tutorial [here](https://docs.code-canvas.com/updating-diagram).
+
+<img width="1916" alt="CodeCanvas Screenshot" src="https://codecanvas-media-public.s3.amazonaws.com/images/codecanvas-readme-screenshot.png" />
+
+
 ## Supporting Svelte
 
 Svelte is an MIT-licensed open source project with its ongoing development made possible entirely by fantastic volunteers. If you'd like to support their efforts, please consider:
