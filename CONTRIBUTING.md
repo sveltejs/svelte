@@ -26,6 +26,12 @@ One great way you can contribute to the project without writing any code is to h
 - Ask for more information if you believe the issue does not provide all the details required to solve it.
 - Flag issues that are stale or that should be closed.
 - Ask for test plans and review code.
+  
+### How does `svelte` work?
+
+Check out this interactive walkthrough of the `svelte` codebase on CodeCanvas [here](https://www.code-canvas.com/?session=unauthenticatedGithub&repo=svelte&owner=sveltejs&branch=main&OnboardingTutorial=true).
+
+<img width="4286" height="1974" alt="image" src="https://github.com/user-attachments/assets/8e4166df-6e57-45fa-b8b6-f06c87653a27" />
 
 ## Our process
 
