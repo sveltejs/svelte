@@ -23,7 +23,11 @@ export function IfBlock(node, context) {
 	/** @type {Statement} */
 	let statement = b.if(test, consequent, alternate);
 
-	if (node.metadata.expression.has_await) {
+	if (
+		node.metadata.expression.has_await ||
+		node.consequent.metadata.has_await ||
+		node.alternate?.metadata.has_await
+	) {
 		statement = create_async_block(b.block([statement]));
 	}
 
