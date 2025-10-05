@@ -285,6 +285,13 @@ export class Boundary {
 				this.#anchor.before(this.#offscreen_fragment);
 				this.#offscreen_fragment = null;
 			}
+
+			// TODO this feels like a little bit of a kludge, but until we
+			// overhaul the boundary/batch relationship it's probably
+			// the most pragmatic solution available to us
+			queue_micro_task(() => {
+				Batch.ensure().flush();
+			});
 		}
 	}
 
