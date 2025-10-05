@@ -1,5 +1,11 @@
 # svelte
 
+## 5.39.9
+
+### Patch Changes
+
+- fix: flush when pending boundaries resolve ([#16897](https://github.com/sveltejs/svelte/pull/16897))
+
 ## 5.39.8
 
 ### Patch Changes
