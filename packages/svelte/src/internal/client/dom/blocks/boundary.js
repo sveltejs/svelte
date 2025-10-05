@@ -33,6 +33,7 @@ import { Batch, current_batch, effect_pending_updates } from '../../reactivity/b
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
+import { flushSync } from 'svelte';
 
 /**
  * @typedef {{
@@ -285,6 +286,10 @@ export class Boundary {
 				this.#anchor.before(this.#offscreen_fragment);
 				this.#offscreen_fragment = null;
 			}
+
+			queue_micro_task(() => {
+				Batch.ensure().flush();
+			});
 		}
 	}
 
