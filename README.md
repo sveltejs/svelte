@@ -13,7 +13,6 @@ Svelte is a new way to build web applications. It's a compiler that takes your d
 
 Learn more at the [Svelte website](https://svelte.dev), or stop by the [Discord chatroom](https://svelte.dev/chat).
 
-
 ## Supporting Svelte
 
 Svelte is an MIT-licensed open source project with its ongoing development made possible entirely by fantastic volunteers. If you'd like to support their efforts, please consider:
