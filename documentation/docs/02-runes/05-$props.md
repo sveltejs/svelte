@@ -35,6 +35,8 @@ On the other side, inside `MyComponent.svelte`, we can receive props with the `$
 <p>this component is {+++adjective+++}</p>
 ```
 
+> [!NOTE] If you use destructuring with a `$props` declaration, the resulting variables will all be reactive.
+
 ## Fallback values
 
 Destructuring allows us to declare fallback values, which are used if the parent component does not set a given prop (or the value is `undefined`):
