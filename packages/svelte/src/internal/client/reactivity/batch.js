@@ -178,6 +178,8 @@ export class Batch {
 			flush_queued_effects(render_effects);
 			flush_queued_effects(effects);
 
+			previous_batch = null;
+
 			this.#deferred?.resolve();
 		} else {
 			this.#defer_effects(this.#render_effects);
@@ -280,17 +282,6 @@ export class Batch {
 
 	deactivate() {
 		current_batch = null;
-		previous_batch = null;
-
-		for (const update of effect_pending_updates) {
-			effect_pending_updates.delete(update);
-			update();
-
-			if (current_batch !== null) {
-				// only do one at a time
-				break;
-			}
-		}
 	}
 
 	flush() {
@@ -307,6 +298,16 @@ export class Batch {
 		}
 
 		this.deactivate();
+
+		for (const update of effect_pending_updates) {
+			effect_pending_updates.delete(update);
+			update();
+
+			if (current_batch !== null) {
+				// only do one at a time
+				break;
+			}
+		}
 	}
 
 	/**
