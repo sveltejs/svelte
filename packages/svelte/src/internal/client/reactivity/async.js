@@ -52,8 +52,6 @@ export function flatten(sync, async, fn) {
 
 	Promise.all(async.map((expression) => async_derived(expression)))
 		.then((result) => {
-			batch?.activate();
-
 			restore();
 
 			try {
