@@ -1,5 +1,19 @@
 # svelte
 
+## 5.39.10
+
+### Patch Changes
+
+- fix: hydrate each blocks inside element correctly ([#16908](https://github.com/sveltejs/svelte/pull/16908))
+
+- fix: allow await in if block consequent and alternate ([#16890](https://github.com/sveltejs/svelte/pull/16890))
+
+- fix: don't replace rest props with `$$props` for excluded props ([#16898](https://github.com/sveltejs/svelte/pull/16898))
+
+- fix: correctly transform `$derived` private fields on server ([#16894](https://github.com/sveltejs/svelte/pull/16894))
+
+- fix: add `UNKNOWN` evaluation value before breaking for `binding.initial===SnippetBlock` ([#16910](https://github.com/sveltejs/svelte/pull/16910))
+
 ## 5.39.9
 
 ### Patch Changes
