@@ -122,7 +122,7 @@ export class Binding {
 
 	/**
 	 * Additional metadata, varies per binding type
-	 * @type {null | { inside_rest?: boolean; is_template_declaration?: boolean }}
+	 * @type {null | { inside_rest?: boolean; is_template_declaration?: boolean; exclude_props?: string[] }}
 	 */
 	metadata = null;
 
