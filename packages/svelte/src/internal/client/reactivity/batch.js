@@ -375,21 +375,17 @@ export class Batch {
 	decrement() {
 		this.#pending -= 1;
 
-		if (this.#pending === 0) {
-			for (const e of this.#dirty_effects) {
-				set_signal_status(e, DIRTY);
-				schedule_effect(e);
-			}
-
-			for (const e of this.#maybe_dirty_effects) {
-				set_signal_status(e, MAYBE_DIRTY);
-				schedule_effect(e);
-			}
-
-			this.flush();
-		} else {
-			this.deactivate();
+		for (const e of this.#dirty_effects) {
+			set_signal_status(e, DIRTY);
+			schedule_effect(e);
 		}
+
+		for (const e of this.#maybe_dirty_effects) {
+			set_signal_status(e, MAYBE_DIRTY);
+			schedule_effect(e);
+		}
+
+		this.flush();
 	}
 
 	/** @param {() => void} fn */
