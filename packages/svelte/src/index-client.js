@@ -242,7 +242,13 @@ function init_update_callbacks(context) {
 }
 
 export { flushSync } from './internal/client/reactivity/batch.js';
-export { getContext, getAllContexts, hasContext, setContext } from './internal/client/context.js';
+export {
+	getContext,
+	getAllContexts,
+	hasContext,
+	setContext,
+	hydratable
+} from './internal/client/context.js';
 export { hydrate, mount, unmount } from './internal/client/render.js';
 export { tick, untrack, settled } from './internal/client/runtime.js';
 export { createRawSnippet } from './internal/client/dom/blocks/snippet.js';

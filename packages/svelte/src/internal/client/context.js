@@ -6,6 +6,7 @@ import { create_user_effect } from './reactivity/effects.js';
 import { async_mode_flag, legacy_mode_flag } from '../flags/index.js';
 import { FILENAME } from '../../constants.js';
 import { BRANCH_EFFECT, EFFECT_RAN } from './constants.js';
+import { hydrating } from './dom/hydration.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;
@@ -192,6 +193,30 @@ export function pop(component) {
 /** @returns {boolean} */
 export function is_runes() {
 	return !legacy_mode_flag || (component_context !== null && component_context.l === null);
+}
+
+/**
+ * @template T
+ * @param {string} key
+ * @param {() => Promise<T>} fn
+ * @returns {Promise<T>}
+ */
+export function hydratable(key, fn) {
+	if (!hydrating) {
+		return fn();
+	}
+	/** @type {Map<string, unknown> | undefined} */
+	// @ts-expect-error
+	var store = window.__svelte?.h;
+	if (store === undefined) {
+		throw new Error('TODO this should be impossible?');
+	}
+	if (!store.has(key)) {
+		throw new Error(
+			`TODO Expected hydratable key "${key}" to exist during hydration, but it does not`
+		);
+	}
+	return /** @type {Promise<T>} */ (store.get(key));
 }
 
 /**

@@ -7,6 +7,7 @@ import * as e from './errors.js';
 import * as w from './warnings.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { attributes } from './index.js';
+import { uneval } from 'devalue';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
@@ -267,6 +268,25 @@ export class Renderer {
 	}
 
 	/**
+	 * @template T
+	 * @param {string} key
+	 * @param {() => Promise<T>} fn
+	 */
+	register_hydratable(key, fn) {
+		if (this.global.mode === 'sync') {
+			// TODO
+			throw new Error('no no');
+		}
+		if (this.global.hydratables.has(key)) {
+			// TODO error
+			throw new Error("can't have two hydratables with the same key");
+		}
+		const result = fn();
+		this.global.hydratables.set(key, { blocking: true, value: result });
+		return result;
+	}
+
+	/**
 	 * @param {() => void} fn
 	 */
 	on_destroy(fn) {
@@ -467,6 +487,7 @@ export class Renderer {
 			const renderer = Renderer.#open_render('async', component, options);
 
 			const content = await renderer.#collect_content_async();
+			content.head = (await renderer.#collect_hydratables()) + content.head;
 			return Renderer.#close_render(content, renderer);
 		} finally {
 			abort();
@@ -509,6 +530,23 @@ export class Renderer {
 		}
 
 		return content;
+	}
+
+	async #collect_hydratables() {
+		const map = this.global.hydratables;
+		if (!map) return '';
+
+		// TODO add namespacing for multiple apps, nonce, csp, whatever -- not sure what we need to do there
+		/** @type {string} */
+		let resolved = '<script>(window.__svelte ??= {}).h = ';
+		let resolved_map = new Map();
+		for (const [k, v] of map) {
+			if (!v.blocking) continue;
+			// sequential await is okay here -- all the work is already kicked off
+			resolved_map.set(k, await v.value);
+		}
+		resolved += uneval(resolved_map) + '</script>';
+		return resolved;
 	}
 
 	/**
@@ -575,6 +613,9 @@ export class SSRState {
 
 	/** @readonly @type {Set<{ hash: string; code: string }>} */
 	css = new Set();
+
+	/** @type {Map<string, { blocking: boolean, value: Promise<unknown> }>} */
+	hydratables = new Map();
 
 	/** @type {{ path: number[], value: string }} */
 	#title = { path: [], value: '' };

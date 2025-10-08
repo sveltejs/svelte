@@ -476,6 +476,8 @@ declare module 'svelte' {
 	 *
 	 * */
 	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
+
+	export function hydratable<T>(key: string, fn: () => Promise<T>): Promise<T>;
 	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
 	 * Transitions will play during the initial render unless the `intro` option is set to `false`.
@@ -2390,6 +2392,28 @@ declare module 'svelte/reactivity' {
 	 * @since 5.7.0
 	 */
 	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
+	export class Resource<T> implements Partial<Promise<T>> {
+		
+		constructor(fn: () => Promise<T>, init?: (() => Promise<T>) | undefined);
+		get then(): <TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined) => Promise<TResult1 | TResult2>;
+		get catch(): (reject: any) => Promise<T>;
+		get finally(): (fn: any) => Promise<any>;
+		get current(): T | undefined;
+		get error(): undefined;
+		/**
+		 * Returns true if the resource is loading or reloading.
+		 */
+		get loading(): boolean;
+		/**
+		 * Returns true once the resource has been loaded for the first time.
+		 */
+		get ready(): boolean;
+		
+		refresh(): Promise<void>;
+		
+		set(value: T): void;
+		#private;
+	}
 	class ReactiveValue<T> {
 		
 		constructor(fn: () => T, onsubscribe: (update: () => void) => void);

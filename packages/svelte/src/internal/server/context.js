@@ -110,3 +110,19 @@ export async function save(promise) {
 		return value;
 	};
 }
+
+/**
+ * @template T
+ * @param {string} key
+ * @param {() => Promise<T>} fn
+ * @returns {Promise<T>}
+ */
+export function hydratable(key, fn) {
+	if (ssr_context === null || ssr_context.r === null) {
+		// TODO probably should make this a different error like await_reactivity_loss
+		// also when can context be defined but r be null? just when context isn't used at all?
+		e.lifecycle_outside_component('hydratable');
+	}
+
+	return ssr_context.r.register_hydratable(key, fn);
+}
