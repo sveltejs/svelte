@@ -1,5 +1,11 @@
 # svelte
 
+## 5.39.11
+
+### Patch Changes
+
+- fix: flush batches whenever an async value resolves ([#16912](https://github.com/sveltejs/svelte/pull/16912))
+
 ## 5.39.10
 
 ### Patch Changes
