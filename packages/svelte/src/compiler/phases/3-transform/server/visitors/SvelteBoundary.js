@@ -43,11 +43,14 @@ export function SvelteBoundary(node, context) {
 			);
 			const pending = b.call(callee, b.id('$$renderer'));
 			const block = /** @type {BlockStatement} */ (context.visit(node.fragment));
+			const statement = node.fragment.metadata.has_await
+				? create_async_block(b.block([block]))
+				: block;
 			context.state.template.push(
 				b.if(
 					callee,
-					b.block(build_template([block_open_else, pending, block_close])),
-					b.block(build_template([block_open, block, block_close]))
+					b.block([b.stmt(pending)]),
+					b.block(build_template([block_open, statement, block_close]))
 				)
 			);
 		} else {
