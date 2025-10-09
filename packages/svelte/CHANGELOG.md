@@ -1,5 +1,15 @@
 # svelte
 
+## 5.39.12
+
+### Patch Changes
+
+- fix: track the user's getter of `bind:this` ([#16916](https://github.com/sveltejs/svelte/pull/16916))
+
+- fix: generate correct SSR code for the case where `pending` is an attribute ([#16919](https://github.com/sveltejs/svelte/pull/16919))
+
+- fix: generate correct code for `each` blocks with async body ([#16923](https://github.com/sveltejs/svelte/pull/16923))
+
 ## 5.39.11
 
 ### Patch Changes
