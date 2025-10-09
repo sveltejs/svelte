@@ -378,7 +378,8 @@ function set_attributes(
 			const opts = {};
 			const event_handle_key = '$$' + key;
 			let event_name = key.slice(2);
-			var delegated = is_delegated(event_name);
+			// Events on custom elements can be anything, we can't assume they bubble
+			var delegated = !is_custom_element && is_delegated(event_name);
 
 			if (is_capture_event(event_name)) {
 				event_name = event_name.slice(0, -7);
