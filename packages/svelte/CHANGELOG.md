@@ -1,5 +1,57 @@
 # svelte
 
+## 5.39.11
+
+### Patch Changes
+
+- fix: flush batches whenever an async value resolves ([#16912](https://github.com/sveltejs/svelte/pull/16912))
+
+## 5.39.10
+
+### Patch Changes
+
+- fix: hydrate each blocks inside element correctly ([#16908](https://github.com/sveltejs/svelte/pull/16908))
+
+- fix: allow await in if block consequent and alternate ([#16890](https://github.com/sveltejs/svelte/pull/16890))
+
+- fix: don't replace rest props with `$$props` for excluded props ([#16898](https://github.com/sveltejs/svelte/pull/16898))
+
+- fix: correctly transform `$derived` private fields on server ([#16894](https://github.com/sveltejs/svelte/pull/16894))
+
+- fix: add `UNKNOWN` evaluation value before breaking for `binding.initial===SnippetBlock` ([#16910](https://github.com/sveltejs/svelte/pull/16910))
+
+## 5.39.9
+
+### Patch Changes
+
+- fix: flush when pending boundaries resolve ([#16897](https://github.com/sveltejs/svelte/pull/16897))
+
+## 5.39.8
+
+### Patch Changes
+
+- fix: check boundary `pending` attribute at runtime on server ([#16855](https://github.com/sveltejs/svelte/pull/16855))
+
+- fix: preserve tuple type in `$state.snapshot` ([#16864](https://github.com/sveltejs/svelte/pull/16864))
+
+- fix: allow await in svelte:boundary without pending ([#16857](https://github.com/sveltejs/svelte/pull/16857))
+
+- fix: update `bind:checked` error message to clarify usage with radio inputs ([#16874](https://github.com/sveltejs/svelte/pull/16874))
+
+## 5.39.7
+
+### Patch Changes
+
+- chore: simplify batch logic ([#16847](https://github.com/sveltejs/svelte/pull/16847))
+
+- fix: rebase pending batches when other batches are committed ([#16866](https://github.com/sveltejs/svelte/pull/16866))
+
+- fix: wrap async `children` in `$$renderer.async` ([#16862](https://github.com/sveltejs/svelte/pull/16862))
+
+- fix: silence label warning for buttons and anchor tags with title attributes ([#16872](https://github.com/sveltejs/svelte/pull/16872))
+
+- fix: coerce nullish `<title>` to empty string ([#16863](https://github.com/sveltejs/svelte/pull/16863))
+
 ## 5.39.6
 
 ### Patch Changes

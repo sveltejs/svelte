@@ -209,10 +209,8 @@ export function parse_directive_name(name) {
  * @param {import('zimmerframe').Context<AST.SvelteNode, ComponentClientTransformState>} context
  */
 export function build_bind_this(expression, value, { state, visit }) {
-	if (expression.type === 'SequenceExpression') {
-		const [get, set] = /** @type {SequenceExpression} */ (visit(expression)).expressions;
-		return b.call('$.bind_this', value, set, get);
-	}
+	const [getter, setter] =
+		expression.type === 'SequenceExpression' ? expression.expressions : [null, null];
 
 	/** @type {Identifier[]} */
 	const ids = [];
@@ -229,7 +227,7 @@ export function build_bind_this(expression, value, { state, visit }) {
 	// Note that we only do this for each context variables, the consequence is that the value might be stale in
 	// some scenarios where the value is a member expression with changing computed parts or using a combination of multiple
 	// variables, but that was the same case in Svelte 4, too. Once legacy mode is gone completely, we can revisit this.
-	walk(expression, null, {
+	walk(getter ?? expression, null, {
 		Identifier(node, { path }) {
 			if (seen.includes(node.name)) return;
 			seen.push(node.name);
@@ -260,9 +258,17 @@ export function build_bind_this(expression, value, { state, visit }) {
 
 	const child_state = { ...state, transform };
 
-	const get = /** @type {Expression} */ (visit(expression, child_state));
-	const set = /** @type {Expression} */ (
-		visit(b.assignment('=', expression, b.id('$$value')), child_state)
+	let get = /** @type {Expression} */ (visit(getter ?? expression, child_state));
+	let set = /** @type {Expression} */ (
+		visit(
+			setter ??
+				b.assignment(
+					'=',
+					/** @type {Identifier | MemberExpression} */ (expression),
+					b.id('$$value')
+				),
+			child_state
+		)
 	);
 
 	// If we're mutating a property, then it might already be non-existent.
@@ -275,13 +281,25 @@ export function build_bind_this(expression, value, { state, visit }) {
 		node = node.object;
 	}
 
-	return b.call(
-		'$.bind_this',
-		value,
-		b.arrow([b.id('$$value'), ...ids], set),
-		b.arrow([...ids], get),
-		values.length > 0 && b.thunk(b.array(values))
-	);
+	get =
+		get.type === 'ArrowFunctionExpression'
+			? b.arrow([...ids], get.body)
+			: get.type === 'FunctionExpression'
+				? b.function(null, [...ids], get.body)
+				: getter
+					? get
+					: b.arrow([...ids], get);
+
+	set =
+		set.type === 'ArrowFunctionExpression'
+			? b.arrow([set.params[0] ?? b.id('_'), ...ids], set.body)
+			: set.type === 'FunctionExpression'
+				? b.function(null, [set.params[0] ?? b.id('_'), ...ids], set.body)
+				: setter
+					? set
+					: b.arrow([b.id('$$value'), ...ids], set);
+
+	return b.call('$.bind_this', value, set, get, values.length > 0 && b.thunk(b.array(values)));
 }
 
 /**

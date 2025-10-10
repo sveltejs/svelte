@@ -85,13 +85,15 @@ declare namespace $state {
 			? NonReactive<T>
 			: T extends { toJSON(): infer R }
 				? R
-				: T extends Array<infer U>
-					? Array<Snapshot<U>>
-					: T extends object
-						? T extends { [key: string]: any }
-							? { [K in keyof T]: Snapshot<T[K]> }
-							: never
-						: never;
+				: T extends readonly unknown[]
+					? { [K in keyof T]: Snapshot<T[K]> }
+					: T extends Array<infer U>
+						? Array<Snapshot<U>>
+						: T extends object
+							? T extends { [key: string]: any }
+								? { [K in keyof T]: Snapshot<T[K]> }
+								: never
+							: never;
 
 	/**
 	 * Declares state that is _not_ made deeply reactive — instead of mutating it,
