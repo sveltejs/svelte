@@ -111,6 +111,7 @@ export {
 } from './reactivity/deriveds.js';
 export {
 	aborted,
+	effect_allowed,
 	effect_tracking,
 	effect_root,
 	legacy_pre_effect,
