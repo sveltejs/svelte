@@ -1,13 +1,24 @@
 <script>
-	let deferred = $state(Promise.withResolvers());
+	let condition = $state(true);
+
+	let deferreds = [];
+
+	function push(value) {
+		const deferred = Promise.withResolvers();
+		deferreds.push({ deferred, value });
+		return deferred.promise;
+	}
 </script>
 
-<button onclick={() => deferred = Promise.withResolvers()}>reset</button>
-<button onclick={() => deferred.resolve(true)}>true</button>
-<button onclick={() => deferred.resolve(false)}>false</button>
+<button onclick={() => {
+	const d = deferreds.shift();
+	d?.deferred.resolve(d.value);
+}}>shift</button>
+<button onclick={() => condition = true}>true</button>
+<button onclick={() => condition = false}>false</button>
 
 <svelte:boundary>
-	{#if await deferred.promise}
+	{#if await push(condition)}
 		<h1>yes</h1>
 	{:else}
 		<h1>no</h1>

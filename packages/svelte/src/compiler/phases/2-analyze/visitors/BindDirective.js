@@ -33,7 +33,7 @@ export function BindDirective(node, context) {
 				e.bind_invalid_target(
 					node,
 					node.name,
-					property.valid_elements.map((valid_element) => `<${valid_element}>`).join(', ')
+					property.valid_elements.map((valid_element) => `\`<${valid_element}>\``).join(', ')
 				);
 			}
 
@@ -67,11 +67,15 @@ export function BindDirective(node, context) {
 					}
 				} else {
 					if (node.name === 'checked' && type?.value[0].data !== 'checkbox') {
-						e.bind_invalid_target(node, node.name, '<input type="checkbox">');
+						e.bind_invalid_target(
+							node,
+							node.name,
+							`\`<input type="checkbox">\`${type?.value[0].data === 'radio' ? ` — for \`<input type="radio">\`, use \`bind:group\`` : ''}`
+						);
 					}
 
 					if (node.name === 'files' && type?.value[0].data !== 'file') {
-						e.bind_invalid_target(node, node.name, '<input type="file">');
+						e.bind_invalid_target(node, node.name, '`<input type="file">`');
 					}
 				}
 			}
@@ -94,7 +98,7 @@ export function BindDirective(node, context) {
 				e.bind_invalid_target(
 					node,
 					node.name,
-					`non-<svg> elements. Use 'clientWidth' for <svg> instead`
+					`non-\`<svg>\` elements. Use \`bind:clientWidth\` for \`<svg>\` instead`
 				);
 			}
 
