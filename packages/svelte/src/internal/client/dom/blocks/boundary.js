@@ -8,19 +8,15 @@ import {
 import { HYDRATION_START_ELSE } from '../../../../constants.js';
 import { component_context, set_component_context } from '../../context.js';
 import { handle_error, invoke_error_boundary } from '../../error-handling.js';
-import {
-	block,
-	branch,
-	destroy_effect,
-	inspect_effect,
-	pause_effect
-} from '../../reactivity/effects.js';
+import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
 import {
 	active_effect,
 	active_reaction,
 	get,
+	read_pending,
 	set_active_effect,
-	set_active_reaction
+	set_active_reaction,
+	set_read_pending
 } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -35,11 +31,10 @@ import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { DEV } from 'esm-env';
-import { Batch, current_batch, effect_pending_updates } from '../../reactivity/batch.js';
+import { Batch, effect_pending_updates } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
-import { untrack } from 'svelte';
 
 /**
  * @typedef {{
@@ -455,7 +450,7 @@ export function get_boundary() {
 }
 
 /**
- * @param {(() => any) | void} fn
+ * @param {() => any} [fn]
  */
 export function pending(fn) {
 	if (active_effect === null) {
@@ -465,28 +460,23 @@ export function pending(fn) {
 	var boundary = active_effect.b;
 
 	if (boundary === null) {
-		return 0; // TODO eventually we will need this to be global
+		return fn ? fn() : 0; // TODO eventually we will need this to be global
 	}
+
+	var pending = boundary.get_effect_pending();
 
 	if (fn) {
-		const signal = source(untrack(fn));
+		var value;
+		var prev_read_pending = read_pending;
+		set_read_pending(true);
+		try {
+			value = fn();
+		} finally {
+			set_read_pending(prev_read_pending);
+		}
 
-		inspect_effect(() => {
-			const value = fn();
-			let stale = false;
-
-			queue_micro_task(() => {
-				if (stale) return;
-				internal_set(signal, value);
-			});
-
-			return () => {
-				stale = true;
-			};
-		});
-
-		return signal;
+		return value;
+	} else {
+		return pending;
 	}
-
-	return boundary.get_effect_pending();
 }

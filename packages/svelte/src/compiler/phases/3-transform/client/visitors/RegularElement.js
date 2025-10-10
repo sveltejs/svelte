@@ -310,8 +310,7 @@ export function RegularElement(node, context) {
 		metadata,
 		scope: /** @type {Scope} */ (context.state.scopes.get(node.fragment)),
 		preserve_whitespace:
-			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea',
-		effect_pending: new Map()
+			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea'
 	};
 
 	const { hoisted, trimmed } = clean_nodes(
@@ -377,10 +376,6 @@ export function RegularElement(node, context) {
 		if (needs_reset) {
 			child_state.init.push(b.stmt(b.call('$.reset', context.state.node)));
 		}
-	}
-
-	for (const [expression, id] of state.effect_pending) {
-		child_state.init.push(b.const(id, b.call('$.pending', b.thunk(expression))));
 	}
 
 	if (node.fragment.nodes.some((node) => node.type === 'SnippetBlock')) {
