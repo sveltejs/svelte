@@ -68,6 +68,7 @@ export function Fragment(node, context) {
 		memoizer: new Memoizer(),
 		template: new Template(),
 		transform: { ...context.state.transform },
+		effect_pending: new Map(),
 		metadata: {
 			namespace,
 			bound_contenteditable: context.state.metadata.bound_contenteditable
@@ -151,6 +152,10 @@ export function Fragment(node, context) {
 	}
 
 	body.push(...state.consts);
+
+	for (const [expression, id] of state.effect_pending) {
+		body.push(b.const(id, b.call('$.pending', b.thunk(expression))));
+	}
 
 	if (has_await) {
 		body.push(b.if(b.call('$.aborted'), b.return()));
