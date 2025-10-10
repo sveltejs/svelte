@@ -1,5 +1,6 @@
 ---
 title: $derived
+use_cases: "computed values, calculated properties, derived state, reactive expressions, data transformations"
 ---
 
 Derived state is declared with the `$derived` rune:
