@@ -63,6 +63,16 @@ let last_scheduled_effect = null;
 let is_flushing = false;
 export let is_flushing_sync = false;
 
+/**
+ * A map of signal -> pending value
+ *
+ * A signal will appear in here if there's pending async work and a signal
+ * cannot be updated to its new value until that work completes.
+ *
+ * Related: `read_pending` in `runtime.js`
+ */
+export let pending_values = new Map();
+
 export class Batch {
 	/**
 	 * The current values of any sources that are updated in this batch
@@ -455,6 +465,9 @@ export class Batch {
 			}
 		}
 
+		var prev_pending = pending_values;
+		pending_values = current_values;
+
 		return () => {
 			for (const [source, { v, wv }] of current_values) {
 				// reset the source to the current value (unless
@@ -465,6 +478,7 @@ export class Batch {
 			}
 
 			batch_deriveds = null;
+			pending_values = prev_pending;
 		};
 	}
 }

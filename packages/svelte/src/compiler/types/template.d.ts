@@ -57,7 +57,6 @@ export namespace AST {
 			 */
 			dynamic: boolean;
 			has_await: boolean;
-			effect_pending_expressions: Expression[];
 		};
 	}
 

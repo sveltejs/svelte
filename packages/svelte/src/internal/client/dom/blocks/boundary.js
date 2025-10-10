@@ -19,8 +19,10 @@ import {
 	active_effect,
 	active_reaction,
 	get,
+	read_pending,
 	set_active_effect,
-	set_active_reaction
+	set_active_reaction,
+	set_read_pending
 } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -455,7 +457,7 @@ export function get_boundary() {
 }
 
 /**
- * @param {(() => any) | void} fn
+ * @param {() => any} [fn]
  */
 export function pending(fn) {
 	if (active_effect === null) {
@@ -465,28 +467,23 @@ export function pending(fn) {
 	var boundary = active_effect.b;
 
 	if (boundary === null) {
-		return 0; // TODO eventually we will need this to be global
+		return fn ? fn() : 0; // TODO eventually we will need this to be global
 	}
+
+	var pending = boundary.get_effect_pending();
 
 	if (fn) {
-		const signal = source(untrack(fn));
+		var value;
+		var prev_read_pending = read_pending;
+		set_read_pending(true);
+		try {
+			value = fn();
+		} finally {
+			set_read_pending(prev_read_pending);
+		}
 
-		inspect_effect(() => {
-			const value = fn();
-			let stale = false;
-
-			queue_micro_task(() => {
-				if (stale) return;
-				internal_set(signal, value);
-			});
-
-			return () => {
-				stale = true;
-			};
-		});
-
-		return signal;
+		return value;
+	} else {
+		return pending;
 	}
-
-	return boundary.get_effect_pending();
 }

@@ -42,7 +42,13 @@ import {
 	set_dev_stack
 } from './context.js';
 import * as w from './warnings.js';
-import { Batch, batch_deriveds, flushSync, schedule_effect } from './reactivity/batch.js';
+import {
+	Batch,
+	batch_deriveds,
+	flushSync,
+	pending_values,
+	schedule_effect
+} from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
@@ -142,6 +148,17 @@ export let skip_reaction = false;
 
 export function increment_write_version() {
 	return ++write_version;
+}
+
+/**
+ * Whether or not we should get the latest value of a signal regardless of whether or not it is pending,
+ * i.e. inside a boundary with pending async work in which case normally a stale value might be shown.
+ */
+export let read_pending = false;
+
+/** @param {boolean} value */
+export function set_read_pending(value) {
+	read_pending = value;
 }
 
 /**
@@ -653,7 +670,7 @@ export function get(signal) {
 		if (is_derived) {
 			derived = /** @type {Derived} */ (signal);
 
-			var value = derived.v;
+			var value = /** @type {V} */ (derived.v);
 
 			// if the derived is dirty and has reactions, or depends on the values that just changed, re-execute
 			// (a derived can be maybe_dirty due to the effect destroy removing its last reaction)
@@ -680,11 +697,16 @@ export function get(signal) {
 		}
 	}
 
-	if ((signal.f & ERROR_VALUE) !== 0) {
-		throw signal.v;
+	var value = signal.v;
+	if (read_pending && pending_values.has(signal)) {
+		value = pending_values.get(signal).v;
 	}
 
-	return signal.v;
+	if ((signal.f & ERROR_VALUE) !== 0) {
+		throw value;
+	}
+
+	return value;
 }
 
 /** @param {Derived} derived */
