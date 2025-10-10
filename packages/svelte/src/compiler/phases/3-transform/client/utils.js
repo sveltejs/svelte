@@ -1,8 +1,9 @@
-/** @import { ArrowFunctionExpression, AssignmentExpression, BlockStatement, Expression, FunctionDeclaration, FunctionExpression, Identifier, Node, Pattern, UpdateExpression } from 'estree' */
+/** @import { ArrowFunctionExpression, AssignmentExpression, BlockStatement, CallExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, Node, Pattern, UpdateExpression } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { ClientTransformState, ComponentClientTransformState, ComponentContext } from './types.js' */
-/** @import { Analysis } from '../../types.js' */
+/** @import { Analysis, ComponentAnalysis } from '../../types.js' */
 /** @import { Scope } from '../../scope.js' */
+/** @import { Visitor } from 'zimmerframe' */
 import * as b from '#compiler/builders';
 import { is_simple_expression, save } from '../../../utils/ast.js';
 import {
@@ -15,6 +16,7 @@ import {
 import { dev } from '../../../state.js';
 import { walk } from 'zimmerframe';
 import { validate_mutation } from './visitors/shared/utils.js';
+import is_reference from 'is-reference';
 
 /**
  * @param {Binding} binding
@@ -26,6 +28,69 @@ export function is_state_source(binding, analysis) {
 		(binding.kind === 'state' || binding.kind === 'raw_state') &&
 		(!analysis.immutable || binding.reassigned || analysis.accessors)
 	);
+}
+
+/**
+ * @param {Expression} expression
+ * @param {Scope} scope
+ * @param {Analysis | ComponentAnalysis} analysis
+ * @param {Binding[]} bindings bindings currently being parallelized (and cannot be accessed)
+ * @returns {boolean}
+ */
+export function can_be_parallelized(expression, scope, analysis, bindings) {
+	let should_stop = false;
+	/** @type {Set<string>} */
+	const references = new Set();
+	/** @type {Visitor<Node, null, Node>} */
+	function stop(_, { stop }) {
+		should_stop = true;
+		stop();
+	}
+	walk(/** @type {Node} */ (expression), null, {
+		ArrowFunctionExpression: stop,
+		FunctionExpression: stop,
+		MemberExpression: stop,
+		CallExpression: stop,
+		NewExpression: stop,
+		StaticBlock: stop,
+		Identifier(node, { path }) {
+			// @ts-ignore this errors for me for some reason
+			if (is_reference(node, /** @type {Node} */ (path.at(-1)))) {
+				references.add(node.name);
+			}
+		}
+	});
+	if (should_stop) {
+		return false;
+	}
+	for (const reference of references) {
+		const binding = scope.get(reference);
+		if (binding === null || binding.declaration_kind === 'import') {
+			return false;
+		}
+		if (binding.scope !== analysis.module.scope) {
+			if (!('template' in analysis)) {
+				return false;
+			}
+			if (binding.scope !== analysis.instance.scope) {
+				return false;
+			}
+		}
+
+		if (bindings.includes(binding)) {
+			return false;
+		}
+
+		// we assume that async deriveds will be parallelized here
+		// TODO can we confirm this instead of relying on assumptions?
+		if (binding.kind === 'derived') {
+			const init = /** @type {CallExpression} */ (binding.initial);
+			if (analysis.async_deriveds.has(init)) {
+				return false;
+			}
+		}
+	}
+	return true;
 }
 
 /**
