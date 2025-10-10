@@ -670,7 +670,7 @@ export function get(signal) {
 		if (is_derived) {
 			derived = /** @type {Derived} */ (signal);
 
-			var value = /** @type {V} */ (derived.v);
+			var derived_value = derived.v;
 
 			// if the derived is dirty and has reactions, or depends on the values that just changed, re-execute
 			// (a derived can be maybe_dirty due to the effect destroy removing its last reaction)
@@ -678,12 +678,12 @@ export function get(signal) {
 				((derived.f & CLEAN) === 0 && derived.reactions !== null) ||
 				depends_on_old_values(derived)
 			) {
-				value = execute_derived(derived);
+				derived_value = execute_derived(derived);
 			}
 
-			old_values.set(derived, value);
+			old_values.set(derived, derived_value);
 
-			return value;
+			return derived_value;
 		}
 	} else if (is_derived) {
 		derived = /** @type {Derived} */ (signal);
@@ -699,7 +699,7 @@ export function get(signal) {
 
 	var value = signal.v;
 	if (read_pending && pending_values.has(signal)) {
-		value = pending_values.get(signal).v;
+		value = /** @type {{v: any}} */ (pending_values.get(signal)).v;
 	}
 
 	if ((signal.f & ERROR_VALUE) !== 0) {

@@ -70,6 +70,8 @@ export let is_flushing_sync = false;
  * cannot be updated to its new value until that work completes.
  *
  * Related: `read_pending` in `runtime.js`
+ *
+ * @type {Map<Source, { v: any }>}
  */
 export let pending_values = new Map();
 
