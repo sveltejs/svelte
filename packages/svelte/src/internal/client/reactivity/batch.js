@@ -626,7 +626,8 @@ function flush_queued_effects(effects) {
 				// TODO this feels incorrect! it gets the tests passing
 				old_values.clear();
 
-				for (const e of eager_block_effects) {
+				// Update effects in reverse order to ensure outer guards are processed before their contents
+				for (const e of eager_block_effects.toReversed()) {
 					update_effect(e);
 				}
 
