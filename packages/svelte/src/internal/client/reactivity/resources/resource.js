@@ -1,6 +1,6 @@
 /** @import { Source, Derived } from '#client' */
-import { state, derived, set, get, tick } from 'svelte/internal/client';
-import { deferred, noop } from '../internal/shared/utils';
+import { state, derived, set, get, tick } from '../../index.js';
+import { deferred, noop } from '../../../shared/utils.js';
 
 /**
  * @template T
@@ -33,8 +33,6 @@ export class Resource {
 		return get(this.#raw);
 	});
 
-	#onrefresh;
-
 	/** {@type Source<any>} */
 	#error = state(undefined);
 
@@ -58,19 +56,18 @@ export class Resource {
 
 	/**
 	 * @param {() => Promise<T>} fn
-	 * @param {() => Promise<T>} [init]
-	 * @param {() => void} [onrefresh]
 	 */
-	constructor(fn, init = fn, onrefresh = noop) {
+	constructor(fn) {
 		this.#fn = fn;
-		this.#promise = state(this.#run(init));
-		this.#onrefresh = onrefresh;
+		this.#promise = state(this.#run());
 	}
 
-	/** @param {() => Promise<T>} fn */
-	#run(fn = this.#fn) {
+	#run() {
 		if (this.#init) {
-			set(this.#loading, true);
+			tick().then(() => {
+				// opt this out of async coordination
+				set(this.#loading, true);
+			});
 		} else {
 			this.#init = true;
 		}
@@ -79,7 +76,7 @@ export class Resource {
 
 		this.#latest.push(resolve);
 
-		Promise.resolve(fn())
+		Promise.resolve(this.#fn())
 			.then((value) => {
 				// Skip the response if resource was refreshed with a later promise while we were waiting for this one to resolve
 				const idx = this.#latest.indexOf(resolve);
@@ -152,21 +149,20 @@ export class Resource {
 	/**
 	 * @returns {Promise<void>}
 	 */
-	refresh() {
-		this.#onrefresh();
+	refresh = () => {
 		const promise = this.#run();
 		set(this.#promise, promise);
 		return promise;
-	}
+	};
 
 	/**
 	 * @param {T} value
 	 */
-	set(value) {
+	set = (value) => {
 		set(this.#ready, true);
 		set(this.#loading, false);
 		set(this.#error, undefined);
 		set(this.#raw, value);
 		set(this.#promise, Promise.resolve());
-	}
+	};
 }

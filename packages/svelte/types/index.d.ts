@@ -2129,6 +2129,7 @@ declare module 'svelte/motion' {
 }
 
 declare module 'svelte/reactivity' {
+	import type { StandardSchemaV1 } from '@standard-schema/spec';
 	/**
 	 * A reactive version of the built-in [`Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date) object.
 	 * Reading the date (whether with methods like `date.getTime()` or `date.toString()`, or via things like [`Intl.DateTimeFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat))
@@ -2394,7 +2395,7 @@ declare module 'svelte/reactivity' {
 	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
 	export class Resource<T> implements Partial<Promise<T>> {
 		
-		constructor(fn: () => Promise<T>, init?: (() => Promise<T>) | undefined);
+		constructor(fn: () => Promise<T>);
 		get then(): <TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined) => Promise<TResult1 | TResult2>;
 		get catch(): (reject: any) => Promise<T>;
 		get finally(): (fn: any) => Promise<any>;
@@ -2409,11 +2410,28 @@ declare module 'svelte/reactivity' {
 		 */
 		get ready(): boolean;
 		
-		refresh(): Promise<void>;
+		refresh: () => Promise<void>;
 		
-		set(value: T): void;
+		set: (value: T) => void;
 		#private;
 	}
+	export function createResource<TReturn, TArgs extends unknown[] = [], TResource extends typeof Resource = typeof Resource>(name: string, fn: (...args: TArgs) => Promise<TReturn>, options?: {
+		Resource?: TResource;
+	} | undefined): (...args: TArgs) => Resource<TReturn>;
+	export function createFetcher<TPathParams extends Record<string, unknown>, TResource extends typeof Resource>(url: string, options?: {
+		Resource?: TResource;
+		schema?: undefined;
+	} | undefined): Fetcher<string | number | Record<string, unknown> | unknown[] | boolean | null, TPathParams>;
+
+	export function createFetcher<TPathParams extends Record<string, unknown>, TSchema extends StandardSchemaV1, TResource extends typeof Resource>(url: string, options: {
+		Resource?: TResource;
+		schema: StandardSchemaV1;
+	}): Fetcher<StandardSchemaV1.InferOutput<TSchema>, TPathParams>;
+	type FetcherInit<TPathParams extends Record<string, unknown>> = {
+		searchParams?: ConstructorParameters<typeof URLSearchParams>[0];
+		pathParams?: TPathParams;
+	} & RequestInit;
+	type Fetcher<TReturn, TPathParams extends Record<string, unknown>> = (init: FetcherInit<TPathParams>) => Resource<TReturn>;
 	class ReactiveValue<T> {
 		
 		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
