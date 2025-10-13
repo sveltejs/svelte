@@ -113,32 +113,24 @@ export function async_derived(fn, location) {
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
 
-	/** @type {Map<Batch, ReturnType<typeof deferred<V>> & { rejected?: boolean }>} */
+	/** @type {Map<Batch, ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Map();
 
 	async_effect(() => {
 		if (DEV) current_async_effect = active_effect;
 
-		/** @type {ReturnType<typeof deferred<V>> & { rejected?: boolean }} */
+		/** @type {ReturnType<typeof deferred<V>>} */
 		var d = deferred();
 		promise = d.promise;
 
 		try {
 			// If this code is changed at some point, make sure to still access the then property
 			// of fn() to read any signals it might access, so that we track them as dependencies.
-			Promise.resolve(fn()).then((v) => {
-				if (d.rejected) {
-					// If we rejected this stale promise, d.resolve
-					// is a noop (d.promise.then(handler) below will never run).
-					// In this case we need to unset the restored context here
-					// to avoid leaking it (and e.g. cause false-positive mutation errors).
-					unset_context();
-				} else {
-					d.resolve(v);
-				}
-			}, d.reject);
+			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
+			Promise.resolve(fn()).then(d.resolve, d.reject).then(unset_context);
 		} catch (error) {
 			d.reject(error);
+			unset_context();
 		}
 
 		if (DEV) current_async_effect = null;
@@ -151,11 +143,7 @@ export function async_derived(fn, location) {
 			if (!pending) {
 				batch.increment();
 
-				var previous_deferred = deferreds.get(batch);
-				if (previous_deferred) {
-					previous_deferred.rejected = true;
-					previous_deferred.reject(STALE_REACTION);
-				}
+				deferreds.get(batch)?.reject(STALE_REACTION);
 				deferreds.set(batch, d);
 			}
 		}
@@ -199,8 +187,6 @@ export function async_derived(fn, location) {
 				boundary.update_pending_count(-1);
 				if (!pending) batch.decrement();
 			}
-
-			unset_context();
 		};
 
 		d.promise.then(handler, (e) => handler(null, e || 'unknown'));
