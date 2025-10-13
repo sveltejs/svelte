@@ -32,7 +32,9 @@ export function EachBlock(node, context) {
 		each.push(b.let(node.index, index));
 	}
 
-	each.push(.../** @type {BlockStatement} */ (context.visit(node.body)).body);
+	const new_body = /** @type {BlockStatement} */ (context.visit(node.body)).body;
+
+	each.push(...(node.body.metadata.has_await ? [create_async_block(b.block(new_body))] : new_body));
 
 	const for_loop = b.for(
 		b.declaration('let', [
@@ -55,7 +57,7 @@ export function EachBlock(node, context) {
 			b.if(
 				b.binary('!==', b.member(array_id, 'length'), b.literal(0)),
 				b.block([open, for_loop]),
-				fallback
+				node.fallback.metadata.has_await ? create_async_block(fallback) : fallback
 			)
 		);
 	} else {

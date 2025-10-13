@@ -99,7 +99,14 @@ export function process_children(nodes, initial, is_element, context) {
 
 			if (is_static_element(node, context.state)) {
 				skipped += 1;
-			} else if (node.type === 'EachBlock' && nodes.length === 1 && is_element) {
+			} else if (
+				node.type === 'EachBlock' &&
+				nodes.length === 1 &&
+				is_element &&
+				// In case it's wrapped in async the async logic will want to skip sibling nodes up until the end, hence we cannot make this controlled
+				// TODO switch this around and instead optimize for elements with a single block child and not require extra comments (neither for async nor normally)
+				!(node.body.metadata.has_await || node.metadata.expression.has_await)
+			) {
 				node.metadata.is_controlled = true;
 			} else {
 				const id = flush_node(false, node.type === 'RegularElement' ? node.name : 'node');

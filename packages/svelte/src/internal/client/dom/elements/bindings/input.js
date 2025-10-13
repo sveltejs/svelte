@@ -43,14 +43,22 @@ export function bind_value(input, get, set = get) {
 		if (value !== (value = get())) {
 			var start = input.selectionStart;
 			var end = input.selectionEnd;
+			var length = input.value.length;
 
 			// the value is coerced on assignment
 			input.value = value ?? '';
 
 			// Restore selection
 			if (end !== null) {
-				input.selectionStart = start;
-				input.selectionEnd = Math.min(end, input.value.length);
+				var new_length = input.value.length;
+				// If cursor was at end and new input is longer, move cursor to new end
+				if (start === end && end === length && new_length > length) {
+					input.selectionStart = new_length;
+					input.selectionEnd = new_length;
+				} else {
+					input.selectionStart = start;
+					input.selectionEnd = Math.min(end, new_length);
+				}
 			}
 		}
 	});
