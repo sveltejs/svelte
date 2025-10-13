@@ -113,20 +113,30 @@ export function async_derived(fn, location) {
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
 
-	/** @type {Map<Batch, ReturnType<typeof deferred<V>>>} */
+	/** @type {Map<Batch, ReturnType<typeof deferred<V>> & { rejected?: boolean }>} */
 	var deferreds = new Map();
 
 	async_effect(() => {
 		if (DEV) current_async_effect = active_effect;
 
-		/** @type {ReturnType<typeof deferred<V>>} */
+		/** @type {ReturnType<typeof deferred<V>> & { rejected?: boolean }} */
 		var d = deferred();
 		promise = d.promise;
 
 		try {
 			// If this code is changed at some point, make sure to still access the then property
 			// of fn() to read any signals it might access, so that we track them as dependencies.
-			Promise.resolve(fn()).then(d.resolve, d.reject);
+			Promise.resolve(fn()).then((v) => {
+				if (d.rejected) {
+					// If we rejected this stale promise, d.resolve
+					// is a noop (d.promise.then(handler) below will never run).
+					// In this case we need to unset the restored context here
+					// to avoid leaking it (and e.g. cause false-positive mutation errors).
+					unset_context();
+				} else {
+					d.resolve(v);
+				}
+			}, d.reject);
 		} catch (error) {
 			d.reject(error);
 		}
@@ -141,7 +151,11 @@ export function async_derived(fn, location) {
 			if (!pending) {
 				batch.increment();
 
-				deferreds.get(batch)?.reject(STALE_REACTION);
+				var previous_deferred = deferreds.get(batch);
+				if (previous_deferred) {
+					previous_deferred.rejected = true;
+					previous_deferred.reject(STALE_REACTION);
+				}
 				deferreds.set(batch, d);
 			}
 		}
