@@ -659,32 +659,37 @@ function flush_queued_effects(effects) {
  */
 function mark_effects(value, sources) {
 	if (value.reactions !== null) {
-		/** @param {Reaction} reaction */
-		const depends_on_sources = (reaction) => {
-			if (reaction.deps !== null) {
-				for (const dep of reaction.deps) {
-					if (sources.includes(dep)) {
-						return true;
-					}
-					if ((dep.f & DERIVED) !== 0 && depends_on_sources(/** @type {Derived} */ (dep))) {
-						return true;
-					}
-				}
-			}
-			return false;
-		};
-
 		for (const reaction of value.reactions) {
 			const flags = reaction.f;
 
 			if ((flags & DERIVED) !== 0) {
 				mark_effects(/** @type {Derived} */ (reaction), sources);
-			} else if ((flags & (ASYNC | BLOCK_EFFECT)) !== 0 && depends_on_sources(reaction)) {
+			} else if ((flags & (ASYNC | BLOCK_EFFECT)) !== 0 && depends_on(reaction, sources)) {
 				set_signal_status(reaction, DIRTY);
 				schedule_effect(/** @type {Effect} */ (reaction));
 			}
 		}
 	}
+}
+
+/**
+ * @param {Reaction} reaction
+ * @param {Source[]} sources
+ */
+function depends_on(reaction, sources) {
+	if (reaction.deps !== null) {
+		for (const dep of reaction.deps) {
+			if (sources.includes(dep)) {
+				return true;
+			}
+
+			if ((dep.f & DERIVED) !== 0 && depends_on(/** @type {Derived} */ (dep), sources)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 /**
