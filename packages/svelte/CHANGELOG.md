@@ -1,5 +1,17 @@
 # svelte
 
+## 5.40.0
+
+### Minor Changes
+
+- feat: add `createContext` utility for type-safe context ([#16948](https://github.com/sveltejs/svelte/pull/16948))
+
+### Patch Changes
+
+- chore: simplify `batch.apply()` ([#16945](https://github.com/sveltejs/svelte/pull/16945))
+
+- fix: don't rerun async effects unnecessarily ([#16944](https://github.com/sveltejs/svelte/pull/16944))
+
 ## 5.39.13
 
 ### Patch Changes
