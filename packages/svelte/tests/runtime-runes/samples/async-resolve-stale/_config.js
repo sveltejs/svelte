@@ -20,7 +20,6 @@ export default test({
 		input.value = '12';
 		input.dispatchEvent(new Event('input', { bubbles: true }));
 		await macrotask(6);
-		// TODO this is wrong (separate bug), this should be 3 | 12
-		assert.htmlEqual(target.innerHTML, '<input> 5 | 12');
+		assert.htmlEqual(target.innerHTML, '<input> 3 | 12');
 	}
 });

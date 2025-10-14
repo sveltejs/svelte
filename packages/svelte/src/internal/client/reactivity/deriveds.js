@@ -171,6 +171,13 @@ export function async_derived(fn, location) {
 
 				internal_set(signal, value);
 
+				// All prior async derived runs are now stale
+				for (const [b, d] of deferreds) {
+					deferreds.delete(b);
+					if (b === batch) break;
+					d.reject(STALE_REACTION);
+				}
+
 				if (DEV && location !== undefined) {
 					recent_async_deriveds.add(signal);
 

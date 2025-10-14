@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Source, Value } from '#client' */
+/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
 import {
 	BLOCK_EFFECT,
 	BRANCH_EFFECT,
@@ -342,31 +342,46 @@ export class Batch {
 					continue;
 				}
 
+				/** @type {Source[]} */
+				const sources = [];
+
 				for (const [source, value] of this.current) {
 					if (batch.current.has(source)) {
-						if (is_earlier) {
+						if (is_earlier && value !== batch.current.get(source)) {
 							// bring the value up to date
 							batch.current.set(source, value);
 						} else {
-							// later batch has more recent value,
+							// same value or later batch has more recent value,
 							// no need to re-run these effects
 							continue;
 						}
 					}
 
-					mark_effects(source);
+					sources.push(source);
 				}
 
-				if (queued_root_effects.length > 0) {
-					current_batch = batch;
-					batch.apply();
+				if (sources.length === 0) {
+					continue;
+				}
 
-					for (const root of queued_root_effects) {
-						batch.#traverse_effect_tree(root);
+				// Re-run async/block effects that depend on distinct values changed in both batches
+				const others = [...batch.current.keys()].filter((s) => !this.current.has(s));
+				if (others.length > 0) {
+					for (const source of sources) {
+						mark_effects(source, others);
 					}
 
-					queued_root_effects = [];
-					batch.deactivate();
+					if (queued_root_effects.length > 0) {
+						current_batch = batch;
+						batch.apply();
+
+						for (const root of queued_root_effects) {
+							batch.#traverse_effect_tree(root);
+						}
+
+						queued_root_effects = [];
+						batch.deactivate();
+					}
 				}
 			}
 
@@ -621,22 +636,44 @@ function flush_queued_effects(effects) {
 
 /**
  * This is similar to `mark_reactions`, but it only marks async/block effects
- * so that these can re-run after another batch has been committed
+ * depending on `value` and at least one of the other `sources`, so that
+ * these effects can re-run after another batch has been committed
  * @param {Value} value
+ * @param {Source[]} sources
  */
-function mark_effects(value) {
+function mark_effects(value, sources) {
 	if (value.reactions !== null) {
 		for (const reaction of value.reactions) {
 			const flags = reaction.f;
 
 			if ((flags & DERIVED) !== 0) {
-				mark_effects(/** @type {Derived} */ (reaction));
-			} else if ((flags & (ASYNC | BLOCK_EFFECT)) !== 0) {
+				mark_effects(/** @type {Derived} */ (reaction), sources);
+			} else if ((flags & (ASYNC | BLOCK_EFFECT)) !== 0 && depends_on(reaction, sources)) {
 				set_signal_status(reaction, DIRTY);
 				schedule_effect(/** @type {Effect} */ (reaction));
 			}
 		}
 	}
+}
+
+/**
+ * @param {Reaction} reaction
+ * @param {Source[]} sources
+ */
+function depends_on(reaction, sources) {
+	if (reaction.deps !== null) {
+		for (const dep of reaction.deps) {
+			if (sources.includes(dep)) {
+				return true;
+			}
+
+			if ((dep.f & DERIVED) !== 0 && depends_on(/** @type {Derived} */ (dep), sources)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 /**
