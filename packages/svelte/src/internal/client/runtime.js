@@ -42,13 +42,7 @@ import {
 	set_dev_stack
 } from './context.js';
 import * as w from './warnings.js';
-import {
-	Batch,
-	batch_values,
-	flushSync,
-	pending_values,
-	schedule_effect
-} from './reactivity/batch.js';
+import { Batch, batch_values, flushSync, schedule_effect } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
@@ -697,20 +691,15 @@ export function get(signal) {
 		}
 	}
 
-	if (batch_values?.has(signal)) {
+	if (!read_pending && batch_values?.has(signal)) {
 		return batch_values.get(signal);
 	}
 
-	var value = signal.v;
-	if (read_pending && pending_values.has(signal)) {
-		value = /** @type {{v: any}} */ (pending_values.get(signal)).v;
-	}
-
 	if ((signal.f & ERROR_VALUE) !== 0) {
-		throw value;
+		throw signal.v;
 	}
 
-	return value;
+	return signal.v;
 }
 
 /** @param {Derived} derived */
