@@ -336,6 +336,8 @@ export function update_derived(derived) {
 	var value = execute_derived(derived);
 
 	if (!derived.equals(value)) {
+		// TODO can we avoid setting `derived.v` when `batch_values !== null`,
+		// without causing the value to be stale later?
 		derived.v = value;
 		derived.wv = increment_write_version();
 	}
