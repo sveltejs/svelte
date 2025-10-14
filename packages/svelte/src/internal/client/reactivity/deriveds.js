@@ -144,6 +144,7 @@ export function async_derived(fn, location) {
 				batch.increment();
 
 				deferreds.get(batch)?.reject(STALE_REACTION);
+				deferreds.delete(batch); // delete to ensure correct order in Map iteration below
 				deferreds.set(batch, d);
 			}
 		}
