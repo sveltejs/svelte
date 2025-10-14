@@ -71,8 +71,12 @@ export function set_dev_current_component_function(fn) {
 
 /**
  * Returns a `[get, set]` pair of functions for working with context in a type-safe way.
+ *
+ * `get` will throw an error if no parent component called `set`.
+ *
  * @template T
  * @returns {[() => T, (context: T) => T]}
+ * @since 5.40.0
  */
 export function createContext() {
 	const key = {};
@@ -93,6 +97,8 @@ export function createContext() {
  * Retrieves the context that belongs to the closest parent component with the specified `key`.
  * Must be called during component initialisation.
  *
+ * [`createContext`](https://svelte.dev/docs/svelte/svelte#createContext) is a type-safe alternative.
+ *
  * @template T
  * @param {any} key
  * @returns {T}
@@ -109,6 +115,8 @@ export function getContext(key) {
  * (including slotted content) with `getContext`.
  *
  * Like lifecycle functions, this must be called during component initialisation.
+ *
+ * [`createContext`](https://svelte.dev/docs/svelte/svelte#createContext) is a type-safe alternative.
  *
  * @template T
  * @param {any} key
