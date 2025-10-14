@@ -637,8 +637,8 @@ function flush_queued_effects(effects) {
 
 /**
  * This is similar to `mark_reactions`, but it only marks async/block effects
- * depending on one of the sources, so that these effects can re-run after
- * another batch has been committed
+ * depending on `value` and at least one of the other `sources`, so that
+ * these effects can re-run after another batch has been committed
  * @param {Value} value
  * @param {Source[]} sources
  */
