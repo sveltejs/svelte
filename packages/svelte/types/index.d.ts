@@ -448,6 +448,9 @@ declare module 'svelte' {
 	}): Snippet<Params>;
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
+	/**
+	 * Returns a `[get, set]` pair of functions for working with context in a type-safe way.
+	 * */
 	export function createContext<T>(): [() => T, (context: T) => T];
 	/**
 	 * Retrieves the context that belongs to the closest parent component with the specified `key`.
