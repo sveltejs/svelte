@@ -1658,6 +1658,7 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	'font-variant'?: number | string | undefined | null;
 	'font-weight'?: number | string | undefined | null;
 	format?: number | string | undefined | null;
+	fr?: number | string | undefined | null;
 	from?: number | string | undefined | null;
 	fx?: number | string | undefined | null;
 	fy?: number | string | undefined | null;
