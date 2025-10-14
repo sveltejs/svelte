@@ -99,3 +99,19 @@ export function svelte_element_invalid_this_value() {
 		throw new Error(`https://svelte.dev/e/svelte_element_invalid_this_value`);
 	}
 }
+
+/**
+ * Context was not set in a parent component
+ * @returns {never}
+ */
+export function missing_context() {
+	if (DEV) {
+		const error = new Error(`missing_context\nContext was not set in a parent component\nhttps://svelte.dev/e/missing_context`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/missing_context`);
+	}
+}
