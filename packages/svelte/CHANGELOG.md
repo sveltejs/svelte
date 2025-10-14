@@ -1,5 +1,13 @@
 # svelte
 
+## 5.39.13
+
+### Patch Changes
+
+- add missing type for `fr` attribute for `radialGradient` tags in svg ([#16943](https://github.com/sveltejs/svelte/pull/16943))
+
+- fix: unset context on stale promises ([#16935](https://github.com/sveltejs/svelte/pull/16935))
+
 ## 5.39.12
 
 ### Patch Changes
