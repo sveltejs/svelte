@@ -360,6 +360,10 @@ export class Batch {
 					sources.push(source);
 				}
 
+				if (sources.length === 0) {
+					continue;
+				}
+
 				// Only reschedule an async effect if it depends on something else than
 				// the sources that were updated in this batch and that something else changed.
 				const others = [...batch.current.keys()].filter((s) => !this.current.has(s));
