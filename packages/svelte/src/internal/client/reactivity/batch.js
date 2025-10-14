@@ -14,7 +14,7 @@ import {
 	DERIVED
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
-import { deferred, define_property, noop } from '../../shared/utils.js';
+import { deferred, define_property } from '../../shared/utils.js';
 import {
 	active_effect,
 	is_dirty,
