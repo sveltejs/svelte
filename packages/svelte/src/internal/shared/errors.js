@@ -52,6 +52,22 @@ export function lifecycle_outside_component(name) {
 }
 
 /**
+ * Context was not set in a parent component
+ * @returns {never}
+ */
+export function missing_context() {
+	if (DEV) {
+		const error = new Error(`missing_context\nContext was not set in a parent component\nhttps://svelte.dev/e/missing_context`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/missing_context`);
+	}
+}
+
+/**
  * Attempted to render a snippet without a `{@render}` block. This would cause the snippet code to be stringified instead of its content being rendered to the DOM. To fix this, change `{snippet}` to `{@render snippet()}`.
  * @returns {never}
  */

@@ -26,7 +26,7 @@ export function CallExpression(node, context) {
 	}
 
 	if (rune === '$effect.pending') {
-		return node.arguments[0] ?? b.literal(0);
+		return b.literal(0);
 	}
 
 	if (rune === '$state' || rune === '$state.raw') {
@@ -36,6 +36,10 @@ export function CallExpression(node, context) {
 	if (rune === '$derived' || rune === '$derived.by') {
 		const fn = /** @type {Expression} */ (context.visit(node.arguments[0]));
 		return b.call('$.derived', rune === '$derived' ? b.thunk(fn) : fn);
+	}
+
+	if (rune === '$state.eager') {
+		return node.arguments[0];
 	}
 
 	if (rune === '$state.snapshot') {

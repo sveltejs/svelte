@@ -49,6 +49,12 @@ export function CallExpression(node, context) {
 			return b.call('$.derived', rune === '$derived' ? b.thunk(fn) : fn);
 		}
 
+		case '$state.eager':
+			return b.call(
+				'$.pending',
+				b.thunk(/** @type {Expression} */ (context.visit(node.arguments[0])))
+			);
+
 		case '$state.snapshot':
 			return b.call(
 				'$.snapshot',
@@ -63,17 +69,6 @@ export function CallExpression(node, context) {
 			);
 
 		case '$effect.pending':
-			if (node.arguments[0]) {
-				const id = b.id(`$$pending_${context.state.effect_pending.size}`);
-
-				context.state.effect_pending.set(
-					/** @type {Expression} */ (context.visit(node.arguments[0])),
-					id
-				);
-
-				return b.call('$.get', id);
-			}
-
 			return b.call('$.pending');
 
 		case '$inspect':

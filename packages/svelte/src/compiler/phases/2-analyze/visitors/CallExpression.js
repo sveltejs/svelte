@@ -165,20 +165,8 @@ export function CallExpression(node, context) {
 			break;
 
 		case '$effect.pending':
-			if (node.arguments.length > 1) {
-				e.rune_invalid_arguments_length(node, rune, 'zero or one arguments');
-			}
-
 			if (context.state.expression) {
 				context.state.expression.has_state = true;
-			}
-
-			if (node.arguments[0]) {
-				const fragment = /** @type {AST.Fragment} */ (context.state.fragment);
-
-				fragment.metadata.effect_pending_expressions.push(
-					/** @type {Expression} */ (node.arguments[0])
-				);
 			}
 
 			break;
@@ -237,6 +225,13 @@ export function CallExpression(node, context) {
 
 			break;
 		}
+
+		case '$state.eager':
+			if (node.arguments.length !== 1) {
+				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+			}
+
+			break;
 
 		case '$state.snapshot':
 			if (node.arguments.length !== 1) {

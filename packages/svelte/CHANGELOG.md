@@ -1,5 +1,37 @@
 # svelte
 
+## 5.40.0
+
+### Minor Changes
+
+- feat: add `createContext` utility for type-safe context ([#16948](https://github.com/sveltejs/svelte/pull/16948))
+
+### Patch Changes
+
+- chore: simplify `batch.apply()` ([#16945](https://github.com/sveltejs/svelte/pull/16945))
+
+- fix: don't rerun async effects unnecessarily ([#16944](https://github.com/sveltejs/svelte/pull/16944))
+
+## 5.39.13
+
+### Patch Changes
+
+- fix: add missing type for `fr` attribute for `radialGradient` tags in svg ([#16943](https://github.com/sveltejs/svelte/pull/16943))
+
+- fix: unset context on stale promises ([#16935](https://github.com/sveltejs/svelte/pull/16935))
+
+## 5.39.12
+
+### Patch Changes
+
+- fix: better input cursor restoration for `bind:value` ([#16925](https://github.com/sveltejs/svelte/pull/16925))
+
+- fix: track the user's getter of `bind:this` ([#16916](https://github.com/sveltejs/svelte/pull/16916))
+
+- fix: generate correct SSR code for the case where `pending` is an attribute ([#16919](https://github.com/sveltejs/svelte/pull/16919))
+
+- fix: generate correct code for `each` blocks with async body ([#16923](https://github.com/sveltejs/svelte/pull/16923))
+
 ## 5.39.11
 
 ### Patch Changes

@@ -11,8 +11,7 @@ export function create_fragment(transparent = false) {
 		metadata: {
 			transparent,
 			dynamic: false,
-			has_await: false,
-			effect_pending_expressions: []
+			has_await: false
 		}
 	};
 }

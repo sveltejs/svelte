@@ -42,7 +42,7 @@ import {
 	set_dev_stack
 } from './context.js';
 import * as w from './warnings.js';
-import { Batch, batch_deriveds, flushSync, schedule_effect } from './reactivity/batch.js';
+import { Batch, batch_values, flushSync, schedule_effect } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
@@ -142,6 +142,17 @@ export let skip_reaction = false;
 
 export function increment_write_version() {
 	return ++write_version;
+}
+
+/**
+ * Whether or not we should get the latest value of a signal regardless of whether or not it is pending,
+ * i.e. inside a boundary with pending async work in which case normally a stale value might be shown.
+ */
+export let read_pending = false;
+
+/** @param {boolean} value */
+export function set_read_pending(value) {
+	read_pending = value;
 }
 
 /**
@@ -653,7 +664,7 @@ export function get(signal) {
 		if (is_derived) {
 			derived = /** @type {Derived} */ (signal);
 
-			var value = derived.v;
+			var derived_value = derived.v;
 
 			// if the derived is dirty and has reactions, or depends on the values that just changed, re-execute
 			// (a derived can be maybe_dirty due to the effect destroy removing its last reaction)
@@ -661,23 +672,27 @@ export function get(signal) {
 				((derived.f & CLEAN) === 0 && derived.reactions !== null) ||
 				depends_on_old_values(derived)
 			) {
-				value = execute_derived(derived);
+				derived_value = execute_derived(derived);
 			}
 
-			old_values.set(derived, value);
+			old_values.set(derived, derived_value);
 
-			return value;
+			return derived_value;
 		}
 	} else if (is_derived) {
 		derived = /** @type {Derived} */ (signal);
 
-		if (batch_deriveds?.has(derived)) {
-			return batch_deriveds.get(derived);
+		if (batch_values?.has(derived)) {
+			return batch_values.get(derived);
 		}
 
 		if (is_dirty(derived)) {
 			update_derived(derived);
 		}
+	}
+
+	if (!read_pending && batch_values?.has(signal)) {
+		return batch_values.get(signal);
 	}
 
 	if ((signal.f & ERROR_VALUE) !== 0) {
