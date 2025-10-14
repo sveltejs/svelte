@@ -279,6 +279,7 @@ export class Batch {
 		}
 
 		this.current.set(source, source.v);
+		batch_values?.set(source, source.v);
 	}
 
 	activate() {
