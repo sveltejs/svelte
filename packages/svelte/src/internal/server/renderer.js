@@ -4,7 +4,6 @@ import { async_mode_flag } from '../flags/index.js';
 import { abort } from './abort-signal.js';
 import { pop, push, set_ssr_context, ssr_context } from './context.js';
 import * as e from './errors.js';
-import * as w from './warnings.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { attributes } from './index.js';
 
@@ -361,7 +360,6 @@ export class Renderer {
 					 */
 					(onfulfilled, onrejected) => {
 						if (!async_mode_flag) {
-							w.experimental_async_ssr();
 							const result = (sync ??= Renderer.#render(component, options));
 							const user_result = onfulfilled({
 								head: result.head,
