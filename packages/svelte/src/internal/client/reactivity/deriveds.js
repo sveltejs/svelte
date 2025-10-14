@@ -33,7 +33,7 @@ import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { Boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_deriveds, current_batch } from './batch.js';
+import { batch_values, current_batch } from './batch.js';
 import { unset_context } from './async.js';
 import { deferred } from '../../shared/utils.js';
 
@@ -126,9 +126,11 @@ export function async_derived(fn, location) {
 		try {
 			// If this code is changed at some point, make sure to still access the then property
 			// of fn() to read any signals it might access, so that we track them as dependencies.
-			Promise.resolve(fn()).then(d.resolve, d.reject);
+			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
+			Promise.resolve(fn()).then(d.resolve, d.reject).then(unset_context);
 		} catch (error) {
 			d.reject(error);
+			unset_context();
 		}
 
 		if (DEV) current_async_effect = null;
@@ -142,6 +144,7 @@ export function async_derived(fn, location) {
 				batch.increment();
 
 				deferreds.get(batch)?.reject(STALE_REACTION);
+				deferreds.delete(batch); // delete to ensure correct order in Map iteration below
 				deferreds.set(batch, d);
 			}
 		}
@@ -169,6 +172,13 @@ export function async_derived(fn, location) {
 
 				internal_set(signal, value);
 
+				// All prior async derived runs are now stale
+				for (const [b, d] of deferreds) {
+					deferreds.delete(b);
+					if (b === batch) break;
+					d.reject(STALE_REACTION);
+				}
+
 				if (DEV && location !== undefined) {
 					recent_async_deriveds.add(signal);
 
@@ -185,8 +195,6 @@ export function async_derived(fn, location) {
 				boundary.update_pending_count(-1);
 				if (!pending) batch.decrement();
 			}
-
-			unset_context();
 		};
 
 		d.promise.then(handler, (e) => handler(null, e || 'unknown'));
@@ -336,6 +344,8 @@ export function update_derived(derived) {
 	var value = execute_derived(derived);
 
 	if (!derived.equals(value)) {
+		// TODO can we avoid setting `derived.v` when `batch_values !== null`,
+		// without causing the value to be stale later?
 		derived.v = value;
 		derived.wv = increment_write_version();
 	}
@@ -346,8 +356,8 @@ export function update_derived(derived) {
 		return;
 	}
 
-	if (batch_deriveds !== null) {
-		batch_deriveds.set(derived, derived.v);
+	if (batch_values !== null) {
+		batch_values.set(derived, derived.v);
 	} else {
 		var status =
 			(skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null ? MAYBE_DIRTY : CLEAN;

@@ -44,7 +44,7 @@ import {
 import * as w from './warnings.js';
 import {
 	Batch,
-	batch_deriveds,
+	batch_values,
 	flushSync,
 	pending_values,
 	schedule_effect
@@ -688,13 +688,17 @@ export function get(signal) {
 	} else if (is_derived) {
 		derived = /** @type {Derived} */ (signal);
 
-		if (batch_deriveds?.has(derived)) {
-			return batch_deriveds.get(derived);
+		if (batch_values?.has(derived)) {
+			return batch_values.get(derived);
 		}
 
 		if (is_dirty(derived)) {
 			update_derived(derived);
 		}
+	}
+
+	if (batch_values?.has(signal)) {
+		return batch_values.get(signal);
 	}
 
 	var value = signal.v;
