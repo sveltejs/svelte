@@ -33,7 +33,7 @@ import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { Boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_deriveds, current_batch } from './batch.js';
+import { batch_values, current_batch } from './batch.js';
 import { unset_context } from './async.js';
 import { deferred } from '../../shared/utils.js';
 
@@ -346,8 +346,8 @@ export function update_derived(derived) {
 		return;
 	}
 
-	if (batch_deriveds !== null) {
-		batch_deriveds.set(derived, derived.v);
+	if (batch_values !== null) {
+		batch_values.set(derived, derived.v);
 	} else {
 		var status =
 			(skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null ? MAYBE_DIRTY : CLEAN;
