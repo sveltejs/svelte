@@ -44,12 +44,12 @@ export let current_batch = null;
 export let previous_batch = null;
 
 /**
- * When time travelling, we re-evaluate deriveds based on the temporary
- * values of their dependencies rather than their actual values, and cache
- * the results in this map rather than on the deriveds themselves
- * @type {Map<Derived, any> | null}
+ * When time travelling (i.e. working in one batch, while other batches
+ * still have ongoing work), we ignore the real values of affected
+ * signals in favour of their values within the batch
+ * @type {Map<Value, any> | null}
  */
-export let batch_deriveds = null;
+export let batch_values = null;
 
 /** @type {Set<() => void>} */
 export let effect_pending_updates = new Set();
@@ -152,7 +152,7 @@ export class Batch {
 
 		previous_batch = null;
 
-		var revert = Batch.apply(this);
+		this.apply();
 
 		for (const root of root_effects) {
 			this.#traverse_effect_tree(root);
@@ -161,6 +161,10 @@ export class Batch {
 		// if we didn't start any new async work, and no async work
 		// is outstanding from a previous flush, commit
 		if (this.#pending === 0) {
+			// TODO we need this because we commit _then_ flush effects...
+			// maybe there's a way we can reverse the order?
+			var previous_batch_sources = batch_values;
+
 			this.#commit();
 
 			var render_effects = this.#render_effects;
@@ -175,6 +179,7 @@ export class Batch {
 			previous_batch = this;
 			current_batch = null;
 
+			batch_values = previous_batch_sources;
 			flush_queued_effects(render_effects);
 			flush_queued_effects(effects);
 
@@ -187,7 +192,7 @@ export class Batch {
 			this.#defer_effects(this.#block_effects);
 		}
 
-		revert();
+		batch_values = null;
 
 		for (const effect of this.#boundary_async_effects) {
 			update_effect(effect);
@@ -274,6 +279,7 @@ export class Batch {
 		}
 
 		this.current.set(source, source.v);
+		batch_values?.set(source, source.v);
 	}
 
 	activate() {
@@ -282,6 +288,7 @@ export class Batch {
 
 	deactivate() {
 		current_batch = null;
+		batch_values = null;
 	}
 
 	flush() {
@@ -363,14 +370,14 @@ export class Batch {
 
 					if (queued_root_effects.length > 0) {
 						current_batch = batch;
-						const revert = Batch.apply(batch);
+						batch.apply();
 
 						for (const root of queued_root_effects) {
 							batch.#traverse_effect_tree(root);
 						}
 
 						queued_root_effects = [];
-						revert();
+						batch.deactivate();
 					}
 				}
 			}
@@ -435,49 +442,23 @@ export class Batch {
 		queue_micro_task(task);
 	}
 
-	/**
-	 * @param {Batch} current_batch
-	 */
-	static apply(current_batch) {
-		if (!async_mode_flag || batches.size === 1) {
-			return noop;
-		}
+	apply() {
+		if (!async_mode_flag || batches.size === 1) return;
 
 		// if there are multiple batches, we are 'time travelling' —
-		// we need to undo the changes belonging to any batch
-		// other than the current one
+		// we need to override values with the ones in this batch...
+		batch_values = new Map(this.current);
 
-		/** @type {Map<Source, { v: unknown, wv: number }>} */
-		var current_values = new Map();
-		batch_deriveds = new Map();
-
-		for (const [source, current] of current_batch.current) {
-			current_values.set(source, { v: source.v, wv: source.wv });
-			source.v = current;
-		}
-
+		// ...and undo changes belonging to other batches
 		for (const batch of batches) {
-			if (batch === current_batch) continue;
+			if (batch === this) continue;
 
 			for (const [source, previous] of batch.#previous) {
-				if (!current_values.has(source)) {
-					current_values.set(source, { v: source.v, wv: source.wv });
-					source.v = previous;
+				if (!batch_values.has(source)) {
+					batch_values.set(source, previous);
 				}
 			}
 		}
-
-		return () => {
-			for (const [source, { v, wv }] of current_values) {
-				// reset the source to the current value (unless
-				// it got a newer value as a result of effects running)
-				if (source.wv <= wv) {
-					source.v = v;
-				}
-			}
-
-			batch_deriveds = null;
-		};
 	}
 }
 
