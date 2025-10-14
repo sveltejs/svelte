@@ -53,7 +53,6 @@ export function asClassComponent(component) {
 					 */
 					value: (onfulfilled, onrejected) => {
 						if (!async_mode_flag) {
-							w.experimental_async_ssr();
 							const user_result = onfulfilled({
 								css: munged.css,
 								head: munged.head,

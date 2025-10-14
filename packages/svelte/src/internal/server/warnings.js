@@ -4,14 +4,3 @@ import { DEV } from 'esm-env';
 
 var bold = 'font-weight: bold';
 var normal = 'font-weight: normal';
-
-/**
- * Attempted to use asynchronous rendering without `experimental.async` enabled
- */
-export function experimental_async_ssr() {
-	if (DEV) {
-		console.warn(`%c[svelte] experimental_async_ssr\n%cAttempted to use asynchronous rendering without \`experimental.async\` enabled\nhttps://svelte.dev/e/experimental_async_ssr`, bold, normal);
-	} else {
-		console.warn(`https://svelte.dev/e/experimental_async_ssr`);
-	}
-}
