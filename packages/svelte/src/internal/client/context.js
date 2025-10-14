@@ -70,6 +70,26 @@ export function set_dev_current_component_function(fn) {
 }
 
 /**
+ * Returns a `[get, set]` pair of functions for working with context in a type-safe way.
+ * @template T
+ * @returns {[() => T, (context: T) => T]}
+ */
+export function createContext() {
+	const key = {};
+
+	return [
+		() => {
+			if (!hasContext(key)) {
+				e.missing_context();
+			}
+
+			return getContext(key);
+		},
+		(context) => setContext(key, context)
+	];
+}
+
+/**
  * Retrieves the context that belongs to the closest parent component with the specified `key`.
  * Must be called during component initialisation.
  *
