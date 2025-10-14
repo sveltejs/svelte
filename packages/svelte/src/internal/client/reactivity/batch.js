@@ -364,8 +364,7 @@ export class Batch {
 					continue;
 				}
 
-				// Only reschedule an async effect if it depends on something else than
-				// the sources that were updated in this batch and that something else changed.
+				// Re-run async/block effects that depend on distinct values changed in both batches
 				const others = [...batch.current.keys()].filter((s) => !this.current.has(s));
 				if (others.length > 0) {
 					for (const source of sources) {
