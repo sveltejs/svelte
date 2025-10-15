@@ -1,4 +1,5 @@
 /** @import { ComponentContext, DevStackEntry, Effect } from '#client' */
+/** @import { Hydratable, Transport } from '#shared' */
 import { DEV } from 'esm-env';
 import * as e from './errors.js';
 import { active_effect, active_reaction } from './runtime.js';
@@ -197,16 +198,12 @@ export function is_runes() {
 
 /**
  * @template T
- * @param {string} key
- * @param {() => Promise<T>} fn
- * @returns {Promise<T>}
+ * @type {Hydratable<T>}
  */
-export function hydratable(key, fn) {
+export function hydratable(key, fn, { transport } = {}) {
 	if (!hydrating) {
-		return fn();
+		return Promise.resolve(fn());
 	}
-	/** @type {Map<string, unknown> | undefined} */
-	// @ts-expect-error
 	var store = window.__svelte?.h;
 	if (store === undefined) {
 		throw new Error('TODO this should be impossible?');
@@ -216,7 +213,9 @@ export function hydratable(key, fn) {
 			`TODO Expected hydratable key "${key}" to exist during hydration, but it does not`
 		);
 	}
-	return /** @type {Promise<T>} */ (store.get(key));
+	const entry = /** @type {string} */ (store.get(key));
+	const parse = transport?.parse ?? ((val) => new Function(`return (${val})`)());
+	return Promise.resolve(/** @type {T} */ (parse(entry)));
 }
 
 /**

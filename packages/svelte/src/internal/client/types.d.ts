@@ -1,6 +1,15 @@
 import type { Store } from '#shared';
 import { STATE_SYMBOL } from './constants.js';
-import type { Effect, Source, Value, Reaction } from './reactivity/types.js';
+import type { Effect, Source, Value } from './reactivity/types.js';
+
+declare global {
+	interface Window {
+		__svelte?: {
+			/** hydratables */
+			h?: Map<string, string>;
+		};
+	}
+}
 
 type EventCallback = (event: Event) => boolean;
 export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;

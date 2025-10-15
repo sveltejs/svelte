@@ -27,7 +27,6 @@ polka()
 		const { default: App } = await vite.ssrLoadModule('/src/App.svelte');
 
 		const { head, body } = await render(App);
-		console.log(head);
 		const html = transformed_template
 			.replace(`<!--ssr-head-->`, head)
 			.replace(`<!--ssr-body-->`, body)

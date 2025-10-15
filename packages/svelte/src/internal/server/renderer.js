@@ -1,8 +1,18 @@
 /** @import { Component } from 'svelte' */
 /** @import { RenderOutput, SSRContext, SyncRenderOutput } from './types.js' */
+/** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import { abort } from './abort-signal.js';
-import { pop, push, set_ssr_context, ssr_context } from './context.js';
+import {
+	get_render_store,
+	pop,
+	push,
+	set_ssr_context,
+	set_sync_store,
+	ssr_context,
+	sync_store,
+	with_render_store
+} from './context.js';
 import * as e from './errors.js';
 import * as w from './warnings.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
@@ -11,10 +21,6 @@ import { uneval } from 'devalue';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
-/**
- * @template T
- * @typedef {T | Promise<T>} MaybePromise<T>
- */
 /**
  * @typedef {string | Renderer} RendererItem
  */
@@ -268,25 +274,6 @@ export class Renderer {
 	}
 
 	/**
-	 * @template T
-	 * @param {string} key
-	 * @param {() => Promise<T>} fn
-	 */
-	register_hydratable(key, fn) {
-		if (this.global.mode === 'sync') {
-			// TODO
-			throw new Error('no no');
-		}
-		if (this.global.hydratables.has(key)) {
-			// TODO error
-			throw new Error("can't have two hydratables with the same key");
-		}
-		const result = fn();
-		this.global.hydratables.set(key, { blocking: true, value: result });
-		return result;
-	}
-
-	/**
 	 * @param {() => void} fn
 	 */
 	on_destroy(fn) {
@@ -390,7 +377,9 @@ export class Renderer {
 							});
 							return Promise.resolve(user_result);
 						}
-						async ??= Renderer.#render_async(component, options);
+						async ??= with_render_store({ hydratables: new Map() }, () =>
+							Renderer.#render_async(component, options)
+						);
 						return async.then((result) => {
 							Object.defineProperty(result, 'html', {
 								// eslint-disable-next-line getter-return
@@ -483,6 +472,8 @@ export class Renderer {
 	 */
 	static async #render_async(component, options) {
 		var previous_context = ssr_context;
+		var previous_sync_store = sync_store;
+
 		try {
 			const renderer = Renderer.#open_render('async', component, options);
 
@@ -492,6 +483,7 @@ export class Renderer {
 		} finally {
 			abort();
 			set_ssr_context(previous_context);
+			set_sync_store(previous_sync_store);
 		}
 	}
 
@@ -533,20 +525,19 @@ export class Renderer {
 	}
 
 	async #collect_hydratables() {
-		const map = this.global.hydratables;
-		if (!map) return '';
+		const map = (await get_render_store()).hydratables;
+		/** @type {(value: unknown) => string} */
+		let default_stringify;
 
-		// TODO add namespacing for multiple apps, nonce, csp, whatever -- not sure what we need to do there
-		/** @type {string} */
-		let resolved = '<script>(window.__svelte ??= {}).h = ';
-		let resolved_map = new Map();
+		/** @type {[string, string][]} */
+		let entries = [];
 		for (const [k, v] of map) {
-			if (!v.blocking) continue;
+			const serialize =
+				v.transport?.stringify ?? (default_stringify ??= new MemoizedUneval().uneval);
 			// sequential await is okay here -- all the work is already kicked off
-			resolved_map.set(k, await v.value);
+			entries.push([k, serialize(await v.value)]);
 		}
-		resolved += uneval(resolved_map) + '</script>';
-		return resolved;
+		return Renderer.#hydratable_block(JSON.stringify(entries));
 	}
 
 	/**
@@ -602,6 +593,27 @@ export class Renderer {
 			body
 		};
 	}
+
+	/** @param {string} serialized */
+	static #hydratable_block(serialized) {
+		// TODO csp?
+		// TODO how can we communicate this error better? Is there a way to not just send it to the console?
+		// (it is probably very rare so... not too worried)
+		return `
+<script>
+	var store = (window.__svelte ??= {}).h ??= new Map();
+	for (const [k,v] of ${serialized}) {
+		if (!store.has(k)) {
+			store.set(k, v);
+			continue;
+		}
+		var stored_val = store.get(k);
+		if (stored_val.value !== v) {
+			throw new Error('TODO tried to populate the same hydratable key twice with different values');
+		}
+	}
+</script>`;
+	}
 }
 
 export class SSRState {
@@ -613,9 +625,6 @@ export class SSRState {
 
 	/** @readonly @type {Set<{ hash: string; code: string }>} */
 	css = new Set();
-
-	/** @type {Map<string, { blocking: boolean, value: Promise<unknown> }>} */
-	hydratables = new Map();
 
 	/** @type {{ path: number[], value: string }} */
 	#title = { path: [], value: '' };
@@ -660,4 +669,37 @@ export class SSRState {
 			this.#title.value = value;
 		}
 	}
+}
+
+class MemoizedUneval {
+	/** @type {Map<unknown, { value?: string }>} */
+	#cache = new Map();
+
+	/**
+	 * @param {unknown} value
+	 * @returns {string}
+	 */
+	uneval = (value) => {
+		return uneval(value, (value, uneval) => {
+			const cached = this.#cache.get(value);
+			if (cached) {
+				// this breaks my brain a bit, but:
+				// - when the entry is defined but its value is `undefined`, calling `uneval` below will cause the custom replacer to be called again
+				// - because the custom replacer returns this, which is `undefined`, it will fall back to the default serialization
+				// - ...which causes it to return a string
+				// - ...which is then added to this cache before being returned
+				return cached.value;
+			}
+
+			const stub = {};
+			this.#cache.set(value, stub);
+
+			const result = uneval(value);
+			// TODO upgrade uneval, this should always be a string
+			if (typeof result === 'string') {
+				stub.value = result;
+				return result;
+			}
+		});
+	};
 }

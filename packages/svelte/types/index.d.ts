@@ -448,6 +448,8 @@ declare module 'svelte' {
 	}): Snippet<Params>;
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
+
+	type MaybePromise<T> = T | Promise<T>;
 	/**
 	 * Retrieves the context that belongs to the closest parent component with the specified `key`.
 	 * Must be called during component initialisation.
@@ -477,7 +479,7 @@ declare module 'svelte' {
 	 * */
 	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
 
-	export function hydratable<T>(key: string, fn: () => Promise<T>): Promise<T>;
+	export function hydratable<T>(key: string, fn: () => T): MaybePromise<T>;
 	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
 	 * Transitions will play during the initial render unless the `intro` option is set to `false`.

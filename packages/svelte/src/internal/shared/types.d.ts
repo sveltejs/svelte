@@ -8,3 +8,16 @@ export type Getters<T> = {
 };
 
 export type Snapshot<T> = ReturnType<typeof $state.snapshot<T>>;
+
+export type MaybePromise<T> = T | Promise<T>;
+
+export type Hydratable<T> = (
+	key: string,
+	fn: () => T,
+	options?: { transport?: Transport<T> }
+) => Promise<T>;
+
+export type Transport<T> = {
+	stringify: (value: T) => string;
+	parse: (value: string) => T;
+};

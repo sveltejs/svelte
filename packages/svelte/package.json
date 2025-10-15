@@ -175,13 +175,12 @@
     "aria-query": "^5.3.1",
     "axobject-query": "^4.1.0",
     "clsx": "^2.1.1",
-    "devalue": "^5.3.2",
+    "devalue": "^5.4.0",
     "esm-env": "^1.2.1",
     "esrap": "^2.1.0",
     "is-reference": "^3.0.3",
     "locate-character": "^3.0.0",
     "magic-string": "^0.30.11",
-    "path-to-regexp": "^8.3.0",
     "zimmerframe": "^1.1.2"
   }
 }
