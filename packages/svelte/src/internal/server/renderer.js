@@ -695,11 +695,8 @@ class MemoizedUneval {
 			this.#cache.set(value, stub);
 
 			const result = uneval(value);
-			// TODO upgrade uneval, this should always be a string
-			if (typeof result === 'string') {
-				stub.value = result;
-				return result;
-			}
+			stub.value = result;
+			return result;
 		});
 	};
 }
