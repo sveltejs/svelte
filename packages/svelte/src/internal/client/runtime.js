@@ -42,7 +42,7 @@ import {
 	set_dev_stack
 } from './context.js';
 import * as w from './warnings.js';
-import { Batch, batch_deriveds, flushSync, schedule_effect } from './reactivity/batch.js';
+import { Batch, batch_values, flushSync, schedule_effect } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
@@ -671,13 +671,17 @@ export function get(signal) {
 	} else if (is_derived) {
 		derived = /** @type {Derived} */ (signal);
 
-		if (batch_deriveds?.has(derived)) {
-			return batch_deriveds.get(derived);
+		if (batch_values?.has(derived)) {
+			return batch_values.get(derived);
 		}
 
 		if (is_dirty(derived)) {
 			update_derived(derived);
 		}
+	}
+
+	if (batch_values?.has(signal)) {
+		return batch_values.get(signal);
 	}
 
 	if ((signal.f & ERROR_VALUE) !== 0) {

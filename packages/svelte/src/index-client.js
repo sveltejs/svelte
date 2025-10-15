@@ -243,6 +243,7 @@ function init_update_callbacks(context) {
 
 export { flushSync } from './internal/client/reactivity/batch.js';
 export {
+	createContext,
 	getContext,
 	getAllContexts,
 	hasContext,

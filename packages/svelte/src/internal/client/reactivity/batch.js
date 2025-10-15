@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Source, Value } from '#client' */
+/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
 import {
 	BLOCK_EFFECT,
 	BRANCH_EFFECT,
@@ -14,7 +14,7 @@ import {
 	DERIVED
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
-import { deferred, define_property, noop } from '../../shared/utils.js';
+import { deferred, define_property } from '../../shared/utils.js';
 import {
 	active_effect,
 	is_dirty,
@@ -44,12 +44,12 @@ export let current_batch = null;
 export let previous_batch = null;
 
 /**
- * When time travelling, we re-evaluate deriveds based on the temporary
- * values of their dependencies rather than their actual values, and cache
- * the results in this map rather than on the deriveds themselves
- * @type {Map<Derived, any> | null}
+ * When time travelling (i.e. working in one batch, while other batches
+ * still have ongoing work), we ignore the real values of affected
+ * signals in favour of their values within the batch
+ * @type {Map<Value, any> | null}
  */
-export let batch_deriveds = null;
+export let batch_values = null;
 
 /** @type {Set<() => void>} */
 export let effect_pending_updates = new Set();
@@ -152,7 +152,7 @@ export class Batch {
 
 		previous_batch = null;
 
-		var revert = Batch.apply(this);
+		this.apply();
 
 		for (const root of root_effects) {
 			this.#traverse_effect_tree(root);
@@ -161,6 +161,10 @@ export class Batch {
 		// if we didn't start any new async work, and no async work
 		// is outstanding from a previous flush, commit
 		if (this.#pending === 0) {
+			// TODO we need this because we commit _then_ flush effects...
+			// maybe there's a way we can reverse the order?
+			var previous_batch_sources = batch_values;
+
 			this.#commit();
 
 			var render_effects = this.#render_effects;
@@ -175,8 +179,11 @@ export class Batch {
 			previous_batch = this;
 			current_batch = null;
 
+			batch_values = previous_batch_sources;
 			flush_queued_effects(render_effects);
 			flush_queued_effects(effects);
+
+			previous_batch = null;
 
 			this.#deferred?.resolve();
 		} else {
@@ -185,7 +192,7 @@ export class Batch {
 			this.#defer_effects(this.#block_effects);
 		}
 
-		revert();
+		batch_values = null;
 
 		for (const effect of this.#boundary_async_effects) {
 			update_effect(effect);
@@ -272,6 +279,7 @@ export class Batch {
 		}
 
 		this.current.set(source, source.v);
+		batch_values?.set(source, source.v);
 	}
 
 	activate() {
@@ -280,17 +288,7 @@ export class Batch {
 
 	deactivate() {
 		current_batch = null;
-		previous_batch = null;
-
-		for (const update of effect_pending_updates) {
-			effect_pending_updates.delete(update);
-			update();
-
-			if (current_batch !== null) {
-				// only do one at a time
-				break;
-			}
-		}
+		batch_values = null;
 	}
 
 	flush() {
@@ -307,6 +305,16 @@ export class Batch {
 		}
 
 		this.deactivate();
+
+		for (const update of effect_pending_updates) {
+			effect_pending_updates.delete(update);
+			update();
+
+			if (current_batch !== null) {
+				// only do one at a time
+				break;
+			}
+		}
 	}
 
 	/**
@@ -334,31 +342,46 @@ export class Batch {
 					continue;
 				}
 
+				/** @type {Source[]} */
+				const sources = [];
+
 				for (const [source, value] of this.current) {
 					if (batch.current.has(source)) {
-						if (is_earlier) {
+						if (is_earlier && value !== batch.current.get(source)) {
 							// bring the value up to date
 							batch.current.set(source, value);
 						} else {
-							// later batch has more recent value,
+							// same value or later batch has more recent value,
 							// no need to re-run these effects
 							continue;
 						}
 					}
 
-					mark_effects(source);
+					sources.push(source);
 				}
 
-				if (queued_root_effects.length > 0) {
-					current_batch = batch;
-					const revert = Batch.apply(batch);
+				if (sources.length === 0) {
+					continue;
+				}
 
-					for (const root of queued_root_effects) {
-						batch.#traverse_effect_tree(root);
+				// Re-run async/block effects that depend on distinct values changed in both batches
+				const others = [...batch.current.keys()].filter((s) => !this.current.has(s));
+				if (others.length > 0) {
+					for (const source of sources) {
+						mark_effects(source, others);
 					}
 
-					queued_root_effects = [];
-					revert();
+					if (queued_root_effects.length > 0) {
+						current_batch = batch;
+						batch.apply();
+
+						for (const root of queued_root_effects) {
+							batch.#traverse_effect_tree(root);
+						}
+
+						queued_root_effects = [];
+						batch.deactivate();
+					}
 				}
 			}
 
@@ -375,21 +398,17 @@ export class Batch {
 	decrement() {
 		this.#pending -= 1;
 
-		if (this.#pending === 0) {
-			for (const e of this.#dirty_effects) {
-				set_signal_status(e, DIRTY);
-				schedule_effect(e);
-			}
-
-			for (const e of this.#maybe_dirty_effects) {
-				set_signal_status(e, MAYBE_DIRTY);
-				schedule_effect(e);
-			}
-
-			this.flush();
-		} else {
-			this.deactivate();
+		for (const e of this.#dirty_effects) {
+			set_signal_status(e, DIRTY);
+			schedule_effect(e);
 		}
+
+		for (const e of this.#maybe_dirty_effects) {
+			set_signal_status(e, MAYBE_DIRTY);
+			schedule_effect(e);
+		}
+
+		this.flush();
 	}
 
 	/** @param {() => void} fn */
@@ -426,49 +445,23 @@ export class Batch {
 		queue_micro_task(task);
 	}
 
-	/**
-	 * @param {Batch} current_batch
-	 */
-	static apply(current_batch) {
-		if (!async_mode_flag || batches.size === 1) {
-			return noop;
-		}
+	apply() {
+		if (!async_mode_flag || batches.size === 1) return;
 
 		// if there are multiple batches, we are 'time travelling' —
-		// we need to undo the changes belonging to any batch
-		// other than the current one
+		// we need to override values with the ones in this batch...
+		batch_values = new Map(this.current);
 
-		/** @type {Map<Source, { v: unknown, wv: number }>} */
-		var current_values = new Map();
-		batch_deriveds = new Map();
-
-		for (const [source, current] of current_batch.current) {
-			current_values.set(source, { v: source.v, wv: source.wv });
-			source.v = current;
-		}
-
+		// ...and undo changes belonging to other batches
 		for (const batch of batches) {
-			if (batch === current_batch) continue;
+			if (batch === this) continue;
 
 			for (const [source, previous] of batch.#previous) {
-				if (!current_values.has(source)) {
-					current_values.set(source, { v: source.v, wv: source.wv });
-					source.v = previous;
+				if (!batch_values.has(source)) {
+					batch_values.set(source, previous);
 				}
 			}
 		}
-
-		return () => {
-			for (const [source, { v, wv }] of current_values) {
-				// reset the source to the current value (unless
-				// it got a newer value as a result of effects running)
-				if (source.wv <= wv) {
-					source.v = v;
-				}
-			}
-
-			batch_deriveds = null;
-		};
 	}
 }
 
@@ -643,22 +636,44 @@ function flush_queued_effects(effects) {
 
 /**
  * This is similar to `mark_reactions`, but it only marks async/block effects
- * so that these can re-run after another batch has been committed
+ * depending on `value` and at least one of the other `sources`, so that
+ * these effects can re-run after another batch has been committed
  * @param {Value} value
+ * @param {Source[]} sources
  */
-function mark_effects(value) {
+function mark_effects(value, sources) {
 	if (value.reactions !== null) {
 		for (const reaction of value.reactions) {
 			const flags = reaction.f;
 
 			if ((flags & DERIVED) !== 0) {
-				mark_effects(/** @type {Derived} */ (reaction));
-			} else if ((flags & (ASYNC | BLOCK_EFFECT)) !== 0) {
+				mark_effects(/** @type {Derived} */ (reaction), sources);
+			} else if ((flags & (ASYNC | BLOCK_EFFECT)) !== 0 && depends_on(reaction, sources)) {
 				set_signal_status(reaction, DIRTY);
 				schedule_effect(/** @type {Effect} */ (reaction));
 			}
 		}
 	}
+}
+
+/**
+ * @param {Reaction} reaction
+ * @param {Source[]} sources
+ */
+function depends_on(reaction, sources) {
+	if (reaction.deps !== null) {
+		for (const dep of reaction.deps) {
+			if (sources.includes(dep)) {
+				return true;
+			}
+
+			if ((dep.f & DERIVED) !== 0 && depends_on(/** @type {Derived} */ (dep), sources)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 /**

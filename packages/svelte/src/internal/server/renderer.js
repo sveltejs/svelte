@@ -14,7 +14,6 @@ import {
 	with_render_store
 } from './context.js';
 import * as e from './errors.js';
-import * as w from './warnings.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { attributes } from './index.js';
 import { uneval } from 'devalue';
@@ -368,7 +367,6 @@ export class Renderer {
 					 */
 					(onfulfilled, onrejected) => {
 						if (!async_mode_flag) {
-							w.experimental_async_ssr();
 							const result = (sync ??= Renderer.#render(component, options));
 							const user_result = onfulfilled({
 								head: result.head,

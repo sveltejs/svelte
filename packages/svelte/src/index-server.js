@@ -40,6 +40,7 @@ export async function settled() {}
 export { getAbortSignal } from './internal/server/abort-signal.js';
 
 export {
+	createContext,
 	getAllContexts,
 	getContext,
 	hasContext,

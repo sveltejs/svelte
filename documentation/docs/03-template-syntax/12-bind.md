@@ -364,6 +364,8 @@ Components also support `bind:this`, allowing you to interact with component ins
 </script>
 ```
 
+> [!NOTE] In case of using [the function bindings](#Function-bindings), the getter is required to ensure that the correct value is nullified on component or element destruction.
+
 ## bind:_property_ for components
 
 ```svelte
