@@ -14,13 +14,13 @@ const cache = new Map();
  * @template {typeof Resource} [TResource=typeof Resource]
  * @param {string} name
  * @param {(...args: TArgs) => TReturn} fn
- * @param {{ Resource?: TResource, transport?: Transport }} [options]
+ * @param {{ Resource?: TResource, transport?: Transport, hash?: (args: TArgs) => string }} [options]
  * @returns {(...args: TArgs) => Resource<TReturn>}
  */
 export function define_resource(name, fn, options = {}) {
 	const ResolvedResource = options?.Resource ?? Resource;
 	return (...args) => {
-		const stringified_args = (options.transport?.stringify ?? JSON.stringify)(args);
+		const stringified_args = (options.hash ?? JSON.stringify)(args);
 		const cache_key = `${name}:${stringified_args}`;
 		let entry = cache.get(cache_key);
 		const maybe_remove = create_remover(cache_key);

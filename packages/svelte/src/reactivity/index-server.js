@@ -120,14 +120,14 @@ export class Resource {
  * @template {typeof Resource} [TResource=typeof Resource]
  * @param {string} name
  * @param {(...args: TArgs) => TReturn} fn
- * @param {{ Resource?: TResource, transport?: Transport }} [options]
+ * @param {{ Resource?: TResource, transport?: Transport, hash?: (args: TArgs) => string }} [options]
  * @returns {(...args: TArgs) => Resource<TReturn>}
  */
 export function defineResource(name, fn, options = {}) {
 	const ResolvedResource = options?.Resource ?? Resource;
 	return (...args) => {
 		const cache = get_render_store().resources;
-		const stringified_args = (options.transport?.stringify ?? JSON.stringify)(args);
+		const stringified_args = (options.hash ?? JSON.stringify)(args);
 		const cache_key = `${name}:${stringified_args}`;
 		const entry = cache.get(cache_key);
 		if (entry) {
