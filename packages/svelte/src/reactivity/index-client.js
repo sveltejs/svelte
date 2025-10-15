@@ -7,4 +7,3 @@ export { MediaQuery } from './media-query.js';
 export { createSubscriber } from './create-subscriber.js';
 export { Resource } from '../internal/client/reactivity/resources/resource.js';
 export { define_resource as defineResource } from '../internal/client/reactivity/resources/define-resource.js';
-export { create_fetcher as createFetcher } from '../internal/client/reactivity/resources/create-fetcher.js';

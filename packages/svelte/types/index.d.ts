@@ -448,8 +448,6 @@ declare module 'svelte' {
 	}): Snippet<Params>;
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
-
-	type MaybePromise<T> = T | Promise<T>;
 	/**
 	 * Returns a `[get, set]` pair of functions for working with context in a type-safe way.
 	 *
@@ -491,7 +489,9 @@ declare module 'svelte' {
 	 * */
 	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
 
-	export function hydratable<T>(key: string, fn: () => T): MaybePromise<T>;
+	export function hydratable<T>(key: string, fn: () => T, { transport }?: {
+		transport?: Transport;
+	} | undefined): Promise<T>;
 	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
 	 * Transitions will play during the initial render unless the `intro` option is set to `false`.
@@ -563,6 +563,11 @@ declare module 'svelte' {
 	export function untrack<T>(fn: () => T): T;
 	type Getters<T> = {
 		[K in keyof T]: () => T[K];
+	};
+
+	type Transport = {
+		stringify: (value: unknown) => string;
+		parse: (value: string) => unknown;
 	};
 
 	export {};
@@ -2143,7 +2148,6 @@ declare module 'svelte/motion' {
 }
 
 declare module 'svelte/reactivity' {
-	import type { StandardSchemaV1 } from '@standard-schema/spec';
 	/**
 	 * A reactive version of the built-in [`Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date) object.
 	 * Reading the date (whether with methods like `date.getTime()` or `date.toString()`, or via things like [`Intl.DateTimeFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat))
@@ -2429,29 +2433,20 @@ declare module 'svelte/reactivity' {
 		set: (value: T) => void;
 		#private;
 	}
-	export function createResource<TReturn, TArgs extends unknown[] = [], TResource extends typeof Resource = typeof Resource>(name: string, fn: (...args: TArgs) => Promise<TReturn>, options?: {
+	export function defineResource<TReturn, TArgs extends unknown[] = [], TResource extends typeof Resource = typeof Resource>(name: string, fn: (...args: TArgs) => TReturn, options?: {
 		Resource?: TResource;
+		transport?: Transport;
 	} | undefined): (...args: TArgs) => Resource<TReturn>;
-	export function createFetcher<TPathParams extends Record<string, unknown>, TResource extends typeof Resource>(url: string, options?: {
-		Resource?: TResource;
-		schema?: undefined;
-	} | undefined): Fetcher<string | number | Record<string, unknown> | unknown[] | boolean | null, TPathParams>;
-
-	export function createFetcher<TPathParams extends Record<string, unknown>, TSchema extends StandardSchemaV1, TResource extends typeof Resource>(url: string, options: {
-		Resource?: TResource;
-		schema: StandardSchemaV1;
-	}): Fetcher<StandardSchemaV1.InferOutput<TSchema>, TPathParams>;
-	type FetcherInit<TPathParams extends Record<string, unknown>> = {
-		searchParams?: ConstructorParameters<typeof URLSearchParams>[0];
-		pathParams?: TPathParams;
-	} & RequestInit;
-	type Fetcher<TReturn, TPathParams extends Record<string, unknown>> = (init: FetcherInit<TPathParams>) => Resource<TReturn>;
 	class ReactiveValue<T> {
 		
 		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
 		get current(): T;
 		#private;
 	}
+	type Transport = {
+		stringify: (value: unknown) => string;
+		parse: (value: string) => unknown;
+	};
 
 	export {};
 }

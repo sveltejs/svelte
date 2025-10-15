@@ -375,7 +375,7 @@ export class Renderer {
 							});
 							return Promise.resolve(user_result);
 						}
-						async ??= with_render_store({ hydratables: new Map() }, () =>
+						async ??= with_render_store({ hydratables: new Map(), resources: new Map() }, () =>
 							Renderer.#render_async(component, options)
 						);
 						return async.then((result) => {
@@ -523,7 +523,7 @@ export class Renderer {
 	}
 
 	async #collect_hydratables() {
-		const map = (await get_render_store()).hydratables;
+		const map = get_render_store().hydratables;
 		/** @type {(value: unknown) => string} */
 		let default_stringify;
 
