@@ -421,6 +421,13 @@ export class Batch {
 	}
 
 	static ensure() {
+		if (current_batch !== null && !batches.has(current_batch)) {
+			// A previously committed batch was reactivated via async `restore`.
+			// Treat it as inactive so a new batch can be created to process updates.
+			current_batch = null;
+			batch_values = null;
+		}
+
 		if (current_batch === null) {
 			const batch = (current_batch = new Batch());
 			batches.add(current_batch);
