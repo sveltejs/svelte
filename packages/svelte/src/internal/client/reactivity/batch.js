@@ -719,30 +719,45 @@ function eager_flush() {
 }
 
 /**
+ * Implementation of `$state.eager(fn())`
  * @template T
  * @param {() => T} fn
  * @returns {T}
  */
 export function eager(fn) {
-	const previous_batch_values = batch_values;
+	get((version ??= source(0)));
 
-	try {
-		get((version ??= source(0)));
+	var initial = true;
+	var value = /** @type {T} */ (undefined);
 
-		inspect_effect(() => {
-			fn();
+	inspect_effect(() => {
+		if (initial) {
+			// the first time this runs, we create an inspect effect
+			// that will run eagerly whenever the expression changes
+			var previous_batch_values = batch_values;
 
-			if (!eager_flushing) {
-				eager_flushing = true;
-				queue_micro_task(eager_flush);
+			try {
+				batch_values = null;
+				value = fn();
+			} finally {
+				batch_values = previous_batch_values;
 			}
-		});
 
-		batch_values = null;
-		return fn();
-	} finally {
-		batch_values = previous_batch_values;
-	}
+			return;
+		}
+
+		// the second time this effect runs, it's to schedule a
+		// `version` update. since this will recreate the effect,
+		// we don't need to evaluate the expression here
+		if (!eager_flushing) {
+			eager_flushing = true;
+			queue_micro_task(eager_flush);
+		}
+	});
+
+	initial = false;
+
+	return value;
 }
 
 /**
