@@ -476,7 +476,10 @@ export class Renderer {
 			const renderer = Renderer.#open_render('async', component, options);
 
 			const content = await renderer.#collect_content_async();
-			content.head = (await renderer.#collect_hydratables()) + content.head;
+			const hydratables = await renderer.#collect_hydratables();
+			if (hydratables !== null) {
+				content.head = hydratables + content.head;
+			}
 			return Renderer.#close_render(content, renderer);
 		} finally {
 			abort();
@@ -535,6 +538,7 @@ export class Renderer {
 			// sequential await is okay here -- all the work is already kicked off
 			entries.push([k, serialize(await v.value)]);
 		}
+		if (entries.length === 0) return null;
 		return Renderer.#hydratable_block(JSON.stringify(entries));
 	}
 
