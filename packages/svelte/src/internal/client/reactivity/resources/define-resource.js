@@ -1,6 +1,7 @@
+/** @import { Transport } from '#shared' */
 import { hydratable } from '../../context.js';
-import { tick } from '../../runtime';
-import { render_effect } from '../effects';
+import { tick } from '../../runtime.js';
+import { render_effect } from '../effects.js';
 import { Resource } from './resource.js';
 
 /** @typedef {{ count: number, resource: Resource<any> }} Entry */
@@ -12,14 +13,14 @@ const cache = new Map();
  * @template {unknown[]} [TArgs=[]]
  * @template {typeof Resource} [TResource=typeof Resource]
  * @param {string} name
- * @param {(...args: TArgs) => Promise<TReturn>} fn
- * @param {{ Resource?: TResource }} [options]
+ * @param {(...args: TArgs) => TReturn} fn
+ * @param {{ Resource?: TResource, transport?: Transport }} [options]
  * @returns {(...args: TArgs) => Resource<TReturn>}
  */
-export function create_resource(name, fn, options) {
+export function define_resource(name, fn, options = {}) {
 	const ResolvedResource = options?.Resource ?? Resource;
 	return (...args) => {
-		const stringified_args = JSON.stringify(args);
+		const stringified_args = (options.transport?.stringify ?? JSON.stringify)(args);
 		const cache_key = `${name}:${stringified_args}`;
 		let entry = cache.get(cache_key);
 		const maybe_remove = create_remover(cache_key);
@@ -41,7 +42,9 @@ export function create_resource(name, fn, options) {
 
 		let resource = entry?.resource;
 		if (!resource) {
-			resource = new ResolvedResource(() => hydratable(cache_key, () => fn(...args)));
+			resource = new ResolvedResource(() =>
+				hydratable(cache_key, () => fn(...args), { transport: options.transport })
+			);
 			const entry = {
 				resource,
 				count: tracking ? 1 : 0

@@ -226,7 +226,10 @@ export function is_runes() {
 
 /**
  * @template T
- * @type {Hydratable<T>}
+ * @param {string} key
+ * @param {() => T} fn
+ * @param {{ transport?: Transport }} [options]
+ * @returns {Promise<T>}
  */
 export function hydratable(key, fn, { transport } = {}) {
 	if (!hydrating) {

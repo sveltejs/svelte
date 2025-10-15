@@ -1,6 +1,6 @@
 /** @import { ALSContext, SSRContext } from '#server' */
 /** @import { AsyncLocalStorage } from 'node:async_hooks' */
-/** @import { Hydratable } from '#shared' */
+/** @import { Transport } from '#shared' */
 import { DEV } from 'esm-env';
 import * as e from './errors.js';
 
@@ -127,7 +127,10 @@ export async function save(promise) {
 
 /**
  * @template T
- * @type {Hydratable<T>}
+ * @param {string} key
+ * @param {() => T} fn
+ * @param {{ transport?: Transport }} [options]
+ * @returns {Promise<T>}
  */
 export async function hydratable(key, fn, { transport } = {}) {
 	const store = await get_render_store();

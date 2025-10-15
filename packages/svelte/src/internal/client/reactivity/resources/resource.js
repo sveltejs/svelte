@@ -1,6 +1,6 @@
 /** @import { Source, Derived } from '#client' */
 import { state, derived, set, get, tick } from '../../index.js';
-import { deferred, noop } from '../../../shared/utils.js';
+import { deferred } from '../../../shared/utils.js';
 
 /**
  * @template T

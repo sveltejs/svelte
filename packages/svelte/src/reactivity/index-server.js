@@ -1,5 +1,6 @@
 /** @import { StandardSchemaV1 } from '@standard-schema/spec' */
-import { compile } from 'path-to-regexp';
+/** @import { Transport } from '#shared' */
+import { uneval } from 'devalue';
 import { hydratable } from '../internal/server/context.js';
 
 export const SvelteDate = globalThis.Date;
@@ -122,20 +123,22 @@ const cache = new Map();
  * @template {unknown[]} [TArgs=[]]
  * @template {typeof Resource} [TResource=typeof Resource]
  * @param {string} name
- * @param {(...args: TArgs) => Promise<TReturn>} fn
- * @param {{ Resource?: TResource }} [options]
+ * @param {(...args: TArgs) => TReturn} fn
+ * @param {{ Resource?: TResource, transport?: Transport }} [options]
  * @returns {(...args: TArgs) => Resource<TReturn>}
  */
-export function createResource(name, fn, options) {
+export function defineResource(name, fn, options = {}) {
 	const ResolvedResource = options?.Resource ?? Resource;
 	return (...args) => {
-		const stringified_args = JSON.stringify(args);
+		const stringified_args = (options.transport?.stringify ?? JSON.stringify)(args);
 		const cache_key = `${name}:${stringified_args}`;
 		const entry = cache.get(cache_key);
 		if (entry) {
 			return entry;
 		}
-		const resource = new ResolvedResource(() => hydratable(cache_key, () => fn(...args)));
+		const resource = new ResolvedResource(() =>
+			hydratable(cache_key, () => fn(...args), { transport: options.transport })
+		);
 		cache.set(cache_key, resource);
 		return resource;
 	};

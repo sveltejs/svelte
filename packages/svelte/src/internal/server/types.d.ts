@@ -20,7 +20,7 @@ export interface ALSContext {
 		string,
 		{
 			value: MaybePromise<unknown>;
-			transport: Transport<any> | undefined;
+			transport: Transport | undefined;
 		}
 	>;
 }

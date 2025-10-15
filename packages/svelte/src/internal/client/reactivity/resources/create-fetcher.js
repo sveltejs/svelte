@@ -2,7 +2,7 @@
 /** @import { StandardSchemaV1 } from '@standard-schema/spec' */
 
 import { compile } from 'path-to-regexp';
-import { create_resource } from './create-resource.js';
+import { create_resource } from './define-resource.js';
 
 /**
  * @template {Record<string, unknown>} TPathParams
