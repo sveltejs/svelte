@@ -3198,7 +3198,7 @@ declare namespace $state {
 	 * you must reassign it.
 	 *
 	 * Example:
-	 * ```ts
+	 * ```svelte
 	 * <script>
 	 *   let items = $state.raw([0]);
 	 *
@@ -3207,7 +3207,7 @@ declare namespace $state {
 	 *   };
 	 * </script>
 	 *
-	 * <button on:click={addItem}>
+	 * <button onclick={addItem}>
 	 *   {items.join(', ')}
 	 * </button>
 	 * ```
@@ -3222,7 +3222,7 @@ declare namespace $state {
 	 * To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snapshot`:
 	 *
 	 * Example:
-	 * ```ts
+	 * ```svelte
 	 * <script>
 	 *   let counter = $state({ count: 0 });
 	 *
