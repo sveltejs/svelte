@@ -734,7 +734,7 @@ export function eager(fn) {
 
 			if (!eager_flushing) {
 				eager_flushing = true;
-				queueMicrotask(eager_flush);
+				queue_micro_task(eager_flush);
 			}
 		});
 
