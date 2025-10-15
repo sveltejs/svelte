@@ -3199,8 +3199,8 @@ declare namespace $state {
 	 *
 	 * ```svelte
 	 * <nav>
-	 *   <a href="/" aria-current={$state.eager(href) === '/' ? 'page' : null}>home</a>
-	 *   <a href="/about" aria-current={$state.eager(href) === '/about' ? 'page' : null}>about</a>
+	 *   <a href="/" aria-current={$state.eager(pathname) === '/' ? 'page' : null}>home</a>
+	 *   <a href="/about" aria-current={$state.eager(pathname) === '/about' ? 'page' : null}>about</a>
 	 * </nav>
 	 * ```
 	 */
