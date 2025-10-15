@@ -197,7 +197,7 @@ if (typeof HTMLElement === 'function') {
 			// In a microtask, because this could be a move within the DOM
 			Promise.resolve().then(() => {
 				if (!this.$$cn && this.$$c) {
-					this.$$c.$destroy();
+					this.$$c?.$destroy();
 					this.$$me();
 					this.$$c = undefined;
 				}
