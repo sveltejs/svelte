@@ -2,12 +2,6 @@ import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	mode: ['client'],
-
-	compileOptions: {
-		dev: true
-	},
-
 	async test({ assert, target }) {
 		const [count, shift] = target.querySelectorAll('button');
 
