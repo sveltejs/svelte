@@ -51,7 +51,7 @@ export function CallExpression(node, context) {
 
 		case '$state.eager':
 			return b.call(
-				'$.pending',
+				'$.eager',
 				b.thunk(/** @type {Expression} */ (context.visit(node.arguments[0])))
 			);
 

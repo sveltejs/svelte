@@ -13,10 +13,8 @@ import {
 	active_effect,
 	active_reaction,
 	get,
-	read_pending,
 	set_active_effect,
-	set_active_reaction,
-	set_read_pending
+	set_active_reaction
 } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -449,10 +447,7 @@ export function get_boundary() {
 	return /** @type {Boundary} */ (/** @type {Effect} */ (active_effect).b);
 }
 
-/**
- * @param {() => any} [fn]
- */
-export function pending(fn) {
+export function pending() {
 	if (active_effect === null) {
 		e.effect_pending_outside_reaction();
 	}
@@ -460,23 +455,8 @@ export function pending(fn) {
 	var boundary = active_effect.b;
 
 	if (boundary === null) {
-		return fn ? fn() : 0; // TODO eventually we will need this to be global
+		return 0; // TODO eventually we will need this to be global
 	}
 
-	var pending = boundary.get_effect_pending();
-
-	if (fn) {
-		var value;
-		var prev_read_pending = read_pending;
-		set_read_pending(true);
-		try {
-			value = fn();
-		} finally {
-			set_read_pending(prev_read_pending);
-		}
-
-		return value;
-	} else {
-		return pending;
-	}
+	return boundary.get_effect_pending();
 }

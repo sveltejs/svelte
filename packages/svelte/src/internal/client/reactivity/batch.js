@@ -17,6 +17,7 @@ import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
 import {
 	active_effect,
+	get,
 	is_dirty,
 	is_updating_effect,
 	set_is_updating_effect,
@@ -27,8 +28,8 @@ import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
-import { old_values } from './sources.js';
-import { unlink_effect } from './effects.js';
+import { old_values, source, update } from './sources.js';
+import { inspect_effect, unlink_effect } from './effects.js';
 
 /** @type {Set<Batch>} */
 const batches = new Set();
@@ -700,6 +701,48 @@ export function schedule_effect(signal) {
 	}
 
 	queued_root_effects.push(effect);
+}
+
+/** @type {Source<number>} */
+let version;
+
+let eager_flushing = false;
+
+function eager_flush() {
+	try {
+		flushSync(() => {
+			update(version);
+		});
+	} finally {
+		eager_flushing = false;
+	}
+}
+
+/**
+ * @template T
+ * @param {() => T} fn
+ * @returns {T}
+ */
+export function eager(fn) {
+	const previous_batch_values = batch_values;
+
+	try {
+		get((version ??= source(0)));
+
+		inspect_effect(() => {
+			fn();
+
+			if (!eager_flushing) {
+				eager_flushing = true;
+				queueMicrotask(eager_flush);
+			}
+		});
+
+		batch_values = null;
+		return fn();
+	} finally {
+		batch_values = previous_batch_values;
+	}
 }
 
 /**

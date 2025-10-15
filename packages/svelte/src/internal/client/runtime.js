@@ -145,17 +145,6 @@ export function increment_write_version() {
 }
 
 /**
- * Whether or not we should get the latest value of a signal regardless of whether or not it is pending,
- * i.e. inside a boundary with pending async work in which case normally a stale value might be shown.
- */
-export let read_pending = false;
-
-/** @param {boolean} value */
-export function set_read_pending(value) {
-	read_pending = value;
-}
-
-/**
  * Determines whether a derived or effect is dirty.
  * If it is MAYBE_DIRTY, will set the status to CLEAN
  * @param {Reaction} reaction
@@ -691,7 +680,7 @@ export function get(signal) {
 		}
 	}
 
-	if (!read_pending && batch_values?.has(signal)) {
+	if (batch_values?.has(signal)) {
 		return batch_values.get(signal);
 	}
 
