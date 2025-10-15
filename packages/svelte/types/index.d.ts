@@ -450,11 +450,17 @@ declare module 'svelte' {
 	type NotFunction<T> = T extends Function ? never : T;
 	/**
 	 * Returns a `[get, set]` pair of functions for working with context in a type-safe way.
-	 * */
+	 *
+	 * `get` will throw an error if no parent component called `set`.
+	 *
+	 * @since 5.40.0
+	 */
 	export function createContext<T>(): [() => T, (context: T) => T];
 	/**
 	 * Retrieves the context that belongs to the closest parent component with the specified `key`.
 	 * Must be called during component initialisation.
+	 *
+	 * [`createContext`](https://svelte.dev/docs/svelte/svelte#createContext) is a type-safe alternative.
 	 *
 	 * */
 	export function getContext<T>(key: any): T;
@@ -464,6 +470,8 @@ declare module 'svelte' {
 	 * (including slotted content) with `getContext`.
 	 *
 	 * Like lifecycle functions, this must be called during component initialisation.
+	 *
+	 * [`createContext`](https://svelte.dev/docs/svelte/svelte#createContext) is a type-safe alternative.
 	 *
 	 * */
 	export function setContext<T>(key: any, context: T): T;

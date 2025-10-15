@@ -83,27 +83,18 @@ Svelte will warn you if you get it wrong.
 
 ## Type-safe context
 
-A useful pattern is to wrap the calls to `setContext` and `getContext` inside helper functions that let you preserve type safety:
+As an alternative to using `setContext` and `getContext` directly, you can use them via `createContext`. This gives you type safety and makes it unnecessary to use a key:
 
-```js
-/// file: context.js
+```ts
+/// file: context.ts
 // @filename: ambient.d.ts
 interface User {}
 
-// @filename: index.js
+// @filename: index.ts
 // ---cut---
-import { getContext, setContext } from 'svelte';
+import { createContext } from 'svelte';
 
-const key = {};
-
-/** @param {User} user */
-export function setUserContext(user) {
-	setContext(key, user);
-}
-
-export function getUserContext() {
-	return /** @type {User} */ (getContext(key));
-}
+export const [getUserContext, setUserContext] = createContext<User>();
 ```
 
 ## Replacing global state

@@ -13,6 +13,7 @@ export function set_ssr_context(v) {
 /**
  * @template T
  * @returns {[() => T, (context: T) => T]}
+ * @since 5.40.0
  */
 export function createContext() {
 	const key = {};
