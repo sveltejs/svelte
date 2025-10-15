@@ -24,7 +24,7 @@ export class Resource {
 	/** @type {Source<T | undefined>} */
 	#raw = state(undefined);
 
-	/** @type {Source<Promise<void>>} */
+	/** @type {Source<Promise<any>>} */
 	#promise;
 
 	/** @type {Derived<T | undefined>} */
@@ -149,10 +149,10 @@ export class Resource {
 	/**
 	 * @returns {Promise<void>}
 	 */
-	refresh = () => {
+	refresh = async () => {
 		const promise = this.#run();
 		set(this.#promise, promise);
-		return promise;
+		await promise;
 	};
 
 	/**

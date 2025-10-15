@@ -1,5 +1,5 @@
 /** @import { ComponentContext, DevStackEntry, Effect } from '#client' */
-/** @import { Hydratable, Transport } from '#shared' */
+/** @import { Transport } from '#shared' */
 import { DEV } from 'esm-env';
 import * as e from './errors.js';
 import { active_effect, active_reaction } from './runtime.js';
