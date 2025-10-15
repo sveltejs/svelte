@@ -1,5 +1,11 @@
 # svelte
 
+## 5.40.1
+
+### Patch Changes
+
+- chore: Remove sync-in-async warning for server rendering ([#16949](https://github.com/sveltejs/svelte/pull/16949))
+
 ## 5.40.0
 
 ### Minor Changes
