@@ -138,8 +138,10 @@ export function async_derived(fn, location) {
 		var batch = /** @type {Batch} */ (current_batch);
 
 		if (should_suspend) {
+			var blocking = !boundary.is_pending();
+
 			boundary.update_pending_count(1);
-			batch.increment();
+			batch.increment(blocking);
 
 			deferreds.get(batch)?.reject(STALE_REACTION);
 			deferreds.delete(batch); // delete to ensure correct order in Map iteration below
@@ -190,7 +192,7 @@ export function async_derived(fn, location) {
 
 			if (should_suspend) {
 				boundary.update_pending_count(-1);
-				batch.decrement();
+				batch.decrement(blocking);
 			}
 		};
 

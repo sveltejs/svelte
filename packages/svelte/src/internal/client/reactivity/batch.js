@@ -102,6 +102,11 @@ export class Batch {
 	#pending = 0;
 
 	/**
+	 * The number of async effects that are currently in flight, _not_ inside a pending boundary
+	 */
+	#blocking_pending = 0;
+
+	/**
 	 * A deferred that resolves when the batch is committed, used with `settled()`
 	 * TODO replace with Promise.withResolvers once supported widely enough
 	 * @type {{ promise: Promise<void>, resolve: (value?: any) => void, reject: (reason: unknown) => void } | null}
@@ -257,7 +262,7 @@ export class Batch {
 			}
 		}
 
-		if (should_defer) {
+		if (this.#blocking_pending > 0) {
 			this.#defer_effects(target.effects);
 			this.#defer_effects(target.render_effects);
 			this.#defer_effects(target.block_effects);
@@ -407,12 +412,22 @@ export class Batch {
 		this.#deferred?.resolve();
 	}
 
-	increment() {
+	/**
+	 *
+	 * @param {boolean} blocking
+	 */
+	increment(blocking) {
 		this.#pending += 1;
+		if (blocking) this.#blocking_pending += 1;
 	}
 
-	decrement() {
+	/**
+	 *
+	 * @param {boolean} blocking
+	 */
+	decrement(blocking) {
 		this.#pending -= 1;
+		if (blocking) this.#blocking_pending -= 1;
 
 		for (const e of this.#dirty_effects) {
 			set_signal_status(e, DIRTY);

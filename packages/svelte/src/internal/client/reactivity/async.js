@@ -203,8 +203,10 @@ export async function async_body(fn) {
 	var boundary = get_boundary();
 	var batch = /** @type {Batch} */ (current_batch);
 
+	var blocking = !boundary.is_pending();
+
 	boundary.update_pending_count(1);
-	batch.increment();
+	batch.increment(blocking);
 
 	var active = /** @type {Effect} */ (active_effect);
 
@@ -237,7 +239,7 @@ export async function async_body(fn) {
 		}
 
 		boundary.update_pending_count(-1);
-		batch.decrement();
+		batch.decrement(blocking);
 
 		unset_context();
 	}
