@@ -160,8 +160,6 @@ export class Batch {
 			// flush_queued_effects(target.effects);
 
 			previous_batch = null;
-
-			this.#deferred?.resolve();
 		} else {
 			// this.#defer_effects(target.render_effects);
 			// this.#defer_effects(target.effects);
@@ -405,6 +403,8 @@ export class Batch {
 		}
 
 		batches.delete(this);
+
+		this.#deferred?.resolve();
 	}
 
 	increment() {
