@@ -298,12 +298,19 @@ export function EachBlock(node, context) {
 	let key_function = b.id('$.index');
 
 	if (node.metadata.keyed) {
-		const pattern = /** @type {Pattern} */ (node.context); // can only be keyed when a context is provided
+		const pattern = node.context;
 		const expression = /** @type {Expression} */ (
 			context.visit(/** @type {Expression} */ (node.key), key_state)
 		);
-
-		key_function = b.arrow(key_uses_index ? [pattern, index] : [pattern], expression);
+		/** @type {Pattern[]} */
+		const args = [];
+		if (pattern) {
+			args.push(pattern);
+		}
+		if (key_uses_index) {
+			args.push(index);
+		}
+		key_function = b.arrow(args, expression);
 	}
 
 	if (node.index && each_node_meta.contains_group_binding) {
