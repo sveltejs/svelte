@@ -87,7 +87,7 @@ export class Boundary {
 	/** @type {DocumentFragment | null} */
 	#offscreen_fragment = null;
 
-	#local_pending_count = 0;
+	local_pending_count = 0;
 	#pending_count = 0;
 
 	#is_creating_fallback = false;
@@ -103,12 +103,12 @@ export class Boundary {
 
 	#effect_pending_update = () => {
 		if (this.#effect_pending) {
-			internal_set(this.#effect_pending, this.#local_pending_count);
+			internal_set(this.#effect_pending, this.local_pending_count);
 		}
 	};
 
 	#effect_pending_subscriber = createSubscriber(() => {
-		this.#effect_pending = source(this.#local_pending_count);
+		this.#effect_pending = source(this.local_pending_count);
 
 		if (DEV) {
 			tag(this.#effect_pending, '$effect.pending()');
@@ -285,13 +285,6 @@ export class Boundary {
 				this.#anchor.before(this.#offscreen_fragment);
 				this.#offscreen_fragment = null;
 			}
-
-			// TODO this feels like a little bit of a kludge, but until we
-			// overhaul the boundary/batch relationship it's probably
-			// the most pragmatic solution available to us
-			queue_micro_task(() => {
-				Batch.ensure().flush();
-			});
 		}
 	}
 
@@ -304,7 +297,7 @@ export class Boundary {
 	update_pending_count(d) {
 		this.#update_pending_count(d);
 
-		this.#local_pending_count += d;
+		this.local_pending_count += d;
 		effect_pending_updates.add(this.#effect_pending_update);
 	}
 
@@ -363,7 +356,7 @@ export class Boundary {
 			// If the failure happened while flushing effects, current_batch can be null
 			Batch.ensure();
 
-			this.#local_pending_count = 0;
+			this.local_pending_count = 0;
 
 			if (this.#failed_effect !== null) {
 				pause_effect(this.#failed_effect, () => {

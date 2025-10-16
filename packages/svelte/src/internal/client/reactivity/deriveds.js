@@ -136,17 +136,14 @@ export function async_derived(fn, location) {
 		if (DEV) current_async_effect = null;
 
 		var batch = /** @type {Batch} */ (current_batch);
-		var pending = boundary.is_pending();
 
 		if (should_suspend) {
 			boundary.update_pending_count(1);
-			if (!pending) {
-				batch.increment();
+			batch.increment();
 
-				deferreds.get(batch)?.reject(STALE_REACTION);
-				deferreds.delete(batch); // delete to ensure correct order in Map iteration below
-				deferreds.set(batch, d);
-			}
+			deferreds.get(batch)?.reject(STALE_REACTION);
+			deferreds.delete(batch); // delete to ensure correct order in Map iteration below
+			deferreds.set(batch, d);
 		}
 
 		/**
@@ -156,7 +153,7 @@ export function async_derived(fn, location) {
 		const handler = (value, error = undefined) => {
 			current_async_effect = null;
 
-			if (!pending) batch.activate();
+			batch.activate();
 
 			if (error) {
 				if (error !== STALE_REACTION) {
@@ -193,7 +190,7 @@ export function async_derived(fn, location) {
 
 			if (should_suspend) {
 				boundary.update_pending_count(-1);
-				if (!pending) batch.decrement();
+				batch.decrement();
 			}
 		};
 

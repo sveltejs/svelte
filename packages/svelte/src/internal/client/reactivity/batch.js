@@ -11,7 +11,8 @@ import {
 	RENDER_EFFECT,
 	ROOT_EFFECT,
 	MAYBE_DIRTY,
-	DERIVED
+	DERIVED,
+	BOUNDARY_EFFECT
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
@@ -29,6 +30,16 @@ import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
 import { old_values } from './sources.js';
 import { unlink_effect } from './effects.js';
+
+/**
+ * @typedef {{
+ *   parent: EffectTarget | null;
+ *   effect: Effect | null;
+ *   effects: Effect[];
+ *   render_effects: Effect[];
+ *   block_effects: Effect[];
+ * }} EffectTarget
+ */
 
 /** @type {Set<Batch>} */
 const batches = new Set();
@@ -98,26 +109,6 @@ export class Batch {
 	#deferred = null;
 
 	/**
-	 * Template effects and `$effect.pre` effects, which run when
-	 * a batch is committed
-	 * @type {Effect[]}
-	 */
-	#render_effects = [];
-
-	/**
-	 * The same as `#render_effects`, but for `$effect` (which runs after)
-	 * @type {Effect[]}
-	 */
-	#effects = [];
-
-	/**
-	 * Block effects, which may need to re-run on subsequent flushes
-	 * in order to update internal sources (e.g. each block items)
-	 * @type {Effect[]}
-	 */
-	#block_effects = [];
-
-	/**
 	 * Deferred effects (which run after async work has completed) that are DIRTY
 	 * @type {Effect[]}
 	 */
@@ -155,33 +146,26 @@ export class Batch {
 		if (this.#pending === 0) {
 			// TODO we need this because we commit _then_ flush effects...
 			// maybe there's a way we can reverse the order?
-			var previous_batch_sources = batch_values;
+			// var previous_batch_sources = batch_values;
 
 			this.#commit();
-
-			var render_effects = this.#render_effects;
-			var effects = this.#effects;
-
-			this.#render_effects = [];
-			this.#effects = [];
-			this.#block_effects = [];
 
 			// If sources are written to, then work needs to happen in a separate batch, else prior sources would be mixed with
 			// newly updated sources, which could lead to infinite loops when effects run over and over again.
 			previous_batch = this;
 			current_batch = null;
 
-			batch_values = previous_batch_sources;
-			flush_queued_effects(render_effects);
-			flush_queued_effects(effects);
+			// batch_values = previous_batch_sources;
+			// flush_queued_effects(target.render_effects);
+			// flush_queued_effects(target.effects);
 
 			previous_batch = null;
 
 			this.#deferred?.resolve();
 		} else {
-			this.#defer_effects(this.#render_effects);
-			this.#defer_effects(this.#effects);
-			this.#defer_effects(this.#block_effects);
+			// this.#defer_effects(target.render_effects);
+			// this.#defer_effects(target.effects);
+			// this.#defer_effects(target.block_effects);
 		}
 
 		batch_values = null;
@@ -195,6 +179,17 @@ export class Batch {
 	#traverse_effect_tree(root) {
 		root.f ^= CLEAN;
 
+		var should_defer = false;
+
+		/** @type {EffectTarget} */
+		var target = {
+			parent: null,
+			effect: null,
+			effects: [],
+			render_effects: [],
+			block_effects: []
+		};
+
 		var effect = root.first;
 
 		while (effect !== null) {
@@ -204,15 +199,25 @@ export class Batch {
 
 			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.skipped_effects.has(effect);
 
+			if ((effect.f & BOUNDARY_EFFECT) !== 0 && effect.b?.is_pending()) {
+				target = {
+					parent: target,
+					effect,
+					effects: [],
+					render_effects: [],
+					block_effects: []
+				};
+			}
+
 			if (!skip && effect.fn !== null) {
 				if (is_branch) {
 					effect.f ^= CLEAN;
 				} else if ((flags & EFFECT) !== 0) {
-					this.#effects.push(effect);
+					target.effects.push(effect);
 				} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
-					this.#render_effects.push(effect);
+					target.render_effects.push(effect);
 				} else if (is_dirty(effect)) {
-					if ((effect.f & BLOCK_EFFECT) !== 0) this.#block_effects.push(effect);
+					if ((effect.f & BLOCK_EFFECT) !== 0) target.block_effects.push(effect);
 					update_effect(effect);
 				}
 
@@ -228,9 +233,40 @@ export class Batch {
 			effect = effect.next;
 
 			while (effect === null && parent !== null) {
+				if (parent.b !== null) {
+					var ready = parent.b.local_pending_count === 0;
+
+					if (target.parent === null) {
+						should_defer ||= !ready;
+					} else if (parent === target.effect) {
+						if (ready) {
+							// TODO can this happen?
+							target.parent.effects.push(...target.effects);
+							target.parent.render_effects.push(...target.render_effects);
+							target.parent.block_effects.push(...target.block_effects);
+						} else {
+							this.#defer_effects(target.effects);
+							this.#defer_effects(target.render_effects);
+							this.#defer_effects(target.block_effects);
+						}
+
+						target = /** @type {EffectTarget} */ (target.parent);
+					}
+				}
+
 				effect = parent.next;
 				parent = parent.parent;
 			}
+		}
+
+		if (should_defer) {
+			this.#defer_effects(target.effects);
+			this.#defer_effects(target.render_effects);
+			this.#defer_effects(target.block_effects);
+		} else {
+			// TODO append/detach blocks here as well
+			flush_queued_effects(target.render_effects);
+			flush_queued_effects(target.effects);
 		}
 	}
 
@@ -245,8 +281,6 @@ export class Batch {
 			// mark as clean so they get scheduled if they depend on pending async state
 			set_signal_status(e, CLEAN);
 		}
-
-		effects.length = 0;
 	}
 
 	/**
