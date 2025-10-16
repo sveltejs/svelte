@@ -49,7 +49,7 @@ export function SvelteBoundary(node, context) {
 			context.state.template.push(
 				b.if(
 					callee,
-					b.block([b.stmt(pending)]),
+					b.block(build_template([block_open_else, b.stmt(pending), block_close])),
 					b.block(build_template([block_open, statement, block_close]))
 				)
 			);
