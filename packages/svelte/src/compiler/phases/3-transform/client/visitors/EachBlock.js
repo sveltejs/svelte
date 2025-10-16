@@ -298,18 +298,13 @@ export function EachBlock(node, context) {
 	let key_function = b.id('$.index');
 
 	if (node.metadata.keyed) {
-		const pattern = node.context;
 		const expression = /** @type {Expression} */ (
 			context.visit(/** @type {Expression} */ (node.key), key_state)
 		);
-		/** @type {Pattern[]} */
-		const args = [];
-		if (pattern) {
-			args.push(pattern);
-		}
-		if (key_uses_index) {
-			args.push(index);
-		}
+
+		const args = [node.context ?? b.id('$$')];
+		if (key_uses_index) args.push(index);
+
 		key_function = b.arrow(args, expression);
 	}
 
