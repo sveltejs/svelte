@@ -63,11 +63,13 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 	const target = window.document.body;
 	const head = window.document.head;
 
-
-	let rendered: RenderOutput | SyncRenderOutput = render((await import(`${cwd}/_output/server/main.svelte.js`)).default, {
-		props: config.server_props ?? config.props ?? {},
-		idPrefix: config?.id_prefix
-	});
+	let rendered: RenderOutput | SyncRenderOutput = render(
+		(await import(`${cwd}/_output/server/main.svelte.js`)).default,
+		{
+			props: config.server_props ?? config.props ?? {},
+			idPrefix: config?.id_prefix
+		}
+	);
 	if (config.async) rendered = await rendered;
 
 	const override = read(`${cwd}/_override.html`);
