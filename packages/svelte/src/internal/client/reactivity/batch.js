@@ -98,13 +98,6 @@ export class Batch {
 	#deferred = null;
 
 	/**
-	 * Async effects inside a newly-created `<svelte:boundary>`
-	 * — these do not prevent the batch from committing
-	 * @type {Effect[]}
-	 */
-	#boundary_async_effects = [];
-
-	/**
 	 * Template effects and `$effect.pre` effects, which run when
 	 * a batch is committed
 	 * @type {Effect[]}
@@ -158,8 +151,7 @@ export class Batch {
 			this.#traverse_effect_tree(root);
 		}
 
-		// if we didn't start any new async work, and no async work
-		// is outstanding from a previous flush, commit
+		// if there is no outstanding async work, commit
 		if (this.#pending === 0) {
 			// TODO we need this because we commit _then_ flush effects...
 			// maybe there's a way we can reverse the order?
@@ -193,12 +185,6 @@ export class Batch {
 		}
 
 		batch_values = null;
-
-		for (const effect of this.#boundary_async_effects) {
-			update_effect(effect);
-		}
-
-		this.#boundary_async_effects = [];
 	}
 
 	/**
@@ -225,13 +211,9 @@ export class Batch {
 					this.#effects.push(effect);
 				} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
 					this.#render_effects.push(effect);
-				} else if ((flags & CLEAN) === 0) {
-					if ((flags & ASYNC) !== 0 && effect.b?.is_pending()) {
-						this.#boundary_async_effects.push(effect);
-					} else if (is_dirty(effect)) {
-						if ((effect.f & BLOCK_EFFECT) !== 0) this.#block_effects.push(effect);
-						update_effect(effect);
-					}
+				} else if (is_dirty(effect)) {
+					if ((effect.f & BLOCK_EFFECT) !== 0) this.#block_effects.push(effect);
+					update_effect(effect);
 				}
 
 				var child = effect.first;
