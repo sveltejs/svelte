@@ -182,8 +182,6 @@ export class Batch {
 	#traverse_effect_tree(root) {
 		root.f ^= CLEAN;
 
-		var should_defer = false;
-
 		/** @type {EffectTarget} */
 		var target = {
 			parent: null,
@@ -236,25 +234,15 @@ export class Batch {
 			effect = effect.next;
 
 			while (effect === null && parent !== null) {
-				if (parent.b !== null) {
-					var ready = parent.b.local_pending_count === 0;
+				if (parent === target.effect) {
+					// TODO rather than traversing into pending boundaries and deferring the effects,
+					// could we just attach the effects _to_ the pending boundary and schedule them
+					// once the boundary is ready?
+					this.#defer_effects(target.effects);
+					this.#defer_effects(target.render_effects);
+					this.#defer_effects(target.block_effects);
 
-					if (target.parent === null) {
-						should_defer ||= !ready;
-					} else if (parent === target.effect) {
-						if (ready) {
-							// TODO can this happen?
-							target.parent.effects.push(...target.effects);
-							target.parent.render_effects.push(...target.render_effects);
-							target.parent.block_effects.push(...target.block_effects);
-						} else {
-							this.#defer_effects(target.effects);
-							this.#defer_effects(target.render_effects);
-							this.#defer_effects(target.block_effects);
-						}
-
-						target = /** @type {EffectTarget} */ (target.parent);
-					}
+					target = /** @type {EffectTarget} */ (target.parent);
 				}
 
 				effect = parent.next;
