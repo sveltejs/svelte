@@ -10,8 +10,10 @@ import { createClassComponent } from 'svelte/legacy';
 import { render } from 'svelte/server';
 import type { CompileOptions } from '#compiler';
 import { flushSync } from 'svelte';
+import type { RenderOutput, SyncRenderOutput } from '#server';
 
 interface HydrationTest extends BaseTest {
+	async?: boolean;
 	load_compiled?: boolean;
 	server_props?: Record<string, any>;
 	id_prefix?: string;
@@ -43,6 +45,11 @@ function read(path: string): string | void {
 }
 
 const { test, run } = suite<HydrationTest>(async (config, cwd) => {
+	if (config.async) {
+		config.compileOptions ??= {};
+		config.compileOptions.experimental ??= {};
+		config.compileOptions.experimental.async = true;
+	}
 	if (!config.load_compiled) {
 		await compile_directory(cwd, 'client', {
 			accessors: true,
@@ -56,16 +63,18 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 	const target = window.document.body;
 	const head = window.document.head;
 
-	const rendered = render((await import(`${cwd}/_output/server/main.svelte.js`)).default, {
+
+	let rendered: RenderOutput | SyncRenderOutput = render((await import(`${cwd}/_output/server/main.svelte.js`)).default, {
 		props: config.server_props ?? config.props ?? {},
 		idPrefix: config?.id_prefix
 	});
+	if (config.async) rendered = await rendered;
 
 	const override = read(`${cwd}/_override.html`);
 	const override_head = read(`${cwd}/_override_head.html`);
 
-	fs.writeFileSync(`${cwd}/_output/body.html`, rendered.html + '\n');
-	target.innerHTML = override ?? rendered.html;
+	fs.writeFileSync(`${cwd}/_output/body.html`, rendered.body + '\n');
+	target.innerHTML = override ?? rendered.body;
 
 	if (rendered.head) {
 		fs.writeFileSync(`${cwd}/_output/head.html`, rendered.head + '\n');
@@ -134,7 +143,7 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 		const normalize = (string: string) =>
 			string.trim().replaceAll('\r\n', '\n').replaceAll('/>', '>');
 
-		const expected = read(`${cwd}/_expected.html`) ?? rendered.html;
+		const expected = read(`${cwd}/_expected.html`) ?? rendered.body;
 		assert.equal(normalize(target.innerHTML), normalize(expected));
 
 		if (rendered.head) {
