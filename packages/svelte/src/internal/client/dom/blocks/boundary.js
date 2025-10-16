@@ -195,7 +195,9 @@ export class Boundary {
 				return branch(() => {
 					// We've already hydrated the pending content. We stop hydrating
 					// here so the resolved content is rendered on top of it.
-					set_hydrating(false);
+					if (hydrating) {
+						set_hydrating(false);
+					}
 					return this.#children(this.#anchor)
 				});
 			});
