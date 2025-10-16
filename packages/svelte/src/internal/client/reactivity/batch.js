@@ -143,8 +143,17 @@ export class Batch {
 
 		this.apply();
 
+		/** @type {EffectTarget} */
+		var target = {
+			parent: null,
+			effect: null,
+			effects: [],
+			render_effects: [],
+			block_effects: []
+		};
+
 		for (const root of root_effects) {
-			this.#traverse_effect_tree(root);
+			this.#traverse_effect_tree(root, target);
 		}
 
 		// if there is no outstanding async work, commit
@@ -155,20 +164,31 @@ export class Batch {
 
 			this.#commit();
 
+			// batch_values = previous_batch_sources;
+			// flush_queued_effects(target.render_effects);
+			// flush_queued_effects(target.effects);
+		} else {
+			// this.#defer_effects(target.render_effects);
+			// this.#defer_effects(target.effects);
+			// this.#defer_effects(target.block_effects);
+		}
+
+		if (this.#blocking_pending > 0) {
+			this.#defer_effects(target.effects);
+			this.#defer_effects(target.render_effects);
+			this.#defer_effects(target.block_effects);
+		} else {
+			// TODO append/detach blocks here as well, not in #commit
+
 			// If sources are written to, then work needs to happen in a separate batch, else prior sources would be mixed with
 			// newly updated sources, which could lead to infinite loops when effects run over and over again.
 			previous_batch = this;
 			current_batch = null;
 
-			// batch_values = previous_batch_sources;
-			// flush_queued_effects(target.render_effects);
-			// flush_queued_effects(target.effects);
+			flush_queued_effects(target.render_effects);
+			flush_queued_effects(target.effects);
 
 			previous_batch = null;
-		} else {
-			// this.#defer_effects(target.render_effects);
-			// this.#defer_effects(target.effects);
-			// this.#defer_effects(target.block_effects);
 		}
 
 		batch_values = null;
@@ -178,18 +198,10 @@ export class Batch {
 	 * Traverse the effect tree, executing effects or stashing
 	 * them for later execution as appropriate
 	 * @param {Effect} root
+	 * @param {EffectTarget} target
 	 */
-	#traverse_effect_tree(root) {
+	#traverse_effect_tree(root, target) {
 		root.f ^= CLEAN;
-
-		/** @type {EffectTarget} */
-		var target = {
-			parent: null,
-			effect: null,
-			effects: [],
-			render_effects: [],
-			block_effects: []
-		};
 
 		var effect = root.first;
 
@@ -248,16 +260,6 @@ export class Batch {
 				effect = parent.next;
 				parent = parent.parent;
 			}
-		}
-
-		if (this.#blocking_pending > 0) {
-			this.#defer_effects(target.effects);
-			this.#defer_effects(target.render_effects);
-			this.#defer_effects(target.block_effects);
-		} else {
-			// TODO append/detach blocks here as well
-			flush_queued_effects(target.render_effects);
-			flush_queued_effects(target.effects);
 		}
 	}
 
@@ -343,6 +345,15 @@ export class Batch {
 
 			let is_earlier = true;
 
+			/** @type {EffectTarget} */
+			var dummy_target = {
+				parent: null,
+				effect: null,
+				effects: [],
+				render_effects: [],
+				block_effects: []
+			};
+
 			for (const batch of batches) {
 				if (batch === this) {
 					is_earlier = false;
@@ -383,8 +394,10 @@ export class Batch {
 						batch.apply();
 
 						for (const root of queued_root_effects) {
-							batch.#traverse_effect_tree(root);
+							batch.#traverse_effect_tree(root, dummy_target);
 						}
+
+						// TODO do we need to do anything with `target`? defer block effects?
 
 						queued_root_effects = [];
 						batch.deactivate();
