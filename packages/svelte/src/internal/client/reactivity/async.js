@@ -1,7 +1,13 @@
 /** @import { Effect, TemplateNode, Value } from '#client' */
 import { DESTROYED } from '#client/constants';
 import { DEV } from 'esm-env';
-import { component_context, is_runes, set_component_context } from '../context.js';
+import {
+	component_context,
+	dev_stack,
+	is_runes,
+	set_component_context,
+	set_dev_stack
+} from '../context.js';
 import { get_boundary } from '../dom/blocks/boundary.js';
 import { invoke_error_boundary } from '../error-handling.js';
 import {
@@ -92,6 +98,10 @@ export function capture() {
 		var previous_hydrate_node = hydrate_node;
 	}
 
+	if (DEV) {
+		var previous_dev_stack = dev_stack;
+	}
+
 	return function restore() {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
@@ -105,6 +115,7 @@ export function capture() {
 
 		if (DEV) {
 			set_from_async_derived(null);
+			set_dev_stack(previous_dev_stack);
 		}
 	};
 }
@@ -193,7 +204,11 @@ export function unset_context() {
 	set_active_effect(null);
 	set_active_reaction(null);
 	set_component_context(null);
-	if (DEV) set_from_async_derived(null);
+
+	if (DEV) {
+		set_from_async_derived(null);
+		set_dev_stack(null);
+	}
 }
 
 /**
