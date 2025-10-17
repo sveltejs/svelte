@@ -1,4 +1,5 @@
 /** @import { Effect, TemplateNode } from '#client' */
+import { is_runes } from '../../context.js';
 import { Batch, current_batch } from '../../reactivity/batch.js';
 import {
 	branch,
@@ -29,6 +30,8 @@ export class BranchManager {
 
 	/** @type {Map<Key, Branch>} */
 	#offscreen = new Map();
+
+	#legacy = !is_runes();
 
 	/**
 	 *
@@ -116,6 +119,11 @@ export class BranchManager {
 	 */
 	ensure(key, fn) {
 		var batch = /** @type {Batch} */ (current_batch);
+
+		// key blocks in Svelte <5 had stupid semantics
+		if (this.#legacy && typeof key === 'object') {
+			key = {};
+		}
 
 		if (!this.#onscreen.has(key) && !this.#offscreen.has(key)) {
 			var fragment = document.createDocumentFragment();
