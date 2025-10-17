@@ -2,7 +2,6 @@
 import { EFFECT_TRANSPARENT } from '#client/constants';
 import {
 	hydrate_next,
-	hydrate_node,
 	hydrating,
 	read_hydration_instruction,
 	skip_nodes,
@@ -10,7 +9,7 @@ import {
 	set_hydrating
 } from '../hydration.js';
 import { block } from '../../reactivity/effects.js';
-import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
+import { HYDRATION_START_ELSE } from '../../../../constants.js';
 import { BranchManager } from './branches.js';
 import { noop } from '../../../shared/utils.js';
 
@@ -27,54 +26,46 @@ export function if_block(node, fn, elseif = false) {
 		hydrate_next();
 	}
 
-	var anchor = node;
-
+	var branches = new BranchManager(node);
 	var flags = elseif ? EFFECT_TRANSPARENT : 0;
 
-	var has_branch = false;
-
-	const set_branch = (/** @type {(anchor: Node) => void} */ fn, flag = true) => {
-		has_branch = true;
-		update_branch(flag, fn);
-	};
-
-	var branches = new BranchManager(anchor);
-
-	const update_branch = (
-		/** @type {boolean} */ condition,
-		/** @type {null | ((anchor: Node) => void)} */ fn
-	) => {
+	/**
+	 * @param {boolean} condition,
+	 * @param {((anchor: Node) => void)} fn
+	 */
+	function update_branch(condition, fn) {
 		if (hydrating) {
-			const is_else = read_hydration_instruction(anchor) === HYDRATION_START_ELSE;
+			const is_else = read_hydration_instruction(node) === HYDRATION_START_ELSE;
 
-			if (!!condition === is_else) {
+			if (condition === is_else) {
 				// Hydration mismatch: remove everything inside the anchor and start fresh.
 				// This could happen with `{#if browser}...{/if}`, for example
-				anchor = skip_nodes();
+				var anchor = skip_nodes();
 
 				set_hydrate_node(anchor);
 				branches.anchor = anchor;
 
 				set_hydrating(false);
-				branches.ensure(condition, fn ?? noop);
+				branches.ensure(condition, fn);
 				set_hydrating(true);
 
 				return;
 			}
 		}
 
-		branches.ensure(condition, fn ?? noop);
-	};
+		branches.ensure(condition, fn);
+	}
 
 	block(() => {
-		has_branch = false;
-		fn(set_branch);
+		var has_branch = false;
+
+		fn((fn, flag = true) => {
+			has_branch = true;
+			update_branch(flag, fn);
+		});
+
 		if (!has_branch) {
-			update_branch(false, null);
+			update_branch(false, noop);
 		}
 	}, flags);
-
-	if (hydrating) {
-		anchor = hydrate_node;
-	}
 }
