@@ -80,7 +80,7 @@ export function flatten(sync, async, fn) {
  * some asynchronous work has happened (so that e.g. `await a + b`
  * causes `b` to be registered as a dependency).
  */
-function capture() {
+export function capture() {
 	var previous_effect = active_effect;
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
