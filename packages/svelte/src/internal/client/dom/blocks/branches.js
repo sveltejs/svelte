@@ -57,16 +57,17 @@ export class BranchManager {
 		} else {
 			// effect is currently offscreen. put it in the DOM
 			var offscreen = this.#offscreen.get(key);
-			if (!offscreen) throw new Error('This should never happen!');
 
-			this.#onscreen.set(key, offscreen.effect);
-			this.#offscreen.delete(key);
+			if (offscreen) {
+				this.#onscreen.set(key, offscreen.effect);
+				this.#offscreen.delete(key);
 
-			// remove the anchor...
-			/** @type {TemplateNode} */ (offscreen.fragment.lastChild).remove();
+				// remove the anchor...
+				/** @type {TemplateNode} */ (offscreen.fragment.lastChild).remove();
 
-			// ...and append the fragment
-			this.anchor.before(offscreen.fragment);
+				// ...and append the fragment
+				this.anchor.before(offscreen.fragment);
+			}
 		}
 
 		this.#batches.delete(batch);
@@ -115,7 +116,7 @@ export class BranchManager {
 	/**
 	 *
 	 * @param {any} key
-	 * @param {(target: TemplateNode) => void} fn
+	 * @param {null | ((target: TemplateNode) => void)} fn
 	 */
 	ensure(key, fn) {
 		var batch = /** @type {Batch} */ (current_batch);
@@ -125,7 +126,7 @@ export class BranchManager {
 			key = {};
 		}
 
-		if (!this.#onscreen.has(key) && !this.#offscreen.has(key)) {
+		if (fn && !this.#onscreen.has(key) && !this.#offscreen.has(key)) {
 			var fragment = document.createDocumentFragment();
 			var target = create_text();
 

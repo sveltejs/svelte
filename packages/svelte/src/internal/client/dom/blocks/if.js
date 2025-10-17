@@ -31,7 +31,7 @@ export function if_block(node, fn, elseif = false) {
 
 	/**
 	 * @param {boolean} condition,
-	 * @param {((anchor: Node) => void)} fn
+	 * @param {null | ((anchor: Node) => void)} fn
 	 */
 	function update_branch(condition, fn) {
 		if (hydrating) {
@@ -65,7 +65,7 @@ export function if_block(node, fn, elseif = false) {
 		});
 
 		if (!has_branch) {
-			update_branch(false, noop);
+			update_branch(false, null);
 		}
 	}, flags);
 }

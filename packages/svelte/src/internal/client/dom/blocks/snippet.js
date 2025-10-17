@@ -28,13 +28,13 @@ export function snippet(node, get_snippet, ...args) {
 	var branches = new BranchManager(node);
 
 	block(() => {
-		const snippet = get_snippet();
+		const snippet = get_snippet() ?? null;
 
-		if (snippet == null) {
+		if (DEV && snippet == null) {
 			e.invalid_snippet();
 		}
 
-		branches.ensure(snippet, (anchor) => snippet(anchor, ...args));
+		branches.ensure(snippet, snippet && ((anchor) => snippet(anchor, ...args)));
 	}, EFFECT_TRANSPARENT);
 }
 
