@@ -1,5 +1,11 @@
 # svelte
 
+## 5.40.2
+
+### Patch Changes
+
+- fix: add hydration markers in `pending` branch of SSR boundary ([#16965](https://github.com/sveltejs/svelte/pull/16965))
+
 ## 5.40.1
 
 ### Patch Changes
