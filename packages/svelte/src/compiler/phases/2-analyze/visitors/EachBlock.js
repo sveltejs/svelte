@@ -28,6 +28,10 @@ export function EachBlock(node, context) {
 			node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index;
 	}
 
+	if (node.metadata.keyed && !node.context) {
+		e.each_key_without_as(node);
+	}
+
 	// evaluate expression in parent scope
 	context.visit(node.expression, {
 		...context.state,
