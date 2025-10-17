@@ -384,7 +384,9 @@ export function client_component(analysis, options) {
 			.../** @type {ESTree.Statement[]} */ (template.body)
 		]);
 
-		component_block.body.push(b.stmt(b.call(`$.async_body`, b.arrow([], body, true))));
+		component_block.body.push(
+			b.stmt(b.call(`$.async_body`, b.id('$$anchor'), b.arrow([b.id('$$anchor')], body, true)))
+		);
 	} else {
 		component_block.body.push(
 			...state.instance_level_snippets,

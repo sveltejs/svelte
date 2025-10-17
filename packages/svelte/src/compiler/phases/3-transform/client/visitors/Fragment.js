@@ -177,7 +177,11 @@ export function Fragment(node, context) {
 	}
 
 	if (has_await) {
-		return b.block([b.stmt(b.call('$.async_body', b.arrow([], b.block(body), true)))]);
+		return b.block([
+			b.stmt(
+				b.call('$.async_body', b.id('$$anchor'), b.arrow([b.id('$$anchor')], b.block(body), true))
+			)
+		]);
 	} else {
 		return b.block(body);
 	}

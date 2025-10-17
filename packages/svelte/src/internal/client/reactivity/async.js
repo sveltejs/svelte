@@ -1,5 +1,4 @@
-/** @import { Effect, Value } from '#client' */
-
+/** @import { Effect, TemplateNode, Value } from '#client' */
 import { DESTROYED } from '#client/constants';
 import { DEV } from 'esm-env';
 import { component_context, is_runes, set_component_context } from '../context.js';
@@ -28,6 +27,7 @@ import {
 	set_hydrating,
 	skip_nodes
 } from '../dom/hydration.js';
+import { create_text } from '../dom/operations.js';
 
 /**
  *
@@ -197,9 +197,10 @@ export function unset_context() {
 }
 
 /**
- * @param {() => Promise<void>} fn
+ * @param {TemplateNode} anchor
+ * @param {(target: TemplateNode) => Promise<void>} fn
  */
-export async function async_body(fn) {
+export async function async_body(anchor, fn) {
 	var boundary = get_boundary();
 	var batch = /** @type {Batch} */ (current_batch);
 	var pending = boundary.is_pending();
@@ -217,8 +218,11 @@ export async function async_body(fn) {
 		next_hydrate_node = skip_nodes(false);
 	}
 
+	var target = create_text();
+	anchor.before(target);
+
 	try {
-		var promise = fn();
+		var promise = fn(target);
 	} finally {
 		if (next_hydrate_node) {
 			set_hydrate_node(next_hydrate_node);
@@ -228,6 +232,7 @@ export async function async_body(fn) {
 
 	try {
 		await promise;
+		target.remove();
 	} catch (error) {
 		if (!aborted(active)) {
 			invoke_error_boundary(error, active);
