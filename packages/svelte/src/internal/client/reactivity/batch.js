@@ -343,7 +343,8 @@ export class Batch {
 		if (batches.size > 1) {
 			this.#previous.clear();
 
-			let is_earlier = true;
+			var previous_batch_values = batch_values;
+			var is_earlier = true;
 
 			/** @type {EffectTarget} */
 			var dummy_target = {
@@ -406,6 +407,7 @@ export class Batch {
 			}
 
 			current_batch = null;
+			batch_values = previous_batch_values;
 		}
 
 		batches.delete(this);
