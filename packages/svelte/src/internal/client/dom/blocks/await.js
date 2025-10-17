@@ -56,7 +56,6 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 			// Hydration mismatch: remove everything inside the anchor and start fresh
 			set_hydrate_node(skip_nodes());
 			set_hydrating(false);
-			mismatch = true;
 		}
 
 		if (is_promise(input)) {
