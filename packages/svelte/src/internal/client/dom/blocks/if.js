@@ -11,7 +11,6 @@ import {
 import { block } from '../../reactivity/effects.js';
 import { HYDRATION_START_ELSE } from '../../../../constants.js';
 import { BranchManager } from './branches.js';
-import { noop } from '../../../shared/utils.js';
 
 // TODO reinstate https://github.com/sveltejs/svelte/pull/15250
 
