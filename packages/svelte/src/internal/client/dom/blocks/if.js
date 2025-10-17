@@ -14,6 +14,8 @@ import { block, branch, pause_effect, resume_effect } from '../../reactivity/eff
 import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
 import { create_text, should_defer_append } from '../operations.js';
 import { current_batch } from '../../reactivity/batch.js';
+import { BranchManager } from './branches.js';
+import { noop } from '../../../shared/utils.js';
 
 // TODO reinstate https://github.com/sveltejs/svelte/pull/15250
 
@@ -30,12 +32,6 @@ export function if_block(node, fn, elseif = false) {
 
 	var anchor = node;
 
-	/** @type {Effect | null} */
-	var consequent_effect = null;
-
-	/** @type {Effect | null} */
-	var alternate_effect = null;
-
 	/** @type {typeof UNINITIALIZED | boolean | null} */
 	var condition = UNINITIALIZED;
 
@@ -48,42 +44,12 @@ export function if_block(node, fn, elseif = false) {
 		update_branch(flag, fn);
 	};
 
-	/** @type {DocumentFragment | null} */
-	var offscreen_fragment = null;
-
-	function commit() {
-		if (offscreen_fragment !== null) {
-			// remove the anchor
-			/** @type {Text} */ (offscreen_fragment.lastChild).remove();
-
-			anchor.before(offscreen_fragment);
-			offscreen_fragment = null;
-		}
-
-		var active = condition ? consequent_effect : alternate_effect;
-		var inactive = condition ? alternate_effect : consequent_effect;
-
-		if (active) {
-			resume_effect(active);
-		}
-
-		if (inactive) {
-			pause_effect(inactive, () => {
-				if (condition) {
-					alternate_effect = null;
-				} else {
-					consequent_effect = null;
-				}
-			});
-		}
-	}
+	var branches = new BranchManager(anchor);
 
 	const update_branch = (
 		/** @type {boolean | null} */ new_condition,
 		/** @type {null | ((anchor: Node) => void)} */ fn
 	) => {
-		if (condition === (condition = new_condition)) return;
-
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
 
@@ -101,33 +67,7 @@ export function if_block(node, fn, elseif = false) {
 			}
 		}
 
-		var defer = should_defer_append();
-		var target = anchor;
-
-		if (defer) {
-			offscreen_fragment = document.createDocumentFragment();
-			offscreen_fragment.append((target = create_text()));
-		}
-
-		if (condition) {
-			consequent_effect ??= fn && branch(() => fn(target));
-		} else {
-			alternate_effect ??= fn && branch(() => fn(target));
-		}
-
-		if (defer) {
-			var batch = /** @type {Batch} */ (current_batch);
-
-			var active = condition ? consequent_effect : alternate_effect;
-			var inactive = condition ? alternate_effect : consequent_effect;
-
-			if (active) batch.skipped_effects.delete(active);
-			if (inactive) batch.skipped_effects.add(inactive);
-
-			batch.add_callback(commit);
-		} else {
-			commit();
-		}
+		branches.ensure(new_condition, fn ?? noop);
 
 		if (mismatch) {
 			// continue in hydration mode
