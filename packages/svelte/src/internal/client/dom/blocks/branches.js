@@ -96,29 +96,27 @@ export class BranchManager {
 	 * @param {(target: TemplateNode) => void} fn
 	 */
 	ensure(key, fn) {
+		var batch = /** @type {Batch} */ (current_batch);
+
+		if (!this.#onscreen.has(key) && !this.#offscreen.has(key)) {
+			var fragment = document.createDocumentFragment();
+			var target = create_text();
+
+			fragment.append(target);
+
+			this.#offscreen.set(key, {
+				effect: branch(() => fn(target)),
+				fragment
+			});
+		}
+
+		this.#batches.set(batch, key);
+
+		// TODO in the no-defer case, we could skip the offscreen step
 		if (should_defer_append()) {
-			var batch = /** @type {Batch} */ (current_batch);
-
-			if (!this.#onscreen.has(key) && !this.#offscreen.has(key)) {
-				var fragment = document.createDocumentFragment();
-				var target = create_text();
-
-				fragment.append(target);
-
-				this.#offscreen.set(key, {
-					effect: branch(() => fn(target)),
-					fragment
-				});
-			}
-
-			this.#batches.set(batch, key);
-
 			batch.add_callback(this.#commit);
 		} else {
-			this.#onscreen.set(
-				key,
-				branch(() => fn(this.#anchor))
-			);
+			this.#commit();
 		}
 	}
 }
