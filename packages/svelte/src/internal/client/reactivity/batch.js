@@ -601,15 +601,32 @@ function flush_queued_effects(effects) {
 			// If update_effect() has a flushSync() in it, we may have flushed another flush_queued_effects(),
 			// which already handled this logic and did set eager_block_effects to null.
 			if (eager_block_effects?.length > 0) {
-				// TODO this feels incorrect! it gets the tests passing
 				old_values.clear();
 
+				/** @type {Array<{ effect: Effect; depth: number }>} */
+				const effects_with_depth = [];
 				for (const e of eager_block_effects) {
-					update_effect(e);
+					// Skip eager effects that have already been unmounted
+					if ((e.f & (DESTROYED | INERT)) !== 0) continue;
+
+					let depth = 0;
+					let ancestor = e.parent;
+					while (ancestor !== null) {
+						depth++;
+						ancestor = ancestor.parent;
+					}
+
+					effects_with_depth.push({ effect: e, depth });
 				}
 
-				eager_block_effects = [];
+				effects_with_depth.sort((a, b) => a.depth - b.depth);
+
+				for (const { effect } of effects_with_depth) {
+					update_effect(effect);
+				}
 			}
+
+			eager_block_effects = [];
 		}
 	}
 
