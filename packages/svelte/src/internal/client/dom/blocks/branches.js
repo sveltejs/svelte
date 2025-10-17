@@ -114,6 +114,22 @@ export class BranchManager {
 
 		// TODO in the no-defer case, we could skip the offscreen step
 		if (should_defer_append()) {
+			for (const [k, effect] of this.#onscreen) {
+				if (k === key) {
+					batch.skipped_effects.delete(effect);
+				} else {
+					batch.skipped_effects.add(effect);
+				}
+			}
+
+			for (const [k, branch] of this.#offscreen) {
+				if (k === key) {
+					batch.skipped_effects.delete(branch.effect);
+				} else {
+					batch.skipped_effects.add(branch.effect);
+				}
+			}
+
 			batch.add_callback(this.#commit);
 		} else {
 			this.#commit();
