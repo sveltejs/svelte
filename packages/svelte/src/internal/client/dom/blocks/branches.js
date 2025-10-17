@@ -40,6 +40,10 @@ export class BranchManager {
 
 	#commit = () => {
 		var batch = /** @type {Batch} */ (current_batch);
+
+		// if this batch was made obsolete, bail
+		if (!this.#batches.has(batch)) return;
+
 		var key = /** @type {Key} */ (this.#batches.get(batch));
 
 		var onscreen = this.#onscreen.get(key);
@@ -64,6 +68,20 @@ export class BranchManager {
 
 		this.#batches.delete(batch);
 
+		for (const [b, k] of this.#batches) {
+			if (b === batch) break;
+
+			const offscreen = this.#offscreen.get(k);
+
+			if (offscreen) {
+				destroy_effect(offscreen.effect);
+				this.#offscreen.delete(k);
+			}
+
+			this.#batches.delete(b);
+		}
+
+		// outro/destroy effects
 		for (const [k, effect] of this.#onscreen) {
 			if (k === key) continue;
 
