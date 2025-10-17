@@ -10,7 +10,7 @@ import {
 	set_hydrating
 } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
-import { HYDRATION_START_ELSE } from '../../../../constants.js';
+import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
 import { is_runes } from '../../context.js';
 import { flushSync, is_flushing_sync } from '../../reactivity/batch.js';
 import { BranchManager } from './branches.js';
@@ -38,10 +38,9 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 
 	var runes = is_runes();
 
-	var input_source = runes
-		? source(/** @type {V} */ (undefined))
-		: mutable_source(/** @type {V} */ (undefined), false, false);
-	var error_source = runes ? source(undefined) : mutable_source(undefined, false, false);
+	var v = /** @type {V} */ (UNINITIALIZED);
+	var value = runes ? source(v) : mutable_source(v, false, false);
+	var error = runes ? source(v) : mutable_source(v, false, false);
 
 	var branches = new BranchManager(node);
 
@@ -90,20 +89,20 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 			};
 
 			input.then(
-				(value) => {
+				(v) => {
 					resolve(() => {
-						internal_set(input_source, value);
-						branches.ensure(THEN, then_fn && ((target) => then_fn(target, input_source)));
+						internal_set(value, v);
+						branches.ensure(THEN, then_fn && ((target) => then_fn(target, value)));
 					});
 				},
-				(error) => {
+				(e) => {
 					resolve(() => {
-						internal_set(error_source, error);
-						branches.ensure(THEN, catch_fn && ((target) => catch_fn(target, error_source)));
+						internal_set(error, e);
+						branches.ensure(THEN, catch_fn && ((target) => catch_fn(target, error)));
 
 						if (!catch_fn) {
 							// Rethrow the error if no catch block exists
-							throw error_source.v;
+							throw error.v;
 						}
 					});
 				}
@@ -123,8 +122,8 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 				});
 			}
 		} else {
-			internal_set(input_source, input);
-			branches.ensure(THEN, then_fn && ((target) => then_fn(target, input_source)));
+			internal_set(value, input);
+			branches.ensure(THEN, then_fn && ((target) => then_fn(target, value)));
 		}
 
 		if (mismatch) {
