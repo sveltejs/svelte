@@ -158,19 +158,9 @@ export class Batch {
 
 		// if there is no outstanding async work, commit
 		if (this.#pending === 0) {
-			// TODO we need this because we commit _then_ flush effects...
-			// maybe there's a way we can reverse the order?
-			// var previous_batch_sources = batch_values;
-
+			// commit before flushing effects, since that may result in
+			// another batch being created
 			this.#commit();
-
-			// batch_values = previous_batch_sources;
-			// flush_queued_effects(target.render_effects);
-			// flush_queued_effects(target.effects);
-		} else {
-			// this.#defer_effects(target.render_effects);
-			// this.#defer_effects(target.effects);
-			// this.#defer_effects(target.block_effects);
 		}
 
 		if (this.#blocking_pending > 0) {
@@ -178,7 +168,7 @@ export class Batch {
 			this.#defer_effects(target.render_effects);
 			this.#defer_effects(target.block_effects);
 		} else {
-			// TODO append/detach blocks here as well, not in #commit
+			// TODO append/detach blocks here, not in #commit
 
 			// If sources are written to, then work needs to happen in a separate batch, else prior sources would be mixed with
 			// newly updated sources, which could lead to infinite loops when effects run over and over again.
