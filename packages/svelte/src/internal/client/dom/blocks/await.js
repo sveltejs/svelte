@@ -49,7 +49,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 		var destroyed = false;
 
 		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
-		// @ts-ignore coercing `anchor` to a `Comment` causes TypeScript and Prettier to fight
+		// @ts-ignore coercing `node` to a `Comment` causes TypeScript and Prettier to fight
 		let mismatch = hydrating && is_promise(input) === (node.data === HYDRATION_START_ELSE);
 
 		if (mismatch) {
