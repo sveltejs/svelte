@@ -29,9 +29,6 @@ export function if_block(node, fn, elseif = false) {
 
 	var anchor = node;
 
-	/** @type {typeof UNINITIALIZED | boolean | null} */
-	var condition = UNINITIALIZED;
-
 	var flags = elseif ? EFFECT_TRANSPARENT : 0;
 
 	var has_branch = false;
@@ -44,12 +41,9 @@ export function if_block(node, fn, elseif = false) {
 	var branches = new BranchManager(anchor);
 
 	const update_branch = (
-		/** @type {boolean | null} */ new_condition,
+		/** @type {boolean} */ condition,
 		/** @type {null | ((anchor: Node) => void)} */ fn
 	) => {
-		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
-		let mismatch = false;
-
 		if (hydrating) {
 			const is_else = read_hydration_instruction(anchor) === HYDRATION_START_ELSE;
 
@@ -59,24 +53,24 @@ export function if_block(node, fn, elseif = false) {
 				anchor = skip_nodes();
 
 				set_hydrate_node(anchor);
+				branches.anchor = anchor;
+
 				set_hydrating(false);
-				mismatch = true;
+				branches.ensure(condition, fn ?? noop);
+				set_hydrating(true);
+
+				return;
 			}
 		}
 
-		branches.ensure(new_condition, fn ?? noop);
-
-		if (mismatch) {
-			// continue in hydration mode
-			set_hydrating(true);
-		}
+		branches.ensure(condition, fn ?? noop);
 	};
 
 	block(() => {
 		has_branch = false;
 		fn(set_branch);
 		if (!has_branch) {
-			update_branch(null, null);
+			update_branch(false, null);
 		}
 	}, flags);
 

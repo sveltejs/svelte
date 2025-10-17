@@ -7,6 +7,7 @@ import {
 	pause_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
+import { hydrate_node, hydrating } from '../hydration.js';
 import { create_text, should_defer_append } from '../operations.js';
 
 /**
@@ -18,7 +19,7 @@ import { create_text, should_defer_append } from '../operations.js';
  */
 export class BranchManager {
 	/** @type {TemplateNode} */
-	#anchor;
+	anchor;
 
 	/** @type {Map<Batch, Key>} */
 	#batches = new Map();
@@ -34,7 +35,7 @@ export class BranchManager {
 	 * @param {TemplateNode} anchor
 	 */
 	constructor(anchor) {
-		this.#anchor = anchor;
+		this.anchor = anchor;
 	}
 
 	#commit = () => {
@@ -58,7 +59,7 @@ export class BranchManager {
 			/** @type {TemplateNode} */ (offscreen.fragment.lastChild).remove();
 
 			// ...and append the fragment
-			this.#anchor.before(offscreen.fragment);
+			this.anchor.before(offscreen.fragment);
 		}
 
 		this.#batches.delete(batch);
@@ -132,6 +133,10 @@ export class BranchManager {
 
 			batch.add_callback(this.#commit);
 		} else {
+			if (hydrating) {
+				this.anchor = hydrate_node;
+			}
+
 			this.#commit();
 		}
 	}
