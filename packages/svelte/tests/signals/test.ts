@@ -9,7 +9,13 @@ import {
 	user_effect,
 	user_pre_effect
 } from '../../src/internal/client/reactivity/effects';
-import { state, set, update, update_pre } from '../../src/internal/client/reactivity/sources';
+import {
+	state,
+	set,
+	update,
+	update_pre,
+	invalidate
+} from '../../src/internal/client/reactivity/sources';
 import type { Derived, Effect, Source, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
@@ -1387,6 +1393,26 @@ describe('signals', () => {
 
 			assert.deepEqual(log, [false, true, false]);
 
+			destroy();
+		};
+	});
+
+	test('invalidate reruns dependent effects', () => {
+		let updates = 0;
+		return () => {
+			const a = state(0);
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					$.get(a);
+					updates++;
+				});
+			});
+			set(a, 1);
+			flushSync();
+			assert.equal(updates, 2);
+			invalidate(a);
+			flushSync();
+			assert.equal(updates, 3);
 			destroy();
 		};
 	});

@@ -959,6 +959,37 @@ Cannot export state from a module if it is reassigned. Either export a function 
 `%rune%(...)` can only be used as a variable declaration initializer, a class field declaration, or the first assignment to a class field at the top level of the constructor.
 ```
 
+### state_invalidate_invalid_this_property
+
+```
+`$state.invalidate` can only be called with an argument referencing `this` in a class using a non-computed property
+```
+
+Like how you can't use `$state` or `$derived` when declaring computed class fields, you can't use `$state.invalidate` to invalidate a computed class field. For example, while `count` here is not itself a computed property, you can't invalidate it if you reference it in a computed property:
+```js
+class Box {
+	value;
+	constructor(initial) {
+		this.value = initial;
+	}
+}
+const property = 'count';
+class Counter {
+	count = $state(new Box(0));
+	increment() {
+		this.count.value += 1;
+		$state.invalidate(this[property]); // this doesn't work
+		$state.invalidate(this.count); // this works
+	}
+}
+```
+
+### state_invalidate_nonreactive_argument
+
+```
+`$state.invalidate` only takes a variable or non-computed class field declared with `$state` or `$state.raw` as its argument
+```
+
 ### store_invalid_scoped_subscription
 
 ```
