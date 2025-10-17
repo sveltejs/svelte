@@ -1,6 +1,12 @@
 /** @import { Effect, TemplateNode } from '#client' */
 import { Batch, current_batch } from '../../reactivity/batch.js';
-import { branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
+import {
+	branch,
+	destroy_effect,
+	move_effect,
+	pause_effect,
+	resume_effect
+} from '../../reactivity/effects.js';
 import { create_text, should_defer_append } from '../operations.js';
 
 /**
@@ -57,15 +63,30 @@ export class BranchManager {
 
 		this.#batches.delete(batch);
 
-		for (const [k, e] of this.#onscreen) {
+		for (const [k, effect] of this.#onscreen) {
 			if (k === key) continue;
 
-			pause_effect(e, () => {
-				// TODO if this needed by a pending batch, move the effect to
-				// a fragment and put it on this.#offscreen
+			pause_effect(
+				effect,
+				() => {
+					const keys = Array.from(this.#batches.values());
 
-				this.#onscreen.delete(k);
-			});
+					if (keys.includes(k)) {
+						// keep the effect offscreen, as another batch will need it
+						var fragment = document.createDocumentFragment();
+						move_effect(effect, fragment);
+
+						fragment.append(create_text()); // TODO can we avoid this?
+
+						this.#offscreen.set(k, { effect, fragment });
+					} else {
+						destroy_effect(effect);
+					}
+
+					this.#onscreen.delete(k);
+				},
+				false
+			);
 		}
 	};
 

@@ -1,5 +1,4 @@
-/** @import { Effect, TemplateNode } from '#client' */
-/** @import { Batch } from '../../reactivity/batch.js'; */
+/** @import { TemplateNode } from '#client' */
 import { EFFECT_TRANSPARENT } from '#client/constants';
 import {
 	hydrate_next,
@@ -10,10 +9,8 @@ import {
 	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
-import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
+import { block } from '../../reactivity/effects.js';
 import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
-import { create_text, should_defer_append } from '../operations.js';
-import { current_batch } from '../../reactivity/batch.js';
 import { BranchManager } from './branches.js';
 import { noop } from '../../../shared/utils.js';
 
