@@ -703,18 +703,18 @@ export function schedule_effect(signal) {
 	queued_root_effects.push(effect);
 }
 
-/** @type {Source<number>} */
-let version;
-
-let eager_flushing = false;
+/** @type {Source<number>[] | null} */
+let eager_flushing = null;
 
 function eager_flush() {
 	try {
 		flushSync(() => {
-			update(version);
+			/** @type {Source<number>[]} */ (eager_flushing).forEach((version) => {
+				update(version);
+			});
 		});
 	} finally {
-		eager_flushing = false;
+		eager_flushing = null;
 	}
 }
 
@@ -725,10 +725,11 @@ function eager_flush() {
  * @returns {T}
  */
 export function eager(fn) {
-	get((version ??= source(0)));
-
+	var version = source(0);
 	var initial = true;
 	var value = /** @type {T} */ (undefined);
+
+	get(version);
 
 	inspect_effect(() => {
 		if (initial) {
@@ -750,9 +751,10 @@ export function eager(fn) {
 		// `version` update. since this will recreate the effect,
 		// we don't need to evaluate the expression here
 		if (!eager_flushing) {
-			eager_flushing = true;
+			eager_flushing = [];
 			queue_micro_task(eager_flush);
 		}
+		eager_flushing.push(version);
 	});
 
 	initial = false;
