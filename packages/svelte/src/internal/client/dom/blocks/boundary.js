@@ -8,7 +8,13 @@ import {
 import { HYDRATION_START_ELSE } from '../../../../constants.js';
 import { component_context, set_component_context } from '../../context.js';
 import { handle_error, invoke_error_boundary } from '../../error-handling.js';
-import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
+import {
+	block,
+	branch,
+	destroy_effect,
+	move_effect,
+	pause_effect
+} from '../../reactivity/effects.js';
 import {
 	active_effect,
 	active_reaction,
@@ -422,24 +428,6 @@ export class Boundary {
 				});
 			});
 		}
-	}
-}
-
-/**
- *
- * @param {Effect} effect
- * @param {DocumentFragment} fragment
- */
-function move_effect(effect, fragment) {
-	var node = effect.nodes_start;
-	var end = effect.nodes_end;
-
-	while (node !== null) {
-		/** @type {TemplateNode | null} */
-		var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
-
-		fragment.append(node);
-		node = next;
 	}
 }
 

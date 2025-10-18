@@ -553,15 +553,16 @@ export function unlink_effect(effect) {
  * A paused effect does not update, and the DOM subtree becomes inert.
  * @param {Effect} effect
  * @param {() => void} [callback]
+ * @param {boolean} [destroy]
  */
-export function pause_effect(effect, callback) {
+export function pause_effect(effect, callback, destroy = true) {
 	/** @type {TransitionManager[]} */
 	var transitions = [];
 
 	pause_children(effect, transitions, true);
 
 	run_out_transitions(transitions, () => {
-		destroy_effect(effect);
+		if (destroy) destroy_effect(effect);
 		if (callback) callback();
 	});
 }
@@ -661,4 +662,21 @@ function resume_children(effect, local) {
 
 export function aborted(effect = /** @type {Effect} */ (active_effect)) {
 	return (effect.f & DESTROYED) !== 0;
+}
+
+/**
+ * @param {Effect} effect
+ * @param {DocumentFragment} fragment
+ */
+export function move_effect(effect, fragment) {
+	var node = effect.nodes_start;
+	var end = effect.nodes_end;
+
+	while (node !== null) {
+		/** @type {TemplateNode | null} */
+		var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
+
+		fragment.append(node);
+		node = next;
+	}
 }
