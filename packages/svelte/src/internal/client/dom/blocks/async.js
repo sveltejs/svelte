@@ -1,5 +1,6 @@
 /** @import { TemplateNode, Value } from '#client' */
 import { flatten } from '../../reactivity/async.js';
+import { Batch, current_batch } from '../../reactivity/batch.js';
 import { get } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -18,8 +19,12 @@ import { get_boundary } from './boundary.js';
  */
 export function async(node, expressions, fn) {
 	var boundary = get_boundary();
+	var batch = /** @type {Batch} */ (current_batch);
+
+	var blocking = !boundary.is_pending();
 
 	boundary.update_pending_count(1);
+	batch.increment(blocking);
 
 	var was_hydrating = hydrating;
 
@@ -44,6 +49,7 @@ export function async(node, expressions, fn) {
 			fn(node, ...values);
 		} finally {
 			boundary.update_pending_count(-1);
+			batch.decrement(blocking);
 		}
 
 		if (was_hydrating) {
