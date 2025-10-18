@@ -93,7 +93,28 @@ let index = $state(0);
 let selected = $derived(items[index]);
 ```
 
-...you can change (or `bind:` to) properties of `selected` and it will affect the underlying `items` array. If `items` was _not_ deeply reactive, mutating `selected` would have no effect.
+...you can change (or `bind:` to) properties of `selected` and it will affect the underlying `items` array.
+
+If `items` was _not_ deeply reactive, mutating `selected` would have no effect. In that case, you need to make the derived variable reactive on its own.
+
+```ts
+let items = [...];
+
+let index = $state(0);
+
+let selected = $derived.by(() => {
+	const proxied = $state(items[index]);
+	return proxied;
+});
+// ... or,
+function proxify<T>(init: T) {
+	const proxied = $state(init);
+	return proxied;
+}
+let selected = $derived(proxify(items[index]));
+```
+
+> [!NOTE] This workaround detaches the state from the source, so mutating the proxied object won't update the source.
 
 ## Destructuring
 
