@@ -8,3 +8,10 @@ export type Getters<T> = {
 };
 
 export type Snapshot<T> = ReturnType<typeof $state.snapshot<T>>;
+
+export type MaybePromise<T> = T | Promise<T>;
+
+export type Transport = {
+	stringify: (value: unknown) => string;
+	parse: (value: string) => unknown;
+};

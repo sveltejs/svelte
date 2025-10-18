@@ -247,7 +247,8 @@ export {
 	getContext,
 	getAllContexts,
 	hasContext,
-	setContext
+	setContext,
+	hydratable
 } from './internal/client/context.js';
 export { hydrate, mount, unmount } from './internal/client/render.js';
 export { tick, untrack, settled } from './internal/client/runtime.js';

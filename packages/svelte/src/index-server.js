@@ -44,7 +44,8 @@ export {
 	getAllContexts,
 	getContext,
 	hasContext,
-	setContext
+	setContext,
+	hydratable
 } from './internal/server/context.js';
 
 export { createRawSnippet } from './internal/server/blocks/snippet.js';

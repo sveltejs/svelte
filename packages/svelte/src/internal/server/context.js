@@ -1,4 +1,6 @@
-/** @import { SSRContext } from '#server' */
+/** @import { ALSContext, SSRContext } from '#server' */
+/** @import { AsyncLocalStorage } from 'node:async_hooks' */
+/** @import { Transport } from '#shared' */
 import { DEV } from 'esm-env';
 import * as e from './errors.js';
 
@@ -113,10 +115,93 @@ function get_parent_context(ssr_context) {
  */
 export async function save(promise) {
 	var previous_context = ssr_context;
+	var previous_sync_store = sync_store;
 	var value = await promise;
 
 	return () => {
 		ssr_context = previous_context;
+		sync_store = previous_sync_store;
 		return value;
 	};
+}
+
+/**
+ * @template T
+ * @param {string} key
+ * @param {() => T} fn
+ * @param {{ transport?: Transport }} [options]
+ * @returns {Promise<T>}
+ */
+export function hydratable(key, fn, { transport } = {}) {
+	const store = get_render_store();
+
+	if (store.hydratables.has(key)) {
+		// TODO error
+		throw new Error("can't have two hydratables with the same key");
+	}
+
+	const result = fn();
+	store.hydratables.set(key, { value: result, transport });
+	return Promise.resolve(result);
+}
+
+/** @type {ALSContext | null} */
+export let sync_store = null;
+
+/** @param {ALSContext | null} store */
+export function set_sync_store(store) {
+	sync_store = store;
+}
+
+/** @type {AsyncLocalStorage<ALSContext | null> | null} */
+let als = null;
+
+import('node:async_hooks')
+	.then((hooks) => (als = new hooks.AsyncLocalStorage()))
+	.catch(() => {
+		// can't use ALS but can still use manual context preservation
+		return null;
+	});
+
+/** @returns {ALSContext | null} */
+function try_get_render_store() {
+	return sync_store ?? als?.getStore() ?? null;
+}
+
+/** @returns {ALSContext} */
+export function get_render_store() {
+	const store = try_get_render_store();
+
+	if (!store) {
+		// TODO make this a proper e.error
+		let message = 'Could not get rendering context.';
+
+		if (als) {
+			message += ' This is an internal error.';
+		} else {
+			message +=
+				' In environments without `AsyncLocalStorage`, `hydratable` must be accessed synchronously, not after an `await`.' +
+				' If it was accessed synchronously then this is an internal error.';
+		}
+
+		throw new Error(message);
+	}
+
+	return store;
+}
+
+/**
+ * @template T
+ * @param {ALSContext} store
+ * @param {() => Promise<T>} fn
+ * @returns {Promise<T>}
+ */
+export function with_render_store(store, fn) {
+	try {
+		sync_store = store;
+		const storage = als;
+		return storage ? storage.run(store, fn) : fn();
+	} finally {
+		sync_store = null;
+	}
 }

@@ -1,4 +1,5 @@
 /** @import { ComponentContext, DevStackEntry, Effect } from '#client' */
+/** @import { Transport } from '#shared' */
 import { DEV } from 'esm-env';
 import * as e from './errors.js';
 import { active_effect, active_reaction } from './runtime.js';
@@ -6,6 +7,7 @@ import { create_user_effect } from './reactivity/effects.js';
 import { async_mode_flag, legacy_mode_flag } from '../flags/index.js';
 import { FILENAME } from '../../constants.js';
 import { BRANCH_EFFECT, EFFECT_RAN } from './constants.js';
+import { hydrating } from './dom/hydration.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;
@@ -220,6 +222,31 @@ export function pop(component) {
 /** @returns {boolean} */
 export function is_runes() {
 	return !legacy_mode_flag || (component_context !== null && component_context.l === null);
+}
+
+/**
+ * @template T
+ * @param {string} key
+ * @param {() => T} fn
+ * @param {{ transport?: Transport }} [options]
+ * @returns {Promise<T>}
+ */
+export function hydratable(key, fn, { transport } = {}) {
+	if (!hydrating) {
+		return Promise.resolve(fn());
+	}
+	var store = window.__svelte?.h;
+	if (store === undefined) {
+		throw new Error('TODO this should be impossible?');
+	}
+	if (!store.has(key)) {
+		throw new Error(
+			`TODO Expected hydratable key "${key}" to exist during hydration, but it does not`
+		);
+	}
+	const entry = /** @type {string} */ (store.get(key));
+	const parse = transport?.parse ?? ((val) => new Function(`return (${val})`)());
+	return Promise.resolve(/** @type {T} */ (parse(entry)));
 }
 
 /**

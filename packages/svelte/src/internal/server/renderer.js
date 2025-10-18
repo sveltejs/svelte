@@ -1,18 +1,25 @@
 /** @import { Component } from 'svelte' */
 /** @import { RenderOutput, SSRContext, SyncRenderOutput } from './types.js' */
+/** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import { abort } from './abort-signal.js';
-import { pop, push, set_ssr_context, ssr_context } from './context.js';
+import {
+	get_render_store,
+	pop,
+	push,
+	set_ssr_context,
+	set_sync_store,
+	ssr_context,
+	sync_store,
+	with_render_store
+} from './context.js';
 import * as e from './errors.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { attributes } from './index.js';
+import { uneval } from 'devalue';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
-/**
- * @template T
- * @typedef {T | Promise<T>} MaybePromise<T>
- */
 /**
  * @typedef {string | Renderer} RendererItem
  */
@@ -368,7 +375,9 @@ export class Renderer {
 							});
 							return Promise.resolve(user_result);
 						}
-						async ??= Renderer.#render_async(component, options);
+						async ??= with_render_store({ hydratables: new Map(), resources: new Map() }, () =>
+							Renderer.#render_async(component, options)
+						);
 						return async.then((result) => {
 							Object.defineProperty(result, 'html', {
 								// eslint-disable-next-line getter-return
@@ -461,14 +470,21 @@ export class Renderer {
 	 */
 	static async #render_async(component, options) {
 		var previous_context = ssr_context;
+		var previous_sync_store = sync_store;
+
 		try {
 			const renderer = Renderer.#open_render('async', component, options);
 
 			const content = await renderer.#collect_content_async();
+			const hydratables = await renderer.#collect_hydratables();
+			if (hydratables !== null) {
+				content.head = hydratables + content.head;
+			}
 			return Renderer.#close_render(content, renderer);
 		} finally {
 			abort();
 			set_ssr_context(previous_context);
+			set_sync_store(previous_sync_store);
 		}
 	}
 
@@ -507,6 +523,23 @@ export class Renderer {
 		}
 
 		return content;
+	}
+
+	async #collect_hydratables() {
+		const map = get_render_store().hydratables;
+		/** @type {(value: unknown) => string} */
+		let default_stringify;
+
+		/** @type {[string, string][]} */
+		let entries = [];
+		for (const [k, v] of map) {
+			const serialize =
+				v.transport?.stringify ?? (default_stringify ??= new MemoizedUneval().uneval);
+			// sequential await is okay here -- all the work is already kicked off
+			entries.push([k, serialize(await v.value)]);
+		}
+		if (entries.length === 0) return null;
+		return Renderer.#hydratable_block(JSON.stringify(entries));
 	}
 
 	/**
@@ -561,6 +594,27 @@ export class Renderer {
 			head,
 			body
 		};
+	}
+
+	/** @param {string} serialized */
+	static #hydratable_block(serialized) {
+		// TODO csp?
+		// TODO how can we communicate this error better? Is there a way to not just send it to the console?
+		// (it is probably very rare so... not too worried)
+		return `
+<script>
+	var store = (window.__svelte ??= {}).h ??= new Map();
+	for (const [k,v] of ${serialized}) {
+		if (!store.has(k)) {
+			store.set(k, v);
+			continue;
+		}
+		var stored_val = store.get(k);
+		if (stored_val.value !== v) {
+			throw new Error('TODO tried to populate the same hydratable key twice with different values');
+		}
+	}
+</script>`;
 	}
 }
 
@@ -617,4 +671,34 @@ export class SSRState {
 			this.#title.value = value;
 		}
 	}
+}
+
+class MemoizedUneval {
+	/** @type {Map<unknown, { value?: string }>} */
+	#cache = new Map();
+
+	/**
+	 * @param {unknown} value
+	 * @returns {string}
+	 */
+	uneval = (value) => {
+		return uneval(value, (value, uneval) => {
+			const cached = this.#cache.get(value);
+			if (cached) {
+				// this breaks my brain a bit, but:
+				// - when the entry is defined but its value is `undefined`, calling `uneval` below will cause the custom replacer to be called again
+				// - because the custom replacer returns this, which is `undefined`, it will fall back to the default serialization
+				// - ...which causes it to return a string
+				// - ...which is then added to this cache before being returned
+				return cached.value;
+			}
+
+			const stub = {};
+			this.#cache.set(value, stub);
+
+			const result = uneval(value);
+			stub.value = result;
+			return result;
+		});
+	};
 }
