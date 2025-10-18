@@ -1,5 +1,6 @@
 ---
 title: {@debug ...}
+use_cases: "development only: debugging templates, inspecting values, troubleshooting"
 ---
 
 The `{@debug ...}` tag offers an alternative to `console.log(...)`. It logs the values of specific variables whenever they change, and pauses code execution if you have devtools open.

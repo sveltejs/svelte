@@ -1,5 +1,6 @@
 ---
 title: Stores
+use_cases: "reactive state management, cross-component state, async data streams, RxJS patterns"
 ---
 
 <!-- - how to use

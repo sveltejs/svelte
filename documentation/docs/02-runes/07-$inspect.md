@@ -1,5 +1,6 @@
 ---
 title: $inspect
+use_cases: "development only: debugging reactive state, logging state changes, development tools"
 ---
 
 > [!NOTE] `$inspect` only works during development. In a production build it becomes a noop.

@@ -1,5 +1,6 @@
 ---
 title: {@render ...}
+use_cases: "rendering snippets, dynamic content, component composition"
 ---
 
 To render a [snippet](snippet), use a `{@render ...}` tag.
