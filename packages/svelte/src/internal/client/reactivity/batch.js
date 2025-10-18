@@ -703,18 +703,18 @@ export function schedule_effect(signal) {
 	queued_root_effects.push(effect);
 }
 
-/** @type {Source<number>[] | null} */
-let eager_flushing = null;
+/** @type {Source<number>[]} */
+let eager_versions = [];
 
 function eager_flush() {
 	try {
 		flushSync(() => {
-			/** @type {Source<number>[]} */ (eager_flushing).forEach((version) => {
+			for (const version of eager_versions) {
 				update(version);
-			});
+			}
 		});
 	} finally {
-		eager_flushing = null;
+		eager_versions = [];
 	}
 }
 
@@ -750,11 +750,11 @@ export function eager(fn) {
 		// the second time this effect runs, it's to schedule a
 		// `version` update. since this will recreate the effect,
 		// we don't need to evaluate the expression here
-		if (!eager_flushing) {
-			eager_flushing = [];
+		if (eager_versions.length === 0) {
 			queue_micro_task(eager_flush);
 		}
-		eager_flushing.push(version);
+
+		eager_versions.push(version);
 	});
 
 	initial = false;
