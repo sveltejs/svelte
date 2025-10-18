@@ -8,6 +8,7 @@ import {
 	pause_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
+import { set_should_intro, should_intro } from '../../render.js';
 import { hydrate_node, hydrating } from '../hydration.js';
 import { create_text, should_defer_append } from '../operations.js';
 
@@ -34,11 +35,18 @@ export class BranchManager {
 	#legacy = !is_runes();
 
 	/**
-	 *
-	 * @param {TemplateNode} anchor
+	 * Whether to pause (i.e. outro) on change, or destroy immediately.
+	 * This is necessary for `<svelte:element>`
 	 */
-	constructor(anchor) {
+	#transition = true;
+
+	/**
+	 * @param {TemplateNode} anchor
+	 * @param {boolean} transition
+	 */
+	constructor(anchor, transition = true) {
 		this.anchor = anchor;
+		this.#transition = transition;
 	}
 
 	#commit = () => {
@@ -67,6 +75,7 @@ export class BranchManager {
 
 				// ...and append the fragment
 				this.anchor.before(offscreen.fragment);
+				onscreen = offscreen.effect;
 			}
 		}
 
@@ -89,27 +98,29 @@ export class BranchManager {
 		for (const [k, effect] of this.#onscreen) {
 			if (k === key) continue;
 
-			pause_effect(
-				effect,
-				() => {
-					const keys = Array.from(this.#batches.values());
+			const on_destroy = () => {
+				const keys = Array.from(this.#batches.values());
 
-					if (keys.includes(k)) {
-						// keep the effect offscreen, as another batch will need it
-						var fragment = document.createDocumentFragment();
-						move_effect(effect, fragment);
+				if (keys.includes(k)) {
+					// keep the effect offscreen, as another batch will need it
+					var fragment = document.createDocumentFragment();
+					move_effect(effect, fragment);
 
-						fragment.append(create_text()); // TODO can we avoid this?
+					fragment.append(create_text()); // TODO can we avoid this?
 
-						this.#offscreen.set(k, { effect, fragment });
-					} else {
-						destroy_effect(effect);
-					}
+					this.#offscreen.set(k, { effect, fragment });
+				} else {
+					destroy_effect(effect);
+				}
 
-					this.#onscreen.delete(k);
-				},
-				false
-			);
+				this.#onscreen.delete(k);
+			};
+
+			if (this.#transition || !onscreen) {
+				pause_effect(effect, on_destroy, false);
+			} else {
+				on_destroy();
+			}
 		}
 	};
 
@@ -120,28 +131,35 @@ export class BranchManager {
 	 */
 	ensure(key, fn) {
 		var batch = /** @type {Batch} */ (current_batch);
+		var defer = should_defer_append();
 
 		// key blocks in Svelte <5 had stupid semantics
-		if (this.#legacy && typeof key === 'object') {
+		if (this.#legacy && key !== null && typeof key === 'object') {
 			key = {};
 		}
 
 		if (fn && !this.#onscreen.has(key) && !this.#offscreen.has(key)) {
-			var fragment = document.createDocumentFragment();
-			var target = create_text();
+			if (defer) {
+				var fragment = document.createDocumentFragment();
+				var target = create_text();
 
-			fragment.append(target);
+				fragment.append(target);
 
-			this.#offscreen.set(key, {
-				effect: branch(() => fn(target)),
-				fragment
-			});
+				this.#offscreen.set(key, {
+					effect: branch(() => fn(target)),
+					fragment
+				});
+			} else {
+				this.#onscreen.set(
+					key,
+					branch(() => fn(this.anchor))
+				);
+			}
 		}
 
 		this.#batches.set(batch, key);
 
-		// TODO in the no-defer case, we could skip the offscreen step
-		if (should_defer_append()) {
+		if (defer) {
 			for (const [k, effect] of this.#onscreen) {
 				if (k === key) {
 					batch.skipped_effects.delete(effect);

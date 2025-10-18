@@ -137,6 +137,7 @@ export function hydrate(component, options) {
 		if (error !== HYDRATION_ERROR) {
 			// eslint-disable-next-line no-console
 			console.warn('Failed to hydrate: ', error);
+			console.error(error);
 		}
 
 		if (options.recover === false) {
