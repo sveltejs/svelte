@@ -17,6 +17,7 @@ import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
 import {
 	active_effect,
+	get,
 	is_dirty,
 	is_updating_effect,
 	set_is_updating_effect,
@@ -27,8 +28,8 @@ import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
-import { old_values } from './sources.js';
-import { unlink_effect } from './effects.js';
+import { old_values, source, update } from './sources.js';
+import { inspect_effect, unlink_effect } from './effects.js';
 
 /** @type {Set<Batch>} */
 const batches = new Set();
@@ -98,13 +99,6 @@ export class Batch {
 	#deferred = null;
 
 	/**
-	 * Async effects inside a newly-created `<svelte:boundary>`
-	 * — these do not prevent the batch from committing
-	 * @type {Effect[]}
-	 */
-	#boundary_async_effects = [];
-
-	/**
 	 * Template effects and `$effect.pre` effects, which run when
 	 * a batch is committed
 	 * @type {Effect[]}
@@ -158,8 +152,7 @@ export class Batch {
 			this.#traverse_effect_tree(root);
 		}
 
-		// if we didn't start any new async work, and no async work
-		// is outstanding from a previous flush, commit
+		// if there is no outstanding async work, commit
 		if (this.#pending === 0) {
 			// TODO we need this because we commit _then_ flush effects...
 			// maybe there's a way we can reverse the order?
@@ -193,12 +186,6 @@ export class Batch {
 		}
 
 		batch_values = null;
-
-		for (const effect of this.#boundary_async_effects) {
-			update_effect(effect);
-		}
-
-		this.#boundary_async_effects = [];
 	}
 
 	/**
@@ -225,13 +212,9 @@ export class Batch {
 					this.#effects.push(effect);
 				} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
 					this.#render_effects.push(effect);
-				} else if ((flags & CLEAN) === 0) {
-					if ((flags & ASYNC) !== 0 && effect.b?.is_pending()) {
-						this.#boundary_async_effects.push(effect);
-					} else if (is_dirty(effect)) {
-						if ((effect.f & BLOCK_EFFECT) !== 0) this.#block_effects.push(effect);
-						update_effect(effect);
-					}
+				} else if (is_dirty(effect)) {
+					if ((effect.f & BLOCK_EFFECT) !== 0) this.#block_effects.push(effect);
+					update_effect(effect);
 				}
 
 				var child = effect.first;
@@ -700,6 +683,65 @@ export function schedule_effect(signal) {
 	}
 
 	queued_root_effects.push(effect);
+}
+
+/** @type {Source<number>[]} */
+let eager_versions = [];
+
+function eager_flush() {
+	try {
+		flushSync(() => {
+			for (const version of eager_versions) {
+				update(version);
+			}
+		});
+	} finally {
+		eager_versions = [];
+	}
+}
+
+/**
+ * Implementation of `$state.eager(fn())`
+ * @template T
+ * @param {() => T} fn
+ * @returns {T}
+ */
+export function eager(fn) {
+	var version = source(0);
+	var initial = true;
+	var value = /** @type {T} */ (undefined);
+
+	get(version);
+
+	inspect_effect(() => {
+		if (initial) {
+			// the first time this runs, we create an inspect effect
+			// that will run eagerly whenever the expression changes
+			var previous_batch_values = batch_values;
+
+			try {
+				batch_values = null;
+				value = fn();
+			} finally {
+				batch_values = previous_batch_values;
+			}
+
+			return;
+		}
+
+		// the second time this effect runs, it's to schedule a
+		// `version` update. since this will recreate the effect,
+		// we don't need to evaluate the expression here
+		if (eager_versions.length === 0) {
+			queue_micro_task(eager_flush);
+		}
+
+		eager_versions.push(version);
+	});
+
+	initial = false;
+
+	return value;
 }
 
 /**

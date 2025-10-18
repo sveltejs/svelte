@@ -436,6 +436,7 @@ const STATE_CREATION_RUNES = /** @type {const} */ ([
 
 const RUNES = /** @type {const} */ ([
 	...STATE_CREATION_RUNES,
+	'$state.eager',
 	'$state.snapshot',
 	'$props',
 	'$props.id',

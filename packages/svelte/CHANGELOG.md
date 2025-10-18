@@ -1,5 +1,25 @@
 # svelte
 
+## 5.41.0
+
+### Minor Changes
+
+- feat: add `$state.eager(value)` rune ([#16849](https://github.com/sveltejs/svelte/pull/16849))
+
+### Patch Changes
+
+- fix: preserve `<select>` state while focused ([#16958](https://github.com/sveltejs/svelte/pull/16958))
+
+- chore: run boundary async effects in the context of the current batch ([#16968](https://github.com/sveltejs/svelte/pull/16968))
+
+- fix: error if `each` block has `key` but no `as` clause ([#16966](https://github.com/sveltejs/svelte/pull/16966))
+
+## 5.40.2
+
+### Patch Changes
+
+- fix: add hydration markers in `pending` branch of SSR boundary ([#16965](https://github.com/sveltejs/svelte/pull/16965))
+
 ## 5.40.1
 
 ### Patch Changes

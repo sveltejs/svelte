@@ -38,6 +38,10 @@ export function CallExpression(node, context) {
 		return b.call('$.derived', rune === '$derived' ? b.thunk(fn) : fn);
 	}
 
+	if (rune === '$state.eager') {
+		return node.arguments[0];
+	}
+
 	if (rune === '$state.snapshot') {
 		return b.call(
 			'$.snapshot',
