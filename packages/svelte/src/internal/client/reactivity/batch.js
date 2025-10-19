@@ -603,7 +603,6 @@ function flush_queued_effects(effects) {
 			if (eager_block_effects?.length > 0) {
 				old_values.clear();
 
-				let max_depth = 0;
 				/** @type {Effect[][]} */
 				const depth_buckets = [];
 
@@ -618,12 +617,10 @@ function flush_queued_effects(effects) {
 						ancestor = ancestor.parent;
 					}
 
-					if (depth > max_depth) max_depth = depth;
 					(depth_buckets[depth] ??= []).push(e);
 				}
 
-				for (let depth = 0; depth <= max_depth; depth++) {
-					const effects = depth_buckets[depth];
+				for (const effects of depth_buckets) {
 					if (effects) {
 						for (const e of effects) {
 							update_effect(e);
