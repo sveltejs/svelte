@@ -79,19 +79,22 @@ export class BranchManager {
 			}
 		}
 
-		this.#batches.delete(batch);
-
 		for (const [b, k] of this.#batches) {
-			if (b === batch) break;
+			this.#batches.delete(b);
+
+			if (b === batch) {
+				// keep values for newer batches
+				break;
+			}
 
 			const offscreen = this.#offscreen.get(k);
 
 			if (offscreen) {
+				// for older batches, destroy offscreen effects
+				// as they will never be committed
 				destroy_effect(offscreen.effect);
 				this.#offscreen.delete(k);
 			}
-
-			this.#batches.delete(b);
 		}
 
 		// outro/destroy effects
