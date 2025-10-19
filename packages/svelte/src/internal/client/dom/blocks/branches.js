@@ -97,8 +97,9 @@ export class BranchManager {
 			}
 		}
 
-		// outro/destroy effects
+		// outro/destroy all onscreen effects...
 		for (const [k, effect] of this.#onscreen) {
+			// ...except the one that was just committed
 			if (k === key) continue;
 
 			const on_destroy = () => {
