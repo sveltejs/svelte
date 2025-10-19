@@ -96,6 +96,18 @@ declare namespace $state {
 							: never;
 
 	/**
+	 * Returns the latest `value`, even if the rest of the UI is suspending
+	 * while async work (such as data loading) completes.
+	 *
+	 * ```svelte
+	 * <nav>
+	 *   <a href="/" aria-current={$state.eager(pathname) === '/' ? 'page' : null}>home</a>
+	 *   <a href="/about" aria-current={$state.eager(pathname) === '/about' ? 'page' : null}>about</a>
+	 * </nav>
+	 * ```
+	 */
+	export function eager<T>(value: T): T;
+	/**
 	 * Declares state that is _not_ made deeply reactive — instead of mutating it,
 	 * you must reassign it.
 	 *

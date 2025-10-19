@@ -126,7 +126,7 @@
 
 ## const_tag_invalid_reference
 
-> The `{@const %name% = ...}` declaration is not available in this snippet 
+> The `{@const %name% = ...}` declaration is not available in this snippet
 
 The following is an error:
 
@@ -178,6 +178,10 @@ The same applies to components:
 ## directive_missing_name
 
 > `%type%` name cannot be empty
+
+## each_key_without_as
+
+> An `{#each ...}` block without an `as` clause cannot have a key
 
 ## element_invalid_closing_tag
 

@@ -49,6 +49,12 @@ export function CallExpression(node, context) {
 			return b.call('$.derived', rune === '$derived' ? b.thunk(fn) : fn);
 		}
 
+		case '$state.eager':
+			return b.call(
+				'$.eager',
+				b.thunk(/** @type {Expression} */ (context.visit(node.arguments[0])))
+			);
+
 		case '$state.snapshot':
 			return b.call(
 				'$.snapshot',
