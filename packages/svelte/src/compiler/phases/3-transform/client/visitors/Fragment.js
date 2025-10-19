@@ -63,6 +63,7 @@ export function Fragment(node, context) {
 		...context.state,
 		init: [],
 		consts: [],
+		let_directives: [],
 		update: [],
 		after_update: [],
 		memoizer: new Memoizer(),
@@ -150,7 +151,7 @@ export function Fragment(node, context) {
 		}
 	}
 
-	body.push(...state.consts);
+	body.push(...state.let_directives, ...state.consts);
 
 	if (has_await) {
 		body.push(b.if(b.call('$.aborted'), b.return()));
