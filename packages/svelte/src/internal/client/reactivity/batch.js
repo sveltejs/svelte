@@ -604,28 +604,29 @@ function flush_queued_effects(effects) {
 			if (eager_block_effects?.size > 0) {
 				old_values.clear();
 
-				/** @type {Effect[]} */
-				const filtered_effects = [];
-
-				outer: for (const e of eager_block_effects) {
+				for (const e of eager_block_effects) {
 					// Skip eager effects that have already been unmounted
 					if ((e.f & (DESTROYED | INERT)) !== 0) continue;
 
-					// Skip effects that have related parent effects in the current flush,
-					// as the inner ones will be run if its parent triggers it (eg. in a guard).
+					// Run effects in order from ancestor to descendant, else we could run into nullpointers
+					/** @type {Effect[]} */
+					const ordered_effects = [];
 					let ancestor = e.parent;
 					while (ancestor !== null) {
 						if (eager_block_effects.has(ancestor)) {
-							continue outer;
+							eager_block_effects.delete(ancestor);
+							ordered_effects.unshift(ancestor);
 						}
 						ancestor = ancestor.parent;
 					}
 
-					filtered_effects.push(e);
-				}
+					ordered_effects.push(e);
 
-				for (const e of filtered_effects) {
-					update_effect(e);
+					for (const e of ordered_effects) {
+						// Skip eager effects that have already been unmounted
+						if ((e.f & (DESTROYED | INERT)) !== 0) continue;
+						update_effect(e);
+					}
 				}
 
 				eager_block_effects.clear();
