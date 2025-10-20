@@ -12,7 +12,7 @@
 </script>
 
 <button onclick={() => {
-	input.focus();
+	input?.focus();
 	resolvers.shift()?.();
 }}>shift</button>
 
