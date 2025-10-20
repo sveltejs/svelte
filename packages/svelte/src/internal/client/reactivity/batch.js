@@ -560,7 +560,7 @@ function infinite_loop_guard() {
 	}
 }
 
-/** @type {Effect[] | null} */
+/** @type {Set<Effect> | null} */
 export let eager_block_effects = null;
 
 /**
@@ -577,7 +577,7 @@ function flush_queued_effects(effects) {
 		var effect = effects[i++];
 
 		if ((effect.f & (DESTROYED | INERT)) === 0 && is_dirty(effect)) {
-			eager_block_effects = [];
+			eager_block_effects = new Set();
 
 			update_effect(effect);
 
@@ -600,7 +600,7 @@ function flush_queued_effects(effects) {
 
 			// If update_effect() has a flushSync() in it, we may have flushed another flush_queued_effects(),
 			// which already handled this logic and did set eager_block_effects to null.
-			if (eager_block_effects?.length > 0) {
+			if (eager_block_effects?.size > 0) {
 				old_values.clear();
 
 				/** @type {Effect[]} */
@@ -615,7 +615,7 @@ function flush_queued_effects(effects) {
 					let skip = false;
 					let ancestor = e.parent;
 					while (!skip && ancestor !== null) {
-						if (eager_block_effects.includes(ancestor)) {
+						if (eager_block_effects.has(ancestor)) {
 							skip = true;
 							break;
 						}
@@ -632,7 +632,7 @@ function flush_queued_effects(effects) {
 					update_effect(e);
 				}
 
-				eager_block_effects = [];
+				eager_block_effects.clear();
 			}
 		}
 	}
