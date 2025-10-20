@@ -622,7 +622,6 @@ function flush_queued_effects(effects) {
 						ancestor = ancestor.parent;
 					}
 					if (skip) {
-						unlink_effect(e);
 						continue;
 					}
 
