@@ -101,7 +101,7 @@ export function build_component(node, component_name, context) {
 	if (slot_scope_applies_to_itself) {
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'LetDirective') {
-				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+				context.visit(attribute, { ...context.state, let_directives: lets });
 			}
 		}
 	}
@@ -109,7 +109,7 @@ export function build_component(node, component_name, context) {
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
 			if (!slot_scope_applies_to_itself) {
-				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute, states.default)));
+				context.visit(attribute, { ...states.default, let_directives: lets });
 			}
 		} else if (attribute.type === 'OnDirective') {
 			if (!attribute.expression) {

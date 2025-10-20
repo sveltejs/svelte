@@ -17,6 +17,7 @@ import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
 import {
 	active_effect,
+	get,
 	is_dirty,
 	is_updating_effect,
 	set_is_updating_effect,
@@ -27,8 +28,8 @@ import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
-import { old_values } from './sources.js';
-import { unlink_effect } from './effects.js';
+import { old_values, source, update } from './sources.js';
+import { inspect_effect, unlink_effect } from './effects.js';
 
 /** @type {Set<Batch>} */
 const batches = new Set();
@@ -706,6 +707,65 @@ export function schedule_effect(signal) {
 	}
 
 	queued_root_effects.push(effect);
+}
+
+/** @type {Source<number>[]} */
+let eager_versions = [];
+
+function eager_flush() {
+	try {
+		flushSync(() => {
+			for (const version of eager_versions) {
+				update(version);
+			}
+		});
+	} finally {
+		eager_versions = [];
+	}
+}
+
+/**
+ * Implementation of `$state.eager(fn())`
+ * @template T
+ * @param {() => T} fn
+ * @returns {T}
+ */
+export function eager(fn) {
+	var version = source(0);
+	var initial = true;
+	var value = /** @type {T} */ (undefined);
+
+	get(version);
+
+	inspect_effect(() => {
+		if (initial) {
+			// the first time this runs, we create an inspect effect
+			// that will run eagerly whenever the expression changes
+			var previous_batch_values = batch_values;
+
+			try {
+				batch_values = null;
+				value = fn();
+			} finally {
+				batch_values = previous_batch_values;
+			}
+
+			return;
+		}
+
+		// the second time this effect runs, it's to schedule a
+		// `version` update. since this will recreate the effect,
+		// we don't need to evaluate the expression here
+		if (eager_versions.length === 0) {
+			queue_micro_task(eager_flush);
+		}
+
+		eager_versions.push(version);
+	});
+
+	initial = false;
+
+	return value;
 }
 
 /**
