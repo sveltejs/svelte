@@ -54,6 +54,8 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly after_update: Statement[];
 	/** Transformed `{@const }` declarations */
 	readonly consts: Statement[];
+	/** Transformed `let:` directives */
+	readonly let_directives: Statement[];
 	/** Memoized expressions */
 	readonly memoizer: Memoizer;
 	/** The HTML template string */

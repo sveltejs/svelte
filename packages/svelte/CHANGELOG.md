@@ -1,5 +1,29 @@
 # svelte
 
+## 5.41.1
+
+### Patch Changes
+
+- fix: place `let:` declarations before `{@const}` declarations ([#16985](https://github.com/sveltejs/svelte/pull/16985))
+
+- fix: improve `each_key_without_as` error ([#16983](https://github.com/sveltejs/svelte/pull/16983))
+
+- chore: centralise branch management ([#16977](https://github.com/sveltejs/svelte/pull/16977))
+
+## 5.41.0
+
+### Minor Changes
+
+- feat: add `$state.eager(value)` rune ([#16849](https://github.com/sveltejs/svelte/pull/16849))
+
+### Patch Changes
+
+- fix: preserve `<select>` state while focused ([#16958](https://github.com/sveltejs/svelte/pull/16958))
+
+- chore: run boundary async effects in the context of the current batch ([#16968](https://github.com/sveltejs/svelte/pull/16968))
+
+- fix: error if `each` block has `key` but no `as` clause ([#16966](https://github.com/sveltejs/svelte/pull/16966))
+
 ## 5.40.2
 
 ### Patch Changes

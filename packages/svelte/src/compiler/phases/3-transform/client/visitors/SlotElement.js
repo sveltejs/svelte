@@ -49,7 +49,7 @@ export function SlotElement(node, context) {
 				}
 			}
 		} else if (attribute.type === 'LetDirective') {
-			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+			context.visit(attribute, { ...context.state, let_directives: lets });
 		}
 	}
 
