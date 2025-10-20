@@ -1,22 +1,20 @@
-import { expect, vi } from 'vitest';
 import { test } from '../../test';
 import { flushSync } from 'svelte';
 
-const trackBranch = vi.fn();
-
 export default test({
 	mode: ['client'],
-	props: { trackBranch: trackBranch },
-	async test({ target }) {
+	async test({ target, assert, logs }) {
 		const button = target.querySelector('button');
 
-		flushSync(() => button?.click());
-		flushSync(() => button?.click());
-		flushSync(() => button?.click());
-		flushSync(() => button?.click());
+		button?.click();
+		flushSync();
+		button?.click();
+		flushSync();
+		button?.click();
+		flushSync();
+		button?.click();
+		flushSync();
 
-		expect(trackBranch).toHaveBeenCalledWith('one');
-		expect(trackBranch).toHaveBeenCalledWith('two');
-		expect(trackBranch).not.toHaveBeenCalledWith('else');
+		assert.deepEqual(logs, ['two', 'one', 'two', 'one', 'two']);
 	}
 });

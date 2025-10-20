@@ -1,6 +1,4 @@
 <script lang="ts">
-	const { trackBranch }:{ trackBranch: (branch:string)=>void } = $props();
-
 	let b = $state(false);
 	let v = $state("two");
 
@@ -12,9 +10,9 @@
 <button onclick={() => b = !b}>Trigger</button>
 
 {#if v === "one"}
-	<div>if1 matched! {trackBranch('one')}</div>
+	<div>if1 matched! {console.log('one')}</div>
 {:else if v === "two"}
-	<div>if2 matched! {trackBranch('two')}</div>
+	<div>if2 matched! {console.log('two')}</div>
 {:else}
-	<div>nothing matched {trackBranch('else')}</div>
+	<div>nothing matched {console.log('else')}</div>
 {/if}
