@@ -607,23 +607,18 @@ function flush_queued_effects(effects) {
 				/** @type {Effect[]} */
 				const filtered_effects = [];
 
-				for (const e of eager_block_effects) {
+				outer: for (const e of eager_block_effects) {
 					// Skip eager effects that have already been unmounted
 					if ((e.f & (DESTROYED | INERT)) !== 0) continue;
 
 					// Skip effects that have related parent effects in the current flush,
 					// as the inner ones will be run if its parent triggers it (eg. in a guard).
-					let skip = false;
 					let ancestor = e.parent;
-					while (!skip && ancestor !== null) {
+					while (ancestor !== null) {
 						if (eager_block_effects.has(ancestor)) {
-							skip = true;
-							break;
+							continue outer;
 						}
 						ancestor = ancestor.parent;
-					}
-					if (skip) {
-						continue;
 					}
 
 					filtered_effects.push(e);
