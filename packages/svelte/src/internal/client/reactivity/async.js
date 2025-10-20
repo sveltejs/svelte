@@ -233,11 +233,8 @@ export async function async_body(anchor, fn) {
 		next_hydrate_node = skip_nodes(false);
 	}
 
-	var target = create_text();
-	anchor.before(target);
-
 	try {
-		var promise = fn(target);
+		var promise = fn(anchor);
 	} finally {
 		if (next_hydrate_node) {
 			set_hydrate_node(next_hydrate_node);
@@ -247,7 +244,6 @@ export async function async_body(anchor, fn) {
 
 	try {
 		await promise;
-		target.remove();
 	} catch (error) {
 		if (!aborted(active)) {
 			invoke_error_boundary(error, active);
