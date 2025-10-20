@@ -603,33 +603,38 @@ function flush_queued_effects(effects) {
 			if (eager_block_effects?.length > 0) {
 				old_values.clear();
 
-				/** @type {Effect[][]} */
-				const depth_buckets = [];
+				/** @type {Effect[]} */
+				const filtered_effects = [];
 
 				for (const e of eager_block_effects) {
 					// Skip eager effects that have already been unmounted
 					if ((e.f & (DESTROYED | INERT)) !== 0) continue;
 
-					let depth = 0;
+					// Skip effects that have related parent effects in the current flush,
+					// as the inner ones will be run if its parent triggers it (eg. in a guard).
+					let skip = false;
 					let ancestor = e.parent;
-					while (ancestor !== null) {
-						depth++;
+					while (!skip && ancestor !== null) {
+						if (eager_block_effects.includes(ancestor)) {
+							skip = true;
+							break;
+						}
 						ancestor = ancestor.parent;
 					}
-
-					(depth_buckets[depth] ??= []).push(e);
-				}
-
-				for (const effects of depth_buckets) {
-					if (effects) {
-						for (const e of effects) {
-							update_effect(e);
-						}
+					if (skip) {
+						unlink_effect(e);
+						continue;
 					}
-				}
-			}
 
-			eager_block_effects = [];
+					filtered_effects.push(e);
+				}
+
+				for (const e of filtered_effects) {
+					update_effect(e);
+				}
+
+				eager_block_effects = [];
+			}
 		}
 	}
 
