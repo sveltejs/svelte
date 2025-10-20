@@ -72,7 +72,8 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 				restore();
 
 				if (hydrating) {
-					// we want to restore everything _except_ this
+					// `restore()` could set `hydrating` to `true`, which we very much
+					// don't want — we want to restore everything _except_ this
 					set_hydrating(false);
 				}
 
