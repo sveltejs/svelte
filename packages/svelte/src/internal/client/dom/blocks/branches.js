@@ -32,8 +32,6 @@ export class BranchManager {
 	/** @type {Map<Key, Branch>} */
 	#offscreen = new Map();
 
-	#legacy = !is_runes();
-
 	/**
 	 * Whether to pause (i.e. outro) on change, or destroy immediately.
 	 * This is necessary for `<svelte:element>`
@@ -136,11 +134,6 @@ export class BranchManager {
 	ensure(key, fn) {
 		var batch = /** @type {Batch} */ (current_batch);
 		var defer = should_defer_append();
-
-		// key blocks in Svelte <5 had stupid semantics
-		if (this.#legacy && key !== null && typeof key === 'object') {
-			key = {};
-		}
 
 		if (fn && !this.#onscreen.has(key) && !this.#offscreen.has(key)) {
 			if (defer) {
