@@ -1,3 +1,4 @@
+/** @import { Expression } from 'estree' */
 /** @import { AST, Binding } from '#compiler' */
 /** @import { Context } from '../types' */
 /** @import { Scope } from '../../scope' */
@@ -29,7 +30,7 @@ export function EachBlock(node, context) {
 	}
 
 	if (node.metadata.keyed && !node.context) {
-		e.each_key_without_as(node);
+		e.each_key_without_as(/** @type {Expression} */ (node.key));
 	}
 
 	// evaluate expression in parent scope

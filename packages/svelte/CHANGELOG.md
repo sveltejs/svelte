@@ -1,5 +1,15 @@
 # svelte
 
+## 5.41.1
+
+### Patch Changes
+
+- fix: place `let:` declarations before `{@const}` declarations ([#16985](https://github.com/sveltejs/svelte/pull/16985))
+
+- fix: improve `each_key_without_as` error ([#16983](https://github.com/sveltejs/svelte/pull/16983))
+
+- chore: centralise branch management ([#16977](https://github.com/sveltejs/svelte/pull/16977))
+
 ## 5.41.0
 
 ### Minor Changes
