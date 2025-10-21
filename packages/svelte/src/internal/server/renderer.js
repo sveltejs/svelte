@@ -375,7 +375,7 @@ export class Renderer {
 							});
 							return Promise.resolve(user_result);
 						}
-						async ??= with_render_store({ hydratables: new Map(), resources: new Map() }, () =>
+						async ??= with_render_store({ hydratables: new Map(), cache: new Map() }, () =>
 							Renderer.#render_async(component, options)
 						);
 						return async.then((result) => {

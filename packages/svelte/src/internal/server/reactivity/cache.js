@@ -1,33 +1,22 @@
-import { get_render_store } from '../context';
+import { get_render_store, set_hydratable_key } from '../context';
 
 /**
- * @template TReturn
- * @template {unknown} TArg
- * @param {string} name
- * @param {(arg: TArg, key: string) => TReturn} fn
- * @param {{ hash?: (arg: TArg) => string }} [options]
- * @returns {(arg: TArg) => TReturn}
+ * @template {(...args: any[]) => any} TFn
+ * @param {string} key
+ * @param {TFn} fn
+ * @returns {ReturnType<TFn>}
  */
-export function cache(name, fn, { hash = default_hash } = {}) {
-	return (arg) => {
-		const cache = get_render_store().cache;
-		const key = `${name}::::${hash(arg)}`;
-		const entry = cache.get(key);
-		if (entry) {
-			return /** @type {TReturn} */ (entry);
-		}
-		const new_entry = fn(arg, key);
-		cache.set(key, new_entry);
-		return new_entry;
-	};
-}
-
-/**
- * @param {any} arg
- * @returns {string}
- */
-function default_hash(arg) {
-	return JSON.stringify(arg);
+export function cache(key, fn) {
+	const cache = get_render_store().cache;
+	const entry = cache.get(key);
+	if (entry) {
+		return /** @type {ReturnType<TFn>} */ (entry);
+	}
+	set_hydratable_key(key);
+	const new_entry = fn();
+	set_hydratable_key(null);
+	cache.set(key, new_entry);
+	return new_entry;
 }
 
 export function get_cache() {

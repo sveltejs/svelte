@@ -489,9 +489,13 @@ declare module 'svelte' {
 	 * */
 	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
 
-	export function hydratable<T>(key: string, fn: () => T, { transport }?: {
+	export function hydratable<T>(key: string, fn: () => T, options?: {
 		transport?: Transport<T>;
-	} | undefined): Promise<T>;
+	} | undefined): Promise<Awaited<T>>;
+
+	export function hydratable<T>(fn: () => T, options?: {
+		transport?: Transport<T>;
+	} | undefined): Promise<Awaited<T>>;
 	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
 	 * Transitions will play during the initial render unless the `intro` option is set to `false`.
@@ -2412,9 +2416,8 @@ declare module 'svelte/reactivity' {
 	 */
 	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
 	export function resource<T>(fn: () => Promise<T>): Resource<T>;
-	export function cache<TReturn, TArg extends unknown>(name: string, fn: (arg: TArg, key: string) => TReturn, { hash }?: {
-		hash?: (arg: TArg) => string;
-	} | undefined): (arg: TArg) => TReturn;
+	export function fetcher<TReturn>(url: string | URL, init?: GetRequestInit | undefined): Resource<TReturn>;
+	export function cache<TFn extends (...args: any[]) => any>(key: string, fn: TFn): ReturnType<TFn>;
 
 	export function getCache(): ReadonlyMap<string, any>;
 	class ReactiveValue<T> {
@@ -2442,6 +2445,8 @@ declare module 'svelte/reactivity' {
 				error: any;
 		  }
 	);
+
+	type GetRequestInit = Omit<RequestInit, 'method' | 'body'> & { method?: 'GET' };
 
 	export {};
 }

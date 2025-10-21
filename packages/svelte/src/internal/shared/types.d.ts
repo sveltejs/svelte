@@ -35,3 +35,5 @@ export type Resource<T> = {
 			error: any;
 	  }
 );
+
+export type GetRequestInit = Omit<RequestInit, 'method' | 'body'> & { method?: 'GET' };

@@ -125,14 +125,60 @@ export async function save(promise) {
 	};
 }
 
+/** @type {string | null} */
+export let hydratable_key = null;
+
+/** @param {string | null} key */
+export function set_hydratable_key(key) {
+	hydratable_key = key;
+}
+
 /**
  * @template T
+ * @overload
  * @param {string} key
  * @param {() => T} fn
  * @param {{ transport?: Transport<T> }} [options]
- * @returns {Promise<T>}
+ * @returns {Promise<Awaited<T>>}
  */
-export function hydratable(key, fn, { transport } = {}) {
+/**
+ * @template T
+ * @overload
+ * @param {() => T} fn
+ * @param {{ transport?: Transport<T> }} [options]
+ * @returns {Promise<Awaited<T>>}
+ */
+/**
+ * @template T
+ * @param {string | (() => T)} key_or_fn
+ * @param {(() => T) | { transport?: Transport<T> }} [fn_or_options]
+ * @param {{ transport?: Transport<T> }} [maybe_options]
+ * @returns {Promise<Awaited<T>>}
+ */
+export function hydratable(key_or_fn, fn_or_options = {}, maybe_options = {}) {
+	// TODO DRY out with #shared
+	/** @type {string} */
+	let key;
+	/** @type {() => T} */
+	let fn;
+	/** @type {{ transport?: Transport<T> }} */
+	let options;
+
+	if (typeof key_or_fn === 'string') {
+		key = key_or_fn;
+		fn = /** @type {() => T} */ (fn_or_options);
+		options = /** @type {{ transport?: Transport<T> }} */ (maybe_options);
+	} else {
+		if (hydratable_key === null) {
+			throw new Error(
+				'TODO error: `hydratable` must be called synchronously within `cache` in order to omit the key'
+			);
+		} else {
+			key = hydratable_key;
+		}
+		fn = /** @type {() => T} */ (key_or_fn);
+		options = /** @type {{ transport?: Transport<T> }} */ (fn_or_options);
+	}
 	const store = get_render_store();
 
 	if (store.hydratables.has(key)) {
@@ -141,7 +187,7 @@ export function hydratable(key, fn, { transport } = {}) {
 	}
 
 	const result = fn();
-	store.hydratables.set(key, { value: result, transport });
+	store.hydratables.set(key, { value: result, transport: options.transport });
 	return Promise.resolve(result);
 }
 

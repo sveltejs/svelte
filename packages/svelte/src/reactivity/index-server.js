@@ -1,5 +1,6 @@
 export { resource } from '../internal/server/reactivity/resource.js';
 export { cache, get_cache as getCache } from '../internal/server/reactivity/cache.js';
+export { fetcher } from '../internal/server/reactivity/fetcher.js';
 
 export const SvelteDate = globalThis.Date;
 export const SvelteSet = globalThis.Set;

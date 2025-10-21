@@ -1,8 +1,8 @@
 /** @import { GetRequestInit, Resource } from '#shared' */
-import { cache } from './cache';
 import { fetch_json } from '../../shared/utils.js';
-import { hydratable } from '../context';
-import { resource } from './resource';
+import { hydratable } from '../context.js';
+import { cache } from './cache';
+import { resource } from './resource.js';
 
 /**
  * @template TReturn
