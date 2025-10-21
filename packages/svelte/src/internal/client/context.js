@@ -1,4 +1,5 @@
 /** @import { ComponentContext, DevStackEntry, Effect } from '#client' */
+/** @import { Transport } from '#shared' */
 import { DEV } from 'esm-env';
 import * as e from './errors.js';
 import { active_effect, active_reaction } from './runtime.js';
@@ -6,6 +7,7 @@ import { create_user_effect } from './reactivity/effects.js';
 import { async_mode_flag, legacy_mode_flag } from '../flags/index.js';
 import { FILENAME } from '../../constants.js';
 import { BRANCH_EFFECT, EFFECT_RAN } from './constants.js';
+import { hydrating } from './dom/hydration.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;
@@ -220,6 +222,77 @@ export function pop(component) {
 /** @returns {boolean} */
 export function is_runes() {
 	return !legacy_mode_flag || (component_context !== null && component_context.l === null);
+}
+
+/** @type {string | null} */
+export let hydratable_key = null;
+
+/** @param {string | null} key */
+export function set_hydratable_key(key) {
+	hydratable_key = key;
+}
+
+/**
+ * @template T
+ * @overload
+ * @param {string} key
+ * @param {() => T} fn
+ * @param {{ transport?: Transport<T> }} [options]
+ * @returns {Promise<Awaited<T>>}
+ */
+/**
+ * @template T
+ * @overload
+ * @param {() => T} fn
+ * @param {{ transport?: Transport<T> }} [options]
+ * @returns {Promise<Awaited<T>>}
+ */
+/**
+ * @template T
+ * @param {string | (() => T)} key_or_fn
+ * @param {(() => T) | { transport?: Transport<T> }} [fn_or_options]
+ * @param {{ transport?: Transport<T> }} [maybe_options]
+ * @returns {Promise<Awaited<T>>}
+ */
+export function hydratable(key_or_fn, fn_or_options = {}, maybe_options = {}) {
+	/** @type {string} */
+	let key;
+	/** @type {() => T} */
+	let fn;
+	/** @type {{ transport?: Transport<T> }} */
+	let options;
+
+	if (typeof key_or_fn === 'string') {
+		key = key_or_fn;
+		fn = /** @type {() => T} */ (fn_or_options);
+		options = /** @type {{ transport?: Transport<T> }} */ (maybe_options);
+	} else {
+		if (hydratable_key === null) {
+			throw new Error(
+				'TODO error: `hydratable` must be called synchronously within `cache` in order to omit the key'
+			);
+		} else {
+			key = hydratable_key;
+		}
+		fn = /** @type {() => T} */ (key_or_fn);
+		options = /** @type {{ transport?: Transport<T> }} */ (fn_or_options);
+	}
+
+	if (!hydrating) {
+		return Promise.resolve(fn());
+	}
+	var store = window.__svelte?.h;
+	if (store === undefined) {
+		throw new Error('TODO this should be impossible?');
+	}
+	if (!store.has(key)) {
+		throw new Error(
+			`TODO Expected hydratable key "${key}" to exist during hydration, but it does not`
+		);
+	}
+	const entry = /** @type {string} */ (store.get(key));
+	const parse = options.transport?.parse ?? ((val) => new Function(`return (${val})`)());
+	return Promise.resolve(/** @type {T} */ (parse(entry)));
 }
 
 /**

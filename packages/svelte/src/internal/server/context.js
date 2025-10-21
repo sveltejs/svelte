@@ -1,4 +1,6 @@
-/** @import { SSRContext } from '#server' */
+/** @import { ALSContext, SSRContext } from '#server' */
+/** @import { AsyncLocalStorage } from 'node:async_hooks' */
+/** @import { Transport } from '#shared' */
 import { DEV } from 'esm-env';
 import * as e from './errors.js';
 
@@ -113,10 +115,139 @@ function get_parent_context(ssr_context) {
  */
 export async function save(promise) {
 	var previous_context = ssr_context;
+	var previous_sync_store = sync_store;
 	var value = await promise;
 
 	return () => {
 		ssr_context = previous_context;
+		sync_store = previous_sync_store;
 		return value;
 	};
+}
+
+/** @type {string | null} */
+export let hydratable_key = null;
+
+/** @param {string | null} key */
+export function set_hydratable_key(key) {
+	hydratable_key = key;
+}
+
+/**
+ * @template T
+ * @overload
+ * @param {string} key
+ * @param {() => T} fn
+ * @param {{ transport?: Transport<T> }} [options]
+ * @returns {Promise<Awaited<T>>}
+ */
+/**
+ * @template T
+ * @overload
+ * @param {() => T} fn
+ * @param {{ transport?: Transport<T> }} [options]
+ * @returns {Promise<Awaited<T>>}
+ */
+/**
+ * @template T
+ * @param {string | (() => T)} key_or_fn
+ * @param {(() => T) | { transport?: Transport<T> }} [fn_or_options]
+ * @param {{ transport?: Transport<T> }} [maybe_options]
+ * @returns {Promise<Awaited<T>>}
+ */
+export function hydratable(key_or_fn, fn_or_options = {}, maybe_options = {}) {
+	// TODO DRY out with #shared
+	/** @type {string} */
+	let key;
+	/** @type {() => T} */
+	let fn;
+	/** @type {{ transport?: Transport<T> }} */
+	let options;
+
+	if (typeof key_or_fn === 'string') {
+		key = key_or_fn;
+		fn = /** @type {() => T} */ (fn_or_options);
+		options = /** @type {{ transport?: Transport<T> }} */ (maybe_options);
+	} else {
+		if (hydratable_key === null) {
+			throw new Error(
+				'TODO error: `hydratable` must be called synchronously within `cache` in order to omit the key'
+			);
+		} else {
+			key = hydratable_key;
+		}
+		fn = /** @type {() => T} */ (key_or_fn);
+		options = /** @type {{ transport?: Transport<T> }} */ (fn_or_options);
+	}
+	const store = get_render_store();
+
+	if (store.hydratables.has(key)) {
+		// TODO error
+		throw new Error("can't have two hydratables with the same key");
+	}
+
+	const result = fn();
+	store.hydratables.set(key, { value: result, transport: options.transport });
+	return Promise.resolve(result);
+}
+
+/** @type {ALSContext | null} */
+export let sync_store = null;
+
+/** @param {ALSContext | null} store */
+export function set_sync_store(store) {
+	sync_store = store;
+}
+
+/** @type {AsyncLocalStorage<ALSContext | null> | null} */
+let als = null;
+
+import('node:async_hooks')
+	.then((hooks) => (als = new hooks.AsyncLocalStorage()))
+	.catch(() => {
+		// can't use ALS but can still use manual context preservation
+		return null;
+	});
+
+/** @returns {ALSContext | null} */
+function try_get_render_store() {
+	return sync_store ?? als?.getStore() ?? null;
+}
+
+/** @returns {ALSContext} */
+export function get_render_store() {
+	const store = try_get_render_store();
+
+	if (!store) {
+		// TODO make this a proper e.error
+		let message = 'Could not get rendering context.';
+
+		if (als) {
+			message += ' This is an internal error.';
+		} else {
+			message +=
+				' In environments without `AsyncLocalStorage`, `hydratable` must be accessed synchronously, not after an `await`.' +
+				' If it was accessed synchronously then this is an internal error.';
+		}
+
+		throw new Error(message);
+	}
+
+	return store;
+}
+
+/**
+ * @template T
+ * @param {ALSContext} store
+ * @param {() => Promise<T>} fn
+ * @returns {Promise<T>}
+ */
+export function with_render_store(store, fn) {
+	try {
+		sync_store = store;
+		const storage = als;
+		return storage ? storage.run(store, fn) : fn();
+	} finally {
+		sync_store = null;
+	}
 }

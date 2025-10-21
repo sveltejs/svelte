@@ -488,6 +488,14 @@ declare module 'svelte' {
 	 *
 	 * */
 	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
+
+	export function hydratable<T>(key: string, fn: () => T, options?: {
+		transport?: Transport<T>;
+	} | undefined): Promise<Awaited<T>>;
+
+	export function hydratable<T>(fn: () => T, options?: {
+		transport?: Transport<T>;
+	} | undefined): Promise<Awaited<T>>;
 	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
 	 * Transitions will play during the initial render unless the `intro` option is set to `false`.
@@ -559,6 +567,11 @@ declare module 'svelte' {
 	export function untrack<T>(fn: () => T): T;
 	type Getters<T> = {
 		[K in keyof T]: () => T[K];
+	};
+
+	type Transport<T> = {
+		stringify: (value: T) => string;
+		parse: (value: string) => T;
 	};
 
 	export {};
@@ -2402,12 +2415,38 @@ declare module 'svelte/reactivity' {
 	 * @since 5.7.0
 	 */
 	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
+	export function resource<T>(fn: () => Promise<T>): Resource<T>;
+	export function fetcher<TReturn>(url: string | URL, init?: GetRequestInit | undefined): Resource<TReturn>;
+	export function cache<TFn extends (...args: any[]) => any>(key: string, fn: TFn): ReturnType<TFn>;
+
+	export function getCache(): ReadonlyMap<string, any>;
 	class ReactiveValue<T> {
 		
 		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
 		get current(): T;
 		#private;
 	}
+	type Resource<T> = {
+		then: Promise<T>['then'];
+		catch: Promise<T>['catch'];
+		finally: Promise<T>['finally'];
+		refresh: () => Promise<void>;
+		set: (value: T) => void;
+		loading: boolean;
+	} & (
+		| {
+				ready: false;
+				value: undefined;
+				error: undefined;
+		  }
+		| {
+				ready: true;
+				value: T;
+				error: any;
+		  }
+	);
+
+	type GetRequestInit = Omit<RequestInit, 'method' | 'body'> & { method?: 'GET' };
 
 	export {};
 }

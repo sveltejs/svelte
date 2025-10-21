@@ -71,6 +71,9 @@ importers:
       '@jridgewell/sourcemap-codec':
         specifier: ^1.5.0
         version: 1.5.0
+      '@standard-schema/spec':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@sveltejs/acorn-typescript':
         specifier: ^1.0.5
         version: 1.0.5(acorn@8.15.0)
@@ -89,6 +92,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      devalue:
+        specifier: ^5.4.1
+        version: 5.4.1
       esm-env:
         specifier: ^1.2.1
         version: 1.2.1
@@ -822,6 +828,9 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@standard-schema/spec@1.0.0':
+    resolution: {integrity: sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA==}
+
   '@stylistic/eslint-plugin-js@1.8.0':
     resolution: {integrity: sha512-jdvnzt+pZPg8TfclZlTZPiUbbima93ylvQ+wNgHLNmup3obY6heQvgewSu9i2CfS61BnRByv+F9fxQLPoNeHag==}
     engines: {node: ^16.0.0 || >=18.0.0}
@@ -1235,6 +1244,9 @@ packages:
     resolution: {integrity: sha512-pGjwhsmsp4kL2RTz08wcOlGN83otlqHeD/Z5T8GXZB+/YcpQ/dgo+lbU8ZsGxV0HIvqqxo9l7mqYwyYMD9bKDg==}
     engines: {node: '>=0.10'}
     hasBin: true
+
+  devalue@5.4.1:
+    resolution: {integrity: sha512-YtoaOfsqjbZQKGIMRYDWKjUmSB4VJ/RElB+bXZawQAQYAo4xu08GKTMVlsZDTF6R2MbAgjcAQRPI5eIyRAT2OQ==}
 
   dir-glob@3.0.1:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
@@ -3096,6 +3108,8 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.50.1':
     optional: true
 
+  '@standard-schema/spec@1.0.0': {}
+
   '@stylistic/eslint-plugin-js@1.8.0(eslint@9.9.1)':
     dependencies:
       '@types/eslint': 8.56.12
@@ -3545,6 +3559,8 @@ snapshots:
 
   detect-libc@1.0.3:
     optional: true
+
+  devalue@5.4.1: {}
 
   dir-glob@3.0.1:
     dependencies:
