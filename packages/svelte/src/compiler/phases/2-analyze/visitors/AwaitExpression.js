@@ -15,7 +15,10 @@ export function AwaitExpression(node, context) {
 	//   b) awaits that precede other expressions in template or `$derived(...)`
 	if (
 		tla ||
-		(is_reactive_expression(context.path, context.state.in_derived) &&
+		(is_reactive_expression(
+			context.path,
+			context.state.derived_function_depth === context.state.function_depth
+		) &&
 			!is_last_evaluated_expression(context.path, node))
 	) {
 		context.state.analysis.pickled_awaits.add(node);
@@ -53,6 +56,8 @@ export function AwaitExpression(node, context) {
  * @param {boolean} in_derived
  */
 export function is_reactive_expression(path, in_derived) {
+	if (in_derived) return true;
+
 	let i = path.length;
 
 	while (i--) {
@@ -63,26 +68,6 @@ export function is_reactive_expression(path, in_derived) {
 			parent.type === 'FunctionExpression' ||
 			parent.type === 'FunctionDeclaration'
 		) {
-			// Check if there's a reactive rune call (like $derived) between this function and the await
-			for (let j = i + 1; j < path.length; j++) {
-				const node = path[j];
-				// @ts-expect-error
-				if (node.metadata) {
-					// There's a reactive expression between the function and the await
-					return true;
-				}
-				// Also check for $derived, $effect, etc. calls
-				if (
-					node.type === 'CallExpression' &&
-					node.callee?.type === 'Identifier' &&
-					(node.callee.name === '$derived' ||
-						node.callee.name === '$effect' ||
-						node.callee.name === '$inspect')
-				) {
-					// This is a reactive rune call
-					return true;
-				}
-			}
 			// No reactive expression found between function and await
 			return false;
 		}
@@ -93,18 +78,23 @@ export function is_reactive_expression(path, in_derived) {
 		}
 	}
 
-	return in_derived;
+	return false;
 }
 
 /**
  * @param {AST.SvelteNode[]} path
  * @param {Expression | SpreadElement | Property} node
  */
-export function is_last_evaluated_expression(path, node) {
+function is_last_evaluated_expression(path, node) {
 	let i = path.length;
 
 	while (i--) {
-		const parent = /** @type {Expression | Property | SpreadElement} */ (path[i]);
+		const parent = path[i];
+
+		if (parent.type === 'ConstTag') {
+			// {@const ...} tags are treated as deriveds and its contents should all get the preserve-reactivity treatment
+			return false;
+		}
 
 		// @ts-expect-error we could probably use a neater/more robust mechanism
 		if (parent.metadata) {
