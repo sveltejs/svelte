@@ -4,6 +4,7 @@ import { dev, is_ignored } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
 import { should_proxy } from '../utils.js';
+import { get_inspect_args } from '../../utils.js';
 
 /**
  * @param {CallExpression} node
@@ -112,17 +113,7 @@ export function CallExpression(node, context) {
 function transform_inspect_rune(rune, node, context) {
 	if (!dev) return b.empty;
 
-	const call =
-		rune === '$inspect'
-			? node
-			: /** @type {CallExpression} */ (/** @type {MemberExpression} */ (node.callee).object);
-
-	const args = call.arguments.map((arg) => /** @type {Expression} */ (context.visit(arg)));
-
-	const inspector =
-		rune === '$inspect'
-			? 'console.log'
-			: /** @type {Expression} */ (context.visit(node.arguments[0]));
+	const { args, inspector } = get_inspect_args(rune, node, context.visit);
 
 	// by passing an arrow function, the log appears to come from the `$inspect` callsite
 	// rather than the `inspect.js` file containing the utility

@@ -1,7 +1,7 @@
 /** @import { Context } from 'zimmerframe' */
 /** @import { TransformState } from './types.js' */
 /** @import { AST, Binding, Namespace, ValidatedCompileOptions } from '#compiler' */
-/** @import { Node, Expression, CallExpression } from 'estree' */
+/** @import { Node, Expression, CallExpression, MemberExpression } from 'estree' */
 import {
 	regex_ends_with_whitespaces,
 	regex_not_whitespace,
@@ -449,4 +449,22 @@ export function determine_namespace_for_children(node, namespace) {
 	}
 
 	return node.metadata.mathml ? 'mathml' : 'html';
+}
+
+/**
+ * @param {'$inspect' | '$inspect().with'} rune
+ * @param {CallExpression} node
+ * @param {(node: AST.SvelteNode) => AST.SvelteNode} visit
+ */
+export function get_inspect_args(rune, node, visit) {
+	const call =
+		rune === '$inspect'
+			? node
+			: /** @type {CallExpression} */ (/** @type {MemberExpression} */ (node.callee).object);
+
+	return {
+		args: call.arguments.map((arg) => /** @type {Expression} */ (visit(arg))),
+		inspector:
+			rune === '$inspect' ? 'console.log' : /** @type {Expression} */ (visit(node.arguments[0]))
+	};
 }
