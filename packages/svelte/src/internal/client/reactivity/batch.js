@@ -157,12 +157,7 @@ export class Batch {
 			this.#traverse_effect_tree(root, target);
 		}
 
-		// if there is no outstanding async work, commit
-		if (this.#pending === 0) {
-			// commit before flushing effects, since that may result in
-			// another batch being created
-			this.#commit();
-		}
+		this.#resolve();
 
 		if (this.#blocking_pending > 0) {
 			this.#defer_effects(target.effects);
@@ -300,8 +295,8 @@ export class Batch {
 				// this can happen if a new batch was created during `flush_effects()`
 				return;
 			}
-		} else if (this.#pending === 0) {
-			this.#commit();
+		} else {
+			this.#resolve();
 		}
 
 		this.deactivate();
@@ -317,16 +312,19 @@ export class Batch {
 		}
 	}
 
-	/**
-	 * Append and remove branches to/from the DOM
-	 */
-	#commit() {
-		for (const fn of this.#callbacks) {
-			fn();
+	#resolve() {
+		if (this.#blocking_pending === 0) {
+			// append/remove branches
+			for (const fn of this.#callbacks) fn();
+			this.#callbacks.clear();
 		}
 
-		this.#callbacks.clear();
+		if (this.#pending === 0) {
+			this.#commit();
+		}
+	}
 
+	#commit() {
 		// If there are other pending batches, they now need to be 'rebased' —
 		// in other words, we re-run block/async effects with the newly
 		// committed state, unless the batch in question has a more
