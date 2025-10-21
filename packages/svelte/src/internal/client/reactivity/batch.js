@@ -115,6 +115,13 @@ export class Batch {
 	#deferred = null;
 
 	/**
+	 * A deferred that resolves when a fork is ready
+	 * TODO replace with Promise.withResolvers once supported widely enough
+	 * @type {{ promise: Promise<void>, resolve: (value?: any) => void, reject: (reason: unknown) => void } | null}
+	 */
+	#fork_deferred = null;
+
+	/**
 	 * Deferred effects (which run after async work has completed) that are DIRTY
 	 * @type {Effect[]}
 	 */
@@ -132,6 +139,8 @@ export class Batch {
 	 * @type {Set<Effect>}
 	 */
 	skipped_effects = new Set();
+
+	is_fork = false;
 
 	/**
 	 *
@@ -159,17 +168,25 @@ export class Batch {
 
 		// if there is no outstanding async work, commit
 		if (this.#pending === 0) {
-			// commit before flushing effects, since that may result in
-			// another batch being created
-			this.#commit();
+			if (this.is_fork) {
+				this.#fork_deferred?.resolve();
+			} else {
+				// commit before flushing effects, since that may result in
+				// another batch being created
+				this.#commit();
+			}
 		}
 
-		if (this.#blocking_pending > 0) {
+		if (this.#blocking_pending > 0 || this.is_fork) {
 			this.#defer_effects(target.effects);
 			this.#defer_effects(target.render_effects);
 			this.#defer_effects(target.block_effects);
 		} else {
-			// TODO append/detach blocks here, not in #commit
+			for (const fn of this.#callbacks) {
+				fn();
+			}
+
+			this.#callbacks.clear();
 
 			// If sources are written to, then work needs to happen in a separate batch, else prior sources would be mixed with
 			// newly updated sources, which could lead to infinite loops when effects run over and over again.
@@ -301,7 +318,7 @@ export class Batch {
 				return;
 			}
 		} else if (this.#pending === 0) {
-			this.#commit();
+			this.process([]); // TODO this feels awkward
 		}
 
 		this.deactivate();
@@ -321,12 +338,6 @@ export class Batch {
 	 * Append and remove branches to/from the DOM
 	 */
 	#commit() {
-		for (const fn of this.#callbacks) {
-			fn();
-		}
-
-		this.#callbacks.clear();
-
 		// If there are other pending batches, they now need to be 'rebased' —
 		// in other words, we re-run block/async effects with the newly
 		// committed state, unless the batch in question has a more
@@ -423,6 +434,10 @@ export class Batch {
 		this.#pending -= 1;
 		if (blocking) this.#blocking_pending -= 1;
 
+		this.revive();
+	}
+
+	revive() {
 		for (const e of this.#dirty_effects) {
 			set_signal_status(e, DIRTY);
 			schedule_effect(e);
@@ -446,6 +461,10 @@ export class Batch {
 
 	settled() {
 		return (this.#deferred ??= deferred()).promise;
+	}
+
+	fork_settled() {
+		return (this.#fork_deferred ??= deferred()).promise;
 	}
 
 	static ensure() {
@@ -794,4 +813,39 @@ export function eager(fn) {
  */
 export function clear() {
 	batches.clear();
+}
+
+/**
+ * @param {() => void} fn
+ * @returns {Promise<{ commit: () => void, discard: () => void }>}
+ */
+export function fork(fn) {
+	/** @type {Promise<{ commit: () => void, discard: () => void }>} */
+	const promise = new Promise((fulfil) => {
+		// TODO does qmt guarantee this will run outside a batch?
+		// because it needs to
+		queue_micro_task(async () => {
+			const batch = Batch.ensure();
+			batch.is_fork = true;
+
+			fn();
+			await batch.fork_settled();
+
+			// TODO revert state changes
+
+			fulfil({
+				commit: () => {
+					// TODO reapply state changes
+					batch.is_fork = false;
+					batch.activate();
+					batch.revive();
+				},
+				discard: () => {
+					batches.delete(batch);
+				}
+			});
+		});
+	});
+
+	return promise;
 }
