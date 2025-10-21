@@ -130,5 +130,5 @@ function transform_inspect_rune(rune, node, context) {
 	// rather than the `inspect.js` file containing the utility
 	const fn = b.arrow([b.rest(b.id('$$args'))], b.call(inspector, b.spread(b.id('$$args'))));
 
-	return b.call('$.inspect', b.thunk(b.array(args)), fn);
+	return b.call('$.inspect', b.thunk(b.array(args)), fn, rune === '$inspect' && b.true);
 }

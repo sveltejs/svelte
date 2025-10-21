@@ -134,7 +134,11 @@ export function trace(label, fn) {
  * @returns {Error & { stack: string } | null}
  */
 export function get_stack(label) {
+	const limit = Error.stackTraceLimit;
+	Error.stackTraceLimit = Infinity;
 	let error = Error();
+	Error.stackTraceLimit = limit;
+
 	const stack = error.stack;
 
 	if (!stack) return null;

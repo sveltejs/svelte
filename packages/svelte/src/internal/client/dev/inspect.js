@@ -2,12 +2,14 @@ import { UNINITIALIZED } from '../../../constants.js';
 import { snapshot } from '../../shared/clone.js';
 import { inspect_effect, render_effect, validate_effect } from '../reactivity/effects.js';
 import { untrack } from '../runtime.js';
+import { get_stack } from './tracing.js';
 
 /**
  * @param {() => any[]} get_value
  * @param {Function} inspector
+ * @param {boolean} show_stack
  */
-export function inspect(get_value, inspector) {
+export function inspect(get_value, inspector, show_stack = false) {
 	validate_effect('$inspect');
 
 	let initial = true;
@@ -27,7 +29,16 @@ export function inspect(get_value, inspector) {
 
 		var snap = snapshot(value, true, true);
 		untrack(() => {
-			inspector(initial ? 'init' : 'update', ...snap);
+			if (show_stack) {
+				inspector(...snap);
+
+				if (!initial) {
+					// eslint-disable-next-line no-console
+					console.log(get_stack('UpdatedAt'));
+				}
+			} else {
+				inspector(initial ? 'init' : 'update', ...snap);
+			}
 		});
 
 		initial = false;
