@@ -112,8 +112,6 @@ export function CallExpression(node, context) {
 function transform_inspect_rune(rune, node, context) {
 	if (!dev) return b.empty;
 
-	const { visit } = context;
-
 	const call =
 		rune === '$inspect'
 			? node
@@ -128,7 +126,8 @@ function transform_inspect_rune(rune, node, context) {
 
 	// by passing an arrow function, the log appears to come from the `$inspect` callsite
 	// rather than the `inspect.js` file containing the utility
-	const fn = b.arrow([b.rest(b.id('$$args'))], b.call(inspector, b.spread(b.id('$$args'))));
+	const id = b.id('$$args');
+	const fn = b.arrow([b.rest(id)], b.call(inspector, b.spread(id)));
 
 	return b.call('$.inspect', b.thunk(b.array(args)), fn, rune === '$inspect' && b.true);
 }
