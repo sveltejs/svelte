@@ -433,6 +433,9 @@ export class Batch {
 			schedule_effect(e);
 		}
 
+		this.#dirty_effects = [];
+		this.#maybe_dirty_effects = [];
+
 		this.flush();
 	}
 
