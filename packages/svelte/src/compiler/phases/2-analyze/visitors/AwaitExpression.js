@@ -53,10 +53,6 @@ export function AwaitExpression(node, context) {
  * @param {boolean} in_derived
  */
 export function is_reactive_expression(path, in_derived) {
-	if (in_derived) {
-		return true;
-	}
-
 	let i = path.length;
 
 	while (i--) {
@@ -67,6 +63,27 @@ export function is_reactive_expression(path, in_derived) {
 			parent.type === 'FunctionExpression' ||
 			parent.type === 'FunctionDeclaration'
 		) {
+			// Check if there's a reactive rune call (like $derived) between this function and the await
+			for (let j = i + 1; j < path.length; j++) {
+				const node = path[j];
+				// @ts-expect-error
+				if (node.metadata) {
+					// There's a reactive expression between the function and the await
+					return true;
+				}
+				// Also check for $derived, $effect, etc. calls
+				if (
+					node.type === 'CallExpression' &&
+					node.callee?.type === 'Identifier' &&
+					(node.callee.name === '$derived' ||
+						node.callee.name === '$effect' ||
+						node.callee.name === '$inspect')
+				) {
+					// This is a reactive rune call
+					return true;
+				}
+			}
+			// No reactive expression found between function and await
 			return false;
 		}
 
@@ -76,7 +93,7 @@ export function is_reactive_expression(path, in_derived) {
 		}
 	}
 
-	return false;
+	return in_derived;
 }
 
 /**
