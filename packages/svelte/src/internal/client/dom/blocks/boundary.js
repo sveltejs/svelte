@@ -30,7 +30,6 @@ import {
 	skip_nodes,
 	set_hydrate_node
 } from '../hydration.js';
-import { get_next_sibling } from '../operations.js';
 import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
@@ -409,6 +408,7 @@ export class Boundary {
 		if (failed) {
 			queue_micro_task(() => {
 				this.#failed_effect = this.#run(() => {
+					Batch.ensure();
 					this.#is_creating_fallback = true;
 
 					try {
