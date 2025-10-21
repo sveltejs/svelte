@@ -24,5 +24,7 @@ export default test({
 				<p>1</p>
 			`
 		);
-	}
+	},
+
+	expect_unhandled_rejections: true
 });
