@@ -1703,6 +1703,7 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	markerWidth?: number | string | undefined | null;
 	mask?: string | undefined | null;
 	maskContentUnits?: number | string | undefined | null;
+	'mask-type'?: 'alpha' | 'luminance' | undefined | null;
 	maskUnits?: number | string | undefined | null;
 	mathematical?: number | string | undefined | null;
 	mode?: number | string | undefined | null;
