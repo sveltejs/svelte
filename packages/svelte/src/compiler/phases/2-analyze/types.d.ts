@@ -29,9 +29,9 @@ export interface AnalysisState {
 	reactive_statement: null | ReactiveStatement;
 
 	/**
-	 * True if we're directly inside a `$derived(...)` expression (but not `$derived.by(...)`)
+	 * Set when we're inside a `$derived(...)` expression (but not `$derived.by(...)`) or `@const`
 	 */
-	in_derived: boolean;
+	derived_function_depth: number;
 }
 
 export type Context<State extends AnalysisState = AnalysisState> = import('zimmerframe').Context<

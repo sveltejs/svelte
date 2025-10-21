@@ -561,7 +561,7 @@ function infinite_loop_guard() {
 	}
 }
 
-/** @type {Effect[] | null} */
+/** @type {Set<Effect> | null} */
 export let eager_block_effects = null;
 
 /**
@@ -578,7 +578,7 @@ function flush_queued_effects(effects) {
 		var effect = effects[i++];
 
 		if ((effect.f & (DESTROYED | INERT)) === 0 && is_dirty(effect)) {
-			eager_block_effects = [];
+			eager_block_effects = new Set();
 
 			update_effect(effect);
 
@@ -601,15 +601,34 @@ function flush_queued_effects(effects) {
 
 			// If update_effect() has a flushSync() in it, we may have flushed another flush_queued_effects(),
 			// which already handled this logic and did set eager_block_effects to null.
-			if (eager_block_effects?.length > 0) {
-				// TODO this feels incorrect! it gets the tests passing
+			if (eager_block_effects?.size > 0) {
 				old_values.clear();
 
 				for (const e of eager_block_effects) {
-					update_effect(e);
+					// Skip eager effects that have already been unmounted
+					if ((e.f & (DESTROYED | INERT)) !== 0) continue;
+
+					// Run effects in order from ancestor to descendant, else we could run into nullpointers
+					/** @type {Effect[]} */
+					const ordered_effects = [e];
+					let ancestor = e.parent;
+					while (ancestor !== null) {
+						if (eager_block_effects.has(ancestor)) {
+							eager_block_effects.delete(ancestor);
+							ordered_effects.push(ancestor);
+						}
+						ancestor = ancestor.parent;
+					}
+
+					for (let j = ordered_effects.length - 1; j >= 0; j--) {
+						const e = ordered_effects[j];
+						// Skip eager effects that have already been unmounted
+						if ((e.f & (DESTROYED | INERT)) !== 0) continue;
+						update_effect(e);
+					}
 				}
 
-				eager_block_effects = [];
+				eager_block_effects.clear();
 			}
 		}
 	}
