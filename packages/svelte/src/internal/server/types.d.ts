@@ -1,5 +1,4 @@
 import type { MaybePromise, Transport } from '#shared';
-import type { Resource } from '../../reactivity/index-server';
 import type { Element } from './dev';
 import type { Renderer } from './renderer';
 
@@ -21,10 +20,10 @@ export interface ALSContext {
 		string,
 		{
 			value: MaybePromise<unknown>;
-			transport: Transport | undefined;
+			transport: Transport<any> | undefined;
 		}
 	>;
-	resources: Map<string, Resource<any>>;
+	cache: Map<string, unknown>;
 }
 
 export interface SyncRenderOutput {

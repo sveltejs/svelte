@@ -1,12 +1,22 @@
 /** @import { Source, Derived } from '#client' */
-import { state, derived, set, get, tick } from '../../index.js';
-import { deferred } from '../../../shared/utils.js';
+/** @import { Resource as ResourceType } from '#shared' */
+import { state, derived, set, get, tick } from '../index.js';
+import { deferred } from '../../shared/utils.js';
+
+/**
+ * @template T
+ * @param {() => Promise<T>} fn
+ * @returns {ResourceType<T>}
+ */
+export function resource(fn) {
+	return /** @type {ResourceType<T>} */ (/** @type {unknown} */ (new Resource(fn)));
+}
 
 /**
  * @template T
  * @implements {Partial<Promise<T>>}
  */
-export class Resource {
+class Resource {
 	#init = false;
 
 	/** @type {() => Promise<T>} */

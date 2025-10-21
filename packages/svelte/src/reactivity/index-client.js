@@ -5,5 +5,5 @@ export { SvelteURL } from './url.js';
 export { SvelteURLSearchParams } from './url-search-params.js';
 export { MediaQuery } from './media-query.js';
 export { createSubscriber } from './create-subscriber.js';
-export { Resource } from '../internal/client/reactivity/resources/resource.js';
-export { define_resource as defineResource } from '../internal/client/reactivity/resources/define-resource.js';
+export { resource } from '../internal/client/reactivity/resource.js';
+export { cache, get_cache as getCache } from '../internal/client/reactivity/cache.js';
