@@ -1,9 +1,8 @@
-/** @import { CallExpression, Expression } from 'estree' */
+/** @import { CallExpression, Expression, MemberExpression } from 'estree' */
 /** @import { Context } from '../types' */
 import { dev, is_ignored } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
-import { transform_inspect_rune } from '../../utils.js';
 import { should_proxy } from '../utils.js';
 
 /**
@@ -73,7 +72,7 @@ export function CallExpression(node, context) {
 
 		case '$inspect':
 		case '$inspect().with':
-			return transform_inspect_rune(node, context);
+			return transform_inspect_rune(rune, node, context);
 	}
 
 	if (
@@ -103,4 +102,33 @@ export function CallExpression(node, context) {
 	}
 
 	context.next();
+}
+
+/**
+ * @param {'$inspect' | '$inspect().with'} rune
+ * @param {CallExpression} node
+ * @param {Context} context
+ */
+function transform_inspect_rune(rune, node, context) {
+	if (!dev) return b.empty;
+
+	const { visit } = context;
+
+	const call =
+		rune === '$inspect'
+			? node
+			: /** @type {CallExpression} */ (/** @type {MemberExpression} */ (node.callee).object);
+
+	const args = call.arguments.map((arg) => /** @type {Expression} */ (context.visit(arg)));
+
+	const inspector =
+		rune === '$inspect'
+			? 'console.log'
+			: /** @type {Expression} */ (context.visit(node.arguments[0]));
+
+	// by passing an arrow function, the log appears to come from the `$inspect` callsite
+	// rather than the `inspect.js` file containing the utility
+	const fn = b.arrow([b.rest(b.id('$$args'))], b.call(inspector, b.spread(b.id('$$args'))));
+
+	return b.call('$.inspect', b.thunk(b.array(args)), fn);
 }

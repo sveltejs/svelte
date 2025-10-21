@@ -1,9 +1,8 @@
-/** @import { CallExpression, Expression } from 'estree' */
+/** @import { CallExpression, Expression, MemberExpression } from 'estree' */
 /** @import { Context } from '../types.js' */
-import { is_ignored } from '../../../../state.js';
+import { dev, is_ignored } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
-import { transform_inspect_rune } from '../../utils.js';
 
 /**
  * @param {CallExpression} node
@@ -51,7 +50,23 @@ export function CallExpression(node, context) {
 	}
 
 	if (rune === '$inspect' || rune === '$inspect().with') {
-		return transform_inspect_rune(node, context);
+		if (!dev) return b.empty;
+
+		const call =
+			rune === '$inspect'
+				? node
+				: /** @type {CallExpression} */ (/** @type {MemberExpression} */ (node.callee).object);
+
+		const args = call.arguments.map((arg) => /** @type {Expression} */ (context.visit(arg)));
+
+		const inspector =
+			rune === '$inspect'
+				? 'console.log'
+				: /** @type {Expression} */ (context.visit(node.arguments[0]));
+
+		// TODO is the `init` doing any work on the server? should it be `$inspect` instead?
+		// should we include a stack trace?
+		return b.call(inspector, b.literal('init'), ...args);
 	}
 
 	context.next();

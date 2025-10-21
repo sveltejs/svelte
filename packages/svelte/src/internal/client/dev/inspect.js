@@ -5,10 +5,9 @@ import { untrack } from '../runtime.js';
 
 /**
  * @param {() => any[]} get_value
- * @param {Function} [inspector]
+ * @param {Function} inspector
  */
-// eslint-disable-next-line no-console
-export function inspect(get_value, inspector = console.log) {
+export function inspect(get_value, inspector) {
 	validate_effect('$inspect');
 
 	let initial = true;

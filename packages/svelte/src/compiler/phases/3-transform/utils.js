@@ -450,32 +450,3 @@ export function determine_namespace_for_children(node, namespace) {
 
 	return node.metadata.mathml ? 'mathml' : 'html';
 }
-
-/**
- * @template {TransformState} T
- * @param {CallExpression} node
- * @param {Context<any, T>} context
- */
-export function transform_inspect_rune(node, context) {
-	const { state, visit } = context;
-	const as_fn = state.options.generate === 'client';
-
-	if (!dev) return b.empty;
-
-	if (node.callee.type === 'MemberExpression') {
-		const raw_inspect_args = /** @type {CallExpression} */ (node.callee.object).arguments;
-		const inspect_args =
-			/** @type {Array<Expression>} */
-			(raw_inspect_args.map((arg) => visit(arg)));
-		const with_arg = /** @type {Expression} */ (visit(node.arguments[0]));
-
-		return b.call(
-			'$.inspect',
-			as_fn ? b.thunk(b.array(inspect_args)) : b.array(inspect_args),
-			with_arg
-		);
-	} else {
-		const arg = node.arguments.map((arg) => /** @type {Expression} */ (visit(arg)));
-		return b.call('$.inspect', as_fn ? b.thunk(b.array(arg)) : b.array(arg));
-	}
-}
