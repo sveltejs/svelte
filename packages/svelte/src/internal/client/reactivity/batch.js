@@ -76,6 +76,8 @@ let is_flushing = false;
 export let is_flushing_sync = false;
 
 export class Batch {
+	committed = false;
+
 	/**
 	 * The current values of any sources that are updated in this batch
 	 * They keys of this map are identical to `this.#previous`
@@ -399,6 +401,7 @@ export class Batch {
 			batch_values = previous_batch_values;
 		}
 
+		this.committed = true;
 		batches.delete(this);
 
 		this.#deferred?.resolve();

@@ -21,5 +21,9 @@ export default test({
 		input.dispatchEvent(new Event('input', { bubbles: true }));
 		await macrotask(6);
 		assert.htmlEqual(target.innerHTML, '<input> 3 | 12');
+		input.value = '';
+		input.dispatchEvent(new Event('input', { bubbles: true }));
+		await macrotask();
+		assert.htmlEqual(target.innerHTML, '<input> 4 | ');
 	}
 });
