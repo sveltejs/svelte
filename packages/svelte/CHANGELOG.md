@@ -1,5 +1,17 @@
 # svelte
 
+## 5.41.2
+
+### Patch Changes
+
+- fix: keep batches alive until all async work is complete ([#16971](https://github.com/sveltejs/svelte/pull/16971))
+
+- fix: don't preserve reactivity context across function boundaries ([#17002](https://github.com/sveltejs/svelte/pull/17002))
+
+- fix: make `$inspect` logs come from the callsite ([#17001](https://github.com/sveltejs/svelte/pull/17001))
+
+- fix: ensure guards (eg. if, each, key) run before their contents ([#16930](https://github.com/sveltejs/svelte/pull/16930))
+
 ## 5.41.1
 
 ### Patch Changes
