@@ -1,8 +1,7 @@
-<script lang="ts">
-	let count = $state(0);
+<script>
+	import Child from './Child.svelte';
 
 	let resolvers = [];
-	let input;
 
 	function push(value) {
 		const { promise, resolve } = Promise.withResolvers();
@@ -11,14 +10,11 @@
 	}
 </script>
 
-<button onclick={() => {
-	input?.focus();
-	resolvers.shift()?.();
-}}>shift</button>
+<button onclick={() => resolvers.shift()?.()}>shift</button>
 
 <svelte:boundary>
-	<input bind:this={input} type="number" bind:value={count} />
-	<p>{await push(count)}</p>
+	<p>{await push('hello')}</p>
+	<Child />
 
 	{#snippet pending()}
 		<p>loading...</p>
