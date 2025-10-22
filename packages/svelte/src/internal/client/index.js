@@ -13,6 +13,7 @@ export { async } from './dom/blocks/async.js';
 export { validate_snippet_args } from './dev/validation.js';
 export { await_block as await } from './dom/blocks/await.js';
 export { if_block as if } from './dom/blocks/if.js';
+export { switch_block as switch } from './dom/blocks/switch.js';
 export { key } from './dom/blocks/key.js';
 export { css_props } from './dom/blocks/css-props.js';
 export { index, each } from './dom/blocks/each.js';

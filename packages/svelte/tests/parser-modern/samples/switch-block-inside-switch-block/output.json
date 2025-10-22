@@ -1,0 +1,154 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 91,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "SwitchBlock",
+				"start": 0,
+				"end": 91,
+				"value": {
+					"type": "Identifier",
+					"start": 9,
+					"end": 12,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 9
+						},
+						"end": {
+							"line": 1,
+							"column": 12
+						}
+					},
+					"name": "foo"
+				},
+				"consequences": [
+					{
+						"type": "Fragment",
+						"nodes": [
+							{
+								"type": "Text",
+								"start": 27,
+								"end": 29,
+								"raw": "\n\t",
+								"data": "\n\t"
+							},
+							{
+								"type": "SwitchBlock",
+								"start": 29,
+								"end": 81,
+								"value": {
+									"type": "Identifier",
+									"start": 38,
+									"end": 41,
+									"loc": {
+										"start": {
+											"line": 3,
+											"column": 10
+										},
+										"end": {
+											"line": 3,
+											"column": 13
+										}
+									},
+									"name": "bar"
+								},
+								"consequences": [
+									{
+										"type": "Fragment",
+										"nodes": [
+											{
+												"type": "Text",
+												"start": 57,
+												"end": 60,
+												"raw": "\n\t\t",
+												"data": "\n\t\t"
+											},
+											{
+												"type": "RegularElement",
+												"start": 60,
+												"end": 70,
+												"name": "p",
+												"attributes": [],
+												"fragment": {
+													"type": "Fragment",
+													"nodes": [
+														{
+															"type": "Text",
+															"start": 63,
+															"end": 66,
+															"raw": "bar",
+															"data": "bar"
+														}
+													]
+												}
+											},
+											{
+												"type": "Text",
+												"start": 70,
+												"end": 72,
+												"raw": "\n\t",
+												"data": "\n\t"
+											}
+										]
+									}
+								],
+								"values": [
+									{
+										"type": "Literal",
+										"start": 51,
+										"end": 56,
+										"loc": {
+											"start": {
+												"line": 4,
+												"column": 8
+											},
+											"end": {
+												"line": 4,
+												"column": 13
+											}
+										},
+										"value": "bar",
+										"raw": "\"bar\""
+									}
+								]
+							},
+							{
+								"type": "Text",
+								"start": 81,
+								"end": 82,
+								"raw": "\n",
+								"data": "\n"
+							}
+						]
+					}
+				],
+				"values": [
+					{
+						"type": "Literal",
+						"start": 21,
+						"end": 26,
+						"loc": {
+							"start": {
+								"line": 2,
+								"column": 7
+							},
+							"end": {
+								"line": 2,
+								"column": 12
+							}
+						},
+						"value": "foo",
+						"raw": "\"foo\""
+					}
+				]
+			}
+		]
+	},
+	"options": null
+}

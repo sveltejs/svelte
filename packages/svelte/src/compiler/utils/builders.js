@@ -611,6 +611,32 @@ function if_builder(test, consequent, alternate) {
 }
 
 /**
+ * @param {ESTree.Expression} discriminant
+ * @param {ESTree.SwitchCase[]} cases
+ * @returns {ESTree.SwitchStatement}
+ */
+function switch_statement_builder(discriminant, cases) {
+	return { type: 'SwitchStatement', discriminant, cases };
+}
+
+/**
+ * @param {ESTree.Identifier | null} label
+ * @returns {ESTree.BreakStatement}
+ */
+function break_builder(label = null) {
+	return { type: 'BreakStatement', label };
+}
+
+/**
+ * @param {ESTree.Expression | null} test
+ * @param {ESTree.Statement[]} consequent
+ * @returns {ESTree.SwitchCase}
+ */
+function switch_case_builder(test, consequent) {
+	return { type: 'SwitchCase', test, consequent };
+}
+
+/**
  * @param {string} as
  * @param {string} source
  * @returns {ESTree.ImportDeclaration}
@@ -672,6 +698,9 @@ export {
 	function_builder as function,
 	return_builder as return,
 	if_builder as if,
+	switch_statement_builder as switch_statement,
+	switch_case_builder as switch_case,
+	break_builder as break,
 	this_instance as this,
 	null_instance as null,
 	debugger_builder as debugger

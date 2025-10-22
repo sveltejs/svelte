@@ -1,0 +1,49 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 25,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "SwitchBlock",
+				"start": 0,
+				"end": 25,
+				"value": {
+					"type": "Identifier",
+					"start": 9,
+					"end": 12,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 9
+						},
+						"end": {
+							"line": 1,
+							"column": 12
+						}
+					},
+					"name": "foo"
+				},
+				"consequences": [
+					{
+						"type": "Fragment",
+						"nodes": [
+							{
+								"type": "Text",
+								"start": 13,
+								"end": 16,
+								"raw": "bar",
+								"data": "bar"
+							}
+						]
+					}
+				],
+				"values": [null]
+			}
+		]
+	},
+	"options": null
+}

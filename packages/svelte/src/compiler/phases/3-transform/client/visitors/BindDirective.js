@@ -31,6 +31,7 @@ export function BindDirective(node, context) {
 				context.path.some(
 					({ type }) =>
 						type === 'IfBlock' ||
+						type === 'SwitchBlock' ||
 						type === 'EachBlock' ||
 						type === 'AwaitBlock' ||
 						type === 'KeyBlock'

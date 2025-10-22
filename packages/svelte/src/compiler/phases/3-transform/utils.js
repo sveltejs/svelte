@@ -407,6 +407,7 @@ function check_nodes_for_namespace(nodes, namespace) {
 					if (
 						node.type === 'EachBlock' ||
 						node.type === 'IfBlock' ||
+						node.type === 'SwitchBlock' ||
 						node.type === 'AwaitBlock' ||
 						node.type === 'Fragment' ||
 						node.type === 'KeyBlock' ||

@@ -1,0 +1,148 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 75,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "SwitchBlock",
+				"start": 0,
+				"end": 75,
+				"value": {
+					"type": "Identifier",
+					"start": 9,
+					"end": 12,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 9
+						},
+						"end": {
+							"line": 1,
+							"column": 12
+						}
+					},
+					"name": "foo"
+				},
+				"consequences": [
+					{
+						"type": "Fragment",
+						"nodes": [
+							{
+								"type": "Text",
+								"start": 27,
+								"end": 29,
+								"raw": "\n\t",
+								"data": "\n\t"
+							},
+							{
+								"type": "RegularElement",
+								"start": 29,
+								"end": 39,
+								"name": "p",
+								"attributes": [],
+								"fragment": {
+									"type": "Fragment",
+									"nodes": [
+										{
+											"type": "Text",
+											"start": 32,
+											"end": 35,
+											"raw": "foo",
+											"data": "foo"
+										}
+									]
+								}
+							},
+							{
+								"type": "Text",
+								"start": 39,
+								"end": 40,
+								"raw": "\n",
+								"data": "\n"
+							}
+						]
+					},
+					{
+						"type": "Fragment",
+						"nodes": [
+							{
+								"type": "Text",
+								"start": 53,
+								"end": 55,
+								"raw": "\n\t",
+								"data": "\n\t"
+							},
+							{
+								"type": "RegularElement",
+								"start": 55,
+								"end": 65,
+								"name": "p",
+								"attributes": [],
+								"fragment": {
+									"type": "Fragment",
+									"nodes": [
+										{
+											"type": "Text",
+											"start": 58,
+											"end": 61,
+											"raw": "baz",
+											"data": "baz"
+										}
+									]
+								}
+							},
+							{
+								"type": "Text",
+								"start": 65,
+								"end": 66,
+								"raw": "\n",
+								"data": "\n"
+							}
+						]
+					}
+				],
+				"values": [
+					{
+						"type": "Literal",
+						"start": 21,
+						"end": 26,
+						"loc": {
+							"start": {
+								"line": 2,
+								"column": 7
+							},
+							"end": {
+								"line": 2,
+								"column": 12
+							}
+						},
+						"value": "bar",
+						"raw": "\"bar\""
+					},
+					{
+						"type": "Literal",
+						"start": 47,
+						"end": 52,
+						"loc": {
+							"start": {
+								"line": 4,
+								"column": 7
+							},
+							"end": {
+								"line": 4,
+								"column": 12
+							}
+						},
+						"value": "baz",
+						"raw": "\"baz\""
+					}
+				]
+			}
+		]
+	},
+	"options": null
+}

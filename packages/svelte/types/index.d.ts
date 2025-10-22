@@ -1453,6 +1453,14 @@ declare module 'svelte/compiler' {
 			alternate: Fragment | null;
 		}
 
+		/** A `{#switch ...}` block */
+		export interface SwitchBlock extends BaseNode {
+			type: 'SwitchBlock';
+			value: Expression;
+			consequences: Array<Fragment>;
+			values: Array<Expression | null>;
+		}
+
 		/** An `{#await ...}` block */
 		export interface AwaitBlock extends BaseNode {
 			type: 'AwaitBlock';
@@ -1528,6 +1536,7 @@ declare module 'svelte/compiler' {
 		export type Block =
 			| AST.EachBlock
 			| AST.IfBlock
+			| AST.SwitchBlock
 			| AST.AwaitBlock
 			| AST.KeyBlock
 			| AST.SnippetBlock;
