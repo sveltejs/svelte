@@ -210,6 +210,9 @@ export function normalise_inspect_logs(logs) {
 
 			const match = last_line && /(at .+) /.exec(last_line);
 
+			// fucking windows jfc
+			console.error({ stack: log.stack, last_line, match });
+
 			return match && match[1];
 		}
 
