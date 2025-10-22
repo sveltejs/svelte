@@ -29,7 +29,14 @@ import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
-import { old_values, source, update } from './sources.js';
+import {
+	flush_inspect_effects,
+	inspect_effects,
+	old_values,
+	set_inspect_effects,
+	source,
+	update
+} from './sources.js';
 import { inspect_effect, unlink_effect } from './effects.js';
 
 /**
@@ -76,6 +83,8 @@ let is_flushing = false;
 export let is_flushing_sync = false;
 
 export class Batch {
+	committed = false;
+
 	/**
 	 * The current values of any sources that are updated in this batch
 	 * They keys of this map are identical to `this.#previous`
@@ -88,7 +97,7 @@ export class Batch {
 	 * They keys of this map are identical to `this.#current`
 	 * @type {Map<Source, any>}
 	 */
-	#previous = new Map();
+	previous = new Map();
 
 	/**
 	 * When the batch is committed (and the DOM is updated), we need to remove old branches
@@ -166,16 +175,7 @@ export class Batch {
 			this.#traverse_effect_tree(root, target);
 		}
 
-		// if there is no outstanding async work, commit
-		if (this.#pending === 0) {
-			if (this.is_fork) {
-				this.#fork_deferred?.resolve();
-			} else {
-				// commit before flushing effects, since that may result in
-				// another batch being created
-				this.#commit();
-			}
-		}
+		this.#resolve();
 
 		if (this.#blocking_pending > 0 || this.is_fork) {
 			this.#defer_effects(target.effects);
@@ -291,8 +291,8 @@ export class Batch {
 	 * @param {any} value
 	 */
 	capture(source, value) {
-		if (!this.#previous.has(source)) {
-			this.#previous.set(source, value);
+		if (!this.previous.has(source)) {
+			this.previous.set(source, value);
 		}
 
 		this.current.set(source, source.v);
@@ -334,16 +334,29 @@ export class Batch {
 		}
 	}
 
-	/**
-	 * Append and remove branches to/from the DOM
-	 */
+	#resolve() {
+		if (this.#blocking_pending === 0 && !this.is_fork) {
+			// append/remove branches
+			for (const fn of this.#callbacks) fn();
+			this.#callbacks.clear();
+		}
+
+		if (this.#pending === 0) {
+			if (this.is_fork) {
+				this.#fork_deferred?.resolve();
+			} else {
+				this.#commit();
+			}
+		}
+	}
+
 	#commit() {
 		// If there are other pending batches, they now need to be 'rebased' —
 		// in other words, we re-run block/async effects with the newly
 		// committed state, unless the batch in question has a more
 		// recent value for a given source
 		if (batches.size > 1) {
-			this.#previous.clear();
+			this.previous.clear();
 
 			var previous_batch_values = batch_values;
 			var is_earlier = true;
@@ -412,6 +425,7 @@ export class Batch {
 			batch_values = previous_batch_values;
 		}
 
+		this.committed = true;
 		batches.delete(this);
 
 		this.#deferred?.resolve();
@@ -503,7 +517,7 @@ export class Batch {
 		for (const batch of batches) {
 			if (batch === this) continue;
 
-			for (const [source, previous] of batch.#previous) {
+			for (const [source, previous] of batch.previous) {
 				if (!batch_values.has(source)) {
 					batch_values.set(source, previous);
 				}
@@ -625,7 +639,7 @@ function infinite_loop_guard() {
 	}
 }
 
-/** @type {Effect[] | null} */
+/** @type {Set<Effect> | null} */
 export let eager_block_effects = null;
 
 /**
@@ -642,7 +656,7 @@ function flush_queued_effects(effects) {
 		var effect = effects[i++];
 
 		if ((effect.f & (DESTROYED | INERT)) === 0 && is_dirty(effect)) {
-			eager_block_effects = [];
+			eager_block_effects = new Set();
 
 			update_effect(effect);
 
@@ -665,15 +679,34 @@ function flush_queued_effects(effects) {
 
 			// If update_effect() has a flushSync() in it, we may have flushed another flush_queued_effects(),
 			// which already handled this logic and did set eager_block_effects to null.
-			if (eager_block_effects?.length > 0) {
-				// TODO this feels incorrect! it gets the tests passing
+			if (eager_block_effects?.size > 0) {
 				old_values.clear();
 
 				for (const e of eager_block_effects) {
-					update_effect(e);
+					// Skip eager effects that have already been unmounted
+					if ((e.f & (DESTROYED | INERT)) !== 0) continue;
+
+					// Run effects in order from ancestor to descendant, else we could run into nullpointers
+					/** @type {Effect[]} */
+					const ordered_effects = [e];
+					let ancestor = e.parent;
+					while (ancestor !== null) {
+						if (eager_block_effects.has(ancestor)) {
+							eager_block_effects.delete(ancestor);
+							ordered_effects.push(ancestor);
+						}
+						ancestor = ancestor.parent;
+					}
+
+					for (let j = ordered_effects.length - 1; j >= 0; j--) {
+						const e = ordered_effects[j];
+						// Skip eager effects that have already been unmounted
+						if ((e.f & (DESTROYED | INERT)) !== 0) continue;
+						update_effect(e);
+					}
 				}
 
-				eager_block_effects = [];
+				eager_block_effects.clear();
 			}
 		}
 	}
@@ -828,17 +861,47 @@ export function fork(fn) {
 			const batch = Batch.ensure();
 			batch.is_fork = true;
 
-			fn();
-			await batch.fork_settled();
+			flushSync(fn);
+			const deferred_inspect_effects = inspect_effects;
 
-			// TODO revert state changes
+			// revert state changes
+			for (const [source, value] of batch.previous) {
+				source.v = value;
+			}
+
+			await batch.fork_settled();
 
 			fulfil({
 				commit: () => {
-					// TODO reapply state changes
-					batch.is_fork = false;
-					batch.activate();
-					batch.revive();
+					if (!batches.has(batch)) {
+						throw new Error('Cannot commit this batch'); // TODO better error
+					}
+
+					// delete all other forks
+					for (const b of batches) {
+						if (b !== batch && b.is_fork) {
+							batches.delete(b);
+						}
+					}
+
+					for (const [source, value] of batch.current) {
+						source.v = value;
+					}
+
+					const previous_inspect_effects = inspect_effects;
+
+					try {
+						if (DEV && deferred_inspect_effects.size > 0) {
+							set_inspect_effects(deferred_inspect_effects);
+							flush_inspect_effects();
+						}
+
+						batch.is_fork = false;
+						batch.activate();
+						batch.revive();
+					} finally {
+						set_inspect_effects(previous_inspect_effects);
+					}
 				},
 				discard: () => {
 					batches.delete(batch);

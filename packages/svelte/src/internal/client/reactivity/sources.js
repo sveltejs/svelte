@@ -234,7 +234,7 @@ export function internal_set(source, value) {
 			}
 		}
 
-		if (DEV && inspect_effects.size > 0 && !inspect_effects_deferred) {
+		if (DEV && !batch.is_fork && inspect_effects.size > 0 && !inspect_effects_deferred) {
 			flush_inspect_effects();
 		}
 	}
@@ -336,7 +336,7 @@ function mark_reactions(signal, status) {
 		} else if (not_dirty) {
 			if ((flags & BLOCK_EFFECT) !== 0) {
 				if (eager_block_effects !== null) {
-					eager_block_effects.push(/** @type {Effect} */ (reaction));
+					eager_block_effects.add(/** @type {Effect} */ (reaction));
 				}
 			}
 

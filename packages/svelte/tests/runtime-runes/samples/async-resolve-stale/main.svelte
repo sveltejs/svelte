@@ -1,28 +1,32 @@
 <script>
 	let count = $state(0);
 	let value = $state('');
-	let prev;
 
-	function asd(v) {
-		const r = Promise.withResolvers();
+	let resolver;
 
-		if (prev || v === '') {
-			Promise.resolve().then(async () => {
-				count++;
-				r.resolve(v);
-				await new Promise(r => setTimeout(r, 0));
-				// TODO with a microtask like below it still throws a mutation error
-				// await Promise.resolve();
-				prev?.resolve();
-			});
-		} else {
-			prev = Promise.withResolvers();
-			prev.promise.then(() => {
-				count++;
-				r.resolve(v)
-			});
+	function asd(v) {		
+		let r = Promise.withResolvers();
+
+		function update_and_resolve(){
+			count++;
+			r.resolve(v);
 		}
 
+		// make sure the second promise resolve before the first one
+		if(resolver){
+			new Promise(r => {
+				setTimeout(r);
+			}).then(update_and_resolve).then(()=>{
+				setTimeout(()=>{
+					resolver();
+					resolver = null;
+				});
+			});
+		}else if(v){
+			resolver = update_and_resolve;
+		}else{
+			Promise.resolve().then(update_and_resolve);
+		}
 		return r.promise;
 	}
 
