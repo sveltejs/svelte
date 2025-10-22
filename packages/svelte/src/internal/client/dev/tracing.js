@@ -160,7 +160,7 @@ export function get_stack(label) {
 		if (line.includes('validate_each_keys')) {
 			return null;
 		}
-		if (line.includes('svelte/src/internal')) {
+		if (line.includes('svelte/src/internal') || line.includes('svelte\\src\\internal')) {
 			continue;
 		}
 		new_lines.push(line);
