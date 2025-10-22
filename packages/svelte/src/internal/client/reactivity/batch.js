@@ -850,65 +850,62 @@ export function clear() {
 
 /**
  * @param {() => void} fn
- * @returns {Promise<{ commit: () => void, discard: () => void }>}
+ * @returns {{ commit: () => void, discard: () => void }}
  */
 export function fork(fn) {
-	/** @type {Promise<{ commit: () => void, discard: () => void }>} */
-	const promise = new Promise((fulfil) => {
-		// TODO does qmt guarantee this will run outside a batch?
-		// because it needs to
-		queue_micro_task(async () => {
-			const batch = Batch.ensure();
-			batch.is_fork = true;
+	if (current_batch !== null) {
+		throw new Error('cannot fork here'); // TODO better error
+	}
 
-			flushSync(fn);
-			const deferred_inspect_effects = inspect_effects;
+	const batch = Batch.ensure();
+	batch.is_fork = true;
 
-			// revert state changes
-			for (const [source, value] of batch.previous) {
+	const promise = batch.fork_settled();
+
+	flushSync(fn);
+	const deferred_inspect_effects = inspect_effects;
+
+	// revert state changes
+	for (const [source, value] of batch.previous) {
+		source.v = value;
+	}
+
+	return {
+		commit: async () => {
+			if (!batches.has(batch)) {
+				throw new Error('Cannot commit this batch'); // TODO better error
+			}
+
+			// delete all other forks
+			for (const b of batches) {
+				if (b !== batch && b.is_fork) {
+					batches.delete(b);
+				}
+			}
+
+			await promise;
+
+			for (const [source, value] of batch.current) {
 				source.v = value;
 			}
 
-			await batch.fork_settled();
+			const previous_inspect_effects = inspect_effects;
 
-			fulfil({
-				commit: () => {
-					if (!batches.has(batch)) {
-						throw new Error('Cannot commit this batch'); // TODO better error
-					}
-
-					// delete all other forks
-					for (const b of batches) {
-						if (b !== batch && b.is_fork) {
-							batches.delete(b);
-						}
-					}
-
-					for (const [source, value] of batch.current) {
-						source.v = value;
-					}
-
-					const previous_inspect_effects = inspect_effects;
-
-					try {
-						if (DEV && deferred_inspect_effects.size > 0) {
-							set_inspect_effects(deferred_inspect_effects);
-							flush_inspect_effects();
-						}
-
-						batch.is_fork = false;
-						batch.activate();
-						batch.revive();
-					} finally {
-						set_inspect_effects(previous_inspect_effects);
-					}
-				},
-				discard: () => {
-					batches.delete(batch);
+			try {
+				if (DEV && deferred_inspect_effects.size > 0) {
+					set_inspect_effects(deferred_inspect_effects);
+					flush_inspect_effects();
 				}
-			});
-		});
-	});
 
-	return promise;
+				batch.is_fork = false;
+				batch.activate();
+				batch.revive();
+			} finally {
+				set_inspect_effects(previous_inspect_effects);
+			}
+		},
+		discard: () => {
+			batches.delete(batch);
+		}
+	};
 }
