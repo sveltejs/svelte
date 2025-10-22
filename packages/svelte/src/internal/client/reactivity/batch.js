@@ -12,17 +12,20 @@ import {
 	ROOT_EFFECT,
 	MAYBE_DIRTY,
 	DERIVED,
-	BOUNDARY_EFFECT
+	BOUNDARY_EFFECT,
+	INSPECT_EFFECT
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
 import {
 	active_effect,
 	get,
+	increment_write_version,
 	is_dirty,
 	is_updating_effect,
 	set_is_updating_effect,
 	set_signal_status,
+	tick,
 	update_effect
 } from '../runtime.js';
 import * as e from '../errors.js';
@@ -122,13 +125,6 @@ export class Batch {
 	 * @type {{ promise: Promise<void>, resolve: (value?: any) => void, reject: (reason: unknown) => void } | null}
 	 */
 	#deferred = null;
-
-	/**
-	 * A deferred that resolves when a fork is ready
-	 * TODO replace with Promise.withResolvers once supported widely enough
-	 * @type {{ promise: Promise<void>, resolve: (value?: any) => void, reject: (reason: unknown) => void } | null}
-	 */
-	#fork_deferred = null;
 
 	/**
 	 * Deferred effects (which run after async work has completed) that are DIRTY
@@ -309,8 +305,9 @@ export class Batch {
 	}
 
 	flush() {
+		this.activate();
+
 		if (queued_root_effects.length > 0) {
-			this.activate();
 			flush_effects();
 
 			if (current_batch !== null && current_batch !== this) {
@@ -341,12 +338,8 @@ export class Batch {
 			this.#callbacks.clear();
 		}
 
-		if (this.#pending === 0) {
-			if (this.is_fork) {
-				this.#fork_deferred?.resolve();
-			} else {
-				this.#commit();
-			}
+		if (this.#pending === 0 && !this.is_fork) {
+			this.#commit();
 		}
 	}
 
@@ -475,10 +468,6 @@ export class Batch {
 
 	settled() {
 		return (this.#deferred ??= deferred()).promise;
-	}
-
-	fork_settled() {
-		return (this.#fork_deferred ??= deferred()).promise;
 	}
 
 	static ensure() {
@@ -737,6 +726,28 @@ function mark_effects(value, sources) {
 }
 
 /**
+ * When committing a fork, we need to trigger inspect effects so that
+ * any `$state.eager(...)` expressions update immediately. This
+ * function allows us to discover them
+ * @param {Value} value
+ * @param {Set<Effect>} effects
+ */
+function mark_inspect_effects(value, effects) {
+	if (value.reactions !== null) {
+		for (const reaction of value.reactions) {
+			const flags = reaction.f;
+
+			if ((flags & DERIVED) !== 0) {
+				mark_inspect_effects(/** @type {Derived} */ (reaction), effects);
+			} else if ((flags & INSPECT_EFFECT) !== 0) {
+				set_signal_status(reaction, DIRTY);
+				effects.add(/** @type {Effect} */ (reaction));
+			}
+		}
+	}
+}
+
+/**
  * @param {Reaction} reaction
  * @param {Source[]} sources
  */
@@ -842,13 +853,6 @@ export function eager(fn) {
 }
 
 /**
- * Forcibly remove all current batches, to prevent cross-talk between tests
- */
-export function clear() {
-	batches.clear();
-}
-
-/**
  * @param {() => void} fn
  * @returns {{ commit: () => void, discard: () => void }}
  */
@@ -860,10 +864,9 @@ export function fork(fn) {
 	const batch = Batch.ensure();
 	batch.is_fork = true;
 
-	const promise = batch.fork_settled();
+	const settled = batch.settled();
 
 	flushSync(fn);
-	const deferred_inspect_effects = inspect_effects;
 
 	// revert state changes
 	for (const [source, value] of batch.previous) {
@@ -876,36 +879,41 @@ export function fork(fn) {
 				throw new Error('Cannot commit this batch'); // TODO better error
 			}
 
+			batch.is_fork = false;
+
 			// delete all other forks
 			for (const b of batches) {
-				if (b !== batch && b.is_fork) {
-					batches.delete(b);
-				}
+				if (b.is_fork) batches.delete(b);
 			}
 
-			await promise;
-
+			// apply changes
 			for (const [source, value] of batch.current) {
 				source.v = value;
 			}
 
-			const previous_inspect_effects = inspect_effects;
-
-			try {
-				if (DEV && deferred_inspect_effects.size > 0) {
-					set_inspect_effects(deferred_inspect_effects);
-					flush_inspect_effects();
+			// trigger any `$state.eager(...)` expressions with the new state
+			flushSync(() => {
+				const inspect_effects = new Set();
+				for (const source of batch.current.keys()) {
+					mark_inspect_effects(source, inspect_effects);
 				}
 
-				batch.is_fork = false;
-				batch.activate();
-				batch.revive();
-			} finally {
-				set_inspect_effects(previous_inspect_effects);
-			}
+				set_inspect_effects(inspect_effects);
+				flush_inspect_effects();
+			});
+
+			batch.revive();
+			await settled;
 		},
 		discard: () => {
 			batches.delete(batch);
 		}
 	};
+}
+
+/**
+ * Forcibly remove all current batches, to prevent cross-talk between tests
+ */
+export function clear() {
+	batches.clear();
 }
