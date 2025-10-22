@@ -449,10 +449,10 @@ declare module 'svelte' {
 	 * */
 	export function flushSync<T = void>(fn?: (() => T) | undefined): T;
 
-	export function fork(fn: () => void): Promise<{
+	export function fork(fn: () => void): {
 		commit: () => void;
 		discard: () => void;
-	}>;
+	};
 	/**
 	 * Returns a `[get, set]` pair of functions for working with context in a type-safe way.
 	 *
