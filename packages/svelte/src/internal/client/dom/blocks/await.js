@@ -33,7 +33,7 @@ const CATCH = 2;
  */
 export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 	if (hydrating) {
-		hydrate_next();
+		hydrate_next(true);
 	}
 
 	var runes = is_runes();
