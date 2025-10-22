@@ -1,22 +1,23 @@
 <script lang="ts">
 	let count = $state(0);
 
-	let deferreds = [];
+	let resolvers = [];
+	let input;
 
-	export function shift() {
-		const d = deferreds.shift();
-		d.d.resolve(d.v);
-	}
-
-	function push(v) {
-		const d = Promise.withResolvers();
-		deferreds.push({ d, v });
-		return d.promise;
+	function push(value) {
+		const { promise, resolve } = Promise.withResolvers();
+		resolvers.push(() => resolve(value));
+		return promise;
 	}
 </script>
 
+<button onclick={() => {
+	input?.focus();
+	resolvers.shift()?.();
+}}>shift</button>
+
 <svelte:boundary>
-	<input type="number" bind:value={count} />
+	<input bind:this={input} type="number" bind:value={count} />
 	<p>{await push(count)}</p>
 
 	{#snippet pending()}

@@ -419,15 +419,6 @@ export function ensure_array_like(array_like_or_iterator) {
 }
 
 /**
- * @param {any[]} args
- * @param {Function} [inspect]
- */
-// eslint-disable-next-line no-console
-export function inspect(args, inspect = console.log) {
-	inspect('init', ...args);
-}
-
-/**
  * @template V
  * @param {() => V} get_value
  */
@@ -448,7 +439,7 @@ export function once(get_value) {
  */
 export function props_id(renderer) {
 	const uid = renderer.global.uid();
-	renderer.push('<!--#' + uid + '-->');
+	renderer.push('<!--$' + uid + '-->');
 	return uid;
 }
 

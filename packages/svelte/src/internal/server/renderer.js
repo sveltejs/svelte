@@ -4,7 +4,6 @@ import { async_mode_flag } from '../flags/index.js';
 import { abort } from './abort-signal.js';
 import { pop, push, set_ssr_context, ssr_context } from './context.js';
 import * as e from './errors.js';
-import * as w from './warnings.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { attributes } from './index.js';
 
@@ -160,9 +159,16 @@ export class Renderer {
 	/**
 	 * @param {Record<string, any>} attrs
 	 * @param {(renderer: Renderer) => void} fn
+	 * @param {string | undefined} [css_hash]
+	 * @param {Record<string, boolean> | undefined} [classes]
+	 * @param {Record<string, string> | undefined} [styles]
+	 * @param {number | undefined} [flags]
+	 * @returns {void}
 	 */
-	select({ value, ...attrs }, fn) {
-		this.push(`<select${attributes(attrs)}>`);
+	select(attrs, fn, css_hash, classes, styles, flags) {
+		const { value, ...select_attrs } = attrs;
+
+		this.push(`<select${attributes(select_attrs, css_hash, classes, styles, flags)}>`);
 		this.child((renderer) => {
 			renderer.local.select_value = value;
 			fn(renderer);
@@ -173,9 +179,13 @@ export class Renderer {
 	/**
 	 * @param {Record<string, any>} attrs
 	 * @param {string | number | boolean | ((renderer: Renderer) => void)} body
+	 * @param {string | undefined} [css_hash]
+	 * @param {Record<string, boolean> | undefined} [classes]
+	 * @param {Record<string, string> | undefined} [styles]
+	 * @param {number | undefined} [flags]
 	 */
-	option(attrs, body) {
-		this.#out.push(`<option${attributes(attrs)}`);
+	option(attrs, body, css_hash, classes, styles, flags) {
+		this.#out.push(`<option${attributes(attrs, css_hash, classes, styles, flags)}`);
 
 		/**
 		 * @param {Renderer} renderer
@@ -350,7 +360,6 @@ export class Renderer {
 					 */
 					(onfulfilled, onrejected) => {
 						if (!async_mode_flag) {
-							w.experimental_async_ssr();
 							const result = (sync ??= Renderer.#render(component, options));
 							const user_result = onfulfilled({
 								head: result.head,

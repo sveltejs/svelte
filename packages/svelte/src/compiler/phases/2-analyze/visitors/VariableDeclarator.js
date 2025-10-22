@@ -46,13 +46,22 @@ export function VariableDeclarator(node, context) {
 								: path.is_rest
 									? 'rest_prop'
 									: 'prop';
+				if (rune === '$props' && binding.kind === 'rest_prop' && node.id.type === 'ObjectPattern') {
+					const { properties } = node.id;
+					/** @type {string[]} */
+					const exclude_props = [];
+					for (const property of properties) {
+						if (property.type === 'RestElement') {
+							continue;
+						}
+						const key = /** @type {Identifier | Literal & { value: string | number }} */ (
+							property.key
+						);
+						exclude_props.push(key.type === 'Identifier' ? key.name : key.value.toString());
+					}
+					(binding.metadata ??= {}).exclude_props = exclude_props;
+				}
 			}
-		}
-
-		if (rune === '$derived') {
-			context.visit(node.id);
-			context.visit(/** @type {Expression} */ (node.init), { ...context.state, in_derived: true });
-			return;
 		}
 
 		if (rune === '$props') {

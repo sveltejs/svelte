@@ -8,7 +8,13 @@ import {
 import { HYDRATION_START_ELSE } from '../../../../constants.js';
 import { component_context, set_component_context } from '../../context.js';
 import { handle_error, invoke_error_boundary } from '../../error-handling.js';
-import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
+import {
+	block,
+	branch,
+	destroy_effect,
+	move_effect,
+	pause_effect
+} from '../../reactivity/effects.js';
 import {
 	active_effect,
 	active_reaction,
@@ -29,7 +35,7 @@ import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { DEV } from 'esm-env';
-import { Batch, current_batch, effect_pending_updates } from '../../reactivity/batch.js';
+import { Batch, effect_pending_updates } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
@@ -415,24 +421,6 @@ export class Boundary {
 				});
 			});
 		}
-	}
-}
-
-/**
- *
- * @param {Effect} effect
- * @param {DocumentFragment} fragment
- */
-function move_effect(effect, fragment) {
-	var node = effect.nodes_start;
-	var end = effect.nodes_end;
-
-	while (node !== null) {
-		/** @type {TemplateNode | null} */
-		var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
-
-		fragment.append(node);
-		node = next;
 	}
 }
 

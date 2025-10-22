@@ -226,6 +226,13 @@ export function CallExpression(node, context) {
 			break;
 		}
 
+		case '$state.eager':
+			if (node.arguments.length !== 1) {
+				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+			}
+
+			break;
+
 		case '$state.snapshot':
 			if (node.arguments.length !== 1) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
@@ -241,7 +248,7 @@ export function CallExpression(node, context) {
 		context.next({
 			...context.state,
 			function_depth: context.state.function_depth + 1,
-			in_derived: true,
+			derived_function_depth: context.state.function_depth + 1,
 			expression
 		});
 

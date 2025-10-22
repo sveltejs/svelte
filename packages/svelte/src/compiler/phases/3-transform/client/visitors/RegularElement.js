@@ -106,7 +106,7 @@ export function RegularElement(node, context) {
 
 			case 'LetDirective':
 				// visit let directives before everything else, to set state
-				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+				context.visit(attribute, { ...context.state, let_directives: lets });
 				break;
 
 			case 'OnDirective':

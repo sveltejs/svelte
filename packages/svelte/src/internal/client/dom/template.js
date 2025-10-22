@@ -365,7 +365,7 @@ export function props_id() {
 		hydrating &&
 		hydrate_node &&
 		hydrate_node.nodeType === COMMENT_NODE &&
-		hydrate_node.textContent?.startsWith(`#`)
+		hydrate_node.textContent?.startsWith(`$`)
 	) {
 		const id = hydrate_node.textContent.substring(1);
 		hydrate_next();

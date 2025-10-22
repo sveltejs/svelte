@@ -1,8 +1,13 @@
-/** @import { Effect, Value } from '#client' */
-
+/** @import { Effect, TemplateNode, Value } from '#client' */
 import { DESTROYED } from '#client/constants';
 import { DEV } from 'esm-env';
-import { component_context, is_runes, set_component_context } from '../context.js';
+import {
+	component_context,
+	dev_stack,
+	is_runes,
+	set_component_context,
+	set_dev_stack
+} from '../context.js';
 import { get_boundary } from '../dom/blocks/boundary.js';
 import { invoke_error_boundary } from '../error-handling.js';
 import {
@@ -28,6 +33,7 @@ import {
 	set_hydrating,
 	skip_nodes
 } from '../dom/hydration.js';
+import { create_text } from '../dom/operations.js';
 
 /**
  *
@@ -52,8 +58,6 @@ export function flatten(sync, async, fn) {
 
 	Promise.all(async.map((expression) => async_derived(expression)))
 		.then((result) => {
-			batch?.activate();
-
 			restore();
 
 			try {
@@ -82,7 +86,7 @@ export function flatten(sync, async, fn) {
  * some asynchronous work has happened (so that e.g. `await a + b`
  * causes `b` to be registered as a dependency).
  */
-function capture() {
+export function capture() {
 	var previous_effect = active_effect;
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
@@ -92,6 +96,10 @@ function capture() {
 
 	if (was_hydrating) {
 		var previous_hydrate_node = hydrate_node;
+	}
+
+	if (DEV) {
+		var previous_dev_stack = dev_stack;
 	}
 
 	return function restore() {
@@ -107,6 +115,7 @@ function capture() {
 
 		if (DEV) {
 			set_from_async_derived(null);
+			set_dev_stack(previous_dev_stack);
 		}
 	};
 }
@@ -195,19 +204,24 @@ export function unset_context() {
 	set_active_effect(null);
 	set_active_reaction(null);
 	set_component_context(null);
-	if (DEV) set_from_async_derived(null);
+
+	if (DEV) {
+		set_from_async_derived(null);
+		set_dev_stack(null);
+	}
 }
 
 /**
- * @param {() => Promise<void>} fn
+ * @param {TemplateNode} anchor
+ * @param {(target: TemplateNode) => Promise<void>} fn
  */
-export async function async_body(fn) {
+export async function async_body(anchor, fn) {
 	var boundary = get_boundary();
 	var batch = /** @type {Batch} */ (current_batch);
-	var pending = boundary.is_pending();
+	var blocking = !boundary.is_pending();
 
 	boundary.update_pending_count(1);
-	if (!pending) batch.increment();
+	batch.increment(blocking);
 
 	var active = /** @type {Effect} */ (active_effect);
 
@@ -220,7 +234,7 @@ export async function async_body(fn) {
 	}
 
 	try {
-		var promise = fn();
+		var promise = fn(anchor);
 	} finally {
 		if (next_hydrate_node) {
 			set_hydrate_node(next_hydrate_node);
@@ -240,13 +254,7 @@ export async function async_body(fn) {
 		}
 
 		boundary.update_pending_count(-1);
-
-		if (pending) {
-			batch.flush();
-		} else {
-			batch.activate();
-			batch.decrement();
-		}
+		batch.decrement(blocking);
 
 		unset_context();
 	}

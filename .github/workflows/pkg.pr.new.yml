@@ -1,6 +1,8 @@
 name: Publish Any Commit
 on: [push, pull_request]
 
+permissions: {}
+
 jobs:
   build:
     permissions: {}
