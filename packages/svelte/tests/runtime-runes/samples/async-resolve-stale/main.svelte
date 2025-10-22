@@ -4,29 +4,30 @@
 
 	let resolver;
 
-	function asd(v) {		
+	function asd(v) {
 		let r = Promise.withResolvers();
 
-		function update_and_resolve(){
+		function update_and_resolve() {
 			count++;
 			r.resolve(v);
 		}
 
 		// make sure the second promise resolve before the first one
-		if(resolver){
+		if (resolver){
 			new Promise(r => {
 				setTimeout(r);
-			}).then(update_and_resolve).then(()=>{
-				setTimeout(()=>{
+			}).then(update_and_resolve).then(() => {
+				setTimeout(() => {
 					resolver();
 					resolver = null;
 				});
 			});
-		}else if(v){
+		} else if (v) {
 			resolver = update_and_resolve;
-		}else{
+		} else {
 			Promise.resolve().then(update_and_resolve);
 		}
+
 		return r.promise;
 	}
 

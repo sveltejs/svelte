@@ -1,5 +1,5 @@
 /** @import { Effect, TemplateNode, Value } from '#client' */
-import { DESTROYED, STALE_REACTION } from '#client/constants';
+import { DESTROYED } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
 	component_context,
@@ -218,7 +218,6 @@ export function unset_context() {
 export async function async_body(anchor, fn) {
 	var boundary = get_boundary();
 	var batch = /** @type {Batch} */ (current_batch);
-
 	var blocking = !boundary.is_pending();
 
 	boundary.update_pending_count(1);
