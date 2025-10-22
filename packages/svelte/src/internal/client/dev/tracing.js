@@ -153,16 +153,20 @@ export function get_stack(label) {
 
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i];
+		const posixified = line.replaceAll('\\', '/');
 
 		if (line === 'Error') {
 			continue;
 		}
+
 		if (line.includes('validate_each_keys')) {
 			return null;
 		}
-		if (line.includes('svelte/src/internal') || line.includes('svelte\\src\\internal')) {
+
+		if (posixified.includes('svelte/src/internal') || posixified.includes('node_modules/.vite')) {
 			continue;
 		}
+
 		new_lines.push(line);
 	}
 
