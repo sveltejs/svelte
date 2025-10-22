@@ -4,10 +4,10 @@
 
 	let resolver;
 
-	function asd(v) {		
+	function asd(v) {
 		let r = Promise.withResolvers();
 
-		function update_and_resolve(){
+		function update_and_resolve() {
 			count++;
 			r.resolve(v);
 		}

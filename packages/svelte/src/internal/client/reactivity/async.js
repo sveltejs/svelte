@@ -218,7 +218,6 @@ export function unset_context() {
 export async function async_body(anchor, fn) {
 	var boundary = get_boundary();
 	var batch = /** @type {Batch} */ (current_batch);
-
 	var blocking = !boundary.is_pending();
 
 	boundary.update_pending_count(1);

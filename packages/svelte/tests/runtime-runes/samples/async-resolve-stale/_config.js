@@ -21,6 +21,7 @@ export default test({
 		input.dispatchEvent(new Event('input', { bubbles: true }));
 		await sleep();
 		assert.htmlEqual(target.innerHTML, '<input> 3 | 12');
+
 		input.value = '';
 		input.dispatchEvent(new Event('input', { bubbles: true }));
 		await sleep();
