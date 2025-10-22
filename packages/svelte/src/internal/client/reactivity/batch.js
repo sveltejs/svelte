@@ -893,7 +893,9 @@ export function fork(fn) {
 
 			// trigger any `$state.eager(...)` expressions with the new state
 			flushSync(() => {
+				/** @type {Set<Effect>} */
 				const inspect_effects = new Set();
+
 				for (const source of batch.current.keys()) {
 					mark_inspect_effects(source, inspect_effects);
 				}
