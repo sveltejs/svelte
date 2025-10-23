@@ -30,7 +30,6 @@ import {
 	skip_nodes,
 	set_hydrate_node
 } from '../hydration.js';
-import { create_text } from '../operations.js';
 import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
@@ -92,9 +91,6 @@ export class Boundary {
 
 	/** @type {DocumentFragment | null} */
 	#offscreen_fragment = null;
-
-	/** @type {TemplateNode | null} */
-	#pending_anchor = null;
 
 	#local_pending_count = 0;
 	#pending_count = 0;
@@ -159,17 +155,8 @@ export class Boundary {
 					this.#hydrate_resolved_content();
 				}
 			} else {
-				var anchor = this.#anchor;
-
-				if (this.#pending) {
-					this.#pending_anchor = create_text();
-					this.#anchor.before(this.#pending_anchor);
-
-					anchor = this.#pending_anchor;
-				}
-
 				try {
-					this.#main_effect = branch(() => children(anchor));
+					this.#main_effect = branch(() => children(this.#anchor));
 				} catch (error) {
 					this.error(error);
 				}
@@ -178,7 +165,6 @@ export class Boundary {
 					this.#show_pending_snippet();
 				} else {
 					this.#pending = false;
-					this.#pending_anchor?.remove();
 				}
 			}
 		}, flags);
@@ -208,18 +194,9 @@ export class Boundary {
 		this.#pending_effect = branch(() => pending(this.#anchor));
 
 		Batch.enqueue(() => {
-			var anchor = this.#anchor;
-
-			if (this.#pending) {
-				this.#pending_anchor = create_text();
-				this.#anchor.before(this.#pending_anchor);
-
-				anchor = this.#pending_anchor;
-			}
-
 			this.#main_effect = this.#run(() => {
 				Batch.ensure();
-				return branch(() => this.#children(anchor));
+				return branch(() => this.#children(this.#anchor));
 			});
 
 			if (this.#pending_count > 0) {
@@ -230,7 +207,6 @@ export class Boundary {
 				});
 
 				this.#pending = false;
-				this.#pending_anchor?.remove();
 			}
 		});
 	}
@@ -276,7 +252,6 @@ export class Boundary {
 
 		if (this.#main_effect !== null) {
 			this.#offscreen_fragment = document.createDocumentFragment();
-			this.#offscreen_fragment.append(/** @type {TemplateNode} */ (this.#pending_anchor));
 			move_effect(this.#main_effect, this.#offscreen_fragment);
 		}
 
@@ -312,7 +287,6 @@ export class Boundary {
 			}
 
 			if (this.#offscreen_fragment) {
-				this.#pending_anchor?.remove();
 				this.#anchor.before(this.#offscreen_fragment);
 				this.#offscreen_fragment = null;
 			}
