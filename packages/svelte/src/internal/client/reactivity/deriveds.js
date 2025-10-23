@@ -10,7 +10,8 @@ import {
 	MAYBE_DIRTY,
 	STALE_REACTION,
 	UNOWNED,
-	ASYNC
+	ASYNC,
+	WAS_MARKED
 } from '#client/constants';
 import {
 	active_reaction,
@@ -326,6 +327,7 @@ export function execute_derived(derived) {
 
 			stack.push(derived);
 
+			derived.f &= ~WAS_MARKED;
 			destroy_derived_effects(derived);
 			value = update_reaction(derived);
 		} finally {
@@ -335,6 +337,7 @@ export function execute_derived(derived) {
 		}
 	} else {
 		try {
+			derived.f &= ~WAS_MARKED;
 			destroy_derived_effects(derived);
 			value = update_reaction(derived);
 		} finally {
