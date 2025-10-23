@@ -178,9 +178,12 @@ export class Boundary {
 					this.#show_pending_snippet();
 				} else {
 					this.#pending = false;
-					this.#pending_anchor?.remove();
 				}
 			}
+
+			return () => {
+				this.#pending_anchor?.remove();
+			};
 		}, flags);
 
 		if (hydrating) {
@@ -230,7 +233,6 @@ export class Boundary {
 				});
 
 				this.#pending = false;
-				this.#pending_anchor?.remove();
 			}
 		});
 	}
@@ -312,7 +314,6 @@ export class Boundary {
 			}
 
 			if (this.#offscreen_fragment) {
-				this.#pending_anchor?.remove();
 				this.#anchor.before(this.#offscreen_fragment);
 				this.#offscreen_fragment = null;
 			}
