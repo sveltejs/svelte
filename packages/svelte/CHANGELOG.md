@@ -1,5 +1,13 @@
 # svelte
 
+## 5.41.3
+
+### Patch Changes
+
+- chore: exclude vite optimized deps from stack traces ([#17008](https://github.com/sveltejs/svelte/pull/17008))
+
+- perf: skip repeatedly traversing the same derived ([#17016](https://github.com/sveltejs/svelte/pull/17016))
+
 ## 5.41.2
 
 ### Patch Changes
