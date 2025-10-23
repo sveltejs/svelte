@@ -377,7 +377,9 @@ export class Batch {
 				// Re-run async/block effects that depend on distinct values changed in both batches
 				const others = [...batch.current.keys()].filter((s) => !this.current.has(s));
 				if (others.length > 0) {
+					/** @type {Set<Value>} */
 					const marked = new Set();
+					/** @type {Map<Reaction, boolean>} */
 					const checked = new Map();
 					for (const source of sources) {
 						mark_effects(source, others, marked, checked);
