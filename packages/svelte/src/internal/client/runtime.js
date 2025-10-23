@@ -20,7 +20,8 @@ import {
 	DISCONNECTED,
 	REACTION_IS_UPDATING,
 	STALE_REACTION,
-	ERROR_VALUE
+	ERROR_VALUE,
+	WAS_MARKED
 } from './constants.js';
 import { old_values } from './reactivity/sources.js';
 import {
@@ -160,6 +161,10 @@ export function is_dirty(reaction) {
 	if ((flags & MAYBE_DIRTY) !== 0) {
 		var dependencies = reaction.deps;
 		var is_unowned = (flags & UNOWNED) !== 0;
+
+		if (flags & DERIVED) {
+			reaction.f &= ~WAS_MARKED;
+		}
 
 		if (dependencies !== null) {
 			var i;
