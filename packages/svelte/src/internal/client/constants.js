@@ -24,6 +24,11 @@ export const USER_EFFECT = 1 << 20;
 // Flags exclusive to deriveds
 export const UNOWNED = 1 << 8;
 export const DISCONNECTED = 1 << 9;
+/**
+ * Tells that we marked this derived and its reactions as visited during the "mark as (maybe) dirty"-phase.
+ * Will be lifted during execution of the derived and during checking its dirty state (both are necessary
+ * because a derived might be checked but not executed).
+ */
 export const WAS_MARKED = 1 << 15;
 
 // Flags used for async
