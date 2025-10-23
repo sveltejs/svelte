@@ -394,8 +394,12 @@ export class Batch {
 				// Re-run async/block effects that depend on distinct values changed in both batches
 				const others = [...batch.current.keys()].filter((s) => !this.current.has(s));
 				if (others.length > 0) {
+					/** @type {Set<Value>} */
+					const marked = new Set();
+					/** @type {Map<Reaction, boolean>} */
+					const checked = new Map();
 					for (const source of sources) {
-						mark_effects(source, others);
+						mark_effects(source, others, marked, checked);
 					}
 
 					if (queued_root_effects.length > 0) {
@@ -709,15 +713,24 @@ function flush_queued_effects(effects) {
  * these effects can re-run after another batch has been committed
  * @param {Value} value
  * @param {Source[]} sources
+ * @param {Set<Value>} marked
+ * @param {Map<Reaction, boolean>} checked
  */
-function mark_effects(value, sources) {
+function mark_effects(value, sources, marked, checked) {
+	if (marked.has(value)) return;
+	marked.add(value);
+
 	if (value.reactions !== null) {
 		for (const reaction of value.reactions) {
 			const flags = reaction.f;
 
 			if ((flags & DERIVED) !== 0) {
-				mark_effects(/** @type {Derived} */ (reaction), sources);
-			} else if ((flags & (ASYNC | BLOCK_EFFECT)) !== 0 && depends_on(reaction, sources)) {
+				mark_effects(/** @type {Derived} */ (reaction), sources, marked, checked);
+			} else if (
+				(flags & (ASYNC | BLOCK_EFFECT)) !== 0 &&
+				(flags & DIRTY) === 0 && // we may have scheduled this one already
+				depends_on(reaction, sources, checked)
+			) {
 				set_signal_status(reaction, DIRTY);
 				schedule_effect(/** @type {Effect} */ (reaction));
 			}
@@ -750,19 +763,26 @@ function mark_inspect_effects(value, effects) {
 /**
  * @param {Reaction} reaction
  * @param {Source[]} sources
+ * @param {Map<Reaction, boolean>} checked
  */
-function depends_on(reaction, sources) {
+function depends_on(reaction, sources, checked) {
+	const depends = checked.get(reaction);
+	if (depends !== undefined) return depends;
+
 	if (reaction.deps !== null) {
 		for (const dep of reaction.deps) {
 			if (sources.includes(dep)) {
 				return true;
 			}
 
-			if ((dep.f & DERIVED) !== 0 && depends_on(/** @type {Derived} */ (dep), sources)) {
+			if ((dep.f & DERIVED) !== 0 && depends_on(/** @type {Derived} */ (dep), sources, checked)) {
+				checked.set(/** @type {Derived} */ (dep), true);
 				return true;
 			}
 		}
 	}
+
+	checked.set(reaction, false);
 
 	return false;
 }
