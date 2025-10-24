@@ -68,10 +68,6 @@ export function Attribute(node, context) {
 			const delegated_event = get_delegated_event(node.name.slice(2), expression, context);
 
 			if (delegated_event !== null) {
-				if (delegated_event.hoisted) {
-					delegated_event.function.metadata.hoisted = true;
-				}
-
 				node.metadata.delegated = delegated_event;
 			}
 		}
@@ -99,6 +95,8 @@ function get_delegated_event(event_name, handler, context) {
 	if (element?.type !== 'RegularElement') {
 		return null;
 	}
+
+	return unhoisted;
 
 	/** @type {FunctionExpression | FunctionDeclaration | ArrowFunctionExpression | null} */
 	let target_function = null;
@@ -229,7 +227,7 @@ function get_delegated_event(event_name, handler, context) {
 		visited_references.add(reference);
 	}
 
-	return { hoisted: true, function: target_function };
+	return unhoisted;
 }
 
 /**
