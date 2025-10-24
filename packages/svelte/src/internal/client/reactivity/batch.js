@@ -752,7 +752,7 @@ function mark_effects(value, sources, marked, checked) {
 }
 
 /**
- * When committing a fork, we need to trigger inspect effects so that
+ * When committing a fork, we need to trigger eager effects so that
  * any `$state.eager(...)` expressions update immediately. This
  * function allows us to discover them
  * @param {Value} value
