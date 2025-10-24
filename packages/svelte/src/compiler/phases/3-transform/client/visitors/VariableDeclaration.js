@@ -7,7 +7,6 @@ import * as b from '#compiler/builders';
 import * as assert from '../../../../utils/assert.js';
 import { get_rune } from '../../../scope.js';
 import { get_prop_source, is_prop_source, is_state_source, should_proxy } from '../utils.js';
-import { is_hoisted_function } from '../../utils.js';
 import { get_value } from './shared/declarations.js';
 
 /**
@@ -32,13 +31,6 @@ export function VariableDeclaration(node, context) {
 				rune === '$state.snapshot' ||
 				rune === '$host'
 			) {
-				if (init != null && is_hoisted_function(init)) {
-					context.state.hoisted.push(
-						b.const(declarator.id, /** @type {Expression} */ (context.visit(init)))
-					);
-
-					continue;
-				}
 				declarations.push(/** @type {VariableDeclarator} */ (context.visit(declarator)));
 				continue;
 			}
@@ -295,16 +287,6 @@ export function VariableDeclaration(node, context) {
 			const has_props = bindings.some((binding) => binding.kind === 'bindable_prop');
 
 			if (!has_state && !has_props) {
-				const init = declarator.init;
-
-				if (init != null && is_hoisted_function(init)) {
-					context.state.hoisted.push(
-						b.const(declarator.id, /** @type {Expression} */ (context.visit(init)))
-					);
-
-					continue;
-				}
-
 				declarations.push(/** @type {VariableDeclarator} */ (context.visit(declarator)));
 				continue;
 			}

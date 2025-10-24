@@ -218,10 +218,10 @@ export function unset_context() {
 export async function async_body(anchor, fn) {
 	var boundary = get_boundary();
 	var batch = /** @type {Batch} */ (current_batch);
-	var pending = boundary.is_pending();
+	var blocking = !boundary.is_pending();
 
 	boundary.update_pending_count(1);
-	if (!pending) batch.increment();
+	batch.increment(blocking);
 
 	var active = /** @type {Effect} */ (active_effect);
 
@@ -254,12 +254,7 @@ export async function async_body(anchor, fn) {
 		}
 
 		boundary.update_pending_count(-1);
-
-		if (pending) {
-			batch.flush();
-		} else {
-			batch.decrement();
-		}
+		batch.decrement(blocking);
 
 		unset_context();
 	}

@@ -10,7 +10,8 @@ import {
 	MAYBE_DIRTY,
 	STALE_REACTION,
 	UNOWNED,
-	ASYNC
+	ASYNC,
+	WAS_MARKED
 } from '#client/constants';
 import {
 	active_reaction,
@@ -27,7 +28,7 @@ import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
 import { async_effect, destroy_effect, teardown } from './effects.js';
-import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
+import { eager_effects, internal_set, set_eager_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { Boundary } from '../dom/blocks/boundary.js';
@@ -127,7 +128,17 @@ export function async_derived(fn, location) {
 			// If this code is changed at some point, make sure to still access the then property
 			// of fn() to read any signals it might access, so that we track them as dependencies.
 			// We call `unset_context` to undo any `save` calls that happen inside `fn()`
-			Promise.resolve(fn()).then(d.resolve, d.reject).then(unset_context);
+			Promise.resolve(fn())
+				.then(d.resolve, d.reject)
+				.then(() => {
+					if (batch === current_batch && batch.committed) {
+						// if the batch was rejected as stale, we need to cleanup
+						// after any `$.save(...)` calls inside `fn()`
+						batch.deactivate();
+					}
+
+					unset_context();
+				});
 		} catch (error) {
 			d.reject(error);
 			unset_context();
@@ -136,17 +147,16 @@ export function async_derived(fn, location) {
 		if (DEV) current_async_effect = null;
 
 		var batch = /** @type {Batch} */ (current_batch);
-		var pending = boundary.is_pending();
 
 		if (should_suspend) {
-			boundary.update_pending_count(1);
-			if (!pending) {
-				batch.increment();
+			var blocking = !boundary.is_pending();
 
-				deferreds.get(batch)?.reject(STALE_REACTION);
-				deferreds.delete(batch); // delete to ensure correct order in Map iteration below
-				deferreds.set(batch, d);
-			}
+			boundary.update_pending_count(1);
+			batch.increment(blocking);
+
+			deferreds.get(batch)?.reject(STALE_REACTION);
+			deferreds.delete(batch); // delete to ensure correct order in Map iteration below
+			deferreds.set(batch, d);
 		}
 
 		/**
@@ -156,7 +166,7 @@ export function async_derived(fn, location) {
 		const handler = (value, error = undefined) => {
 			current_async_effect = null;
 
-			if (!pending) batch.activate();
+			batch.activate();
 
 			if (error) {
 				if (error !== STALE_REACTION) {
@@ -193,7 +203,7 @@ export function async_derived(fn, location) {
 
 			if (should_suspend) {
 				boundary.update_pending_count(-1);
-				if (!pending) batch.decrement();
+				batch.decrement(blocking);
 			}
 		};
 
@@ -308,8 +318,8 @@ export function execute_derived(derived) {
 	set_active_effect(get_derived_parent_effect(derived));
 
 	if (DEV) {
-		let prev_inspect_effects = inspect_effects;
-		set_inspect_effects(new Set());
+		let prev_eager_effects = eager_effects;
+		set_eager_effects(new Set());
 		try {
 			if (stack.includes(derived)) {
 				e.derived_references_self();
@@ -317,15 +327,17 @@ export function execute_derived(derived) {
 
 			stack.push(derived);
 
+			derived.f &= ~WAS_MARKED;
 			destroy_derived_effects(derived);
 			value = update_reaction(derived);
 		} finally {
 			set_active_effect(prev_active_effect);
-			set_inspect_effects(prev_inspect_effects);
+			set_eager_effects(prev_eager_effects);
 			stack.pop();
 		}
 	} else {
 		try {
+			derived.f &= ~WAS_MARKED;
 			destroy_derived_effects(derived);
 			value = update_reaction(derived);
 		} finally {

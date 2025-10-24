@@ -2,7 +2,7 @@
 import { walk } from 'zimmerframe';
 import { regex_is_valid_identifier } from '../phases/patterns.js';
 import { sanitize_template_string } from './sanitize_template_string.js';
-import { has_await } from './ast.js';
+import { has_await_expression } from './ast.js';
 
 /**
  * @param {Array<ESTree.Expression | ESTree.SpreadElement | null>} elements
@@ -42,8 +42,7 @@ export function arrow(params, body, async = false) {
 		body,
 		expression: body.type !== 'BlockStatement',
 		generator: false,
-		async,
-		metadata: /** @type {any} */ (null) // should not be used by codegen
+		async
 	};
 }
 
@@ -237,8 +236,7 @@ export function function_declaration(id, params, body, async = false) {
 		params,
 		body,
 		generator: false,
-		async,
-		metadata: /** @type {any} */ (null) // should not be used by codegen
+		async
 	};
 }
 
@@ -451,7 +449,7 @@ export function thunk(expression, async = false) {
 export function unthunk(expression) {
 	// optimize `async () => await x()`, but not `async () => await x(await y)`
 	if (expression.async && expression.body.type === 'AwaitExpression') {
-		if (!has_await(expression.body.argument)) {
+		if (!has_await_expression(expression.body.argument)) {
 			return unthunk(arrow(expression.params, expression.body.argument));
 		}
 	}
@@ -595,8 +593,7 @@ function function_builder(id, params, body, async = false) {
 		params,
 		body,
 		generator: false,
-		async,
-		metadata: /** @type {any} */ (null) // should not be used by codegen
+		async
 	};
 }
 

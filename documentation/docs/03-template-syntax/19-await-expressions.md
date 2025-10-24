@@ -135,6 +135,54 @@ If a `<svelte:boundary>` with a `pending` snippet is encountered during SSR, tha
 
 > [!NOTE] In the future, we plan to add a streaming implementation that renders the content in the background.
 
+## Forking
+
+The [`fork(...)`](svelte#fork) API, added in 5.42, makes it possible to run `await` expressions that you _expect_ to happen in the near future. This is mainly intended for frameworks like SvelteKit to implement preloading when (for example) users signal an intent to navigate.
+
+```svelte
+<script>
+	import { fork } from 'svelte';
+	import Menu from './Menu.svelte';
+
+	let open = $state(false);
+
+	/** @type {import('svelte').Fork | null} */
+	let pending = null;
+
+	function preload() {
+		pending ??= fork(() => {
+			open = true;
+		});
+	}
+
+	function discard() {
+		pending?.discard();
+		pending = null;
+	}
+</script>
+
+<button
+	onfocusin={preload}
+	onfocusout={discard}
+	onpointerenter={preload}
+	onpointerleave={discard}
+	onclick={() => {
+		pending?.commit();
+		pending = null;
+
+		// in case `pending` didn't exist
+		// (if it did, this is a no-op)
+		open = true;
+	}}
+>open menu</button>
+
+{#if open}
+	<!-- any async work inside this component will start
+	     as soon as the fork is created -->
+	<Menu onclose={() => open = false} />
+{/if}
+```
+
 ## Caveats
 
 As an experimental feature, the details of how `await` is handled (and related APIs like `$effect.pending()`) are subject to breaking changes outside of a semver major release, though we intend to keep such changes to a bare minimum.
