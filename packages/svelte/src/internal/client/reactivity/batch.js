@@ -907,7 +907,7 @@ export function fork(fn) {
 	return {
 		commit: async () => {
 			if (!batches.has(batch)) {
-				throw new Error('Cannot commit this batch'); // TODO better error
+				e.fork_discarded();
 			}
 
 			batch.is_fork = false;

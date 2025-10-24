@@ -146,6 +146,12 @@ The `flushSync()` function can be used to flush any pending effects synchronousl
 
 This restriction only applies when using the `experimental.async` option, which will be active by default in Svelte 6.
 
+### fork_discarded
+
+```
+Cannot commit a fork that was already committed or discarded (including as a result of a different fork being committed)
+```
+
 ### fork_timing
 
 ```

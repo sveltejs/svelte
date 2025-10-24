@@ -262,6 +262,38 @@ export function flush_sync_in_effect() {
 }
 
 /**
+ * Cannot create a fork inside an effect or when state changes are pending
+ * @returns {never}
+ */
+export function fork_timing() {
+	if (DEV) {
+		const error = new Error(`fork_timing\nCannot create a fork inside an effect or when state changes are pending\nhttps://svelte.dev/e/fork_timing`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/fork_timing`);
+	}
+}
+
+/**
+ * Cannot commit a fork that was already committed or discarded (including as a result of a different fork being committed)
+ * @returns {never}
+ */
+export function fork_discarded() {
+	if (DEV) {
+		const error = new Error(`fork_discarded\nCannot commit a fork that was already committed or discarded (including as a result of a different fork being committed)\nhttps://svelte.dev/e/fork_discarded`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/fork_discarded`);
+	}
+}
+
+/**
  * `getAbortSignal()` can only be called inside an effect or derived
  * @returns {never}
  */
@@ -454,21 +486,5 @@ export function svelte_boundary_reset_onerror() {
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/svelte_boundary_reset_onerror`);
-	}
-}
-
-/**
- * Cannot create a fork inside an effect or when state changes are pending
- * @returns {never}
- */
-export function fork_timing() {
-	if (DEV) {
-		const error = new Error(`fork_timing\nCannot create a fork inside an effect or when state changes are pending\nhttps://svelte.dev/e/fork_timing`);
-
-		error.name = 'Svelte error';
-
-		throw error;
-	} else {
-		throw new Error(`https://svelte.dev/e/fork_timing`);
 	}
 }
