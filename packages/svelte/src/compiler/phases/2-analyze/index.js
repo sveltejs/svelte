@@ -543,7 +543,9 @@ export function analyze_component(root, source, options) {
 		snippet_renderers: new Map(),
 		snippets: new Set(),
 		async_deriveds: new Set(),
-		pickled_awaits: new Set()
+		pickled_awaits: new Set(),
+		awaited_declarations: new Map(),
+		awaited_statements: new Map()
 	};
 
 	if (!runes) {
@@ -685,6 +687,25 @@ export function analyze_component(root, source, options) {
 		const rest_props_refs = module.scope.references.get('$$restProps');
 		if (rest_props_refs) {
 			e.legacy_rest_props_invalid(rest_props_refs[0].node);
+		}
+
+		if (instance.has_await) {
+			let awaiting = false;
+			let i = 0;
+
+			for (const node of instance.ast.body) {
+				const has_await = has_await_expression(node);
+				awaiting ||= has_await;
+
+				if (!awaiting) continue;
+
+				const id = b.id(`$$${i++}`);
+
+				analysis.awaited_statements.set(node, {
+					id,
+					has_await
+				});
+			}
 		}
 
 		for (const { ast, scope, scopes } of [module, instance, template]) {

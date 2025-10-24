@@ -5,7 +5,10 @@ import type {
 	ClassBody,
 	Identifier,
 	LabeledStatement,
-	Program
+	ModuleDeclaration,
+	Pattern,
+	Program,
+	Statement
 } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
 
@@ -108,6 +111,28 @@ export interface ComponentAnalysis extends Analysis {
 	 * Every snippet that is declared locally
 	 */
 	snippets: Set<AST.SnippetBlock>;
+	/**
+	 * A lookup of awaited declarations. If you have something this in `<script>`...
+	 *
+	 *   let a = await get_a();
+	 *   let b = get_b();
+	 *
+	 * ...it will get transformed to something like this...
+	 *
+	 *   let $$0 = $.run([], () => get_a());
+	 *   let $$1 = $.run([$$0], () => get_b());
+	 *
+	 * ...and references to `a` or `b` in the template should be mediated by `$$0` and `$$1`
+	 */
+	awaited_declarations: Map<
+		string,
+		{ id: Identifier; pattern: Pattern; updated_by: Set<Identifier> }
+	>;
+	/**
+	 * Information about top-level instance statements that need to be transformed
+	 * so that we can run the template synchronously
+	 */
+	awaited_statements: Map<Statement | ModuleDeclaration, { id: Identifier; has_await: boolean }>;
 }
 
 declare module 'estree' {
