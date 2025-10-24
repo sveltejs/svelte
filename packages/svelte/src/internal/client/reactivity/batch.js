@@ -108,7 +108,12 @@ export class Batch {
 	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks
 	 * @type {Set<() => void>}
 	 */
-	#callbacks = new Set();
+	#commit_callbacks = new Set();
+
+	/**
+	 * If a fork is discarded, we need to destroy any effects that are no longer needed
+	 */
+	#discard_callbacks = new Set();
 
 	/**
 	 * The number of async effects that are currently in flight
@@ -328,11 +333,16 @@ export class Batch {
 		}
 	}
 
+	discard() {
+		for (const fn of this.#discard_callbacks) fn(this);
+		this.#discard_callbacks.clear();
+	}
+
 	#resolve() {
 		if (this.#blocking_pending === 0) {
 			// append/remove branches
-			for (const fn of this.#callbacks) fn();
-			this.#callbacks.clear();
+			for (const fn of this.#commit_callbacks) fn();
+			this.#commit_callbacks.clear();
 		}
 
 		if (this.#pending === 0) {
@@ -463,8 +473,13 @@ export class Batch {
 	}
 
 	/** @param {() => void} fn */
-	add_callback(fn) {
-		this.#callbacks.add(fn);
+	oncommit(fn) {
+		this.#commit_callbacks.add(fn);
+	}
+
+	/** @param {(batch: Batch) => void} fn */
+	ondiscard(fn) {
+		this.#discard_callbacks.add(fn);
 	}
 
 	settled() {
@@ -943,7 +958,10 @@ export function fork(fn) {
 			await settled;
 		},
 		discard: () => {
-			batches.delete(batch);
+			if (batches.has(batch)) {
+				batches.delete(batch);
+				batch.discard();
+			}
 		}
 	};
 }
