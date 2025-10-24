@@ -456,3 +456,19 @@ export function svelte_boundary_reset_onerror() {
 		throw new Error(`https://svelte.dev/e/svelte_boundary_reset_onerror`);
 	}
 }
+
+/**
+ * Cannot create a fork inside an effect or when state changes are pending
+ * @returns {never}
+ */
+export function fork_timing() {
+	if (DEV) {
+		const error = new Error(`fork_timing\nCannot create a fork inside an effect or when state changes are pending\nhttps://svelte.dev/e/fork_timing`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/fork_timing`);
+	}
+}

@@ -448,7 +448,19 @@ declare module 'svelte' {
 	 * Returns void if no callback is provided, otherwise returns the result of calling the callback.
 	 * */
 	export function flushSync<T = void>(fn?: (() => T) | undefined): T;
-
+	/**
+	 * Creates a 'fork', in which state changes are evaluated but not applied to the DOM.
+	 * This is useful for speculatively loading data (for example) when you suspect that
+	 * the user is about to take some action.
+	 *
+	 * Frameworks like SvelteKit can use this to preload data when the user touches or
+	 * hovers over a link, making any subsequent navigation feel instantaneous.
+	 *
+	 * The `fn` parameter is a synchronous function that modifies some state. The
+	 * state changes will be reverted after the fork is initialised, then reapplied
+	 * if and when the fork is eventually committed.
+	 *
+	 * */
 	export function fork(fn: () => void): {
 		commit: () => void;
 		discard: () => void;

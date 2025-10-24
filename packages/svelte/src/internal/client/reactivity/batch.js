@@ -895,7 +895,7 @@ export function fork(fn) {
 	}
 
 	if (current_batch !== null) {
-		throw new Error('cannot fork here'); // TODO better error
+		e.fork_timing();
 	}
 
 	const batch = Batch.ensure();
