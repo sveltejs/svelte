@@ -13,7 +13,7 @@ import {
 	MAYBE_DIRTY,
 	DERIVED,
 	BOUNDARY_EFFECT,
-	INSPECT_EFFECT
+	EAGER_EFFECT
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
@@ -33,14 +33,14 @@ import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
 import {
-	flush_inspect_effects,
-	inspect_effects,
+	flush_eager_effects,
+	eager_effects,
 	old_values,
-	set_inspect_effects,
+	set_eager_effects,
 	source,
 	update
 } from './sources.js';
-import { inspect_effect, unlink_effect } from './effects.js';
+import { eager_effect, unlink_effect } from './effects.js';
 
 /**
  * @typedef {{
@@ -745,14 +745,14 @@ function mark_effects(value, sources, marked, checked) {
  * @param {Value} value
  * @param {Set<Effect>} effects
  */
-function mark_inspect_effects(value, effects) {
+function mark_eager_effects(value, effects) {
 	if (value.reactions !== null) {
 		for (const reaction of value.reactions) {
 			const flags = reaction.f;
 
 			if ((flags & DERIVED) !== 0) {
-				mark_inspect_effects(/** @type {Derived} */ (reaction), effects);
-			} else if ((flags & INSPECT_EFFECT) !== 0) {
+				mark_eager_effects(/** @type {Derived} */ (reaction), effects);
+			} else if ((flags & EAGER_EFFECT) !== 0) {
 				set_signal_status(reaction, DIRTY);
 				effects.add(/** @type {Effect} */ (reaction));
 			}
@@ -841,7 +841,7 @@ export function eager(fn) {
 
 	get(version);
 
-	inspect_effect(() => {
+	eager_effect(() => {
 		if (initial) {
 			// the first time this runs, we create an inspect effect
 			// that will run eagerly whenever the expression changes
@@ -918,14 +918,14 @@ export function fork(fn) {
 			// trigger any `$state.eager(...)` expressions with the new state
 			flushSync(() => {
 				/** @type {Set<Effect>} */
-				const inspect_effects = new Set();
+				const eager_effects = new Set();
 
 				for (const source of batch.current.keys()) {
-					mark_inspect_effects(source, inspect_effects);
+					mark_eager_effects(source, eager_effects);
 				}
 
-				set_inspect_effects(inspect_effects);
-				flush_inspect_effects();
+				set_eager_effects(eager_effects);
+				flush_eager_effects();
 			});
 
 			batch.revive();

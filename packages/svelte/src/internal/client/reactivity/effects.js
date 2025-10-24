@@ -27,7 +27,7 @@ import {
 	DERIVED,
 	UNOWNED,
 	CLEAN,
-	INSPECT_EFFECT,
+	EAGER_EFFECT,
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
 	EFFECT_PRESERVED,
@@ -88,7 +88,7 @@ function create_effect(type, fn, sync, push = true) {
 
 	if (DEV) {
 		// Ensure the parent is never an inspect effect
-		while (parent !== null && (parent.f & INSPECT_EFFECT) !== 0) {
+		while (parent !== null && (parent.f & EAGER_EFFECT) !== 0) {
 			parent = parent.parent;
 		}
 	}
@@ -242,8 +242,8 @@ export function user_pre_effect(fn) {
 }
 
 /** @param {() => void | (() => void)} fn */
-export function inspect_effect(fn) {
-	return create_effect(INSPECT_EFFECT, fn, true);
+export function eager_effect(fn) {
+	return create_effect(EAGER_EFFECT, fn, true);
 }
 
 /**
