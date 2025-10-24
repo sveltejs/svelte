@@ -59,7 +59,7 @@ export function create_attribute(name, start, end, value) {
 		name,
 		value,
 		metadata: {
-			delegated: null,
+			delegated: false,
 			needs_clsx: false
 		}
 	};
