@@ -875,6 +875,13 @@ export function eager(fn) {
 }
 
 /**
+ * Creates a 'fork', in which state changes are evaluated but not applied to the DOM.
+ * This is useful for speculatively loading data (for example) when you suspect that
+ * the user is about to take some action.
+ *
+ * Frameworks like SvelteKit can use this to preload data when the user touches or
+ * hovers over a link, making any subsequent navigation feel instantaneous.
+ *
  * @param {() => void} fn
  * @returns {{ commit: () => void, discard: () => void }}
  */
