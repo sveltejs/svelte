@@ -137,7 +137,7 @@ If a `<svelte:boundary>` with a `pending` snippet is encountered during SSR, tha
 
 ## Forking
 
-The [`fork(...)`](svelte#fork) API, added in 5.42, makes it possible to run `await` expressions that you _expect_ to happen in the near future. This is mainly intended for frameworks like SvelteKit to implement preloading when users signal an intent to navigate (for example).
+The [`fork(...)`](svelte#fork) API, added in 5.42, makes it possible to run `await` expressions that you _expect_ to happen in the near future. This is mainly intended for frameworks like SvelteKit to implement preloading when (for example) users signal an intent to navigate.
 
 ```svelte
 <script>
@@ -162,6 +162,10 @@ The [`fork(...)`](svelte#fork) API, added in 5.42, makes it possible to run `awa
 	}}
 	onclick={() => {
 		pending?.commit();
+		pending = null;
+
+		// in case `pending` didn't exist
+		// (if it did, this is a no-op)
 		open = true;
 	}}
 >open menu</button>
