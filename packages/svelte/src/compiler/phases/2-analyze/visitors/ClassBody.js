@@ -86,7 +86,7 @@ export function ClassBody(node, context) {
 
 	for (const child of node.body) {
 		if (child.type === 'PropertyDefinition' && !child.static) {
-			handle(child, child.key, child.value, child.computed);
+			handle(child, child.key, child.value, child.computed && child.key.type !== 'Literal');
 			const key = /** @type {string} */ (get_name(child.key));
 			const field = fields.get(key);
 			if (!field) {
@@ -142,7 +142,12 @@ export function ClassBody(node, context) {
 			if (left.type !== 'MemberExpression') continue;
 			if (left.object.type !== 'ThisExpression') continue;
 
-			handle(statement.expression, left.property, right, left.computed);
+			handle(
+				statement.expression,
+				left.property,
+				right,
+				left.computed && left.property.type !== 'Literal'
+			);
 		}
 	}
 
