@@ -33,7 +33,7 @@ export function ClassBody(node, context) {
 	/** @type {Map<string | number, StateField>} */
 	const state_fields = new Map();
 
-	/** @type {Map<string, Array<MethodDefinition['kind'] | 'prop' | 'assigned_prop'>>} */
+	/** @type {Map<string | number, Array<MethodDefinition['kind'] | 'prop' | 'assigned_prop'>>} */
 	const fields = new Map();
 
 	context.state.analysis.classes.set(node, state_fields);
@@ -62,12 +62,15 @@ export function ClassBody(node, context) {
 				e.state_field_duplicate(node, name);
 			}
 
-			const _key = (node.type === 'AssignmentExpression' || !node.static ? '' : '@') + name;
+			const _key =
+				typeof name === 'string'
+					? (node.type === 'AssignmentExpression' || !node.static ? '' : '@') + name
+					: name;
 			const field = fields.get(_key);
 
 			// if there's already a method or assigned field, error
 			if (field && !(field.length === 1 && field[0] === 'prop')) {
-				e.duplicate_class_field(node, _key);
+				e.duplicate_class_field(node, typeof _key === 'string' ? _key : '[computed key]');
 			}
 
 			state_fields.set(name, {
@@ -148,7 +151,7 @@ export function ClassBody(node, context) {
 			continue;
 		}
 
-		let deconflicted = `${typeof name === 'number' ? '0' : ''}${name}`.replace(
+		let deconflicted = `${typeof name === 'number' ? '_' : ''}${name}`.replace(
 			regex_invalid_identifier_chars,
 			'_'
 		);
