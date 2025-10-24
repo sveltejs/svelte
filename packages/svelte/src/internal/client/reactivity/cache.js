@@ -1,3 +1,4 @@
+import { BaseCacheObserver } from '../../shared/cache-observer.js';
 import { set_hydratable_key } from '../context.js';
 import { tick } from '../runtime.js';
 import { render_effect } from './effects.js';
@@ -67,58 +68,8 @@ function create_remover(key) {
 		});
 }
 
-/** @implements {ReadonlyMap<string, any>} */
-class ReadonlyCache {
-	/** @type {ReadonlyMap<string, any>['get']} */
-	get(key) {
-		const entry = client_cache.get(key);
-		return entry?.item;
+export class CacheObserver extends BaseCacheObserver {
+	constructor() {
+		super(client_cache);
 	}
-
-	/** @type {ReadonlyMap<string, any>['has']} */
-	has(key) {
-		return client_cache.has(key);
-	}
-
-	/** @type {ReadonlyMap<string, any>['size']} */
-	get size() {
-		return client_cache.size;
-	}
-
-	/** @type {ReadonlyMap<string, any>['forEach']} */
-	forEach(cb) {
-		client_cache.forEach((entry, key) => cb(entry.item, key, this));
-	}
-
-	/** @type {ReadonlyMap<string, any>['entries']} */
-	*entries() {
-		for (const [key, entry] of client_cache.entries()) {
-			yield [key, entry.item];
-		}
-	}
-
-	/** @type {ReadonlyMap<string, any>['keys']} */
-	*keys() {
-		for (const key of client_cache.keys()) {
-			yield key;
-		}
-	}
-
-	/** @type {ReadonlyMap<string, any>['values']} */
-	*values() {
-		for (const entry of client_cache.values()) {
-			yield entry.item;
-		}
-	}
-
-	[Symbol.iterator]() {
-		return this.entries();
-	}
-}
-
-const readonly_cache = new ReadonlyCache();
-
-/** @returns {ReadonlyMap<string, any>} */
-export function get_cache() {
-	return readonly_cache;
 }

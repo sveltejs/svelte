@@ -1,3 +1,4 @@
+import { BaseCacheObserver } from '../../shared/cache-observer';
 import { get_render_store, set_hydratable_key } from '../context';
 
 /**
@@ -19,6 +20,8 @@ export function cache(key, fn) {
 	return new_entry;
 }
 
-export function get_cache() {
-	throw new Error('TODO: cannot get cache on the server');
+export class CacheObserver extends BaseCacheObserver {
+	constructor() {
+		super(get_render_store().cache);
+	}
 }

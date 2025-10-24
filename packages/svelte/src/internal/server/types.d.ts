@@ -1,4 +1,4 @@
-import type { MaybePromise, Transport } from '#shared';
+import type { Transport } from '#shared';
 import type { Element } from './dev';
 import type { Renderer } from './renderer';
 
@@ -15,11 +15,11 @@ export interface SSRContext {
 	element?: Element;
 }
 
-export interface ALSContext {
+export interface RenderContext {
 	hydratables: Map<
 		string,
 		{
-			value: MaybePromise<unknown>;
+			value: Promise<unknown>;
 			transport: Transport<any> | undefined;
 		}
 	>;

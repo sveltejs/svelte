@@ -1,4 +1,4 @@
-/** @import { ALSContext, SSRContext } from '#server' */
+/** @import { RenderContext, SSRContext } from '#server' */
 /** @import { AsyncLocalStorage } from 'node:async_hooks' */
 /** @import { Transport } from '#shared' */
 import { DEV } from 'esm-env';
@@ -137,36 +137,36 @@ export function set_hydratable_key(key) {
  * @template T
  * @overload
  * @param {string} key
- * @param {() => T} fn
+ * @param {() => Promise<T>} fn
  * @param {{ transport?: Transport<T> }} [options]
- * @returns {Promise<Awaited<T>>}
+ * @returns {Promise<T>}
  */
 /**
  * @template T
  * @overload
- * @param {() => T} fn
+ * @param {() => Promise<T>} fn
  * @param {{ transport?: Transport<T> }} [options]
- * @returns {Promise<Awaited<T>>}
+ * @returns {Promise<T>}
  */
 /**
  * @template T
- * @param {string | (() => T)} key_or_fn
- * @param {(() => T) | { transport?: Transport<T> }} [fn_or_options]
+ * @param {string | (() => Promise<T>)} key_or_fn
+ * @param {(() => Promise<T>) | { transport?: Transport<T> }} [fn_or_options]
  * @param {{ transport?: Transport<T> }} [maybe_options]
- * @returns {Promise<Awaited<T>>}
+ * @returns {Promise<T>}
  */
 export function hydratable(key_or_fn, fn_or_options = {}, maybe_options = {}) {
 	// TODO DRY out with #shared
 	/** @type {string} */
 	let key;
-	/** @type {() => T} */
+	/** @type {() => Promise<T>} */
 	let fn;
 	/** @type {{ transport?: Transport<T> }} */
 	let options;
 
 	if (typeof key_or_fn === 'string') {
 		key = key_or_fn;
-		fn = /** @type {() => T} */ (fn_or_options);
+		fn = /** @type {() => Promise<T>} */ (fn_or_options);
 		options = /** @type {{ transport?: Transport<T> }} */ (maybe_options);
 	} else {
 		if (hydratable_key === null) {
@@ -176,7 +176,7 @@ export function hydratable(key_or_fn, fn_or_options = {}, maybe_options = {}) {
 		} else {
 			key = hydratable_key;
 		}
-		fn = /** @type {() => T} */ (key_or_fn);
+		fn = /** @type {() => Promise<T>} */ (key_or_fn);
 		options = /** @type {{ transport?: Transport<T> }} */ (fn_or_options);
 	}
 	const store = get_render_store();
@@ -191,15 +191,15 @@ export function hydratable(key_or_fn, fn_or_options = {}, maybe_options = {}) {
 	return Promise.resolve(result);
 }
 
-/** @type {ALSContext | null} */
+/** @type {RenderContext | null} */
 export let sync_store = null;
 
-/** @param {ALSContext | null} store */
+/** @param {RenderContext | null} store */
 export function set_sync_store(store) {
 	sync_store = store;
 }
 
-/** @type {AsyncLocalStorage<ALSContext | null> | null} */
+/** @type {AsyncLocalStorage<RenderContext | null> | null} */
 let als = null;
 
 import('node:async_hooks')
@@ -209,12 +209,12 @@ import('node:async_hooks')
 		return null;
 	});
 
-/** @returns {ALSContext | null} */
+/** @returns {RenderContext | null} */
 function try_get_render_store() {
 	return sync_store ?? als?.getStore() ?? null;
 }
 
-/** @returns {ALSContext} */
+/** @returns {RenderContext} */
 export function get_render_store() {
 	const store = try_get_render_store();
 
@@ -238,7 +238,7 @@ export function get_render_store() {
 
 /**
  * @template T
- * @param {ALSContext} store
+ * @param {RenderContext} store
  * @param {() => Promise<T>} fn
  * @returns {Promise<T>}
  */

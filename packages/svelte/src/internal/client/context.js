@@ -236,35 +236,35 @@ export function set_hydratable_key(key) {
  * @template T
  * @overload
  * @param {string} key
- * @param {() => T} fn
+ * @param {() => Promise<T>} fn
  * @param {{ transport?: Transport<T> }} [options]
- * @returns {Promise<Awaited<T>>}
+ * @returns {Promise<T>}
  */
 /**
  * @template T
  * @overload
- * @param {() => T} fn
+ * @param {() => Promise<T>} fn
  * @param {{ transport?: Transport<T> }} [options]
- * @returns {Promise<Awaited<T>>}
+ * @returns {Promise<T>}
  */
 /**
  * @template T
- * @param {string | (() => T)} key_or_fn
- * @param {(() => T) | { transport?: Transport<T> }} [fn_or_options]
+ * @param {string | (() => Promise<T>)} key_or_fn
+ * @param {(() => Promise<T>) | { transport?: Transport<T> }} [fn_or_options]
  * @param {{ transport?: Transport<T> }} [maybe_options]
- * @returns {Promise<Awaited<T>>}
+ * @returns {Promise<T>}
  */
 export function hydratable(key_or_fn, fn_or_options = {}, maybe_options = {}) {
 	/** @type {string} */
 	let key;
-	/** @type {() => T} */
+	/** @type {() => Promise<T>} */
 	let fn;
 	/** @type {{ transport?: Transport<T> }} */
 	let options;
 
 	if (typeof key_or_fn === 'string') {
 		key = key_or_fn;
-		fn = /** @type {() => T} */ (fn_or_options);
+		fn = /** @type {() => Promise<T>} */ (fn_or_options);
 		options = /** @type {{ transport?: Transport<T> }} */ (maybe_options);
 	} else {
 		if (hydratable_key === null) {
@@ -274,7 +274,7 @@ export function hydratable(key_or_fn, fn_or_options = {}, maybe_options = {}) {
 		} else {
 			key = hydratable_key;
 		}
-		fn = /** @type {() => T} */ (key_or_fn);
+		fn = /** @type {() => Promise<T>} */ (key_or_fn);
 		options = /** @type {{ transport?: Transport<T> }} */ (fn_or_options);
 	}
 

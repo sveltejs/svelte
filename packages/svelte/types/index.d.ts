@@ -489,13 +489,13 @@ declare module 'svelte' {
 	 * */
 	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
 
-	export function hydratable<T>(key: string, fn: () => T, options?: {
+	export function hydratable<T>(key: string, fn: () => Promise<T>, options?: {
 		transport?: Transport<T>;
-	} | undefined): Promise<Awaited<T>>;
+	} | undefined): Promise<T>;
 
-	export function hydratable<T>(fn: () => T, options?: {
+	export function hydratable<T>(fn: () => Promise<T>, options?: {
 		transport?: Transport<T>;
-	} | undefined): Promise<Awaited<T>>;
+	} | undefined): Promise<T>;
 	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
 	 * Transitions will play during the initial render unless the `intro` option is set to `false`.
@@ -569,10 +569,15 @@ declare module 'svelte' {
 		[K in keyof T]: () => T[K];
 	};
 
-	type Transport<T> = {
-		stringify: (value: T) => string;
-		parse: (value: string) => T;
-	};
+	type Transport<T> =
+		| {
+				stringify: (value: T) => string;
+				parse?: undefined;
+		  }
+		| {
+				stringify?: undefined;
+				parse: (value: string) => T;
+		  };
 
 	export {};
 }
@@ -2152,6 +2157,7 @@ declare module 'svelte/motion' {
 }
 
 declare module 'svelte/reactivity' {
+	export type Resource<T> = Resource_1<T>;
 	/**
 	 * A reactive version of the built-in [`Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date) object.
 	 * Reading the date (whether with methods like `date.getTime()` or `date.toString()`, or via things like [`Intl.DateTimeFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat))
@@ -2415,38 +2421,52 @@ declare module 'svelte/reactivity' {
 	 * @since 5.7.0
 	 */
 	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
-	export function resource<T>(fn: () => Promise<T>): Resource<T>;
-	export function fetcher<TReturn>(url: string | URL, init?: GetRequestInit | undefined): Resource<TReturn>;
-	export function cache<TFn extends (...args: any[]) => any>(key: string, fn: TFn): ReturnType<TFn>;
-
-	export function getCache(): ReadonlyMap<string, any>;
-	class ReactiveValue<T> {
-		
-		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
-		get current(): T;
-		#private;
-	}
-	type Resource<T> = {
+	export function resource<T>(fn: () => Promise<T>): Resource_1<T>;
+	export function fetcher<TReturn>(url: string | URL, init?: GetRequestInit | undefined): Resource_1<TReturn>;
+	type Resource_1<T> = {
 		then: Promise<T>['then'];
 		catch: Promise<T>['catch'];
 		finally: Promise<T>['finally'];
 		refresh: () => Promise<void>;
 		set: (value: T) => void;
 		loading: boolean;
+		error: any;
 	} & (
 		| {
 				ready: false;
-				value: undefined;
-				error: undefined;
+				current: undefined;
 		  }
 		| {
 				ready: true;
-				value: T;
-				error: any;
+				current: T;
 		  }
 	);
 
 	type GetRequestInit = Omit<RequestInit, 'method' | 'body'> & { method?: 'GET' };
+	export function cache<TFn extends (...args: any[]) => any>(key: string, fn: TFn): ReturnType<TFn>;
+	export class CacheObserver extends BaseCacheObserver {
+		constructor();
+	}
+	class ReactiveValue<T> {
+		
+		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
+		get current(): T;
+		#private;
+	}
+	class BaseCacheObserver implements ReadonlyMap<string, any> {
+		
+		constructor(cache: Map<string, any>);
+		get(key: string): any;
+		has(key: string): boolean;
+		
+		get size(): number;
+		forEach(callbackfn: (value: any, key: string, map: ReadonlyMap<string, any>) => void, thisArg?: any): void;
+		entries(): IterableIterator<[string, any]>;
+		keys(): IterableIterator<string>;
+		values(): IterableIterator<any>;
+		[Symbol.iterator](): IterableIterator<[string, any]>;
+		#private;
+	}
 
 	export {};
 }

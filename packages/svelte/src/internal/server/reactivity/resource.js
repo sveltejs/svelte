@@ -6,7 +6,7 @@
  * @returns {ResourceType<T>}
  */
 export function resource(fn) {
-	return /** @type {ResourceType<T>} */ (/** @type {unknown} */ (new Resource(fn)));
+	return /** @type {ResourceType<T>} */ (new Resource(fn));
 }
 
 /**
