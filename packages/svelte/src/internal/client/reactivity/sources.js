@@ -22,7 +22,7 @@ import {
 	DERIVED,
 	DIRTY,
 	BRANCH_EFFECT,
-	INSPECT_EFFECT,
+	EAGER_EFFECT,
 	UNOWNED,
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
@@ -39,7 +39,7 @@ import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 
 /** @type {Set<any>} */
-export let inspect_effects = new Set();
+export let eager_effects = new Set();
 
 /** @type {Map<Source, any>} */
 export const old_values = new Map();
@@ -47,14 +47,14 @@ export const old_values = new Map();
 /**
  * @param {Set<any>} v
  */
-export function set_inspect_effects(v) {
-	inspect_effects = v;
+export function set_eager_effects(v) {
+	eager_effects = v;
 }
 
-let inspect_effects_deferred = false;
+let eager_effects_deferred = false;
 
-export function set_inspect_effects_deferred() {
-	inspect_effects_deferred = true;
+export function set_eager_effects_deferred() {
+	eager_effects_deferred = true;
 }
 
 /**
@@ -146,9 +146,9 @@ export function set(source, value, should_proxy = false) {
 		active_reaction !== null &&
 		// since we are untracking the function inside `$inspect.with` we need to add this check
 		// to ensure we error if state is set inside an inspect effect
-		(!untracking || (active_reaction.f & INSPECT_EFFECT) !== 0) &&
+		(!untracking || (active_reaction.f & EAGER_EFFECT) !== 0) &&
 		is_runes() &&
-		(active_reaction.f & (DERIVED | BLOCK_EFFECT | ASYNC | INSPECT_EFFECT)) !== 0 &&
+		(active_reaction.f & (DERIVED | BLOCK_EFFECT | ASYNC | EAGER_EFFECT)) !== 0 &&
 		!current_sources?.includes(source)
 	) {
 		e.state_unsafe_mutation();
@@ -235,18 +235,18 @@ export function internal_set(source, value) {
 			}
 		}
 
-		if (DEV && inspect_effects.size > 0 && !inspect_effects_deferred) {
-			flush_inspect_effects();
+		if (!batch.is_fork && eager_effects.size > 0 && !eager_effects_deferred) {
+			flush_eager_effects();
 		}
 	}
 
 	return value;
 }
 
-export function flush_inspect_effects() {
-	inspect_effects_deferred = false;
+export function flush_eager_effects() {
+	eager_effects_deferred = false;
 
-	const inspects = Array.from(inspect_effects);
+	const inspects = Array.from(eager_effects);
 
 	for (const effect of inspects) {
 		// Mark clean inspect-effects as maybe dirty and then check their dirtiness
@@ -260,7 +260,7 @@ export function flush_inspect_effects() {
 		}
 	}
 
-	inspect_effects.clear();
+	eager_effects.clear();
 }
 
 /**
@@ -320,8 +320,8 @@ function mark_reactions(signal, status) {
 		if (!runes && reaction === active_effect) continue;
 
 		// Inspect effects need to run immediately, so that the stack trace makes sense
-		if (DEV && (flags & INSPECT_EFFECT) !== 0) {
-			inspect_effects.add(reaction);
+		if (DEV && (flags & EAGER_EFFECT) !== 0) {
+			eager_effects.add(reaction);
 			continue;
 		}
 

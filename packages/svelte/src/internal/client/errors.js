@@ -230,6 +230,22 @@ export function effect_update_depth_exceeded() {
 }
 
 /**
+ * Cannot use `fork(...)` unless the `experimental.async` compiler option is `true`
+ * @returns {never}
+ */
+export function experimental_async_fork() {
+	if (DEV) {
+		const error = new Error(`experimental_async_fork\nCannot use \`fork(...)\` unless the \`experimental.async\` compiler option is \`true\`\nhttps://svelte.dev/e/experimental_async_fork`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/experimental_async_fork`);
+	}
+}
+
+/**
  * Cannot use `flushSync` inside an effect
  * @returns {never}
  */
@@ -242,6 +258,38 @@ export function flush_sync_in_effect() {
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/flush_sync_in_effect`);
+	}
+}
+
+/**
+ * Cannot commit a fork that was already committed or discarded
+ * @returns {never}
+ */
+export function fork_discarded() {
+	if (DEV) {
+		const error = new Error(`fork_discarded\nCannot commit a fork that was already committed or discarded\nhttps://svelte.dev/e/fork_discarded`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/fork_discarded`);
+	}
+}
+
+/**
+ * Cannot create a fork inside an effect or when state changes are pending
+ * @returns {never}
+ */
+export function fork_timing() {
+	if (DEV) {
+		const error = new Error(`fork_timing\nCannot create a fork inside an effect or when state changes are pending\nhttps://svelte.dev/e/fork_timing`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/fork_timing`);
 	}
 }
 

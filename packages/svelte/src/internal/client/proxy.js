@@ -19,8 +19,8 @@ import {
 	state as source,
 	set,
 	increment,
-	flush_inspect_effects,
-	set_inspect_effects_deferred
+	flush_eager_effects,
+	set_eager_effects_deferred
 } from './reactivity/sources.js';
 import { PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
@@ -421,9 +421,9 @@ function inspectable_array(array) {
 			 * @param {any[]} args
 			 */
 			return function (...args) {
-				set_inspect_effects_deferred();
+				set_eager_effects_deferred();
 				var result = value.apply(this, args);
-				flush_inspect_effects();
+				flush_eager_effects();
 				return result;
 			};
 		}

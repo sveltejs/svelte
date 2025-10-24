@@ -1,3 +1,4 @@
+/** @import { Fork } from 'svelte' */
 /** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
 import {
 	BLOCK_EFFECT,
@@ -12,25 +13,35 @@ import {
 	ROOT_EFFECT,
 	MAYBE_DIRTY,
 	DERIVED,
-	BOUNDARY_EFFECT
+	BOUNDARY_EFFECT,
+	EAGER_EFFECT
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
 import {
 	active_effect,
 	get,
+	increment_write_version,
 	is_dirty,
 	is_updating_effect,
 	set_is_updating_effect,
 	set_signal_status,
+	tick,
 	update_effect
 } from '../runtime.js';
 import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
-import { old_values, source, update } from './sources.js';
-import { inspect_effect, unlink_effect } from './effects.js';
+import {
+	flush_eager_effects,
+	eager_effects,
+	old_values,
+	set_eager_effects,
+	source,
+	update
+} from './sources.js';
+import { eager_effect, unlink_effect } from './effects.js';
 
 /**
  * @typedef {{
@@ -90,14 +101,20 @@ export class Batch {
 	 * They keys of this map are identical to `this.#current`
 	 * @type {Map<Source, any>}
 	 */
-	#previous = new Map();
+	previous = new Map();
 
 	/**
 	 * When the batch is committed (and the DOM is updated), we need to remove old branches
 	 * and append new ones by calling the functions added inside (if/each/key/etc) blocks
 	 * @type {Set<() => void>}
 	 */
-	#callbacks = new Set();
+	#commit_callbacks = new Set();
+
+	/**
+	 * If a fork is discarded, we need to destroy any effects that are no longer needed
+	 * @type {Set<(batch: Batch) => void>}
+	 */
+	#discard_callbacks = new Set();
 
 	/**
 	 * The number of async effects that are currently in flight
@@ -135,6 +152,8 @@ export class Batch {
 	 */
 	skipped_effects = new Set();
 
+	is_fork = false;
+
 	/**
 	 *
 	 * @param {Effect[]} root_effects
@@ -159,15 +178,15 @@ export class Batch {
 			this.#traverse_effect_tree(root, target);
 		}
 
-		this.#resolve();
+		if (!this.is_fork) {
+			this.#resolve();
+		}
 
-		if (this.#blocking_pending > 0) {
+		if (this.#blocking_pending > 0 || this.is_fork) {
 			this.#defer_effects(target.effects);
 			this.#defer_effects(target.render_effects);
 			this.#defer_effects(target.block_effects);
 		} else {
-			// TODO append/detach blocks here, not in #commit
-
 			// If sources are written to, then work needs to happen in a separate batch, else prior sources would be mixed with
 			// newly updated sources, which could lead to infinite loops when effects run over and over again.
 			previous_batch = this;
@@ -271,8 +290,8 @@ export class Batch {
 	 * @param {any} value
 	 */
 	capture(source, value) {
-		if (!this.#previous.has(source)) {
-			this.#previous.set(source, value);
+		if (!this.previous.has(source)) {
+			this.previous.set(source, value);
 		}
 
 		this.current.set(source, source.v);
@@ -289,16 +308,17 @@ export class Batch {
 	}
 
 	flush() {
+		this.activate();
+
 		if (queued_root_effects.length > 0) {
-			this.activate();
 			flush_effects();
 
 			if (current_batch !== null && current_batch !== this) {
 				// this can happen if a new batch was created during `flush_effects()`
 				return;
 			}
-		} else {
-			this.#resolve();
+		} else if (this.#pending === 0) {
+			this.process([]); // TODO this feels awkward
 		}
 
 		this.deactivate();
@@ -314,11 +334,16 @@ export class Batch {
 		}
 	}
 
+	discard() {
+		for (const fn of this.#discard_callbacks) fn(this);
+		this.#discard_callbacks.clear();
+	}
+
 	#resolve() {
 		if (this.#blocking_pending === 0) {
 			// append/remove branches
-			for (const fn of this.#callbacks) fn();
-			this.#callbacks.clear();
+			for (const fn of this.#commit_callbacks) fn();
+			this.#commit_callbacks.clear();
 		}
 
 		if (this.#pending === 0) {
@@ -332,7 +357,7 @@ export class Batch {
 		// committed state, unless the batch in question has a more
 		// recent value for a given source
 		if (batches.size > 1) {
-			this.#previous.clear();
+			this.previous.clear();
 
 			var previous_batch_values = batch_values;
 			var is_earlier = true;
@@ -428,6 +453,10 @@ export class Batch {
 		this.#pending -= 1;
 		if (blocking) this.#blocking_pending -= 1;
 
+		this.revive();
+	}
+
+	revive() {
 		for (const e of this.#dirty_effects) {
 			set_signal_status(e, DIRTY);
 			schedule_effect(e);
@@ -445,8 +474,13 @@ export class Batch {
 	}
 
 	/** @param {() => void} fn */
-	add_callback(fn) {
-		this.#callbacks.add(fn);
+	oncommit(fn) {
+		this.#commit_callbacks.add(fn);
+	}
+
+	/** @param {(batch: Batch) => void} fn */
+	ondiscard(fn) {
+		this.#discard_callbacks.add(fn);
 	}
 
 	settled() {
@@ -489,7 +523,7 @@ export class Batch {
 		for (const batch of batches) {
 			if (batch === this) continue;
 
-			for (const [source, previous] of batch.#previous) {
+			for (const [source, previous] of batch.previous) {
 				if (!batch_values.has(source)) {
 					batch_values.set(source, previous);
 				}
@@ -718,6 +752,28 @@ function mark_effects(value, sources, marked, checked) {
 }
 
 /**
+ * When committing a fork, we need to trigger eager effects so that
+ * any `$state.eager(...)` expressions update immediately. This
+ * function allows us to discover them
+ * @param {Value} value
+ * @param {Set<Effect>} effects
+ */
+function mark_eager_effects(value, effects) {
+	if (value.reactions === null) return;
+
+	for (const reaction of value.reactions) {
+		const flags = reaction.f;
+
+		if ((flags & DERIVED) !== 0) {
+			mark_eager_effects(/** @type {Derived} */ (reaction), effects);
+		} else if ((flags & EAGER_EFFECT) !== 0) {
+			set_signal_status(reaction, DIRTY);
+			effects.add(/** @type {Effect} */ (reaction));
+		}
+	}
+}
+
+/**
  * @param {Reaction} reaction
  * @param {Source[]} sources
  * @param {Map<Reaction, boolean>} checked
@@ -798,9 +854,9 @@ export function eager(fn) {
 
 	get(version);
 
-	inspect_effect(() => {
+	eager_effect(() => {
 		if (initial) {
-			// the first time this runs, we create an inspect effect
+			// the first time this runs, we create an eager effect
 			// that will run eagerly whenever the expression changes
 			var previous_batch_values = batch_values;
 
@@ -827,6 +883,88 @@ export function eager(fn) {
 	initial = false;
 
 	return value;
+}
+
+/**
+ * Creates a 'fork', in which state changes are evaluated but not applied to the DOM.
+ * This is useful for speculatively loading data (for example) when you suspect that
+ * the user is about to take some action.
+ *
+ * Frameworks like SvelteKit can use this to preload data when the user touches or
+ * hovers over a link, making any subsequent navigation feel instantaneous.
+ *
+ * The `fn` parameter is a synchronous function that modifies some state. The
+ * state changes will be reverted after the fork is initialised, then reapplied
+ * if and when the fork is eventually committed.
+ *
+ * When it becomes clear that a fork will _not_ be committed (e.g. because the
+ * user navigated elsewhere), it must be discarded to avoid leaking memory.
+ *
+ * @param {() => void} fn
+ * @returns {Fork}
+ * @since 5.42
+ */
+export function fork(fn) {
+	if (!async_mode_flag) {
+		e.experimental_async_fork();
+	}
+
+	if (current_batch !== null) {
+		e.fork_timing();
+	}
+
+	const batch = Batch.ensure();
+	batch.is_fork = true;
+
+	const settled = batch.settled();
+
+	flushSync(fn);
+
+	// revert state changes
+	for (const [source, value] of batch.previous) {
+		source.v = value;
+	}
+
+	return {
+		commit: async () => {
+			if (!batches.has(batch)) {
+				e.fork_discarded();
+			}
+
+			batch.is_fork = false;
+
+			// apply changes
+			for (const [source, value] of batch.current) {
+				source.v = value;
+			}
+
+			// trigger any `$state.eager(...)` expressions with the new state.
+			// eager effects don't get scheduled like other effects, so we
+			// can't just encounter them during traversal, we need to
+			// proactively flush them
+			// TODO maybe there's a better implementation?
+			flushSync(() => {
+				/** @type {Set<Effect>} */
+				const eager_effects = new Set();
+
+				for (const source of batch.current.keys()) {
+					mark_eager_effects(source, eager_effects);
+				}
+
+				set_eager_effects(eager_effects);
+				flush_eager_effects();
+			});
+
+			batch.revive();
+			await settled;
+		},
+		discard: () => {
+			if (batches.has(batch)) {
+				batches.delete(batch);
+				batch.discard();
+			}
+		}
+	};
 }
 
 /**
