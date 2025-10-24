@@ -1,5 +1,17 @@
 # svelte
 
+## 5.41.4
+
+### Patch Changes
+
+- fix: take into account static blocks when determining transition locality ([#17018](https://github.com/sveltejs/svelte/pull/17018))
+
+- fix: coordinate mount of snippets with await expressions ([#17021](https://github.com/sveltejs/svelte/pull/17021))
+
+- fix: better optimization of await expressions ([#17025](https://github.com/sveltejs/svelte/pull/17025))
+
+- fix: flush pending changes after rendering `failed` snippet ([#16995](https://github.com/sveltejs/svelte/pull/16995))
+
 ## 5.41.3
 
 ### Patch Changes

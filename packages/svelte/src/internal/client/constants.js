@@ -19,7 +19,7 @@ export const EFFECT_RAN = 1 << 15;
  * This is on a block effect 99% of the time but may also be on a branch effect if its parent block effect was pruned
  */
 export const EFFECT_TRANSPARENT = 1 << 16;
-export const INSPECT_EFFECT = 1 << 17;
+export const EAGER_EFFECT = 1 << 17;
 export const HEAD_EFFECT = 1 << 18;
 export const EFFECT_PRESERVED = 1 << 19;
 export const USER_EFFECT = 1 << 20;

@@ -310,7 +310,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					}
 				}
 
-				batch.add_callback(commit);
+				batch.oncommit(commit);
 			} else {
 				commit();
 			}

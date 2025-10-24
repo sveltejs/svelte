@@ -100,6 +100,10 @@ $effect(() => {
 
 Often when encountering this issue, the value in question shouldn't be state (for example, if you are pushing to a `logs` array in an effect, make `logs` a normal array rather than `$state([])`). In the rare cases where you really _do_ need to write to state in an effect — [which you should avoid]($effect#When-not-to-use-$effect) — you can read the state with [untrack](svelte#untrack) to avoid adding it as a dependency.
 
+## experimental_async_fork
+
+> Cannot use `fork(...)` unless the `experimental.async` compiler option is `true`
+
 ## flush_sync_in_effect
 
 > Cannot use `flushSync` inside an effect
@@ -107,6 +111,14 @@ Often when encountering this issue, the value in question shouldn't be state (fo
 The `flushSync()` function can be used to flush any pending effects synchronously. It cannot be used if effects are currently being flushed — in other words, you can call it after a state change but _not_ inside an effect.
 
 This restriction only applies when using the `experimental.async` option, which will be active by default in Svelte 6.
+
+## fork_discarded
+
+> Cannot commit a fork that was already committed or discarded
+
+## fork_timing
+
+> Cannot create a fork inside an effect or when state changes are pending
 
 ## get_abort_signal_outside_reaction
 

@@ -28,7 +28,7 @@ import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
 import { async_effect, destroy_effect, teardown } from './effects.js';
-import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
+import { eager_effects, internal_set, set_eager_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { Boundary } from '../dom/blocks/boundary.js';
@@ -318,8 +318,8 @@ export function execute_derived(derived) {
 	set_active_effect(get_derived_parent_effect(derived));
 
 	if (DEV) {
-		let prev_inspect_effects = inspect_effects;
-		set_inspect_effects(new Set());
+		let prev_eager_effects = eager_effects;
+		set_eager_effects(new Set());
 		try {
 			if (stack.includes(derived)) {
 				e.derived_references_self();
@@ -332,7 +332,7 @@ export function execute_derived(derived) {
 			value = update_reaction(derived);
 		} finally {
 			set_active_effect(prev_active_effect);
-			set_inspect_effects(prev_inspect_effects);
+			set_eager_effects(prev_eager_effects);
 			stack.pop();
 		}
 	} else {

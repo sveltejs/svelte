@@ -38,6 +38,7 @@ import { Batch, effect_pending_updates } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
+import { create_text } from '../operations.js';
 
 /**
  * @typedef {{
@@ -91,6 +92,9 @@ export class Boundary {
 
 	/** @type {DocumentFragment | null} */
 	#offscreen_fragment = null;
+
+	/** @type {TemplateNode | null} */
+	#pending_anchor = null;
 
 	#local_pending_count = 0;
 	#pending_count = 0;
@@ -155,8 +159,10 @@ export class Boundary {
 					this.#hydrate_resolved_content();
 				}
 			} else {
+				var anchor = this.#get_anchor();
+
 				try {
-					this.#main_effect = branch(() => children(this.#anchor));
+					this.#main_effect = branch(() => children(anchor));
 				} catch (error) {
 					this.error(error);
 				}
@@ -167,6 +173,10 @@ export class Boundary {
 					this.#pending = false;
 				}
 			}
+
+			return () => {
+				this.#pending_anchor?.remove();
+			};
 		}, flags);
 
 		if (hydrating) {
@@ -194,9 +204,11 @@ export class Boundary {
 		this.#pending_effect = branch(() => pending(this.#anchor));
 
 		Batch.enqueue(() => {
+			var anchor = this.#get_anchor();
+
 			this.#main_effect = this.#run(() => {
 				Batch.ensure();
-				return branch(() => this.#children(this.#anchor));
+				return branch(() => this.#children(anchor));
 			});
 
 			if (this.#pending_count > 0) {
@@ -209,6 +221,19 @@ export class Boundary {
 				this.#pending = false;
 			}
 		});
+	}
+
+	#get_anchor() {
+		var anchor = this.#anchor;
+
+		if (this.#pending) {
+			this.#pending_anchor = create_text();
+			this.#anchor.before(this.#pending_anchor);
+
+			anchor = this.#pending_anchor;
+		}
+
+		return anchor;
 	}
 
 	/**
@@ -252,6 +277,7 @@ export class Boundary {
 
 		if (this.#main_effect !== null) {
 			this.#offscreen_fragment = document.createDocumentFragment();
+			this.#offscreen_fragment.append(/** @type {TemplateNode} */ (this.#pending_anchor));
 			move_effect(this.#main_effect, this.#offscreen_fragment);
 		}
 

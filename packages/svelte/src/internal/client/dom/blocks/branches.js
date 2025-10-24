@@ -1,5 +1,4 @@
 /** @import { Effect, TemplateNode } from '#client' */
-import { is_runes } from '../../context.js';
 import { Batch, current_batch } from '../../reactivity/batch.js';
 import {
 	branch,
@@ -8,7 +7,6 @@ import {
 	pause_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
-import { set_should_intro, should_intro } from '../../render.js';
 import { hydrate_node, hydrating } from '../hydration.js';
 import { create_text, should_defer_append } from '../operations.js';
 
@@ -127,6 +125,22 @@ export class BranchManager {
 	};
 
 	/**
+	 * @param {Batch} batch
+	 */
+	#discard = (batch) => {
+		this.#batches.delete(batch);
+
+		const keys = Array.from(this.#batches.values());
+
+		for (const [k, branch] of this.#offscreen) {
+			if (!keys.includes(k)) {
+				destroy_effect(branch.effect);
+				this.#offscreen.delete(k);
+			}
+		}
+	};
+
+	/**
 	 *
 	 * @param {any} key
 	 * @param {null | ((target: TemplateNode) => void)} fn
@@ -173,7 +187,8 @@ export class BranchManager {
 				}
 			}
 
-			batch.add_callback(this.#commit);
+			batch.oncommit(this.#commit);
+			batch.ondiscard(this.#discard);
 		} else {
 			if (hydrating) {
 				this.anchor = hydrate_node;
