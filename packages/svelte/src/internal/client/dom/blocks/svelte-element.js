@@ -8,13 +8,7 @@ import {
 	set_hydrating
 } from '../hydration.js';
 import { create_text, get_first_child } from '../operations.js';
-import {
-	block,
-	branch,
-	destroy_effect,
-	pause_effect,
-	resume_effect
-} from '../../reactivity/effects.js';
+import { block, teardown } from '../../reactivity/effects.js';
 import { set_should_intro } from '../../render.js';
 import { current_each_item, set_current_each_item } from './each.js';
 import { active_effect } from '../../runtime.js';
@@ -23,6 +17,7 @@ import { DEV } from 'esm-env';
 import { EFFECT_TRANSPARENT, ELEMENT_NODE } from '#client/constants';
 import { assign_nodes } from '../template.js';
 import { is_raw_text_element } from '../../../../utils.js';
+import { BranchManager } from './branches.js';
 
 /**
  * @param {Comment | Element} node
@@ -42,12 +37,6 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 	var filename = DEV && location && component_context?.function[FILENAME];
 
-	/** @type {string | null} */
-	var tag;
-
-	/** @type {string | null} */
-	var current_tag;
-
 	/** @type {null | Element} */
 	var element = null;
 
@@ -58,9 +47,6 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 	var anchor = /** @type {TemplateNode} */ (hydrating ? hydrate_node : node);
 
-	/** @type {Effect | null} */
-	var effect;
-
 	/**
 	 * The keyed `{#each ...}` item block, if any, that this element is inside.
 	 * We track this so we can set it when changing the element, allowing any
@@ -68,36 +54,24 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 	 */
 	var each_item_block = current_each_item;
 
+	var branches = new BranchManager(anchor, false);
+
 	block(() => {
 		const next_tag = get_tag() || null;
 		var ns = get_namespace ? get_namespace() : is_svg || next_tag === 'svg' ? NAMESPACE_SVG : null;
 
-		// Assumption: Noone changes the namespace but not the tag (what would that even mean?)
-		if (next_tag === tag) return;
-
-		// See explanation of `each_item_block` above
-		var previous_each_item = current_each_item;
-		set_current_each_item(each_item_block);
-
-		if (effect) {
-			if (next_tag === null) {
-				// start outro
-				pause_effect(effect, () => {
-					effect = null;
-					current_tag = null;
-				});
-			} else if (next_tag === current_tag) {
-				// same tag as is currently rendered — abort outro
-				resume_effect(effect);
-			} else {
-				// tag is changing — destroy immediately, render contents without intro transitions
-				destroy_effect(effect);
-				set_should_intro(false);
-			}
+		if (next_tag === null) {
+			branches.ensure(null, null);
+			set_should_intro(true);
+			return;
 		}
 
-		if (next_tag && next_tag !== current_tag) {
-			effect = branch(() => {
+		branches.ensure(next_tag, (anchor) => {
+			// See explanation of `each_item_block` above
+			var previous_each_item = current_each_item;
+			set_current_each_item(each_item_block);
+
+			if (next_tag) {
 				element = hydrating
 					? /** @type {Element} */ (element)
 					: ns
@@ -149,15 +123,30 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				/** @type {Effect} */ (active_effect).nodes_end = element;
 
 				anchor.before(element);
-			});
-		}
+			}
 
-		tag = next_tag;
-		if (tag) current_tag = tag;
+			set_current_each_item(previous_each_item);
+
+			if (hydrating) {
+				set_hydrate_node(anchor);
+			}
+		});
+
+		// revert to the default state after the effect has been created
 		set_should_intro(true);
 
-		set_current_each_item(previous_each_item);
+		return () => {
+			if (next_tag) {
+				// if we're in this callback because we're re-running the effect,
+				// disable intros (unless no element is currently displayed)
+				set_should_intro(false);
+			}
+		};
 	}, EFFECT_TRANSPARENT);
+
+	teardown(() => {
+		set_should_intro(true);
+	});
 
 	if (was_hydrating) {
 		set_hydrating(true);

@@ -1,7 +1,7 @@
 /** @import { Context } from 'zimmerframe' */
 /** @import { TransformState } from './types.js' */
 /** @import { AST, Binding, Namespace, ValidatedCompileOptions } from '#compiler' */
-/** @import { Node, Expression, CallExpression } from 'estree' */
+/** @import { Node, Expression, CallExpression, MemberExpression } from 'estree' */
 import {
 	regex_ends_with_whitespaces,
 	regex_not_whitespace,
@@ -452,30 +452,19 @@ export function determine_namespace_for_children(node, namespace) {
 }
 
 /**
- * @template {TransformState} T
+ * @param {'$inspect' | '$inspect().with'} rune
  * @param {CallExpression} node
- * @param {Context<any, T>} context
+ * @param {(node: AST.SvelteNode) => AST.SvelteNode} visit
  */
-export function transform_inspect_rune(node, context) {
-	const { state, visit } = context;
-	const as_fn = state.options.generate === 'client';
+export function get_inspect_args(rune, node, visit) {
+	const call =
+		rune === '$inspect'
+			? node
+			: /** @type {CallExpression} */ (/** @type {MemberExpression} */ (node.callee).object);
 
-	if (!dev) return b.empty;
-
-	if (node.callee.type === 'MemberExpression') {
-		const raw_inspect_args = /** @type {CallExpression} */ (node.callee.object).arguments;
-		const inspect_args =
-			/** @type {Array<Expression>} */
-			(raw_inspect_args.map((arg) => visit(arg)));
-		const with_arg = /** @type {Expression} */ (visit(node.arguments[0]));
-
-		return b.call(
-			'$.inspect',
-			as_fn ? b.thunk(b.array(inspect_args)) : b.array(inspect_args),
-			with_arg
-		);
-	} else {
-		const arg = node.arguments.map((arg) => /** @type {Expression} */ (visit(arg)));
-		return b.call('$.inspect', as_fn ? b.thunk(b.array(arg)) : b.array(arg));
-	}
+	return {
+		args: call.arguments.map((arg) => /** @type {Expression} */ (visit(arg))),
+		inspector:
+			rune === '$inspect' ? 'console.log' : /** @type {Expression} */ (visit(node.arguments[0]))
+	};
 }

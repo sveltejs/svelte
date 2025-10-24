@@ -306,7 +306,7 @@ export function analyze_module(source, options) {
 			fragment: null,
 			parent_element: null,
 			reactive_statement: null,
-			in_derived: false
+			derived_function_depth: -1
 		},
 		visitors
 	);
@@ -703,7 +703,7 @@ export function analyze_component(root, source, options) {
 				state_fields: new Map(),
 				function_depth: scope.function_depth,
 				reactive_statement: null,
-				in_derived: false
+				derived_function_depth: -1
 			};
 
 			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);
@@ -771,7 +771,7 @@ export function analyze_component(root, source, options) {
 				expression: null,
 				state_fields: new Map(),
 				function_depth: scope.function_depth,
-				in_derived: false
+				derived_function_depth: -1
 			};
 
 			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);

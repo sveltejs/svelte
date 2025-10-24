@@ -38,6 +38,8 @@ export function ConstTag(node, context) {
 	context.visit(declaration.init, {
 		...context.state,
 		expression: node.metadata.expression,
-		in_derived: true
+		// We're treating this like a $derived under the hood
+		function_depth: context.state.function_depth + 1,
+		derived_function_depth: context.state.function_depth + 1
 	});
 }

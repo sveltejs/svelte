@@ -63,6 +63,7 @@ export function Fragment(node, context) {
 		...context.state,
 		init: [],
 		consts: [],
+		let_directives: [],
 		update: [],
 		after_update: [],
 		memoizer: new Memoizer(),
@@ -150,7 +151,7 @@ export function Fragment(node, context) {
 		}
 	}
 
-	body.push(...state.consts);
+	body.push(...state.let_directives, ...state.consts);
 
 	if (has_await) {
 		body.push(b.if(b.call('$.aborted'), b.return()));
@@ -177,7 +178,11 @@ export function Fragment(node, context) {
 	}
 
 	if (has_await) {
-		return b.block([b.stmt(b.call('$.async_body', b.arrow([], b.block(body), true)))]);
+		return b.block([
+			b.stmt(
+				b.call('$.async_body', b.id('$$anchor'), b.arrow([b.id('$$anchor')], b.block(body), true))
+			)
+		]);
 	} else {
 		return b.block(body);
 	}
