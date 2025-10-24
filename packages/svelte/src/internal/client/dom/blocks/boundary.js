@@ -159,14 +159,7 @@ export class Boundary {
 					this.#hydrate_resolved_content();
 				}
 			} else {
-				var anchor = this.#anchor;
-
-				if (this.#pending) {
-					this.#pending_anchor = create_text();
-					this.#anchor.before(this.#pending_anchor);
-
-					anchor = this.#pending_anchor;
-				}
+				var anchor = this.#get_anchor();
 
 				try {
 					this.#main_effect = branch(() => children(anchor));
@@ -211,14 +204,7 @@ export class Boundary {
 		this.#pending_effect = branch(() => pending(this.#anchor));
 
 		Batch.enqueue(() => {
-			var anchor = this.#anchor;
-
-			if (this.#pending) {
-				this.#pending_anchor = create_text();
-				this.#anchor.before(this.#pending_anchor);
-
-				anchor = this.#pending_anchor;
-			}
+			var anchor = this.#get_anchor();
 
 			this.#main_effect = this.#run(() => {
 				Batch.ensure();
@@ -235,6 +221,19 @@ export class Boundary {
 				this.#pending = false;
 			}
 		});
+	}
+
+	#get_anchor() {
+		var anchor = this.#anchor;
+
+		if (this.#pending) {
+			this.#pending_anchor = create_text();
+			this.#anchor.before(this.#pending_anchor);
+
+			anchor = this.#pending_anchor;
+		}
+
+		return anchor;
 	}
 
 	/**
