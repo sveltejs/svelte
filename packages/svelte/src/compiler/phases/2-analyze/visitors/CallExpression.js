@@ -313,7 +313,7 @@ function is_variable_declaration(parent, context) {
  * @param {AST.SvelteNode} parent
  */
 function is_class_property_definition(parent) {
-	return parent.type === 'PropertyDefinition' && !parent.static && !parent.computed;
+	return parent.type === 'PropertyDefinition' && !parent.static;
 }
 
 /**
@@ -325,10 +325,7 @@ function is_class_property_assignment_at_constructor_root(node, context) {
 		node.type === 'AssignmentExpression' &&
 		node.operator === '=' &&
 		node.left.type === 'MemberExpression' &&
-		node.left.object.type === 'ThisExpression' &&
-		((node.left.property.type === 'Identifier' && !node.left.computed) ||
-			node.left.property.type === 'PrivateIdentifier' ||
-			node.left.property.type === 'Literal')
+		node.left.object.type === 'ThisExpression'
 	) {
 		// MethodDefinition (-5) -> FunctionExpression (-4) -> BlockStatement (-3) -> ExpressionStatement (-2) -> AssignmentExpression (-1)
 		const parent = get_parent(context.path, -5);
