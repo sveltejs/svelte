@@ -19,6 +19,8 @@ import { BlockStatement } from './visitors/BlockStatement.js';
 import { BreakStatement } from './visitors/BreakStatement.js';
 import { CallExpression } from './visitors/CallExpression.js';
 import { ClassBody } from './visitors/ClassBody.js';
+import { ClassDeclaration } from './visitors/ClassDeclaration.js';
+import { ClassExpression } from './visitors/ClassExpression.js';
 import { Comment } from './visitors/Comment.js';
 import { Component } from './visitors/Component.js';
 import { ConstTag } from './visitors/ConstTag.js';
@@ -97,6 +99,8 @@ const visitors = {
 	BreakStatement,
 	CallExpression,
 	ClassBody,
+	ClassDeclaration,
+	ClassExpression,
 	Comment,
 	Component,
 	ConstTag,
@@ -168,6 +172,7 @@ export function client_component(analysis, options) {
 		in_constructor: false,
 		instance_level_snippets: [],
 		module_level_snippets: [],
+		computed_field_declarations: null,
 
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		init: /** @type {any} */ (null),
@@ -711,7 +716,8 @@ export function client_module(analysis, options) {
 		state_fields: new Map(),
 		transform: {},
 		in_constructor: false,
-		is_instance: false
+		is_instance: false,
+		computed_field_declarations: null
 	};
 
 	const module = /** @type {ESTree.Program} */ (

@@ -30,7 +30,7 @@ export function ClassBody(node, context) {
 		}
 	}
 
-	/** @type {Map<string, StateField>} */
+	/** @type {Map<string | number, StateField>} */
 	const state_fields = new Map();
 
 	/** @type {Map<string, Array<MethodDefinition['kind'] | 'prop' | 'assigned_prop'>>} */
@@ -41,19 +41,24 @@ export function ClassBody(node, context) {
 	/** @type {MethodDefinition | null} */
 	let constructor = null;
 
+	function increment_computed() {
+		const numbered_keys = [...state_fields.keys()].filter((key) => typeof key === 'number');
+		return numbered_keys.length;
+	}
 	/**
 	 * @param {PropertyDefinition | AssignmentExpression} node
 	 * @param {Expression | PrivateIdentifier} key
 	 * @param {Expression | null | undefined} value
+	 * @param {boolean} [computed]
 	 */
-	function handle(node, key, value) {
-		const name = get_name(key);
+	function handle(node, key, value, computed = false) {
+		const name = computed ? increment_computed() : get_name(key);
 		if (name === null) return;
 
 		const rune = get_rune(value, context.state.scope);
 
 		if (rune && is_state_creation_rune(rune)) {
-			if (state_fields.has(name)) {
+			if (typeof name === 'string' && state_fields.has(name)) {
 				e.state_field_duplicate(node, name);
 			}
 
@@ -70,7 +75,8 @@ export function ClassBody(node, context) {
 				type: rune,
 				// @ts-expect-error for public state this is filled out in a moment
 				key: key.type === 'PrivateIdentifier' ? key : null,
-				value: /** @type {CallExpression} */ (value)
+				value: /** @type {CallExpression} */ (value),
+				computed_key: computed ? /** @type {Expression} */ (key) : null
 			});
 		}
 	}
@@ -139,11 +145,11 @@ export function ClassBody(node, context) {
 	}
 
 	for (const [name, field] of state_fields) {
-		if (name[0] === '#') {
+		if (typeof name === 'string' && name[0] === '#') {
 			continue;
 		}
 
-		let deconflicted = name.replace(regex_invalid_identifier_chars, '_');
+		let deconflicted = `${name}`.replace(regex_invalid_identifier_chars, '_');
 		while (private_ids.includes(deconflicted)) {
 			deconflicted = '_' + deconflicted;
 		}
