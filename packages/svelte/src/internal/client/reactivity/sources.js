@@ -27,7 +27,8 @@ import {
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	ASYNC
+	ASYNC,
+	WAS_MARKED
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -332,11 +333,14 @@ function mark_reactions(signal, status) {
 		}
 
 		if ((flags & DERIVED) !== 0) {
-			mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
+			if ((flags & WAS_MARKED) === 0) {
+				reaction.f |= WAS_MARKED;
+				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
+			}
 		} else if (not_dirty) {
 			if ((flags & BLOCK_EFFECT) !== 0) {
 				if (eager_block_effects !== null) {
-					eager_block_effects.push(/** @type {Effect} */ (reaction));
+					eager_block_effects.add(/** @type {Effect} */ (reaction));
 				}
 			}
 

@@ -8,7 +8,13 @@ import {
 import { HYDRATION_START_ELSE } from '../../../../constants.js';
 import { component_context, set_component_context } from '../../context.js';
 import { handle_error, invoke_error_boundary } from '../../error-handling.js';
-import { block, branch, destroy_effect, pause_effect } from '../../reactivity/effects.js';
+import {
+	block,
+	branch,
+	destroy_effect,
+	move_effect,
+	pause_effect
+} from '../../reactivity/effects.js';
 import {
 	active_effect,
 	active_reaction,
@@ -24,7 +30,6 @@ import {
 	skip_nodes,
 	set_hydrate_node
 } from '../hydration.js';
-import { get_next_sibling } from '../operations.js';
 import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
@@ -285,13 +290,6 @@ export class Boundary {
 				this.#anchor.before(this.#offscreen_fragment);
 				this.#offscreen_fragment = null;
 			}
-
-			// TODO this feels like a little bit of a kludge, but until we
-			// overhaul the boundary/batch relationship it's probably
-			// the most pragmatic solution available to us
-			queue_micro_task(() => {
-				Batch.ensure().flush();
-			});
 		}
 	}
 
@@ -403,6 +401,7 @@ export class Boundary {
 		if (failed) {
 			queue_micro_task(() => {
 				this.#failed_effect = this.#run(() => {
+					Batch.ensure();
 					this.#is_creating_fallback = true;
 
 					try {
@@ -422,24 +421,6 @@ export class Boundary {
 				});
 			});
 		}
-	}
-}
-
-/**
- *
- * @param {Effect} effect
- * @param {DocumentFragment} fragment
- */
-function move_effect(effect, fragment) {
-	var node = effect.nodes_start;
-	var end = effect.nodes_end;
-
-	while (node !== null) {
-		/** @type {TemplateNode | null} */
-		var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
-
-		fragment.append(node);
-		node = next;
 	}
 }
 

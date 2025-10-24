@@ -134,7 +134,16 @@ export function trace(label, fn) {
  * @returns {Error & { stack: string } | null}
  */
 export function get_stack(label) {
+	// @ts-ignore stackTraceLimit doesn't exist everywhere
+	const limit = Error.stackTraceLimit;
+
+	// @ts-ignore
+	Error.stackTraceLimit = Infinity;
 	let error = Error();
+
+	// @ts-ignore
+	Error.stackTraceLimit = limit;
+
 	const stack = error.stack;
 
 	if (!stack) return null;
@@ -144,16 +153,20 @@ export function get_stack(label) {
 
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i];
+		const posixified = line.replaceAll('\\', '/');
 
 		if (line === 'Error') {
 			continue;
 		}
+
 		if (line.includes('validate_each_keys')) {
 			return null;
 		}
-		if (line.includes('svelte/src/internal')) {
+
+		if (posixified.includes('svelte/src/internal') || posixified.includes('node_modules/.vite')) {
 			continue;
 		}
+
 		new_lines.push(line);
 	}
 

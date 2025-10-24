@@ -1,5 +1,35 @@
 # svelte
 
+## 5.41.3
+
+### Patch Changes
+
+- chore: exclude vite optimized deps from stack traces ([#17008](https://github.com/sveltejs/svelte/pull/17008))
+
+- perf: skip repeatedly traversing the same derived ([#17016](https://github.com/sveltejs/svelte/pull/17016))
+
+## 5.41.2
+
+### Patch Changes
+
+- fix: keep batches alive until all async work is complete ([#16971](https://github.com/sveltejs/svelte/pull/16971))
+
+- fix: don't preserve reactivity context across function boundaries ([#17002](https://github.com/sveltejs/svelte/pull/17002))
+
+- fix: make `$inspect` logs come from the callsite ([#17001](https://github.com/sveltejs/svelte/pull/17001))
+
+- fix: ensure guards (eg. if, each, key) run before their contents ([#16930](https://github.com/sveltejs/svelte/pull/16930))
+
+## 5.41.1
+
+### Patch Changes
+
+- fix: place `let:` declarations before `{@const}` declarations ([#16985](https://github.com/sveltejs/svelte/pull/16985))
+
+- fix: improve `each_key_without_as` error ([#16983](https://github.com/sveltejs/svelte/pull/16983))
+
+- chore: centralise branch management ([#16977](https://github.com/sveltejs/svelte/pull/16977))
+
 ## 5.41.0
 
 ### Minor Changes

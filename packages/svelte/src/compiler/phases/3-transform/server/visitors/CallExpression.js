@@ -1,9 +1,9 @@
-/** @import { CallExpression, Expression } from 'estree' */
+/** @import { CallExpression, Expression, MemberExpression } from 'estree' */
 /** @import { Context } from '../types.js' */
-import { is_ignored } from '../../../../state.js';
+import { dev, is_ignored } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
-import { transform_inspect_rune } from '../../utils.js';
+import { get_inspect_args } from '../../utils.js';
 
 /**
  * @param {CallExpression} node
@@ -51,7 +51,13 @@ export function CallExpression(node, context) {
 	}
 
 	if (rune === '$inspect' || rune === '$inspect().with') {
-		return transform_inspect_rune(node, context);
+		if (!dev) return b.empty;
+
+		const { args, inspector } = get_inspect_args(rune, node, context.visit);
+
+		return rune === '$inspect'
+			? b.call(inspector, b.literal('$inspect('), ...args, b.literal(')'))
+			: b.call(inspector, b.literal('init'), ...args);
 	}
 
 	context.next();

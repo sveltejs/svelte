@@ -21,7 +21,7 @@
     "polka": "^1.0.0-next.25",
     "svelte": "workspace:*",
     "tinyglobby": "^0.2.12",
-    "vite": "^7.1.5",
+    "vite": "^7.1.11",
     "vite-plugin-devtools-json": "^1.0.0",
     "vite-plugin-inspect": "^11.3.3"
   }
