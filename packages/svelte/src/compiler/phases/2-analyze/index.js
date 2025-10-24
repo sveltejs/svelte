@@ -693,18 +693,46 @@ export function analyze_component(root, source, options) {
 			let awaiting = false;
 			let i = 0;
 
-			for (const node of instance.ast.body) {
-				const has_await = has_await_expression(node);
-				awaiting ||= has_await;
+			for (let node of instance.ast.body) {
+				if (node.type === 'ExportNamedDeclaration' && node.declaration) {
+					node = node.declaration;
+				}
 
-				if (!awaiting) continue;
+				if (node.type === 'VariableDeclaration') {
+					for (const declarator of node.declarations) {
+						const has_await = has_await_expression(declarator);
+						awaiting ||= has_await;
 
-				const id = b.id(`$$${i++}`);
+						if (!awaiting) continue;
 
-				analysis.awaited_statements.set(node, {
-					id,
-					has_await
-				});
+						const id = b.id(`$$${i++}`);
+
+						for (const identifier of extract_identifiers(declarator.id)) {
+							analysis.awaited_declarations.set(identifier.name, {
+								id,
+								has_await,
+								pattern: declarator.id,
+								updated_by: new Set()
+							});
+						}
+					}
+				} else {
+					const has_await = has_await_expression(node);
+					awaiting ||= has_await;
+
+					if (!awaiting) continue;
+
+					if (node.type === 'ClassDeclaration' || node.type === 'FunctionDeclaration') {
+						throw new Error('TODO handle class/function declaration');
+					} else {
+						const id = b.id(`$$${i++}`);
+
+						analysis.awaited_statements.set(node, {
+							id,
+							has_await
+						});
+					}
+				}
 			}
 		}
 

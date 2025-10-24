@@ -126,7 +126,7 @@ export interface ComponentAnalysis extends Analysis {
 	 */
 	awaited_declarations: Map<
 		string,
-		{ id: Identifier; pattern: Pattern; updated_by: Set<Identifier> }
+		{ id: Identifier; has_await: boolean; pattern: Pattern; updated_by: Set<Identifier> }
 	>;
 	/**
 	 * Information about top-level instance statements that need to be transformed
