@@ -12,7 +12,7 @@ import {
 import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_whitespaces_strict } from '../../../../patterns.js';
-import { has_await } from '../../../../../utils/ast.js';
+import { has_await_expression } from '../../../../../utils/ast.js';
 
 /** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
 export const block_open = b.literal(BLOCK_OPEN);
@@ -315,7 +315,7 @@ export class PromiseOptimiser {
 
 		const promises = b.array(
 			this.expressions.map((expression) => {
-				return expression.type === 'AwaitExpression' && !has_await(expression.argument)
+				return expression.type === 'AwaitExpression' && !has_await_expression(expression.argument)
 					? expression.argument
 					: b.call(b.thunk(expression, true));
 			})
