@@ -262,6 +262,22 @@ export function flush_sync_in_effect() {
 }
 
 /**
+ * Cannot commit a fork that was already committed or discarded
+ * @returns {never}
+ */
+export function fork_discarded() {
+	if (DEV) {
+		const error = new Error(`fork_discarded\nCannot commit a fork that was already committed or discarded\nhttps://svelte.dev/e/fork_discarded`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/fork_discarded`);
+	}
+}
+
+/**
  * Cannot create a fork inside an effect or when state changes are pending
  * @returns {never}
  */
@@ -274,22 +290,6 @@ export function fork_timing() {
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/fork_timing`);
-	}
-}
-
-/**
- * Cannot commit a fork that was already committed or discarded (including as a result of a different fork being committed)
- * @returns {never}
- */
-export function fork_discarded() {
-	if (DEV) {
-		const error = new Error(`fork_discarded\nCannot commit a fork that was already committed or discarded (including as a result of a different fork being committed)\nhttps://svelte.dev/e/fork_discarded`);
-
-		error.name = 'Svelte error';
-
-		throw error;
-	} else {
-		throw new Error(`https://svelte.dev/e/fork_discarded`);
 	}
 }
 

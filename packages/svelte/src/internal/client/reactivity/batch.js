@@ -880,6 +880,9 @@ export function eager(fn) {
  * state changes will be reverted after the fork is initialised, then reapplied
  * if and when the fork is eventually committed.
  *
+ * When it becomes clear that a fork will _not_ be committed (e.g. because the
+ * user navigated elsewhere), it must be discarded to avoid leaking memory.
+ *
  * @param {() => void} fn
  * @returns {{ commit: () => void, discard: () => void }}
  */
@@ -911,11 +914,6 @@ export function fork(fn) {
 			}
 
 			batch.is_fork = false;
-
-			// delete all other forks
-			for (const b of batches) {
-				if (b.is_fork) batches.delete(b);
-			}
 
 			// apply changes
 			for (const [source, value] of batch.current) {

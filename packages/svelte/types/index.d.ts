@@ -460,6 +460,9 @@ declare module 'svelte' {
 	 * state changes will be reverted after the fork is initialised, then reapplied
 	 * if and when the fork is eventually committed.
 	 *
+	 * When it becomes clear that a fork will _not_ be committed (e.g. because the
+	 * user navigated elsewhere), it must be discarded to avoid leaking memory.
+	 *
 	 * */
 	export function fork(fn: () => void): {
 		commit: () => void;
