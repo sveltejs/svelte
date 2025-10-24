@@ -134,29 +134,3 @@ export interface ComponentAnalysis extends Analysis {
 	 */
 	awaited_statements: Map<Statement | ModuleDeclaration, { id: Identifier; has_await: boolean }>;
 }
-
-declare module 'estree' {
-	interface ArrowFunctionExpression {
-		metadata: {
-			hoisted: boolean;
-			hoisted_params: Pattern[];
-			scope: Scope;
-		};
-	}
-
-	interface FunctionExpression {
-		metadata: {
-			hoisted: boolean;
-			hoisted_params: Pattern[];
-			scope: Scope;
-		};
-	}
-
-	interface FunctionDeclaration {
-		metadata: {
-			hoisted: boolean;
-			hoisted_params: Pattern[];
-			scope: Scope;
-		};
-	}
-}

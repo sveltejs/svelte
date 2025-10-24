@@ -348,6 +348,22 @@ declare module 'svelte' {
 				 */
 				props: Props;
 			});
+
+	/**
+	 * Represents work that is happening off-screen, such as data being preloaded
+	 * in anticipation of the user navigating
+	 * @since 5.42
+	 */
+	export interface Fork {
+		/**
+		 * Commit the fork. The promise will resolve once the state change has been applied
+		 */
+		commit(): Promise<void>;
+		/**
+		 * Discard the fork
+		 */
+		discard(): void;
+	}
 	/**
 	 * Returns an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that aborts when the current [derived](https://svelte.dev/docs/svelte/$derived) or [effect](https://svelte.dev/docs/svelte/$effect) re-runs or is destroyed.
 	 *
@@ -435,11 +451,6 @@ declare module 'svelte' {
 	 * */
 	export function afterUpdate(fn: () => void): void;
 	/**
-	 * Synchronously flush any pending updates.
-	 * Returns void if no callback is provided, otherwise returns the result of calling the callback.
-	 * */
-	export function flushSync<T = void>(fn?: (() => T) | undefined): T;
-	/**
 	 * Create a snippet programmatically
 	 * */
 	export function createRawSnippet<Params extends unknown[]>(fn: (...params: Getters<Params>) => {
@@ -448,6 +459,29 @@ declare module 'svelte' {
 	}): Snippet<Params>;
 	/** Anything except a function */
 	type NotFunction<T> = T extends Function ? never : T;
+	/**
+	 * Synchronously flush any pending updates.
+	 * Returns void if no callback is provided, otherwise returns the result of calling the callback.
+	 * */
+	export function flushSync<T = void>(fn?: (() => T) | undefined): T;
+	/**
+	 * Creates a 'fork', in which state changes are evaluated but not applied to the DOM.
+	 * This is useful for speculatively loading data (for example) when you suspect that
+	 * the user is about to take some action.
+	 *
+	 * Frameworks like SvelteKit can use this to preload data when the user touches or
+	 * hovers over a link, making any subsequent navigation feel instantaneous.
+	 *
+	 * The `fn` parameter is a synchronous function that modifies some state. The
+	 * state changes will be reverted after the fork is initialised, then reapplied
+	 * if and when the fork is eventually committed.
+	 *
+	 * When it becomes clear that a fork will _not_ be committed (e.g. because the
+	 * user navigated elsewhere), it must be discarded to avoid leaking memory.
+	 *
+	 * @since 5.42
+	 */
+	export function fork(fn: () => void): Fork;
 	/**
 	 * Returns a `[get, set]` pair of functions for working with context in a type-safe way.
 	 *
