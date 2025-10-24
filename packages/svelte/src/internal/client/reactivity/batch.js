@@ -759,16 +759,16 @@ function mark_effects(value, sources, marked, checked) {
  * @param {Set<Effect>} effects
  */
 function mark_eager_effects(value, effects) {
-	if (value.reactions !== null) {
-		for (const reaction of value.reactions) {
-			const flags = reaction.f;
+	if (value.reactions === null) return;
 
-			if ((flags & DERIVED) !== 0) {
-				mark_eager_effects(/** @type {Derived} */ (reaction), effects);
-			} else if ((flags & EAGER_EFFECT) !== 0) {
-				set_signal_status(reaction, DIRTY);
-				effects.add(/** @type {Effect} */ (reaction));
-			}
+	for (const reaction of value.reactions) {
+		const flags = reaction.f;
+
+		if ((flags & DERIVED) !== 0) {
+			mark_eager_effects(/** @type {Derived} */ (reaction), effects);
+		} else if ((flags & EAGER_EFFECT) !== 0) {
+			set_signal_status(reaction, DIRTY);
+			effects.add(/** @type {Effect} */ (reaction));
 		}
 	}
 }
