@@ -180,12 +180,6 @@ export class Batch {
 			this.#defer_effects(target.render_effects);
 			this.#defer_effects(target.block_effects);
 		} else {
-			for (const fn of this.#callbacks) {
-				fn();
-			}
-
-			this.#callbacks.clear();
-
 			// If sources are written to, then work needs to happen in a separate batch, else prior sources would be mixed with
 			// newly updated sources, which could lead to infinite loops when effects run over and over again.
 			previous_batch = this;
