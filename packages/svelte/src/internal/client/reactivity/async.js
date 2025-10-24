@@ -1,5 +1,5 @@
 /** @import { Effect, TemplateNode, Value } from '#client' */
-import { DESTROYED, STALE_REACTION } from '#client/constants';
+import { DESTROYED } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
 	component_context,

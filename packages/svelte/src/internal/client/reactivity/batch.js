@@ -843,7 +843,7 @@ export function eager(fn) {
 
 	eager_effect(() => {
 		if (initial) {
-			// the first time this runs, we create an inspect effect
+			// the first time this runs, we create an eager effect
 			// that will run eagerly whenever the expression changes
 			var previous_batch_values = batch_values;
 
