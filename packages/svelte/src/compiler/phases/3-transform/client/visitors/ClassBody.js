@@ -37,7 +37,7 @@ export function ClassBody(node, context) {
 		}
 
 		if (typeof name === 'number' && field.computed_key) {
-			const key = context.state.scope.generate(`key_${name}`);
+			const key = context.state.scope.generate('key');
 			computed_field_declarations.push(b.let(key));
 			const member = b.member(b.this, field.key);
 
@@ -150,7 +150,7 @@ export function ClassBody(node, context) {
 					b.literal(`${declaration.id?.name ?? '[class]'}[computed key]`)
 				);
 			}
-			const key = context.state.scope.generate(`key_${name}`);
+			const key = context.state.scope.generate('key');
 			computed_field_declarations.push(b.let(key));
 			const member = b.member(b.this, field.key);
 

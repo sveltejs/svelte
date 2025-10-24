@@ -33,7 +33,7 @@ export function ClassBody(node, context) {
 		}
 
 		if (typeof name !== 'string' && field.computed_key) {
-			const key = context.state.scope.generate(`key_${name}`);
+			const key = context.state.scope.generate('key');
 			computed_field_declarations.push(b.let(key));
 			const member = b.member(b.this, field.key);
 			body.push(
@@ -118,7 +118,7 @@ export function ClassBody(node, context) {
 		} else if (field.computed_key) {
 			// $derived / $derived.by
 			const member = b.member(b.this, field.key);
-			const key = context.state.scope.generate(`key_${name}`);
+			const key = context.state.scope.generate('key');
 			computed_field_declarations.push(b.let(key));
 			body.push(
 				b.prop_def(
