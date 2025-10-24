@@ -882,6 +882,10 @@ export function eager(fn) {
  * Frameworks like SvelteKit can use this to preload data when the user touches or
  * hovers over a link, making any subsequent navigation feel instantaneous.
  *
+ * The `fn` parameter is a synchronous function that modifies some state. The
+ * state changes will be reverted after the fork is initialised, then reapplied
+ * if and when the fork is eventually committed.
+ *
  * @param {() => void} fn
  * @returns {{ commit: () => void, discard: () => void }}
  */
