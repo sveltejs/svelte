@@ -148,18 +148,24 @@ The [`fork(...)`](svelte#fork) API, added in 5.42, makes it possible to run `awa
 
 	/** @type {import('svelte').Fork | null} */
 	let pending = null;
-</script>
 
-<button
-	onpointerenter={() => {
+	function preload() {
 		pending ??= fork(() => {
 			open = true;
 		});
-	}}
-	onpointerleave={() => {
+	}
+
+	function discard() {
 		pending?.discard();
 		pending = null;
-	}}
+	}
+</script>
+
+<button
+	onfocusin={preload}
+	onfocusout={discard}
+	onpointerenter={preload}
+	onpointerleave={discard}
 	onclick={() => {
 		pending?.commit();
 		pending = null;
