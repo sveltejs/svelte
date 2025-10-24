@@ -171,7 +171,9 @@ export class Batch {
 			this.#traverse_effect_tree(root, target);
 		}
 
-		this.#resolve();
+		if (!this.is_fork) {
+			this.#resolve();
+		}
 
 		if (this.#blocking_pending > 0 || this.is_fork) {
 			this.#defer_effects(target.effects);
@@ -332,13 +334,13 @@ export class Batch {
 	}
 
 	#resolve() {
-		if (this.#blocking_pending === 0 && !this.is_fork) {
+		if (this.#blocking_pending === 0) {
 			// append/remove branches
 			for (const fn of this.#callbacks) fn();
 			this.#callbacks.clear();
 		}
 
-		if (this.#pending === 0 && !this.is_fork) {
+		if (this.#pending === 0) {
 			this.#commit();
 		}
 	}
