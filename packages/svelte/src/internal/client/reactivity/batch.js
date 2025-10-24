@@ -922,7 +922,11 @@ export function fork(fn) {
 				source.v = value;
 			}
 
-			// trigger any `$state.eager(...)` expressions with the new state
+			// trigger any `$state.eager(...)` expressions with the new state.
+			// eager effects don't get scheduled like other effects, so we
+			// can't just encounter them during traversal, we need to
+			// proactively flush them
+			// TODO maybe there's a better implementation?
 			flushSync(() => {
 				/** @type {Set<Effect>} */
 				const eager_effects = new Set();
