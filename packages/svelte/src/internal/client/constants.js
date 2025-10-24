@@ -14,7 +14,10 @@ export const DESTROYED = 1 << 14;
 
 // Flags exclusive to effects
 export const EFFECT_RAN = 1 << 15;
-/** 'Transparent' effects do not create a transition boundary */
+/**
+ * 'Transparent' effects do not create a transition boundary.
+ * This is on a block effect 99% of the time but may also be on a branch effect if its parent block effect was pruned
+ */
 export const EFFECT_TRANSPARENT = 1 << 16;
 export const EAGER_EFFECT = 1 << 17;
 export const HEAD_EFFECT = 1 << 18;
