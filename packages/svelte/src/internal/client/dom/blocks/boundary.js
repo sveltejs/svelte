@@ -215,7 +215,7 @@ export class Boundary {
 					if (hydrating) {
 						set_hydrating(false);
 					}
-					return this.#children(this.#anchor);
+					return this.#children(anchor);
 				});
 			});
 
