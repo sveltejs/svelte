@@ -33,8 +33,9 @@ export function inspect(get_value, inspector, show_stack = false) {
 				inspector(...snap);
 
 				if (!initial) {
+					const stack = get_stack('$inspect(...)');
 					// eslint-disable-next-line no-console
-					console.log(get_stack('UpdatedAt'));
+					if (stack) console.log(stack);
 				}
 			} else {
 				inspector(initial ? 'init' : 'update', ...snap);
