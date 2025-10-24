@@ -877,6 +877,10 @@ export function eager(fn) {
  * @returns {{ commit: () => void, discard: () => void }}
  */
 export function fork(fn) {
+	if (!async_mode_flag) {
+		e.experimental_async_fork();
+	}
+
 	if (current_batch !== null) {
 		throw new Error('cannot fork here'); // TODO better error
 	}
