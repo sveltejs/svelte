@@ -109,29 +109,3 @@ export interface ComponentAnalysis extends Analysis {
 	 */
 	snippets: Set<AST.SnippetBlock>;
 }
-
-declare module 'estree' {
-	interface ArrowFunctionExpression {
-		metadata: {
-			hoisted: boolean;
-			hoisted_params: Pattern[];
-			scope: Scope;
-		};
-	}
-
-	interface FunctionExpression {
-		metadata: {
-			hoisted: boolean;
-			hoisted_params: Pattern[];
-			scope: Scope;
-		};
-	}
-
-	interface FunctionDeclaration {
-		metadata: {
-			hoisted: boolean;
-			hoisted_params: Pattern[];
-			scope: Scope;
-		};
-	}
-}
