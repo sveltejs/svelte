@@ -463,7 +463,8 @@ declare module 'svelte' {
 	 * When it becomes clear that a fork will _not_ be committed (e.g. because the
 	 * user navigated elsewhere), it must be discarded to avoid leaking memory.
 	 *
-	 * */
+	 * @since 5.42
+	 */
 	export function fork(fn: () => void): {
 		commit: () => void;
 		discard: () => void;

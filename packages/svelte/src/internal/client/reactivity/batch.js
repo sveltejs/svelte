@@ -1,3 +1,4 @@
+/** @import { Fork } from 'svelte' */
 /** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
 import {
 	BLOCK_EFFECT,
@@ -884,7 +885,8 @@ export function eager(fn) {
  * user navigated elsewhere), it must be discarded to avoid leaking memory.
  *
  * @param {() => void} fn
- * @returns {{ commit: () => void, discard: () => void }}
+ * @returns {Fork}
+ * @since 5.42
  */
 export function fork(fn) {
 	if (!async_mode_flag) {
