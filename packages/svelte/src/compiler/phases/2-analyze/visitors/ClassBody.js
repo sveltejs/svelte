@@ -148,7 +148,10 @@ export function ClassBody(node, context) {
 			continue;
 		}
 
-		let deconflicted = `${name}`.replace(regex_invalid_identifier_chars, '_');
+		let deconflicted = `${typeof name === 'number' ? '0' : ''}${name}`.replace(
+			regex_invalid_identifier_chars,
+			'_'
+		);
 		while (private_ids.includes(deconflicted)) {
 			deconflicted = '_' + deconflicted;
 		}
