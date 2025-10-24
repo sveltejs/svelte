@@ -112,6 +112,7 @@ export class Batch {
 
 	/**
 	 * If a fork is discarded, we need to destroy any effects that are no longer needed
+	 * @type {Set<(batch: Batch) => void>}
 	 */
 	#discard_callbacks = new Set();
 
