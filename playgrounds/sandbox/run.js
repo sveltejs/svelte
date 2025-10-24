@@ -5,6 +5,13 @@ import { parseArgs } from 'node:util';
 import { globSync } from 'tinyglobby';
 import { compile, compileModule, parse, migrate } from 'svelte/compiler';
 
+// toggle these to change what gets written to sandbox/output
+const AST = false;
+const MIGRATE = false;
+const FROM_HTML = true;
+const FROM_TREE = false;
+const DEV = false;
+
 const argv = parseArgs({ options: { runes: { type: 'boolean' } }, args: process.argv.slice(2) });
 
 const cwd = fileURLToPath(new URL('.', import.meta.url)).slice(0, -1);
@@ -51,48 +58,52 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 		mkdirp(path.dirname(output_js));
 
 		if (generate === 'client') {
-			const ast = parse(source, {
-				modern: true
+			if (AST) {
+				const ast = parse(source, {
+					modern: true
+				});
+
+				write(
+					`${cwd}/output/ast/${file}.json`,
+					JSON.stringify(
+						ast,
+						(key, value) => (typeof value === 'bigint' ? ['BigInt', value.toString()] : value),
+						'\t'
+					)
+				);
+			}
+
+			if (MIGRATE) {
+				try {
+					const migrated = migrate(source);
+					write(`${cwd}/output/migrated/${file}`, migrated.code);
+				} catch (e) {
+					console.warn(`Error migrating ${file}`, e);
+				}
+			}
+		}
+
+		let from_html;
+		let from_tree;
+
+		if (generate === 'server' || FROM_HTML) {
+			from_html = compile(source, {
+				dev: DEV,
+				filename: input,
+				generate,
+				runes: argv.values.runes,
+				experimental: {
+					async: true
+				}
 			});
 
-			write(
-				`${cwd}/output/ast/${file}.json`,
-				JSON.stringify(
-					ast,
-					(key, value) => (typeof value === 'bigint' ? ['BigInt', value.toString()] : value),
-					'\t'
-				)
-			);
-
-			try {
-				const migrated = migrate(source);
-				write(`${cwd}/output/migrated/${file}`, migrated.code);
-			} catch (e) {
-				console.warn(`Error migrating ${file}`, e);
-			}
+			write(output_js, from_html.js.code + '\n//# sourceMappingURL=' + path.basename(output_map));
+			write(output_map, from_html.js.map.toString());
 		}
-
-		const compiled = compile(source, {
-			dev: false,
-			filename: input,
-			generate,
-			runes: argv.values.runes,
-			experimental: {
-				async: true
-			}
-		});
-
-		for (const warning of compiled.warnings) {
-			console.warn(warning.code);
-			console.warn(warning.frame);
-		}
-
-		write(output_js, compiled.js.code + '\n//# sourceMappingURL=' + path.basename(output_map));
-		write(output_map, compiled.js.map.toString());
 
 		// generate with fragments: 'tree'
-		if (generate === 'client') {
-			const compiled = compile(source, {
+		if (generate === 'client' && FROM_TREE) {
+			from_tree = compile(source, {
 				dev: false,
 				filename: input,
 				generate,
@@ -106,12 +117,21 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 			const output_js = `${cwd}/output/${generate}/${file}.tree.js`;
 			const output_map = `${cwd}/output/${generate}/${file}.tree.js.map`;
 
-			write(output_js, compiled.js.code + '\n//# sourceMappingURL=' + path.basename(output_map));
-			write(output_map, compiled.js.map.toString());
+			write(output_js, from_tree.js.code + '\n//# sourceMappingURL=' + path.basename(output_map));
+			write(output_map, from_tree.js.map.toString());
 		}
 
-		if (compiled.css) {
-			write(output_css, compiled.css.code);
+		const compiled = from_html ?? from_tree;
+
+		if (compiled) {
+			for (const warning of compiled.warnings) {
+				console.warn(warning.code);
+				console.warn(warning.frame);
+			}
+
+			if (compiled.css) {
+				write(output_css, compiled.css.code);
+			}
 		}
 	}
 
