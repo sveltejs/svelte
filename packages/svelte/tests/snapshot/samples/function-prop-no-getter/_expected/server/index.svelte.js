@@ -1,13 +1,13 @@
 import * as $ from 'svelte/internal/server';
 
 export default function Function_prop_no_getter($$renderer) {
-	let count = 0;
+	var count = 0;
 
 	function onmouseup() {
 		count += 2;
 	}
 
-	const plusOne = (num) => num + 1;
+	var plusOne = (num) => num + 1;
 
 	Button($$renderer, {
 		onmousedown: () => count += 1,

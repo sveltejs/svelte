@@ -4,8 +4,8 @@ import * as $ from 'svelte/internal/client';
 var root = $.from_html(`<button> </button> <!> `, 1);
 
 export default function Await_block_scope($$anchor) {
-	let counter = $.proxy({ count: 0 });
-	const promise = $.derived(() => Promise.resolve(counter));
+	var counter = $.proxy({ count: 0 });
+	var promise = $.derived(() => Promise.resolve(counter));
 
 	function increment() {
 		counter.count += 1;
@@ -26,7 +26,7 @@ export default function Await_block_scope($$anchor) {
 
 	var text_1 = $.sibling(node);
 
-	$.template_effect(() => {
+	$.template_effect([], () => {
 		$.set_text(text, `clicks: ${counter.count ?? ''}`);
 		$.set_text(text_1, ` ${counter.count ?? ''}`);
 	});

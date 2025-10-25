@@ -11,7 +11,7 @@ export default function Each_string_template($$anchor) {
 
 		var text = $.text();
 
-		$.template_effect(() => $.set_text(text, `${thing ?? ''}, `));
+		$.template_effect([], () => $.set_text(text, `${thing ?? ''}, `));
 		$.append($$anchor, text);
 	});
 

@@ -6,8 +6,8 @@ function snippet($$renderer) {
 }
 
 export default function Bind_component_snippet($$renderer) {
-	let value = '';
-	const _snippet = snippet;
+	var value = '';
+	var _snippet = snippet;
 	let $$settled = true;
 	let $$inner_renderer;
 
