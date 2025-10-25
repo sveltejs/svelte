@@ -71,13 +71,15 @@ export function RenderTag(node, context) {
 	}
 
 	const async_values = memoizer.async_values();
+	const blockers = memoizer.blockers();
 
-	if (async_values) {
+	if (async_values || blockers.elements.length > 0) {
 		context.state.init.push(
 			b.stmt(
 				b.call(
 					'$.async',
 					context.state.node,
+					blockers,
 					memoizer.async_values(),
 					b.arrow([context.state.node, ...memoizer.async_ids()], b.block(statements))
 				)
