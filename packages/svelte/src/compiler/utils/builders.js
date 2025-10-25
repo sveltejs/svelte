@@ -83,6 +83,17 @@ export function block(body) {
 }
 
 /**
+ * @param {ESTree.Identifier | null} id
+ * @param {ESTree.ClassBody} body
+ * @param {ESTree.Expression | null} [superClass]
+ * @param {ESTree.Decorator[]} [decorators]
+ * @returns {ESTree.ClassExpression}
+ */
+export function class_expression(id, body, superClass, decorators = []) {
+	return { type: 'ClassExpression', body, superClass, decorators };
+}
+
+/**
  * @param {string} name
  * @param {ESTree.Statement} body
  * @returns {ESTree.LabeledStatement}

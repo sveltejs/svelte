@@ -1,8 +1,10 @@
-/** @import { ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, Program, Statement, VariableDeclarator } from 'estree' */
+/** @import { BlockStatement, ClassDeclaration, ClassExpression, Expression, FunctionDeclaration, FunctionExpression, Identifier, ImportDeclaration, MemberExpression, Program, Statement, VariableDeclaration, VariableDeclarator } from 'estree' */
 /** @import { ComponentContext } from '../types' */
+/** @import { AwaitedStatement } from '../../../types' */
 import { build_getter, is_prop_source } from '../utils.js';
 import * as b from '#compiler/builders';
 import { add_state_transformers } from './shared/declarations.js';
+import { get_rune } from '../../../scope.js';
 
 /**
  * @param {Program} node
@@ -155,55 +157,47 @@ function transform_body(program, context) {
 	/** @type {Statement[]} */
 	const out = [];
 
-	const { awaited_declarations, awaited_statements } = context.state.analysis;
+	/** @type {Identifier[]} */
+	const ids = [];
 
-	/** @type {Identifier | null} */
-	let last = null;
+	/** @type {AwaitedStatement[]} */
+	const statements = [];
+
+	/** @type {AwaitedStatement[]} */
+	const deriveds = [];
+
+	const { awaited_statements } = context.state.analysis;
+
+	let awaited = false;
 
 	/**
-	 * @param {Statement | VariableDeclarator | FunctionDeclaration | ClassDeclaration} node
+	 * @param {Statement | VariableDeclarator | ClassDeclaration | FunctionDeclaration} node
 	 */
 	const push = (node) => {
-		const awaited = awaited_statements.get(node);
+		const statement = awaited_statements.get(node);
 
-		if (awaited) {
-			const ids = new Set();
-			const patterns = new Set();
+		awaited ||= !!statement?.has_await;
 
-			for (const binding of awaited.metadata.dependencies) {
-				const dep = awaited_declarations.get(binding.node.name);
-				if (dep && dep.id !== awaited.id && !ids.has(dep.id)) {
-					ids.add(dep.id);
-					patterns.add(dep.pattern);
-				}
+		if (!awaited || !statement || node.type === 'FunctionDeclaration') {
+			if (node.type === 'VariableDeclarator') {
+				out.push(/** @type {VariableDeclaration} */ (context.visit(b.var(node.id, node.init))));
+			} else {
+				out.push(/** @type {Statement} */ (context.visit(node)));
 			}
 
-			if (last) {
-				ids.add(last);
-			}
-
-			const rhs =
-				node.type === 'VariableDeclarator'
-					? node.init ?? b.block([])
-					: node.type === 'ExpressionStatement'
-						? node.expression
-						: node.type === 'FunctionDeclaration'
-							? node
-							: b.block([node]);
-
-			out.push(
-				b.var(
-					awaited.id,
-					b.call('$.run', b.array([...ids]), b.arrow([...patterns], rhs, awaited.has_await))
-				)
-			);
-
-			last = awaited.id;
-		} else if (node.type === 'VariableDeclarator') {
-			out.push(b.var(node.id, node.init));
-		} else {
-			out.push(node);
+			return;
 		}
+
+		if (node.type === 'VariableDeclarator') {
+			const rune = get_rune(node.init, context.state.scope);
+
+			if (rune === '$derived' || rune === '$derived.by') {
+				deriveds.push(statement);
+				return;
+			}
+		}
+
+		statements.push(statement);
 	};
 
 	for (let node of program.body) {
@@ -231,13 +225,86 @@ function transform_body(program, context) {
 			for (const declarator of node.declarations) {
 				push(declarator);
 			}
-		} else if (node.type === 'ClassDeclaration' || node.type === 'FunctionDeclaration') {
-			// TODO
-			push(node);
 		} else {
 			push(node);
 		}
 	}
 
-	return out.map((node) => /** @type {Statement} */ (context.visit(node)));
+	for (const derived of deriveds) {
+		// find the earliest point we can insert this derived
+		let index = -1;
+
+		for (const binding of derived.dependencies) {
+			index = Math.max(
+				index,
+				statements.findIndex((s) => s.declarations.includes(binding))
+			);
+		}
+
+		if (index === -1 && !derived.has_await) {
+			const node = /** @type {VariableDeclarator} */ (derived.node);
+			out.push(/** @type {VariableDeclaration} */ (context.visit(b.var(node.id, node.init))));
+		} else {
+			// TODO combine deriveds with Promise.all where necessary
+			statements.splice(index + 1, 0, derived);
+		}
+	}
+
+	if (statements.length > 0) {
+		var declarations = statements.map((s) => s.declarations).flat();
+		out.push(
+			b.declaration(
+				'var',
+				declarations.map((d) => b.declarator(d.node))
+			)
+		);
+
+		const thunks = statements.map((s) => {
+			if (s.node.type === 'VariableDeclarator') {
+				const visited = /** @type {VariableDeclaration} */ (
+					context.visit(b.var(s.node.id, s.node.init))
+				);
+
+				return b.thunk(
+					b.assignment('=', s.node.id, visited.declarations[0].init ?? b.void0),
+					s.has_await
+				);
+			}
+
+			if (s.node.type === 'ClassDeclaration') {
+				return b.thunk(
+					b.assignment(
+						'=',
+						s.node.id,
+						/** @type {ClassExpression} */ ({ ...s.node, type: 'ClassExpression' })
+					),
+					s.has_await
+				);
+			}
+
+			if (s.node.type === 'FunctionDeclaration') {
+				return b.thunk(
+					b.assignment(
+						'=',
+						s.node.id,
+						/** @type {FunctionExpression} */ ({ ...s.node, type: 'FunctionExpression' })
+					),
+					s.has_await
+				);
+			}
+
+			if (s.node.type === 'ExpressionStatement') {
+				return b.thunk(b.unary('void', /** @type {Expression} */ (s.node.expression)), s.has_await);
+			}
+
+			return b.thunk(b.block([/** @type {Statement} */ (s.node)]), s.has_await);
+		});
+
+		out.push(b.var('$$promises', b.call('$.run', b.array(thunks))));
+	}
+
+	// console.log('statements', statements);
+	// console.log('deriveds', deriveds);
+
+	return out;
 }

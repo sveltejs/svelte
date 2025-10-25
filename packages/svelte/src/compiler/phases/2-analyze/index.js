@@ -1,7 +1,7 @@
 /** @import * as ESTree from 'estree' */
 /** @import { Binding, AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
-/** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
+/** @import { Analysis, AwaitedStatement, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
 import { walk } from 'zimmerframe';
 import { parse } from '../1-parse/acorn.js';
 import * as e from '../../errors.js';
@@ -701,44 +701,62 @@ export function analyze_component(root, source, options) {
 		}
 
 		if (instance.has_await) {
-			let awaiting = false;
-			let i = 0;
+			/**
+			 * @param {ESTree.Node} node
+			 * @param {Set<Binding>} dependencies
+			 */
+			const trace_dependencies = (node, dependencies) => {
+				walk(
+					node,
+					{ scope: instance.scope },
+					{
+						_(node, context) {
+							const scope = scopes.get(node);
+							if (scope) {
+								context.next({ scope });
+							} else {
+								context.next();
+							}
+						},
+						Identifier(node, context) {
+							const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
+							if (is_reference(node, parent)) {
+								const binding = context.state.scope.get(node.name);
+								if (binding) {
+									dependencies.add(binding);
+								}
+
+								// TODO recurse into function definitions
+							}
+						}
+					}
+				);
+
+				return dependencies;
+			};
 
 			/**
 			 * @param {ESTree.Statement | ESTree.VariableDeclarator | ESTree.FunctionDeclaration | ESTree.ClassDeclaration} node
 			 */
 			const push = (node) => {
-				const has_await = has_await_expression(node);
-				awaiting ||= has_await;
+				/** @type {AwaitedStatement} */
+				const statement = {
+					node,
+					has_await: has_await_expression(node),
+					declarations: [],
+					dependencies: trace_dependencies(node, new Set())
+				};
 
-				if (!awaiting) return;
-
-				const id = b.id(`$$${i++}`);
-
-				analysis.awaited_statements.set(node, {
-					id,
-					has_await,
-					metadata: create_expression_metadata()
-				});
+				analysis.awaited_statements.set(node, statement);
 
 				if (node.type === 'VariableDeclarator') {
 					for (const identifier of extract_identifiers(node.id)) {
-						analysis.awaited_declarations.set(identifier.name, {
-							id,
-							has_await,
-							pattern: node.id,
-							updated_by: new Set(),
-							metadata: create_expression_metadata()
-						});
+						const binding = /** @type {Binding} */ (instance.scope.get(identifier.name));
+						statement.declarations.push(binding);
 					}
 				} else if (node.type === 'ClassDeclaration' || node.type === 'FunctionDeclaration') {
-					analysis.awaited_declarations.set(node.id.name, {
-						id,
-						has_await,
-						pattern: node.id,
-						updated_by: new Set(),
-						metadata: create_expression_metadata()
-					});
+					const binding = /** @type {Binding} */ (instance.scope.get(node.id.name));
+					statement.declarations.push(binding);
 				}
 			};
 

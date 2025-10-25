@@ -3,6 +3,8 @@ import type {
 	AwaitExpression,
 	CallExpression,
 	ClassBody,
+	ClassDeclaration,
+	FunctionDeclaration,
 	Identifier,
 	LabeledStatement,
 	ModuleDeclaration,
@@ -40,9 +42,10 @@ export interface AwaitedDeclaration {
 }
 
 export interface AwaitedStatement {
-	id: Identifier;
+	node: Statement | VariableDeclarator | ClassDeclaration | FunctionDeclaration;
 	has_await: boolean;
-	metadata: ExpressionMetadata;
+	declarations: Binding[];
+	dependencies: Set<Binding>;
 }
 
 /**
