@@ -913,28 +913,36 @@ export function fork(fn) {
 		e.fork_timing();
 	}
 
-	const batch = Batch.ensure();
+	var batch = Batch.ensure();
 	batch.is_fork = true;
 
-	const settled = batch.settled();
+	var committed = false;
+	var settled = batch.settled();
 
 	flushSync(fn);
 
 	// revert state changes
-	for (const [source, value] of batch.previous) {
+	for (var [source, value] of batch.previous) {
 		source.v = value;
 	}
 
 	return {
 		commit: async () => {
+			if (committed) {
+				await settled;
+				return;
+			}
+
 			if (!batches.has(batch)) {
 				e.fork_discarded();
 			}
 
+			committed = true;
+
 			batch.is_fork = false;
 
 			// apply changes
-			for (const [source, value] of batch.current) {
+			for (var [source, value] of batch.current) {
 				source.v = value;
 			}
 
@@ -945,9 +953,9 @@ export function fork(fn) {
 			// TODO maybe there's a better implementation?
 			flushSync(() => {
 				/** @type {Set<Effect>} */
-				const eager_effects = new Set();
+				var eager_effects = new Set();
 
-				for (const source of batch.current.keys()) {
+				for (var source of batch.current.keys()) {
 					mark_eager_effects(source, eager_effects);
 				}
 
@@ -959,7 +967,7 @@ export function fork(fn) {
 			await settled;
 		},
 		discard: () => {
-			if (batches.has(batch)) {
+			if (!committed && batches.has(batch)) {
 				batches.delete(batch);
 				batch.discard();
 			}
