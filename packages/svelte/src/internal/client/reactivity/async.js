@@ -36,12 +36,12 @@ import {
 import { create_text } from '../dom/operations.js';
 
 /**
- *
+ * @param {Array<Promise<any>>} dependencies
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
  * @param {(values: Value[]) => any} fn
  */
-export function flatten(sync, async, fn) {
+export function flatten(dependencies, sync, async, fn) {
 	const d = is_runes() ? derived : derived_safe_equal;
 
 	if (async.length === 0) {
@@ -56,29 +56,39 @@ export function flatten(sync, async, fn) {
 
 	var was_hydrating = hydrating;
 
-	Promise.all(async.map((expression) => async_derived(expression)))
-		.then((result) => {
-			restore();
+	Promise.all(dependencies).then((values) => {
+		restore();
 
-			try {
-				fn([...sync.map(d), ...result]);
-			} catch (error) {
-				// ignore errors in blocks that have already been destroyed
-				if ((parent.f & DESTROYED) === 0) {
-					invoke_error_boundary(error, parent);
+		const result = Promise.all(
+			async.map((expression) => async_derived(() => expression(...values)))
+		)
+			.then((result) => {
+				restore();
+
+				try {
+					fn([...sync.map(d), ...result]);
+				} catch (error) {
+					// ignore errors in blocks that have already been destroyed
+					if ((parent.f & DESTROYED) === 0) {
+						invoke_error_boundary(error, parent);
+					}
 				}
-			}
 
-			if (was_hydrating) {
-				set_hydrating(false);
-			}
+				if (was_hydrating) {
+					set_hydrating(false);
+				}
 
-			batch?.deactivate();
-			unset_context();
-		})
-		.catch((error) => {
-			invoke_error_boundary(error, parent);
-		});
+				batch?.deactivate();
+				unset_context();
+			})
+			.catch((error) => {
+				invoke_error_boundary(error, parent);
+			});
+
+		unset_context();
+
+		return result;
+	});
 }
 
 /**
@@ -258,4 +268,13 @@ export async function async_body(anchor, fn) {
 
 		unset_context();
 	}
+}
+
+/**
+ * @param {Array<Promise<any>>} deps
+ * @param {(...deps: any) => any} fn
+ */
+export function run(deps, fn) {
+	// TODO save/restore context
+	return Promise.all(deps).then(fn);
 }

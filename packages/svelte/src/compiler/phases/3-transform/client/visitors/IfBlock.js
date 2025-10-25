@@ -25,9 +25,8 @@ export function IfBlock(node, context) {
 		statements.push(b.var(alternate_id, b.arrow([b.id('$$anchor')], alternate)));
 	}
 
-	const { has_await } = node.metadata.expression;
 	const expression = build_expression(context, node.test, node.metadata.expression);
-	const test = has_await ? b.call('$.get', b.id('$$condition')) : expression;
+	const test = node.metadata.async ? b.call('$.get', b.id('$$condition')) : expression;
 
 	/** @type {Expression[]} */
 	const args = [
@@ -71,13 +70,20 @@ export function IfBlock(node, context) {
 
 	statements.push(add_svelte_meta(b.call('$.if', ...args), node, 'if'));
 
-	if (has_await) {
+	if (node.metadata.async) {
 		context.state.init.push(
 			b.stmt(
 				b.call(
 					'$.async',
 					context.state.node,
-					b.array([b.thunk(expression, true)]),
+					b.array([...node.metadata.async.declarations].map((d) => d.id)),
+					b.array([
+						b.arrow(
+							[...node.metadata.async.declarations].map((d) => d.pattern),
+							expression,
+							node.metadata.expression.has_await
+						)
+					]),
 					b.arrow([context.state.node, b.id('$$condition')], b.block(statements))
 				)
 			)

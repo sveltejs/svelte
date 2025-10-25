@@ -31,6 +31,20 @@ export interface ReactiveStatement {
 	dependencies: Binding[];
 }
 
+export interface AwaitedDeclaration {
+	id: Identifier;
+	has_await: boolean;
+	pattern: Pattern;
+	metadata: ExpressionMetadata;
+	updated_by: Set<Identifier>;
+}
+
+export interface AwaitedStatement {
+	id: Identifier;
+	has_await: boolean;
+	metadata: ExpressionMetadata;
+}
+
 /**
  * Analysis common to modules and components
  */
@@ -125,22 +139,10 @@ export interface ComponentAnalysis extends Analysis {
 	 *
 	 * ...and references to `a` or `b` in the template should be mediated by `$$0` and `$$1`
 	 */
-	awaited_declarations: Map<
-		string,
-		{
-			id: Identifier;
-			has_await: boolean;
-			pattern: Pattern;
-			metadata: ExpressionMetadata;
-			updated_by: Set<Identifier>;
-		}
-	>;
+	awaited_declarations: Map<string, AwaitedDeclaration>;
 	/**
 	 * Information about top-level instance statements that need to be transformed
 	 * so that we can run the template synchronously
 	 */
-	awaited_statements: Map<
-		Statement | ModuleDeclaration | VariableDeclarator,
-		{ id: Identifier; has_await: boolean; metadata: ExpressionMetadata }
-	>;
+	awaited_statements: Map<Statement | ModuleDeclaration | VariableDeclarator, AwaitedStatement>;
 }

@@ -22,6 +22,25 @@ export function IfBlock(node, context) {
 		expression: node.metadata.expression
 	});
 
+	// TODO this can be helperised
+	for (const binding of node.metadata.expression.dependencies) {
+		const awaited = context.state.analysis.awaited_declarations.get(binding.node.name);
+
+		if (awaited) {
+			node.metadata.async ??= {
+				declarations: new Set()
+			};
+
+			node.metadata.async.declarations.add(awaited);
+		}
+	}
+
+	if (node.metadata.expression.has_await) {
+		node.metadata.async ??= {
+			declarations: new Set()
+		};
+	}
+
 	context.visit(node.consequent);
 	if (node.alternate) context.visit(node.alternate);
 }

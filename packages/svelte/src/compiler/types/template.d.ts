@@ -17,6 +17,7 @@ import type {
 } from 'estree';
 import type { Scope } from '../phases/scope';
 import type { _CSS } from './css';
+import type { AwaitedDeclaration } from '../phases/types';
 
 /**
  * - `html`    — the default, for e.g. `<div>` or `<span>`
@@ -465,6 +466,9 @@ export namespace AST {
 		alternate: Fragment | null;
 		/** @internal */
 		metadata: {
+			async: {
+				declarations: Set<AwaitedDeclaration>;
+			};
 			expression: ExpressionMetadata;
 		};
 	}
