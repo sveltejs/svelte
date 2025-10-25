@@ -109,6 +109,11 @@ export class Renderer {
 	}
 
 	/**
+	 * @param {Array<() => void>} thunks
+	 */
+	run(thunks) {}
+
+	/**
 	 * Create a child renderer. The child renderer inherits the state from the parent,
 	 * but has its own content.
 	 * @param {(renderer: Renderer) => MaybePromise<void>} fn

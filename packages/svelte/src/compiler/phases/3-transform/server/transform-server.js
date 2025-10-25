@@ -1,4 +1,4 @@
-/** @import { Program, Property, Statement, VariableDeclarator } from 'estree' */
+/** @import * as ESTree from 'estree' */
 /** @import { AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { ComponentServerTransformState, ComponentVisitors, ServerTransformState, Visitors } from './types.js' */
 /** @import { Analysis, ComponentAnalysis } from '../../types.js' */
@@ -25,6 +25,7 @@ import { IfBlock } from './visitors/IfBlock.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
+import { Program } from './visitors/Program.js';
 import { PropertyDefinition } from './visitors/PropertyDefinition.js';
 import { RegularElement } from './visitors/RegularElement.js';
 import { RenderTag } from './visitors/RenderTag.js';
@@ -53,6 +54,7 @@ const global_visitors = {
 	Identifier,
 	LabeledStatement,
 	MemberExpression,
+	Program,
 	PropertyDefinition,
 	UpdateExpression,
 	VariableDeclaration
@@ -86,7 +88,7 @@ const template_visitors = {
 /**
  * @param {ComponentAnalysis} analysis
  * @param {ValidatedCompileOptions} options
- * @returns {Program}
+ * @returns {ESTree.Program}
  */
 export function server_component(analysis, options) {
 	/** @type {ComponentServerTransformState} */
@@ -103,17 +105,18 @@ export function server_component(analysis, options) {
 		namespace: options.namespace,
 		preserve_whitespace: options.preserveWhitespace,
 		state_fields: new Map(),
-		skip_hydration_boundaries: false
+		skip_hydration_boundaries: false,
+		is_instance: false
 	};
 
-	const module = /** @type {Program} */ (
+	const module = /** @type {ESTree.Program} */ (
 		walk(/** @type {AST.SvelteNode} */ (analysis.module.ast), state, global_visitors)
 	);
 
-	const instance = /** @type {Program} */ (
+	const instance = /** @type {ESTree.Program} */ (
 		walk(
 			/** @type {AST.SvelteNode} */ (analysis.instance.ast),
-			{ ...state, scopes: analysis.instance.scopes },
+			{ ...state, scopes: analysis.instance.scopes, is_instance: true },
 			{
 				...global_visitors,
 				ImportDeclaration(node) {
@@ -131,7 +134,7 @@ export function server_component(analysis, options) {
 		)
 	);
 
-	const template = /** @type {Program} */ (
+	const template = /** @type {ESTree.Program} */ (
 		walk(
 			/** @type {AST.SvelteNode} */ (analysis.template.ast),
 			{ ...state, scopes: analysis.template.scopes },
@@ -140,7 +143,7 @@ export function server_component(analysis, options) {
 		)
 	);
 
-	/** @type {VariableDeclarator[]} */
+	/** @type {ESTree.VariableDeclarator[]} */
 	const legacy_reactive_declarations = [];
 
 	for (const [node] of analysis.reactive_statements) {
@@ -192,7 +195,7 @@ export function server_component(analysis, options) {
 			b.function_declaration(
 				b.id('$$render_inner'),
 				[b.id('$$renderer')],
-				b.block(/** @type {Statement[]} */ (rest))
+				b.block(/** @type {ESTree.Statement[]} */ (rest))
 			),
 			b.do_while(
 				b.unary('!', b.id('$$settled')),
@@ -219,7 +222,7 @@ export function server_component(analysis, options) {
 
 	// Propagate values of bound props upwards if they're undefined in the parent and have a value.
 	// Don't do this as part of the props retrieval because people could eagerly mutate the prop in the instance script.
-	/** @type {Property[]} */
+	/** @type {ESTree.Property[]} */
 	const props = [];
 
 	for (const [name, binding] of analysis.instance.scope.declarations) {
@@ -239,13 +242,9 @@ export function server_component(analysis, options) {
 	}
 
 	let component_block = b.block([
-		.../** @type {Statement[]} */ (instance.body),
-		.../** @type {Statement[]} */ (template.body)
+		.../** @type {ESTree.Statement[]} */ (instance.body),
+		.../** @type {ESTree.Statement[]} */ (template.body)
 	]);
-
-	if (analysis.instance.has_await) {
-		component_block = b.block([create_async_block(component_block)]);
-	}
 
 	// trick esrap into including comments
 	component_block.loc = instance.loc;
@@ -395,7 +394,7 @@ export function server_component(analysis, options) {
 /**
  * @param {Analysis} analysis
  * @param {ValidatedModuleCompileOptions} options
- * @returns {Program}
+ * @returns {ESTree.Program}
  */
 export function server_module(analysis, options) {
 	/** @type {ServerTransformState} */
@@ -411,7 +410,7 @@ export function server_module(analysis, options) {
 		state_fields: new Map()
 	};
 
-	const module = /** @type {Program} */ (
+	const module = /** @type {ESTree.Program} */ (
 		walk(/** @type {AST.SvelteNode} */ (analysis.module.ast), state, global_visitors)
 	);
 
