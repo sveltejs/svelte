@@ -1,5 +1,17 @@
 # svelte
 
+## 5.42.0
+
+### Minor Changes
+
+- feat: experimental `fork` API ([#17004](https://github.com/sveltejs/svelte/pull/17004))
+
+### Patch Changes
+
+- fix: always allow `setContext` before first await in component ([#17031](https://github.com/sveltejs/svelte/pull/17031))
+
+- fix: less confusing names for inspect errors ([#17026](https://github.com/sveltejs/svelte/pull/17026))
+
 ## 5.41.4
 
 ### Patch Changes
