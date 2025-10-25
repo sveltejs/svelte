@@ -486,6 +486,37 @@ function new_builder(expression, ...args) {
 }
 
 /**
+ * @param {ESTree.Identifier | null | undefined} id
+ * @param {ESTree.ClassBody} body
+ * @param {ESTree.Expression | null | undefined} [super_class]
+ * @returns {ESTree.ClassExpression}
+ */
+function class_builder(id, body, super_class = null) {
+	return {
+		type: 'ClassExpression',
+		id,
+		body,
+		superClass: super_class,
+		decorators: []
+	};
+}
+/**
+ * @param {ESTree.Identifier} id
+ * @param {ESTree.ClassBody} body
+ * @param {ESTree.Expression | null} [super_class]
+ * @returns {ESTree.ClassDeclaration}
+ */
+export function class_declaration(id, body, super_class = null) {
+	return {
+		type: 'ClassDeclaration',
+		id,
+		body,
+		superClass: super_class,
+		decorators: []
+	};
+}
+
+/**
  * @param {ESTree.UpdateOperator} operator
  * @param {ESTree.Expression} argument
  * @param {boolean} prefix
@@ -671,7 +702,8 @@ export {
 	if_builder as if,
 	this_instance as this,
 	null_instance as null,
-	debugger_builder as debugger
+	debugger_builder as debugger,
+	class_builder as class
 };
 
 /**

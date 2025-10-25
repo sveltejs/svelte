@@ -13,6 +13,8 @@ import { AwaitBlock } from './visitors/AwaitBlock.js';
 import { AwaitExpression } from './visitors/AwaitExpression.js';
 import { CallExpression } from './visitors/CallExpression.js';
 import { ClassBody } from './visitors/ClassBody.js';
+import { ClassDeclaration } from './visitors/ClassDeclaration.js';
+import { ClassExpression } from './visitors/ClassExpression.js';
 import { Component } from './visitors/Component.js';
 import { ConstTag } from './visitors/ConstTag.js';
 import { DebugTag } from './visitors/DebugTag.js';
@@ -49,6 +51,8 @@ const global_visitors = {
 	AwaitExpression,
 	CallExpression,
 	ClassBody,
+	ClassDeclaration,
+	ClassExpression,
 	ExpressionStatement,
 	Identifier,
 	LabeledStatement,
@@ -103,7 +107,8 @@ export function server_component(analysis, options) {
 		namespace: options.namespace,
 		preserve_whitespace: options.preserveWhitespace,
 		state_fields: new Map(),
-		skip_hydration_boundaries: false
+		skip_hydration_boundaries: false,
+		computed_field_declarations: null
 	};
 
 	const module = /** @type {Program} */ (
@@ -408,7 +413,8 @@ export function server_module(analysis, options) {
 		// to be present for `javascript_visitors_legacy` and so is included in module
 		// transform state as well as component transform state
 		legacy_reactive_statements: new Map(),
-		state_fields: new Map()
+		state_fields: new Map(),
+		computed_field_declarations: null
 	};
 
 	const module = /** @type {Program} */ (
