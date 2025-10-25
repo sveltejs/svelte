@@ -35,7 +35,15 @@ export function inspect(get_value, inspector, show_stack = false) {
 				if (!initial) {
 					const stack = get_stack('$inspect(...)');
 					// eslint-disable-next-line no-console
-					if (stack) console.log(stack);
+
+					if (stack) {
+						// eslint-disable-next-line no-console
+						console.groupCollapsed('stack trace');
+						// eslint-disable-next-line no-console
+						console.log(stack);
+						// eslint-disable-next-line no-console
+						console.groupEnd();
+					}
 				}
 			} else {
 				inspector(initial ? 'init' : 'update', ...snap);
