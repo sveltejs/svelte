@@ -8,7 +8,7 @@ import { is_event_attribute } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { build_class_directives_object, build_style_directives_object } from '../RegularElement.js';
 import { build_expression, build_template_chunk, Memoizer } from './utils.js';
-import type { ExpressionMetadata } from '../../../../nodes.js';
+import { ExpressionMetadata } from '../../../../nodes.js';
 
 /**
  * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
