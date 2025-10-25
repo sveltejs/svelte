@@ -26,12 +26,12 @@ export function IfBlock(node, context) {
 	}
 
 	// TODO helperise
-	const promise_index = Array.from(node.metadata.expression.dependencies).reduce(
-		(index, binding) => Math.max(index, context.state.analysis.promise_indexes.get(binding) ?? -1),
-		-1
-	);
+	const blockers = new Set();
+	for (const d of node.metadata.expression.dependencies) {
+		if (d.blocker) blockers.add(d.blocker);
+	}
 
-	const is_async = promise_index > -1 || node.metadata.expression.has_await;
+	const is_async = blockers.size > 0 || node.metadata.expression.has_await;
 
 	const expression = build_expression(context, node.test, node.metadata.expression);
 	const test = is_async ? b.call('$.get', b.id('$$condition')) : expression;
@@ -84,7 +84,7 @@ export function IfBlock(node, context) {
 				b.call(
 					'$.async',
 					context.state.node,
-					promise_index === -1 ? undefined : b.id(`$$promises[${promise_index}]`),
+					b.array([...blockers]),
 					b.array([b.thunk(expression, node.metadata.expression.has_await)]),
 					b.arrow([context.state.node, b.id('$$condition')], b.block(statements))
 				)

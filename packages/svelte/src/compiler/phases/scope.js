@@ -130,6 +130,15 @@ export class Binding {
 	reassigned = false;
 
 	/**
+	 * Instance-level declarations may follow (or contain) a top-level `await`. In these cases,
+	 * any reads that occur in the template must wait for the corresponding promise to resolve
+	 * otherwise the initial value will not have been assigned
+	 * TODO the blocker is set during transform which feels a bit grubby
+	 * @type {Expression | null}
+	 */
+	blocker = null;
+
+	/**
 	 *
 	 * @param {Scope} scope
 	 * @param {Identifier} node

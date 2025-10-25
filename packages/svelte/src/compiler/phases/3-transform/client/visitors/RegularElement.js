@@ -271,10 +271,7 @@ export function RegularElement(node, context) {
 				const { value, has_state } = build_attribute_value(
 					attribute.value,
 					context,
-					(value, metadata) =>
-						metadata.has_call || metadata.has_await
-							? context.state.memoizer.add(value, metadata)
-							: value
+					(value, metadata) => context.state.memoizer.add(value, metadata)
 				);
 
 				const update = build_element_attribute_update(node, node_id, name, value, attributes);
@@ -518,8 +515,6 @@ export function build_class_directives_object(
 	memoizer = context.state.memoizer
 ) {
 	let properties = [];
-	let has_call_or_state = false;
-	let has_await = false;
 
 	const metadata = create_expression_metadata();
 
@@ -528,13 +523,11 @@ export function build_class_directives_object(
 
 		const expression = /** @type Expression */ (context.visit(d.expression));
 		properties.push(b.init(d.name, expression));
-		has_call_or_state ||= d.metadata.expression.has_call || d.metadata.expression.has_state;
-		has_await ||= d.metadata.expression.has_await;
 	}
 
 	const directives = b.object(properties);
 
-	return has_call_or_state || has_await ? memoizer.add(directives, metadata) : directives;
+	return memoizer.add(directives, metadata);
 }
 
 /**
@@ -551,9 +544,6 @@ export function build_style_directives_object(
 	const normal = b.object([]);
 	const important = b.object([]);
 
-	let has_call_or_state = false;
-	let has_await = false;
-
 	const metadata = create_expression_metadata();
 
 	for (const d of style_directives) {
@@ -566,14 +556,11 @@ export function build_style_directives_object(
 
 		const object = d.modifiers.includes('important') ? important : normal;
 		object.properties.push(b.init(d.name, expression));
-
-		has_call_or_state ||= d.metadata.expression.has_call || d.metadata.expression.has_state;
-		has_await ||= d.metadata.expression.has_await;
 	}
 
 	const directives = important.properties.length ? b.array([normal, important]) : normal;
 
-	return has_call_or_state || has_await ? memoizer.add(directives, metadata) : directives;
+	returnmemoizer.add(directives, metadata);
 }
 
 /**
@@ -702,7 +689,7 @@ function build_element_special_value_attribute(
 		element === 'select' && attribute.value !== true && !is_text_attribute(attribute);
 
 	const { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call || metadata.has_await ? state.memoizer.add(value, metadata) : value
+		state.memoizer.add(value, metadata)
 	);
 
 	const evaluated = context.state.scope.evaluate(value);

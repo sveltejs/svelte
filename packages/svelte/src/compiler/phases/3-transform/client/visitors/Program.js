@@ -166,7 +166,7 @@ function transform_body(program, context) {
 	/** @type {AwaitedStatement[]} */
 	const deriveds = [];
 
-	const { awaited_statements, promise_indexes } = context.state.analysis;
+	const { awaited_statements } = context.state.analysis;
 
 	let awaited = false;
 
@@ -303,19 +303,27 @@ function transform_body(program, context) {
 			return b.thunk(b.block([/** @type {Statement} */ (s.node)]), s.has_await);
 		});
 
-		out.push(b.var('$$promises', b.call('$.run', b.array(thunks))));
+		var id = b.id('$$promises'); // TODO if we use this technique for fragments, need to deconflict
+
+		out.push(b.var(id, b.call('$.run', b.array(thunks))));
+
+		for (let i = 0; i < statements.length; i += 1) {
+			const s = statements[i];
+
+			var blocker = b.member(id, b.literal(i), true);
+
+			for (const binding of s.declarations) {
+				binding.blocker = blocker;
+			}
+		}
+
+		// TODO we likely need to account for updates that happen after the declaration,
+		// e.g. `let obj = $state()` followed by a later `obj = {...}`, otherwise
+		// a synchronous `{obj.foo}` will fail
 	}
 
 	// console.log('statements', statements);
 	// console.log('deriveds', deriveds);
-
-	for (let i = 0; i < statements.length; i += 1) {
-		const s = statements[i];
-
-		for (const binding of s.declarations) {
-			promise_indexes.set(binding, i);
-		}
-	}
 
 	return out;
 }

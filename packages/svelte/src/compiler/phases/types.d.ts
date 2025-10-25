@@ -134,10 +134,4 @@ export interface ComponentAnalysis extends Analysis {
 	 * so that we can run the template synchronously
 	 */
 	awaited_statements: Map<Statement | ModuleDeclaration | VariableDeclarator, AwaitedStatement>;
-	/**
-	 * A map that tells us which of the `$$promises` needs to be awaited
-	 * before a particular binding can be accessed
-	 * TODO this gets populated during transform, which feels wrong
-	 */
-	promise_indexes: Map<Binding, number>;
 }

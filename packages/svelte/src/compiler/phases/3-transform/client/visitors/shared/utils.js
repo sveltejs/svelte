@@ -21,11 +21,25 @@ export class Memoizer {
 	/** @type {Array<{ id: Identifier, expression: Expression }>} */
 	#async = [];
 
+	/** @type {Set<Expression>} */
+	#blockers = new Set();
+
 	/**
 	 * @param {Expression} expression
 	 * @param {ExpressionMetadata} metadata
 	 */
 	add(expression, metadata) {
+		for (const binding of metadata.dependencies) {
+			if (binding.blocker) {
+				this.#blockers.add(binding.blocker);
+			}
+		}
+
+		if (!metadata.has_call && !metadata.has_await) {
+			// no memoization required
+			return expression;
+		}
+
 		const id = b.id('#'); // filled in later
 
 		(metadata.has_await ? this.#async : this.#sync).push({ id, expression });
@@ -38,6 +52,10 @@ export class Memoizer {
 			memo.id.name = `$${i}`;
 			return memo.id;
 		});
+	}
+
+	blockers() {
+		return b.array([...this.#blockers]);
 	}
 
 	deriveds(runes = true) {
@@ -72,8 +90,7 @@ export function build_template_chunk(
 	values,
 	context,
 	state = context.state,
-	memoize = (value, metadata) =>
-		metadata.has_call || metadata.has_await ? state.memoizer.add(value, metadata) : value
+	memoize = (value, metadata) => state.memoizer.add(value, metadata)
 ) {
 	/** @type {Expression[]} */
 	const expressions = [];
@@ -169,6 +186,7 @@ export function build_render_statement(state) {
 	return b.stmt(
 		b.call(
 			'$.template_effect',
+			memoizer.blockers(),
 			b.arrow(
 				ids,
 				state.update.length === 1 && state.update[0].type === 'ExpressionStatement'

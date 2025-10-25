@@ -362,13 +362,14 @@ export function render_effect(fn, flags = 0) {
 }
 
 /**
+ * @param {Array<Promise<void>>} blockers
  * @param {(...expressions: any) => void | (() => void)} fn
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
  * @param {Promise<void>} [blocker]
  */
-export function template_effect(fn, sync = [], async = [], blocker) {
-	flatten(blocker, sync, async, (values) => {
+export function template_effect(blockers, fn, sync = [], async = [], blocker) {
+	flatten(blockers, sync, async, (values) => {
 		create_effect(RENDER_EFFECT, () => fn(...values.map(get)), true);
 	});
 }

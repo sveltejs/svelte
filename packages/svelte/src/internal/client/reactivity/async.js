@@ -33,19 +33,18 @@ import {
 	set_hydrating,
 	skip_nodes
 } from '../dom/hydration.js';
-import { create_text } from '../dom/operations.js';
 import { noop } from '../../shared/utils.js';
 
 /**
- * @param {Promise<void> | undefined} blocker
+ * @param {Array<Promise<void>>} blockers
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
  * @param {(values: Value[]) => any} fn
  */
-export function flatten(blocker, sync, async, fn) {
+export function flatten(blockers, sync, async, fn) {
 	const d = is_runes() ? derived : derived_safe_equal;
 
-	if (async.length === 0) {
+	if (async.length === 0 && blockers.length === 0) {
 		fn(sync.map(d));
 		return;
 	}
@@ -57,7 +56,7 @@ export function flatten(blocker, sync, async, fn) {
 
 	var was_hydrating = hydrating;
 
-	Promise.resolve(blocker).then((values) => {
+	Promise.all(blockers).then(() => {
 		restore();
 
 		const result = Promise.all(async.map((expression) => async_derived(expression)))
