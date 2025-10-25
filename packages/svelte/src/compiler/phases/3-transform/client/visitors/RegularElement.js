@@ -1,5 +1,5 @@
 /** @import { ArrayExpression, Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression } from 'estree' */
-/** @import { AST } from '#compiler' */
+/** @import { AST, ExpressionMetadata } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
 import {
@@ -11,7 +11,11 @@ import {
 import { is_ignored } from '../../../../state.js';
 import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { create_attribute, is_custom_element_node } from '../../../nodes.js';
+import {
+	create_attribute,
+	create_expression_metadata,
+	is_custom_element_node
+} from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_getter } from '../utils.js';
 import {
@@ -488,6 +492,21 @@ function setup_select_synchronization(value_binding, context) {
 }
 
 /**
+ * @param {ExpressionMetadata} target
+ * @param {ExpressionMetadata} source
+ */
+function merge_metadata(target, source) {
+	target.has_assignment ||= source.has_assignment;
+	target.has_await ||= source.has_await;
+	target.has_call ||= source.has_call;
+	target.has_member_expression ||= source.has_member_expression;
+	target.has_state ||= source.has_state;
+
+	for (const r of source.references) target.references.add(r);
+	for (const b of source.dependencies) target.dependencies.add(b);
+}
+
+/**
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
  * @param {Memoizer} memoizer
@@ -502,7 +521,11 @@ export function build_class_directives_object(
 	let has_call_or_state = false;
 	let has_await = false;
 
+	const metadata = create_expression_metadata();
+
 	for (const d of class_directives) {
+		merge_metadata(metadata, d.metadata.expression);
+
 		const expression = /** @type Expression */ (context.visit(d.expression));
 		properties.push(b.init(d.name, expression));
 		has_call_or_state ||= d.metadata.expression.has_call || d.metadata.expression.has_state;
@@ -531,7 +554,11 @@ export function build_style_directives_object(
 	let has_call_or_state = false;
 	let has_await = false;
 
+	const metadata = create_expression_metadata();
+
 	for (const d of style_directives) {
+		merge_metadata(metadata, d.metadata.expression);
+
 		const expression =
 			d.value === true
 				? build_getter(b.id(d.name), context.state)
