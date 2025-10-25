@@ -5,6 +5,7 @@ import { build_getter, is_prop_source } from '../utils.js';
 import * as b from '#compiler/builders';
 import { add_state_transformers } from './shared/declarations.js';
 import { get_rune } from '../../../scope.js';
+import { runes } from '../../../../state.js';
 
 /**
  * @param {Program} node
@@ -139,7 +140,7 @@ export function Program(node, context) {
 
 	add_state_transformers(context);
 
-	if (context.state.is_instance) {
+	if (context.state.is_instance && runes) {
 		return {
 			...node,
 			body: transform_body(node, context)
