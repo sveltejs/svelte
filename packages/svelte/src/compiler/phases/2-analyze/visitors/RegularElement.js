@@ -123,6 +123,7 @@ export function RegularElement(node, context) {
 
 			if (
 				ancestor.type === 'IfBlock' ||
+				ancestor.type === 'SwitchBlock' ||
 				ancestor.type === 'EachBlock' ||
 				ancestor.type === 'AwaitBlock' ||
 				ancestor.type === 'KeyBlock'

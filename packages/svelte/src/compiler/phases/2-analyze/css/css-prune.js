@@ -941,7 +941,7 @@ function get_possible_element_siblings(node, direction, adjacent_only, seen = ne
 }
 
 /**
- * @param {Compiler.AST.EachBlock | Compiler.AST.IfBlock | Compiler.AST.AwaitBlock | Compiler.AST.KeyBlock | Compiler.AST.SlotElement | Compiler.AST.SnippetBlock | Compiler.AST.Component} node
+ * @param {Compiler.AST.EachBlock | Compiler.AST.IfBlock | Compiler.AST.SwitchBlock| Compiler.AST.AwaitBlock | Compiler.AST.KeyBlock | Compiler.AST.SlotElement | Compiler.AST.SnippetBlock | Compiler.AST.Component} node
  * @param {Direction} direction
  * @param {boolean} adjacent_only
  * @param {Set<Compiler.AST.SnippetBlock>} seen
@@ -958,6 +958,10 @@ function get_possible_nested_siblings(node, direction, adjacent_only, seen = new
 
 		case 'IfBlock':
 			fragments.push(node.consequent, node.alternate);
+			break;
+
+		case 'SwitchBlock':
+			fragments.push(...node.consequences);
 			break;
 
 		case 'AwaitBlock':
@@ -1087,11 +1091,12 @@ function loop_child(children, direction, adjacent_only, seen) {
 
 /**
  * @param {Compiler.AST.SvelteNode} node
- * @returns {node is Compiler.AST.IfBlock | Compiler.AST.EachBlock | Compiler.AST.AwaitBlock | Compiler.AST.KeyBlock | Compiler.AST.SlotElement}
+ * @returns {node is Compiler.AST.IfBlock | Compiler.AST.SwitchBlock | Compiler.AST.EachBlock | Compiler.AST.AwaitBlock | Compiler.AST.KeyBlock | Compiler.AST.SlotElement}
  */
 function is_block(node) {
 	return (
 		node.type === 'IfBlock' ||
+		node.type === 'SwitchBlock' ||
 		node.type === 'EachBlock' ||
 		node.type === 'AwaitBlock' ||
 		node.type === 'KeyBlock' ||

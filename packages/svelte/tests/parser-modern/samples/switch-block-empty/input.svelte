@@ -1,0 +1,1 @@
+{#switch foo}bar{/switch}
