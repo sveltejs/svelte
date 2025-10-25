@@ -187,7 +187,9 @@ function transform_body(program, context) {
 					? node.init ?? b.block([])
 					: node.type === 'ExpressionStatement'
 						? node.expression
-						: b.block([node]);
+						: node.type === 'FunctionDeclaration'
+							? node
+							: b.block([node]);
 
 			out.push(
 				b.var(

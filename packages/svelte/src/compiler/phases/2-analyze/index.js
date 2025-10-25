@@ -1,4 +1,4 @@
-/** @import { Expression, Node, Program } from 'estree' */
+/** @import * as ESTree from 'estree' */
 /** @import { Binding, AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
@@ -217,7 +217,7 @@ const visitors = {
  * @returns {Js}
  */
 function js(script, root, allow_reactive_declarations, parent) {
-	/** @type {Program} */
+	/** @type {ESTree.Program} */
 	const ast = script?.content ?? {
 		type: 'Program',
 		sourceType: 'module',
@@ -300,7 +300,7 @@ export function analyze_module(source, options) {
 	});
 
 	walk(
-		/** @type {Node} */ (ast),
+		/** @type {ESTree.Node} */ (ast),
 		{
 			scope,
 			scopes,
@@ -358,7 +358,7 @@ export function analyze_component(root, source, options) {
 
 		const store_name = name.slice(1);
 		const declaration = instance.scope.get(store_name);
-		const init = /** @type {Node | undefined} */ (declaration?.initial);
+		const init = /** @type {ESTree.Node | undefined} */ (declaration?.initial);
 
 		// If we're not in legacy mode through the compiler option, assume the user
 		// is referencing a rune and not a global store.
@@ -418,7 +418,7 @@ export function analyze_component(root, source, options) {
 						/** @type {number} */ (node.start) > /** @type {number} */ (module.ast.start) &&
 						/** @type {number} */ (node.end) < /** @type {number} */ (module.ast.end) &&
 						// const state = $state(0) is valid
-						get_rune(/** @type {Node} */ (path.at(-1)), module.scope) === null
+						get_rune(/** @type {ESTree.Node} */ (path.at(-1)), module.scope) === null
 					) {
 						e.store_invalid_subscription(node);
 					}
@@ -649,7 +649,7 @@ export function analyze_component(root, source, options) {
 							// @ts-expect-error
 							_: set_scope,
 							Identifier(node, context) {
-								const parent = /** @type {Expression} */ (context.path.at(-1));
+								const parent = /** @type {ESTree.Expression} */ (context.path.at(-1));
 
 								if (is_reference(node, parent)) {
 									const binding = context.state.scope.get(node.name);
@@ -704,53 +704,67 @@ export function analyze_component(root, source, options) {
 			let awaiting = false;
 			let i = 0;
 
+			/**
+			 * @param {ESTree.Statement | ESTree.VariableDeclarator | ESTree.FunctionDeclaration | ESTree.ClassDeclaration} node
+			 */
+			const push = (node) => {
+				const has_await = has_await_expression(node);
+				awaiting ||= has_await;
+
+				if (!awaiting) return;
+
+				const id = b.id(`$$${i++}`);
+
+				analysis.awaited_statements.set(node, {
+					id,
+					has_await,
+					metadata: create_expression_metadata()
+				});
+
+				if (node.type === 'VariableDeclarator') {
+					for (const identifier of extract_identifiers(node.id)) {
+						analysis.awaited_declarations.set(identifier.name, {
+							id,
+							has_await,
+							pattern: node.id,
+							updated_by: new Set(),
+							metadata: create_expression_metadata()
+						});
+					}
+				} else if (node.type === 'ClassDeclaration' || node.type === 'FunctionDeclaration') {
+					analysis.awaited_declarations.set(node.id.name, {
+						id,
+						has_await,
+						pattern: node.id,
+						updated_by: new Set(),
+						metadata: create_expression_metadata()
+					});
+				}
+			};
+
 			for (let node of instance.ast.body) {
-				if (node.type === 'ExportNamedDeclaration' && node.declaration) {
-					node = node.declaration;
+				if (
+					node.type === 'ImportDeclaration' ||
+					node.type === 'ExportDefaultDeclaration' ||
+					node.type === 'ExportAllDeclaration'
+				) {
+					continue;
+				}
+
+				if (node.type === 'ExportNamedDeclaration') {
+					if (node.declaration) {
+						node = node.declaration;
+					} else {
+						continue;
+					}
 				}
 
 				if (node.type === 'VariableDeclaration') {
 					for (const declarator of node.declarations) {
-						const has_await = has_await_expression(declarator);
-						awaiting ||= has_await;
-
-						if (!awaiting) continue;
-
-						const id = b.id(`$$${i++}`);
-
-						analysis.awaited_statements.set(declarator, {
-							id,
-							has_await,
-							metadata: create_expression_metadata()
-						});
-
-						for (const identifier of extract_identifiers(declarator.id)) {
-							analysis.awaited_declarations.set(identifier.name, {
-								id,
-								has_await,
-								pattern: declarator.id,
-								updated_by: new Set(),
-								metadata: create_expression_metadata()
-							});
-						}
+						push(declarator);
 					}
 				} else {
-					const has_await = has_await_expression(node);
-					awaiting ||= has_await;
-
-					if (!awaiting) continue;
-
-					if (node.type === 'ClassDeclaration' || node.type === 'FunctionDeclaration') {
-						throw new Error('TODO handle class/function declaration');
-					} else {
-						const id = b.id(`$$${i++}`);
-
-						analysis.awaited_statements.set(node, {
-							id,
-							has_await,
-							metadata: create_expression_metadata()
-						});
-					}
+					push(node);
 				}
 			}
 		}
