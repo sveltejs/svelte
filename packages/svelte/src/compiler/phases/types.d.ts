@@ -1,4 +1,4 @@
-import type { AST, Binding, StateField } from '#compiler';
+import type { AST, Binding, ExpressionMetadata, StateField } from '#compiler';
 import type {
 	AwaitExpression,
 	CallExpression,
@@ -8,7 +8,8 @@ import type {
 	ModuleDeclaration,
 	Pattern,
 	Program,
-	Statement
+	Statement,
+	VariableDeclarator
 } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
 
@@ -126,11 +127,20 @@ export interface ComponentAnalysis extends Analysis {
 	 */
 	awaited_declarations: Map<
 		string,
-		{ id: Identifier; has_await: boolean; pattern: Pattern; updated_by: Set<Identifier> }
+		{
+			id: Identifier;
+			has_await: boolean;
+			pattern: Pattern;
+			metadata: ExpressionMetadata;
+			updated_by: Set<Identifier>;
+		}
 	>;
 	/**
 	 * Information about top-level instance statements that need to be transformed
 	 * so that we can run the template synchronously
 	 */
-	awaited_statements: Map<Statement | ModuleDeclaration, { id: Identifier; has_await: boolean }>;
+	awaited_statements: Map<
+		Statement | ModuleDeclaration | VariableDeclarator,
+		{ id: Identifier; has_await: boolean; metadata: ExpressionMetadata }
+	>;
 }

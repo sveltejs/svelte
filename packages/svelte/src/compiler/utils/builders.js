@@ -184,7 +184,7 @@ export function declaration(kind, declarations) {
 
 /**
  * @param {ESTree.Pattern | string} pattern
- * @param {ESTree.Expression} [init]
+ * @param {ESTree.Expression | null} [init]
  * @returns {ESTree.VariableDeclarator}
  */
 export function declarator(pattern, init) {
@@ -520,7 +520,7 @@ const this_instance = {
 
 /**
  * @param {string | ESTree.Pattern} pattern
- * @param { ESTree.Expression} [init]
+ * @param {ESTree.Expression | null} [init]
  * @returns {ESTree.VariableDeclaration}
  */
 function let_builder(pattern, init) {
@@ -529,7 +529,7 @@ function let_builder(pattern, init) {
 
 /**
  * @param {string | ESTree.Pattern} pattern
- * @param { ESTree.Expression} init
+ * @param {ESTree.Expression | null} init
  * @returns {ESTree.VariableDeclaration}
  */
 function const_builder(pattern, init) {
@@ -538,7 +538,7 @@ function const_builder(pattern, init) {
 
 /**
  * @param {string | ESTree.Pattern} pattern
- * @param { ESTree.Expression} [init]
+ * @param {ESTree.Expression | null} [init]
  * @returns {ESTree.VariableDeclaration}
  */
 function var_builder(pattern, init) {

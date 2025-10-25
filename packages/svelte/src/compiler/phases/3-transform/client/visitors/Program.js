@@ -1,14 +1,14 @@
-/** @import { Expression, ImportDeclaration, MemberExpression, Program } from 'estree' */
+/** @import { Expression, Identifier, ImportDeclaration, MemberExpression, Program, Statement } from 'estree' */
 /** @import { ComponentContext } from '../types' */
 import { build_getter, is_prop_source } from '../utils.js';
 import * as b from '#compiler/builders';
 import { add_state_transformers } from './shared/declarations.js';
 
 /**
- * @param {Program} _
+ * @param {Program} node
  * @param {ComponentContext} context
  */
-export function Program(_, context) {
+export function Program(node, context) {
 	if (!context.state.analysis.runes) {
 		context.state.transform['$$props'] = {
 			read: (node) => ({ ...node, name: '$$sanitized_props' })
@@ -137,5 +137,115 @@ export function Program(_, context) {
 
 	add_state_transformers(context);
 
+	if (context.state.is_instance) {
+		return {
+			...node,
+			body: transform_body(node, context)
+		};
+	}
+
 	context.next();
+}
+
+/**
+ * @param {Program} program
+ * @param {ComponentContext} context
+ */
+function transform_body(program, context) {
+	/** @type {Statement[]} */
+	const out = [];
+
+	const { awaited_declarations, awaited_statements } = context.state.analysis;
+
+	/** @type {Identifier | null} */
+	let last = null;
+
+	for (let node of program.body) {
+		if (node.type === 'ImportDeclaration') {
+			// TODO we can get rid of the visitor
+			context.state.hoisted.push(node);
+			continue;
+		}
+
+		if (node.type === 'ExportDefaultDeclaration' || node.type === 'ExportAllDeclaration') {
+			// this can't happen, but it's useful for TypeScript to understand that
+			continue;
+		}
+
+		if (node.type === 'ExportNamedDeclaration') {
+			if (node.declaration) {
+				// TODO ditto — no visitor needed
+				node = node.declaration;
+			} else {
+				continue;
+			}
+		}
+
+		if (node.type === 'VariableDeclaration') {
+			for (const declarator of node.declarations) {
+				const awaited = awaited_statements.get(declarator);
+
+				if (awaited) {
+					// TODO dependencies
+					out.push(
+						b.var(
+							awaited.id,
+							b.call(
+								'$.run',
+								b.array([]),
+								b.arrow([], declarator.init ?? b.block([]), awaited.has_await)
+							)
+						)
+					);
+
+					last = awaited.id;
+				} else {
+					out.push(b.var(declarator.id, declarator.init));
+				}
+			}
+		} else if (node.type === 'ClassDeclaration' || node.type === 'FunctionDeclaration') {
+			// TODO
+		} else {
+			const awaited = awaited_statements.get(node);
+
+			if (awaited) {
+				const ids = new Set();
+				const patterns = new Set();
+
+				for (const binding of awaited.metadata.dependencies) {
+					const dep = awaited_declarations.get(binding.node.name);
+					if (dep && !ids.has(dep.id)) {
+						ids.add(dep.id);
+						patterns.add(dep.pattern);
+					}
+				}
+
+				if (last) {
+					ids.add(last);
+				}
+
+				// TODO dependencies
+				out.push(
+					b.var(
+						awaited.id,
+						b.call(
+							'$.run',
+							b.array([...ids]),
+							b.arrow(
+								[...patterns],
+								node.type === 'ExpressionStatement' ? node.expression : b.block([node]),
+								awaited.has_await
+							)
+						)
+					)
+				);
+
+				last = awaited.id;
+			} else {
+				out.push(node);
+			}
+		}
+	}
+
+	return out.map((node) => /** @type {Statement} */ (context.visit(node)));
 }

@@ -10,7 +10,7 @@ import { extract_identifiers, has_await_expression } from '../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
-import { create_attribute, is_custom_element_node } from '../nodes.js';
+import { create_attribute, create_expression_metadata, is_custom_element_node } from '../nodes.js';
 import { analyze_css } from './css/css-analyze.js';
 import { prune } from './css/css-prune.js';
 import { hash, is_rune } from '../../../utils.js';
@@ -131,7 +131,18 @@ const visitors = {
 		ignore_map.set(node, structuredClone(ignore_stack));
 
 		const scope = state.scopes.get(node);
-		next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
+		const awaited = state.analysis.awaited_statements.get(node) ?? null;
+
+		if (awaited || (scope !== undefined && scope !== state.scope)) {
+			const child_state = { ...state };
+
+			if (awaited) child_state.expression = awaited.metadata;
+			if (scope !== undefined && scope !== state.scope) child_state.scope = scope;
+
+			next(child_state);
+		} else {
+			next();
+		}
 
 		if (ignores.length > 0) {
 			pop_ignore();
@@ -707,12 +718,19 @@ export function analyze_component(root, source, options) {
 
 						const id = b.id(`$$${i++}`);
 
+						analysis.awaited_statements.set(declarator, {
+							id,
+							has_await,
+							metadata: create_expression_metadata()
+						});
+
 						for (const identifier of extract_identifiers(declarator.id)) {
 							analysis.awaited_declarations.set(identifier.name, {
 								id,
 								has_await,
 								pattern: declarator.id,
-								updated_by: new Set()
+								updated_by: new Set(),
+								metadata: create_expression_metadata()
 							});
 						}
 					}
@@ -729,7 +747,8 @@ export function analyze_component(root, source, options) {
 
 						analysis.awaited_statements.set(node, {
 							id,
-							has_await
+							has_await,
+							metadata: create_expression_metadata()
 						});
 					}
 				}
