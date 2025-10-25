@@ -272,8 +272,21 @@ function transform_body(program, context) {
 					context.visit(b.var(s.node.id, s.node.init))
 				);
 
+				if (visited.declarations.length === 1) {
+					return b.thunk(
+						b.assignment('=', s.node.id, visited.declarations[0].init ?? b.void0),
+						s.has_await
+					);
+				}
+
+				// if we have multiple declarations, it indicates destructuring
 				return b.thunk(
-					b.assignment('=', s.node.id, visited.declarations[0].init ?? b.void0),
+					b.block([
+						b.var(visited.declarations[0].id, visited.declarations[0].init),
+						...visited.declarations
+							.slice(1)
+							.map((d) => b.stmt(b.assignment('=', d.id, d.init ?? b.void0)))
+					]),
 					s.has_await
 				);
 			}

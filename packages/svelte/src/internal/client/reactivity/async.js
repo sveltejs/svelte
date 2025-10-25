@@ -56,10 +56,8 @@ export function flatten(blockers, sync, async, fn) {
 
 	var was_hydrating = hydrating;
 
-	Promise.all(blockers).then(() => {
-		restore();
-
-		const result = Promise.all(async.map((expression) => async_derived(expression)))
+	function run() {
+		Promise.all(async.map((expression) => async_derived(expression)))
 			.then((result) => {
 				restore();
 
@@ -82,11 +80,22 @@ export function flatten(blockers, sync, async, fn) {
 			.catch((error) => {
 				invoke_error_boundary(error, parent);
 			});
+	}
 
-		unset_context();
+	if (blockers.length > 0) {
+		Promise.all(blockers).then(() => {
+			restore();
 
-		return result;
-	});
+			try {
+				return run();
+			} finally {
+				batch?.deactivate();
+				unset_context();
+			}
+		});
+	} else {
+		run();
+	}
 }
 
 /**
@@ -274,7 +283,8 @@ export async function async_body(anchor, fn) {
 export function run(thunks) {
 	const restore = capture();
 
-	let promise = Promise.resolve();
+	// let promise = Promise.resolve();
+	let promise = new Promise((f) => Batch.enqueue(() => f(undefined)));
 
 	var boundary = get_boundary();
 	var batch = /** @type {Batch} */ (current_batch);

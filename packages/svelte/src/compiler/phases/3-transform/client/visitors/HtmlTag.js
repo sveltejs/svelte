@@ -37,7 +37,8 @@ export function HtmlTag(node, context) {
 				b.call(
 					'$.async',
 					context.state.node,
-					b.array([b.thunk(expression, true)]),
+					node.metadata.expression.blockers(),
+					b.array([b.thunk(expression, node.metadata.expression.has_await)]),
 					b.arrow([context.state.node, b.id('$$html')], b.block([statement]))
 				)
 			)
