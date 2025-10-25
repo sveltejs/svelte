@@ -201,7 +201,15 @@ export const async_mode = process.env.SVELTE_NO_ASYNC !== 'true';
  * @param {any[]} logs
  */
 export function normalise_inspect_logs(logs) {
-	return logs.map((log) => {
+	/** @type {string[]} */
+	const normalised = [];
+
+	for (const log of logs) {
+		if (log === 'stack trace') {
+			// ignore `console.group('stack trace')` in default `$inspect(...)` output
+			continue;
+		}
+
 		if (log instanceof Error) {
 			const last_line = log.stack
 				?.trim()
@@ -210,11 +218,13 @@ export function normalise_inspect_logs(logs) {
 
 			const match = last_line && /(at .+) /.exec(last_line);
 
-			return match && match[1];
+			if (match) normalised.push(match[1]);
+		} else {
+			normalised.push(log);
 		}
+	}
 
-		return log;
-	});
+	return normalised;
 }
 
 /**
