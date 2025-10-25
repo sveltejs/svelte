@@ -117,10 +117,6 @@ export class ExpressionMetadata {
 	}
 }
 
-export function new ExpressionMetadata() {
-	return new ExpressionMetadata();
-}
-
 /**
  * @param {Expression | PrivateIdentifier} node
  */
