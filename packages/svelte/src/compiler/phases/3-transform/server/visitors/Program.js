@@ -184,10 +184,11 @@ function transform_body(program, context) {
 			}
 
 			if (s.node.type === 'ExpressionStatement') {
-				return b.thunk(
-					b.unary('void', /** @type {Expression} */ (context.visit(s.node.expression))),
-					s.has_await
-				);
+				const expression = /** @type {Expression} */ (context.visit(s.node.expression));
+
+				return expression.type === 'AwaitExpression'
+					? b.thunk(expression, true)
+					: b.thunk(b.unary('void', expression), s.has_await);
 			}
 
 			return b.thunk(b.block([/** @type {Statement} */ (context.visit(s.node))]), s.has_await);
