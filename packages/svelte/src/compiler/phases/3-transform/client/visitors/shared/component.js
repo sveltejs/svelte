@@ -184,7 +184,9 @@ export function build_component(node, component_name, context) {
 							);
 						});
 
-					return should_wrap_in_derived ? b.call('$.get', memoizer.add(value, metadata)) : value;
+					return should_wrap_in_derived
+						? b.call('$.get', memoizer.add(value, metadata, true))
+						: value;
 				}
 			);
 

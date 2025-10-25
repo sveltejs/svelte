@@ -28,15 +28,19 @@ export class Memoizer {
 	/**
 	 * @param {Expression} expression
 	 * @param {ExpressionMetadata} metadata
+	 * @param {boolean} memoize_if_state
 	 */
-	add(expression, metadata) {
+	add(expression, metadata, memoize_if_state = false) {
 		for (const binding of metadata.dependencies) {
 			if (binding.blocker) {
 				this.#blockers.add(binding.blocker);
 			}
 		}
 
-		if (!metadata.has_call && !metadata.has_await) {
+		const should_memoize =
+			metadata.has_call || metadata.has_await || (memoize_if_state && metadata.has_state);
+
+		if (!should_memoize) {
 			// no memoization required
 			return expression;
 		}
