@@ -9,11 +9,10 @@ import { decode_character_references } from '../utils/html.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { create_fragment } from '../utils/create.js';
-import { create_attribute, create_expression_metadata, is_element_node } from '../../nodes.js';
+import { create_attribute, ExpressionMetadata, is_element_node } from '../../nodes.js';
 import { get_attribute_expression, is_expression_attribute } from '../../../utils/ast.js';
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
 import { list } from '../../../utils/string.js';
-import { regex_whitespace } from '../../patterns.js';
 
 const regex_invalid_unquoted_attribute_value = /^(\/>|[\s"'=<>`])/;
 const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
@@ -297,7 +296,7 @@ export default function element(parser) {
 			element.tag = get_attribute_expression(definition);
 		}
 
-		element.metadata.expression = create_expression_metadata();
+		element.metadata.expression = new ExpressionMetadata();
 	}
 
 	if (is_top_level_script_or_style) {
@@ -508,7 +507,7 @@ function read_attribute(parser) {
 				end: parser.index,
 				expression,
 				metadata: {
-					expression: create_expression_metadata()
+					expression: new ExpressionMetadata()
 				}
 			};
 
@@ -528,7 +527,7 @@ function read_attribute(parser) {
 				end: parser.index,
 				expression,
 				metadata: {
-					expression: create_expression_metadata()
+					expression: new ExpressionMetadata()
 				}
 			};
 
@@ -568,7 +567,7 @@ function read_attribute(parser) {
 					name
 				},
 				metadata: {
-					expression: create_expression_metadata()
+					expression: new ExpressionMetadata()
 				}
 			};
 
@@ -628,7 +627,7 @@ function read_attribute(parser) {
 				modifiers: /** @type {Array<'important'>} */ (modifiers),
 				value,
 				metadata: {
-					expression: create_expression_metadata()
+					expression: new ExpressionMetadata()
 				}
 			};
 		}
@@ -658,7 +657,7 @@ function read_attribute(parser) {
 			name: directive_name,
 			expression,
 			metadata: {
-				expression: create_expression_metadata()
+				expression: new ExpressionMetadata()
 			}
 		};
 
@@ -824,7 +823,7 @@ function read_sequence(parser, done, location) {
 				end: parser.index,
 				expression,
 				metadata: {
-					expression: create_expression_metadata()
+					expression: new ExpressionMetadata()
 				}
 			};
 

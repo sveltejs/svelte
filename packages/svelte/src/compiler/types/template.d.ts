@@ -1,4 +1,4 @@
-import type { Binding, ExpressionMetadata } from '#compiler';
+import type { Binding } from '#compiler';
 import type {
 	ArrayExpression,
 	ArrowFunctionExpression,
@@ -18,6 +18,7 @@ import type {
 import type { Scope } from '../phases/scope';
 import type { _CSS } from './css';
 import type { AwaitedDeclaration } from '../phases/types';
+import type { ExpressionMetadata } from '../phases/nodes';
 
 /**
  * - `html`    — the default, for e.g. `<div>` or `<span>`

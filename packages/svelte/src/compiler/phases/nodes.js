@@ -1,5 +1,5 @@
 /** @import { Expression, PrivateIdentifier } from 'estree' */
-/** @import { AST, ExpressionMetadata } from '#compiler' */
+/** @import { AST, Binding } from '#compiler' */
 
 /**
  * All nodes that can appear elsewhere than the top level, have attributes and can contain children
@@ -64,20 +64,37 @@ export function create_attribute(name, start, end, value) {
 		}
 	};
 }
+export class ExpressionMetadata {
+	/** True if the expression references state directly, or _might_ (via member/call expressions) */
+	has_state = false;
 
-/**
- * @returns {ExpressionMetadata}
- */
-export function create_expression_metadata() {
-	return {
-		dependencies: new Set(),
-		references: new Set(),
-		has_state: false,
-		has_call: false,
-		has_member_expression: false,
-		has_assignment: false,
-		has_await: false
-	};
+	/** True if the expression involves a call expression (often, it will need to be wrapped in a derived) */
+	has_call = false;
+
+	/** True if the expression contains `await` */
+	has_await = false;
+
+	/** True if the expression includes a member expression */
+	has_member_expression = false;
+
+	/** True if the expression includes an assignment or an update */
+	has_assignment = false;
+
+	/**
+	 * All the bindings that are referenced eagerly (not inside functions) in this expression
+	 * @type {Set<Binding>}
+	 */
+	dependencies = new Set();
+
+	/**
+	 * True if the expression references state directly, or _might_ (via member/call expressions)
+	 * @type {Set<Binding>}
+	 */
+	references = new Set();
+}
+
+export function new ExpressionMetadata() {
+	return new ExpressionMetadata();
 }
 
 /**

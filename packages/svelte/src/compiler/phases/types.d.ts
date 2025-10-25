@@ -1,4 +1,4 @@
-import type { AST, Binding, ExpressionMetadata, StateField } from '#compiler';
+import type { AST, Binding, StateField } from '#compiler';
 import type {
 	AwaitExpression,
 	CallExpression,
@@ -14,6 +14,7 @@ import type {
 	VariableDeclarator
 } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
+import type { ExpressionMetadata } from './nodes.js';
 
 export interface Js {
 	ast: Program;

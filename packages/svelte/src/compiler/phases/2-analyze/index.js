@@ -10,7 +10,7 @@ import { extract_identifiers, has_await_expression } from '../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
-import { create_attribute, create_expression_metadata, is_custom_element_node } from '../nodes.js';
+import { create_attribute, is_custom_element_node } from '../nodes.js';
 import { analyze_css } from './css/css-analyze.js';
 import { prune } from './css/css-prune.js';
 import { hash, is_rune } from '../../../utils.js';

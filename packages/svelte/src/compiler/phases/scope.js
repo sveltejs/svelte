@@ -1,9 +1,9 @@
-/** @import { ArrowFunctionExpression, BinaryOperator, ClassDeclaration, Expression, FunctionDeclaration, FunctionExpression, Identifier, ImportDeclaration, MemberExpression, LogicalOperator, Node, Pattern, UnaryOperator, VariableDeclarator, Super } from 'estree' */
+/** @import { BinaryOperator, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, LogicalOperator, Node, Pattern, UnaryOperator, VariableDeclarator, Super } from 'estree' */
 /** @import { Context, Visitor } from 'zimmerframe' */
 /** @import { AST, BindingKind, DeclarationKind } from '#compiler' */
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
-import { create_expression_metadata } from './nodes.js';
+import { ExpressionMetadata } from './nodes.js';
 import * as b from '#compiler/builders';
 import * as e from '../errors.js';
 import {
@@ -1210,7 +1210,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			if (node.fallback) visit(node.fallback, { scope });
 
 			node.metadata = {
-				expression: create_expression_metadata(),
+				expression: new ExpressionMetadata(),
 				keyed: false,
 				contains_group_binding: false,
 				index: scope.root.unique('$$index'),

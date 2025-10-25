@@ -1,5 +1,5 @@
 /** @import { ArrayExpression, Expression, ExpressionStatement, Identifier, MemberExpression, ObjectExpression } from 'estree' */
-/** @import { AST, ExpressionMetadata } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 /** @import { Scope } from '../../../scope' */
 import {
@@ -11,11 +11,7 @@ import {
 import { is_ignored } from '../../../../state.js';
 import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import {
-	create_attribute,
-	create_expression_metadata,
-	is_custom_element_node
-} from '../../../nodes.js';
+import { create_attribute, ExpressionMetadata, is_custom_element_node } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_getter } from '../utils.js';
 import {
@@ -516,7 +512,7 @@ export function build_class_directives_object(
 ) {
 	let properties = [];
 
-	const metadata = create_expression_metadata();
+	const metadata = new ExpressionMetadata();
 
 	for (const d of class_directives) {
 		merge_metadata(metadata, d.metadata.expression);
@@ -544,7 +540,7 @@ export function build_style_directives_object(
 	const normal = b.object([]);
 	const important = b.object([]);
 
-	const metadata = create_expression_metadata();
+	const metadata = new ExpressionMetadata();
 
 	for (const d of style_directives) {
 		merge_metadata(metadata, d.metadata.expression);
