@@ -34,14 +34,15 @@ import {
 	skip_nodes
 } from '../dom/hydration.js';
 import { create_text } from '../dom/operations.js';
+import { noop } from '../../shared/utils.js';
 
 /**
- * @param {Array<Promise<any>>} dependencies
+ * @param {Promise<void> | undefined} blocker
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
  * @param {(values: Value[]) => any} fn
  */
-export function flatten(dependencies, sync, async, fn) {
+export function flatten(blocker, sync, async, fn) {
 	const d = is_runes() ? derived : derived_safe_equal;
 
 	if (async.length === 0) {
@@ -56,12 +57,10 @@ export function flatten(dependencies, sync, async, fn) {
 
 	var was_hydrating = hydrating;
 
-	Promise.all(dependencies).then((values) => {
+	Promise.resolve(blocker).then((values) => {
 		restore();
 
-		const result = Promise.all(
-			async.map((expression) => async_derived(() => expression(...values)))
-		)
+		const result = Promise.all(async.map((expression) => async_derived(expression)))
 			.then((result) => {
 				restore();
 
@@ -271,10 +270,25 @@ export async function async_body(anchor, fn) {
 }
 
 /**
- * @param {Array<Promise<any>>} deps
- * @param {(...deps: any) => any} fn
+ * @param {Array<() => void | Promise<void>>} thunks
  */
-export function run(deps, fn) {
-	// TODO save/restore context
-	return Promise.all(deps).then(fn);
+export function run(thunks) {
+	const restore = capture();
+
+	let promise = Promise.resolve();
+
+	return thunks.map((fn) => {
+		promise = promise
+			.then(() => {
+				try {
+					restore();
+					return fn();
+				} finally {
+					unset_context();
+				}
+			})
+			.then(noop);
+
+		return promise;
+	});
 }

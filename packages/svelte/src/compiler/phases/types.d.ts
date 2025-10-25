@@ -130,22 +130,14 @@ export interface ComponentAnalysis extends Analysis {
 	 */
 	snippets: Set<AST.SnippetBlock>;
 	/**
-	 * A lookup of awaited declarations. If you have something this in `<script>`...
-	 *
-	 *   let a = await get_a();
-	 *   let b = get_b();
-	 *
-	 * ...it will get transformed to something like this...
-	 *
-	 *   let $$0 = $.run([], () => get_a());
-	 *   let $$1 = $.run([$$0], () => get_b());
-	 *
-	 * ...and references to `a` or `b` in the template should be mediated by `$$0` and `$$1`
-	 */
-	awaited_declarations: Map<string, AwaitedDeclaration>;
-	/**
 	 * Information about top-level instance statements that need to be transformed
 	 * so that we can run the template synchronously
 	 */
 	awaited_statements: Map<Statement | ModuleDeclaration | VariableDeclarator, AwaitedStatement>;
+	/**
+	 * A map that tells us which of the `$$promises` needs to be awaited
+	 * before a particular binding can be accessed
+	 * TODO this gets populated during transform, which feels wrong
+	 */
+	promise_indexes: Map<Binding, number>;
 }

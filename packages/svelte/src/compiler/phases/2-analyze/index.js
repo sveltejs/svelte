@@ -555,8 +555,8 @@ export function analyze_component(root, source, options) {
 		snippets: new Set(),
 		async_deriveds: new Set(),
 		pickled_awaits: new Set(),
-		awaited_declarations: new Map(),
-		awaited_statements: new Map()
+		awaited_statements: new Map(),
+		promise_indexes: new Map()
 	};
 
 	if (!runes) {

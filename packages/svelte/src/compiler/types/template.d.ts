@@ -466,9 +466,6 @@ export namespace AST {
 		alternate: Fragment | null;
 		/** @internal */
 		metadata: {
-			async: {
-				declarations: Set<AwaitedDeclaration>;
-			};
 			expression: ExpressionMetadata;
 		};
 	}

@@ -166,7 +166,7 @@ function transform_body(program, context) {
 	/** @type {AwaitedStatement[]} */
 	const deriveds = [];
 
-	const { awaited_statements } = context.state.analysis;
+	const { awaited_statements, promise_indexes } = context.state.analysis;
 
 	let awaited = false;
 
@@ -188,14 +188,17 @@ function transform_body(program, context) {
 			return;
 		}
 
-		if (node.type === 'VariableDeclarator') {
-			const rune = get_rune(node.init, context.state.scope);
+		// TODO put deriveds into a separate array, and group them immediately
+		// after their latest dependency. for now, to avoid having to figure
+		// out the intricacies of dependency tracking, just let 'em waterfall
+		// if (node.type === 'VariableDeclarator') {
+		// 	const rune = get_rune(node.init, context.state.scope);
 
-			if (rune === '$derived' || rune === '$derived.by') {
-				deriveds.push(statement);
-				return;
-			}
-		}
+		// 	if (rune === '$derived' || rune === '$derived.by') {
+		// 		deriveds.push(statement);
+		// 		return;
+		// 	}
+		// }
 
 		statements.push(statement);
 	};
@@ -305,6 +308,14 @@ function transform_body(program, context) {
 
 	// console.log('statements', statements);
 	// console.log('deriveds', deriveds);
+
+	for (let i = 0; i < statements.length; i += 1) {
+		const s = statements[i];
+
+		for (const binding of s.declarations) {
+			promise_indexes.set(binding, i);
+		}
+	}
 
 	return out;
 }

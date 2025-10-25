@@ -25,8 +25,16 @@ export function IfBlock(node, context) {
 		statements.push(b.var(alternate_id, b.arrow([b.id('$$anchor')], alternate)));
 	}
 
+	// TODO helperise
+	const promise_index = Array.from(node.metadata.expression.dependencies).reduce(
+		(index, binding) => Math.max(index, context.state.analysis.promise_indexes.get(binding) ?? -1),
+		-1
+	);
+
+	const is_async = promise_index > -1 || node.metadata.expression.has_await;
+
 	const expression = build_expression(context, node.test, node.metadata.expression);
-	const test = node.metadata.async ? b.call('$.get', b.id('$$condition')) : expression;
+	const test = is_async ? b.call('$.get', b.id('$$condition')) : expression;
 
 	/** @type {Expression[]} */
 	const args = [
@@ -70,20 +78,14 @@ export function IfBlock(node, context) {
 
 	statements.push(add_svelte_meta(b.call('$.if', ...args), node, 'if'));
 
-	if (node.metadata.async) {
+	if (is_async) {
 		context.state.init.push(
 			b.stmt(
 				b.call(
 					'$.async',
 					context.state.node,
-					b.array([...node.metadata.async.declarations].map((d) => d.id)),
-					b.array([
-						b.arrow(
-							[...node.metadata.async.declarations].map((d) => d.pattern),
-							expression,
-							node.metadata.expression.has_await
-						)
-					]),
+					promise_index === -1 ? undefined : b.id(`$$promises[${promise_index}]`),
+					b.array([b.thunk(expression, node.metadata.expression.has_await)]),
 					b.arrow([context.state.node, b.id('$$condition')], b.block(statements))
 				)
 			)

@@ -14,11 +14,11 @@ import { get_boundary } from './boundary.js';
 
 /**
  * @param {TemplateNode} node
- * @param {Array<Promise<any>>} dependencies
+ * @param {Promise<void> | undefined} blocker
  * @param {Array<() => Promise<any>>} expressions
  * @param {(anchor: TemplateNode, ...deriveds: Value[]) => void} fn
  */
-export function async(node, dependencies, expressions, fn) {
+export function async(node, blocker, expressions, fn) {
 	var boundary = get_boundary();
 	var batch = /** @type {Batch} */ (current_batch);
 	var blocking = !boundary.is_pending();
@@ -36,7 +36,7 @@ export function async(node, dependencies, expressions, fn) {
 		set_hydrate_node(end);
 	}
 
-	flatten(dependencies, [], expressions, (values) => {
+	flatten(blocker, [], expressions, (values) => {
 		if (was_hydrating) {
 			set_hydrating(true);
 			set_hydrate_node(previous_hydrate_node);
