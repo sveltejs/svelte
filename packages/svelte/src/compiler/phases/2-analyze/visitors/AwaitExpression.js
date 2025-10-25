@@ -145,6 +145,9 @@ function is_last_evaluated_expression(path, node) {
 				if (node !== parent.expressions.at(-1)) return false;
 				break;
 
+			case 'VariableDeclarator':
+				return true;
+
 			default:
 				return false;
 		}
