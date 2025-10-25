@@ -1,5 +1,5 @@
 /** @import { Effect, TemplateNode, Value } from '#client' */
-import { DESTROYED } from '#client/constants';
+import { DESTROYED, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
 	component_context,
@@ -290,15 +290,36 @@ export function run(thunks) {
 	boundary.update_pending_count(1);
 	batch.increment(blocking);
 
+	var active = /** @type {Effect} */ (active_effect);
+
+	/** @type {null | { error: any }} */
+	var errored = null;
+
 	let was_hydrating = hydrating;
 
-	var promise = Promise.resolve(thunks[0]());
+	/** @param {any} error */
+	const handle_error = (error) => {
+		errored = { error }; // wrap in object in case a promise rejects with a falsy value
+
+		if (!aborted(active)) {
+			invoke_error_boundary(error, active);
+		}
+	};
+
+	var promise = Promise.resolve(thunks[0]()).catch(handle_error);
+
 	var promises = [promise];
 
 	for (const fn of thunks.slice(1)) {
 		promise = promise
 			.then(() => {
-				// TODO abort if component was destroyed?
+				if (errored) {
+					throw errored.error;
+				}
+
+				if (aborted(active)) {
+					throw STALE_REACTION;
+				}
 
 				try {
 					restore();
@@ -312,7 +333,8 @@ export function run(thunks) {
 					}
 				}
 			})
-			.then(() => {
+			.catch(handle_error)
+			.finally(() => {
 				unset_context();
 
 				if (was_hydrating) {
