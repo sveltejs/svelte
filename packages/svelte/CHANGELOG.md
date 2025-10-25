@@ -1,5 +1,11 @@
 # svelte
 
+## 5.42.1
+
+### Patch Changes
+
+- fix: ignore fork `discard()` after `commit()` ([#17034](https://github.com/sveltejs/svelte/pull/17034))
+
 ## 5.42.0
 
 ### Minor Changes
