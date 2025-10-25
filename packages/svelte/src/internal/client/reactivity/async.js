@@ -283,9 +283,6 @@ export async function async_body(anchor, fn) {
 export function run(thunks) {
 	const restore = capture();
 
-	// let promise = Promise.resolve();
-	let promise = new Promise((f) => Batch.enqueue(() => f(undefined)));
-
 	var boundary = get_boundary();
 	var batch = /** @type {Batch} */ (current_batch);
 	var blocking = !boundary.is_pending();
@@ -295,7 +292,10 @@ export function run(thunks) {
 
 	let was_hydrating = hydrating;
 
-	const promises = thunks.map((fn) => {
+	var promise = Promise.resolve(thunks[0]());
+	var promises = [promise];
+
+	for (const fn of thunks.slice(1)) {
 		promise = promise
 			.then(() => {
 				// TODO abort if component was destroyed?
@@ -320,8 +320,8 @@ export function run(thunks) {
 				}
 			});
 
-		return promise;
-	});
+		promises.push(promise);
+	}
 
 	promise.then(() => {
 		boundary.update_pending_count(-1);
