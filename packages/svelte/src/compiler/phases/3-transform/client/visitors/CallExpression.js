@@ -1,4 +1,4 @@
-/** @import { CallExpression, Expression, MemberExpression } from 'estree' */
+/** @import { CallExpression, Expression } from 'estree' */
 /** @import { Context } from '../types' */
 import { dev, is_ignored } from '../../../../state.js';
 import * as b from '#compiler/builders';
@@ -61,6 +61,17 @@ export function CallExpression(node, context) {
 				/** @type {Expression} */ (context.visit(node.arguments[0])),
 				is_ignored(node, 'state_snapshot_uncloneable') && b.true
 			);
+
+		case '$effect':
+		case '$effect.pre': {
+			const callee = rune === '$effect' ? '$.user_effect' : '$.user_pre_effect';
+			const func = /** @type {Expression} */ (context.visit(node.arguments[0]));
+
+			const expr = b.call(callee, /** @type {Expression} */ (func));
+			expr.callee.loc = node.callee.loc; // ensure correct mapping
+
+			return expr;
+		}
 
 		case '$effect.root':
 			return b.call(
