@@ -134,7 +134,7 @@ export function build_component(node, component_name, context) {
 				props_and_spreads.push(
 					b.thunk(
 						attribute.metadata.expression.has_await || attribute.metadata.expression.has_call
-							? b.call('$.get', memoizer.add(expression, attribute.metadata.expression.has_await))
+							? b.call('$.get', memoizer.add(expression, attribute.metadata.expression))
 							: expression
 					)
 				);
@@ -149,7 +149,7 @@ export function build_component(node, component_name, context) {
 						build_attribute_value(attribute.value, context, (value, metadata) => {
 							// TODO put the derived in the local block
 							return metadata.has_call || metadata.has_await
-								? b.call('$.get', memoizer.add(value, metadata.has_await))
+								? b.call('$.get', memoizer.add(value, metadata))
 								: value;
 						}).value
 					)
@@ -184,9 +184,7 @@ export function build_component(node, component_name, context) {
 							);
 						});
 
-					return should_wrap_in_derived
-						? b.call('$.get', memoizer.add(value, metadata.has_await))
-						: value;
+					return should_wrap_in_derived ? b.call('$.get', memoizer.add(value, metadata)) : value;
 				}
 			);
 

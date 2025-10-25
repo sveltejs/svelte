@@ -269,7 +269,7 @@ export function RegularElement(node, context) {
 					context,
 					(value, metadata) =>
 						metadata.has_call || metadata.has_await
-							? context.state.memoizer.add(value, metadata.has_await)
+							? context.state.memoizer.add(value, metadata)
 							: value
 				);
 
@@ -511,7 +511,7 @@ export function build_class_directives_object(
 
 	const directives = b.object(properties);
 
-	return has_call_or_state || has_await ? memoizer.add(directives, has_await) : directives;
+	return has_call_or_state || has_await ? memoizer.add(directives, metadata) : directives;
 }
 
 /**
@@ -546,7 +546,7 @@ export function build_style_directives_object(
 
 	const directives = important.properties.length ? b.array([normal, important]) : normal;
 
-	return has_call_or_state || has_await ? memoizer.add(directives, has_await) : directives;
+	return has_call_or_state || has_await ? memoizer.add(directives, metadata) : directives;
 }
 
 /**
@@ -675,7 +675,7 @@ function build_element_special_value_attribute(
 		element === 'select' && attribute.value !== true && !is_text_attribute(attribute);
 
 	const { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
-		metadata.has_call || metadata.has_await ? state.memoizer.add(value, metadata.has_await) : value
+		metadata.has_call || metadata.has_await ? state.memoizer.add(value, metadata) : value
 	);
 
 	const evaluated = context.state.scope.evaluate(value);

@@ -23,12 +23,12 @@ export class Memoizer {
 
 	/**
 	 * @param {Expression} expression
-	 * @param {boolean} has_await
+	 * @param {ExpressionMetadata} metadata
 	 */
-	add(expression, has_await) {
+	add(expression, metadata) {
 		const id = b.id('#'); // filled in later
 
-		(has_await ? this.#async : this.#sync).push({ id, expression });
+		(metadata.has_await ? this.#async : this.#sync).push({ id, expression });
 
 		return id;
 	}
@@ -73,7 +73,7 @@ export function build_template_chunk(
 	context,
 	state = context.state,
 	memoize = (value, metadata) =>
-		metadata.has_call || metadata.has_await ? state.memoizer.add(value, metadata.has_await) : value
+		metadata.has_call || metadata.has_await ? state.memoizer.add(value, metadata) : value
 ) {
 	/** @type {Expression[]} */
 	const expressions = [];
