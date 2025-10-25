@@ -480,6 +480,7 @@ function set_attributes(
 
 /**
  * @param {Element & ElementCSSInlineStyle} element
+ * @param {Array<Promise<void>>} blockers
  * @param {(...expressions: any) => Record<string | symbol, any>} fn
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
@@ -489,6 +490,7 @@ function set_attributes(
  */
 export function attribute_effect(
 	element,
+	blockers,
 	fn,
 	sync = [],
 	async = [],
@@ -496,7 +498,7 @@ export function attribute_effect(
 	should_remove_defaults = false,
 	skip_warning = false
 ) {
-	flatten(sync, async, (values) => {
+	flatten(blockers, sync, async, (values) => {
 		/** @type {Record<string | symbol, any> | undefined} */
 		var prev = undefined;
 

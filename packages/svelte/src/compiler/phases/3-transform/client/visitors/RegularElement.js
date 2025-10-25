@@ -503,7 +503,6 @@ function merge_metadata(target, source) {
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
  * @param {Memoizer} memoizer
- * @return {ObjectExpression | Identifier}
  */
 export function build_class_directives_object(
 	class_directives,
@@ -530,7 +529,6 @@ export function build_class_directives_object(
  * @param {AST.StyleDirective[]} style_directives
  * @param {ComponentContext} context
  * @param {Memoizer} memoizer
- * @return {ObjectExpression | ArrayExpression | Identifier}}
  */
 export function build_style_directives_object(
 	style_directives,
@@ -556,7 +554,7 @@ export function build_style_directives_object(
 
 	const directives = important.properties.length ? b.array([normal, important]) : normal;
 
-	returnmemoizer.add(directives, metadata);
+	return memoizer.add(directives, metadata);
 }
 
 /**

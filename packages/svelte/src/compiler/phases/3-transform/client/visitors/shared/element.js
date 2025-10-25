@@ -86,6 +86,7 @@ export function build_attribute_effect(
 			b.call(
 				'$.attribute_effect',
 				element_id,
+				memoizer.blockers(),
 				b.arrow(ids, b.object(values)),
 				memoizer.sync_values(),
 				memoizer.async_values(),
@@ -163,7 +164,7 @@ export function build_set_class(element, node_id, attribute, class_directives, c
 	/** @type {ObjectExpression | Identifier | undefined} */
 	let prev;
 
-	/** @type {ObjectExpression | Identifier | undefined} */
+	/** @type {Expression | undefined} */
 	let next;
 
 	if (class_directives.length) {

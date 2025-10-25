@@ -131,12 +131,10 @@ const visitors = {
 		ignore_map.set(node, structuredClone(ignore_stack));
 
 		const scope = state.scopes.get(node);
-		const awaited = state.analysis.awaited_statements.get(node) ?? null;
 
-		if (awaited || (scope !== undefined && scope !== state.scope)) {
+		if (scope !== undefined && scope !== state.scope) {
 			const child_state = { ...state };
 
-			if (awaited) child_state.expression = awaited.metadata;
 			if (scope !== undefined && scope !== state.scope) child_state.scope = scope;
 
 			next(child_state);
