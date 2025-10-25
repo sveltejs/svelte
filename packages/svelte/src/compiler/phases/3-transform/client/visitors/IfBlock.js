@@ -25,13 +25,7 @@ export function IfBlock(node, context) {
 		statements.push(b.var(alternate_id, b.arrow([b.id('$$anchor')], alternate)));
 	}
 
-	// TODO helperise
-	const blockers = new Set();
-	for (const d of node.metadata.expression.dependencies) {
-		if (d.blocker) blockers.add(d.blocker);
-	}
-
-	const is_async = blockers.size > 0 || node.metadata.expression.has_await;
+	const is_async = node.metadata.expression.is_async();
 
 	const expression = build_expression(context, node.test, node.metadata.expression);
 	const test = is_async ? b.call('$.get', b.id('$$condition')) : expression;
@@ -84,7 +78,7 @@ export function IfBlock(node, context) {
 				b.call(
 					'$.async',
 					context.state.node,
-					b.array([...blockers]),
+					node.metadata.expression.blockers(),
 					b.array([b.thunk(expression, node.metadata.expression.has_await)]),
 					b.arrow([context.state.node, b.id('$$condition')], b.block(statements))
 				)

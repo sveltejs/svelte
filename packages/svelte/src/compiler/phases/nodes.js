@@ -1,5 +1,6 @@
 /** @import { Expression, PrivateIdentifier } from 'estree' */
 /** @import { AST, Binding } from '#compiler' */
+import * as b from '#compiler/builders';
 
 /**
  * All nodes that can appear elsewhere than the top level, have attributes and can contain children
@@ -91,6 +92,29 @@ export class ExpressionMetadata {
 	 * @type {Set<Binding>}
 	 */
 	references = new Set();
+
+	/** @type {null | Set<Expression>} */
+	#blockers = null;
+
+	#get_blockers() {
+		if (!this.#blockers) {
+			this.#blockers = new Set();
+
+			for (const d of this.dependencies) {
+				if (d.blocker) this.#blockers.add(d.blocker);
+			}
+		}
+
+		return this.#blockers;
+	}
+
+	blockers() {
+		return b.array([...this.#get_blockers()]);
+	}
+
+	is_async() {
+		return this.has_await || this.#get_blockers().size > 0;
+	}
 }
 
 export function new ExpressionMetadata() {
