@@ -497,12 +497,14 @@ export function build_component(node, component_name, context) {
 	memoizer.apply();
 
 	const async_values = memoizer.async_values();
+	const blockers = memoizer.blockers();
 
-	if (async_values) {
+	if (async_values || blockers.elements.length > 0) {
 		return b.stmt(
 			b.call(
 				'$.async',
 				anchor,
+				blockers,
 				async_values,
 				b.arrow([b.id('$$anchor'), ...memoizer.async_ids()], b.block(statements))
 			)
