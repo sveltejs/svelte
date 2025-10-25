@@ -297,10 +297,13 @@ function transform_body(program, context) {
 			}
 
 			if (s.node.type === 'ExpressionStatement') {
-				return b.thunk(b.unary('void', /** @type {Expression} */ (s.node.expression)), s.has_await);
+				return b.thunk(
+					b.unary('void', /** @type {Expression} */ (context.visit(s.node.expression))),
+					s.has_await
+				);
 			}
 
-			return b.thunk(b.block([/** @type {Statement} */ (s.node)]), s.has_await);
+			return b.thunk(b.block([/** @type {Statement} */ (context.visit(s.node))]), s.has_await);
 		});
 
 		var id = b.id('$$promises'); // TODO if we use this technique for fragments, need to deconflict
