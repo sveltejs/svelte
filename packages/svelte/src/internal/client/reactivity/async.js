@@ -276,9 +276,18 @@ export function run(thunks) {
 
 	let promise = Promise.resolve();
 
-	return thunks.map((fn) => {
+	var boundary = get_boundary();
+	var batch = /** @type {Batch} */ (current_batch);
+	var blocking = !boundary.is_pending();
+
+	boundary.update_pending_count(1);
+	batch.increment(blocking);
+
+	const promises = thunks.map((fn) => {
 		promise = promise
 			.then(() => {
+				// TODO abort if component was destroyed
+
 				try {
 					restore();
 					return fn();
@@ -290,4 +299,11 @@ export function run(thunks) {
 
 		return promise;
 	});
+
+	promise.then(() => {
+		boundary.update_pending_count(-1);
+		batch.decrement(blocking);
+	});
+
+	return promises;
 }

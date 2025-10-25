@@ -255,12 +255,15 @@ function transform_body(program, context) {
 
 	if (statements.length > 0) {
 		var declarations = statements.map((s) => s.declarations).flat();
-		out.push(
-			b.declaration(
-				'var',
-				declarations.map((d) => b.declarator(d.node))
-			)
-		);
+
+		if (declarations.length > 0) {
+			out.push(
+				b.declaration(
+					'var',
+					declarations.map((d) => b.declarator(d.node))
+				)
+			);
+		}
 
 		const thunks = statements.map((s) => {
 			if (s.node.type === 'VariableDeclarator') {
