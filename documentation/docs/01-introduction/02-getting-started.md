@@ -1,5 +1,6 @@
 ---
 title: Getting started
+use_cases: "always: project setup, creating new Svelte apps, configuring build tools, initial development environment"
 ---
 
 We recommend using [SvelteKit](../kit), which lets you [build almost anything](../kit/project-types). It's the official application framework from the Svelte team and powered by [Vite](https://vite.dev/). Create a new project with:

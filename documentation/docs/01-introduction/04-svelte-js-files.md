@@ -1,5 +1,6 @@
 ---
 title: .svelte.js and .svelte.ts files
+use_cases: "reusable reactive logic, shared state modules, composable reactive utilities, reactive helper functions"
 ---
 
 Besides `.svelte` files, Svelte also operates on `.svelte.js` and `.svelte.ts` files.
