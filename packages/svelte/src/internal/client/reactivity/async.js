@@ -293,19 +293,32 @@ export function run(thunks) {
 	boundary.update_pending_count(1);
 	batch.increment(blocking);
 
+	let was_hydrating = hydrating;
+
 	const promises = thunks.map((fn) => {
 		promise = promise
 			.then(() => {
-				// TODO abort if component was destroyed
+				// TODO abort if component was destroyed?
 
 				try {
 					restore();
 					return fn();
 				} finally {
+					// TODO do we need it here as well as below?
 					unset_context();
+
+					if (was_hydrating) {
+						set_hydrating(false);
+					}
 				}
 			})
-			.then(noop);
+			.then(() => {
+				unset_context();
+
+				if (was_hydrating) {
+					set_hydrating(false);
+				}
+			});
 
 		return promise;
 	});
