@@ -15,7 +15,7 @@ export default function Async_each_hoisting($$anchor) {
 
 			var text = $.text();
 
-			$.template_effect([], ($0) => $.set_text(text, $0), void 0, [() => $.get(item)]);
+			$.template_effect(($0) => $.set_text(text, $0), void 0, [() => $.get(item)]);
 			$.append($$anchor, text);
 		});
 	});

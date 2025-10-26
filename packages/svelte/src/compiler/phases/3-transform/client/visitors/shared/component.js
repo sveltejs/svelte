@@ -502,7 +502,7 @@ export function build_component(node, component_name, context) {
 	const async_values = memoizer.async_values();
 	const blockers = memoizer.blockers();
 
-	if (async_values || blockers.elements.length > 0) {
+	if (async_values || blockers) {
 		return b.stmt(
 			b.call(
 				'$.async',

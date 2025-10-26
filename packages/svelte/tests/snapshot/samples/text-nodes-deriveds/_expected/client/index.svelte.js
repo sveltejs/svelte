@@ -19,6 +19,6 @@ export default function Text_nodes_deriveds($$anchor) {
 	var text = $.child(p);
 
 	$.reset(p);
-	$.template_effect([], ($0, $1) => $.set_text(text, `${$0 ?? ''}${$1 ?? ''}`), [text1, text2]);
+	$.template_effect(($0, $1) => $.set_text(text, `${$0 ?? ''}${$1 ?? ''}`), [text1, text2]);
 	$.append($$anchor, p);
 }

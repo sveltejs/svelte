@@ -490,10 +490,10 @@ function set_attributes(
  */
 export function attribute_effect(
 	element,
-	blockers,
 	fn,
 	sync = [],
 	async = [],
+	blockers = [],
 	css_hash,
 	should_remove_defaults = false,
 	skip_warning = false

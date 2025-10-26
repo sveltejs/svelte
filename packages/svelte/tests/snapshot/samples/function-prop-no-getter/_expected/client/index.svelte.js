@@ -20,7 +20,7 @@ export default function Function_prop_no_getter($$anchor) {
 
 			var text = $.text();
 
-			$.template_effect([], () => $.set_text(text, `clicks: ${$.get(count) ?? ''}`));
+			$.template_effect(() => $.set_text(text, `clicks: ${$.get(count) ?? ''}`));
 			$.append($$anchor, text);
 		},
 

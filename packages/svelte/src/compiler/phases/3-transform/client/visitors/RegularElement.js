@@ -476,7 +476,6 @@ function setup_select_synchronization(value_binding, context) {
 		b.stmt(
 			b.call(
 				'$.template_effect',
-				b.array([]),
 				b.thunk(
 					b.block([b.stmt(/** @type {Expression} */ (context.visit(bound))), b.stmt(invalidator)])
 				)
@@ -655,7 +654,7 @@ function build_custom_element_attribute_update_assignment(node_id, attribute, co
 
 	// this is different from other updates — it doesn't get grouped,
 	// because set_custom_element_data may not be idempotent
-	const update = has_state ? b.call('$.template_effect', b.array([]), b.thunk(call)) : call;
+	const update = has_state ? b.call('$.template_effect', b.thunk(call)) : call;
 
 	context.state.init.push(b.stmt(update));
 }

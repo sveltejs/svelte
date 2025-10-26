@@ -46,7 +46,7 @@ export function html(node, get_value, svg = false, mathml = false, skip_warning 
 
 	var value = '';
 
-	template_effect([], () => {
+	template_effect(() => {
 		var effect = /** @type {Effect} */ (active_effect);
 
 		if (value === (value = get_value() ?? '')) {

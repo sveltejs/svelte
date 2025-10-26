@@ -23,6 +23,6 @@ export function DebugTag(node, context) {
 	const call = b.call('console.log', object);
 
 	context.state.init.push(
-		b.stmt(b.call('$.template_effect', b.array([]), b.thunk(b.block([b.stmt(call), b.debugger]))))
+		b.stmt(b.call('$.template_effect', b.thunk(b.block([b.stmt(call), b.debugger]))))
 	);
 }

@@ -44,6 +44,6 @@ export default function Skip_static_subtree($$anchor, $$props) {
 	var img = $.sibling(select, 2);
 
 	$.next(2);
-	$.template_effect([], () => $.set_text(text, $$props.title));
+	$.template_effect(() => $.set_text(text, $$props.title));
 	$.append($$anchor, fragment);
 }

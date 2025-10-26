@@ -26,7 +26,7 @@ export default function Await_block_scope($$anchor) {
 
 	var text_1 = $.sibling(node);
 
-	$.template_effect([], () => {
+	$.template_effect(() => {
 		$.set_text(text, `clicks: ${counter.count ?? ''}`);
 		$.set_text(text_1, ` ${counter.count ?? ''}`);
 	});

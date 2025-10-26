@@ -76,7 +76,7 @@ export function SlotElement(node, context) {
 	const async_values = memoizer.async_values();
 	const blockers = memoizer.blockers();
 
-	if (async_values || blockers.elements.length > 0) {
+	if (async_values || blockers) {
 		context.state.init.push(
 			b.stmt(
 				b.call(

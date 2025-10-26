@@ -60,7 +60,7 @@ export class Memoizer {
 	}
 
 	blockers() {
-		return b.array([...this.#blockers]);
+		return this.#blockers.size > 0 ? b.array([...this.#blockers]) : undefined;
 	}
 
 	deriveds(runes = true) {
@@ -191,7 +191,6 @@ export function build_render_statement(state) {
 	return b.stmt(
 		b.call(
 			'$.template_effect',
-			memoizer.blockers(),
 			b.arrow(
 				ids,
 				state.update.length === 1 && state.update[0].type === 'ExpressionStatement'
@@ -199,7 +198,8 @@ export function build_render_statement(state) {
 					: b.block(state.update)
 			),
 			memoizer.sync_values(),
-			memoizer.async_values()
+			memoizer.async_values(),
+			memoizer.blockers()
 		)
 	);
 }
