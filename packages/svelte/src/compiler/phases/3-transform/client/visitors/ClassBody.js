@@ -121,6 +121,9 @@ export function ClassBody(node, context) {
 			body.push(/** @type {PropertyDefinition} */ (context.visit(definition, child_state)));
 			continue;
 		}
+		const member = b.member(b.this, field.key);
+
+		const should_proxy = field.type === '$state' && true; // TODO
 
 		if (typeof name === 'string' && name[0] === '#') {
 			let value = definition.value
@@ -138,8 +141,6 @@ export function ClassBody(node, context) {
 			if (dev) {
 				call = b.call('$.tag', call, b.literal(`${declaration.id?.name ?? '[class]'}.${name}`));
 			}
-			const member = b.member(b.this, field.key);
-			const should_proxy = field.type === '$state' && true; // TODO
 
 			body.push(
 				b.prop_def(field.key, call),
@@ -164,9 +165,6 @@ export function ClassBody(node, context) {
 			}
 			const key = context.state.scope.generate('key');
 			computed_field_declarations.push(b.let(key));
-			const member = b.member(b.this, field.key);
-
-			const should_proxy = field.type === '$state' && true; // TODO
 
 			body.push(
 				b.prop_def(field.key, call),
