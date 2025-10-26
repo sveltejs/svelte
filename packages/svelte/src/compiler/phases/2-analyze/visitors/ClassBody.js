@@ -87,7 +87,10 @@ export function ClassBody(node, context) {
 	for (const child of node.body) {
 		if (child.type === 'PropertyDefinition' && !child.static) {
 			handle(child, child.key, child.value, child.computed && child.key.type !== 'Literal');
-			const key = /** @type {string} */ (get_name(child.key));
+			const key = get_name(child.key);
+			if (key === null) {
+				continue;
+			}
 			const field = fields.get(key);
 			if (!field) {
 				fields.set(key, [child.value ? 'assigned_prop' : 'prop']);
@@ -100,7 +103,11 @@ export function ClassBody(node, context) {
 			if (child.kind === 'constructor') {
 				constructor = child;
 			} else if (!child.computed) {
-				const key = (child.static ? '@' : '') + get_name(child.key);
+				const name = get_name(child.key);
+				if (name === null) {
+					continue;
+				}
+				const key = (child.static ? '@' : '') + name;
 				const field = fields.get(key);
 				if (!field) {
 					fields.set(key, [child.kind]);
