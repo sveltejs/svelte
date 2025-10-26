@@ -18,7 +18,7 @@ export default function Async_in_derived($$renderer, $$props) {
 			}
 		]);
 
-		$$renderer.async(async ($$renderer) => {
+		$$renderer.async([], async ($$renderer) => {
 			if (true) {
 				$$renderer.push('<!--[-->');
 
