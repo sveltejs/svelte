@@ -34,7 +34,13 @@ export function EachBlock(node, context) {
 
 	const new_body = /** @type {BlockStatement} */ (context.visit(node.body)).body;
 
-	each.push(...(node.body.metadata.has_await ? [create_async_block(b.block(new_body))] : new_body));
+	if (node.body)
+		each.push(
+			// TODO get rid of fragment.has_await
+			...(node.body.metadata.has_await
+				? [create_async_block(b.block(new_body), b.array([]), node.body.metadata.has_await)]
+				: new_body)
+		);
 
 	const for_loop = b.for(
 		b.declaration('let', [
