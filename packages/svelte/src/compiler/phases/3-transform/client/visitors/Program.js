@@ -150,6 +150,7 @@ export function Program(node, context) {
 	context.next();
 }
 
+// TODO find a way to DRY out this and the corresponding server visitor
 /**
  * @param {Program} program
  * @param {ComponentContext} context
