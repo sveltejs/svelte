@@ -2,6 +2,7 @@
 /** @import { Context } from '../types.js' */
 import * as b from '#compiler/builders';
 import { get_name } from '../../../nodes.js';
+import { is_constant } from '../../../scope.js';
 
 /**
  * @param {ClassBody} node
@@ -34,17 +35,43 @@ export function ClassBody(node, context) {
 
 		const member = b.member(b.this, field.key);
 		if (typeof name !== 'string' && field.computed_key) {
+			const computed_key = /** @type {Expression} */ (context.visit(field.computed_key));
+			const evaluation = context.state.scope.evaluate(computed_key);
+			if (evaluation.is_known) {
+				body.push(
+					b.prop_def(field.key, null),
+					b.method('get', b.literal(evaluation.value), [], [b.return(b.call(member))], true),
+					b.method(
+						'set',
+						b.literal(evaluation.value),
+						[b.id('$$value')],
+						[b.return(b.call(member, b.id('$$value')))],
+						true
+					)
+				);
+				continue;
+			}
+			if (is_constant(computed_key, context.state.scope)) {
+				body.push(
+					b.prop_def(field.key, null),
+					b.method('get', computed_key, [], [b.return(b.call(member))], true),
+					b.method(
+						'set',
+						computed_key,
+						[b.id('$$value')],
+						[b.return(b.call(member, b.id('$$value')))],
+						true
+					)
+				);
+				continue;
+			}
 			const key = context.state.scope.generate('key');
 			computed_field_declarations.push(b.let(key));
 			body.push(
 				b.prop_def(field.key, null),
 				b.method(
 					'get',
-					b.assignment(
-						'=',
-						b.id(key),
-						/** @type {Expression} */ (context.visit(field.computed_key))
-					),
+					b.assignment('=', b.id(key), computed_key),
 					[],
 					[b.return(b.call(member))],
 					true
@@ -133,6 +160,23 @@ export function ClassBody(node, context) {
 				);
 				continue;
 			}
+			if (is_constant(computed_key, context.state.scope)) {
+				body.push(
+					b.prop_def(
+						field.key,
+						/** @type {CallExpression} */ (context.visit(field.value, child_state))
+					),
+					b.method('get', computed_key, [], [b.return(b.call(member))], true),
+					b.method(
+						'set',
+						computed_key,
+						[b.id('$$value')],
+						[b.return(b.call(member, b.id('$$value')))],
+						true
+					)
+				);
+				continue;
+			}
 			const key = context.state.scope.generate('key');
 			computed_field_declarations.push(b.let(key));
 			body.push(
@@ -142,11 +186,7 @@ export function ClassBody(node, context) {
 				),
 				b.method(
 					'get',
-					b.assignment(
-						'=',
-						b.id(key),
-						/** @type {Expression} */ (context.visit(field.computed_key))
-					),
+					b.assignment('=', b.id(key), computed_key),
 					[],
 					[b.return(b.call(member))],
 					true

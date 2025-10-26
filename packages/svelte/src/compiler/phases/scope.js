@@ -1359,6 +1359,70 @@ export function get_rune(node, scope) {
 }
 
 /**
+ * @param {Expression} expression
+ * @param {Scope} scope
+ */
+export function is_constant(expression, scope) {
+	const evaluation = scope.evaluate(expression);
+	if (evaluation.is_known) {
+		return true;
+	}
+	let constant = true;
+	walk(/** @type {Node} */ (expression), null, {
+		Identifier(node, { path, stop }) {
+			if (is_reference(node, /** @type {Node} */ (path.at(-1)))) {
+				const binding = scope.get(node.name);
+				if (!binding || binding.reassigned) {
+					constant = false;
+					stop();
+					return;
+				}
+			}
+		},
+		ArrowFunctionExpression(_, { stop }) {
+			constant = false;
+			stop();
+		},
+		FunctionExpression(_, { stop }) {
+			constant = false;
+			stop();
+		},
+		ClassExpression(_, { stop }) {
+			constant = false;
+			stop();
+		},
+		MemberExpression(_, { stop }) {
+			constant = false;
+			stop();
+		},
+		CallExpression(node, { stop }) {
+			if (scope.evaluate(node).is_known) {
+				return;
+			}
+			constant = false;
+			stop();
+		},
+		UpdateExpression(_, { stop }) {
+			constant = false;
+			stop();
+		},
+		AssignmentExpression(_, { stop }) {
+			constant = false;
+			stop();
+		},
+		UnaryExpression(node, { next, stop }) {
+			if (node.operator === 'delete') {
+				constant = false;
+				stop();
+				return;
+			}
+			next();
+		}
+	});
+	return constant;
+}
+
+/**
  * Returns the name of the rune if the given expression is a `CallExpression` using a rune.
  * @param {Expression | Super} node
  * @param {Scope} scope
