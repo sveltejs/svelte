@@ -278,7 +278,7 @@ export function create_child_block(body, async) {
  * @param {ArrayExpression} blockers
  * @param {boolean} has_await
  */
-export function create_async_block(body, blockers, has_await) {
+export function create_async_block(body, blockers = b.array([]), has_await = true) {
 	return b.stmt(
 		b.call('$$renderer.async', blockers, b.arrow([b.id('$$renderer')], body, has_await))
 	);

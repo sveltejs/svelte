@@ -37,9 +37,7 @@ export function EachBlock(node, context) {
 	if (node.body)
 		each.push(
 			// TODO get rid of fragment.has_await
-			...(node.body.metadata.has_await
-				? [create_async_block(b.block(new_body), b.array([]), node.body.metadata.has_await)]
-				: new_body)
+			...(node.body.metadata.has_await ? [create_async_block(b.block(new_body))] : new_body)
 		);
 
 	const for_loop = b.for(
@@ -71,8 +69,13 @@ export function EachBlock(node, context) {
 		block.body.push(for_loop);
 	}
 
-	if (node.metadata.expression.has_await) {
-		state.template.push(create_async_block(block), block_close);
+	const blockers = node.metadata.expression.blockers();
+
+	if (node.metadata.expression.has_await || blockers.elements.length > 0) {
+		state.template.push(
+			create_async_block(block, blockers, node.metadata.expression.has_await),
+			block_close
+		);
 	} else {
 		state.template.push(...block.body, block_close);
 	}
