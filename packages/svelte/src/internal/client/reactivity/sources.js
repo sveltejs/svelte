@@ -76,7 +76,7 @@ export function source(v, stack) {
 	};
 
 	if (DEV && tracing_mode_flag) {
-		signal.created = stack ?? get_stack('CreatedAt');
+		signal.created = stack ?? get_stack('created at');
 		signal.updated = null;
 		signal.set_during_effect = false;
 		signal.trace = null;
@@ -186,7 +186,7 @@ export function internal_set(source, value) {
 
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {
-				const error = get_stack('UpdatedAt');
+				const error = get_stack('updated at');
 
 				if (error !== null) {
 					source.updated ??= new Map();

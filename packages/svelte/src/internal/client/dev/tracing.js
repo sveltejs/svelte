@@ -179,8 +179,7 @@ export function get_stack(label) {
 	});
 
 	define_property(error, 'name', {
-		// 'Error' suffix is required for stack traces to be rendered properly
-		value: `${label}Error`
+		value: label
 	});
 
 	return /** @type {Error & { stack: string }} */ (error);
