@@ -252,6 +252,8 @@ function transform_body(program, context) {
 		}
 	}
 
+	var promises = b.id('$$promises'); // TODO if we use this technique for fragments, need to deconflict
+
 	if (statements.length > 0) {
 		var declarations = statements.map((s) => s.declarations).flat();
 
@@ -322,14 +324,12 @@ function transform_body(program, context) {
 			return b.thunk(b.block([/** @type {Statement} */ (context.visit(s.node))]), s.has_await);
 		});
 
-		var id = b.id('$$promises'); // TODO if we use this technique for fragments, need to deconflict
-
-		out.push(b.var(id, b.call('$.run', b.array(thunks))));
+		out.push(b.var(promises, b.call('$.run', b.array(thunks))));
 
 		for (let i = 0; i < statements.length; i += 1) {
 			const s = statements[i];
 
-			var blocker = b.member(id, b.literal(i), true);
+			var blocker = b.member(promises, b.literal(i), true);
 
 			for (const binding of s.declarations) {
 				binding.blocker = blocker;
@@ -339,6 +339,15 @@ function transform_body(program, context) {
 		// TODO we likely need to account for updates that happen after the declaration,
 		// e.g. `let obj = $state()` followed by a later `obj = {...}`, otherwise
 		// a synchronous `{obj.foo}` will fail
+	}
+
+	for (const binding of context.state.scope.declarations.values()) {
+		// if the binding is updated (TODO or passed to a function, in which case it
+		// could be mutated), play it safe and block until the end. In future we
+		// could develop more sophisticated static analysis to optimise further
+		if (binding.updated) {
+			binding.blocker = b.member(promises, b.literal(statements.length - 1), true);
+		}
 	}
 
 	// console.log('statements', statements);
