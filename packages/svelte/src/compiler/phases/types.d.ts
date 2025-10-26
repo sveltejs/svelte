@@ -1,4 +1,4 @@
-import type { AST, Binding, StateField, StateFields } from '#compiler';
+import type { AST, Binding, StateFields } from '#compiler';
 import type {
 	AwaitExpression,
 	CallExpression,

@@ -35,23 +35,40 @@ export function ClassBody(node, context) {
 		) {
 			continue;
 		}
+		const member = b.member(b.this, field.key);
+		const should_proxy = field.type === '$state' && true; // TODO
 
 		if (typeof name === 'number' && field.computed_key) {
+			const computed_key = /** @type {Expression} */ (context.visit(field.computed_key));
+			const evaluation = context.state.scope.evaluate(computed_key);
+			if (evaluation.is_known) {
+				body.push(
+					b.prop_def(field.key, null),
+					b.method(
+						'get',
+						b.literal(evaluation.value),
+						[],
+						[b.return(b.call('$.get', member))],
+						true
+					),
+					b.method(
+						'set',
+						b.literal(evaluation.value),
+						[b.id('value')],
+						[b.stmt(b.call('$.set', member, b.id('value'), should_proxy && b.true))],
+						true
+					)
+				);
+				continue;
+			}
 			const key = context.state.scope.generate('key');
 			computed_field_declarations.push(b.let(key));
-			const member = b.member(b.this, field.key);
-
-			const should_proxy = field.type === '$state' && true; // TODO
 
 			body.push(
 				b.prop_def(field.key, null),
 				b.method(
 					'get',
-					b.assignment(
-						'=',
-						b.id(key),
-						/** @type {Expression} */ (context.visit(field.computed_key))
-					),
+					b.assignment('=', b.id(key), computed_key),
 					[],
 					[b.return(b.call('$.get', member))],
 					true
@@ -66,11 +83,6 @@ export function ClassBody(node, context) {
 			);
 			continue;
 		}
-
-		const member = b.member(b.this, field.key);
-
-		const should_proxy = field.type === '$state' && true; // TODO
-
 		const key = b.key(/** @type {string} */ (name));
 
 		body.push(

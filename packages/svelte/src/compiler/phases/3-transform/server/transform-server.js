@@ -11,6 +11,7 @@ import { render_stylesheet } from '../css/index.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
 import { AwaitExpression } from './visitors/AwaitExpression.js';
+import { BlockStatement } from './visitors/BlockStatement.js';
 import { CallExpression } from './visitors/CallExpression.js';
 import { ClassBody } from './visitors/ClassBody.js';
 import { ClassDeclaration } from './visitors/ClassDeclaration.js';
@@ -27,12 +28,14 @@ import { IfBlock } from './visitors/IfBlock.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
+import { Program } from './visitors/Program.js';
 import { PropertyDefinition } from './visitors/PropertyDefinition.js';
 import { RegularElement } from './visitors/RegularElement.js';
 import { RenderTag } from './visitors/RenderTag.js';
 import { SlotElement } from './visitors/SlotElement.js';
 import { SnippetBlock } from './visitors/SnippetBlock.js';
 import { SpreadAttribute } from './visitors/SpreadAttribute.js';
+import { StaticBlock } from './visitors/StaticBlock.js';
 import { SvelteComponent } from './visitors/SvelteComponent.js';
 import { SvelteElement } from './visitors/SvelteElement.js';
 import { SvelteFragment } from './visitors/SvelteFragment.js';
@@ -49,6 +52,7 @@ const global_visitors = {
 	_: set_scope,
 	AssignmentExpression,
 	AwaitExpression,
+	BlockStatement,
 	CallExpression,
 	ClassBody,
 	ClassDeclaration,
@@ -57,7 +61,9 @@ const global_visitors = {
 	Identifier,
 	LabeledStatement,
 	MemberExpression,
+	Program,
 	PropertyDefinition,
+	StaticBlock,
 	UpdateExpression,
 	VariableDeclaration
 };
