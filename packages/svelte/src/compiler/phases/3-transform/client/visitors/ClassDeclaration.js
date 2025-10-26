@@ -34,7 +34,7 @@ export function ClassDeclaration(node, context) {
 				metadata: {
 					computed_field_declarations: state.computed_field_declarations
 				}
-			}
+			};
 		}
 	}
 	return b.class_declaration(node.id, body, super_class);
