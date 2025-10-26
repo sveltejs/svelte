@@ -26,7 +26,7 @@ export function RenderTag(node, context) {
 		let expression = build_expression(context, arg, metadata);
 
 		if (metadata.has_await || metadata.has_call) {
-			expression = b.call('$.get', memoizer.add(expression, metadata.has_await));
+			expression = b.call('$.get', memoizer.add(expression, metadata));
 		}
 
 		args.push(b.thunk(expression));
