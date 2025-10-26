@@ -104,10 +104,27 @@ export class Renderer {
 	 * @param {(renderer: Renderer) => void} fn
 	 */
 	async(blockers, fn) {
+		let callback = fn;
+
+		if (blockers.length > 0) {
+			const context = ssr_context;
+
+			callback = (renderer) => {
+				return Promise.all(blockers).then(() => {
+					const previous_context = ssr_context;
+
+					try {
+						set_ssr_context(context);
+						return fn(renderer);
+					} finally {
+						set_ssr_context(previous_context);
+					}
+				});
+			};
+		}
+
 		this.#out.push(BLOCK_OPEN);
-		this.child(
-			blockers.length > 0 ? (renderer) => Promise.all(blockers).then(() => fn(renderer)) : fn
-		);
+		this.child(callback);
 		this.#out.push(BLOCK_CLOSE);
 	}
 
@@ -122,13 +139,13 @@ export class Renderer {
 
 		for (const fn of thunks.slice(1)) {
 			promise = promise.then(() => {
-				const previous_ssr_context = ssr_context;
+				const previous_context = ssr_context;
 				set_ssr_context(context);
 
 				try {
 					return fn();
 				} finally {
-					set_ssr_context(previous_ssr_context);
+					set_ssr_context(previous_context);
 				}
 			});
 		}
