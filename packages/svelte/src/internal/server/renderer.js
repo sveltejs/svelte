@@ -148,6 +148,8 @@ export class Renderer {
 					set_ssr_context(previous_context);
 				}
 			});
+
+			promises.push(promise);
 		}
 
 		return promises;

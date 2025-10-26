@@ -1,5 +1,5 @@
 /** @import { Expression, Identifier, Node, Statement, BlockStatement, ArrayExpression } from 'estree' */
-/** @import { AST } from '#compiler' */
+/** @import { AST, Binding } from '#compiler' */
 /** @import { ComponentContext, ServerTransformState } from '../../types.js' */
 
 import { escape_html } from '../../../../../../escaping.js';
@@ -299,13 +299,26 @@ export class PromiseOptimiser {
 	/** @type {Expression[]} */
 	expressions = [];
 
+	has_await = false;
+
+	/** @type {Set<Expression>} */
+	#blockers = new Set();
+
 	/**
 	 *
 	 * @param {Expression} expression
 	 * @param {ExpressionMetadata} metadata
 	 */
 	transform = (expression, metadata) => {
+		for (const binding of metadata.dependencies) {
+			if (binding.blocker) {
+				this.#blockers.add(binding.blocker);
+			}
+		}
+
 		if (metadata.has_await) {
+			this.has_await = true;
+
 			const length = this.expressions.push(expression);
 			return b.id(`$$${length - 1}`);
 		}
@@ -314,6 +327,10 @@ export class PromiseOptimiser {
 	};
 
 	apply() {
+		if (this.expressions.length === 0) {
+			return b.empty;
+		}
+
 		if (this.expressions.length === 1) {
 			return b.const('$$0', this.expressions[0]);
 		}
@@ -330,5 +347,13 @@ export class PromiseOptimiser {
 			b.array_pattern(this.expressions.map((_, i) => b.id(`$$${i}`))),
 			b.await(b.call('Promise.all', promises))
 		);
+	}
+
+	blockers() {
+		return b.array([...this.#blockers]);
+	}
+
+	is_async() {
+		return this.expressions.length > 0 || this.#blockers.size > 0;
 	}
 }

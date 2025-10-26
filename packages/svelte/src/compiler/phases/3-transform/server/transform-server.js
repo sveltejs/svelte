@@ -41,7 +41,7 @@ import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 import { SvelteBoundary } from './visitors/SvelteBoundary.js';
-import { call_component_renderer, create_async_block } from './visitors/shared/utils.js';
+import { call_component_renderer } from './visitors/shared/utils.js';
 
 /** @type {Visitors} */
 const global_visitors = {

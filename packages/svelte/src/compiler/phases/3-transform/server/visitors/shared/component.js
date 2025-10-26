@@ -323,8 +323,12 @@ export function build_inline_component(node, expression, context) {
 		);
 	}
 
-	if (optimiser.expressions.length > 0) {
-		statement = create_async_block(b.block([optimiser.apply(), statement]));
+	if (optimiser.is_async()) {
+		statement = create_async_block(
+			b.block([optimiser.apply(), statement]),
+			optimiser.blockers(),
+			optimiser.has_await
+		);
 	}
 
 	if (dynamic && custom_css_props.length === 0) {
