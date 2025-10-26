@@ -17,7 +17,6 @@ import type {
 } from 'estree';
 import type { Scope } from '../phases/scope';
 import type { _CSS } from './css';
-import type { AwaitedDeclaration } from '../phases/types';
 import type { ExpressionMetadata } from '../phases/nodes';
 
 /**
