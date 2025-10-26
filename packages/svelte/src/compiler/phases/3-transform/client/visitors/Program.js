@@ -159,9 +159,6 @@ function transform_body(program, context) {
 	/** @type {Statement[]} */
 	const out = [];
 
-	/** @type {Identifier[]} */
-	const ids = [];
-
 	/** @type {AwaitedStatement[]} */
 	const statements = [];
 
