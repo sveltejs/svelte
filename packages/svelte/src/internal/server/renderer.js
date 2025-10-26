@@ -100,18 +100,41 @@ export class Renderer {
 	}
 
 	/**
+	 * @param {Array<Promise<void>>} blockers
 	 * @param {(renderer: Renderer) => void} fn
 	 */
-	async(fn) {
+	async(blockers, fn) {
 		this.#out.push(BLOCK_OPEN);
-		this.child(fn);
+		this.child(
+			blockers.length > 0 ? (renderer) => Promise.all(blockers).then(() => fn(renderer)) : fn
+		);
 		this.#out.push(BLOCK_CLOSE);
 	}
 
 	/**
 	 * @param {Array<() => void>} thunks
 	 */
-	run(thunks) {}
+	run(thunks) {
+		const context = ssr_context;
+
+		let promise = Promise.resolve(thunks[0]());
+		const promises = [promise];
+
+		for (const fn of thunks.slice(1)) {
+			promise = promise.then(() => {
+				const previous_ssr_context = ssr_context;
+				set_ssr_context(context);
+
+				try {
+					return fn();
+				} finally {
+					set_ssr_context(previous_ssr_context);
+				}
+			});
+		}
+
+		return promises;
+	}
 
 	/**
 	 * Create a child renderer. The child renderer inherits the state from the parent,

@@ -1,4 +1,4 @@
-/** @import { Expression, Identifier, Node, Statement, BlockStatement } from 'estree' */
+/** @import { Expression, Identifier, Node, Statement, BlockStatement, ArrayExpression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ServerTransformState } from '../../types.js' */
 
@@ -275,9 +275,13 @@ export function create_child_block(body, async) {
 /**
  * Creates a `$$renderer.async(...)` expression statement
  * @param {BlockStatement | Expression} body
+ * @param {ArrayExpression} blockers
+ * @param {boolean} has_await
  */
-export function create_async_block(body) {
-	return b.stmt(b.call('$$renderer.async', b.arrow([b.id('$$renderer')], body, true)));
+export function create_async_block(body, blockers, has_await) {
+	return b.stmt(
+		b.call('$$renderer.async', blockers, b.arrow([b.id('$$renderer')], body, has_await))
+	);
 }
 
 /**
