@@ -131,16 +131,7 @@ const visitors = {
 		ignore_map.set(node, structuredClone(ignore_stack));
 
 		const scope = state.scopes.get(node);
-
-		if (scope !== undefined && scope !== state.scope) {
-			const child_state = { ...state };
-
-			if (scope !== undefined && scope !== state.scope) child_state.scope = scope;
-
-			next(child_state);
-		} else {
-			next();
-		}
+		next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
 
 		if (ignores.length > 0) {
 			pop_ignore();
