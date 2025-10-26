@@ -35,7 +35,7 @@ export function SlotElement(node, context) {
 				context,
 				(value, metadata) =>
 					metadata.has_call || metadata.has_await
-						? b.call('$.get', memoizer.add(value, metadata.has_await))
+						? b.call('$.get', memoizer.add(value, metadata))
 						: value
 			);
 
