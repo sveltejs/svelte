@@ -18,7 +18,7 @@ import { get_boundary } from './boundary.js';
  * @param {Array<() => Promise<any>>} expressions
  * @param {(anchor: TemplateNode, ...deriveds: Value[]) => void} fn
  */
-export function async(node, blockers, expressions, fn) {
+export function async(node, blockers, expressions = [], fn) {
 	var boundary = get_boundary();
 	var batch = /** @type {Batch} */ (current_batch);
 	var blocking = !boundary.is_pending();

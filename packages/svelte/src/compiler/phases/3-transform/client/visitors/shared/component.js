@@ -16,12 +16,12 @@ import { determine_slot } from '../../../../../utils/slot.js';
  * @returns {Statement}
  */
 export function build_component(node, component_name, context) {
-	/**
-	 * @type {Expression}
-	 */
+	/** @type {Expression} */
 	const anchor = context.state.node;
+
 	/** @type {Array<Property[] | Expression>} */
 	const props_and_spreads = [];
+
 	/** @type {Array<() => void>} */
 	const delayed_props = [];
 
@@ -128,13 +128,16 @@ export function build_component(node, component_name, context) {
 
 			(events[attribute.name] ||= []).push(handler);
 		} else if (attribute.type === 'SpreadAttribute') {
-			const expression = /** @type {Expression} */ (context.visit(attribute));
+			const expression = memoizer.add(
+				/** @type {Expression} */ (context.visit(attribute)),
+				attribute.metadata.expression
+			);
 
 			if (attribute.metadata.expression.has_state || attribute.metadata.expression.has_await) {
 				props_and_spreads.push(
 					b.thunk(
 						attribute.metadata.expression.has_await || attribute.metadata.expression.has_call
-							? b.call('$.get', memoizer.add(expression, attribute.metadata.expression))
+							? b.call('$.get', expression)
 							: expression
 					)
 				);
@@ -147,10 +150,10 @@ export function build_component(node, component_name, context) {
 					b.init(
 						attribute.name,
 						build_attribute_value(attribute.value, context, (value, metadata) => {
+							const memoized = memoizer.add(value, metadata);
+
 							// TODO put the derived in the local block
-							return metadata.has_call || metadata.has_await
-								? b.call('$.get', memoizer.add(value, metadata))
-								: value;
+							return metadata.has_call || metadata.has_await ? b.call('$.get', memoized) : memoized;
 						}).value
 					)
 				);
@@ -184,9 +187,9 @@ export function build_component(node, component_name, context) {
 							);
 						});
 
-					return should_wrap_in_derived
-						? b.call('$.get', memoizer.add(value, metadata, true))
-						: value;
+					const memoized = memoizer.add(value, metadata, should_wrap_in_derived);
+
+					return should_wrap_in_derived ? b.call('$.get', memoized) : memoized;
 				}
 			);
 
