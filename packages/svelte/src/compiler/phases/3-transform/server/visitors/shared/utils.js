@@ -285,6 +285,27 @@ export function create_async_block(body, blockers = b.array([]), has_await = tru
 }
 
 /**
+ * @param {Expression} expression
+ * @param {ExpressionMetadata} metadata
+ * @returns {Expression | Statement}
+ */
+export function create_push(expression, metadata) {
+	if (metadata.is_async()) {
+		let statement = b.stmt(b.call('$$renderer.push', b.thunk(expression, metadata.has_await)));
+
+		const blockers = metadata.blockers();
+
+		if (blockers.elements.length > 0) {
+			statement = create_async_block(b.block([statement]), blockers, false);
+		}
+
+		return statement;
+	}
+
+	return expression;
+}
+
+/**
  * @param {BlockStatement | Expression} body
  * @param {Identifier | false} component_fn_id
  * @returns {Statement}
