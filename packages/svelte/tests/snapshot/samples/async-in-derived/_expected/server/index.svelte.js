@@ -18,24 +18,28 @@ export default function Async_in_derived($$renderer, $$props) {
 			}
 		]);
 
-		$$renderer.async([], async ($$renderer) => {
-			if (true) {
-				$$renderer.push('<!--[-->');
+		$$renderer.async(
+			[],
+			async ($$renderer) => {
+				if (true) {
+					$$renderer.push('<!--[-->');
 
-				const yes1 = (await $.save(1))();
-				const yes2 = foo((await $.save(1))());
+					const yes1 = (await $.save(1))();
+					const yes2 = foo((await $.save(1))());
 
-				const no1 = (async () => {
-					return await 1;
-				})();
+					const no1 = (async () => {
+						return await 1;
+					})();
 
-				const no2 = (async () => {
-					return await 1;
-				})();
-			} else {
-				$$renderer.push('<!--[!-->');
-			}
-		});
+					const no2 = (async () => {
+						return await 1;
+					})();
+				} else {
+					$$renderer.push('<!--[!-->');
+				}
+			},
+			true
+		);
 
 		$$renderer.push(`<!--]-->`);
 	});

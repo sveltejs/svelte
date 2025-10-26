@@ -77,12 +77,11 @@ export function process_children(nodes, { visit, state }) {
 	}
 
 	for (const node of nodes) {
-		if (node.type === 'ExpressionTag' && node.metadata.expression.has_await) {
+		if (node.type === 'ExpressionTag' && node.metadata.expression.is_async()) {
 			flush();
-			const visited = /** @type {Expression} */ (visit(node.expression));
-			state.template.push(
-				b.stmt(b.call('$$renderer.push', b.thunk(b.call('$.escape', visited), true)))
-			);
+
+			const expression = /** @type {Expression} */ (visit(node.expression));
+			state.template.push(create_push(b.call('$.escape', expression), node.metadata.expression));
 		} else if (node.type === 'Text' || node.type === 'Comment' || node.type === 'ExpressionTag') {
 			sequence.push(node);
 		} else {
@@ -277,26 +276,33 @@ export function create_child_block(body, async) {
  * @param {BlockStatement | Expression} body
  * @param {ArrayExpression} blockers
  * @param {boolean} has_await
+ * @param {boolean} markers
  */
-export function create_async_block(body, blockers = b.array([]), has_await = true) {
+export function create_async_block(body, blockers = b.array([]), has_await = true, markers = true) {
 	return b.stmt(
-		b.call('$$renderer.async', blockers, b.arrow([b.id('$$renderer')], body, has_await))
+		b.call(
+			'$$renderer.async',
+			blockers,
+			b.arrow([b.id('$$renderer')], body, has_await),
+			markers && b.true
+		)
 	);
 }
 
 /**
  * @param {Expression} expression
  * @param {ExpressionMetadata} metadata
+ * @param {boolean} markers
  * @returns {Expression | Statement}
  */
-export function create_push(expression, metadata) {
+export function create_push(expression, metadata, markers = false) {
 	if (metadata.is_async()) {
 		let statement = b.stmt(b.call('$$renderer.push', b.thunk(expression, metadata.has_await)));
 
 		const blockers = metadata.blockers();
 
 		if (blockers.elements.length > 0) {
-			statement = create_async_block(b.block([statement]), blockers, false);
+			statement = create_async_block(b.block([statement]), blockers, false, markers);
 		}
 
 		return statement;

@@ -12,5 +12,5 @@ export function HtmlTag(node, context) {
 	const expression = /** @type {Expression} */ (context.visit(node.expression));
 	const call = b.call('$.html', expression);
 
-	context.state.template.push(create_push(call, node.metadata.expression));
+	context.state.template.push(create_push(call, node.metadata.expression, true));
 }

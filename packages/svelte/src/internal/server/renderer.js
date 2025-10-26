@@ -102,8 +102,9 @@ export class Renderer {
 	/**
 	 * @param {Array<Promise<void>>} blockers
 	 * @param {(renderer: Renderer) => void} fn
+	 * @param {boolean} markers
 	 */
-	async(blockers, fn) {
+	async(blockers, fn, markers) {
 		let callback = fn;
 
 		if (blockers.length > 0) {
@@ -123,9 +124,9 @@ export class Renderer {
 			};
 		}
 
-		this.#out.push(BLOCK_OPEN);
+		if (markers) this.#out.push(BLOCK_OPEN);
 		this.child(callback);
-		this.#out.push(BLOCK_CLOSE);
+		if (markers) this.#out.push(BLOCK_CLOSE);
 	}
 
 	/**
