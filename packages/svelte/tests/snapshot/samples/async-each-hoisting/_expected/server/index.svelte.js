@@ -8,20 +8,16 @@ export default function Async_each_hoisting($$renderer) {
 
 	$$renderer.push(`<!--[-->`);
 
-	$$renderer.async(
-		[],
-		async ($$renderer) => {
-			const each_array = $.ensure_array_like((await $.save(Promise.resolve([first, second, third])))());
+	$$renderer.async_block([], async ($$renderer) => {
+		const each_array = $.ensure_array_like((await $.save(Promise.resolve([first, second, third])))());
 
-			for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
-				let item = each_array[$$index];
+		for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
+			let item = each_array[$$index];
 
-				$$renderer.push(`<!---->`);
-				$$renderer.push(async () => $.escape(await item));
-			}
-		},
-		true
-	);
+			$$renderer.push(`<!---->`);
+			$$renderer.push(async () => $.escape(await item));
+		}
+	});
 
 	$$renderer.push(`<!--]-->`);
 }
