@@ -106,7 +106,7 @@ function transform_body(program, context) {
 		// find the earliest point we can insert this derived
 		let index = -1;
 
-		for (const binding of derived.dependencies) {
+		for (const binding of derived.reads) {
 			index = Math.max(
 				index,
 				statements.findIndex((s) => s.declarations.includes(binding))

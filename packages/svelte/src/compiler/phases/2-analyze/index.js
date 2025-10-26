@@ -691,9 +691,14 @@ export function analyze_component(root, source, options) {
 		if (instance.has_await) {
 			/**
 			 * @param {ESTree.Node} node
-			 * @param {Set<Binding>} dependencies
+			 * @param {Set<ESTree.Node>} seen
+			 * @param {Set<Binding>} reads
+			 * @param {Set<Binding>} writes
 			 */
-			const trace_dependencies = (node, dependencies) => {
+			const trace_references = (node, reads, writes, seen = new Set()) => {
+				if (seen.has(node)) return;
+				seen.add(node);
+
 				walk(
 					node,
 					{ scope: instance.scope },
@@ -706,33 +711,45 @@ export function analyze_component(root, source, options) {
 								context.next();
 							}
 						},
+						AssignmentExpression(node, context) {
+							// TODO mark writes
+						},
+						CallExpression(node, context) {
+							// TODO deopt arguments, assume they are mutated
+							// TODO recurse into function definitions
+						},
 						Identifier(node, context) {
 							const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
 							if (is_reference(node, parent)) {
 								const binding = context.state.scope.get(node.name);
 								if (binding) {
-									dependencies.add(binding);
+									reads.add(binding);
 								}
-
-								// TODO recurse into function definitions
 							}
 						}
 					}
 				);
-
-				return dependencies;
 			};
 
 			/**
 			 * @param {ESTree.Statement | ESTree.VariableDeclarator | ESTree.FunctionDeclaration | ESTree.ClassDeclaration} node
 			 */
 			const push = (node) => {
+				/** @type {Set<Binding>} */
+				const reads = new Set();
+
+				/** @type {Set<Binding>} */
+				const writes = new Set();
+
+				trace_references(node, reads, writes);
+
 				/** @type {AwaitedStatement} */
 				const statement = {
 					node,
 					has_await: has_await_expression(node),
 					declarations: [],
-					dependencies: trace_dependencies(node, new Set())
+					reads,
+					writes
 				};
 
 				analysis.awaited_statements.set(node, statement);

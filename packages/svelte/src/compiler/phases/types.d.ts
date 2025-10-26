@@ -46,7 +46,8 @@ export interface AwaitedStatement {
 	node: Statement | VariableDeclarator | ClassDeclaration | FunctionDeclaration;
 	has_await: boolean;
 	declarations: Binding[];
-	dependencies: Set<Binding>;
+	reads: Set<Binding>;
+	writes: Set<Binding>;
 }
 
 /**
