@@ -1,5 +1,5 @@
-/** @import { AssignmentOperator, Expression, Identifier, Node, Statement, BlockStatement } from 'estree' */
-/** @import { AST, ExpressionMetadata } from '#compiler' */
+/** @import { Expression, Identifier, Node, Statement, BlockStatement } from 'estree' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ServerTransformState } from '../../types.js' */
 
 import { escape_html } from '../../../../../../escaping.js';
@@ -13,6 +13,7 @@ import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_whitespaces_strict } from '../../../../patterns.js';
 import { has_await_expression } from '../../../../../utils/ast.js';
+import { ExpressionMetadata } from '../../../../nodes.js';
 
 /** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
 export const block_open = b.literal(BLOCK_OPEN);
