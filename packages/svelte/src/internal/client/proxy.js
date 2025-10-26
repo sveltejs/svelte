@@ -53,7 +53,7 @@ export function proxy(value) {
 	var is_proxied_array = is_array(value);
 	var version = source(0);
 
-	var stack = DEV && tracing_mode_flag ? get_stack('CreatedAt') : null;
+	var stack = DEV && tracing_mode_flag ? get_stack('created at') : null;
 	var parent_version = update_version;
 
 	/**

@@ -1,13 +1,9 @@
 /** @import { ArrayExpression, Expression, Literal, ObjectExpression } from 'estree' */
-/** @import { AST, ExpressionMetadata } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../../types.js' */
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import { binding_properties } from '../../../../bindings.js';
-import {
-	create_attribute,
-	create_expression_metadata,
-	is_custom_element_node
-} from '../../../../nodes.js';
+import { create_attribute, ExpressionMetadata, is_custom_element_node } from '../../../../nodes.js';
 import { regex_starts_with_newline } from '../../../../patterns.js';
 import * as b from '#compiler/builders';
 import {
@@ -160,7 +156,7 @@ export function build_element_attributes(node, context, transform) {
 										build_attribute_value(value_attribute.value, context, transform)
 									),
 							metadata: {
-								expression: create_expression_metadata()
+								expression: new ExpressionMetadata()
 							}
 						}
 					])
@@ -174,7 +170,7 @@ export function build_element_attributes(node, context, transform) {
 							end: -1,
 							expression,
 							metadata: {
-								expression: create_expression_metadata()
+								expression: new ExpressionMetadata()
 							}
 						}
 					])

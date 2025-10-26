@@ -1,4 +1,4 @@
-/** @import { Expression, Node, Program } from 'estree' */
+/** @import * as ESTree from 'estree' */
 /** @import { Binding, AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
@@ -206,7 +206,7 @@ const visitors = {
  * @returns {Js}
  */
 function js(script, root, allow_reactive_declarations, parent) {
-	/** @type {Program} */
+	/** @type {ESTree.Program} */
 	const ast = script?.content ?? {
 		type: 'Program',
 		sourceType: 'module',
@@ -289,7 +289,7 @@ export function analyze_module(source, options) {
 	});
 
 	walk(
-		/** @type {Node} */ (ast),
+		/** @type {ESTree.Node} */ (ast),
 		{
 			scope,
 			scopes,
@@ -347,7 +347,7 @@ export function analyze_component(root, source, options) {
 
 		const store_name = name.slice(1);
 		const declaration = instance.scope.get(store_name);
-		const init = /** @type {Node | undefined} */ (declaration?.initial);
+		const init = /** @type {ESTree.Node | undefined} */ (declaration?.initial);
 
 		// If we're not in legacy mode through the compiler option, assume the user
 		// is referencing a rune and not a global store.
@@ -407,7 +407,7 @@ export function analyze_component(root, source, options) {
 						/** @type {number} */ (node.start) > /** @type {number} */ (module.ast.start) &&
 						/** @type {number} */ (node.end) < /** @type {number} */ (module.ast.end) &&
 						// const state = $state(0) is valid
-						get_rune(/** @type {Node} */ (path.at(-1)), module.scope) === null
+						get_rune(/** @type {ESTree.Node} */ (path.at(-1)), module.scope) === null
 					) {
 						e.store_invalid_subscription(node);
 					}
@@ -636,7 +636,7 @@ export function analyze_component(root, source, options) {
 							// @ts-expect-error
 							_: set_scope,
 							Identifier(node, context) {
-								const parent = /** @type {Expression} */ (context.path.at(-1));
+								const parent = /** @type {ESTree.Expression} */ (context.path.at(-1));
 
 								if (is_reference(node, parent)) {
 									const binding = context.state.scope.get(node.name);

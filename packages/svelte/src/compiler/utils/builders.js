@@ -42,8 +42,7 @@ export function arrow(params, body, async = false) {
 		body,
 		expression: body.type !== 'BlockStatement',
 		generator: false,
-		async,
-		metadata: /** @type {any} */ (null) // should not be used by codegen
+		async
 	};
 }
 
@@ -237,8 +236,7 @@ export function function_declaration(id, params, body, async = false) {
 		params,
 		body,
 		generator: false,
-		async,
-		metadata: /** @type {any} */ (null) // should not be used by codegen
+		async
 	};
 }
 
@@ -626,8 +624,7 @@ function function_builder(id, params, body, async = false) {
 		params,
 		body,
 		generator: false,
-		async,
-		metadata: /** @type {any} */ (null) // should not be used by codegen
+		async
 	};
 }
 

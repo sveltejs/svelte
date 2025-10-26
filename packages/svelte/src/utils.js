@@ -137,7 +137,7 @@ const DELEGATED_EVENTS = [
  * Returns `true` if `event_name` is a delegated event
  * @param {string} event_name
  */
-export function is_delegated(event_name) {
+export function can_delegate_event(event_name) {
 	return DELEGATED_EVENTS.includes(event_name);
 }
 
