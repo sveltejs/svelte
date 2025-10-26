@@ -33,15 +33,15 @@ export default test({
 
 		assert.deepEqual(logs, [
 			'outside boundary 1',
-			'template 1a 1',
 			'$effect.pre 1a 1',
 			'$effect 1a 1',
-			'template 2a 2',
+			'template 1a 1',
 			'$effect.pre 2a 2',
+			'template 2a 2',
 			'outside boundary 2',
 			'$effect 2a 2',
-			'template 2b 2',
 			'$effect.pre 2b 2',
+			'template 2b 2',
 			'$effect 2b 2'
 		]);
 	}

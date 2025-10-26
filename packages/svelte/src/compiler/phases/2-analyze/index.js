@@ -6,7 +6,12 @@ import { walk } from 'zimmerframe';
 import { parse } from '../1-parse/acorn.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
-import { extract_identifiers, has_await_expression } from '../../utils/ast.js';
+import {
+	extract_identifiers,
+	has_await_expression,
+	object,
+	unwrap_pattern
+} from '../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
@@ -690,6 +695,37 @@ export function analyze_component(root, source, options) {
 
 		if (instance.has_await) {
 			/**
+			 * @param {ESTree.Expression} expression
+			 * @param {Scope} scope
+			 * @param {Set<Binding>} touched
+			 * @param {Set<ESTree.Expression>} seen
+			 */
+			const touch = (expression, scope, touched, seen = new Set()) => {
+				if (seen.has(expression)) return;
+				seen.add(expression);
+
+				walk(
+					expression,
+					{ scope },
+					{
+						Identifier(node, context) {
+							const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
+							if (is_reference(node, parent)) {
+								const binding = context.state.scope.get(node.name);
+								if (binding) {
+									touched.add(binding);
+
+									for (const assignment of binding.assignments) {
+										touch(assignment.value, assignment.scope, touched, seen);
+									}
+								}
+							}
+						}
+					}
+				);
+			};
+
+			/**
 			 * @param {ESTree.Node} node
 			 * @param {Set<ESTree.Node>} seen
 			 * @param {Set<Binding>} reads
@@ -698,6 +734,22 @@ export function analyze_component(root, source, options) {
 			const trace_references = (node, reads, writes, seen = new Set()) => {
 				if (seen.has(node)) return;
 				seen.add(node);
+
+				/**
+				 * @param {ESTree.Pattern} node
+				 * @param {Scope} scope
+				 */
+				function update(node, scope) {
+					for (const pattern of unwrap_pattern(node)) {
+						const node = object(pattern);
+						if (!node) return;
+
+						const binding = scope.get(node.name);
+						if (!binding) return;
+
+						writes.add(binding);
+					}
+				}
 
 				walk(
 					node,
@@ -712,12 +764,34 @@ export function analyze_component(root, source, options) {
 							}
 						},
 						AssignmentExpression(node, context) {
-							// TODO mark writes
+							update(node.left, context.state.scope);
+						},
+						UpdateExpression(node, context) {
+							update(
+								/** @type {ESTree.Identifier | ESTree.MemberExpression} */ (node.argument),
+								context.state.scope
+							);
 						},
 						CallExpression(node, context) {
-							// TODO deopt arguments, assume they are mutated
-							// TODO recurse into function definitions
+							// for now, assume everything touched by the callee ends up mutating the object
+							// TODO optimise this better
+
+							// special case — no need to peek inside effects
+							const rune = get_rune(node, context.state.scope);
+							if (rune === '$effect') return;
+
+							/** @type {Set<Binding>} */
+							const touched = new Set();
+							touch(node, context.state.scope, touched);
+
+							for (const b of touched) {
+								writes.add(b);
+							}
 						},
+						// don't look inside functions until they are called
+						ArrowFunctionExpression(_, context) {},
+						FunctionDeclaration(_, context) {},
+						FunctionExpression(_, context) {},
 						Identifier(node, context) {
 							const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
 							if (is_reference(node, parent)) {

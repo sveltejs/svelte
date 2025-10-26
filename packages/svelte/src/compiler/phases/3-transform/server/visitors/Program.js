@@ -204,24 +204,14 @@ function transform_body(program, context) {
 			for (const binding of s.declarations) {
 				binding.blocker = blocker;
 			}
-		}
 
-		// TODO we likely need to account for updates that happen after the declaration,
-		// e.g. `let obj = $state()` followed by a later `obj = {...}`, otherwise
-		// a synchronous `{obj.foo}` will fail
-
-		for (const binding of context.state.scope.declarations.values()) {
-			// if the binding is updated (TODO or passed to a function, in which case it
-			// could be mutated), play it safe and block until the end. In future we
-			// could develop more sophisticated static analysis to optimise further
-			if (binding.updated) {
-				binding.blocker = b.member(promises, b.literal(statements.length - 1), true);
+			for (const binding of s.writes) {
+				// if a statement writes to a binding, any reads of that
+				// binding must wait for the statement
+				binding.blocker = blocker;
 			}
 		}
 	}
-
-	// console.log('statements', statements);
-	// console.log('deriveds', deriveds);
 
 	return out;
 }
