@@ -68,8 +68,8 @@ export default test({
 		assert.deepEqual(logs, [
 			'outside boundary 1',
 			'$effect.pre 42 1',
-			'$effect 42 1',
 			'template 42 1',
+			'$effect 42 1',
 			'$effect.pre 84 2',
 			'template 84 2',
 			'outside boundary 2',

@@ -345,10 +345,14 @@ export function run(thunks) {
 		promises.push(promise);
 	}
 
-	promise.then(() => {
-		boundary.update_pending_count(-1);
-		batch.decrement(blocking);
-	});
+	promise
+		// wait one more tick, so that template effects are
+		// guaranteed to run before `$effect(...)`
+		.then(() => Promise.resolve())
+		.then(() => {
+			boundary.update_pending_count(-1);
+			batch.decrement(blocking);
+		});
 
 	return promises;
 }
