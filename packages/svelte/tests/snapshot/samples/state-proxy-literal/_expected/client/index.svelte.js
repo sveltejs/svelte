@@ -4,8 +4,8 @@ import * as $ from 'svelte/internal/client';
 var root = $.from_html(`<input/> <input/> <button>reset</button>`, 1);
 
 export default function State_proxy_literal($$anchor) {
-	var str = $.state('');
-	var tpl = $.state(``);
+	let str = $.state('');
+	let tpl = $.state(``);
 
 	function reset() {
 		$.set(str, '');

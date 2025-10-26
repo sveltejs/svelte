@@ -3,9 +3,9 @@ import 'svelte/internal/flags/async';
 import * as $ from 'svelte/internal/client';
 
 export default function Async_each_hoisting($$anchor) {
-	var first = Promise.resolve(1);
-	var second = Promise.resolve(2);
-	var third = Promise.resolve(3);
+	const first = Promise.resolve(1);
+	const second = Promise.resolve(2);
+	const third = Promise.resolve(3);
 	var fragment = $.comment();
 	var node = $.first_child(fragment);
 

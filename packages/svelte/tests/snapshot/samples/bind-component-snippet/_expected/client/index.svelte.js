@@ -13,8 +13,8 @@ const snippet = ($$anchor) => {
 var root = $.from_html(`<!> `, 1);
 
 export default function Bind_component_snippet($$anchor) {
-	var value = $.state('');
-	var _snippet = snippet;
+	let value = $.state('');
+	const _snippet = snippet;
 	var fragment = root();
 	var node = $.first_child(fragment);
 

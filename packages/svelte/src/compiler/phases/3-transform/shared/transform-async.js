@@ -77,8 +77,15 @@ export function transform_body(program, awaited_statements, runner, transform, h
 		}
 
 		if (node.type === 'VariableDeclaration') {
-			for (const declarator of node.declarations) {
-				push(declarator);
+			if (
+				!awaited &&
+				node.declarations.every((declarator) => !awaited_statements.get(declarator)?.has_await)
+			) {
+				out.push(/** @type {ESTree.VariableDeclaration} */ (transform(node)));
+			} else {
+				for (const declarator of node.declarations) {
+					push(declarator);
+				}
 			}
 		} else {
 			push(node);

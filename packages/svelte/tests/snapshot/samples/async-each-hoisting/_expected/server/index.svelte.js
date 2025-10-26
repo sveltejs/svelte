@@ -2,9 +2,9 @@ import 'svelte/internal/flags/async';
 import * as $ from 'svelte/internal/server';
 
 export default function Async_each_hoisting($$renderer) {
-	var first = Promise.resolve(1);
-	var second = Promise.resolve(2);
-	var third = Promise.resolve(3);
+	const first = Promise.resolve(1);
+	const second = Promise.resolve(2);
+	const third = Promise.resolve(3);
 
 	$$renderer.push(`<!--[-->`);
 

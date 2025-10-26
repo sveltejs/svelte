@@ -4,10 +4,10 @@ import * as $ from 'svelte/internal/client';
 var root = $.from_html(`<div></div> <svg></svg> <custom-element></custom-element> <div></div> <svg></svg> <custom-element></custom-element>`, 3);
 
 export default function Main($$anchor) {
-	var // needs to be a snapshot test because jsdom does auto-correct the attribute casing
-	x = 'test';
+	// needs to be a snapshot test because jsdom does auto-correct the attribute casing
+	let x = 'test';
 
-	var y = () => 'test';
+	let y = () => 'test';
 	var fragment = root();
 	var div = $.first_child(fragment);
 

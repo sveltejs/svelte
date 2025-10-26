@@ -4,8 +4,8 @@ import * as $ from 'svelte/internal/client';
 var root = $.from_html(`<h1></h1> <b></b> <button> </button> <h1></h1>`, 1);
 
 export default function Nullish_coallescence_omittance($$anchor) {
-	var name = 'world';
-	var count = $.state(0);
+	let name = 'world';
+	let count = $.state(0);
 	var fragment = root();
 	var h1 = $.first_child(fragment);
 

@@ -2,13 +2,13 @@ import 'svelte/internal/disclose-version';
 import * as $ from 'svelte/internal/client';
 
 export default function Function_prop_no_getter($$anchor) {
-	var count = $.state(0);
+	let count = $.state(0);
 
 	function onmouseup() {
 		$.set(count, $.get(count) + 2);
 	}
 
-	var plusOne = (num) => num + 1;
+	const plusOne = (num) => num + 1;
 
 	Button($$anchor, {
 		onmousedown: () => $.set(count, $.get(count) + 1),

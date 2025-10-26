@@ -4,8 +4,8 @@ import * as $ from 'svelte/internal/client';
 var root = $.from_html(`<p> </p>`);
 
 export default function Text_nodes_deriveds($$anchor) {
-	var count1 = 0;
-	var count2 = 0;
+	let count1 = 0;
+	let count2 = 0;
 
 	function text1() {
 		return count1;

@@ -1,8 +1,8 @@
 import * as $ from 'svelte/internal/server';
 
 export default function Await_block_scope($$renderer) {
-	var counter = { count: 0 };
-	var promise = Promise.resolve(counter);
+	let counter = { count: 0 };
+	const promise = Promise.resolve(counter);
 
 	function increment() {
 		counter.count += 1;
