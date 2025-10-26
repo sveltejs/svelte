@@ -23,10 +23,10 @@ export function RenderTag(node, context) {
 		const arg = /** @type {Expression} */ (call.arguments[i]);
 		const metadata = node.metadata.arguments[i];
 
-		let expression = build_expression(context, arg, metadata);
+		let expression = memoizer.add(build_expression(context, arg, metadata), metadata);
 
 		if (metadata.has_await || metadata.has_call) {
-			expression = b.call('$.get', memoizer.add(expression, metadata));
+			expression = b.call('$.get', expression);
 		}
 
 		args.push(b.thunk(expression));
