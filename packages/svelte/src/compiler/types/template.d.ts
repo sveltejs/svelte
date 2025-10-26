@@ -48,6 +48,7 @@ export namespace AST {
 			 * Whether or not we need to traverse into the fragment during mount/hydrate
 			 */
 			dynamic: boolean;
+			/** @deprecated we should get rid of this in favour of the `$$renderer.run` mechanism */
 			has_await: boolean;
 		};
 	}
