@@ -687,6 +687,194 @@ export function analyze_component(root, source, options) {
 		}
 	}
 
+	/**
+	 * @param {ESTree.Node} expression
+	 * @param {Scope} scope
+	 * @param {Set<Binding>} touched
+	 * @param {Set<ESTree.Node>} seen
+	 */
+	const touch = (expression, scope, touched, seen = new Set()) => {
+		if (seen.has(expression)) return;
+		seen.add(expression);
+
+		walk(
+			expression,
+			{ scope },
+			{
+				ImportDeclaration(node) {},
+				Identifier(node, context) {
+					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
+					if (is_reference(node, parent)) {
+						const binding = context.state.scope.get(node.name);
+						if (binding) {
+							touched.add(binding);
+
+							for (const assignment of binding.assignments) {
+								touch(assignment.value, assignment.scope, touched, seen);
+							}
+						}
+					}
+				}
+			}
+		);
+	};
+
+	/**
+	 * @param {ESTree.Node} node
+	 * @param {Set<ESTree.Node>} seen
+	 * @param {Set<Binding>} reads
+	 * @param {Set<Binding>} writes
+	 */
+	const trace_references = (node, reads, writes, seen = new Set()) => {
+		if (seen.has(node)) return;
+		seen.add(node);
+
+		/**
+		 * @param {ESTree.Pattern} node
+		 * @param {Scope} scope
+		 */
+		function update(node, scope) {
+			for (const pattern of unwrap_pattern(node)) {
+				const node = object(pattern);
+				if (!node) return;
+
+				const binding = scope.get(node.name);
+				if (!binding) return;
+
+				writes.add(binding);
+			}
+		}
+
+		walk(
+			node,
+			{ scope: instance.scope },
+			{
+				_(node, context) {
+					const scope = scopes.get(node);
+					if (scope) {
+						context.next({ scope });
+					} else {
+						context.next();
+					}
+				},
+				AssignmentExpression(node, context) {
+					update(node.left, context.state.scope);
+				},
+				UpdateExpression(node, context) {
+					update(
+						/** @type {ESTree.Identifier | ESTree.MemberExpression} */ (node.argument),
+						context.state.scope
+					);
+				},
+				CallExpression(node, context) {
+					// for now, assume everything touched by the callee ends up mutating the object
+					// TODO optimise this better
+
+					// special case — no need to peek inside effects
+					const rune = get_rune(node, context.state.scope);
+					if (rune === '$effect') return;
+
+					/** @type {Set<Binding>} */
+					const touched = new Set();
+					touch(node, context.state.scope, touched);
+
+					for (const b of touched) {
+						writes.add(b);
+					}
+				},
+				// don't look inside functions until they are called
+				ArrowFunctionExpression(_, context) {},
+				FunctionDeclaration(_, context) {},
+				FunctionExpression(_, context) {},
+				Identifier(node, context) {
+					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
+					if (is_reference(node, parent)) {
+						const binding = context.state.scope.get(node.name);
+						if (binding) {
+							reads.add(binding);
+						}
+					}
+				}
+			}
+		);
+	};
+
+	let awaited = false;
+
+	// TODO this should probably be attached to the scope?
+	var promises = b.id('$$promises');
+
+	/**
+	 * @param {ESTree.Identifier} id
+	 * @param {ESTree.Expression} blocker
+	 */
+	function push_declaration(id, blocker) {
+		analysis.instance_body.declarations.push(id);
+
+		const binding = /** @type {Binding} */ (instance.scope.get(id.name));
+		binding.blocker = blocker;
+	}
+
+	for (let node of instance.ast.body) {
+		if (node.type === 'ImportDeclaration') {
+			analysis.instance_body.hoisted.push(node);
+			continue;
+		}
+
+		if (node.type === 'ExportDefaultDeclaration' || node.type === 'ExportAllDeclaration') {
+			// these can't exist inside `<script>` but TypeScript doesn't know that
+			continue;
+		}
+
+		if (node.type === 'ExportNamedDeclaration') {
+			if (node.declaration) {
+				node = node.declaration;
+			} else {
+				continue;
+			}
+		}
+
+		const has_await = has_await_expression(node);
+		awaited ||= has_await;
+
+		if (awaited && node.type !== 'FunctionDeclaration') {
+			/** @type {Set<Binding>} */
+			const reads = new Set(); // TODO we're not actually using this yet
+
+			/** @type {Set<Binding>} */
+			const writes = new Set();
+
+			trace_references(node, reads, writes);
+
+			const blocker = b.member(promises, b.literal(analysis.instance_body.async.length), true);
+
+			for (const binding of writes) {
+				binding.blocker = blocker;
+			}
+
+			if (node.type === 'VariableDeclaration') {
+				for (const declarator of node.declarations) {
+					for (const id of extract_identifiers(declarator.id)) {
+						push_declaration(id, blocker);
+					}
+
+					// one declarator per declaration, makes things simpler
+					analysis.instance_body.async.push({
+						node: declarator,
+						has_await
+					});
+				}
+			} else if (node.type === 'ClassDeclaration') {
+				push_declaration(node.id, blocker);
+				analysis.instance_body.async.push({ node, has_await });
+			} else {
+				analysis.instance_body.async.push({ node, has_await });
+			}
+		} else {
+			analysis.instance_body.sync.push(node);
+		}
+	}
+
 	if (analysis.runes) {
 		const props_refs = module.scope.references.get('$$props');
 		if (props_refs) {
@@ -696,194 +884,6 @@ export function analyze_component(root, source, options) {
 		const rest_props_refs = module.scope.references.get('$$restProps');
 		if (rest_props_refs) {
 			e.legacy_rest_props_invalid(rest_props_refs[0].node);
-		}
-
-		/**
-		 * @param {ESTree.Node} expression
-		 * @param {Scope} scope
-		 * @param {Set<Binding>} touched
-		 * @param {Set<ESTree.Node>} seen
-		 */
-		const touch = (expression, scope, touched, seen = new Set()) => {
-			if (seen.has(expression)) return;
-			seen.add(expression);
-
-			walk(
-				expression,
-				{ scope },
-				{
-					ImportDeclaration(node) {},
-					Identifier(node, context) {
-						const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
-						if (is_reference(node, parent)) {
-							const binding = context.state.scope.get(node.name);
-							if (binding) {
-								touched.add(binding);
-
-								for (const assignment of binding.assignments) {
-									touch(assignment.value, assignment.scope, touched, seen);
-								}
-							}
-						}
-					}
-				}
-			);
-		};
-
-		/**
-		 * @param {ESTree.Node} node
-		 * @param {Set<ESTree.Node>} seen
-		 * @param {Set<Binding>} reads
-		 * @param {Set<Binding>} writes
-		 */
-		const trace_references = (node, reads, writes, seen = new Set()) => {
-			if (seen.has(node)) return;
-			seen.add(node);
-
-			/**
-			 * @param {ESTree.Pattern} node
-			 * @param {Scope} scope
-			 */
-			function update(node, scope) {
-				for (const pattern of unwrap_pattern(node)) {
-					const node = object(pattern);
-					if (!node) return;
-
-					const binding = scope.get(node.name);
-					if (!binding) return;
-
-					writes.add(binding);
-				}
-			}
-
-			walk(
-				node,
-				{ scope: instance.scope },
-				{
-					_(node, context) {
-						const scope = scopes.get(node);
-						if (scope) {
-							context.next({ scope });
-						} else {
-							context.next();
-						}
-					},
-					AssignmentExpression(node, context) {
-						update(node.left, context.state.scope);
-					},
-					UpdateExpression(node, context) {
-						update(
-							/** @type {ESTree.Identifier | ESTree.MemberExpression} */ (node.argument),
-							context.state.scope
-						);
-					},
-					CallExpression(node, context) {
-						// for now, assume everything touched by the callee ends up mutating the object
-						// TODO optimise this better
-
-						// special case — no need to peek inside effects
-						const rune = get_rune(node, context.state.scope);
-						if (rune === '$effect') return;
-
-						/** @type {Set<Binding>} */
-						const touched = new Set();
-						touch(node, context.state.scope, touched);
-
-						for (const b of touched) {
-							writes.add(b);
-						}
-					},
-					// don't look inside functions until they are called
-					ArrowFunctionExpression(_, context) {},
-					FunctionDeclaration(_, context) {},
-					FunctionExpression(_, context) {},
-					Identifier(node, context) {
-						const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
-						if (is_reference(node, parent)) {
-							const binding = context.state.scope.get(node.name);
-							if (binding) {
-								reads.add(binding);
-							}
-						}
-					}
-				}
-			);
-		};
-
-		let awaited = false;
-
-		// TODO this should probably be attached to the scope?
-		var promises = b.id('$$promises');
-
-		/**
-		 * @param {ESTree.Identifier} id
-		 * @param {ESTree.Expression} blocker
-		 */
-		function push_declaration(id, blocker) {
-			analysis.instance_body.declarations.push(id);
-
-			const binding = /** @type {Binding} */ (instance.scope.get(id.name));
-			binding.blocker = blocker;
-		}
-
-		for (let node of instance.ast.body) {
-			if (node.type === 'ImportDeclaration') {
-				analysis.instance_body.hoisted.push(node);
-				continue;
-			}
-
-			if (node.type === 'ExportDefaultDeclaration' || node.type === 'ExportAllDeclaration') {
-				// these can't exist inside `<script>` but TypeScript doesn't know that
-				continue;
-			}
-
-			if (node.type === 'ExportNamedDeclaration') {
-				if (node.declaration) {
-					node = node.declaration;
-				} else {
-					continue;
-				}
-			}
-
-			const has_await = has_await_expression(node);
-			awaited ||= has_await;
-
-			if (awaited && node.type !== 'FunctionDeclaration') {
-				/** @type {Set<Binding>} */
-				const reads = new Set(); // TODO we're not actually using this yet
-
-				/** @type {Set<Binding>} */
-				const writes = new Set();
-
-				trace_references(node, reads, writes);
-
-				const blocker = b.member(promises, b.literal(analysis.instance_body.async.length), true);
-
-				for (const binding of writes) {
-					binding.blocker = blocker;
-				}
-
-				if (node.type === 'VariableDeclaration') {
-					for (const declarator of node.declarations) {
-						for (const id of extract_identifiers(declarator.id)) {
-							push_declaration(id, blocker);
-						}
-
-						// one declarator per declaration, makes things simpler
-						analysis.instance_body.async.push({
-							node: declarator,
-							has_await
-						});
-					}
-				} else if (node.type === 'ClassDeclaration') {
-					push_declaration(node.id, blocker);
-					analysis.instance_body.async.push({ node, has_await });
-				} else {
-					analysis.instance_body.async.push({ node, has_await });
-				}
-			} else {
-				analysis.instance_body.sync.push(node);
-			}
 		}
 
 		for (const { ast, scope, scopes } of [module, instance, template]) {

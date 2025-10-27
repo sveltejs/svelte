@@ -2,15 +2,16 @@
 /** @import { ComponentAnalysis } from '../../types' */
 import * as b from '#compiler/builders';
 
-// TODO find a way to DRY out this and the corresponding server visitor
 /**
- * @param {ESTree.Program} program
  * @param {ComponentAnalysis['instance_body']} instance_body
  * @param {ESTree.Expression} runner
  * @param {(node: ESTree.Node) => ESTree.Node} transform
+ * @returns {Array<ESTree.Statement | ESTree.VariableDeclaration>}
  */
-export function transform_body(program, instance_body, runner, transform) {
-	const statements = instance_body.sync.map(transform);
+export function transform_body(instance_body, runner, transform) {
+	const statements = instance_body.sync.map(
+		(node) => /** @type {ESTree.Statement | ESTree.VariableDeclaration} */ (transform(node))
+	);
 
 	if (instance_body.declarations.length > 0) {
 		statements.push(

@@ -3,7 +3,6 @@
 import { build_getter, is_prop_source } from '../utils.js';
 import * as b from '#compiler/builders';
 import { add_state_transformers } from './shared/declarations.js';
-import { runes } from '../../../../state.js';
 import { transform_body } from '../../shared/transform-async.js';
 
 /**
@@ -139,15 +138,13 @@ export function Program(node, context) {
 
 	add_state_transformers(context);
 
-	if (context.state.is_instance && runes) {
+	if (context.state.is_instance) {
 		return {
 			...node,
 			body: transform_body(
-				node,
 				context.state.analysis.instance_body,
 				b.id('$.run'),
-				(node) => /** @type {Node} */ (context.visit(node)),
-				(statement) => context.state.hoisted.push(statement)
+				(node) => /** @type {Node} */ (context.visit(node))
 			)
 		};
 	}
