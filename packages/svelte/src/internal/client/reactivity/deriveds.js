@@ -86,7 +86,7 @@ export function derived(fn) {
 	};
 
 	if (DEV && tracing_mode_flag) {
-		signal.created = get_stack('CreatedAt');
+		signal.created = get_stack('created at');
 	}
 
 	return signal;

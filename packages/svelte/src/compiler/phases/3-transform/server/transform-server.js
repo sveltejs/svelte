@@ -1,4 +1,4 @@
-/** @import { Program, Property, Statement, VariableDeclarator } from 'estree' */
+/** @import * as ESTree from 'estree' */
 /** @import { AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { ComponentServerTransformState, ComponentVisitors, ServerTransformState, Visitors } from './types.js' */
 /** @import { Analysis, ComponentAnalysis } from '../../types.js' */
@@ -86,7 +86,7 @@ const template_visitors = {
 /**
  * @param {ComponentAnalysis} analysis
  * @param {ValidatedCompileOptions} options
- * @returns {Program}
+ * @returns {ESTree.Program}
  */
 export function server_component(analysis, options) {
 	/** @type {ComponentServerTransformState} */
@@ -106,11 +106,11 @@ export function server_component(analysis, options) {
 		skip_hydration_boundaries: false
 	};
 
-	const module = /** @type {Program} */ (
+	const module = /** @type {ESTree.Program} */ (
 		walk(/** @type {AST.SvelteNode} */ (analysis.module.ast), state, global_visitors)
 	);
 
-	const instance = /** @type {Program} */ (
+	const instance = /** @type {ESTree.Program} */ (
 		walk(
 			/** @type {AST.SvelteNode} */ (analysis.instance.ast),
 			{ ...state, scopes: analysis.instance.scopes },
@@ -131,7 +131,7 @@ export function server_component(analysis, options) {
 		)
 	);
 
-	const template = /** @type {Program} */ (
+	const template = /** @type {ESTree.Program} */ (
 		walk(
 			/** @type {AST.SvelteNode} */ (analysis.template.ast),
 			{ ...state, scopes: analysis.template.scopes },
@@ -140,7 +140,7 @@ export function server_component(analysis, options) {
 		)
 	);
 
-	/** @type {VariableDeclarator[]} */
+	/** @type {ESTree.VariableDeclarator[]} */
 	const legacy_reactive_declarations = [];
 
 	for (const [node] of analysis.reactive_statements) {
@@ -192,7 +192,7 @@ export function server_component(analysis, options) {
 			b.function_declaration(
 				b.id('$$render_inner'),
 				[b.id('$$renderer')],
-				b.block(/** @type {Statement[]} */ (rest))
+				b.block(/** @type {ESTree.Statement[]} */ (rest))
 			),
 			b.do_while(
 				b.unary('!', b.id('$$settled')),
@@ -219,7 +219,7 @@ export function server_component(analysis, options) {
 
 	// Propagate values of bound props upwards if they're undefined in the parent and have a value.
 	// Don't do this as part of the props retrieval because people could eagerly mutate the prop in the instance script.
-	/** @type {Property[]} */
+	/** @type {ESTree.Property[]} */
 	const props = [];
 
 	for (const [name, binding] of analysis.instance.scope.declarations) {
@@ -239,8 +239,8 @@ export function server_component(analysis, options) {
 	}
 
 	let component_block = b.block([
-		.../** @type {Statement[]} */ (instance.body),
-		.../** @type {Statement[]} */ (template.body)
+		.../** @type {ESTree.Statement[]} */ (instance.body),
+		.../** @type {ESTree.Statement[]} */ (template.body)
 	]);
 
 	if (analysis.instance.has_await) {
@@ -395,7 +395,7 @@ export function server_component(analysis, options) {
 /**
  * @param {Analysis} analysis
  * @param {ValidatedModuleCompileOptions} options
- * @returns {Program}
+ * @returns {ESTree.Program}
  */
 export function server_module(analysis, options) {
 	/** @type {ServerTransformState} */
@@ -411,7 +411,7 @@ export function server_module(analysis, options) {
 		state_fields: new Map()
 	};
 
-	const module = /** @type {Program} */ (
+	const module = /** @type {ESTree.Program} */ (
 		walk(/** @type {AST.SvelteNode} */ (analysis.module.ast), state, global_visitors)
 	);
 

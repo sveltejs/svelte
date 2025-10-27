@@ -20,7 +20,7 @@ export default test({
 			'Detected reactivity loss when reading `b`. This happens when state is read in an async function after an earlier `await`'
 		);
 
-		assert.equal(warnings[1].name, 'TracedAtError');
+		assert.equal(warnings[1].name, 'traced at');
 
 		assert.equal(warnings.length, 2);
 	}

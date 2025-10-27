@@ -13,6 +13,7 @@ export const INERT = 1 << 13;
 export const DESTROYED = 1 << 14;
 
 // Flags exclusive to effects
+/** Set once an effect that should run synchronously has run */
 export const EFFECT_RAN = 1 << 15;
 /**
  * 'Transparent' effects do not create a transition boundary.
