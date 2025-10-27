@@ -322,7 +322,9 @@ export function build_inline_component(node, expression, context) {
 		);
 	}
 
-	if (optimiser.is_async()) {
+	const is_async = optimiser.is_async();
+
+	if (is_async) {
 		statement = create_async_block(
 			b.block([optimiser.apply(), statement]),
 			optimiser.blockers(),
@@ -337,6 +339,7 @@ export function build_inline_component(node, expression, context) {
 	context.state.template.push(statement);
 
 	if (
+		!is_async &&
 		!context.state.skip_hydration_boundaries &&
 		custom_css_props.length === 0 &&
 		optimiser.expressions.length === 0
