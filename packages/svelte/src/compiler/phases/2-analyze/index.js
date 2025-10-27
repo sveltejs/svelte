@@ -695,10 +695,10 @@ export function analyze_component(root, source, options) {
 
 		if (instance.has_await) {
 			/**
-			 * @param {ESTree.Expression} expression
+			 * @param {ESTree.Node} expression
 			 * @param {Scope} scope
 			 * @param {Set<Binding>} touched
-			 * @param {Set<ESTree.Expression>} seen
+			 * @param {Set<ESTree.Node>} seen
 			 */
 			const touch = (expression, scope, touched, seen = new Set()) => {
 				if (seen.has(expression)) return;
@@ -708,6 +708,7 @@ export function analyze_component(root, source, options) {
 					expression,
 					{ scope },
 					{
+						ImportDeclaration(node) {},
 						Identifier(node, context) {
 							const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
 							if (is_reference(node, parent)) {
