@@ -207,6 +207,7 @@ export namespace AST {
 		expression: Identifier | MemberExpression | SequenceExpression;
 		/** @internal */
 		metadata: {
+			binding?: Binding | null;
 			binding_group_name: Identifier;
 			parent_each_blocks: EachBlock[];
 		};
