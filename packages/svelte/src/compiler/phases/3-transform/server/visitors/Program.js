@@ -17,7 +17,7 @@ export function Program(node, context) {
 			...node,
 			body: transform_body(
 				node,
-				c.state.analysis.awaited_statements,
+				c.state.analysis.instance_body,
 				b.id('$$renderer.run'),
 				(node) => /** @type {Node} */ (context.visit(node)),
 				(statement) => c.state.hoisted.push(statement)

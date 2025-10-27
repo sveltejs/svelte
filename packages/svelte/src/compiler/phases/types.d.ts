@@ -11,6 +11,7 @@ import type {
 	Pattern,
 	Program,
 	Statement,
+	VariableDeclaration,
 	VariableDeclarator
 } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
@@ -40,14 +41,6 @@ export interface AwaitedDeclaration {
 	pattern: Pattern;
 	metadata: ExpressionMetadata;
 	updated_by: Set<Identifier>;
-}
-
-export interface AwaitedStatement {
-	node: Statement | VariableDeclarator | ClassDeclaration | FunctionDeclaration;
-	has_await: boolean;
-	declarations: Binding[];
-	reads: Set<Binding>;
-	writes: Set<Binding>;
 }
 
 /**
@@ -132,8 +125,12 @@ export interface ComponentAnalysis extends Analysis {
 	 */
 	snippets: Set<AST.SnippetBlock>;
 	/**
-	 * Information about top-level instance statements that need to be transformed
-	 * so that we can run the template synchronously
+	 * Pre-transformed `<script>` block
 	 */
-	awaited_statements: Map<Statement | ModuleDeclaration | VariableDeclarator, AwaitedStatement>;
+	instance_body: {
+		hoisted: Array<Statement | ModuleDeclaration>;
+		sync: Array<Statement | ModuleDeclaration | VariableDeclaration>;
+		async: Array<{ node: Statement | VariableDeclarator; has_await: boolean }>;
+		declarations: Array<Identifier>;
+	};
 }

@@ -97,7 +97,7 @@ export function server_component(analysis, options) {
 		options,
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
-		hoisted: [b.import_all('$', 'svelte/internal/server')],
+		hoisted: [b.import_all('$', 'svelte/internal/server'), ...analysis.instance_body.hoisted],
 		legacy_reactive_statements: new Map(),
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		init: /** @type {any} */ (null),

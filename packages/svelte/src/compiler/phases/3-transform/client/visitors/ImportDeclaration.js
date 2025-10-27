@@ -8,6 +8,7 @@ import * as b from '#compiler/builders';
  */
 export function ImportDeclaration(node, context) {
 	if ('hoisted' in context.state) {
+		// TODO we can get rid of this visitor
 		context.state.hoisted.push(node);
 		return b.empty;
 	}

@@ -144,7 +144,7 @@ export function Program(node, context) {
 			...node,
 			body: transform_body(
 				node,
-				context.state.analysis.awaited_statements,
+				context.state.analysis.instance_body,
 				b.id('$.run'),
 				(node) => /** @type {Node} */ (context.visit(node)),
 				(statement) => context.state.hoisted.push(statement)
