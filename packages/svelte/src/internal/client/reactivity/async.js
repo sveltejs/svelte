@@ -310,7 +310,7 @@ export function run(thunks) {
 		// wait one more tick, so that template effects are
 		// guaranteed to run before `$effect(...)`
 		.then(() => Promise.resolve())
-		.then(() => {
+		.finally(() => {
 			boundary.update_pending_count(-1);
 			batch.decrement(blocking);
 		});
