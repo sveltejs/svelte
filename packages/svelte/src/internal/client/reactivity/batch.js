@@ -196,6 +196,8 @@ export class Batch {
 			flush_queued_effects(target.effects);
 
 			previous_batch = null;
+
+			this.#deferred?.resolve();
 		}
 
 		batch_values = null;
@@ -432,8 +434,6 @@ export class Batch {
 
 		this.committed = true;
 		batches.delete(this);
-
-		this.#deferred?.resolve();
 	}
 
 	/**
