@@ -6,7 +6,8 @@ import {
 	read_hydration_instruction,
 	skip_nodes,
 	set_hydrate_node,
-	set_hydrating
+	set_hydrating,
+	hydrate_node
 } from '../hydration.js';
 import { block } from '../../reactivity/effects.js';
 import { HYDRATION_START_ELSE } from '../../../../constants.js';

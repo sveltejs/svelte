@@ -53,8 +53,6 @@ export function flatten(blockers, sync, async, fn) {
 
 	var restore = capture();
 
-	var was_hydrating = hydrating;
-
 	function run() {
 		Promise.all(async.map((expression) => async_derived(expression)))
 			.then((result) => {
@@ -67,10 +65,6 @@ export function flatten(blockers, sync, async, fn) {
 					if ((parent.f & DESTROYED) === 0) {
 						invoke_error_boundary(error, parent);
 					}
-				}
-
-				if (was_hydrating) {
-					set_hydrating(false);
 				}
 
 				batch?.deactivate();
@@ -108,12 +102,6 @@ export function capture() {
 	var previous_component_context = component_context;
 	var previous_batch = current_batch;
 
-	var was_hydrating = hydrating;
-
-	if (was_hydrating) {
-		var previous_hydrate_node = hydrate_node;
-	}
-
 	if (DEV) {
 		var previous_dev_stack = dev_stack;
 	}
@@ -123,11 +111,6 @@ export function capture() {
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
 		if (activate_batch) previous_batch?.activate();
-
-		if (was_hydrating) {
-			set_hydrating(true);
-			set_hydrate_node(previous_hydrate_node);
-		}
 
 		if (DEV) {
 			set_from_async_derived(null);
@@ -265,10 +248,6 @@ export async function async_body(anchor, fn) {
 			invoke_error_boundary(error, active);
 		}
 	} finally {
-		if (was_hydrating) {
-			set_hydrating(false);
-		}
-
 		boundary.update_pending_count(-1);
 		batch.decrement(blocking);
 
@@ -293,8 +272,6 @@ export function run(thunks) {
 
 	/** @type {null | { error: any }} */
 	var errored = null;
-
-	let was_hydrating = hydrating;
 
 	/** @param {any} error */
 	const handle_error = (error) => {
@@ -326,19 +303,11 @@ export function run(thunks) {
 				} finally {
 					// TODO do we need it here as well as below?
 					unset_context();
-
-					if (was_hydrating) {
-						set_hydrating(false);
-					}
 				}
 			})
 			.catch(handle_error)
 			.finally(() => {
 				unset_context();
-
-				if (was_hydrating) {
-					set_hydrating(false);
-				}
 			});
 
 		promises.push(promise);

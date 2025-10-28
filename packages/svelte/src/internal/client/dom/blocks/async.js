@@ -50,10 +50,11 @@ export function async(node, blockers = [], expressions = [], fn) {
 		} finally {
 			boundary.update_pending_count(-1);
 			batch.decrement(blocking);
-		}
 
-		if (was_hydrating) {
-			set_hydrating(false);
+			if (was_hydrating) {
+				set_hydrating(false);
+				set_hydrate_node(undefined);
+			}
 		}
 	});
 }
