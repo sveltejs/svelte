@@ -128,19 +128,16 @@ export function build_component(node, component_name, context) {
 
 			(events[attribute.name] ||= []).push(handler);
 		} else if (attribute.type === 'SpreadAttribute') {
-			const expression = memoizer.add(
-				/** @type {Expression} */ (context.visit(attribute)),
-				attribute.metadata.expression
-			);
+			const expression = /** @type {Expression} */ (context.visit(attribute));
+			const memoized_expression = memoizer.add(expression, attribute.metadata.expression);
+			const is_memoized = expression !== memoized_expression;
 
-			if (attribute.metadata.expression.has_state || attribute.metadata.expression.has_await) {
-				props_and_spreads.push(
-					b.thunk(
-						attribute.metadata.expression.has_await || attribute.metadata.expression.has_call
-							? b.call('$.get', expression)
-							: expression
-					)
-				);
+			if (
+				is_memoized ||
+				attribute.metadata.expression.has_state ||
+				attribute.metadata.expression.has_await
+			) {
+				props_and_spreads.push(b.thunk(is_memoized ? b.call('$.get', expression) : expression));
 			} else {
 				props_and_spreads.push(expression);
 			}
@@ -153,7 +150,7 @@ export function build_component(node, component_name, context) {
 							const memoized = memoizer.add(value, metadata);
 
 							// TODO put the derived in the local block
-							return metadata.has_call || metadata.has_await ? b.call('$.get', memoized) : memoized;
+							return value !== memoized ? b.call('$.get', memoized) : value;
 						}).value
 					)
 				);
@@ -189,7 +186,7 @@ export function build_component(node, component_name, context) {
 
 					const memoized = memoizer.add(value, metadata, should_wrap_in_derived);
 
-					return should_wrap_in_derived ? b.call('$.get', memoized) : memoized;
+					return value !== memoized ? b.call('$.get', memoized) : value;
 				}
 			);
 
