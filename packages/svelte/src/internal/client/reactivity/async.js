@@ -1,5 +1,5 @@
 /** @import { Effect, TemplateNode, Value } from '#client' */
-import { DESTROYED } from '#client/constants';
+import { DESTROYED, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
 	component_context,
@@ -25,25 +25,18 @@ import {
 	set_from_async_derived
 } from './deriveds.js';
 import { aborted } from './effects.js';
-import {
-	hydrate_next,
-	hydrate_node,
-	hydrating,
-	set_hydrate_node,
-	set_hydrating,
-	skip_nodes
-} from '../dom/hydration.js';
+import { hydrate_next, hydrating, set_hydrate_node, skip_nodes } from '../dom/hydration.js';
 
 /**
- *
+ * @param {Array<Promise<void>>} blockers
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
  * @param {(values: Value[]) => any} fn
  */
-export function flatten(sync, async, fn) {
+export function flatten(blockers, sync, async, fn) {
 	const d = is_runes() ? derived : derived_safe_equal;
 
-	if (async.length === 0) {
+	if (async.length === 0 && blockers.length === 0) {
 		fn(sync.map(d));
 		return;
 	}
@@ -53,31 +46,42 @@ export function flatten(sync, async, fn) {
 
 	var restore = capture();
 
-	var was_hydrating = hydrating;
+	function run() {
+		Promise.all(async.map((expression) => async_derived(expression)))
+			.then((result) => {
+				restore();
 
-	Promise.all(async.map((expression) => async_derived(expression)))
-		.then((result) => {
+				try {
+					fn([...sync.map(d), ...result]);
+				} catch (error) {
+					// ignore errors in blocks that have already been destroyed
+					if ((parent.f & DESTROYED) === 0) {
+						invoke_error_boundary(error, parent);
+					}
+				}
+
+				batch?.deactivate();
+				unset_context();
+			})
+			.catch((error) => {
+				invoke_error_boundary(error, parent);
+			});
+	}
+
+	if (blockers.length > 0) {
+		Promise.all(blockers).then(() => {
 			restore();
 
 			try {
-				fn([...sync.map(d), ...result]);
-			} catch (error) {
-				// ignore errors in blocks that have already been destroyed
-				if ((parent.f & DESTROYED) === 0) {
-					invoke_error_boundary(error, parent);
-				}
+				return run();
+			} finally {
+				batch?.deactivate();
+				unset_context();
 			}
-
-			if (was_hydrating) {
-				set_hydrating(false);
-			}
-
-			batch?.deactivate();
-			unset_context();
-		})
-		.catch((error) => {
-			invoke_error_boundary(error, parent);
 		});
+	} else {
+		run();
+	}
 }
 
 /**
@@ -91,12 +95,6 @@ export function capture() {
 	var previous_component_context = component_context;
 	var previous_batch = current_batch;
 
-	var was_hydrating = hydrating;
-
-	if (was_hydrating) {
-		var previous_hydrate_node = hydrate_node;
-	}
-
 	if (DEV) {
 		var previous_dev_stack = dev_stack;
 	}
@@ -106,11 +104,6 @@ export function capture() {
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
 		if (activate_batch) previous_batch?.activate();
-
-		if (was_hydrating) {
-			set_hydrating(true);
-			set_hydrate_node(previous_hydrate_node);
-		}
 
 		if (DEV) {
 			set_from_async_derived(null);
@@ -248,13 +241,79 @@ export async function async_body(anchor, fn) {
 			invoke_error_boundary(error, active);
 		}
 	} finally {
-		if (was_hydrating) {
-			set_hydrating(false);
-		}
-
 		boundary.update_pending_count(-1);
 		batch.decrement(blocking);
 
 		unset_context();
 	}
+}
+
+/**
+ * @param {Array<() => void | Promise<void>>} thunks
+ */
+export function run(thunks) {
+	const restore = capture();
+
+	var boundary = get_boundary();
+	var batch = /** @type {Batch} */ (current_batch);
+	var blocking = !boundary.is_pending();
+
+	boundary.update_pending_count(1);
+	batch.increment(blocking);
+
+	var active = /** @type {Effect} */ (active_effect);
+
+	/** @type {null | { error: any }} */
+	var errored = null;
+
+	/** @param {any} error */
+	const handle_error = (error) => {
+		errored = { error }; // wrap in object in case a promise rejects with a falsy value
+
+		if (!aborted(active)) {
+			invoke_error_boundary(error, active);
+		}
+	};
+
+	var promise = Promise.resolve(thunks[0]()).catch(handle_error);
+
+	var promises = [promise];
+
+	for (const fn of thunks.slice(1)) {
+		promise = promise
+			.then(() => {
+				if (errored) {
+					throw errored.error;
+				}
+
+				if (aborted(active)) {
+					throw STALE_REACTION;
+				}
+
+				try {
+					restore();
+					return fn();
+				} finally {
+					// TODO do we need it here as well as below?
+					unset_context();
+				}
+			})
+			.catch(handle_error)
+			.finally(() => {
+				unset_context();
+			});
+
+		promises.push(promise);
+	}
+
+	promise
+		// wait one more tick, so that template effects are
+		// guaranteed to run before `$effect(...)`
+		.then(() => Promise.resolve())
+		.finally(() => {
+			boundary.update_pending_count(-1);
+			batch.decrement(blocking);
+		});
+
+	return promises;
 }

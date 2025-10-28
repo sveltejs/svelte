@@ -83,6 +83,17 @@ export function block(body) {
 }
 
 /**
+ * @param {ESTree.Identifier | null} id
+ * @param {ESTree.ClassBody} body
+ * @param {ESTree.Expression | null} [superClass]
+ * @param {ESTree.Decorator[]} [decorators]
+ * @returns {ESTree.ClassExpression}
+ */
+export function class_expression(id, body, superClass, decorators = []) {
+	return { type: 'ClassExpression', body, superClass, decorators };
+}
+
+/**
  * @param {string} name
  * @param {ESTree.Statement} body
  * @returns {ESTree.LabeledStatement}
@@ -184,7 +195,7 @@ export function declaration(kind, declarations) {
 
 /**
  * @param {ESTree.Pattern | string} pattern
- * @param {ESTree.Expression} [init]
+ * @param {ESTree.Expression | null} [init]
  * @returns {ESTree.VariableDeclarator}
  */
 export function declarator(pattern, init) {
@@ -520,7 +531,7 @@ const this_instance = {
 
 /**
  * @param {string | ESTree.Pattern} pattern
- * @param { ESTree.Expression} [init]
+ * @param {ESTree.Expression | null} [init]
  * @returns {ESTree.VariableDeclaration}
  */
 function let_builder(pattern, init) {
@@ -529,7 +540,7 @@ function let_builder(pattern, init) {
 
 /**
  * @param {string | ESTree.Pattern} pattern
- * @param { ESTree.Expression} init
+ * @param {ESTree.Expression | null} init
  * @returns {ESTree.VariableDeclaration}
  */
 function const_builder(pattern, init) {
@@ -538,7 +549,7 @@ function const_builder(pattern, init) {
 
 /**
  * @param {string | ESTree.Pattern} pattern
- * @param { ESTree.Expression} [init]
+ * @param {ESTree.Expression | null} [init]
  * @returns {ESTree.VariableDeclaration}
  */
 function var_builder(pattern, init) {

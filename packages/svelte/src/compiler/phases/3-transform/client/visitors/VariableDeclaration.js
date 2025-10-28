@@ -193,18 +193,25 @@ export function VariableDeclaration(node, context) {
 					/** @type {CallExpression} */ (init)
 				);
 
+				// for now, only wrap async derived in $.save if it's not
+				// a top-level instance derived. TODO in future maybe we
+				// can dewaterfall all of them?
+				const should_save = context.state.is_instance && context.state.scope.function_depth > 1;
+
 				if (declarator.id.type === 'Identifier') {
 					let expression = /** @type {Expression} */ (context.visit(value));
 
 					if (is_async) {
 						const location = dev && !is_ignored(init, 'await_waterfall') && locate_node(init);
+
+						/** @type {Expression} */
 						let call = b.call(
 							'$.async_derived',
 							b.thunk(expression, true),
 							location ? b.literal(location) : undefined
 						);
 
-						call = save(call);
+						call = should_save ? save(call) : b.await(call);
 						if (dev) call = b.call('$.tag', call, b.literal(declarator.id.name));
 
 						declarations.push(b.declarator(declarator.id, call));
@@ -224,18 +231,22 @@ export function VariableDeclaration(node, context) {
 
 					if (rune !== '$derived' || init.arguments[0].type !== 'Identifier') {
 						const id = b.id(context.state.scope.generate('$$d'));
+
+						/** @type {Expression} */
 						let call = b.call('$.derived', rune === '$derived' ? b.thunk(expression) : expression);
 
 						rhs = b.call('$.get', id);
 
 						if (is_async) {
 							const location = dev && !is_ignored(init, 'await_waterfall') && locate_node(init);
+
 							call = b.call(
 								'$.async_derived',
 								b.thunk(expression, true),
 								location ? b.literal(location) : undefined
 							);
-							call = save(call);
+
+							call = should_save ? save(call) : b.await(call);
 						}
 
 						if (dev) {

@@ -22,12 +22,21 @@ export class Memoizer {
 	/** @type {Array<{ id: Identifier, expression: Expression }>} */
 	#async = [];
 
+	/** @type {Set<Expression>} */
+	#blockers = new Set();
+
 	/**
 	 * @param {Expression} expression
 	 * @param {ExpressionMetadata} metadata
 	 * @param {boolean} memoize_if_state
 	 */
 	add(expression, metadata, memoize_if_state = false) {
+		for (const binding of metadata.dependencies) {
+			if (binding.blocker) {
+				this.#blockers.add(binding.blocker);
+			}
+		}
+
 		const should_memoize =
 			metadata.has_call || metadata.has_await || (memoize_if_state && metadata.has_state);
 
@@ -48,6 +57,10 @@ export class Memoizer {
 			memo.id.name = `$${i}`;
 			return memo.id;
 		});
+	}
+
+	blockers() {
+		return this.#blockers.size > 0 ? b.array([...this.#blockers]) : undefined;
 	}
 
 	deriveds(runes = true) {
@@ -185,7 +198,8 @@ export function build_render_statement(state) {
 					: b.block(state.update)
 			),
 			memoizer.sync_values(),
-			memoizer.async_values()
+			memoizer.async_values(),
+			memoizer.blockers()
 		)
 	);
 }

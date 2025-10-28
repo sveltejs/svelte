@@ -243,18 +243,29 @@ export function BindDirective(node, context) {
 		}
 	}
 
+	const defer =
+		node.name !== 'this' &&
+		parent.type === 'RegularElement' &&
+		parent.attributes.find((a) => a.type === 'UseDirective');
+
+	let statement = defer ? b.stmt(b.call('$.effect', b.thunk(call))) : b.stmt(call);
+
+	// TODO this doesn't account for function bindings
+	if (node.metadata.binding?.blocker) {
+		statement = b.stmt(
+			b.call(b.member(node.metadata.binding.blocker, b.id('then')), b.thunk(b.block([statement])))
+		);
+	}
+
 	// Bindings need to happen after attribute updates, therefore after the render effect, and in order with events/actions.
 	// bind:this is a special case as it's one-way and could influence the render effect.
 	if (node.name === 'this') {
-		context.state.init.push(b.stmt(call));
+		context.state.init.push(statement);
 	} else {
-		const has_use =
-			parent.type === 'RegularElement' && parent.attributes.find((a) => a.type === 'UseDirective');
-
-		if (has_use) {
-			context.state.init.push(b.stmt(b.call('$.effect', b.thunk(call))));
+		if (defer) {
+			context.state.init.push(statement);
 		} else {
-			context.state.after_update.push(b.stmt(call));
+			context.state.after_update.push(statement);
 		}
 	}
 }

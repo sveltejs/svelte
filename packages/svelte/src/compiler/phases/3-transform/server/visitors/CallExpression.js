@@ -12,7 +12,14 @@ import { get_inspect_args } from '../../utils.js';
 export function CallExpression(node, context) {
 	const rune = get_rune(node, context.state.scope);
 
-	if (rune === '$host') {
+	if (
+		rune === '$host' ||
+		rune === '$effect' ||
+		rune === '$effect.pre' ||
+		rune === '$inspect.trace'
+	) {
+		// we will only encounter `$effect` etc if they are top-level statements in the <script>
+		// following an `await`, otherwise they are removed by the ExpressionStatement visitor
 		return b.void0;
 	}
 
