@@ -1,5 +1,13 @@
 # svelte
 
+## 5.42.3
+
+### Patch Changes
+
+- fix: handle `<svelte:head>` rendered asynchronously ([#17052](https://github.com/sveltejs/svelte/pull/17052))
+
+- fix: don't restore batch in `#await` ([#17051](https://github.com/sveltejs/svelte/pull/17051))
+
 ## 5.42.2
 
 ### Patch Changes
