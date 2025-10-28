@@ -629,7 +629,7 @@ export function get(signal) {
 			if (signal.trace) {
 				signal.trace();
 			} else {
-				trace = get_stack('traced at');
+				var trace = get_stack('traced at');
 
 				if (trace) {
 					var entry = tracing_expressions.entries.get(signal);
