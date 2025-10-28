@@ -50,7 +50,6 @@ export function async(node, blockers = [], expressions = [], fn) {
 		} finally {
 			if (was_hydrating) {
 				set_hydrating(false);
-				set_hydrate_node(undefined);
 			}
 
 			boundary.update_pending_count(-1);
