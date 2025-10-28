@@ -33,7 +33,6 @@ import {
 	set_hydrating,
 	skip_nodes
 } from '../dom/hydration.js';
-import { noop } from '../../shared/utils.js';
 
 /**
  * @param {Array<Promise<void>>} blockers
@@ -119,11 +118,11 @@ export function capture() {
 		var previous_dev_stack = dev_stack;
 	}
 
-	return function restore() {
+	return function restore(activate_batch = true) {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
-		previous_batch?.activate();
+		if (activate_batch) previous_batch?.activate();
 
 		if (was_hydrating) {
 			set_hydrating(true);
