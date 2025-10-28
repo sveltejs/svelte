@@ -137,7 +137,9 @@ export function build_component(node, component_name, context) {
 				attribute.metadata.expression.has_state ||
 				attribute.metadata.expression.has_await
 			) {
-				props_and_spreads.push(b.thunk(is_memoized ? b.call('$.get', expression) : expression));
+				props_and_spreads.push(
+					b.thunk(is_memoized ? b.call('$.get', memoized_expression) : expression)
+				);
 			} else {
 				props_and_spreads.push(expression);
 			}
