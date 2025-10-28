@@ -1,4 +1,4 @@
-/** @import { ArrowFunctionExpression, BlockStatement, Expression, FunctionDeclaration, FunctionExpression, Statement } from 'estree' */
+/** @import { ArrowFunctionExpression, BlockStatement, Declaration, Expression, FunctionDeclaration, FunctionExpression, Statement, VariableDeclaration } from 'estree' */
 /** @import { ComponentContext } from '../types' */
 import { add_state_transformers } from './shared/declarations.js';
 import * as b from '#compiler/builders';
@@ -11,6 +11,24 @@ export function BlockStatement(node, context) {
 	add_state_transformers(context);
 	const tracing = context.state.scope.tracing;
 
+	/** @type {BlockStatement['body']} */
+	const body = [];
+	for (const child of node.body) {
+		const visited = /** @type {Declaration | Statement} */ (context.visit(child));
+		if (
+			visited.type === 'ClassDeclaration' &&
+			'metadata' in visited &&
+			visited.metadata !== null &&
+			typeof visited.metadata === 'object' &&
+			'computed_field_declarations' in visited.metadata
+		) {
+			body.push(
+				.../** @type {VariableDeclaration[]} */ (visited.metadata.computed_field_declarations)
+			);
+		}
+		body.push(visited);
+	}
+
 	if (tracing !== null) {
 		const parent =
 			/** @type {ArrowFunctionExpression | FunctionDeclaration | FunctionExpression} */ (
@@ -22,11 +40,10 @@ export function BlockStatement(node, context) {
 		const call = b.call(
 			'$.trace',
 			/** @type {Expression} */ (tracing),
-			b.thunk(b.block(node.body.map((n) => /** @type {Statement} */ (context.visit(n)))), is_async)
+			b.thunk(b.block(body), is_async)
 		);
 
 		return b.block([b.return(is_async ? b.await(call) : call)]);
 	}
-
-	context.next();
+	return b.block(body);
 }

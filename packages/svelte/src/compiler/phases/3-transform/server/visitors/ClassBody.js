@@ -1,7 +1,8 @@
-/** @import { CallExpression, ClassBody, MethodDefinition, PropertyDefinition, StaticBlock } from 'estree' */
+/** @import { CallExpression, ClassBody, Expression, MethodDefinition, PropertyDefinition, StaticBlock, VariableDeclaration } from 'estree' */
 /** @import { Context } from '../types.js' */
 import * as b from '#compiler/builders';
 import { get_name } from '../../../nodes.js';
+import { is_constant } from '../../../scope.js';
 
 /**
  * @param {ClassBody} node
@@ -20,24 +21,83 @@ export function ClassBody(node, context) {
 	const body = [];
 
 	const child_state = { ...context.state, state_fields };
+	const computed_field_declarations = /** @type {VariableDeclaration[]} */ (
+		context.state.computed_field_declarations
+	);
 
 	for (const [name, field] of state_fields) {
-		if (name[0] === '#') {
+		if (
+			(typeof name === 'string' && name[0] === '#') ||
+			field.node.type !== 'AssignmentExpression'
+		) {
+			continue;
+		}
+
+		const member = b.member(b.this, field.key);
+		if (typeof name !== 'string' && field.computed_key) {
+			const computed_key = /** @type {Expression} */ (context.visit(field.computed_key));
+			const evaluation = context.state.scope.evaluate(computed_key);
+			if (evaluation.is_known) {
+				body.push(
+					b.prop_def(field.key, null),
+					b.method('get', b.literal(evaluation.value), [], [b.return(b.call(member))], true),
+					b.method(
+						'set',
+						b.literal(evaluation.value),
+						[b.id('$$value')],
+						[b.return(b.call(member, b.id('$$value')))],
+						true
+					)
+				);
+				continue;
+			}
+			if (is_constant(computed_key, context.state.scope)) {
+				body.push(
+					b.prop_def(field.key, null),
+					b.method('get', computed_key, [], [b.return(b.call(member))], true),
+					b.method(
+						'set',
+						computed_key,
+						[b.id('$$value')],
+						[b.return(b.call(member, b.id('$$value')))],
+						true
+					)
+				);
+				continue;
+			}
+			const key = context.state.scope.generate('key');
+			computed_field_declarations.push(b.let(key));
+			body.push(
+				b.prop_def(field.key, null),
+				b.method(
+					'get',
+					b.assignment('=', b.id(key), computed_key),
+					[],
+					[b.return(b.call(member))],
+					true
+				),
+				b.method(
+					'set',
+					b.id(key),
+					[b.id('$$value')],
+					[b.return(b.call(member, b.id('$$value')))],
+					true
+				)
+			);
 			continue;
 		}
 
 		// insert backing fields for stuff declared in the constructor
-		if (
-			field &&
-			field.node.type === 'AssignmentExpression' &&
-			(field.type === '$derived' || field.type === '$derived.by')
-		) {
-			const member = b.member(b.this, field.key);
-
+		if (field.type === '$derived' || field.type === '$derived.by') {
 			body.push(
 				b.prop_def(field.key, null),
-				b.method('get', b.key(name), [], [b.return(b.call(member))]),
-				b.method('set', b.key(name), [b.id('$$value')], [b.return(b.call(member, b.id('$$value')))])
+				b.method('get', b.key(/** @type {string} */ (name)), [], [b.return(b.call(member))]),
+				b.method(
+					'set',
+					b.key(/** @type {string} */ (name)),
+					[b.id('$$value')],
+					[b.return(b.call(member, b.id('$$value')))]
+				)
 			);
 		}
 	}
@@ -51,20 +111,25 @@ export function ClassBody(node, context) {
 			continue;
 		}
 
-		const name = get_name(definition.key);
-		const field = name && state_fields.get(name);
+		const name = definition.computed
+			? [...state_fields.entries()].find(([, field]) => field.node === definition)?.[0] ?? null
+			: get_name(definition.key);
+		const field = name !== null && state_fields.get(name);
 
 		if (!field) {
 			body.push(/** @type {PropertyDefinition} */ (context.visit(definition, child_state)));
 			continue;
 		}
+		const member = b.member(b.this, field.key);
 
-		if (name[0] === '#' || field.type === '$state' || field.type === '$state.raw') {
+		if (
+			(typeof name === 'string' && name[0] === '#') ||
+			field.type === '$state' ||
+			field.type === '$state.raw'
+		) {
 			body.push(/** @type {PropertyDefinition} */ (context.visit(definition, child_state)));
-		} else if (field.node === definition) {
+		} else if (field.node === definition && typeof name === 'string') {
 			// $derived / $derived.by
-			const member = b.member(b.this, field.key);
-
 			body.push(
 				b.prop_def(
 					field.key,
@@ -73,6 +138,66 @@ export function ClassBody(node, context) {
 
 				b.method('get', definition.key, [], [b.return(b.call(member))]),
 				b.method('set', b.key(name), [b.id('$$value')], [b.return(b.call(member, b.id('$$value')))])
+			);
+		} else if (field.computed_key) {
+			// $derived / $derived.by
+			const computed_key = /** @type {Expression} */ (context.visit(field.computed_key));
+			const evaluation = context.state.scope.evaluate(computed_key);
+			if (evaluation.is_known) {
+				body.push(
+					b.prop_def(
+						field.key,
+						/** @type {CallExpression} */ (context.visit(field.value, child_state))
+					),
+					b.method('get', b.literal(evaluation.value), [], [b.return(b.call(member))], true),
+					b.method(
+						'set',
+						b.literal(evaluation.value),
+						[b.id('$$value')],
+						[b.return(b.call(member, b.id('$$value')))],
+						true
+					)
+				);
+				continue;
+			}
+			if (is_constant(computed_key, context.state.scope)) {
+				body.push(
+					b.prop_def(
+						field.key,
+						/** @type {CallExpression} */ (context.visit(field.value, child_state))
+					),
+					b.method('get', computed_key, [], [b.return(b.call(member))], true),
+					b.method(
+						'set',
+						computed_key,
+						[b.id('$$value')],
+						[b.return(b.call(member, b.id('$$value')))],
+						true
+					)
+				);
+				continue;
+			}
+			const key = context.state.scope.generate('key');
+			computed_field_declarations.push(b.let(key));
+			body.push(
+				b.prop_def(
+					field.key,
+					/** @type {CallExpression} */ (context.visit(field.value, child_state))
+				),
+				b.method(
+					'get',
+					b.assignment('=', b.id(key), computed_key),
+					[],
+					[b.return(b.call(member))],
+					true
+				),
+				b.method(
+					'set',
+					b.id(key),
+					[b.id('$$value')],
+					[b.return(b.call(member, b.id('$$value')))],
+					true
+				)
 			);
 		}
 	}

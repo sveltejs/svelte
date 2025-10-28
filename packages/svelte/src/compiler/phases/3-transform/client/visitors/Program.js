@@ -1,14 +1,14 @@
-/** @import { Expression, ImportDeclaration, MemberExpression, Program } from 'estree' */
+/** @import { Declaration, Expression, ImportDeclaration, MemberExpression, Program, Statement, VariableDeclaration } from 'estree' */
 /** @import { ComponentContext } from '../types' */
 import { build_getter, is_prop_source } from '../utils.js';
 import * as b from '#compiler/builders';
 import { add_state_transformers } from './shared/declarations.js';
 
 /**
- * @param {Program} _
+ * @param {Program} node
  * @param {ComponentContext} context
  */
-export function Program(_, context) {
+export function Program(node, context) {
 	if (!context.state.analysis.runes) {
 		context.state.transform['$$props'] = {
 			read: (node) => ({ ...node, name: '$$sanitized_props' })
@@ -137,5 +137,26 @@ export function Program(_, context) {
 
 	add_state_transformers(context);
 
-	context.next();
+	/** @type {Program['body']} */
+	const body = [];
+	for (const child of node.body) {
+		const visited = /** @type {Declaration | Statement} */ (context.visit(child));
+		if (
+			visited.type === 'ClassDeclaration' &&
+			'metadata' in visited &&
+			visited.metadata !== null &&
+			typeof visited.metadata === 'object' &&
+			'computed_field_declarations' in visited.metadata
+		) {
+			body.push(
+				.../** @type {VariableDeclaration[]} */ (visited.metadata.computed_field_declarations)
+			);
+		}
+		body.push(visited);
+	}
+
+	return {
+		...node,
+		body
+	};
 }

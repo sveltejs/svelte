@@ -1,4 +1,4 @@
-import type { AST, Binding, StateField } from '#compiler';
+import type { AST, Binding, StateFields } from '#compiler';
 import type {
 	AwaitExpression,
 	CallExpression,
@@ -40,7 +40,7 @@ export interface Analysis {
 	tracing: boolean;
 	comments: AST.JSComment[];
 
-	classes: Map<ClassBody, Map<string, StateField>>;
+	classes: Map<ClassBody, StateFields>;
 
 	// TODO figure out if we can move this to ComponentAnalysis
 	accessors: boolean;

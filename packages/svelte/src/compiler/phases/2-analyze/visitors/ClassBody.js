@@ -30,10 +30,10 @@ export function ClassBody(node, context) {
 		}
 	}
 
-	/** @type {Map<string, StateField>} */
+	/** @type {Map<string | number, StateField>} */
 	const state_fields = new Map();
 
-	/** @type {Map<string, Array<MethodDefinition['kind'] | 'prop' | 'assigned_prop'>>} */
+	/** @type {Map<string | number, Array<MethodDefinition['kind'] | 'prop' | 'assigned_prop'>>} */
 	const fields = new Map();
 
 	context.state.analysis.classes.set(node, state_fields);
@@ -41,28 +41,36 @@ export function ClassBody(node, context) {
 	/** @type {MethodDefinition | null} */
 	let constructor = null;
 
+	function increment_computed() {
+		const numbered_keys = [...state_fields.keys()].filter((key) => typeof key === 'number');
+		return numbered_keys.length;
+	}
 	/**
 	 * @param {PropertyDefinition | AssignmentExpression} node
 	 * @param {Expression | PrivateIdentifier} key
 	 * @param {Expression | null | undefined} value
+	 * @param {boolean} [computed]
 	 */
-	function handle(node, key, value) {
-		const name = get_name(key);
+	function handle(node, key, value, computed = false) {
+		const name = computed ? increment_computed() : get_name(key);
 		if (name === null) return;
 
 		const rune = get_rune(value, context.state.scope);
 
 		if (rune && is_state_creation_rune(rune)) {
-			if (state_fields.has(name)) {
+			if (typeof name === 'string' && state_fields.has(name)) {
 				e.state_field_duplicate(node, name);
 			}
 
-			const _key = (node.type === 'AssignmentExpression' || !node.static ? '' : '@') + name;
+			const _key =
+				typeof name === 'string'
+					? (node.type === 'AssignmentExpression' || !node.static ? '' : '@') + name
+					: name;
 			const field = fields.get(_key);
 
 			// if there's already a method or assigned field, error
 			if (field && !(field.length === 1 && field[0] === 'prop')) {
-				e.duplicate_class_field(node, _key);
+				e.duplicate_class_field(node, typeof _key === 'string' ? _key : '[computed key]');
 			}
 
 			state_fields.set(name, {
@@ -70,15 +78,19 @@ export function ClassBody(node, context) {
 				type: rune,
 				// @ts-expect-error for public state this is filled out in a moment
 				key: key.type === 'PrivateIdentifier' ? key : null,
-				value: /** @type {CallExpression} */ (value)
+				value: /** @type {CallExpression} */ (value),
+				computed_key: computed ? /** @type {Expression} */ (key) : null
 			});
 		}
 	}
 
 	for (const child of node.body) {
-		if (child.type === 'PropertyDefinition' && !child.computed && !child.static) {
-			handle(child, child.key, child.value);
-			const key = /** @type {string} */ (get_name(child.key));
+		if (child.type === 'PropertyDefinition' && !child.static) {
+			handle(child, child.key, child.value, child.computed && child.key.type !== 'Literal');
+			const key = get_name(child.key);
+			if (key === null) {
+				continue;
+			}
 			const field = fields.get(key);
 			if (!field) {
 				fields.set(key, [child.value ? 'assigned_prop' : 'prop']);
@@ -91,7 +103,11 @@ export function ClassBody(node, context) {
 			if (child.kind === 'constructor') {
 				constructor = child;
 			} else if (!child.computed) {
-				const key = (child.static ? '@' : '') + get_name(child.key);
+				const name = get_name(child.key);
+				if (name === null) {
+					continue;
+				}
+				const key = (child.static ? '@' : '') + name;
 				const field = fields.get(key);
 				if (!field) {
 					fields.set(key, [child.kind]);
@@ -132,18 +148,25 @@ export function ClassBody(node, context) {
 
 			if (left.type !== 'MemberExpression') continue;
 			if (left.object.type !== 'ThisExpression') continue;
-			if (left.computed && left.property.type !== 'Literal') continue;
 
-			handle(statement.expression, left.property, right);
+			handle(
+				statement.expression,
+				left.property,
+				right,
+				left.computed && left.property.type !== 'Literal'
+			);
 		}
 	}
 
 	for (const [name, field] of state_fields) {
-		if (name[0] === '#') {
+		if (typeof name === 'string' && name[0] === '#') {
 			continue;
 		}
 
-		let deconflicted = name.replace(regex_invalid_identifier_chars, '_');
+		let deconflicted = `${typeof name === 'number' ? '_' : ''}${name}`.replace(
+			regex_invalid_identifier_chars,
+			'_'
+		);
 		while (private_ids.includes(deconflicted)) {
 			deconflicted = '_' + deconflicted;
 		}

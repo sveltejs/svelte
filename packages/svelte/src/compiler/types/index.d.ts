@@ -6,6 +6,7 @@ import type { StateCreationRuneName } from '../../utils.js';
 import type {
 	AssignmentExpression,
 	CallExpression,
+	Expression,
 	PrivateIdentifier,
 	PropertyDefinition
 } from 'estree';
@@ -299,7 +300,10 @@ export interface StateField {
 	node: PropertyDefinition | AssignmentExpression;
 	key: PrivateIdentifier;
 	value: CallExpression;
+	computed_key: Expression | null;
 }
+
+export type StateFields = Map<string | number, StateField>;
 
 export * from './template.js';
 
