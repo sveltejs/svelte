@@ -69,11 +69,13 @@ export function EachBlock(node, context) {
 		block.body.push(for_loop);
 	}
 
-	const blockers = node.metadata.expression.blockers();
-
-	if (node.metadata.expression.has_await || blockers.elements.length > 0) {
+	if (node.metadata.expression.is_async()) {
 		state.template.push(
-			create_async_block(block, blockers, node.metadata.expression.has_await),
+			create_async_block(
+				block,
+				node.metadata.expression.blockers(),
+				node.metadata.expression.has_await
+			),
 			block_close
 		);
 	} else {
