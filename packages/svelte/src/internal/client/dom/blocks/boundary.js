@@ -34,7 +34,7 @@ import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { DEV } from 'esm-env';
-import { Batch, effect_pending_updates } from '../../reactivity/batch.js';
+import { Batch } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
@@ -109,12 +109,6 @@ export class Boundary {
 	 * @type {Source<number> | null}
 	 */
 	#effect_pending = null;
-
-	#effect_pending_update = () => {
-		if (this.#effect_pending) {
-			internal_set(this.#effect_pending, this.#local_pending_count);
-		}
-	};
 
 	#effect_pending_subscriber = createSubscriber(() => {
 		this.#effect_pending = source(this.#local_pending_count);
@@ -329,7 +323,10 @@ export class Boundary {
 		this.#update_pending_count(d);
 
 		this.#local_pending_count += d;
-		effect_pending_updates.add(this.#effect_pending_update);
+
+		if (this.#effect_pending) {
+			internal_set(this.#effect_pending, this.#local_pending_count);
+		}
 	}
 
 	get_effect_pending() {

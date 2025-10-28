@@ -74,9 +74,6 @@ export let previous_batch = null;
  */
 export let batch_values = null;
 
-/** @type {Set<() => void>} */
-export let effect_pending_updates = new Set();
-
 /** @type {Effect[]} */
 let queued_root_effects = [];
 
@@ -324,16 +321,6 @@ export class Batch {
 		}
 
 		this.deactivate();
-
-		for (const update of effect_pending_updates) {
-			effect_pending_updates.delete(update);
-			update();
-
-			if (current_batch !== null) {
-				// only do one at a time
-				break;
-			}
-		}
 	}
 
 	discard() {
