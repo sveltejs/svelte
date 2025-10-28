@@ -8,7 +8,7 @@ import * as w from '../../warnings.js';
 import { hash, sanitize_location } from '../../../../utils.js';
 import { DEV } from 'esm-env';
 import { dev_current_component_function } from '../../context.js';
-import { get_first_child, get_next_sibling } from '../operations.js';
+import { create_text, get_first_child, get_next_sibling } from '../operations.js';
 import { active_effect } from '../../runtime.js';
 import { COMMENT_NODE } from '#client/constants';
 
@@ -86,7 +86,14 @@ export function html(node, get_value, svg = false, mathml = false, skip_warning 
 			}
 
 			assign_nodes(hydrate_node, last);
-			anchor = set_hydrate_node(next);
+
+			// in some cases the anchor could be in a fragment, and will be off-screen
+			// when we re-render. TODO figure out how this happens (appears to be
+			// forking-related) and come up with a regression test
+			anchor = create_text();
+			next.before(anchor);
+
+			set_hydrate_node(next);
 			return;
 		}
 
