@@ -535,7 +535,7 @@ async function run_test_variant(
 		}
 	} finally {
 		if (hydrating) {
-			// throw new Error('Hydration state was not cleared');
+			throw new Error('Hydration state was not cleared');
 		}
 
 		config.after_test?.();
