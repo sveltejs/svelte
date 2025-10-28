@@ -441,7 +441,7 @@ export class Renderer {
 	}
 
 	/**
-	 * Collect all of the `onDestroy` callbacks regsitered during rendering. In an async context, this is only safe to call
+	 * Collect all of the `onDestroy` callbacks registered during rendering. In an async context, this is only safe to call
 	 * after awaiting `collect_async`.
 	 *
 	 * Child renderers are "porous" and don't affect execution order, but component body renderers
