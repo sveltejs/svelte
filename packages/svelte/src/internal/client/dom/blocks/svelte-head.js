@@ -1,7 +1,7 @@
 /** @import { TemplateNode } from '#client' */
 import { hydrate_node, hydrating, set_hydrate_node, set_hydrating } from '../hydration.js';
 import { create_text, get_first_child, get_next_sibling } from '../operations.js';
-import { block } from '../../reactivity/effects.js';
+import { block, branch } from '../../reactivity/effects.js';
 import { COMMENT_NODE, HEAD_EFFECT } from '#client/constants';
 
 /**
@@ -49,7 +49,7 @@ export function head(hash, render_fn) {
 	}
 
 	try {
-		block(() => render_fn(anchor), HEAD_EFFECT);
+		block(() => branch(() => render_fn(anchor)), HEAD_EFFECT);
 	} finally {
 		if (was_hydrating) {
 			set_hydrating(true);
