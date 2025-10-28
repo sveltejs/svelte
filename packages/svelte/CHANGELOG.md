@@ -1,5 +1,15 @@
 # svelte
 
+## 5.43.0
+
+### Minor Changes
+
+- feat: out-of-order rendering ([#17038](https://github.com/sveltejs/svelte/pull/17038))
+
+### Patch Changes
+
+- fix: settle batch after DOM updates ([#17054](https://github.com/sveltejs/svelte/pull/17054))
+
 ## 5.42.3
 
 ### Patch Changes
