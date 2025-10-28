@@ -13,6 +13,7 @@ export function SvelteSelf(node, context) {
 	const valid = context.path.some(
 		(node) =>
 			node.type === 'IfBlock' ||
+			node.type === 'SwitchBlock' ||
 			node.type === 'EachBlock' ||
 			node.type === 'Component' ||
 			node.type === 'SnippetBlock'

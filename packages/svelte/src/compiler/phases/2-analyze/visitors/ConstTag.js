@@ -18,6 +18,7 @@ export function ConstTag(node, context) {
 	if (
 		parent?.type !== 'Fragment' ||
 		(grand_parent?.type !== 'IfBlock' &&
+			grand_parent?.type !== 'SwitchBlock' &&
 			grand_parent?.type !== 'SvelteFragment' &&
 			grand_parent?.type !== 'Component' &&
 			grand_parent?.type !== 'SvelteComponent' &&

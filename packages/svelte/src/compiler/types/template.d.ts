@@ -470,6 +470,14 @@ export namespace AST {
 		};
 	}
 
+	/** A `{#switch ...}` block */
+	export interface SwitchBlock extends BaseNode {
+		type: 'SwitchBlock';
+		value: Expression;
+		consequences: Array<Fragment>;
+		values: Array<Expression | null>;
+	}
+
 	/** An `{#await ...}` block */
 	export interface AwaitBlock extends BaseNode {
 		type: 'AwaitBlock';
@@ -571,6 +579,7 @@ export namespace AST {
 	export type Block =
 		| AST.EachBlock
 		| AST.IfBlock
+		| AST.SwitchBlock
 		| AST.AwaitBlock
 		| AST.KeyBlock
 		| AST.SnippetBlock;

@@ -9,6 +9,7 @@ import read_pattern from '../read/context.js';
 import read_expression, { get_loose_identifier } from '../read/expression.js';
 import { create_fragment } from '../utils/create.js';
 import { match_bracket } from '../utils/bracket.js';
+import { regex_whitespaces_strict } from '../../patterns.js';
 
 const regex_whitespace_with_closing_curly_brace = /^\s*}/;
 
@@ -74,6 +75,39 @@ function open(parser) {
 
 		parser.stack.push(block);
 		parser.fragments.push(block.consequent);
+
+		return;
+	}
+
+	if (parser.eat('switch')) {
+		parser.require_whitespace();
+
+		/** @type {AST.SwitchBlock} */
+		const block = parser.append({
+			type: 'SwitchBlock',
+			start,
+			end: -1,
+			value: read_expression(parser),
+			consequences: [create_fragment()],
+			values: [null]
+		});
+
+		parser.allow_whitespace();
+
+		if (parser.eat('case')) {
+			if (parser.match_regex(regex_whitespace_with_closing_curly_brace)) {
+				parser.allow_whitespace();
+			} else {
+				parser.require_whitespace();
+				block.values[0] = read_expression(parser);
+				parser.allow_whitespace();
+			}
+		}
+
+		parser.eat('}', true);
+
+		parser.stack.push(block);
+		parser.fragments.push(block.consequences[0]);
 
 		return;
 	}
@@ -493,6 +527,32 @@ function next(parser) {
 		return;
 	}
 
+	if (block.type === 'SwitchBlock') {
+		if (parser.eat('case')) {
+			parser.require_whitespace();
+
+			const value = read_expression(parser);
+
+			parser.allow_whitespace();
+			parser.eat('}', true);
+
+			let case_start = start - 1;
+			while (parser.template[case_start] !== '{') case_start -= 1;
+
+			const consequent = create_fragment();
+
+			block.consequences.push(consequent);
+			block.values.push(value);
+
+			parser.fragments.pop();
+			parser.fragments.push(consequent);
+		} else {
+			e.expected_token(parser.index - 1, '{:case}');
+		}
+
+		return;
+	}
+
 	if (block.type === 'EachBlock') {
 		if (!parser.eat('else')) e.expected_token(start, '{:else}');
 
@@ -583,6 +643,31 @@ function close(parser) {
 			block.end = parser.index;
 			parser.pop();
 			return;
+
+		case 'SwitchBlock':
+			matched = parser.eat('switch', true, false);
+
+			if (block.values[0] === null) {
+				const child_nodes = block.consequences[0].nodes;
+
+				if (
+					child_nodes.length === 0 ||
+					(child_nodes.length === 1 &&
+						child_nodes[0].type === 'Text' &&
+						child_nodes[0].data.replace(regex_whitespaces_strict, ' ').trim() === '')
+				) {
+					// in this situation we have an empty default case, we detect that and remove it
+					// {#switch show}
+					// {:case true}
+					block.consequences.shift();
+					block.values.shift();
+				} else {
+					// move default to end
+					block.values.push(/** @type {Expression | null} */ (block.values.shift()));
+					block.consequences.push(/** @type {AST.Fragment} */ (block.consequences.shift()));
+				}
+			}
+			break;
 
 		case 'EachBlock':
 			matched = parser.eat('each', true, false);

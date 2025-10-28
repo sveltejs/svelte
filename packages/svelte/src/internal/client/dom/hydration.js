@@ -95,7 +95,7 @@ export function skip_nodes(remove = true) {
 			if (data === HYDRATION_END) {
 				if (depth === 0) return node;
 				depth -= 1;
-			} else if (data === HYDRATION_START || data === HYDRATION_START_ELSE) {
+			} else if (data[0] === HYDRATION_START) {
 				depth += 1;
 			}
 		}

@@ -33,6 +33,7 @@ import { FunctionExpression } from './visitors/FunctionExpression.js';
 import { HtmlTag } from './visitors/HtmlTag.js';
 import { Identifier } from './visitors/Identifier.js';
 import { IfBlock } from './visitors/IfBlock.js';
+import { SwitchBlock } from './visitors/SwitchBlock.js';
 import { ImportDeclaration } from './visitors/ImportDeclaration.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
@@ -111,6 +112,7 @@ const visitors = {
 	HtmlTag,
 	Identifier,
 	IfBlock,
+	SwitchBlock,
 	ImportDeclaration,
 	KeyBlock,
 	LabeledStatement,
