@@ -602,18 +602,19 @@ export function get(signal) {
 	}
 
 	if (DEV) {
-		if (current_async_effect) {
-			var tracking = (current_async_effect.f & REACTION_IS_UPDATING) !== 0;
-			var was_read = current_async_effect.deps?.includes(signal);
+		// TODO reinstate this, but make it actually work
+		// if (current_async_effect) {
+		// 	var tracking = (current_async_effect.f & REACTION_IS_UPDATING) !== 0;
+		// 	var was_read = current_async_effect.deps?.includes(signal);
 
-			if (!tracking && !untracking && !was_read) {
-				w.await_reactivity_loss(/** @type {string} */ (signal.label));
+		// 	if (!tracking && !untracking && !was_read) {
+		// 		w.await_reactivity_loss(/** @type {string} */ (signal.label));
 
-				var trace = get_stack('traced at');
-				// eslint-disable-next-line no-console
-				if (trace) console.warn(trace);
-			}
-		}
+		// 		var trace = get_stack('traced at');
+		// 		// eslint-disable-next-line no-console
+		// 		if (trace) console.warn(trace);
+		// 	}
+		// }
 
 		recent_async_deriveds.delete(signal);
 
