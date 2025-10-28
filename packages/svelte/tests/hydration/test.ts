@@ -132,7 +132,11 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 		flushSync();
 
 		const normalize = (string: string) =>
-			string.trim().replaceAll('\r\n', '\n').replaceAll('/>', '>');
+			string
+				.trim()
+				.replaceAll('\r\n', '\n')
+				.replaceAll('/>', '>')
+				.replace(/<!--.+?-->/g, '');
 
 		const expected = read(`${cwd}/_expected.html`) ?? rendered.html;
 		assert.equal(normalize(target.innerHTML), normalize(expected));
