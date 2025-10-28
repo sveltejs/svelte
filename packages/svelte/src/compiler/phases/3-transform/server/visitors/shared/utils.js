@@ -1,5 +1,5 @@
 /** @import { Expression, Identifier, Node, Statement, BlockStatement, ArrayExpression } from 'estree' */
-/** @import { AST, Binding } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ServerTransformState } from '../../types.js' */
 
 import { escape_html } from '../../../../../../escaping.js';
@@ -276,12 +276,17 @@ export function create_child_block(body, async) {
  * @param {BlockStatement | Expression} body
  * @param {ArrayExpression} blockers
  * @param {boolean} has_await
- * @param {boolean} markers
+ * @param {boolean} needs_hydration_markers
  */
-export function create_async_block(body, blockers = b.array([]), has_await = true, markers = true) {
+export function create_async_block(
+	body,
+	blockers = b.array([]),
+	has_await = true,
+	needs_hydration_markers = true
+) {
 	return b.stmt(
 		b.call(
-			markers ? '$$renderer.async_block' : '$$renderer.async',
+			needs_hydration_markers ? '$$renderer.async_block' : '$$renderer.async',
 			blockers,
 			b.arrow([b.id('$$renderer')], body, has_await)
 		)
@@ -291,17 +296,22 @@ export function create_async_block(body, blockers = b.array([]), has_await = tru
 /**
  * @param {Expression} expression
  * @param {ExpressionMetadata} metadata
- * @param {boolean} markers
+ * @param {boolean} needs_hydration_markers
  * @returns {Expression | Statement}
  */
-export function create_push(expression, metadata, markers = false) {
+export function create_push(expression, metadata, needs_hydration_markers = false) {
 	if (metadata.is_async()) {
 		let statement = b.stmt(b.call('$$renderer.push', b.thunk(expression, metadata.has_await)));
 
 		const blockers = metadata.blockers();
 
 		if (blockers.elements.length > 0) {
-			statement = create_async_block(b.block([statement]), blockers, false, markers);
+			statement = create_async_block(
+				b.block([statement]),
+				blockers,
+				false,
+				needs_hydration_markers
+			);
 		}
 
 		return statement;
@@ -321,6 +331,12 @@ export function call_component_renderer(body, component_fn_id) {
 	);
 }
 
+/**
+ * A utility for optimising promises in templates. Without it code like
+ * `<Component foo={await fetch()} bar={await other()} />` would be transformed
+ * into two blocking promises, with it it's using `Promise.all` to await them.
+ * It also keeps track of blocking promises, i.e. those that need to be resolved before continuing.
+ */
 export class PromiseOptimiser {
 	/** @type {Expression[]} */
 	expressions = [];

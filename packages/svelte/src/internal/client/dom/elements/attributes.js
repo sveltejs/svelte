@@ -480,10 +480,10 @@ function set_attributes(
 
 /**
  * @param {Element & ElementCSSInlineStyle} element
- * @param {Array<Promise<void>>} blockers
  * @param {(...expressions: any) => Record<string | symbol, any>} fn
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
+ * @param {Array<Promise<void>>} blockers
  * @param {string} [css_hash]
  * @param {boolean} [should_remove_defaults]
  * @param {boolean} [skip_warning]

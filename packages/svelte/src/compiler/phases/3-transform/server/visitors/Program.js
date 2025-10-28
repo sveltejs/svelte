@@ -1,5 +1,5 @@
 /** @import { Node, Program } from 'estree' */
-/** @import { Context, ComponentContext } from '../types' */
+/** @import { Context, ComponentServerTransformState } from '../types' */
 import * as b from '#compiler/builders';
 import { transform_body } from '../../shared/transform-async.js';
 
@@ -9,13 +9,12 @@ import { transform_body } from '../../shared/transform-async.js';
  */
 export function Program(node, context) {
 	if (context.state.is_instance) {
-		// @ts-ignore wtf
-		const c = /** @type {ComponentContext} */ (context);
+		const state = /** @type {ComponentServerTransformState} */ (context.state);
 
 		return {
 			...node,
 			body: transform_body(
-				c.state.analysis.instance_body,
+				state.analysis.instance_body,
 				b.id('$$renderer.run'),
 				(node) => /** @type {Node} */ (context.visit(node))
 			)

@@ -770,7 +770,7 @@ export function analyze_component(root, source, options) {
 					// for now, assume everything touched by the callee ends up mutating the object
 					// TODO optimise this better
 
-					// special case — no need to peek inside effects
+					// special case — no need to peek inside effects as they only run once async work has completed
 					const rune = get_rune(node, context.state.scope);
 					if (rune === '$effect') return;
 
