@@ -55,7 +55,7 @@ export function transform_body(instance_body, runner, transform) {
 
 				if (visited.declarations.length === 1) {
 					return b.thunk(
-						b.assignment('=', s.node.id, visited.declarations[0].init ?? b.void0),
+						b.assignment('=', visited.declarations[0].id, visited.declarations[0].init ?? b.void0),
 						s.has_await
 					);
 				}
