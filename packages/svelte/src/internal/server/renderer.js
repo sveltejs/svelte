@@ -3,20 +3,12 @@
 /** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import { abort } from './abort-signal.js';
-import {
-	get_render_store,
-	pop,
-	push,
-	set_ssr_context,
-	set_sync_store,
-	ssr_context,
-	sync_store,
-	with_render_store
-} from './context.js';
+import { pop, push, set_ssr_context, ssr_context, save } from './context.js';
 import * as e from './errors.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { attributes } from './index.js';
 import { uneval } from 'devalue';
+import { get_render_context, with_render_context, init_render_context } from './render-context.js';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
@@ -375,8 +367,8 @@ export class Renderer {
 							});
 							return Promise.resolve(user_result);
 						}
-						async ??= with_render_store({ hydratables: new Map(), cache: new Map() }, () =>
-							Renderer.#render_async(component, options)
+						async ??= init_render_context().then(() =>
+							with_render_context(() => Renderer.#render_async(component, options))
 						);
 						return async.then((result) => {
 							Object.defineProperty(result, 'html', {
@@ -469,23 +461,24 @@ export class Renderer {
 	 * @returns {Promise<AccumulatedContent>}
 	 */
 	static async #render_async(component, options) {
-		var previous_context = ssr_context;
-		var previous_sync_store = sync_store;
+		const restore = await save(
+			(async () => {
+				try {
+					const renderer = Renderer.#open_render('async', component, options);
 
-		try {
-			const renderer = Renderer.#open_render('async', component, options);
+					const content = await renderer.#collect_content_async();
+					const hydratables = await renderer.#collect_hydratables();
+					if (hydratables !== null) {
+						content.head = hydratables + content.head;
+					}
+					return Renderer.#close_render(content, renderer);
+				} finally {
+					abort();
+				}
+			})()
+		);
 
-			const content = await renderer.#collect_content_async();
-			const hydratables = await renderer.#collect_hydratables();
-			if (hydratables !== null) {
-				content.head = hydratables + content.head;
-			}
-			return Renderer.#close_render(content, renderer);
-		} finally {
-			abort();
-			set_ssr_context(previous_context);
-			set_sync_store(previous_sync_store);
-		}
+		return restore();
 	}
 
 	/**
@@ -526,7 +519,7 @@ export class Renderer {
 	}
 
 	async #collect_hydratables() {
-		const map = get_render_store().hydratables;
+		const map = get_render_context().hydratables;
 		/** @type {(value: unknown) => string} */
 		let default_stringify;
 

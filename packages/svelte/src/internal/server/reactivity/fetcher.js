@@ -1,6 +1,6 @@
 /** @import { GetRequestInit, Resource } from '#shared' */
 import { fetch_json } from '../../shared/utils.js';
-import { hydratable } from '../context.js';
+import { hydratable } from '../hydratable.js';
 import { cache } from './cache';
 import { resource } from './resource.js';
 

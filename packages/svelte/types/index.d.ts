@@ -2422,6 +2422,7 @@ declare module 'svelte/reactivity' {
 	 */
 	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
 	export function resource<T>(fn: () => Promise<T>): Resource_1<T>;
+	export function cache<TFn extends (...args: any[]) => any>(key: string, fn: TFn): ReturnType<TFn>;
 	export function fetcher<TReturn>(url: string | URL, init?: GetRequestInit | undefined): Resource_1<TReturn>;
 	type Resource_1<T> = {
 		then: Promise<T>['then'];
@@ -2443,28 +2444,10 @@ declare module 'svelte/reactivity' {
 	);
 
 	type GetRequestInit = Omit<RequestInit, 'method' | 'body'> & { method?: 'GET' };
-	export function cache<TFn extends (...args: any[]) => any>(key: string, fn: TFn): ReturnType<TFn>;
-	export class CacheObserver extends BaseCacheObserver {
-		constructor();
-	}
 	class ReactiveValue<T> {
 		
 		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
 		get current(): T;
-		#private;
-	}
-	class BaseCacheObserver implements ReadonlyMap<string, any> {
-		
-		constructor(cache: Map<string, any>);
-		get(key: string): any;
-		has(key: string): boolean;
-		
-		get size(): number;
-		forEach(callbackfn: (value: any, key: string, map: ReadonlyMap<string, any>) => void, thisArg?: any): void;
-		entries(): IterableIterator<[string, any]>;
-		keys(): IterableIterator<string>;
-		values(): IterableIterator<any>;
-		[Symbol.iterator](): IterableIterator<[string, any]>;
 		#private;
 	}
 

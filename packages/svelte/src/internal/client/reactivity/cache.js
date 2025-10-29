@@ -68,8 +68,8 @@ function create_remover(key) {
 		});
 }
 
-export class CacheObserver extends BaseCacheObserver {
-	constructor() {
-		super(client_cache);
-	}
-}
+// export class CacheObserver extends BaseCacheObserver {
+// 	constructor() {
+// 		super(client_cache);
+// 	}
+// }
