@@ -1,4 +1,5 @@
 import type { Transport } from '#shared';
+import type { ObservableCache } from '../shared/observable-cache';
 import type { Element } from './dev';
 import type { Renderer } from './renderer';
 
@@ -23,7 +24,7 @@ export interface RenderContext {
 			transport: Transport<any> | undefined;
 		}
 	>;
-	cache: Map<string, unknown>;
+	cache: ObservableCache;
 }
 
 export interface SyncRenderOutput {

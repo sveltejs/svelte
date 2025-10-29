@@ -41,3 +41,5 @@ export type Resource<T> = {
 );
 
 export type GetRequestInit = Omit<RequestInit, 'method' | 'body'> & { method?: 'GET' };
+
+export type CacheEntry = { count: number; item: any };

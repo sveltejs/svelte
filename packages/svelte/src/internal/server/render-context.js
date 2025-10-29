@@ -1,6 +1,7 @@
 /** @import { AsyncLocalStorage } from 'node:async_hooks' */
 /** @import { RenderContext } from '#server' */
 
+import { ObservableCache } from '../shared/observable-cache';
 import { deferred } from '../shared/utils';
 
 /** @type {Promise<void> | null} */
@@ -63,7 +64,7 @@ export async function with_render_context(fn) {
 	try {
 		sync_context = {
 			hydratables: new Map(),
-			cache: new Map()
+			cache: new ObservableCache()
 		};
 		if (in_webcontainer()) {
 			const { promise, resolve } = deferred();

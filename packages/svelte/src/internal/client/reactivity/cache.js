@@ -1,11 +1,12 @@
 import { BaseCacheObserver } from '../../shared/cache-observer.js';
+import { ObservableCache } from '../../shared/observable-cache.js';
 import { set_hydratable_key } from '../context.js';
 import { tick } from '../runtime.js';
 import { render_effect } from './effects.js';
 
 /** @typedef {{ count: number, item: any }} Entry */
-/** @type {Map<string, Entry>} */
-const client_cache = new Map();
+/** @type {ObservableCache} */
+const client_cache = new ObservableCache();
 
 /**
  * @template {(...args: any[]) => any} TFn
@@ -68,8 +69,12 @@ function create_remover(key) {
 		});
 }
 
-// export class CacheObserver extends BaseCacheObserver {
-// 	constructor() {
-// 		super(client_cache);
-// 	}
-// }
+/**
+ * @template T
+ * @extends BaseCacheObserver<T>
+ */
+export class CacheObserver extends BaseCacheObserver {
+	constructor(prefix = '') {
+		super(() => client_cache, prefix);
+	}
+}

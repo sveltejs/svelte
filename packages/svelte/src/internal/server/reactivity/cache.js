@@ -1,5 +1,6 @@
-import { set_hydratable_key } from '../hydratable';
-import { get_render_context } from '../render-context';
+import { BaseCacheObserver } from '../../shared/cache-observer.js';
+import { set_hydratable_key } from '../hydratable.js';
+import { get_render_context } from '../render-context.js';
 
 /**
  * @template {(...args: any[]) => any} TFn
@@ -20,9 +21,12 @@ export function cache(key, fn) {
 	return new_entry;
 }
 
-// TODO, has to be async
-// export class CacheObserver extends BaseCacheObserver {
-// 	constructor() {
-// 		super(get_render_store().cache);
-// 	}
-// }
+/**
+ * @template T
+ * @extends BaseCacheObserver<T>
+ */
+export class CacheObserver extends BaseCacheObserver {
+	constructor(prefix = '') {
+		super(() => get_render_context().cache, prefix);
+	}
+}

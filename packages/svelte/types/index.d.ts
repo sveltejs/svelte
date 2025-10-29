@@ -2422,7 +2422,6 @@ declare module 'svelte/reactivity' {
 	 */
 	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
 	export function resource<T>(fn: () => Promise<T>): Resource_1<T>;
-	export function cache<TFn extends (...args: any[]) => any>(key: string, fn: TFn): ReturnType<TFn>;
 	export function fetcher<TReturn>(url: string | URL, init?: GetRequestInit | undefined): Resource_1<TReturn>;
 	type Resource_1<T> = {
 		then: Promise<T>['then'];
@@ -2444,10 +2443,69 @@ declare module 'svelte/reactivity' {
 	);
 
 	type GetRequestInit = Omit<RequestInit, 'method' | 'body'> & { method?: 'GET' };
+
+	type CacheEntry = { count: number; item: any };
+	export function cache<TFn extends (...args: any[]) => any>(key: string, fn: TFn): ReturnType<TFn>;
+
+	export class CacheObserver<T> extends BaseCacheObserver<T> {
+		constructor(prefix?: string);
+	}
 	class ReactiveValue<T> {
 		
 		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
 		get current(): T;
+		#private;
+	}
+	class BaseCacheObserver<T> implements ReadonlyMap<string, T> {
+		
+		constructor(get_cache: () => ObservableCache, prefix?: string | undefined);
+		/**
+		 * Register a callback to be called when a new key is inserted
+		 * @returns Function to unregister the callback
+		 */
+		onInsert(callback: (key: string, value: T) => void): () => void;
+		/**
+		 * Register a callback to be called when an existing key is updated
+		 * @returns Function to unregister the callback
+		 */
+		onUpdate(callback: (key: string, value: T, old_value: T) => void): () => void;
+		/**
+		 * Register a callback to be called when a key is deleted
+		 * @returns Function to unregister the callback
+		 */
+		onDelete(callback: (key: string, old_value: T) => void): () => void;
+		
+		get(key: string): any;
+		
+		has(key: string): boolean;
+		get size(): number;
+		
+		forEach(cb: (item: T, key: string, map: ReadonlyMap<string, T>) => void): void;
+		entries(): Generator<[string, T], undefined, unknown>;
+		keys(): Generator<string, undefined, unknown>;
+		values(): Generator<T, undefined, unknown>;
+		[Symbol.iterator](): Generator<[string, T], undefined, unknown>;
+		#private;
+	}
+	class ObservableCache extends Map<string, CacheEntry> {
+		constructor();
+		constructor(entries?: readonly (readonly [string, CacheEntry])[] | null | undefined);
+		constructor();
+		constructor(iterable?: Iterable<readonly [string, CacheEntry]> | null | undefined);
+		/**
+		 * @returns Function to unregister the callback
+		 */
+		on_insert(callback: (key: string, value: CacheEntry) => void): () => void;
+		/**
+		 * @returns Function to unregister the callback
+		 */
+		on_update(callback: (key: string, value: CacheEntry, old_value: CacheEntry) => void): () => void;
+		/**
+		 * @returns Function to unregister the callback
+		 */
+		on_delete(callback: (key: string, old_value: CacheEntry) => void): () => void;
+		
+		set(key: string, value: CacheEntry): this;
 		#private;
 	}
 
