@@ -6,10 +6,10 @@ import { deferred } from '../../shared/utils.js';
 /**
  * @template T
  * @param {() => T} fn
- * @returns {ResourceType<Awaited<T>>}
+ * @returns {ResourceType<T>}
  */
 export function resource(fn) {
-	return /** @type {ResourceType<Awaited<T>>} */ (new Resource(fn));
+	return /** @type {ResourceType<T>} */ (new Resource(fn));
 }
 
 /**

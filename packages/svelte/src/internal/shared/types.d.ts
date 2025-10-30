@@ -26,11 +26,11 @@ export type Transport<T> =
 	  };
 
 export type Resource<T> = {
-	then: Promise<T>['then'];
-	catch: Promise<T>['catch'];
-	finally: Promise<T>['finally'];
+	then: Promise<Awaited<T>>['then'];
+	catch: Promise<Awaited<T>>['catch'];
+	finally: Promise<Awaited<T>>['finally'];
 	refresh: () => Promise<void>;
-	set: (value: T) => void;
+	set: (value: Awaited<T>) => void;
 	loading: boolean;
 	error: any;
 } & (
@@ -40,7 +40,7 @@ export type Resource<T> = {
 	  }
 	| {
 			ready: true;
-			current: T;
+			current: Awaited<T>;
 	  }
 );
 
