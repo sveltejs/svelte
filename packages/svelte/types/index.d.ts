@@ -439,6 +439,9 @@ declare module 'svelte' {
 	 * Returns void if no callback is provided, otherwise returns the result of calling the callback.
 	 * */
 	export function flushSync<T = void>(fn?: (() => T) | undefined): T;
+	export function hydratable<T>(key: string, fn: () => T, options?: {
+		transport?: Transport<T>;
+	} | undefined): T;
 	/**
 	 * Create a snippet programmatically
 	 * */
@@ -488,14 +491,6 @@ declare module 'svelte' {
 	 *
 	 * */
 	export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T;
-
-	export function hydratable<T>(key: string, fn: () => Promise<T>, options?: {
-		transport?: Transport<T>;
-	} | undefined): Promise<T>;
-
-	export function hydratable<T>(fn: () => Promise<T>, options?: {
-		transport?: Transport<T>;
-	} | undefined): Promise<T>;
 	/**
 	 * Mounts a component to the given target and returns the exports and potentially the props (if compiled with `accessors: true`) of the component.
 	 * Transitions will play during the initial render unless the `intro` option is set to `false`.
@@ -569,14 +564,18 @@ declare module 'svelte' {
 		[K in keyof T]: () => T[K];
 	};
 
+	type Parse<T> = (value: string) => T;
+
+	type Stringify<T> = (value: T) => string;
+
 	type Transport<T> =
 		| {
-				stringify: (value: T) => string;
+				stringify: Stringify<T>;
 				parse?: undefined;
 		  }
 		| {
 				stringify?: undefined;
-				parse: (value: string) => T;
+				parse: Parse<T>;
 		  };
 
 	export {};
@@ -2421,7 +2420,7 @@ declare module 'svelte/reactivity' {
 	 * @since 5.7.0
 	 */
 	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
-	export function resource<T>(fn: () => Promise<T>): Resource_1<T>;
+	export function resource<T>(fn: () => T): Resource_1<Awaited<T>>;
 	export function fetcher<TReturn>(url: string | URL, init?: GetRequestInit | undefined): Resource_1<TReturn>;
 	type Resource_1<T> = {
 		then: Promise<T>['then'];
@@ -2615,6 +2614,15 @@ declare module 'svelte/server' {
 	}
 
 	type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;
+
+	export {};
+}
+
+declare module 'svelte/client' {
+	export function getHydratableValue<T>(key: string, options?: {
+		parse?: Parse<T>;
+	} | undefined): T | undefined;
+	type Parse<T> = (value: string) => T;
 
 	export {};
 }

@@ -247,9 +247,9 @@ export {
 	getContext,
 	getAllContexts,
 	hasContext,
-	setContext,
-	hydratable
+	setContext
 } from './internal/client/context.js';
+export { hydratable } from './internal/client/hydratable.js';
 export { hydrate, mount, unmount } from './internal/client/render.js';
 export { tick, untrack, settled } from './internal/client/runtime.js';
 export { createRawSnippet } from './internal/client/dom/blocks/snippet.js';

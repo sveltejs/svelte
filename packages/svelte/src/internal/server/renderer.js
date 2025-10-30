@@ -526,8 +526,7 @@ export class Renderer {
 		/** @type {[string, string][]} */
 		let entries = [];
 		for (const [k, v] of map) {
-			const serialize =
-				v.transport?.stringify ?? (default_stringify ??= new MemoizedUneval().uneval);
+			const serialize = v.stringify ?? (default_stringify ??= new MemoizedUneval().uneval);
 			// sequential await is okay here -- all the work is already kicked off
 			entries.push([k, serialize(await v.value)]);
 		}

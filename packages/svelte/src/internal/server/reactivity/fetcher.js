@@ -11,7 +11,6 @@ import { resource } from './resource.js';
  * @returns {Resource<TReturn>}
  */
 export function fetcher(url, init) {
-	return cache(`svelte/fetcher::::${typeof url === 'string' ? url : url.toString()}`, () =>
-		resource(() => hydratable(() => fetch_json(url, init)))
-	);
+	const key = `svelte/fetcher/${typeof url === 'string' ? url : url.toString()}`;
+	return cache(key, () => resource(() => hydratable(key, () => fetch_json(url, init))));
 }

@@ -1,4 +1,4 @@
-import type { Transport } from '#shared';
+import type { Stringify, Transport } from '#shared';
 import type { ObservableCache } from '../shared/observable-cache';
 import type { Element } from './dev';
 import type { Renderer } from './renderer';
@@ -20,8 +20,8 @@ export interface RenderContext {
 	hydratables: Map<
 		string,
 		{
-			value: Promise<unknown>;
-			transport: Transport<any> | undefined;
+			value: unknown;
+			stringify: Stringify<any> | undefined;
 		}
 	>;
 	cache: ObservableCache;

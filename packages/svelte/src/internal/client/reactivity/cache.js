@@ -1,6 +1,5 @@
 import { BaseCacheObserver } from '../../shared/cache-observer.js';
 import { ObservableCache } from '../../shared/observable-cache.js';
-import { set_hydratable_key } from '../context.js';
 import { tick } from '../runtime.js';
 import { render_effect } from './effects.js';
 
@@ -38,9 +37,7 @@ export function cache(key, fn) {
 		return entry?.item;
 	}
 
-	set_hydratable_key(key);
 	const item = fn();
-	set_hydratable_key(null);
 	const new_entry = {
 		item,
 		count: tracking ? 1 : 0

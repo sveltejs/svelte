@@ -2,16 +2,16 @@
 
 /**
  * @template T
- * @param {() => Promise<T>} fn
- * @returns {ResourceType<T>}
+ * @param {() => T} fn
+ * @returns {ResourceType<Awaited<T>>}
  */
 export function resource(fn) {
-	return /** @type {ResourceType<T>} */ (new Resource(fn));
+	return /** @type {ResourceType<Awaited<T>>} */ (new Resource(fn));
 }
 
 /**
  * @template T
- * @implements {Partial<Promise<T>>}
+ * @implements {Partial<Promise<Awaited<T>>>}
  */
 class Resource {
 	/** @type {Promise<void>} */
@@ -19,12 +19,12 @@ class Resource {
 	#ready = false;
 	#loading = true;
 
-	/** @type {T | undefined} */
+	/** @type {Awaited<T> | undefined} */
 	#current = undefined;
 	#error = undefined;
 
 	/**
-	 * @param {() => Promise<T>} fn
+	 * @param {() => T} fn
 	 */
 	constructor(fn) {
 		this.#promise = Promise.resolve(fn()).then(
@@ -85,7 +85,7 @@ class Resource {
 	};
 
 	/**
-	 * @param {T} value
+	 * @param {Awaited<T>} value
 	 */
 	set = (value) => {
 		this.#ready = true;

@@ -5,21 +5,21 @@ import { deferred } from '../../shared/utils.js';
 
 /**
  * @template T
- * @param {() => Promise<T>} fn
- * @returns {ResourceType<T>}
+ * @param {() => T} fn
+ * @returns {ResourceType<Awaited<T>>}
  */
 export function resource(fn) {
-	return /** @type {ResourceType<T>} */ (new Resource(fn));
+	return /** @type {ResourceType<Awaited<T>>} */ (new Resource(fn));
 }
 
 /**
  * @template T
- * @implements {Partial<Promise<T>>}
+ * @implements {Partial<Promise<Awaited<T>>>}
  */
 class Resource {
 	#init = false;
 
-	/** @type {() => Promise<T>} */
+	/** @type {() => T} */
 	#fn;
 
 	/** @type {Source<boolean>} */
@@ -31,13 +31,13 @@ class Resource {
 	/** @type {Source<boolean>} */
 	#ready = state(false);
 
-	/** @type {Source<T | undefined>} */
+	/** @type {Source<Awaited<T> | undefined>} */
 	#raw = state(undefined);
 
 	/** @type {Source<Promise<any>>} */
 	#promise;
 
-	/** @type {Derived<T | undefined>} */
+	/** @type {Derived<Awaited<T> | undefined>} */
 	#current = derived(() => {
 		if (!get(this.#ready)) return undefined;
 		return get(this.#raw);
@@ -46,7 +46,7 @@ class Resource {
 	/** {@type Source<any>} */
 	#error = state(undefined);
 
-	/** @type {Derived<Promise<T>['then']>} */
+	/** @type {Derived<Promise<Awaited<T>>['then']>} */
 	// @ts-expect-error - I feel this might actually be incorrect but I can't prove it yet.
 	// we are technically not returning a promise that resolves to the correct type... but it _is_ a promise that resolves at the correct time
 	#then = derived(() => {
@@ -57,7 +57,7 @@ class Resource {
 				await p;
 				await tick();
 
-				resolve?.(/** @type {T} */ (get(this.#current)));
+				resolve?.(/** @type {Awaited<T>} */ (get(this.#current)));
 			} catch (error) {
 				reject?.(error);
 			}
@@ -65,7 +65,7 @@ class Resource {
 	});
 
 	/**
-	 * @param {() => Promise<T>} fn
+	 * @param {() => T} fn
 	 */
 	constructor(fn) {
 		this.#fn = fn;
@@ -166,7 +166,7 @@ class Resource {
 	};
 
 	/**
-	 * @param {T} value
+	 * @param {Awaited<T>} value
 	 */
 	set = (value) => {
 		set(this.#ready, true);
