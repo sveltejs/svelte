@@ -4,6 +4,7 @@ import * as $ from '../../src/internal/client/runtime';
 import { push, pop } from '../../src/internal/client/context';
 import {
 	effect,
+	effect_allowed,
 	effect_root,
 	render_effect,
 	user_effect,
@@ -1391,7 +1392,44 @@ describe('signals', () => {
 		};
 	});
 
-	test('$effect.root inside deriveds stay alive independently', () => {
+	test('$effect.allowed()', () => {
+		const log: Array<string | boolean> = [];
+
+		return () => {
+			log.push('effect orphan', effect_allowed());
+			const destroy = effect_root(() => {
+				log.push('effect root', effect_allowed());
+				effect(() => {
+					log.push('effect', effect_allowed());
+				});
+				$.get(
+					derived(() => {
+						log.push('derived', effect_allowed());
+						return 1;
+					})
+				);
+				return () => {
+					log.push('effect teardown', effect_allowed());
+				};
+			});
+			flushSync();
+			destroy();
+			assert.deepEqual(log, [
+				'effect orphan',
+				false,
+				'effect root',
+				true,
+				'derived',
+				true,
+				'effect',
+				true,
+				'effect teardown',
+				false
+			]);
+		};
+	});
+
+  test('$effect.root inside deriveds stay alive independently', () => {
 		const log: any[] = [];
 		const c = state(0);
 		const cleanup: any[] = [];
