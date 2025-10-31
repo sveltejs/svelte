@@ -1,5 +1,11 @@
 # svelte
 
+## 5.43.3
+
+### Patch Changes
+
+- fix: change title only after any pending work has completed ([#17061](https://github.com/sveltejs/svelte/pull/17061))
+
 ## 5.43.2
 
 ### Patch Changes
