@@ -1,5 +1,11 @@
 # svelte
 
+## 5.43.2
+
+### Patch Changes
+
+- fix: treat each blocks with async dependencies as uncontrolled ([#17077](https://github.com/sveltejs/svelte/pull/17077))
+
 ## 5.43.1
 
 ### Patch Changes
