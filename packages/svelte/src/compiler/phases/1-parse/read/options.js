@@ -133,11 +133,49 @@ export default function read_options(node) {
 
 				const shadow = properties.find(([name]) => name === 'shadow')?.[1];
 				if (shadow) {
-					const shadowdom = shadow?.value;
-					if (shadowdom !== 'open' && shadowdom !== 'none') {
-						e.svelte_options_invalid_customelement_shadow(shadow);
+					if (shadow.type === 'Literal') {
+						if (shadow.value !== 'open' && shadow.value !== 'none') {
+							e.svelte_options_invalid_customelement_shadow(attribute);
+						}
+						ce.shadow = shadow.value;
+					} else if (shadow.type === 'ObjectExpression') {
+						ce.shadow = { mode: 'open' };
+						for (const property of /** @type {ObjectExpression} */ (shadow).properties) {
+							if (
+								property.type !== 'Property' ||
+								property.computed ||
+								property.key.type !== 'Identifier' ||
+								property.value.type !== 'Literal'
+							) {
+								e.svelte_options_invalid_customelement_shadow(attribute);
+							}
+
+							if (property.key.name === 'mode') {
+								if (!['open', 'closed'].includes(/** @type {string} */ (property.value.value))) {
+									e.svelte_options_invalid_customelement_shadow(attribute);
+								}
+								ce.shadow.mode = /** @type {any} */ (property.value.value);
+							} else if (property.key.name === 'slotAssignment') {
+								if (!['named', 'manual'].includes(/** @type {string} */ (property.value.value))) {
+									e.svelte_options_invalid_customelement_shadow(attribute);
+								}
+								ce.shadow.slotAssignment = /** @type {any} */ (property.value.value);
+							} else if (
+								property.key.name === 'clonable' ||
+								property.key.name === 'delegatesFocus' ||
+								property.key.name === 'serializable'
+							) {
+								if (typeof property.value.value !== 'boolean') {
+									e.svelte_options_invalid_customelement_shadow(attribute);
+								}
+								ce.shadow[property.key.name] = property.value.value;
+							} else {
+								e.svelte_options_invalid_customelement_shadow(attribute);
+							}
+						}
+					} else {
+						e.svelte_options_invalid_customelement_shadow(attribute);
 					}
-					ce.shadow = shadowdom;
 				}
 
 				const extend = properties.find(([name]) => name === 'extend')?.[1];
