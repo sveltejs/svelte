@@ -665,7 +665,7 @@ export class SSRState {
 	}
 }
 
-class MemoizedUneval {
+export class MemoizedUneval {
 	/** @type {Map<unknown, { value?: string }>} */
 	#cache = new Map();
 

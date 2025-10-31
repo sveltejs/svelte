@@ -50,6 +50,21 @@ export function get_hydratable_value(key, options = {}) {
 }
 
 /**
+ * @param {string} key
+ * @returns {boolean}
+ */
+export function has_hydratable_value(key) {
+	if (!hydrating) {
+		return false;
+	}
+	var store = window.__svelte?.h;
+	if (store === undefined) {
+		throw new Error('TODO this should be impossible?');
+	}
+	return store.has(key);
+}
+
+/**
  * @template T
  * @param {string} val
  * @param {Parse<T> | undefined} parse
