@@ -1224,7 +1224,7 @@ declare module 'svelte/compiler' {
 			css?: 'injected';
 			customElement?: {
 				tag?: string;
-				shadow?: 'open' | 'none';
+				shadow?: 'open' | 'none' | (ShadowRootInit & { clonable?: boolean });
 				props?: Record<
 					string,
 					{

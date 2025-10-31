@@ -411,7 +411,9 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 ## svelte_options_invalid_customelement_shadow
 
-> "shadow" must be either "open" or "none"
+> "shadow" must be either "open", "none" or `ShadowRootInit`
+
+See https://developer.mozilla.org/en-US/docs/Web/API/Element/attachShadow#options for more information on valid shadow root constructor options
 
 ## svelte_options_invalid_tagname
 

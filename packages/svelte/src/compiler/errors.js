@@ -1550,12 +1550,12 @@ export function svelte_options_invalid_customelement_props(node) {
 }
 
 /**
- * "shadow" must be either "open" or "none"
+ * "shadow" must be either "open", "none" or `ShadowRootInit`
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function svelte_options_invalid_customelement_shadow(node) {
-	e(node, 'svelte_options_invalid_customelement_shadow', `"shadow" must be either "open" or "none"\nhttps://svelte.dev/e/svelte_options_invalid_customelement_shadow`);
+	e(node, 'svelte_options_invalid_customelement_shadow', `"shadow" must be either "open", "none" or \`ShadowRootInit\`\nhttps://svelte.dev/e/svelte_options_invalid_customelement_shadow`);
 }
 
 /**
