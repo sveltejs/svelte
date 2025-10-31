@@ -45,6 +45,17 @@ export default function read_pattern(parser) {
 	const pattern_string = parser.template.slice(start, i);
 
 	try {
+		// Check for TypeScript parameter annotations in the pattern string
+		if (!parser.ts) {
+			const parameterRegex = /\w+\s*:\s*\w+/;
+			if (parameterRegex.test(pattern_string)) {
+				e.typescript_invalid_feature(
+					start,
+					'type annotations in snippets. Did you forget to add lang="ts" to your script tag?'
+				);
+			}
+		}
+
 		// the length of the `space_with_newline` has to be start - 1
 		// because we added a `(` in front of the pattern_string,
 		// which shifted the entire string to right by 1
@@ -67,7 +78,9 @@ export default function read_pattern(parser) {
 			)
 		).left;
 
-		expression.typeAnnotation = read_type_annotation(parser);
+		const annotation = read_type_annotation(parser);
+
+		expression.typeAnnotation = annotation;
 		if (expression.typeAnnotation) {
 			expression.end = expression.typeAnnotation.end;
 		}

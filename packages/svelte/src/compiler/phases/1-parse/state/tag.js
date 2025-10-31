@@ -396,6 +396,14 @@ function open(parser) {
 		const prelude = parser.template.slice(0, params_start).replace(/\S/g, ' ');
 		const params = parser.template.slice(params_start, parser.index);
 
+		// Check for TypeScript parameter annotations without lang="ts"
+		if (!parser.ts && matched && /\w+\s*:\s*\w+/.test(params)) {
+			e.typescript_invalid_feature(
+				parser.index,
+				'type annotations in snippets. Did you forget to add lang="ts" to your script tag?'
+			);
+		}
+
 		let function_expression = matched
 			? /** @type {ArrowFunctionExpression} */ (
 					parse_expression_at(
