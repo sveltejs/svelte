@@ -13,14 +13,11 @@ export function hydratable(key, fn, options = {}) {
 		return fn();
 	}
 	var store = window.__svelte?.h;
-	if (store === undefined) {
-		throw new Error('TODO this should be impossible?');
-	}
-	const val = store.get(key);
+	const val = store?.get(key);
 	if (val === undefined) {
-		throw new Error(
-			`TODO Expected hydratable key "${key}" to exist during hydration, but it does not`
-		);
+		// TODO this should really be an error or at least a warning because it would be disastrous to expect
+		// something to be synchronously hydratable and then have it not be
+		return fn();
 	}
 	return parse(val, options.transport?.parse);
 }
@@ -38,10 +35,7 @@ export function get_hydratable_value(key, options = {}) {
 	}
 
 	var store = window.__svelte?.h;
-	if (store === undefined) {
-		throw new Error('TODO this should be impossible?');
-	}
-	const val = store.get(key);
+	const val = store?.get(key);
 	if (val === undefined) {
 		return undefined;
 	}
@@ -58,10 +52,7 @@ export function has_hydratable_value(key) {
 		return false;
 	}
 	var store = window.__svelte?.h;
-	if (store === undefined) {
-		throw new Error('TODO this should be impossible?');
-	}
-	return store.has(key);
+	return store?.has(key) ?? false;
 }
 
 /**
