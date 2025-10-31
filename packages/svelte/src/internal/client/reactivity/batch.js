@@ -14,33 +14,25 @@ import {
 	MAYBE_DIRTY,
 	DERIVED,
 	BOUNDARY_EFFECT,
-	EAGER_EFFECT
+	EAGER_EFFECT,
+	HEAD_EFFECT
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
 import {
 	active_effect,
 	get,
-	increment_write_version,
 	is_dirty,
 	is_updating_effect,
 	set_is_updating_effect,
 	set_signal_status,
-	tick,
 	update_effect
 } from '../runtime.js';
 import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
-import {
-	flush_eager_effects,
-	eager_effects,
-	old_values,
-	set_eager_effects,
-	source,
-	update
-} from './sources.js';
+import { flush_eager_effects, old_values, set_eager_effects, source, update } from './sources.js';
 import { eager_effect, unlink_effect } from './effects.js';
 
 /**
@@ -800,7 +792,12 @@ export function schedule_effect(signal) {
 
 		// if the effect is being scheduled because a parent (each/await/etc) block
 		// updated an internal source, bail out or we'll cause a second flush
-		if (is_flushing && effect === active_effect && (flags & BLOCK_EFFECT) !== 0) {
+		if (
+			is_flushing &&
+			effect === active_effect &&
+			(flags & BLOCK_EFFECT) !== 0 &&
+			(flags & HEAD_EFFECT) === 0
+		) {
 			return;
 		}
 
