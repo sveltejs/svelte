@@ -89,6 +89,7 @@ export function build_attribute_effect(
 				b.arrow(ids, b.object(values)),
 				memoizer.sync_values(),
 				memoizer.async_values(),
+				memoizer.blockers(),
 				element.metadata.scoped &&
 					context.state.analysis.css.hash !== '' &&
 					b.literal(context.state.analysis.css.hash),

@@ -25,6 +25,7 @@ import { IfBlock } from './visitors/IfBlock.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
+import { Program } from './visitors/Program.js';
 import { PropertyDefinition } from './visitors/PropertyDefinition.js';
 import { RegularElement } from './visitors/RegularElement.js';
 import { RenderTag } from './visitors/RenderTag.js';
@@ -40,7 +41,7 @@ import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 import { SvelteBoundary } from './visitors/SvelteBoundary.js';
-import { call_component_renderer, create_async_block } from './visitors/shared/utils.js';
+import { call_component_renderer } from './visitors/shared/utils.js';
 
 /** @type {Visitors} */
 const global_visitors = {
@@ -53,6 +54,7 @@ const global_visitors = {
 	Identifier,
 	LabeledStatement,
 	MemberExpression,
+	Program,
 	PropertyDefinition,
 	UpdateExpression,
 	VariableDeclaration
@@ -95,7 +97,7 @@ export function server_component(analysis, options) {
 		options,
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
-		hoisted: [b.import_all('$', 'svelte/internal/server')],
+		hoisted: [b.import_all('$', 'svelte/internal/server'), ...analysis.instance_body.hoisted],
 		legacy_reactive_statements: new Map(),
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		init: /** @type {any} */ (null),
@@ -103,7 +105,8 @@ export function server_component(analysis, options) {
 		namespace: options.namespace,
 		preserve_whitespace: options.preserveWhitespace,
 		state_fields: new Map(),
-		skip_hydration_boundaries: false
+		skip_hydration_boundaries: false,
+		is_instance: false
 	};
 
 	const module = /** @type {ESTree.Program} */ (
@@ -113,7 +116,7 @@ export function server_component(analysis, options) {
 	const instance = /** @type {ESTree.Program} */ (
 		walk(
 			/** @type {AST.SvelteNode} */ (analysis.instance.ast),
-			{ ...state, scopes: analysis.instance.scopes },
+			{ ...state, scopes: analysis.instance.scopes, is_instance: true },
 			{
 				...global_visitors,
 				ImportDeclaration(node) {
@@ -242,10 +245,6 @@ export function server_component(analysis, options) {
 		.../** @type {ESTree.Statement[]} */ (instance.body),
 		.../** @type {ESTree.Statement[]} */ (template.body)
 	]);
-
-	if (analysis.instance.has_await) {
-		component_block = b.block([create_async_block(component_block)]);
-	}
 
 	// trick esrap into including comments
 	component_block.loc = instance.loc;
@@ -408,7 +407,8 @@ export function server_module(analysis, options) {
 		// to be present for `javascript_visitors_legacy` and so is included in module
 		// transform state as well as component transform state
 		legacy_reactive_statements: new Map(),
-		state_fields: new Map()
+		state_fields: new Map(),
+		is_instance: false
 	};
 
 	const module = /** @type {ESTree.Program} */ (

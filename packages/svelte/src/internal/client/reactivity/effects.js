@@ -365,10 +365,12 @@ export function render_effect(fn, flags = 0) {
  * @param {(...expressions: any) => void | (() => void)} fn
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
+ * @param {Array<Promise<void>>} blockers
+ * @param {boolean} defer
  */
-export function template_effect(fn, sync = [], async = []) {
-	flatten(sync, async, (values) => {
-		create_effect(RENDER_EFFECT, () => fn(...values.map(get)), true);
+export function template_effect(fn, sync = [], async = [], blockers = [], defer = false) {
+	flatten(blockers, sync, async, (values) => {
+		create_effect(defer ? EFFECT : RENDER_EFFECT, () => fn(...values.map(get)), true);
 	});
 }
 

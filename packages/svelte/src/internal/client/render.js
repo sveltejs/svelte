@@ -12,20 +12,13 @@ import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants
 import { active_effect } from './runtime.js';
 import { push, pop, component_context } from './context.js';
 import { component_root } from './reactivity/effects.js';
-import {
-	hydrate_next,
-	hydrate_node,
-	hydrating,
-	set_hydrate_node,
-	set_hydrating
-} from './dom/hydration.js';
+import { hydrate_node, hydrating, set_hydrate_node, set_hydrating } from './dom/hydration.js';
 import { array_from } from '../shared/utils.js';
 import {
 	all_registered_events,
 	handle_event_propagation,
 	root_event_handles
 } from './dom/elements/events.js';
-import { reset_head_anchor } from './dom/blocks/svelte-head.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
 import { assign_nodes } from './dom/template.js';
@@ -152,7 +145,6 @@ export function hydrate(component, options) {
 	} finally {
 		set_hydrating(was_hydrating);
 		set_hydrate_node(previous_hydrate_node);
-		reset_head_anchor();
 	}
 }
 

@@ -483,6 +483,7 @@ function set_attributes(
  * @param {(...expressions: any) => Record<string | symbol, any>} fn
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
+ * @param {Array<Promise<void>>} blockers
  * @param {string} [css_hash]
  * @param {boolean} [should_remove_defaults]
  * @param {boolean} [skip_warning]
@@ -492,11 +493,12 @@ export function attribute_effect(
 	fn,
 	sync = [],
 	async = [],
+	blockers = [],
 	css_hash,
 	should_remove_defaults = false,
 	skip_warning = false
 ) {
-	flatten(sync, async, (values) => {
+	flatten(blockers, sync, async, (values) => {
 		/** @type {Record<string | symbol, any> | undefined} */
 		var prev = undefined;
 

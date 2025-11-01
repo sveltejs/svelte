@@ -12,6 +12,7 @@ import { raf } from '../animation-helpers.js';
 import type { CompileOptions } from '#compiler';
 import { suite_with_variants, type BaseTest } from '../suite.js';
 import { clear } from '../../src/internal/client/reactivity/batch.js';
+import { hydrating } from '../../src/internal/client/dom/hydration.js';
 
 type Assert = typeof import('vitest').assert & {
 	htmlEqual(a: string, b: string, description?: string): void;
@@ -533,6 +534,10 @@ async function run_test_variant(
 			throw err;
 		}
 	} finally {
+		if (hydrating) {
+			throw new Error('Hydration state was not cleared');
+		}
+
 		config.after_test?.();
 
 		// Free up the microtask queue

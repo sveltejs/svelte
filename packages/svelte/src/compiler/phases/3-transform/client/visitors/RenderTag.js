@@ -22,11 +22,11 @@ export function RenderTag(node, context) {
 	for (let i = 0; i < call.arguments.length; i++) {
 		const arg = /** @type {Expression} */ (call.arguments[i]);
 		const metadata = node.metadata.arguments[i];
-
 		let expression = build_expression(context, arg, metadata);
+		const memoized = memoizer.add(expression, metadata);
 
-		if (metadata.has_await || metadata.has_call) {
-			expression = b.call('$.get', memoizer.add(expression, metadata));
+		if (expression !== memoized) {
+			expression = b.call('$.get', memoized);
 		}
 
 		args.push(b.thunk(expression));
@@ -71,13 +71,15 @@ export function RenderTag(node, context) {
 	}
 
 	const async_values = memoizer.async_values();
+	const blockers = memoizer.blockers();
 
-	if (async_values) {
+	if (async_values || blockers) {
 		context.state.init.push(
 			b.stmt(
 				b.call(
 					'$.async',
 					context.state.node,
+					blockers,
 					memoizer.async_values(),
 					b.arrow([context.state.node, ...memoizer.async_ids()], b.block(statements))
 				)

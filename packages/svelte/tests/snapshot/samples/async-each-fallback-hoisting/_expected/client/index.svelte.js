@@ -6,7 +6,7 @@ export default function Async_each_fallback_hoisting($$anchor) {
 	var fragment = $.comment();
 	var node = $.first_child(fragment);
 
-	$.async(node, [() => Promise.resolve([])], (node, $$collection) => {
+	$.async(node, [], [() => Promise.resolve([])], (node, $$collection) => {
 		$.each(
 			node,
 			16,

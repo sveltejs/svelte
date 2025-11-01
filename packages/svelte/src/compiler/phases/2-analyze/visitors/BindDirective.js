@@ -172,6 +172,7 @@ export function BindDirective(node, context) {
 	}
 
 	const binding = context.state.scope.get(left.name);
+	node.metadata.binding = binding;
 
 	if (assignee.type === 'Identifier') {
 		// reassignment

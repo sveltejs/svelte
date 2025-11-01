@@ -1,4 +1,4 @@
-/** @import { CallExpression, Expression, MemberExpression } from 'estree' */
+/** @import { CallExpression, Expression } from 'estree' */
 /** @import { Context } from '../types' */
 import { dev, is_ignored } from '../../../../state.js';
 import * as b from '#compiler/builders';
@@ -80,7 +80,7 @@ export function CallExpression(node, context) {
 			);
 
 		case '$effect.pending':
-			return b.call('$.pending');
+			return b.call('$.eager', b.thunk(b.call('$.pending')));
 
 		case '$inspect':
 		case '$inspect().with':
