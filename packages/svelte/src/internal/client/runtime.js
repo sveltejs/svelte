@@ -148,23 +148,32 @@ export function increment_write_version() {
 /**
  * Determines whether a derived or effect is dirty.
  * If it is MAYBE_DIRTY, will set the status to CLEAN
+ *
+ * By default is_dirty executes deriveds and marks them as clean if not unowned etc.
+ * But when multiple batches are active, batch_values may contain a value for a derived.
+ * In this case we don't want to execute the derived (or its dependencies), but still
+ * traverse the graph in order to reconnect unowned deriveds to their dependencies.
  * @param {Reaction} reaction
+ * @param {boolean} [run_deriveds]
  * @returns {boolean}
  */
-export function is_dirty(reaction) {
+export function is_dirty(reaction, run_deriveds = true) {
 	var flags = reaction.f;
+	var dirty = (flags & DIRTY) !== 0;
 
-	if ((flags & DIRTY) !== 0) {
+	if (dirty && run_deriveds) {
 		return true;
 	}
 
-	if ((flags & MAYBE_DIRTY) !== 0) {
+	// We don't need this above the DIRTY check because if it's dirty
+	// the related derived update logic which is then called will also reset the flag
+	if ((flags & DERIVED) !== 0) {
+		reaction.f &= ~WAS_MARKED;
+	}
+
+	if ((flags & MAYBE_DIRTY) !== 0 || dirty) {
 		var dependencies = reaction.deps;
 		var is_unowned = (flags & UNOWNED) !== 0;
-
-		if (flags & DERIVED) {
-			reaction.f &= ~WAS_MARKED;
-		}
 
 		if (dependencies !== null) {
 			var i;
@@ -208,7 +217,7 @@ export function is_dirty(reaction) {
 			for (i = 0; i < length; i++) {
 				dependency = dependencies[i];
 
-				if (is_dirty(/** @type {Derived} */ (dependency))) {
+				if (is_dirty(/** @type {Derived} */ (dependency), run_deriveds) && run_deriveds) {
 					update_derived(/** @type {Derived} */ (dependency));
 				}
 
@@ -220,7 +229,7 @@ export function is_dirty(reaction) {
 
 		// Unowned signals should never be marked as clean unless they
 		// are used within an active_effect without skip_reaction
-		if (!is_unowned || (active_effect !== null && !skip_reaction)) {
+		if ((!is_unowned || (active_effect !== null && !skip_reaction)) && run_deriveds) {
 			set_signal_status(reaction, CLEAN);
 		}
 	}
@@ -678,16 +687,17 @@ export function get(signal) {
 		derived = /** @type {Derived} */ (signal);
 
 		if (batch_values?.has(derived)) {
+			is_dirty(derived, false);
 			return batch_values.get(derived);
 		}
 
 		if (is_dirty(derived)) {
 			update_derived(derived);
 		}
-	}
-
-	if (batch_values?.has(signal)) {
-		return batch_values.get(signal);
+	} else {
+		if (batch_values?.has(signal)) {
+			return batch_values.get(signal);
+		}
 	}
 
 	if ((signal.f & ERROR_VALUE) !== 0) {
