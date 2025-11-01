@@ -1,10 +1,7 @@
-<script>
-	await Promise.resolve();
-</script>
-
 component: loaded, boundary:
 
 <svelte:boundary>
+	{@const _ = await Promise.resolve()}
 	loaded
 	{#snippet pending()}
 		loading
