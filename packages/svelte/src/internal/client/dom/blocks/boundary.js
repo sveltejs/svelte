@@ -28,7 +28,8 @@ import {
 	hydrating,
 	next,
 	skip_nodes,
-	set_hydrate_node
+	set_hydrate_node,
+	set_hydrating
 } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
@@ -202,7 +203,14 @@ export class Boundary {
 
 			this.#main_effect = this.#run(() => {
 				Batch.ensure();
-				return branch(() => this.#children(anchor));
+				return branch(() => {
+					// We've already hydrated the pending content. We stop hydrating
+					// here so the resolved content is rendered on top of it.
+					if (hydrating) {
+						set_hydrating(false);
+					}
+					return this.#children(anchor);
+				});
 			});
 
 			if (this.#pending_count > 0) {
