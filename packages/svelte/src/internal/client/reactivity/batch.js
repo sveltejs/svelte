@@ -15,7 +15,8 @@ import {
 	DERIVED,
 	BOUNDARY_EFFECT,
 	EAGER_EFFECT,
-	HEAD_EFFECT
+	HEAD_EFFECT,
+	ERROR_VALUE
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
@@ -285,12 +286,16 @@ export class Batch {
 			this.previous.set(source, value);
 		}
 
-		this.current.set(source, source.v);
-		batch_values?.set(source, source.v);
+		// Don't save this as it would mean it's not thrown in the `runtime.js#get` function
+		if ((source.f & ERROR_VALUE) === 0) {
+			this.current.set(source, source.v);
+			batch_values?.set(source, source.v);
+		}
 	}
 
 	activate() {
 		current_batch = this;
+		this.apply();
 	}
 
 	deactivate() {
@@ -492,7 +497,7 @@ export class Batch {
 	}
 
 	apply() {
-		if (!async_mode_flag || batches.size === 1) return;
+		if (!async_mode_flag || (!this.is_fork && batches.size === 1)) return;
 
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to override values with the ones in this batch...
