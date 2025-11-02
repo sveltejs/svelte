@@ -1,8 +1,11 @@
 <script>
-	const symbol = Symbol();
+	const symbol1 = Symbol();
+	const symbol2 = Symbol();
 
-	let a = { [symbol]: 42 };
+	let a = { [symbol1]: 42 };
+	Object.defineProperty(a, symbol2, { enumerable: false, value: "nope" })
+
 	let { ...b } = $derived(a);
 </script>
 
-<p>{b[symbol]}</p>
+<p>{symbol1 in b} {symbol2 in b}</p>
