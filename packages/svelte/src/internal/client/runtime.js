@@ -778,7 +778,7 @@ export function exclude_from_object(obj, keys) {
 	}
 
 	for (var symbol of Object.getOwnPropertySymbols(obj)) {
-		if (!keys.includes(symbol)) {
+		if (Object.propertyIsEnumerable.call(obj, symbol) && !keys.includes(symbol)) {
 			result[symbol] = obj[symbol];
 		}
 	}
