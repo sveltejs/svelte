@@ -4,6 +4,7 @@ import { get_descriptors, get_prototype_of, index_of } from '../shared/utils.js'
 import {
 	destroy_block_effect_children,
 	destroy_effect_children,
+	effect_tracking,
 	execute_effect_teardown
 } from './reactivity/effects.js';
 import {
@@ -236,7 +237,7 @@ export function update_reaction(reaction) {
 	new_deps = /** @type {null | Value[]} */ (null);
 	skipped_deps = 0;
 	untracked_writes = null;
-	skip_reaction = false && (untracking || !is_updating_effect || active_reaction === null);
+	skip_reaction = !effect_tracking();
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 
 	current_sources = null;
