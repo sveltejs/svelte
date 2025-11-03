@@ -15,7 +15,9 @@ import {
 	DERIVED,
 	BOUNDARY_EFFECT,
 	EAGER_EFFECT,
-	HEAD_EFFECT
+	HEAD_EFFECT,
+	DISCONNECTED,
+	UNOWNED
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
@@ -189,7 +191,28 @@ export class Batch {
 			this.#deferred?.resolve();
 		}
 
-		batch_values = null;
+		if (batch_values !== null) {
+			for (const value of batch_values.keys()) {
+				// reconnect any deriveds that were disconnected from the graph
+				if ((value.f & UNOWNED) !== 0) {
+					var derived = /** @type {Derived} */ (value);
+
+					if (derived.deps !== null) {
+						for (var i = 0; i < derived.deps.length; i++) {
+							var dep = /** @type {Value} */ (derived.deps[i]);
+
+							if (!dep?.reactions?.includes(derived)) {
+								(dep.reactions ??= []).push(derived);
+							}
+						}
+					}
+
+					derived.f ^= UNOWNED;
+				}
+			}
+
+			batch_values = null;
+		}
 	}
 
 	/**
