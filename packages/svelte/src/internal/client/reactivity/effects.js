@@ -32,7 +32,8 @@ import {
 	EFFECT_PRESERVED,
 	STALE_REACTION,
 	USER_EFFECT,
-	ASYNC
+	ASYNC,
+	CONNECTED
 } from '#client/constants';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
@@ -102,7 +103,7 @@ function create_effect(type, fn, sync, push = true) {
 		deps: null,
 		nodes_start: null,
 		nodes_end: null,
-		f: type | DIRTY,
+		f: type | DIRTY | CONNECTED,
 		first: null,
 		fn,
 		last: null,

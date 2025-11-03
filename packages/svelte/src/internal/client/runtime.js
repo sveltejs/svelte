@@ -272,7 +272,7 @@ export function update_reaction(reaction) {
 				reaction.deps = deps = new_deps;
 			}
 
-			if (is_updating_effect) {
+			if (is_updating_effect && (reaction.f & CONNECTED) !== 0) {
 				for (i = skipped_deps; i < deps.length; i++) {
 					(deps[i].reactions ??= []).push(reaction);
 				}
@@ -625,6 +625,15 @@ export function get(signal) {
 
 		if (is_dirty(derived)) {
 			update_derived(derived);
+		}
+
+		// reconnect a disconnected derived to the graph
+		if (is_updating_effect && (derived.f & CONNECTED) === 0 && derived.deps !== null) {
+			derived.f |= CONNECTED;
+
+			for (const dep of derived.deps) {
+				(dep.reactions ??= []).push(derived);
+			}
 		}
 	}
 

@@ -369,11 +369,7 @@ export function update_derived(derived) {
 	if (batch_values !== null) {
 		batch_values.set(derived, derived.v);
 	} else {
-		var status =
-			(skip_reaction || (derived.f & CONNECTED) === 0) && derived.deps !== null
-				? MAYBE_DIRTY
-				: CLEAN;
-
+		var status = (derived.f & CONNECTED) === 0 ? MAYBE_DIRTY : CLEAN;
 		set_signal_status(derived, status);
 	}
 }
