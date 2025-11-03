@@ -25,7 +25,6 @@ import {
 	ROOT_EFFECT,
 	EFFECT_TRANSPARENT,
 	DERIVED,
-	UNOWNED,
 	CLEAN,
 	EAGER_EFFECT,
 	HEAD_EFFECT,
@@ -49,10 +48,10 @@ import { without_reactive_context } from '../dom/elements/bindings/shared.js';
  */
 export function validate_effect(rune) {
 	if (active_effect === null && active_reaction === null) {
-		e.effect_orphan(rune);
-	}
+		if (active_reaction === null) {
+			e.effect_orphan(rune);
+		}
 
-	if (active_reaction !== null && (active_reaction.f & UNOWNED) !== 0 && active_effect === null) {
 		e.effect_in_unowned_derived();
 	}
 
