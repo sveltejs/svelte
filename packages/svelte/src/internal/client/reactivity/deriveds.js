@@ -17,7 +17,6 @@ import {
 	active_reaction,
 	active_effect,
 	set_signal_status,
-	skip_reaction,
 	update_reaction,
 	increment_write_version,
 	set_active_effect,

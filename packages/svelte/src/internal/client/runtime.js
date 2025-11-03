@@ -138,7 +138,7 @@ export function set_update_version(value) {
 
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the reaction.
-export let skip_reaction = false;
+let skip_reaction = false;
 
 export function increment_write_version() {
 	return ++write_version;
