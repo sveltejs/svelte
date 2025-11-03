@@ -763,17 +763,23 @@ export function set_signal_status(signal, status) {
 }
 
 /**
- * @param {Record<string, unknown>} obj
- * @param {string[]} keys
- * @returns {Record<string, unknown>}
+ * @param {Record<string | symbol, unknown>} obj
+ * @param {Array<string | symbol>} keys
+ * @returns {Record<string | symbol, unknown>}
  */
 export function exclude_from_object(obj, keys) {
-	/** @type {Record<string, unknown>} */
+	/** @type {Record<string | symbol, unknown>} */
 	var result = {};
 
 	for (var key in obj) {
 		if (!keys.includes(key)) {
 			result[key] = obj[key];
+		}
+	}
+
+	for (var symbol of Object.getOwnPropertySymbols(obj)) {
+		if (Object.propertyIsEnumerable.call(obj, symbol) && !keys.includes(symbol)) {
+			result[symbol] = obj[symbol];
 		}
 	}
 
