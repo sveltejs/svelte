@@ -645,22 +645,13 @@ export function client_component(analysis, options) {
 		);
 
 		/** @type {ESTree.ObjectExpression | ESTree.ArrowFunctionExpression | undefined} */
-		let shadow_root_init = undefined;
+		let shadow_root_init;
 		if (typeof ce === 'boolean' || ce.shadow === 'open' || ce.shadow === undefined) {
 			shadow_root_init = b.object([b.init('mode', b.literal('open'))]);
 		} else if (ce.shadow === 'none') {
 			shadow_root_init = undefined;
-		} else if ('type' in ce.shadow && ce.shadow.type === 'ArrowFunctionExpression') {
-			shadow_root_init = /** @type {ESTree.ArrowFunctionExpression} */ (ce.shadow);
-		} else if (typeof ce.shadow === 'object') {
-			/** @type {ESTree.Property[]} */
-			const shadow_root_init_props = Object.entries(ce.shadow).map(([key, value]) =>
-				b.init(key, b.literal(value))
-			);
-
-			shadow_root_init = shadow_root_init_props.length
-				? b.object(shadow_root_init_props)
-				: undefined;
+		} else {
+			shadow_root_init = ce.shadow;
 		}
 
 		const create_ce = b.call(

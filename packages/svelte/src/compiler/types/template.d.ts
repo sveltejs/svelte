@@ -88,11 +88,7 @@ export namespace AST {
 		css?: 'injected';
 		customElement?: {
 			tag?: string;
-			shadow?:
-				| 'open'
-				| 'none'
-				| (ShadowRootInit & { clonable?: boolean })
-				| ArrowFunctionExpression;
+			shadow?: 'open' | 'none' | ObjectExpression | ArrowFunctionExpression | undefined;
 			props?: Record<
 				string,
 				{
