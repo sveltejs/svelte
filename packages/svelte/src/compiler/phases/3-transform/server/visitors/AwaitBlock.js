@@ -25,8 +25,12 @@ export function AwaitBlock(node, context) {
 		)
 	);
 
-	if (node.metadata.expression.has_await) {
-		statement = create_async_block(b.block([statement]));
+	if (node.metadata.expression.is_async()) {
+		statement = create_async_block(
+			b.block([statement]),
+			node.metadata.expression.blockers(),
+			node.metadata.expression.has_await
+		);
 	}
 
 	context.state.template.push(statement, block_close);

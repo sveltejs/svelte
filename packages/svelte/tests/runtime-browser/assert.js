@@ -166,7 +166,7 @@ export function test(args) {
 	return args;
 }
 
-// TypeScript needs the type of assertions to be directly visible, not infered, which is why
+// TypeScript needs the type of assertions to be directly visible, not inferred, which is why
 // we can't have it on the test suite type.
 /**
  * @param {any} value

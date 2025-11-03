@@ -1,12 +1,10 @@
-import type { Binding, ExpressionMetadata } from '#compiler';
+import type { Binding } from '#compiler';
 import type {
 	ArrayExpression,
 	ArrowFunctionExpression,
 	VariableDeclaration,
 	VariableDeclarator,
 	Expression,
-	FunctionDeclaration,
-	FunctionExpression,
 	Identifier,
 	MemberExpression,
 	Node,
@@ -19,6 +17,7 @@ import type {
 } from 'estree';
 import type { Scope } from '../phases/scope';
 import type { _CSS } from './css';
+import type { ExpressionMetadata } from '../phases/nodes';
 
 /**
  * - `html`    — the default, for e.g. `<div>` or `<span>`
@@ -26,13 +25,6 @@ import type { _CSS } from './css';
  * - `mathml`  — for e.g. `<math>` or `<mrow>`
  */
 export type Namespace = 'html' | 'svg' | 'mathml';
-
-export type DelegatedEvent =
-	| {
-			hoisted: true;
-			function: ArrowFunctionExpression | FunctionExpression | FunctionDeclaration;
-	  }
-	| { hoisted: false };
 
 export namespace AST {
 	export interface BaseNode {
@@ -56,6 +48,7 @@ export namespace AST {
 			 * Whether or not we need to traverse into the fragment during mount/hydrate
 			 */
 			dynamic: boolean;
+			/** @deprecated we should get rid of this in favour of the `$$renderer.run` mechanism */
 			has_await: boolean;
 		};
 	}
@@ -214,6 +207,7 @@ export namespace AST {
 		expression: Identifier | MemberExpression | SequenceExpression;
 		/** @internal */
 		metadata: {
+			binding?: Binding | null;
 			binding_group_name: Identifier;
 			parent_each_blocks: EachBlock[];
 		};
@@ -531,7 +525,7 @@ export namespace AST {
 		/** @internal */
 		metadata: {
 			/** May be set if this is an event attribute */
-			delegated: null | DelegatedEvent;
+			delegated: boolean;
 			/** May be `true` if this is a `class` attribute that needs `clsx` */
 			needs_clsx: boolean;
 		};

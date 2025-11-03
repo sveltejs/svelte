@@ -33,7 +33,6 @@ import { FunctionExpression } from './visitors/FunctionExpression.js';
 import { HtmlTag } from './visitors/HtmlTag.js';
 import { Identifier } from './visitors/Identifier.js';
 import { IfBlock } from './visitors/IfBlock.js';
-import { ImportDeclaration } from './visitors/ImportDeclaration.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { LetDirective } from './visitors/LetDirective.js';
@@ -111,7 +110,6 @@ const visitors = {
 	HtmlTag,
 	Identifier,
 	IfBlock,
-	ImportDeclaration,
 	KeyBlock,
 	LabeledStatement,
 	LetDirective,
@@ -153,7 +151,7 @@ export function client_component(analysis, options) {
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
 		is_instance: false,
-		hoisted: [b.import_all('$', 'svelte/internal/client')],
+		hoisted: [b.import_all('$', 'svelte/internal/client'), ...analysis.instance_body.hoisted],
 		node: /** @type {any} */ (null), // populated by the root node
 		legacy_reactive_imports: [],
 		legacy_reactive_statements: new Map(),
@@ -370,40 +368,21 @@ export function client_component(analysis, options) {
 		analysis.reactive_statements.size > 0 ||
 		component_returned_object.length > 0;
 
-	if (analysis.instance.has_await) {
-		if (should_inject_context && component_returned_object.length > 0) {
-			component_block.body.push(b.var('$$exports'));
-		}
-		const body = b.block([
-			...store_setup,
-			...state.instance_level_snippets,
-			.../** @type {ESTree.Statement[]} */ (instance.body),
-			...(should_inject_context && component_returned_object.length > 0
-				? [b.stmt(b.assignment('=', b.id('$$exports'), b.object(component_returned_object)))]
-				: []),
-			b.if(b.call('$.aborted'), b.return()),
-			.../** @type {ESTree.Statement[]} */ (template.body)
-		]);
+	component_block.body.push(
+		...state.instance_level_snippets,
+		.../** @type {ESTree.Statement[]} */ (instance.body)
+	);
 
-		component_block.body.push(
-			b.stmt(b.call(`$.async_body`, b.id('$$anchor'), b.arrow([b.id('$$anchor')], body, true)))
-		);
-	} else {
-		component_block.body.push(
-			...state.instance_level_snippets,
-			.../** @type {ESTree.Statement[]} */ (instance.body)
-		);
-		if (should_inject_context && component_returned_object.length > 0) {
-			component_block.body.push(b.var('$$exports', b.object(component_returned_object)));
-		}
-		component_block.body.unshift(...store_setup);
-
-		if (!analysis.runes && analysis.needs_context) {
-			component_block.body.push(b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)));
-		}
-
-		component_block.body.push(.../** @type {ESTree.Statement[]} */ (template.body));
+	if (should_inject_context && component_returned_object.length > 0) {
+		component_block.body.push(b.var('$$exports', b.object(component_returned_object)));
 	}
+	component_block.body.unshift(...store_setup);
+
+	if (!analysis.runes && analysis.needs_context) {
+		component_block.body.push(b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)));
+	}
+
+	component_block.body.push(.../** @type {ESTree.Statement[]} */ (template.body));
 
 	if (analysis.needs_mutation_validation) {
 		component_block.body.unshift(

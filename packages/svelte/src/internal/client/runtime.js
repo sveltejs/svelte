@@ -20,7 +20,8 @@ import {
 	DISCONNECTED,
 	REACTION_IS_UPDATING,
 	STALE_REACTION,
-	ERROR_VALUE
+	ERROR_VALUE,
+	WAS_MARKED
 } from './constants.js';
 import { old_values } from './reactivity/sources.js';
 import {
@@ -160,6 +161,10 @@ export function is_dirty(reaction) {
 	if ((flags & MAYBE_DIRTY) !== 0) {
 		var dependencies = reaction.deps;
 		var is_unowned = (flags & UNOWNED) !== 0;
+
+		if (flags & DERIVED) {
+			reaction.f &= ~WAS_MARKED;
+		}
 
 		if (dependencies !== null) {
 			var i;
@@ -597,18 +602,19 @@ export function get(signal) {
 	}
 
 	if (DEV) {
-		if (current_async_effect) {
-			var tracking = (current_async_effect.f & REACTION_IS_UPDATING) !== 0;
-			var was_read = current_async_effect.deps?.includes(signal);
+		// TODO reinstate this, but make it actually work
+		// if (current_async_effect) {
+		// 	var tracking = (current_async_effect.f & REACTION_IS_UPDATING) !== 0;
+		// 	var was_read = current_async_effect.deps?.includes(signal);
 
-			if (!tracking && !untracking && !was_read) {
-				w.await_reactivity_loss(/** @type {string} */ (signal.label));
+		// 	if (!tracking && !untracking && !was_read) {
+		// 		w.await_reactivity_loss(/** @type {string} */ (signal.label));
 
-				var trace = get_stack('TracedAt');
-				// eslint-disable-next-line no-console
-				if (trace) console.warn(trace);
-			}
-		}
+		// 		var trace = get_stack('traced at');
+		// 		// eslint-disable-next-line no-console
+		// 		if (trace) console.warn(trace);
+		// 	}
+		// }
 
 		recent_async_deriveds.delete(signal);
 
@@ -623,7 +629,7 @@ export function get(signal) {
 			if (signal.trace) {
 				signal.trace();
 			} else {
-				trace = get_stack('TracedAt');
+				var trace = get_stack('traced at');
 
 				if (trace) {
 					var entry = tracing_expressions.entries.get(signal);
@@ -757,17 +763,23 @@ export function set_signal_status(signal, status) {
 }
 
 /**
- * @param {Record<string, unknown>} obj
- * @param {string[]} keys
- * @returns {Record<string, unknown>}
+ * @param {Record<string | symbol, unknown>} obj
+ * @param {Array<string | symbol>} keys
+ * @returns {Record<string | symbol, unknown>}
  */
 export function exclude_from_object(obj, keys) {
-	/** @type {Record<string, unknown>} */
+	/** @type {Record<string | symbol, unknown>} */
 	var result = {};
 
 	for (var key in obj) {
 		if (!keys.includes(key)) {
 			result[key] = obj[key];
+		}
+	}
+
+	for (var symbol of Object.getOwnPropertySymbols(obj)) {
+		if (Object.propertyIsEnumerable.call(obj, symbol) && !keys.includes(symbol)) {
+			result[symbol] = obj[symbol];
 		}
 	}
 

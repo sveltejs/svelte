@@ -100,6 +100,7 @@ export {
 export {
 	async_body,
 	for_await_track_reactivity_loss,
+	run,
 	save,
 	track_reactivity_loss
 } from './reactivity/async.js';

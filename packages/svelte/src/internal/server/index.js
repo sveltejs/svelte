@@ -64,15 +64,16 @@ export function render(component, options = {}) {
 }
 
 /**
+ * @param {string} hash
  * @param {Renderer} renderer
  * @param {(renderer: Renderer) => Promise<void> | void} fn
  * @returns {void}
  */
-export function head(renderer, fn) {
+export function head(hash, renderer, fn) {
 	renderer.head((renderer) => {
-		renderer.push(BLOCK_OPEN);
+		renderer.push(`<!--${hash}-->`);
 		renderer.child(fn);
-		renderer.push(BLOCK_CLOSE);
+		renderer.push(EMPTY_COMMENT);
 	});
 }
 

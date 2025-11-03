@@ -6,7 +6,7 @@ export default function Async_if_hoisting($$anchor) {
 	var fragment = $.comment();
 	var node = $.first_child(fragment);
 
-	$.async(node, [() => Promise.resolve(true)], (node, $$condition) => {
+	$.async(node, [], [() => Promise.resolve(true)], (node, $$condition) => {
 		var consequent = ($$anchor) => {
 			var text = $.text();
 

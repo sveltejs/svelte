@@ -1,36 +1,17 @@
-/** @import { Context } from 'zimmerframe' */
 /** @import { TransformState } from './types.js' */
 /** @import { AST, Binding, Namespace, ValidatedCompileOptions } from '#compiler' */
 /** @import { Node, Expression, CallExpression, MemberExpression } from 'estree' */
 import {
 	regex_ends_with_whitespaces,
 	regex_not_whitespace,
-	regex_starts_with_newline,
 	regex_starts_with_whitespaces
 } from '../patterns.js';
-import * as b from '#compiler/builders';
 import * as e from '../../errors.js';
 import { walk } from 'zimmerframe';
 import { extract_identifiers } from '../../utils/ast.js';
 import check_graph_for_cycles from '../2-analyze/utils/check_graph_for_cycles.js';
 import is_reference from 'is-reference';
 import { set_scope } from '../scope.js';
-import { dev } from '../../state.js';
-
-/**
- * @param {Node} node
- * @returns {boolean}
- */
-export function is_hoisted_function(node) {
-	if (
-		node.type === 'ArrowFunctionExpression' ||
-		node.type === 'FunctionExpression' ||
-		node.type === 'FunctionDeclaration'
-	) {
-		return node.metadata?.hoisted === true;
-	}
-	return false;
-}
 
 /**
  * Match Svelte 4 behaviour by sorting ConstTag nodes in topological order

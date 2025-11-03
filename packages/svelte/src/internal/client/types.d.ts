@@ -1,6 +1,6 @@
 import type { Store } from '#shared';
 import { STATE_SYMBOL } from './constants.js';
-import type { Effect, Source, Value, Reaction } from './reactivity/types.js';
+import type { Effect, Source, Value } from './reactivity/types.js';
 
 type EventCallback = (event: Event) => boolean;
 export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;
@@ -16,6 +16,8 @@ export type ComponentContext = {
 	c: null | Map<unknown, unknown>;
 	/** deferred effects */
 	e: null | Array<() => void | (() => void)>;
+	/** True if initialized, i.e. pop() ran */
+	i: boolean;
 	/**
 	 * props — needed for legacy mode lifecycle functions, and for `createEventDispatcher`
 	 * @deprecated remove in 6.0

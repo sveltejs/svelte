@@ -11,10 +11,10 @@ import { build_expression, add_svelte_meta } from './shared/utils.js';
 export function KeyBlock(node, context) {
 	context.state.template.push_comment();
 
-	const { has_await } = node.metadata.expression;
+	const is_async = node.metadata.expression.is_async();
 
 	const expression = build_expression(context, node.expression, node.metadata.expression);
-	const key = b.thunk(has_await ? b.call('$.get', b.id('$$key')) : expression);
+	const key = b.thunk(is_async ? b.call('$.get', b.id('$$key')) : expression);
 	const body = /** @type {Expression} */ (context.visit(node.fragment));
 
 	let statement = add_svelte_meta(
@@ -23,12 +23,13 @@ export function KeyBlock(node, context) {
 		'key'
 	);
 
-	if (has_await) {
+	if (is_async) {
 		statement = b.stmt(
 			b.call(
 				'$.async',
 				context.state.node,
-				b.array([b.thunk(expression, true)]),
+				node.metadata.expression.blockers(),
+				b.array([b.thunk(expression, node.metadata.expression.has_await)]),
 				b.arrow([context.state.node, b.id('$$key')], b.block([statement]))
 			)
 		);

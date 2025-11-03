@@ -1,6 +1,6 @@
 import { UNINITIALIZED } from '../../../constants.js';
 import { snapshot } from '../../shared/clone.js';
-import { inspect_effect, render_effect, validate_effect } from '../reactivity/effects.js';
+import { eager_effect, render_effect, validate_effect } from '../reactivity/effects.js';
 import { untrack } from '../runtime.js';
 import { get_stack } from './tracing.js';
 
@@ -19,7 +19,7 @@ export function inspect(get_value, inspector, show_stack = false) {
 	// stack traces. As a consequence, reading the value might result
 	// in an error (an `$inspect(object.property)` will run before the
 	// `{#if object}...{/if}` that contains it)
-	inspect_effect(() => {
+	eager_effect(() => {
 		try {
 			var value = get_value();
 		} catch (e) {
@@ -33,8 +33,17 @@ export function inspect(get_value, inspector, show_stack = false) {
 				inspector(...snap);
 
 				if (!initial) {
+					const stack = get_stack('$inspect(...)');
 					// eslint-disable-next-line no-console
-					console.log(get_stack('UpdatedAt'));
+
+					if (stack) {
+						// eslint-disable-next-line no-console
+						console.groupCollapsed('stack trace');
+						// eslint-disable-next-line no-console
+						console.log(stack);
+						// eslint-disable-next-line no-console
+						console.groupEnd();
+					}
 				}
 			} else {
 				inspector(initial ? 'init' : 'update', ...snap);

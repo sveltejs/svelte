@@ -5,8 +5,7 @@ import {
 	empty_comment,
 	build_attribute_value,
 	create_async_block,
-	PromiseOptimiser,
-	build_template
+	PromiseOptimiser
 } from './utils.js';
 import * as b from '#compiler/builders';
 import { is_element_node } from '../../../../nodes.js';
@@ -323,8 +322,14 @@ export function build_inline_component(node, expression, context) {
 		);
 	}
 
-	if (optimiser.expressions.length > 0) {
-		statement = create_async_block(b.block([optimiser.apply(), statement]));
+	const is_async = optimiser.is_async();
+
+	if (is_async) {
+		statement = create_async_block(
+			b.block([optimiser.apply(), statement]),
+			optimiser.blockers(),
+			optimiser.has_await
+		);
 	}
 
 	if (dynamic && custom_css_props.length === 0) {
@@ -334,6 +339,7 @@ export function build_inline_component(node, expression, context) {
 	context.state.template.push(statement);
 
 	if (
+		!is_async &&
 		!context.state.skip_hydration_boundaries &&
 		custom_css_props.length === 0 &&
 		optimiser.expressions.length === 0
