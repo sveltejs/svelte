@@ -629,18 +629,8 @@ export function get(signal) {
 			update_derived(derived);
 		}
 
-		// reconnect a disconnected derived to the graph
-		if (
-			is_updating_effect &&
-			effect_tracking() &&
-			(derived.f & CONNECTED) === 0 &&
-			derived.deps !== null
-		) {
-			derived.f |= CONNECTED;
-
-			for (const dep of derived.deps) {
-				(dep.reactions ??= []).push(derived);
-			}
+		if (is_updating_effect && effect_tracking() && (derived.f & CONNECTED) === 0) {
+			reconnect(derived);
 		}
 	}
 
@@ -653,6 +643,25 @@ export function get(signal) {
 	}
 
 	return signal.v;
+}
+
+/**
+ * (Re)connect a disconnected derived, so that it is notified
+ * of changes in `mark_reactions`
+ * @param {Derived} derived
+ */
+function reconnect(derived) {
+	if (derived.deps === null) return;
+
+	derived.f ^= CONNECTED;
+
+	for (const dep of derived.deps) {
+		(dep.reactions ??= []).push(derived);
+
+		if ((dep.f & DERIVED) !== 0 && (dep.f & CONNECTED) === 0) {
+			reconnect(/** @type {Derived} */ (dep));
+		}
+	}
 }
 
 /** @param {Derived} derived */
