@@ -23,12 +23,12 @@ import {
 	DIRTY,
 	BRANCH_EFFECT,
 	EAGER_EFFECT,
-	UNOWNED,
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	ASYNC,
-	WAS_MARKED
+	WAS_MARKED,
+	CONNECTED
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -211,7 +211,8 @@ export function internal_set(source, value) {
 			if ((source.f & DIRTY) !== 0) {
 				execute_derived(/** @type {Derived} */ (source));
 			}
-			set_signal_status(source, (source.f & UNOWNED) === 0 ? CLEAN : MAYBE_DIRTY);
+
+			set_signal_status(source, (source.f & CONNECTED) !== 0 ? CLEAN : MAYBE_DIRTY);
 		}
 
 		source.wv = increment_write_version();

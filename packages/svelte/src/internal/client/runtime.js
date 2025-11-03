@@ -11,13 +11,12 @@ import {
 	MAYBE_DIRTY,
 	CLEAN,
 	DERIVED,
-	UNOWNED,
 	DESTROYED,
 	BRANCH_EFFECT,
 	STATE_SYMBOL,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	DISCONNECTED,
+	CONNECTED,
 	REACTION_IS_UPDATING,
 	STALE_REACTION,
 	ERROR_VALUE,
@@ -160,7 +159,6 @@ export function is_dirty(reaction) {
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
 		var dependencies = reaction.deps;
-		var is_unowned = (flags & UNOWNED) !== 0;
 
 		if (flags & DERIVED) {
 			reaction.f &= ~WAS_MARKED;
@@ -169,41 +167,7 @@ export function is_dirty(reaction) {
 		if (dependencies !== null) {
 			var i;
 			var dependency;
-			var is_disconnected = (flags & DISCONNECTED) !== 0;
-			var is_unowned_connected = is_unowned && active_effect !== null && !skip_reaction;
 			var length = dependencies.length;
-
-			// If we are working with a disconnected or an unowned signal that is now connected (due to an active effect)
-			// then we need to re-connect the reaction to the dependency, unless the effect has already been destroyed
-			// (which can happen if the derived is read by an async derived)
-			if (
-				(is_disconnected || is_unowned_connected) &&
-				(active_effect === null || (active_effect.f & DESTROYED) === 0)
-			) {
-				var derived = /** @type {Derived} */ (reaction);
-				var parent = derived.parent;
-
-				for (i = 0; i < length; i++) {
-					dependency = dependencies[i];
-
-					// We always re-add all reactions (even duplicates) if the derived was
-					// previously disconnected, however we don't if it was unowned as we
-					// de-duplicate dependencies in that case
-					if (is_disconnected || !dependency?.reactions?.includes(derived)) {
-						(dependency.reactions ??= []).push(derived);
-					}
-				}
-
-				if (is_disconnected) {
-					derived.f ^= DISCONNECTED;
-				}
-				// If the unowned derived is now fully connected to the graph again (it's unowned and reconnected, has a parent
-				// and the parent is not unowned), then we can mark it as connected again, removing the need for the unowned
-				// flag
-				if (is_unowned_connected && parent !== null && (parent.f & UNOWNED) === 0) {
-					derived.f ^= UNOWNED;
-				}
-			}
 
 			for (i = 0; i < length; i++) {
 				dependency = dependencies[i];
@@ -218,9 +182,7 @@ export function is_dirty(reaction) {
 			}
 		}
 
-		// Unowned signals should never be marked as clean unless they
-		// are used within an active_effect without skip_reaction
-		if (!is_unowned || (active_effect !== null && !skip_reaction)) {
+		if ((flags & CONNECTED) !== 0) {
 			set_signal_status(reaction, CLEAN);
 		}
 	}
@@ -274,8 +236,7 @@ export function update_reaction(reaction) {
 	new_deps = /** @type {null | Value[]} */ (null);
 	skipped_deps = 0;
 	untracked_writes = null;
-	skip_reaction =
-		(flags & UNOWNED) !== 0 && (untracking || !is_updating_effect || active_reaction === null);
+	skip_reaction = false && (untracking || !is_updating_effect || active_reaction === null);
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 
 	current_sources = null;
@@ -311,12 +272,7 @@ export function update_reaction(reaction) {
 				reaction.deps = deps = new_deps;
 			}
 
-			if (
-				!skip_reaction ||
-				// Deriveds that already have reactions can cleanup, so we still add them as reactions
-				((flags & DERIVED) !== 0 &&
-					/** @type {import('#client').Derived} */ (reaction).reactions !== null)
-			) {
+			if (is_updating_effect) {
 				for (i = skipped_deps; i < deps.length; i++) {
 					(deps[i].reactions ??= []).push(reaction);
 				}
@@ -416,8 +372,8 @@ function remove_reaction(signal, dependency) {
 		set_signal_status(dependency, MAYBE_DIRTY);
 		// If we are working with a derived that is owned by an effect, then mark it as being
 		// disconnected.
-		if ((dependency.f & (UNOWNED | DISCONNECTED)) === 0) {
-			dependency.f ^= DISCONNECTED;
+		if ((dependency.f & CONNECTED) !== 0) {
+			dependency.f ^= CONNECTED;
 		}
 		// Disconnect any reactions owned by this reaction
 		destroy_derived_effects(/** @type {Derived} **/ (dependency));
@@ -585,20 +541,6 @@ export function get(signal) {
 				}
 			}
 		}
-	} else if (
-		is_derived &&
-		/** @type {Derived} */ (signal).deps === null &&
-		/** @type {Derived} */ (signal).effects === null
-	) {
-		var derived = /** @type {Derived} */ (signal);
-		var parent = derived.parent;
-
-		if (parent !== null && (parent.f & UNOWNED) === 0) {
-			// If the derived is owned by another derived then mark it as unowned
-			// as the derived value might have been referenced in a different context
-			// since and thus its parent might not be its true owner anymore
-			derived.f ^= UNOWNED;
-		}
 	}
 
 	if (DEV) {
@@ -657,7 +599,7 @@ export function get(signal) {
 		}
 
 		if (is_derived) {
-			derived = /** @type {Derived} */ (signal);
+			var derived = /** @type {Derived} */ (signal);
 
 			var value = derived.v;
 

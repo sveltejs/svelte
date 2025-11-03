@@ -9,9 +9,9 @@ import {
 	EFFECT_PRESERVED,
 	MAYBE_DIRTY,
 	STALE_REACTION,
-	UNOWNED,
 	ASYNC,
-	WAS_MARKED
+	WAS_MARKED,
+	CONNECTED
 } from '#client/constants';
 import {
 	active_reaction,
@@ -61,9 +61,7 @@ export function derived(fn) {
 			? /** @type {Derived} */ (active_reaction)
 			: null;
 
-	if (active_effect === null || (parent_derived !== null && (parent_derived.f & UNOWNED) !== 0)) {
-		flags |= UNOWNED;
-	} else {
+	if (active_effect !== null) {
 		// Since deriveds are evaluated lazily, any effects created inside them are
 		// created too late to ensure that the parent effect is added to the tree
 		active_effect.f |= EFFECT_PRESERVED;
@@ -372,7 +370,9 @@ export function update_derived(derived) {
 		batch_values.set(derived, derived.v);
 	} else {
 		var status =
-			(skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null ? MAYBE_DIRTY : CLEAN;
+			(skip_reaction || (derived.f & CONNECTED) === 0) && derived.deps !== null
+				? MAYBE_DIRTY
+				: CLEAN;
 
 		set_signal_status(derived, status);
 	}

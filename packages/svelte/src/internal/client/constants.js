@@ -26,8 +26,7 @@ export const EFFECT_PRESERVED = 1 << 19;
 export const USER_EFFECT = 1 << 20;
 
 // Flags exclusive to deriveds
-export const UNOWNED = 1 << 8;
-export const DISCONNECTED = 1 << 9;
+export const CONNECTED = 1 << 9;
 /**
  * Tells that we marked this derived and its reactions as visited during the "mark as (maybe) dirty"-phase.
  * Will be lifted during execution of the derived and during checking its dirty state (both are necessary
