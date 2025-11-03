@@ -274,7 +274,7 @@ export function update_reaction(reaction) {
 				reaction.deps = deps = new_deps;
 			}
 
-			if (effect_tracking() && (reaction.f & CONNECTED) !== 0) {
+			if (is_updating_effect && effect_tracking() && (reaction.f & CONNECTED) !== 0) {
 				for (i = skipped_deps; i < deps.length; i++) {
 					(deps[i].reactions ??= []).push(reaction);
 				}
@@ -630,7 +630,12 @@ export function get(signal) {
 		}
 
 		// reconnect a disconnected derived to the graph
-		if (effect_tracking() && (derived.f & CONNECTED) === 0 && derived.deps !== null) {
+		if (
+			is_updating_effect &&
+			effect_tracking() &&
+			(derived.f & CONNECTED) === 0 &&
+			derived.deps !== null
+		) {
 			derived.f |= CONNECTED;
 
 			for (const dep of derived.deps) {
