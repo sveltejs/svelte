@@ -49,6 +49,7 @@ import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
 import { without_reactive_context } from './dom/elements/bindings/shared.js';
 
+// TODO we can remove this i think
 export let is_updating_effect = false;
 
 /** @param {boolean} value */
