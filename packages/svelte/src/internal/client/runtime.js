@@ -273,7 +273,7 @@ export function update_reaction(reaction) {
 				reaction.deps = deps = new_deps;
 			}
 
-			if (is_updating_effect && (reaction.f & CONNECTED) !== 0) {
+			if (effect_tracking() && (reaction.f & CONNECTED) !== 0) {
 				for (i = skipped_deps; i < deps.length; i++) {
 					(deps[i].reactions ??= []).push(reaction);
 				}
