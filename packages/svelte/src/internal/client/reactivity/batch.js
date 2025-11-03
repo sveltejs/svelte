@@ -228,8 +228,65 @@ export class Batch {
 				} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
 					target.render_effects.push(effect);
 				} else if (is_dirty(effect)) {
-					if ((effect.f & BLOCK_EFFECT) !== 0) target.block_effects.push(effect);
-					update_effect(effect);
+					if ((effect.f & BLOCK_EFFECT) !== 0) {
+						target.block_effects.push(effect);
+
+						let branches;
+						let has_multiple_batches = batches.size > 1;
+						if (has_multiple_batches) {
+							branches = new Set();
+							let b = effect.first;
+
+							while (b !== null) {
+								if ((b.f & BRANCH_EFFECT) !== 0) {
+									branches.add(b);
+								}
+								b = b.next;
+							}
+						}
+
+						update_effect(effect);
+
+						let new_branches;
+						if (has_multiple_batches) {
+							new_branches = new Set();
+							let b = effect.first;
+
+							while (b !== null) {
+								const next = b.next;
+								if (!(/** @type {Set<Effect>} */ (branches).has(b))) {
+									new_branches.add(b);
+								}
+								b = next;
+							}
+
+							const new_target = {
+								parent: null,
+								effect,
+								effects: [],
+								render_effects: [],
+								block_effects: []
+							};
+
+							// Traverse any new branches added due to running the block effect and collect their effects...
+							if (new_branches.size > 0) {
+								for (const b of new_branches) {
+									this.#traverse_new_effects(b, new_target);
+								}
+							}
+
+							// ...then defer those effects in other batches, as they could have changed values that these effects depend on
+							for (const b of batches) {
+								if (b !== this) {
+									b.#defer_effects(new_target.render_effects, false);
+									b.#defer_effects(new_target.effects, false);
+									b.#defer_effects(new_target.block_effects, false);
+								}
+							}
+						}
+					} else {
+						update_effect(effect);
+					}
 				}
 
 				var child = effect.first;
@@ -262,15 +319,56 @@ export class Batch {
 	}
 
 	/**
-	 * @param {Effect[]} effects
+	 * Traverse the newly created effect tree, adding effects to the appropriate lists
+	 * @param {Effect} root
+	 * @param {EffectTarget} target
 	 */
-	#defer_effects(effects) {
+	#traverse_new_effects(root, target) {
+		var effect = root.first;
+
+		while (effect !== null) {
+			var flags = effect.f;
+			if (effect.fn !== null) {
+				if ((flags & EFFECT) !== 0) {
+					target.effects.push(effect);
+				} else if ((flags & RENDER_EFFECT) !== 0) {
+					target.render_effects.push(effect);
+				} else if ((effect.f & BLOCK_EFFECT) !== 0) {
+					target.block_effects.push(effect);
+				}
+
+				var child = effect.first;
+
+				if (child !== null) {
+					effect = child;
+					continue;
+				}
+			}
+
+			var parent = effect.parent;
+			effect = effect.next;
+
+			while (effect === null && parent !== null && parent !== root) {
+				effect = parent.next;
+				parent = parent.parent;
+			}
+		}
+	}
+
+	/**
+	 * @param {Effect[]} effects
+	 * @param {boolean} use_status
+	 */
+	#defer_effects(effects, use_status = true) {
 		for (const e of effects) {
-			const target = (e.f & DIRTY) !== 0 ? this.#dirty_effects : this.#maybe_dirty_effects;
+			const target =
+				(e.f & DIRTY) !== 0 && use_status ? this.#dirty_effects : this.#maybe_dirty_effects;
 			target.push(e);
 
-			// mark as clean so they get scheduled if they depend on pending async state
-			set_signal_status(e, CLEAN);
+			if (use_status) {
+				// mark as clean so they get scheduled if they depend on pending async state
+				set_signal_status(e, CLEAN);
+			}
 		}
 	}
 
