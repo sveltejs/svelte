@@ -84,9 +84,7 @@ When constructing a custom element, you can tailor several aspects by defining `
 		shadow: () => ({
 			mode: import.meta.env.DEV ? 'open' : 'closed',
 			clonable: true,
-			delegatesFocus: true,
-			serializable: true,
-			slotAssignment: 'manual',
+			// ...
 		}),
 		props: {
 			name: { reflect: true, type: 'Number', attribute: 'element-index' }
