@@ -286,7 +286,7 @@ export class Batch {
 			this.previous.set(source, value);
 		}
 
-		// Don't save this as it would mean it's not thrown in the `runtime.js#get` function
+		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
 		if ((source.f & ERROR_VALUE) === 0) {
 			this.current.set(source, source.v);
 			batch_values?.set(source, source.v);
