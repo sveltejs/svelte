@@ -122,15 +122,7 @@ export class SvelteSet extends Set {
 		var s = sources.get(value);
 
 		if (s === undefined) {
-			if (!has) {
-				// If the value doesn't exist, track the version in case it's added later
-				// but don't create sources willy-nilly to track all possible values
-				get(this.#version);
-				return false;
-			}
-
-			s = this.#source(true);
-
+			s = this.#source(has);
 			if (DEV) {
 				tag(s, `SvelteSet has(${label(value)})`);
 			}
@@ -144,6 +136,12 @@ export class SvelteSet extends Set {
 
 	/** @param {T} value */
 	add(value) {
+		var s = this.#sources.get(value);
+
+		if (s?.v === false) {
+			set(s, true);
+		}
+
 		if (!super.has(value)) {
 			super.add(value);
 			set(this.#size, super.size);
@@ -160,7 +158,6 @@ export class SvelteSet extends Set {
 		var s = sources.get(value);
 
 		if (s !== undefined) {
-			sources.delete(value);
 			set(s, false);
 		}
 
@@ -178,13 +175,11 @@ export class SvelteSet extends Set {
 		}
 		// Clear first, so we get nice console.log outputs with $inspect
 		super.clear();
-		var sources = this.#sources;
 
-		for (var s of sources.values()) {
+		for (var s of this.#sources.values()) {
 			set(s, false);
 		}
 
-		sources.clear();
 		set(this.#size, 0);
 		increment(this.#version);
 	}

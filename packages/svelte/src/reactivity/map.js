@@ -56,6 +56,7 @@ export class SvelteMap extends Map {
 	#version = state(0);
 	#size = state(0);
 	#update_version = update_version || -1;
+	#fully_trackable = true;
 
 	/**
 	 * @param {Iterable<readonly [K, V]> | null | undefined} [value]
@@ -75,7 +76,11 @@ export class SvelteMap extends Map {
 			for (var [key, v] of value) {
 				super.set(key, v);
 			}
-			this.#size.v = super.size;
+			var size = super.size;
+			this.#size.v = size;
+			if (size > 0) {
+				this.#fully_trackable = false;
+			}
 		}
 	}
 
@@ -96,27 +101,19 @@ export class SvelteMap extends Map {
 	has(key) {
 		var sources = this.#sources;
 		var s = sources.get(key);
+		var has = super.has(key);
 
 		if (s === undefined) {
-			var ret = super.get(key);
-			if (ret !== undefined) {
-				s = this.#source(0);
+			s = this.#source(has ? 0 : -1);
+			sources.set(key, s);
 
-				if (DEV) {
-					tag(s, `SvelteMap get(${label(key)})`);
-				}
-
-				sources.set(key, s);
-			} else {
-				// We should always track the version in case
-				// the Set ever gets this value in the future.
-				get(this.#version);
-				return false;
+			if (DEV) {
+				tag(s, `SvelteMap get(${label(key)})`);
 			}
 		}
-
 		get(s);
-		return true;
+
+		return has;
 	}
 
 	/**
@@ -134,24 +131,15 @@ export class SvelteMap extends Map {
 		var s = sources.get(key);
 
 		if (s === undefined) {
-			var ret = super.get(key);
-			if (ret !== undefined) {
-				s = this.#source(0);
+			s = this.#source(super.has(key) ? 0 : -1);
+			sources.set(key, s);
 
-				if (DEV) {
-					tag(s, `SvelteMap get(${label(key)})`);
-				}
-
-				sources.set(key, s);
-			} else {
-				// We should always track the version in case
-				// the Set ever gets this value in the future.
-				get(this.#version);
-				return undefined;
+			if (DEV) {
+				tag(s, `SvelteMap get(${label(key)})`);
 			}
 		}
-
 		get(s);
+
 		return super.get(key);
 	}
 
@@ -175,6 +163,11 @@ export class SvelteMap extends Map {
 
 			sources.set(key, s);
 			set(this.#size, super.size);
+			increment(version);
+			// if it is a signal for non-existing value
+		} else if (s.v === -1) {
+			set(this.#size, super.size);
+			increment(s);
 			increment(version);
 		} else if (prev_res !== value) {
 			increment(s);
@@ -200,8 +193,7 @@ export class SvelteMap extends Map {
 		var s = sources.get(key);
 		var res = super.delete(key);
 
-		if (s !== undefined) {
-			sources.delete(key);
+		if (s !== undefined && s.v !== -1) {
 			set(this.#size, super.size);
 			set(s, -1);
 			increment(this.#version);
@@ -222,14 +214,13 @@ export class SvelteMap extends Map {
 			set(s, -1);
 		}
 		increment(this.#version);
-		sources.clear();
 	}
 
 	#read_all() {
 		get(this.#version);
 
 		var sources = this.#sources;
-		if (this.#size.v !== sources.size) {
+		if (!this.#fully_trackable) {
 			for (var key of super.keys()) {
 				if (!sources.has(key)) {
 					var s = this.#source(0);
@@ -240,10 +231,11 @@ export class SvelteMap extends Map {
 					sources.set(key, s);
 				}
 			}
+			this.#fully_trackable = true;
 		}
 
-		for ([, s] of this.#sources) {
-			get(s);
+		for ([, s] of sources) {
+			if (s.v !== -1) get(s);
 		}
 	}
 

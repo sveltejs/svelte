@@ -52,7 +52,6 @@ test('map.values()', () => {
 		false,
 		[1, 2, 4, 5],
 		0,
-		false,
 		[],
 		1,
 		true,
@@ -214,11 +213,11 @@ test('not invoking reactivity when value is not in the map after changes', () =>
 
 	const cleanup = effect_root(() => {
 		render_effect(() => {
-			log.push(map.get(1));
+			log.push('1', map.get(1));
 		});
 
 		render_effect(() => {
-			log.push(map.get(2));
+			log.push('2', map.get(2));
 		});
 
 		flushSync(() => {
@@ -230,7 +229,7 @@ test('not invoking reactivity when value is not in the map after changes', () =>
 		});
 	});
 
-	assert.deepEqual(log, [1, undefined, undefined, undefined, 1, undefined]);
+	assert.deepEqual(log, ['1', 1, '2', undefined, '1', undefined, '1', 1]);
 
 	cleanup();
 });
