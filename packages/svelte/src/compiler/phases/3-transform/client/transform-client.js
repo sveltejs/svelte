@@ -644,23 +644,24 @@ export function client_component(analysis, options) {
 			analysis.exports.map(({ name, alias }) => b.literal(alias ?? name))
 		);
 
-		/** @type {ShadowRootInit | {}} */
-		let ce_shadow_root_init = {};
+		/** @type {ESTree.ObjectExpression | ESTree.ArrowFunctionExpression | undefined} */
+		let shadow_root_init = undefined;
 		if (typeof ce === 'boolean' || ce.shadow === 'open' || ce.shadow === undefined) {
-			ce_shadow_root_init = { mode: 'open' };
+			shadow_root_init = b.object([b.init('mode', b.literal('open'))]);
 		} else if (ce.shadow === 'none') {
-			ce_shadow_root_init = {};
+			shadow_root_init = undefined;
+		} else if ('type' in ce.shadow && ce.shadow.type === 'ArrowFunctionExpression') {
+			shadow_root_init = /** @type {ESTree.ArrowFunctionExpression} */ (ce.shadow);
 		} else if (typeof ce.shadow === 'object') {
-			ce_shadow_root_init = ce.shadow;
-		}
+			/** @type {ESTree.Property[]} */
+			const shadow_root_init_props = Object.entries(ce.shadow).map(([key, value]) =>
+				b.init(key, b.literal(value))
+			);
 
-		/** @type {ESTree.Property[]} */
-		const shadow_root_init_str = Object.entries(ce_shadow_root_init).map(([key, value]) =>
-			b.init(key, b.literal(value))
-		);
-		const shadow_root_init = shadow_root_init_str.length
-			? b.object(shadow_root_init_str)
-			: undefined;
+			shadow_root_init = shadow_root_init_props.length
+				? b.object(shadow_root_init_props)
+				: undefined;
+		}
 
 		const create_ce = b.call(
 			'$.create_custom_element',

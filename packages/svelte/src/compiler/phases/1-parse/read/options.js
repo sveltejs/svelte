@@ -173,6 +173,8 @@ export default function read_options(node) {
 								e.svelte_options_invalid_customelement_shadow(attribute);
 							}
 						}
+					} else if (shadow.type === 'ArrowFunctionExpression') {
+						ce.shadow = shadow;
 					} else {
 						e.svelte_options_invalid_customelement_shadow(attribute);
 					}

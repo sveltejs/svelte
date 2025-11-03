@@ -1532,12 +1532,12 @@ export function svelte_options_invalid_attribute_value(node, list) {
 }
 
 /**
- * "customElement" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
+ * "customElement" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: "open" | "none" | `ShadowRootInit` | (() => `ShadowRootInit` | undefined); props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function svelte_options_invalid_customelement(node) {
-	e(node, 'svelte_options_invalid_customelement', `"customElement" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }\nhttps://svelte.dev/e/svelte_options_invalid_customelement`);
+	e(node, 'svelte_options_invalid_customelement', `"customElement" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: "open" | "none" | \`ShadowRootInit\` | (() => \`ShadowRootInit\` | undefined); props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }\nhttps://svelte.dev/e/svelte_options_invalid_customelement`);
 }
 
 /**
@@ -1550,12 +1550,12 @@ export function svelte_options_invalid_customelement_props(node) {
 }
 
 /**
- * "shadow" must be either "open", "none" or `ShadowRootInit`
+ * "shadow" must be either "open", "none", `ShadowRootInit` or function that returns `ShadowRootInit`
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function svelte_options_invalid_customelement_shadow(node) {
-	e(node, 'svelte_options_invalid_customelement_shadow', `"shadow" must be either "open", "none" or \`ShadowRootInit\`\nhttps://svelte.dev/e/svelte_options_invalid_customelement_shadow`);
+	e(node, 'svelte_options_invalid_customelement_shadow', `"shadow" must be either "open", "none", \`ShadowRootInit\` or function that returns \`ShadowRootInit\`\nhttps://svelte.dev/e/svelte_options_invalid_customelement_shadow`);
 }
 
 /**

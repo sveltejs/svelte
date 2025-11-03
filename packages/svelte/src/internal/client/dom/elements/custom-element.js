@@ -41,16 +41,19 @@ if (typeof HTMLElement === 'function') {
 		/**
 		 * @param {*} $$componentCtor
 		 * @param {*} $$slots
-		 * @param {ShadowRootInit | undefined} shadow_root_init
+		 * @param {ShadowRootInit | (() => ShadowRootInit | undefined) | undefined} shadow_root_init
 		 */
 		constructor($$componentCtor, $$slots, shadow_root_init) {
 			super();
 			this.$$ctor = $$componentCtor;
 			this.$$s = $$slots;
-			if (shadow_root_init) {
+
+			const shadow_root_init_value =
+				typeof shadow_root_init === 'function' ? shadow_root_init() : shadow_root_init;
+			if (shadow_root_init_value) {
 				// We need to store the reference to shadow root, because `closed` shadow root cannot be
 				// accessed with `this.shadowRoot`.
-				this.$$shadowRoot = this.attachShadow(shadow_root_init);
+				this.$$shadowRoot = this.attachShadow(shadow_root_init_value);
 			}
 		}
 
@@ -281,7 +284,7 @@ function get_custom_elements_slots(element) {
  * @param {Record<string, CustomElementPropDefinition>} props_definition  The props to observe
  * @param {string[]} slots  The slots to create
  * @param {string[]} exports  Explicitly exported values, other than props
- * @param {ShadowRootInit | undefined} shadow_root_init  Options passed to shadow DOM constructor
+ * @param {ShadowRootInit | (() => ShadowRootInit | undefined) | undefined} shadow_root_init  Options passed to shadow DOM constructor
  * @param {(ce: new () => HTMLElement) => new () => HTMLElement} [extend]
  */
 export function create_custom_element(
