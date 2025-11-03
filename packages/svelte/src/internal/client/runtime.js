@@ -629,7 +629,7 @@ export function get(signal) {
 		}
 
 		// reconnect a disconnected derived to the graph
-		if (is_updating_effect && (derived.f & CONNECTED) === 0 && derived.deps !== null) {
+		if (effect_tracking() && (derived.f & CONNECTED) === 0 && derived.deps !== null) {
 			derived.f |= CONNECTED;
 
 			for (const dep of derived.deps) {
