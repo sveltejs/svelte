@@ -335,7 +335,10 @@ function mark_reactions(signal, status) {
 
 		if ((flags & DERIVED) !== 0) {
 			if ((flags & WAS_MARKED) === 0) {
-				reaction.f |= WAS_MARKED;
+				// Only connected deriveds can be reliably unmarked right away
+				if (flags & CONNECTED) {
+					reaction.f |= WAS_MARKED;
+				}
 				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
 			}
 		} else if (not_dirty) {

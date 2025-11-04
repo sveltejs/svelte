@@ -154,12 +154,12 @@ export function is_dirty(reaction) {
 		return true;
 	}
 
+	if (flags & DERIVED) {
+		reaction.f &= ~WAS_MARKED;
+	}
+
 	if ((flags & MAYBE_DIRTY) !== 0) {
 		var dependencies = reaction.deps;
-
-		if (flags & DERIVED) {
-			reaction.f &= ~WAS_MARKED;
-		}
 
 		if (dependencies !== null) {
 			var i;
@@ -365,9 +365,10 @@ function remove_reaction(signal, dependency) {
 	) {
 		set_signal_status(dependency, MAYBE_DIRTY);
 		// If we are working with a derived that is owned by an effect, then mark it as being
-		// disconnected.
+		// disconnected and remove the mark flag, as it cannot be reliably removed otherwise
 		if ((dependency.f & CONNECTED) !== 0) {
 			dependency.f ^= CONNECTED;
+			dependency.f &= ~WAS_MARKED;
 		}
 		// Disconnect any reactions owned by this reaction
 		destroy_derived_effects(/** @type {Derived} **/ (dependency));
@@ -613,6 +614,10 @@ export function get(signal) {
 		var should_reconnect = is_updating_effect && effect_tracking() && (derived.f & CONNECTED) === 0;
 
 		if (batch_values?.has(derived)) {
+			// This happens as part of is_dirty normally, but we return early
+			// here so we need to do it separately
+			remove_marked_flag(derived);
+
 			if (should_reconnect) {
 				reconnect(derived);
 			}
@@ -654,6 +659,20 @@ function reconnect(derived) {
 		if ((dep.f & DERIVED) !== 0 && (dep.f & CONNECTED) === 0) {
 			reconnect(/** @type {Derived} */ (dep));
 		}
+	}
+}
+
+/**
+ * Removes the WAS_MARKED flag from the derived and its dependencies
+ * @param {Derived} derived
+ */
+function remove_marked_flag(derived) {
+	if ((derived.f & WAS_MARKED) === 0) return;
+	derived.f ^= WAS_MARKED;
+
+	// Only deriveds with dependencies can be marked
+	for (const dep of /** @type {Value[]} */ (derived.deps)) {
+		remove_marked_flag(/** @type {Derived} */ (dep));
 	}
 }
 
