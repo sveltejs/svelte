@@ -48,7 +48,7 @@ import { without_reactive_context } from '../dom/elements/bindings/shared.js';
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
  */
 export function validate_effect(rune) {
-	if (active_effect === null && active_reaction === null) {
+	if (active_effect === null) {
 		if (active_reaction === null) {
 			e.effect_orphan(rune);
 		}
