@@ -450,11 +450,6 @@ declare module 'svelte' {
 	 * @deprecated Use [`$effect`](https://svelte.dev/docs/svelte/$effect) instead
 	 * */
 	export function afterUpdate(fn: () => void): void;
-	/**
-	 * Synchronously flush any pending updates.
-	 * Returns void if no callback is provided, otherwise returns the result of calling the callback.
-	 * */
-	export function flushSync<T = void>(fn?: (() => T) | undefined): T;
 	export function hydratable<T>(key: string, fn: () => T, options?: {
 		transport?: Transport<T>;
 	} | undefined): T;
@@ -2459,14 +2454,14 @@ declare module 'svelte/reactivity' {
 	 * @since 5.7.0
 	 */
 	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
-	export function resource<T>(fn: () => T): Resource_1<Awaited<T>>;
+	export function resource<T>(fn: () => T): Resource_1<T>;
 	export function fetcher<TReturn>(url: string | URL, init?: GetRequestInit | undefined): Resource_1<TReturn>;
 	type Resource_1<T> = {
-		then: Promise<T>['then'];
-		catch: Promise<T>['catch'];
-		finally: Promise<T>['finally'];
+		then: Promise<Awaited<T>>['then'];
+		catch: Promise<Awaited<T>>['catch'];
+		finally: Promise<Awaited<T>>['finally'];
 		refresh: () => Promise<void>;
-		set: (value: T) => void;
+		set: (value: Awaited<T>) => void;
 		loading: boolean;
 		error: any;
 	} & (
@@ -2476,7 +2471,7 @@ declare module 'svelte/reactivity' {
 		  }
 		| {
 				ready: true;
-				current: T;
+				current: Awaited<T>;
 		  }
 	);
 
@@ -2653,6 +2648,10 @@ declare module 'svelte/server' {
 	}
 
 	type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;
+	export function setHydratableValue<T>(key: string, value: T, options?: {
+		stringify?: Stringify<T>;
+	} | undefined): void;
+	type Stringify<T> = (value: T) => string;
 
 	export {};
 }
@@ -2661,6 +2660,8 @@ declare module 'svelte/client' {
 	export function getHydratableValue<T>(key: string, options?: {
 		parse?: Parse<T>;
 	} | undefined): T | undefined;
+
+	export function hasHydratableValue(key: string): boolean;
 	type Parse<T> = (value: string) => T;
 
 	export {};
