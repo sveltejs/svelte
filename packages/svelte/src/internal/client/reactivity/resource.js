@@ -53,14 +53,19 @@ class Resource {
 		const p = get(this.#promise);
 
 		return async (resolve, reject) => {
-			try {
-				await p;
-				await tick();
+			const result = /** @type {Promise<Awaited<T>>} */ (
+				(async () => {
+					await p;
+					await tick();
+					return get(this.#current);
+				})()
+			);
 
-				resolve?.(/** @type {Awaited<T>} */ (get(this.#current)));
-			} catch (error) {
-				reject?.(error);
+			if (resolve || reject) {
+				return result.then(resolve, reject);
 			}
+
+			return result;
 		};
 	});
 
@@ -127,10 +132,7 @@ class Resource {
 	get finally() {
 		get(this.#then);
 		return (/** @type {any} */ fn) => {
-			return get(this.#then)(
-				() => fn(),
-				() => fn()
-			);
+			return get(this.#then)().finally(fn);
 		};
 	}
 
