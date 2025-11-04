@@ -11,18 +11,18 @@ export type Snapshot<T> = ReturnType<typeof $state.snapshot<T>>;
 
 export type MaybePromise<T> = T | Promise<T>;
 
-export type Parse<T> = (value: string) => T;
+export type Decode<T> = (value: unknown) => T;
 
-export type Stringify<T> = (value: T) => string;
+export type Encode<T> = (value: T) => unknown;
 
 export type Transport<T> =
 	| {
-			stringify: Stringify<T>;
-			parse?: undefined;
+			encode: Encode<T>;
+			decode?: undefined;
 	  }
 	| {
-			stringify?: undefined;
-			parse: Parse<T>;
+			encode?: undefined;
+			decode: Decode<T>;
 	  };
 
 export type Resource<T> = {

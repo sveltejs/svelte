@@ -598,18 +598,18 @@ declare module 'svelte' {
 		[K in keyof T]: () => T[K];
 	};
 
-	type Parse<T> = (value: string) => T;
+	type Decode<T> = (value: unknown) => T;
 
-	type Stringify<T> = (value: T) => string;
+	type Encode<T> = (value: T) => unknown;
 
 	type Transport<T> =
 		| {
-				stringify: Stringify<T>;
-				parse?: undefined;
+				encode: Encode<T>;
+				decode?: undefined;
 		  }
 		| {
-				stringify?: undefined;
-				parse: Parse<T>;
+				encode?: undefined;
+				decode: Decode<T>;
 		  };
 
 	export {};
@@ -2613,20 +2613,20 @@ declare module 'svelte/server' {
 
 	type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;
 	export function setHydratableValue<T>(key: string, value: T, options?: {
-		stringify?: Stringify<T>;
+		encode?: Encode<T>;
 	} | undefined): void;
-	type Stringify<T> = (value: T) => string;
+	type Encode<T> = (value: T) => unknown;
 
 	export {};
 }
 
 declare module 'svelte/client' {
 	export function getHydratableValue<T>(key: string, options?: {
-		parse?: Parse<T>;
+		parse?: Decode<T>;
 	} | undefined): T | undefined;
 
 	export function hasHydratableValue(key: string): boolean;
-	type Parse<T> = (value: string) => T;
+	type Decode<T> = (value: unknown) => T;
 
 	export {};
 }

@@ -1,4 +1,4 @@
-import type { CacheEntry, Stringify } from '#shared';
+import type { CacheEntry, Encode } from '#shared';
 import type { Element } from './dev';
 import type { Renderer } from './renderer';
 
@@ -20,7 +20,7 @@ export interface RenderContext {
 		string,
 		{
 			value: unknown;
-			stringify: Stringify<any> | undefined;
+			encode: Encode<any> | undefined;
 		}
 	>;
 	cache: Map<string, CacheEntry>;

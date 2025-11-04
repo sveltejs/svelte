@@ -1,4 +1,4 @@
-/** @import { Parse, Transport } from '#shared' */
+/** @import { Decode, Transport } from '#shared' */
 import { hydrating } from './dom/hydration.js';
 
 /**
@@ -19,13 +19,13 @@ export function hydratable(key, fn, options = {}) {
 		// something to be synchronously hydratable and then have it not be
 		return fn();
 	}
-	return parse(val, options.transport?.parse);
+	return parse(val, options.transport?.decode);
 }
 
 /**
  * @template T
  * @param {string} key
- * @param {{ parse?: Parse<T> }} [options]
+ * @param {{ parse?: Decode<T> }} [options]
  * @returns {T | undefined}
  */
 export function get_hydratable_value(key, options = {}) {
@@ -57,10 +57,10 @@ export function has_hydratable_value(key) {
 
 /**
  * @template T
- * @param {string} val
- * @param {Parse<T> | undefined} parse
+ * @param {unknown} val
+ * @param {Decode<T> | undefined} parse
  * @returns {T}
  */
 function parse(val, parse) {
-	return (parse ?? ((val) => new Function(`return (${val})`)()))(val);
+	return (parse ?? ((val) => /** @type {T} */ (val)))(val);
 }

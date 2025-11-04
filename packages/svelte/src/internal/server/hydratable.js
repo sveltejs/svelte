@@ -1,4 +1,4 @@
-/** @import { Stringify, Transport } from '#shared' */
+/** @import { Encode, Transport } from '#shared' */
 
 import { get_render_context } from './render-context.js';
 
@@ -26,14 +26,14 @@ export function hydratable(key, fn, options = {}) {
 	}
 
 	const result = fn();
-	store.hydratables.set(key, { value: result, stringify: options.transport?.stringify });
+	store.hydratables.set(key, { value: result, encode: options.transport?.encode });
 	return result;
 }
 /**
  * @template T
  * @param {string} key
  * @param {T} value
- * @param {{ stringify?: Stringify<T> }} [options]
+ * @param {{ encode?: Encode<T> }} [options]
  */
 export function set_hydratable_value(key, value, options = {}) {
 	const store = get_render_context();
@@ -45,6 +45,6 @@ export function set_hydratable_value(key, value, options = {}) {
 
 	store.hydratables.set(key, {
 		value,
-		stringify: options.stringify
+		encode: options.encode
 	});
 }

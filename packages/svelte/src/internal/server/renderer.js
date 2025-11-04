@@ -578,15 +578,15 @@ export class Renderer {
 		/** @type {(value: unknown) => string} */
 		let default_stringify;
 
-		/** @type {[string, string][]} */
+		/** @type {[string, unknown][]} */
 		let entries = [];
 		for (const [k, v] of map) {
-			const serialize = v.stringify ?? (default_stringify ??= uneval);
+			const encode = v.encode ?? (default_stringify ??= new MemoizedUneval().uneval);
 			// sequential await is okay here -- all the work is already kicked off
-			entries.push([k, serialize(await v.value)]);
+			entries.push([k, encode(await v.value)]);
 		}
 		if (entries.length === 0) return null;
-		return Renderer.#hydratable_block(JSON.stringify(entries));
+		return Renderer.#hydratable_block(entries);
 	}
 
 	/**
@@ -643,23 +643,20 @@ export class Renderer {
 		};
 	}
 
-	/** @param {string} serialized */
+	/** @param {[string, unknown][]} serialized */
 	static #hydratable_block(serialized) {
+		let entries = '';
+		for (const [k, v] of serialized) {
+			entries += `["${k}",${v}],`;
+		}
 		// TODO csp?
 		// TODO how can we communicate this error better? Is there a way to not just send it to the console?
 		// (it is probably very rare so... not too worried)
 		return `
 <script>
 	var store = (window.__svelte ??= {}).h ??= new Map();
-	for (const [k,v] of ${serialized}) {
-		if (!store.has(k)) {
+	for (const [k,v] of ${entries}) {
 			store.set(k, v);
-			continue;
-		}
-		var stored_val = store.get(k);
-		if (stored_val.value !== v) {
-			throw new Error('TODO tried to populate the same hydratable key twice with different values');
-		}
 	}
 </script>`;
 	}
