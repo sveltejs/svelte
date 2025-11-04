@@ -1,5 +1,4 @@
-import type { Stringify, Transport } from '#shared';
-import type { ObservableCache } from '../shared/observable-cache';
+import type { CacheEntry, Stringify } from '#shared';
 import type { Element } from './dev';
 import type { Renderer } from './renderer';
 
@@ -24,7 +23,7 @@ export interface RenderContext {
 			stringify: Stringify<any> | undefined;
 		}
 	>;
-	cache: ObservableCache;
+	cache: Map<string, CacheEntry>;
 }
 
 export interface SyncRenderOutput {

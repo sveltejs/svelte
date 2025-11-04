@@ -1,7 +1,6 @@
 /** @import { AsyncLocalStorage } from 'node:async_hooks' */
 /** @import { RenderContext } from '#server' */
 
-import { ObservableCache } from '../shared/observable-cache';
 import { deferred } from '../shared/utils';
 
 /** @type {Promise<void> | null} */
@@ -64,7 +63,7 @@ export async function with_render_context(fn) {
 	try {
 		sync_context = {
 			hydratables: new Map(),
-			cache: new ObservableCache()
+			cache: new Map()
 		};
 		if (in_webcontainer()) {
 			const { promise, resolve } = deferred();
@@ -93,6 +92,7 @@ export async function init_render_context() {
 }
 
 function in_webcontainer() {
+	// @ts-ignore -- this will fail when we run typecheck because we exclude node types
 	// eslint-disable-next-line n/prefer-global/process
 	return !!globalThis.process?.versions?.webcontainer;
 }

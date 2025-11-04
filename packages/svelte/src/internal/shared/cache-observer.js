@@ -1,4 +1,4 @@
-/** @import { ObservableCache } from './observable-cache.js' */
+/** @import { CacheEntry } from '#shared' */
 
 /**
  * @template T
@@ -7,7 +7,7 @@ export class BaseCacheObserver {
 	/**
 	 * This is a function so that you can create an ObservableCache instance globally and as long as you don't actually
 	 * use it until you're inside the server render lifecycle you'll be okay
-	 * @type {() => ObservableCache}
+	 * @type {() => Map<string, CacheEntry>}
 	 */
 	#get_cache;
 
@@ -15,48 +15,12 @@ export class BaseCacheObserver {
 	#prefix;
 
 	/**
-	 * @param {() => ObservableCache} get_cache
+	 * @param {() => Map<string, CacheEntry>} get_cache
 	 * @param {string} [prefix]
 	 */
 	constructor(get_cache, prefix = '') {
 		this.#get_cache = get_cache;
 		this.#prefix = prefix;
-	}
-
-	/**
-	 * Register a callback to be called when a new key is inserted
-	 * @param {(key: string, value: T) => void} callback
-	 * @returns {() => void} Function to unregister the callback
-	 */
-	onInsert(callback) {
-		return this.#get_cache().on_insert((key, value) => {
-			if (!key.startsWith(this.#prefix)) return;
-			callback(key, value.item);
-		});
-	}
-
-	/**
-	 * Register a callback to be called when an existing key is updated
-	 * @param {(key: string, value: T, old_value: T) => void} callback
-	 * @returns {() => void} Function to unregister the callback
-	 */
-	onUpdate(callback) {
-		return this.#get_cache().on_update((key, value, old_value) => {
-			if (!key.startsWith(this.#prefix)) return;
-			callback(key, value.item, old_value.item);
-		});
-	}
-
-	/**
-	 * Register a callback to be called when a key is deleted
-	 * @param {(key: string, old_value: T) => void} callback
-	 * @returns {() => void} Function to unregister the callback
-	 */
-	onDelete(callback) {
-		return this.#get_cache().on_delete((key, old_value) => {
-			if (!key.startsWith(this.#prefix)) return;
-			callback(key, old_value.item);
-		});
 	}
 
 	/** @param {string} key */
@@ -76,7 +40,9 @@ export class BaseCacheObserver {
 
 	/** @param {(item: T, key: string, map: ReadonlyMap<string, T>) => void} cb */
 	forEach(cb) {
-		this.entries().forEach(([key, entry]) => cb(entry, key, this));
+		for (const [key, entry] of this.entries()) {
+			cb(entry, key, this);
+		}
 	}
 
 	*entries() {

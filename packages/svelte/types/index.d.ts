@@ -2491,22 +2491,7 @@ declare module 'svelte/reactivity' {
 	}
 	class BaseCacheObserver<T> implements ReadonlyMap<string, T> {
 		
-		constructor(get_cache: () => ObservableCache, prefix?: string | undefined);
-		/**
-		 * Register a callback to be called when a new key is inserted
-		 * @returns Function to unregister the callback
-		 */
-		onInsert(callback: (key: string, value: T) => void): () => void;
-		/**
-		 * Register a callback to be called when an existing key is updated
-		 * @returns Function to unregister the callback
-		 */
-		onUpdate(callback: (key: string, value: T, old_value: T) => void): () => void;
-		/**
-		 * Register a callback to be called when a key is deleted
-		 * @returns Function to unregister the callback
-		 */
-		onDelete(callback: (key: string, old_value: T) => void): () => void;
+		constructor(get_cache: () => Map<string, CacheEntry>, prefix?: string | undefined);
 		
 		get(key: string): any;
 		
@@ -2518,27 +2503,6 @@ declare module 'svelte/reactivity' {
 		keys(): Generator<string, undefined, unknown>;
 		values(): Generator<T, undefined, unknown>;
 		[Symbol.iterator](): Generator<[string, T], undefined, unknown>;
-		#private;
-	}
-	class ObservableCache extends Map<string, CacheEntry> {
-		constructor();
-		constructor(entries?: readonly (readonly [string, CacheEntry])[] | null | undefined);
-		constructor();
-		constructor(iterable?: Iterable<readonly [string, CacheEntry]> | null | undefined);
-		/**
-		 * @returns Function to unregister the callback
-		 */
-		on_insert(callback: (key: string, value: CacheEntry) => void): () => void;
-		/**
-		 * @returns Function to unregister the callback
-		 */
-		on_update(callback: (key: string, value: CacheEntry, old_value: CacheEntry) => void): () => void;
-		/**
-		 * @returns Function to unregister the callback
-		 */
-		on_delete(callback: (key: string, old_value: CacheEntry) => void): () => void;
-		
-		set(key: string, value: CacheEntry): this;
 		#private;
 	}
 

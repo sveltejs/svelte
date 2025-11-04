@@ -1,11 +1,11 @@
+/** @import { CacheEntry } from '#shared' */
 import { BaseCacheObserver } from '../../shared/cache-observer.js';
-import { ObservableCache } from '../../shared/observable-cache.js';
 import { tick } from '../runtime.js';
 import { get_effect_validation_error_code, render_effect } from './effects.js';
 
 /** @typedef {{ count: number, item: any }} Entry */
-/** @type {ObservableCache} */
-const client_cache = new ObservableCache();
+/** @type {Map<string, CacheEntry>} */
+const client_cache = new Map();
 
 /**
  * @template {(...args: any[]) => any} TFn
