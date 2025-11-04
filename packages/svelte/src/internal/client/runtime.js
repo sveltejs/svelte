@@ -610,9 +610,10 @@ export function get(signal) {
 	} else if (is_derived) {
 		derived = /** @type {Derived} */ (signal);
 
+		var should_reconnect = is_updating_effect && effect_tracking() && (derived.f & CONNECTED) === 0;
+
 		if (batch_values?.has(derived)) {
-			// TODO DRY out
-			if (is_updating_effect && effect_tracking() && (derived.f & CONNECTED) === 0) {
+			if (should_reconnect) {
 				reconnect(derived);
 			}
 
@@ -623,7 +624,7 @@ export function get(signal) {
 			update_derived(derived);
 		}
 
-		if (is_updating_effect && effect_tracking() && (derived.f & CONNECTED) === 0) {
+		if (should_reconnect) {
 			reconnect(derived);
 		}
 	} else if (batch_values?.has(signal)) {
