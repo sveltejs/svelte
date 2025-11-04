@@ -1,3 +1,4 @@
+// @ts-ignore -- we don't include node types in the production build
 /** @import { AsyncLocalStorage } from 'node:async_hooks' */
 /** @import { RenderContext } from '#server' */
 
@@ -86,6 +87,7 @@ let als = null;
 export async function init_render_context() {
 	if (als !== null) return;
 	try {
+		// @ts-ignore -- we don't include node types in the production build
 		const { AsyncLocalStorage } = await import('node:async_hooks');
 		als = new AsyncLocalStorage();
 	} catch {}
