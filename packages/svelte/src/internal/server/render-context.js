@@ -1,7 +1,7 @@
 /** @import { AsyncLocalStorage } from 'node:async_hooks' */
 /** @import { RenderContext } from '#server' */
 
-import { deferred } from '../shared/utils';
+import { deferred } from '../shared/utils.js';
 
 /** @type {Promise<void> | null} */
 let current_render = null;

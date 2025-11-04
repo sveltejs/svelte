@@ -1,6 +1,6 @@
 /** @import { Stringify, Transport } from '#shared' */
 
-import { get_render_context } from './render-context';
+import { get_render_context } from './render-context.js';
 
 /** @type {string | null} */
 export let hydratable_key = null;
