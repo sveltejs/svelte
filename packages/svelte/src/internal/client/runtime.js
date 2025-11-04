@@ -521,7 +521,7 @@ export function get(signal) {
 						skipped_deps++;
 					} else if (new_deps === null) {
 						new_deps = [signal];
-					} else if (!skip_reaction || !new_deps.includes(signal)) {
+					} else {
 						// Normally we can push duplicated dependencies to `new_deps`, but if we're inside
 						// an unowned derived because skip_reaction is true, then we need to ensure that
 						// we don't have duplicates
