@@ -9,7 +9,7 @@ export default function Async_each_hoisting($$anchor) {
 	var fragment = $.comment();
 	var node = $.first_child(fragment);
 
-	$.async(node, [() => Promise.resolve([first, second, third])], (node, $$collection) => {
+	$.async(node, [], [() => Promise.resolve([first, second, third])], (node, $$collection) => {
 		$.each(node, 17, () => $.get($$collection), $.index, ($$anchor, item) => {
 			$.next();
 

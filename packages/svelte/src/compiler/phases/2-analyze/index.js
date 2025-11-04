@@ -1,4 +1,4 @@
-/** @import { Expression, Node, Program } from 'estree' */
+/** @import * as ESTree from 'estree' */
 /** @import { Binding, AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
@@ -6,7 +6,12 @@ import { walk } from 'zimmerframe';
 import { parse } from '../1-parse/acorn.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
-import { extract_identifiers } from '../../utils/ast.js';
+import {
+	extract_identifiers,
+	has_await_expression,
+	object,
+	unwrap_pattern
+} from '../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
@@ -206,7 +211,7 @@ const visitors = {
  * @returns {Js}
  */
 function js(script, root, allow_reactive_declarations, parent) {
-	/** @type {Program} */
+	/** @type {ESTree.Program} */
 	const ast = script?.content ?? {
 		type: 'Program',
 		sourceType: 'module',
@@ -289,7 +294,7 @@ export function analyze_module(source, options) {
 	});
 
 	walk(
-		/** @type {Node} */ (ast),
+		/** @type {ESTree.Node} */ (ast),
 		{
 			scope,
 			scopes,
@@ -306,7 +311,7 @@ export function analyze_module(source, options) {
 			fragment: null,
 			parent_element: null,
 			reactive_statement: null,
-			in_derived: false
+			derived_function_depth: -1
 		},
 		visitors
 	);
@@ -347,7 +352,7 @@ export function analyze_component(root, source, options) {
 
 		const store_name = name.slice(1);
 		const declaration = instance.scope.get(store_name);
-		const init = /** @type {Node | undefined} */ (declaration?.initial);
+		const init = /** @type {ESTree.Node | undefined} */ (declaration?.initial);
 
 		// If we're not in legacy mode through the compiler option, assume the user
 		// is referencing a rune and not a global store.
@@ -407,7 +412,7 @@ export function analyze_component(root, source, options) {
 						/** @type {number} */ (node.start) > /** @type {number} */ (module.ast.start) &&
 						/** @type {number} */ (node.end) < /** @type {number} */ (module.ast.end) &&
 						// const state = $state(0) is valid
-						get_rune(/** @type {Node} */ (path.at(-1)), module.scope) === null
+						get_rune(/** @type {ESTree.Node} */ (path.at(-1)), module.scope) === null
 					) {
 						e.store_invalid_subscription(node);
 					}
@@ -543,7 +548,13 @@ export function analyze_component(root, source, options) {
 		snippet_renderers: new Map(),
 		snippets: new Set(),
 		async_deriveds: new Set(),
-		pickled_awaits: new Set()
+		pickled_awaits: new Set(),
+		instance_body: {
+			sync: [],
+			async: [],
+			declarations: [],
+			hoisted: []
+		}
 	};
 
 	if (!runes) {
@@ -636,7 +647,7 @@ export function analyze_component(root, source, options) {
 							// @ts-expect-error
 							_: set_scope,
 							Identifier(node, context) {
-								const parent = /** @type {Expression} */ (context.path.at(-1));
+								const parent = /** @type {ESTree.Expression} */ (context.path.at(-1));
 
 								if (is_reference(node, parent)) {
 									const binding = context.state.scope.get(node.name);
@@ -676,6 +687,194 @@ export function analyze_component(root, source, options) {
 		}
 	}
 
+	/**
+	 * @param {ESTree.Node} expression
+	 * @param {Scope} scope
+	 * @param {Set<Binding>} touched
+	 * @param {Set<ESTree.Node>} seen
+	 */
+	const touch = (expression, scope, touched, seen = new Set()) => {
+		if (seen.has(expression)) return;
+		seen.add(expression);
+
+		walk(
+			expression,
+			{ scope },
+			{
+				ImportDeclaration(node) {},
+				Identifier(node, context) {
+					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
+					if (is_reference(node, parent)) {
+						const binding = context.state.scope.get(node.name);
+						if (binding) {
+							touched.add(binding);
+
+							for (const assignment of binding.assignments) {
+								touch(assignment.value, assignment.scope, touched, seen);
+							}
+						}
+					}
+				}
+			}
+		);
+	};
+
+	/**
+	 * @param {ESTree.Node} node
+	 * @param {Set<ESTree.Node>} seen
+	 * @param {Set<Binding>} reads
+	 * @param {Set<Binding>} writes
+	 */
+	const trace_references = (node, reads, writes, seen = new Set()) => {
+		if (seen.has(node)) return;
+		seen.add(node);
+
+		/**
+		 * @param {ESTree.Pattern} node
+		 * @param {Scope} scope
+		 */
+		function update(node, scope) {
+			for (const pattern of unwrap_pattern(node)) {
+				const node = object(pattern);
+				if (!node) return;
+
+				const binding = scope.get(node.name);
+				if (!binding) return;
+
+				writes.add(binding);
+			}
+		}
+
+		walk(
+			node,
+			{ scope: instance.scope },
+			{
+				_(node, context) {
+					const scope = scopes.get(node);
+					if (scope) {
+						context.next({ scope });
+					} else {
+						context.next();
+					}
+				},
+				AssignmentExpression(node, context) {
+					update(node.left, context.state.scope);
+				},
+				UpdateExpression(node, context) {
+					update(
+						/** @type {ESTree.Identifier | ESTree.MemberExpression} */ (node.argument),
+						context.state.scope
+					);
+				},
+				CallExpression(node, context) {
+					// for now, assume everything touched by the callee ends up mutating the object
+					// TODO optimise this better
+
+					// special case — no need to peek inside effects as they only run once async work has completed
+					const rune = get_rune(node, context.state.scope);
+					if (rune === '$effect') return;
+
+					/** @type {Set<Binding>} */
+					const touched = new Set();
+					touch(node, context.state.scope, touched);
+
+					for (const b of touched) {
+						writes.add(b);
+					}
+				},
+				// don't look inside functions until they are called
+				ArrowFunctionExpression(_, context) {},
+				FunctionDeclaration(_, context) {},
+				FunctionExpression(_, context) {},
+				Identifier(node, context) {
+					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
+					if (is_reference(node, parent)) {
+						const binding = context.state.scope.get(node.name);
+						if (binding) {
+							reads.add(binding);
+						}
+					}
+				}
+			}
+		);
+	};
+
+	let awaited = false;
+
+	// TODO this should probably be attached to the scope?
+	var promises = b.id('$$promises');
+
+	/**
+	 * @param {ESTree.Identifier} id
+	 * @param {ESTree.Expression} blocker
+	 */
+	function push_declaration(id, blocker) {
+		analysis.instance_body.declarations.push(id);
+
+		const binding = /** @type {Binding} */ (instance.scope.get(id.name));
+		binding.blocker = blocker;
+	}
+
+	for (let node of instance.ast.body) {
+		if (node.type === 'ImportDeclaration') {
+			analysis.instance_body.hoisted.push(node);
+			continue;
+		}
+
+		if (node.type === 'ExportDefaultDeclaration' || node.type === 'ExportAllDeclaration') {
+			// these can't exist inside `<script>` but TypeScript doesn't know that
+			continue;
+		}
+
+		if (node.type === 'ExportNamedDeclaration') {
+			if (node.declaration) {
+				node = node.declaration;
+			} else {
+				continue;
+			}
+		}
+
+		const has_await = has_await_expression(node);
+		awaited ||= has_await;
+
+		if (awaited && node.type !== 'FunctionDeclaration') {
+			/** @type {Set<Binding>} */
+			const reads = new Set(); // TODO we're not actually using this yet
+
+			/** @type {Set<Binding>} */
+			const writes = new Set();
+
+			trace_references(node, reads, writes);
+
+			const blocker = b.member(promises, b.literal(analysis.instance_body.async.length), true);
+
+			for (const binding of writes) {
+				binding.blocker = blocker;
+			}
+
+			if (node.type === 'VariableDeclaration') {
+				for (const declarator of node.declarations) {
+					for (const id of extract_identifiers(declarator.id)) {
+						push_declaration(id, blocker);
+					}
+
+					// one declarator per declaration, makes things simpler
+					analysis.instance_body.async.push({
+						node: declarator,
+						has_await
+					});
+				}
+			} else if (node.type === 'ClassDeclaration') {
+				push_declaration(node.id, blocker);
+				analysis.instance_body.async.push({ node, has_await });
+			} else {
+				analysis.instance_body.async.push({ node, has_await });
+			}
+		} else {
+			analysis.instance_body.sync.push(node);
+		}
+	}
+
 	if (analysis.runes) {
 		const props_refs = module.scope.references.get('$$props');
 		if (props_refs) {
@@ -703,7 +902,7 @@ export function analyze_component(root, source, options) {
 				state_fields: new Map(),
 				function_depth: scope.function_depth,
 				reactive_statement: null,
-				in_derived: false
+				derived_function_depth: -1
 			};
 
 			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);
@@ -771,7 +970,7 @@ export function analyze_component(root, source, options) {
 				expression: null,
 				state_fields: new Map(),
 				function_depth: scope.function_depth,
-				in_derived: false
+				derived_function_depth: -1
 			};
 
 			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);

@@ -1,4 +1,4 @@
-/** @import { AST } from '#compiler' */
+/** @import { AST, Scope } from '#compiler' */
 /** @import * as ESTree from 'estree' */
 import { walk } from 'zimmerframe';
 import * as b from '#compiler/builders';
@@ -611,16 +611,20 @@ export function build_assignment_value(operator, left, right) {
 }
 
 /**
- * @param {ESTree.Expression} expression
+ * @param {ESTree.Node} node
  */
-export function has_await(expression) {
+export function has_await_expression(node) {
 	let has_await = false;
 
-	walk(expression, null, {
+	walk(node, null, {
 		AwaitExpression(_node, context) {
 			has_await = true;
 			context.stop();
-		}
+		},
+		// don't traverse into these
+		FunctionDeclaration() {},
+		FunctionExpression() {},
+		ArrowFunctionExpression() {}
 	});
 
 	return has_await;

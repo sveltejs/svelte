@@ -1,6 +1,7 @@
 import type { Scope } from '../scope.js';
 import type { ComponentAnalysis, ReactiveStatement } from '../types.js';
-import type { AST, ExpressionMetadata, StateField, ValidatedCompileOptions } from '#compiler';
+import type { AST, StateField, ValidatedCompileOptions } from '#compiler';
+import type { ExpressionMetadata } from '../nodes.js';
 
 export interface AnalysisState {
 	scope: Scope;
@@ -29,9 +30,9 @@ export interface AnalysisState {
 	reactive_statement: null | ReactiveStatement;
 
 	/**
-	 * True if we're directly inside a `$derived(...)` expression (but not `$derived.by(...)`)
+	 * Set when we're inside a `$derived(...)` expression (but not `$derived.by(...)`) or `@const`
 	 */
-	in_derived: boolean;
+	derived_function_depth: number;
 }
 
 export type Context<State extends AnalysisState = AnalysisState> = import('zimmerframe').Context<

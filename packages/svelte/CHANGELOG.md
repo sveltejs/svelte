@@ -1,5 +1,133 @@
 # svelte
 
+## 5.43.3
+
+### Patch Changes
+
+- fix: ensure fork always accesses correct values ([#17098](https://github.com/sveltejs/svelte/pull/17098))
+
+- fix: change title only after any pending work has completed ([#17061](https://github.com/sveltejs/svelte/pull/17061))
+
+- fix: preserve symbols when creating derived rest properties ([#17096](https://github.com/sveltejs/svelte/pull/17096))
+
+## 5.43.2
+
+### Patch Changes
+
+- fix: treat each blocks with async dependencies as uncontrolled ([#17077](https://github.com/sveltejs/svelte/pull/17077))
+
+## 5.43.1
+
+### Patch Changes
+
+- fix: transform `$bindable` after `await` expressions ([#17066](https://github.com/sveltejs/svelte/pull/17066))
+
+## 5.43.0
+
+### Minor Changes
+
+- feat: out-of-order rendering ([#17038](https://github.com/sveltejs/svelte/pull/17038))
+
+### Patch Changes
+
+- fix: settle batch after DOM updates ([#17054](https://github.com/sveltejs/svelte/pull/17054))
+
+## 5.42.3
+
+### Patch Changes
+
+- fix: handle `<svelte:head>` rendered asynchronously ([#17052](https://github.com/sveltejs/svelte/pull/17052))
+
+- fix: don't restore batch in `#await` ([#17051](https://github.com/sveltejs/svelte/pull/17051))
+
+## 5.42.2
+
+### Patch Changes
+
+- fix: better error message for global variable assignments ([#17036](https://github.com/sveltejs/svelte/pull/17036))
+
+- chore: tweak memoizer logic ([#17042](https://github.com/sveltejs/svelte/pull/17042))
+
+## 5.42.1
+
+### Patch Changes
+
+- fix: ignore fork `discard()` after `commit()` ([#17034](https://github.com/sveltejs/svelte/pull/17034))
+
+## 5.42.0
+
+### Minor Changes
+
+- feat: experimental `fork` API ([#17004](https://github.com/sveltejs/svelte/pull/17004))
+
+### Patch Changes
+
+- fix: always allow `setContext` before first await in component ([#17031](https://github.com/sveltejs/svelte/pull/17031))
+
+- fix: less confusing names for inspect errors ([#17026](https://github.com/sveltejs/svelte/pull/17026))
+
+## 5.41.4
+
+### Patch Changes
+
+- fix: take into account static blocks when determining transition locality ([#17018](https://github.com/sveltejs/svelte/pull/17018))
+
+- fix: coordinate mount of snippets with await expressions ([#17021](https://github.com/sveltejs/svelte/pull/17021))
+
+- fix: better optimization of await expressions ([#17025](https://github.com/sveltejs/svelte/pull/17025))
+
+- fix: flush pending changes after rendering `failed` snippet ([#16995](https://github.com/sveltejs/svelte/pull/16995))
+
+## 5.41.3
+
+### Patch Changes
+
+- chore: exclude vite optimized deps from stack traces ([#17008](https://github.com/sveltejs/svelte/pull/17008))
+
+- perf: skip repeatedly traversing the same derived ([#17016](https://github.com/sveltejs/svelte/pull/17016))
+
+## 5.41.2
+
+### Patch Changes
+
+- fix: keep batches alive until all async work is complete ([#16971](https://github.com/sveltejs/svelte/pull/16971))
+
+- fix: don't preserve reactivity context across function boundaries ([#17002](https://github.com/sveltejs/svelte/pull/17002))
+
+- fix: make `$inspect` logs come from the callsite ([#17001](https://github.com/sveltejs/svelte/pull/17001))
+
+- fix: ensure guards (eg. if, each, key) run before their contents ([#16930](https://github.com/sveltejs/svelte/pull/16930))
+
+## 5.41.1
+
+### Patch Changes
+
+- fix: place `let:` declarations before `{@const}` declarations ([#16985](https://github.com/sveltejs/svelte/pull/16985))
+
+- fix: improve `each_key_without_as` error ([#16983](https://github.com/sveltejs/svelte/pull/16983))
+
+- chore: centralise branch management ([#16977](https://github.com/sveltejs/svelte/pull/16977))
+
+## 5.41.0
+
+### Minor Changes
+
+- feat: add `$state.eager(value)` rune ([#16849](https://github.com/sveltejs/svelte/pull/16849))
+
+### Patch Changes
+
+- fix: preserve `<select>` state while focused ([#16958](https://github.com/sveltejs/svelte/pull/16958))
+
+- chore: run boundary async effects in the context of the current batch ([#16968](https://github.com/sveltejs/svelte/pull/16968))
+
+- fix: error if `each` block has `key` but no `as` clause ([#16966](https://github.com/sveltejs/svelte/pull/16966))
+
+## 5.40.2
+
+### Patch Changes
+
+- fix: add hydration markers in `pending` branch of SSR boundary ([#16965](https://github.com/sveltejs/svelte/pull/16965))
+
 ## 5.40.1
 
 ### Patch Changes

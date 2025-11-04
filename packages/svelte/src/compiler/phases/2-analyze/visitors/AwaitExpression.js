@@ -10,13 +10,13 @@ import * as e from '../../../errors.js';
 export function AwaitExpression(node, context) {
 	const tla = context.state.ast_type === 'instance' && context.state.function_depth === 1;
 
-	// preserve context for
-	//   a) top-level await and
-	//   b) awaits that precede other expressions in template or `$derived(...)`
+	// preserve context for awaits that precede other expressions in template or `$derived(...)`
 	if (
-		tla ||
-		(is_reactive_expression(context.path, context.state.in_derived) &&
-			!is_last_evaluated_expression(context.path, node))
+		is_reactive_expression(
+			context.path,
+			context.state.derived_function_depth === context.state.function_depth
+		) &&
+		!is_last_evaluated_expression(context.path, node)
 	) {
 		context.state.analysis.pickled_awaits.add(node);
 	}
@@ -53,9 +53,7 @@ export function AwaitExpression(node, context) {
  * @param {boolean} in_derived
  */
 export function is_reactive_expression(path, in_derived) {
-	if (in_derived) {
-		return true;
-	}
+	if (in_derived) return true;
 
 	let i = path.length;
 
@@ -67,6 +65,7 @@ export function is_reactive_expression(path, in_derived) {
 			parent.type === 'FunctionExpression' ||
 			parent.type === 'FunctionDeclaration'
 		) {
+			// No reactive expression found between function and await
 			return false;
 		}
 
@@ -83,11 +82,16 @@ export function is_reactive_expression(path, in_derived) {
  * @param {AST.SvelteNode[]} path
  * @param {Expression | SpreadElement | Property} node
  */
-export function is_last_evaluated_expression(path, node) {
+function is_last_evaluated_expression(path, node) {
 	let i = path.length;
 
 	while (i--) {
-		const parent = /** @type {Expression | Property | SpreadElement} */ (path[i]);
+		const parent = path[i];
+
+		if (parent.type === 'ConstTag') {
+			// {@const ...} tags are treated as deriveds and its contents should all get the preserve-reactivity treatment
+			return false;
+		}
 
 		// @ts-expect-error we could probably use a neater/more robust mechanism
 		if (parent.metadata) {
@@ -137,6 +141,9 @@ export function is_last_evaluated_expression(path, node) {
 			case 'TemplateLiteral':
 				if (node !== parent.expressions.at(-1)) return false;
 				break;
+
+			case 'VariableDeclarator':
+				return true;
 
 			default:
 				return false;

@@ -7,7 +7,7 @@ import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
 import { LOADING_ATTR_SYMBOL } from '#client/constants';
 import { queue_micro_task } from '../task.js';
-import { is_capture_event, is_delegated, normalize_attribute } from '../../../../utils.js';
+import { is_capture_event, can_delegate_event, normalize_attribute } from '../../../../utils.js';
 import {
 	active_effect,
 	active_reaction,
@@ -378,7 +378,7 @@ function set_attributes(
 			const opts = {};
 			const event_handle_key = '$$' + key;
 			let event_name = key.slice(2);
-			var delegated = is_delegated(event_name);
+			var delegated = can_delegate_event(event_name);
 
 			if (is_capture_event(event_name)) {
 				event_name = event_name.slice(0, -7);
@@ -483,6 +483,7 @@ function set_attributes(
  * @param {(...expressions: any) => Record<string | symbol, any>} fn
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
+ * @param {Array<Promise<void>>} blockers
  * @param {string} [css_hash]
  * @param {boolean} [should_remove_defaults]
  * @param {boolean} [skip_warning]
@@ -492,11 +493,12 @@ export function attribute_effect(
 	fn,
 	sync = [],
 	async = [],
+	blockers = [],
 	css_hash,
 	should_remove_defaults = false,
 	skip_warning = false
 ) {
-	flatten(sync, async, (values) => {
+	flatten(blockers, sync, async, (values) => {
 		/** @type {Record<string | symbol, any> | undefined} */
 		var prev = undefined;
 

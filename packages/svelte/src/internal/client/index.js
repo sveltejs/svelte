@@ -100,10 +100,11 @@ export {
 export {
 	async_body,
 	for_await_track_reactivity_loss,
+	run,
 	save,
 	track_reactivity_loss
 } from './reactivity/async.js';
-export { flushSync as flush } from './reactivity/batch.js';
+export { eager, flushSync as flush } from './reactivity/batch.js';
 export {
 	async_derived,
 	user_derived as derived,

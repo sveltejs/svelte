@@ -1,7 +1,11 @@
 <script>
+	$effect(() => {
+		console.log('before');
+	});
+
 	await 1;
 
 	$effect(() => {
-		console.log('hello');
+		console.log('after');
 	});
 </script>

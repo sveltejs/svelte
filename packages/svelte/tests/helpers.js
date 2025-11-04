@@ -200,6 +200,36 @@ export const async_mode = process.env.SVELTE_NO_ASYNC !== 'true';
 /**
  * @param {any[]} logs
  */
+export function normalise_inspect_logs(logs) {
+	/** @type {string[]} */
+	const normalised = [];
+
+	for (const log of logs) {
+		if (log === 'stack trace') {
+			// ignore `console.group('stack trace')` in default `$inspect(...)` output
+			continue;
+		}
+
+		if (log instanceof Error) {
+			const last_line = log.stack
+				?.trim()
+				.split('\n')
+				.filter((line) => !line.includes('at Module.get_stack'))[1];
+
+			const match = last_line && /(at .+) /.exec(last_line);
+
+			if (match) normalised.push(match[1]);
+		} else {
+			normalised.push(log);
+		}
+	}
+
+	return normalised;
+}
+
+/**
+ * @param {any[]} logs
+ */
 export function normalise_trace_logs(logs) {
 	let normalised = [];
 

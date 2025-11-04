@@ -27,7 +27,7 @@ import {
 	DERIVED,
 	UNOWNED,
 	CLEAN,
-	INSPECT_EFFECT,
+	EAGER_EFFECT,
 	HEAD_EFFECT,
 	MAYBE_DIRTY,
 	EFFECT_PRESERVED,
@@ -99,7 +99,7 @@ function create_effect(type, fn, sync, push = true) {
 
 	if (DEV) {
 		// Ensure the parent is never an inspect effect
-		while (parent !== null && (parent.f & INSPECT_EFFECT) !== 0) {
+		while (parent !== null && (parent.f & EAGER_EFFECT) !== 0) {
 			parent = parent.parent;
 		}
 	}
@@ -160,6 +160,9 @@ function create_effect(type, fn, sync, push = true) {
 			(e.f & EFFECT_PRESERVED) === 0
 		) {
 			e = e.first;
+			if ((type & BLOCK_EFFECT) !== 0 && (type & EFFECT_TRANSPARENT) !== 0 && e !== null) {
+				e.f |= EFFECT_TRANSPARENT;
+			}
 		}
 
 		if (e !== null) {
@@ -253,8 +256,8 @@ export function user_pre_effect(fn) {
 }
 
 /** @param {() => void | (() => void)} fn */
-export function inspect_effect(fn) {
-	return create_effect(INSPECT_EFFECT, fn, true);
+export function eager_effect(fn) {
+	return create_effect(EAGER_EFFECT, fn, true);
 }
 
 /**
@@ -373,10 +376,12 @@ export function render_effect(fn, flags = 0) {
  * @param {(...expressions: any) => void | (() => void)} fn
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
+ * @param {Array<Promise<void>>} blockers
+ * @param {boolean} defer
  */
-export function template_effect(fn, sync = [], async = []) {
-	flatten(sync, async, (values) => {
-		create_effect(RENDER_EFFECT, () => fn(...values.map(get)), true);
+export function template_effect(fn, sync = [], async = [], blockers = [], defer = false) {
+	flatten(blockers, sync, async, (values) => {
+		create_effect(defer ? EFFECT : RENDER_EFFECT, () => fn(...values.map(get)), true);
 	});
 }
 
@@ -564,15 +569,16 @@ export function unlink_effect(effect) {
  * A paused effect does not update, and the DOM subtree becomes inert.
  * @param {Effect} effect
  * @param {() => void} [callback]
+ * @param {boolean} [destroy]
  */
-export function pause_effect(effect, callback) {
+export function pause_effect(effect, callback, destroy = true) {
 	/** @type {TransitionManager[]} */
 	var transitions = [];
 
 	pause_children(effect, transitions, true);
 
 	run_out_transitions(transitions, () => {
-		destroy_effect(effect);
+		if (destroy) destroy_effect(effect);
 		if (callback) callback();
 	});
 }
@@ -614,7 +620,12 @@ export function pause_children(effect, transitions, local) {
 
 	while (child !== null) {
 		var sibling = child.next;
-		var transparent = (child.f & EFFECT_TRANSPARENT) !== 0 || (child.f & BRANCH_EFFECT) !== 0;
+		var transparent =
+			(child.f & EFFECT_TRANSPARENT) !== 0 ||
+			// If this is a branch effect without a block effect parent,
+			// it means the parent block effect was pruned. In that case,
+			// transparency information was transferred to the branch effect.
+			((child.f & BRANCH_EFFECT) !== 0 && (effect.f & BLOCK_EFFECT) !== 0);
 		// TODO we don't need to call pause_children recursively with a linked list in place
 		// it's slightly more involved though as we have to account for `transparent` changing
 		// through the tree.
@@ -672,4 +683,21 @@ function resume_children(effect, local) {
 
 export function aborted(effect = /** @type {Effect} */ (active_effect)) {
 	return (effect.f & DESTROYED) !== 0;
+}
+
+/**
+ * @param {Effect} effect
+ * @param {DocumentFragment} fragment
+ */
+export function move_effect(effect, fragment) {
+	var node = effect.nodes_start;
+	var end = effect.nodes_end;
+
+	while (node !== null) {
+		/** @type {TemplateNode | null} */
+		var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
+
+		fragment.append(node);
+		node = next;
+	}
 }

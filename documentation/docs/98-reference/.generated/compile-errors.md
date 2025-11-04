@@ -199,7 +199,7 @@ Cyclical dependency detected: %cycle%
 ### const_tag_invalid_reference
 
 ```
-The `{@const %name% = ...}` declaration is not available in this snippet 
+The `{@const %name% = ...}` declaration is not available in this snippet
 ```
 
 The following is an error:
@@ -451,6 +451,12 @@ This turned out to be buggy and unpredictable, particularly when working with de
 	<!-- binding -->
 	<input bind:value={array[i]}>
 {/each}
+```
+
+### each_key_without_as
+
+```
+An `{#each ...}` block without an `as` clause cannot have a key
 ```
 
 ### effect_invalid_placement

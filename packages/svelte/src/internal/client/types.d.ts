@@ -25,6 +25,8 @@ export type ComponentContext = {
 	c: null | Map<unknown, unknown>;
 	/** deferred effects */
 	e: null | Array<() => void | (() => void)>;
+	/** True if initialized, i.e. pop() ran */
+	i: boolean;
 	/**
 	 * props — needed for legacy mode lifecycle functions, and for `createEventDispatcher`
 	 * @deprecated remove in 6.0

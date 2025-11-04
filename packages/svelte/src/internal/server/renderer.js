@@ -99,12 +99,67 @@ export class Renderer {
 	}
 
 	/**
+	 * @param {Array<Promise<void>>} blockers
 	 * @param {(renderer: Renderer) => void} fn
 	 */
-	async(fn) {
+	async_block(blockers, fn) {
 		this.#out.push(BLOCK_OPEN);
-		this.child(fn);
+		this.async(blockers, fn);
 		this.#out.push(BLOCK_CLOSE);
+	}
+
+	/**
+	 * @param {Array<Promise<void>>} blockers
+	 * @param {(renderer: Renderer) => void} fn
+	 */
+	async(blockers, fn) {
+		let callback = fn;
+
+		if (blockers.length > 0) {
+			const context = ssr_context;
+
+			callback = (renderer) => {
+				return Promise.all(blockers).then(() => {
+					const previous_context = ssr_context;
+
+					try {
+						set_ssr_context(context);
+						return fn(renderer);
+					} finally {
+						set_ssr_context(previous_context);
+					}
+				});
+			};
+		}
+
+		this.child(callback);
+	}
+
+	/**
+	 * @param {Array<() => void>} thunks
+	 */
+	run(thunks) {
+		const context = ssr_context;
+
+		let promise = Promise.resolve(thunks[0]());
+		const promises = [promise];
+
+		for (const fn of thunks.slice(1)) {
+			promise = promise.then(() => {
+				const previous_context = ssr_context;
+				set_ssr_context(context);
+
+				try {
+					return fn();
+				} finally {
+					set_ssr_context(previous_context);
+				}
+			});
+
+			promises.push(promise);
+		}
+
+		return promises;
 	}
 
 	/**
@@ -387,7 +442,7 @@ export class Renderer {
 	}
 
 	/**
-	 * Collect all of the `onDestroy` callbacks regsitered during rendering. In an async context, this is only safe to call
+	 * Collect all of the `onDestroy` callbacks registered during rendering. In an async context, this is only safe to call
 	 * after awaiting `collect_async`.
 	 *
 	 * Child renderers are "porous" and don't affect execution order, but component body renderers

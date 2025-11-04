@@ -16,12 +16,12 @@ import { determine_slot } from '../../../../../utils/slot.js';
  * @returns {Statement}
  */
 export function build_component(node, component_name, context) {
-	/**
-	 * @type {Expression}
-	 */
+	/** @type {Expression} */
 	const anchor = context.state.node;
+
 	/** @type {Array<Property[] | Expression>} */
 	const props_and_spreads = [];
+
 	/** @type {Array<() => void>} */
 	const delayed_props = [];
 
@@ -101,7 +101,7 @@ export function build_component(node, component_name, context) {
 	if (slot_scope_applies_to_itself) {
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'LetDirective') {
-				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+				context.visit(attribute, { ...context.state, let_directives: lets });
 			}
 		}
 	}
@@ -109,7 +109,7 @@ export function build_component(node, component_name, context) {
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
 			if (!slot_scope_applies_to_itself) {
-				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute, states.default)));
+				context.visit(attribute, { ...states.default, let_directives: lets });
 			}
 		} else if (attribute.type === 'OnDirective') {
 			if (!attribute.expression) {
@@ -129,14 +129,16 @@ export function build_component(node, component_name, context) {
 			(events[attribute.name] ||= []).push(handler);
 		} else if (attribute.type === 'SpreadAttribute') {
 			const expression = /** @type {Expression} */ (context.visit(attribute));
+			const memoized_expression = memoizer.add(expression, attribute.metadata.expression);
+			const is_memoized = expression !== memoized_expression;
 
-			if (attribute.metadata.expression.has_state || attribute.metadata.expression.has_await) {
+			if (
+				is_memoized ||
+				attribute.metadata.expression.has_state ||
+				attribute.metadata.expression.has_await
+			) {
 				props_and_spreads.push(
-					b.thunk(
-						attribute.metadata.expression.has_await || attribute.metadata.expression.has_call
-							? b.call('$.get', memoizer.add(expression, attribute.metadata.expression.has_await))
-							: expression
-					)
+					b.thunk(is_memoized ? b.call('$.get', memoized_expression) : expression)
 				);
 			} else {
 				props_and_spreads.push(expression);
@@ -147,10 +149,10 @@ export function build_component(node, component_name, context) {
 					b.init(
 						attribute.name,
 						build_attribute_value(attribute.value, context, (value, metadata) => {
+							const memoized = memoizer.add(value, metadata);
+
 							// TODO put the derived in the local block
-							return metadata.has_call || metadata.has_await
-								? b.call('$.get', memoizer.add(value, metadata.has_await))
-								: value;
+							return value !== memoized ? b.call('$.get', memoized) : value;
 						}).value
 					)
 				);
@@ -184,9 +186,9 @@ export function build_component(node, component_name, context) {
 							);
 						});
 
-					return should_wrap_in_derived
-						? b.call('$.get', memoizer.add(value, metadata.has_await))
-						: value;
+					const memoized = memoizer.add(value, metadata, should_wrap_in_derived);
+
+					return value !== memoized ? b.call('$.get', memoized) : value;
 				}
 			);
 
@@ -497,12 +499,14 @@ export function build_component(node, component_name, context) {
 	memoizer.apply();
 
 	const async_values = memoizer.async_values();
+	const blockers = memoizer.blockers();
 
-	if (async_values) {
+	if (async_values || blockers) {
 		return b.stmt(
 			b.call(
 				'$.async',
 				anchor,
+				blockers,
 				async_values,
 				b.arrow([b.id('$$anchor'), ...memoizer.async_ids()], b.block(statements))
 			)

@@ -986,13 +986,13 @@ export function const_tag_invalid_placement(node) {
 }
 
 /**
- * The `{@const %name% = ...}` declaration is not available in this snippet 
+ * The `{@const %name% = ...}` declaration is not available in this snippet
  * @param {null | number | NodeLike} node
  * @param {string} name
  * @returns {never}
  */
 export function const_tag_invalid_reference(node, name) {
-	e(node, 'const_tag_invalid_reference', `The \`{@const ${name} = ...}\` declaration is not available in this snippet \nhttps://svelte.dev/e/const_tag_invalid_reference`);
+	e(node, 'const_tag_invalid_reference', `The \`{@const ${name} = ...}\` declaration is not available in this snippet\nhttps://svelte.dev/e/const_tag_invalid_reference`);
 }
 
 /**
@@ -1021,6 +1021,15 @@ export function directive_invalid_value(node) {
  */
 export function directive_missing_name(node, type) {
 	e(node, 'directive_missing_name', `\`${type}\` name cannot be empty\nhttps://svelte.dev/e/directive_missing_name`);
+}
+
+/**
+ * An `{#each ...}` block without an `as` clause cannot have a key
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function each_key_without_as(node) {
+	e(node, 'each_key_without_as', `An \`{#each ...}\` block without an \`as\` clause cannot have a key\nhttps://svelte.dev/e/each_key_without_as`);
 }
 
 /**

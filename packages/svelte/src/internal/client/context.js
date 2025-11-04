@@ -130,7 +130,11 @@ export function setContext(key, context) {
 
 	if (async_mode_flag) {
 		var flags = /** @type {Effect} */ (active_effect).f;
-		var valid = !active_reaction && (flags & BRANCH_EFFECT) !== 0 && (flags & EFFECT_RAN) === 0;
+		var valid =
+			!active_reaction &&
+			(flags & BRANCH_EFFECT) !== 0 &&
+			// pop() runs synchronously, so this indicates we're setting context after an await
+			!(/** @type {ComponentContext} */ (component_context).i);
 
 		if (!valid) {
 			e.set_context_after_init();
@@ -175,6 +179,7 @@ export function getAllContexts() {
 export function push(props, runes = false, fn) {
 	component_context = {
 		p: component_context,
+		i: false,
 		c: null,
 		e: null,
 		s: props,
@@ -209,6 +214,8 @@ export function pop(component) {
 	if (component !== undefined) {
 		context.x = component;
 	}
+
+	context.i = true;
 
 	component_context = context.p;
 

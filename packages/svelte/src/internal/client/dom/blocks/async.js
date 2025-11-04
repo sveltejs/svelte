@@ -1,5 +1,6 @@
 /** @import { TemplateNode, Value } from '#client' */
 import { flatten } from '../../reactivity/async.js';
+import { Batch, current_batch } from '../../reactivity/batch.js';
 import { get } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -13,13 +14,17 @@ import { get_boundary } from './boundary.js';
 
 /**
  * @param {TemplateNode} node
+ * @param {Array<Promise<void>>} blockers
  * @param {Array<() => Promise<any>>} expressions
  * @param {(anchor: TemplateNode, ...deriveds: Value[]) => void} fn
  */
-export function async(node, expressions, fn) {
+export function async(node, blockers = [], expressions = [], fn) {
 	var boundary = get_boundary();
+	var batch = /** @type {Batch} */ (current_batch);
+	var blocking = !boundary.is_pending();
 
 	boundary.update_pending_count(1);
+	batch.increment(blocking);
 
 	var was_hydrating = hydrating;
 
@@ -31,7 +36,7 @@ export function async(node, expressions, fn) {
 		set_hydrate_node(end);
 	}
 
-	flatten([], expressions, (values) => {
+	flatten(blockers, [], expressions, (values) => {
 		if (was_hydrating) {
 			set_hydrating(true);
 			set_hydrate_node(previous_hydrate_node);
@@ -43,11 +48,12 @@ export function async(node, expressions, fn) {
 
 			fn(node, ...values);
 		} finally {
-			boundary.update_pending_count(-1);
-		}
+			if (was_hydrating) {
+				set_hydrating(false);
+			}
 
-		if (was_hydrating) {
-			set_hydrating(false);
+			boundary.update_pending_count(-1);
+			batch.decrement(blocking);
 		}
 	});
 }

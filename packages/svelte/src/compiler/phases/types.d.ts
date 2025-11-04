@@ -3,11 +3,19 @@ import type {
 	AwaitExpression,
 	CallExpression,
 	ClassBody,
+	ClassDeclaration,
+	FunctionDeclaration,
 	Identifier,
 	LabeledStatement,
-	Program
+	ModuleDeclaration,
+	Pattern,
+	Program,
+	Statement,
+	VariableDeclaration,
+	VariableDeclarator
 } from 'estree';
 import type { Scope, ScopeRoot } from './scope.js';
+import type { ExpressionMetadata } from './nodes.js';
 
 export interface Js {
 	ast: Program;
@@ -25,6 +33,14 @@ export interface Template {
 export interface ReactiveStatement {
 	assignments: Set<Binding>;
 	dependencies: Binding[];
+}
+
+export interface AwaitedDeclaration {
+	id: Identifier;
+	has_await: boolean;
+	pattern: Pattern;
+	metadata: ExpressionMetadata;
+	updated_by: Set<Identifier>;
 }
 
 /**
@@ -108,30 +124,13 @@ export interface ComponentAnalysis extends Analysis {
 	 * Every snippet that is declared locally
 	 */
 	snippets: Set<AST.SnippetBlock>;
-}
-
-declare module 'estree' {
-	interface ArrowFunctionExpression {
-		metadata: {
-			hoisted: boolean;
-			hoisted_params: Pattern[];
-			scope: Scope;
-		};
-	}
-
-	interface FunctionExpression {
-		metadata: {
-			hoisted: boolean;
-			hoisted_params: Pattern[];
-			scope: Scope;
-		};
-	}
-
-	interface FunctionDeclaration {
-		metadata: {
-			hoisted: boolean;
-			hoisted_params: Pattern[];
-			scope: Scope;
-		};
-	}
+	/**
+	 * Pre-transformed `<script>` block
+	 */
+	instance_body: {
+		hoisted: Array<Statement | ModuleDeclaration>;
+		sync: Array<Statement | ModuleDeclaration | VariableDeclaration>;
+		async: Array<{ node: Statement | VariableDeclarator; has_await: boolean }>;
+		declarations: Array<Identifier>;
+	};
 }

@@ -241,7 +241,7 @@ function init_update_callbacks(context) {
 	return (l.u ??= { a: [], b: [], m: [] });
 }
 
-export { flushSync } from './internal/client/reactivity/batch.js';
+export { flushSync, fork } from './internal/client/reactivity/batch.js';
 export {
 	createContext,
 	getContext,
