@@ -1,5 +1,5 @@
 /** @import { Parse, Transport } from '#shared' */
-import { hydrating } from './dom/hydration';
+import { hydrating } from './dom/hydration.js';
 
 /**
  * @template T
