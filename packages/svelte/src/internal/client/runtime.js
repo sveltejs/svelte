@@ -137,10 +137,6 @@ export function set_update_version(value) {
 	update_version = value;
 }
 
-// If we are working with a get() chain that has no active container,
-// to prevent memory leaks, we skip adding the reaction.
-let skip_reaction = false;
-
 export function increment_write_version() {
 	return ++write_version;
 }
@@ -226,7 +222,6 @@ export function update_reaction(reaction) {
 	var previous_skipped_deps = skipped_deps;
 	var previous_untracked_writes = untracked_writes;
 	var previous_reaction = active_reaction;
-	var previous_skip_reaction = skip_reaction;
 	var previous_sources = current_sources;
 	var previous_component_context = component_context;
 	var previous_untracking = untracking;
@@ -237,7 +232,6 @@ export function update_reaction(reaction) {
 	new_deps = /** @type {null | Value[]} */ (null);
 	skipped_deps = 0;
 	untracked_writes = null;
-	skip_reaction = !effect_tracking();
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 
 	current_sources = null;
@@ -330,7 +324,6 @@ export function update_reaction(reaction) {
 		skipped_deps = previous_skipped_deps;
 		untracked_writes = previous_untracked_writes;
 		active_reaction = previous_reaction;
-		skip_reaction = previous_skip_reaction;
 		current_sources = previous_sources;
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
