@@ -1,6 +1,4 @@
-/** @import { RenderContext, SSRContext } from '#server' */
-/** @import { AsyncLocalStorage } from 'node:async_hooks' */
-/** @import { Transport } from '#shared' */
+/** @import { SSRContext } from '#server' */
 import { DEV } from 'esm-env';
 import * as e from './errors.js';
 import { save_render_context } from './render-context.js';
