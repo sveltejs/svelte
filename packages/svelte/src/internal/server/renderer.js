@@ -645,9 +645,9 @@ export class Renderer {
 
 	/** @param {[string, unknown][]} serialized */
 	static #hydratable_block(serialized) {
-		let entries = '';
+		let entries = [];
 		for (const [k, v] of serialized) {
-			entries += `["${k}",${v}],`;
+			entries.push(`["${k}",${v}]`);
 		}
 		// TODO csp?
 		// TODO how can we communicate this error better? Is there a way to not just send it to the console?
@@ -655,7 +655,7 @@ export class Renderer {
 		return `
 <script>
 	var store = (window.__svelte ??= {}).h ??= new Map();
-	for (const [k,v] of ${entries}) {
+	for (const [k,v] of [${entries.join(',')}]) {
 			store.set(k, v);
 	}
 </script>`;
