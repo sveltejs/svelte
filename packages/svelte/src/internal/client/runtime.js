@@ -610,16 +610,16 @@ export function get(signal) {
 	} else if (is_derived) {
 		derived = /** @type {Derived} */ (signal);
 
-		if (is_updating_effect && effect_tracking() && (derived.f & CONNECTED) === 0) {
-			reconnect(derived);
-		}
-
 		if (batch_values?.has(derived)) {
 			return batch_values.get(derived);
 		}
 
 		if (is_dirty(derived)) {
 			update_derived(derived);
+		}
+
+		if (is_updating_effect && effect_tracking() && (derived.f & CONNECTED) === 0) {
+			reconnect(derived);
 		}
 	}
 
