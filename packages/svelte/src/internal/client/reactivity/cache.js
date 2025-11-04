@@ -1,7 +1,7 @@
 import { BaseCacheObserver } from '../../shared/cache-observer.js';
 import { ObservableCache } from '../../shared/observable-cache.js';
 import { tick } from '../runtime.js';
-import { render_effect } from './effects.js';
+import { get_effect_validation_error_code, render_effect } from './effects.js';
 
 /** @typedef {{ count: number, item: any }} Entry */
 /** @type {ObservableCache} */
@@ -18,8 +18,8 @@ export function cache(key, fn) {
 	const entry = client_cache.get(key);
 	const maybe_remove = create_remover(key);
 
-	let tracking = true;
-	try {
+	const tracking = get_effect_validation_error_code() === null;
+	if (tracking) {
 		render_effect(() => {
 			if (entry) entry.count++;
 			return () => {
@@ -29,8 +29,6 @@ export function cache(key, fn) {
 				maybe_remove(entry);
 			};
 		});
-	} catch {
-		tracking = false;
 	}
 
 	if (cached) {

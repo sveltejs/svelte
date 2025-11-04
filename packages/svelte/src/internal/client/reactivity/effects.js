@@ -48,17 +48,28 @@ import { without_reactive_context } from '../dom/elements/bindings/shared.js';
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
  */
 export function validate_effect(rune) {
+	const code = get_effect_validation_error_code();
+	if (code === null) return;
+	e[code](rune);
+}
+
+/**
+ * @returns {'effect_orphan' | 'effect_in_unowned_derived' | 'effect_in_teardown' | null}
+ */
+export function get_effect_validation_error_code() {
 	if (active_effect === null && active_reaction === null) {
-		e.effect_orphan(rune);
+		return 'effect_orphan';
 	}
 
 	if (active_reaction !== null && (active_reaction.f & UNOWNED) !== 0 && active_effect === null) {
-		e.effect_in_unowned_derived();
+		return 'effect_in_unowned_derived';
 	}
 
 	if (is_destroying_effect) {
-		e.effect_in_teardown(rune);
+		return 'effect_in_teardown';
 	}
+
+	return null;
 }
 
 /**
