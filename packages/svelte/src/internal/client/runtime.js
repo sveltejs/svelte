@@ -664,15 +664,18 @@ function reconnect(derived) {
 
 /**
  * Removes the WAS_MARKED flag from the derived and its dependencies
- * @param {Derived} derived
+ * @param {Value} derived
  */
 function remove_marked_flag(derived) {
-	if ((derived.f & WAS_MARKED) === 0) return;
-	derived.f ^= WAS_MARKED;
+	// We cannot stop at the first non-marked derived because batch_values can
+	// cause "holes" of unmarked deriveds in an otherwise marked graph
+	if ((derived.f & DERIVED) === 0) return;
+
+	derived.f &= ~WAS_MARKED;
 
 	// Only deriveds with dependencies can be marked
-	for (const dep of /** @type {Value[]} */ (derived.deps)) {
-		remove_marked_flag(/** @type {Derived} */ (dep));
+	for (const dep of /** @type {Value[]} */ (/** @type {Derived} */ (derived).deps)) {
+		remove_marked_flag(dep);
 	}
 }
 
