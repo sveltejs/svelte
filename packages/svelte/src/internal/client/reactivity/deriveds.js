@@ -26,7 +26,7 @@ import {
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import { async_effect, destroy_effect, teardown } from './effects.js';
+import { async_effect, destroy_effect, effect_tracking, teardown } from './effects.js';
 import { eager_effects, internal_set, set_eager_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -365,8 +365,14 @@ export function update_derived(derived) {
 		return;
 	}
 
+	// During time traveling we don't want to reset the status so that
+	// traversal of the graph in the other batches still happens
 	if (batch_values !== null) {
-		batch_values.set(derived, derived.v);
+		// only cache the value if we're in a tracking context, otherwise we won't
+		// clear the cache in `mark_reactions` when dependencies are updated
+		if (effect_tracking()) {
+			batch_values.set(derived, derived.v);
+		}
 	} else {
 		var status = (derived.f & CONNECTED) === 0 ? MAYBE_DIRTY : CLEAN;
 		set_signal_status(derived, status);

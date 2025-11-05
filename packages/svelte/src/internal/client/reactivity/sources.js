@@ -34,7 +34,7 @@ import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack, tag_proxy } from '../dev/tracing.js';
 import { component_context, is_runes } from '../context.js';
-import { Batch, eager_block_effects, schedule_effect } from './batch.js';
+import { Batch, batch_values, eager_block_effects, schedule_effect } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 
@@ -334,12 +334,17 @@ function mark_reactions(signal, status) {
 		}
 
 		if ((flags & DERIVED) !== 0) {
+			var derived = /** @type {Derived} */ (reaction);
+
+			batch_values?.delete(derived);
+
 			if ((flags & WAS_MARKED) === 0) {
 				// Only connected deriveds can be reliably unmarked right away
 				if (flags & CONNECTED) {
 					reaction.f |= WAS_MARKED;
 				}
-				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
+
+				mark_reactions(derived, MAYBE_DIRTY);
 			}
 		} else if (not_dirty) {
 			if ((flags & BLOCK_EFFECT) !== 0) {

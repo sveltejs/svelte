@@ -179,7 +179,12 @@ export function is_dirty(reaction) {
 			}
 		}
 
-		if ((flags & CONNECTED) !== 0) {
+		if (
+			(flags & CONNECTED) !== 0 &&
+			// During time traveling we don't want to reset the status so that
+			// traversal of the graph in the other batches still happens
+			batch_values === null
+		) {
 			set_signal_status(reaction, CLEAN);
 		}
 	}
@@ -611,17 +616,7 @@ export function get(signal) {
 	} else if (is_derived) {
 		derived = /** @type {Derived} */ (signal);
 
-		var should_reconnect = is_updating_effect && effect_tracking() && (derived.f & CONNECTED) === 0;
-
 		if (batch_values?.has(derived)) {
-			// This happens as part of is_dirty normally, but we return early
-			// here so we need to do it separately
-			remove_marked_flag(derived);
-
-			if (should_reconnect) {
-				reconnect(derived);
-			}
-
 			return batch_values.get(derived);
 		}
 
@@ -629,7 +624,7 @@ export function get(signal) {
 			update_derived(derived);
 		}
 
-		if (should_reconnect) {
+		if (is_updating_effect && effect_tracking() && (derived.f & CONNECTED) === 0) {
 			reconnect(derived);
 		}
 	} else if (batch_values?.has(signal)) {
@@ -659,23 +654,6 @@ function reconnect(derived) {
 		if ((dep.f & DERIVED) !== 0 && (dep.f & CONNECTED) === 0) {
 			reconnect(/** @type {Derived} */ (dep));
 		}
-	}
-}
-
-/**
- * Removes the WAS_MARKED flag from the derived and its dependencies
- * @param {Value} derived
- */
-function remove_marked_flag(derived) {
-	// We cannot stop at the first non-marked derived because batch_values can
-	// cause "holes" of unmarked deriveds in an otherwise marked graph
-	if ((derived.f & DERIVED) === 0) return;
-
-	derived.f &= ~WAS_MARKED;
-
-	// Only deriveds with dependencies can be marked
-	for (const dep of /** @type {Value[]} */ (/** @type {Derived} */ (derived).deps)) {
-		remove_marked_flag(dep);
 	}
 }
 
