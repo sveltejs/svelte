@@ -365,8 +365,20 @@ export function update_derived(derived) {
 		return;
 	}
 
+	// During time traveling we don't want to reset the status so that
+	// traversal of the graph in the other batches still happens
 	if (batch_values !== null) {
-		batch_values.set(derived, derived.v);
+		// Delete the value as the current one is now the latest.
+		// Deleting instead of updating handles the case where a derived
+		// is subsequently indirectly updated in the same batch — without
+		// deleting here we would incorrectly get the old value from `batch_values`
+		// instead of recomputing it. The one drawback is that it's now a bit
+		// more inefficient to get the value of that derived again in the same batch,
+		// as it has to check is_dirty all the way up the graph all the time.
+		// TODO if that turns out to be a performance problem, we could try
+		// to save the current status of the derived in a map and restore it
+		// before leaving the batch.
+		batch_values.delete(derived);
 	} else {
 		var status = (derived.f & CONNECTED) === 0 ? MAYBE_DIRTY : CLEAN;
 		set_signal_status(derived, status);

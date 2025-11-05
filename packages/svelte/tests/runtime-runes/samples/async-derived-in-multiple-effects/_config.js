@@ -7,12 +7,10 @@ export default test({
 
 		button?.click();
 		await tick();
-		// TODO this is wrong: it should be [5]
-		assert.deepEqual(logs, [4]);
+		assert.deepEqual(logs, [5]);
 
 		button?.click();
 		await tick();
-		// TODO this is wrong: it should be [5, 7]
-		assert.deepEqual(logs, [4, 7]);
+		assert.deepEqual(logs, [5, 7]);
 	}
 });

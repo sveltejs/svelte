@@ -286,11 +286,12 @@ export class Batch {
 			this.previous.set(source, value);
 		}
 
-		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
 		if ((source.f & ERROR_VALUE) === 0) {
 			this.current.set(source, source.v);
-			batch_values?.set(source, source.v);
 		}
+
+		// The value is now the newest known value for this source, therefore remove it from batch_values
+		batch_values?.delete(source);
 	}
 
 	activate() {
