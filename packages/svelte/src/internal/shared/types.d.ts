@@ -11,7 +11,7 @@ export type Snapshot<T> = ReturnType<typeof $state.snapshot<T>>;
 
 export type MaybePromise<T> = T | Promise<T>;
 
-export type Decode<T> = (value: unknown) => T;
+export type Decode<T> = (value: any) => T;
 
 export type Encode<T> = (value: T) => unknown;
 
