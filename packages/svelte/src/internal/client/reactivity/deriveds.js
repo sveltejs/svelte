@@ -26,7 +26,7 @@ import {
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import { async_effect, destroy_effect, teardown } from './effects.js';
+import { async_effect, destroy_effect, effect_tracking, teardown } from './effects.js';
 import { eager_effects, internal_set, set_eager_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -368,17 +368,11 @@ export function update_derived(derived) {
 	// During time traveling we don't want to reset the status so that
 	// traversal of the graph in the other batches still happens
 	if (batch_values !== null) {
-		// Delete the value as the current one is now the latest.
-		// Deleting instead of updating handles the case where a derived
-		// is subsequently indirectly updated in the same batch — without
-		// deleting here we would incorrectly get the old value from `batch_values`
-		// instead of recomputing it. The one drawback is that it's now a bit
-		// more inefficient to get the value of that derived again in the same batch,
-		// as it has to check is_dirty all the way up the graph all the time.
-		// TODO if that turns out to be a performance problem, we could try
-		// to save the current status of the derived in a map and restore it
-		// before leaving the batch.
-		batch_values.delete(derived);
+		// only cache the value if we're in a tracking context, otherwise we won't
+		// clear the cache in `mark_reactions` when dependencies are updated
+		if (effect_tracking()) {
+			batch_values.set(derived, derived.v);
+		}
 	} else {
 		var status = (derived.f & CONNECTED) === 0 ? MAYBE_DIRTY : CLEAN;
 		set_signal_status(derived, status);
