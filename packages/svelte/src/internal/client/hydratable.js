@@ -19,13 +19,13 @@ export function hydratable(key, fn, options = {}) {
 		// something to be synchronously hydratable and then have it not be
 		return fn();
 	}
-	return parse(val, options.transport?.decode);
+	return decode(val, options.transport?.decode);
 }
 
 /**
  * @template T
  * @param {string} key
- * @param {{ parse?: Decode<T> }} [options]
+ * @param {{ decode?: Decode<T> }} [options]
  * @returns {T | undefined}
  */
 export function get_hydratable_value(key, options = {}) {
@@ -40,7 +40,7 @@ export function get_hydratable_value(key, options = {}) {
 		return undefined;
 	}
 
-	return parse(val, options.parse);
+	return decode(val, options.decode);
 }
 
 /**
@@ -58,9 +58,9 @@ export function has_hydratable_value(key) {
 /**
  * @template T
  * @param {unknown} val
- * @param {Decode<T> | undefined} parse
+ * @param {Decode<T> | undefined} decode
  * @returns {T}
  */
-function parse(val, parse) {
-	return (parse ?? ((val) => /** @type {T} */ (val)))(val);
+function decode(val, decode) {
+	return (decode ?? ((val) => /** @type {T} */ (val)))(val);
 }
