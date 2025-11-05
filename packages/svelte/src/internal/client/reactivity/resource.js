@@ -2,6 +2,8 @@
 /** @import { Resource as ResourceType } from '#shared' */
 import { state, derived, set, get, tick } from '../index.js';
 import { deferred } from '../../shared/utils.js';
+import { async_mode_flag } from '../../flags/index.js';
+import * as e from '../errors.js';
 
 /**
  * @template T
@@ -9,6 +11,9 @@ import { deferred } from '../../shared/utils.js';
  * @returns {ResourceType<T>}
  */
 export function resource(fn) {
+	if (!async_mode_flag) {
+		e.experimental_async_required('resource');
+	}
 	return /** @type {ResourceType<T>} */ (new Resource(fn));
 }
 

@@ -27,6 +27,26 @@ export function html_deprecated() {
 }
 
 /**
+ * Attempted to set hydratable with key `%key%` twice. This behavior is undefined.
+ * 
+ * First set occurred at:
+ * %stack%
+ * @param {string} key
+ * @param {string} stack
+ * @returns {never}
+ */
+export function hydratable_clobbering(key, stack) {
+	const error = new Error(`hydratable_clobbering\nAttempted to set hydratable with key \`${key}\` twice. This behavior is undefined.
+
+First set occurred at:
+${stack}\nhttps://svelte.dev/e/hydratable_clobbering`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
  * `%name%(...)` is not available on the server
  * @param {string} name
  * @returns {never}

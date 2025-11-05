@@ -1,6 +1,7 @@
+import { async_mode_flag } from '../../flags/index.js';
 import { BaseCacheObserver } from '../../shared/cache-observer.js';
-import { set_hydratable_key } from '../hydratable.js';
 import { get_render_context } from '../render-context.js';
+import * as e from '../errors.js';
 
 /**
  * @template {(...args: any[]) => any} TFn
@@ -9,14 +10,16 @@ import { get_render_context } from '../render-context.js';
  * @returns {ReturnType<TFn>}
  */
 export function cache(key, fn) {
+	if (!async_mode_flag) {
+		e.experimental_async_required('cache');
+	}
+
 	const cache = get_render_context().cache;
 	const entry = cache.get(key);
 	if (entry) {
 		return /** @type {ReturnType<TFn>} */ (entry);
 	}
-	set_hydratable_key(key);
 	const new_entry = fn();
-	set_hydratable_key(null);
 	cache.set(key, new_entry);
 	return new_entry;
 }
@@ -27,6 +30,9 @@ export function cache(key, fn) {
  */
 export class CacheObserver extends BaseCacheObserver {
 	constructor(prefix = '') {
+		if (!async_mode_flag) {
+			e.experimental_async_required('CacheObserver');
+		}
 		super(() => get_render_context().cache, prefix);
 	}
 }

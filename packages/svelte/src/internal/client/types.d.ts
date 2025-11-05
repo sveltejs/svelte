@@ -6,7 +6,7 @@ declare global {
 	interface Window {
 		__svelte?: {
 			/** hydratables */
-			h?: Map<string, string>;
+			h?: Map<string, unknown>;
 		};
 	}
 }

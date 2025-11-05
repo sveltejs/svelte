@@ -1,7 +1,9 @@
 /** @import { CacheEntry } from '#shared' */
+import { async_mode_flag } from '../../flags/index.js';
 import { BaseCacheObserver } from '../../shared/cache-observer.js';
 import { tick } from '../runtime.js';
 import { get_effect_validation_error_code, render_effect } from './effects.js';
+import * as e from '../errors.js';
 
 /** @typedef {{ count: number, item: any }} Entry */
 /** @type {Map<string, CacheEntry>} */
@@ -14,6 +16,10 @@ const client_cache = new Map();
  * @returns {ReturnType<TFn>}
  */
 export function cache(key, fn) {
+	if (!async_mode_flag) {
+		e.experimental_async_required('cache');
+	}
+
 	const cached = client_cache.has(key);
 	const entry = client_cache.get(key);
 	const maybe_remove = create_remover(key);
@@ -70,6 +76,9 @@ function create_remover(key) {
  */
 export class CacheObserver extends BaseCacheObserver {
 	constructor(prefix = '') {
+		if (!async_mode_flag) {
+			e.experimental_async_required('CacheObserver');
+		}
 		super(() => client_cache, prefix);
 	}
 }

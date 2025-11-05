@@ -14,6 +14,29 @@ You (or the framework you're using) called [`render(...)`](svelte-server#render)
 The `html` property of server render results has been deprecated. Use `body` instead.
 ```
 
+### hydratable_clobbering
+
+```
+Attempted to set hydratable with key `%key%` twice. This behavior is undefined.
+
+First set occurred at:
+%stack%
+```
+
+This error occurs when using `hydratable` or `setHydratableValue` multiple times with the same key. To avoid this, you can combine `hydratable` with `cache`, or check whether the value has already been set with `hasHydratableValue`.
+
+```svelte
+<script>
+  import { hydratable } from 'svelte';
+
+  await Promise.all([
+    // which one should "win" and be serialized in the rendered response?
+    hydratable('hello', () => 'world'),
+    hydratable('hello', () => 'dad')
+  ])
+</script>
+```
+
 ### lifecycle_function_unavailable
 
 ```

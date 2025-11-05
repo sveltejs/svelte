@@ -15,14 +15,14 @@ export interface SSRContext {
 	element?: Element;
 }
 
+export interface HydratableEntry {
+	value: unknown;
+	encode: Encode<any> | undefined;
+	stack?: string;
+}
+
 export interface RenderContext {
-	hydratables: Map<
-		string,
-		{
-			value: unknown;
-			encode: Encode<any> | undefined;
-		}
-	>;
+	hydratables: Map<string, HydratableEntry>;
 	cache: Map<string, CacheEntry>;
 }
 

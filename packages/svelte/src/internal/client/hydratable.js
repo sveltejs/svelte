@@ -1,5 +1,8 @@
 /** @import { Decode, Transport } from '#shared' */
+import { async_mode_flag } from '../flags/index.js';
 import { hydrating } from './dom/hydration.js';
+import * as w from './warnings.js';
+import * as e from './errors.js';
 
 /**
  * @template T
@@ -9,17 +12,20 @@ import { hydrating } from './dom/hydration.js';
  * @returns {T}
  */
 export function hydratable(key, fn, options) {
-	if (!hydrating) {
-		return fn();
+	if (!async_mode_flag) {
+		e.experimental_async_required('hydratable');
 	}
-	var store = window.__svelte?.h;
-	const val = store?.get(key);
-	if (val === undefined) {
-		// TODO this should really be an error or at least a warning because it would be disastrous to expect
-		// something to be synchronously hydratable and then have it not be
-		return fn();
-	}
-	return decode(val, options?.decode);
+
+	return access_hydratable_store(
+		key,
+		(val, has) => {
+			if (!has) {
+				w.hydratable_missing_but_expected(key);
+			}
+			return decode(val, options?.decode);
+		},
+		fn
+	);
 }
 
 /**
@@ -29,18 +35,15 @@ export function hydratable(key, fn, options) {
  * @returns {T | undefined}
  */
 export function get_hydratable_value(key, options = {}) {
-	// TODO probably can DRY this out with the above
-	if (!hydrating) {
-		return undefined;
+	if (!async_mode_flag) {
+		e.experimental_async_required('getHydratableValue');
 	}
 
-	var store = window.__svelte?.h;
-	const val = store?.get(key);
-	if (val === undefined) {
-		return undefined;
-	}
-
-	return decode(val, options.decode);
+	return access_hydratable_store(
+		key,
+		(val) => decode(val, options.decode),
+		() => undefined
+	);
 }
 
 /**
@@ -48,11 +51,29 @@ export function get_hydratable_value(key, options = {}) {
  * @returns {boolean}
  */
 export function has_hydratable_value(key) {
+	if (!async_mode_flag) {
+		e.experimental_async_required('hasHydratableValue');
+	}
+	return access_hydratable_store(
+		key,
+		(_, has) => has,
+		() => false
+	);
+}
+
+/**
+ * @template T
+ * @param {string} key
+ * @param {(val: unknown, has: boolean) => T} on_hydrating
+ * @param {() => T} on_not_hydrating
+ * @returns {T}
+ */
+function access_hydratable_store(key, on_hydrating, on_not_hydrating) {
 	if (!hydrating) {
-		return false;
+		return on_not_hydrating();
 	}
 	var store = window.__svelte?.h;
-	return store?.has(key) ?? false;
+	return on_hydrating(store?.get(key), store?.has(key) ?? false);
 }
 
 /**

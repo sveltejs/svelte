@@ -1,14 +1,10 @@
 /** @import { Encode, Transport } from '#shared' */
+/** @import { HydratableEntry } from '#server' */
 
+import { async_mode_flag } from '../flags/index.js';
 import { get_render_context } from './render-context.js';
-
-/** @type {string | null} */
-export let hydratable_key = null;
-
-/** @param {string | null} key */
-export function set_hydratable_key(key) {
-	hydratable_key = key;
-}
+import * as e from './errors.js';
+import { DEV } from 'esm-env';
 
 /**
  * @template T
@@ -18,16 +14,19 @@ export function set_hydratable_key(key) {
  * @returns {T}
  */
 export function hydratable(key, fn, options) {
+	if (!async_mode_flag) {
+		e.experimental_async_required('hydratable');
+	}
+
 	const store = get_render_context();
 
 	if (store.hydratables.has(key)) {
-		// TODO error
-		throw new Error("can't have two hydratables with the same key");
+		e.hydratable_clobbering(key, store.hydratables.get(key)?.stack || 'unknown');
 	}
 
-	const result = fn();
-	store.hydratables.set(key, { value: result, encode: options?.encode });
-	return result;
+	const entry = create_entry(fn(), options?.encode);
+	store.hydratables.set(key, entry);
+	return entry.value;
 }
 /**
  * @template T
@@ -36,15 +35,34 @@ export function hydratable(key, fn, options) {
  * @param {{ encode?: Encode<T> }} [options]
  */
 export function set_hydratable_value(key, value, options = {}) {
+	if (!async_mode_flag) {
+		e.experimental_async_required('setHydratableValue');
+	}
+
 	const store = get_render_context();
 
 	if (store.hydratables.has(key)) {
-		// TODO error
-		throw new Error("can't have two hydratables with the same key");
+		e.hydratable_clobbering(key, store.hydratables.get(key)?.stack || 'unknown');
 	}
 
-	store.hydratables.set(key, {
+	store.hydratables.set(key, create_entry(value, options?.encode));
+}
+
+/**
+ * @template T
+ * @param {T} value
+ * @param {Encode<T> | undefined} encode
+ */
+function create_entry(value, encode) {
+	/** @type {Omit<HydratableEntry, 'value'> & { value: T }} */
+	const entry = {
 		value,
-		encode: options.encode
-	});
+		encode
+	};
+
+	if (DEV) {
+		entry.stack = new Error().stack;
+	}
+
+	return entry;
 }

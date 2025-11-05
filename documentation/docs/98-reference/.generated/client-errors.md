@@ -130,12 +130,6 @@ $effect(() => {
 
 Often when encountering this issue, the value in question shouldn't be state (for example, if you are pushing to a `logs` array in an effect, make `logs` a normal array rather than `$state([])`). In the rare cases where you really _do_ need to write to state in an effect — [which you should avoid]($effect#When-not-to-use-$effect) — you can read the state with [untrack](svelte#untrack) to avoid adding it as a dependency.
 
-### experimental_async_fork
-
-```
-Cannot use `fork(...)` unless the `experimental.async` compiler option is `true`
-```
-
 ### flush_sync_in_effect
 
 ```

@@ -1,3 +1,7 @@
+## experimental_async_required
+
+> Cannot use `%name%(...)` unless the `experimental.async` compiler option is `true`
+
 ## invalid_default_snippet
 
 > Cannot use `{@render children(...)}` if the parent component uses `let:` directives. Consider using a named snippet instead
