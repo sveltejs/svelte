@@ -5,10 +5,10 @@ import { hydrating } from './dom/hydration.js';
  * @template T
  * @param {string} key
  * @param {() => T} fn
- * @param {{ transport?: Transport<T> }} [options]
+ * @param {Transport<T>} [options]
  * @returns {T}
  */
-export function hydratable(key, fn, options = {}) {
+export function hydratable(key, fn, options) {
 	if (!hydrating) {
 		return fn();
 	}
@@ -19,7 +19,7 @@ export function hydratable(key, fn, options = {}) {
 		// something to be synchronously hydratable and then have it not be
 		return fn();
 	}
-	return decode(val, options.transport?.decode);
+	return decode(val, options?.decode);
 }
 
 /**

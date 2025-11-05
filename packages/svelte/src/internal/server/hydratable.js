@@ -14,10 +14,10 @@ export function set_hydratable_key(key) {
  * @template T
  * @param {string} key
  * @param {() => T} fn
- * @param {{ transport?: Transport<T> }} [options]
+ * @param {Transport<T>} [options]
  * @returns {T}
  */
-export function hydratable(key, fn, options = {}) {
+export function hydratable(key, fn, options) {
 	const store = get_render_context();
 
 	if (store.hydratables.has(key)) {
@@ -26,7 +26,7 @@ export function hydratable(key, fn, options = {}) {
 	}
 
 	const result = fn();
-	store.hydratables.set(key, { value: result, encode: options.transport?.encode });
+	store.hydratables.set(key, { value: result, encode: options?.encode });
 	return result;
 }
 /**
