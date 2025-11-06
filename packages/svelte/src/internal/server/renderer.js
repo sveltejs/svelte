@@ -652,9 +652,11 @@ export class Renderer {
 		// TODO csp -- have discussed but not implemented
 		return `
 <script>
-	var store = (window.__svelte ??= {}).h ??= new Map();
-	for (const [k,v] of [${entries.join(',')}]) {
-			store.set(k, v);
+	{
+		const store = (window.__svelte ??= {}).h ??= new Map();
+		for (const [k,v] of [${entries.join(',')}]) {
+				store.set(k, v);
+		}
 	}
 </script>`;
 	}
