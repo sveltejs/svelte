@@ -21,6 +21,7 @@ function isomorphic_hydratable(key, fn, options) {
 		(val, has) => {
 			if (!has) {
 				w.hydratable_missing_but_expected(key);
+				return fn();
 			}
 			return decode(val, options?.decode);
 		},
@@ -45,7 +46,7 @@ export { hydratable };
  */
 function get_hydratable_value(key, options = {}) {
 	if (!async_mode_flag) {
-		e.experimental_async_required('getHydratableValue');
+		e.experimental_async_required('hydratable.get');
 	}
 
 	return access_hydratable_store(
@@ -61,7 +62,7 @@ function get_hydratable_value(key, options = {}) {
  */
 function has_hydratable_value(key) {
 	if (!async_mode_flag) {
-		e.experimental_async_required('hasHydratableValue');
+		e.experimental_async_required('hydratable.set');
 	}
 	return access_hydratable_store(
 		key,

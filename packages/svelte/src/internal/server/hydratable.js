@@ -46,7 +46,7 @@ export { hydratable };
  */
 function set_hydratable_value(key, value, options = {}) {
 	if (!async_mode_flag) {
-		e.experimental_async_required('setHydratableValue');
+		e.experimental_async_required('hydratable.set');
 	}
 
 	const store = get_render_context();
@@ -64,7 +64,7 @@ function set_hydratable_value(key, value, options = {}) {
  */
 function has_hydratable_value(key) {
 	if (!async_mode_flag) {
-		e.experimental_async_required('hasHydratableValue');
+		e.experimental_async_required('hydratable.has');
 	}
 	const store = get_render_context();
 	return store.hydratables.has(key);
