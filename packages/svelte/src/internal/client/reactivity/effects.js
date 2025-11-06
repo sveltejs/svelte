@@ -32,7 +32,8 @@ import {
 	EFFECT_PRESERVED,
 	STALE_REACTION,
 	USER_EFFECT,
-	ASYNC
+	ASYNC,
+	CONNECTED
 } from '#client/constants';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
@@ -47,7 +48,7 @@ import { without_reactive_context } from '../dom/elements/bindings/shared.js';
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
  */
 export function validate_effect(rune) {
-	if (active_effect === null && active_reaction === null) {
+	if (active_effect === null) {
 		if (active_reaction === null) {
 			e.effect_orphan(rune);
 		}
@@ -102,7 +103,7 @@ function create_effect(type, fn, sync, push = true) {
 		deps: null,
 		nodes_start: null,
 		nodes_end: null,
-		f: type | DIRTY,
+		f: type | DIRTY | CONNECTED,
 		first: null,
 		fn,
 		last: null,

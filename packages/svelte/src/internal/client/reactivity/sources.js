@@ -23,18 +23,18 @@ import {
 	DIRTY,
 	BRANCH_EFFECT,
 	EAGER_EFFECT,
-	UNOWNED,
 	MAYBE_DIRTY,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	ASYNC,
-	WAS_MARKED
+	WAS_MARKED,
+	CONNECTED
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { get_stack, tag_proxy } from '../dev/tracing.js';
 import { component_context, is_runes } from '../context.js';
-import { Batch, eager_block_effects, schedule_effect } from './batch.js';
+import { Batch, batch_values, eager_block_effects, schedule_effect } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 
@@ -211,7 +211,8 @@ export function internal_set(source, value) {
 			if ((source.f & DIRTY) !== 0) {
 				execute_derived(/** @type {Derived} */ (source));
 			}
-			set_signal_status(source, (source.f & UNOWNED) === 0 ? CLEAN : MAYBE_DIRTY);
+
+			set_signal_status(source, (source.f & CONNECTED) !== 0 ? CLEAN : MAYBE_DIRTY);
 		}
 
 		source.wv = increment_write_version();
@@ -333,9 +334,17 @@ function mark_reactions(signal, status) {
 		}
 
 		if ((flags & DERIVED) !== 0) {
+			var derived = /** @type {Derived} */ (reaction);
+
+			batch_values?.delete(derived);
+
 			if ((flags & WAS_MARKED) === 0) {
-				reaction.f |= WAS_MARKED;
-				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
+				// Only connected deriveds can be reliably unmarked right away
+				if (flags & CONNECTED) {
+					reaction.f |= WAS_MARKED;
+				}
+
+				mark_reactions(derived, MAYBE_DIRTY);
 			}
 		} else if (not_dirty) {
 			if ((flags & BLOCK_EFFECT) !== 0) {

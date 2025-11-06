@@ -1,5 +1,23 @@
 # svelte
 
+## 5.43.4
+
+### Patch Changes
+
+- chore: simplify connection/disconnection logic ([#17105](https://github.com/sveltejs/svelte/pull/17105))
+
+- fix: reconnect deriveds to effect tree when time-travelling ([#17105](https://github.com/sveltejs/svelte/pull/17105))
+
+## 5.43.3
+
+### Patch Changes
+
+- fix: ensure fork always accesses correct values ([#17098](https://github.com/sveltejs/svelte/pull/17098))
+
+- fix: change title only after any pending work has completed ([#17061](https://github.com/sveltejs/svelte/pull/17061))
+
+- fix: preserve symbols when creating derived rest properties ([#17096](https://github.com/sveltejs/svelte/pull/17096))
+
 ## 5.43.2
 
 ### Patch Changes
