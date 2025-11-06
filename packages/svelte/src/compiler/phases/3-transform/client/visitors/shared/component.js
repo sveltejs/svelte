@@ -171,8 +171,6 @@ export function build_component(node, component_name, context) {
 				attribute.value,
 				context,
 				(value, metadata) => {
-					if (!metadata.has_state && !metadata.has_await) return value;
-
 					// When we have a non-simple computation, anything other than an Identifier or Member expression,
 					// then there's a good chance it needs to be memoized to avoid over-firing when read within the
 					// child component (e.g. `active={i === index}`)

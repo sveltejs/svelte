@@ -122,7 +122,7 @@ export function build_attribute_value(value, context, memoize = (value) => value
 
 		return {
 			value: memoize(expression, chunk.metadata.expression),
-			has_state: chunk.metadata.expression.has_state || chunk.metadata.expression.has_await
+			has_state: chunk.metadata.expression.has_state || chunk.metadata.expression.is_async()
 		};
 	}
 
