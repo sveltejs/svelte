@@ -1,7 +1,7 @@
 <script>
 	import Child from './Child.svelte';
 	
-	await 1;
+	await Promise.resolve();
 
 	let ref = $state(null);
 
