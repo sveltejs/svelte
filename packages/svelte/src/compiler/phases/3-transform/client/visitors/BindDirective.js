@@ -250,10 +250,13 @@ export function BindDirective(node, context) {
 
 	let statement = defer ? b.stmt(b.call('$.effect', b.thunk(call))) : b.stmt(call);
 
-	// TODO this doesn't account for function bindings
-	if (node.metadata.binding?.blocker) {
+	if (node.metadata.expression.is_async()) {
 		statement = b.stmt(
-			b.call(b.member(node.metadata.binding.blocker, b.id('then')), b.thunk(b.block([statement])))
+			b.call(
+				'$.run_after_blockers',
+				node.metadata.expression.blockers(),
+				b.thunk(b.block([statement]))
+			)
 		);
 	}
 

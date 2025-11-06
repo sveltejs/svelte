@@ -198,7 +198,12 @@ export function build_component(node, component_name, context) {
 				push_prop(b.init(attribute.name, value));
 			}
 		} else if (attribute.type === 'BindDirective') {
-			const expression = /** @type {Expression} */ (context.visit(attribute.expression));
+			const expression = /** @type {Expression} */ (
+				context.visit(attribute.expression, { ...context.state, memoizer })
+			);
+
+			// Bindings are a bit special: we don't want to add them to (async) deriveds but we need to check if they have blockers
+			memoizer.check_blockers(attribute.metadata.expression);
 
 			if (
 				dev &&

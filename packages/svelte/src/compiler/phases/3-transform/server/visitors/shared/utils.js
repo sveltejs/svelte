@@ -347,16 +347,11 @@ export class PromiseOptimiser {
 	#blockers = new Set();
 
 	/**
-	 *
 	 * @param {Expression} expression
 	 * @param {ExpressionMetadata} metadata
 	 */
 	transform = (expression, metadata) => {
-		for (const binding of metadata.dependencies) {
-			if (binding.blocker) {
-				this.#blockers.add(binding.blocker);
-			}
-		}
+		this.check_blockers(metadata);
 
 		if (metadata.has_await) {
 			this.has_await = true;
@@ -367,6 +362,17 @@ export class PromiseOptimiser {
 
 		return expression;
 	};
+
+	/**
+	 * @param {ExpressionMetadata} metadata
+	 */
+	check_blockers(metadata) {
+		for (const binding of metadata.dependencies) {
+			if (binding.blocker) {
+				this.#blockers.add(binding.blocker);
+			}
+		}
+	}
 
 	apply() {
 		if (this.expressions.length === 0) {
