@@ -20,7 +20,6 @@ export function cache(key, fn) {
 		e.experimental_async_required('cache');
 	}
 
-	const cached = client_cache.has(key);
 	const entry = client_cache.get(key);
 	const maybe_remove = create_remover(key);
 
@@ -37,7 +36,7 @@ export function cache(key, fn) {
 		});
 	}
 
-	if (cached) {
+	if (entry !== undefined) {
 		return entry?.item;
 	}
 
