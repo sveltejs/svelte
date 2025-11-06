@@ -110,7 +110,7 @@ This restriction only applies when using the `experimental.async` option, which 
 
 ## fn_unavailable_on_client
 
-> `%name%`(...) is unavailable on the client.
+> `%name%`(...) is unavailable in the browser.
 
 ## fork_discarded
 
