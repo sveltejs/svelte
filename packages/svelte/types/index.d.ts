@@ -450,7 +450,7 @@ declare module 'svelte' {
 	 * @deprecated Use [`$effect`](https://svelte.dev/docs/svelte/$effect) instead
 	 * */
 	export function afterUpdate(fn: () => void): void;
-	export function hydratable<T>(key: string, fn: () => T, options?: Transport<T> | undefined): T;
+	export const hydratable: Hydratable;
 	/**
 	 * Create a snippet programmatically
 	 * */
@@ -609,6 +609,13 @@ declare module 'svelte' {
 				encode?: undefined;
 				decode: Decode<T>;
 		  };
+
+	type Hydratable = {
+		<T>(key: string, fn: () => T, options?: Transport<T>): T;
+		get: <T>(key: string) => T | undefined;
+		has: (key: string) => boolean;
+		set: <T>(key: string, value: T, options?: Transport<T>) => void;
+	};
 
 	export {};
 }
@@ -2610,21 +2617,6 @@ declare module 'svelte/server' {
 	}
 
 	type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;
-	export function setHydratableValue<T>(key: string, value: T, options?: {
-		encode?: Encode<T>;
-	} | undefined): void;
-	type Encode<T> = (value: T) => unknown;
-
-	export {};
-}
-
-declare module 'svelte/client' {
-	export function getHydratableValue<T>(key: string, options?: {
-		decode?: Decode<T>;
-	} | undefined): T | undefined;
-
-	export function hasHydratableValue(key: string): boolean;
-	type Decode<T> = (value: any) => T;
 
 	export {};
 }

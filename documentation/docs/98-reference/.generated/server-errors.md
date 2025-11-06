@@ -37,10 +37,10 @@ This error occurs when using `hydratable` or `setHydratableValue` multiple times
 </script>
 ```
 
-### lifecycle_function_unavailable
+### render_context_unavailable
 
 ```
-`%name%(...)` is not available on the server
+Failed to retrieve `render` context. %addendum%
 ```
 
-Certain methods such as `mount` cannot be invoked while running in a server context. Avoid calling them eagerly, i.e. not during render.
+If `AsyncLocalStorage` is available, you're likely calling a function that needs access to the `render` context (`hydratable`, `cache`, or something that depends on these) from outside of `render`. If `AsyncLocalStorage` is not available, these functions must also be called synchronously from within `render` -- i.e. not after any `await`s.

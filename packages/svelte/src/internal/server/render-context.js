@@ -3,6 +3,7 @@
 /** @import { RenderContext } from '#server' */
 
 import { deferred } from '../shared/utils.js';
+import * as e from './errors.js';
 
 /** @type {Promise<void> | null} */
 let current_render = null;
@@ -38,18 +39,9 @@ export function get_render_context() {
 	const store = try_get_render_context();
 
 	if (!store) {
-		// TODO make this a proper e.error
-		let message = 'Could not get rendering context.';
-
-		if (als) {
-			message += ' You may have called `hydratable` or `cache` outside of the render lifecycle.';
-		} else {
-			message +=
-				' In environments without `AsyncLocalStorage`, `hydratable` must be accessed synchronously, not after an `await`.' +
-				' If it was accessed synchronously then this is an internal error or you may have called `hydratable` or `cache` outside of the render lifecycle.';
-		}
-
-		throw new Error(message);
+		e.render_context_unavailable(
+			`\`AsyncLocalStorage\` is ${als ? 'available' : 'not available'}.`
+		);
 	}
 
 	return store;
@@ -93,6 +85,7 @@ export async function init_render_context() {
 	} catch {}
 }
 
+// this has to be a function because rollup won't treeshake it if it's a constant
 function in_webcontainer() {
 	// @ts-ignore -- this will fail when we run typecheck because we exclude node types
 	// eslint-disable-next-line n/prefer-global/process

@@ -1,4 +1,4 @@
-/** @import { Decode, Transport } from '#shared' */
+/** @import { Decode, Hydratable, Transport } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import { hydrating } from './dom/hydration.js';
 import * as w from './warnings.js';
@@ -11,7 +11,7 @@ import * as e from './errors.js';
  * @param {Transport<T>} [options]
  * @returns {T}
  */
-export function hydratable(key, fn, options) {
+function isomorphic_hydratable(key, fn, options) {
 	if (!async_mode_flag) {
 		e.experimental_async_required('hydratable');
 	}
@@ -28,13 +28,22 @@ export function hydratable(key, fn, options) {
 	);
 }
 
+isomorphic_hydratable['get'] = get_hydratable_value;
+isomorphic_hydratable['has'] = has_hydratable_value;
+isomorphic_hydratable['set'] = () => e.lifecycle_function_unavailable('hydratable.set', 'browser');
+
+/** @type {Hydratable} */
+const hydratable = isomorphic_hydratable;
+
+export { hydratable };
+
 /**
  * @template T
  * @param {string} key
  * @param {{ decode?: Decode<T> }} [options]
  * @returns {T | undefined}
  */
-export function get_hydratable_value(key, options = {}) {
+function get_hydratable_value(key, options = {}) {
 	if (!async_mode_flag) {
 		e.experimental_async_required('getHydratableValue');
 	}
@@ -50,7 +59,7 @@ export function get_hydratable_value(key, options = {}) {
  * @param {string} key
  * @returns {boolean}
  */
-export function has_hydratable_value(key) {
+function has_hydratable_value(key) {
 	if (!async_mode_flag) {
 		e.experimental_async_required('hasHydratableValue');
 	}

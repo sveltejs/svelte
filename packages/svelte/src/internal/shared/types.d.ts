@@ -25,6 +25,13 @@ export type Transport<T> =
 			decode: Decode<T>;
 	  };
 
+export type Hydratable = {
+	<T>(key: string, fn: () => T, options?: Transport<T>): T;
+	get: <T>(key: string) => T | undefined;
+	has: (key: string) => boolean;
+	set: <T>(key: string, value: T, options?: Transport<T>) => void;
+};
+
 export type Resource<T> = {
 	then: Promise<Awaited<T>>['then'];
 	catch: Promise<Awaited<T>>['catch'];

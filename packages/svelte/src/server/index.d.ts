@@ -27,5 +27,3 @@ export function render<
 				}
 			]
 ): RenderOutput;
-
-export type { set_hydratable_value as setHydratableValue } from '../internal/server/hydratable.js';

@@ -34,6 +34,12 @@ Here, `List.svelte` is using `{@render children(item)` which means it expects `P
 
 > A snippet function was passed invalid arguments. Snippets should only be instantiated via `{@render ...}`
 
+## lifecycle_function_unavailable
+
+> `%name%(...)` is not available on the %location%
+
+Certain methods such as `mount` cannot be invoked while running in a server context, while others, such as `hydratable.set`, cannot be invoked while running in the browser.
+
 ## lifecycle_outside_component
 
 > `%name%(...)` can only be used during component initialisation

@@ -1,4 +1,4 @@
-/** @import { Encode, Transport } from '#shared' */
+/** @import { Encode, Hydratable, Transport } from '#shared' */
 /** @import { HydratableEntry } from '#server' */
 
 import { async_mode_flag } from '../flags/index.js';
@@ -13,7 +13,7 @@ import { DEV } from 'esm-env';
  * @param {Transport<T>} [options]
  * @returns {T}
  */
-export function hydratable(key, fn, options) {
+function isomorphic_hydratable(key, fn, options) {
 	if (!async_mode_flag) {
 		e.experimental_async_required('hydratable');
 	}
@@ -28,13 +28,23 @@ export function hydratable(key, fn, options) {
 	store.hydratables.set(key, entry);
 	return entry.value;
 }
+
+isomorphic_hydratable['get'] = () => e.lifecycle_function_unavailable('hydratable.get', 'server');
+isomorphic_hydratable['has'] = has_hydratable_value;
+isomorphic_hydratable['set'] = set_hydratable_value;
+
+/** @type {Hydratable} */
+const hydratable = isomorphic_hydratable;
+
+export { hydratable };
+
 /**
  * @template T
  * @param {string} key
  * @param {T} value
  * @param {{ encode?: Encode<T> }} [options]
  */
-export function set_hydratable_value(key, value, options = {}) {
+function set_hydratable_value(key, value, options = {}) {
 	if (!async_mode_flag) {
 		e.experimental_async_required('setHydratableValue');
 	}
@@ -46,6 +56,18 @@ export function set_hydratable_value(key, value, options = {}) {
 	}
 
 	store.hydratables.set(key, create_entry(value, options?.encode));
+}
+
+/**
+ * @param {string} key
+ * @returns {boolean}
+ */
+function has_hydratable_value(key) {
+	if (!async_mode_flag) {
+		e.experimental_async_required('hasHydratableValue');
+	}
+	const store = get_render_context();
+	return store.hydratables.has(key);
 }
 
 /**

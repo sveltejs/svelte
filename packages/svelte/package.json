@@ -95,10 +95,6 @@
       "types": "./types/index.d.ts",
       "default": "./src/server/index.js"
     },
-    "./client": {
-      "types": "./types/index.d.ts",
-      "default": "./src/client/index.js"
-    },
     "./store": {
       "types": "./types/index.d.ts",
       "worker": "./src/store/index-server.js",

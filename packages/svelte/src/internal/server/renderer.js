@@ -576,12 +576,12 @@ export class Renderer {
 	async #collect_hydratables() {
 		const map = get_render_context().hydratables;
 		/** @type {(value: unknown) => string} */
-		let default_stringify;
+		const default_encode = new MemoizedUneval().uneval;
 
 		/** @type {[string, unknown][]} */
 		let entries = [];
 		for (const [k, v] of map) {
-			const encode = v.encode ?? (default_stringify ??= new MemoizedUneval().uneval);
+			const encode = v.encode ?? default_encode;
 			// sequential await is okay here -- all the work is already kicked off
 			entries.push([k, encode(await v.value)]);
 		}
@@ -649,9 +649,7 @@ export class Renderer {
 		for (const [k, v] of serialized) {
 			entries.push(`["${k}",${v}]`);
 		}
-		// TODO csp?
-		// TODO how can we communicate this error better? Is there a way to not just send it to the console?
-		// (it is probably very rare so... not too worried)
+		// TODO csp -- have discussed but not implemented
 		return `
 <script>
 	var store = (window.__svelte ??= {}).h ??= new Map();

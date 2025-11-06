@@ -47,12 +47,12 @@ ${stack}\nhttps://svelte.dev/e/hydratable_clobbering`);
 }
 
 /**
- * `%name%(...)` is not available on the server
- * @param {string} name
+ * Failed to retrieve `render` context. %addendum%
+ * @param {string} addendum
  * @returns {never}
  */
-export function lifecycle_function_unavailable(name) {
-	const error = new Error(`lifecycle_function_unavailable\n\`${name}(...)\` is not available on the server\nhttps://svelte.dev/e/lifecycle_function_unavailable`);
+export function render_context_unavailable(addendum) {
+	const error = new Error(`render_context_unavailable\nFailed to retrieve \`render\` context. ${addendum}\nhttps://svelte.dev/e/render_context_unavailable`);
 
 	error.name = 'Svelte error';
 
