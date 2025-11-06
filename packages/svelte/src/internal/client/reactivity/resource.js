@@ -121,7 +121,7 @@ class Resource {
 	get finally() {
 		get(this.#then);
 		return (/** @type {any} */ fn) => {
-			return get(this.#then)().finally(fn);
+			return get(this.#then)(fn, fn);
 		};
 	}
 
