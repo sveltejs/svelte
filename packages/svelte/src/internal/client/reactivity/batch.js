@@ -14,33 +14,26 @@ import {
 	MAYBE_DIRTY,
 	DERIVED,
 	BOUNDARY_EFFECT,
-	EAGER_EFFECT
+	EAGER_EFFECT,
+	HEAD_EFFECT,
+	ERROR_VALUE
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
 import {
 	active_effect,
 	get,
-	increment_write_version,
 	is_dirty,
 	is_updating_effect,
 	set_is_updating_effect,
 	set_signal_status,
-	tick,
 	update_effect
 } from '../runtime.js';
 import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
-import {
-	flush_eager_effects,
-	eager_effects,
-	old_values,
-	set_eager_effects,
-	source,
-	update
-} from './sources.js';
+import { flush_eager_effects, old_values, set_eager_effects, source, update } from './sources.js';
 import { eager_effect, unlink_effect } from './effects.js';
 
 /**
@@ -73,9 +66,6 @@ export let previous_batch = null;
  * @type {Map<Value, any> | null}
  */
 export let batch_values = null;
-
-/** @type {Set<() => void>} */
-export let effect_pending_updates = new Set();
 
 /** @type {Effect[]} */
 let queued_root_effects = [];
@@ -196,6 +186,8 @@ export class Batch {
 			flush_queued_effects(target.effects);
 
 			previous_batch = null;
+
+			this.#deferred?.resolve();
 		}
 
 		batch_values = null;
@@ -294,12 +286,16 @@ export class Batch {
 			this.previous.set(source, value);
 		}
 
-		this.current.set(source, source.v);
-		batch_values?.set(source, source.v);
+		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
+		if ((source.f & ERROR_VALUE) === 0) {
+			this.current.set(source, source.v);
+			batch_values?.set(source, source.v);
+		}
 	}
 
 	activate() {
 		current_batch = this;
+		this.apply();
 	}
 
 	deactivate() {
@@ -322,16 +318,6 @@ export class Batch {
 		}
 
 		this.deactivate();
-
-		for (const update of effect_pending_updates) {
-			effect_pending_updates.delete(update);
-			update();
-
-			if (current_batch !== null) {
-				// only do one at a time
-				break;
-			}
-		}
 	}
 
 	discard() {
@@ -432,8 +418,6 @@ export class Batch {
 
 		this.committed = true;
 		batches.delete(this);
-
-		this.#deferred?.resolve();
 	}
 
 	/**
@@ -513,7 +497,7 @@ export class Batch {
 	}
 
 	apply() {
-		if (!async_mode_flag || batches.size === 1) return;
+		if (!async_mode_flag || (!this.is_fork && batches.size === 1)) return;
 
 		// if there are multiple batches, we are 'time travelling' —
 		// we need to override values with the ones in this batch...
@@ -813,7 +797,12 @@ export function schedule_effect(signal) {
 
 		// if the effect is being scheduled because a parent (each/await/etc) block
 		// updated an internal source, bail out or we'll cause a second flush
-		if (is_flushing && effect === active_effect && (flags & BLOCK_EFFECT) !== 0) {
+		if (
+			is_flushing &&
+			effect === active_effect &&
+			(flags & BLOCK_EFFECT) !== 0 &&
+			(flags & HEAD_EFFECT) === 0
+		) {
 			return;
 		}
 
@@ -913,28 +902,36 @@ export function fork(fn) {
 		e.fork_timing();
 	}
 
-	const batch = Batch.ensure();
+	var batch = Batch.ensure();
 	batch.is_fork = true;
 
-	const settled = batch.settled();
+	var committed = false;
+	var settled = batch.settled();
 
 	flushSync(fn);
 
 	// revert state changes
-	for (const [source, value] of batch.previous) {
+	for (var [source, value] of batch.previous) {
 		source.v = value;
 	}
 
 	return {
 		commit: async () => {
+			if (committed) {
+				await settled;
+				return;
+			}
+
 			if (!batches.has(batch)) {
 				e.fork_discarded();
 			}
 
+			committed = true;
+
 			batch.is_fork = false;
 
 			// apply changes
-			for (const [source, value] of batch.current) {
+			for (var [source, value] of batch.current) {
 				source.v = value;
 			}
 
@@ -945,9 +942,9 @@ export function fork(fn) {
 			// TODO maybe there's a better implementation?
 			flushSync(() => {
 				/** @type {Set<Effect>} */
-				const eager_effects = new Set();
+				var eager_effects = new Set();
 
-				for (const source of batch.current.keys()) {
+				for (var source of batch.current.keys()) {
 					mark_eager_effects(source, eager_effects);
 				}
 
@@ -959,7 +956,7 @@ export function fork(fn) {
 			await settled;
 		},
 		discard: () => {
-			if (batches.has(batch)) {
+			if (!committed && batches.has(batch)) {
 				batches.delete(batch);
 				batch.discard();
 			}

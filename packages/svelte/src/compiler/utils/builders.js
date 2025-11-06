@@ -42,8 +42,7 @@ export function arrow(params, body, async = false) {
 		body,
 		expression: body.type !== 'BlockStatement',
 		generator: false,
-		async,
-		metadata: /** @type {any} */ (null) // should not be used by codegen
+		async
 	};
 }
 
@@ -81,6 +80,17 @@ export function binary(operator, left, right) {
  */
 export function block(body) {
 	return { type: 'BlockStatement', body };
+}
+
+/**
+ * @param {ESTree.Identifier | null} id
+ * @param {ESTree.ClassBody} body
+ * @param {ESTree.Expression | null} [superClass]
+ * @param {ESTree.Decorator[]} [decorators]
+ * @returns {ESTree.ClassExpression}
+ */
+export function class_expression(id, body, superClass, decorators = []) {
+	return { type: 'ClassExpression', body, superClass, decorators };
 }
 
 /**
@@ -185,7 +195,7 @@ export function declaration(kind, declarations) {
 
 /**
  * @param {ESTree.Pattern | string} pattern
- * @param {ESTree.Expression} [init]
+ * @param {ESTree.Expression | null} [init]
  * @returns {ESTree.VariableDeclarator}
  */
 export function declarator(pattern, init) {
@@ -237,8 +247,7 @@ export function function_declaration(id, params, body, async = false) {
 		params,
 		body,
 		generator: false,
-		async,
-		metadata: /** @type {any} */ (null) // should not be used by codegen
+		async
 	};
 }
 
@@ -522,7 +531,7 @@ const this_instance = {
 
 /**
  * @param {string | ESTree.Pattern} pattern
- * @param { ESTree.Expression} [init]
+ * @param {ESTree.Expression | null} [init]
  * @returns {ESTree.VariableDeclaration}
  */
 function let_builder(pattern, init) {
@@ -531,7 +540,7 @@ function let_builder(pattern, init) {
 
 /**
  * @param {string | ESTree.Pattern} pattern
- * @param { ESTree.Expression} init
+ * @param {ESTree.Expression | null} init
  * @returns {ESTree.VariableDeclaration}
  */
 function const_builder(pattern, init) {
@@ -540,7 +549,7 @@ function const_builder(pattern, init) {
 
 /**
  * @param {string | ESTree.Pattern} pattern
- * @param { ESTree.Expression} [init]
+ * @param {ESTree.Expression | null} [init]
  * @returns {ESTree.VariableDeclaration}
  */
 function var_builder(pattern, init) {
@@ -595,8 +604,7 @@ function function_builder(id, params, body, async = false) {
 		params,
 		body,
 		generator: false,
-		async,
-		metadata: /** @type {any} */ (null) // should not be used by codegen
+		async
 	};
 }
 

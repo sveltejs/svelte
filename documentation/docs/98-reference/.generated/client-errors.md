@@ -149,7 +149,7 @@ This restriction only applies when using the `experimental.async` option, which 
 ### fork_discarded
 
 ```
-Cannot commit a fork that was already committed or discarded
+Cannot commit a fork that was already discarded
 ```
 
 ### fork_timing

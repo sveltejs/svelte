@@ -25,7 +25,6 @@ import {
 	ROOT_EFFECT,
 	EFFECT_TRANSPARENT,
 	DERIVED,
-	UNOWNED,
 	CLEAN,
 	EAGER_EFFECT,
 	HEAD_EFFECT,
@@ -33,7 +32,8 @@ import {
 	EFFECT_PRESERVED,
 	STALE_REACTION,
 	USER_EFFECT,
-	ASYNC
+	ASYNC,
+	CONNECTED
 } from '#client/constants';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
@@ -48,11 +48,11 @@ import { without_reactive_context } from '../dom/elements/bindings/shared.js';
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
  */
 export function validate_effect(rune) {
-	if (active_effect === null && active_reaction === null) {
-		e.effect_orphan(rune);
-	}
+	if (active_effect === null) {
+		if (active_reaction === null) {
+			e.effect_orphan(rune);
+		}
 
-	if (active_reaction !== null && (active_reaction.f & UNOWNED) !== 0 && active_effect === null) {
 		e.effect_in_unowned_derived();
 	}
 
@@ -103,7 +103,7 @@ function create_effect(type, fn, sync, push = true) {
 		deps: null,
 		nodes_start: null,
 		nodes_end: null,
-		f: type | DIRTY,
+		f: type | DIRTY | CONNECTED,
 		first: null,
 		fn,
 		last: null,
@@ -365,10 +365,12 @@ export function render_effect(fn, flags = 0) {
  * @param {(...expressions: any) => void | (() => void)} fn
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
+ * @param {Array<Promise<void>>} blockers
+ * @param {boolean} defer
  */
-export function template_effect(fn, sync = [], async = []) {
-	flatten(sync, async, (values) => {
-		create_effect(RENDER_EFFECT, () => fn(...values.map(get)), true);
+export function template_effect(fn, sync = [], async = [], blockers = [], defer = false) {
+	flatten(blockers, sync, async, (values) => {
+		create_effect(defer ? EFFECT : RENDER_EFFECT, () => fn(...values.map(get)), true);
 	});
 }
 

@@ -12,7 +12,7 @@ import {
 import { queue_micro_task } from '../task.js';
 import { HYDRATION_START_ELSE, UNINITIALIZED } from '../../../../constants.js';
 import { is_runes } from '../../context.js';
-import { flushSync, is_flushing_sync } from '../../reactivity/batch.js';
+import { Batch, flushSync, is_flushing_sync } from '../../reactivity/batch.js';
 import { BranchManager } from './branches.js';
 import { capture, unset_context } from '../../reactivity/async.js';
 
@@ -69,7 +69,11 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 				if (destroyed) return;
 
 				resolved = true;
-				restore();
+				// We don't want to restore the previous batch here; {#await} blocks don't follow the async logic
+				// we have elsewhere, instead pending/resolve/fail states are each their own batch so to speak.
+				restore(false);
+				// Make sure we have a batch, since the branch manager expects one to exist
+				Batch.ensure();
 
 				if (hydrating) {
 					// `restore()` could set `hydrating` to `true`, which we very much

@@ -3,7 +3,7 @@
 /** @import { AST, BindingKind, DeclarationKind } from '#compiler' */
 import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
-import { create_expression_metadata } from './nodes.js';
+import { ExpressionMetadata } from './nodes.js';
 import * as b from '#compiler/builders';
 import * as e from '../errors.js';
 import {
@@ -108,6 +108,9 @@ export class Binding {
 	/** @type {Array<{ node: Identifier; path: AST.SvelteNode[] }>} */
 	references = [];
 
+	/** @type {Array<{ value: Expression; scope: Scope }>} */
+	assignments = [];
+
 	/**
 	 * For `legacy_reactive`: its reactive dependencies
 	 * @type {Binding[]}
@@ -130,6 +133,15 @@ export class Binding {
 	reassigned = false;
 
 	/**
+	 * Instance-level declarations may follow (or contain) a top-level `await`. In these cases,
+	 * any reads that occur in the template must wait for the corresponding promise to resolve
+	 * otherwise the initial value will not have been assigned
+	 * TODO the blocker is set during transform which feels a bit grubby
+	 * @type {Expression | null}
+	 */
+	blocker = null;
+
+	/**
 	 *
 	 * @param {Scope} scope
 	 * @param {Identifier} node
@@ -143,6 +155,10 @@ export class Binding {
 		this.initial = initial;
 		this.kind = kind;
 		this.declaration_kind = declaration_kind;
+
+		if (initial) {
+			this.assignments.push({ value: /** @type {Expression} */ (initial), scope });
+		}
 	}
 
 	get updated() {
@@ -859,7 +875,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	/** @type {[Scope, { node: Identifier; path: AST.SvelteNode[] }][]} */
 	const references = [];
 
-	/** @type {[Scope, Pattern | MemberExpression][]} */
+	/** @type {[Scope, Pattern | MemberExpression, Expression][]} */
 	const updates = [];
 
 	/**
@@ -1047,12 +1063,13 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		// updates
 		AssignmentExpression(node, { state, next }) {
-			updates.push([state.scope, node.left]);
+			updates.push([state.scope, node.left, node.right]);
 			next();
 		},
 
 		UpdateExpression(node, { state, next }) {
-			updates.push([state.scope, /** @type {Identifier | MemberExpression} */ (node.argument)]);
+			const expression = /** @type {Identifier | MemberExpression} */ (node.argument);
+			updates.push([state.scope, expression, expression]);
 			next();
 		},
 
@@ -1201,7 +1218,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			if (node.fallback) visit(node.fallback, { scope });
 
 			node.metadata = {
-				expression: create_expression_metadata(),
+				expression: new ExpressionMetadata(),
 				keyed: false,
 				contains_group_binding: false,
 				index: scope.root.unique('$$index'),
@@ -1273,10 +1290,11 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		BindDirective(node, context) {
-			updates.push([
-				context.state.scope,
-				/** @type {Identifier | MemberExpression} */ (node.expression)
-			]);
+			if (node.expression.type !== 'SequenceExpression') {
+				const expression = /** @type {Identifier | MemberExpression} */ (node.expression);
+				updates.push([context.state.scope, expression, expression]);
+			}
+
 			context.next();
 		},
 
@@ -1311,7 +1329,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		scope.reference(node, path);
 	}
 
-	for (const [scope, node] of updates) {
+	for (const [scope, node, value] of updates) {
 		for (const expression of unwrap_pattern(node)) {
 			const left = object(expression);
 			const binding = left && scope.get(left.name);
@@ -1319,6 +1337,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			if (binding !== null && left !== binding.node) {
 				if (left === expression) {
 					binding.reassigned = true;
+					binding.assignments.push({ value, scope });
 				} else {
 					binding.mutated = true;
 				}

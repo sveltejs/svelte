@@ -9,15 +9,14 @@ import {
 	EFFECT_PRESERVED,
 	MAYBE_DIRTY,
 	STALE_REACTION,
-	UNOWNED,
 	ASYNC,
-	WAS_MARKED
+	WAS_MARKED,
+	CONNECTED
 } from '#client/constants';
 import {
 	active_reaction,
 	active_effect,
 	set_signal_status,
-	skip_reaction,
 	update_reaction,
 	increment_write_version,
 	set_active_effect,
@@ -27,7 +26,7 @@ import {
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import { async_effect, destroy_effect, teardown } from './effects.js';
+import { async_effect, destroy_effect, effect_tracking, teardown } from './effects.js';
 import { eager_effects, internal_set, set_eager_effects, source } from './sources.js';
 import { get_stack } from '../dev/tracing.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -61,9 +60,7 @@ export function derived(fn) {
 			? /** @type {Derived} */ (active_reaction)
 			: null;
 
-	if (active_effect === null || (parent_derived !== null && (parent_derived.f & UNOWNED) !== 0)) {
-		flags |= UNOWNED;
-	} else {
+	if (active_effect !== null) {
 		// Since deriveds are evaluated lazily, any effects created inside them are
 		// created too late to ensure that the parent effect is added to the tree
 		active_effect.f |= EFFECT_PRESERVED;
@@ -86,7 +83,7 @@ export function derived(fn) {
 	};
 
 	if (DEV && tracing_mode_flag) {
-		signal.created = get_stack('CreatedAt');
+		signal.created = get_stack('created at');
 	}
 
 	return signal;
@@ -368,12 +365,16 @@ export function update_derived(derived) {
 		return;
 	}
 
+	// During time traveling we don't want to reset the status so that
+	// traversal of the graph in the other batches still happens
 	if (batch_values !== null) {
-		batch_values.set(derived, derived.v);
+		// only cache the value if we're in a tracking context, otherwise we won't
+		// clear the cache in `mark_reactions` when dependencies are updated
+		if (effect_tracking()) {
+			batch_values.set(derived, derived.v);
+		}
 	} else {
-		var status =
-			(skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null ? MAYBE_DIRTY : CLEAN;
-
+		var status = (derived.f & CONNECTED) === 0 ? MAYBE_DIRTY : CLEAN;
 		set_signal_status(derived, status);
 	}
 }

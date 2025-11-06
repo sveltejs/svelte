@@ -6,6 +6,13 @@ export const BLOCK_EFFECT = 1 << 4;
 export const BRANCH_EFFECT = 1 << 5;
 export const ROOT_EFFECT = 1 << 6;
 export const BOUNDARY_EFFECT = 1 << 7;
+/**
+ * Indicates that a reaction is connected to an effect root — either it is an effect,
+ * or it is a derived that is depended on by at least one effect. If a derived has
+ * no dependents, we can disconnect it from the graph, allowing it to either be
+ * GC'd or reconnected later if an effect comes to depend on it again
+ */
+export const CONNECTED = 1 << 9;
 export const CLEAN = 1 << 10;
 export const DIRTY = 1 << 11;
 export const MAYBE_DIRTY = 1 << 12;
@@ -13,6 +20,7 @@ export const INERT = 1 << 13;
 export const DESTROYED = 1 << 14;
 
 // Flags exclusive to effects
+/** Set once an effect that should run synchronously has run */
 export const EFFECT_RAN = 1 << 15;
 /**
  * 'Transparent' effects do not create a transition boundary.
@@ -25,8 +33,6 @@ export const EFFECT_PRESERVED = 1 << 19;
 export const USER_EFFECT = 1 << 20;
 
 // Flags exclusive to deriveds
-export const UNOWNED = 1 << 8;
-export const DISCONNECTED = 1 << 9;
 /**
  * Tells that we marked this derived and its reactions as visited during the "mark as (maybe) dirty"-phase.
  * Will be lifted during execution of the derived and during checking its dirty state (both are necessary

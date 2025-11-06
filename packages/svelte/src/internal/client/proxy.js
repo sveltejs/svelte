@@ -53,7 +53,7 @@ export function proxy(value) {
 	var is_proxied_array = is_array(value);
 	var version = source(0);
 
-	var stack = DEV && tracing_mode_flag ? get_stack('CreatedAt') : null;
+	var stack = DEV && tracing_mode_flag ? get_stack('created at') : null;
 	var parent_version = update_version;
 
 	/**
@@ -267,7 +267,7 @@ export function proxy(value) {
 					if (other_s !== undefined) {
 						set(other_s, UNINITIALIZED);
 					} else if (i in target) {
-						// If the item exists in the original, we need to create a uninitialized source,
+						// If the item exists in the original, we need to create an uninitialized source,
 						// else a later read of the property would result in a source being created with
 						// the value of the original item at that index.
 						other_s = with_parent(() => source(UNINITIALIZED, stack));

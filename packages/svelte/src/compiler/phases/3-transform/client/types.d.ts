@@ -21,9 +21,6 @@ export interface ClientTransformState extends TransformState {
 	 */
 	readonly in_constructor: boolean;
 
-	/** `true` if we're transforming the contents of `<script>` */
-	readonly is_instance: boolean;
-
 	readonly transform: Record<
 		string,
 		{

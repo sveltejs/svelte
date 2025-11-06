@@ -1,5 +1,5 @@
-/** @import { AssignmentOperator, Expression, Identifier, Node, Statement, BlockStatement } from 'estree' */
-/** @import { AST, ExpressionMetadata } from '#compiler' */
+/** @import { Expression, Identifier, Node, Statement, BlockStatement, ArrayExpression } from 'estree' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ServerTransformState } from '../../types.js' */
 
 import { escape_html } from '../../../../../../escaping.js';
@@ -13,6 +13,7 @@ import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_whitespaces_strict } from '../../../../patterns.js';
 import { has_await_expression } from '../../../../../utils/ast.js';
+import { ExpressionMetadata } from '../../../../nodes.js';
 
 /** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
 export const block_open = b.literal(BLOCK_OPEN);
@@ -76,12 +77,11 @@ export function process_children(nodes, { visit, state }) {
 	}
 
 	for (const node of nodes) {
-		if (node.type === 'ExpressionTag' && node.metadata.expression.has_await) {
+		if (node.type === 'ExpressionTag' && node.metadata.expression.is_async()) {
 			flush();
-			const visited = /** @type {Expression} */ (visit(node.expression));
-			state.template.push(
-				b.stmt(b.call('$$renderer.push', b.thunk(b.call('$.escape', visited), true)))
-			);
+
+			const expression = /** @type {Expression} */ (visit(node.expression));
+			state.template.push(create_push(b.call('$.escape', expression), node.metadata.expression));
 		} else if (node.type === 'Text' || node.type === 'Comment' || node.type === 'ExpressionTag') {
 			sequence.push(node);
 		} else {
@@ -274,9 +274,50 @@ export function create_child_block(body, async) {
 /**
  * Creates a `$$renderer.async(...)` expression statement
  * @param {BlockStatement | Expression} body
+ * @param {ArrayExpression} blockers
+ * @param {boolean} has_await
+ * @param {boolean} needs_hydration_markers
  */
-export function create_async_block(body) {
-	return b.stmt(b.call('$$renderer.async', b.arrow([b.id('$$renderer')], body, true)));
+export function create_async_block(
+	body,
+	blockers = b.array([]),
+	has_await = true,
+	needs_hydration_markers = true
+) {
+	return b.stmt(
+		b.call(
+			needs_hydration_markers ? '$$renderer.async_block' : '$$renderer.async',
+			blockers,
+			b.arrow([b.id('$$renderer')], body, has_await)
+		)
+	);
+}
+
+/**
+ * @param {Expression} expression
+ * @param {ExpressionMetadata} metadata
+ * @param {boolean} needs_hydration_markers
+ * @returns {Expression | Statement}
+ */
+export function create_push(expression, metadata, needs_hydration_markers = false) {
+	if (metadata.is_async()) {
+		let statement = b.stmt(b.call('$$renderer.push', b.thunk(expression, metadata.has_await)));
+
+		const blockers = metadata.blockers();
+
+		if (blockers.elements.length > 0) {
+			statement = create_async_block(
+				b.block([statement]),
+				blockers,
+				false,
+				needs_hydration_markers
+			);
+		}
+
+		return statement;
+	}
+
+	return expression;
 }
 
 /**
@@ -290,9 +331,20 @@ export function call_component_renderer(body, component_fn_id) {
 	);
 }
 
+/**
+ * A utility for optimising promises in templates. Without it code like
+ * `<Component foo={await fetch()} bar={await other()} />` would be transformed
+ * into two blocking promises, with it it's using `Promise.all` to await them.
+ * It also keeps track of blocking promises, i.e. those that need to be resolved before continuing.
+ */
 export class PromiseOptimiser {
 	/** @type {Expression[]} */
 	expressions = [];
+
+	has_await = false;
+
+	/** @type {Set<Expression>} */
+	#blockers = new Set();
 
 	/**
 	 *
@@ -300,7 +352,15 @@ export class PromiseOptimiser {
 	 * @param {ExpressionMetadata} metadata
 	 */
 	transform = (expression, metadata) => {
+		for (const binding of metadata.dependencies) {
+			if (binding.blocker) {
+				this.#blockers.add(binding.blocker);
+			}
+		}
+
 		if (metadata.has_await) {
+			this.has_await = true;
+
 			const length = this.expressions.push(expression);
 			return b.id(`$$${length - 1}`);
 		}
@@ -309,6 +369,10 @@ export class PromiseOptimiser {
 	};
 
 	apply() {
+		if (this.expressions.length === 0) {
+			return b.empty;
+		}
+
 		if (this.expressions.length === 1) {
 			return b.const('$$0', this.expressions[0]);
 		}
@@ -325,5 +389,13 @@ export class PromiseOptimiser {
 			b.array_pattern(this.expressions.map((_, i) => b.id(`$$${i}`))),
 			b.await(b.call('Promise.all', promises))
 		);
+	}
+
+	blockers() {
+		return b.array([...this.#blockers]);
+	}
+
+	is_async() {
+		return this.expressions.length > 0 || this.#blockers.size > 0;
 	}
 }

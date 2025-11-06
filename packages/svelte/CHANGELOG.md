@@ -1,5 +1,79 @@
 # svelte
 
+## 5.43.4
+
+### Patch Changes
+
+- chore: simplify connection/disconnection logic ([#17105](https://github.com/sveltejs/svelte/pull/17105))
+
+- fix: reconnect deriveds to effect tree when time-travelling ([#17105](https://github.com/sveltejs/svelte/pull/17105))
+
+## 5.43.3
+
+### Patch Changes
+
+- fix: ensure fork always accesses correct values ([#17098](https://github.com/sveltejs/svelte/pull/17098))
+
+- fix: change title only after any pending work has completed ([#17061](https://github.com/sveltejs/svelte/pull/17061))
+
+- fix: preserve symbols when creating derived rest properties ([#17096](https://github.com/sveltejs/svelte/pull/17096))
+
+## 5.43.2
+
+### Patch Changes
+
+- fix: treat each blocks with async dependencies as uncontrolled ([#17077](https://github.com/sveltejs/svelte/pull/17077))
+
+## 5.43.1
+
+### Patch Changes
+
+- fix: transform `$bindable` after `await` expressions ([#17066](https://github.com/sveltejs/svelte/pull/17066))
+
+## 5.43.0
+
+### Minor Changes
+
+- feat: out-of-order rendering ([#17038](https://github.com/sveltejs/svelte/pull/17038))
+
+### Patch Changes
+
+- fix: settle batch after DOM updates ([#17054](https://github.com/sveltejs/svelte/pull/17054))
+
+## 5.42.3
+
+### Patch Changes
+
+- fix: handle `<svelte:head>` rendered asynchronously ([#17052](https://github.com/sveltejs/svelte/pull/17052))
+
+- fix: don't restore batch in `#await` ([#17051](https://github.com/sveltejs/svelte/pull/17051))
+
+## 5.42.2
+
+### Patch Changes
+
+- fix: better error message for global variable assignments ([#17036](https://github.com/sveltejs/svelte/pull/17036))
+
+- chore: tweak memoizer logic ([#17042](https://github.com/sveltejs/svelte/pull/17042))
+
+## 5.42.1
+
+### Patch Changes
+
+- fix: ignore fork `discard()` after `commit()` ([#17034](https://github.com/sveltejs/svelte/pull/17034))
+
+## 5.42.0
+
+### Minor Changes
+
+- feat: experimental `fork` API ([#17004](https://github.com/sveltejs/svelte/pull/17004))
+
+### Patch Changes
+
+- fix: always allow `setContext` before first await in component ([#17031](https://github.com/sveltejs/svelte/pull/17031))
+
+- fix: less confusing names for inspect errors ([#17026](https://github.com/sveltejs/svelte/pull/17026))
+
 ## 5.41.4
 
 ### Patch Changes

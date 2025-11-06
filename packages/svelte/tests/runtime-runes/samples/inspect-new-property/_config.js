@@ -15,9 +15,9 @@ export default test({
 			{},
 			[],
 			{ x: 'hello' },
-			'at HTMLButtonElement.on_click',
+			'at HTMLButtonElement.Main.button.__click',
 			['hello'],
-			'at HTMLButtonElement.on_click'
+			'at HTMLButtonElement.Main.button.__click'
 		]);
 	}
 });

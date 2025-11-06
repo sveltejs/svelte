@@ -12,7 +12,8 @@ import {
 	process_children,
 	build_template,
 	create_child_block,
-	PromiseOptimiser
+	PromiseOptimiser,
+	create_async_block
 } from './shared/utils.js';
 
 /**
@@ -202,13 +203,19 @@ export function RegularElement(node, context) {
 		state.template.push(b.stmt(b.call('$.pop_element')));
 	}
 
-	if (optimiser.expressions.length > 0) {
-		context.state.template.push(
-			create_child_block(
-				b.block([optimiser.apply(), ...state.init, ...build_template(state.template)]),
-				true
-			)
+	if (optimiser.is_async()) {
+		let statement = create_child_block(
+			b.block([optimiser.apply(), ...state.init, ...build_template(state.template)]),
+			true
 		);
+
+		const blockers = optimiser.blockers();
+
+		if (blockers.elements.length > 0) {
+			statement = create_async_block(b.block([statement]), blockers, false, false);
+		}
+
+		context.state.template.push(statement);
 	} else {
 		context.state.init.push(...state.init);
 		context.state.template.push(...state.template);
