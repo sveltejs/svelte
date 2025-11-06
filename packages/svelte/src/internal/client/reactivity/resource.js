@@ -42,12 +42,6 @@ class Resource {
 	/** @type {Source<Promise<T>>} */
 	#promise;
 
-	/** @type {Derived<T | undefined>} */
-	#current = derived(() => {
-		if (!get(this.#ready)) return undefined;
-		return get(this.#raw);
-	});
-
 	/** {@type Source<any>} */
 	#error = state(undefined);
 
@@ -126,7 +120,7 @@ class Resource {
 	}
 
 	get current() {
-		return get(this.#current);
+		return get(this.#ready) ? get(this.#raw) : undefined;
 	}
 
 	get error() {
