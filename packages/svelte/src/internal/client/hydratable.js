@@ -30,7 +30,7 @@ function isomorphic_hydratable(key, fn, options) {
 
 isomorphic_hydratable['get'] = get_hydratable_value;
 isomorphic_hydratable['has'] = has_hydratable_value;
-isomorphic_hydratable['set'] = () => e.lifecycle_function_unavailable('hydratable.set', 'browser');
+isomorphic_hydratable['set'] = () => e.fn_unavailable_on_client('hydratable.set');
 
 /** @type {Hydratable} */
 const hydratable = isomorphic_hydratable;

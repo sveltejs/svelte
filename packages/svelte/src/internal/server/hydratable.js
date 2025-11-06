@@ -29,7 +29,7 @@ function isomorphic_hydratable(key, fn, options) {
 	return entry.value;
 }
 
-isomorphic_hydratable['get'] = () => e.lifecycle_function_unavailable('hydratable.get', 'server');
+isomorphic_hydratable['get'] = () => e.fn_unavailable_on_server('hydratable.get');
 isomorphic_hydratable['has'] = has_hydratable_value;
 isomorphic_hydratable['set'] = set_hydratable_value;
 

@@ -22,19 +22,19 @@ export function createEventDispatcher() {
 }
 
 export function mount() {
-	e.lifecycle_function_unavailable('mount', 'server');
+	e.lifecycle_function_unavailable('mount');
 }
 
 export function hydrate() {
-	e.lifecycle_function_unavailable('hydrate', 'server');
+	e.lifecycle_function_unavailable('hydrate');
 }
 
 export function unmount() {
-	e.lifecycle_function_unavailable('unmount', 'server');
+	e.lifecycle_function_unavailable('unmount');
 }
 
 export function fork() {
-	e.lifecycle_function_unavailable('fork', 'server');
+	e.lifecycle_function_unavailable('fork');
 }
 
 export async function tick() {}

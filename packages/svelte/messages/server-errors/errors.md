@@ -4,6 +4,10 @@
 
 You (or the framework you're using) called [`render(...)`](svelte-server#render) with a component containing an `await` expression. Either `await` the result of `render` or wrap the `await` (or the component containing it) in a [`<svelte:boundary>`](svelte-boundary) with a `pending` snippet.
 
+## fn_unavailable_on_server
+
+> `%name%`(...) is unavailable on the server.
+
 ## html_deprecated
 
 > The `html` property of server render results has been deprecated. Use `body` instead.
@@ -28,6 +32,11 @@ This error occurs when using `hydratable` or `setHydratableValue` multiple times
   ])
 </script>
 ```
+
+## lifecycle_function_unavailable
+
+> `%name%(...)` is not available on the server
+Certain methods such as `mount` cannot be invoked while running in a server context. Avoid calling them eagerly, i.e. not during render.
 
 ## render_context_unavailable
 

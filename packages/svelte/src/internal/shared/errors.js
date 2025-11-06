@@ -52,24 +52,6 @@ export function invalid_snippet_arguments() {
 }
 
 /**
- * `%name%(...)` is not available on the %location%
- * @param {string} name
- * @param {string} location
- * @returns {never}
- */
-export function lifecycle_function_unavailable(name, location) {
-	if (DEV) {
-		const error = new Error(`lifecycle_function_unavailable\n\`${name}(...)\` is not available on the ${location}\nhttps://svelte.dev/e/lifecycle_function_unavailable`);
-
-		error.name = 'Svelte error';
-
-		throw error;
-	} else {
-		throw new Error(`https://svelte.dev/e/lifecycle_function_unavailable`);
-	}
-}
-
-/**
  * `%name%(...)` can only be used during component initialisation
  * @param {string} name
  * @returns {never}
