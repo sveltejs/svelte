@@ -27,9 +27,9 @@ export type Transport<T> =
 
 export type Hydratable = {
 	<T>(key: string, fn: () => T, options?: Transport<T>): T;
-	get: <T>(key: string) => T | undefined;
+	get: <T>(key: string, options?: { decode?: Decode<T> }) => T | undefined;
 	has: (key: string) => boolean;
-	set: <T>(key: string, value: T, options?: Transport<T>) => void;
+	set: <T>(key: string, value: T, options?: { encode?: Encode<T> }) => void;
 };
 
 export type Resource<T> = {
