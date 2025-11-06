@@ -355,6 +355,7 @@ export function validate_binding(state, binding, expression) {
 			b.call(
 				'$.validate_binding',
 				b.literal(state.analysis.source.slice(binding.start, binding.end)),
+				binding.metadata.expression.blockers(),
 				b.thunk(
 					state.store_to_invalidate ? b.sequence([b.call('$.mark_store_binding'), obj]) : obj
 				),
