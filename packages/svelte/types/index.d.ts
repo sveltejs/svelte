@@ -2195,7 +2195,28 @@ declare module 'svelte/motion' {
 }
 
 declare module 'svelte/reactivity' {
-	export type Resource<T> = Resource_1<T>;
+	export type Resource<T> = {
+		then: Promise<Awaited<T>>['then'];
+		catch: Promise<Awaited<T>>['catch'];
+		finally: Promise<Awaited<T>>['finally'];
+		refresh: () => Promise<void>;
+		set: (value: Awaited<T>) => void;
+		loading: boolean;
+		error: any;
+	} & (
+		| {
+				ready: false;
+				current: undefined;
+		  }
+		| {
+				ready: true;
+				current: Awaited<T>;
+		  }
+	);
+
+	type GetRequestInit = Omit<RequestInit, 'method' | 'body'> & { method?: 'GET' };
+
+	type CacheEntry = { count: number; item: any };
 	/**
 	 * A reactive version of the built-in [`Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date) object.
 	 * Reading the date (whether with methods like `date.getTime()` or `date.toString()`, or via things like [`Intl.DateTimeFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat))
@@ -2459,30 +2480,8 @@ declare module 'svelte/reactivity' {
 	 * @since 5.7.0
 	 */
 	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
-	export function resource<T>(fn: () => T): Resource_1<T>;
-	export function fetcher<TReturn>(url: string | URL, init?: GetRequestInit | undefined): Resource_1<TReturn>;
-	type Resource_1<T> = {
-		then: Promise<Awaited<T>>['then'];
-		catch: Promise<Awaited<T>>['catch'];
-		finally: Promise<Awaited<T>>['finally'];
-		refresh: () => Promise<void>;
-		set: (value: Awaited<T>) => void;
-		loading: boolean;
-		error: any;
-	} & (
-		| {
-				ready: false;
-				current: undefined;
-		  }
-		| {
-				ready: true;
-				current: Awaited<T>;
-		  }
-	);
-
-	type GetRequestInit = Omit<RequestInit, 'method' | 'body'> & { method?: 'GET' };
-
-	type CacheEntry = { count: number; item: any };
+	export function resource<T>(fn: () => T): Resource<T>;
+	export function fetcher<TReturn>(url: string | URL, init?: GetRequestInit | undefined): Resource<TReturn>;
 	export function cache<TFn extends (...args: any[]) => any>(key: string, fn: TFn): ReturnType<TFn>;
 
 	export class CacheObserver<T> extends BaseCacheObserver<T> {
