@@ -115,7 +115,10 @@ export class Parser {
 			e.unexpected_eof(this.index);
 		}
 
-		if (this.root.fragment.nodes.length) {
+		const has_content = this.root.fragment.nodes.some(
+			(node) => node.type !== 'Text' || node.data.trim().length > 0
+		);
+		if (has_content) {
 			let start = /** @type {number} */ (this.root.fragment.nodes[0].start);
 			while (regex_whitespace.test(template[start])) start += 1;
 
