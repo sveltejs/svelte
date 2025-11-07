@@ -1,5 +1,15 @@
 # svelte
 
+## 5.43.5
+
+### Patch Changes
+
+- fix: ensure async static props/attributes are awaited ([#17120](https://github.com/sveltejs/svelte/pull/17120))
+
+- fix: wait on dependencies of async bindings ([#17120](https://github.com/sveltejs/svelte/pull/17120))
+
+- fix: await dependencies of style directives ([#17120](https://github.com/sveltejs/svelte/pull/17120))
+
 ## 5.43.4
 
 ### Patch Changes
