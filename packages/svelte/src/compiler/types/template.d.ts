@@ -210,6 +210,7 @@ export namespace AST {
 			binding?: Binding | null;
 			binding_group_name: Identifier;
 			parent_each_blocks: EachBlock[];
+			expression: ExpressionMetadata;
 		};
 	}
 

@@ -121,6 +121,8 @@ export function build_element_attributes(node, context, transform) {
 				expression = b.call(expression.expressions[0]);
 			}
 
+			expression = transform(expression, attribute.metadata.expression);
+
 			if (is_content_editable_binding(attribute.name)) {
 				content = expression;
 			} else if (attribute.name === 'value' && node.name === 'textarea') {

@@ -31,11 +31,7 @@ export class Memoizer {
 	 * @param {boolean} memoize_if_state
 	 */
 	add(expression, metadata, memoize_if_state = false) {
-		for (const binding of metadata.dependencies) {
-			if (binding.blocker) {
-				this.#blockers.add(binding.blocker);
-			}
-		}
+		this.check_blockers(metadata);
 
 		const should_memoize =
 			metadata.has_call || metadata.has_await || (memoize_if_state && metadata.has_state);
@@ -50,6 +46,17 @@ export class Memoizer {
 		(metadata.has_await ? this.#async : this.#sync).push({ id, expression });
 
 		return id;
+	}
+
+	/**
+	 * @param {ExpressionMetadata} metadata
+	 */
+	check_blockers(metadata) {
+		for (const binding of metadata.dependencies) {
+			if (binding.blocker) {
+				this.#blockers.add(binding.blocker);
+			}
+		}
 	}
 
 	apply() {
@@ -348,6 +355,7 @@ export function validate_binding(state, binding, expression) {
 			b.call(
 				'$.validate_binding',
 				b.literal(state.analysis.source.slice(binding.start, binding.end)),
+				binding.metadata.expression.blockers(),
 				b.thunk(
 					state.store_to_invalidate ? b.sequence([b.call('$.mark_store_binding'), obj]) : obj
 				),

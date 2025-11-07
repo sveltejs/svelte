@@ -115,6 +115,21 @@ export class ExpressionMetadata {
 	is_async() {
 		return this.has_await || this.#get_blockers().size > 0;
 	}
+
+	/**
+	 * @param {ExpressionMetadata} source
+	 */
+	merge(source) {
+		this.has_state ||= source.has_state;
+		this.has_call ||= source.has_call;
+		this.has_await ||= source.has_await;
+		this.has_member_expression ||= source.has_member_expression;
+		this.has_assignment ||= source.has_assignment;
+		this.#blockers = null; // so that blockers are recalculated
+
+		for (const r of source.references) this.references.add(r);
+		for (const b of source.dependencies) this.dependencies.add(b);
+	}
 }
 
 /**
