@@ -161,12 +161,14 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	var each_effect;
 
 	/** @type {ReturnType<typeof capture>} */
-	var restore;
+	var restore_block_context;
 
 	function commit() {
 		// If async work was pending commit could happen long after the block has ran.
 		// Restore so batch etc are created in its correct parent context.
-		restore?.(false);
+		// After that we gotta go back to where we were.
+		var restore_current = capture();
+		restore_block_context?.(false);
 
 		reconcile(
 			each_effect,
@@ -193,10 +195,12 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				});
 			}
 		}
+
+		restore_current();
 	}
 
 	block(() => {
-		restore ??= capture();
+		restore_block_context ??= capture();
 		// store a reference to the effect so that we can update the start/end nodes in reconciliation
 		each_effect ??= /** @type {Effect} */ (active_effect);
 
