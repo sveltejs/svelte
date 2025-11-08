@@ -1,4 +1,4 @@
-import type { CacheEntry, Encode } from '#shared';
+import type { Encode } from '#shared';
 import type { Element } from './dev';
 import type { Renderer } from './renderer';
 
@@ -23,7 +23,7 @@ export interface HydratableEntry {
 
 export interface RenderContext {
 	hydratables: Map<string, HydratableEntry>;
-	cache: Map<string, CacheEntry>;
+	cache: Map<symbol, Map<string, any>>;
 }
 
 export interface SyncRenderOutput {

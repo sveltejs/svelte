@@ -1,38 +1,44 @@
 import { async_mode_flag } from '../../flags/index.js';
-import { BaseCacheObserver } from '../../shared/cache-observer.js';
-import { get_render_context } from '../render-context.js';
 import * as e from '../errors.js';
+import { get_render_context } from '../render-context.js';
 
-/**
- * @template {(...args: any[]) => any} TFn
- * @param {string} key
- * @param {TFn} fn
- * @returns {ReturnType<TFn>}
- */
-export function cache(key, fn) {
-	if (!async_mode_flag) {
-		e.experimental_async_required('cache');
-	}
+/** @template T */
+export class ReactiveCache {
+	#key = Symbol('ReactiveCache');
 
-	const cache = get_render_context().cache;
-	const entry = cache.get(key);
-	if (entry) {
-		return /** @type {ReturnType<TFn>} */ (entry);
-	}
-	const new_entry = fn();
-	cache.set(key, new_entry);
-	return new_entry;
-}
-
-/**
- * @template T
- * @extends BaseCacheObserver<T>
- */
-export class CacheObserver extends BaseCacheObserver {
-	constructor(prefix = '') {
+	constructor() {
 		if (!async_mode_flag) {
-			e.experimental_async_required('CacheObserver');
+			e.experimental_async_required('ReactiveCache');
 		}
-		super(() => get_render_context().cache, prefix);
+	}
+
+	/**
+	 * @param {string} key
+	 * @param {() => T} fn
+	 * @returns {T}
+	 */
+	register(key, fn) {
+		const cache = this.#get_cache();
+		let entry = cache.get(key);
+
+		if (!entry) {
+			entry = fn();
+			cache.set(key, entry);
+		}
+
+		return entry;
+	}
+
+	[Symbol.iterator]() {
+		return this.#get_cache().values();
+	}
+
+	#get_cache() {
+		const store = get_render_context();
+		let map = store.cache.get(this.#key);
+		if (map === undefined) {
+			store.cache.set(this.#key, (map = new Map()));
+		}
+		return map;
 	}
 }
