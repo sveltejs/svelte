@@ -299,6 +299,10 @@ export class Batch {
 	}
 
 	deactivate() {
+		// If we're not the current batch, don't deactivate,
+		// else we could create zombie batches that are never flushed
+		if (current_batch !== this) return;
+
 		current_batch = null;
 		batch_values = null;
 	}
