@@ -2,7 +2,7 @@ import { async_mode_flag } from '../../flags/index.js';
 import * as e from '../errors.js';
 import { get_render_context } from '../render-context.js';
 
-/** @template T */
+/** @template [K=any], [V=any] */
 export class ReactiveCache {
 	#key = Symbol('ReactiveCache');
 
@@ -13,9 +13,9 @@ export class ReactiveCache {
 	}
 
 	/**
-	 * @param {string} key
-	 * @param {() => T} fn
-	 * @returns {T}
+	 * @param {K} key
+	 * @param {() => V} fn
+	 * @returns {V}
 	 */
 	register(key, fn) {
 		const cache = this.#get_cache();

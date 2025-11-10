@@ -4,9 +4,9 @@ import { active_effect, is_destroying_effect, tick } from '../runtime.js';
 import { render_effect } from './effects.js';
 import * as e from '../errors.js';
 
-/** @template T */
+/** @template [K=any], [V=any] */
 export class ReactiveCache {
-	/** @type {Map<string, CacheEntry<T>>} */
+	/** @type {Map<K, CacheEntry<V>>} */
 	#cache = new Map();
 
 	constructor() {
@@ -16,9 +16,9 @@ export class ReactiveCache {
 	}
 
 	/**
-	 * @param {string} key
-	 * @param {() => T} fn
-	 * @returns {T}
+	 * @param {K} key
+	 * @param {() => V} fn
+	 * @returns {V}
 	 */
 	register(key, fn) {
 		let entry = this.#cache.get(key);

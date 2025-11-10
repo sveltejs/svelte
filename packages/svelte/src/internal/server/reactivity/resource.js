@@ -100,3 +100,7 @@ class Resource {
 		this.#promise = Promise.resolve();
 	};
 }
+
+export function refreshAll() {
+	throw new Error('TODO Cannot refreshAll resources on the server');
+}

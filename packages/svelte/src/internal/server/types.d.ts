@@ -23,7 +23,7 @@ export interface HydratableEntry {
 
 export interface RenderContext {
 	hydratables: Map<string, HydratableEntry>;
-	cache: Map<symbol, Map<string, any>>;
+	cache: Map<symbol, Map<any, any>>;
 }
 
 export interface SyncRenderOutput {

@@ -4,6 +4,10 @@ import { state, derived, set, get, tick } from '../index.js';
 import { deferred } from '../../shared/utils.js';
 import { async_mode_flag } from '../../flags/index.js';
 import * as e from '../errors.js';
+import { ReactiveCache } from './cache.js';
+
+/** @type ReactiveCache<Resource<any>, Resource<any>> */
+const registry = new ReactiveCache();
 
 /**
  * @template T
@@ -78,6 +82,8 @@ class Resource {
 	 * @param {() => T} fn
 	 */
 	constructor(fn) {
+		// this is kind of kludgy, but the alternative is basically to write a copy of `cache` that is a `Set` instead of a `Map`, which seems dumb
+		registry.register(this, () => this);
 		this.#fn = fn;
 		this.#promise = state(this.#run());
 	}
@@ -182,4 +188,13 @@ class Resource {
 		set(this.#raw, value);
 		set(this.#promise, Promise.resolve());
 	};
+}
+
+/** @returns {Promise<void>} */
+export async function refreshAll() {
+	let promises = [];
+	for (const resource of registry) {
+		promises.push(resource.refresh());
+	}
+	await Promise.all(promises);
 }
