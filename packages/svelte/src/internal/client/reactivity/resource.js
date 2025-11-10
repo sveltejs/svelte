@@ -19,12 +19,12 @@ export function resource(fn) {
 
 /**
  * @template T
- * @implements {Partial<Promise<Awaited<T>>>}
+ * @implements {Partial<Promise<T>>}
  */
 class Resource {
 	#init = false;
 
-	/** @type {() => T} */
+	/** @type {() => T | Promise<T>} */
 	#fn;
 
 	/** @type {Source<boolean>} */
@@ -36,42 +36,19 @@ class Resource {
 	/** @type {Source<boolean>} */
 	#ready = state(false);
 
-	/** @type {Source<Awaited<T> | undefined>} */
+	/** @type {Source<T | undefined>} */
 	#raw = state(undefined);
 
-	/** @type {Source<Promise<any>>} */
+	/** @type {Source<Promise<T>>} */
 	#promise;
-
-	/** @type {Derived<Awaited<T> | undefined>} */
-	#current = derived(() => {
-		if (!get(this.#ready)) return undefined;
-		return get(this.#raw);
-	});
 
 	/** {@type Source<any>} */
 	#error = state(undefined);
 
-	/** @type {Derived<Promise<Awaited<T>>['then']>} */
-	// @ts-expect-error - I feel this might actually be incorrect but I can't prove it yet.
-	// we are technically not returning a promise that resolves to the correct type... but it _is_ a promise that resolves at the correct time
+	/** @type {Derived<Promise<T>['then']>} */
 	#then = derived(() => {
 		const p = get(this.#promise);
-
-		return async (resolve, reject) => {
-			const result = /** @type {Promise<Awaited<T>>} */ (
-				(async () => {
-					await p;
-					await tick();
-					return get(this.#current);
-				})()
-			);
-
-			if (resolve || reject) {
-				return result.then(resolve, reject);
-			}
-
-			return result;
-		};
+		return (resolve, reject) => p.then(resolve, reject);
 	});
 
 	/**
@@ -92,6 +69,7 @@ class Resource {
 			this.#init = true;
 		}
 
+		/** @type {ReturnType<typeof deferred<T>>} */
 		const { resolve, reject, promise } = deferred();
 
 		this.#latest.push(resolve);
@@ -108,7 +86,7 @@ class Resource {
 				set(this.#raw, value);
 				set(this.#error, undefined);
 
-				resolve(undefined);
+				resolve(value);
 			})
 			.catch((e) => {
 				const idx = this.#latest.indexOf(resolve);
@@ -137,12 +115,12 @@ class Resource {
 	get finally() {
 		get(this.#then);
 		return (/** @type {any} */ fn) => {
-			return get(this.#then)().finally(fn);
+			return get(this.#then)(fn, fn);
 		};
 	}
 
 	get current() {
-		return get(this.#current);
+		return get(this.#ready) ? get(this.#raw) : undefined;
 	}
 
 	get error() {
@@ -173,13 +151,13 @@ class Resource {
 	};
 
 	/**
-	 * @param {Awaited<T>} value
+	 * @param {T} value
 	 */
 	set = (value) => {
 		set(this.#ready, true);
 		set(this.#loading, false);
 		set(this.#error, undefined);
 		set(this.#raw, value);
-		set(this.#promise, Promise.resolve());
+		set(this.#promise, Promise.resolve(value));
 	};
 }
