@@ -1108,15 +1108,11 @@ function calculate_blockers(instance, scopes, analysis) {
 					declarator.init?.type === 'FunctionExpression'
 				) {
 					// one declarator per declaration, makes things simpler
-					analysis.instance_body.sync.push(
-						b.declaration(node.kind, [b.declarator(declarator.id, declarator.init)])
-					);
+					analysis.instance_body.sync.push(b.declaration(node.kind, [declarator]));
 					functions.push(declarator);
 				} else if (!awaited) {
 					// one declarator per declaration, makes things simpler
-					analysis.instance_body.sync.push(
-						b.declaration(node.kind, [b.declarator(declarator.id, declarator.init)])
-					);
+					analysis.instance_body.sync.push(b.declaration(node.kind, [declarator]));
 				} else {
 					/** @type {Set<Binding>} */
 					const reads = new Set(); // TODO we're not actually using this yet
