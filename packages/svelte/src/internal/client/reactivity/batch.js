@@ -528,11 +528,6 @@ export class Batch {
  * @returns {T}
  */
 export function flushSync(fn) {
-	if (async_mode_flag && active_effect !== null) {
-		// We disallow this because it creates super-hard to reason about stack trace and because it's generally a bad idea
-		e.flush_sync_in_effect();
-	}
-
 	var was_flushing_sync = is_flushing_sync;
 	is_flushing_sync = true;
 

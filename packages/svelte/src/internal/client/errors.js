@@ -246,22 +246,6 @@ export function experimental_async_fork() {
 }
 
 /**
- * Cannot use `flushSync` inside an effect
- * @returns {never}
- */
-export function flush_sync_in_effect() {
-	if (DEV) {
-		const error = new Error(`flush_sync_in_effect\nCannot use \`flushSync\` inside an effect\nhttps://svelte.dev/e/flush_sync_in_effect`);
-
-		error.name = 'Svelte error';
-
-		throw error;
-	} else {
-		throw new Error(`https://svelte.dev/e/flush_sync_in_effect`);
-	}
-}
-
-/**
  * Cannot commit a fork that was already discarded
  * @returns {never}
  */
