@@ -1,5 +1,6 @@
 ---
 title: $effect
+use_cases: "side effects, API calls, DOM manipulation, third-party library integration, analytics, canvas drawing, websockets"
 ---
 
 Effects are functions that run when state updates, and can be used for things like calling third-party libraries, drawing on `<canvas>` elements, or making network requests. They only run in the browser, not during server-side rendering.

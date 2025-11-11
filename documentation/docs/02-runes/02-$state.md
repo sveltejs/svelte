@@ -1,5 +1,6 @@
 ---
 title: $state
+use_cases: "always: reactive variables, component state management, form inputs, counters, toggles, data models"
 ---
 
 The `$state` rune allows you to create _reactive state_, which means that your UI _reacts_ when it changes.

@@ -1,5 +1,6 @@
 ---
 title: {#await ...}
+use_cases: "async data fetching, loading states, error handling, API calls, promises"
 ---
 
 ```svelte

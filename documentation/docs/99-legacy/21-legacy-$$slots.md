@@ -1,5 +1,6 @@
 ---
-title: $$slots
+title: $slots
+use_cases: "legacy: slot detection, conditional slots"
 ---
 
 In runes mode, we know which [snippets](snippet) were provided to a component, as they're just normal props.
