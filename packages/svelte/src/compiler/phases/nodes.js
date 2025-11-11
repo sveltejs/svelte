@@ -112,6 +112,10 @@ export class ExpressionMetadata {
 		return b.array([...this.#get_blockers()]);
 	}
 
+	has_blockers() {
+		return this.#get_blockers().size > 0;
+	}
+
 	is_async() {
 		return this.has_await || this.#get_blockers().size > 0;
 	}

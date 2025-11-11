@@ -1,4 +1,4 @@
-/** @import { ArrowFunctionExpression, BinaryOperator, ClassDeclaration, Expression, FunctionDeclaration, FunctionExpression, Identifier, ImportDeclaration, MemberExpression, LogicalOperator, Node, Pattern, UnaryOperator, VariableDeclarator, Super } from 'estree' */
+/** @import { BinaryOperator, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, MemberExpression, LogicalOperator, Node, Pattern, UnaryOperator, VariableDeclarator, Super, SimpleLiteral, FunctionExpression, ArrowFunctionExpression } from 'estree' */
 /** @import { Context, Visitor } from 'zimmerframe' */
 /** @import { AST, BindingKind, DeclarationKind } from '#compiler' */
 import is_reference from 'is-reference';
@@ -108,7 +108,10 @@ export class Binding {
 	/** @type {Array<{ node: Identifier; path: AST.SvelteNode[] }>} */
 	references = [];
 
-	/** @type {Array<{ value: Expression; scope: Scope }>} */
+	/**
+	 * (Re)assignments of this binding. Includes declarations such as `function x() {}`.
+	 * @type {Array<{ value: Expression; scope: Scope }>}
+	 */
 	assignments = [];
 
 	/**
@@ -135,9 +138,10 @@ export class Binding {
 	/**
 	 * Instance-level declarations may follow (or contain) a top-level `await`. In these cases,
 	 * any reads that occur in the template must wait for the corresponding promise to resolve
-	 * otherwise the initial value will not have been assigned
+	 * otherwise the initial value will not have been assigned.
+	 * It is a member expression of the form `$$blockers[n]`.
 	 * TODO the blocker is set during transform which feels a bit grubby
-	 * @type {Expression | null}
+	 * @type {MemberExpression & { object: Identifier, property: SimpleLiteral & { value: number } } | null}
 	 */
 	blocker = null;
 
