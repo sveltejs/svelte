@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { globSync } from 'tinyglobby';
-import { compile, compileModule, parse, migrate } from 'svelte/compiler';
+import { compile, compileModule, parse, print, migrate } from 'svelte/compiler';
 
 // toggle these to change what gets written to sandbox/output
 const AST = false;
@@ -81,6 +81,10 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 					console.warn(`Error migrating ${file}`, e);
 				}
 			}
+
+			const printed = print(ast);
+
+			write(`${cwd}/output/printed/${file}`, printed.code);
 		}
 
 		let from_html;
