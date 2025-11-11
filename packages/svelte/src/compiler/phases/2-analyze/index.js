@@ -687,6 +687,261 @@ export function analyze_component(root, source, options) {
 		}
 	}
 
+	calculate_blockers(instance, scopes, analysis);
+
+	if (analysis.runes) {
+		const props_refs = module.scope.references.get('$$props');
+		if (props_refs) {
+			e.legacy_props_invalid(props_refs[0].node);
+		}
+
+		const rest_props_refs = module.scope.references.get('$$restProps');
+		if (rest_props_refs) {
+			e.legacy_rest_props_invalid(rest_props_refs[0].node);
+		}
+
+		for (const { ast, scope, scopes } of [module, instance, template]) {
+			/** @type {AnalysisState} */
+			const state = {
+				scope,
+				scopes,
+				analysis,
+				options,
+				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
+				fragment: ast === template.ast ? ast : null,
+				parent_element: null,
+				has_props_rune: false,
+				component_slots: new Set(),
+				expression: null,
+				state_fields: new Map(),
+				function_depth: scope.function_depth,
+				reactive_statement: null,
+				derived_function_depth: -1
+			};
+
+			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);
+		}
+
+		// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
+		for (const scope of [module.scope, instance.scope]) {
+			outer: for (const [name, binding] of scope.declarations) {
+				if (binding.kind === 'normal' && binding.reassigned) {
+					inner: for (const { path } of binding.references) {
+						if (path[0].type !== 'Fragment') continue;
+						for (let i = 1; i < path.length; i += 1) {
+							const type = path[i].type;
+							if (
+								type === 'FunctionDeclaration' ||
+								type === 'FunctionExpression' ||
+								type === 'ArrowFunctionExpression'
+							) {
+								continue inner;
+							}
+							// bind:this doesn't need to be a state reference if it will never change
+							if (
+								type === 'BindDirective' &&
+								/** @type {AST.BindDirective} */ (path[i]).name === 'this'
+							) {
+								for (let j = i - 1; j >= 0; j -= 1) {
+									const type = path[j].type;
+									if (
+										type === 'IfBlock' ||
+										type === 'EachBlock' ||
+										type === 'AwaitBlock' ||
+										type === 'KeyBlock'
+									) {
+										w.non_reactive_update(binding.node, name);
+										continue outer;
+									}
+								}
+								continue inner;
+							}
+						}
+
+						w.non_reactive_update(binding.node, name);
+						continue outer;
+					}
+				}
+			}
+		}
+	} else {
+		instance.scope.declare(b.id('$$props'), 'rest_prop', 'synthetic');
+		instance.scope.declare(b.id('$$restProps'), 'rest_prop', 'synthetic');
+
+		for (const { ast, scope, scopes } of [module, instance, template]) {
+			/** @type {AnalysisState} */
+			const state = {
+				scope,
+				scopes,
+				analysis,
+				options,
+				fragment: ast === template.ast ? ast : null,
+				parent_element: null,
+				has_props_rune: false,
+				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
+				reactive_statement: null,
+				component_slots: new Set(),
+				expression: null,
+				state_fields: new Map(),
+				function_depth: scope.function_depth,
+				derived_function_depth: -1
+			};
+
+			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);
+		}
+
+		for (const [name, binding] of instance.scope.declarations) {
+			if (
+				(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
+				binding.node.name !== '$$props'
+			) {
+				const references = binding.references.filter(
+					(r) => r.node !== binding.node && r.path.at(-1)?.type !== 'ExportSpecifier'
+				);
+				if (!references.length && !instance.scope.declarations.has(`$${name}`)) {
+					w.export_let_unused(binding.node, name);
+				}
+			}
+		}
+
+		analysis.reactive_statements = order_reactive_statements(analysis.reactive_statements);
+	}
+
+	for (const node of analysis.module.ast.body) {
+		if (node.type === 'ExportNamedDeclaration' && node.specifiers !== null && node.source == null) {
+			for (const specifier of node.specifiers) {
+				if (specifier.local.type !== 'Identifier') continue;
+				const name = specifier.local.name;
+				const binding = analysis.module.scope.get(name);
+				if (!binding) {
+					if ([...analysis.snippets].find((snippet) => snippet.expression.name === name)) {
+						e.snippet_invalid_export(specifier);
+					} else {
+						e.export_undefined(specifier, name);
+					}
+				}
+			}
+		}
+	}
+
+	if (analysis.event_directive_node && analysis.uses_event_attributes) {
+		e.mixed_event_handler_syntaxes(
+			analysis.event_directive_node,
+			analysis.event_directive_node.name
+		);
+	}
+
+	for (const [node, resolved] of analysis.snippet_renderers) {
+		if (!resolved) {
+			node.metadata.snippets = analysis.snippets;
+		}
+
+		for (const snippet of node.metadata.snippets) {
+			snippet.metadata.sites.add(node);
+		}
+	}
+
+	if (
+		analysis.uses_render_tags &&
+		(analysis.uses_slots || (!analysis.custom_element && analysis.slot_names.size > 0))
+	) {
+		const pos = analysis.slot_names.values().next().value ?? analysis.source.indexOf('$$slot');
+		e.slot_snippet_conflict(pos);
+	}
+
+	if (analysis.css.ast) {
+		analyze_css(analysis.css.ast, analysis);
+
+		// mark nodes as scoped/unused/empty etc
+		for (const node of analysis.elements) {
+			prune(analysis.css.ast, node);
+		}
+
+		const { comment } = analysis.css.ast.content;
+		const should_ignore_unused =
+			comment &&
+			extract_svelte_ignore(comment.start, comment.data, analysis.runes).includes(
+				'css_unused_selector'
+			);
+
+		if (!should_ignore_unused) {
+			warn_unused(analysis.css.ast);
+		}
+	}
+
+	for (const node of analysis.elements) {
+		if (node.metadata.scoped && is_custom_element_node(node)) {
+			mark_subtree_dynamic(node.metadata.path);
+		}
+
+		let has_class = false;
+		let has_style = false;
+		let has_spread = false;
+		let has_class_directive = false;
+		let has_style_directive = false;
+
+		for (const attribute of node.attributes) {
+			// The spread method appends the hash to the end of the class attribute on its own
+			if (attribute.type === 'SpreadAttribute') {
+				has_spread = true;
+				break;
+			} else if (attribute.type === 'Attribute') {
+				has_class ||= attribute.name.toLowerCase() === 'class';
+				has_style ||= attribute.name.toLowerCase() === 'style';
+			} else if (attribute.type === 'ClassDirective') {
+				has_class_directive = true;
+			} else if (attribute.type === 'StyleDirective') {
+				has_style_directive = true;
+			}
+		}
+
+		// We need an empty class to generate the set_class() or class="" correctly
+		if (!has_spread && !has_class && (node.metadata.scoped || has_class_directive)) {
+			node.attributes.push(
+				create_attribute('class', -1, -1, [
+					{
+						type: 'Text',
+						data: '',
+						raw: '',
+						start: -1,
+						end: -1
+					}
+				])
+			);
+		}
+
+		// We need an empty style to generate the set_style() correctly
+		if (!has_spread && !has_style && has_style_directive) {
+			node.attributes.push(
+				create_attribute('style', -1, -1, [
+					{
+						type: 'Text',
+						data: '',
+						raw: '',
+						start: -1,
+						end: -1
+					}
+				])
+			);
+		}
+	}
+
+	// TODO
+	// analysis.stylesheet.warn_on_unused_selectors(analysis);
+
+	return analysis;
+}
+
+/**
+ * Analyzes the instance's top level statements to calculate which bindings need to wait on which
+ * top level statements. This includes indirect blockers such as functions referencing async top level statements.
+ *
+ * @param {Js} instance
+ * @param {Map<AST.SvelteNode, Scope>} scopes
+ * @param {ComponentAnalysis} analysis
+ * @returns {void}
+ */
+function calculate_blockers(instance, scopes, analysis) {
 	/**
 	 * @param {ESTree.Node} expression
 	 * @param {Scope} scope
@@ -943,248 +1198,6 @@ export function analyze_component(root, source, options) {
 
 		binding.blocker = /** @type {typeof binding['blocker']} */ (blocker);
 	}
-
-	if (analysis.runes) {
-		const props_refs = module.scope.references.get('$$props');
-		if (props_refs) {
-			e.legacy_props_invalid(props_refs[0].node);
-		}
-
-		const rest_props_refs = module.scope.references.get('$$restProps');
-		if (rest_props_refs) {
-			e.legacy_rest_props_invalid(rest_props_refs[0].node);
-		}
-
-		for (const { ast, scope, scopes } of [module, instance, template]) {
-			/** @type {AnalysisState} */
-			const state = {
-				scope,
-				scopes,
-				analysis,
-				options,
-				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
-				fragment: ast === template.ast ? ast : null,
-				parent_element: null,
-				has_props_rune: false,
-				component_slots: new Set(),
-				expression: null,
-				state_fields: new Map(),
-				function_depth: scope.function_depth,
-				reactive_statement: null,
-				derived_function_depth: -1
-			};
-
-			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);
-		}
-
-		// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
-		for (const scope of [module.scope, instance.scope]) {
-			outer: for (const [name, binding] of scope.declarations) {
-				if (binding.kind === 'normal' && binding.reassigned) {
-					inner: for (const { path } of binding.references) {
-						if (path[0].type !== 'Fragment') continue;
-						for (let i = 1; i < path.length; i += 1) {
-							const type = path[i].type;
-							if (
-								type === 'FunctionDeclaration' ||
-								type === 'FunctionExpression' ||
-								type === 'ArrowFunctionExpression'
-							) {
-								continue inner;
-							}
-							// bind:this doesn't need to be a state reference if it will never change
-							if (
-								type === 'BindDirective' &&
-								/** @type {AST.BindDirective} */ (path[i]).name === 'this'
-							) {
-								for (let j = i - 1; j >= 0; j -= 1) {
-									const type = path[j].type;
-									if (
-										type === 'IfBlock' ||
-										type === 'EachBlock' ||
-										type === 'AwaitBlock' ||
-										type === 'KeyBlock'
-									) {
-										w.non_reactive_update(binding.node, name);
-										continue outer;
-									}
-								}
-								continue inner;
-							}
-						}
-
-						w.non_reactive_update(binding.node, name);
-						continue outer;
-					}
-				}
-			}
-		}
-	} else {
-		instance.scope.declare(b.id('$$props'), 'rest_prop', 'synthetic');
-		instance.scope.declare(b.id('$$restProps'), 'rest_prop', 'synthetic');
-
-		for (const { ast, scope, scopes } of [module, instance, template]) {
-			/** @type {AnalysisState} */
-			const state = {
-				scope,
-				scopes,
-				analysis,
-				options,
-				fragment: ast === template.ast ? ast : null,
-				parent_element: null,
-				has_props_rune: false,
-				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
-				reactive_statement: null,
-				component_slots: new Set(),
-				expression: null,
-				state_fields: new Map(),
-				function_depth: scope.function_depth,
-				derived_function_depth: -1
-			};
-
-			walk(/** @type {AST.SvelteNode} */ (ast), state, visitors);
-		}
-
-		for (const [name, binding] of instance.scope.declarations) {
-			if (
-				(binding.kind === 'prop' || binding.kind === 'bindable_prop') &&
-				binding.node.name !== '$$props'
-			) {
-				const references = binding.references.filter(
-					(r) => r.node !== binding.node && r.path.at(-1)?.type !== 'ExportSpecifier'
-				);
-				if (!references.length && !instance.scope.declarations.has(`$${name}`)) {
-					w.export_let_unused(binding.node, name);
-				}
-			}
-		}
-
-		analysis.reactive_statements = order_reactive_statements(analysis.reactive_statements);
-	}
-
-	for (const node of analysis.module.ast.body) {
-		if (node.type === 'ExportNamedDeclaration' && node.specifiers !== null && node.source == null) {
-			for (const specifier of node.specifiers) {
-				if (specifier.local.type !== 'Identifier') continue;
-				const name = specifier.local.name;
-				const binding = analysis.module.scope.get(name);
-				if (!binding) {
-					if ([...analysis.snippets].find((snippet) => snippet.expression.name === name)) {
-						e.snippet_invalid_export(specifier);
-					} else {
-						e.export_undefined(specifier, name);
-					}
-				}
-			}
-		}
-	}
-
-	if (analysis.event_directive_node && analysis.uses_event_attributes) {
-		e.mixed_event_handler_syntaxes(
-			analysis.event_directive_node,
-			analysis.event_directive_node.name
-		);
-	}
-
-	for (const [node, resolved] of analysis.snippet_renderers) {
-		if (!resolved) {
-			node.metadata.snippets = analysis.snippets;
-		}
-
-		for (const snippet of node.metadata.snippets) {
-			snippet.metadata.sites.add(node);
-		}
-	}
-
-	if (
-		analysis.uses_render_tags &&
-		(analysis.uses_slots || (!analysis.custom_element && analysis.slot_names.size > 0))
-	) {
-		const pos = analysis.slot_names.values().next().value ?? analysis.source.indexOf('$$slot');
-		e.slot_snippet_conflict(pos);
-	}
-
-	if (analysis.css.ast) {
-		analyze_css(analysis.css.ast, analysis);
-
-		// mark nodes as scoped/unused/empty etc
-		for (const node of analysis.elements) {
-			prune(analysis.css.ast, node);
-		}
-
-		const { comment } = analysis.css.ast.content;
-		const should_ignore_unused =
-			comment &&
-			extract_svelte_ignore(comment.start, comment.data, analysis.runes).includes(
-				'css_unused_selector'
-			);
-
-		if (!should_ignore_unused) {
-			warn_unused(analysis.css.ast);
-		}
-	}
-
-	for (const node of analysis.elements) {
-		if (node.metadata.scoped && is_custom_element_node(node)) {
-			mark_subtree_dynamic(node.metadata.path);
-		}
-
-		let has_class = false;
-		let has_style = false;
-		let has_spread = false;
-		let has_class_directive = false;
-		let has_style_directive = false;
-
-		for (const attribute of node.attributes) {
-			// The spread method appends the hash to the end of the class attribute on its own
-			if (attribute.type === 'SpreadAttribute') {
-				has_spread = true;
-				break;
-			} else if (attribute.type === 'Attribute') {
-				has_class ||= attribute.name.toLowerCase() === 'class';
-				has_style ||= attribute.name.toLowerCase() === 'style';
-			} else if (attribute.type === 'ClassDirective') {
-				has_class_directive = true;
-			} else if (attribute.type === 'StyleDirective') {
-				has_style_directive = true;
-			}
-		}
-
-		// We need an empty class to generate the set_class() or class="" correctly
-		if (!has_spread && !has_class && (node.metadata.scoped || has_class_directive)) {
-			node.attributes.push(
-				create_attribute('class', -1, -1, [
-					{
-						type: 'Text',
-						data: '',
-						raw: '',
-						start: -1,
-						end: -1
-					}
-				])
-			);
-		}
-
-		// We need an empty style to generate the set_style() correctly
-		if (!has_spread && !has_style && has_style_directive) {
-			node.attributes.push(
-				create_attribute('style', -1, -1, [
-					{
-						type: 'Text',
-						data: '',
-						raw: '',
-						start: -1,
-						end: -1
-					}
-				])
-			);
-		}
-	}
-
-	// TODO
-	// analysis.stylesheet.warn_on_unused_selectors(analysis);
-
-	return analysis;
 }
 
 /**
