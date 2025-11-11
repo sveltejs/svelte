@@ -802,11 +802,11 @@ export function analyze_component(root, source, options) {
 	let awaited = false;
 
 	// TODO this should probably be attached to the scope?
-	var promises = b.id('$$promises');
+	const promises = b.id('$$promises');
 
 	/**
 	 * @param {ESTree.Identifier} id
-	 * @param {ESTree.Expression} blocker
+	 * @param {NonNullable<Binding['blocker']>} blocker
 	 */
 	function push_declaration(id, blocker) {
 		analysis.instance_body.declarations.push(id);
@@ -814,6 +814,12 @@ export function analyze_component(root, source, options) {
 		const binding = /** @type {Binding} */ (instance.scope.get(id.name));
 		binding.blocker = blocker;
 	}
+
+	/**
+	 * Analysis of blockers for functions is deferred until we know which statements are async/blockers
+	 * @type {Array<ESTree.FunctionDeclaration | ESTree.VariableDeclarator>}
+	 */
+	const functions = [];
 
 	for (let node of instance.ast.body) {
 		if (node.type === 'ImportDeclaration') {
@@ -837,23 +843,42 @@ export function analyze_component(root, source, options) {
 		const has_await = has_await_expression(node);
 		awaited ||= has_await;
 
-		if (awaited && node.type !== 'FunctionDeclaration') {
-			/** @type {Set<Binding>} */
-			const reads = new Set(); // TODO we're not actually using this yet
+		if (node.type === 'FunctionDeclaration') {
+			analysis.instance_body.sync.push(node);
+			functions.push(node);
+		} else if (node.type === 'VariableDeclaration') {
+			for (const declarator of node.declarations) {
+				if (
+					declarator.init?.type === 'ArrowFunctionExpression' ||
+					declarator.init?.type === 'FunctionExpression'
+				) {
+					// one declarator per declaration, makes things simpler
+					analysis.instance_body.sync.push(
+						b.declaration(node.kind, [b.declarator(declarator.id, declarator.init)])
+					);
+					functions.push(declarator);
+				} else if (!awaited) {
+					// one declarator per declaration, makes things simpler
+					analysis.instance_body.sync.push(
+						b.declaration(node.kind, [b.declarator(declarator.id, declarator.init)])
+					);
+				} else {
+					/** @type {Set<Binding>} */
+					const reads = new Set(); // TODO we're not actually using this yet
 
-			/** @type {Set<Binding>} */
-			const writes = new Set();
+					/** @type {Set<Binding>} */
+					const writes = new Set();
 
-			trace_references(node, reads, writes);
+					trace_references(declarator, reads, writes);
 
-			const blocker = b.member(promises, b.literal(analysis.instance_body.async.length), true);
+					const blocker = /** @type {NonNullable<Binding['blocker']>} */ (
+						b.member(promises, b.literal(analysis.instance_body.async.length), true)
+					);
 
-			for (const binding of writes) {
-				binding.blocker = blocker;
-			}
+					for (const binding of writes) {
+						binding.blocker = blocker;
+					}
 
-			if (node.type === 'VariableDeclaration') {
-				for (const declarator of node.declarations) {
 					for (const id of extract_identifiers(declarator.id)) {
 						push_declaration(id, blocker);
 					}
@@ -864,7 +889,25 @@ export function analyze_component(root, source, options) {
 						has_await
 					});
 				}
-			} else if (node.type === 'ClassDeclaration') {
+			}
+		} else if (awaited) {
+			/** @type {Set<Binding>} */
+			const reads = new Set(); // TODO we're not actually using this yet
+
+			/** @type {Set<Binding>} */
+			const writes = new Set();
+
+			trace_references(node, reads, writes);
+
+			const blocker = /** @type {NonNullable<Binding['blocker']>} */ (
+				b.member(promises, b.literal(analysis.instance_body.async.length), true)
+			);
+
+			for (const binding of writes) {
+				binding.blocker = blocker;
+			}
+
+			if (node.type === 'ClassDeclaration') {
 				push_declaration(node.id, blocker);
 				analysis.instance_body.async.push({ node, has_await });
 			} else {
@@ -873,6 +916,32 @@ export function analyze_component(root, source, options) {
 		} else {
 			analysis.instance_body.sync.push(node);
 		}
+	}
+
+	for (const fn of functions) {
+		/** @type {Set<Binding>} */
+		const reads_writes = new Set();
+		const body =
+			fn.type === 'VariableDeclarator'
+				? /** @type {ESTree.FunctionExpression | ESTree.ArrowFunctionExpression} */ (fn.init).body
+				: fn.body;
+
+		trace_references(body, reads_writes, reads_writes);
+
+		const max = [...reads_writes].reduce((max, binding) => {
+			return binding.blocker ? Math.max(binding.blocker.property.value, max) : max;
+		}, -1);
+
+		if (max === -1) continue;
+
+		const blocker = b.member(promises, b.literal(max), true);
+		const binding = /** @type {Binding} */ (
+			fn.type === 'FunctionDeclaration'
+				? instance.scope.get(fn.id.name)
+				: instance.scope.get(/** @type {ESTree.Identifier} */ (fn.id).name)
+		);
+
+		binding.blocker = /** @type {typeof binding['blocker']} */ (blocker);
 	}
 
 	if (analysis.runes) {
