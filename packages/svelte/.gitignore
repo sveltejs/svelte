@@ -13,3 +13,5 @@
 /transition.d.ts
 
 /scripts/_bundle.js
+*.Zone.Identifier
+
