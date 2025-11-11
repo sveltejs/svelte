@@ -71,7 +71,7 @@ export function AwaitBlock(node, context) {
 		'await'
 	);
 
-	if (node.metadata.expression.is_async()) {
+	if (node.metadata.expression.has_blockers()) {
 		context.state.init.push(
 			b.stmt(
 				b.call(
