@@ -1107,12 +1107,16 @@ function calculate_blockers(instance, scopes, analysis) {
 					declarator.init?.type === 'ArrowFunctionExpression' ||
 					declarator.init?.type === 'FunctionExpression'
 				) {
-					// one declarator per declaration, makes things simpler
-					analysis.instance_body.sync.push(b.declaration(node.kind, [declarator]));
+					// One declarator per declaration, makes things simpler. The ternary ensures more accurate source maps in the common case
+					analysis.instance_body.sync.push(
+						node.declarations.length === 1 ? node : b.declaration(node.kind, [declarator])
+					);
 					functions.push(declarator);
 				} else if (!awaited) {
-					// one declarator per declaration, makes things simpler
-					analysis.instance_body.sync.push(b.declaration(node.kind, [declarator]));
+					// One declarator per declaration, makes things simpler. The ternary ensures more accurate source maps in the common case
+					analysis.instance_body.sync.push(
+						node.declarations.length === 1 ? node : b.declaration(node.kind, [declarator])
+					);
 				} else {
 					/** @type {Set<Binding>} */
 					const reads = new Set(); // TODO we're not actually using this yet
