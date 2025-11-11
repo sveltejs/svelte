@@ -1,5 +1,11 @@
 # svelte
 
+## 5.43.6
+
+### Patch Changes
+
+- fix: don't deactivate other batches ([#17132](https://github.com/sveltejs/svelte/pull/17132))
+
 ## 5.43.5
 
 ### Patch Changes
