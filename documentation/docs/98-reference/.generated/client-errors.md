@@ -136,16 +136,6 @@ Often when encountering this issue, the value in question shouldn't be state (fo
 Cannot use `fork(...)` unless the `experimental.async` compiler option is `true`
 ```
 
-### flush_sync_in_effect
-
-```
-Cannot use `flushSync` inside an effect
-```
-
-The `flushSync()` function can be used to flush any pending effects synchronously. It cannot be used if effects are currently being flushed — in other words, you can call it after a state change but _not_ inside an effect.
-
-This restriction only applies when using the `experimental.async` option, which will be active by default in Svelte 6.
-
 ### fork_discarded
 
 ```
