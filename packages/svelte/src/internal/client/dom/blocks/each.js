@@ -118,7 +118,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	var anchor = node;
 
 	/** @type {EachState} */
-	var state = { flags, onscreen: new Map(), first: null };
+	var state = { flags, onscreen: new Map(), offscreen: new Map(), first: null };
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 
@@ -139,9 +139,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 	var was_empty = false;
 
-	/** @type {Map<any, EachItem>} */
-	var offscreen_items = new Map();
-
 	// TODO: ideally we could use derived for runes mode but because of the ability
 	// to use a store which can be mutated, we can't do that here as mutating a store
 	// will still result in the collection array being the same from the store
@@ -158,17 +155,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	var each_effect;
 
 	function commit() {
-		reconcile(
-			each_effect,
-			array,
-			state,
-			offscreen_items,
-			anchor,
-			render_fn,
-			flags,
-			get_key,
-			get_collection
-		);
+		reconcile(each_effect, array, state, anchor, render_fn, flags, get_key, get_collection);
 
 		if (fallback_fn !== null) {
 			if (array.length === 0) {
@@ -274,7 +261,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					value = array[i];
 					key = get_key(value, i);
 
-					var existing = state.onscreen.get(key) ?? offscreen_items.get(key);
+					var existing = state.onscreen.get(key) ?? state.offscreen.get(key);
 
 					if (existing) {
 						// update before reconciliation, to trigger any async updates
@@ -296,7 +283,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 							true
 						);
 
-						offscreen_items.set(key, item);
+						state.offscreen.set(key, item);
 					}
 
 					keys.add(key);
@@ -339,7 +326,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
  * @param {Effect} each_effect
  * @param {Array<V>} array
  * @param {EachState} state
- * @param {Map<any, EachItem>} offscreen_items
  * @param {Element | Comment | Text} anchor
  * @param {(anchor: Node, item: MaybeSource<V>, index: number | Source<number>, collection: () => V[]) => void} render_fn
  * @param {number} flags
@@ -347,17 +333,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
  * @param {() => V[]} get_collection
  * @returns {void}
  */
-function reconcile(
-	each_effect,
-	array,
-	state,
-	offscreen_items,
-	anchor,
-	render_fn,
-	flags,
-	get_key,
-	get_collection
-) {
+function reconcile(each_effect, array, state, anchor, render_fn, flags, get_key, get_collection) {
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 	var should_update = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 
@@ -413,10 +389,10 @@ function reconcile(
 		item = items.get(key);
 
 		if (item === undefined) {
-			var pending = offscreen_items.get(key);
+			var pending = state.offscreen.get(key);
 
 			if (pending !== undefined) {
-				offscreen_items.delete(key);
+				state.offscreen.delete(key);
 				items.set(key, pending);
 
 				var next = prev ? prev.next : current;
@@ -576,11 +552,11 @@ function reconcile(
 	each_effect.first = state.first && state.first.e;
 	each_effect.last = prev && prev.e;
 
-	for (var unused of offscreen_items.values()) {
+	for (var unused of state.offscreen.values()) {
 		destroy_effect(unused.e);
 	}
 
-	offscreen_items.clear();
+	state.offscreen.clear();
 }
 
 /**

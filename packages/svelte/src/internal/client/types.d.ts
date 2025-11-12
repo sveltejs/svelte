@@ -66,8 +66,10 @@ export type Dom = TemplateNode | TemplateNode[];
 export type EachState = {
 	/** flags */
 	flags: number;
-	/** a key -> item lookup */
+	/** items that are currently onscreen */
 	onscreen: Map<any, EachItem>;
+	/** items that are currently offscreen */
+	offscreen: Map<any, EachItem>;
 	/** head of the linked list of items */
 	first: EachItem | null;
 };
