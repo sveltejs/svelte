@@ -67,7 +67,7 @@ export type EachState = {
 	/** flags */
 	flags: number;
 	/** a key -> item lookup */
-	items: Map<any, EachItem>;
+	onscreen: Map<any, EachItem>;
 	/** head of the linked list of items */
 	first: EachItem | null;
 };

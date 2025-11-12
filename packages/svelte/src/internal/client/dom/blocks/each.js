@@ -71,8 +71,6 @@ export function index(_, i) {
  * @param {null | Node} controlled_anchor
  */
 function pause_effects(state, items, controlled_anchor) {
-	var items_map = state.items;
-
 	/** @type {TransitionManager[]} */
 	var transitions = [];
 	var length = items.length;
@@ -90,7 +88,7 @@ function pause_effects(state, items, controlled_anchor) {
 		);
 		clear_text_content(parent_node);
 		parent_node.append(/** @type {Element} */ (controlled_anchor));
-		items_map.clear();
+		state.onscreen.clear();
 		link(state, items[0].prev, items[length - 1].next);
 	}
 
@@ -98,7 +96,7 @@ function pause_effects(state, items, controlled_anchor) {
 		for (var i = 0; i < length; i++) {
 			var item = items[i];
 			if (!is_controlled) {
-				items_map.delete(item.k);
+				state.onscreen.delete(item.k);
 				link(state, item.prev, item.next);
 			}
 			destroy_effect(item.e, !is_controlled);
@@ -120,7 +118,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	var anchor = node;
 
 	/** @type {EachState} */
-	var state = { flags, items: new Map(), first: null };
+	var state = { flags, onscreen: new Map(), first: null };
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 
@@ -252,7 +250,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					flags,
 					get_collection
 				);
-				state.items.set(key, item);
+				state.onscreen.set(key, item);
 
 				prev = item;
 			}
@@ -276,7 +274,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					value = array[i];
 					key = get_key(value, i);
 
-					var existing = state.items.get(key) ?? offscreen_items.get(key);
+					var existing = state.onscreen.get(key) ?? offscreen_items.get(key);
 
 					if (existing) {
 						// update before reconciliation, to trigger any async updates
@@ -304,7 +302,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					keys.add(key);
 				}
 
-				for (const [key, item] of state.items) {
+				for (const [key, item] of state.onscreen) {
 					if (!keys.has(key)) {
 						batch.skipped_effects.add(item.e);
 					}
@@ -364,7 +362,7 @@ function reconcile(
 	var should_update = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 
 	var length = array.length;
-	var items = state.items;
+	var items = state.onscreen;
 	var first = state.first;
 	var current = first;
 
