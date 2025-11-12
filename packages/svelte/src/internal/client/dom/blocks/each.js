@@ -81,6 +81,7 @@ function pause_effects(state, items, controlled_anchor) {
 	}
 
 	var is_controlled = length > 0 && transitions.length === 0 && controlled_anchor !== null;
+
 	// If we have a controlled anchor, it means that the each block is inside a single
 	// DOM element, so we can apply a fast-path for clearing the contents of the element.
 	if (is_controlled) {
@@ -90,7 +91,6 @@ function pause_effects(state, items, controlled_anchor) {
 		clear_text_content(parent_node);
 		parent_node.append(/** @type {Element} */ (controlled_anchor));
 		state.onscreen.clear();
-		link(state, items[0].prev, items[length - 1].next);
 	}
 
 	run_out_transitions(transitions, () => {
@@ -98,11 +98,13 @@ function pause_effects(state, items, controlled_anchor) {
 			var item = items[i];
 			if (!is_controlled) {
 				state.onscreen.delete(item.k);
-				link(state, item.prev, item.next);
 			}
+
 			destroy_effect(item.e, !is_controlled);
 		}
 	});
+
+	link(state, items[0].prev, items[length - 1].next);
 }
 
 /**
@@ -231,7 +233,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 				batch.skipped_effects.delete(item.e);
 			} else {
-				console.log('creating', key);
 				item = create_item(
 					first_run ? (hydrating ? hydrate_node : anchor) : null,
 					state,
@@ -634,7 +635,7 @@ function create_item(
 		if (prev === null) {
 			if (!deferred) {
 				// TODO move this into block effect?
-				state.first = item;
+				// state.first = item;
 			}
 		} else {
 			prev.next = item;
