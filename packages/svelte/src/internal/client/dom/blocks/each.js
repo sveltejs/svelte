@@ -42,6 +42,7 @@ import { active_effect, get } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
 import { current_batch } from '../../reactivity/batch.js';
+import { log_effect_tree, root } from '../../dev/debug.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -151,9 +152,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	/** @type {V[]} */
 	var array;
 
-	/** @type {Effect} */
-	var each_effect;
-
 	function commit() {
 		reconcile(each_effect, array, state, anchor, render_fn, flags, get_key, get_collection);
 
@@ -172,10 +170,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		}
 	}
 
-	block(() => {
-		// store a reference to the effect so that we can update the start/end nodes in reconciliation
-		each_effect ??= /** @type {Effect} */ (active_effect);
+	var first_run = true;
 
+	var each_effect = block(() => {
 		array = /** @type {V[]} */ (get(each_array));
 		var length = array.length;
 
@@ -202,31 +199,41 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			}
 		}
 
-		// this is separate to the previous block because `hydrating` might change
-		if (hydrating) {
-			/** @type {EachItem | null} */
-			var prev = null;
+		var keys = new Set();
+		var batch = /** @type {Batch} */ (current_batch);
+		var prev = null;
+		var defer = should_defer_append();
 
-			/** @type {EachItem} */
-			var item;
+		for (var i = 0; i < length; i += 1) {
+			if (
+				hydrating &&
+				hydrate_node.nodeType === COMMENT_NODE &&
+				/** @type {Comment} */ (hydrate_node).data === HYDRATION_END
+			) {
+				// The server rendered fewer items than expected,
+				// so break out and continue appending non-hydrated items
+				anchor = /** @type {Comment} */ (hydrate_node);
+				mismatch = true;
+				set_hydrating(false);
+				break;
+			}
 
-			for (var i = 0; i < length; i++) {
-				if (
-					hydrate_node.nodeType === COMMENT_NODE &&
-					/** @type {Comment} */ (hydrate_node).data === HYDRATION_END
-				) {
-					// The server rendered fewer items than expected,
-					// so break out and continue appending non-hydrated items
-					anchor = /** @type {Comment} */ (hydrate_node);
-					mismatch = true;
-					set_hydrating(false);
-					break;
+			var value = array[i];
+			var key = get_key(value, i);
+
+			var item = first_run ? null : state.onscreen.get(key) ?? state.offscreen.get(key);
+
+			if (item) {
+				// update before reconciliation, to trigger any async updates
+				if ((flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0) {
+					update_item(item, value, i, flags);
 				}
 
-				var value = array[i];
-				var key = get_key(value, i);
+				batch.skipped_effects.delete(item.e);
+			} else {
+				console.log('creating', key);
 				item = create_item(
-					hydrate_node,
+					first_run ? (hydrating ? hydrate_node : anchor) : null,
 					state,
 					prev,
 					null,
@@ -235,66 +242,40 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					i,
 					render_fn,
 					flags,
-					get_collection
+					get_collection,
+					defer
 				);
-				state.onscreen.set(key, item);
 
-				prev = item;
+				if (first_run) {
+					if (prev === null) {
+						state.first = item;
+					} else {
+						prev.next = item;
+					}
+
+					prev = item;
+					state.onscreen.set(key, item);
+				} else {
+					state.offscreen.set(key, item);
+				}
 			}
 
-			// remove excess nodes
-			if (length > 0) {
-				set_hydrate_node(skip_nodes());
+			keys.add(key);
+		}
+
+		// remove excess nodes
+		if (hydrating && length > 0) {
+			set_hydrate_node(skip_nodes());
+		}
+
+		for (const [key, item] of state.onscreen) {
+			if (!keys.has(key)) {
+				batch.skipped_effects.add(item.e);
 			}
 		}
 
-		if (hydrating) {
-			if (length === 0 && fallback_fn) {
-				fallback = branch(() => fallback_fn(anchor));
-			}
-		} else {
-			if (should_defer_append()) {
-				var keys = new Set();
-				var batch = /** @type {Batch} */ (current_batch);
-
-				for (i = 0; i < length; i += 1) {
-					value = array[i];
-					key = get_key(value, i);
-
-					var existing = state.onscreen.get(key) ?? state.offscreen.get(key);
-
-					if (existing) {
-						// update before reconciliation, to trigger any async updates
-						if ((flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0) {
-							update_item(existing, value, i, flags);
-						}
-					} else {
-						item = create_item(
-							null,
-							state,
-							null,
-							null,
-							value,
-							key,
-							i,
-							render_fn,
-							flags,
-							get_collection,
-							true
-						);
-
-						state.offscreen.set(key, item);
-					}
-
-					keys.add(key);
-				}
-
-				for (const [key, item] of state.onscreen) {
-					if (!keys.has(key)) {
-						batch.skipped_effects.add(item.e);
-					}
-				}
-
+		if (!first_run) {
+			if (defer) {
 				batch.oncommit(commit);
 			} else {
 				commit();
@@ -314,6 +295,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		// will now be `CLEAN`.
 		get(each_array);
 	});
+
+	first_run = false;
 
 	if (hydrating) {
 		anchor = hydrate_node;
@@ -338,7 +321,7 @@ function reconcile(each_effect, array, state, anchor, render_fn, flags, get_key,
 	var should_update = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 
 	var length = array.length;
-	var items = state.onscreen;
+	var onscreen = state.onscreen;
 	var first = state.first;
 	var current = first;
 
@@ -373,7 +356,7 @@ function reconcile(each_effect, array, state, anchor, render_fn, flags, get_key,
 		for (i = 0; i < length; i += 1) {
 			value = array[i];
 			key = get_key(value, i);
-			item = items.get(key);
+			item = onscreen.get(key);
 
 			if (item !== undefined) {
 				item.a?.measure();
@@ -386,14 +369,14 @@ function reconcile(each_effect, array, state, anchor, render_fn, flags, get_key,
 		value = array[i];
 		key = get_key(value, i);
 
-		item = items.get(key);
+		item = onscreen.get(key);
 
 		if (item === undefined) {
 			var pending = state.offscreen.get(key);
 
 			if (pending !== undefined) {
 				state.offscreen.delete(key);
-				items.set(key, pending);
+				onscreen.set(key, pending);
 
 				var next = prev ? prev.next : current;
 
@@ -419,7 +402,7 @@ function reconcile(each_effect, array, state, anchor, render_fn, flags, get_key,
 				);
 			}
 
-			items.set(key, prev);
+			onscreen.set(key, prev);
 
 			matched = [];
 			stashed = [];
@@ -643,13 +626,14 @@ function create_item(
 			fragment.append((anchor = create_text()));
 		}
 
-		item.e = branch(() => render_fn(/** @type {Node} */ (anchor), v, i, get_collection), hydrating);
+		item.e = branch(() => render_fn(/** @type {Node} */ (anchor), v, i, get_collection));
 
 		item.e.prev = prev && prev.e;
 		item.e.next = next && next.e;
 
 		if (prev === null) {
 			if (!deferred) {
+				// TODO move this into block effect?
 				state.first = item;
 			}
 		} else {

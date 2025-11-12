@@ -171,6 +171,8 @@ function create_effect(type, fn, sync, push = true) {
 				(derived.effects ??= []).push(e);
 			}
 		}
+	} else {
+		console.trace('not pushing');
 	}
 
 	return effect;
@@ -386,6 +388,7 @@ export function block(fn, flags = 0) {
 	return effect;
 }
 
+// TODO i think we don't need `push` any more?
 /**
  * @param {(() => void)} fn
  * @param {boolean} [push]
