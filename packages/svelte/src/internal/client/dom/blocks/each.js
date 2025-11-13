@@ -286,8 +286,11 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		}
 
 		if (!first_run) {
-			if (should_defer_append()) {
+			if (defer) {
 				batch.oncommit(commit);
+				batch.ondiscard(() => {
+					// TODO presumably we need to do something here?
+				});
 			} else {
 				commit();
 			}
