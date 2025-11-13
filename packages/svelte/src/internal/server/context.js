@@ -1,6 +1,7 @@
 /** @import { SSRContext } from '#server' */
 import { DEV } from 'esm-env';
 import * as e from './errors.js';
+import { save_render_context } from './render-context.js';
 
 /** @type {SSRContext | null} */
 export var ssr_context = null;
@@ -113,10 +114,10 @@ function get_parent_context(ssr_context) {
  */
 export async function save(promise) {
 	var previous_context = ssr_context;
-	var value = await promise;
+	const restore_render_context = await save_render_context(promise);
 
 	return () => {
 		ssr_context = previous_context;
-		return value;
+		return restore_render_context();
 	};
 }

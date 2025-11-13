@@ -899,7 +899,7 @@ export function eager(fn) {
  */
 export function fork(fn) {
 	if (!async_mode_flag) {
-		e.experimental_async_fork();
+		e.experimental_async_required('fork');
 	}
 
 	if (current_batch !== null) {

@@ -450,6 +450,7 @@ declare module 'svelte' {
 	 * @deprecated Use [`$effect`](https://svelte.dev/docs/svelte/$effect) instead
 	 * */
 	export function afterUpdate(fn: () => void): void;
+	export const hydratable: Hydratable;
 	/**
 	 * Create a snippet programmatically
 	 * */
@@ -593,6 +594,27 @@ declare module 'svelte' {
 	export function untrack<T>(fn: () => T): T;
 	type Getters<T> = {
 		[K in keyof T]: () => T[K];
+	};
+
+	type Decode<T> = (value: any) => T;
+
+	type Encode<T> = (value: T) => string;
+
+	type Transport<T> =
+		| {
+				encode: Encode<T>;
+				decode?: undefined;
+		  }
+		| {
+				encode?: undefined;
+				decode: Decode<T>;
+		  };
+
+	type Hydratable = {
+		<T>(key: string, fn: () => T, options?: { transport?: Transport<T> }): T;
+		get: <T>(key: string, options?: { decode?: Decode<T> }) => T | undefined;
+		has: (key: string) => boolean;
+		set: <T>(key: string, value: T, options?: { encode?: Encode<T> }) => void;
 	};
 
 	export {};
