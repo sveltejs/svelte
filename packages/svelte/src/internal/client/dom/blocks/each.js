@@ -38,11 +38,10 @@ import { source, mutable_source, internal_set } from '../../reactivity/sources.j
 import { array_from, is_array } from '../../../shared/utils.js';
 import { COMMENT_NODE, INERT } from '#client/constants';
 import { queue_micro_task } from '../task.js';
-import { active_effect, get } from '../../runtime.js';
+import { get } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
 import { current_batch } from '../../reactivity/batch.js';
-import { log_effect_tree, root } from '../../dev/debug.js';
 
 /**
  * The row of a keyed each block that is currently updating. We track this
@@ -140,8 +139,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	/** @type {{ fragment: DocumentFragment | null, effect: Effect } | null} */
 	var fallback = null;
 
-	var was_empty = false;
-
 	// TODO: ideally we could use derived for runes mode but because of the ability
 	// to use a store which can be mutated, we can't do that here as mutating a store
 	// will still result in the collection array being the same from the store
@@ -153,6 +150,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 	/** @type {V[]} */
 	var array;
+
+	var first_run = true;
 
 	function commit() {
 		reconcile(each_effect, array, state, anchor, render_fn, flags, get_key, get_collection);
@@ -179,18 +178,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		}
 	}
 
-	var first_run = true;
-
 	var each_effect = block(() => {
 		array = /** @type {V[]} */ (get(each_array));
 		var length = array.length;
-
-		// if (was_empty && length === 0) {
-		// 	// ignore updates if the array is empty,
-		// 	// and it already was empty on previous run
-		// 	return;
-		// }
-		// was_empty = length === 0;
 
 		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
