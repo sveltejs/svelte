@@ -283,6 +283,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 						if ((flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0) {
 							update_item(existing, value, i, flags);
 						}
+						batch.skipped_effects.delete(existing.e);
 					} else {
 						item = create_item(
 							null,
