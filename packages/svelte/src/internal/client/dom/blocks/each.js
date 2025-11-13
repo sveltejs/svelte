@@ -213,7 +213,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				anchor = /** @type {Comment} */ (hydrate_node);
 				mismatch = true;
 				set_hydrating(false);
-				break;
 			}
 
 			var value = array[i];
