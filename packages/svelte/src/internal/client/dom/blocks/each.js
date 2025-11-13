@@ -201,7 +201,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		var keys = new Set();
 		var batch = /** @type {Batch} */ (current_batch);
 		var prev = null;
-		var defer = should_defer_append();
 
 		for (var i = 0; i < length; i += 1) {
 			if (
@@ -232,16 +231,13 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			} else {
 				item = create_item(
 					first_run ? (hydrating ? hydrate_node : anchor) : null,
-					state,
 					prev,
-					null,
 					value,
 					key,
 					i,
 					render_fn,
 					flags,
-					get_collection,
-					defer
+					get_collection
 				);
 
 				if (first_run) {
@@ -291,7 +287,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		}
 
 		if (!first_run) {
-			if (defer) {
+			if (should_defer_append()) {
 				batch.oncommit(commit);
 			} else {
 				commit();
@@ -574,31 +570,16 @@ function update_item(item, value, index, type) {
 /**
  * @template V
  * @param {Node | null} anchor
- * @param {EachState} state
  * @param {EachItem | null} prev
- * @param {EachItem | null} next
  * @param {V} value
  * @param {unknown} key
  * @param {number} index
  * @param {(anchor: Node, item: V | Source<V>, index: number | Value<number>, collection: () => V[]) => void} render_fn
  * @param {number} flags
  * @param {() => V[]} get_collection
- * @param {boolean} [deferred]
  * @returns {EachItem}
  */
-function create_item(
-	anchor,
-	state,
-	prev,
-	next,
-	value,
-	key,
-	index,
-	render_fn,
-	flags,
-	get_collection,
-	deferred
-) {
+function create_item(anchor, prev, value, key, index, render_fn, flags, get_collection) {
 	var previous_each_item = current_each_item;
 	var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
 	var mutable = (flags & EACH_ITEM_IMMUTABLE) === 0;
@@ -625,7 +606,7 @@ function create_item(
 		// @ts-expect-error
 		e: null,
 		prev,
-		next
+		next: null
 	};
 
 	current_each_item = item;
@@ -639,21 +620,10 @@ function create_item(
 		item.e = branch(() => render_fn(/** @type {Node} */ (anchor), v, i, get_collection));
 
 		item.e.prev = prev && prev.e;
-		item.e.next = next && next.e;
 
-		if (prev === null) {
-			if (!deferred) {
-				// TODO move this into block effect?
-				// state.first = item;
-			}
-		} else {
+		if (prev !== null) {
 			prev.next = item;
 			prev.e.next = item.e;
-		}
-
-		if (next !== null) {
-			next.prev = item;
-			next.e.prev = item.e;
 		}
 
 		return item;
