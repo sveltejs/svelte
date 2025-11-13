@@ -29,7 +29,7 @@ First set occurred at:
 %stack%
 ```
 
-This error occurs when using `hydratable` or `setHydratableValue` multiple times with the same key. To avoid this, you can combine `hydratable` with `cache`, or check whether the value has already been set with `hasHydratableValue`.
+This error occurs when using `hydratable` or `hydratable.set` multiple times with the same key. To avoid this, you can combine `hydratable` with `cache`, or check whether the value has already been set with `hydratable.has`.
 
 ```svelte
 <script>

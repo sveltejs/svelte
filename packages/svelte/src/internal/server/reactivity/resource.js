@@ -99,6 +99,10 @@ class Resource {
 		this.#current = value;
 		this.#promise = Promise.resolve();
 	};
+
+	withOverride = () => {
+		throw new Error('TODO Cannot override a resource on the server');
+	};
 }
 
 export function refreshAll() {

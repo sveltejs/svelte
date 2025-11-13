@@ -1,6 +1,6 @@
 /** @import { Source, Derived } from '#client' */
 /** @import { Resource as ResourceType } from '#shared' */
-import { state, derived, set, get, tick } from '../index.js';
+import { state, derived, set, get, tick, proxy } from '../index.js';
 import { deferred } from '../../shared/utils.js';
 import { async_mode_flag } from '../../flags/index.js';
 import * as e from '../errors.js';
@@ -49,10 +49,24 @@ class Resource {
 	/** {@type Source<any>} */
 	#error = state(undefined);
 
+	/** @type {Source<((oldValue: T) => T)[]>} */
+	#overrides = state(proxy([]));
+
+	/** @type {Derived<T | undefined>} */
+	#current = derived(() => {
+		return get(this.#ready)
+			? get(this.#overrides).reduce((v, r) => r(v), /** @type {T} */ (get(this.#raw)))
+			: undefined;
+	});
+
 	/** @type {Derived<Promise<T>['then']>} */
+	// @ts-ignore
 	#then = derived(() => {
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		get(this.#overrides).length;
 		const p = get(this.#promise);
-		return (resolve, reject) => p.then(resolve, reject);
+		return (resolve, reject) =>
+			p.then(() => resolve?.(/** @type {T} */ (get(this.#current))), reject);
 	});
 
 	/**
@@ -126,7 +140,7 @@ class Resource {
 	}
 
 	get current() {
-		return get(this.#ready) ? get(this.#raw) : undefined;
+		return get(this.#current);
 	}
 
 	get error() {
@@ -166,6 +180,26 @@ class Resource {
 		set(this.#raw, value);
 		set(this.#promise, Promise.resolve(value));
 	};
+
+	/**
+	 * @param {(oldValue: T) => T} fn
+	 * @param {Promise<T>} promise
+	 */
+	withOverride(fn, promise) {
+		get(this.#overrides).push(fn);
+
+		const rollback = () => {
+			const i = get(this.#overrides).indexOf(fn);
+			if (i !== -1) {
+				get(this.#overrides).splice(i, 1);
+			}
+		};
+
+		promise.then((result) => {
+			this.set(result);
+			rollback();
+		}, rollback);
+	}
 }
 
 /** @returns {Promise<void>} */

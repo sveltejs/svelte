@@ -40,6 +40,7 @@ export type Resource<T> = {
 	set: (value: Awaited<T>) => void;
 	loading: boolean;
 	error: any;
+	withOverride(fn: (oldValue: Awaited<T>) => Awaited<T>, promise: Promise<Awaited<T>>): void;
 } & (
 	| {
 			ready: false;

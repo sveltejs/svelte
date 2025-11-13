@@ -2203,6 +2203,7 @@ declare module 'svelte/reactivity' {
 		set: (value: Awaited<T>) => void;
 		loading: boolean;
 		error: any;
+		withOverride(fn: (oldValue: Awaited<T>) => Awaited<T>, promise: Promise<Awaited<T>>): void;
 	} & (
 		| {
 				ready: false;
@@ -2215,8 +2216,6 @@ declare module 'svelte/reactivity' {
 	);
 
 	type GetRequestInit = Omit<RequestInit, 'method' | 'body'> & { method?: 'GET' };
-
-	type CacheEntry = { count: number; item: any };
 	/**
 	 * A reactive version of the built-in [`Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date) object.
 	 * Reading the date (whether with methods like `date.getTime()` or `date.toString()`, or via things like [`Intl.DateTimeFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat))
@@ -2480,33 +2479,20 @@ declare module 'svelte/reactivity' {
 	 * @since 5.7.0
 	 */
 	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
-	export function resource<T>(fn: () => T): Resource<T>;
-	export function fetcher<TReturn>(url: string | URL, init?: GetRequestInit | undefined): Resource<TReturn>;
-	export function cache<TFn extends (...args: any[]) => any>(key: string, fn: TFn): ReturnType<TFn>;
-
-	export class CacheObserver<T> extends BaseCacheObserver<T> {
-		constructor(prefix?: string);
+	export class ReactiveCache<K = any, V = any> {
+		
+		register(key: K, fn: () => V): V;
+		[Symbol.iterator](): Generator<V, void, unknown>;
+		#private;
 	}
+	export function fetcher<TReturn>(url: string | URL, init?: GetRequestInit | undefined): Resource<TReturn>;
+	export function resource<T>(fn: () => T): Resource<T>;
+
+	export function refreshAll(): Promise<void>;
 	class ReactiveValue<T> {
 		
 		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
 		get current(): T;
-		#private;
-	}
-	class BaseCacheObserver<T> implements ReadonlyMap<string, T> {
-		
-		constructor(get_cache: () => Map<string, CacheEntry>, prefix?: string | undefined);
-		
-		get(key: string): any;
-		
-		has(key: string): boolean;
-		get size(): number;
-		
-		forEach(cb: (item: T, key: string, map: ReadonlyMap<string, T>) => void): void;
-		entries(): Generator<[string, T], undefined, unknown>;
-		keys(): Generator<string, undefined, unknown>;
-		values(): Generator<T, undefined, unknown>;
-		[Symbol.iterator](): Generator<[string, T], undefined, unknown>;
 		#private;
 	}
 
