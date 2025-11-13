@@ -389,35 +389,21 @@ function reconcile(each_effect, array, state, anchor, render_fn, flags, get_key,
 		item = onscreen.get(key);
 
 		if (item === undefined) {
-			var pending = offscreen.get(key);
+			item = offscreen.get(key);
 
-			if (pending !== undefined) {
-				offscreen.delete(key);
-				onscreen.set(key, pending);
-
-				var next = prev ? prev.next : current;
-
-				link(state, prev, pending);
-				link(state, pending, next);
-
-				move(pending, next, anchor);
-				prev = pending;
-			} else {
-				var child_anchor = current ? /** @type {TemplateNode} */ (current.e.nodes_start) : anchor;
-
-				prev = create_item(
-					child_anchor,
-					state,
-					prev,
-					prev === null ? state.first : prev.next,
-					value,
-					key,
-					i,
-					render_fn,
-					flags,
-					get_collection
-				);
+			if (item === undefined) {
+				throw new Error('this should be impossible');
 			}
+
+			offscreen.delete(key);
+
+			var next = prev ? prev.next : current;
+
+			link(state, prev, item);
+			link(state, item, next);
+
+			move(item, next, anchor);
+			prev = item;
 
 			onscreen.set(key, prev);
 
