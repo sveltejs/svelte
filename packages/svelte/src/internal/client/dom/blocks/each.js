@@ -348,6 +348,7 @@ function reconcile(each_effect, array, state, anchor, render_fn, flags, get_key,
 
 	var length = array.length;
 	var onscreen = state.onscreen;
+	var offscreen = state.offscreen;
 	var first = state.first;
 	var current = first;
 
@@ -398,10 +399,10 @@ function reconcile(each_effect, array, state, anchor, render_fn, flags, get_key,
 		item = onscreen.get(key);
 
 		if (item === undefined) {
-			var pending = state.offscreen.get(key);
+			var pending = offscreen.get(key);
 
 			if (pending !== undefined) {
-				state.offscreen.delete(key);
+				offscreen.delete(key);
 				onscreen.set(key, pending);
 
 				var next = prev ? prev.next : current;
@@ -561,11 +562,18 @@ function reconcile(each_effect, array, state, anchor, render_fn, flags, get_key,
 	each_effect.first = state.first && state.first.e;
 	each_effect.last = prev && prev.e;
 
-	for (var unused of state.offscreen.values()) {
+	if (prev) {
+		// TODO i think this is wrong... the offscreen items need to be linked,
+		// so that they all update correctly. the last onscreen item should link
+		// to the first offscreen item, etc
+		prev.e.next = null;
+	}
+
+	for (var unused of offscreen.values()) {
 		destroy_effect(unused.e);
 	}
 
-	state.offscreen.clear();
+	offscreen.clear();
 }
 
 /**
