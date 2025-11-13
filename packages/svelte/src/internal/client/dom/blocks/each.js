@@ -157,8 +157,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	function commit() {
 		reconcile(each_effect, array, state, anchor, render_fn, flags, get_key, get_collection);
 
-		if (array.length === 0) {
-			if (fallback !== null) {
+		if (fallback !== null) {
+			if (array.length === 0) {
 				if (fallback.fragment) {
 					anchor.before(fallback.fragment);
 					fallback.fragment = null;
@@ -166,14 +166,16 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					// TODO if this was
 					resume_effect(fallback.effect);
 				}
+
+				each_effect.first = fallback.effect;
+			} else {
+				pause_effect(fallback.effect, () => {
+					// TODO only null out if no pending batch needs it,
+					// otherwise re-add `fallback.fragment` and move the
+					// effect into it
+					fallback = null;
+				});
 			}
-		} else if (fallback !== null) {
-			pause_effect(fallback.effect, () => {
-				// TODO only null out if no pending batch needs it,
-				// otherwise re-add `fallback.fragment` and move the
-				// effect into it
-				fallback = null;
-			});
 		}
 	}
 
@@ -183,12 +185,12 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		array = /** @type {V[]} */ (get(each_array));
 		var length = array.length;
 
-		if (was_empty && length === 0) {
-			// ignore updates if the array is empty,
-			// and it already was empty on previous run
-			return;
-		}
-		was_empty = length === 0;
+		// if (was_empty && length === 0) {
+		// 	// ignore updates if the array is empty,
+		// 	// and it already was empty on previous run
+		// 	return;
+		// }
+		// was_empty = length === 0;
 
 		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
@@ -270,14 +272,21 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		}
 
 		if (length === 0 && fallback_fn && !fallback) {
-			var fragment = document.createDocumentFragment();
-			var target = create_text();
-			fragment.append(target);
+			if (first_run) {
+				fallback = {
+					fragment: null,
+					effect: branch(() => fallback_fn(anchor))
+				};
+			} else {
+				var fragment = document.createDocumentFragment();
+				var target = create_text();
+				fragment.append(target);
 
-			fallback = {
-				fragment,
-				effect: branch(() => fallback_fn(target))
-			};
+				fallback = {
+					fragment,
+					effect: branch(() => fallback_fn(target))
+				};
+			}
 		}
 
 		// remove excess nodes
