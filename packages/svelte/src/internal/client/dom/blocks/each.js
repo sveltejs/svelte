@@ -137,7 +137,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		hydrate_next();
 	}
 
-	/** @type {Effect | null} */
+	/** @type {{ fragment: DocumentFragment | null, effect: Effect } | null} */
 	var fallback = null;
 
 	var was_empty = false;
@@ -157,18 +157,23 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	function commit() {
 		reconcile(each_effect, array, state, anchor, render_fn, flags, get_key, get_collection);
 
-		if (fallback_fn !== null) {
-			if (array.length === 0) {
-				if (fallback) {
-					resume_effect(fallback);
+		if (array.length === 0) {
+			if (fallback !== null) {
+				if (fallback.fragment) {
+					anchor.before(fallback.fragment);
+					fallback.fragment = null;
 				} else {
-					fallback = branch(() => fallback_fn(anchor));
+					// TODO if this was
+					resume_effect(fallback.effect);
 				}
-			} else if (fallback !== null) {
-				pause_effect(fallback, () => {
-					fallback = null;
-				});
 			}
+		} else if (fallback !== null) {
+			pause_effect(fallback.effect, () => {
+				// TODO only null out if no pending batch needs it,
+				// otherwise re-add `fallback.fragment` and move the
+				// effect into it
+				fallback = null;
+			});
 		}
 	}
 
@@ -262,6 +267,17 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			}
 
 			keys.add(key);
+		}
+
+		if (length === 0 && fallback_fn && !fallback) {
+			var fragment = document.createDocumentFragment();
+			var target = create_text();
+			fragment.append(target);
+
+			fallback = {
+				fragment,
+				effect: branch(() => fallback_fn(target))
+			};
 		}
 
 		// remove excess nodes
