@@ -1,3 +1,4 @@
+import type { Encode } from '#shared';
 import type { Element } from './dev';
 import type { Renderer } from './renderer';
 
@@ -12,6 +13,17 @@ export interface SSRContext {
 	function?: any;
 	/** dev mode only: the current element */
 	element?: Element;
+}
+
+export interface HydratableEntry {
+	value: unknown;
+	encode: Encode<any> | undefined;
+	stack?: string;
+}
+
+export interface RenderContext {
+	hydratables: Map<string, HydratableEntry>;
+	cache: Map<symbol, Map<any, any>>;
 }
 
 export interface SyncRenderOutput {
