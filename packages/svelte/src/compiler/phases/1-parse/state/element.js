@@ -242,6 +242,10 @@ export default function element(parser) {
 		parser.allow_whitespace();
 	}
 
+	if (element.type === 'Component') {
+		element.metadata.expression = new ExpressionMetadata();
+	}
+
 	if (element.type === 'SvelteComponent') {
 		const index = element.attributes.findIndex(
 			/** @param {any} attr */
@@ -257,6 +261,7 @@ export default function element(parser) {
 		}
 
 		element.expression = get_attribute_expression(definition);
+		element.metadata.expression = new ExpressionMetadata();
 	}
 
 	if (element.type === 'SvelteElement') {
