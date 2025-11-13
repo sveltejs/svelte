@@ -308,6 +308,7 @@ export namespace AST {
 		type: 'Component';
 		/** @internal */
 		metadata: {
+			expression: ExpressionMetadata;
 			scopes: Record<string, Scope>;
 			dynamic: boolean;
 			/** The set of locally-defined snippets that this component tag could render,
@@ -355,6 +356,7 @@ export namespace AST {
 		expression: Expression;
 		/** @internal */
 		metadata: {
+			expression: ExpressionMetadata;
 			scopes: Record<string, Scope>;
 			/** The set of locally-defined snippets that this component tag could render,
 			 * used for CSS pruning purposes */
