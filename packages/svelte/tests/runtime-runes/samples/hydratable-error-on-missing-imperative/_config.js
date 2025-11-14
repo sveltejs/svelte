@@ -1,6 +1,7 @@
 import { test } from '../../test';
 
 export default test({
+	skip_no_async: true,
 	mode: ['async-server', 'hydrate'],
 
 	server_props: { environment: 'server' },
