@@ -330,7 +330,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
  */
 function reconcile(each_effect, array, state, anchor, flags, get_key) {
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
-	var should_update = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 
 	var length = array.length;
 	var onscreen = state.onscreen;
@@ -407,10 +406,6 @@ function reconcile(each_effect, array, state, anchor, flags, get_key) {
 
 			current = prev.next;
 			continue;
-		}
-
-		if (should_update) {
-			update_item(item, value, i, flags);
 		}
 
 		if ((item.e.f & INERT) !== 0) {
