@@ -5,7 +5,7 @@ import { createClassComponent } from 'svelte/legacy';
 import { proxy } from 'svelte/internal/client';
 import { flushSync, hydrate, mount, unmount } from 'svelte';
 import { render } from 'svelte/server';
-import { afterAll, assert, beforeAll } from 'vitest';
+import { afterAll, assert, beforeAll, beforeEach } from 'vitest';
 import { async_mode, compile_directory, fragments } from '../helpers.js';
 import { assert_html_equal, assert_html_equal_with_options } from '../html_equal.js';
 import { raf } from '../animation-helpers.js';
@@ -102,6 +102,14 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	recover?: boolean;
 }
 
+declare global {
+	var __svelte:
+		| {
+				h?: any;
+		  }
+		| undefined;
+}
+
 let unhandled_rejection: Error | null = null;
 
 function unhandled_rejection_handler(err: Error) {
@@ -113,6 +121,10 @@ const listeners = process.rawListeners('unhandledRejection');
 beforeAll(() => {
 	// @ts-expect-error TODO huh?
 	process.prependListener('unhandledRejection', unhandled_rejection_handler);
+});
+
+beforeEach(() => {
+	delete globalThis?.__svelte?.h;
 });
 
 afterAll(() => {
@@ -539,6 +551,7 @@ async function run_test_variant(
 		}
 	} catch (err) {
 		if (config.runtime_error) {
+			console.log(err);
 			assert.include((err as Error).message, config.runtime_error);
 		} else if (config.error && !unintended_error) {
 			assert.include((err as Error).message, config.error);
