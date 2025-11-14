@@ -201,6 +201,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		var keys = new Set();
 		var batch = /** @type {Batch} */ (current_batch);
 		var prev = null;
+		var defer = should_defer_append();
 
 		for (var i = 0; i < length; i += 1) {
 			if (
@@ -229,7 +230,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				batch.skipped_effects.delete(item.e);
 			} else {
 				item = create_item(
-					first_run ? (hydrating ? hydrate_node : anchor) : null,
+					first_run ? anchor : null,
 					prev,
 					value,
 					key,
