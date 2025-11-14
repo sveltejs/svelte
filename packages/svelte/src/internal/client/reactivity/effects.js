@@ -80,10 +80,9 @@ function push_effect(effect, parent_effect) {
  * @param {number} type
  * @param {null | (() => void | (() => void))} fn
  * @param {boolean} sync
- * @param {boolean} push
  * @returns {Effect}
  */
-function create_effect(type, fn, sync, push = true) {
+function create_effect(type, fn, sync) {
 	var parent = active_effect;
 
 	if (DEV) {
@@ -133,43 +132,41 @@ function create_effect(type, fn, sync, push = true) {
 		schedule_effect(effect);
 	}
 
-	if (push) {
-		/** @type {Effect | null} */
-		var e = effect;
+	/** @type {Effect | null} */
+	var e = effect;
 
-		// if an effect has already ran and doesn't need to be kept in the tree
-		// (because it won't re-run, has no DOM, and has no teardown etc)
-		// then we skip it and go to its child (if any)
-		if (
-			sync &&
-			e.deps === null &&
-			e.teardown === null &&
-			e.nodes_start === null &&
-			e.first === e.last && // either `null`, or a singular child
-			(e.f & EFFECT_PRESERVED) === 0
-		) {
-			e = e.first;
-			if ((type & BLOCK_EFFECT) !== 0 && (type & EFFECT_TRANSPARENT) !== 0 && e !== null) {
-				e.f |= EFFECT_TRANSPARENT;
-			}
+	// if an effect has already ran and doesn't need to be kept in the tree
+	// (because it won't re-run, has no DOM, and has no teardown etc)
+	// then we skip it and go to its child (if any)
+	if (
+		sync &&
+		e.deps === null &&
+		e.teardown === null &&
+		e.nodes_start === null &&
+		e.first === e.last && // either `null`, or a singular child
+		(e.f & EFFECT_PRESERVED) === 0
+	) {
+		e = e.first;
+		if ((type & BLOCK_EFFECT) !== 0 && (type & EFFECT_TRANSPARENT) !== 0 && e !== null) {
+			e.f |= EFFECT_TRANSPARENT;
+		}
+	}
+
+	if (e !== null) {
+		e.parent = parent;
+
+		if (parent !== null) {
+			push_effect(e, parent);
 		}
 
-		if (e !== null) {
-			e.parent = parent;
-
-			if (parent !== null) {
-				push_effect(e, parent);
-			}
-
-			// if we're in a derived, add the effect there too
-			if (
-				active_reaction !== null &&
-				(active_reaction.f & DERIVED) !== 0 &&
-				(type & ROOT_EFFECT) === 0
-			) {
-				var derived = /** @type {Derived} */ (active_reaction);
-				(derived.effects ??= []).push(e);
-			}
+		// if we're in a derived, add the effect there too
+		if (
+			active_reaction !== null &&
+			(active_reaction.f & DERIVED) !== 0 &&
+			(type & ROOT_EFFECT) === 0
+		) {
+			var derived = /** @type {Derived} */ (active_reaction);
+			(derived.effects ??= []).push(e);
 		}
 	}
 
@@ -388,10 +385,9 @@ export function block(fn, flags = 0) {
 
 /**
  * @param {(() => void)} fn
- * @param {boolean} [push]
  */
-export function branch(fn, push = true) {
-	return create_effect(BRANCH_EFFECT | EFFECT_PRESERVED, fn, true, push);
+export function branch(fn) {
+	return create_effect(BRANCH_EFFECT | EFFECT_PRESERVED, fn, true);
 }
 
 /**
