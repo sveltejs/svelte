@@ -132,6 +132,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	var state = { flags, items: new Map(), first: null };
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
+	var is_reactive_value = (flags & EACH_ITEM_REACTIVE) !== 0;
+	var is_reactive_index = (flags & EACH_INDEX_REACTIVE) !== 0;
 
 	if (is_controlled) {
 		var parent_node = /** @type {Element} */ (node);
@@ -231,8 +233,14 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 			if (item) {
 				// update before reconciliation, to trigger any async updates
-				if ((flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0) {
-					update_item(item, value, i, flags);
+				if (is_reactive_value) {
+					internal_set(item.v, value);
+				}
+
+				if (is_reactive_index) {
+					internal_set(/** @type {Value<number>} */ (item.i), i);
+				} else {
+					item.i = i;
 				}
 
 				batch.skipped_effects.delete(item.e);
@@ -534,25 +542,6 @@ function reconcile(each_effect, array, state, anchor, flags, get_key) {
 		// so that they all update correctly. the last onscreen item should link
 		// to the first offscreen item, etc
 		prev.e.next = null;
-	}
-}
-
-/**
- * @param {EachItem} item
- * @param {any} value
- * @param {number} index
- * @param {number} type
- * @returns {void}
- */
-function update_item(item, value, index, type) {
-	if ((type & EACH_ITEM_REACTIVE) !== 0) {
-		internal_set(item.v, value);
-	}
-
-	if ((type & EACH_INDEX_REACTIVE) !== 0) {
-		internal_set(/** @type {Value<number>} */ (item.i), index);
-	} else {
-		item.i = index;
 	}
 }
 
