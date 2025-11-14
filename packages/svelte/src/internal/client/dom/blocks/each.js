@@ -93,20 +93,24 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 			);
 			clear_text_content(parent_node);
 			parent_node.append(/** @type {Element} */ (controlled_anchor));
-			state.onscreen.clear();
+			state.items.clear();
 		}
 
 		for (var i = 0; i < length; i++) {
 			var item = to_destroy[i];
 			if (!is_controlled) {
-				state.onscreen.delete(item.k);
+				state.items.delete(item.k);
 			}
 
 			destroy_effect(item.e, !is_controlled);
 		}
-	});
 
-	link(state, to_destroy[0].prev, to_destroy[length - 1].next);
+		link(state, to_destroy[0].prev, to_destroy[length - 1].next);
+
+		if (state.first === to_destroy[0]) {
+			state.first = to_destroy[0].prev;
+		}
+	});
 }
 
 /**
@@ -123,7 +127,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	var anchor = node;
 
 	/** @type {EachState} */
-	var state = { flags, onscreen: new Map(), offscreen: new Map(), first: null };
+	var state = { flags, items: new Map(), first: null, last: null };
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 
@@ -221,7 +225,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			var value = array[i];
 			var key = get_key(value, i);
 
-			var item = first_run ? null : state.onscreen.get(key) ?? state.offscreen.get(key);
+			var item = first_run ? null : state.items.get(key);
 
 			if (item) {
 				// update before reconciliation, to trigger any async updates
@@ -243,6 +247,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				);
 
 				if (first_run) {
+					item.o = true;
+
 					if (prev === null) {
 						state.first = item;
 					} else {
@@ -250,10 +256,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					}
 
 					prev = item;
-					state.onscreen.set(key, item);
-				} else {
-					state.offscreen.set(key, item);
 				}
+
+				state.items.set(key, item);
 			}
 
 			keys.add(key);
@@ -282,7 +287,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			set_hydrate_node(skip_nodes());
 		}
 
-		for (const [key, item] of state.onscreen) {
+		for (const [key, item] of state.items) {
 			if (!keys.has(key)) {
 				batch.skipped_effects.add(item.e);
 			}
@@ -335,8 +340,7 @@ function reconcile(each_effect, array, state, anchor, flags, get_key) {
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 
 	var length = array.length;
-	var onscreen = state.onscreen;
-	var offscreen = state.offscreen;
+	var items = state.items;
 	var current = state.first;
 
 	/** @type {undefined | Set<EachItem>} */
@@ -370,7 +374,7 @@ function reconcile(each_effect, array, state, anchor, flags, get_key) {
 		for (i = 0; i < length; i += 1) {
 			value = array[i];
 			key = get_key(value, i);
-			item = /** @type {EachItem} */ (onscreen.get(key));
+			item = /** @type {EachItem} */ (items.get(key));
 
 			item.a?.measure();
 			(to_animate ??= new Set()).add(item);
@@ -381,12 +385,12 @@ function reconcile(each_effect, array, state, anchor, flags, get_key) {
 		value = array[i];
 		key = get_key(value, i);
 
-		item = onscreen.get(key);
+		item = /** @type {EachItem} */ (items.get(key));
 
-		if (item === undefined) {
-			item = /** @type {EachItem} */ (offscreen.get(key));
+		state.first ??= item;
 
-			offscreen.delete(key);
+		if (!item.o) {
+			item.o = true;
 
 			var next = prev ? prev.next : current;
 
@@ -395,8 +399,6 @@ function reconcile(each_effect, array, state, anchor, flags, get_key) {
 
 			move(item, next, anchor);
 			prev = item;
-
-			onscreen.set(key, prev);
 
 			matched = [];
 			stashed = [];
@@ -531,12 +533,6 @@ function reconcile(each_effect, array, state, anchor, flags, get_key) {
 		// to the first offscreen item, etc
 		prev.e.next = null;
 	}
-
-	for (var unused of offscreen.values()) {
-		destroy_effect(unused.e);
-	}
-
-	offscreen.clear();
 }
 
 /**
@@ -596,6 +592,7 @@ function create_item(anchor, prev, value, key, index, render_fn, flags, get_coll
 		a: null,
 		// @ts-expect-error
 		e: null,
+		o: false,
 		prev,
 		next: null
 	};

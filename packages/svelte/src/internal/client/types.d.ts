@@ -64,14 +64,10 @@ export type TemplateNode = Text | Element | Comment;
 export type Dom = TemplateNode | TemplateNode[];
 
 export type EachState = {
-	/** flags */
 	flags: number;
-	/** items that are currently onscreen */
-	onscreen: Map<any, EachItem>;
-	/** items that are currently offscreen */
-	offscreen: Map<any, EachItem>;
-	/** head of the linked list of items */
+	items: Map<any, EachItem>;
 	first: EachItem | null;
+	last: EachItem | null;
 };
 
 export type EachItem = {
@@ -85,6 +81,8 @@ export type EachItem = {
 	i: number | Source<number>;
 	/** key */
 	k: unknown;
+	/** true if onscreen */
+	o: boolean;
 	prev: EachItem | null;
 	next: EachItem | null;
 };
