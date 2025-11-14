@@ -129,7 +129,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	var anchor = node;
 
 	/** @type {EachState} */
-	var state = { flags, items: new Map(), first: null, last: null };
+	var state = { flags, items: new Map(), first: null };
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 

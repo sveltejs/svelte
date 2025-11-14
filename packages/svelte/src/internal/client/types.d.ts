@@ -67,7 +67,6 @@ export type EachState = {
 	flags: number;
 	items: Map<any, EachItem>;
 	first: EachItem | null;
-	last: EachItem | null;
 };
 
 export type EachItem = {
