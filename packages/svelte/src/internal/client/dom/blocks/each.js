@@ -80,32 +80,34 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 	}
 
 	run_out_transitions(transitions, () => {
-		var is_controlled = length > 0 && transitions.length === 0 && controlled_anchor !== null;
+		// If we have a controlled anchor, it means that the each block is inside a single
+		// DOM element, so we can apply a fast-path for clearing the contents of the element.
+		var fast_path = transitions.length === 0 && controlled_anchor !== null;
 
 		// TODO only destroy effects if no pending batch needs them. otherwise,
 		// just set `item.o` back to `false`
 
-		// If we have a controlled anchor, it means that the each block is inside a single
-		// DOM element, so we can apply a fast-path for clearing the contents of the element.
-		if (is_controlled) {
+		if (fast_path) {
 			var parent_node = /** @type {Element} */ (
 				/** @type {Element} */ (controlled_anchor).parentNode
 			);
 			clear_text_content(parent_node);
 			parent_node.append(/** @type {Element} */ (controlled_anchor));
+
 			state.items.clear();
+			link(state, to_destroy[0].prev, to_destroy[length - 1].next);
 		}
 
 		for (var i = 0; i < length; i++) {
 			var item = to_destroy[i];
-			if (!is_controlled) {
+
+			if (!fast_path) {
 				state.items.delete(item.k);
+				link(state, item.prev, item.next);
 			}
 
-			destroy_effect(item.e, !is_controlled);
+			destroy_effect(item.e, !fast_path);
 		}
-
-		link(state, to_destroy[0].prev, to_destroy[length - 1].next);
 
 		if (state.first === to_destroy[0]) {
 			state.first = to_destroy[0].prev;
