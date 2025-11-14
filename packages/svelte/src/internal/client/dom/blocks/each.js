@@ -370,12 +370,10 @@ function reconcile(each_effect, array, state, anchor, flags, get_key) {
 		for (i = 0; i < length; i += 1) {
 			value = array[i];
 			key = get_key(value, i);
-			item = onscreen.get(key);
+			item = /** @type {EachItem} */ (onscreen.get(key));
 
-			if (item !== undefined) {
-				item.a?.measure();
-				(to_animate ??= new Set()).add(item);
-			}
+			item.a?.measure();
+			(to_animate ??= new Set()).add(item);
 		}
 	}
 
