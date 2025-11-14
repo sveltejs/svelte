@@ -383,11 +383,7 @@ function reconcile(each_effect, array, state, anchor, flags, get_key) {
 		item = onscreen.get(key);
 
 		if (item === undefined) {
-			item = offscreen.get(key);
-
-			if (item === undefined) {
-				throw new Error('this should be impossible');
-			}
+			item = /** @type {EachItem} */ (offscreen.get(key));
 
 			offscreen.delete(key);
 
