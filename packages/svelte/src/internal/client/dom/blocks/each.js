@@ -88,11 +88,11 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 		// just set `item.o` back to `false`
 
 		if (fast_path) {
-			var parent_node = /** @type {Element} */ (
-				/** @type {Element} */ (controlled_anchor).parentNode
-			);
+			var anchor = /** @type {Element} */ (controlled_anchor);
+			var parent_node = /** @type {Element} */ (anchor.parentNode);
+
 			clear_text_content(parent_node);
-			parent_node.append(/** @type {Element} */ (controlled_anchor));
+			parent_node.append(anchor);
 
 			state.items.clear();
 			link(state, to_destroy[0].prev, to_destroy[length - 1].next);
