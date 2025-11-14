@@ -1,4 +1,3 @@
-import { tick } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -8,12 +7,14 @@ export default test({
 	ssrHtml: '<p>The current environment is: server</p>',
 
 	props: { environment: 'browser' },
-	html: '<p>The current environment is: server</p>',
 
-	async test({ assert, target }) {
-		await tick();
+	async test({ assert, target, variant }) {
 		const p = target.querySelector('p');
 		ok(p);
-		assert.htmlEqual(p.outerHTML, '<p>The current environment is: server</p>');
+		if (variant === 'hydrate') {
+			assert.htmlEqual(p.outerHTML, '<p>The current environment is: server</p>');
+		} else {
+			assert.htmlEqual(p.outerHTML, '<p>The current environment is: browser</p>');
+		}
 	}
 });

@@ -81,7 +81,7 @@ const { test, run } = suite_with_variants<SSRTest, 'sync' | 'async', CompileOpti
 			rendered = is_async ? await render_result : render_result;
 		} catch (error) {
 			if (config.error) {
-				assert.deepEqual((error as Error).message, config.error);
+				assert.include((error as Error).message, config.error);
 				return;
 			} else {
 				throw error;

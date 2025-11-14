@@ -403,6 +403,16 @@ async function run_test_variant(
 				throw new Error('Ensure dom mode is skipped');
 			};
 
+			const run_hydratables_init = () => {
+				if (variant !== 'hydrate') return;
+				const script = document.head
+					.querySelectorAll('script')
+					.values()
+					.find((script) => script.textContent.includes('(window.__svelte ??= {}).h'))?.textContent;
+				if (!script) return;
+				(0, eval)(script);
+			};
+
 			if (runes) {
 				props = proxy({ ...(config.props || {}) });
 
@@ -411,6 +421,7 @@ async function run_test_variant(
 
 				if (manual_hydrate && variant === 'hydrate') {
 					hydrate_fn = () => {
+						run_hydratables_init();
 						instance = hydrate(mod.default, {
 							target,
 							props,
@@ -419,6 +430,7 @@ async function run_test_variant(
 						});
 					};
 				} else {
+					run_hydratables_init();
 					const render = variant === 'hydrate' ? hydrate : mount;
 					instance = render(mod.default, {
 						target,
@@ -428,6 +440,7 @@ async function run_test_variant(
 					});
 				}
 			} else {
+				run_hydratables_init();
 				instance = createClassComponent({
 					component: mod.default,
 					props: config.props,
