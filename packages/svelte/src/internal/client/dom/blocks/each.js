@@ -67,34 +67,34 @@ export function index(_, i) {
  * Pause multiple effects simultaneously, and coordinate their
  * subsequent destruction. Used in each blocks
  * @param {EachState} state
- * @param {EachItem[]} items
+ * @param {EachItem[]} to_destroy
  * @param {null | Node} controlled_anchor
  */
-function pause_effects(state, items, controlled_anchor) {
+function pause_effects(state, to_destroy, controlled_anchor) {
 	/** @type {TransitionManager[]} */
 	var transitions = [];
-	var length = items.length;
+	var length = to_destroy.length;
 
 	for (var i = 0; i < length; i++) {
-		pause_children(items[i].e, transitions, true);
-	}
-
-	var is_controlled = length > 0 && transitions.length === 0 && controlled_anchor !== null;
-
-	// If we have a controlled anchor, it means that the each block is inside a single
-	// DOM element, so we can apply a fast-path for clearing the contents of the element.
-	if (is_controlled) {
-		var parent_node = /** @type {Element} */ (
-			/** @type {Element} */ (controlled_anchor).parentNode
-		);
-		clear_text_content(parent_node);
-		parent_node.append(/** @type {Element} */ (controlled_anchor));
-		state.onscreen.clear();
+		pause_children(to_destroy[i].e, transitions, true);
 	}
 
 	run_out_transitions(transitions, () => {
+		var is_controlled = length > 0 && transitions.length === 0 && controlled_anchor !== null;
+
+		// If we have a controlled anchor, it means that the each block is inside a single
+		// DOM element, so we can apply a fast-path for clearing the contents of the element.
+		if (is_controlled) {
+			var parent_node = /** @type {Element} */ (
+				/** @type {Element} */ (controlled_anchor).parentNode
+			);
+			clear_text_content(parent_node);
+			parent_node.append(/** @type {Element} */ (controlled_anchor));
+			state.onscreen.clear();
+		}
+
 		for (var i = 0; i < length; i++) {
-			var item = items[i];
+			var item = to_destroy[i];
 			if (!is_controlled) {
 				state.onscreen.delete(item.k);
 			}
@@ -103,7 +103,7 @@ function pause_effects(state, items, controlled_anchor) {
 		}
 	});
 
-	link(state, items[0].prev, items[length - 1].next);
+	link(state, to_destroy[0].prev, to_destroy[length - 1].next);
 }
 
 /**
