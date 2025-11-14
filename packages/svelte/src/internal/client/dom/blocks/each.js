@@ -154,7 +154,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	var first_run = true;
 
 	function commit() {
-		reconcile(each_effect, array, state, anchor, render_fn, flags, get_key, get_collection);
+		reconcile(each_effect, array, state, anchor, flags, get_key);
 
 		if (fallback !== null) {
 			if (array.length === 0) {
@@ -162,7 +162,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					anchor.before(fallback.fragment);
 					fallback.fragment = null;
 				} else {
-					// TODO if this was
 					resume_effect(fallback.effect);
 				}
 
@@ -325,21 +324,18 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
  * @param {Array<V>} array
  * @param {EachState} state
  * @param {Element | Comment | Text} anchor
- * @param {(anchor: Node, item: MaybeSource<V>, index: number | Source<number>, collection: () => V[]) => void} render_fn
  * @param {number} flags
  * @param {(value: V, index: number) => any} get_key
- * @param {() => V[]} get_collection
  * @returns {void}
  */
-function reconcile(each_effect, array, state, anchor, render_fn, flags, get_key, get_collection) {
+function reconcile(each_effect, array, state, anchor, flags, get_key) {
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 	var should_update = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 
 	var length = array.length;
 	var onscreen = state.onscreen;
 	var offscreen = state.offscreen;
-	var first = state.first;
-	var current = first;
+	var current = state.first;
 
 	/** @type {undefined | Set<EachItem>} */
 	var seen;
