@@ -82,6 +82,9 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 	run_out_transitions(transitions, () => {
 		var is_controlled = length > 0 && transitions.length === 0 && controlled_anchor !== null;
 
+		// TODO only destroy effects if no pending batch needs them. otherwise,
+		// just set `item.o` back to `false`
+
 		// If we have a controlled anchor, it means that the each block is inside a single
 		// DOM element, so we can apply a fast-path for clearing the contents of the element.
 		if (is_controlled) {
