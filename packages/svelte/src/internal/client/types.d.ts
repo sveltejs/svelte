@@ -64,8 +64,11 @@ export type TemplateNode = Text | Element | Comment;
 export type Dom = TemplateNode | TemplateNode[];
 
 export type EachState = {
+	/** flags */
 	flags: number;
+	/** a key -> item lookup */
 	items: Map<any, EachItem>;
+	/** head of the linked list of items */
 	first: EachItem | null;
 };
 
