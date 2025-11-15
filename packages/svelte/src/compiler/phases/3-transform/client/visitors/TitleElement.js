@@ -29,17 +29,16 @@ export function TitleElement(node, context) {
 		)
 	);
 
-	// Always in an $effect so it only changes the title once async work is done
+	// Make sure it only changes the title once async work is done
 	if (has_state) {
 		context.state.after_update.push(
 			b.stmt(
 				b.call(
-					'$.template_effect',
+					'$.deferred_template_effect',
 					b.arrow(memoizer.apply(), b.block([statement])),
 					memoizer.sync_values(),
 					memoizer.async_values(),
-					memoizer.blockers(),
-					b.true
+					memoizer.blockers()
 				)
 			)
 		);
