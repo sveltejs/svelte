@@ -535,13 +535,13 @@ function reconcile(each_effect, array, state, anchor, flags, get_key) {
 		});
 	}
 
+	// TODO i have an inkling that the rest of this function is wrong...
+	// the offscreen items need to be linked, so that they all update correctly.
+	// the last onscreen item should link to the first offscreen item, etc
 	each_effect.first = state.first && state.first.e;
 	each_effect.last = prev && prev.e;
 
 	if (prev) {
-		// TODO i think this is wrong... the offscreen items need to be linked,
-		// so that they all update correctly. the last onscreen item should link
-		// to the first offscreen item, etc
 		prev.e.next = null;
 	}
 }
