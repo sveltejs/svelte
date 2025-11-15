@@ -80,8 +80,9 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 	}
 
 	run_out_transitions(transitions, () => {
-		// If we have a controlled anchor, it means that the each block is inside a single
-		// DOM element, so we can apply a fast-path for clearing the contents of the element.
+		// If we're in a controlled each block (i.e. the block is the only child of an
+		// element), and we are removing all items, _and_ there are no out transitions,
+		// we can use the fast path — emptying the element and replacing the anchor
 		var fast_path = transitions.length === 0 && controlled_anchor !== null;
 
 		// TODO only destroy effects if no pending batch needs them. otherwise,
