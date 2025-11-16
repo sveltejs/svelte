@@ -119,6 +119,7 @@ export {
 	legacy_pre_effect_reset,
 	render_effect,
 	template_effect,
+	deferred_template_effect,
 	effect,
 	user_effect,
 	user_pre_effect
