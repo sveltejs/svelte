@@ -1,5 +1,15 @@
 # svelte
 
+## 5.43.7
+
+### Patch Changes
+
+- fix: properly defer document title until async work is complete ([#17158](https://github.com/sveltejs/svelte/pull/17158))
+
+- fix: ensure deferred effects can be rescheduled later on ([#17147](https://github.com/sveltejs/svelte/pull/17147))
+
+- fix: take blockers of components into account ([#17153](https://github.com/sveltejs/svelte/pull/17153))
+
 ## 5.43.6
 
 ### Patch Changes
