@@ -144,6 +144,10 @@ export class Batch {
 
 	is_fork = false;
 
+	is_deferred() {
+		return this.is_fork || this.#blocking_pending > 0;
+	}
+
 	/**
 	 *
 	 * @param {Effect[]} root_effects
@@ -172,7 +176,7 @@ export class Batch {
 			this.#resolve();
 		}
 
-		if (this.#blocking_pending > 0 || this.is_fork) {
+		if (this.is_deferred()) {
 			this.#defer_effects(target.effects);
 			this.#defer_effects(target.render_effects);
 			this.#defer_effects(target.block_effects);
