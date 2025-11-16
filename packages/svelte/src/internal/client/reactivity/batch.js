@@ -378,15 +378,13 @@ export class Batch {
 			var previous_batch_values = batch_values;
 			var is_earlier = true;
 
-			/** @type {EffectTarget} */
-			var dummy_target = {
-				parent: null,
-				effect: null,
-				effects: [],
-				render_effects: [],
-				block_effects: []
-			};
+			/** @type {Map<Batch, Set<Effect>>} */
+			const batch_effects = new Map();
 
+			// First loop: collect effects to run for each batch
+			// Do this before running them because rerunning an effect
+			// might change its dependencies and so other batches could
+			// run effects when they shouldn't or not when they should.
 			for (const batch of batches) {
 				if (batch === this) {
 					is_earlier = false;
@@ -418,18 +416,43 @@ export class Batch {
 				// Re-run async/block effects that depend on distinct values changed in both batches
 				const others = [...batch.current.keys()].filter((s) => !this.current.has(s));
 				if (others.length > 0) {
+					/** @type {Set<Effect>} */
+					const effects = new Set();
 					/** @type {Set<Value>} */
 					const marked = new Set();
 					/** @type {Map<Reaction, boolean>} */
 					const checked = new Map();
 					for (const source of sources) {
-						mark_effects(source, others, marked, checked);
+						mark_effects(source, others, effects, marked, checked);
+					}
+
+					if (effects.size > 0) {
+						batch_effects.set(batch, effects);
+					}
+				}
+			}
+
+			// Second loop: schedule effects and traverse effect trees
+			if (batch_effects.size > 0) {
+				/** @type {EffectTarget} */
+				var dummy_target = {
+					parent: null,
+					effect: null,
+					effects: [],
+					render_effects: [],
+					block_effects: []
+				};
+
+				for (const [batch, effects] of batch_effects) {
+					current_batch = batch;
+					batch.apply();
+
+					for (const effect of effects) {
+						set_signal_status(effect, DIRTY);
+						schedule_effect(effect);
 					}
 
 					if (queued_root_effects.length > 0) {
-						current_batch = batch;
-						batch.apply();
-
 						for (const root of queued_root_effects) {
 							batch.#traverse_effect_tree(root, dummy_target);
 						}
@@ -437,8 +460,9 @@ export class Batch {
 						// TODO do we need to do anything with `target`? defer block effects?
 
 						queued_root_effects = [];
-						batch.deactivate();
 					}
+
+					batch.deactivate();
 				}
 			}
 
@@ -740,10 +764,11 @@ function flush_queued_effects(effects) {
  * these effects can re-run after another batch has been committed
  * @param {Value} value
  * @param {Source[]} sources
+ * @param {Set<Effect>} effects
  * @param {Set<Value>} marked
  * @param {Map<Reaction, boolean>} checked
  */
-function mark_effects(value, sources, marked, checked) {
+function mark_effects(value, sources, effects, marked, checked) {
 	if (marked.has(value)) return;
 	marked.add(value);
 
@@ -752,14 +777,13 @@ function mark_effects(value, sources, marked, checked) {
 			const flags = reaction.f;
 
 			if ((flags & DERIVED) !== 0) {
-				mark_effects(/** @type {Derived} */ (reaction), sources, marked, checked);
+				mark_effects(/** @type {Derived} */ (reaction), sources, effects, marked, checked);
 			} else if (
 				(flags & (ASYNC | BLOCK_EFFECT)) !== 0 &&
-				(flags & DIRTY) === 0 && // we may have scheduled this one already
+				!effects.has(/** @type {Effect} */ (reaction)) &&
 				depends_on(reaction, sources, checked)
 			) {
-				set_signal_status(reaction, DIRTY);
-				schedule_effect(/** @type {Effect} */ (reaction));
+				effects.add(/** @type {Effect} */ (reaction));
 			}
 		}
 	}
