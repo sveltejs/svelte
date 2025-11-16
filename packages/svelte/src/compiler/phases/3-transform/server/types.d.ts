@@ -1,4 +1,10 @@
-import type { Expression, Statement, ModuleDeclaration, LabeledStatement } from 'estree';
+import type {
+	Expression,
+	Statement,
+	ModuleDeclaration,
+	LabeledStatement,
+	Identifier
+} from 'estree';
 import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
@@ -21,6 +27,11 @@ export interface ComponentServerTransformState extends ServerTransformState {
 	readonly namespace: Namespace;
 	readonly preserve_whitespace: boolean;
 	readonly skip_hydration_boundaries: boolean;
+	/** Transformed async `{@const }` declarations (if any) and those coming after them */
+	async_consts?: {
+		id: Identifier;
+		thunks: Expression[];
+	};
 }
 
 export type Context = import('zimmerframe').Context<AST.SvelteNode, ServerTransformState>;

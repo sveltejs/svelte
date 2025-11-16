@@ -101,7 +101,13 @@ export function SvelteBoundary(node, context) {
 		nodes.push(child);
 	}
 
-	const block = /** @type {BlockStatement} */ (context.visit({ ...node.fragment, nodes }));
+	const block = /** @type {BlockStatement} */ (
+		context.visit(
+			{ ...node.fragment, nodes },
+			// Since we're creating a new fragment the reference in scopes can't match, so we gotta attach the right scope manually
+			{ ...context.state, scope: context.state.scopes.get(node.fragment) ?? context.state.scope }
+		)
+	);
 
 	if (!context.state.options.experimental.async) {
 		block.body.unshift(...const_tags);

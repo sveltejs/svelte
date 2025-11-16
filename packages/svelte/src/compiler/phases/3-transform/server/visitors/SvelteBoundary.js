@@ -7,8 +7,7 @@ import {
 	block_open,
 	block_open_else,
 	build_attribute_value,
-	build_template,
-	create_async_block
+	build_template
 } from './shared/utils.js';
 
 /**
@@ -43,9 +42,7 @@ export function SvelteBoundary(node, context) {
 			);
 			const pending = b.call(callee, b.id('$$renderer'));
 			const block = /** @type {BlockStatement} */ (context.visit(node.fragment));
-			const statement = node.fragment.metadata.has_await
-				? create_async_block(b.block([block]))
-				: block;
+			const statement = block;
 			context.state.template.push(
 				b.if(
 					callee,
@@ -70,9 +67,7 @@ export function SvelteBoundary(node, context) {
 		}
 	} else {
 		const block = /** @type {BlockStatement} */ (context.visit(node.fragment));
-		const statement = node.fragment.metadata.has_await
-			? create_async_block(b.block([block]))
-			: block;
+		const statement = block;
 		context.state.template.push(block_open, statement, block_close);
 	}
 }
