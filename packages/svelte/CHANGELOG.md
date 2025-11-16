@@ -1,5 +1,11 @@
 # svelte
 
+## 5.43.8
+
+### Patch Changes
+
+- fix: each block losing reactivity when items removed while promise pending ([#17150](https://github.com/sveltejs/svelte/pull/17150))
+
 ## 5.43.7
 
 ### Patch Changes
