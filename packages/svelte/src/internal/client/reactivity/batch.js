@@ -16,7 +16,8 @@ import {
 	BOUNDARY_EFFECT,
 	EAGER_EFFECT,
 	HEAD_EFFECT,
-	ERROR_VALUE
+	ERROR_VALUE,
+	WAS_MARKED
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
@@ -274,8 +275,29 @@ export class Batch {
 			const target = (e.f & DIRTY) !== 0 ? this.#dirty_effects : this.#maybe_dirty_effects;
 			target.push(e);
 
+			// Since we're not executing these effects now, we need to clear any WAS_MARKED flags
+			// so that other batches can correctly reach these effects during their own traversal
+			this.#clear_marked(e.deps);
+
 			// mark as clean so they get scheduled if they depend on pending async state
 			set_signal_status(e, CLEAN);
+		}
+	}
+
+	/**
+	 * @param {Value[] | null} deps
+	 */
+	#clear_marked(deps) {
+		if (deps === null) return;
+
+		for (const dep of deps) {
+			if ((dep.f & DERIVED) === 0 || (dep.f & WAS_MARKED) === 0) {
+				continue;
+			}
+
+			dep.f ^= WAS_MARKED;
+
+			this.#clear_marked(/** @type {Derived} */ (dep).deps);
 		}
 	}
 
