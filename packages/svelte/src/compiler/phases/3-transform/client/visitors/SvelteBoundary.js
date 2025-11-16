@@ -48,7 +48,11 @@ export function SvelteBoundary(node, context) {
 		if (child.type === 'ConstTag') {
 			has_const = true;
 			if (!context.state.options.experimental.async) {
-				context.visit(child, { ...context.state, consts: const_tags });
+				context.visit(child, {
+					...context.state,
+					consts: const_tags,
+					scope: context.state.scopes.get(node.fragment) ?? context.state.scope
+				});
 			}
 		}
 	}
