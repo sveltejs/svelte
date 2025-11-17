@@ -369,4 +369,4 @@ export interface Fork {
 }
 
 export * from './index-client.js';
-export { Hydratable, Transport, Encode, Decode } from '#shared';
+export { Transport, Encode, Decode } from '#shared';

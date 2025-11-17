@@ -576,12 +576,11 @@ export class Renderer {
 	async #collect_hydratables() {
 		const map = get_render_context().hydratables;
 		/** @type {(value: unknown) => string} */
-		const default_encode = new MemoizedUneval().uneval;
 
 		/** @type {[string, string][]} */
 		let entries = [];
 		for (const [k, v] of map) {
-			const encode = v.encode ?? default_encode;
+			const encode = v.encode ?? uneval;
 			// sequential await is okay here -- all the work is already kicked off
 			entries.push([k, encode(await v.value)]);
 		}
@@ -651,14 +650,14 @@ export class Renderer {
 		}
 		// TODO csp -- have discussed but not implemented
 		return `
-<script>
-	{
-		const store = (window.__svelte ??= {}).h ??= new Map();
-		for (const [k,v] of [${entries.join(',')}]) {
-				store.set(k, v);
-		}
-	}
-</script>`;
+		<script>
+			{
+				const store = (window.__svelte ??= {}).h ??= new Map();
+				for (const [k,v] of [${entries.join(',')}]) {
+						store.set(k, v);
+				}
+			}
+		</script>`;
 	}
 }
 
@@ -715,34 +714,4 @@ export class SSRState {
 			this.#title.value = value;
 		}
 	}
-}
-
-export class MemoizedUneval {
-	/** @type {Map<unknown, { value?: string }>} */
-	#cache = new Map();
-
-	/**
-	 * @param {unknown} value
-	 * @returns {string}
-	 */
-	uneval = (value) => {
-		return uneval(value, (value, uneval) => {
-			const cached = this.#cache.get(value);
-			if (cached) {
-				// this breaks my brain a bit, but:
-				// - when the entry is defined but its value is `undefined`, calling `uneval` below will cause the custom replacer to be called again
-				// - because the custom replacer returns this, which is `undefined`, it will fall back to the default serialization
-				// - ...which causes it to return a string
-				// - ...which is then added to this cache before being returned
-				return cached.value;
-			}
-
-			const stub = {};
-			this.#cache.set(value, stub);
-
-			const result = uneval(value);
-			stub.value = result;
-			return result;
-		});
-	};
 }
