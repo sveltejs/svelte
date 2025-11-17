@@ -614,6 +614,7 @@ export function get(signal) {
 	} else if (is_derived) {
 		derived = /** @type {Derived} */ (signal);
 
+		// if we already have a batched value don't bother updating it
 		if (batch_values?.has(derived)) {
 			return batch_values.get(derived);
 		}
@@ -624,6 +625,11 @@ export function get(signal) {
 
 		if (is_updating_effect && effect_tracking() && (derived.f & CONNECTED) === 0) {
 			reconnect(derived);
+		}
+
+		// we need to check again because we could've just update `batch_values` inside `update_derived`
+		if (batch_values?.has(derived)) {
+			return batch_values.get(derived);
 		}
 	} else if (batch_values?.has(signal)) {
 		return batch_values.get(signal);

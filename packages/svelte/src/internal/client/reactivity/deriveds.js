@@ -353,9 +353,15 @@ export function update_derived(derived) {
 	var value = execute_derived(derived);
 
 	if (!derived.equals(value)) {
-		// TODO can we avoid setting `derived.v` when `batch_values !== null`,
-		// without causing the value to be stale later?
-		derived.v = value;
+		// if we have batch_values we don't actually set the value of the derived
+		// otherwise blocks that depends on that derived will not be considered dirty
+		// if the derived changes in a fork AND in a subsequent fork/normal state update
+		// IF we are in a tracking context the derived value of the derived will be set
+		// in the batch_values map thus updating it for this batch otherwise it will just be updated
+		// again during the `get` call
+		if (batch_values === null) {
+			derived.v = value;
+		}
 		derived.wv = increment_write_version();
 	}
 
@@ -371,7 +377,7 @@ export function update_derived(derived) {
 		// only cache the value if we're in a tracking context, otherwise we won't
 		// clear the cache in `mark_reactions` when dependencies are updated
 		if (effect_tracking()) {
-			batch_values.set(derived, derived.v);
+			batch_values.set(derived, value);
 		}
 	} else {
 		var status = (derived.f & CONNECTED) === 0 ? MAYBE_DIRTY : CLEAN;
