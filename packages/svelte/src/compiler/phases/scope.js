@@ -141,7 +141,7 @@ export class Binding {
 	 * otherwise the initial value will not have been assigned.
 	 * It is a member expression of the form `$$blockers[n]`.
 	 * TODO the blocker is set during transform which feels a bit grubby
-	 * @type {MemberExpression & { object: Identifier, property: SimpleLiteral & { value: number } } | null}
+	 * @type {MemberExpression | null}
 	 */
 	blocker = null;
 

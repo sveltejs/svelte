@@ -1184,7 +1184,15 @@ function calculate_blockers(instance, scopes, analysis) {
 		trace_references(body, reads_writes, reads_writes);
 
 		const max = [...reads_writes].reduce((max, binding) => {
-			return binding.blocker ? Math.max(binding.blocker.property.value, max) : max;
+			if (binding.blocker) {
+				let property = /** @type {ESTree.SimpleLiteral & { value: number }} */ (
+					binding.blocker.property
+				);
+
+				return Math.max(property.value, max);
+			}
+
+			return max;
 		}, -1);
 
 		if (max === -1) continue;
