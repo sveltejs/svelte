@@ -108,10 +108,6 @@ The `flushSync()` function can be used to flush any pending effects synchronousl
 
 This restriction only applies when using the `experimental.async` option, which will be active by default in Svelte 6.
 
-## fn_unavailable_on_client
-
-> `%name%`(...) is unavailable in the browser.
-
 ## fork_discarded
 
 > Cannot commit a fork that was already discarded

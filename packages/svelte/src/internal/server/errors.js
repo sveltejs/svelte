@@ -15,19 +15,6 @@ export function await_invalid() {
 }
 
 /**
- * `%name%`(...) is unavailable on the server.
- * @param {string} name
- * @returns {never}
- */
-export function fn_unavailable_on_server(name) {
-	const error = new Error(`fn_unavailable_on_server\n\`${name}\`(...) is unavailable on the server.\nhttps://svelte.dev/e/fn_unavailable_on_server`);
-
-	error.name = 'Svelte error';
-
-	throw error;
-}
-
-/**
  * The `html` property of server render results has been deprecated. Use `body` instead.
  * @returns {never}
  */

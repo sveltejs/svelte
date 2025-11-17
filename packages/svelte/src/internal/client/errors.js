@@ -246,23 +246,6 @@ export function flush_sync_in_effect() {
 }
 
 /**
- * `%name%`(...) is unavailable in the browser.
- * @param {string} name
- * @returns {never}
- */
-export function fn_unavailable_on_client(name) {
-	if (DEV) {
-		const error = new Error(`fn_unavailable_on_client\n\`${name}\`(...) is unavailable in the browser.\nhttps://svelte.dev/e/fn_unavailable_on_client`);
-
-		error.name = 'Svelte error';
-
-		throw error;
-	} else {
-		throw new Error(`https://svelte.dev/e/fn_unavailable_on_client`);
-	}
-}
-
-/**
  * Cannot commit a fork that was already discarded
  * @returns {never}
  */
