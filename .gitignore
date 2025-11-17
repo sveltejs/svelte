@@ -14,9 +14,13 @@ coverage
 # dotenv environment variables file
 .env
 .env.test
+flake.nix
+flake.lock
+.envrc
 
 # build output
 .vercel
+.direnv
 
 # OS-specific
 .DS_Store
