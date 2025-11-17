@@ -83,6 +83,8 @@ export type EachItem = {
 	i: number | Source<number>;
 	/** key */
 	k: unknown;
+	/** true if onscreen */
+	o: boolean;
 	prev: EachItem | null;
 	next: EachItem | null;
 };

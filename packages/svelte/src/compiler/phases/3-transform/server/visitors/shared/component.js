@@ -244,12 +244,7 @@ export function build_inline_component(node, expression, context) {
 			params.push(pattern);
 		}
 
-		const slot_fn = b.arrow(
-			params,
-			node.fragment.metadata.has_await
-				? b.block([create_async_block(b.block(block.body))])
-				: b.block(block.body)
-		);
+		const slot_fn = b.arrow(params, b.block(block.body));
 
 		if (slot_name === 'default' && !has_children_prop) {
 			if (
@@ -325,17 +320,26 @@ export function build_inline_component(node, expression, context) {
 		);
 	}
 
+	if (node.type !== 'SvelteSelf') {
+		// Component name itself could be blocked on async values
+		optimiser.check_blockers(node.metadata.expression);
+	}
+
 	const is_async = optimiser.is_async();
 
 	if (is_async) {
 		statement = create_async_block(
-			b.block([optimiser.apply(), statement]),
+			b.block([
+				optimiser.apply(),
+				dynamic && custom_css_props.length === 0
+					? b.stmt(b.call('$$renderer.push', empty_comment))
+					: b.empty,
+				statement
+			]),
 			optimiser.blockers(),
 			optimiser.has_await
 		);
-	}
-
-	if (dynamic && custom_css_props.length === 0) {
+	} else if (dynamic && custom_css_props.length === 0) {
 		context.state.template.push(empty_comment);
 	}
 

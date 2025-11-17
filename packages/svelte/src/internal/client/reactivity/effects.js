@@ -40,7 +40,7 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
-import { Batch, schedule_effect } from './batch.js';
+import { Batch, current_batch, schedule_effect } from './batch.js';
 import { flatten } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 
@@ -80,10 +80,9 @@ function push_effect(effect, parent_effect) {
  * @param {number} type
  * @param {null | (() => void | (() => void))} fn
  * @param {boolean} sync
- * @param {boolean} push
  * @returns {Effect}
  */
-function create_effect(type, fn, sync, push = true) {
+function create_effect(type, fn, sync) {
 	var parent = active_effect;
 
 	if (DEV) {
@@ -133,43 +132,41 @@ function create_effect(type, fn, sync, push = true) {
 		schedule_effect(effect);
 	}
 
-	if (push) {
-		/** @type {Effect | null} */
-		var e = effect;
+	/** @type {Effect | null} */
+	var e = effect;
 
-		// if an effect has already ran and doesn't need to be kept in the tree
-		// (because it won't re-run, has no DOM, and has no teardown etc)
-		// then we skip it and go to its child (if any)
-		if (
-			sync &&
-			e.deps === null &&
-			e.teardown === null &&
-			e.nodes_start === null &&
-			e.first === e.last && // either `null`, or a singular child
-			(e.f & EFFECT_PRESERVED) === 0
-		) {
-			e = e.first;
-			if ((type & BLOCK_EFFECT) !== 0 && (type & EFFECT_TRANSPARENT) !== 0 && e !== null) {
-				e.f |= EFFECT_TRANSPARENT;
-			}
+	// if an effect has already ran and doesn't need to be kept in the tree
+	// (because it won't re-run, has no DOM, and has no teardown etc)
+	// then we skip it and go to its child (if any)
+	if (
+		sync &&
+		e.deps === null &&
+		e.teardown === null &&
+		e.nodes_start === null &&
+		e.first === e.last && // either `null`, or a singular child
+		(e.f & EFFECT_PRESERVED) === 0
+	) {
+		e = e.first;
+		if ((type & BLOCK_EFFECT) !== 0 && (type & EFFECT_TRANSPARENT) !== 0 && e !== null) {
+			e.f |= EFFECT_TRANSPARENT;
+		}
+	}
+
+	if (e !== null) {
+		e.parent = parent;
+
+		if (parent !== null) {
+			push_effect(e, parent);
 		}
 
-		if (e !== null) {
-			e.parent = parent;
-
-			if (parent !== null) {
-				push_effect(e, parent);
-			}
-
-			// if we're in a derived, add the effect there too
-			if (
-				active_reaction !== null &&
-				(active_reaction.f & DERIVED) !== 0 &&
-				(type & ROOT_EFFECT) === 0
-			) {
-				var derived = /** @type {Derived} */ (active_reaction);
-				(derived.effects ??= []).push(e);
-			}
+		// if we're in a derived, add the effect there too
+		if (
+			active_reaction !== null &&
+			(active_reaction.f & DERIVED) !== 0 &&
+			(type & ROOT_EFFECT) === 0
+		) {
+			var derived = /** @type {Derived} */ (active_reaction);
+			(derived.effects ??= []).push(e);
 		}
 	}
 
@@ -366,11 +363,29 @@ export function render_effect(fn, flags = 0) {
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
  * @param {Array<Promise<void>>} blockers
- * @param {boolean} defer
  */
-export function template_effect(fn, sync = [], async = [], blockers = [], defer = false) {
+export function template_effect(fn, sync = [], async = [], blockers = []) {
 	flatten(blockers, sync, async, (values) => {
-		create_effect(defer ? EFFECT : RENDER_EFFECT, () => fn(...values.map(get)), true);
+		create_effect(RENDER_EFFECT, () => fn(...values.map(get)), true);
+	});
+}
+
+/**
+ * Like `template_effect`, but with an effect which is deferred until the batch commits
+ * @param {(...expressions: any) => void | (() => void)} fn
+ * @param {Array<() => any>} sync
+ * @param {Array<() => Promise<any>>} async
+ * @param {Array<Promise<void>>} blockers
+ */
+export function deferred_template_effect(fn, sync = [], async = [], blockers = []) {
+	var batch = /** @type {Batch} */ (current_batch);
+	var is_async = async.length > 0 || blockers.length > 0;
+
+	if (is_async) batch.increment(true);
+
+	flatten(blockers, sync, async, (values) => {
+		create_effect(EFFECT, () => fn(...values.map(get)), false);
+		if (is_async) batch.decrement(true);
 	});
 }
 
@@ -388,10 +403,9 @@ export function block(fn, flags = 0) {
 
 /**
  * @param {(() => void)} fn
- * @param {boolean} [push]
  */
-export function branch(fn, push = true) {
-	return create_effect(BRANCH_EFFECT | EFFECT_PRESERVED, fn, true, push);
+export function branch(fn) {
+	return create_effect(BRANCH_EFFECT | EFFECT_PRESERVED, fn, true);
 }
 
 /**

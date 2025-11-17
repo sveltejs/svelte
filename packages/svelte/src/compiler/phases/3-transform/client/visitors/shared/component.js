@@ -451,6 +451,11 @@ export function build_component(node, component_name, context) {
 		};
 	}
 
+	if (node.type !== 'SvelteSelf') {
+		// Component name itself could be blocked on async values
+		memoizer.check_blockers(node.metadata.expression);
+	}
+
 	const statements = [...snippet_declarations, ...memoizer.deriveds(context.state.analysis.runes)];
 
 	if (is_component_dynamic) {

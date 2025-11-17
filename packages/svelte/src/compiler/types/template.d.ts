@@ -48,8 +48,6 @@ export namespace AST {
 			 * Whether or not we need to traverse into the fragment during mount/hydrate
 			 */
 			dynamic: boolean;
-			/** @deprecated we should get rid of this in favour of the `$$renderer.run` mechanism */
-			has_await: boolean;
 		};
 	}
 
@@ -308,6 +306,7 @@ export namespace AST {
 		type: 'Component';
 		/** @internal */
 		metadata: {
+			expression: ExpressionMetadata;
 			scopes: Record<string, Scope>;
 			dynamic: boolean;
 			/** The set of locally-defined snippets that this component tag could render,
@@ -355,6 +354,7 @@ export namespace AST {
 		expression: Expression;
 		/** @internal */
 		metadata: {
+			expression: ExpressionMetadata;
 			scopes: Record<string, Scope>;
 			/** The set of locally-defined snippets that this component tag could render,
 			 * used for CSS pruning purposes */
