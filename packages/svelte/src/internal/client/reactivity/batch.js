@@ -67,6 +67,7 @@ export let previous_batch = null;
  */
 export let batch_values = null;
 
+// TODO this should really be a property of `batch`
 /** @type {Effect[]} */
 let queued_root_effects = [];
 
