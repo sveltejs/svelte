@@ -42,12 +42,11 @@ export function SvelteBoundary(node, context) {
 			);
 			const pending = b.call(callee, b.id('$$renderer'));
 			const block = /** @type {BlockStatement} */ (context.visit(node.fragment));
-			const statement = block;
 			context.state.template.push(
 				b.if(
 					callee,
 					b.block(build_template([block_open_else, b.stmt(pending), block_close])),
-					b.block(build_template([block_open, statement, block_close]))
+					b.block(build_template([block_open, block, block_close]))
 				)
 			);
 		} else {
@@ -67,7 +66,6 @@ export function SvelteBoundary(node, context) {
 		}
 	} else {
 		const block = /** @type {BlockStatement} */ (context.visit(node.fragment));
-		const statement = block;
-		context.state.template.push(block_open, statement, block_close);
+		context.state.template.push(block_open, block, block_close);
 	}
 }
