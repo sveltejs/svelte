@@ -244,7 +244,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					item.i = i;
 				}
 
-				batch.skipped_effects.delete(item.e);
+				if (defer) {
+					batch.skipped_effects.delete(item.e);
+				}
 			} else {
 				item = create_item(
 					first_run ? anchor : null,
