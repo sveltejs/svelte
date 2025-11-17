@@ -358,8 +358,9 @@ export function update_derived(derived) {
 		// if the derived changes in a fork AND in a subsequent fork/normal state update
 		// IF we are in a tracking context the derived value of the derived will be set
 		// in the batch_values map thus updating it for this batch otherwise it will just be updated
-		// again during the `get` call
-		if (batch_values === null) {
+		// again during the `get` call we also prevent setting the value if we are in a fork
+		// this will lead to over executing of the derived but would lead to correct values
+		if (batch_values === null && current_batch?.is_fork !== true) {
 			derived.v = value;
 		}
 		derived.wv = increment_write_version();
