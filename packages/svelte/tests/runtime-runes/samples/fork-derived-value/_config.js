@@ -2,6 +2,7 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
+	skip_no_async: true,
 	async test({ assert, target }) {
 		const [fork, update] = target.querySelectorAll('button');
 
