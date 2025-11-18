@@ -1,5 +1,11 @@
 # svelte
 
+## 5.43.12
+
+### Patch Changes
+
+- fix: maintain correct linked list of effects when updating each blocks ([#17191](https://github.com/sveltejs/svelte/pull/17191))
+
 ## 5.43.11
 
 ### Patch Changes
