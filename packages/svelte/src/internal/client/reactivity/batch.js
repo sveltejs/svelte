@@ -635,8 +635,10 @@ function flush_effects() {
 					}
 
 					for (const update of updates.values()) {
-						// eslint-disable-next-line no-console
-						console.error(update.error);
+						if (update.error) {
+							// eslint-disable-next-line no-console
+							console.error(update.error);
+						}
 					}
 				}
 
