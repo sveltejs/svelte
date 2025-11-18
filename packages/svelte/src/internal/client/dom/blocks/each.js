@@ -597,8 +597,10 @@ function create_item(anchor, prev, value, key, index, render_fn, flags, get_coll
 		item.e = branch(() => render_fn(/** @type {Node} */ (anchor), v, i, get_collection));
 
 		if (prev !== null) {
+			// we only need to set `prev.next = item`, because
+			// `item.prev = prev` was set on initialization.
+			// the effects themselves are already linked
 			prev.next = item;
-			prev.e.next = item.e;
 		}
 
 		return item;
