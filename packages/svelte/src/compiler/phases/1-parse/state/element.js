@@ -219,7 +219,7 @@ export default function element(parser) {
 	let attribute;
 	while ((attribute = read(parser))) {
 		// {/* comment */}
-		if (attribute.type === 'Comment') {
+		if (attribute.type === 'CommentAttribute') {
 			parser.allow_whitespace();
 			continue;
 		}
@@ -497,7 +497,7 @@ function read_static_attribute(parser) {
 
 /**
  * @param {Parser} parser
- * @returns {AST.Attribute | AST.SpreadAttribute | AST.Directive | AST.AttachTag | AST.Comment | null}
+ * @returns {AST.Attribute | AST.SpreadAttribute | AST.Directive | AST.AttachTag | AST.CommentAttribute | null}
  */
 function read_attribute(parser) {
 	const start = parser.index;
@@ -548,9 +548,9 @@ function read_attribute(parser) {
 			const data = parser.read_until(/\*\/\}/);
 			parser.eat('*/}', true);
 
-			/** @type {AST.Comment} */
+			/** @type {AST.CommentAttribute} */
 			const comment = {
-				type: 'Comment',
+				type: 'CommentAttribute',
 				data: data,
 				start,
 				end: parser.index
