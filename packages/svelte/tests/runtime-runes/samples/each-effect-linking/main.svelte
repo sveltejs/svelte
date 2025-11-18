@@ -26,6 +26,8 @@
 	jump forward
 </button>
 
-{#each items as item (item)}
-	<div>{item}</div>
-{/each}
+<div>
+	{#each items as item (item)}
+		<p>{item}</p>
+	{/each}
+</div>

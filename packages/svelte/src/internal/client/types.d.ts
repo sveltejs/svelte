@@ -64,6 +64,8 @@ export type TemplateNode = Text | Element | Comment;
 export type Dom = TemplateNode | TemplateNode[];
 
 export type EachState = {
+	/** the each block effect */
+	effect: Effect;
 	/** flags */
 	flags: number;
 	/** a key -> item lookup */

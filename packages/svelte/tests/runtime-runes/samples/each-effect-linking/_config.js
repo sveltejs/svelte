@@ -27,7 +27,6 @@ export default test({
 		step_forward.click();
 		await tick();
 
-		// if the effects get linked in a circle, we will never get here
 		assert.htmlEqual(div.innerHTML, '<p>12</p><p>13</p><p>14</p>');
 	}
 });
