@@ -11,7 +11,8 @@ import {
 	STALE_REACTION,
 	ASYNC,
 	WAS_MARKED,
-	CONNECTED
+	CONNECTED,
+	DESTROYED
 } from '#client/constants';
 import {
 	active_reaction,
@@ -296,7 +297,9 @@ function get_derived_parent_effect(derived) {
 	var parent = derived.parent;
 	while (parent !== null) {
 		if ((parent.f & DERIVED) === 0) {
-			return /** @type {Effect} */ (parent);
+			// The original parent effect might've been destroyed but the derived
+			// is used elsewhere now - do not return the destroyed effect in that case
+			return (parent.f & DESTROYED) === 0 ? /** @type {Effect} */ (parent) : null;
 		}
 		parent = parent.parent;
 	}

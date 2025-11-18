@@ -244,12 +244,7 @@ export function build_inline_component(node, expression, context) {
 			params.push(pattern);
 		}
 
-		const slot_fn = b.arrow(
-			params,
-			node.fragment.metadata.has_await
-				? b.block([create_async_block(b.block(block.body))])
-				: b.block(block.body)
-		);
+		const slot_fn = b.arrow(params, b.block(block.body));
 
 		if (slot_name === 'default' && !has_children_prop) {
 			if (

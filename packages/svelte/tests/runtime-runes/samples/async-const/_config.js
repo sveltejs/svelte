@@ -2,11 +2,12 @@ import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	html: `<h1>Loading...</h1>`,
+	mode: ['async-server', 'client', 'hydrate'],
+	ssrHtml: `<h1>Hello, world!</h1> 5 01234 5 sync 6 5 0`,
 
 	async test({ assert, target }) {
 		await tick();
 
-		assert.htmlEqual(target.innerHTML, `<h1>Hello, world!</h1> 5 01234`);
+		assert.htmlEqual(target.innerHTML, `<h1>Hello, world!</h1> 5 01234 5 sync 6 5 0`);
 	}
 });

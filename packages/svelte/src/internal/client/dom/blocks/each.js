@@ -244,7 +244,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					item.i = i;
 				}
 
-				batch.skipped_effects.delete(item.e);
+				if (defer) {
+					batch.skipped_effects.delete(item.e);
+				}
 			} else {
 				item = create_item(
 					first_run ? anchor : null,
@@ -298,14 +300,14 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			set_hydrate_node(skip_nodes());
 		}
 
-		for (const [key, item] of state.items) {
-			if (!keys.has(key)) {
-				batch.skipped_effects.add(item.e);
-			}
-		}
-
 		if (!first_run) {
 			if (defer) {
+				for (const [key, item] of state.items) {
+					if (!keys.has(key)) {
+						batch.skipped_effects.add(item.e);
+					}
+				}
+
 				batch.oncommit(commit);
 				batch.ondiscard(() => {
 					// TODO presumably we need to do something here?

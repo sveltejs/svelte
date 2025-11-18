@@ -56,22 +56,36 @@ export function AwaitBlock(node, context) {
 		catch_block = b.arrow(args, b.block([...declarations, ...block.body]));
 	}
 
-	context.state.init.push(
-		add_svelte_meta(
-			b.call(
-				'$.await',
-				context.state.node,
-				expression,
-				node.pending
-					? b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.pending)))
-					: b.null,
-				then_block,
-				catch_block
-			),
-			node,
-			'await'
-		)
+	const stmt = add_svelte_meta(
+		b.call(
+			'$.await',
+			context.state.node,
+			expression,
+			node.pending
+				? b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.pending)))
+				: b.null,
+			then_block,
+			catch_block
+		),
+		node,
+		'await'
 	);
+
+	if (node.metadata.expression.has_blockers()) {
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.async',
+					context.state.node,
+					node.metadata.expression.blockers(),
+					b.array([]),
+					b.arrow([context.state.node], b.block([stmt]))
+				)
+			)
+		);
+	} else {
+		context.state.init.push(stmt);
+	}
 }
 
 /**

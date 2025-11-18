@@ -26,10 +26,6 @@ export function AwaitExpression(node, context) {
 	if (context.state.expression) {
 		context.state.expression.has_await = true;
 
-		if (context.state.fragment && context.path.some((node) => node.type === 'ConstTag')) {
-			context.state.fragment.metadata.has_await = true;
-		}
-
 		suspend = true;
 	}
 
