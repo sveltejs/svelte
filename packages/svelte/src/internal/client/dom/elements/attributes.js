@@ -6,8 +6,8 @@ import { create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
 import { LOADING_ATTR_SYMBOL } from '#client/constants';
-import { queue_idle_task } from '../task.js';
-import { is_capture_event, is_delegated, normalize_attribute } from '../../../../utils.js';
+import { queue_micro_task } from '../task.js';
+import { is_capture_event, can_delegate_event, normalize_attribute } from '../../../../utils.js';
 import {
 	active_effect,
 	active_reaction,
@@ -19,10 +19,10 @@ import { attach } from './attachments.js';
 import { clsx } from '../../../shared/attributes.js';
 import { set_class } from './class.js';
 import { set_style } from './style.js';
-import { ATTACHMENT_KEY, NAMESPACE_HTML } from '../../../../constants.js';
+import { ATTACHMENT_KEY, NAMESPACE_HTML, UNINITIALIZED } from '../../../../constants.js';
 import { block, branch, destroy_effect, effect } from '../../reactivity/effects.js';
-import { derived } from '../../reactivity/deriveds.js';
 import { init_select, select_option } from './bindings/select.js';
+import { flatten } from '../../reactivity/async.js';
 
 export const CLASS = Symbol('class');
 export const STYLE = Symbol('style');
@@ -65,7 +65,7 @@ export function remove_input_defaults(input) {
 
 	// @ts-expect-error
 	input.__on_r = remove_defaults;
-	queue_idle_task(remove_defaults);
+	queue_micro_task(remove_defaults);
 	add_form_reset_listener();
 }
 
@@ -238,10 +238,10 @@ export function set_custom_element_data(node, prop, value) {
 			// Don't compute setters for custom elements while they aren't registered yet,
 			// because during their upgrade/instantiation they might add more setters.
 			// Instead, fall back to a simple "an object, then set as property" heuristic.
-			(setters_cache.has(node.nodeName) ||
+			(setters_cache.has(node.getAttribute('is') || node.nodeName) ||
 			// customElements may not be available in browser extension contexts
 			!customElements ||
-			customElements.get(node.tagName.toLowerCase())
+			customElements.get(node.getAttribute('is') || node.tagName.toLowerCase())
 				? get_setters(node).includes(prop)
 				: value && typeof value === 'object')
 		) {
@@ -268,10 +268,27 @@ export function set_custom_element_data(node, prop, value) {
  * @param {Record<string | symbol, any> | undefined} prev
  * @param {Record<string | symbol, any>} next New attributes - this function mutates this object
  * @param {string} [css_hash]
+ * @param {boolean} [should_remove_defaults]
  * @param {boolean} [skip_warning]
  * @returns {Record<string, any>}
  */
-export function set_attributes(element, prev, next, css_hash, skip_warning = false) {
+function set_attributes(
+	element,
+	prev,
+	next,
+	css_hash,
+	should_remove_defaults = false,
+	skip_warning = false
+) {
+	if (hydrating && should_remove_defaults && element.tagName === 'INPUT') {
+		var input = /** @type {HTMLInputElement} */ (element);
+		var attribute = input.type === 'checkbox' ? 'defaultChecked' : 'defaultValue';
+
+		if (!(attribute in next)) {
+			remove_input_defaults(input);
+		}
+	}
+
 	var attributes = get_attributes(element);
 
 	var is_custom_element = attributes[IS_CUSTOM_ELEMENT];
@@ -361,7 +378,7 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 			const opts = {};
 			const event_handle_key = '$$' + key;
 			let event_name = key.slice(2);
-			var delegated = is_delegated(event_name);
+			var delegated = can_delegate_event(event_name);
 
 			if (is_capture_event(event_name)) {
 				event_name = event_name.slice(0, -7);
@@ -446,6 +463,8 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 			) {
 				// @ts-ignore
 				element[name] = value;
+				// remove it from attributes's cache
+				if (name in attributes) attributes[name] = UNINITIALIZED;
 			} else if (typeof value !== 'function') {
 				set_attribute(element, name, value, skip_warning);
 			}
@@ -462,66 +481,78 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 /**
  * @param {Element & ElementCSSInlineStyle} element
  * @param {(...expressions: any) => Record<string | symbol, any>} fn
- * @param {Array<() => any>} thunks
+ * @param {Array<() => any>} sync
+ * @param {Array<() => Promise<any>>} async
+ * @param {Array<Promise<void>>} blockers
  * @param {string} [css_hash]
+ * @param {boolean} [should_remove_defaults]
  * @param {boolean} [skip_warning]
  */
 export function attribute_effect(
 	element,
 	fn,
-	thunks = [],
+	sync = [],
+	async = [],
+	blockers = [],
 	css_hash,
-	skip_warning = false,
-	d = derived
+	should_remove_defaults = false,
+	skip_warning = false
 ) {
-	const deriveds = thunks.map(d);
+	flatten(blockers, sync, async, (values) => {
+		/** @type {Record<string | symbol, any> | undefined} */
+		var prev = undefined;
 
-	/** @type {Record<string | symbol, any> | undefined} */
-	var prev = undefined;
+		/** @type {Record<symbol, Effect>} */
+		var effects = {};
 
-	/** @type {Record<symbol, Effect>} */
-	var effects = {};
+		var is_select = element.nodeName === 'SELECT';
+		var inited = false;
 
-	var is_select = element.nodeName === 'SELECT';
-	var inited = false;
+		block(() => {
+			var next = fn(...values.map(get));
+			/** @type {Record<string | symbol, any>} */
+			var current = set_attributes(
+				element,
+				prev,
+				next,
+				css_hash,
+				should_remove_defaults,
+				skip_warning
+			);
 
-	block(() => {
-		var next = fn(...deriveds.map(get));
-		/** @type {Record<string | symbol, any>} */
-		var current = set_attributes(element, prev, next, css_hash, skip_warning);
-
-		if (inited && is_select && 'value' in next) {
-			select_option(/** @type {HTMLSelectElement} */ (element), next.value, false);
-		}
-
-		for (let symbol of Object.getOwnPropertySymbols(effects)) {
-			if (!next[symbol]) destroy_effect(effects[symbol]);
-		}
-
-		for (let symbol of Object.getOwnPropertySymbols(next)) {
-			var n = next[symbol];
-
-			if (symbol.description === ATTACHMENT_KEY && (!prev || n !== prev[symbol])) {
-				if (effects[symbol]) destroy_effect(effects[symbol]);
-				effects[symbol] = branch(() => attach(element, () => n));
+			if (inited && is_select && 'value' in next) {
+				select_option(/** @type {HTMLSelectElement} */ (element), next.value);
 			}
 
-			current[symbol] = n;
+			for (let symbol of Object.getOwnPropertySymbols(effects)) {
+				if (!next[symbol]) destroy_effect(effects[symbol]);
+			}
+
+			for (let symbol of Object.getOwnPropertySymbols(next)) {
+				var n = next[symbol];
+
+				if (symbol.description === ATTACHMENT_KEY && (!prev || n !== prev[symbol])) {
+					if (effects[symbol]) destroy_effect(effects[symbol]);
+					effects[symbol] = branch(() => attach(element, () => n));
+				}
+
+				current[symbol] = n;
+			}
+
+			prev = current;
+		});
+
+		if (is_select) {
+			var select = /** @type {HTMLSelectElement} */ (element);
+
+			effect(() => {
+				select_option(select, /** @type {Record<string | symbol, any>} */ (prev).value, true);
+				init_select(select);
+			});
 		}
 
-		prev = current;
+		inited = true;
 	});
-
-	if (is_select) {
-		var select = /** @type {HTMLSelectElement} */ (element);
-
-		effect(() => {
-			select_option(select, /** @type {Record<string | symbol, any>} */ (prev).value);
-			init_select(select);
-		});
-	}
-
-	inited = true;
 }
 
 /**
@@ -543,9 +574,10 @@ var setters_cache = new Map();
 
 /** @param {Element} element */
 function get_setters(element) {
-	var setters = setters_cache.get(element.nodeName);
+	var cache_key = element.getAttribute('is') || element.nodeName;
+	var setters = setters_cache.get(cache_key);
 	if (setters) return setters;
-	setters_cache.set(element.nodeName, (setters = []));
+	setters_cache.set(cache_key, (setters = []));
 
 	var descriptors;
 	var proto = element; // In the case of custom elements there might be setters on the instance

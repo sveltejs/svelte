@@ -1,5 +1,4 @@
 /** @import { AST } from '#compiler' */
-/** @import { Comment } from 'estree' */
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment.js';
@@ -9,6 +8,7 @@ import { create_fragment } from './utils/create.js';
 import read_options from './read/options.js';
 import { is_reserved } from '../../../utils.js';
 import { disallow_children } from '../2-analyze/visitors/shared/special-element.js';
+import * as state from '../../state.js';
 
 const regex_position_indicator = / \(\d+:\d+\)$/;
 
@@ -21,12 +21,6 @@ export class Parser {
 	 * @type {string}
 	 */
 	template;
-
-	/**
-	 * @readonly
-	 * @type {string}
-	 */
-	template_untrimmed;
 
 	/**
 	 * Whether or not we're in loose parsing mode, in which
@@ -66,7 +60,6 @@ export class Parser {
 		}
 
 		this.loose = loose;
-		this.template_untrimmed = template;
 		this.template = template.trimEnd();
 
 		let match_lang;
@@ -301,6 +294,8 @@ export class Parser {
  * @returns {AST.Root}
  */
 export function parse(template, loose = false) {
+	state.set_source(template);
+
 	const parser = new Parser(template, loose);
 	return parser.root;
 }

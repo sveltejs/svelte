@@ -1,9 +1,10 @@
 /** @import { Expression } from 'estree' */
-/** @import { AST, ExpressionMetadata } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
 import { is_capture_event, is_passive_event } from '../../../../../../utils.js';
 import { dev, locator } from '../../../../../state.js';
 import * as b from '#compiler/builders';
+import { ExpressionMetadata } from '../../../../nodes.js';
 
 /**
  * @param {AST.Attribute} node
@@ -26,40 +27,12 @@ export function visit_event_attribute(node, context) {
 	let handler = build_event_handler(tag.expression, tag.metadata.expression, context);
 
 	if (node.metadata.delegated) {
-		let delegated_assignment;
-
 		if (!context.state.events.has(event_name)) {
 			context.state.events.add(event_name);
 		}
 
-		// Hoist function if we can, otherwise we leave the function as is
-		if (node.metadata.delegated.hoisted) {
-			if (node.metadata.delegated.function === tag.expression) {
-				const func_name = context.state.scope.root.unique('on_' + event_name);
-				context.state.hoisted.push(b.var(func_name, handler));
-				handler = func_name;
-			}
-
-			const hoisted_params = /** @type {Expression[]} */ (
-				node.metadata.delegated.function.metadata.hoisted_params
-			);
-
-			// When we hoist a function we assign an array with the function and all
-			// hoisted closure params.
-			if (hoisted_params) {
-				const args = [handler, ...hoisted_params];
-				delegated_assignment = b.array(args);
-			} else {
-				delegated_assignment = handler;
-			}
-		} else {
-			delegated_assignment = handler;
-		}
-
 		context.state.init.push(
-			b.stmt(
-				b.assignment('=', b.member(context.state.node, '__' + event_name), delegated_assignment)
-			)
+			b.stmt(b.assignment('=', b.member(context.state.node, '__' + event_name), handler))
 		);
 	} else {
 		const statement = b.stmt(

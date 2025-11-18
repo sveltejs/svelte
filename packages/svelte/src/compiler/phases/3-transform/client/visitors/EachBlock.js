@@ -13,7 +13,7 @@ import { dev } from '../../../../state.js';
 import { extract_paths, object } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { get_value } from './shared/declarations.js';
-import { build_expression } from './shared/utils.js';
+import { build_expression, add_svelte_meta } from './shared/utils.js';
 
 /**
  * @param {AST.EachBlock} node
@@ -312,11 +312,10 @@ export function EachBlock(node, context) {
 		declarations.push(b.let(node.index, index));
 	}
 
-	if (dev && node.metadata.keyed) {
-		context.state.init.push(
-			b.stmt(b.call('$.validate_each_keys', b.thunk(collection), key_function))
-		);
-	}
+	const is_async = node.metadata.expression.is_async();
+
+	const get_collection = b.thunk(collection, node.metadata.expression.has_await);
+	const thunk = is_async ? b.thunk(b.call('$.get', b.id('$$collection'))) : get_collection;
 
 	const render_args = [b.id('$$anchor'), item];
 	if (uses_index || collection_id) render_args.push(index);
@@ -326,7 +325,7 @@ export function EachBlock(node, context) {
 	const args = [
 		context.state.node,
 		b.literal(flags),
-		b.thunk(collection),
+		thunk,
 		key_function,
 		b.arrow(render_args, b.block(declarations.concat(block.body)))
 	];
@@ -337,7 +336,27 @@ export function EachBlock(node, context) {
 		);
 	}
 
-	context.state.init.push(b.stmt(b.call('$.each', ...args)));
+	const statements = [add_svelte_meta(b.call('$.each', ...args), node, 'each')];
+
+	if (dev && node.metadata.keyed) {
+		statements.unshift(b.stmt(b.call('$.validate_each_keys', thunk, key_function)));
+	}
+
+	if (is_async) {
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.async',
+					context.state.node,
+					node.metadata.expression.blockers(),
+					b.array([get_collection]),
+					b.arrow([context.state.node, b.id('$$collection')], b.block(statements))
+				)
+			)
+		);
+	} else {
+		context.state.init.push(...statements);
+	}
 }
 
 /**

@@ -1,40 +1,74 @@
 import { UNINITIALIZED } from '../../../constants.js';
 import { snapshot } from '../../shared/clone.js';
-import { inspect_effect, validate_effect } from '../reactivity/effects.js';
+import { eager_effect, render_effect, validate_effect } from '../reactivity/effects.js';
 import { untrack } from '../runtime.js';
+import { get_stack } from './tracing.js';
 
 /**
  * @param {() => any[]} get_value
- * @param {Function} [inspector]
+ * @param {Function} inspector
+ * @param {boolean} show_stack
  */
-// eslint-disable-next-line no-console
-export function inspect(get_value, inspector = console.log) {
+export function inspect(get_value, inspector, show_stack = false) {
 	validate_effect('$inspect');
 
 	let initial = true;
+	let error = /** @type {any} */ (UNINITIALIZED);
 
-	inspect_effect(() => {
-		/** @type {any} */
-		var value = UNINITIALIZED;
-
-		// Capturing the value might result in an exception due to the inspect effect being
-		// sync and thus operating on stale data. In the case we encounter an exception we
-		// can bail-out of reporting the value. Instead we simply console.error the error
-		// so at least it's known that an error occured, but we don't stop execution
+	// Inspect effects runs synchronously so that we can capture useful
+	// stack traces. As a consequence, reading the value might result
+	// in an error (an `$inspect(object.property)` will run before the
+	// `{#if object}...{/if}` that contains it)
+	eager_effect(() => {
 		try {
-			value = get_value();
-		} catch (error) {
-			// eslint-disable-next-line no-console
-			console.error(error);
+			var value = get_value();
+		} catch (e) {
+			error = e;
+			return;
 		}
 
-		if (value !== UNINITIALIZED) {
-			var snap = snapshot(value, true);
-			untrack(() => {
+		var snap = snapshot(value, true, true);
+		untrack(() => {
+			if (show_stack) {
+				inspector(...snap);
+
+				if (!initial) {
+					const stack = get_stack('$inspect(...)');
+					// eslint-disable-next-line no-console
+
+					if (stack) {
+						// eslint-disable-next-line no-console
+						console.groupCollapsed('stack trace');
+						// eslint-disable-next-line no-console
+						console.log(stack);
+						// eslint-disable-next-line no-console
+						console.groupEnd();
+					}
+				}
+			} else {
 				inspector(initial ? 'init' : 'update', ...snap);
-			});
-		}
+			}
+		});
 
 		initial = false;
+	});
+
+	// If an error occurs, we store it (along with its stack trace).
+	// If the render effect subsequently runs, we log the error,
+	// but if it doesn't run it's because the `$inspect` was
+	// destroyed, meaning we don't need to bother
+	render_effect(() => {
+		try {
+			// call `get_value` so that this runs alongside the inspect effect
+			get_value();
+		} catch {
+			// ignore
+		}
+
+		if (error !== UNINITIALIZED) {
+			// eslint-disable-next-line no-console
+			console.error(error);
+			error = UNINITIALIZED;
+		}
 	});
 }

@@ -1,16 +1,11 @@
-/** @import { ComponentContext } from '#client' */
-
+/** @import { ComponentContext, DevStackEntry, Effect } from '#client' */
 import { DEV } from 'esm-env';
-import { lifecycle_outside_component } from '../shared/errors.js';
-import { source } from './reactivity/sources.js';
-import {
-	active_effect,
-	active_reaction,
-	set_active_effect,
-	set_active_reaction
-} from './runtime.js';
-import { effect, teardown } from './reactivity/effects.js';
-import { legacy_mode_flag } from '../flags/index.js';
+import * as e from './errors.js';
+import { active_effect, active_reaction } from './runtime.js';
+import { create_user_effect } from './reactivity/effects.js';
+import { async_mode_flag, legacy_mode_flag } from '../flags/index.js';
+import { FILENAME } from '../../constants.js';
+import { BRANCH_EFFECT, EFFECT_RAN } from './constants.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;
@@ -18,6 +13,43 @@ export let component_context = null;
 /** @param {ComponentContext | null} context */
 export function set_component_context(context) {
 	component_context = context;
+}
+
+/** @type {DevStackEntry | null} */
+export let dev_stack = null;
+
+/** @param {DevStackEntry | null} stack */
+export function set_dev_stack(stack) {
+	dev_stack = stack;
+}
+
+/**
+ * Execute a callback with a new dev stack entry
+ * @param {() => any} callback - Function to execute
+ * @param {DevStackEntry['type']} type - Type of block/component
+ * @param {any} component - Component function
+ * @param {number} line - Line number
+ * @param {number} column - Column number
+ * @param {Record<string, any>} [additional] - Any additional properties to add to the dev stack entry
+ * @returns {any}
+ */
+export function add_svelte_meta(callback, type, component, line, column, additional) {
+	const parent = dev_stack;
+
+	dev_stack = {
+		type,
+		file: component[FILENAME],
+		line,
+		column,
+		parent,
+		...additional
+	};
+
+	try {
+		return callback();
+	} finally {
+		dev_stack = parent;
+	}
 }
 
 /**
@@ -38,8 +70,34 @@ export function set_dev_current_component_function(fn) {
 }
 
 /**
+ * Returns a `[get, set]` pair of functions for working with context in a type-safe way.
+ *
+ * `get` will throw an error if no parent component called `set`.
+ *
+ * @template T
+ * @returns {[() => T, (context: T) => T]}
+ * @since 5.40.0
+ */
+export function createContext() {
+	const key = {};
+
+	return [
+		() => {
+			if (!hasContext(key)) {
+				e.missing_context();
+			}
+
+			return getContext(key);
+		},
+		(context) => setContext(key, context)
+	];
+}
+
+/**
  * Retrieves the context that belongs to the closest parent component with the specified `key`.
  * Must be called during component initialisation.
+ *
+ * [`createContext`](https://svelte.dev/docs/svelte/svelte#createContext) is a type-safe alternative.
  *
  * @template T
  * @param {any} key
@@ -58,6 +116,8 @@ export function getContext(key) {
  *
  * Like lifecycle functions, this must be called during component initialisation.
  *
+ * [`createContext`](https://svelte.dev/docs/svelte/svelte#createContext) is a type-safe alternative.
+ *
  * @template T
  * @param {any} key
  * @param {T} context
@@ -65,6 +125,20 @@ export function getContext(key) {
  */
 export function setContext(key, context) {
 	const context_map = get_or_init_context_map('setContext');
+
+	if (async_mode_flag) {
+		var flags = /** @type {Effect} */ (active_effect).f;
+		var valid =
+			!active_reaction &&
+			(flags & BRANCH_EFFECT) !== 0 &&
+			// pop() runs synchronously, so this indicates we're setting context after an await
+			!(/** @type {ComponentContext} */ (component_context).i);
+
+		if (!valid) {
+			e.set_context_after_init();
+		}
+	}
+
 	context_map.set(key, context);
 	return context;
 }
@@ -101,29 +175,15 @@ export function getAllContexts() {
  * @returns {void}
  */
 export function push(props, runes = false, fn) {
-	var ctx = (component_context = {
+	component_context = {
 		p: component_context,
+		i: false,
 		c: null,
-		d: false,
 		e: null,
-		m: false,
 		s: props,
 		x: null,
-		l: null
-	});
-
-	if (legacy_mode_flag && !runes) {
-		component_context.l = {
-			s: null,
-			u: null,
-			r1: [],
-			r2: source(false)
-		};
-	}
-
-	teardown(() => {
-		/** @type {ComponentContext} */ (ctx).d = true;
-	});
+		l: legacy_mode_flag && !runes ? { s: null, u: null, $: [] } : null
+	};
 
 	if (DEV) {
 		// component function
@@ -138,37 +198,30 @@ export function push(props, runes = false, fn) {
  * @returns {T}
  */
 export function pop(component) {
-	const context_stack_item = component_context;
-	if (context_stack_item !== null) {
-		if (component !== undefined) {
-			context_stack_item.x = component;
+	var context = /** @type {ComponentContext} */ (component_context);
+	var effects = context.e;
+
+	if (effects !== null) {
+		context.e = null;
+
+		for (var fn of effects) {
+			create_user_effect(fn);
 		}
-		const component_effects = context_stack_item.e;
-		if (component_effects !== null) {
-			var previous_effect = active_effect;
-			var previous_reaction = active_reaction;
-			context_stack_item.e = null;
-			try {
-				for (var i = 0; i < component_effects.length; i++) {
-					var component_effect = component_effects[i];
-					set_active_effect(component_effect.effect);
-					set_active_reaction(component_effect.reaction);
-					effect(component_effect.fn);
-				}
-			} finally {
-				set_active_effect(previous_effect);
-				set_active_reaction(previous_reaction);
-			}
-		}
-		component_context = context_stack_item.p;
-		if (DEV) {
-			dev_current_component_function = context_stack_item.p?.function ?? null;
-		}
-		context_stack_item.m = true;
 	}
-	// Micro-optimization: Don't set .a above to the empty object
-	// so it can be garbage-collected when the return here is unused
-	return component || /** @type {T} */ ({});
+
+	if (component !== undefined) {
+		context.x = component;
+	}
+
+	context.i = true;
+
+	component_context = context.p;
+
+	if (DEV) {
+		dev_current_component_function = component_context?.function ?? null;
+	}
+
+	return component ?? /** @type {T} */ ({});
 }
 
 /** @returns {boolean} */
@@ -182,7 +235,7 @@ export function is_runes() {
  */
 function get_or_init_context_map(name) {
 	if (component_context === null) {
-		lifecycle_outside_component(name);
+		e.lifecycle_outside_component(name);
 	}
 
 	return (component_context.c ??= new Map(get_parent_context(component_context) || undefined));

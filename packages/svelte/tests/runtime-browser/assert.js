@@ -74,6 +74,7 @@ function normalize_html(window, html) {
 		node.innerHTML = html
 			.replace(/<!--.*?-->/g, '')
 			.replace(/>[\s\r\n]+</g, '><')
+			.replace(/svelte-\w+/g, 'svelte-xyz123')
 			.trim();
 
 		normalize_children(node);
@@ -87,15 +88,17 @@ function normalize_html(window, html) {
 /** @param {any} node */
 function normalize_children(node) {
 	// sort attributes
-	const attributes = Array.from(node.attributes).sort((a, b) => {
-		return a.name < b.name ? -1 : 1;
-	});
+	const attributes = Array.from(node.attributes).sort(
+		(/** @type {any} */ a, /** @type {any} */ b) => {
+			return a.name < b.name ? -1 : 1;
+		}
+	);
 
-	attributes.forEach((attr) => {
+	attributes.forEach((/** @type{any} */ attr) => {
 		node.removeAttribute(attr.name);
 	});
 
-	attributes.forEach((attr) => {
+	attributes.forEach((/** @type{any} */ attr) => {
 		node.setAttribute(attr.name, attr.value);
 	});
 
@@ -163,7 +166,7 @@ export function test(args) {
 	return args;
 }
 
-// TypeScript needs the type of assertions to be directly visible, not infered, which is why
+// TypeScript needs the type of assertions to be directly visible, not inferred, which is why
 // we can't have it on the test suite type.
 /**
  * @param {any} value

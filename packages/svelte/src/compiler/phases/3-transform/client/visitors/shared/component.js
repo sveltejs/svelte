@@ -4,7 +4,7 @@
 import { dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { build_bind_this, memoize_expression, validate_binding } from '../shared/utils.js';
+import { add_svelte_meta, build_bind_this, Memoizer, validate_binding } from '../shared/utils.js';
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
@@ -16,12 +16,12 @@ import { determine_slot } from '../../../../../utils/slot.js';
  * @returns {Statement}
  */
 export function build_component(node, component_name, context) {
-	/**
-	 * @type {Expression}
-	 */
+	/** @type {Expression} */
 	const anchor = context.state.node;
+
 	/** @type {Array<Property[] | Expression>} */
 	const props_and_spreads = [];
+
 	/** @type {Array<() => void>} */
 	const delayed_props = [];
 
@@ -42,6 +42,8 @@ export function build_component(node, component_name, context) {
 
 	/** @type {Record<string, Expression[]>} */
 	const events = {};
+
+	const memoizer = new Memoizer();
 
 	/** @type {Property[]} */
 	const custom_css_props = [];
@@ -99,7 +101,7 @@ export function build_component(node, component_name, context) {
 	if (slot_scope_applies_to_itself) {
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'LetDirective') {
-				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+				context.visit(attribute, { ...context.state, let_directives: lets });
 			}
 		}
 	}
@@ -107,7 +109,7 @@ export function build_component(node, component_name, context) {
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'LetDirective') {
 			if (!slot_scope_applies_to_itself) {
-				lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute, states.default)));
+				context.visit(attribute, { ...states.default, let_directives: lets });
 			}
 		} else if (attribute.type === 'OnDirective') {
 			if (!attribute.expression) {
@@ -127,16 +129,17 @@ export function build_component(node, component_name, context) {
 			(events[attribute.name] ||= []).push(handler);
 		} else if (attribute.type === 'SpreadAttribute') {
 			const expression = /** @type {Expression} */ (context.visit(attribute));
-			if (attribute.metadata.expression.has_state) {
-				let value = expression;
+			const memoized_expression = memoizer.add(expression, attribute.metadata.expression);
+			const is_memoized = expression !== memoized_expression;
 
-				if (attribute.metadata.expression.has_call) {
-					const id = b.id(context.state.scope.generate('spread_element'));
-					context.state.init.push(b.var(id, b.call('$.derived', b.thunk(value))));
-					value = b.call('$.get', id);
-				}
-
-				props_and_spreads.push(b.thunk(value));
+			if (
+				is_memoized ||
+				attribute.metadata.expression.has_state ||
+				attribute.metadata.expression.has_await
+			) {
+				props_and_spreads.push(
+					b.thunk(is_memoized ? b.call('$.get', memoized_expression) : expression)
+				);
 			} else {
 				props_and_spreads.push(expression);
 			}
@@ -145,10 +148,12 @@ export function build_component(node, component_name, context) {
 				custom_css_props.push(
 					b.init(
 						attribute.name,
-						build_attribute_value(attribute.value, context, (value, metadata) =>
+						build_attribute_value(attribute.value, context, (value, metadata) => {
+							const memoized = memoizer.add(value, metadata);
+
 							// TODO put the derived in the local block
-							metadata.has_call ? memoize_expression(context.state, value) : value
-						).value
+							return value !== memoized ? b.call('$.get', memoized) : value;
+						}).value
 					)
 				);
 				continue;
@@ -166,20 +171,22 @@ export function build_component(node, component_name, context) {
 				attribute.value,
 				context,
 				(value, metadata) => {
-					if (!metadata.has_state) return value;
-
 					// When we have a non-simple computation, anything other than an Identifier or Member expression,
 					// then there's a good chance it needs to be memoized to avoid over-firing when read within the
 					// child component (e.g. `active={i === index}`)
-					const should_wrap_in_derived = get_attribute_chunks(attribute.value).some((n) => {
-						return (
-							n.type === 'ExpressionTag' &&
-							n.expression.type !== 'Identifier' &&
-							n.expression.type !== 'MemberExpression'
-						);
-					});
+					const should_wrap_in_derived =
+						metadata.has_await ||
+						get_attribute_chunks(attribute.value).some((n) => {
+							return (
+								n.type === 'ExpressionTag' &&
+								n.expression.type !== 'Identifier' &&
+								n.expression.type !== 'MemberExpression'
+							);
+						});
 
-					return should_wrap_in_derived ? memoize_expression(context.state, value) : value;
+					const memoized = memoizer.add(value, metadata, should_wrap_in_derived);
+
+					return value !== memoized ? b.call('$.get', memoized) : value;
 				}
 			);
 
@@ -189,7 +196,12 @@ export function build_component(node, component_name, context) {
 				push_prop(b.init(attribute.name, value));
 			}
 		} else if (attribute.type === 'BindDirective') {
-			const expression = /** @type {Expression} */ (context.visit(attribute.expression));
+			const expression = /** @type {Expression} */ (
+				context.visit(attribute.expression, { ...context.state, memoizer })
+			);
+
+			// Bindings are a bit special: we don't want to add them to (async) deriveds but we need to check if they have blockers
+			memoizer.check_blockers(attribute.metadata.expression);
 
 			if (
 				dev &&
@@ -439,7 +451,12 @@ export function build_component(node, component_name, context) {
 		};
 	}
 
-	const statements = [...snippet_declarations];
+	if (node.type !== 'SvelteSelf') {
+		// Component name itself could be blocked on async values
+		memoizer.check_blockers(node.metadata.expression);
+	}
+
+	const statements = [...snippet_declarations, ...memoizer.deriveds(context.state.analysis.runes)];
 
 	if (is_component_dynamic) {
 		const prev = fn;
@@ -483,7 +500,25 @@ export function build_component(node, component_name, context) {
 		);
 	} else {
 		context.state.template.push_comment();
-		statements.push(b.stmt(fn(anchor)));
+
+		statements.push(add_svelte_meta(fn(anchor), node, 'component', { componentTag: node.name }));
+	}
+
+	memoizer.apply();
+
+	const async_values = memoizer.async_values();
+	const blockers = memoizer.blockers();
+
+	if (async_values || blockers) {
+		return b.stmt(
+			b.call(
+				'$.async',
+				anchor,
+				blockers,
+				async_values,
+				b.arrow([b.id('$$anchor'), ...memoizer.async_ids()], b.block(statements))
+			)
+		);
 	}
 
 	return statements.length > 1 ? b.block(statements) : statements[0];

@@ -30,6 +30,82 @@ function add() {
 }
 ```
 
+## await_reactivity_loss
+
+> Detected reactivity loss when reading `%name%`. This happens when state is read in an async function after an earlier `await`
+
+Svelte's signal-based reactivity works by tracking which bits of state are read when a template or `$derived(...)` expression executes. If an expression contains an `await`, Svelte transforms it such that any state _after_ the `await` is also tracked — in other words, in a case like this...
+
+```js
+let a = Promise.resolve(1);
+let b = 2;
+// ---cut---
+let total = $derived(await a + b);
+```
+
+...both `a` and `b` are tracked, even though `b` is only read once `a` has resolved, after the initial execution.
+
+This does _not_ apply to an `await` that is not 'visible' inside the expression. In a case like this...
+
+```js
+let a = Promise.resolve(1);
+let b = 2;
+// ---cut---
+async function sum() {
+	return await a + b;
+}
+
+let total = $derived(await sum());
+```
+
+...`total` will depend on `a` (which is read immediately) but not `b` (which is not). The solution is to pass the values into the function:
+
+```js
+let a = Promise.resolve(1);
+let b = 2;
+// ---cut---
+/**
+ * @param {Promise<number>} a
+ * @param {number} b
+ */
+async function sum(a, b) {
+	return await a + b;
+}
+
+let total = $derived(await sum(a, b));
+```
+
+## await_waterfall
+
+> An async derived, `%name%` (%location%) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app
+
+In a case like this...
+
+```js
+async function one() { return 1 }
+async function two() { return 2 }
+// ---cut---
+let a = $derived(await one());
+let b = $derived(await two());
+```
+
+...the second `$derived` will not be created until the first one has resolved. Since `await two()` does not depend on the value of `a`, this delay, often described as a 'waterfall', is unnecessary.
+
+(Note that if the values of `await one()` and `await two()` subsequently change, they can do so concurrently — the waterfall only occurs when the deriveds are first created.)
+
+You can solve this by creating the promises first and _then_ awaiting them:
+
+```js
+async function one() { return 1 }
+async function two() { return 2 }
+// ---cut---
+let aPromise = $derived(one());
+let bPromise = $derived(two());
+
+let a = $derived(await aPromise);
+let b = $derived(await bPromise);
+```
+
 ## binding_property_non_reactive
 
 > `%binding%` is binding to a non-reactive property
@@ -195,6 +271,49 @@ To silence the warning, ensure that `value`:
 ```
 
 To resolve this, ensure you're comparing values where both values were created with `$state(...)`, or neither were. Note that `$state.raw(...)` will _not_ create a state proxy.
+
+## state_proxy_unmount
+
+> Tried to unmount a state proxy, rather than a component
+
+`unmount` was called with a state proxy:
+
+```js
+import { mount, unmount } from 'svelte';
+import Component from './Component.svelte';
+let target = document.body;
+// ---cut---
+let component = $state(mount(Component, { target }));
+
+// later...
+unmount(component);
+```
+
+Avoid using `$state` here. If `component` _does_ need to be reactive for some reason, use `$state.raw` instead.
+
+## svelte_boundary_reset_noop
+
+> A `<svelte:boundary>` `reset` function only resets the boundary the first time it is called
+
+When an error occurs while rendering the contents of a [`<svelte:boundary>`](https://svelte.dev/docs/svelte/svelte-boundary), the `onerror` handler is called with the error plus a `reset` function that attempts to re-render the contents.
+
+This `reset` function should only be called once. After that, it has no effect — in a case like this, where a reference to `reset` is stored outside the boundary, clicking the button while `<Contents />` is rendered will _not_ cause the contents to be rendered again.
+
+```svelte
+<script>
+	let reset;
+</script>
+
+<button onclick={reset}>reset</button>
+
+<svelte:boundary onerror={(e, r) => (reset = r)}>
+	<!-- contents -->
+
+	{#snippet failed(e)}
+		<p>oops! {e.message}</p>
+	{/snippet}
+</svelte:boundary>
+```
 
 ## transition_slide_display
 

@@ -15,6 +15,7 @@ packages/svelte/src/internal/client/warnings.js
 packages/svelte/src/internal/shared/errors.js
 packages/svelte/src/internal/shared/warnings.js
 packages/svelte/src/internal/server/errors.js
+packages/svelte/src/internal/server/warnings.js
 packages/svelte/tests/migrate/samples/*/output.svelte
 packages/svelte/tests/**/*.svelte
 packages/svelte/tests/**/_expected*
@@ -27,15 +28,6 @@ packages/svelte/tests/hydration/samples/*/_override.html
 packages/svelte/types
 packages/svelte/compiler/index.js
 playgrounds/sandbox/src/*
-
-# sites/svelte.dev
-sites/svelte.dev/static/svelte-app.json
-sites/svelte.dev/scripts/svelte-app/
-sites/svelte.dev/src/routes/_components/Supporters/contributors.jpg
-sites/svelte.dev/src/routes/_components/Supporters/contributors.js
-sites/svelte.dev/src/routes/_components/Supporters/donors.jpg
-sites/svelte.dev/src/routes/_components/Supporters/donors.js
-sites/svelte.dev/src/lib/generated
 
 **/node_modules
 **/.svelte-kit

@@ -209,21 +209,14 @@ export function transition(flags, element, get_fn, get_params) {
 	var outro;
 
 	function get_options() {
-		var previous_reaction = active_reaction;
-		var previous_effect = active_effect;
-		set_active_reaction(null);
-		set_active_effect(null);
-		try {
+		return without_reactive_context(() => {
 			// If a transition is still ongoing, we use the existing options rather than generating
 			// new ones. This ensures that reversible transitions reverse smoothly, rather than
 			// jumping to a new spot because (for example) a different `duration` was used
 			return (current_options ??= get_fn()(element, get_params?.() ?? /** @type {P} */ ({}), {
 				direction
 			}));
-		} finally {
-			set_active_reaction(previous_reaction);
-			set_active_effect(previous_effect);
-		}
+		});
 	}
 
 	/** @type {TransitionManager} */

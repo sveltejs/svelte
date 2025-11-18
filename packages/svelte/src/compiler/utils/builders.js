@@ -1,6 +1,8 @@
 /** @import * as ESTree from 'estree' */
+import { walk } from 'zimmerframe';
 import { regex_is_valid_identifier } from '../phases/patterns.js';
 import { sanitize_template_string } from './sanitize_template_string.js';
+import { has_await_expression } from './ast.js';
 
 /**
  * @param {Array<ESTree.Expression | ESTree.SpreadElement | null>} elements
@@ -30,17 +32,17 @@ export function assignment_pattern(left, right) {
 /**
  * @param {Array<ESTree.Pattern>} params
  * @param {ESTree.BlockStatement | ESTree.Expression} body
+ * @param {boolean} async
  * @returns {ESTree.ArrowFunctionExpression}
  */
-export function arrow(params, body) {
+export function arrow(params, body, async = false) {
 	return {
 		type: 'ArrowFunctionExpression',
 		params,
 		body,
 		expression: body.type !== 'BlockStatement',
 		generator: false,
-		async: false,
-		metadata: /** @type {any} */ (null) // should not be used by codegen
+		async
 	};
 }
 
@@ -52,15 +54,6 @@ export function arrow(params, body) {
  */
 export function assignment(operator, left, right) {
 	return { type: 'AssignmentExpression', operator, left, right };
-}
-
-/**
- * @template T
- * @param {T & ESTree.BaseFunction} func
- * @returns {T & ESTree.BaseFunction}
- */
-export function async(func) {
-	return { ...func, async: true };
 }
 
 /**
@@ -90,6 +83,17 @@ export function block(body) {
 }
 
 /**
+ * @param {ESTree.Identifier | null} id
+ * @param {ESTree.ClassBody} body
+ * @param {ESTree.Expression | null} [superClass]
+ * @param {ESTree.Decorator[]} [decorators]
+ * @returns {ESTree.ClassExpression}
+ */
+export function class_expression(id, body, superClass, decorators = []) {
+	return { type: 'ClassExpression', body, superClass, decorators };
+}
+
+/**
  * @param {string} name
  * @param {ESTree.Statement} body
  * @returns {ESTree.LabeledStatement}
@@ -100,14 +104,14 @@ export function labeled(name, body) {
 
 /**
  * @param {string | ESTree.Expression} callee
- * @param {...(ESTree.Expression | ESTree.SpreadElement | false | undefined)} args
+ * @param {...(ESTree.Expression | ESTree.SpreadElement | false | undefined | null)} args
  * @returns {ESTree.CallExpression}
  */
 export function call(callee, ...args) {
 	if (typeof callee === 'string') callee = id(callee);
 	args = args.slice();
 
-	// replacing missing arguments with `undefined`, unless they're at the end in which case remove them
+	// replacing missing arguments with `void(0)`, unless they're at the end in which case remove them
 	let i = args.length;
 	let popping = true;
 	while (i--) {
@@ -115,7 +119,7 @@ export function call(callee, ...args) {
 			if (popping) {
 				args.pop();
 			} else {
-				args[i] = id('undefined');
+				args[i] = void0;
 			}
 		} else {
 			popping = false;
@@ -177,7 +181,7 @@ export function logical(operator, left, right) {
 }
 
 /**
- * @param {'const' | 'let' | 'var'} kind
+ * @param {ESTree.VariableDeclaration['kind']} kind
  * @param {ESTree.VariableDeclarator[]} declarations
  * @returns {ESTree.VariableDeclaration}
  */
@@ -191,7 +195,7 @@ export function declaration(kind, declarations) {
 
 /**
  * @param {ESTree.Pattern | string} pattern
- * @param {ESTree.Expression} [init]
+ * @param {ESTree.Expression | null} [init]
  * @returns {ESTree.VariableDeclarator}
  */
 export function declarator(pattern, init) {
@@ -213,20 +217,37 @@ export function export_default(declaration) {
 }
 
 /**
+ * @param {ESTree.VariableDeclaration | ESTree.Pattern} left
+ * @param {ESTree.Expression} right
+ * @param {ESTree.Statement} body
+ * @param {boolean} [_await]
+ * @returns {ESTree.ForOfStatement}
+ */
+export function for_of(left, right, body, _await = false) {
+	return {
+		type: 'ForOfStatement',
+		left,
+		right,
+		body,
+		await: _await
+	};
+}
+
+/**
  * @param {ESTree.Identifier} id
  * @param {ESTree.Pattern[]} params
  * @param {ESTree.BlockStatement} body
+ * @param {boolean} async
  * @returns {ESTree.FunctionDeclaration}
  */
-export function function_declaration(id, params, body) {
+export function function_declaration(id, params, body, async = false) {
 	return {
 		type: 'FunctionDeclaration',
 		id,
 		params,
 		body,
 		generator: false,
-		async: false,
-		metadata: /** @type {any} */ (null) // should not be used by codegen
+		async
 	};
 }
 
@@ -352,7 +373,14 @@ export function prop(kind, key, value, computed = false) {
  * @returns {ESTree.PropertyDefinition}
  */
 export function prop_def(key, value, computed = false, is_static = false) {
-	return { type: 'PropertyDefinition', key, value, computed, static: is_static };
+	return {
+		type: 'PropertyDefinition',
+		decorators: [],
+		key,
+		value,
+		computed,
+		static: is_static
+	};
 }
 
 /**
@@ -421,19 +449,23 @@ export function template(elements, expressions) {
  * @returns {ESTree.Expression}
  */
 export function thunk(expression, async = false) {
-	const fn = arrow([], expression);
-	if (async) fn.async = true;
-	return unthunk(fn);
+	return unthunk(arrow([], expression, async));
 }
 
 /**
  * Replace "(arg) => func(arg)" to "func"
- * @param {ESTree.Expression} expression
+ * @param {ESTree.ArrowFunctionExpression} expression
  * @returns {ESTree.Expression}
  */
 export function unthunk(expression) {
+	// optimize `async () => await x()`, but not `async () => await x(await y)`
+	if (expression.async && expression.body.type === 'AwaitExpression') {
+		if (!has_await_expression(expression.body.argument)) {
+			return unthunk(arrow(expression.params, expression.body.argument));
+		}
+	}
+
 	if (
-		expression.type === 'ArrowFunctionExpression' &&
 		expression.async === false &&
 		expression.body.type === 'CallExpression' &&
 		expression.body.callee.type === 'Identifier' &&
@@ -499,7 +531,7 @@ const this_instance = {
 
 /**
  * @param {string | ESTree.Pattern} pattern
- * @param { ESTree.Expression} [init]
+ * @param {ESTree.Expression | null} [init]
  * @returns {ESTree.VariableDeclaration}
  */
 function let_builder(pattern, init) {
@@ -508,7 +540,7 @@ function let_builder(pattern, init) {
 
 /**
  * @param {string | ESTree.Pattern} pattern
- * @param { ESTree.Expression} init
+ * @param {ESTree.Expression | null} init
  * @returns {ESTree.VariableDeclaration}
  */
 function const_builder(pattern, init) {
@@ -517,7 +549,7 @@ function const_builder(pattern, init) {
 
 /**
  * @param {string | ESTree.Pattern} pattern
- * @param { ESTree.Expression} [init]
+ * @param {ESTree.Expression | null} [init]
  * @returns {ESTree.VariableDeclaration}
  */
 function var_builder(pattern, init) {
@@ -549,6 +581,7 @@ function for_builder(init, test, update, body) {
 export function method(kind, key, params, body, computed = false, is_static = false) {
 	return {
 		type: 'MethodDefinition',
+		decorators: [],
 		key,
 		kind,
 		value: function_builder(null, params, block(body)),
@@ -564,15 +597,14 @@ export function method(kind, key, params, body, computed = false, is_static = fa
  * @param {ESTree.BlockStatement} body
  * @returns {ESTree.FunctionExpression}
  */
-function function_builder(id, params, body) {
+function function_builder(id, params, body, async = false) {
 	return {
 		type: 'FunctionExpression',
 		id,
 		params,
 		body,
 		generator: false,
-		async: false,
-		metadata: /** @type {any} */ (null) // should not be used by codegen
+		async
 	};
 }
 
@@ -594,6 +626,7 @@ function if_builder(test, consequent, alternate) {
 export function import_all(as, source) {
 	return {
 		type: 'ImportDeclaration',
+		attributes: [],
 		source: literal(source),
 		specifiers: [import_namespace(as)]
 	};
@@ -607,6 +640,7 @@ export function import_all(as, source) {
 export function imports(parts, source) {
 	return {
 		type: 'ImportDeclaration',
+		attributes: [],
 		source: literal(source),
 		specifiers: parts.map((p) => ({
 			type: 'ImportSpecifier',

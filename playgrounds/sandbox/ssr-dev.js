@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import polka from 'polka';
 import { createServer as createViteServer } from 'vite';
-import { render } from 'svelte/server';
+import './ssr-common.js';
 
 const PORT = process.env.PORT || '5173';
 
@@ -22,8 +22,11 @@ polka()
 	.use(async (req, res) => {
 		const template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
 		const transformed_template = await vite.transformIndexHtml(req.url, template);
+
+		const { render } = await vite.ssrLoadModule('svelte/server');
 		const { default: App } = await vite.ssrLoadModule('/src/App.svelte');
-		const { head, body } = render(App);
+
+		const { head, body } = await render(App);
 
 		const html = transformed_template
 			.replace(`<!--ssr-head-->`, head)

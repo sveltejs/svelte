@@ -1,12 +1,10 @@
-import type { Binding, ExpressionMetadata } from '#compiler';
+import type { Binding } from '#compiler';
 import type {
 	ArrayExpression,
 	ArrowFunctionExpression,
 	VariableDeclaration,
 	VariableDeclarator,
 	Expression,
-	FunctionDeclaration,
-	FunctionExpression,
 	Identifier,
 	MemberExpression,
 	Node,
@@ -19,6 +17,7 @@ import type {
 } from 'estree';
 import type { Scope } from '../phases/scope';
 import type { _CSS } from './css';
+import type { ExpressionMetadata } from '../phases/nodes';
 
 /**
  * - `html`    — the default, for e.g. `<div>` or `<span>`
@@ -26,13 +25,6 @@ import type { _CSS } from './css';
  * - `mathml`  — for e.g. `<math>` or `<mrow>`
  */
 export type Namespace = 'html' | 'svg' | 'mathml';
-
-export type DelegatedEvent =
-	| {
-			hoisted: true;
-			function: ArrowFunctionExpression | FunctionExpression | FunctionDeclaration;
-	  }
-	| { hoisted: false };
 
 export namespace AST {
 	export interface BaseNode {
@@ -213,8 +205,10 @@ export namespace AST {
 		expression: Identifier | MemberExpression | SequenceExpression;
 		/** @internal */
 		metadata: {
+			binding?: Binding | null;
 			binding_group_name: Identifier;
 			parent_each_blocks: EachBlock[];
+			expression: ExpressionMetadata;
 		};
 	}
 
@@ -247,7 +241,17 @@ export namespace AST {
 		name: string;
 		/** The 'y' in `on:x={y}` */
 		expression: null | Expression;
-		modifiers: string[]; // TODO specify
+		modifiers: Array<
+			| 'capture'
+			| 'nonpassive'
+			| 'once'
+			| 'passive'
+			| 'preventDefault'
+			| 'self'
+			| 'stopImmediatePropagation'
+			| 'stopPropagation'
+			| 'trusted'
+		>;
 		/** @internal */
 		metadata: {
 			expression: ExpressionMetadata;
@@ -302,6 +306,7 @@ export namespace AST {
 		type: 'Component';
 		/** @internal */
 		metadata: {
+			expression: ExpressionMetadata;
 			scopes: Record<string, Scope>;
 			dynamic: boolean;
 			/** The set of locally-defined snippets that this component tag could render,
@@ -333,6 +338,8 @@ export namespace AST {
 			has_spread: boolean;
 			scoped: boolean;
 			path: SvelteNode[];
+			/** Synthetic value attribute for <option> with single expression child, used for client-only handling */
+			synthetic_value_node: ExpressionTag | null;
 		};
 	}
 
@@ -347,6 +354,7 @@ export namespace AST {
 		expression: Expression;
 		/** @internal */
 		metadata: {
+			expression: ExpressionMetadata;
 			scopes: Record<string, Scope>;
 			/** The set of locally-defined snippets that this component tag could render,
 			 * used for CSS pruning purposes */
@@ -366,6 +374,7 @@ export namespace AST {
 		tag: Expression;
 		/** @internal */
 		metadata: {
+			expression: ExpressionMetadata;
 			/**
 			 * `true` if this is an svg element. The boolean may not be accurate because
 			 * the tag is dynamic, but we do our best to infer it from the template.
@@ -517,7 +526,7 @@ export namespace AST {
 		/** @internal */
 		metadata: {
 			/** May be set if this is an event attribute */
-			delegated: null | DelegatedEvent;
+			delegated: boolean;
 			/** May be `true` if this is a `class` attribute that needs `clsx` */
 			needs_clsx: boolean;
 		};

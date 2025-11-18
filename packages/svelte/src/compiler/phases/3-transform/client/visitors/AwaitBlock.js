@@ -1,11 +1,11 @@
 /** @import { BlockStatement, Pattern, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
-import { extract_identifiers } from '../../../../utils/ast.js';
+import { extract_identifiers, is_expression_async } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { create_derived } from '../utils.js';
 import { get_value } from './shared/declarations.js';
-import { build_expression } from './shared/utils.js';
+import { build_expression, add_svelte_meta } from './shared/utils.js';
 
 /**
  * @param {AST.AwaitBlock} node
@@ -15,7 +15,10 @@ export function AwaitBlock(node, context) {
 	context.state.template.push_comment();
 
 	// Visit {#await <expression>} first to ensure that scopes are in the correct order
-	const expression = b.thunk(build_expression(context, node.expression, node.metadata.expression));
+	const expression = b.thunk(
+		build_expression(context, node.expression, node.metadata.expression),
+		node.metadata.expression.has_await
+	);
 
 	let then_block;
 	let catch_block;
@@ -53,20 +56,36 @@ export function AwaitBlock(node, context) {
 		catch_block = b.arrow(args, b.block([...declarations, ...block.body]));
 	}
 
-	context.state.init.push(
-		b.stmt(
-			b.call(
-				'$.await',
-				context.state.node,
-				expression,
-				node.pending
-					? b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.pending)))
-					: b.null,
-				then_block,
-				catch_block
-			)
-		)
+	const stmt = add_svelte_meta(
+		b.call(
+			'$.await',
+			context.state.node,
+			expression,
+			node.pending
+				? b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.pending)))
+				: b.null,
+			then_block,
+			catch_block
+		),
+		node,
+		'await'
 	);
+
+	if (node.metadata.expression.has_blockers()) {
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.async',
+					context.state.node,
+					node.metadata.expression.blockers(),
+					b.array([]),
+					b.arrow([context.state.node], b.block([stmt]))
+				)
+			)
+		);
+	} else {
+		context.state.init.push(stmt);
+	}
 }
 
 /**
@@ -91,13 +110,13 @@ function create_derived_block_argument(node, context) {
 		b.return(b.object(identifiers.map((identifier) => b.prop('init', identifier, identifier))))
 	]);
 
-	const declarations = [b.var(value, create_derived(context.state, b.thunk(block)))];
+	const declarations = [b.var(value, create_derived(context.state, block))];
 
 	for (const id of identifiers) {
 		context.state.transform[id.name] = { read: get_value };
 
 		declarations.push(
-			b.var(id, create_derived(context.state, b.thunk(b.member(b.call('$.get', value), id))))
+			b.var(id, create_derived(context.state, b.member(b.call('$.get', value), id)))
 		);
 	}
 

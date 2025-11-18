@@ -348,6 +348,46 @@ declare module 'svelte' {
 				 */
 				props: Props;
 			});
+
+	/**
+	 * Represents work that is happening off-screen, such as data being preloaded
+	 * in anticipation of the user navigating
+	 * @since 5.42
+	 */
+	export interface Fork {
+		/**
+		 * Commit the fork. The promise will resolve once the state change has been applied
+		 */
+		commit(): Promise<void>;
+		/**
+		 * Discard the fork
+		 */
+		discard(): void;
+	}
+	/**
+	 * Returns an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that aborts when the current [derived](https://svelte.dev/docs/svelte/$derived) or [effect](https://svelte.dev/docs/svelte/$effect) re-runs or is destroyed.
+	 *
+	 * Must be called while a derived or effect is running.
+	 *
+	 * ```svelte
+	 * <script>
+	 * 	import { getAbortSignal } from 'svelte';
+	 *
+	 * 	let { id } = $props();
+	 *
+	 * 	async function getData(id) {
+	 * 		const response = await fetch(`/items/${id}`, {
+	 * 			signal: getAbortSignal()
+	 * 		});
+	 *
+	 * 		return await response.json();
+	 * 	}
+	 *
+	 * 	const data = $derived(await getData(id));
+	 * </script>
+	 * ```
+	 */
+	export function getAbortSignal(): AbortSignal;
 	/**
 	 * `onMount`, like [`$effect`](https://svelte.dev/docs/svelte/$effect), schedules a function to run as soon as the component has been mounted to the DOM.
 	 * Unlike `$effect`, the provided function only runs once.
@@ -425,26 +465,36 @@ declare module 'svelte' {
 	 * */
 	export function flushSync<T = void>(fn?: (() => T) | undefined): T;
 	/**
-	 * Returns a promise that resolves once any pending state changes have been applied.
-	 * */
-	export function tick(): Promise<void>;
-	/**
-	 * When used inside a [`$derived`](https://svelte.dev/docs/svelte/$derived) or [`$effect`](https://svelte.dev/docs/svelte/$effect),
-	 * any state read inside `fn` will not be treated as a dependency.
+	 * Creates a 'fork', in which state changes are evaluated but not applied to the DOM.
+	 * This is useful for speculatively loading data (for example) when you suspect that
+	 * the user is about to take some action.
 	 *
-	 * ```ts
-	 * $effect(() => {
-	 *   // this will run when `data` changes, but not when `time` changes
-	 *   save(data, {
-	 *     timestamp: untrack(() => time)
-	 *   });
-	 * });
-	 * ```
-	 * */
-	export function untrack<T>(fn: () => T): T;
+	 * Frameworks like SvelteKit can use this to preload data when the user touches or
+	 * hovers over a link, making any subsequent navigation feel instantaneous.
+	 *
+	 * The `fn` parameter is a synchronous function that modifies some state. The
+	 * state changes will be reverted after the fork is initialised, then reapplied
+	 * if and when the fork is eventually committed.
+	 *
+	 * When it becomes clear that a fork will _not_ be committed (e.g. because the
+	 * user navigated elsewhere), it must be discarded to avoid leaking memory.
+	 *
+	 * @since 5.42
+	 */
+	export function fork(fn: () => void): Fork;
+	/**
+	 * Returns a `[get, set]` pair of functions for working with context in a type-safe way.
+	 *
+	 * `get` will throw an error if no parent component called `set`.
+	 *
+	 * @since 5.40.0
+	 */
+	export function createContext<T>(): [() => T, (context: T) => T];
 	/**
 	 * Retrieves the context that belongs to the closest parent component with the specified `key`.
 	 * Must be called during component initialisation.
+	 *
+	 * [`createContext`](https://svelte.dev/docs/svelte/svelte#createContext) is a type-safe alternative.
 	 *
 	 * */
 	export function getContext<T>(key: any): T;
@@ -454,6 +504,8 @@ declare module 'svelte' {
 	 * (including slotted content) with `getContext`.
 	 *
 	 * Like lifecycle functions, this must be called during component initialisation.
+	 *
+	 * [`createContext`](https://svelte.dev/docs/svelte/svelte#createContext) is a type-safe alternative.
 	 *
 	 * */
 	export function setContext<T>(key: any, context: T): T;
@@ -515,6 +567,30 @@ declare module 'svelte' {
 	export function unmount(component: Record<string, any>, options?: {
 		outro?: boolean;
 	} | undefined): Promise<void>;
+	/**
+	 * Returns a promise that resolves once any pending state changes have been applied.
+	 * */
+	export function tick(): Promise<void>;
+	/**
+	 * Returns a promise that resolves once any state changes, and asynchronous work resulting from them,
+	 * have resolved and the DOM has been updated
+	 * @since 5.36
+	 */
+	export function settled(): Promise<void>;
+	/**
+	 * When used inside a [`$derived`](https://svelte.dev/docs/svelte/$derived) or [`$effect`](https://svelte.dev/docs/svelte/$effect),
+	 * any state read inside `fn` will not be treated as a dependency.
+	 *
+	 * ```ts
+	 * $effect(() => {
+	 *   // this will run when `data` changes, but not when `time` changes
+	 *   save(data, {
+	 *     timestamp: untrack(() => time)
+	 *   });
+	 * });
+	 * ```
+	 * */
+	export function untrack<T>(fn: () => T): T;
 	type Getters<T> = {
 		[K in keyof T]: () => T[K];
 	};
@@ -968,7 +1044,7 @@ declare module 'svelte/compiler' {
 		css?: 'injected' | 'external';
 		/**
 		 * A function that takes a `{ hash, css, name, filename }` argument and returns the string that is used as a classname for scoped CSS.
-		 * It defaults to returning `svelte-${hash(css)}`.
+		 * It defaults to returning `svelte-${hash(filename ?? css)}`.
 		 *
 		 * @default undefined
 		 */
@@ -1087,6 +1163,17 @@ declare module 'svelte/compiler' {
 		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 		 */
 		warningFilter?: (warning: Warning) => boolean;
+		/**
+		 * Experimental options
+		 * @since 5.36
+		 */
+		experimental?: {
+			/**
+			 * Allow `await` keyword in deriveds, template expressions, and the top level of components
+			 * @since 5.36
+			 */
+			async?: boolean;
+		};
 	}
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
@@ -1255,7 +1342,17 @@ declare module 'svelte/compiler' {
 			name: string;
 			/** The 'y' in `on:x={y}` */
 			expression: null | Expression;
-			modifiers: string[];
+			modifiers: Array<
+				| 'capture'
+				| 'nonpassive'
+				| 'once'
+				| 'passive'
+				| 'preventDefault'
+				| 'self'
+				| 'stopImmediatePropagation'
+				| 'stopPropagation'
+				| 'trusted'
+			>;
 		}
 
 		/** A `style:` directive */
@@ -2298,10 +2395,13 @@ declare module 'svelte/reactivity' {
 		constructor(query: string, fallback?: boolean | undefined);
 	}
 	/**
-	 * Returns a `subscribe` function that, if called in an effect (including expressions in the template),
-	 * calls its `start` callback with an `update` function. Whenever `update` is called, the effect re-runs.
+	 * Returns a `subscribe` function that integrates external event-based systems with Svelte's reactivity.
+	 * It's particularly useful for integrating with web APIs like `MediaQuery`, `IntersectionObserver`, or `WebSocket`.
 	 *
-	 * If `start` returns a function, it will be called when the effect is destroyed.
+	 * If `subscribe` is called inside an effect (including indirectly, for example inside a getter),
+	 * the `start` callback will be called with an `update` function. Whenever `update` is called, the effect re-runs.
+	 *
+	 * If `start` returns a cleanup function, it will be called when the effect is destroyed.
 	 *
 	 * If `subscribe` is called in multiple effects, `start` will only be called once as long as the effects
 	 * are active, and the returned teardown function will only be called when all effects are destroyed.
@@ -2329,6 +2429,7 @@ declare module 'svelte/reactivity' {
 	 * 	}
 	 *
 	 * 	get current() {
+	 * 		// This makes the getter reactive, if read in an effect
 	 * 		this.#subscribe();
 	 *
 	 * 		// Return the current state of the query, whether or not we're in an effect
@@ -2442,7 +2543,7 @@ declare module 'svelte/server' {
 					}
 				]
 	): RenderOutput;
-	interface RenderOutput {
+	interface SyncRenderOutput {
 		/** HTML that goes into the `<head>` */
 		head: string;
 		/** @deprecated use `body` instead */
@@ -2450,6 +2551,8 @@ declare module 'svelte/server' {
 		/** HTML that goes somewhere into the `<body>` */
 		body: string;
 	}
+
+	type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;
 
 	export {};
 }
@@ -2882,7 +2985,7 @@ declare module 'svelte/types/compiler/interfaces' {
 		css?: 'injected' | 'external';
 		/**
 		 * A function that takes a `{ hash, css, name, filename }` argument and returns the string that is used as a classname for scoped CSS.
-		 * It defaults to returning `svelte-${hash(css)}`.
+		 * It defaults to returning `svelte-${hash(filename ?? css)}`.
 		 *
 		 * @default undefined
 		 */
@@ -3001,6 +3104,17 @@ declare module 'svelte/types/compiler/interfaces' {
 		 * Use this to filter out warnings. Return `true` to keep the warning, `false` to discard it.
 		 */
 		warningFilter?: (warning: Warning_1) => boolean;
+		/**
+		 * Experimental options
+		 * @since 5.36
+		 */
+		experimental?: {
+			/**
+			 * Allow `await` keyword in deriveds, template expressions, and the top level of components
+			 * @since 5.36
+			 */
+			async?: boolean;
+		};
 	}
 	/**
 	 * - `html`    — the default, for e.g. `<div>` or `<span>`
@@ -3107,20 +3221,34 @@ declare namespace $state {
 			? NonReactive<T>
 			: T extends { toJSON(): infer R }
 				? R
-				: T extends Array<infer U>
-					? Array<Snapshot<U>>
-					: T extends object
-						? T extends { [key: string]: any }
-							? { [K in keyof T]: Snapshot<T[K]> }
-							: never
-						: never;
+				: T extends readonly unknown[]
+					? { [K in keyof T]: Snapshot<T[K]> }
+					: T extends Array<infer U>
+						? Array<Snapshot<U>>
+						: T extends object
+							? T extends { [key: string]: any }
+								? { [K in keyof T]: Snapshot<T[K]> }
+								: never
+							: never;
 
+	/**
+	 * Returns the latest `value`, even if the rest of the UI is suspending
+	 * while async work (such as data loading) completes.
+	 *
+	 * ```svelte
+	 * <nav>
+	 *   <a href="/" aria-current={$state.eager(pathname) === '/' ? 'page' : null}>home</a>
+	 *   <a href="/about" aria-current={$state.eager(pathname) === '/about' ? 'page' : null}>about</a>
+	 * </nav>
+	 * ```
+	 */
+	export function eager<T>(value: T): T;
 	/**
 	 * Declares state that is _not_ made deeply reactive — instead of mutating it,
 	 * you must reassign it.
 	 *
 	 * Example:
-	 * ```ts
+	 * ```svelte
 	 * <script>
 	 *   let items = $state.raw([0]);
 	 *
@@ -3129,7 +3257,7 @@ declare namespace $state {
 	 *   };
 	 * </script>
 	 *
-	 * <button on:click={addItem}>
+	 * <button onclick={addItem}>
 	 *   {items.join(', ')}
 	 * </button>
 	 * ```
@@ -3144,7 +3272,7 @@ declare namespace $state {
 	 * To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snapshot`:
 	 *
 	 * Example:
-	 * ```ts
+	 * ```svelte
 	 * <script>
 	 *   let counter = $state({ count: 0 });
 	 *
@@ -3251,7 +3379,7 @@ declare namespace $derived {
  *
  * If you return a function from the effect, it will be called right before the effect is run again, or when the component is unmounted.
  *
- * Does not run during server side rendering.
+ * Does not run during server-side rendering.
  *
  * https://svelte.dev/docs/svelte/$effect
  * @param fn The function to execute
@@ -3270,12 +3398,19 @@ declare namespace $effect {
 	 *
 	 * If you return a function from the effect, it will be called right before the effect is run again, or when the component is unmounted.
 	 *
-	 * Does not run during server side rendering.
+	 * Does not run during server-side rendering.
 	 *
 	 * https://svelte.dev/docs/svelte/$effect#$effect.pre
 	 * @param fn The function to execute
 	 */
 	export function pre(fn: () => void | (() => void)): void;
+
+	/**
+	 * Returns the number of promises that are pending in the current boundary, not including child boundaries.
+	 *
+	 * https://svelte.dev/docs/svelte/$effect#$effect.pending
+	 */
+	export function pending(): number;
 
 	/**
 	 * The `$effect.tracking` rune is an advanced feature that tells you whether or not the code is running inside a tracking context, such as an effect or inside your template.
@@ -3310,13 +3445,13 @@ declare namespace $effect {
 	 *   let count = $state(0);
 	 *
 	 *   const cleanup = $effect.root(() => {
-	 *	    $effect(() => {
-	 *				console.log(count);
-	 *			})
+	 *     $effect(() => {
+	 *       console.log(count);
+	 *     })
 	 *
-	 *      return () => {
-	 *        console.log('effect root cleanup');
-	 * 			}
+	 *     return () => {
+	 *       console.log('effect root cleanup');
+	 *     }
 	 *   });
 	 * </script>
 	 *

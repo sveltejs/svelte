@@ -1,6 +1,6 @@
 import type { Store } from '#shared';
 import { STATE_SYMBOL } from './constants.js';
-import type { Effect, Source, Value, Reaction } from './reactivity/types.js';
+import type { Effect, Source, Value } from './reactivity/types.js';
 
 type EventCallback = (event: Event) => boolean;
 export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;
@@ -14,16 +14,10 @@ export type ComponentContext = {
 	p: null | ComponentContext;
 	/** context */
 	c: null | Map<unknown, unknown>;
-	/** destroyed */
-	d: boolean;
 	/** deferred effects */
-	e: null | Array<{
-		fn: () => void | (() => void);
-		effect: null | Effect;
-		reaction: null | Reaction;
-	}>;
-	/** mounted */
-	m: boolean;
+	e: null | Array<() => void | (() => void)>;
+	/** True if initialized, i.e. pop() ran */
+	i: boolean;
 	/**
 	 * props — needed for legacy mode lifecycle functions, and for `createEventDispatcher`
 	 * @deprecated remove in 6.0
@@ -51,9 +45,7 @@ export type ComponentContext = {
 			m: Array<() => any>;
 		};
 		/** `$:` statements */
-		r1: any[];
-		/** This tracks whether `$:` statements have run in the current cycle, to ensure they only run once */
-		r2: Source<boolean>;
+		$: any[];
 	};
 	/**
 	 * dev mode only: the component function
@@ -91,6 +83,8 @@ export type EachItem = {
 	i: number | Source<number>;
 	/** key */
 	k: unknown;
+	/** true if onscreen */
+	o: boolean;
 	prev: EachItem | null;
 	next: EachItem | null;
 };
@@ -186,5 +180,14 @@ export type ProxyStateObject<T = Record<string | symbol, any>> = T & {
 export type SourceLocation =
 	| [line: number, column: number]
 	| [line: number, column: number, SourceLocation[]];
+
+export interface DevStackEntry {
+	file: string;
+	type: 'component' | 'if' | 'each' | 'await' | 'key' | 'render';
+	line: number;
+	column: number;
+	parent: DevStackEntry | null;
+	componentTag?: string;
+}
 
 export * from './reactivity/types';

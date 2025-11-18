@@ -6,9 +6,9 @@ export default test({
 		<p>selected: </p>
 
 		<select>
-			<option value="a">a</option>
-			<option value="b">b</option>
-			<option value="c">c</option>
+			<option>a</option>
+			<option>b</option>
+			<option>c</option>
 		</select>
 
 		<p>selected: </p>
@@ -37,9 +37,9 @@ export default test({
 			<p>selected: a</p>
 
 			<select>
-				<option value="a">a</option>
-				<option value="b">b</option>
-				<option value="c">c</option>
+				<option>a</option>
+				<option>b</option>
+				<option>c</option>
 			</select>
 
 			<p>selected: a</p>
@@ -59,9 +59,9 @@ export default test({
 			<p>selected: d</p>
 
 			<select>
-				<option value="a">a</option>
-				<option value="b">b</option>
-				<option value="c">c</option>
+				<option>a</option>
+				<option>b</option>
+				<option>c</option>
 			</select>
 
 			<p>selected: d</p>
@@ -78,9 +78,9 @@ export default test({
 			<p>selected: b</p>
 
 			<select>
-				<option value="a">a</option>
-				<option value="b">b</option>
-				<option value="c">c</option>
+				<option>a</option>
+				<option>b</option>
+				<option>c</option>
 			</select>
 
 			<p>selected: b</p>
@@ -100,9 +100,9 @@ export default test({
 			<p>selected: </p>
 
 			<select>
-				<option value="a">a</option>
-				<option value="b">b</option>
-				<option value="c">c</option>
+				<option>a</option>
+				<option>b</option>
+				<option>c</option>
 			</select>
 
 			<p>selected: </p>

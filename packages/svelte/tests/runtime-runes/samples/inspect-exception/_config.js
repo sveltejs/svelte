@@ -11,7 +11,7 @@ export default test({
 		b1?.click();
 		flushSync();
 
-		assert.ok(errors.length > 0);
+		assert.equal(errors.length, 0);
 		assert.deepEqual(logs, ['init', 'a', 'init', 'b']);
 	}
 });

@@ -3,14 +3,16 @@ import { setImmediate } from 'node:timers/promises';
 import { globSync } from 'tinyglobby';
 import { createClassComponent } from 'svelte/legacy';
 import { proxy } from 'svelte/internal/client';
-import { flushSync, hydrate, mount, unmount, untrack } from 'svelte';
+import { flushSync, hydrate, mount, unmount } from 'svelte';
 import { render } from 'svelte/server';
 import { afterAll, assert, beforeAll } from 'vitest';
-import { compile_directory, fragments } from '../helpers.js';
+import { async_mode, compile_directory, fragments } from '../helpers.js';
 import { assert_html_equal, assert_html_equal_with_options } from '../html_equal.js';
 import { raf } from '../animation-helpers.js';
 import type { CompileOptions } from '#compiler';
 import { suite_with_variants, type BaseTest } from '../suite.js';
+import { clear } from '../../src/internal/client/reactivity/batch.js';
+import { hydrating } from '../../src/internal/client/dom/hydration.js';
 
 type Assert = typeof import('vitest').assert & {
 	htmlEqual(a: string, b: string, description?: string): void;
@@ -25,12 +27,30 @@ type Assert = typeof import('vitest').assert & {
 	): void;
 };
 
+// TODO remove this shim when we can
+// @ts-expect-error
+Promise.withResolvers = () => {
+	let resolve;
+	let reject;
+
+	const promise = new Promise((f, r) => {
+		resolve = f;
+		reject = r;
+	});
+
+	return { promise, resolve, reject };
+};
+
 export interface RuntimeTest<Props extends Record<string, any> = Record<string, any>>
 	extends BaseTest {
 	/** Use e.g. `mode: ['client']` to indicate that this test should never run in server/hydrate modes */
-	mode?: Array<'server' | 'client' | 'hydrate'>;
+	mode?: Array<'server' | 'async-server' | 'client' | 'hydrate'>;
 	/** Temporarily skip specific modes, without skipping the entire test */
-	skip_mode?: Array<'server' | 'client' | 'hydrate'>;
+	skip_mode?: Array<'server' | 'async-server' | 'client' | 'hydrate'>;
+	/** Skip if running with process.env.NO_ASYNC */
+	skip_no_async?: boolean;
+	/** Skip if running without process.env.NO_ASYNC */
+	skip_async?: boolean;
 	html?: string;
 	ssrHtml?: string;
 	compileOptions?: Partial<CompileOptions>;
@@ -64,7 +84,11 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 		errors: any[];
 		hydrate: Function;
 	}) => void | Promise<void>;
-	test_ssr?: (args: { logs: any[]; assert: Assert }) => void | Promise<void>;
+	test_ssr?: (args: {
+		logs: any[];
+		assert: Assert;
+		variant: 'ssr' | 'async-ssr';
+	}) => void | Promise<void>;
 	accessors?: boolean;
 	immutable?: boolean;
 	intro?: boolean;
@@ -105,9 +129,17 @@ let console_warn = console.warn;
 let console_error = console.error;
 
 export function runtime_suite(runes: boolean) {
-	return suite_with_variants<RuntimeTest, 'hydrate' | 'ssr' | 'dom', CompileOptions>(
-		['dom', 'hydrate', 'ssr'],
-		(variant, config) => {
+	return suite_with_variants<RuntimeTest, 'hydrate' | 'ssr' | 'async-ssr' | 'dom', CompileOptions>(
+		['dom', 'hydrate', 'ssr', 'async-ssr'],
+		(variant, config, test_name) => {
+			if (!async_mode && (config.skip_no_async || test_name.startsWith('async-'))) {
+				return true;
+			}
+
+			if (async_mode && config.skip_async) {
+				return true;
+			}
+
 			if (variant === 'hydrate') {
 				if (config.mode && !config.mode.includes('hydrate')) return 'no-test';
 				if (config.skip_mode?.includes('hydrate')) return true;
@@ -135,6 +167,22 @@ export function runtime_suite(runes: boolean) {
 				if (config.skip_mode?.includes('server')) return true;
 			}
 
+			if (variant === 'async-ssr') {
+				if (!runes || !async_mode) return 'no-test';
+				if (
+					(config.mode && !config.mode.includes('async-server')) ||
+					(!config.test_ssr &&
+						config.html === undefined &&
+						config.ssrHtml === undefined &&
+						config.error === undefined &&
+						config.runtime_error === undefined &&
+						!config.mode?.includes('async-server'))
+				) {
+					return 'no-test';
+				}
+				if (config.skip_mode?.includes('async-server')) return true;
+			}
+
 			return false;
 		},
 		(config, cwd) => {
@@ -154,6 +202,9 @@ async function common_setup(cwd: string, runes: boolean | undefined, config: Run
 		rootDir: cwd,
 		dev: force_hmr ? true : undefined,
 		hmr: force_hmr ? true : undefined,
+		experimental: {
+			async: runes && async_mode
+		},
 		fragments,
 		...config.compileOptions,
 		immutable: config.immutable,
@@ -177,7 +228,7 @@ async function common_setup(cwd: string, runes: boolean | undefined, config: Run
 async function run_test_variant(
 	cwd: string,
 	config: RuntimeTest,
-	variant: 'dom' | 'hydrate' | 'ssr',
+	variant: 'dom' | 'hydrate' | 'ssr' | 'async-ssr',
 	compileOptions: CompileOptions,
 	runes: boolean
 ) {
@@ -215,7 +266,7 @@ async function run_test_variant(
 		if (str.slice(0, i).includes('warnings') || config.warnings) {
 			// eslint-disable-next-line no-console
 			console.warn = (...args) => {
-				if (args[0].startsWith('%c[svelte]')) {
+				if (typeof args[0] === 'string' && args[0].startsWith('%c[svelte]')) {
 					// TODO convert this to structured data, for more robust comparison?
 
 					let message = args[0];
@@ -280,20 +331,26 @@ async function run_test_variant(
 
 		let snapshot = undefined;
 
-		if (variant === 'hydrate' || variant === 'ssr') {
+		if (variant === 'hydrate' || variant === 'ssr' || variant === 'async-ssr') {
 			config.before_test?.();
 			// ssr into target
 			const SsrSvelteComponent = (await import(`${cwd}/_output/server/main.svelte.js`)).default;
-			const { html, head } = render(SsrSvelteComponent, {
+			const render_result = render(SsrSvelteComponent, {
 				props: config.server_props ?? config.props ?? {},
 				idPrefix: config.id_prefix
 			});
+			const rendered =
+				variant === 'async-ssr' || (variant === 'hydrate' && compileOptions.experimental?.async)
+					? await render_result
+					: render_result;
+			const { body, head } = rendered;
 
-			fs.writeFileSync(`${cwd}/_output/rendered.html`, html);
-			target.innerHTML = html;
+			const prefix = variant === 'async-ssr' ? 'async_' : '';
+			fs.writeFileSync(`${cwd}/_output/${prefix}rendered.html`, body);
+			target.innerHTML = body;
 
 			if (head) {
-				fs.writeFileSync(`${cwd}/_output/rendered_head.html`, head);
+				fs.writeFileSync(`${cwd}/_output/${prefix}rendered_head.html`, head);
 				window.document.head.innerHTML = window.document.head.innerHTML + head;
 			}
 
@@ -308,7 +365,7 @@ async function run_test_variant(
 			target.innerHTML = '';
 		}
 
-		if (variant === 'ssr') {
+		if (variant === 'ssr' || variant === 'async-ssr') {
 			if (config.ssrHtml) {
 				assert_html_equal_with_options(target.innerHTML, config.ssrHtml, {
 					preserveComments:
@@ -331,7 +388,8 @@ async function run_test_variant(
 						...assert,
 						htmlEqual: assert_html_equal,
 						htmlEqualWithOptions: assert_html_equal_with_options
-					}
+					},
+					variant
 				});
 			}
 		} else {
@@ -397,6 +455,12 @@ async function run_test_variant(
 			try {
 				if (config.test) {
 					flushSync();
+
+					if (variant === 'hydrate' && cwd.includes('async-')) {
+						// wait for pending boundaries to render
+						await Promise.resolve();
+					}
+
 					await config.test({
 						// @ts-expect-error TS doesn't get it
 						assert: {
@@ -453,10 +517,11 @@ async function run_test_variant(
 					'Expected component to unmount and leave nothing behind after it was destroyed'
 				);
 
-				// TODO: This seems useless, unhandledRejection is only triggered on the next task
-				// by which time the test has already finished and the next test resets it to null above
+				// uncaught errors like during template effects flush
 				if (unhandled_rejection) {
-					throw unhandled_rejection; // eslint-disable-line no-unsafe-finally
+					if (!config.expect_unhandled_rejections) {
+						throw unhandled_rejection; // eslint-disable-line no-unsafe-finally
+					}
 				}
 			}
 		}
@@ -469,6 +534,10 @@ async function run_test_variant(
 			throw err;
 		}
 	} finally {
+		if (hydrating) {
+			throw new Error('Hydration state was not cleared');
+		}
+
 		config.after_test?.();
 
 		// Free up the microtask queue
@@ -486,6 +555,8 @@ async function run_test_variant(
 		console.log = console_log;
 		console.warn = console_warn;
 		console.error = console_error;
+
+		clear();
 	}
 }
 

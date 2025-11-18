@@ -65,7 +65,7 @@ There will be a blog post about this eventually, but in the meantime, check out 
 
 ## Is there a UI component library?
 
-There are several UI component libraries as well as standalone components. Find them under the [design systems section of the components page](https://sveltesociety.dev/packages?category=design-system) on the Svelte Society website.
+There are several [UI component libraries](/packages#component-libraries) as well as standalone components listed on [the packages page](/packages).
 
 ## How do I test Svelte apps?
 
@@ -91,23 +91,15 @@ Some resources for getting started with testing:
 
 ## Is there a router?
 
-The official routing library is [SvelteKit](/docs/kit). SvelteKit provides a filesystem router, server-side rendering (SSR), and hot module reloading (HMR) in one easy-to-use package. It shares similarities with Next.js for React.
+The official routing library is [SvelteKit](/docs/kit). SvelteKit provides a filesystem router, server-side rendering (SSR), and hot module reloading (HMR) in one easy-to-use package. It shares similarities with Next.js for React and Nuxt.js for Vue.
 
-However, you can use any router library. A lot of people use [page.js](https://github.com/visionmedia/page.js). There's also [navaid](https://github.com/lukeed/navaid), which is very similar. And [universal-router](https://github.com/kriasoft/universal-router), which is isomorphic with child routes, but without built-in history support.
-
-If you prefer a declarative HTML approach, there's the isomorphic [svelte-routing](https://github.com/EmilTholin/svelte-routing) library and a fork of it called [svelte-navigator](https://github.com/mefechoel/svelte-navigator) containing some additional functionality.
-
-If you need hash-based routing on the client side, check out the [hash option](https://svelte.dev/docs/kit/configuration#router) in SvelteKit, [svelte-spa-router](https://github.com/ItalyPaleAle/svelte-spa-router), or [abstract-state-router](https://github.com/TehShrike/abstract-state-router/).
-
-[Routify](https://routify.dev) is another filesystem-based router, similar to SvelteKit's router. Version 3 supports Svelte's native SSR.
-
-You can see a [community-maintained list of routers on sveltesociety.dev](https://sveltesociety.dev/packages?category=routers).
+However, you can use any router library. A sampling of available routers are highlighted [on the packages page](/packages#routing).
 
 ## How do I write a mobile app with Svelte?
 
 While most mobile apps are written without using JavaScript, if you'd like to leverage your existing Svelte components and knowledge of Svelte when building mobile apps, you can turn a [SvelteKit SPA](https://kit.svelte.dev/docs/single-page-apps) into a mobile app with [Tauri](https://v2.tauri.app/start/frontend/sveltekit/) or [Capacitor](https://capacitorjs.com/solution/svelte). Mobile features like the camera, geolocation, and push notifications are available via plugins for both platforms.
 
-Svelte Native was an option available for Svelte 4, but note that Svelte 5 does not currently support it. Svelte Native lets you write NativeScript apps using Svelte components that contain [NativeScript UI components](https://docs.nativescript.org/ui/) rather than DOM elements, which may be familiar for users coming from React Native.
+Some work has been completed towards [custom renderer support in Svelte 5](https://github.com/sveltejs/svelte/issues/15470), but this feature is not yet available. The custom rendering API would support additional mobile frameworks like Lynx JS and Svelte Native. Svelte Native was an option available for Svelte 4, but Svelte 5 does not currently support it. Svelte Native lets you write NativeScript apps using Svelte components that contain [NativeScript UI components](https://docs.nativescript.org/ui/) rather than DOM elements, which may be familiar for users coming from React Native.
 
 ## Can I tell Svelte not to remove my unused styles?
 

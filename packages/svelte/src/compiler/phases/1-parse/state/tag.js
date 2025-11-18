@@ -3,7 +3,7 @@
 /** @import { Parser } from '../index.js' */
 import { walk } from 'zimmerframe';
 import * as e from '../../../errors.js';
-import { create_expression_metadata } from '../../nodes.js';
+import { ExpressionMetadata } from '../../nodes.js';
 import { parse_expression_at } from '../acorn.js';
 import read_pattern from '../read/context.js';
 import read_expression, { get_loose_identifier } from '../read/expression.js';
@@ -42,7 +42,7 @@ export default function tag(parser) {
 		end: parser.index,
 		expression,
 		metadata: {
-			expression: create_expression_metadata()
+			expression: new ExpressionMetadata()
 		}
 	});
 }
@@ -65,7 +65,7 @@ function open(parser) {
 			consequent: create_fragment(),
 			alternate: null,
 			metadata: {
-				expression: create_expression_metadata()
+				expression: new ExpressionMetadata()
 			}
 		});
 
@@ -249,7 +249,7 @@ function open(parser) {
 			then: null,
 			catch: null,
 			metadata: {
-				expression: create_expression_metadata()
+				expression: new ExpressionMetadata()
 			}
 		});
 
@@ -334,7 +334,7 @@ function open(parser) {
 			expression,
 			fragment: create_fragment(),
 			metadata: {
-				expression: create_expression_metadata()
+				expression: new ExpressionMetadata()
 			}
 		});
 
@@ -477,7 +477,7 @@ function next(parser) {
 				consequent: create_fragment(),
 				alternate: null,
 				metadata: {
-					expression: create_expression_metadata()
+					expression: new ExpressionMetadata()
 				}
 			});
 
@@ -643,7 +643,7 @@ function special(parser) {
 			end: parser.index,
 			expression,
 			metadata: {
-				expression: create_expression_metadata()
+				expression: new ExpressionMetadata()
 			}
 		});
 
@@ -721,7 +721,7 @@ function special(parser) {
 				end: parser.index - 1
 			},
 			metadata: {
-				expression: create_expression_metadata()
+				expression: new ExpressionMetadata()
 			}
 		});
 	}
@@ -748,7 +748,7 @@ function special(parser) {
 			end: parser.index,
 			expression: /** @type {AST.RenderTag['expression']} */ (expression),
 			metadata: {
-				expression: create_expression_metadata(),
+				expression: new ExpressionMetadata(),
 				dynamic: false,
 				arguments: [],
 				path: [],

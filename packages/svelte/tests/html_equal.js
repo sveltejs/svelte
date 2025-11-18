@@ -32,7 +32,13 @@ function clean_children(node, opts) {
 			return;
 		}
 
-		node.setAttribute(attr.name, attr.value);
+		let value = attr.value;
+
+		if (attr.name === 'class') {
+			value = value.replace(/svelte-\w+/, 'svelte-xyz123');
+		}
+
+		node.setAttribute(attr.name, value);
 	});
 
 	for (let child of [...node.childNodes]) {

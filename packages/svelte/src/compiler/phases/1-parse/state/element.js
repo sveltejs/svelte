@@ -9,11 +9,10 @@ import { decode_character_references } from '../utils/html.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { create_fragment } from '../utils/create.js';
-import { create_attribute, create_expression_metadata, is_element_node } from '../../nodes.js';
+import { create_attribute, ExpressionMetadata, is_element_node } from '../../nodes.js';
 import { get_attribute_expression, is_expression_attribute } from '../../../utils/ast.js';
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
 import { list } from '../../../utils/string.js';
-import { regex_whitespace } from '../../patterns.js';
 
 const regex_invalid_unquoted_attribute_value = /^(\/>|[\s"'=<>`])/;
 const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
@@ -177,7 +176,8 @@ export default function element(parser) {
 						mathml: false,
 						scoped: false,
 						has_spread: false,
-						path: []
+						path: [],
+						synthetic_value_node: null
 					}
 				}
 			: /** @type {AST.ElementLike} */ ({
@@ -242,6 +242,10 @@ export default function element(parser) {
 		parser.allow_whitespace();
 	}
 
+	if (element.type === 'Component') {
+		element.metadata.expression = new ExpressionMetadata();
+	}
+
 	if (element.type === 'SvelteComponent') {
 		const index = element.attributes.findIndex(
 			/** @param {any} attr */
@@ -257,6 +261,7 @@ export default function element(parser) {
 		}
 
 		element.expression = get_attribute_expression(definition);
+		element.metadata.expression = new ExpressionMetadata();
 	}
 
 	if (element.type === 'SvelteElement') {
@@ -295,6 +300,8 @@ export default function element(parser) {
 		} else {
 			element.tag = get_attribute_expression(definition);
 		}
+
+		element.metadata.expression = new ExpressionMetadata();
 	}
 
 	if (is_top_level_script_or_style) {
@@ -368,14 +375,6 @@ export default function element(parser) {
 				// ... or we're followed by whitespace, for example near the end of the template,
 				// which we want to take in so that language tools has more room to work with
 				parser.allow_whitespace();
-				if (parser.index === parser.template.length) {
-					while (
-						parser.index < parser.template_untrimmed.length &&
-						regex_whitespace.test(parser.template_untrimmed[parser.index])
-					) {
-						parser.index++;
-					}
-				}
 			}
 		}
 	}
@@ -513,7 +512,7 @@ function read_attribute(parser) {
 				end: parser.index,
 				expression,
 				metadata: {
-					expression: create_expression_metadata()
+					expression: new ExpressionMetadata()
 				}
 			};
 
@@ -533,7 +532,7 @@ function read_attribute(parser) {
 				end: parser.index,
 				expression,
 				metadata: {
-					expression: create_expression_metadata()
+					expression: new ExpressionMetadata()
 				}
 			};
 
@@ -573,7 +572,7 @@ function read_attribute(parser) {
 					name
 				},
 				metadata: {
-					expression: create_expression_metadata()
+					expression: new ExpressionMetadata()
 				}
 			};
 
@@ -633,7 +632,7 @@ function read_attribute(parser) {
 				modifiers: /** @type {Array<'important'>} */ (modifiers),
 				value,
 				metadata: {
-					expression: create_expression_metadata()
+					expression: new ExpressionMetadata()
 				}
 			};
 		}
@@ -663,7 +662,7 @@ function read_attribute(parser) {
 			name: directive_name,
 			expression,
 			metadata: {
-				expression: create_expression_metadata()
+				expression: new ExpressionMetadata()
 			}
 		};
 
@@ -829,7 +828,7 @@ function read_sequence(parser, done, location) {
 				end: parser.index,
 				expression,
 				metadata: {
-					expression: create_expression_metadata()
+					expression: new ExpressionMetadata()
 				}
 			};
 

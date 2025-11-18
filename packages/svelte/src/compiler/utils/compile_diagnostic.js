@@ -61,7 +61,7 @@ export class CompileDiagnostic {
 		this.code = code;
 		this.message = message;
 
-		if (state.filename) {
+		if (state.filename !== state.UNKNOWN_FILENAME) {
 			this.filename = state.filename;
 		}
 
