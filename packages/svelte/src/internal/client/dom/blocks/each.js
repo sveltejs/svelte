@@ -129,14 +129,11 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 export function each(node, flags, get_collection, get_key, render_fn, fallback_fn = null) {
 	var anchor = node;
 
-	/** @type {EachState} */
-	var state = {
-		// @ts-ignore TODO create this object later?
-		effect: null,
-		flags,
-		items: new Map(),
-		first: null
-	};
+	/** @type {Map<any, EachItem>} */
+	var items = new Map();
+
+	/** @type {EachItem | null} */
+	var first = null;
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 	var is_reactive_value = (flags & EACH_ITEM_REACTIVE) !== 0;
@@ -183,7 +180,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					resume_effect(fallback.effect);
 				}
 
-				state.effect.first = fallback.effect;
+				effect.first = fallback.effect;
 			} else {
 				pause_effect(fallback.effect, () => {
 					// TODO only null out if no pending batch needs it,
@@ -195,7 +192,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		}
 	}
 
-	state.effect = block(() => {
+	var effect = block(() => {
 		array = /** @type {V[]} */ (get(each_array));
 		var length = array.length;
 
@@ -236,7 +233,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			var value = array[i];
 			var key = get_key(value, i);
 
-			var item = first_run ? null : state.items.get(key);
+			var item = first_run ? null : items.get(key);
 
 			if (item) {
 				// update before reconciliation, to trigger any async updates
@@ -269,7 +266,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					item.o = true;
 
 					if (prev === null) {
-						state.first = item;
+						first = item;
 					} else {
 						prev.next = item;
 					}
@@ -277,7 +274,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					prev = item;
 				}
 
-				state.items.set(key, item);
+				items.set(key, item);
 			}
 
 			keys.add(key);
@@ -308,7 +305,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 		if (!first_run) {
 			if (defer) {
-				for (const [key, item] of state.items) {
+				for (const [key, item] of items) {
 					if (!keys.has(key)) {
 						batch.skipped_effects.add(item.e);
 					}
@@ -336,6 +333,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		// will now be `CLEAN`.
 		get(each_array);
 	});
+
+	/** @type {EachState} */
+	var state = { effect, flags, items, first };
 
 	first_run = false;
 
