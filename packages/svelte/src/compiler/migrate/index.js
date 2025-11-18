@@ -604,7 +604,7 @@ const instance_script = {
 						'Encountered an export declaration pattern that is not supported for automigration.'
 					);
 					// Turn export let into props. It's really really weird because export let { x: foo, z: [bar]} = ..
-					// means that foo and bar are the props (i.e. the leafs are the prop names), not x and z.
+					// means that foo and bar are the props (i.e. the leaves are the prop names), not x and z.
 					// const tmp = b.id(state.scope.generate('tmp'));
 					// const paths = extract_paths(declarator.id, tmp);
 					// state.props_pre.push(
@@ -1810,7 +1810,7 @@ function handle_events(element, state) {
 }
 
 /**
- * Returns start and end of the node. If the start is preceeded with white-space-only before a line break,
+ * Returns start and end of the node. If the start is preceded with white-space-only before a line break,
  * the start will be the start of the line.
  * @param {string} source
  * @param {LabeledStatement} node
