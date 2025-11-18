@@ -1,5 +1,5 @@
 ---
-title: "`hydratable`"
+title: Hydratable data
 ---
 
 In Svelte, when you want to render asynchonous content data on the server, you can simply `await` it. This is great! However, it comes with a major pitall: when hydrating that content on the client, Svelte has to redo the asynchronous work, which blocks hydration for however long it takes:
@@ -27,7 +27,7 @@ To fix the example above:
   import { getUser } from 'my-database-library';
 
   // During server rendering, this will serialize and stash the result of `getUser`, associating
-  // it with the provided key and baking it into the `head` content. During hydration, it will 
+  // it with the provided key and baking it into the `head` content. During hydration, it will
   // look for the serialized version, returning it instead of running `getUser`. After hydration
   // is done, if it's called again, it'll simply invoke `getUser`.
   const user = await hydratable('user', getUser());
@@ -65,8 +65,16 @@ By default, Svelte uses [`devalue`](https://npmjs.com/package/devalue) to serial
 
 Encode receives a value and outputs _the JavaScript code necessary to create that value on the client_. For example, Svelte's built-in encoder looks like this:
 
-```ts
-const encode = (value) => devalue.uneval(value);
+```js
+import * as devalue from 'devalue';
+
+/**
+ * @param {any} value
+ */
+function encode (value) {
+  return devalue.uneval(value);
+}
+
 encode(['hello', 'world']); // outputs `['hello', 'world']`
 ```
 
