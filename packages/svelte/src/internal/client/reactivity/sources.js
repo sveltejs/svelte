@@ -188,18 +188,26 @@ export function internal_set(source, value) {
 
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {
-				const error = get_stack('updated at');
+				source.updated ??= new Map();
 
-				if (error !== null) {
-					source.updated ??= new Map();
-					let entry = source.updated.get(error.stack);
+				// For performance reasons, when not using $inspect.trace, we only start collecting stack traces
+				// after the same source has been updated more than 5 times in the same flush cycle.
+				const count = (source.updated.get('')?.count ?? 0) + 1;
+				source.updated.set('', { error: /** @type {any} */ (null), count });
 
-					if (!entry) {
-						entry = { error, count: 0 };
-						source.updated.set(error.stack, entry);
+				if (tracing_mode_flag || count > 5) {
+					const error = get_stack('updated at');
+
+					if (error !== null) {
+						let entry = source.updated.get(error.stack);
+
+						if (!entry) {
+							entry = { error, count: 0 };
+							source.updated.set(error.stack, entry);
+						}
+
+						entry.count++;
 					}
-
-					entry.count++;
 				}
 			}
 
