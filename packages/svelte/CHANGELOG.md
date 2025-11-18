@@ -1,5 +1,11 @@
 # svelte
 
+## 5.43.10
+
+### Patch Changes
+
+- fix: avoid other batches running with queued root effects of main batch ([#17145](https://github.com/sveltejs/svelte/pull/17145))
+
 ## 5.43.9
 
 ### Patch Changes
