@@ -89,6 +89,7 @@ function clean(ast: AST.SvelteNode) {
 				if (child.type === 'Text') {
 					child = {
 						...child,
+						// trim multiple whitespace to single space
 						data: child.data.replace(/[^\S]+/g, ' '),
 						raw: child.raw.replace(/[^\S]+/g, ' ')
 					};
