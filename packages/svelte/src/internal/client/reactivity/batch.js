@@ -608,6 +608,8 @@ function flush_effects() {
 	var was_updating_effect = is_updating_effect;
 	is_flushing = true;
 
+	var source_stacks = DEV ? new Set() : null;
+
 	try {
 		var flush_count = 0;
 		set_is_updating_effect(true);
@@ -643,12 +645,24 @@ function flush_effects() {
 
 			batch.process(queued_root_effects);
 			old_values.clear();
+
+			if (DEV) {
+				for (const source of batch.current.keys()) {
+					/** @type {Set<Source>} */ (source_stacks).add(source);
+				}
+			}
 		}
 	} finally {
 		is_flushing = false;
 		set_is_updating_effect(was_updating_effect);
 
 		last_scheduled_effect = null;
+
+		if (DEV) {
+			for (const source of /** @type {Set<Source>} */ (source_stacks)) {
+				source.updated = null;
+			}
+		}
 	}
 }
 
