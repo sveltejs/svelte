@@ -22,12 +22,15 @@ export function hydratable(key, fn, transport) {
 	}
 
 	const store = window.__svelte?.h;
+	const unused_keys = window.__svelte?.uh;
 	if (!store?.has(key)) {
-		hydratable_missing_but_expected(key);
+		if (!unused_keys?.has(key)) {
+			hydratable_missing_but_expected(key);
+		}
 		return fn();
 	}
 
-	return decode(store.get(key), transport?.decode);
+	return decode(store?.get(key), transport?.decode);
 }
 
 /**

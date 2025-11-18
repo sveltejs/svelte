@@ -4,3 +4,26 @@ import { DEV } from 'esm-env';
 
 var bold = 'font-weight: bold';
 var normal = 'font-weight: normal';
+
+/**
+ * A `hydratable` value with key `%key%` was created, but not used during the render.
+ * 
+ * Stack:
+ * %stack%
+ * @param {string} key
+ * @param {string} stack
+ */
+export function unused_hydratable(key, stack) {
+	if (DEV) {
+		console.warn(
+			`%c[svelte] unused_hydratable\n%cA \`hydratable\` value with key \`${key}\` was created, but not used during the render.
+
+Stack:
+${stack}\nhttps://svelte.dev/e/unused_hydratable`,
+			bold,
+			normal
+		);
+	} else {
+		console.warn(`https://svelte.dev/e/unused_hydratable`);
+	}
+}

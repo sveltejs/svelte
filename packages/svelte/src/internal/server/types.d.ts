@@ -19,6 +19,7 @@ export interface HydratableEntry {
 	value: unknown;
 	encode: Encode<any> | undefined;
 	stack?: string;
+	dev_competing_entries?: Omit<HydratableEntry, 'dev_competing_entries'>[];
 }
 
 export interface RenderContext {

@@ -5,10 +5,13 @@ import { async_mode_flag } from '../flags/index.js';
 import { abort } from './abort-signal.js';
 import { pop, push, set_ssr_context, ssr_context, save } from './context.js';
 import * as e from './errors.js';
+import * as w from './warnings.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { attributes } from './index.js';
 import { uneval } from 'devalue';
 import { get_render_context, with_render_context, init_render_context } from './render-context.js';
+import { unresolved_hydratables } from './hydratable.js';
+import { DEV } from 'esm-env';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
@@ -575,17 +578,38 @@ export class Renderer {
 
 	async #collect_hydratables() {
 		const map = get_render_context().hydratables;
-		/** @type {(value: unknown) => string} */
 
 		/** @type {[string, string][]} */
 		let entries = [];
+		/** @type {string[]} */
+		let unused_keys = [];
 		for (const [k, v] of map) {
 			const encode = v.encode ?? uneval;
-			// sequential await is okay here -- all the work is already kicked off
-			entries.push([k, encode(await v.value)]);
+			if (unresolved_hydratables.has(v)) {
+				// this is a problem -- it means we've finished the render but somehow not consumed a hydratable, which means we've done
+				// extra work that won't get used on the client
+				w.unused_hydratable(k, v.stack ?? 'unavailable');
+				unused_keys.push(k);
+				continue;
+			}
+
+			const encoded = encode(await v.value);
+			if (DEV && v.dev_competing_entries?.length) {
+				for (const competing_entry of v.dev_competing_entries) {
+					const competing_encoded = (competing_entry.encode ?? uneval)(await competing_entry.value);
+					if (encoded !== competing_encoded) {
+						e.hydratable_clobbering(
+							k,
+							v.stack ?? 'unavailable',
+							competing_entry.stack ?? 'unavailable'
+						);
+					}
+				}
+			}
+			entries.push([k, encoded]);
 		}
-		if (entries.length === 0) return null;
-		return Renderer.#hydratable_block(entries);
+		if (entries.length === 0 && unused_keys.length === 0) return null;
+		return Renderer.#hydratable_block(entries, unused_keys);
 	}
 
 	/**
@@ -642,22 +666,45 @@ export class Renderer {
 		};
 	}
 
-	/** @param {[string, string][]} serialized */
-	static #hydratable_block(serialized) {
+	/**
+	 * @param {[string, string][]} serialized_entries
+	 * @param {string[]} unused_keys
+	 */
+	static #hydratable_block(serialized_entries, unused_keys) {
 		let entries = [];
-		for (const [k, v] of serialized) {
+		for (const [k, v] of serialized_entries) {
 			entries.push(`[${JSON.stringify(k)},${v}]`);
 		}
 		// TODO csp -- have discussed but not implemented
 		return `
 		<script>
 			{
-				const store = (window.__svelte ??= {}).h ??= new Map();
-				for (const [k,v] of [${entries.join(',')}]) {
-						store.set(k, v);
-				}
+				const sv = window.__svelte ??= {};${Renderer.#used_hydratables(serialized_entries)}${Renderer.#unused_hydratables(unused_keys)}
 			}
 		</script>`;
+	}
+
+	/** @param {[string, string][]} serialized_entries */
+	static #used_hydratables(serialized_entries) {
+		let entries = [];
+		for (const [k, v] of serialized_entries) {
+			entries.push(`[${JSON.stringify(k)},${v}]`);
+		}
+		return `
+				const store = sv.h ??= new Map();
+				for (const [k,v] of [${entries.join(',')}]) {
+						store.set(k, v);
+				}`;
+	}
+
+	/** @param {string[]} unused_keys */
+	static #unused_hydratables(unused_keys) {
+		if (unused_keys.length === 0) return '';
+		return `
+				const unused = sv.uh ??= new Set();
+				for (const k of ${JSON.stringify(unused_keys)}) {
+					unused.add(k);
+				}`;
 	}
 }
 

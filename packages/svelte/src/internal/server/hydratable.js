@@ -5,6 +5,9 @@ import { get_render_context } from './render-context.js';
 import * as e from './errors.js';
 import { DEV } from 'esm-env';
 
+/** @type {WeakSet<HydratableEntry>} */
+export const unresolved_hydratables = new WeakSet();
+
 /**
  * @template T
  * @param {string} key
@@ -19,11 +22,12 @@ export function hydratable(key, fn, transport) {
 
 	const store = get_render_context();
 
-	if (store.hydratables.has(key)) {
-		e.hydratable_clobbering(key, store.hydratables.get(key)?.stack || 'unknown');
-	}
-
 	const entry = create_entry(fn(), transport?.encode);
+	const existing_entry = store.hydratables.get(key);
+	if (DEV && existing_entry !== undefined) {
+		(existing_entry.dev_competing_entries ??= []).push(entry);
+		return entry.value;
+	}
 	store.hydratables.set(key, entry);
 	return entry.value;
 }
@@ -42,6 +46,16 @@ function create_entry(value, encode) {
 
 	if (DEV) {
 		entry.stack = new Error().stack;
+
+		if (
+			typeof value === 'object' &&
+			value !== null &&
+			'then' in value &&
+			typeof value.then === 'function'
+		) {
+			unresolved_hydratables.add(entry);
+			value.then(() => unresolved_hydratables.delete(entry));
+		}
 	}
 
 	return entry;

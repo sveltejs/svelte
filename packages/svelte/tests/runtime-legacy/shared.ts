@@ -106,6 +106,7 @@ declare global {
 	var __svelte:
 		| {
 				h?: Map<string, unknown>;
+				uh?: Set<string>;
 		  }
 		| undefined;
 }
@@ -125,6 +126,7 @@ beforeAll(() => {
 
 beforeEach(() => {
 	delete globalThis?.__svelte?.h;
+	delete globalThis?.__svelte?.uh;
 });
 
 afterAll(() => {
@@ -418,7 +420,7 @@ async function run_test_variant(
 			const run_hydratables_init = () => {
 				if (variant !== 'hydrate') return;
 				const script = [...document.head.querySelectorAll('script').values()].find((script) =>
-					script.textContent?.includes('(window.__svelte ??= {}).h')
+					script.textContent?.includes('const sv = window.__svelte ??= {}')
 				)?.textContent;
 				if (!script) return;
 				(0, eval)(script);

@@ -10,12 +10,17 @@ You (or the framework you're using) called [`render(...)`](svelte-server#render)
 
 ## hydratable_clobbering
 
-> Attempted to set hydratable with key `%key%` twice. This behavior is undefined.
+> Attempted to set hydratable with key `%key%` twice with different values.
 >
-> First set occurred at:
+> First instance occurred at:
 > %stack%
+>
+> Second instance occurred at:
+> %stack2%
 
-This error occurs when using `hydratable` or `hydratable.set` multiple times with the same key. To avoid this, you can combine `hydratable` with `cache`, or check whether the value has already been set with `hydratable.has`.
+This error occurs when using `hydratable` multiple times with the same key. To avoid this, you can:
+- Ensure all invocations with the same key result in the same value
+- Update the keys to make both instances unique
 
 ```svelte
 <script>

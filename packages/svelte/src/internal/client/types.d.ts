@@ -7,6 +7,8 @@ declare global {
 		__svelte?: {
 			/** hydratables */
 			h?: Map<string, unknown>;
+			/** unused hydratable keys */
+			uh?: Set<string>;
 		};
 	}
 }
