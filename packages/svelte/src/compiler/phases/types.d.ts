@@ -53,6 +53,7 @@ export interface Analysis {
 	/** @deprecated use `runes` from `state.js` instead */
 	runes: boolean;
 	immutable: boolean;
+	/** True if `$inspect.trace` is used */
 	tracing: boolean;
 	comments: AST.JSComment[];
 
