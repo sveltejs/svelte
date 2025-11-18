@@ -81,6 +81,7 @@ export class BranchManager {
 		if (onscreen) {
 			// effect is already in the DOM — abort any current outro
 			resume_effect(onscreen);
+			this.#outroing.delete(key);
 		} else {
 			// effect is currently offscreen. put it in the DOM
 			var offscreen = this.#offscreen.get(key);
