@@ -677,9 +677,8 @@ export class Renderer {
 		<script>
 			{
 				const r = (v) => Promise.resolve(v);
-				const w = (v) => () => v;
-				const v = [${values.map((v) => `w(${v})`).join(',')}];
-				function d(i) { return v[i] };
+				const v = [${values.map((v) => `() => (${v})`).join(',')}];
+				function d(i) { return v[i]() };
 				const sv = window.__svelte ??= {};${Renderer.#used_hydratables(ctx.lookup)}${Renderer.#unused_hydratables(unused_keys)}
 			}
 		</script>`;
