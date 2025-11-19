@@ -1,22 +1,19 @@
 <script>
-	import { fork, flushSync } from "svelte";
-	
+	import { fork } from "svelte";
+
 	let state = $state(0);
-
 	let count = $derived(state);
-
-	let forked;
 </script>
 
-<button onclick={()=>{
-	forked = fork(()=>{
+<button onclick={() => {
+	fork(() => {
 		state++;
-	})
-}}></button>
+	});
+}}>fork</button>
 
-<button onclick={()=>{
+<button onclick={() => {
 	state++;
-}}></button>
+}}>update</button>
 
 {#if count === 1}
 	<p>one</p>
