@@ -1,5 +1,5 @@
 /** @import { Component } from 'svelte' */
-/** @import { RenderOutput, SSRContext, SyncRenderOutput } from './types.js' */
+/** @import { HydratableContext, RenderOutput, SSRContext, SyncRenderOutput } from './types.js' */
 /** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import { abort } from './abort-signal.js';
@@ -10,7 +10,6 @@ import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { attributes } from './index.js';
 import { uneval } from 'devalue';
 import { get_render_context, with_render_context, init_render_context } from './render-context.js';
-import { unresolved_hydratables } from './hydratable.js';
 import { DEV } from 'esm-env';
 
 /** @typedef {'head' | 'body'} RendererType */
@@ -577,39 +576,35 @@ export class Renderer {
 	}
 
 	async #collect_hydratables() {
-		const map = get_render_context().hydratables;
+		const ctx = get_render_context().hydratable;
 
-		/** @type {[string, string][]} */
-		let entries = [];
-		/** @type {string[]} */
-		let unused_keys = [];
-		for (const [k, v] of map) {
-			const encode = v.encode ?? uneval;
-			if (unresolved_hydratables.has(v)) {
-				// this is a problem -- it means we've finished the render but somehow not consumed a hydratable, which means we've done
-				// extra work that won't get used on the client
-				w.unused_hydratable(k, v.stack ?? 'unavailable');
-				unused_keys.push(k);
-				continue;
-			}
+		// for (const [k, v] of ctx.lookup) {
+		// 	// TODO - root-level
+		// 	// if (ctx.unresolved_promises.has(/** @type {Promise<unknown>} */ (v.value))) {
+		// 	// 	// this is a problem -- it means we've finished the render but somehow not consumed a hydratable, which means we've done
+		// 	// 	// extra work that will get serialized and sent but then not used on the client
+		// 	// 	w.unused_hydratable(k, v.stack ?? 'unavailable');
+		// 	// 	unused_keys.push(k);
+		// 	// 	continue;
+		// 	// }
 
-			const encoded = encode(await v.value);
-			if (DEV && v.dev_competing_entries?.length) {
-				for (const competing_entry of v.dev_competing_entries) {
-					const competing_encoded = (competing_entry.encode ?? uneval)(await competing_entry.value);
-					if (encoded !== competing_encoded) {
-						e.hydratable_clobbering(
-							k,
-							v.stack ?? 'unavailable',
-							competing_entry.stack ?? 'unavailable'
-						);
-					}
-				}
-			}
-			entries.push([k, encoded]);
-		}
-		if (entries.length === 0 && unused_keys.length === 0) return null;
-		return Renderer.#hydratable_block(entries, unused_keys);
+		// 	// TODO - nested
+
+		// 	// const encoded = encode(await v.value);
+		// 	// if (DEV && v.dev_competing_entries?.length) {
+		// 	// 	for (const competing_entry of v.dev_competing_entries) {
+		// 	// 		const competing_encoded = (competing_entry.encode ?? uneval)(await competing_entry.value);
+		// 	// 		if (encoded !== competing_encoded) {
+		// 	// 			e.hydratable_clobbering(
+		// 	// 				k,
+		// 	// 				v.stack ?? 'unavailable',
+		// 	// 				competing_entry.stack ?? 'unavailable'
+		// 	// 			);
+		// 	// 		}
+		// 	// 	}
+		// 	// }
+		// }
+		return await Renderer.#hydratable_block(ctx, []);
 	}
 
 	/**
@@ -667,33 +662,39 @@ export class Renderer {
 	}
 
 	/**
-	 * @param {[string, string][]} serialized_entries
+	 * @param {HydratableContext} ctx
 	 * @param {string[]} unused_keys
 	 */
-	static #hydratable_block(serialized_entries, unused_keys) {
-		let entries = [];
-		for (const [k, v] of serialized_entries) {
-			entries.push(`[${JSON.stringify(k)},${v}]`);
+	static async #hydratable_block(ctx, unused_keys) {
+		if (ctx.lookup.size === 0 && unused_keys.length === 0) {
+			return null;
 		}
+
+		const values = await Promise.all(ctx.values);
+
 		// TODO csp -- have discussed but not implemented
 		return `
 		<script>
 			{
-				const sv = window.__svelte ??= {};${Renderer.#used_hydratables(serialized_entries)}${Renderer.#unused_hydratables(unused_keys)}
+				const r = (v) => Promise.resolve(v);
+				const w = (v) => () => v;
+				const v = [${values.map((v) => `w(${v})`).join(',')}];
+				function d(i) { return v[i] };
+				const sv = window.__svelte ??= {};${Renderer.#used_hydratables(ctx.lookup)}${Renderer.#unused_hydratables(unused_keys)}
 			}
 		</script>`;
 	}
 
-	/** @param {[string, string][]} serialized_entries */
-	static #used_hydratables(serialized_entries) {
+	/** @param {HydratableContext['lookup']} lookup */
+	static #used_hydratables(lookup) {
 		let entries = [];
-		for (const [k, v] of serialized_entries) {
-			entries.push(`[${JSON.stringify(k)},${v}]`);
+		for (const [k, v] of lookup) {
+			entries.push(`[${JSON.stringify(k)},${v.root_index}]`);
 		}
 		return `
 				const store = sv.h ??= new Map();
-				for (const [k,v] of [${entries.join(',')}]) {
-						store.set(k, v);
+				for (const [k,i] of [${entries.join(',')}]) {
+						store.set(k, d(i));
 				}`;
 	}
 

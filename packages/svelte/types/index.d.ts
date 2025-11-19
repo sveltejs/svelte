@@ -450,33 +450,7 @@ declare module 'svelte' {
 	 * @deprecated Use [`$effect`](https://svelte.dev/docs/svelte/$effect) instead
 	 * */
 	export function afterUpdate(fn: () => void): void;
-	type Getters<T> = {
-		[K in keyof T]: () => T[K];
-	};
-
-	/** Decode a value. The value will be whatever the evaluated JavaScript emitted by the corresponding {@link Encode} function evaluates to. */
-	export type Decode<T> = (value: any) => T;
-
-	/** Encode a value as a string. The string should be _valid JavaScript code_ -- for example, the output of `devalue`'s `uneval` function. */
-	export type Encode<T> = (value: T) => string;
-
-	/**
-	 * Custom encode and decode options. This must be used in combination with an environment variable to enable treeshaking, eg:
-	 * ```ts
-	 * import { BROWSER } from 'esm-env';
-	 * const transport: Transport<MyType> = BROWSER ? { decode: myDecodeFunction } : { encode: myEncodeFunction };
-	 * ```
-	 */
-	export type Transport<T> =
-		| {
-				encode: Encode<T>;
-				decode?: undefined;
-		  }
-		| {
-				encode?: undefined;
-				decode: Decode<T>;
-		  };
-	export function hydratable<T>(key: string, fn: () => T, transport?: Transport<T> | undefined): T;
+	export function hydratable<T>(key: string, fn: () => T): T;
 	/**
 	 * Create a snippet programmatically
 	 * */
@@ -618,6 +592,9 @@ declare module 'svelte' {
 	 * ```
 	 * */
 	export function untrack<T>(fn: () => T): T;
+	type Getters<T> = {
+		[K in keyof T]: () => T[K];
+	};
 
 	export {};
 }

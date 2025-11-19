@@ -89,25 +89,13 @@ export function event_handler_invalid(handler, suggestion) {
 
 /**
  * Expected to find a hydratable with key `%key%` during hydration, but did not.
- * This can happen if you render a hydratable on the client that was not rendered on the server, and means that it was forced to fall back to running its function blockingly during hydration. This is bad for performance, as it blocks hydration until the asynchronous work completes.
- * ```svelte
- * <script>
- *   import { hydratable } from 'svelte';
  * @param {string} key
  */
-export function hydratable_missing_but_expected_w(key) {
+export function hydratable_missing_but_expected(key) {
 	if (DEV) {
-		console.warn(
-			`%c[svelte] hydratable_missing_but_expected_w\n%cExpected to find a hydratable with key \`${key}\` during hydration, but did not.
-This can happen if you render a hydratable on the client that was not rendered on the server, and means that it was forced to fall back to running its function blockingly during hydration. This is bad for performance, as it blocks hydration until the asynchronous work completes.
-\`\`\`svelte
-<script>
-  import { hydratable } from 'svelte';\nhttps://svelte.dev/e/hydratable_missing_but_expected_w`,
-			bold,
-			normal
-		);
+		console.warn(`%c[svelte] hydratable_missing_but_expected\n%cExpected to find a hydratable with key \`${key}\` during hydration, but did not.\nhttps://svelte.dev/e/hydratable_missing_but_expected`, bold, normal);
 	} else {
-		console.warn(`https://svelte.dev/e/hydratable_missing_but_expected_w`);
+		console.warn(`https://svelte.dev/e/hydratable_missing_but_expected`);
 	}
 }
 

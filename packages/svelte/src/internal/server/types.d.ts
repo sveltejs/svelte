@@ -1,4 +1,4 @@
-import type { Encode } from '#shared';
+import type { MaybePromise } from '#shared';
 import type { Element } from './dev';
 import type { Renderer } from './renderer';
 
@@ -15,16 +15,19 @@ export interface SSRContext {
 	element?: Element;
 }
 
-export interface HydratableEntry {
+export interface HydratableLookupEntry {
 	value: unknown;
-	encode: Encode<any> | undefined;
-	stack?: string;
-	dev_competing_entries?: Omit<HydratableEntry, 'dev_competing_entries'>[];
+	root_index: number;
+}
+
+export interface HydratableContext {
+	lookup: Map<string, HydratableLookupEntry>;
+	values: MaybePromise<string>[];
+	unresolved_promises: Map<Promise<unknown>, string>;
 }
 
 export interface RenderContext {
-	hydratables: Map<string, HydratableEntry>;
-	cache: Map<symbol, Map<any, any>>;
+	hydratable: HydratableContext;
 }
 
 export interface SyncRenderOutput {

@@ -105,7 +105,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 declare global {
 	var __svelte:
 		| {
-				h?: Map<string, unknown>;
+				h?: Map<string, () => unknown>;
 				uh?: Set<string>;
 		  }
 		| undefined;

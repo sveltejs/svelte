@@ -369,4 +369,3 @@ export interface Fork {
 }
 
 export * from './index-client.js';
-export { Transport, Encode, Decode } from '#shared';

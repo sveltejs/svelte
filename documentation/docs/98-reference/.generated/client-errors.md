@@ -158,15 +158,17 @@ Cannot create a fork inside an effect or when state changes are pending
 `getAbortSignal()` can only be called inside an effect or derived
 ```
 
-### hydratable_missing_but_expected_e
+### hydratable_missing_but_required
 
 ```
 Expected to find a hydratable with key `%key%` during hydration, but did not.
+```
+
 This can happen if you render a hydratable on the client that was not rendered on the server, and means that it was forced to fall back to running its function blockingly during hydration. This is bad for performance, as it blocks hydration until the asynchronous work completes.
+
 ```svelte
 <script>
   import { hydratable } from 'svelte';
-```
 
 	if (BROWSER) {
 		// bad! nothing can become interactive until this asynchronous work is done

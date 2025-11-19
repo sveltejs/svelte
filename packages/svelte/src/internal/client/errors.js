@@ -295,26 +295,18 @@ export function get_abort_signal_outside_reaction() {
 
 /**
  * Expected to find a hydratable with key `%key%` during hydration, but did not.
- * This can happen if you render a hydratable on the client that was not rendered on the server, and means that it was forced to fall back to running its function blockingly during hydration. This is bad for performance, as it blocks hydration until the asynchronous work completes.
- * ```svelte
- * <script>
- *   import { hydratable } from 'svelte';
  * @param {string} key
  * @returns {never}
  */
-export function hydratable_missing_but_expected_e(key) {
+export function hydratable_missing_but_required(key) {
 	if (DEV) {
-		const error = new Error(`hydratable_missing_but_expected_e\nExpected to find a hydratable with key \`${key}\` during hydration, but did not.
-This can happen if you render a hydratable on the client that was not rendered on the server, and means that it was forced to fall back to running its function blockingly during hydration. This is bad for performance, as it blocks hydration until the asynchronous work completes.
-\`\`\`svelte
-<script>
-  import { hydratable } from 'svelte';\nhttps://svelte.dev/e/hydratable_missing_but_expected_e`);
+		const error = new Error(`hydratable_missing_but_required\nExpected to find a hydratable with key \`${key}\` during hydration, but did not.\nhttps://svelte.dev/e/hydratable_missing_but_required`);
 
 		error.name = 'Svelte error';
 
 		throw error;
 	} else {
-		throw new Error(`https://svelte.dev/e/hydratable_missing_but_expected_e`);
+		throw new Error(`https://svelte.dev/e/hydratable_missing_but_required`);
 	}
 }
 

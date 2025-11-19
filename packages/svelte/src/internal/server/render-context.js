@@ -55,8 +55,11 @@ export function get_render_context() {
 export async function with_render_context(fn) {
 	try {
 		sync_context = {
-			hydratables: new Map(),
-			cache: new Map()
+			hydratable: {
+				lookup: new Map(),
+				values: [],
+				unresolved_promises: new Map()
+			}
 		};
 		if (in_webcontainer()) {
 			const { promise, resolve } = deferred();
