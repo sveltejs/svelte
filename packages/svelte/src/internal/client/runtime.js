@@ -611,12 +611,8 @@ export function get(signal) {
 
 			return value;
 		}
-	} else if (is_derived) {
+	} else if (is_derived && !batch_values?.has(signal)) {
 		derived = /** @type {Derived} */ (signal);
-
-		if (batch_values?.has(derived)) {
-			return batch_values.get(derived);
-		}
 
 		if (is_dirty(derived)) {
 			update_derived(derived);
@@ -625,7 +621,9 @@ export function get(signal) {
 		if (is_updating_effect && effect_tracking() && (derived.f & CONNECTED) === 0) {
 			reconnect(derived);
 		}
-	} else if (batch_values?.has(signal)) {
+	}
+
+	if (batch_values?.has(signal)) {
 		return batch_values.get(signal);
 	}
 
