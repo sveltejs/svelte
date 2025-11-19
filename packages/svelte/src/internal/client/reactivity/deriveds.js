@@ -356,16 +356,14 @@ export function update_derived(derived) {
 	var value = execute_derived(derived);
 
 	if (!derived.equals(value)) {
-		// if we have batch_values we don't actually set the value of the derived
-		// otherwise blocks that depends on that derived will not be considered dirty
-		// if the derived changes in a fork AND in a subsequent fork/normal state update
-		// IF we are in a tracking context the derived value of the derived will be set
-		// in the batch_values map thus updating it for this batch otherwise it will just be updated
-		// again during the `get` call we also prevent setting the value if we are in a fork
-		// this will lead to over executing of the derived but would lead to correct values
+		// in a fork, we don't update the underlying value, just `batch_values`.
+		// the underlying value will be updated when the fork is committed.
+		// otherwise, the next time we get here after a 'real world' state
+		// change, `derived.equals` may incorrectly return `true`
 		if (!current_batch?.is_fork) {
 			derived.v = value;
 		}
+
 		derived.wv = increment_write_version();
 	}
 
