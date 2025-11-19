@@ -129,8 +129,11 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 export function each(node, flags, get_collection, get_key, render_fn, fallback_fn = null) {
 	var anchor = node;
 
-	/** @type {EachState} */
-	var state = { flags, items: new Map(), first: null };
+	/** @type {Map<any, EachItem>} */
+	var items = new Map();
+
+	/** @type {EachItem | null} */
+	var first = null;
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 	var is_reactive_value = (flags & EACH_ITEM_REACTIVE) !== 0;
@@ -166,7 +169,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	var first_run = true;
 
 	function commit() {
-		reconcile(each_effect, array, state, anchor, flags, get_key);
+		reconcile(state, array, anchor, flags, get_key);
 
 		if (fallback !== null) {
 			if (array.length === 0) {
@@ -177,7 +180,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					resume_effect(fallback.effect);
 				}
 
-				each_effect.first = fallback.effect;
+				effect.first = fallback.effect;
 			} else {
 				pause_effect(fallback.effect, () => {
 					// TODO only null out if no pending batch needs it,
@@ -189,7 +192,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		}
 	}
 
-	var each_effect = block(() => {
+	var effect = block(() => {
 		array = /** @type {V[]} */ (get(each_array));
 		var length = array.length;
 
@@ -230,7 +233,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			var value = array[i];
 			var key = get_key(value, i);
 
-			var item = first_run ? null : state.items.get(key);
+			var item = first_run ? null : items.get(key);
 
 			if (item) {
 				// update before reconciliation, to trigger any async updates
@@ -263,7 +266,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					item.o = true;
 
 					if (prev === null) {
-						state.first = item;
+						first = item;
 					} else {
 						prev.next = item;
 					}
@@ -271,7 +274,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					prev = item;
 				}
 
-				state.items.set(key, item);
+				items.set(key, item);
 			}
 
 			keys.add(key);
@@ -302,7 +305,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 		if (!first_run) {
 			if (defer) {
-				for (const [key, item] of state.items) {
+				for (const [key, item] of items) {
 					if (!keys.has(key)) {
 						batch.skipped_effects.add(item.e);
 					}
@@ -331,6 +334,9 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		get(each_array);
 	});
 
+	/** @type {EachState} */
+	var state = { effect, flags, items, first };
+
 	first_run = false;
 
 	if (hydrating) {
@@ -341,15 +347,14 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 /**
  * Add, remove, or reorder items output by an each block as its input changes
  * @template V
- * @param {Effect} each_effect
- * @param {Array<V>} array
  * @param {EachState} state
+ * @param {Array<V>} array
  * @param {Element | Comment | Text} anchor
  * @param {number} flags
  * @param {(value: V, index: number) => any} get_key
  * @returns {void}
  */
-function reconcile(each_effect, array, state, anchor, flags, get_key) {
+function reconcile(state, array, anchor, flags, get_key) {
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 
 	var length = array.length;
@@ -536,16 +541,6 @@ function reconcile(each_effect, array, state, anchor, flags, get_key) {
 			}
 		});
 	}
-
-	// TODO i have an inkling that the rest of this function is wrong...
-	// the offscreen items need to be linked, so that they all update correctly.
-	// the last onscreen item should link to the first offscreen item, etc
-	each_effect.first = state.first && state.first.e;
-	each_effect.last = prev && prev.e;
-
-	if (prev) {
-		prev.e.next = null;
-	}
 }
 
 /**
@@ -601,11 +596,11 @@ function create_item(anchor, prev, value, key, index, render_fn, flags, get_coll
 
 		item.e = branch(() => render_fn(/** @type {Node} */ (anchor), v, i, get_collection));
 
-		item.e.prev = prev && prev.e;
-
 		if (prev !== null) {
+			// we only need to set `prev.next = item`, because
+			// `item.prev = prev` was set on initialization.
+			// the effects themselves are already linked
 			prev.next = item;
-			prev.e.next = item.e;
 		}
 
 		return item;
@@ -640,12 +635,23 @@ function move(item, next, anchor) {
 function link(state, prev, next) {
 	if (prev === null) {
 		state.first = next;
+		state.effect.first = next && next.e;
 	} else {
+		if (prev.e.next) {
+			prev.e.next.prev = null;
+		}
+
 		prev.next = next;
 		prev.e.next = next && next.e;
 	}
 
-	if (next !== null) {
+	if (next === null) {
+		state.effect.last = prev && prev.e;
+	} else {
+		if (next.e.prev) {
+			next.e.prev.next = null;
+		}
+
 		next.prev = prev;
 		next.e.prev = prev && prev.e;
 	}
