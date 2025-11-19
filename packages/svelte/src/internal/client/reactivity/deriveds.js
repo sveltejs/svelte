@@ -363,7 +363,7 @@ export function update_derived(derived) {
 		// in the batch_values map thus updating it for this batch otherwise it will just be updated
 		// again during the `get` call we also prevent setting the value if we are in a fork
 		// this will lead to over executing of the derived but would lead to correct values
-		if (batch_values === null && current_batch?.is_fork !== true) {
+		if (!current_batch?.is_fork) {
 			derived.v = value;
 		}
 		derived.wv = increment_write_version();
