@@ -142,6 +142,10 @@ export function build_inline_component(node, expression, context) {
 					true
 				);
 			}
+		} else if (attribute.type === 'AttachTag') {
+			// While we don't run attachments on the server, on the client they might generate a surrounding blocker function which generates
+			// extra comments, and to prevent hydration mismatches we therefore have to account for them here to generate similar comments on the server.
+			optimiser.check_blockers(attribute.metadata.expression);
 		}
 	}
 

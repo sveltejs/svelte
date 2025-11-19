@@ -561,6 +561,12 @@ Cannot use `await` in deriveds and template expressions, or at the top level of 
 `$host()` can only be used inside custom element component instances
 ```
 
+### illegal_await_expression
+
+```
+`use:`, `transition:` and `animate:` directives, attachments and bindings do not support await expressions
+```
+
 ### illegal_element_attribute
 
 ```
