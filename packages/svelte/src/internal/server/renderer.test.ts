@@ -2,7 +2,6 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { Renderer, SSRState } from './renderer.js';
 import type { Component } from 'svelte';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../flags/index.js';
-import { uneval } from 'devalue';
 
 test('collects synchronous body content by default', () => {
 	const component = (renderer: Renderer) => {

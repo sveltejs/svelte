@@ -15,7 +15,7 @@ export default test({
 	},
 
 	async test({ assert, target }) {
-		// let it hydrate and resolve the promise on the client
+		// make sure the hydratable promise on the client has a chance to run and reject (it shouldn't, because the server data should be used)
 		await tick();
 
 		assert.htmlEqual(

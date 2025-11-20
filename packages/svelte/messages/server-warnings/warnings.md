@@ -4,9 +4,6 @@
 >
 > The `hydratable` was initialized in:
 > %stack%
->
-> The unresolved data is:
-> %unresolved_data%
 
 The most likely cause of this is creating a `hydratable` in the `script` block of your component and then `await`ing
 the result inside a `svelte:boundary` with a `pending` snippet:

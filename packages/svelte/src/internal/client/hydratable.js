@@ -21,11 +21,8 @@ export function hydratable(key, fn) {
 	}
 
 	const store = window.__svelte?.h;
-	const unused_keys = window.__svelte?.uh;
 	if (!store?.has(key)) {
-		if (!unused_keys?.has(key)) {
-			hydratable_missing_but_expected(key);
-		}
+		hydratable_missing_but_expected(key);
 		return fn();
 	}
 

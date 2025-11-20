@@ -107,7 +107,6 @@ declare global {
 	var __svelte:
 		| {
 				h?: Map<string, unknown>;
-				uh?: Set<string>;
 		  }
 		| undefined;
 }
@@ -127,7 +126,6 @@ beforeAll(() => {
 
 beforeEach(() => {
 	delete globalThis?.__svelte?.h;
-	delete globalThis?.__svelte?.uh;
 });
 
 afterAll(() => {

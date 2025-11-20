@@ -10,7 +10,6 @@ import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { attributes } from './index.js';
 import { get_render_context, with_render_context, init_render_context } from './render-context.js';
 import { DEV } from 'esm-env';
-import { get_stack } from './dev.js';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
@@ -578,14 +577,10 @@ export class Renderer {
 	async #collect_hydratables() {
 		const ctx = get_render_context().hydratable;
 
-		for (const [promise, key] of ctx.unresolved_promises) {
+		for (const [_, key] of ctx.unresolved_promises) {
 			// this is a problem -- it means we've finished the render but we're still waiting on a promise to resolve so we can
 			// serialize it, so we're blocking the response on useless content.
-			w.unresolved_hydratable(
-				key,
-				ctx.lookup.get(key)?.dev?.stack ?? '<missing stack trace>',
-				await promise
-			);
+			w.unresolved_hydratable(key, ctx.lookup.get(key)?.dev?.stack ?? '<missing stack trace>');
 		}
 
 		for (const comparison of ctx.comparisons) {
@@ -593,7 +588,7 @@ export class Renderer {
 			await comparison;
 		}
 
-		return await Renderer.#hydratable_block(ctx, []);
+		return await Renderer.#hydratable_block(ctx);
 	}
 
 	/**
@@ -652,10 +647,9 @@ export class Renderer {
 
 	/**
 	 * @param {HydratableContext} ctx
-	 * @param {string[]} unused_keys
 	 */
-	static async #hydratable_block(ctx, unused_keys) {
-		if (ctx.lookup.size === 0 && unused_keys.length === 0) {
+	static async #hydratable_block(ctx) {
+		if (ctx.lookup.size === 0) {
 			return null;
 		}
 
@@ -672,11 +666,11 @@ export class Renderer {
 			{
 				const r = (v) => Promise.resolve(v);
 				const v = [${values.join(',')}];
-				function d(i) { 
+				function d(i) {
 					const value = v[i];
 					return typeof value === 'function' ? value() : value;
 				};
-				const sv = window.__svelte ??= {};${Renderer.#used_hydratables(ctx.lookup)}${Renderer.#unused_hydratables(unused_keys)}
+				const sv = window.__svelte ??= {};${Renderer.#used_hydratables(ctx.lookup)}
 			}
 		</script>`;
 	}
@@ -691,16 +685,6 @@ export class Renderer {
 				const store = sv.h ??= new Map();
 				for (const [k,i] of [${entries.join(',')}]) {
 						store.set(k, d(i));
-				}`;
-	}
-
-	/** @param {string[]} unused_keys */
-	static #unused_hydratables(unused_keys) {
-		if (unused_keys.length === 0) return '';
-		return `
-				const unused = sv.uh ??= new Set();
-				for (const k of ${JSON.stringify(unused_keys)}) {
-					unused.add(k);
 				}`;
 	}
 }

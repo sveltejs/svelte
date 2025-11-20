@@ -7,9 +7,6 @@ A `hydratable` value with key `%key%` was created, but at least part of it was n
 
 The `hydratable` was initialized in:
 %stack%
-
-The unresolved data is:
-%unresolved_data%
 ```
 
 The most likely cause of this is creating a `hydratable` in the `script` block of your component and then `await`ing

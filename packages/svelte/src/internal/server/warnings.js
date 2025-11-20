@@ -10,23 +10,16 @@ var normal = 'font-weight: normal';
  * 
  * The `hydratable` was initialized in:
  * %stack%
- * 
- * The unresolved data is:
- * %unresolved_data%
  * @param {string} key
  * @param {string} stack
- * @param {string} unresolved_data
  */
-export function unresolved_hydratable(key, stack, unresolved_data) {
+export function unresolved_hydratable(key, stack) {
 	if (DEV) {
 		console.warn(
 			`%c[svelte] unresolved_hydratable\n%cA \`hydratable\` value with key \`${key}\` was created, but at least part of it was not used during the render.
 
 The \`hydratable\` was initialized in:
-${stack}
-
-The unresolved data is:
-${unresolved_data}\nhttps://svelte.dev/e/unresolved_hydratable`,
+${stack}\nhttps://svelte.dev/e/unresolved_hydratable`,
 			bold,
 			normal
 		);
