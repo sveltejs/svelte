@@ -654,7 +654,12 @@ export class Renderer {
 			return null;
 		}
 
-		const values = await Promise.all(ctx.values);
+		let values = await Promise.all(ctx.values);
+
+		if (DEV) {
+			// turn `d("1")` into `d(1)` — see `hydratable.js` for an explanation
+			values = values.map((v) => v.replace(/d\("(\d+)"\)/g, (_, i) => `d(${i})`));
+		}
 
 		// TODO csp -- have discussed but not implemented
 		return `
@@ -672,7 +677,7 @@ export class Renderer {
 	static #used_hydratables(lookup) {
 		let entries = [];
 		for (const [k, v] of lookup) {
-			entries.push(`[${JSON.stringify(k)},${v.root_index}]`);
+			entries.push(`[${JSON.stringify(k)},${v.index}]`);
 		}
 		return `
 				const store = sv.h ??= new Map();

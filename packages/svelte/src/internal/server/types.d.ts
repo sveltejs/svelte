@@ -17,7 +17,12 @@ export interface SSRContext {
 
 export interface HydratableLookupEntry {
 	value: unknown;
-	root_index: number;
+	index: number;
+	/** dev-only */
+	promises?: Array<Promise<void>>;
+	/** dev-only */
+	serialized?: string;
+	/** dev-only */
 	stack?: string;
 }
 
