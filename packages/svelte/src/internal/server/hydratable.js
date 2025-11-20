@@ -24,7 +24,7 @@ export function hydratable(key, fn) {
 	let entry = hydratable.lookup.get(key);
 
 	if (entry !== undefined) {
-		if (DEV && entry.dev) {
+		if (DEV) {
 			const comparison = compare(key, entry, encode(key, fn(), []));
 			comparison.catch(() => {});
 			hydratable.comparisons.push(comparison);
@@ -52,11 +52,7 @@ function encode(key, value, values, unresolved) {
 	const entry = { value, index: -1 };
 
 	if (DEV) {
-		entry.dev = {
-			serialized: undefined,
-			serialize_work: [],
-			stack: get_stack('hydratable')?.stack
-		};
+		entry.stack = get_stack('hydratable')?.stack;
 	}
 
 	let needs_thunk = false;
@@ -82,12 +78,11 @@ function encode(key, value, values, unresolved) {
 			// of a given hydratable are identical with a simple string comparison
 			const result = DEV ? `d("${index}")` : `d(${index})`;
 
-			if (DEV && entry.dev) {
-				const { dev } = entry;
-				dev.serialize_work.push(
+			if (DEV) {
+				(entry.serialize_work ??= []).push(
 					serialize_promise.then((s) => {
 						serialized = serialized.replace(result, s);
-						dev.serialized = serialized;
+						entry.serialized = serialized;
 					})
 				);
 			}
@@ -96,6 +91,7 @@ function encode(key, value, values, unresolved) {
 		}
 	});
 
+	entry.serialized = serialized;
 	entry.index = values.push(needs_thunk ? `()=>(${serialized})` : serialized) - 1;
 	needs_thunk = false;
 
@@ -111,19 +107,19 @@ async function compare(key, a, b) {
 	// note: these need to be loops (as opposed to Promise.all) because
 	// additional promises can get pushed to them while we're awaiting
 	// an earlier one
-	for (const p of a.dev?.serialize_work ?? []) {
+	for (const p of a?.serialize_work ?? []) {
 		await p;
 	}
 
-	for (const p of b.dev?.serialize_work ?? []) {
+	for (const p of b?.serialize_work ?? []) {
 		await p;
 	}
 
-	if (a.dev?.serialized !== b.dev?.serialized) {
+	if (a?.serialized !== b?.serialized) {
 		e.hydratable_clobbering(
 			key,
-			a.dev?.stack ?? '<missing stack trace>',
-			b.dev?.stack ?? '<missing stack trace>'
+			a?.stack ?? '<missing stack trace>',
+			b?.stack ?? '<missing stack trace>'
 		);
 	}
 }
