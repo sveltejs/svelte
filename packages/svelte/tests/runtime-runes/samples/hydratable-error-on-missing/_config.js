@@ -9,5 +9,5 @@ export default test({
 
 	props: { environment: 'browser' },
 
-	runtime_error: 'hydratable_missing_but_expected_e'
+	runtime_error: 'hydratable_missing_but_required'
 });

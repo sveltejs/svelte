@@ -6,7 +6,7 @@
 	const unresolved_hydratable = hydratable(
 		"unused_key",
 		() => new Promise(
-			(res) => environment === 'server' ? undefined : res('did you ever hear the tragedy of darth plagueis the wise?')
+			(res, rej) => environment === 'server' ? setTimeout(() => res('did you ever hear the tragedy of darth plagueis the wise?'), 0) : rej('should not run')
 		)
 	);
 </script>

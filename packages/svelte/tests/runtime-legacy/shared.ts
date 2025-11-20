@@ -86,6 +86,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	}) => void | Promise<void>;
 	test_ssr?: (args: {
 		logs: any[];
+		warnings: any[];
 		assert: Assert;
 		variant: 'ssr' | 'async-ssr';
 	}) => void | Promise<void>;
@@ -105,7 +106,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 declare global {
 	var __svelte:
 		| {
-				h?: Map<string, () => unknown>;
+				h?: Map<string, unknown>;
 				uh?: Set<string>;
 		  }
 		| undefined;
@@ -266,7 +267,16 @@ async function run_test_variant(
 			i++;
 		}
 
-		if (str.slice(0, i).includes('logs')) {
+		let ssr_str = config.test_ssr?.toString() ?? '';
+		let sn = 0;
+		let si = 0;
+		while (si < ssr_str.length) {
+			if (ssr_str[si] === '(') sn++;
+			if (ssr_str[si] === ')' && --sn === 0) break;
+			si++;
+		}
+
+		if (str.slice(0, i).includes('logs') || ssr_str.slice(0, si).includes('logs')) {
 			// eslint-disable-next-line no-console
 			console.log = (...args) => {
 				logs.push(...args);
@@ -277,7 +287,11 @@ async function run_test_variant(
 			manual_hydrate = true;
 		}
 
-		if (str.slice(0, i).includes('warnings') || config.warnings) {
+		if (
+			str.slice(0, i).includes('warnings') ||
+			config.warnings ||
+			ssr_str.slice(0, si).includes('warnings')
+		) {
 			// eslint-disable-next-line no-console
 			console.warn = (...args) => {
 				if (typeof args[0] === 'string' && args[0].startsWith('%c[svelte]')) {
@@ -397,6 +411,7 @@ async function run_test_variant(
 			if (config.test_ssr) {
 				await config.test_ssr({
 					logs,
+					warnings,
 					// @ts-expect-error
 					assert: {
 						...assert,

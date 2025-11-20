@@ -8,9 +8,9 @@ import * as e from './errors.js';
 import * as w from './warnings.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { attributes } from './index.js';
-import { uneval } from 'devalue';
 import { get_render_context, with_render_context, init_render_context } from './render-context.js';
 import { DEV } from 'esm-env';
+import { get_stack } from './dev.js';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
@@ -578,32 +578,16 @@ export class Renderer {
 	async #collect_hydratables() {
 		const ctx = get_render_context().hydratable;
 
-		// for (const [k, v] of ctx.lookup) {
-		// 	// TODO - root-level
-		// 	// if (ctx.unresolved_promises.has(/** @type {Promise<unknown>} */ (v.value))) {
-		// 	// 	// this is a problem -- it means we've finished the render but somehow not consumed a hydratable, which means we've done
-		// 	// 	// extra work that will get serialized and sent but then not used on the client
-		// 	// 	w.unused_hydratable(k, v.stack ?? 'unavailable');
-		// 	// 	unused_keys.push(k);
-		// 	// 	continue;
-		// 	// }
+		for (const [promise, key] of ctx.unresolved_promises) {
+			// this is a problem -- it means we've finished the render but we're still waiting on a promise to resolve so we can
+			// serialize it, so we're blocking the response on useless content.
+			w.unresolved_hydratable(
+				key,
+				DEV ? ctx.lookup.get(key)?.stack ?? 'unavailable' : 'unavailable in production builds',
+				await promise
+			);
+		}
 
-		// 	// TODO - nested
-
-		// 	// const encoded = encode(await v.value);
-		// 	// if (DEV && v.dev_competing_entries?.length) {
-		// 	// 	for (const competing_entry of v.dev_competing_entries) {
-		// 	// 		const competing_encoded = (competing_entry.encode ?? uneval)(await competing_entry.value);
-		// 	// 		if (encoded !== competing_encoded) {
-		// 	// 			e.hydratable_clobbering(
-		// 	// 				k,
-		// 	// 				v.stack ?? 'unavailable',
-		// 	// 				competing_entry.stack ?? 'unavailable'
-		// 	// 			);
-		// 	// 		}
-		// 	// 	}
-		// 	// }
-		// }
 		return await Renderer.#hydratable_block(ctx, []);
 	}
 

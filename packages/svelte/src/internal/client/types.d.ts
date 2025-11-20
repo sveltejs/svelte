@@ -6,7 +6,7 @@ declare global {
 	interface Window {
 		__svelte?: {
 			/** hydratables */
-			h?: Map<string, () => unknown>;
+			h?: Map<string, unknown>;
 			/** unused hydratable keys */
 			uh?: Set<string>;
 		};

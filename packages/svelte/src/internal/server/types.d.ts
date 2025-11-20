@@ -18,12 +18,13 @@ export interface SSRContext {
 export interface HydratableLookupEntry {
 	value: unknown;
 	root_index: number;
+	stack?: string;
 }
 
 export interface HydratableContext {
 	lookup: Map<string, HydratableLookupEntry>;
 	values: MaybePromise<string>[];
-	unresolved_promises: Map<Promise<unknown>, string>;
+	unresolved_promises: Map<Promise<string>, string>;
 }
 
 export interface RenderContext {

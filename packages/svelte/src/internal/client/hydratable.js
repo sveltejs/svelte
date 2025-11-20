@@ -29,8 +29,7 @@ export function hydratable(key, fn) {
 		return fn();
 	}
 
-	const val = /** @type {() => T} */ (store.get(key));
-	return val;
+	return /** @type {T} */ (store.get(key));
 }
 
 /** @param {string} key */

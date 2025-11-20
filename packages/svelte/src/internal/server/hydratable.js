@@ -1,8 +1,10 @@
-/** @import { HydratableContext } from '#server' */
+/** @import { HydratableContext, HydratableLookupEntry } from '#server' */
 import { async_mode_flag } from '../flags/index.js';
 import { get_render_context } from './render-context.js';
 import * as e from './errors.js';
 import { uneval } from 'devalue';
+import { get_stack } from './dev.js';
+import { DEV } from 'esm-env';
 
 /**
  * @template T
@@ -17,16 +19,23 @@ export function hydratable(key, fn) {
 
 	const store = get_render_context();
 
-	const entry = store.hydratable.lookup.get(key);
-	if (entry !== undefined) {
-		return /** @type {T} */ (entry.value);
+	const existing_entry = store.hydratable.lookup.get(key);
+	if (existing_entry !== undefined) {
+		return /** @type {T} */ (existing_entry.value);
 	}
 
 	const result = fn();
-	store.hydratable.lookup.set(key, {
+	/** @type {HydratableLookupEntry} */
+	const entry = {
 		value: result,
 		root_index: encode(result, key, store.hydratable)
-	});
+	};
+
+	if (DEV) {
+		entry.stack = get_stack(`hydratable"`)?.stack;
+	}
+
+	store.hydratable.lookup.set(key, entry);
 
 	return result;
 }
@@ -50,15 +59,17 @@ function encode(value, key, hydratable_context) {
 function create_replacer(key, hydratable_context) {
 	/**
 	 * @param {unknown} value
-	 * @param {(value: any) => string} inner_uneval
 	 */
-	const replacer = (value, inner_uneval) => {
+	const replacer = (value) => {
 		if (value instanceof Promise) {
-			hydratable_context.unresolved_promises.set(value, key);
-			value.finally(() => hydratable_context.unresolved_promises.delete(value));
 			// use the root-level uneval because we need a separate, top-level entry for each promise
-			const index =
-				hydratable_context.values.push(value.then((v) => `r(${uneval(v, replacer)})`)) - 1;
+			/** @type {Promise<string>} */
+			const serialize_promise = value.then((v) => `r(${uneval(v, replacer)})`);
+			hydratable_context.unresolved_promises.set(serialize_promise, key);
+			serialize_promise.finally(() =>
+				hydratable_context.unresolved_promises.delete(serialize_promise)
+			);
+			const index = hydratable_context.values.push(serialize_promise) - 1;
 			return `d(${index})`;
 		}
 	};

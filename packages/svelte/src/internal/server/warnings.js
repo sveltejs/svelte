@@ -6,24 +6,31 @@ var bold = 'font-weight: bold';
 var normal = 'font-weight: normal';
 
 /**
- * A `hydratable` value with key `%key%` was created, but not used during the render.
+ * A `hydratable` value with key `%key%` was created, but at least part of it was not used during the render.
  * 
- * Stack:
+ * The `hydratable` was initialized in:
  * %stack%
+ * 
+ * The unresolved data is:
+ * %unresolved_data%
  * @param {string} key
  * @param {string} stack
+ * @param {string} unresolved_data
  */
-export function unused_hydratable(key, stack) {
+export function unresolved_hydratable(key, stack, unresolved_data) {
 	if (DEV) {
 		console.warn(
-			`%c[svelte] unused_hydratable\n%cA \`hydratable\` value with key \`${key}\` was created, but not used during the render.
+			`%c[svelte] unresolved_hydratable\n%cA \`hydratable\` value with key \`${key}\` was created, but at least part of it was not used during the render.
 
-Stack:
-${stack}\nhttps://svelte.dev/e/unused_hydratable`,
+The \`hydratable\` was initialized in:
+${stack}
+
+The unresolved data is:
+${unresolved_data}\nhttps://svelte.dev/e/unresolved_hydratable`,
 			bold,
 			normal
 		);
 	} else {
-		console.warn(`https://svelte.dev/e/unused_hydratable`);
+		console.warn(`https://svelte.dev/e/unresolved_hydratable`);
 	}
 }

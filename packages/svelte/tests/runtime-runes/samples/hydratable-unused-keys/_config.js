@@ -1,5 +1,5 @@
 import { tick } from 'svelte';
-import { ok, test } from '../../test';
+import { test } from '../../test';
 
 export default test({
 	skip_no_async: true,
@@ -7,6 +7,12 @@ export default test({
 
 	server_props: { environment: 'server' },
 	ssrHtml: '<div>Loading...</div>',
+
+	test_ssr({ assert, warnings }) {
+		assert.strictEqual(warnings.length, 1);
+		// for some strange reason we trim the error code off the beginning of warnings so I can't actually assert it
+		assert.include(warnings[0], 'A `hydratable` value with key `unused_key`');
+	},
 
 	async test({ assert, target }) {
 		// let it hydrate and resolve the promise on the client

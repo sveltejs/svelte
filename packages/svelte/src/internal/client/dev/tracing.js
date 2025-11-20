@@ -5,6 +5,7 @@ import { define_property } from '../../shared/utils.js';
 import { DERIVED, ASYNC, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { effect_tracking } from '../reactivity/effects.js';
 import { active_reaction, untrack } from '../runtime.js';
+import { get_infinite_stack } from '../../shared/dev.js';
 
 /**
  * @typedef {{
@@ -134,55 +135,37 @@ export function trace(label, fn) {
  * @returns {Error & { stack: string } | null}
  */
 export function get_stack(label) {
-	// @ts-ignore stackTraceLimit doesn't exist everywhere
-	const limit = Error.stackTraceLimit;
+	return get_infinite_stack(label, (stack) => {
+		if (!stack) return;
 
-	// @ts-ignore
-	Error.stackTraceLimit = Infinity;
-	let error = Error();
+		const lines = stack.split('\n');
+		const new_lines = ['\n'];
 
-	// @ts-ignore
-	Error.stackTraceLimit = limit;
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i];
+			const posixified = line.replaceAll('\\', '/');
 
-	const stack = error.stack;
+			if (line === 'Error') {
+				continue;
+			}
 
-	if (!stack) return null;
+			if (line.includes('validate_each_keys')) {
+				return undefined;
+			}
 
-	const lines = stack.split('\n');
-	const new_lines = ['\n'];
+			if (posixified.includes('svelte/src/internal') || posixified.includes('node_modules/.vite')) {
+				continue;
+			}
 
-	for (let i = 0; i < lines.length; i++) {
-		const line = lines[i];
-		const posixified = line.replaceAll('\\', '/');
-
-		if (line === 'Error') {
-			continue;
+			new_lines.push(line);
 		}
 
-		if (line.includes('validate_each_keys')) {
-			return null;
+		if (new_lines.length === 1) {
+			return undefined;
 		}
 
-		if (posixified.includes('svelte/src/internal') || posixified.includes('node_modules/.vite')) {
-			continue;
-		}
-
-		new_lines.push(line);
-	}
-
-	if (new_lines.length === 1) {
-		return null;
-	}
-
-	define_property(error, 'stack', {
-		value: new_lines.join('\n')
+		return new_lines.join('\n');
 	});
-
-	define_property(error, 'name', {
-		value: label
-	});
-
-	return /** @type {Error & { stack: string }} */ (error);
 }
 
 /**
