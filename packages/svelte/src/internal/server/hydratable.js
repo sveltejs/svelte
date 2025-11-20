@@ -59,7 +59,12 @@ function encode(key, value, values, unresolved) {
 			serialize_promise.finally(() => unresolved?.delete(serialize_promise));
 
 			const index = values.push(serialize_promise) - 1;
-			const result = `d(${index})`;
+
+			// in dev, we serialize promises as `d("1")` instead of `d(1)`, because it's
+			// impossible for that string to occur 'naturally' (since the quote marks
+			// would have to be escaped). this allows us to check that repeat occurrences
+			// of a given hydratable are identical with a simple string comparison
+			const result = DEV ? `d("${index}")` : `d(${index})`;
 
 			if (DEV) {
 				(entry.promises ??= []).push(
