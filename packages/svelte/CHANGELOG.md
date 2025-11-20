@@ -1,5 +1,11 @@
 # svelte
 
+## 5.43.13
+
+### Patch Changes
+
+- fix: don't set derived values during time traveling ([#17200](https://github.com/sveltejs/svelte/pull/17200))
+
 ## 5.43.12
 
 ### Patch Changes
