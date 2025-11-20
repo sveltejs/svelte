@@ -35,7 +35,7 @@ export function transform_body(instance_body, runner, transform) {
 		(node) => /** @type {ESTree.Statement | ESTree.VariableDeclaration} */ (transform(node))
 	);
 
-	// Declarations for the await expressions (they will asign to them; need to be hoisted to be available in whole instance scope)
+	// Declarations for the await expressions (they will assign to them; need to be hoisted to be available in whole instance scope)
 	if (instance_body.declarations.length > 0) {
 		statements.push(
 			b.declaration(
