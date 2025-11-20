@@ -672,7 +672,7 @@ export class Renderer {
 	static #used_hydratables(lookup) {
 		let entries = [];
 		for (const [k, v] of lookup) {
-			entries.push(`[${JSON.stringify(k)},${v.root_index}]`);
+			entries.push(`[${JSON.stringify(k)},${v.index}]`);
 		}
 		return `
 				const store = sv.h ??= new Map();

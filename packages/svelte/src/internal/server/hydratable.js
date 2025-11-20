@@ -1,8 +1,9 @@
-/** @import { HydratableContext, HydratableLookupEntry } from '#server' */
+/** @import { HydratableLookupEntry } from '#server' */
+/** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import { get_render_context } from './render-context.js';
 import * as e from './errors.js';
-import { uneval } from 'devalue';
+import * as devalue from 'devalue';
 import { get_stack } from './dev.js';
 import { DEV } from 'esm-env';
 
@@ -17,62 +18,88 @@ export function hydratable(key, fn) {
 		e.experimental_async_required('hydratable');
 	}
 
-	const store = get_render_context();
+	const { hydratable } = get_render_context();
 
-	const existing_entry = store.hydratable.lookup.get(key);
-	if (existing_entry !== undefined) {
-		return /** @type {T} */ (existing_entry.value);
+	let entry = hydratable.lookup.get(key);
+
+	if (entry !== undefined) {
+		if (DEV) {
+			compare(key, entry, encode(key, fn(), []));
+		}
+
+		return /** @type {T} */ (entry.value);
 	}
 
-	const result = fn();
+	const value = fn();
+
+	entry = encode(key, value, hydratable.values, hydratable.unresolved_promises);
+	hydratable.lookup.set(key, entry);
+
+	return value;
+}
+
+/**
+ * @param {string} key
+ * @param {any} value
+ * @param {MaybePromise<string>[]} values
+ * @param {Map<Promise<any>, string>} [unresolved]
+ */
+function encode(key, value, values, unresolved) {
 	/** @type {HydratableLookupEntry} */
-	const entry = {
-		value: result,
-		root_index: encode(result, key, store.hydratable)
-	};
+	const entry = { value, index: -1 };
 
 	if (DEV) {
 		entry.stack = get_stack(`hydratable"`)?.stack;
 	}
 
-	store.hydratable.lookup.set(key, entry);
-
-	return result;
-}
-
-/**
- * @param {unknown} value
- * @param {string} key
- * @param {HydratableContext} hydratable_context
- * @returns {number}
- */
-function encode(value, key, hydratable_context) {
-	const replacer = create_replacer(key, hydratable_context);
-	return hydratable_context.values.push(uneval(value, replacer)) - 1;
-}
-
-/**
- * @param {string} key
- * @param {HydratableContext} hydratable_context
- * @returns {(value: unknown, uneval: (value: any) => string) => string | undefined}
- */
-function create_replacer(key, hydratable_context) {
-	/**
-	 * @param {unknown} value
-	 */
-	const replacer = (value) => {
+	let serialized = devalue.uneval(entry.value, (value, uneval) => {
 		if (value instanceof Promise) {
-			// use the root-level uneval because we need a separate, top-level entry for each promise
-			/** @type {Promise<string>} */
-			const serialize_promise = value.then((v) => `r(${uneval(v, replacer)})`);
-			hydratable_context.unresolved_promises.set(serialize_promise, key);
-			serialize_promise.finally(() =>
-				hydratable_context.unresolved_promises.delete(serialize_promise)
-			);
-			const index = hydratable_context.values.push(serialize_promise) - 1;
-			return `d(${index})`;
-		}
-	};
+			const serialize_promise = value.then((v) => `r(${uneval(v)})`);
+			unresolved?.set(serialize_promise, key);
+			serialize_promise.finally(() => unresolved?.delete(serialize_promise));
 
-	return replacer;
+			const index = values.push(serialize_promise) - 1;
+			const result = `d(${index})`;
+
+			if (DEV) {
+				(entry.promises ??= []).push(
+					serialize_promise.then((s) => {
+						serialized = serialized.replace(result, s);
+						entry.serialized = serialized;
+					})
+				);
+			}
+
+			return result;
+		}
+	});
+
+	entry.index = values.push(serialized) - 1;
+
+	return entry;
+}
+
+/**
+ * @param {string} key
+ * @param {HydratableLookupEntry} a
+ * @param {HydratableLookupEntry} b
+ */
+async function compare(key, a, b) {
+	for (const p of a.promises ?? []) {
+		await p;
+	}
+
+	for (const p of b.promises ?? []) {
+		await p;
+	}
+
+	if (a.serialized !== b.serialized) {
+		// TODO right now this causes an unhandled rejection — it
+		// needs to happen somewhere else
+		e.hydratable_clobbering(
+			key,
+			a.stack ?? '<missing stack trace>',
+			b.stack ?? '<missing stack trace>'
+		);
+	}
 }
