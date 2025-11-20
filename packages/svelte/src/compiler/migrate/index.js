@@ -1058,8 +1058,6 @@ const template = {
 		handle_identifier(node, state, path);
 	},
 	RegularElement(node, { state, path, next }) {
-		migrate_slot_usage(node, path, state);
-		handle_events(node, state);
 		// Strip off any namespace from the beginning of the node name.
 		const node_name = node.name.replace(/[a-zA-Z-]*:/g, '');
 
@@ -1067,8 +1065,12 @@ const template = {
 			let trimmed_position = node.end - 2;
 			while (state.str.original.charAt(trimmed_position - 1) === ' ') trimmed_position--;
 			state.str.remove(trimmed_position, node.end - 1);
-			state.str.appendRight(node.end, `</${node.name}>`);
+			state.str.appendLeft(node.end, `</${node.name}>`);
 		}
+
+		migrate_slot_usage(node, path, state);
+		handle_events(node, state);
+
 		next();
 	},
 	SvelteSelf(node, { state, next }) {
