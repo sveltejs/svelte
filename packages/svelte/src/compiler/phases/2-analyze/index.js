@@ -24,6 +24,7 @@ import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
 import { ignore_map, ignore_stack, pop_ignore, push_ignore } from '../../state.js';
 import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
+import { AnimateDirective } from './visitors/AnimateDirective.js';
 import { AttachTag } from './visitors/AttachTag.js';
 import { Attribute } from './visitors/Attribute.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
@@ -142,6 +143,7 @@ const visitors = {
 			pop_ignore();
 		}
 	},
+	AnimateDirective,
 	ArrowFunctionExpression,
 	AssignmentExpression,
 	AttachTag,
