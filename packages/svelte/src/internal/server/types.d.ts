@@ -18,17 +18,17 @@ export interface SSRContext {
 export interface HydratableLookupEntry {
 	value: unknown;
 	index: number;
-	/** dev-only */
-	promises?: Array<Promise<void>>;
-	/** dev-only */
-	serialized?: string;
-	/** dev-only */
-	stack?: string;
+	dev?: {
+		serialize_work: Array<Promise<void>>;
+		serialized: string | undefined;
+		stack: string | undefined;
+	};
 }
 
 export interface HydratableContext {
 	lookup: Map<string, HydratableLookupEntry>;
 	values: MaybePromise<string>[];
+	comparisons: Promise<void>[];
 	unresolved_promises: Map<Promise<string>, string>;
 }
 

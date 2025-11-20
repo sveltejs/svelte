@@ -6,6 +6,7 @@ import * as e from './errors.js';
 import * as devalue from 'devalue';
 import { get_stack } from './dev.js';
 import { DEV } from 'esm-env';
+import { deferred } from '../shared/utils.js';
 
 /**
  * @template T
@@ -23,8 +24,10 @@ export function hydratable(key, fn) {
 	let entry = hydratable.lookup.get(key);
 
 	if (entry !== undefined) {
-		if (DEV) {
-			compare(key, entry, encode(key, fn(), []));
+		if (DEV && entry.dev) {
+			const comparison = compare(key, entry, encode(key, fn(), []));
+			comparison.catch(() => {});
+			hydratable.comparisons.push(comparison);
 		}
 
 		return /** @type {T} */ (entry.value);
@@ -49,12 +52,25 @@ function encode(key, value, values, unresolved) {
 	const entry = { value, index: -1 };
 
 	if (DEV) {
-		entry.stack = get_stack(`hydratable"`)?.stack;
+		entry.dev = {
+			serialized: undefined,
+			serialize_work: [],
+			stack: get_stack('hydratable')?.stack
+		};
 	}
 
+	let needs_thunk = false;
 	let serialized = devalue.uneval(entry.value, (value, uneval) => {
 		if (value instanceof Promise) {
-			const serialize_promise = value.then((v) => `r(${uneval(v)})`);
+			needs_thunk = true;
+			/** @param {string} val */
+			const scoped_uneval = (val) => {
+				const raw = `r(${uneval(val)})`;
+				const result = needs_thunk ? `()=>(${raw})` : raw;
+				needs_thunk = false;
+				return result;
+			};
+			const serialize_promise = value.then(scoped_uneval);
 			unresolved?.set(serialize_promise, key);
 			serialize_promise.finally(() => unresolved?.delete(serialize_promise));
 
@@ -66,11 +82,12 @@ function encode(key, value, values, unresolved) {
 			// of a given hydratable are identical with a simple string comparison
 			const result = DEV ? `d("${index}")` : `d(${index})`;
 
-			if (DEV) {
-				(entry.promises ??= []).push(
+			if (DEV && entry.dev) {
+				const { dev } = entry;
+				dev.serialize_work.push(
 					serialize_promise.then((s) => {
 						serialized = serialized.replace(result, s);
-						entry.serialized = serialized;
+						dev.serialized = serialized;
 					})
 				);
 			}
@@ -79,7 +96,8 @@ function encode(key, value, values, unresolved) {
 		}
 	});
 
-	entry.index = values.push(serialized) - 1;
+	entry.index = values.push(needs_thunk ? `()=>(${serialized})` : serialized) - 1;
+	needs_thunk = false;
 
 	return entry;
 }
@@ -90,21 +108,22 @@ function encode(key, value, values, unresolved) {
  * @param {HydratableLookupEntry} b
  */
 async function compare(key, a, b) {
-	for (const p of a.promises ?? []) {
+	// note: these need to be loops (as opposed to Promise.all) because
+	// additional promises can get pushed to them while we're awaiting
+	// an earlier one
+	for (const p of a.dev?.serialize_work ?? []) {
 		await p;
 	}
 
-	for (const p of b.promises ?? []) {
+	for (const p of b.dev?.serialize_work ?? []) {
 		await p;
 	}
 
-	if (a.serialized !== b.serialized) {
-		// TODO right now this causes an unhandled rejection — it
-		// needs to happen somewhere else
+	if (a.dev?.serialized !== b.dev?.serialized) {
 		e.hydratable_clobbering(
 			key,
-			a.stack ?? '<missing stack trace>',
-			b.stack ?? '<missing stack trace>'
+			a.dev?.stack ?? '<missing stack trace>',
+			b.dev?.stack ?? '<missing stack trace>'
 		);
 	}
 }

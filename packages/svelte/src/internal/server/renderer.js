@@ -583,9 +583,14 @@ export class Renderer {
 			// serialize it, so we're blocking the response on useless content.
 			w.unresolved_hydratable(
 				key,
-				DEV ? ctx.lookup.get(key)?.stack ?? 'unavailable' : 'unavailable in production builds',
+				ctx.lookup.get(key)?.dev?.stack ?? '<missing stack trace>',
 				await promise
 			);
+		}
+
+		for (const comparison of ctx.comparisons) {
+			// these reject if there's a mismatch
+			await comparison;
 		}
 
 		return await Renderer.#hydratable_block(ctx, []);
@@ -666,8 +671,11 @@ export class Renderer {
 		<script>
 			{
 				const r = (v) => Promise.resolve(v);
-				const v = [${values.map((v) => `() => (${v})`).join(',')}];
-				function d(i) { return v[i]() };
+				const v = [${values.join(',')}];
+				function d(i) { 
+					const value = v[i];
+					return typeof value === 'function' ? value() : value;
+				};
 				const sv = window.__svelte ??= {};${Renderer.#used_hydratables(ctx.lookup)}${Renderer.#unused_hydratables(unused_keys)}
 			}
 		</script>`;
