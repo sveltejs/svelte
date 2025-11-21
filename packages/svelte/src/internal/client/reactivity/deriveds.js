@@ -34,7 +34,7 @@ import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { Boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
-import { batch_values, current_batch } from './batch.js';
+import { batch_values, current_batch, forked_derived_values } from './batch.js';
 import { unset_context } from './async.js';
 import { deferred } from '../../shared/utils.js';
 
@@ -360,8 +360,10 @@ export function update_derived(derived) {
 		// the underlying value will be updated when the fork is committed.
 		// otherwise, the next time we get here after a 'real world' state
 		// change, `derived.equals` may incorrectly return `true`
-		if (!current_batch?.is_fork) {
+		if (!forked_derived_values) {
 			derived.v = value;
+		} else {
+			forked_derived_values.set(derived, value);
 		}
 
 		derived.wv = increment_write_version();
