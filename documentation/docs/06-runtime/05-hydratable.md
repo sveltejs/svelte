@@ -2,7 +2,7 @@
 title: Hydratable data
 ---
 
-In Svelte, when you want to render asynchonous content data on the server, you can simply `await` it. This is great! However, it comes with a pitall: when hydrating that content on the client, Svelte has to redo the asynchronous work, which blocks hydration for however long it takes:
+In Svelte, when you want to render asynchronous content data on the server, you can simply `await` it. This is great! However, it comes with a pitfall: when hydrating that content on the client, Svelte has to redo the asynchronous work, which blocks hydration for however long it takes:
 
 ```svelte
 <script>
