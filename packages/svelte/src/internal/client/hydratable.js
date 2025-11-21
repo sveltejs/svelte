@@ -1,4 +1,3 @@
-/** @import { Decode, Transport } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import { hydrating } from './dom/hydration.js';
 import * as w from './warnings.js';
