@@ -31,6 +31,11 @@ export const EAGER_EFFECT = 1 << 17;
 export const HEAD_EFFECT = 1 << 18;
 export const EFFECT_PRESERVED = 1 << 19;
 export const USER_EFFECT = 1 << 20;
+/**
+ * A block effect that should run as part of render effects, i.e. not eagerly as part of tree traversal or effect flushing.
+ * Essentially it is a combination of RENDER_EFFECT and BLOCK_EFFECT.
+ */
+export const BLOCK_NON_EAGER = 1 << 24;
 
 // Flags exclusive to deriveds
 /**

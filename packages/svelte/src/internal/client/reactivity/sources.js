@@ -30,7 +30,8 @@ import {
 	ROOT_EFFECT,
 	ASYNC,
 	WAS_MARKED,
-	CONNECTED
+	CONNECTED,
+	BLOCK_NON_EAGER
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -363,10 +364,12 @@ function mark_reactions(signal, status) {
 				mark_reactions(derived, MAYBE_DIRTY);
 			}
 		} else if (not_dirty) {
-			if ((flags & BLOCK_EFFECT) !== 0) {
-				if (eager_block_effects !== null) {
-					eager_block_effects.add(/** @type {Effect} */ (reaction));
-				}
+			if (
+				(flags & BLOCK_EFFECT) !== 0 &&
+				(flags & BLOCK_NON_EAGER) === 0 &&
+				eager_block_effects !== null
+			) {
+				eager_block_effects.add(/** @type {Effect} */ (reaction));
 			}
 
 			schedule_effect(/** @type {Effect} */ (reaction));

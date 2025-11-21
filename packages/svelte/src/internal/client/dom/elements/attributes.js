@@ -5,7 +5,7 @@ import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
 import { create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
-import { LOADING_ATTR_SYMBOL } from '#client/constants';
+import { BLOCK_NON_EAGER, LOADING_ATTR_SYMBOL } from '#client/constants';
 import { queue_micro_task } from '../task.js';
 import { is_capture_event, can_delegate_event, normalize_attribute } from '../../../../utils.js';
 import {
@@ -540,7 +540,7 @@ export function attribute_effect(
 			}
 
 			prev = current;
-		});
+		}, BLOCK_NON_EAGER);
 
 		if (is_select) {
 			var select = /** @type {HTMLSelectElement} */ (element);
