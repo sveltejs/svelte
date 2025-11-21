@@ -483,7 +483,7 @@ const visitors = {
 	},
 
 	Nth(node, context) {
-		context.write(node.value); // TODO is this right?
+		context.write(node.value);
 	},
 
 	OnDirective(node, context) {
