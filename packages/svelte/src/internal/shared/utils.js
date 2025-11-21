@@ -1,3 +1,5 @@
+/** @import { GetRequestInit } from '#shared' */
+
 // Store the references to globals in case someone tries to monkey patch these, causing the below
 // to de-opt (this occurs often when using popular extensions).
 export var is_array = Array.isArray;
@@ -48,7 +50,7 @@ export function run_all(arr) {
 
 /**
  * TODO replace with Promise.withResolvers once supported widely enough
- * @template T
+ * @template [T=void]
  */
 export function deferred() {
 	/** @type {(value: T) => void} */
@@ -115,4 +117,18 @@ export function to_array(value, n) {
 	}
 
 	return array;
+}
+
+/**
+ * @template [TReturn=any]
+ * @param {string | URL} url
+ * @param {GetRequestInit} [init]
+ * @returns {Promise<TReturn>}
+ */
+export async function fetch_json(url, init) {
+	const response = await fetch(url, init);
+	if (!response.ok) {
+		throw new Error(`TODO error: Fetch error: ${response.status} ${response.statusText}`);
+	}
+	return response.json();
 }

@@ -15,6 +15,19 @@ export function await_invalid() {
 }
 
 /**
+ * `%name%`(...) is unavailable on the server.
+ * @param {string} name
+ * @returns {never}
+ */
+export function fn_unavailable_on_server(name) {
+	const error = new Error(`fn_unavailable_on_server\n\`${name}\`(...) is unavailable on the server.\nhttps://svelte.dev/e/fn_unavailable_on_server`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
  * The `html` property of server render results has been deprecated. Use `body` instead.
  * @returns {never}
  */
@@ -27,12 +40,47 @@ export function html_deprecated() {
 }
 
 /**
+ * Attempted to set hydratable with key `%key%` twice. This behavior is undefined.
+ * 
+ * First set occurred at:
+ * %stack%
+ * @param {string} key
+ * @param {string} stack
+ * @returns {never}
+ */
+export function hydratable_clobbering(key, stack) {
+	const error = new Error(`hydratable_clobbering\nAttempted to set hydratable with key \`${key}\` twice. This behavior is undefined.
+
+First set occurred at:
+${stack}\nhttps://svelte.dev/e/hydratable_clobbering`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
  * `%name%(...)` is not available on the server
+ * Certain methods such as `mount` cannot be invoked while running in a server context. Avoid calling them eagerly, i.e. not during render.
  * @param {string} name
  * @returns {never}
  */
 export function lifecycle_function_unavailable(name) {
-	const error = new Error(`lifecycle_function_unavailable\n\`${name}(...)\` is not available on the server\nhttps://svelte.dev/e/lifecycle_function_unavailable`);
+	const error = new Error(`lifecycle_function_unavailable\n\`${name}(...)\` is not available on the server
+Certain methods such as \`mount\` cannot be invoked while running in a server context. Avoid calling them eagerly, i.e. not during render.\nhttps://svelte.dev/e/lifecycle_function_unavailable`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
+ * Failed to retrieve `render` context. %addendum%
+ * @param {string} addendum
+ * @returns {never}
+ */
+export function render_context_unavailable(addendum) {
+	const error = new Error(`render_context_unavailable\nFailed to retrieve \`render\` context. ${addendum}\nhttps://svelte.dev/e/render_context_unavailable`);
 
 	error.name = 'Svelte error';
 

@@ -230,22 +230,6 @@ export function effect_update_depth_exceeded() {
 }
 
 /**
- * Cannot use `fork(...)` unless the `experimental.async` compiler option is `true`
- * @returns {never}
- */
-export function experimental_async_fork() {
-	if (DEV) {
-		const error = new Error(`experimental_async_fork\nCannot use \`fork(...)\` unless the \`experimental.async\` compiler option is \`true\`\nhttps://svelte.dev/e/experimental_async_fork`);
-
-		error.name = 'Svelte error';
-
-		throw error;
-	} else {
-		throw new Error(`https://svelte.dev/e/experimental_async_fork`);
-	}
-}
-
-/**
  * Cannot use `flushSync` inside an effect
  * @returns {never}
  */
@@ -258,6 +242,23 @@ export function flush_sync_in_effect() {
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/flush_sync_in_effect`);
+	}
+}
+
+/**
+ * `%name%`(...) is unavailable in the browser.
+ * @param {string} name
+ * @returns {never}
+ */
+export function fn_unavailable_on_client(name) {
+	if (DEV) {
+		const error = new Error(`fn_unavailable_on_client\n\`${name}\`(...) is unavailable in the browser.\nhttps://svelte.dev/e/fn_unavailable_on_client`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/fn_unavailable_on_client`);
 	}
 }
 
