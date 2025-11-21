@@ -357,6 +357,7 @@ const visitors = {
 	},
 
 	ConstTag(node, context) {
+		// TODO this is buggy
 		context.write('{@const ');
 		context.visit(node.declaration);
 		context.write('}');
