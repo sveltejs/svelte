@@ -450,6 +450,7 @@ const visitors = {
 				context.write('{:else}');
 			}
 
+			// TODO inconsistent indentation behavior here
 			block(context, node.alternate);
 		}
 
