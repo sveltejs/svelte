@@ -66,7 +66,12 @@ function encode(key, value, values, unresolved) {
 				needs_thunk = false;
 				return result;
 			};
-			const serialize_promise = value.then(scoped_uneval);
+			const serialize_promise = value
+				.then(scoped_uneval)
+				.catch((devalue_error) =>
+					e.hydratable_serialization_failed(serialization_stack(entry.stack, devalue_error?.stack))
+				);
+			serialize_promise.catch(() => {});
 			unresolved?.set(serialize_promise, key);
 			serialize_promise.finally(() => unresolved?.delete(serialize_promise));
 
@@ -122,4 +127,19 @@ async function compare(key, a, b) {
 			b?.stack ?? '<missing stack trace>'
 		);
 	}
+}
+
+/**
+ * @param {string | undefined} root_stack
+ * @param {string | undefined} uneval_stack
+ */
+function serialization_stack(root_stack, uneval_stack) {
+	let out = '';
+	if (root_stack) {
+		out += root_stack + '\n';
+	}
+	if (uneval_stack) {
+		out += 'Caused by:\n' + uneval_stack + '\n';
+	}
+	return out || '<missing stack trace>';
 }

@@ -33,6 +33,15 @@ This error occurs when using `hydratable` multiple times with the same key. To a
 </script>
 ```
 
+## hydratable_serialization_failed
+
+> Failed to serialize `hydratable` data.
+>
+> `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/uneval) can, plus Promises. 
+>
+> Stack:
+> %stack%
+
 ## lifecycle_function_unavailable
 
 > `%name%(...)` is not available on the server

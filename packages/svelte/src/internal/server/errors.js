@@ -54,6 +54,29 @@ ${stack2}\nhttps://svelte.dev/e/hydratable_clobbering`);
 }
 
 /**
+ * Failed to serialize `hydratable` data.
+ * 
+ * `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/uneval) can, plus Promises. 
+ * 
+ * Stack:
+ * %stack%
+ * @param {string} stack
+ * @returns {never}
+ */
+export function hydratable_serialization_failed(stack) {
+	const error = new Error(`hydratable_serialization_failed\nFailed to serialize \`hydratable\` data.
+
+\`hydratable\` can serialize anything [\`uneval\` from \`devalue\`](https://npmjs.com/package/uneval) can, plus Promises. 
+
+Stack:
+${stack}\nhttps://svelte.dev/e/hydratable_serialization_failed`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
  * `%name%(...)` is not available on the server
  * @param {string} name
  * @returns {never}
