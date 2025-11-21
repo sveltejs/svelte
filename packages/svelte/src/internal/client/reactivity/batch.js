@@ -68,14 +68,6 @@ export let previous_batch = null;
  */
 export let batch_values = null;
 
-/**
- * When time travelling (i.e. working in one batch, while other batches
- * still have ongoing work), we ignore the real values of affected
- * signals in favour of their values within the batch
- * @type {Map<Value, any> | null}
- */
-export let forked_derived_values = null;
-
 // TODO this should really be a property of `batch`
 /** @type {Effect[]} */
 let queued_root_effects = [];
@@ -966,15 +958,14 @@ export function fork(fn) {
 
 	var batch = Batch.ensure();
 	batch.is_fork = true;
+	batch_values = new Map();
 
 	var committed = false;
 	var settled = batch.settled();
 
-	forked_derived_values = new Map();
-
 	flushSync(fn);
 
-	forked_derived_values = null;
+	batch_values = null;
 
 	// revert state changes
 	for (var [source, value] of batch.previous) {
