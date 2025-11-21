@@ -10,17 +10,18 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 
 	const ast = parse(input, { modern: true });
 	const output = print(ast);
+	const outputCode = output.code.endsWith('\n') ? output.code : output.code + '\n';
 
 	// run `UPDATE_SNAPSHOTS=true pnpm test print` to update print tests
 	if (process.env.UPDATE_SNAPSHOTS) {
-		fs.writeFileSync(`${cwd}/output.svelte`, output.code);
+		fs.writeFileSync(`${cwd}/output.svelte`, outputCode);
 	} else {
-		fs.writeFileSync(`${cwd}/_actual.svelte`, output.code);
+		fs.writeFileSync(`${cwd}/_actual.svelte`, outputCode);
 
 		const file = `${cwd}/output.svelte`;
 
 		const expected = fs.existsSync(file) ? fs.readFileSync(file, 'utf-8') : '';
-		assert.deepEqual(output.code.trim().replaceAll('\r', ''), expected.trim().replaceAll('\r', ''));
+		assert.deepEqual(outputCode.trim().replaceAll('\r', ''), expected.trim().replaceAll('\r', ''));
 	}
 });
 
