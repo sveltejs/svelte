@@ -1,6 +1,14 @@
 
 
 <style>
+	.foo {
+		color: red;
+	}
+
+	.foo.bar {
+		color: blue;
+	}
+
 	@media (max-width: 600px) {
 		.box {
 			display: none;
@@ -21,5 +29,17 @@
 		font-family: "MyFont";
 
 		src: url("/fonts/MyFont.woff2") format("woff2");
+	}
+
+	.container .item {
+		color: red;
+	}
+
+	nav > ul.menu {
+		display: flex;
+	}
+
+	h2 + p.note {
+		margin-top: 0;
 	}
 </style>
