@@ -27,12 +27,78 @@ export function html_deprecated() {
 }
 
 /**
+ * Attempted to set `hydratable` with key `%key%` twice with different values.
+ * 
+ * First instance occurred at:
+ * %stack%
+ * 
+ * Second instance occurred at:
+ * %stack2%
+ * @param {string} key
+ * @param {string} stack
+ * @param {string} stack2
+ * @returns {never}
+ */
+export function hydratable_clobbering(key, stack, stack2) {
+	const error = new Error(`hydratable_clobbering\nAttempted to set \`hydratable\` with key \`${key}\` twice with different values.
+
+First instance occurred at:
+${stack}
+
+Second instance occurred at:
+${stack2}\nhttps://svelte.dev/e/hydratable_clobbering`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
+ * Failed to serialize `hydratable` data for key `%key%`.
+ * 
+ * `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/uneval) can, plus Promises. 
+ * 
+ * Stack:
+ * %stack%
+ * @param {string} key
+ * @param {string} stack
+ * @returns {never}
+ */
+export function hydratable_serialization_failed(key, stack) {
+	const error = new Error(`hydratable_serialization_failed\nFailed to serialize \`hydratable\` data for key \`${key}\`.
+
+\`hydratable\` can serialize anything [\`uneval\` from \`devalue\`](https://npmjs.com/package/uneval) can, plus Promises. 
+
+Stack:
+${stack}\nhttps://svelte.dev/e/hydratable_serialization_failed`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
  * `%name%(...)` is not available on the server
  * @param {string} name
  * @returns {never}
  */
 export function lifecycle_function_unavailable(name) {
 	const error = new Error(`lifecycle_function_unavailable\n\`${name}(...)\` is not available on the server\nhttps://svelte.dev/e/lifecycle_function_unavailable`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
+ * Failed to retrieve `render` context. %addendum%
+ * If `AsyncLocalStorage` is available, you're likely calling a function that needs access to the `render` context (`hydratable`, `cache`, or something that depends on these) from outside of `render`. If `AsyncLocalStorage` is not available, these functions must also be called synchronously from within `render` -- i.e. not after any `await`s.
+ * @param {string} addendum
+ * @returns {never}
+ */
+export function render_context_unavailable(addendum) {
+	const error = new Error(`render_context_unavailable\nFailed to retrieve \`render\` context. ${addendum}
+If \`AsyncLocalStorage\` is available, you're likely calling a function that needs access to the \`render\` context (\`hydratable\`, \`cache\`, or something that depends on these) from outside of \`render\`. If \`AsyncLocalStorage\` is not available, these functions must also be called synchronously from within \`render\` -- i.e. not after any \`await\`s.\nhttps://svelte.dev/e/render_context_unavailable`);
 
 	error.name = 'Svelte error';
 

@@ -230,22 +230,6 @@ export function effect_update_depth_exceeded() {
 }
 
 /**
- * Cannot use `fork(...)` unless the `experimental.async` compiler option is `true`
- * @returns {never}
- */
-export function experimental_async_fork() {
-	if (DEV) {
-		const error = new Error(`experimental_async_fork\nCannot use \`fork(...)\` unless the \`experimental.async\` compiler option is \`true\`\nhttps://svelte.dev/e/experimental_async_fork`);
-
-		error.name = 'Svelte error';
-
-		throw error;
-	} else {
-		throw new Error(`https://svelte.dev/e/experimental_async_fork`);
-	}
-}
-
-/**
  * Cannot use `flushSync` inside an effect
  * @returns {never}
  */
@@ -306,6 +290,23 @@ export function get_abort_signal_outside_reaction() {
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/get_abort_signal_outside_reaction`);
+	}
+}
+
+/**
+ * Expected to find a hydratable with key `%key%` during hydration, but did not.
+ * @param {string} key
+ * @returns {never}
+ */
+export function hydratable_missing_but_required(key) {
+	if (DEV) {
+		const error = new Error(`hydratable_missing_but_required\nExpected to find a hydratable with key \`${key}\` during hydration, but did not.\nhttps://svelte.dev/e/hydratable_missing_but_required`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/hydratable_missing_but_required`);
 	}
 }
 

@@ -1,18 +1,19 @@
 /** @import { Component } from 'svelte' */
-/** @import { RenderOutput, SSRContext, SyncRenderOutput } from './types.js' */
+/** @import { HydratableContext, RenderOutput, SSRContext, SyncRenderOutput } from './types.js' */
+/** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import { abort } from './abort-signal.js';
-import { pop, push, set_ssr_context, ssr_context } from './context.js';
+import { pop, push, set_ssr_context, ssr_context, save } from './context.js';
 import * as e from './errors.js';
+import * as w from './warnings.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { attributes } from './index.js';
+import { get_render_context, with_render_context, init_render_context } from './render-context.js';
+import { DEV } from 'esm-env';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
-/**
- * @template T
- * @typedef {T | Promise<T>} MaybePromise<T>
- */
+
 /**
  * @typedef {string | Renderer} RendererItem
  */
@@ -423,7 +424,9 @@ export class Renderer {
 							});
 							return Promise.resolve(user_result);
 						}
-						async ??= Renderer.#render_async(component, options);
+						async ??= init_render_context().then(() =>
+							with_render_context(() => Renderer.#render_async(component, options))
+						);
 						return async.then((result) => {
 							Object.defineProperty(result, 'html', {
 								// eslint-disable-next-line getter-return
@@ -515,16 +518,23 @@ export class Renderer {
 	 * @returns {Promise<AccumulatedContent>}
 	 */
 	static async #render_async(component, options) {
-		var previous_context = ssr_context;
-		try {
-			const renderer = Renderer.#open_render('async', component, options);
+		const restore = await save(
+			(async () => {
+				try {
+					const renderer = Renderer.#open_render('async', component, options);
+					const content = await renderer.#collect_content_async();
+					const hydratables = await renderer.#collect_hydratables();
+					if (hydratables !== null) {
+						content.head = hydratables + content.head;
+					}
+					return Renderer.#close_render(content, renderer);
+				} finally {
+					abort();
+				}
+			})()
+		);
 
-			const content = await renderer.#collect_content_async();
-			return Renderer.#close_render(content, renderer);
-		} finally {
-			abort();
-			set_ssr_context(previous_context);
-		}
+		return restore();
 	}
 
 	/**
@@ -562,6 +572,23 @@ export class Renderer {
 		}
 
 		return content;
+	}
+
+	async #collect_hydratables() {
+		const ctx = get_render_context().hydratable;
+
+		for (const [_, key] of ctx.unresolved_promises) {
+			// this is a problem -- it means we've finished the render but we're still waiting on a promise to resolve so we can
+			// serialize it, so we're blocking the response on useless content.
+			w.unresolved_hydratable(key, ctx.lookup.get(key)?.stack ?? '<missing stack trace>');
+		}
+
+		for (const comparison of ctx.comparisons) {
+			// these reject if there's a mismatch
+			await comparison;
+		}
+
+		return await Renderer.#hydratable_block(ctx);
 	}
 
 	/**
@@ -616,6 +643,49 @@ export class Renderer {
 			head,
 			body
 		};
+	}
+
+	/**
+	 * @param {HydratableContext} ctx
+	 */
+	static async #hydratable_block(ctx) {
+		if (ctx.lookup.size === 0) {
+			return null;
+		}
+
+		let values = await Promise.all(ctx.values);
+
+		if (DEV) {
+			// turn `d("1")` into `d(1)` — see `hydratable.js` for an explanation
+			values = values.map((v) => v.replace(/d\("(\d+)"\)/g, (_, i) => `d(${i})`));
+		}
+
+		// TODO csp -- have discussed but not implemented
+		return `
+		<script>
+			{
+				const r = (v) => Promise.resolve(v);
+				const v = [${values.join(',')}];
+				function d(i) {
+					const value = v[i];
+					return typeof value === 'function' ? value() : value;
+				};
+				const sv = window.__svelte ??= {};${Renderer.#used_hydratables(ctx.lookup)}
+			}
+		</script>`;
+	}
+
+	/** @param {HydratableContext['lookup']} lookup */
+	static #used_hydratables(lookup) {
+		let entries = [];
+		for (const [k, v] of lookup) {
+			entries.push(`[${JSON.stringify(k)},${v.index}]`);
+		}
+		return `
+				const store = sv.h ??= new Map();
+				for (const [k,i] of [${entries.join(',')}]) {
+						store.set(k, d(i));
+				}`;
 	}
 }
 

@@ -73,6 +73,7 @@ const { test, run } = suite_with_variants<SSRTest, 'sync' | 'async', CompileOpti
 		seen?.clear();
 
 		let rendered;
+		let errored = false;
 		try {
 			const render_result = render(Component, {
 				props: config.props || {},
@@ -80,12 +81,17 @@ const { test, run } = suite_with_variants<SSRTest, 'sync' | 'async', CompileOpti
 			});
 			rendered = is_async ? await render_result : render_result;
 		} catch (error) {
+			errored = true;
 			if (config.error) {
-				assert.deepEqual((error as Error).message, config.error);
+				assert.include((error as Error).message, config.error);
 				return;
 			} else {
 				throw error;
 			}
+		}
+
+		if (config.error && !errored) {
+			assert.fail('Expected an error to be thrown, but rendering succeeded.');
 		}
 
 		const { body, head } = rendered;
