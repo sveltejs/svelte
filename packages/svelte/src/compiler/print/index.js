@@ -40,6 +40,8 @@ function block(context, node, allow_inline = false) {
 	}
 }
 
+// TODO split css and svelte visitors? Currently they are really mixed together
+
 /** @type {Visitors<AST.SvelteNode>} */
 const visitors = {
 	Root(node, context) {
