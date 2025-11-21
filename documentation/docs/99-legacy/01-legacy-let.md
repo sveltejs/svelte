@@ -1,5 +1,6 @@
 ---
 title: Reactive let/var declarations
+use_cases: "legacy: reactive variables, Svelte 3/4 state"
 ---
 
 In runes mode, reactive state is explicitly declared with the [`$state` rune]($state).

@@ -1,5 +1,6 @@
 ---
 title: Custom properties
+use_cases: "theming, design tokens, dynamic CSS variables, component customization"
 ---
 
 You can pass CSS custom properties — both static and dynamic — to components:
