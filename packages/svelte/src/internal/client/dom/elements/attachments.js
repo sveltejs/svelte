@@ -1,4 +1,5 @@
 /** @import { Effect } from '#client' */
+import { BLOCK_NON_EAGER } from '#client/constants';
 import { block, branch, effect, destroy_effect } from '../../reactivity/effects.js';
 
 // TODO in 6.0 or 7.0, when we remove legacy mode, we can simplify this by
@@ -29,5 +30,5 @@ export function attach(node, get_fn) {
 				});
 			}
 		}
-	});
+	}, BLOCK_NON_EAGER);
 }
