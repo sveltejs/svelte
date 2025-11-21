@@ -363,6 +363,18 @@ declare module 'svelte' {
 		 * Discard the fork
 		 */
 		discard(): void;
+		/**
+		 * Whether the fork has been committed
+		 */
+		isCommitted(): boolean;
+		/**
+		 * Whether the fork has been discarded
+		 */
+		isDiscarded(): boolean;
+		/**
+		 * Run a function within the forked context.
+		 */
+		run(fn: () => void): Promise<void>;
 	}
 	/**
 	 * Returns an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that aborts when the current [derived](https://svelte.dev/docs/svelte/$derived) or [effect](https://svelte.dev/docs/svelte/$effect) re-runs or is destroyed.
