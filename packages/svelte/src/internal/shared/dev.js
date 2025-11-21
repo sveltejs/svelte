@@ -1,4 +1,4 @@
-import { define_property } from './utils';
+import { define_property } from './utils.js';
 
 /**
  * @param {string} label
@@ -6,9 +6,12 @@ import { define_property } from './utils';
  * @returns {Error & { stack: string } | null}
  */
 export function get_infinite_stack(label, fn) {
+	// @ts-ignore - doesn't exist everywhere
 	const limit = Error.stackTraceLimit;
+	// @ts-ignore - doesn't exist everywhere
 	Error.stackTraceLimit = Infinity;
 	let error = Error();
+	// @ts-ignore - doesn't exist everywhere
 	Error.stackTraceLimit = limit;
 	const stack = fn(error.stack);
 
