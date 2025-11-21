@@ -3,9 +3,9 @@ import { assert } from 'vitest';
 import { parse, print } from 'svelte/compiler';
 import { suite, type BaseTest } from '../suite.js';
 
-interface ParserTest extends BaseTest {}
+interface PrintTest extends BaseTest {}
 
-const { test, run } = suite<ParserTest>(async (config, cwd) => {
+const { test, run } = suite<PrintTest>(async (config, cwd) => {
 	const input = fs.readFileSync(`${cwd}/input.svelte`, 'utf-8');
 
 	const ast = parse(input, { modern: true });
