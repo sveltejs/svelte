@@ -10,7 +10,7 @@ You (or the framework you're using) called [`render(...)`](svelte-server#render)
 
 ## hydratable_clobbering
 
-> Attempted to set hydratable with key `%key%` twice with different values.
+> Attempted to set `hydratable` with key `%key%` twice with different values.
 >
 > First instance occurred at:
 > %stack%
@@ -35,7 +35,7 @@ This error occurs when using `hydratable` multiple times with the same key. To a
 
 ## hydratable_serialization_failed
 
-> Failed to serialize `hydratable` data.
+> Failed to serialize `hydratable` data for key `%key%`.
 >
 > `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/uneval) can, plus Promises. 
 >

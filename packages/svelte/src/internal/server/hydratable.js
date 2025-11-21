@@ -69,7 +69,10 @@ function encode(key, value, values, unresolved) {
 			const serialize_promise = value
 				.then(scoped_uneval)
 				.catch((devalue_error) =>
-					e.hydratable_serialization_failed(serialization_stack(entry.stack, devalue_error?.stack))
+					e.hydratable_serialization_failed(
+						key,
+						serialization_stack(entry.stack, devalue_error?.stack)
+					)
 				);
 			serialize_promise.catch(() => {});
 			unresolved?.set(serialize_promise, key);
