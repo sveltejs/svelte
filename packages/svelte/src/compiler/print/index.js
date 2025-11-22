@@ -566,7 +566,6 @@ const svelte_visitors = {
 	},
 
 	LetDirective(node, context) {
-		// TODO new lines
 		context.write(`let:${node.name}`);
 		if (
 			node.expression !== null &&
@@ -623,7 +622,7 @@ const svelte_visitors = {
 		attributes(node.attributes, context);
 		if (node.fragment.nodes.length > 0) {
 			context.write('>');
-			context.visit(node.fragment); // TODO block/inline
+			context.visit(node.fragment);
 			context.write('</slot>');
 		} else {
 			context.write(' />');

@@ -11,6 +11,7 @@ const MIGRATE = false;
 const FROM_HTML = true;
 const FROM_TREE = false;
 const DEV = false;
+const PRINT = false;
 
 const argv = parseArgs({ options: { runes: { type: 'boolean' } }, args: process.argv.slice(2) });
 
@@ -71,6 +72,11 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 						'\t'
 					)
 				);
+
+				if (PRINT) {
+					const printed = print(ast);
+					write(`${cwd}/output/printed/${file}`, printed.code);
+				}
 			}
 
 			if (MIGRATE) {
@@ -81,10 +87,6 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 					console.warn(`Error migrating ${file}`, e);
 				}
 			}
-
-			const printed = print(ast);
-
-			write(`${cwd}/output/printed/${file}`, printed.code);
 		}
 
 		let from_html;
