@@ -442,8 +442,7 @@ const svelte_visitors = {
 	},
 
 	ConstTag(node, context) {
-		// TODO this is buggy
-		context.write('{@const ');
+		context.write('{@');
 		context.visit(node.declaration);
 		context.write('}');
 	},
