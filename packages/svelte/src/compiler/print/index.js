@@ -44,7 +44,6 @@ function block(context, node, allow_inline = false) {
 /** @type {Visitors<AST.SvelteNode>} */
 const css_visitors = {
 	Atrule(node, context) {
-		// TODO seems to produce too many new lines sometimes. Also new lines above style tag?
 		context.write(`@${node.name}`);
 		if (node.prelude) context.write(` ${node.prelude}`);
 
@@ -67,7 +66,6 @@ const css_visitors = {
 
 			for (const child of node.children) {
 				if (started) {
-					context.margin();
 					context.newline();
 				}
 
