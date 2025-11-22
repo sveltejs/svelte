@@ -733,6 +733,7 @@ const visitors = {
 			context.visit(attribute);
 		}
 
+		// TODO handling of self-closing does not seem to work
 		if (node.fragment) {
 			context.write('>');
 			block(context, node.fragment, true);
@@ -751,6 +752,7 @@ const visitors = {
 			context.visit(attribute);
 		}
 
+		// TODO handling of self-closing does not seem to work
 		if (node.fragment) {
 			context.write('>');
 			block(context, node.fragment, true);
@@ -763,6 +765,7 @@ const visitors = {
 	SvelteElement(node, context) {
 		context.write('<svelte:element');
 
+		// TODO spaces at interesting places
 		context.write('this={');
 		context.visit(node.tag);
 		context.write('} ');
@@ -773,6 +776,7 @@ const visitors = {
 			context.visit(attribute);
 		}
 
+		// TODO new line handling not working?
 		if (node.fragment) {
 			context.write('>');
 			block(context, node.fragment, true);
@@ -827,6 +831,7 @@ const visitors = {
 			context.visit(attribute);
 		}
 
+		// TODO handling of self-closing does not seem to work
 		if (node.fragment) {
 			context.write('>');
 			block(context, node.fragment, true);
@@ -845,6 +850,7 @@ const visitors = {
 			context.visit(attribute);
 		}
 
+		// TODO handling of self-closing does not seem to work
 		if (node.fragment) {
 			context.write('>');
 			block(context, node.fragment, true);
