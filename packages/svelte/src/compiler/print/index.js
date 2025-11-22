@@ -56,6 +56,33 @@ const css_visitors = {
 		}
 	},
 
+	Block(node, context) {
+		context.write('{');
+
+		if (node.children.length > 0) {
+			context.indent();
+			context.newline();
+
+			let started = false;
+
+			for (const child of node.children) {
+				if (started) {
+					context.margin();
+					context.newline();
+				}
+
+				context.visit(child);
+
+				started = true;
+			}
+
+			context.dedent();
+			context.newline();
+		}
+
+		context.write('}');
+	},
+
 	ClassSelector(node, context) {
 		context.write(`.${node.name}`);
 	},
@@ -376,33 +403,6 @@ const svelte_visitors = {
 			context.visit(node.expression.expressions[1]);
 		} else {
 			context.visit(node.expression);
-		}
-
-		context.write('}');
-	},
-
-	Block(node, context) {
-		context.write('{');
-
-		if (node.children.length > 0) {
-			context.indent();
-			context.newline();
-
-			let started = false;
-
-			for (const child of node.children) {
-				if (started) {
-					context.margin();
-					context.newline();
-				}
-
-				context.visit(child);
-
-				started = true;
-			}
-
-			context.dedent();
-			context.newline();
 		}
 
 		context.write('}');
