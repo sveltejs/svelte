@@ -4,7 +4,8 @@
 	let visible = $state(false);
 </script>
 
-<button onclick={() => visible = !visible}>
+<button
+	onclick={() => visible = !visible}>
 	toggle
 </button>
 

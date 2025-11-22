@@ -6,6 +6,7 @@
 	}
 </script>
 
-<button on:click|preventDefault={handleClick}>
+<button
+	on:click|preventDefault={handleClick}>
 	count: {count}
 </button>

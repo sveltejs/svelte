@@ -4,6 +4,9 @@ import * as esrap from 'esrap';
 import ts from 'esrap/languages/ts';
 import { is_void } from '../../utils.js';
 
+/** Threshold for when content should be formatted on separate lines */
+const LINE_BREAK_THRESHOLD = 30;
+
 /**
  * @param {AST.SvelteNode} ast
  */
@@ -46,9 +49,26 @@ function block(context, node, allow_inline = false) {
  * @param {Context} context
  */
 function attributes(attributes, context) {
+	// Measure total width of all attributes
+	const child_context = context.new();
+
 	for (const attribute of attributes) {
-		context.write(' ');
-		context.visit(attribute);
+		child_context.write(' ');
+		child_context.visit(attribute);
+	}
+
+	// Format on multiple lines if too wide
+	const multiline = child_context.measure() > LINE_BREAK_THRESHOLD;
+
+	if (multiline) {
+		context.indent();
+		for (const attribute of attributes) {
+			context.newline();
+			context.visit(attribute);
+		}
+		context.dedent();
+	} else {
+		context.append(child_context);
 	}
 }
 
@@ -293,7 +313,7 @@ const svelte_visitors = {
 			return child_context;
 		});
 
-		multiline ||= width > 30;
+		multiline ||= width > LINE_BREAK_THRESHOLD;
 
 		for (let i = 0; i < child_contexts.length; i += 1) {
 			const prev = child_contexts[i];
@@ -585,7 +605,7 @@ const svelte_visitors = {
 			child_context.write('>');
 
 			if (node.fragment) {
-				block(child_context, node.fragment, child_context.measure() < 30);
+				block(child_context, node.fragment, child_context.measure() < LINE_BREAK_THRESHOLD);
 				child_context.write(`</${node.name}>`);
 			}
 		}
