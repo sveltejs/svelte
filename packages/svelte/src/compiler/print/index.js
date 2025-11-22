@@ -12,7 +12,8 @@ export function print(ast) {
 		ast,
 		/** @type {Visitors<AST.SvelteNode>} */ ({
 			...ts({ comments: ast.type === 'Root' ? ast.comments : [] }),
-			...visitors
+			...svelte_visitors,
+			...css_visitors
 		})
 	);
 }
@@ -40,10 +41,115 @@ function block(context, node, allow_inline = false) {
 	}
 }
 
-// TODO split css and svelte visitors? Currently they are really mixed together
+/** @type {Visitors<AST.SvelteNode>} */
+const css_visitors = {
+	Atrule(node, context) {
+		// TODO seems to produce too many new lines sometimes. Also new lines above style tag?
+		context.write(`@${node.name}`);
+		if (node.prelude) context.write(` ${node.prelude}`);
+
+		if (node.block) {
+			context.write(' ');
+			context.visit(node.block);
+		} else {
+			context.write(';');
+		}
+	},
+
+	ClassSelector(node, context) {
+		context.write(`.${node.name}`);
+	},
+
+	ComplexSelector(node, context) {
+		for (const selector of node.children) {
+			context.visit(selector);
+		}
+	},
+
+	Declaration(node, context) {
+		context.write(`${node.property}: ${node.value};`);
+	},
+
+	Nth(node, context) {
+		context.write(node.value);
+	},
+
+	PseudoClassSelector(node, context) {
+		context.write(`:${node.name}`);
+
+		if (node.args) {
+			context.write('(');
+
+			let started = false;
+
+			for (const arg of node.args.children) {
+				if (started) {
+					context.write(', ');
+				}
+
+				context.visit(arg);
+
+				started = true;
+			}
+
+			context.write(')');
+		}
+	},
+
+	PseudoElementSelector(node, context) {
+		context.write(`::${node.name}`);
+	},
+
+	RelativeSelector(node, context) {
+		if (node.combinator) {
+			if (node.combinator.name === ' ') {
+				context.write(' ');
+			} else {
+				context.write(` ${node.combinator.name} `);
+			}
+		}
+
+		for (const selector of node.selectors) {
+			context.visit(selector);
+		}
+	},
+
+	Rule(node, context) {
+		let started = false;
+
+		for (const selector of node.prelude.children) {
+			if (started) {
+				context.write(',');
+				context.newline();
+			}
+
+			context.visit(selector);
+			started = true;
+		}
+
+		context.write(' ');
+		context.visit(node.block);
+	},
+
+	SelectorList(node, context) {
+		let started = false;
+		for (const selector of node.children) {
+			if (started) {
+				context.write(', ');
+			}
+
+			context.visit(selector);
+			started = true;
+		}
+	},
+
+	TypeSelector(node, context) {
+		context.write(node.name);
+	}
+};
 
 /** @type {Visitors<AST.SvelteNode>} */
-const visitors = {
+const svelte_visitors = {
 	Root(node, context) {
 		if (node.options) {
 			context.write('<svelte:options');
@@ -189,19 +295,6 @@ const visitors = {
 		}
 	},
 
-	Atrule(node, context) {
-		// TODO seems to produce too many new lines sometimes. Also new lines above style tag?
-		context.write(`@${node.name}`);
-		if (node.prelude) context.write(` ${node.prelude}`);
-
-		if (node.block) {
-			context.write(' ');
-			context.visit(node.block);
-		} else {
-			context.write(';');
-		}
-	},
-
 	AttachTag(node, context) {
 		context.write('{@attach ');
 		context.visit(node.expression);
@@ -327,18 +420,8 @@ const visitors = {
 		}
 	},
 
-	ClassSelector(node, context) {
-		context.write(`.${node.name}`);
-	},
-
 	Comment(node, context) {
 		context.write('<!--' + node.data + '-->');
-	},
-
-	ComplexSelector(node, context) {
-		for (const selector of node.children) {
-			context.visit(selector);
-		}
 	},
 
 	Component(node, context) {
@@ -376,10 +459,6 @@ const visitors = {
 			started = true;
 		}
 		context.write('}');
-	},
-
-	Declaration(node, context) {
-		context.write(`${node.property}: ${node.value};`);
 	},
 
 	EachBlock(node, context) {
@@ -482,10 +561,6 @@ const visitors = {
 		}
 	},
 
-	Nth(node, context) {
-		context.write(node.value);
-	},
-
 	OnDirective(node, context) {
 		context.write(`on:${node.name}`);
 		for (const modifier of node.modifiers) {
@@ -499,32 +574,6 @@ const visitors = {
 			context.visit(node.expression);
 			context.write('}');
 		}
-	},
-
-	PseudoClassSelector(node, context) {
-		context.write(`:${node.name}`);
-
-		if (node.args) {
-			context.write('(');
-
-			let started = false;
-
-			for (const arg of node.args.children) {
-				if (started) {
-					context.write(', ');
-				}
-
-				context.visit(arg);
-
-				started = true;
-			}
-
-			context.write(')');
-		}
-	},
-
-	PseudoElementSelector(node, context) {
-		context.write(`::${node.name}`);
 	},
 
 	RegularElement(node, context) {
@@ -552,53 +601,10 @@ const visitors = {
 		context.append(child_context);
 	},
 
-	RelativeSelector(node, context) {
-		if (node.combinator) {
-			if (node.combinator.name === ' ') {
-				context.write(' ');
-			} else {
-				context.write(` ${node.combinator.name} `);
-			}
-		}
-
-		for (const selector of node.selectors) {
-			context.visit(selector);
-		}
-	},
-
 	RenderTag(node, context) {
 		context.write('{@render ');
 		context.visit(node.expression);
 		context.write('}');
-	},
-
-	Rule(node, context) {
-		let started = false;
-
-		for (const selector of node.prelude.children) {
-			if (started) {
-				context.write(',');
-				context.newline();
-			}
-
-			context.visit(selector);
-			started = true;
-		}
-
-		context.write(' ');
-		context.visit(node.block);
-	},
-
-	SelectorList(node, context) {
-		let started = false;
-		for (const selector of node.children) {
-			if (started) {
-				context.write(', ');
-			}
-
-			context.visit(selector);
-			started = true;
-		}
 	},
 
 	SlotElement(node, context) {
@@ -878,10 +884,6 @@ const visitors = {
 			context.visit(node.expression);
 			context.write('}');
 		}
-	},
-
-	TypeSelector(node, context) {
-		context.write(node.name);
 	},
 
 	UseDirective(node, context) {
