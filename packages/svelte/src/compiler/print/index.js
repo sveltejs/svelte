@@ -768,12 +768,11 @@ const svelte_visitors = {
 	},
 
 	SvelteElement(node, context) {
-		context.write('<svelte:element');
+		context.write('<svelte:element ');
 
-		// TODO spaces at interesting places
 		context.write('this={');
 		context.visit(node.tag);
-		context.write('} ');
+		context.write('}');
 
 		for (const attribute of node.attributes) {
 			// TODO handle multiline
