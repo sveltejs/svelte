@@ -503,9 +503,8 @@ const svelte_visitors = {
 		block(context, node.body);
 
 		if (node.fallback) {
-			// TODO new lines
 			context.write('{:else}');
-			context.visit(node.fallback);
+			block(context, node.fallback);
 		}
 
 		context.write('{/each}');
