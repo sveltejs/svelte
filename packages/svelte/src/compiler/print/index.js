@@ -870,6 +870,24 @@ const svelte_visitors = {
 		context.write(node.data);
 	},
 
+	TitleElement(node, context) {
+		context.write('<title');
+
+		for (const attribute of node.attributes) {
+			// TODO handle multiline
+			context.write(' ');
+			context.visit(attribute);
+		}
+
+		if (node.fragment) {
+			context.write('>');
+			block(context, node.fragment, true);
+			context.write(`</title>`);
+		} else {
+			context.write('/>');
+		}
+	},
+
 	TransitionDirective(node, context) {
 		const directive = node.intro && node.outro ? 'transition' : node.intro ? 'in' : 'out';
 		context.write(`${directive}:${node.name}`);
