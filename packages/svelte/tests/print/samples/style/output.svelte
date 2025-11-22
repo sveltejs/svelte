@@ -46,4 +46,14 @@
 	li:nth-child(2n + 1) {
 		color: red;
 	}
+
+	.button:hover {
+		opacity: 0.5;
+	}
+
+	.card::before {
+		content: "";
+
+		display: block;
+	}
 </style>

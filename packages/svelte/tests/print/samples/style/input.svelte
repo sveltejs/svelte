@@ -29,4 +29,9 @@
   nav > ul.menu { display: flex; }
   h2 + p.note { margin-top: 0; }
   li:nth-child(2n + 1) { color: red; }
+  .button:hover { opacity: 0.5; }
+  .card::before {
+    content: "";
+    display: block;
+  }
 </style>
