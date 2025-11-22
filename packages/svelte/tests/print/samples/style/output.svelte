@@ -56,4 +56,17 @@
 
 		display: block;
 	}
+
+	.container > .item {
+		color: red;
+	}
+
+	h1 + p {
+		margin-top: 0;
+	}
+
+	.container .item,
+	nav > ul.menu {
+		color: red;
+	}
 </style>
