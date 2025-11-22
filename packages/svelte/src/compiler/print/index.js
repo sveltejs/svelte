@@ -756,10 +756,10 @@ const svelte_visitors = {
 		context.visit(node.tag);
 		context.write('}');
 		attributes(node.attributes, context);
-		// TODO new line handling not working?
+
 		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
-			block(context, node.fragment, true);
+			block(context, node.fragment);
 			context.write(`</svelte:element>`);
 		} else {
 			context.write(' />');
