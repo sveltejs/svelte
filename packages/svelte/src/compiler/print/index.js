@@ -41,6 +41,17 @@ function block(context, node, allow_inline = false) {
 	}
 }
 
+/**
+ * @param {(AST.AttachTag | AST.Attribute | AST.SpreadAttribute | AST.Directive)[]} attributes
+ * @param {Context} context
+ */
+function attributes(attributes, context) {
+	for (const attribute of attributes) {
+		context.write(' ');
+		context.visit(attribute);
+	}
+}
+
 /** @type {Visitors<AST.SvelteNode>} */
 const css_visitors = {
 	Atrule(node, context) {
@@ -204,12 +215,7 @@ const svelte_visitors = {
 
 	Script(node, context) {
 		context.write('<script');
-
-		for (const attribute of node.attributes) {
-			context.write(' ');
-			context.visit(attribute);
-		}
-
+		attributes(node.attributes, context);
 		context.write('>');
 		block(context, node.content);
 		context.write('</script>');
@@ -424,12 +430,7 @@ const svelte_visitors = {
 
 	Component(node, context) {
 		context.write(`<${node.name}`);
-
-		for (let i = 0; i < node.attributes.length; i += 1) {
-			context.write(' ');
-			context.visit(node.attributes[i]);
-		}
-
+		attributes(node.attributes, context);
 		if (node.fragment.nodes.length > 0) {
 			context.write('>');
 			block(context, node.fragment, true);
@@ -577,13 +578,7 @@ const svelte_visitors = {
 		const child_context = context.new();
 
 		child_context.write('<' + node.name);
-
-		for (const attribute of node.attributes) {
-			// TODO handle multiline
-			child_context.write(' ');
-			child_context.visit(attribute);
-		}
-
+		attributes(node.attributes, child_context);
 		if (is_void(node.name)) {
 			child_context.write(' />');
 		} else {
@@ -606,12 +601,7 @@ const svelte_visitors = {
 
 	SlotElement(node, context) {
 		context.write('<slot');
-
-		for (let i = 0; i < node.attributes.length; i += 1) {
-			context.write(' ');
-			context.visit(node.attributes[i]);
-		}
-
+		attributes(node.attributes, context);
 		if (node.fragment.nodes.length > 0) {
 			context.write('>');
 			context.visit(node.fragment); // TODO block/inline
@@ -674,12 +664,7 @@ const svelte_visitors = {
 
 	StyleSheet(node, context) {
 		context.write('<style');
-
-		for (const attribute of node.attributes) {
-			context.write(' ');
-			context.visit(attribute);
-		}
-
+		attributes(node.attributes, context);
 		context.write('>');
 
 		if (node.children.length > 0) {
@@ -707,13 +692,7 @@ const svelte_visitors = {
 
 	SvelteBoundary(node, context) {
 		context.write('<svelte:boundary');
-
-		for (const attribute of node.attributes) {
-			// TODO handle multiline
-			context.write(' ');
-			context.visit(attribute);
-		}
-
+		attributes(node.attributes, context);
 		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
 			block(context, node.fragment, true);
@@ -729,13 +708,7 @@ const svelte_visitors = {
 		context.write(' this={');
 		context.visit(node.expression);
 		context.write('}');
-
-		for (const attribute of node.attributes) {
-			// TODO handle multiline
-			context.write(' ');
-			context.visit(attribute);
-		}
-
+		attributes(node.attributes, context);
 		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
 			block(context, node.fragment, true);
@@ -747,13 +720,7 @@ const svelte_visitors = {
 
 	SvelteDocument(node, context) {
 		context.write('<svelte:document');
-
-		for (const attribute of node.attributes) {
-			// TODO handle multiline
-			context.write(' ');
-			context.visit(attribute);
-		}
-
+		attributes(node.attributes, context);
 		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
 			block(context, node.fragment, true);
@@ -769,13 +736,7 @@ const svelte_visitors = {
 		context.write('this={');
 		context.visit(node.tag);
 		context.write('}');
-
-		for (const attribute of node.attributes) {
-			// TODO handle multiline
-			context.write(' ');
-			context.visit(attribute);
-		}
-
+		attributes(node.attributes, context);
 		// TODO new line handling not working?
 		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
@@ -788,13 +749,7 @@ const svelte_visitors = {
 
 	SvelteFragment(node, context) {
 		context.write('<svelte:fragment');
-
-		for (const attribute of node.attributes) {
-			// TODO handle multiline
-			context.write(' ');
-			context.visit(attribute);
-		}
-
+		attributes(node.attributes, context);
 		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
 			block(context, node.fragment, true);
@@ -806,13 +761,7 @@ const svelte_visitors = {
 
 	SvelteHead(node, context) {
 		context.write('<svelte:head');
-
-		for (const attribute of node.attributes) {
-			// TODO handle multiline
-			context.write(' ');
-			context.visit(attribute);
-		}
-
+		attributes(node.attributes, context);
 		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
 			block(context, node.fragment, true);
@@ -824,13 +773,7 @@ const svelte_visitors = {
 
 	SvelteSelf(node, context) {
 		context.write('<svelte:self');
-
-		for (const attribute of node.attributes) {
-			// TODO handle multiline
-			context.write(' ');
-			context.visit(attribute);
-		}
-
+		attributes(node.attributes, context);
 		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
 			block(context, node.fragment, true);
@@ -842,13 +785,7 @@ const svelte_visitors = {
 
 	SvelteWindow(node, context) {
 		context.write('<svelte:window');
-
-		for (const attribute of node.attributes) {
-			// TODO handle multiline
-			context.write(' ');
-			context.visit(attribute);
-		}
-
+		attributes(node.attributes, context);
 		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
 			block(context, node.fragment, true);
@@ -864,13 +801,7 @@ const svelte_visitors = {
 
 	TitleElement(node, context) {
 		context.write('<title');
-
-		for (const attribute of node.attributes) {
-			// TODO handle multiline
-			context.write(' ');
-			context.visit(attribute);
-		}
-
+		attributes(node.attributes, context);
 		if (node.fragment) {
 			context.write('>');
 			block(context, node.fragment, true);
