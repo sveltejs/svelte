@@ -526,10 +526,10 @@ const svelte_visitors = {
 				)
 			) {
 				context.write('{:else}');
+				block(context, node.alternate);
+			} else {
+				context.visit(node.alternate);
 			}
-
-			// TODO inconsistent indentation behavior here
-			block(context, node.alternate);
 		}
 
 		if (!node.elseif) {
