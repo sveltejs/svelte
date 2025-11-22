@@ -1,1 +1,1 @@
-<svelte:componentthis={MyComponent} ></svelte:component>
+<svelte:component this={MyComponent} />

@@ -1,5 +1,5 @@
 {#if porridge.temperature > 100}
-	<p>too hot1!</p>
+	<p>too hot!</p>
 {:else if 80 > porridge.temperature}
 	<p>too cold!</p>
 {:else}

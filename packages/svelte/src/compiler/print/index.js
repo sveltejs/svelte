@@ -714,21 +714,21 @@ const svelte_visitors = {
 			context.visit(attribute);
 		}
 
-		if (node.fragment) {
+		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
 			block(context, node.fragment, true);
 			context.write(`</svelte:boundary>`);
 		} else {
-			context.write('/>');
+			context.write(' />');
 		}
 	},
 
 	SvelteComponent(node, context) {
 		context.write('<svelte:component');
 
-		context.write('this={');
+		context.write(' this={');
 		context.visit(node.expression);
-		context.write('} ');
+		context.write('}');
 
 		for (const attribute of node.attributes) {
 			// TODO handle multiline
@@ -736,13 +736,12 @@ const svelte_visitors = {
 			context.visit(attribute);
 		}
 
-		// TODO handling of self-closing does not seem to work
-		if (node.fragment) {
+		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
 			block(context, node.fragment, true);
 			context.write(`</svelte:component>`);
 		} else {
-			context.write('/>');
+			context.write(' />');
 		}
 	},
 
@@ -755,13 +754,12 @@ const svelte_visitors = {
 			context.visit(attribute);
 		}
 
-		// TODO handling of self-closing does not seem to work
-		if (node.fragment) {
+		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
 			block(context, node.fragment, true);
 			context.write(`</svelte:document>`);
 		} else {
-			context.write('/>');
+			context.write(' />');
 		}
 	},
 
@@ -779,12 +777,12 @@ const svelte_visitors = {
 		}
 
 		// TODO new line handling not working?
-		if (node.fragment) {
+		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
 			block(context, node.fragment, true);
 			context.write(`</svelte:element>`);
 		} else {
-			context.write('/>');
+			context.write(' />');
 		}
 	},
 
@@ -797,12 +795,12 @@ const svelte_visitors = {
 			context.visit(attribute);
 		}
 
-		if (node.fragment) {
+		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
 			block(context, node.fragment, true);
 			context.write(`</svelte:fragment>`);
 		} else {
-			context.write('/>');
+			context.write(' />');
 		}
 	},
 
@@ -815,12 +813,12 @@ const svelte_visitors = {
 			context.visit(attribute);
 		}
 
-		if (node.fragment) {
+		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
 			block(context, node.fragment, true);
 			context.write(`</svelte:head>`);
 		} else {
-			context.write('/>');
+			context.write(' />');
 		}
 	},
 
@@ -833,13 +831,12 @@ const svelte_visitors = {
 			context.visit(attribute);
 		}
 
-		// TODO handling of self-closing does not seem to work
-		if (node.fragment) {
+		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
 			block(context, node.fragment, true);
 			context.write(`</svelte:self>`);
 		} else {
-			context.write('/>');
+			context.write(' />');
 		}
 	},
 
@@ -852,13 +849,12 @@ const svelte_visitors = {
 			context.visit(attribute);
 		}
 
-		// TODO handling of self-closing does not seem to work
-		if (node.fragment) {
+		if (node.fragment && node.fragment.nodes.length > 0) {
 			context.write('>');
 			block(context, node.fragment, true);
 			context.write(`</svelte:window>`);
 		} else {
-			context.write('/>');
+			context.write(' />');
 		}
 	},
 
