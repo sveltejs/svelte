@@ -95,25 +95,21 @@ function base_element(node, context) {
 	let multiline = false;
 	if (is_void(node.name) || node.fragment.nodes.length === 0) {
 		child_context.write(' />');
-	} else {
+	} else if (node.fragment) {
 		child_context.write('>');
 
-		if (node.fragment) {
-			const sub_child_context = child_context.new();
-			block(sub_child_context, node.fragment, child_context.measure() < LINE_BREAK_THRESHOLD);
+		const sub_child_context = child_context.new();
+		block(sub_child_context, node.fragment, child_context.measure() < LINE_BREAK_THRESHOLD);
 
-			multiline ||= sub_child_context.measure() > LINE_BREAK_THRESHOLD;
+		multiline ||= sub_child_context.measure() > LINE_BREAK_THRESHOLD;
 
-			if (multiline) child_context.newline();
-			if (multiline && !multiline_attributes && !sub_child_context.multiline)
-				child_context.indent();
-			child_context.append(sub_child_context);
-			if (multiline && !multiline_attributes && !sub_child_context.multiline)
-				child_context.dedent();
-			if (multiline) child_context.newline();
+		if (multiline) child_context.newline();
+		if (multiline && !multiline_attributes && !sub_child_context.multiline) child_context.indent();
+		child_context.append(sub_child_context);
+		if (multiline && !multiline_attributes && !sub_child_context.multiline) child_context.dedent();
+		if (multiline) child_context.newline();
 
-			child_context.write(`</${node.name}>`);
-		}
+		child_context.write(`</${node.name}>`);
 	}
 
 	if (multiline || multiline_attributes) {
