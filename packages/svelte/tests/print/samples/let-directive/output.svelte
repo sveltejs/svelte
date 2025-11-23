@@ -1,4 +1,3 @@
-
 <FancyList
 	items={items}
 	let:item={processed}>

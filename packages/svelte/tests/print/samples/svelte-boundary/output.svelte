@@ -1,4 +1,3 @@
-
 <svelte:boundary>
 	<p>{await delayed('hello!')}</p>
 
