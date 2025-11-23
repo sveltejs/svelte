@@ -75,6 +75,56 @@ function attributes(attributes, context) {
 	return multiline;
 }
 
+/**
+ * @param {AST.BaseElement} node
+ * @param {Context} context
+ */
+function base_element(node, context) {
+	const child_context = context.new();
+
+	child_context.write('<' + node.name);
+
+	if (node.type === 'SvelteComponent' || node.type === 'SvelteElement') {
+		context.write(' this={');
+		// @ts-expect-error expression is not parse of the base node
+		context.visit(node.expression);
+		context.write('}');
+	}
+
+	let multiline_attributes = attributes(node.attributes, child_context);
+	let multiline = false;
+	if (is_void(node.name) || node.fragment.nodes.length === 0) {
+		child_context.write(' />');
+	} else {
+		child_context.write('>');
+
+		if (node.fragment) {
+			const sub_child_context = child_context.new();
+			block(sub_child_context, node.fragment, child_context.measure() < LINE_BREAK_THRESHOLD);
+
+			multiline ||= sub_child_context.measure() > LINE_BREAK_THRESHOLD;
+
+			if (multiline) child_context.newline();
+			if (multiline && !multiline_attributes && !sub_child_context.multiline)
+				child_context.indent();
+			child_context.append(sub_child_context);
+			if (multiline && !multiline_attributes && !sub_child_context.multiline)
+				child_context.dedent();
+			if (multiline) child_context.newline();
+
+			child_context.write(`</${node.name}>`);
+		}
+	}
+
+	if (multiline || multiline_attributes) {
+		context.newline();
+	}
+	context.append(child_context);
+	if (multiline || multiline_attributes) {
+		context.newline();
+	}
+}
+
 /** @type {Visitors<AST.SvelteNode>} */
 const css_visitors = {
 	Atrule(node, context) {
@@ -452,15 +502,7 @@ const svelte_visitors = {
 	},
 
 	Component(node, context) {
-		context.write(`<${node.name}`);
-		attributes(node.attributes, context);
-		if (node.fragment.nodes.length > 0) {
-			context.write('>');
-			block(context, node.fragment, true);
-			context.write(`</${node.name}>`);
-		} else {
-			context.write(' />');
-		}
+		base_element(node, context);
 	},
 
 	ConstTag(node, context) {
@@ -596,41 +638,7 @@ const svelte_visitors = {
 	},
 
 	RegularElement(node, context) {
-		const child_context = context.new();
-
-		child_context.write('<' + node.name);
-		let multiline_attributes = attributes(node.attributes, child_context);
-		let multiline = false;
-		if (is_void(node.name)) {
-			child_context.write(' />');
-		} else {
-			child_context.write('>');
-
-			if (node.fragment) {
-				const sub_child_context = child_context.new();
-				block(sub_child_context, node.fragment, child_context.measure() < LINE_BREAK_THRESHOLD);
-
-				multiline ||= sub_child_context.measure() > LINE_BREAK_THRESHOLD;
-
-				if (multiline) child_context.newline();
-				if (multiline && !multiline_attributes && !sub_child_context.multiline)
-					child_context.indent();
-				child_context.append(sub_child_context);
-				if (multiline && !multiline_attributes && !sub_child_context.multiline)
-					child_context.dedent();
-				if (multiline) child_context.newline();
-
-				child_context.write(`</${node.name}>`);
-			}
-		}
-
-		if (multiline || multiline_attributes) {
-			context.newline();
-		}
-		context.append(child_context);
-		if (multiline || multiline_attributes) {
-			context.newline();
-		}
+		base_element(node, context);
 	},
 
 	RenderTag(node, context) {
@@ -640,15 +648,7 @@ const svelte_visitors = {
 	},
 
 	SlotElement(node, context) {
-		context.write('<slot');
-		attributes(node.attributes, context);
-		if (node.fragment.nodes.length > 0) {
-			context.write('>');
-			context.visit(node.fragment);
-			context.write('</slot>');
-		} else {
-			context.write(' />');
-		}
+		base_element(node, context);
 	},
 
 	SnippetBlock(node, context) {
@@ -731,15 +731,7 @@ const svelte_visitors = {
 	},
 
 	SvelteBoundary(node, context) {
-		context.write('<svelte:boundary');
-		attributes(node.attributes, context);
-		if (node.fragment && node.fragment.nodes.length > 0) {
-			context.write('>');
-			block(context, node.fragment, true);
-			context.write(`</svelte:boundary>`);
-		} else {
-			context.write(' />');
-		}
+		base_element(node, context);
 	},
 
 	SvelteComponent(node, context) {
@@ -759,15 +751,7 @@ const svelte_visitors = {
 	},
 
 	SvelteDocument(node, context) {
-		context.write('<svelte:document');
-		attributes(node.attributes, context);
-		if (node.fragment && node.fragment.nodes.length > 0) {
-			context.write('>');
-			block(context, node.fragment, true);
-			context.write(`</svelte:document>`);
-		} else {
-			context.write(' />');
-		}
+		base_element(node, context);
 	},
 
 	SvelteElement(node, context) {
@@ -788,51 +772,19 @@ const svelte_visitors = {
 	},
 
 	SvelteFragment(node, context) {
-		context.write('<svelte:fragment');
-		attributes(node.attributes, context);
-		if (node.fragment && node.fragment.nodes.length > 0) {
-			context.write('>');
-			block(context, node.fragment, true);
-			context.write(`</svelte:fragment>`);
-		} else {
-			context.write(' />');
-		}
+		base_element(node, context);
 	},
 
 	SvelteHead(node, context) {
-		context.write('<svelte:head');
-		attributes(node.attributes, context);
-		if (node.fragment && node.fragment.nodes.length > 0) {
-			context.write('>');
-			block(context, node.fragment, true);
-			context.write(`</svelte:head>`);
-		} else {
-			context.write(' />');
-		}
+		base_element(node, context);
 	},
 
 	SvelteSelf(node, context) {
-		context.write('<svelte:self');
-		attributes(node.attributes, context);
-		if (node.fragment && node.fragment.nodes.length > 0) {
-			context.write('>');
-			block(context, node.fragment, true);
-			context.write(`</svelte:self>`);
-		} else {
-			context.write(' />');
-		}
+		base_element(node, context);
 	},
 
 	SvelteWindow(node, context) {
-		context.write('<svelte:window');
-		attributes(node.attributes, context);
-		if (node.fragment && node.fragment.nodes.length > 0) {
-			context.write('>');
-			block(context, node.fragment, true);
-			context.write(`</svelte:window>`);
-		} else {
-			context.write(' />');
-		}
+		base_element(node, context);
 	},
 
 	Text(node, context) {
@@ -840,15 +792,7 @@ const svelte_visitors = {
 	},
 
 	TitleElement(node, context) {
-		context.write('<title');
-		attributes(node.attributes, context);
-		if (node.fragment) {
-			context.write('>');
-			block(context, node.fragment, true);
-			context.write(`</title>`);
-		} else {
-			context.write('/>');
-		}
+		base_element(node, context);
 	},
 
 	TransitionDirective(node, context) {

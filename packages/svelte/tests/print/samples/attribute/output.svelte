@@ -1,1 +1,1 @@
-<div class="foo" data-foo="bar"></div>
+<div class="foo" data-foo="bar" />

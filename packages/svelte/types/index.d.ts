@@ -1389,7 +1389,7 @@ declare module 'svelte/compiler' {
 			expression: null | Expression;
 		}
 
-		interface BaseElement extends BaseNode {
+		export interface BaseElement extends BaseNode {
 			name: string;
 			attributes: Array<Attribute | SpreadAttribute | Directive | AttachTag>;
 			fragment: Fragment;
