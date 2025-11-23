@@ -89,11 +89,14 @@ function base_element(node, context) {
 	child_context.write('<' + node.name);
 
 	// Handle special Svelte components/elements that need 'this' attribute
-	if (node.type === 'SvelteComponent' || node.type === 'SvelteElement') {
-		context.write(' this={');
-		// @ts-expect-error expression is not part of the base node interface
-		context.visit(node.expression);
-		context.write('}');
+	if (node.type === 'SvelteComponent') {
+		child_context.write(' this={');
+		child_context.visit(/** @type {AST.SvelteComponent} */ (node).expression);
+		child_context.write('}');
+	} else if (node.type === 'SvelteElement') {
+		child_context.write(' this={');
+		child_context.visit(/** @type {AST.SvelteElement} */ (node).tag);
+		child_context.write('}');
 	}
 
 	const multiline_attributes = attributes(node.attributes, child_context);
