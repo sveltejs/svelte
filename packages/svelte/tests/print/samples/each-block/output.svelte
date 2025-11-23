@@ -3,7 +3,9 @@
 {/each}
 
 {#each objects as { id, ...rest }}
-	<li><span>{id}</span><MyComponent {...rest} /></li>
+	<li>
+		<span>{id}</span><MyComponent {...rest} />
+	</li>
 {/each}
 
 {#each expression}

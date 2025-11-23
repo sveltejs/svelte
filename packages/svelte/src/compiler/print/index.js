@@ -47,6 +47,7 @@ function block(context, node, allow_inline = false) {
 /**
  * @param {(AST.AttachTag | AST.Attribute | AST.SpreadAttribute | AST.Directive)[]} attributes
  * @param {Context} context
+ * @returns {boolean} multiline
  */
 function attributes(attributes, context) {
 	// Measure total width of all attributes
@@ -70,6 +71,8 @@ function attributes(attributes, context) {
 	} else {
 		context.append(child_context);
 	}
+
+	return multiline;
 }
 
 /** @type {Visitors<AST.SvelteNode>} */
@@ -596,19 +599,38 @@ const svelte_visitors = {
 		const child_context = context.new();
 
 		child_context.write('<' + node.name);
-		attributes(node.attributes, child_context);
+		let multiline_attributes = attributes(node.attributes, child_context);
+		let multiline = false;
 		if (is_void(node.name)) {
 			child_context.write(' />');
 		} else {
 			child_context.write('>');
 
 			if (node.fragment) {
-				block(child_context, node.fragment, child_context.measure() < LINE_BREAK_THRESHOLD);
+				const sub_child_context = child_context.new();
+				block(sub_child_context, node.fragment, child_context.measure() < LINE_BREAK_THRESHOLD);
+
+				multiline ||= sub_child_context.measure() > LINE_BREAK_THRESHOLD;
+
+				if (multiline) child_context.newline();
+				if (multiline && !multiline_attributes && !sub_child_context.multiline)
+					child_context.indent();
+				child_context.append(sub_child_context);
+				if (multiline && !multiline_attributes && !sub_child_context.multiline)
+					child_context.dedent();
+				if (multiline) child_context.newline();
+
 				child_context.write(`</${node.name}>`);
 			}
 		}
 
+		if (multiline || multiline_attributes) {
+			context.newline();
+		}
 		context.append(child_context);
+		if (multiline || multiline_attributes) {
+			context.newline();
+		}
 	},
 
 	RenderTag(node, context) {
