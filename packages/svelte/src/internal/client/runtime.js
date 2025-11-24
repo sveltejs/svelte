@@ -21,7 +21,8 @@ import {
 	REACTION_IS_UPDATING,
 	STALE_REACTION,
 	ERROR_VALUE,
-	WAS_MARKED
+	WAS_MARKED,
+	MANAGED_EFFECT
 } from './constants.js';
 import { old_values } from './reactivity/sources.js';
 import {
@@ -421,7 +422,7 @@ export function update_effect(effect) {
 	}
 
 	try {
-		if ((flags & BLOCK_EFFECT) !== 0) {
+		if ((flags & (BLOCK_EFFECT | MANAGED_EFFECT)) !== 0) {
 			destroy_block_effect_children(effect);
 		} else {
 			destroy_effect_children(effect);

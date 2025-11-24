@@ -5,7 +5,7 @@ import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
 import { create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
-import { BLOCK_NON_EAGER, LOADING_ATTR_SYMBOL } from '#client/constants';
+import { LOADING_ATTR_SYMBOL } from '#client/constants';
 import { queue_micro_task } from '../task.js';
 import { is_capture_event, can_delegate_event, normalize_attribute } from '../../../../utils.js';
 import {
@@ -20,7 +20,7 @@ import { clsx } from '../../../shared/attributes.js';
 import { set_class } from './class.js';
 import { set_style } from './style.js';
 import { ATTACHMENT_KEY, NAMESPACE_HTML, UNINITIALIZED } from '../../../../constants.js';
-import { block, branch, destroy_effect, effect } from '../../reactivity/effects.js';
+import { branch, destroy_effect, effect, managed } from '../../reactivity/effects.js';
 import { init_select, select_option } from './bindings/select.js';
 import { flatten } from '../../reactivity/async.js';
 
@@ -508,7 +508,7 @@ export function attribute_effect(
 		var is_select = element.nodeName === 'SELECT';
 		var inited = false;
 
-		block(() => {
+		managed(() => {
 			var next = fn(...values.map(get));
 			/** @type {Record<string | symbol, any>} */
 			var current = set_attributes(
@@ -540,7 +540,7 @@ export function attribute_effect(
 			}
 
 			prev = current;
-		}, BLOCK_NON_EAGER);
+		});
 
 		if (is_select) {
 			var select = /** @type {HTMLSelectElement} */ (element);
