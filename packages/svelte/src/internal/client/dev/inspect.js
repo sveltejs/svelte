@@ -1,8 +1,8 @@
 import { UNINITIALIZED } from '../../../constants.js';
 import { snapshot } from '../../shared/clone.js';
+import { get_stack } from '../../shared/dev.js';
 import { eager_effect, render_effect, validate_effect } from '../reactivity/effects.js';
 import { untrack } from '../runtime.js';
-import { get_stack } from './tracing.js';
 
 /**
  * @param {() => any[]} get_value

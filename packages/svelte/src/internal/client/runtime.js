@@ -32,7 +32,7 @@ import {
 	update_derived
 } from './reactivity/deriveds.js';
 import { async_mode_flag, tracing_mode_flag } from '../flags/index.js';
-import { tracing_expressions, get_stack } from './dev/tracing.js';
+import { tracing_expressions } from './dev/tracing.js';
 import {
 	component_context,
 	dev_current_component_function,
@@ -48,6 +48,7 @@ import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
 import { without_reactive_context } from './dom/elements/bindings/shared.js';
+import { get_stack } from '../shared/dev.js';
 
 export let is_updating_effect = false;
 

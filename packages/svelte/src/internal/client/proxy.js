@@ -25,8 +25,9 @@ import {
 import { PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
-import { get_stack, tag } from './dev/tracing.js';
+import { tag } from './dev/tracing.js';
 import { tracing_mode_flag } from '../flags/index.js';
+import { get_stack } from '../shared/dev.js';
 
 // TODO move all regexes into shared module?
 const regex_is_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;

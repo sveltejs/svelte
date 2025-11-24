@@ -131,44 +131,6 @@ export function trace(label, fn) {
 }
 
 /**
- * @param {string} label
- * @returns {Error & { stack: string } | null}
- */
-export function get_stack(label) {
-	return get_infinite_stack(label, (stack) => {
-		if (!stack) return;
-
-		const lines = stack.split('\n');
-		const new_lines = ['\n'];
-
-		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i];
-			const posixified = line.replaceAll('\\', '/');
-
-			if (line === 'Error') {
-				continue;
-			}
-
-			if (line.includes('validate_each_keys')) {
-				return undefined;
-			}
-
-			if (posixified.includes('svelte/src/internal') || posixified.includes('node_modules/.vite')) {
-				continue;
-			}
-
-			new_lines.push(line);
-		}
-
-		if (new_lines.length === 1) {
-			return undefined;
-		}
-
-		return new_lines.join('\n');
-	});
-}
-
-/**
  * @param {Value} source
  * @param {string} label
  */
