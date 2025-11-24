@@ -1391,6 +1391,33 @@ describe('signals', () => {
 		};
 	});
 
+	test('derived whose original parent effect has been destroyed keeps updating', () => {
+		return () => {
+			let count: Source<number>;
+			let double: Derived<number>;
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					count = state(0);
+					double = derived(() => $.get(count) * 2);
+				});
+			});
+
+			flushSync();
+			assert.equal($.get(double!), 0);
+
+			destroy();
+			flushSync();
+
+			set(count!, 1);
+			flushSync();
+			assert.equal($.get(double!), 2);
+
+			set(count!, 2);
+			flushSync();
+			assert.equal($.get(double!), 4);
+		};
+	});
+
 	test('$effect.root inside deriveds stay alive independently', () => {
 		const log: any[] = [];
 		const c = state(0);

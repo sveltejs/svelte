@@ -24,6 +24,7 @@ import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
 import { ignore_map, ignore_stack, pop_ignore, push_ignore } from '../../state.js';
 import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
+import { AnimateDirective } from './visitors/AnimateDirective.js';
 import { AttachTag } from './visitors/AttachTag.js';
 import { Attribute } from './visitors/Attribute.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
@@ -142,6 +143,7 @@ const visitors = {
 			pop_ignore();
 		}
 	},
+	AnimateDirective,
 	ArrowFunctionExpression,
 	AssignmentExpression,
 	AttachTag,
@@ -687,193 +689,7 @@ export function analyze_component(root, source, options) {
 		}
 	}
 
-	/**
-	 * @param {ESTree.Node} expression
-	 * @param {Scope} scope
-	 * @param {Set<Binding>} touched
-	 * @param {Set<ESTree.Node>} seen
-	 */
-	const touch = (expression, scope, touched, seen = new Set()) => {
-		if (seen.has(expression)) return;
-		seen.add(expression);
-
-		walk(
-			expression,
-			{ scope },
-			{
-				ImportDeclaration(node) {},
-				Identifier(node, context) {
-					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
-					if (is_reference(node, parent)) {
-						const binding = context.state.scope.get(node.name);
-						if (binding) {
-							touched.add(binding);
-
-							for (const assignment of binding.assignments) {
-								touch(assignment.value, assignment.scope, touched, seen);
-							}
-						}
-					}
-				}
-			}
-		);
-	};
-
-	/**
-	 * @param {ESTree.Node} node
-	 * @param {Set<ESTree.Node>} seen
-	 * @param {Set<Binding>} reads
-	 * @param {Set<Binding>} writes
-	 */
-	const trace_references = (node, reads, writes, seen = new Set()) => {
-		if (seen.has(node)) return;
-		seen.add(node);
-
-		/**
-		 * @param {ESTree.Pattern} node
-		 * @param {Scope} scope
-		 */
-		function update(node, scope) {
-			for (const pattern of unwrap_pattern(node)) {
-				const node = object(pattern);
-				if (!node) return;
-
-				const binding = scope.get(node.name);
-				if (!binding) return;
-
-				writes.add(binding);
-			}
-		}
-
-		walk(
-			node,
-			{ scope: instance.scope },
-			{
-				_(node, context) {
-					const scope = scopes.get(node);
-					if (scope) {
-						context.next({ scope });
-					} else {
-						context.next();
-					}
-				},
-				AssignmentExpression(node, context) {
-					update(node.left, context.state.scope);
-				},
-				UpdateExpression(node, context) {
-					update(
-						/** @type {ESTree.Identifier | ESTree.MemberExpression} */ (node.argument),
-						context.state.scope
-					);
-				},
-				CallExpression(node, context) {
-					// for now, assume everything touched by the callee ends up mutating the object
-					// TODO optimise this better
-
-					// special case — no need to peek inside effects as they only run once async work has completed
-					const rune = get_rune(node, context.state.scope);
-					if (rune === '$effect') return;
-
-					/** @type {Set<Binding>} */
-					const touched = new Set();
-					touch(node, context.state.scope, touched);
-
-					for (const b of touched) {
-						writes.add(b);
-					}
-				},
-				// don't look inside functions until they are called
-				ArrowFunctionExpression(_, context) {},
-				FunctionDeclaration(_, context) {},
-				FunctionExpression(_, context) {},
-				Identifier(node, context) {
-					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
-					if (is_reference(node, parent)) {
-						const binding = context.state.scope.get(node.name);
-						if (binding) {
-							reads.add(binding);
-						}
-					}
-				}
-			}
-		);
-	};
-
-	let awaited = false;
-
-	// TODO this should probably be attached to the scope?
-	var promises = b.id('$$promises');
-
-	/**
-	 * @param {ESTree.Identifier} id
-	 * @param {ESTree.Expression} blocker
-	 */
-	function push_declaration(id, blocker) {
-		analysis.instance_body.declarations.push(id);
-
-		const binding = /** @type {Binding} */ (instance.scope.get(id.name));
-		binding.blocker = blocker;
-	}
-
-	for (let node of instance.ast.body) {
-		if (node.type === 'ImportDeclaration') {
-			analysis.instance_body.hoisted.push(node);
-			continue;
-		}
-
-		if (node.type === 'ExportDefaultDeclaration' || node.type === 'ExportAllDeclaration') {
-			// these can't exist inside `<script>` but TypeScript doesn't know that
-			continue;
-		}
-
-		if (node.type === 'ExportNamedDeclaration') {
-			if (node.declaration) {
-				node = node.declaration;
-			} else {
-				continue;
-			}
-		}
-
-		const has_await = has_await_expression(node);
-		awaited ||= has_await;
-
-		if (awaited && node.type !== 'FunctionDeclaration') {
-			/** @type {Set<Binding>} */
-			const reads = new Set(); // TODO we're not actually using this yet
-
-			/** @type {Set<Binding>} */
-			const writes = new Set();
-
-			trace_references(node, reads, writes);
-
-			const blocker = b.member(promises, b.literal(analysis.instance_body.async.length), true);
-
-			for (const binding of writes) {
-				binding.blocker = blocker;
-			}
-
-			if (node.type === 'VariableDeclaration') {
-				for (const declarator of node.declarations) {
-					for (const id of extract_identifiers(declarator.id)) {
-						push_declaration(id, blocker);
-					}
-
-					// one declarator per declaration, makes things simpler
-					analysis.instance_body.async.push({
-						node: declarator,
-						has_await
-					});
-				}
-			} else if (node.type === 'ClassDeclaration') {
-				push_declaration(node.id, blocker);
-				analysis.instance_body.async.push({ node, has_await });
-			} else {
-				analysis.instance_body.async.push({ node, has_await });
-			}
-		} else {
-			analysis.instance_body.sync.push(node);
-		}
-	}
+	calculate_blockers(instance, scopes, analysis);
 
 	if (analysis.runes) {
 		const props_refs = module.scope.references.get('$$props');
@@ -1116,6 +932,282 @@ export function analyze_component(root, source, options) {
 	// analysis.stylesheet.warn_on_unused_selectors(analysis);
 
 	return analysis;
+}
+
+/**
+ * Analyzes the instance's top level statements to calculate which bindings need to wait on which
+ * top level statements. This includes indirect blockers such as functions referencing async top level statements.
+ *
+ * @param {Js} instance
+ * @param {Map<AST.SvelteNode, Scope>} scopes
+ * @param {ComponentAnalysis} analysis
+ * @returns {void}
+ */
+function calculate_blockers(instance, scopes, analysis) {
+	/**
+	 * @param {ESTree.Node} expression
+	 * @param {Scope} scope
+	 * @param {Set<Binding>} touched
+	 * @param {Set<ESTree.Node>} seen
+	 */
+	const touch = (expression, scope, touched, seen = new Set()) => {
+		if (seen.has(expression)) return;
+		seen.add(expression);
+
+		walk(
+			expression,
+			{ scope },
+			{
+				ImportDeclaration(node) {},
+				Identifier(node, context) {
+					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
+					if (is_reference(node, parent)) {
+						const binding = context.state.scope.get(node.name);
+						if (binding) {
+							touched.add(binding);
+
+							for (const assignment of binding.assignments) {
+								touch(assignment.value, assignment.scope, touched, seen);
+							}
+						}
+					}
+				}
+			}
+		);
+	};
+
+	/**
+	 * @param {ESTree.Node} node
+	 * @param {Set<ESTree.Node>} seen
+	 * @param {Set<Binding>} reads
+	 * @param {Set<Binding>} writes
+	 */
+	const trace_references = (node, reads, writes, seen = new Set()) => {
+		if (seen.has(node)) return;
+		seen.add(node);
+
+		/**
+		 * @param {ESTree.Pattern} node
+		 * @param {Scope} scope
+		 */
+		function update(node, scope) {
+			for (const pattern of unwrap_pattern(node)) {
+				const node = object(pattern);
+				if (!node) return;
+
+				const binding = scope.get(node.name);
+				if (!binding) return;
+
+				writes.add(binding);
+			}
+		}
+
+		walk(
+			node,
+			{ scope: instance.scope },
+			{
+				_(node, context) {
+					const scope = scopes.get(node);
+					if (scope) {
+						context.next({ scope });
+					} else {
+						context.next();
+					}
+				},
+				AssignmentExpression(node, context) {
+					update(node.left, context.state.scope);
+				},
+				UpdateExpression(node, context) {
+					update(
+						/** @type {ESTree.Identifier | ESTree.MemberExpression} */ (node.argument),
+						context.state.scope
+					);
+				},
+				CallExpression(node, context) {
+					// for now, assume everything touched by the callee ends up mutating the object
+					// TODO optimise this better
+
+					// special case — no need to peek inside effects as they only run once async work has completed
+					const rune = get_rune(node, context.state.scope);
+					if (rune === '$effect') return;
+
+					/** @type {Set<Binding>} */
+					const touched = new Set();
+					touch(node, context.state.scope, touched);
+
+					for (const b of touched) {
+						writes.add(b);
+					}
+				},
+				// don't look inside functions until they are called
+				ArrowFunctionExpression(_, context) {},
+				FunctionDeclaration(_, context) {},
+				FunctionExpression(_, context) {},
+				Identifier(node, context) {
+					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
+					if (is_reference(node, parent)) {
+						const binding = context.state.scope.get(node.name);
+						if (binding) {
+							reads.add(binding);
+						}
+					}
+				}
+			}
+		);
+	};
+
+	let awaited = false;
+
+	// TODO this should probably be attached to the scope?
+	const promises = b.id('$$promises');
+
+	/**
+	 * @param {ESTree.Identifier} id
+	 * @param {NonNullable<Binding['blocker']>} blocker
+	 */
+	function push_declaration(id, blocker) {
+		analysis.instance_body.declarations.push(id);
+
+		const binding = /** @type {Binding} */ (instance.scope.get(id.name));
+		binding.blocker = blocker;
+	}
+
+	/**
+	 * Analysis of blockers for functions is deferred until we know which statements are async/blockers
+	 * @type {Array<ESTree.FunctionDeclaration | ESTree.VariableDeclarator>}
+	 */
+	const functions = [];
+
+	for (let node of instance.ast.body) {
+		if (node.type === 'ImportDeclaration') {
+			analysis.instance_body.hoisted.push(node);
+			continue;
+		}
+
+		if (node.type === 'ExportDefaultDeclaration' || node.type === 'ExportAllDeclaration') {
+			// these can't exist inside `<script>` but TypeScript doesn't know that
+			continue;
+		}
+
+		if (node.type === 'ExportNamedDeclaration') {
+			if (node.declaration) {
+				node = node.declaration;
+			} else {
+				continue;
+			}
+		}
+
+		const has_await = has_await_expression(node);
+		awaited ||= has_await;
+
+		if (node.type === 'FunctionDeclaration') {
+			analysis.instance_body.sync.push(node);
+			functions.push(node);
+		} else if (node.type === 'VariableDeclaration') {
+			for (const declarator of node.declarations) {
+				if (
+					declarator.init?.type === 'ArrowFunctionExpression' ||
+					declarator.init?.type === 'FunctionExpression'
+				) {
+					// One declarator per declaration, makes things simpler. The ternary ensures more accurate source maps in the common case
+					analysis.instance_body.sync.push(
+						node.declarations.length === 1 ? node : b.declaration(node.kind, [declarator])
+					);
+					functions.push(declarator);
+				} else if (!awaited) {
+					// One declarator per declaration, makes things simpler. The ternary ensures more accurate source maps in the common case
+					analysis.instance_body.sync.push(
+						node.declarations.length === 1 ? node : b.declaration(node.kind, [declarator])
+					);
+				} else {
+					/** @type {Set<Binding>} */
+					const reads = new Set(); // TODO we're not actually using this yet
+
+					/** @type {Set<Binding>} */
+					const writes = new Set();
+
+					trace_references(declarator, reads, writes);
+
+					const blocker = /** @type {NonNullable<Binding['blocker']>} */ (
+						b.member(promises, b.literal(analysis.instance_body.async.length), true)
+					);
+
+					for (const binding of writes) {
+						binding.blocker = blocker;
+					}
+
+					for (const id of extract_identifiers(declarator.id)) {
+						push_declaration(id, blocker);
+					}
+
+					// one declarator per declaration, makes things simpler
+					analysis.instance_body.async.push({
+						node: declarator,
+						has_await
+					});
+				}
+			}
+		} else if (awaited) {
+			/** @type {Set<Binding>} */
+			const reads = new Set(); // TODO we're not actually using this yet
+
+			/** @type {Set<Binding>} */
+			const writes = new Set();
+
+			trace_references(node, reads, writes);
+
+			const blocker = /** @type {NonNullable<Binding['blocker']>} */ (
+				b.member(promises, b.literal(analysis.instance_body.async.length), true)
+			);
+
+			for (const binding of writes) {
+				binding.blocker = blocker;
+			}
+
+			if (node.type === 'ClassDeclaration') {
+				push_declaration(node.id, blocker);
+				analysis.instance_body.async.push({ node, has_await });
+			} else {
+				analysis.instance_body.async.push({ node, has_await });
+			}
+		} else {
+			analysis.instance_body.sync.push(node);
+		}
+	}
+
+	for (const fn of functions) {
+		/** @type {Set<Binding>} */
+		const reads_writes = new Set();
+		const body =
+			fn.type === 'VariableDeclarator'
+				? /** @type {ESTree.FunctionExpression | ESTree.ArrowFunctionExpression} */ (fn.init).body
+				: fn.body;
+
+		trace_references(body, reads_writes, reads_writes);
+
+		const max = [...reads_writes].reduce((max, binding) => {
+			if (binding.blocker) {
+				let property = /** @type {ESTree.SimpleLiteral & { value: number }} */ (
+					binding.blocker.property
+				);
+
+				return Math.max(property.value, max);
+			}
+
+			return max;
+		}, -1);
+
+		if (max === -1) continue;
+
+		const blocker = b.member(promises, b.literal(max), true);
+		const binding = /** @type {Binding} */ (
+			fn.type === 'FunctionDeclaration'
+				? instance.scope.get(fn.id.name)
+				: instance.scope.get(/** @type {ESTree.Identifier} */ (fn.id).name)
+		);
+
+		binding.blocker = /** @type {typeof binding['blocker']} */ (blocker);
+	}
 }
 
 /**

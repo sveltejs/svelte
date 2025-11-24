@@ -1,5 +1,83 @@
 # svelte
 
+## 5.43.15
+
+### Patch Changes
+
+- fix: don't execute attachments and attribute effects eagerly ([#17208](https://github.com/sveltejs/svelte/pull/17208))
+
+- chore: lift "flushSync cannot be called in effects" restriction ([#17139](https://github.com/sveltejs/svelte/pull/17139))
+
+- fix: store forked derived values ([#17212](https://github.com/sveltejs/svelte/pull/17212))
+
+## 5.43.14
+
+### Patch Changes
+
+- fix: correctly migrate named self closing slots ([#17199](https://github.com/sveltejs/svelte/pull/17199))
+
+- fix: error at compile time instead of at runtime on await expressions inside bindings/transitions/animations/attachments ([#17198](https://github.com/sveltejs/svelte/pull/17198))
+
+- fix: take async blockers into account for bindings/transitions/animations/attachments ([#17198](https://github.com/sveltejs/svelte/pull/17198))
+
+## 5.43.13
+
+### Patch Changes
+
+- fix: don't set derived values during time traveling ([#17200](https://github.com/sveltejs/svelte/pull/17200))
+
+## 5.43.12
+
+### Patch Changes
+
+- fix: maintain correct linked list of effects when updating each blocks ([#17191](https://github.com/sveltejs/svelte/pull/17191))
+
+## 5.43.11
+
+### Patch Changes
+
+- perf: don't use tracing overeager during dev ([#17183](https://github.com/sveltejs/svelte/pull/17183))
+
+- fix: don't cancel transition of already outroing elements ([#17186](https://github.com/sveltejs/svelte/pull/17186))
+
+## 5.43.10
+
+### Patch Changes
+
+- fix: avoid other batches running with queued root effects of main batch ([#17145](https://github.com/sveltejs/svelte/pull/17145))
+
+## 5.43.9
+
+### Patch Changes
+
+- fix: correctly handle functions when determining async blockers ([#17137](https://github.com/sveltejs/svelte/pull/17137))
+
+- fix: keep deriveds reactive after their original parent effect was destroyed ([#17171](https://github.com/sveltejs/svelte/pull/17171))
+
+- fix: ensure eager effects don't break reactions chain ([#17138](https://github.com/sveltejs/svelte/pull/17138))
+
+- fix: ensure async `@const` in boundary hydrates correctly ([#17165](https://github.com/sveltejs/svelte/pull/17165))
+
+- fix: take blockers into account when creating `#await` blocks ([#17137](https://github.com/sveltejs/svelte/pull/17137))
+
+- fix: parallelize async `@const`s in the template ([#17165](https://github.com/sveltejs/svelte/pull/17165))
+
+## 5.43.8
+
+### Patch Changes
+
+- fix: each block losing reactivity when items removed while promise pending ([#17150](https://github.com/sveltejs/svelte/pull/17150))
+
+## 5.43.7
+
+### Patch Changes
+
+- fix: properly defer document title until async work is complete ([#17158](https://github.com/sveltejs/svelte/pull/17158))
+
+- fix: ensure deferred effects can be rescheduled later on ([#17147](https://github.com/sveltejs/svelte/pull/17147))
+
+- fix: take blockers of components into account ([#17153](https://github.com/sveltejs/svelte/pull/17153))
+
 ## 5.43.6
 
 ### Patch Changes

@@ -48,8 +48,6 @@ export namespace AST {
 			 * Whether or not we need to traverse into the fragment during mount/hydrate
 			 */
 			dynamic: boolean;
-			/** @deprecated we should get rid of this in favour of the `$$renderer.run` mechanism */
-			has_await: boolean;
 		};
 	}
 
@@ -196,6 +194,10 @@ export namespace AST {
 		name: string;
 		/** The y in `animate:x={y}` */
 		expression: null | Expression;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	/** A `bind:` directive */
@@ -287,6 +289,10 @@ export namespace AST {
 		intro: boolean;
 		/** True if this is a `transition:` or `out:` directive */
 		outro: boolean;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	/** A `use:` directive */
@@ -296,6 +302,10 @@ export namespace AST {
 		name: string;
 		/** The 'y' in `use:x={y}` */
 		expression: null | Expression;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	interface BaseElement extends BaseNode {
@@ -308,6 +318,7 @@ export namespace AST {
 		type: 'Component';
 		/** @internal */
 		metadata: {
+			expression: ExpressionMetadata;
 			scopes: Record<string, Scope>;
 			dynamic: boolean;
 			/** The set of locally-defined snippets that this component tag could render,
@@ -355,6 +366,7 @@ export namespace AST {
 		expression: Expression;
 		/** @internal */
 		metadata: {
+			expression: ExpressionMetadata;
 			scopes: Record<string, Scope>;
 			/** The set of locally-defined snippets that this component tag could render,
 			 * used for CSS pruning purposes */

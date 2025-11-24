@@ -231,6 +231,10 @@ The same applies to components:
 
 > Expected whitespace
 
+## illegal_await_expression
+
+> `use:`, `transition:` and `animate:` directives, attachments and bindings do not support await expressions
+
 ## illegal_element_attribute
 
 > `<%name%>` does not support non-event attributes or spread attributes

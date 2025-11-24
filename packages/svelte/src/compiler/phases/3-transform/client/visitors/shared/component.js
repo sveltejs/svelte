@@ -296,6 +296,9 @@ export function build_component(node, component_name, context) {
 				);
 			}
 
+			// TODO also support await expressions here?
+			memoizer.check_blockers(attribute.metadata.expression);
+
 			push_prop(b.prop('init', b.call('$.attachment'), expression, true));
 		}
 	}
@@ -449,6 +452,11 @@ export function build_component(node, component_name, context) {
 		fn = (node_id) => {
 			return build_bind_this(bind_this, prev(node_id), context);
 		};
+	}
+
+	if (node.type !== 'SvelteSelf') {
+		// Component name itself could be blocked on async values
+		memoizer.check_blockers(node.metadata.expression);
 	}
 
 	const statements = [...snippet_declarations, ...memoizer.deriveds(context.state.analysis.runes)];

@@ -57,8 +57,10 @@ function log_entry(signal, entry) {
 
 	if (dirty && signal.updated) {
 		for (const updated of signal.updated.values()) {
-			// eslint-disable-next-line no-console
-			console.log(updated.error);
+			if (updated.error) {
+				// eslint-disable-next-line no-console
+				console.log(updated.error);
+			}
 		}
 	}
 

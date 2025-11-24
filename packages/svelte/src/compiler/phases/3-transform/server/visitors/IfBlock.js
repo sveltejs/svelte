@@ -25,11 +25,7 @@ export function IfBlock(node, context) {
 
 	const is_async = node.metadata.expression.is_async();
 
-	const has_await =
-		node.metadata.expression.has_await ||
-		// TODO get rid of this stuff
-		node.consequent.metadata.has_await ||
-		node.alternate?.metadata.has_await;
+	const has_await = node.metadata.expression.has_await;
 
 	if (is_async || has_await) {
 		statement = create_async_block(
