@@ -29,7 +29,7 @@ export function EachBlock(node, context) {
 		scope: /** @type {Scope} */ (context.state.scope.parent)
 	};
 
-	const collection = build_expression(
+	let collection = build_expression(
 		{
 			...context,
 			state: parent_scope_state
@@ -37,6 +37,17 @@ export function EachBlock(node, context) {
 		node.expression,
 		node.metadata.expression
 	);
+
+	const destructured_pattern = get_destructured_pattern(node.context);
+
+	if (destructured_pattern) {
+		const mapper =
+			destructured_pattern.type === 'ArrayPattern'
+				? create_array_snapshot_mapper(destructured_pattern)
+				: create_object_snapshot_mapper();
+
+		collection = b.call('$.snapshot_each_value', collection, mapper);
+	}
 
 	if (!each_node_meta.is_controlled) {
 		context.state.template.push_comment();
@@ -364,4 +375,35 @@ export function EachBlock(node, context) {
  */
 function collect_parent_each_blocks(context) {
 	return /** @type {AST.EachBlock[]} */ (context.path.filter((node) => node.type === 'EachBlock'));
+}
+
+/**
+ * @param {import('estree').Pattern | null | undefined} pattern
+ * @returns {import('estree').ArrayPattern | import('estree').ObjectPattern | null}
+ */
+function get_destructured_pattern(pattern) {
+	if (!pattern) return null;
+	if (pattern.type === 'ArrayPattern' || pattern.type === 'ObjectPattern') {
+		return pattern;
+	}
+
+	return null;
+}
+
+/**
+ * @param {import('estree').ArrayPattern} pattern
+ */
+function create_array_snapshot_mapper(pattern) {
+	const value = b.id('$$value');
+	const has_rest = pattern.elements.some((element) => element?.type === 'RestElement');
+
+	return b.arrow(
+		[value],
+		b.call('$.snapshot_array', value, b.literal(pattern.elements.length), has_rest ? b.true : b.false)
+	);
+}
+
+function create_object_snapshot_mapper() {
+	const value = b.id('$$value');
+	return b.arrow([value], b.call('$.snapshot_object', value));
 }

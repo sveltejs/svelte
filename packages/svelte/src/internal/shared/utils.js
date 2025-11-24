@@ -116,3 +116,37 @@ export function to_array(value, n) {
 
 	return array;
 }
+
+/**
+ * Snapshot items produced by an iterator so that destructured values reflect
+ * what was yielded before the iterator mutates the value again.
+ * @template T
+ * @param {ArrayLike<T> | Iterable<T> | null | undefined} collection
+ * @param {(value: T) => T} mapper
+ * @returns {Array<T>}
+ */
+export function snapshot_each_value(collection, mapper) {
+	if (collection == null) {
+		return [];
+	}
+
+	return is_array(collection) ? collection : array_from(collection, mapper);
+}
+
+/**
+ * @param {any} value
+ * @param {number} length
+ * @param {boolean} has_rest
+ * @returns {any[]}
+ */
+export function snapshot_array(value, length, has_rest) {
+	const array = to_array(value, has_rest ? undefined : length);
+	return array.slice();
+}
+
+/**
+ * @param {any} value
+ */
+export function snapshot_object(value) {
+	return value == null || typeof value !== 'object' ? value : { ...value };
+}

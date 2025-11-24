@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Expression, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, Pattern, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '#compiler/builders';
@@ -12,7 +12,17 @@ export function EachBlock(node, context) {
 	const state = context.state;
 
 	const each_node_meta = node.metadata;
-	const collection = /** @type {Expression} */ (context.visit(node.expression));
+	let collection = /** @type {Expression} */ (context.visit(node.expression));
+	const destructured_pattern = get_destructured_pattern(node.context);
+
+	if (destructured_pattern) {
+		const mapper =
+			destructured_pattern.type === 'ArrayPattern'
+				? create_array_snapshot_mapper(destructured_pattern)
+				: create_object_snapshot_mapper();
+
+		collection = b.call('$.snapshot_each_value', collection, mapper);
+	}
 	const index =
 		each_node_meta.contains_group_binding || !node.index ? each_node_meta.index : b.id(node.index);
 
@@ -77,4 +87,35 @@ export function EachBlock(node, context) {
 	} else {
 		state.template.push(...block.body, block_close);
 	}
+}
+
+/**
+ * @param {Pattern | null} pattern
+ * @returns {import('estree').ArrayPattern | import('estree').ObjectPattern | null}
+ */
+function get_destructured_pattern(pattern) {
+	if (!pattern) return null;
+	if (pattern.type === 'ArrayPattern' || pattern.type === 'ObjectPattern') {
+		return pattern;
+	}
+
+	return null;
+}
+
+/**
+ * @param {import('estree').ArrayPattern} pattern
+ */
+function create_array_snapshot_mapper(pattern) {
+	const value = b.id('$$value');
+	const has_rest = pattern.elements.some((element) => element?.type === 'RestElement');
+
+	return b.arrow(
+		[value],
+		b.call('$.snapshot_array', value, b.literal(pattern.elements.length), has_rest ? b.true : b.false)
+	);
+}
+
+function create_object_snapshot_mapper() {
+	const value = b.id('$$value');
+	return b.arrow([value], b.call('$.snapshot_object', value));
 }
