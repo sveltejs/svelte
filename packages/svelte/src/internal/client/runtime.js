@@ -617,7 +617,10 @@ export function get(signal) {
 
 			return value;
 		}
-	} else if (is_derived && (!batch_values?.has(signal) || current_batch?.is_fork)) {
+	} else if (
+		is_derived &&
+		(!batch_values?.has(signal) || (current_batch?.is_fork && !effect_tracking()))
+	) {
 		derived = /** @type {Derived} */ (signal);
 
 		if (is_dirty(derived)) {

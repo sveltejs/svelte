@@ -9,5 +9,7 @@
 	fork(() => {
 		state++;
 		console.log(count);
+		state++;
+		console.log(count);
 	});
 }}>fork</button>

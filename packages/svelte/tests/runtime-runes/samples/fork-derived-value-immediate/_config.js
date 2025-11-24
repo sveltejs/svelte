@@ -6,10 +6,8 @@ export default test({
 	async test({ assert, target, logs }) {
 		const fork = target.querySelector('button');
 
-		flushSync(() => {
-			fork?.click();
-		});
-
-		assert.deepEqual(logs, [1]);
+		fork?.click();
+		flushSync();
+		assert.deepEqual(logs, [1, 2]);
 	}
 });
