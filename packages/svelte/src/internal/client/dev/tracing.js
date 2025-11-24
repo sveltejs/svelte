@@ -1,11 +1,10 @@
 /** @import { Derived, Reaction, Value } from '#client' */
 import { UNINITIALIZED } from '../../../constants.js';
 import { snapshot } from '../../shared/clone.js';
-import { define_property } from '../../shared/utils.js';
 import { DERIVED, ASYNC, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { effect_tracking } from '../reactivity/effects.js';
 import { active_reaction, untrack } from '../runtime.js';
-import { get_infinite_stack } from '../../shared/dev.js';
+import { get_error } from '../../shared/dev.js';
 
 /**
  * @typedef {{
@@ -135,37 +134,7 @@ export function trace(label, fn) {
  * @returns {Error & { stack: string } | null}
  */
 export function get_stack(label) {
-	return get_infinite_stack(label, (stack) => {
-		if (!stack) return;
-
-		const lines = stack.split('\n');
-		const new_lines = ['\n'];
-
-		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i];
-			const posixified = line.replaceAll('\\', '/');
-
-			if (line === 'Error') {
-				continue;
-			}
-
-			if (line.includes('validate_each_keys')) {
-				return undefined;
-			}
-
-			if (posixified.includes('svelte/src/internal') || posixified.includes('node_modules/.vite')) {
-				continue;
-			}
-
-			new_lines.push(line);
-		}
-
-		if (new_lines.length === 1) {
-			return undefined;
-		}
-
-		return new_lines.join('\n');
-	});
+	return get_error(label);
 }
 
 /**

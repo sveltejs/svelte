@@ -45,7 +45,7 @@ This error occurs when using `hydratable` multiple times with the same key. To a
 >
 > `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/uneval) can, plus Promises. 
 >
-> Stack:
+> Cause:
 > %stack%
 
 ## lifecycle_function_unavailable

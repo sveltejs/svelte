@@ -56,7 +56,7 @@ Failed to serialize `hydratable` data for key `%key%`.
 
 `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/uneval) can, plus Promises. 
 
-Stack:
+Cause:
 %stack%
 ```
 

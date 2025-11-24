@@ -3,8 +3,9 @@ import { async_mode_flag } from '../flags/index.js';
 import { get_render_context } from './render-context.js';
 import * as e from './errors.js';
 import * as devalue from 'devalue';
-import { get_stack } from './dev.js';
+import { get_stack } from '../shared/dev.js';
 import { DEV } from 'esm-env';
+import { get_user_code_location } from './dev.js';
 
 /**
  * @template T
@@ -49,7 +50,7 @@ function encode(key, value, unresolved) {
 	const entry = { value, serialized: '' };
 
 	if (DEV) {
-		entry.stack = get_stack('hydratable')?.stack;
+		entry.stack = get_user_code_location();
 	}
 
 	let uid = 1;

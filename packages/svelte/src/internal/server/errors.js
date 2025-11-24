@@ -70,7 +70,7 @@ ${stack2}\nhttps://svelte.dev/e/hydratable_clobbering`);
  * 
  * `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/uneval) can, plus Promises. 
  * 
- * Stack:
+ * Cause:
  * %stack%
  * @param {string} key
  * @param {string} stack
@@ -81,7 +81,7 @@ export function hydratable_serialization_failed(key, stack) {
 
 \`hydratable\` can serialize anything [\`uneval\` from \`devalue\`](https://npmjs.com/package/uneval) can, plus Promises. 
 
-Stack:
+Cause:
 ${stack}\nhttps://svelte.dev/e/hydratable_serialization_failed`);
 
 	error.name = 'Svelte error';
