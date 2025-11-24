@@ -58,7 +58,7 @@ function encode(key, value, unresolved) {
 
 	entry.serialized = devalue.uneval(entry.value, (value, uneval) => {
 		if (value instanceof Promise) {
-			const serialize_promise = value
+			const p = value
 				.then((v) => `r(${uneval(v)})`)
 				.catch((devalue_error) =>
 					e.hydratable_serialization_failed(
@@ -66,20 +66,20 @@ function encode(key, value, unresolved) {
 						serialization_stack(entry.stack, devalue_error?.stack)
 					)
 				);
-			serialize_promise.catch(() => {});
-			unresolved?.set(serialize_promise, key);
-			serialize_promise.finally(() => unresolved?.delete(serialize_promise));
 
-			const i = uid++;
+			// prevent unhandled rejections from crashing the server
+			p.catch(() => {});
 
-			// we serialize promises as `d("1")` instead of `d(1)`, because it's
-			// impossible for that string to occur 'naturally' (since the quote marks
-			// would have to be escaped). this allows us to check that repeat occurrences
-			// of a given hydratable are identical with a simple string comparison
-			const result = `d("${i}")`;
+			// track which promises are still resolving when render is complete
+			unresolved?.set(p, key);
+			p.finally(() => unresolved?.delete(p));
+
+			// we serialize promises as `"${i}"`, because it's impossible for that string
+			// to occur 'naturally' (since the quote marks would have to be escaped)
+			const result = `"${uid++}"`;
 
 			(entry.promises ??= []).push(
-				serialize_promise.then((s) => {
+				p.then((s) => {
 					entry.serialized = entry.serialized.replace(result, s);
 				})
 			);
