@@ -518,23 +518,20 @@ export class Renderer {
 	 * @returns {Promise<AccumulatedContent>}
 	 */
 	static async #render_async(component, options) {
-		const restore = await save(
-			(async () => {
-				try {
-					const renderer = Renderer.#open_render('async', component, options);
-					const content = await renderer.#collect_content_async();
-					const hydratables = await renderer.#collect_hydratables();
-					if (hydratables !== null) {
-						content.head = hydratables + content.head;
-					}
-					return Renderer.#close_render(content, renderer);
-				} finally {
-					abort();
-				}
-			})()
-		);
+		const previous_context = ssr_context;
 
-		return restore();
+		try {
+			const renderer = Renderer.#open_render('async', component, options);
+			const content = await renderer.#collect_content_async();
+			const hydratables = await renderer.#collect_hydratables();
+			if (hydratables !== null) {
+				content.head = hydratables + content.head;
+			}
+			return Renderer.#close_render(content, renderer);
+		} finally {
+			set_ssr_context(previous_context);
+			abort();
+		}
 	}
 
 	/**
@@ -653,39 +650,38 @@ export class Renderer {
 			return null;
 		}
 
-		let values = await Promise.all(ctx.values);
+		let entries = [];
+		let has_promises = false;
 
-		if (DEV) {
-			// turn `d("1")` into `d(1)` — see `hydratable.js` for an explanation
-			values = values.map((v) => v.replace(/d\("(\d+)"\)/g, (_, i) => `d(${i})`));
+		for (const [k, v] of ctx.lookup) {
+			if (v.promises) {
+				has_promises = true;
+				for (const p of v.promises) await p;
+			}
+
+			entries.push(`[${JSON.stringify(k)},${v.serialized}]`);
+		}
+
+		let prelude = `const h = (window.__svelte ??= {}).h ??= new Map();`;
+
+		if (has_promises) {
+			prelude = `const r = (v) => Promise.resolve(v);
+				${prelude}`;
 		}
 
 		// TODO csp -- have discussed but not implemented
 		return `
 		<script>
 			{
-				const r = (v) => Promise.resolve(v);
-				const v = [${values.join(',')}];
-				function d(i) {
-					const value = v[i];
-					return typeof value === 'function' ? value() : value;
-				};
-				const sv = window.__svelte ??= {};${Renderer.#used_hydratables(ctx.lookup)}
+				${prelude}
+
+				for (const [k, v] of [
+					${entries.join(',\n\t\t\t\t\t')}
+				]) {
+					h.set(k, v);
+				}
 			}
 		</script>`;
-	}
-
-	/** @param {HydratableContext['lookup']} lookup */
-	static #used_hydratables(lookup) {
-		let entries = [];
-		for (const [k, v] of lookup) {
-			entries.push(`[${JSON.stringify(k)},${v.index}]`);
-		}
-		return `
-				const store = sv.h ??= new Map();
-				for (const [k,i] of [${entries.join(',')}]) {
-						store.set(k, d(i));
-				}`;
 	}
 }
 
