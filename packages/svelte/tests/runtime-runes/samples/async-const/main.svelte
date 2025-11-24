@@ -23,4 +23,9 @@
 
 	{@render greet()}
 	{number} {sync} {after_async} {length} {first}
+
+	{#if sync}
+		{@const double = number * 2}
+		{double}
+	{/if}
 </svelte:boundary>
