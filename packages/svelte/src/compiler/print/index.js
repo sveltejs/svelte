@@ -8,6 +8,12 @@ import { is_void } from '../../utils.js';
 const LINE_BREAK_THRESHOLD = 30;
 
 /**
+ * `print` converts a Svelte AST node back into Svelte source code.
+ * It is primarily intended for tools that parse and transform components using the compiler’s modern AST representation.
+ *
+ * `print(ast)` requires an AST node produced by parse with modern: true, or any sub-node within that modern AST.
+ * The result contains the generated source and a corresponding source map.
+ * The output is valid Svelte, but formatting details such as whitespace or quoting may differ from the original.
  * @param {AST.SvelteNode} ast
  */
 export function print(ast) {
