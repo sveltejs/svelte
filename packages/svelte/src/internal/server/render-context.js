@@ -31,7 +31,6 @@ export async function with_render_context(fn) {
 	context = {
 		hydratable: {
 			lookup: new Map(),
-			values: [],
 			comparisons: [],
 			unresolved_promises: new Map()
 		}

@@ -1,12 +1,10 @@
 /** @import { HydratableLookupEntry } from '#server' */
-/** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import { get_render_context } from './render-context.js';
 import * as e from './errors.js';
 import * as devalue from 'devalue';
 import { get_stack } from './dev.js';
 import { DEV } from 'esm-env';
-import { deferred } from '../shared/utils.js';
 
 /**
  * @template T
@@ -25,7 +23,7 @@ export function hydratable(key, fn) {
 
 	if (entry !== undefined) {
 		if (DEV) {
-			const comparison = compare(key, entry, encode(key, fn(), []));
+			const comparison = compare(key, entry, encode(key, fn()));
 			comparison.catch(() => {});
 			hydratable.comparisons.push(comparison);
 		}
@@ -35,7 +33,7 @@ export function hydratable(key, fn) {
 
 	const value = fn();
 
-	entry = encode(key, value, hydratable.values, hydratable.unresolved_promises);
+	entry = encode(key, value, hydratable.unresolved_promises);
 	hydratable.lookup.set(key, entry);
 
 	return value;
@@ -44,64 +42,49 @@ export function hydratable(key, fn) {
 /**
  * @param {string} key
  * @param {any} value
- * @param {MaybePromise<string>[]} values
  * @param {Map<Promise<any>, string>} [unresolved]
  */
-function encode(key, value, values, unresolved) {
+function encode(key, value, unresolved) {
 	/** @type {HydratableLookupEntry} */
-	const entry = { value, index: -1 };
+	const entry = { value, serialized: '' };
 
 	if (DEV) {
 		entry.stack = get_stack('hydratable')?.stack;
 	}
 
-	let needs_thunk = false;
-	let serialized = devalue.uneval(entry.value, (value, uneval) => {
+	let uid = 1;
+
+	entry.serialized = devalue.uneval(entry.value, (value, uneval) => {
 		if (value instanceof Promise) {
-			needs_thunk = true;
-			/** @param {string} val */
-			const scoped_uneval = (val) => {
-				const raw = `r(${uneval(val)})`;
-				const result = needs_thunk ? `()=>(${raw})` : raw;
-				needs_thunk = false;
-				return result;
-			};
-			const serialize_promise = value
-				.then(scoped_uneval)
+			const p = value
+				.then((v) => `r(${uneval(v)})`)
 				.catch((devalue_error) =>
 					e.hydratable_serialization_failed(
 						key,
 						serialization_stack(entry.stack, devalue_error?.stack)
 					)
 				);
-			serialize_promise.catch(() => {});
-			unresolved?.set(serialize_promise, key);
-			serialize_promise.finally(() => unresolved?.delete(serialize_promise));
 
-			const index = values.push(serialize_promise) - 1;
+			// prevent unhandled rejections from crashing the server
+			p.catch(() => {});
 
-			// in dev, we serialize promises as `d("1")` instead of `d(1)`, because it's
-			// impossible for that string to occur 'naturally' (since the quote marks
-			// would have to be escaped). this allows us to check that repeat occurrences
-			// of a given hydratable are identical with a simple string comparison
-			const result = DEV ? `d("${index}")` : `d(${index})`;
+			// track which promises are still resolving when render is complete
+			unresolved?.set(p, key);
+			p.finally(() => unresolved?.delete(p));
 
-			if (DEV) {
-				(entry.serialize_work ??= []).push(
-					serialize_promise.then((s) => {
-						serialized = serialized.replace(result, s);
-						entry.serialized = serialized;
-					})
-				);
-			}
+			// we serialize promises as `"${i}"`, because it's impossible for that string
+			// to occur 'naturally' (since the quote marks would have to be escaped)
+			const placeholder = `"${uid++}"`;
 
-			return result;
+			(entry.promises ??= []).push(
+				p.then((s) => {
+					entry.serialized = entry.serialized.replace(placeholder, s);
+				})
+			);
+
+			return placeholder;
 		}
 	});
-
-	entry.serialized = serialized;
-	entry.index = values.push(needs_thunk ? `()=>(${serialized})` : serialized) - 1;
-	needs_thunk = false;
 
 	return entry;
 }
@@ -115,11 +98,11 @@ async function compare(key, a, b) {
 	// note: these need to be loops (as opposed to Promise.all) because
 	// additional promises can get pushed to them while we're awaiting
 	// an earlier one
-	for (const p of a?.serialize_work ?? []) {
+	for (const p of a?.promises ?? []) {
 		await p;
 	}
 
-	for (const p of b?.serialize_work ?? []) {
+	for (const p of b?.promises ?? []) {
 		await p;
 	}
 
