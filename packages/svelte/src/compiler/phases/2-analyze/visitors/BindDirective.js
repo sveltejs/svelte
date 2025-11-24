@@ -161,6 +161,7 @@ export function BindDirective(node, context) {
 
 		const [get, set] = node.expression.expressions;
 		// We gotta jump across the getter/setter functions to avoid the expression metadata field being reset to null
+		// as we want to collect the functions' blocker/async info
 		context.visit(get.type === 'ArrowFunctionExpression' ? get.body : get, {
 			...context.state,
 			expression: node.metadata.expression
@@ -169,6 +170,11 @@ export function BindDirective(node, context) {
 			...context.state,
 			expression: node.metadata.expression
 		});
+
+		if (node.metadata.expression.has_await) {
+			e.illegal_await_expression(node);
+		}
+
 		return;
 	}
 
@@ -267,4 +273,8 @@ export function BindDirective(node, context) {
 	}
 
 	context.next({ ...context.state, expression: node.metadata.expression });
+
+	if (node.metadata.expression.has_await) {
+		e.illegal_await_expression(node);
+	}
 }

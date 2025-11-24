@@ -356,9 +356,14 @@ export function update_derived(derived) {
 	var value = execute_derived(derived);
 
 	if (!derived.equals(value)) {
-		// TODO can we avoid setting `derived.v` when `batch_values !== null`,
-		// without causing the value to be stale later?
-		derived.v = value;
+		// in a fork, we don't update the underlying value, just `batch_values`.
+		// the underlying value will be updated when the fork is committed.
+		// otherwise, the next time we get here after a 'real world' state
+		// change, `derived.equals` may incorrectly return `true`
+		if (!current_batch?.is_fork) {
+			derived.v = value;
+		}
+
 		derived.wv = increment_write_version();
 	}
 
@@ -374,7 +379,7 @@ export function update_derived(derived) {
 		// only cache the value if we're in a tracking context, otherwise we won't
 		// clear the cache in `mark_reactions` when dependencies are updated
 		if (effect_tracking()) {
-			batch_values.set(derived, derived.v);
+			batch_values.set(derived, value);
 		}
 	} else {
 		var status = (derived.f & CONNECTED) === 0 ? MAYBE_DIRTY : CLEAN;

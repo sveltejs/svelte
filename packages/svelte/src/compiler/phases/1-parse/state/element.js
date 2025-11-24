@@ -654,8 +654,7 @@ function read_attribute(parser) {
 			}
 		}
 
-		/** @type {AST.Directive} */
-		const directive = {
+		const directive = /** @type {AST.Directive} */ ({
 			start,
 			end,
 			type,
@@ -664,7 +663,7 @@ function read_attribute(parser) {
 			metadata: {
 				expression: new ExpressionMetadata()
 			}
-		};
+		});
 
 		// @ts-expect-error we do this separately from the declaration to avoid upsetting typescript
 		directive.modifiers = modifiers;

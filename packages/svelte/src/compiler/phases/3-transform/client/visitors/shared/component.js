@@ -296,6 +296,9 @@ export function build_component(node, component_name, context) {
 				);
 			}
 
+			// TODO also support await expressions here?
+			memoizer.check_blockers(attribute.metadata.expression);
+
 			push_prop(b.prop('init', b.call('$.attachment'), expression, true));
 		}
 	}

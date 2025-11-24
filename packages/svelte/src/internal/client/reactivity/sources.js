@@ -363,10 +363,8 @@ function mark_reactions(signal, status) {
 				mark_reactions(derived, MAYBE_DIRTY);
 			}
 		} else if (not_dirty) {
-			if ((flags & BLOCK_EFFECT) !== 0) {
-				if (eager_block_effects !== null) {
-					eager_block_effects.add(/** @type {Effect} */ (reaction));
-				}
+			if ((flags & BLOCK_EFFECT) !== 0 && eager_block_effects !== null) {
+				eager_block_effects.add(/** @type {Effect} */ (reaction));
 			}
 
 			schedule_effect(/** @type {Effect} */ (reaction));

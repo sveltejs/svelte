@@ -17,7 +17,8 @@ import {
 	EAGER_EFFECT,
 	HEAD_EFFECT,
 	ERROR_VALUE,
-	WAS_MARKED
+	WAS_MARKED,
+	MANAGED_EFFECT
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
 import { deferred, define_property } from '../../shared/utils.js';
@@ -234,7 +235,7 @@ export class Batch {
 					effect.f ^= CLEAN;
 				} else if ((flags & EFFECT) !== 0) {
 					target.effects.push(effect);
-				} else if (async_mode_flag && (flags & RENDER_EFFECT) !== 0) {
+				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
 					target.render_effects.push(effect);
 				} else if (is_dirty(effect)) {
 					if ((effect.f & BLOCK_EFFECT) !== 0) target.block_effects.push(effect);
@@ -779,7 +780,7 @@ function mark_effects(value, sources, marked, checked) {
 				mark_effects(/** @type {Derived} */ (reaction), sources, marked, checked);
 			} else if (
 				(flags & (ASYNC | BLOCK_EFFECT)) !== 0 &&
-				(flags & DIRTY) === 0 && // we may have scheduled this one already
+				(flags & DIRTY) === 0 &&
 				depends_on(reaction, sources, checked)
 			) {
 				set_signal_status(reaction, DIRTY);

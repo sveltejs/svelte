@@ -194,6 +194,10 @@ export namespace AST {
 		name: string;
 		/** The y in `animate:x={y}` */
 		expression: null | Expression;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	/** A `bind:` directive */
@@ -285,6 +289,10 @@ export namespace AST {
 		intro: boolean;
 		/** True if this is a `transition:` or `out:` directive */
 		outro: boolean;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	/** A `use:` directive */
@@ -294,6 +302,10 @@ export namespace AST {
 		name: string;
 		/** The 'y' in `use:x={y}` */
 		expression: null | Expression;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	export interface BaseElement extends BaseNode {
