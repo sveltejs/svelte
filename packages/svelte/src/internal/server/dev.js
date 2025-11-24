@@ -4,7 +4,6 @@ import {
 	is_tag_valid_with_ancestor,
 	is_tag_valid_with_parent
 } from '../../html-tree-validation.js';
-import { get_infinite_stack } from '../shared/dev.js';
 import { set_ssr_context, ssr_context } from './context.js';
 import * as e from './errors.js';
 import { Renderer } from './renderer.js';
@@ -98,37 +97,4 @@ export function validate_snippet_args(renderer) {
 	) {
 		e.invalid_snippet_arguments();
 	}
-}
-
-/**
- * @param {string} label
- * @returns {Error & { stack: string } | null}
- */
-export function get_stack(label) {
-	return get_infinite_stack(label, (stack) => {
-		if (!stack) return;
-
-		const lines = stack.split('\n');
-		const new_lines = [];
-
-		for (const line of lines) {
-			const posixified = line.replaceAll('\\', '/');
-
-			if (line.startsWith('Error:')) {
-				continue;
-			}
-
-			if (posixified.includes('svelte/src/internal') || posixified.includes('node_modules/.vite')) {
-				continue;
-			}
-
-			new_lines.push(line);
-		}
-
-		if (new_lines.length === 1) {
-			return undefined;
-		}
-
-		return new_lines.join('\n');
-	});
 }

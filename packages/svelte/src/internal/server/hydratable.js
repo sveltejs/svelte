@@ -4,9 +4,8 @@ import { async_mode_flag } from '../flags/index.js';
 import { get_render_context } from './render-context.js';
 import * as e from './errors.js';
 import * as devalue from 'devalue';
-import { get_stack } from './dev.js';
 import { DEV } from 'esm-env';
-import { deferred } from '../shared/utils.js';
+import { get_stack } from '../shared/dev.js';
 
 /**
  * @template T
