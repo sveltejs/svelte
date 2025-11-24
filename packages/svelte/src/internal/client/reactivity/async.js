@@ -26,6 +26,7 @@ import {
 } from './deriveds.js';
 import { aborted } from './effects.js';
 import { hydrate_next, hydrating, set_hydrate_node, skip_nodes } from '../dom/hydration.js';
+import { current_each_item, set_current_each_item } from '../dom/blocks/each.js';
 
 /**
  * @param {Array<Promise<void>>} blockers
@@ -89,7 +90,11 @@ export function flatten(blockers, sync, async, fn) {
  * @param {(values: Value[]) => any} fn
  */
 export function run_after_blockers(blockers, fn) {
-	flatten(blockers, [], [], fn);
+	var each_item = current_each_item; // TODO should this be part of capture?
+	flatten(blockers, [], [], (v) => {
+		set_current_each_item(each_item);
+		fn(v);
+	});
 }
 
 /**

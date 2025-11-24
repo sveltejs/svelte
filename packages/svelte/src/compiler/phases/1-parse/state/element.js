@@ -242,6 +242,10 @@ export default function element(parser) {
 		parser.allow_whitespace();
 	}
 
+	if (element.type === 'Component') {
+		element.metadata.expression = new ExpressionMetadata();
+	}
+
 	if (element.type === 'SvelteComponent') {
 		const index = element.attributes.findIndex(
 			/** @param {any} attr */
@@ -257,6 +261,7 @@ export default function element(parser) {
 		}
 
 		element.expression = get_attribute_expression(definition);
+		element.metadata.expression = new ExpressionMetadata();
 	}
 
 	if (element.type === 'SvelteElement') {
@@ -649,8 +654,7 @@ function read_attribute(parser) {
 			}
 		}
 
-		/** @type {AST.Directive} */
-		const directive = {
+		const directive = /** @type {AST.Directive} */ ({
 			start,
 			end,
 			type,
@@ -659,7 +663,7 @@ function read_attribute(parser) {
 			metadata: {
 				expression: new ExpressionMetadata()
 			}
-		};
+		});
 
 		// @ts-expect-error we do this separately from the declaration to avoid upsetting typescript
 		directive.modifiers = modifiers;

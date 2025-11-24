@@ -21,7 +21,8 @@ import {
 	REACTION_IS_UPDATING,
 	STALE_REACTION,
 	ERROR_VALUE,
-	WAS_MARKED
+	WAS_MARKED,
+	MANAGED_EFFECT
 } from './constants.js';
 import { old_values } from './reactivity/sources.js';
 import {
@@ -43,7 +44,13 @@ import {
 	set_dev_stack
 } from './context.js';
 import * as w from './warnings.js';
-import { Batch, batch_values, flushSync, schedule_effect } from './reactivity/batch.js';
+import {
+	Batch,
+	batch_values,
+	current_batch,
+	flushSync,
+	schedule_effect
+} from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
@@ -421,7 +428,7 @@ export function update_effect(effect) {
 	}
 
 	try {
-		if ((flags & BLOCK_EFFECT) !== 0) {
+		if ((flags & (BLOCK_EFFECT | MANAGED_EFFECT)) !== 0) {
 			destroy_block_effect_children(effect);
 		} else {
 			destroy_effect_children(effect);
@@ -611,12 +618,11 @@ export function get(signal) {
 
 			return value;
 		}
-	} else if (is_derived) {
+	} else if (
+		is_derived &&
+		(!batch_values?.has(signal) || (current_batch?.is_fork && !effect_tracking()))
+	) {
 		derived = /** @type {Derived} */ (signal);
-
-		if (batch_values?.has(derived)) {
-			return batch_values.get(derived);
-		}
 
 		if (is_dirty(derived)) {
 			update_derived(derived);
@@ -625,7 +631,9 @@ export function get(signal) {
 		if (is_updating_effect && effect_tracking() && (derived.f & CONNECTED) === 0) {
 			reconnect(derived);
 		}
-	} else if (batch_values?.has(signal)) {
+	}
+
+	if (batch_values?.has(signal)) {
 		return batch_values.get(signal);
 	}
 

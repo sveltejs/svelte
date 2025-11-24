@@ -105,7 +105,7 @@ export function process_children(nodes, initial, is_element, context) {
 				is_element &&
 				// In case it's wrapped in async the async logic will want to skip sibling nodes up until the end, hence we cannot make this controlled
 				// TODO switch this around and instead optimize for elements with a single block child and not require extra comments (neither for async nor normally)
-				!(node.body.metadata.has_await || node.metadata.expression.is_async())
+				!node.metadata.expression.is_async()
 			) {
 				node.metadata.is_controlled = true;
 			} else {

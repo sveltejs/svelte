@@ -1149,6 +1149,15 @@ export function expected_whitespace(node) {
 }
 
 /**
+ * `use:`, `transition:` and `animate:` directives, attachments and bindings do not support await expressions
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function illegal_await_expression(node) {
+	e(node, 'illegal_await_expression', `\`use:\`, \`transition:\` and \`animate:\` directives, attachments and bindings do not support await expressions\nhttps://svelte.dev/e/illegal_await_expression`);
+}
+
+/**
  * `<%name%>` does not support non-event attributes or spread attributes
  * @param {null | number | NodeLike} node
  * @param {string} name
