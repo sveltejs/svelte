@@ -11,17 +11,9 @@ let current_render = null;
 /** @type {RenderContext | null} */
 let context = null;
 
-/** @returns {RenderContext | null} */
-export function try_get_render_context() {
-	if (context !== null) {
-		return context;
-	}
-	return als?.getStore() ?? null;
-}
-
 /** @returns {RenderContext} */
 export function get_render_context() {
-	const store = try_get_render_context();
+	const store = context ?? als?.getStore();
 
 	if (!store) {
 		e.server_context_required();
