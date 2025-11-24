@@ -959,11 +959,14 @@ export function fork(fn) {
 
 	var batch = Batch.ensure();
 	batch.is_fork = true;
+	batch_values = new Map();
 
 	var committed = false;
 	var settled = batch.settled();
 
 	flushSync(fn);
+
+	batch_values = null;
 
 	// revert state changes
 	for (var [source, value] of batch.previous) {

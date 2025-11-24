@@ -378,7 +378,7 @@ export function update_derived(derived) {
 	if (batch_values !== null) {
 		// only cache the value if we're in a tracking context, otherwise we won't
 		// clear the cache in `mark_reactions` when dependencies are updated
-		if (effect_tracking()) {
+		if (effect_tracking() || current_batch?.is_fork) {
 			batch_values.set(derived, value);
 		}
 	} else {
