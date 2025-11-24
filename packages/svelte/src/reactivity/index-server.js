@@ -1,3 +1,8 @@
+/** @import { Resource as ResourceType } from '#shared' */
+export { resource, refreshAll } from '../internal/server/reactivity/resource.js';
+export { ReactiveCache } from '../internal/server/reactivity/cache.js';
+export { fetcher } from '../internal/server/reactivity/fetcher.js';
+
 export const SvelteDate = globalThis.Date;
 export const SvelteSet = globalThis.Set;
 export const SvelteMap = globalThis.Map;
@@ -21,3 +26,8 @@ export class MediaQuery {
 export function createSubscriber(_) {
 	return () => {};
 }
+
+/**
+ * @template T
+ * @typedef {ResourceType<T>} Resource
+ */

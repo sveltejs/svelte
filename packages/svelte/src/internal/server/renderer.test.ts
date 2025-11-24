@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
-import { Renderer, SSRState } from './renderer.js';
+import { MemoizedUneval, Renderer, SSRState } from './renderer.js';
 import type { Component } from 'svelte';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../flags/index.js';
+import { uneval } from 'devalue';
 
 test('collects synchronous body content by default', () => {
 	const component = (renderer: Renderer) => {
@@ -353,5 +354,41 @@ describe('async', () => {
 
 		await Renderer.render(component as unknown as Component);
 		expect(destroyed).toEqual(['c', 'e', 'a', 'b', 'b*', 'd']);
+	});
+});
+
+describe('MemoizedDevalue', () => {
+	test.each([
+		1,
+		'general kenobi',
+		{ foo: 'bar' },
+		[1, 2],
+		null,
+		undefined,
+		new Map([[1, '2']])
+	] as const)('has same behavior as unmemoized devalue for %s', (input) => {
+		expect(new MemoizedUneval().uneval(input)).toBe(uneval(input));
+	});
+
+	test('caches results', () => {
+		const memoized = new MemoizedUneval();
+		let calls = 0;
+
+		const input = {
+			get only_once() {
+				calls++;
+				return 42;
+			}
+		};
+
+		const first = memoized.uneval(input);
+		const max_calls = calls;
+		const second = memoized.uneval(input);
+		memoized.uneval(input);
+
+		expect(first).toBe(second);
+		// for reasons I don't quite comprehend, it does get called twice, but both calls happen in the first
+		// serialization, and don't increase afterwards
+		expect(calls).toBe(max_calls);
 	});
 });

@@ -450,6 +450,7 @@ declare module 'svelte' {
 	 * @deprecated Use [`$effect`](https://svelte.dev/docs/svelte/$effect) instead
 	 * */
 	export function afterUpdate(fn: () => void): void;
+	export const hydratable: Hydratable;
 	/**
 	 * Create a snippet programmatically
 	 * */
@@ -593,6 +594,27 @@ declare module 'svelte' {
 	export function untrack<T>(fn: () => T): T;
 	type Getters<T> = {
 		[K in keyof T]: () => T[K];
+	};
+
+	type Decode<T> = (value: any) => T;
+
+	type Encode<T> = (value: T) => unknown;
+
+	type Transport<T> =
+		| {
+				encode: Encode<T>;
+				decode?: undefined;
+		  }
+		| {
+				encode?: undefined;
+				decode: Decode<T>;
+		  };
+
+	type Hydratable = {
+		<T>(key: string, fn: () => T, options?: Transport<T>): T;
+		get: <T>(key: string, options?: { decode?: Decode<T> }) => T | undefined;
+		has: (key: string) => boolean;
+		set: <T>(key: string, value: T, options?: { encode?: Encode<T> }) => void;
 	};
 
 	export {};
@@ -2173,6 +2195,27 @@ declare module 'svelte/motion' {
 }
 
 declare module 'svelte/reactivity' {
+	export type Resource<T> = {
+		then: Promise<Awaited<T>>['then'];
+		catch: Promise<Awaited<T>>['catch'];
+		finally: Promise<Awaited<T>>['finally'];
+		refresh: () => Promise<void>;
+		set: (value: Awaited<T>) => void;
+		loading: boolean;
+		error: any;
+		withOverride(fn: (oldValue: Awaited<T>) => Awaited<T>, promise: Promise<Awaited<T>>): void;
+	} & (
+		| {
+				ready: false;
+				current: undefined;
+		  }
+		| {
+				ready: true;
+				current: Awaited<T>;
+		  }
+	);
+
+	type GetRequestInit = Omit<RequestInit, 'method' | 'body'> & { method?: 'GET' };
 	/**
 	 * A reactive version of the built-in [`Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date) object.
 	 * Reading the date (whether with methods like `date.getTime()` or `date.toString()`, or via things like [`Intl.DateTimeFormat`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat))
@@ -2436,6 +2479,16 @@ declare module 'svelte/reactivity' {
 	 * @since 5.7.0
 	 */
 	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
+	export class ReactiveCache<K = any, V = any> {
+		
+		register(key: K, fn: () => V): V;
+		[Symbol.iterator](): Generator<V, void, unknown>;
+		#private;
+	}
+	export function fetcher<TReturn>(url: string | URL, init?: GetRequestInit | undefined): Resource<TReturn>;
+	export function resource<T>(fn: () => T): Resource<T>;
+
+	export function refreshAll(): Promise<void>;
 	class ReactiveValue<T> {
 		
 		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
