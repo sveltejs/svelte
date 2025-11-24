@@ -33,11 +33,11 @@ import {
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { tag_proxy } from '../dev/tracing.js';
+import { get_stack } from '../../shared/dev.js';
 import { component_context, is_runes } from '../context.js';
 import { Batch, batch_values, eager_block_effects, schedule_effect } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
-import { get_stack } from '../../shared/dev.js';
 
 /** @type {Set<any>} */
 export let eager_effects = new Set();
