@@ -1,12 +1,10 @@
 /** @import { HydratableLookupEntry } from '#server' */
-/** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import { get_render_context } from './render-context.js';
 import * as e from './errors.js';
 import * as devalue from 'devalue';
 import { get_stack } from './dev.js';
 import { DEV } from 'esm-env';
-import { deferred } from '../shared/utils.js';
 
 /**
  * @template T
@@ -76,15 +74,15 @@ function encode(key, value, unresolved) {
 
 			// we serialize promises as `"${i}"`, because it's impossible for that string
 			// to occur 'naturally' (since the quote marks would have to be escaped)
-			const result = `"${uid++}"`;
+			const placeholder = `"${uid++}"`;
 
 			(entry.promises ??= []).push(
 				p.then((s) => {
-					entry.serialized = entry.serialized.replace(result, s);
+					entry.serialized = entry.serialized.replace(placeholder, s);
 				})
 			);
 
-			return result;
+			return placeholder;
 		}
 	});
 
