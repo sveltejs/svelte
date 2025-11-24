@@ -3,6 +3,18 @@
 export *  from '../shared/errors.js';
 
 /**
+ * The node API `AsyncLocalStorage` is not available, but is required to use async server rendering.
+ * @returns {never}
+ */
+export function async_local_storage_unavailable() {
+	const error = new Error(`async_local_storage_unavailable\nThe node API \`AsyncLocalStorage\` is not available, but is required to use async server rendering.\nhttps://svelte.dev/e/async_local_storage_unavailable`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
  * Encountered asynchronous work while rendering synchronously.
  * @returns {never}
  */
@@ -91,14 +103,11 @@ export function lifecycle_function_unavailable(name) {
 }
 
 /**
- * Failed to retrieve `render` context. %addendum%
- * If `AsyncLocalStorage` is available, you're likely calling a function that needs access to the `render` context (`hydratable`, `cache`, or something that depends on these) from outside of `render`. If `AsyncLocalStorage` is not available, these functions must also be called synchronously from within `render` -- i.e. not after any `await`s.
- * @param {string} addendum
+ * Could not resolve `render` context.
  * @returns {never}
  */
-export function render_context_unavailable(addendum) {
-	const error = new Error(`render_context_unavailable\nFailed to retrieve \`render\` context. ${addendum}
-If \`AsyncLocalStorage\` is available, you're likely calling a function that needs access to the \`render\` context (\`hydratable\`, \`cache\`, or something that depends on these) from outside of \`render\`. If \`AsyncLocalStorage\` is not available, these functions must also be called synchronously from within \`render\` -- i.e. not after any \`await\`s.\nhttps://svelte.dev/e/render_context_unavailable`);
+export function server_context_required() {
+	const error = new Error(`server_context_required\nCould not resolve \`render\` context.\nhttps://svelte.dev/e/server_context_required`);
 
 	error.name = 'Svelte error';
 

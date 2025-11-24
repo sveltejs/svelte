@@ -9,27 +9,12 @@ import * as e from './errors.js';
 let current_render = null;
 
 /** @type {RenderContext | null} */
-let sync_context = null;
-
-/**
- * @template T
- * @param {Promise<T>} promise
- * @returns {Promise<() => T>}
- */
-export async function save_render_context(promise) {
-	var previous_context = sync_context;
-	var value = await promise;
-
-	return () => {
-		sync_context = previous_context;
-		return value;
-	};
-}
+let context = null;
 
 /** @returns {RenderContext | null} */
 export function try_get_render_context() {
-	if (sync_context !== null) {
-		return sync_context;
+	if (context !== null) {
+		return context;
 	}
 	return als?.getStore() ?? null;
 }
@@ -39,9 +24,7 @@ export function get_render_context() {
 	const store = try_get_render_context();
 
 	if (!store) {
-		e.render_context_unavailable(
-			`\`AsyncLocalStorage\` is ${als ? 'available' : 'not available'}.`
-		);
+		e.server_context_required();
 	}
 
 	return store;
@@ -53,27 +36,30 @@ export function get_render_context() {
  * @returns {Promise<T>}
  */
 export async function with_render_context(fn) {
+	context = {
+		hydratable: {
+			lookup: new Map(),
+			values: [],
+			comparisons: [],
+			unresolved_promises: new Map()
+		}
+	};
+
+	if (in_webcontainer()) {
+		const { promise, resolve } = deferred();
+		const previous_render = current_render;
+		current_render = promise;
+		await previous_render;
+		return fn().finally(resolve);
+	}
+
 	try {
-		sync_context = {
-			hydratable: {
-				lookup: new Map(),
-				values: [],
-				comparisons: [],
-				unresolved_promises: new Map()
-			}
-		};
-		if (in_webcontainer()) {
-			const { promise, resolve } = deferred();
-			const previous_render = current_render;
-			current_render = promise;
-			await previous_render;
-			return fn().finally(resolve);
+		if (als === null) {
+			e.async_local_storage_unavailable();
 		}
-		return als ? als.run(sync_context, fn) : fn();
+		return als.run(context, fn);
 	} finally {
-		if (!in_webcontainer()) {
-			sync_context = null;
-		}
+		context = null;
 	}
 }
 
