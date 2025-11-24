@@ -33,7 +33,8 @@ import {
 	STALE_REACTION,
 	USER_EFFECT,
 	ASYNC,
-	CONNECTED
+	CONNECTED,
+	MANAGED_EFFECT
 } from '#client/constants';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
@@ -395,6 +396,18 @@ export function deferred_template_effect(fn, sync = [], async = [], blockers = [
  */
 export function block(fn, flags = 0) {
 	var effect = create_effect(BLOCK_EFFECT | flags, fn, true);
+	if (DEV) {
+		effect.dev_stack = dev_stack;
+	}
+	return effect;
+}
+
+/**
+ * @param {(() => void)} fn
+ * @param {number} flags
+ */
+export function managed(fn, flags = 0) {
+	var effect = create_effect(MANAGED_EFFECT | flags, fn, true);
 	if (DEV) {
 		effect.dev_stack = dev_stack;
 	}
