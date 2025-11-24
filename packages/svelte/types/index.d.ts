@@ -1615,6 +1615,14 @@ declare module 'svelte/compiler' {
 	export function preprocess(source: string, preprocessor: PreprocessorGroup | PreprocessorGroup[], options?: {
 		filename?: string;
 	} | undefined): Promise<Processed>;
+	/**
+	 * `print` converts a Svelte AST node back into Svelte source code.
+	 * It is primarily intended for tools that parse and transform components using the compiler’s modern AST representation.
+	 *
+	 * `print(ast)` requires an AST node produced by parse with modern: true, or any sub-node within that modern AST.
+	 * The result contains the generated source and a corresponding source map.
+	 * The output is valid Svelte, but formatting details such as whitespace or quoting may differ from the original.
+	 * */
 	export function print(ast: AST.SvelteNode): {
 		code: string;
 		map: any;
