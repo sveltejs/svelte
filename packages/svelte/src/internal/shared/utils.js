@@ -118,8 +118,54 @@ export function to_array(value, n) {
 }
 
 /**
+ * Convert an iterable to an array, immediately destructuring array elements
+ * at the specified indices. This ensures that when a generator yields the same
+ * array object multiple times (mutating it), we capture the values at iteration
+ * time, matching for...of behavior.
+ * 
+ * Returns an array where each element is a new array containing the destructured
+ * values, so that extract_paths can process them correctly.
+ * @template T
+ * @param {ArrayLike<T> | Iterable<T> | null | undefined} collection
+ * @param {number[]} destructure_indices - Array indices to extract from each element
+ * @returns {Array<any[]>}
+ */
+export function to_array_destructured(collection, destructure_indices) {
+	if (collection == null) {
+		return [];
+	}
+
+	const result = [];
+
+	// Helper to destructure a single element
+	const destructure_element = (element) => {
+		const destructured = [];
+		for (let j = 0; j < destructure_indices.length; j++) {
+			destructured.push(element?.[destructure_indices[j]]);
+		}
+		return destructured;
+	};
+
+	// If already an array, destructure each element immediately
+	if (is_array(collection)) {
+		for (let i = 0; i < collection.length; i++) {
+			result.push(destructure_element(collection[i]));
+		}
+		return result;
+	}
+
+	// For iterables, destructure during iteration
+	for (const element of collection) {
+		result.push(destructure_element(element));
+	}
+
+	return result;
+}
+
+/**
  * Snapshot items produced by an iterator so that destructured values reflect
  * what was yielded before the iterator mutates the value again.
+ * Used for object destructuring where we need to shallow copy the object.
  * @template T
  * @param {ArrayLike<T> | Iterable<T> | null | undefined} collection
  * @param {(value: T) => T} mapper
@@ -131,17 +177,6 @@ export function snapshot_each_value(collection, mapper) {
 	}
 
 	return is_array(collection) ? collection : array_from(collection, mapper);
-}
-
-/**
- * @param {any} value
- * @param {number} length
- * @param {boolean} has_rest
- * @returns {any[]}
- */
-export function snapshot_array(value, length, has_rest) {
-	const array = to_array(value, has_rest ? undefined : length);
-	return array.slice();
 }
 
 /**

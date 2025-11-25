@@ -41,12 +41,25 @@ export function EachBlock(node, context) {
 	const destructured_pattern = get_destructured_pattern(node.context);
 
 	if (destructured_pattern) {
-		const mapper =
-			destructured_pattern.type === 'ArrayPattern'
-				? create_array_snapshot_mapper(destructured_pattern)
-				: create_object_snapshot_mapper();
-
-		collection = b.call('$.snapshot_each_value', collection, mapper);
+		if (destructured_pattern.type === 'ArrayPattern') {
+			// For array destructuring, we need to destructure immediately during iteration
+			// to match for...of behavior, capturing values before the generator mutates them
+			const indices = [];
+			for (let i = 0; i < destructured_pattern.elements.length; i++) {
+				const element = destructured_pattern.elements[i];
+				if (element && element.type !== 'RestElement') {
+					indices.push(i);
+				}
+			}
+			collection = b.call(
+				'$.to_array_destructured',
+				collection,
+				b.array(indices.map((i) => b.literal(i)))
+			);
+		} else {
+			// For object destructuring, we still need to snapshot to capture values
+			collection = b.call('$.snapshot_each_value', collection, create_object_snapshot_mapper());
+		}
 	}
 
 	if (!each_node_meta.is_controlled) {
@@ -388,19 +401,6 @@ function get_destructured_pattern(pattern) {
 	}
 
 	return null;
-}
-
-/**
- * @param {import('estree').ArrayPattern} pattern
- */
-function create_array_snapshot_mapper(pattern) {
-	const value = b.id('$$value');
-	const has_rest = pattern.elements.some((element) => element?.type === 'RestElement');
-
-	return b.arrow(
-		[value],
-		b.call('$.snapshot_array', value, b.literal(pattern.elements.length), has_rest ? b.true : b.false)
-	);
 }
 
 function create_object_snapshot_mapper() {
