@@ -5,7 +5,8 @@
 </script>
 
 <button
-	onclick={() => visible = !visible}>
+	onclick={() => visible = !visible}
+>
 	toggle
 </button>
 

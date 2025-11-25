@@ -78,6 +78,7 @@ function attributes(attributes, context) {
 			context.visit(attribute);
 		}
 		context.dedent();
+		context.newline();
 	} else {
 		context.append(child_context);
 	}
@@ -112,7 +113,7 @@ function base_element(node, context) {
 	let multiline_content = false;
 
 	if (is_self_closing) {
-		child_context.write(' />');
+		child_context.write(`${multiline_attributes ? '' : ' '}/>`);
 	} else {
 		child_context.write('>');
 

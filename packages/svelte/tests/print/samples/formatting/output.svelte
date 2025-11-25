@@ -8,11 +8,13 @@
 </h1>
 <div>
 	<button
-		onclick={() => setLocale('en')}>
+		onclick={() => setLocale('en')}
+	>
 		en
 	</button>
 	<button
-		onclick={() => setLocale('es')}>
+		onclick={() => setLocale('es')}
+	>
 		es
 	</button>
 </div>
@@ -21,7 +23,8 @@
 
 	<a
 		href="https://marketplace.visualstudio.com/items?itemName=inlang.vs-code-extension"
-		target="_blank">
+		target="_blank"
+	>
 		Sherlock i18n extension
 	</a>
 	for a better i18n experience.
