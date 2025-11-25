@@ -132,14 +132,6 @@ export function trace(label, fn) {
 }
 
 /**
- * @param {string} label
- * @returns {Error & { stack: string } | null}
- */
-export function get_stack(label) {
-	return get_error(label);
-}
-
-/**
  * @param {Value} source
  * @param {string} label
  */

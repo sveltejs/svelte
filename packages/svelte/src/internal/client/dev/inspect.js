@@ -1,8 +1,8 @@
 import { UNINITIALIZED } from '../../../constants.js';
 import { snapshot } from '../../shared/clone.js';
+import { get_error } from '../../shared/dev.js';
 import { eager_effect, render_effect, validate_effect } from '../reactivity/effects.js';
 import { untrack } from '../runtime.js';
-import { get_stack } from './tracing.js';
 
 /**
  * @param {() => any[]} get_value
@@ -33,7 +33,7 @@ export function inspect(get_value, inspector, show_stack = false) {
 				inspector(...snap);
 
 				if (!initial) {
-					const stack = get_stack('$inspect(...)');
+					const stack = get_error('$inspect(...)');
 					// eslint-disable-next-line no-console
 
 					if (stack) {
