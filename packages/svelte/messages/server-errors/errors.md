@@ -27,11 +27,10 @@ This error occurs when using `hydratable` multiple times with the same key. To a
 ```svelte
 <script>
   import { hydratable } from 'svelte';
-  await Promise.all([
-    // which one should "win" and be serialized in the rendered response?
-    hydratable('hello', () => 'world'),
-    hydratable('hello', () => 'dad')
-  ])
+
+  // which one should "win" and be serialized in the rendered response?
+  const one = hydratable('not-unique', () => 1);
+  const two = hydratable('not-unique', () => 2);
 </script>
 ```
 
