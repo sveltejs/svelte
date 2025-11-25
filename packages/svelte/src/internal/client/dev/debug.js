@@ -12,6 +12,8 @@ import {
 	RENDER_EFFECT,
 	ROOT_EFFECT
 } from '#client/constants';
+import { snapshot } from '../../shared/clone.js';
+import { untrack } from '../runtime.js';
 
 /**
  *
@@ -84,6 +86,16 @@ export function log_effect_tree(effect, depth = 0) {
 		console.groupEnd();
 	}
 
+	if (effect.nodes_start && effect.nodes_end) {
+		// eslint-disable-next-line no-console
+		console.log(effect.nodes_start);
+
+		if (effect.nodes_start !== effect.nodes_end) {
+			// eslint-disable-next-line no-console
+			console.log(effect.nodes_end);
+		}
+	}
+
 	let child = effect.first;
 	while (child !== null) {
 		log_effect_tree(child, depth + 1);
@@ -103,7 +115,13 @@ function log_dep(dep) {
 		const derived = /** @type {Derived} */ (dep);
 
 		// eslint-disable-next-line no-console
-		console.groupCollapsed('%cderived', 'font-weight: normal', derived.v);
+		console.groupCollapsed(
+			`%c$derived %c${dep.label ?? '<unknown>'}`,
+			'font-weight: bold; color: CornflowerBlue',
+			'font-weight: normal',
+			untrack(() => snapshot(derived.v))
+		);
+
 		if (derived.deps) {
 			for (const d of derived.deps) {
 				log_dep(d);
@@ -114,6 +132,11 @@ function log_dep(dep) {
 		console.groupEnd();
 	} else {
 		// eslint-disable-next-line no-console
-		console.log('state', dep.v);
+		console.log(
+			`%c$state %c${dep.label ?? '<unknown>'}`,
+			'font-weight: bold; color: CornflowerBlue',
+			'font-weight: normal',
+			untrack(() => snapshot(dep.v))
+		);
 	}
 }
