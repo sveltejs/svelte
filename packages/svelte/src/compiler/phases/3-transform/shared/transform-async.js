@@ -61,15 +61,19 @@ export function transform_body(instance_body, runner, transform) {
 				}
 
 				// if we have multiple declarations, it indicates destructuring
-				return b.thunk(
-					b.block([
-						b.var(visited.declarations[0].id, visited.declarations[0].init),
-						...visited.declarations
-							.slice(1)
-							.map((d) => b.stmt(b.assignment('=', d.id, d.init ?? b.void0)))
-					]),
-					s.has_await
-				);
+				const is_generated = /** @type {ESTree.Identifier} */ (
+					visited.declarations[0].id
+				).name?.startsWith('$$d'); // bit hacky; this is the generated id from VariableDeclaration.js
+				const declarations = is_generated
+					? [
+							b.var(visited.declarations[0].id, visited.declarations[0].init),
+							...visited.declarations
+								.slice(1)
+								.map((d) => b.stmt(b.assignment('=', d.id, d.init ?? b.void0)))
+						]
+					: visited.declarations.map((d) => b.stmt(b.assignment('=', d.id, d.init ?? b.void0)));
+
+				return b.thunk(b.block(declarations), s.has_await);
 			}
 
 			if (s.node.type === 'ClassDeclaration') {
