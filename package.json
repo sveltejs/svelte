@@ -18,7 +18,7 @@
     "check": "cd packages/svelte && pnpm build && cd ../../ && pnpm -r check",
     "lint": "eslint && prettier --check .",
     "format": "prettier --write .",
-    "test": "vitest run --allowOnly",
+    "test": "vitest run",
     "changeset:version": "changeset version && pnpm -r generate:version && git add --all",
     "changeset:publish": "changeset publish",
     "bench": "node --allow-natives-syntax ./benchmarking/run.js",
