@@ -394,8 +394,12 @@ function reconcile(state, array, anchor, flags, get_key) {
 			key = get_key(value, i);
 			item = /** @type {EachItem} */ (items.get(key));
 
-			item.a?.measure();
-			(to_animate ??= new Set()).add(item);
+			// offscreen == coming in now, no animation in that case,
+			// else this would happen https://github.com/sveltejs/svelte/issues/17181
+			if (item.o) {
+				item.a?.measure();
+				(to_animate ??= new Set()).add(item);
+			}
 		}
 	}
 
