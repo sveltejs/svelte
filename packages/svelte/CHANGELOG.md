@@ -1,5 +1,17 @@
 # svelte
 
+## 5.44.1
+
+### Patch Changes
+
+- fix: await blockers before initialising const ([#17226](https://github.com/sveltejs/svelte/pull/17226))
+
+- fix: link offscreen items and last effect in each block correctly ([#17244](https://github.com/sveltejs/svelte/pull/17244))
+
+- fix: generate correct code for simple destructurings ([#17237](https://github.com/sveltejs/svelte/pull/17237))
+
+- fix: ensure each block animations don't mess with transitions ([#17238](https://github.com/sveltejs/svelte/pull/17238))
+
 ## 5.44.0
 
 ### Minor Changes
