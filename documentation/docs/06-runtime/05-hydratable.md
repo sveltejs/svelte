@@ -30,7 +30,7 @@ To fix the example above:
   // it with the provided key and baking it into the `head` content. During hydration, it will
   // look for the serialized version, returning it instead of running `getUser`. After hydration
   // is done, if it's called again, it'll simply invoke `getUser`.
-  const user = await hydratable('user', getUser);
+  const user = await hydratable('user', () => getUser());
 </script>
 
 <h1>{user.name}</h1>
@@ -47,7 +47,7 @@ If you're a library author, be sure to prefix the keys of your `hydratable` valu
 
 ## Serialization
 
-All data returned from a `hydratable` function must be serializable. Not to fear, though -- this doesn't mean you're limited to JSON! Svelte uses [`devalue`](https://npmjs.com/package/devalue) for serialization, which means it can serialize all sorts of things, including `Map`, `Set`, `URL`, and `BigInt`. Check the documentation page for a full list. In addition to these, thanks to some Svelte magic, you can also fearlessly use promises:
+All data returned from a `hydratable` function must be serializable. But this doesn't mean you're limited to JSON — Svelte uses [`devalue`](https://npmjs.com/package/devalue), which can serialize all sorts of things including `Map`, `Set`, `URL`, and `BigInt`. Check the documentation page for a full list. In addition to these, thanks to some Svelte magic, you can also fearlessly use promises:
 
 ```svelte
 <script>
