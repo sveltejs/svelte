@@ -4,7 +4,6 @@ import { snapshot } from '../../shared/clone.js';
 import { DERIVED, ASYNC, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { effect_tracking } from '../reactivity/effects.js';
 import { active_reaction, untrack } from '../runtime.js';
-import { get_error } from '../../shared/dev.js';
 
 /**
  * @typedef {{
