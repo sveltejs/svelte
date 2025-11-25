@@ -13,6 +13,7 @@ export default test({
 				<button>increment</button>
 				<p>1 ** 2 = 1</p>
 				<p>1 ** 3 = 1</p>
+				<p>function function</p>
 			`
 		);
 
@@ -25,6 +26,7 @@ export default test({
 				<button>increment</button>
 				<p>2 ** 2 = 4</p>
 				<p>2 ** 3 = 8</p>
+				<p>function function</p>
 			`
 		);
 	}
