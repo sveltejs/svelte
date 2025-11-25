@@ -13,6 +13,7 @@ import {
 	ROOT_EFFECT
 } from '#client/constants';
 import { snapshot } from '../../shared/clone.js';
+import { untrack } from '../runtime.js';
 
 /**
  *
@@ -118,7 +119,7 @@ function log_dep(dep) {
 			`%c$derived %c${dep.label ?? '<unknown>'}`,
 			'font-weight: bold; color: CornflowerBlue',
 			'font-weight: normal',
-			snapshot(derived.v)
+			untrack(() => snapshot(derived.v))
 		);
 
 		if (derived.deps) {
@@ -135,7 +136,7 @@ function log_dep(dep) {
 			`%c$state %c${dep.label ?? '<unknown>'}`,
 			'font-weight: bold; color: CornflowerBlue',
 			'font-weight: normal',
-			snapshot(dep.v)
+			untrack(() => snapshot(dep.v))
 		);
 	}
 }
