@@ -1,2 +1,1 @@
-<span>{name}</span>
-<span>{count + 1}</span>
+<span>{name}</span><span>{count + 1}</span>

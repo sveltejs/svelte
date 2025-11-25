@@ -5,7 +5,7 @@ import ts from 'esrap/languages/ts';
 import { is_void } from '../../utils.js';
 
 /** Threshold for when content should be formatted on separate lines */
-const LINE_BREAK_THRESHOLD = 30;
+const LINE_BREAK_THRESHOLD = 50;
 
 /**
  * `print` converts a Svelte AST node back into Svelte source code.
@@ -148,10 +148,16 @@ function base_element(node, context) {
 		child_context.write(`</${node.name}>`);
 	}
 
+	const break_line_after = child_context.measure() > LINE_BREAK_THRESHOLD;
+
+	if ((multiline_content || multiline_attributes) && !context.empty()) {
+		context.newline();
+	}
+
 	context.append(child_context);
 
 	if (is_self_closing) return;
-	if (multiline_content || multiline_attributes) {
+	if (multiline_content || multiline_attributes || break_line_after) {
 		context.newline();
 	}
 }
@@ -411,8 +417,6 @@ const svelte_visitors = {
 					context.newline();
 				} else if (multiline) {
 					context.newline();
-				} else {
-					context.write(' ');
 				}
 			}
 		}

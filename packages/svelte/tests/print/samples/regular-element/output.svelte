@@ -1,2 +1,1 @@
-<div><a href="/foo">bar</a></div>
-<br />
+<div><a href="/foo">bar</a></div><br />

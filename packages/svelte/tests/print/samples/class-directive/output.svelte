@@ -3,6 +3,4 @@
 	let foo = false;
 </script>
 
-<div class:active class:bar={foo}>
-	Hello world!
-</div>
+<div class:active class:bar={foo}>Hello world!</div>
