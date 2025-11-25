@@ -563,11 +563,6 @@ export class Batch {
  * @returns {T}
  */
 export function flushSync(fn) {
-	if (async_mode_flag && active_effect !== null) {
-		// We disallow this because it creates super-hard to reason about stack trace and because it's generally a bad idea
-		e.flush_sync_in_effect();
-	}
-
 	var was_flushing_sync = is_flushing_sync;
 	is_flushing_sync = true;
 
@@ -950,7 +945,7 @@ export function eager(fn) {
  */
 export function fork(fn) {
 	if (!async_mode_flag) {
-		e.experimental_async_fork();
+		e.experimental_async_required('fork');
 	}
 
 	if (current_batch !== null) {
@@ -959,11 +954,14 @@ export function fork(fn) {
 
 	var batch = Batch.ensure();
 	batch.is_fork = true;
+	batch_values = new Map();
 
 	var committed = false;
 	var settled = batch.settled();
 
 	flushSync(fn);
+
+	batch_values = null;
 
 	// revert state changes
 	for (var [source, value] of batch.previous) {

@@ -34,7 +34,8 @@ import {
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
-import { get_stack, tag_proxy } from '../dev/tracing.js';
+import { tag_proxy } from '../dev/tracing.js';
+import { get_error } from '../../shared/dev.js';
 import { component_context, is_runes } from '../context.js';
 import { Batch, batch_values, eager_block_effects, schedule_effect } from './batch.js';
 import { proxy } from '../proxy.js';
@@ -78,7 +79,7 @@ export function source(v, stack) {
 	};
 
 	if (DEV && tracing_mode_flag) {
-		signal.created = stack ?? get_stack('created at');
+		signal.created = stack ?? get_error('created at');
 		signal.updated = null;
 		signal.set_during_effect = false;
 		signal.trace = null;
@@ -196,7 +197,7 @@ export function internal_set(source, value) {
 				source.updated.set('', { error: /** @type {any} */ (null), count });
 
 				if (tracing_mode_flag || count > 5) {
-					const error = get_stack('updated at');
+					const error = get_error('updated at');
 
 					if (error !== null) {
 						let entry = source.updated.get(error.stack);

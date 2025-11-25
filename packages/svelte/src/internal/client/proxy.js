@@ -25,7 +25,8 @@ import {
 import { PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
-import { get_stack, tag } from './dev/tracing.js';
+import { tag } from './dev/tracing.js';
+import { get_error } from '../shared/dev.js';
 import { tracing_mode_flag } from '../flags/index.js';
 
 // TODO move all regexes into shared module?
@@ -53,7 +54,7 @@ export function proxy(value) {
 	var is_proxied_array = is_array(value);
 	var version = source(0);
 
-	var stack = DEV && tracing_mode_flag ? get_stack('created at') : null;
+	var stack = DEV && tracing_mode_flag ? get_error('created at') : null;
 	var parent_version = update_version;
 
 	/**

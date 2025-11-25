@@ -29,7 +29,7 @@ import * as e from '../errors.js';
 import * as w from '../warnings.js';
 import { async_effect, destroy_effect, effect_tracking, teardown } from './effects.js';
 import { eager_effects, internal_set, set_eager_effects, source } from './sources.js';
-import { get_stack } from '../dev/tracing.js';
+import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { Boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
@@ -84,7 +84,7 @@ export function derived(fn) {
 	};
 
 	if (DEV && tracing_mode_flag) {
-		signal.created = get_stack('created at');
+		signal.created = get_error('created at');
 	}
 
 	return signal;
@@ -378,7 +378,7 @@ export function update_derived(derived) {
 	if (batch_values !== null) {
 		// only cache the value if we're in a tracking context, otherwise we won't
 		// clear the cache in `mark_reactions` when dependencies are updated
-		if (effect_tracking()) {
+		if (effect_tracking() || current_batch?.is_fork) {
 			batch_values.set(derived, value);
 		}
 	} else {

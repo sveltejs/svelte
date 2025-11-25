@@ -33,7 +33,8 @@ import {
 	update_derived
 } from './reactivity/deriveds.js';
 import { async_mode_flag, tracing_mode_flag } from '../flags/index.js';
-import { tracing_expressions, get_stack } from './dev/tracing.js';
+import { tracing_expressions } from './dev/tracing.js';
+import { get_error } from '../shared/dev.js';
 import {
 	component_context,
 	dev_current_component_function,
@@ -44,7 +45,13 @@ import {
 	set_dev_stack
 } from './context.js';
 import * as w from './warnings.js';
-import { Batch, batch_values, flushSync, schedule_effect } from './reactivity/batch.js';
+import {
+	Batch,
+	batch_values,
+	current_batch,
+	flushSync,
+	schedule_effect
+} from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
@@ -548,7 +555,7 @@ export function get(signal) {
 		// 	if (!tracking && !untracking && !was_read) {
 		// 		w.await_reactivity_loss(/** @type {string} */ (signal.label));
 
-		// 		var trace = get_stack('traced at');
+		// 		var trace = get_error('traced at');
 		// 		// eslint-disable-next-line no-console
 		// 		if (trace) console.warn(trace);
 		// 	}
@@ -567,7 +574,7 @@ export function get(signal) {
 			if (signal.trace) {
 				signal.trace();
 			} else {
-				var trace = get_stack('traced at');
+				var trace = get_error('traced at');
 
 				if (trace) {
 					var entry = tracing_expressions.entries.get(signal);
@@ -612,7 +619,10 @@ export function get(signal) {
 
 			return value;
 		}
-	} else if (is_derived && !batch_values?.has(signal)) {
+	} else if (
+		is_derived &&
+		(!batch_values?.has(signal) || (current_batch?.is_fork && !effect_tracking()))
+	) {
 		derived = /** @type {Derived} */ (signal);
 
 		if (is_dirty(derived)) {
