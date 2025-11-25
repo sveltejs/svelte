@@ -450,6 +450,7 @@ declare module 'svelte' {
 	 * @deprecated Use [`$effect`](https://svelte.dev/docs/svelte/$effect) instead
 	 * */
 	export function afterUpdate(fn: () => void): void;
+	export function hydratable<T>(key: string, fn: () => T): T;
 	/**
 	 * Create a snippet programmatically
 	 * */

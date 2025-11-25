@@ -100,9 +100,13 @@ $effect(() => {
 
 Often when encountering this issue, the value in question shouldn't be state (for example, if you are pushing to a `logs` array in an effect, make `logs` a normal array rather than `$state([])`). In the rare cases where you really _do_ need to write to state in an effect — [which you should avoid]($effect#When-not-to-use-$effect) — you can read the state with [untrack](svelte#untrack) to avoid adding it as a dependency.
 
-## experimental_async_fork
+## flush_sync_in_effect
 
-> Cannot use `fork(...)` unless the `experimental.async` compiler option is `true`
+> Cannot use `flushSync` inside an effect
+
+The `flushSync()` function can be used to flush any pending effects synchronously. It cannot be used if effects are currently being flushed — in other words, you can call it after a state change but _not_ inside an effect.
+
+This restriction only applies when using the `experimental.async` option, which will be active by default in Svelte 6.
 
 ## fork_discarded
 
@@ -115,6 +119,23 @@ Often when encountering this issue, the value in question shouldn't be state (fo
 ## get_abort_signal_outside_reaction
 
 > `getAbortSignal()` can only be called inside an effect or derived
+
+## hydratable_missing_but_required
+
+> Expected to find a hydratable with key `%key%` during hydration, but did not.
+
+This can happen if you render a hydratable on the client that was not rendered on the server, and means that it was forced to fall back to running its function blockingly during hydration. This is bad for performance, as it blocks hydration until the asynchronous work completes.
+
+```svelte
+<script>
+  import { hydratable } from 'svelte';
+
+	if (BROWSER) {
+		// bad! nothing can become interactive until this asynchronous work is done
+		await hydratable('foo', get_slow_random_number);
+	}
+</script>
+```
 
 ## hydration_failed
 
