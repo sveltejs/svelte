@@ -51,7 +51,7 @@ export function add_form_reset_listener() {
 					}
 				});
 			},
-			// In the capture phase to guarantee we get noticed of it (no possiblity of stopPropagation)
+			// In the capture phase to guarantee we get noticed of it (no possibility of stopPropagation)
 			{ capture: true }
 		);
 	}
