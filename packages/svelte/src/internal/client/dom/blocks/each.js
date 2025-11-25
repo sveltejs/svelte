@@ -503,6 +503,8 @@ function reconcile(state, array, anchor, flags, get_key) {
 		current = item.next;
 	}
 
+	let has_offscreen_items = items.size > length;
+
 	if (current !== null || seen !== undefined) {
 		var to_destroy = seen === undefined ? [] : array_from(seen);
 
@@ -515,6 +517,8 @@ function reconcile(state, array, anchor, flags, get_key) {
 		}
 
 		var destroy_length = to_destroy.length;
+
+		has_offscreen_items = items.size - destroy_length > length;
 
 		if (destroy_length > 0) {
 			var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && length === 0 ? anchor : null;
@@ -532,6 +536,18 @@ function reconcile(state, array, anchor, flags, get_key) {
 			pause_effects(state, to_destroy, controlled_anchor);
 		}
 	}
+
+	// Append offscreen items at the end
+	if (has_offscreen_items) {
+		for (const item of items.values()) {
+			if (!item.o) {
+				link(state, prev, item);
+				prev = item;
+			}
+		}
+	}
+
+	state.effect.last = prev && prev.e;
 
 	if (is_animated) {
 		queue_micro_task(() => {
