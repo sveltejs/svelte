@@ -1,5 +1,11 @@
 # svelte
 
+## 5.44.0
+
+### Minor Changes
+
+- feat: `hydratable` API ([#17154](https://github.com/sveltejs/svelte/pull/17154))
+
 ## 5.43.15
 
 ### Patch Changes
