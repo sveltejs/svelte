@@ -53,5 +53,4 @@ Certain methods such as `mount` cannot be invoked while running in a server cont
 
 > Could not resolve `render` context.
 
-Certain methods such as `hydratable` cannot be invoked outside of the `render` context. This could've occurred because you invoked the function
-before or after `render` finished running, or it could be because you did so inside of a `setTimeout` or similar.
+Certain functions such as `hydratable` cannot be invoked outside of a `render(...)` call, such as at the top level of a module.
