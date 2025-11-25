@@ -1,3 +1,3 @@
 <svelte:document
 	onvisibilitychange={handleVisibilityChange}
-	use:someAction />
+	use:someAction></svelte:document>

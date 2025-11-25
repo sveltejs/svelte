@@ -107,7 +107,8 @@ function base_element(node, context) {
 
 	const multiline_attributes = attributes(node.attributes, child_context);
 
-	const is_self_closing = is_void(node.name) || node.fragment.nodes.length === 0;
+	const is_self_closing =
+		is_void(node.name) || (node.type === 'Component' && node.fragment.nodes.length === 0);
 	let multiline_content = false;
 
 	if (is_self_closing) {

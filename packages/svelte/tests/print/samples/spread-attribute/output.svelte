@@ -1,1 +1,1 @@
-<div {...props} />
+<div {...props}></div>
