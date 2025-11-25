@@ -637,6 +637,10 @@ function link(state, prev, next) {
 		state.first = next;
 		state.effect.first = next && next.e;
 	} else {
+		if (prev.e === state.effect.last && next !== null) {
+			state.effect.last = next.e;
+		}
+
 		if (prev.e.next) {
 			prev.e.next.prev = null;
 		}
@@ -648,6 +652,10 @@ function link(state, prev, next) {
 	if (next === null) {
 		state.effect.last = prev && prev.e;
 	} else {
+		if (next.e === state.effect.last && prev === null) {
+			state.effect.last = next.e.prev;
+		}
+
 		if (next.e.prev) {
 			next.e.prev.next = null;
 		}
