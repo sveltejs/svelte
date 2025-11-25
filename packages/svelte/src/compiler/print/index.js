@@ -15,12 +15,17 @@ const LINE_BREAK_THRESHOLD = 50;
  * The result contains the generated source and a corresponding source map.
  * The output is valid Svelte, but formatting details such as whitespace or quoting may differ from the original.
  * @param {AST.SvelteNode} ast
+ * @param {import('./types.js').Options | undefined} options
  */
-export function print(ast) {
+export function print(ast, options = undefined) {
 	return esrap.print(
 		ast,
 		/** @type {Visitors<AST.SvelteNode>} */ ({
-			...ts({ comments: ast.type === 'Root' ? ast.comments : [] }),
+			...ts({
+				comments: ast.type === 'Root' ? ast.comments : [],
+				getLeadingComments: options?.getLeadingComments,
+				getTrailingComments: options?.getTrailingComments
+			}),
 			...svelte_visitors,
 			...css_visitors
 		})
