@@ -107,12 +107,16 @@ async function compare(key, a, b) {
 		await p;
 	}
 
-	if (a?.serialized !== b?.serialized) {
-		e.hydratable_clobbering(
-			key,
-			a?.stack ?? '<missing stack trace>',
-			b?.stack ?? '<missing stack trace>'
-		);
+	if (a.serialized !== b.serialized) {
+		const a_stack = /** @type {string} */ (a.stack);
+		const b_stack = /** @type {string} */ (b.stack);
+
+		const stack =
+			a_stack === b_stack
+				? `Occurred at:\n${a_stack}`
+				: `First occurrence at:\n${a_stack}\n\nSecond occurrence at:\n${b_stack}`;
+
+		e.hydratable_clobbering(key, stack);
 	}
 }
 

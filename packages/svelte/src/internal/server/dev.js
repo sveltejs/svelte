@@ -103,12 +103,8 @@ export function validate_snippet_args(renderer) {
 export function get_user_code_location() {
 	const stack = get_stack();
 
-	for (const line of stack) {
-		const trimmed = line.trim();
-		if (!trimmed.startsWith('at ')) continue;
-
-		return line.replace(/\((.*):\d+:\d+\)$/, (_, file) => {
-			return `(${file})`;
-		});
-	}
+	return stack
+		.filter((line) => line.trim().startsWith('at '))
+		.map((line) => line.replace(/\((.*):\d+:\d+\)$/, (_, file) => `(${file})`))
+		.join('\n');
 }

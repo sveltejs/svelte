@@ -18,11 +18,7 @@ You (or the framework you're using) called [`render(...)`](svelte-server#render)
 
 > Attempted to set `hydratable` with key `%key%` twice with different values.
 >
-> First instance occurred at:
 > %stack%
->
-> Second instance occurred at:
-> %stack2%
 
 This error occurs when using `hydratable` multiple times with the same key. To avoid this, you can:
 - Ensure all invocations with the same key result in the same value
@@ -43,7 +39,7 @@ This error occurs when using `hydratable` multiple times with the same key. To a
 
 > Failed to serialize `hydratable` data for key `%key%`.
 >
-> `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/uneval) can, plus Promises. 
+> `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/uneval) can, plus Promises.
 >
 > Cause:
 > %stack%

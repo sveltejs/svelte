@@ -41,24 +41,15 @@ export function html_deprecated() {
 /**
  * Attempted to set `hydratable` with key `%key%` twice with different values.
  * 
- * First instance occurred at:
  * %stack%
- * 
- * Second instance occurred at:
- * %stack2%
  * @param {string} key
  * @param {string} stack
- * @param {string} stack2
  * @returns {never}
  */
-export function hydratable_clobbering(key, stack, stack2) {
+export function hydratable_clobbering(key, stack) {
 	const error = new Error(`hydratable_clobbering\nAttempted to set \`hydratable\` with key \`${key}\` twice with different values.
 
-First instance occurred at:
-${stack}
-
-Second instance occurred at:
-${stack2}\nhttps://svelte.dev/e/hydratable_clobbering`);
+${stack}\nhttps://svelte.dev/e/hydratable_clobbering`);
 
 	error.name = 'Svelte error';
 
@@ -68,7 +59,7 @@ ${stack2}\nhttps://svelte.dev/e/hydratable_clobbering`);
 /**
  * Failed to serialize `hydratable` data for key `%key%`.
  * 
- * `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/uneval) can, plus Promises. 
+ * `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/uneval) can, plus Promises.
  * 
  * Cause:
  * %stack%
@@ -79,7 +70,7 @@ ${stack2}\nhttps://svelte.dev/e/hydratable_clobbering`);
 export function hydratable_serialization_failed(key, stack) {
 	const error = new Error(`hydratable_serialization_failed\nFailed to serialize \`hydratable\` data for key \`${key}\`.
 
-\`hydratable\` can serialize anything [\`uneval\` from \`devalue\`](https://npmjs.com/package/uneval) can, plus Promises. 
+\`hydratable\` can serialize anything [\`uneval\` from \`devalue\`](https://npmjs.com/package/uneval) can, plus Promises.
 
 Cause:
 ${stack}\nhttps://svelte.dev/e/hydratable_serialization_failed`);
