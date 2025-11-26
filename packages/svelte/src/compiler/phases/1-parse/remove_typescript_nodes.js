@@ -132,6 +132,7 @@ const visitors = {
 		if (node.declare) {
 			return b.empty;
 		}
+		delete node.abstract;
 		delete node.implements;
 		return context.next();
 	},
