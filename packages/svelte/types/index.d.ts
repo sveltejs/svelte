@@ -844,7 +844,6 @@ declare module 'svelte/compiler' {
 	import type { SourceMap } from 'magic-string';
 	import type { ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, Expression, Identifier, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
 	import type { Location } from 'locate-character';
-	import type { default as ts } from 'esrap/languages/ts';
 	/**
 	 * `compile` converts your `.svelte` source code into a JavaScript module that exports a component
 	 *
@@ -1813,8 +1812,8 @@ declare module 'svelte/compiler' {
 			| Declaration;
 	}
 	type Options = {
-		getLeadingComments?: NonNullable<Parameters<typeof ts>[0]>['getLeadingComments'] | undefined;
-		getTrailingComments?: NonNullable<Parameters<typeof ts>[0]>['getTrailingComments'] | undefined;
+		getLeadingComments?: ((node: any) => Array<{ type: 'Line' | 'Block'; value: string; start?: number; end?: number; }> | undefined) | undefined;
+		getTrailingComments?: ((node: any) => Array<{ type: 'Line' | 'Block'; value: string; start?: number; end?: number; }> | undefined) | undefined;
 	};
 
 	export {};
