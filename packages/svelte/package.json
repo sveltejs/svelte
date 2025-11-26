@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.44.0",
+  "version": "5.44.1",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -176,7 +176,7 @@
     "clsx": "^2.1.1",
     "devalue": "^5.5.0",
     "esm-env": "^1.2.1",
-    "esrap": "^2.1.0",
+    "esrap": "^2.2.0",
     "is-reference": "^3.0.3",
     "locate-character": "^3.0.0",
     "magic-string": "^0.30.11",

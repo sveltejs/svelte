@@ -1,6 +1,7 @@
 /** @import { Pattern } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
+/** @import { ExpressionMetadata } from '../../../nodes.js' */
 import { dev } from '../../../../state.js';
 import { extract_identifiers } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
@@ -30,7 +31,7 @@ export function ConstTag(node, context) {
 			context.state,
 			declaration.id,
 			expression,
-			node.metadata.expression.has_await,
+			node.metadata.expression,
 			context.state.scope.get_bindings(declaration)
 		);
 	} else {
@@ -73,7 +74,7 @@ export function ConstTag(node, context) {
 			context.state,
 			tmp,
 			expression,
-			node.metadata.expression.has_await,
+			node.metadata.expression,
 			context.state.scope.get_bindings(declaration)
 		);
 
@@ -89,15 +90,18 @@ export function ConstTag(node, context) {
  * @param {ComponentContext['state']} state
  * @param {import('estree').Identifier} id
  * @param {import('estree').Expression} expression
- * @param {boolean} has_await
+ * @param {ExpressionMetadata} metadata
  * @param {import('#compiler').Binding[]} bindings
  */
-function add_const_declaration(state, id, expression, has_await, bindings) {
+function add_const_declaration(state, id, expression, metadata, bindings) {
 	// we need to eagerly evaluate the expression in order to hit any
 	// 'Cannot access x before initialization' errors
 	const after = dev ? [b.stmt(b.call('$.get', id))] : [];
 
-	if (has_await || state.async_consts) {
+	const has_await = metadata.has_await;
+	const blockers = [...metadata.dependencies].map((dep) => dep.blocker).filter((b) => b !== null);
+
+	if (has_await || state.async_consts || blockers.length > 0) {
 		const run = (state.async_consts ??= {
 			id: b.id(state.scope.generate('promises')),
 			thunks: []
@@ -107,6 +111,8 @@ function add_const_declaration(state, id, expression, has_await, bindings) {
 
 		const assignment = b.assignment('=', id, expression);
 		const body = after.length === 0 ? assignment : b.block([b.stmt(assignment), ...after]);
+
+		if (blockers.length > 0) run.thunks.push(b.thunk(b.call('Promise.all', b.array(blockers))));
 
 		run.thunks.push(b.thunk(body, has_await));
 

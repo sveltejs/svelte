@@ -69,7 +69,7 @@ There are several [UI component libraries](/packages#component-libraries) as wel
 
 ## How do I test Svelte apps?
 
-How your application is structured and where logic is defined will determine the best way to ensure it is properly tested. It is important to note that not all logic belongs within a component - this includes concerns such as data transformation, cross-component state management, and logging, among others. Remember that the Svelte library has its own test suite, so you do not need to write tests to validate implementation details provided by Svelte.
+How your application is structured and where logic is defined will determine the best way to ensure it is properly tested. It is important to note that not all logic belongs within a component — this includes concerns such as data transformation, cross-component state management, and logging, among others. Remember that the Svelte library has its own test suite, so you do not need to write tests to validate implementation details provided by Svelte.
 
 A Svelte application will typically have three different types of tests: Unit, Component, and End-to-End (E2E).
 

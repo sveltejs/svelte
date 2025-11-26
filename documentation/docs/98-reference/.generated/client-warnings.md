@@ -237,7 +237,7 @@ Hydration failed because the initial UI does not match what was rendered on the 
 
 This warning is thrown when Svelte encounters an error while hydrating the HTML from the server. During hydration, Svelte walks the DOM, expecting a certain structure. If that structure is different (for example because the HTML was repaired by the DOM because of invalid HTML), then Svelte will run into issues, resulting in this warning.
 
-During development, this error is often preceeded by a `console.error` detailing the offending HTML, which needs fixing.
+During development, this error is often preceded by a `console.error` detailing the offending HTML, which needs fixing.
 
 ### invalid_raw_snippet_render
 

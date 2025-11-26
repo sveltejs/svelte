@@ -394,8 +394,12 @@ function reconcile(state, array, anchor, flags, get_key) {
 			key = get_key(value, i);
 			item = /** @type {EachItem} */ (items.get(key));
 
-			item.a?.measure();
-			(to_animate ??= new Set()).add(item);
+			// offscreen == coming in now, no animation in that case,
+			// else this would happen https://github.com/sveltejs/svelte/issues/17181
+			if (item.o) {
+				item.a?.measure();
+				(to_animate ??= new Set()).add(item);
+			}
 		}
 	}
 
@@ -653,6 +657,10 @@ function link(state, prev, next) {
 		state.first = next;
 		state.effect.first = next && next.e;
 	} else {
+		if (prev.e === state.effect.last && next !== null) {
+			state.effect.last = next.e;
+		}
+
 		if (prev.e.next) {
 			prev.e.next.prev = null;
 		}
@@ -664,6 +672,10 @@ function link(state, prev, next) {
 	if (next === null) {
 		state.effect.last = prev && prev.e;
 	} else {
+		if (next.e === state.effect.last && prev === null) {
+			state.effect.last = next.e.prev;
+		}
+
 		if (next.e.prev) {
 			next.e.prev.next = null;
 		}

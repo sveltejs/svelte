@@ -35,7 +35,7 @@ export function transform_body(instance_body, runner, transform) {
 		(node) => /** @type {ESTree.Statement | ESTree.VariableDeclaration} */ (transform(node))
 	);
 
-	// Declarations for the await expressions (they will asign to them; need to be hoisted to be available in whole instance scope)
+	// Declarations for the await expressions (they will assign to them; need to be hoisted to be available in whole instance scope)
 	if (instance_body.declarations.length > 0) {
 		statements.push(
 			b.declaration(
@@ -53,23 +53,22 @@ export function transform_body(instance_body, runner, transform) {
 					transform(b.var(s.node.id, s.node.init))
 				);
 
-				if (visited.declarations.length === 1) {
-					return b.thunk(
-						b.assignment('=', visited.declarations[0].id, visited.declarations[0].init ?? b.void0),
-						s.has_await
-					);
+				const statements = visited.declarations.map((node) => {
+					if (node.id.type === 'Identifier' && node.id.name.startsWith('$$d')) {
+						// this is an intermediate declaration created in VariableDeclaration.js;
+						// subsequent statements depend on it
+						return b.var(node.id, node.init);
+					}
+
+					return b.stmt(b.assignment('=', node.id, node.init ?? b.void0));
+				});
+
+				if (statements.length === 1) {
+					const statement = /** @type {ESTree.ExpressionStatement} */ (statements[0]);
+					return b.thunk(statement.expression, s.has_await);
 				}
 
-				// if we have multiple declarations, it indicates destructuring
-				return b.thunk(
-					b.block([
-						b.var(visited.declarations[0].id, visited.declarations[0].init),
-						...visited.declarations
-							.slice(1)
-							.map((d) => b.stmt(b.assignment('=', d.id, d.init ?? b.void0)))
-					]),
-					s.has_await
-				);
+				return b.thunk(b.block(statements), s.has_await);
 			}
 
 			if (s.node.type === 'ClassDeclaration') {

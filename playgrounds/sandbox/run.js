@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { globSync } from 'tinyglobby';
-import { compile, compileModule, parse, migrate } from 'svelte/compiler';
+import { compile, compileModule, parse, print, migrate } from 'svelte/compiler';
 
 // toggle these to change what gets written to sandbox/output
 const AST = false;
@@ -11,6 +11,7 @@ const MIGRATE = false;
 const FROM_HTML = true;
 const FROM_TREE = false;
 const DEV = false;
+const PRINT = false;
 
 const argv = parseArgs({ options: { runes: { type: 'boolean' } }, args: process.argv.slice(2) });
 
@@ -71,6 +72,11 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 						'\t'
 					)
 				);
+
+				if (PRINT) {
+					const printed = print(ast);
+					write(`${cwd}/output/printed/${file}`, printed.code);
+				}
 			}
 
 			if (MIGRATE) {

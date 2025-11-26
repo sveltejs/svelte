@@ -844,6 +844,7 @@ declare module 'svelte/compiler' {
 	import type { SourceMap } from 'magic-string';
 	import type { ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, Expression, Identifier, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
 	import type { Location } from 'locate-character';
+	import type { default as ts } from 'esrap/languages/ts';
 	/**
 	 * `compile` converts your `.svelte` source code into a JavaScript module that exports a component
 	 *
@@ -1390,7 +1391,7 @@ declare module 'svelte/compiler' {
 			expression: null | Expression;
 		}
 
-		interface BaseElement extends BaseNode {
+		export interface BaseElement extends BaseNode {
 			name: string;
 			attributes: Array<Attribute | SpreadAttribute | Directive | AttachTag>;
 			fragment: Fragment;
@@ -1617,6 +1618,18 @@ declare module 'svelte/compiler' {
 		filename?: string;
 	} | undefined): Promise<Processed>;
 	/**
+	 * `print` converts a Svelte AST node back into Svelte source code.
+	 * It is primarily intended for tools that parse and transform components using the compiler’s modern AST representation.
+	 *
+	 * `print(ast)` requires an AST node produced by parse with modern: true, or any sub-node within that modern AST.
+	 * The result contains the generated source and a corresponding source map.
+	 * The output is valid Svelte, but formatting details such as whitespace or quoting may differ from the original.
+	 * */
+	export function print(ast: AST.SvelteNode, options?: Options | undefined): {
+		code: string;
+		map: any;
+	};
+	/**
 	 * The current version, as set in package.json.
 	 * */
 	export const VERSION: string;
@@ -1799,6 +1812,10 @@ declare module 'svelte/compiler' {
 			| SimpleSelector
 			| Declaration;
 	}
+	type Options = {
+		getLeadingComments?: NonNullable<Parameters<typeof ts>[0]>['getLeadingComments'] | undefined;
+		getTrailingComments?: NonNullable<Parameters<typeof ts>[0]>['getTrailingComments'] | undefined;
+	};
 
 	export {};
 }
