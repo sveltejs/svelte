@@ -1,5 +1,11 @@
 # svelte
 
+## 5.45.0
+
+### Minor Changes
+
+- feat: add `print(...)` function ([#16188](https://github.com/sveltejs/svelte/pull/16188))
+
 ## 5.44.1
 
 ### Patch Changes
