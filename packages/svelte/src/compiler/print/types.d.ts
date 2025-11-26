@@ -1,4 +1,4 @@
-import ts from 'esrap/languages/ts';
+import type ts from 'esrap/languages/ts';
 
 export type Options = {
 	getLeadingComments?: NonNullable<Parameters<typeof ts>[0]>['getLeadingComments'] | undefined;
