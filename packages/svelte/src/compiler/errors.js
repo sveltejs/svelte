@@ -1130,6 +1130,15 @@ export function expected_pattern(node) {
 }
 
 /**
+ * Expected 'html', 'render', 'attach', 'const', or 'debug'
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function expected_tag(node) {
+	e(node, 'expected_tag', `Expected 'html', 'render', 'attach', 'const', or 'debug'\nhttps://svelte.dev/e/expected_tag`);
+}
+
+/**
  * Expected token %token%
  * @param {null | number | NodeLike} node
  * @param {string} token

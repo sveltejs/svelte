@@ -724,6 +724,7 @@ function special(parser) {
 				expression: new ExpressionMetadata()
 			}
 		});
+		return;
 	}
 
 	if (parser.eat('render')) {
@@ -755,5 +756,7 @@ function special(parser) {
 				snippets: new Set()
 			}
 		});
+		return;
 	}
+	e.expected_tag(parser.index);
 }

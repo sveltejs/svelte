@@ -525,6 +525,12 @@ Expected an identifier
 Expected identifier or destructure pattern
 ```
 
+### expected_tag
+
+```
+Expected 'html', 'render', 'attach', 'const', or 'debug'
+```
+
 ### expected_token
 
 ```
