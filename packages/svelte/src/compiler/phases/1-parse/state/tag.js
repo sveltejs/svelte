@@ -758,5 +758,5 @@ function special(parser) {
 		});
 		return;
 	}
-	e.expected_tag();
+	e.expected_tag(parser.index);
 }
