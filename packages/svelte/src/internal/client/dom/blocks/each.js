@@ -126,10 +126,6 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 		}
 
 		destroy_items(state, to_destroy);
-
-		// if (state.first === to_destroy[0]) {
-		// 	state.first = to_destroy[0].prev;
-		// }
 	} else {
 		group = {
 			remaining,
@@ -147,6 +143,8 @@ function pause_effects(state, to_destroy, controlled_anchor) {
  * @param {EachItem[]} to_destroy
  */
 function destroy_items(state, to_destroy) {
+	// TODO only destroy effects if no pending batch needs them. otherwise,
+	// just set `item.o` back to `false`
 	for (var i = 0; i < to_destroy.length; i++) {
 		var item = to_destroy[i];
 
