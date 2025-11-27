@@ -1,5 +1,6 @@
 ---
 title: on:
+use_cases: "legacy: event handling, event modifiers, component events"
 ---
 
 In runes mode, event handlers are just like any other attribute or prop.

@@ -1,5 +1,6 @@
 ---
 title: Lifecycle hooks
+use_cases: "initialization logic, cleanup, DOM access, third-party library setup"
 ---
 
 <!-- - onMount/onDestroy
