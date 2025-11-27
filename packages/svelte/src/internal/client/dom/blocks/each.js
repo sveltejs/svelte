@@ -29,8 +29,6 @@ import {
 	block,
 	branch,
 	destroy_effect,
-	run_out_transitions,
-	pause_children,
 	pause_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
