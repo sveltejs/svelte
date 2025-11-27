@@ -1,4 +1,4 @@
-/** @import { EachItem, EachState, Effect, MaybeSource, Source, TemplateNode, TransitionManager, Value } from '#client' */
+/** @import { EachItem, EachOutroGroup, EachState, Effect, MaybeSource, Source, TemplateNode, TransitionManager, Value } from '#client' */
 /** @import { Batch } from '../../reactivity/batch.js'; */
 import {
 	EACH_INDEX_REACTIVE,
@@ -75,18 +75,40 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 	var transitions = [];
 	var length = to_destroy.length;
 
+	/** @type {EachOutroGroup} */
+	var group;
+	var remaining = to_destroy.length;
+
 	for (var i = 0; i < length; i++) {
-		pause_children(to_destroy[i].e, transitions, true);
+		pause_effect(
+			to_destroy[i].e,
+			() => {
+				if (group) {
+					group.remaining -= 1;
+
+					if (group.remaining === 0) {
+						var groups = /** @type {Set<EachOutroGroup>} */ (state.outrogroups);
+
+						destroy_items(state, Array.from(group.items));
+						groups.delete(group);
+
+						if (groups.size === 0) {
+							state.outrogroups = null;
+						}
+					}
+				} else {
+					remaining -= 1;
+				}
+			},
+			false
+		);
 	}
 
-	run_out_transitions(transitions, () => {
+	if (remaining === 0) {
 		// If we're in a controlled each block (i.e. the block is the only child of an
 		// element), and we are removing all items, _and_ there are no out transitions,
 		// we can use the fast path — emptying the element and replacing the anchor
 		var fast_path = transitions.length === 0 && controlled_anchor !== null;
-
-		// TODO only destroy effects if no pending batch needs them. otherwise,
-		// just set `item.o` back to `false`
 
 		if (fast_path) {
 			var anchor = /** @type {Element} */ (controlled_anchor);
@@ -97,23 +119,43 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 
 			state.items.clear();
 			link(state, to_destroy[0].prev, to_destroy[length - 1].next);
-		}
 
-		for (var i = 0; i < length; i++) {
-			var item = to_destroy[i];
-
-			if (!fast_path) {
-				state.items.delete(item.k);
-				link(state, item.prev, item.next);
+			for (i = 0; i < length; i++) {
+				destroy_effect(to_destroy[i].e);
 			}
 
-			destroy_effect(item.e, !fast_path);
+			return;
 		}
 
-		if (state.first === to_destroy[0]) {
-			state.first = to_destroy[0].prev;
-		}
-	});
+		destroy_items(state, to_destroy);
+
+		// if (state.first === to_destroy[0]) {
+		// 	state.first = to_destroy[0].prev;
+		// }
+	} else {
+		group = {
+			remaining,
+			items: new Set(to_destroy)
+		};
+
+		(state.outrogroups ??= new Set()).add(group);
+	}
+}
+
+/**
+ * Pause multiple effects simultaneously, and coordinate their
+ * subsequent destruction. Used in each blocks
+ * @param {EachState} state
+ * @param {EachItem[]} to_destroy
+ */
+function destroy_items(state, to_destroy) {
+	for (var i = 0; i < to_destroy.length; i++) {
+		var item = to_destroy[i];
+
+		state.items.delete(item.k);
+		link(state, item.prev, item.next);
+		destroy_effect(item.e);
+	}
 }
 
 /**
@@ -335,7 +377,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	});
 
 	/** @type {EachState} */
-	var state = { effect, flags, items, first };
+	var state = { effect, flags, items, first, outrogroups: null };
 
 	first_run = false;
 
@@ -408,6 +450,15 @@ function reconcile(state, array, anchor, flags, get_key) {
 		key = get_key(value, i);
 
 		item = /** @type {EachItem} */ (items.get(key));
+
+		if (state.outrogroups !== null) {
+			for (const group of state.outrogroups) {
+				if (group.items.has(item)) {
+					group.remaining -= 1;
+					group.items.delete(item);
+				}
+			}
+		}
 
 		state.first ??= item;
 
@@ -508,6 +559,19 @@ function reconcile(state, array, anchor, flags, get_key) {
 	}
 
 	let has_offscreen_items = items.size > length;
+
+	if (state.outrogroups !== null) {
+		for (const group of state.outrogroups) {
+			if (group.remaining === 0) {
+				destroy_items(state, Array.from(group.items));
+				state.outrogroups?.delete(group);
+			}
+		}
+
+		if (state.outrogroups.size === 0) {
+			state.outrogroups = null;
+		}
+	}
 
 	if (current !== null || seen !== undefined) {
 		var to_destroy = seen === undefined ? [] : array_from(seen);
