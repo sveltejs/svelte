@@ -5,11 +5,7 @@ export default test({
 	async test({ assert, target, raf }) {
 		const [clear, push] = target.querySelectorAll('button');
 
-		raf.tick(0);
-
 		flushSync(() => clear.click());
-		raf.tick(1);
-
 		flushSync(() => push.click());
 		raf.tick(500);
 

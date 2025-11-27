@@ -533,11 +533,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 			stashed = [];
 
 			while (current !== null && current.k !== key) {
-				// If the each block isn't inert and an item has an effect that is already inert,
-				// skip over adding it to our seen Set as the item is already being handled
-				if ((current.e.f & INERT) === 0) {
-					(seen ??= new Set()).add(current);
-				}
+				(seen ??= new Set()).add(current);
 				stashed.push(current);
 				current = current.next;
 			}
@@ -570,7 +566,15 @@ function reconcile(state, array, anchor, flags, get_key) {
 	}
 
 	if (current !== null || seen !== undefined) {
-		var to_destroy = seen === undefined ? [] : array_from(seen);
+		var to_destroy = [];
+
+		if (seen !== undefined) {
+			for (item of seen) {
+				if ((item.e.f & INERT) === 0) {
+					to_destroy.push(item);
+				}
+			}
+		}
 
 		while (current !== null) {
 			// If the each block isn't inert, then inert effects are currently outroing and will be removed once the transition is finished
