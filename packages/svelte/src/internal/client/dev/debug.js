@@ -210,6 +210,7 @@ export function log_reactions(signal) {
 			'font-weight: normal; color: gray'
 		);
 
+		// eslint-disable-next-line no-console
 		console.log(untrack(() => snapshot(d.v)));
 
 		if ('fn' in d) {
