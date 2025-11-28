@@ -1468,4 +1468,535 @@ describe('signals', () => {
 			assert.deepEqual(log, ['inner destroyed', 'inner destroyed']);
 		};
 	});
+
+	test('derived with nested proxy - property deletion replaces nested proxy', () => {
+		// This test reproduces the bug where:
+		// - A derived depends on a nested proxy's property (obj.foo.bar)
+		// - obj.foo is deleted and re-added with a different object
+		// - The NEW nested proxy doesn't have the derived in its reactions
+		const log: any[] = [];
+
+		return () => {
+			// Create a proxy with a nested object
+			const obj = proxy<{ foo?: { bar: number } }>({ foo: { bar: 1 } });
+
+			// Create a derived that depends on the nested property
+			const d = derived(() => obj.foo?.bar ?? 0);
+
+			// Create an effect that reads the derived
+			let destroy1 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [1], 'initial value');
+
+			// Verify reactivity works initially
+			obj.foo!.bar = 2;
+			flushSync();
+			assert.deepEqual(log, [1, 2], 'after updating nested property');
+
+			// Destroy the effect - derived is now disconnected
+			destroy1();
+			flushSync();
+
+			// Delete the nested object and re-add with a different one
+			// This creates a BRAND NEW nested proxy
+			delete obj.foo;
+			flushSync();
+
+			obj.foo = { bar: 42 };
+			flushSync();
+
+			// Create a new effect that reads the derived
+			const destroy2 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [1, 2, 42], 'should see new nested value');
+
+			// CRITICAL: Verify reactivity still works with the NEW nested proxy
+			obj.foo!.bar = 100;
+			flushSync();
+			assert.deepEqual(log, [1, 2, 42, 100], 'should react to new nested proxy changes');
+
+			destroy2();
+		};
+	});
+
+	test('derived reacts to proxy property deletion and re-addition', () => {
+		const log: any[] = [];
+
+		return () => {
+			// Create a proxy object with an initial property
+			const obj = proxy<{ foo?: number }>({ foo: 1 });
+
+			// Create a derived that depends on the proxy's property
+			const d = derived(() => obj.foo ?? 0);
+
+			// First effect - reads the derived
+			let destroy1: () => void;
+			destroy1 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [1], 'initial value');
+
+			// Destroy the effect - this disconnects the derived
+			destroy1();
+			flushSync();
+
+			// Now delete the property from the proxy
+			delete obj.foo;
+
+			// Re-add the property with a different value
+			obj.foo = 42;
+
+			// Create a new effect that reads the derived
+			const destroy2 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+
+			// The derived should now reflect the new value (42)
+			assert.deepEqual(log, [1, 42], 'after property re-addition');
+
+			// Update the property again to verify reactivity
+			obj.foo = 100;
+			flushSync();
+
+			assert.deepEqual(log, [1, 42, 100], 'after subsequent update');
+
+			destroy2();
+		};
+	});
+
+	test('derived reacts to proxy property deletion and re-addition with delayed re-add', () => {
+		const log: any[] = [];
+
+		return async () => {
+			// Create a proxy object with an initial property
+			const obj = proxy<{ foo?: number }>({ foo: 1 });
+
+			// Create a derived that depends on the proxy's property
+			const d = derived(() => obj.foo ?? 0);
+
+			// First effect - reads the derived
+			let destroy1 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [1], 'initial value');
+
+			// Destroy the effect - this disconnects the derived
+			destroy1();
+			flushSync();
+
+			// Now delete the property from the proxy
+			delete obj.foo;
+			flushSync();
+
+			// Wait a tick
+			await new Promise(resolve => setTimeout(resolve, 0));
+
+			// Re-add the property with a different value
+			obj.foo = 42;
+			flushSync();
+
+			// Wait another tick
+			await new Promise(resolve => setTimeout(resolve, 0));
+
+			// Create a new effect that reads the derived
+			const destroy2 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+
+			// The derived should now reflect the new value (42)
+			assert.deepEqual(log, [1, 42], 'after property re-addition');
+
+			// Update the property again to verify reactivity
+			obj.foo = 100;
+			flushSync();
+
+			assert.deepEqual(log, [1, 42, 100], 'after subsequent update');
+
+			destroy2();
+		};
+	});
+
+	test('derived with proxy dependency - delete then re-add property in different effect', () => {
+		const log: any[] = [];
+
+		return () => {
+			// Create a proxy with a property
+			const obj = proxy<{ foo?: { value: number } }>({ foo: { value: 1 } });
+
+			// Create a derived that depends on the proxy's property
+			const d = derived(() => obj.foo?.value ?? 0);
+
+			// First, read the derived outside of any effect (unowned)
+			assert.equal($.get(d), 1);
+
+			// Create an effect that reads the derived
+			let destroy1 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [1]);
+
+			// Destroy the first effect
+			destroy1();
+			flushSync();
+
+			// Delete the property
+			delete obj.foo;
+			flushSync();
+
+			// Re-add with different value
+			obj.foo = { value: 42 };
+			flushSync();
+
+			// Create a new effect
+			const destroy2 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [1, 42], 'after reconnection');
+
+			// Verify reactivity continues to work
+			obj.foo = { value: 100 };
+			flushSync();
+			assert.deepEqual(log, [1, 42, 100], 'after update');
+
+			destroy2();
+		};
+	});
+
+	test('nested derived with proxy - inner derived disconnects then reconnects', () => {
+		const log: any[] = [];
+
+		return () => {
+			// Create a proxy with a property
+			const obj = proxy<{ foo?: number }>({ foo: 1 });
+
+			// Create an inner derived that depends on proxy property
+			const inner = derived(() => obj.foo ?? 0);
+			
+			// Create an outer derived that depends on inner
+			const outer = derived(() => $.get(inner) * 2);
+
+			// Create an effect that reads the outer derived
+			let destroy1 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(outer));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [2], 'initial value');
+
+			// Destroy the effect - this should disconnect both deriveds
+			destroy1();
+			flushSync();
+
+			// Delete the property on the proxy
+			delete obj.foo;
+			flushSync();
+
+			// Re-add the property with a different value
+			obj.foo = 42;
+			flushSync();
+
+			// Create a new effect that reads outer again
+			const destroy2 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(outer));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [2, 84], 'after property re-addition');
+
+			// Verify reactivity continues to work
+			obj.foo = 100;
+			flushSync();
+			assert.deepEqual(log, [2, 84, 200], 'after subsequent update');
+
+			destroy2();
+		};
+	});
+
+	test('derived chain with proxy - middle derived changes deps', () => {
+		const log: any[] = [];
+
+		return () => {
+			// Create two proxies
+			const obj1 = proxy<{ value?: number }>({ value: 1 });
+			const obj2 = proxy<{ value?: number }>({ value: 10 });
+			
+			// Control which object is used
+			const useFirst = state(true);
+
+			// Derived that switches between objects
+			const selected = derived(() => $.get(useFirst) ? obj1.value : obj2.value);
+			
+			// Outer derived
+			const doubled = derived(() => ($.get(selected) ?? 0) * 2);
+
+			// Create effect
+			let destroy1 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(doubled));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [2], 'initial - using obj1');
+
+			// Switch to obj2
+			set(useFirst, false);
+			flushSync();
+			assert.deepEqual(log, [2, 20], 'switched to obj2');
+
+			// Destroy effect
+			destroy1();
+			flushSync();
+
+			// Delete property on obj2 and re-add
+			delete obj2.value;
+			obj2.value = 50;
+
+			// Create new effect
+			const destroy2 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(doubled));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [2, 20, 100], 'after obj2 property re-add');
+
+			// Update obj2
+			obj2.value = 75;
+			flushSync();
+			assert.deepEqual(log, [2, 20, 100, 150], 'after obj2 update');
+
+			destroy2();
+		};
+	});
+
+	test('disconnected derived with stale deps after property re-add - direct source access', () => {
+		// This test attempts to reproduce the bug where:
+		// - A derived has deps on a proxy property source
+		// - The derived is disconnected  
+		// - The property is deleted then re-added
+		// - The newly created source doesn't have the derived in its reactions
+		const log: any[] = [];
+
+		return () => {
+			// Create a proxy
+			const obj = proxy<{ foo?: number }>({});
+
+			// Initially set the property
+			obj.foo = 1;
+
+			// Create a derived outside of any effect (will be "unowned")
+			const d = derived(() => {
+				return obj.foo ?? 0;
+			});
+
+			// Read it outside effect first (creates unowned derived)
+			assert.equal($.get(d), 1);
+
+			// Now connect it to an effect
+			let destroy1 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [1]);
+
+			// Update to verify reactivity works
+			obj.foo = 2;
+			flushSync();
+			assert.deepEqual(log, [1, 2]);
+
+			// Destroy the effect - derived is now disconnected
+			destroy1();
+			flushSync();
+
+			// Delete and re-add the property
+			delete obj.foo;
+			flushSync();
+			
+			obj.foo = 42;
+			flushSync();
+
+			// Read derived outside effect 
+			const val = $.get(d);
+			assert.equal(val, 42, 'derived should have new value');
+
+			// Now connect to a new effect
+			const destroy2 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [1, 2, 42], 'reconnected effect should see new value');
+
+			// Critical: verify reactivity still works after reconnection
+			obj.foo = 100;
+			flushSync();
+			assert.deepEqual(log, [1, 2, 42, 100], 'reactivity should work after reconnection');
+
+			destroy2();
+		};
+	});
+
+	test('derived with state-wrapped proxy - property deletion and re-addition', () => {
+		// This test specifically covers the case where the proxy is wrapped in a state
+		// which is what happens with $state({...}) in Svelte
+		const log: any[] = [];
+
+		return () => {
+			// This simulates: let obj = $state({ foo: 1 })
+			// where obj is a source that holds a proxy
+			const objState = state(proxy<{ foo?: number }>({ foo: 1 }));
+
+			// This simulates: const d = $derived(obj.foo)
+			const d = derived(() => {
+				const obj = $.get(objState);
+				return obj.foo ?? 0;
+			});
+
+			// Create an effect that reads the derived
+			let destroy1 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [1], 'initial value');
+
+			// Modify the property through the proxy
+			const obj = $.get(objState);
+			obj.foo = 2;
+			flushSync();
+			assert.deepEqual(log, [1, 2], 'after first update');
+
+			// Destroy the effect
+			destroy1();
+			flushSync();
+
+			// Delete and re-add the property
+			delete obj.foo;
+			flushSync();
+			
+			obj.foo = 42;
+			flushSync();
+
+			// Create a new effect
+			const destroy2 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [1, 2, 42], 'after reconnection');
+
+			// Verify reactivity
+			obj.foo = 100;
+			flushSync();
+			assert.deepEqual(log, [1, 2, 42, 100], 'after subsequent update');
+
+			destroy2();
+		};
+	});
+
+	test('derived depends on proxy version source - key iteration changes', () => {
+		// This test covers the case where a derived depends on the proxy's version
+		// which is used to track object structure changes (key additions/deletions)
+		const log: any[] = [];
+
+		return () => {
+			const obj = proxy<{ [key: string]: number }>({ a: 1, b: 2 });
+
+			// Derived that iterates over keys (depends on version)
+			const d = derived(() => {
+				return Object.keys(obj).join(',');
+			});
+
+			let destroy1 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, ['a,b'], 'initial keys');
+
+			// Delete a key
+			delete obj.a;
+			flushSync();
+			assert.deepEqual(log, ['a,b', 'b'], 'after deleting a');
+
+			// Destroy effect
+			destroy1();
+			flushSync();
+
+			// Re-add the key
+			obj.a = 100;
+			flushSync();
+
+			// Create new effect
+			const destroy2 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+			// The order might vary, but both keys should be present
+			const lastLog = log[log.length - 1];
+			assert.ok(lastLog.includes('a') && lastLog.includes('b'), 'should have both keys after re-add');
+
+			// Add another key
+			obj.c = 300;
+			flushSync();
+			const newLog = log[log.length - 1];
+			assert.ok(newLog.includes('c'), 'should react to new key');
+
+			destroy2();
+		};
+	});
 });
