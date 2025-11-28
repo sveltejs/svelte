@@ -1469,6 +1469,250 @@ describe('signals', () => {
 		};
 	});
 
+	test('derived reactions after proxy property delete/re-add while disconnected', () => {
+		// This directly tests the scenario from the bug report:
+		// - Derived depends on proxy property source
+		// - Derived is disconnected
+		// - Property is deleted then re-added
+		// - Verify the source has the derived in reactions after reconnection
+		return () => {
+			const obj = proxy<{ foo?: number }>({ foo: 1 });
+			const d = derived(() => obj.foo ?? 0);
+
+			// Create effect - connect the derived
+			let destroy1 = effect_root(() => {
+				render_effect(() => {
+					$.get(d);
+				});
+			});
+
+			flushSync();
+
+			// Get reference to the source
+			const originalSource = d.deps![0];
+			assert.ok(originalSource.reactions !== null, 'source should have reactions');
+			assert.ok(originalSource.reactions!.includes(d), 'derived should be in source reactions');
+
+			// Destroy effect - disconnect the derived
+			destroy1();
+			flushSync();
+
+			assert.equal(originalSource.reactions, null, 'source reactions should be null after disconnect');
+
+			// Delete and re-add the property
+			delete obj.foo;
+			flushSync();
+
+			obj.foo = 42;
+			flushSync();
+
+			// The source should be the SAME source (proxy reuses sources)
+			// Read the derived to trigger reconnection
+			const destroy2 = effect_root(() => {
+				render_effect(() => {
+					$.get(d);
+				});
+			});
+
+			flushSync();
+
+			// After reconnection, check that the source has the derived in reactions
+			const newSource = d.deps![0];
+			
+			// Should be the same source (proxy reuses sources for the same property)
+			assert.equal(newSource, originalSource, 'should be the same source after delete/re-add');
+			
+			// Source should have the derived in reactions
+			assert.ok(newSource.reactions !== null, 'source should have reactions after reconnect');
+			assert.ok(newSource.reactions!.includes(d), 'derived should be in source reactions after reconnect');
+
+			// Verify reactivity works
+			const log: any[] = [];
+			const destroy3 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+			obj.foo = 100;
+			flushSync();
+
+			assert.deepEqual(log, [42, 100], 'effect should react to changes');
+
+			destroy2();
+			destroy3();
+		};
+	});
+
+	test('derived reactions are properly maintained after disconnect/reconnect', () => {
+		// This test directly inspects the reactions arrays to verify they are properly maintained
+		return () => {
+			const obj = proxy<{ foo?: number }>({ foo: 1 });
+			const d = derived(() => obj.foo ?? 0);
+
+			// Initially, the derived should not be in any reactions (no effect)
+			assert.equal($.get(d), 1);
+			// Derived was read outside effect, should have deps but no reactions on source
+
+			// Create effect - this should connect the derived
+			let destroy1 = effect_root(() => {
+				render_effect(() => {
+					$.get(d);
+				});
+			});
+
+			flushSync();
+
+			// After effect runs, derived should be connected
+			// The derived should be in its source's reactions
+			// Note: We can't directly check the proxy's internal source, but we can 
+			// verify behavior through the derived's properties
+			assert.ok(d.deps !== null, 'derived should have deps');
+			assert.ok(d.deps!.length > 0, 'derived should have at least one dep');
+
+			// The source should have the derived in its reactions
+			const source = d.deps![0];
+			assert.ok(source.reactions !== null, 'source should have reactions');
+			assert.ok(source.reactions!.includes(d), 'source reactions should include derived');
+
+			// Destroy effect - this should disconnect the derived
+			destroy1();
+			flushSync();
+
+			// After destruction, source's reactions should be null (derived was removed)
+			assert.equal(source.reactions, null, 'source reactions should be null after disconnect');
+
+			// Derived still has deps
+			assert.ok(d.deps !== null, 'derived should still have deps');
+
+			// Create new effect - this should reconnect the derived
+			const destroy2 = effect_root(() => {
+				render_effect(() => {
+					$.get(d);
+				});
+			});
+
+			flushSync();
+
+			// After reconnection, source should have derived in reactions again
+			assert.ok(source.reactions !== null, 'source should have reactions after reconnect');
+			assert.ok(source.reactions!.includes(d), 'source reactions should include derived after reconnect');
+
+			destroy2();
+		};
+	});
+
+	test('effect is scheduled when disconnected derived reconnects and source changes', () => {
+		// This test verifies that after a derived reconnects, changes to its
+		// source properly schedule the effect (via mark_reactions)
+		const log: any[] = [];
+		const scheduledTimes: number[] = [];
+		let effectRunCount = 0;
+
+		return () => {
+			const obj = proxy<{ foo?: number }>({ foo: 1 });
+			const d = derived(() => obj.foo ?? 0);
+
+			// Create effect
+			let destroy1 = effect_root(() => {
+				render_effect(() => {
+					effectRunCount++;
+					scheduledTimes.push(effectRunCount);
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [1]);
+			assert.equal(effectRunCount, 1);
+
+			// Modify property - effect should be scheduled
+			obj.foo = 2;
+			flushSync();
+			assert.deepEqual(log, [1, 2]);
+			assert.equal(effectRunCount, 2);
+
+			// Destroy effect
+			destroy1();
+			flushSync();
+
+			// Create new effect
+			const destroy2 = effect_root(() => {
+				render_effect(() => {
+					effectRunCount++;
+					scheduledTimes.push(effectRunCount);
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [1, 2, 2], 'new effect sees current value');
+			assert.equal(effectRunCount, 3);
+
+			// CRITICAL: Modify property - effect should be scheduled and run
+			// If the derived's source doesn't have the derived in reactions,
+			// this change won't schedule the effect
+			obj.foo = 100;
+			flushSync();
+			assert.deepEqual(log, [1, 2, 2, 100], 'effect should run when source changes');
+			assert.equal(effectRunCount, 4);
+
+			destroy2();
+		};
+	});
+
+	test('disconnected derived read outside effect update cycle', () => {
+		// This tests the scenario where a derived is read when is_updating_effect is false
+		// which could prevent reconnect from being called
+		const log: any[] = [];
+
+		return () => {
+			const obj = proxy<{ foo?: number }>({ foo: 1 });
+			const d = derived(() => obj.foo ?? 0);
+
+			// Create and run effect
+			let destroy1 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [1]);
+
+			// Destroy effect - derived disconnects
+			destroy1();
+			flushSync();
+
+			// Modify property
+			obj.foo = 2;
+			flushSync();
+
+			// Read derived OUTSIDE of any effect execution
+			// (is_updating_effect should be false here)
+			const val = $.get(d);
+			assert.equal(val, 2, 'should see updated value');
+
+			// Now create new effect
+			const destroy2 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [1, 2], 'new effect should see value');
+
+			// CRITICAL: verify reactivity still works
+			obj.foo = 100;
+			flushSync();
+			assert.deepEqual(log, [1, 2, 100], 'should react to changes');
+
+			destroy2();
+		};
+	});
+
 	test('derived created and read within another derived - proxy property changes', () => {
 		// This tests a complex scenario where:
 		// - A derived creates an inner derived during execution
