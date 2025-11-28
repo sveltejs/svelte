@@ -3367,9 +3367,26 @@ describe('signals', () => {
 			flushSync();
 			assert.equal($.get(d), false);
 
+			// Verify derived has deps and is connected
+			assert.ok(d.deps !== null, 'derived should have deps after first effect');
+			assert.ok(d.deps!.length > 0, 'derived should have at least one dep');
+
+			// Get reference to the version source (first dep should be #version)
+			const versionSource = d.deps![0];
+			assert.ok(
+				versionSource.reactions?.includes(d),
+				'version source should have derived in reactions'
+			);
+
 			// Destroy the effect - disconnects the derived
 			destroy1();
 			flushSync();
+
+			// Verify derived is disconnected
+			assert.ok(
+				!versionSource.reactions?.includes(d),
+				'version source should NOT have derived in reactions after disconnect'
+			);
 
 			// Modify the set while derived is disconnected
 			expanded_ids.add(1);
@@ -3383,6 +3400,15 @@ describe('signals', () => {
 
 			flushSync();
 
+			// Verify derived is reconnected to its deps
+			assert.ok(d.deps !== null, 'derived should have deps after reconnect');
+			// After reconnection, check if derived is back in version source's reactions
+			const newVersionSource = d.deps![0];
+			assert.ok(
+				newVersionSource.reactions?.includes(d),
+				'version source should have derived in reactions after reconnect'
+			);
+
 			// The derived should reflect the updated value
 			assert.equal($.get(d), true, 'derived should see updated value after reconnection');
 
@@ -3391,8 +3417,16 @@ describe('signals', () => {
 			const immediateValue = $.get(d);
 			assert.equal(immediateValue, false, 'immediate read should see deleted');
 
-			// Add back
+			// Add back - THIS IS WHERE THE BUG IS
 			expanded_ids.add(1);
+
+			// Check if derived is still in reactions
+			const depAfterAdd = d.deps![0];
+			assert.ok(
+				depAfterAdd.reactions?.includes(d),
+				'derived should still be in dep reactions after add'
+			);
+
 			const immediateValue2 = $.get(d);
 			assert.equal(immediateValue2, true, 'immediate read should see added');
 
