@@ -2827,4 +2827,258 @@ describe('signals', () => {
 			destroy2();
 		};
 	});
+
+	test('multiple deriveds interacting with proxy - one updates, other reacts', () => {
+		// Tests multiple deriveds that depend on each other and on a proxy
+		const log: any[] = [];
+
+		return () => {
+			const objSignal = state(proxy<{ foo?: number }>({ foo: 1 }));
+
+			// First derived reads from proxy
+			const d1 = derived(() => {
+				const obj = $.get(objSignal);
+				return obj.foo ?? 0;
+			});
+
+			// Second derived depends on first derived
+			const d2 = derived(() => $.get(d1) * 2);
+
+			// Third derived also depends on first
+			const d3 = derived(() => $.get(d1) + 10);
+
+			// Effect reads all deriveds
+			let destroy1 = effect_root(() => {
+				render_effect(() => {
+					log.push({ d1: $.get(d1), d2: $.get(d2), d3: $.get(d3) });
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [{ d1: 1, d2: 2, d3: 11 }]);
+
+			// Destroy effect - all deriveds disconnect
+			destroy1();
+			flushSync();
+
+			// Replace proxy with one WITHOUT the property
+			set(objSignal, proxy<{ foo?: number }>({}));
+			flushSync();
+
+			// Replace proxy with one WITH the property (new value)
+			set(objSignal, proxy<{ foo?: number }>({ foo: 42 }));
+			flushSync();
+
+			// Reconnect with new effect
+			const destroy2 = effect_root(() => {
+				render_effect(() => {
+					log.push({ d1: $.get(d1), d2: $.get(d2), d3: $.get(d3) });
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log[log.length - 1], { d1: 42, d2: 84, d3: 52 });
+
+			// Verify reactivity on new proxy
+			$.get(objSignal).foo = 100;
+			flushSync();
+			assert.deepEqual(log[log.length - 1], { d1: 100, d2: 200, d3: 110 });
+
+			destroy2();
+		};
+	});
+
+	test('derived created in effect context survives after effect destruction', () => {
+		// Tests a derived created inside an effect that continues to live
+		// after that effect is destroyed
+		const log: any[] = [];
+
+		return () => {
+			const objSignal = state(proxy<{ foo?: number }>({ foo: 1 }));
+			let escapedDerived: Derived<number>;
+
+			// Effect 1: creates a derived and "escapes" it
+			let destroy1 = effect_root(() => {
+				render_effect(() => {
+					// Create derived inside effect
+					escapedDerived = derived(() => {
+						const obj = $.get(objSignal);
+						return obj.foo ?? 0;
+					});
+					log.push('effect1: ' + $.get(escapedDerived));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, ['effect1: 1']);
+
+			// Destroy the effect that created the derived
+			destroy1();
+			flushSync();
+
+			// The derived should still be usable
+			// Replace proxy
+			set(objSignal, proxy<{ foo?: number }>({}));
+			set(objSignal, proxy<{ foo?: number }>({ foo: 42 }));
+			flushSync();
+
+			// Use the escaped derived in a NEW effect
+			const destroy2 = effect_root(() => {
+				render_effect(() => {
+					log.push('effect2: ' + $.get(escapedDerived!));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log[log.length - 1], 'effect2: 42');
+
+			// Verify reactivity works on the escaped derived
+			$.get(objSignal).foo = 100;
+			flushSync();
+			assert.deepEqual(log[log.length - 1], 'effect2: 100');
+
+			destroy2();
+		};
+	});
+
+	test('derived moved between effect contexts with proxy changes', () => {
+		// Tests a derived that is read in one effect, then that effect is destroyed,
+		// and the derived is read in a different effect
+		const log: any[] = [];
+
+		return () => {
+			const objSignal = state(proxy<{ foo?: number }>({ foo: 1 }));
+
+			// Create derived outside effects
+			const d = derived(() => {
+				const obj = $.get(objSignal);
+				return obj.foo ?? 0;
+			});
+
+			// Effect 1: reads the derived
+			let destroy1 = effect_root(() => {
+				render_effect(() => {
+					log.push('effect1: ' + $.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, ['effect1: 1']);
+
+			// Effect 2: also reads the derived (both effects active)
+			let destroy2 = effect_root(() => {
+				render_effect(() => {
+					log.push('effect2: ' + $.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log[log.length - 1], 'effect2: 1');
+
+			// Destroy effect 1 - derived still connected via effect 2
+			destroy1();
+			flushSync();
+
+			// Change proxy
+			set(objSignal, proxy<{ foo?: number }>({ foo: 50 }));
+			flushSync();
+
+			// Effect 2 should still react
+			assert.deepEqual(log[log.length - 1], 'effect2: 50');
+
+			// Destroy effect 2 - derived now fully disconnected
+			destroy2();
+			flushSync();
+
+			// Replace proxy while disconnected
+			set(objSignal, proxy<{ foo?: number }>({}));
+			set(objSignal, proxy<{ foo?: number }>({ foo: 99 }));
+			flushSync();
+
+			// Effect 3: reads the derived (reconnection)
+			const destroy3 = effect_root(() => {
+				render_effect(() => {
+					log.push('effect3: ' + $.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log[log.length - 1], 'effect3: 99');
+
+			// Verify reactivity
+			$.get(objSignal).foo = 200;
+			flushSync();
+			assert.deepEqual(log[log.length - 1], 'effect3: 200');
+
+			destroy3();
+		};
+	});
+
+	test('derived created in destroyed effect - verify reactions', () => {
+		// Directly verify reactions arrays when derived outlives its creating effect
+		return () => {
+			const objSignal = state(proxy<{ foo?: number }>({ foo: 1 }));
+			let escapedDerived: Derived<number>;
+
+			// Create derived inside effect
+			let destroy1 = effect_root(() => {
+				render_effect(() => {
+					escapedDerived = derived(() => {
+						const obj = $.get(objSignal);
+						return obj.foo ?? 0;
+					});
+					$.get(escapedDerived); // Read it to establish deps
+				});
+			});
+
+			flushSync();
+
+			// Verify initial state
+			assert.ok(escapedDerived!.deps !== null, 'derived should have deps');
+
+			// Destroy creating effect
+			destroy1();
+			flushSync();
+
+			// Replace proxy while derived is orphaned
+			set(objSignal, proxy<{ foo?: number }>({}));
+			set(objSignal, proxy<{ foo?: number }>({ foo: 42 }));
+			flushSync();
+
+			// Use derived in new effect
+			const destroy2 = effect_root(() => {
+				render_effect(() => {
+					$.get(escapedDerived!);
+				});
+			});
+
+			flushSync();
+
+			// Verify deps are updated and reactions are correct
+			assert.ok(escapedDerived!.deps !== null, 'derived should still have deps');
+			const fooSource = escapedDerived!.deps![1]; // objSignal is [0], foo source is [1]
+			assert.ok(fooSource.reactions !== null, 'foo source should have reactions');
+			assert.ok(
+				fooSource.reactions!.includes(escapedDerived!),
+				'derived should be in foo source reactions'
+			);
+
+			// Verify reactivity
+			const log: any[] = [];
+			const destroy3 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(escapedDerived!));
+				});
+			});
+
+			flushSync();
+			$.get(objSignal).foo = 100;
+			flushSync();
+
+			assert.deepEqual(log, [42, 100], 'should react to changes');
+
+			destroy2();
+			destroy3();
+		};
+	});
 });
