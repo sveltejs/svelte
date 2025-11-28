@@ -3081,4 +3081,322 @@ describe('signals', () => {
 			destroy3();
 		};
 	});
+
+	test('derived property on object depending on SvelteSet - immediate read after update', () => {
+		// Reproduction from issue #17263:
+		// An item has an `expanded` derived property that depends on expanded_ids.has(id)
+		// Reading item.expanded immediately after modifying expanded_ids should reflect the change
+		const log: any[] = [];
+
+		return () => {
+			const expanded_ids = new SvelteSet<number>();
+
+			// Create an "item" with a derived expanded property
+			function create_item(id: number) {
+				return {
+					id,
+					get expanded() {
+						return expanded_ids.has(id);
+					}
+				};
+			}
+
+			const item = create_item(1);
+
+			// Expand function
+			function on_expand(id: number) {
+				expanded_ids.add(id);
+			}
+
+			// Collapse function
+			function on_collapse(id: number) {
+				expanded_ids.delete(id);
+			}
+
+			// Toggle function - this is where the bug manifests
+			function toggle_expansion() {
+				if (item.expanded) {
+					on_collapse(item.id);
+				} else {
+					on_expand(item.id);
+				}
+				// Reading immediately after modification - this is the bug trigger
+				log.push(item.expanded);
+			}
+
+			// Create an effect that reads item.expanded
+			let destroy = effect_root(() => {
+				render_effect(() => {
+					// Just to establish reactivity
+					item.expanded;
+				});
+			});
+
+			flushSync();
+
+			// Initially not expanded
+			assert.equal(item.expanded, false, 'initially not expanded');
+
+			// Toggle to expand
+			toggle_expansion();
+			// Should now be true
+			assert.deepEqual(log, [true], 'should be expanded after toggle');
+
+			// Toggle to collapse
+			toggle_expansion();
+			// Should now be false
+			assert.deepEqual(log, [true, false], 'should be collapsed after second toggle');
+
+			destroy();
+		};
+	});
+
+	test('derived depending on SvelteSet - item object with derived getter', () => {
+		// More direct reproduction of the issue pattern
+		const log: any[] = [];
+
+		return () => {
+			const expanded_ids = new SvelteSet<number>();
+
+			// Simulate the item structure from the reproduction
+			class Item {
+				id: number;
+				constructor(id: number) {
+					this.id = id;
+				}
+				get expanded() {
+					return expanded_ids.has(this.id);
+				}
+			}
+
+			const item = new Item(1);
+
+			let destroy = effect_root(() => {
+				render_effect(() => {
+					log.push(`effect: ${item.expanded}`);
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, ['effect: false']);
+
+			// Add to set
+			expanded_ids.add(1);
+			// Immediately read the derived
+			const valueAfterAdd = item.expanded;
+			log.push(`immediate: ${valueAfterAdd}`);
+
+			flushSync();
+
+			// The immediate read should have returned true
+			assert.equal(valueAfterAdd, true, 'immediate read after add should be true');
+
+			// Effect should have run
+			assert.ok(log.includes('effect: true'), 'effect should have seen true');
+
+			// Delete from set
+			expanded_ids.delete(1);
+			const valueAfterDelete = item.expanded;
+			log.push(`immediate: ${valueAfterDelete}`);
+
+			flushSync();
+
+			assert.equal(valueAfterDelete, false, 'immediate read after delete should be false');
+
+			destroy();
+		};
+	});
+
+	test('derived on SvelteSet with object property - toggle pattern', () => {
+		// Exact pattern from the buggy reproduction
+		return () => {
+			const expanded_ids = new SvelteSet<number>();
+
+			const items = [
+				{
+					id: 1,
+					get expanded() {
+						return expanded_ids.has(this.id);
+					}
+				},
+				{
+					id: 2,
+					get expanded() {
+						return expanded_ids.has(this.id);
+					}
+				}
+			];
+
+			function on_expand(id: number) {
+				expanded_ids.add(id);
+			}
+
+			function on_collapse(id: number) {
+				expanded_ids.delete(id);
+			}
+
+			// The buggy toggle function that reads item.expanded after modification
+			function buggy_toggle(item: (typeof items)[0]) {
+				if (item.expanded) {
+					on_collapse(item.id);
+				} else {
+					on_expand(item.id);
+				}
+				// This is the problematic pattern - reading immediately after modification
+				return item.expanded;
+			}
+
+			let destroy = effect_root(() => {
+				render_effect(() => {
+					// Establish reactivity
+					items.forEach((i) => i.expanded);
+				});
+			});
+
+			flushSync();
+
+			// Toggle item 1 (expand)
+			const result1 = buggy_toggle(items[0]);
+			assert.equal(result1, true, 'after toggle expand, should read true');
+			assert.equal(expanded_ids.has(1), true, 'set should contain id 1');
+
+			// Toggle item 1 again (collapse)
+			const result2 = buggy_toggle(items[0]);
+			assert.equal(result2, false, 'after toggle collapse, should read false');
+			assert.equal(expanded_ids.has(1), false, 'set should not contain id 1');
+
+			// Toggle item 2 (expand)
+			const result3 = buggy_toggle(items[1]);
+			assert.equal(result3, true, 'after toggle expand item 2, should read true');
+
+			destroy();
+		};
+	});
+
+	test('derived passed as prop - item with expanded derived from SvelteSet', () => {
+		// Simulates the parent-child component pattern from issue #17263
+		// Parent creates item with expanded derived, passes to child
+		// Child reads item.expanded after modifying the set
+		return () => {
+			const expanded_ids = new SvelteSet<number>();
+
+			// Parent creates the item (like in App.svelte)
+			function create_item(id: number) {
+				const d = derived(() => expanded_ids.has(id));
+				return {
+					id,
+					get expanded() {
+						return $.get(d);
+					}
+				};
+			}
+
+			const item = create_item(1);
+
+			// Parent's expand/collapse functions
+			function on_expand(id: number) {
+				expanded_ids.add(id);
+			}
+			function on_collapse(id: number) {
+				expanded_ids.delete(id);
+			}
+
+			// Simulate child component receiving item as prop
+			let childDestroy: () => void;
+
+			// Parent effect (creates the item and passes to child)
+			let parentDestroy = effect_root(() => {
+				render_effect(() => {
+					// Parent might read item.expanded in template
+					item.expanded;
+				});
+			});
+
+			flushSync();
+
+			// Child effect - simulates child component
+			childDestroy = effect_root(() => {
+				render_effect(() => {
+					// Child reads item.expanded
+					item.expanded;
+				});
+			});
+
+			flushSync();
+
+			// Child's buggy toggle function
+			function buggy_on_toggle_expansion() {
+				if (item.expanded) {
+					on_collapse(item.id);
+				} else {
+					on_expand(item.id);
+				}
+				// This triggers the bug - reading immediately after modification
+				return item.expanded;
+			}
+
+			// Test the toggle
+			const result1 = buggy_on_toggle_expansion();
+			assert.equal(result1, true, 'after expand, should read true');
+
+			const result2 = buggy_on_toggle_expansion();
+			assert.equal(result2, false, 'after collapse, should read false');
+
+			const result3 = buggy_on_toggle_expansion();
+			assert.equal(result3, true, 'after expand again, should read true');
+
+			childDestroy();
+			parentDestroy();
+		};
+	});
+
+	test('derived with SvelteSet - disconnected then reconnected', () => {
+		// Test the scenario where the derived might become disconnected
+		return () => {
+			const expanded_ids = new SvelteSet<number>();
+
+			const d = derived(() => expanded_ids.has(1));
+
+			// First effect - connects the derived
+			let destroy1 = effect_root(() => {
+				render_effect(() => {
+					$.get(d);
+				});
+			});
+
+			flushSync();
+			assert.equal($.get(d), false);
+
+			// Destroy the effect - disconnects the derived
+			destroy1();
+			flushSync();
+
+			// Modify the set while derived is disconnected
+			expanded_ids.add(1);
+
+			// Create new effect - reconnects the derived
+			let destroy2 = effect_root(() => {
+				render_effect(() => {
+					$.get(d);
+				});
+			});
+
+			flushSync();
+
+			// The derived should reflect the updated value
+			assert.equal($.get(d), true, 'derived should see updated value after reconnection');
+
+			// Modify again
+			expanded_ids.delete(1);
+			const immediateValue = $.get(d);
+			assert.equal(immediateValue, false, 'immediate read should see deleted');
+
+			// Add back
+			expanded_ids.add(1);
+			const immediateValue2 = $.get(d);
+			assert.equal(immediateValue2, true, 'immediate read should see added');
+
+			destroy2();
+		};
+	});
 });
