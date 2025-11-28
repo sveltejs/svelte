@@ -1469,6 +1469,123 @@ describe('signals', () => {
 		};
 	});
 
+	test('derived created and read within another derived - proxy property changes', () => {
+		// This tests a complex scenario where:
+		// - A derived creates an inner derived during execution
+		// - The inner derived depends on a proxy property
+		// - The proxy property is deleted and re-added
+		const log: any[] = [];
+
+		return () => {
+			const obj = proxy<{ foo?: number }>({ foo: 1 });
+			let innerDerived: Derived<number> | null = null;
+
+			// Outer derived that creates and reads an inner derived
+			const outer = derived(() => {
+				innerDerived = derived(() => obj.foo ?? 0);
+				return $.get(innerDerived);
+			});
+
+			let destroy1 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(outer));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [1], 'initial value');
+
+			// Verify reactivity
+			obj.foo = 2;
+			flushSync();
+			assert.deepEqual(log, [1, 2], 'after property change');
+
+			// Destroy effect
+			destroy1();
+			flushSync();
+
+			// Delete and re-add property
+			delete obj.foo;
+			obj.foo = 42;
+
+			// Create new effect
+			const destroy2 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(outer));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [1, 2, 42], 'after property re-addition');
+
+			// Verify continued reactivity
+			obj.foo = 100;
+			flushSync();
+			assert.deepEqual(log, [1, 2, 42, 100], 'after subsequent change');
+
+			destroy2();
+		};
+	});
+
+	test('derived read in untrack during effect - proxy property changes', () => {
+		// This tests a scenario similar to the async-derived-in-multiple-effects test
+		// where untrack is involved
+		const log: any[] = [];
+
+		return () => {
+			const obj = proxy<{ foo?: number }>({ foo: 1 });
+
+			const d = derived(() => obj.foo ?? 0);
+
+			let destroy1 = effect_root(() => {
+				render_effect(() => {
+					// Read derived in untrack
+					$.untrack(() => {
+						$.get(d);
+					});
+				});
+
+				render_effect(() => {
+					// Also read it in a tracked context
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [1]);
+
+			// Modify property
+			obj.foo = 2;
+			flushSync();
+			assert.deepEqual(log, [1, 2]);
+
+			// Destroy effect
+			destroy1();
+			flushSync();
+
+			// Delete and re-add
+			delete obj.foo;
+			obj.foo = 42;
+
+			// Create new effect
+			const destroy2 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [1, 2, 42]);
+
+			// Verify reactivity
+			obj.foo = 100;
+			flushSync();
+			assert.deepEqual(log, [1, 2, 42, 100]);
+
+			destroy2();
+		};
+	});
+
 	test('derived with nested proxy - property deletion replaces nested proxy', () => {
 		// This test reproduces the bug where:
 		// - A derived depends on a nested proxy's property (obj.foo.bar)
@@ -1524,6 +1641,62 @@ describe('signals', () => {
 			obj.foo!.bar = 100;
 			flushSync();
 			assert.deepEqual(log, [1, 2, 42, 100], 'should react to new nested proxy changes');
+
+			destroy2();
+		};
+	});
+
+	test('derived with source-wrapped proxy - entire object replacement', () => {
+		// This tests the case where the proxy container is replaced entirely
+		// The derived depends on both the container source AND the property source
+		const log: any[] = [];
+
+		return () => {
+			// Simulate: let obj = $state({ foo: 1 })
+			const objSource = state(proxy<{ foo?: number }>({ foo: 1 }));
+
+			// Derived that depends on both objSource and property source
+			const d = derived(() => {
+				const obj = $.get(objSource);
+				return obj.foo ?? 0;
+			});
+
+			let destroy1 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [1]);
+
+			// Modify property on existing proxy
+			$.get(objSource).foo = 2;
+			flushSync();
+			assert.deepEqual(log, [1, 2]);
+
+			// Destroy effect
+			destroy1();
+			flushSync();
+
+			// Replace the ENTIRE proxy with a new one
+			set(objSource, proxy<{ foo?: number }>({ foo: 42 }));
+			flushSync();
+
+			// Create new effect
+			const destroy2 = effect_root(() => {
+				render_effect(() => {
+					log.push($.get(d));
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [1, 2, 42], 'should see value from new proxy');
+
+			// CRITICAL: Modify property on NEW proxy
+			$.get(objSource).foo = 100;
+			flushSync();
+			assert.deepEqual(log, [1, 2, 42, 100], 'should react to changes on new proxy');
 
 			destroy2();
 		};
