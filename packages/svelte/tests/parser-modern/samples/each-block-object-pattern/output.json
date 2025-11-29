@@ -204,7 +204,6 @@
 								},
 								"name": "name"
 							},
-							"kind": "init",
 							"value": {
 								"type": "Identifier",
 								"start": 19,
@@ -220,7 +219,8 @@
 									}
 								},
 								"name": "name"
-							}
+							},
+							"kind": "init"
 						},
 						{
 							"type": "Property",
@@ -255,7 +255,6 @@
 								},
 								"name": "cool"
 							},
-							"kind": "init",
 							"value": {
 								"type": "AssignmentPattern",
 								"start": 25,
@@ -303,7 +302,8 @@
 									"value": true,
 									"raw": "true"
 								}
-							}
+							},
+							"kind": "init"
 						}
 					]
 				}
@@ -512,7 +512,6 @@
 								},
 								"name": "name"
 							},
-							"kind": "init",
 							"value": {
 								"type": "AssignmentPattern",
 								"start": 115,
@@ -619,7 +618,8 @@
 										}
 									]
 								}
-							}
+							},
+							"kind": "init"
 						},
 						{
 							"type": "Property",
@@ -654,7 +654,6 @@
 								},
 								"name": "cool"
 							},
-							"kind": "init",
 							"value": {
 								"type": "AssignmentPattern",
 								"start": 139,
@@ -702,7 +701,8 @@
 									"value": true,
 									"raw": "true"
 								}
-							}
+							},
+							"kind": "init"
 						}
 					]
 				}
@@ -911,7 +911,6 @@
 								},
 								"name": "name"
 							},
-							"kind": "init",
 							"value": {
 								"type": "AssignmentPattern",
 								"start": 229,
@@ -1087,7 +1086,8 @@
 									"arguments": [],
 									"optional": false
 								}
-							}
+							},
+							"kind": "init"
 						},
 						{
 							"type": "Property",
@@ -1122,7 +1122,6 @@
 								},
 								"name": "cool"
 							},
-							"kind": "init",
 							"value": {
 								"type": "AssignmentPattern",
 								"start": 275,
@@ -1170,7 +1169,8 @@
 									"value": true,
 									"raw": "true"
 								}
-							}
+							},
+							"kind": "init"
 						}
 					]
 				}
