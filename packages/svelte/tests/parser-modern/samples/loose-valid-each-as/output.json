@@ -48,6 +48,20 @@
 							"type": "RegularElement",
 							"start": 86,
 							"end": 111,
+							"id": {
+								"type": "Identifier",
+								"name": "div",
+								"loc": {
+									"start": {
+										"line": 6,
+										"column": 2
+									},
+									"end": {
+										"line": 6,
+										"column": 5
+									}
+								}
+							},
 							"name": "div",
 							"attributes": [],
 							"fragment": {

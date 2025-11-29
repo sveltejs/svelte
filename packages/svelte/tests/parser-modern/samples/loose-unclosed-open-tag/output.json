@@ -11,6 +11,20 @@
 				"type": "RegularElement",
 				"start": 0,
 				"end": 29,
+				"id": {
+					"type": "Identifier",
+					"name": "div",
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 1
+						},
+						"end": {
+							"line": 1,
+							"column": 4
+						}
+					}
+				},
 				"name": "div",
 				"attributes": [],
 				"fragment": {
@@ -27,6 +41,20 @@
 							"type": "Component",
 							"start": 7,
 							"end": 23,
+							"id": {
+								"type": "Identifier",
+								"name": "Comp",
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 2
+									},
+									"end": {
+										"line": 2,
+										"column": 6
+									}
+								}
+							},
 							"name": "Comp",
 							"attributes": [
 								{
@@ -76,6 +104,20 @@
 				"type": "RegularElement",
 				"start": 31,
 				"end": 60,
+				"id": {
+					"type": "Identifier",
+					"name": "div",
+					"loc": {
+						"start": {
+							"line": 5,
+							"column": 1
+						},
+						"end": {
+							"line": 5,
+							"column": 4
+						}
+					}
+				},
 				"name": "div",
 				"attributes": [],
 				"fragment": {
@@ -92,6 +134,20 @@
 							"type": "RegularElement",
 							"start": 38,
 							"end": 54,
+							"id": {
+								"type": "Identifier",
+								"name": "span",
+								"loc": {
+									"start": {
+										"line": 6,
+										"column": 2
+									},
+									"end": {
+										"line": 6,
+										"column": 6
+									}
+								}
+							},
 							"name": "span",
 							"attributes": [
 								{
@@ -172,6 +228,20 @@
 							"type": "Component",
 							"start": 73,
 							"end": 89,
+							"id": {
+								"type": "Identifier",
+								"name": "Comp",
+								"loc": {
+									"start": {
+										"line": 10,
+										"column": 2
+									},
+									"end": {
+										"line": 10,
+										"column": 6
+									}
+								}
+							},
 							"name": "Comp",
 							"attributes": [
 								{
@@ -253,6 +323,20 @@
 							"type": "Component",
 							"start": 107,
 							"end": 124,
+							"id": {
+								"type": "Identifier",
+								"name": "Comp",
+								"loc": {
+									"start": {
+										"line": 14,
+										"column": 2
+									},
+									"end": {
+										"line": 14,
+										"column": 6
+									}
+								}
+							},
 							"name": "Comp",
 							"attributes": [
 								{
@@ -373,6 +457,20 @@
 				"type": "RegularElement",
 				"start": 156,
 				"end": 170,
+				"id": {
+					"type": "Identifier",
+					"name": "div",
+					"loc": {
+						"start": {
+							"line": 20,
+							"column": 1
+						},
+						"end": {
+							"line": 20,
+							"column": 4
+						}
+					}
+				},
 				"name": "div",
 				"attributes": [
 					{

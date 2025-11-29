@@ -11,6 +11,20 @@
 				"type": "RegularElement",
 				"start": 0,
 				"end": 57,
+				"id": {
+					"type": "Identifier",
+					"name": "div",
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 1
+						},
+						"end": {
+							"line": 1,
+							"column": 4
+						}
+					}
+				},
 				"name": "div",
 				"attributes": [
 					{

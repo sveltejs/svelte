@@ -18,6 +18,20 @@
 				"type": "RegularElement",
 				"start": 54,
 				"end": 173,
+				"id": {
+					"type": "Identifier",
+					"name": "button",
+					"loc": {
+						"start": {
+							"line": 5,
+							"column": 1
+						},
+						"end": {
+							"line": 5,
+							"column": 7
+						}
+					}
+				},
 				"name": "button",
 				"attributes": [
 					{

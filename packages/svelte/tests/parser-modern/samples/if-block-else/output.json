@@ -42,6 +42,20 @@
 							"type": "RegularElement",
 							"start": 11,
 							"end": 21,
+							"id": {
+								"type": "Identifier",
+								"name": "p",
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 2
+									},
+									"end": {
+										"line": 2,
+										"column": 3
+									}
+								}
+							},
 							"name": "p",
 							"attributes": [],
 							"fragment": {
@@ -80,6 +94,20 @@
 							"type": "RegularElement",
 							"start": 31,
 							"end": 45,
+							"id": {
+								"type": "Identifier",
+								"name": "p",
+								"loc": {
+									"start": {
+										"line": 4,
+										"column": 2
+									},
+									"end": {
+										"line": 4,
+										"column": 3
+									}
+								}
+							},
 							"name": "p",
 							"attributes": [],
 							"fragment": {

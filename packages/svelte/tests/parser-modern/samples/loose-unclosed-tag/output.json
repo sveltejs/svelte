@@ -11,6 +11,20 @@
 				"type": "RegularElement",
 				"start": 0,
 				"end": 20,
+				"id": {
+					"type": "Identifier",
+					"name": "div",
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 1
+						},
+						"end": {
+							"line": 1,
+							"column": 4
+						}
+					}
+				},
 				"name": "div",
 				"attributes": [],
 				"fragment": {
@@ -27,6 +41,20 @@
 							"type": "Component",
 							"start": 7,
 							"end": 14,
+							"id": {
+								"type": "Identifier",
+								"name": "Comp",
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 2
+									},
+									"end": {
+										"line": 2,
+										"column": 6
+									}
+								}
+							},
 							"name": "Comp",
 							"attributes": [],
 							"fragment": {
@@ -56,6 +84,20 @@
 				"type": "RegularElement",
 				"start": 22,
 				"end": 51,
+				"id": {
+					"type": "Identifier",
+					"name": "div",
+					"loc": {
+						"start": {
+							"line": 5,
+							"column": 1
+						},
+						"end": {
+							"line": 5,
+							"column": 4
+						}
+					}
+				},
 				"name": "div",
 				"attributes": [],
 				"fragment": {
@@ -72,6 +114,20 @@
 							"type": "Component",
 							"start": 29,
 							"end": 45,
+							"id": {
+								"type": "Identifier",
+								"name": "Comp",
+								"loc": {
+									"start": {
+										"line": 6,
+										"column": 2
+									},
+									"end": {
+										"line": 6,
+										"column": 6
+									}
+								}
+							},
 							"name": "Comp",
 							"attributes": [
 								{
@@ -121,6 +177,20 @@
 				"type": "RegularElement",
 				"start": 53,
 				"end": 72,
+				"id": {
+					"type": "Identifier",
+					"name": "div",
+					"loc": {
+						"start": {
+							"line": 9,
+							"column": 1
+						},
+						"end": {
+							"line": 9,
+							"column": 4
+						}
+					}
+				},
 				"name": "div",
 				"attributes": [],
 				"fragment": {
@@ -137,6 +207,20 @@
 							"type": "RegularElement",
 							"start": 60,
 							"end": 66,
+							"id": {
+								"type": "Identifier",
+								"name": "span",
+								"loc": {
+									"start": {
+										"line": 10,
+										"column": 2
+									},
+									"end": {
+										"line": 10,
+										"column": 6
+									}
+								}
+							},
 							"name": "span",
 							"attributes": [],
 							"fragment": {
@@ -158,6 +242,20 @@
 				"type": "RegularElement",
 				"start": 74,
 				"end": 94,
+				"id": {
+					"type": "Identifier",
+					"name": "div",
+					"loc": {
+						"start": {
+							"line": 13,
+							"column": 1
+						},
+						"end": {
+							"line": 13,
+							"column": 4
+						}
+					}
+				},
 				"name": "div",
 				"attributes": [],
 				"fragment": {
@@ -174,6 +272,20 @@
 							"type": "Component",
 							"start": 81,
 							"end": 88,
+							"id": {
+								"type": "Identifier",
+								"name": "Comp.",
+								"loc": {
+									"start": {
+										"line": 14,
+										"column": 2
+									},
+									"end": {
+										"line": 14,
+										"column": 7
+									}
+								}
+							},
 							"name": "Comp.",
 							"attributes": [],
 							"fragment": {
@@ -195,6 +307,20 @@
 				"type": "RegularElement",
 				"start": 96,
 				"end": 116,
+				"id": {
+					"type": "Identifier",
+					"name": "div",
+					"loc": {
+						"start": {
+							"line": 17,
+							"column": 1
+						},
+						"end": {
+							"line": 17,
+							"column": 4
+						}
+					}
+				},
 				"name": "div",
 				"attributes": [],
 				"fragment": {
@@ -211,6 +337,20 @@
 							"type": "Component",
 							"start": 103,
 							"end": 110,
+							"id": {
+								"type": "Identifier",
+								"name": "comp.",
+								"loc": {
+									"start": {
+										"line": 18,
+										"column": 2
+									},
+									"end": {
+										"line": 18,
+										"column": 7
+									}
+								}
+							},
 							"name": "comp.",
 							"attributes": [],
 							"fragment": {
@@ -263,6 +403,20 @@
 							"type": "RegularElement",
 							"start": 129,
 							"end": 135,
+							"id": {
+								"type": "Identifier",
+								"name": "div",
+								"loc": {
+									"start": {
+										"line": 22,
+										"column": 2
+									},
+									"end": {
+										"line": 22,
+										"column": 5
+									}
+								}
+							},
 							"name": "div",
 							"attributes": [],
 							"fragment": {
@@ -324,6 +478,20 @@
 							"type": "Component",
 							"start": 153,
 							"end": 169,
+							"id": {
+								"type": "Identifier",
+								"name": "Comp",
+								"loc": {
+									"start": {
+										"line": 26,
+										"column": 2
+									},
+									"end": {
+										"line": 26,
+										"column": 6
+									}
+								}
+							},
 							"name": "Comp",
 							"attributes": [
 								{
@@ -374,6 +542,20 @@
 				"type": "RegularElement",
 				"start": 176,
 				"end": 204,
+				"id": {
+					"type": "Identifier",
+					"name": "div",
+					"loc": {
+						"start": {
+							"line": 29,
+							"column": 1
+						},
+						"end": {
+							"line": 29,
+							"column": 4
+						}
+					}
+				},
 				"name": "div",
 				"attributes": [],
 				"fragment": {
@@ -390,6 +572,20 @@
 							"type": "RegularElement",
 							"start": 182,
 							"end": 191,
+							"id": {
+								"type": "Identifier",
+								"name": "p",
+								"loc": {
+									"start": {
+										"line": 30,
+										"column": 1
+									},
+									"end": {
+										"line": 30,
+										"column": 2
+									}
+								}
+							},
 							"name": "p",
 							"attributes": [],
 							"fragment": {
@@ -416,6 +612,20 @@
 							"type": "RegularElement",
 							"start": 193,
 							"end": 204,
+							"id": {
+								"type": "Identifier",
+								"name": "open-ended",
+								"loc": {
+									"start": {
+										"line": 32,
+										"column": 1
+									},
+									"end": {
+										"line": 32,
+										"column": 11
+									}
+								}
+							},
 							"name": "open-ended",
 							"attributes": [],
 							"fragment": {

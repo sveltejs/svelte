@@ -86,6 +86,20 @@
 							"type": "RegularElement",
 							"start": 58,
 							"end": 70,
+							"id": {
+								"type": "Identifier",
+								"name": "p",
+								"loc": {
+									"start": {
+										"line": 4,
+										"column": 2
+									},
+									"end": {
+										"line": 4,
+										"column": 3
+									}
+								}
+							},
 							"name": "p",
 							"attributes": [],
 							"fragment": {
