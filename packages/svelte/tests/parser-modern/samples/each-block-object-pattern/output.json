@@ -41,21 +41,17 @@
 							"type": "RegularElement",
 							"start": 41,
 							"end": 86,
-							"id": {
-								"type": "Identifier",
-								"name": "p",
-								"loc": {
-									"start": {
-										"line": 2,
-										"column": 2
-									},
-									"end": {
-										"line": 2,
-										"column": 3
-									}
+							"name": "p",
+							"name_loc": {
+								"start": {
+									"line": 2,
+									"column": 2
+								},
+								"end": {
+									"line": 2,
+									"column": 3
 								}
 							},
-							"name": "p",
 							"attributes": [],
 							"fragment": {
 								"type": "Fragment",
@@ -363,21 +359,17 @@
 							"type": "RegularElement",
 							"start": 155,
 							"end": 200,
-							"id": {
-								"type": "Identifier",
-								"name": "p",
-								"loc": {
-									"start": {
-										"line": 6,
-										"column": 2
-									},
-									"end": {
-										"line": 6,
-										"column": 3
-									}
+							"name": "p",
+							"name_loc": {
+								"start": {
+									"line": 6,
+									"column": 2
+								},
+								"end": {
+									"line": 6,
+									"column": 3
 								}
 							},
-							"name": "p",
 							"attributes": [],
 							"fragment": {
 								"type": "Fragment",
@@ -776,21 +768,17 @@
 							"type": "RegularElement",
 							"start": 291,
 							"end": 336,
-							"id": {
-								"type": "Identifier",
-								"name": "p",
-								"loc": {
-									"start": {
-										"line": 10,
-										"column": 2
-									},
-									"end": {
-										"line": 10,
-										"column": 3
-									}
+							"name": "p",
+							"name_loc": {
+								"start": {
+									"line": 10,
+									"column": 2
+								},
+								"end": {
+									"line": 10,
+									"column": 3
 								}
 							},
-							"name": "p",
 							"attributes": [],
 							"fragment": {
 								"type": "Fragment",

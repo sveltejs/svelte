@@ -11,21 +11,17 @@
 				"type": "RegularElement",
 				"start": 0,
 				"end": 66,
-				"id": {
-					"type": "Identifier",
-					"name": "template",
-					"loc": {
-						"start": {
-							"line": 1,
-							"column": 1
-						},
-						"end": {
-							"line": 1,
-							"column": 9
-						}
+				"name": "template",
+				"name_loc": {
+					"start": {
+						"line": 1,
+						"column": 1
+					},
+					"end": {
+						"line": 1,
+						"column": 9
 					}
 				},
-				"name": "template",
 				"attributes": [
 					{
 						"type": "Attribute",
@@ -57,21 +53,17 @@
 							"type": "RegularElement",
 							"start": 34,
 							"end": 54,
-							"id": {
-								"type": "Identifier",
-								"name": "p",
-								"loc": {
-									"start": {
-										"line": 2,
-										"column": 2
-									},
-									"end": {
-										"line": 2,
-										"column": 3
-									}
+							"name": "p",
+							"name_loc": {
+								"start": {
+									"line": 2,
+									"column": 2
+								},
+								"end": {
+									"line": 2,
+									"column": 3
 								}
 							},
-							"name": "p",
 							"attributes": [],
 							"fragment": {
 								"type": "Fragment",
@@ -80,21 +72,17 @@
 										"type": "RegularElement",
 										"start": 37,
 										"end": 50,
-										"id": {
-											"type": "Identifier",
-											"name": "slot",
-											"loc": {
-												"start": {
-													"line": 2,
-													"column": 5
-												},
-												"end": {
-													"line": 2,
-													"column": 9
-												}
+										"name": "slot",
+										"name_loc": {
+											"start": {
+												"line": 2,
+												"column": 5
+											},
+											"end": {
+												"line": 2,
+												"column": 9
 											}
 										},
-										"name": "slot",
 										"attributes": [],
 										"fragment": {
 											"type": "Fragment",
@@ -125,21 +113,17 @@
 				"type": "RegularElement",
 				"start": 67,
 				"end": 111,
-				"id": {
-					"type": "Identifier",
-					"name": "template",
-					"loc": {
-						"start": {
-							"line": 4,
-							"column": 1
-						},
-						"end": {
-							"line": 4,
-							"column": 9
-						}
+				"name": "template",
+				"name_loc": {
+					"start": {
+						"line": 4,
+						"column": 1
+					},
+					"end": {
+						"line": 4,
+						"column": 9
 					}
 				},
-				"name": "template",
 				"attributes": [],
 				"fragment": {
 					"type": "Fragment",
@@ -155,21 +139,17 @@
 							"type": "RegularElement",
 							"start": 79,
 							"end": 99,
-							"id": {
-								"type": "Identifier",
-								"name": "p",
-								"loc": {
-									"start": {
-										"line": 5,
-										"column": 2
-									},
-									"end": {
-										"line": 5,
-										"column": 3
-									}
+							"name": "p",
+							"name_loc": {
+								"start": {
+									"line": 5,
+									"column": 2
+								},
+								"end": {
+									"line": 5,
+									"column": 3
 								}
 							},
-							"name": "p",
 							"attributes": [],
 							"fragment": {
 								"type": "Fragment",
@@ -178,21 +158,17 @@
 										"type": "SlotElement",
 										"start": 82,
 										"end": 95,
-										"id": {
-											"type": "Identifier",
-											"name": "slot",
-											"loc": {
-												"start": {
-													"line": 5,
-													"column": 5
-												},
-												"end": {
-													"line": 5,
-													"column": 9
-												}
+										"name": "slot",
+										"name_loc": {
+											"start": {
+												"line": 5,
+												"column": 5
+											},
+											"end": {
+												"line": 5,
+												"column": 9
 											}
 										},
-										"name": "slot",
 										"attributes": [],
 										"fragment": {
 											"type": "Fragment",
@@ -223,21 +199,17 @@
 				"type": "SlotElement",
 				"start": 112,
 				"end": 125,
-				"id": {
-					"type": "Identifier",
-					"name": "slot",
-					"loc": {
-						"start": {
-							"line": 7,
-							"column": 1
-						},
-						"end": {
-							"line": 7,
-							"column": 5
-						}
+				"name": "slot",
+				"name_loc": {
+					"start": {
+						"line": 7,
+						"column": 1
+					},
+					"end": {
+						"line": 7,
+						"column": 5
 					}
 				},
-				"name": "slot",
 				"attributes": [],
 				"fragment": {
 					"type": "Fragment",

@@ -132,18 +132,14 @@ it('Strips BOM from the input', () => {
 					nodes: [],
 					type: 'Fragment'
 				},
-				id: {
-					type: 'Identifier',
-					name: 'div',
-					loc: {
-						end: {
-							column: 4,
-							line: 1
-						},
-						start: {
-							column: 1,
-							line: 1
-						}
+				name_loc: {
+					end: {
+						column: 4,
+						line: 1
+					},
+					start: {
+						column: 1,
+						line: 1
 					}
 				},
 				name: 'div',

@@ -86,21 +86,17 @@
 				"type": "RegularElement",
 				"start": 0,
 				"end": 35,
-				"id": {
-					"type": "Identifier",
-					"name": "h1",
-					"loc": {
-						"start": {
-							"line": 1,
-							"column": 1
-						},
-						"end": {
-							"line": 1,
-							"column": 3
-						}
+				"name": "h1",
+				"name_loc": {
+					"start": {
+						"line": 1,
+						"column": 1
+					},
+					"end": {
+						"line": 1,
+						"column": 3
 					}
 				},
-				"name": "h1",
 				"attributes": [],
 				"fragment": {
 					"type": "Fragment",
