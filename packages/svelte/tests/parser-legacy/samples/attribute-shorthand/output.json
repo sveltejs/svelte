@@ -15,6 +15,7 @@
 						"start": 5,
 						"end": 9,
 						"name": "id",
+						"name_loc": null,
 						"value": [
 							{
 								"type": "AttributeShorthand",

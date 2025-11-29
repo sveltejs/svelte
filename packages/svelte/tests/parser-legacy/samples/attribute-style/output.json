@@ -15,6 +15,16 @@
 						"start": 5,
 						"end": 24,
 						"name": "style",
+						"name_loc": {
+							"start": {
+								"line": 1,
+								"column": 5
+							},
+							"end": {
+								"line": 1,
+								"column": 10
+							}
+						},
 						"value": [
 							{
 								"start": 12,

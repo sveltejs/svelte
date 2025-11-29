@@ -22,6 +22,16 @@
 						"end": 692,
 						"type": "EventHandler",
 						"name": "click",
+						"name_loc": {
+							"start": {
+								"line": 34,
+								"column": 1
+							},
+							"end": {
+								"line": 34,
+								"column": 9
+							}
+						},
 						"expression": {
 							"type": "ArrowFunctionExpression",
 							"start": 596,

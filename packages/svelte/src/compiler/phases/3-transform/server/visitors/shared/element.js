@@ -142,7 +142,7 @@ export function build_element_attributes(node, context, transform) {
 				);
 
 				attributes.push(
-					create_attribute('checked', -1, -1, [
+					create_attribute('checked', null, -1, -1, [
 						{
 							type: 'ExpressionTag',
 							start: -1,
@@ -165,7 +165,7 @@ export function build_element_attributes(node, context, transform) {
 				);
 			} else {
 				attributes.push(
-					create_attribute(attribute.name, -1, -1, [
+					create_attribute(attribute.name, null, -1, -1, [
 						{
 							type: 'ExpressionTag',
 							start: -1,

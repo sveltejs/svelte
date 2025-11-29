@@ -533,6 +533,7 @@ export namespace AST {
 	export interface Attribute extends BaseNode {
 		type: 'Attribute';
 		name: string;
+		name_loc: SourceLocation;
 		/**
 		 * Quoted/string values are represented by an array, even if they contain a single expression like `"{x}"`
 		 */

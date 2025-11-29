@@ -15,6 +15,16 @@
 						"start": 5,
 						"end": 11,
 						"name": "id",
+						"name_loc": {
+							"start": {
+								"line": 1,
+								"column": 5
+							},
+							"end": {
+								"line": 1,
+								"column": 7
+							}
+						},
 						"value": [
 							{
 								"start": 9,
@@ -30,6 +40,16 @@
 						"start": 12,
 						"end": 21,
 						"name": "class",
+						"name_loc": {
+							"start": {
+								"line": 1,
+								"column": 12
+							},
+							"end": {
+								"line": 1,
+								"column": 17
+							}
+						},
 						"value": [
 							{
 								"start": 19,

@@ -32,6 +32,16 @@
 				"start": 16,
 				"end": 49,
 				"name": "customElement",
+				"name_loc": {
+					"start": {
+						"line": 1,
+						"column": 16
+					},
+					"end": {
+						"line": 1,
+						"column": 29
+					}
+				},
 				"value": [
 					{
 						"start": 31,
@@ -47,6 +57,16 @@
 				"start": 50,
 				"end": 62,
 				"name": "runes",
+				"name_loc": {
+					"start": {
+						"line": 1,
+						"column": 50
+					},
+					"end": {
+						"line": 1,
+						"column": 55
+					}
+				},
 				"value": {
 					"type": "ExpressionTag",
 					"start": 56,
@@ -104,6 +124,7 @@
 				"start": 75,
 				"end": 81,
 				"name": "module",
+				"name_loc": null,
 				"value": true
 			},
 			{
@@ -111,6 +132,7 @@
 				"start": 82,
 				"end": 91,
 				"name": "lang",
+				"name_loc": null,
 				"value": [
 					{
 						"start": 88,
@@ -151,6 +173,7 @@
 				"start": 112,
 				"end": 121,
 				"name": "lang",
+				"name_loc": null,
 				"value": [
 					{
 						"start": 118,
@@ -166,6 +189,7 @@
 				"start": 122,
 				"end": 158,
 				"name": "generics",
+				"name_loc": null,
 				"value": [
 					{
 						"start": 132,

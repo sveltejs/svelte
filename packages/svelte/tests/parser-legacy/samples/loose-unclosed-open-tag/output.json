@@ -29,6 +29,16 @@
 								"start": 13,
 								"end": 22,
 								"name": "foo",
+								"name_loc": {
+									"start": {
+										"line": 2,
+										"column": 7
+									},
+									"end": {
+										"line": 2,
+										"column": 10
+									}
+								},
 								"value": [
 									{
 										"type": "MustacheTag",
@@ -90,6 +100,16 @@
 								"start": 44,
 								"end": 53,
 								"name": "foo",
+								"name_loc": {
+									"start": {
+										"line": 6,
+										"column": 7
+									},
+									"end": {
+										"line": 6,
+										"column": 10
+									}
+								},
 								"value": [
 									{
 										"type": "MustacheTag",
@@ -158,6 +178,16 @@
 								"start": 79,
 								"end": 88,
 								"name": "foo",
+								"name_loc": {
+									"start": {
+										"line": 10,
+										"column": 7
+									},
+									"end": {
+										"line": 10,
+										"column": 10
+									}
+								},
 								"value": [
 									{
 										"type": "MustacheTag",
@@ -226,6 +256,16 @@
 								"start": 113,
 								"end": 122,
 								"name": "foo",
+								"name_loc": {
+									"start": {
+										"line": 14,
+										"column": 7
+									},
+									"end": {
+										"line": 14,
+										"column": 10
+									}
+								},
 								"value": [
 									{
 										"type": "MustacheTag",
@@ -317,6 +357,16 @@
 						"start": 161,
 						"end": 170,
 						"name": "foo",
+						"name_loc": {
+							"start": {
+								"line": 20,
+								"column": 5
+							},
+							"end": {
+								"line": 20,
+								"column": 8
+							}
+						},
 						"value": [
 							{
 								"type": "MustacheTag",

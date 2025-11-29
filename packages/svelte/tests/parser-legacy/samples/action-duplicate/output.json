@@ -15,6 +15,16 @@
 						"end": 20,
 						"type": "Action",
 						"name": "autofocus",
+						"name_loc": {
+							"start": {
+								"line": 1,
+								"column": 7
+							},
+							"end": {
+								"line": 1,
+								"column": 20
+							}
+						},
 						"expression": null,
 						"modifiers": []
 					},
@@ -23,6 +33,16 @@
 						"end": 34,
 						"type": "Action",
 						"name": "autofocus",
+						"name_loc": {
+							"start": {
+								"line": 1,
+								"column": 21
+							},
+							"end": {
+								"line": 1,
+								"column": 34
+							}
+						},
 						"expression": null,
 						"modifiers": []
 					}

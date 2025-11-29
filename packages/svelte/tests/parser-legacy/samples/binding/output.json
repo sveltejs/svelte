@@ -22,6 +22,16 @@
 						"end": 55,
 						"type": "Binding",
 						"name": "value",
+						"name_loc": {
+							"start": {
+								"line": 5,
+								"column": 7
+							},
+							"end": {
+								"line": 5,
+								"column": 17
+							}
+						},
 						"expression": {
 							"type": "Identifier",
 							"start": 50,

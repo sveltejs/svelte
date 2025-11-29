@@ -138,6 +138,7 @@
 				"start": 36,
 				"end": 45,
 				"name": "lang",
+				"name_loc": null,
 				"value": [
 					{
 						"start": 42,

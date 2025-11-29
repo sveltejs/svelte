@@ -15,6 +15,16 @@
 						"start": 10,
 						"end": 29,
 						"name": "readonly",
+						"name_loc": {
+							"start": {
+								"line": 1,
+								"column": 10
+							},
+							"end": {
+								"line": 1,
+								"column": 18
+							}
+						},
 						"value": [
 							{
 								"type": "MustacheTag",

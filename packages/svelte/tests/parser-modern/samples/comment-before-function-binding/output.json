@@ -35,6 +35,16 @@
 						"end": 114,
 						"type": "BindDirective",
 						"name": "value",
+						"name_loc": {
+							"start": {
+								"line": 5,
+								"column": 7
+							},
+							"end": {
+								"line": 5,
+								"column": 17
+							}
+						},
 						"expression": {
 							"type": "SequenceExpression",
 							"start": 68,

@@ -15,6 +15,7 @@
 						"start": 5,
 						"end": 7,
 						"name": "",
+						"name_loc": null,
 						"value": [
 							{
 								"type": "AttributeShorthand",
@@ -50,6 +51,16 @@
 						"start": 20,
 						"end": 26,
 						"name": "foo",
+						"name_loc": {
+							"start": {
+								"line": 2,
+								"column": 5
+							},
+							"end": {
+								"line": 2,
+								"column": 8
+							}
+						},
 						"value": [
 							{
 								"type": "MustacheTag",
@@ -85,6 +96,16 @@
 						"start": 40,
 						"end": 48,
 						"name": "foo",
+						"name_loc": {
+							"start": {
+								"line": 4,
+								"column": 5
+							},
+							"end": {
+								"line": 4,
+								"column": 8
+							}
+						},
 						"value": [
 							{
 								"type": "MustacheTag",
@@ -120,6 +141,16 @@
 						"start": 61,
 						"end": 73,
 						"name": "foo",
+						"name_loc": {
+							"start": {
+								"line": 5,
+								"column": 5
+							},
+							"end": {
+								"line": 5,
+								"column": 8
+							}
+						},
 						"value": [
 							{
 								"type": "MustacheTag",
@@ -155,6 +186,16 @@
 						"start": 92,
 						"end": 110,
 						"name": "onclick",
+						"name_loc": {
+							"start": {
+								"line": 6,
+								"column": 11
+							},
+							"end": {
+								"line": 6,
+								"column": 18
+							}
+						},
 						"value": [
 							{
 								"type": "MustacheTag",
@@ -190,6 +231,16 @@
 						"end": 137,
 						"type": "Binding",
 						"name": "value",
+						"name_loc": {
+							"start": {
+								"line": 8,
+								"column": 7
+							},
+							"end": {
+								"line": 8,
+								"column": 17
+							}
+						},
 						"expression": {
 							"type": "Identifier",
 							"start": 134,

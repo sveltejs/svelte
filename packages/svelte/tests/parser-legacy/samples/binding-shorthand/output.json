@@ -22,6 +22,16 @@
 						"end": 46,
 						"type": "Binding",
 						"name": "foo",
+						"name_loc": {
+							"start": {
+								"line": 5,
+								"column": 8
+							},
+							"end": {
+								"line": 5,
+								"column": 16
+							}
+						},
 						"expression": {
 							"start": 43,
 							"end": 46,

@@ -508,7 +508,7 @@ function read_static_attribute(parser) {
 		e.expected_token(parser.index, '=');
 	}
 
-	return create_attribute(name, start, parser.index, value);
+	return create_attribute(name, null, start, parser.index, value);
 }
 
 /**
@@ -517,6 +517,8 @@ function read_static_attribute(parser) {
  */
 function read_attribute(parser) {
 	const start = parser.index;
+
+	const start_location = /** @type {Location} */ (locator(parser.index));
 
 	if (parser.eat('{')) {
 		parser.allow_whitespace();
@@ -599,14 +601,30 @@ function read_attribute(parser) {
 				}
 			};
 
-			return create_attribute(name, start, parser.index, expression);
+			return create_attribute(name, null, start, parser.index, expression);
 		}
 	}
+
+	/** @type {SourceLocation} */
+	const name_loc = {
+		start: {
+			line: start_location.line,
+			column: start_location.column
+		},
+		end: {
+			line: -1,
+			column: -1
+		}
+	};
 
 	const name = parser.read_until(regex_token_ending_character);
 	if (!name) return null;
 
 	let end = parser.index;
+	const end_location = /** @type {Location} */ (locator(end));
+
+	name_loc.end.line = end_location.line;
+	name_loc.end.column = end_location.column;
 
 	parser.allow_whitespace();
 
@@ -652,6 +670,7 @@ function read_attribute(parser) {
 				end,
 				type,
 				name: directive_name,
+				name_loc,
 				modifiers: /** @type {Array<'important'>} */ (modifiers),
 				value,
 				metadata: {
@@ -682,6 +701,7 @@ function read_attribute(parser) {
 			end,
 			type,
 			name: directive_name,
+			name_loc,
 			expression,
 			metadata: {
 				expression: new ExpressionMetadata()
@@ -713,7 +733,7 @@ function read_attribute(parser) {
 		return directive;
 	}
 
-	return create_attribute(name, start, end, value);
+	return create_attribute(name, name_loc, start, end, value);
 }
 
 /**

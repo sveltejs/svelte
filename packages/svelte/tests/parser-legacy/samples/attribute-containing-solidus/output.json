@@ -15,6 +15,16 @@
 						"start": 3,
 						"end": 30,
 						"name": "href",
+						"name_loc": {
+							"start": {
+								"line": 1,
+								"column": 3
+							},
+							"end": {
+								"line": 1,
+								"column": 7
+							}
+						},
 						"value": [
 							{
 								"start": 8,

@@ -68,6 +68,16 @@
 								"start": 35,
 								"end": 44,
 								"name": "foo",
+								"name_loc": {
+									"start": {
+										"line": 6,
+										"column": 7
+									},
+									"end": {
+										"line": 6,
+										"column": 10
+									}
+								},
 								"value": [
 									{
 										"type": "MustacheTag",
@@ -275,6 +285,16 @@
 								"start": 159,
 								"end": 168,
 								"name": "foo",
+								"name_loc": {
+									"start": {
+										"line": 26,
+										"column": 7
+									},
+									"end": {
+										"line": 26,
+										"column": 10
+									}
+								},
 								"value": [
 									{
 										"type": "MustacheTag",

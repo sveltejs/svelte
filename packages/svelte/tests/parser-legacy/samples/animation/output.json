@@ -20,6 +20,16 @@
 								"end": 50,
 								"type": "Animation",
 								"name": "flip",
+								"name_loc": {
+									"start": {
+										"line": 2,
+										"column": 6
+									},
+									"end": {
+										"line": 2,
+										"column": 18
+									}
+								},
 								"expression": null,
 								"modifiers": []
 							}

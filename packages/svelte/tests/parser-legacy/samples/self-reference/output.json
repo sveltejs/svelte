@@ -69,6 +69,16 @@
 								"start": 30,
 								"end": 49,
 								"name": "depth",
+								"name_loc": {
+									"start": {
+										"line": 2,
+										"column": 14
+									},
+									"end": {
+										"line": 2,
+										"column": 19
+									}
+								},
 								"value": [
 									{
 										"type": "MustacheTag",

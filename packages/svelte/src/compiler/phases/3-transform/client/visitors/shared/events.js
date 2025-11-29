@@ -32,7 +32,13 @@ export function visit_event_attribute(node, context) {
 		}
 
 		context.state.init.push(
-			b.stmt(b.assignment('=', b.member(context.state.node, '__' + event_name), handler))
+			b.stmt(
+				b.assignment(
+					'=',
+					b.member(context.state.node, b.id('__' + event_name, node.name_loc)),
+					handler
+				)
+			)
 		);
 	} else {
 		const statement = b.stmt(
