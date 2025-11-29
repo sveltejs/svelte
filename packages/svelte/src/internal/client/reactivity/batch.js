@@ -175,6 +175,9 @@ export class Batch {
 			this.#traverse_effect_tree(root, target);
 			// Note: #traverse_effect_tree runs block effects eagerly, which can schedule effects,
 			// which means queued_root_effects now may be filled again.
+
+			// Helpful for debugging reactivity loss that has to do with branches being skipped:
+			// log_inconsistent_branches(root);
 		}
 
 		if (!this.is_fork) {
