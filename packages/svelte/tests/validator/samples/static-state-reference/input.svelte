@@ -8,11 +8,21 @@
 	console.log(count);
 	console.log(doubled);
 
+	let {
+		prop
+	} = $props();
+	let prop_state = $state(prop);
+	let prop_derived = $derived(prop);
+	console.log(prop);
+	console.log(prop_derived);
+
 	// writes are okay
 	count++;
 	count = 1;
 	obj.a++;
 	obj.a = 1;
+	prop_state = 1;
+	prop_derived = 1;
 
 	// `count` here is correctly identified as a non-reference
 	let typed: { count: number } | null = null;

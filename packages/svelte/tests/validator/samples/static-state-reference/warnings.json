@@ -34,5 +34,41 @@
 			"column": 20,
 			"line": 9
 		}
+	},
+	{
+		"code": "state_referenced_locally",
+		"end": {
+			"column": 29,
+			"line": 14
+		},
+		"message": "This reference only captures the initial value of `prop`. Did you mean to reference it inside a closure instead?",
+		"start": {
+			"column": 25,
+			"line": 14
+		}
+	},
+	{
+		"code": "state_referenced_locally",
+		"end": {
+			"column": 17,
+			"line": 16
+		},
+		"message": "This reference only captures the initial value of `prop`. Did you mean to reference it inside a closure instead?",
+		"start": {
+			"column": 13,
+			"line": 16
+		}
+	},
+	{
+		"code": "state_referenced_locally",
+		"end": {
+			"column": 25,
+			"line": 17
+		},
+		"message": "This reference only captures the initial value of `prop_derived`. Did you mean to reference it inside a closure instead?",
+		"start": {
+			"column": 13,
+			"line": 17
+		}
 	}
 ]
