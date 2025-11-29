@@ -8,6 +8,6 @@ import * as b from '#compiler/builders';
  * @param {ComponentContext} context
  */
 export function SvelteComponent(node, context) {
-	const component = build_component(node, b.id('$$component'), context);
+	const component = build_component(node, '$$component', null, context);
 	context.state.init.push(component);
 }

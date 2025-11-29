@@ -7,6 +7,6 @@ import { build_component } from './shared/component.js';
  * @param {ComponentContext} context
  */
 export function Component(node, context) {
-	const component = build_component(node, node.id, context);
+	const component = build_component(node, node.name, node.name_loc, context);
 	context.state.init.push(component);
 }

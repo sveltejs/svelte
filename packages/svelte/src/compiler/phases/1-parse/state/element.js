@@ -73,7 +73,7 @@ export default function element(parser) {
 	const start_location = /** @type {Location} */ (locator(parser.index));
 
 	/** @type {SourceLocation} */
-	const loc = {
+	const name_loc = {
 		start: {
 			line: start_location.line,
 			column: start_location.column
@@ -143,8 +143,8 @@ export default function element(parser) {
 	}
 
 	const end_location = /** @type {Location} */ (locator(parser.index));
-	loc.end.line = end_location.line;
-	loc.end.column = end_location.column;
+	name_loc.end.line = end_location.line;
+	name_loc.end.column = end_location.column;
 
 	if (name.startsWith('svelte:') && !meta_tags.has(name)) {
 		const bounds = { start: start + 1, end: start + 1 + name.length };
@@ -182,8 +182,6 @@ export default function element(parser) {
 					? 'SlotElement'
 					: 'RegularElement';
 
-	const id = b.id(name, loc);
-
 	/** @type {AST.ElementLike} */
 	const element =
 		type === 'RegularElement'
@@ -191,8 +189,8 @@ export default function element(parser) {
 					type,
 					start,
 					end: -1,
-					id,
 					name,
+					name_loc,
 					attributes: [],
 					fragment: create_fragment(true),
 					metadata: {
@@ -208,8 +206,8 @@ export default function element(parser) {
 					type,
 					start,
 					end: -1,
-					id,
 					name,
+					name_loc,
 					attributes: [],
 					fragment: create_fragment(true),
 					metadata: {

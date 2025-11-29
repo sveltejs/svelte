@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, SourceLocation, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
@@ -11,11 +11,12 @@ import { determine_slot } from '../../../../../utils/slot.js';
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
- * @param {Identifier} id
+ * @param {string} name
+ * @param {SourceLocation | null} loc
  * @param {ComponentContext} context
  * @returns {Statement}
  */
-export function build_component(node, id, context) {
+export function build_component(node, name, loc, context) {
 	/** @type {Expression} */
 	const anchor = context.state.node;
 
@@ -220,7 +221,7 @@ export function build_component(node, id, context) {
 							b.call(
 								'$$ownership_validator.binding',
 								b.literal(binding.node.name),
-								is_component_dynamic ? b.id(intermediate_name) : id,
+								b.id(is_component_dynamic ? intermediate_name : name),
 								b.thunk(expression)
 							)
 						)

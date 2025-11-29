@@ -14,7 +14,7 @@ export function SvelteHead(node, context) {
 	context.state.init.push(
 		b.stmt(
 			b.call(
-				b.id('$.head', node.id.loc),
+				b.id('$.head', node.name_loc),
 				b.literal(hash(filename)),
 				b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.fragment)))
 			)

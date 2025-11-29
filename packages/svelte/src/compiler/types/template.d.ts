@@ -13,7 +13,8 @@ import type {
 	Program,
 	ChainExpression,
 	SimpleCallExpression,
-	SequenceExpression
+	SequenceExpression,
+	SourceLocation
 } from 'estree';
 import type { Scope } from '../phases/scope';
 import type { _CSS } from './css';
@@ -309,8 +310,8 @@ export namespace AST {
 	}
 
 	export interface BaseElement extends BaseNode {
-		id: Identifier;
 		name: string;
+		name_loc: SourceLocation;
 		attributes: Array<Attribute | SpreadAttribute | Directive | AttachTag>;
 		fragment: Fragment;
 	}
