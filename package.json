@@ -36,7 +36,7 @@
     "eslint-plugin-lube": "^0.4.3",
     "eslint-plugin-svelte": "^3.11.0",
     "jsdom": "25.0.1",
-    "playwright": "^1.46.1",
+    "playwright": "^1.55.1",
     "prettier": "^3.2.4",
     "prettier-plugin-svelte": "^3.4.0",
     "svelte": "workspace:^",
