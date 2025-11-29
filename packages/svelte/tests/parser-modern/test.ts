@@ -66,6 +66,8 @@ function clean(ast: AST.SvelteNode) {
 			// @ts-ignore
 			delete node.loc;
 			// @ts-ignore
+			delete node.name_loc;
+			// @ts-ignore
 			delete node.leadingComments;
 			// @ts-ignore
 			delete node.trailingComments;
