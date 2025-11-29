@@ -110,7 +110,12 @@ export function process_children(nodes, initial, is_element, context) {
 			) {
 				node.metadata.is_controlled = true;
 			} else {
-				const id = flush_node(false, node.type === 'RegularElement' ? node.name : 'node');
+				const id = flush_node(
+					false,
+					node.type === 'RegularElement' ? node.name : 'node',
+					node.type === 'RegularElement' ? node.name_loc : null
+				);
+
 				child_state = { ...context.state, node: id };
 			}
 
