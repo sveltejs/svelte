@@ -625,12 +625,29 @@ export function get(signal) {
 	) {
 		derived = /** @type {Derived} */ (signal);
 
+		var was_connected = (derived.f & CONNECTED) !== 0;
+		var prev_deps = derived.deps;
+
 		if (is_dirty(derived)) {
 			update_derived(derived);
 		}
 
 		if (is_updating_effect && effect_tracking() && (derived.f & CONNECTED) === 0) {
 			reconnect(derived);
+		} else if (was_connected && derived.deps !== null) {
+			// If the derived was already connected but update_derived ran outside of
+			// is_updating_effect (e.g., direct $.get() call), we need to ensure
+			// new deps have the derived in their reactions
+			var current_deps = derived.deps;
+			for (var i = 0; i < current_deps.length; i++) {
+				var dep = current_deps[i];
+				// Only add if this is a new dep or if dep's reactions don't include derived
+				if (prev_deps === null || !prev_deps.includes(dep)) {
+					(dep.reactions ??= []).push(derived);
+				} else if (dep.reactions === null || !dep.reactions.includes(derived)) {
+					(dep.reactions ??= []).push(derived);
+				}
+			}
 		}
 	}
 
