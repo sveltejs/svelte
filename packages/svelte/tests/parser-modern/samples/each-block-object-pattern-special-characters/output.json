@@ -79,7 +79,6 @@
 								},
 								"name": "y"
 							},
-							"kind": "init",
 							"value": {
 								"type": "AssignmentPattern",
 								"start": 14,
@@ -127,7 +126,8 @@
 									"value": "z",
 									"raw": "'z'"
 								}
-							}
+							},
+							"kind": "init"
 						}
 					]
 				}
@@ -211,7 +211,6 @@
 								},
 								"name": "y"
 							},
-							"kind": "init",
 							"value": {
 								"type": "AssignmentPattern",
 								"start": 47,
@@ -259,7 +258,8 @@
 									"value": "{",
 									"raw": "'{'"
 								}
-							}
+							},
+							"kind": "init"
 						}
 					]
 				}
@@ -343,7 +343,6 @@
 								},
 								"name": "y"
 							},
-							"kind": "init",
 							"value": {
 								"type": "AssignmentPattern",
 								"start": 80,
@@ -391,7 +390,8 @@
 									"value": "]",
 									"raw": "']'"
 								}
-							}
+							},
+							"kind": "init"
 						}
 					]
 				}
@@ -475,7 +475,6 @@
 								},
 								"name": "y"
 							},
-							"kind": "init",
 							"value": {
 								"type": "AssignmentPattern",
 								"start": 113,
@@ -603,7 +602,8 @@
 										}
 									]
 								}
-							}
+							},
+							"kind": "init"
 						}
 					]
 				}
@@ -687,7 +687,6 @@
 								},
 								"name": "y"
 							},
-							"kind": "init",
 							"value": {
 								"type": "AssignmentPattern",
 								"start": 151,
@@ -815,7 +814,8 @@
 										}
 									]
 								}
-							}
+							},
+							"kind": "init"
 						}
 					]
 				}

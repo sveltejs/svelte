@@ -25,6 +25,10 @@ packages/svelte/tests/**/_output
 packages/svelte/tests/**/shards/*.test.js
 packages/svelte/tests/hydration/samples/*/_expected.html
 packages/svelte/tests/hydration/samples/*/_override.html
+packages/svelte/tests/parser-legacy/samples/*/_actual.json
+packages/svelte/tests/parser-legacy/samples/*/output.json
+packages/svelte/tests/parser-modern/samples/*/_actual.json
+packages/svelte/tests/parser-modern/samples/*/output.json
 packages/svelte/types
 packages/svelte/compiler/index.js
 playgrounds/sandbox/src/*
