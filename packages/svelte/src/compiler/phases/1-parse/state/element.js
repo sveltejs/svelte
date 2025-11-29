@@ -1,4 +1,5 @@
-/** @import { Expression } from 'estree' */
+/** @import { Expression, SourceLocation } from 'estree' */
+/** @import { Location } from 'locate-character' */
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import { is_void } from '../../../../utils.js';
@@ -13,6 +14,8 @@ import { create_attribute, ExpressionMetadata, is_element_node } from '../../nod
 import { get_attribute_expression, is_expression_attribute } from '../../../utils/ast.js';
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
 import { list } from '../../../utils/string.js';
+import { locator } from '../../../state.js';
+import * as b from '#compiler/builders';
 
 const regex_invalid_unquoted_attribute_value = /^(\/>|[\s"'=<>`])/;
 const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
@@ -66,6 +69,20 @@ export default function element(parser) {
 
 		return;
 	}
+
+	const start_location = /** @type {Location} */ (locator(parser.index));
+
+	/** @type {SourceLocation} */
+	const loc = {
+		start: {
+			line: start_location.line,
+			column: start_location.column
+		},
+		end: {
+			line: -1,
+			column: -1
+		}
+	};
 
 	const is_closing_tag = parser.eat('/');
 	const name = parser.read_until(regex_whitespace_or_slash_or_closing_tag);
@@ -125,6 +142,10 @@ export default function element(parser) {
 		return;
 	}
 
+	const end_location = /** @type {Location} */ (locator(parser.index));
+	loc.end.line = end_location.line;
+	loc.end.column = end_location.column;
+
 	if (name.startsWith('svelte:') && !meta_tags.has(name)) {
 		const bounds = { start: start + 1, end: start + 1 + name.length };
 		e.svelte_meta_invalid_tag(bounds, list(Array.from(meta_tags.keys())));
@@ -161,6 +182,8 @@ export default function element(parser) {
 					? 'SlotElement'
 					: 'RegularElement';
 
+	const id = b.id(name, loc);
+
 	/** @type {AST.ElementLike} */
 	const element =
 		type === 'RegularElement'
@@ -168,6 +191,7 @@ export default function element(parser) {
 					type,
 					start,
 					end: -1,
+					id,
 					name,
 					attributes: [],
 					fragment: create_fragment(true),
@@ -184,6 +208,7 @@ export default function element(parser) {
 					type,
 					start,
 					end: -1,
+					id,
 					name,
 					attributes: [],
 					fragment: create_fragment(true),

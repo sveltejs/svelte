@@ -11,11 +11,11 @@ import { determine_slot } from '../../../../../utils/slot.js';
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
- * @param {string} component_name
+ * @param {Identifier} id
  * @param {ComponentContext} context
  * @returns {Statement}
  */
-export function build_component(node, component_name, context) {
+export function build_component(node, id, context) {
 	/** @type {Expression} */
 	const anchor = context.state.node;
 
@@ -220,7 +220,7 @@ export function build_component(node, component_name, context) {
 							b.call(
 								'$$ownership_validator.binding',
 								b.literal(binding.node.name),
-								b.id(is_component_dynamic ? intermediate_name : component_name),
+								is_component_dynamic ? b.id(intermediate_name) : id,
 								b.thunk(expression)
 							)
 						)
@@ -438,9 +438,7 @@ export function build_component(node, component_name, context) {
 			// TODO We can remove this ternary once we remove legacy mode, since in runes mode dynamic components
 			// will be handled separately through the `$.component` function, and then the component name will
 			// always be referenced through just the identifier here.
-			is_component_dynamic
-				? intermediate_name
-				: /** @type {Expression} */ (context.visit(b.member_id(component_name))),
+			is_component_dynamic ? intermediate_name : /** @type {Expression} */ (context.visit(id)),
 			node_id,
 			props_expression
 		);
@@ -470,7 +468,7 @@ export function build_component(node, component_name, context) {
 				node_id,
 				b.thunk(
 					/** @type {Expression} */ (
-						context.visit(node.type === 'Component' ? b.member_id(component_name) : node.expression)
+						context.visit(node.type === 'Component' ? id : node.expression)
 					)
 				),
 				b.arrow(
