@@ -243,8 +243,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 				if (is_reactive_index) {
 					internal_set(/** @type {Value<number>} */ (item.i), i);
-				} else {
-					item.i = i;
 				}
 
 				if (defer) {
