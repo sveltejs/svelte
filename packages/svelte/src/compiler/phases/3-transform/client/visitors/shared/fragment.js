@@ -1,4 +1,4 @@
-/** @import { Expression } from 'estree' */
+/** @import { Expression, Identifier } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
 import { cannot_be_set_statically } from '../../../../../../utils.js';
@@ -41,14 +41,14 @@ export function process_children(nodes, initial, is_element, context) {
 
 	/**
 	 * @param {boolean} is_text
-	 * @param {string} name
+	 * @param {Identifier} node
 	 */
-	function flush_node(is_text, name) {
+	function flush_node(is_text, node) {
 		const expression = get_node(is_text);
 		let id = expression;
 
 		if (id.type !== 'Identifier') {
-			id = b.id(context.state.scope.generate(name));
+			id = b.id(context.state.scope.generate(node.name), node.loc);
 			context.state.init.push(b.var(id, expression));
 		}
 
@@ -75,7 +75,7 @@ export function process_children(nodes, initial, is_element, context) {
 		// if this is a standalone `{expression}`, make sure we handle the case where
 		// no text node was created because the expression was empty during SSR
 		const is_text = sequence.length === 1;
-		const id = flush_node(is_text, 'text');
+		const id = flush_node(is_text, b.id('text'));
 
 		const update = b.stmt(b.call('$.set_text', id, value));
 
@@ -109,7 +109,7 @@ export function process_children(nodes, initial, is_element, context) {
 			) {
 				node.metadata.is_controlled = true;
 			} else {
-				const id = flush_node(false, node.type === 'RegularElement' ? node.name : 'node');
+				const id = flush_node(false, node.type === 'RegularElement' ? node.id : b.id('node'));
 				child_state = { ...context.state, node: id };
 			}
 

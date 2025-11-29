@@ -41,6 +41,20 @@
 							"type": "RegularElement",
 							"start": 41,
 							"end": 86,
+							"id": {
+								"type": "Identifier",
+								"name": "p",
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 2
+									},
+									"end": {
+										"line": 2,
+										"column": 3
+									}
+								}
+							},
 							"name": "p",
 							"attributes": [],
 							"fragment": {
@@ -204,7 +218,6 @@
 								},
 								"name": "name"
 							},
-							"kind": "init",
 							"value": {
 								"type": "Identifier",
 								"start": 19,
@@ -220,7 +233,8 @@
 									}
 								},
 								"name": "name"
-							}
+							},
+							"kind": "init"
 						},
 						{
 							"type": "Property",
@@ -255,7 +269,6 @@
 								},
 								"name": "cool"
 							},
-							"kind": "init",
 							"value": {
 								"type": "AssignmentPattern",
 								"start": 25,
@@ -303,7 +316,8 @@
 									"value": true,
 									"raw": "true"
 								}
-							}
+							},
+							"kind": "init"
 						}
 					]
 				}
@@ -349,6 +363,20 @@
 							"type": "RegularElement",
 							"start": 155,
 							"end": 200,
+							"id": {
+								"type": "Identifier",
+								"name": "p",
+								"loc": {
+									"start": {
+										"line": 6,
+										"column": 2
+									},
+									"end": {
+										"line": 6,
+										"column": 3
+									}
+								}
+							},
 							"name": "p",
 							"attributes": [],
 							"fragment": {
@@ -512,7 +540,6 @@
 								},
 								"name": "name"
 							},
-							"kind": "init",
 							"value": {
 								"type": "AssignmentPattern",
 								"start": 115,
@@ -619,7 +646,8 @@
 										}
 									]
 								}
-							}
+							},
+							"kind": "init"
 						},
 						{
 							"type": "Property",
@@ -654,7 +682,6 @@
 								},
 								"name": "cool"
 							},
-							"kind": "init",
 							"value": {
 								"type": "AssignmentPattern",
 								"start": 139,
@@ -702,7 +729,8 @@
 									"value": true,
 									"raw": "true"
 								}
-							}
+							},
+							"kind": "init"
 						}
 					]
 				}
@@ -748,6 +776,20 @@
 							"type": "RegularElement",
 							"start": 291,
 							"end": 336,
+							"id": {
+								"type": "Identifier",
+								"name": "p",
+								"loc": {
+									"start": {
+										"line": 10,
+										"column": 2
+									},
+									"end": {
+										"line": 10,
+										"column": 3
+									}
+								}
+							},
 							"name": "p",
 							"attributes": [],
 							"fragment": {
@@ -911,7 +953,6 @@
 								},
 								"name": "name"
 							},
-							"kind": "init",
 							"value": {
 								"type": "AssignmentPattern",
 								"start": 229,
@@ -1087,7 +1128,8 @@
 									"arguments": [],
 									"optional": false
 								}
-							}
+							},
+							"kind": "init"
 						},
 						{
 							"type": "Property",
@@ -1122,7 +1164,6 @@
 								},
 								"name": "cool"
 							},
-							"kind": "init",
 							"value": {
 								"type": "AssignmentPattern",
 								"start": 275,
@@ -1170,7 +1211,8 @@
 									"value": true,
 									"raw": "true"
 								}
-							}
+							},
+							"kind": "init"
 						}
 					]
 				}
