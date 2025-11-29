@@ -72,6 +72,11 @@ export type TemplateNode = Text | Element | Comment;
 
 export type Dom = TemplateNode | TemplateNode[];
 
+export type EachOutroGroup = {
+	remaining: number;
+	items: Set<EachItem>;
+};
+
 export type EachState = {
 	/** the each block effect */
 	effect: Effect;
@@ -81,6 +86,8 @@ export type EachState = {
 	items: Map<any, EachItem>;
 	/** head of the linked list of items */
 	first: EachItem | null;
+	/** all outro groups that this item is a part of */
+	outrogroups: Set<EachOutroGroup> | null;
 };
 
 export type EachItem = {
