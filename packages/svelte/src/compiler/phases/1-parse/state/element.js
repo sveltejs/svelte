@@ -70,24 +70,9 @@ export default function element(parser) {
 		return;
 	}
 
-	const start_location = /** @type {Location} */ (locator(parser.index));
+	if (parser.eat('/')) {
+		const name = parser.read_until(regex_whitespace_or_slash_or_closing_tag);
 
-	/** @type {SourceLocation} */
-	const name_loc = {
-		start: {
-			line: start_location.line,
-			column: start_location.column
-		},
-		end: {
-			line: -1,
-			column: -1
-		}
-	};
-
-	const is_closing_tag = parser.eat('/');
-	const name = parser.read_until(regex_whitespace_or_slash_or_closing_tag);
-
-	if (is_closing_tag) {
 		parser.allow_whitespace();
 		parser.eat('>', true);
 
@@ -142,9 +127,7 @@ export default function element(parser) {
 		return;
 	}
 
-	const end_location = /** @type {Location} */ (locator(parser.index));
-	name_loc.end.line = end_location.line;
-	name_loc.end.column = end_location.column;
+	const { name, name_loc } = read_name(parser, regex_whitespace_or_slash_or_closing_tag);
 
 	if (name.startsWith('svelte:') && !meta_tags.has(name)) {
 		const bounds = { start: start + 1, end: start + 1 + name.length };
@@ -518,8 +501,6 @@ function read_static_attribute(parser) {
 function read_attribute(parser) {
 	const start = parser.index;
 
-	const start_location = /** @type {Location} */ (locator(parser.index));
-
 	if (parser.eat('{')) {
 		parser.allow_whitespace();
 
@@ -605,19 +586,8 @@ function read_attribute(parser) {
 		}
 	}
 
-	/** @type {SourceLocation} */
-	const name_loc = {
-		start: {
-			line: start_location.line,
-			column: start_location.column
-		},
-		end: {
-			line: -1,
-			column: -1
-		}
-	};
+	const { name, name_loc } = read_name(parser, regex_token_ending_character);
 
-	const name = parser.read_until(regex_token_ending_character);
 	if (!name) return null;
 
 	let end = parser.index;
@@ -893,4 +863,23 @@ function read_sequence(parser, done, location) {
 	} else {
 		e.unexpected_eof(parser.template.length);
 	}
+}
+
+/**
+ *
+ * @param {Parser} parser
+ * @param {RegExp} regex
+ */
+function read_name(parser, regex) {
+	const a = /** @type {Location} */ (locator(parser.index));
+	const name = parser.read_until(regex);
+	const b = /** @type {Location} */ (locator(parser.index));
+
+	/** @type {SourceLocation} */
+	const name_loc = {
+		start: { line: a.line, column: a.column },
+		end: { line: b.line, column: b.column }
+	};
+
+	return { name, name_loc };
 }
