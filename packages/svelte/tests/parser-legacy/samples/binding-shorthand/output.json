@@ -25,11 +25,13 @@
 						"name_loc": {
 							"start": {
 								"line": 5,
-								"column": 8
+								"column": 8,
+								"character": 38
 							},
 							"end": {
 								"line": 5,
-								"column": 16
+								"column": 16,
+								"character": 46
 							}
 						},
 						"expression": {

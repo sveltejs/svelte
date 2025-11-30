@@ -71,11 +71,13 @@
 								"name_loc": {
 									"start": {
 										"line": 6,
-										"column": 7
+										"column": 7,
+										"character": 35
 									},
 									"end": {
 										"line": 6,
-										"column": 10
+										"column": 10,
+										"character": 38
 									}
 								},
 								"value": [
@@ -288,11 +290,13 @@
 								"name_loc": {
 									"start": {
 										"line": 26,
-										"column": 7
+										"column": 7,
+										"character": 159
 									},
 									"end": {
 										"line": 26,
-										"column": 10
+										"column": 10,
+										"character": 162
 									}
 								},
 								"value": [

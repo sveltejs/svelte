@@ -1100,11 +1100,13 @@
 				"name_loc": {
 					"start": {
 						"line": 46,
-						"column": 1
+						"column": 1,
+						"character": 809
 					},
 					"end": {
 						"line": 46,
-						"column": 3
+						"column": 3,
+						"character": 811
 					}
 				},
 				"attributes": [],

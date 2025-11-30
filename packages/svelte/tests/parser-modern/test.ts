@@ -136,10 +136,12 @@ it('Strips BOM from the input', () => {
 				},
 				name_loc: {
 					end: {
+						character: 4,
 						column: 4,
 						line: 1
 					},
 					start: {
+						character: 1,
 						column: 1,
 						line: 1
 					}

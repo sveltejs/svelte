@@ -1,4 +1,4 @@
-/** @import { Position } from 'estree' */
+/** @import { Location } from 'locate-character' */
 /** @import { CompileOptions } from './types' */
 /** @import { AST, Warning } from '#compiler' */
 import { getLocator } from 'locate-character';
@@ -40,7 +40,7 @@ export let dev;
 
 export let runes = false;
 
-/** @type {(index: number) => Position} */
+/** @type {(index: number) => Location} */
 export let locator;
 
 /** @param {string} value */
@@ -53,10 +53,7 @@ export function set_source(value) {
 		const loc = l(i);
 		if (!loc) throw new Error('An impossible situation occurred');
 
-		return {
-			line: loc.line,
-			column: loc.column
-		};
+		return loc;
 	};
 }
 

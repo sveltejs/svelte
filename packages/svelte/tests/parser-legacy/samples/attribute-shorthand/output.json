@@ -18,11 +18,13 @@
 						"name_loc": {
 							"start": {
 								"line": 1,
-								"column": 6
+								"column": 6,
+								"character": 6
 							},
 							"end": {
 								"line": 1,
-								"column": 8
+								"column": 8,
+								"character": 8
 							}
 						},
 						"value": [
@@ -38,11 +40,13 @@
 									"loc": {
 										"start": {
 											"line": 1,
-											"column": 6
+											"column": 6,
+											"character": 6
 										},
 										"end": {
 											"line": 1,
-											"column": 8
+											"column": 8,
+											"character": 8
 										}
 									}
 								}

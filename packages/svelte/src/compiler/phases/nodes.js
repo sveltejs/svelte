@@ -47,7 +47,7 @@ export function is_custom_element_node(node) {
 
 /**
  * @param {string} name
- * @param {SourceLocation} name_loc
+ * @param {SourceLocation | null} name_loc
  * @param {number} start
  * @param {number} end
  * @param {AST.Attribute['value']} value

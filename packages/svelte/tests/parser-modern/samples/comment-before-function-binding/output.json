@@ -22,11 +22,13 @@
 				"name_loc": {
 					"start": {
 						"line": 5,
-						"column": 1
+						"column": 1,
+						"character": 38
 					},
 					"end": {
 						"line": 5,
-						"column": 6
+						"column": 6,
+						"character": 43
 					}
 				},
 				"attributes": [
@@ -38,11 +40,13 @@
 						"name_loc": {
 							"start": {
 								"line": 5,
-								"column": 7
+								"column": 7,
+								"character": 44
 							},
 							"end": {
 								"line": 5,
-								"column": 17
+								"column": 17,
+								"character": 54
 							}
 						},
 						"expression": {

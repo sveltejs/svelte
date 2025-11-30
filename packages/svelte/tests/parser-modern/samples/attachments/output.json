@@ -15,11 +15,13 @@
 				"name_loc": {
 					"start": {
 						"line": 1,
-						"column": 1
+						"column": 1,
+						"character": 1
 					},
 					"end": {
 						"line": 1,
-						"column": 4
+						"column": 4,
+						"character": 4
 					}
 				},
 				"attributes": [

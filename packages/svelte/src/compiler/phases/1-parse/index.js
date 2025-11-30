@@ -1,4 +1,5 @@
 /** @import { AST } from '#compiler' */
+/** @import { Location } from 'locate-character' */
 /** @import * as ESTree from 'estree' */
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
@@ -220,7 +221,7 @@ export class Parser {
 	}
 
 	/**
-	 * @returns {ESTree.Identifier & { start: number, end: number }}
+	 * @returns {ESTree.Identifier & { start: number, end: number, loc: { start: Location, end: Location } }}
 	 */
 	read_id() {
 		const start = this.index;

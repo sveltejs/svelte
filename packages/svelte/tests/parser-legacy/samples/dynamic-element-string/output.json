@@ -159,11 +159,13 @@
 						"name_loc": {
 							"start": {
 								"line": 7,
-								"column": 29
+								"column": 29,
+								"character": 263
 							},
 							"end": {
 								"line": 7,
-								"column": 34
+								"column": 34,
+								"character": 268
 							}
 						},
 						"value": [
