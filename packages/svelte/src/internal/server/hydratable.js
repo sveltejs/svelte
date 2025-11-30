@@ -3,7 +3,6 @@ import { async_mode_flag } from '../flags/index.js';
 import { get_render_context } from './render-context.js';
 import * as e from './errors.js';
 import * as devalue from 'devalue';
-import { get_stack } from '../shared/dev.js';
 import { DEV } from 'esm-env';
 import { get_user_code_location } from './dev.js';
 
@@ -56,8 +55,14 @@ function encode(key, value, unresolved) {
 	let uid = 1;
 
 	entry.serialized = devalue.uneval(entry.value, (value, uneval) => {
-		if (value instanceof Promise) {
-			const p = value
+		if (
+			value instanceof Promise ||
+			(typeof value === 'object' &&
+				value !== null &&
+				'then' in value &&
+				typeof value.then === 'function')
+		) {
+			const p = Promise.resolve(value)
 				.then((v) => `r(${uneval(v)})`)
 				.catch((devalue_error) =>
 					e.hydratable_serialization_failed(
