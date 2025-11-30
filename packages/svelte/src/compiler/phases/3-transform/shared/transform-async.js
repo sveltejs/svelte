@@ -54,7 +54,10 @@ export function transform_body(instance_body, runner, transform) {
 				);
 
 				const statements = visited.declarations.map((node) => {
-					if (node.id.type === 'Identifier' && node.id.name.startsWith('$$d')) {
+					if (
+						node.id.type === 'Identifier' &&
+						(node.id.name.startsWith('$$d') || node.id.name.startsWith('$$array'))
+					) {
 						// this is an intermediate declaration created in VariableDeclaration.js;
 						// subsequent statements depend on it
 						return b.var(node.id, node.init);

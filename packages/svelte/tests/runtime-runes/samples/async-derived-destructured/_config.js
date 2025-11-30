@@ -14,6 +14,7 @@ export default test({
 				<p>1 ** 2 = 1</p>
 				<p>1 ** 3 = 1</p>
 				<p>function function</p>
+				<p>1 2</p>
 			`
 		);
 
@@ -27,6 +28,7 @@ export default test({
 				<p>2 ** 2 = 4</p>
 				<p>2 ** 3 = 8</p>
 				<p>function function</p>
+				<p>1 2</p>
 			`
 		);
 	}

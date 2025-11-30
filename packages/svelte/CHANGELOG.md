@@ -1,5 +1,25 @@
 # svelte
 
+## 5.45.2
+
+### Patch Changes
+
+- fix: array destructuring after await ([#17254](https://github.com/sveltejs/svelte/pull/17254))
+
+- fix: throw on invalid `{@tag}`s ([#17256](https://github.com/sveltejs/svelte/pull/17256))
+
+## 5.45.1
+
+### Patch Changes
+
+- fix: link offscreen items and last effect in each block correctly ([#17240](https://github.com/sveltejs/svelte/pull/17240))
+
+## 5.45.0
+
+### Minor Changes
+
+- feat: add `print(...)` function ([#16188](https://github.com/sveltejs/svelte/pull/16188))
+
 ## 5.44.1
 
 ### Patch Changes
