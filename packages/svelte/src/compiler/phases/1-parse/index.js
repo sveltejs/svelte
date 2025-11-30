@@ -218,8 +218,7 @@ export class Parser {
 		return result;
 	}
 
-	/** @param {any} allow_reserved */
-	read_identifier(allow_reserved = false) {
+	read_identifier() {
 		const start = this.index;
 
 		let i = this.index;
@@ -238,7 +237,7 @@ export class Parser {
 
 		const identifier = this.template.slice(this.index, (this.index = i));
 
-		if (!allow_reserved && is_reserved(identifier)) {
+		if (is_reserved(identifier)) {
 			e.unexpected_reserved_word(start, identifier);
 		}
 
