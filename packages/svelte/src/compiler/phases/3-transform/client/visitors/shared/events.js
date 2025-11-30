@@ -32,7 +32,13 @@ export function visit_event_attribute(node, context) {
 		}
 
 		context.state.init.push(
-			b.stmt(b.assignment('=', b.member(context.state.node, '__' + event_name), handler))
+			b.stmt(
+				b.assignment(
+					'=',
+					b.member(context.state.node, b.id('__' + event_name, node.name_loc)),
+					handler
+				)
+			)
 		);
 	} else {
 		const statement = b.stmt(
@@ -140,7 +146,7 @@ export function build_event_handler(node, metadata, context) {
 			b.this,
 			b.id('$$args'),
 			b.id(context.state.analysis.name),
-			loc && b.array([b.literal(loc.line), b.literal(loc.column)]),
+			b.array([b.literal(loc.line), b.literal(loc.column)]),
 			has_side_effects(node) && b.true,
 			remove_parens && b.true
 		);

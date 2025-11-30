@@ -842,7 +842,7 @@ declare module 'svelte/attachments' {
 
 declare module 'svelte/compiler' {
 	import type { SourceMap } from 'magic-string';
-	import type { ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, Expression, Identifier, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
+	import type { ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, Expression, Identifier, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression, SourceLocation } from 'estree';
 	import type { Location } from 'locate-character';
 	import type { default as ts } from 'esrap/languages/ts';
 	/**
@@ -1302,7 +1302,7 @@ declare module 'svelte/compiler' {
 		}
 
 		/** An `animate:` directive */
-		export interface AnimateDirective extends BaseNode {
+		export interface AnimateDirective extends BaseAttribute {
 			type: 'AnimateDirective';
 			/** The 'x' in `animate:x` */
 			name: string;
@@ -1311,7 +1311,7 @@ declare module 'svelte/compiler' {
 		}
 
 		/** A `bind:` directive */
-		export interface BindDirective extends BaseNode {
+		export interface BindDirective extends BaseAttribute {
 			type: 'BindDirective';
 			/** The 'x' in `bind:x` */
 			name: string;
@@ -1320,7 +1320,7 @@ declare module 'svelte/compiler' {
 		}
 
 		/** A `class:` directive */
-		export interface ClassDirective extends BaseNode {
+		export interface ClassDirective extends BaseAttribute {
 			type: 'ClassDirective';
 			/** The 'x' in `class:x` */
 			name: 'class';
@@ -1329,7 +1329,7 @@ declare module 'svelte/compiler' {
 		}
 
 		/** A `let:` directive */
-		export interface LetDirective extends BaseNode {
+		export interface LetDirective extends BaseAttribute {
 			type: 'LetDirective';
 			/** The 'x' in `let:x` */
 			name: string;
@@ -1338,7 +1338,7 @@ declare module 'svelte/compiler' {
 		}
 
 		/** An `on:` directive */
-		export interface OnDirective extends BaseNode {
+		export interface OnDirective extends BaseAttribute {
 			type: 'OnDirective';
 			/** The 'x' in `on:x` */
 			name: string;
@@ -1358,7 +1358,7 @@ declare module 'svelte/compiler' {
 		}
 
 		/** A `style:` directive */
-		export interface StyleDirective extends BaseNode {
+		export interface StyleDirective extends BaseAttribute {
 			type: 'StyleDirective';
 			/** The 'x' in `style:x` */
 			name: string;
@@ -1369,7 +1369,7 @@ declare module 'svelte/compiler' {
 
 		// TODO have separate in/out/transition directives
 		/** A `transition:`, `in:` or `out:` directive */
-		export interface TransitionDirective extends BaseNode {
+		export interface TransitionDirective extends BaseAttribute {
 			type: 'TransitionDirective';
 			/** The 'x' in `transition:x` */
 			name: string;
@@ -1383,7 +1383,7 @@ declare module 'svelte/compiler' {
 		}
 
 		/** A `use:` directive */
-		export interface UseDirective extends BaseNode {
+		export interface UseDirective extends BaseAttribute {
 			type: 'UseDirective';
 			/** The 'x' in `use:x` */
 			name: string;
@@ -1393,6 +1393,7 @@ declare module 'svelte/compiler' {
 
 		export interface BaseElement extends BaseNode {
 			name: string;
+			name_loc: SourceLocation;
 			attributes: Array<Attribute | SpreadAttribute | Directive | AttachTag>;
 			fragment: Fragment;
 		}
@@ -1517,9 +1518,13 @@ declare module 'svelte/compiler' {
 			body: Fragment;
 		}
 
-		export interface Attribute extends BaseNode {
-			type: 'Attribute';
+		export interface BaseAttribute extends BaseNode {
 			name: string;
+			name_loc: SourceLocation | null;
+		}
+
+		export interface Attribute extends BaseAttribute {
+			type: 'Attribute';
 			/**
 			 * Quoted/string values are represented by an array, even if they contain a single expression like `"{x}"`
 			 */

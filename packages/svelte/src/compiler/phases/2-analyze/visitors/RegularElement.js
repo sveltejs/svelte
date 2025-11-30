@@ -48,8 +48,9 @@ export function RegularElement(node, context) {
 			node.attributes.push(
 				create_attribute(
 					'value',
-					/** @type {AST.Text} */ (node.fragment.nodes.at(0)).start,
-					/** @type {AST.Text} */ (node.fragment.nodes.at(-1)).end,
+					null,
+					-1,
+					-1,
 					// @ts-ignore
 					node.fragment.nodes
 				)

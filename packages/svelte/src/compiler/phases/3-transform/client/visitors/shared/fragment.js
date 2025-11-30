@@ -1,4 +1,4 @@
-/** @import { Expression } from 'estree' */
+/** @import { Expression, Identifier, SourceLocation } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
 import { cannot_be_set_statically } from '../../../../../../utils.js';
@@ -42,13 +42,14 @@ export function process_children(nodes, initial, is_element, context) {
 	/**
 	 * @param {boolean} is_text
 	 * @param {string} name
+	 * @param {SourceLocation | null} [loc]
 	 */
-	function flush_node(is_text, name) {
+	function flush_node(is_text, name, loc) {
 		const expression = get_node(is_text);
 		let id = expression;
 
 		if (id.type !== 'Identifier') {
-			id = b.id(context.state.scope.generate(name));
+			id = b.id(context.state.scope.generate(name), loc);
 			context.state.init.push(b.var(id, expression));
 		}
 
@@ -109,7 +110,12 @@ export function process_children(nodes, initial, is_element, context) {
 			) {
 				node.metadata.is_controlled = true;
 			} else {
-				const id = flush_node(false, node.type === 'RegularElement' ? node.name : 'node');
+				const id = flush_node(
+					false,
+					node.type === 'RegularElement' ? node.name : 'node',
+					node.type === 'RegularElement' ? node.name_loc : null
+				);
+
 				child_state = { ...context.state, node: id };
 			}
 
