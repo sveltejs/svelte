@@ -1,4 +1,4 @@
-/** @import { Expression, SourceLocation } from 'estree' */
+/** @import { Expression, Identifier, SourceLocation } from 'estree' */
 /** @import { Location } from 'locate-character' */
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
@@ -456,8 +456,8 @@ function parent_is_shadowroot_template(stack) {
 function read_static_attribute(parser) {
 	const start = parser.index;
 
-	const { name, name_loc } = read_name(parser, regex_token_ending_character);
-	if (!name) return null;
+	const tag = read_tag(parser, regex_token_ending_character);
+	if (!tag.name) return null;
 
 	/** @type {true | Array<AST.Text | AST.ExpressionTag>} */
 	let value = true;
@@ -491,7 +491,7 @@ function read_static_attribute(parser) {
 		e.expected_token(parser.index, '=');
 	}
 
-	return create_attribute(name, name_loc, start, parser.index, value);
+	return create_attribute(tag.name, tag.loc, start, parser.index, value);
 }
 
 /**
@@ -856,6 +856,28 @@ function read_sequence(parser, done, location) {
 	} else {
 		e.unexpected_eof(parser.template.length);
 	}
+}
+
+/**
+ * @param {Parser} parser
+ * @param {RegExp} regex
+ * @returns {Identifier & { start: number, end: number }}
+ */
+function read_tag(parser, regex) {
+	const start = parser.index;
+	const name = parser.read_until(regex);
+	const end = parser.index;
+
+	return {
+		type: 'Identifier',
+		name,
+		start,
+		end,
+		loc: {
+			start: locator(start),
+			end: locator(end)
+		}
+	};
 }
 
 /**
