@@ -223,7 +223,7 @@ export class Parser {
 	/**
 	 * @returns {ESTree.Identifier & { start: number, end: number, loc: { start: Location, end: Location } }}
 	 */
-	read_id() {
+	read_identifier() {
 		const start = this.index;
 		let end = start;
 		let name = '';

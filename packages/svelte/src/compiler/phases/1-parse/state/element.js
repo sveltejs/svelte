@@ -544,7 +544,7 @@ function read_attribute(parser) {
 
 			return spread;
 		} else {
-			const id = parser.read_id();
+			const id = parser.read_identifier();
 
 			if (id.name === '') {
 				if (

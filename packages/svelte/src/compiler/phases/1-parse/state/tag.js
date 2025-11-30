@@ -177,7 +177,7 @@ function open(parser) {
 
 		if (parser.eat(',')) {
 			parser.allow_whitespace();
-			index = parser.read_id().name;
+			index = parser.read_identifier().name;
 			if (!index) {
 				e.expected_identifier(parser.index);
 			}
@@ -347,7 +347,7 @@ function open(parser) {
 	if (parser.eat('snippet')) {
 		parser.require_whitespace();
 
-		const id = parser.read_id();
+		const id = parser.read_identifier();
 
 		if (id.name === '' && !parser.loose) {
 			e.expected_identifier(parser.index);

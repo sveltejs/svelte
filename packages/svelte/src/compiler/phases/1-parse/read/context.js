@@ -13,7 +13,7 @@ export default function read_pattern(parser) {
 	const start = parser.index;
 	let i = parser.index;
 
-	const id = parser.read_id();
+	const id = parser.read_identifier();
 
 	if (id.name !== '') {
 		const annotation = read_type_annotation(parser);
