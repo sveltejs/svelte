@@ -51,8 +51,6 @@ export function RegularElement(node, context) {
 					null,
 					-1,
 					-1,
-					// /** @type {AST.Text} */ (node.fragment.nodes.at(0)).start,
-					// /** @type {AST.Text} */ (node.fragment.nodes.at(-1)).end,
 					// @ts-ignore
 					node.fragment.nodes
 				)
