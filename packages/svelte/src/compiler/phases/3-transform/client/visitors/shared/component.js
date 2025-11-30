@@ -260,15 +260,9 @@ export function build_component(node, component_name, loc, context) {
 						attribute.expression.type === 'Identifier' &&
 						context.state.scope.get(attribute.expression.name)?.kind === 'store_sub';
 
-					// Delay prop pushes so bindings come at the end, to avoid spreads overwriting them
-					if (is_store_sub) {
-						push_prop(
-							b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)]),
-							true
-						);
-					} else {
-						push_prop(b.get(attribute.name, [b.return(expression)]), true);
-					}
+					const get = is_store_sub
+						? b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)])
+						: b.get(attribute.name, [b.return(expression)]);
 
 					const assignment = b.assignment(
 						'=',
@@ -276,10 +270,16 @@ export function build_component(node, component_name, loc, context) {
 						b.id('$$value')
 					);
 
-					push_prop(
-						b.set(attribute.name, [b.stmt(/** @type {Expression} */ (context.visit(assignment)))]),
-						true
-					);
+					const set = b.set(attribute.name, [
+						b.stmt(/** @type {Expression} */ (context.visit(assignment)))
+					]);
+
+					get.key.loc = attribute.name_loc;
+					set.key.loc = attribute.name_loc;
+
+					// Delay prop pushes so bindings come at the end, to avoid spreads overwriting them
+					push_prop(get, true);
+					push_prop(set, true);
 				}
 			}
 		} else if (attribute.type === 'AttachTag') {
