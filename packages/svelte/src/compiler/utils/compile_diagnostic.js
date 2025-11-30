@@ -67,8 +67,8 @@ export class CompileDiagnostic {
 
 		if (position) {
 			this.position = position;
-			this.start = state.locator(position[0]);
-			this.end = state.locator(position[1]);
+			this.start = { character: position[0], ...state.locator(position[0]) };
+			this.end = { character: position[1], ...state.locator(position[1]) };
 			if (this.start && this.end) {
 				this.frame = get_code_frame(state.source, this.start.line - 1, this.end.column);
 			}

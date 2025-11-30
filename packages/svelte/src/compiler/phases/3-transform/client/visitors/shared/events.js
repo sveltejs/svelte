@@ -146,7 +146,7 @@ export function build_event_handler(node, metadata, context) {
 			b.this,
 			b.id('$$args'),
 			b.id(context.state.analysis.name),
-			loc && b.array([b.literal(loc.line), b.literal(loc.column)]),
+			b.array([b.literal(loc.line), b.literal(loc.column)]),
 			has_side_effects(node) && b.true,
 			remove_parens && b.true
 		);

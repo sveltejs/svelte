@@ -1,4 +1,4 @@
-/** @import { Location } from 'locate-character' */
+/** @import { Position } from 'estree' */
 /** @import { CompileOptions } from './types' */
 /** @import { AST, Warning } from '#compiler' */
 import { getLocator } from 'locate-character';
@@ -40,19 +40,31 @@ export let dev;
 
 export let runes = false;
 
-export let locator = getLocator('', { offsetLine: 1 });
+/** @type {(index: number) => Position} */
+export let locator;
 
 /** @param {string} value */
 export function set_source(value) {
 	source = value;
-	locator = getLocator(source, { offsetLine: 1 });
+
+	const l = getLocator(source, { offsetLine: 1 });
+
+	locator = (i) => {
+		const loc = l(i);
+		if (!loc) throw new Error('An impossible situation occurred');
+
+		return {
+			line: loc.line,
+			column: loc.column
+		};
+	};
 }
 
 /**
  * @param {AST.SvelteNode & { start?: number | undefined }} node
  */
 export function locate_node(node) {
-	const loc = /** @type {Location} */ (locator(/** @type {number} */ (node.start)));
+	const loc = locator(/** @type {number} */ (node.start));
 	return `${sanitize_location(filename)}:${loc?.line}:${loc.column}`;
 }
 
@@ -103,7 +115,6 @@ export function reset(state) {
 	runes = false;
 	component_name = UNKNOWN_FILENAME;
 	source = '';
-	locator = () => undefined;
 	filename = (state.filename ?? UNKNOWN_FILENAME).replace(/\\/g, '/');
 	warning_filter = state.warning ?? (() => true);
 	warnings = [];

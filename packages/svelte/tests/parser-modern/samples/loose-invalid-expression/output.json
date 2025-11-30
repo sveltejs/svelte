@@ -31,13 +31,11 @@
 						"name_loc": {
 							"start": {
 								"line": 1,
-								"column": 6,
-								"character": 6
+								"column": 6
 							},
 							"end": {
 								"line": 1,
-								"column": 6,
-								"character": 6
+								"column": 6
 							}
 						},
 						"value": {
@@ -52,13 +50,11 @@
 								"loc": {
 									"start": {
 										"line": 1,
-										"column": 6,
-										"character": 6
+										"column": 6
 									},
 									"end": {
 										"line": 1,
-										"column": 6,
-										"character": 6
+										"column": 6
 									}
 								}
 							}
@@ -445,13 +441,11 @@
 					"loc": {
 						"start": {
 							"line": 15,
-							"column": 16,
-							"character": 197
+							"column": 16
 						},
 						"end": {
 							"line": 15,
-							"column": 20,
-							"character": 201
+							"column": 20
 						}
 					}
 				},
@@ -491,13 +485,11 @@
 					"loc": {
 						"start": {
 							"line": 17,
-							"column": 15,
-							"character": 234
+							"column": 15
 						},
 						"end": {
 							"line": 17,
-							"column": 19,
-							"character": 238
+							"column": 19
 						}
 					}
 				}
@@ -553,13 +545,11 @@
 					"loc": {
 						"start": {
 							"line": 21,
-							"column": 16,
-							"character": 285
+							"column": 16
 						},
 						"end": {
 							"line": 21,
-							"column": 17,
-							"character": 286
+							"column": 17
 						}
 					}
 				},
@@ -597,13 +587,11 @@
 					"loc": {
 						"start": {
 							"line": 23,
-							"column": 17,
-							"character": 314
+							"column": 17
 						},
 						"end": {
 							"line": 23,
-							"column": 18,
-							"character": 315
+							"column": 18
 						}
 					}
 				},

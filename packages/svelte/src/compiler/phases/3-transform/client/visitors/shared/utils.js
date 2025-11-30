@@ -366,8 +366,8 @@ export function validate_binding(state, binding, expression) {
 							: b.literal(/** @type {Identifier} */ (expression.property).name)
 					)
 				),
-				loc && b.literal(loc.line),
-				loc && b.literal(loc.column)
+				b.literal(loc.line),
+				b.literal(loc.column)
 			)
 		)
 	);
