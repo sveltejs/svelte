@@ -127,41 +127,41 @@ export default function element(parser) {
 		return;
 	}
 
-	const { name, name_loc } = read_name(parser, regex_whitespace_or_slash_or_closing_tag);
+	const tag = read_tag(parser, regex_whitespace_or_slash_or_closing_tag);
 
-	if (name.startsWith('svelte:') && !meta_tags.has(name)) {
-		const bounds = { start: start + 1, end: start + 1 + name.length };
+	if (tag.name.startsWith('svelte:') && !meta_tags.has(tag.name)) {
+		const bounds = { start: start + 1, end: start + 1 + tag.name.length };
 		e.svelte_meta_invalid_tag(bounds, list(Array.from(meta_tags.keys())));
 	}
 
-	if (!regex_valid_element_name.test(name) && !regex_valid_component_name.test(name)) {
+	if (!regex_valid_element_name.test(tag.name) && !regex_valid_component_name.test(tag.name)) {
 		// <div. -> in the middle of typing -> allow in loose mode
-		if (!parser.loose || !name.endsWith('.')) {
-			const bounds = { start: start + 1, end: start + 1 + name.length };
+		if (!parser.loose || !tag.name.endsWith('.')) {
+			const bounds = { start: start + 1, end: start + 1 + tag.name.length };
 			e.tag_invalid_name(bounds);
 		}
 	}
 
-	if (root_only_meta_tags.has(name)) {
-		if (name in parser.meta_tags) {
-			e.svelte_meta_duplicate(start, name);
+	if (root_only_meta_tags.has(tag.name)) {
+		if (tag.name in parser.meta_tags) {
+			e.svelte_meta_duplicate(start, tag.name);
 		}
 
 		if (parent.type !== 'Root') {
-			e.svelte_meta_invalid_placement(start, name);
+			e.svelte_meta_invalid_placement(start, tag.name);
 		}
 
-		parser.meta_tags[name] = true;
+		parser.meta_tags[tag.name] = true;
 	}
 
-	const type = meta_tags.has(name)
-		? meta_tags.get(name)
-		: regex_valid_component_name.test(name) || (parser.loose && name.endsWith('.'))
+	const type = meta_tags.has(tag.name)
+		? meta_tags.get(tag.name)
+		: regex_valid_component_name.test(tag.name) || (parser.loose && tag.name.endsWith('.'))
 			? 'Component'
-			: name === 'title' && parent_is_head(parser.stack)
+			: tag.name === 'title' && parent_is_head(parser.stack)
 				? 'TitleElement'
 				: // TODO Svelte 6/7: once slots are removed in favor of snippets, always keep slot as a regular element
-					name === 'slot' && !parent_is_shadowroot_template(parser.stack)
+					tag.name === 'slot' && !parent_is_shadowroot_template(parser.stack)
 					? 'SlotElement'
 					: 'RegularElement';
 
@@ -172,8 +172,8 @@ export default function element(parser) {
 					type,
 					start,
 					end: -1,
-					name,
-					name_loc,
+					name: tag.name,
+					name_loc: tag.loc,
 					attributes: [],
 					fragment: create_fragment(true),
 					metadata: {
@@ -189,8 +189,8 @@ export default function element(parser) {
 					type,
 					start,
 					end: -1,
-					name,
-					name_loc,
+					name: tag.name,
+					name_loc: tag.loc,
 					attributes: [],
 					fragment: create_fragment(true),
 					metadata: {
@@ -200,14 +200,14 @@ export default function element(parser) {
 
 	parser.allow_whitespace();
 
-	if (parent.type === 'RegularElement' && closing_tag_omitted(parent.name, name)) {
+	if (parent.type === 'RegularElement' && closing_tag_omitted(parent.name, tag.name)) {
 		const end = parent.fragment.nodes[0]?.start ?? start;
-		w.element_implicitly_closed({ start: parent.start, end }, `<${name}>`, `</${parent.name}>`);
+		w.element_implicitly_closed({ start: parent.start, end }, `<${tag.name}>`, `</${parent.name}>`);
 		parent.end = start;
 		parser.pop();
 		parser.last_auto_closed_tag = {
 			tag: parent.name,
-			reason: name,
+			reason: tag.name,
 			depth: parser.stack.length
 		};
 	}
@@ -217,7 +217,7 @@ export default function element(parser) {
 
 	const current = parser.current();
 	const is_top_level_script_or_style =
-		(name === 'script' || name === 'style') && current.type === 'Root';
+		(tag.name === 'script' || tag.name === 'style') && current.type === 'Root';
 
 	const read = is_top_level_script_or_style ? read_static_attribute : read_attribute;
 
@@ -330,7 +330,7 @@ export default function element(parser) {
 			}
 		}
 
-		if (name === 'script') {
+		if (tag.name === 'script') {
 			const content = read_script(parser, start, element.attributes);
 			if (prev_comment) {
 				// We take advantage of the fact that the root will never have leadingComments set,
@@ -358,7 +358,7 @@ export default function element(parser) {
 
 	parser.append(element);
 
-	const self_closing = parser.eat('/') || is_void(name);
+	const self_closing = parser.eat('/') || is_void(tag.name);
 	const closed = parser.eat('>', true, false);
 
 	// Loose parsing mode
@@ -388,7 +388,7 @@ export default function element(parser) {
 	if (self_closing || !closed) {
 		// don't push self-closing elements onto the stack
 		element.end = parser.index;
-	} else if (name === 'textarea') {
+	} else if (tag.name === 'textarea') {
 		// special case
 		element.fragment.nodes = read_sequence(
 			parser,
@@ -397,10 +397,10 @@ export default function element(parser) {
 		);
 		parser.read(regex_closing_textarea_tag);
 		element.end = parser.index;
-	} else if (name === 'script' || name === 'style') {
+	} else if (tag.name === 'script' || tag.name === 'style') {
 		// special case
 		const start = parser.index;
-		const data = parser.read_until(new RegExp(`</${name}>`));
+		const data = parser.read_until(new RegExp(`</${tag.name}>`));
 		const end = parser.index;
 
 		/** @type {AST.Text} */
@@ -413,7 +413,7 @@ export default function element(parser) {
 		};
 
 		element.fragment.nodes.push(node);
-		parser.eat(`</${name}>`, true);
+		parser.eat(`</${tag.name}>`, true);
 		element.end = parser.index;
 	} else {
 		parser.stack.push(element);
@@ -861,7 +861,7 @@ function read_sequence(parser, done, location) {
 /**
  * @param {Parser} parser
  * @param {RegExp} regex
- * @returns {Identifier & { start: number, end: number }}
+ * @returns {Identifier & { start: number, end: number, loc: SourceLocation }}
  */
 function read_tag(parser, regex) {
 	const start = parser.index;
