@@ -138,7 +138,16 @@
 				"start": 36,
 				"end": 45,
 				"name": "lang",
-				"name_loc": null,
+				"name_loc": {
+					"start": {
+						"line": 2,
+						"column": 8
+					},
+					"end": {
+						"line": 2,
+						"column": 12
+					}
+				},
 				"value": [
 					{
 						"start": 42,

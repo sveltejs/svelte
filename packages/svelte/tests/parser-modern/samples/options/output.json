@@ -124,7 +124,16 @@
 				"start": 75,
 				"end": 81,
 				"name": "module",
-				"name_loc": null,
+				"name_loc": {
+					"start": {
+						"line": 3,
+						"column": 8
+					},
+					"end": {
+						"line": 3,
+						"column": 14
+					}
+				},
 				"value": true
 			},
 			{
@@ -132,7 +141,16 @@
 				"start": 82,
 				"end": 91,
 				"name": "lang",
-				"name_loc": null,
+				"name_loc": {
+					"start": {
+						"line": 3,
+						"column": 15
+					},
+					"end": {
+						"line": 3,
+						"column": 19
+					}
+				},
 				"value": [
 					{
 						"start": 88,
@@ -173,7 +191,16 @@
 				"start": 112,
 				"end": 121,
 				"name": "lang",
-				"name_loc": null,
+				"name_loc": {
+					"start": {
+						"line": 6,
+						"column": 8
+					},
+					"end": {
+						"line": 6,
+						"column": 12
+					}
+				},
 				"value": [
 					{
 						"start": 118,
@@ -189,7 +216,16 @@
 				"start": 122,
 				"end": 158,
 				"name": "generics",
-				"name_loc": null,
+				"name_loc": {
+					"start": {
+						"line": 6,
+						"column": 18
+					},
+					"end": {
+						"line": 6,
+						"column": 26
+					}
+				},
 				"value": [
 					{
 						"start": 132,

@@ -456,7 +456,7 @@ function parent_is_shadowroot_template(stack) {
 function read_static_attribute(parser) {
 	const start = parser.index;
 
-	const name = parser.read_until(regex_token_ending_character);
+	const { name, name_loc } = read_name(parser, regex_token_ending_character);
 	if (!name) return null;
 
 	/** @type {true | Array<AST.Text | AST.ExpressionTag>} */
@@ -491,7 +491,7 @@ function read_static_attribute(parser) {
 		e.expected_token(parser.index, '=');
 	}
 
-	return create_attribute(name, null, start, parser.index, value);
+	return create_attribute(name, name_loc, start, parser.index, value);
 }
 
 /**
