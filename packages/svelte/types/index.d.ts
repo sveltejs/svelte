@@ -1520,7 +1520,7 @@ declare module 'svelte/compiler' {
 
 		export interface BaseAttribute extends BaseNode {
 			name: string;
-			name_loc: SourceLocation;
+			name_loc: SourceLocation | null;
 		}
 
 		export interface Attribute extends BaseAttribute {
