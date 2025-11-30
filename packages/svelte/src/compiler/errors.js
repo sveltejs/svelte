@@ -319,12 +319,12 @@ export function props_duplicate(node, rune) {
 }
 
 /**
- * `$props.id()` can only be used at the top level of components as a variable declaration initializer
+ * `$props.id()` can only be used at the top level of components as a variable declaration initializer, and before any `await` expression.
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function props_id_invalid_placement(node) {
-	e(node, 'props_id_invalid_placement', `\`$props.id()\` can only be used at the top level of components as a variable declaration initializer\nhttps://svelte.dev/e/props_id_invalid_placement`);
+	e(node, 'props_id_invalid_placement', `\`$props.id()\` can only be used at the top level of components as a variable declaration initializer, and before any \`await\` expression.\nhttps://svelte.dev/e/props_id_invalid_placement`);
 }
 
 /**

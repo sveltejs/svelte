@@ -103,6 +103,11 @@ export function CallExpression(node, context) {
 				e.props_id_invalid_placement(node);
 			}
 
+			// $props.id() should not be on the async part of the body :
+			if (context.state.analysis.instance_body.async.find((a) => a.node === parent)) {
+				e.props_id_invalid_placement(node);
+			}
+
 			if (node.arguments.length > 0) {
 				e.rune_invalid_arguments(node, rune);
 			}
