@@ -49,6 +49,7 @@
 					"type": "Identifier",
 					"name": "thing",
 					"start": 17,
+					"end": 22,
 					"loc": {
 						"start": {
 							"line": 1,
@@ -60,8 +61,7 @@
 							"column": 22,
 							"character": 22
 						}
-					},
-					"end": 22
+					}
 				},
 				"expression": {
 					"type": "Identifier",

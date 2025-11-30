@@ -544,10 +544,9 @@ function read_attribute(parser) {
 
 			return spread;
 		} else {
-			const value_start = parser.index;
-			let name = parser.read_identifier();
+			const id = parser.read_id();
 
-			if (name === null) {
+			if (id.name === '') {
 				if (
 					parser.loose &&
 					(parser.match('#') || parser.match('/') || parser.match('@') || parser.match(':'))
@@ -557,7 +556,6 @@ function read_attribute(parser) {
 					return null;
 				} else if (parser.loose && parser.match('}')) {
 					// Likely in the middle of typing, just created the shorthand
-					name = '';
 				} else {
 					e.attribute_empty_shorthand(start);
 				}
@@ -569,20 +567,15 @@ function read_attribute(parser) {
 			/** @type {AST.ExpressionTag} */
 			const expression = {
 				type: 'ExpressionTag',
-				start: value_start,
-				end: value_start + name.length,
-				expression: {
-					start: value_start,
-					end: value_start + name.length,
-					type: 'Identifier',
-					name
-				},
+				start: id.start,
+				end: id.end,
+				expression: id,
 				metadata: {
 					expression: new ExpressionMetadata()
 				}
 			};
 
-			return create_attribute(name, null, start, parser.index, expression);
+			return create_attribute(id.name, id.loc, start, parser.index, expression);
 		}
 	}
 

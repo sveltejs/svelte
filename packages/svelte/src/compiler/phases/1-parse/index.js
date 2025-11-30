@@ -1,4 +1,5 @@
 /** @import { AST } from '#compiler' */
+/** @import * as ESTree from 'estree' */
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment.js';
@@ -216,6 +217,47 @@ export class Parser {
 		const result = this.match_regex(pattern);
 		if (result) this.index += result.length;
 		return result;
+	}
+
+	/**
+	 * @returns {ESTree.Identifier & { start: number, end: number }}
+	 */
+	read_id() {
+		const start = this.index;
+		let end = start;
+		let name = '';
+
+		const code = /** @type {number} */ (this.template.codePointAt(this.index));
+
+		if (isIdentifierStart(code, true)) {
+			let i = this.index;
+			end += code <= 0xffff ? 1 : 2;
+
+			while (end < this.template.length) {
+				const code = /** @type {number} */ (this.template.codePointAt(end));
+
+				if (!isIdentifierChar(code, true)) break;
+				end += code <= 0xffff ? 1 : 2;
+			}
+
+			name = this.template.slice(start, end);
+			this.index = end;
+
+			if (is_reserved(name)) {
+				e.unexpected_reserved_word(start, name);
+			}
+		}
+
+		return {
+			type: 'Identifier',
+			name,
+			start,
+			end,
+			loc: {
+				start: state.locator(start),
+				end: state.locator(end)
+			}
+		};
 	}
 
 	read_identifier() {
