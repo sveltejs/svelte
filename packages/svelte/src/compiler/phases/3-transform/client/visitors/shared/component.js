@@ -435,16 +435,17 @@ export function build_component(node, component_name, loc, context) {
 
 	/** @param {Expression} node_id */
 	let fn = (node_id) => {
-		return b.call(
-			// TODO We can remove this ternary once we remove legacy mode, since in runes mode dynamic components
-			// will be handled separately through the `$.component` function, and then the component name will
-			// always be referenced through just the identifier here.
-			is_component_dynamic
-				? intermediate_name
-				: /** @type {Expression} */ (context.visit(b.member_id(component_name))),
-			node_id,
-			props_expression
-		);
+		// TODO We can remove this ternary once we remove legacy mode, since in runes mode dynamic components
+		// will be handled separately through the `$.component` function, and then the component name will
+		// always be referenced through just the identifier here.
+		const callee = is_component_dynamic
+			? b.id(intermediate_name)
+			: /** @type {Expression} */ (context.visit(b.member_id(component_name)));
+
+		// line up the `Foo` in `Foo(...)` and `<Foo>` for usable stack traces
+		callee.loc = loc;
+
+		return b.call(callee, node_id, props_expression);
 	};
 
 	if (bind_this !== null) {

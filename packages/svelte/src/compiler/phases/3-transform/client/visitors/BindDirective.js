@@ -40,22 +40,38 @@ export function BindDirective(node, context) {
 			validate_binding(context.state, node, expression);
 		}
 
-		get = b.thunk(expression);
-
-		/** @type {Expression | undefined} */
-		set = b.unthunk(
-			b.arrow(
-				[b.id('$$value')],
-				/** @type {Expression} */ (
-					context.visit(
-						b.assignment('=', /** @type {Pattern} */ (node.expression), b.id('$$value'))
-					)
-				)
-			)
+		const assignment = /** @type {Expression} */ (
+			context.visit(b.assignment('=', /** @type {Pattern} */ (node.expression), b.id('$$value')))
 		);
 
-		if (get === set) {
-			set = undefined;
+		if (dev) {
+			// in dev, create named functions, so that `$inspect(...)` delivers
+			// useful stack traces
+			get = b.function(b.id('get', node.name_loc), [], b.block([b.return(expression)]));
+			set = b.function(
+				b.id('set', node.name_loc),
+				[b.id('$$value')],
+				b.block([b.stmt(assignment)])
+			);
+		} else {
+			// in prod, optimise for brevity
+			get = b.thunk(expression);
+
+			/** @type {Expression | undefined} */
+			set = b.unthunk(
+				b.arrow(
+					[b.id('$$value')],
+					/** @type {Expression} */ (
+						context.visit(
+							b.assignment('=', /** @type {Pattern} */ (node.expression), b.id('$$value'))
+						)
+					)
+				)
+			);
+
+			if (get === set) {
+				set = undefined;
+			}
 		}
 	}
 
