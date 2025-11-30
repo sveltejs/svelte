@@ -20,9 +20,21 @@
 				"end": 81,
 				"expression": {
 					"type": "Identifier",
+					"name": "foo",
 					"start": 39,
 					"end": 42,
-					"name": "foo"
+					"loc": {
+						"start": {
+							"line": 3,
+							"column": 10,
+							"character": 39
+						},
+						"end": {
+							"line": 3,
+							"column": 13,
+							"character": 42
+						}
+					}
 				},
 				"parameters": [
 					{

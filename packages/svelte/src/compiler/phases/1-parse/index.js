@@ -261,32 +261,6 @@ export class Parser {
 		};
 	}
 
-	read_identifier() {
-		const start = this.index;
-
-		let i = this.index;
-
-		const code = /** @type {number} */ (this.template.codePointAt(i));
-		if (!isIdentifierStart(code, true)) return null;
-
-		i += code <= 0xffff ? 1 : 2;
-
-		while (i < this.template.length) {
-			const code = /** @type {number} */ (this.template.codePointAt(i));
-
-			if (!isIdentifierChar(code, true)) break;
-			i += code <= 0xffff ? 1 : 2;
-		}
-
-		const identifier = this.template.slice(this.index, (this.index = i));
-
-		if (is_reserved(identifier)) {
-			e.unexpected_reserved_word(start, identifier);
-		}
-
-		return identifier;
-	}
-
 	/** @param {RegExp} pattern */
 	read_until(pattern) {
 		if (this.index >= this.template.length) {
