@@ -579,20 +579,16 @@ function read_attribute(parser) {
 		}
 	}
 
-	const { name, name_loc } = read_name(parser, regex_token_ending_character);
+	const tag = read_tag(parser, regex_token_ending_character);
 
-	if (!name) return null;
+	if (!tag.name) return null;
 
 	let end = parser.index;
-	const end_location = /** @type {Location} */ (locator(end));
-
-	name_loc.end.line = end_location.line;
-	name_loc.end.column = end_location.column;
 
 	parser.allow_whitespace();
 
-	const colon_index = name.indexOf(':');
-	const type = colon_index !== -1 && get_directive_type(name.slice(0, colon_index));
+	const colon_index = tag.name.indexOf(':');
+	const type = colon_index !== -1 && get_directive_type(tag.name.slice(0, colon_index));
 
 	/** @type {true | AST.ExpressionTag | Array<AST.Text | AST.ExpressionTag>} */
 	let value = true;
@@ -621,10 +617,10 @@ function read_attribute(parser) {
 	}
 
 	if (type) {
-		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
+		const [directive_name, ...modifiers] = tag.name.slice(colon_index + 1).split('|');
 
 		if (directive_name === '') {
-			e.directive_missing_name({ start, end: start + colon_index + 1 }, name);
+			e.directive_missing_name({ start, end: start + colon_index + 1 }, tag.name);
 		}
 
 		if (type === 'StyleDirective') {
@@ -633,7 +629,7 @@ function read_attribute(parser) {
 				end,
 				type,
 				name: directive_name,
-				name_loc,
+				name_loc: tag.loc,
 				modifiers: /** @type {Array<'important'>} */ (modifiers),
 				value,
 				metadata: {
@@ -664,7 +660,7 @@ function read_attribute(parser) {
 			end,
 			type,
 			name: directive_name,
-			name_loc,
+			name_loc: tag.loc,
 			expression,
 			metadata: {
 				expression: new ExpressionMetadata()
@@ -675,7 +671,7 @@ function read_attribute(parser) {
 		directive.modifiers = modifiers;
 
 		if (directive.type === 'TransitionDirective') {
-			const direction = name.slice(0, colon_index);
+			const direction = tag.name.slice(0, colon_index);
 			directive.intro = direction === 'in' || direction === 'transition';
 			directive.outro = direction === 'out' || direction === 'transition';
 		}
@@ -696,7 +692,7 @@ function read_attribute(parser) {
 		return directive;
 	}
 
-	return create_attribute(name, name_loc, start, end, value);
+	return create_attribute(tag.name, tag.loc, start, end, value);
 }
 
 /**
@@ -878,23 +874,4 @@ function read_tag(parser, regex) {
 			end: locator(end)
 		}
 	};
-}
-
-/**
- *
- * @param {Parser} parser
- * @param {RegExp} regex
- */
-function read_name(parser, regex) {
-	const a = /** @type {Location} */ (locator(parser.index));
-	const name = parser.read_until(regex);
-	const b = /** @type {Location} */ (locator(parser.index));
-
-	/** @type {SourceLocation} */
-	const name_loc = {
-		start: { line: a.line, column: a.column },
-		end: { line: b.line, column: b.column }
-	};
-
-	return { name, name_loc };
 }
