@@ -900,7 +900,7 @@ export function analyze_component(root, source, options) {
 		// We need an empty class to generate the set_class() or class="" correctly
 		if (!has_spread && !has_class && (node.metadata.scoped || has_class_directive)) {
 			node.attributes.push(
-				create_attribute('class', -1, -1, [
+				create_attribute('class', null, -1, -1, [
 					{
 						type: 'Text',
 						data: '',
@@ -915,7 +915,7 @@ export function analyze_component(root, source, options) {
 		// We need an empty style to generate the set_style() correctly
 		if (!has_spread && !has_style && has_style_directive) {
 			node.attributes.push(
-				create_attribute('style', -1, -1, [
+				create_attribute('style', null, -1, -1, [
 					{
 						type: 'Text',
 						data: '',

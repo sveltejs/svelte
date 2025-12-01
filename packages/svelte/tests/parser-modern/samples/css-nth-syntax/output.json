@@ -1097,6 +1097,18 @@
 				"start": 808,
 				"end": 820,
 				"name": "h1",
+				"name_loc": {
+					"start": {
+						"line": 46,
+						"column": 1,
+						"character": 809
+					},
+					"end": {
+						"line": 46,
+						"column": 3,
+						"character": 811
+					}
+				},
 				"attributes": [],
 				"fragment": {
 					"type": "Fragment",

@@ -81,7 +81,7 @@ export function Fragment(node, context) {
 	if (is_single_element) {
 		const element = /** @type {AST.RegularElement} */ (trimmed[0]);
 
-		const id = b.id(context.state.scope.generate(element.name));
+		const id = b.id(context.state.scope.generate(element.name), element.name_loc);
 
 		context.visit(element, {
 			...state,

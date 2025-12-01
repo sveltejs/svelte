@@ -136,7 +136,8 @@ export function VariableDeclaration(node, context) {
 					}
 
 					if (is_state) {
-						value = b.call('$.state', value);
+						const callee = b.id('$.state', /** @type {CallExpression} */ (init).callee.loc);
+						value = b.call(callee, value);
 
 						if (dev) {
 							value = b.call('$.tag', value, b.literal(id.name));

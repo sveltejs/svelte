@@ -72,6 +72,7 @@
 					"type": "Identifier",
 					"name": "animal",
 					"start": 18,
+					"end": 24,
 					"loc": {
 						"start": {
 							"line": 1,
@@ -83,8 +84,7 @@
 							"column": 24,
 							"character": 24
 						}
-					},
-					"end": 24
+					}
 				},
 				"expression": {
 					"type": "Identifier",
