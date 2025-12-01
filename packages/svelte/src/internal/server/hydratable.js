@@ -56,7 +56,7 @@ function encode(key, value, unresolved) {
 	let uid = 1;
 
 	entry.serialized = devalue.uneval(entry.value, (value, uneval) => {
-		if (value instanceof Promise) {
+		if (is_promise(value)) {
 			const p = value
 				.then((v) => `r(${uneval(v)})`)
 				.catch((devalue_error) =>
@@ -88,6 +88,16 @@ function encode(key, value, unresolved) {
 	});
 
 	return entry;
+}
+
+/**
+ * @param {any} value
+ * @returns {value is Promise<any>}
+ */
+function is_promise(value) {
+	// we use this check rather than `instanceof Promise`
+	// because it works cross-realm
+	return Object.prototype.toString.call(value) === '[object Promise]';
 }
 
 /**
