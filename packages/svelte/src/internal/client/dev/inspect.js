@@ -34,8 +34,6 @@ export function inspect(get_value, inspector, show_stack = false) {
 
 				if (!initial) {
 					const stack = get_error('$inspect(...)');
-					// eslint-disable-next-line no-console
-
 					if (stack) {
 						// eslint-disable-next-line no-console
 						console.groupCollapsed('stack trace');
