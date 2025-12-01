@@ -1105,6 +1105,11 @@ function calculate_blockers(instance, scopes, analysis) {
 			functions.push(node);
 		} else if (node.type === 'VariableDeclaration') {
 			for (const declarator of node.declarations) {
+				if (get_rune(declarator.init, instance.scope) === '$props.id') {
+					// special case
+					continue;
+				}
+
 				if (
 					declarator.init?.type === 'ArrowFunctionExpression' ||
 					declarator.init?.type === 'FunctionExpression'
