@@ -116,7 +116,7 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 			parent_node.append(anchor);
 
 			state.items.clear();
-			link(state, to_destroy[0].prev, to_destroy[length - 1].next);
+			state.first = null;
 
 			for (i = 0; i < length; i++) {
 				destroy_effect(to_destroy[i].e);
