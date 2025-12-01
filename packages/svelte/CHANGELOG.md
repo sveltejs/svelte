@@ -1,5 +1,15 @@
 # svelte
 
+## 5.45.3
+
+### Patch Changes
+
+- add props to state_referenced_locally ([#17266](https://github.com/sveltejs/svelte/pull/17266))
+
+- fix: preserve node locations for better sourcemaps ([#17269](https://github.com/sveltejs/svelte/pull/17269))
+
+- fix: handle cross-realm Promises in `hydratable` ([#17284](https://github.com/sveltejs/svelte/pull/17284))
+
 ## 5.45.2
 
 ### Patch Changes
