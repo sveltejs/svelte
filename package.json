@@ -26,7 +26,7 @@
     "bench:debug": "node --allow-natives-syntax --inspect-brk ./benchmarking/run.js"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.7",
+    "@changesets/cli": "^2.29.8",
     "@sveltejs/eslint-config": "^8.3.3",
     "@svitejs/changesets-changelog-github-compact": "^1.1.0",
     "@types/node": "^20.11.5",
