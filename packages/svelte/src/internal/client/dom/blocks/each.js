@@ -624,22 +624,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 function log_state(state, message = 'log_state') {
 	console.group(message);
 
-	let item = state.first;
 	let effect = state.effect.first;
-
-	if (item) {
-		let items = [item];
-		while ((item = item.next)) {
-			if (items.includes(item)) {
-				throw new Error('items loop');
-			}
-
-			items.push(item);
-		}
-		console.log(items.map((item) => item.k));
-	} else {
-		console.log('no items');
-	}
 
 	if (effect) {
 		let effects = [effect];
