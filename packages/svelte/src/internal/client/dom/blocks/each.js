@@ -411,6 +411,9 @@ function reconcile(state, array, anchor, flags, get_key) {
 	/** @type {EachItem | undefined} */
 	var item;
 
+	/** @type {Effect | undefined} */
+	var effect;
+
 	/** @type {number} */
 	var i;
 
@@ -434,6 +437,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 		key = get_key(value, i);
 
 		item = /** @type {EachItem} */ (items.get(key));
+		effect = item.e;
 
 		if (state.outrogroups !== null) {
 			for (const group of state.outrogroups) {
@@ -464,10 +468,10 @@ function reconcile(state, array, anchor, flags, get_key) {
 			continue;
 		}
 
-		if ((item.e.f & INERT) !== 0) {
-			resume_effect(item.e);
+		if ((effect.f & INERT) !== 0) {
+			resume_effect(effect);
 			if (is_animated) {
-				item.e.nodes?.a?.unfix();
+				effect.nodes?.a?.unfix();
 				(to_animate ??= new Set()).delete(item);
 			}
 		}
