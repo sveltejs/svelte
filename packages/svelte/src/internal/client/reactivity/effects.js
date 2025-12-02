@@ -102,12 +102,6 @@ function create_effect(type, fn, sync) {
 		ctx: component_context,
 		deps: null,
 		nodes: null,
-		get nodes_start() {
-			return effect.nodes && effect.nodes.start;
-		},
-		get nodes_end() {
-			return effect.nodes && effect.nodes.end;
-		},
 		f: type | DIRTY | CONNECTED,
 		first: null,
 		fn,
@@ -710,8 +704,11 @@ export function aborted(effect = /** @type {Effect} */ (active_effect)) {
  * @param {DocumentFragment} fragment
  */
 export function move_effect(effect, fragment) {
-	var node = effect.nodes_start;
-	var end = effect.nodes_end;
+	if (!effect.nodes) return;
+
+	/** @type {TemplateNode | null} */
+	var node = effect.nodes.start;
+	var end = effect.nodes.end;
 
 	while (node !== null) {
 		/** @type {TemplateNode | null} */

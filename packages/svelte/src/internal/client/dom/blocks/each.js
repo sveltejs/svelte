@@ -635,10 +635,12 @@ function create_item(anchor, prev, value, key, index, render_fn, flags, get_coll
  * @param {Text | Element | Comment} anchor
  */
 function move(item, next, anchor) {
-	var end = item.next ? /** @type {TemplateNode} */ (item.next.e.nodes_start) : anchor;
+	if (!item.e.nodes) return;
 
-	var dest = next ? /** @type {TemplateNode} */ (next.e.nodes_start) : anchor;
-	var node = /** @type {TemplateNode} */ (item.e.nodes_start);
+	var end = item.next ? /** @type {TemplateNode} */ (item.next.e.nodes.start) : anchor;
+
+	var dest = next ? /** @type {TemplateNode} */ (next.e.nodes.start) : anchor;
+	var node = /** @type {TemplateNode} */ (item.e.nodes.start);
 
 	while (node !== null && node !== end) {
 		var next_node = /** @type {TemplateNode} */ (get_next_sibling(node));
