@@ -533,8 +533,6 @@ function reconcile(state, array, anchor, flags, get_key) {
 			if (current === null) {
 				continue;
 			}
-
-			item = current;
 		}
 
 		matched.push(item);
