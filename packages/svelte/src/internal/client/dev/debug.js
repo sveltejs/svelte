@@ -110,13 +110,13 @@ export function log_effect_tree(effect, depth = 0) {
 		console.groupEnd();
 	}
 
-	if (effect.nodes_start && effect.nodes_end) {
+	if (effect.nodes) {
 		// eslint-disable-next-line no-console
-		console.log(effect.nodes_start);
+		console.log(effect.nodes.start);
 
-		if (effect.nodes_start !== effect.nodes_end) {
+		if (effect.nodes.start !== effect.nodes.end) {
 			// eslint-disable-next-line no-console
-			console.log(effect.nodes_end);
+			console.log(effect.nodes.end);
 		}
 	}
 

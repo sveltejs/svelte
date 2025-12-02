@@ -54,9 +54,9 @@ export function html(node, get_value, svg = false, mathml = false, skip_warning 
 			return;
 		}
 
-		if (effect.nodes_start !== null) {
-			remove_effect_dom(effect.nodes_start, /** @type {TemplateNode} */ (effect.nodes_end));
-			effect.nodes_start = effect.nodes_end = null;
+		if (effect.nodes !== null) {
+			remove_effect_dom(effect.nodes.start, /** @type {TemplateNode} */ (effect.nodes.end));
+			effect.nodes = null;
 		}
 
 		if (value === '') return;
