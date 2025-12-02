@@ -136,7 +136,6 @@ function destroy_items(state, to_destroy) {
 	for (var i = 0; i < to_destroy.length; i++) {
 		var item = to_destroy[i];
 
-		state.items.delete(item.k);
 		link(state, item.prev, item.next);
 		destroy_effect(item.e);
 	}
@@ -278,6 +277,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				}
 			} else {
 				item = create_item(
+					items,
 					first_run ? anchor : null,
 					prev,
 					value,
@@ -667,6 +667,7 @@ function log_state(state, message = 'log_state') {
 
 /**
  * @template V
+ * @param {Map<any, EachItem>} items
  * @param {Node | null} anchor
  * @param {EachItem | null} prev
  * @param {V} value
@@ -677,7 +678,7 @@ function log_state(state, message = 'log_state') {
  * @param {() => V[]} get_collection
  * @returns {EachItem}
  */
-function create_item(anchor, prev, value, key, index, render_fn, flags, get_collection) {
+function create_item(items, anchor, prev, value, key, index, render_fn, flags, get_collection) {
 	var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
 	var mutable = (flags & EACH_ITEM_IMMUTABLE) === 0;
 
@@ -711,7 +712,13 @@ function create_item(anchor, prev, value, key, index, render_fn, flags, get_coll
 		fragment.append((anchor = create_text()));
 	}
 
-	item.e = branch(() => render_fn(/** @type {Node} */ (anchor), v, i, get_collection));
+	item.e = branch(() => {
+		render_fn(/** @type {Node} */ (anchor), v, i, get_collection);
+
+		return () => {
+			items.delete(key);
+		};
+	});
 
 	if (prev !== null) {
 		// we only need to set `prev.next = item`, because
