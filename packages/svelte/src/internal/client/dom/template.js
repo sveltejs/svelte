@@ -28,9 +28,8 @@ import { COMMENT_NODE, DOCUMENT_FRAGMENT_NODE, EFFECT_RAN, TEXT_NODE } from '#cl
  */
 export function assign_nodes(start, end) {
 	var effect = /** @type {Effect} */ (active_effect);
-	if (effect.nodes_start === null) {
-		effect.nodes_start = start;
-		effect.nodes_end = end;
+	if (effect.nodes === null) {
+		effect.nodes = { start, end };
 	}
 }
 
@@ -282,10 +281,10 @@ function run_scripts(node) {
 
 		// The script has changed - if it's at the edges, the effect now points at dead nodes
 		if (is_fragment ? node.firstChild === script : node === script) {
-			effect.nodes_start = clone;
+			effect.nodes.start = clone;
 		}
 		if (is_fragment ? node.lastChild === script : node === script) {
-			effect.nodes_end = clone;
+			effect.nodes.end = clone;
 		}
 
 		script.replaceWith(clone);
@@ -348,8 +347,8 @@ export function append(anchor, dom) {
 		// When hydrating and outer component and an inner component is async, i.e. blocked on a promise,
 		// then by the time the inner resolves we have already advanced to the end of the hydrated nodes
 		// of the parent component. Check for defined for that reason to avoid rewinding the parent's end marker.
-		if ((effect.f & EFFECT_RAN) === 0 || effect.nodes_end === null) {
-			effect.nodes_end = hydrate_node;
+		if ((effect.f & EFFECT_RAN) === 0 || effect.nodes.end === null) {
+			effect.nodes.end = hydrate_node;
 		}
 		hydrate_next();
 		return;

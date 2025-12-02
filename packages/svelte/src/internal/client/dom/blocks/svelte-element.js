@@ -120,7 +120,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 				}
 
 				// we do this after calling `render_fn` so that child effects don't override `nodes.end`
-				/** @type {Effect} */ (active_effect).nodes_end = element;
+				/** @type {Effect} */ (active_effect).nodes.end = element;
 
 				anchor.before(element);
 			}

@@ -60,6 +60,11 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 	parent: Effect | Derived | null;
 }
 
+export interface EffectNodes {
+	start: TemplateNode;
+	end: TemplateNode | null;
+}
+
 export interface Effect extends Reaction {
 	/**
 	 * Branch effects store their start/end nodes so that they can be
@@ -67,8 +72,7 @@ export interface Effect extends Reaction {
 	 * block is reconciled. In the case of a single text/element node,
 	 * `start` and `end` will be the same.
 	 */
-	nodes_start: null | TemplateNode;
-	nodes_end: null | TemplateNode;
+	nodes: null | EffectNodes;
 	/** The effect function */
 	fn: null | (() => void | (() => void));
 	/** The teardown function returned from the effect function */

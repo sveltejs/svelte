@@ -56,7 +56,7 @@ export function html(node, get_value, svg = false, mathml = false, skip_warning 
 
 		if (effect.nodes_start !== null) {
 			remove_effect_dom(effect.nodes_start, /** @type {TemplateNode} */ (effect.nodes_end));
-			effect.nodes_start = effect.nodes_end = null;
+			effect.nodes = null;
 		}
 
 		if (value === '') return;

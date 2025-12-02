@@ -228,7 +228,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 				should_intro = true;
 
 				if (hydrating) {
-					/** @type {Effect} */ (active_effect).nodes_end = hydrate_node;
+					/** @type {Effect} */ (active_effect).nodes.end = hydrate_node;
 
 					if (
 						hydrate_node === null ||

@@ -101,8 +101,13 @@ function create_effect(type, fn, sync) {
 	var effect = {
 		ctx: component_context,
 		deps: null,
-		nodes_start: null,
-		nodes_end: null,
+		nodes: null,
+		get nodes_start() {
+			return effect.nodes && effect.nodes.start;
+		},
+		get nodes_end() {
+			return effect.nodes && effect.nodes.end;
+		},
 		f: type | DIRTY | CONNECTED,
 		first: null,
 		fn,
@@ -537,8 +542,7 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.ctx =
 		effect.deps =
 		effect.fn =
-		effect.nodes_start =
-		effect.nodes_end =
+		effect.nodes =
 		effect.ac =
 			null;
 }
