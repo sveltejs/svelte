@@ -1,4 +1,4 @@
-/** @import { EachItem, EachState, Effect, MaybeSource, Source, TemplateNode, TransitionManager, Value } from '#client' */
+/** @import { EachItem, EachState, Effect, EffectNodes, MaybeSource, Source, TemplateNode, TransitionManager, Value } from '#client' */
 /** @import { Batch } from '../../reactivity/batch.js'; */
 import {
 	EACH_INDEX_REACTIVE,
@@ -637,9 +637,9 @@ function create_item(anchor, prev, value, key, index, render_fn, flags, get_coll
 function move(item, next, anchor) {
 	if (!item.e.nodes) return;
 
-	var end = item.next ? /** @type {TemplateNode} */ (item.next.e.nodes.start) : anchor;
+	var end = item.next ? /** @type {EffectNodes} */ (item.next.e.nodes).start : anchor;
 
-	var dest = next ? /** @type {TemplateNode} */ (next.e.nodes.start) : anchor;
+	var dest = next ? /** @type {EffectNodes} */ (next.e.nodes).start : anchor;
 	var node = /** @type {TemplateNode} */ (item.e.nodes.start);
 
 	while (node !== null && node !== end) {

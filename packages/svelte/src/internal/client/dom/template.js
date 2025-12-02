@@ -1,4 +1,4 @@
-/** @import { Effect, TemplateNode } from '#client' */
+/** @import { Effect, EffectNodes, TemplateNode } from '#client' */
 /** @import { TemplateStructure } from './types' */
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import {
@@ -269,7 +269,8 @@ function run_scripts(node) {
 		/** @type {HTMLElement} */ (node).tagName === 'SCRIPT'
 			? [/** @type {HTMLScriptElement} */ (node)]
 			: node.querySelectorAll('script');
-	const effect = /** @type {Effect} */ (active_effect);
+
+	const effect = /** @type {Effect & { nodes: EffectNodes }} */ (active_effect);
 
 	for (const script of scripts) {
 		const clone = document.createElement('script');
@@ -343,13 +344,15 @@ export function comment() {
  */
 export function append(anchor, dom) {
 	if (hydrating) {
-		var effect = /** @type {Effect} */ (active_effect);
+		var effect = /** @type {Effect & { nodes: EffectNodes }} */ (active_effect);
+
 		// When hydrating and outer component and an inner component is async, i.e. blocked on a promise,
 		// then by the time the inner resolves we have already advanced to the end of the hydrated nodes
 		// of the parent component. Check for defined for that reason to avoid rewinding the parent's end marker.
 		if ((effect.f & EFFECT_RAN) === 0 || effect.nodes.end === null) {
 			effect.nodes.end = hydrate_node;
 		}
+
 		hydrate_next();
 		return;
 	}

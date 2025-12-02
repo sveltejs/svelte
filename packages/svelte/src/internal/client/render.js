@@ -1,4 +1,4 @@
-/** @import { ComponentContext, Effect, TemplateNode } from '#client' */
+/** @import { ComponentContext, Effect, EffectNodes, TemplateNode } from '#client' */
 /** @import { Component, ComponentType, SvelteComponent, MountOptions } from '../../index.js' */
 import { DEV } from 'esm-env';
 import {
@@ -228,7 +228,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 				should_intro = true;
 
 				if (hydrating) {
-					/** @type {Effect} */ (active_effect).nodes.end = hydrate_node;
+					/** @type {Effect & { nodes: EffectNodes }} */ (active_effect).nodes.end = hydrate_node;
 
 					if (
 						hydrate_node === null ||
