@@ -148,7 +148,7 @@ function create_effect(type, fn, sync) {
 		sync &&
 		e.deps === null &&
 		e.teardown === null &&
-		e.nodes_start === null &&
+		e.nodes === null &&
 		e.first === e.last && // either `null`, or a singular child
 		(e.f & EFFECT_PRESERVED) === 0
 	) {
@@ -502,10 +502,10 @@ export function destroy_effect(effect, remove_dom = true) {
 
 	if (
 		(remove_dom || (effect.f & HEAD_EFFECT) !== 0) &&
-		effect.nodes_start !== null &&
-		effect.nodes_end !== null
+		effect.nodes !== null &&
+		effect.nodes.end !== null
 	) {
-		remove_effect_dom(effect.nodes_start, /** @type {TemplateNode} */ (effect.nodes_end));
+		remove_effect_dom(effect.nodes.start, /** @type {TemplateNode} */ (effect.nodes.end));
 		removed = true;
 	}
 
