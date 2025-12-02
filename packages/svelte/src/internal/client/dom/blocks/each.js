@@ -483,7 +483,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 			matched = [];
 			stashed = [];
 
-			while (current !== null && current.k !== key) {
+			while (current !== null && current !== item) {
 				// If the each block isn't inert and an item has an effect that is already inert,
 				// skip over adding it to our seen Set as the item is already being handled
 				if ((current.e.f & INERT) === 0) {
