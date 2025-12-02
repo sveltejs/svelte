@@ -152,6 +152,8 @@ function destroy_items(state, to_destroy) {
 		link(state, item.prev, item.next);
 		destroy_effect(item.e);
 	}
+
+	log_state(state, 'after destroy_items');
 }
 
 /**
@@ -625,6 +627,56 @@ function reconcile(state, array, anchor, flags, get_key) {
 			}
 		});
 	}
+
+	log_state(state, 'after reconcile');
+}
+
+/**
+ * @param {EachState} state
+ * @param {string} [message]
+ */
+function log_state(state, message = 'log_state') {
+	console.group(message);
+
+	let item = state.first;
+	let effect = state.effect.first;
+
+	if (item) {
+		let items = [item];
+		while ((item = item.next)) {
+			if (items.includes(item)) {
+				throw new Error('items loop');
+			}
+
+			items.push(item);
+		}
+		console.log(items.map((item) => item.k));
+	} else {
+		console.log('no items');
+	}
+
+	if (effect) {
+		let effects = [effect];
+		while ((effect = effect.next)) {
+			if (effects.includes(effect)) {
+				throw new Error('items loop');
+			}
+
+			effects.push(effect);
+		}
+		console.log(
+			effects.map((effect) => {
+				let text = effect.nodes_start?.textContent ?? '???';
+				if (effect === state.effect.first) text += ' (FIRST)';
+				if (effect === state.effect.last) text += ' (LAST)';
+				return text;
+			})
+		);
+	} else {
+		console.log('no effects');
+	}
+
+	console.groupEnd();
 }
 
 /**
