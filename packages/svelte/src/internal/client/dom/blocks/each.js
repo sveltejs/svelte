@@ -585,9 +585,6 @@ function create_item(anchor, prev, value, key, index, render_fn, flags, get_coll
 		i,
 		v,
 		k: key,
-		get a() {
-			return item.e.nodes && item.e.nodes.a;
-		},
 		// @ts-expect-error
 		e: null,
 		o: false,
