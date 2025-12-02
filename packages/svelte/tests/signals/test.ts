@@ -1418,6 +1418,31 @@ describe('signals', () => {
 		};
 	});
 
+	test('derived when connected should add new dependency to its reaction even when read outside effect', () => {
+		let count_a = state(0);
+		let count_b = state(0);
+		let which = state(true);
+		let double = derived(() => ($.get(which) ? $.get(count_a) * 2 : $.get(count_b) * 2));
+
+		render_effect(() => {
+			$.get(double);
+		});
+
+		return () => {
+			flushSync();
+			assert.equal($.get(double!), 0);
+
+			set(which, false);
+			$.get(double); // read before render effect has a chance to rerun
+			flushSync();
+			assert.equal($.get(double!), 0);
+
+			set(count_b, 1);
+			flushSync();
+			assert.equal($.get(double!), 2);
+		};
+	});
+
 	test('$effect.root inside deriveds stay alive independently', () => {
 		const log: any[] = [];
 		const c = state(0);
