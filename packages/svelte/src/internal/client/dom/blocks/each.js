@@ -652,7 +652,7 @@ function log_state(state, message = 'log_state') {
 		}
 		console.log(
 			effects.map((effect) => {
-				let text = effect.nodes_start?.textContent ?? '???';
+				let text = effect.nodes?.start?.textContent ?? '???';
 				if (effect === state.effect.first) text += ' (FIRST)';
 				if (effect === state.effect.last) text += ' (LAST)';
 				return text;
