@@ -111,7 +111,6 @@ function create_effect(type, fn, sync) {
 		b: parent && parent.b,
 		prev: null,
 		teardown: null,
-		transitions: null,
 		wv: 0,
 		ac: null
 	};
@@ -507,7 +506,7 @@ export function destroy_effect(effect, remove_dom = true) {
 	remove_reactions(effect, 0);
 	set_signal_status(effect, DESTROYED);
 
-	var transitions = effect.transitions;
+	var transitions = effect.nodes && effect.nodes.t;
 
 	if (transitions !== null) {
 		for (const transition of transitions) {
@@ -622,8 +621,10 @@ export function pause_children(effect, transitions, local) {
 	if ((effect.f & INERT) !== 0) return;
 	effect.f ^= INERT;
 
-	if (effect.transitions !== null) {
-		for (const transition of effect.transitions) {
+	var t = effect.nodes && effect.nodes.t;
+
+	if (t !== null) {
+		for (const transition of t) {
 			if (transition.is_global || local) {
 				transitions.push(transition);
 			}
@@ -686,8 +687,10 @@ function resume_children(effect, local) {
 		child = sibling;
 	}
 
-	if (effect.transitions !== null) {
-		for (const transition of effect.transitions) {
+	var t = effect.nodes && effect.nodes.t;
+
+	if (t !== null) {
+		for (const transition of t) {
 			if (transition.is_global || local) {
 				transition.in();
 			}

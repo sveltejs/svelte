@@ -1,4 +1,4 @@
-/** @import { AnimateFn, Animation, AnimationConfig, EachItem, Effect, TransitionFn, TransitionManager } from '#client' */
+/** @import { AnimateFn, Animation, AnimationConfig, EachItem, Effect, EffectNodes, TransitionFn, TransitionManager } from '#client' */
 import { noop, is_function } from '../../../shared/utils.js';
 import { effect } from '../../reactivity/effects.js';
 import { active_effect, untrack } from '../../runtime.js';
@@ -265,9 +265,9 @@ export function transition(flags, element, get_fn, get_params) {
 		}
 	};
 
-	var e = /** @type {Effect} */ (active_effect);
+	var e = /** @type {Effect & { nodes: EffectNodes }} */ (active_effect);
 
-	(e.transitions ??= []).push(transition);
+	(e.nodes.t ??= []).push(transition);
 
 	// if this is a local transition, we only want to run it if the parent (branch) effect's
 	// parent (block) effect is where the state change happened. we can determine that by

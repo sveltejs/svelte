@@ -29,7 +29,7 @@ import { COMMENT_NODE, DOCUMENT_FRAGMENT_NODE, EFFECT_RAN, TEXT_NODE } from '#cl
 export function assign_nodes(start, end) {
 	var effect = /** @type {Effect} */ (active_effect);
 	if (effect.nodes === null) {
-		effect.nodes = { start, end };
+		effect.nodes = { start, end, a: null, t: null };
 	}
 }
 

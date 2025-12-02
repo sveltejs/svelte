@@ -1,4 +1,5 @@
 import type {
+	AnimationManager,
 	ComponentContext,
 	DevStackEntry,
 	Equals,
@@ -63,6 +64,10 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 export interface EffectNodes {
 	start: TemplateNode;
 	end: TemplateNode | null;
+	/** $.animation */
+	a: AnimationManager | null;
+	/** $.transition */
+	t: TransitionManager[] | null;
 }
 
 export interface Effect extends Reaction {
@@ -77,8 +82,6 @@ export interface Effect extends Reaction {
 	fn: null | (() => void | (() => void));
 	/** The teardown function returned from the effect function */
 	teardown: null | (() => void);
-	/** Transition managers created with `$.transition` */
-	transitions: null | TransitionManager[];
 	/** Next sibling child effect created inside the parent signal */
 	prev: null | Effect;
 	/** Next sibling child effect created inside the parent signal */
