@@ -1,4 +1,4 @@
-/** @import { EachItem, EachOutroGroup, EachState, Effect, MaybeSource, Source, TemplateNode, TransitionManager, Value } from '#client' */
+/** @import { EachItem, EachOutroGroup, EachState, Effect, EffectNodes, MaybeSource, Source, TemplateNode, TransitionManager, Value } from '#client' */
 /** @import { Batch } from '../../reactivity/batch.js'; */
 import {
 	EACH_INDEX_REACTIVE,
@@ -40,18 +40,6 @@ import { get } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
 import { current_batch } from '../../reactivity/batch.js';
-
-/**
- * The row of a keyed each block that is currently updating. We track this
- * so that `animate:` directives have something to attach themselves to
- * @type {EachItem | null}
- */
-export let current_each_item = null;
-
-/** @param {EachItem | null} item */
-export function set_current_each_item(item) {
-	current_each_item = item;
-}
 
 /**
  * @param {any} _
@@ -283,8 +271,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 				if (is_reactive_index) {
 					internal_set(/** @type {Value<number>} */ (item.i), i);
-				} else {
-					item.i = i;
 				}
 
 				if (defer) {
@@ -437,7 +423,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 			// offscreen == coming in now, no animation in that case,
 			// else this would happen https://github.com/sveltejs/svelte/issues/17181
 			if (item.o) {
-				item.a?.measure();
+				item.e.nodes?.a?.measure();
 				(to_animate ??= new Set()).add(item);
 			}
 		}
@@ -481,7 +467,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 		if ((item.e.f & INERT) !== 0) {
 			resume_effect(item.e);
 			if (is_animated) {
-				item.a?.unfix();
+				item.e.nodes?.a?.unfix();
 				(to_animate ??= new Set()).delete(item);
 			}
 		}
@@ -534,7 +520,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 			matched = [];
 			stashed = [];
 
-			while (current !== null && current.k !== key) {
+			while (current !== null && current !== item) {
 				(seen ??= new Set()).add(current);
 				stashed.push(current);
 				current = current.next;
@@ -595,11 +581,11 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 			if (is_animated) {
 				for (i = 0; i < destroy_length; i += 1) {
-					to_destroy[i].a?.measure();
+					to_destroy[i].e.nodes?.a?.measure();
 				}
 
 				for (i = 0; i < destroy_length; i += 1) {
-					to_destroy[i].a?.fix();
+					to_destroy[i].e.nodes?.a?.fix();
 				}
 			}
 
@@ -623,7 +609,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 		queue_micro_task(() => {
 			if (to_animate === undefined) return;
 			for (item of to_animate) {
-				item.a?.apply();
+				item.e.nodes?.a?.apply();
 			}
 		});
 	}
@@ -692,7 +678,6 @@ function log_state(state, message = 'log_state') {
  * @returns {EachItem}
  */
 function create_item(anchor, prev, value, key, index, render_fn, flags, get_collection) {
-	var previous_each_item = current_each_item;
 	var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
 	var mutable = (flags & EACH_ITEM_IMMUTABLE) === 0;
 
@@ -714,7 +699,6 @@ function create_item(anchor, prev, value, key, index, render_fn, flags, get_coll
 		i,
 		v,
 		k: key,
-		a: null,
 		// @ts-expect-error
 		e: null,
 		o: false,
@@ -722,27 +706,21 @@ function create_item(anchor, prev, value, key, index, render_fn, flags, get_coll
 		next: null
 	};
 
-	current_each_item = item;
-
-	try {
-		if (anchor === null) {
-			var fragment = document.createDocumentFragment();
-			fragment.append((anchor = create_text()));
-		}
-
-		item.e = branch(() => render_fn(/** @type {Node} */ (anchor), v, i, get_collection));
-
-		if (prev !== null) {
-			// we only need to set `prev.next = item`, because
-			// `item.prev = prev` was set on initialization.
-			// the effects themselves are already linked
-			prev.next = item;
-		}
-
-		return item;
-	} finally {
-		current_each_item = previous_each_item;
+	if (anchor === null) {
+		var fragment = document.createDocumentFragment();
+		fragment.append((anchor = create_text()));
 	}
+
+	item.e = branch(() => render_fn(/** @type {Node} */ (anchor), v, i, get_collection));
+
+	if (prev !== null) {
+		// we only need to set `prev.next = item`, because
+		// `item.prev = prev` was set on initialization.
+		// the effects themselves are already linked
+		prev.next = item;
+	}
+
+	return item;
 }
 
 /**
@@ -751,10 +729,12 @@ function create_item(anchor, prev, value, key, index, render_fn, flags, get_coll
  * @param {Text | Element | Comment} anchor
  */
 function move(item, next, anchor) {
-	var end = item.next ? /** @type {TemplateNode} */ (item.next.e.nodes_start) : anchor;
+	if (!item.e.nodes) return;
 
-	var dest = next ? /** @type {TemplateNode} */ (next.e.nodes_start) : anchor;
-	var node = /** @type {TemplateNode} */ (item.e.nodes_start);
+	var end = item.next ? /** @type {EffectNodes} */ (item.next.e.nodes).start : anchor;
+
+	var dest = next ? /** @type {EffectNodes} */ (next.e.nodes).start : anchor;
+	var node = /** @type {TemplateNode} */ (item.e.nodes.start);
 
 	while (node !== null && node !== end) {
 		var next_node = /** @type {TemplateNode} */ (get_next_sibling(node));

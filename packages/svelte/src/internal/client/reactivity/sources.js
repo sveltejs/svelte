@@ -228,6 +228,8 @@ export function internal_set(source, value) {
 
 		source.wv = increment_write_version();
 
+		// For debugging, in case you want to know which reactions are being scheduled:
+		// log_reactions(source);
 		mark_reactions(source, DIRTY);
 
 		// It's possible that the current reaction might not have up-to-date dependencies

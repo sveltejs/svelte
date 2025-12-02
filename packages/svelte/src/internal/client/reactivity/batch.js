@@ -175,6 +175,9 @@ export class Batch {
 			this.#traverse_effect_tree(root, target);
 			// Note: #traverse_effect_tree runs block effects eagerly, which can schedule effects,
 			// which means queued_root_effects now may be filled again.
+
+			// Helpful for debugging reactivity loss that has to do with branches being skipped:
+			// log_inconsistent_branches(root);
 		}
 
 		if (!this.is_fork) {
@@ -705,7 +708,7 @@ function flush_queued_effects(effects) {
 			// don't know if we need to keep them until they are executed. Doing the check
 			// here (rather than in `update_effect`) allows us to skip the work for
 			// immediate effects.
-			if (effect.deps === null && effect.first === null && effect.nodes_start === null) {
+			if (effect.deps === null && effect.first === null && effect.nodes === null) {
 				// if there's no teardown or abort controller we completely unlink
 				// the effect from the graph
 				if (effect.teardown === null && effect.ac === null) {

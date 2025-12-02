@@ -91,8 +91,6 @@ export type EachState = {
 };
 
 export type EachItem = {
-	/** animation manager */
-	a: AnimationManager | null;
 	/** effect */
 	e: Effect;
 	/** item */

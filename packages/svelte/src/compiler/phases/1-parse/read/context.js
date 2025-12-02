@@ -1,11 +1,9 @@
-/** @import { Location } from 'locate-character' */
 /** @import { Pattern } from 'estree' */
 /** @import { Parser } from '../index.js' */
 import { match_bracket } from '../utils/bracket.js';
 import { parse_expression_at } from '../acorn.js';
 import { regex_not_newline_characters } from '../../patterns.js';
 import * as e from '../../../errors.js';
-import { locator } from '../../../state.js';
 
 /**
  * @param {Parser} parser
@@ -15,20 +13,13 @@ export default function read_pattern(parser) {
 	const start = parser.index;
 	let i = parser.index;
 
-	const name = parser.read_identifier();
+	const id = parser.read_identifier();
 
-	if (name !== null) {
+	if (id.name !== '') {
 		const annotation = read_type_annotation(parser);
 
 		return {
-			type: 'Identifier',
-			name,
-			start,
-			loc: {
-				start: /** @type {Location} */ (locator(start)),
-				end: /** @type {Location} */ (locator(parser.index))
-			},
-			end: parser.index,
+			...id,
 			typeAnnotation: annotation
 		};
 	}

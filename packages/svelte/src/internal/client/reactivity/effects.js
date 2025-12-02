@@ -101,8 +101,7 @@ function create_effect(type, fn, sync) {
 	var effect = {
 		ctx: component_context,
 		deps: null,
-		nodes_start: null,
-		nodes_end: null,
+		nodes: null,
 		f: type | DIRTY | CONNECTED,
 		first: null,
 		fn,
@@ -112,7 +111,6 @@ function create_effect(type, fn, sync) {
 		b: parent && parent.b,
 		prev: null,
 		teardown: null,
-		transitions: null,
 		wv: 0,
 		ac: null
 	};
@@ -143,7 +141,7 @@ function create_effect(type, fn, sync) {
 		sync &&
 		e.deps === null &&
 		e.teardown === null &&
-		e.nodes_start === null &&
+		e.nodes === null &&
 		e.first === e.last && // either `null`, or a singular child
 		(e.f & EFFECT_PRESERVED) === 0
 	) {
@@ -497,10 +495,10 @@ export function destroy_effect(effect, remove_dom = true) {
 
 	if (
 		(remove_dom || (effect.f & HEAD_EFFECT) !== 0) &&
-		effect.nodes_start !== null &&
-		effect.nodes_end !== null
+		effect.nodes !== null &&
+		effect.nodes.end !== null
 	) {
-		remove_effect_dom(effect.nodes_start, /** @type {TemplateNode} */ (effect.nodes_end));
+		remove_effect_dom(effect.nodes.start, /** @type {TemplateNode} */ (effect.nodes.end));
 		removed = true;
 	}
 
@@ -508,7 +506,7 @@ export function destroy_effect(effect, remove_dom = true) {
 	remove_reactions(effect, 0);
 	set_signal_status(effect, DESTROYED);
 
-	var transitions = effect.transitions;
+	var transitions = effect.nodes && effect.nodes.t;
 
 	if (transitions !== null) {
 		for (const transition of transitions) {
@@ -537,8 +535,7 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.ctx =
 		effect.deps =
 		effect.fn =
-		effect.nodes_start =
-		effect.nodes_end =
+		effect.nodes =
 		effect.ac =
 			null;
 }
@@ -618,8 +615,10 @@ function pause_children(effect, transitions, local) {
 	if ((effect.f & INERT) !== 0) return;
 	effect.f ^= INERT;
 
-	if (effect.transitions !== null) {
-		for (const transition of effect.transitions) {
+	var t = effect.nodes && effect.nodes.t;
+
+	if (t !== null) {
+		for (const transition of t) {
 			if (transition.is_global || local) {
 				transitions.push(transition);
 			}
@@ -682,8 +681,10 @@ function resume_children(effect, local) {
 		child = sibling;
 	}
 
-	if (effect.transitions !== null) {
-		for (const transition of effect.transitions) {
+	var t = effect.nodes && effect.nodes.t;
+
+	if (t !== null) {
+		for (const transition of t) {
 			if (transition.is_global || local) {
 				transition.in();
 			}
@@ -700,8 +701,11 @@ export function aborted(effect = /** @type {Effect} */ (active_effect)) {
  * @param {DocumentFragment} fragment
  */
 export function move_effect(effect, fragment) {
-	var node = effect.nodes_start;
-	var end = effect.nodes_end;
+	if (!effect.nodes) return;
+
+	/** @type {TemplateNode | null} */
+	var node = effect.nodes.start;
+	var end = effect.nodes.end;
 
 	while (node !== null) {
 		/** @type {TemplateNode | null} */
