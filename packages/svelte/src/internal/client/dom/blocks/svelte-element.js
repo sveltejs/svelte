@@ -18,6 +18,7 @@ import { EFFECT_TRANSPARENT, ELEMENT_NODE } from '#client/constants';
 import { assign_nodes } from '../template.js';
 import { is_raw_text_element } from '../../../../utils.js';
 import { BranchManager } from './branches.js';
+import { set_animation_effect_override } from '../elements/transitions.js';
 
 /**
  * @param {Comment | Element} node
@@ -48,11 +49,10 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 	var anchor = /** @type {TemplateNode} */ (hydrating ? hydrate_node : node);
 
 	/**
-	 * The keyed `{#each ...}` item block, if any, that this element is inside.
 	 * We track this so we can set it when changing the element, allowing any
 	 * `animate:` directive to bind itself to the correct block
 	 */
-	var each_item_block = current_each_item;
+	var parent_effect = /** @type {Effect} */ (active_effect);
 
 	var branches = new BranchManager(anchor, false);
 
@@ -67,10 +67,6 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 		}
 
 		branches.ensure(next_tag, (anchor) => {
-			// See explanation of `each_item_block` above
-			var previous_each_item = current_each_item;
-			set_current_each_item(each_item_block);
-
 			if (next_tag) {
 				element = hydrating
 					? /** @type {Element} */ (element)
@@ -112,11 +108,15 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 						}
 					}
 
+					set_animation_effect_override(parent_effect);
+
 					// `child_anchor` is undefined if this is a void element, but we still
 					// need to call `render_fn` in order to run actions etc. If the element
 					// contains children, it's a user error (which is warned on elsewhere)
 					// and the DOM will be silently discarded
 					render_fn(element, child_anchor);
+
+					set_animation_effect_override(null);
 				}
 
 				// we do this after calling `render_fn` so that child effects don't override `nodes.end`
@@ -124,8 +124,6 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 
 				anchor.before(element);
 			}
-
-			set_current_each_item(previous_each_item);
 
 			if (hydrating) {
 				set_hydrate_node(anchor);

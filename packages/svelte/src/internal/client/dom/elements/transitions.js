@@ -66,6 +66,14 @@ function css_to_keyframe(css) {
 /** @param {number} t */
 const linear = (t) => t;
 
+/** @type {Effect | null} */
+let animation_effect_override = null;
+
+/** @param {Effect | null} v */
+export function set_animation_effect_override(v) {
+	animation_effect_override = v;
+}
+
 /**
  * Called inside keyed `{#each ...}` blocks (as `$.animation(...)`). This creates an animation manager
  * and attaches it to the block, so that moves can be animated following reconciliation.
@@ -75,7 +83,8 @@ const linear = (t) => t;
  * @param {(() => P) | null} get_params
  */
 export function animation(element, get_fn, get_params) {
-	var item = /** @type {EachItem} */ (current_each_item);
+	var effect = animation_effect_override ?? /** @type {Effect} */ (active_effect);
+	var nodes = /** @type {EffectNodes} */ (effect.nodes);
 
 	/** @type {DOMRect} */
 	var from;
@@ -89,7 +98,7 @@ export function animation(element, get_fn, get_params) {
 	/** @type {null | { position: string, width: string, height: string, transform: string }} */
 	var original_styles = null;
 
-	item.a ??= {
+	nodes.a ??= {
 		element,
 		measure() {
 			from = this.element.getBoundingClientRect();
@@ -161,7 +170,7 @@ export function animation(element, get_fn, get_params) {
 	// when an animation manager already exists, if the tag changes. in that case, we need to
 	// swap out the element rather than creating a new manager, in case it happened at the same
 	// moment as a reconciliation
-	item.a.element = element;
+	nodes.a.element = element;
 }
 
 /**
