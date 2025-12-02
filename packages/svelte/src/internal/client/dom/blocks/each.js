@@ -44,18 +44,6 @@ import { derived_safe_equal } from '../../reactivity/deriveds.js';
 import { current_batch } from '../../reactivity/batch.js';
 
 /**
- * The row of a keyed each block that is currently updating. We track this
- * so that `animate:` directives have something to attach themselves to
- * @type {EachItem | null}
- */
-export let current_each_item = null;
-
-/** @param {EachItem | null} item */
-export function set_current_each_item(item) {
-	current_each_item = item;
-}
-
-/**
  * @param {any} _
  * @param {number} i
  */
@@ -576,7 +564,6 @@ function reconcile(state, array, anchor, flags, get_key) {
  * @returns {EachItem}
  */
 function create_item(anchor, prev, value, key, index, render_fn, flags, get_collection) {
-	var previous_each_item = current_each_item;
 	var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
 	var mutable = (flags & EACH_ITEM_IMMUTABLE) === 0;
 
@@ -608,27 +595,21 @@ function create_item(anchor, prev, value, key, index, render_fn, flags, get_coll
 		next: null
 	};
 
-	current_each_item = item;
-
-	try {
-		if (anchor === null) {
-			var fragment = document.createDocumentFragment();
-			fragment.append((anchor = create_text()));
-		}
-
-		item.e = branch(() => render_fn(/** @type {Node} */ (anchor), v, i, get_collection));
-
-		if (prev !== null) {
-			// we only need to set `prev.next = item`, because
-			// `item.prev = prev` was set on initialization.
-			// the effects themselves are already linked
-			prev.next = item;
-		}
-
-		return item;
-	} finally {
-		current_each_item = previous_each_item;
+	if (anchor === null) {
+		var fragment = document.createDocumentFragment();
+		fragment.append((anchor = create_text()));
 	}
+
+	item.e = branch(() => render_fn(/** @type {Node} */ (anchor), v, i, get_collection));
+
+	if (prev !== null) {
+		// we only need to set `prev.next = item`, because
+		// `item.prev = prev` was set on initialization.
+		// the effects themselves are already linked
+		prev.next = item;
+	}
+
+	return item;
 }
 
 /**

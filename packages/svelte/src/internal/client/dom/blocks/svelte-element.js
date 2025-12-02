@@ -10,7 +10,6 @@ import {
 import { create_text, get_first_child } from '../operations.js';
 import { block, teardown } from '../../reactivity/effects.js';
 import { set_should_intro } from '../../render.js';
-import { current_each_item, set_current_each_item } from './each.js';
 import { active_effect } from '../../runtime.js';
 import { component_context, dev_stack } from '../../context.js';
 import { DEV } from 'esm-env';
