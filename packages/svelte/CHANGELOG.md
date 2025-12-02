@@ -1,5 +1,15 @@
 # svelte
 
+## 5.45.4
+
+### Patch Changes
+
+- chore: move DOM-related effect properties to `effect.nodes` ([#17293](https://github.com/sveltejs/svelte/pull/17293))
+
+- fix: allow `$props.id()` to occur after an `await` ([#17285](https://github.com/sveltejs/svelte/pull/17285))
+
+- fix: keep reactions up to date even when read outside of effect ([#17295](https://github.com/sveltejs/svelte/pull/17295))
+
 ## 5.45.3
 
 ### Patch Changes
