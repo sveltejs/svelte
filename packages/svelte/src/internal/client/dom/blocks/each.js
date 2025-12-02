@@ -397,7 +397,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 			// offscreen == coming in now, no animation in that case,
 			// else this would happen https://github.com/sveltejs/svelte/issues/17181
 			if (item.o) {
-				item.a?.measure();
+				item.e.nodes?.a?.measure();
 				(to_animate ??= new Set()).add(item);
 			}
 		}
@@ -432,7 +432,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 		if ((item.e.f & INERT) !== 0) {
 			resume_effect(item.e);
 			if (is_animated) {
-				item.a?.unfix();
+				item.e.nodes?.a?.unfix();
 				(to_animate ??= new Set()).delete(item);
 			}
 		}
@@ -529,11 +529,11 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 			if (is_animated) {
 				for (i = 0; i < destroy_length; i += 1) {
-					to_destroy[i].a?.measure();
+					to_destroy[i].e.nodes?.a?.measure();
 				}
 
 				for (i = 0; i < destroy_length; i += 1) {
-					to_destroy[i].a?.fix();
+					to_destroy[i].e.nodes?.a?.fix();
 				}
 			}
 
@@ -557,7 +557,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 		queue_micro_task(() => {
 			if (to_animate === undefined) return;
 			for (item of to_animate) {
-				item.a?.apply();
+				item.e.nodes?.a?.apply();
 			}
 		});
 	}
