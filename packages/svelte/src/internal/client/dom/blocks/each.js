@@ -684,7 +684,6 @@ function create_item(items, anchor, prev, value, key, index, render_fn, flags, g
 	var item = {
 		i,
 		v,
-		k: key,
 		// @ts-expect-error
 		e: null,
 		o: false,

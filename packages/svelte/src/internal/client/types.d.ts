@@ -97,8 +97,6 @@ export type EachItem = {
 	v: any | Source<any>;
 	/** index */
 	i: number | Source<number>;
-	/** key */
-	k: unknown;
 	/** true if onscreen */
 	o: boolean;
 	prev: EachItem | null;
