@@ -89,14 +89,12 @@ export type EachState = {
 };
 
 export type EachItem = {
-	/** effect */
-	e: Effect;
-	/** item */
+	/** value */
 	v: any | Source<any>;
 	/** index */
 	i: number | Source<number>;
-	/** true if onscreen */
-	o: boolean;
+	/** effect */
+	e: Effect;
 };
 
 export interface TransitionManager {

@@ -34,7 +34,7 @@ import {
 } from '../../reactivity/effects.js';
 import { source, mutable_source, internal_set } from '../../reactivity/sources.js';
 import { array_from, is_array } from '../../../shared/utils.js';
-import { COMMENT_NODE, INERT } from '#client/constants';
+import { COMMENT_NODE, EFFECT_OFFSCREEN, INERT } from '#client/constants';
 import { queue_micro_task } from '../task.js';
 import { get } from '../../runtime.js';
 import { DEV } from 'esm-env';
@@ -131,7 +131,7 @@ function pause_effects(state, to_destroy, controlled_anchor) {
  */
 function destroy_items(state, to_destroy) {
 	// TODO only destroy effects if no pending batch needs them. otherwise,
-	// just set `item.o` back to `false`
+	// just re-add the `EFFECT_OFFSCREEN` flag
 	for (var i = 0; i < to_destroy.length; i++) {
 		var effect = to_destroy[i];
 
@@ -282,8 +282,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					get_collection
 				);
 
-				if (first_run) {
-					item.o = true;
+				if (!first_run) {
+					item.e.f |= EFFECT_OFFSCREEN;
 				}
 
 				items.set(key, item);
@@ -394,9 +394,6 @@ function reconcile(state, array, anchor, flags, get_key) {
 	/** @type {any} */
 	var key;
 
-	/** @type {EachItem | undefined} */
-	var item;
-
 	/** @type {Effect | undefined} */
 	var effect;
 
@@ -407,13 +404,13 @@ function reconcile(state, array, anchor, flags, get_key) {
 		for (i = 0; i < length; i += 1) {
 			value = array[i];
 			key = get_key(value, i);
-			item = /** @type {EachItem} */ (items.get(key));
+			effect = /** @type {EachItem} */ (items.get(key)).e;
 
 			// offscreen == coming in now, no animation in that case,
 			// else this would happen https://github.com/sveltejs/svelte/issues/17181
-			if (item.o) {
-				item.e.nodes?.a?.measure();
-				(to_animate ??= new Set()).add(item.e);
+			if ((effect.f & EFFECT_OFFSCREEN) === 0) {
+				effect.nodes?.a?.measure();
+				(to_animate ??= new Set()).add(effect);
 			}
 		}
 	}
@@ -422,8 +419,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 		value = array[i];
 		key = get_key(value, i);
 
-		item = /** @type {EachItem} */ (items.get(key));
-		effect = item.e;
+		effect = /** @type {EachItem} */ (items.get(key)).e;
 
 		if (state.outrogroups !== null) {
 			for (const group of state.outrogroups) {
@@ -434,8 +430,8 @@ function reconcile(state, array, anchor, flags, get_key) {
 			}
 		}
 
-		if (!item.o) {
-			item.o = true;
+		if ((effect.f & EFFECT_OFFSCREEN) !== 0) {
+			effect.f ^= EFFECT_OFFSCREEN;
 
 			if (effect === current) {
 				move(effect, null, anchor);
@@ -586,10 +582,12 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 	// Append offscreen items at the end
 	if (has_offscreen_items) {
-		for (const item of items.values()) {
-			if (!item.o) {
-				link(state, prev, item.e);
-				prev = item.e;
+		for (var item of items.values()) {
+			effect = item.e;
+
+			if ((effect.f & EFFECT_OFFSCREEN) !== 0) {
+				link(state, prev, effect);
+				prev = effect;
 			}
 		}
 	}
@@ -676,9 +674,8 @@ function create_item(items, anchor, value, key, index, render_fn, flags, get_col
 	}
 
 	return {
-		i,
 		v,
-		o: false,
+		i,
 		e: branch(() => {
 			render_fn(/** @type {Node} */ (anchor), v, i, get_collection);
 
