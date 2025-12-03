@@ -392,6 +392,8 @@ function reconcile(state, array, anchor, flags, get_key) {
 	/** @type {number} */
 	var i;
 
+	log_state(state, 'before reconcile');
+
 	if (is_animated) {
 		for (i = 0; i < length; i += 1) {
 			value = array[i];
@@ -430,8 +432,26 @@ function reconcile(state, array, anchor, flags, get_key) {
 			} else {
 				var next = prev ? prev.next : current;
 
+				if (effect === state.effect.last) {
+					state.effect.last = effect.prev;
+				}
+
+				console.group('insert offscreen effect');
+				console.log({
+					effect: effect.nodes?.start.textContent,
+					prev: prev?.nodes?.start.textContent,
+					next: next?.nodes?.start.textContent,
+					current: current?.nodes?.start.textContent,
+					effect_prev: effect.prev?.nodes?.start.textContent,
+					effect_next: effect.next?.nodes?.start.textContent
+				});
+				if (effect.prev) effect.prev.next = effect.next;
+				if (effect.next) effect.next.prev = effect.prev;
+				log_state(state, 'after yoink');
 				link(state, prev, effect);
 				link(state, effect, next);
+				log_state(state, 'after link');
+				console.groupEnd();
 
 				move(effect, next, anchor);
 				prev = effect;
@@ -454,6 +474,12 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 		if (effect !== current) {
 			if (seen !== undefined && seen.has(effect)) {
+				console.log({
+					effect: effect.nodes?.start.textContent,
+					matched: matched.map((e) => e.nodes?.start.textContent).join(' '),
+					stashed: stashed.map((e) => e.nodes?.start.textContent).join(' ')
+				});
+
 				if (matched.length < stashed.length) {
 					// more efficient to move later items to the front
 					var start = stashed[0];
@@ -686,21 +712,17 @@ function move(item, next, anchor) {
  * @param {Effect | null} next
  */
 function link(state, prev, next) {
+	console.log('link', prev?.nodes?.start.textContent, next?.nodes?.start.textContent);
+
 	if (prev === null) {
 		state.effect.first = next;
 	} else {
-		if (prev.next) {
-			prev.next.prev = null;
-		}
-
 		prev.next = next;
 	}
 
-	if (next !== null) {
-		if (next.prev) {
-			next.prev.next = null;
-		}
-
+	if (next === null) {
+		state.effect.last = prev;
+	} else {
 		next.prev = prev;
 	}
 }
