@@ -139,7 +139,8 @@ function destroy_items(state, to_destroy) {
 	log_state(state, 'after destroy_items');
 }
 
-var offscreen_anchor = create_text();
+/** @type {TemplateNode} */
+var offscreen_anchor;
 
 /**
  * @template V
@@ -265,7 +266,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			} else {
 				item = create_item(
 					items,
-					first_run ? anchor : offscreen_anchor,
+					first_run ? anchor : (offscreen_anchor ??= create_text()),
 					value,
 					key,
 					index,
@@ -415,7 +416,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 		effect = /** @type {EachItem} */ (items.get(key)).e;
 
-		console.log({ key });
+		// console.log({ key });
 
 		if (state.outrogroups !== null) {
 			for (const group of state.outrogroups) {
@@ -429,21 +430,21 @@ function reconcile(state, array, anchor, flags, get_key) {
 		if ((effect.f & EFFECT_OFFSCREEN) !== 0) {
 			effect.f ^= EFFECT_OFFSCREEN;
 
-			console.group('insert offscreen effect');
-			console.log({
-				effect: effect.nodes?.start.textContent,
-				prev: prev?.nodes?.start.textContent,
-				next: next?.nodes?.start.textContent,
-				current: current?.nodes?.start.textContent,
-				effect_prev: effect.prev?.nodes?.start.textContent,
-				effect_next: effect.next?.nodes?.start.textContent
-			});
+			// console.group('insert offscreen effect');
+			// console.log({
+			// 	effect: effect.nodes?.start.textContent,
+			// 	prev: prev?.nodes?.start.textContent,
+			// 	next: next?.nodes?.start.textContent,
+			// 	current: current?.nodes?.start.textContent,
+			// 	effect_prev: effect.prev?.nodes?.start.textContent,
+			// 	effect_next: effect.next?.nodes?.start.textContent
+			// });
 
 			if (effect === current) {
-				console.warn('>>>> is current', effect.nodes?.start.textContent);
+				// console.warn('>>>> is current', effect.nodes?.start.textContent);
 				move(effect, null, anchor);
 			} else {
-				console.warn('>>>> is NOT current', effect.nodes?.start.textContent);
+				// console.warn('>>>> is NOT current', effect.nodes?.start.textContent);
 				var next = prev ? prev.next : current;
 
 				if (effect === state.effect.last) {
@@ -468,7 +469,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 			}
 
 			log_state(state, 'after insert');
-			console.groupEnd();
+			// console.groupEnd();
 		}
 
 		if ((effect.f & INERT) !== 0) {
@@ -481,11 +482,11 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 		if (effect !== current) {
 			if (seen !== undefined && seen.has(effect)) {
-				console.log({
-					effect: effect.nodes?.start.textContent,
-					matched: matched.map((e) => e.nodes?.start.textContent).join(' '),
-					stashed: stashed.map((e) => e.nodes?.start.textContent).join(' ')
-				});
+				// console.log({
+				// 	effect: effect.nodes?.start.textContent,
+				// 	matched: matched.map((e) => e.nodes?.start.textContent).join(' '),
+				// 	stashed: stashed.map((e) => e.nodes?.start.textContent).join(' ')
+				// });
 
 				if (matched.length < stashed.length) {
 					// more efficient to move later items to the front
@@ -494,37 +495,37 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 					prev = start.prev;
 
-					console.group('move later items to the front');
-					console.log({
-						effect: effect.nodes?.start.textContent,
-						prev: prev?.nodes?.start.textContent,
-						start: start?.nodes?.start.textContent,
-						current: current?.nodes?.start.textContent,
-						effect_prev: effect.prev?.nodes?.start.textContent,
-						effect_next: effect.next?.nodes?.start.textContent
-					});
+					// console.group('move later items to the front');
+					// console.log({
+					// 	effect: effect.nodes?.start.textContent,
+					// 	prev: prev?.nodes?.start.textContent,
+					// 	start: start?.nodes?.start.textContent,
+					// 	current: current?.nodes?.start.textContent,
+					// 	effect_prev: effect.prev?.nodes?.start.textContent,
+					// 	effect_next: effect.next?.nodes?.start.textContent
+					// });
 
 					var a = matched[0];
 					var b = matched[matched.length - 1];
 
 					for (j = 0; j < matched.length; j += 1) {
-						console.group('moving', matched[j].nodes?.start.textContent);
+						// console.group('moving', matched[j].nodes?.start.textContent);
 						move(matched[j], start, anchor);
 
-						console.log(
-							'output:',
-							Array.from(document.querySelector('#output')?.childNodes)
-								.map((node) => {
-									if (node.nodeType === node.TEXT_NODE && /** @type {Text} */ (node).data === '') {
-										return '<anchor>';
-									}
+						// console.log(
+						// 	'output:',
+						// 	Array.from(document.querySelector('#output')?.childNodes)
+						// 		.map((node) => {
+						// 			if (node.nodeType === node.TEXT_NODE && /** @type {Text} */ (node).data === '') {
+						// 				return '<anchor>';
+						// 			}
 
-									return node.textContent;
-								})
-								.join(' ')
-						);
+						// 			return node.textContent;
+						// 		})
+						// 		.join(' ')
+						// );
 
-						console.groupEnd();
+						// console.groupEnd();
 					}
 
 					for (j = 0; j < stashed.length; j += 1) {
@@ -536,7 +537,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 					link(state, b, start);
 
 					log_state(state, 'after move');
-					console.groupEnd();
+					// console.groupEnd();
 
 					current = start;
 					prev = b;
@@ -549,14 +550,14 @@ function reconcile(state, array, anchor, flags, get_key) {
 					seen.delete(effect);
 					move(effect, current, anchor);
 
-					console.group('move earlier items back');
-					console.log({
-						effect: effect.nodes?.start.textContent,
-						prev: prev?.nodes?.start.textContent,
-						current: current?.nodes?.start.textContent,
-						effect_prev: effect.prev?.nodes?.start.textContent,
-						effect_next: effect.next?.nodes?.start.textContent
-					});
+					// console.group('move earlier items back');
+					// console.log({
+					// 	effect: effect.nodes?.start.textContent,
+					// 	prev: prev?.nodes?.start.textContent,
+					// 	current: current?.nodes?.start.textContent,
+					// 	effect_prev: effect.prev?.nodes?.start.textContent,
+					// 	effect_next: effect.next?.nodes?.start.textContent
+					// });
 
 					link(state, effect.prev, effect.next);
 					link(state, effect, prev === null ? state.effect.first : prev.next);
@@ -565,7 +566,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 					prev = effect;
 
 					log_state(state, 'after move');
-					console.groupEnd();
+					// console.groupEnd();
 				}
 
 				continue;
@@ -576,7 +577,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 			while (current !== null && current !== effect) {
 				(seen ??= new Set()).add(current);
-				console.log('stashing', current.nodes?.start.textContent);
+				// console.log('stashing', current.nodes?.start.textContent);
 				stashed.push(current);
 				current = current.next;
 			}
@@ -663,6 +664,7 @@ function reconcile(state, array, anchor, flags, get_key) {
  * @param {string} [message]
  */
 function log_state(state, message = 'log_state') {
+	return;
 	console.group(message);
 
 	let effect = state.effect.first;
@@ -762,17 +764,13 @@ function create_item(items, anchor, value, key, index, render_fn, flags, get_col
 function move(item, next, anchor) {
 	if (!item.nodes) return;
 
-	// var end = item.next ? /** @type {EffectNodes} */ (item.next.nodes).start : anchor;
+	var node = item.nodes.start;
 	var end = item.nodes.end;
 
 	var dest =
 		next && (next.f & EFFECT_OFFSCREEN) === 0
 			? /** @type {EffectNodes} */ (next.nodes).start
 			: anchor;
-
-	var node = /** @type {TemplateNode} */ (item.nodes.start);
-
-	console.log({ node, dest, end });
 
 	while (node !== null) {
 		var next_node = /** @type {TemplateNode} */ (get_next_sibling(node));
@@ -792,7 +790,7 @@ function move(item, next, anchor) {
  * @param {Effect | null} next
  */
 function link(state, prev, next) {
-	console.log('link', prev?.nodes?.start.textContent, next?.nodes?.start.textContent);
+	// console.log('link', prev?.nodes?.start.textContent, next?.nodes?.start.textContent);
 
 	if (prev === null) {
 		state.effect.first = next;
