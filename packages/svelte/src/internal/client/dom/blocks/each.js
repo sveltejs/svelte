@@ -43,6 +43,7 @@ import { current_batch } from '../../reactivity/batch.js';
 
 // When making substantive changes to this file, validate them with the each block stress test:
 // https://svelte.dev/playground/1972b2cf46564476ad8c8c6405b23b7b
+// This test also exists in this repo, as `packages/svelte/tests/manual/each-stress-test`
 
 /**
  * @param {any} _
