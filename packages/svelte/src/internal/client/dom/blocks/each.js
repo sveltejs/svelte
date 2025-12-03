@@ -107,15 +107,9 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 			parent_node.append(anchor);
 
 			state.items.clear();
-
-			for (i = 0; i < length; i++) {
-				destroy_effect(to_destroy[i]);
-			}
-
-			return;
 		}
 
-		destroy_effects(to_destroy);
+		destroy_effects(to_destroy, !fast_path);
 	} else {
 		group = {
 			remaining,
@@ -128,12 +122,13 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 
 /**
  * @param {Effect[]} to_destroy
+ * @param {boolean} remove_dom
  */
-function destroy_effects(to_destroy) {
+function destroy_effects(to_destroy, remove_dom = true) {
 	// TODO only destroy effects if no pending batch needs them. otherwise,
 	// just re-add the `EFFECT_OFFSCREEN` flag
 	for (var i = 0; i < to_destroy.length; i++) {
-		destroy_effect(to_destroy[i]);
+		destroy_effect(to_destroy[i], remove_dom);
 	}
 }
 
@@ -196,7 +191,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				if ((fallback.f & EFFECT_OFFSCREEN) === 0) {
 					resume_effect(fallback);
 				} else {
-					// TODO do we need to relink effects?
 					fallback.f ^= EFFECT_OFFSCREEN;
 					move(fallback, null, anchor);
 				}
