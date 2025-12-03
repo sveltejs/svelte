@@ -27,7 +27,7 @@ The Svelte team maintains a VS Code extension, and there are integrations with v
 For other editors, see the Editor Support collection:
 https://sveltesociety.dev/collection/editor-support-c85c080efc292a34
 
-You can also check your code from the command line using `sv check`(https://github.com/sveltejs/cli).
+You can also check your code from the command line using [`sv check`](https://github.com/sveltejs/cli).
 .
 
 
