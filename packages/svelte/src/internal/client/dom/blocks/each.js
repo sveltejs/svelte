@@ -172,7 +172,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		hydrate_next();
 	}
 
-	/** @type {{ fragment: DocumentFragment | null, effect: Effect } | null} */
+	/** @type {Effect | null} */
 	var fallback = null;
 
 	// TODO: ideally we could use derived for runes mode but because of the ability
@@ -194,16 +194,17 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 		if (fallback !== null) {
 			if (array.length === 0) {
-				if (fallback.fragment) {
-					anchor.before(fallback.fragment);
-					fallback.fragment = null;
+				if ((fallback.f & EFFECT_OFFSCREEN) === 0) {
+					console.warn('resuming fallback');
+					resume_effect(fallback);
 				} else {
-					resume_effect(fallback.effect);
+					console.warn('moving fallback onscreen');
+					// TODO do we need to relink effects?
+					fallback.f ^= EFFECT_OFFSCREEN;
+					move(fallback, null, anchor);
 				}
-
-				effect.first = fallback.effect;
 			} else {
-				pause_effect(fallback.effect, () => {
+				pause_effect(fallback, () => {
 					// TODO only null out if no pending batch needs it,
 					// otherwise re-add `fallback.fragment` and move the
 					// effect into it
@@ -211,6 +212,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				});
 			}
 		}
+
+		log_state(state, 'after reconcile');
 	}
 
 	var effect = block(() => {
@@ -287,19 +290,10 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 		if (length === 0 && fallback_fn && !fallback) {
 			if (first_run) {
-				fallback = {
-					fragment: null,
-					effect: branch(() => fallback_fn(anchor))
-				};
+				fallback = branch(() => fallback_fn(anchor));
 			} else {
-				var fragment = document.createDocumentFragment();
-				var target = create_text();
-				fragment.append(target);
-
-				fallback = {
-					fragment,
-					effect: branch(() => fallback_fn(target))
-				};
+				fallback = branch(() => fallback_fn((offscreen_anchor ??= create_text())));
+				fallback.f |= EFFECT_OFFSCREEN;
 			}
 		}
 
@@ -655,8 +649,6 @@ function reconcile(state, array, anchor, flags, get_key) {
 			}
 		});
 	}
-
-	log_state(state, 'after reconcile');
 }
 
 /**
@@ -664,7 +656,7 @@ function reconcile(state, array, anchor, flags, get_key) {
  * @param {string} [message]
  */
 function log_state(state, message = 'log_state') {
-	return;
+	// return;
 	console.group(message);
 
 	let effect = state.effect.first;
