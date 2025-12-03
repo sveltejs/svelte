@@ -633,7 +633,10 @@ function log_state(state, message = 'log_state') {
 			if (effect === state.effect.first) text += ' (FIRST)';
 			if (effect === state.effect.last) text += ' (LAST)';
 
-			console.log(`%c${text}`, `color: ${(effect.f & INERT) !== 0 ? 'grey' : 'black'}`);
+			console.log(
+				`%c${text}`,
+				`color: ${(effect.f & EFFECT_OFFSCREEN) !== 0 ? 'magenta' : (effect.f & INERT) !== 0 ? 'grey' : 'black'}`
+			);
 		}
 	} else {
 		console.log('no effects');
