@@ -21,7 +21,7 @@ export function head(hash, render_fn) {
 	if (hydrating) {
 		previous_hydrate_node = hydrate_node;
 
-		var head_anchor = /** @type {TemplateNode} */ (get_first_child(document.head));
+		var head_anchor = get_first_child(document.head);
 
 		// There might be multiple head blocks in our app, and they could have been
 		// rendered in an arbitrary order — find one corresponding to this component
@@ -29,7 +29,7 @@ export function head(hash, render_fn) {
 			head_anchor !== null &&
 			(head_anchor.nodeType !== COMMENT_NODE || /** @type {Comment} */ (head_anchor).data !== hash)
 		) {
-			head_anchor = /** @type {TemplateNode} */ (get_next_sibling(head_anchor));
+			head_anchor = get_next_sibling(head_anchor);
 		}
 
 		// If we can't find an opening hydration marker, skip hydration (this can happen

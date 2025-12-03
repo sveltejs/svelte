@@ -60,7 +60,7 @@ export function from_html(content, flags) {
 
 		if (node === undefined) {
 			node = create_fragment_from_html(has_start ? content : '<!>' + content);
-			if (!is_fragment) node = /** @type {Node} */ (get_first_child(node));
+			if (!is_fragment) node = /** @type {TemplateNode} */ (get_first_child(node));
 		}
 
 		var clone = /** @type {TemplateNode} */ (
@@ -113,7 +113,7 @@ function from_namespace(content, flags, ns = 'svg') {
 			if (is_fragment) {
 				node = document.createDocumentFragment();
 				while (get_first_child(root)) {
-					node.appendChild(/** @type {Node} */ (get_first_child(root)));
+					node.appendChild(/** @type {TemplateNode} */ (get_first_child(root)));
 				}
 			} else {
 				node = /** @type {Element} */ (get_first_child(root));
@@ -227,7 +227,7 @@ export function from_tree(structure, flags) {
 						: undefined;
 
 			node = fragment_from_tree(structure, ns);
-			if (!is_fragment) node = /** @type {Node} */ (get_first_child(node));
+			if (!is_fragment) node = /** @type {TemplateNode} */ (get_first_child(node));
 		}
 
 		var clone = /** @type {TemplateNode} */ (
