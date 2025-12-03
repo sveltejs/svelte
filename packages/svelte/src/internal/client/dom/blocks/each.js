@@ -75,7 +75,7 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 					if (group.remaining === 0) {
 						var groups = /** @type {Set<EachOutroGroup>} */ (state.outrogroups);
 
-						destroy_items(state, Array.from(group.effects));
+						destroy_effects(Array.from(group.effects));
 						groups.delete(group);
 
 						if (groups.size === 0) {
@@ -112,7 +112,7 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 			return;
 		}
 
-		destroy_items(state, to_destroy);
+		destroy_effects(to_destroy);
 	} else {
 		group = {
 			remaining,
@@ -124,12 +124,9 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 }
 
 /**
- * Pause multiple effects simultaneously, and coordinate their
- * subsequent destruction. Used in each blocks
- * @param {EachState} state
  * @param {Effect[]} to_destroy
  */
-function destroy_items(state, to_destroy) {
+function destroy_effects(to_destroy) {
 	// TODO only destroy effects if no pending batch needs them. otherwise,
 	// just re-add the `EFFECT_OFFSCREEN` flag
 	for (var i = 0; i < to_destroy.length; i++) {
@@ -518,7 +515,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 	if (state.outrogroups !== null) {
 		for (const group of state.outrogroups) {
 			if (group.remaining === 0) {
-				destroy_items(state, Array.from(group.effects));
+				destroy_effects(Array.from(group.effects));
 				state.outrogroups?.delete(group);
 			}
 		}
@@ -545,6 +542,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 			if ((current.f & INERT) === 0 && current !== state.fallback) {
 				to_destroy.push(current);
 			}
+
 			current = current.next;
 		}
 
@@ -622,15 +620,15 @@ function create_item(items, anchor, value, key, index, render_fn, flags, get_col
 }
 
 /**
- * @param {Effect} item
+ * @param {Effect} effect
  * @param {Effect | null} next
  * @param {Text | Element | Comment} anchor
  */
-function move(item, next, anchor) {
-	if (!item.nodes) return;
+function move(effect, next, anchor) {
+	if (!effect.nodes) return;
 
-	var node = item.nodes.start;
-	var end = item.nodes.end;
+	var node = effect.nodes.start;
+	var end = effect.nodes.end;
 
 	var dest =
 		next && (next.f & EFFECT_OFFSCREEN) === 0
@@ -655,8 +653,6 @@ function move(item, next, anchor) {
  * @param {Effect | null} next
  */
 function link(state, prev, next) {
-	// console.log('link', prev?.nodes?.start.textContent, next?.nodes?.start.textContent);
-
 	if (prev === null) {
 		state.effect.first = next;
 	} else {
