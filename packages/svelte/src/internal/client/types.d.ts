@@ -73,8 +73,8 @@ export type TemplateNode = Text | Element | Comment;
 export type Dom = TemplateNode | TemplateNode[];
 
 export type EachOutroGroup = {
-	remaining: number;
-	effects: Set<Effect>;
+	pending: Set<Effect>;
+	done: Set<Effect>;
 };
 
 export type EachState = {

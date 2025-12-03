@@ -69,16 +69,19 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 	var remaining = to_destroy.length;
 
 	for (var i = 0; i < length; i++) {
+		let effect = to_destroy[i];
+
 		pause_effect(
-			to_destroy[i],
+			effect,
 			() => {
 				if (group) {
-					group.remaining -= 1;
+					group.pending.delete(effect);
+					group.done.add(effect);
 
-					if (group.remaining === 0) {
+					if (group.pending.size === 0) {
 						var groups = /** @type {Set<EachOutroGroup>} */ (state.outrogroups);
 
-						destroy_effects(Array.from(group.effects));
+						destroy_effects(array_from(group.done));
 						groups.delete(group);
 
 						if (groups.size === 0) {
@@ -112,8 +115,8 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 		destroy_effects(to_destroy, !fast_path);
 	} else {
 		group = {
-			remaining,
-			effects: new Set(to_destroy)
+			pending: new Set(to_destroy),
+			done: new Set()
 		};
 
 		(state.outrogroups ??= new Set()).add(group);
@@ -399,10 +402,8 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 		if (state.outrogroups !== null) {
 			for (const group of state.outrogroups) {
-				if (group.effects.has(effect)) {
-					group.remaining -= 1;
-					group.effects.delete(effect);
-				}
+				group.pending.delete(effect);
+				group.done.delete(effect);
 			}
 		}
 
@@ -511,8 +512,8 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 	if (state.outrogroups !== null) {
 		for (const group of state.outrogroups) {
-			if (group.remaining === 0) {
-				destroy_effects(Array.from(group.effects));
+			if (group.pending.size === 0) {
+				destroy_effects(array_from(group.done));
 				state.outrogroups?.delete(group);
 			}
 		}
