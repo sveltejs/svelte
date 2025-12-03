@@ -494,11 +494,37 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 					prev = start.prev;
 
+					console.group('move later items to the front');
+					console.log({
+						effect: effect.nodes?.start.textContent,
+						prev: prev?.nodes?.start.textContent,
+						start: start?.nodes?.start.textContent,
+						current: current?.nodes?.start.textContent,
+						effect_prev: effect.prev?.nodes?.start.textContent,
+						effect_next: effect.next?.nodes?.start.textContent
+					});
+
 					var a = matched[0];
 					var b = matched[matched.length - 1];
 
 					for (j = 0; j < matched.length; j += 1) {
+						console.group('moving', matched[j].nodes?.start.textContent);
 						move(matched[j], start, anchor);
+
+						console.log(
+							'output:',
+							Array.from(document.querySelector('#output')?.childNodes)
+								.map((node) => {
+									if (node.nodeType === node.TEXT_NODE && /** @type {Text} */ (node).data === '') {
+										return '<anchor>';
+									}
+
+									return node.textContent;
+								})
+								.join(' ')
+						);
+
+						console.groupEnd();
 					}
 
 					for (j = 0; j < stashed.length; j += 1) {
@@ -508,6 +534,9 @@ function reconcile(state, array, anchor, flags, get_key) {
 					link(state, a.prev, b.next);
 					link(state, prev, a);
 					link(state, b, start);
+
+					log_state(state, 'after move');
+					console.groupEnd();
 
 					current = start;
 					prev = b;
@@ -547,6 +576,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 			while (current !== null && current !== effect) {
 				(seen ??= new Set()).add(current);
+				console.log('stashing', current.nodes?.start.textContent);
 				stashed.push(current);
 				current = current.next;
 			}
@@ -664,6 +694,19 @@ function log_state(state, message = 'log_state') {
 		console.log('no effects');
 	}
 
+	console.log(
+		'output:',
+		Array.from(document.querySelector('#output')?.childNodes)
+			.map((node) => {
+				if (node.nodeType === node.TEXT_NODE && /** @type {Text} */ (node).data === '') {
+					return '<anchor>';
+				}
+
+				return node.textContent;
+			})
+			.join(' ')
+	);
+
 	console.groupEnd();
 }
 
@@ -719,7 +762,8 @@ function create_item(items, anchor, value, key, index, render_fn, flags, get_col
 function move(item, next, anchor) {
 	if (!item.nodes) return;
 
-	var end = item.next ? /** @type {EffectNodes} */ (item.next.nodes).start : anchor;
+	// var end = item.next ? /** @type {EffectNodes} */ (item.next.nodes).start : anchor;
+	var end = item.nodes.end;
 
 	var dest =
 		next && (next.f & EFFECT_OFFSCREEN) === 0
@@ -728,9 +772,16 @@ function move(item, next, anchor) {
 
 	var node = /** @type {TemplateNode} */ (item.nodes.start);
 
-	while (node !== null && node !== end) {
+	console.log({ node, dest, end });
+
+	while (node !== null) {
 		var next_node = /** @type {TemplateNode} */ (get_next_sibling(node));
 		dest.before(node);
+
+		if (node === end) {
+			return;
+		}
+
 		node = next_node;
 	}
 }
