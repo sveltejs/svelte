@@ -74,7 +74,7 @@ export type Dom = TemplateNode | TemplateNode[];
 
 export type EachOutroGroup = {
 	remaining: number;
-	items: Set<EachItem>;
+	effects: Set<Effect>;
 };
 
 export type EachState = {
@@ -84,8 +84,6 @@ export type EachState = {
 	flags: number;
 	/** a key -> item lookup */
 	items: Map<any, EachItem>;
-	/** head of the linked list of items */
-	first: EachItem | null;
 	/** all outro groups that this item is a part of */
 	outrogroups: Set<EachOutroGroup> | null;
 };
@@ -99,8 +97,6 @@ export type EachItem = {
 	i: number | Source<number>;
 	/** true if onscreen */
 	o: boolean;
-	prev: EachItem | null;
-	next: EachItem | null;
 };
 
 export interface TransitionManager {

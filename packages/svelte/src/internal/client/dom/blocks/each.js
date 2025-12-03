@@ -53,7 +53,7 @@ export function index(_, i) {
  * Pause multiple effects simultaneously, and coordinate their
  * subsequent destruction. Used in each blocks
  * @param {EachState} state
- * @param {EachItem[]} to_destroy
+ * @param {Effect[]} to_destroy
  * @param {null | Node} controlled_anchor
  */
 function pause_effects(state, to_destroy, controlled_anchor) {
@@ -67,7 +67,7 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 
 	for (var i = 0; i < length; i++) {
 		pause_effect(
-			to_destroy[i].e,
+			to_destroy[i],
 			() => {
 				if (group) {
 					group.remaining -= 1;
@@ -75,7 +75,7 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 					if (group.remaining === 0) {
 						var groups = /** @type {Set<EachOutroGroup>} */ (state.outrogroups);
 
-						destroy_items(state, Array.from(group.items));
+						destroy_items(state, Array.from(group.effects));
 						groups.delete(group);
 
 						if (groups.size === 0) {
@@ -104,10 +104,9 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 			parent_node.append(anchor);
 
 			state.items.clear();
-			state.first = null;
 
 			for (i = 0; i < length; i++) {
-				destroy_effect(to_destroy[i].e);
+				destroy_effect(to_destroy[i]);
 			}
 
 			return;
@@ -117,7 +116,7 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 	} else {
 		group = {
 			remaining,
-			items: new Set(to_destroy)
+			effects: new Set(to_destroy)
 		};
 
 		(state.outrogroups ??= new Set()).add(group);
@@ -128,16 +127,16 @@ function pause_effects(state, to_destroy, controlled_anchor) {
  * Pause multiple effects simultaneously, and coordinate their
  * subsequent destruction. Used in each blocks
  * @param {EachState} state
- * @param {EachItem[]} to_destroy
+ * @param {Effect[]} to_destroy
  */
 function destroy_items(state, to_destroy) {
 	// TODO only destroy effects if no pending batch needs them. otherwise,
 	// just set `item.o` back to `false`
 	for (var i = 0; i < to_destroy.length; i++) {
-		var item = to_destroy[i];
+		var effect = to_destroy[i];
 
-		link(state, item.prev, item.next);
-		destroy_effect(item.e);
+		link(state, effect.prev, effect.next);
+		destroy_effect(effect);
 	}
 
 	log_state(state, 'after destroy_items');
@@ -158,9 +157,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 	/** @type {Map<any, EachItem>} */
 	var items = new Map();
-
-	/** @type {EachItem | null} */
-	var first = null;
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 	var is_reactive_value = (flags & EACH_ITEM_REACTIVE) !== 0;
@@ -241,7 +237,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 		var keys = new Set();
 		var batch = /** @type {Batch} */ (current_batch);
-		var prev = null;
 		var defer = should_defer_append();
 
 		for (var i = 0; i < length; i += 1) {
@@ -279,7 +274,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				item = create_item(
 					items,
 					first_run ? anchor : null,
-					prev,
 					value,
 					key,
 					i,
@@ -290,14 +284,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 				if (first_run) {
 					item.o = true;
-
-					if (prev === null) {
-						first = item;
-					} else {
-						prev.next = item;
-					}
-
-					prev = item;
 				}
 
 				items.set(key, item);
@@ -361,7 +347,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	});
 
 	/** @type {EachState} */
-	var state = { effect, flags, items, first, outrogroups: null };
+	var state = { effect, flags, items, outrogroups: null };
 
 	first_run = false;
 
@@ -385,21 +371,21 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 	var length = array.length;
 	var items = state.items;
-	var current = state.first;
+	var current = state.effect.first;
 
-	/** @type {undefined | Set<EachItem>} */
+	/** @type {undefined | Set<Effect>} */
 	var seen;
 
-	/** @type {EachItem | null} */
+	/** @type {Effect | null} */
 	var prev = null;
 
-	/** @type {undefined | Set<EachItem>} */
+	/** @type {undefined | Set<Effect>} */
 	var to_animate;
 
-	/** @type {EachItem[]} */
+	/** @type {Effect[]} */
 	var matched = [];
 
-	/** @type {EachItem[]} */
+	/** @type {Effect[]} */
 	var stashed = [];
 
 	/** @type {V} */
@@ -427,7 +413,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 			// else this would happen https://github.com/sveltejs/svelte/issues/17181
 			if (item.o) {
 				item.e.nodes?.a?.measure();
-				(to_animate ??= new Set()).add(item);
+				(to_animate ??= new Set()).add(item.e);
 			}
 		}
 	}
@@ -441,43 +427,45 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 		if (state.outrogroups !== null) {
 			for (const group of state.outrogroups) {
-				if (group.items.has(item)) {
+				if (group.effects.has(effect)) {
 					group.remaining -= 1;
-					group.items.delete(item);
+					group.effects.delete(effect);
 				}
 			}
 		}
 
-		state.first ??= item;
-
 		if (!item.o) {
 			item.o = true;
 
-			var next = prev ? prev.next : current;
+			if (effect === current) {
+				move(effect, null, anchor);
+			} else {
+				var next = prev ? prev.next : current;
 
-			link(state, prev, item);
-			link(state, item, next);
+				link(state, prev, effect);
+				link(state, effect, next);
 
-			move(item, next, anchor);
-			prev = item;
+				move(effect, next, anchor);
+				prev = effect;
 
-			matched = [];
-			stashed = [];
+				matched = [];
+				stashed = [];
 
-			current = prev.next;
-			continue;
+				current = prev.next;
+				continue;
+			}
 		}
 
 		if ((effect.f & INERT) !== 0) {
 			resume_effect(effect);
 			if (is_animated) {
 				effect.nodes?.a?.unfix();
-				(to_animate ??= new Set()).delete(item);
+				(to_animate ??= new Set()).delete(effect);
 			}
 		}
 
-		if (item !== current) {
-			if (seen !== undefined && seen.has(item)) {
+		if (effect !== current) {
+			if (seen !== undefined && seen.has(effect)) {
 				if (matched.length < stashed.length) {
 					// more efficient to move later items to the front
 					var start = stashed[0];
@@ -508,14 +496,14 @@ function reconcile(state, array, anchor, flags, get_key) {
 					stashed = [];
 				} else {
 					// more efficient to move earlier items to the back
-					seen.delete(item);
-					move(item, current, anchor);
+					seen.delete(effect);
+					move(effect, current, anchor);
 
-					link(state, item.prev, item.next);
-					link(state, item, prev === null ? state.first : prev.next);
-					link(state, prev, item);
+					link(state, effect.prev, effect.next);
+					link(state, effect, prev === null ? state.effect.first : prev.next);
+					link(state, prev, effect);
 
-					prev = item;
+					prev = effect;
 				}
 
 				continue;
@@ -524,7 +512,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 			matched = [];
 			stashed = [];
 
-			while (current !== null && current !== item) {
+			while (current !== null && current !== effect) {
 				(seen ??= new Set()).add(current);
 				stashed.push(current);
 				current = current.next;
@@ -535,9 +523,9 @@ function reconcile(state, array, anchor, flags, get_key) {
 			}
 		}
 
-		matched.push(item);
-		prev = item;
-		current = item.next;
+		matched.push(effect);
+		prev = effect;
+		current = effect.next;
 	}
 
 	let has_offscreen_items = items.size > length;
@@ -545,7 +533,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 	if (state.outrogroups !== null) {
 		for (const group of state.outrogroups) {
 			if (group.remaining === 0) {
-				destroy_items(state, Array.from(group.items));
+				destroy_items(state, Array.from(group.effects));
 				state.outrogroups?.delete(group);
 			}
 		}
@@ -556,19 +544,20 @@ function reconcile(state, array, anchor, flags, get_key) {
 	}
 
 	if (current !== null || seen !== undefined) {
+		/** @type {Effect[]} */
 		var to_destroy = [];
 
 		if (seen !== undefined) {
-			for (item of seen) {
-				if ((item.e.f & INERT) === 0) {
-					to_destroy.push(item);
+			for (effect of seen) {
+				if ((effect.f & INERT) === 0) {
+					to_destroy.push(effect);
 				}
 			}
 		}
 
 		while (current !== null) {
 			// If the each block isn't inert, then inert effects are currently outroing and will be removed once the transition is finished
-			if ((current.e.f & INERT) === 0) {
+			if ((current.f & INERT) === 0) {
 				to_destroy.push(current);
 			}
 			current = current.next;
@@ -583,11 +572,11 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 			if (is_animated) {
 				for (i = 0; i < destroy_length; i += 1) {
-					to_destroy[i].e.nodes?.a?.measure();
+					to_destroy[i].nodes?.a?.measure();
 				}
 
 				for (i = 0; i < destroy_length; i += 1) {
-					to_destroy[i].e.nodes?.a?.fix();
+					to_destroy[i].nodes?.a?.fix();
 				}
 			}
 
@@ -599,19 +588,19 @@ function reconcile(state, array, anchor, flags, get_key) {
 	if (has_offscreen_items) {
 		for (const item of items.values()) {
 			if (!item.o) {
-				link(state, prev, item);
-				prev = item;
+				link(state, prev, item.e);
+				prev = item.e;
 			}
 		}
 	}
 
-	state.effect.last = prev && prev.e;
+	state.effect.last = prev;
 
 	if (is_animated) {
 		queue_micro_task(() => {
 			if (to_animate === undefined) return;
-			for (item of to_animate) {
-				item.e.nodes?.a?.apply();
+			for (effect of to_animate) {
+				effect.nodes?.a?.apply();
 			}
 		});
 	}
@@ -656,7 +645,6 @@ function log_state(state, message = 'log_state') {
  * @template V
  * @param {Map<any, EachItem>} items
  * @param {Node | null} anchor
- * @param {EachItem | null} prev
  * @param {V} value
  * @param {unknown} key
  * @param {number} index
@@ -665,7 +653,7 @@ function log_state(state, message = 'log_state') {
  * @param {() => V[]} get_collection
  * @returns {EachItem}
  */
-function create_item(items, anchor, prev, value, key, index, render_fn, flags, get_collection) {
+function create_item(items, anchor, value, key, index, render_fn, flags, get_collection) {
 	var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
 	var mutable = (flags & EACH_ITEM_IMMUTABLE) === 0;
 
@@ -682,52 +670,37 @@ function create_item(items, anchor, prev, value, key, index, render_fn, flags, g
 		};
 	}
 
-	/** @type {EachItem} */
-	var item = {
-		i,
-		v,
-		// @ts-expect-error
-		e: null,
-		o: false,
-		prev,
-		next: null
-	};
-
 	if (anchor === null) {
 		var fragment = document.createDocumentFragment();
 		fragment.append((anchor = create_text()));
 	}
 
-	item.e = branch(() => {
-		render_fn(/** @type {Node} */ (anchor), v, i, get_collection);
+	return {
+		i,
+		v,
+		o: false,
+		e: branch(() => {
+			render_fn(/** @type {Node} */ (anchor), v, i, get_collection);
 
-		return () => {
-			items.delete(key);
-		};
-	});
-
-	if (prev !== null) {
-		// we only need to set `prev.next = item`, because
-		// `item.prev = prev` was set on initialization.
-		// the effects themselves are already linked
-		prev.next = item;
-	}
-
-	return item;
+			return () => {
+				items.delete(key);
+			};
+		})
+	};
 }
 
 /**
- * @param {EachItem} item
- * @param {EachItem | null} next
+ * @param {Effect} item
+ * @param {Effect | null} next
  * @param {Text | Element | Comment} anchor
  */
 function move(item, next, anchor) {
-	if (!item.e.nodes) return;
+	if (!item.nodes) return;
 
-	var end = item.next ? /** @type {EffectNodes} */ (item.next.e.nodes).start : anchor;
+	var end = item.next ? /** @type {EffectNodes} */ (item.next.nodes).start : anchor;
 
-	var dest = next ? /** @type {EffectNodes} */ (next.e.nodes).start : anchor;
-	var node = /** @type {TemplateNode} */ (item.e.nodes.start);
+	var dest = next ? /** @type {EffectNodes} */ (next.nodes).start : anchor;
+	var node = /** @type {TemplateNode} */ (item.nodes.start);
 
 	while (node !== null && node !== end) {
 		var next_node = /** @type {TemplateNode} */ (get_next_sibling(node));
@@ -738,28 +711,25 @@ function move(item, next, anchor) {
 
 /**
  * @param {EachState} state
- * @param {EachItem | null} prev
- * @param {EachItem | null} next
+ * @param {Effect | null} prev
+ * @param {Effect | null} next
  */
 function link(state, prev, next) {
 	if (prev === null) {
-		state.first = next;
-		state.effect.first = next && next.e;
+		state.effect.first = next;
 	} else {
-		if (prev.e.next) {
-			prev.e.next.prev = null;
+		if (prev.next) {
+			prev.next.prev = null;
 		}
 
 		prev.next = next;
-		prev.e.next = next && next.e;
 	}
 
 	if (next !== null) {
-		if (next.e.prev) {
-			next.e.prev.next = null;
+		if (next.prev) {
+			next.prev.next = null;
 		}
 
 		next.prev = prev;
-		next.e.prev = prev && prev.e;
 	}
 }
