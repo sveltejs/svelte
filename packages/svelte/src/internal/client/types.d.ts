@@ -86,6 +86,8 @@ export type EachState = {
 	items: Map<any, EachItem>;
 	/** all outro groups that this item is a part of */
 	outrogroups: Set<EachOutroGroup> | null;
+	/** `{:else}` effect */
+	fallback: Effect | null;
 };
 
 export type EachItem = {

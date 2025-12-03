@@ -190,15 +190,14 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	var first_run = true;
 
 	function commit() {
+		state.fallback = fallback;
 		reconcile(state, array, anchor, flags, get_key);
 
 		if (fallback !== null) {
 			if (array.length === 0) {
 				if ((fallback.f & EFFECT_OFFSCREEN) === 0) {
-					console.warn('resuming fallback');
 					resume_effect(fallback);
 				} else {
-					console.warn('moving fallback onscreen');
 					// TODO do we need to relink effects?
 					fallback.f ^= EFFECT_OFFSCREEN;
 					move(fallback, null, anchor);
@@ -334,7 +333,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	});
 
 	/** @type {EachState} */
-	var state = { effect, flags, items, outrogroups: null };
+	var state = { effect, flags, items, outrogroups: null, fallback };
 
 	first_run = false;
 
@@ -616,7 +615,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 		while (current !== null) {
 			// If the each block isn't inert, then inert effects are currently outroing and will be removed once the transition is finished
-			if ((current.f & INERT) === 0) {
+			if ((current.f & INERT) === 0 && current !== state.fallback) {
 				to_destroy.push(current);
 			}
 			current = current.next;
@@ -656,7 +655,7 @@ function reconcile(state, array, anchor, flags, get_key) {
  * @param {string} [message]
  */
 function log_state(state, message = 'log_state') {
-	// return;
+	return;
 	console.group(message);
 
 	let effect = state.effect.first;
