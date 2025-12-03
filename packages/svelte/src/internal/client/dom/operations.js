@@ -128,14 +128,13 @@ export function child(node, is_text) {
 
 /**
  * Don't mark this as side-effect-free, hydration needs to walk all nodes
- * @param {DocumentFragment | TemplateNode | TemplateNode[]} fragment
+ * @param {TemplateNode} node
  * @param {boolean} [is_text]
- * @returns {Node | null}
+ * @returns {TemplateNode | null}
  */
-export function first_child(fragment, is_text = false) {
+export function first_child(node, is_text = false) {
 	if (!hydrating) {
-		// when not hydrating, `fragment` is a `DocumentFragment` (the result of calling `open_frag`)
-		var first = /** @type {DocumentFragment} */ (get_first_child(/** @type {Node} */ (fragment)));
+		var first = get_first_child(node);
 
 		// TODO prevent user comments with the empty string when preserveComments is true
 		if (first instanceof Comment && first.data === '') return get_next_sibling(first);
