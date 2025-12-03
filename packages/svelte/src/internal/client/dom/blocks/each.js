@@ -516,8 +516,6 @@ function reconcile(state, array, anchor, flags, get_key) {
 		current = effect.next;
 	}
 
-	let has_offscreen_items = items.size > length;
-
 	if (state.outrogroups !== null) {
 		for (const group of state.outrogroups) {
 			if (group.remaining === 0) {
@@ -552,8 +550,6 @@ function reconcile(state, array, anchor, flags, get_key) {
 		}
 
 		var destroy_length = to_destroy.length;
-
-		has_offscreen_items = items.size - destroy_length > length;
 
 		if (destroy_length > 0) {
 			var controlled_anchor = (flags & EACH_IS_CONTROLLED) !== 0 && length === 0 ? anchor : null;
