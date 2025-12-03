@@ -1,3 +1,5 @@
+/// <reference types="esrap" />
+
 declare module 'svelte' {
 	/**
 	 * @deprecated In Svelte 4, components are classes. In Svelte 5, they are functions.
