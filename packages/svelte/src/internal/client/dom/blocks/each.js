@@ -131,7 +131,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		var parent_node = /** @type {Element} */ (node);
 
 		anchor = hydrating
-			? set_hydrate_node(/** @type {Comment | Text} */ (get_first_child(parent_node)))
+			? set_hydrate_node(get_first_child(parent_node))
 			: parent_node.appendChild(create_text());
 	}
 

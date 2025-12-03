@@ -548,7 +548,7 @@ export function destroy_effect(effect, remove_dom = true) {
 export function remove_effect_dom(node, end) {
 	while (node !== null) {
 		/** @type {TemplateNode | null} */
-		var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
+		var next = node === end ? null : get_next_sibling(node);
 
 		node.remove();
 		node = next;
@@ -715,7 +715,7 @@ export function move_effect(effect, fragment) {
 
 	while (node !== null) {
 		/** @type {TemplateNode | null} */
-		var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
+		var next = node === end ? null : get_next_sibling(node);
 
 		fragment.append(node);
 		node = next;

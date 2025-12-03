@@ -83,21 +83,19 @@ export function create_text(value = '') {
 /**
  * @template {Node} N
  * @param {N} node
- * @returns {Node | null}
  */
 /*@__NO_SIDE_EFFECTS__*/
 export function get_first_child(node) {
-	return first_child_getter.call(node);
+	return /** @type {TemplateNode | null} */ (first_child_getter.call(node));
 }
 
 /**
  * @template {Node} N
  * @param {N} node
- * @returns {Node | null}
  */
 /*@__NO_SIDE_EFFECTS__*/
 export function get_next_sibling(node) {
-	return next_sibling_getter.call(node);
+	return /** @type {TemplateNode | null} */ (next_sibling_getter.call(node));
 }
 
 /**
@@ -105,14 +103,14 @@ export function get_next_sibling(node) {
  * @template {Node} N
  * @param {N} node
  * @param {boolean} is_text
- * @returns {Node | null}
+ * @returns {TemplateNode | null}
  */
 export function child(node, is_text) {
 	if (!hydrating) {
 		return get_first_child(node);
 	}
 
-	var child = /** @type {TemplateNode} */ (get_first_child(hydrate_node));
+	var child = get_first_child(hydrate_node);
 
 	// Child can be null if we have an element with a single child, like `<p>{text}</p>`, where `text` is empty
 	if (child === null) {
@@ -163,7 +161,7 @@ export function first_child(fragment, is_text = false) {
  * @param {TemplateNode} node
  * @param {number} count
  * @param {boolean} is_text
- * @returns {Node | null}
+ * @returns {TemplateNode | null}
  */
 export function sibling(node, count = 1, is_text = false) {
 	let next_sibling = hydrating ? hydrate_node : node;
@@ -195,7 +193,7 @@ export function sibling(node, count = 1, is_text = false) {
 	}
 
 	set_hydrate_node(next_sibling);
-	return /** @type {TemplateNode} */ (next_sibling);
+	return next_sibling;
 }
 
 /**

@@ -99,12 +99,13 @@ export function hydrate(component, options) {
 	const previous_hydrate_node = hydrate_node;
 
 	try {
-		var anchor = /** @type {TemplateNode} */ (get_first_child(target));
+		var anchor = get_first_child(target);
+
 		while (
 			anchor &&
 			(anchor.nodeType !== COMMENT_NODE || /** @type {Comment} */ (anchor).data !== HYDRATION_START)
 		) {
-			anchor = /** @type {TemplateNode} */ (get_next_sibling(anchor));
+			anchor = get_next_sibling(anchor);
 		}
 
 		if (!anchor) {
