@@ -142,6 +142,10 @@ export function build_inline_component(node, expression, context) {
 					true
 				);
 			}
+		} else if (attribute.type === 'AttachTag') {
+			// While we don't run attachments on the server, on the client they might generate a surrounding blocker function which generates
+			// extra comments, and to prevent hydration mismatches we therefore have to account for them here to generate similar comments on the server.
+			optimiser.check_blockers(attribute.metadata.expression);
 		}
 	}
 
@@ -244,12 +248,7 @@ export function build_inline_component(node, expression, context) {
 			params.push(pattern);
 		}
 
-		const slot_fn = b.arrow(
-			params,
-			node.fragment.metadata.has_await
-				? b.block([create_async_block(b.block(block.body))])
-				: b.block(block.body)
-		);
+		const slot_fn = b.arrow(params, b.block(block.body));
 
 		if (slot_name === 'default' && !has_children_prop) {
 			if (

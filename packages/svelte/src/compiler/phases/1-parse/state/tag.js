@@ -177,7 +177,7 @@ function open(parser) {
 
 		if (parser.eat(',')) {
 			parser.allow_whitespace();
-			index = parser.read_identifier();
+			index = parser.read_identifier().name;
 			if (!index) {
 				e.expected_identifier(parser.index);
 			}
@@ -347,16 +347,10 @@ function open(parser) {
 	if (parser.eat('snippet')) {
 		parser.require_whitespace();
 
-		const name_start = parser.index;
-		let name = parser.read_identifier();
-		const name_end = parser.index;
+		const id = parser.read_identifier();
 
-		if (name === null) {
-			if (parser.loose) {
-				name = '';
-			} else {
-				e.expected_identifier(parser.index);
-			}
+		if (id.name === '' && !parser.loose) {
+			e.expected_identifier(parser.index);
 		}
 
 		parser.allow_whitespace();
@@ -415,12 +409,7 @@ function open(parser) {
 			type: 'SnippetBlock',
 			start,
 			end: -1,
-			expression: {
-				type: 'Identifier',
-				start: name_start,
-				end: name_end,
-				name
-			},
+			expression: id,
 			typeParams: type_params,
 			parameters: function_expression.params,
 			body: create_fragment(),
@@ -724,6 +713,7 @@ function special(parser) {
 				expression: new ExpressionMetadata()
 			}
 		});
+		return;
 	}
 
 	if (parser.eat('render')) {
@@ -755,5 +745,7 @@ function special(parser) {
 				snippets: new Set()
 			}
 		});
+		return;
 	}
+	e.expected_tag(parser.index);
 }

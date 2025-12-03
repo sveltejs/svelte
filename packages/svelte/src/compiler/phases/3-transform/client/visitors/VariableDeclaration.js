@@ -136,7 +136,8 @@ export function VariableDeclaration(node, context) {
 					}
 
 					if (is_state) {
-						value = b.call('$.state', value);
+						const callee = b.id('$.state', /** @type {CallExpression} */ (init).callee.loc);
+						value = b.call(callee, value);
 
 						if (dev) {
 							value = b.call('$.tag', value, b.literal(id.name));
@@ -305,7 +306,7 @@ export function VariableDeclaration(node, context) {
 			if (has_props) {
 				if (declarator.id.type !== 'Identifier') {
 					// Turn export let into props. It's really really weird because export let { x: foo, z: [bar]} = ..
-					// means that foo and bar are the props (i.e. the leafs are the prop names), not x and z.
+					// means that foo and bar are the props (i.e. the leaves are the prop names), not x and z.
 					const tmp = b.id(context.state.scope.generate('tmp'));
 					const { inserts, paths } = extract_paths(declarator.id, tmp);
 

@@ -14,7 +14,9 @@ import {
 	is_dirty,
 	untracking,
 	is_destroying_effect,
-	push_reaction_value
+	push_reaction_value,
+	set_is_updating_effect,
+	is_updating_effect
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -32,7 +34,8 @@ import {
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
-import { get_stack, tag_proxy } from '../dev/tracing.js';
+import { tag_proxy } from '../dev/tracing.js';
+import { get_error } from '../../shared/dev.js';
 import { component_context, is_runes } from '../context.js';
 import { Batch, batch_values, eager_block_effects, schedule_effect } from './batch.js';
 import { proxy } from '../proxy.js';
@@ -76,7 +79,7 @@ export function source(v, stack) {
 	};
 
 	if (DEV && tracing_mode_flag) {
-		signal.created = stack ?? get_stack('created at');
+		signal.created = stack ?? get_error('created at');
 		signal.updated = null;
 		signal.set_during_effect = false;
 		signal.trace = null;
@@ -186,18 +189,26 @@ export function internal_set(source, value) {
 
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {
-				const error = get_stack('updated at');
+				source.updated ??= new Map();
 
-				if (error !== null) {
-					source.updated ??= new Map();
-					let entry = source.updated.get(error.stack);
+				// For performance reasons, when not using $inspect.trace, we only start collecting stack traces
+				// after the same source has been updated more than 5 times in the same flush cycle.
+				const count = (source.updated.get('')?.count ?? 0) + 1;
+				source.updated.set('', { error: /** @type {any} */ (null), count });
 
-					if (!entry) {
-						entry = { error, count: 0 };
-						source.updated.set(error.stack, entry);
+				if (tracing_mode_flag || count > 5) {
+					const error = get_error('updated at');
+
+					if (error !== null) {
+						let entry = source.updated.get(error.stack);
+
+						if (!entry) {
+							entry = { error, count: 0 };
+							source.updated.set(error.stack, entry);
+						}
+
+						entry.count++;
 					}
-
-					entry.count++;
 				}
 			}
 
@@ -217,6 +228,8 @@ export function internal_set(source, value) {
 
 		source.wv = increment_write_version();
 
+		// For debugging, in case you want to know which reactions are being scheduled:
+		// log_reactions(source);
 		mark_reactions(source, DIRTY);
 
 		// It's possible that the current reaction might not have up-to-date dependencies
@@ -246,19 +259,25 @@ export function internal_set(source, value) {
 
 export function flush_eager_effects() {
 	eager_effects_deferred = false;
+	var prev_is_updating_effect = is_updating_effect;
+	set_is_updating_effect(true);
 
 	const inspects = Array.from(eager_effects);
 
-	for (const effect of inspects) {
-		// Mark clean inspect-effects as maybe dirty and then check their dirtiness
-		// instead of just updating the effects - this way we avoid overfiring.
-		if ((effect.f & CLEAN) !== 0) {
-			set_signal_status(effect, MAYBE_DIRTY);
-		}
+	try {
+		for (const effect of inspects) {
+			// Mark clean inspect-effects as maybe dirty and then check their dirtiness
+			// instead of just updating the effects - this way we avoid overfiring.
+			if ((effect.f & CLEAN) !== 0) {
+				set_signal_status(effect, MAYBE_DIRTY);
+			}
 
-		if (is_dirty(effect)) {
-			update_effect(effect);
+			if (is_dirty(effect)) {
+				update_effect(effect);
+			}
 		}
+	} finally {
+		set_is_updating_effect(prev_is_updating_effect);
 	}
 
 	eager_effects.clear();
@@ -347,10 +366,8 @@ function mark_reactions(signal, status) {
 				mark_reactions(derived, MAYBE_DIRTY);
 			}
 		} else if (not_dirty) {
-			if ((flags & BLOCK_EFFECT) !== 0) {
-				if (eager_block_effects !== null) {
-					eager_block_effects.add(/** @type {Effect} */ (reaction));
-				}
+			if ((flags & BLOCK_EFFECT) !== 0 && eager_block_effects !== null) {
+				eager_block_effects.add(/** @type {Effect} */ (reaction));
 			}
 
 			schedule_effect(/** @type {Effect} */ (reaction));

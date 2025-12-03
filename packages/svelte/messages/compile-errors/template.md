@@ -223,6 +223,10 @@ The same applies to components:
 
 > Expected identifier or destructure pattern
 
+## expected_tag
+
+> Expected 'html', 'render', 'attach', 'const', or 'debug'
+
 ## expected_token
 
 > Expected token %token%
@@ -230,6 +234,10 @@ The same applies to components:
 ## expected_whitespace
 
 > Expected whitespace
+
+## illegal_await_expression
+
+> `use:`, `transition:` and `animate:` directives, attachments and bindings do not support await expressions
 
 ## illegal_element_attribute
 

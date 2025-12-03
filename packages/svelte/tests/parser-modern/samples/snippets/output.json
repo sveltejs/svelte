@@ -20,9 +20,21 @@
 				"end": 81,
 				"expression": {
 					"type": "Identifier",
+					"name": "foo",
 					"start": 39,
 					"end": 42,
-					"name": "foo"
+					"loc": {
+						"start": {
+							"line": 3,
+							"column": 10,
+							"character": 39
+						},
+						"end": {
+							"line": 3,
+							"column": 13,
+							"character": 42
+						}
+					}
 				},
 				"parameters": [
 					{
@@ -87,6 +99,18 @@
 							"start": 58,
 							"end": 70,
 							"name": "p",
+							"name_loc": {
+								"start": {
+									"line": 4,
+									"column": 2,
+									"character": 59
+								},
+								"end": {
+									"line": 4,
+									"column": 3,
+									"character": 60
+								}
+							},
 							"attributes": [],
 							"fragment": {
 								"type": "Fragment",
@@ -218,6 +242,18 @@
 				"start": 8,
 				"end": 17,
 				"name": "lang",
+				"name_loc": {
+					"start": {
+						"line": 1,
+						"column": 8,
+						"character": 8
+					},
+					"end": {
+						"line": 1,
+						"column": 12,
+						"character": 12
+					}
+				},
 				"value": [
 					{
 						"start": 14,

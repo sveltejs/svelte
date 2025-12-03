@@ -5,7 +5,7 @@ import { createClassComponent } from 'svelte/legacy';
 import { proxy } from 'svelte/internal/client';
 import { flushSync, hydrate, mount, unmount } from 'svelte';
 import { render } from 'svelte/server';
-import { afterAll, assert, beforeAll } from 'vitest';
+import { afterAll, assert, beforeAll, beforeEach } from 'vitest';
 import { async_mode, compile_directory, fragments } from '../helpers.js';
 import { assert_html_equal, assert_html_equal_with_options } from '../html_equal.js';
 import { raf } from '../animation-helpers.js';
@@ -86,6 +86,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	}) => void | Promise<void>;
 	test_ssr?: (args: {
 		logs: any[];
+		warnings: any[];
 		assert: Assert;
 		variant: 'ssr' | 'async-ssr';
 	}) => void | Promise<void>;
@@ -102,6 +103,14 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	recover?: boolean;
 }
 
+declare global {
+	var __svelte:
+		| {
+				h?: Map<string, unknown>;
+		  }
+		| undefined;
+}
+
 let unhandled_rejection: Error | null = null;
 
 function unhandled_rejection_handler(err: Error) {
@@ -113,6 +122,10 @@ const listeners = process.rawListeners('unhandledRejection');
 beforeAll(() => {
 	// @ts-expect-error TODO huh?
 	process.prependListener('unhandledRejection', unhandled_rejection_handler);
+});
+
+beforeEach(() => {
+	delete globalThis?.__svelte?.h;
 });
 
 afterAll(() => {
@@ -252,7 +265,16 @@ async function run_test_variant(
 			i++;
 		}
 
-		if (str.slice(0, i).includes('logs')) {
+		let ssr_str = config.test_ssr?.toString() ?? '';
+		let sn = 0;
+		let si = 0;
+		while (si < ssr_str.length) {
+			if (ssr_str[si] === '(') sn++;
+			if (ssr_str[si] === ')' && --sn === 0) break;
+			si++;
+		}
+
+		if (str.slice(0, i).includes('logs') || ssr_str.slice(0, si).includes('logs')) {
 			// eslint-disable-next-line no-console
 			console.log = (...args) => {
 				logs.push(...args);
@@ -263,7 +285,11 @@ async function run_test_variant(
 			manual_hydrate = true;
 		}
 
-		if (str.slice(0, i).includes('warnings') || config.warnings) {
+		if (
+			str.slice(0, i).includes('warnings') ||
+			config.warnings ||
+			ssr_str.slice(0, si).includes('warnings')
+		) {
 			// eslint-disable-next-line no-console
 			console.warn = (...args) => {
 				if (typeof args[0] === 'string' && args[0].startsWith('%c[svelte]')) {
@@ -383,6 +409,7 @@ async function run_test_variant(
 			if (config.test_ssr) {
 				await config.test_ssr({
 					logs,
+					warnings,
 					// @ts-expect-error
 					assert: {
 						...assert,
@@ -403,6 +430,15 @@ async function run_test_variant(
 				throw new Error('Ensure dom mode is skipped');
 			};
 
+			const run_hydratables_init = () => {
+				if (variant !== 'hydrate') return;
+				const script = [...document.head.querySelectorAll('script').values()].find((script) =>
+					script.textContent?.includes('window.__svelte ??= {}')
+				)?.textContent;
+				if (!script) return;
+				(0, eval)(script);
+			};
+
 			if (runes) {
 				props = proxy({ ...(config.props || {}) });
 
@@ -411,6 +447,7 @@ async function run_test_variant(
 
 				if (manual_hydrate && variant === 'hydrate') {
 					hydrate_fn = () => {
+						run_hydratables_init();
 						instance = hydrate(mod.default, {
 							target,
 							props,
@@ -419,6 +456,7 @@ async function run_test_variant(
 						});
 					};
 				} else {
+					run_hydratables_init();
 					const render = variant === 'hydrate' ? hydrate : mount;
 					instance = render(mod.default, {
 						target,
@@ -428,6 +466,7 @@ async function run_test_variant(
 					});
 				}
 			} else {
+				run_hydratables_init();
 				instance = createClassComponent({
 					component: mod.default,
 					props: config.props,

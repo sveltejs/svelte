@@ -13,7 +13,8 @@ import type {
 	Program,
 	ChainExpression,
 	SimpleCallExpression,
-	SequenceExpression
+	SequenceExpression,
+	SourceLocation
 } from 'estree';
 import type { Scope } from '../phases/scope';
 import type { _CSS } from './css';
@@ -48,8 +49,6 @@ export namespace AST {
 			 * Whether or not we need to traverse into the fragment during mount/hydrate
 			 */
 			dynamic: boolean;
-			/** @deprecated we should get rid of this in favour of the `$$renderer.run` mechanism */
-			has_await: boolean;
 		};
 	}
 
@@ -190,16 +189,20 @@ export namespace AST {
 	}
 
 	/** An `animate:` directive */
-	export interface AnimateDirective extends BaseNode {
+	export interface AnimateDirective extends BaseAttribute {
 		type: 'AnimateDirective';
 		/** The 'x' in `animate:x` */
 		name: string;
 		/** The y in `animate:x={y}` */
 		expression: null | Expression;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	/** A `bind:` directive */
-	export interface BindDirective extends BaseNode {
+	export interface BindDirective extends BaseAttribute {
 		type: 'BindDirective';
 		/** The 'x' in `bind:x` */
 		name: string;
@@ -215,7 +218,7 @@ export namespace AST {
 	}
 
 	/** A `class:` directive */
-	export interface ClassDirective extends BaseNode {
+	export interface ClassDirective extends BaseAttribute {
 		type: 'ClassDirective';
 		/** The 'x' in `class:x` */
 		name: 'class';
@@ -228,7 +231,7 @@ export namespace AST {
 	}
 
 	/** A `let:` directive */
-	export interface LetDirective extends BaseNode {
+	export interface LetDirective extends BaseAttribute {
 		type: 'LetDirective';
 		/** The 'x' in `let:x` */
 		name: string;
@@ -237,7 +240,7 @@ export namespace AST {
 	}
 
 	/** An `on:` directive */
-	export interface OnDirective extends BaseNode {
+	export interface OnDirective extends BaseAttribute {
 		type: 'OnDirective';
 		/** The 'x' in `on:x` */
 		name: string;
@@ -261,7 +264,7 @@ export namespace AST {
 	}
 
 	/** A `style:` directive */
-	export interface StyleDirective extends BaseNode {
+	export interface StyleDirective extends BaseAttribute {
 		type: 'StyleDirective';
 		/** The 'x' in `style:x` */
 		name: string;
@@ -276,7 +279,7 @@ export namespace AST {
 
 	// TODO have separate in/out/transition directives
 	/** A `transition:`, `in:` or `out:` directive */
-	export interface TransitionDirective extends BaseNode {
+	export interface TransitionDirective extends BaseAttribute {
 		type: 'TransitionDirective';
 		/** The 'x' in `transition:x` */
 		name: string;
@@ -287,19 +290,28 @@ export namespace AST {
 		intro: boolean;
 		/** True if this is a `transition:` or `out:` directive */
 		outro: boolean;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
 	/** A `use:` directive */
-	export interface UseDirective extends BaseNode {
+	export interface UseDirective extends BaseAttribute {
 		type: 'UseDirective';
 		/** The 'x' in `use:x` */
 		name: string;
 		/** The 'y' in `use:x={y}` */
 		expression: null | Expression;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+		};
 	}
 
-	interface BaseElement extends BaseNode {
+	export interface BaseElement extends BaseNode {
 		name: string;
+		name_loc: SourceLocation;
 		attributes: Array<Attribute | SpreadAttribute | Directive | AttachTag>;
 		fragment: Fragment;
 	}
@@ -518,9 +530,13 @@ export namespace AST {
 		};
 	}
 
-	export interface Attribute extends BaseNode {
-		type: 'Attribute';
+	export interface BaseAttribute extends BaseNode {
 		name: string;
+		name_loc: SourceLocation | null;
+	}
+
+	export interface Attribute extends BaseAttribute {
+		type: 'Attribute';
 		/**
 		 * Quoted/string values are represented by an array, even if they contain a single expression like `"{x}"`
 		 */

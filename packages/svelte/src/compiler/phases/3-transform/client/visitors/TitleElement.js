@@ -20,7 +20,7 @@ export function TitleElement(node, context) {
 	const statement = b.stmt(
 		b.assignment(
 			'=',
-			b.id('$.document.title'),
+			b.member(b.id('$.document'), b.id('title', node.name_loc)),
 			evaluated.is_known
 				? b.literal(evaluated.value)
 				: evaluated.is_defined

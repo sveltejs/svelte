@@ -24,11 +24,34 @@ export class BranchManager {
 	/** @type {Map<Batch, Key>} */
 	#batches = new Map();
 
-	/** @type {Map<Key, Effect>} */
+	/**
+	 * Map of keys to effects that are currently rendered in the DOM.
+	 * These effects are visible and actively part of the document tree.
+	 * Example:
+	 * ```
+	 * {#if condition}
+	 * 	foo
+	 * {:else}
+	 * 	bar
+	 * {/if}
+	 * ```
+	 * Can result in the entries `true->Effect` and `false->Effect`
+	 * @type {Map<Key, Effect>}
+	 */
 	#onscreen = new Map();
 
-	/** @type {Map<Key, Branch>} */
+	/**
+	 * Similar to #onscreen with respect to the keys, but contains branches that are not yet
+	 * in the DOM, because their insertion is deferred.
+	 * @type {Map<Key, Branch>}
+	 */
 	#offscreen = new Map();
+
+	/**
+	 * Keys of effects that are currently outroing
+	 * @type {Set<Key>}
+	 */
+	#outroing = new Set();
 
 	/**
 	 * Whether to pause (i.e. outro) on change, or destroy immediately.
@@ -58,6 +81,7 @@ export class BranchManager {
 		if (onscreen) {
 			// effect is already in the DOM — abort any current outro
 			resume_effect(onscreen);
+			this.#outroing.delete(key);
 		} else {
 			// effect is currently offscreen. put it in the DOM
 			var offscreen = this.#offscreen.get(key);
@@ -96,7 +120,8 @@ export class BranchManager {
 		// outro/destroy all onscreen effects...
 		for (const [k, effect] of this.#onscreen) {
 			// ...except the one that was just committed
-			if (k === key) continue;
+			//    or those that are already outroing (else the transition is aborted and the effect destroyed right away)
+			if (k === key || this.#outroing.has(k)) continue;
 
 			const on_destroy = () => {
 				const keys = Array.from(this.#batches.values());
@@ -113,10 +138,12 @@ export class BranchManager {
 					destroy_effect(effect);
 				}
 
+				this.#outroing.delete(k);
 				this.#onscreen.delete(k);
 			};
 
 			if (this.#transition || !onscreen) {
+				this.#outroing.add(k);
 				pause_effect(effect, on_destroy, false);
 			} else {
 				on_destroy();

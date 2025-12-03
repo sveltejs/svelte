@@ -49,6 +49,18 @@
 							"start": 86,
 							"end": 111,
 							"name": "div",
+							"name_loc": {
+								"start": {
+									"line": 6,
+									"column": 2,
+									"character": 87
+								},
+								"end": {
+									"line": 6,
+									"column": 5,
+									"character": 90
+								}
+							},
 							"attributes": [],
 							"fragment": {
 								"type": "Fragment",
@@ -293,6 +305,18 @@
 				"start": 8,
 				"end": 17,
 				"name": "lang",
+				"name_loc": {
+					"start": {
+						"line": 1,
+						"column": 8,
+						"character": 8
+					},
+					"end": {
+						"line": 1,
+						"column": 12,
+						"character": 12
+					}
+				},
 				"value": [
 					{
 						"start": 14,

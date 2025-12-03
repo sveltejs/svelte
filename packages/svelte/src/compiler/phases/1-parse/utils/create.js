@@ -10,8 +10,7 @@ export function create_fragment(transparent = false) {
 		nodes: [],
 		metadata: {
 			transparent,
-			dynamic: false,
-			has_await: false
+			dynamic: false
 		}
 	};
 }

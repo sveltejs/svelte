@@ -114,7 +114,8 @@ export function Identifier(node, context) {
 						binding.initial.arguments[0].type !== 'SpreadElement' &&
 						!should_proxy(binding.initial.arguments[0], context.state.scope)))) ||
 				binding.kind === 'raw_state' ||
-				binding.kind === 'derived') &&
+				binding.kind === 'derived' ||
+				binding.kind === 'prop') &&
 			// We're only concerned with reads here
 			(parent.type !== 'AssignmentExpression' || parent.left !== node) &&
 			parent.type !== 'UpdateExpression'

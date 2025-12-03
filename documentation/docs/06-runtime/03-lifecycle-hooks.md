@@ -94,7 +94,7 @@ Svelte 4 contained hooks that ran before and after the component as a whole was 
 </script>
 ```
 
-Instead of `beforeUpdate` use `$effect.pre` and instead of `afterUpdate` use `$effect` instead - these runes offer more granular control and only react to the changes you're actually interested in.
+Instead of `beforeUpdate` use `$effect.pre` and instead of `afterUpdate` use `$effect` instead — these runes offer more granular control and only react to the changes you're actually interested in.
 
 ### Chat window example
 

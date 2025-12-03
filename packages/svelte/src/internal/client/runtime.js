@@ -21,7 +21,8 @@ import {
 	REACTION_IS_UPDATING,
 	STALE_REACTION,
 	ERROR_VALUE,
-	WAS_MARKED
+	WAS_MARKED,
+	MANAGED_EFFECT
 } from './constants.js';
 import { old_values } from './reactivity/sources.js';
 import {
@@ -32,7 +33,8 @@ import {
 	update_derived
 } from './reactivity/deriveds.js';
 import { async_mode_flag, tracing_mode_flag } from '../flags/index.js';
-import { tracing_expressions, get_stack } from './dev/tracing.js';
+import { tracing_expressions } from './dev/tracing.js';
+import { get_error } from '../shared/dev.js';
 import {
 	component_context,
 	dev_current_component_function,
@@ -43,7 +45,13 @@ import {
 	set_dev_stack
 } from './context.js';
 import * as w from './warnings.js';
-import { Batch, batch_values, flushSync, schedule_effect } from './reactivity/batch.js';
+import {
+	Batch,
+	batch_values,
+	current_batch,
+	flushSync,
+	schedule_effect
+} from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
@@ -270,7 +278,7 @@ export function update_reaction(reaction) {
 				reaction.deps = deps = new_deps;
 			}
 
-			if (is_updating_effect && effect_tracking() && (reaction.f & CONNECTED) !== 0) {
+			if (effect_tracking() && (reaction.f & CONNECTED) !== 0) {
 				for (i = skipped_deps; i < deps.length; i++) {
 					(deps[i].reactions ??= []).push(reaction);
 				}
@@ -421,7 +429,7 @@ export function update_effect(effect) {
 	}
 
 	try {
-		if ((flags & BLOCK_EFFECT) !== 0) {
+		if ((flags & (BLOCK_EFFECT | MANAGED_EFFECT)) !== 0) {
 			destroy_block_effect_children(effect);
 		} else {
 			destroy_effect_children(effect);
@@ -547,7 +555,7 @@ export function get(signal) {
 		// 	if (!tracking && !untracking && !was_read) {
 		// 		w.await_reactivity_loss(/** @type {string} */ (signal.label));
 
-		// 		var trace = get_stack('traced at');
+		// 		var trace = get_error('traced at');
 		// 		// eslint-disable-next-line no-console
 		// 		if (trace) console.warn(trace);
 		// 	}
@@ -566,7 +574,7 @@ export function get(signal) {
 			if (signal.trace) {
 				signal.trace();
 			} else {
-				var trace = get_stack('traced at');
+				var trace = get_error('traced at');
 
 				if (trace) {
 					var entry = tracing_expressions.entries.get(signal);
@@ -611,12 +619,11 @@ export function get(signal) {
 
 			return value;
 		}
-	} else if (is_derived) {
+	} else if (
+		is_derived &&
+		(!batch_values?.has(signal) || (current_batch?.is_fork && !effect_tracking()))
+	) {
 		derived = /** @type {Derived} */ (signal);
-
-		if (batch_values?.has(derived)) {
-			return batch_values.get(derived);
-		}
 
 		if (is_dirty(derived)) {
 			update_derived(derived);
@@ -625,7 +632,9 @@ export function get(signal) {
 		if (is_updating_effect && effect_tracking() && (derived.f & CONNECTED) === 0) {
 			reconnect(derived);
 		}
-	} else if (batch_values?.has(signal)) {
+	}
+
+	if (batch_values?.has(signal)) {
 		return batch_values.get(signal);
 	}
 

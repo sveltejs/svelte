@@ -11,7 +11,8 @@ import {
 	STALE_REACTION,
 	ASYNC,
 	WAS_MARKED,
-	CONNECTED
+	CONNECTED,
+	DESTROYED
 } from '#client/constants';
 import {
 	active_reaction,
@@ -28,7 +29,7 @@ import * as e from '../errors.js';
 import * as w from '../warnings.js';
 import { async_effect, destroy_effect, effect_tracking, teardown } from './effects.js';
 import { eager_effects, internal_set, set_eager_effects, source } from './sources.js';
-import { get_stack } from '../dev/tracing.js';
+import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { Boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
@@ -83,7 +84,7 @@ export function derived(fn) {
 	};
 
 	if (DEV && tracing_mode_flag) {
-		signal.created = get_stack('created at');
+		signal.created = get_error('created at');
 	}
 
 	return signal;
@@ -296,7 +297,9 @@ function get_derived_parent_effect(derived) {
 	var parent = derived.parent;
 	while (parent !== null) {
 		if ((parent.f & DERIVED) === 0) {
-			return /** @type {Effect} */ (parent);
+			// The original parent effect might've been destroyed but the derived
+			// is used elsewhere now - do not return the destroyed effect in that case
+			return (parent.f & DESTROYED) === 0 ? /** @type {Effect} */ (parent) : null;
 		}
 		parent = parent.parent;
 	}
@@ -353,9 +356,14 @@ export function update_derived(derived) {
 	var value = execute_derived(derived);
 
 	if (!derived.equals(value)) {
-		// TODO can we avoid setting `derived.v` when `batch_values !== null`,
-		// without causing the value to be stale later?
-		derived.v = value;
+		// in a fork, we don't update the underlying value, just `batch_values`.
+		// the underlying value will be updated when the fork is committed.
+		// otherwise, the next time we get here after a 'real world' state
+		// change, `derived.equals` may incorrectly return `true`
+		if (!current_batch?.is_fork) {
+			derived.v = value;
+		}
+
 		derived.wv = increment_write_version();
 	}
 
@@ -370,8 +378,8 @@ export function update_derived(derived) {
 	if (batch_values !== null) {
 		// only cache the value if we're in a tracking context, otherwise we won't
 		// clear the cache in `mark_reactions` when dependencies are updated
-		if (effect_tracking()) {
-			batch_values.set(derived, derived.v);
+		if (effect_tracking() || current_batch?.is_fork) {
+			batch_values.set(derived, value);
 		}
 	} else {
 		var status = (derived.f & CONNECTED) === 0 ? MAYBE_DIRTY : CLEAN;

@@ -1130,6 +1130,15 @@ export function expected_pattern(node) {
 }
 
 /**
+ * Expected 'html', 'render', 'attach', 'const', or 'debug'
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function expected_tag(node) {
+	e(node, 'expected_tag', `Expected 'html', 'render', 'attach', 'const', or 'debug'\nhttps://svelte.dev/e/expected_tag`);
+}
+
+/**
  * Expected token %token%
  * @param {null | number | NodeLike} node
  * @param {string} token
@@ -1146,6 +1155,15 @@ export function expected_token(node, token) {
  */
 export function expected_whitespace(node) {
 	e(node, 'expected_whitespace', `Expected whitespace\nhttps://svelte.dev/e/expected_whitespace`);
+}
+
+/**
+ * `use:`, `transition:` and `animate:` directives, attachments and bindings do not support await expressions
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function illegal_await_expression(node) {
+	e(node, 'illegal_await_expression', `\`use:\`, \`transition:\` and \`animate:\` directives, attachments and bindings do not support await expressions\nhttps://svelte.dev/e/illegal_await_expression`);
 }
 
 /**

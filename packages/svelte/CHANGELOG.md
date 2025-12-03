@@ -1,5 +1,133 @@
 # svelte
 
+## 5.45.5
+
+### Patch Changes
+
+- fix: correctly reconcile each blocks after outroing branches are resumed ([#17258](https://github.com/sveltejs/svelte/pull/17258))
+
+- fix: destroy each items after siblings are resumed ([#17258](https://github.com/sveltejs/svelte/pull/17258))
+
+## 5.45.4
+
+### Patch Changes
+
+- chore: move DOM-related effect properties to `effect.nodes` ([#17293](https://github.com/sveltejs/svelte/pull/17293))
+
+- fix: allow `$props.id()` to occur after an `await` ([#17285](https://github.com/sveltejs/svelte/pull/17285))
+
+- fix: keep reactions up to date even when read outside of effect ([#17295](https://github.com/sveltejs/svelte/pull/17295))
+
+## 5.45.3
+
+### Patch Changes
+
+- add props to state_referenced_locally ([#17266](https://github.com/sveltejs/svelte/pull/17266))
+
+- fix: preserve node locations for better sourcemaps ([#17269](https://github.com/sveltejs/svelte/pull/17269))
+
+- fix: handle cross-realm Promises in `hydratable` ([#17284](https://github.com/sveltejs/svelte/pull/17284))
+
+## 5.45.2
+
+### Patch Changes
+
+- fix: array destructuring after await ([#17254](https://github.com/sveltejs/svelte/pull/17254))
+
+- fix: throw on invalid `{@tag}`s ([#17256](https://github.com/sveltejs/svelte/pull/17256))
+
+## 5.45.1
+
+### Patch Changes
+
+- fix: link offscreen items and last effect in each block correctly ([#17240](https://github.com/sveltejs/svelte/pull/17240))
+
+## 5.45.0
+
+### Minor Changes
+
+- feat: add `print(...)` function ([#16188](https://github.com/sveltejs/svelte/pull/16188))
+
+## 5.44.1
+
+### Patch Changes
+
+- fix: await blockers before initialising const ([#17226](https://github.com/sveltejs/svelte/pull/17226))
+
+- fix: link offscreen items and last effect in each block correctly ([#17244](https://github.com/sveltejs/svelte/pull/17244))
+
+- fix: generate correct code for simple destructurings ([#17237](https://github.com/sveltejs/svelte/pull/17237))
+
+- fix: ensure each block animations don't mess with transitions ([#17238](https://github.com/sveltejs/svelte/pull/17238))
+
+## 5.44.0
+
+### Minor Changes
+
+- feat: `hydratable` API ([#17154](https://github.com/sveltejs/svelte/pull/17154))
+
+## 5.43.15
+
+### Patch Changes
+
+- fix: don't execute attachments and attribute effects eagerly ([#17208](https://github.com/sveltejs/svelte/pull/17208))
+
+- chore: lift "flushSync cannot be called in effects" restriction ([#17139](https://github.com/sveltejs/svelte/pull/17139))
+
+- fix: store forked derived values ([#17212](https://github.com/sveltejs/svelte/pull/17212))
+
+## 5.43.14
+
+### Patch Changes
+
+- fix: correctly migrate named self closing slots ([#17199](https://github.com/sveltejs/svelte/pull/17199))
+
+- fix: error at compile time instead of at runtime on await expressions inside bindings/transitions/animations/attachments ([#17198](https://github.com/sveltejs/svelte/pull/17198))
+
+- fix: take async blockers into account for bindings/transitions/animations/attachments ([#17198](https://github.com/sveltejs/svelte/pull/17198))
+
+## 5.43.13
+
+### Patch Changes
+
+- fix: don't set derived values during time traveling ([#17200](https://github.com/sveltejs/svelte/pull/17200))
+
+## 5.43.12
+
+### Patch Changes
+
+- fix: maintain correct linked list of effects when updating each blocks ([#17191](https://github.com/sveltejs/svelte/pull/17191))
+
+## 5.43.11
+
+### Patch Changes
+
+- perf: don't use tracing overeager during dev ([#17183](https://github.com/sveltejs/svelte/pull/17183))
+
+- fix: don't cancel transition of already outroing elements ([#17186](https://github.com/sveltejs/svelte/pull/17186))
+
+## 5.43.10
+
+### Patch Changes
+
+- fix: avoid other batches running with queued root effects of main batch ([#17145](https://github.com/sveltejs/svelte/pull/17145))
+
+## 5.43.9
+
+### Patch Changes
+
+- fix: correctly handle functions when determining async blockers ([#17137](https://github.com/sveltejs/svelte/pull/17137))
+
+- fix: keep deriveds reactive after their original parent effect was destroyed ([#17171](https://github.com/sveltejs/svelte/pull/17171))
+
+- fix: ensure eager effects don't break reactions chain ([#17138](https://github.com/sveltejs/svelte/pull/17138))
+
+- fix: ensure async `@const` in boundary hydrates correctly ([#17165](https://github.com/sveltejs/svelte/pull/17165))
+
+- fix: take blockers into account when creating `#await` blocks ([#17137](https://github.com/sveltejs/svelte/pull/17137))
+
+- fix: parallelize async `@const`s in the template ([#17165](https://github.com/sveltejs/svelte/pull/17165))
+
 ## 5.43.8
 
 ### Patch Changes

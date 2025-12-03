@@ -407,6 +407,7 @@ export function RegularElement(node, context) {
 			const synthetic_node = node.metadata.synthetic_value_node;
 			const synthetic_attribute = create_attribute(
 				'value',
+				null,
 				synthetic_node.start,
 				synthetic_node.end,
 				[synthetic_node]
