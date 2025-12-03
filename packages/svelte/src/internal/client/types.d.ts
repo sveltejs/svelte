@@ -90,9 +90,9 @@ export type EachState = {
 
 export type EachItem = {
 	/** value */
-	v: any | Source<any>;
+	v: Source<any> | null;
 	/** index */
-	i: number | Source<number>;
+	i: Source<number> | null;
 	/** effect */
 	e: Effect;
 };

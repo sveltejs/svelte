@@ -139,6 +139,8 @@ function destroy_items(state, to_destroy) {
 	log_state(state, 'after destroy_items');
 }
 
+var offscreen_anchor = create_text();
+
 /**
  * @template V
  * @param {Element | Comment} node The next sibling node, or the parent node if this is a 'controlled' block
@@ -156,8 +158,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	var items = new Map();
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-	var is_reactive_value = (flags & EACH_ITEM_REACTIVE) !== 0;
-	var is_reactive_index = (flags & EACH_INDEX_REACTIVE) !== 0;
 
 	if (is_controlled) {
 		var parent_node = /** @type {Element} */ (node);
@@ -236,7 +236,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		var batch = /** @type {Batch} */ (current_batch);
 		var defer = should_defer_append();
 
-		for (var i = 0; i < length; i += 1) {
+		for (var index = 0; index < length; index += 1) {
 			if (
 				hydrating &&
 				hydrate_node.nodeType === COMMENT_NODE &&
@@ -249,20 +249,15 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				set_hydrating(false);
 			}
 
-			var value = array[i];
-			var key = get_key(value, i);
+			var value = array[index];
+			var key = get_key(value, index);
 
 			var item = first_run ? null : items.get(key);
 
 			if (item) {
 				// update before reconciliation, to trigger any async updates
-				if (is_reactive_value) {
-					internal_set(item.v, value);
-				}
-
-				if (is_reactive_index) {
-					internal_set(/** @type {Value<number>} */ (item.i), i);
-				}
+				if (item.v) internal_set(item.v, value);
+				if (item.i) internal_set(item.i, index);
 
 				if (defer) {
 					batch.skipped_effects.delete(item.e);
@@ -270,10 +265,10 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			} else {
 				item = create_item(
 					items,
-					first_run ? anchor : null,
+					first_run ? anchor : offscreen_anchor,
 					value,
 					key,
-					i,
+					index,
 					render_fn,
 					flags,
 					get_collection
@@ -628,7 +623,7 @@ function log_state(state, message = 'log_state') {
 /**
  * @template V
  * @param {Map<any, EachItem>} items
- * @param {Node | null} anchor
+ * @param {Node} anchor
  * @param {V} value
  * @param {unknown} key
  * @param {number} index
@@ -638,32 +633,29 @@ function log_state(state, message = 'log_state') {
  * @returns {EachItem}
  */
 function create_item(items, anchor, value, key, index, render_fn, flags, get_collection) {
-	var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
-	var mutable = (flags & EACH_ITEM_IMMUTABLE) === 0;
+	var v =
+		(flags & EACH_ITEM_REACTIVE) !== 0
+			? (flags & EACH_ITEM_IMMUTABLE) === 0
+				? mutable_source(value, false, false)
+				: source(value)
+			: null;
 
-	var v = reactive ? (mutable ? mutable_source(value, false, false) : source(value)) : value;
-	var i = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
+	var i = (flags & EACH_INDEX_REACTIVE) !== 0 ? source(index) : null;
 
-	if (DEV && reactive) {
+	if (DEV && v) {
 		// For tracing purposes, we need to link the source signal we create with the
 		// collection + index so that tracing works as intended
-		/** @type {Value} */ (v).trace = () => {
-			var collection_index = typeof i === 'number' ? index : i.v;
+		v.trace = () => {
 			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-			get_collection()[collection_index];
+			get_collection()[i?.v ?? index];
 		};
-	}
-
-	if (anchor === null) {
-		var fragment = document.createDocumentFragment();
-		fragment.append((anchor = create_text()));
 	}
 
 	return {
 		v,
 		i,
 		e: branch(() => {
-			render_fn(/** @type {Node} */ (anchor), v, i, get_collection);
+			render_fn(anchor, v ?? value, i ?? index, get_collection);
 
 			return () => {
 				items.delete(key);
