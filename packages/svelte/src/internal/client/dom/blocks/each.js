@@ -133,10 +133,7 @@ function destroy_items(state, to_destroy) {
 	// TODO only destroy effects if no pending batch needs them. otherwise,
 	// just re-add the `EFFECT_OFFSCREEN` flag
 	for (var i = 0; i < to_destroy.length; i++) {
-		var effect = to_destroy[i];
-
-		link(state, effect.prev, effect.next);
-		destroy_effect(effect);
+		destroy_effect(to_destroy[i]);
 	}
 
 	log_state(state, 'after destroy_items');
@@ -580,20 +577,6 @@ function reconcile(state, array, anchor, flags, get_key) {
 		}
 	}
 
-	// Append offscreen items at the end
-	if (has_offscreen_items) {
-		for (var item of items.values()) {
-			effect = item.e;
-
-			if ((effect.f & EFFECT_OFFSCREEN) !== 0) {
-				link(state, prev, effect);
-				prev = effect;
-			}
-		}
-	}
-
-	state.effect.last = prev;
-
 	if (is_animated) {
 		queue_micro_task(() => {
 			if (to_animate === undefined) return;
@@ -624,14 +607,17 @@ function log_state(state, message = 'log_state') {
 
 			effects.push(effect);
 		}
-		console.log(
-			effects.map((effect) => {
-				let text = effect.nodes?.start?.textContent ?? '???';
-				if (effect === state.effect.first) text += ' (FIRST)';
-				if (effect === state.effect.last) text += ' (LAST)';
-				return text;
-			})
-		);
+
+		for (let i = 0; i < effects.length; i += 1) {
+			let effect = effects[i];
+
+			let text = effect.nodes?.start?.textContent ?? '???';
+
+			if (effect === state.effect.first) text += ' (FIRST)';
+			if (effect === state.effect.last) text += ' (LAST)';
+
+			console.log(`%c${text}`, `color: ${(effect.f & INERT) !== 0 ? 'grey' : 'black'}`);
+		}
 	} else {
 		console.log('no effects');
 	}
