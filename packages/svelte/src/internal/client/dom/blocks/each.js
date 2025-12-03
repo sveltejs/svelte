@@ -415,6 +415,8 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 		effect = /** @type {EachItem} */ (items.get(key)).e;
 
+		console.log({ key });
+
 		if (state.outrogroups !== null) {
 			for (const group of state.outrogroups) {
 				if (group.effects.has(effect)) {
@@ -427,31 +429,33 @@ function reconcile(state, array, anchor, flags, get_key) {
 		if ((effect.f & EFFECT_OFFSCREEN) !== 0) {
 			effect.f ^= EFFECT_OFFSCREEN;
 
+			console.group('insert offscreen effect');
+			console.log({
+				effect: effect.nodes?.start.textContent,
+				prev: prev?.nodes?.start.textContent,
+				next: next?.nodes?.start.textContent,
+				current: current?.nodes?.start.textContent,
+				effect_prev: effect.prev?.nodes?.start.textContent,
+				effect_next: effect.next?.nodes?.start.textContent
+			});
+
 			if (effect === current) {
+				console.warn('>>>> is current', effect.nodes?.start.textContent);
 				move(effect, null, anchor);
 			} else {
+				console.warn('>>>> is NOT current', effect.nodes?.start.textContent);
 				var next = prev ? prev.next : current;
 
 				if (effect === state.effect.last) {
 					state.effect.last = effect.prev;
 				}
 
-				console.group('insert offscreen effect');
-				console.log({
-					effect: effect.nodes?.start.textContent,
-					prev: prev?.nodes?.start.textContent,
-					next: next?.nodes?.start.textContent,
-					current: current?.nodes?.start.textContent,
-					effect_prev: effect.prev?.nodes?.start.textContent,
-					effect_next: effect.next?.nodes?.start.textContent
-				});
 				if (effect.prev) effect.prev.next = effect.next;
 				if (effect.next) effect.next.prev = effect.prev;
 				log_state(state, 'after yoink');
 				link(state, prev, effect);
 				link(state, effect, next);
 				log_state(state, 'after link');
-				console.groupEnd();
 
 				move(effect, next, anchor);
 				prev = effect;
@@ -462,6 +466,9 @@ function reconcile(state, array, anchor, flags, get_key) {
 				current = prev.next;
 				continue;
 			}
+
+			log_state(state, 'after insert');
+			console.groupEnd();
 		}
 
 		if ((effect.f & INERT) !== 0) {
@@ -513,11 +520,23 @@ function reconcile(state, array, anchor, flags, get_key) {
 					seen.delete(effect);
 					move(effect, current, anchor);
 
+					console.group('move earlier items back');
+					console.log({
+						effect: effect.nodes?.start.textContent,
+						prev: prev?.nodes?.start.textContent,
+						current: current?.nodes?.start.textContent,
+						effect_prev: effect.prev?.nodes?.start.textContent,
+						effect_next: effect.next?.nodes?.start.textContent
+					});
+
 					link(state, effect.prev, effect.next);
 					link(state, effect, prev === null ? state.effect.first : prev.next);
 					link(state, prev, effect);
 
 					prev = effect;
+
+					log_state(state, 'after move');
+					console.groupEnd();
 				}
 
 				continue;
@@ -537,7 +556,10 @@ function reconcile(state, array, anchor, flags, get_key) {
 			}
 		}
 
-		matched.push(effect);
+		if ((effect.f & EFFECT_OFFSCREEN) === 0) {
+			matched.push(effect);
+		}
+
 		prev = effect;
 		current = effect.next;
 	}
@@ -699,7 +721,11 @@ function move(item, next, anchor) {
 
 	var end = item.next ? /** @type {EffectNodes} */ (item.next.nodes).start : anchor;
 
-	var dest = next ? /** @type {EffectNodes} */ (next.nodes).start : anchor;
+	var dest =
+		next && (next.f & EFFECT_OFFSCREEN) === 0
+			? /** @type {EffectNodes} */ (next.nodes).start
+			: anchor;
+
 	var node = /** @type {TemplateNode} */ (item.nodes.start);
 
 	while (node !== null && node !== end) {
