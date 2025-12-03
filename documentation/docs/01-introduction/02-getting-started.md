@@ -23,9 +23,7 @@ There are also [plugins for other bundlers](/packages#bundler-plugins), but we r
 
 ## Editor tooling
 
-The Svelte team maintains a [VS Code extension](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode), and there are integrations with various other [editors](https://sveltesociety.dev/resources#editor-support) and tools as well.
-For other editors, see the Editor Support collection:
-https://sveltesociety.dev/collection/editor-support-c85c080efc292a34
+The Svelte team maintains a [VS Code extension](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode), and there are integrations with various other [editors](https://sveltesociety.dev/collection/editor-support-c85c080efc292a34) and tools as well.
 
 You can also check your code from the command line using `sv check`(https://github.com/sveltejs/cli).
 
