@@ -135,8 +135,6 @@ function destroy_items(state, to_destroy) {
 	for (var i = 0; i < to_destroy.length; i++) {
 		destroy_effect(to_destroy[i]);
 	}
-
-	log_state(state, 'after destroy_items');
 }
 
 /** @type {TemplateNode} */
@@ -211,8 +209,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				});
 			}
 		}
-
-		log_state(state, 'after reconcile');
 	}
 
 	var effect = block(() => {
@@ -386,8 +382,6 @@ function reconcile(state, array, anchor, flags, get_key) {
 	/** @type {number} */
 	var i;
 
-	log_state(state, 'before reconcile');
-
 	if (is_animated) {
 		for (i = 0; i < length; i += 1) {
 			value = array[i];
@@ -409,8 +403,6 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 		effect = /** @type {EachItem} */ (items.get(key)).e;
 
-		// console.log({ key });
-
 		if (state.outrogroups !== null) {
 			for (const group of state.outrogroups) {
 				if (group.effects.has(effect)) {
@@ -423,21 +415,9 @@ function reconcile(state, array, anchor, flags, get_key) {
 		if ((effect.f & EFFECT_OFFSCREEN) !== 0) {
 			effect.f ^= EFFECT_OFFSCREEN;
 
-			// console.group('insert offscreen effect');
-			// console.log({
-			// 	effect: effect.nodes?.start.textContent,
-			// 	prev: prev?.nodes?.start.textContent,
-			// 	next: next?.nodes?.start.textContent,
-			// 	current: current?.nodes?.start.textContent,
-			// 	effect_prev: effect.prev?.nodes?.start.textContent,
-			// 	effect_next: effect.next?.nodes?.start.textContent
-			// });
-
 			if (effect === current) {
-				// console.warn('>>>> is current', effect.nodes?.start.textContent);
 				move(effect, null, anchor);
 			} else {
-				// console.warn('>>>> is NOT current', effect.nodes?.start.textContent);
 				var next = prev ? prev.next : current;
 
 				if (effect === state.effect.last) {
@@ -446,10 +426,8 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 				if (effect.prev) effect.prev.next = effect.next;
 				if (effect.next) effect.next.prev = effect.prev;
-				log_state(state, 'after yoink');
 				link(state, prev, effect);
 				link(state, effect, next);
-				log_state(state, 'after link');
 
 				move(effect, next, anchor);
 				prev = effect;
@@ -460,9 +438,6 @@ function reconcile(state, array, anchor, flags, get_key) {
 				current = prev.next;
 				continue;
 			}
-
-			log_state(state, 'after insert');
-			// console.groupEnd();
 		}
 
 		if ((effect.f & INERT) !== 0) {
@@ -475,12 +450,6 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 		if (effect !== current) {
 			if (seen !== undefined && seen.has(effect)) {
-				// console.log({
-				// 	effect: effect.nodes?.start.textContent,
-				// 	matched: matched.map((e) => e.nodes?.start.textContent).join(' '),
-				// 	stashed: stashed.map((e) => e.nodes?.start.textContent).join(' ')
-				// });
-
 				if (matched.length < stashed.length) {
 					// more efficient to move later items to the front
 					var start = stashed[0];
@@ -488,37 +457,11 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 					prev = start.prev;
 
-					// console.group('move later items to the front');
-					// console.log({
-					// 	effect: effect.nodes?.start.textContent,
-					// 	prev: prev?.nodes?.start.textContent,
-					// 	start: start?.nodes?.start.textContent,
-					// 	current: current?.nodes?.start.textContent,
-					// 	effect_prev: effect.prev?.nodes?.start.textContent,
-					// 	effect_next: effect.next?.nodes?.start.textContent
-					// });
-
 					var a = matched[0];
 					var b = matched[matched.length - 1];
 
 					for (j = 0; j < matched.length; j += 1) {
-						// console.group('moving', matched[j].nodes?.start.textContent);
 						move(matched[j], start, anchor);
-
-						// console.log(
-						// 	'output:',
-						// 	Array.from(document.querySelector('#output')?.childNodes)
-						// 		.map((node) => {
-						// 			if (node.nodeType === node.TEXT_NODE && /** @type {Text} */ (node).data === '') {
-						// 				return '<anchor>';
-						// 			}
-
-						// 			return node.textContent;
-						// 		})
-						// 		.join(' ')
-						// );
-
-						// console.groupEnd();
 					}
 
 					for (j = 0; j < stashed.length; j += 1) {
@@ -528,9 +471,6 @@ function reconcile(state, array, anchor, flags, get_key) {
 					link(state, a.prev, b.next);
 					link(state, prev, a);
 					link(state, b, start);
-
-					log_state(state, 'after move');
-					// console.groupEnd();
 
 					current = start;
 					prev = b;
@@ -543,23 +483,11 @@ function reconcile(state, array, anchor, flags, get_key) {
 					seen.delete(effect);
 					move(effect, current, anchor);
 
-					// console.group('move earlier items back');
-					// console.log({
-					// 	effect: effect.nodes?.start.textContent,
-					// 	prev: prev?.nodes?.start.textContent,
-					// 	current: current?.nodes?.start.textContent,
-					// 	effect_prev: effect.prev?.nodes?.start.textContent,
-					// 	effect_next: effect.next?.nodes?.start.textContent
-					// });
-
 					link(state, effect.prev, effect.next);
 					link(state, effect, prev === null ? state.effect.first : prev.next);
 					link(state, prev, effect);
 
 					prev = effect;
-
-					log_state(state, 'after move');
-					// console.groupEnd();
 				}
 
 				continue;
@@ -570,7 +498,6 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 			while (current !== null && current !== effect) {
 				(seen ??= new Set()).add(current);
-				// console.log('stashing', current.nodes?.start.textContent);
 				stashed.push(current);
 				current = current.next;
 			}
@@ -648,59 +575,6 @@ function reconcile(state, array, anchor, flags, get_key) {
 			}
 		});
 	}
-}
-
-/**
- * @param {EachState} state
- * @param {string} [message]
- */
-function log_state(state, message = 'log_state') {
-	return;
-	console.group(message);
-
-	let effect = state.effect.first;
-
-	if (effect) {
-		let effects = [effect];
-		while ((effect = effect.next)) {
-			if (effects.includes(effect)) {
-				throw new Error('items loop');
-			}
-
-			effects.push(effect);
-		}
-
-		for (let i = 0; i < effects.length; i += 1) {
-			let effect = effects[i];
-
-			let text = effect.nodes?.start?.textContent ?? '???';
-
-			if (effect === state.effect.first) text += ' (FIRST)';
-			if (effect === state.effect.last) text += ' (LAST)';
-
-			console.log(
-				`%c${text}`,
-				`color: ${(effect.f & EFFECT_OFFSCREEN) !== 0 ? 'magenta' : (effect.f & INERT) !== 0 ? 'grey' : 'black'}`
-			);
-		}
-	} else {
-		console.log('no effects');
-	}
-
-	console.log(
-		'output:',
-		Array.from(document.querySelector('#output')?.childNodes)
-			.map((node) => {
-				if (node.nodeType === node.TEXT_NODE && /** @type {Text} */ (node).data === '') {
-					return '<anchor>';
-				}
-
-				return node.textContent;
-			})
-			.join(' ')
-	);
-
-	console.groupEnd();
 }
 
 /**
