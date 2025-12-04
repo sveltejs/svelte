@@ -483,6 +483,13 @@ export class Batch {
 	}
 
 	revive() {
+		// Ensure the batch is active before scheduling effects
+		// This is critical for fork commits (used by SvelteKit's preload)
+		var was_current = current_batch === this;
+		if (!was_current) {
+			this.activate();
+		}
+
 		for (const e of this.#dirty_effects) {
 			set_signal_status(e, DIRTY);
 			schedule_effect(e);
@@ -496,7 +503,14 @@ export class Batch {
 		this.#dirty_effects = [];
 		this.#maybe_dirty_effects = [];
 
-		this.flush();
+		// Always flush if we have pending work that needs to be resolved
+		if (this.#pending === 0 || queued_root_effects.length > 0) {
+			this.flush();
+		}
+
+		if (!was_current) {
+			this.deactivate();
+		}
 	}
 
 	/** @param {() => void} fn */
