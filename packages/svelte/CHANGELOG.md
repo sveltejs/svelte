@@ -1,5 +1,13 @@
 # svelte
 
+## 5.45.6
+
+### Patch Changes
+
+- fix: don't issue a11y warning for `<video>` without captions if it has no `src` ([#17311](https://github.com/sveltejs/svelte/pull/17311))
+
+- fix: add `srcObject` to permitted `<audio>`/`<video>` attributes ([#17310](https://github.com/sveltejs/svelte/pull/17310))
+
 ## 5.45.5
 
 ### Patch Changes
