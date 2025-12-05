@@ -78,9 +78,11 @@ function encode(key, value, unresolved) {
 			const placeholder = `"${uid++}"`;
 
 			(entry.promises ??= []).push(
-				p.then((s) => {
-					entry.serialized = entry.serialized.replace(placeholder, s);
-				})
+				p
+					.then((s) => {
+						entry.serialized = entry.serialized.replace(placeholder, s);
+					})
+					.catch(() => {})
 			);
 
 			return placeholder;
