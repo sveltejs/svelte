@@ -372,6 +372,40 @@ export class Renderer {
 	}
 
 	/**
+	 * Collect all content from this renderer (both head and body) synchronously.
+	 * @returns {AccumulatedContent}
+	 */
+	collect_sync() {
+		return this.#collect_content();
+	}
+
+	/**
+	 * Collect only head content from this renderer, filtering out body content.
+	 * Used when rendering components inside svelte:head to exclude body output.
+	 * @returns {string}
+	 */
+	get_head_only() {
+		const content = { head: '', body: '' };
+		for (const item of this.#out) {
+			if (typeof item === 'string') {
+				// Only collect if this item's parent type is head
+				if (this.type === 'head') {
+					content[this.type] += item;
+				}
+			} else if (item instanceof Renderer) {
+				// Recursively collect head content from child renderers
+				if (item.type === 'head') {
+					const child_head = item.get_head_only();
+					if (child_head) {
+						content.head += child_head;
+					}
+				}
+			}
+		}
+		return content.head;
+	}
+
+	/**
 	 * Only available on the server and when compiling with the `server` option.
 	 * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
 	 * @template {Record<string, any>} Props

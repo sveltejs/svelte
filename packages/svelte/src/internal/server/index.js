@@ -70,10 +70,30 @@ export function render(component, options = {}) {
  * @returns {void}
  */
 export function head(hash, renderer, fn) {
-	renderer.head((renderer) => {
-		renderer.push(`<!--${hash}-->`);
-		renderer.child(fn);
-		renderer.push(EMPTY_COMMENT);
+	renderer.head((parentRenderer) => {
+		parentRenderer.push(`<!--${hash}-->`);
+		
+		// Create a capture renderer to collect all output from the function
+		const captureRenderer = new Renderer(parentRenderer.global, parentRenderer);
+		const result = fn(captureRenderer);
+
+		if (result instanceof Promise) {
+			return result.then(() => {
+				// Collect content and only push head content
+				const content = captureRenderer.collect_sync();
+				if (content.head) {
+					parentRenderer.push(content.head);
+				}
+			});
+		} else {
+			// Collect content and only push head content
+			const content = captureRenderer.collect_sync();
+			if (content.head) {
+				parentRenderer.push(content.head);
+			}
+		}
+		
+		parentRenderer.push(EMPTY_COMMENT);
 	});
 }
 
