@@ -1,5 +1,6 @@
 ---
 title: {@html ...}
+use_cases: "raw HTML rendering, CMS content, markdown rendering, rich text, third-party HTML"
 ---
 
 To inject raw HTML into your component, use the `{@html ...}` tag:
