@@ -69,7 +69,7 @@ export function init_select(select) {
 		// (doesn't get notified of select value changes,
 		// because that property is not reflected as an attribute)
 		attributes: true,
-		attributeFilter: ['value']
+		attributeFilter: ['value', 'multiple']
 	});
 
 	teardown(() => {
