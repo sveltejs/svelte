@@ -348,7 +348,7 @@ const svelte_visitors = {
 			} else {
 				sequence.push(child_node);
 
-				if (next && child_node.type === 'RegularElement') flush();
+				if (child_node.type === 'RegularElement') flush();
 			}
 		}
 
@@ -357,18 +357,20 @@ const svelte_visitors = {
 		let multiline = false;
 		let width = 0;
 
-		const child_contexts = items.map((sequence) => {
-			const child_context = context.new();
+		const child_contexts = items
+			.filter((x) => x.length > 0)
+			.map((sequence) => {
+				const child_context = context.new();
 
-			for (const node of sequence) {
-				child_context.visit(node);
-				multiline ||= child_context.multiline;
-			}
+				for (const node of sequence) {
+					child_context.visit(node);
+					multiline ||= child_context.multiline;
+				}
 
-			width += child_context.measure();
+				width += child_context.measure();
 
-			return child_context;
-		});
+				return child_context;
+			});
 
 		multiline ||= width > LINE_BREAK_THRESHOLD;
 
