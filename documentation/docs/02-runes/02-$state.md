@@ -319,7 +319,7 @@ import { count } from './state.svelte.js';
 console.log(typeof count); // 'object', not 'number'
 ```
 
-This leaves you with two options for sharing state between modules — either don't reassign it...
+This leaves you with three options for sharing state between modules — either don't reassign it...
 
 ```js
 // This is allowed — since we're updating
@@ -334,7 +334,7 @@ export function increment() {
 }
 ```
 
-...or don't directly export it:
+...don't directly export it:
 
 ```js
 let count = $state(0);
@@ -345,5 +345,19 @@ export function getCount() {
 
 export function increment() {
 	count += 1;
+}
+```
+
+...or wrap your state in an instance of a class:
+
+```js
+class CountStore {
+  count = $state(0);
+}
+
+export let countStore = new CountStore();
+
+export function increment() {
+  countStore.count += 1;
 }
 ```
