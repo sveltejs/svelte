@@ -10,12 +10,32 @@
 </div>
 <p>
 	If you use VSCode, install the 
-
 	<a
 		href="https://marketplace.visualstudio.com/items?itemName=inlang.vs-code-extension"
 		target="_blank"
-	>
-		Sherlock i18n extension
-	</a>
+	>Sherlock i18n extension</a>
 	for a better i18n experience.
 </p>
+<Component>
+	<div>
+		<button>Hello, this is a test</button>
+		<button>Hello, this is a test</button>
+	</div>
+</Component>
+<Component>
+	<button>Hello, this is a test</button>
+	<button>Hello, this is a test</button>
+</Component>
+<button
+	class="foo bar"
+	aria-label="click"
+	onclick={() => console.log("clicked")}
+>Click me!</button>
+<button
+	class="foo bar"
+	aria-label="click"
+	onclick={() => console.log("clicked")}
+>
+	<span>some fancy looking</span>
+	<span>really long button text</span>
+</button>

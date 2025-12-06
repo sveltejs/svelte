@@ -3,6 +3,4 @@
 	style:color
 	style:width="12rem"
 	style:background-color={darkMode ? 'black' : 'white'}
->
-	...
-</div>
+>...</div>

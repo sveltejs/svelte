@@ -115,56 +115,16 @@ function base_element(node, context) {
 
 	const is_self_closing =
 		is_void(node.name) || (node.type === 'Component' && node.fragment.nodes.length === 0);
-	let multiline_content = false;
 
 	if (is_self_closing) {
 		child_context.write(`${multiline_attributes ? '' : ' '}/>`);
 	} else {
 		child_context.write('>');
-
-		// Process the element's content in a separate context for measurement
-		const content_context = child_context.new();
-		const allow_inline_content = child_context.measure() < LINE_BREAK_THRESHOLD;
-		block(content_context, node.fragment, allow_inline_content);
-
-		// Determine if content should be formatted on multiple lines
-		multiline_content = content_context.measure() > LINE_BREAK_THRESHOLD;
-
-		if (multiline_content) {
-			child_context.newline();
-
-			// Only indent if attributes are inline and content itself isn't already multiline
-			const should_indent = !multiline_attributes && !content_context.multiline;
-			if (should_indent) {
-				child_context.indent();
-			}
-
-			child_context.append(content_context);
-
-			if (should_indent) {
-				child_context.dedent();
-			}
-
-			child_context.newline();
-		} else {
-			child_context.append(content_context);
-		}
-
+		block(child_context, node.fragment, true);
 		child_context.write(`</${node.name}>`);
 	}
 
-	const break_line_after = child_context.measure() > LINE_BREAK_THRESHOLD;
-
-	if ((multiline_content || multiline_attributes) && !context.empty()) {
-		context.newline();
-	}
-
 	context.append(child_context);
-
-	if (is_self_closing) return;
-	if (multiline_content || multiline_attributes || break_line_after) {
-		context.newline();
-	}
 }
 
 /** @type {Visitors<AST.SvelteNode>} */
@@ -387,6 +347,8 @@ const svelte_visitors = {
 				}
 			} else {
 				sequence.push(child_node);
+
+				if (child_node.type === 'RegularElement') flush();
 			}
 		}
 
