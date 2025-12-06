@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: Don't crash on hydratable serialization failure
+fix: don't crash on `hydratable` serialization failure
