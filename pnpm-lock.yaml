@@ -96,8 +96,8 @@ importers:
         specifier: ^1.2.1
         version: 1.2.1
       esrap:
-        specifier: ^2.2.1
-        version: 2.2.1
+        specifier: https://pkg.pr.new/sveltejs/esrap@101
+        version: https://pkg.pr.new/sveltejs/esrap@101
       is-reference:
         specifier: ^3.0.3
         version: 3.0.3
@@ -1356,8 +1356,9 @@ packages:
     resolution: {integrity: sha512-YQLXUplAwJgCydQ78IMJywZCceoqk1oH01OERdSAJc/7U2AylwjhSCLDEtqwg811idIS/9fIU5GjG73IgjKMVg==}
     engines: {node: '>=0.10'}
 
-  esrap@2.2.1:
-    resolution: {integrity: sha512-GiYWG34AN/4CUyaWAgunGt0Rxvr1PTMlGC0vvEov/uOQYWne2bpN03Um+k8jT+q3op33mKouP2zeJ6OlM+qeUg==}
+  esrap@https://pkg.pr.new/sveltejs/esrap@101:
+    resolution: {tarball: https://pkg.pr.new/sveltejs/esrap@101}
+    version: 2.2.1
 
   esrecurse@4.3.0:
     resolution: {integrity: sha512-KmfKL3b6G+RXvP8N1vr3Tq1kL/oCFgn2NYXEtqP8/L3pKapUA4G8cFVaoF3SU323CD4XypR/ffioHmkti6/Tag==}
@@ -3720,7 +3721,7 @@ snapshots:
     dependencies:
       estraverse: 5.3.0
 
-  esrap@2.2.1:
+  esrap@https://pkg.pr.new/sveltejs/esrap@101:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
 
