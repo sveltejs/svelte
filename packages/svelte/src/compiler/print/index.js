@@ -348,7 +348,7 @@ const svelte_visitors = {
 			} else {
 				sequence.push(child_node);
 
-				if (child_node.type === 'RegularElement') flush();
+				if (next && child_node.type === 'RegularElement') flush();
 			}
 		}
 
