@@ -1239,6 +1239,7 @@ export interface HTMLMediaAttributes<T extends HTMLMediaElement> extends HTMLAtt
 	playsinline?: boolean | undefined | null;
 	preload?: 'auto' | 'none' | 'metadata' | '' | undefined | null;
 	src?: string | undefined | null;
+	srcobject?: MediaStream | MediaSource | File | Blob;
 	/**
 	 * a value between 0 and 1
 	 */
