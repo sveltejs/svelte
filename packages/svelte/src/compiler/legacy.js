@@ -540,10 +540,6 @@ export function convert(source, ast) {
 				};
 			},
 			SvelteHead(node, { visit }) {
-				console.log('inside svelte head...')
-				console.log(node.fragment.nodes.map(
-						(child) => /** @type {Legacy.LegacyElementLike} */ (visit(child))));
-						
 				return {
 					type: 'Head',
 					name: 'svelte:head',
