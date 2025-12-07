@@ -52,9 +52,9 @@ export function head(hash, render_fn) {
 		// Track nodes added to head before render
 		const head_children_before = Array.from(document.head.children);
 		const head_child_count_before = head_children_before.length;
-		
+
 		block(() => render_fn(anchor), HEAD_EFFECT);
-		
+
 		// After rendering, check if non-head elements were added and move them to body
 		const head_child_count_after = document.head.children.length;
 		if (head_child_count_after > head_children_before.length) {
@@ -62,7 +62,8 @@ export function head(hash, render_fn) {
 			const new_children = Array.from(document.head.children).slice(head_child_count_before);
 			for (const child of new_children) {
 				// Move non-head-specific elements to body
-				if (child.nodeType === 1) { // ELEMENT_NODE
+				if (child.nodeType === 1) {
+					// ELEMENT_NODE
 					const tag = child.tagName.toLowerCase();
 					// Only keep head-specific elements (script, meta, link, style, title, base, noscript)
 					// Move div, span, and other body elements to the body
