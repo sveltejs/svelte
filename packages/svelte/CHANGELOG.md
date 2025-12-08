@@ -1,5 +1,13 @@
 # svelte
 
+## 5.45.8
+
+### Patch Changes
+
+- fix: set AST `root.start` to `0` and `root.end` to `template.length` ([#17125](https://github.com/sveltejs/svelte/pull/17125))
+
+- fix: prevent erroneous `state_referenced_locally` warnings on prop fallbacks ([#17329](https://github.com/sveltejs/svelte/pull/17329))
+
 ## 5.45.7
 
 ### Patch Changes
