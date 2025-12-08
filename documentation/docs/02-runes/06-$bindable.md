@@ -4,9 +4,7 @@ title: $bindable
 
 Ordinarily, props go one way, from parent to child. This makes it easy to understand how data flows around your app.
 
-In Svelte, component props can be _bound_, which means that data can also flow _up_ from child to parent. This isn't something you should do often, but it can simplify your code if used sparingly and carefully.
-
-> [!NOTE] `$bindable` enables bidirectional bindings between components. While convenient, it should be used with care — frequent use can make your data flow unpredictable and your components harder to maintain. In most cases, prefer one-way data flow and explicit updates through events or stores.
+In Svelte, component props can be _bound_, which means that data can also flow _up_ from child to parent. This isn't something you should do often — overuse can make your data flow unpredictable and your components harder to maintain — but it can simplify your code if used sparingly and carefully.
 
 It also means that a state proxy can be _mutated_ in the child.
 
