@@ -158,9 +158,9 @@ export namespace _CSS {
 		| AttributeSelector
 		| PseudoElementSelector
 		| PseudoClassSelector
-		| Percentage //
+		| Percentage
 		| Nth
-		| NestingSelector; //
+		| NestingSelector;
 
 	export interface Combinator extends BaseNode {
 		type: 'Combinator';
