@@ -1,5 +1,15 @@
 # svelte
 
+## 5.45.7
+
+### Patch Changes
+
+- fix: Add `<textarea wrap="off">` as a valid attribute value ([#17326](https://github.com/sveltejs/svelte/pull/17326))
+
+- fix: add more css selectors to `print()` ([#17330](https://github.com/sveltejs/svelte/pull/17330))
+
+- fix: don't crash on `hydratable` serialization failure ([#17315](https://github.com/sveltejs/svelte/pull/17315))
+
 ## 5.45.6
 
 ### Patch Changes

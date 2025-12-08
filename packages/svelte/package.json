@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.45.6",
+  "version": "5.45.7",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
