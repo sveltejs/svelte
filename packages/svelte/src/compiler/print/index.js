@@ -181,6 +181,18 @@ const css_visitors = {
 		}
 	},
 
+	AttributeSelector(node, context) {
+		context.write(`[${node.name}`);
+		if (node.matcher) {
+			context.write(node.matcher);
+			context.write(`"${node.value}"`);
+			if (node.flags) {
+				context.write(` ${node.flags}`);
+			}
+		}
+		context.write(']');
+	},
+
 	Block(node, context) {
 		context.write('{');
 
@@ -221,8 +233,20 @@ const css_visitors = {
 		context.write(`${node.property}: ${node.value};`);
 	},
 
+	IdSelector(node, context) {
+		context.write(`#${node.name}`);
+	},
+
+	NestingSelector(node, context) {
+		context.write('&');
+	},
+
 	Nth(node, context) {
 		context.write(node.value);
+	},
+
+	Percentage(node, context) {
+		context.write(`${node.value}%`);
 	},
 
 	PseudoClassSelector(node, context) {
