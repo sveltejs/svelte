@@ -146,5 +146,15 @@ export function VariableDeclarator(node, context) {
 		}
 	}
 
-	context.next();
+	if (node.init && get_rune(node.init, context.state.scope) === '$props') {
+		// prevent erroneous `state_referenced_locally` warnings on prop fallbacks
+		context.visit(node.id, {
+			...context.state,
+			function_depth: context.state.function_depth + 1
+		});
+
+		context.visit(node.init);
+	} else {
+		context.next();
+	}
 }
