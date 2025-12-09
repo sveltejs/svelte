@@ -726,7 +726,7 @@ export class SSRState {
 	 * @param {string} id_prefix
 	 * @param {CspInternal} csp
 	 */
-	constructor(mode, id_prefix, csp = { hash: false }) {
+	constructor(mode, id_prefix = '', csp = { hash: false }) {
 		this.mode = mode;
 		this.csp = { ...csp, script_hashes: [] };
 

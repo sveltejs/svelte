@@ -47,7 +47,7 @@ test('child inherits parent type when not specified', () => {
 });
 
 test('get_path returns the path indexes to a renderer', () => {
-	const root = new Renderer(new SSRState('sync'));
+	const root = new Renderer(new SSRState('sync', ''));
 	let child_a: InstanceType<typeof Renderer> | undefined;
 	let child_b: InstanceType<typeof Renderer> | undefined;
 	let child_b_0: InstanceType<typeof Renderer> | undefined;
