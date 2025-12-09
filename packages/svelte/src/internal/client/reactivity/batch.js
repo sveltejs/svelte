@@ -128,15 +128,15 @@ export class Batch {
 
 	/**
 	 * Deferred effects (which run after async work has completed) that are DIRTY
-	 * @type {Effect[]}
+	 * @type {Set<Effect>}
 	 */
-	#dirty_effects = [];
+	#dirty_effects = new Set();
 
 	/**
 	 * Deferred effects that are MAYBE_DIRTY
-	 * @type {Effect[]}
+	 * @type {Set<Effect>}
 	 */
-	#maybe_dirty_effects = [];
+	#maybe_dirty_effects = new Set();
 
 	/**
 	 * A set of branches that still exist, but will be destroyed when this batch
@@ -279,8 +279,11 @@ export class Batch {
 	 */
 	#defer_effects(effects) {
 		for (const e of effects) {
-			const target = (e.f & DIRTY) !== 0 ? this.#dirty_effects : this.#maybe_dirty_effects;
-			target.push(e);
+			if ((e.f & DIRTY) !== 0) {
+				this.#dirty_effects.add(e);
+			} else if ((e.f & MAYBE_DIRTY) !== 0) {
+				this.#maybe_dirty_effects.add(e);
+			}
 
 			// Since we're not executing these effects now, we need to clear any WAS_MARKED flags
 			// so that other batches can correctly reach these effects during their own traversal
@@ -484,6 +487,7 @@ export class Batch {
 
 	revive() {
 		for (const e of this.#dirty_effects) {
+			this.#maybe_dirty_effects.delete(e);
 			set_signal_status(e, DIRTY);
 			schedule_effect(e);
 		}
@@ -492,9 +496,6 @@ export class Batch {
 			set_signal_status(e, MAYBE_DIRTY);
 			schedule_effect(e);
 		}
-
-		this.#dirty_effects = [];
-		this.#maybe_dirty_effects = [];
 
 		this.flush();
 	}
