@@ -382,7 +382,7 @@ export class Renderer {
 	static render(component, options = {}) {
 		/** @type {AccumulatedContent | undefined} */
 		let sync;
-		/** @type {Promise<AccumulatedContent & { hashes: { script: string[] } }> | undefined} */
+		/** @type {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }> | undefined} */
 		let async;
 
 		const result = /** @type {RenderOutput} */ ({});
