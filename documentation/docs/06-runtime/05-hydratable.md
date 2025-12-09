@@ -63,3 +63,19 @@ All data returned from a `hydratable` function must be serializable. But this do
 {await promises.one}
 {await promises.two}
 ```
+
+## CSP
+
+`hydratable` adds an inline `<script>` block to the `head` returned from `render`. If you're using CSP, this script will likely fail to run. You can provide a `nonce` to `render`:
+
+```ts
+const { head, body } = await render(App, { csp: { nonce: 'abcd123' } });
+```
+
+This will add the `nonce` to the script block. If you need to use hashes instead, you can do that as well:
+
+```ts
+const { head, body, hashes } = await render(App, { csp: { hash: true } });
+```
+
+`hashes.style` will be `["sha256-abcd123"]`. We recommend using `nonce` over hash if you can, as `hash` will interfere with streaming SSR in the future.
