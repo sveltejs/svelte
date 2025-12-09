@@ -1,5 +1,5 @@
 /** @import { Component } from 'svelte' */
-/** @import { CspInternal, HydratableContext, RenderOutput, SSRContext, SyncRenderOutput } from './types.js' */
+/** @import { CspInternal, HydratableContext, RenderOutput, SSRContext, SyncRenderOutput, Sha256Source } from './types.js' */
 /** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import { abort } from './abort-signal.js';
@@ -521,7 +521,7 @@ export class Renderer {
 	 * @template {Record<string, any>} Props
 	 * @param {Component<Props>} component
 	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: CspInternal }} options
-	 * @returns {Promise<AccumulatedContent & { hashes: { script: string[] } }>}
+	 * @returns {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }>}
 	 */
 	static async #render_async(component, options) {
 		const previous_context = ssr_context;
@@ -629,7 +629,7 @@ export class Renderer {
 	/**
 	 * @param {AccumulatedContent} content
 	 * @param {Renderer} renderer
-	 * @returns {AccumulatedContent & { hashes: { script: string[] } }}
+	 * @returns {AccumulatedContent & { hashes: { script: Sha256Source[] } }}
 	 */
 	static #close_render(content, renderer) {
 		for (const cleanup of renderer.#collect_on_destroy()) {
@@ -706,7 +706,7 @@ export class Renderer {
 }
 
 export class SSRState {
-	/** @readonly @type {CspInternal & { script_hashes: string[] }} */
+	/** @readonly @type {CspInternal & { script_hashes: Sha256Source[] }} */
 	csp;
 
 	/** @readonly @type {'sync' | 'async'} */
@@ -723,10 +723,10 @@ export class SSRState {
 
 	/**
 	 * @param {'sync' | 'async'} mode
-	 * @param {string} [id_prefix]
-	 * @param {CspInternal} [csp]
+	 * @param {string} id_prefix
+	 * @param {CspInternal} csp
 	 */
-	constructor(mode, id_prefix = '', csp = { hash: false }) {
+	constructor(mode, id_prefix, csp = { hash: false }) {
 		this.mode = mode;
 		this.csp = { ...csp, script_hashes: [] };
 

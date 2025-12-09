@@ -2566,7 +2566,9 @@ declare module 'svelte/server' {
 					}
 				]
 	): RenderOutput;
-	type Csp = { nonce: string } | { hash: true };
+	type Csp = { nonce: string } | { hash: boolean };
+
+	type Sha256Source = `sha256-${string}`;
 
 	interface SyncRenderOutput {
 		/** HTML that goes into the `<head>` */
@@ -2576,7 +2578,7 @@ declare module 'svelte/server' {
 		/** HTML that goes somewhere into the `<body>` */
 		body: string;
 		hashes: {
-			script: string[];
+			script: Sha256Source[];
 		};
 	}
 

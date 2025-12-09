@@ -15,7 +15,7 @@ export interface SSRContext {
 	element?: Element;
 }
 
-export type Csp = { nonce: string } | { hash: true };
+export type Csp = { nonce: string } | { hash: boolean };
 
 export type CspInternal = { nonce?: string; hash: boolean };
 
@@ -37,6 +37,8 @@ export interface RenderContext {
 	hydratable: HydratableContext;
 }
 
+export type Sha256Source = `sha256-${string}`;
+
 export interface SyncRenderOutput {
 	/** HTML that goes into the `<head>` */
 	head: string;
@@ -45,7 +47,7 @@ export interface SyncRenderOutput {
 	/** HTML that goes somewhere into the `<body>` */
 	body: string;
 	hashes: {
-		script: string[];
+		script: Sha256Source[];
 	};
 }
 
