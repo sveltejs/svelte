@@ -2576,7 +2576,7 @@ declare module 'svelte/server' {
 		/** HTML that goes somewhere into the `<body>` */
 		body: string;
 		hashes: {
-			script: string;
+			script: string[];
 		};
 	}
 

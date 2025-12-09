@@ -382,7 +382,7 @@ export class Renderer {
 	static render(component, options = {}) {
 		/** @type {AccumulatedContent | undefined} */
 		let sync;
-		/** @type {Promise<AccumulatedContent> | undefined} */
+		/** @type {Promise<AccumulatedContent & { hashes: { script: string[] } }> | undefined} */
 		let async;
 
 		const result = /** @type {RenderOutput} */ ({});
@@ -426,7 +426,7 @@ export class Renderer {
 								head: result.head,
 								body: result.body,
 								html: result.body,
-								hashes: { script: '' }
+								hashes: { script: [] }
 							});
 							return Promise.resolve(user_result);
 						}
@@ -521,7 +521,7 @@ export class Renderer {
 	 * @template {Record<string, any>} Props
 	 * @param {Component<Props>} component
 	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: CspInternal }} options
-	 * @returns {Promise<AccumulatedContent & { hashes: { script: string } }>}
+	 * @returns {Promise<AccumulatedContent & { hashes: { script: string[] } }>}
 	 */
 	static async #render_async(component, options) {
 		const previous_context = ssr_context;
@@ -629,7 +629,7 @@ export class Renderer {
 	/**
 	 * @param {AccumulatedContent} content
 	 * @param {Renderer} renderer
-	 * @returns {AccumulatedContent & { hashes: { script: string } }}
+	 * @returns {AccumulatedContent & { hashes: { script: string[] } }}
 	 */
 	static #close_render(content, renderer) {
 		for (const cleanup of renderer.#collect_on_destroy()) {
@@ -647,7 +647,7 @@ export class Renderer {
 			head,
 			body,
 			hashes: {
-				script: renderer.global.csp.script_hashes.map((hash) => `'${hash}'`).join(' ')
+				script: renderer.global.csp.script_hashes
 			}
 		};
 	}
@@ -694,8 +694,11 @@ export class Renderer {
 		if (this.global.csp.nonce) {
 			csp_attr = ` nonce="${this.global.csp.nonce}"`;
 		} else if (this.global.csp.hash) {
+			// note to future selves: this doesn't need to be optimized with a Map<body, hash>
+			// because the it's impossible for identical data to occur multiple times in a single render
+			// (this would require the same hydratable key:value pair to be serialized multiple times)
 			const hash = await sha256(body);
-			this.global.csp.script_hashes.push(hash);
+			this.global.csp.script_hashes.push(`sha256-${hash}`);
 		}
 
 		return `<script${csp_attr}>${body}</script>`;

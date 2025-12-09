@@ -22,7 +22,7 @@ interface SSRTest extends BaseTest {
 	withoutNormalizeHtml?: boolean;
 	error?: string;
 	csp?: { nonce: string } | { hash: true };
-	script_hashes?: string;
+	script_hashes?: string[];
 }
 
 // TODO remove this shim when we can
@@ -145,7 +145,7 @@ const { test, run } = suite_with_variants<SSRTest, 'sync' | 'async', CompileOpti
 		}
 
 		if (config.script_hashes !== undefined) {
-			assert.equal(hashes.script, config.script_hashes);
+			assert.deepEqual(hashes.script, config.script_hashes);
 		}
 	}
 );
