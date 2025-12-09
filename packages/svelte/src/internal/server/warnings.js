@@ -6,6 +6,23 @@ var bold = 'font-weight: bold';
 var normal = 'font-weight: normal';
 
 /**
+ * `csp.nonce` was set while `csp.hash` was `true`. These options cannot be used simultaneously.
+ * `nonce` will be used.
+ */
+export function invalid_csp() {
+	if (DEV) {
+		console.warn(
+			`%c[svelte] invalid_csp\n%c\`csp.nonce\` was set while \`csp.hash\` was \`true\`. These options cannot be used simultaneously.
+\`nonce\` will be used.\nhttps://svelte.dev/e/invalid_csp`,
+			bold,
+			normal
+		);
+	} else {
+		console.warn(`https://svelte.dev/e/invalid_csp`);
+	}
+}
+
+/**
  * A `hydratable` value with key `%key%` was created, but at least part of it was not used during the render.
  * 
  * The `hydratable` was initialized in:

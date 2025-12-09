@@ -1,4 +1,4 @@
-import type { RenderOutput } from '#server';
+import type { Csp, RenderOutput } from '#server';
 import type { ComponentProps, Component, SvelteComponent, ComponentType } from 'svelte';
 
 /**
@@ -16,6 +16,7 @@ export function render<
 					props?: Omit<Props, '$$slots' | '$$events'>;
 					context?: Map<any, any>;
 					idPrefix?: string;
+					csp?: Csp;
 				}
 			]
 		: [
@@ -24,6 +25,7 @@ export function render<
 					props: Omit<Props, '$$slots' | '$$events'>;
 					context?: Map<any, any>;
 					idPrefix?: string;
+					csp?: Csp;
 				}
 			]
 ): RenderOutput;

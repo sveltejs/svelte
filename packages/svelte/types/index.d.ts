@@ -2553,6 +2553,7 @@ declare module 'svelte/server' {
 						props?: Omit<Props, '$$slots' | '$$events'>;
 						context?: Map<any, any>;
 						idPrefix?: string;
+						csp?: Csp;
 					}
 				]
 			: [
@@ -2561,9 +2562,12 @@ declare module 'svelte/server' {
 						props: Omit<Props, '$$slots' | '$$events'>;
 						context?: Map<any, any>;
 						idPrefix?: string;
+						csp?: Csp;
 					}
 				]
 	): RenderOutput;
+	type Csp = { nonce: string } | { hash: true };
+
 	interface SyncRenderOutput {
 		/** HTML that goes into the `<head>` */
 		head: string;
@@ -2571,6 +2575,9 @@ declare module 'svelte/server' {
 		html: string;
 		/** HTML that goes somewhere into the `<body>` */
 		body: string;
+		hashes: {
+			script: string;
+		};
 	}
 
 	type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;

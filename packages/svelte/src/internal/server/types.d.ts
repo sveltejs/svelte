@@ -15,6 +15,10 @@ export interface SSRContext {
 	element?: Element;
 }
 
+export type Csp = { nonce: string } | { hash: true };
+
+export type CspInternal = { nonce?: string; hash: boolean };
+
 export interface HydratableLookupEntry {
 	value: unknown;
 	serialized: string;
@@ -40,6 +44,9 @@ export interface SyncRenderOutput {
 	html: string;
 	/** HTML that goes somewhere into the `<body>` */
 	body: string;
+	hashes: {
+		script: string;
+	};
 }
 
 export type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;
