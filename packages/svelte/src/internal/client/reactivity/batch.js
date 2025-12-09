@@ -44,7 +44,6 @@ import { eager_effect, unlink_effect } from './effects.js';
  *   effect: Effect | null;
  *   effects: Effect[];
  *   render_effects: Effect[];
- *   block_effects: Effect[];
  * }} EffectTarget
  */
 
@@ -167,8 +166,7 @@ export class Batch {
 			parent: null,
 			effect: null,
 			effects: [],
-			render_effects: [],
-			block_effects: []
+			render_effects: []
 		};
 
 		for (const root of root_effects) {
@@ -187,7 +185,6 @@ export class Batch {
 		if (this.is_deferred()) {
 			this.#defer_effects(target.effects);
 			this.#defer_effects(target.render_effects);
-			this.#defer_effects(target.block_effects);
 		} else {
 			// If sources are written to, then work needs to happen in a separate batch, else prior sources would be mixed with
 			// newly updated sources, which could lead to infinite loops when effects run over and over again.
@@ -228,8 +225,7 @@ export class Batch {
 					parent: target,
 					effect,
 					effects: [],
-					render_effects: [],
-					block_effects: []
+					render_effects: []
 				};
 			}
 
@@ -241,7 +237,7 @@ export class Batch {
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
 					target.render_effects.push(effect);
 				} else if (is_dirty(effect)) {
-					if ((effect.f & BLOCK_EFFECT) !== 0) target.block_effects.push(effect);
+					if ((effect.f & BLOCK_EFFECT) !== 0) this.#dirty_effects.add(effect);
 					update_effect(effect);
 				}
 
@@ -263,7 +259,6 @@ export class Batch {
 					// once the boundary is ready?
 					this.#defer_effects(target.effects);
 					this.#defer_effects(target.render_effects);
-					this.#defer_effects(target.block_effects);
 
 					target = /** @type {EffectTarget} */ (target.parent);
 				}
@@ -393,8 +388,7 @@ export class Batch {
 				parent: null,
 				effect: null,
 				effects: [],
-				render_effects: [],
-				block_effects: []
+				render_effects: []
 			};
 
 			for (const batch of batches) {
