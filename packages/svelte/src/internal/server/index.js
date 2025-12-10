@@ -67,7 +67,8 @@ export function render(component, options = {}) {
 				? { nonce: options.csp.nonce, hash: false }
 				: { hash: options.csp.hash, nonce: undefined };
 
-		if (csp.hash && csp.nonce) {
+		// @ts-expect-error
+		if (options.csp.hash && options.csp.nonce) {
 			w.invalid_csp();
 		}
 	}
