@@ -2152,10 +2152,10 @@ declare module 'svelte/motion' {
 		 * 	const tween = Tween.of(() => number);
 		 * </script>
 		 * ```
-		 *
+		 * 
 		 */
 		static of<U>(fn: () => U, options?: TweenedOptions<U> | undefined): Tween<U>;
-
+		
 		constructor(value: T, options?: TweenedOptions<T>);
 		/**
 		 * Sets `tween.target` to `value` and returns a `Promise` that resolves if and when `tween.current` catches up to it.
@@ -2206,7 +2206,7 @@ declare module 'svelte/reactivity' {
 	 * ```
 	 */
 	export class SvelteDate extends Date {
-
+		
 		constructor(...params: any[]);
 		#private;
 	}
@@ -2242,12 +2242,12 @@ declare module 'svelte/reactivity' {
 	 * {#if monkeys.has('🙊')}<p>speak no evil</p>{/if}
 	 * ```
 	 *
-	 *
+	 * 
 	 */
 	export class SvelteSet<T> extends Set<T> {
-
+		
 		constructor(value?: Iterable<T> | null | undefined);
-
+		
 		add(value: T): this;
 		#private;
 	}
@@ -2293,7 +2293,7 @@ declare module 'svelte/reactivity' {
 	 * {/if}
 	 * ```
 	 *
-	 *
+	 * 
 	 */
 	export class SvelteMap<K, V> extends Map<K, V> {
 
