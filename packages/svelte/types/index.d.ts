@@ -2296,9 +2296,9 @@ declare module 'svelte/reactivity' {
 	 * 
 	 */
 	export class SvelteMap<K, V> extends Map<K, V> {
-
+		
 		constructor(value?: Iterable<readonly [K, V]> | null | undefined);
-
+		
 		set(key: K, value: V): this;
 		#private;
 	}
@@ -2361,7 +2361,7 @@ declare module 'svelte/reactivity' {
 	 * ```
 	 */
 	export class SvelteURLSearchParams extends URLSearchParams {
-
+		
 		[REPLACE](params: URLSearchParams): void;
 		#private;
 	}
@@ -2437,7 +2437,7 @@ declare module 'svelte/reactivity' {
 	 */
 	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
 	class ReactiveValue<T> {
-
+		
 		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
 		get current(): T;
 		#private;
@@ -2502,7 +2502,7 @@ declare module 'svelte/reactivity/window' {
 		get current(): number | undefined;
 	};
 	class ReactiveValue<T> {
-
+		
 		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
 		get current(): T;
 		#private;
