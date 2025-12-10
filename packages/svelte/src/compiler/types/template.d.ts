@@ -88,7 +88,7 @@ export namespace AST {
 		css?: 'injected';
 		customElement?: {
 			tag?: string;
-			shadow?: 'open' | 'none' | ObjectExpression | ArrowFunctionExpression | undefined;
+			shadow?: 'open' | 'none' | ObjectExpression | undefined;
 			props?: Record<
 				string,
 				{

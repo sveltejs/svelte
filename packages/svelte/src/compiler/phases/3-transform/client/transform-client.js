@@ -644,7 +644,7 @@ export function client_component(analysis, options) {
 			analysis.exports.map(({ name, alias }) => b.literal(alias ?? name))
 		);
 
-		/** @type {ESTree.ObjectExpression | ESTree.ArrowFunctionExpression | undefined} */
+		/** @type {ESTree.ObjectExpression | undefined} */
 		let shadow_root_init;
 		if (typeof ce === 'boolean' || ce.shadow === 'open' || ce.shadow === undefined) {
 			shadow_root_init = b.object([b.init('mode', b.literal('open'))]);

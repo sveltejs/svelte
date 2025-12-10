@@ -135,10 +135,7 @@ export default function read_options(node) {
 				if (shadow) {
 					if (shadow.type === 'Literal' && (shadow.value === 'open' || shadow.value === 'none')) {
 						ce.shadow = shadow.value;
-					} else if (
-						shadow.type === 'ObjectExpression' ||
-						shadow.type === 'ArrowFunctionExpression'
-					) {
+					} else if (shadow.type === 'ObjectExpression') {
 						ce.shadow = shadow;
 					} else {
 						e.svelte_options_invalid_customelement_shadow(attribute);

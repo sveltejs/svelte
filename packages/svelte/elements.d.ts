@@ -2061,12 +2061,7 @@ export interface SvelteHTMLElements {
 			| undefined
 			| {
 					tag?: string;
-					shadow?:
-						| 'open'
-						| 'none'
-						| ShadowRootInit
-						| (() => ShadowRootInit | undefined)
-						| undefined;
+					shadow?: 'open' | 'none' | ShadowRootInit | undefined;
 					props?:
 						| Record<
 								string,

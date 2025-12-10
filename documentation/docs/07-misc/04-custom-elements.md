@@ -69,7 +69,7 @@ When constructing a custom element, you can tailor several aspects by defining `
 - `shadow`: an optional property to modify shadow root properties. It accepts the following values:
   - `"none"`: No shadow root is created. Note that styles are then no longer encapsulated, and you can't use slots.
   - `"open"`: Shadow root is created with the `mode: "open"` option.
-  - [`ShadowRootInit`](https://developer.mozilla.org/en-US/docs/Web/API/Element/attachShadow#options): You can pass a settings object that will be passed to `attachShadow()` when shadow root is created. Alternatively, you can pass function that returns the options object. This comes in handy if you need to dynamically change the options values - for example, based on value of environment variables.
+  - [`ShadowRootInit`](https://developer.mozilla.org/en-US/docs/Web/API/Element/attachShadow#options): You can pass a settings object that will be passed to `attachShadow()` when shadow root is created.
 - `props`: an optional property to modify certain details and behaviors of your component's properties. It offers the following settings:
   - `attribute: string`: To update a custom element's prop, you have two alternatives: either set the property on the custom element's reference as illustrated above or use an HTML attribute. For the latter, the default attribute name is the lowercase property name. Modify this by assigning `attribute: "<desired name>"`.
   - `reflect: boolean`: By default, updated prop values do not reflect back to the DOM. To enable this behavior, set `reflect: true`.
@@ -81,11 +81,11 @@ When constructing a custom element, you can tailor several aspects by defining `
 <svelte:options
 	customElement={{
 		tag: 'custom-element',
-		shadow: () => ({
+		shadow: {
 			mode: import.meta.env.DEV ? 'open' : 'closed',
 			clonable: true,
 			// ...
-		}),
+		},
 		props: {
 			name: { reflect: true, type: 'Number', attribute: 'element-index' }
 		},

@@ -2,4 +2,4 @@
 'svelte': minor
 ---
 
-feat: allow passing `ShadowRootInit` to custom element `shadow` option
+feat: allow passing `ShadowRootInit` object to custom element `shadow` option
