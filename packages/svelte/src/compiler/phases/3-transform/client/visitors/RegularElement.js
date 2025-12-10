@@ -407,6 +407,7 @@ export function RegularElement(node, context) {
 			const synthetic_node = node.metadata.synthetic_value_node;
 			const synthetic_attribute = create_attribute(
 				'value',
+				null,
 				synthetic_node.start,
 				synthetic_node.end,
 				[synthetic_node]
@@ -485,21 +486,6 @@ function setup_select_synchronization(value_binding, context) {
 }
 
 /**
- * @param {ExpressionMetadata} target
- * @param {ExpressionMetadata} source
- */
-function merge_metadata(target, source) {
-	target.has_assignment ||= source.has_assignment;
-	target.has_await ||= source.has_await;
-	target.has_call ||= source.has_call;
-	target.has_member_expression ||= source.has_member_expression;
-	target.has_state ||= source.has_state;
-
-	for (const r of source.references) target.references.add(r);
-	for (const b of source.dependencies) target.dependencies.add(b);
-}
-
-/**
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
  * @param {Memoizer} memoizer
@@ -514,7 +500,7 @@ export function build_class_directives_object(
 	const metadata = new ExpressionMetadata();
 
 	for (const d of class_directives) {
-		merge_metadata(metadata, d.metadata.expression);
+		metadata.merge(d.metadata.expression);
 
 		const expression = /** @type Expression */ (context.visit(d.expression));
 		properties.push(b.init(d.name, expression));
@@ -541,7 +527,7 @@ export function build_style_directives_object(
 	const metadata = new ExpressionMetadata();
 
 	for (const d of style_directives) {
-		merge_metadata(metadata, d.metadata.expression);
+		metadata.merge(d.metadata.expression);
 
 		const expression =
 			d.value === true

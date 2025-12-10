@@ -107,6 +107,9 @@ export function build_inline_component(node, expression, context) {
 
 			push_prop(b.prop('init', b.key(attribute.name), value));
 		} else if (attribute.type === 'BindDirective' && attribute.name !== 'this') {
+			// Bindings are a bit special: we don't want to add them to (async) deriveds but we need to check if they have blockers
+			optimiser.check_blockers(attribute.metadata.expression);
+
 			if (attribute.expression.type === 'SequenceExpression') {
 				const [get, set] = /** @type {SequenceExpression} */ (context.visit(attribute.expression))
 					.expressions;
@@ -139,6 +142,10 @@ export function build_inline_component(node, expression, context) {
 					true
 				);
 			}
+		} else if (attribute.type === 'AttachTag') {
+			// While we don't run attachments on the server, on the client they might generate a surrounding blocker function which generates
+			// extra comments, and to prevent hydration mismatches we therefore have to account for them here to generate similar comments on the server.
+			optimiser.check_blockers(attribute.metadata.expression);
 		}
 	}
 
@@ -241,12 +248,7 @@ export function build_inline_component(node, expression, context) {
 			params.push(pattern);
 		}
 
-		const slot_fn = b.arrow(
-			params,
-			node.fragment.metadata.has_await
-				? b.block([create_async_block(b.block(block.body))])
-				: b.block(block.body)
-		);
+		const slot_fn = b.arrow(params, b.block(block.body));
 
 		if (slot_name === 'default' && !has_children_prop) {
 			if (
@@ -322,17 +324,26 @@ export function build_inline_component(node, expression, context) {
 		);
 	}
 
+	if (node.type !== 'SvelteSelf') {
+		// Component name itself could be blocked on async values
+		optimiser.check_blockers(node.metadata.expression);
+	}
+
 	const is_async = optimiser.is_async();
 
 	if (is_async) {
 		statement = create_async_block(
-			b.block([optimiser.apply(), statement]),
+			b.block([
+				optimiser.apply(),
+				dynamic && custom_css_props.length === 0
+					? b.stmt(b.call('$$renderer.push', empty_comment))
+					: b.empty,
+				statement
+			]),
 			optimiser.blockers(),
 			optimiser.has_await
 		);
-	}
-
-	if (dynamic && custom_css_props.length === 0) {
+	} else if (dynamic && custom_css_props.length === 0) {
 		context.state.template.push(empty_comment);
 	}
 

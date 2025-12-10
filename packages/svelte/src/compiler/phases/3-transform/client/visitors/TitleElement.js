@@ -20,7 +20,7 @@ export function TitleElement(node, context) {
 	const statement = b.stmt(
 		b.assignment(
 			'=',
-			b.id('$.document.title'),
+			b.member(b.id('$.document'), b.id('title', node.name_loc)),
 			evaluated.is_known
 				? b.literal(evaluated.value)
 				: evaluated.is_defined
@@ -29,17 +29,16 @@ export function TitleElement(node, context) {
 		)
 	);
 
-	// Always in an $effect so it only changes the title once async work is done
+	// Make sure it only changes the title once async work is done
 	if (has_state) {
 		context.state.after_update.push(
 			b.stmt(
 				b.call(
-					'$.template_effect',
+					'$.deferred_template_effect',
 					b.arrow(memoizer.apply(), b.block([statement])),
 					memoizer.sync_values(),
 					memoizer.async_values(),
-					memoizer.blockers(),
-					b.true
+					memoizer.blockers()
 				)
 			)
 		);

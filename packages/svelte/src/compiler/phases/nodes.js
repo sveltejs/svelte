@@ -1,4 +1,4 @@
-/** @import { Expression, PrivateIdentifier } from 'estree' */
+/** @import { Expression, PrivateIdentifier, SourceLocation } from 'estree' */
 /** @import { AST, Binding } from '#compiler' */
 import * as b from '#compiler/builders';
 
@@ -47,17 +47,19 @@ export function is_custom_element_node(node) {
 
 /**
  * @param {string} name
+ * @param {SourceLocation | null} name_loc
  * @param {number} start
  * @param {number} end
  * @param {AST.Attribute['value']} value
  * @returns {AST.Attribute}
  */
-export function create_attribute(name, start, end, value) {
+export function create_attribute(name, name_loc, start, end, value) {
 	return {
 		type: 'Attribute',
 		start,
 		end,
 		name,
+		name_loc,
 		value,
 		metadata: {
 			delegated: false,
@@ -112,8 +114,27 @@ export class ExpressionMetadata {
 		return b.array([...this.#get_blockers()]);
 	}
 
+	has_blockers() {
+		return this.#get_blockers().size > 0;
+	}
+
 	is_async() {
 		return this.has_await || this.#get_blockers().size > 0;
+	}
+
+	/**
+	 * @param {ExpressionMetadata} source
+	 */
+	merge(source) {
+		this.has_state ||= source.has_state;
+		this.has_call ||= source.has_call;
+		this.has_await ||= source.has_await;
+		this.has_member_expression ||= source.has_member_expression;
+		this.has_assignment ||= source.has_assignment;
+		this.#blockers = null; // so that blockers are recalculated
+
+		for (const r of source.references) this.references.add(r);
+		for (const b of source.dependencies) this.dependencies.add(b);
 	}
 }
 

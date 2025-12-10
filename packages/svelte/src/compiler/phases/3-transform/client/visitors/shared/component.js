@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, SourceLocation, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
@@ -12,10 +12,11 @@ import { determine_slot } from '../../../../../utils/slot.js';
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
  * @param {string} component_name
+ * @param {SourceLocation | null} loc
  * @param {ComponentContext} context
  * @returns {Statement}
  */
-export function build_component(node, component_name, context) {
+export function build_component(node, component_name, loc, context) {
 	/** @type {Expression} */
 	const anchor = context.state.node;
 
@@ -171,8 +172,6 @@ export function build_component(node, component_name, context) {
 				attribute.value,
 				context,
 				(value, metadata) => {
-					if (!metadata.has_state && !metadata.has_await) return value;
-
 					// When we have a non-simple computation, anything other than an Identifier or Member expression,
 					// then there's a good chance it needs to be memoized to avoid over-firing when read within the
 					// child component (e.g. `active={i === index}`)
@@ -198,7 +197,12 @@ export function build_component(node, component_name, context) {
 				push_prop(b.init(attribute.name, value));
 			}
 		} else if (attribute.type === 'BindDirective') {
-			const expression = /** @type {Expression} */ (context.visit(attribute.expression));
+			const expression = /** @type {Expression} */ (
+				context.visit(attribute.expression, { ...context.state, memoizer })
+			);
+
+			// Bindings are a bit special: we don't want to add them to (async) deriveds but we need to check if they have blockers
+			memoizer.check_blockers(attribute.metadata.expression);
 
 			if (
 				dev &&
@@ -256,15 +260,9 @@ export function build_component(node, component_name, context) {
 						attribute.expression.type === 'Identifier' &&
 						context.state.scope.get(attribute.expression.name)?.kind === 'store_sub';
 
-					// Delay prop pushes so bindings come at the end, to avoid spreads overwriting them
-					if (is_store_sub) {
-						push_prop(
-							b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)]),
-							true
-						);
-					} else {
-						push_prop(b.get(attribute.name, [b.return(expression)]), true);
-					}
+					const get = is_store_sub
+						? b.get(attribute.name, [b.stmt(b.call('$.mark_store_binding')), b.return(expression)])
+						: b.get(attribute.name, [b.return(expression)]);
 
 					const assignment = b.assignment(
 						'=',
@@ -272,10 +270,16 @@ export function build_component(node, component_name, context) {
 						b.id('$$value')
 					);
 
-					push_prop(
-						b.set(attribute.name, [b.stmt(/** @type {Expression} */ (context.visit(assignment)))]),
-						true
-					);
+					const set = b.set(attribute.name, [
+						b.stmt(/** @type {Expression} */ (context.visit(assignment)))
+					]);
+
+					get.key.loc = attribute.name_loc;
+					set.key.loc = attribute.name_loc;
+
+					// Delay prop pushes so bindings come at the end, to avoid spreads overwriting them
+					push_prop(get, true);
+					push_prop(set, true);
 				}
 			}
 		} else if (attribute.type === 'AttachTag') {
@@ -292,6 +296,9 @@ export function build_component(node, component_name, context) {
 					)
 				);
 			}
+
+			// TODO also support await expressions here?
+			memoizer.check_blockers(attribute.metadata.expression);
 
 			push_prop(b.prop('init', b.call('$.attachment'), expression, true));
 		}
@@ -428,16 +435,17 @@ export function build_component(node, component_name, context) {
 
 	/** @param {Expression} node_id */
 	let fn = (node_id) => {
-		return b.call(
-			// TODO We can remove this ternary once we remove legacy mode, since in runes mode dynamic components
-			// will be handled separately through the `$.component` function, and then the component name will
-			// always be referenced through just the identifier here.
-			is_component_dynamic
-				? intermediate_name
-				: /** @type {Expression} */ (context.visit(b.member_id(component_name))),
-			node_id,
-			props_expression
-		);
+		// TODO We can remove this ternary once we remove legacy mode, since in runes mode dynamic components
+		// will be handled separately through the `$.component` function, and then the component name will
+		// always be referenced through just the identifier here.
+		const callee = is_component_dynamic
+			? b.id(intermediate_name)
+			: /** @type {Expression} */ (context.visit(b.member_id(component_name)));
+
+		// line up the `Foo` in `Foo(...)` and `<Foo>` for usable stack traces
+		callee.loc = loc;
+
+		return b.call(callee, node_id, props_expression);
 	};
 
 	if (bind_this !== null) {
@@ -446,6 +454,11 @@ export function build_component(node, component_name, context) {
 		fn = (node_id) => {
 			return build_bind_this(bind_this, prev(node_id), context);
 		};
+	}
+
+	if (node.type !== 'SvelteSelf') {
+		// Component name itself could be blocked on async values
+		memoizer.check_blockers(node.metadata.expression);
 	}
 
 	const statements = [...snippet_declarations, ...memoizer.deriveds(context.state.analysis.runes)];

@@ -3,7 +3,6 @@
 /** @import { ComponentContext } from '../types.js' */
 import { dev } from '../../../../state.js';
 import * as b from '#compiler/builders';
-import { create_async_block } from './shared/utils.js';
 
 /**
  * @param {AST.SnippetBlock} node
@@ -15,10 +14,6 @@ export function SnippetBlock(node, context) {
 		[b.id('$$renderer'), ...node.parameters],
 		/** @type {BlockStatement} */ (context.visit(node.body))
 	);
-
-	if (node.body.metadata.has_await) {
-		fn.body = b.block([create_async_block(fn.body)]);
-	}
 
 	// @ts-expect-error - TODO remove this hack once $$render_inner for legacy bindings is gone
 	fn.___snippet = true;

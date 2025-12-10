@@ -85,6 +85,14 @@ export function flatten(blockers, sync, async, fn) {
 }
 
 /**
+ * @param {Array<Promise<void>>} blockers
+ * @param {(values: Value[]) => any} fn
+ */
+export function run_after_blockers(blockers, fn) {
+	flatten(blockers, [], [], fn);
+}
+
+/**
  * Captures the current effect context so that we can restore it after
  * some asynchronous work has happened (so that e.g. `await a + b`
  * causes `b` to be registered as a dependency).

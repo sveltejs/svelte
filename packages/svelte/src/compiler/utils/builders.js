@@ -181,7 +181,7 @@ export function logical(operator, left, right) {
 }
 
 /**
- * @param {'const' | 'let' | 'var'} kind
+ * @param {ESTree.VariableDeclaration['kind']} kind
  * @param {ESTree.VariableDeclarator[]} declarations
  * @returns {ESTree.VariableDeclaration}
  */
@@ -262,10 +262,14 @@ export function get(name, body) {
 
 /**
  * @param {string} name
+ * @param {ESTree.SourceLocation | null} [loc]
  * @returns {ESTree.Identifier}
  */
-export function id(name) {
-	return { type: 'Identifier', name };
+export function id(name, loc) {
+	const node = /** @type {ESTree.Identifier} */ ({ type: 'Identifier', name });
+	if (loc) node.loc = loc;
+
+	return node;
 }
 
 /**

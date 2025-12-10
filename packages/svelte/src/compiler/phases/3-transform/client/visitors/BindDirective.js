@@ -40,22 +40,38 @@ export function BindDirective(node, context) {
 			validate_binding(context.state, node, expression);
 		}
 
-		get = b.thunk(expression);
-
-		/** @type {Expression | undefined} */
-		set = b.unthunk(
-			b.arrow(
-				[b.id('$$value')],
-				/** @type {Expression} */ (
-					context.visit(
-						b.assignment('=', /** @type {Pattern} */ (node.expression), b.id('$$value'))
-					)
-				)
-			)
+		const assignment = /** @type {Expression} */ (
+			context.visit(b.assignment('=', /** @type {Pattern} */ (node.expression), b.id('$$value')))
 		);
 
-		if (get === set) {
-			set = undefined;
+		if (dev) {
+			// in dev, create named functions, so that `$inspect(...)` delivers
+			// useful stack traces
+			get = b.function(b.id('get', node.name_loc), [], b.block([b.return(expression)]));
+			set = b.function(
+				b.id('set', node.name_loc),
+				[b.id('$$value')],
+				b.block([b.stmt(assignment)])
+			);
+		} else {
+			// in prod, optimise for brevity
+			get = b.thunk(expression);
+
+			/** @type {Expression | undefined} */
+			set = b.unthunk(
+				b.arrow(
+					[b.id('$$value')],
+					/** @type {Expression} */ (
+						context.visit(
+							b.assignment('=', /** @type {Pattern} */ (node.expression), b.id('$$value'))
+						)
+					)
+				)
+			);
+
+			if (get === set) {
+				set = undefined;
+			}
 		}
 	}
 
@@ -250,10 +266,13 @@ export function BindDirective(node, context) {
 
 	let statement = defer ? b.stmt(b.call('$.effect', b.thunk(call))) : b.stmt(call);
 
-	// TODO this doesn't account for function bindings
-	if (node.metadata.binding?.blocker) {
+	if (node.metadata.expression.is_async()) {
 		statement = b.stmt(
-			b.call(b.member(node.metadata.binding.blocker, b.id('then')), b.thunk(b.block([statement])))
+			b.call(
+				'$.run_after_blockers',
+				node.metadata.expression.blockers(),
+				b.thunk(b.block([statement]))
+			)
 		);
 	}
 

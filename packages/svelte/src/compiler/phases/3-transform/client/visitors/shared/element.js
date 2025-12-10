@@ -122,7 +122,7 @@ export function build_attribute_value(value, context, memoize = (value) => value
 
 		return {
 			value: memoize(expression, chunk.metadata.expression),
-			has_state: chunk.metadata.expression.has_state || chunk.metadata.expression.has_await
+			has_state: chunk.metadata.expression.has_state || chunk.metadata.expression.is_async()
 		};
 	}
 
@@ -170,7 +170,7 @@ export function build_set_class(element, node_id, attribute, class_directives, c
 	if (class_directives.length) {
 		next = build_class_directives_object(class_directives, context);
 		has_state ||= class_directives.some(
-			(d) => d.metadata.expression.has_state || d.metadata.expression.has_await
+			(d) => d.metadata.expression.has_state || d.metadata.expression.is_async()
 		);
 
 		if (has_state) {
@@ -240,7 +240,7 @@ export function build_set_style(node_id, attribute, style_directives, context) {
 	if (style_directives.length) {
 		next = build_style_directives_object(style_directives, context);
 		has_state ||= style_directives.some(
-			(d) => d.metadata.expression.has_state || d.metadata.expression.has_await
+			(d) => d.metadata.expression.has_state || d.metadata.expression.is_async()
 		);
 
 		if (has_state) {

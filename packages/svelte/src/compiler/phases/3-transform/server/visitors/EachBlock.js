@@ -34,11 +34,7 @@ export function EachBlock(node, context) {
 
 	const new_body = /** @type {BlockStatement} */ (context.visit(node.body)).body;
 
-	if (node.body)
-		each.push(
-			// TODO get rid of fragment.has_await
-			...(node.body.metadata.has_await ? [create_async_block(b.block(new_body))] : new_body)
-		);
+	if (node.body) each.push(...new_body);
 
 	const for_loop = b.for(
 		b.declaration('let', [
@@ -61,7 +57,7 @@ export function EachBlock(node, context) {
 			b.if(
 				b.binary('!==', b.member(array_id, 'length'), b.literal(0)),
 				b.block([open, for_loop]),
-				node.fallback.metadata.has_await ? create_async_block(fallback) : fallback
+				fallback
 			)
 		);
 	} else {

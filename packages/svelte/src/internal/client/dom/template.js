@@ -1,4 +1,4 @@
-/** @import { Effect, TemplateNode } from '#client' */
+/** @import { Effect, EffectNodes, TemplateNode } from '#client' */
 /** @import { TemplateStructure } from './types' */
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydration.js';
 import {
@@ -20,7 +20,7 @@ import {
 	TEMPLATE_USE_MATHML,
 	TEMPLATE_USE_SVG
 } from '../../../constants.js';
-import { COMMENT_NODE, DOCUMENT_FRAGMENT_NODE, TEXT_NODE } from '#client/constants';
+import { COMMENT_NODE, DOCUMENT_FRAGMENT_NODE, EFFECT_RAN, TEXT_NODE } from '#client/constants';
 
 /**
  * @param {TemplateNode} start
@@ -28,9 +28,8 @@ import { COMMENT_NODE, DOCUMENT_FRAGMENT_NODE, TEXT_NODE } from '#client/constan
  */
 export function assign_nodes(start, end) {
 	var effect = /** @type {Effect} */ (active_effect);
-	if (effect.nodes_start === null) {
-		effect.nodes_start = start;
-		effect.nodes_end = end;
+	if (effect.nodes === null) {
+		effect.nodes = { start, end, a: null, t: null };
 	}
 }
 
@@ -61,7 +60,7 @@ export function from_html(content, flags) {
 
 		if (node === undefined) {
 			node = create_fragment_from_html(has_start ? content : '<!>' + content);
-			if (!is_fragment) node = /** @type {Node} */ (get_first_child(node));
+			if (!is_fragment) node = /** @type {TemplateNode} */ (get_first_child(node));
 		}
 
 		var clone = /** @type {TemplateNode} */ (
@@ -114,7 +113,7 @@ function from_namespace(content, flags, ns = 'svg') {
 			if (is_fragment) {
 				node = document.createDocumentFragment();
 				while (get_first_child(root)) {
-					node.appendChild(/** @type {Node} */ (get_first_child(root)));
+					node.appendChild(/** @type {TemplateNode} */ (get_first_child(root)));
 				}
 			} else {
 				node = /** @type {Element} */ (get_first_child(root));
@@ -228,7 +227,7 @@ export function from_tree(structure, flags) {
 						: undefined;
 
 			node = fragment_from_tree(structure, ns);
-			if (!is_fragment) node = /** @type {Node} */ (get_first_child(node));
+			if (!is_fragment) node = /** @type {TemplateNode} */ (get_first_child(node));
 		}
 
 		var clone = /** @type {TemplateNode} */ (
@@ -270,7 +269,8 @@ function run_scripts(node) {
 		/** @type {HTMLElement} */ (node).tagName === 'SCRIPT'
 			? [/** @type {HTMLScriptElement} */ (node)]
 			: node.querySelectorAll('script');
-	const effect = /** @type {Effect} */ (active_effect);
+
+	const effect = /** @type {Effect & { nodes: EffectNodes }} */ (active_effect);
 
 	for (const script of scripts) {
 		const clone = document.createElement('script');
@@ -282,10 +282,10 @@ function run_scripts(node) {
 
 		// The script has changed - if it's at the edges, the effect now points at dead nodes
 		if (is_fragment ? node.firstChild === script : node === script) {
-			effect.nodes_start = clone;
+			effect.nodes.start = clone;
 		}
 		if (is_fragment ? node.lastChild === script : node === script) {
-			effect.nodes_end = clone;
+			effect.nodes.end = clone;
 		}
 
 		script.replaceWith(clone);
@@ -344,7 +344,15 @@ export function comment() {
  */
 export function append(anchor, dom) {
 	if (hydrating) {
-		/** @type {Effect} */ (active_effect).nodes_end = hydrate_node;
+		var effect = /** @type {Effect & { nodes: EffectNodes }} */ (active_effect);
+
+		// When hydrating and outer component and an inner component is async, i.e. blocked on a promise,
+		// then by the time the inner resolves we have already advanced to the end of the hydrated nodes
+		// of the parent component. Check for defined for that reason to avoid rewinding the parent's end marker.
+		if ((effect.f & EFFECT_RAN) === 0 || effect.nodes.end === null) {
+			effect.nodes.end = hydrate_node;
+		}
+
 		hydrate_next();
 		return;
 	}

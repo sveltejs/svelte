@@ -102,7 +102,8 @@ export {
 	for_await_track_reactivity_loss,
 	run,
 	save,
-	track_reactivity_loss
+	track_reactivity_loss,
+	run_after_blockers
 } from './reactivity/async.js';
 export { eager, flushSync as flush } from './reactivity/batch.js';
 export {
@@ -118,6 +119,7 @@ export {
 	legacy_pre_effect_reset,
 	render_effect,
 	template_effect,
+	deferred_template_effect,
 	effect,
 	user_effect,
 	user_pre_effect

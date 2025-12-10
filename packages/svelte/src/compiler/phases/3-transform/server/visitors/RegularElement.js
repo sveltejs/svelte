@@ -99,7 +99,7 @@ export function RegularElement(node, context) {
 	}
 
 	if (dev) {
-		const location = /** @type {Location} */ (locator(node.start));
+		const location = locator(node.start);
 		state.template.push(
 			b.stmt(
 				b.call(

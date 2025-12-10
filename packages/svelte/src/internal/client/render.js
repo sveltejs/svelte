@@ -1,4 +1,4 @@
-/** @import { ComponentContext, Effect, TemplateNode } from '#client' */
+/** @import { ComponentContext, Effect, EffectNodes, TemplateNode } from '#client' */
 /** @import { Component, ComponentType, SvelteComponent, MountOptions } from '../../index.js' */
 import { DEV } from 'esm-env';
 import {
@@ -99,12 +99,13 @@ export function hydrate(component, options) {
 	const previous_hydrate_node = hydrate_node;
 
 	try {
-		var anchor = /** @type {TemplateNode} */ (get_first_child(target));
+		var anchor = get_first_child(target);
+
 		while (
 			anchor &&
 			(anchor.nodeType !== COMMENT_NODE || /** @type {Comment} */ (anchor).data !== HYDRATION_START)
 		) {
-			anchor = /** @type {TemplateNode} */ (get_next_sibling(anchor));
+			anchor = get_next_sibling(anchor);
 		}
 
 		if (!anchor) {
@@ -228,7 +229,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 				should_intro = true;
 
 				if (hydrating) {
-					/** @type {Effect} */ (active_effect).nodes_end = hydrate_node;
+					/** @type {Effect & { nodes: EffectNodes }} */ (active_effect).nodes.end = hydrate_node;
 
 					if (
 						hydrate_node === null ||

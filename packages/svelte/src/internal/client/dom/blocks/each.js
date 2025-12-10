@@ -1,4 +1,4 @@
-/** @import { EachItem, EachState, Effect, MaybeSource, Source, TemplateNode, TransitionManager, Value } from '#client' */
+/** @import { EachItem, EachOutroGroup, EachState, Effect, EffectNodes, MaybeSource, Source, TemplateNode, TransitionManager, Value } from '#client' */
 /** @import { Batch } from '../../reactivity/batch.js'; */
 import {
 	EACH_INDEX_REACTIVE,
@@ -29,31 +29,21 @@ import {
 	block,
 	branch,
 	destroy_effect,
-	run_out_transitions,
-	pause_children,
 	pause_effect,
 	resume_effect
 } from '../../reactivity/effects.js';
 import { source, mutable_source, internal_set } from '../../reactivity/sources.js';
 import { array_from, is_array } from '../../../shared/utils.js';
-import { COMMENT_NODE, INERT } from '#client/constants';
+import { COMMENT_NODE, EFFECT_OFFSCREEN, INERT } from '#client/constants';
 import { queue_micro_task } from '../task.js';
-import { active_effect, get } from '../../runtime.js';
+import { get } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
 import { current_batch } from '../../reactivity/batch.js';
 
-/**
- * The row of a keyed each block that is currently updating. We track this
- * so that `animate:` directives have something to attach themselves to
- * @type {EachItem | null}
- */
-export let current_each_item = null;
-
-/** @param {EachItem | null} item */
-export function set_current_each_item(item) {
-	current_each_item = item;
-}
+// When making substantive changes to this file, validate them with the each block stress test:
+// https://svelte.dev/playground/1972b2cf46564476ad8c8c6405b23b7b
+// This test also exists in this repo, as `packages/svelte/tests/manual/each-stress-test`
 
 /**
  * @param {any} _
@@ -67,44 +57,87 @@ export function index(_, i) {
  * Pause multiple effects simultaneously, and coordinate their
  * subsequent destruction. Used in each blocks
  * @param {EachState} state
- * @param {EachItem[]} items
+ * @param {Effect[]} to_destroy
  * @param {null | Node} controlled_anchor
  */
-function pause_effects(state, items, controlled_anchor) {
-	var items_map = state.items;
-
+function pause_effects(state, to_destroy, controlled_anchor) {
 	/** @type {TransitionManager[]} */
 	var transitions = [];
-	var length = items.length;
+	var length = to_destroy.length;
+
+	/** @type {EachOutroGroup} */
+	var group;
+	var remaining = to_destroy.length;
 
 	for (var i = 0; i < length; i++) {
-		pause_children(items[i].e, transitions, true);
-	}
+		let effect = to_destroy[i];
 
-	var is_controlled = length > 0 && transitions.length === 0 && controlled_anchor !== null;
-	// If we have a controlled anchor, it means that the each block is inside a single
-	// DOM element, so we can apply a fast-path for clearing the contents of the element.
-	if (is_controlled) {
-		var parent_node = /** @type {Element} */ (
-			/** @type {Element} */ (controlled_anchor).parentNode
+		pause_effect(
+			effect,
+			() => {
+				if (group) {
+					group.pending.delete(effect);
+					group.done.add(effect);
+
+					if (group.pending.size === 0) {
+						var groups = /** @type {Set<EachOutroGroup>} */ (state.outrogroups);
+
+						destroy_effects(array_from(group.done));
+						groups.delete(group);
+
+						if (groups.size === 0) {
+							state.outrogroups = null;
+						}
+					}
+				} else {
+					remaining -= 1;
+				}
+			},
+			false
 		);
-		clear_text_content(parent_node);
-		parent_node.append(/** @type {Element} */ (controlled_anchor));
-		items_map.clear();
-		link(state, items[0].prev, items[length - 1].next);
 	}
 
-	run_out_transitions(transitions, () => {
-		for (var i = 0; i < length; i++) {
-			var item = items[i];
-			if (!is_controlled) {
-				items_map.delete(item.k);
-				link(state, item.prev, item.next);
-			}
-			destroy_effect(item.e, !is_controlled);
+	if (remaining === 0) {
+		// If we're in a controlled each block (i.e. the block is the only child of an
+		// element), and we are removing all items, _and_ there are no out transitions,
+		// we can use the fast path — emptying the element and replacing the anchor
+		var fast_path = transitions.length === 0 && controlled_anchor !== null;
+
+		if (fast_path) {
+			var anchor = /** @type {Element} */ (controlled_anchor);
+			var parent_node = /** @type {Element} */ (anchor.parentNode);
+
+			clear_text_content(parent_node);
+			parent_node.append(anchor);
+
+			state.items.clear();
 		}
-	});
+
+		destroy_effects(to_destroy, !fast_path);
+	} else {
+		group = {
+			pending: new Set(to_destroy),
+			done: new Set()
+		};
+
+		(state.outrogroups ??= new Set()).add(group);
+	}
 }
+
+/**
+ * @param {Effect[]} to_destroy
+ * @param {boolean} remove_dom
+ */
+function destroy_effects(to_destroy, remove_dom = true) {
+	// TODO only destroy effects if no pending batch needs them. otherwise,
+	// just re-add the `EFFECT_OFFSCREEN` flag
+	for (var i = 0; i < to_destroy.length; i++) {
+		destroy_effect(to_destroy[i], remove_dom);
+	}
+}
+
+/** @type {TemplateNode} */
+var offscreen_anchor;
 
 /**
  * @template V
@@ -119,8 +152,8 @@ function pause_effects(state, items, controlled_anchor) {
 export function each(node, flags, get_collection, get_key, render_fn, fallback_fn = null) {
 	var anchor = node;
 
-	/** @type {EachState} */
-	var state = { flags, items: new Map(), first: null };
+	/** @type {Map<any, EachItem>} */
+	var items = new Map();
 
 	var is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 
@@ -128,7 +161,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		var parent_node = /** @type {Element} */ (node);
 
 		anchor = hydrating
-			? set_hydrate_node(/** @type {Comment | Text} */ (get_first_child(parent_node)))
+			? set_hydrate_node(get_first_child(parent_node))
 			: parent_node.appendChild(create_text());
 	}
 
@@ -138,11 +171,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 	/** @type {Effect | null} */
 	var fallback = null;
-
-	var was_empty = false;
-
-	/** @type {Map<any, EachItem>} */
-	var offscreen_items = new Map();
 
 	// TODO: ideally we could use derived for runes mode but because of the ability
 	// to use a store which can be mutated, we can't do that here as mutating a store
@@ -156,50 +184,34 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	/** @type {V[]} */
 	var array;
 
-	/** @type {Effect} */
-	var each_effect;
+	var first_run = true;
 
 	function commit() {
-		reconcile(
-			each_effect,
-			array,
-			state,
-			offscreen_items,
-			anchor,
-			render_fn,
-			flags,
-			get_key,
-			get_collection
-		);
+		state.fallback = fallback;
+		reconcile(state, array, anchor, flags, get_key);
 
-		if (fallback_fn !== null) {
+		if (fallback !== null) {
 			if (array.length === 0) {
-				if (fallback) {
+				if ((fallback.f & EFFECT_OFFSCREEN) === 0) {
 					resume_effect(fallback);
 				} else {
-					fallback = branch(() => fallback_fn(anchor));
+					fallback.f ^= EFFECT_OFFSCREEN;
+					move(fallback, null, anchor);
 				}
-			} else if (fallback !== null) {
+			} else {
 				pause_effect(fallback, () => {
+					// TODO only null out if no pending batch needs it,
+					// otherwise re-add `fallback.fragment` and move the
+					// effect into it
 					fallback = null;
 				});
 			}
 		}
 	}
 
-	block(() => {
-		// store a reference to the effect so that we can update the start/end nodes in reconciliation
-		each_effect ??= /** @type {Effect} */ (active_effect);
-
+	var effect = block(() => {
 		array = /** @type {V[]} */ (get(each_array));
 		var length = array.length;
-
-		if (was_empty && length === 0) {
-			// ignore updates if the array is empty,
-			// and it already was empty on previous run
-			return;
-		}
-		was_empty = length === 0;
 
 		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
@@ -217,100 +229,84 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			}
 		}
 
-		// this is separate to the previous block because `hydrating` might change
-		if (hydrating) {
-			/** @type {EachItem | null} */
-			var prev = null;
+		var keys = new Set();
+		var batch = /** @type {Batch} */ (current_batch);
+		var defer = should_defer_append();
 
-			/** @type {EachItem} */
-			var item;
+		for (var index = 0; index < length; index += 1) {
+			if (
+				hydrating &&
+				hydrate_node.nodeType === COMMENT_NODE &&
+				/** @type {Comment} */ (hydrate_node).data === HYDRATION_END
+			) {
+				// The server rendered fewer items than expected,
+				// so break out and continue appending non-hydrated items
+				anchor = /** @type {Comment} */ (hydrate_node);
+				mismatch = true;
+				set_hydrating(false);
+			}
 
-			for (var i = 0; i < length; i++) {
-				if (
-					hydrate_node.nodeType === COMMENT_NODE &&
-					/** @type {Comment} */ (hydrate_node).data === HYDRATION_END
-				) {
-					// The server rendered fewer items than expected,
-					// so break out and continue appending non-hydrated items
-					anchor = /** @type {Comment} */ (hydrate_node);
-					mismatch = true;
-					set_hydrating(false);
-					break;
+			var value = array[index];
+			var key = get_key(value, index);
+
+			var item = first_run ? null : items.get(key);
+
+			if (item) {
+				// update before reconciliation, to trigger any async updates
+				if (item.v) internal_set(item.v, value);
+				if (item.i) internal_set(item.i, index);
+
+				if (defer) {
+					batch.skipped_effects.delete(item.e);
 				}
-
-				var value = array[i];
-				var key = get_key(value, i);
+			} else {
 				item = create_item(
-					hydrate_node,
-					state,
-					prev,
-					null,
+					items,
+					first_run ? anchor : (offscreen_anchor ??= create_text()),
 					value,
 					key,
-					i,
+					index,
 					render_fn,
 					flags,
 					get_collection
 				);
-				state.items.set(key, item);
 
-				prev = item;
+				if (!first_run) {
+					item.e.f |= EFFECT_OFFSCREEN;
+				}
+
+				items.set(key, item);
 			}
 
-			// remove excess nodes
-			if (length > 0) {
-				set_hydrate_node(skip_nodes());
+			keys.add(key);
+		}
+
+		if (length === 0 && fallback_fn && !fallback) {
+			if (first_run) {
+				fallback = branch(() => fallback_fn(anchor));
+			} else {
+				fallback = branch(() => fallback_fn((offscreen_anchor ??= create_text())));
+				fallback.f |= EFFECT_OFFSCREEN;
 			}
 		}
 
-		if (hydrating) {
-			if (length === 0 && fallback_fn) {
-				fallback = branch(() => fallback_fn(anchor));
-			}
-		} else {
-			if (should_defer_append()) {
-				var keys = new Set();
-				var batch = /** @type {Batch} */ (current_batch);
+		// remove excess nodes
+		if (hydrating && length > 0) {
+			set_hydrate_node(skip_nodes());
+		}
 
-				for (i = 0; i < length; i += 1) {
-					value = array[i];
-					key = get_key(value, i);
-
-					var existing = state.items.get(key) ?? offscreen_items.get(key);
-
-					if (existing) {
-						// update before reconciliation, to trigger any async updates
-						if ((flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0) {
-							update_item(existing, value, i, flags);
-						}
-					} else {
-						item = create_item(
-							null,
-							state,
-							null,
-							null,
-							value,
-							key,
-							i,
-							render_fn,
-							flags,
-							get_collection,
-							true
-						);
-
-						offscreen_items.set(key, item);
-					}
-
-					keys.add(key);
-				}
-
-				for (const [key, item] of state.items) {
+		if (!first_run) {
+			if (defer) {
+				for (const [key, item] of items) {
 					if (!keys.has(key)) {
 						batch.skipped_effects.add(item.e);
 					}
 				}
 
 				batch.oncommit(commit);
+				batch.ondiscard(() => {
+					// TODO presumably we need to do something here?
+				});
 			} else {
 				commit();
 			}
@@ -330,6 +326,11 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		get(each_array);
 	});
 
+	/** @type {EachState} */
+	var state = { effect, flags, items, outrogroups: null, fallback };
+
+	first_run = false;
+
 	if (hydrating) {
 		anchor = hydrate_node;
 	}
@@ -338,49 +339,33 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 /**
  * Add, remove, or reorder items output by an each block as its input changes
  * @template V
- * @param {Effect} each_effect
- * @param {Array<V>} array
  * @param {EachState} state
- * @param {Map<any, EachItem>} offscreen_items
+ * @param {Array<V>} array
  * @param {Element | Comment | Text} anchor
- * @param {(anchor: Node, item: MaybeSource<V>, index: number | Source<number>, collection: () => V[]) => void} render_fn
  * @param {number} flags
  * @param {(value: V, index: number) => any} get_key
- * @param {() => V[]} get_collection
  * @returns {void}
  */
-function reconcile(
-	each_effect,
-	array,
-	state,
-	offscreen_items,
-	anchor,
-	render_fn,
-	flags,
-	get_key,
-	get_collection
-) {
+function reconcile(state, array, anchor, flags, get_key) {
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
-	var should_update = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 
 	var length = array.length;
 	var items = state.items;
-	var first = state.first;
-	var current = first;
+	var current = state.effect.first;
 
-	/** @type {undefined | Set<EachItem>} */
+	/** @type {undefined | Set<Effect>} */
 	var seen;
 
-	/** @type {EachItem | null} */
+	/** @type {Effect | null} */
 	var prev = null;
 
-	/** @type {undefined | Set<EachItem>} */
+	/** @type {undefined | Set<Effect>} */
 	var to_animate;
 
-	/** @type {EachItem[]} */
+	/** @type {Effect[]} */
 	var matched = [];
 
-	/** @type {EachItem[]} */
+	/** @type {Effect[]} */
 	var stashed = [];
 
 	/** @type {V} */
@@ -389,8 +374,8 @@ function reconcile(
 	/** @type {any} */
 	var key;
 
-	/** @type {EachItem | undefined} */
-	var item;
+	/** @type {Effect | undefined} */
+	var effect;
 
 	/** @type {number} */
 	var i;
@@ -399,11 +384,13 @@ function reconcile(
 		for (i = 0; i < length; i += 1) {
 			value = array[i];
 			key = get_key(value, i);
-			item = items.get(key);
+			effect = /** @type {EachItem} */ (items.get(key)).e;
 
-			if (item !== undefined) {
-				item.a?.measure();
-				(to_animate ??= new Set()).add(item);
+			// offscreen == coming in now, no animation in that case,
+			// else this would happen https://github.com/sveltejs/svelte/issues/17181
+			if ((effect.f & EFFECT_OFFSCREEN) === 0) {
+				effect.nodes?.a?.measure();
+				(to_animate ??= new Set()).add(effect);
 			}
 		}
 	}
@@ -412,62 +399,53 @@ function reconcile(
 		value = array[i];
 		key = get_key(value, i);
 
-		item = items.get(key);
+		effect = /** @type {EachItem} */ (items.get(key)).e;
 
-		if (item === undefined) {
-			var pending = offscreen_items.get(key);
+		if (state.outrogroups !== null) {
+			for (const group of state.outrogroups) {
+				group.pending.delete(effect);
+				group.done.delete(effect);
+			}
+		}
 
-			if (pending !== undefined) {
-				offscreen_items.delete(key);
-				items.set(key, pending);
+		if ((effect.f & EFFECT_OFFSCREEN) !== 0) {
+			effect.f ^= EFFECT_OFFSCREEN;
 
+			if (effect === current) {
+				move(effect, null, anchor);
+			} else {
 				var next = prev ? prev.next : current;
 
-				link(state, prev, pending);
-				link(state, pending, next);
+				if (effect === state.effect.last) {
+					state.effect.last = effect.prev;
+				}
 
-				move(pending, next, anchor);
-				prev = pending;
-			} else {
-				var child_anchor = current ? /** @type {TemplateNode} */ (current.e.nodes_start) : anchor;
+				if (effect.prev) effect.prev.next = effect.next;
+				if (effect.next) effect.next.prev = effect.prev;
+				link(state, prev, effect);
+				link(state, effect, next);
 
-				prev = create_item(
-					child_anchor,
-					state,
-					prev,
-					prev === null ? state.first : prev.next,
-					value,
-					key,
-					i,
-					render_fn,
-					flags,
-					get_collection
-				);
+				move(effect, next, anchor);
+				prev = effect;
+
+				matched = [];
+				stashed = [];
+
+				current = prev.next;
+				continue;
 			}
-
-			items.set(key, prev);
-
-			matched = [];
-			stashed = [];
-
-			current = prev.next;
-			continue;
 		}
 
-		if (should_update) {
-			update_item(item, value, i, flags);
-		}
-
-		if ((item.e.f & INERT) !== 0) {
-			resume_effect(item.e);
+		if ((effect.f & INERT) !== 0) {
+			resume_effect(effect);
 			if (is_animated) {
-				item.a?.unfix();
-				(to_animate ??= new Set()).delete(item);
+				effect.nodes?.a?.unfix();
+				(to_animate ??= new Set()).delete(effect);
 			}
 		}
 
-		if (item !== current) {
-			if (seen !== undefined && seen.has(item)) {
+		if (effect !== current) {
+			if (seen !== undefined && seen.has(effect)) {
 				if (matched.length < stashed.length) {
 					// more efficient to move later items to the front
 					var start = stashed[0];
@@ -498,14 +476,14 @@ function reconcile(
 					stashed = [];
 				} else {
 					// more efficient to move earlier items to the back
-					seen.delete(item);
-					move(item, current, anchor);
+					seen.delete(effect);
+					move(effect, current, anchor);
 
-					link(state, item.prev, item.next);
-					link(state, item, prev === null ? state.first : prev.next);
-					link(state, prev, item);
+					link(state, effect.prev, effect.next);
+					link(state, effect, prev === null ? state.effect.first : prev.next);
+					link(state, prev, effect);
 
-					prev = item;
+					prev = effect;
 				}
 
 				continue;
@@ -514,12 +492,8 @@ function reconcile(
 			matched = [];
 			stashed = [];
 
-			while (current !== null && current.k !== key) {
-				// If the each block isn't inert and an item has an effect that is already inert,
-				// skip over adding it to our seen Set as the item is already being handled
-				if ((current.e.f & INERT) === 0) {
-					(seen ??= new Set()).add(current);
-				}
+			while (current !== null && current !== effect) {
+				(seen ??= new Set()).add(current);
 				stashed.push(current);
 				current = current.next;
 			}
@@ -527,23 +501,47 @@ function reconcile(
 			if (current === null) {
 				continue;
 			}
-
-			item = current;
 		}
 
-		matched.push(item);
-		prev = item;
-		current = item.next;
+		if ((effect.f & EFFECT_OFFSCREEN) === 0) {
+			matched.push(effect);
+		}
+
+		prev = effect;
+		current = effect.next;
+	}
+
+	if (state.outrogroups !== null) {
+		for (const group of state.outrogroups) {
+			if (group.pending.size === 0) {
+				destroy_effects(array_from(group.done));
+				state.outrogroups?.delete(group);
+			}
+		}
+
+		if (state.outrogroups.size === 0) {
+			state.outrogroups = null;
+		}
 	}
 
 	if (current !== null || seen !== undefined) {
-		var to_destroy = seen === undefined ? [] : array_from(seen);
+		/** @type {Effect[]} */
+		var to_destroy = [];
+
+		if (seen !== undefined) {
+			for (effect of seen) {
+				if ((effect.f & INERT) === 0) {
+					to_destroy.push(effect);
+				}
+			}
+		}
 
 		while (current !== null) {
 			// If the each block isn't inert, then inert effects are currently outroing and will be removed once the transition is finished
-			if ((current.e.f & INERT) === 0) {
+			if ((current.f & INERT) === 0 && current !== state.fallback) {
 				to_destroy.push(current);
 			}
+
 			current = current.next;
 		}
 
@@ -554,11 +552,11 @@ function reconcile(
 
 			if (is_animated) {
 				for (i = 0; i < destroy_length; i += 1) {
-					to_destroy[i].a?.measure();
+					to_destroy[i].nodes?.a?.measure();
 				}
 
 				for (i = 0; i < destroy_length; i += 1) {
-					to_destroy[i].a?.fix();
+					to_destroy[i].nodes?.a?.fix();
 				}
 			}
 
@@ -569,164 +567,100 @@ function reconcile(
 	if (is_animated) {
 		queue_micro_task(() => {
 			if (to_animate === undefined) return;
-			for (item of to_animate) {
-				item.a?.apply();
+			for (effect of to_animate) {
+				effect.nodes?.a?.apply();
 			}
 		});
-	}
-
-	each_effect.first = state.first && state.first.e;
-	each_effect.last = prev && prev.e;
-
-	for (var unused of offscreen_items.values()) {
-		destroy_effect(unused.e);
-	}
-
-	offscreen_items.clear();
-}
-
-/**
- * @param {EachItem} item
- * @param {any} value
- * @param {number} index
- * @param {number} type
- * @returns {void}
- */
-function update_item(item, value, index, type) {
-	if ((type & EACH_ITEM_REACTIVE) !== 0) {
-		internal_set(item.v, value);
-	}
-
-	if ((type & EACH_INDEX_REACTIVE) !== 0) {
-		internal_set(/** @type {Value<number>} */ (item.i), index);
-	} else {
-		item.i = index;
 	}
 }
 
 /**
  * @template V
- * @param {Node | null} anchor
- * @param {EachState} state
- * @param {EachItem | null} prev
- * @param {EachItem | null} next
+ * @param {Map<any, EachItem>} items
+ * @param {Node} anchor
  * @param {V} value
  * @param {unknown} key
  * @param {number} index
  * @param {(anchor: Node, item: V | Source<V>, index: number | Value<number>, collection: () => V[]) => void} render_fn
  * @param {number} flags
  * @param {() => V[]} get_collection
- * @param {boolean} [deferred]
  * @returns {EachItem}
  */
-function create_item(
-	anchor,
-	state,
-	prev,
-	next,
-	value,
-	key,
-	index,
-	render_fn,
-	flags,
-	get_collection,
-	deferred
-) {
-	var previous_each_item = current_each_item;
-	var reactive = (flags & EACH_ITEM_REACTIVE) !== 0;
-	var mutable = (flags & EACH_ITEM_IMMUTABLE) === 0;
+function create_item(items, anchor, value, key, index, render_fn, flags, get_collection) {
+	var v =
+		(flags & EACH_ITEM_REACTIVE) !== 0
+			? (flags & EACH_ITEM_IMMUTABLE) === 0
+				? mutable_source(value, false, false)
+				: source(value)
+			: null;
 
-	var v = reactive ? (mutable ? mutable_source(value, false, false) : source(value)) : value;
-	var i = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
+	var i = (flags & EACH_INDEX_REACTIVE) !== 0 ? source(index) : null;
 
-	if (DEV && reactive) {
+	if (DEV && v) {
 		// For tracing purposes, we need to link the source signal we create with the
 		// collection + index so that tracing works as intended
-		/** @type {Value} */ (v).trace = () => {
-			var collection_index = typeof i === 'number' ? index : i.v;
+		v.trace = () => {
 			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-			get_collection()[collection_index];
+			get_collection()[i?.v ?? index];
 		};
 	}
 
-	/** @type {EachItem} */
-	var item = {
-		i,
+	return {
 		v,
-		k: key,
-		a: null,
-		// @ts-expect-error
-		e: null,
-		prev,
-		next
+		i,
+		e: branch(() => {
+			render_fn(anchor, v ?? value, i ?? index, get_collection);
+
+			return () => {
+				items.delete(key);
+			};
+		})
 	};
-
-	current_each_item = item;
-
-	try {
-		if (anchor === null) {
-			var fragment = document.createDocumentFragment();
-			fragment.append((anchor = create_text()));
-		}
-
-		item.e = branch(() => render_fn(/** @type {Node} */ (anchor), v, i, get_collection), hydrating);
-
-		item.e.prev = prev && prev.e;
-		item.e.next = next && next.e;
-
-		if (prev === null) {
-			if (!deferred) {
-				state.first = item;
-			}
-		} else {
-			prev.next = item;
-			prev.e.next = item.e;
-		}
-
-		if (next !== null) {
-			next.prev = item;
-			next.e.prev = item.e;
-		}
-
-		return item;
-	} finally {
-		current_each_item = previous_each_item;
-	}
 }
 
 /**
- * @param {EachItem} item
- * @param {EachItem | null} next
+ * @param {Effect} effect
+ * @param {Effect | null} next
  * @param {Text | Element | Comment} anchor
  */
-function move(item, next, anchor) {
-	var end = item.next ? /** @type {TemplateNode} */ (item.next.e.nodes_start) : anchor;
+function move(effect, next, anchor) {
+	if (!effect.nodes) return;
 
-	var dest = next ? /** @type {TemplateNode} */ (next.e.nodes_start) : anchor;
-	var node = /** @type {TemplateNode} */ (item.e.nodes_start);
+	var node = effect.nodes.start;
+	var end = effect.nodes.end;
 
-	while (node !== null && node !== end) {
+	var dest =
+		next && (next.f & EFFECT_OFFSCREEN) === 0
+			? /** @type {EffectNodes} */ (next.nodes).start
+			: anchor;
+
+	while (node !== null) {
 		var next_node = /** @type {TemplateNode} */ (get_next_sibling(node));
 		dest.before(node);
+
+		if (node === end) {
+			return;
+		}
+
 		node = next_node;
 	}
 }
 
 /**
  * @param {EachState} state
- * @param {EachItem | null} prev
- * @param {EachItem | null} next
+ * @param {Effect | null} prev
+ * @param {Effect | null} next
  */
 function link(state, prev, next) {
 	if (prev === null) {
-		state.first = next;
+		state.effect.first = next;
 	} else {
 		prev.next = next;
-		prev.e.next = next && next.e;
 	}
 
-	if (next !== null) {
+	if (next === null) {
+		state.effect.last = prev;
+	} else {
 		next.prev = prev;
-		next.e.prev = prev && prev.e;
 	}
 }

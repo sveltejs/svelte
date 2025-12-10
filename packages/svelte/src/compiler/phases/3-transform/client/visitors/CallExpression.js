@@ -39,7 +39,8 @@ export function CallExpression(node, context) {
 				}
 			}
 
-			return b.call('$.state', value);
+			const callee = b.id('$.state', node.callee.loc);
+			return b.call(callee, value);
 		}
 
 		case '$derived':
