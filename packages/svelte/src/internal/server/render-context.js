@@ -63,6 +63,11 @@ let als_import = null;
 export async function init_render_context() {
 	if (als !== null) return;
 	try {
+		// It's important the right side of this assignment can run a maximum of one time
+		// otherwise it's possible for a very, very well-timed race condition to assign to `als`
+		// at the beginning of a render, and then another render to assign to it again, which causes
+		// the first render's second half to use a new instance of `als` which doesn't have its
+		// context anymore.
 		// @ts-ignore -- we don't include node types in the production build
 		als_import ??= import('node:async_hooks').then((hooks) => {
 			als = new hooks.AsyncLocalStorage();
