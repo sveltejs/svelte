@@ -116,6 +116,10 @@ type Branded<T, B> = T & Brand<B>;
  */
 export type ComponentInternals = Branded<{}, 'ComponentInternals'>;
 
+type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void
+	? I
+	: never;
+
 /**
  * Can be used to create strongly typed Svelte components.
  *
@@ -141,7 +145,7 @@ export type ComponentInternals = Branded<{}, 'ComponentInternals'>;
 export interface Component<
 	Props extends Record<string, any> = {},
 	Exports extends Record<string, any> = {},
-	Bindings extends keyof Props | '' = string
+	Bindings extends keyof UnionToIntersection<Required<Props>> | (string & {}) | '' = string
 > {
 	/**
 	 * @param internal An internal object used by Svelte. Do not use or modify.

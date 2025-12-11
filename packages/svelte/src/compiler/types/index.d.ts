@@ -1,5 +1,4 @@
 import type { SourceMap } from 'magic-string';
-import type { Binding } from '../phases/scope.js';
 import type { AST, Namespace } from './template.js';
 import type { ICompileDiagnostic } from '../utils/compile_diagnostic.js';
 import type { StateCreationRuneName } from '../../utils.js';

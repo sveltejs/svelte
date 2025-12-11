@@ -13,7 +13,7 @@ export function render<
 		? [
 				component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
 				options?: {
-					props?: Omit<Props, '$$slots' | '$$events'>;
+					props?: NoInfer<Props>;
 					context?: Map<any, any>;
 					idPrefix?: string;
 				}
@@ -21,7 +21,7 @@ export function render<
 		: [
 				component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
 				options: {
-					props: Omit<Props, '$$slots' | '$$events'>;
+					props: NoInfer<Props>;
 					context?: Map<any, any>;
 					idPrefix?: string;
 				}
