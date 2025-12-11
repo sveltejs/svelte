@@ -56,6 +56,7 @@ export async function with_render_context(fn) {
 
 /** @type {AsyncLocalStorage<RenderContext | null> | null} */
 let als = null;
+/** @ts-ignore - we don't include node types in the production build */
 /** @type {Promise<typeof import('node:async_hooks')> | null} */
 let als_import = null;
 
