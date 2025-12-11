@@ -56,12 +56,15 @@ export async function with_render_context(fn) {
 
 /** @type {AsyncLocalStorage<RenderContext | null> | null} */
 let als = null;
+/** @type {Promise<typeof import('node:async_hooks')> | null} */
+let als_import = null;
 
 export async function init_render_context() {
 	if (als !== null) return;
 	try {
 		// @ts-ignore -- we don't include node types in the production build
-		const { AsyncLocalStorage } = await import('node:async_hooks');
+		als_import ??= import('node:async_hooks');
+		const { AsyncLocalStorage } = await als_import;
 		als = new AsyncLocalStorage();
 	} catch {}
 }
