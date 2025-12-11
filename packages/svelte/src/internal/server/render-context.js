@@ -8,12 +8,13 @@ import * as e from './errors.js';
 /** @type {Promise<void> | null} */
 let current_render = null;
 
+// Fallback only when AsyncLocalStorage is unavailable (e.g. webcontainer)
 /** @type {RenderContext | null} */
-let context = null;
+let fallback_context = null;
 
 /** @returns {RenderContext} */
 export function get_render_context() {
-	const store = context ?? als?.getStore();
+	const store = als?.getStore?.() ?? fallback_context;
 
 	if (!store) {
 		e.server_context_required();
@@ -28,7 +29,7 @@ export function get_render_context() {
  * @returns {Promise<T>}
  */
 export async function with_render_context(fn) {
-	context = {
+	const store = {
 		hydratable: {
 			lookup: new Map(),
 			comparisons: [],
@@ -36,22 +37,20 @@ export async function with_render_context(fn) {
 		}
 	};
 
-	if (in_webcontainer()) {
+	// Fallback path when AsyncLocalStorage is not available
+	if (in_webcontainer() || als === null) {
 		const { promise, resolve } = deferred();
 		const previous_render = current_render;
 		current_render = promise;
 		await previous_render;
-		return fn().finally(resolve);
+		fallback_context = store;
+		return fn().finally(() => {
+			fallback_context = null;
+			resolve();
+		});
 	}
 
-	try {
-		if (als === null) {
-			e.async_local_storage_unavailable();
-		}
-		return als.run(context, fn);
-	} finally {
-		context = null;
-	}
+	return als.run(store, fn);
 }
 
 /** @type {AsyncLocalStorage<RenderContext | null> | null} */
