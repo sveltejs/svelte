@@ -64,9 +64,11 @@ export async function init_render_context() {
 	if (als !== null) return;
 	try {
 		// @ts-ignore -- we don't include node types in the production build
-		als_import ??= import('node:async_hooks');
-		const { AsyncLocalStorage } = await als_import;
-		als = new AsyncLocalStorage();
+		als_import ??= import('node:async_hooks').then((mod) => {
+			const { AsyncLocalStorage } = mod;
+			als = new AsyncLocalStorage();
+		});
+		await als_import;
 	} catch {}
 }
 
