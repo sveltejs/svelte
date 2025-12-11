@@ -304,7 +304,7 @@ export class Batch {
 
 			dep.f ^= WAS_MARKED;
 
-			this.#clear_marked(/** @type {Derived} */ (dep).deps);
+			this.#clear_marked(/** @type {Derived} */(dep).deps);
 		}
 	}
 
@@ -483,6 +483,13 @@ export class Batch {
 	}
 
 	revive() {
+		// Ensure the batch is active before scheduling effects
+		// This is critical for fork commits (used by SvelteKit's preload)
+		var was_current = current_batch === this;
+		if (!was_current) {
+			this.activate();
+		}
+
 		for (const e of this.#dirty_effects) {
 			set_signal_status(e, DIRTY);
 			schedule_effect(e);
@@ -496,7 +503,14 @@ export class Batch {
 		this.#dirty_effects = [];
 		this.#maybe_dirty_effects = [];
 
-		this.flush();
+		// Flush if there are queued root effects, or if there is no pending work left.
+		if (queued_root_effects.length > 0 || this.#pending === 0) {
+			this.flush();
+		}
+
+		if (!was_current) {
+			this.deactivate();
+		}
 	}
 
 	/** @param {() => void} fn */
@@ -775,14 +789,14 @@ function mark_effects(value, sources, marked, checked) {
 			const flags = reaction.f;
 
 			if ((flags & DERIVED) !== 0) {
-				mark_effects(/** @type {Derived} */ (reaction), sources, marked, checked);
+				mark_effects(/** @type {Derived} */(reaction), sources, marked, checked);
 			} else if (
 				(flags & (ASYNC | BLOCK_EFFECT)) !== 0 &&
 				(flags & DIRTY) === 0 &&
 				depends_on(reaction, sources, checked)
 			) {
 				set_signal_status(reaction, DIRTY);
-				schedule_effect(/** @type {Effect} */ (reaction));
+				schedule_effect(/** @type {Effect} */(reaction));
 			}
 		}
 	}
@@ -802,10 +816,10 @@ function mark_eager_effects(value, effects) {
 		const flags = reaction.f;
 
 		if ((flags & DERIVED) !== 0) {
-			mark_eager_effects(/** @type {Derived} */ (reaction), effects);
+			mark_eager_effects(/** @type {Derived} */(reaction), effects);
 		} else if ((flags & EAGER_EFFECT) !== 0) {
 			set_signal_status(reaction, DIRTY);
-			effects.add(/** @type {Effect} */ (reaction));
+			effects.add(/** @type {Effect} */(reaction));
 		}
 	}
 }
@@ -825,8 +839,8 @@ function depends_on(reaction, sources, checked) {
 				return true;
 			}
 
-			if ((dep.f & DERIVED) !== 0 && depends_on(/** @type {Derived} */ (dep), sources, checked)) {
-				checked.set(/** @type {Derived} */ (dep), true);
+			if ((dep.f & DERIVED) !== 0 && depends_on(/** @type {Derived} */(dep), sources, checked)) {
+				checked.set(/** @type {Derived} */(dep), true);
 				return true;
 			}
 		}
