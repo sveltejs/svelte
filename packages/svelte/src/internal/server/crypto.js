@@ -2,15 +2,16 @@ import { BROWSER } from 'esm-env';
 
 let text_encoder;
 // TODO - remove this and use global `crypto` when we drop Node 18
-/** @type {Crypto} */
-// @ts-ignore - annoying type node stuff
-let crypto = globalThis.crypto?.subtle?.digest ? globalThis.crypto : undefined;
+let crypto;
 
 /** @param {string} data */
 export async function sha256(data) {
 	text_encoder ??= new TextEncoder();
-	// @ts-ignore - we don't install node types in the prod build
-	crypto ??= (await import('node:crypto')).webcrypto;
+	// @ts-ignore
+	crypto ??= globalThis.crypto?.subtle?.digest
+		? globalThis.crypto
+		: // @ts-ignore - we don't install node types in the prod build
+			(await import('node:crypto')).webcrypto;
 	const hash_buffer = await crypto.subtle.digest('SHA-256', text_encoder.encode(data));
 	// @ts-ignore - we don't install node types in the prod build
 	return base64_encode(hash_buffer);
