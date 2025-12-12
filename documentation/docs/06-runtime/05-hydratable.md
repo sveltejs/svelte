@@ -85,7 +85,12 @@ response.headers.set(
   `script-src 'nonce-${nonce}'`
  );
 
-```ts
+```
+It's essential that a `nonce` — which, British slang definition aside, means 'number used once' — is only used when dynamically server rendering an individual response.
+
+If instead you are generating static HTML ahead of time, you must use hashes instead:
+
+```js
 // @errors: 2304 2708
 const { head, body, hashes } = await render(App, { csp: { hash: true } });
 ```
