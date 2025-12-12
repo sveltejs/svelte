@@ -2,7 +2,9 @@ import { BROWSER } from 'esm-env';
 
 let text_encoder;
 // TODO - remove this and use global `crypto` when we drop Node 18
-let crypto = globalThis.crypto;
+/** @type {Crypto} */
+// @ts-ignore - annoying type node stuff
+let crypto = globalThis.crypto?.subtle?.digest ? globalThis.crypto : undefined;
 
 /** @param {string} data */
 export async function sha256(data) {
