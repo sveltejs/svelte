@@ -66,18 +66,28 @@ All data returned from a `hydratable` function must be serializable. But this do
 
 ## CSP
 
-`hydratable` adds an inline `<script>` block to the `head` returned from `render`. If you're using CSP, this script will likely fail to run. You can provide a `nonce` to `render`:
+`hydratable` adds an inline `<script>` block to the `head` returned from `render`. If you're using [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP) (CSP), this script will likely fail to run. You can provide a `nonce` to `render`:
 
 ```ts
 // @errors: 2304 2708
-const { head, body } = await render(App, { csp: { nonce: 'abcd123' } });
+const nonce = crypto.randomUUID();
+
+const { head, body } = await render(App, {
+	csp: { nonce }
+});
 ```
 
-This will add the `nonce` to the script block. If you need to use hashes instead, you can do that as well:
+This will add the `nonce` to the script block, on the assumption that you will later add the same nonce to the CSP header of the document that contains it:
+
+```js
+response.headers.set(
+  'Content-Security-Policy',
+  `script-src 'nonce-${nonce}'`
+ );
 
 ```ts
 // @errors: 2304 2708
 const { head, body, hashes } = await render(App, { csp: { hash: true } });
 ```
 
-`hashes.style` will be `["sha256-abcd123"]`. We recommend using `nonce` over hash if you can, as `hash` will interfere with streaming SSR in the future.
+`hashes.script` will be an array of strings like `["sha256-abcd123"]`. We recommend using `nonce` over hash if you can, as `hash` will interfere with streaming SSR in the future.

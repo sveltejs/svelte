@@ -1,6 +1,6 @@
 let text_encoder;
 // TODO - remove this and use global `crypto` when we drop Node 18
-let crypto;
+let crypto = globalThis.crypto;
 
 /** @param {string} data */
 export async function sha256(data) {
