@@ -84,7 +84,6 @@ response.headers.set(
   'Content-Security-Policy',
   `script-src 'nonce-${nonce}'`
  );
-
 ```
 
 It's essential that a `nonce` — which, British slang definition aside, means 'number used once' — is only used when dynamically server rendering an individual response.
