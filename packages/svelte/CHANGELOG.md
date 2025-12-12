@@ -1,5 +1,11 @@
 # svelte
 
+## 5.46.0
+
+### Minor Changes
+
+- feat: Add `csp` option to `render(...)`, and emit hashes when using `hydratable` ([#17338](https://github.com/sveltejs/svelte/pull/17338))
+
 ## 5.45.10
 
 ### Patch Changes
