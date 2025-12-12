@@ -86,6 +86,7 @@ response.headers.set(
  );
 
 ```
+
 It's essential that a `nonce` — which, British slang definition aside, means 'number used once' — is only used when dynamically server rendering an individual response.
 
 If instead you are generating static HTML ahead of time, you must use hashes instead:
