@@ -683,7 +683,7 @@ export class Renderer {
 				${prelude}
 
 				for (const [k, v] of [
-					${entries.join(',\n')}
+					${entries.join(',\n\t\t\t\t\t')}
 				]) {
 					h.set(k, v);
 				}
