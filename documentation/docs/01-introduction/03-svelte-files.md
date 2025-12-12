@@ -1,5 +1,6 @@
 ---
 title: .svelte files
+use_cases: "always: component structure, organizing HTML/CSS/JavaScript, single-file components, component templates"
 ---
 
 Components are the building blocks of Svelte applications. They are written into `.svelte` files, using a superset of HTML.

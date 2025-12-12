@@ -1,5 +1,6 @@
 ---
 title: <svelte:body>
+use_cases: "body events, mouse enter/leave, global interactions, body classes"
 ---
 
 ```svelte

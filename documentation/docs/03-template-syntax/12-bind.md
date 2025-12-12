@@ -1,5 +1,6 @@
 ﻿---
 title: bind:
+use_cases: "forms, inputs, two-way binding, checkboxes, selects, textareas, media elements, dimensions"
 ---
 
 Data ordinarily flows down, from parent to child. The `bind:` directive allows data to flow the other way, from child to parent.
