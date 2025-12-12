@@ -97,4 +97,13 @@ const { head, body, hashes } = await render(App, {
 });
 ```
 
-`hashes.script` will be an array of strings like `["sha256-abcd123"]`. We recommend using `nonce` over hash if you can, as `hash` will interfere with streaming SSR in the future.
+`hashes.script` will be an array of strings like `["sha256-abcd123"]`. As with `nonce`, the hashes should be used in your CSP header:
+
+```js
+response.headers.set(
+  'Content-Security-Policy',
+  `script-src ${hashes.script.map((hash) => `'${hash}'`).join(' ')}`
+ );
+```
+
+We recommend using `nonce` over hash if you can, as `hash` will interfere with streaming SSR in the future.
