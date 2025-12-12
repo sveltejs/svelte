@@ -112,12 +112,13 @@ function base_element(node, context) {
 	}
 
 	const multiline_attributes = attributes(node.attributes, child_context);
-
+	const is_doctype_node = node.name.toLowerCase() === '!doctype';
 	const is_self_closing =
 		is_void(node.name) || (node.type === 'Component' && node.fragment.nodes.length === 0);
 	let multiline_content = false;
 
-	if (is_self_closing) {
+	if (is_doctype_node) child_context.write(`>`);
+	else if (is_self_closing) {
 		child_context.write(`${multiline_attributes ? '' : ' '}/>`);
 	} else {
 		child_context.write('>');
@@ -181,6 +182,18 @@ const css_visitors = {
 		}
 	},
 
+	AttributeSelector(node, context) {
+		context.write(`[${node.name}`);
+		if (node.matcher) {
+			context.write(node.matcher);
+			context.write(`"${node.value}"`);
+			if (node.flags) {
+				context.write(` ${node.flags}`);
+			}
+		}
+		context.write(']');
+	},
+
 	Block(node, context) {
 		context.write('{');
 
@@ -221,8 +234,20 @@ const css_visitors = {
 		context.write(`${node.property}: ${node.value};`);
 	},
 
+	IdSelector(node, context) {
+		context.write(`#${node.name}`);
+	},
+
+	NestingSelector(node, context) {
+		context.write('&');
+	},
+
 	Nth(node, context) {
 		context.write(node.value);
+	},
+
+	Percentage(node, context) {
+		context.write(`${node.value}%`);
 	},
 
 	PseudoClassSelector(node, context) {

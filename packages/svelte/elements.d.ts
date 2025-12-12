@@ -1422,7 +1422,7 @@ export interface HTMLTextareaAttributes extends HTMLAttributes<HTMLTextAreaEleme
 	// needs both casing variants because language tools does lowercase names of non-shorthand attributes
 	defaultValue?: string | string[] | number | undefined | null;
 	defaultvalue?: string | string[] | number | undefined | null;
-	wrap?: 'hard' | 'soft' | undefined | null;
+	wrap?: 'hard' | 'soft' | 'off' | undefined | null;
 
 	'on:change'?: ChangeEventHandler<HTMLTextAreaElement> | undefined | null;
 	onchange?: ChangeEventHandler<HTMLTextAreaElement> | undefined | null;
