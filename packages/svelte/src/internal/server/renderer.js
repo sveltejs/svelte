@@ -675,7 +675,8 @@ export class Renderer {
 		let prelude = `const h = (window.__svelte ??= {}).h ??= new Map();`;
 
 		if (has_promises) {
-			prelude = `const r = (v) => Promise.resolve(v);\n\t${prelude}`;
+			prelude = `const r = (v) => Promise.resolve(v);
+				${prelude}`;
 		}
 
 		const body = `
