@@ -92,7 +92,9 @@ If instead you are generating static HTML ahead of time, you must use hashes ins
 
 ```js
 // @errors: 2304 2708
-const { head, body, hashes } = await render(App, { csp: { hash: true } });
+const { head, body, hashes } = await render(App, {
+	csp: { hash: true }
+});
 ```
 
 `hashes.script` will be an array of strings like `["sha256-abcd123"]`. We recommend using `nonce` over hash if you can, as `hash` will interfere with streaming SSR in the future.
