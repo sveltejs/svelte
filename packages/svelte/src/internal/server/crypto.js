@@ -1,3 +1,5 @@
+import { BROWSER } from 'esm-env';
+
 let text_encoder;
 // TODO - remove this and use global `crypto` when we drop Node 18
 let crypto = globalThis.crypto;
@@ -9,5 +11,24 @@ export async function sha256(data) {
 	crypto ??= (await import('node:crypto')).webcrypto;
 	const hash_buffer = await crypto.subtle.digest('SHA-256', text_encoder.encode(data));
 	// @ts-ignore - we don't install node types in the prod build
-	return Buffer.from(hash_buffer).toString('base64');
+	return base64_encode(hash_buffer);
+}
+
+/**
+ * @param {Uint8Array} bytes
+ * @returns {string}
+ */
+export function base64_encode(bytes) {
+	// Using `Buffer` is faster than iterating
+	if (!BROWSER && globalThis.Buffer) {
+		return globalThis.Buffer.from(bytes).toString('base64');
+	}
+
+	let binary = '';
+
+	for (let i = 0; i < bytes.length; i++) {
+		binary += String.fromCharCode(bytes[i]);
+	}
+
+	return btoa(binary);
 }
