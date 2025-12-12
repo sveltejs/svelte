@@ -1,8 +1,3 @@
-## invalid_csp
-
-> `csp.nonce` was set while `csp.hash` was `true`. These options cannot be used simultaneously.
-> `nonce` will be used.
-
 ## unresolved_hydratable
 
 > A `hydratable` value with key `%key%` was created, but at least part of it was not used during the render.
