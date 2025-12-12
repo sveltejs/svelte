@@ -675,20 +675,21 @@ export class Renderer {
 		let prelude = `const h = (window.__svelte ??= {}).h ??= new Map();`;
 
 		if (has_promises) {
-			prelude = `const r = (v) => Promise.resolve(v);\n\t${prelude}`;
+			prelude = `const r = (v) => Promise.resolve(v);
+				${prelude}`;
 		}
 
 		const body = `
-{
-	${prelude}
+			{
+				${prelude}
 
-	for (const [k, v] of [
-		${entries.join(',\n')}
-	]) {
-		h.set(k, v);
-	}
-}
-`;
+				for (const [k, v] of [
+					${entries.join(',\n\t\t\t\t\t')}
+				]) {
+					h.set(k, v);
+				}
+			}
+		`;
 
 		let csp_attr = '';
 		if (this.global.csp.nonce) {
@@ -701,7 +702,7 @@ export class Renderer {
 			this.global.csp.script_hashes.push(`sha256-${hash}`);
 		}
 
-		return `<script${csp_attr}>${body}</script>`;
+		return `\n\t\t<script${csp_attr}>${body}</script>`;
 	}
 }
 

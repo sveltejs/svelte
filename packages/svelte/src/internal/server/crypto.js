@@ -7,13 +7,15 @@ let crypto;
 /** @param {string} data */
 export async function sha256(data) {
 	text_encoder ??= new TextEncoder();
-	// @ts-ignore
+
+	// @ts-expect-error
 	crypto ??= globalThis.crypto?.subtle?.digest
 		? globalThis.crypto
 		: // @ts-ignore - we don't install node types in the prod build
 			(await import('node:crypto')).webcrypto;
+
 	const hash_buffer = await crypto.subtle.digest('SHA-256', text_encoder.encode(data));
-	// @ts-ignore - we don't install node types in the prod build
+
 	return base64_encode(hash_buffer);
 }
 
@@ -23,7 +25,9 @@ export async function sha256(data) {
  */
 export function base64_encode(bytes) {
 	// Using `Buffer` is faster than iterating
+	// @ts-ignore
 	if (!BROWSER && globalThis.Buffer) {
+		// @ts-ignore
 		return globalThis.Buffer.from(bytes).toString('base64');
 	}
 

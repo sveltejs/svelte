@@ -44,7 +44,6 @@ import { eager_effect, unlink_effect } from './effects.js';
  *   effect: Effect | null;
  *   effects: Effect[];
  *   render_effects: Effect[];
- *   block_effects: Effect[];
  * }} EffectTarget
  */
 
@@ -128,15 +127,15 @@ export class Batch {
 
 	/**
 	 * Deferred effects (which run after async work has completed) that are DIRTY
-	 * @type {Effect[]}
+	 * @type {Set<Effect>}
 	 */
-	#dirty_effects = [];
+	#dirty_effects = new Set();
 
 	/**
 	 * Deferred effects that are MAYBE_DIRTY
-	 * @type {Effect[]}
+	 * @type {Set<Effect>}
 	 */
-	#maybe_dirty_effects = [];
+	#maybe_dirty_effects = new Set();
 
 	/**
 	 * A set of branches that still exist, but will be destroyed when this batch
@@ -167,8 +166,7 @@ export class Batch {
 			parent: null,
 			effect: null,
 			effects: [],
-			render_effects: [],
-			block_effects: []
+			render_effects: []
 		};
 
 		for (const root of root_effects) {
@@ -187,7 +185,6 @@ export class Batch {
 		if (this.is_deferred()) {
 			this.#defer_effects(target.effects);
 			this.#defer_effects(target.render_effects);
-			this.#defer_effects(target.block_effects);
 		} else {
 			// If sources are written to, then work needs to happen in a separate batch, else prior sources would be mixed with
 			// newly updated sources, which could lead to infinite loops when effects run over and over again.
@@ -228,8 +225,7 @@ export class Batch {
 					parent: target,
 					effect,
 					effects: [],
-					render_effects: [],
-					block_effects: []
+					render_effects: []
 				};
 			}
 
@@ -241,7 +237,7 @@ export class Batch {
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
 					target.render_effects.push(effect);
 				} else if (is_dirty(effect)) {
-					if ((effect.f & BLOCK_EFFECT) !== 0) target.block_effects.push(effect);
+					if ((effect.f & BLOCK_EFFECT) !== 0) this.#dirty_effects.add(effect);
 					update_effect(effect);
 				}
 
@@ -263,7 +259,6 @@ export class Batch {
 					// once the boundary is ready?
 					this.#defer_effects(target.effects);
 					this.#defer_effects(target.render_effects);
-					this.#defer_effects(target.block_effects);
 
 					target = /** @type {EffectTarget} */ (target.parent);
 				}
@@ -279,8 +274,11 @@ export class Batch {
 	 */
 	#defer_effects(effects) {
 		for (const e of effects) {
-			const target = (e.f & DIRTY) !== 0 ? this.#dirty_effects : this.#maybe_dirty_effects;
-			target.push(e);
+			if ((e.f & DIRTY) !== 0) {
+				this.#dirty_effects.add(e);
+			} else if ((e.f & MAYBE_DIRTY) !== 0) {
+				this.#maybe_dirty_effects.add(e);
+			}
 
 			// Since we're not executing these effects now, we need to clear any WAS_MARKED flags
 			// so that other batches can correctly reach these effects during their own traversal
@@ -390,8 +388,7 @@ export class Batch {
 				parent: null,
 				effect: null,
 				effects: [],
-				render_effects: [],
-				block_effects: []
+				render_effects: []
 			};
 
 			for (const batch of batches) {
@@ -484,6 +481,7 @@ export class Batch {
 
 	revive() {
 		for (const e of this.#dirty_effects) {
+			this.#maybe_dirty_effects.delete(e);
 			set_signal_status(e, DIRTY);
 			schedule_effect(e);
 		}
@@ -492,9 +490,6 @@ export class Batch {
 			set_signal_status(e, MAYBE_DIRTY);
 			schedule_effect(e);
 		}
-
-		this.#dirty_effects = [];
-		this.#maybe_dirty_effects = [];
 
 		this.flush();
 	}
