@@ -60,22 +60,10 @@ export function element(renderer, tag, attributes_fn = noop, children_fn = noop)
  * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
-	let csp;
-	if (options.csp) {
-		csp =
-			'nonce' in options.csp
-				? { nonce: options.csp.nonce, hash: false }
-				: { hash: options.csp.hash, nonce: undefined };
-
-		// @ts-expect-error
-		if (options.csp.hash && options.csp.nonce) {
-			e.invalid_csp();
-		}
+	if (options.csp?.hash && options.csp.nonce) {
+		e.invalid_csp();
 	}
-	return Renderer.render(/** @type {Component<Props>} */ (component), {
-		...options,
-		csp
-	});
+	return Renderer.render(/** @type {Component<Props>} */ (component), options);
 }
 
 /**

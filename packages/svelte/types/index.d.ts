@@ -2566,7 +2566,7 @@ declare module 'svelte/server' {
 					}
 				]
 	): RenderOutput;
-	type Csp = { nonce: string } | { hash: boolean };
+	type Csp = { nonce?: string; hash?: boolean };
 
 	type Sha256Source = `sha256-${string}`;
 

@@ -15,9 +15,7 @@ export interface SSRContext {
 	element?: Element;
 }
 
-export type Csp = { nonce: string } | { hash: boolean };
-
-export type CspInternal = { nonce?: string; hash: boolean };
+export type Csp = { nonce?: string; hash?: boolean };
 
 export interface HydratableLookupEntry {
 	value: unknown;

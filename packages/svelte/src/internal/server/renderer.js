@@ -1,5 +1,5 @@
 /** @import { Component } from 'svelte' */
-/** @import { CspInternal, HydratableContext, RenderOutput, SSRContext, SyncRenderOutput, Sha256Source } from './types.js' */
+/** @import { Csp, HydratableContext, RenderOutput, SSRContext, SyncRenderOutput, Sha256Source } from './types.js' */
 /** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import { abort } from './abort-signal.js';
@@ -376,7 +376,7 @@ export class Renderer {
 	 * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
 	 * @template {Record<string, any>} Props
 	 * @param {Component<Props>} component
-	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: CspInternal }} [options]
+	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} [options]
 	 * @returns {RenderOutput}
 	 */
 	static render(component, options = {}) {
@@ -520,7 +520,7 @@ export class Renderer {
 	 *
 	 * @template {Record<string, any>} Props
 	 * @param {Component<Props>} component
-	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: CspInternal }} options
+	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} options
 	 * @returns {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }>}
 	 */
 	static async #render_async(component, options) {
@@ -598,7 +598,7 @@ export class Renderer {
 	 * @template {Record<string, any>} Props
 	 * @param {'sync' | 'async'} mode
 	 * @param {import('svelte').Component<Props>} component
-	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: CspInternal }} options
+	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} options
 	 * @returns {Renderer}
 	 */
 	static #open_render(mode, component, options) {
@@ -707,7 +707,7 @@ export class Renderer {
 }
 
 export class SSRState {
-	/** @readonly @type {CspInternal & { script_hashes: Sha256Source[] }} */
+	/** @readonly @type {Csp & { script_hashes: Sha256Source[] }} */
 	csp;
 
 	/** @readonly @type {'sync' | 'async'} */
@@ -725,7 +725,7 @@ export class SSRState {
 	/**
 	 * @param {'sync' | 'async'} mode
 	 * @param {string} id_prefix
-	 * @param {CspInternal} csp
+	 * @param {Csp} csp
 	 */
 	constructor(mode, id_prefix = '', csp = { hash: false }) {
 		this.mode = mode;
