@@ -18,7 +18,7 @@ There are online forums and chats which are a great place for discussion about b
 
 ## Are there any third-party resources?
 
-Svelte Society maintains a [list of books and videos](https://sveltesociety.dev/resources).
+Svelte Society maintains a [list of books and videos](https://sveltesociety.dev/collection/a-list-of-books-and-courses-ac01dd10363184fa).
 
 ## How can I get VS Code to syntax-highlight my .svelte files?
 

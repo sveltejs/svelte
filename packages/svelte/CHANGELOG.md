@@ -1,5 +1,37 @@
 # svelte
 
+## 5.45.10
+
+### Patch Changes
+
+- fix: race condition when importing `AsyncLocalStorage` ([#17350](https://github.com/sveltejs/svelte/pull/17350))
+
+## 5.45.9
+
+### Patch Changes
+
+- fix: correctly reschedule deferred effects when reviving a batch after async work ([#17332](https://github.com/sveltejs/svelte/pull/17332))
+
+- fix: correctly print `!doctype` during `print` ([#17341](https://github.com/sveltejs/svelte/pull/17341))
+
+## 5.45.8
+
+### Patch Changes
+
+- fix: set AST `root.start` to `0` and `root.end` to `template.length` ([#17125](https://github.com/sveltejs/svelte/pull/17125))
+
+- fix: prevent erroneous `state_referenced_locally` warnings on prop fallbacks ([#17329](https://github.com/sveltejs/svelte/pull/17329))
+
+## 5.45.7
+
+### Patch Changes
+
+- fix: Add `<textarea wrap="off">` as a valid attribute value ([#17326](https://github.com/sveltejs/svelte/pull/17326))
+
+- fix: add more css selectors to `print()` ([#17330](https://github.com/sveltejs/svelte/pull/17330))
+
+- fix: don't crash on `hydratable` serialization failure ([#17315](https://github.com/sveltejs/svelte/pull/17315))
+
 ## 5.45.6
 
 ### Patch Changes
