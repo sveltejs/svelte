@@ -1,5 +1,11 @@
 # svelte
 
+## 5.45.10
+
+### Patch Changes
+
+- fix: race condition when importing `AsyncLocalStorage` ([#17350](https://github.com/sveltejs/svelte/pull/17350))
+
 ## 5.45.9
 
 ### Patch Changes
