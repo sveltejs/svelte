@@ -1,4 +1,4 @@
-/** @import { Derived, Source } from './types.js' */
+/** @import { Effect, Source } from './types.js' */
 import { DEV } from 'esm-env';
 import {
 	PROPS_IS_BINDABLE,
@@ -8,12 +8,17 @@ import {
 	PROPS_IS_UPDATED
 } from '../../../constants.js';
 import { get_descriptor, is_function } from '../../shared/utils.js';
-import { mutable_source, set, source, update } from './sources.js';
+import { set, source, update } from './sources.js';
 import { derived, derived_safe_equal } from './deriveds.js';
-import { get, captured_signals, untrack } from '../runtime.js';
-import { safe_equals } from './equality.js';
+import {
+	active_effect,
+	get,
+	is_destroying_effect,
+	set_active_effect,
+	untrack
+} from '../runtime.js';
 import * as e from '../errors.js';
-import { LEGACY_DERIVED_PROP, LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
+import { DESTROYED, LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
@@ -93,7 +98,7 @@ export function rest_props(props, exclude, name) {
 
 /**
  * The proxy handler for legacy $$restProps and $$props
- * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol>, special: Record<string | symbol, (v?: unknown) => unknown>, version: Source<number> }>}}
+ * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol>, special: Record<string | symbol, (v?: unknown) => unknown>, version: Source<number>, parent_effect: Effect }>}}
  */
 const legacy_rest_props_handler = {
 	get(target, key) {
@@ -103,17 +108,25 @@ const legacy_rest_props_handler = {
 	},
 	set(target, key, value) {
 		if (!(key in target.special)) {
-			// Handle props that can temporarily get out of sync with the parent
-			/** @type {Record<string, (v?: unknown) => unknown>} */
-			target.special[key] = prop(
-				{
-					get [key]() {
-						return target.props[key];
-					}
-				},
-				/** @type {string} */ (key),
-				PROPS_IS_UPDATED
-			);
+			var previous_effect = active_effect;
+
+			try {
+				set_active_effect(target.parent_effect);
+
+				// Handle props that can temporarily get out of sync with the parent
+				/** @type {Record<string, (v?: unknown) => unknown>} */
+				target.special[key] = prop(
+					{
+						get [key]() {
+							return target.props[key];
+						}
+					},
+					/** @type {string} */ (key),
+					PROPS_IS_UPDATED
+				);
+			} finally {
+				set_active_effect(previous_effect);
+			}
 		}
 
 		target.special[key](value);
@@ -152,15 +165,26 @@ const legacy_rest_props_handler = {
  * @returns {Record<string, unknown>}
  */
 export function legacy_rest_props(props, exclude) {
-	return new Proxy({ props, exclude, special: {}, version: source(0) }, legacy_rest_props_handler);
+	return new Proxy(
+		{
+			props,
+			exclude,
+			special: {},
+			version: source(0),
+			// TODO this is only necessary because we need to track component
+			// destruction inside `prop`, because of `bind:this`, but it
+			// seems likely that we can simplify `bind:this` instead
+			parent_effect: /** @type {Effect} */ (active_effect)
+		},
+		legacy_rest_props_handler
+	);
 }
 
 /**
  * The proxy handler for spread props. Handles the incoming array of props
  * that looks like `() => { dynamic: props }, { static: prop }, ..` and wraps
  * them so that the whole thing is passed to the component as the `$$props` argument.
- * @template {Record<string | symbol, unknown>} T
- * @type {ProxyHandler<{ props: Array<T | (() => T)> }>}}
+ * @type {ProxyHandler<{ props: Array<Record<string | symbol, unknown> | (() => Record<string | symbol, unknown>)> }>}}
  */
 const spread_props_handler = {
 	get(target, key) {
@@ -242,14 +266,6 @@ export function spread_props(...props) {
 }
 
 /**
- * @param {Derived} current_value
- * @returns {boolean}
- */
-function has_destroyed_component_ctx(current_value) {
-	return current_value.ctx?.d ?? false;
-}
-
-/**
  * This function is responsible for synchronizing a possibly bound prop with the inner component state.
  * It is used whenever the compiler sees that the component writes to the prop, or when it has a default prop_value.
  * @template V
@@ -260,174 +276,155 @@ function has_destroyed_component_ctx(current_value) {
  * @returns {(() => V | ((arg: V) => V) | ((arg: V, mutation: boolean) => V))}
  */
 export function prop(props, key, flags, fallback) {
-	var immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
 	var runes = !legacy_mode_flag || (flags & PROPS_IS_RUNES) !== 0;
 	var bindable = (flags & PROPS_IS_BINDABLE) !== 0;
 	var lazy = (flags & PROPS_IS_LAZY_INITIAL) !== 0;
-	var is_store_sub = false;
-	var prop_value;
-
-	if (bindable) {
-		[prop_value, is_store_sub] = capture_store_binding(() => /** @type {V} */ (props[key]));
-	} else {
-		prop_value = /** @type {V} */ (props[key]);
-	}
-
-	// Can be the case when someone does `mount(Component, props)` with `let props = $state({...})`
-	// or `createClassComponent(Component, props)`
-	var is_entry_props = STATE_SYMBOL in props || LEGACY_PROPS in props;
-
-	var setter =
-		(bindable &&
-			(get_descriptor(props, key)?.set ??
-				(is_entry_props && key in props && ((v) => (props[key] = v))))) ||
-		undefined;
 
 	var fallback_value = /** @type {V} */ (fallback);
 	var fallback_dirty = true;
-	var fallback_used = false;
 
 	var get_fallback = () => {
-		fallback_used = true;
 		if (fallback_dirty) {
 			fallback_dirty = false;
-			if (lazy) {
-				fallback_value = untrack(/** @type {() => V} */ (fallback));
-			} else {
-				fallback_value = /** @type {V} */ (fallback);
-			}
+
+			fallback_value = lazy
+				? untrack(/** @type {() => V} */ (fallback))
+				: /** @type {V} */ (fallback);
 		}
 
 		return fallback_value;
 	};
 
-	if (prop_value === undefined && fallback !== undefined) {
-		if (setter && runes) {
-			e.props_invalid_value(key);
-		}
+	/** @type {((v: V) => void) | undefined} */
+	var setter;
 
-		prop_value = get_fallback();
-		if (setter) setter(prop_value);
+	if (bindable) {
+		// Can be the case when someone does `mount(Component, props)` with `let props = $state({...})`
+		// or `createClassComponent(Component, props)`
+		var is_entry_props = STATE_SYMBOL in props || LEGACY_PROPS in props;
+
+		setter =
+			get_descriptor(props, key)?.set ??
+			(is_entry_props && key in props ? (v) => (props[key] = v) : undefined);
+	}
+
+	var initial_value;
+	var is_store_sub = false;
+
+	if (bindable) {
+		[initial_value, is_store_sub] = capture_store_binding(() => /** @type {V} */ (props[key]));
+	} else {
+		initial_value = /** @type {V} */ (props[key]);
+	}
+
+	if (initial_value === undefined && fallback !== undefined) {
+		initial_value = get_fallback();
+
+		if (setter) {
+			if (runes) e.props_invalid_value(key);
+			setter(initial_value);
+		}
 	}
 
 	/** @type {() => V} */
 	var getter;
+
 	if (runes) {
 		getter = () => {
 			var value = /** @type {V} */ (props[key]);
 			if (value === undefined) return get_fallback();
 			fallback_dirty = true;
-			fallback_used = false;
 			return value;
 		};
 	} else {
-		// Svelte 4 did not trigger updates when a primitive value was updated to the same value.
-		// Replicate that behavior through using a derived
-		var derived_getter = (immutable ? derived : derived_safe_equal)(
-			() => /** @type {V} */ (props[key])
-		);
-		derived_getter.f |= LEGACY_DERIVED_PROP;
 		getter = () => {
-			var value = get(derived_getter);
-			if (value !== undefined) fallback_value = /** @type {V} */ (undefined);
+			var value = /** @type {V} */ (props[key]);
+
+			if (value !== undefined) {
+				// in legacy mode, we don't revert to the fallback value
+				// if the prop goes from defined to undefined. The easiest
+				// way to model this is to make the fallback undefined
+				// as soon as the prop has a value
+				fallback_value = /** @type {V} */ (undefined);
+			}
+
 			return value === undefined ? fallback_value : value;
 		};
 	}
 
-	// easy mode — prop is never written to
-	if ((flags & PROPS_IS_UPDATED) === 0 && runes) {
+	// prop is never written to — we only need a getter
+	if (runes && (flags & PROPS_IS_UPDATED) === 0) {
 		return getter;
 	}
 
-	// intermediate mode — prop is written to, but the parent component had
-	// `bind:foo` which means we can just call `$$props.foo = value` directly
+	// prop is written to, but the parent component had `bind:foo` which
+	// means we can just call `$$props.foo = value` directly
 	if (setter) {
 		var legacy_parent = props.$$legacy;
-		return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
-			if (arguments.length > 0) {
-				// We don't want to notify if the value was mutated and the parent is in runes mode.
-				// In that case the state proxy (if it exists) should take care of the notification.
-				// If the parent is not in runes mode, we need to notify on mutation, too, that the prop
-				// has changed because the parent will not be able to detect the change otherwise.
-				if (!runes || !mutation || legacy_parent || is_store_sub) {
-					/** @type {Function} */ (setter)(mutation ? getter() : value);
-				}
-				return value;
-			} else {
-				return getter();
-			}
-		};
-	}
+		return /** @type {() => V} */ (
+			function (/** @type {V} */ value, /** @type {boolean} */ mutation) {
+				if (arguments.length > 0) {
+					// We don't want to notify if the value was mutated and the parent is in runes mode.
+					// In that case the state proxy (if it exists) should take care of the notification.
+					// If the parent is not in runes mode, we need to notify on mutation, too, that the prop
+					// has changed because the parent will not be able to detect the change otherwise.
+					if (!runes || !mutation || legacy_parent || is_store_sub) {
+						/** @type {Function} */ (setter)(mutation ? getter() : value);
+					}
 
-	// hard mode. this is where it gets ugly — the value in the child should
-	// synchronize with the parent, but it should also be possible to temporarily
-	// set the value to something else locally.
-	var from_child = false;
-	var was_from_child = false;
-
-	// The derived returns the current value. The underlying mutable
-	// source is written to from various places to persist this value.
-	var inner_current_value = mutable_source(prop_value);
-	var current_value = derived(() => {
-		var parent_value = getter();
-		var child_value = get(inner_current_value);
-
-		if (from_child) {
-			from_child = false;
-			was_from_child = true;
-			return child_value;
-		}
-
-		was_from_child = false;
-		return (inner_current_value.v = parent_value);
-	});
-
-	// Ensure we eagerly capture the initial value if it's bindable
-	if (bindable) {
-		get(current_value);
-	}
-
-	if (!immutable) current_value.equals = safe_equals;
-
-	return function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
-		// legacy nonsense — need to ensure the source is invalidated when necessary
-		// also needed for when handling inspect logic so we can inspect the correct source signal
-		if (captured_signals !== null) {
-			// set this so that we don't reset to the parent value if `d`
-			// is invalidated because of `invalidate_inner_signals` (rather
-			// than because the parent or child value changed)
-			from_child = was_from_child;
-			// invoke getters so that signals are picked up by `invalidate_inner_signals`
-			getter();
-			get(inner_current_value);
-		}
-
-		if (arguments.length > 0) {
-			const new_value = mutation ? get(current_value) : runes && bindable ? proxy(value) : value;
-
-			if (!current_value.equals(new_value)) {
-				from_child = true;
-				set(inner_current_value, new_value);
-				// To ensure the fallback value is consistent when used with proxies, we
-				// update the local fallback_value, but only if the fallback is actively used
-				if (fallback_used && fallback_value !== undefined) {
-					fallback_value = new_value;
-				}
-
-				if (has_destroyed_component_ctx(current_value)) {
 					return value;
 				}
 
-				untrack(() => get(current_value)); // force a synchronisation immediately
+				return getter();
+			}
+		);
+	}
+
+	// Either prop is written to, but there's no binding, which means we
+	// create a derived that we can write to locally.
+	// Or we are in legacy mode where we always create a derived to replicate that
+	// Svelte 4 did not trigger updates when a primitive value was updated to the same value.
+	var overridden = false;
+
+	var d = ((flags & PROPS_IS_IMMUTABLE) !== 0 ? derived : derived_safe_equal)(() => {
+		overridden = false;
+		return getter();
+	});
+
+	if (DEV) {
+		d.label = key;
+	}
+
+	// Capture the initial value if it's bindable
+	if (bindable) get(d);
+
+	var parent_effect = /** @type {Effect} */ (active_effect);
+
+	return /** @type {() => V} */ (
+		function (/** @type {any} */ value, /** @type {boolean} */ mutation) {
+			if (arguments.length > 0) {
+				const new_value = mutation ? get(d) : runes && bindable ? proxy(value) : value;
+
+				set(d, new_value);
+				overridden = true;
+
+				if (fallback_value !== undefined) {
+					fallback_value = new_value;
+				}
+
+				return value;
 			}
 
-			return value;
-		}
+			// special case — avoid recalculating the derived if we're in a
+			// teardown function and the prop was overridden locally, or the
+			// component was already destroyed (this latter part is necessary
+			// because `bind:this` can read props after the component has
+			// been destroyed. TODO simplify `bind:this`
+			if ((is_destroying_effect && overridden) || (parent_effect.f & DESTROYED) !== 0) {
+				return d.v;
+			}
 
-		if (has_destroyed_component_ctx(current_value)) {
-			return current_value.v;
+			return get(d);
 		}
-
-		return get(current_value);
-	};
+	);
 }

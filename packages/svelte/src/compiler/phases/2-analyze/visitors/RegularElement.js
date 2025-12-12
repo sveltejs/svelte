@@ -9,7 +9,7 @@ import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { create_attribute, is_custom_element_node } from '../../nodes.js';
 import { regex_starts_with_newline } from '../../patterns.js';
-import { check_element } from './shared/a11y.js';
+import { check_element } from './shared/a11y/index.js';
 import { validate_element } from './shared/element.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 
@@ -48,8 +48,9 @@ export function RegularElement(node, context) {
 			node.attributes.push(
 				create_attribute(
 					'value',
-					/** @type {AST.Text} */ (node.fragment.nodes.at(0)).start,
-					/** @type {AST.Text} */ (node.fragment.nodes.at(-1)).end,
+					null,
+					-1,
+					-1,
 					// @ts-ignore
 					node.fragment.nodes
 				)
@@ -70,7 +71,7 @@ export function RegularElement(node, context) {
 		)
 	) {
 		const child = node.fragment.nodes[0];
-		node.attributes.push(create_attribute('value', child.start, child.end, [child]));
+		node.metadata.synthetic_value_node = child;
 	}
 
 	const binding = context.state.scope.get(node.name);

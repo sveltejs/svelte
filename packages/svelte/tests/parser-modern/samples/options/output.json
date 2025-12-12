@@ -32,6 +32,18 @@
 				"start": 16,
 				"end": 49,
 				"name": "customElement",
+				"name_loc": {
+					"start": {
+						"line": 1,
+						"column": 16,
+						"character": 16
+					},
+					"end": {
+						"line": 1,
+						"column": 29,
+						"character": 29
+					}
+				},
 				"value": [
 					{
 						"start": 31,
@@ -47,6 +59,18 @@
 				"start": 50,
 				"end": 62,
 				"name": "runes",
+				"name_loc": {
+					"start": {
+						"line": 1,
+						"column": 50,
+						"character": 50
+					},
+					"end": {
+						"line": 1,
+						"column": 55,
+						"character": 55
+					}
+				},
 				"value": {
 					"type": "ExpressionTag",
 					"start": 56,
@@ -104,6 +128,18 @@
 				"start": 75,
 				"end": 81,
 				"name": "module",
+				"name_loc": {
+					"start": {
+						"line": 3,
+						"column": 8,
+						"character": 75
+					},
+					"end": {
+						"line": 3,
+						"column": 14,
+						"character": 81
+					}
+				},
 				"value": true
 			},
 			{
@@ -111,6 +147,18 @@
 				"start": 82,
 				"end": 91,
 				"name": "lang",
+				"name_loc": {
+					"start": {
+						"line": 3,
+						"column": 15,
+						"character": 82
+					},
+					"end": {
+						"line": 3,
+						"column": 19,
+						"character": 86
+					}
+				},
 				"value": [
 					{
 						"start": 88,
@@ -151,6 +199,18 @@
 				"start": 112,
 				"end": 121,
 				"name": "lang",
+				"name_loc": {
+					"start": {
+						"line": 6,
+						"column": 8,
+						"character": 112
+					},
+					"end": {
+						"line": 6,
+						"column": 12,
+						"character": 116
+					}
+				},
 				"value": [
 					{
 						"start": 118,
@@ -166,6 +226,18 @@
 				"start": 122,
 				"end": 158,
 				"name": "generics",
+				"name_loc": {
+					"start": {
+						"line": 6,
+						"column": 18,
+						"character": 122
+					},
+					"end": {
+						"line": 6,
+						"column": 26,
+						"character": 130
+					}
+				},
 				"value": [
 					{
 						"start": 132,

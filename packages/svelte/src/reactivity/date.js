@@ -1,6 +1,6 @@
 /** @import { Source } from '#client' */
 import { derived } from '../internal/client/index.js';
-import { source, set } from '../internal/client/reactivity/sources.js';
+import { set, state } from '../internal/client/reactivity/sources.js';
 import { tag } from '../internal/client/dev/tracing.js';
 import { active_reaction, get, set_active_reaction } from '../internal/client/runtime.js';
 import { DEV } from 'esm-env';
@@ -40,7 +40,7 @@ var inited = false;
  * ```
  */
 export class SvelteDate extends Date {
-	#time = source(super.getTime());
+	#time = state(super.getTime());
 
 	/** @type {Map<keyof Date, Source<unknown>>} */
 	#deriveds = new Map();

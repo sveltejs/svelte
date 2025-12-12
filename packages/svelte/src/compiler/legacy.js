@@ -55,7 +55,9 @@ export function convert(source, ast) {
 
 				// Insert svelte:options back into the root nodes
 				if (/** @type {any} */ (options)?.__raw__) {
-					let idx = node.fragment.nodes.findIndex((node) => options.end <= node.start);
+					let idx = node.fragment.nodes.findIndex(
+						(node) => /** @type {any} */ (options).end <= node.start
+					);
 					if (idx === -1) {
 						idx = node.fragment.nodes.length;
 					}
@@ -451,6 +453,7 @@ export function convert(source, ast) {
 			SpreadAttribute(node) {
 				return { ...node, type: 'Spread' };
 			},
+			// @ts-ignore
 			StyleSheet(node, context) {
 				return {
 					...node,

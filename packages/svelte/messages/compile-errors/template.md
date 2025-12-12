@@ -124,6 +124,49 @@
 
 > `{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>`, `<svelte:boundary` or `<Component>`
 
+## const_tag_invalid_reference
+
+> The `{@const %name% = ...}` declaration is not available in this snippet
+
+The following is an error:
+
+```svelte
+<svelte:boundary>
+    {@const foo = 'bar'}
+
+    {#snippet failed()}
+        {foo}
+    {/snippet}
+</svelte:boundary>
+```
+
+Here, `foo` is not available inside `failed`. The top level code inside `<svelte:boundary>` becomes part of the implicit `children` snippet, in other words the above code is equivalent to this:
+
+```svelte
+<svelte:boundary>
+    {#snippet children()}
+        {@const foo = 'bar'}
+    {/snippet}
+
+    {#snippet failed()}
+        {foo}
+    {/snippet}
+</svelte:boundary>
+```
+
+The same applies to components:
+
+```svelte
+<Component>
+    {@const foo = 'bar'}
+
+    {#snippet someProp()}
+        <!-- error -->
+        {foo}
+    {/snippet}
+</Component>
+```
+
 ## debug_tag_invalid_arguments
 
 > {@debug ...} arguments must be identifiers, not arbitrary expressions
@@ -135,6 +178,10 @@
 ## directive_missing_name
 
 > `%type%` name cannot be empty
+
+## each_key_without_as
+
+> An `{#each ...}` block without an `as` clause cannot have a key
 
 ## element_invalid_closing_tag
 
@@ -176,6 +223,10 @@
 
 > Expected identifier or destructure pattern
 
+## expected_tag
+
+> Expected 'html', 'render', 'attach', 'const', or 'debug'
+
 ## expected_token
 
 > Expected token %token%
@@ -183,6 +234,10 @@
 ## expected_whitespace
 
 > Expected whitespace
+
+## illegal_await_expression
+
+> `use:`, `transition:` and `animate:` directives, attachments and bindings do not support await expressions
 
 ## illegal_element_attribute
 

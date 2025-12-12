@@ -26,9 +26,11 @@ await createBundle({
 		// so that types/properties with `@internal` (and its dependencies) are removed from the output
 		stripInternal: true,
 		paths: Object.fromEntries(
-			Object.entries(pkg.imports).map(([key, value]) => {
-				return [key, [value.types ?? value.default ?? value]];
-			})
+			Object.entries(pkg.imports).map(
+				/** @param {[string,any]} import */ ([key, value]) => {
+					return [key, [value.types ?? value.default ?? value]];
+				}
+			)
 		)
 	},
 	modules: {

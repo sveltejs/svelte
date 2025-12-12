@@ -1,18 +1,18 @@
-import { effect } from '../../../reactivity/effects.js';
+import { effect, teardown } from '../../../reactivity/effects.js';
 import { listen_to_event_and_reset_event } from './shared.js';
-import { untrack } from '../../../runtime.js';
 import { is } from '../../../proxy.js';
 import { is_array } from '../../../../shared/utils.js';
 import * as w from '../../../warnings.js';
+import { Batch, current_batch, previous_batch } from '../../../reactivity/batch.js';
 
 /**
  * Selects the correct option(s) (depending on whether this is a multiple select)
  * @template V
  * @param {HTMLSelectElement} select
  * @param {V} value
- * @param {boolean} [mounting]
+ * @param {boolean} mounting
  */
-export function select_option(select, value, mounting) {
+export function select_option(select, value, mounting = false) {
 	if (select.multiple) {
 		// If value is null or undefined, keep the selection as is
 		if (value == undefined) {
@@ -51,40 +51,29 @@ export function select_option(select, value, mounting) {
  * current selection to the dom when it changes. Such
  * changes could for example occur when options are
  * inside an `#each` block.
- * @template V
  * @param {HTMLSelectElement} select
- * @param {() => V} [get_value]
  */
-export function init_select(select, get_value) {
-	let mounting = true;
-	effect(() => {
-		if (get_value) {
-			select_option(select, untrack(get_value), mounting);
-		}
-		mounting = false;
+export function init_select(select) {
+	var observer = new MutationObserver(() => {
+		// @ts-ignore
+		select_option(select, select.__value);
+		// Deliberately don't update the potential binding value,
+		// the model should be preserved unless explicitly changed
+	});
 
-		var observer = new MutationObserver(() => {
-			// @ts-ignore
-			var value = select.__value;
-			select_option(select, value);
-			// Deliberately don't update the potential binding value,
-			// the model should be preserved unless explicitly changed
-		});
+	observer.observe(select, {
+		// Listen to option element changes
+		childList: true,
+		subtree: true, // because of <optgroup>
+		// Listen to option element value attribute changes
+		// (doesn't get notified of select value changes,
+		// because that property is not reflected as an attribute)
+		attributes: true,
+		attributeFilter: ['value']
+	});
 
-		observer.observe(select, {
-			// Listen to option element changes
-			childList: true,
-			subtree: true, // because of <optgroup>
-			// Listen to option element value attribute changes
-			// (doesn't get notified of select value changes,
-			// because that property is not reflected as an attribute)
-			attributes: true,
-			attributeFilter: ['value']
-		});
-
-		return () => {
-			observer.disconnect();
-		};
+	teardown(() => {
+		observer.disconnect();
 	});
 }
 
@@ -95,6 +84,7 @@ export function init_select(select, get_value) {
  * @returns {void}
  */
 export function bind_select_value(select, get, set = get) {
+	var batches = new WeakSet();
 	var mounting = true;
 
 	listen_to_event_and_reset_event(select, 'change', (is_reset) => {
@@ -114,11 +104,30 @@ export function bind_select_value(select, get, set = get) {
 		}
 
 		set(value);
+
+		if (current_batch !== null) {
+			batches.add(current_batch);
+		}
 	});
 
 	// Needs to be an effect, not a render_effect, so that in case of each loops the logic runs after the each block has updated
 	effect(() => {
 		var value = get();
+
+		if (select === document.activeElement) {
+			// we need both, because in non-async mode, render effects run before previous_batch is set
+			var batch = /** @type {Batch} */ (previous_batch ?? current_batch);
+
+			// Don't update the <select> if it is focused. We can get here if, for example,
+			// an update is deferred because of async work depending on the select:
+			//
+			// <select bind:value={selected}>...</select>
+			// <p>{await find(selected)}</p>
+			if (batches.has(batch)) {
+				return;
+			}
+		}
+
 		select_option(select, value, mounting);
 
 		// Mounting and value undefined -> take selection from dom
@@ -136,7 +145,6 @@ export function bind_select_value(select, get, set = get) {
 		mounting = false;
 	});
 
-	// don't pass get_value, we already initialize it in the effect above
 	init_select(select);
 }
 

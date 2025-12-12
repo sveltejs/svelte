@@ -1,4 +1,6 @@
 /** @import { AST } from '#compiler' */
+/** @import { Location } from 'locate-character' */
+/** @import * as ESTree from 'estree' */
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment.js';
@@ -8,6 +10,7 @@ import { create_fragment } from './utils/create.js';
 import read_options from './read/options.js';
 import { is_reserved } from '../../../utils.js';
 import { disallow_children } from '../2-analyze/visitors/shared/special-element.js';
+import * as state from '../../state.js';
 
 const regex_position_indicator = / \(\d+:\d+\)$/;
 
@@ -20,12 +23,6 @@ export class Parser {
 	 * @type {string}
 	 */
 	template;
-
-	/**
-	 * @readonly
-	 * @type {string}
-	 */
-	template_untrimmed;
 
 	/**
 	 * Whether or not we're in loose parsing mode, in which
@@ -65,7 +62,6 @@ export class Parser {
 		}
 
 		this.loose = loose;
-		this.template_untrimmed = template;
 		this.template = template.trimEnd();
 
 		let match_lang;
@@ -87,6 +83,7 @@ export class Parser {
 			type: 'Root',
 			fragment: create_fragment(),
 			options: null,
+			comments: [],
 			metadata: {
 				ts: this.ts
 			}
@@ -223,31 +220,45 @@ export class Parser {
 		return result;
 	}
 
-	/** @param {any} allow_reserved */
-	read_identifier(allow_reserved = false) {
+	/**
+	 * @returns {ESTree.Identifier & { start: number, end: number, loc: { start: Location, end: Location } }}
+	 */
+	read_identifier() {
 		const start = this.index;
+		let end = start;
+		let name = '';
 
-		let i = this.index;
+		const code = /** @type {number} */ (this.template.codePointAt(this.index));
 
-		const code = /** @type {number} */ (this.template.codePointAt(i));
-		if (!isIdentifierStart(code, true)) return null;
+		if (isIdentifierStart(code, true)) {
+			let i = this.index;
+			end += code <= 0xffff ? 1 : 2;
 
-		i += code <= 0xffff ? 1 : 2;
+			while (end < this.template.length) {
+				const code = /** @type {number} */ (this.template.codePointAt(end));
 
-		while (i < this.template.length) {
-			const code = /** @type {number} */ (this.template.codePointAt(i));
+				if (!isIdentifierChar(code, true)) break;
+				end += code <= 0xffff ? 1 : 2;
+			}
 
-			if (!isIdentifierChar(code, true)) break;
-			i += code <= 0xffff ? 1 : 2;
+			name = this.template.slice(start, end);
+			this.index = end;
+
+			if (is_reserved(name)) {
+				e.unexpected_reserved_word(start, name);
+			}
 		}
 
-		const identifier = this.template.slice(this.index, (this.index = i));
-
-		if (!allow_reserved && is_reserved(identifier)) {
-			e.unexpected_reserved_word(start, identifier);
-		}
-
-		return identifier;
+		return {
+			type: 'Identifier',
+			name,
+			start,
+			end,
+			loc: {
+				start: state.locator(start),
+				end: state.locator(end)
+			}
+		};
 	}
 
 	/** @param {RegExp} pattern */
@@ -299,6 +310,8 @@ export class Parser {
  * @returns {AST.Root}
  */
 export function parse(template, loose = false) {
+	state.set_source(template);
+
 	const parser = new Parser(template, loose);
 	return parser.root;
 }

@@ -6,6 +6,7 @@ var root = $.from_html(`<div></div> <svg></svg> <custom-element></custom-element
 export default function Main($$anchor) {
 	// needs to be a snapshot test because jsdom does auto-correct the attribute casing
 	let x = 'test';
+
 	let y = () => 'test';
 	var fragment = root();
 	var div = $.first_child(fragment);

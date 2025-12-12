@@ -137,7 +137,7 @@ const DELEGATED_EVENTS = [
  * Returns `true` if `event_name` is a delegated event
  * @param {string} event_name
  */
-export function is_delegated(event_name) {
+export function can_delegate_event(event_name) {
 	return DELEGATED_EVENTS.includes(event_name);
 }
 
@@ -154,7 +154,6 @@ const DOM_BOOLEAN_ATTRIBUTES = [
 	'default',
 	'disabled',
 	'formnovalidate',
-	'hidden',
 	'indeterminate',
 	'inert',
 	'ismap',
@@ -428,7 +427,7 @@ export function is_mathml(name) {
 	return MATHML_ELEMENTS.includes(name);
 }
 
-export const STATE_CREATION_RUNES = /** @type {const} */ ([
+const STATE_CREATION_RUNES = /** @type {const} */ ([
 	'$state',
 	'$state.raw',
 	'$derived',
@@ -437,6 +436,7 @@ export const STATE_CREATION_RUNES = /** @type {const} */ ([
 
 const RUNES = /** @type {const} */ ([
 	...STATE_CREATION_RUNES,
+	'$state.eager',
 	'$state.snapshot',
 	'$props',
 	'$props.id',
@@ -445,13 +445,14 @@ const RUNES = /** @type {const} */ ([
 	'$effect.pre',
 	'$effect.tracking',
 	'$effect.root',
+	'$effect.pending',
 	'$inspect',
 	'$inspect().with',
 	'$inspect.trace',
 	'$host'
 ]);
 
-/** @typedef {RUNES[number]} RuneName */
+/** @typedef {typeof RUNES[number]} RuneName */
 
 /**
  * @param {string} name
@@ -461,7 +462,7 @@ export function is_rune(name) {
 	return RUNES.includes(/** @type {RuneName} */ (name));
 }
 
-/** @typedef {STATE_CREATION_RUNES[number]} StateCreationRuneName */
+/** @typedef {typeof STATE_CREATION_RUNES[number]} StateCreationRuneName */
 
 /**
  * @param {string} name
@@ -476,7 +477,7 @@ const RAW_TEXT_ELEMENTS = /** @type {const} */ (['textarea', 'script', 'style', 
 
 /** @param {string} name */
 export function is_raw_text_element(name) {
-	return RAW_TEXT_ELEMENTS.includes(/** @type {RAW_TEXT_ELEMENTS[number]} */ (name));
+	return RAW_TEXT_ELEMENTS.includes(/** @type {typeof RAW_TEXT_ELEMENTS[number]} */ (name));
 }
 
 /**

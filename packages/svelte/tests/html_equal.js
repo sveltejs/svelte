@@ -1,3 +1,4 @@
+import { COMMENT_NODE, ELEMENT_NODE, TEXT_NODE } from '#client/constants';
 import { assert } from 'vitest';
 
 /**
@@ -31,11 +32,17 @@ function clean_children(node, opts) {
 			return;
 		}
 
-		node.setAttribute(attr.name, attr.value);
+		let value = attr.value;
+
+		if (attr.name === 'class') {
+			value = value.replace(/svelte-\w+/, 'svelte-xyz123');
+		}
+
+		node.setAttribute(attr.name, value);
 	});
 
 	for (let child of [...node.childNodes]) {
-		if (child.nodeType === 3) {
+		if (child.nodeType === TEXT_NODE) {
 			let text = /** @type {Text} */ (child);
 
 			if (
@@ -49,7 +56,7 @@ function clean_children(node, opts) {
 
 			text.data = text.data.replace(/[^\S]+/g, ' ');
 
-			if (previous && previous.nodeType === 3) {
+			if (previous && previous.nodeType === TEXT_NODE) {
 				const prev = /** @type {Text} */ (previous);
 
 				prev.data += text.data;
@@ -62,22 +69,22 @@ function clean_children(node, opts) {
 			}
 		}
 
-		if (child.nodeType === 8 && !opts.preserveComments) {
+		if (child.nodeType === COMMENT_NODE && !opts.preserveComments) {
 			// comment
 			child.remove();
 			continue;
 		}
 
 		// add newlines for better readability and potentially recurse into children
-		if (child.nodeType === 1 || child.nodeType === 8) {
-			if (previous?.nodeType === 3) {
+		if (child.nodeType === ELEMENT_NODE || child.nodeType === COMMENT_NODE) {
+			if (previous?.nodeType === TEXT_NODE) {
 				const prev = /** @type {Text} */ (previous);
 				prev.data = prev.data.replace(/^[^\S]+$/, '\n');
-			} else if (previous?.nodeType === 1 || previous?.nodeType === 8) {
+			} else if (previous?.nodeType === ELEMENT_NODE || previous?.nodeType === COMMENT_NODE) {
 				node.insertBefore(document.createTextNode('\n'), child);
 			}
 
-			if (child.nodeType === 1) {
+			if (child.nodeType === ELEMENT_NODE) {
 				has_element_children = true;
 				clean_children(/** @type {Element} */ (child), opts);
 			}
@@ -87,12 +94,12 @@ function clean_children(node, opts) {
 	}
 
 	// collapse whitespace
-	if (node.firstChild && node.firstChild.nodeType === 3) {
+	if (node.firstChild && node.firstChild.nodeType === TEXT_NODE) {
 		const text = /** @type {Text} */ (node.firstChild);
 		text.data = text.data.trimStart();
 	}
 
-	if (node.lastChild && node.lastChild.nodeType === 3) {
+	if (node.lastChild && node.lastChild.nodeType === TEXT_NODE) {
 		const text = /** @type {Text} */ (node.lastChild);
 		text.data = text.data.trimEnd();
 	}

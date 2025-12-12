@@ -1,11 +1,10 @@
 /** @import { ComponentContext, ComponentContextLegacy } from '#client' */
 /** @import { Component, EventDispatcher } from './index.js' */
 /** @import { NotFunction } from './internal/types.js' */
-import { untrack } from './internal/client/runtime.js';
+import { active_reaction, untrack } from './internal/client/runtime.js';
 import { is_array } from './internal/shared/utils.js';
 import { user_effect } from './internal/client/index.js';
 import * as e from './internal/client/errors.js';
-import { lifecycle_outside_component } from './internal/shared/errors.js';
 import { legacy_mode_flag } from './internal/flags/index.js';
 import { component_context } from './internal/client/context.js';
 import { DEV } from 'esm-env';
@@ -45,6 +44,37 @@ if (DEV) {
 }
 
 /**
+ * Returns an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that aborts when the current [derived](https://svelte.dev/docs/svelte/$derived) or [effect](https://svelte.dev/docs/svelte/$effect) re-runs or is destroyed.
+ *
+ * Must be called while a derived or effect is running.
+ *
+ * ```svelte
+ * <script>
+ * 	import { getAbortSignal } from 'svelte';
+ *
+ * 	let { id } = $props();
+ *
+ * 	async function getData(id) {
+ * 		const response = await fetch(`/items/${id}`, {
+ * 			signal: getAbortSignal()
+ * 		});
+ *
+ * 		return await response.json();
+ * 	}
+ *
+ * 	const data = $derived(await getData(id));
+ * </script>
+ * ```
+ */
+export function getAbortSignal() {
+	if (active_reaction === null) {
+		e.get_abort_signal_outside_reaction();
+	}
+
+	return (active_reaction.ac ??= new AbortController()).signal;
+}
+
+/**
  * `onMount`, like [`$effect`](https://svelte.dev/docs/svelte/$effect), schedules a function to run as soon as the component has been mounted to the DOM.
  * Unlike `$effect`, the provided function only runs once.
  *
@@ -60,7 +90,7 @@ if (DEV) {
  */
 export function onMount(fn) {
 	if (component_context === null) {
-		lifecycle_outside_component('onMount');
+		e.lifecycle_outside_component('onMount');
 	}
 
 	if (legacy_mode_flag && component_context.l !== null) {
@@ -84,7 +114,7 @@ export function onMount(fn) {
  */
 export function onDestroy(fn) {
 	if (component_context === null) {
-		lifecycle_outside_component('onDestroy');
+		e.lifecycle_outside_component('onDestroy');
 	}
 
 	onMount(() => () => untrack(fn));
@@ -181,13 +211,17 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
 export function createEventDispatcher() {
 	const active_component_context = component_context;
 	if (active_component_context === null) {
-		lifecycle_outside_component('createEventDispatcher');
+		e.lifecycle_outside_component('createEventDispatcher');
 	}
 
+	/**
+	 * @param [detail]
+	 * @param [options]
+	 */
 	return (type, detail, options) => {
 		const events = /** @type {Record<string, Function | Function[]>} */ (
 			active_component_context.s.$$events
-		)?.[/** @type {any} */ (type)];
+		)?.[/** @type {string} */ (type)];
 
 		if (events) {
 			const callbacks = is_array(events) ? events.slice() : [events];
@@ -219,7 +253,7 @@ export function createEventDispatcher() {
  */
 export function beforeUpdate(fn) {
 	if (component_context === null) {
-		lifecycle_outside_component('beforeUpdate');
+		e.lifecycle_outside_component('beforeUpdate');
 	}
 
 	if (component_context.l === null) {
@@ -242,7 +276,7 @@ export function beforeUpdate(fn) {
  */
 export function afterUpdate(fn) {
 	if (component_context === null) {
-		lifecycle_outside_component('afterUpdate');
+		e.lifecycle_outside_component('afterUpdate');
 	}
 
 	if (component_context.l === null) {
@@ -261,8 +295,15 @@ function init_update_callbacks(context) {
 	return (l.u ??= { a: [], b: [], m: [] });
 }
 
-export { flushSync } from './internal/client/runtime.js';
-export { getContext, getAllContexts, hasContext, setContext } from './internal/client/context.js';
+export { flushSync, fork } from './internal/client/reactivity/batch.js';
+export {
+	createContext,
+	getContext,
+	getAllContexts,
+	hasContext,
+	setContext
+} from './internal/client/context.js';
+export { hydratable } from './internal/client/hydratable.js';
 export { hydrate, mount, unmount } from './internal/client/render.js';
-export { tick, untrack } from './internal/client/runtime.js';
+export { tick, untrack, settled } from './internal/client/runtime.js';
 export { createRawSnippet } from './internal/client/dom/blocks/snippet.js';

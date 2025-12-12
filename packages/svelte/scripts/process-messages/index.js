@@ -1,9 +1,14 @@
+/** @import { Node } from 'esrap/languages/ts' */
+/** @import * as ESTree from 'estree' */
+/** @import { AST } from 'svelte/compiler' */
+
 // @ts-check
 import process from 'node:process';
 import fs from 'node:fs';
 import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
 import * as esrap from 'esrap';
+import ts from 'esrap/languages/ts';
 
 const DIR = '../../documentation/docs/98-reference/.generated';
 
@@ -97,79 +102,49 @@ function run() {
 			.readFileSync(new URL(`./templates/${name}.js`, import.meta.url), 'utf-8')
 			.replace(/\r\n/g, '\n');
 
-		/**
-		 * @type {Array<{
-		 * 	type: string;
-		 * 	value: string;
-		 * 	start: number;
-		 * 	end: number
-		 * }>}
-		 */
+		/** @type {AST.JSComment[]} */
 		const comments = [];
 
-		let ast = acorn.parse(source, {
-			ecmaVersion: 'latest',
-			sourceType: 'module',
-			onComment: (block, value, start, end) => {
-				if (block && /\n/.test(value)) {
-					let a = start;
-					while (a > 0 && source[a - 1] !== '\n') a -= 1;
+		let ast = /** @type {ESTree.Node} */ (
+			/** @type {unknown} */ (
+				acorn.parse(source, {
+					ecmaVersion: 'latest',
+					sourceType: 'module',
+					locations: true,
+					onComment: comments
+				})
+			)
+		);
 
-					let b = a;
-					while (/[ \t]/.test(source[b])) b += 1;
-
-					const indentation = source.slice(a, b);
-					value = value.replace(new RegExp(`^${indentation}`, 'gm'), '');
-				}
-
-				comments.push({ type: block ? 'Block' : 'Line', value, start, end });
+		comments.forEach((comment) => {
+			if (comment.type === 'Block') {
+				comment.value = comment.value.replace(/^\t+/gm, '');
 			}
 		});
 
 		ast = walk(ast, null, {
-			_(node, { next }) {
-				let comment;
-
-				while (comments[0] && comments[0].start < node.start) {
-					comment = comments.shift();
-					// @ts-expect-error
-					(node.leadingComments ||= []).push(comment);
-				}
-
-				next();
-
-				if (comments[0]) {
-					const slice = source.slice(node.end, comments[0].start);
-
-					if (/^[,) \t]*$/.test(slice)) {
-						// @ts-expect-error
-						node.trailingComments = [comments.shift()];
-					}
-				}
-			},
-			// @ts-expect-error
 			Identifier(node, context) {
 				if (node.name === 'CODES') {
-					return {
+					/** @type {ESTree.ArrayExpression} */
+					const array = {
 						type: 'ArrayExpression',
 						elements: Object.keys(messages[name]).map((code) => ({
 							type: 'Literal',
 							value: code
 						}))
 					};
+
+					return array;
 				}
 			}
 		});
 
-		if (comments.length > 0) {
-			// @ts-expect-error
-			(ast.trailingComments ||= []).push(...comments);
-		}
+		const body = /** @type {ESTree.Program} */ (ast).body;
 
 		const category = messages[name];
 
 		// find the `export function CODE` node
-		const index = ast.body.findIndex((node) => {
+		const index = body.findIndex((node) => {
 			if (
 				node.type === 'ExportNamedDeclaration' &&
 				node.declaration &&
@@ -181,8 +156,19 @@ function run() {
 
 		if (index === -1) throw new Error(`missing export function CODE in ${name}.js`);
 
-		const template_node = ast.body[index];
-		ast.body.splice(index, 1);
+		const template_node = body[index];
+		body.splice(index, 1);
+
+		const jsdoc = /** @type {AST.JSComment} */ (
+			comments.findLast((comment) => comment.start < /** @type {number} */ (template_node.start))
+		);
+
+		const printed = esrap.print(
+			/** @type {Node} */ (ast),
+			ts({
+				comments: comments.filter((comment) => comment !== jsdoc)
+			})
+		);
 
 		for (const code in category) {
 			const { messages } = category[code];
@@ -203,7 +189,7 @@ function run() {
 				};
 			});
 
-			/** @type {import('estree').Expression} */
+			/** @type {ESTree.Expression} */
 			let message = { type: 'Literal', value: '' };
 			let prev_vars;
 
@@ -221,10 +207,10 @@ function run() {
 
 				const parts = text.split(/(%\w+%)/);
 
-				/** @type {import('estree').Expression[]} */
+				/** @type {ESTree.Expression[]} */
 				const expressions = [];
 
-				/** @type {import('estree').TemplateElement[]} */
+				/** @type {ESTree.TemplateElement[]} */
 				const quasis = [];
 
 				for (let i = 0; i < parts.length; i += 1) {
@@ -244,7 +230,7 @@ function run() {
 					}
 				}
 
-				/** @type {import('estree').Expression} */
+				/** @type {ESTree.Expression} */
 				const expression = {
 					type: 'TemplateLiteral',
 					expressions,
@@ -272,138 +258,140 @@ function run() {
 				prev_vars = vars;
 			}
 
-			const clone = walk(/** @type {import('estree').Node} */ (template_node), null, {
-				// @ts-expect-error Block is a block comment, which is not recognised
-				Block(node, context) {
-					if (!node.value.includes('PARAMETER')) return;
+			const clone = /** @type {ESTree.Statement} */ (
+				walk(/** @type {ESTree.Node} */ (template_node), null, {
+					FunctionDeclaration(node, context) {
+						if (node.id.name !== 'CODE') return;
 
-					const value = /** @type {string} */ (node.value)
-						.split('\n')
-						.map((line) => {
-							if (line === ' * MESSAGE') {
-								return messages[messages.length - 1]
-									.split('\n')
-									.map((line) => ` * ${line}`)
-									.join('\n');
-							}
+						const params = [];
 
-							if (line.includes('PARAMETER')) {
-								return vars
-									.map((name, i) => {
-										const optional = i >= group[0].vars.length;
-
-										return optional
-											? ` * @param {string | undefined | null} [${name}]`
-											: ` * @param {string} ${name}`;
-									})
-									.join('\n');
-							}
-
-							return line;
-						})
-						.filter((x) => x !== '')
-						.join('\n');
-
-					if (value !== node.value) {
-						return { ...node, value };
-					}
-				},
-				FunctionDeclaration(node, context) {
-					if (node.id.name !== 'CODE') return;
-
-					const params = [];
-
-					for (const param of node.params) {
-						if (param.type === 'Identifier' && param.name === 'PARAMETER') {
-							params.push(...vars.map((name) => ({ type: 'Identifier', name })));
-						} else {
-							params.push(param);
-						}
-					}
-
-					return /** @type {import('estree').FunctionDeclaration} */ ({
-						.../** @type {import('estree').FunctionDeclaration} */ (context.next()),
-						params,
-						id: {
-							...node.id,
-							name: code
-						}
-					});
-				},
-				TemplateLiteral(node, context) {
-					/** @type {import('estree').TemplateElement} */
-					let quasi = {
-						type: 'TemplateElement',
-						value: {
-							...node.quasis[0].value
-						},
-						tail: node.quasis[0].tail
-					};
-
-					/** @type {import('estree').TemplateLiteral} */
-					let out = {
-						type: 'TemplateLiteral',
-						quasis: [quasi],
-						expressions: []
-					};
-
-					for (let i = 0; i < node.expressions.length; i += 1) {
-						const q = structuredClone(node.quasis[i + 1]);
-						const e = node.expressions[i];
-
-						if (e.type === 'Literal' && e.value === 'CODE') {
-							quasi.value.raw += code + q.value.raw;
-							continue;
-						}
-
-						if (e.type === 'Identifier' && e.name === 'MESSAGE') {
-							if (message.type === 'Literal') {
-								const str = /** @type {string} */ (message.value).replace(/(`|\${)/g, '\\$1');
-								quasi.value.raw += str + q.value.raw;
-								continue;
-							}
-
-							if (message.type === 'TemplateLiteral') {
-								const m = structuredClone(message);
-								quasi.value.raw += m.quasis[0].value.raw;
-								out.quasis.push(...m.quasis.slice(1));
-								out.expressions.push(...m.expressions);
-								quasi = m.quasis[m.quasis.length - 1];
-								quasi.value.raw += q.value.raw;
-								continue;
+						for (const param of node.params) {
+							if (param.type === 'Identifier' && param.name === 'PARAMETER') {
+								params.push(...vars.map((name) => ({ type: 'Identifier', name })));
+							} else {
+								params.push(param);
 							}
 						}
 
-						out.quasis.push((quasi = q));
-						out.expressions.push(/** @type {import('estree').Expression} */ (context.visit(e)));
-					}
-
-					return out;
-				},
-				Literal(node) {
-					if (node.value === 'CODE') {
-						return {
-							type: 'Literal',
-							value: code
+						return /** @type {ESTree.FunctionDeclaration} */ ({
+							.../** @type {ESTree.FunctionDeclaration} */ (context.next()),
+							params,
+							id: {
+								...node.id,
+								name: code
+							}
+						});
+					},
+					TemplateLiteral(node, context) {
+						/** @type {ESTree.TemplateElement} */
+						let quasi = {
+							type: 'TemplateElement',
+							value: {
+								...node.quasis[0].value
+							},
+							tail: node.quasis[0].tail
 						};
+
+						/** @type {ESTree.TemplateLiteral} */
+						let out = {
+							type: 'TemplateLiteral',
+							quasis: [quasi],
+							expressions: []
+						};
+
+						for (let i = 0; i < node.expressions.length; i += 1) {
+							const q = structuredClone(node.quasis[i + 1]);
+							const e = node.expressions[i];
+
+							if (e.type === 'Literal' && e.value === 'CODE') {
+								quasi.value.raw += code + q.value.raw;
+								continue;
+							}
+
+							if (e.type === 'Identifier' && e.name === 'MESSAGE') {
+								if (message.type === 'Literal') {
+									const str = /** @type {string} */ (message.value).replace(/(`|\${)/g, '\\$1');
+									quasi.value.raw += str + q.value.raw;
+									continue;
+								}
+
+								if (message.type === 'TemplateLiteral') {
+									const m = structuredClone(message);
+									quasi.value.raw += m.quasis[0].value.raw;
+									out.quasis.push(...m.quasis.slice(1));
+									out.expressions.push(...m.expressions);
+									quasi = m.quasis[m.quasis.length - 1];
+									quasi.value.raw += q.value.raw;
+									continue;
+								}
+							}
+
+							out.quasis.push((quasi = q));
+							out.expressions.push(/** @type {ESTree.Expression} */ (context.visit(e)));
+						}
+
+						return out;
+					},
+					Literal(node) {
+						if (node.value === 'CODE') {
+							return {
+								type: 'Literal',
+								value: code
+							};
+						}
+					},
+					Identifier(node) {
+						if (node.name !== 'MESSAGE') return;
+						return message;
 					}
-				},
-				Identifier(node) {
-					if (node.name !== 'MESSAGE') return;
-					return message;
-				}
-			});
+				})
+			);
 
-			// @ts-expect-error
-			ast.body.push(clone);
+			const jsdoc_clone = {
+				...jsdoc,
+				value: /** @type {string} */ (jsdoc.value)
+					.split('\n')
+					.map((line) => {
+						if (line === ' * MESSAGE') {
+							return messages[messages.length - 1]
+								.split('\n')
+								.map((line) => ` * ${line}`)
+								.join('\n');
+						}
+
+						if (line.includes('PARAMETER')) {
+							return vars
+								.map((name, i) => {
+									const optional = i >= group[0].vars.length;
+
+									return optional
+										? ` * @param {string | undefined | null} [${name}]`
+										: ` * @param {string} ${name}`;
+								})
+								.join('\n');
+						}
+
+						return line;
+					})
+					.filter((x) => x !== '')
+					.join('\n')
+			};
+
+			const block = esrap.print(
+				// @ts-expect-error some bullshit
+				/** @type {ESTree.Program} */ ({ ...ast, body: [clone] }),
+				ts({ comments: [jsdoc_clone] })
+			).code;
+
+			printed.code += `\n\n${block}`;
+
+			body.push(clone);
 		}
-
-		const module = esrap.print(ast);
 
 		fs.writeFileSync(
 			dest,
 			`/* This file is generated by scripts/process-messages/index.js. Do not edit! */\n\n` +
-				module.code,
+				printed.code,
 			'utf-8'
 		);
 	}
@@ -413,6 +401,7 @@ function run() {
 
 	transform('client-warnings', 'src/internal/client/warnings.js');
 	transform('client-errors', 'src/internal/client/errors.js');
+	transform('server-warnings', 'src/internal/server/warnings.js');
 	transform('server-errors', 'src/internal/server/errors.js');
 	transform('shared-errors', 'src/internal/shared/errors.js');
 	transform('shared-warnings', 'src/internal/shared/warnings.js');

@@ -1,19 +1,20 @@
 import 'svelte/internal/disclose-version';
 import * as $ from 'svelte/internal/client';
 
-function increment(_, counter) {
-	counter.count += 1;
-}
-
 var root = $.from_html(`<button> </button> <!> `, 1);
 
 export default function Await_block_scope($$anchor) {
 	let counter = $.proxy({ count: 0 });
 	const promise = $.derived(() => Promise.resolve(counter));
+
+	function increment() {
+		counter.count += 1;
+	}
+
 	var fragment = root();
 	var button = $.first_child(fragment);
 
-	button.__click = [increment, counter];
+	button.__click = increment;
 
 	var text = $.child(button);
 

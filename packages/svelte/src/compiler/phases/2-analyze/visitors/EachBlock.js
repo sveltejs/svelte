@@ -1,3 +1,4 @@
+/** @import { Expression } from 'estree' */
 /** @import { AST, Binding } from '#compiler' */
 /** @import { Context } from '../types' */
 /** @import { Scope } from '../../scope' */
@@ -26,6 +27,10 @@ export function EachBlock(node, context) {
 		// treat `{#each items as item, i (i)}` as a normal indexed block, everything else as keyed
 		node.metadata.keyed =
 			node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index;
+	}
+
+	if (node.metadata.keyed && !node.context) {
+		e.each_key_without_as(/** @type {Expression} */ (node.key));
 	}
 
 	// evaluate expression in parent scope

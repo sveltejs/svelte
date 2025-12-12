@@ -3,7 +3,7 @@
 /** @import { Parser } from '../index.js' */
 import { walk } from 'zimmerframe';
 import * as e from '../../../errors.js';
-import { create_expression_metadata } from '../../nodes.js';
+import { ExpressionMetadata } from '../../nodes.js';
 import { parse_expression_at } from '../acorn.js';
 import read_pattern from '../read/context.js';
 import read_expression, { get_loose_identifier } from '../read/expression.js';
@@ -42,7 +42,7 @@ export default function tag(parser) {
 		end: parser.index,
 		expression,
 		metadata: {
-			expression: create_expression_metadata()
+			expression: new ExpressionMetadata()
 		}
 	});
 }
@@ -63,7 +63,10 @@ function open(parser) {
 			end: -1,
 			test: read_expression(parser),
 			consequent: create_fragment(),
-			alternate: null
+			alternate: null,
+			metadata: {
+				expression: new ExpressionMetadata()
+			}
 		});
 
 		parser.allow_whitespace();
@@ -174,7 +177,7 @@ function open(parser) {
 
 		if (parser.eat(',')) {
 			parser.allow_whitespace();
-			index = parser.read_identifier();
+			index = parser.read_identifier().name;
 			if (!index) {
 				e.expected_identifier(parser.index);
 			}
@@ -244,7 +247,10 @@ function open(parser) {
 			error: null,
 			pending: null,
 			then: null,
-			catch: null
+			catch: null,
+			metadata: {
+				expression: new ExpressionMetadata()
+			}
 		});
 
 		if (parser.eat('then')) {
@@ -326,7 +332,10 @@ function open(parser) {
 			start,
 			end: -1,
 			expression,
-			fragment: create_fragment()
+			fragment: create_fragment(),
+			metadata: {
+				expression: new ExpressionMetadata()
+			}
 		});
 
 		parser.stack.push(block);
@@ -338,16 +347,10 @@ function open(parser) {
 	if (parser.eat('snippet')) {
 		parser.require_whitespace();
 
-		const name_start = parser.index;
-		let name = parser.read_identifier();
-		const name_end = parser.index;
+		const id = parser.read_identifier();
 
-		if (name === null) {
-			if (parser.loose) {
-				name = '';
-			} else {
-				e.expected_identifier(parser.index);
-			}
+		if (id.name === '' && !parser.loose) {
+			e.expected_identifier(parser.index);
 		}
 
 		parser.allow_whitespace();
@@ -389,7 +392,12 @@ function open(parser) {
 
 		let function_expression = matched
 			? /** @type {ArrowFunctionExpression} */ (
-					parse_expression_at(prelude + `${params} => {}`, parser.ts, params_start)
+					parse_expression_at(
+						prelude + `${params} => {}`,
+						parser.root.comments,
+						parser.ts,
+						params_start
+					)
 				)
 			: { params: [] };
 
@@ -401,12 +409,7 @@ function open(parser) {
 			type: 'SnippetBlock',
 			start,
 			end: -1,
-			expression: {
-				type: 'Identifier',
-				start: name_start,
-				end: name_end,
-				name
-			},
+			expression: id,
 			typeParams: type_params,
 			parameters: function_expression.params,
 			body: create_fragment(),
@@ -461,7 +464,10 @@ function next(parser) {
 				elseif: true,
 				test: expression,
 				consequent: create_fragment(),
-				alternate: null
+				alternate: null,
+				metadata: {
+					expression: new ExpressionMetadata()
+				}
 			});
 
 			parser.stack.push(child);
@@ -624,7 +630,10 @@ function special(parser) {
 			type: 'HtmlTag',
 			start,
 			end: parser.index,
-			expression
+			expression,
+			metadata: {
+				expression: new ExpressionMetadata()
+			}
 		});
 
 		return;
@@ -699,8 +708,12 @@ function special(parser) {
 				declarations: [{ type: 'VariableDeclarator', id, init, start: id.start, end: init.end }],
 				start: start + 2, // start at const, not at @const
 				end: parser.index - 1
+			},
+			metadata: {
+				expression: new ExpressionMetadata()
 			}
 		});
+		return;
 	}
 
 	if (parser.eat('render')) {
@@ -725,11 +738,14 @@ function special(parser) {
 			end: parser.index,
 			expression: /** @type {AST.RenderTag['expression']} */ (expression),
 			metadata: {
+				expression: new ExpressionMetadata(),
 				dynamic: false,
 				arguments: [],
 				path: [],
 				snippets: new Set()
 			}
 		});
+		return;
 	}
+	e.expected_tag(parser.index);
 }

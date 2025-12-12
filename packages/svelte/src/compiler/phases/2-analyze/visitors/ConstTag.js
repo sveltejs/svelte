@@ -32,5 +32,14 @@ export function ConstTag(node, context) {
 		e.const_tag_invalid_placement(node);
 	}
 
-	context.next();
+	const declaration = node.declaration.declarations[0];
+
+	context.visit(declaration.id);
+	context.visit(declaration.init, {
+		...context.state,
+		expression: node.metadata.expression,
+		// We're treating this like a $derived under the hood
+		function_depth: context.state.function_depth + 1,
+		derived_function_depth: context.state.function_depth + 1
+	});
 }

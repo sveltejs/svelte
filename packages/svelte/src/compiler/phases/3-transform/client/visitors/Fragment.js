@@ -6,7 +6,7 @@ import * as b from '#compiler/builders';
 import { clean_nodes, infer_namespace } from '../../utils.js';
 import { transform_template } from '../transform-template/index.js';
 import { process_children } from './shared/fragment.js';
-import { build_render_statement } from './shared/utils.js';
+import { build_render_statement, Memoizer } from './shared/utils.js';
 import { Template } from '../transform-template/template.js';
 
 /**
@@ -47,10 +47,7 @@ export function Fragment(node, context) {
 	const is_single_element = trimmed.length === 1 && trimmed[0].type === 'RegularElement';
 	const is_single_child_not_needing_template =
 		trimmed.length === 1 &&
-		(trimmed[0].type === 'SvelteFragment' ||
-			trimmed[0].type === 'TitleElement' ||
-			(trimmed[0].type === 'IfBlock' && trimmed[0].elseif));
-
+		(trimmed[0].type === 'SvelteFragment' || trimmed[0].type === 'TitleElement');
 	const template_name = context.state.scope.root.unique('root'); // TODO infer name from parent
 
 	/** @type {Statement[]} */
@@ -63,30 +60,28 @@ export function Fragment(node, context) {
 	const state = {
 		...context.state,
 		init: [],
+		consts: [],
+		let_directives: [],
 		update: [],
-		expressions: [],
 		after_update: [],
+		memoizer: new Memoizer(),
 		template: new Template(),
 		transform: { ...context.state.transform },
 		metadata: {
 			namespace,
 			bound_contenteditable: context.state.metadata.bound_contenteditable
-		}
+		},
+		async_consts: undefined
 	};
 
 	for (const node of hoisted) {
 		context.visit(node, state);
 	}
 
-	if (is_text_first) {
-		// skip over inserted comment
-		body.push(b.stmt(b.call('$.next')));
-	}
-
 	if (is_single_element) {
 		const element = /** @type {AST.RegularElement} */ (trimmed[0]);
 
-		const id = b.id(context.state.scope.generate(element.name));
+		const id = b.id(context.state.scope.generate(element.name), element.name_loc);
 
 		context.visit(element, {
 			...state,
@@ -98,13 +93,13 @@ export function Fragment(node, context) {
 		const template = transform_template(state, namespace, flags);
 		state.hoisted.push(b.var(template_name, template));
 
-		body.push(b.var(id, b.call(template_name)));
+		state.init.unshift(b.var(id, b.call(template_name)));
 		close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 	} else if (is_single_child_not_needing_template) {
 		context.visit(trimmed[0], state);
 	} else if (trimmed.length === 1 && trimmed[0].type === 'Text') {
 		const id = b.id(context.state.scope.generate('text'));
-		body.push(b.var(id, b.call('$.text', b.literal(trimmed[0].data))));
+		state.init.unshift(b.var(id, b.call('$.text', b.literal(trimmed[0].data))));
 		close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 	} else if (trimmed.length > 0) {
 		const id = b.id(context.state.scope.generate('fragment'));
@@ -122,7 +117,7 @@ export function Fragment(node, context) {
 				state
 			});
 
-			body.push(b.var(id, b.call('$.text')));
+			state.init.unshift(b.var(id, b.call('$.text')));
 			close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 		} else {
 			if (is_standalone) {
@@ -142,17 +137,28 @@ export function Fragment(node, context) {
 
 				if (state.template.nodes.length === 1 && state.template.nodes[0].type === 'comment') {
 					// special case — we can use `$.comment` instead of creating a unique template
-					body.push(b.var(id, b.call('$.comment')));
+					state.init.unshift(b.var(id, b.call('$.comment')));
 				} else {
 					const template = transform_template(state, namespace, flags);
 					state.hoisted.push(b.var(template_name, template));
 
-					body.push(b.var(id, b.call(template_name)));
+					state.init.unshift(b.var(id, b.call(template_name)));
 				}
 
 				close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 			}
 		}
+	}
+
+	body.push(...state.let_directives, ...state.consts);
+
+	if (state.async_consts && state.async_consts.thunks.length > 0) {
+		body.push(b.var(state.async_consts.id, b.call('$.run', b.array(state.async_consts.thunks))));
+	}
+
+	if (is_text_first) {
+		// skip over inserted comment
+		body.push(b.stmt(b.call('$.next')));
 	}
 
 	body.push(...state.init);

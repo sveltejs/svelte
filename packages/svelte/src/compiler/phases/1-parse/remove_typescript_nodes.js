@@ -27,6 +27,9 @@ const visitors = {
 		delete n.typeArguments;
 		delete n.returnType;
 		delete n.accessibility;
+		delete n.readonly;
+		delete n.definite;
+		delete n.override;
 	},
 	Decorator(node) {
 		e.typescript_invalid_feature(node, 'decorators (related TSC proposal is not stage 4 yet)');
@@ -132,7 +135,14 @@ const visitors = {
 		if (node.declare) {
 			return b.empty;
 		}
+		delete node.abstract;
 		delete node.implements;
+		delete node.superTypeArguments;
+		return context.next();
+	},
+	ClassExpression(node, context) {
+		delete node.implements;
+		delete node.superTypeArguments;
 		return context.next();
 	},
 	MethodDefinition(node, context) {

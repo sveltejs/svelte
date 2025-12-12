@@ -1,52 +1,68 @@
 /** @import { Derived, Effect, Reaction, Signal, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
-import { define_property, get_descriptors, get_prototype_of, index_of } from '../shared/utils.js';
+import { get_descriptors, get_prototype_of, index_of } from '../shared/utils.js';
 import {
 	destroy_block_effect_children,
 	destroy_effect_children,
-	execute_effect_teardown,
-	unlink_effect
+	effect_tracking,
+	execute_effect_teardown
 } from './reactivity/effects.js';
 import {
-	EFFECT,
 	DIRTY,
 	MAYBE_DIRTY,
 	CLEAN,
 	DERIVED,
-	UNOWNED,
 	DESTROYED,
-	INERT,
 	BRANCH_EFFECT,
 	STATE_SYMBOL,
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	LEGACY_DERIVED_PROP,
-	DISCONNECTED,
-	EFFECT_IS_UPDATING
+	CONNECTED,
+	REACTION_IS_UPDATING,
+	STALE_REACTION,
+	ERROR_VALUE,
+	WAS_MARKED,
+	MANAGED_EFFECT
 } from './constants.js';
-import { flush_tasks } from './dom/task.js';
-import { internal_set, old_values } from './reactivity/sources.js';
-import { destroy_derived_effects, update_derived } from './reactivity/deriveds.js';
-import * as e from './errors.js';
-
-import { tracing_mode_flag } from '../flags/index.js';
-import { tracing_expressions, get_stack } from './dev/tracing.js';
+import { old_values } from './reactivity/sources.js';
+import {
+	destroy_derived_effects,
+	execute_derived,
+	current_async_effect,
+	recent_async_deriveds,
+	update_derived
+} from './reactivity/deriveds.js';
+import { async_mode_flag, tracing_mode_flag } from '../flags/index.js';
+import { tracing_expressions } from './dev/tracing.js';
+import { get_error } from '../shared/dev.js';
 import {
 	component_context,
 	dev_current_component_function,
+	dev_stack,
 	is_runes,
 	set_component_context,
-	set_dev_current_component_function
+	set_dev_current_component_function,
+	set_dev_stack
 } from './context.js';
-import { handle_error, invoke_error_boundary } from './error-handling.js';
-import { snapshot } from '../shared/clone.js';
+import * as w from './warnings.js';
+import {
+	Batch,
+	batch_values,
+	current_batch,
+	flushSync,
+	schedule_effect
+} from './reactivity/batch.js';
+import { handle_error } from './error-handling.js';
+import { UNINITIALIZED } from '../../constants.js';
+import { captured_signals } from './legacy.js';
+import { without_reactive_context } from './dom/elements/bindings/shared.js';
 
-let is_flushing = false;
+export let is_updating_effect = false;
 
-/** @type {Effect | null} */
-let last_scheduled_effect = null;
-
-let is_updating_effect = false;
+/** @param {boolean} value */
+export function set_is_updating_effect(value) {
+	is_updating_effect = value;
+}
 
 export let is_destroying_effect = false;
 
@@ -54,15 +70,6 @@ export let is_destroying_effect = false;
 export function set_is_destroying_effect(value) {
 	is_destroying_effect = value;
 }
-
-// Handle effect queues
-
-/** @type {Effect[]} */
-let queued_root_effects = [];
-
-/** @type {Effect[]} Stack of effects, dev only */
-let dev_effect_stack = [];
-// Handle signal reactivity tree dependencies and reactions
 
 /** @type {null | Reaction} */
 export let active_reaction = null;
@@ -84,18 +91,18 @@ export function set_active_effect(effect) {
 
 /**
  * When sources are created within a reaction, reading and writing
- * them should not cause a re-run
+ * them within that reaction should not cause a re-run
  * @type {null | Source[]}
  */
-export let reaction_sources = null;
+export let current_sources = null;
 
 /** @param {Value} value */
 export function push_reaction_value(value) {
-	if (active_reaction !== null && active_reaction.f & EFFECT_IS_UPDATING) {
-		if (reaction_sources === null) {
-			reaction_sources = [value];
+	if (active_reaction !== null && (!async_mode_flag || (active_reaction.f & DERIVED) !== 0)) {
+		if (current_sources === null) {
+			current_sources = [value];
 		} else {
-			reaction_sources.push(value);
+			current_sources.push(value);
 		}
 	}
 }
@@ -126,21 +133,16 @@ export function set_untracked_writes(value) {
  * @type {number} Used by sources and deriveds for handling updates.
  * Version starts from 1 so that unowned deriveds differentiate between a created effect and a run one for tracing
  **/
-let write_version = 1;
+export let write_version = 1;
 
 /** @type {number} Used to version each read of a source of derived to avoid duplicating depedencies inside a reaction */
 let read_version = 0;
 
-// If we are working with a get() chain that has no active container,
-// to prevent memory leaks, we skip adding the reaction.
-export let skip_reaction = false;
-// Handle collecting all signals which are read during a specific time frame
-/** @type {Set<Value> | null} */
-export let captured_signals = null;
+export let update_version = read_version;
 
-/** @param {Set<Value> | null} value */
-export function set_captured_signals(value) {
-	captured_signals = value;
+/** @param {number} value */
+export function set_update_version(value) {
+	update_version = value;
 }
 
 export function increment_write_version() {
@@ -153,56 +155,27 @@ export function increment_write_version() {
  * @param {Reaction} reaction
  * @returns {boolean}
  */
-export function check_dirtiness(reaction) {
+export function is_dirty(reaction) {
 	var flags = reaction.f;
 
 	if ((flags & DIRTY) !== 0) {
 		return true;
 	}
 
+	if (flags & DERIVED) {
+		reaction.f &= ~WAS_MARKED;
+	}
+
 	if ((flags & MAYBE_DIRTY) !== 0) {
 		var dependencies = reaction.deps;
-		var is_unowned = (flags & UNOWNED) !== 0;
 
 		if (dependencies !== null) {
-			var i;
-			var dependency;
-			var is_disconnected = (flags & DISCONNECTED) !== 0;
-			var is_unowned_connected = is_unowned && active_effect !== null && !skip_reaction;
 			var length = dependencies.length;
 
-			// If we are working with a disconnected or an unowned signal that is now connected (due to an active effect)
-			// then we need to re-connect the reaction to the dependency
-			if (is_disconnected || is_unowned_connected) {
-				var derived = /** @type {Derived} */ (reaction);
-				var parent = derived.parent;
+			for (var i = 0; i < length; i++) {
+				var dependency = dependencies[i];
 
-				for (i = 0; i < length; i++) {
-					dependency = dependencies[i];
-
-					// We always re-add all reactions (even duplicates) if the derived was
-					// previously disconnected, however we don't if it was unowned as we
-					// de-duplicate dependencies in that case
-					if (is_disconnected || !dependency?.reactions?.includes(derived)) {
-						(dependency.reactions ??= []).push(derived);
-					}
-				}
-
-				if (is_disconnected) {
-					derived.f ^= DISCONNECTED;
-				}
-				// If the unowned derived is now fully connected to the graph again (it's unowned and reconnected, has a parent
-				// and the parent is not unowned), then we can mark it as connected again, removing the need for the unowned
-				// flag
-				if (is_unowned_connected && parent !== null && (parent.f & UNOWNED) === 0) {
-					derived.f ^= UNOWNED;
-				}
-			}
-
-			for (i = 0; i < length; i++) {
-				dependency = dependencies[i];
-
-				if (check_dirtiness(/** @type {Derived} */ (dependency))) {
+				if (is_dirty(/** @type {Derived} */ (dependency))) {
 					update_derived(/** @type {Derived} */ (dependency));
 				}
 
@@ -212,9 +185,12 @@ export function check_dirtiness(reaction) {
 			}
 		}
 
-		// Unowned signals should never be marked as clean unless they
-		// are used within an active_effect without skip_reaction
-		if (!is_unowned || (active_effect !== null && !skip_reaction)) {
+		if (
+			(flags & CONNECTED) !== 0 &&
+			// During time traveling we don't want to reset the status so that
+			// traversal of the graph in the other batches still happens
+			batch_values === null
+		) {
 			set_signal_status(reaction, CLEAN);
 		}
 	}
@@ -231,10 +207,12 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
+	if (!async_mode_flag && current_sources?.includes(signal)) {
+		return;
+	}
+
 	for (var i = 0; i < reactions.length; i++) {
 		var reaction = reactions[i];
-
-		if (reaction_sources?.includes(signal)) continue;
 
 		if ((reaction.f & DERIVED) !== 0) {
 			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
@@ -255,29 +233,35 @@ export function update_reaction(reaction) {
 	var previous_skipped_deps = skipped_deps;
 	var previous_untracked_writes = untracked_writes;
 	var previous_reaction = active_reaction;
-	var previous_skip_reaction = skip_reaction;
-	var previous_reaction_sources = reaction_sources;
+	var previous_sources = current_sources;
 	var previous_component_context = component_context;
 	var previous_untracking = untracking;
+	var previous_update_version = update_version;
 
 	var flags = reaction.f;
 
 	new_deps = /** @type {null | Value[]} */ (null);
 	skipped_deps = 0;
 	untracked_writes = null;
-	skip_reaction =
-		(flags & UNOWNED) !== 0 && (untracking || !is_updating_effect || active_reaction === null);
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 
-	reaction_sources = null;
+	current_sources = null;
 	set_component_context(reaction.ctx);
 	untracking = false;
-	read_version++;
+	update_version = ++read_version;
 
-	reaction.f |= EFFECT_IS_UPDATING;
+	if (reaction.ac !== null) {
+		without_reactive_context(() => {
+			/** @type {AbortController} */ (reaction.ac).abort(STALE_REACTION);
+		});
+
+		reaction.ac = null;
+	}
 
 	try {
-		var result = /** @type {Function} */ (0, reaction.fn)();
+		reaction.f |= REACTION_IS_UPDATING;
+		var fn = /** @type {Function} */ (reaction.fn);
+		var result = fn();
 		var deps = reaction.deps;
 
 		if (new_deps !== null) {
@@ -294,7 +278,7 @@ export function update_reaction(reaction) {
 				reaction.deps = deps = new_deps;
 			}
 
-			if (!skip_reaction) {
+			if (effect_tracking() && (reaction.f & CONNECTED) !== 0) {
 				for (i = skipped_deps; i < deps.length; i++) {
 					(deps[i].reactions ??= []).push(reaction);
 				}
@@ -338,20 +322,23 @@ export function update_reaction(reaction) {
 			}
 		}
 
+		if ((reaction.f & ERROR_VALUE) !== 0) {
+			reaction.f ^= ERROR_VALUE;
+		}
+
 		return result;
 	} catch (error) {
-		handle_error(error);
+		return handle_error(error);
 	} finally {
+		reaction.f ^= REACTION_IS_UPDATING;
 		new_deps = previous_deps;
 		skipped_deps = previous_skipped_deps;
 		untracked_writes = previous_untracked_writes;
 		active_reaction = previous_reaction;
-		skip_reaction = previous_skip_reaction;
-		reaction_sources = previous_reaction_sources;
+		current_sources = previous_sources;
 		set_component_context(previous_component_context);
 		untracking = previous_untracking;
-
-		reaction.f ^= EFFECT_IS_UPDATING;
+		update_version = previous_update_version;
 	}
 }
 
@@ -376,6 +363,7 @@ function remove_reaction(signal, dependency) {
 			}
 		}
 	}
+
 	// If the derived has no reactions, then we can disconnect it from the graph,
 	// allowing it to either reconnect in the future, or be GC'd by the VM.
 	if (
@@ -388,9 +376,10 @@ function remove_reaction(signal, dependency) {
 	) {
 		set_signal_status(dependency, MAYBE_DIRTY);
 		// If we are working with a derived that is owned by an effect, then mark it as being
-		// disconnected.
-		if ((dependency.f & (UNOWNED | DISCONNECTED)) === 0) {
-			dependency.f ^= DISCONNECTED;
+		// disconnected and remove the mark flag, as it cannot be reliably removed otherwise
+		if ((dependency.f & CONNECTED) !== 0) {
+			dependency.f ^= CONNECTED;
+			dependency.f &= ~WAS_MARKED;
 		}
 		// Disconnect any reactions owned by this reaction
 		destroy_derived_effects(/** @type {Derived} **/ (dependency));
@@ -434,10 +423,13 @@ export function update_effect(effect) {
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
 		set_dev_current_component_function(effect.component_function);
+		var previous_stack = /** @type {any} */ (dev_stack);
+		// only block effects have a dev stack, keep the current one otherwise
+		set_dev_stack(effect.dev_stack ?? dev_stack);
 	}
 
 	try {
-		if ((flags & BLOCK_EFFECT) !== 0) {
+		if ((flags & (BLOCK_EFFECT | MANAGED_EFFECT)) !== 0) {
 			destroy_block_effect_children(effect);
 		} else {
 			destroy_effect_children(effect);
@@ -458,243 +450,14 @@ export function update_effect(effect) {
 				}
 			}
 		}
-
-		if (DEV) {
-			dev_effect_stack.push(effect);
-		}
 	} finally {
 		is_updating_effect = was_updating_effect;
 		active_effect = previous_effect;
 
 		if (DEV) {
 			set_dev_current_component_function(previous_component_fn);
+			set_dev_stack(previous_stack);
 		}
-	}
-}
-
-function log_effect_stack() {
-	// eslint-disable-next-line no-console
-	console.error(
-		'Last ten effects were: ',
-		dev_effect_stack.slice(-10).map((d) => d.fn)
-	);
-	dev_effect_stack = [];
-}
-
-function infinite_loop_guard() {
-	try {
-		e.effect_update_depth_exceeded();
-	} catch (error) {
-		if (DEV) {
-			// stack is garbage, ignore. Instead add a console.error message.
-			define_property(error, 'stack', {
-				value: ''
-			});
-		}
-		// Try and handle the error so it can be caught at a boundary, that's
-		// if there's an effect available from when it was last scheduled
-		if (last_scheduled_effect !== null) {
-			if (DEV) {
-				try {
-					invoke_error_boundary(error, last_scheduled_effect);
-				} catch (e) {
-					// Only log the effect stack if the error is re-thrown
-					log_effect_stack();
-					throw e;
-				}
-			} else {
-				invoke_error_boundary(error, last_scheduled_effect);
-			}
-		} else {
-			if (DEV) {
-				log_effect_stack();
-			}
-			throw error;
-		}
-	}
-}
-
-function flush_queued_root_effects() {
-	var was_updating_effect = is_updating_effect;
-
-	try {
-		var flush_count = 0;
-		is_updating_effect = true;
-
-		while (queued_root_effects.length > 0) {
-			if (flush_count++ > 1000) {
-				infinite_loop_guard();
-			}
-
-			var root_effects = queued_root_effects;
-			var length = root_effects.length;
-
-			queued_root_effects = [];
-
-			for (var i = 0; i < length; i++) {
-				var collected_effects = process_effects(root_effects[i]);
-				flush_queued_effects(collected_effects);
-			}
-			old_values.clear();
-		}
-	} finally {
-		is_flushing = false;
-		is_updating_effect = was_updating_effect;
-
-		last_scheduled_effect = null;
-		if (DEV) {
-			dev_effect_stack = [];
-		}
-	}
-}
-
-/**
- * @param {Array<Effect>} effects
- * @returns {void}
- */
-function flush_queued_effects(effects) {
-	var length = effects.length;
-	if (length === 0) return;
-
-	for (var i = 0; i < length; i++) {
-		var effect = effects[i];
-
-		if ((effect.f & (DESTROYED | INERT)) === 0) {
-			if (check_dirtiness(effect)) {
-				update_effect(effect);
-
-				// Effects with no dependencies or teardown do not get added to the effect tree.
-				// Deferred effects (e.g. `$effect(...)`) _are_ added to the tree because we
-				// don't know if we need to keep them until they are executed. Doing the check
-				// here (rather than in `update_effect`) allows us to skip the work for
-				// immediate effects.
-				if (effect.deps === null && effect.first === null && effect.nodes_start === null) {
-					if (effect.teardown === null) {
-						// remove this effect from the graph
-						unlink_effect(effect);
-					} else {
-						// keep the effect in the graph, but free up some memory
-						effect.fn = null;
-					}
-				}
-			}
-		}
-	}
-}
-
-/**
- * @param {Effect} signal
- * @returns {void}
- */
-export function schedule_effect(signal) {
-	if (!is_flushing) {
-		is_flushing = true;
-		queueMicrotask(flush_queued_root_effects);
-	}
-
-	var effect = (last_scheduled_effect = signal);
-
-	while (effect.parent !== null) {
-		effect = effect.parent;
-		var flags = effect.f;
-
-		if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
-			if ((flags & CLEAN) === 0) return;
-			effect.f ^= CLEAN;
-		}
-	}
-
-	queued_root_effects.push(effect);
-}
-
-/**
- *
- * This function both runs render effects and collects user effects in topological order
- * from the starting effect passed in. Effects will be collected when they match the filtered
- * bitwise flag passed in only. The collected effects array will be populated with all the user
- * effects to be flushed.
- *
- * @param {Effect} root
- * @returns {Effect[]}
- */
-function process_effects(root) {
-	/** @type {Effect[]} */
-	var effects = [];
-
-	/** @type {Effect | null} */
-	var effect = root;
-
-	while (effect !== null) {
-		var flags = effect.f;
-		var is_branch = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0;
-		var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
-
-		if (!is_skippable_branch && (flags & INERT) === 0) {
-			if ((flags & EFFECT) !== 0) {
-				effects.push(effect);
-			} else if (is_branch) {
-				effect.f ^= CLEAN;
-			} else {
-				if (check_dirtiness(effect)) {
-					update_effect(effect);
-				}
-			}
-
-			/** @type {Effect | null} */
-			var child = effect.first;
-
-			if (child !== null) {
-				effect = child;
-				continue;
-			}
-		}
-
-		var parent = effect.parent;
-		effect = effect.next;
-
-		while (effect === null && parent !== null) {
-			effect = parent.next;
-			parent = parent.parent;
-		}
-	}
-
-	return effects;
-}
-
-/**
- * Synchronously flush any pending updates.
- * Returns void if no callback is provided, otherwise returns the result of calling the callback.
- * @template [T=void]
- * @param {(() => T) | undefined} [fn]
- * @returns {T}
- */
-export function flushSync(fn) {
-	var result;
-
-	if (fn) {
-		is_flushing = true;
-		flush_queued_root_effects();
-
-		is_flushing = true;
-		result = fn();
-	}
-
-	while (true) {
-		flush_tasks();
-
-		if (queued_root_effects.length === 0) {
-			// this would be reset in `flush_queued_root_effects` but since we are early returning here,
-			// we need to reset it here as well in case the first time there's 0 queued root effects
-			is_flushing = false;
-			last_scheduled_effect = null;
-			if (DEV) {
-				dev_effect_stack = [];
-			}
-			return /** @type {T} */ (result);
-		}
-
-		is_flushing = true;
-		flush_queued_root_effects();
 	}
 }
 
@@ -703,10 +466,31 @@ export function flushSync(fn) {
  * @returns {Promise<void>}
  */
 export async function tick() {
+	if (async_mode_flag) {
+		return new Promise((f) => {
+			// Race them against each other - in almost all cases requestAnimationFrame will fire first,
+			// but e.g. in case the window is not focused or a view transition happens, requestAnimationFrame
+			// will be delayed and setTimeout helps us resolve fast enough in that case
+			requestAnimationFrame(() => f());
+			setTimeout(() => f());
+		});
+	}
+
 	await Promise.resolve();
+
 	// By calling flushSync we guarantee that any pending state changes are applied after one tick.
 	// TODO look into whether we can make flushing subsequent updates synchronously in the future.
 	flushSync();
+}
+
+/**
+ * Returns a promise that resolves once any state changes, and asynchronous work resulting from them,
+ * have resolved and the DOM has been updated
+ * @returns {Promise<void>}
+ * @since 5.36
+ */
+export function settled() {
+	return Batch.ensure().settled();
 }
 
 /**
@@ -718,93 +502,184 @@ export function get(signal) {
 	var flags = signal.f;
 	var is_derived = (flags & DERIVED) !== 0;
 
-	if (captured_signals !== null) {
-		captured_signals.add(signal);
-	}
+	captured_signals?.add(signal);
 
 	// Register the dependency on the current reaction signal.
 	if (active_reaction !== null && !untracking) {
-		if (!reaction_sources?.includes(signal)) {
+		// if we're in a derived that is being read inside an _async_ derived,
+		// it's possible that the effect was already destroyed. In this case,
+		// we don't add the dependency, because that would create a memory leak
+		var destroyed = active_effect !== null && (active_effect.f & DESTROYED) !== 0;
+
+		if (!destroyed && !current_sources?.includes(signal)) {
 			var deps = active_reaction.deps;
-			if (signal.rv < read_version) {
-				signal.rv = read_version;
-				// If the signal is accessing the same dependencies in the same
-				// order as it did last time, increment `skipped_deps`
-				// rather than updating `new_deps`, which creates GC cost
-				if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
-					skipped_deps++;
-				} else if (new_deps === null) {
-					new_deps = [signal];
-				} else if (!skip_reaction || !new_deps.includes(signal)) {
-					// Normally we can push duplicated dependencies to `new_deps`, but if we're inside
-					// an unowned derived because skip_reaction is true, then we need to ensure that
-					// we don't have duplicates
-					new_deps.push(signal);
+
+			if ((active_reaction.f & REACTION_IS_UPDATING) !== 0) {
+				// we're in the effect init/update cycle
+				if (signal.rv < read_version) {
+					signal.rv = read_version;
+
+					// If the signal is accessing the same dependencies in the same
+					// order as it did last time, increment `skipped_deps`
+					// rather than updating `new_deps`, which creates GC cost
+					if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
+						skipped_deps++;
+					} else if (new_deps === null) {
+						new_deps = [signal];
+					} else if (!new_deps.includes(signal)) {
+						new_deps.push(signal);
+					}
+				}
+			} else {
+				// we're adding a dependency outside the init/update cycle
+				// (i.e. after an `await`)
+				(active_reaction.deps ??= []).push(signal);
+
+				var reactions = signal.reactions;
+
+				if (reactions === null) {
+					signal.reactions = [active_reaction];
+				} else if (!reactions.includes(active_reaction)) {
+					reactions.push(active_reaction);
 				}
 			}
+		}
+	}
+
+	if (DEV) {
+		// TODO reinstate this, but make it actually work
+		// if (current_async_effect) {
+		// 	var tracking = (current_async_effect.f & REACTION_IS_UPDATING) !== 0;
+		// 	var was_read = current_async_effect.deps?.includes(signal);
+
+		// 	if (!tracking && !untracking && !was_read) {
+		// 		w.await_reactivity_loss(/** @type {string} */ (signal.label));
+
+		// 		var trace = get_error('traced at');
+		// 		// eslint-disable-next-line no-console
+		// 		if (trace) console.warn(trace);
+		// 	}
+		// }
+
+		recent_async_deriveds.delete(signal);
+
+		if (
+			tracing_mode_flag &&
+			!untracking &&
+			tracing_expressions !== null &&
+			active_reaction !== null &&
+			tracing_expressions.reaction === active_reaction
+		) {
+			// Used when mapping state between special blocks like `each`
+			if (signal.trace) {
+				signal.trace();
+			} else {
+				var trace = get_error('traced at');
+
+				if (trace) {
+					var entry = tracing_expressions.entries.get(signal);
+
+					if (entry === undefined) {
+						entry = { traces: [] };
+						tracing_expressions.entries.set(signal, entry);
+					}
+
+					var last = entry.traces[entry.traces.length - 1];
+
+					// traces can be duplicated, e.g. by `snapshot` invoking both
+					// both `getOwnPropertyDescriptor` and `get` traps at once
+					if (trace.stack !== last?.stack) {
+						entry.traces.push(trace);
+					}
+				}
+			}
+		}
+	}
+
+	if (is_destroying_effect) {
+		if (old_values.has(signal)) {
+			return old_values.get(signal);
+		}
+
+		if (is_derived) {
+			var derived = /** @type {Derived} */ (signal);
+
+			var value = derived.v;
+
+			// if the derived is dirty and has reactions, or depends on the values that just changed, re-execute
+			// (a derived can be maybe_dirty due to the effect destroy removing its last reaction)
+			if (
+				((derived.f & CLEAN) === 0 && derived.reactions !== null) ||
+				depends_on_old_values(derived)
+			) {
+				value = execute_derived(derived);
+			}
+
+			old_values.set(derived, value);
+
+			return value;
 		}
 	} else if (
 		is_derived &&
-		/** @type {Derived} */ (signal).deps === null &&
-		/** @type {Derived} */ (signal).effects === null
+		(!batch_values?.has(signal) || (current_batch?.is_fork && !effect_tracking()))
 	) {
-		var derived = /** @type {Derived} */ (signal);
-		var parent = derived.parent;
-
-		if (parent !== null && (parent.f & UNOWNED) === 0) {
-			// If the derived is owned by another derived then mark it as unowned
-			// as the derived value might have been referenced in a different context
-			// since and thus its parent might not be its true owner anymore
-			derived.f ^= UNOWNED;
-		}
-	}
-
-	if (is_derived) {
 		derived = /** @type {Derived} */ (signal);
 
-		if (check_dirtiness(derived)) {
+		if (is_dirty(derived)) {
 			update_derived(derived);
 		}
-	}
 
-	if (
-		DEV &&
-		tracing_mode_flag &&
-		!untracking &&
-		tracing_expressions !== null &&
-		active_reaction !== null &&
-		tracing_expressions.reaction === active_reaction
-	) {
-		// Used when mapping state between special blocks like `each`
-		if (signal.trace) {
-			signal.trace();
-		} else {
-			var trace = get_stack('TracedAt');
-
-			if (trace) {
-				var entry = tracing_expressions.entries.get(signal);
-
-				if (entry === undefined) {
-					entry = { traces: [] };
-					tracing_expressions.entries.set(signal, entry);
-				}
-
-				var last = entry.traces[entry.traces.length - 1];
-
-				// traces can be duplicated, e.g. by `snapshot` invoking both
-				// both `getOwnPropertyDescriptor` and `get` traps at once
-				if (trace.stack !== last?.stack) {
-					entry.traces.push(trace);
-				}
-			}
+		if (is_updating_effect && effect_tracking() && (derived.f & CONNECTED) === 0) {
+			reconnect(derived);
 		}
 	}
 
-	if (is_destroying_effect && old_values.has(signal)) {
-		return old_values.get(signal);
+	if (batch_values?.has(signal)) {
+		return batch_values.get(signal);
+	}
+
+	if ((signal.f & ERROR_VALUE) !== 0) {
+		throw signal.v;
 	}
 
 	return signal.v;
+}
+
+/**
+ * (Re)connect a disconnected derived, so that it is notified
+ * of changes in `mark_reactions`
+ * @param {Derived} derived
+ */
+function reconnect(derived) {
+	if (derived.deps === null) return;
+
+	derived.f ^= CONNECTED;
+
+	for (const dep of derived.deps) {
+		(dep.reactions ??= []).push(derived);
+
+		if ((dep.f & DERIVED) !== 0 && (dep.f & CONNECTED) === 0) {
+			reconnect(/** @type {Derived} */ (dep));
+		}
+	}
+}
+
+/** @param {Derived} derived */
+function depends_on_old_values(derived) {
+	if (derived.v === UNINITIALIZED) return true; // we don't know, so assume the worst
+	if (derived.deps === null) return false;
+
+	for (const dep of derived.deps) {
+		if (old_values.has(dep)) {
+			return true;
+		}
+
+		if ((dep.f & DERIVED) !== 0 && depends_on_old_values(/** @type {Derived} */ (dep))) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**
@@ -815,55 +690,6 @@ export function get(signal) {
  */
 export function safe_get(signal) {
 	return signal && get(signal);
-}
-
-/**
- * Capture an array of all the signals that are read when `fn` is called
- * @template T
- * @param {() => T} fn
- */
-function capture_signals(fn) {
-	var previous_captured_signals = captured_signals;
-	captured_signals = new Set();
-
-	var captured = captured_signals;
-	var signal;
-
-	try {
-		untrack(fn);
-		if (previous_captured_signals !== null) {
-			for (signal of captured_signals) {
-				previous_captured_signals.add(signal);
-			}
-		}
-	} finally {
-		captured_signals = previous_captured_signals;
-	}
-
-	return captured;
-}
-
-/**
- * Invokes a function and captures all signals that are read during the invocation,
- * then invalidates them.
- * @param {() => any} fn
- */
-export function invalidate_inner_signals(fn) {
-	var captured = capture_signals(() => untrack(fn));
-
-	for (var signal of captured) {
-		// Go one level up because derived signals created as part of props in legacy mode
-		if ((signal.f & LEGACY_DERIVED_PROP) !== 0) {
-			for (const dep of /** @type {Derived} */ (signal).deps || []) {
-				if ((dep.f & DERIVED) === 0) {
-					// Use internal_set instead of set here and below to avoid mutation validation
-					internal_set(dep, dep.v);
-				}
-			}
-		} else {
-			internal_set(signal, signal.v);
-		}
-	}
 }
 
 /**
@@ -904,17 +730,23 @@ export function set_signal_status(signal, status) {
 }
 
 /**
- * @param {Record<string, unknown>} obj
- * @param {string[]} keys
- * @returns {Record<string, unknown>}
+ * @param {Record<string | symbol, unknown>} obj
+ * @param {Array<string | symbol>} keys
+ * @returns {Record<string | symbol, unknown>}
  */
 export function exclude_from_object(obj, keys) {
-	/** @type {Record<string, unknown>} */
+	/** @type {Record<string | symbol, unknown>} */
 	var result = {};
 
 	for (var key in obj) {
 		if (!keys.includes(key)) {
 			result[key] = obj[key];
+		}
+	}
+
+	for (var symbol of Object.getOwnPropertySymbols(obj)) {
+		if (Object.propertyIsEnumerable.call(obj, symbol) && !keys.includes(symbol)) {
+			result[symbol] = obj[symbol];
 		}
 	}
 

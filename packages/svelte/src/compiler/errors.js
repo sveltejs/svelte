@@ -15,10 +15,12 @@ class InternalCompileError extends Error {
 	constructor(code, message, position) {
 		super(message);
 		this.stack = ''; // avoid unnecessary noise; don't set it as a class property or it becomes enumerable
+
 		// We want to extend from Error so that various bundler plugins properly handle it.
 		// But we also want to share the same object shape with that of warnings, therefore
 		// we create an instance of the shared class an copy over its properties.
 		this.#diagnostic = new CompileDiagnostic(code, message, position);
+
 		Object.assign(this, this.#diagnostic);
 		this.name = 'CompileError';
 	}
@@ -151,6 +153,16 @@ export function dollar_prefix_invalid(node) {
 }
 
 /**
+ * `%name%` has already been declared
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function duplicate_class_field(node, name) {
+	e(node, 'duplicate_class_field', `\`${name}\` has already been declared\nhttps://svelte.dev/e/duplicate_class_field`);
+}
+
+/**
  * Cannot reassign or bind to each block argument in runes mode. Use the array and index variables instead (e.g. `array[i] = value` instead of `entry = value`, or `bind:value={array[i]}` instead of `bind:value={entry}`)
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -166,6 +178,15 @@ export function each_item_invalid_assignment(node) {
  */
 export function effect_invalid_placement(node) {
 	e(node, 'effect_invalid_placement', `\`$effect()\` can only be used as an expression statement\nhttps://svelte.dev/e/effect_invalid_placement`);
+}
+
+/**
+ * Cannot use `await` in deriveds and template expressions, or at the top level of a component, unless the `experimental.async` compiler option is `true`
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function experimental_async(node) {
+	e(node, 'experimental_async', `Cannot use \`await\` in deriveds and template expressions, or at the top level of a component, unless the \`experimental.async\` compiler option is \`true\`\nhttps://svelte.dev/e/experimental_async`);
 }
 
 /**
@@ -231,6 +252,15 @@ export function inspect_trace_invalid_placement(node) {
  */
 export function invalid_arguments_usage(node) {
 	e(node, 'invalid_arguments_usage', `The arguments keyword cannot be used within the template or at the top level of a component\nhttps://svelte.dev/e/invalid_arguments_usage`);
+}
+
+/**
+ * Cannot use `await` in deriveds and template expressions, or at the top level of a component, unless in runes mode
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function legacy_await_invalid(node) {
+	e(node, 'legacy_await_invalid', `Cannot use \`await\` in deriveds and template expressions, or at the top level of a component, unless in runes mode\nhttps://svelte.dev/e/legacy_await_invalid`);
 }
 
 /**
@@ -816,7 +846,9 @@ export function bind_invalid_expression(node) {
  * @returns {never}
  */
 export function bind_invalid_name(node, name, explanation) {
-	e(node, 'bind_invalid_name', `${explanation ? `\`bind:${name}\` is not a valid binding. ${explanation}` : `\`bind:${name}\` is not a valid binding`}\nhttps://svelte.dev/e/bind_invalid_name`);
+	e(node, 'bind_invalid_name', `${explanation
+		? `\`bind:${name}\` is not a valid binding. ${explanation}`
+		: `\`bind:${name}\` is not a valid binding`}\nhttps://svelte.dev/e/bind_invalid_name`);
 }
 
 /**
@@ -954,6 +986,16 @@ export function const_tag_invalid_placement(node) {
 }
 
 /**
+ * The `{@const %name% = ...}` declaration is not available in this snippet
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function const_tag_invalid_reference(node, name) {
+	e(node, 'const_tag_invalid_reference', `The \`{@const ${name} = ...}\` declaration is not available in this snippet\nhttps://svelte.dev/e/const_tag_invalid_reference`);
+}
+
+/**
  * {@debug ...} arguments must be identifiers, not arbitrary expressions
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -979,6 +1021,15 @@ export function directive_invalid_value(node) {
  */
 export function directive_missing_name(node, type) {
 	e(node, 'directive_missing_name', `\`${type}\` name cannot be empty\nhttps://svelte.dev/e/directive_missing_name`);
+}
+
+/**
+ * An `{#each ...}` block without an `as` clause cannot have a key
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function each_key_without_as(node) {
+	e(node, 'each_key_without_as', `An \`{#each ...}\` block without an \`as\` clause cannot have a key\nhttps://svelte.dev/e/each_key_without_as`);
 }
 
 /**
@@ -1079,6 +1130,15 @@ export function expected_pattern(node) {
 }
 
 /**
+ * Expected 'html', 'render', 'attach', 'const', or 'debug'
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function expected_tag(node) {
+	e(node, 'expected_tag', `Expected 'html', 'render', 'attach', 'const', or 'debug'\nhttps://svelte.dev/e/expected_tag`);
+}
+
+/**
  * Expected token %token%
  * @param {null | number | NodeLike} node
  * @param {string} token
@@ -1095,6 +1155,15 @@ export function expected_token(node, token) {
  */
 export function expected_whitespace(node) {
 	e(node, 'expected_whitespace', `Expected whitespace\nhttps://svelte.dev/e/expected_whitespace`);
+}
+
+/**
+ * `use:`, `transition:` and `animate:` directives, attachments and bindings do not support await expressions
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function illegal_await_expression(node) {
+	e(node, 'illegal_await_expression', `\`use:\`, \`transition:\` and \`animate:\` directives, attachments and bindings do not support await expressions\nhttps://svelte.dev/e/illegal_await_expression`);
 }
 
 /**

@@ -1,4 +1,4 @@
-/** @import { Program, Property, Statement, VariableDeclarator } from 'estree' */
+/** @import * as ESTree from 'estree' */
 /** @import { AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { ComponentServerTransformState, ComponentVisitors, ServerTransformState, Visitors } from './types.js' */
 /** @import { Analysis, ComponentAnalysis } from '../../types.js' */
@@ -6,10 +6,11 @@ import { walk } from 'zimmerframe';
 import { set_scope } from '../../scope.js';
 import { extract_identifiers } from '../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { dev, filename } from '../../../state.js';
+import { component_name, dev, filename } from '../../../state.js';
 import { render_stylesheet } from '../css/index.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
+import { AwaitExpression } from './visitors/AwaitExpression.js';
 import { CallExpression } from './visitors/CallExpression.js';
 import { ClassBody } from './visitors/ClassBody.js';
 import { Component } from './visitors/Component.js';
@@ -24,6 +25,7 @@ import { IfBlock } from './visitors/IfBlock.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
+import { Program } from './visitors/Program.js';
 import { PropertyDefinition } from './visitors/PropertyDefinition.js';
 import { RegularElement } from './visitors/RegularElement.js';
 import { RenderTag } from './visitors/RenderTag.js';
@@ -39,17 +41,20 @@ import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 import { SvelteBoundary } from './visitors/SvelteBoundary.js';
+import { call_component_renderer } from './visitors/shared/utils.js';
 
 /** @type {Visitors} */
 const global_visitors = {
 	_: set_scope,
 	AssignmentExpression,
+	AwaitExpression,
 	CallExpression,
 	ClassBody,
 	ExpressionStatement,
 	Identifier,
 	LabeledStatement,
 	MemberExpression,
+	Program,
 	PropertyDefinition,
 	UpdateExpression,
 	VariableDeclaration
@@ -83,7 +88,7 @@ const template_visitors = {
 /**
  * @param {ComponentAnalysis} analysis
  * @param {ValidatedCompileOptions} options
- * @returns {Program}
+ * @returns {ESTree.Program}
  */
 export function server_component(analysis, options) {
 	/** @type {ComponentServerTransformState} */
@@ -92,7 +97,7 @@ export function server_component(analysis, options) {
 		options,
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
-		hoisted: [b.import_all('$', 'svelte/internal/server')],
+		hoisted: [b.import_all('$', 'svelte/internal/server'), ...analysis.instance_body.hoisted],
 		legacy_reactive_statements: new Map(),
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		init: /** @type {any} */ (null),
@@ -100,17 +105,18 @@ export function server_component(analysis, options) {
 		namespace: options.namespace,
 		preserve_whitespace: options.preserveWhitespace,
 		state_fields: new Map(),
-		skip_hydration_boundaries: false
+		skip_hydration_boundaries: false,
+		is_instance: false
 	};
 
-	const module = /** @type {Program} */ (
+	const module = /** @type {ESTree.Program} */ (
 		walk(/** @type {AST.SvelteNode} */ (analysis.module.ast), state, global_visitors)
 	);
 
-	const instance = /** @type {Program} */ (
+	const instance = /** @type {ESTree.Program} */ (
 		walk(
 			/** @type {AST.SvelteNode} */ (analysis.instance.ast),
-			{ ...state, scopes: analysis.instance.scopes },
+			{ ...state, scopes: analysis.instance.scopes, is_instance: true },
 			{
 				...global_visitors,
 				ImportDeclaration(node) {
@@ -128,7 +134,7 @@ export function server_component(analysis, options) {
 		)
 	);
 
-	const template = /** @type {Program} */ (
+	const template = /** @type {ESTree.Program} */ (
 		walk(
 			/** @type {AST.SvelteNode} */ (analysis.template.ast),
 			{ ...state, scopes: analysis.template.scopes },
@@ -137,7 +143,7 @@ export function server_component(analysis, options) {
 		)
 	);
 
-	/** @type {VariableDeclarator[]} */
+	/** @type {ESTree.VariableDeclarator[]} */
 	const legacy_reactive_declarations = [];
 
 	for (const [node] of analysis.reactive_statements) {
@@ -185,23 +191,21 @@ export function server_component(analysis, options) {
 		template.body = [
 			...snippets,
 			b.let('$$settled', b.true),
-			b.let('$$inner_payload'),
+			b.let('$$inner_renderer'),
 			b.function_declaration(
 				b.id('$$render_inner'),
-				[b.id('$$payload')],
-				b.block(/** @type {Statement[]} */ (rest))
+				[b.id('$$renderer')],
+				b.block(/** @type {ESTree.Statement[]} */ (rest))
 			),
 			b.do_while(
 				b.unary('!', b.id('$$settled')),
 				b.block([
 					b.stmt(b.assignment('=', b.id('$$settled'), b.true)),
-					b.stmt(
-						b.assignment('=', b.id('$$inner_payload'), b.call('$.copy_payload', b.id('$$payload')))
-					),
-					b.stmt(b.call('$$render_inner', b.id('$$inner_payload')))
+					b.stmt(b.assignment('=', b.id('$$inner_renderer'), b.call('$$renderer.copy'))),
+					b.stmt(b.call('$$render_inner', b.id('$$inner_renderer')))
 				])
 			),
-			b.stmt(b.call('$.assign_payload', b.id('$$payload'), b.id('$$inner_payload')))
+			b.stmt(b.call('$$renderer.subsume', b.id('$$inner_renderer')))
 		];
 	}
 
@@ -218,7 +222,7 @@ export function server_component(analysis, options) {
 
 	// Propagate values of bound props upwards if they're undefined in the parent and have a value.
 	// Don't do this as part of the props retrieval because people could eagerly mutate the prop in the instance script.
-	/** @type {Property[]} */
+	/** @type {ESTree.Property[]} */
 	const props = [];
 
 	for (const [name, binding] of analysis.instance.scope.declarations) {
@@ -237,23 +241,27 @@ export function server_component(analysis, options) {
 		template.body.push(b.stmt(b.call('$.bind_props', b.id('$$props'), b.object(props))));
 	}
 
-	const component_block = b.block([
-		.../** @type {Statement[]} */ (instance.body),
-		.../** @type {Statement[]} */ (template.body)
+	let component_block = b.block([
+		.../** @type {ESTree.Statement[]} */ (instance.body),
+		.../** @type {ESTree.Statement[]} */ (template.body)
 	]);
+
+	// trick esrap into including comments
+	component_block.loc = instance.loc;
 
 	if (analysis.props_id) {
 		// need to be placed on first line of the component for hydration
 		component_block.body.unshift(
-			b.const(analysis.props_id, b.call('$.props_id', b.id('$$payload')))
+			b.const(analysis.props_id, b.call('$.props_id', b.id('$$renderer')))
 		);
 	}
 
 	let should_inject_context = dev || analysis.needs_context;
 
 	if (should_inject_context) {
-		component_block.body.unshift(b.stmt(b.call('$.push', dev && b.id(analysis.name))));
-		component_block.body.push(b.stmt(b.call('$.pop')));
+		component_block = b.block([
+			call_component_renderer(component_block, dev && b.id(component_name))
+		]);
 	}
 
 	if (analysis.uses_rest_props) {
@@ -292,7 +300,7 @@ export function server_component(analysis, options) {
 		const code = b.literal(render_stylesheet(analysis.source, analysis, options).code);
 
 		body.push(b.const('$$css', b.object([b.init('hash', hash), b.init('code', code)])));
-		component_block.body.unshift(b.stmt(b.call('$$payload.css.add', b.id('$$css'))));
+		component_block.body.unshift(b.stmt(b.call('$$renderer.global.css.add', b.id('$$css'))));
 	}
 
 	let should_inject_props =
@@ -306,7 +314,7 @@ export function server_component(analysis, options) {
 
 	const component_function = b.function_declaration(
 		b.id(analysis.name),
-		should_inject_props ? [b.id('$$payload'), b.id('$$props')] : [b.id('$$payload')],
+		should_inject_props ? [b.id('$$renderer'), b.id('$$props')] : [b.id('$$renderer')],
 		component_block
 	);
 
@@ -372,6 +380,10 @@ export function server_component(analysis, options) {
 		);
 	}
 
+	if (options.experimental.async) {
+		body.unshift(b.imports([], 'svelte/internal/flags/async'));
+	}
+
 	return {
 		type: 'Program',
 		sourceType: 'module',
@@ -382,7 +394,7 @@ export function server_component(analysis, options) {
 /**
  * @param {Analysis} analysis
  * @param {ValidatedModuleCompileOptions} options
- * @returns {Program}
+ * @returns {ESTree.Program}
  */
 export function server_module(analysis, options) {
 	/** @type {ServerTransformState} */
@@ -395,10 +407,11 @@ export function server_module(analysis, options) {
 		// to be present for `javascript_visitors_legacy` and so is included in module
 		// transform state as well as component transform state
 		legacy_reactive_statements: new Map(),
-		state_fields: new Map()
+		state_fields: new Map(),
+		is_instance: false
 	};
 
-	const module = /** @type {Program} */ (
+	const module = /** @type {ESTree.Program} */ (
 		walk(/** @type {AST.SvelteNode} */ (analysis.module.ast), state, global_visitors)
 	);
 
