@@ -121,6 +121,12 @@ export class Binding {
 	legacy_dependencies = [];
 
 	/**
+	 * Bindings that should be invalidated when this binding is invalidated
+	 * @type {Set<Binding>}
+	 */
+	legacy_indirect_bindings = new Set();
+
+	/**
 	 * Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props()
 	 * @type {string | null}
 	 */
