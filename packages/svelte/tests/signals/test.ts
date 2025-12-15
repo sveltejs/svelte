@@ -16,7 +16,7 @@ import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
-import { CONNECTED, DESTROYED } from '../../src/internal/client/constants';
+import { CLEAN, CONNECTED, DESTROYED, MAYBE_DIRTY } from '../../src/internal/client/constants';
 import { noop } from 'svelte/internal/client';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/internal/flags';
 import { branch } from '../../src/internal/client/reactivity/effects';
@@ -1522,6 +1522,45 @@ describe('signals', () => {
 
 			const countReactions = count.reactions || [];
 			assert.ok(countReactions.includes(d!), 'derived should be in source reactions');
+		};
+	});
+
+	// Test that deriveds with no dependencies are always CLEAN
+	test('deriveds with no deps should be CLEAN and not re-evaluate', () => {
+		let evalCount = 0;
+		let d: Derived<number> | null = null;
+
+		render_effect(() => {
+			branch(() => {
+				if (!d) {
+					d = derived(() => {
+						evalCount++;
+						return 42;
+					});
+				}
+
+				$.get(d);
+			});
+		});
+
+		return () => {
+			flushSync();
+
+			const initialEvalCount = evalCount;
+			assert.equal(initialEvalCount, 1, 'derived should evaluate once initially');
+
+			for (let i = 0; i < 100; i++) {
+				$.get(d!);
+			}
+
+			assert.equal(
+				evalCount,
+				initialEvalCount,
+				'derived with no deps should not re-evaluate on subsequent reads'
+			);
+
+			const isClean = (d!.f & CLEAN) !== 0;
+			assert.ok(isClean, 'derived with no deps should be CLEAN');
 		};
 	});
 });
