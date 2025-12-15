@@ -28,7 +28,6 @@ import { old_values } from './reactivity/sources.js';
 import {
 	destroy_derived_effects,
 	execute_derived,
-	current_async_effect,
 	recent_async_deriveds,
 	update_derived
 } from './reactivity/deriveds.js';
@@ -629,7 +628,11 @@ export function get(signal) {
 			update_derived(derived);
 		}
 
-		if (is_updating_effect && effect_tracking() && (derived.f & CONNECTED) === 0) {
+		if (
+			is_updating_effect &&
+			(derived.f & CONNECTED) === 0 &&
+			(effect_tracking() || (active_effect !== null && (active_effect.f & BRANCH_EFFECT) !== 0))
+		) {
 			reconnect(derived);
 		}
 	}
