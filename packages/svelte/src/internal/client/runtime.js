@@ -175,8 +175,8 @@ export function is_dirty(reaction) {
 			for (var i = 0; i < length; i++) {
 				var dependency = dependencies[i];
 
-				if (is_dirty(/** @type {Derived} */ (dependency))) {
-					update_derived(/** @type {Derived} */ (dependency));
+				if (is_dirty(/** @type {Derived} */(dependency))) {
+					update_derived(/** @type {Derived} */(dependency));
 				}
 
 				if (dependency.wv > reaction.wv) {
@@ -215,14 +215,14 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 		var reaction = reactions[i];
 
 		if ((reaction.f & DERIVED) !== 0) {
-			schedule_possible_effect_self_invalidation(/** @type {Derived} */ (reaction), effect, false);
+			schedule_possible_effect_self_invalidation(/** @type {Derived} */(reaction), effect, false);
 		} else if (effect === reaction) {
 			if (root) {
 				set_signal_status(reaction, DIRTY);
 			} else if ((reaction.f & CLEAN) !== 0) {
 				set_signal_status(reaction, MAYBE_DIRTY);
 			}
-			schedule_effect(/** @type {Effect} */ (reaction));
+			schedule_effect(/** @type {Effect} */(reaction));
 		}
 	}
 }
@@ -301,7 +301,7 @@ export function update_reaction(reaction) {
 			for (i = 0; i < /** @type {Source[]} */ (untracked_writes).length; i++) {
 				schedule_possible_effect_self_invalidation(
 					untracked_writes[i],
-					/** @type {Effect} */ (reaction)
+					/** @type {Effect} */(reaction)
 				);
 			}
 		}
@@ -382,8 +382,8 @@ function remove_reaction(signal, dependency) {
 			dependency.f &= ~WAS_MARKED;
 		}
 		// Disconnect any reactions owned by this reaction
-		destroy_derived_effects(/** @type {Derived} **/ (dependency));
-		remove_reactions(/** @type {Derived} **/ (dependency), 0);
+		destroy_derived_effects(/** @type {Derived} **/(dependency));
+		remove_reactions(/** @type {Derived} **/(dependency), 0);
 	}
 }
 
@@ -547,19 +547,18 @@ export function get(signal) {
 	}
 
 	if (DEV) {
-		// TODO reinstate this, but make it actually work
-		// if (current_async_effect) {
-		// 	var tracking = (current_async_effect.f & REACTION_IS_UPDATING) !== 0;
-		// 	var was_read = current_async_effect.deps?.includes(signal);
+        if (current_async_effect) {
+            var tracking = (current_async_effect.f & REACTION_IS_UPDATING) !== 0;
+            var was_read = current_async_effect.deps?.includes(signal);
 
-		// 	if (!tracking && !untracking && !was_read) {
-		// 		w.await_reactivity_loss(/** @type {string} */ (signal.label));
+            if (!tracking && !untracking && !was_read) {
+                w.await_reactivity_loss(/** @type {string} */ (signal.label));
 
-		// 		var trace = get_error('traced at');
-		// 		// eslint-disable-next-line no-console
-		// 		if (trace) console.warn(trace);
-		// 	}
-		// }
+                var trace = get_error('traced at');
+                // eslint-disable-next-line no-console
+                if (trace) console.warn(trace);
+            }
+        }
 
 		recent_async_deriveds.delete(signal);
 
@@ -659,7 +658,7 @@ function reconnect(derived) {
 		(dep.reactions ??= []).push(derived);
 
 		if ((dep.f & DERIVED) !== 0 && (dep.f & CONNECTED) === 0) {
-			reconnect(/** @type {Derived} */ (dep));
+			reconnect(/** @type {Derived} */(dep));
 		}
 	}
 }
@@ -674,7 +673,7 @@ function depends_on_old_values(derived) {
 			return true;
 		}
 
-		if ((dep.f & DERIVED) !== 0 && depends_on_old_values(/** @type {Derived} */ (dep))) {
+		if ((dep.f & DERIVED) !== 0 && depends_on_old_values(/** @type {Derived} */(dep))) {
 			return true;
 		}
 	}
