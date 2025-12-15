@@ -16,7 +16,8 @@ import {
 	is_destroying_effect,
 	push_reaction_value,
 	set_is_updating_effect,
-	is_updating_effect
+	is_updating_effect,
+	update_derived_status
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -218,12 +219,14 @@ export function internal_set(source, value) {
 		}
 
 		if ((source.f & DERIVED) !== 0) {
+			const derived = /** @type {Derived} */ (source);
+
 			// if we are assigning to a dirty derived we set it to clean/maybe dirty but we also eagerly execute it to track the dependencies
 			if ((source.f & DIRTY) !== 0) {
-				execute_derived(/** @type {Derived} */ (source));
+				execute_derived(derived);
 			}
 
-			set_signal_status(source, (source.f & CONNECTED) !== 0 ? CLEAN : MAYBE_DIRTY);
+			update_derived_status(derived);
 		}
 
 		source.wv = increment_write_version();

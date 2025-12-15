@@ -22,7 +22,8 @@ import {
 	increment_write_version,
 	set_active_effect,
 	push_reaction_value,
-	is_destroying_effect
+	is_destroying_effect,
+	update_derived_status
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -386,13 +387,7 @@ export function update_derived(derived) {
 		}
 	}
 
-	// Only mark as MAYBE_DIRTY if disconnected AND has dependencies.
-	// Deriveds with no deps can never become dirty from dependency changes.
 	if (batch_values === null || derived.deps === null) {
-		if ((derived.f & CONNECTED) === 0 && derived.deps !== null) {
-			set_signal_status(derived, MAYBE_DIRTY);
-		} else {
-			set_signal_status(derived, CLEAN);
-		}
+		update_derived_status(derived);
 	}
 }

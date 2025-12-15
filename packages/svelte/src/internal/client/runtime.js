@@ -185,12 +185,12 @@ export function is_dirty(reaction) {
 		}
 
 		if (
-			(flags & CONNECTED) !== 0 &&
+			(flags & DERIVED) !== 0 &&
 			// During time traveling we don't want to reset the status so that
 			// traversal of the graph in the other batches still happens
-			batch_values === null
+			(batch_values === null || reaction.deps === null)
 		) {
-			set_signal_status(reaction, CLEAN);
+			update_derived_status(/** @type {Derived} */ (reaction));
 		}
 	}
 
@@ -730,6 +730,19 @@ const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN);
  */
 export function set_signal_status(signal, status) {
 	signal.f = (signal.f & STATUS_MASK) | status;
+}
+
+/**
+ * Set a derived's status to CLEAN or MAYBE_DIRTY based on its connection state.
+ * @param {Derived} derived
+ */
+export function update_derived_status(derived) {
+	// Only mark as MAYBE_DIRTY if disconnected and has dependencies.
+	if ((derived.f & CONNECTED) !== 0 || derived.deps === null) {
+		set_signal_status(derived, CLEAN);
+	} else {
+		set_signal_status(derived, MAYBE_DIRTY);
+	}
 }
 
 /**
