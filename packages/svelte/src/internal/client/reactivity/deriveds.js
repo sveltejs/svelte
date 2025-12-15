@@ -360,7 +360,10 @@ export function update_derived(derived) {
 		// the underlying value will be updated when the fork is committed.
 		// otherwise, the next time we get here after a 'real world' state
 		// change, `derived.equals` may incorrectly return `true`
-		if (!current_batch?.is_fork) {
+		//
+		// deriveds with no deps should always update `derived.v`
+		// since they will never change and need the value after fork commits
+		if (!current_batch?.is_fork || derived.deps === null) {
 			derived.v = value;
 		}
 
@@ -381,8 +384,15 @@ export function update_derived(derived) {
 		if (effect_tracking() || current_batch?.is_fork) {
 			batch_values.set(derived, value);
 		}
-	} else {
-		var status = (derived.f & CONNECTED) === 0 ? MAYBE_DIRTY : CLEAN;
-		set_signal_status(derived, status);
+	}
+
+	// Only mark as MAYBE_DIRTY if disconnected AND has dependencies.
+	// Deriveds with no deps can never become dirty from dependency changes.
+	if (batch_values === null || derived.deps === null) {
+		if ((derived.f & CONNECTED) === 0 && derived.deps !== null) {
+			set_signal_status(derived, MAYBE_DIRTY);
+		} else {
+			set_signal_status(derived, CLEAN);
+		}
 	}
 }
