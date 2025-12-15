@@ -1,3 +1,4 @@
+/** @import { Reaction } from '#client' */
 import { describe, assert, it } from 'vitest';
 import { flushSync } from '../../src/index-client';
 import * as $ from '../../src/internal/client/runtime';
@@ -15,9 +16,10 @@ import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
-import { DESTROYED } from '../../src/internal/client/constants';
+import { CONNECTED, DESTROYED } from '../../src/internal/client/constants';
 import { noop } from 'svelte/internal/client';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/internal/flags';
+import { branch } from '../../src/internal/client/reactivity/effects';
 
 /**
  * @param runes runes mode
@@ -1491,6 +1493,35 @@ describe('signals', () => {
 			flushSync();
 
 			assert.deepEqual(log, ['inner destroyed', 'inner destroyed']);
+		};
+	});
+
+	// reproduces conditions leading to https://github.com/sveltejs/kit/issues/15059
+	test('derived read inside branch effect should be reconnected even when effect_tracking is false', () => {
+		let count = state(0);
+		let d: Derived<number> | null = null;
+
+		render_effect(() => {
+			branch(() => {
+				if (!d) {
+					d = derived(() => $.get(count) * 2);
+				}
+
+				$.get(d);
+			});
+		});
+
+		return () => {
+			flushSync();
+
+			const isConnected = (d!.f & CONNECTED) !== 0;
+			assert.ok(
+				isConnected,
+				'derived should be CONNECTED after being read inside branch during effect update'
+			);
+
+			const countReactions = count.reactions || [];
+			assert.ok(countReactions.includes(d!), 'derived should be in source reactions');
 		};
 	});
 });
