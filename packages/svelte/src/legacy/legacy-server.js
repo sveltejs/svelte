@@ -1,14 +1,14 @@
 /** @import { SvelteComponent } from '../index.js' */
+/** @import { Csp } from '#server' */
 import { asClassComponent as as_class_component, createClassComponent } from './legacy-client.js';
 import { render } from '../internal/server/index.js';
 import { async_mode_flag } from '../internal/flags/index.js';
-import * as w from '../internal/server/warnings.js';
 
 // By having this as a separate entry point for server environments, we save the client bundle from having to include the server runtime
 
 export { createClassComponent };
 
-/** @typedef {{ head: string, html: string, css: { code: string, map: null }}} LegacyRenderResult */
+/** @typedef {{ head: string, html: string, css: { code: string, map: null }; hashes?: { script: `sha256-${string}`[] } }} LegacyRenderResult */
 
 /**
  * Takes a Svelte 5 component and returns a Svelte 4 compatible component constructor.
@@ -25,10 +25,10 @@ export { createClassComponent };
  */
 export function asClassComponent(component) {
 	const component_constructor = as_class_component(component);
-	/** @type {(props?: {}, opts?: { $$slots?: {}; context?: Map<any, any>; }) => LegacyRenderResult & PromiseLike<LegacyRenderResult> } */
-	const _render = (props, { context } = {}) => {
+	/** @type {(props?: {}, opts?: { $$slots?: {}; context?: Map<any, any>; csp?: Csp }) => LegacyRenderResult & PromiseLike<LegacyRenderResult> } */
+	const _render = (props, { context, csp } = {}) => {
 		// @ts-expect-error the typings are off, but this will work if the component is compiled in SSR mode
-		const result = render(component, { props, context });
+		const result = render(component, { props, context, csp });
 
 		const munged = Object.defineProperties(
 			/** @type {LegacyRenderResult & PromiseLike<LegacyRenderResult>} */ ({}),
@@ -65,7 +65,8 @@ export function asClassComponent(component) {
 							return onfulfilled({
 								css: munged.css,
 								head: result.head,
-								html: result.body
+								html: result.body,
+								hashes: result.hashes
 							});
 						}, onrejected);
 					}
