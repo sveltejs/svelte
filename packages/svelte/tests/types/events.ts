@@ -8,6 +8,8 @@ on(window, 'click', (e) => e.button);
 
 on(document, 'click', (e) => e.button);
 
+on(document.createElement('input'), 'input', (e) => e.currentTarget?.value);
+
 on(
 	document.body,
 	'clidck',

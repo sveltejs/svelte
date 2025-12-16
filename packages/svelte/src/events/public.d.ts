@@ -30,7 +30,10 @@ export function on<Type extends keyof DocumentEventMap>(
 export function on<Element extends HTMLElement, Type extends keyof HTMLElementEventMap>(
 	element: Element,
 	type: Type,
-	handler: (this: Element, event: HTMLElementEventMap[Type]) => any,
+	handler: (
+		this: Element,
+		event: HTMLElementEventMap[Type] & { currentTarget: EventTarget & Element }
+	) => any,
 	options?: AddEventListenerOptions | undefined
 ): () => void;
 /**
