@@ -1563,4 +1563,91 @@ describe('signals', () => {
 			assert.ok(isClean, 'derived with no deps should be CLEAN');
 		};
 	});
+
+	// reproduction of https://github.com/sveltejs/svelte/issues/17352
+	test('nested deriveds with parent-child dependencies stay reactive', () => {
+		const log: any[] = [];
+
+		return () => {
+			const expanded_ids = new SvelteSet<string>();
+			const nodes = proxy([
+				{
+					id: 'folder',
+					children: [{ id: 'file' }]
+				},
+				{ id: 'other' }
+			]);
+
+			let items_derived: Derived<any[]>;
+			let visible_items_derived: Derived<any[]>;
+
+			const destroy = effect_root(() => {
+				items_derived = derived(function create_items(
+					list: any[] = nodes,
+					parent?: any,
+					result: any[] = []
+				) {
+					for (const node of list) {
+						const expanded_d = derived(() => expanded_ids.has(node.id));
+						const visible_d = derived(() =>
+							parent === undefined ? true : $.get(parent.expanded_d) && $.get(parent.visible_d)
+						);
+
+						const item = {
+							node,
+							expanded_d,
+							visible_d,
+							get expanded() {
+								return $.get(expanded_d);
+							},
+							get visible() {
+								return $.get(visible_d);
+							}
+						};
+						result.push(item);
+
+						if (node.children) {
+							create_items(node.children, item, result);
+						}
+					}
+					return result;
+				});
+
+				visible_items_derived = derived(() => $.get(items_derived).filter((item) => item.visible));
+
+				render_effect(() => {
+					log.push($.get(visible_items_derived).length);
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [2], 'initial: folder and other visible');
+
+			expanded_ids.add('folder');
+			flushSync();
+			assert.deepEqual(log, [2, 3], 'after expand: folder, file, other visible');
+
+			expanded_ids.delete('folder');
+			flushSync();
+			assert.deepEqual(log, [2, 3, 2], 'after collapse');
+
+			nodes.splice(1, 1); // Remove 'other'
+
+			const snapshot = $.get(visible_items_derived!);
+			assert.equal(snapshot.length, 1, 'after delete: only folder visible');
+
+			flushSync();
+			assert.deepEqual(log, [2, 3, 2, 1], 'effect ran after delete');
+
+			expanded_ids.add('folder');
+			flushSync();
+			assert.deepEqual(
+				log,
+				[2, 3, 2, 1, 2],
+				'after expand post-delete: folder and file should be visible'
+			);
+
+			destroy();
+		};
+	});
 });
