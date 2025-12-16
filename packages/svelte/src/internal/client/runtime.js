@@ -629,9 +629,12 @@ export function get(signal) {
 		}
 
 		if (
-			is_updating_effect &&
 			(derived.f & CONNECTED) === 0 &&
-			(effect_tracking() || (active_effect !== null && (active_effect.f & BRANCH_EFFECT) !== 0))
+			((is_updating_effect &&
+				(effect_tracking() ||
+					(active_effect !== null && (active_effect.f & BRANCH_EFFECT) !== 0))) ||
+				// evaluating connected parent derived, so reconnect child deriveds too
+				(active_reaction !== null && (active_reaction.f & CONNECTED) !== 0))
 		) {
 			reconnect(derived);
 		}
