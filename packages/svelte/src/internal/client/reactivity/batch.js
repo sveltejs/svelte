@@ -21,6 +21,7 @@ import {
 	MANAGED_EFFECT
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
+import { UNINITIALIZED } from '../../../constants.js';
 import { deferred, define_property } from '../../shared/utils.js';
 import {
 	active_effect,
@@ -320,7 +321,7 @@ export class Batch {
 		// Don't save errors in `batch_values`, or they won't be thrown in `runtime.js#get`
 		if ((source.f & ERROR_VALUE) === 0) {
 			this.current.set(source, source.v);
-			batch_values?.set(source, source.v);
+			batch_values?.set(source, source.v === UNINITIALIZED ? undefined : source.v);
 		}
 	}
 
@@ -546,7 +547,7 @@ export class Batch {
 
 			for (const [source, previous] of batch.previous) {
 				if (!batch_values.has(source)) {
-					batch_values.set(source, previous);
+					batch_values.set(source, previous === UNINITIALIZED ? undefined : previous);
 				}
 			}
 		}
