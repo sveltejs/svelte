@@ -163,6 +163,10 @@ export function is_dirty(reaction) {
 	}
 
 	if (flags & DERIVED) {
+		// UNINITIALIZED deriveds need computation
+		if (/** @type {Derived} */ (reaction).v === UNINITIALIZED) {
+			return true;
+		}
 		reaction.f &= ~WAS_MARKED;
 	}
 
@@ -640,6 +644,10 @@ export function get(signal) {
 
 	if ((signal.f & ERROR_VALUE) !== 0) {
 		throw signal.v;
+	}
+
+	if (signal.v === UNINITIALIZED) {
+		return /** @type {V} */ (undefined);
 	}
 
 	return signal.v;
