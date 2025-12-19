@@ -237,7 +237,10 @@ export class Batch {
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
 					target.render_effects.push(effect);
 				} else if (is_dirty(effect)) {
-					if ((effect.f & BLOCK_EFFECT) !== 0) this.#dirty_effects.add(effect);
+					// only track block effects when deferred to prevent infinite HMR loops (#17369)
+					if ((effect.f & BLOCK_EFFECT) !== 0 && this.is_deferred()) {
+						this.#dirty_effects.add(effect);
+					}
 					update_effect(effect);
 				}
 
