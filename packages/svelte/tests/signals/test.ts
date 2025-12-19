@@ -1,5 +1,5 @@
 import { describe, assert, it } from 'vitest';
-import { flushSync } from '../../src/index-client';
+import { flushSync, fork } from '../../src/index-client';
 import * as $ from '../../src/internal/client/runtime';
 import { push, pop } from '../../src/internal/client/context';
 import {
@@ -9,15 +9,24 @@ import {
 	user_effect,
 	user_pre_effect
 } from '../../src/internal/client/reactivity/effects';
-import { state, set, update, update_pre } from '../../src/internal/client/reactivity/sources';
+import {
+	state,
+	set,
+	update,
+	update_pre,
+	internal_set,
+	source
+} from '../../src/internal/client/reactivity/sources';
 import type { Derived, Effect, Source, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
-import { DESTROYED } from '../../src/internal/client/constants';
+import { DESTROYED, MAYBE_DIRTY } from '../../src/internal/client/constants';
+import { UNINITIALIZED } from '../../src/constants';
 import { noop } from 'svelte/internal/client';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/internal/flags';
+import { Batch } from '../../src/internal/client/reactivity/batch';
 
 /**
  * @param runes runes mode
@@ -1492,5 +1501,105 @@ describe('signals', () => {
 
 			assert.deepEqual(log, ['inner destroyed', 'inner destroyed']);
 		};
+	});
+
+	// prevent UNINITIALIZED from leaking in get() (#17271)
+	it('derived with deps evaluated in fork should not return UNINITIALIZED', () => {
+		enable_async_mode_flag();
+
+		try {
+			const count = state(5);
+			let d: Derived<number>;
+
+			const f = fork(() => {
+				effect_root(() => {
+					render_effect(() => {
+						d = derived(() => $.get(count) * 2);
+						$.get(d);
+					});
+				})();
+			});
+
+			assert.equal(d!.v, /** @type {any} */ UNINITIALIZED);
+			assert.equal((d!.f & MAYBE_DIRTY) !== 0, true);
+			assert.equal($.get(d!), 10);
+
+			f.discard();
+		} finally {
+			disable_async_mode_flag();
+		}
+	});
+
+	it('should return undefined when reading UNINITIALIZED from batch.previous via apply()', () => {
+		enable_async_mode_flag();
+
+		try {
+			const s = source(/** @type {any} */ UNINITIALIZED);
+			const dummy = state(0);
+
+			const forkA = fork(() => {
+				effect_root(() => {
+					render_effect(() => {
+						internal_set(s, 'resolved');
+					});
+				})();
+			});
+
+			let readValue: any;
+
+			const forkB = fork(() => {
+				effect_root(() => {
+					render_effect(() => {
+						set(dummy, 1);
+						readValue = $.get(s);
+					});
+				})();
+			});
+
+			assert.equal(readValue, undefined);
+			assert.notEqual(readValue, UNINITIALIZED);
+
+			forkA.discard();
+			forkB.discard();
+		} finally {
+			disable_async_mode_flag();
+		}
+	});
+
+	it('should return undefined when reading UNINITIALIZED source captured in concurrent batch', () => {
+		enable_async_mode_flag();
+
+		try {
+			const s = source('initial');
+			const dummy = state(0);
+
+			// Create a pending batch
+			const f1 = fork(() => {
+				effect_root(() => {
+					render_effect(() => {
+						set(dummy, 1);
+					});
+				})();
+			});
+
+			let readValue: any;
+			const f2 = fork(() => {
+				effect_root(() => {
+					render_effect(() => {
+						// Puts UNINITIALIZED in batch_values via capture()
+						internal_set(s, /** @type {any} */ UNINITIALIZED);
+						readValue = $.get(s);
+					});
+				})();
+			});
+
+			assert.equal(readValue, undefined);
+			assert.notEqual(readValue, UNINITIALIZED);
+
+			f1.discard();
+			f2.discard();
+		} finally {
+			disable_async_mode_flag();
+		}
 	});
 });
