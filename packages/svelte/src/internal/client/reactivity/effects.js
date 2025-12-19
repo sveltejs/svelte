@@ -1,4 +1,5 @@
 /** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
+import { set_signal_status } from './status.js';
 import {
 	is_dirty,
 	active_effect,
@@ -9,7 +10,6 @@ import {
 	remove_reactions,
 	set_active_reaction,
 	set_is_destroying_effect,
-	set_signal_status,
 	untrack,
 	untracking
 } from '../runtime.js';

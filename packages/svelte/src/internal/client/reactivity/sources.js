@@ -6,7 +6,6 @@ import {
 	untracked_writes,
 	get,
 	set_untracked_writes,
-	set_signal_status,
 	untrack,
 	increment_write_version,
 	update_effect,
@@ -16,9 +15,9 @@ import {
 	is_destroying_effect,
 	push_reaction_value,
 	set_is_updating_effect,
-	is_updating_effect,
-	update_derived_status
+	is_updating_effect
 } from '../runtime.js';
+import { set_signal_status, update_derived_status } from './status.js';
 import { equals, safe_equals } from './equality.js';
 import {
 	CLEAN,

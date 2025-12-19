@@ -17,14 +17,13 @@ import {
 import {
 	active_reaction,
 	active_effect,
-	set_signal_status,
 	update_reaction,
 	increment_write_version,
 	set_active_effect,
 	push_reaction_value,
-	is_destroying_effect,
-	update_derived_status
+	is_destroying_effect
 } from '../runtime.js';
+import { set_signal_status, update_derived_status } from './status.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
