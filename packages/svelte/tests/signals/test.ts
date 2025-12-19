@@ -1520,7 +1520,7 @@ describe('signals', () => {
 				})();
 			});
 
-			assert.equal(d!.v, /** @type {any} */ UNINITIALIZED);
+			assert.equal(d!.v, UNINITIALIZED as unknown);
 			assert.equal((d!.f & MAYBE_DIRTY) !== 0, true);
 			assert.equal($.get(d!), 10);
 
@@ -1534,7 +1534,7 @@ describe('signals', () => {
 		enable_async_mode_flag();
 
 		try {
-			const s = source(/** @type {any} */ UNINITIALIZED);
+			const s = source(UNINITIALIZED as unknown);
 			const dummy = state(0);
 
 			const forkA = fork(() => {
@@ -1587,7 +1587,7 @@ describe('signals', () => {
 				effect_root(() => {
 					render_effect(() => {
 						// Puts UNINITIALIZED in batch_values via capture()
-						internal_set(s, /** @type {any} */ UNINITIALIZED);
+						internal_set(s, UNINITIALIZED as unknown);
 						readValue = $.get(s);
 					});
 				})();
