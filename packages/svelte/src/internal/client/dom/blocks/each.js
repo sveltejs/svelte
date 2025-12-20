@@ -493,6 +493,13 @@ function reconcile(state, array, anchor, flags, get_key) {
 			stashed = [];
 
 			while (current !== null && current !== effect) {
+				// Detect cycle in linked list to prevent infinite loop
+				if (seen !== undefined && seen.has(current)) {
+					if (DEV) {
+						console.warn('Svelte: cycle detected in each block linked list, breaking to prevent infinite loop');
+					}
+					break;
+				}
 				(seen ??= new Set()).add(current);
 				stashed.push(current);
 				current = current.next;
@@ -536,7 +543,21 @@ function reconcile(state, array, anchor, flags, get_key) {
 			}
 		}
 
+		// Track visited nodes to detect cycles in the linked list
+		// A cycle would cause an infinite loop and eventually a RangeError
+		/** @type {Set<Effect>} */
+		var visited = new Set();
+
 		while (current !== null) {
+			// Detect cycle in linked list to prevent infinite loop
+			if (visited.has(current)) {
+				if (DEV) {
+					console.warn('Svelte: cycle detected in each block linked list, breaking to prevent infinite loop');
+				}
+				break;
+			}
+			visited.add(current);
+
 			// If the each block isn't inert, then inert effects are currently outroing and will be removed once the transition is finished
 			if ((current.f & INERT) === 0 && current !== state.fallback) {
 				to_destroy.push(current);
