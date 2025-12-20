@@ -12,7 +12,6 @@ import { get } from '../runtime.js';
  * @param {Component} component
  */
 export function hmr(component) {
-	let v = -1;
 	let s = source(0);
 
 	/**
@@ -20,6 +19,7 @@ export function hmr(component) {
 	 * @param {any} props
 	 */
 	function wrapper(anchor, props) {
+		let v = -1;
 		let instance = {};
 
 		/** @type {Effect} */
