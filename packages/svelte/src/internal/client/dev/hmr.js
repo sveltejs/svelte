@@ -1,18 +1,20 @@
-/** @import { Source, Effect, TemplateNode } from '#client' */
+/** @import { Effect, TemplateNode } from '#client' */
 import { FILENAME, HMR } from '../../../constants.js';
 import { EFFECT_TRANSPARENT } from '#client/constants';
 import { hydrate_node, hydrating } from '../dom/hydration.js';
 import { block, branch, destroy_effect } from '../reactivity/effects.js';
-import { source } from '../reactivity/sources.js';
+import { source, update } from '../reactivity/sources.js';
 import { set_should_intro } from '../render.js';
 import { get } from '../runtime.js';
 
 /**
  * @template {(anchor: Comment, props: any) => any} Component
- * @param {Component} original
- * @param {() => Source<Component>} get_source
+ * @param {Component} component
  */
-export function hmr(original, get_source) {
+export function hmr(component) {
+	let v = -1;
+	let s = source(0);
+
 	/**
 	 * @param {TemplateNode} anchor
 	 * @param {any} props
@@ -26,8 +28,9 @@ export function hmr(original, get_source) {
 		let ran = false;
 
 		block(() => {
-			const source = get_source();
-			const component = get(source);
+			if (v === (v = get(s))) {
+				return;
+			}
 
 			if (effect) {
 				// @ts-ignore
@@ -62,16 +65,12 @@ export function hmr(original, get_source) {
 	}
 
 	// @ts-expect-error
-	wrapper[FILENAME] = original[FILENAME];
+	wrapper[FILENAME] = component[FILENAME];
 
 	// @ts-ignore
-	wrapper[HMR] = {
-		// When we accept an update, we set the original source to the new component
-		original,
-		// The `get_source` parameter reads `wrapper[HMR].source`, but in the `accept`
-		// function we always replace it with `previous[HMR].source`, which in practice
-		// means we only ever update the original
-		source: source(original)
+	wrapper[HMR] = (c) => {
+		component = c;
+		update(s);
 	};
 
 	return wrapper;
