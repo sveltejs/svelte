@@ -521,7 +521,7 @@ export function client_component(analysis, options) {
 		const id = b.id(analysis.name);
 
 		const accept_fn_body = [
-			b.stmt(b.call(b.member(id, b.id('$.HMR'), true), b.id('module.default')))
+			b.stmt(b.call(b.member(b.member(id, b.id('$.HMR'), true), 'update'), b.id('module.default')))
 		];
 
 		if (analysis.css.hash) {
