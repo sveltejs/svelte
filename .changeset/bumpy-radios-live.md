@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-type `currentTarget` in `on` function
+fix: type `currentTarget` in `on` function
