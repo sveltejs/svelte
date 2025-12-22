@@ -8,7 +8,7 @@
 export function on<Type extends keyof WindowEventMap>(
 	window: Window,
 	type: Type,
-	handler: (this: Window, event: WindowEventMap[Type]) => any,
+	handler: (this: Window, event: WindowEventMap[Type] & { currentTarget: Window }) => any,
 	options?: AddEventListenerOptions | undefined
 ): () => void;
 /**
@@ -19,7 +19,7 @@ export function on<Type extends keyof WindowEventMap>(
 export function on<Type extends keyof DocumentEventMap>(
 	document: Document,
 	type: Type,
-	handler: (this: Document, event: DocumentEventMap[Type]) => any,
+	handler: (this: Document, event: DocumentEventMap[Type] & { currentTarget: Document }) => any,
 	options?: AddEventListenerOptions | undefined
 ): () => void;
 /**
@@ -41,7 +41,7 @@ export function on<Element extends HTMLElement, Type extends keyof HTMLElementEv
 export function on<Element extends MediaQueryList, Type extends keyof MediaQueryListEventMap>(
 	element: Element,
 	type: Type,
-	handler: (this: Element, event: MediaQueryListEventMap[Type]) => any,
+	handler: (this: Element, event: MediaQueryListEventMap[Type] & { currentTarget: Element }) => any,
 	options?: AddEventListenerOptions | undefined
 ): () => void;
 /**
