@@ -2823,10 +2823,7 @@ declare module 'svelte/events' {
 	export function on<Element extends HTMLElement, Type extends keyof HTMLElementEventMap>(
 		element: Element,
 		type: Type,
-		handler: (
-			this: Element,
-			event: HTMLElementEventMap[Type] & { currentTarget: EventTarget & Element }
-		) => any,
+		handler: (this: Element, event: HTMLElementEventMap[Type] & { currentTarget: Element }) => any,
 		options?: AddEventListenerOptions | undefined
 	): () => void;
 	/**
