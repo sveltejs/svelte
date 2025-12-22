@@ -625,18 +625,30 @@ export function get(signal) {
 	) {
 		derived = /** @type {Derived} */ (signal);
 
-		if (is_dirty(derived)) {
-			update_derived(derived);
-		}
-
-		if (
+		var needs_connection =
 			(derived.f & CONNECTED) === 0 &&
+			!untracking &&
 			((is_updating_effect &&
 				(effect_tracking() ||
 					(active_effect !== null && (active_effect.f & BRANCH_EFFECT) !== 0))) ||
 				// evaluating connected parent derived, so reconnect child deriveds too
-				(active_reaction !== null && (active_reaction.f & CONNECTED) !== 0))
-		) {
+				(active_reaction !== null && (active_reaction.f & CONNECTED) !== 0));
+
+		if (is_dirty(derived)) {
+			var is_new = derived.deps === null;
+
+			if (needs_connection) {
+				derived.f |= CONNECTED;
+			}
+
+			update_derived(derived);
+
+			if (needs_connection && !is_new && derived.deps !== null) {
+				for (const dep of derived.deps) {
+					(dep.reactions ??= []).push(derived);
+				}
+			}
+		} else if (needs_connection) {
 			reconnect(derived);
 		}
 	}
@@ -660,7 +672,7 @@ export function get(signal) {
 function reconnect(derived) {
 	if (derived.deps === null) return;
 
-	derived.f ^= CONNECTED;
+	derived.f |= CONNECTED;
 
 	for (const dep of derived.deps) {
 		(dep.reactions ??= []).push(derived);
