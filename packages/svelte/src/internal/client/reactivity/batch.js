@@ -37,6 +37,7 @@ import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
 import { flush_eager_effects, old_values, set_eager_effects, source, update } from './sources.js';
 import { eager_effect, unlink_effect } from './effects.js';
+import { UNINITIALIZED } from '../../../constants.js';
 
 /**
  * @typedef {{
@@ -313,7 +314,7 @@ export class Batch {
 	 * @param {any} value
 	 */
 	capture(source, value) {
-		if (!this.previous.has(source)) {
+		if (value !== UNINITIALIZED && !this.previous.has(source)) {
 			this.previous.set(source, value);
 		}
 
