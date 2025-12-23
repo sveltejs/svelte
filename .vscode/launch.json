@@ -2,7 +2,7 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"type": "node",
+			"type": "nod",
 			"request": "launch",
 			"name": "Run sandbox",
 			"program": "${workspaceFolder}/playgrounds/sandbox/run.js",
@@ -12,3 +12,4 @@
 		}
 	]
 }
+
