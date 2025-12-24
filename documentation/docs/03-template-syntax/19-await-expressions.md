@@ -1,5 +1,6 @@
 ---
 title: await
+use_cases: "async components, SSR with async data, synchronized UI updates, data fetching"
 ---
 
 As of Svelte 5.36, you can use the `await` keyword inside your components in three places where it was previously unavailable:
