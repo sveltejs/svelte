@@ -1,5 +1,21 @@
 # svelte
 
+## 5.46.1
+
+### Patch Changes
+
+- fix: type `currentTarget` in `on` function ([#17370](https://github.com/sveltejs/svelte/pull/17370))
+
+- fix: skip static optimisation for stateless deriveds after `await` ([#17389](https://github.com/sveltejs/svelte/pull/17389))
+
+- fix: prevent infinite loop when HMRing a component with an `await` ([#17380](https://github.com/sveltejs/svelte/pull/17380))
+
+## 5.46.0
+
+### Minor Changes
+
+- feat: Add `csp` option to `render(...)`, and emit hashes when using `hydratable` ([#17338](https://github.com/sveltejs/svelte/pull/17338))
+
 ## 5.45.10
 
 ### Patch Changes
