@@ -166,6 +166,7 @@ export function client_component(analysis, options) {
 		in_constructor: false,
 		instance_level_snippets: [],
 		module_level_snippets: [],
+		legacy_instance_top_function_declarations: [],
 
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		init: /** @type {any} */ (null),
@@ -389,6 +390,9 @@ export function client_component(analysis, options) {
 			b.var('$$ownership_validator', b.call('$.create_ownership_validator', b.id('$$props')))
 		);
 	}
+
+	// these have to be at the top of the instance, to prevent TDZ violations
+	component_block.body.unshift(...state.legacy_instance_top_function_declarations);
 
 	let should_inject_props =
 		should_inject_context ||

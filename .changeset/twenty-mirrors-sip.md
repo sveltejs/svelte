@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: don't mark function declarations as stateful in legacy each blocks
+fix: hoist potentially stateful function declarations in legacy mode

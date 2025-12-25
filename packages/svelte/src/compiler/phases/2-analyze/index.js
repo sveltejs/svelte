@@ -555,7 +555,8 @@ export function analyze_component(root, source, options) {
 			sync: [],
 			async: [],
 			declarations: [],
-			hoisted: []
+			hoisted: [],
+			top_function_declarations: []
 		}
 	};
 
@@ -657,11 +658,14 @@ export function analyze_component(root, source, options) {
 									if (
 										binding &&
 										binding.kind === 'normal' &&
-										binding.declaration_kind !== 'import' &&
-										binding.declaration_kind !== 'function'
+										binding.declaration_kind !== 'import'
 									) {
 										binding.kind = 'state';
 										binding.mutated = true;
+
+										if (binding.declaration_kind === 'function') {
+											analysis.instance_body.top_function_declarations.push(binding);
+										}
 									}
 								}
 							}

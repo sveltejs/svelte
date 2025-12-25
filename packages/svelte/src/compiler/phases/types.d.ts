@@ -3,8 +3,6 @@ import type {
 	AwaitExpression,
 	CallExpression,
 	ClassBody,
-	ClassDeclaration,
-	FunctionDeclaration,
 	Identifier,
 	LabeledStatement,
 	ModuleDeclaration,
@@ -133,5 +131,7 @@ export interface ComponentAnalysis extends Analysis {
 		sync: Array<Statement | ModuleDeclaration | VariableDeclaration>;
 		async: Array<{ node: Statement | VariableDeclarator; has_await: boolean }>;
 		declarations: Array<Identifier>;
+		/** legacy property for lifting potentially stateful function declarations to the top of the instance body */
+		top_function_declarations: Binding[];
 	};
 }
