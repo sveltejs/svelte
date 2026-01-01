@@ -95,6 +95,7 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 		if (generate === 'server' || FROM_HTML) {
 			from_html = compile(source, {
 				dev: DEV,
+				hmr: DEV,
 				filename: input,
 				generate,
 				runes: argv.values.runes,
