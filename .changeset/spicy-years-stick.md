@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: correctly remove $inspect after await expressions when compiling for the server
+fix: remove `$inspect` calls after await expressions when compiling for production server code
