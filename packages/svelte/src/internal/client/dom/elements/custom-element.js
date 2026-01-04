@@ -2,6 +2,7 @@ import { createClassComponent } from '../../../../legacy/legacy-client.js';
 import { effect_root, render_effect } from '../../reactivity/effects.js';
 import { append } from '../template.js';
 import { define_property, get_descriptor, object_keys } from '../../../shared/utils.js';
+import { NAMESPACE_HTML } from '../../../../constants.js';
 
 /**
  * @typedef {Object} CustomElementPropDefinition
@@ -98,7 +99,7 @@ if (typeof HTMLElement === 'function') {
 					 * @param {Element} anchor
 					 */
 					return (anchor) => {
-						const slot = document.createElement('slot');
+						const slot = document.createElementNS(NAMESPACE_HTML, 'slot');
 						if (name !== 'default') slot.name = name;
 
 						append(anchor, slot);

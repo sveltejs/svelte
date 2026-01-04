@@ -83,7 +83,10 @@ export function set_value(element, value) {
 				value ?? undefined) ||
 		// @ts-expect-error
 		// `progress` elements always need their value set when it's `0`
-		(element.value === value && (value !== 0 || element.nodeName !== 'PROGRESS'))
+		(element.value === value &&
+			(value !== 0 ||
+				element.namespaceURI !== NAMESPACE_HTML ||
+				element.nodeName.toUpperCase() !== 'PROGRESS'))
 	) {
 		return;
 	}
@@ -168,7 +171,7 @@ export function set_attribute(element, attribute, value, skip_warning) {
 		if (
 			attribute === 'src' ||
 			attribute === 'srcset' ||
-			(attribute === 'href' && element.nodeName === 'LINK')
+			(attribute === 'href' && element.nodeName.toUpperCase() === 'LINK')
 		) {
 			if (!skip_warning) {
 				check_src_in_dev_hydration(element, attribute, value ?? '');
@@ -280,7 +283,12 @@ function set_attributes(
 	should_remove_defaults = false,
 	skip_warning = false
 ) {
-	if (hydrating && should_remove_defaults && element.tagName === 'INPUT') {
+	if (
+		hydrating &&
+		should_remove_defaults &&
+		element.namespaceURI === NAMESPACE_HTML &&
+		element.tagName.toUpperCase() === 'INPUT'
+	) {
 		var input = /** @type {HTMLInputElement} */ (element);
 		var attribute = input.type === 'checkbox' ? 'defaultChecked' : 'defaultValue';
 
@@ -302,7 +310,8 @@ function set_attributes(
 	}
 
 	var current = prev || {};
-	var is_option_element = element.tagName === 'OPTION';
+	var is_option_element =
+		element.namespaceURI === NAMESPACE_HTML && element.tagName.toUpperCase() === 'OPTION';
 
 	for (var key in prev) {
 		if (!(key in next)) {
@@ -347,7 +356,7 @@ function set_attributes(
 		}
 
 		if (key === 'class') {
-			var is_html = element.namespaceURI === 'http://www.w3.org/1999/xhtml';
+			var is_html = element.namespaceURI === NAMESPACE_HTML;
 			set_class(element, is_html, value, css_hash, prev?.[CLASS], next[CLASS]);
 			current[key] = value;
 			current[CLASS] = next[CLASS];
@@ -505,7 +514,7 @@ export function attribute_effect(
 		/** @type {Record<symbol, Effect>} */
 		var effects = {};
 
-		var is_select = element.nodeName === 'SELECT';
+		var is_select = element.nodeName.toUpperCase() === 'SELECT';
 		var inited = false;
 
 		managed(() => {
