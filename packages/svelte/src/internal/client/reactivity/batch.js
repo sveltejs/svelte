@@ -397,6 +397,14 @@ export class Batch {
 					continue;
 				}
 
+				for (const e of this.#dirty_effects) {
+					batch.#dirty_effects.add(e);
+				}
+
+				for (const e of this.#maybe_dirty_effects) {
+					batch.#maybe_dirty_effects.add(e);
+				}
+
 				/** @type {Source[]} */
 				const sources = [];
 

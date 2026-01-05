@@ -298,17 +298,13 @@ export function run(thunks) {
 					throw STALE_REACTION;
 				}
 
-				try {
-					restore();
-					return fn();
-				} finally {
-					// TODO do we need it here as well as below?
-					unset_context();
-				}
+				restore();
+				return fn();
 			})
 			.catch(handle_error)
 			.finally(() => {
 				unset_context();
+				current_batch?.deactivate();
 			});
 
 		promises.push(promise);
