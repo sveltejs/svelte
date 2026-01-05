@@ -209,11 +209,11 @@ export function VariableDeclaration(node, context) {
 						let call = b.call(
 							'$.async_derived',
 							b.thunk(expression, true),
+							dev && b.literal(declarator.id.name),
 							location ? b.literal(location) : undefined
 						);
 
 						call = should_save ? save(call) : b.await(call);
-						if (dev) call = b.call('$.tag', call, b.literal(declarator.id.name));
 
 						declarations.push(b.declarator(declarator.id, call));
 					} else {
@@ -244,15 +244,14 @@ export function VariableDeclaration(node, context) {
 							call = b.call(
 								'$.async_derived',
 								b.thunk(expression, true),
+								dev &&
+									b.literal(
+										`[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`
+									),
 								location ? b.literal(location) : undefined
 							);
 
 							call = should_save ? save(call) : b.await(call);
-						}
-
-						if (dev) {
-							const label = `[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`;
-							call = b.call('$.tag', call, b.literal(label));
 						}
 
 						declarations.push(b.declarator(id, call));
