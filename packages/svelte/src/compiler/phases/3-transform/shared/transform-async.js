@@ -86,7 +86,14 @@ export function transform_body(instance_body, runner, transform) {
 			}
 
 			if (s.node.type === 'ExpressionStatement') {
-				const expression = /** @type {ESTree.Expression} */ (transform(s.node.expression));
+				// the expression may be a $inspect call, which will be transformed into an empty statement
+				const expression = /** @type {ESTree.Expression | ESTree.EmptyStatement} */ (
+					transform(s.node.expression)
+				);
+
+				if (expression.type === 'EmptyStatement') {
+					return null;
+				}
 
 				return expression.type === 'AwaitExpression'
 					? b.thunk(expression, true)
