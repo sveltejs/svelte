@@ -397,13 +397,13 @@ export class Batch {
 					continue;
 				}
 
-				for (const e of this.#dirty_effects) {
-					batch.#dirty_effects.add(e);
-				}
-
-				for (const e of this.#maybe_dirty_effects) {
-					batch.#maybe_dirty_effects.add(e);
-				}
+				// in rare cases, effects inside a still-pending boundary might be left
+				// unflushed when a batch is committed. to ensure that they run, we add
+				// them to other batches.
+				// TODO it would be better if the effects were associated with the
+				// boundary instead, and rescheduled when the boundary resolves
+				for (const e of this.#dirty_effects) batch.#dirty_effects.add(e);
+				for (const e of this.#maybe_dirty_effects) batch.#maybe_dirty_effects.add(e);
 
 				/** @type {Source[]} */
 				const sources = [];
