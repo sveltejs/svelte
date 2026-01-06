@@ -215,7 +215,11 @@ export class Batch {
 
 			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.skipped_effects.has(effect);
 
-			if ((effect.f & BOUNDARY_EFFECT) !== 0 && effect.b?.is_pending()) {
+			if (
+				pending_boundary === null &&
+				(effect.f & BOUNDARY_EFFECT) !== 0 &&
+				effect.b?.is_pending()
+			) {
 				pending_boundary = effect.b;
 			}
 
@@ -254,8 +258,7 @@ export class Batch {
 					(parent.f & BOUNDARY_EFFECT) !== 0 &&
 					parent.b === pending_boundary
 				) {
-					pending_boundary = pending_boundary?.parent;
-					if (!pending_boundary?.is_pending()) pending_boundary = null;
+					pending_boundary = null;
 				}
 
 				effect = parent.next;
