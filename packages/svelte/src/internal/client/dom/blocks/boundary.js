@@ -1,9 +1,12 @@
 /** @import { Effect, Source, TemplateNode, } from '#client' */
 import {
 	BOUNDARY_EFFECT,
+	CLEAN,
 	COMMENT_NODE,
+	DIRTY,
 	EFFECT_PRESERVED,
-	EFFECT_TRANSPARENT
+	EFFECT_TRANSPARENT,
+	MAYBE_DIRTY
 } from '#client/constants';
 import { HYDRATION_START_ELSE } from '../../../../constants.js';
 import { component_context, set_component_context } from '../../context.js';
@@ -20,7 +23,8 @@ import {
 	active_reaction,
 	get,
 	set_active_effect,
-	set_active_reaction
+	set_active_reaction,
+	set_signal_status
 } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -34,11 +38,12 @@ import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { DEV } from 'esm-env';
-import { Batch } from '../../reactivity/batch.js';
+import { Batch, schedule_effect } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
 import { create_text } from '../operations.js';
+import { clear_marked } from '../../reactivity/utils.js';
 
 /**
  * @typedef {{
@@ -100,6 +105,12 @@ export class Boundary {
 	#pending_count = 0;
 
 	#is_creating_fallback = false;
+
+	/** @type {Set<Effect>} */
+	#dirty_effects = new Set();
+
+	/** @type {Set<Effect>} */
+	#maybe_dirty_effects = new Set();
 
 	/**
 	 * A source containing the number of pending async deriveds/expressions.
@@ -231,6 +242,25 @@ export class Boundary {
 	}
 
 	/**
+	 *
+	 * @param {Effect} e
+	 */
+	add_effect(e) {
+		if ((e.f & DIRTY) !== 0) {
+			this.#dirty_effects.add(e);
+		} else if ((e.f & MAYBE_DIRTY) !== 0) {
+			this.#maybe_dirty_effects.add(e);
+		}
+
+		// Since we're not executing these effects now, we need to clear any WAS_MARKED flags
+		// so that other batches can correctly reach these effects during their own traversal
+		clear_marked(e.deps);
+
+		// mark as clean so they get scheduled if they depend on pending async state
+		set_signal_status(e, CLEAN);
+	}
+
+	/**
 	 * Returns `true` if the effect exists inside a boundary whose pending snippet is shown
 	 * @returns {boolean}
 	 */
@@ -299,6 +329,19 @@ export class Boundary {
 
 		if (this.#pending_count === 0) {
 			this.#pending = false;
+
+			for (const e of this.#dirty_effects) {
+				set_signal_status(e, DIRTY);
+				schedule_effect(e);
+			}
+
+			for (const e of this.#maybe_dirty_effects) {
+				set_signal_status(e, MAYBE_DIRTY);
+				schedule_effect(e);
+			}
+
+			this.#dirty_effects.clear();
+			this.#maybe_dirty_effects.clear();
 
 			if (this.#pending_effect) {
 				pause_effect(this.#pending_effect, () => {

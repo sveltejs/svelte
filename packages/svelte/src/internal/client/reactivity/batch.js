@@ -1,5 +1,6 @@
 /** @import { Fork } from 'svelte' */
 /** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
+/** @import { Boundary } from '../dom/blocks/boundary' */
 import {
 	BLOCK_EFFECT,
 	BRANCH_EFFECT,
@@ -37,6 +38,7 @@ import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
 import { flush_eager_effects, old_values, set_eager_effects, source, update } from './sources.js';
 import { eager_effect, unlink_effect } from './effects.js';
+import { clear_marked } from './utils.js';
 
 /**
  * @typedef {{
@@ -213,6 +215,9 @@ export class Batch {
 
 		var effect = root.first;
 
+		/** @type {Boundary | null} */
+		var pending_boundary = null;
+
 		while (effect !== null) {
 			var flags = effect.f;
 			var is_branch = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0;
@@ -221,21 +226,24 @@ export class Batch {
 			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.skipped_effects.has(effect);
 
 			if ((effect.f & BOUNDARY_EFFECT) !== 0 && effect.b?.is_pending()) {
-				target = {
-					parent: target,
-					effect,
-					effects: [],
-					render_effects: []
-				};
+				pending_boundary = effect.b;
 			}
 
 			if (!skip && effect.fn !== null) {
 				if (is_branch) {
 					effect.f ^= CLEAN;
 				} else if ((flags & EFFECT) !== 0) {
-					target.effects.push(effect);
+					if (pending_boundary !== null) {
+						pending_boundary.add_effect(effect);
+					} else {
+						target.effects.push(effect);
+					}
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
-					target.render_effects.push(effect);
+					if (pending_boundary !== null) {
+						pending_boundary.add_effect(effect);
+					} else {
+						target.render_effects.push(effect);
+					}
 				} else if (is_dirty(effect)) {
 					if ((effect.f & BLOCK_EFFECT) !== 0) this.#dirty_effects.add(effect);
 					update_effect(effect);
@@ -253,14 +261,13 @@ export class Batch {
 			effect = effect.next;
 
 			while (effect === null && parent !== null) {
-				if (parent === target.effect) {
-					// TODO rather than traversing into pending boundaries and deferring the effects,
-					// could we just attach the effects _to_ the pending boundary and schedule them
-					// once the boundary is ready?
-					this.#defer_effects(target.effects);
-					this.#defer_effects(target.render_effects);
-
-					target = /** @type {EffectTarget} */ (target.parent);
+				if (
+					(parent.f & BOUNDARY_EFFECT) !== 0 &&
+					pending_boundary &&
+					parent.b === pending_boundary
+				) {
+					pending_boundary = pending_boundary?.parent;
+					if (!pending_boundary?.is_pending()) pending_boundary = null;
 				}
 
 				effect = parent.next;
@@ -282,27 +289,10 @@ export class Batch {
 
 			// Since we're not executing these effects now, we need to clear any WAS_MARKED flags
 			// so that other batches can correctly reach these effects during their own traversal
-			this.#clear_marked(e.deps);
+			clear_marked(e.deps);
 
 			// mark as clean so they get scheduled if they depend on pending async state
 			set_signal_status(e, CLEAN);
-		}
-	}
-
-	/**
-	 * @param {Value[] | null} deps
-	 */
-	#clear_marked(deps) {
-		if (deps === null) return;
-
-		for (const dep of deps) {
-			if ((dep.f & DERIVED) === 0 || (dep.f & WAS_MARKED) === 0) {
-				continue;
-			}
-
-			dep.f ^= WAS_MARKED;
-
-			this.#clear_marked(/** @type {Derived} */ (dep).deps);
 		}
 	}
 
