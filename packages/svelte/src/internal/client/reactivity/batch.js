@@ -205,7 +205,7 @@ export class Batch {
 
 		var effect = root.first;
 
-		/** @type {Boundary | null} */
+		/** @type {Effect | null} */
 		var pending_boundary = null;
 
 		while (effect !== null) {
@@ -220,7 +220,7 @@ export class Batch {
 				(effect.f & BOUNDARY_EFFECT) !== 0 &&
 				effect.b?.is_pending()
 			) {
-				pending_boundary = effect.b;
+				pending_boundary = effect;
 			}
 
 			if (!skip && effect.fn !== null) {
@@ -231,7 +231,7 @@ export class Batch {
 					pending_boundary !== null &&
 					(flags & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0
 				) {
-					pending_boundary.defer_effect(effect);
+					/** @type {Boundary} */ (pending_boundary.b).defer_effect(effect);
 				} else if ((flags & EFFECT) !== 0) {
 					effects.push(effect);
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
@@ -253,11 +253,7 @@ export class Batch {
 			effect = effect.next;
 
 			while (effect === null && parent !== null) {
-				if (
-					pending_boundary !== null &&
-					(parent.f & BOUNDARY_EFFECT) !== 0 &&
-					parent.b === pending_boundary
-				) {
+				if (parent === pending_boundary) {
 					pending_boundary = null;
 				}
 
