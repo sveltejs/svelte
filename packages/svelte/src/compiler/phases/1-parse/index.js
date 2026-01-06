@@ -117,21 +117,8 @@ export class Parser {
 			e.unexpected_eof(this.index);
 		}
 
-		if (this.root.fragment.nodes.length) {
-			let start = /** @type {number} */ (this.root.fragment.nodes[0].start);
-			while (regex_whitespace.test(template[start])) start += 1;
-
-			let end = /** @type {number} */ (
-				this.root.fragment.nodes[this.root.fragment.nodes.length - 1].end
-			);
-			while (regex_whitespace.test(template[end - 1])) end -= 1;
-
-			this.root.start = start;
-			this.root.end = end;
-		} else {
-			// @ts-ignore
-			this.root.start = this.root.end = null;
-		}
+		this.root.start = 0;
+		this.root.end = template.length;
 
 		const options_index = this.root.fragment.nodes.findIndex(
 			/** @param {any} thing */

@@ -1,7 +1,6 @@
 /** @import { ComponentType, SvelteComponent, Component } from 'svelte' */
-/** @import { RenderOutput } from '#server' */
+/** @import { Csp, RenderOutput } from '#server' */
 /** @import { Store } from '#shared' */
-/** @import { AccumulatedContent } from './renderer.js' */
 export { FILENAME, HMR } from '../../constants.js';
 import { attr, clsx, to_class, to_style } from '../shared/attributes.js';
 import { is_promise, noop } from '../shared/utils.js';
@@ -18,6 +17,7 @@ import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN, BLOCK_OPEN_ELSE } from './hydra
 import { validate_store } from '../shared/validate.js';
 import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
 import { Renderer } from './renderer.js';
+import * as e from './errors.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
@@ -56,10 +56,13 @@ export function element(renderer, tag, attributes_fn = noop, children_fn = noop)
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
  * @template {Record<string, any>} Props
  * @param {Component<Props> | ComponentType<SvelteComponent<Props>>} component
- * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} [options]
+ * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} [options]
  * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
+	if (options.csp?.hash && options.csp.nonce) {
+		e.invalid_csp();
+	}
 	return Renderer.render(/** @type {Component<Props>} */ (component), options);
 }
 

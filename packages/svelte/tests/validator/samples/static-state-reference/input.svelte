@@ -9,7 +9,8 @@
 	console.log(doubled);
 
 	let {
-		prop
+		prop,
+		other_prop = prop
 	} = $props();
 	let prop_state = $state(prop);
 	let prop_derived = $derived(prop);

@@ -16,6 +16,7 @@
 
   @keyframes fade {
     from { opacity: 0; }
+    50% { opacity: 0.5; }
     to   { opacity: 1; }
   }
 
@@ -39,5 +40,15 @@
 
   .container .item, nav > ul.menu {
     color: red;
+  }
+  #id-selector { color: red; }
+  [data-attribute] { color: red; }
+  [data-attribute="value"] { color: red; }
+
+  .card {
+    background: white;
+    &:hover {
+      background: gray;
+    }
   }
 </style>
