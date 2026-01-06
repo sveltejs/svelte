@@ -43,7 +43,7 @@ import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
 import { create_text } from '../operations.js';
-import { clear_marked } from '../../reactivity/utils.js';
+import { defer_effect } from '../../reactivity/utils.js';
 
 /**
  * @typedef {{
@@ -242,22 +242,11 @@ export class Boundary {
 	}
 
 	/**
-	 *
-	 * @param {Effect} e
+	 * Defer an effect inside a pending boundary until the boundary resolves
+	 * @param {Effect} effect
 	 */
-	add_effect(e) {
-		if ((e.f & DIRTY) !== 0) {
-			this.#dirty_effects.add(e);
-		} else if ((e.f & MAYBE_DIRTY) !== 0) {
-			this.#maybe_dirty_effects.add(e);
-		}
-
-		// Since we're not executing these effects now, we need to clear any WAS_MARKED flags
-		// so that other batches can correctly reach these effects during their own traversal
-		clear_marked(e.deps);
-
-		// mark as clean so they get scheduled if they depend on pending async state
-		set_signal_status(e, CLEAN);
+	defer_effect(effect) {
+		defer_effect(effect, this.#dirty_effects, this.#maybe_dirty_effects);
 	}
 
 	/**

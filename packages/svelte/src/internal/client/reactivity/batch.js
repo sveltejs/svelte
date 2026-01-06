@@ -38,16 +38,7 @@ import { DEV } from 'esm-env';
 import { invoke_error_boundary } from '../error-handling.js';
 import { flush_eager_effects, old_values, set_eager_effects, source, update } from './sources.js';
 import { eager_effect, unlink_effect } from './effects.js';
-import { clear_marked } from './utils.js';
-
-/**
- * @typedef {{
- *   parent: EffectTarget | null;
- *   effect: Effect | null;
- *   effects: Effect[];
- *   render_effects: Effect[];
- * }} EffectTarget
- */
+import { defer_effect } from './utils.js';
 
 /** @type {Set<Batch>} */
 const batches = new Set();
@@ -163,16 +154,14 @@ export class Batch {
 
 		this.apply();
 
-		/** @type {EffectTarget} */
-		var target = {
-			parent: null,
-			effect: null,
-			effects: [],
-			render_effects: []
-		};
+		/** @type {Effect[]} */
+		var effects = [];
+
+		/** @type {Effect[]} */
+		var render_effects = [];
 
 		for (const root of root_effects) {
-			this.#traverse_effect_tree(root, target);
+			this.#traverse_effect_tree(root, effects, render_effects);
 			// Note: #traverse_effect_tree runs block effects eagerly, which can schedule effects,
 			// which means queued_root_effects now may be filled again.
 
@@ -185,16 +174,16 @@ export class Batch {
 		}
 
 		if (this.is_deferred()) {
-			this.#defer_effects(target.effects);
-			this.#defer_effects(target.render_effects);
+			this.#defer_effects(render_effects);
+			this.#defer_effects(effects);
 		} else {
 			// If sources are written to, then work needs to happen in a separate batch, else prior sources would be mixed with
 			// newly updated sources, which could lead to infinite loops when effects run over and over again.
 			previous_batch = this;
 			current_batch = null;
 
-			flush_queued_effects(target.render_effects);
-			flush_queued_effects(target.effects);
+			flush_queued_effects(render_effects);
+			flush_queued_effects(effects);
 
 			previous_batch = null;
 
@@ -208,9 +197,10 @@ export class Batch {
 	 * Traverse the effect tree, executing effects or stashing
 	 * them for later execution as appropriate
 	 * @param {Effect} root
-	 * @param {EffectTarget} target
+	 * @param {Effect[]} effects
+	 * @param {Effect[]} render_effects
 	 */
-	#traverse_effect_tree(root, target) {
+	#traverse_effect_tree(root, effects, render_effects) {
 		root.f ^= CLEAN;
 
 		var effect = root.first;
@@ -232,18 +222,16 @@ export class Batch {
 			if (!skip && effect.fn !== null) {
 				if (is_branch) {
 					effect.f ^= CLEAN;
+				} else if (
+					async_mode_flag &&
+					pending_boundary !== null &&
+					(flags & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0
+				) {
+					pending_boundary.defer_effect(effect);
 				} else if ((flags & EFFECT) !== 0) {
-					if (pending_boundary !== null) {
-						pending_boundary.add_effect(effect);
-					} else {
-						target.effects.push(effect);
-					}
+					effects.push(effect);
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
-					if (pending_boundary !== null) {
-						pending_boundary.add_effect(effect);
-					} else {
-						target.render_effects.push(effect);
-					}
+					render_effects.push(effect);
 				} else if (is_dirty(effect)) {
 					if ((effect.f & BLOCK_EFFECT) !== 0) this.#dirty_effects.add(effect);
 					update_effect(effect);
@@ -262,8 +250,8 @@ export class Batch {
 
 			while (effect === null && parent !== null) {
 				if (
+					pending_boundary !== null &&
 					(parent.f & BOUNDARY_EFFECT) !== 0 &&
-					pending_boundary &&
 					parent.b === pending_boundary
 				) {
 					pending_boundary = pending_boundary?.parent;
@@ -280,19 +268,8 @@ export class Batch {
 	 * @param {Effect[]} effects
 	 */
 	#defer_effects(effects) {
-		for (const e of effects) {
-			if ((e.f & DIRTY) !== 0) {
-				this.#dirty_effects.add(e);
-			} else if ((e.f & MAYBE_DIRTY) !== 0) {
-				this.#maybe_dirty_effects.add(e);
-			}
-
-			// Since we're not executing these effects now, we need to clear any WAS_MARKED flags
-			// so that other batches can correctly reach these effects during their own traversal
-			clear_marked(e.deps);
-
-			// mark as clean so they get scheduled if they depend on pending async state
-			set_signal_status(e, CLEAN);
+		for (var i = 0; i < effects.length; i += 1) {
+			defer_effect(effects[i], this.#dirty_effects, this.#maybe_dirty_effects);
 		}
 	}
 
@@ -373,14 +350,6 @@ export class Batch {
 			var previous_batch_values = batch_values;
 			var is_earlier = true;
 
-			/** @type {EffectTarget} */
-			var dummy_target = {
-				parent: null,
-				effect: null,
-				effects: [],
-				render_effects: []
-			};
-
 			for (const batch of batches) {
 				if (batch === this) {
 					is_earlier = false;
@@ -437,10 +406,10 @@ export class Batch {
 						batch.apply();
 
 						for (const root of queued_root_effects) {
-							batch.#traverse_effect_tree(root, dummy_target);
+							batch.#traverse_effect_tree(root, [], []);
 						}
 
-						// TODO do we need to do anything with `target`? defer block effects?
+						// TODO do we need to do anything with the dummy effect arrays?
 
 						batch.deactivate();
 					}
