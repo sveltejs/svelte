@@ -215,7 +215,15 @@ export class Batch {
 
 			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.skipped_effects.has(effect);
 
-			if (pending_boundary === null && (effect.f & BOUNDARY_EFFECT) !== 0 && effect.b?.is_pending) {
+			// Inside a `<svelte:boundary>` with a pending snippet,
+			// all effects are deferred until the boundary resolves
+			// (except block/async effects, which run immediately)
+			if (
+				async_mode_flag &&
+				pending_boundary === null &&
+				(flags & BOUNDARY_EFFECT) !== 0 &&
+				effect.b?.is_pending
+			) {
 				pending_boundary = effect;
 			}
 
@@ -223,7 +231,6 @@ export class Batch {
 				if (is_branch) {
 					effect.f ^= CLEAN;
 				} else if (
-					async_mode_flag &&
 					pending_boundary !== null &&
 					(flags & (EFFECT | RENDER_EFFECT | MANAGED_EFFECT)) !== 0
 				) {
@@ -233,7 +240,7 @@ export class Batch {
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
 					render_effects.push(effect);
 				} else if (is_dirty(effect)) {
-					if ((effect.f & BLOCK_EFFECT) !== 0) this.#dirty_effects.add(effect);
+					if ((flags & BLOCK_EFFECT) !== 0) this.#dirty_effects.add(effect);
 					update_effect(effect);
 				}
 
