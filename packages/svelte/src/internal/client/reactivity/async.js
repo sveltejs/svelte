@@ -219,7 +219,7 @@ export function run(thunks) {
 
 	var boundary = get_boundary();
 	var batch = /** @type {Batch} */ (current_batch);
-	var blocking = !boundary.is_pending();
+	var blocking = boundary.is_rendered();
 
 	boundary.update_pending_count(1);
 	batch.increment(blocking);

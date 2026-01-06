@@ -69,7 +69,7 @@ export class Boundary {
 	/** @type {Boundary | null} */
 	parent;
 
-	#pending = false;
+	is_pending = false;
 
 	/** @type {TemplateNode} */
 	#anchor;
@@ -145,7 +145,7 @@ export class Boundary {
 
 		this.parent = /** @type {Effect} */ (active_effect).b;
 
-		this.#pending = !!this.#props.pending;
+		this.is_pending = !!this.#props.pending;
 
 		this.#effect = block(() => {
 			/** @type {Effect} */ (active_effect).b = this;
@@ -175,7 +175,7 @@ export class Boundary {
 				if (this.#pending_count > 0) {
 					this.#show_pending_snippet();
 				} else {
-					this.#pending = false;
+					this.is_pending = false;
 				}
 			}
 
@@ -198,7 +198,7 @@ export class Boundary {
 
 		// Since server rendered resolved content, we never show pending state
 		// Even if client-side async operations are still running, the content is already displayed
-		this.#pending = false;
+		this.is_pending = false;
 	}
 
 	#hydrate_pending_content() {
@@ -223,7 +223,7 @@ export class Boundary {
 					this.#pending_effect = null;
 				});
 
-				this.#pending = false;
+				this.is_pending = false;
 			}
 		});
 	}
@@ -231,7 +231,7 @@ export class Boundary {
 	#get_anchor() {
 		var anchor = this.#anchor;
 
-		if (this.#pending) {
+		if (this.is_pending) {
 			this.#pending_anchor = create_text();
 			this.#anchor.before(this.#pending_anchor);
 
@@ -250,11 +250,11 @@ export class Boundary {
 	}
 
 	/**
-	 * Returns `true` if the effect exists inside a boundary whose pending snippet is shown
+	 * Returns `false` if the effect exists inside a boundary whose pending snippet is shown
 	 * @returns {boolean}
 	 */
-	is_pending() {
-		return this.#pending || (!!this.parent && this.parent.is_pending());
+	is_rendered() {
+		return !this.is_pending && (!this.parent || this.parent.is_rendered());
 	}
 
 	has_pending_snippet() {
@@ -317,7 +317,7 @@ export class Boundary {
 		this.#pending_count += d;
 
 		if (this.#pending_count === 0) {
-			this.#pending = false;
+			this.is_pending = false;
 
 			for (const e of this.#dirty_effects) {
 				set_signal_status(e, DIRTY);
@@ -426,7 +426,7 @@ export class Boundary {
 
 			// we intentionally do not try to find the nearest pending boundary. If this boundary has one, we'll render it on reset
 			// but it would be really weird to show the parent's boundary on a child reset.
-			this.#pending = this.has_pending_snippet();
+			this.is_pending = this.has_pending_snippet();
 
 			this.#main_effect = this.#run(() => {
 				this.#is_creating_fallback = false;
@@ -436,7 +436,7 @@ export class Boundary {
 			if (this.#pending_count > 0) {
 				this.#show_pending_snippet();
 			} else {
-				this.#pending = false;
+				this.is_pending = false;
 			}
 		};
 
