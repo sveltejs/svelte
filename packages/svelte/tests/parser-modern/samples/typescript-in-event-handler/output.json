@@ -392,11 +392,11 @@
 			"loc": {
 				"start": {
 					"line": 1,
-					"column": 18
+					"column": 0
 				},
 				"end": {
 					"line": 3,
-					"column": 0
+					"column": 9
 				}
 			},
 			"body": [
