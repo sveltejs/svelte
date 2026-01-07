@@ -25,7 +25,6 @@ import {
 	set_from_async_derived
 } from './deriveds.js';
 import { aborted } from './effects.js';
-import { hydrate_next, hydrating, set_hydrate_node, skip_nodes } from '../dom/hydration.js';
 
 /**
  * @param {Array<Promise<void>>} blockers
@@ -208,51 +207,6 @@ export function unset_context() {
 	if (DEV) {
 		set_from_async_derived(null);
 		set_dev_stack(null);
-	}
-}
-
-/**
- * @param {TemplateNode} anchor
- * @param {(target: TemplateNode) => Promise<void>} fn
- */
-export async function async_body(anchor, fn) {
-	var boundary = get_boundary();
-	var batch = /** @type {Batch} */ (current_batch);
-	var blocking = !boundary.is_pending();
-
-	boundary.update_pending_count(1);
-	batch.increment(blocking);
-
-	var active = /** @type {Effect} */ (active_effect);
-
-	var was_hydrating = hydrating;
-	var next_hydrate_node = undefined;
-
-	if (was_hydrating) {
-		hydrate_next();
-		next_hydrate_node = skip_nodes(false);
-	}
-
-	try {
-		var promise = fn(anchor);
-	} finally {
-		if (next_hydrate_node) {
-			set_hydrate_node(next_hydrate_node);
-			hydrate_next();
-		}
-	}
-
-	try {
-		await promise;
-	} catch (error) {
-		if (!aborted(active)) {
-			invoke_error_boundary(error, active);
-		}
-	} finally {
-		boundary.update_pending_count(-1);
-		batch.decrement(blocking);
-
-		unset_context();
 	}
 }
 
