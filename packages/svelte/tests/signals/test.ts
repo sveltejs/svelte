@@ -1514,27 +1514,26 @@ describe('signals', () => {
 		return () => {
 			flushSync();
 
-			const isConnected = (d!.f & CONNECTED) !== 0;
+			const is_connected = (d!.f & CONNECTED) !== 0;
 			assert.ok(
-				isConnected,
+				is_connected,
 				'derived should be CONNECTED after being read inside branch during effect update'
 			);
 
-			const countReactions = count.reactions || [];
-			assert.ok(countReactions.includes(d!), 'derived should be in source reactions');
+			assert.ok(count.reactions?.includes(d!), 'derived should be in source reactions');
 		};
 	});
 
 	// Test that deriveds with no dependencies are always CLEAN
 	test('deriveds with no deps should be CLEAN and not re-evaluate', () => {
-		let evalCount = 0;
+		let eval_count = 0;
 		let d: Derived<number> | null = null;
 
 		render_effect(() => {
 			branch(() => {
 				if (!d) {
 					d = derived(() => {
-						evalCount++;
+						eval_count++;
 						return 42;
 					});
 				}
@@ -1546,21 +1545,21 @@ describe('signals', () => {
 		return () => {
 			flushSync();
 
-			const initialEvalCount = evalCount;
-			assert.equal(initialEvalCount, 1, 'derived should evaluate once initially');
+			const initial_eval_count = eval_count;
+			assert.equal(initial_eval_count, 1, 'derived should evaluate once initially');
 
 			for (let i = 0; i < 100; i++) {
 				$.get(d!);
 			}
 
 			assert.equal(
-				evalCount,
-				initialEvalCount,
+				eval_count,
+				initial_eval_count,
 				'derived with no deps should not re-evaluate on subsequent reads'
 			);
 
-			const isClean = (d!.f & CLEAN) !== 0;
-			assert.ok(isClean, 'derived with no deps should be CLEAN');
+			const is_clean = (d!.f & CLEAN) !== 0;
+			assert.ok(is_clean, 'derived with no deps should be CLEAN');
 		};
 	});
 
