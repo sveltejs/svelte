@@ -318,6 +318,10 @@ export class Boundary {
 		if (this.#pending_count === 0) {
 			this.is_pending = false;
 
+			// any effects that were encountered and deferred during traversal
+			// should be rescheduled — after the next traversal (which will happen
+			// immediately, due to the same update that brought us here)
+			// the effects will be flushed
 			for (const e of this.#dirty_effects) {
 				set_signal_status(e, DIRTY);
 				schedule_effect(e);
