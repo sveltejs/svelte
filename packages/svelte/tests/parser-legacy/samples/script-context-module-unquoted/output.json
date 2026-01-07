@@ -24,8 +24,8 @@
 			"end": 77,
 			"loc": {
 				"start": {
-					"line": 1,
-					"column": 0
+					"line": 5,
+					"column": 8
 				},
 				"end": {
 					"line": 7,
@@ -80,7 +80,7 @@
 			"loc": {
 				"start": {
 					"line": 1,
-					"column": 0
+					"column": 23
 				},
 				"end": {
 					"line": 3,
