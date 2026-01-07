@@ -150,7 +150,7 @@ export function async_derived(fn, label, location) {
 		var batch = /** @type {Batch} */ (current_batch);
 
 		if (should_suspend) {
-			var blocking = !boundary.is_pending();
+			var blocking = boundary.is_rendered();
 
 			boundary.update_pending_count(1);
 			batch.increment(blocking);
