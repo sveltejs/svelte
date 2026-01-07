@@ -18,7 +18,6 @@ import {
 	EAGER_EFFECT,
 	HEAD_EFFECT,
 	ERROR_VALUE,
-	WAS_MARKED,
 	MANAGED_EFFECT
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
