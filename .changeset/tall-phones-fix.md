@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: adjust program location to prevent corrupted sourcemaps
+fix: adjust `loc` property of `Program` nodes created from `<script>` elements
