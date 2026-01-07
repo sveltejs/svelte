@@ -4,18 +4,18 @@ import { test } from '../../test';
 export default test({
 	skip_no_async: true,
 	async test({ assert, target }) {
-		const [forkBtn, counterBtn] = target.querySelectorAll('button');
+		const [fork_btn, counter_btn] = target.querySelectorAll('button');
 
 		flushSync(() => {
-			forkBtn.click();
+			fork_btn.click();
 		});
 
-		assert.equal(counterBtn.textContent, '0');
+		assert.equal(counter_btn.textContent, '0');
 
 		flushSync(() => {
-			counterBtn.click();
+			counter_btn.click();
 		});
 
-		assert.equal(counterBtn.textContent, '1');
+		assert.equal(counter_btn.textContent, '1');
 	}
 });
