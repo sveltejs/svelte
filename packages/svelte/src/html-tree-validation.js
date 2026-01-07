@@ -82,7 +82,8 @@ const disallowed_children = {
 	...autoclosing_children,
 	optgroup: { only: ['option', '#text'] },
 	// Strictly speaking, seeing an <option> doesn't mean we're in a <select>, but we assume it here
-	option: { only: ['#text'] },
+	// option does not have an `only` restriction because newer browsers support rich HTML content
+	// inside option elements. For older browsers, hydration will handle the mismatch.
 	form: { descendant: ['form'] },
 	a: { descendant: ['a'] },
 	button: { descendant: ['button'] },

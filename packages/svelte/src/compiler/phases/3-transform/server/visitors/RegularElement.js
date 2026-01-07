@@ -149,10 +149,26 @@ export function RegularElement(node, context) {
 			const inner_state = { ...state, template: [], init: [] };
 			process_children(trimmed, { ...context, state: inner_state });
 
-			body = b.arrow(
-				[b.id('$$renderer')],
-				b.block([...state.init, ...build_template(inner_state.template)])
-			);
+			/** @type {import('estree').Statement[]} */
+			const body_statements = [...state.init, ...build_template(inner_state.template)];
+
+			if (dev) {
+				const location = locator(node.start);
+				body_statements.unshift(
+					b.stmt(
+						b.call(
+							'$.push_element',
+							b.id('$$renderer'),
+							b.literal(node.name),
+							b.literal(location.line),
+							b.literal(location.column)
+						)
+					)
+				);
+				body_statements.push(b.stmt(b.call('$.pop_element')));
+			}
+
+			body = b.arrow([b.id('$$renderer')], b.block(body_statements));
 		}
 
 		const [attributes, ...rest] = prepare_element_spread_object(node, context, optimiser.transform);

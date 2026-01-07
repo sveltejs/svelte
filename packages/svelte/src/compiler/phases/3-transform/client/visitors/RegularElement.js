@@ -327,11 +327,20 @@ export function RegularElement(node, context) {
 		context.visit(node, child_state);
 	}
 
+	// Detect if this is an <option> with rich content (non-text children)
+	// In this case, we need to branch hydration based on browser support
+	const is_option_with_rich_content =
+		node.name === 'option' &&
+		trimmed.some(
+			(child) => child.type !== 'Text' && child.type !== 'ExpressionTag' && child.type !== 'Comment'
+		);
+
 	// special case — if an element that only contains text, we don't need
 	// to descend into it if the text is non-reactive
 	// in the rare case that we have static text that can't be inlined
 	// (e.g. `<span>{location}</span>`), set `textContent` programmatically
 	const use_text_content =
+		!is_option_with_rich_content &&
 		trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') &&
 		trimmed.every(
 			(node) =>
@@ -351,6 +360,63 @@ export function RegularElement(node, context) {
 				b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), value))
 			);
 		}
+	} else if (is_option_with_rich_content) {
+		// For <option> elements with rich content, we need to branch based on browser support.
+		// Modern browsers preserve rich HTML in options, older browsers strip it to text only.
+		// We use $.rich_option(rich_fn, text_fn) to handle both cases.
+
+		/** @type {Expression} */
+		let arg = context.state.node;
+
+		// Create the rich content branch (for modern browsers)
+		/** @type {typeof state} */
+		const rich_child_state = { ...state, init: [], update: [], after_update: [] };
+
+		let needs_reset = trimmed.some((node) => node.type !== 'Text');
+
+		process_children(trimmed, (is_text) => b.call('$.child', arg, is_text && b.true), true, {
+			...context,
+			state: rich_child_state
+		});
+
+		if (needs_reset) {
+			rich_child_state.init.push(b.stmt(b.call('$.reset', context.state.node)));
+		}
+
+		// Build the rich content function body
+		const rich_fn_body = b.block([
+			...rich_child_state.init,
+			...(rich_child_state.update.length > 0 ? [build_render_statement(rich_child_state)] : []),
+			...rich_child_state.after_update
+		]);
+
+		// Create the text fallback branch (for legacy browsers)
+		// Extract all text/expression content recursively from the children
+		const text_content = extract_text_content(trimmed);
+
+		/** @type {typeof state} */
+		const text_child_state = { ...state, init: [], update: [], after_update: [] };
+
+		if (text_content.length > 0) {
+			const { value, has_state } = build_template_chunk(text_content, context, text_child_state);
+			const update = b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), value));
+
+			if (has_state) {
+				text_child_state.update.push(update);
+			} else {
+				text_child_state.init.push(update);
+			}
+		}
+
+		const text_fn_body = b.block([
+			...text_child_state.init,
+			...(text_child_state.update.length > 0 ? [build_render_statement(text_child_state)] : []),
+			...text_child_state.after_update
+		]);
+
+		child_state.init.push(
+			b.stmt(b.call('$.rich_option', b.arrow([], rich_fn_body), b.arrow([], text_fn_body)))
+		);
 	} else {
 		/** @type {Expression} */
 		let arg = context.state.node;
@@ -715,4 +781,29 @@ function build_element_special_value_attribute(
 	if (is_select_with_value) {
 		state.init.push(b.stmt(b.call('$.init_select', node_id)));
 	}
+}
+
+/**
+ * Recursively extracts all Text and ExpressionTag nodes from a tree of nodes.
+ * This is used to build the text-only fallback for rich options in legacy browsers.
+ * @param {AST.SvelteNode[]} nodes
+ * @returns {Array<AST.Text | AST.ExpressionTag>}
+ */
+function extract_text_content(nodes) {
+	/** @type {Array<AST.Text | AST.ExpressionTag>} */
+	const result = [];
+
+	for (const node of nodes) {
+		if (node.type === 'Text' || node.type === 'ExpressionTag') {
+			result.push(node);
+		} else if ('fragment' in node && node.fragment) {
+			// Recursively extract from elements with fragments (like RegularElement)
+			result.push(...extract_text_content(node.fragment.nodes));
+		} else if ('children' in node && Array.isArray(node.children)) {
+			// Handle other node types with children
+			result.push(...extract_text_content(node.children));
+		}
+	}
+
+	return result;
 }
