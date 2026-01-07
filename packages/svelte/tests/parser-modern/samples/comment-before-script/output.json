@@ -34,12 +34,12 @@
 			"end": 67,
 			"loc": {
 				"start": {
-					"line": 1,
+					"line": 2,
 					"column": 0
 				},
 				"end": {
 					"line": 4,
-					"column": 0
+					"column": 9
 				}
 			},
 			"body": [
