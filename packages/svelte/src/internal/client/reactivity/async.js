@@ -25,7 +25,6 @@ import {
 	set_from_async_derived
 } from './deriveds.js';
 import { aborted } from './effects.js';
-import { hydrate_next, hydrating, set_hydrate_node, skip_nodes } from '../dom/hydration.js';
 
 /**
  * @param {Array<Promise<void>>} blockers
