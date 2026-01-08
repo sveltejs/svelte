@@ -415,7 +415,14 @@ export function RegularElement(node, context) {
 		]);
 
 		child_state.init.push(
-			b.stmt(b.call('$.rich_option', b.arrow([], rich_fn_body), b.arrow([], text_fn_body)))
+			b.stmt(
+				b.call(
+					'$.rich_option',
+					context.state.node,
+					b.arrow([], rich_fn_body),
+					b.arrow([], text_fn_body)
+				)
+			)
 		);
 	} else {
 		/** @type {Expression} */
