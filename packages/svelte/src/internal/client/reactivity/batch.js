@@ -963,8 +963,8 @@ export function fork(fn) {
 				/** @type {Set<Effect>} */
 				var eager_effects = new Set();
 
-				for (var signal of batch.current.keys()) {
-					mark_eager_effects(signal, eager_effects);
+				for (var source of batch.current.keys()) {
+					mark_eager_effects(source, eager_effects);
 				}
 
 				set_eager_effects(eager_effects);
