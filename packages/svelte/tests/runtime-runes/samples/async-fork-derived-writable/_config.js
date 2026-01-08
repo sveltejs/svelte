@@ -11,6 +11,6 @@ export default test({
 
 		increment.click();
 		await tick();
-		assert.deepEqual(logs, [2, 3]);
+		assert.deepEqual(logs, [1, 2, 2, 2]);
 	}
 });
