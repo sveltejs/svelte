@@ -22,8 +22,7 @@ import {
 	active_reaction,
 	get,
 	set_active_effect,
-	set_active_reaction,
-	set_signal_status
+	set_active_reaction
 } from '../../runtime.js';
 import {
 	hydrate_next,
@@ -43,6 +42,7 @@ import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
 import { create_text } from '../operations.js';
 import { defer_effect } from '../../reactivity/utils.js';
+import { set_signal_status } from '../../reactivity/status.js';
 
 /**
  * @typedef {{
