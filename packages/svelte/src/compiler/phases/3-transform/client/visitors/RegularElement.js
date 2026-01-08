@@ -361,38 +361,30 @@ export function RegularElement(node, context) {
 			);
 		}
 	} else if (is_option_with_rich_content) {
-		// For <option> elements with rich content, we need to branch based on browser support.
-		// Modern browsers preserve rich HTML in options, older browsers strip it to text only.
-		// We use $.rich_option(rich_fn, text_fn) to handle both cases.
+		// For <option> elements with rich content, we need to bail out of hydration in old browsers
 
 		/** @type {Expression} */
-		let arg = context.state.node;
+		let option = context.state.node;
 
 		// Create the rich content branch (for modern browsers)
 		/** @type {typeof state} */
-		const rich_child_state = { ...state, init: [], update: [], after_update: [] };
+		const option_state = { ...state, init: [], update: [], after_update: [] };
 
-		let needs_reset = trimmed.some((node) => node.type !== 'Text');
-
-		process_children(trimmed, (is_text) => b.call('$.child', arg, is_text && b.true), true, {
+		process_children(trimmed, (is_text) => b.call('$.child', option, is_text && b.true), true, {
 			...context,
-			state: rich_child_state
+			state: option_state
 		});
 
-		if (needs_reset) {
-			rich_child_state.init.push(b.stmt(b.call('$.reset', context.state.node)));
-		}
+		option_state.init.push(b.stmt(b.call('$.reset', option)));
 
 		// Build the rich content function body
-		const rich_fn_body = b.block([
-			...rich_child_state.init,
-			...(rich_child_state.update.length > 0 ? [build_render_statement(rich_child_state)] : []),
-			...rich_child_state.after_update
+		const body = b.block([
+			...option_state.init,
+			...(option_state.update.length > 0 ? [build_render_statement(option_state)] : []),
+			...option_state.after_update
 		]);
 
-		child_state.init.push(
-			b.stmt(b.call('$.rich_option', context.state.node, b.arrow([], rich_fn_body)))
-		);
+		child_state.init.push(b.stmt(b.call('$.rich_option', option, b.arrow([], body))));
 	} else {
 		/** @type {Expression} */
 		let arg = context.state.node;
