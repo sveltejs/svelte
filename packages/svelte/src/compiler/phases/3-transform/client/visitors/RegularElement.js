@@ -24,6 +24,9 @@ import {
 import { process_children } from './shared/fragment.js';
 import { build_render_statement, build_template_chunk, Memoizer } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
+import { Template } from '../transform-template/template.js';
+import { transform_template } from '../transform-template/index.js';
+import { TEMPLATE_FRAGMENT } from '../../../../../constants.js';
 
 /**
  * @param {AST.RegularElement} node
@@ -363,60 +366,48 @@ export function RegularElement(node, context) {
 	} else if (is_option_with_rich_content) {
 		// For <option> elements with rich content, we need to branch based on browser support.
 		// Modern browsers preserve rich HTML in options, older browsers strip it to text only.
-		// We use $.rich_option(rich_fn, text_fn) to handle both cases.
+		// We create a separate template for the rich content and append it to the option.
 
-		/** @type {Expression} */
-		let arg = context.state.node;
+		const option_node = context.state.node;
 
-		// Create the rich content branch (for modern browsers)
+		// Create a separate template for the rich content
+		const template_name = context.state.scope.root.unique('option_content');
+		const fragment_id = b.id(context.state.scope.generate('fragment'));
+
+		// Create state with a new template for the rich content
 		/** @type {typeof state} */
-		const rich_child_state = { ...state, init: [], update: [], after_update: [] };
+		const rich_child_state = {
+			...state,
+			init: [],
+			update: [],
+			after_update: [],
+			template: new Template()
+		};
 
-		let needs_reset = trimmed.some((node) => node.type !== 'Text');
+		process_children(
+			trimmed,
+			(is_text) => b.call('$.first_child', fragment_id, is_text && b.true),
+			false,
+			{
+				...context,
+				state: rich_child_state
+			}
+		);
 
-		process_children(trimmed, (is_text) => b.call('$.child', arg, is_text && b.true), true, {
-			...context,
-			state: rich_child_state
-		});
-
-		if (needs_reset) {
-			rich_child_state.init.push(b.stmt(b.call('$.reset', context.state.node)));
-		}
+		// Transform the template to $.from_html(...) and hoist it
+		const template = transform_template(rich_child_state, metadata.namespace, TEMPLATE_FRAGMENT);
+		context.state.hoisted.push(b.var(template_name, template));
 
 		// Build the rich content function body
 		const rich_fn_body = b.block([
+			b.var(fragment_id, b.call(template_name)),
 			...rich_child_state.init,
 			...(rich_child_state.update.length > 0 ? [build_render_statement(rich_child_state)] : []),
-			...rich_child_state.after_update
+			...rich_child_state.after_update,
+			b.stmt(b.call('$.append', option_node, fragment_id))
 		]);
 
-		// Create the text fallback branch (for legacy browsers)
-		// Extract all text/expression content recursively from the children
-		const text_content = extract_text_content(trimmed);
-
-		/** @type {typeof state} */
-		const text_child_state = { ...state, init: [], update: [], after_update: [] };
-
-		if (text_content.length > 0) {
-			const { value, has_state } = build_template_chunk(text_content, context, text_child_state);
-			const update = b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), value));
-
-			if (has_state) {
-				text_child_state.update.push(update);
-			} else {
-				text_child_state.init.push(update);
-			}
-		}
-
-		const text_fn_body = b.block([
-			...text_child_state.init,
-			...(text_child_state.update.length > 0 ? [build_render_statement(text_child_state)] : []),
-			...text_child_state.after_update
-		]);
-
-		child_state.init.push(
-			b.stmt(b.call('$.rich_option', b.arrow([], rich_fn_body), b.arrow([], text_fn_body)))
-		);
+		child_state.init.push(b.stmt(b.call('$.rich_option', option_node, b.arrow([], rich_fn_body))));
 	} else {
 		/** @type {Expression} */
 		let arg = context.state.node;
@@ -781,29 +772,4 @@ function build_element_special_value_attribute(
 	if (is_select_with_value) {
 		state.init.push(b.stmt(b.call('$.init_select', node_id)));
 	}
-}
-
-/**
- * Recursively extracts all Text and ExpressionTag nodes from a tree of nodes.
- * This is used to build the text-only fallback for rich options in legacy browsers.
- * @param {AST.SvelteNode[]} nodes
- * @returns {Array<AST.Text | AST.ExpressionTag>}
- */
-function extract_text_content(nodes) {
-	/** @type {Array<AST.Text | AST.ExpressionTag>} */
-	const result = [];
-
-	for (const node of nodes) {
-		if (node.type === 'Text' || node.type === 'ExpressionTag') {
-			result.push(node);
-		} else if ('fragment' in node && node.fragment) {
-			// Recursively extract from elements with fragments (like RegularElement)
-			result.push(...extract_text_content(node.fragment.nodes));
-		} else if ('children' in node && Array.isArray(node.children)) {
-			// Handle other node types with children
-			result.push(...extract_text_content(node.children));
-		}
-	}
-
-	return result;
 }
