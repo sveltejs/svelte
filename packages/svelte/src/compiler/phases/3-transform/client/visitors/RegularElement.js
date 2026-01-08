@@ -336,7 +336,9 @@ export function RegularElement(node, context) {
 		trimmed.every(
 			(node) =>
 				node.type === 'Text' ||
-				(!node.metadata.expression.has_state && !node.metadata.expression.has_await)
+				(!node.metadata.expression.has_state &&
+					!node.metadata.expression.has_await &&
+					!node.metadata.expression.has_blockers())
 		) &&
 		trimmed.some((node) => node.type === 'ExpressionTag');
 

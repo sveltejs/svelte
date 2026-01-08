@@ -519,14 +519,9 @@ export function client_component(analysis, options) {
 
 	if (options.hmr) {
 		const id = b.id(analysis.name);
-		const HMR = b.id('$.HMR');
-
-		const existing = b.member(id, HMR, true);
-		const incoming = b.member(b.id('module.default'), HMR, true);
 
 		const accept_fn_body = [
-			b.stmt(b.assignment('=', b.member(incoming, 'source'), b.member(existing, 'source'))),
-			b.stmt(b.call('$.set', b.member(existing, 'source'), b.member(incoming, 'original')))
+			b.stmt(b.call(b.member(b.member(id, b.id('$.HMR'), true), 'update'), b.id('module.default')))
 		];
 
 		if (analysis.css.hash) {
@@ -535,8 +530,7 @@ export function client_component(analysis, options) {
 		}
 
 		const hmr = b.block([
-			b.stmt(b.assignment('=', id, b.call('$.hmr', id, b.thunk(b.member(existing, 'source'))))),
-
+			b.stmt(b.assignment('=', id, b.call('$.hmr', id))),
 			b.stmt(b.call('import.meta.hot.accept', b.arrow([b.id('module')], b.block(accept_fn_body))))
 		]);
 

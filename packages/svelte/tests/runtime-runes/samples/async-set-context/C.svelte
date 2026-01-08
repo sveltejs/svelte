@@ -2,6 +2,7 @@
 	import { getContext } from "svelte";
 
   let greeting = getContext("greeting");
+  let recipient = getContext("recipient");
 </script>
 
-<p>{greeting}</p>
+<p>{greeting} {recipient}</p>

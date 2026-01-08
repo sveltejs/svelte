@@ -43,6 +43,10 @@ This error occurs when using `hydratable` multiple times with the same key. To a
 > Cause:
 > %stack%
 
+## invalid_csp
+
+> `csp.nonce` was set while `csp.hash` was `true`. These options cannot be used simultaneously.
+
 ## lifecycle_function_unavailable
 
 > `%name%(...)` is not available on the server

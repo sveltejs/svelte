@@ -93,11 +93,12 @@ export function derived(fn) {
 /**
  * @template V
  * @param {() => V | Promise<V>} fn
+ * @param {string} [label]
  * @param {string} [location] If provided, print a warning if the value is not read immediately after update
  * @returns {Promise<Source<V>>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function async_derived(fn, location) {
+export function async_derived(fn, label, location) {
 	let parent = /** @type {Effect | null} */ (active_effect);
 
 	if (parent === null) {
@@ -108,6 +109,8 @@ export function async_derived(fn, location) {
 
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
+
+	if (DEV) signal.label = label;
 
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
@@ -147,7 +150,7 @@ export function async_derived(fn, location) {
 		var batch = /** @type {Batch} */ (current_batch);
 
 		if (should_suspend) {
-			var blocking = !boundary.is_pending();
+			var blocking = boundary.is_rendered();
 
 			boundary.update_pending_count(1);
 			batch.increment(blocking);

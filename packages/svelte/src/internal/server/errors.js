@@ -81,6 +81,18 @@ ${stack}\nhttps://svelte.dev/e/hydratable_serialization_failed`);
 }
 
 /**
+ * `csp.nonce` was set while `csp.hash` was `true`. These options cannot be used simultaneously.
+ * @returns {never}
+ */
+export function invalid_csp() {
+	const error = new Error(`invalid_csp\n\`csp.nonce\` was set while \`csp.hash\` was \`true\`. These options cannot be used simultaneously.\nhttps://svelte.dev/e/invalid_csp`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
  * `%name%(...)` is not available on the server
  * @param {string} name
  * @returns {never}

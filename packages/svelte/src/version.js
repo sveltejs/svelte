@@ -4,5 +4,5 @@
  * The current version, as set in package.json.
  * @type {string}
  */
-export const VERSION = '5.45.8';
+export const VERSION = '5.46.1';
 export const PUBLIC_VERSION = '5';

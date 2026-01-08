@@ -657,7 +657,8 @@ export function analyze_component(root, source, options) {
 									if (
 										binding &&
 										binding.kind === 'normal' &&
-										binding.declaration_kind !== 'import'
+										binding.declaration_kind !== 'import' &&
+										binding.declaration_kind !== 'function'
 									) {
 										binding.kind = 'state';
 										binding.mutated = true;
