@@ -360,8 +360,6 @@ export function RegularElement(node, context) {
 			);
 		}
 	} else if (is_option_with_rich_content) {
-		// For <option> elements with rich content, we need to bail out of hydration in old browsers
-
 		/** @type {Expression} */
 		let option = context.state.node;
 

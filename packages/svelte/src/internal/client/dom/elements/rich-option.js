@@ -30,6 +30,7 @@ export function rich_option(option, render) {
 	try {
 		if (!supports_customizable_select() && was_hydrating) {
 			set_hydrating(false);
+
 			// Clear the mangled content and add an anchor for mounting
 			option.textContent = '';
 			option.append(create_text());
