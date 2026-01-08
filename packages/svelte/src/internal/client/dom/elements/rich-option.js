@@ -6,10 +6,9 @@ import { check_rich_option_support, create_text } from '../operations.js';
  * Modern browsers preserve HTML inside options, while older browsers strip it to text only.
  *
  * @param {HTMLOptionElement} option The option element
- * @param {() => void} rich_fn Function to process rich HTML content (modern browsers)
- * @param {() => void} text_fn Function to process text-only content (legacy browsers)
+ * @param {() => void} render Function to render the option content
  */
-export function rich_option(option, rich_fn, text_fn) {
+export function rich_option(option, render) {
 	var dominated = !check_rich_option_support();
 	var was_hydrating = hydrating;
 
@@ -23,7 +22,7 @@ export function rich_option(option, rich_fn, text_fn) {
 			option.appendChild(create_text());
 		}
 
-		rich_fn();
+		render();
 	} finally {
 		if (was_hydrating) {
 			set_hydrating(true);

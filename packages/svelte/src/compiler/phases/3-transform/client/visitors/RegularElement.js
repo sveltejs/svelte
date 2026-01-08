@@ -390,39 +390,8 @@ export function RegularElement(node, context) {
 			...rich_child_state.after_update
 		]);
 
-		// Create the text fallback branch (for legacy browsers)
-		// Extract all text/expression content recursively from the children
-		const text_content = extract_text_content(trimmed);
-
-		/** @type {typeof state} */
-		const text_child_state = { ...state, init: [], update: [], after_update: [] };
-
-		if (text_content.length > 0) {
-			const { value, has_state } = build_template_chunk(text_content, context, text_child_state);
-			const update = b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), value));
-
-			if (has_state) {
-				text_child_state.update.push(update);
-			} else {
-				text_child_state.init.push(update);
-			}
-		}
-
-		const text_fn_body = b.block([
-			...text_child_state.init,
-			...(text_child_state.update.length > 0 ? [build_render_statement(text_child_state)] : []),
-			...text_child_state.after_update
-		]);
-
 		child_state.init.push(
-			b.stmt(
-				b.call(
-					'$.rich_option',
-					context.state.node,
-					b.arrow([], rich_fn_body),
-					b.arrow([], text_fn_body)
-				)
-			)
+			b.stmt(b.call('$.rich_option', context.state.node, b.arrow([], rich_fn_body)))
 		);
 	} else {
 		/** @type {Expression} */
@@ -788,29 +757,4 @@ function build_element_special_value_attribute(
 	if (is_select_with_value) {
 		state.init.push(b.stmt(b.call('$.init_select', node_id)));
 	}
-}
-
-/**
- * Recursively extracts all Text and ExpressionTag nodes from a tree of nodes.
- * This is used to build the text-only fallback for rich options in legacy browsers.
- * @param {AST.SvelteNode[]} nodes
- * @returns {Array<AST.Text | AST.ExpressionTag>}
- */
-function extract_text_content(nodes) {
-	/** @type {Array<AST.Text | AST.ExpressionTag>} */
-	const result = [];
-
-	for (const node of nodes) {
-		if (node.type === 'Text' || node.type === 'ExpressionTag') {
-			result.push(node);
-		} else if ('fragment' in node && node.fragment) {
-			// Recursively extract from elements with fragments (like RegularElement)
-			result.push(...extract_text_content(node.fragment.nodes));
-		} else if ('children' in node && Array.isArray(node.children)) {
-			// Handle other node types with children
-			result.push(...extract_text_content(node.children));
-		}
-	}
-
-	return result;
 }
