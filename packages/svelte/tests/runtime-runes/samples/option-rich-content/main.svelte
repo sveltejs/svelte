@@ -1,12 +1,15 @@
 <script>
+	import InnerA from './InnerA.svelte';
+	import InnerB from './InnerB.svelte';
+
 	let selected = $state('a');
 	let label_a = $state('Option');
 	let label_b = $state('Strong');
 </script>
 
 <select bind:value={selected}>
-	<option value="a"><span>{label_a}</span> A</option>
-	<option value="b"><strong>{label_b}</strong> B</option>
+	<option value="a"><InnerA label={label_a} /></option>
+	<option value="b"><InnerB label={label_b} /></option>
 	<option value="c">Plain C</option>
 </select>
 
