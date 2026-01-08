@@ -340,7 +340,6 @@ export function RegularElement(node, context) {
 	// in the rare case that we have static text that can't be inlined
 	// (e.g. `<span>{location}</span>`), set `textContent` programmatically
 	const use_text_content =
-		!is_option_with_rich_content &&
 		trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') &&
 		trimmed.every(
 			(node) =>
@@ -366,7 +365,6 @@ export function RegularElement(node, context) {
 		/** @type {Expression} */
 		let option = context.state.node;
 
-		// Create the rich content branch (for modern browsers)
 		/** @type {typeof state} */
 		const option_state = { ...state, init: [], update: [], after_update: [] };
 
@@ -377,7 +375,6 @@ export function RegularElement(node, context) {
 
 		option_state.init.push(b.stmt(b.call('$.reset', option)));
 
-		// Build the rich content function body
 		const body = b.block([
 			...option_state.init,
 			...(option_state.update.length > 0 ? [build_render_statement(option_state)] : []),
