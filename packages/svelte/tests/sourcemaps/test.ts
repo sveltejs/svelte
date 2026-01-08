@@ -102,7 +102,7 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 		*/
 		for (let l = 0; l < decoded.length; l++) {
 			for (let m of decoded[l]) {
-				if (m.find((i) => i < 0)) {
+				if (m.some((i) => i < 0)) {
 					throw new Error(
 						`Invalid mapping with negative value ${JSON.stringify(m)} at line ${l} of the decoded mappings of ${info} sourcemap\n${JSON.stringify(map)}`
 					);
