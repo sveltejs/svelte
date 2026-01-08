@@ -161,6 +161,10 @@ export class Boundary {
 					this.#hydrate_pending_content();
 				} else {
 					this.#hydrate_resolved_content();
+
+					if (this.#pending_count === 0) {
+						this.is_pending = false;
+					}
 				}
 			} else {
 				var anchor = this.#get_anchor();
@@ -194,10 +198,6 @@ export class Boundary {
 		} catch (error) {
 			this.error(error);
 		}
-
-		// Since server rendered resolved content, we never show pending state
-		// Even if client-side async operations are still running, the content is already displayed
-		this.is_pending = false;
 	}
 
 	#hydrate_pending_content() {
