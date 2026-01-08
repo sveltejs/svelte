@@ -139,6 +139,12 @@ export class Batch {
 
 	is_fork = false;
 
+	/**
+	 * Branches that had their CLEAN flag toggled during fork execution
+	 * @type {Set<Effect> | null}
+	 */
+	toggled_branches = null;
+
 	is_deferred() {
 		return this.is_fork || this.#blocking_pending > 0;
 	}
@@ -818,6 +824,12 @@ export function schedule_effect(signal) {
 		if ((flags & (ROOT_EFFECT | BRANCH_EFFECT)) !== 0) {
 			if ((flags & CLEAN) === 0) return;
 			effect.f ^= CLEAN;
+
+			// Track branches toggled during fork execution so we can restore
+			// their CLEAN flag after flush
+			if (current_batch !== null && current_batch.is_fork) {
+				(current_batch.toggled_branches ??= new Set()).add(effect);
+			}
 		}
 	}
 
@@ -919,6 +931,14 @@ export function fork(fn) {
 	var settled = batch.settled();
 
 	flushSync(fn);
+
+	// Restore CLEAN flags that were toggled during fork initialization.
+	if (batch.toggled_branches !== null) {
+		for (const effect of batch.toggled_branches) {
+			effect.f |= CLEAN;
+		}
+		batch.toggled_branches = null;
+	}
 
 	batch_values = null;
 
