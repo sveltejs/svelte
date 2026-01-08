@@ -1,25 +1,38 @@
 import { hydrating, set_hydrating } from '../hydration.js';
-import { check_rich_option_support, create_text } from '../operations.js';
+import { create_text } from '../operations.js';
+
+/** @type {boolean | null} */
+var supported = null;
 
 /**
- * Handles rich HTML content inside `<option>` elements with browser-specific branching.
- * Modern browsers preserve HTML inside options, while older browsers strip it to text only.
- *
- * @param {HTMLOptionElement} option The option element
- * @param {() => void} render Function to render the option content
+ * Checks if the browser supports rich HTML content inside `<option>` elements
+ * @returns {boolean}
+ */
+function supports_customizable_select() {
+	if (supported === null) {
+		var s = document.createElement('select');
+		supported = (s.innerHTML = '<option><span>x</span></option>') === s.innerHTML;
+	}
+
+	return supported;
+}
+
+/**
+ * Handles rich HTML content inside `<option>` elements by disabling hydration
+ * in browsers that don't support it, since the server-rendered HTML
+ * will have been mangled by the browser's parser
+ * @param {HTMLOptionElement} option
+ * @param {() => void} render
  */
 export function rich_option(option, render) {
-	var dominated = !check_rich_option_support();
 	var was_hydrating = hydrating;
 
 	try {
-		// If the browser doesn't support rich options, disable hydration to avoid
-		// mismatches caused by the browser's parser mangling the server-rendered HTML
-		if (dominated && was_hydrating) {
+		if (!supports_customizable_select() && was_hydrating) {
 			set_hydrating(false);
 			// Clear the mangled content and add an anchor for mounting
 			option.textContent = '';
-			option.appendChild(create_text());
+			option.append(create_text());
 		}
 
 		render();
