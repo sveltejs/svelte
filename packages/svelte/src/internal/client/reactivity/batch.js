@@ -922,12 +922,12 @@ export function fork(fn) {
 	flushSync(fn);
 
 	// revert state changes
-	for (var [source, value] of batch.previous) {
-		source.v = value;
+	for (var [signal, value] of batch.previous) {
+		signal.v = value;
 	}
 
 	// make writable deriveds dirty, so they recalculate correctly
-	for (var signal of batch.current.keys()) {
+	for (signal of batch.current.keys()) {
 		if ((signal.f & DERIVED) !== 0) {
 			set_signal_status(signal, DIRTY);
 		}
@@ -949,9 +949,9 @@ export function fork(fn) {
 			batch.is_fork = false;
 
 			// apply changes and update write versions so deriveds see the change
-			for (var [source, value] of batch.current) {
-				source.v = value;
-				source.wv = increment_write_version();
+			for (var [signal, value] of batch.current) {
+				signal.v = value;
+				signal.wv = increment_write_version();
 			}
 
 			// trigger any `$state.eager(...)` expressions with the new state.
@@ -963,8 +963,8 @@ export function fork(fn) {
 				/** @type {Set<Effect>} */
 				var eager_effects = new Set();
 
-				for (var source of batch.current.keys()) {
-					mark_eager_effects(source, eager_effects);
+				for (var signal of batch.current.keys()) {
+					mark_eager_effects(signal, eager_effects);
 				}
 
 				set_eager_effects(eager_effects);
