@@ -2,4 +2,4 @@
 'svelte': minor
 ---
 
-feat: customizable select
+feat: allow arbitrary content in `<option>` elements
