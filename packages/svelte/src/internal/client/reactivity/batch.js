@@ -921,11 +921,16 @@ export function fork(fn) {
 
 	flushSync(fn);
 
-	batch_values = null;
-
 	// revert state changes
 	for (var [source, value] of batch.previous) {
 		source.v = value;
+	}
+
+	// make writable deriveds dirty, so they recalculate correctly
+	for (source of batch.current.keys()) {
+		if ((source.f & DERIVED) !== 0) {
+			set_signal_status(source, DIRTY);
+		}
 	}
 
 	return {
