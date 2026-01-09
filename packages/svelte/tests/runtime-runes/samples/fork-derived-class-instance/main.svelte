@@ -1,17 +1,23 @@
 <script>
 	import { fork } from 'svelte';
-	import Child from './Child.svelte';
 
-	let x = $state(false);
+	class Counter {
+		count = $state(0);
+	}
+
+	let condition = $state(false);
+	let counter = $derived(new Counter());
 </script>
 
 <button onclick={() => {
-	const f = fork(() => {
-		x = true;
-	});
-	f.commit();
+	fork(() => {
+		condition = true;
+	}).commit();
 }}>fork</button>
 
-{#if x}
-	<Child />
+{#if condition}
+	<button onclick={() => {
+		counter.count++;
+	}}>click</button>
+	<p>{counter.count}</p>
 {/if}
