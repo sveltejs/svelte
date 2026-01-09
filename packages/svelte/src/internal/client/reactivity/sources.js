@@ -6,7 +6,6 @@ import {
 	untracked_writes,
 	get,
 	set_untracked_writes,
-	set_signal_status,
 	untrack,
 	increment_write_version,
 	update_effect,
@@ -40,6 +39,7 @@ import { component_context, is_runes } from '../context.js';
 import { Batch, batch_values, eager_block_effects, schedule_effect } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
+import { set_signal_status } from './status.js';
 
 /** @type {Set<any>} */
 export let eager_effects = new Set();

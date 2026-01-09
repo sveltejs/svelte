@@ -17,7 +17,6 @@ import {
 import {
 	active_reaction,
 	active_effect,
-	set_signal_status,
 	update_reaction,
 	increment_write_version,
 	set_active_effect,
@@ -37,6 +36,7 @@ import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch } from './batch.js';
 import { unset_context } from './async.js';
 import { deferred } from '../../shared/utils.js';
+import { set_signal_status } from './status.js';
 
 /** @type {Effect | null} */
 export let current_async_effect = null;

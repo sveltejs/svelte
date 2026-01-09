@@ -56,6 +56,7 @@ import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
 import { without_reactive_context } from './dom/elements/bindings/shared.js';
+import { set_signal_status } from './reactivity/status.js';
 
 export let is_updating_effect = false;
 
@@ -716,17 +717,6 @@ export function untrack(fn) {
 	} finally {
 		untracking = previous_untracking;
 	}
-}
-
-const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN);
-
-/**
- * @param {Signal} signal
- * @param {number} status
- * @returns {void}
- */
-export function set_signal_status(signal, status) {
-	signal.f = (signal.f & STATUS_MASK) | status;
 }
 
 /**
