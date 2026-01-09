@@ -148,3 +148,33 @@ export function get_name(node) {
 
 	return null;
 }
+
+/**
+ * Checks if an <option> or <optgroup> element has rich content that requires special hydration handling.
+ * Rich content is anything beyond simple text, expressions, and comments for <option>,
+ * or anything beyond <option> children for <optgroup>.
+ * @param {AST.RegularElement} node
+ * @param {AST.SvelteNode[]} children - The trimmed/filtered children of the element
+ * @returns {boolean}
+ */
+export function is_option_or_optgroup_with_rich_content(node, children) {
+	if (node.name === 'option') {
+		return children.some(
+			(child) => child.type !== 'Text' && child.type !== 'ExpressionTag' && child.type !== 'Comment'
+		);
+	}
+
+	if (node.name === 'optgroup') {
+		return children.some(
+			(child) =>
+				// For optgroup, only <option> elements, comments, and empty/whitespace text nodes are "normal" content
+				// Non-empty text nodes and expression tags count as rich content since browsers
+				// that don't support rich options will strip them
+				child.type !== 'Comment' &&
+				(child.type !== 'RegularElement' || child.name !== 'option') &&
+				(child.type !== 'Text' || child.data.trim() !== '')
+		);
+	}
+
+	return false;
+}

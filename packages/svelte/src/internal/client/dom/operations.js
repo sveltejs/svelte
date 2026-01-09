@@ -18,6 +18,9 @@ export var $document;
 /** @type {boolean} */
 export var is_firefox;
 
+/** @type {boolean | null} */
+var supports_rich_option = null;
+
 /** @type {() => Node | null} */
 var first_child_getter;
 /** @type {() => Node | null} */
@@ -257,4 +260,18 @@ export function set_attribute(element, key, value = '') {
 		return;
 	}
 	return element.setAttribute(key, value);
+}
+
+/**
+ * Checks if the browser supports rich HTML content inside `<option>` elements.
+ * Modern browsers preserve HTML elements inside options, while older browsers
+ * strip them during parsing, leaving only text content.
+ * @returns {boolean}
+ */
+export function check_rich_option_support() {
+	if (supports_rich_option !== null) return supports_rich_option;
+	var select = document.createElement('select');
+	select.innerHTML = '<option><span>t</span></option>';
+	return (supports_rich_option =
+		/** @type {Element} */ (select.firstChild)?.firstChild?.nodeType === 1);
 }

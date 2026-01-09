@@ -7,7 +7,11 @@ import {
 } from '../../../../html-tree-validation.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
-import { create_attribute, is_custom_element_node } from '../../nodes.js';
+import {
+	create_attribute,
+	is_custom_element_node,
+	is_option_or_optgroup_with_rich_content
+} from '../../nodes.js';
 import { regex_starts_with_newline } from '../../patterns.js';
 import { check_element } from './shared/a11y/index.js';
 import { validate_element } from './shared/element.js';
@@ -72,6 +76,18 @@ export function RegularElement(node, context) {
 	) {
 		const child = node.fragment.nodes[0];
 		node.metadata.synthetic_value_node = child;
+	}
+
+	// Special case: <option> or <optgroup> with rich content needs special hydration handling
+	// We mark the subtree as dynamic so parent elements properly include the child init code
+	const trimmed_children = node.fragment.nodes.filter(
+		(n) => n.type !== 'Text' || n.data.trim() !== ''
+	);
+	if (is_option_or_optgroup_with_rich_content(node, trimmed_children)) {
+		// Mark the option's own fragment as dynamic so it's not treated as static
+		node.fragment.metadata.dynamic = true;
+		// Also mark ancestor fragments so parents properly include the child init code
+		mark_subtree_dynamic(context.path);
 	}
 
 	const binding = context.state.scope.get(node.name);
