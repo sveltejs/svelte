@@ -167,7 +167,6 @@ export function is_dirty(reaction) {
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
 		var dependencies = /** @type {Value[]} */ (reaction.deps);
-
 		var length = dependencies.length;
 
 		for (var i = 0; i < length; i++) {
