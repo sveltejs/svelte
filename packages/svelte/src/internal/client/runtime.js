@@ -166,21 +166,18 @@ export function is_dirty(reaction) {
 	}
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
-		var dependencies = reaction.deps;
+		var dependencies = /** @type {Value[]} */ (reaction.deps);
+		var length = dependencies.length;
 
-		if (dependencies !== null) {
-			var length = dependencies.length;
+		for (var i = 0; i < length; i++) {
+			var dependency = dependencies[i];
 
-			for (var i = 0; i < length; i++) {
-				var dependency = dependencies[i];
+			if (is_dirty(/** @type {Derived} */ (dependency))) {
+				update_derived(/** @type {Derived} */ (dependency));
+			}
 
-				if (is_dirty(/** @type {Derived} */ (dependency))) {
-					update_derived(/** @type {Derived} */ (dependency));
-				}
-
-				if (dependency.wv > reaction.wv) {
-					return true;
-				}
+			if (dependency.wv > reaction.wv) {
+				return true;
 			}
 		}
 
