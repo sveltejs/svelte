@@ -374,18 +374,20 @@ function remove_reaction(signal, dependency) {
 		// allows us to skip the expensive work of disconnecting and immediately reconnecting it
 		(new_deps === null || !new_deps.includes(dependency))
 	) {
+		var derived = /** @type {Derived} **/ (dependency);
+
 		// If we are working with a derived that is owned by an effect, then mark it as being
 		// disconnected and remove the mark flag, as it cannot be reliably removed otherwise
-		if ((dependency.f & CONNECTED) !== 0) {
-			dependency.f ^= CONNECTED;
-			dependency.f &= ~WAS_MARKED;
+		if ((derived.f & CONNECTED) !== 0) {
+			derived.f ^= CONNECTED;
+			derived.f &= ~WAS_MARKED;
 		}
 
-		update_derived_status(dependency);
+		update_derived_status(derived);
 
 		// Disconnect any reactions owned by this reaction
-		destroy_derived_effects(/** @type {Derived} **/ (dependency));
-		remove_reactions(/** @type {Derived} **/ (dependency), 0);
+		destroy_derived_effects(derived);
+		remove_reactions(derived, 0);
 	}
 }
 
