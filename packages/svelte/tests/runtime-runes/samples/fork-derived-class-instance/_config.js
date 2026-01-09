@@ -1,23 +1,21 @@
-import { flushSync } from 'svelte';
+import { tick } from 'svelte';
 import { test } from '../../test';
 
 export default test({
 	skip_no_async: true,
 	async test({ assert, target }) {
-		const forkButton = target.querySelector('button');
+		const [fork] = target.querySelectorAll('button');
 
-		flushSync(() => {
-			forkButton?.click();
-		});
+		fork.click();
+		await tick();
 
-		const [, clickButton] = target.querySelectorAll('button');
+		const [, increment] = target.querySelectorAll('button');
 		const p = target.querySelector('p');
 
 		assert.equal(p?.textContent, '0');
 
-		flushSync(() => {
-			clickButton?.click();
-		});
+		increment.click();
+		await tick();
 
 		assert.equal(p?.textContent, '1');
 	}
