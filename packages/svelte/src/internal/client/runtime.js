@@ -167,31 +167,29 @@ export function is_dirty(reaction) {
 	}
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
-		var dependencies = reaction.deps;
+		var dependencies = /** @type {Value[]} */ (reaction.deps);
 
-		if (dependencies !== null) {
-			var length = dependencies.length;
+		var length = dependencies.length;
 
-			for (var i = 0; i < length; i++) {
-				var dependency = dependencies[i];
+		for (var i = 0; i < length; i++) {
+			var dependency = dependencies[i];
 
-				if (is_dirty(/** @type {Derived} */ (dependency))) {
-					update_derived(/** @type {Derived} */ (dependency));
-				}
-
-				if (dependency.wv > reaction.wv) {
-					return true;
-				}
+			if (is_dirty(/** @type {Derived} */ (dependency))) {
+				update_derived(/** @type {Derived} */ (dependency));
 			}
 
-			if (
-				(flags & DERIVED) !== 0 &&
-				// During time traveling we don't want to reset the status so that
-				// traversal of the graph in the other batches still happens
-				batch_values === null
-			) {
-				update_derived_status(/** @type {Derived} */ (reaction));
+			if (dependency.wv > reaction.wv) {
+				return true;
 			}
+		}
+
+		if (
+			(flags & DERIVED) !== 0 &&
+			// During time traveling we don't want to reset the status so that
+			// traversal of the graph in the other batches still happens
+			batch_values === null
+		) {
+			update_derived_status(/** @type {Derived} */ (reaction));
 		}
 	}
 
