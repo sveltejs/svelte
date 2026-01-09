@@ -20,7 +20,6 @@ import {
 	push_reaction_value,
 	is_destroying_effect
 } from '../runtime.js';
-import { update_derived_status } from './status.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
@@ -34,6 +33,7 @@ import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch } from './batch.js';
 import { unset_context } from './async.js';
 import { deferred } from '../../shared/utils.js';
+import { update_derived_status } from './status.js';
 
 /** @type {Effect | null} */
 export let current_async_effect = null;
