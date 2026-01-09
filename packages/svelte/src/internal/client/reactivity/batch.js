@@ -40,6 +40,7 @@ import { flush_eager_effects, old_values, set_eager_effects, source, update } fr
 import { eager_effect, unlink_effect } from './effects.js';
 import { defer_effect } from './utils.js';
 import { UNINITIALIZED } from '../../../constants.js';
+import { set_signal_status } from './status.js';
 
 /** @type {Set<Batch>} */
 const batches = new Set();

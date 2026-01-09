@@ -44,6 +44,7 @@ import { component_context, dev_current_component_function, dev_stack } from '..
 import { Batch, current_batch, schedule_effect } from './batch.js';
 import { flatten } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
+import { set_signal_status } from './status.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
