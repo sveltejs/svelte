@@ -15,6 +15,7 @@ import {
 	PromiseOptimiser,
 	create_async_block
 } from './shared/utils.js';
+import { is_option_or_optgroup_with_rich_content } from '../../../nodes.js';
 
 /**
  * @param {AST.RegularElement} node
@@ -139,9 +140,7 @@ export function RegularElement(node, context) {
 
 	if (is_option_special) {
 		// Check if this option has rich content (non-text children)
-		const is_rich_option = trimmed.some(
-			(child) => child.type !== 'Text' && child.type !== 'ExpressionTag' && child.type !== 'Comment'
-		);
+		const is_rich_option = is_option_or_optgroup_with_rich_content(node, trimmed);
 
 		let body;
 
@@ -216,6 +215,10 @@ export function RegularElement(node, context) {
 			)
 		);
 	} else {
+		// For optgroup with rich content, add hydration marker at the start
+		if (node.name === 'optgroup' && is_option_or_optgroup_with_rich_content(node, trimmed)) {
+			state.template.push(b.literal('<!>'));
+		}
 		process_children(trimmed, { ...context, state });
 	}
 

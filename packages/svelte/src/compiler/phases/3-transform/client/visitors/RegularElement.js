@@ -11,7 +11,12 @@ import {
 import { is_ignored } from '../../../../state.js';
 import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { create_attribute, ExpressionMetadata, is_custom_element_node } from '../../../nodes.js';
+import {
+	create_attribute,
+	ExpressionMetadata,
+	is_custom_element_node,
+	is_option_or_optgroup_with_rich_content
+} from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_getter } from '../utils.js';
 import {
@@ -330,20 +335,16 @@ export function RegularElement(node, context) {
 		context.visit(node, child_state);
 	}
 
-	// Detect if this is an <option> with rich content (non-text children)
+	// Detect if this is an <option> or <optgroup> with rich content
 	// In this case, we need to branch hydration based on browser support
-	const is_option_with_rich_content =
-		node.name === 'option' &&
-		trimmed.some(
-			(child) => child.type !== 'Text' && child.type !== 'ExpressionTag' && child.type !== 'Comment'
-		);
+	const has_rich_content = is_option_or_optgroup_with_rich_content(node, trimmed);
 
 	// special case — if an element that only contains text, we don't need
 	// to descend into it if the text is non-reactive
 	// in the rare case that we have static text that can't be inlined
 	// (e.g. `<span>{location}</span>`), set `textContent` programmatically
 	const use_text_content =
-		!is_option_with_rich_content &&
+		!has_rich_content &&
 		trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') &&
 		trimmed.every(
 			(node) =>
@@ -363,7 +364,7 @@ export function RegularElement(node, context) {
 				b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), value))
 			);
 		}
-	} else if (is_option_with_rich_content) {
+	} else if (has_rich_content) {
 		// For <option> elements with rich content, we need to branch based on browser support.
 		// Modern browsers preserve rich HTML in options, older browsers strip it to text only.
 		// We create a separate template for the rich content and append it to the option.
@@ -412,7 +413,6 @@ export function RegularElement(node, context) {
 			...rich_child_state.after_update,
 			b.stmt(b.call('$.append', anchor_id, fragment_id))
 		]);
-
 		child_state.init.push(b.stmt(b.call('$.rich_option', option_node, b.arrow([], rich_fn_body))));
 	} else {
 		/** @type {Expression} */
@@ -451,7 +451,7 @@ export function RegularElement(node, context) {
 				...element_state.after_update
 			])
 		);
-	} else if (node.fragment.metadata.dynamic) {
+	} else if (node.fragment.metadata.dynamic || has_rich_content) {
 		context.state.init.push(...child_state.init, ...element_state.init);
 		context.state.update.push(...child_state.update);
 		context.state.after_update.push(...child_state.after_update, ...element_state.after_update);
