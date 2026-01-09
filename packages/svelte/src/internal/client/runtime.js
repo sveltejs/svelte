@@ -28,7 +28,6 @@ import { old_values } from './reactivity/sources.js';
 import {
 	destroy_derived_effects,
 	execute_derived,
-	current_async_effect,
 	recent_async_deriveds,
 	update_derived
 } from './reactivity/deriveds.js';
