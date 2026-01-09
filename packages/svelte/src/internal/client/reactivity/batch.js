@@ -31,7 +31,6 @@ import {
 	set_is_updating_effect,
 	update_effect
 } from '../runtime.js';
-import { set_signal_status } from './status.js';
 import * as e from '../errors.js';
 import { flush_tasks, queue_micro_task } from '../dom/task.js';
 import { DEV } from 'esm-env';

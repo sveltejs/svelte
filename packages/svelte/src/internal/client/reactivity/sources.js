@@ -17,7 +17,6 @@ import {
 	set_is_updating_effect,
 	is_updating_effect
 } from '../runtime.js';
-import { set_signal_status, update_derived_status } from './status.js';
 import { equals, safe_equals } from './equality.js';
 import {
 	CLEAN,
@@ -40,7 +39,7 @@ import { component_context, is_runes } from '../context.js';
 import { Batch, batch_values, eager_block_effects, schedule_effect } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
-import { set_signal_status } from './status.js';
+import { set_signal_status, update_derived_status } from './status.js';
 
 /** @type {Set<any>} */
 export let eager_effects = new Set();
