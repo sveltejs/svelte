@@ -183,15 +183,15 @@ export function is_dirty(reaction) {
 					return true;
 				}
 			}
-		}
 
-		if (
-			(flags & DERIVED) !== 0 &&
-			// During time traveling we don't want to reset the status so that
-			// traversal of the graph in the other batches still happens
-			(batch_values === null || reaction.deps === null)
-		) {
-			update_derived_status(/** @type {Derived} */ (reaction));
+			if (
+				(flags & DERIVED) !== 0 &&
+				// During time traveling we don't want to reset the status so that
+				// traversal of the graph in the other batches still happens
+				batch_values === null
+			) {
+				update_derived_status(/** @type {Derived} */ (reaction));
+			}
 		}
 	}
 
