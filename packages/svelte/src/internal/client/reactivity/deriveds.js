@@ -36,7 +36,7 @@ import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch } from './batch.js';
 import { unset_context } from './async.js';
 import { deferred } from '../../shared/utils.js';
-import { set_signal_status } from './status.js';
+import { update_derived_status } from './status.js';
 
 /** @type {Effect | null} */
 export let current_async_effect = null;
@@ -385,7 +385,6 @@ export function update_derived(derived) {
 			batch_values.set(derived, value);
 		}
 	} else {
-		var status = (derived.f & CONNECTED) === 0 ? MAYBE_DIRTY : CLEAN;
-		set_signal_status(derived, status);
+		update_derived_status(derived);
 	}
 }

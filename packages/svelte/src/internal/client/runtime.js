@@ -56,7 +56,7 @@ import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
 import { without_reactive_context } from './dom/elements/bindings/shared.js';
-import { set_signal_status } from './reactivity/status.js';
+import { set_signal_status, update_derived_status } from './reactivity/status.js';
 
 export let is_updating_effect = false;
 
@@ -375,16 +375,20 @@ function remove_reaction(signal, dependency) {
 		// allows us to skip the expensive work of disconnecting and immediately reconnecting it
 		(new_deps === null || !new_deps.includes(dependency))
 	) {
-		set_signal_status(dependency, MAYBE_DIRTY);
+		const derived = /** @type {Derived} */ (dependency);
+
 		// If we are working with a derived that is owned by an effect, then mark it as being
 		// disconnected and remove the mark flag, as it cannot be reliably removed otherwise
-		if ((dependency.f & CONNECTED) !== 0) {
-			dependency.f ^= CONNECTED;
-			dependency.f &= ~WAS_MARKED;
+		if ((derived.f & CONNECTED) !== 0) {
+			derived.f ^= CONNECTED;
+			derived.f &= ~WAS_MARKED;
 		}
+
+		update_derived_status(derived);
+
 		// Disconnect any reactions owned by this reaction
-		destroy_derived_effects(/** @type {Derived} **/ (dependency));
-		remove_reactions(/** @type {Derived} **/ (dependency), 0);
+		destroy_derived_effects(derived);
+		remove_reactions(derived, 0);
 	}
 }
 
