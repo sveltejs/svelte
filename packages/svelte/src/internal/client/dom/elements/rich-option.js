@@ -1,5 +1,5 @@
 import { hydrating, set_hydrating } from '../hydration.js';
-import { check_rich_option_support, create_text } from '../operations.js';
+import { check_rich_option_support, create_comment, create_text } from '../operations.js';
 
 /**
  * Handles rich HTML content inside `<option>` elements with browser-specific branching.
@@ -12,8 +12,8 @@ export function rich_option(option, rich_fn) {
 	var was_hydrating = hydrating;
 	if (!check_rich_option_support()) {
 		set_hydrating(false);
-		option.innerText = '';
-		option.append(create_text(''));
+		option.textContent = '';
+		option.append(create_comment(''));
 	}
 	try {
 		rich_fn();
