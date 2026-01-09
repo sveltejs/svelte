@@ -637,7 +637,7 @@ export function get(signal) {
 				(active_reaction !== null && (active_reaction.f & CONNECTED) !== 0));
 
 		if (is_dirty(derived)) {
-			var is_new = derived.deps === null;
+			var is_new = derived.v === UNINITIALIZED;
 
 			if (needs_connection) {
 				derived.f |= CONNECTED;
