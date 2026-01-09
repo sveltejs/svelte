@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Reaction, Signal, Source, Value } from '#client' */
+/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import { get_descriptors, get_prototype_of, index_of } from '../shared/utils.js';
 import {
@@ -28,7 +28,6 @@ import { old_values } from './reactivity/sources.js';
 import {
 	destroy_derived_effects,
 	execute_derived,
-	current_async_effect,
 	recent_async_deriveds,
 	update_derived
 } from './reactivity/deriveds.js';
@@ -44,7 +43,6 @@ import {
 	set_dev_current_component_function,
 	set_dev_stack
 } from './context.js';
-import * as w from './warnings.js';
 import {
 	Batch,
 	batch_values,

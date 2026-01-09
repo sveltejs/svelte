@@ -3,15 +3,12 @@
 import { DEV } from 'esm-env';
 import {
 	ERROR_VALUE,
-	CLEAN,
 	DERIVED,
 	DIRTY,
 	EFFECT_PRESERVED,
-	MAYBE_DIRTY,
 	STALE_REACTION,
 	ASYNC,
 	WAS_MARKED,
-	CONNECTED,
 	DESTROYED
 } from '#client/constants';
 import {
