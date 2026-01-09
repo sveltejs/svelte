@@ -25,6 +25,7 @@ import { deferred, define_property } from '../../shared/utils.js';
 import {
 	active_effect,
 	get,
+	increment_write_version,
 	is_dirty,
 	is_updating_effect,
 	set_is_updating_effect,
@@ -38,6 +39,7 @@ import { invoke_error_boundary } from '../error-handling.js';
 import { flush_eager_effects, old_values, set_eager_effects, source, update } from './sources.js';
 import { eager_effect, unlink_effect } from './effects.js';
 import { defer_effect } from './utils.js';
+import { UNINITIALIZED } from '../../../constants.js';
 
 /** @type {Set<Batch>} */
 const batches = new Set();
@@ -281,7 +283,7 @@ export class Batch {
 	 * @param {any} value
 	 */
 	capture(source, value) {
-		if (!this.previous.has(source)) {
+		if (value !== UNINITIALIZED && !this.previous.has(source)) {
 			this.previous.set(source, value);
 		}
 
@@ -919,11 +921,16 @@ export function fork(fn) {
 
 	flushSync(fn);
 
-	batch_values = null;
-
 	// revert state changes
 	for (var [source, value] of batch.previous) {
 		source.v = value;
+	}
+
+	// make writable deriveds dirty, so they recalculate correctly
+	for (source of batch.current.keys()) {
+		if ((source.f & DERIVED) !== 0) {
+			set_signal_status(source, DIRTY);
+		}
 	}
 
 	return {
@@ -941,9 +948,10 @@ export function fork(fn) {
 
 			batch.is_fork = false;
 
-			// apply changes
+			// apply changes and update write versions so deriveds see the change
 			for (var [source, value] of batch.current) {
 				source.v = value;
+				source.wv = increment_write_version();
 			}
 
 			// trigger any `$state.eager(...)` expressions with the new state.
