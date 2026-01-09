@@ -370,9 +370,13 @@ export function RegularElement(node, context) {
 
 		const option_node = context.state.node;
 
+		// Add a hydration marker inside the option element so $.child() has an anchor to find
+		context.state.template.push_comment();
+
 		// Create a separate template for the rich content
 		const template_name = context.state.scope.root.unique('option_content');
 		const fragment_id = b.id(context.state.scope.generate('fragment'));
+		const anchor_id = b.id(context.state.scope.generate('anchor'));
 
 		// Create state with a new template for the rich content
 		/** @type {typeof state} */
@@ -399,12 +403,14 @@ export function RegularElement(node, context) {
 		context.state.hoisted.push(b.var(template_name, template));
 
 		// Build the rich content function body
+		// The anchor is the child of the option (a hydration marker during hydration)
 		const rich_fn_body = b.block([
+			b.var(anchor_id, b.call('$.child', option_node)),
 			b.var(fragment_id, b.call(template_name)),
 			...rich_child_state.init,
 			...(rich_child_state.update.length > 0 ? [build_render_statement(rich_child_state)] : []),
 			...rich_child_state.after_update,
-			b.stmt(b.call('$.append', option_node, fragment_id))
+			b.stmt(b.call('$.append', anchor_id, fragment_id))
 		]);
 
 		child_state.init.push(b.stmt(b.call('$.rich_option', option_node, b.arrow([], rich_fn_body))));

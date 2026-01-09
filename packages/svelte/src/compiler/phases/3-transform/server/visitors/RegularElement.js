@@ -138,6 +138,11 @@ export function RegularElement(node, context) {
 	}
 
 	if (is_option_special) {
+		// Check if this option has rich content (non-text children)
+		const is_rich_option = trimmed.some(
+			(child) => child.type !== 'Text' && child.type !== 'ExpressionTag' && child.type !== 'Comment'
+		);
+
 		let body;
 
 		if (node.metadata.synthetic_value_node) {
@@ -173,7 +178,10 @@ export function RegularElement(node, context) {
 
 		const [attributes, ...rest] = prepare_element_spread_object(node, context, optimiser.transform);
 
-		const statement = b.stmt(b.call('$$renderer.option', attributes, body, ...rest));
+		// Pass is_rich_option as the last argument to add hydration marker
+		const statement = b.stmt(
+			b.call('$$renderer.option', attributes, body, ...rest, is_rich_option ? b.true : undefined)
+		);
 
 		if (optimiser.expressions.length > 0) {
 			context.state.template.push(

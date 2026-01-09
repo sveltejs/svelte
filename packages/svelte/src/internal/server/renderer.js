@@ -239,8 +239,9 @@ export class Renderer {
 	 * @param {Record<string, boolean> | undefined} [classes]
 	 * @param {Record<string, string> | undefined} [styles]
 	 * @param {number | undefined} [flags]
+	 * @param {boolean | undefined} [is_rich]
 	 */
-	option(attrs, body, css_hash, classes, styles, flags) {
+	option(attrs, body, css_hash, classes, styles, flags, is_rich) {
 		this.#out.push(`<option${attributes(attrs, css_hash, classes, styles, flags)}`);
 
 		/**
@@ -257,7 +258,9 @@ export class Renderer {
 				renderer.#out.push(' selected');
 			}
 
-			renderer.#out.push(`>${body}</option>`);
+			// For rich content options, add a hydration marker at the start
+			// so the client can find it as an anchor during hydration
+			renderer.#out.push(`>${is_rich ? '<!>' : ''}${body}</option>`);
 
 			// super edge case, but may as well handle it
 			if (head) {
