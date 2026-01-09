@@ -3,15 +3,12 @@
 import { DEV } from 'esm-env';
 import {
 	ERROR_VALUE,
-	CLEAN,
 	DERIVED,
 	DIRTY,
 	EFFECT_PRESERVED,
-	MAYBE_DIRTY,
 	STALE_REACTION,
 	ASYNC,
 	WAS_MARKED,
-	CONNECTED,
 	DESTROYED
 } from '#client/constants';
 import {
@@ -23,7 +20,7 @@ import {
 	push_reaction_value,
 	is_destroying_effect
 } from '../runtime.js';
-import { set_signal_status, update_derived_status } from './status.js';
+import { update_derived_status } from './status.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
@@ -37,7 +34,6 @@ import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch } from './batch.js';
 import { unset_context } from './async.js';
 import { deferred } from '../../shared/utils.js';
-import { set_signal_status } from './status.js';
 
 /** @type {Effect | null} */
 export let current_async_effect = null;
@@ -367,7 +363,7 @@ export function update_derived(derived) {
 		//
 		// deriveds with no deps should always update `derived.v`
 		// since they will never change and need the value after fork commits
-		if (!current_batch?.is_fork || derived.deps === null) {
+		if (!current_batch?.is_fork) {
 			derived.v = value;
 		}
 
