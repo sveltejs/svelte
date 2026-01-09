@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Reaction, Signal, Source, Value } from '#client' */
+/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import { get_descriptors, get_prototype_of, index_of } from '../shared/utils.js';
 import {
@@ -43,7 +43,6 @@ import {
 	set_dev_current_component_function,
 	set_dev_stack
 } from './context.js';
-import * as w from './warnings.js';
 import {
 	Batch,
 	batch_values,
