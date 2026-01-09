@@ -363,7 +363,7 @@ export function update_derived(derived) {
 		//
 		// deriveds with no deps should always update `derived.v`
 		// since they will never change and need the value after fork commits
-		if (!current_batch?.is_fork) {
+		if (!current_batch?.is_fork || derived.deps === null) {
 			derived.v = value;
 		}
 
