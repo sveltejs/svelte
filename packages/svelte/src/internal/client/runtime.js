@@ -620,6 +620,8 @@ export function get(signal) {
 			return value;
 		}
 
+		// TODO this should probably just be `!batch_values?.has(derived)` — the second bit
+		// should be taken care of by clearing `batch_values` in `mark_reactions`?
 		if (!batch_values?.has(derived) || (current_batch?.is_fork && !effect_tracking())) {
 			if (is_dirty(derived)) {
 				update_derived(derived);
