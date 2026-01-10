@@ -619,14 +619,15 @@ export function get(signal) {
 
 			return value;
 		}
-	} else if (
-		is_derived &&
-		(!batch_values?.has(signal) || (current_batch?.is_fork && !effect_tracking()))
-	) {
+	}
+
+	if (is_derived) {
 		derived = /** @type {Derived} */ (signal);
 
-		if (is_dirty(derived)) {
-			update_derived(derived);
+		if (!batch_values?.has(derived) || (current_batch?.is_fork && !effect_tracking())) {
+			if (is_dirty(derived)) {
+				update_derived(derived);
+			}
 		}
 
 		if (is_updating_effect && effect_tracking() && (derived.f & CONNECTED) === 0) {
