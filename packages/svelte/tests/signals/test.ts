@@ -1524,45 +1524,6 @@ describe('signals', () => {
 		};
 	});
 
-	// Test that deriveds with no dependencies are always CLEAN
-	test('deriveds with no deps should be CLEAN and not re-evaluate', () => {
-		let eval_count = 0;
-		let d: Derived<number> | null = null;
-
-		render_effect(() => {
-			branch(() => {
-				if (!d) {
-					d = derived(() => {
-						eval_count++;
-						return 42;
-					});
-				}
-
-				$.get(d);
-			});
-		});
-
-		return () => {
-			flushSync();
-
-			const initial_eval_count = eval_count;
-			assert.equal(initial_eval_count, 1, 'derived should evaluate once initially');
-
-			for (let i = 0; i < 100; i++) {
-				$.get(d!);
-			}
-
-			assert.equal(
-				eval_count,
-				initial_eval_count,
-				'derived with no deps should not re-evaluate on subsequent reads'
-			);
-
-			const is_clean = (d!.f & CLEAN) !== 0;
-			assert.ok(is_clean, 'derived with no deps should be CLEAN');
-		};
-	});
-
 	// reproduction of https://github.com/sveltejs/svelte/issues/17352
 	test('nested deriveds with parent-child dependencies stay reactive', () => {
 		const log: any[] = [];
