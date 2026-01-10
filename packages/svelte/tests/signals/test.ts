@@ -1,3 +1,4 @@
+/** @import { Reaction } from '#client' */
 import { describe, assert, it } from 'vitest';
 import { flushSync } from '../../src/index-client';
 import * as $ from '../../src/internal/client/runtime';
@@ -15,9 +16,10 @@ import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
-import { DESTROYED } from '../../src/internal/client/constants';
+import { CLEAN, CONNECTED, DESTROYED, MAYBE_DIRTY } from '../../src/internal/client/constants';
 import { noop } from 'svelte/internal/client';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/internal/flags';
+import { branch } from '../../src/internal/client/reactivity/effects';
 
 /**
  * @param runes runes mode
@@ -1491,6 +1493,121 @@ describe('signals', () => {
 			flushSync();
 
 			assert.deepEqual(log, ['inner destroyed', 'inner destroyed']);
+		};
+	});
+
+	// reproduces conditions leading to https://github.com/sveltejs/kit/issues/15059
+	test('derived read inside branch effect should be reconnected even when effect_tracking is false', () => {
+		let count = state(0);
+		let d: Derived<number> | null = null;
+
+		render_effect(() => {
+			branch(() => {
+				if (!d) {
+					d = derived(() => $.get(count) * 2);
+				}
+
+				$.get(d);
+			});
+		});
+
+		return () => {
+			flushSync();
+
+			const is_connected = (d!.f & CONNECTED) !== 0;
+			assert.ok(
+				is_connected,
+				'derived should be CONNECTED after being read inside branch during effect update'
+			);
+
+			assert.ok(count.reactions?.includes(d!), 'derived should be in source reactions');
+		};
+	});
+
+	// reproduction of https://github.com/sveltejs/svelte/issues/17352
+	test('nested deriveds with parent-child dependencies stay reactive', () => {
+		const log: any[] = [];
+
+		return () => {
+			const expanded_ids = new SvelteSet<string>();
+			const nodes = proxy([
+				{
+					id: 'folder',
+					children: [{ id: 'file' }]
+				},
+				{ id: 'other' }
+			]);
+
+			let items_derived: Derived<any[]>;
+			let visible_items_derived: Derived<any[]>;
+
+			const destroy = effect_root(() => {
+				items_derived = derived(function create_items(
+					list: any[] = nodes,
+					parent?: any,
+					result: any[] = []
+				) {
+					for (const node of list) {
+						const expanded_d = derived(() => expanded_ids.has(node.id));
+						const visible_d = derived(() =>
+							parent === undefined ? true : $.get(parent.expanded_d) && $.get(parent.visible_d)
+						);
+
+						const item = {
+							node,
+							expanded_d,
+							visible_d,
+							get expanded() {
+								return $.get(expanded_d);
+							},
+							get visible() {
+								return $.get(visible_d);
+							}
+						};
+						result.push(item);
+
+						if (node.children) {
+							create_items(node.children, item, result);
+						}
+					}
+					return result;
+				});
+
+				visible_items_derived = derived(() => $.get(items_derived).filter((item) => item.visible));
+
+				render_effect(() => {
+					log.push($.get(visible_items_derived).length);
+				});
+			});
+
+			flushSync();
+			assert.deepEqual(log, [2], 'initial: folder and other visible');
+
+			expanded_ids.add('folder');
+			flushSync();
+			assert.deepEqual(log, [2, 3], 'after expand: folder, file, other visible');
+
+			expanded_ids.delete('folder');
+			flushSync();
+			assert.deepEqual(log, [2, 3, 2], 'after collapse');
+
+			nodes.splice(1, 1); // Remove 'other'
+
+			const snapshot = $.get(visible_items_derived!);
+			assert.equal(snapshot.length, 1, 'after delete: only folder visible');
+
+			flushSync();
+			assert.deepEqual(log, [2, 3, 2, 1], 'effect ran after delete');
+
+			expanded_ids.add('folder');
+			flushSync();
+			assert.deepEqual(
+				log,
+				[2, 3, 2, 1, 2],
+				'after expand post-delete: folder and file should be visible'
+			);
+
+			destroy();
 		};
 	});
 });
