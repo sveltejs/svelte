@@ -1,6 +1,6 @@
 /** @import { Derived, Effect, Value } from '#client' */
 import { CLEAN, DERIVED, DIRTY, MAYBE_DIRTY, WAS_MARKED } from '#client/constants';
-import { set_signal_status } from '../runtime.js';
+import { set_signal_status } from './status.js';
 
 /**
  * @param {Value[] | null} deps

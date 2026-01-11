@@ -3,21 +3,18 @@
 import { DEV } from 'esm-env';
 import {
 	ERROR_VALUE,
-	CLEAN,
 	DERIVED,
 	DIRTY,
 	EFFECT_PRESERVED,
-	MAYBE_DIRTY,
 	STALE_REACTION,
 	ASYNC,
 	WAS_MARKED,
-	CONNECTED,
-	DESTROYED
+	DESTROYED,
+	CLEAN
 } from '#client/constants';
 import {
 	active_reaction,
 	active_effect,
-	set_signal_status,
 	update_reaction,
 	increment_write_version,
 	set_active_effect,
@@ -37,6 +34,7 @@ import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch } from './batch.js';
 import { unset_context } from './async.js';
 import { deferred } from '../../shared/utils.js';
+import { set_signal_status, update_derived_status } from './status.js';
 
 /** @type {Effect | null} */
 export let current_async_effect = null;
@@ -359,15 +357,21 @@ export function update_derived(derived) {
 	var value = execute_derived(derived);
 
 	if (!derived.equals(value)) {
+		derived.wv = increment_write_version();
+
 		// in a fork, we don't update the underlying value, just `batch_values`.
 		// the underlying value will be updated when the fork is committed.
 		// otherwise, the next time we get here after a 'real world' state
 		// change, `derived.equals` may incorrectly return `true`
-		if (!current_batch?.is_fork) {
+		if (!current_batch?.is_fork || derived.deps === null) {
 			derived.v = value;
-		}
 
-		derived.wv = increment_write_version();
+			// deriveds without dependencies should never be recomputed
+			if (derived.deps === null) {
+				set_signal_status(derived, CLEAN);
+				return;
+			}
+		}
 	}
 
 	// don't mark derived clean if we're reading it inside a
@@ -385,7 +389,6 @@ export function update_derived(derived) {
 			batch_values.set(derived, value);
 		}
 	} else {
-		var status = (derived.f & CONNECTED) === 0 ? MAYBE_DIRTY : CLEAN;
-		set_signal_status(derived, status);
+		update_derived_status(derived);
 	}
 }
