@@ -150,14 +150,16 @@ export function get_name(node) {
 }
 
 /**
- * Checks if an <option> or <optgroup> element has rich content that requires special hydration handling.
+ * Checks if an <option>, <optgroup>, or <select> element has rich content that requires special hydration handling.
  * Rich content is anything beyond simple text, expressions, and comments for <option>,
- * or anything beyond <option> children for <optgroup>.
+ * anything beyond <option> children for <optgroup>,
+ * or anything beyond <option>, <optgroup>, and empty text for <select>.
+ * Control flow blocks are considered rich content since they could contain rich content at runtime.
  * @param {AST.RegularElement} node
  * @param {AST.SvelteNode[]} children - The trimmed/filtered children of the element
  * @returns {boolean}
  */
-export function is_option_or_optgroup_with_rich_content(node, children) {
+export function is_customizable_select_element_with_rich_content(node, children) {
 	if (node.name === 'option') {
 		return children.some(
 			(child) => child.type !== 'Text' && child.type !== 'ExpressionTag' && child.type !== 'Comment'
@@ -167,11 +169,24 @@ export function is_option_or_optgroup_with_rich_content(node, children) {
 	if (node.name === 'optgroup') {
 		return children.some(
 			(child) =>
-				// For optgroup, only <option> elements, comments, and empty/whitespace text nodes are "normal" content
-				// Non-empty text nodes and expression tags count as rich content since browsers
-				// that don't support rich options will strip them
+				// For optgroup, only <option> elements, comments, and empty/whitespace text nodes are "normal" content.
+				// Non-empty text nodes, expression tags, and control flow blocks count as rich content since browsers
+				// that don't support rich options will strip them (and control flow could contain rich content at runtime)
 				child.type !== 'Comment' &&
 				(child.type !== 'RegularElement' || child.name !== 'option') &&
+				(child.type !== 'Text' || child.data.trim() !== '')
+		);
+	}
+
+	if (node.name === 'select') {
+		return children.some(
+			(child) =>
+				// For select, only <option>, <optgroup> elements, comments, and empty/whitespace text nodes are "normal" content.
+				// Anything else (including non-empty text nodes, expression tags, and control flow blocks) counts as rich content
+				// since control flow could contain rich content at runtime
+				child.type !== 'Comment' &&
+				(child.type !== 'RegularElement' ||
+					(child.name !== 'option' && child.name !== 'optgroup')) &&
 				(child.type !== 'Text' || child.data.trim() !== '')
 		);
 	}

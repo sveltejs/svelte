@@ -36,12 +36,12 @@ export default test({
 		<p>shake it all about</p>
 	`,
 
-	async test({ assert, component, target, window, variant }) {
+	async test({ assert, component, target, window }) {
 		assert.htmlEqual(
 			target.innerHTML,
 			`
 			<select>
-				<option ${variant === 'hydrate' ? 'selected ' : ''}value='[object Object]'>put your left leg in</option>
+				<option value='[object Object]'>put your left leg in</option>
 				<option value='[object Object]'>your left leg out</option>
 				<option value='[object Object]'>in, out, in, out</option>
 				<option value='[object Object]'>shake it all about</option>
@@ -78,7 +78,7 @@ export default test({
 			target.innerHTML,
 			`
 			<select>
-				<option ${variant === 'hydrate' ? 'selected ' : ''}value='[object Object]'>put your left leg in</option>
+				<option value='[object Object]'>put your left leg in</option>
 				<option value='[object Object]'>your left leg out</option>
 				<option value='[object Object]'>in, out, in, out</option>
 				<option value='[object Object]'>shake it all about</option>
@@ -115,7 +115,7 @@ export default test({
 			target.innerHTML,
 			`
 			<select>
-				<option ${variant === 'hydrate' ? 'selected ' : ''}value='[object Object]'>put your left leg in</option>
+				<option value='[object Object]'>put your left leg in</option>
 				<option value='[object Object]'>your left leg out</option>
 				<option value='[object Object]'>in, out, in, out</option>
 				<option value='[object Object]'>shake it all about</option>

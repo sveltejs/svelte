@@ -15,7 +15,7 @@ import {
 	PromiseOptimiser,
 	create_async_block
 } from './shared/utils.js';
-import { is_option_or_optgroup_with_rich_content } from '../../../nodes.js';
+import { is_customizable_select_element_with_rich_content } from '../../../nodes.js';
 
 /**
  * @param {AST.RegularElement} node
@@ -115,6 +115,9 @@ export function RegularElement(node, context) {
 	}
 
 	if (is_select_special) {
+		// Check if this select has rich content (non-option/optgroup children)
+		const is_rich_select = is_customizable_select_element_with_rich_content(node, trimmed);
+
 		const inner_state = { ...state, template: [], init: [] };
 		process_children(trimmed, { ...context, state: inner_state });
 
@@ -125,7 +128,10 @@ export function RegularElement(node, context) {
 
 		const [attributes, ...rest] = prepare_element_spread_object(node, context, optimiser.transform);
 
-		const statement = b.stmt(b.call('$$renderer.select', attributes, fn, ...rest));
+		// Pass is_rich_select as the last argument to add hydration marker
+		const statement = b.stmt(
+			b.call('$$renderer.select', attributes, fn, ...rest, is_rich_select ? b.true : undefined)
+		);
 
 		if (optimiser.expressions.length > 0) {
 			context.state.template.push(
@@ -140,7 +146,7 @@ export function RegularElement(node, context) {
 
 	if (is_option_special) {
 		// Check if this option has rich content (non-text children)
-		const is_rich_option = is_option_or_optgroup_with_rich_content(node, trimmed);
+		const is_rich_option = is_customizable_select_element_with_rich_content(node, trimmed);
 
 		let body;
 
@@ -215,8 +221,11 @@ export function RegularElement(node, context) {
 			)
 		);
 	} else {
-		// For optgroup with rich content, add hydration marker at the start
-		if (node.name === 'optgroup' && is_option_or_optgroup_with_rich_content(node, trimmed)) {
+		// For optgroup or select with rich content, add hydration marker at the start
+		if (
+			(node.name === 'optgroup' || node.name === 'select') &&
+			is_customizable_select_element_with_rich_content(node, trimmed)
+		) {
 			state.template.push(b.literal('<!>'));
 		}
 		process_children(trimmed, { ...context, state });

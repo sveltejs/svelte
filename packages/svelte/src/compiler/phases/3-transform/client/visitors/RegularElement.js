@@ -15,7 +15,7 @@ import {
 	create_attribute,
 	ExpressionMetadata,
 	is_custom_element_node,
-	is_option_or_optgroup_with_rich_content
+	is_customizable_select_element_with_rich_content
 } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_getter } from '../utils.js';
@@ -335,9 +335,9 @@ export function RegularElement(node, context) {
 		context.visit(node, child_state);
 	}
 
-	// Detect if this is an <option> or <optgroup> with rich content
+	// Detect if this is an <option>, <optgroup>, or <select> with rich content
 	// In this case, we need to branch hydration based on browser support
-	const has_rich_content = is_option_or_optgroup_with_rich_content(node, trimmed);
+	const has_rich_content = is_customizable_select_element_with_rich_content(node, trimmed);
 
 	// special case — if an element that only contains text, we don't need
 	// to descend into it if the text is non-reactive
@@ -365,11 +365,11 @@ export function RegularElement(node, context) {
 			);
 		}
 	} else if (has_rich_content) {
-		// For <option> elements with rich content, we need to branch based on browser support.
+		// For <option>, <optgroup>, or <select> elements with rich content, we need to branch based on browser support.
 		// Modern browsers preserve rich HTML in options, older browsers strip it to text only.
-		// We create a separate template for the rich content and append it to the option.
+		// We create a separate template for the rich content and append it to the element.
 
-		const option_node = context.state.node;
+		const element_node = context.state.node;
 
 		// Add a hydration marker inside the option element so $.child() has an anchor to find
 		context.state.template.push_comment();
@@ -404,16 +404,18 @@ export function RegularElement(node, context) {
 		context.state.hoisted.push(b.var(template_name, template));
 
 		// Build the rich content function body
-		// The anchor is the child of the option (a hydration marker during hydration)
+		// The anchor is the child of the element (a hydration marker during hydration)
 		const rich_fn_body = b.block([
-			b.var(anchor_id, b.call('$.child', option_node)),
+			b.var(anchor_id, b.call('$.child', element_node)),
 			b.var(fragment_id, b.call(template_name)),
 			...rich_child_state.init,
 			...(rich_child_state.update.length > 0 ? [build_render_statement(rich_child_state)] : []),
 			...rich_child_state.after_update,
 			b.stmt(b.call('$.append', anchor_id, fragment_id))
 		]);
-		child_state.init.push(b.stmt(b.call('$.rich_option', option_node, b.arrow([], rich_fn_body))));
+		child_state.init.push(
+			b.stmt(b.call('$.customizable_select_element', element_node, b.arrow([], rich_fn_body)))
+		);
 	} else {
 		/** @type {Expression} */
 		let arg = context.state.node;

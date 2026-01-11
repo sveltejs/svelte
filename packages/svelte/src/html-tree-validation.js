@@ -92,8 +92,6 @@ const disallowed_children = {
 	h4: { descendant: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] },
 	h5: { descendant: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] },
 	h6: { descendant: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] },
-	// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inselect
-	select: { only: ['option', 'optgroup', '#text', 'hr', 'script', 'template'] },
 
 	// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intd
 	// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-incaption

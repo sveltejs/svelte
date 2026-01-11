@@ -1,19 +1,19 @@
 import { hydrating, set_hydrating } from '../hydration.js';
-import { check_rich_option_support, create_comment, create_text } from '../operations.js';
+import { support_customizable_select, create_comment, create_text } from '../operations.js';
 
 /**
- * Handles rich HTML content inside `<option>` elements with browser-specific branching.
+ * Handles rich HTML content inside `<option>`, `<optgroup>`, or `<select>` elements with browser-specific branching.
  * Modern browsers preserve HTML inside options, while older browsers strip it to text only.
  *
- * @param {HTMLOptionElement} option The `<option>` element to process
+ * @param {HTMLOptionElement | HTMLOptGroupElement | HTMLSelectElement} element The element to process
  * @param {() => void} rich_fn Function to process rich HTML content (modern browsers)
  */
-export function rich_option(option, rich_fn) {
+export function customizable_select_element(element, rich_fn) {
 	var was_hydrating = hydrating;
-	if (!check_rich_option_support()) {
+	if (!support_customizable_select()) {
 		set_hydrating(false);
-		option.textContent = '';
-		option.append(create_comment(''));
+		element.textContent = '';
+		element.append(create_comment(''));
 	}
 	try {
 		rich_fn();

@@ -16,13 +16,13 @@ export default test({
 		<p>foo: 2</p>
 	`,
 
-	test({ assert, component, target, window, variant }) {
+	test({ assert, component, target, window }) {
 		assert.htmlEqual(
 			target.innerHTML,
 			`
 			<select>
 				<option>1</option>
-				<option ${variant === 'hydrate' ? 'selected ' : ''}>2</option>
+				<option>2</option>
 				<option>3</option>
 			</select>
 
@@ -48,7 +48,7 @@ export default test({
 			`
 			<select>
 				<option>1</option>
-				<option ${variant === 'hydrate' ? 'selected ' : ''}>2</option>
+				<option>2</option>
 				<option>3</option>
 			</select>
 

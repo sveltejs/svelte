@@ -219,12 +219,15 @@ export class Renderer {
 	 * @param {Record<string, boolean> | undefined} [classes]
 	 * @param {Record<string, string> | undefined} [styles]
 	 * @param {number | undefined} [flags]
+	 * @param {boolean | undefined} [is_rich]
 	 * @returns {void}
 	 */
-	select(attrs, fn, css_hash, classes, styles, flags) {
+	select(attrs, fn, css_hash, classes, styles, flags, is_rich) {
 		const { value, ...select_attrs } = attrs;
 
-		this.push(`<select${attributes(select_attrs, css_hash, classes, styles, flags)}>`);
+		this.push(
+			`<select${attributes(select_attrs, css_hash, classes, styles, flags)}>${is_rich ? '<!>' : ''}`
+		);
 		this.child((renderer) => {
 			renderer.local.select_value = value;
 			fn(renderer);

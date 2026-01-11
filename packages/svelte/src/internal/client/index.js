@@ -42,7 +42,7 @@ export {
 export { set_class } from './dom/elements/class.js';
 export { apply, event, delegate, replay_events } from './dom/elements/events.js';
 export { autofocus, remove_textarea_child } from './dom/elements/misc.js';
-export { rich_option } from './dom/elements/rich-option.js';
+export { customizable_select_element } from './dom/elements/rich-option.js';
 export { set_style } from './dom/elements/style.js';
 export { animation, transition } from './dom/elements/transitions.js';
 export { bind_active_element } from './dom/elements/bindings/document.js';

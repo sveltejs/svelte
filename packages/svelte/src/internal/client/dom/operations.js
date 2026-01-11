@@ -19,7 +19,7 @@ export var $document;
 export var is_firefox;
 
 /** @type {boolean | null} */
-var supports_rich_option = null;
+var supports_customizable_select = null;
 
 /** @type {() => Node | null} */
 var first_child_getter;
@@ -268,10 +268,10 @@ export function set_attribute(element, key, value = '') {
  * strip them during parsing, leaving only text content.
  * @returns {boolean}
  */
-export function check_rich_option_support() {
-	if (supports_rich_option !== null) return supports_rich_option;
+export function support_customizable_select() {
+	if (supports_customizable_select !== null) return supports_customizable_select;
 	var select = document.createElement('select');
 	select.innerHTML = '<option><span>t</span></option>';
-	return (supports_rich_option =
+	return (supports_customizable_select =
 		/** @type {Element} */ (select.firstChild)?.firstChild?.nodeType === 1);
 }
