@@ -628,9 +628,10 @@ export function get(signal) {
 		var should_connect =
 			(derived.f & CONNECTED) === 0 &&
 			!untracking &&
-			((is_updating_effect && effect_tracking()) ||
+			active_reaction !== null &&
+			(is_updating_effect ||
 				// evaluating connected parent derived, so reconnect child deriveds too
-				(active_reaction !== null && (active_reaction.f & CONNECTED) !== 0));
+				(active_reaction.f & CONNECTED) !== 0);
 
 		var is_new = derived.v === UNINITIALIZED;
 
