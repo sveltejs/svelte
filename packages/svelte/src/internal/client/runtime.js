@@ -641,10 +641,8 @@ export function get(signal) {
 
 			update_derived(derived);
 
-			if (needs_connection && !is_new && derived.deps !== null) {
-				for (const dep of derived.deps) {
-					(dep.reactions ??= []).push(derived);
-				}
+			if (needs_connection && !is_new) {
+				reconnect(derived);
 			}
 		} else if (needs_connection) {
 			reconnect(derived);
