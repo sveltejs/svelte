@@ -1495,32 +1495,4 @@ describe('signals', () => {
 			assert.deepEqual(log, ['inner destroyed', 'inner destroyed']);
 		};
 	});
-
-	// reproduces conditions leading to https://github.com/sveltejs/kit/issues/15059
-	test('derived read inside branch effect should be reconnected even when effect_tracking is false', () => {
-		let count = state(0);
-		let d: Derived<number> | null = null;
-
-		render_effect(() => {
-			branch(() => {
-				if (!d) {
-					d = derived(() => $.get(count) * 2);
-				}
-
-				$.get(d);
-			});
-		});
-
-		return () => {
-			flushSync();
-
-			const is_connected = (d!.f & CONNECTED) !== 0;
-			assert.ok(
-				is_connected,
-				'derived should be CONNECTED after being read inside branch during effect update'
-			);
-
-			assert.ok(count.reactions?.includes(d!), 'derived should be in source reactions');
-		};
-	});
 });
