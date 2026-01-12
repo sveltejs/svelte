@@ -628,9 +628,7 @@ export function get(signal) {
 		var needs_connection =
 			(derived.f & CONNECTED) === 0 &&
 			!untracking &&
-			((is_updating_effect &&
-				(effect_tracking() ||
-					(active_effect !== null && (active_effect.f & BRANCH_EFFECT) !== 0))) ||
+			((is_updating_effect && effect_tracking()) ||
 				// evaluating connected parent derived, so reconnect child deriveds too
 				(active_reaction !== null && (active_reaction.f & CONNECTED) !== 0));
 
