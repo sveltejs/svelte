@@ -625,26 +625,26 @@ export function get(signal) {
 	) {
 		derived = /** @type {Derived} */ (signal);
 
-		var needs_connection =
+		var should_connect =
 			(derived.f & CONNECTED) === 0 &&
 			!untracking &&
 			((is_updating_effect && effect_tracking()) ||
 				// evaluating connected parent derived, so reconnect child deriveds too
 				(active_reaction !== null && (active_reaction.f & CONNECTED) !== 0));
 
-		if (is_dirty(derived)) {
-			var is_new = derived.v === UNINITIALIZED;
+		var is_new = derived.v === UNINITIALIZED;
 
-			if (needs_connection) {
+		if (is_dirty(derived)) {
+			if (should_connect) {
+				// set the flag before `update_derived`, so that the derived
+				// is added as a reaction to its dependencies
 				derived.f |= CONNECTED;
 			}
 
 			update_derived(derived);
+		}
 
-			if (needs_connection && !is_new) {
-				reconnect(derived);
-			}
-		} else if (needs_connection) {
+		if (should_connect && !is_new) {
 			reconnect(derived);
 		}
 	}
