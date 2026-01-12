@@ -1,5 +1,11 @@
 # svelte
 
+## 5.46.3
+
+### Patch Changes
+
+- fix: reconnect clean deriveds when they are read in a reactive context ([#17362](https://github.com/sveltejs/svelte/pull/17362))
+
 ## 5.46.2
 
 ### Patch Changes
