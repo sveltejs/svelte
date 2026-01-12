@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: performance regression affecting deriveds with no dependencies (#17342)
+fix: reconnect clean deriveds when they are read in a reactive context
