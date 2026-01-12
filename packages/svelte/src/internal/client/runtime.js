@@ -625,13 +625,13 @@ export function get(signal) {
 	) {
 		derived = /** @type {Derived} */ (signal);
 
+		// connect disconnected deriveds if we are reading them inside an effect,
+		// or inside another derived that is already connected
 		var should_connect =
 			(derived.f & CONNECTED) === 0 &&
 			!untracking &&
 			active_reaction !== null &&
-			(is_updating_effect ||
-				// evaluating connected parent derived, so reconnect child deriveds too
-				(active_reaction.f & CONNECTED) !== 0);
+			(is_updating_effect || (active_reaction.f & CONNECTED) !== 0);
 
 		var is_new = derived.v === UNINITIALIZED;
 
