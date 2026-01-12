@@ -1,4 +1,3 @@
-/** @import { Reaction } from '#client' */
 import { describe, assert, it } from 'vitest';
 import { flushSync } from '../../src/index-client';
 import * as $ from '../../src/internal/client/runtime';
@@ -16,10 +15,9 @@ import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
-import { CLEAN, CONNECTED, DESTROYED, MAYBE_DIRTY } from '../../src/internal/client/constants';
+import { DESTROYED } from '../../src/internal/client/constants';
 import { noop } from 'svelte/internal/client';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/internal/flags';
-import { branch } from '../../src/internal/client/reactivity/effects';
 
 /**
  * @param runes runes mode
