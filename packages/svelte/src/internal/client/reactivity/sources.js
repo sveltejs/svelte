@@ -6,7 +6,6 @@ import {
 	untracked_writes,
 	get,
 	set_untracked_writes,
-	set_signal_status,
 	untrack,
 	increment_write_version,
 	update_effect,
@@ -40,6 +39,7 @@ import { component_context, is_runes } from '../context.js';
 import { Batch, batch_values, eager_block_effects, schedule_effect } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
+import { set_signal_status, update_derived_status } from './status.js';
 
 /** @type {Set<any>} */
 export let eager_effects = new Set();
@@ -218,12 +218,14 @@ export function internal_set(source, value) {
 		}
 
 		if ((source.f & DERIVED) !== 0) {
+			const derived = /** @type {Derived} */ (source);
+
 			// if we are assigning to a dirty derived we set it to clean/maybe dirty but we also eagerly execute it to track the dependencies
 			if ((source.f & DIRTY) !== 0) {
-				execute_derived(/** @type {Derived} */ (source));
+				execute_derived(derived);
 			}
 
-			set_signal_status(source, (source.f & CONNECTED) !== 0 ? CLEAN : MAYBE_DIRTY);
+			update_derived_status(derived);
 		}
 
 		source.wv = increment_write_version();

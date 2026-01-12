@@ -1,4 +1,4 @@
-/** @import { Derived, Effect, Reaction, Signal, Source, Value } from '#client' */
+/** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import { get_descriptors, get_prototype_of, index_of } from '../shared/utils.js';
 import {
@@ -28,7 +28,6 @@ import { old_values } from './reactivity/sources.js';
 import {
 	destroy_derived_effects,
 	execute_derived,
-	current_async_effect,
 	recent_async_deriveds,
 	update_derived
 } from './reactivity/deriveds.js';
@@ -44,7 +43,6 @@ import {
 	set_dev_current_component_function,
 	set_dev_stack
 } from './context.js';
-import * as w from './warnings.js';
 import {
 	Batch,
 	batch_values,
@@ -56,6 +54,7 @@ import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
 import { without_reactive_context } from './dom/elements/bindings/shared.js';
+import { set_signal_status, update_derived_status } from './reactivity/status.js';
 
 export let is_updating_effect = false;
 
@@ -167,21 +166,18 @@ export function is_dirty(reaction) {
 	}
 
 	if ((flags & MAYBE_DIRTY) !== 0) {
-		var dependencies = reaction.deps;
+		var dependencies = /** @type {Value[]} */ (reaction.deps);
+		var length = dependencies.length;
 
-		if (dependencies !== null) {
-			var length = dependencies.length;
+		for (var i = 0; i < length; i++) {
+			var dependency = dependencies[i];
 
-			for (var i = 0; i < length; i++) {
-				var dependency = dependencies[i];
+			if (is_dirty(/** @type {Derived} */ (dependency))) {
+				update_derived(/** @type {Derived} */ (dependency));
+			}
 
-				if (is_dirty(/** @type {Derived} */ (dependency))) {
-					update_derived(/** @type {Derived} */ (dependency));
-				}
-
-				if (dependency.wv > reaction.wv) {
-					return true;
-				}
+			if (dependency.wv > reaction.wv) {
+				return true;
 			}
 		}
 
@@ -374,16 +370,20 @@ function remove_reaction(signal, dependency) {
 		// allows us to skip the expensive work of disconnecting and immediately reconnecting it
 		(new_deps === null || !new_deps.includes(dependency))
 	) {
-		set_signal_status(dependency, MAYBE_DIRTY);
+		var derived = /** @type {Derived} */ (dependency);
+
 		// If we are working with a derived that is owned by an effect, then mark it as being
 		// disconnected and remove the mark flag, as it cannot be reliably removed otherwise
-		if ((dependency.f & CONNECTED) !== 0) {
-			dependency.f ^= CONNECTED;
-			dependency.f &= ~WAS_MARKED;
+		if ((derived.f & CONNECTED) !== 0) {
+			derived.f ^= CONNECTED;
+			derived.f &= ~WAS_MARKED;
 		}
+
+		update_derived_status(derived);
+
 		// Disconnect any reactions owned by this reaction
-		destroy_derived_effects(/** @type {Derived} **/ (dependency));
-		remove_reactions(/** @type {Derived} **/ (dependency), 0);
+		destroy_derived_effects(derived);
+		remove_reactions(derived, 0);
 	}
 }
 
@@ -596,14 +596,14 @@ export function get(signal) {
 		}
 	}
 
-	if (is_destroying_effect) {
-		if (old_values.has(signal)) {
-			return old_values.get(signal);
-		}
+	if (is_destroying_effect && old_values.has(signal)) {
+		return old_values.get(signal);
+	}
 
-		if (is_derived) {
-			var derived = /** @type {Derived} */ (signal);
+	if (is_derived) {
+		var derived = /** @type {Derived} */ (signal);
 
+		if (is_destroying_effect) {
 			var value = derived.v;
 
 			// if the derived is dirty and has reactions, or depends on the values that just changed, re-execute
@@ -619,17 +619,28 @@ export function get(signal) {
 
 			return value;
 		}
-	} else if (
-		is_derived &&
-		(!batch_values?.has(signal) || (current_batch?.is_fork && !effect_tracking()))
-	) {
-		derived = /** @type {Derived} */ (signal);
+
+		// connect disconnected deriveds if we are reading them inside an effect,
+		// or inside another derived that is already connected
+		var should_connect =
+			(derived.f & CONNECTED) === 0 &&
+			!untracking &&
+			active_reaction !== null &&
+			(is_updating_effect || (active_reaction.f & CONNECTED) !== 0);
+
+		var is_new = derived.deps === null;
 
 		if (is_dirty(derived)) {
+			if (should_connect) {
+				// set the flag before `update_derived`, so that the derived
+				// is added as a reaction to its dependencies
+				derived.f |= CONNECTED;
+			}
+
 			update_derived(derived);
 		}
 
-		if (is_updating_effect && effect_tracking() && (derived.f & CONNECTED) === 0) {
+		if (should_connect && !is_new) {
 			reconnect(derived);
 		}
 	}
@@ -653,7 +664,7 @@ export function get(signal) {
 function reconnect(derived) {
 	if (derived.deps === null) return;
 
-	derived.f ^= CONNECTED;
+	derived.f |= CONNECTED;
 
 	for (const dep of derived.deps) {
 		(dep.reactions ??= []).push(derived);
@@ -716,17 +727,6 @@ export function untrack(fn) {
 	} finally {
 		untracking = previous_untracking;
 	}
-}
-
-const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN);
-
-/**
- * @param {Signal} signal
- * @param {number} status
- * @returns {void}
- */
-export function set_signal_status(signal, status) {
-	signal.f = (signal.f & STATUS_MASK) | status;
 }
 
 /**
