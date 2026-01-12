@@ -620,15 +620,27 @@ export function get(signal) {
 			return value;
 		}
 
-		// TODO this should probably just be `!batch_values?.has(derived)` — the second bit
-		// should be taken care of by clearing `batch_values` in `mark_reactions`?
-		if (!batch_values?.has(derived) || (current_batch?.is_fork && !effect_tracking())) {
-			if (is_dirty(derived)) {
-				update_derived(derived);
+		// connect disconnected deriveds if we are reading them inside an effect,
+		// or inside another derived that is already connected
+		var should_connect =
+			(derived.f & CONNECTED) === 0 &&
+			!untracking &&
+			active_reaction !== null &&
+			(is_updating_effect || (active_reaction.f & CONNECTED) !== 0);
+
+		var is_new = derived.deps === null;
+
+		if (is_dirty(derived)) {
+			if (should_connect) {
+				// set the flag before `update_derived`, so that the derived
+				// is added as a reaction to its dependencies
+				derived.f |= CONNECTED;
 			}
+
+			update_derived(derived);
 		}
 
-		if (is_updating_effect && effect_tracking() && (derived.f & CONNECTED) === 0) {
+		if (should_connect && !is_new) {
 			reconnect(derived);
 		}
 	}
@@ -652,7 +664,7 @@ export function get(signal) {
 function reconnect(derived) {
 	if (derived.deps === null) return;
 
-	derived.f ^= CONNECTED;
+	derived.f |= CONNECTED;
 
 	for (const dep of derived.deps) {
 		(dep.reactions ??= []).push(derived);
