@@ -24,6 +24,12 @@
 
 - fix: don't revert source to UNINITIALIZED state when time travelling ([#17409](https://github.com/sveltejs/svelte/pull/17409))
 
+## 5.46.2
+
+### Notice
+
+Not published due to CI issue
+
 ## 5.46.1
 
 ### Patch Changes
