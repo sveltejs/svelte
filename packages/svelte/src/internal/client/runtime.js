@@ -596,14 +596,14 @@ export function get(signal) {
 		}
 	}
 
-	if (is_destroying_effect) {
-		if (old_values.has(signal)) {
-			return old_values.get(signal);
-		}
+	if (is_destroying_effect && old_values.has(signal)) {
+		return old_values.get(signal);
+	}
 
-		if (is_derived) {
-			var derived = /** @type {Derived} */ (signal);
+	if (is_derived) {
+		var derived = /** @type {Derived} */ (signal);
 
+		if (is_destroying_effect) {
 			var value = derived.v;
 
 			// if the derived is dirty and has reactions, or depends on the values that just changed, re-execute
@@ -619,17 +619,28 @@ export function get(signal) {
 
 			return value;
 		}
-	} else if (
-		is_derived &&
-		(!batch_values?.has(signal) || (current_batch?.is_fork && !effect_tracking()))
-	) {
-		derived = /** @type {Derived} */ (signal);
+
+		// connect disconnected deriveds if we are reading them inside an effect,
+		// or inside another derived that is already connected
+		var should_connect =
+			(derived.f & CONNECTED) === 0 &&
+			!untracking &&
+			active_reaction !== null &&
+			(is_updating_effect || (active_reaction.f & CONNECTED) !== 0);
+
+		var is_new = derived.deps === null;
 
 		if (is_dirty(derived)) {
+			if (should_connect) {
+				// set the flag before `update_derived`, so that the derived
+				// is added as a reaction to its dependencies
+				derived.f |= CONNECTED;
+			}
+
 			update_derived(derived);
 		}
 
-		if (is_updating_effect && effect_tracking() && (derived.f & CONNECTED) === 0) {
+		if (should_connect && !is_new) {
 			reconnect(derived);
 		}
 	}
@@ -653,7 +664,7 @@ export function get(signal) {
 function reconnect(derived) {
 	if (derived.deps === null) return;
 
-	derived.f ^= CONNECTED;
+	derived.f |= CONNECTED;
 
 	for (const dep of derived.deps) {
 		(dep.reactions ??= []).push(derived);
