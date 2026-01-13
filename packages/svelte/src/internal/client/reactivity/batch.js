@@ -438,7 +438,12 @@ export class Batch {
 		this.#pending -= 1;
 		if (blocking) this.#blocking_pending -= 1;
 
-		this.revive();
+		if (!this.is_deferred()) {
+			this.revive();
+		} else if (queued_root_effects.length > 0) {
+			// needed primarily for $effect.pending()
+			this.flush();
+		}
 	}
 
 	revive() {
