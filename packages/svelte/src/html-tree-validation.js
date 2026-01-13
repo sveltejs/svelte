@@ -80,9 +80,6 @@ export function closing_tag_omitted(current, next) {
  */
 const disallowed_children = {
 	...autoclosing_children,
-	optgroup: { only: ['option', '#text'] },
-	// Strictly speaking, seeing an <option> doesn't mean we're in a <select>, but we assume it here
-	option: { only: ['#text'] },
 	form: { descendant: ['form'] },
 	a: { descendant: ['a'] },
 	button: { descendant: ['button'] },
@@ -92,8 +89,6 @@ const disallowed_children = {
 	h4: { descendant: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] },
 	h5: { descendant: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] },
 	h6: { descendant: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] },
-	// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inselect
-	select: { only: ['option', 'optgroup', '#text', 'hr', 'script', 'template'] },
 
 	// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intd
 	// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-incaption
