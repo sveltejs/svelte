@@ -26,6 +26,14 @@ import {
 } from './deriveds.js';
 import { aborted } from './effects.js';
 
+/** @type {WeakSet<Promise<any>>} */
+export const settled_promises = new WeakSet();
+
+/** @param {Promise<any>} promise */
+export function is_promise_settled(promise) {
+	return settled_promises.has(promise);
+}
+
 /**
  * @param {Array<Promise<void>>} blockers
  * @param {Array<() => any>} sync
@@ -239,7 +247,10 @@ export function run(thunks) {
 
 	var promise = Promise.resolve(thunks[0]()).catch(handle_error);
 
+	/** @type {Array<Promise<void>>} */
 	var promises = [promise];
+
+	promise.finally(() => settled_promises.add(promise));
 
 	for (const fn of thunks.slice(1)) {
 		promise = promise
@@ -261,6 +272,8 @@ export function run(thunks) {
 				current_batch?.deactivate();
 			});
 
+		const p = promise;
+		promise.finally(() => settled_promises.add(p));
 		promises.push(promise);
 	}
 
