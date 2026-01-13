@@ -110,7 +110,7 @@ export function push_reaction_value(value) {
  * The dependencies of the reaction that is currently being executed. In many cases,
  * the dependencies are unchanged between runs, and so this will be `null` unless
  * and until a new dependency is accessed — we track this via `skipped_deps`
- * @type {null | Value[]}
+ * @type {null | Set<Value>}
  */
 let new_deps = null;
 
@@ -236,7 +236,7 @@ export function update_reaction(reaction) {
 
 	var flags = reaction.f;
 
-	new_deps = /** @type {null | Value[]} */ (null);
+	new_deps = /** @type {null | Set<Value>} */ (null);
 	skipped_deps = 0;
 	untracked_writes = null;
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
@@ -266,12 +266,13 @@ export function update_reaction(reaction) {
 			remove_reactions(reaction, skipped_deps);
 
 			if (deps !== null && skipped_deps > 0) {
-				deps.length = skipped_deps + new_deps.length;
-				for (i = 0; i < new_deps.length; i++) {
-					deps[skipped_deps + i] = new_deps[i];
+				deps.length = skipped_deps + new_deps.size;
+				i = skipped_deps;
+				for (var dep of new_deps) {
+					deps[i++] = dep;
 				}
 			} else {
-				reaction.deps = deps = new_deps;
+				reaction.deps = deps = Array.from(new_deps);
 			}
 
 			if (effect_tracking() && (reaction.f & CONNECTED) !== 0) {
@@ -368,7 +369,7 @@ function remove_reaction(signal, dependency) {
 		// Destroying a child effect while updating a parent effect can cause a dependency to appear
 		// to be unused, when in fact it is used by the currently-updating parent. Checking `new_deps`
 		// allows us to skip the expensive work of disconnecting and immediately reconnecting it
-		(new_deps === null || !new_deps.includes(dependency))
+		(new_deps === null || !new_deps.has(dependency))
 	) {
 		var derived = /** @type {Derived} */ (dependency);
 
@@ -524,10 +525,8 @@ export function get(signal) {
 					// rather than updating `new_deps`, which creates GC cost
 					if (new_deps === null && deps !== null && deps[skipped_deps] === signal) {
 						skipped_deps++;
-					} else if (new_deps === null) {
-						new_deps = [signal];
-					} else if (!new_deps.includes(signal)) {
-						new_deps.push(signal);
+					} else {
+						(new_deps ??= new Set()).add(signal);
 					}
 				}
 			} else {
