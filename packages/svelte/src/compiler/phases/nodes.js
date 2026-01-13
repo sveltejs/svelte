@@ -150,45 +150,143 @@ export function get_name(node) {
 }
 
 /**
+ * Gets all fragment children from a block or boundary node that should be recursively checked
+ * @param {AST.EachBlock | AST.IfBlock | AST.AwaitBlock | AST.KeyBlock | AST.SvelteBoundary} node
+ * @returns {AST.SvelteNode[]}
+ */
+function get_recursive_fragments(node) {
+	switch (node.type) {
+		case 'EachBlock':
+			return [...node.body.nodes, ...(node.fallback?.nodes ?? [])];
+		case 'IfBlock':
+			return [...node.consequent.nodes, ...(node.alternate?.nodes ?? [])];
+		case 'AwaitBlock':
+			return [
+				...(node.pending?.nodes ?? []),
+				...(node.then?.nodes ?? []),
+				...(node.catch?.nodes ?? [])
+			];
+		case 'KeyBlock':
+			return node.fragment.nodes;
+		case 'SvelteBoundary':
+			return node.fragment.nodes;
+	}
+}
+
+/**
+ * Checks if a child should be recursively explored for rich content
+ * @param {AST.SvelteNode} child
+ * @returns {child is AST.EachBlock | AST.IfBlock | AST.AwaitBlock | AST.KeyBlock | AST.SvelteBoundary}
+ */
+function should_recurse(child) {
+	return (
+		child.type === 'EachBlock' ||
+		child.type === 'IfBlock' ||
+		child.type === 'AwaitBlock' ||
+		child.type === 'KeyBlock' ||
+		child.type === 'SvelteBoundary'
+	);
+}
+
+/**
+ * Checks if a child is a non-content node that should be ignored for rich content detection
+ * (snippet definitions, const declarations, etc.)
+ * @param {AST.SvelteNode} child
+ * @returns {boolean}
+ */
+function is_ignored_node(child) {
+	return child.type === 'SnippetBlock' || child.type === 'ConstTag' || child.type === 'DebugTag';
+}
+
+/**
+ * Checks if a child is rich content for an <option> element
+ * @param {AST.SvelteNode} child
+ * @returns {boolean}
+ */
+function is_option_rich_content(child) {
+	if (child.type === 'Text' || child.type === 'ExpressionTag' || child.type === 'Comment') {
+		return false;
+	}
+	if (is_ignored_node(child)) {
+		return false;
+	}
+	if (should_recurse(child)) {
+		return get_recursive_fragments(child).some(is_option_rich_content);
+	}
+	return true;
+}
+
+/**
+ * Checks if a child is rich content for an <optgroup> element
+ * @param {AST.SvelteNode} child
+ * @returns {boolean}
+ */
+function is_optgroup_rich_content(child) {
+	// For optgroup, only <option> elements, comments, and empty/whitespace text nodes are "normal" content.
+	if (child.type === 'Comment') {
+		return false;
+	}
+	if (child.type === 'RegularElement' && child.name === 'option') {
+		return false;
+	}
+	if (child.type === 'Text' && child.data.trim() === '') {
+		return false;
+	}
+	if (is_ignored_node(child)) {
+		return false;
+	}
+	if (should_recurse(child)) {
+		return get_recursive_fragments(child).some(is_optgroup_rich_content);
+	}
+	return true;
+}
+
+/**
+ * Checks if a child is rich content for a <select> element
+ * @param {AST.SvelteNode} child
+ * @returns {boolean}
+ */
+function is_select_rich_content(child) {
+	// For select, only <option>, <optgroup> elements, comments, and empty/whitespace text nodes are "normal" content.
+	if (child.type === 'Comment') {
+		return false;
+	}
+	if (child.type === 'RegularElement' && (child.name === 'option' || child.name === 'optgroup')) {
+		return false;
+	}
+	if (child.type === 'Text' && child.data.trim() === '') {
+		return false;
+	}
+	if (is_ignored_node(child)) {
+		return false;
+	}
+	if (should_recurse(child)) {
+		return get_recursive_fragments(child).some(is_select_rich_content);
+	}
+	return true;
+}
+
+/**
  * Checks if an <option>, <optgroup>, or <select> element has rich content that requires special hydration handling.
  * Rich content is anything beyond simple text, expressions, and comments for <option>,
  * anything beyond <option> children for <optgroup>,
  * or anything beyond <option>, <optgroup>, and empty text for <select>.
- * Control flow blocks are considered rich content since they could contain rich content at runtime.
+ * Control flow blocks are recursively checked - they only count as rich content if they contain rich content.
  * @param {AST.RegularElement} node
  * @param {AST.SvelteNode[]} children - The trimmed/filtered children of the element
  * @returns {boolean}
  */
 export function is_customizable_select_element_with_rich_content(node, children) {
 	if (node.name === 'option') {
-		return children.some(
-			(child) => child.type !== 'Text' && child.type !== 'ExpressionTag' && child.type !== 'Comment'
-		);
+		return children.some(is_option_rich_content);
 	}
 
 	if (node.name === 'optgroup') {
-		return children.some(
-			(child) =>
-				// For optgroup, only <option> elements, comments, and empty/whitespace text nodes are "normal" content.
-				// Non-empty text nodes, expression tags, and control flow blocks count as rich content since browsers
-				// that don't support rich options will strip them (and control flow could contain rich content at runtime)
-				child.type !== 'Comment' &&
-				(child.type !== 'RegularElement' || child.name !== 'option') &&
-				(child.type !== 'Text' || child.data.trim() !== '')
-		);
+		return children.some(is_optgroup_rich_content);
 	}
 
 	if (node.name === 'select') {
-		return children.some(
-			(child) =>
-				// For select, only <option>, <optgroup> elements, comments, and empty/whitespace text nodes are "normal" content.
-				// Anything else (including non-empty text nodes, expression tags, and control flow blocks) counts as rich content
-				// since control flow could contain rich content at runtime
-				child.type !== 'Comment' &&
-				(child.type !== 'RegularElement' ||
-					(child.name !== 'option' && child.name !== 'optgroup')) &&
-				(child.type !== 'Text' || child.data.trim() !== '')
-		);
+		return children.some(is_select_rich_content);
 	}
 
 	return false;
