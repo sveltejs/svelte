@@ -375,7 +375,7 @@ export function RegularElement(node, context) {
 		context.state.template.push_comment();
 
 		// Create a separate template for the rich content
-		const template_name = context.state.scope.root.unique('option_content');
+		const template_name = context.state.scope.root.unique('rich_select_content');
 		const fragment_id = b.id(context.state.scope.generate('fragment'));
 		const anchor_id = b.id(context.state.scope.generate('anchor'));
 
