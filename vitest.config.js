@@ -32,7 +32,8 @@ export default defineConfig({
 		include: [
 			'packages/svelte/**/*.test.ts',
 			'packages/svelte/tests/*/test.ts',
-			'packages/svelte/tests/runtime-browser/test-ssr.ts'
+			'packages/svelte/tests/runtime-browser/test-ssr.ts',
+			'packages/parse-css/tests/test.ts'
 		],
 		exclude: [...configDefaults.exclude, '**/samples/**'],
 		coverage: {

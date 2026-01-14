@@ -1,0 +1,39 @@
+{
+  "name": "@sveltejs/parse-css",
+  "version": "0.0.1",
+  "description": "A partial-coverage CSS parser",
+  "license": "MIT",
+  "type": "module",
+  "main": "src/index.js",
+  "types": "types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./src/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "src",
+    "types"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sveltejs/svelte.git",
+    "directory": "packages/parse-css"
+  },
+  "bugs": {
+    "url": "https://github.com/sveltejs/svelte/issues"
+  },
+  "homepage": "https://svelte.dev",
+  "scripts": {
+    "check": "tsc",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "vitest": "^2.1.9"
+  }
+}
