@@ -846,6 +846,7 @@ declare module 'svelte/compiler' {
 	import type { SourceMap } from 'magic-string';
 	import type { ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, Expression, Identifier, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression, SourceLocation } from 'estree';
 	import type { Location } from 'locate-character';
+	import type { BaseNode as ParseCSSBaseNode, Combinator as ParseCSSCombinator, TypeSelector as ParseCSSTypeSelector, IdSelector as ParseCSSIdSelector, ClassSelector as ParseCSSClassSelector, AttributeSelector as ParseCSSAttributeSelector, PseudoElementSelector as ParseCSSPseudoElementSelector, Percentage as ParseCSSPercentage, NestingSelector as ParseCSSNestingSelector, Nth as ParseCSSNth, Declaration as ParseCSSDeclaration } from '@sveltejs/parse-css';
 	import type { default as ts } from 'esrap/languages/ts';
 	/**
 	 * `compile` converts your `.svelte` source code into a JavaScript module that exports a component
@@ -1662,10 +1663,38 @@ declare module 'svelte/compiler' {
 		frame?: string;
 	};
 	namespace _CSS {
-		export interface BaseNode {
-			start: number;
-			end: number;
+		// Re-export unchanged types from @sveltejs/parse-css
+		export type BaseNode = ParseCSSBaseNode;
+		export type Combinator = ParseCSSCombinator;
+		export type TypeSelector = ParseCSSTypeSelector;
+		export type IdSelector = ParseCSSIdSelector;
+		export type ClassSelector = ParseCSSClassSelector;
+		export type AttributeSelector = ParseCSSAttributeSelector;
+		export type PseudoElementSelector = ParseCSSPseudoElementSelector;
+		export type Percentage = ParseCSSPercentage;
+		export type NestingSelector = ParseCSSNestingSelector;
+		export type Nth = ParseCSSNth;
+		export type Declaration = ParseCSSDeclaration;
+
+		// PseudoClassSelector references SelectorList, so we need to define it here
+		export interface PseudoClassSelector extends BaseNode {
+			type: 'PseudoClassSelector';
+			name: string;
+			args: SelectorList | null;
 		}
+
+		export type SimpleSelector =
+			| TypeSelector
+			| IdSelector
+			| ClassSelector
+			| AttributeSelector
+			| PseudoElementSelector
+			| PseudoClassSelector
+			| Percentage
+			| Nth
+			| NestingSelector;
+
+		// Svelte-specific types (with metadata or additional fields)
 
 		export interface StyleSheet extends BaseNode {
 			type: 'StyleSheet';
@@ -1730,80 +1759,9 @@ declare module 'svelte/compiler' {
 			selectors: SimpleSelector[];
 		}
 
-		export interface TypeSelector extends BaseNode {
-			type: 'TypeSelector';
-			name: string;
-		}
-
-		export interface IdSelector extends BaseNode {
-			type: 'IdSelector';
-			name: string;
-		}
-
-		export interface ClassSelector extends BaseNode {
-			type: 'ClassSelector';
-			name: string;
-		}
-
-		export interface AttributeSelector extends BaseNode {
-			type: 'AttributeSelector';
-			name: string;
-			matcher: string | null;
-			value: string | null;
-			flags: string | null;
-		}
-
-		export interface PseudoElementSelector extends BaseNode {
-			type: 'PseudoElementSelector';
-			name: string;
-		}
-
-		export interface PseudoClassSelector extends BaseNode {
-			type: 'PseudoClassSelector';
-			name: string;
-			args: SelectorList | null;
-		}
-
-		export interface Percentage extends BaseNode {
-			type: 'Percentage';
-			value: string;
-		}
-
-		export interface NestingSelector extends BaseNode {
-			type: 'NestingSelector';
-			name: '&';
-		}
-
-		export interface Nth extends BaseNode {
-			type: 'Nth';
-			value: string;
-		}
-
-		export type SimpleSelector =
-			| TypeSelector
-			| IdSelector
-			| ClassSelector
-			| AttributeSelector
-			| PseudoElementSelector
-			| PseudoClassSelector
-			| Percentage
-			| Nth
-			| NestingSelector;
-
-		export interface Combinator extends BaseNode {
-			type: 'Combinator';
-			name: string;
-		}
-
 		export interface Block extends BaseNode {
 			type: 'Block';
 			children: Array<Declaration | Rule | Atrule>;
-		}
-
-		export interface Declaration extends BaseNode {
-			type: 'Declaration';
-			property: string;
-			value: string;
 		}
 
 		// for zimmerframe

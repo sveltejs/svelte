@@ -29,10 +29,13 @@
   },
   "homepage": "https://svelte.dev",
   "scripts": {
+    "build": "pnpm generate:types",
+    "generate:types": "node scripts/generate-types.js",
     "check": "tsc",
     "test": "vitest run"
   },
   "devDependencies": {
+    "dts-buddy": "^0.5.5",
     "typescript": "^5.5.4",
     "vitest": "^2.1.9"
   }

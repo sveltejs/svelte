@@ -1,4 +1,4 @@
-/** @import * as CSS from '../types/index.js' */
+/** @import * as CSS from './public.js' */
 /** @import { Parser } from './parser.js' */
 import * as e from './error.js';
 

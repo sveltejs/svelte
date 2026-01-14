@@ -26,9 +26,6 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^2.1.9
         version: 2.1.9(vitest@2.1.9(@types/node@20.19.17)(jsdom@25.0.1)(lightningcss@1.23.0)(sass@1.70.0)(terser@5.27.0))
-      acorn:
-        specifier: ^8.12.1
-        version: 8.15.0
       eslint:
         specifier: ^9.9.1
         version: 9.9.1
@@ -38,9 +35,6 @@ importers:
       eslint-plugin-svelte:
         specifier: ^3.11.0
         version: 3.11.0(eslint@9.9.1)(svelte@packages+svelte)
-      esrap:
-        specifier: ^2.2.1
-        version: 2.2.1
       jsdom:
         specifier: 25.0.1
         version: 25.0.1
@@ -68,16 +62,12 @@ importers:
       vitest:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@20.19.17)(jsdom@25.0.1)(lightningcss@1.23.0)(sass@1.70.0)(terser@5.27.0)
-      zimmerframe:
-        specifier: ^1.1.2
-        version: 1.1.2
 
   packages/parse-css:
-    dependencies:
-      locate-character:
-        specifier: ^3.0.0
-        version: 3.0.0
     devDependencies:
+      dts-buddy:
+        specifier: ^0.5.5
+        version: 0.5.5(typescript@5.5.4)
       typescript:
         specifier: ^5.5.4
         version: 5.5.4

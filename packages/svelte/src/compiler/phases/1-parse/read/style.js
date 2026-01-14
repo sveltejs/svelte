@@ -1,5 +1,8 @@
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
+/** @import { Visitors } from 'zimmerframe' */
+/** @import { StyleSheet as CSSStyleSheet, Rule as CSSRule, Atrule as CSSAtrule, Node as CSSNode } from '@sveltejs/parse-css' */
+import { walk } from 'zimmerframe';
 import { parse as parse_css, CSSParseError } from '@sveltejs/parse-css';
 import * as e from '../../../errors.js';
 
@@ -17,7 +20,7 @@ export default function read_style(parser, start, attributes) {
 	const styles = parser.template.slice(content_start, content_end);
 
 	// Parse the CSS
-	/** @type {import('@sveltejs/parse-css').StyleSheet} */
+	/** @type {CSSStyleSheet} */
 	let parsed;
 	try {
 		parsed = parse_css(styles);
@@ -112,200 +115,68 @@ function find_style_end(parser) {
 /**
  * Walk the parse-css AST and add Svelte-specific metadata fields.
  * Also adjusts positions by the offset.
- * @param {Array<import('@sveltejs/parse-css').Rule | import('@sveltejs/parse-css').Atrule>} children
+ * @param {Array<CSSRule | CSSAtrule>} children
  * @param {number} offset
  * @returns {Array<AST.CSS.Rule | AST.CSS.Atrule>}
  */
 function add_metadata(children, offset) {
-	/** @type {Array<AST.CSS.Rule | AST.CSS.Atrule>} */
-	const result = [];
-
-	for (const child of children) {
-		if (child.type === 'Rule') {
-			result.push(convert_rule(child, offset));
-		} else {
-			result.push(convert_atrule(child, offset));
-		}
-	}
-
-	return result;
-}
-
-/**
- * @param {import('@sveltejs/parse-css').Rule} rule
- * @param {number} offset
- * @returns {AST.CSS.Rule}
- */
-function convert_rule(rule, offset) {
-	return {
-		type: 'Rule',
-		start: rule.start + offset,
-		end: rule.end + offset,
-		prelude: convert_selector_list(rule.prelude, offset),
-		block: convert_block(rule.block, offset),
-		metadata: {
-			parent_rule: null,
-			has_local_selectors: false,
-			has_global_selectors: false,
-			is_global_block: false
-		}
-	};
-}
-
-/**
- * @param {import('@sveltejs/parse-css').Atrule} atrule
- * @param {number} offset
- * @returns {AST.CSS.Atrule}
- */
-function convert_atrule(atrule, offset) {
-	return {
-		type: 'Atrule',
-		start: atrule.start + offset,
-		end: atrule.end + offset,
-		name: atrule.name,
-		prelude: atrule.prelude,
-		block: atrule.block ? convert_block(atrule.block, offset) : null
-	};
-}
-
-/**
- * @param {import('@sveltejs/parse-css').SelectorList} list
- * @param {number} offset
- * @returns {AST.CSS.SelectorList}
- */
-function convert_selector_list(list, offset) {
-	return {
-		type: 'SelectorList',
-		start: list.start + offset,
-		end: list.end + offset,
-		children: list.children.map((child) => convert_complex_selector(child, offset))
-	};
-}
-
-/**
- * @param {import('@sveltejs/parse-css').ComplexSelector} selector
- * @param {number} offset
- * @returns {AST.CSS.ComplexSelector}
- */
-function convert_complex_selector(selector, offset) {
-	return {
-		type: 'ComplexSelector',
-		start: selector.start + offset,
-		end: selector.end + offset,
-		children: selector.children.map((child) => convert_relative_selector(child, offset)),
-		metadata: {
-			rule: null,
-			is_global: false,
-			used: false
-		}
-	};
-}
-
-/**
- * @param {import('@sveltejs/parse-css').RelativeSelector} selector
- * @param {number} offset
- * @returns {AST.CSS.RelativeSelector}
- */
-function convert_relative_selector(selector, offset) {
-	return {
-		type: 'RelativeSelector',
-		start: selector.start + offset,
-		end: selector.end + offset,
-		combinator: selector.combinator
-			? {
-					type: 'Combinator',
-					start: selector.combinator.start + offset,
-					end: selector.combinator.end + offset,
-					name: selector.combinator.name
-				}
-			: null,
-		selectors: selector.selectors.map((s) => convert_simple_selector(s, offset)),
-		metadata: {
-			is_global: false,
-			is_global_like: false,
-			scoped: false
-		}
-	};
-}
-
-/**
- * @param {import('@sveltejs/parse-css').SimpleSelector} selector
- * @param {number} offset
- * @returns {AST.CSS.SimpleSelector}
- */
-function convert_simple_selector(selector, offset) {
-	const base = {
-		start: selector.start + offset,
-		end: selector.end + offset
-	};
-
-	switch (selector.type) {
-		case 'TypeSelector':
-			return { ...base, type: 'TypeSelector', name: selector.name };
-		case 'IdSelector':
-			return { ...base, type: 'IdSelector', name: selector.name };
-		case 'ClassSelector':
-			return { ...base, type: 'ClassSelector', name: selector.name };
-		case 'AttributeSelector':
+	/** @type {Visitors<CSSNode, { offset: number }>} */
+	const visitors = {
+		_: (node, ctx) => {
+			const result = ctx.next() ?? node;
 			return {
-				...base,
-				type: 'AttributeSelector',
-				name: selector.name,
-				matcher: selector.matcher,
-				value: selector.value,
-				flags: selector.flags
+				...result,
+				start: result.start + ctx.state.offset,
+				end: result.end + ctx.state.offset
 			};
-		case 'PseudoElementSelector':
-			return { ...base, type: 'PseudoElementSelector', name: selector.name };
-		case 'PseudoClassSelector':
-			return {
-				...base,
-				type: 'PseudoClassSelector',
-				name: selector.name,
-				args: selector.args ? convert_selector_list(selector.args, offset) : null
-			};
-		case 'Percentage':
-			return { ...base, type: 'Percentage', value: selector.value };
-		case 'Nth':
-			return { ...base, type: 'Nth', value: selector.value };
-		case 'NestingSelector':
-			return { ...base, type: 'NestingSelector', name: '&' };
-	}
-}
-
-/**
- * @param {import('@sveltejs/parse-css').Block} block
- * @param {number} offset
- * @returns {AST.CSS.Block}
- */
-function convert_block(block, offset) {
-	return {
-		type: 'Block',
-		start: block.start + offset,
-		end: block.end + offset,
-		children: block.children.map((child) => {
-			if (child.type === 'Declaration') {
-				return convert_declaration(child, offset);
-			} else if (child.type === 'Rule') {
-				return convert_rule(child, offset);
-			} else {
-				return convert_atrule(child, offset);
+		},
+		// Nodes with children that need to be visited
+		Atrule: (node, { visit }) => ({
+			...node,
+			block: node.block && /** @type {CSSNode & { type: 'Block' }} */ (visit(node.block))
+		}),
+		Rule: (node, { visit }) => ({
+			...node,
+			prelude: /** @type {CSSNode & { type: 'SelectorList' }} */ (visit(node.prelude)),
+			block: /** @type {CSSNode & { type: 'Block' }} */ (visit(node.block)),
+			metadata: {
+				parent_rule: null,
+				has_local_selectors: false,
+				has_global_selectors: false,
+				is_global_block: false
 			}
+		}),
+		SelectorList: (node, { visit }) => ({
+			...node,
+			children: node.children.map(
+				(child) => /** @type {CSSNode & { type: 'ComplexSelector' }} */ (visit(child))
+			)
+		}),
+		ComplexSelector: (node, { visit }) => ({
+			...node,
+			children: node.children.map(
+				(child) => /** @type {CSSNode & { type: 'RelativeSelector' }} */ (visit(child))
+			),
+			metadata: { rule: null, is_global: false, used: false }
+		}),
+		RelativeSelector: (node, { visit }) => ({
+			...node,
+			combinator:
+				node.combinator && /** @type {CSSNode & { type: 'Combinator' }} */ (visit(node.combinator)),
+			selectors: node.selectors.map((child) => /** @type {any} */ (visit(child))),
+			metadata: { is_global: false, is_global_like: false, scoped: false }
+		}),
+		Block: (node, { visit }) => ({
+			...node,
+			children: node.children.map((child) => /** @type {any} */ (visit(child)))
+		}),
+		PseudoClassSelector: (node, { visit }) => ({
+			...node,
+			args: node.args && /** @type {CSSNode & { type: 'SelectorList' }} */ (visit(node.args))
 		})
 	};
-}
 
-/**
- * @param {import('@sveltejs/parse-css').Declaration} decl
- * @param {number} offset
- * @returns {AST.CSS.Declaration}
- */
-function convert_declaration(decl, offset) {
-	return {
-		type: 'Declaration',
-		start: decl.start + offset,
-		end: decl.end + offset,
-		property: decl.property,
-		value: decl.value
-	};
+	return children.map(
+		(child) => /** @type {AST.CSS.Rule | AST.CSS.Atrule} */ (walk(child, { offset }, visitors))
+	);
 }
