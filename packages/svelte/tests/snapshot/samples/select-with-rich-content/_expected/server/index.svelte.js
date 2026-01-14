@@ -1,34 +1,34 @@
 import * as $ from 'svelte/internal/server';
 import Option from './Option.svelte';
 
+function opt($$renderer) {
+	$$renderer.option({}, ($$renderer) => {
+		$$renderer.push(`Snippet`);
+	});
+}
+
+function option_snippet($$renderer) {
+	$$renderer.option({}, ($$renderer) => {
+		$$renderer.push(`Rendered`);
+	});
+}
+
+function option_snippet2($$renderer) {
+	$$renderer.option({}, ($$renderer) => {
+		$$renderer.push(`Rendered in group`);
+	});
+}
+
+function conditional_option($$renderer) {
+	$$renderer.option({}, ($$renderer) => {
+		$$renderer.push(`Conditional`);
+	});
+}
+
 export default function Select_with_rich_content($$renderer) {
 	let items = [1, 2, 3];
 	let show = true;
 	let html = '<option>From HTML</option>';
-
-	function opt($$renderer) {
-		$$renderer.option({}, ($$renderer) => {
-			$$renderer.push(`Snippet`);
-		});
-	}
-
-	function option_snippet($$renderer) {
-		$$renderer.option({}, ($$renderer) => {
-			$$renderer.push(`Rendered`);
-		});
-	}
-
-	function option_snippet2($$renderer) {
-		$$renderer.option({}, ($$renderer) => {
-			$$renderer.push(`Rendered in group`);
-		});
-	}
-
-	function conditional_option($$renderer) {
-		$$renderer.option({}, ($$renderer) => {
-			$$renderer.push(`Conditional`);
-		});
-	}
 
 	$$renderer.push(`<select>`);
 
@@ -74,13 +74,9 @@ export default function Select_with_rich_content($$renderer) {
 		});
 	}
 
-	$$renderer.push(`<!----></select> <select>`);
-
-	$$renderer.option({}, ($$renderer) => {
-		$$renderer.push(`Normal`);
-	});
-
-	$$renderer.push(`</select> <select><!--[-->`);
+	$$renderer.push(`<!----></select>  <select><!>`);
+	opt($$renderer);
+	$$renderer.push(`<!----></select> <select><!--[-->`);
 
 	const each_array_1 = $.ensure_array_like(items);
 
@@ -194,11 +190,11 @@ export default function Select_with_rich_content($$renderer) {
 
 	$$renderer.push(`<!--]--></select> <select><!>`);
 	Option($$renderer, {});
-	$$renderer.push(`<!----></select> <select><!>`);
+	$$renderer.push(`<!----></select>  <select><!>`);
 	option_snippet($$renderer);
 	$$renderer.push(`<!----></select> <select><!>${$.html(html)}</select> <select><optgroup label="Group"><!>`);
 	Option($$renderer, {});
-	$$renderer.push(`<!----></optgroup></select> <select><optgroup label="Group"><!>`);
+	$$renderer.push(`<!----></optgroup></select>  <select><optgroup label="Group"><!>`);
 	option_snippet2($$renderer);
 	$$renderer.push(`<!----></optgroup></select> <select>`);
 
@@ -224,7 +220,7 @@ export default function Select_with_rich_content($$renderer) {
 		Option($$renderer, {});
 	}
 
-	$$renderer.push(`<!--]--></select> <select><!>`);
+	$$renderer.push(`<!--]--></select>  <select><!>`);
 
 	if (show) {
 		$$renderer.push('<!--[-->');
