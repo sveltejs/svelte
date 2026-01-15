@@ -770,7 +770,39 @@ function get_ancestor_elements(node, adjacent_only, seen = new Set()) {
 		}
 
 		if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
+			// Special handling for <option> inside <select>: elements inside <option> should
+			// also be considered descendants of <selectedcontent>, which clones the selected option's content
+			if (parent.type === 'RegularElement' && parent.name === 'option') {
+				const is_direct_child = ancestors.length === 0;
+
+				const select_element = path.findLast(
+					(element, j) => element.type === 'RegularElement' && element.name === 'select' && j < i
+				);
+
+				if (select_element && (!adjacent_only || is_direct_child)) {
+					/** @type {Compiler.AST.RegularElement | null} */
+					let selectedcontent_element = null;
+					walk(select_element, null, {
+						RegularElement(child, context) {
+							if (child.name === 'selectedcontent') {
+								selectedcontent_element = child;
+								context.stop();
+								return;
+							}
+							context.next();
+						}
+					});
+
+					if (adjacent_only && is_direct_child && selectedcontent_element) {
+						return [selectedcontent_element];
+					} else if (selectedcontent_element) {
+						ancestors.push(selectedcontent_element);
+					}
+				}
+			}
+
 			ancestors.push(parent);
+
 			if (adjacent_only) {
 				break;
 			}
