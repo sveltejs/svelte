@@ -10,6 +10,7 @@ import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { attributes } from './index.js';
 import { get_render_context, with_render_context, init_render_context } from './render-context.js';
 import { sha256 } from './crypto.js';
+import * as devalue from 'devalue';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
@@ -669,7 +670,7 @@ export class Renderer {
 				for (const p of v.promises) await p;
 			}
 
-			entries.push(`[${JSON.stringify(k)},${v.serialized}]`);
+			entries.push(`[${devalue.uneval(k)},${v.serialized}]`);
 		}
 
 		let prelude = `const h = (window.__svelte ??= {}).h ??= new Map();`;
