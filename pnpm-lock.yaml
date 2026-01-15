@@ -90,8 +90,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       devalue:
-        specifier: ^5.5.0
-        version: 5.5.0
+        specifier: ^5.6.2
+        version: 5.6.2
       esm-env:
         specifier: ^1.2.1
         version: 1.2.1
@@ -1219,8 +1219,8 @@ packages:
     engines: {node: '>=0.10'}
     hasBin: true
 
-  devalue@5.5.0:
-    resolution: {integrity: sha512-69sM5yrHfFLJt0AZ9QqZXGCPfJ7fQjvpln3Rq5+PS03LD32Ost1Q9N+eEnaQwGRIriKkMImXD56ocjQmfjbV3w==}
+  devalue@5.6.2:
+    resolution: {integrity: sha512-nPRkjWzzDQlsejL1WVifk5rvcFi/y1onBRxjaFMjZeR9mFpqu2gmAZ9xUB9/IEanEP/vBtGeGganC/GO1fmufg==}
 
   dir-glob@3.0.1:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
@@ -3500,7 +3500,7 @@ snapshots:
   detect-libc@1.0.3:
     optional: true
 
-  devalue@5.5.0: {}
+  devalue@5.6.2: {}
 
   dir-glob@3.0.1:
     dependencies:
