@@ -40,7 +40,12 @@ function print_error(renderer, message) {
 
 	// eslint-disable-next-line no-console
 	console.error(message);
-	renderer.head((r) => r.push(`<script>console.error(${JSON.stringify(message)})</script>`));
+	renderer.head((r) =>
+		r.push(
+			// ensure that `</script>` can't leak in to the script contents
+			`<script>console.error(${JSON.stringify(message).replaceAll('</', '<\\u002f')})</script>`
+		)
+	);
 }
 
 /**
