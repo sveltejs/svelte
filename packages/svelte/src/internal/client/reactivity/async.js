@@ -44,6 +44,9 @@ export function is_promise_settled(promise) {
 export function flatten(blockers, sync, async, fn) {
 	const d = is_runes() ? derived : derived_safe_equal;
 
+	// Filter out already-settled blockers - no need to wait for them
+	blockers = blockers.filter((b) => !is_promise_settled(b));
+
 	if (async.length === 0 && blockers.length === 0) {
 		fn(sync.map(d));
 		return;
@@ -53,40 +56,41 @@ export function flatten(blockers, sync, async, fn) {
 	var parent = /** @type {Effect} */ (active_effect);
 
 	var restore = capture();
+	var blocker_promise =
+		blockers.length === 1 ? blockers[0] : blockers.length > 1 ? Promise.all(blockers) : null;
 
-	function run() {
-		Promise.all(async.map((expression) => async_derived(expression)))
-			.then((result) => {
-				restore();
+	/** @param {Value[]} values */
+	function finish(values) {
+		restore();
 
-				try {
-					fn([...sync.map(d), ...result]);
-				} catch (error) {
-					// ignore errors in blocks that have already been destroyed
-					if ((parent.f & DESTROYED) === 0) {
-						invoke_error_boundary(error, parent);
-					}
-				}
-
-				batch?.deactivate();
-				unset_context();
-			})
-			.catch((error) => {
+		try {
+			fn(values);
+		} catch (error) {
+			if ((parent.f & DESTROYED) === 0) {
 				invoke_error_boundary(error, parent);
-			});
+			}
+		}
+
+		batch?.deactivate();
+		unset_context();
 	}
 
-	if (blockers.length > 0) {
-		Promise.all(blockers).then(() => {
-			restore();
+	// Fast path: blockers but no async expressions
+	if (async.length === 0) {
+		/** @type {Promise<any>} */ (blocker_promise).then(() => finish(sync.map(d)));
+		return;
+	}
 
-			try {
-				return run();
-			} finally {
-				batch?.deactivate();
-				unset_context();
-			}
-		});
+	// Full path: has async expressions
+	function run() {
+		restore();
+		Promise.all(async.map((expression) => async_derived(expression)))
+			.then((result) => finish([...sync.map(d), ...result]))
+			.catch((error) => invoke_error_boundary(error, parent));
+	}
+
+	if (blocker_promise) {
+		blocker_promise.then(run);
 	} else {
 		run();
 	}
