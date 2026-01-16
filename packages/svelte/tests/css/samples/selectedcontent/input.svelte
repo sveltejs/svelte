@@ -22,4 +22,8 @@
 	select > button > selectedcontent > b {
 		color: blue;
 	}
+
+	selectedcontent:has(b){
+		background-color: rebeccapurple;
+	}
 </style>

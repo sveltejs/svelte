@@ -14,3 +14,7 @@
 	select.svelte-xyz > button:where(.svelte-xyz) > selectedcontent:where(.svelte-xyz) > b:where(.svelte-xyz) {
 		color: blue;
 	}
+
+	selectedcontent.svelte-xyz:has(b:where(.svelte-xyz)){
+		background-color: rebeccapurple;
+	}
