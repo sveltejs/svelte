@@ -26,7 +26,7 @@ import {
 	build_set_class,
 	build_set_style
 } from './shared/element.js';
-import { process_children } from './shared/fragment.js';
+import { process_children, is_static_element } from './shared/fragment.js';
 import { build_render_statement, build_template_chunk, Memoizer } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
 import { Template } from '../transform-template/template.js';
@@ -421,8 +421,9 @@ export function RegularElement(node, context) {
 		let arg = context.state.node;
 
 		// If `hydrate_node` is set inside the element, we need to reset it
-		// after the element has been hydrated
-		let needs_reset = trimmed.some((node) => node.type !== 'Text');
+		// after the element has been hydrated. We need to check if any child
+		// would actually advance the hydrate_node cursor - static elements don't.
+		let needs_reset = trimmed.some((node) => node.type !== 'Text' && !is_static_element(node));
 
 		// The same applies if it's a `<template>` element, since we need to
 		// set the value of `hydrate_node` to `node.content`
