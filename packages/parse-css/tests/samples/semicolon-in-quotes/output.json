@@ -1,0 +1,69 @@
+{
+	"type": "StyleSheet",
+	"start": 0,
+	"end": 148,
+	"children": [
+		{
+			"type": "Atrule",
+			"start": 0,
+			"end": 90,
+			"name": "import",
+			"prelude": "url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap')",
+			"block": null
+		},
+		{
+			"type": "Rule",
+			"prelude": {
+				"type": "SelectorList",
+				"start": 91,
+				"end": 93,
+				"children": [
+					{
+						"type": "ComplexSelector",
+						"start": 91,
+						"end": 93,
+						"children": [
+							{
+								"type": "RelativeSelector",
+								"combinator": null,
+								"selectors": [
+									{
+										"type": "TypeSelector",
+										"name": "h1",
+										"start": 91,
+										"end": 93
+									}
+								],
+								"start": 91,
+								"end": 93
+							}
+						]
+					}
+				]
+			},
+			"block": {
+				"type": "Block",
+				"start": 94,
+				"end": 147,
+				"children": [
+					{
+						"type": "Declaration",
+						"start": 97,
+						"end": 114,
+						"property": "font-weight",
+						"value": "bold"
+					},
+					{
+						"type": "Declaration",
+						"start": 117,
+						"end": 144,
+						"property": "background",
+						"value": "url('whatever')"
+					}
+				]
+			},
+			"start": 91,
+			"end": 147
+		}
+	]
+}
