@@ -440,7 +440,7 @@ export class Batch {
 
 		if (!this.is_deferred()) {
 			this.revive();
-		} else if (queued_root_effects.length > 0) {
+		} else if (!is_flushing && queued_root_effects.length > 0) {
 			// needed primarily for $effect.pending()
 			this.flush();
 		}
