@@ -42,6 +42,7 @@ function print_error(renderer, message) {
 	console.error(message);
 	renderer.head((r) =>
 		r.push(
+			// ensure that `</script>` can't leak in to the script contents
 			`<script>console.error(${JSON.stringify(message).replaceAll('</', '<\\u002f')})</script>`
 		)
 	);
