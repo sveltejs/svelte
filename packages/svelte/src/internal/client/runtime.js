@@ -43,25 +43,14 @@ import {
 	set_dev_current_component_function,
 	set_dev_stack
 } from './context.js';
-import {
-	Batch,
-	batch_values,
-	current_batch,
-	flushSync,
-	schedule_effect
-} from './reactivity/batch.js';
+import { Batch, batch_values, flushSync, schedule_effect } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
 import { without_reactive_context } from './dom/elements/bindings/shared.js';
 import { set_signal_status, update_derived_status } from './reactivity/status.js';
 
-export let is_updating_effect = false;
-
-/** @param {boolean} value */
-export function set_is_updating_effect(value) {
-	is_updating_effect = value;
-}
+let is_updating_effect = false;
 
 export let is_destroying_effect = false;
 

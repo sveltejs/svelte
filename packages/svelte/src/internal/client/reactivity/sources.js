@@ -13,9 +13,7 @@ import {
 	is_dirty,
 	untracking,
 	is_destroying_effect,
-	push_reaction_value,
-	set_is_updating_effect,
-	is_updating_effect
+	push_reaction_value
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -261,25 +259,17 @@ export function internal_set(source, value) {
 
 export function flush_eager_effects() {
 	eager_effects_deferred = false;
-	var prev_is_updating_effect = is_updating_effect;
-	set_is_updating_effect(true);
 
-	const inspects = Array.from(eager_effects);
-
-	try {
-		for (const effect of inspects) {
-			// Mark clean inspect-effects as maybe dirty and then check their dirtiness
-			// instead of just updating the effects - this way we avoid overfiring.
-			if ((effect.f & CLEAN) !== 0) {
-				set_signal_status(effect, MAYBE_DIRTY);
-			}
-
-			if (is_dirty(effect)) {
-				update_effect(effect);
-			}
+	for (const effect of eager_effects) {
+		// Mark clean inspect-effects as maybe dirty and then check their dirtiness
+		// instead of just updating the effects - this way we avoid overfiring.
+		if ((effect.f & CLEAN) !== 0) {
+			set_signal_status(effect, MAYBE_DIRTY);
 		}
-	} finally {
-		set_is_updating_effect(prev_is_updating_effect);
+
+		if (is_dirty(effect)) {
+			update_effect(effect);
+		}
 	}
 
 	eager_effects.clear();
