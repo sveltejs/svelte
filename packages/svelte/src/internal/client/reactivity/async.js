@@ -1,4 +1,5 @@
 /** @import { Effect, TemplateNode, Value } from '#client' */
+
 import { DESTROYED, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
@@ -250,8 +251,6 @@ export function run(thunks) {
 	/** @type {Array<Promise<void>>} */
 	var promises = [promise];
 
-	promise.finally(() => settled_promises.add(promise));
-
 	for (const fn of thunks.slice(1)) {
 		promise = promise
 			.then(() => {
@@ -272,8 +271,6 @@ export function run(thunks) {
 				current_batch?.deactivate();
 			});
 
-		const p = promise;
-		promise.finally(() => settled_promises.add(p));
 		promises.push(promise);
 	}
 
@@ -284,6 +281,9 @@ export function run(thunks) {
 		.finally(() => {
 			boundary.update_pending_count(-1);
 			batch.decrement(blocking);
+			for (const p of promises) {
+				settled_promises.add(p);
+			}
 		});
 
 	return promises;
