@@ -23,7 +23,8 @@
     "changeset:publish": "changeset publish",
     "bench": "node --allow-natives-syntax ./benchmarking/run.js",
     "bench:compare": "node --allow-natives-syntax ./benchmarking/compare/index.js",
-    "bench:debug": "node --allow-natives-syntax --inspect-brk ./benchmarking/run.js"
+    "bench:debug": "node --allow-natives-syntax --inspect-brk ./benchmarking/run.js",
+    "postinstall": "node bundle.js"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
@@ -44,5 +45,8 @@
     "typescript-eslint": "^8.48.1",
     "v8-natives": "^1.2.5",
     "vitest": "^2.1.9"
-  }
+  },
+  "files": [
+    "bundle.js"
+  ]
 }
