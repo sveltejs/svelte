@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Expression, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, Pattern, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '#compiler/builders';
@@ -12,7 +12,29 @@ export function EachBlock(node, context) {
 	const state = context.state;
 
 	const each_node_meta = node.metadata;
-	const collection = /** @type {Expression} */ (context.visit(node.expression));
+	let collection = /** @type {Expression} */ (context.visit(node.expression));
+	const destructured_pattern = get_destructured_pattern(node.context);
+
+	if (destructured_pattern) {
+		if (destructured_pattern.type === 'ArrayPattern') {
+			// For array destructuring, destructure immediately during iteration
+			const indices = [];
+			for (let i = 0; i < destructured_pattern.elements.length; i++) {
+				const element = destructured_pattern.elements[i];
+				if (element && element.type !== 'RestElement') {
+					indices.push(i);
+				}
+			}
+			collection = b.call(
+				'$.to_array_destructured',
+				collection,
+				b.array(indices.map((i) => b.literal(i)))
+			);
+		} else {
+			// For object destructuring, we still need to snapshot
+			collection = b.call('$.snapshot_each_value', collection, create_object_snapshot_mapper());
+		}
+	}
 	const index =
 		each_node_meta.contains_group_binding || !node.index ? each_node_meta.index : b.id(node.index);
 
@@ -77,4 +99,22 @@ export function EachBlock(node, context) {
 	} else {
 		state.template.push(...block.body, block_close);
 	}
+}
+
+/**
+ * @param {Pattern | null} pattern
+ * @returns {import('estree').ArrayPattern | import('estree').ObjectPattern | null}
+ */
+function get_destructured_pattern(pattern) {
+	if (!pattern) return null;
+	if (pattern.type === 'ArrayPattern' || pattern.type === 'ObjectPattern') {
+		return pattern;
+	}
+
+	return null;
+}
+
+function create_object_snapshot_mapper() {
+	const value = b.id('$$value');
+	return b.arrow([value], b.call('$.snapshot_object', value));
 }
