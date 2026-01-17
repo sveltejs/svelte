@@ -98,7 +98,7 @@ export function process_children(nodes, initial, is_element, context) {
 
 			let child_state = context.state;
 
-			if (is_static_element(node, context.state)) {
+			if (is_static_element(node)) {
 				skipped += 1;
 			} else if (
 				node.type === 'EachBlock' &&
@@ -137,9 +137,8 @@ export function process_children(nodes, initial, is_element, context) {
 
 /**
  * @param {AST.SvelteNode} node
- * @param {ComponentContext["state"]} state
  */
-function is_static_element(node, state) {
+export function is_static_element(node) {
 	if (node.type !== 'RegularElement') return false;
 	if (node.fragment.metadata.dynamic) return false;
 	if (is_custom_element_node(node)) return false; // we're setting all attributes on custom elements through properties
