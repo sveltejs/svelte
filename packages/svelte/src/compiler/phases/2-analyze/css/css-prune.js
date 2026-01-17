@@ -794,7 +794,7 @@ function get_ancestor_elements(node, adjacent_only, seen = new Set()) {
 					});
 
 					if (adjacent_only && is_direct_child && selectedcontent_element) {
-						return [selectedcontent_element];
+						return [selectedcontent_element, parent];
 					} else if (selectedcontent_element) {
 						ancestors.push(selectedcontent_element);
 					}
