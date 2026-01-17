@@ -1,4 +1,5 @@
 /** @import { Effect, TemplateNode, Value } from '#client' */
+
 import { DESTROYED, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
@@ -26,6 +27,14 @@ import {
 } from './deriveds.js';
 import { aborted } from './effects.js';
 
+/** @type {WeakSet<Promise<any>>} */
+export const settled_promises = new WeakSet();
+
+/** @param {Promise<any>} promise */
+export function is_promise_settled(promise) {
+	return settled_promises.has(promise);
+}
+
 /**
  * @param {Array<Promise<void>>} blockers
  * @param {Array<() => any>} sync
@@ -34,6 +43,9 @@ import { aborted } from './effects.js';
  */
 export function flatten(blockers, sync, async, fn) {
 	const d = is_runes() ? derived : derived_safe_equal;
+
+	// Filter out already-settled blockers - no need to wait for them
+	blockers = blockers.filter((b) => !is_promise_settled(b));
 
 	if (async.length === 0 && blockers.length === 0) {
 		fn(sync.map(d));
@@ -44,40 +56,41 @@ export function flatten(blockers, sync, async, fn) {
 	var parent = /** @type {Effect} */ (active_effect);
 
 	var restore = capture();
+	var blocker_promise =
+		blockers.length === 1 ? blockers[0] : blockers.length > 1 ? Promise.all(blockers) : null;
 
-	function run() {
-		Promise.all(async.map((expression) => async_derived(expression)))
-			.then((result) => {
-				restore();
+	/** @param {Value[]} values */
+	function finish(values) {
+		restore();
 
-				try {
-					fn([...sync.map(d), ...result]);
-				} catch (error) {
-					// ignore errors in blocks that have already been destroyed
-					if ((parent.f & DESTROYED) === 0) {
-						invoke_error_boundary(error, parent);
-					}
-				}
-
-				batch?.deactivate();
-				unset_context();
-			})
-			.catch((error) => {
+		try {
+			fn(values);
+		} catch (error) {
+			if ((parent.f & DESTROYED) === 0) {
 				invoke_error_boundary(error, parent);
-			});
+			}
+		}
+
+		batch?.deactivate();
+		unset_context();
 	}
 
-	if (blockers.length > 0) {
-		Promise.all(blockers).then(() => {
-			restore();
+	// Fast path: blockers but no async expressions
+	if (async.length === 0) {
+		/** @type {Promise<any>} */ (blocker_promise).then(() => finish(sync.map(d)));
+		return;
+	}
 
-			try {
-				return run();
-			} finally {
-				batch?.deactivate();
-				unset_context();
-			}
-		});
+	// Full path: has async expressions
+	function run() {
+		restore();
+		Promise.all(async.map((expression) => async_derived(expression)))
+			.then((result) => finish([...sync.map(d), ...result]))
+			.catch((error) => invoke_error_boundary(error, parent));
+	}
+
+	if (blocker_promise) {
+		blocker_promise.then(run);
 	} else {
 		run();
 	}
@@ -239,6 +252,7 @@ export function run(thunks) {
 
 	var promise = Promise.resolve(thunks[0]()).catch(handle_error);
 
+	/** @type {Array<Promise<void>>} */
 	var promises = [promise];
 
 	for (const fn of thunks.slice(1)) {
@@ -271,6 +285,9 @@ export function run(thunks) {
 		.finally(() => {
 			boundary.update_pending_count(-1);
 			batch.decrement(blocking);
+			for (const p of promises) {
+				settled_promises.add(p);
+			}
 		});
 
 	return promises;
