@@ -1228,7 +1228,7 @@ declare module 'svelte/compiler' {
 			css?: 'injected';
 			customElement?: {
 				tag?: string;
-				shadow?: 'open' | 'none';
+				shadow?: 'open' | 'none' | ObjectExpression | undefined;
 				props?: Record<
 					string,
 					{
