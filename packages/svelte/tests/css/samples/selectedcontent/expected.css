@@ -18,3 +18,7 @@
 	selectedcontent.svelte-xyz:has(b:where(.svelte-xyz)){
 		background-color: rebeccapurple;
 	}
+
+	option.svelte-xyz > b:where(.svelte-xyz){
+		color: orange;
+	}

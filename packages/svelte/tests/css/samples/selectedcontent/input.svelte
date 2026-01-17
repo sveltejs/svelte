@@ -26,4 +26,8 @@
 	selectedcontent:has(b){
 		background-color: rebeccapurple;
 	}
+
+	option > b{
+		color: orange;
+	}
 </style>
