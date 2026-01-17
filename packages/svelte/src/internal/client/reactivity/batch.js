@@ -140,6 +140,8 @@ export class Batch {
 
 	is_fork = false;
 
+	#decrement_queued = false;
+
 	is_deferred() {
 		return this.is_fork || this.#blocking_pending > 0;
 	}
@@ -438,11 +440,16 @@ export class Batch {
 		this.#pending -= 1;
 		if (blocking) this.#blocking_pending -= 1;
 
-		if (!this.is_deferred()) {
-			this.revive();
-		} else if (!is_flushing && queued_root_effects.length > 0) {
-			// needed primarily for $effect.pending()
-			this.flush();
+		if (!this.#decrement_queued) {
+			this.#decrement_queued = true;
+			Batch.enqueue(() => {
+				this.#decrement_queued = false;
+				if (!this.is_deferred()) {
+					this.revive();
+				} else if (!is_flushing && queued_root_effects.length > 0) {
+					this.flush();
+				}
+			});
 		}
 	}
 

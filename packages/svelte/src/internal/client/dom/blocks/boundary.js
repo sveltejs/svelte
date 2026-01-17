@@ -102,6 +102,7 @@ export class Boundary {
 
 	#local_pending_count = 0;
 	#pending_count = 0;
+	#pending_count_update_queued = false;
 
 	#is_creating_fallback = false;
 
@@ -359,8 +360,14 @@ export class Boundary {
 
 		this.#local_pending_count += d;
 
-		if (this.#effect_pending) {
-			internal_set(this.#effect_pending, this.#local_pending_count);
+		if (this.#effect_pending && !this.#pending_count_update_queued) {
+			this.#pending_count_update_queued = true;
+			Batch.enqueue(() => {
+				this.#pending_count_update_queued = false;
+				if (this.#effect_pending) {
+					internal_set(this.#effect_pending, this.#local_pending_count);
+				}
+			});
 		}
 	}
 
