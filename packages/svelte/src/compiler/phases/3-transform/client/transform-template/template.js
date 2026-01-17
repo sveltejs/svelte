@@ -101,7 +101,7 @@ function stringify(item) {
 		const value = item.attributes[key];
 
 		str += ` ${key}`;
-		if (value !== undefined) str += `="${escape_html(value, true)}"`;
+		str += `="${value !== undefined ? escape_html(value, true) : ''}"`;
 	}
 
 	if (is_void(item.name)) {
