@@ -1,0 +1,5 @@
+<select>
+	<option value="a"><strong>Bold</strong> Option</option>
+	<option value="b"><em>Italic</em> Option</option>
+	<option value="c">Plain Option</option>
+</select>

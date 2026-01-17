@@ -15,6 +15,7 @@ import {
 	PromiseOptimiser,
 	create_async_block
 } from './shared/utils.js';
+import { is_customizable_select_element_with_rich_content } from '../../../nodes.js';
 
 /**
  * @param {AST.RegularElement} node
@@ -114,6 +115,9 @@ export function RegularElement(node, context) {
 	}
 
 	if (is_select_special) {
+		// Check if this select has rich content (non-option/optgroup children)
+		const is_rich_select = is_customizable_select_element_with_rich_content(node, trimmed);
+
 		const inner_state = { ...state, template: [], init: [] };
 		process_children(trimmed, { ...context, state: inner_state });
 
@@ -124,7 +128,10 @@ export function RegularElement(node, context) {
 
 		const [attributes, ...rest] = prepare_element_spread_object(node, context, optimiser.transform);
 
-		const statement = b.stmt(b.call('$$renderer.select', attributes, fn, ...rest));
+		// Pass is_rich_select as the last argument to add hydration marker
+		const statement = b.stmt(
+			b.call('$$renderer.select', attributes, fn, ...rest, is_rich_select ? b.true : undefined)
+		);
 
 		if (optimiser.expressions.length > 0) {
 			context.state.template.push(
@@ -138,6 +145,9 @@ export function RegularElement(node, context) {
 	}
 
 	if (is_option_special) {
+		// Check if this option has rich content (non-text children)
+		const is_rich_option = is_customizable_select_element_with_rich_content(node, trimmed);
+
 		let body;
 
 		if (node.metadata.synthetic_value_node) {
@@ -149,15 +159,34 @@ export function RegularElement(node, context) {
 			const inner_state = { ...state, template: [], init: [] };
 			process_children(trimmed, { ...context, state: inner_state });
 
-			body = b.arrow(
-				[b.id('$$renderer')],
-				b.block([...state.init, ...build_template(inner_state.template)])
-			);
+			/** @type {import('estree').Statement[]} */
+			const body_statements = [...state.init, ...build_template(inner_state.template)];
+
+			if (dev) {
+				const location = locator(node.start);
+				body_statements.unshift(
+					b.stmt(
+						b.call(
+							'$.push_element',
+							b.id('$$renderer'),
+							b.literal(node.name),
+							b.literal(location.line),
+							b.literal(location.column)
+						)
+					)
+				);
+				body_statements.push(b.stmt(b.call('$.pop_element')));
+			}
+
+			body = b.arrow([b.id('$$renderer')], b.block(body_statements));
 		}
 
 		const [attributes, ...rest] = prepare_element_spread_object(node, context, optimiser.transform);
 
-		const statement = b.stmt(b.call('$$renderer.option', attributes, body, ...rest));
+		// Pass is_rich_option as the last argument to add hydration marker
+		const statement = b.stmt(
+			b.call('$$renderer.option', attributes, body, ...rest, is_rich_option ? b.true : undefined)
+		);
 
 		if (optimiser.expressions.length > 0) {
 			context.state.template.push(
@@ -192,6 +221,13 @@ export function RegularElement(node, context) {
 			)
 		);
 	} else {
+		// For optgroup or select with rich content, add hydration marker at the start
+		if (
+			(node.name === 'optgroup' || node.name === 'select') &&
+			is_customizable_select_element_with_rich_content(node, trimmed)
+		) {
+			state.template.push(b.literal('<!>'));
+		}
 		process_children(trimmed, { ...context, state });
 	}
 
