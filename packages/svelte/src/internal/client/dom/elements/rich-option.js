@@ -27,7 +27,7 @@ function support_customizable_select() {
  * @param {HTMLOptionElement | HTMLOptGroupElement | HTMLSelectElement} element The element to process
  * @param {() => void} rich_fn Function to process rich HTML content (modern browsers)
  */
-export function customizable_select_element(element, rich_fn) {
+export function customizable_select(element, rich_fn) {
 	var was_hydrating = hydrating;
 
 	if (!support_customizable_select()) {

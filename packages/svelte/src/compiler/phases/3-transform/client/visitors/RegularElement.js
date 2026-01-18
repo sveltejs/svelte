@@ -414,7 +414,7 @@ export function RegularElement(node, context) {
 			b.stmt(b.call('$.append', anchor_id, fragment_id))
 		]);
 		child_state.init.push(
-			b.stmt(b.call('$.customizable_select_element', element_node, b.arrow([], rich_fn_body)))
+			b.stmt(b.call('$.customizable_select', element_node, b.arrow([], rich_fn_body)))
 		);
 	} else {
 		/** @type {Expression} */
