@@ -376,7 +376,7 @@ export function RegularElement(node, context) {
 
 		// Create state with a new template for the rich content
 		/** @type {typeof state} */
-		const rich_child_state = {
+		const select_state = {
 			...state,
 			init: [],
 			update: [],
@@ -390,27 +390,26 @@ export function RegularElement(node, context) {
 			false,
 			{
 				...context,
-				state: rich_child_state
+				state: select_state
 			}
 		);
 
 		// Transform the template to $.from_html(...) and hoist it
-		const template = transform_template(rich_child_state, metadata.namespace, TEMPLATE_FRAGMENT);
+		const template = transform_template(select_state, metadata.namespace, TEMPLATE_FRAGMENT);
 		context.state.hoisted.push(b.var(template_name, template));
 
 		// Build the rich content function body
 		// The anchor is the child of the element (a hydration marker during hydration)
-		const rich_fn_body = b.block([
+		const body = b.block([
 			b.var(anchor_id, b.call('$.child', element_node)),
 			b.var(fragment_id, b.call(template_name)),
-			...rich_child_state.init,
-			...(rich_child_state.update.length > 0 ? [build_render_statement(rich_child_state)] : []),
-			...rich_child_state.after_update,
+			...select_state.init,
+			...(select_state.update.length > 0 ? [build_render_statement(select_state)] : []),
+			...select_state.after_update,
 			b.stmt(b.call('$.append', anchor_id, fragment_id))
 		]);
-		child_state.init.push(
-			b.stmt(b.call('$.customizable_select', element_node, b.arrow([], rich_fn_body)))
-		);
+
+		child_state.init.push(b.stmt(b.call('$.customizable_select', element_node, b.arrow([], body))));
 	} else {
 		/** @type {Expression} */
 		let arg = context.state.node;
