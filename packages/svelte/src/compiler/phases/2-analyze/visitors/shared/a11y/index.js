@@ -831,6 +831,10 @@ function has_content(element) {
 				return true;
 			}
 
+			if (node.name === 'selectedcontent') {
+				return true;
+			}
+
 			if (!has_content(node)) {
 				continue;
 			}
