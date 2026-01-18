@@ -176,7 +176,17 @@ export function is_customizable_select_element_with_rich_content(node, children)
 				}
 			}
 
-			return true;
+			if (child.type === 'Text') {
+				// Text nodes directly in <select> or <optgroup> are rich content
+				if (node.name === 'select' || node.name === 'optgroup') {
+					return true;
+				}
+			}
+
+			// Any other non-RegularElement, non-Text node is rich content
+			if (child.type !== 'RegularElement' && child.type !== 'Text') {
+				return true;
+			}
 		}
 	}
 
@@ -196,8 +206,13 @@ function* find_descendants(fragment) {
 			case 'DebugTag':
 			case 'ConstTag':
 			case 'Comment':
-			case 'Text':
 			case 'ExpressionTag':
+				break;
+
+			case 'Text':
+				if (node.data.trim() !== '') {
+					yield node;
+				}
 				break;
 
 			case 'IfBlock':
