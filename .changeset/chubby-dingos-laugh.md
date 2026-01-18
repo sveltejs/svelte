@@ -2,4 +2,4 @@
 'svelte': minor
 ---
 
-feat: customizable select
+feat: customizable `<select>` elements
