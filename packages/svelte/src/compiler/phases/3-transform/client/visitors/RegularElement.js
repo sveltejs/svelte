@@ -15,7 +15,7 @@ import {
 	create_attribute,
 	ExpressionMetadata,
 	is_custom_element_node,
-	is_customizable_select_element_with_rich_content
+	is_customizable_select_element
 } from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_getter } from '../utils.js';
@@ -337,7 +337,7 @@ export function RegularElement(node, context) {
 
 	// Detect if this is an <option>, <optgroup>, or <select> with rich content
 	// In this case, we need to branch hydration based on browser support
-	const has_rich_content = is_customizable_select_element_with_rich_content(node);
+	const has_rich_content = is_customizable_select_element(node);
 
 	// special case — if an element that only contains text, we don't need
 	// to descend into it if the text is non-reactive

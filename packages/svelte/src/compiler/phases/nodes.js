@@ -158,7 +158,7 @@ export function get_name(node) {
  * @param {AST.RegularElement} node
  * @returns {boolean}
  */
-export function is_customizable_select_element_with_rich_content(node) {
+export function is_customizable_select_element(node) {
 	if (node.name === 'select' || node.name === 'optgroup' || node.name === 'option') {
 		for (const child of find_descendants(node.fragment)) {
 			if (child.type === 'RegularElement') {

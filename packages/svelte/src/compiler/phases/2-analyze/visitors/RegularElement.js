@@ -10,7 +10,7 @@ import * as w from '../../../warnings.js';
 import {
 	create_attribute,
 	is_custom_element_node,
-	is_customizable_select_element_with_rich_content
+	is_customizable_select_element
 } from '../../nodes.js';
 import { regex_starts_with_newline } from '../../patterns.js';
 import { check_element } from './shared/a11y/index.js';
@@ -80,7 +80,7 @@ export function RegularElement(node, context) {
 
 	// Special case: <select>, <option> or <optgroup> with rich content needs special hydration handling
 	// We mark the subtree as dynamic so parent elements properly include the child init code
-	if (is_customizable_select_element_with_rich_content(node)) {
+	if (is_customizable_select_element(node)) {
 		// Mark the element's own fragment as dynamic so it's not treated as static
 		node.fragment.metadata.dynamic = true;
 		// Also mark ancestor fragments so parents properly include the child init code

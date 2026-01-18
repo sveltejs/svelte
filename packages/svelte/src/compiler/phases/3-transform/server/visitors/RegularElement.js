@@ -15,7 +15,7 @@ import {
 	PromiseOptimiser,
 	create_async_block
 } from './shared/utils.js';
-import { is_customizable_select_element_with_rich_content } from '../../../nodes.js';
+import { is_customizable_select_element } from '../../../nodes.js';
 
 /**
  * @param {AST.RegularElement} node
@@ -116,7 +116,7 @@ export function RegularElement(node, context) {
 
 	if (is_select_special) {
 		// Check if this select has rich content (non-option/optgroup children)
-		const is_rich_select = is_customizable_select_element_with_rich_content(node);
+		const is_rich_select = is_customizable_select_element(node);
 
 		const inner_state = { ...state, template: [], init: [] };
 		process_children(trimmed, { ...context, state: inner_state });
@@ -146,7 +146,7 @@ export function RegularElement(node, context) {
 
 	if (is_option_special) {
 		// Check if this option has rich content (non-text children)
-		const is_rich_option = is_customizable_select_element_with_rich_content(node);
+		const is_rich_option = is_customizable_select_element(node);
 
 		let body;
 
@@ -225,7 +225,7 @@ export function RegularElement(node, context) {
 		process_children(trimmed, { ...context, state });
 		if (
 			(node.name === 'optgroup' || node.name === 'select') &&
-			is_customizable_select_element_with_rich_content(node)
+			is_customizable_select_element(node)
 		) {
 			state.template.push(b.literal('<!>'));
 		}
