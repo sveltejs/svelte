@@ -335,10 +335,6 @@ export function RegularElement(node, context) {
 		context.visit(node, child_state);
 	}
 
-	// Detect if this is an <option>, <optgroup>, or <select> with rich content
-	// In this case, we need to branch hydration based on browser support
-	const has_rich_content = is_customizable_select_element(node);
-
 	// special case — if an element that only contains text, we don't need
 	// to descend into it if the text is non-reactive
 	// in the rare case that we have static text that can't be inlined
@@ -363,7 +359,7 @@ export function RegularElement(node, context) {
 				b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), value))
 			);
 		}
-	} else if (has_rich_content) {
+	} else if (is_customizable_select_element(node)) {
 		// For <option>, <optgroup>, or <select> elements with rich content, we need to branch based on browser support.
 		// Modern browsers preserve rich HTML in options, older browsers strip it to text only.
 		// We create a separate template for the rich content and append it to the element.
