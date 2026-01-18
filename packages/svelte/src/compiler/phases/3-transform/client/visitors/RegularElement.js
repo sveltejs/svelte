@@ -453,7 +453,7 @@ export function RegularElement(node, context) {
 				...element_state.after_update
 			])
 		);
-	} else if (node.fragment.metadata.dynamic || has_rich_content) {
+	} else if (node.fragment.metadata.dynamic) {
 		context.state.init.push(...child_state.init, ...element_state.init);
 		context.state.update.push(...child_state.update);
 		context.state.after_update.push(...child_state.after_update, ...element_state.after_update);
