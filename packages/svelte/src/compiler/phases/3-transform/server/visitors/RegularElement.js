@@ -115,9 +115,6 @@ export function RegularElement(node, context) {
 	}
 
 	if (is_select_special) {
-		// Check if this select has rich content (non-option/optgroup children)
-		const is_rich_select = is_customizable_select_element(node);
-
 		const inner_state = { ...state, template: [], init: [] };
 		process_children(trimmed, { ...context, state: inner_state });
 
@@ -128,10 +125,11 @@ export function RegularElement(node, context) {
 
 		const [attributes, ...rest] = prepare_element_spread_object(node, context, optimiser.transform);
 
-		// Pass is_rich_select as the last argument to add hydration marker
-		const statement = b.stmt(
-			b.call('$$renderer.select', attributes, fn, ...rest, is_rich_select ? b.true : undefined)
-		);
+		if (is_customizable_select_element(node)) {
+			rest.push(b.true);
+		}
+
+		const statement = b.stmt(b.call('$$renderer.select', attributes, fn, ...rest));
 
 		if (optimiser.expressions.length > 0) {
 			context.state.template.push(
@@ -145,9 +143,6 @@ export function RegularElement(node, context) {
 	}
 
 	if (is_option_special) {
-		// Check if this option has rich content (non-text children)
-		const is_rich_option = is_customizable_select_element(node);
-
 		let body;
 
 		if (node.metadata.synthetic_value_node) {
@@ -183,10 +178,11 @@ export function RegularElement(node, context) {
 
 		const [attributes, ...rest] = prepare_element_spread_object(node, context, optimiser.transform);
 
-		// Pass is_rich_option as the last argument to add hydration marker
-		const statement = b.stmt(
-			b.call('$$renderer.option', attributes, body, ...rest, is_rich_option ? b.true : undefined)
-		);
+		if (is_customizable_select_element(node)) {
+			rest.push(b.true);
+		}
+
+		const statement = b.stmt(b.call('$$renderer.option', attributes, body, ...rest));
 
 		if (optimiser.expressions.length > 0) {
 			context.state.template.push(
