@@ -64,7 +64,7 @@ export default function Select_with_rich_content($$anchor) {
 	var select = $.first_child(fragment);
 	var option_4 = $.child(select);
 
-	$.customizable_select_element(option_4, () => {
+	$.customizable_select(option_4, () => {
 		var anchor = $.child(option_4);
 		var fragment_1 = rich_select_content();
 
@@ -126,7 +126,7 @@ export default function Select_with_rich_content($$anchor) {
 
 	var select_4 = $.sibling(select_3, 2);
 
-	$.customizable_select_element(select_4, () => {
+	$.customizable_select(select_4, () => {
 		var anchor_1 = $.child(select_4);
 		var fragment_2 = rich_select_content_1();
 		var node_2 = $.first_child(fragment_2);
@@ -163,7 +163,7 @@ export default function Select_with_rich_content($$anchor) {
 	var optgroup = $.child(select_6);
 	var option_9 = $.child(optgroup);
 
-	$.customizable_select_element(option_9, () => {
+	$.customizable_select(option_9, () => {
 		var anchor_2 = $.child(option_9);
 		var fragment_3 = rich_select_content_2();
 
@@ -201,7 +201,7 @@ export default function Select_with_rich_content($$anchor) {
 	var select_8 = $.sibling(select_7, 2);
 	var option_11 = $.child(select_8);
 
-	$.customizable_select_element(option_11, () => {
+	$.customizable_select(option_11, () => {
 		var anchor_3 = $.child(option_11);
 		var fragment_4 = rich_select_content_3();
 
@@ -217,7 +217,7 @@ export default function Select_with_rich_content($$anchor) {
 	$.each(select_9, 5, () => items, $.index, ($$anchor, item) => {
 		var option_12 = root_10();
 
-		$.customizable_select_element(option_12, () => {
+		$.customizable_select(option_12, () => {
 			var anchor_4 = $.child(option_12);
 			var fragment_5 = rich_select_content_4();
 			var span = $.first_child(fragment_5);
@@ -287,7 +287,7 @@ export default function Select_with_rich_content($$anchor) {
 	$.boundary(node_6, {}, ($$anchor) => {
 		var option_15 = root_14();
 
-		$.customizable_select_element(option_15, () => {
+		$.customizable_select(option_15, () => {
 			var anchor_5 = $.child(option_15);
 			var fragment_7 = rich_select_content_5();
 
@@ -301,7 +301,7 @@ export default function Select_with_rich_content($$anchor) {
 
 	var select_13 = $.sibling(select_12, 2);
 
-	$.customizable_select_element(select_13, () => {
+	$.customizable_select(select_13, () => {
 		var anchor_6 = $.child(select_13);
 		var fragment_8 = rich_select_content_6();
 		var node_7 = $.first_child(fragment_8);
@@ -312,7 +312,7 @@ export default function Select_with_rich_content($$anchor) {
 
 	var select_14 = $.sibling(select_13, 2);
 
-	$.customizable_select_element(select_14, () => {
+	$.customizable_select(select_14, () => {
 		var anchor_7 = $.child(select_14);
 		var fragment_9 = rich_select_content_7();
 		var node_8 = $.first_child(fragment_9);
@@ -323,7 +323,7 @@ export default function Select_with_rich_content($$anchor) {
 
 	var select_15 = $.sibling(select_14, 2);
 
-	$.customizable_select_element(select_15, () => {
+	$.customizable_select(select_15, () => {
 		var anchor_8 = $.child(select_15);
 		var fragment_10 = rich_select_content_8();
 		var node_9 = $.first_child(fragment_10);
@@ -335,7 +335,7 @@ export default function Select_with_rich_content($$anchor) {
 	var select_16 = $.sibling(select_15, 2);
 	var optgroup_2 = $.child(select_16);
 
-	$.customizable_select_element(optgroup_2, () => {
+	$.customizable_select(optgroup_2, () => {
 		var anchor_9 = $.child(optgroup_2);
 		var fragment_11 = rich_select_content_9();
 		var node_10 = $.first_child(fragment_11);
@@ -349,7 +349,7 @@ export default function Select_with_rich_content($$anchor) {
 	var select_17 = $.sibling(select_16, 2);
 	var optgroup_3 = $.child(select_17);
 
-	$.customizable_select_element(optgroup_3, () => {
+	$.customizable_select(optgroup_3, () => {
 		var anchor_10 = $.child(optgroup_3);
 		var fragment_12 = rich_select_content_10();
 		var node_11 = $.first_child(fragment_12);
@@ -363,7 +363,7 @@ export default function Select_with_rich_content($$anchor) {
 	var select_18 = $.sibling(select_17, 2);
 	var option_16 = $.child(select_18);
 
-	$.customizable_select_element(option_16, () => {
+	$.customizable_select(option_16, () => {
 		var anchor_11 = $.child(option_16);
 		var fragment_13 = rich_select_content_11();
 		var node_12 = $.first_child(fragment_13);
@@ -376,7 +376,7 @@ export default function Select_with_rich_content($$anchor) {
 
 	var select_19 = $.sibling(select_18, 2);
 
-	$.customizable_select_element(select_19, () => {
+	$.customizable_select(select_19, () => {
 		var anchor_12 = $.child(select_19);
 		var fragment_14 = rich_select_content_12();
 		var node_13 = $.first_child(fragment_14);
@@ -390,7 +390,7 @@ export default function Select_with_rich_content($$anchor) {
 
 	var select_20 = $.sibling(select_19, 2);
 
-	$.customizable_select_element(select_20, () => {
+	$.customizable_select(select_20, () => {
 		var anchor_13 = $.child(select_20);
 		var fragment_16 = rich_select_content_13();
 		var node_14 = $.first_child(fragment_16);
