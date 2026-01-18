@@ -10,7 +10,7 @@ let supported = null;
  * strip them during parsing, leaving only text content.
  * @returns {boolean}
  */
-function support_customizable_select() {
+function is_supported() {
 	if (supported === null) {
 		var select = document.createElement('select');
 		select.innerHTML = '<option><span>t</span></option>';
@@ -30,7 +30,7 @@ function support_customizable_select() {
 export function customizable_select(element, rich_fn) {
 	var was_hydrating = hydrating;
 
-	if (!support_customizable_select()) {
+	if (!is_supported()) {
 		set_hydrating(false);
 		element.textContent = '';
 		element.append(create_comment(''));
