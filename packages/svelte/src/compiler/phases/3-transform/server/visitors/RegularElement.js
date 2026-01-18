@@ -222,13 +222,13 @@ export function RegularElement(node, context) {
 		);
 	} else {
 		// For optgroup or select with rich content, add hydration marker at the start
+		process_children(trimmed, { ...context, state });
 		if (
 			(node.name === 'optgroup' || node.name === 'select') &&
 			is_customizable_select_element_with_rich_content(node, trimmed)
 		) {
 			state.template.push(b.literal('<!>'));
 		}
-		process_children(trimmed, { ...context, state });
 	}
 
 	if (!node_is_void) {

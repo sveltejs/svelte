@@ -155,3 +155,19 @@
 		{@render conditional_option()}
 	{/if}
 </select>
+
+<!-- select with button/selectedcontent and static options - SHOULD use customizable_select_element -->
+<select>
+	<button><selectedcontent></selectedcontent></button>
+	<option>cool</option>
+	<option>cooler</option>
+	<option>coolerone</option>
+</select>
+
+<!-- select with button/selectedcontent and dynamic options - SHOULD use customizable_select_element -->
+<select>
+	<button><selectedcontent></selectedcontent></button>
+	{#each items as item}
+		<option>{item}</option>
+	{/each}
+</select>

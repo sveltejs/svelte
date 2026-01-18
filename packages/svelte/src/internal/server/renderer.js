@@ -226,14 +226,12 @@ export class Renderer {
 	select(attrs, fn, css_hash, classes, styles, flags, is_rich) {
 		const { value, ...select_attrs } = attrs;
 
-		this.push(
-			`<select${attributes(select_attrs, css_hash, classes, styles, flags)}>${is_rich ? '<!>' : ''}`
-		);
+		this.push(`<select${attributes(select_attrs, css_hash, classes, styles, flags)}>`);
 		this.child((renderer) => {
 			renderer.local.select_value = value;
 			fn(renderer);
 		});
-		this.push('</select>');
+		this.push(`${is_rich ? '<!>' : ''}</select>`);
 	}
 
 	/**
@@ -262,9 +260,7 @@ export class Renderer {
 				renderer.#out.push(' selected');
 			}
 
-			// For rich content options, add a hydration marker at the start
-			// so the client can find it as an anchor during hydration
-			renderer.#out.push(`>${is_rich ? '<!>' : ''}${body}</option>`);
+			renderer.#out.push(`>${body}${is_rich ? '<!>' : ''}</option>`);
 
 			// super edge case, but may as well handle it
 			if (head) {
