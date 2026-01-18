@@ -31,29 +31,29 @@ var root_1 = $.from_html(`<option>Snippet</option>`);
 var root_2 = $.from_html(`<option>Rendered</option>`);
 var root_3 = $.from_html(`<option>Rendered in group</option>`);
 var root_4 = $.from_html(`<option>Conditional</option>`);
-var select_content = $.from_html(`<span>Rich</span>`, 1);
+var option_content = $.from_html(`<span>Rich</span>`, 1);
 var root_5 = $.from_html(`<option> </option>`);
 var root_6 = $.from_html(`<option>Visible</option>`);
 var root_7 = $.from_html(`<option>Keyed</option>`);
-var select_content_1 = $.from_html(`<!>`, 1);
+var select_content = $.from_html(`<!>`, 1);
 var root_8 = $.from_html(`<option> </option>`);
-var select_content_2 = $.from_html(`<strong>Bold</strong>`, 1);
+var option_content_1 = $.from_html(`<strong>Bold</strong>`, 1);
 var root_9 = $.from_html(`<option> </option>`);
-var select_content_3 = $.from_html(`<em>Italic</em> text`, 1);
-var select_content_4 = $.from_html(`<span> </span>`, 1);
+var option_content_2 = $.from_html(`<em>Italic</em> text`, 1);
+var option_content_3 = $.from_html(`<span> </span>`, 1);
 var root_10 = $.from_html(`<option><!></option>`);
 var root_12 = $.from_html(`<option> </option>`);
 var root_13 = $.from_html(`<option>Boundary</option>`);
-var select_content_5 = $.from_html(`<span>Rich in boundary</span>`, 1);
+var option_content_4 = $.from_html(`<span>Rich in boundary</span>`, 1);
 var root_14 = $.from_html(`<option><!></option>`);
-var select_content_6 = $.from_html(`<!>`, 1);
-var select_content_7 = $.from_html(`<!>`, 1);
-var select_content_8 = $.from_html(`<!>`, 1);
-var select_content_9 = $.from_html(`<!>`, 1);
-var select_content_10 = $.from_html(`<!>`, 1);
-var select_content_11 = $.from_html(`<!>`, 1);
-var select_content_12 = $.from_html(`<!>`, 1);
-var select_content_13 = $.from_html(`<!>`, 1);
+var select_content_1 = $.from_html(`<!>`, 1);
+var select_content_2 = $.from_html(`<!>`, 1);
+var select_content_3 = $.from_html(`<!>`, 1);
+var optgroup_content = $.from_html(`<!>`, 1);
+var optgroup_content_1 = $.from_html(`<!>`, 1);
+var option_content_5 = $.from_html(`<!>`, 1);
+var select_content_4 = $.from_html(`<!>`, 1);
+var select_content_5 = $.from_html(`<!>`, 1);
 var root = $.from_html(`<select><option><!></option></select> <select></select> <select><!></select> <select><!></select>  <select><!></select> <select></select> <select><optgroup label="Group"><option><!></option></optgroup></select> <select><optgroup label="Group"></optgroup></select> <select><option><!></option></select> <select></select> <select><!></select> <select><!></select> <select><!></select> <select><!></select>  <select><!></select> <select><!></select> <select><optgroup label="Group"><!></optgroup></select>  <select><optgroup label="Group"><!></optgroup></select> <select><option><!></option></select> <select><!></select>  <select><!></select>`, 1);
 
 export default function Select_with_rich_content($$anchor) {
@@ -66,7 +66,7 @@ export default function Select_with_rich_content($$anchor) {
 
 	$.customizable_select(option_4, () => {
 		var anchor = $.child(option_4);
-		var fragment_1 = select_content();
+		var fragment_1 = option_content();
 
 		$.append(anchor, fragment_1);
 	});
@@ -128,7 +128,7 @@ export default function Select_with_rich_content($$anchor) {
 
 	$.customizable_select(select_4, () => {
 		var anchor_1 = $.child(select_4);
-		var fragment_2 = select_content_1();
+		var fragment_2 = select_content();
 		var node_2 = $.first_child(fragment_2);
 
 		opt(node_2);
@@ -165,7 +165,7 @@ export default function Select_with_rich_content($$anchor) {
 
 	$.customizable_select(option_9, () => {
 		var anchor_2 = $.child(option_9);
-		var fragment_3 = select_content_2();
+		var fragment_3 = option_content_1();
 
 		$.append(anchor_2, fragment_3);
 	});
@@ -203,7 +203,7 @@ export default function Select_with_rich_content($$anchor) {
 
 	$.customizable_select(option_11, () => {
 		var anchor_3 = $.child(option_11);
-		var fragment_4 = select_content_3();
+		var fragment_4 = option_content_2();
 
 		$.next();
 		$.append(anchor_3, fragment_4);
@@ -219,7 +219,7 @@ export default function Select_with_rich_content($$anchor) {
 
 		$.customizable_select(option_12, () => {
 			var anchor_4 = $.child(option_12);
-			var fragment_5 = select_content_4();
+			var fragment_5 = option_content_3();
 			var span = $.first_child(fragment_5);
 			var text_3 = $.child(span, true);
 
@@ -289,7 +289,7 @@ export default function Select_with_rich_content($$anchor) {
 
 		$.customizable_select(option_15, () => {
 			var anchor_5 = $.child(option_15);
-			var fragment_7 = select_content_5();
+			var fragment_7 = option_content_4();
 
 			$.append(anchor_5, fragment_7);
 		});
@@ -303,7 +303,7 @@ export default function Select_with_rich_content($$anchor) {
 
 	$.customizable_select(select_13, () => {
 		var anchor_6 = $.child(select_13);
-		var fragment_8 = select_content_6();
+		var fragment_8 = select_content_1();
 		var node_7 = $.first_child(fragment_8);
 
 		Option(node_7, {});
@@ -314,7 +314,7 @@ export default function Select_with_rich_content($$anchor) {
 
 	$.customizable_select(select_14, () => {
 		var anchor_7 = $.child(select_14);
-		var fragment_9 = select_content_7();
+		var fragment_9 = select_content_2();
 		var node_8 = $.first_child(fragment_9);
 
 		option_snippet(node_8);
@@ -325,7 +325,7 @@ export default function Select_with_rich_content($$anchor) {
 
 	$.customizable_select(select_15, () => {
 		var anchor_8 = $.child(select_15);
-		var fragment_10 = select_content_8();
+		var fragment_10 = select_content_3();
 		var node_9 = $.first_child(fragment_10);
 
 		$.html(node_9, () => html);
@@ -337,7 +337,7 @@ export default function Select_with_rich_content($$anchor) {
 
 	$.customizable_select(optgroup_2, () => {
 		var anchor_9 = $.child(optgroup_2);
-		var fragment_11 = select_content_9();
+		var fragment_11 = optgroup_content();
 		var node_10 = $.first_child(fragment_11);
 
 		Option(node_10, {});
@@ -351,7 +351,7 @@ export default function Select_with_rich_content($$anchor) {
 
 	$.customizable_select(optgroup_3, () => {
 		var anchor_10 = $.child(optgroup_3);
-		var fragment_12 = select_content_10();
+		var fragment_12 = optgroup_content_1();
 		var node_11 = $.first_child(fragment_12);
 
 		option_snippet2(node_11);
@@ -365,7 +365,7 @@ export default function Select_with_rich_content($$anchor) {
 
 	$.customizable_select(option_16, () => {
 		var anchor_11 = $.child(option_16);
-		var fragment_13 = select_content_11();
+		var fragment_13 = option_content_5();
 		var node_12 = $.first_child(fragment_13);
 
 		$.html(node_12, () => '<strong>Bold HTML</strong>');
@@ -378,7 +378,7 @@ export default function Select_with_rich_content($$anchor) {
 
 	$.customizable_select(select_19, () => {
 		var anchor_12 = $.child(select_19);
-		var fragment_14 = select_content_12();
+		var fragment_14 = select_content_4();
 		var node_13 = $.first_child(fragment_14);
 
 		$.each(node_13, 1, () => items, $.index, ($$anchor, item) => {
@@ -392,7 +392,7 @@ export default function Select_with_rich_content($$anchor) {
 
 	$.customizable_select(select_20, () => {
 		var anchor_13 = $.child(select_20);
-		var fragment_16 = select_content_13();
+		var fragment_16 = select_content_5();
 		var node_14 = $.first_child(fragment_16);
 
 		{
