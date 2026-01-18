@@ -162,12 +162,12 @@ export function is_customizable_select_element(node) {
 	if (node.name === 'select' || node.name === 'optgroup' || node.name === 'option') {
 		for (const child of find_descendants(node.fragment)) {
 			if (child.type === 'RegularElement') {
-				if (node.name === 'select') {
-					return child.name !== 'option' && child.name !== 'optgroup';
+				if (node.name === 'select' && child.name !== 'option' && child.name !== 'optgroup') {
+					return true;
 				}
 
-				if (node.name === 'optgroup') {
-					return child.name !== 'option';
+				if (node.name === 'optgroup' && child.name !== 'option') {
+					return true;
 				}
 
 				if (node.name === 'option') {
@@ -175,15 +175,15 @@ export function is_customizable_select_element(node) {
 				}
 			}
 
-			if (child.type === 'Text') {
-				// Text nodes directly in <select> or <optgroup> are rich content
+			// Text nodes directly in <select> or <optgroup> are rich content
+			else if (child.type === 'Text') {
 				if (node.name === 'select' || node.name === 'optgroup') {
 					return true;
 				}
 			}
 
-			// Any other non-RegularElement, non-Text node is rich content
-			if (child.type !== 'RegularElement' && child.type !== 'Text') {
+			// Any non-RegularElement, non-Text node is rich content
+			else {
 				return true;
 			}
 		}
