@@ -344,7 +344,6 @@ export function RegularElement(node, context) {
 	// in the rare case that we have static text that can't be inlined
 	// (e.g. `<span>{location}</span>`), set `textContent` programmatically
 	const use_text_content =
-		!has_rich_content &&
 		trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag') &&
 		trimmed.every(
 			(node) =>
