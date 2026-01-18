@@ -156,10 +156,9 @@ export function get_name(node) {
  * or anything beyond <option>, <optgroup>, and empty text for <select>.
  * Control flow blocks are recursively checked - they only count as rich content if they contain rich content.
  * @param {AST.RegularElement} node
- * @param {AST.SvelteNode[]} children - The trimmed/filtered children of the element
  * @returns {boolean}
  */
-export function is_customizable_select_element_with_rich_content(node, children) {
+export function is_customizable_select_element_with_rich_content(node) {
 	if (node.name === 'select' || node.name === 'optgroup' || node.name === 'option') {
 		for (const child of find_descendants(node.fragment)) {
 			if (child.type === 'RegularElement') {

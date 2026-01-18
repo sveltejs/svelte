@@ -80,10 +80,7 @@ export function RegularElement(node, context) {
 
 	// Special case: <select>, <option> or <optgroup> with rich content needs special hydration handling
 	// We mark the subtree as dynamic so parent elements properly include the child init code
-	const trimmed_children = node.fragment.nodes.filter(
-		(n) => n.type !== 'Text' || n.data.trim() !== ''
-	);
-	if (is_customizable_select_element_with_rich_content(node, trimmed_children)) {
+	if (is_customizable_select_element_with_rich_content(node)) {
 		// Mark the element's own fragment as dynamic so it's not treated as static
 		node.fragment.metadata.dynamic = true;
 		// Also mark ancestor fragments so parents properly include the child init code
