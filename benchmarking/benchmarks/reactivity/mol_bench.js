@@ -1,6 +1,6 @@
 import { assert } from '../../utils.js';
 import * as $ from 'svelte/internal/client';
-import { create_test } from './kairo/util.js';
+import { create_test } from './util.js';
 
 /**
  * @param {number} n

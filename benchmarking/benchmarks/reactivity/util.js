@@ -1,5 +1,5 @@
 import * as $ from 'svelte/internal/client';
-import { fastest_test } from '../../../utils.js';
+import { fastest_test } from '../../utils.js';
 
 export function busy() {
 	let a = 0;
