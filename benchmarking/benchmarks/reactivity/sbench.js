@@ -1,3 +1,4 @@
+/** @import { Source } from '../../../packages/svelte/src/internal/client/types.js' */
 import { fastest_test } from '../../utils.js';
 import * as $ from '../../../packages/svelte/src/internal/client/index.js';
 
@@ -7,360 +8,180 @@ const COUNT = 1e5;
  * @param {number} n
  * @param {any[]} sources
  */
-function create_data_signals(n, sources) {
+function create_sources(n, sources) {
 	for (let i = 0; i < n; i++) {
 		sources[i] = $.state(i);
 	}
+
 	return sources;
 }
 
 /**
- * @param {number} i
+ * @param {Source<number>} source
  */
-function create_computation_0(i) {
-	$.derived(() => i);
+function create_derived(source) {
+	$.derived(() => $.get(source));
 }
 
 /**
- * @param {any} s1
- */
-function create_computation_1(s1) {
-	$.derived(() => $.get(s1));
-}
-/**
- * @param {any} s1
- * @param {any} s2
- */
-function create_computation_2(s1, s2) {
-	$.derived(() => $.get(s1) + $.get(s2));
-}
-
-function create_computation_1000(ss, offset) {
-	$.derived(() => {
-		let sum = 0;
-		for (let i = 0; i < 1000; i++) {
-			sum += $.get(ss[offset + i]);
-		}
-		return sum;
-	});
-}
-
-/**
- * @param {number} n
- */
-function create_computations_0to1(n) {
-	for (let i = 0; i < n; i++) {
-		create_computation_0(i);
-	}
-}
-
-/**
- * @param {number} n
- * @param {any[]} sources
- */
-function create_computations_1to1(n, sources) {
-	for (let i = 0; i < n; i++) {
-		const source = sources[i];
-		create_computation_1(source);
-	}
-}
-
-/**
- * @param {number} n
- * @param {any[]} sources
- */
-function create_computations_2to1(n, sources) {
-	for (let i = 0; i < n; i++) {
-		create_computation_2(sources[i * 2], sources[i * 2 + 1]);
-	}
-}
-
-function create_computation_4(s1, s2, s3, s4) {
-	$.derived(() => $.get(s1) + $.get(s2) + $.get(s3) + $.get(s4));
-}
-
-function create_computations_1000to1(n, sources) {
-	for (let i = 0; i < n; i++) {
-		create_computation_1000(sources, i * 1000);
-	}
-}
-
-function create_computations_1to2(n, sources) {
-	for (let i = 0; i < n / 2; i++) {
-		const source = sources[i];
-		create_computation_1(source);
-		create_computation_1(source);
-	}
-}
-
-function create_computations_1to4(n, sources) {
-	for (let i = 0; i < n / 4; i++) {
-		const source = sources[i];
-		create_computation_1(source);
-		create_computation_1(source);
-		create_computation_1(source);
-		create_computation_1(source);
-	}
-}
-
-function create_computations_1to8(n, sources) {
-	for (let i = 0; i < n / 8; i++) {
-		const source = sources[i];
-		create_computation_1(source);
-		create_computation_1(source);
-		create_computation_1(source);
-		create_computation_1(source);
-		create_computation_1(source);
-		create_computation_1(source);
-		create_computation_1(source);
-		create_computation_1(source);
-	}
-}
-
-function create_computations_1to1000(n, sources) {
-	for (let i = 0; i < n / 1000; i++) {
-		const source = sources[i];
-		for (let j = 0; j < 1000; j++) {
-			create_computation_1(source);
-		}
-	}
-}
-
-function create_computations_4to1(n, sources) {
-	for (let i = 0; i < n; i++) {
-		create_computation_4(
-			sources[i * 4],
-			sources[i * 4 + 1],
-			sources[i * 4 + 2],
-			sources[i * 4 + 3]
-		);
-	}
-}
-
-/**
- * @param {any} fn
+ *
+ * @param {string} label
+ * @param {(n: number, sources: Array<Source<number>>)} fn
  * @param {number} count
- * @param {number} scount
+ * @param {number} num_sources
  */
-function bench(fn, count, scount) {
-	let sources = create_data_signals(scount, []);
-
-	fn(count, sources);
-}
-
-export async function sbench_create_signals() {
-	// Do 3 loops to warm up JIT
-	for (let i = 0; i < 3; i++) {
-		bench(create_data_signals, COUNT, COUNT);
-	}
-
-	const { timing } = await fastest_test(10, () => {
-		for (let i = 0; i < 100; i++) {
-			bench(create_data_signals, COUNT, COUNT);
+function create_sbench_test(label, count, num_sources, fn) {
+	return async () => {
+		// Do 3 loops to warm up JIT
+		for (let i = 0; i < 3; i++) {
+			fn(count, create_sources(num_sources, []));
 		}
-	});
 
-	return {
-		benchmark: 'sbench_create_signals',
-		time: timing.time.toFixed(2),
-		gc_time: timing.gc_time.toFixed(2)
-	};
-}
-
-export async function sbench_create_0to1() {
-	// Do 3 loops to warm up JIT
-	for (let i = 0; i < 3; i++) {
-		bench(create_computations_0to1, COUNT, 0);
-	}
-
-	const { timing } = await fastest_test(10, () => {
-		const destroy = $.effect_root(() => {
-			for (let i = 0; i < 10; i++) {
-				bench(create_computations_0to1, COUNT, 0);
-			}
+		const { timing } = await fastest_test(10, () => {
+			const destroy = $.effect_root(() => {
+				for (let i = 0; i < 10; i++) {
+					fn(count, create_sources(num_sources, []));
+				}
+			});
+			destroy();
 		});
-		destroy();
-	});
 
-	return {
-		benchmark: 'sbench_create_0to1',
-		time: timing.time.toFixed(2),
-		gc_time: timing.gc_time.toFixed(2)
+		return {
+			benchmark: label,
+			time: timing.time.toFixed(2),
+			gc_time: timing.gc_time.toFixed(2)
+		};
 	};
 }
 
-export async function sbench_create_1to1() {
-	// Do 3 loops to warm up JIT
-	for (let i = 0; i < 3; i++) {
-		bench(create_computations_1to1, COUNT, COUNT);
+export const sbench_create_signals = create_sbench_test(
+	'sbench_create_signals',
+	COUNT,
+	COUNT,
+	create_sources
+);
+
+export const sbench_create_0to1 = create_sbench_test('sbench_create_0to1', COUNT, 0, (n) => {
+	for (let i = 0; i < n; i++) {
+		$.derived(() => i);
 	}
+});
 
-	const { timing } = await fastest_test(10, () => {
-		const destroy = $.effect_root(() => {
-			for (let i = 0; i < 10; i++) {
-				bench(create_computations_1to1, COUNT, COUNT);
-			}
-		});
-		destroy();
-	});
-
-	return {
-		benchmark: 'sbench_create_1to1',
-		time: timing.time.toFixed(2),
-		gc_time: timing.gc_time.toFixed(2)
-	};
-}
-
-export async function sbench_create_2to1() {
-	// Do 3 loops to warm up JIT
-	for (let i = 0; i < 3; i++) {
-		bench(create_computations_2to1, COUNT / 2, COUNT);
+export const sbench_create_1to1 = create_sbench_test(
+	'sbench_create_1to1',
+	COUNT,
+	COUNT,
+	(n, sources) => {
+		for (let i = 0; i < n; i++) {
+			create_derived(sources[i]);
+		}
 	}
+);
 
-	const { timing } = await fastest_test(10, () => {
-		const destroy = $.effect_root(() => {
-			for (let i = 0; i < 10; i++) {
-				bench(create_computations_2to1, COUNT / 2, COUNT);
-			}
-		});
-		destroy();
-	});
-
-	return {
-		benchmark: 'sbench_create_2to1',
-		time: timing.time.toFixed(2),
-		gc_time: timing.gc_time.toFixed(2)
-	};
-}
-
-export async function sbench_create_4to1() {
-	// Do 3 loops to warm up JIT
-	for (let i = 0; i < 3; i++) {
-		bench(create_computations_4to1, COUNT / 4, COUNT);
+export const sbench_create_2to1 = create_sbench_test(
+	'sbench_create_2to1',
+	COUNT / 2,
+	COUNT,
+	(n, sources) => {
+		for (let i = 0; i < n; i++) {
+			$.derived(() => $.get(sources[i * 2]) + $.get(sources[i * 2 + 1]));
+		}
 	}
+);
 
-	const { timing } = await fastest_test(10, () => {
-		const destroy = $.effect_root(() => {
-			for (let i = 0; i < 10; i++) {
-				bench(create_computations_4to1, COUNT / 4, COUNT);
-			}
-		});
-		destroy();
-	});
-
-	return {
-		benchmark: 'sbench_create_4to1',
-		time: timing.time.toFixed(2),
-		gc_time: timing.gc_time.toFixed(2)
-	};
-}
-
-export async function sbench_create_1000to1() {
-	// Do 3 loops to warm up JIT
-	for (let i = 0; i < 3; i++) {
-		bench(create_computations_1000to1, COUNT / 1000, COUNT);
+export const sbench_create_4to1 = create_sbench_test(
+	'sbench_create_4to1',
+	COUNT / 4,
+	COUNT,
+	(n, sources) => {
+		for (let i = 0; i < n; i++) {
+			$.derived(
+				() =>
+					$.get(sources[i * 4]) +
+					$.get(sources[i * 4 + 1]) +
+					$.get(sources[i * 4 + 2]) +
+					$.get(sources[i * 4 + 3])
+			);
+		}
 	}
+);
 
-	const { timing } = await fastest_test(10, () => {
-		const destroy = $.effect_root(() => {
-			for (let i = 0; i < 10; i++) {
-				bench(create_computations_1000to1, COUNT / 1000, COUNT);
-			}
-		});
-		destroy();
-	});
+export const sbench_create_1000to1 = create_sbench_test(
+	'sbench_create_1000to1',
+	COUNT / 1000,
+	COUNT,
+	(n, sources) => {
+		for (let i = 0; i < n; i++) {
+			const offset = i * 1000;
 
-	return {
-		benchmark: 'sbench_create_1000to1',
-		time: timing.time.toFixed(2),
-		gc_time: timing.gc_time.toFixed(2)
-	};
-}
-
-export async function sbench_create_1to2() {
-	// Do 3 loops to warm up JIT
-	for (let i = 0; i < 3; i++) {
-		bench(create_computations_1to2, COUNT, COUNT / 2);
+			$.derived(() => {
+				let sum = 0;
+				for (let i = 0; i < 1000; i++) {
+					sum += $.get(sources[offset + i]);
+				}
+				return sum;
+			});
+		}
 	}
+);
 
-	const { timing } = await fastest_test(10, () => {
-		const destroy = $.effect_root(() => {
-			for (let i = 0; i < 10; i++) {
-				bench(create_computations_1to2, COUNT, COUNT / 2);
-			}
-		});
-		destroy();
-	});
-
-	return {
-		benchmark: 'sbench_create_1to2',
-		time: timing.time.toFixed(2),
-		gc_time: timing.gc_time.toFixed(2)
-	};
-}
-
-export async function sbench_create_1to4() {
-	// Do 3 loops to warm up JIT
-	for (let i = 0; i < 3; i++) {
-		bench(create_computations_1to4, COUNT, COUNT / 4);
+export const sbench_create_1to2 = create_sbench_test(
+	'sbench_create_1to2',
+	COUNT,
+	COUNT / 2,
+	(n, sources) => {
+		for (let i = 0; i < n / 2; i++) {
+			const source = sources[i];
+			create_derived(source);
+			create_derived(source);
+		}
 	}
+);
 
-	const { timing } = await fastest_test(10, () => {
-		const destroy = $.effect_root(() => {
-			for (let i = 0; i < 10; i++) {
-				bench(create_computations_1to4, COUNT, COUNT / 4);
-			}
-		});
-		destroy();
-	});
-
-	return {
-		benchmark: 'sbench_create_1to4',
-		time: timing.time.toFixed(2),
-		gc_time: timing.gc_time.toFixed(2)
-	};
-}
-
-export async function sbench_create_1to8() {
-	// Do 3 loops to warm up JIT
-	for (let i = 0; i < 3; i++) {
-		bench(create_computations_1to8, COUNT, COUNT / 8);
+export const sbench_create_1to4 = create_sbench_test(
+	'sbench_create_1to4',
+	COUNT,
+	COUNT / 4,
+	(n, sources) => {
+		for (let i = 0; i < n / 4; i++) {
+			const source = sources[i];
+			create_derived(source);
+			create_derived(source);
+			create_derived(source);
+			create_derived(source);
+		}
 	}
+);
 
-	const { timing } = await fastest_test(10, () => {
-		const destroy = $.effect_root(() => {
-			for (let i = 0; i < 10; i++) {
-				bench(create_computations_1to8, COUNT, COUNT / 8);
-			}
-		});
-		destroy();
-	});
-
-	return {
-		benchmark: 'sbench_create_1to8',
-		time: timing.time.toFixed(2),
-		gc_time: timing.gc_time.toFixed(2)
-	};
-}
-
-export async function sbench_create_1to1000() {
-	// Do 3 loops to warm up JIT
-	for (let i = 0; i < 3; i++) {
-		bench(create_computations_1to1000, COUNT, COUNT / 1000);
+export const sbench_create_1to8 = create_sbench_test(
+	'sbench_create_1to8',
+	COUNT,
+	COUNT / 8,
+	(n, sources) => {
+		for (let i = 0; i < n / 8; i++) {
+			const source = sources[i];
+			create_derived(source);
+			create_derived(source);
+			create_derived(source);
+			create_derived(source);
+			create_derived(source);
+			create_derived(source);
+			create_derived(source);
+			create_derived(source);
+		}
 	}
+);
 
-	const { timing } = await fastest_test(10, () => {
-		const destroy = $.effect_root(() => {
-			for (let i = 0; i < 10; i++) {
-				bench(create_computations_1to1000, COUNT, COUNT / 1000);
+export const sbench_create_1to1000 = create_sbench_test(
+	'sbench_create_1to1000',
+	COUNT,
+	COUNT / 1000,
+	(n, sources) => {
+		for (let i = 0; i < n / 1000; i++) {
+			const source = sources[i];
+			for (let j = 0; j < 1000; j++) {
+				create_derived(source);
 			}
-		});
-		destroy();
-	});
-
-	return {
-		benchmark: 'sbench_create_1to1000',
-		time: timing.time.toFixed(2),
-		gc_time: timing.gc_time.toFixed(2)
-	};
-}
+		}
+	}
+);
