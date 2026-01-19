@@ -457,6 +457,18 @@ export function RegularElement(node, context) {
 		context.state.after_update.push(...element_state.after_update);
 	}
 
+	if (node.name === 'selectedcontent') {
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.selectedcontent',
+					context.state.node,
+					b.arrow([b.id('$$element')], b.assignment('=', context.state.node, b.id('$$element')))
+				)
+			)
+		);
+	}
+
 	if (lookup.has('dir')) {
 		// This fixes an issue with Chromium where updates to text content within an element
 		// does not update the direction when set to auto. If we just re-assign the dir, this fixes it.
