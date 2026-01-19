@@ -1,8 +1,7 @@
 import { assert } from '../../../utils.js';
 import * as $ from 'svelte/internal/client';
-import { create_test } from '../util.js';
 
-export default create_test('kairo_unstable', () => {
+export default () => {
 	let head = $.state(0);
 	const double = $.derived(() => $.get(head) * 2);
 	const inverse = $.derived(() => -$.get(head));
@@ -39,4 +38,4 @@ export default create_test('kairo_unstable', () => {
 			assert(counter === 100);
 		}
 	};
-});
+};

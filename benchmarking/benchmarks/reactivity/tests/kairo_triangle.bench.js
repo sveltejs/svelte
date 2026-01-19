@@ -1,6 +1,5 @@
 import { assert } from '../../../utils.js';
 import * as $ from 'svelte/internal/client';
-import { create_test } from '../util.js';
 
 let width = 10;
 
@@ -11,7 +10,7 @@ function count(number) {
 		.reduce((x, y) => x + y, 0);
 }
 
-export default create_test('kairo_triangle', () => {
+export default () => {
 	let head = $.state(0);
 	let current = head;
 	let list = [];
@@ -53,4 +52,4 @@ export default create_test('kairo_triangle', () => {
 			assert(counter === 100);
 		}
 	};
-});
+};

@@ -1,11 +1,10 @@
 import { assert } from '../../../utils.js';
 import * as $ from 'svelte/internal/client';
-import { create_test } from '../util.js';
 
 let len = 50;
 const iter = 50;
 
-export default create_test('kairo_deep', () => {
+export default () => {
 	let head = $.state(0);
 	let current = head;
 	for (let i = 0; i < len; i++) {
@@ -39,4 +38,4 @@ export default create_test('kairo_deep', () => {
 			assert(counter === iter);
 		}
 	};
-});
+};

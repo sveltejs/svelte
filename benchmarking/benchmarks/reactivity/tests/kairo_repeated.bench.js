@@ -1,10 +1,9 @@
 import { assert } from '../../../utils.js';
 import * as $ from 'svelte/internal/client';
-import { create_test } from '../util.js';
 
 let size = 30;
 
-export default create_test('kairo_repeated', () => {
+export default () => {
 	let head = $.state(0);
 	let current = $.derived(() => {
 		let result = 0;
@@ -40,4 +39,4 @@ export default create_test('kairo_repeated', () => {
 			assert(counter === 100);
 		}
 	};
-});
+};

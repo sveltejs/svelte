@@ -1,6 +1,5 @@
 import { assert } from '../../../utils.js';
 import * as $ from 'svelte/internal/client';
-import { create_test } from '../util.js';
 
 /**
  * @param {number} n
@@ -19,7 +18,7 @@ function hard(n) {
 
 const numbers = Array.from({ length: 5 }, (_, i) => i);
 
-export default create_test('mol_bench', () => {
+export default () => {
 	let res = [];
 	const A = $.state(0);
 	const B = $.state(0);
@@ -63,4 +62,4 @@ export default create_test('mol_bench', () => {
 			assert(res[0] === 3198 && res[1] === 1601 && res[2] === 3195 && res[3] === 1598);
 		}
 	};
-});
+};

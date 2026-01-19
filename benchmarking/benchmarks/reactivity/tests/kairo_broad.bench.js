@@ -1,8 +1,7 @@
 import { assert } from '../../../utils.js';
 import * as $ from 'svelte/internal/client';
-import { create_test } from '../util.js';
 
-export default create_test('kairo_broad', () => {
+export default () => {
 	let head = $.state(0);
 	let last = head;
 	let counter = 0;
@@ -39,4 +38,4 @@ export default create_test('kairo_broad', () => {
 			assert(counter === 50 * 50);
 		}
 	};
-});
+};

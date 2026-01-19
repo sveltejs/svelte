@@ -1,10 +1,9 @@
 import { assert } from '../../../utils.js';
 import * as $ from 'svelte/internal/client';
-import { create_test } from '../util.js';
 
 let width = 5;
 
-export default create_test('kairo_diamond', () => {
+export default () => {
 	let head = $.state(0);
 	let current = [];
 	for (let i = 0; i < width; i++) {
@@ -43,4 +42,4 @@ export default create_test('kairo_diamond', () => {
 			assert(counter === 500);
 		}
 	};
-});
+};
