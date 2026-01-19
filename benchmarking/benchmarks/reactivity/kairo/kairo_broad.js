@@ -1,4 +1,4 @@
-import { assert, fastest_test } from '../../../utils.js';
+import { assert } from '../../../utils.js';
 import * as $ from 'svelte/internal/client';
 import { create_test } from './util.js';
 

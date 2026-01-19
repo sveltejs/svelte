@@ -1,101 +1,49 @@
-import { assert, fastest_test } from '../../../utils.js';
+import { assert } from '../../../utils.js';
 import * as $ from 'svelte/internal/client';
+import { create_test } from './util.js';
 
 let width = 5;
 
-function setup() {
-	let head = $.state(0);
-	let current = [];
-	for (let i = 0; i < width; i++) {
-		current.push(
-			$.derived(() => {
-				return $.get(head) + 1;
-			})
-		);
-	}
-	let sum = $.derived(() => {
-		return current.map((x) => $.get(x)).reduce((a, b) => a + b, 0);
-	});
-	let counter = 0;
-
-	const destroy = $.effect_root(() => {
-		$.render_effect(() => {
-			$.get(sum);
-			counter++;
+export const { owned: kairo_diamond_owned, unowned: kairo_diamond_unowned } = create_test(
+	'kairo_diamond',
+	() => {
+		let head = $.state(0);
+		let current = [];
+		for (let i = 0; i < width; i++) {
+			current.push(
+				$.derived(() => {
+					return $.get(head) + 1;
+				})
+			);
+		}
+		let sum = $.derived(() => {
+			return current.map((x) => $.get(x)).reduce((a, b) => a + b, 0);
 		});
-	});
+		let counter = 0;
 
-	return {
-		destroy,
-		run() {
-			$.flush(() => {
-				$.set(head, 1);
+		const destroy = $.effect_root(() => {
+			$.render_effect(() => {
+				$.get(sum);
+				counter++;
 			});
-			assert($.get(sum) === 2 * width);
-			counter = 0;
-			for (let i = 0; i < 500; i++) {
+		});
+
+		return {
+			destroy,
+			run() {
 				$.flush(() => {
-					$.set(head, i);
+					$.set(head, 1);
 				});
-				assert($.get(sum) === (i + 1) * width);
+				assert($.get(sum) === 2 * width);
+				counter = 0;
+				for (let i = 0; i < 500; i++) {
+					$.flush(() => {
+						$.set(head, i);
+					});
+					assert($.get(sum) === (i + 1) * width);
+				}
+				assert(counter === 500);
 			}
-			assert(counter === 500);
-		}
-	};
-}
-
-export async function kairo_diamond_unowned() {
-	// Do 10 loops to warm up JIT
-	for (let i = 0; i < 10; i++) {
-		const { run, destroy } = setup();
-		run();
-		destroy();
+		};
 	}
-
-	const { run, destroy } = setup();
-
-	const { timing } = await fastest_test(10, () => {
-		for (let i = 0; i < 1000; i++) {
-			run();
-		}
-	});
-
-	destroy();
-
-	return {
-		benchmark: 'kairo_diamond_unowned',
-		time: timing.time.toFixed(2),
-		gc_time: timing.gc_time.toFixed(2)
-	};
-}
-
-export async function kairo_diamond_owned() {
-	let run, destroy;
-
-	const destroy_owned = $.effect_root(() => {
-		// Do 10 loops to warm up JIT
-		for (let i = 0; i < 10; i++) {
-			const { run, destroy } = setup();
-			run();
-			destroy();
-		}
-
-		({ run, destroy } = setup());
-	});
-
-	const { timing } = await fastest_test(10, () => {
-		for (let i = 0; i < 1000; i++) {
-			run();
-		}
-	});
-
-	// @ts-ignore
-	destroy();
-	destroy_owned();
-
-	return {
-		benchmark: 'kairo_diamond_owned',
-		time: timing.time.toFixed(2),
-		gc_time: timing.gc_time.toFixed(2)
-	};
-}
+);
