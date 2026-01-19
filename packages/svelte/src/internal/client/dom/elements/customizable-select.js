@@ -41,8 +41,9 @@ function find_in_path(node, tag_name) {
 /**
  *
  * @param {HTMLElement} element
+ * @param {(new_element: HTMLElement) => void} update_element
  */
-export function selectedcontent(element) {
+export function selectedcontent(element, update_element) {
 	// if it's not supported no need for special logic
 	if (!is_supported()) return;
 
@@ -73,6 +74,7 @@ export function selectedcontent(element) {
 				// otherwise we replace selectedcontent with a new element to trigger the browser
 				// reclone of the selected option
 				element.replaceWith((element = /** @type {HTMLElement} */ (element.cloneNode(true))));
+				update_element(element);
 			});
 
 			observer.observe(select, {

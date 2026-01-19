@@ -458,7 +458,18 @@ export function RegularElement(node, context) {
 	}
 
 	if (node.name === 'selectedcontent') {
-		context.state.init.push(b.stmt(b.call('$.selectedcontent', context.state.node)));
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.selectedcontent',
+					context.state.node,
+					b.arrow(
+						[b.id('$$new_element')],
+						b.assignment('=', context.state.node, b.id('$$new_element'))
+					)
+				)
+			)
+		);
 	}
 
 	if (lookup.has('dir')) {
