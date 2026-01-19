@@ -1,5 +1,11 @@
 # svelte
 
+## 5.47.1
+
+### Patch Changes
+
+- fix: trigger `selectedcontent` reactivity ([#17486](https://github.com/sveltejs/svelte/pull/17486))
+
 ## 5.47.0
 
 ### Minor Changes
