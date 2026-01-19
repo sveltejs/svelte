@@ -260,10 +260,16 @@ export function update_reaction(reaction) {
 		var result = fn();
 		var deps = reaction.deps;
 
+		// Don't remove reactions during fork;
+		// they must remain for when fork is discarded
+		var is_fork = current_batch?.is_fork;
+
 		if (new_deps !== null) {
 			var i;
 
-			remove_reactions(reaction, skipped_deps);
+			if (!is_fork) {
+				remove_reactions(reaction, skipped_deps);
+			}
 
 			if (deps !== null && skipped_deps > 0) {
 				deps.length = skipped_deps + new_deps.length;
@@ -279,7 +285,7 @@ export function update_reaction(reaction) {
 					(deps[i].reactions ??= []).push(reaction);
 				}
 			}
-		} else if (deps !== null && skipped_deps < deps.length) {
+		} else if (!is_fork && deps !== null && skipped_deps < deps.length) {
 			remove_reactions(reaction, skipped_deps);
 			deps.length = skipped_deps;
 		}
