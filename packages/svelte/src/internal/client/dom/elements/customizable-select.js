@@ -33,38 +33,37 @@ export function selectedcontent(element, update_element) {
 	// we use the attach function directly just to make sure is executed when is mounted to the dom
 	attach(element, () => () => {
 		const select = element.closest('select');
+		if (!select) return;
 
-		if (select) {
-			const observer = new MutationObserver((entries) => {
-				var selected = false;
+		const observer = new MutationObserver((entries) => {
+			var selected = false;
 
-				for (const entry of entries) {
-					if (entry.target === element) {
-						// the `<selectedcontent>` already changed, no need to replace it
-						return;
-					}
-
-					// if the changes doesn't include the selected `<option>` we don't need to do anything
-					selected ||= !!entry.target.parentElement?.closest('option')?.selected;
+			for (const entry of entries) {
+				if (entry.target === element) {
+					// the `<selectedcontent>` already changed, no need to replace it
+					return;
 				}
 
-				if (selected) {
-					// replace the `<selectedcontent>` with a clone
-					element.replaceWith((element = /** @type {HTMLElement} */ (element.cloneNode(true))));
-					update_element(element);
-				}
-			});
+				// if the changes doesn't include the selected `<option>` we don't need to do anything
+				selected ||= !!entry.target.parentElement?.closest('option')?.selected;
+			}
 
-			observer.observe(select, {
-				childList: true,
-				characterData: true,
-				subtree: true
-			});
+			if (selected) {
+				// replace the `<selectedcontent>` with a clone
+				element.replaceWith((element = /** @type {HTMLElement} */ (element.cloneNode(true))));
+				update_element(element);
+			}
+		});
 
-			return () => {
-				observer.disconnect();
-			};
-		}
+		observer.observe(select, {
+			childList: true,
+			characterData: true,
+			subtree: true
+		});
+
+		return () => {
+			observer.disconnect();
+		};
 	});
 }
 
