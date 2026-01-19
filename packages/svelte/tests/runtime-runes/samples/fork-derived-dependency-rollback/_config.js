@@ -5,7 +5,7 @@ export default test({
 	skip_no_async: true,
 	async test({ assert, target }) {
 		const [fork_btn, _toggle_btn, inc_count_1_btn] = target.querySelectorAll('button');
-		const p = target.querySelector('p');
+		const p = /** @type {HTMLElement} */ (target.querySelector('p'));
 
 		assert.equal(p.textContent, '0');
 
