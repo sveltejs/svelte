@@ -220,9 +220,10 @@ export class Renderer {
 	 * @param {Record<string, boolean> | undefined} [classes]
 	 * @param {Record<string, string> | undefined} [styles]
 	 * @param {number | undefined} [flags]
+	 * @param {boolean | undefined} [is_rich]
 	 * @returns {void}
 	 */
-	select(attrs, fn, css_hash, classes, styles, flags) {
+	select(attrs, fn, css_hash, classes, styles, flags, is_rich) {
 		const { value, ...select_attrs } = attrs;
 
 		this.push(`<select${attributes(select_attrs, css_hash, classes, styles, flags)}>`);
@@ -230,7 +231,7 @@ export class Renderer {
 			renderer.local.select_value = value;
 			fn(renderer);
 		});
-		this.push('</select>');
+		this.push(`${is_rich ? '<!>' : ''}</select>`);
 	}
 
 	/**
@@ -240,8 +241,9 @@ export class Renderer {
 	 * @param {Record<string, boolean> | undefined} [classes]
 	 * @param {Record<string, string> | undefined} [styles]
 	 * @param {number | undefined} [flags]
+	 * @param {boolean | undefined} [is_rich]
 	 */
-	option(attrs, body, css_hash, classes, styles, flags) {
+	option(attrs, body, css_hash, classes, styles, flags, is_rich) {
 		this.#out.push(`<option${attributes(attrs, css_hash, classes, styles, flags)}`);
 
 		/**
@@ -258,7 +260,7 @@ export class Renderer {
 				renderer.#out.push(' selected');
 			}
 
-			renderer.#out.push(`>${body}</option>`);
+			renderer.#out.push(`>${body}${is_rich ? '<!>' : ''}</option>`);
 
 			// super edge case, but may as well handle it
 			if (head) {
