@@ -49,28 +49,20 @@ export function selectedcontent(element, update_element) {
 
 	// we use the attach function directly just to make sure is executed when is mounted to the dom
 	attach(element, () => () => {
-		const select = /** @type {HTMLSelectElement | null} */ (find_in_path(element, 'SELECT'));
+		const select = element.closest('select');
+
 		if (select) {
 			const observer = new MutationObserver((entries) => {
-				// if the changes include SELECTEDCONTENT we don't need to do anything as it already changed
-				if (
-					entries.some(
-						(el) => el.target instanceof HTMLElement && el.target.tagName === 'SELECTEDCONTENT'
-					)
-				) {
+				if (entries.some((entry) => entry.target === element)) {
+					// the `<selectedcontent>` already changed
 					return;
 				}
-				// if the changes doesn't include the selected options we don't need to do anything
-				if (
-					!entries.find((e) => {
-						const option = /** @type {HTMLOptionElement | null} */ (
-							find_in_path(e.target, 'OPTION')
-						);
-						return option && [...select.selectedOptions].includes(option);
-					})
-				) {
+
+				// if the changes doesn't include the selected `<option>` we don't need to do anything
+				if (!entries.some((e) => e.target.parentElement?.closest('option')?.selected)) {
 					return;
 				}
+
 				// otherwise we replace selectedcontent with a new element to trigger the browser
 				// reclone of the selected option
 				element.replaceWith((element = /** @type {HTMLElement} */ (element.cloneNode(true))));
