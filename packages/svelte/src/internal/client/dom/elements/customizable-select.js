@@ -43,12 +43,15 @@ function find_in_path(node, tag_name) {
  * @param {HTMLElement} element
  */
 export function selectedcontent(element) {
+	// if it's not supported no need for special logic
 	if (!CSS.supports('appearance: base-select')) return;
 
+	// we use the attach function directly just to make sure is executed when is mounted to the dom
 	attach(element, () => () => {
 		const select = /** @type {HTMLSelectElement | null} */ (find_in_path(element, 'SELECT'));
 		if (select) {
 			const observer = new MutationObserver((entries) => {
+				// if the changes include SELECTEDCONTENT we don't need to do anything as it already changed
 				if (
 					entries.some(
 						(el) => el.target instanceof HTMLElement && el.target.tagName === 'SELECTEDCONTENT'
@@ -56,6 +59,7 @@ export function selectedcontent(element) {
 				) {
 					return;
 				}
+				// if the changes doesn't include the selected options we don't need to do anything
 				if (
 					!entries.find((e) => {
 						const option = /** @type {HTMLOptionElement | null} */ (
@@ -66,6 +70,8 @@ export function selectedcontent(element) {
 				) {
 					return;
 				}
+				// otherwise we replace selectedcontent with a new element to trigger the browser
+				// reclone of the selected option
 				element.replaceWith((element = document.createElement('selectedcontent')));
 			});
 
