@@ -11,7 +11,7 @@ export function busy() {
 /**
  *
  * @param {string} label
- * @param {() => { run: () => void, destroy: () => void }} setup
+ * @param {() => { run: (i?: number) => void, destroy: () => void }} setup
  */
 export function create_test(label, setup) {
 	return {
@@ -19,7 +19,7 @@ export function create_test(label, setup) {
 			// Do 10 loops to warm up JIT
 			for (let i = 0; i < 10; i++) {
 				const { run, destroy } = setup();
-				run();
+				run(0);
 				destroy();
 			}
 
@@ -27,7 +27,7 @@ export function create_test(label, setup) {
 
 			const { timing } = await fastest_test(10, () => {
 				for (let i = 0; i < 1000; i++) {
-					run();
+					run(i);
 				}
 			});
 
@@ -46,7 +46,7 @@ export function create_test(label, setup) {
 				// Do 10 loops to warm up JIT
 				for (let i = 0; i < 10; i++) {
 					const { run, destroy } = setup();
-					run();
+					run(0);
 					destroy();
 				}
 
@@ -55,7 +55,7 @@ export function create_test(label, setup) {
 
 			const { timing } = await fastest_test(10, () => {
 				for (let i = 0; i < 1000; i++) {
-					run();
+					run(i);
 				}
 			});
 

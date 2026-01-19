@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { mol_bench_owned, mol_bench_unowned } from './mol_bench.js';
+import mol_bench from './mol_bench.js';
 import {
 	sbench_create_0to1,
 	sbench_create_1000to1,
@@ -40,4 +40,4 @@ for (const file of fs.readdirSync(`${dirname}/kairo`)) {
 	reactivity_benchmarks.push(module.default.owned, module.default.unowned);
 }
 
-reactivity_benchmarks.push(mol_bench_owned, mol_bench_unowned);
+reactivity_benchmarks.push(mol_bench.owned, mol_bench.unowned);
