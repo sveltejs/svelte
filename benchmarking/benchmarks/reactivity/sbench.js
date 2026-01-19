@@ -1,3 +1,4 @@
+/** @import { Source } from '../../../packages/svelte/src/internal/client/types.js' */
 import { fastest_test } from '../../utils.js';
 import * as $ from '../../../packages/svelte/src/internal/client/index.js';
 
@@ -15,68 +16,10 @@ function create_data_signals(n, sources) {
 }
 
 /**
- * @param {number} i
- */
-function create_computation_0(i) {
-	$.derived(() => i);
-}
-
-/**
  * @param {any} s1
  */
 function create_computation_1(s1) {
 	$.derived(() => $.get(s1));
-}
-/**
- * @param {any} s1
- * @param {any} s2
- */
-function create_computation_2(s1, s2) {
-	$.derived(() => $.get(s1) + $.get(s2));
-}
-
-function create_computation_1000(ss, offset) {
-	$.derived(() => {
-		let sum = 0;
-		for (let i = 0; i < 1000; i++) {
-			sum += $.get(ss[offset + i]);
-		}
-		return sum;
-	});
-}
-
-/**
- * @param {number} n
- */
-function create_computations_0to1(n) {
-	for (let i = 0; i < n; i++) {
-		create_computation_0(i);
-	}
-}
-
-/**
- * @param {number} n
- * @param {any[]} sources
- */
-function create_computations_1to1(n, sources) {
-	for (let i = 0; i < n; i++) {
-		const source = sources[i];
-		create_computation_1(source);
-	}
-}
-
-/**
- * @param {number} n
- * @param {any[]} sources
- */
-function create_computations_2to1(n, sources) {
-	for (let i = 0; i < n; i++) {
-		create_computation_2(sources[i * 2], sources[i * 2 + 1]);
-	}
-}
-
-function create_computation_4(s1, s2, s3, s4) {
-	$.derived(() => $.get(s1) + $.get(s2) + $.get(s3) + $.get(s4));
 }
 
 /**
@@ -93,7 +36,7 @@ function bench(fn, count, scount) {
 /**
  *
  * @param {string} label
- * @param {*} fn
+ * @param {(n: number, sources: Array<Source<number>>)} fn
  * @param {number} count
  * @param {number} scount
  */
@@ -130,21 +73,33 @@ export const sbench_create_signals = create_sbench_test(
 
 export const sbench_create_0to1 = create_sbench_test(
 	'sbench_create_0to1',
-	create_computations_0to1,
+	function create_computations_0to1(n) {
+		for (let i = 0; i < n; i++) {
+			$.derived(() => i);
+		}
+	},
 	COUNT,
 	0
 );
 
 export const sbench_create_1to1 = create_sbench_test(
 	'sbench_create_1to1',
-	create_computations_1to1,
+	function create_computations_1to1(n, sources) {
+		for (let i = 0; i < n; i++) {
+			create_computation_1(sources[i]);
+		}
+	},
 	COUNT,
 	COUNT
 );
 
 export const sbench_create_2to1 = create_sbench_test(
 	'sbench_create_2to1',
-	create_computations_2to1,
+	function create_computations_2to1(n, sources) {
+		for (let i = 0; i < n; i++) {
+			$.derived(() => $.get(sources[i * 2]) + $.get(sources[i * 2 + 1]));
+		}
+	},
 	COUNT / 2,
 	COUNT
 );
@@ -153,11 +108,12 @@ export const sbench_create_4to1 = create_sbench_test(
 	'sbench_create_4to1',
 	function create_computations_4to1(n, sources) {
 		for (let i = 0; i < n; i++) {
-			create_computation_4(
-				sources[i * 4],
-				sources[i * 4 + 1],
-				sources[i * 4 + 2],
-				sources[i * 4 + 3]
+			$.derived(
+				() =>
+					$.get(sources[i * 4]) +
+					$.get(sources[i * 4 + 1]) +
+					$.get(sources[i * 4 + 2]) +
+					$.get(sources[i * 4 + 3])
 			);
 		}
 	},
@@ -169,7 +125,15 @@ export const sbench_create_1000to1 = create_sbench_test(
 	'sbench_create_1000to1',
 	function create_computations_1000to1(n, sources) {
 		for (let i = 0; i < n; i++) {
-			create_computation_1000(sources, i * 1000);
+			const offset = i * 1000;
+
+			$.derived(() => {
+				let sum = 0;
+				for (let i = 0; i < 1000; i++) {
+					sum += $.get(sources[offset + i]);
+				}
+				return sum;
+			});
 		}
 	},
 	COUNT / 1000,
