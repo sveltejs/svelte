@@ -1,5 +1,8 @@
+import { teardown } from '../../reactivity/effects.js';
 import { hydrating, reset, set_hydrate_node, set_hydrating } from '../hydration.js';
 import { create_comment } from '../operations.js';
+import { queue_micro_task } from '../task.js';
+import { attach } from './attachments.js';
 
 /** @type {boolean | null} */
 let supported = null;
@@ -18,6 +21,65 @@ function is_supported() {
 	}
 
 	return supported;
+}
+
+/**
+ * @param {Node} node
+ * @param {string} tag_name
+ */
+function find_in_path(node, tag_name) {
+	/**
+	 * @type {HTMLElement | undefined | null}
+	 */
+	let parent = /** @type {HTMLElement} */ (node);
+	while (parent && parent.tagName !== tag_name) {
+		parent = parent.parentElement;
+	}
+	return parent;
+}
+
+/**
+ *
+ * @param {HTMLElement} element
+ */
+export function selectedcontent(element) {
+	if (!CSS.supports('appearance: base-select')) return;
+
+	attach(element, () => () => {
+		const select = /** @type {HTMLSelectElement | null} */ (find_in_path(element, 'SELECT'));
+		if (select) {
+			const observer = new MutationObserver((entries) => {
+				if (
+					entries.some(
+						(el) => el.target instanceof HTMLElement && el.target.tagName === 'SELECTEDCONTENT'
+					)
+				) {
+					return;
+				}
+				if (
+					!entries.find((e) => {
+						const option = /** @type {HTMLOptionElement | null} */ (
+							find_in_path(e.target, 'OPTION')
+						);
+						return option && [...select.selectedOptions].includes(option);
+					})
+				) {
+					return;
+				}
+				element.replaceWith((element = document.createElement('selectedcontent')));
+			});
+
+			observer.observe(select, {
+				childList: true,
+				characterData: true,
+				subtree: true
+			});
+
+			teardown(() => {
+				observer.disconnect();
+			});
+		}
+	});
 }
 
 /**
