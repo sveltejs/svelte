@@ -36,20 +36,23 @@ export function selectedcontent(element, update_element) {
 
 		if (select) {
 			const observer = new MutationObserver((entries) => {
-				if (entries.some((entry) => entry.target === element)) {
-					// the `<selectedcontent>` already changed
-					return;
+				var selected = false;
+
+				for (const entry of entries) {
+					if (entry.target === element) {
+						// the `<selectedcontent>` already changed, no need to replace it
+						return;
+					}
+
+					// if the changes doesn't include the selected `<option>` we don't need to do anything
+					selected ||= !!entry.target.parentElement?.closest('option')?.selected;
 				}
 
-				// if the changes doesn't include the selected `<option>` we don't need to do anything
-				if (!entries.some((e) => e.target.parentElement?.closest('option')?.selected)) {
-					return;
+				if (selected) {
+					// replace the `<selectedcontent>` with a clone
+					element.replaceWith((element = /** @type {HTMLElement} */ (element.cloneNode(true))));
+					update_element(element);
 				}
-
-				// otherwise we replace selectedcontent with a new element to trigger the browser
-				// reclone of the selected option
-				element.replaceWith((element = /** @type {HTMLElement} */ (element.cloneNode(true))));
-				update_element(element);
 			});
 
 			observer.observe(select, {
