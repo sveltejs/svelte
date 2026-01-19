@@ -463,10 +463,7 @@ export function RegularElement(node, context) {
 				b.call(
 					'$.selectedcontent',
 					context.state.node,
-					b.arrow(
-						[b.id('$$new_element')],
-						b.assignment('=', context.state.node, b.id('$$new_element'))
-					)
+					b.arrow([b.id('$$element')], b.assignment('=', context.state.node, b.id('$$element')))
 				)
 			)
 		);
