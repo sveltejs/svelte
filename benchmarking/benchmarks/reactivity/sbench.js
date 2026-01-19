@@ -16,10 +16,10 @@ function create_data_signals(n, sources) {
 }
 
 /**
- * @param {any} s1
+ * @param {Source<number>} source
  */
-function create_computation_1(s1) {
-	$.derived(() => $.get(s1));
+function create_derived(source) {
+	$.derived(() => $.get(source));
 }
 
 /**
@@ -86,7 +86,7 @@ export const sbench_create_1to1 = create_sbench_test(
 	'sbench_create_1to1',
 	function create_computations_1to1(n, sources) {
 		for (let i = 0; i < n; i++) {
-			create_computation_1(sources[i]);
+			create_derived(sources[i]);
 		}
 	},
 	COUNT,
@@ -145,8 +145,8 @@ export const sbench_create_1to2 = create_sbench_test(
 	function create_computations_1to2(n, sources) {
 		for (let i = 0; i < n / 2; i++) {
 			const source = sources[i];
-			create_computation_1(source);
-			create_computation_1(source);
+			create_derived(source);
+			create_derived(source);
 		}
 	},
 	COUNT,
@@ -158,10 +158,10 @@ export const sbench_create_1to4 = create_sbench_test(
 	function create_computations_1to4(n, sources) {
 		for (let i = 0; i < n / 4; i++) {
 			const source = sources[i];
-			create_computation_1(source);
-			create_computation_1(source);
-			create_computation_1(source);
-			create_computation_1(source);
+			create_derived(source);
+			create_derived(source);
+			create_derived(source);
+			create_derived(source);
 		}
 	},
 	COUNT,
@@ -173,14 +173,14 @@ export const sbench_create_1to8 = create_sbench_test(
 	function create_computations_1to8(n, sources) {
 		for (let i = 0; i < n / 8; i++) {
 			const source = sources[i];
-			create_computation_1(source);
-			create_computation_1(source);
-			create_computation_1(source);
-			create_computation_1(source);
-			create_computation_1(source);
-			create_computation_1(source);
-			create_computation_1(source);
-			create_computation_1(source);
+			create_derived(source);
+			create_derived(source);
+			create_derived(source);
+			create_derived(source);
+			create_derived(source);
+			create_derived(source);
+			create_derived(source);
+			create_derived(source);
 		}
 	},
 	COUNT,
@@ -193,7 +193,7 @@ export const sbench_create_1to1000 = create_sbench_test(
 		for (let i = 0; i < n / 1000; i++) {
 			const source = sources[i];
 			for (let j = 0; j < 1000; j++) {
-				create_computation_1(source);
+				create_derived(source);
 			}
 		}
 	},
