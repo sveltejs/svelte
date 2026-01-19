@@ -1,3 +1,4 @@
+import * as $ from 'svelte/internal/client';
 import { fastest_test } from '../../../utils.js';
 
 export function busy() {
