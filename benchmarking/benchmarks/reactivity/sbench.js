@@ -148,46 +148,50 @@ function bench(fn, count, scount) {
 	fn(count, sources);
 }
 
-export async function sbench_create_signals() {
-	// Do 3 loops to warm up JIT
-	for (let i = 0; i < 3; i++) {
-		bench(create_data_signals, COUNT, COUNT);
-	}
-
-	const { timing } = await fastest_test(10, () => {
-		for (let i = 0; i < 100; i++) {
-			bench(create_data_signals, COUNT, COUNT);
+/**
+ *
+ * @param {string} label
+ * @param {*} fn
+ * @param {number} count
+ * @param {number} scount
+ */
+function create_sbench_test(label, fn, count, scount) {
+	return async () => {
+		// Do 3 loops to warm up JIT
+		for (let i = 0; i < 3; i++) {
+			bench(fn, count, scount);
 		}
-	});
 
-	return {
-		benchmark: 'sbench_create_signals',
-		time: timing.time.toFixed(2),
-		gc_time: timing.gc_time.toFixed(2)
-	};
-}
-
-export async function sbench_create_0to1() {
-	// Do 3 loops to warm up JIT
-	for (let i = 0; i < 3; i++) {
-		bench(create_computations_0to1, COUNT, 0);
-	}
-
-	const { timing } = await fastest_test(10, () => {
-		const destroy = $.effect_root(() => {
-			for (let i = 0; i < 10; i++) {
-				bench(create_computations_0to1, COUNT, 0);
-			}
+		const { timing } = await fastest_test(10, () => {
+			const destroy = $.effect_root(() => {
+				for (let i = 0; i < 10; i++) {
+					bench(fn, count, scount);
+				}
+			});
+			destroy();
 		});
-		destroy();
-	});
 
-	return {
-		benchmark: 'sbench_create_0to1',
-		time: timing.time.toFixed(2),
-		gc_time: timing.gc_time.toFixed(2)
+		return {
+			benchmark: label,
+			time: timing.time.toFixed(2),
+			gc_time: timing.gc_time.toFixed(2)
+		};
 	};
 }
+
+export const sbench_create_signals = create_sbench_test(
+	'sbench_create_signals',
+	create_data_signals,
+	COUNT,
+	COUNT
+);
+
+export const sbench_create_0to1 = create_sbench_test(
+	'sbench_create_0to1',
+	create_computations_0to1,
+	COUNT,
+	0
+);
 
 export async function sbench_create_1to1() {
 	// Do 3 loops to warm up JIT
