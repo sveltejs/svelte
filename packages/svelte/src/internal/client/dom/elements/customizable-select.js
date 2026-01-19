@@ -83,9 +83,9 @@ export function selectedcontent(element, update_element) {
 				subtree: true
 			});
 
-			teardown(() => {
+			return () => {
 				observer.disconnect();
-			});
+			};
 		}
 	});
 }
