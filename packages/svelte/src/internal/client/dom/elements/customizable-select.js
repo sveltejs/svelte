@@ -44,7 +44,7 @@ function find_in_path(node, tag_name) {
  */
 export function selectedcontent(element) {
 	// if it's not supported no need for special logic
-	if (!CSS.supports('appearance: base-select')) return;
+	if (!is_supported()) return;
 
 	// we use the attach function directly just to make sure is executed when is mounted to the dom
 	attach(element, () => () => {
