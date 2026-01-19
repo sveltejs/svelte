@@ -1,11 +1,5 @@
-import { kairo_avoidable_owned, kairo_avoidable_unowned } from './kairo/kairo_avoidable.js';
-import { kairo_broad_owned, kairo_broad_unowned } from './kairo/kairo_broad.js';
-import { kairo_deep_owned, kairo_deep_unowned } from './kairo/kairo_deep.js';
-import { kairo_diamond_owned, kairo_diamond_unowned } from './kairo/kairo_diamond.js';
-import { kairo_mux_unowned, kairo_mux_owned } from './kairo/kairo_mux.js';
-import { kairo_repeated_unowned, kairo_repeated_owned } from './kairo/kairo_repeated.js';
-import { kairo_triangle_owned, kairo_triangle_unowned } from './kairo/kairo_triangle.js';
-import { kairo_unstable_owned, kairo_unstable_unowned } from './kairo/kairo_unstable.js';
+import fs from 'node:fs';
+import path from 'node:path';
 import { mol_bench_owned, mol_bench_unowned } from './mol_bench.js';
 import {
 	sbench_create_0to1,
@@ -19,9 +13,12 @@ import {
 	sbench_create_4to1,
 	sbench_create_signals
 } from './sbench.js';
+import { fileURLToPath } from 'node:url';
 
 // This benchmark has been adapted from the js-reactivity-benchmark (https://github.com/milomg/js-reactivity-benchmark)
 // Not all tests are the same, and many parts have been tweaked to capture different data.
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const reactivity_benchmarks = [
 	sbench_create_signals,
@@ -33,23 +30,14 @@ export const reactivity_benchmarks = [
 	sbench_create_1to2,
 	sbench_create_1to4,
 	sbench_create_1to8,
-	sbench_create_1to1000,
-	kairo_avoidable_owned,
-	kairo_avoidable_unowned,
-	kairo_broad_owned,
-	kairo_broad_unowned,
-	kairo_deep_owned,
-	kairo_deep_unowned,
-	kairo_diamond_owned,
-	kairo_diamond_unowned,
-	kairo_triangle_owned,
-	kairo_triangle_unowned,
-	kairo_mux_owned,
-	kairo_mux_unowned,
-	kairo_repeated_owned,
-	kairo_repeated_unowned,
-	kairo_unstable_owned,
-	kairo_unstable_unowned,
-	mol_bench_owned,
-	mol_bench_unowned
+	sbench_create_1to1000
 ];
+
+for (const file of fs.readdirSync(`${dirname}/kairo`)) {
+	if (!file.startsWith('kairo_')) continue;
+
+	const module = await import(`${dirname}/kairo/${file}`);
+	reactivity_benchmarks.push(module.default.owned, module.default.unowned);
+}
+
+reactivity_benchmarks.push(mol_bench_owned, mol_bench_unowned);

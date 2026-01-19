@@ -4,43 +4,40 @@ import { create_test } from './util.js';
 
 let size = 30;
 
-export const { owned: kairo_repeated_owned, unowned: kairo_repeated_unowned } = create_test(
-	'kairo_repeated',
-	() => {
-		let head = $.state(0);
-		let current = $.derived(() => {
-			let result = 0;
-			for (let i = 0; i < size; i++) {
-				result += $.get(head);
-			}
-			return result;
+export default create_test('kairo_repeated', () => {
+	let head = $.state(0);
+	let current = $.derived(() => {
+		let result = 0;
+		for (let i = 0; i < size; i++) {
+			result += $.get(head);
+		}
+		return result;
+	});
+
+	let counter = 0;
+
+	const destroy = $.effect_root(() => {
+		$.render_effect(() => {
+			$.get(current);
+			counter++;
 		});
+	});
 
-		let counter = 0;
-
-		const destroy = $.effect_root(() => {
-			$.render_effect(() => {
-				$.get(current);
-				counter++;
+	return {
+		destroy,
+		run() {
+			$.flush(() => {
+				$.set(head, 1);
 			});
-		});
-
-		return {
-			destroy,
-			run() {
+			assert($.get(current) === size);
+			counter = 0;
+			for (let i = 0; i < 100; i++) {
 				$.flush(() => {
-					$.set(head, 1);
+					$.set(head, i);
 				});
-				assert($.get(current) === size);
-				counter = 0;
-				for (let i = 0; i < 100; i++) {
-					$.flush(() => {
-						$.set(head, i);
-					});
-					assert($.get(current) === i * size);
-				}
-				assert(counter === 100);
+				assert($.get(current) === i * size);
 			}
-		};
-	}
-);
+			assert(counter === 100);
+		}
+	};
+});
