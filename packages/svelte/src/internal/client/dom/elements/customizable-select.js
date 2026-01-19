@@ -72,7 +72,7 @@ export function selectedcontent(element) {
 				}
 				// otherwise we replace selectedcontent with a new element to trigger the browser
 				// reclone of the selected option
-				element.replaceWith((element = document.createElement('selectedcontent')));
+				element.replaceWith((element = /** @type {HTMLElement} */ (element.cloneNode(true))));
 			});
 
 			observer.observe(select, {
