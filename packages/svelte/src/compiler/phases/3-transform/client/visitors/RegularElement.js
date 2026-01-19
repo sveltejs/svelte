@@ -11,7 +11,12 @@ import {
 import { is_ignored } from '../../../../state.js';
 import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { create_attribute, ExpressionMetadata, is_custom_element_node } from '../../../nodes.js';
+import {
+	create_attribute,
+	ExpressionMetadata,
+	is_custom_element_node,
+	is_customizable_select_element
+} from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_getter } from '../utils.js';
 import {
@@ -24,6 +29,9 @@ import {
 import { process_children, is_static_element } from './shared/fragment.js';
 import { build_render_statement, build_template_chunk, Memoizer } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
+import { Template } from '../transform-template/template.js';
+import { transform_template } from '../transform-template/index.js';
+import { TEMPLATE_FRAGMENT } from '../../../../../constants.js';
 
 /**
  * @param {AST.RegularElement} node
@@ -351,6 +359,57 @@ export function RegularElement(node, context) {
 				b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), value))
 			);
 		}
+	} else if (is_customizable_select_element(node)) {
+		// For <option>, <optgroup>, or <select> elements with rich content, we need to branch based on browser support.
+		// Modern browsers preserve rich HTML in options, older browsers strip it to text only.
+		// We create a separate template for the rich content and append it to the element.
+
+		const element_node = context.state.node;
+
+		// Add a hydration marker inside the option element so $.child() has an anchor to find
+		context.state.template.push_comment();
+
+		// Create a separate template for the rich content
+		const template_name = context.state.scope.root.unique(`${node.name}_content`);
+		const fragment_id = b.id(context.state.scope.generate('fragment'));
+		const anchor_id = b.id(context.state.scope.generate('anchor'));
+
+		// Create state with a new template for the rich content
+		/** @type {typeof state} */
+		const select_state = {
+			...state,
+			init: [],
+			update: [],
+			after_update: [],
+			template: new Template()
+		};
+
+		process_children(
+			trimmed,
+			(is_text) => b.call('$.first_child', fragment_id, is_text && b.true),
+			false,
+			{
+				...context,
+				state: select_state
+			}
+		);
+
+		// Transform the template to $.from_html(...) and hoist it
+		const template = transform_template(select_state, metadata.namespace, TEMPLATE_FRAGMENT);
+		context.state.hoisted.push(b.var(template_name, template));
+
+		// Build the rich content function body
+		// The anchor is the child of the element (a hydration marker during hydration)
+		const body = b.block([
+			b.var(anchor_id, b.call('$.child', element_node)),
+			b.var(fragment_id, b.call(template_name)),
+			...select_state.init,
+			...(select_state.update.length > 0 ? [build_render_statement(select_state)] : []),
+			...select_state.after_update,
+			b.stmt(b.call('$.append', anchor_id, fragment_id))
+		]);
+
+		child_state.init.push(b.stmt(b.call('$.customizable_select', element_node, b.arrow([], body))));
 	} else {
 		/** @type {Expression} */
 		let arg = context.state.node;
@@ -396,6 +455,18 @@ export function RegularElement(node, context) {
 	} else {
 		context.state.init.push(...element_state.init);
 		context.state.after_update.push(...element_state.after_update);
+	}
+
+	if (node.name === 'selectedcontent') {
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.selectedcontent',
+					context.state.node,
+					b.arrow([b.id('$$element')], b.assignment('=', context.state.node, b.id('$$element')))
+				)
+			)
+		);
 	}
 
 	if (lookup.has('dir')) {

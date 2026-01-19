@@ -1,5 +1,17 @@
 # svelte
 
+## 5.47.0
+
+### Minor Changes
+
+- feat: customizable `<select>` elements ([#17429](https://github.com/sveltejs/svelte/pull/17429))
+
+### Patch Changes
+
+- fix: mark subtree of svelte boundary as dynamic ([#17468](https://github.com/sveltejs/svelte/pull/17468))
+
+- fix: don't reset static elements with debug/snippets ([#17477](https://github.com/sveltejs/svelte/pull/17477))
+
 ## 5.46.4
 
 ### Patch Changes
