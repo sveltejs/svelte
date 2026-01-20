@@ -1,7 +1,7 @@
 {
 	"css": null,
 	"js": [],
-	"start": 54,
+	"start": 0,
 	"end": 173,
 	"type": "Root",
 	"fragment": {
@@ -396,7 +396,7 @@
 				},
 				"end": {
 					"line": 3,
-					"column": 0
+					"column": 9
 				}
 			},
 			"body": [

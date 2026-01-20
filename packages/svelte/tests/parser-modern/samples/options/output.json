@@ -2,7 +2,7 @@
 	"css": null,
 	"js": [],
 	"start": 0,
-	"end": 102,
+	"end": 169,
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
@@ -111,12 +111,12 @@
 			"end": 93,
 			"loc": {
 				"start": {
-					"line": 1,
+					"line": 3,
 					"column": 0
 				},
 				"end": {
 					"line": 4,
-					"column": 0
+					"column": 9
 				}
 			},
 			"body": [],
@@ -182,12 +182,12 @@
 			"end": 160,
 			"loc": {
 				"start": {
-					"line": 1,
+					"line": 6,
 					"column": 0
 				},
 				"end": {
 					"line": 7,
-					"column": 0
+					"column": 9
 				}
 			},
 			"body": [],

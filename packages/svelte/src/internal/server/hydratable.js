@@ -57,8 +57,16 @@ function encode(key, value, unresolved) {
 
 	entry.serialized = devalue.uneval(entry.value, (value, uneval) => {
 		if (is_promise(value)) {
+			// we serialize promises as `"${i}"`, because it's impossible for that string
+			// to occur 'naturally' (since the quote marks would have to be escaped)
+			// this placeholder is returned synchronously from `uneval`, which includes it in the
+			// serialized string. Later (at least one microtask from now), when `p.then` runs, it'll
+			// be replaced.
+			const placeholder = `"${uid++}"`;
 			const p = value
-				.then((v) => `r(${uneval(v)})`)
+				.then((v) => {
+					entry.serialized = entry.serialized.replace(placeholder, `r(${uneval(v)})`);
+				})
 				.catch((devalue_error) =>
 					e.hydratable_serialization_failed(
 						key,
@@ -66,23 +74,11 @@ function encode(key, value, unresolved) {
 					)
 				);
 
-			// prevent unhandled rejections from crashing the server
-			p.catch(() => {});
-
-			// track which promises are still resolving when render is complete
 			unresolved?.set(p, key);
-			p.finally(() => unresolved?.delete(p));
+			// prevent unhandled rejections from crashing the server, track which promises are still resolving when render is complete
+			p.catch(() => {}).finally(() => unresolved?.delete(p));
 
-			// we serialize promises as `"${i}"`, because it's impossible for that string
-			// to occur 'naturally' (since the quote marks would have to be escaped)
-			const placeholder = `"${uid++}"`;
-
-			(entry.promises ??= []).push(
-				p.then((s) => {
-					entry.serialized = entry.serialized.replace(placeholder, s);
-				})
-			);
-
+			(entry.promises ??= []).push(p);
 			return placeholder;
 		}
 	});

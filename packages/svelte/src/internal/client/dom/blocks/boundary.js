@@ -2,8 +2,10 @@
 import {
 	BOUNDARY_EFFECT,
 	COMMENT_NODE,
+	DIRTY,
 	EFFECT_PRESERVED,
-	EFFECT_TRANSPARENT
+	EFFECT_TRANSPARENT,
+	MAYBE_DIRTY
 } from '#client/constants';
 import { HYDRATION_START_ELSE } from '../../../../constants.js';
 import { component_context, set_component_context } from '../../context.js';
@@ -34,11 +36,13 @@ import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
 import { DEV } from 'esm-env';
-import { Batch } from '../../reactivity/batch.js';
+import { Batch, schedule_effect } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
 import { create_text } from '../operations.js';
+import { defer_effect } from '../../reactivity/utils.js';
+import { set_signal_status } from '../../reactivity/status.js';
 
 /**
  * @typedef {{
@@ -64,7 +68,7 @@ export class Boundary {
 	/** @type {Boundary | null} */
 	parent;
 
-	#pending = false;
+	is_pending = false;
 
 	/** @type {TemplateNode} */
 	#anchor;
@@ -101,6 +105,12 @@ export class Boundary {
 
 	#is_creating_fallback = false;
 
+	/** @type {Set<Effect>} */
+	#dirty_effects = new Set();
+
+	/** @type {Set<Effect>} */
+	#maybe_dirty_effects = new Set();
+
 	/**
 	 * A source containing the number of pending async deriveds/expressions.
 	 * Only created if `$effect.pending()` is used inside the boundary,
@@ -134,7 +144,7 @@ export class Boundary {
 
 		this.parent = /** @type {Effect} */ (active_effect).b;
 
-		this.#pending = !!this.#props.pending;
+		this.is_pending = !!this.#props.pending;
 
 		this.#effect = block(() => {
 			/** @type {Effect} */ (active_effect).b = this;
@@ -151,6 +161,10 @@ export class Boundary {
 					this.#hydrate_pending_content();
 				} else {
 					this.#hydrate_resolved_content();
+
+					if (this.#pending_count === 0) {
+						this.is_pending = false;
+					}
 				}
 			} else {
 				var anchor = this.#get_anchor();
@@ -164,7 +178,7 @@ export class Boundary {
 				if (this.#pending_count > 0) {
 					this.#show_pending_snippet();
 				} else {
-					this.#pending = false;
+					this.is_pending = false;
 				}
 			}
 
@@ -184,10 +198,6 @@ export class Boundary {
 		} catch (error) {
 			this.error(error);
 		}
-
-		// Since server rendered resolved content, we never show pending state
-		// Even if client-side async operations are still running, the content is already displayed
-		this.#pending = false;
 	}
 
 	#hydrate_pending_content() {
@@ -212,7 +222,7 @@ export class Boundary {
 					this.#pending_effect = null;
 				});
 
-				this.#pending = false;
+				this.is_pending = false;
 			}
 		});
 	}
@@ -220,7 +230,7 @@ export class Boundary {
 	#get_anchor() {
 		var anchor = this.#anchor;
 
-		if (this.#pending) {
+		if (this.is_pending) {
 			this.#pending_anchor = create_text();
 			this.#anchor.before(this.#pending_anchor);
 
@@ -231,11 +241,19 @@ export class Boundary {
 	}
 
 	/**
-	 * Returns `true` if the effect exists inside a boundary whose pending snippet is shown
+	 * Defer an effect inside a pending boundary until the boundary resolves
+	 * @param {Effect} effect
+	 */
+	defer_effect(effect) {
+		defer_effect(effect, this.#dirty_effects, this.#maybe_dirty_effects);
+	}
+
+	/**
+	 * Returns `false` if the effect exists inside a boundary whose pending snippet is shown
 	 * @returns {boolean}
 	 */
-	is_pending() {
-		return this.#pending || (!!this.parent && this.parent.is_pending());
+	is_rendered() {
+		return !this.is_pending && (!this.parent || this.parent.is_rendered());
 	}
 
 	has_pending_snippet() {
@@ -298,7 +316,24 @@ export class Boundary {
 		this.#pending_count += d;
 
 		if (this.#pending_count === 0) {
-			this.#pending = false;
+			this.is_pending = false;
+
+			// any effects that were encountered and deferred during traversal
+			// should be rescheduled — after the next traversal (which will happen
+			// immediately, due to the same update that brought us here)
+			// the effects will be flushed
+			for (const e of this.#dirty_effects) {
+				set_signal_status(e, DIRTY);
+				schedule_effect(e);
+			}
+
+			for (const e of this.#maybe_dirty_effects) {
+				set_signal_status(e, MAYBE_DIRTY);
+				schedule_effect(e);
+			}
+
+			this.#dirty_effects.clear();
+			this.#maybe_dirty_effects.clear();
 
 			if (this.#pending_effect) {
 				pause_effect(this.#pending_effect, () => {
@@ -394,7 +429,7 @@ export class Boundary {
 
 			// we intentionally do not try to find the nearest pending boundary. If this boundary has one, we'll render it on reset
 			// but it would be really weird to show the parent's boundary on a child reset.
-			this.#pending = this.has_pending_snippet();
+			this.is_pending = this.has_pending_snippet();
 
 			this.#main_effect = this.#run(() => {
 				this.#is_creating_fallback = false;
@@ -404,7 +439,7 @@ export class Boundary {
 			if (this.#pending_count > 0) {
 				this.#show_pending_snippet();
 			} else {
-				this.#pending = false;
+				this.is_pending = false;
 			}
 		};
 

@@ -21,7 +21,7 @@ import { get_boundary } from './boundary.js';
 export function async(node, blockers = [], expressions = [], fn) {
 	var boundary = get_boundary();
 	var batch = /** @type {Batch} */ (current_batch);
-	var blocking = !boundary.is_pending();
+	var blocking = boundary.is_rendered();
 
 	boundary.update_pending_count(1);
 	batch.increment(blocking);
