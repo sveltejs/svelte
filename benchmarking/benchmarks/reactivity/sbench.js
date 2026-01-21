@@ -26,31 +26,28 @@ function create_derived(source) {
 /**
  *
  * @param {string} label
- * @param {(n: number, sources: Array<Source<number>>)} fn
+ * @param {(n: number, sources: Array<Source<number>>) => void} fn
  * @param {number} count
  * @param {number} num_sources
  */
 function create_sbench_test(label, count, num_sources, fn) {
-	return async () => {
-		// Do 3 loops to warm up JIT
-		for (let i = 0; i < 3; i++) {
-			fn(count, create_sources(num_sources, []));
-		}
+	return {
+		label,
+		fn: async () => {
+			// Do 3 loops to warm up JIT
+			for (let i = 0; i < 3; i++) {
+				fn(count, create_sources(num_sources, []));
+			}
 
-		const { time, gc_time } = await fastest_test(10, () => {
-			const destroy = $.effect_root(() => {
-				for (let i = 0; i < 10; i++) {
-					fn(count, create_sources(num_sources, []));
-				}
+			return await fastest_test(10, () => {
+				const destroy = $.effect_root(() => {
+					for (let i = 0; i < 10; i++) {
+						fn(count, create_sources(num_sources, []));
+					}
+				});
+				destroy();
 			});
-			destroy();
-		});
-
-		return {
-			benchmark: label,
-			time,
-			gc_time
-		};
+		}
 	};
 }
 
