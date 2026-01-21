@@ -5,9 +5,6 @@ import { ssr_benchmarks } from './benchmarks/ssr/index.js';
 // e.g. `pnpm bench kairo` to only run the kairo benchmarks
 const filters = process.argv.slice(2);
 
-let total_time = 0;
-let total_gc_time = 0;
-
 const suites = [
 	{
 		benchmarks: reactivity_benchmarks.filter(
@@ -33,6 +30,9 @@ const TOTAL_WIDTH = COLUMN_WIDTHS.reduce((a, b) => a + b);
 
 const pad_right = (str, n) => str + ' '.repeat(n - str.length);
 const pad_left = (str, n) => ' '.repeat(n - str.length) + str;
+
+let total_time = 0;
+let total_gc_time = 0;
 
 $.push({}, true);
 
