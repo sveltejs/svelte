@@ -10,7 +10,7 @@ export { invalid_default_snippet } from './errors.js';
  */
 export function validate_void_dynamic_element(tag_fn) {
 	const tag = tag_fn();
-	if (tag && is_void(tag)) {
+	if (tag && typeof tag === 'string' && is_void(tag)) {
 		w.dynamic_void_element_content(tag);
 	}
 }

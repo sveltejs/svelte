@@ -37,10 +37,7 @@ const VOID_ELEMENT_NAMES = [
  * @param {string} name
  */
 export function is_void(name) {
-	return (
-		VOID_ELEMENT_NAMES.includes(name) ||
-		(typeof name === 'string' && name.toLowerCase() === '!doctype')
-	);
+	return VOID_ELEMENT_NAMES.includes(name) || name.toLowerCase() === '!doctype';
 }
 
 const RESERVED_WORDS = [

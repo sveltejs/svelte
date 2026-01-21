@@ -35,16 +35,22 @@ export function element(renderer, tag, attributes_fn = noop, children_fn = noop)
 	renderer.push('<!---->');
 
 	if (tag) {
-		renderer.push(`<${tag}`);
-		attributes_fn();
-		renderer.push(`>`);
-
-		if (!is_void(tag)) {
-			children_fn();
-			if (!is_raw_text_element(tag)) {
-				renderer.push(EMPTY_COMMENT);
+		if (typeof tag !== 'string') {
+			if (DEV) {
+				e.svelte_element_invalid_this_value();
 			}
-			renderer.push(`</${tag}>`);
+		} else {
+			renderer.push(`<${tag}`);
+			attributes_fn();
+			renderer.push(`>`);
+
+			if (!is_void(tag)) {
+				children_fn();
+				if (!is_raw_text_element(tag)) {
+					renderer.push(EMPTY_COMMENT);
+				}
+				renderer.push(`</${tag}>`);
+			}
 		}
 	}
 
