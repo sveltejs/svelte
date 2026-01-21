@@ -250,7 +250,11 @@ export function run(thunks) {
 		}
 	};
 
-	var promise = Promise.resolve(thunks[0]()).catch(handle_error);
+	var promise = Promise.resolve(thunks[0]())
+		.catch(handle_error)
+		.finally(() => {
+			settled_promises.add(promise);
+		});
 
 	/** @type {Array<Promise<void>>} */
 	var promises = [promise];
@@ -271,6 +275,8 @@ export function run(thunks) {
 			})
 			.catch(handle_error)
 			.finally(() => {
+				settled_promises.add(promise);
+
 				unset_context();
 				current_batch?.deactivate();
 			});
@@ -285,9 +291,6 @@ export function run(thunks) {
 		.finally(() => {
 			boundary.update_pending_count(-1);
 			batch.decrement(blocking);
-			for (const p of promises) {
-				settled_promises.add(p);
-			}
 		});
 
 	return promises;
