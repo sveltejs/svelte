@@ -41,12 +41,3 @@ export async function fastest_test(times, fn) {
 
 	return results.reduce((a, b) => (a.time < b.time ? a : b));
 }
-
-/**
- * @param {boolean} a
- */
-export function assert(a) {
-	if (!a) {
-		throw new Error('Assertion failed');
-	}
-}
