@@ -21,9 +21,9 @@
     "test": "vitest run",
     "changeset:version": "changeset version && pnpm -r generate:version && git add --all",
     "changeset:publish": "changeset publish",
-    "bench": "node --allow-natives-syntax ./benchmarking/run.js",
-    "bench:compare": "node --allow-natives-syntax ./benchmarking/compare/index.js",
-    "bench:debug": "node --allow-natives-syntax --inspect-brk ./benchmarking/run.js"
+    "bench": "NODE_ENV=production node --allow-natives-syntax ./benchmarking/run.js",
+    "bench:compare": "NODE_ENV=production node --allow-natives-syntax ./benchmarking/compare/index.js",
+    "bench:debug": "NODE_ENV=production node --allow-natives-syntax --inspect-brk ./benchmarking/run.js"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",

@@ -3,8 +3,9 @@
 /** @import { AST } from './public.js' */
 import { walk as zimmerframe_walk } from 'zimmerframe';
 import { convert } from './legacy.js';
-import { parse as _parse } from './phases/1-parse/index.js';
+import { parse as _parse, Parser } from './phases/1-parse/index.js';
 import { remove_typescript_nodes } from './phases/1-parse/remove_typescript_nodes.js';
+import { parse_stylesheet } from './phases/1-parse/read/style.js';
 import { analyze_component, analyze_module } from './phases/2-analyze/index.js';
 import { transform_component, transform_module } from './phases/3-transform/index.js';
 import { validate_component_options, validate_module_options } from './validate-options.js';
@@ -116,6 +117,29 @@ export function parse(source, { modern, loose } = {}) {
 
 	const ast = _parse(source, loose);
 	return to_public_ast(source, ast, modern);
+}
+
+/**
+ * The parseCss function parses a CSS stylesheet, returning its abstract syntax tree.
+ *
+ * @param {string} source The CSS source code
+ * @returns {Omit<AST.CSS.StyleSheet, 'attributes' | 'content'>}
+ */
+export function parseCss(source) {
+	source = remove_bom(source);
+	state.reset({ warning: () => false, filename: undefined });
+
+	state.set_source(source);
+
+	const parser = Parser.forCss(source);
+	const children = parse_stylesheet(parser);
+
+	return {
+		type: 'StyleSheet',
+		start: 0,
+		end: source.length,
+		children
+	};
 }
 
 /**

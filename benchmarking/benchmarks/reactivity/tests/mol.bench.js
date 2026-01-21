@@ -1,4 +1,4 @@
-import { assert, fastest_test } from '../../utils.js';
+import assert from 'node:assert';
 import * as $ from 'svelte/internal/client';
 
 /**
@@ -18,7 +18,7 @@ function hard(n) {
 
 const numbers = Array.from({ length: 5 }, (_, i) => i);
 
-function setup() {
+export default () => {
 	let res = [];
 	const A = $.state(0);
 	const B = $.state(0);
@@ -59,63 +59,10 @@ function setup() {
 				$.set(A, 2 + i * 2);
 				$.set(B, 2);
 			});
-			assert(res[0] === 3198 && res[1] === 1601 && res[2] === 3195 && res[3] === 1598);
+			assert.equal(res[0], 3198);
+			assert.equal(res[1], 1601);
+			assert.equal(res[2], 3195);
+			assert.equal(res[3], 1598);
 		}
 	};
-}
-
-export async function mol_bench_owned() {
-	let run, destroy;
-
-	const destroy_owned = $.effect_root(() => {
-		// Do 10 loops to warm up JIT
-		for (let i = 0; i < 10; i++) {
-			const { run, destroy } = setup();
-			run(0);
-			destroy();
-		}
-
-		({ run, destroy } = setup());
-	});
-
-	const { timing } = await fastest_test(10, () => {
-		for (let i = 0; i < 1e4; i++) {
-			run(i);
-		}
-	});
-
-	// @ts-ignore
-	destroy();
-	destroy_owned();
-
-	return {
-		benchmark: 'mol_bench_owned',
-		time: timing.time.toFixed(2),
-		gc_time: timing.gc_time.toFixed(2)
-	};
-}
-
-export async function mol_bench_unowned() {
-	// Do 10 loops to warm up JIT
-	for (let i = 0; i < 10; i++) {
-		const { run, destroy } = setup();
-		run(0);
-		destroy();
-	}
-
-	const { run, destroy } = setup();
-
-	const { timing } = await fastest_test(10, () => {
-		for (let i = 0; i < 1e4; i++) {
-			run(i);
-		}
-	});
-
-	destroy();
-
-	return {
-		benchmark: 'mol_bench_unowned',
-		time: timing.time.toFixed(2),
-		gc_time: timing.gc_time.toFixed(2)
-	};
-}
+};

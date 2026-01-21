@@ -885,6 +885,12 @@ declare module 'svelte/compiler' {
 		loose?: boolean;
 	} | undefined): Record<string, any>;
 	/**
+	 * The parseCss function parses a CSS stylesheet, returning its abstract syntax tree.
+	 *
+	 * @param source The CSS source code
+	 * */
+	export function parseCss(source: string): Omit<AST.CSS.StyleSheet, "attributes" | "content">;
+	/**
 	 * @deprecated Replace this with `import { walk } from 'estree-walker'`
 	 * */
 	export function walk(): never;
