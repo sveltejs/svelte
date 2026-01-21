@@ -25,7 +25,7 @@ export function create_test(label, setup) {
 
 			const { run, destroy } = setup();
 
-			const { timing } = await fastest_test(10, () => {
+			const { time, gc_time } = await fastest_test(10, () => {
 				for (let i = 0; i < 1000; i++) {
 					run(i);
 				}
@@ -35,8 +35,8 @@ export function create_test(label, setup) {
 
 			return {
 				benchmark: `${label}_unowned`,
-				time: timing.time.toFixed(2),
-				gc_time: timing.gc_time.toFixed(2)
+				time: time.toFixed(2),
+				gc_time: gc_time.toFixed(2)
 			};
 		},
 		owned: async () => {
@@ -53,7 +53,7 @@ export function create_test(label, setup) {
 				({ run, destroy } = setup());
 			});
 
-			const { timing } = await fastest_test(10, () => {
+			const { time, gc_time } = await fastest_test(10, () => {
 				for (let i = 0; i < 1000; i++) {
 					run(i);
 				}
@@ -65,8 +65,8 @@ export function create_test(label, setup) {
 
 			return {
 				benchmark: `${label}_owned`,
-				time: timing.time.toFixed(2),
-				gc_time: timing.gc_time.toFixed(2)
+				time: time.toFixed(2),
+				gc_time: gc_time.toFixed(2)
 			};
 		}
 	};

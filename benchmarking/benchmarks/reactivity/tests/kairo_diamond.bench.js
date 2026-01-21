@@ -1,4 +1,4 @@
-import { assert } from '../../../utils.js';
+import assert from 'node:assert';
 import * as $ from 'svelte/internal/client';
 
 let width = 5;
@@ -31,15 +31,15 @@ export default () => {
 			$.flush(() => {
 				$.set(head, 1);
 			});
-			assert($.get(sum) === 2 * width);
+			assert.equal($.get(sum), 2 * width);
 			counter = 0;
 			for (let i = 0; i < 500; i++) {
 				$.flush(() => {
 					$.set(head, i);
 				});
-				assert($.get(sum) === (i + 1) * width);
+				assert.equal($.get(sum), (i + 1) * width);
 			}
-			assert(counter === 500);
+			assert.equal(counter, 500);
 		}
 	};
 };

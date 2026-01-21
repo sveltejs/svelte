@@ -37,7 +37,7 @@ function create_sbench_test(label, count, num_sources, fn) {
 			fn(count, create_sources(num_sources, []));
 		}
 
-		const { timing } = await fastest_test(10, () => {
+		const { time, gc_time } = await fastest_test(10, () => {
 			const destroy = $.effect_root(() => {
 				for (let i = 0; i < 10; i++) {
 					fn(count, create_sources(num_sources, []));
@@ -48,8 +48,8 @@ function create_sbench_test(label, count, num_sources, fn) {
 
 		return {
 			benchmark: label,
-			time: timing.time.toFixed(2),
-			gc_time: timing.gc_time.toFixed(2)
+			time: time.toFixed(2),
+			gc_time: gc_time.toFixed(2)
 		};
 	};
 }
