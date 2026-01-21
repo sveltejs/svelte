@@ -10,46 +10,47 @@ const suites = [
 	{ benchmarks: ssr_benchmarks, name: 'server-side rendering benchmarks' }
 ];
 
-// eslint-disable-next-line no-console
-console.log('\x1b[1m', '-- Benchmarking Started --', '\x1b[0m');
+const pad_right = (str, n) => str + ' '.repeat(n - str.length);
+const pad_left = (str, n) => ' '.repeat(n - str.length) + str;
+
 $.push({}, true);
+
 try {
 	for (const { benchmarks, name } of suites) {
 		let suite_time = 0;
 		let suite_gc_time = 0;
-		// eslint-disable-next-line no-console
+
 		console.log(`\nRunning ${name}...\n`);
+		console.log(`${pad_right('Benchmark', 30)} ${pad_left('Time', 7)} ${pad_left('GC time', 9)}`);
+		console.log('='.repeat(48));
 
 		for (const benchmark of benchmarks) {
 			const results = await benchmark();
-			// eslint-disable-next-line no-console
-			console.log(results);
+			console.log(
+				`${pad_right(results.benchmark, 30)} ${pad_left(results.time.toFixed(2), 7)} ${pad_left(results.gc_time.toFixed(2), 9)}`
+			);
 			total_time += results.time;
 			total_gc_time += results.gc_time;
 			suite_time += results.time;
 			suite_gc_time += results.gc_time;
 		}
 
-		console.log(`\nFinished ${name}.\n`);
-
-		// eslint-disable-next-line no-console
-		console.log({
-			suite_time: suite_time.toFixed(2),
-			suite_gc_time: suite_gc_time.toFixed(2)
-		});
+		console.log('='.repeat(48));
+		console.log(
+			`${pad_right('suite', 30)} ${pad_left(suite_time.toFixed(2), 7)} ${pad_left(suite_gc_time.toFixed(2), 9)}`
+		);
+		console.log('='.repeat(48));
 	}
 } catch (e) {
-	// eslint-disable-next-line no-console
-	console.log('\x1b[1m', '\n-- Benchmarking Failed --\n', '\x1b[0m');
 	// eslint-disable-next-line no-console
 	console.error(e);
 	process.exit(1);
 }
+
 $.pop();
-// eslint-disable-next-line no-console
-console.log('\x1b[1m', '\n-- Benchmarking Complete --\n', '\x1b[0m');
-// eslint-disable-next-line no-console
-console.log({
-	total_time: total_time.toFixed(2),
-	total_gc_time: total_gc_time.toFixed(2)
-});
+
+console.log('');
+
+console.log(
+	`${pad_right('total', 30)} ${pad_left(total_time.toFixed(2), 7)} ${pad_left(total_gc_time.toFixed(2), 9)}`
+);
