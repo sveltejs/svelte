@@ -35,7 +35,7 @@ export async function fastest_test(times, fn) {
 	/** @type {Array<{ time: number, gc_time: number }>} */
 	const results = [];
 
-	for (let i = 0; i < 2; i++) {
+	for (let i = 0; i < times; i++) {
 		results.push(await track(fn));
 	}
 
