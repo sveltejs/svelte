@@ -35,11 +35,9 @@ export function element(renderer, tag, attributes_fn = noop, children_fn = noop)
 	renderer.push('<!---->');
 
 	if (tag) {
-		if (typeof tag !== 'string') {
-			if (DEV) {
-				e.svelte_element_invalid_this_value();
-			}
-		} else {
+		if (DEV && typeof tag !== 'string') {
+			e.svelte_element_invalid_this_value();
+		} else if (typeof tag === 'string') {
 			renderer.push(`<${tag}`);
 			attributes_fn();
 			renderer.push(`>`);
