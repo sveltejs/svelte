@@ -34,8 +34,8 @@ export async function wrapper_bench() {
 
 	return {
 		benchmark: 'wrapper_bench',
-		time: time.toFixed(2),
-		gc_time: gc_time.toFixed(2)
+		time,
+		gc_time
 	};
 }
 

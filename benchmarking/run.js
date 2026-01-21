@@ -10,46 +10,60 @@ const suites = [
 	{ benchmarks: ssr_benchmarks, name: 'server-side rendering benchmarks' }
 ];
 
-// eslint-disable-next-line no-console
-console.log('\x1b[1m', '-- Benchmarking Started --', '\x1b[0m');
+const COLUMN_WIDTHS = [25, 9, 9];
+const TOTAL_WIDTH = COLUMN_WIDTHS.reduce((a, b) => a + b);
+
+const pad_right = (str, n) => str + ' '.repeat(n - str.length);
+const pad_left = (str, n) => ' '.repeat(n - str.length) + str;
+
 $.push({}, true);
+
 try {
 	for (const { benchmarks, name } of suites) {
 		let suite_time = 0;
 		let suite_gc_time = 0;
-		// eslint-disable-next-line no-console
+
 		console.log(`\nRunning ${name}...\n`);
+		console.log(
+			pad_right('Benchmark', COLUMN_WIDTHS[0]) +
+				pad_left('Time', COLUMN_WIDTHS[1]) +
+				pad_left('GC time', COLUMN_WIDTHS[2])
+		);
+		console.log('='.repeat(TOTAL_WIDTH));
 
 		for (const benchmark of benchmarks) {
 			const results = await benchmark();
-			// eslint-disable-next-line no-console
-			console.log(results);
-			total_time += Number(results.time);
-			total_gc_time += Number(results.gc_time);
-			suite_time += Number(results.time);
-			suite_gc_time += Number(results.gc_time);
+			console.log(
+				pad_right(results.benchmark, COLUMN_WIDTHS[0]) +
+					pad_left(results.time.toFixed(2), COLUMN_WIDTHS[1]) +
+					pad_left(results.gc_time.toFixed(2), COLUMN_WIDTHS[2])
+			);
+			total_time += results.time;
+			total_gc_time += results.gc_time;
+			suite_time += results.time;
+			suite_gc_time += results.gc_time;
 		}
 
-		console.log(`\nFinished ${name}.\n`);
-
-		// eslint-disable-next-line no-console
-		console.log({
-			suite_time: suite_time.toFixed(2),
-			suite_gc_time: suite_gc_time.toFixed(2)
-		});
+		console.log('='.repeat(TOTAL_WIDTH));
+		console.log(
+			pad_right('suite', COLUMN_WIDTHS[0]) +
+				pad_left(suite_time.toFixed(2), COLUMN_WIDTHS[1]) +
+				pad_left(suite_gc_time.toFixed(2), COLUMN_WIDTHS[2])
+		);
+		console.log('='.repeat(TOTAL_WIDTH));
 	}
 } catch (e) {
-	// eslint-disable-next-line no-console
-	console.log('\x1b[1m', '\n-- Benchmarking Failed --\n', '\x1b[0m');
 	// eslint-disable-next-line no-console
 	console.error(e);
 	process.exit(1);
 }
+
 $.pop();
-// eslint-disable-next-line no-console
-console.log('\x1b[1m', '\n-- Benchmarking Complete --\n', '\x1b[0m');
-// eslint-disable-next-line no-console
-console.log({
-	total_time: total_time.toFixed(2),
-	total_gc_time: total_gc_time.toFixed(2)
-});
+
+console.log('');
+
+console.log(
+	pad_right('total', COLUMN_WIDTHS[0]) +
+		pad_left(total_time.toFixed(2), COLUMN_WIDTHS[1]) +
+		pad_left(total_gc_time.toFixed(2), COLUMN_WIDTHS[2])
+);
