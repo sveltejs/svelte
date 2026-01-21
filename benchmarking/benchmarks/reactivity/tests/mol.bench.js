@@ -59,7 +59,10 @@ export default () => {
 				$.set(A, 2 + i * 2);
 				$.set(B, 2);
 			});
-			assert.equal(res[0], 3198 && res[1] === 1601 && res[2] === 3195 && res[3] === 1598);
+			assert.equal(res[0], 3198);
+			assert.equal(res[1], 1601);
+			assert.equal(res[2], 3195);
+			assert.equal(res[3], 1598);
 		}
 	};
 };
