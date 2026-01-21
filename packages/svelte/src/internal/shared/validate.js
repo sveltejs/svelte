@@ -10,12 +10,8 @@ export { invalid_default_snippet } from './errors.js';
  */
 export function validate_void_dynamic_element(tag_fn) {
 	const tag = tag_fn();
-	if (tag) {
-		if (typeof tag !== 'string') {
-			e.svelte_element_invalid_this_value();
-		} else if (is_void(tag)) {
-			w.dynamic_void_element_content(tag);
-		}
+	if (tag && is_void(tag)) {
+		w.dynamic_void_element_content(tag);
 	}
 }
 

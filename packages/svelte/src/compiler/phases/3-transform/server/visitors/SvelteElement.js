@@ -29,10 +29,10 @@ export function SvelteElement(node, context) {
 			tag = b.id(tag_id);
 		}
 
+		context.state.init.push(b.stmt(b.call('$.validate_dynamic_element_tag', b.thunk(tag))));
 		if (node.fragment.nodes.length > 0) {
 			context.state.init.push(b.stmt(b.call('$.validate_void_dynamic_element', b.thunk(tag))));
 		}
-		context.state.init.push(b.stmt(b.call('$.validate_dynamic_element_tag', b.thunk(tag))));
 	}
 
 	const state = {

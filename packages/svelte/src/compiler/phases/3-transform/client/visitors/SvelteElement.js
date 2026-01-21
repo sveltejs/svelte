@@ -117,10 +117,10 @@ export function SvelteElement(node, context) {
 	);
 
 	if (dev) {
+		statements.push(b.stmt(b.call('$.validate_dynamic_element_tag', get_tag)));
 		if (node.fragment.nodes.length > 0) {
 			statements.push(b.stmt(b.call('$.validate_void_dynamic_element', get_tag)));
 		}
-		statements.push(b.stmt(b.call('$.validate_dynamic_element_tag', get_tag)));
 	}
 
 	const location = dev && locator(node.start);
