@@ -24,7 +24,11 @@ const REGEX_HTML_COMMENT_CLOSE = /-->/;
  */
 export default function read_style(parser, start, attributes) {
 	const content_start = parser.index;
-	const children = read_body(parser, (p) => p.match('</style'));
+	const children = read_body(
+		parser,
+		(p) => p.match('</style'),
+		() => e.expected_token(parser.template.length, '</style')
+	);
 	const content_end = parser.index;
 
 	parser.read(/^<\/style\s*>/);
@@ -47,9 +51,10 @@ export default function read_style(parser, start, attributes) {
 /**
  * @param {Parser} parser
  * @param {(parser: Parser) => boolean} finished
+ * @param {() => never} on_eof
  * @returns {Array<AST.CSS.Rule | AST.CSS.Atrule>}
  */
-function read_body(parser, finished) {
+function read_body(parser, finished, on_eof) {
 	/** @type {Array<AST.CSS.Rule | AST.CSS.Atrule>} */
 	const children = [];
 
@@ -71,7 +76,7 @@ function read_body(parser, finished) {
 		return children;
 	}
 
-	e.unexpected_eof(parser.template.length);
+	on_eof();
 }
 
 /**
@@ -638,5 +643,9 @@ function allow_comment_or_whitespace(parser) {
  * @returns {Array<AST.CSS.Rule | AST.CSS.Atrule>}
  */
 export function parse_stylesheet(parser) {
-	return read_body(parser, (p) => p.index >= p.template.length);
+	return read_body(
+		parser,
+		(p) => p.index >= p.template.length,
+		() => e.unexpected_eof(parser.template.length)
+	);
 }
