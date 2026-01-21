@@ -15,34 +15,9 @@ export function busy() {
  */
 export function create_test(label, setup) {
 	return {
-		unowned: async () => {
-			// Do 10 loops to warm up JIT
-			for (let i = 0; i < 10; i++) {
-				const { run, destroy } = setup();
-				run(0);
-				destroy();
-			}
-
-			const { run, destroy } = setup();
-
-			const { timing } = await fastest_test(10, () => {
-				for (let i = 0; i < 1000; i++) {
-					run(i);
-				}
-			});
-
-			destroy();
-
-			return {
-				benchmark: `${label}_unowned`,
-				time: timing.time.toFixed(2),
-				gc_time: timing.gc_time.toFixed(2)
-			};
-		},
-		owned: async () => {
-			let run, destroy;
-
-			const destroy_owned = $.effect_root(() => {
+		unowned: {
+			label: `${label}_unowned`,
+			fn: async () => {
 				// Do 10 loops to warm up JIT
 				for (let i = 0; i < 10; i++) {
 					const { run, destroy } = setup();
@@ -50,24 +25,47 @@ export function create_test(label, setup) {
 					destroy();
 				}
 
-				({ run, destroy } = setup());
-			});
+				const { run, destroy } = setup();
 
-			const { timing } = await fastest_test(10, () => {
-				for (let i = 0; i < 1000; i++) {
-					run(i);
-				}
-			});
+				const result = await fastest_test(10, () => {
+					for (let i = 0; i < 1000; i++) {
+						run(i);
+					}
+				});
 
-			// @ts-ignore
-			destroy();
-			destroy_owned();
+				destroy();
 
-			return {
-				benchmark: `${label}_owned`,
-				time: timing.time.toFixed(2),
-				gc_time: timing.gc_time.toFixed(2)
-			};
+				return result;
+			}
+		},
+		owned: {
+			label: `${label}_owned`,
+			fn: async () => {
+				let run, destroy;
+
+				const destroy_owned = $.effect_root(() => {
+					// Do 10 loops to warm up JIT
+					for (let i = 0; i < 10; i++) {
+						const { run, destroy } = setup();
+						run(0);
+						destroy();
+					}
+
+					({ run, destroy } = setup());
+				});
+
+				const result = await fastest_test(10, () => {
+					for (let i = 0; i < 1000; i++) {
+						run(i);
+					}
+				});
+
+				// @ts-ignore
+				destroy();
+				destroy_owned();
+
+				return result;
+			}
 		}
 	};
 }
