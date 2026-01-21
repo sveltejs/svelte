@@ -116,8 +116,37 @@ export function async_derived(fn, label, location) {
 	/** @type {Map<Batch, ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Map();
 
+	/** @type {unknown[] | null} */
+	var prev_dep_values = null;
+
 	async_effect(() => {
 		if (DEV) current_async_effect = active_effect;
+
+		// Check if dependencies have actually changed by reference.
+		// This prevents infinite loops when a `mutable_source` (eg. a store)
+		// is updated with the same object reference.
+		var effect = /** @type {Effect} */ (active_effect);
+		var deps = effect.deps;
+
+		if (deps !== null && prev_dep_values !== null && deps.length === prev_dep_values.length) {
+			var unchanged = true;
+			var has_object_dep = false;
+
+			for (var i = 0; i < deps.length; i++) {
+				var current = deps[i].v;
+				if (!has_object_dep && current !== null && typeof current === 'object') {
+					has_object_dep = true;
+				}
+				if (current !== prev_dep_values[i]) {
+					unchanged = false;
+					break;
+				}
+			}
+
+			if (unchanged && has_object_dep) {
+				return;
+			}
+		}
 
 		/** @type {ReturnType<typeof deferred<V>>} */
 		var d = deferred();
@@ -142,6 +171,8 @@ export function async_derived(fn, label, location) {
 			d.reject(error);
 			unset_context();
 		}
+
+		prev_dep_values = effect.deps?.map((dep) => dep.v) ?? null;
 
 		if (DEV) current_async_effect = null;
 
