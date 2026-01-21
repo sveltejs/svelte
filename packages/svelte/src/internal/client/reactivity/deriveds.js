@@ -116,8 +116,10 @@ export function async_derived(fn, label, location) {
 	/** @type {Map<Batch, ReturnType<typeof deferred<V>>>} */
 	var deferreds = new Map();
 
+	/** @type {Batch | null} */
+	var prev_batch = null;
 	/** @type {unknown[] | null} */
-	var prev_dep_values = null;
+	var prev_object_refs = null;
 
 	async_effect(() => {
 		if (DEV) current_async_effect = active_effect;
@@ -128,25 +130,36 @@ export function async_derived(fn, label, location) {
 		var effect = /** @type {Effect} */ (active_effect);
 		var deps = effect.deps;
 
-		if (deps !== null && prev_dep_values !== null && deps.length === prev_dep_values.length) {
-			var unchanged = true;
-			var has_object_dep = false;
+		/** @type {unknown[] | null} */
+		var object_refs = null;
+		var should_skip =
+			current_batch !== null &&
+			current_batch === prev_batch &&
+			deps !== null &&
+			prev_object_refs !== null;
 
+		if (deps !== null) {
 			for (var i = 0; i < deps.length; i++) {
-				var current = deps[i].v;
-				if (!has_object_dep && current !== null && typeof current === 'object') {
-					has_object_dep = true;
+				var v = deps[i].v;
+				if (v !== null && typeof v === 'object') {
+					if (should_skip) {
+						var prev = /** @type {unknown[]} */ (prev_object_refs);
+						var length = object_refs?.length ?? 0;
+						if (length >= prev.length || v !== prev[length]) {
+							should_skip = false;
+						}
+					}
+					(object_refs ??= []).push(v);
 				}
-				if (current !== prev_dep_values[i]) {
-					unchanged = false;
-					break;
-				}
-			}
-
-			if (unchanged && has_object_dep) {
-				return;
 			}
 		}
+
+		if (should_skip && object_refs?.length === /** @type {unknown[]} */ (prev_object_refs).length) {
+			return;
+		}
+
+		prev_batch = current_batch;
+		prev_object_refs = object_refs;
 
 		/** @type {ReturnType<typeof deferred<V>>} */
 		var d = deferred();
@@ -171,8 +184,6 @@ export function async_derived(fn, label, location) {
 			d.reject(error);
 			unset_context();
 		}
-
-		prev_dep_values = effect.deps?.map((dep) => dep.v) ?? null;
 
 		if (DEV) current_async_effect = null;
 
