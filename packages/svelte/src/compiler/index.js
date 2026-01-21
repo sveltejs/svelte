@@ -129,6 +129,8 @@ export function parseCss(source) {
 	source = remove_bom(source);
 	state.reset({ warning: () => false, filename: undefined });
 
+	state.set_source(source);
+
 	const parser = Parser.forCss(source);
 	const children = parse_stylesheet(parser);
 
