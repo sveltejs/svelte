@@ -18,26 +18,23 @@ async function compile_svelte() {
 	return module.default;
 }
 
-export async function wrapper_bench() {
-	const App = await compile_svelte();
+export const wrapper_bench = {
+	label: 'wrapper_bench',
+	fn: async () => {
+		const App = await compile_svelte();
 
-	// Do 3 loops to warm up JIT
-	for (let i = 0; i < 3; i++) {
-		render(App);
-	}
-
-	const { time, gc_time } = await fastest_test(10, () => {
-		for (let i = 0; i < 100; i++) {
+		// Do 3 loops to warm up JIT
+		for (let i = 0; i < 3; i++) {
 			render(App);
 		}
-	});
 
-	return {
-		benchmark: 'wrapper_bench',
-		time,
-		gc_time
-	};
-}
+		return await fastest_test(10, () => {
+			for (let i = 0; i < 100; i++) {
+				render(App);
+			}
+		});
+	}
+};
 
 /**
  * @param {string} file
