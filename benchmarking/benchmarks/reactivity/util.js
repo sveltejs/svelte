@@ -35,8 +35,8 @@ export function create_test(label, setup) {
 
 			return {
 				benchmark: `${label}_unowned`,
-				time: time.toFixed(2),
-				gc_time: gc_time.toFixed(2)
+				time,
+				gc_time
 			};
 		},
 		owned: async () => {
@@ -65,8 +65,8 @@ export function create_test(label, setup) {
 
 			return {
 				benchmark: `${label}_owned`,
-				time: time.toFixed(2),
-				gc_time: gc_time.toFixed(2)
+				time,
+				gc_time
 			};
 		}
 	};

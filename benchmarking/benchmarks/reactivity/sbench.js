@@ -48,8 +48,8 @@ function create_sbench_test(label, count, num_sources, fn) {
 
 		return {
 			benchmark: label,
-			time: time.toFixed(2),
-			gc_time: gc_time.toFixed(2)
+			time,
+			gc_time
 		};
 	};
 }

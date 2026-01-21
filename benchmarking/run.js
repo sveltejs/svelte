@@ -24,10 +24,10 @@ try {
 			const results = await benchmark();
 			// eslint-disable-next-line no-console
 			console.log(results);
-			total_time += Number(results.time);
-			total_gc_time += Number(results.gc_time);
-			suite_time += Number(results.time);
-			suite_gc_time += Number(results.gc_time);
+			total_time += results.time;
+			total_gc_time += results.gc_time;
+			suite_time += results.time;
+			suite_gc_time += results.gc_time;
 		}
 
 		console.log(`\nFinished ${name}.\n`);
