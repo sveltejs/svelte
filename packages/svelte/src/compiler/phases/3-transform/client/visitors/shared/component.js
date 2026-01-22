@@ -333,7 +333,7 @@ export function build_component(node, component_name, loc, context) {
 			// can be used as props without creating conflicts
 			context.visit(child, {
 				...context.state,
-				init: snippet_declarations
+				snippets: snippet_declarations
 			});
 
 			push_prop(b.prop('init', child.expression, child.expression));

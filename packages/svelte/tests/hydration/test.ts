@@ -53,6 +53,8 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 		await compile_directory(cwd, 'server', config.compileOptions);
 	}
 
+	config.before_test?.();
+
 	const target = window.document.body;
 	const head = window.document.head;
 
@@ -71,8 +73,6 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 		fs.writeFileSync(`${cwd}/_output/head.html`, rendered.head + '\n');
 		head.innerHTML = override_head ?? rendered.head;
 	}
-
-	config.before_test?.();
 
 	try {
 		const snapshot = config.snapshot ? config.snapshot(target) : {};
