@@ -250,11 +250,11 @@ export function run(thunks) {
 		}
 	};
 
-	var promise = Promise.resolve(thunks[0]())
-		.catch(handle_error)
-		.finally(() => {
-			settled_promises.add(promise);
-		});
+	var promise = Promise.resolve(thunks[0]()).catch(handle_error);
+
+	promise.finally(() => {
+		settled_promises.add(promise);
+	});
 
 	/** @type {Array<Promise<void>>} */
 	var promises = [promise];
@@ -273,13 +273,14 @@ export function run(thunks) {
 				restore();
 				return fn();
 			})
-			.catch(handle_error)
-			.finally(() => {
-				settled_promises.add(promise);
+			.catch(handle_error);
 
-				unset_context();
-				current_batch?.deactivate();
-			});
+		promise.finally(() => {
+			settled_promises.add(promise);
+
+			unset_context();
+			current_batch?.deactivate();
+		});
 
 		promises.push(promise);
 	}
