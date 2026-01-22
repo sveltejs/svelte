@@ -26,14 +26,6 @@ import {
 } from './deriveds.js';
 import { aborted } from './effects.js';
 
-/** @type {WeakSet<Promise<any>>} */
-export const settled_promises = new WeakSet();
-
-/** @param {Promise<any>} promise */
-export function is_promise_settled(promise) {
-	return settled_promises.has(promise);
-}
-
 /**
  * @param {Blocker[]} blockers
  * @param {Array<() => any>} sync
