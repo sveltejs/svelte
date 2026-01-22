@@ -45,9 +45,9 @@ export function flatten(blockers, sync, async, fn) {
 	const d = is_runes() ? derived : derived_safe_equal;
 
 	// Filter out already-settled blockers - no need to wait for them
-	blockers = blockers.filter((b) => !is_promise_settled(b));
+	var pending = blockers.filter((b) => !is_promise_settled(b));
 
-	if (async.length === 0 && blockers.length === 0) {
+	if (async.length === 0 && pending.length === 0) {
 		fn(sync.map(d));
 		return;
 	}
@@ -57,7 +57,7 @@ export function flatten(blockers, sync, async, fn) {
 
 	var restore = capture();
 	var blocker_promise =
-		blockers.length === 1 ? blockers[0] : blockers.length > 1 ? Promise.all(blockers) : null;
+		pending.length === 1 ? pending[0] : pending.length > 1 ? Promise.all(pending) : null;
 
 	/** @param {Value[]} values */
 	function finish(values) {
