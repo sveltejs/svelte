@@ -1032,6 +1032,12 @@ function calculate_blockers(instance, scopes, analysis) {
 					const rune = get_rune(node, context.state.scope);
 					if (rune === '$effect') return;
 
+					// runes do not mutate their inputs
+					if (rune !== null) {
+						context.next();
+						return;
+					}
+
 					/** @type {Set<Binding>} */
 					const touched = new Set();
 					touch(node, context.state.scope, touched);
