@@ -89,6 +89,6 @@ export function SnippetBlock(node, context) {
 			context.state.instance_level_snippets.push(declaration);
 		}
 	} else {
-		context.state.init.push(declaration);
+		context.state.snippets.push(declaration);
 	}
 }
