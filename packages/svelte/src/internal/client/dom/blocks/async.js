@@ -1,5 +1,5 @@
 /** @import { Blocker, TemplateNode, Value } from '#client' */
-import { flatten, is_promise_settled } from '../../reactivity/async.js';
+import { flatten } from '../../reactivity/async.js';
 import { Batch, current_batch } from '../../reactivity/batch.js';
 import { get } from '../../runtime.js';
 import {
