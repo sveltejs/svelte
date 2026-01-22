@@ -1,5 +1,4 @@
-/** @import { Effect, TemplateNode, Value } from '#client' */
-
+/** @import { Blocker, Effect, Value } from '#client' */
 import { DESTROYED, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
 import {
@@ -36,7 +35,7 @@ export function is_promise_settled(promise) {
 }
 
 /**
- * @param {Array<Promise<void>>} blockers
+ * @param {Blocker[]} blockers
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
  * @param {(values: Value[]) => any} fn
@@ -45,7 +44,7 @@ export function flatten(blockers, sync, async, fn) {
 	const d = is_runes() ? derived : derived_safe_equal;
 
 	// Filter out already-settled blockers - no need to wait for them
-	var pending = blockers.filter((b) => !is_promise_settled(b));
+	var pending = blockers.filter((b) => !b.settled);
 
 	if (async.length === 0 && pending.length === 0) {
 		fn(sync.map(d));
@@ -57,7 +56,11 @@ export function flatten(blockers, sync, async, fn) {
 
 	var restore = capture();
 	var blocker_promise =
-		pending.length === 1 ? pending[0] : pending.length > 1 ? Promise.all(pending) : null;
+		pending.length === 1
+			? pending[0].promise
+			: pending.length > 1
+				? Promise.all(pending.map((b) => b.promise))
+				: null;
 
 	/** @param {Value[]} values */
 	function finish(values) {
@@ -97,7 +100,7 @@ export function flatten(blockers, sync, async, fn) {
 }
 
 /**
- * @param {Array<Promise<void>>} blockers
+ * @param {Blocker[]} blockers
  * @param {(values: Value[]) => any} fn
  */
 export function run_after_blockers(blockers, fn) {
@@ -252,12 +255,13 @@ export function run(thunks) {
 
 	var promise = Promise.resolve(thunks[0]()).catch(handle_error);
 
-	promise.finally(() => {
-		settled_promises.add(promise);
-	});
+	/** @type {Blocker} */
+	var blocker = { promise, settled: false };
+	var blockers = [blocker];
 
-	/** @type {Array<Promise<void>>} */
-	var promises = [promise];
+	promise.finally(() => {
+		blocker.settled = true;
+	});
 
 	for (const fn of thunks.slice(1)) {
 		promise = promise
@@ -275,16 +279,15 @@ export function run(thunks) {
 			})
 			.catch(handle_error);
 
-		const p = promise;
+		const blocker = { promise, settled: false };
+		blockers.push(blocker);
 
-		p.finally(() => {
-			settled_promises.add(p);
+		promise.finally(() => {
+			blocker.settled = true;
 
 			unset_context();
 			current_batch?.deactivate();
 		});
-
-		promises.push(p);
 	}
 
 	promise
@@ -296,5 +299,12 @@ export function run(thunks) {
 			batch.decrement(blocking);
 		});
 
-	return promises;
+	return blockers;
+}
+
+/**
+ * @param {Blocker[]} blockers
+ */
+export function wait(blockers) {
+	return Promise.all(blockers.map((b) => b.promise));
 }

@@ -112,7 +112,9 @@ function add_const_declaration(state, id, expression, metadata, bindings) {
 		const assignment = b.assignment('=', id, expression);
 		const body = after.length === 0 ? assignment : b.block([b.stmt(assignment), ...after]);
 
-		if (blockers.length > 0) run.thunks.push(b.thunk(b.call('Promise.all', b.array(blockers))));
+		if (blockers.length > 0) {
+			run.thunks.push(b.thunk(b.call('Promise.all', b.array(blockers))));
+		}
 
 		run.thunks.push(b.thunk(body, has_await));
 

@@ -1,4 +1,4 @@
-/** @import { TemplateNode, Value } from '#client' */
+/** @import { Blocker, TemplateNode, Value } from '#client' */
 import { flatten, is_promise_settled } from '../../reactivity/async.js';
 import { Batch, current_batch } from '../../reactivity/batch.js';
 import { get } from '../../runtime.js';
@@ -14,12 +14,12 @@ import { get_boundary } from './boundary.js';
 
 /**
  * @param {TemplateNode} node
- * @param {Array<Promise<void>>} blockers
+ * @param {Blocker[]} blockers
  * @param {Array<() => Promise<any>>} expressions
  * @param {(anchor: TemplateNode, ...deriveds: Value[]) => void} fn
  */
 export function async(node, blockers = [], expressions = [], fn) {
-	if (expressions.length === 0 && blockers.length > 0 && blockers.every(is_promise_settled)) {
+	if (expressions.length === 0 && blockers.every((b) => b.settled)) {
 		fn(node);
 		return;
 	}
