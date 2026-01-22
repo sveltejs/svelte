@@ -115,9 +115,9 @@ function add_const_declaration(state, id, expression, metadata, bindings) {
 		const body = after.length === 0 ? assignment : b.block([b.stmt(assignment), ...after]);
 
 		if (blockers.length === 1) {
-			run.thunks.push(b.thunk(/** @type {Expression} */ (blockers[0])));
+			run.thunks.push(b.thunk(b.member(/** @type {Expression} */ (blockers[0]), 'promise')));
 		} else if (blockers.length > 0) {
-			run.thunks.push(b.thunk(b.call('Promise.all', b.array(blockers))));
+			run.thunks.push(b.thunk(b.call('$.wait', b.array(blockers))));
 		}
 
 		run.thunks.push(b.thunk(body, has_await));
