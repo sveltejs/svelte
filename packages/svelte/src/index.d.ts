@@ -334,6 +334,10 @@ export type MountOptions<Props extends Record<string, any> = Record<string, any>
 	 */
 	context?: Map<any, any>;
 	/**
+	 * A function invoked before the component is mounted but after the component context has been initialized.
+	 */
+	beforeMount?: () => void;
+	/**
 	 * Whether or not to play transitions on initial render.
 	 * @default true
 	 */
