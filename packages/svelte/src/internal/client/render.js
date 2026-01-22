@@ -248,7 +248,7 @@ function _mount(
 					}
 				}
 
-				if (context) {
+				if (context || beforeMount) {
 					pop();
 				}
 			}
