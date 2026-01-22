@@ -442,8 +442,10 @@ export class Batch {
 
 		if (!this.#decrement_queued) {
 			this.#decrement_queued = true;
-			Batch.enqueue(() => {
+
+			queue_micro_task(() => {
 				this.#decrement_queued = false;
+
 				if (!this.is_deferred()) {
 					this.revive();
 				} else if (!is_flushing && queued_root_effects.length > 0) {
@@ -488,7 +490,7 @@ export class Batch {
 			batches.add(current_batch);
 
 			if (!is_flushing_sync) {
-				Batch.enqueue(() => {
+				queue_micro_task(() => {
 					if (current_batch !== batch) {
 						// a flushSync happened in the meantime
 						return;
@@ -500,11 +502,6 @@ export class Batch {
 		}
 
 		return current_batch;
-	}
-
-	/** @param {() => void} task */
-	static enqueue(task) {
-		queue_micro_task(task);
 	}
 
 	apply() {
