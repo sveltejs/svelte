@@ -211,10 +211,12 @@ function _mount(
 				pending: () => {}
 			},
 			(anchor_node) => {
-				if (context) {
+				if (context || beforeMount) {
 					push({});
-					var ctx = /** @type {ComponentContext} */ (component_context);
-					ctx.c = context;
+					if (context) {
+						var ctx = /** @type {ComponentContext} */ (component_context);
+						ctx.c = context;
+					}
 				}
 
 				beforeMount?.();
