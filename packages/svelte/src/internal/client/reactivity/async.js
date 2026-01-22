@@ -275,14 +275,16 @@ export function run(thunks) {
 			})
 			.catch(handle_error);
 
-		promise.finally(() => {
-			settled_promises.add(promise);
+		const p = promise;
+
+		p.finally(() => {
+			settled_promises.add(p);
 
 			unset_context();
 			current_batch?.deactivate();
 		});
 
-		promises.push(promise);
+		promises.push(p);
 	}
 
 	promise
