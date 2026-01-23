@@ -27,8 +27,6 @@ import {
 	get,
 	increment_write_version,
 	is_dirty,
-	is_updating_effect,
-	set_is_updating_effect,
 	update_effect
 } from '../runtime.js';
 import * as e from '../errors.js';
@@ -561,14 +559,12 @@ export function flushSync(fn) {
 }
 
 function flush_effects() {
-	var was_updating_effect = is_updating_effect;
 	is_flushing = true;
 
 	var source_stacks = DEV ? new Set() : null;
 
 	try {
 		var flush_count = 0;
-		set_is_updating_effect(true);
 
 		while (queued_root_effects.length > 0) {
 			var batch = Batch.ensure();
@@ -612,7 +608,6 @@ function flush_effects() {
 		}
 	} finally {
 		is_flushing = false;
-		set_is_updating_effect(was_updating_effect);
 
 		last_scheduled_effect = null;
 
