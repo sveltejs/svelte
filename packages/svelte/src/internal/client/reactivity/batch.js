@@ -149,8 +149,6 @@ export class Batch {
 	process(root_effects) {
 		queued_root_effects = [];
 
-		previous_batch = null;
-
 		this.apply();
 
 		/** @type {Effect[]} */
