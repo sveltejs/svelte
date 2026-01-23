@@ -1,5 +1,21 @@
 # svelte
 
+## 5.48.1
+
+### Patch Changes
+
+- fix: hoist snippets above const in same block ([#17516](https://github.com/sveltejs/svelte/pull/17516))
+
+- fix: properly hydrate await in `{@html}` ([#17528](https://github.com/sveltejs/svelte/pull/17528))
+
+- fix: batch resolution of async work ([#17511](https://github.com/sveltejs/svelte/pull/17511))
+
+- fix: account for empty statements when visiting in transform async ([#17524](https://github.com/sveltejs/svelte/pull/17524))
+
+- fix: avoid async overhead for already settled promises ([#17461](https://github.com/sveltejs/svelte/pull/17461))
+
+- fix: better code generation for const tags with async dependencies ([#17518](https://github.com/sveltejs/svelte/pull/17518))
+
 ## 5.48.0
 
 ### Minor Changes
