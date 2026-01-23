@@ -1,4 +1,6 @@
 /** @import { Blocker, TemplateNode, Value } from '#client' */
+import { COMMENT_NODE } from '#client/constants';
+import { HYDRATION_START, HYDRATION_START_ELSE } from '../../../../constants.js';
 import { flatten } from '../../reactivity/async.js';
 import { Batch, current_batch } from '../../reactivity/batch.js';
 import { get } from '../../runtime.js';
@@ -34,10 +36,17 @@ export function async(node, blockers = [], expressions = [], fn) {
 	var was_hydrating = hydrating;
 
 	if (was_hydrating) {
+		// Check if this is an `@html` block by looking at the current comment
+		// `@html` uses a hash comment (not `[` or `[!`) with empty comment as end marker
+		var is_html =
+			hydrate_node.nodeType === COMMENT_NODE &&
+			/** @type {Comment} */ (hydrate_node).data !== HYDRATION_START &&
+			/** @type {Comment} */ (hydrate_node).data !== HYDRATION_START_ELSE;
+
 		hydrate_next();
 
 		var previous_hydrate_node = hydrate_node;
-		var end = skip_nodes(false);
+		var end = skip_nodes(false, is_html);
 		set_hydrate_node(end);
 	}
 
