@@ -15,12 +15,12 @@ export function HtmlTag(node, context) {
 	const has_await = node.metadata.expression.has_await;
 
 	if (has_await) {
-		context.state.template.push(block_open)
+		context.state.template.push(block_open);
 	}
 
 	context.state.template.push(create_push(call, node.metadata.expression, true));
 
 	if (has_await) {
-		context.state.template.push(block_close)
+		context.state.template.push(block_close);
 	}
 }
