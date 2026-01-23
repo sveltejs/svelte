@@ -1,6 +1,16 @@
-// Creates a test from the existing playground. cwd needs to be playground/sandbox
+// Creates a test from the existing playground. Can be called from anywhere.
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Get the directory where this script is located
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Base paths relative to this script's location
+const sandbox_dir = path.resolve(__dirname, '..');
+const src_dir = path.join(sandbox_dir, 'src');
+const tests_dir = path.resolve(__dirname, '../../../packages/svelte/tests');
 
 // Get target folder from command line arguments
 let target_folder = process.argv[2];
@@ -20,7 +30,7 @@ if (!target_folder.startsWith('runtime-')) {
 	process.exit(1);
 }
 target_folder = path.join(
-	path.resolve('../../packages/svelte/tests', target_folder.split('/')[0]),
+	path.resolve(tests_dir, target_folder.split('/')[0]),
 	'samples',
 	target_folder.split('/')[1]
 );
@@ -56,8 +66,8 @@ if (exists) {
 	const files = fs.readdirSync(target_folder);
 	for (const file of files) {
 		if (file !== '_config.js') {
-			const filePath = path.join(target_folder, file);
-			fs.rmSync(filePath, { recursive: true, force: true });
+			const file_path = path.join(target_folder, file);
+			fs.rmSync(file_path, { recursive: true, force: true });
 		}
 	}
 } else {
@@ -65,7 +75,7 @@ if (exists) {
 }
 
 // Starting file
-const app_svelte_path = path.resolve('./src/App.svelte');
+const app_svelte_path = path.join(src_dir, 'App.svelte');
 const collected_files = new Set();
 const processed_files = new Set();
 
@@ -117,7 +127,7 @@ collect_imports(app_svelte_path);
 
 // Copy collected files to target folder
 for (const file_path of collected_files) {
-	const relative_path = path.relative(path.resolve('./src'), file_path);
+	const relative_path = path.relative(src_dir, file_path);
 	let target_path = path.join(target_folder, relative_path);
 
 	// Rename App.svelte to main.svelte
