@@ -83,9 +83,8 @@ export function next(count = 1) {
 /**
  * Skips or removes (depending on {@link remove}) all nodes starting at `hydrate_node` up until the next hydration end comment
  * @param {boolean} remove
- * @param {boolean} [is_html] - If true, look for empty comment end marker (used by `@html` blocks)
  */
-export function skip_nodes(remove = true, is_html = false) {
+export function skip_nodes(remove = true) {
 	var depth = 0;
 	var node = hydrate_node;
 
@@ -98,9 +97,6 @@ export function skip_nodes(remove = true, is_html = false) {
 				depth -= 1;
 			} else if (data === HYDRATION_START || data === HYDRATION_START_ELSE) {
 				depth += 1;
-			} else if (is_html && data === '' && depth === 0) {
-				// `@html` blocks use an empty comment as end marker
-				return node;
 			}
 		}
 
