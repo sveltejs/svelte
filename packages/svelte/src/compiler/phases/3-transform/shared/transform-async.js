@@ -49,22 +49,25 @@ export function transform_body(instance_body, runner, transform) {
 	if (instance_body.async.length > 0) {
 		const thunks = instance_body.async.map((s) => {
 			if (s.node.type === 'VariableDeclarator') {
-				const visited = /** @type {ESTree.VariableDeclaration} */ (
+				const visited = /** @type {ESTree.VariableDeclaration | ESTree.EmptyStatement} */ (
 					transform(b.var(s.node.id, s.node.init))
 				);
 
-				const statements = visited.declarations.map((node) => {
-					if (
-						node.id.type === 'Identifier' &&
-						(node.id.name.startsWith('$$d') || node.id.name.startsWith('$$array'))
-					) {
-						// this is an intermediate declaration created in VariableDeclaration.js;
-						// subsequent statements depend on it
-						return b.var(node.id, node.init);
-					}
+				const statements =
+					visited.type === 'VariableDeclaration'
+						? visited.declarations.map((node) => {
+								if (
+									node.id.type === 'Identifier' &&
+									(node.id.name.startsWith('$$d') || node.id.name.startsWith('$$array'))
+								) {
+									// this is an intermediate declaration created in VariableDeclaration.js;
+									// subsequent statements depend on it
+									return b.var(node.id, node.init);
+								}
 
-					return b.stmt(b.assignment('=', node.id, node.init ?? b.void0));
-				});
+								return b.stmt(b.assignment('=', node.id, node.init ?? b.void0));
+							})
+						: [];
 
 				if (statements.length === 1) {
 					const statement = /** @type {ESTree.ExpressionStatement} */ (statements[0]);
