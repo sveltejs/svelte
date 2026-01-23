@@ -435,8 +435,12 @@ export class Batch {
 				this.#decrement_queued = false;
 
 				if (!this.is_deferred()) {
+					// we only reschedule previously-deferred effects if we expect
+					// to be able to run them after processing the batch
 					this.revive();
 				} else if (queued_root_effects.length > 0) {
+					// if other effects are scheduled, process the batch _without_
+					// rescheduling the previously-deferred effects
 					this.flush();
 				}
 			});
