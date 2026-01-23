@@ -428,23 +428,22 @@ export class Batch {
 		this.#pending -= 1;
 		if (blocking) this.#blocking_pending -= 1;
 
-		if (!this.#decrement_queued) {
-			this.#decrement_queued = true;
+		if (this.#decrement_queued) return;
+		this.#decrement_queued = true;
 
-			queue_micro_task(() => {
-				this.#decrement_queued = false;
+		queue_micro_task(() => {
+			this.#decrement_queued = false;
 
-				if (!this.is_deferred()) {
-					// we only reschedule previously-deferred effects if we expect
-					// to be able to run them after processing the batch
-					this.revive();
-				} else if (queued_root_effects.length > 0) {
-					// if other effects are scheduled, process the batch _without_
-					// rescheduling the previously-deferred effects
-					this.flush();
-				}
-			});
-		}
+			if (!this.is_deferred()) {
+				// we only reschedule previously-deferred effects if we expect
+				// to be able to run them after processing the batch
+				this.revive();
+			} else if (queued_root_effects.length > 0) {
+				// if other effects are scheduled, process the batch _without_
+				// rescheduling the previously-deferred effects
+				this.flush();
+			}
+		});
 	}
 
 	revive() {
