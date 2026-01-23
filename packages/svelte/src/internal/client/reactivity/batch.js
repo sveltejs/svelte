@@ -27,8 +27,6 @@ import {
 	get,
 	increment_write_version,
 	is_dirty,
-	is_updating_effect,
-	set_is_updating_effect,
 	update_effect
 } from '../runtime.js';
 import * as e from '../errors.js';
@@ -153,8 +151,6 @@ export class Batch {
 	process(root_effects) {
 		queued_root_effects = [];
 
-		previous_batch = null;
-
 		this.apply();
 
 		/** @type {Effect[]} */
@@ -172,14 +168,18 @@ export class Batch {
 			// log_inconsistent_branches(root);
 		}
 
-		if (!this.is_fork) {
-			this.#resolve();
-		}
-
 		if (this.is_deferred()) {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 		} else {
+			// append/remove branches
+			for (const fn of this.#commit_callbacks) fn();
+			this.#commit_callbacks.clear();
+
+			if (this.#pending === 0) {
+				this.#commit();
+			}
+
 			// If sources are written to, then work needs to happen in a separate batch, else prior sources would be mixed with
 			// newly updated sources, which could lead to infinite loops when effects run over and over again.
 			previous_batch = this;
@@ -330,18 +330,6 @@ export class Batch {
 	discard() {
 		for (const fn of this.#discard_callbacks) fn(this);
 		this.#discard_callbacks.clear();
-	}
-
-	#resolve() {
-		if (this.#blocking_pending === 0) {
-			// append/remove branches
-			for (const fn of this.#commit_callbacks) fn();
-			this.#commit_callbacks.clear();
-		}
-
-		if (this.#pending === 0) {
-			this.#commit();
-		}
 	}
 
 	#commit() {
@@ -570,14 +558,12 @@ export function flushSync(fn) {
 }
 
 function flush_effects() {
-	var was_updating_effect = is_updating_effect;
 	is_flushing = true;
 
 	var source_stacks = DEV ? new Set() : null;
 
 	try {
 		var flush_count = 0;
-		set_is_updating_effect(true);
 
 		while (queued_root_effects.length > 0) {
 			var batch = Batch.ensure();
@@ -621,7 +607,6 @@ function flush_effects() {
 		}
 	} finally {
 		is_flushing = false;
-		set_is_updating_effect(was_updating_effect);
 
 		last_scheduled_effect = null;
 

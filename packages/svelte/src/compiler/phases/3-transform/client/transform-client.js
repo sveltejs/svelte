@@ -170,6 +170,7 @@ export function client_component(analysis, options) {
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		init: /** @type {any} */ (null),
 		consts: /** @type {any} */ (null),
+		snippets: /** @type {any} */ (null),
 		let_directives: /** @type {any} */ (null),
 		update: /** @type {any} */ (null),
 		after_update: /** @type {any} */ (null),

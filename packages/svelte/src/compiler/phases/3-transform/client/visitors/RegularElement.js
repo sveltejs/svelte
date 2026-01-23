@@ -329,7 +329,7 @@ export function RegularElement(node, context) {
 	);
 
 	/** @type {typeof state} */
-	const child_state = { ...state, init: [], update: [], after_update: [] };
+	const child_state = { ...state, init: [], update: [], after_update: [], snippets: [] };
 
 	for (const node of hoisted) {
 		context.visit(node, child_state);
@@ -441,6 +441,7 @@ export function RegularElement(node, context) {
 		// Wrap children in `{...}` to avoid declaration conflicts
 		context.state.init.push(
 			b.block([
+				...child_state.snippets,
 				...child_state.init,
 				...element_state.init,
 				child_state.update.length > 0 ? build_render_statement(child_state) : b.empty,
