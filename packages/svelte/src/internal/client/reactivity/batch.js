@@ -448,7 +448,7 @@ export class Batch {
 
 				if (!this.is_deferred()) {
 					this.revive();
-				} else if (!is_flushing && queued_root_effects.length > 0) {
+				} else if (queued_root_effects.length > 0) {
 					this.flush();
 				}
 			});
