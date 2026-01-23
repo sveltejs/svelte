@@ -138,6 +138,8 @@ export class Batch {
 
 	is_fork = false;
 
+	#decrement_queued = false;
+
 	is_deferred() {
 		return this.is_fork || this.#blocking_pending > 0;
 	}
@@ -426,7 +428,22 @@ export class Batch {
 		this.#pending -= 1;
 		if (blocking) this.#blocking_pending -= 1;
 
-		this.revive();
+		if (this.#decrement_queued) return;
+		this.#decrement_queued = true;
+
+		queue_micro_task(() => {
+			this.#decrement_queued = false;
+
+			if (!this.is_deferred()) {
+				// we only reschedule previously-deferred effects if we expect
+				// to be able to run them after processing the batch
+				this.revive();
+			} else if (queued_root_effects.length > 0) {
+				// if other effects are scheduled, process the batch _without_
+				// rescheduling the previously-deferred effects
+				this.flush();
+			}
+		});
 	}
 
 	revive() {
@@ -464,7 +481,7 @@ export class Batch {
 			batches.add(current_batch);
 
 			if (!is_flushing_sync) {
-				Batch.enqueue(() => {
+				queue_micro_task(() => {
 					if (current_batch !== batch) {
 						// a flushSync happened in the meantime
 						return;
@@ -476,11 +493,6 @@ export class Batch {
 		}
 
 		return current_batch;
-	}
-
-	/** @param {() => void} task */
-	static enqueue(task) {
-		queue_micro_task(task);
 	}
 
 	apply() {
