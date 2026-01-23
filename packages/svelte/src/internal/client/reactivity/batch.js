@@ -168,14 +168,18 @@ export class Batch {
 			// log_inconsistent_branches(root);
 		}
 
-		if (!this.is_fork) {
-			this.#resolve();
-		}
-
 		if (this.is_deferred()) {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 		} else {
+			// append/remove branches
+			for (const fn of this.#commit_callbacks) fn();
+			this.#commit_callbacks.clear();
+
+			if (this.#pending === 0) {
+				this.#commit();
+			}
+
 			// If sources are written to, then work needs to happen in a separate batch, else prior sources would be mixed with
 			// newly updated sources, which could lead to infinite loops when effects run over and over again.
 			previous_batch = this;
@@ -326,18 +330,6 @@ export class Batch {
 	discard() {
 		for (const fn of this.#discard_callbacks) fn(this);
 		this.#discard_callbacks.clear();
-	}
-
-	#resolve() {
-		if (this.#blocking_pending === 0) {
-			// append/remove branches
-			for (const fn of this.#commit_callbacks) fn();
-			this.#commit_callbacks.clear();
-		}
-
-		if (this.#pending === 0) {
-			this.#commit();
-		}
 	}
 
 	#commit() {
