@@ -1,30 +1,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { parseArgs } from 'node:util';
 
-const args = process.argv.slice(2);
-
-let create_test_name = null;
-let url_arg = null;
-
-for (let i = 0; i < args.length; i++) {
-	const current_arg = args[i];
-
-	if (current_arg === '--create-test') {
-		const next_arg = args[i + 1];
-		if (!next_arg) {
-			console.error(`--create-test requires a test name (e.g. hello-world)`);
-			process.exit(1);
+const { values, positionals } = parseArgs({
+	options: {
+		'create-test': {
+			type: 'string'
 		}
-		create_test_name = next_arg;
-		i++;
-		continue;
-	}
+	},
+	allowPositionals: true
+});
 
-	if (!current_arg.startsWith('-') && !url_arg) {
-		url_arg = current_arg;
-		continue;
-	}
-}
+const create_test_name = values['create-test'] ?? null;
+const url_arg = positionals[0];
 
 if (!url_arg) {
 	console.error(`Missing URL argument`);
