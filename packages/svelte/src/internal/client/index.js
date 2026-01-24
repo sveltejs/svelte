@@ -103,7 +103,8 @@ export {
 	run,
 	save,
 	track_reactivity_loss,
-	run_after_blockers
+	run_after_blockers,
+	wait
 } from './reactivity/async.js';
 export { eager, flushSync as flush } from './reactivity/batch.js';
 export {
