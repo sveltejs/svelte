@@ -1,5 +1,11 @@
 # svelte
 
+## 5.48.2
+
+### Patch Changes
+
+- fix: export `wait` function from internal client index ([#17530](https://github.com/sveltejs/svelte/pull/17530))
+
 ## 5.48.1
 
 ### Patch Changes
