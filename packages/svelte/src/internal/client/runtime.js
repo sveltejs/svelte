@@ -43,7 +43,13 @@ import {
 	set_dev_current_component_function,
 	set_dev_stack
 } from './context.js';
-import { Batch, batch_values, flushSync, schedule_effect } from './reactivity/batch.js';
+import {
+	Batch,
+	batch_values,
+	current_batch,
+	flushSync,
+	schedule_effect
+} from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
