@@ -33,7 +33,7 @@ import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch } from './batch.js';
 import { unset_context } from './async.js';
-import { deferred, includes, index_of } from '../../shared/utils.js';
+import { deferred, includes } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
 
 /** @type {Effect | null} */
