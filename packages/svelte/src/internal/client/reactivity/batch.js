@@ -21,7 +21,7 @@ import {
 	MANAGED_EFFECT
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
-import { deferred, define_property } from '../../shared/utils.js';
+import { deferred, define_property, includes } from '../../shared/utils.js';
 import {
 	active_effect,
 	get,
@@ -249,7 +249,7 @@ export class Batch {
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
 					render_effects.push(effect);
 				} else if (is_dirty(effect)) {
-					if ((flags & BLOCK_EFFECT) !== 0) this.#dirty_effects.add(effect);
+					if ((flags & BLOCK_EFFECT) !== 0) this.#maybe_dirty_effects.add(effect);
 					update_effect(effect);
 				}
 
@@ -781,7 +781,7 @@ function depends_on(reaction, sources, checked) {
 
 	if (reaction.deps !== null) {
 		for (const dep of reaction.deps) {
-			if (sources.includes(dep)) {
+			if (includes.call(sources, dep)) {
 				return true;
 			}
 

@@ -33,7 +33,7 @@ import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch } from './batch.js';
 import { unset_context } from './async.js';
-import { deferred } from '../../shared/utils.js';
+import { deferred, includes } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
 
 /** @type {Effect | null} */
@@ -322,7 +322,7 @@ export function execute_derived(derived) {
 		let prev_eager_effects = eager_effects;
 		set_eager_effects(new Set());
 		try {
-			if (stack.includes(derived)) {
+			if (includes.call(stack, derived)) {
 				e.derived_references_self();
 			}
 
