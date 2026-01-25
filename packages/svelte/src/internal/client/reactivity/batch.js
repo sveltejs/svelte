@@ -243,7 +243,7 @@ export class Batch {
 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
 					render_effects.push(effect);
 				} else if (is_dirty(effect)) {
-					if ((flags & BLOCK_EFFECT) !== 0) this.#dirty_effects.add(effect);
+					if ((flags & BLOCK_EFFECT) !== 0) this.#maybe_dirty_effects.add(effect);
 					update_effect(effect);
 				}
 
@@ -449,13 +449,7 @@ export class Batch {
 	revive() {
 		for (const e of this.#dirty_effects) {
 			this.#maybe_dirty_effects.delete(e);
-
-			if ((e.f & BLOCK_EFFECT) !== 0) {
-				set_signal_status(e, MAYBE_DIRTY);
-			} else {
-				set_signal_status(e, DIRTY);
-			}
-
+			set_signal_status(e, DIRTY);
 			schedule_effect(e);
 		}
 
