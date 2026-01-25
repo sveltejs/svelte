@@ -15,7 +15,7 @@ export function ConstTag(node, context) {
 	const has_await = node.metadata.expression.has_await;
 	const blockers = [...node.metadata.expression.dependencies]
 		.map((dep) => dep.blocker)
-		.filter((b) => b !== null);
+		.filter((b) => b !== null && b.object !== context.state.async_consts?.id);
 
 	if (has_await || context.state.async_consts || blockers.length > 0) {
 		const run = (context.state.async_consts ??= {
@@ -30,7 +30,9 @@ export function ConstTag(node, context) {
 			context.state.init.push(b.let(identifier.name));
 		}
 
-		if (blockers.length > 0) {
+		if (blockers.length === 1) {
+			run.thunks.push(b.thunk(/** @type {Expression} */ (blockers[0])));
+		} else if (blockers.length > 0) {
 			run.thunks.push(b.thunk(b.call('Promise.all', b.array(blockers))));
 		}
 

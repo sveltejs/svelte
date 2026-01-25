@@ -1,4 +1,4 @@
-/** @import { Effect } from '#client' */
+/** @import { Blocker, Effect } from '#client' */
 import { DEV } from 'esm-env';
 import { hydrating, set_hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
@@ -483,7 +483,7 @@ function set_attributes(
  * @param {(...expressions: any) => Record<string | symbol, any>} fn
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
- * @param {Array<Promise<void>>} blockers
+ * @param {Blocker[]} blockers
  * @param {string} [css_hash]
  * @param {boolean} [should_remove_defaults]
  * @param {boolean} [skip_warning]

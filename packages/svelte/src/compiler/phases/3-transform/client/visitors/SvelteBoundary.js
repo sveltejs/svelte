@@ -77,7 +77,7 @@ export function SvelteBoundary(node, context) {
 				/** @type {Statement[]} */
 				const statements = [];
 
-				context.visit(child, { ...context.state, init: statements });
+				context.visit(child, { ...context.state, snippets: statements });
 
 				const snippet = /** @type {VariableDeclaration} */ (statements[0]);
 

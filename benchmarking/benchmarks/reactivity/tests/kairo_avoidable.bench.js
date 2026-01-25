@@ -1,4 +1,4 @@
-import { assert } from '../../../utils.js';
+import assert from 'node:assert';
 import * as $ from 'svelte/internal/client';
 import { busy } from '../util.js';
 
@@ -23,12 +23,12 @@ export default () => {
 			$.flush(() => {
 				$.set(head, 1);
 			});
-			assert($.get(computed5) === 6);
+			assert.equal($.get(computed5), 6);
 			for (let i = 0; i < 1000; i++) {
 				$.flush(() => {
 					$.set(head, i);
 				});
-				assert($.get(computed5) === 6);
+				assert.equal($.get(computed5), 6);
 			}
 		}
 	};

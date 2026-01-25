@@ -1,4 +1,4 @@
-import { assert } from '../../../utils.js';
+import assert from 'node:assert';
 import * as $ from 'svelte/internal/client';
 
 export default () => {
@@ -33,9 +33,9 @@ export default () => {
 				$.flush(() => {
 					$.set(head, i);
 				});
-				assert($.get(last) === i + 50);
+				assert.equal($.get(last), i + 50);
 			}
-			assert(counter === 50 * 50);
+			assert.equal(counter, 50 * 50);
 		}
 	};
 };
