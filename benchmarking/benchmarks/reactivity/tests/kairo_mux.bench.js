@@ -1,4 +1,4 @@
-import { assert } from '../../../utils.js';
+import assert from 'node:assert';
 import * as $ from 'svelte/internal/client';
 
 export default () => {
@@ -25,13 +25,13 @@ export default () => {
 				$.flush(() => {
 					$.set(heads[i], i);
 				});
-				assert($.get(splited[i]) === i + 1);
+				assert.equal($.get(splited[i]), i + 1);
 			}
 			for (let i = 0; i < 10; i++) {
 				$.flush(() => {
 					$.set(heads[i], i * 2);
 				});
-				assert($.get(splited[i]) === i * 2 + 1);
+				assert.equal($.get(splited[i]), i * 2 + 1);
 			}
 		}
 	};

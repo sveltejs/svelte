@@ -27,8 +27,6 @@ import {
 	get,
 	increment_write_version,
 	is_dirty,
-	is_updating_effect,
-	set_is_updating_effect,
 	update_effect
 } from '../runtime.js';
 import * as e from '../errors.js';
@@ -140,6 +138,8 @@ export class Batch {
 
 	is_fork = false;
 
+	#decrement_queued = false;
+
 	is_deferred() {
 		return this.is_fork || this.#blocking_pending > 0;
 	}
@@ -150,8 +150,6 @@ export class Batch {
 	 */
 	process(root_effects) {
 		queued_root_effects = [];
-
-		previous_batch = null;
 
 		this.apply();
 
@@ -170,14 +168,18 @@ export class Batch {
 			// log_inconsistent_branches(root);
 		}
 
-		if (!this.is_fork) {
-			this.#resolve();
-		}
-
 		if (this.is_deferred()) {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 		} else {
+			// append/remove branches
+			for (const fn of this.#commit_callbacks) fn();
+			this.#commit_callbacks.clear();
+
+			if (this.#pending === 0) {
+				this.#commit();
+			}
+
 			// If sources are written to, then work needs to happen in a separate batch, else prior sources would be mixed with
 			// newly updated sources, which could lead to infinite loops when effects run over and over again.
 			previous_batch = this;
@@ -330,18 +332,6 @@ export class Batch {
 		this.#discard_callbacks.clear();
 	}
 
-	#resolve() {
-		if (this.#blocking_pending === 0) {
-			// append/remove branches
-			for (const fn of this.#commit_callbacks) fn();
-			this.#commit_callbacks.clear();
-		}
-
-		if (this.#pending === 0) {
-			this.#commit();
-		}
-	}
-
 	#commit() {
 		// If there are other pending batches, they now need to be 'rebased' —
 		// in other words, we re-run block/async effects with the newly
@@ -438,7 +428,22 @@ export class Batch {
 		this.#pending -= 1;
 		if (blocking) this.#blocking_pending -= 1;
 
-		this.revive();
+		if (this.#decrement_queued) return;
+		this.#decrement_queued = true;
+
+		queue_micro_task(() => {
+			this.#decrement_queued = false;
+
+			if (!this.is_deferred()) {
+				// we only reschedule previously-deferred effects if we expect
+				// to be able to run them after processing the batch
+				this.revive();
+			} else if (queued_root_effects.length > 0) {
+				// if other effects are scheduled, process the batch _without_
+				// rescheduling the previously-deferred effects
+				this.flush();
+			}
+		});
 	}
 
 	revive() {
@@ -476,7 +481,7 @@ export class Batch {
 			batches.add(current_batch);
 
 			if (!is_flushing_sync) {
-				Batch.enqueue(() => {
+				queue_micro_task(() => {
 					if (current_batch !== batch) {
 						// a flushSync happened in the meantime
 						return;
@@ -488,11 +493,6 @@ export class Batch {
 		}
 
 		return current_batch;
-	}
-
-	/** @param {() => void} task */
-	static enqueue(task) {
-		queue_micro_task(task);
 	}
 
 	apply() {
@@ -561,14 +561,12 @@ export function flushSync(fn) {
 }
 
 function flush_effects() {
-	var was_updating_effect = is_updating_effect;
 	is_flushing = true;
 
 	var source_stacks = DEV ? new Set() : null;
 
 	try {
 		var flush_count = 0;
-		set_is_updating_effect(true);
 
 		while (queued_root_effects.length > 0) {
 			var batch = Batch.ensure();
@@ -612,7 +610,6 @@ function flush_effects() {
 		}
 	} finally {
 		is_flushing = false;
-		set_is_updating_effect(was_updating_effect);
 
 		last_scheduled_effect = null;
 

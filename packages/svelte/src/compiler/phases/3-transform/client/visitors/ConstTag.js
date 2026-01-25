@@ -1,4 +1,4 @@
-/** @import { Pattern } from 'estree' */
+/** @import { Expression, Identifier, Pattern } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 /** @import { ExpressionMetadata } from '../../../nodes.js' */
@@ -88,8 +88,8 @@ export function ConstTag(node, context) {
 
 /**
  * @param {ComponentContext['state']} state
- * @param {import('estree').Identifier} id
- * @param {import('estree').Expression} expression
+ * @param {Identifier} id
+ * @param {Expression} expression
  * @param {ExpressionMetadata} metadata
  * @param {import('#compiler').Binding[]} bindings
  */
@@ -99,7 +99,9 @@ function add_const_declaration(state, id, expression, metadata, bindings) {
 	const after = dev ? [b.stmt(b.call('$.get', id))] : [];
 
 	const has_await = metadata.has_await;
-	const blockers = [...metadata.dependencies].map((dep) => dep.blocker).filter((b) => b !== null);
+	const blockers = [...metadata.dependencies]
+		.map((dep) => dep.blocker)
+		.filter((b) => b !== null && b.object !== state.async_consts?.id);
 
 	if (has_await || state.async_consts || blockers.length > 0) {
 		const run = (state.async_consts ??= {
@@ -112,7 +114,11 @@ function add_const_declaration(state, id, expression, metadata, bindings) {
 		const assignment = b.assignment('=', id, expression);
 		const body = after.length === 0 ? assignment : b.block([b.stmt(assignment), ...after]);
 
-		if (blockers.length > 0) run.thunks.push(b.thunk(b.call('Promise.all', b.array(blockers))));
+		if (blockers.length === 1) {
+			run.thunks.push(b.thunk(b.member(/** @type {Expression} */ (blockers[0]), 'promise')));
+		} else if (blockers.length > 0) {
+			run.thunks.push(b.thunk(b.call('$.wait', b.array(blockers))));
+		}
 
 		run.thunks.push(b.thunk(body, has_await));
 

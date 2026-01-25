@@ -1,3 +1,15 @@
 import { test } from '../../test';
 
-export default test({});
+/** @type {typeof console.log} */
+let log;
+
+export default test({
+	before_test() {
+		log = console.log;
+		console.log = () => {};
+	},
+
+	after_test() {
+		console.log = log;
+	}
+});

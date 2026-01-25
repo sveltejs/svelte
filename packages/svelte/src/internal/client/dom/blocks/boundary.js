@@ -102,6 +102,7 @@ export class Boundary {
 
 	#local_pending_count = 0;
 	#pending_count = 0;
+	#pending_count_update_queued = false;
 
 	#is_creating_fallback = false;
 
@@ -202,12 +203,11 @@ export class Boundary {
 
 	#hydrate_pending_content() {
 		const pending = this.#props.pending;
-		if (!pending) {
-			return;
-		}
+		if (!pending) return;
+
 		this.#pending_effect = branch(() => pending(this.#anchor));
 
-		Batch.enqueue(() => {
+		queue_micro_task(() => {
 			var anchor = this.#get_anchor();
 
 			this.#main_effect = this.#run(() => {
@@ -359,9 +359,15 @@ export class Boundary {
 
 		this.#local_pending_count += d;
 
-		if (this.#effect_pending) {
-			internal_set(this.#effect_pending, this.#local_pending_count);
-		}
+		if (!this.#effect_pending || this.#pending_count_update_queued) return;
+		this.#pending_count_update_queued = true;
+
+		queue_micro_task(() => {
+			this.#pending_count_update_queued = false;
+			if (this.#effect_pending) {
+				internal_set(this.#effect_pending, this.#local_pending_count);
+			}
+		});
 	}
 
 	get_effect_pending() {
