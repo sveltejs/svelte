@@ -449,7 +449,13 @@ export class Batch {
 	revive() {
 		for (const e of this.#dirty_effects) {
 			this.#maybe_dirty_effects.delete(e);
-			set_signal_status(e, DIRTY);
+
+			if ((e.f & BLOCK_EFFECT) !== 0) {
+				set_signal_status(e, MAYBE_DIRTY);
+			} else {
+				set_signal_status(e, DIRTY);
+			}
+
 			schedule_effect(e);
 		}
 
