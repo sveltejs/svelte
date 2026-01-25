@@ -1,6 +1,6 @@
 /** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
-import { get_descriptors, get_prototype_of, index_of } from '../shared/utils.js';
+import { get_descriptors, get_prototype_of, includes, index_of } from '../shared/utils.js';
 import {
 	destroy_block_effect_children,
 	destroy_effect_children,
@@ -192,7 +192,7 @@ function schedule_possible_effect_self_invalidation(signal, effect, root = true)
 	var reactions = signal.reactions;
 	if (reactions === null) return;
 
-	if (!async_mode_flag && current_sources?.includes(signal)) {
+	if (!async_mode_flag && current_sources !== null && includes.call(current_sources, signal)) {
 		return;
 	}
 
@@ -371,7 +371,7 @@ function remove_reaction(signal, dependency) {
 		// Destroying a child effect while updating a parent effect can cause a dependency to appear
 		// to be unused, when in fact it is used by the currently-updating parent. Checking `new_deps`
 		// allows us to skip the expensive work of disconnecting and immediately reconnecting it
-		(new_deps === null || !new_deps.includes(dependency))
+		(new_deps === null || !includes.call(new_deps, dependency))
 	) {
 		var derived = /** @type {Derived} */ (dependency);
 
@@ -514,7 +514,7 @@ export function get(signal) {
 		// we don't add the dependency, because that would create a memory leak
 		var destroyed = active_effect !== null && (active_effect.f & DESTROYED) !== 0;
 
-		if (!destroyed && !current_sources?.includes(signal)) {
+		if (!destroyed && (current_sources === null || !includes.call(current_sources, signal))) {
 			var deps = active_reaction.deps;
 
 			if ((active_reaction.f & REACTION_IS_UPDATING) !== 0) {
@@ -542,7 +542,7 @@ export function get(signal) {
 
 				if (reactions === null) {
 					signal.reactions = [active_reaction];
-				} else if (!reactions.includes(active_reaction)) {
+				} else if (!includes.call(reactions, active_reaction)) {
 					reactions.push(active_reaction);
 				}
 			}

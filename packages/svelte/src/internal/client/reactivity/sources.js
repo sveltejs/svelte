@@ -31,6 +31,7 @@ import {
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
+import { includes } from '../../shared/utils.js';
 import { tag_proxy } from '../dev/tracing.js';
 import { get_error } from '../../shared/dev.js';
 import { component_context, is_runes } from '../context.js';
@@ -150,7 +151,7 @@ export function set(source, value, should_proxy = false) {
 		(!untracking || (active_reaction.f & EAGER_EFFECT) !== 0) &&
 		is_runes() &&
 		(active_reaction.f & (DERIVED | BLOCK_EFFECT | ASYNC | EAGER_EFFECT)) !== 0 &&
-		!current_sources?.includes(source)
+		(current_sources === null || !includes.call(current_sources, source))
 	) {
 		e.state_unsafe_mutation();
 	}

@@ -21,7 +21,7 @@ import {
 	MANAGED_EFFECT
 } from '#client/constants';
 import { async_mode_flag } from '../../flags/index.js';
-import { deferred, define_property } from '../../shared/utils.js';
+import { deferred, define_property, includes } from '../../shared/utils.js';
 import {
 	active_effect,
 	get,
@@ -775,7 +775,7 @@ function depends_on(reaction, sources, checked) {
 
 	if (reaction.deps !== null) {
 		for (const dep of reaction.deps) {
-			if (sources.includes(dep)) {
+			if (includes.call(sources, dep)) {
 				return true;
 			}
 
