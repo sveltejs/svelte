@@ -6,7 +6,7 @@ import fs from 'node:fs';
  * @param {string} filepath - Path to the file
  * @returns {boolean} - true if file is text, false if binary
  */
-function isTextFile(filepath) {
+function is_text_file(filepath) {
 	const buffer = fs.readFileSync(filepath);
 	// Check for null bytes which indicate binary files
 	for (let i = 0; i < buffer.length; i++) {
@@ -31,7 +31,7 @@ for (const basename of fs.readdirSync('src')) {
 	if (fs.statSync(`src/${basename}`).isDirectory()) continue;
 
 	const filepath = `src/${basename}`;
-	const text = isTextFile(filepath);
+	const text = is_text_file(filepath);
 
 	files.push({
 		type: 'file',
