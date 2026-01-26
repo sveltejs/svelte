@@ -1,9 +1,10 @@
-import { get, tick, untrack } from '../internal/client/runtime.js';
+import { active_effect, get, set_active_effect, untrack } from '../internal/client/runtime.js';
 import { effect_tracking, render_effect } from '../internal/client/reactivity/effects.js';
 import { source, increment } from '../internal/client/reactivity/sources.js';
 import { tag } from '../internal/client/dev/tracing.js';
 import { DEV } from 'esm-env';
 import { queue_micro_task } from '../internal/client/dom/task.js';
+import { BLOCK_EFFECT } from '../internal/client/constants.js';
 
 /**
  * Returns a `subscribe` function that integrates external event-based systems with Svelte's reactivity.
@@ -65,31 +66,44 @@ export function createSubscriber(start) {
 		if (effect_tracking()) {
 			get(version);
 
-			render_effect(() => {
-				if (subscribers === 0) {
-					stop = untrack(() => start(() => increment(version)));
-				}
+			// Attach to parent of block effects to avoid interfering
+			// with their child effects (eg. children of each)
+			var parent = active_effect;
+			while (parent !== null && (parent.f & BLOCK_EFFECT) !== 0) {
+				parent = parent.parent;
+			}
 
-				subscribers += 1;
+			var previous_effect = active_effect;
+			try {
+				set_active_effect(parent);
+				render_effect(() => {
+					if (subscribers === 0) {
+						stop = untrack(() => start(() => increment(version)));
+					}
 
-				return () => {
-					queue_micro_task(() => {
-						// Only count down after a microtask, else we would reach 0 before our own render effect reruns,
-						// but reach 1 again when the tick callback of the prior teardown runs. That would mean we
-						// re-subcribe unnecessarily and create a memory leak because the old subscription is never cleaned up.
-						subscribers -= 1;
+					subscribers += 1;
 
-						if (subscribers === 0) {
-							stop?.();
-							stop = undefined;
-							// Increment the version to ensure any dependent deriveds are marked dirty when the subscription is picked up again later.
-							// If we didn't do this then the comparison of write versions would determine that the derived has a later version than
-							// the subscriber, and it would not be re-run.
-							increment(version);
-						}
-					});
-				};
-			});
+					return () => {
+						queue_micro_task(() => {
+							// Only count down after a microtask, else we would reach 0 before our own render effect reruns,
+							// but reach 1 again when the tick callback of the prior teardown runs. That would mean we
+							// re-subcribe unnecessarily and create a memory leak because the old subscription is never cleaned up.
+							subscribers -= 1;
+
+							if (subscribers === 0) {
+								stop?.();
+								stop = undefined;
+								// Increment the version to ensure any dependent deriveds are marked dirty when the subscription is picked up again later.
+								// If we didn't do this then the comparison of write versions would determine that the derived has a later version than
+								// the subscriber, and it would not be re-run.
+								increment(version);
+							}
+						});
+					};
+				});
+			} finally {
+				set_active_effect(previous_effect);
+			}
 		}
 	};
 }
