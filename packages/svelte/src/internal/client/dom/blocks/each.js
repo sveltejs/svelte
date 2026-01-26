@@ -337,7 +337,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 }
 
 /**
- * Skip past any non-branch effects to find the next branch effect
+ * Skip past any non-branch effects (which could be created with `createSubscriber`, for example) to find the next branch effect
  * @param {Effect | null} effect
  * @returns {Effect | null}
  */
