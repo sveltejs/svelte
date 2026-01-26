@@ -31,14 +31,14 @@ for (const basename of fs.readdirSync('src')) {
 	if (fs.statSync(`src/${basename}`).isDirectory()) continue;
 
 	const filepath = `src/${basename}`;
-	const isText = isTextFile(filepath);
+	const text = isTextFile(filepath);
 
 	files.push({
 		type: 'file',
 		name: basename,
 		basename,
-		contents: isText ? fs.readFileSync(filepath, 'utf-8') : fs.readFileSync(filepath).toString('base64'),
-		text: isText
+		contents: fs.readFileSync(filepath, text ? 'utf-8' : 'base64'),
+		text
 	});
 }
 
