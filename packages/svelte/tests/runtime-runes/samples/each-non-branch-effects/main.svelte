@@ -1,12 +1,16 @@
 <script>
-	import { createSubscriber } from 'svelte/reactivity';
-
-	const subscribe = createSubscriber(() => {});
-
 	let items = $state([]);
 
 	const proxy = new Proxy(items, {
-		get: (target, prop) => (subscribe(), Reflect.get(target, prop))
+		get: (target, prop) => {
+			try {
+				$effect.pre(() => {
+					return () => {};
+				});
+			} catch {}
+
+			return Reflect.get(target, prop);
+		}
 	});
 
 	function add() {
