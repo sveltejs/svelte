@@ -357,6 +357,8 @@ function animate(element, options, counterpart, t2, on_finish) {
 	}
 
 	const { delay = 0, css, tick, easing = linear } = options;
+	var is_string_easing = typeof easing === 'string';
+	var easing_fn = is_string_easing ? linear : easing;
 
 	var keyframes = [];
 
@@ -393,6 +395,12 @@ function animate(element, options, counterpart, t2, on_finish) {
 		var delta = t2 - t1;
 		var duration = /** @type {number} */ (options.duration) * Math.abs(delta);
 		var keyframes = [];
+		var animate_options = { duration, fill: 'forwards' };
+
+		// If easing is a string, pass it to animate() options so the browser handles it
+		if (is_string_easing) {
+			animate_options.easing = easing;
+		}
 
 		if (duration > 0) {
 			/**
@@ -406,7 +414,9 @@ function animate(element, options, counterpart, t2, on_finish) {
 				var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
 
 				for (var i = 0; i <= n; i += 1) {
-					var t = t1 + delta * easing(i / n);
+					// When easing is a string, create evenly-spaced keyframes and let the browser apply easing
+					// When easing is a function, use it to determine keyframe timing
+					var t = t1 + delta * easing_fn(i / n);
 					var styles = css_to_keyframe(css(t, 1 - t));
 					keyframes.push(styles);
 
@@ -423,7 +433,9 @@ function animate(element, options, counterpart, t2, on_finish) {
 					/** @type {globalThis.Animation} */ (animation).currentTime
 				);
 
-				return t1 + delta * easing(time / duration);
+				// When easing is a string, the browser applies it, so we calculate progress linearly
+				// When easing is a function, use it to calculate the eased progress
+				return t1 + delta * easing_fn(time / duration);
 			};
 
 			if (tick) {
@@ -438,7 +450,7 @@ function animate(element, options, counterpart, t2, on_finish) {
 			}
 		}
 
-		animation = element.animate(keyframes, { duration, fill: 'forwards' });
+		animation = element.animate(keyframes, animate_options);
 
 		animation.onfinish = () => {
 			get_t = () => t2;

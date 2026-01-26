@@ -149,7 +149,7 @@ export type AnimateFn<P> = (
 export type AnimationConfig = {
 	delay?: number;
 	duration?: number;
-	easing?: (t: number) => number;
+	easing?: ((t: number) => number) | string;
 	css?: (t: number, u: number) => string;
 	tick?: (t: number, u: number) => string;
 };

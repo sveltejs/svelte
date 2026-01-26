@@ -2,7 +2,7 @@
 export interface AnimationConfig {
 	delay?: number;
 	duration?: number;
-	easing?: (t: number) => number;
+	easing?: ((t: number) => number) | string;
 	css?: (t: number, u: number) => string;
 	tick?: (t: number, u: number) => void;
 }
@@ -10,7 +10,7 @@ export interface AnimationConfig {
 export interface FlipParams {
 	delay?: number;
 	duration?: number | ((len: number) => number);
-	easing?: (t: number) => number;
+	easing?: ((t: number) => number) | string;
 }
 
 export * from './index.js';
