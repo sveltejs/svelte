@@ -1,16 +1,44 @@
 import fs from 'node:fs';
 
+/**
+ * Detects if a file is text or binary by checking for null bytes
+ * and validating UTF-8 encoding
+ * @param {string} filepath - Path to the file
+ * @returns {boolean} - true if file is text, false if binary
+ */
+function isTextFile(filepath) {
+	const buffer = fs.readFileSync(filepath);
+	// Check for null bytes which indicate binary files
+	for (let i = 0; i < buffer.length; i++) {
+		if (buffer[i] === 0) {
+			return false;
+		}
+	}
+	// Validate UTF-8 encoding
+	try {
+		const text = buffer.toString('utf-8');
+		// Verify round-trip encoding to ensure valid UTF-8
+		const encoded = Buffer.from(text, 'utf-8');
+		return buffer.equals(encoded);
+	} catch {
+		return false;
+	}
+}
+
 const files = [];
 
 for (const basename of fs.readdirSync('src')) {
 	if (fs.statSync(`src/${basename}`).isDirectory()) continue;
 
+	const filepath = `src/${basename}`;
+	const isText = isTextFile(filepath);
+
 	files.push({
 		type: 'file',
 		name: basename,
 		basename,
-		contents: fs.readFileSync(`src/${basename}`, 'utf-8'),
-		text: true // TODO might not be
+		contents: isText ? fs.readFileSync(filepath, 'utf-8') : fs.readFileSync(filepath).toString('base64'),
+		text: isText
 	});
 }
 
