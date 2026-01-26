@@ -20,6 +20,9 @@ import { get_boundary } from './boundary.js';
  */
 export function async(node, blockers = [], expressions = [], fn) {
 	if (expressions.length === 0 && blockers.every((b) => b.settled)) {
+		if (hydrating) {
+			hydrate_next();
+		}
 		fn(node);
 		return;
 	}
