@@ -295,21 +295,17 @@ export function build_inline_component(node, expression, context) {
 					b.array(props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p)))
 				);
 
+	const dynamic =
+		node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic);
+
 	/** @type {Statement} */
 	let statement = b.stmt(
-		(node.type === 'SvelteComponent' ? b.maybe_call : b.call)(
-			expression,
-			b.id('$$renderer'),
-			props_expression
-		)
+		(dynamic ? b.maybe_call : b.call)(expression, b.id('$$renderer'), props_expression)
 	);
 
 	if (snippet_declarations.length > 0) {
 		statement = b.block([...snippet_declarations, statement]);
 	}
-
-	const dynamic =
-		node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic);
 
 	if (custom_css_props.length > 0) {
 		statement = b.stmt(
