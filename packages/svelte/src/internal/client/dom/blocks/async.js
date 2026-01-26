@@ -19,6 +19,12 @@ import { get_boundary } from './boundary.js';
  * @param {(anchor: TemplateNode, ...deriveds: Value[]) => void} fn
  */
 export function async(node, blockers = [], expressions = [], fn) {
+	var was_hydrating = hydrating;
+
+	if (was_hydrating) {
+		hydrate_next();
+	}
+
 	if (expressions.length === 0 && blockers.every((b) => b.settled)) {
 		fn(node);
 		return;
@@ -31,11 +37,7 @@ export function async(node, blockers = [], expressions = [], fn) {
 	boundary.update_pending_count(1);
 	batch.increment(blocking);
 
-	var was_hydrating = hydrating;
-
 	if (was_hydrating) {
-		hydrate_next();
-
 		var previous_hydrate_node = hydrate_node;
 		var end = skip_nodes(false);
 		set_hydrate_node(end);
