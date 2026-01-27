@@ -14,6 +14,7 @@
 		"strict": true,
 		"allowJs": true,
 		"checkJs": true,
+
 		"paths": {
 			"svelte": ["./src/index.d.ts"],
 			"svelte/action": ["./src/action/public.d.ts"],
@@ -27,6 +28,16 @@
 			"svelte/reactivity": ["./src/reactivity/index-client.js"]
 		}
 	},
+
+	"overrides": [
+		{
+			"files": ["scripts/**/*.js"],
+			"compilerOptions": {
+				"moduleResolution": "node16"
+			}
+		}
+	],
+
 	"include": [
 		"./*.js",
 		"./scripts/",
@@ -35,6 +46,7 @@
 		"./tests/runtime-browser/test-ssr.ts",
 		"./tests/*/samples/*/_config.js"
 	],
+
 	"exclude": [
 		"./scripts/process-messages/templates/",
 		"./scripts/_bundle.js",

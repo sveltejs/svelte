@@ -1,3 +1,5 @@
+export {};
+
 /// <reference types="esrap" />
 
 declare module 'svelte' {
