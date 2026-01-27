@@ -508,25 +508,25 @@ function read_value(parser) {
 		if (escaped) {
 			value += '\\' + char;
 			escaped = false;
+			parser.index++;
+			continue;
 		} else if (char === '\\') {
 			escaped = true;
+			parser.index++;
+			continue;
 		} else if (char === quote_mark) {
 			quote_mark = null;
-			value += char;
 		} else if (char === ')') {
 			in_url = false;
-			value += char;
 		} else if (quote_mark === null && (char === '"' || char === "'")) {
 			quote_mark = char;
-			value += char;
 		} else if (char === '(' && value.slice(-3) === 'url') {
 			in_url = true;
-			value += char;
 		} else if ((char === ';' || char === '{' || char === '}') && !in_url && !quote_mark) {
 			return value.trim();
-		} else {
-			value += char;
 		}
+
+		value += char;
 
 		parser.index++;
 	}
