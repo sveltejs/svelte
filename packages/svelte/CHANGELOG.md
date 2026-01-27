@@ -1,5 +1,19 @@
 # svelte
 
+## 5.48.3
+
+### Patch Changes
+
+- fix: hydration failing with settled async blocks ([#17539](https://github.com/sveltejs/svelte/pull/17539))
+
+- fix: add pointer and touch events to a11y_no_static_element_interactions warning ([#17551](https://github.com/sveltejs/svelte/pull/17551))
+
+- fix: handle false dynamic components in SSR ([#17542](https://github.com/sveltejs/svelte/pull/17542))
+
+- fix: avoid unnecessary block effect re-runs after async work completes ([#17535](https://github.com/sveltejs/svelte/pull/17535))
+
+- fix: avoid using dev-mode array.includes wrapper on internal array checks ([#17536](https://github.com/sveltejs/svelte/pull/17536))
+
 ## 5.48.2
 
 ### Patch Changes
