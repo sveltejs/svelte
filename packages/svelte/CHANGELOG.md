@@ -1,5 +1,11 @@
 # svelte
 
+## 5.48.4
+
+### Patch Changes
+
+- fix: avoid duplicating escaped characters in CSS AST ([#17554](https://github.com/sveltejs/svelte/pull/17554))
+
 ## 5.48.3
 
 ### Patch Changes
