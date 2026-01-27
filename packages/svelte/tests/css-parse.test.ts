@@ -137,7 +137,7 @@ describe('parseCss', () => {
 	});
 
 	it('parses escaped characters', () => {
-		const ast = parseCss('div { background: url(\'./example.png?\\\'\'); }');
+		const ast = parseCss("div { background: url('./example.png?\\''); }");
 		assert.equal(ast.type, 'StyleSheet');
 		assert.equal(ast.children.length, 1);
 		const rule = ast.children[0];
@@ -149,5 +149,5 @@ describe('parseCss', () => {
 				assert.equal(declaration.value, "url('./example.png?\\'')");
 			}
 		}
-	})
+	});
 });
