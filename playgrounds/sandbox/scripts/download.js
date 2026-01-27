@@ -143,7 +143,6 @@ async function download_stackblitz_project(url, target_dir) {
 		console.log('Loading StackBlitz project (this may take a moment)...');
 		await page.goto(url.href, { waitUntil: 'domcontentloaded', timeout: 20000 });
 
-		
 		// Set up download handler
 		const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
 		await page.locator('button[aria-label*="Download Project" i]', { timeout: 30000 }).click();
@@ -160,7 +159,10 @@ async function download_stackblitz_project(url, target_dir) {
 
 		// Extract the zip file
 		if (process.platform === 'win32') {
-			execSync(`powershell -Command "Expand-Archive -Path '${zip_path}' -DestinationPath '${target_dir}' -Force"`, { stdio: 'inherit' });
+			execSync(
+				`powershell -Command "Expand-Archive -Path '${zip_path}' -DestinationPath '${target_dir}' -Force"`,
+				{ stdio: 'inherit' }
+			);
 		} else {
 			execSync(`unzip -o "${zip_path}" -d "${target_dir}"`, { stdio: 'inherit' });
 		}
@@ -276,15 +278,12 @@ function route_to_component_name(route_path) {
  */
 function transform_lib_imports(content) {
 	// Replace $lib/ imports with relative paths to flattened files
-	return content.replace(
-		/from\s+['"](\$lib\/[^'"]+)['"]/g,
-		(match, import_path) => {
-			// Get just the filename from the lib path
-			const lib_path = import_path.replace('$lib/', '');
-			const filename = path.basename(lib_path);
-			return `from './${filename}'`;
-		}
-	);
+	return content.replace(/from\s+['"](\$lib\/[^'"]+)['"]/g, (match, import_path) => {
+		// Get just the filename from the lib path
+		const lib_path = import_path.replace('$lib/', '');
+		const filename = path.basename(lib_path);
+		return `from './${filename}'`;
+	});
 }
 
 /**
@@ -331,7 +330,11 @@ function get_child_routes(routes, parent_route) {
 		if (route === parent_route) continue;
 
 		const parent_prefix = parent_route === '' ? '' : parent_route + '/';
-		if (parent_route === '' ? !route.includes('/') : route.startsWith(parent_prefix) && !route.slice(parent_prefix.length).includes('/')) {
+		if (
+			parent_route === ''
+				? !route.includes('/')
+				: route.startsWith(parent_prefix) && !route.slice(parent_prefix.length).includes('/')
+		) {
 			children.push(route);
 		}
 	}
@@ -452,7 +455,8 @@ function convert_sveltekit_project(repo_dir) {
 				if (children.length > 0) {
 					// Use the first child's component (or its layout if it has one)
 					const first_child = children[0];
-					child_component = route_component_map.get(first_child) || route_to_component_name(first_child);
+					child_component =
+						route_component_map.get(first_child) || route_to_component_name(first_child);
 				}
 			}
 
@@ -461,11 +465,11 @@ function convert_sveltekit_project(repo_dir) {
 
 			if (child_component) {
 				contents = transform_layout_content(contents, child_component);
-		} else {
-			// No child, just remove {@render children()} or {@render children?.()}
-			contents = contents.replace(/\{@render\s+children\?\.\(\)\}/g, '<!-- no child content -->');
-			contents = contents.replace(/\{@render\s+children\(\)\}/g, '<!-- no child content -->');
-		}
+			} else {
+				// No child, just remove {@render children()} or {@render children?.()}
+				contents = contents.replace(/\{@render\s+children\?\.\(\)\}/g, '<!-- no child content -->');
+				contents = contents.replace(/\{@render\s+children\(\)\}/g, '<!-- no child content -->');
+			}
 
 			output_files.push({
 				name: `${component_name}.svelte`,
@@ -487,7 +491,9 @@ function convert_sveltekit_project(repo_dir) {
 
 	// If there's no App.svelte yet, create one that imports the first available component
 	if (!output_files.some((f) => f.name === 'App.svelte')) {
-		const first_component = output_files.find((f) => f.name.endsWith('.svelte') && !f.name.includes('/'));
+		const first_component = output_files.find(
+			(f) => f.name.endsWith('.svelte') && !f.name.includes('/')
+		);
 		if (first_component) {
 			const comp_name = first_component.name.replace('.svelte', '');
 			output_files.push({
@@ -512,7 +518,9 @@ function convert_vite_project(repo_dir) {
 
 	// Find src directory
 	const src_files = all_files.filter(
-		(f) => f.path.startsWith('src/') && (f.name.endsWith('.svelte') || f.name.endsWith('.js') || f.name.endsWith('.ts'))
+		(f) =>
+			f.path.startsWith('src/') &&
+			(f.name.endsWith('.svelte') || f.name.endsWith('.js') || f.name.endsWith('.ts'))
 	);
 
 	for (const file of src_files) {
@@ -639,7 +647,9 @@ if (is_local) {
 		});
 	}
 } else {
-	console.error(`${url_arg} is not a supported URL (Svelte playground, GitHub repository, or StackBlitz project)`);
+	console.error(
+		`${url_arg} is not a supported URL (Svelte playground, GitHub repository, or StackBlitz project)`
+	);
 	process.exit(1);
 }
 
