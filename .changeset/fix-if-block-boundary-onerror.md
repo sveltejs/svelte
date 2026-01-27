@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: ensure `{#if}` block re-evaluates when state is updated in `<svelte:boundary>` onerror handler during initial render
+fix: run boundary `onerror` callbacks in a microtask, in case they result in the boundary's destruction

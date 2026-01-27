@@ -450,31 +450,16 @@ export class Boundary {
 			}
 		};
 
-		var previous_reaction = active_reaction;
-
-		try {
-			set_active_reaction(null);
-			calling_on_error = true;
-			onerror?.(error, reset);
-			calling_on_error = false;
-		} catch (error) {
-			invoke_error_boundary(error, this.#effect && this.#effect.parent);
-		} finally {
-			set_active_reaction(previous_reaction);
-
-			// If the error occurred while a parent effect was still initializing (before its
-			// reactions were registered), state updates in onerror won't have marked it dirty.
-			// We need to mark the parent effect as dirty and schedule it to re-run so it can
-			// re-evaluate its condition. This handles cases like:
-			// {#if !exception}<svelte:boundary onerror={e => exception = e}>
-			if (previous_reaction !== null && (previous_reaction.f & BLOCK_EFFECT) !== 0) {
-				set_signal_status(/** @type {Effect} */ (previous_reaction), DIRTY);
-				schedule_effect(/** @type {Effect} */ (previous_reaction));
+		queue_micro_task(() => {
+			try {
+				calling_on_error = true;
+				onerror?.(error, reset);
+				calling_on_error = false;
+			} catch (error) {
+				invoke_error_boundary(error, this.#effect && this.#effect.parent);
 			}
-		}
 
-		if (failed) {
-			queue_micro_task(() => {
+			if (failed) {
 				this.#failed_effect = this.#run(() => {
 					Batch.ensure();
 					this.#is_creating_fallback = true;
@@ -494,8 +479,8 @@ export class Boundary {
 						this.#is_creating_fallback = false;
 					}
 				});
-			});
-		}
+			}
+		});
 	}
 }
 
