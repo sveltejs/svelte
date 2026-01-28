@@ -994,6 +994,13 @@ export function fork(fn) {
 			await settled;
 		},
 		discard: () => {
+			// cause any MAYBE_DIRTY deriveds to update
+			// if they depend on things thath changed
+			// inside the discarded fork
+			for (var source of batch.current.keys()) {
+				source.wv = increment_write_version();
+			}
+
 			if (!committed && batches.has(batch)) {
 				batches.delete(batch);
 				batch.discard();
