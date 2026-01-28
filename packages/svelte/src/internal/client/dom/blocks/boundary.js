@@ -1,5 +1,6 @@
 /** @import { Effect, Source, TemplateNode, } from '#client' */
 import {
+	BLOCK_EFFECT,
 	BOUNDARY_EFFECT,
 	COMMENT_NODE,
 	DIRTY,
@@ -449,21 +450,16 @@ export class Boundary {
 			}
 		};
 
-		var previous_reaction = active_reaction;
+		queue_micro_task(() => {
+			try {
+				calling_on_error = true;
+				onerror?.(error, reset);
+				calling_on_error = false;
+			} catch (error) {
+				invoke_error_boundary(error, this.#effect && this.#effect.parent);
+			}
 
-		try {
-			set_active_reaction(null);
-			calling_on_error = true;
-			onerror?.(error, reset);
-			calling_on_error = false;
-		} catch (error) {
-			invoke_error_boundary(error, this.#effect && this.#effect.parent);
-		} finally {
-			set_active_reaction(previous_reaction);
-		}
-
-		if (failed) {
-			queue_micro_task(() => {
+			if (failed) {
 				this.#failed_effect = this.#run(() => {
 					Batch.ensure();
 					this.#is_creating_fallback = true;
@@ -483,8 +479,8 @@ export class Boundary {
 						this.#is_creating_fallback = false;
 					}
 				});
-			});
-		}
+			}
+		});
 	}
 }
 
