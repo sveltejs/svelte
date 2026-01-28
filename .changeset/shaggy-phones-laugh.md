@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-Fix false negative for a11y_consider_explicit_label with popover elements
+fix: disregard `popover` elements when determining whether an element has content
