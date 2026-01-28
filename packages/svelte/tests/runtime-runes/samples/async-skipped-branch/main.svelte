@@ -1,21 +1,22 @@
 <script>
-	import { fork } from 'svelte';
-	import Child from './Child.svelte';
-
 	let show = $state(false);
+	let show_async = $state(false);
+	let count = $state(0);
 </script>
 
 <button onclick={() => {
-	let f = fork(() => {
-		show = !show;
-	});
-	f.discard();
-}}>fork</button>
+	show = true;
+	show_async = true;
+}}>show</button>
 
 {#if show}
 	hi
 {:else}
 	{#if show || !show}
-		<Child />
+		<button onclick={() => count++}>{count}</button>
 	{/if}
+{/if}
+
+{#if show_async}
+	{await new Promise(() => {})}
 {/if}
