@@ -312,7 +312,8 @@ export function transition(flags, element, get_fn, get_params) {
  * @param {Animation | undefined} counterpart The corresponding intro/outro to this outro/intro
  * @param {number} t2 The target `t` value — `1` for intro, `0` for outro
  * @param {(() => void)} on_finish Called after successfully completing the animation
- * @param {(() => void)} [on_start] Called when the animation actually starts (after delay, for intro)
+ * @param {(() => void)} [on_start] Called when the animation actually starts
+ * (after delay, for intro)
  * @returns {Animation}
  */
 function animate(element, options, counterpart, t2, on_finish, on_start) {
