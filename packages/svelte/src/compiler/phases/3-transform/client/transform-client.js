@@ -638,7 +638,16 @@ export function client_component(analysis, options) {
 		const accessors_str = b.array(
 			analysis.exports.map(({ name, alias }) => b.literal(alias ?? name))
 		);
-		const use_shadow_dom = typeof ce === 'boolean' || ce.shadow !== 'none' ? true : false;
+
+		/** @type {ESTree.ObjectExpression | undefined} */
+		let shadow_root_init;
+		if (typeof ce === 'boolean' || ce.shadow === 'open' || ce.shadow === undefined) {
+			shadow_root_init = b.object([b.init('mode', b.literal('open'))]);
+		} else if (ce.shadow === 'none') {
+			shadow_root_init = undefined;
+		} else {
+			shadow_root_init = ce.shadow;
+		}
 
 		const create_ce = b.call(
 			'$.create_custom_element',
@@ -646,7 +655,7 @@ export function client_component(analysis, options) {
 			b.object(props_str),
 			slots_str,
 			accessors_str,
-			b.literal(use_shadow_dom),
+			shadow_root_init,
 			/** @type {any} */ (typeof ce !== 'boolean' ? ce.extend : undefined)
 		);
 
