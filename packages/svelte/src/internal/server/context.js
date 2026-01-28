@@ -17,7 +17,17 @@ export function set_ssr_context(v) {
  */
 export function createContext() {
 	const key = {};
-	return [() => getContext(key), (context) => setContext(key, context)];
+
+	return [
+		() => {
+			if (!hasContext(key)) {
+				e.missing_context();
+			}
+
+			return getContext(key);
+		},
+		(context) => setContext(key, context)
+	];
 }
 
 /**

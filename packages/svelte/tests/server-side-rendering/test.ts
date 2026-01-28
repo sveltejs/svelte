@@ -12,6 +12,7 @@ import { assert_html_equal_with_options } from '../html_equal.js';
 import { suite_with_variants, type BaseTest } from '../suite.js';
 import type { CompileOptions } from '#compiler';
 import { seen } from '../../src/internal/server/dev.js';
+import type { SyncRenderOutput } from '#server';
 
 interface SSRTest extends BaseTest {
 	mode?: ('sync' | 'async')[];
@@ -76,6 +77,9 @@ const { test, run } = suite_with_variants<SSRTest, 'sync' | 'async', CompileOpti
 
 		let rendered;
 		let errored = false;
+		let body: SyncRenderOutput['body'];
+		let head: SyncRenderOutput['head'];
+		let hashes: SyncRenderOutput['hashes'];
 		try {
 			const render_result = render(Component, {
 				props: config.props || {},
@@ -83,6 +87,9 @@ const { test, run } = suite_with_variants<SSRTest, 'sync' | 'async', CompileOpti
 				csp: config.csp
 			});
 			rendered = is_async ? await render_result : render_result;
+			// we need to access there inside the try catch or else errors that throw in the script tag
+			// are not caught in sync mode since those are lazy
+			({ body, head, hashes } = rendered);
 		} catch (error) {
 			errored = true;
 			if (config.error) {
@@ -96,8 +103,6 @@ const { test, run } = suite_with_variants<SSRTest, 'sync' | 'async', CompileOpti
 		if (config.error && !errored) {
 			assert.fail('Expected an error to be thrown, but rendering succeeded.');
 		}
-
-		const { body, head, hashes } = rendered;
 
 		fs.writeFileSync(
 			`${test_dir}/_output/${is_async ? 'async_rendered.html' : 'rendered.html'}`,
