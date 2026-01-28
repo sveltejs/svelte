@@ -1,4 +1,0 @@
-Working copy changes:
-[38;5;6mM packages/svelte/src/internal/client/runtime.js[39m
-Working copy  (@) : [1m[38;5;13mws[38;5;8msktusk[39m [38;5;12mf4[38;5;8mde48f2[39m [38;5;3m(no description set)[0m
-Parent commit (@-): [1m[38;5;5mmm[0m[38;5;8mvpxruz[39m [1m[38;5;4m10[0m[38;5;8m226e56[39m [38;5;5mfix/fork-lost-reactivity[38;5;8m | [38;5;2m(empty)[39m Merge branch 'main' into fix/fork-lost-reactivity
