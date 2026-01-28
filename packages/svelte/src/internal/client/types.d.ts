@@ -2,6 +2,15 @@ import type { Store } from '#shared';
 import { STATE_SYMBOL } from './constants.js';
 import type { Effect, Source, Value } from './reactivity/types.js';
 
+declare global {
+	interface Window {
+		__svelte?: {
+			/** hydratables */
+			h?: Map<string, unknown>;
+		};
+	}
+}
+
 type EventCallback = (event: Event) => boolean;
 export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;
 
@@ -63,30 +72,31 @@ export type TemplateNode = Text | Element | Comment;
 
 export type Dom = TemplateNode | TemplateNode[];
 
+export type EachOutroGroup = {
+	pending: Set<Effect>;
+	done: Set<Effect>;
+};
+
 export type EachState = {
+	/** the each block effect */
+	effect: Effect;
 	/** flags */
 	flags: number;
 	/** a key -> item lookup */
 	items: Map<any, EachItem>;
-	/** head of the linked list of items */
-	first: EachItem | null;
+	/** all outro groups that this item is a part of */
+	outrogroups: Set<EachOutroGroup> | null;
+	/** `{:else}` effect */
+	fallback: Effect | null;
 };
 
 export type EachItem = {
-	/** animation manager */
-	a: AnimationManager | null;
+	/** value */
+	v: Source<any> | null;
+	/** index */
+	i: Source<number> | null;
 	/** effect */
 	e: Effect;
-	/** item */
-	v: any | Source<any>;
-	/** index */
-	i: number | Source<number>;
-	/** key */
-	k: unknown;
-	/** true if onscreen */
-	o: boolean;
-	prev: EachItem | null;
-	next: EachItem | null;
 };
 
 export interface TransitionManager {

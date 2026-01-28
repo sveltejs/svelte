@@ -67,7 +67,21 @@ export const a11y_interactive_handlers = [
 	'mousemove',
 	'mouseout',
 	'mouseover',
-	'mouseup'
+	'mouseup',
+	// Pointer events
+	'pointerdown',
+	'pointerup',
+	'pointermove',
+	'pointerenter',
+	'pointerleave',
+	'pointerover',
+	'pointerout',
+	'pointercancel',
+	// Touch events
+	'touchstart',
+	'touchend',
+	'touchmove',
+	'touchcancel'
 ];
 
 export const a11y_recommended_interactive_handlers = [

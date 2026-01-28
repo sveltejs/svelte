@@ -2,7 +2,7 @@ import { UNINITIALIZED } from '../../../constants.js';
 import { snapshot } from '../../shared/clone.js';
 import { eager_effect, render_effect, validate_effect } from '../reactivity/effects.js';
 import { untrack } from '../runtime.js';
-import { get_stack } from './tracing.js';
+import { get_error } from '../../shared/dev.js';
 
 /**
  * @param {() => any[]} get_value
@@ -33,9 +33,7 @@ export function inspect(get_value, inspector, show_stack = false) {
 				inspector(...snap);
 
 				if (!initial) {
-					const stack = get_stack('$inspect(...)');
-					// eslint-disable-next-line no-console
-
+					const stack = get_error('$inspect(...)');
 					if (stack) {
 						// eslint-disable-next-line no-console
 						console.groupCollapsed('stack trace');

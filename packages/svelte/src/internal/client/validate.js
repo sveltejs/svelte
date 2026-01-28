@@ -1,3 +1,4 @@
+/** @import { Blocker } from '#client' */
 import { dev_current_component_function } from './context.js';
 import { is_array } from '../shared/utils.js';
 import * as e from './errors.js';
@@ -41,7 +42,7 @@ export function validate_each_keys(collection, key_fn) {
 
 /**
  * @param {string} binding
- * @param {Array<Promise<void>>} blockers
+ * @param {Blocker[]} blockers
  * @param {() => Record<string, any>} get_object
  * @param {() => string} get_property
  * @param {number} line

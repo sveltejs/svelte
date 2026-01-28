@@ -25,20 +25,23 @@ export default function Async_in_derived($$anchor, $$props) {
 
 	{
 		var consequent = ($$anchor) => {
-			$.async_body($$anchor, async ($$anchor) => {
-				const yes1 = (await $.save($.async_derived(async () => (await $.save(1))())))();
-				const yes2 = (await $.save($.async_derived(async () => foo((await $.save(1))()))))();
+			let yes1;
+			let yes2;
+			let no1;
+			let no2;
 
-				const no1 = $.derived(() => (async () => {
+			var promises = $.run([
+				async () => yes1 = (await $.save($.async_derived(async () => (await $.save(1))())))(),
+				async () => yes2 = (await $.save($.async_derived(async () => foo((await $.save(1))()))))(),
+
+				() => no1 = $.derived(() => (async () => {
 					return await 1;
-				})());
+				})()),
 
-				const no2 = $.derived(() => (async () => {
+				() => no2 = $.derived(() => (async () => {
 					return await 1;
-				})());
-
-				if ($.aborted()) return;
-			});
+				})())
+			]);
 		};
 
 		$.if(node, ($$render) => {

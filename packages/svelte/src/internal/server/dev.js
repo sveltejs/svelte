@@ -4,6 +4,7 @@ import {
 	is_tag_valid_with_ancestor,
 	is_tag_valid_with_parent
 } from '../../html-tree-validation.js';
+import { get_stack } from '../shared/dev.js';
 import { set_ssr_context, ssr_context } from './context.js';
 import * as e from './errors.js';
 import { Renderer } from './renderer.js';
@@ -39,7 +40,12 @@ function print_error(renderer, message) {
 
 	// eslint-disable-next-line no-console
 	console.error(message);
-	renderer.head((r) => r.push(`<script>console.error(${JSON.stringify(message)})</script>`));
+	renderer.head((r) =>
+		r.push(
+			// ensure that `</script>` can't leak in to the script contents
+			`<script>console.error(${JSON.stringify(message).replaceAll('</', '<\\u002f')})</script>`
+		)
+	);
 }
 
 /**
@@ -97,4 +103,13 @@ export function validate_snippet_args(renderer) {
 	) {
 		e.invalid_snippet_arguments();
 	}
+}
+
+export function get_user_code_location() {
+	const stack = get_stack();
+
+	return stack
+		.filter((line) => line.trim().startsWith('at '))
+		.map((line) => line.replace(/\((.*):\d+:\d+\)$/, (_, file) => `(${file})`))
+		.join('\n');
 }

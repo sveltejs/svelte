@@ -1,13 +1,13 @@
 /** @import { Expression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
-import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../../../constants.js';
 import * as b from '#compiler/builders';
+import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../../../constants.js';
 import { clean_nodes, infer_namespace } from '../../utils.js';
 import { transform_template } from '../transform-template/index.js';
+import { Template } from '../transform-template/template.js';
 import { process_children } from './shared/fragment.js';
 import { build_render_statement, Memoizer } from './shared/utils.js';
-import { Template } from '../transform-template/template.js';
 
 /**
  * @param {AST.Fragment} node
@@ -48,8 +48,6 @@ export function Fragment(node, context) {
 	const is_single_child_not_needing_template =
 		trimmed.length === 1 &&
 		(trimmed[0].type === 'SvelteFragment' || trimmed[0].type === 'TitleElement');
-	const has_await = context.state.init !== null && (node.metadata.has_await || false);
-
 	const template_name = context.state.scope.root.unique('root'); // TODO infer name from parent
 
 	/** @type {Statement[]} */
@@ -62,6 +60,7 @@ export function Fragment(node, context) {
 	const state = {
 		...context.state,
 		init: [],
+		snippets: [],
 		consts: [],
 		let_directives: [],
 		update: [],
@@ -72,7 +71,8 @@ export function Fragment(node, context) {
 		metadata: {
 			namespace,
 			bound_contenteditable: context.state.metadata.bound_contenteditable
-		}
+		},
+		async_consts: undefined
 	};
 
 	for (const node of hoisted) {
@@ -82,7 +82,7 @@ export function Fragment(node, context) {
 	if (is_single_element) {
 		const element = /** @type {AST.RegularElement} */ (trimmed[0]);
 
-		const id = b.id(context.state.scope.generate(element.name));
+		const id = b.id(context.state.scope.generate(element.name), element.name_loc);
 
 		context.visit(element, {
 			...state,
@@ -151,10 +151,10 @@ export function Fragment(node, context) {
 		}
 	}
 
-	body.push(...state.let_directives, ...state.consts);
+	body.push(...state.snippets, ...state.let_directives, ...state.consts);
 
-	if (has_await) {
-		body.push(b.if(b.call('$.aborted'), b.return()));
+	if (state.async_consts && state.async_consts.thunks.length > 0) {
+		body.push(b.var(state.async_consts.id, b.call('$.run', b.array(state.async_consts.thunks))));
 	}
 
 	if (is_text_first) {
@@ -177,13 +177,5 @@ export function Fragment(node, context) {
 		body.push(close);
 	}
 
-	if (has_await) {
-		return b.block([
-			b.stmt(
-				b.call('$.async_body', b.id('$$anchor'), b.arrow([b.id('$$anchor')], b.block(body), true))
-			)
-		]);
-	} else {
-		return b.block(body);
-	}
+	return b.block(body);
 }

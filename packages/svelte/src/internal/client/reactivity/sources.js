@@ -6,7 +6,6 @@ import {
 	untracked_writes,
 	get,
 	set_untracked_writes,
-	set_signal_status,
 	untrack,
 	increment_write_version,
 	update_effect,
@@ -32,11 +31,14 @@ import {
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
-import { get_stack, tag_proxy } from '../dev/tracing.js';
+import { includes } from '../../shared/utils.js';
+import { tag_proxy } from '../dev/tracing.js';
+import { get_error } from '../../shared/dev.js';
 import { component_context, is_runes } from '../context.js';
 import { Batch, batch_values, eager_block_effects, schedule_effect } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
+import { set_signal_status, update_derived_status } from './status.js';
 
 /** @type {Set<any>} */
 export let eager_effects = new Set();
@@ -76,7 +78,7 @@ export function source(v, stack) {
 	};
 
 	if (DEV && tracing_mode_flag) {
-		signal.created = stack ?? get_stack('created at');
+		signal.created = stack ?? get_error('created at');
 		signal.updated = null;
 		signal.set_during_effect = false;
 		signal.trace = null;
@@ -149,7 +151,7 @@ export function set(source, value, should_proxy = false) {
 		(!untracking || (active_reaction.f & EAGER_EFFECT) !== 0) &&
 		is_runes() &&
 		(active_reaction.f & (DERIVED | BLOCK_EFFECT | ASYNC | EAGER_EFFECT)) !== 0 &&
-		!current_sources?.includes(source)
+		(current_sources === null || !includes.call(current_sources, source))
 	) {
 		e.state_unsafe_mutation();
 	}
@@ -186,18 +188,26 @@ export function internal_set(source, value) {
 
 		if (DEV) {
 			if (tracing_mode_flag || active_effect !== null) {
-				const error = get_stack('updated at');
+				source.updated ??= new Map();
 
-				if (error !== null) {
-					source.updated ??= new Map();
-					let entry = source.updated.get(error.stack);
+				// For performance reasons, when not using $inspect.trace, we only start collecting stack traces
+				// after the same source has been updated more than 5 times in the same flush cycle.
+				const count = (source.updated.get('')?.count ?? 0) + 1;
+				source.updated.set('', { error: /** @type {any} */ (null), count });
 
-					if (!entry) {
-						entry = { error, count: 0 };
-						source.updated.set(error.stack, entry);
+				if (tracing_mode_flag || count > 5) {
+					const error = get_error('updated at');
+
+					if (error !== null) {
+						let entry = source.updated.get(error.stack);
+
+						if (!entry) {
+							entry = { error, count: 0 };
+							source.updated.set(error.stack, entry);
+						}
+
+						entry.count++;
 					}
-
-					entry.count++;
 				}
 			}
 
@@ -207,16 +217,20 @@ export function internal_set(source, value) {
 		}
 
 		if ((source.f & DERIVED) !== 0) {
+			const derived = /** @type {Derived} */ (source);
+
 			// if we are assigning to a dirty derived we set it to clean/maybe dirty but we also eagerly execute it to track the dependencies
 			if ((source.f & DIRTY) !== 0) {
-				execute_derived(/** @type {Derived} */ (source));
+				execute_derived(derived);
 			}
 
-			set_signal_status(source, (source.f & CONNECTED) !== 0 ? CLEAN : MAYBE_DIRTY);
+			update_derived_status(derived);
 		}
 
 		source.wv = increment_write_version();
 
+		// For debugging, in case you want to know which reactions are being scheduled:
+		// log_reactions(source);
 		mark_reactions(source, DIRTY);
 
 		// It's possible that the current reaction might not have up-to-date dependencies
@@ -247,9 +261,7 @@ export function internal_set(source, value) {
 export function flush_eager_effects() {
 	eager_effects_deferred = false;
 
-	const inspects = Array.from(eager_effects);
-
-	for (const effect of inspects) {
+	for (const effect of eager_effects) {
 		// Mark clean inspect-effects as maybe dirty and then check their dirtiness
 		// instead of just updating the effects - this way we avoid overfiring.
 		if ((effect.f & CLEAN) !== 0) {
@@ -347,10 +359,8 @@ function mark_reactions(signal, status) {
 				mark_reactions(derived, MAYBE_DIRTY);
 			}
 		} else if (not_dirty) {
-			if ((flags & BLOCK_EFFECT) !== 0) {
-				if (eager_block_effects !== null) {
-					eager_block_effects.add(/** @type {Effect} */ (reaction));
-				}
+			if ((flags & BLOCK_EFFECT) !== 0 && eager_block_effects !== null) {
+				eager_block_effects.add(/** @type {Effect} */ (reaction));
 			}
 
 			schedule_effect(/** @type {Effect} */ (reaction));

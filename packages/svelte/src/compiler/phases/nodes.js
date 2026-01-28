@@ -1,4 +1,4 @@
-/** @import { Expression, PrivateIdentifier } from 'estree' */
+/** @import { Expression, PrivateIdentifier, SourceLocation } from 'estree' */
 /** @import { AST, Binding } from '#compiler' */
 import * as b from '#compiler/builders';
 
@@ -47,17 +47,19 @@ export function is_custom_element_node(node) {
 
 /**
  * @param {string} name
+ * @param {SourceLocation | null} name_loc
  * @param {number} start
  * @param {number} end
  * @param {AST.Attribute['value']} value
  * @returns {AST.Attribute}
  */
-export function create_attribute(name, start, end, value) {
+export function create_attribute(name, name_loc, start, end, value) {
 	return {
 		type: 'Attribute',
 		start,
 		end,
 		name,
+		name_loc,
 		value,
 		metadata: {
 			delegated: false,
@@ -112,6 +114,10 @@ export class ExpressionMetadata {
 		return b.array([...this.#get_blockers()]);
 	}
 
+	has_blockers() {
+		return this.#get_blockers().size > 0;
+	}
+
 	is_async() {
 		return this.has_await || this.#get_blockers().size > 0;
 	}
@@ -141,4 +147,99 @@ export function get_name(node) {
 	if (node.type === 'Identifier') return node.name;
 
 	return null;
+}
+
+/**
+ * Checks if an <option>, <optgroup>, or <select> element has rich content that requires special hydration handling.
+ * Rich content is anything beyond simple text, expressions, and comments for <option>,
+ * anything beyond <option> children for <optgroup>,
+ * or anything beyond <option>, <optgroup>, and empty text for <select>.
+ * Control flow blocks are recursively checked - they only count as rich content if they contain rich content.
+ * @param {AST.RegularElement} node
+ * @returns {boolean}
+ */
+export function is_customizable_select_element(node) {
+	if (node.name === 'select' || node.name === 'optgroup' || node.name === 'option') {
+		for (const child of find_descendants(node.fragment)) {
+			if (child.type === 'RegularElement') {
+				if (node.name === 'select' && child.name !== 'option' && child.name !== 'optgroup') {
+					return true;
+				}
+
+				if (node.name === 'optgroup' && child.name !== 'option') {
+					return true;
+				}
+
+				if (node.name === 'option') {
+					return true;
+				}
+			}
+
+			// Text nodes directly in <select> or <optgroup> are rich content
+			else if (child.type === 'Text') {
+				if (node.name === 'select' || node.name === 'optgroup') {
+					return true;
+				}
+			}
+
+			// Any non-RegularElement, non-Text node is rich content
+			else {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+/**
+ * @param {AST.Fragment | null} fragment
+ * @returns {Iterable<AST.SvelteNode>}
+ */
+function* find_descendants(fragment) {
+	if (fragment === null) return;
+
+	for (const node of fragment.nodes) {
+		switch (node.type) {
+			case 'SnippetBlock':
+			case 'DebugTag':
+			case 'ConstTag':
+			case 'Comment':
+			case 'ExpressionTag':
+				break;
+
+			case 'Text':
+				if (node.data.trim() !== '') {
+					yield node;
+				}
+				break;
+
+			case 'IfBlock':
+				yield* find_descendants(node.consequent);
+				yield* find_descendants(node.alternate);
+				break;
+
+			case 'EachBlock':
+				yield* find_descendants(node.body);
+				yield* find_descendants(node.fallback ?? null);
+				break;
+
+			case 'KeyBlock':
+				yield* find_descendants(node.fragment);
+				break;
+
+			case 'AwaitBlock':
+				yield* find_descendants(node.pending);
+				yield* find_descendants(node.then);
+				yield* find_descendants(node.catch);
+				break;
+
+			case 'SvelteBoundary':
+				yield* find_descendants(node.fragment);
+				break;
+
+			default:
+				yield node;
+		}
+	}
 }

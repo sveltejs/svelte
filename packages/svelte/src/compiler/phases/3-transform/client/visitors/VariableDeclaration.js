@@ -136,7 +136,8 @@ export function VariableDeclaration(node, context) {
 					}
 
 					if (is_state) {
-						value = b.call('$.state', value);
+						const callee = b.id('$.state', /** @type {CallExpression} */ (init).callee.loc);
+						value = b.call(callee, value);
 
 						if (dev) {
 							value = b.call('$.tag', value, b.literal(id.name));
@@ -208,11 +209,11 @@ export function VariableDeclaration(node, context) {
 						let call = b.call(
 							'$.async_derived',
 							b.thunk(expression, true),
+							dev && b.literal(declarator.id.name),
 							location ? b.literal(location) : undefined
 						);
 
 						call = should_save ? save(call) : b.await(call);
-						if (dev) call = b.call('$.tag', call, b.literal(declarator.id.name));
 
 						declarations.push(b.declarator(declarator.id, call));
 					} else {
@@ -243,15 +244,14 @@ export function VariableDeclaration(node, context) {
 							call = b.call(
 								'$.async_derived',
 								b.thunk(expression, true),
+								dev &&
+									b.literal(
+										`[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`
+									),
 								location ? b.literal(location) : undefined
 							);
 
 							call = should_save ? save(call) : b.await(call);
-						}
-
-						if (dev) {
-							const label = `[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`;
-							call = b.call('$.tag', call, b.literal(label));
 						}
 
 						declarations.push(b.declarator(id, call));
@@ -305,7 +305,7 @@ export function VariableDeclaration(node, context) {
 			if (has_props) {
 				if (declarator.id.type !== 'Identifier') {
 					// Turn export let into props. It's really really weird because export let { x: foo, z: [bar]} = ..
-					// means that foo and bar are the props (i.e. the leafs are the prop names), not x and z.
+					// means that foo and bar are the props (i.e. the leaves are the prop names), not x and z.
 					const tmp = b.id(context.state.scope.generate('tmp'));
 					const { inserts, paths } = extract_paths(declarator.id, tmp);
 

@@ -1,4 +1,4 @@
-/** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
+/** @import { Blocker, ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
 import {
 	is_dirty,
 	active_effect,
@@ -9,7 +9,6 @@ import {
 	remove_reactions,
 	set_active_reaction,
 	set_is_destroying_effect,
-	set_signal_status,
 	untrack,
 	untracking
 } from '../runtime.js';
@@ -33,7 +32,8 @@ import {
 	STALE_REACTION,
 	USER_EFFECT,
 	ASYNC,
-	CONNECTED
+	CONNECTED,
+	MANAGED_EFFECT
 } from '#client/constants';
 import * as e from '../errors.js';
 import { DEV } from 'esm-env';
@@ -43,6 +43,7 @@ import { component_context, dev_current_component_function, dev_stack } from '..
 import { Batch, current_batch, schedule_effect } from './batch.js';
 import { flatten } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
+import { set_signal_status } from './status.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -100,8 +101,7 @@ function create_effect(type, fn, sync) {
 	var effect = {
 		ctx: component_context,
 		deps: null,
-		nodes_start: null,
-		nodes_end: null,
+		nodes: null,
 		f: type | DIRTY | CONNECTED,
 		first: null,
 		fn,
@@ -111,7 +111,6 @@ function create_effect(type, fn, sync) {
 		b: parent && parent.b,
 		prev: null,
 		teardown: null,
-		transitions: null,
 		wv: 0,
 		ac: null
 	};
@@ -142,7 +141,7 @@ function create_effect(type, fn, sync) {
 		sync &&
 		e.deps === null &&
 		e.teardown === null &&
-		e.nodes_start === null &&
+		e.nodes === null &&
 		e.first === e.last && // either `null`, or a singular child
 		(e.f & EFFECT_PRESERVED) === 0
 	) {
@@ -329,7 +328,7 @@ export function legacy_pre_effect_reset() {
 
 			// If the effect is CLEAN, then make it MAYBE_DIRTY. This ensures we traverse through
 			// the effects dependencies and correctly ensure each dependency is up-to-date.
-			if ((effect.f & CLEAN) !== 0) {
+			if ((effect.f & CLEAN) !== 0 && effect.deps !== null) {
 				set_signal_status(effect, MAYBE_DIRTY);
 			}
 
@@ -362,7 +361,7 @@ export function render_effect(fn, flags = 0) {
  * @param {(...expressions: any) => void | (() => void)} fn
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
- * @param {Array<Promise<void>>} blockers
+ * @param {Blocker[]} blockers
  */
 export function template_effect(fn, sync = [], async = [], blockers = []) {
 	flatten(blockers, sync, async, (values) => {
@@ -375,7 +374,7 @@ export function template_effect(fn, sync = [], async = [], blockers = []) {
  * @param {(...expressions: any) => void | (() => void)} fn
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
- * @param {Array<Promise<void>>} blockers
+ * @param {Blocker[]} blockers
  */
 export function deferred_template_effect(fn, sync = [], async = [], blockers = []) {
 	var batch = /** @type {Batch} */ (current_batch);
@@ -395,6 +394,18 @@ export function deferred_template_effect(fn, sync = [], async = [], blockers = [
  */
 export function block(fn, flags = 0) {
 	var effect = create_effect(BLOCK_EFFECT | flags, fn, true);
+	if (DEV) {
+		effect.dev_stack = dev_stack;
+	}
+	return effect;
+}
+
+/**
+ * @param {(() => void)} fn
+ * @param {number} flags
+ */
+export function managed(fn, flags = 0) {
+	var effect = create_effect(MANAGED_EFFECT | flags, fn, true);
 	if (DEV) {
 		effect.dev_stack = dev_stack;
 	}
@@ -484,10 +495,10 @@ export function destroy_effect(effect, remove_dom = true) {
 
 	if (
 		(remove_dom || (effect.f & HEAD_EFFECT) !== 0) &&
-		effect.nodes_start !== null &&
-		effect.nodes_end !== null
+		effect.nodes !== null &&
+		effect.nodes.end !== null
 	) {
-		remove_effect_dom(effect.nodes_start, /** @type {TemplateNode} */ (effect.nodes_end));
+		remove_effect_dom(effect.nodes.start, /** @type {TemplateNode} */ (effect.nodes.end));
 		removed = true;
 	}
 
@@ -495,7 +506,7 @@ export function destroy_effect(effect, remove_dom = true) {
 	remove_reactions(effect, 0);
 	set_signal_status(effect, DESTROYED);
 
-	var transitions = effect.transitions;
+	var transitions = effect.nodes && effect.nodes.t;
 
 	if (transitions !== null) {
 		for (const transition of transitions) {
@@ -524,8 +535,7 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.ctx =
 		effect.deps =
 		effect.fn =
-		effect.nodes_start =
-		effect.nodes_end =
+		effect.nodes =
 		effect.ac =
 			null;
 }
@@ -538,7 +548,7 @@ export function destroy_effect(effect, remove_dom = true) {
 export function remove_effect_dom(node, end) {
 	while (node !== null) {
 		/** @type {TemplateNode | null} */
-		var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
+		var next = node === end ? null : get_next_sibling(node);
 
 		node.remove();
 		node = next;
@@ -580,17 +590,11 @@ export function pause_effect(effect, callback, destroy = true) {
 
 	pause_children(effect, transitions, true);
 
-	run_out_transitions(transitions, () => {
+	var fn = () => {
 		if (destroy) destroy_effect(effect);
 		if (callback) callback();
-	});
-}
+	};
 
-/**
- * @param {TransitionManager[]} transitions
- * @param {() => void} fn
- */
-export function run_out_transitions(transitions, fn) {
 	var remaining = transitions.length;
 	if (remaining > 0) {
 		var check = () => --remaining || fn();
@@ -607,12 +611,14 @@ export function run_out_transitions(transitions, fn) {
  * @param {TransitionManager[]} transitions
  * @param {boolean} local
  */
-export function pause_children(effect, transitions, local) {
+function pause_children(effect, transitions, local) {
 	if ((effect.f & INERT) !== 0) return;
 	effect.f ^= INERT;
 
-	if (effect.transitions !== null) {
-		for (const transition of effect.transitions) {
+	var t = effect.nodes && effect.nodes.t;
+
+	if (t !== null) {
+		for (const transition of t) {
 			if (transition.is_global || local) {
 				transitions.push(transition);
 			}
@@ -675,8 +681,10 @@ function resume_children(effect, local) {
 		child = sibling;
 	}
 
-	if (effect.transitions !== null) {
-		for (const transition of effect.transitions) {
+	var t = effect.nodes && effect.nodes.t;
+
+	if (t !== null) {
+		for (const transition of t) {
 			if (transition.is_global || local) {
 				transition.in();
 			}
@@ -693,12 +701,15 @@ export function aborted(effect = /** @type {Effect} */ (active_effect)) {
  * @param {DocumentFragment} fragment
  */
 export function move_effect(effect, fragment) {
-	var node = effect.nodes_start;
-	var end = effect.nodes_end;
+	if (!effect.nodes) return;
+
+	/** @type {TemplateNode | null} */
+	var node = effect.nodes.start;
+	var end = effect.nodes.end;
 
 	while (node !== null) {
 		/** @type {TemplateNode | null} */
-		var next = node === end ? null : /** @type {TemplateNode} */ (get_next_sibling(node));
+		var next = node === end ? null : get_next_sibling(node);
 
 		fragment.append(node);
 		node = next;

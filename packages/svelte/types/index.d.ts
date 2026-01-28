@@ -1,3 +1,5 @@
+/// <reference types="esrap" />
+
 declare module 'svelte' {
 	/**
 	 * @deprecated In Svelte 4, components are classes. In Svelte 5, they are functions.
@@ -450,6 +452,7 @@ declare module 'svelte' {
 	 * @deprecated Use [`$effect`](https://svelte.dev/docs/svelte/$effect) instead
 	 * */
 	export function afterUpdate(fn: () => void): void;
+	export function hydratable<T>(key: string, fn: () => T): T;
 	/**
 	 * Create a snippet programmatically
 	 * */
@@ -841,8 +844,9 @@ declare module 'svelte/attachments' {
 
 declare module 'svelte/compiler' {
 	import type { SourceMap } from 'magic-string';
-	import type { ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, Expression, Identifier, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression } from 'estree';
+	import type { ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, Expression, Identifier, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression, SourceLocation } from 'estree';
 	import type { Location } from 'locate-character';
+	import type { default as ts } from 'esrap/languages/ts';
 	/**
 	 * `compile` converts your `.svelte` source code into a JavaScript module that exports a component
 	 *
@@ -880,6 +884,12 @@ declare module 'svelte/compiler' {
 		modern?: false;
 		loose?: boolean;
 	} | undefined): Record<string, any>;
+	/**
+	 * The parseCss function parses a CSS stylesheet, returning its abstract syntax tree.
+	 *
+	 * @param source The CSS source code
+	 * */
+	export function parseCss(source: string): Omit<AST.CSS.StyleSheet, "attributes" | "content">;
 	/**
 	 * @deprecated Replace this with `import { walk } from 'estree-walker'`
 	 * */
@@ -1224,7 +1234,7 @@ declare module 'svelte/compiler' {
 			css?: 'injected';
 			customElement?: {
 				tag?: string;
-				shadow?: 'open' | 'none';
+				shadow?: 'open' | 'none' | ObjectExpression | undefined;
 				props?: Record<
 					string,
 					{
@@ -1300,7 +1310,7 @@ declare module 'svelte/compiler' {
 		}
 
 		/** An `animate:` directive */
-		export interface AnimateDirective extends BaseNode {
+		export interface AnimateDirective extends BaseAttribute {
 			type: 'AnimateDirective';
 			/** The 'x' in `animate:x` */
 			name: string;
@@ -1309,7 +1319,7 @@ declare module 'svelte/compiler' {
 		}
 
 		/** A `bind:` directive */
-		export interface BindDirective extends BaseNode {
+		export interface BindDirective extends BaseAttribute {
 			type: 'BindDirective';
 			/** The 'x' in `bind:x` */
 			name: string;
@@ -1318,7 +1328,7 @@ declare module 'svelte/compiler' {
 		}
 
 		/** A `class:` directive */
-		export interface ClassDirective extends BaseNode {
+		export interface ClassDirective extends BaseAttribute {
 			type: 'ClassDirective';
 			/** The 'x' in `class:x` */
 			name: 'class';
@@ -1327,7 +1337,7 @@ declare module 'svelte/compiler' {
 		}
 
 		/** A `let:` directive */
-		export interface LetDirective extends BaseNode {
+		export interface LetDirective extends BaseAttribute {
 			type: 'LetDirective';
 			/** The 'x' in `let:x` */
 			name: string;
@@ -1336,7 +1346,7 @@ declare module 'svelte/compiler' {
 		}
 
 		/** An `on:` directive */
-		export interface OnDirective extends BaseNode {
+		export interface OnDirective extends BaseAttribute {
 			type: 'OnDirective';
 			/** The 'x' in `on:x` */
 			name: string;
@@ -1356,7 +1366,7 @@ declare module 'svelte/compiler' {
 		}
 
 		/** A `style:` directive */
-		export interface StyleDirective extends BaseNode {
+		export interface StyleDirective extends BaseAttribute {
 			type: 'StyleDirective';
 			/** The 'x' in `style:x` */
 			name: string;
@@ -1367,7 +1377,7 @@ declare module 'svelte/compiler' {
 
 		// TODO have separate in/out/transition directives
 		/** A `transition:`, `in:` or `out:` directive */
-		export interface TransitionDirective extends BaseNode {
+		export interface TransitionDirective extends BaseAttribute {
 			type: 'TransitionDirective';
 			/** The 'x' in `transition:x` */
 			name: string;
@@ -1381,7 +1391,7 @@ declare module 'svelte/compiler' {
 		}
 
 		/** A `use:` directive */
-		export interface UseDirective extends BaseNode {
+		export interface UseDirective extends BaseAttribute {
 			type: 'UseDirective';
 			/** The 'x' in `use:x` */
 			name: string;
@@ -1389,8 +1399,9 @@ declare module 'svelte/compiler' {
 			expression: null | Expression;
 		}
 
-		interface BaseElement extends BaseNode {
+		export interface BaseElement extends BaseNode {
 			name: string;
+			name_loc: SourceLocation;
 			attributes: Array<Attribute | SpreadAttribute | Directive | AttachTag>;
 			fragment: Fragment;
 		}
@@ -1515,9 +1526,13 @@ declare module 'svelte/compiler' {
 			body: Fragment;
 		}
 
-		export interface Attribute extends BaseNode {
-			type: 'Attribute';
+		export interface BaseAttribute extends BaseNode {
 			name: string;
+			name_loc: SourceLocation | null;
+		}
+
+		export interface Attribute extends BaseAttribute {
+			type: 'Attribute';
 			/**
 			 * Quoted/string values are represented by an array, even if they contain a single expression like `"{x}"`
 			 */
@@ -1615,6 +1630,18 @@ declare module 'svelte/compiler' {
 	export function preprocess(source: string, preprocessor: PreprocessorGroup | PreprocessorGroup[], options?: {
 		filename?: string;
 	} | undefined): Promise<Processed>;
+	/**
+	 * `print` converts a Svelte AST node back into Svelte source code.
+	 * It is primarily intended for tools that parse and transform components using the compiler’s modern AST representation.
+	 *
+	 * `print(ast)` requires an AST node produced by parse with modern: true, or any sub-node within that modern AST.
+	 * The result contains the generated source and a corresponding source map.
+	 * The output is valid Svelte, but formatting details such as whitespace or quoting may differ from the original.
+	 * */
+	export function print(ast: AST.SvelteNode, options?: Options | undefined): {
+		code: string;
+		map: any;
+	};
 	/**
 	 * The current version, as set in package.json.
 	 * */
@@ -1798,6 +1825,10 @@ declare module 'svelte/compiler' {
 			| SimpleSelector
 			| Declaration;
 	}
+	type Options = {
+		getLeadingComments?: NonNullable<Parameters<typeof ts>[0]>['getLeadingComments'] | undefined;
+		getTrailingComments?: NonNullable<Parameters<typeof ts>[0]>['getTrailingComments'] | undefined;
+	};
 
 	export {};
 }
@@ -2528,6 +2559,7 @@ declare module 'svelte/server' {
 						props?: Omit<Props, '$$slots' | '$$events'>;
 						context?: Map<any, any>;
 						idPrefix?: string;
+						csp?: Csp;
 					}
 				]
 			: [
@@ -2536,9 +2568,14 @@ declare module 'svelte/server' {
 						props: Omit<Props, '$$slots' | '$$events'>;
 						context?: Map<any, any>;
 						idPrefix?: string;
+						csp?: Csp;
 					}
 				]
 	): RenderOutput;
+	type Csp = { nonce?: string; hash?: boolean };
+
+	type Sha256Source = `sha256-${string}`;
+
 	interface SyncRenderOutput {
 		/** HTML that goes into the `<head>` */
 		head: string;
@@ -2546,6 +2583,9 @@ declare module 'svelte/server' {
 		html: string;
 		/** HTML that goes somewhere into the `<body>` */
 		body: string;
+		hashes: {
+			script: Sha256Source[];
+		};
 	}
 
 	type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;
@@ -2776,7 +2816,7 @@ declare module 'svelte/events' {
 	export function on<Type extends keyof WindowEventMap>(
 		window: Window,
 		type: Type,
-		handler: (this: Window, event: WindowEventMap[Type]) => any,
+		handler: (this: Window, event: WindowEventMap[Type] & { currentTarget: Window }) => any,
 		options?: AddEventListenerOptions | undefined
 	): () => void;
 	/**
@@ -2787,7 +2827,7 @@ declare module 'svelte/events' {
 	export function on<Type extends keyof DocumentEventMap>(
 		document: Document,
 		type: Type,
-		handler: (this: Document, event: DocumentEventMap[Type]) => any,
+		handler: (this: Document, event: DocumentEventMap[Type] & { currentTarget: Document }) => any,
 		options?: AddEventListenerOptions | undefined
 	): () => void;
 	/**
@@ -2798,7 +2838,7 @@ declare module 'svelte/events' {
 	export function on<Element extends HTMLElement, Type extends keyof HTMLElementEventMap>(
 		element: Element,
 		type: Type,
-		handler: (this: Element, event: HTMLElementEventMap[Type]) => any,
+		handler: (this: Element, event: HTMLElementEventMap[Type] & { currentTarget: Element }) => any,
 		options?: AddEventListenerOptions | undefined
 	): () => void;
 	/**
@@ -2809,7 +2849,7 @@ declare module 'svelte/events' {
 	export function on<Element extends MediaQueryList, Type extends keyof MediaQueryListEventMap>(
 		element: Element,
 		type: Type,
-		handler: (this: Element, event: MediaQueryListEventMap[Type]) => any,
+		handler: (this: Element, event: MediaQueryListEventMap[Type] & { currentTarget: Element }) => any,
 		options?: AddEventListenerOptions | undefined
 	): () => void;
 	/**
@@ -3305,6 +3345,9 @@ declare namespace $state {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -3362,6 +3405,9 @@ declare namespace $derived {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -3478,6 +3524,9 @@ declare namespace $effect {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -3521,6 +3570,9 @@ declare namespace $props {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -3555,6 +3607,9 @@ declare namespace $bindable {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -3617,6 +3672,9 @@ declare namespace $inspect {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -3661,6 +3719,9 @@ declare namespace $host {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 //# sourceMappingURL=index.d.ts.map

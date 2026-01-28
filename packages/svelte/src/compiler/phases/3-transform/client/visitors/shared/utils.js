@@ -134,7 +134,7 @@ export function build_template_chunk(
 
 			const evaluated = state.scope.evaluate(value);
 
-			has_await ||= node.metadata.expression.has_await;
+			has_await ||= node.metadata.expression.has_await || node.metadata.expression.has_blockers();
 			has_state ||= has_await || (node.metadata.expression.has_state && !evaluated.is_known);
 
 			if (values.length === 1) {
@@ -366,8 +366,8 @@ export function validate_binding(state, binding, expression) {
 							: b.literal(/** @type {Identifier} */ (expression.property).name)
 					)
 				),
-				loc && b.literal(loc.line),
-				loc && b.literal(loc.column)
+				b.literal(loc.line),
+				b.literal(loc.column)
 			)
 		)
 	);

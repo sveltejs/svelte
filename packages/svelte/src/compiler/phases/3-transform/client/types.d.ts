@@ -49,8 +49,15 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly update: Statement[];
 	/** Stuff that happens after the render effect (control blocks, dynamic elements, bindings, actions, etc) */
 	readonly after_update: Statement[];
+	/** Transformed `{#snippets }` declarations */
+	readonly snippets: Statement[];
 	/** Transformed `{@const }` declarations */
 	readonly consts: Statement[];
+	/** Transformed async `{@const }` declarations (if any) and those coming after them */
+	async_consts?: {
+		id: Identifier;
+		thunks: Expression[];
+	};
 	/** Transformed `let:` directives */
 	readonly let_directives: Statement[];
 	/** Memoized expressions */

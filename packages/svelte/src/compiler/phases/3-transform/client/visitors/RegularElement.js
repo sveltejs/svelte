@@ -11,7 +11,12 @@ import {
 import { is_ignored } from '../../../../state.js';
 import { is_event_attribute, is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { create_attribute, ExpressionMetadata, is_custom_element_node } from '../../../nodes.js';
+import {
+	create_attribute,
+	ExpressionMetadata,
+	is_custom_element_node,
+	is_customizable_select_element
+} from '../../../nodes.js';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_getter } from '../utils.js';
 import {
@@ -21,9 +26,12 @@ import {
 	build_set_class,
 	build_set_style
 } from './shared/element.js';
-import { process_children } from './shared/fragment.js';
+import { process_children, is_static_element } from './shared/fragment.js';
 import { build_render_statement, build_template_chunk, Memoizer } from './shared/utils.js';
 import { visit_event_attribute } from './shared/events.js';
+import { Template } from '../transform-template/template.js';
+import { transform_template } from '../transform-template/index.js';
+import { TEMPLATE_FRAGMENT } from '../../../../../constants.js';
 
 /**
  * @param {AST.RegularElement} node
@@ -321,7 +329,7 @@ export function RegularElement(node, context) {
 	);
 
 	/** @type {typeof state} */
-	const child_state = { ...state, init: [], update: [], after_update: [] };
+	const child_state = { ...state, init: [], update: [], after_update: [], snippets: [] };
 
 	for (const node of hoisted) {
 		context.visit(node, child_state);
@@ -336,7 +344,9 @@ export function RegularElement(node, context) {
 		trimmed.every(
 			(node) =>
 				node.type === 'Text' ||
-				(!node.metadata.expression.has_state && !node.metadata.expression.has_await)
+				(!node.metadata.expression.has_state &&
+					!node.metadata.expression.has_await &&
+					!node.metadata.expression.has_blockers())
 		) &&
 		trimmed.some((node) => node.type === 'ExpressionTag');
 
@@ -349,13 +359,65 @@ export function RegularElement(node, context) {
 				b.stmt(b.assignment('=', b.member(context.state.node, 'textContent'), value))
 			);
 		}
+	} else if (is_customizable_select_element(node)) {
+		// For <option>, <optgroup>, or <select> elements with rich content, we need to branch based on browser support.
+		// Modern browsers preserve rich HTML in options, older browsers strip it to text only.
+		// We create a separate template for the rich content and append it to the element.
+
+		const element_node = context.state.node;
+
+		// Add a hydration marker inside the option element so $.child() has an anchor to find
+		context.state.template.push_comment();
+
+		// Create a separate template for the rich content
+		const template_name = context.state.scope.root.unique(`${node.name}_content`);
+		const fragment_id = b.id(context.state.scope.generate('fragment'));
+		const anchor_id = b.id(context.state.scope.generate('anchor'));
+
+		// Create state with a new template for the rich content
+		/** @type {typeof state} */
+		const select_state = {
+			...state,
+			init: [],
+			update: [],
+			after_update: [],
+			template: new Template()
+		};
+
+		process_children(
+			trimmed,
+			(is_text) => b.call('$.first_child', fragment_id, is_text && b.true),
+			false,
+			{
+				...context,
+				state: select_state
+			}
+		);
+
+		// Transform the template to $.from_html(...) and hoist it
+		const template = transform_template(select_state, metadata.namespace, TEMPLATE_FRAGMENT);
+		context.state.hoisted.push(b.var(template_name, template));
+
+		// Build the rich content function body
+		// The anchor is the child of the element (a hydration marker during hydration)
+		const body = b.block([
+			b.var(anchor_id, b.call('$.child', element_node)),
+			b.var(fragment_id, b.call(template_name)),
+			...select_state.init,
+			...(select_state.update.length > 0 ? [build_render_statement(select_state)] : []),
+			...select_state.after_update,
+			b.stmt(b.call('$.append', anchor_id, fragment_id))
+		]);
+
+		child_state.init.push(b.stmt(b.call('$.customizable_select', element_node, b.arrow([], body))));
 	} else {
 		/** @type {Expression} */
 		let arg = context.state.node;
 
 		// If `hydrate_node` is set inside the element, we need to reset it
-		// after the element has been hydrated
-		let needs_reset = trimmed.some((node) => node.type !== 'Text');
+		// after the element has been hydrated. We need to check if any child
+		// would actually advance the hydrate_node cursor - static elements don't.
+		let needs_reset = trimmed.some((node) => node.type !== 'Text' && !is_static_element(node));
 
 		// The same applies if it's a `<template>` element, since we need to
 		// set the value of `hydrate_node` to `node.content`
@@ -379,6 +441,7 @@ export function RegularElement(node, context) {
 		// Wrap children in `{...}` to avoid declaration conflicts
 		context.state.init.push(
 			b.block([
+				...child_state.snippets,
 				...child_state.init,
 				...element_state.init,
 				child_state.update.length > 0 ? build_render_statement(child_state) : b.empty,
@@ -395,6 +458,18 @@ export function RegularElement(node, context) {
 		context.state.after_update.push(...element_state.after_update);
 	}
 
+	if (node.name === 'selectedcontent') {
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.selectedcontent',
+					context.state.node,
+					b.arrow([b.id('$$element')], b.assignment('=', context.state.node, b.id('$$element')))
+				)
+			)
+		);
+	}
+
 	if (lookup.has('dir')) {
 		// This fixes an issue with Chromium where updates to text content within an element
 		// does not update the direction when set to auto. If we just re-assign the dir, this fixes it.
@@ -407,6 +482,7 @@ export function RegularElement(node, context) {
 			const synthetic_node = node.metadata.synthetic_value_node;
 			const synthetic_attribute = create_attribute(
 				'value',
+				null,
 				synthetic_node.start,
 				synthetic_node.end,
 				[synthetic_node]

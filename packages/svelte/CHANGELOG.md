@@ -1,5 +1,307 @@
 # svelte
 
+## 5.48.5
+
+### Patch Changes
+
+- fix: run boundary `onerror` callbacks in a microtask, in case they result in the boundary's destruction ([#17561](https://github.com/sveltejs/svelte/pull/17561))
+
+- fix: prevent unintended exports from namespaces ([#17562](https://github.com/sveltejs/svelte/pull/17562))
+
+- fix: each block breaking with effects interspersed among items ([#17550](https://github.com/sveltejs/svelte/pull/17550))
+
+## 5.48.4
+
+### Patch Changes
+
+- fix: avoid duplicating escaped characters in CSS AST ([#17554](https://github.com/sveltejs/svelte/pull/17554))
+
+## 5.48.3
+
+### Patch Changes
+
+- fix: hydration failing with settled async blocks ([#17539](https://github.com/sveltejs/svelte/pull/17539))
+
+- fix: add pointer and touch events to a11y_no_static_element_interactions warning ([#17551](https://github.com/sveltejs/svelte/pull/17551))
+
+- fix: handle false dynamic components in SSR ([#17542](https://github.com/sveltejs/svelte/pull/17542))
+
+- fix: avoid unnecessary block effect re-runs after async work completes ([#17535](https://github.com/sveltejs/svelte/pull/17535))
+
+- fix: avoid using dev-mode array.includes wrapper on internal array checks ([#17536](https://github.com/sveltejs/svelte/pull/17536))
+
+## 5.48.2
+
+### Patch Changes
+
+- fix: export `wait` function from internal client index ([#17530](https://github.com/sveltejs/svelte/pull/17530))
+
+## 5.48.1
+
+### Patch Changes
+
+- fix: hoist snippets above const in same block ([#17516](https://github.com/sveltejs/svelte/pull/17516))
+
+- fix: properly hydrate await in `{@html}` ([#17528](https://github.com/sveltejs/svelte/pull/17528))
+
+- fix: batch resolution of async work ([#17511](https://github.com/sveltejs/svelte/pull/17511))
+
+- fix: account for empty statements when visiting in transform async ([#17524](https://github.com/sveltejs/svelte/pull/17524))
+
+- fix: avoid async overhead for already settled promises ([#17461](https://github.com/sveltejs/svelte/pull/17461))
+
+- fix: better code generation for const tags with async dependencies ([#17518](https://github.com/sveltejs/svelte/pull/17518))
+
+## 5.48.0
+
+### Minor Changes
+
+- feat: export `parseCss` from `svelte/compiler` ([#17496](https://github.com/sveltejs/svelte/pull/17496))
+
+### Patch Changes
+
+- fix: handle non-string values in `svelte:element` `this` attribute ([#17499](https://github.com/sveltejs/svelte/pull/17499))
+
+- fix: faster deduplication of dependencies ([#17503](https://github.com/sveltejs/svelte/pull/17503))
+
+## 5.47.1
+
+### Patch Changes
+
+- fix: trigger `selectedcontent` reactivity ([#17486](https://github.com/sveltejs/svelte/pull/17486))
+
+## 5.47.0
+
+### Minor Changes
+
+- feat: customizable `<select>` elements ([#17429](https://github.com/sveltejs/svelte/pull/17429))
+
+### Patch Changes
+
+- fix: mark subtree of svelte boundary as dynamic ([#17468](https://github.com/sveltejs/svelte/pull/17468))
+
+- fix: don't reset static elements with debug/snippets ([#17477](https://github.com/sveltejs/svelte/pull/17477))
+
+## 5.46.4
+
+### Patch Changes
+
+- fix: use `devalue.uneval` to serialize `hydratable` keys ([`ef81048e238844b729942441541d6dcfe6c8ccca`](https://github.com/sveltejs/svelte/commit/ef81048e238844b729942441541d6dcfe6c8ccca))
+
+## 5.46.3
+
+### Patch Changes
+
+- fix: reconnect clean deriveds when they are read in a reactive context ([#17362](https://github.com/sveltejs/svelte/pull/17362))
+
+- fix: don't transform references of function declarations in legacy mode ([#17431](https://github.com/sveltejs/svelte/pull/17431))
+
+- fix: notify deriveds of changes to sources inside forks ([#17437](https://github.com/sveltejs/svelte/pull/17437))
+
+- fix: always reconnect deriveds in get, when appropriate ([#17451](https://github.com/sveltejs/svelte/pull/17451))
+
+- fix: prevent derives without dependencies from ever re-running ([`286b40c4526ce9970cb81ddd5e65b93b722fe468`](https://github.com/sveltejs/svelte/commit/286b40c4526ce9970cb81ddd5e65b93b722fe468))
+
+- fix: correctly update writable deriveds inside forks ([#17437](https://github.com/sveltejs/svelte/pull/17437))
+
+- fix: remove `$inspect` calls after await expressions when compiling for production server code ([#17407](https://github.com/sveltejs/svelte/pull/17407))
+
+- fix: clear batch between runs ([#17424](https://github.com/sveltejs/svelte/pull/17424))
+
+- fix: adjust `loc` property of `Program` nodes created from `<script>` elements ([#17428](https://github.com/sveltejs/svelte/pull/17428))
+
+- fix: don't revert source to UNINITIALIZED state when time travelling ([#17409](https://github.com/sveltejs/svelte/pull/17409))
+
+## 5.46.2
+
+### Notice
+
+Not published due to CI issue
+
+## 5.46.1
+
+### Patch Changes
+
+- fix: type `currentTarget` in `on` function ([#17370](https://github.com/sveltejs/svelte/pull/17370))
+
+- fix: skip static optimisation for stateless deriveds after `await` ([#17389](https://github.com/sveltejs/svelte/pull/17389))
+
+- fix: prevent infinite loop when HMRing a component with an `await` ([#17380](https://github.com/sveltejs/svelte/pull/17380))
+
+## 5.46.0
+
+### Minor Changes
+
+- feat: Add `csp` option to `render(...)`, and emit hashes when using `hydratable` ([#17338](https://github.com/sveltejs/svelte/pull/17338))
+
+## 5.45.10
+
+### Patch Changes
+
+- fix: race condition when importing `AsyncLocalStorage` ([#17350](https://github.com/sveltejs/svelte/pull/17350))
+
+## 5.45.9
+
+### Patch Changes
+
+- fix: correctly reschedule deferred effects when reviving a batch after async work ([#17332](https://github.com/sveltejs/svelte/pull/17332))
+
+- fix: correctly print `!doctype` during `print` ([#17341](https://github.com/sveltejs/svelte/pull/17341))
+
+## 5.45.8
+
+### Patch Changes
+
+- fix: set AST `root.start` to `0` and `root.end` to `template.length` ([#17125](https://github.com/sveltejs/svelte/pull/17125))
+
+- fix: prevent erroneous `state_referenced_locally` warnings on prop fallbacks ([#17329](https://github.com/sveltejs/svelte/pull/17329))
+
+## 5.45.7
+
+### Patch Changes
+
+- fix: Add `<textarea wrap="off">` as a valid attribute value ([#17326](https://github.com/sveltejs/svelte/pull/17326))
+
+- fix: add more css selectors to `print()` ([#17330](https://github.com/sveltejs/svelte/pull/17330))
+
+- fix: don't crash on `hydratable` serialization failure ([#17315](https://github.com/sveltejs/svelte/pull/17315))
+
+## 5.45.6
+
+### Patch Changes
+
+- fix: don't issue a11y warning for `<video>` without captions if it has no `src` ([#17311](https://github.com/sveltejs/svelte/pull/17311))
+
+- fix: add `srcObject` to permitted `<audio>`/`<video>` attributes ([#17310](https://github.com/sveltejs/svelte/pull/17310))
+
+## 5.45.5
+
+### Patch Changes
+
+- fix: correctly reconcile each blocks after outroing branches are resumed ([#17258](https://github.com/sveltejs/svelte/pull/17258))
+
+- fix: destroy each items after siblings are resumed ([#17258](https://github.com/sveltejs/svelte/pull/17258))
+
+## 5.45.4
+
+### Patch Changes
+
+- chore: move DOM-related effect properties to `effect.nodes` ([#17293](https://github.com/sveltejs/svelte/pull/17293))
+
+- fix: allow `$props.id()` to occur after an `await` ([#17285](https://github.com/sveltejs/svelte/pull/17285))
+
+- fix: keep reactions up to date even when read outside of effect ([#17295](https://github.com/sveltejs/svelte/pull/17295))
+
+## 5.45.3
+
+### Patch Changes
+
+- add props to state_referenced_locally ([#17266](https://github.com/sveltejs/svelte/pull/17266))
+
+- fix: preserve node locations for better sourcemaps ([#17269](https://github.com/sveltejs/svelte/pull/17269))
+
+- fix: handle cross-realm Promises in `hydratable` ([#17284](https://github.com/sveltejs/svelte/pull/17284))
+
+## 5.45.2
+
+### Patch Changes
+
+- fix: array destructuring after await ([#17254](https://github.com/sveltejs/svelte/pull/17254))
+
+- fix: throw on invalid `{@tag}`s ([#17256](https://github.com/sveltejs/svelte/pull/17256))
+
+## 5.45.1
+
+### Patch Changes
+
+- fix: link offscreen items and last effect in each block correctly ([#17240](https://github.com/sveltejs/svelte/pull/17240))
+
+## 5.45.0
+
+### Minor Changes
+
+- feat: add `print(...)` function ([#16188](https://github.com/sveltejs/svelte/pull/16188))
+
+## 5.44.1
+
+### Patch Changes
+
+- fix: await blockers before initialising const ([#17226](https://github.com/sveltejs/svelte/pull/17226))
+
+- fix: link offscreen items and last effect in each block correctly ([#17244](https://github.com/sveltejs/svelte/pull/17244))
+
+- fix: generate correct code for simple destructurings ([#17237](https://github.com/sveltejs/svelte/pull/17237))
+
+- fix: ensure each block animations don't mess with transitions ([#17238](https://github.com/sveltejs/svelte/pull/17238))
+
+## 5.44.0
+
+### Minor Changes
+
+- feat: `hydratable` API ([#17154](https://github.com/sveltejs/svelte/pull/17154))
+
+## 5.43.15
+
+### Patch Changes
+
+- fix: don't execute attachments and attribute effects eagerly ([#17208](https://github.com/sveltejs/svelte/pull/17208))
+
+- chore: lift "flushSync cannot be called in effects" restriction ([#17139](https://github.com/sveltejs/svelte/pull/17139))
+
+- fix: store forked derived values ([#17212](https://github.com/sveltejs/svelte/pull/17212))
+
+## 5.43.14
+
+### Patch Changes
+
+- fix: correctly migrate named self closing slots ([#17199](https://github.com/sveltejs/svelte/pull/17199))
+
+- fix: error at compile time instead of at runtime on await expressions inside bindings/transitions/animations/attachments ([#17198](https://github.com/sveltejs/svelte/pull/17198))
+
+- fix: take async blockers into account for bindings/transitions/animations/attachments ([#17198](https://github.com/sveltejs/svelte/pull/17198))
+
+## 5.43.13
+
+### Patch Changes
+
+- fix: don't set derived values during time traveling ([#17200](https://github.com/sveltejs/svelte/pull/17200))
+
+## 5.43.12
+
+### Patch Changes
+
+- fix: maintain correct linked list of effects when updating each blocks ([#17191](https://github.com/sveltejs/svelte/pull/17191))
+
+## 5.43.11
+
+### Patch Changes
+
+- perf: don't use tracing overeager during dev ([#17183](https://github.com/sveltejs/svelte/pull/17183))
+
+- fix: don't cancel transition of already outroing elements ([#17186](https://github.com/sveltejs/svelte/pull/17186))
+
+## 5.43.10
+
+### Patch Changes
+
+- fix: avoid other batches running with queued root effects of main batch ([#17145](https://github.com/sveltejs/svelte/pull/17145))
+
+## 5.43.9
+
+### Patch Changes
+
+- fix: correctly handle functions when determining async blockers ([#17137](https://github.com/sveltejs/svelte/pull/17137))
+
+- fix: keep deriveds reactive after their original parent effect was destroyed ([#17171](https://github.com/sveltejs/svelte/pull/17171))
+
+- fix: ensure eager effects don't break reactions chain ([#17138](https://github.com/sveltejs/svelte/pull/17138))
+
+- fix: ensure async `@const` in boundary hydrates correctly ([#17165](https://github.com/sveltejs/svelte/pull/17165))
+
+- fix: take blockers into account when creating `#await` blocks ([#17137](https://github.com/sveltejs/svelte/pull/17137))
+
+- fix: parallelize async `@const`s in the template ([#17165](https://github.com/sveltejs/svelte/pull/17165))
+
 ## 5.43.8
 
 ### Patch Changes

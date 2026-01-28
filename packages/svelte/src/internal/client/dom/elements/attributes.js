@@ -1,4 +1,4 @@
-/** @import { Effect } from '#client' */
+/** @import { Blocker, Effect } from '#client' */
 import { DEV } from 'esm-env';
 import { hydrating, set_hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
@@ -20,7 +20,7 @@ import { clsx } from '../../../shared/attributes.js';
 import { set_class } from './class.js';
 import { set_style } from './style.js';
 import { ATTACHMENT_KEY, NAMESPACE_HTML, UNINITIALIZED } from '../../../../constants.js';
-import { block, branch, destroy_effect, effect } from '../../reactivity/effects.js';
+import { branch, destroy_effect, effect, managed } from '../../reactivity/effects.js';
 import { init_select, select_option } from './bindings/select.js';
 import { flatten } from '../../reactivity/async.js';
 
@@ -483,7 +483,7 @@ function set_attributes(
  * @param {(...expressions: any) => Record<string | symbol, any>} fn
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
- * @param {Array<Promise<void>>} blockers
+ * @param {Blocker[]} blockers
  * @param {string} [css_hash]
  * @param {boolean} [should_remove_defaults]
  * @param {boolean} [skip_warning]
@@ -508,7 +508,7 @@ export function attribute_effect(
 		var is_select = element.nodeName === 'SELECT';
 		var inited = false;
 
-		block(() => {
+		managed(() => {
 			var next = fn(...values.map(get));
 			/** @type {Record<string | symbol, any>} */
 			var current = set_attributes(
