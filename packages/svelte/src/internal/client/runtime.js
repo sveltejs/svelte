@@ -43,13 +43,7 @@ import {
 	set_dev_current_component_function,
 	set_dev_stack
 } from './context.js';
-import {
-	Batch,
-	batch_values,
-	current_batch,
-	flushSync,
-	schedule_effect
-} from './reactivity/batch.js';
+import { Batch, batch_values, flushSync, schedule_effect } from './reactivity/batch.js';
 import { handle_error } from './error-handling.js';
 import { UNINITIALIZED } from '../../constants.js';
 import { captured_signals } from './legacy.js';
@@ -255,16 +249,10 @@ export function update_reaction(reaction) {
 		var result = fn();
 		var deps = reaction.deps;
 
-		// Don't remove reactions during fork;
-		// they must remain for when fork is discarded
-		var is_fork = current_batch?.is_fork;
-
 		if (new_deps !== null) {
 			var i;
 
-			if (!is_fork) {
-				remove_reactions(reaction, skipped_deps);
-			}
+			remove_reactions(reaction, skipped_deps);
 
 			if (deps !== null && skipped_deps > 0) {
 				deps.length = skipped_deps + new_deps.length;
@@ -280,7 +268,7 @@ export function update_reaction(reaction) {
 					(deps[i].reactions ??= []).push(reaction);
 				}
 			}
-		} else if (!is_fork && deps !== null && skipped_deps < deps.length) {
+		} else if (deps !== null && skipped_deps < deps.length) {
 			remove_reactions(reaction, skipped_deps);
 			deps.length = skipped_deps;
 		}
