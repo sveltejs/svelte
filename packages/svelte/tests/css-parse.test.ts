@@ -135,4 +135,19 @@ describe('parseCss', () => {
 			}
 		}
 	});
+
+	it('parses escaped characters', () => {
+		const ast = parseCss("div { background: url('./example.png?\\''); }");
+		assert.equal(ast.type, 'StyleSheet');
+		assert.equal(ast.children.length, 1);
+		const rule = ast.children[0];
+		assert.equal(rule.type, 'Rule');
+		if (rule.type === 'Rule') {
+			const declaration = rule.block.children[0];
+			assert.equal(declaration.type, 'Declaration');
+			if (declaration.type === 'Declaration') {
+				assert.equal(declaration.value, "url('./example.png?\\'')");
+			}
+		}
+	});
 });

@@ -239,8 +239,6 @@ export function transition(flags, element, get_fn, get_params) {
 				intro?.abort();
 			}
 
-			dispatch_event(element, 'introstart');
-
 			intro = animate(element, get_options(), outro, 1, () => {
 				dispatch_event(element, 'introend');
 
@@ -259,8 +257,6 @@ export function transition(flags, element, get_fn, get_params) {
 			}
 
 			element.inert = true;
-
-			dispatch_event(element, 'outrostart');
 
 			outro = animate(element, get_options(), intro, 0, () => {
 				dispatch_event(element, 'outroend');
@@ -345,7 +341,8 @@ function animate(element, options, counterpart, t2, on_finish) {
 
 	counterpart?.deactivate();
 
-	if (!options?.duration) {
+	if (!options?.duration && !options?.delay) {
+		dispatch_event(element, is_intro ? 'introstart' : 'outrostart');
 		on_finish();
 
 		return {
@@ -384,6 +381,8 @@ function animate(element, options, counterpart, t2, on_finish) {
 	animation.onfinish = () => {
 		// remove dummy animation from the stack to prevent conflict with main animation
 		animation.cancel();
+
+		dispatch_event(element, is_intro ? 'introstart' : 'outrostart');
 
 		// for bidirectional transitions, we start from the current position,
 		// rather than doing a full intro/outro

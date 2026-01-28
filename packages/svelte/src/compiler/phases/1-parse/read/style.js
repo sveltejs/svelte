@@ -508,8 +508,12 @@ function read_value(parser) {
 		if (escaped) {
 			value += '\\' + char;
 			escaped = false;
+			parser.index++;
+			continue;
 		} else if (char === '\\') {
 			escaped = true;
+			parser.index++;
+			continue;
 		} else if (char === quote_mark) {
 			quote_mark = null;
 		} else if (char === ')') {

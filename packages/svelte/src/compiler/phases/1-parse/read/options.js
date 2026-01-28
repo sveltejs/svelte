@@ -133,11 +133,13 @@ export default function read_options(node) {
 
 				const shadow = properties.find(([name]) => name === 'shadow')?.[1];
 				if (shadow) {
-					const shadowdom = shadow?.value;
-					if (shadowdom !== 'open' && shadowdom !== 'none') {
-						e.svelte_options_invalid_customelement_shadow(shadow);
+					if (shadow.type === 'Literal' && (shadow.value === 'open' || shadow.value === 'none')) {
+						ce.shadow = shadow.value;
+					} else if (shadow.type === 'ObjectExpression') {
+						ce.shadow = shadow;
+					} else {
+						e.svelte_options_invalid_customelement_shadow(attribute);
 					}
-					ce.shadow = shadowdom;
 				}
 
 				const extend = properties.find(([name]) => name === 'extend')?.[1];

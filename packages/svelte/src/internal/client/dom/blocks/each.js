@@ -34,7 +34,7 @@ import {
 } from '../../reactivity/effects.js';
 import { source, mutable_source, internal_set } from '../../reactivity/sources.js';
 import { array_from, is_array } from '../../../shared/utils.js';
-import { COMMENT_NODE, EFFECT_OFFSCREEN, INERT } from '#client/constants';
+import { BRANCH_EFFECT, COMMENT_NODE, EFFECT_OFFSCREEN, INERT } from '#client/constants';
 import { queue_micro_task } from '../task.js';
 import { get } from '../../runtime.js';
 import { DEV } from 'esm-env';
@@ -337,6 +337,18 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 }
 
 /**
+ * Skip past any non-branch effects (which could be created with `createSubscriber`, for example) to find the next branch effect
+ * @param {Effect | null} effect
+ * @returns {Effect | null}
+ */
+function skip_to_branch(effect) {
+	while (effect !== null && (effect.f & BRANCH_EFFECT) === 0) {
+		effect = effect.next;
+	}
+	return effect;
+}
+
+/**
  * Add, remove, or reorder items output by an each block as its input changes
  * @template V
  * @param {EachState} state
@@ -351,7 +363,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 	var length = array.length;
 	var items = state.items;
-	var current = state.effect.first;
+	var current = skip_to_branch(state.effect.first);
 
 	/** @type {undefined | Set<Effect>} */
 	var seen;
@@ -431,7 +443,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 				matched = [];
 				stashed = [];
 
-				current = prev.next;
+				current = skip_to_branch(prev.next);
 				continue;
 			}
 		}
@@ -495,7 +507,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 			while (current !== null && current !== effect) {
 				(seen ??= new Set()).add(current);
 				stashed.push(current);
-				current = current.next;
+				current = skip_to_branch(current.next);
 			}
 
 			if (current === null) {
@@ -508,7 +520,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 		}
 
 		prev = effect;
-		current = effect.next;
+		current = skip_to_branch(effect.next);
 	}
 
 	if (state.outrogroups !== null) {
@@ -542,7 +554,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 				to_destroy.push(current);
 			}
 
-			current = current.next;
+			current = skip_to_branch(current.next);
 		}
 
 		var destroy_length = to_destroy.length;
