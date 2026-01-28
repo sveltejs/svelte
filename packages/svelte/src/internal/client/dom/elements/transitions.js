@@ -341,7 +341,7 @@ function animate(element, options, counterpart, t2, on_finish) {
 
 	counterpart?.deactivate();
 
-	if (!options?.duration && !options.delay) {
+	if (!options?.duration && !options?.delay) {
 		dispatch_event(element, is_intro ? 'introstart' : 'outrostart');
 		on_finish();
 
