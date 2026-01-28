@@ -107,7 +107,7 @@ export function is_capture_event(name) {
 }
 
 /** List of Element events that will be delegated */
-export const DELEGATED_EVENTS = [
+const DELEGATED_EVENTS = [
 	'beforeinput',
 	'click',
 	'change',
@@ -137,14 +137,14 @@ export const DELEGATED_EVENTS = [
  * Returns `true` if `event_name` is a delegated event
  * @param {string} event_name
  */
-export function is_delegated(event_name) {
+export function can_delegate_event(event_name) {
 	return DELEGATED_EVENTS.includes(event_name);
 }
 
 /**
  * Attributes that are boolean, i.e. they are present or not present.
  */
-export const DOM_BOOLEAN_ATTRIBUTES = [
+const DOM_BOOLEAN_ATTRIBUTES = [
 	'allowfullscreen',
 	'async',
 	'autofocus',
@@ -154,8 +154,8 @@ export const DOM_BOOLEAN_ATTRIBUTES = [
 	'default',
 	'disabled',
 	'formnovalidate',
-	'hidden',
 	'indeterminate',
+	'inert',
 	'ismap',
 	'loop',
 	'multiple',
@@ -169,7 +169,10 @@ export const DOM_BOOLEAN_ATTRIBUTES = [
 	'reversed',
 	'seamless',
 	'selected',
-	'webkitdirectory'
+	'webkitdirectory',
+	'defer',
+	'disablepictureinpicture',
+	'disableremoteplayback'
 ];
 
 /**
@@ -192,7 +195,14 @@ const ATTRIBUTE_ALIASES = {
 	ismap: 'isMap',
 	nomodule: 'noModule',
 	playsinline: 'playsInline',
-	readonly: 'readOnly'
+	readonly: 'readOnly',
+	defaultvalue: 'defaultValue',
+	defaultchecked: 'defaultChecked',
+	srcobject: 'srcObject',
+	novalidate: 'noValidate',
+	allowfullscreen: 'allowFullscreen',
+	disablepictureinpicture: 'disablePictureInPicture',
+	disableremoteplayback: 'disableRemotePlayback'
 };
 
 /**
@@ -211,8 +221,14 @@ const DOM_PROPERTIES = [
 	'playsInline',
 	'readOnly',
 	'value',
-	'inert',
-	'volume'
+	'volume',
+	'defaultValue',
+	'defaultChecked',
+	'srcObject',
+	'noValidate',
+	'allowFullscreen',
+	'disablePictureInPicture',
+	'disableRemotePlayback'
 ];
 
 /**
@@ -222,7 +238,27 @@ export function is_dom_property(name) {
 	return DOM_PROPERTIES.includes(name);
 }
 
-const PASSIVE_EVENTS = ['wheel', 'touchstart', 'touchmove', 'touchend', 'touchcancel'];
+const NON_STATIC_PROPERTIES = ['autofocus', 'muted', 'defaultValue', 'defaultChecked'];
+
+/**
+ * Returns `true` if the given attribute cannot be set through the template
+ * string, i.e. needs some kind of JavaScript handling to work.
+ * @param {string} name
+ */
+export function cannot_be_set_statically(name) {
+	return NON_STATIC_PROPERTIES.includes(name);
+}
+
+/**
+ * Subset of delegated events which should be passive by default.
+ * These two are already passive via browser defaults on window, document and body.
+ * But since
+ * - we're delegating them
+ * - they happen often
+ * - they apply to mobile which is generally less performant
+ * we're marking them as passive by default for other elements, too.
+ */
+const PASSIVE_EVENTS = ['touchstart', 'touchmove'];
 
 /**
  * Returns `true` if `name` is a passive event
@@ -391,28 +427,65 @@ export function is_mathml(name) {
 	return MATHML_ELEMENTS.includes(name);
 }
 
-const RUNES = /** @type {const} */ ([
+const STATE_CREATION_RUNES = /** @type {const} */ ([
 	'$state',
-	'$state.frozen',
-	'$state.snapshot',
-	'$state.is',
-	'$props',
-	'$bindable',
+	'$state.raw',
 	'$derived',
-	'$derived.by',
+	'$derived.by'
+]);
+
+const RUNES = /** @type {const} */ ([
+	...STATE_CREATION_RUNES,
+	'$state.eager',
+	'$state.snapshot',
+	'$props',
+	'$props.id',
+	'$bindable',
 	'$effect',
 	'$effect.pre',
 	'$effect.tracking',
 	'$effect.root',
+	'$effect.pending',
 	'$inspect',
 	'$inspect().with',
+	'$inspect.trace',
 	'$host'
 ]);
 
+/** @typedef {typeof RUNES[number]} RuneName */
+
 /**
  * @param {string} name
- * @returns {name is RUNES[number]}
+ * @returns {name is RuneName}
  */
 export function is_rune(name) {
-	return RUNES.includes(/** @type {RUNES[number]} */ (name));
+	return RUNES.includes(/** @type {RuneName} */ (name));
+}
+
+/** @typedef {typeof STATE_CREATION_RUNES[number]} StateCreationRuneName */
+
+/**
+ * @param {string} name
+ * @returns {name is StateCreationRuneName}
+ */
+export function is_state_creation_rune(name) {
+	return STATE_CREATION_RUNES.includes(/** @type {StateCreationRuneName} */ (name));
+}
+
+/** List of elements that require raw contents and should not have SSR comments put in them */
+const RAW_TEXT_ELEMENTS = /** @type {const} */ (['textarea', 'script', 'style', 'title']);
+
+/** @param {string} name */
+export function is_raw_text_element(name) {
+	return RAW_TEXT_ELEMENTS.includes(/** @type {typeof RAW_TEXT_ELEMENTS[number]} */ (name));
+}
+
+/**
+ * Prevent devtools trying to make `location` a clickable link by inserting a zero-width space
+ * @template {string | undefined} T
+ * @param {T} location
+ * @returns {T};
+ */
+export function sanitize_location(location) {
+	return /** @type {T} */ (location?.replace(/\//g, '/\u200b'));
 }

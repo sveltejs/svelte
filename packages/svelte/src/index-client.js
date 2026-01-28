@@ -1,33 +1,100 @@
 /** @import { ComponentContext, ComponentContextLegacy } from '#client' */
 /** @import { EventDispatcher } from './index.js' */
 /** @import { NotFunction } from './internal/types.js' */
-import { current_component_context, flush_sync, untrack } from './internal/client/runtime.js';
+import { active_reaction, untrack } from './internal/client/runtime.js';
 import { is_array } from './internal/shared/utils.js';
 import { user_effect } from './internal/client/index.js';
 import * as e from './internal/client/errors.js';
-import { lifecycle_outside_component } from './internal/shared/errors.js';
+import { legacy_mode_flag } from './internal/flags/index.js';
+import { component_context } from './internal/client/context.js';
+import { DEV } from 'esm-env';
+
+if (DEV) {
+	/**
+	 * @param {string} rune
+	 */
+	function throw_rune_error(rune) {
+		if (!(rune in globalThis)) {
+			// TODO if people start adjusting the "this can contain runes" config through v-p-s more, adjust this message
+			/** @type {any} */
+			let value; // let's hope noone modifies this global, but belts and braces
+			Object.defineProperty(globalThis, rune, {
+				configurable: true,
+				// eslint-disable-next-line getter-return
+				get: () => {
+					if (value !== undefined) {
+						return value;
+					}
+
+					e.rune_outside_svelte(rune);
+				},
+				set: (v) => {
+					value = v;
+				}
+			});
+		}
+	}
+
+	throw_rune_error('$state');
+	throw_rune_error('$effect');
+	throw_rune_error('$derived');
+	throw_rune_error('$inspect');
+	throw_rune_error('$props');
+	throw_rune_error('$bindable');
+}
 
 /**
- * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
- * It must be called during the component's initialisation (but doesn't need to live *inside* the component;
- * it can be called from an external module).
+ * Returns an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that aborts when the current [derived](https://svelte.dev/docs/svelte/$derived) or [effect](https://svelte.dev/docs/svelte/$effect) re-runs or is destroyed.
  *
- * If a function is returned _synchronously_ from `onMount`, it will be called when the component is unmounted.
+ * Must be called while a derived or effect is running.
  *
- * `onMount` does not run inside a [server-side component](https://svelte.dev/docs#run-time-server-side-component-api).
+ * ```svelte
+ * <script>
+ * 	import { getAbortSignal } from 'svelte';
  *
- * https://svelte.dev/docs/svelte#onmount
+ * 	let { id } = $props();
+ *
+ * 	async function getData(id) {
+ * 		const response = await fetch(`/items/${id}`, {
+ * 			signal: getAbortSignal()
+ * 		});
+ *
+ * 		return await response.json();
+ * 	}
+ *
+ * 	const data = $derived(await getData(id));
+ * </script>
+ * ```
+ */
+export function getAbortSignal() {
+	if (active_reaction === null) {
+		e.get_abort_signal_outside_reaction();
+	}
+
+	return (active_reaction.ac ??= new AbortController()).signal;
+}
+
+/**
+ * `onMount`, like [`$effect`](https://svelte.dev/docs/svelte/$effect), schedules a function to run as soon as the component has been mounted to the DOM.
+ * Unlike `$effect`, the provided function only runs once.
+ *
+ * It must be called during the component's initialisation (but doesn't need to live _inside_ the component;
+ * it can be called from an external module). If a function is returned _synchronously_ from `onMount`,
+ * it will be called when the component is unmounted.
+ *
+ * `onMount` functions do not run during [server-side rendering](https://svelte.dev/docs/svelte/svelte-server#render).
+ *
  * @template T
  * @param {() => NotFunction<T> | Promise<NotFunction<T>> | (() => any)} fn
  * @returns {void}
  */
 export function onMount(fn) {
-	if (current_component_context === null) {
-		lifecycle_outside_component('onMount');
+	if (component_context === null) {
+		e.lifecycle_outside_component('onMount');
 	}
 
-	if (current_component_context.l !== null) {
-		init_update_callbacks(current_component_context).m.push(fn);
+	if (legacy_mode_flag && component_context.l !== null) {
+		init_update_callbacks(component_context).m.push(fn);
 	} else {
 		user_effect(() => {
 			const cleanup = untrack(fn);
@@ -42,13 +109,12 @@ export function onMount(fn) {
  * Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the
  * only one that runs inside a server-side component.
  *
- * https://svelte.dev/docs/svelte#ondestroy
  * @param {() => any} fn
  * @returns {void}
  */
 export function onDestroy(fn) {
-	if (current_component_context === null) {
-		lifecycle_outside_component('onDestroy');
+	if (component_context === null) {
+		e.lifecycle_outside_component('onDestroy');
 	}
 
 	onMount(() => () => untrack(fn));
@@ -66,7 +132,7 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
 }
 
 /**
- * Creates an event dispatcher that can be used to dispatch [component events](https://svelte.dev/docs#template-syntax-component-directives-on-eventname).
+ * Creates an event dispatcher that can be used to dispatch [component events](https://svelte.dev/docs/svelte/legacy-on#Component-events).
  * Event dispatchers are functions that can take two arguments: `name` and `detail`.
  *
  * Component events created with `createEventDispatcher` create a
@@ -78,27 +144,30 @@ function create_custom_event(type, detail, { bubbles = false, cancelable = false
  * The event dispatcher can be typed to narrow the allowed event names and the type of the `detail` argument:
  * ```ts
  * const dispatch = createEventDispatcher<{
- *  loaded: never; // does not take a detail argument
+ *  loaded: null; // does not take a detail argument
  *  change: string; // takes a detail argument of type string, which is required
  *  optional: number | null; // takes an optional detail argument of type number
  * }>();
  * ```
  *
- * https://svelte.dev/docs/svelte#createeventdispatcher
- * @deprecated Use callback props and/or the `$host()` rune instead — see https://svelte-5-preview.vercel.app/docs/deprecations#createeventdispatcher
+ * @deprecated Use callback props and/or the `$host()` rune instead — see [migration guide](https://svelte.dev/docs/svelte/v5-migration-guide#Event-changes-Component-events)
  * @template {Record<string, any>} [EventMap = any]
  * @returns {EventDispatcher<EventMap>}
  */
 export function createEventDispatcher() {
-	const component_context = current_component_context;
-	if (component_context === null) {
-		lifecycle_outside_component('createEventDispatcher');
+	const active_component_context = component_context;
+	if (active_component_context === null) {
+		e.lifecycle_outside_component('createEventDispatcher');
 	}
 
+	/**
+	 * @param [detail]
+	 * @param [options]
+	 */
 	return (type, detail, options) => {
 		const events = /** @type {Record<string, Function | Function[]>} */ (
-			component_context.s.$$events
-		)?.[/** @type {any} */ (type)];
+			active_component_context.s.$$events
+		)?.[/** @type {string} */ (type)];
 
 		if (events) {
 			const callbacks = is_array(events) ? events.slice() : [events];
@@ -106,7 +175,7 @@ export function createEventDispatcher() {
 			// in a server (non-DOM) environment?
 			const event = create_custom_event(/** @type {string} */ (type), detail, options);
 			for (const fn of callbacks) {
-				fn.call(component_context.x, event);
+				fn.call(active_component_context.x, event);
 			}
 			return !event.defaultPrevented;
 		}
@@ -124,21 +193,20 @@ export function createEventDispatcher() {
  *
  * In runes mode use `$effect.pre` instead.
  *
- * https://svelte.dev/docs/svelte#beforeupdate
- * @deprecated Use `$effect.pre` instead — see https://svelte-5-preview.vercel.app/docs/deprecations#beforeupdate-and-afterupdate
+ * @deprecated Use [`$effect.pre`](https://svelte.dev/docs/svelte/$effect#$effect.pre) instead
  * @param {() => void} fn
  * @returns {void}
  */
 export function beforeUpdate(fn) {
-	if (current_component_context === null) {
-		lifecycle_outside_component('beforeUpdate');
+	if (component_context === null) {
+		e.lifecycle_outside_component('beforeUpdate');
 	}
 
-	if (current_component_context.l === null) {
+	if (component_context.l === null) {
 		e.lifecycle_legacy_only('beforeUpdate');
 	}
 
-	init_update_callbacks(current_component_context).b.push(fn);
+	init_update_callbacks(component_context).b.push(fn);
 }
 
 /**
@@ -148,21 +216,20 @@ export function beforeUpdate(fn) {
  *
  * In runes mode use `$effect` instead.
  *
- * https://svelte.dev/docs/svelte#afterupdate
- * @deprecated Use `$effect` instead — see https://svelte-5-preview.vercel.app/docs/deprecations#beforeupdate-and-afterupdate
+ * @deprecated Use [`$effect`](https://svelte.dev/docs/svelte/$effect) instead
  * @param {() => void} fn
  * @returns {void}
  */
 export function afterUpdate(fn) {
-	if (current_component_context === null) {
-		lifecycle_outside_component('afterUpdate');
+	if (component_context === null) {
+		e.lifecycle_outside_component('afterUpdate');
 	}
 
-	if (current_component_context.l === null) {
+	if (component_context.l === null) {
 		e.lifecycle_legacy_only('afterUpdate');
 	}
 
-	init_update_callbacks(current_component_context).a.push(fn);
+	init_update_callbacks(component_context).a.push(fn);
 }
 
 /**
@@ -174,24 +241,15 @@ function init_update_callbacks(context) {
 	return (l.u ??= { a: [], b: [], m: [] });
 }
 
-/**
- * Synchronously flushes any pending state changes and those that result from it.
- * @param {() => void} [fn]
- * @returns {void}
- */
-export function flushSync(fn) {
-	flush_sync(fn);
-}
-
-export { hydrate, mount, unmount } from './internal/client/render.js';
-
+export { flushSync, fork } from './internal/client/reactivity/batch.js';
 export {
+	createContext,
 	getContext,
 	getAllContexts,
 	hasContext,
-	setContext,
-	tick,
-	untrack
-} from './internal/client/runtime.js';
-
+	setContext
+} from './internal/client/context.js';
+export { hydratable } from './internal/client/hydratable.js';
+export { hydrate, mount, unmount } from './internal/client/render.js';
+export { tick, untrack, settled } from './internal/client/runtime.js';
 export { createRawSnippet } from './internal/client/dom/blocks/snippet.js';

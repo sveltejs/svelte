@@ -1,11 +1,11 @@
 /** @import { Expression } from 'estree' */
-/** @import { UseDirective } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { parse_directive_name } from './shared/utils.js';
 
 /**
- * @param {UseDirective} node
+ * @param {AST.UseDirective} node
  * @param {ComponentContext} context
  */
 export function UseDirective(node, context) {
@@ -20,7 +20,10 @@ export function UseDirective(node, context) {
 		context.state.node,
 		b.arrow(
 			params,
-			b.call(/** @type {Expression} */ (context.visit(parse_directive_name(node.name))), ...params)
+			b.maybe_call(
+				/** @type {Expression} */ (context.visit(parse_directive_name(node.name))),
+				...params
+			)
 		)
 	];
 
@@ -29,6 +32,18 @@ export function UseDirective(node, context) {
 	}
 
 	// actions need to run after attribute updates in order with bindings/events
-	context.state.after_update.push(b.stmt(b.call('$.action', ...args)));
+	let statement = b.stmt(b.call('$.action', ...args));
+
+	if (node.metadata.expression.is_async()) {
+		statement = b.stmt(
+			b.call(
+				'$.run_after_blockers',
+				node.metadata.expression.blockers(),
+				b.thunk(b.block([statement]))
+			)
+		);
+	}
+
+	context.state.init.push(statement);
 	context.next();
 }

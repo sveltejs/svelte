@@ -1,213 +1,134 @@
-/** @import { ComponentType, SvelteComponent } from 'svelte' */
-/** @import { Component, Payload, RenderOutput } from '#server' */
+/** @import { ComponentType, SvelteComponent, Component } from 'svelte' */
+/** @import { Csp, RenderOutput } from '#server' */
 /** @import { Store } from '#shared' */
 export { FILENAME, HMR } from '../../constants.js';
+import { attr, clsx, to_class, to_style } from '../shared/attributes.js';
 import { is_promise, noop } from '../shared/utils.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import {
 	UNINITIALIZED,
 	ELEMENT_PRESERVE_ATTRIBUTE_CASE,
-	ELEMENT_IS_NAMESPACED
+	ELEMENT_IS_NAMESPACED,
+	ELEMENT_IS_INPUT
 } from '../../constants.js';
-
 import { escape_html } from '../../escaping.js';
 import { DEV } from 'esm-env';
-import { current_component, pop, push } from './context.js';
-import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
+import { EMPTY_COMMENT, BLOCK_CLOSE, BLOCK_OPEN, BLOCK_OPEN_ELSE } from './hydration.js';
 import { validate_store } from '../shared/validate.js';
-import { is_boolean_attribute, is_void } from '../../utils.js';
+import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
+import { Renderer } from './renderer.js';
+import * as e from './errors.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
 const INVALID_ATTR_NAME_CHAR_REGEX =
 	/[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
 
-/** List of elements that require raw contents and should not have SSR comments put in them */
-const RAW_TEXT_ELEMENTS = ['textarea', 'script', 'style', 'title'];
-
 /**
- * @param {Payload} to_copy
- * @returns {Payload}
- */
-export function copy_payload({ out, css, head }) {
-	return {
-		out,
-		css: new Set(css),
-		head: {
-			title: head.title,
-			out: head.out
-		}
-	};
-}
-
-/**
- * Assigns second payload to first
- * @param {Payload} p1
- * @param {Payload} p2
- * @returns {void}
- */
-export function assign_payload(p1, p2) {
-	p1.out = p2.out;
-	p1.head = p2.head;
-}
-
-/**
- * @param {Payload} payload
+ * @param {Renderer} renderer
  * @param {string} tag
  * @param {() => void} attributes_fn
  * @param {() => void} children_fn
  * @returns {void}
  */
-export function element(payload, tag, attributes_fn = noop, children_fn = noop) {
-	payload.out += '<!---->';
+export function element(renderer, tag, attributes_fn = noop, children_fn = noop) {
+	renderer.push('<!---->');
 
 	if (tag) {
-		payload.out += `<${tag} `;
+		renderer.push(`<${tag}`);
 		attributes_fn();
-		payload.out += `>`;
+		renderer.push(`>`);
 
 		if (!is_void(tag)) {
 			children_fn();
-			if (!RAW_TEXT_ELEMENTS.includes(tag)) {
-				payload.out += EMPTY_COMMENT;
+			if (!is_raw_text_element(tag)) {
+				renderer.push(EMPTY_COMMENT);
 			}
-			payload.out += `</${tag}>`;
+			renderer.push(`</${tag}>`);
 		}
 	}
 
-	payload.out += '<!---->';
+	renderer.push('<!---->');
 }
-
-/**
- * Array of `onDestroy` callbacks that should be called at the end of the server render function
- * @type {Function[]}
- */
-export let on_destroy = [];
 
 /**
  * Only available on the server and when compiling with the `server` option.
  * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
  * @template {Record<string, any>} Props
- * @param {import('svelte').Component<Props> | ComponentType<SvelteComponent<Props>>} component
- * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any> }} [options]
+ * @param {Component<Props> | ComponentType<SvelteComponent<Props>>} component
+ * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} [options]
  * @returns {RenderOutput}
  */
 export function render(component, options = {}) {
-	/** @type {Payload} */
-	const payload = { out: '', css: new Set(), head: { title: '', out: '' } };
-
-	const prev_on_destroy = on_destroy;
-	on_destroy = [];
-	payload.out += BLOCK_OPEN;
-
-	if (options.context) {
-		push();
-		/** @type {Component} */ (current_component).c = options.context;
+	if (options.csp?.hash && options.csp.nonce) {
+		e.invalid_csp();
 	}
-
-	// @ts-expect-error
-	component(payload, options.props ?? {}, {}, {});
-
-	if (options.context) {
-		pop();
-	}
-
-	payload.out += BLOCK_CLOSE;
-	for (const cleanup of on_destroy) cleanup();
-	on_destroy = prev_on_destroy;
-
-	let head = payload.head.out + payload.head.title;
-
-	for (const { hash, code } of payload.css) {
-		head += `<style id="${hash}">${code}</style>`;
-	}
-
-	return {
-		head,
-		html: payload.out,
-		body: payload.out
-	};
+	return Renderer.render(/** @type {Component<Props>} */ (component), options);
 }
 
 /**
- * @param {Payload} payload
- * @param {(head_payload: Payload['head']) => void} fn
+ * @param {string} hash
+ * @param {Renderer} renderer
+ * @param {(renderer: Renderer) => Promise<void> | void} fn
  * @returns {void}
  */
-export function head(payload, fn) {
-	const head_payload = payload.head;
-	head_payload.out += BLOCK_OPEN;
-	fn(head_payload);
-	head_payload.out += BLOCK_CLOSE;
+export function head(hash, renderer, fn) {
+	renderer.head((renderer) => {
+		renderer.push(`<!--${hash}-->`);
+		renderer.child(fn);
+		renderer.push(EMPTY_COMMENT);
+	});
 }
 
 /**
- * @template V
- * @param {string} name
- * @param {V} value
- * @param {boolean} [is_boolean]
- * @returns {string}
- */
-export function attr(name, value, is_boolean = false) {
-	if (value == null || (!value && is_boolean) || (value === '' && name === 'class')) return '';
-	const assignment = is_boolean ? '' : `="${escape_html(value, true)}"`;
-	return ` ${name}${assignment}`;
-}
-
-/**
- * @param {Payload} payload
+ * @param {Renderer} renderer
  * @param {boolean} is_html
  * @param {Record<string, string>} props
  * @param {() => void} component
  * @param {boolean} dynamic
  * @returns {void}
  */
-export function css_props(payload, is_html, props, component, dynamic = false) {
+export function css_props(renderer, is_html, props, component, dynamic = false) {
 	const styles = style_object_to_string(props);
 
 	if (is_html) {
-		payload.out += `<div style="display: contents; ${styles}">`;
+		renderer.push(`<svelte-css-wrapper style="display: contents; ${styles}">`);
 	} else {
-		payload.out += `<g style="${styles}">`;
+		renderer.push(`<g style="${styles}">`);
 	}
 
 	if (dynamic) {
-		payload.out += '<!---->';
+		renderer.push('<!---->');
 	}
 
 	component();
 
 	if (is_html) {
-		payload.out += `<!----></div>`;
+		renderer.push(`<!----></svelte-css-wrapper>`);
 	} else {
-		payload.out += `<!----></g>`;
+		renderer.push(`<!----></g>`);
 	}
 }
 
 /**
  * @param {Record<string, unknown>} attrs
- * @param {Record<string, string>} [classes]
+ * @param {string} [css_hash]
+ * @param {Record<string, boolean>} [classes]
  * @param {Record<string, string>} [styles]
  * @param {number} [flags]
  * @returns {string}
  */
-export function spread_attributes(attrs, classes, styles, flags = 0) {
+export function attributes(attrs, css_hash, classes, styles, flags = 0) {
 	if (styles) {
-		attrs.style = attrs.style
-			? style_object_to_string(merge_styles(/** @type {string} */ (attrs.style), styles))
-			: style_object_to_string(styles);
+		attrs.style = to_style(attrs.style, styles);
 	}
 
-	if (classes) {
-		const classlist = attrs.class ? [attrs.class] : [];
+	if (attrs.class) {
+		attrs.class = clsx(attrs.class);
+	}
 
-		for (const key in classes) {
-			if (classes[key]) {
-				classlist.push(key);
-			}
-		}
-
-		attrs.class = classlist.join(' ');
+	if (css_hash || classes) {
+		attrs.class = to_class(attrs.class, css_hash, classes);
 	}
 
 	let attr_str = '';
@@ -215,6 +136,7 @@ export function spread_attributes(attrs, classes, styles, flags = 0) {
 
 	const is_html = (flags & ELEMENT_IS_NAMESPACED) === 0;
 	const lowercase = (flags & ELEMENT_PRESERVE_ATTRIBUTE_CASE) === 0;
+	const is_input = (flags & ELEMENT_IS_INPUT) !== 0;
 
 	for (name in attrs) {
 		// omit functions, internal svelte properties and invalid attribute names
@@ -222,11 +144,20 @@ export function spread_attributes(attrs, classes, styles, flags = 0) {
 		if (name[0] === '$' && name[1] === '$') continue; // faster than name.startsWith('$$')
 		if (INVALID_ATTR_NAME_CHAR_REGEX.test(name)) continue;
 
+		var value = attrs[name];
+
 		if (lowercase) {
 			name = name.toLowerCase();
 		}
 
-		attr_str += attr(name, attrs[name], is_html && is_boolean_attribute(name));
+		if (is_input) {
+			if (name === 'defaultvalue' || name === 'defaultchecked') {
+				name = name === 'defaultvalue' ? 'value' : 'checked';
+				if (attrs[name]) continue;
+			}
+		}
+
+		attr_str += attr(name, value, is_html && is_boolean_attribute(name));
 	}
 
 	return attr_str;
@@ -244,7 +175,12 @@ export function spread_props(props) {
 	for (let i = 0; i < props.length; i++) {
 		const obj = props[i];
 		for (key in obj) {
-			merged_props[key] = obj[key];
+			const desc = Object.getOwnPropertyDescriptor(obj, key);
+			if (desc) {
+				Object.defineProperty(merged_props, key, desc);
+			} else {
+				merged_props[key] = obj[key];
+			}
 		}
 	}
 	return merged_props;
@@ -266,35 +202,23 @@ function style_object_to_string(style_object) {
 		.join(' ');
 }
 
-/** @param {Record<string, string>} style_object */
-export function add_styles(style_object) {
-	const styles = style_object_to_string(style_object);
-	return styles ? ` style="${styles}"` : '';
+/**
+ * @param {any} value
+ * @param {string | undefined} [hash]
+ * @param {Record<string, boolean>} [directives]
+ */
+export function attr_class(value, hash, directives) {
+	var result = to_class(value, hash, directives);
+	return result ? ` class="${escape_html(result, true)}"` : '';
 }
 
 /**
- * @param {string} attribute
- * @param {Record<string, string>} styles
+ * @param {any} value
+ * @param {Record<string,any>|[Record<string,any>,Record<string,any>]} [directives]
  */
-export function merge_styles(attribute, styles) {
-	/** @type {Record<string, string>} */
-	var merged = {};
-
-	if (attribute) {
-		for (var declaration of attribute.split(';')) {
-			var i = declaration.indexOf(':');
-			var name = declaration.slice(0, i).trim();
-			var value = declaration.slice(i + 1).trim();
-
-			if (name !== '') merged[name] = value;
-		}
-	}
-
-	for (name in styles) {
-		merged[name] = styles[name];
-	}
-
-	return merged;
+export function attr_style(value, directives) {
+	var result = to_style(value, directives);
+	return result ? ` style="${escape_html(result, true)}"` : '';
 }
 
 /**
@@ -384,35 +308,22 @@ export function unsubscribe_stores(store_values) {
 }
 
 /**
- * @template V
- * @param {V} value
- * @param {() => V} fallback lazy because could contain side effects
- * @returns {V}
- */
-export function value_or_fallback(value, fallback) {
-	return value === undefined ? fallback() : value;
-}
-
-/**
- * @template V
- * @param {V} value
- * @param {() => Promise<V>} fallback lazy because could contain side effects
- * @returns {Promise<V>}
- */
-export async function value_or_fallback_async(value, fallback) {
-	return value === undefined ? fallback() : value;
-}
-
-/**
- * @param {Payload} payload
- * @param {void | ((payload: Payload, props: Record<string, unknown>) => void)} slot_fn
+ * @param {Renderer} renderer
+ * @param {Record<string, any>} $$props
+ * @param {string} name
  * @param {Record<string, unknown>} slot_props
  * @param {null | (() => void)} fallback_fn
  * @returns {void}
  */
-export function slot(payload, slot_fn, slot_props, fallback_fn) {
+export function slot(renderer, $$props, name, slot_props, fallback_fn) {
+	var slot_fn = $$props.$$slots?.[name];
+	// Interop: Can use snippets to fill slots
+	if (slot_fn === true) {
+		slot_fn = $$props[name === 'default' ? 'children' : name];
+	}
+
 	if (slot_fn !== undefined) {
-		slot_fn(payload, slot_props);
+		slot_fn(renderer, slot_props);
 	} else {
 		fallback_fn?.();
 	}
@@ -480,18 +391,21 @@ export function bind_props(props_parent, props_now) {
 
 /**
  * @template V
+ * @param {Renderer} renderer
  * @param {Promise<V>} promise
  * @param {null | (() => void)} pending_fn
  * @param {(value: V) => void} then_fn
  * @returns {void}
  */
-function await_block(promise, pending_fn, then_fn) {
+function await_block(renderer, promise, pending_fn, then_fn) {
 	if (is_promise(promise)) {
+		renderer.push(BLOCK_OPEN);
 		promise.then(null, noop);
 		if (pending_fn !== null) {
 			pending_fn();
 		}
 	} else if (then_fn !== null) {
+		renderer.push(BLOCK_OPEN_ELSE);
 		then_fn(promise);
 	}
 }
@@ -500,18 +414,12 @@ export { await_block as await };
 
 /** @param {any} array_like_or_iterator */
 export function ensure_array_like(array_like_or_iterator) {
-	return array_like_or_iterator?.length !== undefined
-		? array_like_or_iterator
-		: Array.from(array_like_or_iterator);
-}
-
-/**
- * @param {any[]} args
- * @param {Function} [inspect]
- */
-// eslint-disable-next-line no-console
-export function inspect(args, inspect = console.log) {
-	inspect('init', ...args);
+	if (array_like_or_iterator) {
+		return array_like_or_iterator.length !== undefined
+			? array_like_or_iterator
+			: Array.from(array_like_or_iterator);
+	}
+	return [];
 }
 
 /**
@@ -528,20 +436,55 @@ export function once(get_value) {
 	};
 }
 
+/**
+ * Create an unique ID
+ * @param {Renderer} renderer
+ * @returns {string}
+ */
+export function props_id(renderer) {
+	const uid = renderer.global.uid();
+	renderer.push('<!--$' + uid + '-->');
+	return uid;
+}
+
+export { attr, clsx };
+
 export { html } from './blocks/html.js';
 
-export { push, pop } from './context.js';
+export { save } from './context.js';
 
-export { push_element, pop_element } from './dev.js';
+export { push_element, pop_element, validate_snippet_args } from './dev.js';
 
 export { snapshot } from '../shared/clone.js';
+
+export { fallback, to_array } from '../shared/utils.js';
 
 export {
 	invalid_default_snippet,
 	validate_dynamic_element_tag,
-	validate_void_dynamic_element
+	validate_void_dynamic_element,
+	prevent_snippet_stringification
 } from '../shared/validate.js';
 
 export { escape_html as escape };
 
-export { default_slot } from '../client/dom/legacy/misc.js';
+/**
+ * @template T
+ * @param {()=>T} fn
+ * @returns {(new_value?: T) => (T | void)}
+ */
+export function derived(fn) {
+	const get_value = once(fn);
+	/**
+	 * @type {T | undefined}
+	 */
+	let updated_value;
+
+	return function (new_value) {
+		if (arguments.length === 0) {
+			return updated_value ?? get_value();
+		}
+		updated_value = new_value;
+		return updated_value;
+	};
+}

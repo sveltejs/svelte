@@ -3,7 +3,7 @@ import { CompileDiagnostic } from './utils/compile_diagnostic.js';
 
 /** @typedef {{ start?: number, end?: number }} NodeLike */
 
-export class InternalCompileWarning extends CompileDiagnostic {
+class InternalCompileWarning extends CompileDiagnostic {
 	name = 'CompileWarning';
 
 	/**
@@ -47,5 +47,5 @@ export const codes = CODES;
  * @param {string} PARAMETER
  */
 export function CODE(node, PARAMETER) {
-	w(node, 'CODE', MESSAGE);
+	w(node, 'CODE', `${MESSAGE}\nhttps://svelte.dev/e/${'CODE'}`);
 }

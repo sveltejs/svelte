@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 import { store } from './store.js';
 
@@ -6,10 +7,9 @@ export default test({
 	before_test() {
 		store.reset();
 	},
-	async test({ assert, target }) {
+	test({ assert, target }) {
 		store.set(42);
-
-		await Promise.resolve();
+		flushSync();
 
 		assert.htmlEqual(target.innerHTML, '<h1>42</h1>');
 

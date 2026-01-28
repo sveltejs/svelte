@@ -1,10 +1,11 @@
-/** @import { AwaitBlock } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import { validate_block_not_empty, validate_opening_tag } from './shared/utils.js';
 import * as e from '../../../errors.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
- * @param {AwaitBlock} node
+ * @param {AST.AwaitBlock} node
  * @param {Context} context
  */
 export function AwaitBlock(node, context) {
@@ -38,5 +39,10 @@ export function AwaitBlock(node, context) {
 		}
 	}
 
-	context.next();
+	mark_subtree_dynamic(context.path);
+
+	context.visit(node.expression, { ...context.state, expression: node.metadata.expression });
+	if (node.pending) context.visit(node.pending);
+	if (node.then) context.visit(node.then);
+	if (node.catch) context.visit(node.catch);
 }

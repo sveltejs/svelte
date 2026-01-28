@@ -2,4 +2,4 @@
 	export let height;
 </script>
 
-<button style:height></button>
+<button style:height>click me</button>

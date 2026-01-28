@@ -17,13 +17,11 @@ export function init_array_prototype_warnings() {
 		const index = indexOf.call(this, item, from_index);
 
 		if (index === -1) {
-			const test = indexOf.call(get_proxied_value(this), get_proxied_value(item), from_index);
-
-			if (test !== -1) {
-				w.state_proxy_equality_mismatch(
-					'array.indexOf(...)',
-					': `array.findIndex(entry => $state.is(entry, item))`'
-				);
+			for (let i = from_index ?? 0; i < this.length; i += 1) {
+				if (get_proxied_value(this[i]) === item) {
+					w.state_proxy_equality_mismatch('array.indexOf(...)');
+					break;
+				}
 			}
 		}
 
@@ -36,19 +34,11 @@ export function init_array_prototype_warnings() {
 		const index = lastIndexOf.call(this, item, from_index ?? this.length - 1);
 
 		if (index === -1) {
-			// we need to specify this.length - 1 because it's probably using something like
-			// `arguments` inside so passing undefined is different from not passing anything
-			const test = lastIndexOf.call(
-				get_proxied_value(this),
-				get_proxied_value(item),
-				from_index ?? this.length - 1
-			);
-
-			if (test !== -1) {
-				w.state_proxy_equality_mismatch(
-					'array.lastIndexOf(...)',
-					': `array.findLastIndex(entry => $state.is(entry, item))`'
-				);
+			for (let i = 0; i <= (from_index ?? this.length - 1); i += 1) {
+				if (get_proxied_value(this[i]) === item) {
+					w.state_proxy_equality_mismatch('array.lastIndexOf(...)');
+					break;
+				}
 			}
 		}
 
@@ -59,13 +49,11 @@ export function init_array_prototype_warnings() {
 		const has = includes.call(this, item, from_index);
 
 		if (!has) {
-			const test = includes.call(get_proxied_value(this), get_proxied_value(item), from_index);
-
-			if (test) {
-				w.state_proxy_equality_mismatch(
-					'array.includes(...)',
-					': `array.some(entry => $state.is(entry, item))`'
-				);
+			for (let i = 0; i < this.length; i += 1) {
+				if (get_proxied_value(this[i]) === item) {
+					w.state_proxy_equality_mismatch('array.includes(...)');
+					break;
+				}
 			}
 		}
 
@@ -87,9 +75,13 @@ export function init_array_prototype_warnings() {
  * @returns {boolean}
  */
 export function strict_equals(a, b, equal = true) {
-	if ((a === b) !== (get_proxied_value(a) === get_proxied_value(b))) {
-		w.state_proxy_equality_mismatch(equal ? '===' : '!==', '');
-	}
+	// try-catch needed because this tries to read properties of `a` and `b`,
+	// which could be disallowed for example in a secure context
+	try {
+		if ((a === b) !== (get_proxied_value(a) === get_proxied_value(b))) {
+			w.state_proxy_equality_mismatch(equal ? '===' : '!==');
+		}
+	} catch {}
 
 	return (a === b) === equal;
 }
@@ -102,7 +94,7 @@ export function strict_equals(a, b, equal = true) {
  */
 export function equals(a, b, equal = true) {
 	if ((a == b) !== (get_proxied_value(a) == get_proxied_value(b))) {
-		w.state_proxy_equality_mismatch(equal ? '==' : '!=', '');
+		w.state_proxy_equality_mismatch(equal ? '==' : '!=');
 	}
 
 	return (a == b) === equal;

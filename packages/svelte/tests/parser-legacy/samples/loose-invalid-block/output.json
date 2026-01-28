@@ -1,0 +1,131 @@
+{
+	"html": {
+		"type": "Fragment",
+		"start": 0,
+		"end": 102,
+		"children": [
+			{
+				"type": "IfBlock",
+				"start": 0,
+				"end": 33,
+				"expression": {
+					"type": "Identifier",
+					"start": 5,
+					"end": 5,
+					"name": ""
+				},
+				"children": [],
+				"else": {
+					"type": "ElseBlock",
+					"start": 18,
+					"end": 28,
+					"children": [
+						{
+							"type": "IfBlock",
+							"start": 18,
+							"end": 33,
+							"expression": {
+								"type": "Identifier",
+								"start": 17,
+								"end": 17,
+								"name": ""
+							},
+							"children": [],
+							"else": {
+								"type": "ElseBlock",
+								"start": 27,
+								"end": 28,
+								"children": []
+							},
+							"elseif": true
+						}
+					]
+				}
+			},
+			{
+				"type": "Text",
+				"start": 33,
+				"end": 35,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "EachBlock",
+				"start": 35,
+				"end": 51,
+				"children": [],
+				"context": null,
+				"expression": {
+					"type": "Identifier",
+					"start": 42,
+					"end": 42,
+					"name": ""
+				}
+			},
+			{
+				"type": "Text",
+				"start": 51,
+				"end": 53,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "SnippetBlock",
+				"start": 53,
+				"end": 75,
+				"expression": {
+					"type": "Identifier",
+					"name": "",
+					"start": 63,
+					"end": 63,
+					"loc": {
+						"start": {
+							"line": 9,
+							"column": 10,
+							"character": 63
+						},
+						"end": {
+							"line": 9,
+							"column": 10,
+							"character": 63
+						}
+					}
+				},
+				"parameters": [],
+				"children": []
+			},
+			{
+				"type": "Text",
+				"start": 75,
+				"end": 77,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "SnippetBlock",
+				"start": 77,
+				"end": 102,
+				"expression": {
+					"type": "Identifier",
+					"name": "foo",
+					"start": 87,
+					"end": 90,
+					"loc": {
+						"start": {
+							"line": 12,
+							"column": 10,
+							"character": 87
+						},
+						"end": {
+							"line": 12,
+							"column": 13,
+							"character": 90
+						}
+					}
+				},
+				"parameters": [],
+				"children": []
+			}
+		]
+	}
+}

@@ -22,7 +22,18 @@
 						"end": 692,
 						"type": "EventHandler",
 						"name": "click",
-						"modifiers": [],
+						"name_loc": {
+							"start": {
+								"line": 34,
+								"column": 1,
+								"character": 574
+							},
+							"end": {
+								"line": 34,
+								"column": 9,
+								"character": 582
+							}
+						},
 						"expression": {
 							"type": "ArrowFunctionExpression",
 							"start": 596,
@@ -137,7 +148,8 @@
 									"end": 594
 								}
 							]
-						}
+						},
+						"modifiers": []
 					}
 				],
 				"children": [
@@ -286,7 +298,7 @@
 				},
 				"end": {
 					"line": 31,
-					"column": 0
+					"column": 9
 				}
 			},
 			"body": [

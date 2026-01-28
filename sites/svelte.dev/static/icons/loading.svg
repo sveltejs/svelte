@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" style="width:24px;height:24px" viewBox="0 0 24 24">
-  <circle id="spinner" cx="12" cy="12" r="8" fill="none" stroke="white" stroke-width="3" stroke-dasharray="50.2 50" />
-  <animate href="#spinner" attributeName="stroke-dashoffset" values="52;0;52" dur="5s" repeatCount="indefinite" />
-  <animateTransform href="#spinner" attributeName="transform" type="rotate" values="0 12 12;360 12 12;0 12 12" dur="9s" repeatCount="indefinite"/>
-</svg>

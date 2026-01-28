@@ -1,4 +1,6 @@
-import { source, set } from '../internal/client/reactivity/sources.js';
+import { DEV } from 'esm-env';
+import { set, state } from '../internal/client/reactivity/sources.js';
+import { tag } from '../internal/client/dev/tracing.js';
 import { get } from '../internal/client/runtime.js';
 import { REPLACE, SvelteURLSearchParams } from './url-search-params.js';
 
@@ -10,15 +12,42 @@ export function get_current_url() {
 	return current_url;
 }
 
+/**
+ * A reactive version of the built-in [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) object.
+ * Reading properties of the URL (such as `url.href` or `url.pathname`) in an [effect](https://svelte.dev/docs/svelte/$effect) or [derived](https://svelte.dev/docs/svelte/$derived)
+ * will cause it to be re-evaluated as necessary when the URL changes.
+ *
+ * The `searchParams` property is an instance of [SvelteURLSearchParams](https://svelte.dev/docs/svelte/svelte-reactivity#SvelteURLSearchParams).
+ *
+ * [Example](https://svelte.dev/playground/5a694758901b448c83dc40dc31c71f2a):
+ *
+ * ```svelte
+ * <script>
+ * 	import { SvelteURL } from 'svelte/reactivity';
+ *
+ * 	const url = new SvelteURL('https://example.com/path');
+ * </script>
+ *
+ * <!-- changes to these... -->
+ * <input bind:value={url.protocol} />
+ * <input bind:value={url.hostname} />
+ * <input bind:value={url.pathname} />
+ *
+ * <hr />
+ *
+ * <!-- will update `href` and vice versa -->
+ * <input bind:value={url.href} size="65" />
+ * ```
+ */
 export class SvelteURL extends URL {
-	#protocol = source(super.protocol);
-	#username = source(super.username);
-	#password = source(super.password);
-	#hostname = source(super.hostname);
-	#port = source(super.port);
-	#pathname = source(super.pathname);
-	#hash = source(super.hash);
-	#search = source(super.search);
+	#protocol = state(super.protocol);
+	#username = state(super.username);
+	#password = state(super.password);
+	#hostname = state(super.hostname);
+	#port = state(super.port);
+	#pathname = state(super.pathname);
+	#hash = state(super.hash);
+	#search = state(super.search);
 	#searchParams;
 
 	/**
@@ -28,6 +57,17 @@ export class SvelteURL extends URL {
 	constructor(url, base) {
 		url = new URL(url, base);
 		super(url);
+
+		if (DEV) {
+			tag(this.#protocol, 'SvelteURL.protocol');
+			tag(this.#username, 'SvelteURL.username');
+			tag(this.#password, 'SvelteURL.password');
+			tag(this.#hostname, 'SvelteURL.hostname');
+			tag(this.#port, 'SvelteURL.port');
+			tag(this.#pathname, 'SvelteURL.pathname');
+			tag(this.#hash, 'SvelteURL.hash');
+			tag(this.#search, 'SvelteURL.search');
+		}
 
 		current_url = this;
 		this.#searchParams = new SvelteURLSearchParams(url.searchParams);

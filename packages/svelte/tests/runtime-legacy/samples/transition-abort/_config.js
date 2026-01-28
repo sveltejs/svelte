@@ -27,6 +27,8 @@ export default test({
 			array: ['a', 'b', 'c']
 		});
 
+		raf.tick(25);
+
 		raf.tick(50);
 		assert.htmlEqual(
 			target.innerHTML,

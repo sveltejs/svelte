@@ -1,223 +1,111 @@
-/** @import { ClassBody, Expression, Identifier, Literal, MethodDefinition, PrivateIdentifier, PropertyDefinition } from 'estree' */
-/** @import {  } from '#compiler' */
-/** @import { Context, StateField } from '../types' */
-import { dev, is_ignored } from '../../../../state.js';
-import * as b from '../../../../utils/builders.js';
-import { regex_invalid_identifier_chars } from '../../../patterns.js';
-import { get_rune } from '../../../scope.js';
-import { build_proxy_reassignment, should_proxy_or_freeze } from '../utils.js';
+/** @import { CallExpression, ClassBody, ClassDeclaration, ClassExpression, MethodDefinition, PropertyDefinition, StaticBlock } from 'estree' */
+/** @import { StateField } from '#compiler' */
+/** @import { Context } from '../types' */
+import * as b from '#compiler/builders';
+import { dev } from '../../../../state.js';
+import { get_parent } from '../../../../utils/ast.js';
+import { get_name } from '../../../nodes.js';
 
 /**
  * @param {ClassBody} node
  * @param {Context} context
  */
 export function ClassBody(node, context) {
-	if (!context.state.analysis.runes) {
+	const state_fields = context.state.analysis.classes.get(node);
+
+	if (!state_fields) {
+		// in legacy mode, do nothing
 		context.next();
 		return;
 	}
 
-	/** @type {Map<string, StateField>} */
-	const public_state = new Map();
-
-	/** @type {Map<string, StateField>} */
-	const private_state = new Map();
-
-	/** @type {string[]} */
-	const private_ids = [];
-
-	for (const definition of node.body) {
-		if (
-			definition.type === 'PropertyDefinition' &&
-			(definition.key.type === 'Identifier' ||
-				definition.key.type === 'PrivateIdentifier' ||
-				definition.key.type === 'Literal')
-		) {
-			const type = definition.key.type;
-			const name = get_name(definition.key);
-			if (!name) continue;
-
-			const is_private = type === 'PrivateIdentifier';
-			if (is_private) private_ids.push(name);
-
-			if (definition.value?.type === 'CallExpression') {
-				const rune = get_rune(definition.value, context.state.scope);
-				if (
-					rune === '$state' ||
-					rune === '$state.frozen' ||
-					rune === '$derived' ||
-					rune === '$derived.by'
-				) {
-					/** @type {StateField} */
-					const field = {
-						kind:
-							rune === '$state'
-								? 'state'
-								: rune === '$state.frozen'
-									? 'frozen_state'
-									: rune === '$derived.by'
-										? 'derived_by'
-										: 'derived',
-						// @ts-expect-error this is set in the next pass
-						id: is_private ? definition.key : null
-					};
-
-					if (is_private) {
-						private_state.set(name, field);
-					} else {
-						public_state.set(name, field);
-					}
-				}
-			}
-		}
-	}
-
-	// each `foo = $state()` needs a backing `#foo` field
-	for (const [name, field] of public_state) {
-		let deconflicted = name;
-		while (private_ids.includes(deconflicted)) {
-			deconflicted = '_' + deconflicted;
-		}
-
-		private_ids.push(deconflicted);
-		field.id = b.private_id(deconflicted);
-	}
-
-	/** @type {Array<MethodDefinition | PropertyDefinition>} */
+	/** @type {Array<MethodDefinition | PropertyDefinition | StaticBlock>} */
 	const body = [];
 
-	const child_state = { ...context.state, public_state, private_state };
+	const child_state = { ...context.state, state_fields };
+
+	for (const [name, field] of state_fields) {
+		if (name[0] === '#') {
+			continue;
+		}
+
+		// insert backing fields for stuff declared in the constructor
+		if (field.node.type === 'AssignmentExpression') {
+			const member = b.member(b.this, field.key);
+
+			const should_proxy = field.type === '$state' && true; // TODO
+
+			const key = b.key(name);
+
+			body.push(
+				b.prop_def(field.key, null),
+
+				b.method('get', key, [], [b.return(b.call('$.get', member))]),
+
+				b.method(
+					'set',
+					key,
+					[b.id('value')],
+					[b.stmt(b.call('$.set', member, b.id('value'), should_proxy && b.true))]
+				)
+			);
+		}
+	}
+
+	const declaration = /** @type {ClassDeclaration | ClassExpression} */ (
+		get_parent(context.path, -1)
+	);
 
 	// Replace parts of the class body
 	for (const definition of node.body) {
-		if (
-			definition.type === 'PropertyDefinition' &&
-			(definition.key.type === 'Identifier' ||
-				definition.key.type === 'PrivateIdentifier' ||
-				definition.key.type === 'Literal')
-		) {
-			const name = get_name(definition.key);
-			if (!name) continue;
-
-			const is_private = definition.key.type === 'PrivateIdentifier';
-			const field = (is_private ? private_state : public_state).get(name);
-
-			if (definition.value?.type === 'CallExpression' && field !== undefined) {
-				let value = null;
-
-				if (definition.value.arguments.length > 0) {
-					const init = /** @type {Expression} **/ (
-						context.visit(definition.value.arguments[0], child_state)
-					);
-
-					value =
-						field.kind === 'state'
-							? b.call(
-									'$.source',
-									should_proxy_or_freeze(init, context.state.scope) ? b.call('$.proxy', init) : init
-								)
-							: field.kind === 'frozen_state'
-								? b.call(
-										'$.source',
-										should_proxy_or_freeze(init, context.state.scope)
-											? b.call('$.freeze', init)
-											: init
-									)
-								: field.kind === 'derived_by'
-									? b.call('$.derived', init)
-									: b.call('$.derived', b.thunk(init));
-				} else {
-					// if no arguments, we know it's state as `$derived()` is a compile error
-					value = b.call('$.source');
-				}
-
-				if (is_private) {
-					body.push(b.prop_def(field.id, value));
-				} else {
-					// #foo;
-					const member = b.member(b.this, field.id);
-					body.push(b.prop_def(field.id, value));
-
-					// get foo() { return this.#foo; }
-					body.push(b.method('get', definition.key, [], [b.return(b.call('$.get', member))]));
-
-					if (field.kind === 'state') {
-						// set foo(value) { this.#foo = value; }
-						const value = b.id('value');
-						body.push(
-							b.method(
-								'set',
-								definition.key,
-								[value],
-								[b.stmt(b.call('$.set', member, build_proxy_reassignment(value, field.id)))]
-							)
-						);
-					}
-
-					if (field.kind === 'frozen_state') {
-						// set foo(value) { this.#foo = value; }
-						const value = b.id('value');
-						body.push(
-							b.method(
-								'set',
-								definition.key,
-								[value],
-								[b.stmt(b.call('$.set', member, b.call('$.freeze', value)))]
-							)
-						);
-					}
-
-					if (dev && (field.kind === 'derived' || field.kind === 'derived_by')) {
-						body.push(
-							b.method(
-								'set',
-								definition.key,
-								[b.id('_')],
-								[b.throw_error(`Cannot update a derived property ('${name}')`)]
-							)
-						);
-					}
-				}
-				continue;
-			}
+		if (definition.type !== 'PropertyDefinition') {
+			body.push(
+				/** @type {MethodDefinition | StaticBlock} */ (context.visit(definition, child_state))
+			);
+			continue;
 		}
 
-		body.push(/** @type {MethodDefinition} **/ (context.visit(definition, child_state)));
-	}
+		const name = get_name(definition.key);
+		const field = name && /** @type {StateField} */ (state_fields.get(name));
 
-	if (dev && public_state.size > 0) {
-		// add an `[$.ADD_OWNER]` method so that a class with state fields can widen ownership
-		body.push(
-			b.method(
-				'method',
-				b.id('$.ADD_OWNER'),
-				[b.id('owner')],
-				Array.from(public_state.keys()).map((name) =>
-					b.stmt(
-						b.call(
-							'$.add_owner',
-							b.call('$.get', b.member(b.this, b.private_id(name))),
-							b.id('owner'),
-							b.literal(false),
-							is_ignored(node, 'ownership_invalid_binding') && b.true
-						)
-					)
-				),
-				true
-			)
-		);
+		if (!field) {
+			body.push(/** @type {PropertyDefinition} */ (context.visit(definition, child_state)));
+			continue;
+		}
+
+		if (name[0] === '#') {
+			let value = definition.value
+				? /** @type {CallExpression} */ (context.visit(definition.value, child_state))
+				: undefined;
+
+			if (dev && field.node === definition) {
+				value = b.call('$.tag', value, b.literal(`${declaration.id?.name ?? '[class]'}.${name}`));
+			}
+
+			body.push(b.prop_def(definition.key, value));
+		} else if (field.node === definition) {
+			let call = /** @type {CallExpression} */ (context.visit(field.value, child_state));
+
+			if (dev) {
+				call = b.call('$.tag', call, b.literal(`${declaration.id?.name ?? '[class]'}.${name}`));
+			}
+			const member = b.member(b.this, field.key);
+			const should_proxy = field.type === '$state' && true; // TODO
+
+			body.push(
+				b.prop_def(field.key, call),
+
+				b.method('get', definition.key, [], [b.return(b.call('$.get', member))]),
+
+				b.method(
+					'set',
+					definition.key,
+					[b.id('value')],
+					[b.stmt(b.call('$.set', member, b.id('value'), should_proxy && b.true))]
+				)
+			);
+		}
 	}
 
 	return { ...node, body };
-}
-
-/**
- * @param {Identifier | PrivateIdentifier | Literal} node
- */
-function get_name(node) {
-	if (node.type === 'Literal') {
-		return node.value?.toString().replace(regex_invalid_identifier_chars, '_');
-	} else {
-		return node.name;
-	}
 }

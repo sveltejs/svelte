@@ -1,7 +1,8 @@
 /** @import { Context, Visitors } from 'zimmerframe' */
 /** @import { FunctionExpression, FunctionDeclaration } from 'estree' */
 import { walk } from 'zimmerframe';
-import * as b from '../../utils/builders.js';
+import * as b from '#compiler/builders';
+import * as e from '../../errors.js';
 
 /**
  * @param {FunctionExpression | FunctionDeclaration} node
@@ -16,6 +17,23 @@ function remove_this_param(node, context) {
 
 /** @type {Visitors<any, null>} */
 const visitors = {
+	_(node, context) {
+		const n = context.next() ?? node;
+
+		// TODO there may come a time when we decide to preserve type annotations.
+		// until that day comes, we just delete them so they don't confuse esrap
+		delete n.typeAnnotation;
+		delete n.typeParameters;
+		delete n.typeArguments;
+		delete n.returnType;
+		delete n.accessibility;
+		delete n.readonly;
+		delete n.definite;
+		delete n.override;
+	},
+	Decorator(node) {
+		e.typescript_invalid_feature(node, 'decorators (related TSC proposal is not stage 4 yet)');
+	},
 	ImportDeclaration(node) {
 		if (node.importKind === 'type') return b.empty;
 
@@ -32,7 +50,11 @@ const visitors = {
 		if (node.exportKind === 'type') return b.empty;
 
 		if (node.declaration) {
-			return context.next();
+			const result = context.next();
+			if (result?.declaration?.type === 'EmptyStatement') {
+				return b.empty;
+			}
+			return result;
 		}
 
 		if (node.specifiers) {
@@ -52,6 +74,15 @@ const visitors = {
 		if (node.exportKind === 'type') return b.empty;
 		return node;
 	},
+	PropertyDefinition(node, { next }) {
+		if (node.accessor) {
+			e.typescript_invalid_feature(
+				node,
+				'accessor fields (related TSC proposal is not stage 4 yet)'
+			);
+		}
+		return next();
+	},
 	TSAsExpression(node, context) {
 		return context.visit(node.expression);
 	},
@@ -67,29 +98,76 @@ const visitors = {
 	TSTypeAliasDeclaration() {
 		return b.empty;
 	},
-	TSTypeParameterDeclaration() {
-		return b.empty;
+	TSTypeAssertion(node, context) {
+		return context.visit(node.expression);
 	},
-	TSTypeParameterInstantiation() {
-		return b.empty;
+	TSEnumDeclaration(node) {
+		e.typescript_invalid_feature(node, 'enums');
 	},
-	TSEnumDeclaration() {
-		return b.empty;
-	},
-	TSParameterProperty(node) {
-		return node.parameter;
-	},
-	Identifier(node) {
-		if (node.typeAnnotation) {
-			return {
-				...node,
-				typeAnnotation: null
-			};
+	TSParameterProperty(node, context) {
+		if ((node.readonly || node.accessibility) && context.path.at(-2)?.kind === 'constructor') {
+			e.typescript_invalid_feature(node, 'accessibility modifiers on constructor parameters');
 		}
-		return node;
+		return context.visit(node.parameter);
+	},
+	TSInstantiationExpression(node, context) {
+		return context.visit(node.expression);
 	},
 	FunctionExpression: remove_this_param,
-	FunctionDeclaration: remove_this_param
+	FunctionDeclaration: remove_this_param,
+	TSDeclareFunction() {
+		return b.empty;
+	},
+	ClassBody(node, context) {
+		const body = [];
+		for (const _child of node.body) {
+			const child = context.visit(_child);
+			if (child.type !== 'PropertyDefinition' || !child.declare) {
+				body.push(child);
+			}
+		}
+		return {
+			...node,
+			body
+		};
+	},
+	ClassDeclaration(node, context) {
+		if (node.declare) {
+			return b.empty;
+		}
+		delete node.abstract;
+		delete node.implements;
+		delete node.superTypeArguments;
+		return context.next();
+	},
+	ClassExpression(node, context) {
+		delete node.implements;
+		delete node.superTypeArguments;
+		return context.next();
+	},
+	MethodDefinition(node, context) {
+		if (node.abstract) {
+			return b.empty;
+		}
+		return context.next();
+	},
+	VariableDeclaration(node, context) {
+		if (node.declare) {
+			return b.empty;
+		}
+		return context.next();
+	},
+	TSModuleDeclaration(node, context) {
+		if (!node.body) return b.empty;
+
+		// namespaces can contain non-type nodes
+		const cleaned = /** @type {any[]} */ (node.body.body).map((entry) => context.visit(entry));
+		if (cleaned.some((entry) => entry !== b.empty)) {
+			e.typescript_invalid_feature(node, 'namespaces with non-type nodes');
+		}
+
+		return b.empty;
+	}
 };
 
 /**

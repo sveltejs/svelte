@@ -1,0 +1,26 @@
+[
+	{
+		"code": "options_missing_custom_element",
+		"end": {
+			"column": 34,
+			"line": 1
+		},
+		"message": "The `customElement` option is used when generating a custom element. Did you forget the `customElement: true` compile option?",
+		"start": {
+			"column": 16,
+			"line": 1
+		}
+	},
+	{
+		"code": "custom_element_props_identifier",
+		"end": {
+			"column": 15,
+			"line": 4
+		},
+		"message": "Using a rest element or a non-destructured declaration with `$props()` means that Svelte can't infer what properties to expose when creating a custom element. Consider destructuring all the props or explicitly specifying the `customElement.props` option.",
+		"start": {
+			"column": 7,
+			"line": 4
+		}
+	}
+]

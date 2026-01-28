@@ -1,19 +1,9 @@
-/** @import { Location } from 'locate-character' */
 /** @import { Pattern } from 'estree' */
 /** @import { Parser } from '../index.js' */
-// @ts-expect-error acorn type definitions are borked in the release we use
-import { isIdentifierStart } from 'acorn';
-import full_char_code_at from '../utils/full_char_code_at.js';
-import {
-	is_bracket_open,
-	is_bracket_close,
-	is_bracket_pair,
-	get_bracket_close
-} from '../utils/bracket.js';
+import { match_bracket } from '../utils/bracket.js';
 import { parse_expression_at } from '../acorn.js';
 import { regex_not_newline_characters } from '../../patterns.js';
 import * as e from '../../../errors.js';
-import { locator } from '../../../state.js';
 
 /**
  * @param {Parser} parser
@@ -23,51 +13,28 @@ export default function read_pattern(parser) {
 	const start = parser.index;
 	let i = parser.index;
 
-	const code = full_char_code_at(parser.template, i);
-	if (isIdentifierStart(code, true)) {
-		const name = /** @type {string} */ (parser.read_identifier());
+	const id = parser.read_identifier();
+
+	if (id.name !== '') {
 		const annotation = read_type_annotation(parser);
 
 		return {
-			type: 'Identifier',
-			name,
-			start,
-			loc: {
-				start: /** @type {Location} */ (locator(start)),
-				end: /** @type {Location} */ (locator(parser.index))
-			},
-			end: parser.index,
+			...id,
 			typeAnnotation: annotation
 		};
 	}
 
-	if (!is_bracket_open(code)) {
+	const char = parser.template[i];
+
+	if (char !== '{' && char !== '[') {
 		e.expected_pattern(i);
 	}
 
-	const bracket_stack = [code];
-	i += code <= 0xffff ? 1 : 2;
-
-	while (i < parser.template.length) {
-		const code = full_char_code_at(parser.template, i);
-		if (is_bracket_open(code)) {
-			bracket_stack.push(code);
-		} else if (is_bracket_close(code)) {
-			const popped = /** @type {number} */ (bracket_stack.pop());
-			if (!is_bracket_pair(popped, code)) {
-				e.expected_token(i, String.fromCharCode(/** @type {number} */ (get_bracket_close(popped))));
-			}
-			if (bracket_stack.length === 0) {
-				i += code <= 0xffff ? 1 : 2;
-				break;
-			}
-		}
-		i += code <= 0xffff ? 1 : 2;
-	}
-
+	i = match_bracket(parser, start);
 	parser.index = i;
 
 	const pattern_string = parser.template.slice(start, i);
+
 	try {
 		// the length of the `space_with_newline` has to be start - 1
 		// because we added a `(` in front of the pattern_string,
@@ -83,7 +50,12 @@ export default function read_pattern(parser) {
 			space_with_newline.slice(0, first_space) + space_with_newline.slice(first_space + 1);
 
 		const expression = /** @type {any} */ (
-			parse_expression_at(`${space_with_newline}(${pattern_string} = 1)`, parser.ts, start - 1)
+			parse_expression_at(
+				`${space_with_newline}(${pattern_string} = 1)`,
+				parser.root.comments,
+				parser.ts,
+				start - 1
+			)
 		).left;
 
 		expression.typeAnnotation = read_type_annotation(parser);
@@ -120,13 +92,13 @@ function read_type_annotation(parser) {
 		// parameters as part of a sequence expression instead, and will then error on optional
 		// parameters (`?:`). Therefore replace that sequence with something that will not error.
 		parser.template.slice(parser.index).replace(/\?\s*:/g, ':');
-	let expression = parse_expression_at(template, parser.ts, a);
+	let expression = parse_expression_at(template, parser.root.comments, parser.ts, a);
 
 	// `foo: bar = baz` gets mangled — fix it
 	if (expression.type === 'AssignmentExpression') {
 		let b = expression.right.start;
 		while (template[b] !== '=') b -= 1;
-		expression = parse_expression_at(template.slice(0, b), parser.ts, a);
+		expression = parse_expression_at(template.slice(0, b), parser.root.comments, parser.ts, a);
 	}
 
 	// `array as item: string, index` becomes `string, index`, which is mistaken as a sequence expression - fix that

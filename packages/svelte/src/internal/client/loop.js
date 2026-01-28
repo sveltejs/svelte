@@ -4,10 +4,13 @@ import { raf } from './timing.js';
 // TODO move this into timing.js where it probably belongs
 
 /**
- * @param {number} now
  * @returns {void}
  */
-function run_tasks(now) {
+function run_tasks() {
+	// use `raf.now()` instead of the `requestAnimationFrame` callback argument, because
+	// otherwise things can get wonky https://github.com/sveltejs/svelte/pull/14541
+	const now = raf.now();
+
 	raf.tasks.forEach((task) => {
 		if (!task.c(now)) {
 			raf.tasks.delete(task);

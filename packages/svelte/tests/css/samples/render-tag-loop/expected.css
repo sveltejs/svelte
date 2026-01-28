@@ -1,0 +1,13 @@
+
+	div.svelte-xyz div:where(.svelte-xyz) {
+		color: green;
+	}
+	div.svelte-xyz + div:where(.svelte-xyz) {
+		color: green;
+	}
+	div.svelte-xyz:has(div:where(.svelte-xyz)) {
+		color: green;
+	}
+	span.svelte-xyz:has(~span:where(.svelte-xyz)) {
+		color: green;
+	}

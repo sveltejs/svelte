@@ -1,0 +1,10 @@
+
+	.foo.svelte-xyz {
+		> .bar:where(.svelte-xyz) {
+			color: red;
+		}
+
+		/* (unused) ~ .unused {
+			color: red;
+		}*/
+	}

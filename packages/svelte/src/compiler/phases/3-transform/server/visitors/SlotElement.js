@@ -1,11 +1,17 @@
-/** @import { BlockStatement, Expression, ExpressionStatement, Property } from 'estree' */
-/** @import { SlotElement } from '#compiler' */
+/** @import { BlockStatement, Expression, Literal, Property } from 'estree' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
-import * as b from '../../../../utils/builders.js';
-import { empty_comment, build_attribute_value } from './shared/utils.js';
+import * as b from '#compiler/builders';
+import {
+	build_attribute_value,
+	PromiseOptimiser,
+	create_async_block,
+	block_open,
+	block_close
+} from './shared/utils.js';
 
 /**
- * @param {SlotElement} node
+ * @param {AST.SlotElement} node
  * @param {ComponentContext} context
  */
 export function SlotElement(node, context) {
@@ -15,17 +21,25 @@ export function SlotElement(node, context) {
 	/** @type {Expression[]} */
 	const spreads = [];
 
-	/** @type {Expression} */
-	let expression = b.call('$.default_slot', b.id('$$props'));
+	const optimiser = new PromiseOptimiser();
+
+	let name = b.literal('default');
 
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'SpreadAttribute') {
-			spreads.push(/** @type {Expression} */ (context.visit(attribute)));
+			let expression = /** @type {Expression} */ (context.visit(attribute));
+			spreads.push(optimiser.transform(expression, attribute.metadata.expression));
 		} else if (attribute.type === 'Attribute') {
-			const value = build_attribute_value(attribute.value, context, false, true);
+			const value = build_attribute_value(
+				attribute.value,
+				context,
+				optimiser.transform,
+				false,
+				true
+			);
 
 			if (attribute.name === 'name') {
-				expression = b.member(b.member_id('$$props.$$slots'), value, true, true);
+				name = /** @type {Literal} */ (value);
 			} else if (attribute.name !== 'slot') {
 				props.push(b.init(attribute.name, value));
 			}
@@ -39,10 +53,25 @@ export function SlotElement(node, context) {
 
 	const fallback =
 		node.fragment.nodes.length === 0
-			? b.literal(null)
+			? b.null
 			: b.thunk(/** @type {BlockStatement} */ (context.visit(node.fragment)));
 
-	const slot = b.call('$.slot', b.id('$$payload'), expression, props_expression, fallback);
+	const slot = b.call(
+		'$.slot',
+		b.id('$$renderer'),
+		b.id('$$props'),
+		name,
+		props_expression,
+		fallback
+	);
 
-	context.state.template.push(empty_comment, b.stmt(slot), empty_comment);
+	const statement = optimiser.is_async()
+		? create_async_block(
+				b.block([optimiser.apply(), b.stmt(slot)]),
+				optimiser.blockers(),
+				optimiser.has_await
+			)
+		: b.stmt(slot);
+
+	context.state.template.push(block_open, statement, block_close);
 }

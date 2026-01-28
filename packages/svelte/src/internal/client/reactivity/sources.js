@@ -1,19 +1,19 @@
 /** @import { Derived, Effect, Source, Value } from '#client' */
 import { DEV } from 'esm-env';
 import {
-	current_component_context,
-	current_reaction,
-	new_deps,
-	current_effect,
-	current_untracked_writes,
+	active_reaction,
+	active_effect,
+	untracked_writes,
 	get,
-	is_runes,
-	schedule_effect,
-	set_current_untracked_writes,
-	set_signal_status,
+	set_untracked_writes,
 	untrack,
-	increment_version,
-	update_effect
+	increment_write_version,
+	update_effect,
+	current_sources,
+	is_dirty,
+	untracking,
+	is_destroying_effect,
+	push_reaction_value
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -21,44 +21,103 @@ import {
 	DERIVED,
 	DIRTY,
 	BRANCH_EFFECT,
-	INSPECT_EFFECT,
-	UNOWNED,
-	MAYBE_DIRTY
-} from '../constants.js';
+	EAGER_EFFECT,
+	MAYBE_DIRTY,
+	BLOCK_EFFECT,
+	ROOT_EFFECT,
+	ASYNC,
+	WAS_MARKED,
+	CONNECTED
+} from '#client/constants';
 import * as e from '../errors.js';
+import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
+import { includes } from '../../shared/utils.js';
+import { tag_proxy } from '../dev/tracing.js';
+import { get_error } from '../../shared/dev.js';
+import { component_context, is_runes } from '../context.js';
+import { Batch, batch_values, eager_block_effects, schedule_effect } from './batch.js';
+import { proxy } from '../proxy.js';
+import { execute_derived } from './deriveds.js';
+import { set_signal_status, update_derived_status } from './status.js';
 
-let inspect_effects = new Set();
+/** @type {Set<any>} */
+export let eager_effects = new Set();
+
+/** @type {Map<Source, any>} */
+export const old_values = new Map();
+
+/**
+ * @param {Set<any>} v
+ */
+export function set_eager_effects(v) {
+	eager_effects = v;
+}
+
+let eager_effects_deferred = false;
+
+export function set_eager_effects_deferred() {
+	eager_effects_deferred = true;
+}
 
 /**
  * @template V
  * @param {V} v
+ * @param {Error | null} [stack]
  * @returns {Source<V>}
  */
-/*#__NO_SIDE_EFFECTS__*/
-export function source(v) {
-	return {
+// TODO rename this to `state` throughout the codebase
+export function source(v, stack) {
+	/** @type {Value} */
+	var signal = {
 		f: 0, // TODO ideally we could skip this altogether, but it causes type errors
 		v,
 		reactions: null,
 		equals,
-		version: 0
+		rv: 0,
+		wv: 0
 	};
+
+	if (DEV && tracing_mode_flag) {
+		signal.created = stack ?? get_error('created at');
+		signal.updated = null;
+		signal.set_during_effect = false;
+		signal.trace = null;
+	}
+
+	return signal;
+}
+
+/**
+ * @template V
+ * @param {V} v
+ * @param {Error | null} [stack]
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function state(v, stack) {
+	const s = source(v, stack);
+
+	push_reaction_value(s);
+
+	return s;
 }
 
 /**
  * @template V
  * @param {V} initial_value
+ * @param {boolean} [immutable]
  * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function mutable_source(initial_value) {
+export function mutable_source(initial_value, immutable = false, trackable = true) {
 	const s = source(initial_value);
-	s.equals = safe_equals;
+	if (!immutable) {
+		s.equals = safe_equals;
+	}
 
 	// bind the signal to the component context, in case we need to
 	// track updates to trigger beforeUpdate/afterUpdate callbacks
-	if (current_component_context !== null && current_component_context.l !== null) {
-		(current_component_context.l.s ??= []).push(s);
+	if (legacy_mode_flag && trackable && component_context !== null && component_context.l !== null) {
+		(component_context.l.s ??= []).push(s);
 	}
 
 	return s;
@@ -81,52 +140,177 @@ export function mutate(source, value) {
  * @template V
  * @param {Source<V>} source
  * @param {V} value
+ * @param {boolean} [should_proxy]
  * @returns {V}
  */
-export function set(source, value) {
-	if (current_reaction !== null && is_runes() && (current_reaction.f & DERIVED) !== 0) {
+export function set(source, value, should_proxy = false) {
+	if (
+		active_reaction !== null &&
+		// since we are untracking the function inside `$inspect.with` we need to add this check
+		// to ensure we error if state is set inside an inspect effect
+		(!untracking || (active_reaction.f & EAGER_EFFECT) !== 0) &&
+		is_runes() &&
+		(active_reaction.f & (DERIVED | BLOCK_EFFECT | ASYNC | EAGER_EFFECT)) !== 0 &&
+		(current_sources === null || !includes.call(current_sources, source))
+	) {
 		e.state_unsafe_mutation();
 	}
 
-	if (!source.equals(value)) {
-		source.v = value;
-		source.version = increment_version();
+	let new_value = should_proxy ? proxy(value) : value;
 
+	if (DEV) {
+		tag_proxy(new_value, /** @type {string} */ (source.label));
+	}
+
+	return internal_set(source, new_value);
+}
+
+/**
+ * @template V
+ * @param {Source<V>} source
+ * @param {V} value
+ * @returns {V}
+ */
+export function internal_set(source, value) {
+	if (!source.equals(value)) {
+		var old_value = source.v;
+
+		if (is_destroying_effect) {
+			old_values.set(source, value);
+		} else {
+			old_values.set(source, old_value);
+		}
+
+		source.v = value;
+
+		var batch = Batch.ensure();
+		batch.capture(source, old_value);
+
+		if (DEV) {
+			if (tracing_mode_flag || active_effect !== null) {
+				source.updated ??= new Map();
+
+				// For performance reasons, when not using $inspect.trace, we only start collecting stack traces
+				// after the same source has been updated more than 5 times in the same flush cycle.
+				const count = (source.updated.get('')?.count ?? 0) + 1;
+				source.updated.set('', { error: /** @type {any} */ (null), count });
+
+				if (tracing_mode_flag || count > 5) {
+					const error = get_error('updated at');
+
+					if (error !== null) {
+						let entry = source.updated.get(error.stack);
+
+						if (!entry) {
+							entry = { error, count: 0 };
+							source.updated.set(error.stack, entry);
+						}
+
+						entry.count++;
+					}
+				}
+			}
+
+			if (active_effect !== null) {
+				source.set_during_effect = true;
+			}
+		}
+
+		if ((source.f & DERIVED) !== 0) {
+			const derived = /** @type {Derived} */ (source);
+
+			// if we are assigning to a dirty derived we set it to clean/maybe dirty but we also eagerly execute it to track the dependencies
+			if ((source.f & DIRTY) !== 0) {
+				execute_derived(derived);
+			}
+
+			update_derived_status(derived);
+		}
+
+		source.wv = increment_write_version();
+
+		// For debugging, in case you want to know which reactions are being scheduled:
+		// log_reactions(source);
 		mark_reactions(source, DIRTY);
 
-		// If the current signal is running for the first time, it won't have any
-		// reactions as we only allocate and assign the reactions after the signal
-		// has fully executed. So in the case of ensuring it registers the reaction
+		// It's possible that the current reaction might not have up-to-date dependencies
+		// whilst it's actively running. So in the case of ensuring it registers the reaction
 		// properly for itself, we need to ensure the current effect actually gets
 		// scheduled. i.e: `$effect(() => x++)`
 		if (
 			is_runes() &&
-			current_effect !== null &&
-			(current_effect.f & CLEAN) !== 0 &&
-			(current_effect.f & BRANCH_EFFECT) === 0
+			active_effect !== null &&
+			(active_effect.f & CLEAN) !== 0 &&
+			(active_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0
 		) {
-			if (new_deps !== null && new_deps.includes(source)) {
-				set_signal_status(current_effect, DIRTY);
-				schedule_effect(current_effect);
+			if (untracked_writes === null) {
+				set_untracked_writes([source]);
 			} else {
-				if (current_untracked_writes === null) {
-					set_current_untracked_writes([source]);
-				} else {
-					current_untracked_writes.push(source);
-				}
+				untracked_writes.push(source);
 			}
 		}
 
-		if (DEV) {
-			for (const effect of inspect_effects) {
-				update_effect(effect);
-			}
-
-			inspect_effects.clear();
+		if (!batch.is_fork && eager_effects.size > 0 && !eager_effects_deferred) {
+			flush_eager_effects();
 		}
 	}
 
 	return value;
+}
+
+export function flush_eager_effects() {
+	eager_effects_deferred = false;
+
+	for (const effect of eager_effects) {
+		// Mark clean inspect-effects as maybe dirty and then check their dirtiness
+		// instead of just updating the effects - this way we avoid overfiring.
+		if ((effect.f & CLEAN) !== 0) {
+			set_signal_status(effect, MAYBE_DIRTY);
+		}
+
+		if (is_dirty(effect)) {
+			update_effect(effect);
+		}
+	}
+
+	eager_effects.clear();
+}
+
+/**
+ * @template {number | bigint} T
+ * @param {Source<T>} source
+ * @param {1 | -1} [d]
+ * @returns {T}
+ */
+export function update(source, d = 1) {
+	var value = get(source);
+	var result = d === 1 ? value++ : value--;
+
+	set(source, value);
+
+	// @ts-expect-error
+	return result;
+}
+
+/**
+ * @template {number | bigint} T
+ * @param {Source<T>} source
+ * @param {1 | -1} [d]
+ * @returns {T}
+ */
+export function update_pre(source, d = 1) {
+	var value = get(source);
+
+	// @ts-expect-error
+	return set(source, d === 1 ? ++value : --value);
+}
+
+/**
+ * Silently (without using `get`) increment a source
+ * @param {Source<number>} source
+ */
+export function increment(source) {
+	set(source, source.v + 1);
 }
 
 /**
@@ -145,27 +329,41 @@ function mark_reactions(signal, status) {
 		var reaction = reactions[i];
 		var flags = reaction.f;
 
-		// Skip any effects that are already dirty
-		if ((flags & DIRTY) !== 0) continue;
-
 		// In legacy mode, skip the current effect to prevent infinite loops
-		if (!runes && reaction === current_effect) continue;
+		if (!runes && reaction === active_effect) continue;
 
 		// Inspect effects need to run immediately, so that the stack trace makes sense
-		if (DEV && (flags & INSPECT_EFFECT) !== 0) {
-			inspect_effects.add(reaction);
+		if (DEV && (flags & EAGER_EFFECT) !== 0) {
+			eager_effects.add(reaction);
 			continue;
 		}
 
-		set_signal_status(reaction, status);
+		var not_dirty = (flags & DIRTY) === 0;
 
-		// If the signal a) was previously clean or b) is an unowned derived, then mark it
-		if ((flags & (CLEAN | UNOWNED)) !== 0) {
-			if ((flags & DERIVED) !== 0) {
-				mark_reactions(/** @type {Derived} */ (reaction), MAYBE_DIRTY);
-			} else {
-				schedule_effect(/** @type {Effect} */ (reaction));
+		// don't set a DIRTY reaction to MAYBE_DIRTY
+		if (not_dirty) {
+			set_signal_status(reaction, status);
+		}
+
+		if ((flags & DERIVED) !== 0) {
+			var derived = /** @type {Derived} */ (reaction);
+
+			batch_values?.delete(derived);
+
+			if ((flags & WAS_MARKED) === 0) {
+				// Only connected deriveds can be reliably unmarked right away
+				if (flags & CONNECTED) {
+					reaction.f |= WAS_MARKED;
+				}
+
+				mark_reactions(derived, MAYBE_DIRTY);
 			}
+		} else if (not_dirty) {
+			if ((flags & BLOCK_EFFECT) !== 0 && eager_block_effects !== null) {
+				eager_block_effects.add(/** @type {Effect} */ (reaction));
+			}
+
+			schedule_effect(/** @type {Effect} */ (reaction));
 		}
 	}
 }

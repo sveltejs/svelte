@@ -1,0 +1,592 @@
+{
+	"html": {
+		"type": "Fragment",
+		"start": 0,
+		"end": 324,
+		"children": [
+			{
+				"type": "Element",
+				"start": 0,
+				"end": 14,
+				"name": "div",
+				"attributes": [
+					{
+						"type": "Attribute",
+						"start": 5,
+						"end": 7,
+						"name": "",
+						"name_loc": {
+							"start": {
+								"line": 1,
+								"column": 6,
+								"character": 6
+							},
+							"end": {
+								"line": 1,
+								"column": 6,
+								"character": 6
+							}
+						},
+						"value": [
+							{
+								"type": "AttributeShorthand",
+								"start": 6,
+								"end": 6,
+								"expression": {
+									"type": "Identifier",
+									"name": "",
+									"start": 6,
+									"end": 6,
+									"loc": {
+										"start": {
+											"line": 1,
+											"column": 6,
+											"character": 6
+										},
+										"end": {
+											"line": 1,
+											"column": 6,
+											"character": 6
+										}
+									}
+								}
+							}
+						]
+					}
+				],
+				"children": []
+			},
+			{
+				"type": "Text",
+				"start": 14,
+				"end": 15,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "Element",
+				"start": 15,
+				"end": 33,
+				"name": "div",
+				"attributes": [
+					{
+						"type": "Attribute",
+						"start": 20,
+						"end": 26,
+						"name": "foo",
+						"name_loc": {
+							"start": {
+								"line": 2,
+								"column": 5,
+								"character": 20
+							},
+							"end": {
+								"line": 2,
+								"column": 8,
+								"character": 23
+							}
+						},
+						"value": [
+							{
+								"type": "MustacheTag",
+								"start": 24,
+								"end": 26,
+								"expression": {
+									"type": "Identifier",
+									"start": 25,
+									"end": 25,
+									"name": ""
+								}
+							}
+						]
+					}
+				],
+				"children": []
+			},
+			{
+				"type": "Text",
+				"start": 33,
+				"end": 35,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "Element",
+				"start": 35,
+				"end": 55,
+				"name": "div",
+				"attributes": [
+					{
+						"type": "Attribute",
+						"start": 40,
+						"end": 48,
+						"name": "foo",
+						"name_loc": {
+							"start": {
+								"line": 4,
+								"column": 5,
+								"character": 40
+							},
+							"end": {
+								"line": 4,
+								"column": 8,
+								"character": 43
+							}
+						},
+						"value": [
+							{
+								"type": "MustacheTag",
+								"start": 44,
+								"end": 48,
+								"expression": {
+									"type": "Identifier",
+									"start": 45,
+									"end": 47,
+									"name": ""
+								}
+							}
+						]
+					}
+				],
+				"children": []
+			},
+			{
+				"type": "Text",
+				"start": 55,
+				"end": 56,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "Element",
+				"start": 56,
+				"end": 80,
+				"name": "div",
+				"attributes": [
+					{
+						"type": "Attribute",
+						"start": 61,
+						"end": 73,
+						"name": "foo",
+						"name_loc": {
+							"start": {
+								"line": 5,
+								"column": 5,
+								"character": 61
+							},
+							"end": {
+								"line": 5,
+								"column": 8,
+								"character": 64
+							}
+						},
+						"value": [
+							{
+								"type": "MustacheTag",
+								"start": 65,
+								"end": 73,
+								"expression": {
+									"type": "Identifier",
+									"start": 66,
+									"end": 72,
+									"name": ""
+								}
+							}
+						]
+					}
+				],
+				"children": []
+			},
+			{
+				"type": "Text",
+				"start": 80,
+				"end": 81,
+				"raw": "\n",
+				"data": "\n"
+			},
+			{
+				"type": "InlineComponent",
+				"start": 81,
+				"end": 113,
+				"name": "Component",
+				"attributes": [
+					{
+						"type": "Attribute",
+						"start": 92,
+						"end": 110,
+						"name": "onclick",
+						"name_loc": {
+							"start": {
+								"line": 6,
+								"column": 11,
+								"character": 92
+							},
+							"end": {
+								"line": 6,
+								"column": 18,
+								"character": 99
+							}
+						},
+						"value": [
+							{
+								"type": "MustacheTag",
+								"start": 100,
+								"end": 110,
+								"expression": {
+									"type": "Identifier",
+									"start": 101,
+									"end": 109,
+									"name": ""
+								}
+							}
+						]
+					}
+				],
+				"children": []
+			},
+			{
+				"type": "Text",
+				"start": 113,
+				"end": 115,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "Element",
+				"start": 115,
+				"end": 140,
+				"name": "input",
+				"attributes": [
+					{
+						"start": 122,
+						"end": 137,
+						"type": "Binding",
+						"name": "value",
+						"name_loc": {
+							"start": {
+								"line": 8,
+								"column": 7,
+								"character": 122
+							},
+							"end": {
+								"line": 8,
+								"column": 17,
+								"character": 132
+							}
+						},
+						"expression": {
+							"type": "Identifier",
+							"start": 134,
+							"end": 136,
+							"name": ""
+						},
+						"modifiers": []
+					}
+				],
+				"children": []
+			},
+			{
+				"type": "Text",
+				"start": 140,
+				"end": 145,
+				"raw": "\n\nasd",
+				"data": "\n\nasd"
+			},
+			{
+				"type": "MustacheTag",
+				"start": 145,
+				"end": 149,
+				"expression": {
+					"type": "Identifier",
+					"start": 146,
+					"end": 148,
+					"name": ""
+				}
+			},
+			{
+				"type": "Text",
+				"start": 149,
+				"end": 153,
+				"raw": "asd\n",
+				"data": "asd\n"
+			},
+			{
+				"type": "MustacheTag",
+				"start": 153,
+				"end": 164,
+				"expression": {
+					"type": "Identifier",
+					"start": 154,
+					"end": 163,
+					"name": ""
+				}
+			},
+			{
+				"type": "Text",
+				"start": 164,
+				"end": 166,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "IfBlock",
+				"start": 166,
+				"end": 179,
+				"expression": {
+					"type": "Identifier",
+					"start": 171,
+					"end": 173,
+					"name": ""
+				},
+				"children": []
+			},
+			{
+				"type": "Text",
+				"start": 179,
+				"end": 181,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "EachBlock",
+				"start": 181,
+				"end": 217,
+				"children": [],
+				"context": {
+					"type": "Identifier",
+					"name": "item",
+					"start": 197,
+					"end": 201,
+					"loc": {
+						"start": {
+							"line": 15,
+							"column": 16,
+							"character": 197
+						},
+						"end": {
+							"line": 15,
+							"column": 20,
+							"character": 201
+						}
+					}
+				},
+				"expression": {
+					"type": "Identifier",
+					"start": 188,
+					"end": 193,
+					"loc": {
+						"start": {
+							"line": 15,
+							"column": 7
+						},
+						"end": {
+							"line": 15,
+							"column": 12
+						}
+					},
+					"name": "array"
+				},
+				"key": {
+					"type": "Identifier",
+					"start": 203,
+					"end": 208,
+					"name": ""
+				}
+			},
+			{
+				"type": "Text",
+				"start": 217,
+				"end": 219,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "EachBlock",
+				"start": 219,
+				"end": 246,
+				"children": [],
+				"context": {
+					"type": "Identifier",
+					"name": "item",
+					"start": 234,
+					"end": 238,
+					"loc": {
+						"start": {
+							"line": 17,
+							"column": 15,
+							"character": 234
+						},
+						"end": {
+							"line": 17,
+							"column": 19,
+							"character": 238
+						}
+					}
+				},
+				"expression": {
+					"type": "Identifier",
+					"name": "",
+					"start": 226,
+					"end": 230
+				}
+			},
+			{
+				"type": "Text",
+				"start": 246,
+				"end": 248,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "AwaitBlock",
+				"start": 248,
+				"end": 267,
+				"expression": {
+					"type": "Identifier",
+					"start": 256,
+					"end": 258,
+					"name": ""
+				},
+				"value": null,
+				"error": null,
+				"pending": {
+					"type": "PendingBlock",
+					"start": 259,
+					"end": 259,
+					"children": [],
+					"skip": false
+				},
+				"then": {
+					"type": "ThenBlock",
+					"start": null,
+					"end": null,
+					"children": [],
+					"skip": true
+				},
+				"catch": {
+					"type": "CatchBlock",
+					"start": null,
+					"end": null,
+					"children": [],
+					"skip": true
+				}
+			},
+			{
+				"type": "Text",
+				"start": 267,
+				"end": 269,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "AwaitBlock",
+				"start": 269,
+				"end": 295,
+				"expression": {
+					"type": "Identifier",
+					"name": "",
+					"start": 277,
+					"end": 279
+				},
+				"value": {
+					"type": "Identifier",
+					"name": "y",
+					"start": 285,
+					"end": 286,
+					"loc": {
+						"start": {
+							"line": 21,
+							"column": 16,
+							"character": 285
+						},
+						"end": {
+							"line": 21,
+							"column": 17,
+							"character": 286
+						}
+					}
+				},
+				"error": null,
+				"pending": {
+					"type": "PendingBlock",
+					"start": null,
+					"end": null,
+					"children": [],
+					"skip": true
+				},
+				"then": {
+					"type": "ThenBlock",
+					"start": 287,
+					"end": 267,
+					"children": [],
+					"skip": false
+				},
+				"catch": {
+					"type": "CatchBlock",
+					"start": null,
+					"end": null,
+					"children": [],
+					"skip": true
+				}
+			},
+			{
+				"type": "Text",
+				"start": 295,
+				"end": 297,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "AwaitBlock",
+				"start": 297,
+				"end": 324,
+				"expression": {
+					"type": "Identifier",
+					"name": "",
+					"start": 305,
+					"end": 307
+				},
+				"value": null,
+				"error": {
+					"type": "Identifier",
+					"name": "y",
+					"start": 314,
+					"end": 315,
+					"loc": {
+						"start": {
+							"line": 23,
+							"column": 17,
+							"character": 314
+						},
+						"end": {
+							"line": 23,
+							"column": 18,
+							"character": 315
+						}
+					}
+				},
+				"pending": {
+					"type": "PendingBlock",
+					"start": null,
+					"end": null,
+					"children": [],
+					"skip": true
+				},
+				"then": {
+					"type": "ThenBlock",
+					"start": null,
+					"end": null,
+					"children": [],
+					"skip": true
+				},
+				"catch": {
+					"type": "CatchBlock",
+					"start": 316,
+					"end": 295,
+					"children": [],
+					"skip": false
+				}
+			}
+		]
+	}
+}

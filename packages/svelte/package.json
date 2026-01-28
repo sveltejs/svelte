@@ -2,18 +2,19 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.0.0-next.212",
+  "version": "5.48.5",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
     "node": ">=18"
   },
   "files": [
+    "*.d.ts",
     "src",
     "!src/**/*.test.*",
+    "!src/**/*.d.ts",
     "types",
     "compiler",
-    "*.d.ts",
     "README.md"
   ],
   "module": "src/index-client.js",
@@ -21,6 +22,7 @@
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
+      "worker": "./src/index-server.js",
       "browser": "./src/index-client.js",
       "default": "./src/index-server.js"
     },
@@ -31,6 +33,10 @@
     "./animate": {
       "types": "./types/index.d.ts",
       "default": "./src/animate/index.js"
+    },
+    "./attachments": {
+      "types": "./types/index.d.ts",
+      "default": "./src/attachments/index.js"
     },
     "./compiler": {
       "types": "./types/index.d.ts",
@@ -53,11 +59,21 @@
     "./internal/disclose-version": {
       "default": "./src/internal/disclose-version.js"
     },
+    "./internal/flags/async": {
+      "default": "./src/internal/flags/async.js"
+    },
+    "./internal/flags/legacy": {
+      "default": "./src/internal/flags/legacy.js"
+    },
+    "./internal/flags/tracing": {
+      "default": "./src/internal/flags/tracing.js"
+    },
     "./internal/server": {
       "default": "./src/internal/server/index.js"
     },
     "./legacy": {
       "types": "./types/index.d.ts",
+      "worker": "./src/legacy/legacy-server.js",
       "browser": "./src/legacy/legacy-client.js",
       "default": "./src/legacy/legacy-server.js"
     },
@@ -67,8 +83,13 @@
     },
     "./reactivity": {
       "types": "./types/index.d.ts",
+      "worker": "./src/reactivity/index-server.js",
       "browser": "./src/reactivity/index-client.js",
       "default": "./src/reactivity/index-server.js"
+    },
+    "./reactivity/window": {
+      "types": "./types/index.d.ts",
+      "default": "./src/reactivity/window/index.js"
     },
     "./server": {
       "types": "./types/index.d.ts",
@@ -76,7 +97,9 @@
     },
     "./store": {
       "types": "./types/index.d.ts",
-      "default": "./src/store/index.js"
+      "worker": "./src/store/index-server.js",
+      "browser": "./src/store/index-client.js",
+      "default": "./src/store/index-server.js"
     },
     "./transition": {
       "types": "./types/index.d.ts",
@@ -86,6 +109,17 @@
       "types": "./types/index.d.ts",
       "default": "./src/events/index.js"
     }
+  },
+  "imports": {
+    "#client": "./src/internal/client/types.d.ts",
+    "#client/constants": "./src/internal/client/constants.js",
+    "#compiler": {
+      "types": "./src/compiler/private.d.ts",
+      "default": "./src/compiler/index.js"
+    },
+    "#compiler/builders": "./src/compiler/utils/builders.js",
+    "#server": "./src/internal/server/types.d.ts",
+    "#shared": "./src/internal/shared/types.d.ts"
   },
   "repository": {
     "type": "git",
@@ -105,57 +139,47 @@
   ],
   "scripts": {
     "build": "node scripts/process-messages && rollup -c && pnpm generate:types && node scripts/check-treeshakeability.js",
-    "dev": "node scripts/process-messages && rollup -cw",
+    "dev": "node scripts/process-messages -w & rollup -cw",
     "check": "tsc --project tsconfig.runtime.json && tsc && cd ./tests/types && tsc",
+    "check:tsgo": "tsgo --project tsconfig.runtime.json --skipLibCheck && tsgo --skipLibCheck",
     "check:watch": "tsc --watch",
     "generate:version": "node ./scripts/generate-version.js",
     "generate:types": "node ./scripts/generate-types.js && tsc -p tsconfig.generated.json",
     "prepublishOnly": "pnpm build",
-    "format": "prettier --check --write .",
-    "lint": "prettier --check . && eslint",
     "knip": "pnpm dlx knip"
   },
   "devDependencies": {
-    "@jridgewell/trace-mapping": "^0.3.22",
-    "@playwright/test": "^1.35.1",
-    "@rollup/plugin-commonjs": "^25.0.7",
-    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@jridgewell/trace-mapping": "^0.3.25",
+    "@playwright/test": "^1.46.1",
+    "@rollup/plugin-commonjs": "^28.0.1",
+    "@rollup/plugin-node-resolve": "^15.3.0",
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/aria-query": "^5.0.4",
-    "dts-buddy": "^0.5.1",
-    "esbuild": "^0.19.11",
-    "rollup": "^4.9.5",
+    "@types/node": "^20.11.5",
+    "dts-buddy": "^0.5.5",
+    "esbuild": "^0.25.10",
+    "rollup": "^4.22.4",
     "source-map": "^0.7.4",
-    "tiny-glob": "^0.2.9"
+    "tinyglobby": "^0.2.12",
+    "typescript": "^5.5.4",
+    "vitest": "^2.1.9"
   },
   "dependencies": {
-    "@ampproject/remapping": "^2.2.1",
-    "@jridgewell/sourcemap-codec": "^1.4.15",
+    "@jridgewell/remapping": "^2.3.4",
+    "@jridgewell/sourcemap-codec": "^1.5.0",
+    "@sveltejs/acorn-typescript": "^1.0.5",
     "@types/estree": "^1.0.5",
-    "acorn": "^8.11.3",
-    "acorn-typescript": "^1.4.13",
-    "aria-query": "^5.3.0",
-    "axobject-query": "^4.0.0",
-    "esm-env": "^1.0.0",
-    "esrap": "^1.2.2",
-    "is-reference": "^3.0.2",
+    "acorn": "^8.12.1",
+    "aria-query": "^5.3.1",
+    "axobject-query": "^4.1.0",
+    "clsx": "^2.1.1",
+    "devalue": "^5.6.2",
+    "esm-env": "^1.2.1",
+    "esrap": "^2.2.1",
+    "is-reference": "^3.0.3",
     "locate-character": "^3.0.0",
-    "magic-string": "^0.30.5",
+    "magic-string": "^0.30.11",
     "zimmerframe": "^1.1.2"
-  },
-  "knip": {
-    "entry": [
-      "src/*/index.js",
-      "src/index-client.ts",
-      "src/index-server.ts",
-      "src/index.d.ts"
-    ],
-    "project": [
-      "src/**"
-    ]
-  },
-  "publishConfig": {
-    "provenance": true
   }
 }

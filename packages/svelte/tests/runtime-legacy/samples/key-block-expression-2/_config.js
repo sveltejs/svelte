@@ -1,19 +1,26 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
 	html: '<div>3</div>',
-	async test({ assert, component, target }) {
+	test({ assert, component, target }) {
 		const div = target.querySelector('div');
 
-		await component.mutate();
+		component.mutate();
+		flushSync();
+
 		assert.htmlEqual(target.innerHTML, '<div>5</div>');
 		assert.strictEqual(div, target.querySelector('div'));
 
-		await component.reassign();
+		component.reassign();
+		flushSync();
+
 		assert.htmlEqual(target.innerHTML, '<div>7</div>');
 		assert.strictEqual(div, target.querySelector('div'));
 
-		await component.changeKey();
+		component.changeKey();
+		flushSync();
+
 		assert.htmlEqual(target.innerHTML, '<div>7</div>');
 		assert.notStrictEqual(div, target.querySelector('div'));
 	}

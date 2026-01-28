@@ -1,7 +1,7 @@
 [
 	{
 		"code": "svelte_options_invalid_tagname",
-		"message": "Tag name must be two or more words joined by the \"-\" character",
+		"message": "Tag name must be lowercase and hyphenated",
 		"start": {
 			"line": 1,
 			"column": 16

@@ -1,13 +1,26 @@
 /** @import { Expression } from 'estree' */
-/** @import { HtmlTag } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
+import { block_close, block_open, create_push } from './shared/utils.js';
 
 /**
- * @param {HtmlTag} node
+ * @param {AST.HtmlTag} node
  * @param {ComponentContext} context
  */
 export function HtmlTag(node, context) {
 	const expression = /** @type {Expression} */ (context.visit(node.expression));
-	context.state.template.push(b.call('$.html', expression));
+	const call = b.call('$.html', expression);
+
+	const has_await = node.metadata.expression.has_await;
+
+	if (has_await) {
+		context.state.template.push(block_open);
+	}
+
+	context.state.template.push(create_push(call, node.metadata.expression, true));
+
+	if (has_await) {
+		context.state.template.push(block_close);
+	}
 }

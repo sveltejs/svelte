@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -7,7 +8,7 @@ export default test({
 
 	async test({ assert, target }) {
 		await Promise.resolve();
-		await Promise.resolve();
+		flushSync();
 		assert.htmlEqual(
 			target.innerHTML,
 			'<div>d2: 3,4,5</div><div>d3: 3,4,5</div><div>d4: 3,4,5</div>'

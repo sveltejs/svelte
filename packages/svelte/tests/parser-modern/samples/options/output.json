@@ -2,7 +2,7 @@
 	"css": null,
 	"js": [],
 	"start": 0,
-	"end": 112,
+	"end": 169,
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
@@ -16,13 +16,12 @@
 			},
 			{
 				"type": "Text",
-				"start": 112,
-				"end": 114,
+				"start": 102,
+				"end": 104,
 				"raw": "\n\n",
 				"data": "\n\n"
 			}
-		],
-		"transparent": false
+		]
 	},
 	"options": {
 		"start": 0,
@@ -33,6 +32,18 @@
 				"start": 16,
 				"end": 49,
 				"name": "customElement",
+				"name_loc": {
+					"start": {
+						"line": 1,
+						"column": 16,
+						"character": 16
+					},
+					"end": {
+						"line": 1,
+						"column": 29,
+						"character": 29
+					}
+				},
 				"value": [
 					{
 						"start": 31,
@@ -48,6 +59,18 @@
 				"start": 50,
 				"end": 62,
 				"name": "runes",
+				"name_loc": {
+					"start": {
+						"line": 1,
+						"column": 50,
+						"character": 50
+					},
+					"end": {
+						"line": 1,
+						"column": 55,
+						"character": 55
+					}
+				},
 				"value": {
 					"type": "ExpressionTag",
 					"start": 56,
@@ -80,20 +103,20 @@
 	"module": {
 		"type": "Script",
 		"start": 67,
-		"end": 112,
+		"end": 102,
 		"context": "module",
 		"content": {
 			"type": "Program",
-			"start": 102,
-			"end": 103,
+			"start": 92,
+			"end": 93,
 			"loc": {
 				"start": {
-					"line": 1,
+					"line": 3,
 					"column": 0
 				},
 				"end": {
 					"line": 4,
-					"column": 0
+					"column": 9
 				}
 			},
 			"body": [],
@@ -103,27 +126,43 @@
 			{
 				"type": "Attribute",
 				"start": 75,
-				"end": 91,
-				"name": "context",
-				"value": [
-					{
-						"start": 84,
-						"end": 90,
-						"type": "Text",
-						"raw": "module",
-						"data": "module"
+				"end": 81,
+				"name": "module",
+				"name_loc": {
+					"start": {
+						"line": 3,
+						"column": 8,
+						"character": 75
+					},
+					"end": {
+						"line": 3,
+						"column": 14,
+						"character": 81
 					}
-				]
+				},
+				"value": true
 			},
 			{
 				"type": "Attribute",
-				"start": 92,
-				"end": 101,
+				"start": 82,
+				"end": 91,
 				"name": "lang",
+				"name_loc": {
+					"start": {
+						"line": 3,
+						"column": 15,
+						"character": 82
+					},
+					"end": {
+						"line": 3,
+						"column": 19,
+						"character": 86
+					}
+				},
 				"value": [
 					{
-						"start": 98,
-						"end": 100,
+						"start": 88,
+						"end": 90,
 						"type": "Text",
 						"raw": "ts",
 						"data": "ts"
@@ -134,21 +173,21 @@
 	},
 	"instance": {
 		"type": "Script",
-		"start": 114,
-		"end": 179,
+		"start": 104,
+		"end": 169,
 		"context": "default",
 		"content": {
 			"type": "Program",
-			"start": 169,
-			"end": 170,
+			"start": 159,
+			"end": 160,
 			"loc": {
 				"start": {
-					"line": 1,
+					"line": 6,
 					"column": 0
 				},
 				"end": {
 					"line": 7,
-					"column": 0
+					"column": 9
 				}
 			},
 			"body": [],
@@ -157,13 +196,25 @@
 		"attributes": [
 			{
 				"type": "Attribute",
-				"start": 122,
-				"end": 131,
+				"start": 112,
+				"end": 121,
 				"name": "lang",
+				"name_loc": {
+					"start": {
+						"line": 6,
+						"column": 8,
+						"character": 112
+					},
+					"end": {
+						"line": 6,
+						"column": 12,
+						"character": 116
+					}
+				},
 				"value": [
 					{
-						"start": 128,
-						"end": 130,
+						"start": 118,
+						"end": 120,
 						"type": "Text",
 						"raw": "ts",
 						"data": "ts"
@@ -172,13 +223,25 @@
 			},
 			{
 				"type": "Attribute",
-				"start": 132,
-				"end": 168,
+				"start": 122,
+				"end": 158,
 				"name": "generics",
+				"name_loc": {
+					"start": {
+						"line": 6,
+						"column": 18,
+						"character": 122
+					},
+					"end": {
+						"line": 6,
+						"column": 26,
+						"character": 130
+					}
+				},
 				"value": [
 					{
-						"start": 142,
-						"end": 167,
+						"start": 132,
+						"end": 157,
 						"type": "Text",
 						"raw": "T extends { foo: number }",
 						"data": "T extends { foo: number }"

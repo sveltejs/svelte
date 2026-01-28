@@ -1,7 +1,16 @@
 import { teardown } from '../../reactivity/effects.js';
-import { define_property, is_array } from '../../../shared/utils.js';
+import { define_property } from '../../../shared/utils.js';
 import { hydrating } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
+import { FILENAME } from '../../../../constants.js';
+import * as w from '../../warnings.js';
+import {
+	active_effect,
+	active_reaction,
+	set_active_effect,
+	set_active_reaction
+} from '../../runtime.js';
+import { without_reactive_context } from './bindings/shared.js';
 
 /** @type {Set<string>} */
 export const all_registered_events = new Set();
@@ -17,12 +26,8 @@ export const root_event_handles = new Set();
 export function replay_events(dom) {
 	if (!hydrating) return;
 
-	if (dom.onload) {
-		dom.removeAttribute('onload');
-	}
-	if (dom.onerror) {
-		dom.removeAttribute('onerror');
-	}
+	dom.removeAttribute('onload');
+	dom.removeAttribute('onerror');
 	// @ts-expect-error
 	const event = dom.__e;
 	if (event !== undefined) {
@@ -39,10 +44,10 @@ export function replay_events(dom) {
 /**
  * @param {string} event_name
  * @param {EventTarget} dom
- * @param {EventListener} handler
- * @param {AddEventListenerOptions} options
+ * @param {EventListener} [handler]
+ * @param {AddEventListenerOptions} [options]
  */
-export function create_event(event_name, dom, handler, options) {
+export function create_event(event_name, dom, handler, options = {}) {
 	/**
 	 * @this {EventTarget}
 	 */
@@ -52,7 +57,9 @@ export function create_event(event_name, dom, handler, options) {
 			handle_event_propagation.call(dom, event);
 		}
 		if (!event.cancelBubble) {
-			return handler.call(this, event);
+			return without_reactive_context(() => {
+				return handler?.call(this, event);
+			});
 		}
 	}
 
@@ -80,30 +87,6 @@ export function create_event(event_name, dom, handler, options) {
  * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
  * (with attributes like `onclick`), which use event delegation for performance reasons
  *
- * @template {HTMLElement} Element
- * @template {keyof HTMLElementEventMap} Type
- * @overload
- * @param {Element} element
- * @param {Type} type
- * @param {(this: Element, event: HTMLElementEventMap[Type]) => any} handler
- * @param {AddEventListenerOptions} [options]
- * @returns {() => void}
- */
-
-/**
- * Attaches an event handler to an element and returns a function that removes the handler. Using this
- * rather than `addEventListener` will preserve the correct order relative to handlers added declaratively
- * (with attributes like `onclick`), which use event delegation for performance reasons
- *
- * @overload
- * @param {EventTarget} element
- * @param {string} type
- * @param {EventListener} handler
- * @param {AddEventListenerOptions} [options]
- * @returns {() => void}
- */
-
-/**
  * @param {EventTarget} element
  * @param {string} type
  * @param {EventListener} handler
@@ -120,8 +103,8 @@ export function on(element, type, handler, options = {}) {
 /**
  * @param {string} event_name
  * @param {Element} dom
- * @param {EventListener} handler
- * @param {boolean} capture
+ * @param {EventListener} [handler]
+ * @param {boolean} [capture]
  * @param {boolean} [passive]
  * @returns {void}
  */
@@ -129,8 +112,15 @@ export function event(event_name, dom, handler, capture, passive) {
 	var options = { capture, passive };
 	var target_handler = create_event(event_name, dom, handler, options);
 
-	// @ts-ignore
-	if (dom === document.body || dom === window || dom === document) {
+	if (
+		dom === document.body ||
+		// @ts-ignore
+		dom === window ||
+		// @ts-ignore
+		dom === document ||
+		// Firefox has quirky behavior, it can happen that we still get "canplay" events when the element is already removed
+		dom instanceof HTMLMediaElement
+	) {
 		teardown(() => {
 			dom.removeEventListener(event_name, target_handler, options);
 		});
@@ -151,6 +141,13 @@ export function delegate(events) {
 	}
 }
 
+// used to store the reference to the currently propagated event
+// to prevent garbage collection between microtasks in Firefox
+// If the event object is GCed too early, the expando __root property
+// set on the event object is lost, causing the event delegation
+// to process the event twice
+let last_propagated_event = null;
+
 /**
  * @this {EventTarget}
  * @param {Event} event
@@ -163,14 +160,19 @@ export function handle_event_propagation(event) {
 	var path = event.composedPath?.() || [];
 	var current_target = /** @type {null | Element} */ (path[0] || event.target);
 
+	last_propagated_event = event;
+
 	// composedPath contains list of nodes the event has propagated through.
 	// We check __root to skip all nodes below it in case this is a
 	// parent of the __root node, which indicates that there's nested
 	// mounted apps. In this case we don't want to trigger events multiple times.
 	var path_idx = 0;
 
+	// the `last_propagated_event === event` check is redundant, but
+	// without it the variable will be DCE'd and things will
+	// fail mysteriously in Firefox
 	// @ts-expect-error is added below
-	var handled_at = event.__root;
+	var handled_at = last_propagated_event === event && event.__root;
 
 	if (handled_at) {
 		var at_idx = path.indexOf(handled_at);
@@ -217,6 +219,16 @@ export function handle_event_propagation(event) {
 		}
 	});
 
+	// This started because of Chromium issue https://chromestatus.com/feature/5128696823545856,
+	// where removal or moving of of the DOM can cause sync `blur` events to fire, which can cause logic
+	// to run inside the current `active_reaction`, which isn't what we want at all. However, on reflection,
+	// it's probably best that all event handled by Svelte have this behaviour, as we don't really want
+	// an event handler to run in the context of another reaction or effect.
+	var previous_reaction = active_reaction;
+	var previous_effect = active_effect;
+	set_active_reaction(null);
+	set_active_effect(null);
+
 	try {
 		/**
 		 * @type {unknown}
@@ -230,19 +242,23 @@ export function handle_event_propagation(event) {
 		while (current_target !== null) {
 			/** @type {null | Element} */
 			var parent_element =
-				current_target.parentNode || /** @type {any} */ (current_target).host || null;
+				current_target.assignedSlot ||
+				current_target.parentNode ||
+				/** @type {any} */ (current_target).host ||
+				null;
 
 			try {
 				// @ts-expect-error
 				var delegated = current_target['__' + event_name];
 
-				if (delegated !== undefined && !(/** @type {any} */ (current_target).disabled)) {
-					if (is_array(delegated)) {
-						var [fn, ...data] = delegated;
-						fn.apply(current_target, [event, ...data]);
-					} else {
-						delegated.call(current_target, event);
-					}
+				if (
+					delegated != null &&
+					(!(/** @type {any} */ (current_target).disabled) ||
+						// DOM could've been updated already by the time this is reached, so we check this as well
+						// -> the target could not have been disabled because it emits the event in the first place
+						event.target === current_target)
+				) {
+					delegated.call(current_target, event);
 				}
 			} catch (error) {
 				if (throw_error) {
@@ -269,7 +285,54 @@ export function handle_event_propagation(event) {
 	} finally {
 		// @ts-expect-error is used above
 		event.__root = handler_element;
-		// @ts-expect-error is used above
-		current_target = handler_element;
+		// @ts-ignore remove proxy on currentTarget
+		delete event.currentTarget;
+		set_active_reaction(previous_reaction);
+		set_active_effect(previous_effect);
 	}
+}
+
+/**
+ * In dev, warn if an event handler is not a function, as it means the
+ * user probably called the handler or forgot to add a `() =>`
+ * @param {() => (event: Event, ...args: any) => void} thunk
+ * @param {EventTarget} element
+ * @param {[Event, ...any]} args
+ * @param {any} component
+ * @param {[number, number]} [loc]
+ * @param {boolean} [remove_parens]
+ */
+export function apply(
+	thunk,
+	element,
+	args,
+	component,
+	loc,
+	has_side_effects = false,
+	remove_parens = false
+) {
+	let handler;
+	let error;
+
+	try {
+		handler = thunk();
+	} catch (e) {
+		error = e;
+	}
+
+	if (typeof handler !== 'function' && (has_side_effects || handler != null || error)) {
+		const filename = component?.[FILENAME];
+		const location = loc ? ` at ${filename}:${loc[0]}:${loc[1]}` : ` in ${filename}`;
+		const phase = args[0]?.eventPhase < Event.BUBBLING_PHASE ? 'capture' : '';
+		const event_name = args[0]?.type + phase;
+		const description = `\`${event_name}\` handler${location}`;
+		const suggestion = remove_parens ? 'remove the trailing `()`' : 'add a leading `() =>`';
+
+		w.event_handler_invalid(description, suggestion);
+
+		if (error) {
+			throw error;
+		}
+	}
+	handler?.apply(element, args);
 }

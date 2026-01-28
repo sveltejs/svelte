@@ -1,10 +1,51 @@
 /** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
-import { source, set } from '../internal/client/reactivity/sources.js';
-import { get } from '../internal/client/runtime.js';
-import { increment } from './utils.js';
+import { set, source, state, increment } from '../internal/client/reactivity/sources.js';
+import { label, tag } from '../internal/client/dev/tracing.js';
+import { get, update_version } from '../internal/client/runtime.js';
 
 /**
+ * A reactive version of the built-in [`Map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) object.
+ * Reading contents of the map (by iterating, or by reading `map.size` or calling `map.get(...)` or `map.has(...)` as in the [tic-tac-toe example](https://svelte.dev/playground/0b0ff4aa49c9443f9b47fe5203c78293) below) in an [effect](https://svelte.dev/docs/svelte/$effect) or [derived](https://svelte.dev/docs/svelte/$derived)
+ * will cause it to be re-evaluated as necessary when the map is updated.
+ *
+ * Note that values in a reactive map are _not_ made [deeply reactive](https://svelte.dev/docs/svelte/$state#Deep-state).
+ *
+ * ```svelte
+ * <script>
+ * 	import { SvelteMap } from 'svelte/reactivity';
+ * 	import { result } from './game.js';
+ *
+ * 	let board = new SvelteMap();
+ * 	let player = $state('x');
+ * 	let winner = $derived(result(board));
+ *
+ * 	function reset() {
+ * 		player = 'x';
+ * 		board.clear();
+ * 	}
+ * </script>
+ *
+ * <div class="board">
+ * 	{#each Array(9), i}
+ * 		<button
+ * 			disabled={board.has(i) || winner}
+ * 			onclick={() => {
+ * 				board.set(i, player);
+ * 				player = player === 'x' ? 'o' : 'x';
+ * 			}}
+ * 		>{board.get(i)}</button>
+ * 	{/each}
+ * </div>
+ *
+ * {#if winner}
+ * 	<p>{winner} wins!</p>
+ * 	<button onclick={reset}>reset</button>
+ * {:else}
+ * 	<p>{player} is next</p>
+ * {/if}
+ * ```
+ *
  * @template K
  * @template V
  * @extends {Map<K, V>}
@@ -12,8 +53,9 @@ import { increment } from './utils.js';
 export class SvelteMap extends Map {
 	/** @type {Map<K, Source<number>>} */
 	#sources = new Map();
-	#version = source(0);
-	#size = source(0);
+	#version = state(0);
+	#size = state(0);
+	#update_version = update_version || -1;
 
 	/**
 	 * @param {Iterable<readonly [K, V]> | null | undefined} [value]
@@ -21,8 +63,13 @@ export class SvelteMap extends Map {
 	constructor(value) {
 		super();
 
-		// If the value is invalid then the native exception will fire here
-		if (DEV) new Map(value);
+		if (DEV) {
+			// If the value is invalid then the native exception will fire here
+			value = new Map(value);
+
+			tag(this.#version, 'SvelteMap version');
+			tag(this.#size, 'SvelteMap.size');
+		}
 
 		if (value) {
 			for (var [key, v] of value) {
@@ -30,6 +77,19 @@ export class SvelteMap extends Map {
 			}
 			this.#size.v = super.size;
 		}
+	}
+
+	/**
+	 * If the source is being created inside the same reaction as the SvelteMap instance,
+	 * we use `state` so that it will not be a dependency of the reaction. Otherwise we
+	 * use `source` so it will be.
+	 *
+	 * @template T
+	 * @param {T} value
+	 * @returns {Source<T>}
+	 */
+	#source(value) {
+		return update_version === this.#update_version ? state(value) : source(value);
 	}
 
 	/** @param {K} key */
@@ -40,7 +100,12 @@ export class SvelteMap extends Map {
 		if (s === undefined) {
 			var ret = super.get(key);
 			if (ret !== undefined) {
-				s = source(0);
+				s = this.#source(0);
+
+				if (DEV) {
+					tag(s, `SvelteMap get(${label(key)})`);
+				}
+
 				sources.set(key, s);
 			} else {
 				// We should always track the version in case
@@ -71,7 +136,12 @@ export class SvelteMap extends Map {
 		if (s === undefined) {
 			var ret = super.get(key);
 			if (ret !== undefined) {
-				s = source(0);
+				s = this.#source(0);
+
+				if (DEV) {
+					tag(s, `SvelteMap get(${label(key)})`);
+				}
+
 				sources.set(key, s);
 			} else {
 				// We should always track the version in case
@@ -94,13 +164,31 @@ export class SvelteMap extends Map {
 		var s = sources.get(key);
 		var prev_res = super.get(key);
 		var res = super.set(key, value);
+		var version = this.#version;
 
 		if (s === undefined) {
-			sources.set(key, source(0));
+			s = this.#source(0);
+
+			if (DEV) {
+				tag(s, `SvelteMap get(${label(key)})`);
+			}
+
+			sources.set(key, s);
 			set(this.#size, super.size);
-			increment(this.#version);
+			increment(version);
 		} else if (prev_res !== value) {
 			increment(s);
+
+			// if not every reaction of s is a reaction of version we need to also include version
+			var v_reactions = version.reactions === null ? null : new Set(version.reactions);
+			var needs_version_increase =
+				v_reactions === null ||
+				!s.reactions?.every((r) =>
+					/** @type {NonNullable<typeof v_reactions>} */ (v_reactions).has(r)
+				);
+			if (needs_version_increase) {
+				increment(version);
+			}
 		}
 
 		return res;
@@ -144,12 +232,17 @@ export class SvelteMap extends Map {
 		if (this.#size.v !== sources.size) {
 			for (var key of super.keys()) {
 				if (!sources.has(key)) {
-					sources.set(key, source(0));
+					var s = this.#source(0);
+					if (DEV) {
+						tag(s, `SvelteMap get(${label(key)})`);
+					}
+
+					sources.set(key, s);
 				}
 			}
 		}
 
-		for (var [, s] of this.#sources) {
+		for ([, s] of this.#sources) {
 			get(s);
 		}
 	}

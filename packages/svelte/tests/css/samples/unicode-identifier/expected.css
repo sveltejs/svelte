@@ -1,0 +1,21 @@
+	#\31\32\33 .svelte-xyz{ color: green; }
+	#\31 23.svelte-xyz { color: green; }
+	#line\a break.svelte-xyz { color: green; }
+	#line\a
+break.svelte-xyz { color: green; }
+	#line\00000abreak.svelte-xyz { color: green; }
+	#line\00000a break.svelte-xyz { color: green; }
+	#line\00000a	break.svelte-xyz { color: green; }
+	.a\1f642 b.svelte-xyz { color: green; }
+
+	.\61sdf.svelte-xyz { color: green; }
+
+	/* (unused) .\61  sdf { color: red; }*/
+	/* (unused) .\61
+	sdf { color: red; }*/
+	/* (unused) .\61
+ sdf { color: red; }*/
+
+	/* (unused) #\31span { color: red; }*/
+	/* (unused) #\31 span { color: red; }*/
+	#\31 .svelte-xyz span:where(.svelte-xyz) { color: green; }

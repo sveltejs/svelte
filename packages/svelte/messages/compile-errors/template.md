@@ -50,15 +50,27 @@
 
 > Attribute values containing `{...}` must be enclosed in quote marks, unless the value only contains the expression
 
+## bind_group_invalid_expression
+
+> `bind:group` can only bind to an Identifier or MemberExpression
+
+## bind_group_invalid_snippet_parameter
+
+> Cannot `bind:group` to a snippet parameter
+
 ## bind_invalid_expression
 
-> Can only bind to an Identifier or MemberExpression
+> Can only bind to an Identifier or MemberExpression or a `{get, set}` pair
 
 ## bind_invalid_name
 
 > `bind:%name%` is not a valid binding
 
 > `bind:%name%` is not a valid binding. %explanation%
+
+## bind_invalid_parens
+
+> `bind:%name%={get, set}` must not have surrounding parentheses
 
 ## bind_invalid_target
 
@@ -74,7 +86,7 @@
 
 ## block_invalid_continuation_placement
 
-> {:...} block is invalid at this position (did you forget to close the preceeding element or block?)
+> {:...} block is invalid at this position (did you forget to close the preceding element or block?)
 
 ## block_invalid_elseif
 
@@ -110,7 +122,50 @@
 
 ## const_tag_invalid_placement
 
-> `{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>` or `<Component>`
+> `{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>`, `<svelte:boundary>` or `<Component>`
+
+## const_tag_invalid_reference
+
+> The `{@const %name% = ...}` declaration is not available in this snippet
+
+The following is an error:
+
+```svelte
+<svelte:boundary>
+    {@const foo = 'bar'}
+
+    {#snippet failed()}
+        {foo}
+    {/snippet}
+</svelte:boundary>
+```
+
+Here, `foo` is not available inside `failed`. The top level code inside `<svelte:boundary>` becomes part of the implicit `children` snippet, in other words the above code is equivalent to this:
+
+```svelte
+<svelte:boundary>
+    {#snippet children()}
+        {@const foo = 'bar'}
+    {/snippet}
+
+    {#snippet failed()}
+        {foo}
+    {/snippet}
+</svelte:boundary>
+```
+
+The same applies to components:
+
+```svelte
+<Component>
+    {@const foo = 'bar'}
+
+    {#snippet someProp()}
+        <!-- error -->
+        {foo}
+    {/snippet}
+</Component>
+```
 
 ## debug_tag_invalid_arguments
 
@@ -124,6 +179,10 @@
 
 > `%type%` name cannot be empty
 
+## each_key_without_as
+
+> An `{#each ...}` block without an `as` clause cannot have a key
+
 ## element_invalid_closing_tag
 
 > `</%name%>` attempted to close an element that was not open
@@ -131,10 +190,6 @@
 ## element_invalid_closing_tag_autoclosed
 
 > `</%name%>` attempted to close element that was already automatically closed by `<%reason%>` (cannot nest `<%reason%>` inside `<%name%>`)
-
-## element_invalid_tag_name
-
-> Expected valid tag name
 
 ## element_unclosed
 
@@ -168,6 +223,10 @@
 
 > Expected identifier or destructure pattern
 
+## expected_tag
+
+> Expected 'html', 'render', 'attach', 'const', or 'debug'
+
 ## expected_token
 
 > Expected token %token%
@@ -175,6 +234,14 @@
 ## expected_whitespace
 
 > Expected whitespace
+
+## illegal_await_expression
+
+> `use:`, `transition:` and `animate:` directives, attachments and bindings do not support await expressions
+
+## illegal_element_attribute
+
+> `<%name%>` does not support non-event attributes or spread attributes
 
 ## js_parse_error
 
@@ -190,11 +257,11 @@
 
 ## node_invalid_placement
 
-> %thing% is invalid inside `<%parent%>`
+> %message%. The browser will 'repair' the HTML (by moving, removing, or inserting elements) which breaks Svelte's assumptions about the structure of your components.
 
 HTML restricts where certain elements can appear. In case of a violation the browser will 'repair' the HTML in a way that breaks Svelte's assumptions about the structure of your components. Some examples:
 
-- `<p>hello <div>world</div></p>` will result in `<p>hello </p><div>world</div><p></p>` for example (the `<div>` autoclosed the `<p>` because `<p>` cannot contain block-level elements)
+- `<p>hello <div>world</div></p>` will result in `<p>hello </p><div>world</div><p></p>` (the `<div>` autoclosed the `<p>` because `<p>` cannot contain block-level elements)
 - `<option><div>option a</div></option>` will result in `<option>option a</option>` (the `<div>` is removed)
 - `<table><tr><td>cell</td></tr></table>` will result in `<table><tbody><tr><td>cell</td></tr></tbody></table>` (a `<tbody>` is auto-inserted)
 
@@ -212,11 +279,19 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 ## script_duplicate
 
-> A component can have a single top-level `<script>` element and/or a single top-level `<script context="module">` element
+> A component can have a single top-level `<script>` element and/or a single top-level `<script module>` element
+
+## script_invalid_attribute_value
+
+> If the `%name%` attribute is supplied, it must be a boolean attribute
 
 ## script_invalid_context
 
 > If the context attribute is supplied, its value must be "module"
+
+## script_reserved_attribute
+
+> The `%name%` attribute is reserved and cannot be used
 
 ## slot_attribute_duplicate
 
@@ -270,6 +345,18 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 > A component can have a single top-level `<style>` element
 
+## svelte_body_illegal_attribute
+
+> `<svelte:body>` does not support non-event attributes or spread attributes
+
+## svelte_boundary_invalid_attribute
+
+> Valid attributes on `<svelte:boundary>` are `onerror` and `failed`
+
+## svelte_boundary_invalid_attribute_value
+
+> Attribute value must be a non-string expression
+
 ## svelte_component_invalid_this
 
 > Invalid component definition — must be an `{expression}`
@@ -289,10 +376,6 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 ## svelte_fragment_invalid_placement
 
 > `<svelte:fragment>` must be the direct child of a component
-
-## svelte_fragment_invalid_slot
-
-> `<svelte:fragment>` slot attribute must have a static value
 
 ## svelte_head_illegal_attribute
 
@@ -328,7 +411,7 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 ## svelte_options_invalid_customelement
 
-> "customElement" must be a string literal defining a valid custom element name or an object of the form { tag: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
+> "customElement" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: "open" | "none" | `ShadowRootInit`; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
 
 ## svelte_options_invalid_customelement_props
 
@@ -336,11 +419,21 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 
 ## svelte_options_invalid_customelement_shadow
 
-> "shadow" must be either "open" or "none"
+> "shadow" must be either "open", "none" or `ShadowRootInit` object.
+
+See https://developer.mozilla.org/en-US/docs/Web/API/Element/attachShadow#options for more information on valid shadow root constructor options
 
 ## svelte_options_invalid_tagname
 
-> Tag name must be two or more words joined by the "-" character
+> Tag name must be lowercase and hyphenated
+
+See https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name for more information on valid tag names
+
+## svelte_options_reserved_tagname
+
+> Tag name is reserved
+
+See https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name for more information on valid tag names
 
 ## svelte_options_unknown_attribute
 
@@ -349,6 +442,10 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 ## svelte_self_invalid_placement
 
 > `<svelte:self>` components can only exist inside `{#if}` blocks, `{#each}` blocks, `{#snippet}` blocks or slots passed to components
+
+## tag_invalid_name
+
+> Expected a valid element or component name. Components must have a valid variable name or dot notation expression
 
 ## tag_invalid_placement
 
@@ -381,6 +478,10 @@ HTML restricts where certain elements can appear. In case of a violation the bro
 ## unexpected_reserved_word
 
 > '%word%' is a reserved word in JavaScript and cannot be used here
+
+## unterminated_string_constant
+
+> Unterminated string constant
 
 ## void_element_invalid_content
 

@@ -1,4 +1,9 @@
-[![Cybernetically enhanced web apps: Svelte](https://sveltejs.github.io/assets/banner.png)](https://svelte.dev)
+<a href="https://svelte.dev">
+	<picture>
+		<source media="(prefers-color-scheme: dark)" srcset="../../assets/banner_dark.png">
+		<img src="../../assets/banner.png" alt="Svelte - web development for the rest of us" />
+	</picture>
+</a>
 
 [![npm version](https://img.shields.io/npm/v/svelte.svg)](https://www.npmjs.com/package/svelte) [![license](https://img.shields.io/npm/l/svelte.svg)](LICENSE.md) [![Chat](https://img.shields.io/discord/457912077277855764?label=chat&logo=discord)](https://svelte.dev/chat)
 
@@ -10,22 +15,22 @@ Learn more at the [Svelte website](https://svelte.dev), or stop by the [Discord 
 
 ## Getting started
 
-You can play around with Svelte in the [tutorial](https://learn.svelte.dev/), [examples](https://svelte.dev/examples), and [REPL](https://svelte.dev/repl).
+You can play around with Svelte in the [tutorial](https://svelte.dev/tutorial), [examples](https://svelte.dev/examples), and [REPL](https://svelte.dev/repl).
 
-When you're ready to build a full-fledge application, we recommend using [SvelteKit](https://kit.svelte.dev):
+When you're ready to build a full-fledge application, we recommend using [SvelteKit](https://svelte.dev/docs/kit):
 
-```bash
-npm create svelte@latest my-app
+```sh
+npx sv create my-app
 cd my-app
 npm install
 npm run dev
 ```
 
-See [the SvelteKit documentation](https://kit.svelte.dev/docs) to learn more.
+See [the SvelteKit documentation](https://svelte.dev/docs/kit) to learn more.
 
 ## Changelog
 
-[The Changelog for this package is available on GitHub](https://github.com/sveltejs/svelte/blob/master/packages/svelte/CHANGELOG.md).
+[The Changelog for this package is available on GitHub](https://github.com/sveltejs/svelte/blob/main/packages/svelte/CHANGELOG.md).
 
 ## Supporting Svelte
 

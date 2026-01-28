@@ -2,6 +2,7 @@ import { render_effect, effect_root } from '../internal/client/reactivity/effect
 import { flushSync } from '../index-client.js';
 import { SvelteDate } from './date.js';
 import { assert, test } from 'vitest';
+import { derived, get } from 'svelte/internal/client';
 
 const initial_date = new Date(2023, 0, 2, 0, 0, 0, 0);
 const a = new Date(2024, 1, 3, 1, 1, 1, 1);
@@ -37,15 +38,23 @@ test('date.setDate and date.setUTCDate', () => {
 		date.setUTCDate(date.getUTCDate() + 1);
 	});
 
+	// Date/UTCDate may vary on some timezones
+	const date_plus_zero = new Date(initial_date);
+	date_plus_zero.setDate(a.getDate());
+	const date_plus_one = new Date(initial_date);
+	date_plus_one.setDate(a.getDate() + 1);
+	const date_plus_two = new Date(initial_date);
+	date_plus_two.setDate(a.getDate() + 2);
+
 	assert.deepEqual(log, [
 		initial_date.getDate(),
 		initial_date.getUTCDate(),
-		a.getDate(),
-		a.getUTCDate(),
-		a.getDate() + 1,
-		a.getUTCDate() + 1,
-		a.getDate() + 2,
-		a.getUTCDate() + 2
+		date_plus_zero.getDate(),
+		date_plus_zero.getUTCDate(),
+		date_plus_one.getDate(),
+		date_plus_one.getUTCDate(),
+		date_plus_two.getDate(),
+		date_plus_two.getUTCDate()
 	]);
 
 	cleanup();
@@ -579,6 +588,87 @@ test('Date.toLocaleString', () => {
 	cleanup();
 });
 
+test('Date.valueOf', () => {
+	const date = new SvelteDate(initial_date);
+
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(date.valueOf());
+		});
+	});
+
+	flushSync();
+
+	assert.deepEqual(log, [initial_date.valueOf()]);
+
+	flushSync(() => {
+		date.setTime(date.getTime() + 10);
+	});
+
+	assert.deepEqual(log, [initial_date.valueOf(), new Date(initial_date.getTime() + 10).valueOf()]);
+
+	cleanup();
+});
+
 test('Date.instanceOf', () => {
 	assert.equal(new SvelteDate() instanceof Date, true);
+});
+
+test('Date methods invoked for the first time in a derived', () => {
+	const date = new SvelteDate(initial_date);
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		const months = derived(() => {
+			return date.getMonth();
+		});
+
+		render_effect(() => {
+			log.push(get(months));
+		});
+
+		flushSync(() => {
+			date.setMonth(date.getMonth() + 1);
+		});
+
+		flushSync(() => {
+			date.setMonth(date.getMonth() + 1);
+		});
+	});
+
+	assert.deepEqual(log, [0, 1, 2]);
+
+	cleanup();
+});
+
+test('Date methods shared between deriveds', () => {
+	const date = new SvelteDate(initial_date);
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		const year = derived(() => {
+			return date.getFullYear();
+		});
+		const year2 = derived(() => {
+			return date.getTime(), date.getFullYear();
+		});
+
+		render_effect(() => {
+			log.push(get(year) + '/' + get(year2).toString());
+		});
+
+		flushSync(() => {
+			date.setFullYear(date.getFullYear() + 1);
+		});
+
+		flushSync(() => {
+			date.setFullYear(date.getFullYear() + 1);
+		});
+	});
+
+	assert.deepEqual(log, ['2023/2023', '2024/2024', '2025/2025']);
+
+	cleanup();
 });

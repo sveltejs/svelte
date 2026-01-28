@@ -1,47 +1,91 @@
-/** @import { Expression } from 'estree' */
-/** @import { RenderTag } from '#compiler' */
+/** @import { Expression, Statement } from 'estree' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { unwrap_optional } from '../../../../utils/ast.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
+import { add_svelte_meta, build_expression, Memoizer } from './shared/utils.js';
 
 /**
- * @param {RenderTag} node
+ * @param {AST.RenderTag} node
  * @param {ComponentContext} context
  */
 export function RenderTag(node, context) {
-	context.state.template.push('<!>');
-	const callee = unwrap_optional(node.expression).callee;
-	const raw_args = unwrap_optional(node.expression).arguments;
+	context.state.template.push_comment();
+
+	const call = unwrap_optional(node.expression);
 
 	/** @type {Expression[]} */
 	let args = [];
-	for (let i = 0; i < raw_args.length; i++) {
-		const raw = raw_args[i];
-		const arg = /** @type {Expression} */ (context.visit(raw));
-		if (node.metadata.args_with_call_expression.has(i)) {
-			const id = b.id(context.state.scope.generate('render_arg'));
-			context.state.init.push(b.var(id, b.call('$.derived_safe_equal', b.thunk(arg))));
-			args.push(b.thunk(b.call('$.get', id)));
-		} else {
-			args.push(b.thunk(arg));
+
+	const memoizer = new Memoizer();
+
+	for (let i = 0; i < call.arguments.length; i++) {
+		const arg = /** @type {Expression} */ (call.arguments[i]);
+		const metadata = node.metadata.arguments[i];
+		let expression = build_expression(context, arg, metadata);
+		const memoized = memoizer.add(expression, metadata);
+
+		if (expression !== memoized) {
+			expression = b.call('$.get', memoized);
 		}
+
+		args.push(b.thunk(expression));
 	}
 
-	let snippet_function = /** @type {Expression} */ (context.visit(callee));
+	memoizer.apply();
+
+	/** @type {Statement[]} */
+	const statements = memoizer.deriveds(context.state.analysis.runes);
+
+	let snippet_function = build_expression(
+		context,
+		/** @type {Expression} */ (call.callee),
+		node.metadata.expression
+	);
 
 	if (node.metadata.dynamic) {
-		context.state.init.push(
-			b.stmt(b.call('$.snippet', context.state.node, b.thunk(snippet_function), ...args))
+		// If we have a chain expression then ensure a nullish snippet function gets turned into an empty one
+		if (node.expression.type === 'ChainExpression') {
+			snippet_function = b.logical('??', snippet_function, b.id('$.noop'));
+		}
+
+		statements.push(
+			add_svelte_meta(
+				b.call('$.snippet', context.state.node, b.thunk(snippet_function), ...args),
+				node,
+				'render'
+			)
 		);
 	} else {
-		context.state.init.push(
-			b.stmt(
+		statements.push(
+			add_svelte_meta(
 				(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
 					snippet_function,
 					context.state.node,
 					...args
+				),
+				node,
+				'render'
+			)
+		);
+	}
+
+	const async_values = memoizer.async_values();
+	const blockers = memoizer.blockers();
+
+	if (async_values || blockers) {
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.async',
+					context.state.node,
+					blockers,
+					memoizer.async_values(),
+					b.arrow([context.state.node, ...memoizer.async_ids()], b.block(statements))
 				)
 			)
 		);
+	} else {
+		context.state.init.push(statements.length === 1 ? statements[0] : b.block(statements));
 	}
 }

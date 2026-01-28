@@ -1,9 +1,18 @@
 /** @import { ComponentConstructorOptions, ComponentType, SvelteComponent, Component } from 'svelte' */
-import { mutable_source, set } from '../internal/client/reactivity/sources.js';
+import { DIRTY, LEGACY_PROPS, MAYBE_DIRTY } from '../internal/client/constants.js';
 import { user_pre_effect } from '../internal/client/reactivity/effects.js';
+import { mutable_source, set } from '../internal/client/reactivity/sources.js';
 import { hydrate, mount, unmount } from '../internal/client/render.js';
-import { flush_sync, get } from '../internal/client/runtime.js';
-import { define_property } from '../internal/shared/utils.js';
+import { active_effect, get } from '../internal/client/runtime.js';
+import { flushSync } from '../internal/client/reactivity/batch.js';
+import { define_property, is_array } from '../internal/shared/utils.js';
+import * as e from '../internal/client/errors.js';
+import * as w from '../internal/client/warnings.js';
+import { DEV } from 'esm-env';
+import { FILENAME } from '../constants.js';
+import { component_context, dev_current_component_function } from '../internal/client/context.js';
+import { async_mode_flag } from '../internal/flags/index.js';
+import { set_signal_status } from '../internal/client/reactivity/status.js';
 
 /**
  * Takes the same options as a Svelte 4 component and the component function and returns a Svelte 4 compatible component.
@@ -17,9 +26,6 @@ import { define_property } from '../internal/shared/utils.js';
  *
  * @param {ComponentConstructorOptions<Props> & {
  * 	component: ComponentType<SvelteComponent<Props, Events, Slots>> | Component<Props>;
- * 	immutable?: boolean;
- * 	hydrate?: boolean;
- * 	recover?: boolean;
  * }} options
  * @returns {SvelteComponent<Props, Events, Slots> & Exports}
  */
@@ -54,6 +60,11 @@ export function asClassComponent(component) {
 	};
 }
 
+/**
+ * Support using the component as both a class and function during the transition period
+ * @typedef  {{new (o: ComponentConstructorOptions): SvelteComponent;(...args: Parameters<Component<Record<string, any>>>): ReturnType<Component<Record<string, any>, Record<string, any>>>;}} LegacyComponentType
+ */
+
 class Svelte4Component {
 	/** @type {any} */
 	#events;
@@ -64,9 +75,6 @@ class Svelte4Component {
 	/**
 	 * @param {ComponentConstructorOptions & {
 	 *  component: any;
-	 * 	immutable?: boolean;
-	 * 	hydrate?: boolean;
-	 * 	recover?: false;
 	 * }} options
 	 */
 	constructor(options) {
@@ -77,13 +85,13 @@ class Svelte4Component {
 		 * @param {unknown} value
 		 */
 		var add_source = (key, value) => {
-			var s = mutable_source(value);
+			var s = mutable_source(value, false, false);
 			sources.set(key, s);
 			return s;
 		};
 
 		// Replicate coarse-grained props through a proxy that has a version source for
-		// each property, which is increment on updates to the property itself. Do not
+		// each property, which is incremented on updates to the property itself. Do not
 		// use our $state proxy because that one has fine-grained reactivity.
 		const props = new Proxy(
 			{ ...(options.props || {}), $$events: {} },
@@ -92,6 +100,9 @@ class Svelte4Component {
 					return get(sources.get(prop) ?? add_source(prop, Reflect.get(target, prop)));
 				},
 				has(target, prop) {
+					// Necessary to not throw "invalid binding" validation errors on the component side
+					if (prop === LEGACY_PROPS) return true;
+
 					get(sources.get(prop) ?? add_source(prop, Reflect.get(target, prop)));
 					return Reflect.has(target, prop);
 				},
@@ -104,13 +115,18 @@ class Svelte4Component {
 
 		this.#instance = (options.hydrate ? hydrate : mount)(options.component, {
 			target: options.target,
+			anchor: options.anchor,
 			props,
 			context: options.context,
 			intro: options.intro ?? false,
 			recover: options.recover
 		});
 
-		flush_sync();
+		// We don't flushSync for custom element wrappers or if the user doesn't want it,
+		// or if we're in async mode since `flushSync()` will fail
+		if (!async_mode_flag && (!options?.props?.$$host || options.sync === false)) {
+			flushSync();
+		}
 
 		this.#events = props.$$events;
 
@@ -171,5 +187,94 @@ class Svelte4Component {
  * @returns {void}
  */
 export function run(fn) {
-	user_pre_effect(fn);
+	user_pre_effect(() => {
+		fn();
+		var effect = /** @type {import('#client').Effect} */ (active_effect);
+		// If the effect is immediately made dirty again, mark it as maybe dirty to emulate legacy behaviour
+		if ((effect.f & DIRTY) !== 0) {
+			let filename = "a file (we can't know which one)";
+			if (DEV) {
+				// @ts-ignore
+				filename = dev_current_component_function?.[FILENAME] ?? filename;
+			}
+			w.legacy_recursive_reactive_block(filename);
+			set_signal_status(effect, MAYBE_DIRTY);
+		}
+	});
 }
+
+/**
+ * Function to mimic the multiple listeners available in svelte 4
+ * @deprecated
+ * @param {EventListener[]} handlers
+ * @returns {EventListener}
+ */
+export function handlers(...handlers) {
+	return function (event) {
+		const { stopImmediatePropagation } = event;
+		let stopped = false;
+
+		event.stopImmediatePropagation = () => {
+			stopped = true;
+			stopImmediatePropagation.call(event);
+		};
+
+		const errors = [];
+
+		for (const handler of handlers) {
+			try {
+				// @ts-expect-error `this` is not typed
+				handler?.call(this, event);
+			} catch (e) {
+				errors.push(e);
+			}
+
+			if (stopped) {
+				break;
+			}
+		}
+
+		for (let error of errors) {
+			queueMicrotask(() => {
+				throw error;
+			});
+		}
+	};
+}
+
+/**
+ * Function to create a `bubble` function that mimic the behavior of `on:click` without handler available in svelte 4.
+ * @deprecated Use this only as a temporary solution to migrate your automatically delegated events in Svelte 5.
+ */
+export function createBubbler() {
+	const active_component_context = component_context;
+	if (active_component_context === null) {
+		e.lifecycle_outside_component('createBubbler');
+	}
+
+	return (/**@type {string}*/ type) => (/**@type {Event}*/ event) => {
+		const events = /** @type {Record<string, Function | Function[]>} */ (
+			active_component_context.s.$$events
+		)?.[/** @type {any} */ (type)];
+
+		if (events) {
+			const callbacks = is_array(events) ? events.slice() : [events];
+			for (const fn of callbacks) {
+				fn.call(active_component_context.x, event);
+			}
+			return !event.defaultPrevented;
+		}
+		return true;
+	};
+}
+
+export {
+	once,
+	preventDefault,
+	self,
+	stopImmediatePropagation,
+	stopPropagation,
+	trusted,
+	passive,
+	nonpassive
+} from '../internal/client/dom/legacy/event-modifiers.js';

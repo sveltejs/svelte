@@ -1,10 +1,10 @@
-import "svelte/internal/disclose-version";
-import * as $ from "svelte/internal/client";
+import 'svelte/internal/disclose-version';
+import * as $ from 'svelte/internal/client';
 
 export default function Props_identifier($$anchor, $$props) {
 	$.push($$props, true);
 
-	let props = $.rest_props($$props, ["$$slots", "$$events", "$$legacy"]);
+	let props = $.rest_props($$props, ['$$slots', '$$events', '$$legacy']);
 
 	$$props.a;
 	props[a];

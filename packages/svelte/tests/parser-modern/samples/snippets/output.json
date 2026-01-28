@@ -1,7 +1,7 @@
 {
 	"css": null,
 	"js": [],
-	"start": 29,
+	"start": 0,
 	"end": 101,
 	"type": "Root",
 	"fragment": {
@@ -20,15 +20,27 @@
 				"end": 81,
 				"expression": {
 					"type": "Identifier",
+					"name": "foo",
 					"start": 39,
 					"end": 42,
-					"name": "foo"
+					"loc": {
+						"start": {
+							"line": 3,
+							"column": 10,
+							"character": 39
+						},
+						"end": {
+							"line": 3,
+							"column": 13,
+							"character": 42
+						}
+					}
 				},
 				"parameters": [
 					{
 						"type": "Identifier",
 						"start": 43,
-						"end": 46,
+						"end": 54,
 						"loc": {
 							"start": {
 								"line": 3,
@@ -87,6 +99,18 @@
 							"start": 58,
 							"end": 70,
 							"name": "p",
+							"name_loc": {
+								"start": {
+									"line": 4,
+									"column": 2,
+									"character": 59
+								},
+								"end": {
+									"line": 4,
+									"column": 3,
+									"character": 60
+								}
+							},
 							"attributes": [],
 							"fragment": {
 								"type": "Fragment",
@@ -112,8 +136,7 @@
 											"name": "msg"
 										}
 									}
-								],
-								"transparent": true
+								]
 							}
 						},
 						{
@@ -123,8 +146,7 @@
 							"raw": "\n",
 							"data": "\n"
 						}
-					],
-					"transparent": false
+					]
 				}
 			},
 			{
@@ -189,8 +211,7 @@
 					"optional": false
 				}
 			}
-		],
-		"transparent": false
+		]
 	},
 	"options": null,
 	"instance": {
@@ -209,7 +230,7 @@
 				},
 				"end": {
 					"line": 1,
-					"column": 18
+					"column": 27
 				}
 			},
 			"body": [],
@@ -221,6 +242,18 @@
 				"start": 8,
 				"end": 17,
 				"name": "lang",
+				"name_loc": {
+					"start": {
+						"line": 1,
+						"column": 8,
+						"character": 8
+					},
+					"end": {
+						"line": 1,
+						"column": 12,
+						"character": 12
+					}
+				},
 				"value": [
 					{
 						"start": 14,

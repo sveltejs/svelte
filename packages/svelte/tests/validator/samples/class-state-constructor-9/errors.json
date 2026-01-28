@@ -1,0 +1,14 @@
+[
+	{
+		"code": "duplicate_class_field",
+		"message": "`count` has already been declared",
+		"start": {
+			"line": 5,
+			"column": 2
+		},
+		"end": {
+			"line": 5,
+			"column": 24
+		}
+	}
+]

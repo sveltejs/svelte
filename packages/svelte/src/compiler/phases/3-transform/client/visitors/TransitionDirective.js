@@ -1,12 +1,12 @@
 /** @import { Expression } from 'estree' */
-/** @import { TransitionDirective } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../../constants.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { parse_directive_name } from './shared/utils.js';
 
 /**
- * @param {TransitionDirective} node
+ * @param {AST.TransitionDirective} node
  * @param {ComponentContext} context
  */
 export function TransitionDirective(node, context) {
@@ -25,5 +25,17 @@ export function TransitionDirective(node, context) {
 	}
 
 	// in after_update to ensure it always happens after bind:this
-	context.state.after_update.push(b.stmt(b.call('$.transition', ...args)));
+	let statement = b.stmt(b.call('$.transition', ...args));
+
+	if (node.metadata.expression.is_async()) {
+		statement = b.stmt(
+			b.call(
+				'$.run_after_blockers',
+				node.metadata.expression.blockers(),
+				b.thunk(b.block([statement]))
+			)
+		);
+	}
+
+	context.state.after_update.push(statement);
 }

@@ -2,8 +2,8 @@
 /** @import { Processed } from '../preprocess/public.js' */
 /** @import { SourceMap } from 'magic-string' */
 /** @import { Source } from '../preprocess/private.js' */
-/** @import { DecodedSourceMap, SourceMapSegment, RawSourceMap } from '@ampproject/remapping' */
-import remapping from '@ampproject/remapping';
+/** @import { DecodedSourceMap, SourceMapSegment, RawSourceMap } from '@jridgewell/remapping' */
+import remapping from '@jridgewell/remapping';
 import { push_array } from './push_array.js';
 
 /**
@@ -328,7 +328,7 @@ function apply_preprocessor_sourcemap(filename, svelte_map, preprocessor_map_inp
 			}
 		}
 	});
-	return /** @type {SourceMap} */ (result_map);
+	return /** @type {any} */ (result_map);
 }
 const regex_data_uri = /data:(?:application|text)\/json;(?:charset[:=]\S+?;)?base64,(\S*)/;
 // parse attached sourcemap in processed.code
@@ -393,15 +393,18 @@ export function parse_attached_sourcemap(processed, tag_name) {
  */
 export function merge_with_preprocessor_map(result, options, source_name) {
 	if (options.sourcemap) {
-		const file_basename = get_basename(options.filename || 'input.svelte');
+		const file_basename = get_basename(options.filename);
 		// The preprocessor map is expected to contain `sources: [basename_of_filename]`, but our own
 		// map may contain a different file name. Patch our map beforehand to align sources so merging
 		// with the preprocessor map works correctly.
 		result.map.sources = [file_basename];
-		result.map = apply_preprocessor_sourcemap(
-			file_basename,
+		Object.assign(
 			result.map,
-			/** @type {any} */ (options.sourcemap)
+			apply_preprocessor_sourcemap(
+				file_basename,
+				result.map,
+				/** @type {any} */ (options.sourcemap)
+			)
 		);
 		// After applying the preprocessor map, we need to do the inverse and make the sources
 		// relative to the input file again in case the output code is in a different directory.
@@ -442,11 +445,10 @@ export function get_basename(filename) {
 }
 
 /**
- * @param {string | undefined} filename
+ * @param {string} filename
  * @param {string | undefined} output_filename
  * @param {string} fallback
  */
 export function get_source_name(filename, output_filename, fallback) {
-	if (!filename) return fallback;
 	return output_filename ? get_relative_path(output_filename, filename) : get_basename(filename);
 }

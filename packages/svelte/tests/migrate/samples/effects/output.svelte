@@ -1,7 +1,7 @@
 <script>
 	import { run } from 'svelte/legacy';
 
-	let count = 0;
+	let count = $state(0);
 	run(() => {
 		console.log(count);
 	});
@@ -18,4 +18,9 @@
 	run(() => {
 		$count = 1;
 	});
+	run(() => {
+		foo.x = count;
+	});
 </script>
+
+<button onclick={() => count++}>increment</button>

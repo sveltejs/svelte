@@ -1,5 +1,3 @@
-/** @import { TemplateNode } from '#client' */
-/** @import { Getters } from '#shared' */
 import { is_void } from '../../utils.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
@@ -34,4 +32,16 @@ export function validate_store(store, name) {
 	if (store != null && typeof store.subscribe !== 'function') {
 		e.store_invalid_shape(name);
 	}
+}
+
+/**
+ * @template {(...args: any[]) => unknown} T
+ * @param {T} fn
+ */
+export function prevent_snippet_stringification(fn) {
+	fn.toString = () => {
+		e.snippet_without_render_tag();
+		return '';
+	};
+	return fn;
 }

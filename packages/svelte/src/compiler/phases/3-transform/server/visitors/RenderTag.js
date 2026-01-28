@@ -1,33 +1,49 @@
 /** @import { Expression } from 'estree' */
-/** @import { RenderTag } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import { unwrap_optional } from '../../../../utils/ast.js';
-import * as b from '../../../../utils/builders.js';
-import { empty_comment } from './shared/utils.js';
+import * as b from '#compiler/builders';
+import { create_async_block, empty_comment, PromiseOptimiser } from './shared/utils.js';
 
 /**
- * @param {RenderTag} node
+ * @param {AST.RenderTag} node
  * @param {ComponentContext} context
  */
 export function RenderTag(node, context) {
+	const optimiser = new PromiseOptimiser();
+
 	const callee = unwrap_optional(node.expression).callee;
 	const raw_args = unwrap_optional(node.expression).arguments;
 
-	const snippet_function = /** @type {Expression} */ (context.visit(callee));
+	const snippet_function = optimiser.transform(
+		/** @type {Expression} */ (context.visit(callee)),
+		node.metadata.expression
+	);
 
-	const snippet_args = raw_args.map((arg) => {
-		return /** @type {Expression} */ (context.visit(arg));
+	const snippet_args = raw_args.map((arg, i) => {
+		return optimiser.transform(
+			/** @type {Expression} */ (context.visit(arg)),
+			node.metadata.arguments[i]
+		);
 	});
 
-	context.state.template.push(
-		b.stmt(
-			(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
-				snippet_function,
-				b.id('$$payload'),
-				...snippet_args
-			)
+	let statement = b.stmt(
+		(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
+			snippet_function,
+			b.id('$$renderer'),
+			...snippet_args
 		)
 	);
+
+	if (optimiser.is_async()) {
+		statement = create_async_block(
+			b.block([optimiser.apply(), statement]),
+			optimiser.blockers(),
+			optimiser.has_await
+		);
+	}
+
+	context.state.template.push(statement);
 
 	if (!context.state.skip_hydration_boundaries) {
 		context.state.template.push(empty_comment);

@@ -1,21 +1,19 @@
 <script>
-	// Even if otherProps contains onBlur and/or onFocus, the rule will still fail.
-	// Props should be passed down explicitly for rule to pass.
 	const otherProps = {
-		onBlur: () => void 0,
-		onFocus: () => void 0
+		onblur: () => {},
+		onfocus: () => {}
 	};
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div on:mouseover={() => void 0}></div>
+<div onmouseover={() => {}}></div>
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div on:mouseover={() => void 0} on:focus={() => void 0}></div>
+<div onmouseover={() => {}} onfocus={() => {}}></div>
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div on:mouseover={() => void 0} {...otherProps}></div>
+<div onmouseover={() => {}} {...otherProps}></div>
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div on:mouseout={() => void 0}></div>
+<div onmouseout={() => {}}></div>
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div on:mouseout={() => void 0} on:blur={() => void 0}></div>
+<div onmouseout={() => {}} onblur={() => {}}></div>
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div on:mouseout={() => void 0} {...otherProps}></div>
+<div onmouseout={() => {}} {...otherProps}></div>

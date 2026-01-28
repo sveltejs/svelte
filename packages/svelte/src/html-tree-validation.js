@@ -80,9 +80,9 @@ export function closing_tag_omitted(current, next) {
  */
 const disallowed_children = {
 	...autoclosing_children,
-	optgroup: { only: ['option', '#text'] },
 	// Strictly speaking, seeing an <option> doesn't mean we're in a <select>, but we assume it here
-	option: { only: ['#text'] },
+	// option or optgroup does not have an `only` restriction because newer browsers support rich HTML content
+	// inside option elements. For older browsers, hydration will handle the mismatch.
 	form: { descendant: ['form'] },
 	a: { descendant: ['a'] },
 	button: { descendant: ['button'] },
@@ -92,8 +92,6 @@ const disallowed_children = {
 	h4: { descendant: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] },
 	h5: { descendant: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] },
 	h6: { descendant: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] },
-	// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inselect
-	select: { only: ['option', 'optgroup', '#text', 'hr', 'script', 'template'] },
 
 	// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intd
 	// https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-incaption
@@ -135,52 +133,87 @@ const disallowed_children = {
 };
 
 /**
- * Returns false if the tag is not allowed inside the ancestor tag (which is grandparent and above) such that it will result
+ * Returns an error message if the tag is not allowed inside the ancestor tag (which is grandparent and above) such that it will result
  * in the browser repairing the HTML, which will likely result in an error during hydration.
- * @param {string} tag
+ * @param {string} child_tag
  * @param {string[]} ancestors All nodes starting with the parent, up until the ancestor, which means two entries minimum
- * @returns {boolean}
+ * @param {string} [child_loc]
+ * @param {string} [ancestor_loc]
+ * @returns {string | null}
  */
-export function is_tag_valid_with_ancestor(tag, ancestors) {
-	const target = ancestors[ancestors.length - 1];
-	const disallowed = disallowed_children[target];
-	if (!disallowed) return true;
+export function is_tag_valid_with_ancestor(child_tag, ancestors, child_loc, ancestor_loc) {
+	if (child_tag.includes('-')) return null; // custom elements can be anything
+
+	const ancestor_tag = ancestors[ancestors.length - 1];
+	const disallowed = disallowed_children[ancestor_tag];
+	if (!disallowed) return null;
 
 	if ('reset_by' in disallowed && disallowed.reset_by) {
 		for (let i = ancestors.length - 2; i >= 0; i--) {
+			const ancestor = ancestors[i];
+			if (ancestor.includes('-')) return null; // custom elements can be anything
+
 			// A reset means that forbidden descendants are allowed again
 			if (disallowed.reset_by.includes(ancestors[i])) {
-				return true;
+				return null;
 			}
 		}
 	}
 
-	return 'descendant' in disallowed ? !disallowed.descendant.includes(tag) : true;
+	if ('descendant' in disallowed && disallowed.descendant.includes(child_tag)) {
+		const child = child_loc ? `\`<${child_tag}>\` (${child_loc})` : `\`<${child_tag}>\``;
+		const ancestor = ancestor_loc
+			? `\`<${ancestor_tag}>\` (${ancestor_loc})`
+			: `\`<${ancestor_tag}>\``;
+
+		return `${child} cannot be a descendant of ${ancestor}`;
+	}
+
+	return null;
 }
 
 /**
- * Returns false if the tag is not allowed inside the parent tag such that it will result
+ * Returns an error message if the tag is not allowed inside the parent tag such that it will result
  * in the browser repairing the HTML, which will likely result in an error during hydration.
- * @param {string} tag
+ * @param {string} child_tag
  * @param {string} parent_tag
- * @returns {boolean}
+ * @param {string} [child_loc]
+ * @param {string} [parent_loc]
+ * @returns {string | null}
  */
-export function is_tag_valid_with_parent(tag, parent_tag) {
+export function is_tag_valid_with_parent(child_tag, parent_tag, child_loc, parent_loc) {
+	if (child_tag.includes('-') || parent_tag?.includes('-')) return null; // custom elements can be anything
+
+	if (parent_tag === 'template') return null; // no errors or warning should be thrown in immediate children of template tags
+
 	const disallowed = disallowed_children[parent_tag];
 
+	const child = child_loc ? `\`<${child_tag}>\` (${child_loc})` : `\`<${child_tag}>\``;
+	const parent = parent_loc ? `\`<${parent_tag}>\` (${parent_loc})` : `\`<${parent_tag}>\``;
+
 	if (disallowed) {
-		if ('direct' in disallowed && disallowed.direct.includes(tag)) {
-			return false;
+		if ('direct' in disallowed && disallowed.direct.includes(child_tag)) {
+			return `${child} cannot be a direct child of ${parent}`;
 		}
-		if ('descendant' in disallowed && disallowed.descendant.includes(tag)) {
-			return false;
+
+		if ('descendant' in disallowed && disallowed.descendant.includes(child_tag)) {
+			return `${child} cannot be a child of ${parent}`;
 		}
+
 		if ('only' in disallowed && disallowed.only) {
-			return disallowed.only.includes(tag);
+			if (disallowed.only.includes(child_tag)) {
+				return null;
+			} else {
+				return `${child} cannot be a child of ${parent}. \`<${parent_tag}>\` only allows these children: ${disallowed.only.map((d) => `\`<${d}>\``).join(', ')}`;
+			}
 		}
 	}
 
-	switch (tag) {
+	// These tags are only valid with a few parents that have special child
+	// parsing rules - if we're down here, then none of those matched and
+	// so we allow it only if we don't know what the parent is, as all other
+	// cases are invalid (and we only get into this function if we know the parent).
+	switch (child_tag) {
 		case 'body':
 		case 'caption':
 		case 'col':
@@ -189,18 +222,17 @@ export function is_tag_valid_with_parent(tag, parent_tag) {
 		case 'frame':
 		case 'head':
 		case 'html':
-		case 'tbody':
-		case 'td':
-		case 'tfoot':
-		case 'th':
+			return `${child} cannot be a child of ${parent}`;
 		case 'thead':
+		case 'tbody':
+		case 'tfoot':
+			return `${child} must be the child of a \`<table>\`, not a ${parent}`;
+		case 'td':
+		case 'th':
+			return `${child} must be the child of a \`<tr>\`, not a ${parent}`;
 		case 'tr':
-			// These tags are only valid with a few parents that have special child
-			// parsing rules - if we're down here, then none of those matched and
-			// so we allow it only if we don't know what the parent is, as all other
-			// cases are invalid (and we only get into this function if we know the parent).
-			return false;
+			return `\`<tr>\` must be the child of a \`<thead>\`, \`<tbody>\`, or \`<tfoot>\`, not a ${parent}`;
 	}
 
-	return true;
+	return null;
 }

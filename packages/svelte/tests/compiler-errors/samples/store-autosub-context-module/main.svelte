@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	// this should be fine (state rune is not treated as a store)
 	const state = $state(0);
 	// this is not

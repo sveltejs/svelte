@@ -1,0 +1,14 @@
+[
+	{
+		"code": "bind_group_invalid_snippet_parameter",
+		"end": {
+			"column": 44,
+			"line": 2
+		},
+		"message": "Cannot `bind:group` to a snippet parameter",
+		"start": {
+			"column": 21,
+			"line": 2
+		}
+	}
+]

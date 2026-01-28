@@ -1,6 +1,8 @@
 /** @import * as ESTree from 'estree' */
+import { walk } from 'zimmerframe';
 import { regex_is_valid_identifier } from '../phases/patterns.js';
 import { sanitize_template_string } from './sanitize_template_string.js';
+import { has_await_expression } from './ast.js';
 
 /**
  * @param {Array<ESTree.Expression | ESTree.SpreadElement | null>} elements
@@ -30,17 +32,17 @@ export function assignment_pattern(left, right) {
 /**
  * @param {Array<ESTree.Pattern>} params
  * @param {ESTree.BlockStatement | ESTree.Expression} body
+ * @param {boolean} async
  * @returns {ESTree.ArrowFunctionExpression}
  */
-export function arrow(params, body) {
+export function arrow(params, body, async = false) {
 	return {
 		type: 'ArrowFunctionExpression',
 		params,
 		body,
 		expression: body.type !== 'BlockStatement',
 		generator: false,
-		async: false,
-		metadata: /** @type {any} */ (null) // should not be used by codegen
+		async
 	};
 }
 
@@ -52,15 +54,6 @@ export function arrow(params, body) {
  */
 export function assignment(operator, left, right) {
 	return { type: 'AssignmentExpression', operator, left, right };
-}
-
-/**
- * @template T
- * @param {T & ESTree.BaseFunction} func
- * @returns {T & ESTree.BaseFunction}
- */
-export function async(func) {
-	return { ...func, async: true };
 }
 
 /**
@@ -90,6 +83,17 @@ export function block(body) {
 }
 
 /**
+ * @param {ESTree.Identifier | null} id
+ * @param {ESTree.ClassBody} body
+ * @param {ESTree.Expression | null} [superClass]
+ * @param {ESTree.Decorator[]} [decorators]
+ * @returns {ESTree.ClassExpression}
+ */
+export function class_expression(id, body, superClass, decorators = []) {
+	return { type: 'ClassExpression', body, superClass, decorators };
+}
+
+/**
  * @param {string} name
  * @param {ESTree.Statement} body
  * @returns {ESTree.LabeledStatement}
@@ -100,14 +104,14 @@ export function labeled(name, body) {
 
 /**
  * @param {string | ESTree.Expression} callee
- * @param {...(ESTree.Expression | ESTree.SpreadElement | false | undefined)} args
+ * @param {...(ESTree.Expression | ESTree.SpreadElement | false | undefined | null)} args
  * @returns {ESTree.CallExpression}
  */
 export function call(callee, ...args) {
 	if (typeof callee === 'string') callee = id(callee);
 	args = args.slice();
 
-	// replacing missing arguments with `undefined`, unless they're at the end in which case remove them
+	// replacing missing arguments with `void(0)`, unless they're at the end in which case remove them
 	let i = args.length;
 	let popping = true;
 	while (i--) {
@@ -115,7 +119,7 @@ export function call(callee, ...args) {
 			if (popping) {
 				args.pop();
 			} else {
-				args[i] = id('undefined');
+				args[i] = void0;
 			}
 		} else {
 			popping = false;
@@ -154,6 +158,8 @@ export function unary(operator, argument) {
 	return { type: 'UnaryExpression', argument, operator, prefix: true };
 }
 
+export const void0 = unary('void', literal(0));
+
 /**
  * @param {ESTree.Expression} test
  * @param {ESTree.Expression} consequent
@@ -175,28 +181,26 @@ export function logical(operator, left, right) {
 }
 
 /**
- * @param {'const' | 'let' | 'var'} kind
- * @param {string | ESTree.Pattern} pattern
- * @param {ESTree.Expression} [init]
+ * @param {ESTree.VariableDeclaration['kind']} kind
+ * @param {ESTree.VariableDeclarator[]} declarations
  * @returns {ESTree.VariableDeclaration}
  */
-export function declaration(kind, pattern, init) {
-	if (typeof pattern === 'string') pattern = id(pattern);
-
+export function declaration(kind, declarations) {
 	return {
 		type: 'VariableDeclaration',
 		kind,
-		declarations: [init ? declarator(pattern, init) : declarator(pattern)]
+		declarations
 	};
 }
 
 /**
- * @param {ESTree.Pattern} id
- * @param {ESTree.Expression} [init]
+ * @param {ESTree.Pattern | string} pattern
+ * @param {ESTree.Expression | null} [init]
  * @returns {ESTree.VariableDeclarator}
  */
-export function declarator(id, init) {
-	return { type: 'VariableDeclarator', id, init };
+export function declarator(pattern, init) {
+	if (typeof pattern === 'string') pattern = id(pattern);
+	return { type: 'VariableDeclarator', id: pattern, init };
 }
 
 /** @type {ESTree.EmptyStatement} */
@@ -213,20 +217,37 @@ export function export_default(declaration) {
 }
 
 /**
+ * @param {ESTree.VariableDeclaration | ESTree.Pattern} left
+ * @param {ESTree.Expression} right
+ * @param {ESTree.Statement} body
+ * @param {boolean} [_await]
+ * @returns {ESTree.ForOfStatement}
+ */
+export function for_of(left, right, body, _await = false) {
+	return {
+		type: 'ForOfStatement',
+		left,
+		right,
+		body,
+		await: _await
+	};
+}
+
+/**
  * @param {ESTree.Identifier} id
  * @param {ESTree.Pattern[]} params
  * @param {ESTree.BlockStatement} body
+ * @param {boolean} async
  * @returns {ESTree.FunctionDeclaration}
  */
-export function function_declaration(id, params, body) {
+export function function_declaration(id, params, body, async = false) {
 	return {
 		type: 'FunctionDeclaration',
 		id,
 		params,
 		body,
 		generator: false,
-		async: false,
-		metadata: /** @type {any} */ (null) // should not be used by codegen
+		async
 	};
 }
 
@@ -241,10 +262,14 @@ export function get(name, body) {
 
 /**
  * @param {string} name
+ * @param {ESTree.SourceLocation | null} [loc]
  * @returns {ESTree.Identifier}
  */
-export function id(name) {
-	return { type: 'Identifier', name };
+export function id(name, loc) {
+	const node = /** @type {ESTree.Identifier} */ ({ type: 'Identifier', name });
+	if (loc) node.loc = loc;
+
+	return node;
 }
 
 /**
@@ -286,12 +311,16 @@ export function literal(value) {
 
 /**
  * @param {ESTree.Expression | ESTree.Super} object
- * @param {ESTree.Expression | ESTree.PrivateIdentifier} property
+ * @param {string | ESTree.Expression | ESTree.PrivateIdentifier} property
  * @param {boolean} computed
  * @param {boolean} optional
  * @returns {ESTree.MemberExpression}
  */
 export function member(object, property, computed = false, optional = false) {
+	if (typeof property === 'string') {
+		property = id(property);
+	}
+
 	return { type: 'MemberExpression', object, property, computed, optional };
 }
 
@@ -348,7 +377,14 @@ export function prop(kind, key, value, computed = false) {
  * @returns {ESTree.PropertyDefinition}
  */
 export function prop_def(key, value, computed = false, is_static = false) {
-	return { type: 'PropertyDefinition', key, value, computed, static: is_static };
+	return {
+		type: 'PropertyDefinition',
+		decorators: [],
+		key,
+		value,
+		computed,
+		static: is_static
+	};
 }
 
 /**
@@ -417,19 +453,35 @@ export function template(elements, expressions) {
  * @returns {ESTree.Expression}
  */
 export function thunk(expression, async = false) {
-	if (
-		expression.type === 'CallExpression' &&
-		expression.callee.type !== 'Super' &&
-		expression.callee.type !== 'MemberExpression' &&
-		expression.callee.type !== 'CallExpression' &&
-		expression.arguments.length === 0
-	) {
-		return expression.callee;
+	return unthunk(arrow([], expression, async));
+}
+
+/**
+ * Replace "(arg) => func(arg)" to "func"
+ * @param {ESTree.ArrowFunctionExpression} expression
+ * @returns {ESTree.Expression}
+ */
+export function unthunk(expression) {
+	// optimize `async () => await x()`, but not `async () => await x(await y)`
+	if (expression.async && expression.body.type === 'AwaitExpression') {
+		if (!has_await_expression(expression.body.argument)) {
+			return unthunk(arrow(expression.params, expression.body.argument));
+		}
 	}
 
-	const fn = arrow([], expression);
-	if (async) fn.async = true;
-	return fn;
+	if (
+		expression.async === false &&
+		expression.body.type === 'CallExpression' &&
+		expression.body.callee.type === 'Identifier' &&
+		expression.params.length === expression.body.arguments.length &&
+		expression.params.every((param, index) => {
+			const arg = /** @type {ESTree.SimpleCallExpression} */ (expression.body).arguments[index];
+			return param.type === 'Identifier' && arg.type === 'Identifier' && param.name === arg.name;
+		})
+	) {
+		return expression.body.callee;
+	}
+	return expression;
 }
 
 /**
@@ -469,7 +521,7 @@ export function do_while(test, body) {
 
 const true_instance = literal(true);
 const false_instance = literal(false);
-const null_instane = literal(null);
+const null_instance = literal(null);
 
 /** @type {ESTree.DebuggerStatement} */
 const debugger_builder = {
@@ -483,29 +535,29 @@ const this_instance = {
 
 /**
  * @param {string | ESTree.Pattern} pattern
- * @param { ESTree.Expression} [init]
+ * @param {ESTree.Expression | null} [init]
  * @returns {ESTree.VariableDeclaration}
  */
 function let_builder(pattern, init) {
-	return declaration('let', pattern, init);
+	return declaration('let', [declarator(pattern, init)]);
 }
 
 /**
  * @param {string | ESTree.Pattern} pattern
- * @param { ESTree.Expression} init
+ * @param {ESTree.Expression | null} init
  * @returns {ESTree.VariableDeclaration}
  */
 function const_builder(pattern, init) {
-	return declaration('const', pattern, init);
+	return declaration('const', [declarator(pattern, init)]);
 }
 
 /**
  * @param {string | ESTree.Pattern} pattern
- * @param { ESTree.Expression} [init]
+ * @param {ESTree.Expression | null} [init]
  * @returns {ESTree.VariableDeclaration}
  */
 function var_builder(pattern, init) {
-	return declaration('var', pattern, init);
+	return declaration('var', [declarator(pattern, init)]);
 }
 
 /**
@@ -533,6 +585,7 @@ function for_builder(init, test, update, body) {
 export function method(kind, key, params, body, computed = false, is_static = false) {
 	return {
 		type: 'MethodDefinition',
+		decorators: [],
 		key,
 		kind,
 		value: function_builder(null, params, block(body)),
@@ -548,15 +601,14 @@ export function method(kind, key, params, body, computed = false, is_static = fa
  * @param {ESTree.BlockStatement} body
  * @returns {ESTree.FunctionExpression}
  */
-function function_builder(id, params, body) {
+function function_builder(id, params, body, async = false) {
 	return {
 		type: 'FunctionExpression',
 		id,
 		params,
 		body,
 		generator: false,
-		async: false,
-		metadata: /** @type {any} */ (null) // should not be used by codegen
+		async
 	};
 }
 
@@ -578,6 +630,7 @@ function if_builder(test, consequent, alternate) {
 export function import_all(as, source) {
 	return {
 		type: 'ImportDeclaration',
+		attributes: [],
 		source: literal(source),
 		specifiers: [import_namespace(as)]
 	};
@@ -591,6 +644,7 @@ export function import_all(as, source) {
 export function imports(parts, source) {
 	return {
 		type: 'ImportDeclaration',
+		attributes: [],
 		source: literal(source),
 		specifiers: parts.map((p) => ({
 			type: 'ImportSpecifier',
@@ -631,7 +685,7 @@ export {
 	return_builder as return,
 	if_builder as if,
 	this_instance as this,
-	null_instane as null,
+	null_instance as null,
 	debugger_builder as debugger
 };
 

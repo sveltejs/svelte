@@ -12,12 +12,36 @@
 				"start": 0,
 				"end": 66,
 				"name": "template",
+				"name_loc": {
+					"start": {
+						"line": 1,
+						"column": 1,
+						"character": 1
+					},
+					"end": {
+						"line": 1,
+						"column": 9,
+						"character": 9
+					}
+				},
 				"attributes": [
 					{
 						"type": "Attribute",
 						"start": 10,
 						"end": 31,
 						"name": "shadowrootmode",
+						"name_loc": {
+							"start": {
+								"line": 1,
+								"column": 10,
+								"character": 10
+							},
+							"end": {
+								"line": 1,
+								"column": 24,
+								"character": 24
+							}
+						},
 						"value": [
 							{
 								"start": 26,
@@ -44,6 +68,18 @@
 							"start": 34,
 							"end": 54,
 							"name": "p",
+							"name_loc": {
+								"start": {
+									"line": 2,
+									"column": 2,
+									"character": 35
+								},
+								"end": {
+									"line": 2,
+									"column": 3,
+									"character": 36
+								}
+							},
 							"attributes": [],
 							"fragment": {
 								"type": "Fragment",
@@ -53,15 +89,25 @@
 										"start": 37,
 										"end": 50,
 										"name": "slot",
+										"name_loc": {
+											"start": {
+												"line": 2,
+												"column": 5,
+												"character": 38
+											},
+											"end": {
+												"line": 2,
+												"column": 9,
+												"character": 42
+											}
+										},
 										"attributes": [],
 										"fragment": {
 											"type": "Fragment",
-											"nodes": [],
-											"transparent": true
+											"nodes": []
 										}
 									}
-								],
-								"transparent": true
+								]
 							}
 						},
 						{
@@ -71,8 +117,7 @@
 							"raw": "\n",
 							"data": "\n"
 						}
-					],
-					"transparent": true
+					]
 				}
 			},
 			{
@@ -87,6 +132,18 @@
 				"start": 67,
 				"end": 111,
 				"name": "template",
+				"name_loc": {
+					"start": {
+						"line": 4,
+						"column": 1,
+						"character": 68
+					},
+					"end": {
+						"line": 4,
+						"column": 9,
+						"character": 76
+					}
+				},
 				"attributes": [],
 				"fragment": {
 					"type": "Fragment",
@@ -103,6 +160,18 @@
 							"start": 79,
 							"end": 99,
 							"name": "p",
+							"name_loc": {
+								"start": {
+									"line": 5,
+									"column": 2,
+									"character": 80
+								},
+								"end": {
+									"line": 5,
+									"column": 3,
+									"character": 81
+								}
+							},
 							"attributes": [],
 							"fragment": {
 								"type": "Fragment",
@@ -112,15 +181,25 @@
 										"start": 82,
 										"end": 95,
 										"name": "slot",
+										"name_loc": {
+											"start": {
+												"line": 5,
+												"column": 5,
+												"character": 83
+											},
+											"end": {
+												"line": 5,
+												"column": 9,
+												"character": 87
+											}
+										},
 										"attributes": [],
 										"fragment": {
 											"type": "Fragment",
-											"nodes": [],
-											"transparent": true
+											"nodes": []
 										}
 									}
-								],
-								"transparent": true
+								]
 							}
 						},
 						{
@@ -130,8 +209,7 @@
 							"raw": "\n",
 							"data": "\n"
 						}
-					],
-					"transparent": true
+					]
 				}
 			},
 			{
@@ -146,15 +224,25 @@
 				"start": 112,
 				"end": 125,
 				"name": "slot",
+				"name_loc": {
+					"start": {
+						"line": 7,
+						"column": 1,
+						"character": 113
+					},
+					"end": {
+						"line": 7,
+						"column": 5,
+						"character": 117
+					}
+				},
 				"attributes": [],
 				"fragment": {
 					"type": "Fragment",
-					"nodes": [],
-					"transparent": true
+					"nodes": []
 				}
 			}
-		],
-		"transparent": false
+		]
 	},
 	"options": null
 }

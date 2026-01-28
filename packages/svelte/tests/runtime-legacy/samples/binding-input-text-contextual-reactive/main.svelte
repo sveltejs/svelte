@@ -1,5 +1,10 @@
 <script>
-	export let items;
+	let items = [
+		{ done: false, text: 'one' },
+		{ done: true, text: 'two' },
+		{ done: false, text: 'three' }
+	];
+
 	export let filter = 'all';
 
 	$: done = items.filter(item => item.done);

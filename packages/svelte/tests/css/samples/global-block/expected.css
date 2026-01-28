@@ -3,6 +3,10 @@
 		.x {
 			color: green;
 		}
+
+		.a, .selector, .list {
+			color: green;
+		}
 	/*}*/
 
 	div.svelte-xyz {
@@ -69,3 +73,34 @@
 			color: red;
 		}
 	}*/
+	/* :global{*/
+		.x{
+			animation: svelte-xyz-test 1s;
+		}
+
+		.y{
+			animation: test-in 1s;
+		}
+
+		@keyframes test-in{
+			to{
+				opacity: 1;
+			}
+		}
+	/*}*/
+
+	@keyframes svelte-xyz-test{
+		to{
+			opacity: 1;
+		}
+	}
+
+	 x,  y {
+		color: green;
+	}
+
+	div.svelte-xyz, div.svelte-xyz y /* (unused) unused*/ {
+		z {
+			color: green;
+		}
+	}

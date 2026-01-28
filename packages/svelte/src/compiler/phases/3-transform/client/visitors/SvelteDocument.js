@@ -1,9 +1,9 @@
-/** @import { SvelteDocument } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { visit_special_element } from './shared/special_element.js';
 
 /**
- * @param {SvelteDocument} node
+ * @param {AST.SvelteDocument} node
  * @param {ComponentContext} context
  */
 export function SvelteDocument(node, context) {

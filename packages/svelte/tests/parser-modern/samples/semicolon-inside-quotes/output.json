@@ -77,7 +77,7 @@
 	},
 	"js": [],
 	"start": 0,
-	"end": 35,
+	"end": 205,
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
@@ -87,6 +87,18 @@
 				"start": 0,
 				"end": 35,
 				"name": "h1",
+				"name_loc": {
+					"start": {
+						"line": 1,
+						"column": 1,
+						"character": 1
+					},
+					"end": {
+						"line": 1,
+						"column": 3,
+						"character": 3
+					}
+				},
 				"attributes": [],
 				"fragment": {
 					"type": "Fragment",
@@ -98,8 +110,7 @@
 							"raw": "\n\tSemicolon inside quotes\n",
 							"data": "\n\tSemicolon inside quotes\n"
 						}
-					],
-					"transparent": true
+					]
 				}
 			},
 			{
@@ -109,8 +120,7 @@
 				"raw": "\n",
 				"data": "\n"
 			}
-		],
-		"transparent": false
+		]
 	},
 	"options": null
 }

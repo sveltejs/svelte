@@ -1,0 +1,14 @@
+[
+	{
+		"code": "state_field_invalid_assignment",
+		"message": "Cannot assign to a state field before its declaration",
+		"start": {
+			"line": 4,
+			"column": 3
+		},
+		"end": {
+			"line": 4,
+			"column": 18
+		}
+	}
+]

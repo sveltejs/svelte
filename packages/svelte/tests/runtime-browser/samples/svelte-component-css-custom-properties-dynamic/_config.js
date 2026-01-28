@@ -8,18 +8,18 @@ export default test({
 		trackColor2: 'blue'
 	},
 	html: `
-		<div style="display: contents; --rail-color: black; --track-color: red;">
+		<svelte-css-wrapper style="display: contents; --rail-color: black; --track-color: red;">
 			<div id="slider-1">
 				<p class="svelte-17ay6rc">Slider</p>
 				<span class="svelte-17ay6rc">Track</span>
 			</div>
-		</div>
-		<div style="display: contents; --rail-color: green; --track-color: blue;">
+		</svelte-css-wrapper>
+		<svelte-css-wrapper style="display: contents; --rail-color: green; --track-color: blue;">
 			<div id="slider-2">
 				<p class="svelte-17ay6rc">Slider</p>
 				<span class="svelte-17ay6rc">Track</span>
 			</div>
-		</div>
+		</svelte-css-wrapper>
 	`,
 	test({ component, assert, target }) {
 		component.railColor1 = 'yellow';
@@ -28,18 +28,18 @@ export default test({
 		assert.htmlEqual(
 			target.innerHTML,
 			`
-			<div style="display: contents; --rail-color: yellow; --track-color: red;">
+			<svelte-css-wrapper style="display: contents; --rail-color: yellow; --track-color: red;">
 				<div id="slider-1">
 					<p class="svelte-17ay6rc">Slider</p>
 					<span class="svelte-17ay6rc">Track</span>
 				</div>
-			</div>
-			<div style="display: contents; --rail-color: green; --track-color: orange;">
+			</svelte-css-wrapper>
+			<svelte-css-wrapper style="display: contents; --rail-color: green; --track-color: orange;">
 				<div id="slider-2">
 					<p class="svelte-17ay6rc">Slider</p>
 					<span class="svelte-17ay6rc">Track</span>
 				</div>
-			</div>
+			</svelte-css-wrapper>
 		`
 		);
 	}

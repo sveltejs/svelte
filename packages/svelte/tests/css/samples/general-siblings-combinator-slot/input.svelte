@@ -5,14 +5,14 @@
 <style>
 	.d ~ .e { color: green; }
 	.a ~ .g { color: green; }
+	.a ~ .b { color: green; }
+	.f ~ .g { color: green; }
+	.b ~ .g { color: green; }
 
 	/* no match */
-	.a ~ .b { color: green; }
-	.b ~ .c { color: green; }
-	.c ~ .f { color: green; }
-	.f ~ .g { color: green; }
-	.b ~ .f { color: green; }
-	.b ~ .g { color: green; }
+	.b ~ .c { color: red; }
+	.c ~ .f { color: red; }
+	.b ~ .f { color: red; }
 </style>
 
 <div class="a"></div>

@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	export const foo = 123;
 	export const doFoo = (foo) => foo;
 </script>

@@ -9,12 +9,12 @@ The [Open Source Guides](https://opensource.guide/) website has a collection of 
 
 ## Get involved
 
-There are many ways to contribute to Svelte, and many of them do not involve writing any code. Here's a few ideas to get started:
+There are many ways to contribute to Svelte, and many of them do not involve writing any code. Here are a few ideas to get started:
 
 - Simply start using Svelte. Go through the [Getting Started](https://svelte.dev/docs#getting-started) guide. Does everything work as expected? If not, we're always looking for improvements. Let us know by [opening an issue](#reporting-new-issues).
 - Look through the [open issues](https://github.com/sveltejs/svelte/issues). A good starting point would be issues tagged [good first issue](https://github.com/sveltejs/svelte/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22). Provide workarounds, ask for clarification, or suggest labels. Help [triage issues](#triaging-issues-and-pull-requests).
 - If you find an issue you would like to fix, [open a pull request](#pull-requests).
-- Read through our [tutorials](https://learn.svelte.dev/). If you find anything that is confusing or can be improved, you can make edits by clicking "Edit this page" at the bottom left of the tutorial page.
+- Read through our [tutorials](https://svelte.dev/tutorial). If you find anything that is confusing or can be improved, you can make edits by clicking "Edit this page" at the bottom left of the tutorial page.
 - Take a look at the [features requested](https://github.com/sveltejs/svelte/labels/feature%20request) by others in the community and consider opening a pull request if you see something you want to work on.
 
 Contributions are very welcome. If you think you need help planning your contribution, please ping us on Discord at [svelte.dev/chat](https://svelte.dev/chat) and let us know you are looking for a bit of help.
@@ -51,7 +51,7 @@ We use [GitHub issues](https://github.com/sveltejs/svelte/issues) for our public
 
 If you have questions about using Svelte, contact us on Discord at [svelte.dev/chat](https://svelte.dev/chat), and we will do our best to answer your questions.
 
-If you see anything you'd like to be implemented, create a [feature request issue](https://github.com/sveltejs/svelte/issues/new?template=feature_request.yml)
+If you see anything you'd like to be implemented, create a [feature request issue](https://github.com/sveltejs/svelte/issues/new?template=feature_request.yml).
 
 ### Reporting new issues
 
@@ -61,8 +61,6 @@ When [opening a new issue](https://github.com/sveltejs/svelte/issues/new/choose)
 - **Provide reproduction steps:** List all the steps necessary to reproduce the issue. The person reading your bug report should be able to follow these steps to reproduce your issue with minimal effort. If possible, use the [REPL](https://svelte.dev/repl) to create your reproduction.
 
 ## Pull requests
-
-> HEADS UP: Svelte 5 will likely change a lot on the compiler. For that reason, please don't open PRs that are large in scope, touch more than a couple of files etc. In other words, bug fixes are fine, but big feature PRs will likely not be merged.
 
 ### Proposing a change
 
@@ -92,9 +90,9 @@ A good test plan has the exact commands you ran and their output, provides scree
 
 #### Writing tests
 
-All tests are located in `/test` folder.
+All tests are located in the `/tests` folder.
 
-Test samples are kept in `/test/xxx/samples` folder.
+Test samples are kept in `/tests/xxx/samples` folders.
 
 #### Running tests
 
@@ -103,14 +101,14 @@ Test samples are kept in `/test/xxx/samples` folder.
 1. To run test, run `pnpm test`.
 1. To run a particular test suite, use `pnpm test <suite-name>`, for example:
 
-   ```bash
+   ```sh
    pnpm test validator
    ```
 
-1. To filter tests _within_ a test suite, use `pnpm test <suite-name> -- -t <test-name>`, for example:
+1. To filter tests _within_ a test suite, use `pnpm test <suite-name> -t <test-name>`, for example:
 
-   ```bash
-   pnpm test validator -- -t a11y-alt-text
+   ```sh
+   pnpm test validator -t a11y-alt-text
    ```
 
    (You can also do `FILTER=<test-name> pnpm test <suite-name>` which removes other tests rather than simply skipping them — this will result in faster and more compact test results, but it's non-idiomatic. Choose your fighter.)
@@ -159,6 +157,10 @@ When adding a new breaking change, follow this template in your pull request:
 - **Why make this breaking change**:
 - **Severity (number of people affected x effort)**:
 ```
+
+### Reviewing pull requests
+
+If you'd like to manually test a pull request in another pnpm project, you can do so by running `pnpm add -D "github:sveltejs/svelte#path:packages/svelte&branch-name"` in that project.
 
 ## License
 

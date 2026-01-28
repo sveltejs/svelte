@@ -1,4 +1,4 @@
-import type { Text, Css, ExpressionTag } from '#compiler';
+import type { AST } from '#compiler';
 import type {
 	ArrayExpression,
 	AssignmentExpression,
@@ -6,7 +6,8 @@ import type {
 	Identifier,
 	MemberExpression,
 	ObjectExpression,
-	Pattern
+	Pattern,
+	SequenceExpression
 } from 'estree';
 
 interface BaseNode {
@@ -49,7 +50,7 @@ export interface LegacyBinding extends BaseNode {
 	/** The 'x' in `bind:x` */
 	name: string;
 	/** The y in `bind:x={y}` */
-	expression: Identifier | MemberExpression;
+	expression: Identifier | MemberExpression | SequenceExpression;
 }
 
 export interface LegacyBody extends BaseElement {
@@ -60,7 +61,7 @@ export interface LegacyBody extends BaseElement {
 export interface LegacyAttribute extends BaseNode {
 	type: 'Attribute';
 	name: string;
-	value: true | Array<Text | LegacyMustacheTag | LegacyAttributeShorthand>;
+	value: true | Array<AST.Text | LegacyMustacheTag | LegacyAttributeShorthand>;
 }
 
 export interface LegacyAttributeShorthand extends BaseNode {
@@ -200,7 +201,7 @@ export interface LegacyStyleDirective extends BaseNode {
 	/** The 'x' in `style:x` */
 	name: string;
 	/** The 'y' in `style:x={y}` */
-	value: true | Array<ExpressionTag | Text>;
+	value: true | Array<AST.ExpressionTag | AST.Text>;
 	modifiers: Array<'important'>;
 }
 
@@ -259,7 +260,7 @@ export interface LegacyStyle extends BaseNode {
 
 export interface LegacySelector extends BaseNode {
 	type: 'Selector';
-	children: Array<Css.Combinator | Css.SimpleSelector>;
+	children: Array<AST.CSS.Combinator | AST.CSS.SimpleSelector>;
 }
 
 export type LegacyCssNode = LegacyStyle | LegacySelector;
@@ -270,4 +271,4 @@ export type LegacySvelteNode =
 	| LegacyAttributeLike
 	| LegacyAttributeShorthand
 	| LegacyCssNode
-	| Text;
+	| AST.Text;

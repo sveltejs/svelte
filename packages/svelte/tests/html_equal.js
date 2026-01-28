@@ -1,8 +1,21 @@
+import { COMMENT_NODE, ELEMENT_NODE, TEXT_NODE } from '#client/constants';
 import { assert } from 'vitest';
 
-/** @param {Element} node */
-function clean_children(node) {
+/**
+ * @param {Element} node
+ * @param {{ preserveComments: boolean }} opts
+ */
+function clean_children(node, opts) {
 	let previous = null;
+	let has_element_children = false;
+	let template =
+		node.nodeName === 'TEMPLATE' ? /** @type {HTMLTemplateElement} */ (node) : undefined;
+
+	if (template) {
+		const div = document.createElement('div');
+		div.append(template.content);
+		node = div;
+	}
 
 	// sort attributes
 	const attributes = Array.from(node.attributes).sort((a, b) => {
@@ -14,11 +27,22 @@ function clean_children(node) {
 	});
 
 	attributes.forEach((attr) => {
-		node.setAttribute(attr.name, attr.value);
+		// Strip out the special onload/onerror hydration events from the test output
+		if ((attr.name === 'onload' || attr.name === 'onerror') && attr.value === 'this.__e=event') {
+			return;
+		}
+
+		let value = attr.value;
+
+		if (attr.name === 'class') {
+			value = value.replace(/svelte-\w+/, 'svelte-xyz123');
+		}
+
+		node.setAttribute(attr.name, value);
 	});
 
 	for (let child of [...node.childNodes]) {
-		if (child.nodeType === 3) {
+		if (child.nodeType === TEXT_NODE) {
 			let text = /** @type {Text} */ (child);
 
 			if (
@@ -27,66 +51,84 @@ function clean_children(node) {
 				node.tagName !== 'tspan'
 			) {
 				node.removeChild(child);
+				continue;
 			}
 
-			text.data = text.data.replace(/[ \t\n\r\f]+/g, '\n');
+			text.data = text.data.replace(/[^\S]+/g, ' ');
 
-			if (previous && previous.nodeType === 3) {
+			if (previous && previous.nodeType === TEXT_NODE) {
 				const prev = /** @type {Text} */ (previous);
 
 				prev.data += text.data;
-				prev.data = prev.data.replace(/[ \t\n\r\f]+/g, '\n');
-
 				node.removeChild(text);
+
 				text = prev;
+				text.data = text.data.replace(/[^\S]+/g, ' ');
+
+				continue;
 			}
-		} else if (child.nodeType === 8) {
+		}
+
+		if (child.nodeType === COMMENT_NODE && !opts.preserveComments) {
 			// comment
-			// do nothing
-		} else {
-			clean_children(/** @type {Element} */ (child));
+			child.remove();
+			continue;
+		}
+
+		// add newlines for better readability and potentially recurse into children
+		if (child.nodeType === ELEMENT_NODE || child.nodeType === COMMENT_NODE) {
+			if (previous?.nodeType === TEXT_NODE) {
+				const prev = /** @type {Text} */ (previous);
+				prev.data = prev.data.replace(/^[^\S]+$/, '\n');
+			} else if (previous?.nodeType === ELEMENT_NODE || previous?.nodeType === COMMENT_NODE) {
+				node.insertBefore(document.createTextNode('\n'), child);
+			}
+
+			if (child.nodeType === ELEMENT_NODE) {
+				has_element_children = true;
+				clean_children(/** @type {Element} */ (child), opts);
+			}
 		}
 
 		previous = child;
 	}
 
 	// collapse whitespace
-	if (node.firstChild && node.firstChild.nodeType === 3) {
+	if (node.firstChild && node.firstChild.nodeType === TEXT_NODE) {
 		const text = /** @type {Text} */ (node.firstChild);
-		text.data = text.data.replace(/^[ \t\n\r\f]+/, '');
-		if (!text.data.length) node.removeChild(text);
+		text.data = text.data.trimStart();
 	}
 
-	if (node.lastChild && node.lastChild.nodeType === 3) {
+	if (node.lastChild && node.lastChild.nodeType === TEXT_NODE) {
 		const text = /** @type {Text} */ (node.lastChild);
-		text.data = text.data.replace(/[ \t\n\r\f]+$/, '');
-		if (!text.data.length) node.removeChild(text);
+		text.data = text.data.trimEnd();
+	}
+
+	// indent code for better readability
+	if (has_element_children && node.parentNode) {
+		node.innerHTML = `\n\  ${node.innerHTML.replace(/\n/g, '\n  ')}\n`;
+	}
+
+	if (template) {
+		template.innerHTML = node.innerHTML;
 	}
 }
 
 /**
  * @param {Window} window
  * @param {string} html
- * @param {{ removeDataSvelte?: boolean, preserveComments?: boolean }} param2
+ * @param {{ preserveComments?: boolean }} opts
  */
-export function normalize_html(
-	window,
-	html,
-	{ removeDataSvelte = false, preserveComments = false }
-) {
+export function normalize_html(window, html, { preserveComments = false } = {}) {
 	try {
 		const node = window.document.createElement('div');
-		node.innerHTML = html
-			.replace(/(<!(--)?.*?\2>)/g, preserveComments ? '$1' : '')
-			.replace(/(data-svelte-h="[^"]+")/g, removeDataSvelte ? '' : '$1')
-			.replace(/>[ \t\n\r\f]+</g, '><')
-			// Strip out the special onload/onerror hydration events from the test output
-			.replace(/\s?onerror="this.__e=event"|\s?onload="this.__e=event"/g, '')
-			.trim();
-		clean_children(node);
+
+		node.innerHTML = html.trim();
+		clean_children(node, { preserveComments });
+
 		return node.innerHTML;
 	} catch (err) {
-		throw new Error(`Failed to normalize HTML:\n${html}`);
+		throw new Error(`Failed to normalize HTML:\n${html}\nCause: ${err}`);
 	}
 }
 
@@ -99,67 +141,52 @@ export function normalize_new_line(html) {
 }
 
 /**
- * @param {{ removeDataSvelte?: boolean }} options
+ * @param {string} actual
+ * @param {string} expected
+ * @param {string} [message]
  */
-export function setup_html_equal(options = {}) {
-	/**
-	 * @param {string} actual
-	 * @param {string} expected
-	 * @param {string} [message]
-	 */
-	const assert_html_equal = (actual, expected, message) => {
-		try {
-			assert.deepEqual(
-				normalize_html(window, actual, options),
-				normalize_html(window, expected, options),
-				message
-			);
-		} catch (e) {
-			if (Error.captureStackTrace)
-				Error.captureStackTrace(/** @type {Error} */ (e), assert_html_equal);
-			throw e;
-		}
-	};
+export const assert_html_equal = (actual, expected, message) => {
+	try {
+		assert.deepEqual(normalize_html(window, actual), normalize_html(window, expected), message);
+	} catch (e) {
+		if (Error.captureStackTrace)
+			Error.captureStackTrace(/** @type {Error} */ (e), assert_html_equal);
+		throw e;
+	}
+};
 
-	/**
-	 *
-	 * @param {string} actual
-	 * @param {string} expected
-	 * @param {{ preserveComments?: boolean, withoutNormalizeHtml?: boolean }} param2
-	 * @param {string} [message]
-	 */
-	const assert_html_equal_with_options = (
-		actual,
-		expected,
-		{ preserveComments, withoutNormalizeHtml },
-		message
-	) => {
-		try {
-			assert.deepEqual(
-				withoutNormalizeHtml
-					? normalize_new_line(actual.trim())
-							.replace(/(\sdata-svelte-h="[^"]+")/g, options.removeDataSvelte ? '' : '$1')
-							.replace(/(<!(--)?.*?\2>)/g, preserveComments !== false ? '$1' : '')
-					: normalize_html(window, actual.trim(), { ...options, preserveComments }),
-				withoutNormalizeHtml
-					? normalize_new_line(expected.trim())
-							.replace(/(\sdata-svelte-h="[^"]+")/g, options.removeDataSvelte ? '' : '$1')
-							.replace(/(<!(--)?.*?\2>)/g, preserveComments !== false ? '$1' : '')
-					: normalize_html(window, expected.trim(), { ...options, preserveComments }),
-				message
-			);
-		} catch (e) {
-			if (Error.captureStackTrace)
-				Error.captureStackTrace(/** @type {Error} */ (e), assert_html_equal_with_options);
-			throw e;
-		}
-	};
-
-	return {
-		assert_html_equal,
-		assert_html_equal_with_options
-	};
-}
-
-// Common case without options
-export const { assert_html_equal, assert_html_equal_with_options } = setup_html_equal();
+/**
+ *
+ * @param {string} actual
+ * @param {string} expected
+ * @param {{ preserveComments?: boolean, withoutNormalizeHtml?: boolean }} param2
+ * @param {string} [message]
+ */
+export const assert_html_equal_with_options = (
+	actual,
+	expected,
+	{ preserveComments, withoutNormalizeHtml },
+	message
+) => {
+	try {
+		assert.deepEqual(
+			withoutNormalizeHtml
+				? normalize_new_line(actual.trim()).replace(
+						/(<!(--)?.*?\2>)/g,
+						preserveComments !== false ? '$1' : ''
+					)
+				: normalize_html(window, actual.trim(), { preserveComments }),
+			withoutNormalizeHtml
+				? normalize_new_line(expected.trim()).replace(
+						/(<!(--)?.*?\2>)/g,
+						preserveComments !== false ? '$1' : ''
+					)
+				: normalize_html(window, expected.trim(), { preserveComments }),
+			message
+		);
+	} catch (e) {
+		if (Error.captureStackTrace)
+			Error.captureStackTrace(/** @type {Error} */ (e), assert_html_equal_with_options);
+		throw e;
+	}
+};

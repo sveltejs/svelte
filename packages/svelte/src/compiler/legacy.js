@@ -1,5 +1,5 @@
 /** @import { Expression } from 'estree' */
-/** @import { BaseNode, ConstTag, Root, SvelteNode, TemplateNode, Text } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import * as Legacy from './types/legacy-nodes.js' */
 import { walk } from 'zimmerframe';
 import {
@@ -11,7 +11,7 @@ import { extract_svelte_ignore } from './utils/extract_svelte_ignore.js';
 
 /**
  * Some of the legacy Svelte AST nodes remove whitespace from the start and end of their children.
- * @param {TemplateNode[]} nodes
+ * @param {AST.TemplateNode[]} nodes
  */
 function remove_surrounding_whitespace_nodes(nodes) {
 	const first = nodes.at(0);
@@ -36,17 +36,15 @@ function remove_surrounding_whitespace_nodes(nodes) {
 /**
  * Transform our nice modern AST into the monstrosity emitted by Svelte 4
  * @param {string} source
- * @param {Root} ast
+ * @param {AST.Root} ast
  * @returns {Legacy.LegacyRoot}
  */
 export function convert(source, ast) {
-	const root = /** @type {SvelteNode | Legacy.LegacySvelteNode} */ (ast);
+	const root = /** @type {AST.SvelteNode | Legacy.LegacySvelteNode} */ (ast);
 
 	return /** @type {Legacy.LegacyRoot} */ (
 		walk(root, null, {
 			_(node, { next }) {
-				// @ts-ignore
-				delete node.parent;
 				// @ts-ignore
 				delete node.metadata;
 				next();
@@ -57,13 +55,13 @@ export function convert(source, ast) {
 
 				// Insert svelte:options back into the root nodes
 				if (/** @type {any} */ (options)?.__raw__) {
-					let idx = node.fragment.nodes.findIndex((node) => options.end <= node.start);
+					let idx = node.fragment.nodes.findIndex(
+						(node) => /** @type {any} */ (options).end <= node.start
+					);
 					if (idx === -1) {
 						idx = node.fragment.nodes.length;
 					}
 
-					// @ts-ignore
-					delete options.__raw__.parent;
 					node.fragment.nodes.splice(idx, 0, /** @type {any} */ (options).__raw__);
 				}
 
@@ -74,8 +72,8 @@ export function convert(source, ast) {
 				let end = null;
 
 				if (node.fragment.nodes.length > 0) {
-					const first = /** @type {BaseNode} */ (node.fragment.nodes.at(0));
-					const last = /** @type {BaseNode} */ (node.fragment.nodes.at(-1));
+					const first = /** @type {AST.BaseNode} */ (node.fragment.nodes.at(0));
+					const last = /** @type {AST.BaseNode} */ (node.fragment.nodes.at(-1));
 
 					start = first.start;
 					end = last.end;
@@ -86,14 +84,10 @@ export function convert(source, ast) {
 
 				if (instance) {
 					// @ts-ignore
-					delete instance.parent;
-					// @ts-ignore
 					delete instance.attributes;
 				}
 
 				if (module) {
-					// @ts-ignore
-					delete module.parent;
 					// @ts-ignore
 					delete module.attributes;
 				}
@@ -204,7 +198,9 @@ export function convert(source, ast) {
 					ignores: extract_svelte_ignore(node.start, node.data, false)
 				};
 			},
-			ComplexSelector(node) {
+			ComplexSelector(node, { next }) {
+				next(); // delete inner metadata/parent properties
+
 				const children = [];
 
 				for (const child of node.children) {
@@ -242,7 +238,7 @@ export function convert(source, ast) {
 					return node;
 				}
 
-				const modern_node = /** @type {ConstTag} */ (node);
+				const modern_node = /** @type {AST.ConstTag} */ (node);
 				const { id: left } = { ...modern_node.declaration.declarations[0] };
 				// @ts-ignore
 				delete left.typeAnnotation;
@@ -384,7 +380,22 @@ export function convert(source, ast) {
 					end: node.end,
 					expression: node.expression,
 					parameters: node.parameters,
-					children: node.body.nodes.map((child) => visit(child))
+					children: node.body.nodes.map((child) => visit(child)),
+					typeParams: node.typeParams
+				};
+			},
+			// @ts-expect-error
+			SvelteBoundary(node, { visit }) {
+				remove_surrounding_whitespace_nodes(node.fragment.nodes);
+				return {
+					type: 'SvelteBoundary',
+					name: 'svelte:boundary',
+					start: node.start,
+					end: node.end,
+					attributes: node.attributes.map(
+						(child) => /** @type {Legacy.LegacyAttributeLike} */ (visit(child))
+					),
+					children: node.fragment.nodes.map((child) => visit(child))
 				};
 			},
 			RegularElement(node, { visit }) {
@@ -442,6 +453,7 @@ export function convert(source, ast) {
 			SpreadAttribute(node) {
 				return { ...node, type: 'Spread' };
 			},
+			// @ts-ignore
 			StyleSheet(node, context) {
 				return {
 					...node,
@@ -584,7 +596,7 @@ export function convert(source, ast) {
 				const parent = path.at(-1);
 				if (parent?.type === 'RegularElement' && parent.name === 'style') {
 					// these text nodes are missing `raw` for some dumb reason
-					return /** @type {Text} */ ({
+					return /** @type {AST.Text} */ ({
 						type: 'Text',
 						start: node.start,
 						end: node.end,

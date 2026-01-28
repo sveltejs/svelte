@@ -1,4 +1,8 @@
 /** @import { BlurParams, CrossfadeParams, DrawParams, FadeParams, FlyParams, ScaleParams, SlideParams, TransitionConfig } from './public' */
+
+import { DEV } from 'esm-env';
+import * as w from '../internal/client/warnings.js';
+
 /** @param {number} x */
 const linear = (x) => x;
 
@@ -9,7 +13,6 @@ function cubic_out(t) {
 }
 
 /**
- * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -28,7 +31,6 @@ function split_css_unit(value) {
 /**
  * Animates a `blur` filter alongside an element's opacity.
  *
- * https://svelte.dev/docs/svelte-transition#blur
  * @param {Element} node
  * @param {BlurParams} [params]
  * @returns {TransitionConfig}
@@ -53,7 +55,6 @@ export function blur(
 /**
  * Animates the opacity of an element from 0 to the current opacity for `in` transitions and from the current opacity to 0 for `out` transitions.
  *
- * https://svelte.dev/docs/svelte-transition#fade
  * @param {Element} node
  * @param {FadeParams} [params]
  * @returns {TransitionConfig}
@@ -71,7 +72,6 @@ export function fade(node, { delay = 0, duration = 400, easing = linear } = {}) 
 /**
  * Animates the x and y positions and the opacity of an element. `in` transitions animate from the provided values, passed as parameters to the element's default values. `out` transitions animate from the element's default values to the provided values.
  *
- * https://svelte.dev/docs/svelte-transition#fly
  * @param {Element} node
  * @param {FlyParams} [params]
  * @returns {TransitionConfig}
@@ -96,16 +96,24 @@ export function fly(
 	};
 }
 
+var slide_warning = false;
+
 /**
  * Slides an element in and out.
  *
- * https://svelte.dev/docs/svelte-transition#slide
  * @param {Element} node
  * @param {SlideParams} [params]
  * @returns {TransitionConfig}
  */
 export function slide(node, { delay = 0, duration = 400, easing = cubic_out, axis = 'y' } = {}) {
 	const style = getComputedStyle(node);
+
+	if (DEV && !slide_warning && /(contents|inline|table)/.test(style.display)) {
+		slide_warning = true;
+		Promise.resolve().then(() => (slide_warning = false));
+		w.transition_slide_display(style.display);
+	}
+
 	const opacity = +style.opacity;
 	const primary_property = axis === 'y' ? 'height' : 'width';
 	const primary_property_value = parseFloat(style[primary_property]);
@@ -136,14 +144,14 @@ export function slide(node, { delay = 0, duration = 400, easing = cubic_out, axi
 			`margin-${secondary_properties[0]}: ${t * margin_start_value}px;` +
 			`margin-${secondary_properties[1]}: ${t * margin_end_value}px;` +
 			`border-${secondary_properties[0]}-width: ${t * border_width_start_value}px;` +
-			`border-${secondary_properties[1]}-width: ${t * border_width_end_value}px;`
+			`border-${secondary_properties[1]}-width: ${t * border_width_end_value}px;` +
+			`min-${primary_property}: 0`
 	};
 }
 
 /**
- * Animates the opacity and scale of an element. `in` transitions animate from an element's current (default) values to the provided values, passed as parameters. `out` transitions animate from the provided values to an element's default values.
+ * Animates the opacity and scale of an element. `in` transitions animate from the provided values, passed as parameters, to an element's current (default) values. `out` transitions animate from an element's default values to the provided values.
  *
- * https://svelte.dev/docs/svelte-transition#scale
  * @param {Element} node
  * @param {ScaleParams} [params]
  * @returns {TransitionConfig}
@@ -171,7 +179,6 @@ export function scale(
 /**
  * Animates the stroke of an SVG element, like a snake in a tube. `in` transitions begin with the path invisible and draw the path to the screen over time. `out` transitions start in a visible state and gradually erase the path. `draw` only works with elements that have a `getTotalLength` method, like `<path>` and `<polyline>`.
  *
- * https://svelte.dev/docs/svelte-transition#draw
  * @param {SVGElement & { getTotalLength(): number }} node
  * @param {DrawParams} [params]
  * @returns {TransitionConfig}
@@ -216,9 +223,8 @@ function assign(tar, src) {
 }
 
 /**
- * The `crossfade` function creates a pair of [transitions](https://svelte.dev/docs#template-syntax-element-directives-transition-fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
+ * The `crossfade` function creates a pair of [transitions](https://svelte.dev/docs/svelte/transition) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
  *
- * https://svelte.dev/docs/svelte-transition#crossfade
  * @param {CrossfadeParams & {
  * 	fallback?: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;
  * }} params

@@ -5,7 +5,7 @@ import * as path from 'node:path';
 import { compile } from 'svelte/compiler';
 import { afterAll, assert, beforeAll, describe } from 'vitest';
 import { suite, suite_with_variants } from '../suite';
-import { write } from '../helpers';
+import { write, fragments } from '../helpers';
 import type { Warning } from '#compiler';
 
 const assert_file = path.resolve(__dirname, 'assert.js');
@@ -79,6 +79,7 @@ async function run_test(
 			__CONFIG__: path.resolve(test_dir, '_config.js'),
 			'assert.js': assert_file
 		},
+		conditions: ['browser', 'production'],
 		plugins: [
 			{
 				name: 'testing-runtime-browser',
@@ -86,6 +87,7 @@ async function run_test(
 					build.onLoad({ filter: /\.svelte$/ }, (args) => {
 						const compiled = compile(fs.readFileSync(args.path, 'utf-8').replace(/\r/g, ''), {
 							generate: 'client',
+							fragments,
 							...config.compileOptions,
 							immutable: config.immutable,
 							customElement: test_dir.includes('custom-elements-samples'),
@@ -131,6 +133,7 @@ async function run_test(
 				__MAIN_DOT_SVELTE__: path.resolve(test_dir, 'main.svelte'),
 				__CONFIG__: path.resolve(test_dir, '_config.js')
 			},
+			conditions: ['browser', 'production'],
 			plugins: [
 				{
 					name: 'testing-runtime-browser-ssr',
@@ -161,6 +164,7 @@ async function run_test(
 				}
 			],
 			bundle: true,
+			platform: 'node',
 			format: 'iife',
 			globalName: 'test_ssr'
 		});
@@ -191,9 +195,11 @@ async function run_test(
 
 	try {
 		const page = await browser.newPage();
-		page.on('console', (type) => {
+		page.on('console', (message) => {
+			let method = message.type();
+			if (method === 'warning') method = 'warn';
 			// @ts-ignore
-			console[type.type()](type.text());
+			console[method](message.text());
 		});
 
 		if (build_result_ssr) {

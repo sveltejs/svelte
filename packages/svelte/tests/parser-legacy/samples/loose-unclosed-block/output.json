@@ -1,0 +1,276 @@
+{
+	"html": {
+		"type": "Fragment",
+		"start": 0,
+		"end": 150,
+		"children": [
+			{
+				"type": "Element",
+				"start": 0,
+				"end": 23,
+				"name": "div",
+				"attributes": [],
+				"children": [
+					{
+						"type": "Text",
+						"start": 5,
+						"end": 7,
+						"raw": "\n\t",
+						"data": "\n\t"
+					},
+					{
+						"type": "IfBlock",
+						"start": 7,
+						"end": 17,
+						"expression": {
+							"type": "Identifier",
+							"start": 12,
+							"end": 15,
+							"loc": {
+								"start": {
+									"line": 2,
+									"column": 6
+								},
+								"end": {
+									"line": 2,
+									"column": 9
+								}
+							},
+							"name": "foo"
+						},
+						"children": []
+					}
+				]
+			},
+			{
+				"type": "Text",
+				"start": 23,
+				"end": 25,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "InlineComponent",
+				"start": 25,
+				"end": 51,
+				"name": "Comp",
+				"attributes": [],
+				"children": [
+					{
+						"type": "Text",
+						"start": 31,
+						"end": 33,
+						"raw": "\n\t",
+						"data": "\n\t"
+					},
+					{
+						"type": "KeyBlock",
+						"start": 33,
+						"end": 44,
+						"expression": {
+							"type": "Identifier",
+							"start": 39,
+							"end": 42,
+							"loc": {
+								"start": {
+									"line": 6,
+									"column": 7
+								},
+								"end": {
+									"line": 6,
+									"column": 10
+								}
+							},
+							"name": "bar"
+						},
+						"children": []
+					}
+				]
+			},
+			{
+				"type": "Text",
+				"start": 51,
+				"end": 53,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "Element",
+				"start": 53,
+				"end": 95,
+				"name": "div",
+				"attributes": [],
+				"children": [
+					{
+						"type": "Text",
+						"start": 58,
+						"end": 60,
+						"raw": "\n\t",
+						"data": "\n\t"
+					},
+					{
+						"type": "IfBlock",
+						"start": 60,
+						"end": 89,
+						"expression": {
+							"type": "Identifier",
+							"start": 65,
+							"end": 68,
+							"loc": {
+								"start": {
+									"line": 10,
+									"column": 6
+								},
+								"end": {
+									"line": 10,
+									"column": 9
+								}
+							},
+							"name": "foo"
+						},
+						"children": [
+							{
+								"type": "IfBlock",
+								"start": 72,
+								"end": 88,
+								"expression": {
+									"type": "Identifier",
+									"start": 77,
+									"end": 80,
+									"loc": {
+										"start": {
+											"line": 11,
+											"column": 7
+										},
+										"end": {
+											"line": 11,
+											"column": 10
+										}
+									},
+									"name": "bar"
+								},
+								"children": []
+							}
+						]
+					}
+				]
+			},
+			{
+				"type": "Text",
+				"start": 95,
+				"end": 97,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "IfBlock",
+				"start": 97,
+				"end": 124,
+				"expression": {
+					"type": "Identifier",
+					"start": 102,
+					"end": 105,
+					"loc": {
+						"start": {
+							"line": 15,
+							"column": 5
+						},
+						"end": {
+							"line": 15,
+							"column": 8
+						}
+					},
+					"name": "foo"
+				},
+				"children": [
+					{
+						"type": "KeyBlock",
+						"start": 108,
+						"end": 119,
+						"expression": {
+							"type": "Identifier",
+							"start": 114,
+							"end": 117,
+							"loc": {
+								"start": {
+									"line": 16,
+									"column": 7
+								},
+								"end": {
+									"line": 16,
+									"column": 10
+								}
+							},
+							"name": "bar"
+						},
+						"children": []
+					}
+				]
+			},
+			{
+				"type": "Text",
+				"start": 124,
+				"end": 126,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "EachBlock",
+				"start": 126,
+				"end": 150,
+				"children": [
+					{
+						"type": "Element",
+						"start": 141,
+						"end": 150,
+						"name": "p",
+						"attributes": [],
+						"children": [
+							{
+								"type": "Text",
+								"start": 144,
+								"end": 146,
+								"raw": "hi",
+								"data": "hi"
+							}
+						]
+					}
+				],
+				"context": {
+					"type": "Identifier",
+					"name": "y",
+					"start": 138,
+					"end": 139,
+					"loc": {
+						"start": {
+							"line": 19,
+							"column": 12,
+							"character": 138
+						},
+						"end": {
+							"line": 19,
+							"column": 13,
+							"character": 139
+						}
+					}
+				},
+				"expression": {
+					"type": "Identifier",
+					"start": 133,
+					"end": 134,
+					"loc": {
+						"start": {
+							"line": 19,
+							"column": 7
+						},
+						"end": {
+							"line": 19,
+							"column": 8
+						}
+					},
+					"name": "x"
+				}
+			}
+		]
+	}
+}

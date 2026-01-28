@@ -1,7 +1,8 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	async test({ assert, component }) {
+	test({ assert, component }) {
 		const { foo, p } = component;
 
 		/** @type {string[]} */
@@ -13,7 +14,8 @@ export default test({
 			}
 		});
 
-		await foo.double();
+		foo.double();
+		flushSync();
 
 		assert.deepEqual(values, ['6']);
 	}

@@ -1,16 +1,17 @@
-/** @import { BlockStatement, Expression, ExpressionStatement, Property } from 'estree' */
-/** @import { SlotElement } from '#compiler' */
+/** @import { BlockStatement, Expression, ExpressionStatement, Literal, Property, Statement } from 'estree' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { build_attribute_value } from './shared/element.js';
+import { Memoizer } from './shared/utils.js';
 
 /**
- * @param {SlotElement} node
+ * @param {AST.SlotElement} node
  * @param {ComponentContext} context
  */
 export function SlotElement(node, context) {
 	// <slot {a}>fallback</slot>  -->   $.slot($$slots.default, { get a() { .. } }, () => ...fallback);
-	context.state.template.push('<!>');
+	context.state.template.push_comment();
 
 	/** @type {Property[]} */
 	const props = [];
@@ -21,47 +22,73 @@ export function SlotElement(node, context) {
 	/** @type {ExpressionStatement[]} */
 	const lets = [];
 
-	let is_default = true;
+	const memoizer = new Memoizer();
 
-	/** @type {Expression} */
 	let name = b.literal('default');
 
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'SpreadAttribute') {
 			spreads.push(b.thunk(/** @type {Expression} */ (context.visit(attribute))));
 		} else if (attribute.type === 'Attribute') {
-			const { value } = build_attribute_value(attribute.value, context);
+			const { value, has_state } = build_attribute_value(
+				attribute.value,
+				context,
+				(value, metadata) =>
+					metadata.has_call || metadata.has_await
+						? b.call('$.get', memoizer.add(value, metadata))
+						: value
+			);
 
 			if (attribute.name === 'name') {
-				name = value;
-				is_default = false;
+				name = /** @type {Literal} */ (value);
 			} else if (attribute.name !== 'slot') {
-				if (attribute.metadata.expression.has_state) {
+				if (has_state) {
 					props.push(b.get(attribute.name, [b.return(value)]));
 				} else {
 					props.push(b.init(attribute.name, value));
 				}
 			}
 		} else if (attribute.type === 'LetDirective') {
-			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+			context.visit(attribute, { ...context.state, let_directives: lets });
 		}
 	}
 
+	memoizer.apply();
+
 	// Let bindings first, they can be used on attributes
 	context.state.init.push(...lets);
+
+	/** @type {Statement[]} */
+	const statements = memoizer.deriveds(context.state.analysis.runes);
 
 	const props_expression =
 		spreads.length === 0 ? b.object(props) : b.call('$.spread_props', b.object(props), ...spreads);
 
 	const fallback =
 		node.fragment.nodes.length === 0
-			? b.literal(null)
+			? b.null
 			: b.arrow([b.id('$$anchor')], /** @type {BlockStatement} */ (context.visit(node.fragment)));
 
-	const expression = is_default
-		? b.call('$.default_slot', b.id('$$props'))
-		: b.member(b.member(b.id('$$props'), b.id('$$slots')), name, true, true);
+	statements.push(
+		b.stmt(b.call('$.slot', context.state.node, b.id('$$props'), name, props_expression, fallback))
+	);
 
-	const slot = b.call('$.slot', context.state.node, expression, props_expression, fallback);
-	context.state.init.push(b.stmt(slot));
+	const async_values = memoizer.async_values();
+	const blockers = memoizer.blockers();
+
+	if (async_values || blockers) {
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.async',
+					context.state.node,
+					blockers,
+					async_values,
+					b.arrow([context.state.node, ...memoizer.async_ids()], b.block(statements))
+				)
+			)
+		);
+	} else {
+		context.state.init.push(statements.length === 1 ? statements[0] : b.block(statements));
+	}
 }

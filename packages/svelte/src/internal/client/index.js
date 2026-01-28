@@ -1,19 +1,19 @@
-export { FILENAME, HMR } from '../../constants.js';
+export { createAttachmentKey as attachment } from '../../attachments/index.js';
+export { FILENAME, HMR, NAMESPACE_SVG } from '../../constants.js';
+export { push, pop, add_svelte_meta } from './context.js';
+export { assign, assign_and, assign_or, assign_nullish } from './dev/assign.js';
+export { cleanup_styles } from './dev/css.js';
 export { add_locations } from './dev/elements.js';
 export { hmr } from './dev/hmr.js';
-export {
-	ADD_OWNER,
-	add_owner,
-	mark_module_start,
-	mark_module_end,
-	add_owner_effect,
-	skip_ownership_validation
-} from './dev/ownership.js';
+export { create_ownership_validator } from './dev/ownership.js';
 export { check_target, legacy_api } from './dev/legacy.js';
+export { trace, tag, tag_proxy } from './dev/tracing.js';
 export { inspect } from './dev/inspect.js';
+export { async } from './dom/blocks/async.js';
+export { validate_snippet_args } from './dev/validation.js';
 export { await_block as await } from './dom/blocks/await.js';
 export { if_block as if } from './dom/blocks/if.js';
-export { key_block as key } from './dom/blocks/key.js';
+export { key } from './dom/blocks/key.js';
 export { css_props } from './dom/blocks/css-props.js';
 export { index, each } from './dom/blocks/each.js';
 export { html } from './dom/blocks/html.js';
@@ -24,20 +24,25 @@ export { element } from './dom/blocks/svelte-element.js';
 export { head } from './dom/blocks/svelte-head.js';
 export { append_styles } from './dom/css.js';
 export { action } from './dom/elements/actions.js';
+export { attach } from './dom/elements/attachments.js';
 export {
 	remove_input_defaults,
 	set_attribute,
-	set_attributes,
+	attribute_effect,
 	set_custom_element_data,
-	set_dynamic_element_attributes,
 	set_xlink_attribute,
-	handle_lazy_img,
 	set_value,
-	set_checked
+	set_checked,
+	set_selected,
+	set_default_checked,
+	set_default_value,
+	CLASS,
+	STYLE
 } from './dom/elements/attributes.js';
-export { set_class, set_svg_class, set_mathml_class, toggle_class } from './dom/elements/class.js';
-export { event, delegate, replay_events } from './dom/elements/events.js';
+export { set_class } from './dom/elements/class.js';
+export { apply, event, delegate, replay_events } from './dom/elements/events.js';
 export { autofocus, remove_textarea_child } from './dom/elements/misc.js';
+export { customizable_select, selectedcontent } from './dom/elements/customizable-select.js';
 export { set_style } from './dom/elements/style.js';
 export { animation, transition } from './dom/elements/transitions.js';
 export { bind_active_element } from './dom/elements/bindings/document.js';
@@ -66,7 +71,7 @@ export {
 	bind_focused
 } from './dom/elements/bindings/universal.js';
 export { bind_window_scroll, bind_window_size } from './dom/elements/bindings/window.js';
-export { next, reset } from './dom/hydration.js';
+export { hydrate_template, next, reset } from './dom/hydration.js';
 export {
 	once,
 	preventDefault,
@@ -80,33 +85,47 @@ export {
 	add_legacy_event_listener,
 	bubble_event,
 	reactive_import,
-	update_legacy_props,
-	default_slot
+	update_legacy_props
 } from './dom/legacy/misc.js';
 export {
 	append,
 	comment,
-	ns_template,
-	svg_template_with_script,
-	mathml_template,
-	template,
-	template_with_script,
-	text
+	from_html,
+	from_mathml,
+	from_svg,
+	from_tree,
+	text,
+	props_id,
+	with_script
 } from './dom/template.js';
-export { freeze } from './freeze.js';
-export { derived, derived_safe_equal } from './reactivity/deriveds.js';
 export {
+	for_await_track_reactivity_loss,
+	run,
+	save,
+	track_reactivity_loss,
+	run_after_blockers,
+	wait
+} from './reactivity/async.js';
+export { eager, flushSync as flush } from './reactivity/batch.js';
+export {
+	async_derived,
+	user_derived as derived,
+	derived_safe_equal
+} from './reactivity/deriveds.js';
+export {
+	aborted,
 	effect_tracking,
 	effect_root,
 	legacy_pre_effect,
 	legacy_pre_effect_reset,
 	render_effect,
 	template_effect,
+	deferred_template_effect,
 	effect,
 	user_effect,
 	user_pre_effect
 } from './reactivity/effects.js';
-export { mutable_source, mutate, source, set } from './reactivity/sources.js';
+export { mutable_source, mutate, set, state, update, update_pre } from './reactivity/sources.js';
 export {
 	prop,
 	rest_props,
@@ -123,38 +142,25 @@ export {
 	store_set,
 	store_unsub,
 	update_pre_store,
-	update_store
+	update_store,
+	mark_store_binding
 } from './reactivity/store.js';
+export { boundary, pending } from './dom/blocks/boundary.js';
+export { invalidate_inner_signals } from './legacy.js';
 export { set_text } from './render.js';
 export {
 	get,
-	invalidate_inner_signals,
-	flush_sync,
+	safe_get,
 	tick,
 	untrack,
-	update,
-	update_pre,
-	value_or_fallback,
-	value_or_fallback_async,
 	exclude_from_object,
-	pop,
-	push,
-	unwrap,
 	deep_read,
 	deep_read_state,
-	getAllContexts,
-	getContext,
-	setContext,
-	hasContext
+	active_effect
 } from './runtime.js';
-export {
-	validate_binding,
-	validate_dynamic_component,
-	validate_each_keys,
-	validate_prop_bindings
-} from './validate.js';
+export { validate_binding, validate_each_keys } from './validate.js';
 export { raf } from './timing.js';
-export { proxy, is } from './proxy.js';
+export { proxy } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';
 export {
 	child,
@@ -163,12 +169,16 @@ export {
 	$window as window,
 	$document as document
 } from './dom/operations.js';
+export { attr, clsx } from '../shared/attributes.js';
 export { snapshot } from '../shared/clone.js';
-export { noop } from '../shared/utils.js';
+export { noop, fallback, to_array } from '../shared/utils.js';
 export {
 	invalid_default_snippet,
 	validate_dynamic_element_tag,
 	validate_store,
-	validate_void_dynamic_element
+	validate_void_dynamic_element,
+	prevent_snippet_stringification
 } from '../shared/validate.js';
 export { strict_equals, equals } from './dev/equality.js';
+export { log_if_contains_state } from './dev/console-log.js';
+export { invoke_error_boundary } from './error-handling.js';

@@ -1,13 +1,16 @@
-/** @import { TemplateNode, Fragment, Root, SvelteOptionsRaw } from '#compiler' */
+/** @import { AST } from '#compiler' */
+/** @import { Location } from 'locate-character' */
+/** @import * as ESTree from 'estree' */
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment.js';
 import { regex_whitespace } from '../patterns.js';
-import full_char_code_at from './utils/full_char_code_at.js';
 import * as e from '../../errors.js';
 import { create_fragment } from './utils/create.js';
 import read_options from './read/options.js';
 import { is_reserved } from '../../../utils.js';
+import { disallow_children } from '../2-analyze/visitors/shared/special-element.js';
+import * as state from '../../state.js';
 
 const regex_position_indicator = / \(\d+:\d+\)$/;
 
@@ -21,19 +24,40 @@ export class Parser {
 	 */
 	template;
 
+	/**
+	 * Whether or not we're in loose parsing mode, in which
+	 * case we try to continue parsing as much as possible
+	 * @type {boolean}
+	 */
+	loose;
+
 	/** */
 	index = 0;
+
+	/**
+	 * Creates a minimal parser instance for CSS-only parsing.
+	 * Skips Svelte component parsing setup.
+	 * @param {string} source
+	 * @returns {Parser}
+	 */
+	static forCss(source) {
+		const parser = Object.create(Parser.prototype);
+		parser.template = source;
+		parser.index = 0;
+		parser.loose = false;
+		return parser;
+	}
 
 	/** Whether we're parsing in TypeScript mode */
 	ts = false;
 
-	/** @type {TemplateNode[]} */
+	/** @type {AST.TemplateNode[]} */
 	stack = [];
 
-	/** @type {Fragment[]} */
+	/** @type {AST.Fragment[]} */
 	fragments = [];
 
-	/** @type {Root} */
+	/** @type {AST.Root} */
 	root;
 
 	/** @type {Record<string, boolean>} */
@@ -42,12 +66,16 @@ export class Parser {
 	/** @type {LastAutoClosedTag | undefined} */
 	last_auto_closed_tag;
 
-	/** @param {string} template */
-	constructor(template) {
+	/**
+	 * @param {string} template
+	 * @param {boolean} loose
+	 */
+	constructor(template, loose) {
 		if (typeof template !== 'string') {
 			throw new TypeError('Template must be a string');
 		}
 
+		this.loose = loose;
 		this.template = template.trimEnd();
 
 		let match_lang;
@@ -69,6 +97,7 @@ export class Parser {
 			type: 'Root',
 			fragment: create_fragment(),
 			options: null,
+			comments: [],
 			metadata: {
 				ts: this.ts
 			}
@@ -87,7 +116,9 @@ export class Parser {
 		if (this.stack.length > 1) {
 			const current = this.current();
 
-			if (current.type === 'RegularElement') {
+			if (this.loose) {
+				current.end = this.template.length;
+			} else if (current.type === 'RegularElement') {
 				current.end = current.start + 1;
 				e.element_unclosed(current, current.name);
 			} else {
@@ -100,30 +131,20 @@ export class Parser {
 			e.unexpected_eof(this.index);
 		}
 
-		if (this.root.fragment.nodes.length) {
-			let start = /** @type {number} */ (this.root.fragment.nodes[0].start);
-			while (regex_whitespace.test(template[start])) start += 1;
-
-			let end = /** @type {number} */ (
-				this.root.fragment.nodes[this.root.fragment.nodes.length - 1].end
-			);
-			while (regex_whitespace.test(template[end - 1])) end -= 1;
-
-			this.root.start = start;
-			this.root.end = end;
-		} else {
-			// @ts-ignore
-			this.root.start = this.root.end = null;
-		}
+		this.root.start = 0;
+		this.root.end = template.length;
 
 		const options_index = this.root.fragment.nodes.findIndex(
 			/** @param {any} thing */
 			(thing) => thing.type === 'SvelteOptions'
 		);
 		if (options_index !== -1) {
-			const options = /** @type {SvelteOptionsRaw} */ (this.root.fragment.nodes[options_index]);
+			const options = /** @type {AST.SvelteOptionsRaw} */ (this.root.fragment.nodes[options_index]);
 			this.root.fragment.nodes.splice(options_index, 1);
 			this.root.options = read_options(options);
+
+			disallow_children(options);
+
 			// We need this for the old AST format
 			Object.defineProperty(this.root.options, '__raw__', {
 				value: options,
@@ -147,14 +168,15 @@ export class Parser {
 	/**
 	 * @param {string} str
 	 * @param {boolean} required
+	 * @param {boolean} required_in_loose
 	 */
-	eat(str, required = false) {
+	eat(str, required = false, required_in_loose = true) {
 		if (this.match(str)) {
 			this.index += str.length;
 			return true;
 		}
 
-		if (required) {
+		if (required && (!this.loose || required_in_loose)) {
 			e.expected_token(this.index, str);
 		}
 
@@ -199,36 +221,51 @@ export class Parser {
 		return result;
 	}
 
-	/** @param {any} allow_reserved */
-	read_identifier(allow_reserved = false) {
+	/**
+	 * @returns {ESTree.Identifier & { start: number, end: number, loc: { start: Location, end: Location } }}
+	 */
+	read_identifier() {
 		const start = this.index;
+		let end = start;
+		let name = '';
 
-		let i = this.index;
+		const code = /** @type {number} */ (this.template.codePointAt(this.index));
 
-		const code = full_char_code_at(this.template, i);
-		if (!isIdentifierStart(code, true)) return null;
+		if (isIdentifierStart(code, true)) {
+			let i = this.index;
+			end += code <= 0xffff ? 1 : 2;
 
-		i += code <= 0xffff ? 1 : 2;
+			while (end < this.template.length) {
+				const code = /** @type {number} */ (this.template.codePointAt(end));
 
-		while (i < this.template.length) {
-			const code = full_char_code_at(this.template, i);
+				if (!isIdentifierChar(code, true)) break;
+				end += code <= 0xffff ? 1 : 2;
+			}
 
-			if (!isIdentifierChar(code, true)) break;
-			i += code <= 0xffff ? 1 : 2;
+			name = this.template.slice(start, end);
+			this.index = end;
+
+			if (is_reserved(name)) {
+				e.unexpected_reserved_word(start, name);
+			}
 		}
 
-		const identifier = this.template.slice(this.index, (this.index = i));
-
-		if (!allow_reserved && is_reserved(identifier)) {
-			e.unexpected_reserved_word(start, identifier);
-		}
-
-		return identifier;
+		return {
+			type: 'Identifier',
+			name,
+			start,
+			end,
+			loc: {
+				start: state.locator(start),
+				end: state.locator(end)
+			}
+		};
 	}
 
 	/** @param {RegExp} pattern */
 	read_until(pattern) {
 		if (this.index >= this.template.length) {
+			if (this.loose) return '';
 			e.unexpected_eof(this.template.length);
 		}
 
@@ -258,40 +295,25 @@ export class Parser {
 	}
 
 	/**
-	 * @template T
-	 * @param {Omit<T, 'prev' | 'parent'>} node
+	 * @template {AST.Fragment['nodes'][number]} T
+	 * @param {T} node
 	 * @returns {T}
 	 */
 	append(node) {
-		const current = this.current();
-		const fragment = this.fragments.at(-1);
-
-		Object.defineProperties(node, {
-			prev: {
-				enumerable: false,
-				value: fragment?.nodes.at(-1) ?? null
-			},
-			parent: {
-				enumerable: false,
-				configurable: true,
-				value: current
-			}
-		});
-
-		// @ts-expect-error
-		fragment.nodes.push(node);
-
-		// @ts-expect-error
+		this.fragments.at(-1)?.nodes.push(node);
 		return node;
 	}
 }
 
 /**
  * @param {string} template
- * @returns {Root}
+ * @param {boolean} [loose]
+ * @returns {AST.Root}
  */
-export function parse(template) {
-	const parser = new Parser(template);
+export function parse(template, loose = false) {
+	state.set_source(template);
+
+	const parser = new Parser(template, loose);
 	return parser.root;
 }
 

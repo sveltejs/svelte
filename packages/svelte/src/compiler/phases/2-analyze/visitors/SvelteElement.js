@@ -1,22 +1,23 @@
-/** @import { Attribute, SvelteElement, Text } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import { NAMESPACE_MATHML, NAMESPACE_SVG } from '../../../../constants.js';
 import { is_text_attribute } from '../../../utils/ast.js';
-import { check_element } from './shared/a11y.js';
+import { check_element } from './shared/a11y/index.js';
 import { validate_element } from './shared/element.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
- * @param {SvelteElement} node
+ * @param {AST.SvelteElement} node
  * @param {Context} context
  */
 export function SvelteElement(node, context) {
 	validate_element(node, context);
+	check_element(node, context);
 
-	check_element(node, context.state);
-
+	node.metadata.path = [...context.path];
 	context.state.analysis.elements.push(node);
 
-	const xmlns = /** @type {Attribute & { value: [Text] } | undefined} */ (
+	const xmlns = /** @type {AST.Attribute & { value: [AST.Text] } | undefined} */ (
 		node.attributes.find(
 			(a) => a.type === 'Attribute' && a.name === 'xmlns' && is_text_attribute(a)
 		)
@@ -34,9 +35,10 @@ export function SvelteElement(node, context) {
 				ancestor.type === 'Component' ||
 				ancestor.type === 'SvelteComponent' ||
 				ancestor.type === 'SvelteFragment' ||
-				ancestor.type === 'SnippetBlock'
+				ancestor.type === 'SnippetBlock' ||
+				i === 0
 			) {
-				// Inside a slot or a snippet -> this resets the namespace, so assume the component namespace
+				// Root element, or inside a slot or a snippet -> this resets the namespace, so assume the component namespace
 				node.metadata.svg = context.state.options.namespace === 'svg';
 				node.metadata.mathml = context.state.options.namespace === 'mathml';
 				break;
@@ -58,5 +60,19 @@ export function SvelteElement(node, context) {
 		}
 	}
 
-	context.next({ ...context.state, parent_element: null });
+	mark_subtree_dynamic(context.path);
+
+	context.visit(node.tag, {
+		...context.state,
+		expression: node.metadata.expression
+	});
+
+	for (const attribute of node.attributes) {
+		context.visit(attribute);
+	}
+
+	context.visit(node.fragment, {
+		...context.state,
+		parent_element: null
+	});
 }

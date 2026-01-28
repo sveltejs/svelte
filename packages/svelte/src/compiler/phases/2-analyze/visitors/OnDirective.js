@@ -1,9 +1,10 @@
-/** @import { OnDirective } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import * as w from '../../../warnings.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
- * @param {OnDirective} node
+ * @param {AST.OnDirective} node
  * @param {Context} context
  */
 export function OnDirective(node, context) {
@@ -20,6 +21,8 @@ export function OnDirective(node, context) {
 	if (parent?.type === 'SvelteElement' || parent?.type === 'RegularElement') {
 		context.state.analysis.event_directive_node ??= node;
 	}
+
+	mark_subtree_dynamic(context.path);
 
 	context.next({ ...context.state, expression: node.metadata.expression });
 }

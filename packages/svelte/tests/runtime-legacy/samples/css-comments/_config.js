@@ -6,6 +6,6 @@ export default test({
 		const p = target.querySelector('p');
 		ok(p);
 
-		assert.equal(window.getComputedStyle(p).color, 'red');
+		assert.equal(window.getComputedStyle(p).color, 'rgb(255, 0, 0)');
 	}
 });

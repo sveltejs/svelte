@@ -1,6 +1,6 @@
 /** @import { Processed, Preprocessor, MarkupPreprocessor, PreprocessorGroup } from './public.js' */
 /** @import { SourceUpdate, Source } from './private.js' */
-/** @import { DecodedSourceMap, RawSourceMap } from '@ampproject/remapping' */
+/** @import { DecodedSourceMap, RawSourceMap } from '@jridgewell/remapping' */
 import { getLocator } from 'locate-character';
 import {
 	MappedCode,
@@ -25,7 +25,7 @@ class PreprocessResult {
 
 	// sourcemap_list is sorted in reverse order from last map (index 0) to first map (index -1)
 	// so we use sourcemap_list.unshift() to add new maps
-	// https://github.com/ampproject/remapping#multiple-transformations-of-a-file
+	// https://github.com/jridgewell/sourcemaps/tree/main/packages/remapping#multiple-transformations-of-a-file
 
 	/**
 	 * @default []
@@ -328,9 +328,8 @@ async function process_markup(process, source) {
 
 /**
  * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
- * For example, it can be used to convert a <style lang="sass"> block into vanilla CSS.
+ * For example, it can be used to convert a `<style lang="sass">` block into vanilla CSS.
  *
- * https://svelte.dev/docs/svelte-compiler#svelte-preprocess
  * @param {string} source
  * @param {PreprocessorGroup | PreprocessorGroup[]} preprocessor
  * @param {{ filename?: string }} [options]

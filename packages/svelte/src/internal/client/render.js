@@ -1,28 +1,30 @@
 /** @import { ComponentContext, Effect, EffectNodes, TemplateNode } from '#client' */
-/** @import { Component, ComponentType, SvelteComponent } from '../../index.js' */
+/** @import { Component, ComponentType, SvelteComponent, MountOptions } from '../../index.js' */
 import { DEV } from 'esm-env';
-import { clear_text_content, empty, init_operations } from './dom/operations.js';
-import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
-import { push, pop, current_component_context, current_effect } from './runtime.js';
-import { effect_root, branch } from './reactivity/effects.js';
 import {
-	hydrate_next,
-	hydrate_node,
-	hydrating,
-	set_hydrate_node,
-	set_hydrating
-} from './dom/hydration.js';
+	clear_text_content,
+	create_text,
+	get_first_child,
+	get_next_sibling,
+	init_operations
+} from './dom/operations.js';
+import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
+import { active_effect } from './runtime.js';
+import { push, pop, component_context } from './context.js';
+import { component_root } from './reactivity/effects.js';
+import { hydrate_node, hydrating, set_hydrate_node, set_hydrating } from './dom/hydration.js';
 import { array_from } from '../shared/utils.js';
 import {
 	all_registered_events,
 	handle_event_propagation,
 	root_event_handles
 } from './dom/elements/events.js';
-import { reset_head_anchor } from './dom/blocks/svelte-head.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
 import { assign_nodes } from './dom/template.js';
 import { is_passive_event } from '../../utils.js';
+import { COMMENT_NODE, STATE_SYMBOL } from './constants.js';
+import { boundary } from './dom/blocks/boundary.js';
 
 /**
  * This is normally true — block effects should run their intro transitions —
@@ -42,12 +44,13 @@ export function set_should_intro(value) {
  * @returns {void}
  */
 export function set_text(text, value) {
+	// For objects, we apply string coercion (which might make things like $state array references in the template reactive) before diffing
+	var str = value == null ? '' : typeof value === 'object' ? value + '' : value;
 	// @ts-expect-error
-	const prev = (text.__t ??= text.nodeValue);
-
-	if (prev !== value) {
+	if (str !== (text.__t ??= text.nodeValue)) {
 		// @ts-expect-error
-		text.nodeValue = text.__t = value;
+		text.__t = str;
+		text.nodeValue = str + '';
 	}
 }
 
@@ -58,26 +61,11 @@ export function set_text(text, value) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
  * @param {ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>} component
- * @param {{} extends Props ? {
- * 		target: Document | Element | ShadowRoot;
- * 		anchor?: Node;
- * 		props?: Props;
- * 		events?: Record<string, (e: any) => any>;
- * 		context?: Map<any, any>;
- * 		intro?: boolean;
- * 	}: {
- * 		target: Document | Element | ShadowRoot;
- * 		props: Props;
- * 		anchor?: Node;
- * 		events?: Record<string, (e: any) => any>;
- * 		context?: Map<any, any>;
- * 		intro?: boolean;
- * 	}} options
+ * @param {MountOptions<Props>} options
  * @returns {Exports}
  */
 export function mount(component, options) {
-	const anchor = options.anchor ?? options.target.appendChild(empty());
-	return _mount(component, { ...options, anchor });
+	return _mount(component, options);
 }
 
 /**
@@ -104,18 +92,20 @@ export function mount(component, options) {
  * @returns {Exports}
  */
 export function hydrate(component, options) {
+	init_operations();
 	options.intro = options.intro ?? false;
 	const target = options.target;
 	const was_hydrating = hydrating;
 	const previous_hydrate_node = hydrate_node;
 
 	try {
-		var anchor = /** @type {TemplateNode} */ (target.firstChild);
+		var anchor = get_first_child(target);
+
 		while (
 			anchor &&
-			(anchor.nodeType !== 8 || /** @type {Comment} */ (anchor).data !== HYDRATION_START)
+			(anchor.nodeType !== COMMENT_NODE || /** @type {Comment} */ (anchor).data !== HYDRATION_START)
 		) {
-			anchor = /** @type {TemplateNode} */ (anchor.nextSibling);
+			anchor = get_next_sibling(anchor);
 		}
 
 		if (!anchor) {
@@ -124,41 +114,38 @@ export function hydrate(component, options) {
 
 		set_hydrating(true);
 		set_hydrate_node(/** @type {Comment} */ (anchor));
-		hydrate_next();
 
 		const instance = _mount(component, { ...options, anchor });
-
-		if (
-			hydrate_node === null ||
-			hydrate_node.nodeType !== 8 ||
-			/** @type {Comment} */ (hydrate_node).data !== HYDRATION_END
-		) {
-			w.hydration_mismatch();
-			throw HYDRATION_ERROR;
-		}
 
 		set_hydrating(false);
 
 		return /**  @type {Exports} */ (instance);
 	} catch (error) {
-		if (error === HYDRATION_ERROR) {
-			if (options.recover === false) {
-				e.hydration_failed();
-			}
-
-			// If an error occured above, the operations might not yet have been initialised.
-			init_operations();
-			clear_text_content(target);
-
-			set_hydrating(false);
-			return mount(component, options);
+		// re-throw Svelte errors - they are certainly not related to hydration
+		if (
+			error instanceof Error &&
+			error.message.split('\n').some((line) => line.startsWith('https://svelte.dev/e/'))
+		) {
+			throw error;
+		}
+		if (error !== HYDRATION_ERROR) {
+			// eslint-disable-next-line no-console
+			console.warn('Failed to hydrate: ', error);
 		}
 
-		throw error;
+		if (options.recover === false) {
+			e.hydration_failed();
+		}
+
+		// If an error occurred above, the operations might not yet have been initialised.
+		init_operations();
+		clear_text_content(target);
+
+		set_hydrating(false);
+		return mount(component, options);
 	} finally {
 		set_hydrating(was_hydrating);
 		set_hydrate_node(previous_hydrate_node);
-		reset_head_anchor();
 	}
 }
 
@@ -168,19 +155,13 @@ const document_listeners = new Map();
 /**
  * @template {Record<string, any>} Exports
  * @param {ComponentType<SvelteComponent<any>> | Component<any>} Component
- * @param {{
- * 		target: Document | Element | ShadowRoot;
- * 		anchor: Node;
- * 		props?: any;
- * 		events?: any;
- * 		context?: Map<any, any>;
- * 		intro?: boolean;
- * 	}} options
+ * @param {MountOptions} options
  * @returns {Exports}
  */
 function _mount(Component, { target, anchor, props = {}, events, context, intro = true }) {
 	init_operations();
 
+	/** @type {Set<string>} */
 	var registered_events = new Set();
 
 	/** @param {Array<string>} events */
@@ -218,36 +199,53 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 	// @ts-expect-error will be defined because the render effect runs synchronously
 	var component = undefined;
 
-	var unmount = effect_root(() => {
-		branch(() => {
-			if (context) {
-				push({});
-				var ctx = /** @type {ComponentContext} */ (current_component_context);
-				ctx.c = context;
-			}
+	var unmount = component_root(() => {
+		var anchor_node = anchor ?? target.appendChild(create_text());
 
-			if (events) {
-				// We can't spread the object or else we'd lose the state proxy stuff, if it is one
-				/** @type {any} */ (props).$$events = events;
-			}
+		boundary(
+			/** @type {TemplateNode} */ (anchor_node),
+			{
+				pending: () => {}
+			},
+			(anchor_node) => {
+				if (context) {
+					push({});
+					var ctx = /** @type {ComponentContext} */ (component_context);
+					ctx.c = context;
+				}
 
-			if (hydrating) {
-				assign_nodes(/** @type {TemplateNode} */ (anchor), null);
-			}
+				if (events) {
+					// We can't spread the object or else we'd lose the state proxy stuff, if it is one
+					/** @type {any} */ (props).$$events = events;
+				}
 
-			should_intro = intro;
-			// @ts-expect-error the public typings are not what the actual function looks like
-			component = Component(anchor, props) || {};
-			should_intro = true;
+				if (hydrating) {
+					assign_nodes(/** @type {TemplateNode} */ (anchor_node), null);
+				}
 
-			if (hydrating) {
-				/** @type {Effect & { nodes: EffectNodes }} */ (current_effect).nodes.end = hydrate_node;
-			}
+				should_intro = intro;
+				// @ts-expect-error the public typings are not what the actual function looks like
+				component = Component(anchor_node, props) || {};
+				should_intro = true;
 
-			if (context) {
-				pop();
+				if (hydrating) {
+					/** @type {Effect & { nodes: EffectNodes }} */ (active_effect).nodes.end = hydrate_node;
+
+					if (
+						hydrate_node === null ||
+						hydrate_node.nodeType !== COMMENT_NODE ||
+						/** @type {Comment} */ (hydrate_node).data !== HYDRATION_END
+					) {
+						w.hydration_mismatch();
+						throw HYDRATION_ERROR;
+					}
+				}
+
+				if (context) {
+					pop();
+				}
 			}
-		});
+		);
 
 		return () => {
 			for (var event_name of registered_events) {
@@ -264,7 +262,10 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			}
 
 			root_event_handles.delete(event_handle);
-			mounted_components.delete(component);
+
+			if (anchor_node !== anchor) {
+				anchor_node.parentNode?.removeChild(anchor_node);
+			}
 		};
 	});
 
@@ -280,14 +281,39 @@ let mounted_components = new WeakMap();
 
 /**
  * Unmounts a component that was previously mounted using `mount` or `hydrate`.
+ *
+ * Since 5.13.0, if `options.outro` is `true`, [transitions](https://svelte.dev/docs/svelte/transition) will play before the component is removed from the DOM.
+ *
+ * Returns a `Promise` that resolves after transitions have completed if `options.outro` is true, or immediately otherwise (prior to 5.13.0, returns `void`).
+ *
+ * ```js
+ * import { mount, unmount } from 'svelte';
+ * import App from './App.svelte';
+ *
+ * const app = mount(App, { target: document.body });
+ *
+ * // later...
+ * unmount(app, { outro: true });
+ * ```
  * @param {Record<string, any>} component
+ * @param {{ outro?: boolean }} [options]
+ * @returns {Promise<void>}
  */
-export function unmount(component) {
+export function unmount(component, options) {
 	const fn = mounted_components.get(component);
-	if (DEV && !fn) {
-		w.lifecycle_double_unmount();
-		// eslint-disable-next-line no-console
-		console.trace('stack trace');
+
+	if (fn) {
+		mounted_components.delete(component);
+		return fn(options);
 	}
-	fn?.();
+
+	if (DEV) {
+		if (STATE_SYMBOL in component) {
+			w.state_proxy_unmount();
+		} else {
+			w.lifecycle_double_unmount();
+		}
+	}
+
+	return Promise.resolve();
 }

@@ -2,19 +2,37 @@
 
 import { DEV } from 'esm-env';
 
+export *  from '../shared/errors.js';
+
+/**
+ * Cannot create a `$derived(...)` with an `await` expression outside of an effect tree
+ * @returns {never}
+ */
+export function async_derived_orphan() {
+	if (DEV) {
+		const error = new Error(`async_derived_orphan\nCannot create a \`$derived(...)\` with an \`await\` expression outside of an effect tree\nhttps://svelte.dev/e/async_derived_orphan`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/async_derived_orphan`);
+	}
+}
+
 /**
  * Using `bind:value` together with a checkbox input is not allowed. Use `bind:checked` instead
  * @returns {never}
  */
 export function bind_invalid_checkbox_value() {
 	if (DEV) {
-		const error = new Error(`bind_invalid_checkbox_value\nUsing \`bind:value\` together with a checkbox input is not allowed. Use \`bind:checked\` instead`);
+		const error = new Error(`bind_invalid_checkbox_value\nUsing \`bind:value\` together with a checkbox input is not allowed. Use \`bind:checked\` instead\nhttps://svelte.dev/e/bind_invalid_checkbox_value`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("bind_invalid_checkbox_value");
+		throw new Error(`https://svelte.dev/e/bind_invalid_checkbox_value`);
 	}
 }
 
@@ -27,13 +45,13 @@ export function bind_invalid_checkbox_value() {
  */
 export function bind_invalid_export(component, key, name) {
 	if (DEV) {
-		const error = new Error(`bind_invalid_export\nComponent ${component} has an export named \`${key}\` that a consumer component is trying to access using \`bind:${key}\`, which is disallowed. Instead, use \`bind:this\` (e.g. \`<${name} bind:this={component} />\`) and then access the property on the bound component instance (e.g. \`component.${key}\`)`);
+		const error = new Error(`bind_invalid_export\nComponent ${component} has an export named \`${key}\` that a consumer component is trying to access using \`bind:${key}\`, which is disallowed. Instead, use \`bind:this\` (e.g. \`<${name} bind:this={component} />\`) and then access the property on the bound component instance (e.g. \`component.${key}\`)\nhttps://svelte.dev/e/bind_invalid_export`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("bind_invalid_export");
+		throw new Error(`https://svelte.dev/e/bind_invalid_export`);
 	}
 }
 
@@ -46,50 +64,49 @@ export function bind_invalid_export(component, key, name) {
  */
 export function bind_not_bindable(key, component, name) {
 	if (DEV) {
-		const error = new Error(`bind_not_bindable\nA component is attempting to bind to a non-bindable property \`${key}\` belonging to ${component} (i.e. \`<${name} bind:${key}={...}>\`). To mark a property as bindable: \`let { ${key} = $bindable() } = $props()\``);
+		const error = new Error(`bind_not_bindable\nA component is attempting to bind to a non-bindable property \`${key}\` belonging to ${component} (i.e. \`<${name} bind:${key}={...}>\`). To mark a property as bindable: \`let { ${key} = $bindable() } = $props()\`\nhttps://svelte.dev/e/bind_not_bindable`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("bind_not_bindable");
+		throw new Error(`https://svelte.dev/e/bind_not_bindable`);
 	}
 }
 
 /**
- * %parent% called `%method%` on an instance of %component%, which is no longer valid in Svelte 5. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information
- * @param {string} parent
+ * Calling `%method%` on a component instance (of %component%) is no longer valid in Svelte 5
  * @param {string} method
  * @param {string} component
  * @returns {never}
  */
-export function component_api_changed(parent, method, component) {
+export function component_api_changed(method, component) {
 	if (DEV) {
-		const error = new Error(`component_api_changed\n${parent} called \`${method}\` on an instance of ${component}, which is no longer valid in Svelte 5. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information`);
+		const error = new Error(`component_api_changed\nCalling \`${method}\` on a component instance (of ${component}) is no longer valid in Svelte 5\nhttps://svelte.dev/e/component_api_changed`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("component_api_changed");
+		throw new Error(`https://svelte.dev/e/component_api_changed`);
 	}
 }
 
 /**
- * Attempted to instantiate %component% with `new %name%`, which is no longer valid in Svelte 5. If this component is not under your control, set the `compatibility.componentApi` compiler option to `4` to keep it working. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information
+ * Attempted to instantiate %component% with `new %name%`, which is no longer valid in Svelte 5. If this component is not under your control, set the `compatibility.componentApi` compiler option to `4` to keep it working.
  * @param {string} component
  * @param {string} name
  * @returns {never}
  */
 export function component_api_invalid_new(component, name) {
 	if (DEV) {
-		const error = new Error(`component_api_invalid_new\nAttempted to instantiate ${component} with \`new ${name}\`, which is no longer valid in Svelte 5. If this component is not under your control, set the \`compatibility.componentApi\` compiler option to \`4\` to keep it working. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more information`);
+		const error = new Error(`component_api_invalid_new\nAttempted to instantiate ${component} with \`new ${name}\`, which is no longer valid in Svelte 5. If this component is not under your control, set the \`compatibility.componentApi\` compiler option to \`4\` to keep it working.\nhttps://svelte.dev/e/component_api_invalid_new`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("component_api_invalid_new");
+		throw new Error(`https://svelte.dev/e/component_api_invalid_new`);
 	}
 }
 
@@ -99,13 +116,13 @@ export function component_api_invalid_new(component, name) {
  */
 export function derived_references_self() {
 	if (DEV) {
-		const error = new Error(`derived_references_self\nA derived value cannot reference itself recursively`);
+		const error = new Error(`derived_references_self\nA derived value cannot reference itself recursively\nhttps://svelte.dev/e/derived_references_self`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("derived_references_self");
+		throw new Error(`https://svelte.dev/e/derived_references_self`);
 	}
 }
 
@@ -118,13 +135,15 @@ export function derived_references_self() {
  */
 export function each_key_duplicate(a, b, value) {
 	if (DEV) {
-		const error = new Error(`each_key_duplicate\n${value ? `Keyed each block has duplicate key \`${value}\` at indexes ${a} and ${b}` : `Keyed each block has duplicate key at indexes ${a} and ${b}`}`);
+		const error = new Error(`each_key_duplicate\n${value
+			? `Keyed each block has duplicate key \`${value}\` at indexes ${a} and ${b}`
+			: `Keyed each block has duplicate key at indexes ${a} and ${b}`}\nhttps://svelte.dev/e/each_key_duplicate`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("each_key_duplicate");
+		throw new Error(`https://svelte.dev/e/each_key_duplicate`);
 	}
 }
 
@@ -135,13 +154,13 @@ export function each_key_duplicate(a, b, value) {
  */
 export function effect_in_teardown(rune) {
 	if (DEV) {
-		const error = new Error(`effect_in_teardown\n\`${rune}\` cannot be used inside an effect cleanup function`);
+		const error = new Error(`effect_in_teardown\n\`${rune}\` cannot be used inside an effect cleanup function\nhttps://svelte.dev/e/effect_in_teardown`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("effect_in_teardown");
+		throw new Error(`https://svelte.dev/e/effect_in_teardown`);
 	}
 }
 
@@ -151,13 +170,13 @@ export function effect_in_teardown(rune) {
  */
 export function effect_in_unowned_derived() {
 	if (DEV) {
-		const error = new Error(`effect_in_unowned_derived\nEffect cannot be created inside a \`$derived\` value that was not itself created inside an effect`);
+		const error = new Error(`effect_in_unowned_derived\nEffect cannot be created inside a \`$derived\` value that was not itself created inside an effect\nhttps://svelte.dev/e/effect_in_unowned_derived`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("effect_in_unowned_derived");
+		throw new Error(`https://svelte.dev/e/effect_in_unowned_derived`);
 	}
 }
 
@@ -168,29 +187,126 @@ export function effect_in_unowned_derived() {
  */
 export function effect_orphan(rune) {
 	if (DEV) {
-		const error = new Error(`effect_orphan\n\`${rune}\` can only be used inside an effect (e.g. during component initialisation)`);
+		const error = new Error(`effect_orphan\n\`${rune}\` can only be used inside an effect (e.g. during component initialisation)\nhttps://svelte.dev/e/effect_orphan`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("effect_orphan");
+		throw new Error(`https://svelte.dev/e/effect_orphan`);
 	}
 }
 
 /**
- * Maximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops
+ * `$effect.pending()` can only be called inside an effect or derived
+ * @returns {never}
+ */
+export function effect_pending_outside_reaction() {
+	if (DEV) {
+		const error = new Error(`effect_pending_outside_reaction\n\`$effect.pending()\` can only be called inside an effect or derived\nhttps://svelte.dev/e/effect_pending_outside_reaction`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/effect_pending_outside_reaction`);
+	}
+}
+
+/**
+ * Maximum update depth exceeded. This typically indicates that an effect reads and writes the same piece of state
  * @returns {never}
  */
 export function effect_update_depth_exceeded() {
 	if (DEV) {
-		const error = new Error(`effect_update_depth_exceeded\nMaximum update depth exceeded. This can happen when a reactive block or effect repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops`);
+		const error = new Error(`effect_update_depth_exceeded\nMaximum update depth exceeded. This typically indicates that an effect reads and writes the same piece of state\nhttps://svelte.dev/e/effect_update_depth_exceeded`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("effect_update_depth_exceeded");
+		throw new Error(`https://svelte.dev/e/effect_update_depth_exceeded`);
+	}
+}
+
+/**
+ * Cannot use `flushSync` inside an effect
+ * @returns {never}
+ */
+export function flush_sync_in_effect() {
+	if (DEV) {
+		const error = new Error(`flush_sync_in_effect\nCannot use \`flushSync\` inside an effect\nhttps://svelte.dev/e/flush_sync_in_effect`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/flush_sync_in_effect`);
+	}
+}
+
+/**
+ * Cannot commit a fork that was already discarded
+ * @returns {never}
+ */
+export function fork_discarded() {
+	if (DEV) {
+		const error = new Error(`fork_discarded\nCannot commit a fork that was already discarded\nhttps://svelte.dev/e/fork_discarded`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/fork_discarded`);
+	}
+}
+
+/**
+ * Cannot create a fork inside an effect or when state changes are pending
+ * @returns {never}
+ */
+export function fork_timing() {
+	if (DEV) {
+		const error = new Error(`fork_timing\nCannot create a fork inside an effect or when state changes are pending\nhttps://svelte.dev/e/fork_timing`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/fork_timing`);
+	}
+}
+
+/**
+ * `getAbortSignal()` can only be called inside an effect or derived
+ * @returns {never}
+ */
+export function get_abort_signal_outside_reaction() {
+	if (DEV) {
+		const error = new Error(`get_abort_signal_outside_reaction\n\`getAbortSignal()\` can only be called inside an effect or derived\nhttps://svelte.dev/e/get_abort_signal_outside_reaction`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/get_abort_signal_outside_reaction`);
+	}
+}
+
+/**
+ * Expected to find a hydratable with key `%key%` during hydration, but did not.
+ * @param {string} key
+ * @returns {never}
+ */
+export function hydratable_missing_but_required(key) {
+	if (DEV) {
+		const error = new Error(`hydratable_missing_but_required\nExpected to find a hydratable with key \`${key}\` during hydration, but did not.\nhttps://svelte.dev/e/hydratable_missing_but_required`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/hydratable_missing_but_required`);
 	}
 }
 
@@ -200,13 +316,29 @@ export function effect_update_depth_exceeded() {
  */
 export function hydration_failed() {
 	if (DEV) {
-		const error = new Error(`hydration_failed\nFailed to hydrate the application`);
+		const error = new Error(`hydration_failed\nFailed to hydrate the application\nhttps://svelte.dev/e/hydration_failed`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("hydration_failed");
+		throw new Error(`https://svelte.dev/e/hydration_failed`);
+	}
+}
+
+/**
+ * Could not `{@render}` snippet due to the expression being `null` or `undefined`. Consider using optional chaining `{@render snippet?.()}`
+ * @returns {never}
+ */
+export function invalid_snippet() {
+	if (DEV) {
+		const error = new Error(`invalid_snippet\nCould not \`{@render}\` snippet due to the expression being \`null\` or \`undefined\`. Consider using optional chaining \`{@render snippet?.()}\`\nhttps://svelte.dev/e/invalid_snippet`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/invalid_snippet`);
 	}
 }
 
@@ -217,13 +349,13 @@ export function hydration_failed() {
  */
 export function lifecycle_legacy_only(name) {
 	if (DEV) {
-		const error = new Error(`lifecycle_legacy_only\n\`${name}(...)\` cannot be used in runes mode`);
+		const error = new Error(`lifecycle_legacy_only\n\`${name}(...)\` cannot be used in runes mode\nhttps://svelte.dev/e/lifecycle_legacy_only`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("lifecycle_legacy_only");
+		throw new Error(`https://svelte.dev/e/lifecycle_legacy_only`);
 	}
 }
 
@@ -234,13 +366,13 @@ export function lifecycle_legacy_only(name) {
  */
 export function props_invalid_value(key) {
 	if (DEV) {
-		const error = new Error(`props_invalid_value\nCannot do \`bind:${key}={undefined}\` when \`${key}\` has a fallback value`);
+		const error = new Error(`props_invalid_value\nCannot do \`bind:${key}={undefined}\` when \`${key}\` has a fallback value\nhttps://svelte.dev/e/props_invalid_value`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("props_invalid_value");
+		throw new Error(`https://svelte.dev/e/props_invalid_value`);
 	}
 }
 
@@ -251,13 +383,13 @@ export function props_invalid_value(key) {
  */
 export function props_rest_readonly(property) {
 	if (DEV) {
-		const error = new Error(`props_rest_readonly\nRest element properties of \`$props()\` such as \`${property}\` are readonly`);
+		const error = new Error(`props_rest_readonly\nRest element properties of \`$props()\` such as \`${property}\` are readonly\nhttps://svelte.dev/e/props_rest_readonly`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("props_rest_readonly");
+		throw new Error(`https://svelte.dev/e/props_rest_readonly`);
 	}
 }
 
@@ -268,29 +400,45 @@ export function props_rest_readonly(property) {
  */
 export function rune_outside_svelte(rune) {
 	if (DEV) {
-		const error = new Error(`rune_outside_svelte\nThe \`${rune}\` rune is only available inside \`.svelte\` and \`.svelte.js/ts\` files`);
+		const error = new Error(`rune_outside_svelte\nThe \`${rune}\` rune is only available inside \`.svelte\` and \`.svelte.js/ts\` files\nhttps://svelte.dev/e/rune_outside_svelte`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("rune_outside_svelte");
+		throw new Error(`https://svelte.dev/e/rune_outside_svelte`);
 	}
 }
 
 /**
- * The argument to `$state.frozen(...)` cannot be an object created with `$state(...)`. You should create a copy of it first, for example with `$state.snapshot`
+ * `setContext` must be called when a component first initializes, not in a subsequent effect or after an `await` expression
  * @returns {never}
  */
-export function state_frozen_invalid_argument() {
+export function set_context_after_init() {
 	if (DEV) {
-		const error = new Error(`state_frozen_invalid_argument\nThe argument to \`$state.frozen(...)\` cannot be an object created with \`$state(...)\`. You should create a copy of it first, for example with \`$state.snapshot\``);
+		const error = new Error(`set_context_after_init\n\`setContext\` must be called when a component first initializes, not in a subsequent effect or after an \`await\` expression\nhttps://svelte.dev/e/set_context_after_init`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("state_frozen_invalid_argument");
+		throw new Error(`https://svelte.dev/e/set_context_after_init`);
+	}
+}
+
+/**
+ * Property descriptors defined on `$state` objects must contain `value` and always be `enumerable`, `configurable` and `writable`.
+ * @returns {never}
+ */
+export function state_descriptors_fixed() {
+	if (DEV) {
+		const error = new Error(`state_descriptors_fixed\nProperty descriptors defined on \`$state\` objects must contain \`value\` and always be \`enumerable\`, \`configurable\` and \`writable\`.\nhttps://svelte.dev/e/state_descriptors_fixed`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/state_descriptors_fixed`);
 	}
 }
 
@@ -300,44 +448,44 @@ export function state_frozen_invalid_argument() {
  */
 export function state_prototype_fixed() {
 	if (DEV) {
-		const error = new Error(`state_prototype_fixed\nCannot set prototype of \`$state\` object`);
+		const error = new Error(`state_prototype_fixed\nCannot set prototype of \`$state\` object\nhttps://svelte.dev/e/state_prototype_fixed`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("state_prototype_fixed");
+		throw new Error(`https://svelte.dev/e/state_prototype_fixed`);
 	}
 }
 
 /**
- * Updating state inside a derived is forbidden. If the value should not be reactive, declare it without `$state`
+ * Updating state inside `$derived(...)`, `$inspect(...)` or a template expression is forbidden. If the value should not be reactive, declare it without `$state`
  * @returns {never}
  */
 export function state_unsafe_mutation() {
 	if (DEV) {
-		const error = new Error(`state_unsafe_mutation\nUpdating state inside a derived is forbidden. If the value should not be reactive, declare it without \`$state\``);
+		const error = new Error(`state_unsafe_mutation\nUpdating state inside \`$derived(...)\`, \`$inspect(...)\` or a template expression is forbidden. If the value should not be reactive, declare it without \`$state\`\nhttps://svelte.dev/e/state_unsafe_mutation`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("state_unsafe_mutation");
+		throw new Error(`https://svelte.dev/e/state_unsafe_mutation`);
 	}
 }
 
 /**
- * The `this={...}` property of a `<svelte:component>` must be a Svelte component, if defined
+ * A `<svelte:boundary>` `reset` function cannot be called while an error is still being handled
  * @returns {never}
  */
-export function svelte_component_invalid_this_value() {
+export function svelte_boundary_reset_onerror() {
 	if (DEV) {
-		const error = new Error(`svelte_component_invalid_this_value\nThe \`this={...}\` property of a \`<svelte:component>\` must be a Svelte component, if defined`);
+		const error = new Error(`svelte_boundary_reset_onerror\nA \`<svelte:boundary>\` \`reset\` function cannot be called while an error is still being handled\nhttps://svelte.dev/e/svelte_boundary_reset_onerror`);
 
 		error.name = 'Svelte error';
+
 		throw error;
 	} else {
-		// TODO print a link to the documentation
-		throw new Error("svelte_component_invalid_this_value");
+		throw new Error(`https://svelte.dev/e/svelte_boundary_reset_onerror`);
 	}
 }

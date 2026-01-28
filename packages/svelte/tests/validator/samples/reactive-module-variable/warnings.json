@@ -1,14 +1,14 @@
 [
 	{
-		"code": "reactive_declaration_module_script",
-		"message": "All dependencies of the reactive declaration are declared in a module script and will not be reactive",
+		"code": "reactive_declaration_module_script_dependency",
+		"message": "Reassignments of module-level declarations will not cause reactive statements to update",
 		"start": {
-			"column": 1,
-			"line": 5
+			"column": 10,
+			"line": 10
 		},
 		"end": {
-			"column": 14,
-			"line": 5
+			"column": 13,
+			"line": 10
 		}
 	}
 ]

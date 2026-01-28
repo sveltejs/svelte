@@ -2,6 +2,15 @@ import type { Store } from '#shared';
 import { STATE_SYMBOL } from './constants.js';
 import type { Effect, Source, Value } from './reactivity/types.js';
 
+declare global {
+	interface Window {
+		__svelte?: {
+			/** hydratables */
+			h?: Map<string, unknown>;
+		};
+	}
+}
+
 type EventCallback = (event: Event) => boolean;
 export type EventCallbackMap = Record<string, EventCallback | EventCallback[]>;
 
@@ -16,8 +25,8 @@ export type ComponentContext = {
 	c: null | Map<unknown, unknown>;
 	/** deferred effects */
 	e: null | Array<() => void | (() => void)>;
-	/** mounted */
-	m: boolean;
+	/** True if initialized, i.e. pop() ran */
+	i: boolean;
 	/**
 	 * props — needed for legacy mode lifecycle functions, and for `createEventDispatcher`
 	 * @deprecated remove in 6.0
@@ -45,9 +54,7 @@ export type ComponentContext = {
 			m: Array<() => any>;
 		};
 		/** `$:` statements */
-		r1: any[];
-		/** This tracks whether `$:` statements have run in the current cycle, to ensure they only run once */
-		r2: Source<boolean>;
+		$: any[];
 	};
 	/**
 	 * dev mode only: the component function
@@ -65,28 +72,31 @@ export type TemplateNode = Text | Element | Comment;
 
 export type Dom = TemplateNode | TemplateNode[];
 
+export type EachOutroGroup = {
+	pending: Set<Effect>;
+	done: Set<Effect>;
+};
+
 export type EachState = {
+	/** the each block effect */
+	effect: Effect;
 	/** flags */
 	flags: number;
 	/** a key -> item lookup */
 	items: Map<any, EachItem>;
-	/** head of the linked list of items */
-	first: EachItem | null;
+	/** all outro groups that this item is a part of */
+	outrogroups: Set<EachOutroGroup> | null;
+	/** `{:else}` effect */
+	fallback: Effect | null;
 };
 
 export type EachItem = {
-	/** animation manager */
-	a: AnimationManager | null;
+	/** value */
+	v: Source<any> | null;
+	/** index */
+	i: Source<number> | null;
 	/** effect */
 	e: Effect;
-	/** item */
-	v: any | Source<any>;
-	/** index */
-	i: number | Source<number>;
-	/** key */
-	k: unknown;
-	prev: EachItem | null;
-	next: EachItem | null;
 };
 
 export interface TransitionManager {
@@ -121,7 +131,7 @@ export interface Animation {
 	/** Resets an animation to its starting state, if it uses `tick`. Exposed as a separate method so that an aborted `out:` can still reset even if the `outro` had already completed */
 	reset: () => void;
 	/** Get the `t` value (between `0` and `1`) of the animation, so that its counterpart can start from the right place */
-	t: (now: number) => number;
+	t: () => number;
 }
 
 export type TransitionFn<P> = (
@@ -173,25 +183,21 @@ export type TaskCallback = (now: number) => boolean | void;
 
 export type TaskEntry = { c: TaskCallback; f: () => void };
 
-export interface ProxyMetadata<T = Record<string | symbol, any>> {
-	/** A map of signals associated to the properties that are reactive */
-	s: Map<string | symbol, Source<any>>;
-	/** A version counter, used within the proxy to signal changes in places where there's no other way to signal an update */
-	v: Source<number>;
-	/** `true` if the proxified object is an array */
-	a: boolean;
-	/** The associated proxy */
-	p: ProxyStateObject<T>;
-	/** The original target this proxy was created for */
-	t: T;
-	/** Dev-only — the components that 'own' this state, if any. `null` means no owners, i.e. everyone can mutate this state. */
-	owners: null | Set<Function>;
-	/** Dev-only — the parent metadata object */
-	parent: null | ProxyMetadata;
-}
-
 export type ProxyStateObject<T = Record<string | symbol, any>> = T & {
-	[STATE_SYMBOL]: ProxyMetadata;
+	[STATE_SYMBOL]: T;
 };
+
+export type SourceLocation =
+	| [line: number, column: number]
+	| [line: number, column: number, SourceLocation[]];
+
+export interface DevStackEntry {
+	file: string;
+	type: 'component' | 'if' | 'each' | 'await' | 'key' | 'render';
+	line: number;
+	column: number;
+	parent: DevStackEntry | null;
+	componentTag?: string;
+}
 
 export * from './reactivity/types';

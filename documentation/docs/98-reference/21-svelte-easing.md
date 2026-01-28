@@ -2,4 +2,4 @@
 title: svelte/easing
 ---
 
-<!-- @include svelte/easing -->
+> MODULE: svelte/easing

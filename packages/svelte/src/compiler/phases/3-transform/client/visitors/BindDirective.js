@@ -1,56 +1,79 @@
-/** @import { CallExpression, Expression, MemberExpression } from 'estree' */
-/** @import { Attribute, BindDirective } from '#compiler' */
+/** @import { CallExpression, Expression, Pattern } from 'estree' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev, is_ignored } from '../../../../state.js';
 import { is_text_attribute } from '../../../../utils/ast.js';
-import * as b from '../../../../utils/builders.js';
+import * as b from '#compiler/builders';
 import { binding_properties } from '../../../bindings.js';
-import { build_setter } from '../utils.js';
 import { build_attribute_value } from './shared/element.js';
 import { build_bind_this, validate_binding } from './shared/utils.js';
 
 /**
- * @param {BindDirective} node
+ * @param {AST.BindDirective} node
  * @param {ComponentContext} context
  */
 export function BindDirective(node, context) {
-	const expression = node.expression;
+	const expression = /** @type {Expression} */ (context.visit(node.expression));
 	const property = binding_properties[node.name];
 
-	const parent = /** @type {import('#compiler').SvelteNode} */ (context.path.at(-1));
+	const parent = /** @type {AST.SvelteNode} */ (context.path.at(-1));
 
-	if (
-		dev &&
-		context.state.analysis.runes &&
-		expression.type === 'MemberExpression' &&
-		(node.name !== 'this' ||
-			context.path.some(
-				({ type }) =>
-					type === 'IfBlock' || type === 'EachBlock' || type === 'AwaitBlock' || type === 'KeyBlock'
-			)) &&
-		!is_ignored(node, 'binding_property_non_reactive')
-	) {
-		validate_binding(
-			context.state,
-			node,
-			/**@type {MemberExpression} */ (context.visit(expression))
+	let get, set;
+
+	if (expression.type === 'SequenceExpression') {
+		[get, set] = expression.expressions;
+	} else {
+		if (
+			dev &&
+			context.state.analysis.runes &&
+			expression.type === 'MemberExpression' &&
+			(node.name !== 'this' ||
+				context.path.some(
+					({ type }) =>
+						type === 'IfBlock' ||
+						type === 'EachBlock' ||
+						type === 'AwaitBlock' ||
+						type === 'KeyBlock'
+				)) &&
+			!is_ignored(node, 'binding_property_non_reactive')
+		) {
+			validate_binding(context.state, node, expression);
+		}
+
+		const assignment = /** @type {Expression} */ (
+			context.visit(b.assignment('=', /** @type {Pattern} */ (node.expression), b.id('$$value')))
 		);
-	}
 
-	const getter = b.thunk(/** @type {Expression} */ (context.visit(expression)));
-	const assignment = b.assignment('=', expression, b.id('$$value'));
-	const setter = b.arrow(
-		[b.id('$$value')],
-		build_setter(
-			assignment,
-			context,
-			() => /** @type {Expression} */ (context.visit(assignment)),
-			null,
-			{
-				skip_proxy_and_freeze: true
+		if (dev) {
+			// in dev, create named functions, so that `$inspect(...)` delivers
+			// useful stack traces
+			get = b.function(b.id('get', node.name_loc), [], b.block([b.return(expression)]));
+			set = b.function(
+				b.id('set', node.name_loc),
+				[b.id('$$value')],
+				b.block([b.stmt(assignment)])
+			);
+		} else {
+			// in prod, optimise for brevity
+			get = b.thunk(expression);
+
+			/** @type {Expression | undefined} */
+			set = b.unthunk(
+				b.arrow(
+					[b.id('$$value')],
+					/** @type {Expression} */ (
+						context.visit(
+							b.assignment('=', /** @type {Pattern} */ (node.expression), b.id('$$value'))
+						)
+					)
+				)
+			);
+
+			if (get === set) {
+				set = undefined;
 			}
-		)
-	);
+		}
+	}
 
 	/** @type {CallExpression} */
 	let call;
@@ -61,15 +84,15 @@ export function BindDirective(node, context) {
 			b.literal(node.name),
 			b.literal(property.event),
 			context.state.node,
-			setter,
-			property.bidirectional && getter
+			set ?? get,
+			property.bidirectional && get
 		);
 	} else {
 		// special cases
 		switch (node.name) {
 			// window
 			case 'online':
-				call = b.call(`$.bind_online`, setter);
+				call = b.call(`$.bind_online`, set ?? get);
 				break;
 
 			case 'scrollX':
@@ -77,8 +100,8 @@ export function BindDirective(node, context) {
 				call = b.call(
 					'$.bind_window_scroll',
 					b.literal(node.name === 'scrollX' ? 'x' : 'y'),
-					getter,
-					setter
+					get,
+					set
 				);
 				break;
 
@@ -86,47 +109,47 @@ export function BindDirective(node, context) {
 			case 'innerHeight':
 			case 'outerWidth':
 			case 'outerHeight':
-				call = b.call('$.bind_window_size', b.literal(node.name), setter);
+				call = b.call('$.bind_window_size', b.literal(node.name), set ?? get);
 				break;
 
 			// document
 			case 'activeElement':
-				call = b.call('$.bind_active_element', setter);
+				call = b.call('$.bind_active_element', set ?? get);
 				break;
 
 			// media
 			case 'muted':
-				call = b.call(`$.bind_muted`, context.state.node, getter, setter);
+				call = b.call(`$.bind_muted`, context.state.node, get, set);
 				break;
 			case 'paused':
-				call = b.call(`$.bind_paused`, context.state.node, getter, setter);
+				call = b.call(`$.bind_paused`, context.state.node, get, set);
 				break;
 			case 'volume':
-				call = b.call(`$.bind_volume`, context.state.node, getter, setter);
+				call = b.call(`$.bind_volume`, context.state.node, get, set);
 				break;
 			case 'playbackRate':
-				call = b.call(`$.bind_playback_rate`, context.state.node, getter, setter);
+				call = b.call(`$.bind_playback_rate`, context.state.node, get, set);
 				break;
 			case 'currentTime':
-				call = b.call(`$.bind_current_time`, context.state.node, getter, setter);
+				call = b.call(`$.bind_current_time`, context.state.node, get, set);
 				break;
 			case 'buffered':
-				call = b.call(`$.bind_buffered`, context.state.node, setter);
+				call = b.call(`$.bind_buffered`, context.state.node, set ?? get);
 				break;
 			case 'played':
-				call = b.call(`$.bind_played`, context.state.node, setter);
+				call = b.call(`$.bind_played`, context.state.node, set ?? get);
 				break;
 			case 'seekable':
-				call = b.call(`$.bind_seekable`, context.state.node, setter);
+				call = b.call(`$.bind_seekable`, context.state.node, set ?? get);
 				break;
 			case 'seeking':
-				call = b.call(`$.bind_seeking`, context.state.node, setter);
+				call = b.call(`$.bind_seeking`, context.state.node, set ?? get);
 				break;
 			case 'ended':
-				call = b.call(`$.bind_ended`, context.state.node, setter);
+				call = b.call(`$.bind_ended`, context.state.node, set ?? get);
 				break;
 			case 'readyState':
-				call = b.call(`$.bind_ready_state`, context.state.node, setter);
+				call = b.call(`$.bind_ready_state`, context.state.node, set ?? get);
 				break;
 
 			// dimensions
@@ -134,32 +157,37 @@ export function BindDirective(node, context) {
 			case 'contentBoxSize':
 			case 'borderBoxSize':
 			case 'devicePixelContentBoxSize':
-				call = b.call('$.bind_resize_observer', context.state.node, b.literal(node.name), setter);
+				call = b.call(
+					'$.bind_resize_observer',
+					context.state.node,
+					b.literal(node.name),
+					set ?? get
+				);
 				break;
 
 			case 'clientWidth':
 			case 'clientHeight':
 			case 'offsetWidth':
 			case 'offsetHeight':
-				call = b.call('$.bind_element_size', context.state.node, b.literal(node.name), setter);
+				call = b.call('$.bind_element_size', context.state.node, b.literal(node.name), set ?? get);
 				break;
 
 			// various
 			case 'value': {
 				if (parent?.type === 'RegularElement' && parent.name === 'select') {
-					call = b.call(`$.bind_select_value`, context.state.node, getter, setter);
+					call = b.call(`$.bind_select_value`, context.state.node, get, set);
 				} else {
-					call = b.call(`$.bind_value`, context.state.node, getter, setter);
+					call = b.call(`$.bind_value`, context.state.node, get, set);
 				}
 				break;
 			}
 
 			case 'files':
-				call = b.call(`$.bind_files`, context.state.node, getter, setter);
+				call = b.call(`$.bind_files`, context.state.node, get, set);
 				break;
 
 			case 'this':
-				call = build_bind_this(expression, context.state.node, context);
+				call = build_bind_this(node.expression, context.state.node, context);
 				break;
 
 			case 'textContent':
@@ -169,18 +197,18 @@ export function BindDirective(node, context) {
 					'$.bind_content_editable',
 					b.literal(node.name),
 					context.state.node,
-					getter,
-					setter
+					get,
+					set
 				);
 				break;
 
 			// checkbox/radio
 			case 'checked':
-				call = b.call(`$.bind_checked`, context.state.node, getter, setter);
+				call = b.call(`$.bind_checked`, context.state.node, get, set);
 				break;
 
 			case 'focused':
-				call = b.call(`$.bind_focused`, context.state.node, setter);
+				call = b.call(`$.bind_focused`, context.state.node, set ?? get);
 				break;
 
 			case 'group': {
@@ -193,11 +221,11 @@ export function BindDirective(node, context) {
 
 				// We need to additionally invoke the value attribute signal to register it as a dependency,
 				// so that when the value is updated, the group binding is updated
-				let group_getter = getter;
+				let group_getter = get;
 
 				if (parent?.type === 'RegularElement') {
 					const value = /** @type {any[]} */ (
-						/** @type {Attribute} */ (
+						/** @type {AST.Attribute} */ (
 							parent.attributes.find(
 								(a) =>
 									a.type === 'Attribute' &&
@@ -210,10 +238,7 @@ export function BindDirective(node, context) {
 
 					if (value !== undefined) {
 						group_getter = b.thunk(
-							b.block([
-								b.stmt(build_attribute_value(value, context).value),
-								b.return(/** @type {Expression} */ (context.visit(expression)))
-							])
+							b.block([b.stmt(build_attribute_value(value, context).value), b.return(expression)])
 						);
 					}
 				}
@@ -224,7 +249,7 @@ export function BindDirective(node, context) {
 					b.array(indexes),
 					context.state.node,
 					group_getter,
-					setter
+					set ?? get
 				);
 				break;
 			}
@@ -234,16 +259,32 @@ export function BindDirective(node, context) {
 		}
 	}
 
+	const defer =
+		node.name !== 'this' &&
+		parent.type === 'RegularElement' &&
+		parent.attributes.find((a) => a.type === 'UseDirective');
+
+	let statement = defer ? b.stmt(b.call('$.effect', b.thunk(call))) : b.stmt(call);
+
+	if (node.metadata.expression.is_async()) {
+		statement = b.stmt(
+			b.call(
+				'$.run_after_blockers',
+				node.metadata.expression.blockers(),
+				b.thunk(b.block([statement]))
+			)
+		);
+	}
+
 	// Bindings need to happen after attribute updates, therefore after the render effect, and in order with events/actions.
 	// bind:this is a special case as it's one-way and could influence the render effect.
 	if (node.name === 'this') {
-		context.state.init.push(b.stmt(call));
+		context.state.init.push(statement);
 	} else {
-		const has_action_directive =
-			parent.type === 'RegularElement' && parent.attributes.find((a) => a.type === 'UseDirective');
-
-		context.state.after_update.push(
-			b.stmt(has_action_directive ? b.call('$.effect', b.thunk(call)) : call)
-		);
+		if (defer) {
+			context.state.init.push(statement);
+		} else {
+			context.state.after_update.push(statement);
+		}
 	}
 }

@@ -10,7 +10,7 @@ export default test({
 		ok(p);
 
 		const styles = window.getComputedStyle(p);
-		assert.equal(styles.color, 'blue');
+		assert.equal(styles.color, 'rgb(0, 0, 255)');
 		assert.equal(styles.width, '65px');
 		assert.equal(p.id, 'my-id');
 	}

@@ -1,0 +1,3 @@
+<script
+
+unterminated template

@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 import { count } from './store.js';
 
@@ -8,8 +9,9 @@ export default test({
 		count.set(0);
 	},
 
-	async test({ assert, component, target }) {
-		await component.increment();
+	test({ assert, component, target }) {
+		component.increment();
+		flushSync();
 
 		assert.htmlEqual(target.innerHTML, '<p>count: 1</p>');
 	}

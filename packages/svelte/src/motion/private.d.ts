@@ -1,9 +1,11 @@
-import { Spring } from './public.js';
-
-export interface TickContext<T> {
+export interface TickContext {
 	inv_mass: number;
 	dt: number;
-	opts: Spring<T>;
+	opts: {
+		stiffness: number;
+		damping: number;
+		precision: number;
+	};
 	settled: boolean;
 }
 
@@ -14,8 +16,22 @@ export interface SpringOpts {
 }
 
 export interface SpringUpdateOpts {
+	/**
+	 * @deprecated Only use this for the spring store; does nothing when set on the Spring class
+	 */
 	hard?: any;
+	/**
+	 * @deprecated Only use this for the spring store; does nothing when set on the Spring class
+	 */
 	soft?: string | number | boolean;
+	/**
+	 * Only use this for the Spring class; does nothing when set on the spring store
+	 */
+	instant?: boolean;
+	/**
+	 * Only use this for the Spring class; does nothing when set on the spring store
+	 */
+	preserveMomentum?: number;
 }
 
 export type Updater<T> = (target_value: T, value: T) => T;

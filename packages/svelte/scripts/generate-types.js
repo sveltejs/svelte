@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { createBundle } from 'dts-buddy';
 
@@ -21,24 +22,39 @@ fs.writeFileSync(`${dir}/types/compiler/interfaces.d.ts`, "import '../index.js';
 
 await createBundle({
 	output: `${dir}/types/index.d.ts`,
+	compilerOptions: {
+		// so that types/properties with `@internal` (and its dependencies) are removed from the output
+		stripInternal: true,
+		paths: Object.fromEntries(
+			Object.entries(pkg.imports).map(
+				/** @param {[string,any]} import */ ([key, value]) => {
+					return [key, [value.types ?? value.default ?? value]];
+				}
+			)
+		)
+	},
 	modules: {
 		[pkg.name]: `${dir}/src/index.d.ts`,
 		[`${pkg.name}/action`]: `${dir}/src/action/public.d.ts`,
 		[`${pkg.name}/animate`]: `${dir}/src/animate/public.d.ts`,
+		[`${pkg.name}/attachments`]: `${dir}/src/attachments/public.d.ts`,
 		[`${pkg.name}/compiler`]: `${dir}/src/compiler/public.d.ts`,
 		[`${pkg.name}/easing`]: `${dir}/src/easing/index.js`,
 		[`${pkg.name}/legacy`]: `${dir}/src/legacy/legacy-client.js`,
 		[`${pkg.name}/motion`]: `${dir}/src/motion/public.d.ts`,
 		[`${pkg.name}/reactivity`]: `${dir}/src/reactivity/index-client.js`,
+		[`${pkg.name}/reactivity/window`]: `${dir}/src/reactivity/window/index.js`,
 		[`${pkg.name}/server`]: `${dir}/src/server/index.d.ts`,
 		[`${pkg.name}/store`]: `${dir}/src/store/public.d.ts`,
 		[`${pkg.name}/transition`]: `${dir}/src/transition/public.d.ts`,
-		[`${pkg.name}/events`]: `${dir}/src/events/index.js`,
+		[`${pkg.name}/events`]: `${dir}/src/events/public.d.ts`,
 		// TODO remove in Svelte 6
 		[`${pkg.name}/types/compiler/preprocess`]: `${dir}/src/compiler/preprocess/legacy-public.d.ts`,
 		[`${pkg.name}/types/compiler/interfaces`]: `${dir}/src/compiler/types/legacy-interfaces.d.ts`
 	}
 });
+
+fs.appendFileSync(`${dir}/types/index.d.ts`, '\n');
 
 const types = fs.readFileSync(`${dir}/types/index.d.ts`, 'utf-8');
 
@@ -54,5 +70,16 @@ if (bad_links.length > 0) {
 		console.error(`- ${link}`);
 	}
 
+	process.exit(1);
+}
+
+if (types.includes('\texport { ')) {
+	// eslint-disable-next-line no-console
+	console.error(
+		`The generated types file should not contain 'export { ... }' statements. ` +
+			`TypeScript is bad at following these: when creating d.ts files through @sveltejs/package, and one of these types is used, ` +
+			`TypeScript will likely fail at generating a d.ts file. ` +
+			`To prevent this, do 'export interface Foo {}' instead of 'interface Foo {}' and then 'export { Foo }'`
+	);
 	process.exit(1);
 }

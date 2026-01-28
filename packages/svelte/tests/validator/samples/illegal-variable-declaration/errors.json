@@ -1,7 +1,7 @@
 [
 	{
 		"code": "declaration_duplicate_module_import",
-		"message": "Cannot declare same variable name which is imported inside `<script context=\"module\">`",
+		"message": "Cannot declare a variable with the same name as an import inside `<script module>`",
 		"start": {
 			"line": 12,
 			"column": 5

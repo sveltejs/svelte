@@ -1,9 +1,52 @@
+
   :root {
-    color: red;
+    color: green;
   }
   .foo:root {
-    color: blue;
+    color: green;
   }
   :root.foo {
     color: green;
+  }
+  :root.unknown {
+    color: green;
+  }
+
+  :root h1.svelte-xyz {
+    color: green;
+  }
+  /* (unused) :root .unused {
+    color: red;
+  }*/
+
+  :root:has(h1:where(.svelte-xyz)) {
+    color: green;
+  }
+  /* (unused) :root:has(.unused) {
+    color: red;
+  }*/
+
+  :root:not(.x) {
+    color: green;
+  }
+
+  :root {
+    h1.svelte-xyz {
+      color: green;
+    }
+    /* (unused) .unused {
+      color: red;
+    }*/
+    .svelte-xyz:has(h1:where(.svelte-xyz)) {
+      color: green;
+    }
+    /* (unused) :has(.unused) {
+      color: red;
+    }*/
+    &:has(h1.svelte-xyz) {
+      color: green;
+    }
+    /* (unused) &:has(.unused) {
+      color: red;
+    }*/
   }

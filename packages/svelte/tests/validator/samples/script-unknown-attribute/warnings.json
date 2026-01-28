@@ -1,0 +1,14 @@
+[
+	{
+		"code": "script_unknown_attribute",
+		"message": "Unrecognized attribute — should be one of `generics`, `lang` or `module`. If this exists for a preprocessor, ensure that the preprocessor removes it",
+		"start": {
+			"column": 8,
+			"line": 1
+		},
+		"end": {
+			"column": 14,
+			"line": 1
+		}
+	}
+]

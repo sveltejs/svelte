@@ -1,7 +1,7 @@
-/** @import { Attribute, Text, ExpressionTag, SvelteNode } from '#compiler' */
+/** @import { AST, Scope } from '#compiler' */
 /** @import * as ESTree from 'estree' */
 import { walk } from 'zimmerframe';
-import * as b from '../utils/builders.js';
+import * as b from '#compiler/builders';
 
 /**
  * Gets the left-most identifier of a member expression or identifier.
@@ -22,8 +22,8 @@ export function object(expression) {
 
 /**
  * Returns true if the attribute contains a single static text node.
- * @param {Attribute} attribute
- * @returns {attribute is Attribute & { value: [Text] }}
+ * @param {AST.Attribute} attribute
+ * @returns {attribute is AST.Attribute & { value: [AST.Text] }}
  */
 export function is_text_attribute(attribute) {
 	return (
@@ -37,8 +37,8 @@ export function is_text_attribute(attribute) {
  * Returns true if the attribute contains a single expression node.
  * In Svelte 5, this also includes a single expression node wrapped in an array.
  * TODO change that in a future version
- * @param {Attribute} attribute
- * @returns {attribute is Attribute & { value: [ExpressionTag] | ExpressionTag }}
+ * @param {AST.Attribute} attribute
+ * @returns {attribute is AST.Attribute & { value: [AST.ExpressionTag] | AST.ExpressionTag }}
  */
 export function is_expression_attribute(attribute) {
 	return (
@@ -53,19 +53,19 @@ export function is_expression_attribute(attribute) {
  * Returns the single attribute expression node.
  * In Svelte 5, this also includes a single expression node wrapped in an array.
  * TODO change that in a future version
- * @param { Attribute & { value: [ExpressionTag] | ExpressionTag }} attribute
+ * @param { AST.Attribute & { value: [AST.ExpressionTag] | AST.ExpressionTag }} attribute
  * @returns {ESTree.Expression}
  */
 export function get_attribute_expression(attribute) {
 	return Array.isArray(attribute.value)
-		? /** @type {ExpressionTag} */ (attribute.value[0]).expression
+		? /** @type {AST.ExpressionTag} */ (attribute.value[0]).expression
 		: attribute.value.expression;
 }
 
 /**
  * Returns the expression chunks of an attribute value
- * @param {Attribute['value']} value
- * @returns {Array<Text | ExpressionTag>}
+ * @param {AST.Attribute['value']} value
+ * @returns {Array<AST.Text | AST.ExpressionTag>}
  */
 export function get_attribute_chunks(value) {
 	return Array.isArray(value) ? value : typeof value === 'boolean' ? [] : [value];
@@ -73,8 +73,8 @@ export function get_attribute_chunks(value) {
 
 /**
  * Returns true if the attribute starts with `on` and contains a single expression node.
- * @param {Attribute} attribute
- * @returns {attribute is Attribute & { value: [ExpressionTag] | ExpressionTag }}
+ * @param {AST.Attribute} attribute
+ * @returns {attribute is AST.Attribute & { value: [AST.ExpressionTag] | AST.ExpressionTag }}
  */
 export function is_event_attribute(attribute) {
 	return is_expression_attribute(attribute) && attribute.name.startsWith('on');
@@ -227,40 +227,50 @@ export function extract_identifiers_from_destructuring(node, nodes = []) {
  * @property {ESTree.Identifier | ESTree.MemberExpression} node The node the destructuring path end in. Can be a member expression only for assignment expressions
  * @property {boolean} is_rest `true` if this is a `...rest` destructuring
  * @property {boolean} has_default_value `true` if this has a fallback value like `const { foo = 'bar } = ..`
- * @property {(expression: ESTree.Expression) => ESTree.Identifier | ESTree.MemberExpression | ESTree.CallExpression | ESTree.AwaitExpression} expression Returns an expression which walks the path starting at the given expression.
+ * @property {ESTree.Expression} expression The value of the current path
  * This will be a call expression if a rest element or default is involved — e.g. `const { foo: { bar: baz = 42 }, ...rest } = quux` — since we can't represent `baz` or `rest` purely as a path
  * Will be an await expression in case of an async default value (`const { foo = await bar } = ...`)
- * @property {(expression: ESTree.Expression) => ESTree.Identifier | ESTree.MemberExpression | ESTree.CallExpression | ESTree.AwaitExpression} update_expression Like `expression` but without default values.
+ * @property {ESTree.Expression} update_expression Like `expression` but without default values.
  */
 
 /**
  * Extracts all destructured assignments from a pattern.
+ * For each `id` in the returned `inserts`, make sure to adjust the `name`.
  * @param {ESTree.Node} param
- * @returns {DestructuredAssignment[]}
+ * @param {ESTree.Expression} initial
+ * @returns {{ inserts: Array<{ id: ESTree.Identifier, value: ESTree.Expression }>, paths: DestructuredAssignment[] }}
  */
-export function extract_paths(param) {
-	return _extract_paths(
-		[],
-		param,
-		(node) => /** @type {ESTree.Identifier | ESTree.MemberExpression} */ (node),
-		(node) => /** @type {ESTree.Identifier | ESTree.MemberExpression} */ (node),
-		false
-	);
+export function extract_paths(param, initial) {
+	/**
+	 * When dealing with array destructuring patterns (`let [a, b, c] = $derived(blah())`)
+	 * we need an intermediate declaration that creates an array, since `blah()` could
+	 * return a non-array-like iterator
+	 * @type {Array<{ id: ESTree.Identifier, value: ESTree.Expression }>}
+	 */
+	const inserts = [];
+
+	/** @type {DestructuredAssignment[]} */
+	const paths = [];
+
+	_extract_paths(paths, inserts, param, initial, initial, false);
+
+	return { inserts, paths };
 }
 
 /**
- * @param {DestructuredAssignment[]} assignments
+ * @param {DestructuredAssignment[]} paths
+ * @param {Array<{ id: ESTree.Identifier, value: ESTree.Expression }>} inserts
  * @param {ESTree.Node} param
- * @param {DestructuredAssignment['expression']} expression
- * @param {DestructuredAssignment['update_expression']} update_expression
+ * @param {ESTree.Expression} expression
+ * @param {ESTree.Expression} update_expression
  * @param {boolean} has_default_value
  * @returns {DestructuredAssignment[]}
  */
-function _extract_paths(assignments = [], param, expression, update_expression, has_default_value) {
+function _extract_paths(paths, inserts, param, expression, update_expression, has_default_value) {
 	switch (param.type) {
 		case 'Identifier':
 		case 'MemberExpression':
-			assignments.push({
+			paths.push({
 				node: param,
 				is_rest: false,
 				has_default_value,
@@ -272,28 +282,25 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 		case 'ObjectPattern':
 			for (const prop of param.properties) {
 				if (prop.type === 'RestElement') {
-					/** @type {DestructuredAssignment['expression']} */
-					const rest_expression = (object) => {
-						/** @type {ESTree.Expression[]} */
-						const props = [];
+					/** @type {ESTree.Expression[]} */
+					const props = [];
 
-						for (const p of param.properties) {
-							if (p.type === 'Property' && p.key.type !== 'PrivateIdentifier') {
-								if (p.key.type === 'Identifier' && !p.computed) {
-									props.push(b.literal(p.key.name));
-								} else if (p.key.type === 'Literal') {
-									props.push(b.literal(String(p.key.value)));
-								} else {
-									props.push(b.call('String', p.key));
-								}
+					for (const p of param.properties) {
+						if (p.type === 'Property' && p.key.type !== 'PrivateIdentifier') {
+							if (p.key.type === 'Identifier' && !p.computed) {
+								props.push(b.literal(p.key.name));
+							} else if (p.key.type === 'Literal') {
+								props.push(b.literal(String(p.key.value)));
+							} else {
+								props.push(b.call('String', p.key));
 							}
 						}
+					}
 
-						return b.call('$.exclude_from_object', expression(object), b.array(props));
-					};
+					const rest_expression = b.call('$.exclude_from_object', expression, b.array(props));
 
 					if (prop.argument.type === 'Identifier') {
-						assignments.push({
+						paths.push({
 							node: prop.argument,
 							is_rest: true,
 							has_default_value,
@@ -302,7 +309,8 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 						});
 					} else {
 						_extract_paths(
-							assignments,
+							paths,
+							inserts,
 							prop.argument,
 							rest_expression,
 							rest_expression,
@@ -310,11 +318,15 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 						);
 					}
 				} else {
-					/** @type {DestructuredAssignment['expression']} */
-					const object_expression = (object) =>
-						b.member(expression(object), prop.key, prop.computed || prop.key.type !== 'Identifier');
+					const object_expression = b.member(
+						expression,
+						prop.key,
+						prop.computed || prop.key.type !== 'Identifier'
+					);
+
 					_extract_paths(
-						assignments,
+						paths,
+						inserts,
 						prop.value,
 						object_expression,
 						object_expression,
@@ -325,16 +337,27 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 
 			break;
 
-		case 'ArrayPattern':
+		case 'ArrayPattern': {
+			// we create an intermediate declaration to convert iterables to arrays if necessary.
+			// the consumer is responsible for setting the name of the identifier
+			const id = b.id('#');
+
+			const value = b.call(
+				'$.to_array',
+				expression,
+				param.elements.at(-1)?.type === 'RestElement' ? undefined : b.literal(param.elements.length)
+			);
+
+			inserts.push({ id, value });
+
 			for (let i = 0; i < param.elements.length; i += 1) {
 				const element = param.elements[i];
 				if (element) {
 					if (element.type === 'RestElement') {
-						/** @type {DestructuredAssignment['expression']} */
-						const rest_expression = (object) =>
-							b.call(b.member(expression(object), b.id('slice')), b.literal(i));
+						const rest_expression = b.call(b.member(id, 'slice'), b.literal(i));
+
 						if (element.argument.type === 'Identifier') {
-							assignments.push({
+							paths.push({
 								node: element.argument,
 								is_rest: true,
 								has_default_value,
@@ -343,7 +366,8 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 							});
 						} else {
 							_extract_paths(
-								assignments,
+								paths,
+								inserts,
 								element.argument,
 								rest_expression,
 								rest_expression,
@@ -351,10 +375,11 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 							);
 						}
 					} else {
-						/** @type {DestructuredAssignment['expression']} */
-						const array_expression = (object) => b.member(expression(object), b.literal(i), true);
+						const array_expression = b.member(id, b.literal(i), true);
+
 						_extract_paths(
-							assignments,
+							paths,
+							inserts,
 							element,
 							array_expression,
 							array_expression,
@@ -365,18 +390,13 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 			}
 
 			break;
+		}
 
 		case 'AssignmentPattern': {
-			/** @type {DestructuredAssignment['expression']} */
-			const fallback_expression = (object) =>
-				is_expression_async(param.right)
-					? b.await(
-							b.call('$.value_or_fallback_async', expression(object), b.thunk(param.right, true))
-						)
-					: b.call('$.value_or_fallback', expression(object), b.thunk(param.right));
+			const fallback_expression = build_fallback(expression, param.right);
 
 			if (param.left.type === 'Identifier') {
-				assignments.push({
+				paths.push({
 					node: param.left,
 					is_rest: false,
 					has_default_value: true,
@@ -384,21 +404,21 @@ function _extract_paths(assignments = [], param, expression, update_expression, 
 					update_expression
 				});
 			} else {
-				_extract_paths(assignments, param.left, fallback_expression, update_expression, true);
+				_extract_paths(paths, inserts, param.left, fallback_expression, update_expression, true);
 			}
 
 			break;
 		}
 	}
 
-	return assignments;
+	return paths;
 }
 
 /**
  * Like `path.at(x)`, but skips over `TSNonNullExpression` and `TSAsExpression` nodes and eases assertions a bit
  * by removing the `| undefined` from the resulting type.
  *
- * @template {SvelteNode} T
+ * @template {AST.SvelteNode} T
  * @param {T[]} path
  * @param {number} at
  */
@@ -438,7 +458,11 @@ export function is_simple_expression(node) {
 	}
 
 	if (node.type === 'BinaryExpression' || node.type === 'LogicalExpression') {
-		return is_simple_expression(node.left) && is_simple_expression(node.right);
+		return (
+			node.left.type !== 'PrivateIdentifier' &&
+			is_simple_expression(node.left) &&
+			is_simple_expression(node.right)
+		);
 	}
 
 	return false;
@@ -480,7 +504,10 @@ export function is_expression_async(expression) {
 		case 'AssignmentExpression':
 		case 'BinaryExpression':
 		case 'LogicalExpression': {
-			return is_expression_async(expression.left) || is_expression_async(expression.right);
+			return (
+				(expression.left.type !== 'PrivateIdentifier' && is_expression_async(expression.left)) ||
+				is_expression_async(expression.right)
+			);
 		}
 		case 'CallExpression':
 		case 'NewExpression': {
@@ -548,4 +575,65 @@ export function is_expression_async(expression) {
 		default:
 			return false;
 	}
+}
+
+/**
+ *
+ * @param {ESTree.Expression} expression
+ * @param {ESTree.Expression} fallback
+ */
+export function build_fallback(expression, fallback) {
+	if (is_simple_expression(fallback)) {
+		return b.call('$.fallback', expression, fallback);
+	}
+
+	if (fallback.type === 'AwaitExpression' && is_simple_expression(fallback.argument)) {
+		return b.await(b.call('$.fallback', expression, fallback.argument));
+	}
+
+	return is_expression_async(fallback)
+		? b.await(b.call('$.fallback', expression, b.thunk(fallback, true), b.true))
+		: b.call('$.fallback', expression, b.thunk(fallback), b.true);
+}
+
+/**
+ * @param {ESTree.AssignmentOperator} operator
+ * @param {ESTree.Identifier | ESTree.MemberExpression} left
+ * @param {ESTree.Expression} right
+ */
+export function build_assignment_value(operator, left, right) {
+	return operator === '='
+		? right
+		: // turn something like x += 1 into x = x + 1
+			['||=', '&&=', '??='].includes(operator)
+			? b.logical(/** @type {ESTree.LogicalOperator} */ (operator.slice(0, -1)), left, right)
+			: b.binary(/** @type {ESTree.BinaryOperator} */ (operator.slice(0, -1)), left, right);
+}
+
+/**
+ * @param {ESTree.Node} node
+ */
+export function has_await_expression(node) {
+	let has_await = false;
+
+	walk(node, null, {
+		AwaitExpression(_node, context) {
+			has_await = true;
+			context.stop();
+		},
+		// don't traverse into these
+		FunctionDeclaration() {},
+		FunctionExpression() {},
+		ArrowFunctionExpression() {}
+	});
+
+	return has_await;
+}
+
+/**
+ * Turns `await ...` to `(await $.save(...))()`
+ * @param {ESTree.Expression} expression
+ */
+export function save(expression) {
+	return b.call(b.await(b.call('$.save', expression)));
 }

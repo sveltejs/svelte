@@ -1,0 +1,14 @@
+[
+	{
+		"code": "script_context_deprecated",
+		"message": "`context=\"module\"` is deprecated, use the `module` attribute instead",
+		"start": {
+			"column": 8,
+			"line": 3
+		},
+		"end": {
+			"column": 24,
+			"line": 3
+		}
+	}
+]

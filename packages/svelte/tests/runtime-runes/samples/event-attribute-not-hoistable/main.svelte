@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	function declared_in_module_scope() {
 		return 'x';
 	}

@@ -1,22 +1,23 @@
 import { effect, render_effect, teardown } from '../../../reactivity/effects.js';
-import { listen } from './shared.js';
+import { listen, without_reactive_context } from './shared.js';
 
 /**
  * @param {'x' | 'y'} type
- * @param {() => number} get_value
- * @param {(value: number) => void} update
+ * @param {() => number} get
+ * @param {(value: number) => void} set
  * @returns {void}
  */
-export function bind_window_scroll(type, get_value, update) {
+export function bind_window_scroll(type, get, set = get) {
 	var is_scrolling_x = type === 'x';
 
-	var target_handler = () => {
-		scrolling = true;
-		clearTimeout(timeout);
-		timeout = setTimeout(clear, 100); // TODO use scrollend event if supported (or when supported everywhere?)
+	var target_handler = () =>
+		without_reactive_context(() => {
+			scrolling = true;
+			clearTimeout(timeout);
+			timeout = setTimeout(clear, 100); // TODO use scrollend event if supported (or when supported everywhere?)
 
-		update(window[is_scrolling_x ? 'scrollX' : 'scrollY']);
-	};
+			set(window[is_scrolling_x ? 'scrollX' : 'scrollY']);
+		});
 
 	addEventListener('scroll', target_handler, {
 		passive: true
@@ -32,7 +33,7 @@ export function bind_window_scroll(type, get_value, update) {
 	var first = true;
 
 	render_effect(() => {
-		var latest_value = get_value();
+		var latest_value = get();
 		// Don't scroll to the initial value for accessibility reasons
 		if (first) {
 			first = false;
@@ -58,8 +59,8 @@ export function bind_window_scroll(type, get_value, update) {
 
 /**
  * @param {'innerWidth' | 'innerHeight' | 'outerWidth' | 'outerHeight'} type
- * @param {(size: number) => void} update
+ * @param {(size: number) => void} set
  */
-export function bind_window_size(type, update) {
-	listen(window, ['resize'], () => update(window[type]));
+export function bind_window_size(type, set) {
+	listen(window, ['resize'], () => without_reactive_context(() => set(window[type])));
 }

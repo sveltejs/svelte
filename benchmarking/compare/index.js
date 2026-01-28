@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execSync, fork } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { benchmarks } from '../benchmarks.js';
 
 // if (execSync('git status --porcelain').toString().trim()) {
 // 	console.error('Working directory is not clean');
@@ -68,23 +67,37 @@ for (let i = 0; i < results[0].length; i += 1) {
 	for (const metric of ['time', 'gc_time']) {
 		const times = results.map((result) => +result[i][metric]);
 		let min = Infinity;
+		let max = -Infinity;
 		let min_index = -1;
 
 		for (let b = 0; b < times.length; b += 1) {
-			if (times[b] < min) {
-				min = times[b];
+			const time = times[b];
+
+			if (time < min) {
+				min = time;
 				min_index = b;
+			}
+
+			if (time > max) {
+				max = time;
 			}
 		}
 
 		if (min !== 0) {
-			console.group(`${metric}: fastest is ${branches[min_index]}`);
+			console.group(`${metric}: fastest is ${char(min_index)} (${branches[min_index]})`);
 			times.forEach((time, b) => {
-				console.log(`${branches[b]}: ${time.toFixed(2)}ms (${((time / min) * 100).toFixed(2)}%)`);
+				const SIZE = 20;
+				const n = Math.round(SIZE * (time / max));
+
+				console.log(`${char(b)}: ${'◼'.repeat(n)}${' '.repeat(SIZE - n)} ${time.toFixed(2)}ms`);
 			});
 			console.groupEnd();
 		}
 	}
 
 	console.groupEnd();
+}
+
+function char(i) {
+	return String.fromCharCode(97 + i);
 }

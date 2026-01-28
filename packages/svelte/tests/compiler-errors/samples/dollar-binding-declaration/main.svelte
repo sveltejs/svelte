@@ -1,3 +1,0 @@
-<script>
-	let $;
-</script>

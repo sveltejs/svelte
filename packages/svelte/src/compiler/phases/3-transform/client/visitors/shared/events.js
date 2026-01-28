@@ -1,11 +1,13 @@
 /** @import { Expression } from 'estree' */
-/** @import { Attribute, ExpressionMetadata, ExpressionTag, OnDirective, SvelteNode } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
 import { is_capture_event, is_passive_event } from '../../../../../../utils.js';
-import * as b from '../../../../../utils/builders.js';
+import { dev, locator } from '../../../../../state.js';
+import * as b from '#compiler/builders';
+import { ExpressionMetadata } from '../../../../nodes.js';
 
 /**
- * @param {Attribute} node
+ * @param {AST.Attribute} node
  * @param {ComponentContext} context
  */
 export function visit_event_attribute(node, context) {
@@ -19,53 +21,37 @@ export function visit_event_attribute(node, context) {
 
 	// we still need to support the weird `onclick="{() => {...}}" form
 	const tag = Array.isArray(node.value)
-		? /** @type {ExpressionTag} */ (node.value[0])
-		: /** @type {ExpressionTag} */ (node.value);
+		? /** @type {AST.ExpressionTag} */ (node.value[0])
+		: /** @type {AST.ExpressionTag} */ (node.value);
 
 	let handler = build_event_handler(tag.expression, tag.metadata.expression, context);
 
 	if (node.metadata.delegated) {
-		let delegated_assignment;
-
 		if (!context.state.events.has(event_name)) {
 			context.state.events.add(event_name);
-		}
-
-		// Hoist function if we can, otherwise we leave the function as is
-		if (node.metadata.delegated.hoisted) {
-			if (node.metadata.delegated.function === tag.expression) {
-				const func_name = context.state.scope.root.unique('on_' + event_name);
-				context.state.hoisted.push(b.var(func_name, handler));
-				handler = func_name;
-			}
-
-			const hoisted_params = /** @type {Expression[]} */ (
-				node.metadata.delegated.function.metadata.hoisted_params
-			);
-
-			// When we hoist a function we assign an array with the function and all
-			// hoisted closure params.
-			const args = [handler, ...hoisted_params];
-			delegated_assignment = b.array(args);
-		} else {
-			delegated_assignment = handler;
 		}
 
 		context.state.init.push(
 			b.stmt(
 				b.assignment(
 					'=',
-					b.member(context.state.node, b.id('__' + event_name)),
-					delegated_assignment
+					b.member(context.state.node, b.id('__' + event_name, node.name_loc)),
+					handler
 				)
 			)
 		);
 	} else {
 		const statement = b.stmt(
-			build_event(event_name, context.state.node, handler, capture, undefined)
+			build_event(
+				event_name,
+				context.state.node,
+				handler,
+				capture,
+				is_passive_event(event_name) ? true : undefined
+			)
 		);
 
-		const type = /** @type {SvelteNode} */ (context.path.at(-1)).type;
+		const type = /** @type {AST.SvelteNode} */ (context.path.at(-1)).type;
 
 		if (type === 'SvelteDocument' || type === 'SvelteWindow' || type === 'SvelteBody') {
 			// These nodes are above the component tree, and its events should run parent first
@@ -120,11 +106,19 @@ export function build_event_handler(node, metadata, context) {
 	}
 
 	// function declared in the script
-	if (
-		handler.type === 'Identifier' &&
-		context.state.scope.get(handler.name)?.declaration_kind !== 'import'
-	) {
-		return handler;
+	if (handler.type === 'Identifier') {
+		const binding = context.state.scope.get(handler.name);
+
+		if (binding?.is_function()) {
+			return handler;
+		}
+
+		// local variable can be assigned directly
+		// except in dev mode where when need $.apply()
+		// in order to handle warnings.
+		if (!dev && binding?.declaration_kind !== 'import') {
+			return handler;
+		}
 	}
 
 	if (metadata.has_call) {
@@ -136,9 +130,47 @@ export function build_event_handler(node, metadata, context) {
 	}
 
 	// wrap the handler in a function, so the expression is re-evaluated for each event
-	return b.function(
-		null,
-		[b.rest(b.id('$$args'))],
-		b.block([b.stmt(b.call(b.member(handler, b.id('apply'), false, true), b.this, b.id('$$args')))])
-	);
+	let call = b.call(b.member(handler, 'apply', false, true), b.this, b.id('$$args'));
+
+	if (dev) {
+		const loc = locator(/** @type {number} */ (node.start));
+
+		const remove_parens =
+			node.type === 'CallExpression' &&
+			node.arguments.length === 0 &&
+			node.callee.type === 'Identifier';
+
+		call = b.call(
+			'$.apply',
+			b.thunk(handler),
+			b.this,
+			b.id('$$args'),
+			b.id(context.state.analysis.name),
+			b.array([b.literal(loc.line), b.literal(loc.column)]),
+			has_side_effects(node) && b.true,
+			remove_parens && b.true
+		);
+	}
+
+	return b.function(null, [b.rest(b.id('$$args'))], b.block([b.stmt(call)]));
+}
+
+/**
+ * @param {Expression} node
+ */
+function has_side_effects(node) {
+	if (
+		node.type === 'CallExpression' ||
+		node.type === 'NewExpression' ||
+		node.type === 'AssignmentExpression' ||
+		node.type === 'UpdateExpression'
+	) {
+		return true;
+	}
+
+	if (node.type === 'SequenceExpression') {
+		return node.expressions.some(has_side_effects);
+	}
+
+	return false;
 }

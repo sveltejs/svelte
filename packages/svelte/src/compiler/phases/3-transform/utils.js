@@ -1,52 +1,34 @@
-/** @import { Context } from 'zimmerframe' */
 /** @import { TransformState } from './types.js' */
-/** @import * as Compiler from '#compiler' */
-/** @import { Node, Expression, CallExpression } from 'estree' */
+/** @import { AST, Binding, Namespace, ValidatedCompileOptions } from '#compiler' */
+/** @import { Node, Expression, CallExpression, MemberExpression } from 'estree' */
 import {
 	regex_ends_with_whitespaces,
 	regex_not_whitespace,
 	regex_starts_with_whitespaces
 } from '../patterns.js';
-import * as b from '../../utils/builders.js';
 import * as e from '../../errors.js';
 import { walk } from 'zimmerframe';
 import { extract_identifiers } from '../../utils/ast.js';
 import check_graph_for_cycles from '../2-analyze/utils/check_graph_for_cycles.js';
 import is_reference from 'is-reference';
 import { set_scope } from '../scope.js';
-import { dev } from '../../state.js';
-
-/**
- * @param {Node} node
- * @returns {boolean}
- */
-export function is_hoisted_function(node) {
-	if (
-		node.type === 'ArrowFunctionExpression' ||
-		node.type === 'FunctionExpression' ||
-		node.type === 'FunctionDeclaration'
-	) {
-		return node.metadata?.hoisted === true;
-	}
-	return false;
-}
 
 /**
  * Match Svelte 4 behaviour by sorting ConstTag nodes in topological order
- * @param {Compiler.SvelteNode[]} nodes
+ * @param {AST.SvelteNode[]} nodes
  * @param {TransformState} state
  */
 function sort_const_tags(nodes, state) {
 	/**
 	 * @typedef {{
-	 *   node: Compiler.ConstTag;
-	 *   deps: Set<Compiler.Binding>;
+	 *   node: AST.ConstTag;
+	 *   deps: Set<Binding>;
 	 * }} Tag
 	 */
 
 	const other = [];
 
-	/** @type {Map<Compiler.Binding, Tag>} */
+	/** @type {Map<Binding, Tag>} */
 	const tags = new Map();
 
 	for (const node of nodes) {
@@ -54,10 +36,10 @@ function sort_const_tags(nodes, state) {
 			const declaration = node.declaration.declarations[0];
 
 			const bindings = extract_identifiers(declaration.id).map((id) => {
-				return /** @type {Compiler.Binding} */ (state.scope.get(id.name));
+				return /** @type {Binding} */ (state.scope.get(id.name));
 			});
 
-			/** @type {Set<Compiler.Binding>} */
+			/** @type {Set<Binding>} */
 			const deps = new Set();
 
 			walk(declaration.init, state, {
@@ -85,7 +67,7 @@ function sort_const_tags(nodes, state) {
 		return nodes;
 	}
 
-	/** @type {Array<[Compiler.Binding, Compiler.Binding]>} */
+	/** @type {Array<[Binding, Binding]>} */
 	const edges = [];
 
 	for (const [id, tag] of tags) {
@@ -102,7 +84,7 @@ function sort_const_tags(nodes, state) {
 		e.const_tag_cycle(tag.node, cycle.map((binding) => binding.node.name).join(' → '));
 	}
 
-	/** @type {Compiler.ConstTag[]} */
+	/** @type {AST.ConstTag[]} */
 	const sorted = [];
 
 	/** @param {Tag} tag */
@@ -133,11 +115,11 @@ function sort_const_tags(nodes, state) {
  *   unless it's whitespace-only, in which case collapse to a single whitespace for all cases
  *   except when it's children of certain elements where we know ignore whitespace (like td/option/head),
  *   in which case we remove it entirely
- * @param {Compiler.SvelteNode} parent
- * @param {Compiler.SvelteNode[]} nodes
- * @param {Compiler.SvelteNode[]} path
- * @param {Compiler.Namespace} namespace
- * @param {TransformState & { options: Compiler.ValidatedCompileOptions }} state
+ * @param {AST.SvelteNode} parent
+ * @param {AST.SvelteNode[]} nodes
+ * @param {AST.SvelteNode[]} path
+ * @param {Namespace} namespace
+ * @param {TransformState & { options: ValidatedCompileOptions }} state
  * @param {boolean} preserve_whitespace
  * @param {boolean} preserve_comments
  */
@@ -157,10 +139,10 @@ export function clean_nodes(
 		nodes = sort_const_tags(nodes, state);
 	}
 
-	/** @type {Compiler.SvelteNode[]} */
+	/** @type {AST.SvelteNode[]} */
 	const hoisted = [];
 
-	/** @type {Compiler.SvelteNode[]} */
+	/** @type {AST.SvelteNode[]} */
 	const regular = [];
 
 	for (const node of nodes) {
@@ -270,6 +252,27 @@ export function clean_nodes(
 
 	var first = trimmed[0];
 
+	// if first text node inside a <pre> is a single newline, discard it, because otherwise
+	// the browser will do it for us which could break hydration
+	if (parent.type === 'RegularElement' && parent.name === 'pre' && first?.type === 'Text') {
+		if (first.data === '\n' || first.data === '\r\n') {
+			trimmed.shift();
+			first = trimmed[0];
+		}
+	}
+
+	// Special case: Add a comment if this is a lone script tag. This ensures that our run_scripts logic in template.js
+	// will always be able to call node.replaceWith() on the script tag in order to make it run. If we don't add this
+	// and would still call node.replaceWith() on the script tag, it would be a no-op because the script tag has no parent.
+	if (trimmed.length === 1 && first.type === 'RegularElement' && first.name === 'script') {
+		trimmed.push({
+			type: 'Comment',
+			data: '',
+			start: -1,
+			end: -1
+		});
+	}
+
 	return {
 		hoisted,
 		trimmed,
@@ -287,11 +290,13 @@ export function clean_nodes(
 					!first.attributes.some(
 						(attribute) => attribute.type === 'Attribute' && attribute.name.startsWith('--')
 					))),
-		/** if a component or snippet starts with text, we need to add an anchor comment so that its text node doesn't get fused with its surroundings */
+		/** if a component/snippet/each block starts with text, we need to add an anchor comment so that its text node doesn't get fused with its surroundings */
 		is_text_first:
 			(parent.type === 'Fragment' ||
 				parent.type === 'SnippetBlock' ||
+				parent.type === 'EachBlock' ||
 				parent.type === 'SvelteComponent' ||
+				parent.type === 'SvelteBoundary' ||
 				parent.type === 'Component' ||
 				parent.type === 'SvelteSelf') &&
 			first &&
@@ -300,54 +305,69 @@ export function clean_nodes(
 }
 
 /**
- * Infers the namespace for the children of a node that should be used when creating the `$.template(...)`.
- * @param {Compiler.Namespace} namespace
- * @param {Compiler.SvelteNode} parent
- * @param {Compiler.SvelteNode[]} nodes
+ * Infers the namespace for the children of a node that should be used when creating the fragment
+ * @param {Namespace} namespace
+ * @param {AST.SvelteNode} parent
+ * @param {AST.SvelteNode[]} nodes
  */
 export function infer_namespace(namespace, parent, nodes) {
-	if (namespace !== 'foreign') {
-		if (parent.type === 'RegularElement' && parent.name === 'foreignObject') {
-			return 'html';
-		}
+	if (parent.type === 'RegularElement' && parent.name === 'foreignObject') {
+		return 'html';
+	}
 
-		if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
-			if (parent.metadata.svg) {
-				return 'svg';
-			}
-			return parent.metadata.mathml ? 'mathml' : 'html';
+	if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
+		if (parent.metadata.svg) {
+			return 'svg';
 		}
+		return parent.metadata.mathml ? 'mathml' : 'html';
+	}
 
-		// Re-evaluate the namespace inside slot nodes that reset the namespace
-		if (
-			parent.type === 'Fragment' ||
-			parent.type === 'Root' ||
-			parent.type === 'Component' ||
-			parent.type === 'SvelteComponent' ||
-			parent.type === 'SvelteFragment' ||
-			parent.type === 'SnippetBlock' ||
-			parent.type === 'SlotElement'
-		) {
-			const new_namespace = check_nodes_for_namespace(nodes, 'keep');
-			if (new_namespace !== 'keep' && new_namespace !== 'maybe_html') {
-				return new_namespace;
-			}
+	// Re-evaluate the namespace inside slot nodes that reset the namespace
+	if (
+		parent.type === 'Fragment' ||
+		parent.type === 'Root' ||
+		parent.type === 'Component' ||
+		parent.type === 'SvelteComponent' ||
+		parent.type === 'SvelteFragment' ||
+		parent.type === 'SnippetBlock' ||
+		parent.type === 'SlotElement'
+	) {
+		const new_namespace = check_nodes_for_namespace(nodes, 'keep');
+		if (new_namespace !== 'keep' && new_namespace !== 'maybe_html') {
+			return new_namespace;
 		}
 	}
 
-	return namespace;
+	/** @type {Namespace | null} */
+	let new_namespace = null;
+
+	// Check the elements within the fragment and look for consistent namespaces.
+	// If we have no namespaces or they are mixed, then fallback to existing namespace
+	for (const node of nodes) {
+		if (node.type !== 'RegularElement') continue;
+
+		if (node.metadata.mathml) {
+			new_namespace = new_namespace === null || new_namespace === 'mathml' ? 'mathml' : 'html';
+		} else if (node.metadata.svg) {
+			new_namespace = new_namespace === null || new_namespace === 'svg' ? 'svg' : 'html';
+		} else {
+			return 'html';
+		}
+	}
+
+	return new_namespace ?? namespace;
 }
 
 /**
  * Heuristic: Keep current namespace, unless we find a regular element,
  * in which case we always want html, or we only find svg nodes,
  * in which case we assume svg.
- * @param {Compiler.SvelteNode[]} nodes
- * @param {Compiler.Namespace | 'keep' | 'maybe_html'} namespace
+ * @param {AST.SvelteNode[]} nodes
+ * @param {Namespace | 'keep' | 'maybe_html'} namespace
  */
 function check_nodes_for_namespace(nodes, namespace) {
 	/**
-	 * @param {Compiler.SvelteElement | Compiler.RegularElement} node}
+	 * @param {AST.SvelteElement | AST.RegularElement} node}
 	 * @param {{stop: () => void}} context
 	 */
 	const RegularElement = (node, { stop }) => {
@@ -396,15 +416,11 @@ function check_nodes_for_namespace(nodes, namespace) {
 
 /**
  * Determines the namespace the children of this node are in.
- * @param {Compiler.RegularElement | Compiler.SvelteElement} node
- * @param {Compiler.Namespace} namespace
- * @returns {Compiler.Namespace}
+ * @param {AST.RegularElement | AST.SvelteElement} node
+ * @param {Namespace} namespace
+ * @returns {Namespace}
  */
 export function determine_namespace_for_children(node, namespace) {
-	if (namespace === 'foreign') {
-		return namespace;
-	}
-
 	if (node.name === 'foreignObject') {
 		return 'html';
 	}
@@ -417,30 +433,19 @@ export function determine_namespace_for_children(node, namespace) {
 }
 
 /**
- * @template {TransformState} T
+ * @param {'$inspect' | '$inspect().with'} rune
  * @param {CallExpression} node
- * @param {Context<any, T>} context
+ * @param {(node: AST.SvelteNode) => AST.SvelteNode} visit
  */
-export function transform_inspect_rune(node, context) {
-	const { state, visit } = context;
-	const as_fn = state.options.generate === 'client';
+export function get_inspect_args(rune, node, visit) {
+	const call =
+		rune === '$inspect'
+			? node
+			: /** @type {CallExpression} */ (/** @type {MemberExpression} */ (node.callee).object);
 
-	if (!dev) return b.unary('void', b.literal(0));
-
-	if (node.callee.type === 'MemberExpression') {
-		const raw_inspect_args = /** @type {CallExpression} */ (node.callee.object).arguments;
-		const inspect_args =
-			/** @type {Array<Expression>} */
-			(raw_inspect_args.map((arg) => visit(arg)));
-		const with_arg = /** @type {Expression} */ (visit(node.arguments[0]));
-
-		return b.call(
-			'$.inspect',
-			as_fn ? b.thunk(b.array(inspect_args)) : b.array(inspect_args),
-			with_arg
-		);
-	} else {
-		const arg = node.arguments.map((arg) => /** @type {Expression} */ (visit(arg)));
-		return b.call('$.inspect', as_fn ? b.thunk(b.array(arg)) : b.array(arg));
-	}
+	return {
+		args: call.arguments.map((arg) => /** @type {Expression} */ (visit(arg))),
+		inspector:
+			rune === '$inspect' ? 'console.log' : /** @type {Expression} */ (visit(node.arguments[0]))
+	};
 }

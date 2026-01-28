@@ -1,7 +1,7 @@
-<script context="module">
+<script module>
 	let foo;
 </script>
 
-<script context="module">
+<script module>
 	let bar;
 </script>

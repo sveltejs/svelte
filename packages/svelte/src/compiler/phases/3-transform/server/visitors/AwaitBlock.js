@@ -1,33 +1,37 @@
-/** @import { BlockStatement, Expression, Pattern } from 'estree' */
-/** @import { AwaitBlock } from '#compiler' */
+/** @import { BlockStatement, Expression, Pattern, Statement } from 'estree' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
-import * as b from '../../../../utils/builders.js';
-import { empty_comment } from './shared/utils.js';
+import * as b from '#compiler/builders';
+import { block_close, create_async_block } from './shared/utils.js';
 
 /**
- * @param {AwaitBlock} node
+ * @param {AST.AwaitBlock} node
  * @param {ComponentContext} context
  */
 export function AwaitBlock(node, context) {
-	context.state.template.push(
-		empty_comment,
-		b.stmt(
-			b.call(
-				'$.await',
-				/** @type {Expression} */ (context.visit(node.expression)),
-				b.thunk(
-					node.pending ? /** @type {BlockStatement} */ (context.visit(node.pending)) : b.block([])
-				),
-				b.arrow(
-					node.value ? [/** @type {Pattern} */ (context.visit(node.value))] : [],
-					node.then ? /** @type {BlockStatement} */ (context.visit(node.then)) : b.block([])
-				),
-				b.arrow(
-					node.error ? [/** @type {Pattern} */ (context.visit(node.error))] : [],
-					node.catch ? /** @type {BlockStatement} */ (context.visit(node.catch)) : b.block([])
-				)
+	/** @type {Statement} */
+	let statement = b.stmt(
+		b.call(
+			'$.await',
+			b.id('$$renderer'),
+			/** @type {Expression} */ (context.visit(node.expression)),
+			b.thunk(
+				node.pending ? /** @type {BlockStatement} */ (context.visit(node.pending)) : b.block([])
+			),
+			b.arrow(
+				node.value ? [/** @type {Pattern} */ (context.visit(node.value))] : [],
+				node.then ? /** @type {BlockStatement} */ (context.visit(node.then)) : b.block([])
 			)
-		),
-		empty_comment
+		)
 	);
+
+	if (node.metadata.expression.is_async()) {
+		statement = create_async_block(
+			b.block([statement]),
+			node.metadata.expression.blockers(),
+			node.metadata.expression.has_await
+		);
+	}
+
+	context.state.template.push(statement, block_close);
 }

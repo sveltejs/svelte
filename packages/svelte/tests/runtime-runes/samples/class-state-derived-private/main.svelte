@@ -2,14 +2,25 @@
 	class Counter {
 		count = $state(0);
 		#doubled = $derived(this.count * 2);
+		#tripled = $derived.by(() => this.count * this.by);
 
-		get embiggened() {
-			return this.#doubled;
+		constructor(by) {
+			this.by = by;
+		}
+
+		get embiggened1() {
+			const self = this;
+			return self.#doubled;
+		}
+
+		get embiggened2() {
+			return this.#tripled;
 		}
 	}
 
-	const counter = new Counter();
+	const counter = new Counter(3);
 </script>
 
 <button on:click={() => counter.count++}>{counter.count}</button>
-<p>doubled: {counter.embiggened}</p>
+<p>doubled: {counter.embiggened1}</p>
+<p>tripled: {counter.embiggened2}</p>

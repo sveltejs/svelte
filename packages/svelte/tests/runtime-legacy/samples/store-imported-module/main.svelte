@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	import foo from './foo.js';
 </script>
 

@@ -6,17 +6,29 @@ export default test({
 		return { values: [1, 2, 3], foo: 2 };
 	},
 
-	html: `
+	ssrHtml: `
 		<select>
-			<option value="1">1</option>
-			<option value="2">2</option>
-			<option value="3">3</option>
+			<option>1</option>
+			<option selected>2</option>
+			<option>3</option>
 		</select>
 
 		<p>foo: 2</p>
 	`,
 
-	test({ assert, component, target, window }) {
+	test({ assert, component, target, window, variant }) {
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+			<select>
+				<option>1</option>
+				<option ${variant === 'hydrate' ? 'selected ' : ''}>2</option>
+				<option>3</option>
+			</select>
+
+			<p>foo: 2</p>
+		`
+		);
 		const select = target.querySelector('select');
 		ok(select);
 		const options = [...target.querySelectorAll('option')];
@@ -35,9 +47,9 @@ export default test({
 			target.innerHTML,
 			`
 			<select>
-				<option value="1">1</option>
-				<option value="2">2</option>
-				<option value="3">3</option>
+				<option>1</option>
+				<option ${variant === 'hydrate' ? 'selected ' : ''}>2</option>
+				<option>3</option>
 			</select>
 
 			<p>foo: 3</p>

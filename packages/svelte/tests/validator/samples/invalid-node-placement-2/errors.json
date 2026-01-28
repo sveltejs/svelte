@@ -1,7 +1,7 @@
 [
 	{
 		"code": "node_invalid_placement",
-		"message": "`<div>` is invalid inside `<p>`",
+		"message": "`<div>` cannot be a descendant of `<p>`. The browser will 'repair' the HTML (by moving, removing, or inserting elements) which breaks Svelte's assumptions about the structure of your components.",
 		"start": {
 			"line": 4,
 			"column": 3

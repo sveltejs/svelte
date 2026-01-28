@@ -1,26 +1,82 @@
+/** @import { Batch } from '../../../reactivity/batch.js' */
 import { DEV } from 'esm-env';
 import { render_effect, teardown } from '../../../reactivity/effects.js';
 import { listen_to_event_and_reset_event } from './shared.js';
 import * as e from '../../../errors.js';
-import { get_proxied_value, is } from '../../../proxy.js';
+import { is } from '../../../proxy.js';
 import { queue_micro_task } from '../../task.js';
 import { hydrating } from '../../hydration.js';
+import { tick, untrack } from '../../../runtime.js';
+import { is_runes } from '../../../context.js';
+import { current_batch, previous_batch } from '../../../reactivity/batch.js';
 
 /**
  * @param {HTMLInputElement} input
- * @param {() => unknown} get_value
- * @param {(value: unknown) => void} update
+ * @param {() => unknown} get
+ * @param {(value: unknown) => void} set
  * @returns {void}
  */
-export function bind_value(input, get_value, update) {
-	listen_to_event_and_reset_event(input, 'input', () => {
+export function bind_value(input, get, set = get) {
+	var batches = new WeakSet();
+
+	listen_to_event_and_reset_event(input, 'input', async (is_reset) => {
 		if (DEV && input.type === 'checkbox') {
 			// TODO should this happen in prod too?
 			e.bind_invalid_checkbox_value();
 		}
 
-		update(is_numberlike_input(input) ? to_number(input.value) : input.value);
+		/** @type {any} */
+		var value = is_reset ? input.defaultValue : input.value;
+		value = is_numberlike_input(input) ? to_number(value) : value;
+		set(value);
+
+		if (current_batch !== null) {
+			batches.add(current_batch);
+		}
+
+		// Because `{#each ...}` blocks work by updating sources inside the flush,
+		// we need to wait a tick before checking to see if we should forcibly
+		// update the input and reset the selection state
+		await tick();
+
+		// Respect any validation in accessors
+		if (value !== (value = get())) {
+			var start = input.selectionStart;
+			var end = input.selectionEnd;
+			var length = input.value.length;
+
+			// the value is coerced on assignment
+			input.value = value ?? '';
+
+			// Restore selection
+			if (end !== null) {
+				var new_length = input.value.length;
+				// If cursor was at end and new input is longer, move cursor to new end
+				if (start === end && end === length && new_length > length) {
+					input.selectionStart = new_length;
+					input.selectionEnd = new_length;
+				} else {
+					input.selectionStart = start;
+					input.selectionEnd = Math.min(end, new_length);
+				}
+			}
+		}
 	});
+
+	if (
+		// If we are hydrating and the value has since changed,
+		// then use the updated value from the input instead.
+		(hydrating && input.defaultValue !== input.value) ||
+		// If defaultValue is set, then value == defaultValue
+		// TODO Svelte 6: remove input.value check and set to empty string?
+		(untrack(get) == null && input.value)
+	) {
+		set(is_numberlike_input(input) ? to_number(input.value) : input.value);
+
+		if (current_batch !== null) {
+			batches.add(current_batch);
+		}
+	}
 
 	render_effect(() => {
 		if (DEV && input.type === 'checkbox') {
@@ -28,13 +84,20 @@ export function bind_value(input, get_value, update) {
 			e.bind_invalid_checkbox_value();
 		}
 
-		var value = get_value();
+		var value = get();
 
-		// If we are hydrating and the value has since changed, then use the update value
-		// from the input instead.
-		if (hydrating && input.defaultValue !== input.value) {
-			update(input.value);
-			return;
+		if (input === document.activeElement) {
+			// we need both, because in non-async mode, render effects run before previous_batch is set
+			var batch = /** @type {Batch} */ (previous_batch ?? current_batch);
+
+			// Never rewrite the contents of a focused input. We can get here if, for example,
+			// an update is deferred because of async work depending on the input:
+			//
+			// <input bind:value={query}>
+			// <p>{await find(query)}</p>
+			if (batches.has(batch)) {
+				return;
+			}
 		}
 
 		if (is_numberlike_input(input) && value === to_number(input.value)) {
@@ -48,8 +111,12 @@ export function bind_value(input, get_value, update) {
 			return;
 		}
 
-		// @ts-expect-error the value is coerced on assignment
-		input.value = value ?? '';
+		// don't set the value of the input if it's the same to allow
+		// minlength to work properly
+		if (value !== input.value) {
+			// @ts-expect-error the value is coerced on assignment
+			input.value = value ?? '';
+		}
 	});
 }
 
@@ -60,11 +127,11 @@ const pending = new Set();
  * @param {HTMLInputElement[]} inputs
  * @param {null | [number]} group_index
  * @param {HTMLInputElement} input
- * @param {() => unknown} get_value
- * @param {(value: unknown) => void} update
+ * @param {() => unknown} get
+ * @param {(value: unknown) => void} set
  * @returns {void}
  */
-export function bind_group(inputs, group_index, input, get_value, update) {
+export function bind_group(inputs, group_index, input, get, set = get) {
 	var is_checkbox = input.getAttribute('type') === 'checkbox';
 	var binding_group = inputs;
 
@@ -91,14 +158,14 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 				value = get_binding_group_value(binding_group, value, input.checked);
 			}
 
-			update(value);
+			set(value);
 		},
 		// TODO better default value handling
-		() => update(is_checkbox ? [] : null)
+		() => set(is_checkbox ? [] : null)
 	);
 
 	render_effect(() => {
-		var value = get_value();
+		var value = get();
 
 		// If we are hydrating and the value has since changed, then use the update value
 		// from the input instead.
@@ -110,7 +177,7 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 		if (is_checkbox) {
 			value = value || [];
 			// @ts-ignore
-			input.checked = get_proxied_value(value).includes(get_proxied_value(input.__value));
+			input.checked = value.includes(input.__value);
 		} else {
 			// @ts-ignore
 			input.checked = is(input.__value, value);
@@ -147,29 +214,35 @@ export function bind_group(inputs, group_index, input, get_value, update) {
 				value = hydration_input?.__value;
 			}
 
-			update(value);
+			set(value);
 		}
 	});
 }
 
 /**
  * @param {HTMLInputElement} input
- * @param {() => unknown} get_value
- * @param {(value: unknown) => void} update
+ * @param {() => unknown} get
+ * @param {(value: unknown) => void} set
  * @returns {void}
  */
-export function bind_checked(input, get_value, update) {
-	listen_to_event_and_reset_event(input, 'change', () => {
-		var value = input.checked;
-		update(value);
+export function bind_checked(input, get, set = get) {
+	listen_to_event_and_reset_event(input, 'change', (is_reset) => {
+		var value = is_reset ? input.defaultChecked : input.checked;
+		set(value);
 	});
 
-	if (get_value() == undefined) {
-		update(false);
+	if (
+		// If we are hydrating and the value has since changed,
+		// then use the update value from the input instead.
+		(hydrating && input.defaultChecked !== input.checked) ||
+		// If defaultChecked is set, then checked == defaultChecked
+		untrack(get) == null
+	) {
+		set(input.checked);
 	}
 
 	render_effect(() => {
-		var value = get_value();
+		var value = get();
 		input.checked = Boolean(value);
 	});
 }
@@ -182,6 +255,7 @@ export function bind_checked(input, get_value, update) {
  * @returns {V[]}
  */
 function get_binding_group_value(group, __value, checked) {
+	/** @type {Set<V>} */
 	var value = new Set();
 
 	for (var i = 0; i < group.length; i += 1) {
@@ -215,15 +289,24 @@ function to_number(value) {
 
 /**
  * @param {HTMLInputElement} input
- * @param {() => FileList | null} get_value
- * @param {(value: FileList | null) => void} update
+ * @param {() => FileList | null} get
+ * @param {(value: FileList | null) => void} set
  */
-export function bind_files(input, get_value, update) {
+export function bind_files(input, get, set = get) {
 	listen_to_event_and_reset_event(input, 'change', () => {
-		update(input.files);
+		set(input.files);
 	});
 
+	if (
+		// If we are hydrating and the value has since changed,
+		// then use the updated value from the input instead.
+		hydrating &&
+		input.files
+	) {
+		set(input.files);
+	}
+
 	render_effect(() => {
-		input.files = get_value();
+		input.files = get();
 	});
 }

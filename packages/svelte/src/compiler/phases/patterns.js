@@ -21,3 +21,7 @@ export const regex_invalid_identifier_chars = /(^[^a-zA-Z_$]|[^a-zA-Z0-9_$])/g;
 export const regex_starts_with_vowel = /^[aeiou]/;
 export const regex_heading_tags = /^h[1-6]$/;
 export const regex_illegal_attribute_character = /(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/;
+export const regex_bidirectional_control_characters =
+	/[\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069]+/g;
+export const regex_js_prefix = /^\W*javascript:/i;
+export const regex_redundant_img_alt = /\b(image|picture|photo)\b/i;

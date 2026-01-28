@@ -10,4 +10,7 @@
 		console.log('bar');
 	}
 	$: $count = 1;
+	$: foo.x = count;
 </script>
+
+<button onclick={() => count++}>increment</button>

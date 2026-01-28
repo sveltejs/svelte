@@ -1,128 +1,263 @@
-/** @import { Expression, Identifier } from 'estree' */
-/** @import { Attribute, ClassDirective, ExpressionMetadata, Namespace, RegularElement, StyleDirective, SvelteElement } from '#compiler' */
+/** @import { Expression, Identifier, ObjectExpression } from 'estree' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types' */
+import { escape_html } from '../../../../../../escaping.js';
 import { normalize_attribute } from '../../../../../../utils.js';
-import * as b from '../../../../../utils/builders.js';
-import { build_getter } from '../../utils.js';
-import { build_template_literal, build_update } from './utils.js';
+import { is_ignored } from '../../../../../state.js';
+import { is_event_attribute } from '../../../../../utils/ast.js';
+import * as b from '#compiler/builders';
+import { build_class_directives_object, build_style_directives_object } from '../RegularElement.js';
+import { build_expression, build_template_chunk, Memoizer } from './utils.js';
+import { ExpressionMetadata } from '../../../../nodes.js';
 
 /**
- * Serializes each style directive into something like `$.set_style(element, style_property, value)`
- * and adds it either to init or update, depending on whether or not the value or the attributes are dynamic.
- * @param {StyleDirective[]} style_directives
- * @param {Identifier} element_id
+ * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
+ * @param {AST.ClassDirective[]} class_directives
+ * @param {AST.StyleDirective[]} style_directives
  * @param {ComponentContext} context
- * @param {boolean} is_attributes_reactive
- * @param {boolean} force_check Should be `true` if we can't rely on our cached value, because for example there's also a `style` attribute
+ * @param {AST.RegularElement | AST.SvelteElement} element
+ * @param {Identifier} element_id
+ * @param {boolean} [should_remove_defaults]
  */
-export function build_style_directives(
+export function build_attribute_effect(
+	attributes,
+	class_directives,
 	style_directives,
-	element_id,
 	context,
-	is_attributes_reactive,
-	force_check
+	element,
+	element_id,
+	should_remove_defaults = false
 ) {
-	const state = context.state;
+	/** @type {ObjectExpression['properties']} */
+	const values = [];
 
-	for (const directive of style_directives) {
-		let value =
-			directive.value === true
-				? build_getter({ name: directive.name, type: 'Identifier' }, context.state)
-				: build_attribute_value(directive.value, context).value;
+	const memoizer = new Memoizer();
 
-		const update = b.stmt(
-			b.call(
-				'$.set_style',
-				element_id,
-				b.literal(directive.name),
-				value,
-				/** @type {Expression} */ (directive.modifiers.includes('important') ? b.true : undefined),
-				force_check ? b.true : undefined
+	for (const attribute of attributes) {
+		if (attribute.type === 'Attribute') {
+			const { value } = build_attribute_value(attribute.value, context, (value, metadata) =>
+				memoizer.add(value, metadata)
+			);
+
+			if (
+				is_event_attribute(attribute) &&
+				(value.type === 'ArrowFunctionExpression' || value.type === 'FunctionExpression')
+			) {
+				// Give the event handler a stable ID so it isn't removed and readded on every update
+				const id = context.state.scope.generate('event_handler');
+				context.state.init.push(b.var(id, value));
+				values.push(b.init(attribute.name, b.id(id)));
+			} else {
+				values.push(b.init(attribute.name, value));
+			}
+		} else {
+			let value = /** @type {Expression} */ (context.visit(attribute));
+
+			value = memoizer.add(value, attribute.metadata.expression);
+
+			values.push(b.spread(value));
+		}
+	}
+
+	if (class_directives.length) {
+		values.push(
+			b.prop(
+				'init',
+				b.array([b.id('$.CLASS')]),
+				build_class_directives_object(class_directives, context, memoizer)
 			)
 		);
-
-		const { has_state, has_call } = directive.metadata.expression;
-
-		if (!is_attributes_reactive && has_call) {
-			state.init.push(build_update(update));
-		} else if (is_attributes_reactive || has_state || has_call) {
-			state.update.push(update);
-		} else {
-			state.init.push(update);
-		}
 	}
+
+	if (style_directives.length) {
+		values.push(
+			b.prop(
+				'init',
+				b.array([b.id('$.STYLE')]),
+				build_style_directives_object(style_directives, context, memoizer)
+			)
+		);
+	}
+
+	const ids = memoizer.apply();
+
+	context.state.init.push(
+		b.stmt(
+			b.call(
+				'$.attribute_effect',
+				element_id,
+				b.arrow(ids, b.object(values)),
+				memoizer.sync_values(),
+				memoizer.async_values(),
+				memoizer.blockers(),
+				element.metadata.scoped &&
+					context.state.analysis.css.hash !== '' &&
+					b.literal(context.state.analysis.css.hash),
+				should_remove_defaults && b.true,
+				is_ignored(element, 'hydration_attribute_changed') && b.true
+			)
+		)
+	);
 }
 
 /**
- * Serializes each class directive into something like `$.class_toogle(element, class_name, value)`
- * and adds it either to init or update, depending on whether or not the value or the attributes are dynamic.
- * @param {ClassDirective[]} class_directives
- * @param {Identifier} element_id
+ * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
- * @param {boolean} is_attributes_reactive
+ * @param {(value: Expression, metadata: ExpressionMetadata) => Expression} memoize
+ * @returns {{ value: Expression, has_state: boolean }}
  */
-export function build_class_directives(
-	class_directives,
-	element_id,
-	context,
-	is_attributes_reactive
-) {
-	const state = context.state;
-	for (const directive of class_directives) {
-		const value = /** @type {Expression} */ (context.visit(directive.expression));
-		const update = b.stmt(b.call('$.toggle_class', element_id, b.literal(directive.name), value));
-
-		const { has_state, has_call } = directive.metadata.expression;
-
-		if (!is_attributes_reactive && has_call) {
-			state.init.push(build_update(update));
-		} else if (is_attributes_reactive || has_state || has_call) {
-			state.update.push(update);
-		} else {
-			state.init.push(update);
-		}
-	}
-}
-
-/**
- * @param {Attribute['value']} value
- * @param {ComponentContext} context
- */
-export function build_attribute_value(value, context) {
+export function build_attribute_value(value, context, memoize = (value) => value) {
 	if (value === true) {
-		return { has_state: false, has_call: false, value: b.literal(true) };
+		return { value: b.true, has_state: false };
 	}
 
 	if (!Array.isArray(value) || value.length === 1) {
 		const chunk = Array.isArray(value) ? value[0] : value;
 
 		if (chunk.type === 'Text') {
-			return { has_state: false, has_call: false, value: b.literal(chunk.data) };
+			return { value: b.literal(chunk.data), has_state: false };
 		}
 
+		let expression = build_expression(context, chunk.expression, chunk.metadata.expression);
+
 		return {
-			has_state: chunk.metadata.expression.has_call,
-			has_call: chunk.metadata.expression.has_call,
-			value: /** @type {Expression} */ (context.visit(chunk.expression))
+			value: memoize(expression, chunk.metadata.expression),
+			has_state: chunk.metadata.expression.has_state || chunk.metadata.expression.is_async()
 		};
 	}
 
-	return build_template_literal(value, context.visit, context.state);
+	return build_template_chunk(value, context, context.state, memoize);
 }
 
 /**
- * @param {RegularElement | SvelteElement} element
- * @param {Attribute} attribute
- * @param {{ state: { metadata: { namespace: Namespace }}}} context
+ * @param {AST.RegularElement | AST.SvelteElement} element
+ * @param {AST.Attribute} attribute
  */
-export function get_attribute_name(element, attribute, context) {
-	if (
-		!element.metadata.svg &&
-		!element.metadata.mathml &&
-		context.state.metadata.namespace !== 'foreign'
-	) {
+export function get_attribute_name(element, attribute) {
+	if (!element.metadata.svg && !element.metadata.mathml) {
 		return normalize_attribute(attribute.name);
 	}
 
 	return attribute.name;
+}
+
+/**
+ * @param {AST.RegularElement | AST.SvelteElement} element
+ * @param {Identifier} node_id
+ * @param {AST.Attribute} attribute
+ * @param {AST.ClassDirective[]} class_directives
+ * @param {ComponentContext} context
+ * @param {boolean} is_html
+ */
+export function build_set_class(element, node_id, attribute, class_directives, context, is_html) {
+	let { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) => {
+		if (attribute.metadata.needs_clsx) {
+			value = b.call('$.clsx', value);
+		}
+
+		return context.state.memoizer.add(value, metadata);
+	});
+
+	/** @type {Identifier | undefined} */
+	let previous_id;
+
+	/** @type {ObjectExpression | Identifier | undefined} */
+	let prev;
+
+	/** @type {Expression | undefined} */
+	let next;
+
+	if (class_directives.length) {
+		next = build_class_directives_object(class_directives, context);
+		has_state ||= class_directives.some(
+			(d) => d.metadata.expression.has_state || d.metadata.expression.is_async()
+		);
+
+		if (has_state) {
+			previous_id = b.id(context.state.scope.generate('classes'));
+			context.state.init.push(b.declaration('let', [b.declarator(previous_id)]));
+			prev = previous_id;
+		} else {
+			prev = b.object([]);
+		}
+	}
+
+	/** @type {Expression | undefined} */
+	let css_hash;
+
+	if (element.metadata.scoped && context.state.analysis.css.hash) {
+		if (value.type === 'Literal' && (value.value === '' || value.value === null)) {
+			value = b.literal(context.state.analysis.css.hash);
+		} else if (value.type === 'Literal' && typeof value.value === 'string') {
+			value = b.literal(escape_html(value.value, true) + ' ' + context.state.analysis.css.hash);
+		} else {
+			css_hash = b.literal(context.state.analysis.css.hash);
+		}
+	}
+
+	if (!css_hash && next) {
+		css_hash = b.null;
+	}
+
+	/** @type {Expression} */
+	let set_class = b.call(
+		'$.set_class',
+		node_id,
+		is_html ? b.literal(1) : b.literal(0),
+		value,
+		css_hash,
+		prev,
+		next
+	);
+
+	if (previous_id) {
+		set_class = b.assignment('=', previous_id, set_class);
+	}
+
+	(has_state ? context.state.update : context.state.init).push(b.stmt(set_class));
+}
+
+/**
+ * @param {Identifier} node_id
+ * @param {AST.Attribute} attribute
+ * @param {AST.StyleDirective[]} style_directives
+ * @param {ComponentContext} context
+ */
+export function build_set_style(node_id, attribute, style_directives, context) {
+	let { value, has_state } = build_attribute_value(attribute.value, context, (value, metadata) =>
+		context.state.memoizer.add(value, metadata)
+	);
+
+	/** @type {Identifier | undefined} */
+	let previous_id;
+
+	/** @type {ObjectExpression | Identifier | undefined} */
+	let prev;
+
+	/** @type {Expression | undefined} */
+	let next;
+
+	if (style_directives.length) {
+		next = build_style_directives_object(style_directives, context);
+		has_state ||= style_directives.some(
+			(d) => d.metadata.expression.has_state || d.metadata.expression.is_async()
+		);
+
+		if (has_state) {
+			previous_id = b.id(context.state.scope.generate('styles'));
+			context.state.init.push(b.declaration('let', [b.declarator(previous_id)]));
+			prev = previous_id;
+		} else {
+			prev = b.object([]);
+		}
+	}
+
+	/** @type {Expression} */
+	let set_style = b.call('$.set_style', node_id, value, prev, next);
+
+	if (previous_id) {
+		set_style = b.assignment('=', previous_id, set_style);
+	}
+
+	(has_state ? context.state.update : context.state.init).push(b.stmt(set_style));
 }

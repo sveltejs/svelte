@@ -1,4 +1,4 @@
-/** @import { RegularElement } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { Context } from '../types' */
 import { is_mathml, is_svg, is_void } from '../../../../utils.js';
 import {
@@ -7,28 +7,29 @@ import {
 } from '../../../../html-tree-validation.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
-import { create_attribute } from '../../nodes.js';
+import {
+	create_attribute,
+	is_custom_element_node,
+	is_customizable_select_element
+} from '../../nodes.js';
 import { regex_starts_with_newline } from '../../patterns.js';
-import { check_element } from './shared/a11y.js';
+import { check_element } from './shared/a11y/index.js';
 import { validate_element } from './shared/element.js';
+import { mark_subtree_dynamic } from './shared/fragment.js';
 
 /**
- * @param {RegularElement} node
+ * @param {AST.RegularElement} node
  * @param {Context} context
  */
 export function RegularElement(node, context) {
 	validate_element(node, context);
+	check_element(node, context);
 
-	check_element(node, context.state);
-
+	node.metadata.path = [...context.path];
 	context.state.analysis.elements.push(node);
 
 	// Special case: Move the children of <textarea> into a value attribute if they are dynamic
-	if (
-		context.state.options.namespace !== 'foreign' &&
-		node.name === 'textarea' &&
-		node.fragment.nodes.length > 0
-	) {
+	if (node.name === 'textarea' && node.fragment.nodes.length > 0) {
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute' && attribute.name === 'value') {
 				e.textarea_invalid_content(node);
@@ -51,8 +52,9 @@ export function RegularElement(node, context) {
 			node.attributes.push(
 				create_attribute(
 					'value',
-					/** @type {import('#compiler').Text} */ (node.fragment.nodes.at(0)).start,
-					/** @type {import('#compiler').Text} */ (node.fragment.nodes.at(-1)).end,
+					null,
+					-1,
+					-1,
 					// @ts-ignore
 					node.fragment.nodes
 				)
@@ -65,7 +67,6 @@ export function RegularElement(node, context) {
 	// Special case: single expression tag child of option element -> add "fake" attribute
 	// to ensure that value types are the same (else for example numbers would be strings)
 	if (
-		context.state.options.namespace !== 'foreign' &&
 		node.name === 'option' &&
 		node.fragment.nodes?.length === 1 &&
 		node.fragment.nodes[0].type === 'ExpressionTag' &&
@@ -74,7 +75,16 @@ export function RegularElement(node, context) {
 		)
 	) {
 		const child = node.fragment.nodes[0];
-		node.attributes.push(create_attribute('value', child.start, child.end, [child]));
+		node.metadata.synthetic_value_node = child;
+	}
+
+	// Special case: <select>, <option> or <optgroup> with rich content needs special hydration handling
+	// We mark the subtree as dynamic so parent elements properly include the child init code
+	if (is_customizable_select_element(node) || node.name === 'selectedcontent') {
+		// Mark the element's own fragment as dynamic so it's not treated as static
+		node.fragment.metadata.dynamic = true;
+		// Also mark ancestor fragments so parents properly include the child init code
+		mark_subtree_dynamic(context.path);
 	}
 
 	const binding = context.state.scope.get(node.name);
@@ -90,9 +100,31 @@ export function RegularElement(node, context) {
 		(attribute) => attribute.type === 'SpreadAttribute'
 	);
 
-	if (context.state.options.namespace !== 'foreign') {
-		node.metadata.svg = is_svg(node.name);
-		node.metadata.mathml = is_mathml(node.name);
+	const is_svg_element = () => {
+		if (is_svg(node.name)) {
+			return true;
+		}
+
+		if (node.name === 'a' || node.name === 'title') {
+			let i = context.path.length;
+
+			while (i--) {
+				const ancestor = context.path[i];
+				if (ancestor.type === 'RegularElement') {
+					return ancestor.metadata.svg;
+				}
+			}
+		}
+
+		return false;
+	};
+
+	node.metadata.svg = is_svg_element();
+	node.metadata.mathml = is_mathml(node.name);
+
+	if (is_custom_element_node(node) && node.attributes.length > 0) {
+		// we're setting all attributes on custom elements through properties
+		mark_subtree_dynamic(context.path);
 	}
 
 	if (context.state.parent_element) {
@@ -115,15 +147,12 @@ export function RegularElement(node, context) {
 
 			if (!past_parent) {
 				if (ancestor.type === 'RegularElement' && ancestor.name === context.state.parent_element) {
-					if (!is_tag_valid_with_parent(node.name, context.state.parent_element)) {
+					const message = is_tag_valid_with_parent(node.name, context.state.parent_element);
+					if (message) {
 						if (only_warn) {
-							w.node_invalid_placement_ssr(
-								node,
-								`\`<${node.name}>\``,
-								context.state.parent_element
-							);
+							w.node_invalid_placement_ssr(node, message);
 						} else {
-							e.node_invalid_placement(node, `\`<${node.name}>\``, context.state.parent_element);
+							e.node_invalid_placement(node, message);
 						}
 					}
 
@@ -132,11 +161,12 @@ export function RegularElement(node, context) {
 			} else if (ancestor.type === 'RegularElement') {
 				ancestors.push(ancestor.name);
 
-				if (!is_tag_valid_with_ancestor(node.name, ancestors)) {
+				const message = is_tag_valid_with_ancestor(node.name, ancestors);
+				if (message) {
 					if (only_warn) {
-						w.node_invalid_placement_ssr(node, `\`<${node.name}>\``, ancestor.name);
+						w.node_invalid_placement_ssr(node, message);
 					} else {
-						e.node_invalid_placement(node, `\`<${node.name}>\``, ancestor.name);
+						e.node_invalid_placement(node, message);
 					}
 				}
 			} else if (
@@ -156,12 +186,25 @@ export function RegularElement(node, context) {
 
 	if (
 		context.state.analysis.source[node.end - 2] === '/' &&
-		context.state.options.namespace !== 'foreign' &&
 		!is_void(node_name) &&
-		!is_svg(node_name)
+		!is_svg(node_name) &&
+		!is_mathml(node_name)
 	) {
 		w.element_invalid_self_closing_tag(node, node.name);
 	}
 
 	context.next({ ...context.state, parent_element: node.name });
+
+	// Special case: <a> tags are valid in both the SVG and HTML namespace.
+	// If there's no parent, look downwards to see if it's the parent of a SVG or HTML element.
+	if (node.name === 'a' && !context.state.parent_element) {
+		for (const child of node.fragment.nodes) {
+			if (child.type === 'RegularElement') {
+				if (child.metadata.svg && child.name !== 'svg') {
+					node.metadata.svg = true;
+					break;
+				}
+			}
+		}
+	}
 }

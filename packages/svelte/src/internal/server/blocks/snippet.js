@@ -1,5 +1,5 @@
 /** @import { Snippet } from 'svelte' */
-/** @import { Payload } from '#server' */
+/** @import { Renderer } from '../renderer' */
 /** @import { Getters } from '#shared' */
 
 /**
@@ -7,16 +7,18 @@
  * @template {unknown[]} Params
  * @param {(...params: Getters<Params>) => {
  *   render: () => string
- *   setup?: (element: Element) => void
+ *   setup?: (element: Element) => void | (() => void)
  * }} fn
  * @returns {Snippet<Params>}
  */
 export function createRawSnippet(fn) {
 	// @ts-expect-error the types are a lie
-	return (/** @type {Payload} */ payload, /** @type {Params} */ ...args) => {
+	return (/** @type {Renderer} */ renderer, /** @type {Params} */ ...args) => {
 		var getters = /** @type {Getters<Params>} */ (args.map((value) => () => value));
-		payload.out += fn(...getters)
-			.render()
-			.trim();
+		renderer.push(
+			fn(...getters)
+				.render()
+				.trim()
+		);
 	};
 }

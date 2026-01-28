@@ -1,26 +1,74 @@
 [
 	{
 		"code": "state_referenced_locally",
-		"message": "State referenced in its own scope will never update. Did you mean to reference it inside a closure?",
+		"message": "This reference only captures the initial value of `count`. Did you mean to reference it inside a derived instead?",
 		"start": {
-			"column": 13,
-			"line": 7
+			"column": 22,
+			"line": 5
 		},
 		"end": {
-			"column": 18,
-			"line": 7
+			"column": 27,
+			"line": 5
 		}
 	},
 	{
 		"code": "state_referenced_locally",
-		"message": "State referenced in its own scope will never update. Did you mean to reference it inside a closure?",
+		"message": "This reference only captures the initial value of `count`. Did you mean to reference it inside a closure instead?",
 		"start": {
 			"column": 13,
 			"line": 8
 		},
 		"end": {
-			"column": 20,
+			"column": 18,
 			"line": 8
+		}
+	},
+	{
+		"code": "state_referenced_locally",
+		"message": "This reference only captures the initial value of `doubled`. Did you mean to reference it inside a closure instead?",
+		"start": {
+			"column": 13,
+			"line": 9
+		},
+		"end": {
+			"column": 20,
+			"line": 9
+		}
+	},
+	{
+		"code": "state_referenced_locally",
+		"end": {
+			"column": 29,
+			"line": 15
+		},
+		"message": "This reference only captures the initial value of `prop`. Did you mean to reference it inside a closure instead?",
+		"start": {
+			"column": 25,
+			"line": 15
+		}
+	},
+	{
+		"code": "state_referenced_locally",
+		"end": {
+			"column": 17,
+			"line": 17
+		},
+		"message": "This reference only captures the initial value of `prop`. Did you mean to reference it inside a closure instead?",
+		"start": {
+			"column": 13,
+			"line": 17
+		}
+	},
+	{
+		"code": "state_referenced_locally",
+		"end": {
+			"column": 25,
+			"line": 18
+		},
+		"message": "This reference only captures the initial value of `prop_derived`. Did you mean to reference it inside a closure instead?",
+		"start": {
+			"column": 13,
+			"line": 18
 		}
 	}
 ]

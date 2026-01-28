@@ -1,16 +1,15 @@
-import * as $ from "svelte/internal/server";
+import * as $ from 'svelte/internal/server';
 
-export default function Props_identifier($$payload, $$props) {
-	$.push();
+export default function Props_identifier($$renderer, $$props) {
+	$$renderer.component(($$renderer) => {
+		let { $$slots, $$events, ...props } = $$props;
 
-	let props = $$props;
-
-	props.a;
-	props[a];
-	props.a.b;
-	props.a.b = true;
-	props.a = true;
-	props[a] = true;
-	props;
-	$.pop();
+		props.a;
+		props[a];
+		props.a.b;
+		props.a.b = true;
+		props.a = true;
+		props[a] = true;
+		props;
+	});
 }

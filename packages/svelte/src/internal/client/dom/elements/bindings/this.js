@@ -1,4 +1,4 @@
-import { STATE_SYMBOL } from '../../../constants.js';
+import { STATE_SYMBOL } from '#client/constants';
 import { effect, render_effect } from '../../../reactivity/effects.js';
 import { untrack } from '../../../runtime.js';
 import { queue_micro_task } from '../../task.js';
@@ -9,9 +9,9 @@ import { queue_micro_task } from '../../task.js';
  * @returns {boolean}
  */
 function is_bound_this(bound_value, element_or_component) {
-	// Find the original target if the value is proxied.
-	var proxy_target = bound_value && bound_value[STATE_SYMBOL]?.t;
-	return bound_value === element_or_component || proxy_target === element_or_component;
+	return (
+		bound_value === element_or_component || bound_value?.[STATE_SYMBOL] === element_or_component
+	);
 }
 
 /**
@@ -38,7 +38,7 @@ export function bind_this(element_or_component = {}, update, get_value, get_part
 			untrack(() => {
 				if (element_or_component !== get_value(...parts)) {
 					update(element_or_component, ...parts);
-					// If this is an effect rerun (cause: each block context changes), then nullfiy the binding at
+					// If this is an effect rerun (cause: each block context changes), then nullify the binding at
 					// the previous position if it isn't already taken over by a different effect.
 					if (old_parts && is_bound_this(get_value(...old_parts), element_or_component)) {
 						update(null, ...old_parts);

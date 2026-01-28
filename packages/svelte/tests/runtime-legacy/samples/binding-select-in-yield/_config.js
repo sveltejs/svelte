@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -7,8 +8,9 @@ export default test({
 		return { letter: 'b' };
 	},
 
-	async test({ assert, component, target, window }) {
-		await component.modal.toggle();
+	test({ assert, component, target, window }) {
+		component.modal.toggle();
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -28,7 +30,8 @@ export default test({
 		const change = new window.MouseEvent('change');
 
 		select.options[2].selected = true;
-		await select.dispatchEvent(change);
+		select.dispatchEvent(change);
+		flushSync();
 		assert.equal(component.letter, 'c');
 
 		assert.deepEqual(
@@ -49,9 +52,9 @@ export default test({
 		`
 		);
 
-		await component.modal.toggle();
-		await component.modal.toggle();
-		await Promise.resolve();
+		component.modal.toggle();
+		component.modal.toggle();
+		flushSync();
 
 		select = target.querySelector('select');
 		ok(select);

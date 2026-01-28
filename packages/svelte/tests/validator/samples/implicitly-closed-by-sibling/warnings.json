@@ -1,0 +1,26 @@
+[
+	{
+		"code": "element_implicitly_closed",
+		"message": "This element is implicitly closed by the following `<p>`, which can cause an unexpected DOM structure. Add an explicit `</p>` to avoid surprises.",
+		"start": {
+			"line": 2,
+			"column": 1
+		},
+		"end": {
+			"line": 2,
+			"column": 18
+		}
+	},
+	{
+		"code": "element_implicitly_closed",
+		"message": "This element is implicitly closed by the following `<p>`, which can cause an unexpected DOM structure. Add an explicit `</p>` to avoid surprises.",
+		"start": {
+			"line": 8,
+			"column": 1
+		},
+		"end": {
+			"line": 8,
+			"column": 18
+		}
+	}
+]

@@ -3,38 +3,36 @@ import type {
 	Statement,
 	LabeledStatement,
 	Identifier,
-	PrivateIdentifier,
 	Expression,
-	AssignmentExpression
+	AssignmentExpression,
+	UpdateExpression,
+	VariableDeclaration
 } from 'estree';
-import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
+import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
 import type { ComponentAnalysis } from '../../types.js';
-import type { SourceLocation } from '#shared';
+import type { Template } from './transform-template/template.js';
+import type { Memoizer } from './visitors/shared/utils.js';
 
 export interface ClientTransformState extends TransformState {
-	readonly private_state: Map<string, StateField>;
-	readonly public_state: Map<string, StateField>;
-
 	/**
 	 * `true` if the current lexical scope belongs to a class constructor. this allows
 	 * us to rewrite `this.foo` as `this.#foo.value`
 	 */
 	readonly in_constructor: boolean;
 
-	/** The $: calls, which will be ordered in the end */
-	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
-	/**
-	 * A map of `[name, node]` pairs, where `Identifier` nodes matching `name`
-	 * will be replaced with `node` (e.g. `x` -> `$.get(x)`)
-	 */
-	readonly getters: Record<string, Expression | ((id: Identifier) => Expression)>;
-	/**
-	 * Counterpart to `getters`
-	 */
-	readonly setters: Record<
+	readonly transform: Record<
 		string,
-		(assignment: AssignmentExpression, context: Context) => Expression
+		{
+			/** turn `foo` into e.g. `$.get(foo)` */
+			read: (id: Identifier) => Expression;
+			/** turn `foo = bar` into e.g. `$.set(foo, bar)` */
+			assign?: (node: Identifier, value: Expression, proxy?: boolean) => Expression;
+			/** turn `foo.bar = baz` into e.g. `$.mutate(foo, $.get(foo).bar = baz);` */
+			mutate?: (node: Identifier, mutation: AssignmentExpression | UpdateExpression) => Expression;
+			/** turn `foo++` into e.g. `$.update(foo)` */
+			update?: (node: UpdateExpression) => Expression;
+		}
 	>;
 }
 
@@ -43,57 +41,58 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly options: ValidatedCompileOptions;
 	readonly hoisted: Array<Statement | ModuleDeclaration>;
 	readonly events: Set<string>;
-	readonly is_instance: boolean;
+	readonly store_to_invalidate?: string;
 
-	/** Stuff that happens before the render effect(s) */
-	readonly before_init: Statement[];
 	/** Stuff that happens before the render effect(s) */
 	readonly init: Statement[];
 	/** Stuff that happens inside the render effect */
 	readonly update: Statement[];
 	/** Stuff that happens after the render effect (control blocks, dynamic elements, bindings, actions, etc) */
 	readonly after_update: Statement[];
+	/** Transformed `{#snippets }` declarations */
+	readonly snippets: Statement[];
+	/** Transformed `{@const }` declarations */
+	readonly consts: Statement[];
+	/** Transformed async `{@const }` declarations (if any) and those coming after them */
+	async_consts?: {
+		id: Identifier;
+		thunks: Expression[];
+	};
+	/** Transformed `let:` directives */
+	readonly let_directives: Statement[];
+	/** Memoized expressions */
+	readonly memoizer: Memoizer;
 	/** The HTML template string */
-	readonly template: string[];
-	readonly locations: SourceLocation[];
+	readonly template: Template;
 	readonly metadata: {
 		namespace: Namespace;
 		bound_contenteditable: boolean;
-		/**
-		 * Stuff that is set within the children of one `Fragment` visitor that is relevant
-		 * to said fragment. Shouldn't be destructured or otherwise spread unless inside the
-		 * `Fragment` visitor to keep the object reference intact (it's also nested
-		 * within `metadata` for this reason).
-		 */
-		context: {
-			/** `true` if the HTML template needs to be instantiated with `importNode` */
-			template_needs_import_node: boolean;
-			/**
-			 * `true` if HTML template contains a `<script>` tag. In this case we need to invoke a special
-			 * template instantiation function (see `create_fragment_with_script_from_html` for more info)
-			 */
-			template_contains_script_tag: boolean;
-		};
 	};
 	readonly preserve_whitespace: boolean;
 
 	/** The anchor node for the current context */
 	readonly node: Identifier;
+
+	/** Imports that should be re-evaluated in legacy mode following a mutation */
+	readonly legacy_reactive_imports: Statement[];
+
+	/** The $: calls, which will be ordered in the end */
+	readonly legacy_reactive_statements: Map<LabeledStatement, Statement>;
+
+	/** Snippets hoisted to the instance */
+	readonly instance_level_snippets: VariableDeclaration[];
+	/** Snippets hoisted to the module */
+	readonly module_level_snippets: VariableDeclaration[];
 }
 
-export interface StateField {
-	kind: 'state' | 'frozen_state' | 'derived' | 'derived_by';
-	id: PrivateIdentifier;
-}
-
-export type Context = import('zimmerframe').Context<SvelteNode, ClientTransformState>;
-export type Visitors = import('zimmerframe').Visitors<SvelteNode, any>;
+export type Context = import('zimmerframe').Context<AST.SvelteNode, ClientTransformState>;
+export type Visitors = import('zimmerframe').Visitors<AST.SvelteNode, any>;
 
 export type ComponentContext = import('zimmerframe').Context<
-	SvelteNode,
+	AST.SvelteNode,
 	ComponentClientTransformState
 >;
 export type ComponentVisitors = import('zimmerframe').Visitors<
-	SvelteNode,
+	AST.SvelteNode,
 	ComponentClientTransformState
 >;

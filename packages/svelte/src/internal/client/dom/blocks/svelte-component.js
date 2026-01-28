@@ -1,6 +1,8 @@
-/** @import { TemplateNode, Dom, Effect } from '#client' */
-import { block, branch, pause_effect } from '../../reactivity/effects.js';
-import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
+/** @import { TemplateNode, Dom } from '#client' */
+import { EFFECT_TRANSPARENT } from '#client/constants';
+import { block } from '../../reactivity/effects.js';
+import { hydrate_next, hydrating } from '../hydration.js';
+import { BranchManager } from './branches.js';
 
 /**
  * @template P
@@ -15,28 +17,10 @@ export function component(node, get_component, render_fn) {
 		hydrate_next();
 	}
 
-	var anchor = node;
-
-	/** @type {C} */
-	var component;
-
-	/** @type {Effect | null} */
-	var effect;
+	var branches = new BranchManager(node);
 
 	block(() => {
-		if (component === (component = get_component())) return;
-
-		if (effect) {
-			pause_effect(effect);
-			effect = null;
-		}
-
-		if (component) {
-			effect = branch(() => render_fn(anchor, component));
-		}
-	});
-
-	if (hydrating) {
-		anchor = hydrate_node;
-	}
+		var component = get_component() ?? null;
+		branches.ensure(component, component && ((target) => render_fn(target, component)));
+	}, EFFECT_TRANSPARENT);
 }

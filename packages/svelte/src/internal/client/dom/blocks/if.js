@@ -1,95 +1,70 @@
-/** @import { Effect, TemplateNode } from '#client' */
-import { EFFECT_TRANSPARENT } from '../../constants.js';
+/** @import { TemplateNode } from '#client' */
+import { EFFECT_TRANSPARENT } from '#client/constants';
 import {
 	hydrate_next,
-	hydrate_node,
 	hydrating,
-	remove_nodes,
+	read_hydration_instruction,
+	skip_nodes,
 	set_hydrate_node,
 	set_hydrating
 } from '../hydration.js';
-import { block, branch, pause_effect, resume_effect } from '../../reactivity/effects.js';
+import { block } from '../../reactivity/effects.js';
 import { HYDRATION_START_ELSE } from '../../../../constants.js';
+import { BranchManager } from './branches.js';
+
+// TODO reinstate https://github.com/sveltejs/svelte/pull/15250
 
 /**
  * @param {TemplateNode} node
- * @param {() => boolean} get_condition
- * @param {(anchor: Node) => void} consequent_fn
- * @param {null | ((anchor: Node) => void)} [alternate_fn]
+ * @param {(branch: (fn: (anchor: Node) => void, flag?: boolean) => void) => void} fn
  * @param {boolean} [elseif] True if this is an `{:else if ...}` block rather than an `{#if ...}`, as that affects which transitions are considered 'local'
  * @returns {void}
  */
-export function if_block(node, get_condition, consequent_fn, alternate_fn = null, elseif = false) {
+export function if_block(node, fn, elseif = false) {
 	if (hydrating) {
 		hydrate_next();
 	}
 
-	var anchor = node;
-
-	/** @type {Effect | null} */
-	var consequent_effect = null;
-
-	/** @type {Effect | null} */
-	var alternate_effect = null;
-
-	/** @type {boolean | null} */
-	var condition = null;
-
+	var branches = new BranchManager(node);
 	var flags = elseif ? EFFECT_TRANSPARENT : 0;
 
-	block(() => {
-		if (condition === (condition = !!get_condition())) return;
-
-		/** Whether or not there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
-		let mismatch = false;
-
+	/**
+	 * @param {boolean} condition,
+	 * @param {null | ((anchor: Node) => void)} fn
+	 */
+	function update_branch(condition, fn) {
 		if (hydrating) {
-			const is_else = /** @type {Comment} */ (anchor).data === HYDRATION_START_ELSE;
+			const is_else = read_hydration_instruction(node) === HYDRATION_START_ELSE;
 
 			if (condition === is_else) {
 				// Hydration mismatch: remove everything inside the anchor and start fresh.
 				// This could happen with `{#if browser}...{/if}`, for example
-				anchor = remove_nodes();
+				var anchor = skip_nodes();
 
 				set_hydrate_node(anchor);
+				branches.anchor = anchor;
+
 				set_hydrating(false);
-				mismatch = true;
+				branches.ensure(condition, fn);
+				set_hydrating(true);
+
+				return;
 			}
 		}
 
-		if (condition) {
-			if (consequent_effect) {
-				resume_effect(consequent_effect);
-			} else {
-				consequent_effect = branch(() => consequent_fn(anchor));
-			}
+		branches.ensure(condition, fn);
+	}
 
-			if (alternate_effect) {
-				pause_effect(alternate_effect, () => {
-					alternate_effect = null;
-				});
-			}
-		} else {
-			if (alternate_effect) {
-				resume_effect(alternate_effect);
-			} else if (alternate_fn) {
-				alternate_effect = branch(() => alternate_fn(anchor));
-			}
+	block(() => {
+		var has_branch = false;
 
-			if (consequent_effect) {
-				pause_effect(consequent_effect, () => {
-					consequent_effect = null;
-				});
-			}
-		}
+		fn((fn, flag = true) => {
+			has_branch = true;
+			update_branch(flag, fn);
+		});
 
-		if (mismatch) {
-			// continue in hydration mode
-			set_hydrating(true);
+		if (!has_branch) {
+			update_branch(false, null);
 		}
 	}, flags);
-
-	if (hydrating) {
-		anchor = hydrate_node;
-	}
 }

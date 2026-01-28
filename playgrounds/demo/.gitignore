@@ -1,5 +1,0 @@
-src/*
-dist/client/*
-dist/server/*
-!src/entry-client.ts
-!src/entry-server.ts

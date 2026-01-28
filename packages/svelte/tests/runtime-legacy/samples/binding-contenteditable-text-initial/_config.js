@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { ok, test } from '../../test';
 
 export default test({
@@ -18,7 +19,7 @@ export default test({
 		<p>hello</p>
 	`,
 
-	async test({ assert, component, target, window }) {
+	test({ assert, component, target, window }) {
 		assert.equal(component.name, 'world');
 
 		const el = target.querySelector('editor');
@@ -27,7 +28,8 @@ export default test({
 		const event = new window.Event('input');
 
 		el.textContent = 'everybody';
-		await el.dispatchEvent(event);
+		el.dispatchEvent(event);
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

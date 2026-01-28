@@ -2,4 +2,4 @@
 title: svelte/transition
 ---
 
-<!-- @include svelte/transition -->
+> MODULE: svelte/transition

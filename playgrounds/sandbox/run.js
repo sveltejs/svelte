@@ -2,8 +2,16 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
-import glob from 'tiny-glob/sync.js';
-import { compile, compileModule, parse, migrate } from 'svelte/compiler';
+import { globSync } from 'tinyglobby';
+import { compile, compileModule, parse, print, migrate } from 'svelte/compiler';
+
+// toggle these to change what gets written to sandbox/output
+const AST = false;
+const MIGRATE = false;
+const FROM_HTML = true;
+const FROM_TREE = false;
+const DEV = false;
+const PRINT = false;
 
 const argv = parseArgs({ options: { runes: { type: 'boolean' } }, args: process.argv.slice(2) });
 
@@ -26,13 +34,22 @@ function mkdirp(dir) {
 	} catch {}
 }
 
-const svelte_modules = glob('**/*.svelte', { cwd: `${cwd}/input` });
-const js_modules = glob('**/*.js', { cwd: `${cwd}/input` });
+/**
+ * @param {string} file
+ * @param {string} contents
+ */
+function write(file, contents) {
+	mkdirp(path.dirname(file));
+	fs.writeFileSync(file, contents);
+}
+
+const svelte_modules = globSync('**/*.svelte', { cwd: `${cwd}/src` });
+const js_modules = globSync('**/*.js', { cwd: `${cwd}/src` });
 
 for (const generate of /** @type {const} */ (['client', 'server'])) {
 	console.error(`\n--- generating ${generate} ---\n`);
 	for (const file of svelte_modules) {
-		const input = `${cwd}/input/${file}`;
+		const input = `${cwd}/src/${file}`;
 		const source = fs.readFileSync(input, 'utf-8');
 
 		const output_js = `${cwd}/output/${generate}/${file}.js`;
@@ -42,50 +59,105 @@ for (const generate of /** @type {const} */ (['client', 'server'])) {
 		mkdirp(path.dirname(output_js));
 
 		if (generate === 'client') {
-			const ast = parse(source, {
-				modern: true
-			});
+			if (AST) {
+				const ast = parse(source, {
+					modern: true
+				});
 
-			fs.writeFileSync(`${cwd}/output/${file}.json`, JSON.stringify(ast, null, '\t'));
+				write(
+					`${cwd}/output/ast/${file}.json`,
+					JSON.stringify(
+						ast,
+						(key, value) => (typeof value === 'bigint' ? ['BigInt', value.toString()] : value),
+						'\t'
+					)
+				);
 
-			try {
-				const migrated = migrate(source);
-				fs.writeFileSync(`${cwd}/output/${file}.migrated.svelte`, migrated.code);
-			} catch (e) {
-				console.warn(`Error migrating ${file}`, e);
+				if (PRINT) {
+					const printed = print(ast);
+					write(`${cwd}/output/printed/${file}`, printed.code);
+				}
+			}
+
+			if (MIGRATE) {
+				try {
+					const migrated = migrate(source);
+					write(`${cwd}/output/migrated/${file}`, migrated.code);
+				} catch (e) {
+					console.warn(`Error migrating ${file}`, e);
+				}
 			}
 		}
 
-		const compiled = compile(source, {
-			dev: true,
-			filename: input,
-			generate,
-			runes: argv.values.runes
-		});
+		let from_html;
+		let from_tree;
 
-		fs.writeFileSync(
-			output_js,
-			compiled.js.code + '\n//# sourceMappingURL=' + path.basename(output_map)
-		);
-		fs.writeFileSync(output_map, compiled.js.map.toString());
-		if (compiled.css) {
-			fs.writeFileSync(output_css, compiled.css.code);
+		if (generate === 'server' || FROM_HTML) {
+			from_html = compile(source, {
+				dev: DEV,
+				hmr: DEV,
+				filename: input,
+				generate,
+				runes: argv.values.runes,
+				experimental: {
+					async: true
+				}
+			});
+
+			write(output_js, from_html.js.code + '\n//# sourceMappingURL=' + path.basename(output_map));
+			write(output_map, from_html.js.map.toString());
+		}
+
+		// generate with fragments: 'tree'
+		if (generate === 'client' && FROM_TREE) {
+			from_tree = compile(source, {
+				dev: false,
+				filename: input,
+				generate,
+				runes: argv.values.runes,
+				fragments: 'tree',
+				experimental: {
+					async: true
+				}
+			});
+
+			const output_js = `${cwd}/output/${generate}/${file}.tree.js`;
+			const output_map = `${cwd}/output/${generate}/${file}.tree.js.map`;
+
+			write(output_js, from_tree.js.code + '\n//# sourceMappingURL=' + path.basename(output_map));
+			write(output_map, from_tree.js.map.toString());
+		}
+
+		const compiled = from_html ?? from_tree;
+
+		if (compiled) {
+			for (const warning of compiled.warnings) {
+				console.warn(warning.code);
+				console.warn(warning.frame);
+			}
+
+			if (compiled.css) {
+				write(output_css, compiled.css.code);
+			}
 		}
 	}
 
 	for (const file of js_modules) {
-		const input = `${cwd}/input/${file}`;
+		const input = `${cwd}/src/${file}`;
 		const source = fs.readFileSync(input, 'utf-8');
 
 		const compiled = compileModule(source, {
-			dev: true,
+			dev: false,
 			filename: input,
-			generate
+			generate,
+			experimental: {
+				async: true
+			}
 		});
 
 		const output_js = `${cwd}/output/${generate}/${file}`;
 
 		mkdirp(path.dirname(output_js));
-		fs.writeFileSync(output_js, compiled.js.code);
+		write(output_js, compiled.js.code);
 	}
 }

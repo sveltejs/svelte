@@ -12,6 +12,6 @@ export default test({
 		ok(p);
 
 		const styles = window.getComputedStyle(p);
-		assert.equal(styles.color, 'red');
+		assert.equal(styles.color, 'rgb(255, 0, 0)');
 	}
 });

@@ -1,0 +1,15 @@
+
+	h1.svelte-xyz /* (unused) h2, h3*/ {
+		color: red;
+	}
+	h1.svelte-xyz /* (unused) h2*/ {
+		text-decoration: underline;
+	}
+
+	h1.svelte-xyz /* (unused) h2, h3*/, h4.svelte-xyz {
+		text-transform: uppercase;
+	}
+
+	h1.svelte-xyz /* (unused) h2, h3*/, h4.svelte-xyz /* (unused) h5, h6*/ {
+		background-color: green;
+	}

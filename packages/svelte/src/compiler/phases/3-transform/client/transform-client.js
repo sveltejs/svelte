@@ -1,11 +1,10 @@
 /** @import * as ESTree from 'estree' */
-/** @import { ValidatedCompileOptions, SvelteNode, ValidatedModuleCompileOptions } from '#compiler' */
+/** @import { AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { ComponentAnalysis, Analysis } from '../../types' */
 /** @import { Visitors, ComponentClientTransformState, ClientTransformState } from './types' */
 import { walk } from 'zimmerframe';
-import * as b from '../../../utils/builders.js';
-import { set_scope } from '../../scope.js';
-import { build_getter } from './utils.js';
+import * as b from '#compiler/builders';
+import { build_getter, is_state_source } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
 import { dev, filename } from '../../../state.js';
 import { AnimateDirective } from './visitors/AnimateDirective.js';
@@ -13,8 +12,10 @@ import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { Attribute } from './visitors/Attribute.js';
 import { AwaitBlock } from './visitors/AwaitBlock.js';
+import { AwaitExpression } from './visitors/AwaitExpression.js';
 import { BinaryExpression } from './visitors/BinaryExpression.js';
 import { BindDirective } from './visitors/BindDirective.js';
+import { BlockStatement } from './visitors/BlockStatement.js';
 import { BreakStatement } from './visitors/BreakStatement.js';
 import { CallExpression } from './visitors/CallExpression.js';
 import { ClassBody } from './visitors/ClassBody.js';
@@ -25,18 +26,19 @@ import { DebugTag } from './visitors/DebugTag.js';
 import { EachBlock } from './visitors/EachBlock.js';
 import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
 import { ExpressionStatement } from './visitors/ExpressionStatement.js';
+import { ForOfStatement } from './visitors/ForOfStatement.js';
 import { Fragment } from './visitors/Fragment.js';
 import { FunctionDeclaration } from './visitors/FunctionDeclaration.js';
 import { FunctionExpression } from './visitors/FunctionExpression.js';
 import { HtmlTag } from './visitors/HtmlTag.js';
 import { Identifier } from './visitors/Identifier.js';
 import { IfBlock } from './visitors/IfBlock.js';
-import { ImportDeclaration } from './visitors/ImportDeclaration.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { LetDirective } from './visitors/LetDirective.js';
 import { MemberExpression } from './visitors/MemberExpression.js';
 import { OnDirective } from './visitors/OnDirective.js';
+import { Program } from './visitors/Program.js';
 import { RegularElement } from './visitors/RegularElement.js';
 import { RenderTag } from './visitors/RenderTag.js';
 import { SlotElement } from './visitors/SlotElement.js';
@@ -47,6 +49,7 @@ import { SvelteComponent } from './visitors/SvelteComponent.js';
 import { SvelteDocument } from './visitors/SvelteDocument.js';
 import { SvelteElement } from './visitors/SvelteElement.js';
 import { SvelteFragment } from './visitors/SvelteFragment.js';
+import { SvelteBoundary } from './visitors/SvelteBoundary.js';
 import { SvelteHead } from './visitors/SvelteHead.js';
 import { SvelteSelf } from './visitors/SvelteSelf.js';
 import { SvelteWindow } from './visitors/SvelteWindow.js';
@@ -54,18 +57,42 @@ import { TitleElement } from './visitors/TitleElement.js';
 import { TransitionDirective } from './visitors/TransitionDirective.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { UseDirective } from './visitors/UseDirective.js';
+import { AttachTag } from './visitors/AttachTag.js';
 import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 
 /** @type {Visitors} */
 const visitors = {
-	_: set_scope,
+	_: function set_scope(node, { next, state }) {
+		const scope = state.scopes.get(node);
+
+		if (scope && scope !== state.scope) {
+			const transform = { ...state.transform };
+
+			for (const [name, binding] of scope.declarations) {
+				if (
+					binding.kind === 'normal' ||
+					// Reads of `$state(...)` declarations are not
+					// transformed if they are never reassigned
+					(binding.kind === 'state' && !is_state_source(binding, state.analysis))
+				) {
+					delete transform[name];
+				}
+			}
+
+			next({ ...state, transform, scope });
+		} else {
+			next();
+		}
+	},
 	AnimateDirective,
 	ArrowFunctionExpression,
 	AssignmentExpression,
 	Attribute,
 	AwaitBlock,
+	AwaitExpression,
 	BinaryExpression,
 	BindDirective,
+	BlockStatement,
 	BreakStatement,
 	CallExpression,
 	ClassBody,
@@ -76,18 +103,19 @@ const visitors = {
 	EachBlock,
 	ExportNamedDeclaration,
 	ExpressionStatement,
+	ForOfStatement,
 	Fragment,
 	FunctionDeclaration,
 	FunctionExpression,
 	HtmlTag,
 	Identifier,
 	IfBlock,
-	ImportDeclaration,
 	KeyBlock,
 	LabeledStatement,
 	LetDirective,
 	MemberExpression,
 	OnDirective,
+	Program,
 	RegularElement,
 	RenderTag,
 	SlotElement,
@@ -98,6 +126,7 @@ const visitors = {
 	SvelteDocument,
 	SvelteElement,
 	SvelteFragment,
+	SvelteBoundary,
 	SvelteHead,
 	SvelteSelf,
 	SvelteWindow,
@@ -105,6 +134,7 @@ const visitors = {
 	TransitionDirective,
 	UpdateExpression,
 	UseDirective,
+	AttachTag,
 	VariableDeclaration
 };
 
@@ -121,81 +151,89 @@ export function client_component(analysis, options) {
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
 		is_instance: false,
-		hoisted: [b.import_all('$', 'svelte/internal/client')],
+		hoisted: [b.import_all('$', 'svelte/internal/client'), ...analysis.instance_body.hoisted],
 		node: /** @type {any} */ (null), // populated by the root node
+		legacy_reactive_imports: [],
 		legacy_reactive_statements: new Map(),
 		metadata: {
-			context: {
-				template_needs_import_node: false,
-				template_contains_script_tag: false
-			},
 			namespace: options.namespace,
 			bound_contenteditable: false
 		},
 		events: new Set(),
 		preserve_whitespace: options.preserveWhitespace,
-		public_state: new Map(),
-		private_state: new Map(),
-		getters: {},
-		setters: {},
+		state_fields: new Map(),
+		transform: {},
 		in_constructor: false,
+		instance_level_snippets: [],
+		module_level_snippets: [],
 
 		// these are set inside the `Fragment` visitor, and cannot be used until then
-		before_init: /** @type {any} */ (null),
 		init: /** @type {any} */ (null),
+		consts: /** @type {any} */ (null),
+		snippets: /** @type {any} */ (null),
+		let_directives: /** @type {any} */ (null),
 		update: /** @type {any} */ (null),
 		after_update: /** @type {any} */ (null),
 		template: /** @type {any} */ (null),
-		locations: /** @type {any} */ (null)
+		memoizer: /** @type {any} */ (null)
 	};
 
 	const module = /** @type {ESTree.Program} */ (
-		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, visitors)
+		walk(/** @type {AST.SvelteNode} */ (analysis.module.ast), state, visitors)
 	);
 
 	const instance_state = {
 		...state,
+		transform: { ...state.transform },
 		scope: analysis.instance.scope,
 		scopes: analysis.instance.scopes,
 		is_instance: true
 	};
 
 	const instance = /** @type {ESTree.Program} */ (
-		walk(/** @type {SvelteNode} */ (analysis.instance.ast), instance_state, visitors)
+		walk(/** @type {AST.SvelteNode} */ (analysis.instance.ast), instance_state, visitors)
 	);
 
 	const template = /** @type {ESTree.Program} */ (
 		walk(
-			/** @type {SvelteNode} */ (analysis.template.ast),
-			{ ...state, scope: analysis.instance.scope, scopes: analysis.template.scopes },
+			/** @type {AST.SvelteNode} */ (analysis.template.ast),
+			{
+				...state,
+				transform: instance_state.transform,
+				scope: analysis.instance.scope,
+				scopes: analysis.template.scopes
+			},
 			visitors
 		)
 	);
 
-	// Very very dirty way of making import statements reactive in legacy mode if needed
-	if (!analysis.runes) {
-		for (const [name, binding] of analysis.module.scope.declarations) {
-			if (binding.kind === 'legacy_reactive_import') {
-				instance.body.unshift(
-					b.var('$$_import_' + name, b.call('$.reactive_import', b.thunk(b.id(name))))
-				);
-			}
-		}
-	}
+	module.body.unshift(...state.legacy_reactive_imports);
 
 	/** @type {ESTree.Statement[]} */
 	const store_setup = [];
-
+	/** @type {ESTree.Statement} */
+	let store_init = b.empty;
 	/** @type {ESTree.VariableDeclaration[]} */
 	const legacy_reactive_declarations = [];
 
+	let needs_store_cleanup = false;
+
 	for (const [name, binding] of analysis.instance.scope.declarations) {
 		if (binding.kind === 'legacy_reactive') {
-			legacy_reactive_declarations.push(b.const(name, b.call('$.mutable_source')));
+			legacy_reactive_declarations.push(
+				b.const(
+					name,
+					b.call('$.mutable_source', undefined, analysis.immutable ? b.true : undefined)
+				)
+			);
 		}
 		if (binding.kind === 'store_sub') {
 			if (store_setup.length === 0) {
-				store_setup.push(b.const('$$stores', b.call('$.setup_stores')));
+				needs_store_cleanup = true;
+				store_init = b.const(
+					b.array_pattern([b.id('$$stores'), b.id('$$cleanup')]),
+					b.call('$.setup_stores')
+				);
 			}
 
 			// We're creating an arrow function that gets the store value which minifies better for two or more references
@@ -255,19 +293,13 @@ export function client_component(analysis, options) {
 			}
 		}
 
-		if (binding?.kind === 'state' || binding?.kind === 'frozen_state') {
-			return [
-				getter,
-				b.set(alias ?? name, [
-					b.stmt(
-						b.call(
-							'$.set',
-							b.id(name),
-							b.call(binding.kind === 'state' ? '$.proxy' : '$.freeze', b.id('$$value'))
-						)
-					)
-				])
-			];
+		if (binding?.kind === 'prop' || binding?.kind === 'bindable_prop') {
+			return [getter, b.set(alias ?? name, [b.stmt(b.call(name, b.id('$$value')))])];
+		}
+
+		if (binding?.kind === 'state' || binding?.kind === 'raw_state') {
+			const value = binding.kind === 'state' ? b.call('$.proxy', b.id('$$value')) : b.id('$$value');
+			return [getter, b.set(alias ?? name, [b.stmt(b.call('$.set', b.id(name), value))])];
 		}
 
 		return getter;
@@ -278,28 +310,6 @@ export function client_component(analysis, options) {
 			(binding.kind === 'prop' || binding.kind === 'bindable_prop') && !name.startsWith('$$')
 	);
 
-	if (dev && analysis.runes) {
-		const exports = analysis.exports.map(({ name, alias }) => b.literal(alias ?? name));
-		/** @type {ESTree.Literal[]} */
-		const bindable = [];
-		for (const [name, binding] of properties) {
-			if (binding.kind === 'bindable_prop') {
-				bindable.push(b.literal(binding.prop_alias ?? name));
-			}
-		}
-		instance.body.unshift(
-			b.stmt(
-				b.call(
-					'$.validate_prop_bindings',
-					b.id('$$props'),
-					b.array(bindable),
-					b.array(exports),
-					b.id(`${analysis.name}`)
-				)
-			)
-		);
-	}
-
 	if (analysis.accessors) {
 		for (const [name, binding] of properties) {
 			const key = binding.prop_alias ?? name;
@@ -308,7 +318,7 @@ export function client_component(analysis, options) {
 
 			const setter = b.set(key, [
 				b.stmt(b.call(b.id(name), b.id('$$value'))),
-				b.stmt(b.call('$.flush_sync'))
+				b.stmt(b.call('$.flush'))
 			]);
 
 			if (analysis.runes && binding.initial) {
@@ -347,15 +357,50 @@ export function client_component(analysis, options) {
 	const push_args = [b.id('$$props'), b.literal(analysis.runes)];
 	if (dev) push_args.push(b.id(analysis.name));
 
-	const component_block = b.block([
-		...store_setup,
+	let component_block = b.block([
+		store_init,
 		...legacy_reactive_declarations,
-		...group_binding_declarations,
-		...analysis.top_level_snippets,
-		.../** @type {ESTree.Statement[]} */ (instance.body),
-		analysis.runes || !analysis.needs_context ? b.empty : b.stmt(b.call('$.init')),
-		.../** @type {ESTree.Statement[]} */ (template.body)
+		...group_binding_declarations
 	]);
+
+	const should_inject_context =
+		dev ||
+		analysis.needs_context ||
+		analysis.reactive_statements.size > 0 ||
+		component_returned_object.length > 0;
+
+	component_block.body.push(
+		...state.instance_level_snippets,
+		.../** @type {ESTree.Statement[]} */ (instance.body)
+	);
+
+	if (should_inject_context && component_returned_object.length > 0) {
+		component_block.body.push(b.var('$$exports', b.object(component_returned_object)));
+	}
+	component_block.body.unshift(...store_setup);
+
+	if (!analysis.runes && analysis.needs_context) {
+		component_block.body.push(b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)));
+	}
+
+	component_block.body.push(.../** @type {ESTree.Statement[]} */ (template.body));
+
+	if (analysis.needs_mutation_validation) {
+		component_block.body.unshift(
+			b.var('$$ownership_validator', b.call('$.create_ownership_validator', b.id('$$props')))
+		);
+	}
+
+	let should_inject_props =
+		should_inject_context ||
+		analysis.needs_props ||
+		analysis.uses_props ||
+		analysis.uses_rest_props ||
+		analysis.uses_slots ||
+		analysis.slot_names.size > 0;
+
+	// trick esrap into including comments
+	component_block.loc = instance.loc;
 
 	if (!analysis.runes) {
 		// Bind static exports to props so that people can access them with bind:x
@@ -384,20 +429,29 @@ export function client_component(analysis, options) {
 		);
 	}
 
-	const should_inject_context =
-		dev ||
-		analysis.needs_context ||
-		analysis.reactive_statements.size > 0 ||
-		component_returned_object.length > 0;
-
+	// we want the cleanup function for the stores to run as the very last thing
+	// so that it can effectively clean up the store subscription even after the user effects runs
 	if (should_inject_context) {
 		component_block.body.unshift(b.stmt(b.call('$.push', ...push_args)));
 
-		component_block.body.push(
-			component_returned_object.length > 0
-				? b.return(b.call('$.pop', b.object(component_returned_object)))
-				: b.stmt(b.call('$.pop'))
-		);
+		let to_push;
+
+		if (component_returned_object.length > 0) {
+			let pop_call = b.call('$.pop', b.id('$$exports'));
+			to_push = needs_store_cleanup ? b.var('$$pop', pop_call) : b.return(pop_call);
+		} else {
+			to_push = b.stmt(b.call('$.pop'));
+		}
+
+		component_block.body.push(to_push);
+	}
+
+	if (needs_store_cleanup) {
+		component_block.body.push(b.stmt(b.call('$$cleanup')));
+
+		if (component_returned_object.length > 0) {
+			component_block.body.push(b.return(b.id('$$pop')));
+		}
 	}
 
 	if (analysis.uses_rest_props) {
@@ -441,15 +495,22 @@ export function client_component(analysis, options) {
 		component_block.body.unshift(b.const('$$slots', b.call('$.sanitize_slots', b.id('$$props'))));
 	}
 
-	let should_inject_props =
-		should_inject_context ||
-		analysis.needs_props ||
-		analysis.uses_props ||
-		analysis.uses_rest_props ||
-		analysis.uses_slots ||
-		analysis.slot_names.size > 0;
+	// Merge hoisted statements into module body.
+	// Ensure imports are on top, with the order preserved, then module body, then hoisted statements
+	/** @type {ESTree.ImportDeclaration[]} */
+	const imports = [];
+	/** @type {ESTree.Program['body']} */
+	let body = [];
 
-	const body = [...state.hoisted, ...module.body];
+	for (const entry of [...module.body, ...state.hoisted]) {
+		if (entry.type === 'ImportDeclaration') {
+			imports.push(entry);
+		} else {
+			body.push(entry);
+		}
+	}
+
+	body = [...imports, ...state.module_level_snippets, ...body];
 
 	const component = b.function_declaration(
 		b.id(analysis.name),
@@ -459,41 +520,18 @@ export function client_component(analysis, options) {
 
 	if (options.hmr) {
 		const id = b.id(analysis.name);
-		const HMR = b.id('$.HMR');
-
-		const existing = b.member(id, HMR, true);
-		const incoming = b.member(b.id('module.default'), HMR, true);
 
 		const accept_fn_body = [
-			b.stmt(
-				b.assignment('=', b.member(incoming, b.id('source')), b.member(existing, b.id('source')))
-			),
-			b.stmt(
-				b.call('$.set', b.member(existing, b.id('source')), b.member(incoming, b.id('original')))
-			)
+			b.stmt(b.call(b.member(b.member(id, b.id('$.HMR'), true), 'update'), b.id('module.default')))
 		];
 
 		if (analysis.css.hash) {
 			// remove existing `<style>` element, in case CSS changed
-			accept_fn_body.unshift(
-				b.stmt(
-					b.call(
-						b.member(
-							b.call('document.querySelector', b.literal('#' + analysis.css.hash)),
-							b.id('remove'),
-							false,
-							true
-						)
-					)
-				)
-			);
+			accept_fn_body.unshift(b.stmt(b.call('$.cleanup_styles', b.literal(analysis.css.hash))));
 		}
 
 		const hmr = b.block([
-			b.stmt(
-				b.assignment('=', id, b.call('$.hmr', id, b.thunk(b.member(existing, b.id('source')))))
-			),
-
+			b.stmt(b.assignment('=', id, b.call('$.hmr', id))),
 			b.stmt(b.call('import.meta.hot.accept', b.arrow([b.id('module')], b.block(accept_fn_body))))
 		]);
 
@@ -503,21 +541,24 @@ export function client_component(analysis, options) {
 	}
 
 	if (dev) {
-		if (filename) {
-			// add `App[$.FILENAME] = 'App.svelte'` so that we can print useful messages later
-			body.unshift(
-				b.stmt(
-					b.assignment(
-						'=',
-						b.member(b.id(analysis.name), b.id('$.FILENAME'), true),
-						b.literal(filename)
-					)
-				)
-			);
-		}
+		// add `App[$.FILENAME] = 'App.svelte'` so that we can print useful messages later
+		body.unshift(
+			b.stmt(
+				b.assignment('=', b.member(b.id(analysis.name), '$.FILENAME', true), b.literal(filename))
+			)
+		);
+	}
 
-		body.unshift(b.stmt(b.call(b.id('$.mark_module_start'))));
-		body.push(b.stmt(b.call(b.id('$.mark_module_end'), b.id(analysis.name))));
+	if (options.experimental.async) {
+		body.unshift(b.imports([], 'svelte/internal/flags/async'));
+	}
+
+	if (!analysis.runes) {
+		body.unshift(b.imports([], 'svelte/internal/flags/legacy'));
+	}
+
+	if (analysis.tracing) {
+		body.unshift(b.imports([], 'svelte/internal/flags/tracing'));
 	}
 
 	if (options.discloseVersion) {
@@ -542,25 +583,33 @@ export function client_component(analysis, options) {
 		component_block.body.unshift(b.stmt(b.call('$.check_target', b.id('new.target'))));
 	}
 
+	if (analysis.props_id) {
+		// need to be placed on first line of the component for hydration
+		component_block.body.unshift(b.const(analysis.props_id, b.call('$.props_id')));
+	}
+
 	if (state.events.size > 0) {
 		body.push(
 			b.stmt(b.call('$.delegate', b.array(Array.from(state.events).map((name) => b.literal(name)))))
 		);
 	}
 
-	if (analysis.custom_element) {
-		const ce = analysis.custom_element;
+	const ce = options.customElementOptions ?? options.customElement;
+
+	if (ce) {
+		const ce_props = typeof ce === 'boolean' ? {} : ce.props || {};
 
 		/** @type {ESTree.Property[]} */
 		const props_str = [];
 
-		for (const [name, binding] of properties) {
-			const key = binding.prop_alias ?? name;
-			const prop_def = typeof ce === 'boolean' ? {} : ce.props?.[key] || {};
+		for (const [name, prop_def] of Object.entries(ce_props)) {
+			const binding = analysis.instance.scope.get(name);
+			const key = binding?.prop_alias ?? name;
+
 			if (
 				!prop_def.type &&
-				binding.initial?.type === 'Literal' &&
-				typeof binding.initial.value === 'boolean'
+				binding?.initial?.type === 'Literal' &&
+				typeof binding?.initial.value === 'boolean'
 			) {
 				prop_def.type = 'Boolean';
 			}
@@ -569,19 +618,36 @@ export function client_component(analysis, options) {
 				/** @type {ESTree.Property[]} */ (
 					[
 						prop_def.attribute ? b.init('attribute', b.literal(prop_def.attribute)) : undefined,
-						prop_def.reflect ? b.init('reflect', b.literal(true)) : undefined,
+						prop_def.reflect ? b.init('reflect', b.true) : undefined,
 						prop_def.type ? b.init('type', b.literal(prop_def.type)) : undefined
 					].filter(Boolean)
 				)
 			);
+
 			props_str.push(b.init(key, value));
+		}
+
+		for (const [name, binding] of properties) {
+			const key = binding.prop_alias ?? name;
+			if (ce_props[key]) continue;
+
+			props_str.push(b.init(key, b.object([])));
 		}
 
 		const slots_str = b.array([...analysis.slot_names.keys()].map((name) => b.literal(name)));
 		const accessors_str = b.array(
 			analysis.exports.map(({ name, alias }) => b.literal(alias ?? name))
 		);
-		const use_shadow_dom = typeof ce === 'boolean' || ce.shadow !== 'none' ? true : false;
+
+		/** @type {ESTree.ObjectExpression | undefined} */
+		let shadow_root_init;
+		if (typeof ce === 'boolean' || ce.shadow === 'open' || ce.shadow === undefined) {
+			shadow_root_init = b.object([b.init('mode', b.literal('open'))]);
+		} else if (ce.shadow === 'none') {
+			shadow_root_init = undefined;
+		} else {
+			shadow_root_init = ce.shadow;
+		}
 
 		const create_ce = b.call(
 			'$.create_custom_element',
@@ -589,14 +655,21 @@ export function client_component(analysis, options) {
 			b.object(props_str),
 			slots_str,
 			accessors_str,
-			b.literal(use_shadow_dom),
+			shadow_root_init,
 			/** @type {any} */ (typeof ce !== 'boolean' ? ce.extend : undefined)
 		);
 
-		// If customElement option is set, we define the custom element directly. Else we still create
-		// the custom element class so that the user may instantiate a custom element themselves later.
-		if (typeof ce !== 'boolean') {
-			body.push(b.stmt(b.call('customElements.define', b.literal(ce.tag), create_ce)));
+		// If a tag name is provided, call `customElements.define`, otherwise leave to the user
+		if (typeof ce !== 'boolean' && typeof ce.tag === 'string') {
+			const define = b.stmt(b.call('customElements.define', b.literal(ce.tag), create_ce));
+
+			if (options.hmr) {
+				body.push(
+					b.if(b.binary('==', b.call('customElements.get', b.literal(ce.tag)), b.null), define)
+				);
+			} else {
+				body.push(define);
+			}
 		} else {
 			body.push(b.stmt(create_ce));
 		}
@@ -621,21 +694,25 @@ export function client_module(analysis, options) {
 		options,
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
-		legacy_reactive_statements: new Map(),
-		public_state: new Map(),
-		private_state: new Map(),
-		getters: {},
-		setters: {},
-		in_constructor: false
+		state_fields: new Map(),
+		transform: {},
+		in_constructor: false,
+		is_instance: false
 	};
 
 	const module = /** @type {ESTree.Program} */ (
-		walk(/** @type {SvelteNode} */ (analysis.module.ast), state, visitors)
+		walk(/** @type {AST.SvelteNode} */ (analysis.module.ast), state, visitors)
 	);
+
+	const body = [b.import_all('$', 'svelte/internal/client')];
+
+	if (analysis.tracing) {
+		body.push(b.imports([], 'svelte/internal/flags/tracing'));
+	}
 
 	return {
 		type: 'Program',
 		sourceType: 'module',
-		body: [b.import_all('$', 'svelte/internal/client'), ...module.body]
+		body: [...body, ...module.body]
 	};
 }

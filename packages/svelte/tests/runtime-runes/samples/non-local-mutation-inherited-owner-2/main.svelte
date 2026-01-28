@@ -1,9 +1,8 @@
-<script>
-	import { global } from './state.svelte.js';
+<script lang="ts">
+	import Sub from './sub.svelte';
+	import { create_my_state } from './state.svelte';
 
-	global.a = { b: 0 };
+	const myState = create_my_state();
 </script>
 
-<button onclick={() => global.a.b += 1}>
-	clicks: {global.a.b}
-</button>
+<Sub count={myState.my_state} inc={myState.inc} />

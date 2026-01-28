@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
@@ -17,13 +18,14 @@ export default test({
 		<p>quux: core</p></div>
 	`,
 
-	async test({ assert, component, target }) {
-		await component.$set({
+	test({ assert, component, target }) {
+		component.$set({
 			foo: 'wut',
 			baz: 40 + 3,
 			qux: `this is a ${'rather boring'} string`,
 			quux: 'heart'
 		});
+		flushSync();
 
 		assert.htmlEqual(
 			target.innerHTML,

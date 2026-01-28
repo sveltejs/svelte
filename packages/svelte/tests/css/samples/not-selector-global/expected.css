@@ -1,0 +1,38 @@
+
+	.svelte-xyz:not(.foo) {
+		color: green;
+	}
+	.svelte-xyz:not(.foo):not(.unused) {
+		color: green;
+	}
+	.x:not(.foo) {
+		color: green;
+	}
+	.x .svelte-xyz:not(p) {
+		color: green;
+	}
+	.x:not(p) {
+		color: green;
+	}
+	.x .svelte-xyz:not(.unused) {
+		color: green;
+	}
+
+	span:not(p.svelte-xyz span:where(.svelte-xyz)) {
+		color: green;
+	}
+	span.svelte-xyz:not(p span) {
+		color: green;
+	}
+	span:not(p span) {
+		color: green;
+	}
+
+	.x {
+		.svelte-xyz:not(.foo) {
+			color: green;
+		}
+		&:not(.foo) {
+			color: green;
+		}
+	}

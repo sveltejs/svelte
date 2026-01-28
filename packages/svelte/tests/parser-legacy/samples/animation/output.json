@@ -20,8 +20,20 @@
 								"end": 50,
 								"type": "Animation",
 								"name": "flip",
-								"modifiers": [],
-								"expression": null
+								"name_loc": {
+									"start": {
+										"line": 2,
+										"column": 6,
+										"character": 38
+									},
+									"end": {
+										"line": 2,
+										"column": 18,
+										"character": 50
+									}
+								},
+								"expression": null,
+								"modifiers": []
 							}
 						],
 						"children": [
@@ -39,6 +51,7 @@
 					"type": "Identifier",
 					"name": "thing",
 					"start": 17,
+					"end": 22,
 					"loc": {
 						"start": {
 							"line": 1,
@@ -50,8 +63,7 @@
 							"column": 22,
 							"character": 22
 						}
-					},
-					"end": 22
+					}
 				},
 				"expression": {
 					"type": "Identifier",

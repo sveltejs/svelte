@@ -1,30 +1,12 @@
 import { run_all } from '../../shared/utils.js';
-
-// Fallback for when requestIdleCallback is not available
-const request_idle_callback =
-	typeof requestIdleCallback === 'undefined'
-		? (/** @type {() => void} */ cb) => setTimeout(cb, 1)
-		: requestIdleCallback;
-
-let is_micro_task_queued = false;
-let is_idle_task_queued = false;
+import { is_flushing_sync } from '../reactivity/batch.js';
 
 /** @type {Array<() => void>} */
-let current_queued_micro_tasks = [];
-/** @type {Array<() => void>} */
-let current_queued_idle_tasks = [];
+let micro_tasks = [];
 
-function process_micro_tasks() {
-	is_micro_task_queued = false;
-	const tasks = current_queued_micro_tasks.slice();
-	current_queued_micro_tasks = [];
-	run_all(tasks);
-}
-
-function process_idle_tasks() {
-	is_idle_task_queued = false;
-	const tasks = current_queued_idle_tasks.slice();
-	current_queued_idle_tasks = [];
+function run_micro_tasks() {
+	var tasks = micro_tasks;
+	micro_tasks = [];
 	run_all(tasks);
 }
 
@@ -32,32 +14,29 @@ function process_idle_tasks() {
  * @param {() => void} fn
  */
 export function queue_micro_task(fn) {
-	if (!is_micro_task_queued) {
-		is_micro_task_queued = true;
-		queueMicrotask(process_micro_tasks);
+	if (micro_tasks.length === 0 && !is_flushing_sync) {
+		var tasks = micro_tasks;
+		queueMicrotask(() => {
+			// If this is false, a flushSync happened in the meantime. Do _not_ run new scheduled microtasks in that case
+			// as the ordering of microtasks would be broken at that point - consider this case:
+			// - queue_micro_task schedules microtask A to flush task X
+			// - synchronously after, flushSync runs, processing task X
+			// - synchronously after, some other microtask B is scheduled, but not through queue_micro_task but for example a Promise.resolve() in user code
+			// - synchronously after, queue_micro_task schedules microtask C to flush task Y
+			// - one tick later, microtask A now resolves, flushing task Y before microtask B, which is incorrect
+			// This if check prevents that race condition (that realistically will only happen in tests)
+			if (tasks === micro_tasks) run_micro_tasks();
+		});
 	}
-	current_queued_micro_tasks.push(fn);
-}
 
-/**
- * @param {() => void} fn
- */
-export function queue_idle_task(fn) {
-	if (!is_idle_task_queued) {
-		is_idle_task_queued = true;
-		request_idle_callback(process_idle_tasks);
-	}
-	current_queued_idle_tasks.push(fn);
+	micro_tasks.push(fn);
 }
 
 /**
  * Synchronously run any queued tasks.
  */
 export function flush_tasks() {
-	if (is_micro_task_queued) {
-		process_micro_tasks();
-	}
-	if (is_idle_task_queued) {
-		process_idle_tasks();
+	while (micro_tasks.length > 0) {
+		run_micro_tasks();
 	}
 }

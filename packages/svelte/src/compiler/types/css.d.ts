@@ -1,6 +1,6 @@
-import type { Comment } from '#compiler';
+import type { AST } from '#compiler';
 
-export namespace Css {
+export namespace _CSS {
 	export interface BaseNode {
 		start: number;
 		end: number;
@@ -15,7 +15,7 @@ export namespace Css {
 			end: number;
 			styles: string;
 			/** Possible comment atop the style tag */
-			comment: Comment | null;
+			comment: AST.Comment | null;
 		};
 	}
 
@@ -30,9 +30,14 @@ export namespace Css {
 		type: 'Rule';
 		prelude: SelectorList;
 		block: Block;
+		/** @internal */
 		metadata: {
 			parent_rule: null | Rule;
 			has_local_selectors: boolean;
+			/**
+			 * `true` if the rule contains a ComplexSelector whose RelativeSelectors are all global or global-like
+			 */
+			has_global_selectors: boolean;
 			/**
 			 * `true` if the rule contains a `:global` selector, and therefore everything inside should be unscoped
 			 */
@@ -60,8 +65,11 @@ export namespace Css {
 		 * The `a`, `b` and `c` in `a b c {}`
 		 */
 		children: RelativeSelector[];
+		/** @internal */
 		metadata: {
 			rule: null | Rule;
+			is_global: boolean;
+			/** True if this selector applies to an element. For global selectors, this is defined in css-analyze, for others in css-prune while scoping */
 			used: boolean;
 		};
 	}
@@ -79,10 +87,13 @@ export namespace Css {
 		 * The `b:is(...)` in `> b:is(...)`
 		 */
 		selectors: SimpleSelector[];
+		/** @internal */
 		metadata: {
 			/**
 			 * `true` if the whole selector is unscoped, e.g. `:global(...)` or `:global` or `:global.x`.
 			 * Selectors like `:global(...).x` are not considered global, because they still need scoping.
+			 * Selectors like `:global(...):is/where/not/has(...)` are only considered global if all their
+			 * children are global.
 			 */
 			is_global: boolean;
 			/** `:root`, `:host`, `::view-transition`, or selectors after a `:global` */

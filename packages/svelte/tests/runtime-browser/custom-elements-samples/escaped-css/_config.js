@@ -5,6 +5,7 @@ export default test({
 	async test({ assert, target }) {
 		target.innerHTML = '<custom-element></custom-element>';
 		await tick();
+		await tick();
 		/** @type {any} */
 		const ce = target.querySelector('custom-element');
 		const icon = ce.shadowRoot.querySelector('.icon');

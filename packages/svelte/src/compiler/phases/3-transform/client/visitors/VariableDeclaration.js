@@ -1,19 +1,13 @@
 /** @import { CallExpression, Expression, Identifier, Literal, VariableDeclaration, VariableDeclarator } from 'estree' */
 /** @import { Binding } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-/** @import { Scope } from '../../../scope' */
-import { dev } from '../../../../state.js';
-import { extract_paths } from '../../../../utils/ast.js';
-import * as b from '../../../../utils/builders.js';
+import { dev, is_ignored, locate_node } from '../../../../state.js';
+import { extract_paths, save } from '../../../../utils/ast.js';
+import * as b from '#compiler/builders';
 import * as assert from '../../../../utils/assert.js';
 import { get_rune } from '../../../scope.js';
-import {
-	get_prop_source,
-	is_prop_source,
-	is_state_source,
-	should_proxy_or_freeze
-} from '../utils.js';
-import { is_hoisted_function } from '../../utils.js';
+import { get_prop_source, is_prop_source, is_state_source, should_proxy } from '../utils.js';
+import { get_value } from './shared/declarations.js';
 
 /**
  * @param {VariableDeclaration} node
@@ -25,7 +19,7 @@ export function VariableDeclaration(node, context) {
 
 	if (context.state.analysis.runes) {
 		for (const declarator of node.declarations) {
-			const init = declarator.init;
+			const init = /** @type {Expression} */ (declarator.init);
 			const rune = get_rune(init, context.state.scope);
 
 			if (
@@ -33,17 +27,16 @@ export function VariableDeclaration(node, context) {
 				rune === '$effect.tracking' ||
 				rune === '$effect.root' ||
 				rune === '$inspect' ||
+				rune === '$inspect.trace' ||
 				rune === '$state.snapshot' ||
-				rune === '$state.is'
+				rune === '$host'
 			) {
-				if (init != null && is_hoisted_function(init)) {
-					context.state.hoisted.push(
-						b.declaration('const', declarator.id, /** @type {Expression} */ (context.visit(init)))
-					);
-
-					continue;
-				}
 				declarations.push(/** @type {VariableDeclarator} */ (context.visit(declarator)));
+				continue;
+			}
+
+			if (rune === '$props.id') {
+				// skip
 				continue;
 			}
 
@@ -86,9 +79,13 @@ export function VariableDeclaration(node, context) {
 							if (
 								initial &&
 								binding.kind === 'bindable_prop' &&
-								should_proxy_or_freeze(initial, context.state.scope)
+								should_proxy(initial, context.state.scope)
 							) {
 								initial = b.call('$.proxy', initial);
+
+								if (dev) {
+									initial = b.call('$.tag_proxy', initial, b.literal(id.name));
+								}
 							}
 
 							if (is_prop_source(binding, context.state)) {
@@ -116,10 +113,9 @@ export function VariableDeclaration(node, context) {
 			}
 
 			const args = /** @type {CallExpression} */ (init).arguments;
-			const value =
-				args.length === 0 ? b.id('undefined') : /** @type {Expression} */ (context.visit(args[0]));
+			const value = /** @type {Expression} */ (args[0]) ?? b.void0; // TODO do we need the void 0? can we just omit it altogether?
 
-			if (rune === '$state' || rune === '$state.frozen') {
+			if (rune === '$state' || rune === '$state.raw') {
 				/**
 				 * @param {Identifier} id
 				 * @param {Expression} value
@@ -128,30 +124,61 @@ export function VariableDeclaration(node, context) {
 					const binding = /** @type {import('#compiler').Binding} */ (
 						context.state.scope.get(id.name)
 					);
-					if (should_proxy_or_freeze(value, context.state.scope)) {
-						value = b.call(rune === '$state' ? '$.proxy' : '$.freeze', value);
+					const is_state = is_state_source(binding, context.state.analysis);
+					const is_proxy = should_proxy(value, context.state.scope);
+
+					if (rune === '$state' && is_proxy) {
+						value = b.call('$.proxy', value);
+
+						if (dev && !is_state) {
+							value = b.call('$.tag_proxy', value, b.literal(id.name));
+						}
 					}
-					if (is_state_source(binding, context.state)) {
-						value = b.call('$.source', value);
+
+					if (is_state) {
+						const callee = b.id('$.state', /** @type {CallExpression} */ (init).callee.loc);
+						value = b.call(callee, value);
+
+						if (dev) {
+							value = b.call('$.tag', value, b.literal(id.name));
+						}
 					}
+
 					return value;
 				};
 
 				if (declarator.id.type === 'Identifier') {
+					const expression = /** @type {Expression} */ (context.visit(value));
+
 					declarations.push(
-						b.declarator(declarator.id, create_state_declarator(declarator.id, value))
+						b.declarator(declarator.id, create_state_declarator(declarator.id, expression))
 					);
 				} else {
-					const tmp = context.state.scope.generate('tmp');
-					const paths = extract_paths(declarator.id);
+					const tmp = b.id(context.state.scope.generate('tmp'));
+					const { inserts, paths } = extract_paths(declarator.id, tmp);
+
 					declarations.push(
-						b.declarator(b.id(tmp), value),
+						b.declarator(tmp, /** @type {Expression} */ (context.visit(value))),
+						...inserts.map(({ id, value }) => {
+							id.name = context.state.scope.generate('$$array');
+							context.state.transform[id.name] = { read: get_value };
+
+							const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
+							let call = b.call('$.derived', expression);
+
+							if (dev) {
+								const label = `[$state ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`;
+								call = b.call('$.tag', call, b.literal(label));
+							}
+
+							return b.declarator(id, call);
+						}),
 						...paths.map((path) => {
-							const value = path.expression?.(b.id(tmp));
+							const value = /** @type {Expression} */ (context.visit(path.expression));
 							const binding = context.state.scope.get(/** @type {Identifier} */ (path.node).name);
 							return b.declarator(
 								path.node,
-								binding?.kind === 'state' || binding?.kind === 'frozen_state'
+								binding?.kind === 'state' || binding?.kind === 'raw_state'
 									? create_state_declarator(binding.node, value)
 									: value
 							);
@@ -163,40 +190,104 @@ export function VariableDeclaration(node, context) {
 			}
 
 			if (rune === '$derived' || rune === '$derived.by') {
+				const is_async = context.state.analysis.async_deriveds.has(
+					/** @type {CallExpression} */ (init)
+				);
+
+				// for now, only wrap async derived in $.save if it's not
+				// a top-level instance derived. TODO in future maybe we
+				// can dewaterfall all of them?
+				const should_save = context.state.is_instance && context.state.scope.function_depth > 1;
+
 				if (declarator.id.type === 'Identifier') {
-					declarations.push(
-						b.declarator(
-							declarator.id,
-							b.call('$.derived', rune === '$derived.by' ? value : b.thunk(value))
-						)
-					);
+					let expression = /** @type {Expression} */ (context.visit(value));
+
+					if (is_async) {
+						const location = dev && !is_ignored(init, 'await_waterfall') && locate_node(init);
+
+						/** @type {Expression} */
+						let call = b.call(
+							'$.async_derived',
+							b.thunk(expression, true),
+							dev && b.literal(declarator.id.name),
+							location ? b.literal(location) : undefined
+						);
+
+						call = should_save ? save(call) : b.await(call);
+
+						declarations.push(b.declarator(declarator.id, call));
+					} else {
+						if (rune === '$derived') expression = b.thunk(expression);
+
+						let call = b.call('$.derived', expression);
+						if (dev) call = b.call('$.tag', call, b.literal(declarator.id.name));
+
+						declarations.push(b.declarator(declarator.id, call));
+					}
 				} else {
-					const bindings = extract_paths(declarator.id);
-
 					const init = /** @type {CallExpression} */ (declarator.init);
+					let expression = /** @type {Expression} */ (context.visit(value));
 
-					/** @type {Identifier} */
-					let id;
 					let rhs = value;
 
-					if (init.arguments[0].type === 'Identifier') {
-						id = init.arguments[0];
-					} else {
-						id = b.id(context.state.scope.generate('$$d'));
+					if (rune !== '$derived' || init.arguments[0].type !== 'Identifier') {
+						const id = b.id(context.state.scope.generate('$$d'));
+
+						/** @type {Expression} */
+						let call = b.call('$.derived', rune === '$derived' ? b.thunk(expression) : expression);
+
 						rhs = b.call('$.get', id);
 
-						declarations.push(
-							b.declarator(id, b.call('$.derived', rune === '$derived.by' ? value : b.thunk(value)))
-						);
+						if (is_async) {
+							const location = dev && !is_ignored(init, 'await_waterfall') && locate_node(init);
+
+							call = b.call(
+								'$.async_derived',
+								b.thunk(expression, true),
+								dev &&
+									b.literal(
+										`[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`
+									),
+								location ? b.literal(location) : undefined
+							);
+
+							call = should_save ? save(call) : b.await(call);
+						}
+
+						declarations.push(b.declarator(id, call));
 					}
 
-					for (let i = 0; i < bindings.length; i++) {
-						const binding = bindings[i];
+					const { inserts, paths } = extract_paths(declarator.id, rhs);
+
+					for (const { id, value } of inserts) {
+						id.name = context.state.scope.generate('$$array');
+						context.state.transform[id.name] = { read: get_value };
+
+						const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
+						let call = b.call('$.derived', expression);
+
+						if (dev) {
+							const label = `[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`;
+							call = b.call('$.tag', call, b.literal(label));
+						}
+
+						declarations.push(b.declarator(id, call));
+					}
+
+					for (const path of paths) {
+						const expression = /** @type {Expression} */ (context.visit(path.expression));
+						const call = b.call('$.derived', b.thunk(expression));
 						declarations.push(
-							b.declarator(binding.node, b.call('$.derived', b.thunk(binding.expression(rhs))))
+							b.declarator(
+								path.node,
+								dev
+									? b.call('$.tag', call, b.literal(/** @type {Identifier} */ (path.node).name))
+									: call
+							)
 						);
 					}
 				}
+
 				continue;
 			}
 		}
@@ -207,16 +298,6 @@ export function VariableDeclaration(node, context) {
 			const has_props = bindings.some((binding) => binding.kind === 'bindable_prop');
 
 			if (!has_state && !has_props) {
-				const init = declarator.init;
-
-				if (init != null && is_hoisted_function(init)) {
-					context.state.hoisted.push(
-						b.declaration('const', declarator.id, /** @type {Expression} */ (context.visit(init)))
-					);
-
-					continue;
-				}
-
 				declarations.push(/** @type {VariableDeclarator} */ (context.visit(declarator)));
 				continue;
 			}
@@ -224,21 +305,30 @@ export function VariableDeclaration(node, context) {
 			if (has_props) {
 				if (declarator.id.type !== 'Identifier') {
 					// Turn export let into props. It's really really weird because export let { x: foo, z: [bar]} = ..
-					// means that foo and bar are the props (i.e. the leafs are the prop names), not x and z.
-					const tmp = context.state.scope.generate('tmp');
-					const paths = extract_paths(declarator.id);
+					// means that foo and bar are the props (i.e. the leaves are the prop names), not x and z.
+					const tmp = b.id(context.state.scope.generate('tmp'));
+					const { inserts, paths } = extract_paths(declarator.id, tmp);
 
 					declarations.push(
 						b.declarator(
-							b.id(tmp),
+							tmp,
 							/** @type {Expression} */ (context.visit(/** @type {Expression} */ (declarator.init)))
 						)
 					);
 
+					for (const { id, value } of inserts) {
+						id.name = context.state.scope.generate('$$array');
+						context.state.transform[id.name] = { read: get_value };
+
+						const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
+						declarations.push(b.declarator(id, b.call('$.derived', expression)));
+					}
+
 					for (const path of paths) {
 						const name = /** @type {Identifier} */ (path.node).name;
 						const binding = /** @type {Binding} */ (context.state.scope.get(name));
-						const value = path.expression?.(b.id(tmp));
+						const value = /** @type {Expression} */ (context.visit(path.expression));
+
 						declarations.push(
 							b.declarator(
 								path.node,
@@ -272,7 +362,7 @@ export function VariableDeclaration(node, context) {
 			declarations.push(
 				...create_state_declarators(
 					declarator,
-					context.state.scope,
+					context,
 					/** @type {Expression} */ (declarator.init && context.visit(declarator.init))
 				)
 			);
@@ -290,26 +380,42 @@ export function VariableDeclaration(node, context) {
 }
 
 /**
- * Creates the output for a state declaration.
+ * Creates the output for a state declaration in legacy mode.
  * @param {VariableDeclarator} declarator
- * @param {Scope} scope
+ * @param {ComponentContext} context
  * @param {Expression} value
  */
-function create_state_declarators(declarator, scope, value) {
+function create_state_declarators(declarator, context, value) {
 	if (declarator.id.type === 'Identifier') {
-		return [b.declarator(declarator.id, b.call('$.mutable_source', value))];
+		return [
+			b.declarator(
+				declarator.id,
+				b.call('$.mutable_source', value, context.state.analysis.immutable ? b.true : undefined)
+			)
+		];
 	}
 
-	const tmp = scope.generate('tmp');
-	const paths = extract_paths(declarator.id);
+	const tmp = b.id(context.state.scope.generate('tmp'));
+	const { inserts, paths } = extract_paths(declarator.id, tmp);
+
 	return [
-		b.declarator(b.id(tmp), value),
+		b.declarator(tmp, value),
+		...inserts.map(({ id, value }) => {
+			id.name = context.state.scope.generate('$$array');
+			context.state.transform[id.name] = { read: get_value };
+
+			const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
+			return b.declarator(id, b.call('$.derived', expression));
+		}),
 		...paths.map((path) => {
-			const value = path.expression?.(b.id(tmp));
-			const binding = scope.get(/** @type {Identifier} */ (path.node).name);
+			const value = /** @type {Expression} */ (context.visit(path.expression));
+			const binding = context.state.scope.get(/** @type {Identifier} */ (path.node).name);
+
 			return b.declarator(
 				path.node,
-				binding?.kind === 'state' ? b.call('$.mutable_source', value) : value
+				binding?.kind === 'state'
+					? b.call('$.mutable_source', value, context.state.analysis.immutable ? b.true : undefined)
+					: value
 			);
 		})
 	];

@@ -18,7 +18,7 @@ export default test({
 			'<button>toggle</button><p style="opacity: 0;">delayed fade</p>'
 		);
 
-		raf.tick(99);
+		raf.tick(100);
 		assert.htmlEqual(
 			target.innerHTML,
 			'<button>toggle</button><p style="opacity: 0;">delayed fade</p>'
@@ -38,6 +38,8 @@ export default test({
 		flushSync();
 		raf.tick(275);
 		assert.htmlEqual(target.innerHTML, '<button>toggle</button><p style="">delayed fade</p>');
+
+		raf.tick(300);
 
 		raf.tick(350);
 		assert.htmlEqual(

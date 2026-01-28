@@ -1,15 +1,16 @@
 /** @import { Raf } from '#client' */
 import { noop } from '../shared/utils.js';
 
-const is_client = typeof window !== 'undefined';
+import { BROWSER } from 'esm-env';
 
-const request_animation_frame = is_client ? requestAnimationFrame : noop;
-
-const now = is_client ? () => performance.now() : () => Date.now();
+const now = BROWSER ? () => performance.now() : () => Date.now();
 
 /** @type {Raf} */
 export const raf = {
-	tick: /** @param {any} _ */ (_) => request_animation_frame(_),
+	// don't access requestAnimationFrame eagerly outside method
+	// this allows basic testing of user code without JSDOM
+	// bunder will eval and remove ternary when the user's app is built
+	tick: /** @param {any} _ */ (_) => (BROWSER ? requestAnimationFrame : noop)(_),
 	now: () => now(),
 	tasks: new Set()
 };

@@ -2,7 +2,7 @@
 	"css": null,
 	"js": [],
 	"start": 0,
-	"end": 27,
+	"end": 76,
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
@@ -20,8 +20,7 @@
 				"raw": "\n",
 				"data": "\n"
 			}
-		],
-		"transparent": false
+		]
 	},
 	"options": null,
 	"instance": {
@@ -35,12 +34,12 @@
 			"end": 67,
 			"loc": {
 				"start": {
-					"line": 1,
+					"line": 2,
 					"column": 0
 				},
 				"end": {
 					"line": 4,
-					"column": 0
+					"column": 9
 				}
 			},
 			"body": [
@@ -76,7 +75,7 @@
 							"id": {
 								"type": "Identifier",
 								"start": 52,
-								"end": 57,
+								"end": 65,
 								"loc": {
 									"start": {
 										"line": 3,
@@ -139,6 +138,18 @@
 				"start": 36,
 				"end": 45,
 				"name": "lang",
+				"name_loc": {
+					"start": {
+						"line": 2,
+						"column": 8,
+						"character": 36
+					},
+					"end": {
+						"line": 2,
+						"column": 12,
+						"character": 40
+					}
+				},
 				"value": [
 					{
 						"start": 42,

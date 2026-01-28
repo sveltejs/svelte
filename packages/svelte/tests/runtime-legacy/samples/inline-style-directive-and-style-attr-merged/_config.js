@@ -9,7 +9,7 @@ export default test({
 		const p = target.querySelector('p');
 		ok(p);
 		const styles = window.getComputedStyle(p);
-		assert.equal(styles.color, 'red');
+		assert.equal(styles.color, 'rgb(255, 0, 0)');
 		assert.equal(styles.height, '40px');
 	}
 });

@@ -1,6 +1,6 @@
 <svelte:options runes />
 
-<script context="module">
+<script module>
 	export const answer = 42;
 </script>
 

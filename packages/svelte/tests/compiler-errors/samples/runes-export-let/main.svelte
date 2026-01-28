@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
     export let bar = ''; // check that it doesn't error here already
 </script>
 

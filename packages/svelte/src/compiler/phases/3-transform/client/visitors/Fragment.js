@@ -1,23 +1,23 @@
-/** @import { Expression, Identifier, Statement } from 'estree' */
-/** @import { Fragment, Namespace, RegularElement } from '#compiler' */
-/** @import { SourceLocation } from '#shared' */
+/** @import { Expression, Statement } from 'estree' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
+import * as b from '#compiler/builders';
 import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../../../constants.js';
-import { dev } from '../../../../state.js';
-import * as b from '../../../../utils/builders.js';
 import { clean_nodes, infer_namespace } from '../../utils.js';
+import { transform_template } from '../transform-template/index.js';
+import { Template } from '../transform-template/template.js';
 import { process_children } from './shared/fragment.js';
-import { build_render_statement } from './shared/utils.js';
+import { build_render_statement, Memoizer } from './shared/utils.js';
 
 /**
- * @param {Fragment} node
+ * @param {AST.Fragment} node
  * @param {ComponentContext} context
  */
 export function Fragment(node, context) {
 	// Creates a new block which looks roughly like this:
 	// ```js
 	// // hoisted:
-	// const block_name = $.template(`...`);
+	// const block_name = $.from_html(`...`);
 	//
 	// // for the main block:
 	// const id = block_name();
@@ -48,7 +48,6 @@ export function Fragment(node, context) {
 	const is_single_child_not_needing_template =
 		trimmed.length === 1 &&
 		(trimmed[0].type === 'SvelteFragment' || trimmed[0].type === 'TitleElement');
-
 	const template_name = context.state.scope.root.unique('root'); // TODO infer name from parent
 
 	/** @type {Statement[]} */
@@ -60,74 +59,49 @@ export function Fragment(node, context) {
 	/** @type {ComponentClientTransformState} */
 	const state = {
 		...context.state,
-		before_init: [],
 		init: [],
+		snippets: [],
+		consts: [],
+		let_directives: [],
 		update: [],
 		after_update: [],
-		template: [],
-		locations: [],
-		getters: { ...context.state.getters },
+		memoizer: new Memoizer(),
+		template: new Template(),
+		transform: { ...context.state.transform },
 		metadata: {
-			context: {
-				template_needs_import_node: false,
-				template_contains_script_tag: false
-			},
 			namespace,
 			bound_contenteditable: context.state.metadata.bound_contenteditable
-		}
+		},
+		async_consts: undefined
 	};
 
 	for (const node of hoisted) {
 		context.visit(node, state);
 	}
 
-	if (is_text_first) {
-		// skip over inserted comment
-		body.push(b.stmt(b.call('$.next')));
-	}
-
-	/**
-	 * @param {Identifier} template_name
-	 * @param {Expression[]} args
-	 */
-	const add_template = (template_name, args) => {
-		let call = b.call(get_template_function(namespace, state), ...args);
-		if (dev) {
-			call = b.call(
-				'$.add_locations',
-				call,
-				b.member(b.id(context.state.analysis.name), b.id('$.FILENAME'), true),
-				build_locations(state.locations)
-			);
-		}
-
-		context.state.hoisted.push(b.var(template_name, call));
-	};
-
 	if (is_single_element) {
-		const element = /** @type {RegularElement} */ (trimmed[0]);
+		const element = /** @type {AST.RegularElement} */ (trimmed[0]);
 
-		const id = b.id(context.state.scope.generate(element.name));
+		const id = b.id(context.state.scope.generate(element.name), element.name_loc);
 
 		context.visit(element, {
 			...state,
 			node: id
 		});
 
-		/** @type {Expression[]} */
-		const args = [b.template([b.quasi(state.template.join(''), true)], [])];
+		let flags = state.template.needs_import_node ? TEMPLATE_USE_IMPORT_NODE : undefined;
 
-		if (state.metadata.context.template_needs_import_node) {
-			args.push(b.literal(TEMPLATE_USE_IMPORT_NODE));
-		}
+		const template = transform_template(state, namespace, flags);
+		state.hoisted.push(b.var(template_name, template));
 
-		add_template(template_name, args);
-
-		body.push(b.var(id, b.call(template_name)), ...state.before_init, ...state.init);
+		state.init.unshift(b.var(id, b.call(template_name)));
 		close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 	} else if (is_single_child_not_needing_template) {
 		context.visit(trimmed[0], state);
-		body.push(...state.before_init, ...state.init);
+	} else if (trimmed.length === 1 && trimmed[0].type === 'Text') {
+		const id = b.id(context.state.scope.generate('text'));
+		state.init.unshift(b.var(id, b.call('$.text', b.literal(trimmed[0].data))));
+		close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 	} else if (trimmed.length > 0) {
 		const id = b.id(context.state.scope.generate('fragment'));
 
@@ -144,7 +118,7 @@ export function Fragment(node, context) {
 				state
 			});
 
-			body.push(b.var(id, b.call('$.text')), ...state.before_init, ...state.init);
+			state.init.unshift(b.var(id, b.call('$.text')));
 			close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 		} else {
 			if (is_standalone) {
@@ -158,33 +132,40 @@ export function Fragment(node, context) {
 
 				let flags = TEMPLATE_FRAGMENT;
 
-				if (state.metadata.context.template_needs_import_node) {
+				if (state.template.needs_import_node) {
 					flags |= TEMPLATE_USE_IMPORT_NODE;
 				}
 
-				if (state.template.length === 1 && state.template[0] === '<!>') {
+				if (state.template.nodes.length === 1 && state.template.nodes[0].type === 'comment') {
 					// special case — we can use `$.comment` instead of creating a unique template
-					body.push(b.var(id, b.call('$.comment')));
+					state.init.unshift(b.var(id, b.call('$.comment')));
 				} else {
-					add_template(template_name, [
-						b.template([b.quasi(state.template.join(''), true)], []),
-						b.literal(flags)
-					]);
+					const template = transform_template(state, namespace, flags);
+					state.hoisted.push(b.var(template_name, template));
 
-					body.push(b.var(id, b.call(template_name)));
+					state.init.unshift(b.var(id, b.call(template_name)));
 				}
 
 				close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 			}
-
-			body.push(...state.before_init, ...state.init);
 		}
-	} else {
-		body.push(...state.before_init, ...state.init);
 	}
 
+	body.push(...state.snippets, ...state.let_directives, ...state.consts);
+
+	if (state.async_consts && state.async_consts.thunks.length > 0) {
+		body.push(b.var(state.async_consts.id, b.call('$.run', b.array(state.async_consts.thunks))));
+	}
+
+	if (is_text_first) {
+		// skip over inserted comment
+		body.push(b.stmt(b.call('$.next')));
+	}
+
+	body.push(...state.init);
+
 	if (state.update.length > 0) {
-		body.push(build_render_statement(state.update));
+		body.push(build_render_statement(state));
 	}
 
 	body.push(...state.after_update);
@@ -197,40 +178,4 @@ export function Fragment(node, context) {
 	}
 
 	return b.block(body);
-}
-
-/**
- *
- * @param {Namespace} namespace
- * @param {ComponentClientTransformState} state
- * @returns
- */
-function get_template_function(namespace, state) {
-	const contains_script_tag = state.metadata.context.template_contains_script_tag;
-	return namespace === 'svg'
-		? contains_script_tag
-			? '$.svg_template_with_script'
-			: '$.ns_template'
-		: namespace === 'mathml'
-			? '$.mathml_template'
-			: contains_script_tag
-				? '$.template_with_script'
-				: '$.template';
-}
-
-/**
- * @param {SourceLocation[]} locations
- */
-function build_locations(locations) {
-	return b.array(
-		locations.map((loc) => {
-			const expression = b.array([b.literal(loc[0]), b.literal(loc[1])]);
-
-			if (loc.length === 3) {
-				expression.elements.push(build_locations(loc[2]));
-			}
-
-			return expression;
-		})
-	);
 }

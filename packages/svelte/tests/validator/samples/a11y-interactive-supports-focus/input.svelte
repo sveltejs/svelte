@@ -3,7 +3,7 @@
 <div aria-disabled="true" role="button" on:keypress={() => {}}></div>
 <div disabled role="button" on:keypress={() => {}}></div>
 <div role="presentation" on:keypress={() => {}}></div>
-<button on:click={() => {}}></button>
+<button on:click={() => {}}>click me</button>
 <div role="menuitem" tabindex="0" on:click={() => {}} on:keypress={() => {}}></div>
 <div role="button" tabindex="-1" on:click={() => {}} on:keypress={() => {}}></div>
 

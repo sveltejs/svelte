@@ -12,8 +12,8 @@ export default function fuzzymatch(name, names) {
 	return matches && matches[0][0] > 0.7 ? matches[0][1] : null;
 }
 
-// adapted from https://github.com/Glench/fuzzyset.js/blob/master/lib/fuzzyset.js
-// BSD Licensed
+// adapted from https://github.com/Glench/fuzzyset.js/blob/master/lib/fuzzyset.js in 2016
+// BSD Licensed (see https://github.com/Glench/fuzzyset.js/issues/10)
 
 const GRAM_SIZE_LOWER = 2;
 const GRAM_SIZE_UPPER = 3;

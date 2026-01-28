@@ -1,5 +1,5 @@
 import { hydrating } from '../hydration.js';
-import { clear_text_content } from '../operations.js';
+import { clear_text_content, get_first_child } from '../operations.js';
 import { queue_micro_task } from '../task.js';
 
 /**
@@ -27,7 +27,7 @@ export function autofocus(dom, value) {
  * @returns {void}
  */
 export function remove_textarea_child(dom) {
-	if (hydrating && dom.firstChild !== null) {
+	if (hydrating && get_first_child(dom) !== null) {
 		clear_text_content(dom);
 	}
 }
@@ -51,7 +51,7 @@ export function add_form_reset_listener() {
 					}
 				});
 			},
-			// In the capture phase to guarantee we get noticed of it (no possiblity of stopPropagation)
+			// In the capture phase to guarantee we get noticed of it (no possibility of stopPropagation)
 			{ capture: true }
 		);
 	}

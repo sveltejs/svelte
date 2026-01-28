@@ -78,9 +78,9 @@ var resize_observer_device_pixel_content_box = /* @__PURE__ */ new ResizeObserve
 /**
  * @param {Element} element
  * @param {'contentRect' | 'contentBoxSize' | 'borderBoxSize' | 'devicePixelContentBoxSize'} type
- * @param {(entry: keyof ResizeObserverEntry) => void} update
+ * @param {(entry: keyof ResizeObserverEntry) => void} set
  */
-export function bind_resize_observer(element, type, update) {
+export function bind_resize_observer(element, type, set) {
 	var observer =
 		type === 'contentRect' || type === 'contentBoxSize'
 			? resize_observer_content_box
@@ -88,21 +88,21 @@ export function bind_resize_observer(element, type, update) {
 				? resize_observer_border_box
 				: resize_observer_device_pixel_content_box;
 
-	var unsub = observer.observe(element, /** @param {any} entry */ (entry) => update(entry[type]));
+	var unsub = observer.observe(element, /** @param {any} entry */ (entry) => set(entry[type]));
 	teardown(unsub);
 }
 
 /**
  * @param {HTMLElement} element
  * @param {'clientWidth' | 'clientHeight' | 'offsetWidth' | 'offsetHeight'} type
- * @param {(size: number) => void} update
+ * @param {(size: number) => void} set
  */
-export function bind_element_size(element, type, update) {
-	var unsub = resize_observer_border_box.observe(element, () => update(element[type]));
+export function bind_element_size(element, type, set) {
+	var unsub = resize_observer_border_box.observe(element, () => set(element[type]));
 
 	effect(() => {
 		// The update could contain reads which should be ignored
-		untrack(() => update(element[type]));
+		untrack(() => set(element[type]));
 		return unsub;
 	});
 }

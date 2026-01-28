@@ -1,0 +1,195 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 102,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "IfBlock",
+				"elseif": false,
+				"start": 0,
+				"end": 33,
+				"test": {
+					"type": "Identifier",
+					"start": 5,
+					"end": 5,
+					"name": ""
+				},
+				"consequent": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 6,
+							"end": 7,
+							"raw": "\n",
+							"data": "\n"
+						}
+					]
+				},
+				"alternate": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"start": 7,
+							"end": 33,
+							"type": "IfBlock",
+							"elseif": true,
+							"test": {
+								"type": "Identifier",
+								"start": 17,
+								"end": 17,
+								"name": ""
+							},
+							"consequent": {
+								"type": "Fragment",
+								"nodes": [
+									{
+										"type": "Text",
+										"start": 18,
+										"end": 19,
+										"raw": "\n",
+										"data": "\n"
+									}
+								]
+							},
+							"alternate": {
+								"type": "Fragment",
+								"nodes": [
+									{
+										"type": "Text",
+										"start": 27,
+										"end": 28,
+										"raw": "\n",
+										"data": "\n"
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"type": "Text",
+				"start": 33,
+				"end": 35,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "EachBlock",
+				"start": 35,
+				"end": 51,
+				"expression": {
+					"type": "Identifier",
+					"start": 42,
+					"end": 42,
+					"name": ""
+				},
+				"body": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 43,
+							"end": 44,
+							"raw": "\n",
+							"data": "\n"
+						}
+					]
+				},
+				"context": null
+			},
+			{
+				"type": "Text",
+				"start": 51,
+				"end": 53,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "SnippetBlock",
+				"start": 53,
+				"end": 75,
+				"expression": {
+					"type": "Identifier",
+					"name": "",
+					"start": 63,
+					"end": 63,
+					"loc": {
+						"start": {
+							"line": 9,
+							"column": 10,
+							"character": 63
+						},
+						"end": {
+							"line": 9,
+							"column": 10,
+							"character": 63
+						}
+					}
+				},
+				"parameters": [],
+				"body": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 64,
+							"end": 65,
+							"raw": "\n",
+							"data": "\n"
+						}
+					]
+				}
+			},
+			{
+				"type": "Text",
+				"start": 75,
+				"end": 77,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "SnippetBlock",
+				"start": 77,
+				"end": 102,
+				"expression": {
+					"type": "Identifier",
+					"name": "foo",
+					"start": 87,
+					"end": 90,
+					"loc": {
+						"start": {
+							"line": 12,
+							"column": 10,
+							"character": 87
+						},
+						"end": {
+							"line": 12,
+							"column": 13,
+							"character": 90
+						}
+					}
+				},
+				"parameters": [],
+				"body": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 91,
+							"end": 92,
+							"raw": "\n",
+							"data": "\n"
+						}
+					]
+				}
+			}
+		]
+	},
+	"options": null
+}
