@@ -632,7 +632,7 @@ export function get(signal) {
 
 		var is_new = derived.deps === null;
 
-		if (is_dirty(derived) || value === UNINITIALIZED) {
+		if (is_dirty(derived)) {
 			if (should_connect) {
 				// set the flag before `update_derived`, so that the derived
 				// is added as a reaction to its dependencies
