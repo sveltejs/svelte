@@ -39,10 +39,14 @@ function is_local_directory(arg) {
 // Check if it's a local directory first (before URL parsing)
 const is_local = is_local_directory(url_arg);
 
+const resolved_test_path = ['runtime-runes', 'runtime-legacy']
+	.map((d) => path.resolve(`${base_dir}/../../../packages/svelte/tests/${d}/samples/${url_arg}`))
+	.find(fs.existsSync);
+
 /** @type {URL | null} */
 let url = null;
 
-if (!is_local) {
+if (!is_local && !resolved_test_path) {
 	try {
 		url = new URL(url_arg);
 	} catch (e) {
@@ -599,6 +603,17 @@ let files;
 if (is_local) {
 	console.log(`Processing local directory: ${url_arg}`);
 	files = process_directory(url_arg);
+} else if (resolved_test_path) {
+	// Copy files from test
+	console.log(`Processing test ${url_arg}`);
+	files = get_all_files(resolved_test_path)
+		.filter((file) => !file.path.includes('_'))
+		.map((file) => {
+			return {
+				name: file.name === 'main.svelte' ? 'App.svelte' : file.name,
+				contents: file.contents
+			};
+		});
 } else if (url && is_github_url(url)) {
 	// GitHub repository handling
 	await with_tmp_dir(base_dir, (tmp_dir) => {
