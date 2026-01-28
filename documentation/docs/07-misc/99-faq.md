@@ -91,7 +91,7 @@ Some resources for getting started with testing:
 
 ## Is there a router?
 
-The official routing library is [SvelteKit](/docs/kit). SvelteKit provides a filesystem router, server-side rendering (SSR), and hot module reloading (HMR) in one easy-to-use package. It shares similarities with Next.js for React and Nuxt.js for Vue.
+The official routing library is [SvelteKit](/docs/kit). SvelteKit provides a filesystem router, server-side rendering (SSR), and hot module reloading (HMR) in one easy-to-use package. It shares similarities with Next.js for React and Nuxt.js for Vue. SvelteKit also supports hash-based routing for client-side applications.
 
 However, you can use any router library. A sampling of available routers are highlighted [on the packages page](/packages#routing).
 
