@@ -110,8 +110,6 @@ export class Batch {
 	 */
 	#blocking_pending = 0;
 
-	#decrement_queued = false;
-
 	/**
 	 * A deferred that resolves when the batch is committed, used with `settled()`
 	 * TODO replace with Promise.withResolvers once supported widely enough
@@ -139,6 +137,8 @@ export class Batch {
 	skipped_effects = new Set();
 
 	is_fork = false;
+
+	#decrement_queued = false;
 
 	is_deferred() {
 		return this.is_fork || this.#blocking_pending > 0;
