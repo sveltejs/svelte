@@ -605,10 +605,9 @@ export function get(signal) {
 
 	if (is_derived) {
 		var derived = /** @type {Derived} */ (signal);
+		var value = derived.v;
 
 		if (is_destroying_effect) {
-			var value = derived.v;
-
 			// if the derived is dirty and has reactions, or depends on the values that just changed, re-execute
 			// (a derived can be maybe_dirty due to the effect destroy removing its last reaction)
 			if (
@@ -633,7 +632,7 @@ export function get(signal) {
 
 		var is_new = derived.deps === null;
 
-		if (is_dirty(derived)) {
+		if (is_dirty(derived) || value === UNINITIALIZED) {
 			if (should_connect) {
 				// set the flag before `update_derived`, so that the derived
 				// is added as a reaction to its dependencies
