@@ -70,6 +70,21 @@ export function store_get(store, store_name, stores) {
 		return get_store(store);
 	}
 
+	// If the store is subscribed and we're reading $value inside a manual subscription callback,
+	// ensure the source reflects the current store value. This fixes the case where
+	// store.subscribe((newValue) => console.log(newValue, $value)) - $value should be up to date.
+	// We check the store's current value and sync it to the source if it differs, ensuring
+	// $value is always current even if read during a manual subscription callback.
+	if (store && entry.store === store && entry.unsubscribe !== noop) {
+		const current_store_value = get_store(store);
+		const current_source_value = entry.source.v;
+		// Update source if store value differs (handles case where manual subscription
+		// callback runs before auto-subscription callback updates the source)
+		if (current_store_value !== current_source_value) {
+			entry.source.v = current_store_value;
+		}
+	}
+
 	return get(entry.source);
 }
 
