@@ -824,11 +824,9 @@ function has_content(element) {
 		}
 
 		if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
-			// FIX START: Ignore elements with the popover attribute
 			if (node.attributes.some((a) => a.type === 'Attribute' && a.name === 'popover')) {
 				continue;
 			}
-			// FIX END
 
 			if (
 				node.name === 'img' &&
