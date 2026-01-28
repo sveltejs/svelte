@@ -15,10 +15,8 @@
 
 <button onclick={() => show = !show}>toggle</button>
 
-<!-- load bearing button! need something in template that updates clicks or else it gest optimized away -->
 <button onclick={() => clicks++}>clicks: {clicks}</button>
 
-<!-- only read derived during fork -->
 {#if show}
 	<p>{derived}</p>
 {/if}
