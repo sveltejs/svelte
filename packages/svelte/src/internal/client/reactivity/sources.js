@@ -358,7 +358,7 @@ function mark_reactions(signal, status) {
 
 				mark_reactions(derived, MAYBE_DIRTY);
 			}
-		} else {
+		} else if (not_dirty) {
 			if ((flags & BLOCK_EFFECT) !== 0 && eager_block_effects !== null) {
 				eager_block_effects.add(/** @type {Effect} */ (reaction));
 			}

@@ -173,7 +173,7 @@ export class Batch {
 			this.#defer_effects(effects);
 
 			for (const e of this.skipped_effects) {
-				clear_branch(e);
+				reset_branch(e);
 			}
 		} else {
 			// append/remove branches
@@ -886,17 +886,21 @@ export function eager(fn) {
 }
 
 /**
+ * Mark all the effects inside a skipped branch CLEAN, so that
+ * they can be correctly rescheduled later
  * @param {Effect} effect
  */
-function clear_branch(effect) {
-	if ((effect.f & BRANCH_EFFECT) !== 0) {
-		if ((effect.f & CLEAN) !== 0) return;
-		set_signal_status(effect, CLEAN);
+function reset_branch(effect) {
+	// clean branch = nothing dirty inside, no need to traverse further
+	if ((effect.f & BRANCH_EFFECT) !== 0 && (effect.f & CLEAN) !== 0) {
+		return;
 	}
 
-	let e = effect.first;
+	set_signal_status(effect, CLEAN);
+
+	var e = effect.first;
 	while (e !== null) {
-		clear_branch(e);
+		reset_branch(e);
 		e = e.next;
 	}
 }
