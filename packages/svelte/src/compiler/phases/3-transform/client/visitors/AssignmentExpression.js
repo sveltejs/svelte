@@ -162,7 +162,10 @@ function build_assignment(operator, left, right, context) {
 	// will be pushed to. we do this by transforming it to something like
 	// `$.assign_nullish(object, 'items', [])`
 	let should_transform =
-		dev && path.at(-1) !== 'ExpressionStatement' && is_non_coercive_operator(operator);
+		dev &&
+		path.at(-1) !== 'ExpressionStatement' &&
+		is_non_coercive_operator(operator) &&
+		!context.state.scope.evaluate(right).is_primitive;
 
 	// special case — ignore `onclick={() => (...)}`
 	if (

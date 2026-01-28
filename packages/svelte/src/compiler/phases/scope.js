@@ -229,6 +229,13 @@ class Evaluation {
 	is_number = true;
 
 	/**
+	 * True if the value is known to be a primitive
+	 * @readonly
+	 * @type {boolean}
+	 */
+	is_primitive = true;
+
+	/**
 	 * True if the value is known to be a function
 	 * @readonly
 	 * @type {boolean}
@@ -577,6 +584,7 @@ class Evaluation {
 
 			if (value === UNKNOWN) {
 				this.has_unknown = true;
+				this.is_primitive = false;
 			}
 		}
 
