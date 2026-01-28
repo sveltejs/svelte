@@ -3345,6 +3345,9 @@ declare namespace $state {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -3402,6 +3405,9 @@ declare namespace $derived {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -3518,6 +3524,9 @@ declare namespace $effect {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -3561,6 +3570,9 @@ declare namespace $props {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -3595,6 +3607,9 @@ declare namespace $bindable {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -3657,6 +3672,9 @@ declare namespace $inspect {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 /**
@@ -3701,6 +3719,9 @@ declare namespace $host {
 	export const prototype: never;
 	/** @deprecated */
 	export const toString: never;
+
+	// needed to keep private stuff private
+	export {};
 }
 
 //# sourceMappingURL=index.d.ts.map
