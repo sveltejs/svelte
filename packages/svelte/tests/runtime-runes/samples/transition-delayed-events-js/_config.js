@@ -27,6 +27,6 @@ export default test({
 		assert.deepEqual(logs, ['introstart', 'introend', 'outrostart']);
 
 		raf.tick(400);
-		assert.deepEqual(logs, ['introstart', 'introend', 'outroend']);
+		assert.deepEqual(logs, ['introstart', 'introend', 'outrostart', 'outroend']);
 	}
 });
