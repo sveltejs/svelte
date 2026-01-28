@@ -31,7 +31,8 @@ export function store_get(store, store_name, stores) {
 	const entry = (stores[store_name] ??= {
 		store: null,
 		source: mutable_source(undefined),
-		unsubscribe: noop
+		unsubscribe: noop,
+		last_value: undefined
 	});
 
 	if (DEV) {
@@ -46,10 +47,12 @@ export function store_get(store, store_name, stores) {
 		if (store == null) {
 			entry.source.v = undefined; // see synchronous callback comment below
 			entry.unsubscribe = noop;
+			entry.last_value = undefined;
 		} else {
 			var is_synchronous_callback = true;
 
 			entry.unsubscribe = subscribe_to_store(store, (v) => {
+				entry.last_value = v; // Track last value seen in subscription callback
 				if (is_synchronous_callback) {
 					// If the first updates to the store value (possibly multiple of them) are synchronously
 					// inside a derived, we will hit the `state_unsafe_mutation` error if we `set` the value
@@ -73,16 +76,18 @@ export function store_get(store, store_name, stores) {
 	// If the store is subscribed and we're reading $value inside a manual subscription callback,
 	// ensure the source reflects the current store value. This fixes the case where
 	// store.subscribe((newValue) => console.log(newValue, $value)) - $value should be up to date.
-	// We check the store's current value and sync it to the source if it differs, ensuring
-	// $value is always current even if read during a manual subscription callback.
-	if (store && entry.store === store && entry.unsubscribe !== noop) {
-		const current_store_value = get_store(store);
-		const current_source_value = entry.source.v;
-		// Update source if store value differs (handles case where manual subscription
-		// callback runs before auto-subscription callback updates the source)
-		if (current_store_value !== current_source_value) {
-			entry.source.v = current_store_value;
-		}
+	// We use the last_value tracked by the subscription callback to sync without creating
+	// additional subscriptions that could interfere with async stores.
+	if (
+		store &&
+		entry.store === store &&
+		entry.unsubscribe !== noop &&
+		entry.last_value !== undefined &&
+		entry.last_value !== entry.source.v
+	) {
+		// Sync source with last value seen in subscription callback
+		// This ensures $value is current when read during manual subscription callbacks
+		entry.source.v = entry.last_value;
 	}
 
 	return get(entry.source);
