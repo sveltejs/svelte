@@ -363,7 +363,7 @@ export function update_derived(derived) {
 		// the underlying value will be updated when the fork is committed.
 		// otherwise, the next time we get here after a 'real world' state
 		// change, `derived.equals` may incorrectly return `true`
-		if (!current_batch?.is_fork || derived.v === UNINITIALIZED) {
+		if (!current_batch?.is_fork || derived.deps === null) {
 			derived.v = value;
 
 			// deriveds without dependencies should never be recomputed
