@@ -239,8 +239,6 @@ export function transition(flags, element, get_fn, get_params) {
 				intro?.abort();
 			}
 
-			dispatch_event(element, 'introstart');
-
 			intro = animate(element, get_options(), outro, 1, () => {
 				dispatch_event(element, 'introend');
 
@@ -249,6 +247,9 @@ export function transition(flags, element, get_fn, get_params) {
 				intro = current_options = undefined;
 
 				element.style.overflow = overflow;
+			}, () => {
+				// Dispatch introstart after delay, if any
+				dispatch_event(element, 'introstart');
 			});
 		},
 		out(fn) {
@@ -311,9 +312,10 @@ export function transition(flags, element, get_fn, get_params) {
  * @param {Animation | undefined} counterpart The corresponding intro/outro to this outro/intro
  * @param {number} t2 The target `t` value — `1` for intro, `0` for outro
  * @param {(() => void)} on_finish Called after successfully completing the animation
+ * @param {(() => void)} [on_start] Called when the animation actually starts (after delay, for intro)
  * @returns {Animation}
  */
-function animate(element, options, counterpart, t2, on_finish) {
+function animate(element, options, counterpart, t2, on_finish, on_start) {
 	var is_intro = t2 === 1;
 
 	if (is_function(options)) {
@@ -327,7 +329,7 @@ function animate(element, options, counterpart, t2, on_finish) {
 		queue_micro_task(() => {
 			if (aborted) return;
 			var o = options({ direction: is_intro ? 'in' : 'out' });
-			a = animate(element, o, counterpart, t2, on_finish);
+			a = animate(element, o, counterpart, t2, on_finish, on_start);
 		});
 
 		// ...but we want to do so without using `async`/`await` everywhere, so
@@ -346,6 +348,26 @@ function animate(element, options, counterpart, t2, on_finish) {
 	counterpart?.deactivate();
 
 	if (!options?.duration) {
+		// If there's no duration but we have a delay, still respect the delay for introstart
+		if (is_intro && options?.delay && options.delay > 0) {
+			var delay_animation = element.animate([], { duration: options.delay });
+			delay_animation.onfinish = () => {
+				delay_animation.cancel();
+				if (on_start) on_start();
+				on_finish();
+			};
+			return {
+				abort: () => {
+					delay_animation.cancel();
+				},
+				deactivate: noop,
+				reset: noop,
+				t: () => t2
+			};
+		}
+		if (is_intro && on_start) {
+			on_start();
+		}
 		on_finish();
 
 		return {
@@ -384,6 +406,11 @@ function animate(element, options, counterpart, t2, on_finish) {
 	animation.onfinish = () => {
 		// remove dummy animation from the stack to prevent conflict with main animation
 		animation.cancel();
+
+		// Dispatch introstart event after delay (if any) for intro transitions
+		if (is_intro && on_start) {
+			on_start();
+		}
 
 		// for bidirectional transitions, we start from the current position,
 		// rather than doing a full intro/outro
