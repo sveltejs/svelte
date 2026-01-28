@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: always update an UNINITIALIZED derived on read
+fix: increment signal versions when discarding forks
