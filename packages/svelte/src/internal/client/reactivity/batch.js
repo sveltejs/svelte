@@ -171,6 +171,10 @@ export class Batch {
 		if (this.is_deferred()) {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
+
+			for (const e of this.skipped_effects) {
+				clear_branch(e);
+			}
 		} else {
 			// append/remove branches
 			for (const fn of this.#commit_callbacks) fn();
@@ -933,10 +937,6 @@ export function fork(fn) {
 	var settled = batch.settled();
 
 	flushSync(fn);
-
-	for (const e of batch.skipped_effects) {
-		clear_branch(e);
-	}
 
 	// revert state changes
 	for (var [source, value] of batch.previous) {
