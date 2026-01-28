@@ -119,6 +119,7 @@
 					"type": "Identifier",
 					"name": "f",
 					"start": 97,
+					"end": 98,
 					"loc": {
 						"start": {
 							"line": 13,
@@ -130,8 +131,7 @@
 							"column": 8,
 							"character": 98
 						}
-					},
-					"end": 98
+					}
 				},
 				"error": null,
 				"pending": {
@@ -219,6 +219,7 @@
 					"type": "Identifier",
 					"name": "f",
 					"start": 137,
+					"end": 138,
 					"loc": {
 						"start": {
 							"line": 18,
@@ -230,8 +231,7 @@
 							"column": 8,
 							"character": 138
 						}
-					},
-					"end": 138
+					}
 				},
 				"error": null,
 				"pending": {

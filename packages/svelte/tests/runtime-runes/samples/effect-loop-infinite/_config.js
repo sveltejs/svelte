@@ -14,7 +14,7 @@ export default test({
 		try {
 			flushSync(() => button.click());
 		} catch (e) {
-			assert.equal(errors.length, 1); // for whatever reason we can't get the name which should be UpdatedAtError
+			assert.equal(errors.length, 1); // for whatever reason we can't get the name which should be 'updated at'
 			assert.ok(/** @type {Error} */ (e).message.startsWith('effect_update_depth_exceeded'));
 		}
 	}

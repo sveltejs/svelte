@@ -22,7 +22,10 @@ export function validate_assignment(node, argument, context) {
 		const binding = context.state.scope.get(argument.name);
 
 		if (context.state.analysis.runes) {
-			if (binding?.node === context.state.analysis.props_id) {
+			if (
+				context.state.analysis.props_id != null &&
+				binding?.node === context.state.analysis.props_id
+			) {
 				e.constant_assignment(node, '$props.id()');
 			}
 

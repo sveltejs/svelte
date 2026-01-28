@@ -7,7 +7,6 @@ import * as b from '#compiler/builders';
 import * as assert from '../../../../utils/assert.js';
 import { get_rune } from '../../../scope.js';
 import { get_prop_source, is_prop_source, is_state_source, should_proxy } from '../utils.js';
-import { is_hoisted_function } from '../../utils.js';
 import { get_value } from './shared/declarations.js';
 
 /**
@@ -32,13 +31,6 @@ export function VariableDeclaration(node, context) {
 				rune === '$state.snapshot' ||
 				rune === '$host'
 			) {
-				if (init != null && is_hoisted_function(init)) {
-					context.state.hoisted.push(
-						b.const(declarator.id, /** @type {Expression} */ (context.visit(init)))
-					);
-
-					continue;
-				}
 				declarations.push(/** @type {VariableDeclarator} */ (context.visit(declarator)));
 				continue;
 			}
@@ -144,7 +136,8 @@ export function VariableDeclaration(node, context) {
 					}
 
 					if (is_state) {
-						value = b.call('$.state', value);
+						const callee = b.id('$.state', /** @type {CallExpression} */ (init).callee.loc);
+						value = b.call(callee, value);
 
 						if (dev) {
 							value = b.call('$.tag', value, b.literal(id.name));
@@ -201,19 +194,26 @@ export function VariableDeclaration(node, context) {
 					/** @type {CallExpression} */ (init)
 				);
 
+				// for now, only wrap async derived in $.save if it's not
+				// a top-level instance derived. TODO in future maybe we
+				// can dewaterfall all of them?
+				const should_save = context.state.is_instance && context.state.scope.function_depth > 1;
+
 				if (declarator.id.type === 'Identifier') {
 					let expression = /** @type {Expression} */ (context.visit(value));
 
 					if (is_async) {
 						const location = dev && !is_ignored(init, 'await_waterfall') && locate_node(init);
+
+						/** @type {Expression} */
 						let call = b.call(
 							'$.async_derived',
 							b.thunk(expression, true),
+							dev && b.literal(declarator.id.name),
 							location ? b.literal(location) : undefined
 						);
 
-						call = save(call);
-						if (dev) call = b.call('$.tag', call, b.literal(declarator.id.name));
+						call = should_save ? save(call) : b.await(call);
 
 						declarations.push(b.declarator(declarator.id, call));
 					} else {
@@ -232,23 +232,26 @@ export function VariableDeclaration(node, context) {
 
 					if (rune !== '$derived' || init.arguments[0].type !== 'Identifier') {
 						const id = b.id(context.state.scope.generate('$$d'));
+
+						/** @type {Expression} */
 						let call = b.call('$.derived', rune === '$derived' ? b.thunk(expression) : expression);
 
 						rhs = b.call('$.get', id);
 
 						if (is_async) {
 							const location = dev && !is_ignored(init, 'await_waterfall') && locate_node(init);
+
 							call = b.call(
 								'$.async_derived',
 								b.thunk(expression, true),
+								dev &&
+									b.literal(
+										`[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`
+									),
 								location ? b.literal(location) : undefined
 							);
-							call = save(call);
-						}
 
-						if (dev) {
-							const label = `[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`;
-							call = b.call('$.tag', call, b.literal(label));
+							call = should_save ? save(call) : b.await(call);
 						}
 
 						declarations.push(b.declarator(id, call));
@@ -295,16 +298,6 @@ export function VariableDeclaration(node, context) {
 			const has_props = bindings.some((binding) => binding.kind === 'bindable_prop');
 
 			if (!has_state && !has_props) {
-				const init = declarator.init;
-
-				if (init != null && is_hoisted_function(init)) {
-					context.state.hoisted.push(
-						b.const(declarator.id, /** @type {Expression} */ (context.visit(init)))
-					);
-
-					continue;
-				}
-
 				declarations.push(/** @type {VariableDeclarator} */ (context.visit(declarator)));
 				continue;
 			}
@@ -312,7 +305,7 @@ export function VariableDeclaration(node, context) {
 			if (has_props) {
 				if (declarator.id.type !== 'Identifier') {
 					// Turn export let into props. It's really really weird because export let { x: foo, z: [bar]} = ..
-					// means that foo and bar are the props (i.e. the leafs are the prop names), not x and z.
+					// means that foo and bar are the props (i.e. the leaves are the prop names), not x and z.
 					const tmp = b.id(context.state.scope.generate('tmp'));
 					const { inserts, paths } = extract_paths(declarator.id, tmp);
 

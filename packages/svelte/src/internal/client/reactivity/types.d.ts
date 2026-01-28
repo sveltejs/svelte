@@ -1,4 +1,5 @@
 import type {
+	AnimationManager,
 	ComponentContext,
 	DevStackEntry,
 	Equals,
@@ -60,6 +61,15 @@ export interface Derived<V = unknown> extends Value<V>, Reaction {
 	parent: Effect | Derived | null;
 }
 
+export interface EffectNodes {
+	start: TemplateNode;
+	end: TemplateNode | null;
+	/** $.animation */
+	a: AnimationManager | null;
+	/** $.transition */
+	t: TransitionManager[] | null;
+}
+
 export interface Effect extends Reaction {
 	/**
 	 * Branch effects store their start/end nodes so that they can be
@@ -67,14 +77,11 @@ export interface Effect extends Reaction {
 	 * block is reconciled. In the case of a single text/element node,
 	 * `start` and `end` will be the same.
 	 */
-	nodes_start: null | TemplateNode;
-	nodes_end: null | TemplateNode;
+	nodes: null | EffectNodes;
 	/** The effect function */
 	fn: null | (() => void | (() => void));
 	/** The teardown function returned from the effect function */
 	teardown: null | (() => void);
-	/** Transition managers created with `$.transition` */
-	transitions: null | TransitionManager[];
 	/** Next sibling child effect created inside the parent signal */
 	prev: null | Effect;
 	/** Next sibling child effect created inside the parent signal */
@@ -96,3 +103,8 @@ export interface Effect extends Reaction {
 export type Source<V = unknown> = Value<V>;
 
 export type MaybeSource<T = unknown> = T | Source<T>;
+
+export interface Blocker {
+	promise: Promise<any>;
+	settled: boolean;
+}

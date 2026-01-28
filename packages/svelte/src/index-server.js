@@ -33,6 +33,10 @@ export function unmount() {
 	e.lifecycle_function_unavailable('unmount');
 }
 
+export function fork() {
+	e.lifecycle_function_unavailable('fork');
+}
+
 export async function tick() {}
 
 export async function settled() {}
@@ -46,5 +50,7 @@ export {
 	hasContext,
 	setContext
 } from './internal/server/context.js';
+
+export { hydratable } from './internal/server/hydratable.js';
 
 export { createRawSnippet } from './internal/server/blocks/snippet.js';

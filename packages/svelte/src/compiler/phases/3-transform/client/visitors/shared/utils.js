@@ -1,5 +1,5 @@
 /** @import { AssignmentExpression, Expression, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression, ExpressionStatement } from 'estree' */
-/** @import { AST, ExpressionMetadata } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext, Context } from '../../types' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
@@ -9,6 +9,7 @@ import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator, component_name } from '../../../../../state.js';
 import { build_getter } from '../../utils.js';
+import { ExpressionMetadata } from '../../../../nodes.js';
 
 /**
  * A utility for extracting complex expressions (such as call expressions)
@@ -21,16 +22,41 @@ export class Memoizer {
 	/** @type {Array<{ id: Identifier, expression: Expression }>} */
 	#async = [];
 
+	/** @type {Set<Expression>} */
+	#blockers = new Set();
+
 	/**
 	 * @param {Expression} expression
-	 * @param {boolean} has_await
+	 * @param {ExpressionMetadata} metadata
+	 * @param {boolean} memoize_if_state
 	 */
-	add(expression, has_await) {
+	add(expression, metadata, memoize_if_state = false) {
+		this.check_blockers(metadata);
+
+		const should_memoize =
+			metadata.has_call || metadata.has_await || (memoize_if_state && metadata.has_state);
+
+		if (!should_memoize) {
+			// no memoization required
+			return expression;
+		}
+
 		const id = b.id('#'); // filled in later
 
-		(has_await ? this.#async : this.#sync).push({ id, expression });
+		(metadata.has_await ? this.#async : this.#sync).push({ id, expression });
 
 		return id;
+	}
+
+	/**
+	 * @param {ExpressionMetadata} metadata
+	 */
+	check_blockers(metadata) {
+		for (const binding of metadata.dependencies) {
+			if (binding.blocker) {
+				this.#blockers.add(binding.blocker);
+			}
+		}
 	}
 
 	apply() {
@@ -38,6 +64,10 @@ export class Memoizer {
 			memo.id.name = `$${i}`;
 			return memo.id;
 		});
+	}
+
+	blockers() {
+		return this.#blockers.size > 0 ? b.array([...this.#blockers]) : undefined;
 	}
 
 	deriveds(runes = true) {
@@ -72,8 +102,7 @@ export function build_template_chunk(
 	values,
 	context,
 	state = context.state,
-	memoize = (value, metadata) =>
-		metadata.has_call || metadata.has_await ? state.memoizer.add(value, metadata.has_await) : value
+	memoize = (value, metadata) => state.memoizer.add(value, metadata)
 ) {
 	/** @type {Expression[]} */
 	const expressions = [];
@@ -105,7 +134,7 @@ export function build_template_chunk(
 
 			const evaluated = state.scope.evaluate(value);
 
-			has_await ||= node.metadata.expression.has_await;
+			has_await ||= node.metadata.expression.has_await || node.metadata.expression.has_blockers();
 			has_state ||= has_await || (node.metadata.expression.has_state && !evaluated.is_known);
 
 			if (values.length === 1) {
@@ -176,7 +205,8 @@ export function build_render_statement(state) {
 					: b.block(state.update)
 			),
 			memoizer.sync_values(),
-			memoizer.async_values()
+			memoizer.async_values(),
+			memoizer.blockers()
 		)
 	);
 }
@@ -325,6 +355,7 @@ export function validate_binding(state, binding, expression) {
 			b.call(
 				'$.validate_binding',
 				b.literal(state.analysis.source.slice(binding.start, binding.end)),
+				binding.metadata.expression.blockers(),
 				b.thunk(
 					state.store_to_invalidate ? b.sequence([b.call('$.mark_store_binding'), obj]) : obj
 				),
@@ -335,8 +366,8 @@ export function validate_binding(state, binding, expression) {
 							: b.literal(/** @type {Identifier} */ (expression.property).name)
 					)
 				),
-				loc && b.literal(loc.line),
-				loc && b.literal(loc.column)
+				b.literal(loc.line),
+				b.literal(loc.column)
 			)
 		)
 	);

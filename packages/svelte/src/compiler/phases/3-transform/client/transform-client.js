@@ -33,7 +33,6 @@ import { FunctionExpression } from './visitors/FunctionExpression.js';
 import { HtmlTag } from './visitors/HtmlTag.js';
 import { Identifier } from './visitors/Identifier.js';
 import { IfBlock } from './visitors/IfBlock.js';
-import { ImportDeclaration } from './visitors/ImportDeclaration.js';
 import { KeyBlock } from './visitors/KeyBlock.js';
 import { LabeledStatement } from './visitors/LabeledStatement.js';
 import { LetDirective } from './visitors/LetDirective.js';
@@ -111,7 +110,6 @@ const visitors = {
 	HtmlTag,
 	Identifier,
 	IfBlock,
-	ImportDeclaration,
 	KeyBlock,
 	LabeledStatement,
 	LetDirective,
@@ -153,7 +151,7 @@ export function client_component(analysis, options) {
 		scope: analysis.module.scope,
 		scopes: analysis.module.scopes,
 		is_instance: false,
-		hoisted: [b.import_all('$', 'svelte/internal/client')],
+		hoisted: [b.import_all('$', 'svelte/internal/client'), ...analysis.instance_body.hoisted],
 		node: /** @type {any} */ (null), // populated by the root node
 		legacy_reactive_imports: [],
 		legacy_reactive_statements: new Map(),
@@ -172,6 +170,7 @@ export function client_component(analysis, options) {
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		init: /** @type {any} */ (null),
 		consts: /** @type {any} */ (null),
+		snippets: /** @type {any} */ (null),
 		let_directives: /** @type {any} */ (null),
 		update: /** @type {any} */ (null),
 		after_update: /** @type {any} */ (null),
@@ -370,40 +369,21 @@ export function client_component(analysis, options) {
 		analysis.reactive_statements.size > 0 ||
 		component_returned_object.length > 0;
 
-	if (analysis.instance.has_await) {
-		if (should_inject_context && component_returned_object.length > 0) {
-			component_block.body.push(b.var('$$exports'));
-		}
-		const body = b.block([
-			...store_setup,
-			...state.instance_level_snippets,
-			.../** @type {ESTree.Statement[]} */ (instance.body),
-			...(should_inject_context && component_returned_object.length > 0
-				? [b.stmt(b.assignment('=', b.id('$$exports'), b.object(component_returned_object)))]
-				: []),
-			b.if(b.call('$.aborted'), b.return()),
-			.../** @type {ESTree.Statement[]} */ (template.body)
-		]);
+	component_block.body.push(
+		...state.instance_level_snippets,
+		.../** @type {ESTree.Statement[]} */ (instance.body)
+	);
 
-		component_block.body.push(
-			b.stmt(b.call(`$.async_body`, b.id('$$anchor'), b.arrow([b.id('$$anchor')], body, true)))
-		);
-	} else {
-		component_block.body.push(
-			...state.instance_level_snippets,
-			.../** @type {ESTree.Statement[]} */ (instance.body)
-		);
-		if (should_inject_context && component_returned_object.length > 0) {
-			component_block.body.push(b.var('$$exports', b.object(component_returned_object)));
-		}
-		component_block.body.unshift(...store_setup);
-
-		if (!analysis.runes && analysis.needs_context) {
-			component_block.body.push(b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)));
-		}
-
-		component_block.body.push(.../** @type {ESTree.Statement[]} */ (template.body));
+	if (should_inject_context && component_returned_object.length > 0) {
+		component_block.body.push(b.var('$$exports', b.object(component_returned_object)));
 	}
+	component_block.body.unshift(...store_setup);
+
+	if (!analysis.runes && analysis.needs_context) {
+		component_block.body.push(b.stmt(b.call('$.init', analysis.immutable ? b.true : undefined)));
+	}
+
+	component_block.body.push(.../** @type {ESTree.Statement[]} */ (template.body));
 
 	if (analysis.needs_mutation_validation) {
 		component_block.body.unshift(
@@ -540,14 +520,9 @@ export function client_component(analysis, options) {
 
 	if (options.hmr) {
 		const id = b.id(analysis.name);
-		const HMR = b.id('$.HMR');
-
-		const existing = b.member(id, HMR, true);
-		const incoming = b.member(b.id('module.default'), HMR, true);
 
 		const accept_fn_body = [
-			b.stmt(b.assignment('=', b.member(incoming, 'source'), b.member(existing, 'source'))),
-			b.stmt(b.call('$.set', b.member(existing, 'source'), b.member(incoming, 'original')))
+			b.stmt(b.call(b.member(b.member(id, b.id('$.HMR'), true), 'update'), b.id('module.default')))
 		];
 
 		if (analysis.css.hash) {
@@ -556,8 +531,7 @@ export function client_component(analysis, options) {
 		}
 
 		const hmr = b.block([
-			b.stmt(b.assignment('=', id, b.call('$.hmr', id, b.thunk(b.member(existing, 'source'))))),
-
+			b.stmt(b.assignment('=', id, b.call('$.hmr', id))),
 			b.stmt(b.call('import.meta.hot.accept', b.arrow([b.id('module')], b.block(accept_fn_body))))
 		]);
 
@@ -664,7 +638,16 @@ export function client_component(analysis, options) {
 		const accessors_str = b.array(
 			analysis.exports.map(({ name, alias }) => b.literal(alias ?? name))
 		);
-		const use_shadow_dom = typeof ce === 'boolean' || ce.shadow !== 'none' ? true : false;
+
+		/** @type {ESTree.ObjectExpression | undefined} */
+		let shadow_root_init;
+		if (typeof ce === 'boolean' || ce.shadow === 'open' || ce.shadow === undefined) {
+			shadow_root_init = b.object([b.init('mode', b.literal('open'))]);
+		} else if (ce.shadow === 'none') {
+			shadow_root_init = undefined;
+		} else {
+			shadow_root_init = ce.shadow;
+		}
 
 		const create_ce = b.call(
 			'$.create_custom_element',
@@ -672,7 +655,7 @@ export function client_component(analysis, options) {
 			b.object(props_str),
 			slots_str,
 			accessors_str,
-			b.literal(use_shadow_dom),
+			shadow_root_init,
 			/** @type {any} */ (typeof ce !== 'boolean' ? ce.extend : undefined)
 		);
 

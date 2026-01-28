@@ -34,7 +34,7 @@ export function EachBlock(node, context) {
 
 	const new_body = /** @type {BlockStatement} */ (context.visit(node.body)).body;
 
-	each.push(...(node.body.metadata.has_await ? [create_async_block(b.block(new_body))] : new_body));
+	if (node.body) each.push(...new_body);
 
 	const for_loop = b.for(
 		b.declaration('let', [
@@ -57,7 +57,7 @@ export function EachBlock(node, context) {
 			b.if(
 				b.binary('!==', b.member(array_id, 'length'), b.literal(0)),
 				b.block([open, for_loop]),
-				node.fallback.metadata.has_await ? create_async_block(fallback) : fallback
+				fallback
 			)
 		);
 	} else {
@@ -65,8 +65,15 @@ export function EachBlock(node, context) {
 		block.body.push(for_loop);
 	}
 
-	if (node.metadata.expression.has_await) {
-		state.template.push(create_async_block(block), block_close);
+	if (node.metadata.expression.is_async()) {
+		state.template.push(
+			create_async_block(
+				block,
+				node.metadata.expression.blockers(),
+				node.metadata.expression.has_await
+			),
+			block_close
+		);
 	} else {
 		state.template.push(...block.body, block_close);
 	}

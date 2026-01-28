@@ -164,6 +164,7 @@ async function run_test(
 				}
 			],
 			bundle: true,
+			platform: 'node',
 			format: 'iife',
 			globalName: 'test_ssr'
 		});

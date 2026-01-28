@@ -1,18 +1,20 @@
 /** @import { Component } from 'svelte' */
-/** @import { RenderOutput, SSRContext, SyncRenderOutput } from './types.js' */
+/** @import { Csp, HydratableContext, RenderOutput, SSRContext, SyncRenderOutput, Sha256Source } from './types.js' */
+/** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import { abort } from './abort-signal.js';
-import { pop, push, set_ssr_context, ssr_context } from './context.js';
+import { pop, push, set_ssr_context, ssr_context, save } from './context.js';
 import * as e from './errors.js';
+import * as w from './warnings.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { attributes } from './index.js';
+import { get_render_context, with_render_context, init_render_context } from './render-context.js';
+import { sha256 } from './crypto.js';
+import * as devalue from 'devalue';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
-/**
- * @template T
- * @typedef {T | Promise<T>} MaybePromise<T>
- */
+
 /**
  * @typedef {string | Renderer} RendererItem
  */
@@ -100,12 +102,67 @@ export class Renderer {
 	}
 
 	/**
+	 * @param {Array<Promise<void>>} blockers
 	 * @param {(renderer: Renderer) => void} fn
 	 */
-	async(fn) {
+	async_block(blockers, fn) {
 		this.#out.push(BLOCK_OPEN);
-		this.child(fn);
+		this.async(blockers, fn);
 		this.#out.push(BLOCK_CLOSE);
+	}
+
+	/**
+	 * @param {Array<Promise<void>>} blockers
+	 * @param {(renderer: Renderer) => void} fn
+	 */
+	async(blockers, fn) {
+		let callback = fn;
+
+		if (blockers.length > 0) {
+			const context = ssr_context;
+
+			callback = (renderer) => {
+				return Promise.all(blockers).then(() => {
+					const previous_context = ssr_context;
+
+					try {
+						set_ssr_context(context);
+						return fn(renderer);
+					} finally {
+						set_ssr_context(previous_context);
+					}
+				});
+			};
+		}
+
+		this.child(callback);
+	}
+
+	/**
+	 * @param {Array<() => void>} thunks
+	 */
+	run(thunks) {
+		const context = ssr_context;
+
+		let promise = Promise.resolve(thunks[0]());
+		const promises = [promise];
+
+		for (const fn of thunks.slice(1)) {
+			promise = promise.then(() => {
+				const previous_context = ssr_context;
+				set_ssr_context(context);
+
+				try {
+					return fn();
+				} finally {
+					set_ssr_context(previous_context);
+				}
+			});
+
+			promises.push(promise);
+		}
+
+		return promises;
 	}
 
 	/**
@@ -163,9 +220,10 @@ export class Renderer {
 	 * @param {Record<string, boolean> | undefined} [classes]
 	 * @param {Record<string, string> | undefined} [styles]
 	 * @param {number | undefined} [flags]
+	 * @param {boolean | undefined} [is_rich]
 	 * @returns {void}
 	 */
-	select(attrs, fn, css_hash, classes, styles, flags) {
+	select(attrs, fn, css_hash, classes, styles, flags, is_rich) {
 		const { value, ...select_attrs } = attrs;
 
 		this.push(`<select${attributes(select_attrs, css_hash, classes, styles, flags)}>`);
@@ -173,7 +231,7 @@ export class Renderer {
 			renderer.local.select_value = value;
 			fn(renderer);
 		});
-		this.push('</select>');
+		this.push(`${is_rich ? '<!>' : ''}</select>`);
 	}
 
 	/**
@@ -183,8 +241,9 @@ export class Renderer {
 	 * @param {Record<string, boolean> | undefined} [classes]
 	 * @param {Record<string, string> | undefined} [styles]
 	 * @param {number | undefined} [flags]
+	 * @param {boolean | undefined} [is_rich]
 	 */
-	option(attrs, body, css_hash, classes, styles, flags) {
+	option(attrs, body, css_hash, classes, styles, flags, is_rich) {
 		this.#out.push(`<option${attributes(attrs, css_hash, classes, styles, flags)}`);
 
 		/**
@@ -201,7 +260,7 @@ export class Renderer {
 				renderer.#out.push(' selected');
 			}
 
-			renderer.#out.push(`>${body}</option>`);
+			renderer.#out.push(`>${body}${is_rich ? '<!>' : ''}</option>`);
 
 			// super edge case, but may as well handle it
 			if (head) {
@@ -320,13 +379,13 @@ export class Renderer {
 	 * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
 	 * @template {Record<string, any>} Props
 	 * @param {Component<Props>} component
-	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} [options]
+	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} [options]
 	 * @returns {RenderOutput}
 	 */
 	static render(component, options = {}) {
 		/** @type {AccumulatedContent | undefined} */
 		let sync;
-		/** @type {Promise<AccumulatedContent> | undefined} */
+		/** @type {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }> | undefined} */
 		let async;
 
 		const result = /** @type {RenderOutput} */ ({});
@@ -348,6 +407,11 @@ export class Renderer {
 					return (sync ??= Renderer.#render(component, options)).body;
 				}
 			},
+			hashes: {
+				value: {
+					script: ''
+				}
+			},
 			then: {
 				value:
 					/**
@@ -364,11 +428,14 @@ export class Renderer {
 							const user_result = onfulfilled({
 								head: result.head,
 								body: result.body,
-								html: result.body
+								html: result.body,
+								hashes: { script: [] }
 							});
 							return Promise.resolve(user_result);
 						}
-						async ??= Renderer.#render_async(component, options);
+						async ??= init_render_context().then(() =>
+							with_render_context(() => Renderer.#render_async(component, options))
+						);
 						return async.then((result) => {
 							Object.defineProperty(result, 'html', {
 								// eslint-disable-next-line getter-return
@@ -386,7 +453,7 @@ export class Renderer {
 	}
 
 	/**
-	 * Collect all of the `onDestroy` callbacks regsitered during rendering. In an async context, this is only safe to call
+	 * Collect all of the `onDestroy` callbacks registered during rendering. In an async context, this is only safe to call
 	 * after awaiting `collect_async`.
 	 *
 	 * Child renderers are "porous" and don't affect execution order, but component body renderers
@@ -456,19 +523,23 @@ export class Renderer {
 	 *
 	 * @template {Record<string, any>} Props
 	 * @param {Component<Props>} component
-	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} options
-	 * @returns {Promise<AccumulatedContent>}
+	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} options
+	 * @returns {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }>}
 	 */
 	static async #render_async(component, options) {
-		var previous_context = ssr_context;
+		const previous_context = ssr_context;
+
 		try {
 			const renderer = Renderer.#open_render('async', component, options);
-
 			const content = await renderer.#collect_content_async();
+			const hydratables = await renderer.#collect_hydratables();
+			if (hydratables !== null) {
+				content.head = hydratables + content.head;
+			}
 			return Renderer.#close_render(content, renderer);
 		} finally {
-			abort();
 			set_ssr_context(previous_context);
+			abort();
 		}
 	}
 
@@ -509,16 +580,33 @@ export class Renderer {
 		return content;
 	}
 
+	async #collect_hydratables() {
+		const ctx = get_render_context().hydratable;
+
+		for (const [_, key] of ctx.unresolved_promises) {
+			// this is a problem -- it means we've finished the render but we're still waiting on a promise to resolve so we can
+			// serialize it, so we're blocking the response on useless content.
+			w.unresolved_hydratable(key, ctx.lookup.get(key)?.stack ?? '<missing stack trace>');
+		}
+
+		for (const comparison of ctx.comparisons) {
+			// these reject if there's a mismatch
+			await comparison;
+		}
+
+		return await this.#hydratable_block(ctx);
+	}
+
 	/**
 	 * @template {Record<string, any>} Props
 	 * @param {'sync' | 'async'} mode
 	 * @param {import('svelte').Component<Props>} component
-	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} options
+	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} options
 	 * @returns {Renderer}
 	 */
 	static #open_render(mode, component, options) {
 		const renderer = new Renderer(
-			new SSRState(mode, options.idPrefix ? options.idPrefix + '-' : '')
+			new SSRState(mode, options.idPrefix ? options.idPrefix + '-' : '', options.csp)
 		);
 
 		renderer.push(BLOCK_OPEN);
@@ -544,6 +632,7 @@ export class Renderer {
 	/**
 	 * @param {AccumulatedContent} content
 	 * @param {Renderer} renderer
+	 * @returns {AccumulatedContent & { hashes: { script: Sha256Source[] } }}
 	 */
 	static #close_render(content, renderer) {
 		for (const cleanup of renderer.#collect_on_destroy()) {
@@ -559,12 +648,71 @@ export class Renderer {
 
 		return {
 			head,
-			body
+			body,
+			hashes: {
+				script: renderer.global.csp.script_hashes
+			}
 		};
+	}
+
+	/**
+	 * @param {HydratableContext} ctx
+	 */
+	async #hydratable_block(ctx) {
+		if (ctx.lookup.size === 0) {
+			return null;
+		}
+
+		let entries = [];
+		let has_promises = false;
+
+		for (const [k, v] of ctx.lookup) {
+			if (v.promises) {
+				has_promises = true;
+				for (const p of v.promises) await p;
+			}
+
+			entries.push(`[${devalue.uneval(k)},${v.serialized}]`);
+		}
+
+		let prelude = `const h = (window.__svelte ??= {}).h ??= new Map();`;
+
+		if (has_promises) {
+			prelude = `const r = (v) => Promise.resolve(v);
+				${prelude}`;
+		}
+
+		const body = `
+			{
+				${prelude}
+
+				for (const [k, v] of [
+					${entries.join(',\n\t\t\t\t\t')}
+				]) {
+					h.set(k, v);
+				}
+			}
+		`;
+
+		let csp_attr = '';
+		if (this.global.csp.nonce) {
+			csp_attr = ` nonce="${this.global.csp.nonce}"`;
+		} else if (this.global.csp.hash) {
+			// note to future selves: this doesn't need to be optimized with a Map<body, hash>
+			// because the it's impossible for identical data to occur multiple times in a single render
+			// (this would require the same hydratable key:value pair to be serialized multiple times)
+			const hash = await sha256(body);
+			this.global.csp.script_hashes.push(`sha256-${hash}`);
+		}
+
+		return `\n\t\t<script${csp_attr}>${body}</script>`;
 	}
 }
 
 export class SSRState {
+	/** @readonly @type {Csp & { script_hashes: Sha256Source[] }} */
+	csp;
+
 	/** @readonly @type {'sync' | 'async'} */
 	mode;
 
@@ -579,10 +727,12 @@ export class SSRState {
 
 	/**
 	 * @param {'sync' | 'async'} mode
-	 * @param {string} [id_prefix]
+	 * @param {string} id_prefix
+	 * @param {Csp} csp
 	 */
-	constructor(mode, id_prefix = '') {
+	constructor(mode, id_prefix = '', csp = { hash: false }) {
 		this.mode = mode;
+		this.csp = { ...csp, script_hashes: [] };
 
 		let uid = 1;
 		this.uid = () => `${id_prefix}s${uid++}`;

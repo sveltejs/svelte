@@ -14,8 +14,6 @@ export function SnippetBlock(node, context) {
 	// TODO hoist where possible
 	/** @type {(Identifier | AssignmentPattern)[]} */
 	const args = [b.id('$$anchor')];
-	const has_await = node.body.metadata.has_await || false;
-
 	/** @type {BlockStatement} */
 	let body;
 
@@ -78,12 +76,8 @@ export function SnippetBlock(node, context) {
 
 	// in dev we use a FunctionExpression (not arrow function) so we can use `arguments`
 	let snippet = dev
-		? b.call(
-				'$.wrap_snippet',
-				b.id(context.state.analysis.name),
-				b.function(null, args, body, has_await)
-			)
-		: b.arrow(args, body, has_await);
+		? b.call('$.wrap_snippet', b.id(context.state.analysis.name), b.function(null, args, body))
+		: b.arrow(args, body);
 
 	const declaration = b.const(node.expression, snippet);
 
@@ -95,6 +89,6 @@ export function SnippetBlock(node, context) {
 			context.state.instance_level_snippets.push(declaration);
 		}
 	} else {
-		context.state.init.push(declaration);
+		context.state.snippets.push(declaration);
 	}
 }

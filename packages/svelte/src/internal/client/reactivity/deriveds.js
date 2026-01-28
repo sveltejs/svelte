@@ -3,20 +3,18 @@
 import { DEV } from 'esm-env';
 import {
 	ERROR_VALUE,
-	CLEAN,
 	DERIVED,
 	DIRTY,
 	EFFECT_PRESERVED,
-	MAYBE_DIRTY,
 	STALE_REACTION,
-	UNOWNED,
-	ASYNC
+	ASYNC,
+	WAS_MARKED,
+	DESTROYED,
+	CLEAN
 } from '#client/constants';
 import {
 	active_reaction,
 	active_effect,
-	set_signal_status,
-	skip_reaction,
 	update_reaction,
 	increment_write_version,
 	set_active_effect,
@@ -26,16 +24,17 @@ import {
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import { async_effect, destroy_effect, teardown } from './effects.js';
-import { inspect_effects, internal_set, set_inspect_effects, source } from './sources.js';
-import { get_stack } from '../dev/tracing.js';
+import { async_effect, destroy_effect, effect_tracking, teardown } from './effects.js';
+import { eager_effects, internal_set, set_eager_effects, source } from './sources.js';
+import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
 import { Boundary } from '../dom/blocks/boundary.js';
 import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch } from './batch.js';
 import { unset_context } from './async.js';
-import { deferred } from '../../shared/utils.js';
+import { deferred, includes } from '../../shared/utils.js';
+import { set_signal_status, update_derived_status } from './status.js';
 
 /** @type {Effect | null} */
 export let current_async_effect = null;
@@ -60,9 +59,7 @@ export function derived(fn) {
 			? /** @type {Derived} */ (active_reaction)
 			: null;
 
-	if (active_effect === null || (parent_derived !== null && (parent_derived.f & UNOWNED) !== 0)) {
-		flags |= UNOWNED;
-	} else {
+	if (active_effect !== null) {
 		// Since deriveds are evaluated lazily, any effects created inside them are
 		// created too late to ensure that the parent effect is added to the tree
 		active_effect.f |= EFFECT_PRESERVED;
@@ -85,7 +82,7 @@ export function derived(fn) {
 	};
 
 	if (DEV && tracing_mode_flag) {
-		signal.created = get_stack('CreatedAt');
+		signal.created = get_error('created at');
 	}
 
 	return signal;
@@ -94,11 +91,12 @@ export function derived(fn) {
 /**
  * @template V
  * @param {() => V | Promise<V>} fn
+ * @param {string} [label]
  * @param {string} [location] If provided, print a warning if the value is not read immediately after update
  * @returns {Promise<Source<V>>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function async_derived(fn, location) {
+export function async_derived(fn, label, location) {
 	let parent = /** @type {Effect | null} */ (active_effect);
 
 	if (parent === null) {
@@ -109,6 +107,8 @@ export function async_derived(fn, location) {
 
 	var promise = /** @type {Promise<V>} */ (/** @type {unknown} */ (undefined));
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
+
+	if (DEV) signal.label = label;
 
 	// only suspend in async deriveds created on initialisation
 	var should_suspend = !active_reaction;
@@ -148,7 +148,7 @@ export function async_derived(fn, location) {
 		var batch = /** @type {Batch} */ (current_batch);
 
 		if (should_suspend) {
-			var blocking = !boundary.is_pending();
+			var blocking = boundary.is_rendered();
 
 			boundary.update_pending_count(1);
 			batch.increment(blocking);
@@ -298,7 +298,9 @@ function get_derived_parent_effect(derived) {
 	var parent = derived.parent;
 	while (parent !== null) {
 		if ((parent.f & DERIVED) === 0) {
-			return /** @type {Effect} */ (parent);
+			// The original parent effect might've been destroyed but the derived
+			// is used elsewhere now - do not return the destroyed effect in that case
+			return (parent.f & DESTROYED) === 0 ? /** @type {Effect} */ (parent) : null;
 		}
 		parent = parent.parent;
 	}
@@ -317,24 +319,26 @@ export function execute_derived(derived) {
 	set_active_effect(get_derived_parent_effect(derived));
 
 	if (DEV) {
-		let prev_inspect_effects = inspect_effects;
-		set_inspect_effects(new Set());
+		let prev_eager_effects = eager_effects;
+		set_eager_effects(new Set());
 		try {
-			if (stack.includes(derived)) {
+			if (includes.call(stack, derived)) {
 				e.derived_references_self();
 			}
 
 			stack.push(derived);
 
+			derived.f &= ~WAS_MARKED;
 			destroy_derived_effects(derived);
 			value = update_reaction(derived);
 		} finally {
 			set_active_effect(prev_active_effect);
-			set_inspect_effects(prev_inspect_effects);
+			set_eager_effects(prev_eager_effects);
 			stack.pop();
 		}
 	} else {
 		try {
+			derived.f &= ~WAS_MARKED;
 			destroy_derived_effects(derived);
 			value = update_reaction(derived);
 		} finally {
@@ -353,10 +357,21 @@ export function update_derived(derived) {
 	var value = execute_derived(derived);
 
 	if (!derived.equals(value)) {
-		// TODO can we avoid setting `derived.v` when `batch_values !== null`,
-		// without causing the value to be stale later?
-		derived.v = value;
 		derived.wv = increment_write_version();
+
+		// in a fork, we don't update the underlying value, just `batch_values`.
+		// the underlying value will be updated when the fork is committed.
+		// otherwise, the next time we get here after a 'real world' state
+		// change, `derived.equals` may incorrectly return `true`
+		if (!current_batch?.is_fork || derived.deps === null) {
+			derived.v = value;
+
+			// deriveds without dependencies should never be recomputed
+			if (derived.deps === null) {
+				set_signal_status(derived, CLEAN);
+				return;
+			}
+		}
 	}
 
 	// don't mark derived clean if we're reading it inside a
@@ -365,12 +380,15 @@ export function update_derived(derived) {
 		return;
 	}
 
+	// During time traveling we don't want to reset the status so that
+	// traversal of the graph in the other batches still happens
 	if (batch_values !== null) {
-		batch_values.set(derived, derived.v);
+		// only cache the value if we're in a tracking context, otherwise we won't
+		// clear the cache in `mark_reactions` when dependencies are updated
+		if (effect_tracking() || current_batch?.is_fork) {
+			batch_values.set(derived, value);
+		}
 	} else {
-		var status =
-			(skip_reaction || (derived.f & UNOWNED) !== 0) && derived.deps !== null ? MAYBE_DIRTY : CLEAN;
-
-		set_signal_status(derived, status);
+		update_derived_status(derived);
 	}
 }

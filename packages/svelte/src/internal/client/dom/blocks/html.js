@@ -54,9 +54,9 @@ export function html(node, get_value, svg = false, mathml = false, skip_warning 
 			return;
 		}
 
-		if (effect.nodes_start !== null) {
-			remove_effect_dom(effect.nodes_start, /** @type {TemplateNode} */ (effect.nodes_end));
-			effect.nodes_start = effect.nodes_end = null;
+		if (effect.nodes !== null) {
+			remove_effect_dom(effect.nodes.start, /** @type {TemplateNode} */ (effect.nodes.end));
+			effect.nodes = null;
 		}
 
 		if (value === '') return;
@@ -65,6 +65,8 @@ export function html(node, get_value, svg = false, mathml = false, skip_warning 
 			// We're deliberately not trying to repair mismatches between server and client,
 			// as it's costly and error-prone (and it's an edge case to have a mismatch anyway)
 			var hash = /** @type {Comment} */ (hydrate_node).data;
+
+			/** @type {TemplateNode | null} */
 			var next = hydrate_next();
 			var last = next;
 
@@ -73,7 +75,7 @@ export function html(node, get_value, svg = false, mathml = false, skip_warning 
 				(next.nodeType !== COMMENT_NODE || /** @type {Comment} */ (next).data !== '')
 			) {
 				last = next;
-				next = /** @type {TemplateNode} */ (get_next_sibling(next));
+				next = get_next_sibling(next);
 			}
 
 			if (next === null) {
@@ -110,7 +112,7 @@ export function html(node, get_value, svg = false, mathml = false, skip_warning 
 
 		if (svg || mathml) {
 			while (get_first_child(node)) {
-				anchor.before(/** @type {Node} */ (get_first_child(node)));
+				anchor.before(/** @type {TemplateNode} */ (get_first_child(node)));
 			}
 		} else {
 			anchor.before(node);

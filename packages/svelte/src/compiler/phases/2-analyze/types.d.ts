@@ -1,6 +1,7 @@
 import type { Scope } from '../scope.js';
 import type { ComponentAnalysis, ReactiveStatement } from '../types.js';
-import type { AST, ExpressionMetadata, StateField, ValidatedCompileOptions } from '#compiler';
+import type { AST, StateField, ValidatedCompileOptions } from '#compiler';
+import type { ExpressionMetadata } from '../nodes.js';
 
 export interface AnalysisState {
 	scope: Scope;

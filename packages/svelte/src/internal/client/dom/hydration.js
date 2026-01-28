@@ -30,7 +30,7 @@ export function set_hydrating(value) {
  */
 export let hydrate_node;
 
-/** @param {TemplateNode} node */
+/** @param {TemplateNode | null} node */
 export function set_hydrate_node(node) {
 	if (node === null) {
 		w.hydration_mismatch();
@@ -41,7 +41,7 @@ export function set_hydrate_node(node) {
 }
 
 export function hydrate_next() {
-	return set_hydrate_node(/** @type {TemplateNode} */ (get_next_sibling(hydrate_node)));
+	return set_hydrate_node(get_next_sibling(hydrate_node));
 }
 
 /** @param {TemplateNode} node */

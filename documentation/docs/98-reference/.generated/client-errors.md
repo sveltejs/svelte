@@ -140,10 +140,41 @@ The `flushSync()` function can be used to flush any pending effects synchronousl
 
 This restriction only applies when using the `experimental.async` option, which will be active by default in Svelte 6.
 
+### fork_discarded
+
+```
+Cannot commit a fork that was already discarded
+```
+
+### fork_timing
+
+```
+Cannot create a fork inside an effect or when state changes are pending
+```
+
 ### get_abort_signal_outside_reaction
 
 ```
 `getAbortSignal()` can only be called inside an effect or derived
+```
+
+### hydratable_missing_but_required
+
+```
+Expected to find a hydratable with key `%key%` during hydration, but did not.
+```
+
+This can happen if you render a hydratable on the client that was not rendered on the server, and means that it was forced to fall back to running its function blockingly during hydration. This is bad for performance, as it blocks hydration until the asynchronous work completes.
+
+```svelte
+<script>
+  import { hydratable } from 'svelte';
+
+	if (BROWSER) {
+		// bad! nothing can become interactive until this asynchronous work is done
+		await hydratable('foo', get_slow_random_number);
+	}
+</script>
 ```
 
 ### hydration_failed

@@ -3,38 +3,54 @@ import * as $ from 'svelte/internal/server';
 
 export default function Async_in_derived($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		$$renderer.async(async ($$renderer) => {
-			let yes1 = (await $.save(1))();
-			let yes2 = foo((await $.save(1))());
+		var yes1, yes2, no1, no2;
 
-			let no1 = (async () => {
+		var $$promises = $$renderer.run([
+			async () => yes1 = await 1,
+			async () => yes2 = foo(await 1),
+
+			() => no1 = (async () => {
 				return await 1;
-			})();
+			})(),
 
-			let no2 = async () => {
+			() => no2 = async () => {
 				return await 1;
-			};
+			}
+		]);
 
-			$$renderer.async(async ($$renderer) => {
-				if (true) {
-					$$renderer.push('<!--[-->');
+		if (true) {
+			$$renderer.push('<!--[-->');
 
-					const yes1 = (await $.save(1))();
-					const yes2 = foo((await $.save(1))());
+			let yes1;
+			let yes2;
+			let no1;
+			let no2;
 
-					const no1 = (async () => {
+			var promises = $$renderer.run([
+				async () => {
+					yes1 = (await $.save(1))();
+				},
+
+				async () => {
+					yes2 = foo((await $.save(1))());
+				},
+
+				() => {
+					no1 = (async () => {
 						return await 1;
 					})();
+				},
 
-					const no2 = (async () => {
+				() => {
+					no2 = (async () => {
 						return await 1;
 					})();
-				} else {
-					$$renderer.push('<!--[!-->');
 				}
-			});
+			]);
+		} else {
+			$$renderer.push('<!--[!-->');
+		}
 
-			$$renderer.push(`<!--]-->`);
-		});
+		$$renderer.push(`<!--]-->`);
 	});
 }

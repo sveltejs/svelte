@@ -6,7 +6,12 @@ import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { determine_namespace_for_children } from '../../utils.js';
 import { build_element_attributes } from './shared/element.js';
-import { build_template, create_child_block, PromiseOptimiser } from './shared/utils.js';
+import {
+	build_template,
+	create_async_block,
+	create_child_block,
+	PromiseOptimiser
+} from './shared/utils.js';
 
 /**
  * @param {AST.SvelteElement} node
@@ -24,10 +29,10 @@ export function SvelteElement(node, context) {
 			tag = b.id(tag_id);
 		}
 
+		context.state.init.push(b.stmt(b.call('$.validate_dynamic_element_tag', b.thunk(tag))));
 		if (node.fragment.nodes.length > 0) {
 			context.state.init.push(b.stmt(b.call('$.validate_void_dynamic_element', b.thunk(tag))));
 		}
-		context.state.init.push(b.stmt(b.call('$.validate_dynamic_element_tag', b.thunk(tag))));
 	}
 
 	const state = {
@@ -39,11 +44,14 @@ export function SvelteElement(node, context) {
 
 	const optimiser = new PromiseOptimiser();
 
+	/** @type {Statement[]} */
+	let statements = [];
+
 	build_element_attributes(node, { ...context, state }, optimiser.transform);
 
 	if (dev) {
-		const location = /** @type {Location} */ (locator(node.start));
-		context.state.template.push(
+		const location = locator(node.start);
+		statements.push(
 			b.stmt(
 				b.call(
 					'$.push_element',
@@ -74,9 +82,21 @@ export function SvelteElement(node, context) {
 		statement = create_child_block(b.block([optimiser.apply(), statement]), true);
 	}
 
-	context.state.template.push(statement);
+	statements.push(statement);
 
 	if (dev) {
-		context.state.template.push(b.stmt(b.call('$.pop_element')));
+		statements.push(b.stmt(b.call('$.pop_element')));
 	}
+
+	if (node.metadata.expression.is_async()) {
+		statements = [
+			create_async_block(
+				b.block(statements),
+				node.metadata.expression.blockers(),
+				node.metadata.expression.has_await
+			)
+		];
+	}
+
+	context.state.template.push(...statements);
 }

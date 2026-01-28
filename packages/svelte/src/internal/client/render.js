@@ -1,4 +1,4 @@
-/** @import { ComponentContext, Effect, TemplateNode } from '#client' */
+/** @import { ComponentContext, Effect, EffectNodes, TemplateNode } from '#client' */
 /** @import { Component, ComponentType, SvelteComponent, MountOptions } from '../../index.js' */
 import { DEV } from 'esm-env';
 import {
@@ -12,20 +12,13 @@ import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants
 import { active_effect } from './runtime.js';
 import { push, pop, component_context } from './context.js';
 import { component_root } from './reactivity/effects.js';
-import {
-	hydrate_next,
-	hydrate_node,
-	hydrating,
-	set_hydrate_node,
-	set_hydrating
-} from './dom/hydration.js';
+import { hydrate_node, hydrating, set_hydrate_node, set_hydrating } from './dom/hydration.js';
 import { array_from } from '../shared/utils.js';
 import {
 	all_registered_events,
 	handle_event_propagation,
 	root_event_handles
 } from './dom/elements/events.js';
-import { reset_head_anchor } from './dom/blocks/svelte-head.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
 import { assign_nodes } from './dom/template.js';
@@ -106,12 +99,13 @@ export function hydrate(component, options) {
 	const previous_hydrate_node = hydrate_node;
 
 	try {
-		var anchor = /** @type {TemplateNode} */ (get_first_child(target));
+		var anchor = get_first_child(target);
+
 		while (
 			anchor &&
 			(anchor.nodeType !== COMMENT_NODE || /** @type {Comment} */ (anchor).data !== HYDRATION_START)
 		) {
-			anchor = /** @type {TemplateNode} */ (get_next_sibling(anchor));
+			anchor = get_next_sibling(anchor);
 		}
 
 		if (!anchor) {
@@ -152,7 +146,6 @@ export function hydrate(component, options) {
 	} finally {
 		set_hydrating(was_hydrating);
 		set_hydrate_node(previous_hydrate_node);
-		reset_head_anchor();
 	}
 }
 
@@ -236,7 +229,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 				should_intro = true;
 
 				if (hydrating) {
-					/** @type {Effect} */ (active_effect).nodes_end = hydrate_node;
+					/** @type {Effect & { nodes: EffectNodes }} */ (active_effect).nodes.end = hydrate_node;
 
 					if (
 						hydrate_node === null ||
