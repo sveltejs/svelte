@@ -611,18 +611,14 @@ export class Renderer {
 
 		renderer.push(BLOCK_OPEN);
 
-		if (options.context) {
-			push();
-			/** @type {SSRContext} */ (ssr_context).c = options.context;
-			/** @type {SSRContext} */ (ssr_context).r = renderer;
-		}
+		push();
+		if (options.context) /** @type {SSRContext} */ (ssr_context).c = options.context;
+		/** @type {SSRContext} */ (ssr_context).r = renderer;
 
 		// @ts-expect-error
 		component(renderer, options.props ?? {});
 
-		if (options.context) {
-			pop();
-		}
+		pop();
 
 		renderer.push(BLOCK_CLOSE);
 
