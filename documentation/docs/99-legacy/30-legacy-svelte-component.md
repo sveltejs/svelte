@@ -1,5 +1,6 @@
 ---
 title: <svelte:component>
+use_cases: "legacy: dynamic components, component switching"
 ---
 
 In runes mode, `<MyComponent>` will re-render if the value of `MyComponent` changes. See the [Svelte 5 migration guide](/docs/svelte/v5-migration-guide#svelte:component-is-no-longer-necessary) for an example.

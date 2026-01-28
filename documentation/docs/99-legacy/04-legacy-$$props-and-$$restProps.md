@@ -1,5 +1,6 @@
 ---
-title: $$props and $$restProps
+title: $props and $restProps
+use_cases: "legacy: spread props, rest props, prop forwarding"
 ---
 
 In runes mode, getting an object containing all the props that were passed in is easy, using the [`$props`]($props) rune.

@@ -1,5 +1,6 @@
 ---
 title: <svelte:document>
+use_cases: "document events, visibility changes, fullscreen handling, global clicks"
 ---
 
 ```svelte

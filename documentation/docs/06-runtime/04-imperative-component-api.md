@@ -1,5 +1,6 @@
 ---
 title: Imperative component API
+use_cases: "programmatic component control, testing, framework integration, dynamic component creation"
 ---
 
 <!-- better title needed?

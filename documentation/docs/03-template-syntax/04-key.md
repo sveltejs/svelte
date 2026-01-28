@@ -1,5 +1,6 @@
 ---
 title: {#key ...}
+use_cases: "forcing re-renders, resetting component state, animations on value change"
 ---
 
 ```svelte
