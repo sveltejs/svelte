@@ -1,5 +1,15 @@
 # svelte
 
+## 5.48.5
+
+### Patch Changes
+
+- fix: run boundary `onerror` callbacks in a microtask, in case they result in the boundary's destruction ([#17561](https://github.com/sveltejs/svelte/pull/17561))
+
+- fix: prevent unintended exports from namespaces ([#17562](https://github.com/sveltejs/svelte/pull/17562))
+
+- fix: each block breaking with effects interspersed among items ([#17550](https://github.com/sveltejs/svelte/pull/17550))
+
 ## 5.48.4
 
 ### Patch Changes
