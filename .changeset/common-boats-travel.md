@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: prevent reactivity loss during fork
+fix: reset effects inside skipped branches
