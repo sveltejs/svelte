@@ -824,6 +824,10 @@ function has_content(element) {
 		}
 
 		if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
+			if (node.attributes.some((a) => a.type === 'Attribute' && a.name === 'popover')) {
+				continue;
+			}
+
 			if (
 				node.name === 'img' &&
 				node.attributes.some((node) => node.type === 'Attribute' && node.name === 'alt')
