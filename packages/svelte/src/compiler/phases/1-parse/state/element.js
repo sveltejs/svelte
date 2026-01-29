@@ -588,7 +588,7 @@ function read_attribute(parser) {
 	parser.allow_whitespace();
 
 	const colon_index = tag.name.indexOf(':');
-	const type = colon_index !== -1 && get_directive_type(tag.name.slice(0, colon_index));
+	const type = colon_index !== -1 ? get_directive_type(tag.name.slice(0, colon_index)) : undefined;
 
 	/** @type {true | AST.ExpressionTag | Array<AST.Text | AST.ExpressionTag>} */
 	let value = true;
@@ -609,7 +609,7 @@ function read_attribute(parser) {
 			];
 			end = parser.index;
 		} else {
-			value = read_attribute_value(parser);
+			value = read_attribute_value(parser, type);
 			end = parser.index;
 		}
 	} else if (parser.match_regex(regex_starts_with_quote_characters)) {
@@ -704,7 +704,6 @@ function read_attribute(parser) {
 
 /**
  * @param {string} name
- * @returns {any}
  */
 function get_directive_type(name) {
 	if (name === 'use') return 'UseDirective';
@@ -715,14 +714,14 @@ function get_directive_type(name) {
 	if (name === 'on') return 'OnDirective';
 	if (name === 'let') return 'LetDirective';
 	if (name === 'in' || name === 'out' || name === 'transition') return 'TransitionDirective';
-	return false;
 }
 
 /**
  * @param {Parser} parser
+ * @param {AST.AttributeLike['type'] | undefined} type
  * @return {AST.ExpressionTag | Array<AST.ExpressionTag | AST.Text>}
  */
-function read_attribute_value(parser) {
+function read_attribute_value(parser, type) {
 	const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
 	if (quote_mark && parser.eat(quote_mark)) {
 		return [
@@ -746,7 +745,8 @@ function read_attribute_value(parser) {
 				if (quote_mark) return parser.match(quote_mark);
 				return !!parser.match_regex(regex_invalid_unquoted_attribute_value);
 			},
-			'in attribute value'
+			'in attribute value',
+			type === 'BindDirective'
 		);
 	} catch (/** @type {any} */ error) {
 		if (error.code === 'js_parse_error') {
@@ -779,9 +779,10 @@ function read_attribute_value(parser) {
  * @param {Parser} parser
  * @param {() => boolean} done
  * @param {string} location
+ * @param {boolean} allow_spread
  * @returns {any[]}
  */
-function read_sequence(parser, done, location) {
+function read_sequence(parser, done, location, allow_spread = false) {
 	/** @type {AST.Text} */
 	let current_chunk = {
 		start: parser.index,
@@ -826,10 +827,7 @@ function read_sequence(parser, done, location) {
 
 			parser.allow_whitespace();
 
-			const has_spread = parser.eat('...');
-			if (has_spread) {
-				parser.allow_whitespace();
-			}
+			const has_spread = allow_spread && parser.eat('...');
 
 			const expression = read_expression(parser);
 			parser.allow_whitespace();
