@@ -241,8 +241,8 @@ export function build_component(node, component_name, loc, context) {
 						argument: attribute.expression.argument
 					};
 				} else {
-					push_prop(b.get(attribute.name, [b.return(b.call(get))]), true);
-					push_prop(b.set(attribute.name, [b.stmt(b.call(set, b.id('$$value')))]), true);
+					push_prop(b.get(attribute.name, [b.return(get)]), true);
+					push_prop(b.set(attribute.name, [b.stmt(set)]), true);
 				}
 			} else if (expression.type === 'SequenceExpression') {
 				if (attribute.name === 'this') {

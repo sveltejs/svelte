@@ -22,7 +22,9 @@ export function BindDirective(node, context) {
 	let get, set;
 
 	if (node.expression.type === 'SpreadElement') {
-		[get, set] = init_spread_binding(node.expression, context);
+		const [getter, setter] = init_spread_binding(node.expression, context);
+		get = b.thunk(getter);
+		set = b.arrow([b.id('$$value')], setter);
 	} else if (expression.type === 'SequenceExpression') {
 		[get, set] = expression.expressions;
 	} else {
