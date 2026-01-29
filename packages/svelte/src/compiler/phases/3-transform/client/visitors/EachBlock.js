@@ -295,7 +295,7 @@ export function EachBlock(node, context) {
 	const block = /** @type {BlockStatement} */ (context.visit(node.body, child_state));
 
 	/** @type {Expression} */
-	let key_function = b.id('$.get_index');
+	let key_function = b.id('$.index');
 
 	if (node.metadata.keyed) {
 		const pattern = /** @type {Pattern} */ (node.context); // can only be keyed when a context is provided

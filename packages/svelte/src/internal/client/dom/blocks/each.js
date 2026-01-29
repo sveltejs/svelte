@@ -52,7 +52,7 @@ import { invoke_error_boundary } from '../../error-handling.js';
  * @param {any} _
  * @param {number} i
  */
-export function get_index(_, i) {
+export function index(_, i) {
 	return i;
 }
 
@@ -217,7 +217,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		var length = array.length;
 
 		// skip if #each block isn't keyed
-		if (DEV && get_key !== get_index) {
+		if (DEV && get_key !== index) {
 			validate_each_keys(array, get_key);
 		}
 
@@ -241,7 +241,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		var batch = /** @type {Batch} */ (current_batch);
 		var defer = should_defer_append();
 
-		for (var index = 0; index < length; index += 1) {
+		for (var i = 0; i < length; i += 1) {
 			if (
 				hydrating &&
 				hydrate_node.nodeType === COMMENT_NODE &&
@@ -254,15 +254,15 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				set_hydrating(false);
 			}
 
-			var value = array[index];
-			var key = get_key(value, index);
+			var value = array[i];
+			var key = get_key(value, i);
 
 			var item = first_run ? null : items.get(key);
 
 			if (item) {
 				// update before reconciliation, to trigger any async updates
 				if (item.v) internal_set(item.v, value);
-				if (item.i) internal_set(item.i, index);
+				if (item.i) internal_set(item.i, i);
 
 				if (defer) {
 					batch.skipped_effects.delete(item.e);
@@ -273,7 +273,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					first_run ? anchor : (offscreen_anchor ??= create_text()),
 					value,
 					key,
-					index,
+					i,
 					render_fn,
 					flags,
 					get_collection
@@ -297,7 +297,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				fallback.f |= EFFECT_OFFSCREEN;
 			}
 		}
-		if (length > state.items.size) {
+
+		if (length > items.size) {
 			each_key_duplicate('', '', '');
 		}
 
