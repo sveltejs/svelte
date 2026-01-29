@@ -40,6 +40,9 @@ import { get } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
 import { current_batch } from '../../reactivity/batch.js';
+import { each_key_duplicate } from '../../errors.js';
+import { validate_each_keys } from '../../validate.js';
+import { invoke_error_boundary } from '../../error-handling.js';
 
 // When making substantive changes to this file, validate them with the each block stress test:
 // https://svelte.dev/playground/1972b2cf46564476ad8c8c6405b23b7b
@@ -213,6 +216,11 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		array = /** @type {V[]} */ (get(each_array));
 		var length = array.length;
 
+		// skip if #each block isn't keyed
+		if (DEV && get_key !== index) {
+			validate_each_keys(array, get_key);
+		}
+
 		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
 
@@ -233,7 +241,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		var batch = /** @type {Batch} */ (current_batch);
 		var defer = should_defer_append();
 
-		for (var index = 0; index < length; index += 1) {
+		for (var i = 0; i < length; i += 1) {
 			if (
 				hydrating &&
 				hydrate_node.nodeType === COMMENT_NODE &&
@@ -246,15 +254,15 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				set_hydrating(false);
 			}
 
-			var value = array[index];
-			var key = get_key(value, index);
+			var value = array[i];
+			var key = get_key(value, i);
 
 			var item = first_run ? null : items.get(key);
 
 			if (item) {
 				// update before reconciliation, to trigger any async updates
 				if (item.v) internal_set(item.v, value);
-				if (item.i) internal_set(item.i, index);
+				if (item.i) internal_set(item.i, i);
 
 				if (defer) {
 					batch.skipped_effects.delete(item.e);
@@ -265,7 +273,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					first_run ? anchor : (offscreen_anchor ??= create_text()),
 					value,
 					key,
-					index,
+					i,
 					render_fn,
 					flags,
 					get_collection
@@ -288,6 +296,10 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				fallback = branch(() => fallback_fn((offscreen_anchor ??= create_text())));
 				fallback.f |= EFFECT_OFFSCREEN;
 			}
+		}
+
+		if (length > items.size) {
+			each_key_duplicate('', '', '');
 		}
 
 		// remove excess nodes
@@ -361,6 +373,7 @@ function skip_to_branch(effect) {
 function reconcile(state, array, anchor, flags, get_key) {
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 
+	var count = 0;
 	var length = array.length;
 	var items = state.items;
 	var current = skip_to_branch(state.effect.first);
@@ -446,6 +459,8 @@ function reconcile(state, array, anchor, flags, get_key) {
 				current = skip_to_branch(prev.next);
 				continue;
 			}
+
+			count += 1;
 		}
 
 		if ((effect.f & INERT) !== 0) {
@@ -462,6 +477,19 @@ function reconcile(state, array, anchor, flags, get_key) {
 					// more efficient to move later items to the front
 					var start = stashed[0];
 					var j;
+
+					// full key uniqueness check is dev-only,
+					// key duplicates cause crash only due to `matched` being empty
+					if (matched.length === 0) {
+						// reconcile can be called in the batch's callbacks which are
+						// executed outside of the effect tree, so error are not caught
+						try {
+							each_key_duplicate('', '', '');
+						} catch (error) {
+							invoke_error_boundary(error, state.effect);
+							return;
+						}
+					}
 
 					prev = start.prev;
 
@@ -496,6 +524,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 					link(state, prev, effect);
 
 					prev = effect;
+					count += 1;
 				}
 
 				continue;
@@ -521,6 +550,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 		prev = effect;
 		current = skip_to_branch(effect.next);
+		count += 1;
 	}
 
 	if (state.outrogroups !== null) {
