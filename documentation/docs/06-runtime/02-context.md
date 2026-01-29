@@ -97,6 +97,32 @@ import { createContext } from 'svelte';
 export const [getUserContext, setUserContext] = createContext<User>();
 ```
 
+When writing [component tests](testing#Unit-and-component-tests-with-Vitest-Component-testing), it can be useful to create a wrapper component that sets the context in order to check the behaviour of a component that uses it. As of version 5.49, you can do this sort of thing:
+
+```js
+import { mount, unmount } from 'svelte';
+import { expect, test } from 'vitest';
+import { setUserContext } from './context';
+import MyComponent from './MyComponent.svelte';
+
+test('MyComponent', () => {
+	function Wrapper(...args) {
+		setUserContext({ name: 'Bob' });
+		return MyComponent(...args);
+	}
+
+	const component = mount(Wrapper, {
+		target: document.body
+	});
+
+	expect(document.body.innerHTML).toBe('<h1>Hello Bob!</h1>');
+
+	unmount(component);
+});
+```
+
+This approach also works with [`hydrate`](imperative-component-api#hydrate) and [`render`](imperative-component-api#render).
+
 ## Replacing global state
 
 When you have state shared by many different components, you might be tempted to put it in its own module and just import it wherever it's needed:
