@@ -52,19 +52,19 @@ export function invalid_snippet_arguments() {
 }
 
 /**
- * `%name%` must be a function or `undefined`
+ * `%name%` must be a `[get, set]` array where `get` and `set` are functions. For readonly bindings, `get` should be `undefined`/`null`
  * @param {string} name
  * @returns {never}
  */
-export function invalid_spread_bindings(name) {
+export function invalid_spread_binding(name) {
 	if (DEV) {
-		const error = new Error(`invalid_spread_bindings\n\`${name}\` must be a function or \`undefined\`\nhttps://svelte.dev/e/invalid_spread_bindings`);
+		const error = new Error(`invalid_spread_binding\n\`${name}\` must be a \`[get, set]\` array where \`get\` and \`set\` are functions. For readonly bindings, \`get\` should be \`undefined\`/\`null\`\nhttps://svelte.dev/e/invalid_spread_binding`);
 
 		error.name = 'Svelte error';
 
 		throw error;
 	} else {
-		throw new Error(`https://svelte.dev/e/invalid_spread_bindings`);
+		throw new Error(`https://svelte.dev/e/invalid_spread_binding`);
 	}
 }
 

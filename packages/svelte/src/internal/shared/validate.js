@@ -1,7 +1,6 @@
 import { is_void } from '../../utils.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
-import { noop } from './utils.js';
 
 export { invalid_default_snippet } from './errors.js';
 
@@ -48,20 +47,18 @@ export function prevent_snippet_stringification(fn) {
 }
 
 /**
- * @param {any} spread_object
+ * @param {any} binding
  * @param {string} name
- * @return {[() => unknown, (value: unknown) => void]}
  */
-export function validate_spread_binding(spread_object, name) {
-	const getter = spread_object[0];
-	const setter = spread_object[1];
-
-	if (typeof getter !== 'function' && getter != null) {
-		e.invalid_spread_bindings(name + '[0]');
+export function validate_spread_binding(binding, name) {
+	if (
+		Array.isArray(binding) &&
+		binding.length === 2 &&
+		(typeof binding[0] === 'function' || binding[0] == null) &&
+		typeof binding[1] === 'function'
+	) {
+		return binding;
 	}
-	if (typeof setter !== 'function' && setter != null) {
-		e.invalid_spread_bindings(name + '[1]');
-	}
 
-	return [getter, setter];
+	e.invalid_spread_binding(name);
 }

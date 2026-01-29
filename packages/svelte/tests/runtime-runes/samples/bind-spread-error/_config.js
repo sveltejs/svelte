@@ -5,5 +5,5 @@ export default test({
 	compileOptions: {
 		dev: true
 	},
-	error: 'invalid_spread_bindings'
+	error: 'invalid_spread_binding'
 });
