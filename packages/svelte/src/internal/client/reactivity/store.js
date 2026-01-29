@@ -1,6 +1,6 @@
 /** @import { StoreReferencesContainer } from '#client' */
 /** @import { Store } from '#shared' */
-import { subscribe_to_store } from '../../../store/utils.js';
+import { subscribe_to_store, get_store_current_value } from '../../../store/utils.js';
 import { get as get_store } from '../../../store/shared/index.js';
 import { define_property, noop } from '../../shared/utils.js';
 import { get } from '../runtime.js';
@@ -16,6 +16,10 @@ import { DEV } from 'esm-env';
 let is_store_binding = false;
 
 let IS_UNMOUNTED = Symbol();
+
+// Track stores that are currently being updated and their new values
+// This allows us to read the current value even if auto-subscription hasn't run yet
+const store_update_map = new WeakMap();
 
 /**
  * Gets the current value of a store. If the store isn't subscribed to yet, it will create a proxy
@@ -79,22 +83,24 @@ export function store_get(store, store_name, stores) {
 	// The issue: when store.set() is called, subscription callbacks run synchronously but in
 	// subscription order. If a manual subscription runs before the auto-subscription, reading
 	// $value inside the manual callback sees a stale value.
-	// Fix: Sync with last_value if it's been updated by the auto-subscription callback.
-	// Note: This only works if the auto-subscription has already run. If manual subscription
-	// runs first, we can't peek without creating subscriptions that interfere with tests.
-	// A complete fix would require ensuring auto-subscription always runs first, or a different
-	// mechanism to access the current store value without subscribing.
+	// Fix: Check if there's a current value being processed for this store (tracked during
+	// subscription callbacks), and use that if it differs from the source. This ensures $value
+	// is current even when read inside manual subscription callbacks that run before auto-subscription.
 	if (
 		store &&
 		entry.store === store &&
 		entry.unsubscribe !== noop &&
-		entry.last_value !== undefined &&
-		entry.last_value !== entry.source.v
+		entry.source.v !== undefined
 	) {
-		// Sync source with last value seen in auto-subscription callback
-		// This ensures $value is current when read during manual subscription callbacks,
-		// as long as the auto-subscription callback has already run
-		entry.source.v = entry.last_value;
+		// First check if there's a current value being processed (from any subscription callback)
+		const current_value = get_store_current_value(store);
+		if (current_value !== undefined && current_value !== entry.source.v) {
+			entry.source.v = current_value;
+			entry.last_value = current_value;
+		} else if (entry.last_value !== undefined && entry.last_value !== entry.source.v) {
+			// Fall back to last_value if current_value isn't available
+			entry.source.v = entry.last_value;
+		}
 	}
 
 	return get(entry.source);
