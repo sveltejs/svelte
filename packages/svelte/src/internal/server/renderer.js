@@ -162,6 +162,12 @@ export class Renderer {
 			promises.push(promise);
 		}
 
+		const run_promise = Promise.all(promises);
+		// avoid unhandled promise rejections — we'll end up throwing in collect_async if something fails
+		run_promise.catch(() => {});
+		this.promise = this.promise ? Promise.all([this.promise, run_promise]) : run_promise;
+		this.promise.catch(() => {});
+
 		return promises;
 	}
 
