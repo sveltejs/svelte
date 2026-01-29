@@ -8,7 +8,6 @@ export default function Async_in_derived($$renderer, $$props) {
 		var $$promises = $$renderer.run([
 			async () => yes1 = await 1,
 			async () => yes2 = foo(await 1),
-
 			() => no1 = (async () => {
 				return await 1;
 			})(),
