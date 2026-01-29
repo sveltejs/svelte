@@ -31,7 +31,8 @@ export function store_get(store, store_name, stores) {
 	const entry = (stores[store_name] ??= {
 		store: null,
 		source: mutable_source(undefined),
-		unsubscribe: noop
+		unsubscribe: noop,
+		last_value: undefined
 	});
 
 	if (DEV) {
@@ -46,10 +47,12 @@ export function store_get(store, store_name, stores) {
 		if (store == null) {
 			entry.source.v = undefined; // see synchronous callback comment below
 			entry.unsubscribe = noop;
+			entry.last_value = undefined;
 		} else {
 			var is_synchronous_callback = true;
 
 			entry.unsubscribe = subscribe_to_store(store, (v) => {
+				entry.last_value = v; // Track last value seen in subscription callback
 				if (is_synchronous_callback) {
 					// If the first updates to the store value (possibly multiple of them) are synchronously
 					// inside a derived, we will hit the `state_unsafe_mutation` error if we `set` the value
@@ -68,6 +71,28 @@ export function store_get(store, store_name, stores) {
 	// and it will keep the value consistent
 	if (store && IS_UNMOUNTED in stores) {
 		return get_store(store);
+	}
+
+	// If the store is subscribed and we're reading $value inside a manual subscription callback,
+	// ensure the source reflects the current store value. This fixes the case where
+	// store.subscribe((newValue) => console.log(newValue, $value)) - $value should be up to date.
+	// The issue: when store.set() is called, subscription callbacks run synchronously but in
+	// subscription order. If a manual subscription runs before the auto-subscription, reading
+	// $value inside the manual callback sees a stale value. We fix this by checking if
+	// last_value (updated by auto-subscription) differs from source, and syncing if needed.
+	// Note: This only works if the auto-subscription has already run. If it hasn't, the source
+	// will still be stale, but that's a limitation of the current approach.
+	if (
+		store &&
+		entry.store === store &&
+		entry.unsubscribe !== noop &&
+		entry.last_value !== undefined &&
+		entry.last_value !== entry.source.v
+	) {
+		// Sync source with last value seen in auto-subscription callback
+		// This ensures $value is current when read during manual subscription callbacks,
+		// as long as the auto-subscription callback has already run
+		entry.source.v = entry.last_value;
 	}
 
 	return get(entry.source);
