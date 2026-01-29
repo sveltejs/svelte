@@ -76,8 +76,12 @@ export function store_get(store, store_name, stores) {
 	// If the store is subscribed and we're reading $value inside a manual subscription callback,
 	// ensure the source reflects the current store value. This fixes the case where
 	// store.subscribe((newValue) => console.log(newValue, $value)) - $value should be up to date.
-	// We use the last_value tracked by the subscription callback to sync without creating
-	// additional subscriptions that could interfere with async stores.
+	// The issue: when store.set() is called, subscription callbacks run synchronously but in
+	// subscription order. If a manual subscription runs before the auto-subscription, reading
+	// $value inside the manual callback sees a stale value. We fix this by checking if
+	// last_value (updated by auto-subscription) differs from source, and syncing if needed.
+	// Note: This only works if the auto-subscription has already run. If it hasn't, the source
+	// will still be stale, but that's a limitation of the current approach.
 	if (
 		store &&
 		entry.store === store &&
@@ -85,8 +89,9 @@ export function store_get(store, store_name, stores) {
 		entry.last_value !== undefined &&
 		entry.last_value !== entry.source.v
 	) {
-		// Sync source with last value seen in subscription callback
-		// This ensures $value is current when read during manual subscription callbacks
+		// Sync source with last value seen in auto-subscription callback
+		// This ensures $value is current when read during manual subscription callbacks,
+		// as long as the auto-subscription callback has already run
 		entry.source.v = entry.last_value;
 	}
 
