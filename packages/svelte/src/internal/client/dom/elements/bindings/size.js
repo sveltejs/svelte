@@ -98,7 +98,14 @@ export function bind_resize_observer(element, type, set) {
  * @param {(size: number) => void} set
  */
 export function bind_element_size(element, type, set) {
-	var unsub = resize_observer_border_box.observe(element, () => set(element[type]));
+	// Use content-box for clientWidth/clientHeight because they exclude scrollbars.
+	// When scrollbars appear/disappear, the content-box size changes, but border-box doesn't.
+	// Use border-box for offsetWidth/offsetHeight because they include borders.
+	var observer =
+		type === 'clientWidth' || type === 'clientHeight'
+			? resize_observer_content_box
+			: resize_observer_border_box;
+	var unsub = observer.observe(element, () => set(element[type]));
 
 	effect(() => {
 		// The update could contain reads which should be ignored
