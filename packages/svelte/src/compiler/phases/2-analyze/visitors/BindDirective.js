@@ -271,12 +271,8 @@ export function BindDirective(node, context) {
 			context.state.analysis.binding_groups.set([keypath, bindings], group_name);
 		}
 
-		node.metadata = {
-			binding_group_name: group_name,
-			parent_each_blocks: each_blocks,
-			spread_binding: node.metadata.spread_binding,
-			expression: node.metadata.expression
-		};
+		node.metadata.binding_group_name = group_name;
+		node.metadata.parent_each_blocks = each_blocks;
 	}
 
 	if (binding?.kind === 'each' && binding.metadata?.inside_rest) {
