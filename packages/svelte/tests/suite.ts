@@ -1,11 +1,9 @@
 import fs from 'node:fs';
-import { it, vi } from 'vitest';
+import { it } from 'vitest';
 
 export interface BaseTest {
 	skip?: boolean;
 	solo?: boolean;
-	/** Set `DEV` to `false` */
-	production?: boolean;
 }
 
 /**
@@ -29,31 +27,11 @@ export function suite<Test extends BaseTest>(fn: (config: Test, test_dir: string
 	return {
 		test: (config: Test) => config,
 		run: async (cwd: string, samples_dir = 'samples') => {
-			const production_tests: Array<[Function, string, Function]> = [];
-
 			await for_each_dir<Test>(cwd, samples_dir, (config, dir) => {
 				let it_fn = config.skip ? it.skip : config.solo ? it.only : it;
 
-				if (config.production) {
-					production_tests.push([it_fn, dir, () => fn(config, `${cwd}/${samples_dir}/${dir}`)]);
-				} else {
-					it_fn(dir, () => fn(config, `${cwd}/${samples_dir}/${dir}`));
-				}
+				it_fn(dir, () => fn(config, `${cwd}/${samples_dir}/${dir}`));
 			});
-
-			let mocked = false;
-			for (const [it, name, test] of production_tests) {
-				it(name, () => {
-					if (!mocked) {
-						vi.doMock('esm-env', async (importEnv) => ({
-							...(await importEnv()),
-							DEV: false
-						}));
-						mocked = true;
-					}
-					return test();
-				});
-			}
 		}
 	};
 }
@@ -67,8 +45,6 @@ export function suite_with_variants<Test extends BaseTest, Variants extends stri
 	return {
 		test: (config: Test) => config,
 		run: async (cwd: string, samples_dir = 'samples') => {
-			const production_tests: Array<[Function, string, Function]> = [];
-
 			await for_each_dir<Test>(cwd, samples_dir, (config, dir) => {
 				let called_common = false;
 				let common: any = undefined;
@@ -81,35 +57,15 @@ export function suite_with_variants<Test extends BaseTest, Variants extends stri
 					const solo = config.solo;
 					let it_fn = skip ? it.skip : solo ? it.only : it;
 
-					const test = async () => {
+					it_fn(`${dir} (${variant})`, async () => {
 						if (!called_common) {
 							called_common = true;
 							common = await common_setup(config, `${cwd}/${samples_dir}/${dir}`);
 						}
 						return fn(config, `${cwd}/${samples_dir}/${dir}`, variant, common);
-					};
-
-					if (config.production) {
-						production_tests.push([it_fn, `${dir} (${variant})`, test]);
-					} else {
-						it_fn(`${dir} (${variant})`, test);
-					}
+					});
 				}
 			});
-
-			let mocked = false;
-			for (const [it, name, test] of production_tests) {
-				it(name, () => {
-					if (!mocked) {
-						vi.doMock('esm-env', async (importEnv) => ({
-							...(await importEnv()),
-							DEV: false
-						}));
-						mocked = true;
-					}
-					return test();
-				});
-			}
 		}
 	};
 }
@@ -151,18 +107,4 @@ export function assert_ok(value: any): asserts value {
 	if (!value) {
 		throw new Error(`Expected truthy value, got ${value}`);
 	}
-}
-
-function run_in_production(fn: (...args: any[]) => void | Promise<void>) {
-	return async (...args: any[]) => {
-		vi.doMock('esm-env', async (importEnv) => ({
-			...(await importEnv()),
-			DEV: false
-		}));
-		try {
-			await fn(...args);
-		} finally {
-			vi.doUnmock('esm-env');
-		}
-	};
 }
