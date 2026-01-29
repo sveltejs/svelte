@@ -70,8 +70,7 @@ export function RegularElement(node, context) {
 		if (optimiser.expressions.length > 0) {
 			context.state.template.push(
 				create_child_block(
-					b.block([optimiser.apply(), ...state.init, ...build_template(state.template)]),
-					true
+					b.block([optimiser.apply(), ...state.init, ...build_template(state.template)])
 				)
 			);
 		} else {
@@ -133,7 +132,7 @@ export function RegularElement(node, context) {
 
 		if (optimiser.expressions.length > 0) {
 			context.state.template.push(
-				create_child_block(b.block([optimiser.apply(), ...state.init, statement]), true)
+				create_child_block(b.block([optimiser.apply(), ...state.init, statement]))
 			);
 		} else {
 			context.state.template.push(...state.init, statement);
@@ -186,7 +185,7 @@ export function RegularElement(node, context) {
 
 		if (optimiser.expressions.length > 0) {
 			context.state.template.push(
-				create_child_block(b.block([optimiser.apply(), ...state.init, statement]), true)
+				create_child_block(b.block([optimiser.apply(), ...state.init, statement]))
 			);
 		} else {
 			context.state.template.push(...state.init, statement);
@@ -239,7 +238,7 @@ export function RegularElement(node, context) {
 		let statements = [...state.init, ...build_template(state.template)];
 
 		if (optimiser.has_await) {
-			statements = [create_child_block(b.block([optimiser.apply(), ...statements]), true)];
+			statements = [create_child_block(b.block([optimiser.apply(), ...statements]))];
 		}
 
 		const blockers = optimiser.blockers();
