@@ -7,7 +7,7 @@ import * as b from '#compiler/builders';
 import { binding_properties } from '../../../bindings.js';
 import { build_attribute_value } from './shared/element.js';
 import { build_bind_this, validate_binding } from './shared/utils.js';
-import { init_spread_bindings } from '../../shared/spread_bindings.js';
+import { init_spread_bindings } from './shared/spread_bindings.js';
 
 /**
  * @param {AST.BindDirective} node

@@ -8,7 +8,7 @@ import { add_svelte_meta, build_bind_this, Memoizer, validate_binding } from '..
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
-import { init_spread_bindings } from '../../../shared/spread_bindings.js';
+import { init_spread_bindings } from './spread_bindings.js';
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node

@@ -9,7 +9,7 @@ import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator, component_name } from '../../../../../state.js';
 import { build_getter } from '../../utils.js';
-import { init_spread_bindings } from '../../../shared/spread_bindings.js';
+import { init_spread_bindings } from './spread_bindings.js';
 import { ExpressionMetadata } from '../../../../nodes.js';
 
 /**

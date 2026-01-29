@@ -18,7 +18,7 @@ import {
 	is_load_error_element
 } from '../../../../../../utils.js';
 import { escape_html } from '../../../../../../escaping.js';
-import { init_spread_bindings } from '../../../shared/spread_bindings.js';
+import { init_spread_bindings } from './spread_bindings.js';
 
 const WHITESPACE_INSENSITIVE_ATTRIBUTES = ['class', 'style'];
 
@@ -116,17 +116,10 @@ export function build_element_attributes(node, context, transform) {
 			const binding = binding_properties[attribute.name];
 			if (binding?.omit_in_ssr) continue;
 
-			let expression = /** @type {Expression} */ (
-				context.visit(
-					attribute.expression.type === 'SpreadElement'
-						? attribute.expression.argument
-						: attribute.expression
-				)
-			);
+			let expression = /** @type {Expression} */ (context.visit(attribute.expression));
 
 			if (attribute.expression.type === 'SpreadElement') {
-				const [get] = init_spread_bindings(attribute.expression, context);
-				expression = b.call(get);
+				[expression] = init_spread_bindings(attribute.expression, context);
 			} else if (expression.type === 'SequenceExpression') {
 				expression = b.call(expression.expressions[0]);
 			}

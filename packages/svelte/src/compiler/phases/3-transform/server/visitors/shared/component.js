@@ -10,7 +10,7 @@ import {
 import * as b from '#compiler/builders';
 import { is_element_node } from '../../../../nodes.js';
 import { dev } from '../../../../../state.js';
-import { init_spread_bindings } from '../../../shared/spread_bindings.js';
+import { init_spread_bindings } from './spread_bindings.js';
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
@@ -114,8 +114,8 @@ export function build_inline_component(node, expression, context) {
 			if (attribute.expression.type === 'SpreadElement') {
 				const [get, set] = init_spread_bindings(attribute.expression, context);
 
-				push_prop(b.get(attribute.name, [b.return(b.call(get))]));
-				push_prop(b.set(attribute.name, [b.stmt(b.call(set, b.id('$$value')))]));
+				push_prop(b.get(attribute.name, [b.return(get)]));
+				push_prop(b.set(attribute.name, [b.stmt(set)]));
 			} else if (attribute.expression.type === 'SequenceExpression') {
 				const [get, set] = /** @type {SequenceExpression} */ (context.visit(attribute.expression))
 					.expressions;

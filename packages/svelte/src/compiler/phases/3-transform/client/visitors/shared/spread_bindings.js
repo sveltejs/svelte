@@ -1,13 +1,12 @@
 /** @import { Expression, SpreadElement } from 'estree' */
-/** @import { ComponentContext as ClientContext } from '../client/types.js' */
-/** @import { ComponentContext as ServerContext } from '../server/types.js' */
+/** @import { ComponentContext as ClientContext } from '../../types.js' */
 import * as b from '#compiler/builders';
-import { dev, source } from '../../../state.js';
+import { dev, source } from '../../../../../state.js';
 
 /**
  * Initializes spread bindings for a SpreadElement in a bind directive.
  * @param {SpreadElement} spread
- * @param {ClientContext | ServerContext} context
+ * @param {ClientContext} context
  * @returns {[get: Expression, set: Expression]}
  */
 export function init_spread_bindings(spread, { state, visit }) {
@@ -25,8 +24,7 @@ export function init_spread_bindings(spread, { state, visit }) {
 		)
 	);
 
-	const is_server = state.options.generate === 'server';
-	const binding = is_server ? b.call(id) : b.call('$.get', id);
+	const binding = b.call('$.get', id);
 
 	return [
 		b.thunk(b.call(b.logical('??', b.member(binding, b.literal(0), true), b.id('$.noop')))),
