@@ -1,5 +1,11 @@
 # svelte
 
+## 5.49.1
+
+### Patch Changes
+
+- fix: properly separate multiline html blocks from each other in `print()` ([#17319](https://github.com/sveltejs/svelte/pull/17319))
+
 ## 5.49.0
 
 ### Minor Changes
