@@ -14,6 +14,7 @@ import { create_fragment_from_html } from './reconciler.js';
 import { active_effect } from '../runtime.js';
 import {
 	NAMESPACE_MATHML,
+	NAMESPACE_HTML,
 	NAMESPACE_SVG,
 	TEMPLATE_FRAGMENT,
 	TEMPLATE_USE_IMPORT_NODE,
@@ -155,7 +156,7 @@ export function from_mathml(content, flags) {
 
 /**
  * @param {TemplateStructure[]} structure
- * @param {typeof NAMESPACE_SVG | typeof NAMESPACE_MATHML | undefined} [ns]
+ * @param {typeof NAMESPACE_SVG | typeof NAMESPACE_MATHML} [ns]
  */
 function fragment_from_tree(structure, ns) {
 	var fragment = create_fragment();
@@ -184,12 +185,17 @@ function fragment_from_tree(structure, ns) {
 
 		if (children.length > 0) {
 			var target =
-				element.tagName === 'TEMPLATE'
+				element.namespaceURI === NAMESPACE_HTML && element.tagName.toUpperCase() === 'TEMPLATE'
 					? /** @type {HTMLTemplateElement} */ (element).content
 					: element;
 
 			target.append(
-				fragment_from_tree(children, element.tagName === 'foreignObject' ? undefined : namespace)
+				fragment_from_tree(
+					children,
+					element.namespaceURI === NAMESPACE_SVG && element.tagName === 'foreignObject'
+						? undefined
+						: namespace
+				)
 			);
 		}
 
@@ -266,14 +272,15 @@ function run_scripts(node) {
 
 	const is_fragment = node.nodeType === DOCUMENT_FRAGMENT_NODE;
 	const scripts =
-		/** @type {HTMLElement} */ (node).tagName === 'SCRIPT'
+		/** @type {HTMLElement} */ (node).namespaceURI === NAMESPACE_HTML &&
+		/** @type {HTMLElement} */ (node).tagName.toUpperCase() === 'SCRIPT'
 			? [/** @type {HTMLScriptElement} */ (node)]
 			: node.querySelectorAll('script');
 
 	const effect = /** @type {Effect & { nodes: EffectNodes }} */ (active_effect);
 
 	for (const script of scripts) {
-		const clone = document.createElement('script');
+		const clone = document.createElementNS(NAMESPACE_HTML, 'script');
 		for (var attribute of script.attributes) {
 			clone.setAttribute(attribute.name, attribute.value);
 		}
