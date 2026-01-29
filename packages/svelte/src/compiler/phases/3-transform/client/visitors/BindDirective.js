@@ -22,9 +22,7 @@ export function BindDirective(node, context) {
 	let get, set;
 
 	if (node.metadata.spread_binding) {
-		const { get: getter, set: setter } = init_spread_bindings(node.expression, context);
-		get = getter;
-		set = setter;
+		[get, set] = init_spread_bindings(node.expression, context);
 	} else if (expression.type === 'SequenceExpression') {
 		[get, set] = expression.expressions;
 	} else {

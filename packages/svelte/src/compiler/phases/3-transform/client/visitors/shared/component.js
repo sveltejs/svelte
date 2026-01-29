@@ -233,7 +233,7 @@ export function build_component(node, component_name, loc, context) {
 			}
 
 			if (attribute.metadata.spread_binding) {
-				const { get, set } = init_spread_bindings(attribute.expression, context);
+				const [get, set] = init_spread_bindings(attribute.expression, context);
 
 				if (attribute.name === 'this') {
 					bind_this = {

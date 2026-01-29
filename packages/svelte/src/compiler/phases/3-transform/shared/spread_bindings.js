@@ -8,7 +8,7 @@ import { dev, source } from '../../../state.js';
  * Initializes spread bindings for a SpreadElement in a bind directive.
  * @param {Expression} spread_expression
  * @param {ClientContext | ServerContext} context
- * @returns {{ get: Expression, set: Expression }}
+ * @returns {[get: Expression, set: Expression]}
  */
 export function init_spread_bindings(spread_expression, { state, visit }) {
 	const expression = /** @type {Expression} */ (visit(spread_expression));
@@ -28,14 +28,14 @@ export function init_spread_bindings(spread_expression, { state, visit }) {
 	const is_server = state.options.generate === 'server';
 	const binding = is_server ? b.call(id) : b.call('$.get', id);
 
-	const get = b.thunk(
-		b.call(b.logical('??', b.member(binding, b.literal(0), true), b.id('$.noop')))
-	);
-
-	const set = b.arrow(
-		[b.id('$$value')],
-		b.call(b.logical('??', b.member(binding, b.literal(1), true), b.id('$.noop')), b.id('$$value'))
-	);
-
-	return { get, set };
+	return [
+		b.thunk(b.call(b.logical('??', b.member(binding, b.literal(0), true), b.id('$.noop')))),
+		b.arrow(
+			[b.id('$$value')],
+			b.call(
+				b.logical('??', b.member(binding, b.literal(1), true), b.id('$.noop')),
+				b.id('$$value')
+			)
+		)
+	];
 }
