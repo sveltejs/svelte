@@ -8,7 +8,7 @@ import { add_svelte_meta, build_bind_this, Memoizer, validate_binding } from '..
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
-import { init_spread_bindings } from './spread_bindings.js';
+import { init_spread_binding } from './spread_bindings.js';
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
@@ -233,7 +233,7 @@ export function build_component(node, component_name, loc, context) {
 			}
 
 			if (attribute.expression.type === 'SpreadElement') {
-				const [get, set] = init_spread_bindings(attribute.expression, context);
+				const [get, set] = init_spread_binding(attribute.expression, context);
 
 				if (attribute.name === 'this') {
 					bind_this = {

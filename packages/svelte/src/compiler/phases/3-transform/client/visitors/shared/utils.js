@@ -9,7 +9,7 @@ import { regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator, component_name } from '../../../../../state.js';
 import { build_getter } from '../../utils.js';
-import { init_spread_bindings } from './spread_bindings.js';
+import { init_spread_binding } from './spread_bindings.js';
 import { ExpressionMetadata } from '../../../../nodes.js';
 
 /**
@@ -241,7 +241,7 @@ export function parse_directive_name(name) {
  */
 export function build_bind_this(expression, value, context) {
 	if (expression.type === 'SpreadElement') {
-		const [get, set] = init_spread_bindings(expression, context);
+		const [get, set] = init_spread_binding(expression, context);
 		return b.call('$.bind_this', value, set, get);
 	}
 

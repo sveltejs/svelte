@@ -9,7 +9,7 @@ import { dev, source } from '../../../../../state.js';
  * @param {ClientContext} context
  * @returns {[get: Expression, set: Expression]}
  */
-export function init_spread_bindings(spread, { state, visit }) {
+export function init_spread_binding(spread, { state, visit }) {
 	const expression = /** @type {Expression} */ (visit(spread.argument));
 	const expression_text = b.literal(source.slice(spread.start, spread.end));
 
