@@ -333,6 +333,10 @@ declare module 'svelte' {
 		 */
 		context?: Map<any, any>;
 		/**
+		 * A function invoked before the component is mounted but after the component context has been initialized.
+		 */
+		beforeMount?: () => void;
+		/**
 		 * Whether or not to play transitions on initial render.
 		 * @default true
 		 */
