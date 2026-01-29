@@ -30,12 +30,6 @@ export function init_spread_bindings(spread_expression, { state, visit }) {
 
 	return [
 		b.thunk(b.call(b.logical('??', b.member(binding, b.literal(0), true), b.id('$.noop')))),
-		b.arrow(
-			[b.id('$$value')],
-			b.call(
-				b.logical('??', b.member(binding, b.literal(1), true), b.id('$.noop')),
-				b.id('$$value')
-			)
-		)
+		b.arrow([b.id('$$value')], b.call(b.member(binding, b.literal(1), true), b.id('$$value')))
 	];
 }
