@@ -258,7 +258,13 @@ export function handle_event_propagation(event) {
 						// -> the target could not have been disabled because it emits the event in the first place
 						event.target === current_target)
 				) {
-					delegated.call(current_target, event);
+					if (Array.isArray(delegated)) {
+						for (const handler of delegated) {
+							handler.call(current_target, event);
+						}
+					} else if (typeof delegated === "function") {
+						delegated.call(current_target, event);
+					}
 				}
 			} catch (error) {
 				if (throw_error) {
