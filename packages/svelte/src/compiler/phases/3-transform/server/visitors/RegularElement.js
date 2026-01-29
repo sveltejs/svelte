@@ -71,7 +71,7 @@ export function RegularElement(node, context) {
 			context.state.template.push(
 				create_child_block(
 					b.block([optimiser.apply(), ...state.init, ...build_template(state.template)]),
-					true
+					optimiser.has_await
 				)
 			);
 		} else {
@@ -133,7 +133,10 @@ export function RegularElement(node, context) {
 
 		if (optimiser.expressions.length > 0) {
 			context.state.template.push(
-				create_child_block(b.block([optimiser.apply(), ...state.init, statement]), true)
+				create_child_block(
+					b.block([optimiser.apply(), ...state.init, statement]),
+					optimiser.has_await
+				)
 			);
 		} else {
 			context.state.template.push(...state.init, statement);
@@ -186,7 +189,10 @@ export function RegularElement(node, context) {
 
 		if (optimiser.expressions.length > 0) {
 			context.state.template.push(
-				create_child_block(b.block([optimiser.apply(), ...state.init, statement]), true)
+				create_child_block(
+					b.block([optimiser.apply(), ...state.init, statement]),
+					optimiser.has_await
+				)
 			);
 		} else {
 			context.state.template.push(...state.init, statement);
@@ -238,7 +244,7 @@ export function RegularElement(node, context) {
 	if (optimiser.is_async()) {
 		let statement = create_child_block(
 			b.block([optimiser.apply(), ...state.init, ...build_template(state.template)]),
-			true
+			optimiser.has_await
 		);
 
 		const blockers = optimiser.blockers();
