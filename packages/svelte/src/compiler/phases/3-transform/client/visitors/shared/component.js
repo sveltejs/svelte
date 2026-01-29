@@ -212,7 +212,7 @@ export function build_component(node, component_name, loc, context) {
 				// bind:x={() => x.y, y => x.y = y} and bind:x={...[() => x.y, y => x.y = y]}
 				// will be handled by the assignment expression binding validation
 				attribute.expression.type !== 'SequenceExpression' &&
-				!attribute.metadata.spread_binding
+				attribute.expression.type !== 'SpreadElement'
 			) {
 				const left = object(attribute.expression);
 				const binding = left && context.state.scope.get(left.name);
@@ -232,13 +232,13 @@ export function build_component(node, component_name, loc, context) {
 				}
 			}
 
-			if (attribute.metadata.spread_binding) {
-				const [get, set] = init_spread_bindings(attribute.expression, context);
+			if (attribute.expression.type === 'SpreadElement') {
+				const [get, set] = init_spread_bindings(attribute.expression.argument, context);
 
 				if (attribute.name === 'this') {
 					bind_this = {
 						type: 'SpreadElement',
-						argument: attribute.expression
+						argument: attribute.expression.argument
 					};
 				} else {
 					push_prop(b.get(attribute.name, [b.return(b.call(get))]), true);

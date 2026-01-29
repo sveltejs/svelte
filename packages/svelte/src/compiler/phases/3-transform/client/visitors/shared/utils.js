@@ -346,7 +346,10 @@ export function build_bind_this(expression, value, context) {
  * @param {MemberExpression} expression
  */
 export function validate_binding(state, binding, expression) {
-	if (binding.expression.type === 'SequenceExpression' || binding.metadata.spread_binding) {
+	if (
+		binding.expression.type === 'SequenceExpression' ||
+		binding.expression.type === 'SpreadElement'
+	) {
 		return;
 	}
 	// If we are referencing a $store.foo then we don't need to add validation

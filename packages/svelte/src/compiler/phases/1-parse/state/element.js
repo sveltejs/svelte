@@ -608,8 +608,33 @@ function read_attribute(parser) {
 				}
 			];
 			end = parser.index;
+		} else if (type === 'BindDirective') {
+			// allow quote marks for legacy reasons. TODO 6.0 disallow
+			const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
+			parser.eat('{', true);
+			const spread = parser.eat('...');
+			const expression = spread ? b.spread(read_expression(parser)) : read_expression(parser);
+			parser.allow_whitespace();
+			parser.eat('}', true);
+			if (quote_mark) parser.eat(quote_mark, true);
+			end = parser.index;
+
+			return {
+				start,
+				end,
+				type,
+				name: tag.name.slice(5),
+				modifiers: [],
+				name_loc: tag.loc,
+				// @ts-ignore
+				expression,
+				// @ts-ignore
+				metadata: {
+					expression: new ExpressionMetadata()
+				}
+			};
 		} else {
-			value = read_attribute_value(parser, type);
+			value = read_attribute_value(parser);
 			end = parser.index;
 		}
 	} else if (parser.match_regex(regex_starts_with_quote_characters)) {
@@ -667,13 +692,6 @@ function read_attribute(parser) {
 			}
 		});
 
-		if (first_value?.metadata.expression.has_spread) {
-			if (directive.type !== 'BindDirective') {
-				e.directive_invalid_value(first_value.start);
-			}
-			directive.metadata.spread_binding = true;
-		}
-
 		// @ts-expect-error we do this separately from the declaration to avoid upsetting typescript
 		directive.modifiers = modifiers;
 
@@ -718,10 +736,9 @@ function get_directive_type(name) {
 
 /**
  * @param {Parser} parser
- * @param {AST.AttributeLike['type'] | undefined} type
  * @return {AST.ExpressionTag | Array<AST.ExpressionTag | AST.Text>}
  */
-function read_attribute_value(parser, type) {
+function read_attribute_value(parser) {
 	const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
 	if (quote_mark && parser.eat(quote_mark)) {
 		return [
@@ -745,8 +762,7 @@ function read_attribute_value(parser, type) {
 				if (quote_mark) return parser.match(quote_mark);
 				return !!parser.match_regex(regex_invalid_unquoted_attribute_value);
 			},
-			'in attribute value',
-			type === 'BindDirective'
+			'in attribute value'
 		);
 	} catch (/** @type {any} */ error) {
 		if (error.code === 'js_parse_error') {
@@ -779,10 +795,9 @@ function read_attribute_value(parser, type) {
  * @param {Parser} parser
  * @param {() => boolean} done
  * @param {string} location
- * @param {boolean} allow_spread
  * @returns {any[]}
  */
-function read_sequence(parser, done, location, allow_spread = false) {
+function read_sequence(parser, done, location) {
 	/** @type {AST.Text} */
 	let current_chunk = {
 		start: parser.index,
@@ -827,8 +842,6 @@ function read_sequence(parser, done, location, allow_spread = false) {
 
 			parser.allow_whitespace();
 
-			const has_spread = allow_spread && parser.eat('...');
-
 			const expression = read_expression(parser);
 			parser.allow_whitespace();
 			parser.eat('}', true);
@@ -843,8 +856,6 @@ function read_sequence(parser, done, location, allow_spread = false) {
 					expression: new ExpressionMetadata()
 				}
 			};
-
-			chunk.metadata.expression.has_spread = has_spread;
 
 			chunks.push(chunk);
 

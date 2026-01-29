@@ -738,7 +738,7 @@ export function analyze_component(root, source, options) {
 								type === 'FunctionExpression' ||
 								type === 'ArrowFunctionExpression' ||
 								(type === 'BindDirective' &&
-									/** @type {AST.BindDirective} */ (path[i]).metadata.spread_binding)
+									/** @type {AST.BindDirective} */ (path[i]).expression.type === 'SpreadElement')
 							) {
 								continue inner;
 							}

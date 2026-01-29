@@ -77,9 +77,6 @@ export class ExpressionMetadata {
 	/** True if the expression contains `await` */
 	has_await = false;
 
-	/** True if the expression includes a spread element */
-	has_spread = false;
-
 	/** True if the expression includes a member expression */
 	has_member_expression = false;
 

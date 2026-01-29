@@ -111,8 +111,8 @@ export function build_inline_component(node, expression, context) {
 			// Bindings are a bit special: we don't want to add them to (async) deriveds but we need to check if they have blockers
 			optimiser.check_blockers(attribute.metadata.expression);
 
-			if (attribute.metadata.spread_binding) {
-				const [get, set] = init_spread_bindings(attribute.expression, context);
+			if (attribute.expression.type === 'SpreadElement') {
+				const [get, set] = init_spread_bindings(attribute.expression.argument, context);
 
 				push_prop(b.get(attribute.name, [b.return(b.call(get))]));
 				push_prop(b.set(attribute.name, [b.stmt(b.call(set, b.id('$$value')))]));

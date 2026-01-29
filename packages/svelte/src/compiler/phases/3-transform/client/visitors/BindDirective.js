@@ -1,4 +1,4 @@
-/** @import { CallExpression, Expression, Pattern } from 'estree' */
+/** @import { CallExpression, Expression, Pattern, SpreadElement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { dev, is_ignored } from '../../../../state.js';
@@ -14,15 +14,19 @@ import { init_spread_bindings } from '../../shared/spread_bindings.js';
  * @param {ComponentContext} context
  */
 export function BindDirective(node, context) {
-	const expression = /** @type {Expression} */ (context.visit(node.expression));
-	const property = binding_properties[node.name];
+	const expression = /** @type {Expression} */ (
+		context.visit(
+			node.expression.type === 'SpreadElement' ? node.expression.argument : node.expression
+		)
+	);
 
+	const property = binding_properties[node.name];
 	const parent = /** @type {AST.SvelteNode} */ (context.path.at(-1));
 
 	let get, set;
 
-	if (node.metadata.spread_binding) {
-		[get, set] = init_spread_bindings(node.expression, context);
+	if (node.expression.type === 'SpreadElement') {
+		[get, set] = init_spread_bindings(expression, context);
 	} else if (expression.type === 'SequenceExpression') {
 		[get, set] = expression.expressions;
 	} else {

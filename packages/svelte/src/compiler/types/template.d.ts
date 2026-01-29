@@ -14,7 +14,8 @@ import type {
 	ChainExpression,
 	SimpleCallExpression,
 	SequenceExpression,
-	SourceLocation
+	SourceLocation,
+	SpreadElement
 } from 'estree';
 import type { Scope } from '../phases/scope';
 import type { _CSS } from './css';
@@ -207,13 +208,12 @@ export namespace AST {
 		/** The 'x' in `bind:x` */
 		name: string;
 		/** The y in `bind:x={y}` */
-		expression: Identifier | MemberExpression | SequenceExpression;
+		expression: Identifier | MemberExpression | SequenceExpression | SpreadElement;
 		/** @internal */
 		metadata: {
 			binding?: Binding | null;
 			binding_group_name: Identifier;
 			parent_each_blocks: EachBlock[];
-			spread_binding: boolean;
 			expression: ExpressionMetadata;
 		};
 	}

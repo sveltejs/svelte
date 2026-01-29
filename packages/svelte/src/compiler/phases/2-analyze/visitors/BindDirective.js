@@ -178,7 +178,7 @@ export function BindDirective(node, context) {
 		return;
 	}
 
-	if (node.metadata.spread_binding) {
+	if (node.expression.type === 'SpreadElement') {
 		if (node.name === 'group') {
 			e.bind_group_invalid_expression(node);
 		}

@@ -116,10 +116,16 @@ export function build_element_attributes(node, context, transform) {
 			const binding = binding_properties[attribute.name];
 			if (binding?.omit_in_ssr) continue;
 
-			let expression = /** @type {Expression} */ (context.visit(attribute.expression));
+			let expression = /** @type {Expression} */ (
+				context.visit(
+					attribute.expression.type === 'SpreadElement'
+						? attribute.expression.argument
+						: attribute.expression
+				)
+			);
 
-			if (attribute.metadata.spread_binding) {
-				const [get] = init_spread_bindings(attribute.expression, context);
+			if (attribute.expression.type === 'SpreadElement') {
+				const [get] = init_spread_bindings(expression, context);
 				expression = b.call(get);
 			} else if (expression.type === 'SequenceExpression') {
 				expression = b.call(expression.expressions[0]);
@@ -134,7 +140,7 @@ export function build_element_attributes(node, context, transform) {
 			} else if (
 				attribute.name === 'group' &&
 				attribute.expression.type !== 'SequenceExpression' &&
-				!attribute.metadata.spread_binding
+				attribute.expression.type !== 'SpreadElement'
 			) {
 				const value_attribute = /** @type {AST.Attribute | undefined} */ (
 					node.attributes.find((attr) => attr.type === 'Attribute' && attr.name === 'value')
