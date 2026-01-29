@@ -457,10 +457,9 @@ function reconcile(state, array, anchor, flags, get_key) {
 				stashed = [];
 
 				current = skip_to_branch(prev.next);
+				count += 1;
 				continue;
 			}
-
-			count += 1;
 		}
 
 		if ((effect.f & INERT) !== 0) {
@@ -551,6 +550,17 @@ function reconcile(state, array, anchor, flags, get_key) {
 		prev = effect;
 		current = skip_to_branch(effect.next);
 		count += 1;
+	}
+
+	if (count !== length) {
+		// reconcile can be called in the batch's callbacks which are
+		// executed outside of the effect tree, so error are not caught
+		try {
+			each_key_duplicate('', '', '');
+		} catch (error) {
+			invoke_error_boundary(error, state.effect);
+			return;
+		}
 	}
 
 	if (state.outrogroups !== null) {
