@@ -22,5 +22,41 @@
 			"column": 0,
 			"line": 19
 		}
+	},
+	{
+		"code": "a11y_no_static_element_interactions",
+		"end": {
+			"column": 37,
+			"line": 20
+		},
+		"message": "`<div>` with a pointerdown handler must have an ARIA role",
+		"start": {
+			"column": 0,
+			"line": 20
+		}
+	},
+	{
+		"code": "a11y_no_static_element_interactions",
+		"end": {
+			"column": 38,
+			"line": 21
+		},
+		"message": "`<div>` with a pointerenter handler must have an ARIA role",
+		"start": {
+			"column": 0,
+			"line": 21
+		}
+	},
+	{
+		"code": "a11y_no_static_element_interactions",
+		"end": {
+			"column": 36,
+			"line": 22
+		},
+		"message": "`<div>` with a touchstart handler must have an ARIA role",
+		"start": {
+			"column": 0,
+			"line": 22
+		}
 	}
 ]

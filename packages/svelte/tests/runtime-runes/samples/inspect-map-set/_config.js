@@ -1,5 +1,6 @@
 import { flushSync } from 'svelte';
 import { test } from '../../test';
+import { normalise_inspect_logs } from '../../../helpers.js';
 
 export default test({
 	compileOptions: {
@@ -12,15 +13,13 @@ export default test({
 		btn2.click();
 		flushSync();
 
-		assert.deepEqual(logs, [
-			'init',
+		assert.deepEqual(normalise_inspect_logs(logs), [
 			new Map(),
-			'init',
 			new Set(),
-			'update',
 			new Map([['a', 'a']]),
-			'update',
-			new Set(['a'])
+			'at SvelteMap.set',
+			new Set(['a']),
+			'at SvelteSet.add'
 		]);
 	}
 });

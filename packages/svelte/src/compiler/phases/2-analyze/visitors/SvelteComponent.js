@@ -12,7 +12,7 @@ export function SvelteComponent(node, context) {
 		w.svelte_component_deprecated(node);
 	}
 
-	context.visit(node.expression);
+	context.visit(node.expression, { ...context.state, expression: node.metadata.expression });
 
 	visit_component(node, context);
 }

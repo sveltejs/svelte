@@ -382,7 +382,10 @@ export function check_element(node, context) {
 	}
 
 	// element-specific checks
-	const is_labelled = attribute_map.has('aria-label') || attribute_map.has('aria-labelledby');
+	const is_labelled =
+		attribute_map.has('aria-label') ||
+		attribute_map.has('aria-labelledby') ||
+		attribute_map.has('title');
 
 	switch (node.name) {
 		case 'a':
@@ -483,9 +486,17 @@ export function check_element(node, context) {
 		case 'video': {
 			const aria_hidden_attribute = attribute_map.get('aria-hidden');
 			const aria_hidden_exist = aria_hidden_attribute && get_static_value(aria_hidden_attribute);
+
 			if (attribute_map.has('muted') || aria_hidden_exist === 'true' || has_spread) {
 				return;
 			}
+
+			if (!attribute_map.has('src')) {
+				// don't warn about missing captions if `<video>` has no `src` —
+				// could e.g. be playing a MediaStream
+				return;
+			}
+
 			let has_caption = false;
 			const track = /** @type {AST.RegularElement | undefined} */ (
 				node.fragment.nodes.find((i) => i.type === 'RegularElement' && i.name === 'track')
@@ -813,10 +824,18 @@ function has_content(element) {
 		}
 
 		if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
+			if (node.attributes.some((a) => a.type === 'Attribute' && a.name === 'popover')) {
+				continue;
+			}
+
 			if (
 				node.name === 'img' &&
 				node.attributes.some((node) => node.type === 'Attribute' && node.name === 'alt')
 			) {
+				return true;
+			}
+
+			if (node.name === 'selectedcontent') {
 				return true;
 			}
 

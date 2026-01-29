@@ -30,7 +30,7 @@ export function set_hydrating(value) {
  */
 export let hydrate_node;
 
-/** @param {TemplateNode} node */
+/** @param {TemplateNode | null} node */
 export function set_hydrate_node(node) {
 	if (node === null) {
 		w.hydration_mismatch();
@@ -41,7 +41,7 @@ export function set_hydrate_node(node) {
 }
 
 export function hydrate_next() {
-	return set_hydrate_node(/** @type {TemplateNode} */ (get_next_sibling(hydrate_node)));
+	return set_hydrate_node(get_next_sibling(hydrate_node));
 }
 
 /** @param {TemplateNode} node */
@@ -81,9 +81,10 @@ export function next(count = 1) {
 }
 
 /**
- * Removes all nodes starting at `hydrate_node` up until the next hydration end comment
+ * Skips or removes (depending on {@link remove}) all nodes starting at `hydrate_node` up until the next hydration end comment
+ * @param {boolean} remove
  */
-export function remove_nodes() {
+export function skip_nodes(remove = true) {
 	var depth = 0;
 	var node = hydrate_node;
 
@@ -100,7 +101,7 @@ export function remove_nodes() {
 		}
 
 		var next = /** @type {TemplateNode} */ (get_next_sibling(node));
-		node.remove();
+		if (remove) node.remove();
 		node = next;
 	}
 }

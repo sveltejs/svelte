@@ -1,10 +1,14 @@
 /** @import { SvelteComponent } from '../index.js' */
+/** @import { Csp } from '#server' */
 import { asClassComponent as as_class_component, createClassComponent } from './legacy-client.js';
 import { render } from '../internal/server/index.js';
+import { async_mode_flag } from '../internal/flags/index.js';
 
 // By having this as a separate entry point for server environments, we save the client bundle from having to include the server runtime
 
 export { createClassComponent };
+
+/** @typedef {{ head: string, html: string, css: { code: string, map: null }; hashes?: { script: `sha256-${string}`[] } }} LegacyRenderResult */
 
 /**
  * Takes a Svelte 5 component and returns a Svelte 4 compatible component constructor.
@@ -21,16 +25,58 @@ export { createClassComponent };
  */
 export function asClassComponent(component) {
 	const component_constructor = as_class_component(component);
-	/** @type {(props?: {}, opts?: { $$slots?: {}; context?: Map<any, any>; }) => { html: any; css: { code: string; map: any; }; head: string; } } */
-	const _render = (props, { context } = {}) => {
+	/** @type {(props?: {}, opts?: { $$slots?: {}; context?: Map<any, any>; csp?: Csp }) => LegacyRenderResult & PromiseLike<LegacyRenderResult> } */
+	const _render = (props, { context, csp } = {}) => {
 		// @ts-expect-error the typings are off, but this will work if the component is compiled in SSR mode
-		const result = render(component, { props, context });
-		return {
-			css: { code: '', map: null },
-			head: result.head,
-			html: result.body
-		};
+		const result = render(component, { props, context, csp });
+
+		const munged = Object.defineProperties(
+			/** @type {LegacyRenderResult & PromiseLike<LegacyRenderResult>} */ ({}),
+			{
+				css: {
+					value: { code: '', map: null }
+				},
+				head: {
+					get: () => result.head
+				},
+				html: {
+					get: () => result.body
+				},
+				then: {
+					/**
+					 * this is not type-safe, but honestly it's the best I can do right now, and it's a straightforward function.
+					 *
+					 * @template TResult1
+					 * @template [TResult2=never]
+					 * @param { (value: LegacyRenderResult) => TResult1 } onfulfilled
+					 * @param { (reason: unknown) => TResult2 } onrejected
+					 */
+					value: (onfulfilled, onrejected) => {
+						if (!async_mode_flag) {
+							const user_result = onfulfilled({
+								css: munged.css,
+								head: munged.head,
+								html: munged.html
+							});
+							return Promise.resolve(user_result);
+						}
+
+						return result.then((result) => {
+							return onfulfilled({
+								css: munged.css,
+								head: result.head,
+								html: result.body,
+								hashes: result.hashes
+							});
+						}, onrejected);
+					}
+				}
+			}
+		);
+
+		return munged;
 	};
+
 	// @ts-expect-error this is present for SSR
 	component_constructor.render = _render;
 

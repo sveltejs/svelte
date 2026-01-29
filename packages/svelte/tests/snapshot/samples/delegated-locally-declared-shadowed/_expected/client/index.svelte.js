@@ -2,12 +2,6 @@ import 'svelte/internal/disclose-version';
 import 'svelte/internal/flags/legacy';
 import * as $ from 'svelte/internal/client';
 
-var on_click = (e) => {
-	const index = Number(e.currentTarget.dataset.index);
-
-	console.log(index);
-};
-
 var root_1 = $.from_html(`<button type="button">B</button>`);
 
 export default function Delegated_locally_declared_shadowed($$anchor) {
@@ -18,7 +12,13 @@ export default function Delegated_locally_declared_shadowed($$anchor) {
 		var button = root_1();
 
 		$.set_attribute(button, 'data-index', index);
-		button.__click = [on_click];
+
+		button.__click = (e) => {
+			const index = Number(e.currentTarget.dataset.index);
+
+			console.log(index);
+		};
+
 		$.append($$anchor, button);
 	});
 

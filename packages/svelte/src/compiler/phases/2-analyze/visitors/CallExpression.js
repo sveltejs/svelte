@@ -7,7 +7,7 @@ import { get_parent } from '../../../utils/ast.js';
 import { is_pure, is_safe_identifier } from './shared/utils.js';
 import { dev, locate_node, source } from '../../../state.js';
 import * as b from '#compiler/builders';
-import { create_expression_metadata } from '../../nodes.js';
+import { ExpressionMetadata } from '../../nodes.js';
 
 /**
  * @param {CallExpression} node
@@ -226,6 +226,13 @@ export function CallExpression(node, context) {
 			break;
 		}
 
+		case '$state.eager':
+			if (node.arguments.length !== 1) {
+				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
+			}
+
+			break;
+
 		case '$state.snapshot':
 			if (node.arguments.length !== 1) {
 				e.rune_invalid_arguments_length(node, rune, 'exactly one argument');
@@ -236,11 +243,12 @@ export function CallExpression(node, context) {
 
 	// `$inspect(foo)` or `$derived(foo) should not trigger the `static-state-reference` warning
 	if (rune === '$derived') {
-		const expression = create_expression_metadata();
+		const expression = new ExpressionMetadata();
 
 		context.next({
 			...context.state,
 			function_depth: context.state.function_depth + 1,
+			derived_function_depth: context.state.function_depth + 1,
 			expression
 		});
 

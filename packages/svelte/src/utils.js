@@ -137,7 +137,7 @@ const DELEGATED_EVENTS = [
  * Returns `true` if `event_name` is a delegated event
  * @param {string} event_name
  */
-export function is_delegated(event_name) {
+export function can_delegate_event(event_name) {
 	return DELEGATED_EVENTS.includes(event_name);
 }
 
@@ -154,7 +154,6 @@ const DOM_BOOLEAN_ATTRIBUTES = [
 	'default',
 	'disabled',
 	'formnovalidate',
-	'hidden',
 	'indeterminate',
 	'inert',
 	'ismap',
@@ -437,6 +436,7 @@ const STATE_CREATION_RUNES = /** @type {const} */ ([
 
 const RUNES = /** @type {const} */ ([
 	...STATE_CREATION_RUNES,
+	'$state.eager',
 	'$state.snapshot',
 	'$props',
 	'$props.id',

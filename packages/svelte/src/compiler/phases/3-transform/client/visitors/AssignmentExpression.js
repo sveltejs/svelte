@@ -162,7 +162,10 @@ function build_assignment(operator, left, right, context) {
 	// will be pushed to. we do this by transforming it to something like
 	// `$.assign_nullish(object, 'items', [])`
 	let should_transform =
-		dev && path.at(-1) !== 'ExpressionStatement' && is_non_coercive_operator(operator);
+		dev &&
+		path.at(-1) !== 'ExpressionStatement' &&
+		is_non_coercive_operator(operator) &&
+		!context.state.scope.evaluate(right).is_primitive;
 
 	// special case — ignore `onclick={() => (...)}`
 	if (
@@ -192,17 +195,18 @@ function build_assignment(operator, left, right, context) {
 		path.at(-1) === 'Component' ||
 		path.at(-1) === 'SvelteComponent' ||
 		(path.at(-1) === 'ArrowFunctionExpression' &&
-			path.at(-2) === 'SequenceExpression' &&
-			(path.at(-3) === 'Component' ||
-				path.at(-3) === 'SvelteComponent' ||
-				path.at(-3) === 'BindDirective'))
+			(path.at(-2) === 'BindDirective' ||
+				(path.at(-2) === 'Component' && path.at(-3) === 'Fragment') ||
+				(path.at(-2) === 'SequenceExpression' &&
+					(path.at(-3) === 'Component' ||
+						path.at(-3) === 'SvelteComponent' ||
+						path.at(-3) === 'BindDirective'))))
 	) {
 		should_transform = false;
 	}
 
 	if (left.type === 'MemberExpression' && should_transform) {
 		const callee = callees[operator];
-
 		return /** @type {Expression} */ (
 			context.visit(
 				b.call(

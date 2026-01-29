@@ -1,5 +1,5 @@
 /** @import { AssignmentExpression, Expression, Identifier, MemberExpression, SequenceExpression, SpreadElement, Literal, Super, UpdateExpression, ExpressionStatement } from 'estree' */
-/** @import { AST, ExpressionMetadata } from '#compiler' */
+/** @import { AST } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext, Context } from '../../types' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
@@ -10,6 +10,7 @@ import is_reference from 'is-reference';
 import { dev, is_ignored, locator, component_name } from '../../../../../state.js';
 import { build_getter } from '../../utils.js';
 import { init_spread_bindings } from '../../../shared/spread_bindings.js';
+import { ExpressionMetadata } from '../../../../nodes.js';
 
 /**
  * A utility for extracting complex expressions (such as call expressions)
@@ -22,16 +23,41 @@ export class Memoizer {
 	/** @type {Array<{ id: Identifier, expression: Expression }>} */
 	#async = [];
 
+	/** @type {Set<Expression>} */
+	#blockers = new Set();
+
 	/**
 	 * @param {Expression} expression
-	 * @param {boolean} has_await
+	 * @param {ExpressionMetadata} metadata
+	 * @param {boolean} memoize_if_state
 	 */
-	add(expression, has_await) {
+	add(expression, metadata, memoize_if_state = false) {
+		this.check_blockers(metadata);
+
+		const should_memoize =
+			metadata.has_call || metadata.has_await || (memoize_if_state && metadata.has_state);
+
+		if (!should_memoize) {
+			// no memoization required
+			return expression;
+		}
+
 		const id = b.id('#'); // filled in later
 
-		(has_await ? this.#async : this.#sync).push({ id, expression });
+		(metadata.has_await ? this.#async : this.#sync).push({ id, expression });
 
 		return id;
+	}
+
+	/**
+	 * @param {ExpressionMetadata} metadata
+	 */
+	check_blockers(metadata) {
+		for (const binding of metadata.dependencies) {
+			if (binding.blocker) {
+				this.#blockers.add(binding.blocker);
+			}
+		}
 	}
 
 	apply() {
@@ -39,6 +65,10 @@ export class Memoizer {
 			memo.id.name = `$${i}`;
 			return memo.id;
 		});
+	}
+
+	blockers() {
+		return this.#blockers.size > 0 ? b.array([...this.#blockers]) : undefined;
 	}
 
 	deriveds(runes = true) {
@@ -73,8 +103,7 @@ export function build_template_chunk(
 	values,
 	context,
 	state = context.state,
-	memoize = (value, metadata) =>
-		metadata.has_call || metadata.has_await ? state.memoizer.add(value, metadata.has_await) : value
+	memoize = (value, metadata) => state.memoizer.add(value, metadata)
 ) {
 	/** @type {Expression[]} */
 	const expressions = [];
@@ -106,7 +135,7 @@ export function build_template_chunk(
 
 			const evaluated = state.scope.evaluate(value);
 
-			has_await ||= node.metadata.expression.has_await;
+			has_await ||= node.metadata.expression.has_await || node.metadata.expression.has_blockers();
 			has_state ||= has_await || (node.metadata.expression.has_state && !evaluated.is_known);
 
 			if (values.length === 1) {
@@ -177,7 +206,8 @@ export function build_render_statement(state) {
 					: b.block(state.update)
 			),
 			memoizer.sync_values(),
-			memoizer.async_values()
+			memoizer.async_values(),
+			memoizer.blockers()
 		)
 	);
 }
@@ -210,16 +240,15 @@ export function parse_directive_name(name) {
  * @param {import('zimmerframe').Context<AST.SvelteNode, ComponentClientTransformState>} context
  */
 export function build_bind_this(expression, value, context) {
-	const { state, visit } = context;
 	if (expression.type === 'SpreadElement') {
 		const { get, set } = init_spread_bindings(expression.argument, context);
 		return b.call('$.bind_this', value, set, get);
 	}
 
-	if (expression.type === 'SequenceExpression') {
-		const [get, set] = /** @type {SequenceExpression} */ (visit(expression)).expressions;
-		return b.call('$.bind_this', value, set, get);
-	}
+	const { state, visit } = context;
+
+	const [getter, setter] =
+		expression.type === 'SequenceExpression' ? expression.expressions : [null, null];
 
 	/** @type {Identifier[]} */
 	const ids = [];
@@ -236,7 +265,7 @@ export function build_bind_this(expression, value, context) {
 	// Note that we only do this for each context variables, the consequence is that the value might be stale in
 	// some scenarios where the value is a member expression with changing computed parts or using a combination of multiple
 	// variables, but that was the same case in Svelte 4, too. Once legacy mode is gone completely, we can revisit this.
-	walk(expression, null, {
+	walk(getter ?? expression, null, {
 		Identifier(node, { path }) {
 			if (seen.includes(node.name)) return;
 			seen.push(node.name);
@@ -267,9 +296,17 @@ export function build_bind_this(expression, value, context) {
 
 	const child_state = { ...state, transform };
 
-	const get = /** @type {Expression} */ (visit(expression, child_state));
-	const set = /** @type {Expression} */ (
-		visit(b.assignment('=', expression, b.id('$$value')), child_state)
+	let get = /** @type {Expression} */ (visit(getter ?? expression, child_state));
+	let set = /** @type {Expression} */ (
+		visit(
+			setter ??
+				b.assignment(
+					'=',
+					/** @type {Identifier | MemberExpression} */ (expression),
+					b.id('$$value')
+				),
+			child_state
+		)
 	);
 
 	// If we're mutating a property, then it might already be non-existent.
@@ -282,13 +319,25 @@ export function build_bind_this(expression, value, context) {
 		node = node.object;
 	}
 
-	return b.call(
-		'$.bind_this',
-		value,
-		b.arrow([b.id('$$value'), ...ids], set),
-		b.arrow([...ids], get),
-		values.length > 0 && b.thunk(b.array(values))
-	);
+	get =
+		get.type === 'ArrowFunctionExpression'
+			? b.arrow([...ids], get.body)
+			: get.type === 'FunctionExpression'
+				? b.function(null, [...ids], get.body)
+				: getter
+					? get
+					: b.arrow([...ids], get);
+
+	set =
+		set.type === 'ArrowFunctionExpression'
+			? b.arrow([set.params[0] ?? b.id('_'), ...ids], set.body)
+			: set.type === 'FunctionExpression'
+				? b.function(null, [set.params[0] ?? b.id('_'), ...ids], set.body)
+				: setter
+					? set
+					: b.arrow([b.id('$$value'), ...ids], set);
+
+	return b.call('$.bind_this', value, set, get, values.length > 0 && b.thunk(b.array(values)));
 }
 
 /**
@@ -314,6 +363,7 @@ export function validate_binding(state, binding, expression) {
 			b.call(
 				'$.validate_binding',
 				b.literal(state.analysis.source.slice(binding.start, binding.end)),
+				binding.metadata.expression.blockers(),
 				b.thunk(
 					state.store_to_invalidate ? b.sequence([b.call('$.mark_store_binding'), obj]) : obj
 				),
@@ -324,8 +374,8 @@ export function validate_binding(state, binding, expression) {
 							: b.literal(/** @type {Identifier} */ (expression.property).name)
 					)
 				),
-				loc && b.literal(loc.line),
-				loc && b.literal(loc.column)
+				b.literal(loc.line),
+				b.literal(loc.column)
 			)
 		)
 	);

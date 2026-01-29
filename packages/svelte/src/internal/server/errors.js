@@ -3,12 +3,114 @@
 export *  from '../shared/errors.js';
 
 /**
+ * The node API `AsyncLocalStorage` is not available, but is required to use async server rendering.
+ * @returns {never}
+ */
+export function async_local_storage_unavailable() {
+	const error = new Error(`async_local_storage_unavailable\nThe node API \`AsyncLocalStorage\` is not available, but is required to use async server rendering.\nhttps://svelte.dev/e/async_local_storage_unavailable`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
+ * Encountered asynchronous work while rendering synchronously.
+ * @returns {never}
+ */
+export function await_invalid() {
+	const error = new Error(`await_invalid\nEncountered asynchronous work while rendering synchronously.\nhttps://svelte.dev/e/await_invalid`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
+ * The `html` property of server render results has been deprecated. Use `body` instead.
+ * @returns {never}
+ */
+export function html_deprecated() {
+	const error = new Error(`html_deprecated\nThe \`html\` property of server render results has been deprecated. Use \`body\` instead.\nhttps://svelte.dev/e/html_deprecated`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
+ * Attempted to set `hydratable` with key `%key%` twice with different values.
+ * 
+ * %stack%
+ * @param {string} key
+ * @param {string} stack
+ * @returns {never}
+ */
+export function hydratable_clobbering(key, stack) {
+	const error = new Error(`hydratable_clobbering\nAttempted to set \`hydratable\` with key \`${key}\` twice with different values.
+
+${stack}\nhttps://svelte.dev/e/hydratable_clobbering`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
+ * Failed to serialize `hydratable` data for key `%key%`.
+ * 
+ * `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/uneval) can, plus Promises.
+ * 
+ * Cause:
+ * %stack%
+ * @param {string} key
+ * @param {string} stack
+ * @returns {never}
+ */
+export function hydratable_serialization_failed(key, stack) {
+	const error = new Error(`hydratable_serialization_failed\nFailed to serialize \`hydratable\` data for key \`${key}\`.
+
+\`hydratable\` can serialize anything [\`uneval\` from \`devalue\`](https://npmjs.com/package/uneval) can, plus Promises.
+
+Cause:
+${stack}\nhttps://svelte.dev/e/hydratable_serialization_failed`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
+ * `csp.nonce` was set while `csp.hash` was `true`. These options cannot be used simultaneously.
+ * @returns {never}
+ */
+export function invalid_csp() {
+	const error = new Error(`invalid_csp\n\`csp.nonce\` was set while \`csp.hash\` was \`true\`. These options cannot be used simultaneously.\nhttps://svelte.dev/e/invalid_csp`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
  * `%name%(...)` is not available on the server
  * @param {string} name
  * @returns {never}
  */
 export function lifecycle_function_unavailable(name) {
 	const error = new Error(`lifecycle_function_unavailable\n\`${name}(...)\` is not available on the server\nhttps://svelte.dev/e/lifecycle_function_unavailable`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
+ * Could not resolve `render` context.
+ * @returns {never}
+ */
+export function server_context_required() {
+	const error = new Error(`server_context_required\nCould not resolve \`render\` context.\nhttps://svelte.dev/e/server_context_required`);
 
 	error.name = 'Svelte error';
 

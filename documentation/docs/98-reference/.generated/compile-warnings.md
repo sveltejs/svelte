@@ -81,7 +81,7 @@ Coding for the keyboard is important for users with physical disabilities who ca
 ### a11y_consider_explicit_label
 
 ```
-Buttons and links should either contain text or have an `aria-label` or `aria-labelledby` attribute
+Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute
 ```
 
 ### a11y_distracting_elements
