@@ -78,21 +78,40 @@ export function store_get(store, store_name, stores) {
 	// store.subscribe((newValue) => console.log(newValue, $value)) - $value should be up to date.
 	// The issue: when store.set() is called, subscription callbacks run synchronously but in
 	// subscription order. If a manual subscription runs before the auto-subscription, reading
-	// $value inside the manual callback sees a stale value. We fix this by checking if
-	// last_value (updated by auto-subscription) differs from source, and syncing if needed.
-	// Note: This only works if the auto-subscription has already run. If it hasn't, the source
-	// will still be stale, but that's a limitation of the current approach.
+	// $value inside the manual callback sees a stale value.
+	// Fix: When reading $value, if last_value has been updated (meaning auto-subscription ran),
+	// sync the source. If not, peek at the store's current value via a synchronous subscription
+	// that immediately unsubscribes. This ensures $value is always current.
 	if (
 		store &&
 		entry.store === store &&
 		entry.unsubscribe !== noop &&
-		entry.last_value !== undefined &&
-		entry.last_value !== entry.source.v
+		entry.source.v !== undefined
 	) {
-		// Sync source with last value seen in auto-subscription callback
-		// This ensures $value is current when read during manual subscription callbacks,
-		// as long as the auto-subscription callback has already run
-		entry.source.v = entry.last_value;
+		// If auto-subscription has already updated last_value, use it
+		if (entry.last_value !== undefined && entry.last_value !== entry.source.v) {
+			entry.source.v = entry.last_value;
+		} else {
+			// Auto-subscription hasn't run yet (manual callback ran first), peek at store value
+			// This is safe because we only do it when source is initialized (not async stores)
+			// and we immediately unsubscribe, so it won't interfere with async store initialization
+			try {
+				let peeked_value = entry.source.v;
+				const temp_unsub = store.subscribe((v) => {
+					peeked_value = v;
+				});
+				temp_unsub(); // Immediately unsubscribe - this is synchronous for writable stores
+				if (peeked_value !== entry.source.v) {
+					entry.source.v = peeked_value;
+					entry.last_value = peeked_value;
+				}
+			} catch {
+				// If peeking fails, fall back to last_value if available
+				if (entry.last_value !== undefined && entry.last_value !== entry.source.v) {
+					entry.source.v = entry.last_value;
+				}
+			}
+		}
 	}
 
 	return get(entry.source);
