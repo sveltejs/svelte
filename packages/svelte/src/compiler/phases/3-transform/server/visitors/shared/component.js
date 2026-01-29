@@ -10,7 +10,7 @@ import {
 import * as b from '#compiler/builders';
 import { is_element_node } from '../../../../nodes.js';
 import { dev } from '../../../../../state.js';
-import { init_spread_bindings } from './spread_bindings.js';
+import { init_spread_binding } from './spread_bindings.js';
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
@@ -112,7 +112,7 @@ export function build_inline_component(node, expression, context) {
 			optimiser.check_blockers(attribute.metadata.expression);
 
 			if (attribute.expression.type === 'SpreadElement') {
-				const [get, set] = init_spread_bindings(attribute.expression, context);
+				const [get, set] = init_spread_binding(attribute.expression, context);
 
 				push_prop(b.get(attribute.name, [b.return(get)]));
 				push_prop(b.set(attribute.name, [b.stmt(set)]));
