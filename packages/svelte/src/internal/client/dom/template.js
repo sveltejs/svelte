@@ -4,6 +4,7 @@ import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydra
 import {
 	create_text,
 	get_first_child,
+	get_next_sibling,
 	is_firefox,
 	create_element,
 	create_fragment,
@@ -310,6 +311,21 @@ export function text(value = '') {
 		// if an {expression} is empty during SSR, we need to insert an empty text node
 		node.before((node = create_text()));
 		set_hydrate_node(node);
+	} else {
+		// Browsers may split text nodes > 65536 characters into multiple consecutive text nodes
+		// during HTML parsing. We need to merge them into a single text node.
+		var next = get_next_sibling(node);
+		var merged_text = /** @type {Text} */ (node).textContent;
+		
+		while (next !== null && next.nodeType === TEXT_NODE) {
+			merged_text += /** @type {Text} */ (next).textContent;
+			var to_remove = next;
+			next = get_next_sibling(next);
+			to_remove.remove();
+		}
+		
+		// Update the text node with the merged content
+		/** @type {Text} */ (node).textContent = merged_text;
 	}
 
 	assign_nodes(node, node);
