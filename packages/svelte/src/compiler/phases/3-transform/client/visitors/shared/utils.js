@@ -241,7 +241,7 @@ export function parse_directive_name(name) {
  */
 export function build_bind_this(expression, value, context) {
 	if (expression.type === 'SpreadElement') {
-		const [get, set] = init_spread_bindings(expression.argument, context);
+		const [get, set] = init_spread_bindings(expression, context);
 		return b.call('$.bind_this', value, set, get);
 	}
 

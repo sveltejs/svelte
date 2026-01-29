@@ -14,11 +14,7 @@ import { init_spread_bindings } from '../../shared/spread_bindings.js';
  * @param {ComponentContext} context
  */
 export function BindDirective(node, context) {
-	const expression = /** @type {Expression} */ (
-		context.visit(
-			node.expression.type === 'SpreadElement' ? node.expression.argument : node.expression
-		)
-	);
+	const expression = /** @type {Expression} */ (context.visit(node.expression));
 
 	const property = binding_properties[node.name];
 	const parent = /** @type {AST.SvelteNode} */ (context.path.at(-1));
@@ -26,7 +22,7 @@ export function BindDirective(node, context) {
 	let get, set;
 
 	if (node.expression.type === 'SpreadElement') {
-		[get, set] = init_spread_bindings(expression, context);
+		[get, set] = init_spread_bindings(node.expression, context);
 	} else if (expression.type === 'SequenceExpression') {
 		[get, set] = expression.expressions;
 	} else {

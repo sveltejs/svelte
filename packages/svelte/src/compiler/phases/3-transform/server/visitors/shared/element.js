@@ -125,7 +125,7 @@ export function build_element_attributes(node, context, transform) {
 			);
 
 			if (attribute.expression.type === 'SpreadElement') {
-				const [get] = init_spread_bindings(expression, context);
+				const [get] = init_spread_bindings(attribute.expression, context);
 				expression = b.call(get);
 			} else if (expression.type === 'SequenceExpression') {
 				expression = b.call(expression.expressions[0]);

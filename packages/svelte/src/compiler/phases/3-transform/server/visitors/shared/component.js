@@ -112,7 +112,7 @@ export function build_inline_component(node, expression, context) {
 			optimiser.check_blockers(attribute.metadata.expression);
 
 			if (attribute.expression.type === 'SpreadElement') {
-				const [get, set] = init_spread_bindings(attribute.expression.argument, context);
+				const [get, set] = init_spread_bindings(attribute.expression, context);
 
 				push_prop(b.get(attribute.name, [b.return(b.call(get))]));
 				push_prop(b.set(attribute.name, [b.stmt(b.call(set, b.id('$$value')))]));
