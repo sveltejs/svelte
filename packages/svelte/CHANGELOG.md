@@ -1,5 +1,27 @@
 # svelte
 
+## 5.49.0
+
+### Minor Changes
+
+- feat: allow passing `ShadowRootInit` object to custom element `shadow` option ([#17088](https://github.com/sveltejs/svelte/pull/17088))
+
+### Patch Changes
+
+- fix: throw for unset `createContext` get on the server ([#17580](https://github.com/sveltejs/svelte/pull/17580))
+
+- fix: reset effects inside skipped branches ([#17581](https://github.com/sveltejs/svelte/pull/17581))
+
+- fix: preserve old dependencies when updating reaction inside fork ([#17579](https://github.com/sveltejs/svelte/pull/17579))
+
+- fix: more conservative assignment_value_stale warnings ([#17574](https://github.com/sveltejs/svelte/pull/17574))
+
+- fix: disregard `popover` elements when determining whether an element has content ([#17367](https://github.com/sveltejs/svelte/pull/17367))
+
+- fix: fire introstart/outrostart events after delay, if specified ([#17567](https://github.com/sveltejs/svelte/pull/17567))
+
+- fix: increment signal versions when discarding forks ([#17577](https://github.com/sveltejs/svelte/pull/17577))
+
 ## 5.48.5
 
 ### Patch Changes
