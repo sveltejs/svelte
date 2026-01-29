@@ -87,8 +87,7 @@ const { test, run } = suite_with_variants<SSRTest, 'sync' | 'async', CompileOpti
 				csp: config.csp
 			});
 			rendered = is_async ? await render_result : render_result;
-			// we need to access there inside the try catch or else errors that throw in the script tag
-			// are not caught in sync mode since those are lazy
+			// we need to access these inside the try-catch otherwise errors in the script tag are not caught
 			({ body, head, hashes } = rendered);
 		} catch (error) {
 			errored = true;
