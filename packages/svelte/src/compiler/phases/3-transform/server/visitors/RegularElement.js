@@ -236,18 +236,19 @@ export function RegularElement(node, context) {
 	}
 
 	if (optimiser.is_async()) {
-		let statement = create_child_block(
-			b.block([optimiser.apply(), ...state.init, ...build_template(state.template)]),
-			optimiser.has_await
-		);
+		let statements = [...state.init, ...build_template(state.template)];
+
+		if (optimiser.has_await) {
+			statements = [create_child_block(b.block([optimiser.apply(), ...statements]), true)];
+		}
 
 		const blockers = optimiser.blockers();
 
 		if (blockers.elements.length > 0) {
-			statement = create_async_block(b.block([statement]), blockers, false, false);
+			statements = [create_async_block(b.block(statements), blockers, false, false)];
 		}
 
-		context.state.template.push(statement);
+		context.state.template.push(...statements);
 	} else {
 		context.state.init.push(...state.init);
 		context.state.template.push(...state.template);
