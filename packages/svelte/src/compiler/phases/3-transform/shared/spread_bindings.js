@@ -20,9 +20,7 @@ export function init_spread_bindings(spread_expression, { state, visit }) {
 			id,
 			b.call(
 				'$.derived',
-				b.thunk(
-					dev ? b.call('$.validate_spread_bindings', expression, expression_text) : expression
-				)
+				b.thunk(dev ? b.call('$.validate_spread_binding', expression, expression_text) : expression)
 			)
 		)
 	);

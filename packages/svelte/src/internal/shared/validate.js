@@ -52,7 +52,7 @@ export function prevent_snippet_stringification(fn) {
  * @param {string} name
  * @return {[() => unknown, (value: unknown) => void]}
  */
-export function validate_spread_bindings(spread_object, name) {
+export function validate_spread_binding(spread_object, name) {
 	const getter = spread_object[0];
 	const setter = spread_object[1];
 
