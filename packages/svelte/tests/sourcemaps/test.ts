@@ -96,6 +96,20 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 
 		const decoded = decode(map.mappings);
 
+		/*
+		Decoded sourcemap mappings contain absolute line/column numbers.
+		Negative values are invalid and can cause errors in downstream processing
+		*/
+		for (let l = 0; l < decoded.length; l++) {
+			for (let m of decoded[l]) {
+				if (m.some((i) => i < 0)) {
+					throw new Error(
+						`Invalid mapping with negative value ${JSON.stringify(m)} at line ${l} of the decoded mappings of ${info} sourcemap\n${JSON.stringify(map)}`
+					);
+				}
+			}
+		}
+
 		try {
 			for (let entry of entries) {
 				entry = typeof entry === 'string' ? { str: entry } : entry;

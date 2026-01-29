@@ -1,6 +1,8 @@
 name: Publish Any Commit
 on: [push, pull_request]
 
+permissions: {}
+
 jobs:
   build:
     permissions: {}
@@ -8,9 +10,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22.x
           cache: pnpm
@@ -23,7 +25,7 @@ jobs:
 
       - run: pnpx pkg-pr-new publish --comment=off --json output.json --compact --no-template './packages/svelte'
       - name: Add metadata to output
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -34,7 +36,7 @@ jobs:
             output.ref = context.ref;
             fs.writeFileSync('output.json', JSON.stringify(output), 'utf8');
       - name: Upload output
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: output
           path: ./output.json

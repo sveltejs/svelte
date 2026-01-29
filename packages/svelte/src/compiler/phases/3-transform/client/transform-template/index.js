@@ -1,4 +1,3 @@
-/** @import { Location } from 'locate-character' */
 /** @import { Namespace } from '#compiler' */
 /** @import { ComponentClientTransformState } from '../types.js' */
 /** @import { Node } from './types.js' */
@@ -15,7 +14,7 @@ function build_locations(nodes) {
 	for (const node of nodes) {
 		if (node.type !== 'element') continue;
 
-		const { line, column } = /** @type {Location} */ (locator(node.start));
+		const { line, column } = locator(node.start);
 
 		const expression = b.array([b.literal(line), b.literal(column)]);
 		const children = build_locations(node.children);

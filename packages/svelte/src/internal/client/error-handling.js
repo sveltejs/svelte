@@ -29,7 +29,7 @@ export function handle_error(error) {
 		// if the error occurred while creating this subtree, we let it
 		// bubble up until it hits a boundary that can handle it
 		if ((effect.f & BOUNDARY_EFFECT) === 0) {
-			if (!effect.parent && error instanceof Error) {
+			if (DEV && !effect.parent && error instanceof Error) {
 				apply_adjustments(error);
 			}
 
@@ -61,7 +61,7 @@ export function invoke_error_boundary(error, effect) {
 		effect = effect.parent;
 	}
 
-	if (error instanceof Error) {
+	if (DEV && error instanceof Error) {
 		apply_adjustments(error);
 	}
 

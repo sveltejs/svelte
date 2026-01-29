@@ -35,7 +35,7 @@ export function SlotElement(node, context) {
 				context,
 				(value, metadata) =>
 					metadata.has_call || metadata.has_await
-						? b.call('$.get', memoizer.add(value, metadata.has_await))
+						? b.call('$.get', memoizer.add(value, metadata))
 						: value
 			);
 
@@ -49,7 +49,7 @@ export function SlotElement(node, context) {
 				}
 			}
 		} else if (attribute.type === 'LetDirective') {
-			lets.push(/** @type {ExpressionStatement} */ (context.visit(attribute)));
+			context.visit(attribute, { ...context.state, let_directives: lets });
 		}
 	}
 
@@ -74,13 +74,15 @@ export function SlotElement(node, context) {
 	);
 
 	const async_values = memoizer.async_values();
+	const blockers = memoizer.blockers();
 
-	if (async_values) {
+	if (async_values || blockers) {
 		context.state.init.push(
 			b.stmt(
 				b.call(
 					'$.async',
 					context.state.node,
+					blockers,
 					async_values,
 					b.arrow([context.state.node, ...memoizer.async_ids()], b.block(statements))
 				)

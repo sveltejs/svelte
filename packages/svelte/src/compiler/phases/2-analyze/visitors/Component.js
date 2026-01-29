@@ -16,5 +16,11 @@ export function Component(node, context) {
 		binding !== null &&
 		(binding.kind !== 'normal' || node.name.includes('.'));
 
+	if (binding) {
+		node.metadata.expression.has_state = node.metadata.dynamic;
+		node.metadata.expression.dependencies.add(binding);
+		node.metadata.expression.references.add(binding);
+	}
+
 	visit_component(node, context);
 }

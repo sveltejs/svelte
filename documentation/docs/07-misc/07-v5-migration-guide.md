@@ -4,7 +4,7 @@ title: Svelte 5 migration guide
 
 Version 5 comes with an overhauled syntax and reactivity system. While it may look different at first, you'll soon notice many similarities. This guide goes over the changes in detail and shows you how to upgrade. Along with it, we also provide information on _why_ we did these changes.
 
-You don't have to migrate to the new syntax right away - Svelte 5 still supports the old Svelte 4 syntax, and you can mix and match components using the new syntax with components using the old and vice versa. We expect many people to be able to upgrade with only a few lines of code changed initially. There's also a [migration script](#Migration-script) that helps you with many of these steps automatically.
+You don't have to migrate to the new syntax right away — Svelte 5 still supports the old Svelte 4 syntax, and you can mix and match components using the new syntax with components using the old and vice versa. We expect many people to be able to upgrade with only a few lines of code changed initially. There's also a [migration script](#Migration-script) that helps you with many of these steps automatically.
 
 ## Reactivity syntax changes
 
@@ -23,7 +23,7 @@ In Svelte 4, a `let` declaration at the top level of a component was implicitly 
 Nothing else changes. `count` is still the number itself, and you read and write directly to it, without a wrapper like `.value` or `getCount()`.
 
 > [!DETAILS] Why we did this
-> `let` being implicitly reactive at the top level worked great, but it meant that reactivity was constrained - a `let` declaration anywhere else was not reactive. This forced you to resort to using stores when refactoring code out of the top level of components for reuse. This meant you had to learn an entirely separate reactivity model, and the result often wasn't as nice to work with. Because reactivity is more explicit in Svelte 5, you can keep using the same API outside the top level of components. Head to [the tutorial](/tutorial) to learn more.
+> `let` being implicitly reactive at the top level worked great, but it meant that reactivity was constrained — a `let` declaration anywhere else was not reactive. This forced you to resort to using stores when refactoring code out of the top level of components for reuse. This meant you had to learn an entirely separate reactivity model, and the result often wasn't as nice to work with. Because reactivity is more explicit in Svelte 5, you can keep using the same API outside the top level of components. Head to [the tutorial](/tutorial) to learn more.
 
 ### $: → $derived/$effect
 
@@ -120,7 +120,7 @@ In Svelte 5, the `$props` rune makes this straightforward without any additional
 
 ## Event changes
 
-Event handlers have been given a facelift in Svelte 5. Whereas in Svelte 4 we use the `on:` directive to attach an event listener to an element, in Svelte 5 they are properties like any other (in other words - remove the colon):
+Event handlers have been given a facelift in Svelte 5. Whereas in Svelte 4 we use the `on:` directive to attach an event listener to an element, in Svelte 5 they are properties like any other (in other words — remove the colon):
 
 ```svelte
 <script>
@@ -154,7 +154,7 @@ Since they're just properties, you can use the normal shorthand syntax...
 
 In Svelte 4, components could emit events by creating a dispatcher with `createEventDispatcher`.
 
-This function is deprecated in Svelte 5. Instead, components should accept _callback props_ - which means you then pass functions as properties to these components:
+This function is deprecated in Svelte 5. Instead, components should accept _callback props_ — which means you then pass functions as properties to these components:
 
 ```svelte
 <!--- file: App.svelte --->
@@ -462,7 +462,7 @@ In Svelte 4, you would pass data to a `<slot />` and then retrieve it with `let:
 
 ## Migration script
 
-By now you should have a pretty good understanding of the before/after and how the old syntax relates to the new syntax. It probably also became clear that a lot of these migrations are rather technical and repetitive - something you don't want to do by hand.
+By now you should have a pretty good understanding of the before/after and how the old syntax relates to the new syntax. It probably also became clear that a lot of these migrations are rather technical and repetitive — something you don't want to do by hand.
 
 We thought the same, which is why we provide a migration script to do most of the migration automatically. You can upgrade your project by using `npx sv migrate svelte-5`. This will do the following things:
 

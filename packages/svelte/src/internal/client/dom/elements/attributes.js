@@ -1,4 +1,4 @@
-/** @import { Effect } from '#client' */
+/** @import { Blocker, Effect } from '#client' */
 import { DEV } from 'esm-env';
 import { hydrating, set_hydrating } from '../hydration.js';
 import { get_descriptors, get_prototype_of } from '../../../shared/utils.js';
@@ -6,8 +6,8 @@ import { create_event, delegate } from './events.js';
 import { add_form_reset_listener, autofocus } from './misc.js';
 import * as w from '../../warnings.js';
 import { LOADING_ATTR_SYMBOL } from '#client/constants';
-import { queue_idle_task } from '../task.js';
-import { is_capture_event, is_delegated, normalize_attribute } from '../../../../utils.js';
+import { queue_micro_task } from '../task.js';
+import { is_capture_event, can_delegate_event, normalize_attribute } from '../../../../utils.js';
 import {
 	active_effect,
 	active_reaction,
@@ -20,7 +20,7 @@ import { clsx } from '../../../shared/attributes.js';
 import { set_class } from './class.js';
 import { set_style } from './style.js';
 import { ATTACHMENT_KEY, NAMESPACE_HTML, UNINITIALIZED } from '../../../../constants.js';
-import { block, branch, destroy_effect, effect } from '../../reactivity/effects.js';
+import { branch, destroy_effect, effect, managed } from '../../reactivity/effects.js';
 import { init_select, select_option } from './bindings/select.js';
 import { flatten } from '../../reactivity/async.js';
 
@@ -65,7 +65,7 @@ export function remove_input_defaults(input) {
 
 	// @ts-expect-error
 	input.__on_r = remove_defaults;
-	queue_idle_task(remove_defaults);
+	queue_micro_task(remove_defaults);
 	add_form_reset_listener();
 }
 
@@ -268,10 +268,27 @@ export function set_custom_element_data(node, prop, value) {
  * @param {Record<string | symbol, any> | undefined} prev
  * @param {Record<string | symbol, any>} next New attributes - this function mutates this object
  * @param {string} [css_hash]
+ * @param {boolean} [should_remove_defaults]
  * @param {boolean} [skip_warning]
  * @returns {Record<string, any>}
  */
-export function set_attributes(element, prev, next, css_hash, skip_warning = false) {
+function set_attributes(
+	element,
+	prev,
+	next,
+	css_hash,
+	should_remove_defaults = false,
+	skip_warning = false
+) {
+	if (hydrating && should_remove_defaults && element.tagName === 'INPUT') {
+		var input = /** @type {HTMLInputElement} */ (element);
+		var attribute = input.type === 'checkbox' ? 'defaultChecked' : 'defaultValue';
+
+		if (!(attribute in next)) {
+			remove_input_defaults(input);
+		}
+	}
+
 	var attributes = get_attributes(element);
 
 	var is_custom_element = attributes[IS_CUSTOM_ELEMENT];
@@ -361,7 +378,7 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
 			const opts = {};
 			const event_handle_key = '$$' + key;
 			let event_name = key.slice(2);
-			var delegated = is_delegated(event_name);
+			var delegated = can_delegate_event(event_name);
 
 			if (is_capture_event(event_name)) {
 				event_name = event_name.slice(0, -7);
@@ -466,7 +483,9 @@ export function set_attributes(element, prev, next, css_hash, skip_warning = fal
  * @param {(...expressions: any) => Record<string | symbol, any>} fn
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
+ * @param {Blocker[]} blockers
  * @param {string} [css_hash]
+ * @param {boolean} [should_remove_defaults]
  * @param {boolean} [skip_warning]
  */
 export function attribute_effect(
@@ -474,10 +493,12 @@ export function attribute_effect(
 	fn,
 	sync = [],
 	async = [],
+	blockers = [],
 	css_hash,
+	should_remove_defaults = false,
 	skip_warning = false
 ) {
-	flatten(sync, async, (values) => {
+	flatten(blockers, sync, async, (values) => {
 		/** @type {Record<string | symbol, any> | undefined} */
 		var prev = undefined;
 
@@ -487,10 +508,17 @@ export function attribute_effect(
 		var is_select = element.nodeName === 'SELECT';
 		var inited = false;
 
-		block(() => {
+		managed(() => {
 			var next = fn(...values.map(get));
 			/** @type {Record<string | symbol, any>} */
-			var current = set_attributes(element, prev, next, css_hash, skip_warning);
+			var current = set_attributes(
+				element,
+				prev,
+				next,
+				css_hash,
+				should_remove_defaults,
+				skip_warning
+			);
 
 			if (inited && is_select && 'value' in next) {
 				select_option(/** @type {HTMLSelectElement} */ (element), next.value);

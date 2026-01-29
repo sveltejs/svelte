@@ -6,8 +6,7 @@ import type {
 	Expression,
 	AssignmentExpression,
 	UpdateExpression,
-	VariableDeclaration,
-	Declaration
+	VariableDeclaration
 } from 'estree';
 import type { AST, Namespace, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
@@ -21,14 +20,6 @@ export interface ClientTransformState extends TransformState {
 	 * us to rewrite `this.foo` as `this.#foo.value`
 	 */
 	readonly in_constructor: boolean;
-
-	/**
-	 * True if we're directly inside a `$derived(...)` expression (but not `$derived.by(...)`)
-	 */
-	readonly in_derived: boolean;
-
-	/** `true` if we're transforming the contents of `<script>` */
-	readonly is_instance: boolean;
 
 	readonly transform: Record<
 		string,
@@ -58,8 +49,17 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly update: Statement[];
 	/** Stuff that happens after the render effect (control blocks, dynamic elements, bindings, actions, etc) */
 	readonly after_update: Statement[];
+	/** Transformed `{#snippets }` declarations */
+	readonly snippets: Statement[];
 	/** Transformed `{@const }` declarations */
 	readonly consts: Statement[];
+	/** Transformed async `{@const }` declarations (if any) and those coming after them */
+	async_consts?: {
+		id: Identifier;
+		thunks: Expression[];
+	};
+	/** Transformed `let:` directives */
+	readonly let_directives: Statement[];
 	/** Memoized expressions */
 	readonly memoizer: Memoizer;
 	/** The HTML template string */

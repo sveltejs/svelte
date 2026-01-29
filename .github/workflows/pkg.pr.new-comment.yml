@@ -14,9 +14,8 @@ jobs:
     name: 'Update comment'
     runs-on: ubuntu-latest
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@v1
       - name: Download artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: output
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -24,7 +23,7 @@ jobs:
 
       - run: ls -R .
       - name: 'Post or update comment'
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |

@@ -15,7 +15,7 @@ export { await_block as await } from './dom/blocks/await.js';
 export { if_block as if } from './dom/blocks/if.js';
 export { key } from './dom/blocks/key.js';
 export { css_props } from './dom/blocks/css-props.js';
-export { index, each } from './dom/blocks/each.js';
+export { get_index, each } from './dom/blocks/each.js';
 export { html } from './dom/blocks/html.js';
 export { sanitize_slots, slot } from './dom/blocks/slot.js';
 export { snippet, wrap_snippet } from './dom/blocks/snippet.js';
@@ -28,7 +28,6 @@ export { attach } from './dom/elements/attachments.js';
 export {
 	remove_input_defaults,
 	set_attribute,
-	set_attributes,
 	attribute_effect,
 	set_custom_element_data,
 	set_xlink_attribute,
@@ -43,6 +42,7 @@ export {
 export { set_class } from './dom/elements/class.js';
 export { apply, event, delegate, replay_events } from './dom/elements/events.js';
 export { autofocus, remove_textarea_child } from './dom/elements/misc.js';
+export { customizable_select, selectedcontent } from './dom/elements/customizable-select.js';
 export { set_style } from './dom/elements/style.js';
 export { animation, transition } from './dom/elements/transitions.js';
 export { bind_active_element } from './dom/elements/bindings/document.js';
@@ -99,12 +99,14 @@ export {
 	with_script
 } from './dom/template.js';
 export {
-	async_body,
 	for_await_track_reactivity_loss,
+	run,
 	save,
-	track_reactivity_loss
+	track_reactivity_loss,
+	run_after_blockers,
+	wait
 } from './reactivity/async.js';
-export { flushSync as flush, suspend } from './reactivity/batch.js';
+export { eager, flushSync as flush } from './reactivity/batch.js';
 export {
 	async_derived,
 	user_derived as derived,
@@ -118,6 +120,7 @@ export {
 	legacy_pre_effect_reset,
 	render_effect,
 	template_effect,
+	deferred_template_effect,
 	effect,
 	user_effect,
 	user_pre_effect

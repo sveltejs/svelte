@@ -81,8 +81,13 @@ export function SnippetBlock(node, context) {
 function can_hoist_snippet(scope, scopes, visited = new Set()) {
 	for (const [reference] of scope.references) {
 		const binding = scope.get(reference);
+		if (!binding) continue;
 
-		if (!binding || binding.scope.function_depth === 0) {
+		if (binding.blocker) {
+			return false;
+		}
+
+		if (binding.scope.function_depth === 0) {
 			continue;
 		}
 

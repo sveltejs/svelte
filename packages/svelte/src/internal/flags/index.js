@@ -1,5 +1,8 @@
+/** True if experimental.async=true */
 export let async_mode_flag = false;
+/** True if we're not certain that we only have Svelte 5 code in the compilation */
 export let legacy_mode_flag = false;
+/** True if $inspect.trace is used */
 export let tracing_mode_flag = false;
 
 export function enable_async_mode_flag() {
