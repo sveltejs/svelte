@@ -197,6 +197,7 @@ async function run_test(
 		const page = await browser.newPage();
 		page.on('console', (message) => {
 			let method = message.type();
+			// @ts-ignore
 			if (method === 'warning') method = 'warn';
 			// @ts-ignore
 			console[method](message.text());
