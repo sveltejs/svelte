@@ -60,7 +60,7 @@
 
 ## bind_invalid_expression
 
-> Can only bind to an Identifier, a MemberExpression, a SpreadElement, or a `{get, set}` pair
+> Can only bind to an Identifier, a MemberExpression, or a SpreadElement
 
 ## bind_invalid_name
 
