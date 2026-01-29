@@ -163,6 +163,8 @@ export class Renderer {
 			promises.push(promise);
 		}
 
+		// prevent unhandled rejections, and attach the promise to the renderer instance
+		// so that rejections correctly cause rendering to fail
 		promise.catch(noop);
 		this.promise = promise;
 
