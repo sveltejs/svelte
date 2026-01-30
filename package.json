@@ -32,7 +32,7 @@
     "@types/node": "^20.11.5",
     "@types/picomatch": "^4.0.2",
     "@vitest/coverage-v8": "^2.1.9",
-    "eslint": "^9.9.1",
+    "eslint": "^9.26.0",
     "eslint-plugin-lube": "^0.4.3",
     "eslint-plugin-svelte": "^3.11.0",
     "jsdom": "25.0.1",
