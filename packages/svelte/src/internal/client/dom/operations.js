@@ -122,6 +122,10 @@ export function child(node, is_text) {
 		return text;
 	}
 
+	if (is_text) {
+		merge_text_nodes(/** @type {Text} */ (child));
+	}
+
 	set_hydrate_node(child);
 	return child;
 }
@@ -142,14 +146,18 @@ export function first_child(node, is_text = false) {
 		return first;
 	}
 
-	// if an {expression} is empty during SSR, there might be no
-	// text node to hydrate — we must therefore create one
-	if (is_text && hydrate_node?.nodeType !== TEXT_NODE) {
-		var text = create_text();
+	if (is_text) {
+		// if an {expression} is empty during SSR, there might be no
+		// text node to hydrate — we must therefore create one
+		if (hydrate_node?.nodeType !== TEXT_NODE) {
+			var text = create_text();
 
-		hydrate_node?.before(text);
-		set_hydrate_node(text);
-		return text;
+			hydrate_node?.before(text);
+			set_hydrate_node(text);
+			return text;
+		}
+
+		merge_text_nodes(/** @type {Text} */ (hydrate_node));
 	}
 
 	return hydrate_node;
@@ -175,20 +183,24 @@ export function sibling(node, count = 1, is_text = false) {
 		return next_sibling;
 	}
 
-	// if a sibling {expression} is empty during SSR, there might be no
-	// text node to hydrate — we must therefore create one
-	if (is_text && next_sibling?.nodeType !== TEXT_NODE) {
-		var text = create_text();
-		// If the next sibling is `null` and we're handling text then it's because
-		// the SSR content was empty for the text, so we need to generate a new text
-		// node and insert it after the last sibling
-		if (next_sibling === null) {
-			last_sibling?.after(text);
-		} else {
-			next_sibling.before(text);
+	if (is_text) {
+		// if a sibling {expression} is empty during SSR, there might be no
+		// text node to hydrate — we must therefore create one
+		if (next_sibling?.nodeType !== TEXT_NODE) {
+			var text = create_text();
+			// If the next sibling is `null` and we're handling text then it's because
+			// the SSR content was empty for the text, so we need to generate a new text
+			// node and insert it after the last sibling
+			if (next_sibling === null) {
+				last_sibling?.after(text);
+			} else {
+				next_sibling.before(text);
+			}
+			set_hydrate_node(text);
+			return text;
 		}
-		set_hydrate_node(text);
-		return text;
+
+		merge_text_nodes(/** @type {Text} */ (next_sibling));
 	}
 
 	set_hydrate_node(next_sibling);
@@ -257,4 +269,25 @@ export function set_attribute(element, key, value = '') {
 		return;
 	}
 	return element.setAttribute(key, value);
+}
+
+/**
+ * Browsers split text nodes larger than 65536 bytes when parsing.
+ * For hydration to succeed, we need to stitch them back together
+ * @param {Text} text
+ */
+export function merge_text_nodes(text) {
+	if (/** @type {string} */ (text.nodeValue).length < 65536) {
+		return;
+	}
+
+	let next = text.nextSibling;
+
+	while (next !== null && next.nodeType === TEXT_NODE) {
+		next.remove();
+
+		/** @type {string} */ (text.nodeValue) += /** @type {string} */ (next.nodeValue);
+
+		next = text.nextSibling;
+	}
 }

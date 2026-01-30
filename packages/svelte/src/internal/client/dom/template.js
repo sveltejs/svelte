@@ -4,11 +4,13 @@ import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from './hydra
 import {
 	create_text,
 	get_first_child,
+	get_next_sibling,
 	is_firefox,
 	create_element,
 	create_fragment,
 	create_comment,
-	set_attribute
+	set_attribute,
+	merge_text_nodes
 } from './operations.js';
 import { create_fragment_from_html } from './reconciler.js';
 import { active_effect } from '../runtime.js';
@@ -310,6 +312,8 @@ export function text(value = '') {
 		// if an {expression} is empty during SSR, we need to insert an empty text node
 		node.before((node = create_text()));
 		set_hydrate_node(node);
+	} else {
+		merge_text_nodes(/** @type {Text} */ (node));
 	}
 
 	assign_nodes(node, node);
