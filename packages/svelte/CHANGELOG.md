@@ -1,5 +1,17 @@
 # svelte
 
+## 5.49.1
+
+### Patch Changes
+
+- fix: merge consecutive large text nodes ([#17587](https://github.com/sveltejs/svelte/pull/17587))
+
+- fix: only create async functions in SSR output when necessary ([#17593](https://github.com/sveltejs/svelte/pull/17593))
+
+- fix: properly separate multiline html blocks from each other in `print()` ([#17319](https://github.com/sveltejs/svelte/pull/17319))
+
+- fix: prevent unhandled exceptions arising from dangling promises in <script> ([#17591](https://github.com/sveltejs/svelte/pull/17591))
+
 ## 5.49.0
 
 ### Minor Changes
