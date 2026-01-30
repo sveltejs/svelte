@@ -146,14 +146,18 @@ export function first_child(node, is_text = false) {
 		return first;
 	}
 
-	// if an {expression} is empty during SSR, there might be no
-	// text node to hydrate — we must therefore create one
-	if (is_text && hydrate_node?.nodeType !== TEXT_NODE) {
-		var text = create_text();
+	if (is_text) {
+		// if an {expression} is empty during SSR, there might be no
+		// text node to hydrate — we must therefore create one
+		if (hydrate_node?.nodeType !== TEXT_NODE) {
+			var text = create_text();
 
-		hydrate_node?.before(text);
-		set_hydrate_node(text);
-		return text;
+			hydrate_node?.before(text);
+			set_hydrate_node(text);
+			return text;
+		}
+
+		merge_text_nodes(/** @type {Text} */ (hydrate_node));
 	}
 
 	return hydrate_node;
