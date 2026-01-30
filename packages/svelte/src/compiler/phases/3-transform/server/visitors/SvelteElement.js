@@ -79,7 +79,7 @@ export function SvelteElement(node, context) {
 	);
 
 	if (optimiser.expressions.length > 0) {
-		statement = create_child_block(b.block([optimiser.apply(), statement]), true);
+		statement = create_child_block(b.block([optimiser.apply(), statement]));
 	}
 
 	statements.push(statement);

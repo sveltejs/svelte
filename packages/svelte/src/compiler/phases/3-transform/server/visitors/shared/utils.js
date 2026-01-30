@@ -264,11 +264,10 @@ export function build_getter(node, state) {
 /**
  * Creates a `$$renderer.child(...)` expression statement
  * @param {BlockStatement | Expression} body
- * @param {boolean} async
  * @returns {Statement}
  */
-export function create_child_block(body, async) {
-	return b.stmt(b.call('$$renderer.child', b.arrow([b.id('$$renderer')], body, async)));
+export function create_child_block(body) {
+	return b.stmt(b.call('$$renderer.child', b.arrow([b.id('$$renderer')], body, true)));
 }
 
 /**
