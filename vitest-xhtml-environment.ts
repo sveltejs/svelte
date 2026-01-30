@@ -7,14 +7,6 @@ const xhtml_page = `<?xml version="1.0" encoding="UTF-8"?>
 export default <Environment>{
 	name: 'jsdom-xhtml',
 	transformMode: 'web',
-	// setupVM({ jsdom }) {
-	// 	return builtinEnvironments.jsdom.setupVM?.({
-	// 		jsdom: {
-	// 			...jsdom,
-	// 			contentType: 'text/xml'
-	// 		}
-	// 	});
-	// },
 	setup(global, { jsdom = {} }) {
 		return builtinEnvironments.jsdom.setup(global, {
 			jsdom: {
