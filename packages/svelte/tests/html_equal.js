@@ -9,7 +9,9 @@ function clean_children(node, opts) {
 	let previous = null;
 	let has_element_children = false;
 	let template =
-		node.nodeName === 'TEMPLATE' ? /** @type {HTMLTemplateElement} */ (node) : undefined;
+		node.nodeName.toUpperCase() === 'TEMPLATE'
+			? /** @type {HTMLTemplateElement} */ (node)
+			: undefined;
 
 	if (template) {
 		const div = document.createElement('div');
@@ -23,22 +25,20 @@ function clean_children(node, opts) {
 	});
 
 	attributes.forEach((attr) => {
-		node.removeAttribute(attr.name);
+		if (attr.name !== 'xmlns') node.removeAttribute(attr.name);
 	});
 
-	attributes.forEach((attr) => {
+	attributes.forEach(({ name, value }) => {
 		// Strip out the special onload/onerror hydration events from the test output
-		if ((attr.name === 'onload' || attr.name === 'onerror') && attr.value === 'this.__e=event') {
+		if (['onload', 'onerror', 'xmlns'].includes(name) && value === 'this.__e=event') {
 			return;
 		}
 
-		let value = attr.value;
-
-		if (attr.name === 'class') {
+		if (name === 'class') {
 			value = value.replace(/svelte-\w+/, 'svelte-xyz123');
 		}
 
-		node.setAttribute(attr.name, value);
+		node.setAttribute(name, value);
 	});
 
 	for (let child of [...node.childNodes]) {
@@ -147,6 +147,7 @@ export function normalize_new_line(html) {
  */
 export const assert_html_equal = (actual, expected, message) => {
 	try {
+		if (actual === '' && expected === '') return;
 		assert.deepEqual(normalize_html(window, actual), normalize_html(window, expected), message);
 	} catch (e) {
 		if (Error.captureStackTrace)
