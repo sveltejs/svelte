@@ -1,5 +1,5 @@
 /** @import { Effect, EffectNodes, TemplateNode } from '#client' */
-import { FILENAME, NAMESPACE_SVG } from '../../../../constants.js';
+import { FILENAME, NAMESPACE_HTML, NAMESPACE_SVG } from '../../../../constants.js';
 import {
 	hydrate_next,
 	hydrate_node,
@@ -69,9 +69,7 @@ export function element(node, get_tag, is_svg, render_fn, get_namespace, locatio
 			if (next_tag) {
 				element = hydrating
 					? /** @type {Element} */ (element)
-					: ns
-						? document.createElementNS(ns, next_tag)
-						: document.createElement(next_tag);
+					: document.createElementNS(ns || NAMESPACE_HTML, next_tag);
 
 				if (DEV && location) {
 					// @ts-expect-error
