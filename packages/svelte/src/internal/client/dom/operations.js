@@ -179,20 +179,24 @@ export function sibling(node, count = 1, is_text = false) {
 		return next_sibling;
 	}
 
-	// if a sibling {expression} is empty during SSR, there might be no
-	// text node to hydrate — we must therefore create one
-	if (is_text && next_sibling?.nodeType !== TEXT_NODE) {
-		var text = create_text();
-		// If the next sibling is `null` and we're handling text then it's because
-		// the SSR content was empty for the text, so we need to generate a new text
-		// node and insert it after the last sibling
-		if (next_sibling === null) {
-			last_sibling?.after(text);
-		} else {
-			next_sibling.before(text);
+	if (is_text) {
+		// if a sibling {expression} is empty during SSR, there might be no
+		// text node to hydrate — we must therefore create one
+		if (next_sibling?.nodeType !== TEXT_NODE) {
+			var text = create_text();
+			// If the next sibling is `null` and we're handling text then it's because
+			// the SSR content was empty for the text, so we need to generate a new text
+			// node and insert it after the last sibling
+			if (next_sibling === null) {
+				last_sibling?.after(text);
+			} else {
+				next_sibling.before(text);
+			}
+			set_hydrate_node(text);
+			return text;
 		}
-		set_hydrate_node(text);
-		return text;
+
+		merge_text_nodes(/** @type {Text} */ (next_sibling));
 	}
 
 	set_hydrate_node(next_sibling);
