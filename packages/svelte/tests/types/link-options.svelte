@@ -1,4 +1,6 @@
 <div
+	data-foo="bar"
+
 	{/* @ts-expect-error */}
 	data-sveltekit-keepfocus={3}
 
