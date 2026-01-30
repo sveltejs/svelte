@@ -7,6 +7,7 @@ import * as b from '#compiler/builders';
 import { binding_properties } from '../../../bindings.js';
 import { build_attribute_value } from './shared/element.js';
 import { build_bind_this, validate_binding } from './shared/utils.js';
+import { init_spread_binding } from './shared/spread_bindings.js';
 
 /**
  * @param {AST.BindDirective} node
@@ -15,12 +16,15 @@ import { build_bind_this, validate_binding } from './shared/utils.js';
 export function BindDirective(node, context) {
 	const expression = /** @type {Expression} */ (context.visit(node.expression));
 	const property = binding_properties[node.name];
-
 	const parent = /** @type {AST.SvelteNode} */ (context.path.at(-1));
 
 	let get, set;
 
-	if (expression.type === 'SequenceExpression') {
+	if (node.expression.type === 'SpreadElement') {
+		const [getter, setter] = init_spread_binding(node.expression, context);
+		get = b.thunk(getter);
+		set = b.arrow([b.id('$$value')], setter);
+	} else if (expression.type === 'SequenceExpression') {
 		[get, set] = expression.expressions;
 	} else {
 		if (

@@ -588,7 +588,7 @@ function read_attribute(parser) {
 	parser.allow_whitespace();
 
 	const colon_index = tag.name.indexOf(':');
-	const type = colon_index !== -1 && get_directive_type(tag.name.slice(0, colon_index));
+	const type = colon_index !== -1 ? get_directive_type(tag.name.slice(0, colon_index)) : undefined;
 
 	/** @type {true | AST.ExpressionTag | Array<AST.Text | AST.ExpressionTag>} */
 	let value = true;
@@ -608,6 +608,31 @@ function read_attribute(parser) {
 				}
 			];
 			end = parser.index;
+		} else if (type === 'BindDirective') {
+			// allow quote marks for legacy reasons. TODO 6.0 disallow
+			const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
+			parser.eat('{', true);
+			const spread = parser.eat('...');
+			const expression = spread ? b.spread(read_expression(parser)) : read_expression(parser);
+			parser.allow_whitespace();
+			parser.eat('}', true);
+			if (quote_mark) parser.eat(quote_mark, true);
+			end = parser.index;
+
+			return {
+				start,
+				end,
+				type,
+				name: tag.name.slice(5),
+				modifiers: [],
+				name_loc: tag.loc,
+				// @ts-ignore
+				expression,
+				// @ts-ignore
+				metadata: {
+					expression: new ExpressionMetadata()
+				}
+			};
 		} else {
 			value = read_attribute_value(parser);
 			end = parser.index;
@@ -697,7 +722,6 @@ function read_attribute(parser) {
 
 /**
  * @param {string} name
- * @returns {any}
  */
 function get_directive_type(name) {
 	if (name === 'use') return 'UseDirective';
@@ -708,7 +732,6 @@ function get_directive_type(name) {
 	if (name === 'on') return 'OnDirective';
 	if (name === 'let') return 'LetDirective';
 	if (name === 'in' || name === 'out' || name === 'transition') return 'TransitionDirective';
-	return false;
 }
 
 /**
@@ -818,6 +841,7 @@ function read_sequence(parser, done, location) {
 			flush(parser.index - 1);
 
 			parser.allow_whitespace();
+
 			const expression = read_expression(parser);
 			parser.allow_whitespace();
 			parser.eat('}', true);

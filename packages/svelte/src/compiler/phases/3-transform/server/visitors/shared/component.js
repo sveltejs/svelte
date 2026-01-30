@@ -10,6 +10,7 @@ import {
 import * as b from '#compiler/builders';
 import { is_element_node } from '../../../../nodes.js';
 import { dev } from '../../../../../state.js';
+import { init_spread_binding } from './spread_bindings.js';
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
@@ -110,7 +111,12 @@ export function build_inline_component(node, expression, context) {
 			// Bindings are a bit special: we don't want to add them to (async) deriveds but we need to check if they have blockers
 			optimiser.check_blockers(attribute.metadata.expression);
 
-			if (attribute.expression.type === 'SequenceExpression') {
+			if (attribute.expression.type === 'SpreadElement') {
+				const [get, set] = init_spread_binding(attribute.expression, context);
+
+				push_prop(b.get(attribute.name, [b.return(get)]));
+				push_prop(b.set(attribute.name, [b.stmt(set)]));
+			} else if (attribute.expression.type === 'SequenceExpression') {
 				const [get, set] = /** @type {SequenceExpression} */ (context.visit(attribute.expression))
 					.expressions;
 				const get_id = b.id(context.state.scope.generate('bind_get'));

@@ -515,7 +515,7 @@ function setup_select_synchronization(value_binding, context) {
 
 	let bound = value_binding.expression;
 
-	if (bound.type === 'SequenceExpression') {
+	if (bound.type === 'SequenceExpression' || bound.type === 'SpreadElement') {
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, SourceLocation, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, SourceLocation, Statement, SpreadElement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
 import { dev, is_ignored } from '../../../../../state.js';
@@ -8,6 +8,7 @@ import { add_svelte_meta, build_bind_this, Memoizer, validate_binding } from '..
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
+import { init_spread_binding } from './spread_bindings.js';
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
@@ -49,7 +50,7 @@ export function build_component(node, component_name, loc, context) {
 	/** @type {Property[]} */
 	const custom_css_props = [];
 
-	/** @type {Identifier | MemberExpression | SequenceExpression | null} */
+	/** @type {Identifier | MemberExpression | SequenceExpression | SpreadElement | null} */
 	let bind_this = null;
 
 	/** @type {ExpressionStatement[]} */
@@ -208,8 +209,10 @@ export function build_component(node, component_name, loc, context) {
 				dev &&
 				attribute.name !== 'this' &&
 				!is_ignored(node, 'ownership_invalid_binding') &&
-				// bind:x={() => x.y, y => x.y = y} will be handled by the assignment expression binding validation
-				attribute.expression.type !== 'SequenceExpression'
+				// bind:x={() => x.y, y => x.y = y} and bind:x={...[() => x.y, y => x.y = y]}
+				// will be handled by the assignment expression binding validation
+				attribute.expression.type !== 'SequenceExpression' &&
+				attribute.expression.type !== 'SpreadElement'
 			) {
 				const left = object(attribute.expression);
 				const binding = left && context.state.scope.get(left.name);
@@ -229,7 +232,19 @@ export function build_component(node, component_name, loc, context) {
 				}
 			}
 
-			if (expression.type === 'SequenceExpression') {
+			if (attribute.expression.type === 'SpreadElement') {
+				const [get, set] = init_spread_binding(attribute.expression, context);
+
+				if (attribute.name === 'this') {
+					bind_this = {
+						type: 'SpreadElement',
+						argument: attribute.expression.argument
+					};
+				} else {
+					push_prop(b.get(attribute.name, [b.return(get)]), true);
+					push_prop(b.set(attribute.name, [b.stmt(set)]), true);
+				}
+			} else if (expression.type === 'SequenceExpression') {
 				if (attribute.name === 'this') {
 					bind_this = attribute.expression;
 				} else {

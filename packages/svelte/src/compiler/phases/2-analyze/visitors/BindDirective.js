@@ -178,6 +178,16 @@ export function BindDirective(node, context) {
 		return;
 	}
 
+	if (node.expression.type === 'SpreadElement') {
+		if (node.name === 'group') {
+			e.bind_group_invalid_expression(node);
+		}
+
+		mark_subtree_dynamic(context.path);
+
+		return;
+	}
+
 	validate_assignment(node, node.expression, context);
 
 	const assignee = node.expression;
@@ -261,11 +271,8 @@ export function BindDirective(node, context) {
 			context.state.analysis.binding_groups.set([keypath, bindings], group_name);
 		}
 
-		node.metadata = {
-			binding_group_name: group_name,
-			parent_each_blocks: each_blocks,
-			expression: node.metadata.expression
-		};
+		node.metadata.binding_group_name = group_name;
+		node.metadata.parent_each_blocks = each_blocks;
 	}
 
 	if (binding?.kind === 'each' && binding.metadata?.inside_rest) {

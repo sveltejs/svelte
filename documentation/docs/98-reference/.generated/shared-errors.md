@@ -42,6 +42,12 @@ Here, `List.svelte` is using `{@render children(item)` which means it expects `P
 A snippet function was passed invalid arguments. Snippets should only be instantiated via `{@render ...}`
 ```
 
+### invalid_spread_binding
+
+```
+`%name%` must be a `[get, set]` array where `get` and `set` are functions. For readonly bindings, `get` should be `undefined`/`null`
+```
+
 ### lifecycle_outside_component
 
 ```

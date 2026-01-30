@@ -45,3 +45,20 @@ export function prevent_snippet_stringification(fn) {
 	};
 	return fn;
 }
+
+/**
+ * @param {any} binding
+ * @param {string} name
+ */
+export function validate_spread_binding(binding, name) {
+	if (
+		Array.isArray(binding) &&
+		binding.length === 2 &&
+		(typeof binding[0] === 'function' || binding[0] == null) &&
+		typeof binding[1] === 'function'
+	) {
+		return binding;
+	}
+
+	e.invalid_spread_binding(name);
+}

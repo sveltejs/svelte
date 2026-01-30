@@ -844,7 +844,7 @@ declare module 'svelte/attachments' {
 
 declare module 'svelte/compiler' {
 	import type { SourceMap } from 'magic-string';
-	import type { ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, Expression, Identifier, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression, SourceLocation } from 'estree';
+	import type { ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, Expression, Identifier, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression, SourceLocation, SpreadElement } from 'estree';
 	import type { Location } from 'locate-character';
 	import type { default as ts } from 'esrap/languages/ts';
 	/**
@@ -1324,7 +1324,7 @@ declare module 'svelte/compiler' {
 			/** The 'x' in `bind:x` */
 			name: string;
 			/** The y in `bind:x={y}` */
-			expression: Identifier | MemberExpression | SequenceExpression;
+			expression: Identifier | MemberExpression | SequenceExpression | SpreadElement;
 		}
 
 		/** A `class:` directive */
