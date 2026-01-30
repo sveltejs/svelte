@@ -2,14 +2,11 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	compileOptions: {
-		dev: false
-	},
 	test({ assert, target }) {
 		let button = target.querySelector('button');
 
 		button?.click();
 
-		assert.throws(flushSync, /each_key_duplicate/);
+		assert.throws(flushSync, 'https://svelte.dev/e/each_key_duplicate');
 	}
 });

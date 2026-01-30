@@ -7,6 +7,6 @@ export default test({
 
 		button?.click();
 
-		assert.throws(flushSync, /each_key_duplicate/);
+		assert.throws(flushSync, 'https://svelte.dev/e/each_key_duplicate');
 	}
 });
