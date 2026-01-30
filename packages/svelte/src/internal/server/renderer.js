@@ -11,6 +11,7 @@ import { attributes } from './index.js';
 import { get_render_context, with_render_context, init_render_context } from './render-context.js';
 import { sha256 } from './crypto.js';
 import * as devalue from 'devalue';
+import { noop } from '../shared/utils.js';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
@@ -161,6 +162,11 @@ export class Renderer {
 
 			promises.push(promise);
 		}
+
+		// prevent unhandled rejections, and attach the promise to the renderer instance
+		// so that rejections correctly cause rendering to fail
+		promise.catch(noop);
+		this.promise = promise;
 
 		return promises;
 	}
