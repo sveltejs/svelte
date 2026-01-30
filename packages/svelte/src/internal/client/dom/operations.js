@@ -122,6 +122,10 @@ export function child(node, is_text) {
 		return text;
 	}
 
+	if (is_text) {
+		merge_text_nodes(/** @type {Text} */ (child));
+	}
+
 	set_hydrate_node(child);
 	return child;
 }
@@ -257,4 +261,25 @@ export function set_attribute(element, key, value = '') {
 		return;
 	}
 	return element.setAttribute(key, value);
+}
+
+/**
+ * Browsers split text nodes larger than 65536 bytes when parsing.
+ * For hydration to succeed, we need to stitch them back together
+ * @param {Text} text
+ */
+export function merge_text_nodes(text) {
+	if (/** @type {string} */ (text.nodeValue).length < 65536) {
+		return;
+	}
+
+	let next = text.nextSibling;
+
+	while (next !== null && next.nodeType === TEXT_NODE) {
+		next.remove();
+
+		/** @type {string} */ (text.nodeValue) += /** @type {string} */ (next.nodeValue);
+
+		next = text.nextSibling;
+	}
 }
