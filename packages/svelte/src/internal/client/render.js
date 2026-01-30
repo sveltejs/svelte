@@ -158,7 +158,10 @@ const document_listeners = new Map();
  * @param {MountOptions} options
  * @returns {Exports}
  */
-function _mount(Component, { target, anchor, props = {}, events, context, intro = true }) {
+function _mount(
+	Component,
+	{ target, anchor, props = {}, beforeMount, events, context, intro = true }
+) {
 	init_operations();
 
 	/** @type {Set<string>} */
@@ -208,11 +211,15 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 				pending: () => {}
 			},
 			(anchor_node) => {
-				if (context) {
+				if (context || beforeMount) {
 					push({});
-					var ctx = /** @type {ComponentContext} */ (component_context);
-					ctx.c = context;
+					if (context) {
+						var ctx = /** @type {ComponentContext} */ (component_context);
+						ctx.c = context;
+					}
 				}
+
+				beforeMount?.();
 
 				if (events) {
 					// We can't spread the object or else we'd lose the state proxy stuff, if it is one
@@ -241,7 +248,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 					}
 				}
 
-				if (context) {
+				if (context || beforeMount) {
 					pop();
 				}
 			}
