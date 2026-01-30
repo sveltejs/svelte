@@ -868,9 +868,6 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	'data-sveltekit-reload'?: true | '' | 'off' | undefined | null;
 	'data-sveltekit-replacestate'?: true | '' | 'off' | undefined | null;
 
-	// allow any data- attribute
-	[key: `data-${string}`]: any;
-
 	// allow any attachment and falsy values (by using false we prevent the usage of booleans values by themselves)
 	[key: symbol]: Attachment<T> | false | undefined | null;
 }
