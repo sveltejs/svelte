@@ -1,5 +1,6 @@
 ---
 title: What are runes?
+use_cases: "always: understanding Svelte 5 reactivity, reactive primitives, modern Svelte syntax"
 ---
 
 > [!NOTE] **rune** /ruːn/ _noun_

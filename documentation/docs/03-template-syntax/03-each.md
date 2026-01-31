@@ -1,5 +1,6 @@
 ---
 title: {#each ...}
+use_cases: "lists, arrays, iterations, product listings, user lists, data tables, galleries, menus"
 ---
 
 ```svelte

@@ -1,5 +1,6 @@
 ---
 title: Custom elements
+use_cases: "web components, framework-agnostic components, micro-frontends, design systems"
 ---
 
 <!-- - [basically what we have today](https://svelte.dev/docs/custom-elements-api) -->
