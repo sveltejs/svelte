@@ -60,7 +60,9 @@ export function Attribute(node, context) {
 			}
 
 			node.metadata.delegated =
-				parent?.type === 'RegularElement' && can_delegate_event(node.name.slice(2));
+				parent?.type === 'RegularElement' &&
+				can_delegate_event(node.name.slice(2)) &&
+				!context.state.analysis.custom_element;
 		}
 	}
 }
