@@ -1,4 +1,4 @@
-import { getSsrHtml, test } from '../../test';
+import { test } from '../../test';
 
 const expected = [
 	`<area alt=""/>`,
@@ -21,9 +21,8 @@ const expected = [
 
 export default test({
 	mode: ['server'],
-	test_ssr({ assert }) {
-		const html = getSsrHtml(import.meta.dirname);
-		assert.htmlEqualWithOptions(html, expected, {
+	test_ssr({ assert, html }) {
+		assert.htmlEqualWithOptions(html.body, expected, {
 			preserveComments: false,
 			withoutNormalizeHtml: true
 		});

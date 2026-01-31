@@ -147,7 +147,6 @@ export function normalize_new_line(html) {
  */
 export const assert_html_equal = (actual, expected, message) => {
 	try {
-		if (actual === '' && expected === '') return;
 		assert.deepEqual(normalize_html(window, actual), normalize_html(window, expected), message);
 	} catch (e) {
 		if (Error.captureStackTrace)

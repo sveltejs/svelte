@@ -1,10 +1,9 @@
-import { getSsrHtml, test } from '../../test';
+import { test } from '../../test';
 
 export default test({
 	mode: ['server'],
-	test_ssr({ assert }) {
-		const html = getSsrHtml(import.meta.dirname);
-		assert.htmlEqualWithOptions(html, '<!--[--><!--[-->foo<!--]--><!--]-->', {
+	test_ssr({ assert, html }) {
+		assert.htmlEqualWithOptions(html.body, '<!--[--><!--[-->foo<!--]--><!--]-->', {
 			preserveComments: true,
 			withoutNormalizeHtml: true
 		});
