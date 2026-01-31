@@ -221,8 +221,15 @@ export default function element(parser) {
 
 	const read = is_top_level_script_or_style ? read_static_attribute : read_attribute;
 
+	/** @type {ReturnType<typeof read>} */
 	let attribute;
 	while ((attribute = read(parser))) {
+		// {/* comment */}
+		if (attribute.type === 'CommentAttribute') {
+			parser.allow_whitespace();
+			continue;
+		}
+
 		// animate and transition can only be specified once per element so no need
 		// to check here, use can be used multiple times, same for the on directive
 		// finally let already has error handling in case of duplicate variable names
@@ -496,7 +503,7 @@ function read_static_attribute(parser) {
 
 /**
  * @param {Parser} parser
- * @returns {AST.Attribute | AST.SpreadAttribute | AST.Directive | AST.AttachTag | null}
+ * @returns {AST.Attribute | AST.SpreadAttribute | AST.Directive | AST.AttachTag | AST.CommentAttribute | null}
  */
 function read_attribute(parser) {
 	const start = parser.index;
@@ -543,6 +550,19 @@ function read_attribute(parser) {
 			};
 
 			return spread;
+		} else if (parser.eat('/*')) {
+			const data = parser.read_until(/\*\/\}/);
+			parser.eat('*/}', true);
+
+			/** @type {AST.CommentAttribute} */
+			const comment = {
+				type: 'CommentAttribute',
+				data: data,
+				start,
+				end: parser.index
+			};
+
+			return comment;
 		} else {
 			const id = parser.read_identifier();
 
