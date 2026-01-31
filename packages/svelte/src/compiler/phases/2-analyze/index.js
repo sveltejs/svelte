@@ -767,6 +767,13 @@ export function analyze_component(root, source, options) {
 				}
 			}
 		}
+
+		// warn on bindable props that are never mutated or reassigned
+		for (const [name, binding] of instance.scope.declarations) {
+			if (binding.kind === 'bindable_prop' && !binding.updated) {
+				w.bindable_prop_not_mutated(binding.node, name);
+			}
+		}
 	} else {
 		instance.scope.declare(b.id('$$props'), 'rest_prop', 'synthetic');
 		instance.scope.declare(b.id('$$restProps'), 'rest_prop', 'synthetic');
