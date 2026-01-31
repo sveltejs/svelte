@@ -521,6 +521,8 @@ async function run_test_variant(
 						errors,
 						hydrate: hydrate_fn
 					});
+
+					flushSync();
 				}
 
 				if (config.runtime_error && !unhandled_rejection) {
