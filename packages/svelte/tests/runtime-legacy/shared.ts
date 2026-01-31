@@ -89,6 +89,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 		warnings: any[];
 		assert: Assert;
 		variant: 'ssr' | 'async-ssr';
+		html: { body: string; head: string };
 	}) => void | Promise<void>;
 	accessors?: boolean;
 	immutable?: boolean;
@@ -356,6 +357,8 @@ async function run_test_variant(
 		const target = window.document.querySelector('main') as HTMLElement;
 
 		let snapshot = undefined;
+		let body = '',
+			head = '';
 
 		if (variant === 'hydrate' || variant === 'ssr' || variant === 'async-ssr') {
 			config.before_test?.();
@@ -369,7 +372,7 @@ async function run_test_variant(
 				variant === 'async-ssr' || (variant === 'hydrate' && compileOptions.experimental?.async)
 					? await render_result
 					: render_result;
-			const { body, head } = rendered;
+			({ body, head } = rendered);
 
 			const prefix = variant === 'async-ssr' ? 'async_' : '';
 			fs.writeFileSync(`${cwd}/_output/${prefix}rendered.html`, body);
@@ -416,7 +419,8 @@ async function run_test_variant(
 						htmlEqual: assert_html_equal,
 						htmlEqualWithOptions: assert_html_equal_with_options
 					},
-					variant
+					variant,
+					html: { body, head }
 				});
 			}
 		} else {

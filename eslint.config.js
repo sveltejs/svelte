@@ -102,6 +102,7 @@ export default [
 			'playgrounds/sandbox/**',
 			// exclude top level config files
 			'*.config.js',
+			'vitest-xhtml-environment.ts',
 			// documentation can contain invalid examples
 			'documentation',
 			'tmp/**'
