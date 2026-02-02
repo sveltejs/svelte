@@ -130,11 +130,13 @@ export class Batch {
 	#maybe_dirty_effects = new Set();
 
 	/**
-	 * A set of branches that still exist, but will be destroyed when this batch
-	 * is committed — we skip over these during `process`
-	 * @type {Set<Effect>}
+	 * A map of branches that still exist, but will be destroyed when this batch
+	 * is committed — we skip over these during `process`.
+	 * The value contains child effects that were dirty/maybe_dirty before being reset,
+	 * so they can be rescheduled if the branch survives.
+	 * @type {Map<Effect, { d: Effect[], m: Effect[] }>}
 	 */
-	skipped_effects = new Set();
+	skipped_effects = new Map();
 
 	is_fork = false;
 
@@ -142,6 +144,38 @@ export class Batch {
 
 	is_deferred() {
 		return this.is_fork || this.#blocking_pending > 0;
+	}
+
+	/**
+	 * Add an effect to the skipped_effects map and reset its children
+	 * @param {Effect} effect
+	 */
+	skip_effect(effect) {
+		if (!this.skipped_effects.has(effect)) {
+			this.skipped_effects.set(effect, { d: [], m: [] });
+		}
+	}
+
+	/**
+	 * Remove an effect from the skipped_effects map and reschedule
+	 * any tracked dirty/maybe_dirty child effects
+	 * @param {Effect} effect
+	 */
+	unskip_effect(effect) {
+		var tracked = this.skipped_effects.get(effect);
+		if (tracked) {
+			this.skipped_effects.delete(effect);
+
+			for (var e of tracked.d) {
+				set_signal_status(e, DIRTY);
+				schedule_effect(e);
+			}
+
+			for (var e of tracked.m) {
+				set_signal_status(e, MAYBE_DIRTY);
+				schedule_effect(e);
+			}
+		}
 	}
 
 	/**
@@ -172,8 +206,8 @@ export class Batch {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 
-			for (const e of this.skipped_effects) {
-				reset_branch(e);
+			for (const [e, t] of this.skipped_effects) {
+				reset_branch(e, t);
 			}
 		} else {
 			// append/remove branches
@@ -887,20 +921,28 @@ export function eager(fn) {
 
 /**
  * Mark all the effects inside a skipped branch CLEAN, so that
- * they can be correctly rescheduled later
+ * they can be correctly rescheduled later. Tracks dirty and maybe_dirty
+ * effects so they can be rescheduled if the branch survives.
  * @param {Effect} effect
+ * @param {{ d: Effect[], m: Effect[] }} tracked
  */
-function reset_branch(effect) {
+function reset_branch(effect, tracked) {
 	// clean branch = nothing dirty inside, no need to traverse further
 	if ((effect.f & BRANCH_EFFECT) !== 0 && (effect.f & CLEAN) !== 0) {
 		return;
+	}
+
+	if ((effect.f & DIRTY) !== 0) {
+		tracked.d.push(effect);
+	} else if ((effect.f & MAYBE_DIRTY) !== 0) {
+		tracked.m.push(effect);
 	}
 
 	set_signal_status(effect, CLEAN);
 
 	var e = effect.first;
 	while (e !== null) {
-		reset_branch(e);
+		reset_branch(e, tracked);
 		e = e.next;
 	}
 }
