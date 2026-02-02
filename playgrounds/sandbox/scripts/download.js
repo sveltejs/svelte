@@ -635,11 +635,25 @@ if (is_local) {
 } else if (url && url.origin === 'https://svelte.dev' && url.pathname.startsWith('/playground/')) {
 	// Svelte playground URL handling (existing logic)
 	if (url.hash.length > 1) {
-		const decoded = atob(url.hash.slice(1).replaceAll('-', '+').replaceAll('_', '/'));
+		// Decode percent-encoded characters (e.g., %5F => _), and replace base64 chars.
+		let decodedHash;
+		try {
+			// First, decode URI components to handle %xx encodings (e.g. %5F -> _) (LLMs calling this script sometimes encode them for some reason)
+			decodedHash = url.hash.slice(1);
+			decodedHash = decodeURIComponent(decodedHash);
+
+			// Now, restore for base64 (replace -/+, _/ /)
+			decodedHash = atob(
+				decodedHash.replaceAll('-', '+').replaceAll('_', '/')
+			);
+		} catch (e) {
+			console.error('Failed to decode URL hash:', e);
+			process.exit(1);
+		}
 		// putting it directly into the blob gives a corrupted file
-		const u8 = new Uint8Array(decoded.length);
-		for (let i = 0; i < decoded.length; i++) {
-			u8[i] = decoded.charCodeAt(i);
+		const u8 = new Uint8Array(decodedHash.length);
+		for (let i = 0; i < decodedHash.length; i++) {
+			u8[i] = decodedHash.charCodeAt(i);
 		}
 		const stream = new Blob([u8]).stream().pipeThrough(new DecompressionStream('gzip'));
 		const json = await new Response(stream).text();
