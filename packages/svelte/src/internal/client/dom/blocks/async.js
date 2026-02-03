@@ -27,6 +27,10 @@ export function async(node, blockers = [], expressions = [], fn) {
 
 	if (expressions.length === 0 && blockers.every((b) => b.settled)) {
 		fn(node);
+		if (was_hydrating) {
+			skip_nodes(false);
+			hydrate_next();
+		}
 		return;
 	}
 
