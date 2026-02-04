@@ -215,11 +215,6 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		array = /** @type {V[]} */ (get(each_array));
 		var length = array.length;
 
-		// skip if #each block isn't keyed
-		if (DEV && get_key !== index) {
-			validate_each_keys(array, get_key);
-		}
-
 		/** `true` if there was a hydration mismatch. Needs to be a `let` or else it isn't treeshaken out */
 		let mismatch = false;
 
@@ -298,7 +293,12 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		}
 
 		if (length > keys.size) {
-			e.each_key_duplicate('', '', '');
+			if (DEV) {
+				validate_each_keys(array, get_key);
+			} else {
+				// in prod, the additional information isn't printed, so don't bother computing it
+				e.each_key_duplicate('', '', '');
+			}
 		}
 
 		// remove excess nodes
@@ -476,19 +476,6 @@ function reconcile(state, array, anchor, flags, get_key) {
 					var start = stashed[0];
 					var j;
 
-					// full key uniqueness check is dev-only,
-					// key duplicates cause crash only due to `matched` being empty
-					if (matched.length === 0) {
-						// reconcile can be called in the batch's callbacks which are
-						// executed outside of the effect tree, so error are not caught
-						try {
-							e.each_key_duplicate('', '', '');
-						} catch (error) {
-							invoke_error_boundary(error, state.effect);
-							return;
-						}
-					}
-
 					prev = start.prev;
 
 					var a = matched[0];
@@ -549,17 +536,6 @@ function reconcile(state, array, anchor, flags, get_key) {
 		prev = effect;
 		current = skip_to_branch(effect.next);
 		count += 1;
-	}
-
-	if (count !== length) {
-		// reconcile can be called in the batch's callbacks which are
-		// executed outside of the effect tree, so error are not caught
-		try {
-			e.each_key_duplicate('', '', '');
-		} catch (error) {
-			invoke_error_boundary(error, state.effect);
-			return;
-		}
 	}
 
 	if (state.outrogroups !== null) {
