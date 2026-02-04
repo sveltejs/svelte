@@ -171,7 +171,7 @@ export class Batch {
 				schedule_effect(e);
 			}
 
-			for (var e of tracked.m) {
+			for (e of tracked.m) {
 				set_signal_status(e, MAYBE_DIRTY);
 				schedule_effect(e);
 			}
