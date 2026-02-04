@@ -700,8 +700,10 @@ function link(state, prev, next) {
 function validate_each_keys(array, key_fn) {
 	const keys = new Map();
 	const length = array.length;
+
 	for (let i = 0; i < length; i++) {
 		const key = key_fn(array[i], i);
+
 		if (keys.has(key)) {
 			const a = String(keys.get(key));
 			const b = String(i);
@@ -712,6 +714,7 @@ function validate_each_keys(array, key_fn) {
 
 			e.each_key_duplicate(a, b, k);
 		}
+
 		keys.set(key, i);
 	}
 }
