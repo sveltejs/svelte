@@ -372,7 +372,6 @@ function skip_to_branch(effect) {
 function reconcile(state, array, anchor, flags, get_key) {
 	var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 
-	var count = 0;
 	var length = array.length;
 	var items = state.items;
 	var current = skip_to_branch(state.effect.first);
@@ -456,7 +455,6 @@ function reconcile(state, array, anchor, flags, get_key) {
 				stashed = [];
 
 				current = skip_to_branch(prev.next);
-				count += 1;
 				continue;
 			}
 		}
@@ -509,7 +507,6 @@ function reconcile(state, array, anchor, flags, get_key) {
 					link(state, prev, effect);
 
 					prev = effect;
-					count += 1;
 				}
 
 				continue;
@@ -535,7 +532,6 @@ function reconcile(state, array, anchor, flags, get_key) {
 
 		prev = effect;
 		current = skip_to_branch(effect.next);
-		count += 1;
 	}
 
 	if (state.outrogroups !== null) {
