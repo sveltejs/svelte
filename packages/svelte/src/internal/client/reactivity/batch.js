@@ -647,8 +647,9 @@ function flush_effects() {
 			}
 		}
 	} finally {
-		is_flushing = false;
+		queued_root_effects = [];
 
+		is_flushing = false;
 		last_scheduled_effect = null;
 
 		if (DEV) {
