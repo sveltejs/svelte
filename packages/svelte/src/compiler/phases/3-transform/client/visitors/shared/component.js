@@ -515,7 +515,7 @@ export function build_component(node, component_name, loc, context) {
 	const blockers = memoizer.blockers();
 
 	if (async_values || blockers) {
-		return b.stmt(
+		const async_call = b.stmt(
 			b.call(
 				'$.async',
 				anchor,
@@ -524,6 +524,27 @@ export function build_component(node, component_name, loc, context) {
 				b.arrow([b.id('$$anchor'), ...memoizer.async_ids()], b.block(statements))
 			)
 		);
+
+		// When a static component wrapped in $.async is the sole child of a parent (snippet prop, each body, etc.),
+		// we need to add $.next() after the $.async call to advance hydrate_node past the closing comment of $.async.
+		// If there were not $.async wrapper, the component in question would do it itself via $.append(), so we need to replicate that behavior.
+		if (node.type === 'Component') {
+			const parent = context.path.at(-1);
+			if (parent?.type === 'Fragment') {
+				const siblings = parent.nodes.filter(
+					(n) =>
+						!(
+							(n.type === 'Text' && n.data.trim() === '') ||
+							(n.type === 'Comment' && !context.state.options.preserveComments)
+						)
+				);
+				if (siblings.length === 1 && siblings[0] === node) {
+					return b.block([async_call, b.stmt(b.call('$.next'))]);
+				}
+			}
+		}
+
+		return async_call;
 	}
 
 	return statements.length > 1 ? b.block(statements) : statements[0];

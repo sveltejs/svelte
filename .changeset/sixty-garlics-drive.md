@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: properly hydrate already-resolved async blocks
+fix: properly hydrate async blocks that are the sole child of block
