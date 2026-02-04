@@ -1,5 +1,17 @@
 # svelte
 
+## 5.49.2
+
+### Patch Changes
+
+- chore: remove SvelteKit data attributes from elements.d.ts ([#17613](https://github.com/sveltejs/svelte/pull/17613))
+
+- fix: avoid erroneous async derived expressions for blocks ([#17604](https://github.com/sveltejs/svelte/pull/17604))
+
+- fix: avoid Cloudflare warnings about not having the "node:crypto" module ([#17612](https://github.com/sveltejs/svelte/pull/17612))
+
+- fix: reschedule effects inside unskipped branches ([#17604](https://github.com/sveltejs/svelte/pull/17604))
+
 ## 5.49.1
 
 ### Patch Changes

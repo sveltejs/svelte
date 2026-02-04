@@ -47,9 +47,9 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	mode?: Array<'server' | 'async-server' | 'client' | 'hydrate'>;
 	/** Temporarily skip specific modes, without skipping the entire test */
 	skip_mode?: Array<'server' | 'async-server' | 'client' | 'hydrate'>;
-	/** Skip if running with process.env.NO_ASYNC */
+	/** Skip if running with process.env.SVELTE_NO_ASYNC */
 	skip_no_async?: boolean;
-	/** Skip if running without process.env.NO_ASYNC */
+	/** Skip if running without process.env.SVELTE_NO_ASYNC */
 	skip_async?: boolean;
 	html?: string;
 	ssrHtml?: string;
@@ -521,6 +521,8 @@ async function run_test_variant(
 						errors,
 						hydrate: hydrate_fn
 					});
+
+					flushSync();
 				}
 
 				if (config.runtime_error && !unhandled_rejection) {

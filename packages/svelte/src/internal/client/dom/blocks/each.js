@@ -265,7 +265,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				if (item.i) internal_set(item.i, i);
 
 				if (defer) {
-					batch.skipped_effects.delete(item.e);
+					batch.unskip_effect(item.e);
 				}
 			} else {
 				item = create_item(
@@ -311,7 +311,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			if (defer) {
 				for (const [key, item] of items) {
 					if (!keys.has(key)) {
-						batch.skipped_effects.add(item.e);
+						batch.skip_effect(item.e);
 					}
 				}
 
