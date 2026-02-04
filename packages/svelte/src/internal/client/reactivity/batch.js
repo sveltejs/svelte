@@ -841,7 +841,8 @@ export function schedule_effect(signal) {
 		var flags = effect.f;
 
 		// if the effect is being scheduled because a parent (each/await/etc) block
-		// updated an internal source, bail out or we'll cause a second flush
+		// updated an internal source, or because a branch is being unskipped,
+		// bail out or we'll cause a second flush
 		if (
 			is_flushing &&
 			effect === active_effect &&
