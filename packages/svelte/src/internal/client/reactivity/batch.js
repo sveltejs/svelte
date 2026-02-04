@@ -647,6 +647,7 @@ function flush_effects() {
 			}
 		}
 	} finally {
+		console.log('!!!!');
 		queued_root_effects = [];
 
 		is_flushing = false;
