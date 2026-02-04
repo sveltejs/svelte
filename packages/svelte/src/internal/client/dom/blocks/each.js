@@ -235,7 +235,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 		var batch = /** @type {Batch} */ (current_batch);
 		var defer = should_defer_append();
 
-		for (var i = 0; i < length; i += 1) {
+		for (var index = 0; index < length; index += 1) {
 			if (
 				hydrating &&
 				hydrate_node.nodeType === COMMENT_NODE &&
@@ -248,15 +248,15 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 				set_hydrating(false);
 			}
 
-			var value = array[i];
-			var key = get_key(value, i);
+			var value = array[index];
+			var key = get_key(value, index);
 
 			var item = first_run ? null : items.get(key);
 
 			if (item) {
 				// update before reconciliation, to trigger any async updates
 				if (item.v) internal_set(item.v, value);
-				if (item.i) internal_set(item.i, i);
+				if (item.i) internal_set(item.i, index);
 
 				if (defer) {
 					batch.unskip_effect(item.e);
@@ -267,7 +267,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 					first_run ? anchor : (offscreen_anchor ??= create_text()),
 					value,
 					key,
-					i,
+					index,
 					render_fn,
 					flags,
 					get_collection
