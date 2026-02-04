@@ -136,7 +136,7 @@ export class Batch {
 	 * so they can be rescheduled if the branch survives.
 	 * @type {Map<Effect, { d: Effect[], m: Effect[] }>}
 	 */
-	skipped_effects = new Map();
+	#skipped_effects = new Map();
 
 	is_fork = false;
 
@@ -151,8 +151,8 @@ export class Batch {
 	 * @param {Effect} effect
 	 */
 	skip_effect(effect) {
-		if (!this.skipped_effects.has(effect)) {
-			this.skipped_effects.set(effect, { d: [], m: [] });
+		if (!this.#skipped_effects.has(effect)) {
+			this.#skipped_effects.set(effect, { d: [], m: [] });
 		}
 	}
 
@@ -162,9 +162,9 @@ export class Batch {
 	 * @param {Effect} effect
 	 */
 	unskip_effect(effect) {
-		var tracked = this.skipped_effects.get(effect);
+		var tracked = this.#skipped_effects.get(effect);
 		if (tracked) {
-			this.skipped_effects.delete(effect);
+			this.#skipped_effects.delete(effect);
 
 			for (var e of tracked.d) {
 				set_signal_status(e, DIRTY);
@@ -206,7 +206,7 @@ export class Batch {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 
-			for (const [e, t] of this.skipped_effects) {
+			for (const [e, t] of this.#skipped_effects) {
 				reset_branch(e, t);
 			}
 		} else {
@@ -254,7 +254,7 @@ export class Batch {
 			var is_branch = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) !== 0;
 			var is_skippable_branch = is_branch && (flags & CLEAN) !== 0;
 
-			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.skipped_effects.has(effect);
+			var skip = is_skippable_branch || (flags & INERT) !== 0 || this.#skipped_effects.has(effect);
 
 			// Inside a `<svelte:boundary>` with a pending snippet,
 			// all effects are deferred until the boundary resolves
