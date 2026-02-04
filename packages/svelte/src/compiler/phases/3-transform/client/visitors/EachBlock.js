@@ -338,10 +338,6 @@ export function EachBlock(node, context) {
 
 	const statements = [add_svelte_meta(b.call('$.each', ...args), node, 'each')];
 
-	if (dev && node.metadata.keyed) {
-		statements.unshift(b.stmt(b.call('$.validate_each_keys', thunk, key_function)));
-	}
-
 	if (node.metadata.expression.is_async()) {
 		context.state.init.push(
 			b.stmt(

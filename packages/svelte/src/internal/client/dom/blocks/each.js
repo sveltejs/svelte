@@ -40,6 +40,7 @@ import { get } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
 import { current_batch } from '../../reactivity/batch.js';
+import * as e from '../../errors.js';
 
 // When making substantive changes to this file, validate them with the each block stress test:
 // https://svelte.dev/playground/1972b2cf46564476ad8c8c6405b23b7b
@@ -287,6 +288,15 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			} else {
 				fallback = branch(() => fallback_fn((offscreen_anchor ??= create_text())));
 				fallback.f |= EFFECT_OFFSCREEN;
+			}
+		}
+
+		if (length > keys.size) {
+			if (DEV) {
+				validate_each_keys(array, get_key);
+			} else {
+				// in prod, the additional information isn't printed, so don't bother computing it
+				e.each_key_duplicate('', '', '');
 			}
 		}
 
@@ -674,5 +684,32 @@ function link(state, prev, next) {
 		state.effect.last = prev;
 	} else {
 		next.prev = prev;
+	}
+}
+
+/**
+ * @param {Array<any>} array
+ * @param {(item: any, index: number) => string} key_fn
+ * @returns {void}
+ */
+function validate_each_keys(array, key_fn) {
+	const keys = new Map();
+	const length = array.length;
+
+	for (let i = 0; i < length; i++) {
+		const key = key_fn(array[i], i);
+
+		if (keys.has(key)) {
+			const a = String(keys.get(key));
+			const b = String(i);
+
+			/** @type {string | null} */
+			let k = String(key);
+			if (k.startsWith('[object ')) k = null;
+
+			e.each_key_duplicate(a, b, k);
+		}
+
+		keys.set(key, i);
 	}
 }
