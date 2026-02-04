@@ -40,7 +40,7 @@ import { get } from '../../runtime.js';
 import { DEV } from 'esm-env';
 import { derived_safe_equal } from '../../reactivity/deriveds.js';
 import { current_batch } from '../../reactivity/batch.js';
-import { each_key_duplicate } from '../../errors.js';
+import * as e from '../../errors.js';
 import { invoke_error_boundary } from '../../error-handling.js';
 
 // When making substantive changes to this file, validate them with the each block stress test:
@@ -297,8 +297,8 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 			}
 		}
 
-		if (length > items.size) {
-			each_key_duplicate('', '', '');
+		if (length > keys.size) {
+			e.each_key_duplicate('', '', '');
 		}
 
 		// remove excess nodes
@@ -482,7 +482,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 						// reconcile can be called in the batch's callbacks which are
 						// executed outside of the effect tree, so error are not caught
 						try {
-							each_key_duplicate('', '', '');
+							e.each_key_duplicate('', '', '');
 						} catch (error) {
 							invoke_error_boundary(error, state.effect);
 							return;
@@ -555,7 +555,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 		// reconcile can be called in the batch's callbacks which are
 		// executed outside of the effect tree, so error are not caught
 		try {
-			each_key_duplicate('', '', '');
+			e.each_key_duplicate('', '', '');
 		} catch (error) {
 			invoke_error_boundary(error, state.effect);
 			return;
