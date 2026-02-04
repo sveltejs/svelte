@@ -350,7 +350,10 @@ export function EachBlock(node, context) {
 					context.state.node,
 					node.metadata.expression.blockers(),
 					has_await ? b.array([get_collection]) : b.void0,
-					b.arrow(has_await ? [context.state.node, b.id('$$collection')] : [context.state.node], b.block(statements))
+					b.arrow(
+						has_await ? [context.state.node, b.id('$$collection')] : [context.state.node],
+						b.block(statements)
+					)
 				)
 			)
 		);
