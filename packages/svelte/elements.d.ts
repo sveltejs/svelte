@@ -851,23 +851,6 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	readonly 'bind:offsetWidth'?: number | undefined | null;
 	readonly 'bind:offsetHeight'?: number | undefined | null;
 
-	// SvelteKit
-	'data-sveltekit-keepfocus'?: true | '' | 'off' | undefined | null;
-	'data-sveltekit-noscroll'?: true | '' | 'off' | undefined | null;
-	'data-sveltekit-preload-code'?:
-		| true
-		| ''
-		| 'eager'
-		| 'viewport'
-		| 'hover'
-		| 'tap'
-		| 'off'
-		| undefined
-		| null;
-	'data-sveltekit-preload-data'?: true | '' | 'hover' | 'tap' | 'off' | undefined | null;
-	'data-sveltekit-reload'?: true | '' | 'off' | undefined | null;
-	'data-sveltekit-replacestate'?: true | '' | 'off' | undefined | null;
-
 	// allow any data- attribute
 	[key: `data-${string}`]: any;
 
