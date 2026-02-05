@@ -292,24 +292,6 @@ export function create_child_block(statements, blockers, has_await) {
 }
 
 /**
- * Creates a `$$renderer.async(...)` expression statement
- * @param {Statement[]} statements
- * @param {ArrayExpression} blockers
- * @param {boolean} has_await
- */
-function create_child(statements, blockers, has_await) {
-	if (blockers.elements.length === 0 && !has_await) {
-		return statements;
-	}
-
-	const fn = b.arrow([b.id('$$renderer')], b.block(statements), has_await);
-
-	return blockers.elements.length > 0
-		? [b.stmt(b.call('$$renderer.async', blockers, fn))]
-		: [b.stmt(b.call('$$renderer.child', fn))];
-}
-
-/**
  * A utility for optimising promises in templates. Without it code like
  * `<Component foo={await fetch()} bar={await other()} />` would be transformed
  * into two blocking promises, with it it's using `Promise.all` to await them.
@@ -392,7 +374,17 @@ export class PromiseOptimiser {
 			return statements;
 		}
 
-		return create_child([this.#apply(), ...statements], this.blockers(), this.has_await);
+		const fn = b.arrow(
+			[b.id('$$renderer')],
+			b.block([this.#apply(), ...statements]),
+			this.has_await
+		);
+
+		const blockers = this.blockers();
+
+		return blockers.elements.length > 0
+			? [b.stmt(b.call('$$renderer.async', blockers, fn))]
+			: [b.stmt(b.call('$$renderer.child', fn))];
 	}
 
 	/**
