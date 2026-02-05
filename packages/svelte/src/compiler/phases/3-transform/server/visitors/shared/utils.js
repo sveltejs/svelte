@@ -89,7 +89,7 @@ export function process_children(nodes, { visit, state }) {
 			const blockers = node.metadata.expression.blockers();
 
 			if (blockers.elements.length > 0) {
-				statement = create_async(b.block([statement]), blockers, false);
+				statement = create_async(b.block([statement]), blockers);
 			}
 
 			state.template.push(statement);
@@ -297,12 +297,9 @@ export function create_async_block(body, blockers = b.array([]), has_await = tru
  * Creates a `$$renderer.async(...)` expression statement
  * @param {BlockStatement | Expression} body
  * @param {ArrayExpression} blockers
- * @param {boolean} has_await
  */
-export function create_async(body, blockers = b.array([]), has_await = true) {
-	return b.stmt(
-		b.call('$$renderer.async', blockers, b.arrow([b.id('$$renderer')], body, has_await))
-	);
+export function create_async(body, blockers = b.array([])) {
+	return b.stmt(b.call('$$renderer.async', blockers, b.arrow([b.id('$$renderer')], body, false)));
 }
 
 /**

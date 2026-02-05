@@ -243,7 +243,7 @@ export function RegularElement(node, context) {
 		const blockers = optimiser.blockers();
 
 		if (blockers.elements.length > 0) {
-			statements = [create_async(b.block(statements), blockers, false)];
+			statements = [create_async(b.block(statements), blockers)];
 		}
 
 		context.state.template.push(...statements);
