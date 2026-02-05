@@ -37,7 +37,7 @@ export function RenderTag(node, context) {
 
 	context.state.template.push(...optimiser.render_block([statement]));
 
-	if (!context.state.skip_hydration_boundaries) {
+	if (!context.state.is_standalone) {
 		context.state.template.push(empty_comment);
 	}
 }

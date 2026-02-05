@@ -104,7 +104,7 @@ export function server_component(analysis, options) {
 		namespace: options.namespace,
 		preserve_whitespace: options.preserveWhitespace,
 		state_fields: new Map(),
-		skip_hydration_boundaries: false,
+		is_standalone: false,
 		is_instance: false
 	};
 
