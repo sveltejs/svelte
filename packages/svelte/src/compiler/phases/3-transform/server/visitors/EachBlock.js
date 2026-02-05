@@ -71,10 +71,11 @@ export function EachBlock(node, context) {
 				block,
 				node.metadata.expression.blockers(),
 				node.metadata.expression.has_await
-			),
-			block_close
+			)
 		);
 	} else {
-		state.template.push(...block.body, block_close);
+		state.template.push(...block.body);
 	}
+
+	state.template.push(block_close);
 }
