@@ -89,7 +89,7 @@ jobs:
             const raw = JSON.parse(fs.readFileSync('output.json', 'utf8'));
 
             const ALLOWED_PACKAGES = new Set(['svelte']);
-            const SHA_PATTERN = /^[0-9a-f]{6}$/;
+            const SHA_PATTERN = /^[0-9a-f]{7}$/;
 
             const packages = (raw.packages || [])
               .filter(p => {
