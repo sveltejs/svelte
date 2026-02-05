@@ -81,7 +81,9 @@ export function process_children(nodes, { visit, state }) {
 			flush();
 
 			const expression = /** @type {Expression} */ (visit(node.expression));
-			state.template.push(create_push(b.call('$.escape', expression), node.metadata.expression));
+			state.template.push(
+				create_push(b.call('$.escape', expression), node.metadata.expression, false)
+			);
 		} else if (node.type === 'Text' || node.type === 'Comment' || node.type === 'ExpressionTag') {
 			sequence.push(node);
 		} else {
@@ -275,20 +277,22 @@ export function create_child_block(body) {
  * @param {BlockStatement | Expression} body
  * @param {ArrayExpression} blockers
  * @param {boolean} has_await
- * @param {boolean} needs_hydration_markers
  */
-export function create_async_block(
-	body,
-	blockers = b.array([]),
-	has_await = true,
-	needs_hydration_markers = true
-) {
+export function create_async_block(body, blockers = b.array([]), has_await = true) {
 	return b.stmt(
-		b.call(
-			needs_hydration_markers ? '$$renderer.async_block' : '$$renderer.async',
-			blockers,
-			b.arrow([b.id('$$renderer')], body, has_await)
-		)
+		b.call('$$renderer.async_block', blockers, b.arrow([b.id('$$renderer')], body, has_await))
+	);
+}
+
+/**
+ * Creates a `$$renderer.async(...)` expression statement
+ * @param {BlockStatement | Expression} body
+ * @param {ArrayExpression} blockers
+ * @param {boolean} has_await
+ */
+export function create_async(body, blockers = b.array([]), has_await = true) {
+	return b.stmt(
+		b.call('$$renderer.async', blockers, b.arrow([b.id('$$renderer')], body, has_await))
 	);
 }
 
@@ -298,19 +302,18 @@ export function create_async_block(
  * @param {boolean} needs_hydration_markers
  * @returns {Expression | Statement}
  */
-export function create_push(expression, metadata, needs_hydration_markers = false) {
+export function create_push(expression, metadata, needs_hydration_markers) {
 	if (metadata.is_async()) {
 		let statement = b.stmt(b.call('$$renderer.push', b.thunk(expression, metadata.has_await)));
 
 		const blockers = metadata.blockers();
 
 		if (blockers.elements.length > 0) {
-			statement = create_async_block(
-				b.block([statement]),
-				blockers,
-				false,
-				needs_hydration_markers
-			);
+			if (needs_hydration_markers) {
+				statement = create_async_block(b.block([statement]), blockers, false);
+			} else {
+				statement = create_async(b.block([statement]), blockers, false);
+			}
 		}
 
 		return statement;

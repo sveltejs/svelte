@@ -31,7 +31,7 @@ export function IfBlock(node, context) {
 		statement = create_async_block(
 			b.block([statement]),
 			node.metadata.expression.blockers(),
-			!!has_await
+			has_await
 		);
 	}
 

@@ -1,5 +1,4 @@
 /** @import { Expression } from 'estree' */
-/** @import { Location } from 'locate-character' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../types.js' */
 /** @import { Scope } from '../../../scope.js' */
@@ -13,7 +12,7 @@ import {
 	build_template,
 	create_child_block,
 	PromiseOptimiser,
-	create_async_block
+	create_async
 } from './shared/utils.js';
 import { is_customizable_select_element } from '../../../nodes.js';
 
@@ -244,7 +243,7 @@ export function RegularElement(node, context) {
 		const blockers = optimiser.blockers();
 
 		if (blockers.elements.length > 0) {
-			statements = [create_async_block(b.block(statements), blockers, false, false)];
+			statements = [create_async(b.block(statements), blockers, false)];
 		}
 
 		context.state.template.push(...statements);
