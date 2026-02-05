@@ -3,7 +3,7 @@
 /** @import { ComponentContext } from '../types.js' */
 import { unwrap_optional } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { create_child_block, empty_comment, PromiseOptimiser } from './shared/utils.js';
+import { empty_comment, PromiseOptimiser } from './shared/utils.js';
 
 /**
  * @param {AST.RenderTag} node

@@ -278,16 +278,20 @@ export function build_getter(node, state) {
 
 /**
  * Creates a `$$renderer.async(...)` expression statement
- * @param {BlockStatement | Expression} body
+ * @param {Statement[]} statements
  * @param {ArrayExpression} blockers
  * @param {boolean} has_await
  */
-export function create_child_block(body, blockers, has_await) {
-	const fn = b.arrow([b.id('$$renderer')], body, has_await);
+export function create_child_block(statements, blockers, has_await) {
+	if (blockers.elements.length === 0 && !has_await) {
+		return statements;
+	}
+
+	const fn = b.arrow([b.id('$$renderer')], b.block(statements), has_await);
 
 	return blockers.elements.length > 0
-		? b.stmt(b.call('$$renderer.async_block', blockers, fn))
-		: b.stmt(b.call('$$renderer.child_block', fn));
+		? [b.stmt(b.call('$$renderer.async_block', blockers, fn))]
+		: [b.stmt(b.call('$$renderer.child_block', fn))];
 }
 
 /**
@@ -405,12 +409,6 @@ export class PromiseOptimiser {
 			return statements;
 		}
 
-		const statement = create_child_block(
-			b.block([this.#apply(), ...statements]),
-			this.blockers(),
-			this.has_await
-		);
-
-		return [statement];
+		return create_child_block([this.#apply(), ...statements], this.blockers(), this.has_await);
 	}
 }

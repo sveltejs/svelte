@@ -65,17 +65,12 @@ export function EachBlock(node, context) {
 		statements.push(for_loop);
 	}
 
-	if (node.metadata.expression.is_async()) {
-		state.template.push(
-			create_child_block(
-				b.block(statements),
-				node.metadata.expression.blockers(),
-				node.metadata.expression.has_await
-			)
-		);
-	} else {
-		state.template.push(...statements);
-	}
-
-	state.template.push(block_close);
+	state.template.push(
+		...create_child_block(
+			statements,
+			node.metadata.expression.blockers(),
+			node.metadata.expression.has_await
+		),
+		block_close
+	);
 }

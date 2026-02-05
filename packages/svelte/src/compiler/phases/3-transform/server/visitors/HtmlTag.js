@@ -13,8 +13,8 @@ export function HtmlTag(node, context) {
 
 	if (node.metadata.expression.is_async()) {
 		context.state.template.push(
-			create_child_block(
-				b.call('$$renderer.push', expression),
+			...create_child_block(
+				[b.stmt(b.call('$$renderer.push', expression))],
 				node.metadata.expression.blockers(),
 				node.metadata.expression.has_await
 			)

@@ -23,13 +23,12 @@ export function IfBlock(node, context) {
 	/** @type {Statement} */
 	let statement = b.if(test, consequent, alternate);
 
-	if (node.metadata.expression.is_async()) {
-		statement = create_child_block(
-			b.block([statement]),
+	context.state.template.push(
+		...create_child_block(
+			[statement],
 			node.metadata.expression.blockers(),
 			node.metadata.expression.has_await
-		);
-	}
-
-	context.state.template.push(statement, block_close);
+		),
+		block_close
+	);
 }

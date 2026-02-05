@@ -79,15 +79,11 @@ export function SvelteElement(node, context) {
 		statements.push(b.stmt(b.call('$.pop_element')));
 	}
 
-	if (node.metadata.expression.is_async()) {
-		statements = [
-			create_child_block(
-				b.block(statements),
-				node.metadata.expression.blockers(),
-				node.metadata.expression.has_await
-			)
-		];
-	}
-
-	context.state.template.push(...statements);
+	context.state.template.push(
+		...create_child_block(
+			statements,
+			node.metadata.expression.blockers(),
+			node.metadata.expression.has_await
+		)
+	);
 }
