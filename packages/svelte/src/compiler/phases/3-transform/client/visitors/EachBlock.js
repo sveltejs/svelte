@@ -101,15 +101,11 @@ export function EachBlock(node, context) {
 	}
 
 	// If the array is a store expression, we need to invalidate it when the array is changed.
-	// This doesn't catch all cases, but all the ones that Svelte 4 catches, too.
 	let store_to_invalidate = '';
-	if (node.expression.type === 'Identifier' || node.expression.type === 'MemberExpression') {
-		const id = object(node.expression);
-		if (id) {
-			const binding = context.state.scope.get(id.name);
-			if (binding?.kind === 'store_sub') {
-				store_to_invalidate = id.name;
-			}
+	for (const binding of node.metadata.expression.dependencies) {
+		if (binding.kind === 'store_sub') {
+			store_to_invalidate = binding.node.name;
+			break;
 		}
 	}
 
