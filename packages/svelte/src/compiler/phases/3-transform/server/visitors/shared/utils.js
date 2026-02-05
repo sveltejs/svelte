@@ -344,7 +344,7 @@ export class PromiseOptimiser {
 		}
 	}
 
-	apply() {
+	#apply() {
 		if (this.expressions.length === 0) {
 			return b.empty;
 		}
@@ -384,7 +384,7 @@ export class PromiseOptimiser {
 			return statements;
 		}
 
-		const body = b.block([this.apply(), ...statements]);
+		const body = b.block([this.#apply(), ...statements]);
 		return [b.stmt(b.call('$$renderer.child', b.arrow([b.id('$$renderer')], body, true)))];
 	}
 
@@ -398,7 +398,7 @@ export class PromiseOptimiser {
 		}
 
 		const statement = create_async_block(
-			b.block([this.apply(), ...statements]),
+			b.block([this.#apply(), ...statements]),
 			this.blockers(),
 			this.has_await
 		);
