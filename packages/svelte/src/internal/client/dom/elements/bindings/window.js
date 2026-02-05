@@ -10,11 +10,16 @@ import { listen, without_reactive_context } from './shared.js';
 export function bind_window_scroll(type, get, set = get) {
 	var is_scrolling_x = type === 'x';
 
+	// Check if scrollend event is supported
+	var supports_scrollend = 'onscrollend' in window;
+
 	var target_handler = () =>
 		without_reactive_context(() => {
 			scrolling = true;
-			clearTimeout(timeout);
-			timeout = setTimeout(clear, 100); // TODO use scrollend event if supported (or when supported everywhere?)
+			if (!supports_scrollend) {
+				clearTimeout(timeout);
+				timeout = setTimeout(clear, 100);
+			}
 
 			set(window[is_scrolling_x ? 'scrollX' : 'scrollY']);
 		});
@@ -30,6 +35,22 @@ export function bind_window_scroll(type, get, set = get) {
 	var clear = () => {
 		scrolling = false;
 	};
+
+	// Use scrollend event if supported, otherwise fall back to timeout
+	if (supports_scrollend) {
+		var scrollend_handler = () => {
+			without_reactive_context(() => {
+				scrolling = false;
+			});
+		};
+		addEventListener('scrollend', scrollend_handler, {
+			passive: true
+		});
+		teardown(() => {
+			removeEventListener('scrollend', scrollend_handler);
+		});
+	}
+
 	var first = true;
 
 	render_effect(() => {
@@ -39,13 +60,17 @@ export function bind_window_scroll(type, get, set = get) {
 			first = false;
 		} else if (!scrolling && latest_value != null) {
 			scrolling = true;
-			clearTimeout(timeout);
+			if (!supports_scrollend) {
+				clearTimeout(timeout);
+			}
 			if (is_scrolling_x) {
 				scrollTo(latest_value, window.scrollY);
 			} else {
 				scrollTo(window.scrollX, latest_value);
 			}
-			timeout = setTimeout(clear, 100);
+			if (!supports_scrollend) {
+				timeout = setTimeout(clear, 100);
+			}
 		}
 	});
 
