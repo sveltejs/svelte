@@ -332,8 +332,7 @@ export function build_inline_component(node, expression, context) {
 	if (
 		!optimiser.is_async() &&
 		!context.state.skip_hydration_boundaries &&
-		custom_css_props.length === 0 &&
-		optimiser.expressions.length === 0
+		custom_css_props.length === 0
 	) {
 		context.state.template.push(empty_comment);
 	}
