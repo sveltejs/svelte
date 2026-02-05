@@ -36,6 +36,31 @@ See the [migration guide](/docs/svelte/v5-migration-guide#Components-are-no-long
 
 > A derived value cannot reference itself recursively
 
+This error occurs when a `$derived` expression ends up reading its own value, either directly or through a chain of other deriveds. Since a derived must compute its value from other state, referencing itself would create infinite recursion.
+
+```svelte
+<script>
+	let count = $state(0);
+
+	// This will throw derived_references_self because `double`
+	// tries to read itself during computation
+	let double = $derived(double + count);
+</script>
+```
+
+To fix this, ensure that derived values only depend on other state or derived values, never on themselves. If you need a value that updates based on its previous value, use `$state` with an `$effect` instead:
+
+```svelte
+<script>
+	let count = $state(0);
+	let total = $state(0);
+
+	$effect(() => {
+		total = total + count;
+	});
+</script>
+```
+
 ## each_key_duplicate
 
 > Keyed each block has duplicate key at indexes %a% and %b%
