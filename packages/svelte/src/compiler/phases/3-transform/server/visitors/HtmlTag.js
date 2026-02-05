@@ -2,7 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '#compiler/builders';
-import { create_async_block } from './shared/utils.js';
+import { create_child_block } from './shared/utils.js';
 
 /**
  * @param {AST.HtmlTag} node
@@ -13,7 +13,7 @@ export function HtmlTag(node, context) {
 
 	if (node.metadata.expression.is_async()) {
 		context.state.template.push(
-			create_async_block(
+			create_child_block(
 				b.call('$$renderer.push', expression),
 				node.metadata.expression.blockers(),
 				node.metadata.expression.has_await

@@ -89,7 +89,7 @@ export function process_children(nodes, { visit, state }) {
 			const blockers = node.metadata.expression.blockers();
 
 			if (blockers.elements.length > 0) {
-				statement = create_async(
+				statement = create_child(
 					b.block([statement]),
 					blockers,
 					node.metadata.expression.has_await
@@ -282,14 +282,12 @@ export function build_getter(node, state) {
  * @param {ArrayExpression} blockers
  * @param {boolean} has_await
  */
-export function create_async_block(body, blockers, has_await) {
-	if (blockers.elements.length > 0) {
-		return b.stmt(
-			b.call('$$renderer.async_block', blockers, b.arrow([b.id('$$renderer')], body, has_await))
-		);
-	}
+export function create_child_block(body, blockers, has_await) {
+	const fn = b.arrow([b.id('$$renderer')], body, has_await);
 
-	return b.stmt(b.call('$$renderer.child_block', b.arrow([b.id('$$renderer')], body, has_await)));
+	return blockers.elements.length > 0
+		? b.stmt(b.call('$$renderer.async_block', blockers, fn))
+		: b.stmt(b.call('$$renderer.child_block', fn));
 }
 
 /**
@@ -298,7 +296,7 @@ export function create_async_block(body, blockers, has_await) {
  * @param {ArrayExpression} blockers
  * @param {boolean} has_await
  */
-export function create_async(body, blockers, has_await) {
+export function create_child(body, blockers, has_await) {
 	const fn = b.arrow([b.id('$$renderer')], body, has_await);
 
 	return blockers.elements.length > 0
@@ -389,7 +387,7 @@ export class PromiseOptimiser {
 			return statements;
 		}
 
-		const statement = create_async(
+		const statement = create_child(
 			b.block([this.#apply(), ...statements]),
 			this.blockers(),
 			this.has_await
@@ -407,7 +405,7 @@ export class PromiseOptimiser {
 			return statements;
 		}
 
-		const statement = create_async_block(
+		const statement = create_child_block(
 			b.block([this.#apply(), ...statements]),
 			this.blockers(),
 			this.has_await

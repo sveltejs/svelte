@@ -2,7 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '#compiler/builders';
-import { block_close, block_open, block_open_else, create_async_block } from './shared/utils.js';
+import { block_close, block_open, block_open_else, create_child_block } from './shared/utils.js';
 
 /**
  * @param {AST.IfBlock} node
@@ -24,7 +24,7 @@ export function IfBlock(node, context) {
 	let statement = b.if(test, consequent, alternate);
 
 	if (node.metadata.expression.is_async()) {
-		statement = create_async_block(
+		statement = create_child_block(
 			b.block([statement]),
 			node.metadata.expression.blockers(),
 			node.metadata.expression.has_await

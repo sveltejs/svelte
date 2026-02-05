@@ -2,7 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '#compiler/builders';
-import { block_close, block_open, block_open_else, create_async_block } from './shared/utils.js';
+import { block_close, block_open, block_open_else, create_child_block } from './shared/utils.js';
 
 /**
  * @param {AST.EachBlock} node
@@ -67,7 +67,7 @@ export function EachBlock(node, context) {
 
 	if (node.metadata.expression.is_async()) {
 		state.template.push(
-			create_async_block(
+			create_child_block(
 				b.block(statements),
 				node.metadata.expression.blockers(),
 				node.metadata.expression.has_await

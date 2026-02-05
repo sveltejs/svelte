@@ -5,7 +5,7 @@ import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { determine_namespace_for_children } from '../../utils.js';
 import { build_element_attributes } from './shared/element.js';
-import { build_template, create_async_block, PromiseOptimiser } from './shared/utils.js';
+import { build_template, create_child_block, PromiseOptimiser } from './shared/utils.js';
 
 /**
  * @param {AST.SvelteElement} node
@@ -81,7 +81,7 @@ export function SvelteElement(node, context) {
 
 	if (node.metadata.expression.is_async()) {
 		statements = [
-			create_async_block(
+			create_child_block(
 				b.block(statements),
 				node.metadata.expression.blockers(),
 				node.metadata.expression.has_await
