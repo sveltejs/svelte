@@ -1,16 +1,51 @@
-name: Publish Any Commit
-on: [push, pull_request]
+name: pkg.pr.new
+on:
+  pull_request_target:
+    types: [opened, synchronize]
+  push:
+    branches: [main]
 
 permissions: {}
 
 jobs:
-  build:
-    permissions: {}
-
+  # This job determines the environment to use for the build job. It ensures that:
+  # - For pushes to main, we use the "Publish pkg.pr.new (maintainers)" environment.
+  # - For PRs from the same repository, we also use the "Publish pkg.pr.new (maintainers)" environment, since these are trusted.
+  # - For PRs from forks, we use the "Publish pkg.pr.new (external contributors)" environment, which requires manual approval by a maintainer before the build job can run.
+  #   This protects us from running untrusted code while still allowing external contributors to use pkg.pr.new.
+  resolve-env:
     runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.resolve.outputs.environment }}
+    steps:
+      - name: Determine environment
+        id: resolve
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "environment=Publish pkg.pr.new (maintainers)" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event.pull_request.head.repo.full_name }}" == "${{ github.repository }}" ]]; then
+            echo "environment=Publish pkg.pr.new (maintainers)" >> "$GITHUB_OUTPUT"
+          else
+            echo "environment=Publish pkg.pr.new (external contributors)" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: resolve-env
+    runs-on: ubuntu-latest
+    # This is the line that ensures forks require manual approval before running the build job
+    environment: ${{ needs.resolve-env.outputs.environment }}
+
+    # No permissions — this job runs user-controlled code
+    permissions: {}
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          # For pull_request_target, we must explicitly check out the PR head.
+          # This is safe because the environment gate above has already fired —
+          # an org member has approved this specific commit for external PRs.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
@@ -24,21 +59,161 @@ jobs:
         run: pnpm build
 
       - run: pnpx pkg-pr-new publish --comment=off --json output.json --compact --no-template './packages/svelte'
-      - name: Add metadata to output
+
+      - name: Upload output
+        uses: actions/upload-artifact@v4
+        with:
+          name: output
+          path: ./output.json
+
+  # Sanitizes the untrusted output from the build job before it's consumed by
+  # jobs with elevated permissions. This ensures that only known package names
+  # and valid SHA prefixes make it through.
+  sanitize:
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions: {}
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: output
+
+      - name: Sanitize output
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const raw = JSON.parse(fs.readFileSync('output.json', 'utf8'));
+
+            const ALLOWED_PACKAGES = new Set(['svelte']);
+            const SHA_PATTERN = /^[0-9a-f]{6}$/;
+
+            const packages = (raw.packages || [])
+              .filter(p => {
+                if (!ALLOWED_PACKAGES.has(p.name)) {
+                  console.log(`Skipping unexpected package: ${JSON.stringify(p.name)}`);
+                  return false;
+                }
+                const sha = p.url?.replace(/^.+@([^@]+)$/, '$1');
+                if (!sha || !SHA_PATTERN.test(sha)) {
+                  console.log(`Skipping package with invalid SHA: ${JSON.stringify(p.url)}`);
+                  return false;
+                }
+                return true;
+              })
+              .map(p => ({
+                name: p.name,
+                sha: p.url.replace(/^.+@([^@]+)$/, '$1'),
+              }));
+
+            fs.writeFileSync('sanitized-output.json', JSON.stringify({ packages }), 'utf8');
+
+      - name: Upload sanitized output
+        uses: actions/upload-artifact@v4
+        with:
+          name: sanitized-output
+          path: ./sanitized-output.json
+
+  comment:
+    needs: sanitize
+    if: github.event_name == 'pull_request_target'
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Download sanitized artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: sanitized-output
+
+      - name: Post or update comment
         uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const output = JSON.parse(fs.readFileSync('output.json', 'utf8'));
-            output.number = context.issue.number;
-            output.event_name = context.eventName;
-            output.ref = context.ref;
-            fs.writeFileSync('output.json', JSON.stringify(output), 'utf8');
-      - name: Upload output
-        uses: actions/upload-artifact@v6
-        with:
-          name: output
-          path: ./output.json
+            const { packages } = JSON.parse(fs.readFileSync('sanitized-output.json', 'utf8'));
 
-      - run: ls -R .
+            if (packages.length === 0) {
+              console.log('No valid packages found. Skipping comment.');
+              return;
+            }
+
+            // Issue number from trusted event context, never from the artifact
+            const issue_number = context.issue.number;
+
+            const bot_comment_identifier = `<!-- pkg.pr.new comment -->`;
+
+            const body = `${bot_comment_identifier}
+
+            [Playground](https://svelte.dev/playground?version=pr-${issue_number})
+
+            \`\`\`
+            ${packages.map(p => `pnpm add https://pkg.pr.new/${p.name}@${issue_number}`).join('\n')}
+            \`\`\`
+            `;
+
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+            });
+            const existing = comments.data.find(c => c.body.includes(bot_comment_identifier));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                body,
+              });
+            }
+
+  log:
+    needs: sanitize
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    permissions: {}
+
+    steps:
+      - name: Download sanitized artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: sanitized-output
+
+      - name: Log publish info
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const { packages } = JSON.parse(fs.readFileSync('sanitized-output.json', 'utf8'));
+
+            if (packages.length === 0) {
+              console.log('No valid packages found.');
+              return;
+            }
+
+            console.log('\n' + '='.repeat(50));
+            console.log('Publish Information');
+            console.log('='.repeat(50));
+            for (const p of packages) {
+              console.log(`${p.name} - pnpm add https://pkg.pr.new/${p.name}@${p.sha}`);
+            }
+            const svelte = packages.find(p => p.name === 'svelte');
+            if (svelte) {
+              console.log(`\nPlayground: https://svelte.dev/playground?version=commit-${svelte.sha}`);
+            }
+            console.log('='.repeat(50));
