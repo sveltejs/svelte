@@ -25,10 +25,11 @@ export function IfBlock(node, context) {
 		statements.push(b.var(alternate_id, b.arrow([b.id('$$anchor')], alternate)));
 	}
 
-	const is_async = node.metadata.expression.is_async();
+	const has_await = node.metadata.expression.has_await;
+	const has_blockers = node.metadata.expression.has_blockers();
 
 	const expression = build_expression(context, node.test, node.metadata.expression);
-	const test = is_async ? b.call('$.get', b.id('$$condition')) : expression;
+	const test = has_await ? b.call('$.get', b.id('$$condition')) : expression;
 
 	/** @type {Expression[]} */
 	const args = [
@@ -72,15 +73,18 @@ export function IfBlock(node, context) {
 
 	statements.push(add_svelte_meta(b.call('$.if', ...args), node, 'if'));
 
-	if (is_async) {
+	if (has_await || has_blockers) {
 		context.state.init.push(
 			b.stmt(
 				b.call(
 					'$.async',
 					context.state.node,
 					node.metadata.expression.blockers(),
-					b.array([b.thunk(expression, node.metadata.expression.has_await)]),
-					b.arrow([context.state.node, b.id('$$condition')], b.block(statements))
+					has_await ? b.array([b.thunk(expression, true)]) : b.void0,
+					b.arrow(
+						has_await ? [context.state.node, b.id('$$condition')] : [context.state.node],
+						b.block(statements)
+					)
 				)
 			)
 		);
