@@ -80,19 +80,20 @@ export function process_children(nodes, { visit, state }) {
 		if (node.type === 'ExpressionTag' && node.metadata.expression.is_async()) {
 			flush();
 
-			const expression = b.call('$.escape', /** @type {Expression} */ (visit(node.expression)));
+			const expression = /** @type {Expression} */ (visit(node.expression));
 
-			let statement = b.stmt(
-				b.call('$$renderer.push', b.thunk(expression, node.metadata.expression.has_await))
+			let call = b.call(
+				'$$renderer.push',
+				b.thunk(b.call('$.escape', expression), node.metadata.expression.has_await)
 			);
 
 			const blockers = node.metadata.expression.blockers();
 
 			if (blockers.elements.length > 0) {
-				statement = create_child([statement], blockers, node.metadata.expression.has_await);
+				call = b.call('$$renderer.async', blockers, b.arrow([b.id('$$renderer')], call));
 			}
 
-			state.template.push(statement);
+			state.template.push(b.stmt(call));
 		} else if (node.type === 'Text' || node.type === 'Comment' || node.type === 'ExpressionTag') {
 			sequence.push(node);
 		} else {
@@ -297,11 +298,15 @@ export function create_child_block(statements, blockers, has_await) {
  * @param {boolean} has_await
  */
 function create_child(statements, blockers, has_await) {
+	if (blockers.elements.length === 0 && !has_await) {
+		return statements;
+	}
+
 	const fn = b.arrow([b.id('$$renderer')], b.block(statements), has_await);
 
 	return blockers.elements.length > 0
-		? b.stmt(b.call('$$renderer.async', blockers, fn))
-		: b.stmt(b.call('$$renderer.child', fn));
+		? [b.stmt(b.call('$$renderer.async', blockers, fn))]
+		: [b.stmt(b.call('$$renderer.child', fn))];
 }
 
 /**
@@ -387,9 +392,7 @@ export class PromiseOptimiser {
 			return statements;
 		}
 
-		const statement = create_child([this.#apply(), ...statements], this.blockers(), this.has_await);
-
-		return [statement];
+		return create_child([this.#apply(), ...statements], this.blockers(), this.has_await);
 	}
 
 	/**
