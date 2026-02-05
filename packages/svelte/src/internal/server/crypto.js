@@ -13,7 +13,7 @@ export async function sha256(data) {
 		? globalThis.crypto
 		: // @ts-ignore - we don't install node types in the prod build
 			// don't use 'node:crypto' because static analysers will think we rely on node when we don't
-			(await import('node:' + 'crypto')).webcrypto;
+			(await import(/* @vite-ignore */ 'node:' + 'crypto')).webcrypto;
 
 	const hash_buffer = await crypto.subtle.digest('SHA-256', text_encoder.encode(data));
 
