@@ -298,8 +298,8 @@ export function create_async_block(body, blockers = b.array([]), has_await = tru
  * @param {BlockStatement | Expression} body
  * @param {ArrayExpression} blockers
  */
-export function create_async(body, blockers = b.array([])) {
-	return b.stmt(b.call('$$renderer.async', blockers, b.arrow([b.id('$$renderer')], body, false)));
+export function create_async(body, blockers) {
+	return b.stmt(b.call('$$renderer.async', blockers, b.arrow([b.id('$$renderer')], body)));
 }
 
 /**
