@@ -80,8 +80,19 @@ export function process_children(nodes, { visit, state }) {
 		if (node.type === 'ExpressionTag' && node.metadata.expression.is_async()) {
 			flush();
 
-			const expression = /** @type {Expression} */ (visit(node.expression));
-			state.template.push(create_push(b.call('$.escape', expression), node.metadata.expression));
+			const expression = b.call('$.escape', /** @type {Expression} */ (visit(node.expression)));
+
+			let statement = b.stmt(
+				b.call('$$renderer.push', b.thunk(expression, node.metadata.expression.has_await))
+			);
+
+			const blockers = node.metadata.expression.blockers();
+
+			if (blockers.elements.length > 0) {
+				statement = create_async(b.block([statement]), blockers, false);
+			}
+
+			state.template.push(statement);
 		} else if (node.type === 'Text' || node.type === 'Comment' || node.type === 'ExpressionTag') {
 			sequence.push(node);
 		} else {
@@ -292,27 +303,6 @@ export function create_async(body, blockers = b.array([]), has_await = true) {
 	return b.stmt(
 		b.call('$$renderer.async', blockers, b.arrow([b.id('$$renderer')], body, has_await))
 	);
-}
-
-/**
- * @param {Expression} expression
- * @param {ExpressionMetadata} metadata
- * @returns {Expression | Statement}
- */
-function create_push(expression, metadata) {
-	if (metadata.is_async()) {
-		let statement = b.stmt(b.call('$$renderer.push', b.thunk(expression, metadata.has_await)));
-
-		const blockers = metadata.blockers();
-
-		if (blockers.elements.length > 0) {
-			statement = create_async(b.block([statement]), blockers, false);
-		}
-
-		return statement;
-	}
-
-	return expression;
 }
 
 /**
