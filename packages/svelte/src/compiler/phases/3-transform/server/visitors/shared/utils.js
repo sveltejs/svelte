@@ -296,7 +296,7 @@ export function create_child_block(body, blockers, has_await) {
  * @param {ArrayExpression} blockers
  * @param {boolean} has_await
  */
-export function create_child(body, blockers, has_await) {
+function create_child(body, blockers, has_await) {
 	const fn = b.arrow([b.id('$$renderer')], body, has_await);
 
 	return blockers.elements.length > 0

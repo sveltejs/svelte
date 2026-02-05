@@ -5,7 +5,6 @@ import * as b from '#compiler/builders';
 import {
 	build_attribute_value,
 	PromiseOptimiser,
-	create_child_block,
 	block_open,
 	block_close
 } from './shared/utils.js';
