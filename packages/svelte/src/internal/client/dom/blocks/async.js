@@ -26,7 +26,23 @@ export function async(node, blockers = [], expressions = [], fn) {
 	}
 
 	if (expressions.length === 0 && blockers.every((b) => b.settled)) {
+		// We need to first find the end marker of the $.async function ...
+		if (was_hydrating) {
+			var end = skip_nodes(false);
+		}
+
 		fn(node);
+
+		// ... and then set it as the hydration node after calling the render function.
+		// This is necessary because it is not guaranteed that the render function will
+		// advance the hydration node to $.async's end marker (it may stop at an inner block's end marker).
+		if (was_hydrating) {
+			set_hydrate_node(
+				// @ts-expect-error assignment definitely happens
+				end
+			);
+		}
+
 		return;
 	}
 
