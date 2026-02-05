@@ -376,11 +376,15 @@ export class PromiseOptimiser {
 	}
 
 	/**
-	 *
 	 * @param {Statement[]} statements
+	 * @returns {Statement[]}
 	 */
 	render(statements) {
+		if (this.expressions.length === 0) {
+			return statements;
+		}
+
 		const body = b.block([this.apply(), ...statements]);
-		return b.stmt(b.call('$$renderer.child', b.arrow([b.id('$$renderer')], body, true)));
+		return [b.stmt(b.call('$$renderer.child', b.arrow([b.id('$$renderer')], body, true)))];
 	}
 }

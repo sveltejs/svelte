@@ -64,15 +64,9 @@ export function RegularElement(node, context) {
 			b.literal(`</${node.name}>`)
 		);
 
-		// TODO this is a real edge case, would be good to DRY this out
-		if (optimiser.expressions.length > 0) {
-			context.state.template.push(
-				optimiser.render([...state.init, ...build_template(state.template)])
-			);
-		} else {
-			context.state.init.push(...state.init);
-			context.state.template.push(...state.template);
-		}
+		context.state.template.push(
+			...optimiser.render([...state.init, ...build_template(state.template)])
+		);
 
 		return;
 	}
@@ -126,11 +120,7 @@ export function RegularElement(node, context) {
 
 		const statement = b.stmt(b.call('$$renderer.select', attributes, fn, ...rest));
 
-		if (optimiser.expressions.length > 0) {
-			context.state.template.push(optimiser.render([...state.init, statement]));
-		} else {
-			context.state.template.push(...state.init, statement);
-		}
+		context.state.template.push(...optimiser.render([...state.init, statement]));
 
 		return;
 	}
@@ -177,11 +167,7 @@ export function RegularElement(node, context) {
 
 		const statement = b.stmt(b.call('$$renderer.option', attributes, body, ...rest));
 
-		if (optimiser.expressions.length > 0) {
-			context.state.template.push(optimiser.render([...state.init, statement]));
-		} else {
-			context.state.template.push(...state.init, statement);
-		}
+		context.state.template.push(...optimiser.render([...state.init, statement]));
 
 		return;
 	}
@@ -227,11 +213,7 @@ export function RegularElement(node, context) {
 	}
 
 	if (optimiser.is_async()) {
-		let statements = [...state.init, ...build_template(state.template)];
-
-		if (optimiser.has_await) {
-			statements = [optimiser.render(statements)];
-		}
+		let statements = optimiser.render([...state.init, ...build_template(state.template)]);
 
 		const blockers = optimiser.blockers();
 

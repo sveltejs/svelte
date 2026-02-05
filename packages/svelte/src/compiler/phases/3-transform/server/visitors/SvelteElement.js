@@ -61,22 +61,19 @@ export function SvelteElement(node, context) {
 	const attributes = b.block([...state.init, ...build_template(state.template)]);
 	const children = /** @type {BlockStatement} */ (context.visit(node.fragment, state));
 
-	/** @type {Statement} */
-	let statement = b.stmt(
-		b.call(
-			'$.element',
-			b.id('$$renderer'),
-			tag,
-			attributes.body.length > 0 && b.thunk(attributes),
-			children.body.length > 0 && b.thunk(children)
-		)
+	statements.push(
+		...optimiser.render([
+			b.stmt(
+				b.call(
+					'$.element',
+					b.id('$$renderer'),
+					tag,
+					attributes.body.length > 0 && b.thunk(attributes),
+					children.body.length > 0 && b.thunk(children)
+				)
+			)
+		])
 	);
-
-	if (optimiser.expressions.length > 0) {
-		statement = optimiser.render([statement]);
-	}
-
-	statements.push(statement);
 
 	if (dev) {
 		statements.push(b.stmt(b.call('$.pop_element')));
