@@ -10,6 +10,35 @@ import { get_prop_source, is_prop_source, is_state_source, should_proxy } from '
 import { get_value } from './shared/declarations.js';
 
 /**
+ * Checks if an AST expression references a store subscription binding.
+ * Used to detect when $derived wraps a store, so we use safe equality. (#13569)
+ * @param {import('estree').Node | null | undefined} node
+ * @param {import('../../../scope.js').Scope} scope
+ * @returns {boolean}
+ */
+function references_store_sub(node, scope) {
+	if (!node || typeof node !== 'object' || !('type' in node)) return false;
+
+	if (node.type === 'Identifier') {
+		return scope.get(/** @type {string} */ (/** @type {Identifier} */ (node).name))?.kind === 'store_sub' ?? false;
+	}
+
+	for (const key of Object.keys(node)) {
+		if (key === 'type' || key === 'start' || key === 'end' || key === 'loc') continue;
+		const child = /** @type {any} */ (node)[key];
+		if (Array.isArray(child)) {
+			for (const item of child) {
+				if (item && typeof item === 'object' && item.type && references_store_sub(item, scope)) return true;
+			}
+		} else if (child && typeof child === 'object' && child.type && references_store_sub(child, scope)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
  * @param {VariableDeclaration} node
  * @param {ComponentContext} context
  */
@@ -219,7 +248,10 @@ export function VariableDeclaration(node, context) {
 					} else {
 						if (rune === '$derived') expression = b.thunk(expression);
 
-						let call = b.call('$.derived', expression);
+						// If the derived expression depends on a store subscription,
+						// use safe equality to detect mutations to same-reference objects (#13569)
+						const use_safe_equal = references_store_sub(value, context.state.scope);
+						let call = b.call(use_safe_equal ? '$.derived_safe_equal' : '$.derived', expression);
 						if (dev) call = b.call('$.tag', call, b.literal(declarator.id.name));
 
 						declarations.push(b.declarator(declarator.id, call));
