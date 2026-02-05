@@ -325,28 +325,17 @@ export function build_inline_component(node, expression, context) {
 		optimiser.check_blockers(node.metadata.expression);
 	}
 
-	const is_async = optimiser.is_async();
-
-	if (is_async) {
-		statement = create_async_block(
-			b.block([
-				optimiser.apply(),
-				dynamic && custom_css_props.length === 0
-					? b.stmt(b.call('$$renderer.push', empty_comment))
-					: b.empty,
-				statement
-			]),
-			optimiser.blockers(),
-			optimiser.has_await
-		);
-	} else if (dynamic && custom_css_props.length === 0) {
-		context.state.template.push(empty_comment);
-	}
-
-	context.state.template.push(statement);
+	context.state.template.push(
+		...optimiser.render_block([
+			dynamic && custom_css_props.length === 0
+				? b.stmt(b.call('$$renderer.push', empty_comment))
+				: b.empty,
+			statement
+		])
+	);
 
 	if (
-		!is_async &&
+		!optimiser.is_async() &&
 		!context.state.skip_hydration_boundaries &&
 		custom_css_props.length === 0 &&
 		optimiser.expressions.length === 0

@@ -35,15 +35,7 @@ export function RenderTag(node, context) {
 		)
 	);
 
-	if (optimiser.is_async()) {
-		statement = create_async_block(
-			b.block([optimiser.apply(), statement]),
-			optimiser.blockers(),
-			optimiser.has_await
-		);
-	}
-
-	context.state.template.push(statement);
+	context.state.template.push(...optimiser.render_block([statement]));
 
 	if (!context.state.skip_hydration_boundaries) {
 		context.state.template.push(empty_comment);

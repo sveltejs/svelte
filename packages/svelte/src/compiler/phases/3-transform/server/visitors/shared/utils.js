@@ -387,4 +387,22 @@ export class PromiseOptimiser {
 		const body = b.block([this.apply(), ...statements]);
 		return [b.stmt(b.call('$$renderer.child', b.arrow([b.id('$$renderer')], body, true)))];
 	}
+
+	/**
+	 * @param {Statement[]} statements
+	 * @returns {Statement[]}
+	 */
+	render_block(statements) {
+		if (!this.is_async()) {
+			return statements;
+		}
+
+		const statement = create_async_block(
+			b.block([this.apply(), ...statements]),
+			this.blockers(),
+			this.has_await
+		);
+
+		return [statement];
+	}
 }

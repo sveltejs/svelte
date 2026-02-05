@@ -65,13 +65,5 @@ export function SlotElement(node, context) {
 		fallback
 	);
 
-	const statement = optimiser.is_async()
-		? create_async_block(
-				b.block([optimiser.apply(), b.stmt(slot)]),
-				optimiser.blockers(),
-				optimiser.has_await
-			)
-		: b.stmt(slot);
-
-	context.state.template.push(block_open, statement, block_close);
+	context.state.template.push(block_open, ...optimiser.render_block([b.stmt(slot)]), block_close);
 }
