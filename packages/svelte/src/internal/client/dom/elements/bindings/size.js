@@ -4,7 +4,7 @@ import { untrack } from '../../../runtime.js';
 /**
  * Resize observer singleton.
  * One listener per element only!
- * https://groups.google.com/a/chromium.org/g/blink-dev/c/z6ienONUb5A/m/F5-VcUZtBAAJ
+ * @see {@link https://groups.google.com/a/chromium.org/g/blink-dev/c/z6ienONUb5A/}m/F5-VcUZtBAAJ
  */
 class ResizeObserverSingleton {
 	/** */

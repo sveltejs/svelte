@@ -3188,7 +3188,7 @@ declare module 'svelte/types/compiler/interfaces' {
  * let count = $state(0);
  * ```
  *
- * https://svelte.dev/docs/svelte/$state
+ * @see {@link https://svelte.dev/docs/svelte/$state}
  *
  * @param initial The initial value
  */
@@ -3298,7 +3298,7 @@ declare namespace $state {
 	 * </button>
 	 * ```
 	 *
-	 * https://svelte.dev/docs/svelte/$state#$state.raw
+	 * @see {@link https://svelte.dev/docs/svelte/$state#$state.raw}
 	 *
 	 * @param initial The initial value
 	 */
@@ -3319,7 +3319,7 @@ declare namespace $state {
 	 * </script>
 	 * ```
 	 *
-	 * https://svelte.dev/docs/svelte/$state#$state.snapshot
+	 * @see {@link https://svelte.dev/docs/svelte/$state#$state.snapshot}
 	 *
 	 * @param state The value to snapshot
 	 */
@@ -3359,7 +3359,7 @@ declare namespace $state {
  * let double = $derived(count * 2);
  * ```
  *
- * https://svelte.dev/docs/svelte/$derived
+ * @see {@link https://svelte.dev/docs/svelte/$derived}
  *
  * @param expression The derived state expression
  */
@@ -3381,7 +3381,7 @@ declare namespace $derived {
 	 * });
 	 * ```
 	 *
-	 * https://svelte.dev/docs/svelte/$derived#$derived.by
+	 * @see {@link https://svelte.dev/docs/svelte/$derived#$derived.by}
 	 */
 	export function by<T>(fn: () => T): T;
 
@@ -3423,7 +3423,7 @@ declare namespace $derived {
  *
  * Does not run during server-side rendering.
  *
- * https://svelte.dev/docs/svelte/$effect
+ * @see {@link https://svelte.dev/docs/svelte/$effect}
  * @param fn The function to execute
  */
 declare function $effect(fn: () => void | (() => void)): void;
@@ -3442,7 +3442,7 @@ declare namespace $effect {
 	 *
 	 * Does not run during server-side rendering.
 	 *
-	 * https://svelte.dev/docs/svelte/$effect#$effect.pre
+	 * @see {@link https://svelte.dev/docs/svelte/$effect#$effect.pre}
 	 * @param fn The function to execute
 	 */
 	export function pre(fn: () => void | (() => void)): void;
@@ -3450,7 +3450,7 @@ declare namespace $effect {
 	/**
 	 * Returns the number of promises that are pending in the current boundary, not including child boundaries.
 	 *
-	 * https://svelte.dev/docs/svelte/$effect#$effect.pending
+	 * @see {@link https://svelte.dev/docs/svelte/$effect#$effect.pending}
 	 */
 	export function pending(): number;
 
@@ -3472,7 +3472,7 @@ declare namespace $effect {
 	 *
 	 * This allows you to (for example) add things like subscriptions without causing memory leaks, by putting them in child effects.
 	 *
-	 * https://svelte.dev/docs/svelte/$effect#$effect.tracking
+	 * @see {@link https://svelte.dev/docs/svelte/$effect#$effect.tracking}
 	 */
 	export function tracking(): boolean;
 
@@ -3500,7 +3500,7 @@ declare namespace $effect {
 	 * <button onclick={() => cleanup()}>cleanup</button>
 	 * ```
 	 *
-	 * https://svelte.dev/docs/svelte/$effect#$effect.root
+	 * @see {@link https://svelte.dev/docs/svelte/$effect#$effect.root}
 	 */
 	export function root(fn: () => void | (() => void)): () => void;
 
@@ -3536,7 +3536,7 @@ declare namespace $effect {
  * let { optionalProp = 42, requiredProp, bindableProp = $bindable() }: { optionalProp?: number; requiredProps: string; bindableProp: boolean } = $props();
  * ```
  *
- * https://svelte.dev/docs/svelte/$props
+ * @see {@link https://svelte.dev/docs/svelte/$props}
  */
 declare function $props(): any;
 
@@ -3582,7 +3582,7 @@ declare namespace $props {
  * let { propName = $bindable() }: { propName: boolean } = $props();
  * ```
  *
- * https://svelte.dev/docs/svelte/$bindable
+ * @see {@link https://svelte.dev/docs/svelte/$bindable}
  */
 declare function $bindable<T>(fallback?: T): T;
 
@@ -3628,7 +3628,7 @@ declare namespace $bindable {
  * $inspect(x, y).with(() => { debugger; });
  * ```
  *
- * https://svelte.dev/docs/svelte/$inspect
+ * @see {@link https://svelte.dev/docs/svelte/$inspect}
  */
 declare function $inspect<T extends any[]>(
 	...values: T
@@ -3694,7 +3694,7 @@ declare namespace $inspect {
  *
  * Only available inside custom element components, and only on the client-side.
  *
- * https://svelte.dev/docs/svelte/$host
+ * @see {@link https://svelte.dev/docs/svelte/$host}
  */
 declare function $host<El extends HTMLElement = HTMLElement>(): El;
 
