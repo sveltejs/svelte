@@ -10,7 +10,6 @@ import { build_element_attributes, prepare_element_spread_object } from './share
 import {
 	process_children,
 	build_template,
-	create_child_block,
 	PromiseOptimiser,
 	create_async
 } from './shared/utils.js';
@@ -68,9 +67,7 @@ export function RegularElement(node, context) {
 		// TODO this is a real edge case, would be good to DRY this out
 		if (optimiser.expressions.length > 0) {
 			context.state.template.push(
-				create_child_block(
-					b.block([optimiser.apply(), ...state.init, ...build_template(state.template)])
-				)
+				optimiser.render([...state.init, ...build_template(state.template)])
 			);
 		} else {
 			context.state.init.push(...state.init);
@@ -130,9 +127,7 @@ export function RegularElement(node, context) {
 		const statement = b.stmt(b.call('$$renderer.select', attributes, fn, ...rest));
 
 		if (optimiser.expressions.length > 0) {
-			context.state.template.push(
-				create_child_block(b.block([optimiser.apply(), ...state.init, statement]))
-			);
+			context.state.template.push(optimiser.render([...state.init, statement]));
 		} else {
 			context.state.template.push(...state.init, statement);
 		}
@@ -183,9 +178,7 @@ export function RegularElement(node, context) {
 		const statement = b.stmt(b.call('$$renderer.option', attributes, body, ...rest));
 
 		if (optimiser.expressions.length > 0) {
-			context.state.template.push(
-				create_child_block(b.block([optimiser.apply(), ...state.init, statement]))
-			);
+			context.state.template.push(optimiser.render([...state.init, statement]));
 		} else {
 			context.state.template.push(...state.init, statement);
 		}
@@ -237,7 +230,7 @@ export function RegularElement(node, context) {
 		let statements = [...state.init, ...build_template(state.template)];
 
 		if (optimiser.has_await) {
-			statements = [create_child_block(b.block([optimiser.apply(), ...statements]))];
+			statements = [optimiser.render(statements)];
 		}
 
 		const blockers = optimiser.blockers();

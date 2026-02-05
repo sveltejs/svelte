@@ -1,4 +1,3 @@
-/** @import { Location } from 'locate-character' */
 /** @import { BlockStatement, Expression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
@@ -6,12 +5,7 @@ import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { determine_namespace_for_children } from '../../utils.js';
 import { build_element_attributes } from './shared/element.js';
-import {
-	build_template,
-	create_async_block,
-	create_child_block,
-	PromiseOptimiser
-} from './shared/utils.js';
+import { build_template, create_async_block, PromiseOptimiser } from './shared/utils.js';
 
 /**
  * @param {AST.SvelteElement} node
@@ -79,7 +73,7 @@ export function SvelteElement(node, context) {
 	);
 
 	if (optimiser.expressions.length > 0) {
-		statement = create_child_block(b.block([optimiser.apply(), statement]));
+		statement = optimiser.render([statement]);
 	}
 
 	statements.push(statement);
