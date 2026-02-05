@@ -307,17 +307,6 @@ export function create_async(body, blockers) {
 }
 
 /**
- * @param {BlockStatement | Expression} body
- * @param {Identifier | false} component_fn_id
- * @returns {Statement}
- */
-export function call_component_renderer(body, component_fn_id) {
-	return b.stmt(
-		b.call('$$renderer.component', b.arrow([b.id('$$renderer')], body, false), component_fn_id)
-	);
-}
-
-/**
  * A utility for optimising promises in templates. Without it code like
  * `<Component foo={await fetch()} bar={await other()} />` would be transformed
  * into two blocking promises, with it it's using `Promise.all` to await them.
