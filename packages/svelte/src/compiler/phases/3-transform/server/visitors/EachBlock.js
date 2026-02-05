@@ -18,8 +18,8 @@ export function EachBlock(node, context) {
 
 	const array_id = state.scope.root.unique('each_array');
 
-	/** @type {Statement} */
-	let block = b.block([b.const(array_id, b.call('$.ensure_array_like', collection))]);
+	/** @type {Statement[]} */
+	let statements = [b.const(array_id, b.call('$.ensure_array_like', collection))];
 
 	/** @type {Statement[]} */
 	const each = [];
@@ -53,7 +53,7 @@ export function EachBlock(node, context) {
 
 		fallback.body.unshift(b.stmt(b.call(b.id('$$renderer.push'), block_open_else)));
 
-		block.body.push(
+		statements.push(
 			b.if(
 				b.binary('!==', b.member(array_id, 'length'), b.literal(0)),
 				b.block([open, for_loop]),
@@ -62,19 +62,19 @@ export function EachBlock(node, context) {
 		);
 	} else {
 		state.template.push(block_open);
-		block.body.push(for_loop);
+		statements.push(for_loop);
 	}
 
 	if (node.metadata.expression.is_async()) {
 		state.template.push(
 			create_async_block(
-				block,
+				b.block(statements),
 				node.metadata.expression.blockers(),
 				node.metadata.expression.has_await
 			)
 		);
 	} else {
-		state.template.push(...block.body);
+		state.template.push(...statements);
 	}
 
 	state.template.push(block_close);
