@@ -20,7 +20,7 @@ function references_store_sub(node, scope) {
 	if (!node || typeof node !== 'object' || !('type' in node)) return false;
 
 	if (node.type === 'Identifier') {
-		return scope.get(/** @type {string} */ (/** @type {Identifier} */ (node).name))?.kind === 'store_sub' ?? false;
+		return scope.get(/** @type {string} */ (/** @type {Identifier} */ (node).name))?.kind === 'store_sub';
 	}
 
 	for (const key of Object.keys(node)) {
