@@ -81,9 +81,7 @@ export function process_children(nodes, { visit, state }) {
 			flush();
 
 			const expression = /** @type {Expression} */ (visit(node.expression));
-			state.template.push(
-				create_push(b.call('$.escape', expression), node.metadata.expression, false)
-			);
+			state.template.push(create_push(b.call('$.escape', expression), node.metadata.expression));
 		} else if (node.type === 'Text' || node.type === 'Comment' || node.type === 'ExpressionTag') {
 			sequence.push(node);
 		} else {
@@ -299,21 +297,16 @@ export function create_async(body, blockers = b.array([]), has_await = true) {
 /**
  * @param {Expression} expression
  * @param {ExpressionMetadata} metadata
- * @param {boolean} needs_hydration_markers
  * @returns {Expression | Statement}
  */
-export function create_push(expression, metadata, needs_hydration_markers) {
+function create_push(expression, metadata) {
 	if (metadata.is_async()) {
 		let statement = b.stmt(b.call('$$renderer.push', b.thunk(expression, metadata.has_await)));
 
 		const blockers = metadata.blockers();
 
 		if (blockers.elements.length > 0) {
-			if (needs_hydration_markers) {
-				statement = create_async_block(b.block([statement]), blockers, false);
-			} else {
-				statement = create_async(b.block([statement]), blockers, false);
-			}
+			statement = create_async(b.block([statement]), blockers, false);
 		}
 
 		return statement;
