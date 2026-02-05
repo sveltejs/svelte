@@ -6,3 +6,5 @@
  */
 export const VERSION = '5.49.2';
 export const PUBLIC_VERSION = '5';
+
+export const test = 'foo';
