@@ -7,12 +7,7 @@ import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
 import { build_element_attributes, prepare_element_spread_object } from './shared/element.js';
-import {
-	process_children,
-	build_template,
-	PromiseOptimiser,
-	create_async
-} from './shared/utils.js';
+import { process_children, build_template, PromiseOptimiser } from './shared/utils.js';
 import { is_customizable_select_element } from '../../../nodes.js';
 
 /**
@@ -213,15 +208,9 @@ export function RegularElement(node, context) {
 	}
 
 	if (optimiser.is_async()) {
-		let statements = optimiser.render([...state.init, ...build_template(state.template)]);
-
-		const blockers = optimiser.blockers();
-
-		if (blockers.elements.length > 0) {
-			statements = [create_async(b.block(statements), blockers)];
-		}
-
-		context.state.template.push(...statements);
+		context.state.template.push(
+			...optimiser.render([...state.init, ...build_template(state.template)])
+		);
 	} else {
 		context.state.init.push(...state.init);
 		context.state.template.push(...state.template);
