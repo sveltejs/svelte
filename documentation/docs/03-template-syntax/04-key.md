@@ -22,3 +22,5 @@ It's also useful if you want a transition to play whenever a value changes:
 	<div transition:fade>{value}</div>
 {/key}
 ```
+
+> [!NOTE] `NaN` is not a valid key value, because JavaScript's `NaN !== NaN` prevents the block from rendering correctly.
