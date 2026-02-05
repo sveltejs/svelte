@@ -288,9 +288,13 @@ export function create_child_block(body) {
  * @param {boolean} has_await
  */
 export function create_async_block(body, blockers, has_await) {
-	return b.stmt(
-		b.call('$$renderer.async_block', blockers, b.arrow([b.id('$$renderer')], body, has_await))
-	);
+	if (blockers.elements.length > 0) {
+		return b.stmt(
+			b.call('$$renderer.async_block', blockers, b.arrow([b.id('$$renderer')], body, has_await))
+		);
+	}
+
+	return b.stmt(b.call('$$renderer.child_block', b.arrow([b.id('$$renderer')], body, has_await)));
 }
 
 /**
