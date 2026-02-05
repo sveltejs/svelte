@@ -20,6 +20,8 @@ import { get_boundary } from './boundary.js';
  */
 export function async(node, blockers = [], expressions = [], fn) {
 	var was_hydrating = hydrating;
+	/** @type {TemplateNode} */
+	var end;
 
 	if (was_hydrating) {
 		hydrate_next();
@@ -28,7 +30,7 @@ export function async(node, blockers = [], expressions = [], fn) {
 	if (expressions.length === 0 && blockers.every((b) => b.settled)) {
 		// We need to first find the end marker of the $.async function ...
 		if (was_hydrating) {
-			var end = skip_nodes(false);
+			end = skip_nodes(false);
 		}
 
 		fn(node);
@@ -55,7 +57,7 @@ export function async(node, blockers = [], expressions = [], fn) {
 
 	if (was_hydrating) {
 		var previous_hydrate_node = hydrate_node;
-		var end = skip_nodes(false);
+		end = skip_nodes(false);
 		set_hydrate_node(end);
 	}
 
