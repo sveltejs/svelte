@@ -41,7 +41,6 @@ import { TitleElement } from './visitors/TitleElement.js';
 import { UpdateExpression } from './visitors/UpdateExpression.js';
 import { VariableDeclaration } from './visitors/VariableDeclaration.js';
 import { SvelteBoundary } from './visitors/SvelteBoundary.js';
-import { call_component_renderer } from './visitors/shared/utils.js';
 
 /** @type {Visitors} */
 const global_visitors = {
@@ -105,7 +104,7 @@ export function server_component(analysis, options) {
 		namespace: options.namespace,
 		preserve_whitespace: options.preserveWhitespace,
 		state_fields: new Map(),
-		skip_hydration_boundaries: false,
+		is_standalone: false,
 		is_instance: false
 	};
 
@@ -260,7 +259,13 @@ export function server_component(analysis, options) {
 
 	if (should_inject_context) {
 		component_block = b.block([
-			call_component_renderer(component_block, dev && b.id(component_name))
+			b.stmt(
+				b.call(
+					'$$renderer.component',
+					b.arrow([b.id('$$renderer')], component_block, false),
+					dev && b.id(component_name)
+				)
+			)
 		]);
 	}
 

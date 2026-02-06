@@ -81,7 +81,19 @@ export function process_children(nodes, { visit, state }) {
 			flush();
 
 			const expression = /** @type {Expression} */ (visit(node.expression));
-			state.template.push(create_push(b.call('$.escape', expression), node.metadata.expression));
+
+			let call = b.call(
+				'$$renderer.push',
+				b.thunk(b.call('$.escape', expression), node.metadata.expression.has_await)
+			);
+
+			const blockers = node.metadata.expression.blockers();
+
+			if (blockers.elements.length > 0) {
+				call = b.call('$$renderer.async', blockers, b.arrow([b.id('$$renderer')], call));
+			}
+
+			state.template.push(b.stmt(call));
 		} else if (node.type === 'Text' || node.type === 'Comment' || node.type === 'ExpressionTag') {
 			sequence.push(node);
 		} else {
@@ -262,72 +274,20 @@ export function build_getter(node, state) {
 }
 
 /**
- * Creates a `$$renderer.child(...)` expression statement
- * @param {BlockStatement | Expression} body
- * @returns {Statement}
- */
-export function create_child_block(body) {
-	return b.stmt(b.call('$$renderer.child', b.arrow([b.id('$$renderer')], body, true)));
-}
-
-/**
- * Creates a `$$renderer.async(...)` expression statement
- * @param {BlockStatement | Expression} body
+ * @param {Statement[]} statements
  * @param {ArrayExpression} blockers
  * @param {boolean} has_await
- * @param {boolean} needs_hydration_markers
  */
-export function create_async_block(
-	body,
-	blockers = b.array([]),
-	has_await = true,
-	needs_hydration_markers = true
-) {
-	return b.stmt(
-		b.call(
-			needs_hydration_markers ? '$$renderer.async_block' : '$$renderer.async',
-			blockers,
-			b.arrow([b.id('$$renderer')], body, has_await)
-		)
-	);
-}
-
-/**
- * @param {Expression} expression
- * @param {ExpressionMetadata} metadata
- * @param {boolean} needs_hydration_markers
- * @returns {Expression | Statement}
- */
-export function create_push(expression, metadata, needs_hydration_markers = false) {
-	if (metadata.is_async()) {
-		let statement = b.stmt(b.call('$$renderer.push', b.thunk(expression, metadata.has_await)));
-
-		const blockers = metadata.blockers();
-
-		if (blockers.elements.length > 0) {
-			statement = create_async_block(
-				b.block([statement]),
-				blockers,
-				false,
-				needs_hydration_markers
-			);
-		}
-
-		return statement;
+export function create_child_block(statements, blockers, has_await) {
+	if (blockers.elements.length === 0 && !has_await) {
+		return statements;
 	}
 
-	return expression;
-}
+	const fn = b.arrow([b.id('$$renderer')], b.block(statements), has_await);
 
-/**
- * @param {BlockStatement | Expression} body
- * @param {Identifier | false} component_fn_id
- * @returns {Statement}
- */
-export function call_component_renderer(body, component_fn_id) {
-	return b.stmt(
-		b.call('$$renderer.component', b.arrow([b.id('$$renderer')], body, false), component_fn_id)
-	);
+	return blockers.elements.length > 0
+		? [b.stmt(b.call('$$renderer.async_block', blockers, fn))]
+		: [b.stmt(b.call('$$renderer.child_block', fn))];
 }
 
 /**
@@ -373,7 +333,7 @@ export class PromiseOptimiser {
 		}
 	}
 
-	apply() {
+	#apply() {
 		if (this.expressions.length === 0) {
 			return b.empty;
 		}
@@ -402,5 +362,39 @@ export class PromiseOptimiser {
 
 	is_async() {
 		return this.expressions.length > 0 || this.#blockers.size > 0;
+	}
+
+	/**
+	 * @param {Statement[]} statements
+	 * @returns {Statement[]}
+	 */
+	render(statements) {
+		if (!this.is_async()) {
+			return statements;
+		}
+
+		const fn = b.arrow(
+			[b.id('$$renderer')],
+			b.block([this.#apply(), ...statements]),
+			this.has_await
+		);
+
+		const blockers = this.blockers();
+
+		return blockers.elements.length > 0
+			? [b.stmt(b.call('$$renderer.async', blockers, fn))]
+			: [b.stmt(b.call('$$renderer.child', fn))];
+	}
+
+	/**
+	 * @param {Statement[]} statements
+	 * @returns {Statement[]}
+	 */
+	render_block(statements) {
+		if (!this.is_async()) {
+			return statements;
+		}
+
+		return create_child_block([this.#apply(), ...statements], this.blockers(), this.has_await);
 	}
 }

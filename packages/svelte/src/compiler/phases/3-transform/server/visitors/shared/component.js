@@ -1,12 +1,7 @@
 /** @import { BlockStatement, Expression, Pattern, Property, SequenceExpression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
-import {
-	empty_comment,
-	build_attribute_value,
-	create_async_block,
-	PromiseOptimiser
-} from './utils.js';
+import { empty_comment, build_attribute_value, PromiseOptimiser } from './utils.js';
 import * as b from '#compiler/builders';
 import { is_element_node } from '../../../../nodes.js';
 import { dev } from '../../../../../state.js';
@@ -325,32 +320,16 @@ export function build_inline_component(node, expression, context) {
 		optimiser.check_blockers(node.metadata.expression);
 	}
 
-	const is_async = optimiser.is_async();
+	context.state.template.push(
+		...optimiser.render_block([
+			dynamic && custom_css_props.length === 0
+				? b.stmt(b.call('$$renderer.push', empty_comment))
+				: b.empty,
+			statement
+		])
+	);
 
-	if (is_async) {
-		statement = create_async_block(
-			b.block([
-				optimiser.apply(),
-				dynamic && custom_css_props.length === 0
-					? b.stmt(b.call('$$renderer.push', empty_comment))
-					: b.empty,
-				statement
-			]),
-			optimiser.blockers(),
-			optimiser.has_await
-		);
-	} else if (dynamic && custom_css_props.length === 0) {
-		context.state.template.push(empty_comment);
-	}
-
-	context.state.template.push(statement);
-
-	if (
-		!is_async &&
-		!context.state.skip_hydration_boundaries &&
-		custom_css_props.length === 0 &&
-		optimiser.expressions.length === 0
-	) {
+	if (!optimiser.is_async() && !context.state.is_standalone && custom_css_props.length === 0) {
 		context.state.template.push(empty_comment);
 	}
 }

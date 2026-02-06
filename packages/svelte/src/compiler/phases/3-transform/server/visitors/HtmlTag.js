@@ -2,25 +2,24 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '#compiler/builders';
-import { block_close, block_open, create_push } from './shared/utils.js';
+import { create_child_block } from './shared/utils.js';
 
 /**
  * @param {AST.HtmlTag} node
  * @param {ComponentContext} context
  */
 export function HtmlTag(node, context) {
-	const expression = /** @type {Expression} */ (context.visit(node.expression));
-	const call = b.call('$.html', expression);
+	const expression = b.call('$.html', /** @type {Expression} */ (context.visit(node.expression)));
 
-	const has_await = node.metadata.expression.has_await;
-
-	if (has_await) {
-		context.state.template.push(block_open);
-	}
-
-	context.state.template.push(create_push(call, node.metadata.expression, true));
-
-	if (has_await) {
-		context.state.template.push(block_close);
+	if (node.metadata.expression.is_async()) {
+		context.state.template.push(
+			...create_child_block(
+				[b.stmt(b.call('$$renderer.push', expression))],
+				node.metadata.expression.blockers(),
+				node.metadata.expression.has_await
+			)
+		);
+	} else {
+		context.state.template.push(expression);
 	}
 }
