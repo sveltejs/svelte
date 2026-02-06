@@ -124,7 +124,7 @@ To typecheck the codebase, run `pnpm check` inside `packages/svelte`. To typeche
 
 ### Style guide
 
-[Eslint](https://eslint.org) will catch most styling issues that may exist in your code. You can check the status of your code styling by simply running `pnpm lint`.
+[Oxlint](https://oxc.rs/docs/guide/usage/linter.html) will catch most styling issues that may exist in your code. You can check the status of your code styling by simply running `pnpm lint`.
 
 #### Code conventions
 
