@@ -101,9 +101,15 @@ export function build_inline_component(node, expression, context) {
 			}
 
 			push_prop(b.prop('init', b.key(attribute.name), value));
-		} else if (attribute.type === 'BindDirective' && attribute.name !== 'this') {
+		} else if (attribute.type === 'BindDirective') {
 			// Bindings are a bit special: we don't want to add them to (async) deriveds but we need to check if they have blockers
 			optimiser.check_blockers(attribute.metadata.expression);
+
+			if (attribute.name === 'this') {
+				// bind:this is client-only, but we still need to check for blockers to ensure
+				// the server generates matching hydration markers if the client wraps in $.async
+				continue;
+			}
 
 			if (attribute.expression.type === 'SequenceExpression') {
 				const [get, set] = /** @type {SequenceExpression} */ (context.visit(attribute.expression))
