@@ -256,10 +256,7 @@ export function RegularElement(node, context) {
 				}
 
 				if (name !== 'class' || value) {
-					context.state.template.set_prop(
-						attribute.name,
-						is_boolean_attribute(name) && value === true ? undefined : value === true ? '' : value
-					);
+					context.state.template.set_prop(attribute.name, value === true ? '' : value);
 				}
 			} else if (name === 'autofocus') {
 				let { value } = build_attribute_value(attribute.value, context);
