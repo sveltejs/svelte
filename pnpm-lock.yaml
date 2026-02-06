@@ -32,12 +32,6 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^2.1.9
         version: 2.1.9(vitest@2.1.9(@types/node@20.19.17)(jsdom@25.0.1)(lightningcss@1.23.0)(sass@1.70.0)(terser@5.27.0))
-      eslint:
-        specifier: ^9.9.1
-        version: 9.9.1
-      eslint-plugin-custom:
-        specifier: ^0.0.6
-        version: 0.0.6
       eslint-plugin-lube:
         specifier: ^0.4.3
         version: 0.4.3
@@ -1361,10 +1355,6 @@ packages:
     peerDependencies:
       eslint: '>=7.0.0'
 
-  eslint-plugin-custom@0.0.6:
-    resolution: {integrity: sha512-777PTnVYEs4ts9R9f211NqNmo6dtjAc1fXzAYhdWMe+rPgRlYCrkwDPYdh97RRMSgoQsFhPshxyByqnwodnKsg==}
-    engines: {node: '>=0.10.0'}
-
   eslint-plugin-es-x@7.8.0:
     resolution: {integrity: sha512-7Ds8+wAAoV3T+LAKeu39Y5BzXCrGKrcISfgKEqTS4BDN8SFEDQd0S43jiQ8vIa3wUKD07qitZdfzlenSi8/0qQ==}
     engines: {node: ^14.18.0 || >=16.0.0}
@@ -1838,9 +1828,6 @@ packages:
   lodash.startcase@4.4.0:
     resolution: {integrity: sha512-+WKqsK294HMSc2jEbNgpHpd0JfIBhp7rEV4aqXWqFr6AlXov+SlcgB1Fv01y2kGe3Gc8nMW7VA0SrGuSkRfIEg==}
 
-  lodash@4.17.23:
-    resolution: {integrity: sha512-LgVTMpQtIopCi79SJeDiP0TfWi5CNEc/L/aRdTh3yIvmZXTnheWpKjSZhnvMl8iXbC1tFg9gdHHDMLoV7CnG+w==}
-
   loupe@3.2.1:
     resolution: {integrity: sha512-CdzqowRJCeLU72bHvWqwRBBlLcMEtIvGrlvef74kMnV2AolS9Y8xUv1I0U/MNAWMhBlKIoyuEgoJ0t/bbwHbLQ==}
 
@@ -2121,10 +2108,6 @@ packages:
   regexparam@3.0.0:
     resolution: {integrity: sha512-RSYAtP31mvYLkAHrOlh25pCNQ5hWnT106VukGaaFfuJrZFkGRX5GhUAdPqpSDXxOhA2c4akmRuplv1mRqnBn6Q==}
     engines: {node: '>=8'}
-
-  requireindex@1.1.0:
-    resolution: {integrity: sha512-LBnkqsDE7BZKvqylbmn7lTIVdpx4K/QCduRATpO5R+wtPmky/a8pN1bO2D6wXppn1497AJF9mNjqAXr6bdl9jg==}
-    engines: {node: '>=0.10.5'}
 
   resolve-from@4.0.0:
     resolution: {integrity: sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==}
@@ -3750,11 +3733,6 @@ snapshots:
     dependencies:
       eslint: 9.9.1
 
-  eslint-plugin-custom@0.0.6:
-    dependencies:
-      lodash: 4.17.23
-      requireindex: 1.1.0
-
   eslint-plugin-es-x@7.8.0(eslint@9.9.1):
     dependencies:
       '@eslint-community/eslint-utils': 4.9.1(eslint@9.9.1)
@@ -4259,8 +4237,6 @@ snapshots:
 
   lodash.startcase@4.4.0: {}
 
-  lodash@4.17.23: {}
-
   loupe@3.2.1: {}
 
   lru-cache@10.4.3: {}
@@ -4492,8 +4468,6 @@ snapshots:
     optional: true
 
   regexparam@3.0.0: {}
-
-  requireindex@1.1.0: {}
 
   resolve-from@4.0.0: {}
 
