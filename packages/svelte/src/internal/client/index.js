@@ -158,7 +158,7 @@ export {
 	deep_read_state,
 	active_effect
 } from './runtime.js';
-export { validate_binding, validate_each_keys } from './validate.js';
+export { validate_binding } from './validate.js';
 export { raf } from './timing.js';
 export { proxy } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';

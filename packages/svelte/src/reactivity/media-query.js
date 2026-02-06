@@ -7,7 +7,7 @@ const parenthesis_regex = /\(.+\)/;
 //
 // eg: new MediaQuery('screen')
 //
-// however because of the auto-parenthesis logic in the constructor since there's no parentehesis
+// however because of the auto-parenthesis logic in the constructor since there's no parenthesis
 // in the media query they'll be surrounded by parenthesis
 //
 // however we can check if the media query is only composed of these keywords
