@@ -9,10 +9,6 @@
 		"node": true
 	},
 	"rules": {
-		
-
-
-		
 		"getter-return": "error",
 		"no-array-constructor": "error",
 		"no-case-declarations": "error",
