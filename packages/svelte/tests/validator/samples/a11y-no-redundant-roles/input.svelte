@@ -22,7 +22,7 @@
 <!-- <li role="listitem" /> allowed since CSS list-style none removes semantic meaning and role brings it back -->
 <link role="link" />
 <main role="main"></main>
-<menu role="list"></menu>
+<!-- <menu role="list" /> allowed, same as ul/ol above -->
 <nav role="navigation"></nav>
 <!-- <ol role="list" /> allowed, see comment above -->
 <optgroup role="group"></optgroup>
@@ -44,5 +44,5 @@
 <footer role="contentinfo"></footer>
 
 <!-- Allowed -->
-<!-- svelte-ignore a11y_no_noninteractive_element_to_interactive_role -->
+<!-- menu has same interactive role exceptions as ul/ol -->
 <menu role="menu"></menu>
