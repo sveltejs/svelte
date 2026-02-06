@@ -20,30 +20,25 @@ import { get_boundary } from './boundary.js';
  */
 export function async(node, blockers = [], expressions = [], fn) {
 	var was_hydrating = hydrating;
+	var end = null;
 
 	if (was_hydrating) {
 		hydrate_next();
+		end = skip_nodes(false);
 	}
 
 	if (expressions.length === 0 && blockers.every((b) => b.settled)) {
-		// We need to first find the end marker of the $.async function ...
-		if (was_hydrating) {
-			end = skip_nodes(false);
-		}
-
 		fn(node);
 
-		// ... and then set it as the hydration node after calling the render function.
 		// This is necessary because it is not guaranteed that the render function will
 		// advance the hydration node to $.async's end marker: it may stop at an inner
 		// block's end marker (in case of an inner if block for example), but it also may
 		// stop at the correct $.async end marker (in case of component child) - hence
 		// we can't just use hydrate_next()
+		// TODO this feels indicative of a bug elsewhere; ideally we wouldn't need
+		// to double-traverse in the already-resolved case
 		if (was_hydrating) {
-			set_hydrate_node(
-				// @ts-expect-error assignment definitely happens
-				end
-			);
+			set_hydrate_node(end);
 		}
 
 		return;
@@ -58,7 +53,6 @@ export function async(node, blockers = [], expressions = [], fn) {
 
 	if (was_hydrating) {
 		var previous_hydrate_node = hydrate_node;
-		var end = skip_nodes(false);
 		set_hydrate_node(end);
 	}
 
