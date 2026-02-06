@@ -6,6 +6,6 @@ export default test({
 
 	async test({ assert, target }) {
 		await tick();
-		assert.htmlEqual(target.innerHTML, `<div><p>hello</p></div>`);
+		assert.htmlEqual(target.innerHTML, `<div><p>hello</p></div> <div>true</div>`);
 	}
 });
