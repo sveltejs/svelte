@@ -274,7 +274,6 @@ export function build_getter(node, state) {
 }
 
 /**
- * Creates a `$$renderer.async(...)` expression statement
  * @param {Statement[]} statements
  * @param {ArrayExpression} blockers
  * @param {boolean} has_await
