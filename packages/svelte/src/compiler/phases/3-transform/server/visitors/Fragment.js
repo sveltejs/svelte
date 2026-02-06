@@ -28,7 +28,7 @@ export function Fragment(node, context) {
 		init: [],
 		template: [],
 		namespace,
-		skip_hydration_boundaries: is_standalone,
+		is_standalone,
 		async_consts: undefined
 	};
 
