@@ -25,7 +25,8 @@ export function key(node, get_key, render_fn) {
 	block(() => {
 		var key = get_key();
 
-		if (isNaN(/** @type {any} */ (key))) {
+		// NaN !== NaN, hence we do this workaround to not trigger remounts unnecessarily
+		if (key !== key) {
 			key = /** @type {any} */ (NAN);
 		}
 
