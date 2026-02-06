@@ -1335,6 +1335,7 @@
         "no-unsafe-negation": "off",
         "no-var": "error",
         "no-with": "off",
+        "prefer-const": "error",
         "prefer-rest-params": "error",
         "prefer-spread": "error"
       }
@@ -1374,11 +1375,12 @@
         "packages/svelte/src/**/*"
       ],
       "rules": {
-        "custom/no_compiler_imports": "error",
-        "svelte/no-svelte-internal": "off"
+        "svelte/no-svelte-internal": "off",
+        "custom/no-compiler-imports": "error"
       },
       "jsPlugins": [
-        "eslint-plugin-custom"
+        "eslint-plugin-custom",
+        "./oxlint/custom.js"
       ]
     }
   ]

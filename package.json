@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
+    "@oxlint/plugins": "^1.43.0",
     "@stylistic/eslint-plugin": "^5.7.1",
     "@sveltejs/eslint-config": "^8.3.3",
     "@svitejs/changesets-changelog-github-compact": "^1.1.0",

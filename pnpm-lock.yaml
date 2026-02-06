@@ -11,6 +11,9 @@ importers:
       '@changesets/cli':
         specifier: ^2.29.8
         version: 2.29.8(@types/node@20.19.17)
+      '@oxlint/plugins':
+        specifier: ^1.43.0
+        version: 1.43.0
       '@stylistic/eslint-plugin':
         specifier: ^5.7.1
         version: 5.7.1(eslint@9.9.1)
@@ -707,6 +710,10 @@ packages:
     resolution: {integrity: sha512-8NTe8A78HHFn+nBi+8qMwIjgv9oIBh+9zqCPNLH56ah4vKOPvbePLI6NIv9qSkmzrBuu8SB+FJ2TH/G05UzbNA==}
     cpu: [x64]
     os: [linux]
+
+  '@oxlint/plugins@1.43.0':
+    resolution: {integrity: sha512-hx8aiUIM9firpmHY6XU/MIKcsUvGgFPOKcBgbGUdhAlbOKGWtEYP0hapXIsaNlO0eixmLomNmQWwgjpunc9q7g==}
+    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
 
   '@oxlint/win32-arm64@1.42.0':
     resolution: {integrity: sha512-lAPS2YAuu+qFqoTNPFcNsxXjwSV0M+dOgAzzVTAN7Yo2ifj+oLOx0GsntWoM78PvQWI7Q827ZxqtU2ImBmDapA==}
@@ -1547,6 +1554,7 @@ packages:
 
   glob@10.5.0:
     resolution: {integrity: sha512-DfXN8DfhJ7NH3Oe7cFmu3NCu1wKbkReJ8TorzSAFbSKrlNaQSKfIzqYqVY8zlbs2NLBbWpRiU52GX2PbaBVNkg==}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   globals@14.0.0:
@@ -3084,6 +3092,8 @@ snapshots:
   '@oxlint/linux-x64-musl@1.42.0':
     optional: true
 
+  '@oxlint/plugins@1.43.0': {}
+
   '@oxlint/win32-arm64@1.42.0':
     optional: true
 
@@ -3747,7 +3757,7 @@ snapshots:
 
   eslint-plugin-es-x@7.8.0(eslint@9.9.1):
     dependencies:
-      '@eslint-community/eslint-utils': 4.9.0(eslint@9.9.1)
+      '@eslint-community/eslint-utils': 4.9.1(eslint@9.9.1)
       '@eslint-community/regexpp': 4.12.2
       eslint: 9.9.1
       eslint-compat-utils: 0.5.1(eslint@9.9.1)
@@ -3756,7 +3766,7 @@ snapshots:
 
   eslint-plugin-n@17.16.1(eslint@9.9.1)(typescript@5.5.4):
     dependencies:
-      '@eslint-community/eslint-utils': 4.9.0(eslint@9.9.1)
+      '@eslint-community/eslint-utils': 4.9.1(eslint@9.9.1)
       '@typescript-eslint/utils': 8.48.1(eslint@9.9.1)(typescript@5.5.4)
       enhanced-resolve: 5.18.3
       eslint: 9.9.1

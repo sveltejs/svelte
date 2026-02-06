@@ -29,6 +29,7 @@ const regex_valid_element_name =
 export const regex_valid_component_name =
 	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#identifiers adjusted for our needs
 	// (must start with uppercase letter if no dots, can contain dots)
+	// eslint-disable-next-line no-misleading-character-class
 	/^(?:\p{Lu}[$\u200c\u200d\p{ID_Continue}.]*|\p{ID_Start}[$\u200c\u200d\p{ID_Continue}]*(?:\.[$\u200c\u200d\p{ID_Continue}]+)+)$/u;
 
 /** @type {Map<string, AST.ElementLike['type']>} */
