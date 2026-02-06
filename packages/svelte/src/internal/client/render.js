@@ -208,11 +208,9 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 				pending: () => {}
 			},
 			(anchor_node) => {
-				if (context) {
-					push({});
-					var ctx = /** @type {ComponentContext} */ (component_context);
-					ctx.c = context;
-				}
+				push({});
+				var ctx = /** @type {ComponentContext} */ (component_context);
+				if (context) ctx.c = context;
 
 				if (events) {
 					// We can't spread the object or else we'd lose the state proxy stuff, if it is one
@@ -241,9 +239,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 					}
 				}
 
-				if (context) {
-					pop();
-				}
+				pop();
 			}
 		);
 
