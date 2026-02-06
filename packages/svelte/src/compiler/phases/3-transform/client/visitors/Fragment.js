@@ -122,7 +122,10 @@ export function Fragment(node, context) {
 			close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 		} else if (is_standalone) {
 			// no need to create a template, we can just use the existing block's anchor
-			process_children(trimmed, () => b.id('$$anchor'), false, { ...context, state });
+			process_children(trimmed, () => b.id('$$anchor'), false, {
+				...context,
+				state: { ...state, is_standalone }
+			});
 		} else {
 			/** @type {(is_text: boolean) => Expression} */
 			const expression = (is_text) => b.call('$.first_child', id, is_text && b.true);

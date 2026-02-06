@@ -83,6 +83,9 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly instance_level_snippets: VariableDeclaration[];
 	/** Snippets hoisted to the module */
 	readonly module_level_snippets: VariableDeclaration[];
+
+	/** True if the current node is a) a component or render tag and b) the sole child of a block  */
+	readonly is_standalone: boolean;
 }
 
 export type Context = import('zimmerframe').Context<AST.SvelteNode, ClientTransformState>;
