@@ -89,7 +89,6 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 		warnings: any[];
 		assert: Assert;
 		variant: 'ssr' | 'async-ssr';
-		html: { body: string; head: string };
 	}) => void | Promise<void>;
 	accessors?: boolean;
 	immutable?: boolean;
