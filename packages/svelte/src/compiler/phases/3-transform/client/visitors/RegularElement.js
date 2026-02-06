@@ -199,10 +199,6 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	if (node.name === 'select' && bindings.has('value')) {
-		setup_select_synchronization(/** @type {AST.BindDirective} */ (bindings.get('value')), context);
-	}
-
 	// Let bindings first, they can be used on attributes
 	context.state.init.push(...lets);
 
@@ -502,62 +498,6 @@ export function RegularElement(node, context) {
 	}
 
 	context.state.template.pop_element();
-}
-
-/**
- * Special case: if we have a value binding on a select element, we need to set up synchronization
- * between the value binding and inner signals, for indirect updates
- * @param {AST.BindDirective} value_binding
- * @param {ComponentContext} context
- */
-function setup_select_synchronization(value_binding, context) {
-	if (context.state.analysis.runes) return;
-
-	let bound = value_binding.expression;
-
-	if (bound.type === 'SequenceExpression') {
-		return;
-	}
-
-	while (bound.type === 'MemberExpression') {
-		bound = /** @type {Identifier | MemberExpression} */ (bound.object);
-	}
-
-	/** @type {string[]} */
-	const names = [];
-
-	for (const [name, refs] of context.state.scope.references) {
-		if (
-			refs.length > 0 &&
-			// prevent infinite loop
-			name !== bound.name
-		) {
-			names.push(name);
-		}
-	}
-
-	const invalidator = b.call(
-		'$.invalidate_inner_signals',
-		b.thunk(
-			b.block(
-				names.map((name) => {
-					const serialized = build_getter(b.id(name), context.state);
-					return b.stmt(serialized);
-				})
-			)
-		)
-	);
-
-	context.state.init.push(
-		b.stmt(
-			b.call(
-				'$.template_effect',
-				b.thunk(
-					b.block([b.stmt(/** @type {Expression} */ (context.visit(bound))), b.stmt(invalidator)])
-				)
-			)
-		)
-	);
 }
 
 /**
