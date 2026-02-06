@@ -25,9 +25,9 @@ export function key(node, get_key, render_fn) {
 	block(() => {
 		var key = get_key();
 
-		// if (isNaN(/** @type {any} */ (key))) {
-		// 	key = /** @type {any} */ (NAN);
-		// }
+		if (isNaN(/** @type {any} */ (key))) {
+			key = /** @type {any} */ (NAN);
+		}
 
 		// key blocks in Svelte <5 had stupid semantics
 		if (legacy && key !== null && typeof key === 'object') {
