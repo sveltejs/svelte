@@ -29,7 +29,7 @@ export function EachBlock(node, context) {
 		scope: /** @type {Scope} */ (context.state.scope.parent)
 	};
 
-	const collection = build_expression(
+	let collection = build_expression(
 		{
 			...context,
 			state: parent_scope_state
@@ -37,6 +37,30 @@ export function EachBlock(node, context) {
 		node.expression,
 		node.metadata.expression
 	);
+
+	const destructured_pattern = get_destructured_pattern(node.context);
+
+	if (destructured_pattern) {
+		if (destructured_pattern.type === 'ArrayPattern') {
+			// For array destructuring, we need to destructure immediately during iteration
+			// to match for...of behavior, capturing values before the generator mutates them
+			const indices = [];
+			for (let i = 0; i < destructured_pattern.elements.length; i++) {
+				const element = destructured_pattern.elements[i];
+				if (element && element.type !== 'RestElement') {
+					indices.push(i);
+				}
+			}
+			collection = b.call(
+				'$.to_array_destructured',
+				collection,
+				b.array(indices.map((i) => b.literal(i)))
+			);
+		} else {
+			// For object destructuring, we still need to snapshot to capture values
+			collection = b.call('$.snapshot_each_value', collection, create_object_snapshot_mapper());
+		}
+	}
 
 	if (!each_node_meta.is_controlled) {
 		context.state.template.push_comment();
@@ -359,4 +383,22 @@ export function EachBlock(node, context) {
  */
 function collect_parent_each_blocks(context) {
 	return /** @type {AST.EachBlock[]} */ (context.path.filter((node) => node.type === 'EachBlock'));
+}
+
+/**
+ * @param {import('estree').Pattern | null | undefined} pattern
+ * @returns {import('estree').ArrayPattern | import('estree').ObjectPattern | null}
+ */
+function get_destructured_pattern(pattern) {
+	if (!pattern) return null;
+	if (pattern.type === 'ArrayPattern' || pattern.type === 'ObjectPattern') {
+		return pattern;
+	}
+
+	return null;
+}
+
+function create_object_snapshot_mapper() {
+	const value = b.id('$$value');
+	return b.arrow([value], b.call('$.snapshot_object', value));
 }
