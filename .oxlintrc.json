@@ -1379,7 +1379,6 @@
         "custom/no-compiler-imports": "error"
       },
       "jsPlugins": [
-        "eslint-plugin-custom",
         "./oxlint/custom.js"
       ]
     }

@@ -14,6 +14,12 @@ const plugin = eslintCompatPlugin({
 			create(context) {
 				return {
 					Program: () => {
+						// Skip files in the compiler directory - this rule is only for runtime code
+						const filename = context.filename || context.getFilename?.();
+						if (filename && filename.includes('/src/compiler/')) {
+							return;
+						}
+
 						// Do a simple string search because ESLint doesn't provide a way to check JSDoc comments.
 						// The string search could in theory yield false positives, but in practice it's unlikely.
 						const text = context.sourceCode.getText();
