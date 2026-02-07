@@ -28,7 +28,10 @@ export function log_if_contains_state(method, ...objects) {
 				// eslint-disable-next-line no-console
 				console.log('%c[snapshot]', 'color: grey', ...transformed);
 			}
-		} catch {}
+		} catch {
+			// Silently ignore errors during snapshot creation to prevent breaking console.log functionality.
+			// Errors can occur when trying to snapshot objects with getters that throw or non-enumerable properties.
+		}
 	});
 
 	return objects;
