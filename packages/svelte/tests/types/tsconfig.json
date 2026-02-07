@@ -2,7 +2,15 @@
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
 		"rootDir": "../..",
-		"baseUrl": "../../"
+		"baseUrl": "../../",
+		"paths": {
+			// Use the published type entrypoints to simulate package export resolution in tests.
+			"svelte": ["./types/index.d.ts"],
+			"svelte/*": ["./types/*.d.ts"],
+			"svelte5": ["./types/index.d.ts"],
+			"svelte5/*": ["./types/*.d.ts"]
+		}
 	},
-	"include": ["."]
+	"include": ["."],
+	"exclude": ["../../src/ambient.d.ts"]
 }

@@ -1,0 +1,27 @@
+{
+	"version": 3,
+	"file": "window.d.ts",
+	"names": [
+		"scrollX",
+		"scrollY",
+		"innerWidth",
+		"innerHeight",
+		"outerWidth",
+		"outerHeight",
+		"screenLeft",
+		"screenTop",
+		"online",
+		"devicePixelRatio",
+		"ReactiveValue"
+	],
+	"sources": [
+		"../../src/reactivity/window/index.js",
+		"../../src/reactivity/reactive-value.js"
+	],
+	"sourcesContent": [
+		null,
+		null
+	],
+	"mappings": ";;;;;cAWaA,OAAOA;;;;;cASPC,OAAOA;;;;;cASPC,UAAUA;;;;;cASVC,WAAWA;;;;;cASXC,UAAUA;;;;;cASVC,WAAWA;;;;;cASXC,UAAUA;;;;;cAuBVC,SAASA;;;;;cAuBTC,MAAMA;;;;;;;cAmBNC,gBAAgBA;;;OC7HhBC,aAAaA",
+	"ignoreList": []
+}

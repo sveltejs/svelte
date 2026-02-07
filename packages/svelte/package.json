@@ -28,23 +28,23 @@
     },
     "./package.json": "./package.json",
     "./action": {
-      "types": "./types/index.d.ts"
+      "types": "./types/action.d.ts"
     },
     "./animate": {
-      "types": "./types/index.d.ts",
+      "types": "./types/animate.d.ts",
       "default": "./src/animate/index.js"
     },
     "./attachments": {
-      "types": "./types/index.d.ts",
+      "types": "./types/attachments.d.ts",
       "default": "./src/attachments/index.js"
     },
     "./compiler": {
-      "types": "./types/index.d.ts",
+      "types": "./types/compiler.d.ts",
       "require": "./compiler/index.js",
       "default": "./src/compiler/index.js"
     },
     "./easing": {
-      "types": "./types/index.d.ts",
+      "types": "./types/easing.d.ts",
       "default": "./src/easing/index.js"
     },
     "./elements": {
@@ -72,41 +72,41 @@
       "default": "./src/internal/server/index.js"
     },
     "./legacy": {
-      "types": "./types/index.d.ts",
+      "types": "./types/legacy.d.ts",
       "worker": "./src/legacy/legacy-server.js",
       "browser": "./src/legacy/legacy-client.js",
       "default": "./src/legacy/legacy-server.js"
     },
     "./motion": {
-      "types": "./types/index.d.ts",
+      "types": "./types/motion.d.ts",
       "default": "./src/motion/index.js"
     },
     "./reactivity": {
-      "types": "./types/index.d.ts",
+      "types": "./types/reactivity.d.ts",
       "worker": "./src/reactivity/index-server.js",
       "browser": "./src/reactivity/index-client.js",
       "default": "./src/reactivity/index-server.js"
     },
     "./reactivity/window": {
-      "types": "./types/index.d.ts",
+      "types": "./types/reactivity/window.d.ts",
       "default": "./src/reactivity/window/index.js"
     },
     "./server": {
-      "types": "./types/index.d.ts",
+      "types": "./types/server.d.ts",
       "default": "./src/server/index.js"
     },
     "./store": {
-      "types": "./types/index.d.ts",
+      "types": "./types/store.d.ts",
       "worker": "./src/store/index-server.js",
       "browser": "./src/store/index-client.js",
       "default": "./src/store/index-server.js"
     },
     "./transition": {
-      "types": "./types/index.d.ts",
+      "types": "./types/transition.d.ts",
       "default": "./src/transition/index.js"
     },
     "./events": {
-      "types": "./types/index.d.ts",
+      "types": "./types/events.d.ts",
       "default": "./src/events/index.js"
     }
   },
