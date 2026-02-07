@@ -37,7 +37,9 @@ export function RenderTag(node, context) {
 
 	context.state.template.push(...optimiser.render_block([statement]));
 
-	if (!context.state.is_standalone) {
+	// If the render tag is wrapped in $.async, that $.async call already contains surrounding markers,
+	// so we don't need to (or rather must not, to avoid hydration mismatches) add our own.
+	if (!optimiser.is_async() && !context.state.is_standalone) {
 		context.state.template.push(empty_comment);
 	}
 }
