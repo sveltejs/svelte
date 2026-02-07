@@ -81,9 +81,7 @@ export function strict_equals(a, b, equal = true) {
 		if ((a === b) !== (get_proxied_value(a) === get_proxied_value(b))) {
 			w.state_proxy_equality_mismatch(equal ? '===' : '!==');
 		}
-	} catch {
-		// Silently ignore - see comment above (line 78-79) for explanation
-	}
+	} catch {}
 
 	return (a === b) === equal;
 }
