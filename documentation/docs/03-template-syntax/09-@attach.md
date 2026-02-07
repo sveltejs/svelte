@@ -82,6 +82,14 @@ Attachments can also be created inline ([demo](/playground/untitled#H4sIAAAAAAAA
 > [!NOTE]
 > The nested effect runs whenever `color` changes, while the outer effect (where `canvas.getContext(...)` is called) only runs once, since it doesn't read any reactive state.
 
+## Conditional attachments
+
+Falsy values like `false` or `undefined` are treated as no attachment, enabling conditional usage:
+
+```svelte
+<div {@attach enabled && myAttachment}>...</div>
+```
+
 ## Passing attachments to components
 
 When used on a component, `{@attach ...}` will create a prop whose key is a [`Symbol`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol). If the component then [spreads](/tutorial/svelte/spread-props) props onto an element, the element will receive those attachments.

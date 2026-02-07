@@ -120,6 +120,7 @@
 		"coverage/**",
 		"playgrounds/sandbox/**",
 		"*.config.js",
+		"vitest-xhtml-environment.ts",
 		"documentation",
 		"tmp/**"
 	],
