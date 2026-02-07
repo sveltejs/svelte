@@ -1,0 +1,31 @@
+import type { Component } from 'svelte5';
+import * as compiler from 'svelte5/compiler';
+import { fade, crossfade } from 'svelte5/transition';
+import { linear } from 'svelte5/easing';
+import { spring } from 'svelte5/motion';
+import { flip } from 'svelte5/animate';
+import { writable } from 'svelte5/store';
+import { createClassComponent } from 'svelte5/legacy';
+import { createSubscriber } from 'svelte5/reactivity';
+import { render } from 'svelte5/server';
+import { on } from 'svelte5/events';
+
+const store = writable(0);
+const component: Component = {} as Component;
+const subscriber = createSubscriber(() => {});
+const legacy = createClassComponent({ component: component as any, target: null as any });
+const rendered = render(component as any);
+
+void store;
+void compiler;
+void component;
+void fade;
+void linear;
+void spring;
+void flip;
+void crossfade;
+void createClassComponent;
+void subscriber;
+void legacy;
+void rendered;
+void on;
