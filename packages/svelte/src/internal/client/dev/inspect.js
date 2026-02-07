@@ -59,12 +59,7 @@ export function inspect(get_value, inspector, show_stack = false) {
 		try {
 			// call `get_value` so that this runs alongside the inspect effect
 			get_value();
-		} catch {
-			// Intentionally ignore errors here. If get_value() throws, the error is already
-			// captured and stored in the `error` variable (line 26) and will be logged
-			// in the subsequent error check (line 66-69). This try-catch ensures the render
-			// effect runs alongside the inspect effect without propagating the error twice.
-		}
+		} catch {}
 
 		if (error !== UNINITIALIZED) {
 			// eslint-disable-next-line no-console
