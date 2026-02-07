@@ -29,7 +29,6 @@ export function log_if_contains_state(method, ...objects) {
 				console.log('%c[snapshot]', 'color: grey', ...transformed);
 			}
 		} catch {
-			// Silently ignore errors during snapshot creation to prevent breaking console.log functionality.
 			// Errors can occur when trying to snapshot objects with getters that throw or non-enumerable properties.
 		}
 	});
