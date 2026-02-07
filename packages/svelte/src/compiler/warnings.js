@@ -91,6 +91,7 @@ export const codes = [
 	'options_removed_hydratable',
 	'options_removed_loop_guard_timeout',
 	'options_renamed_ssr_dom',
+	'bindable_prop_not_mutated',
 	'custom_element_props_identifier',
 	'export_let_unused',
 	'legacy_component_creation',
@@ -592,6 +593,15 @@ export function options_removed_loop_guard_timeout(node) {
  */
 export function options_renamed_ssr_dom(node) {
 	w(node, 'options_renamed_ssr_dom', `\`generate: "dom"\` and \`generate: "ssr"\` options have been renamed to "client" and "server" respectively\nhttps://svelte.dev/e/options_renamed_ssr_dom`);
+}
+
+/**
+ * `%name%` is declared with `$bindable()` but is not mutated or reassigned
+ * @param {null | NodeLike} node
+ * @param {string} name
+ */
+export function bindable_prop_not_mutated(node, name) {
+	w(node, 'bindable_prop_not_mutated', `\`${name}\` is declared with \`$bindable()\` but is not mutated or reassigned\nhttps://svelte.dev/e/bindable_prop_not_mutated`);
 }
 
 /**

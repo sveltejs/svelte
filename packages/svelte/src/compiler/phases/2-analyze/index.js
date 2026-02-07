@@ -764,6 +764,9 @@ export function analyze_component(root, source, options) {
 						w.non_reactive_update(binding.node, name);
 						continue outer;
 					}
+				} else if (binding.kind === 'bindable_prop' && !binding.updated) {
+					// this check only applies to instance but we check here to avoid a second loop
+					w.bindable_prop_not_mutated(binding.node, name);
 				}
 			}
 		}
