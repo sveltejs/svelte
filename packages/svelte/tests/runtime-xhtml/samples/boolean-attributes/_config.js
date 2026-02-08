@@ -1,5 +1,3 @@
 import { test } from '../../test';
 
-export default test({
-	skip: true
-});
+export default test({});
