@@ -48,7 +48,7 @@ export function bind_current_time(media, get, set = get) {
 	render_effect(() => {
 		var next_value = Number(get());
 
-		if (value !== next_value && !isNaN(/** @type {any} */(next_value))) {
+		if (value !== next_value && !isNaN(/** @type {any} */ (next_value))) {
 			media.currentTime = value = next_value;
 		}
 	});
