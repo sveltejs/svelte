@@ -223,6 +223,12 @@ During development, this error is often preceded by a `console.error` detailing 
 
 > Tried to unmount a component that was not mounted
 
+## media_play_failed
+
+> Failed to play media. This could be because the browser blocked autoplay.
+
+Browsers often block autoplaying media with sound. If `bind:paused` is used to play the media, and the browser blocks it, Svelte will set the value back to `true` and emit this warning.
+
 ## ownership_invalid_binding
 
 > %parent% passed property `%prop%` to %child% with `bind:`, but its parent component %owner% did not declare `%prop%` as a binding. Consider creating a binding between %owner% and %parent% (e.g. `bind:%prop%={...}` instead of `%prop%={...}`)

@@ -184,6 +184,17 @@ export function lifecycle_double_unmount() {
 }
 
 /**
+ * Failed to play media. This could be because the browser blocked autoplay.
+ */
+export function media_play_failed() {
+	if (DEV) {
+		console.warn(`%c[svelte] media_play_failed\n%cFailed to play media. This could be because the browser blocked autoplay.\nhttps://svelte.dev/e/media_play_failed`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/media_play_failed`);
+	}
+}
+
+/**
  * %parent% passed property `%prop%` to %child% with `bind:`, but its parent component %owner% did not declare `%prop%` as a binding. Consider creating a binding between %owner% and %parent% (e.g. `bind:%prop%={...}` instead of `%prop%={...}`)
  * @param {string} parent
  * @param {string} prop

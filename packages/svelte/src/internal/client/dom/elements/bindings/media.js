@@ -1,5 +1,7 @@
 import { render_effect, effect, teardown } from '../../../reactivity/effects.js';
+import { DEV } from 'esm-env';
 import { listen } from './shared.js';
+import * as w from '../../../warnings.js';
 
 /** @param {TimeRanges} ranges */
 function time_ranges_to_array(ranges) {
@@ -46,7 +48,7 @@ export function bind_current_time(media, get, set = get) {
 	render_effect(() => {
 		var next_value = Number(get());
 
-		if (value !== next_value && !isNaN(/** @type {any} */ (next_value))) {
+		if (value !== next_value && !isNaN(/** @type {any} */(next_value))) {
 			media.currentTime = value = next_value;
 		}
 	});
@@ -177,6 +179,10 @@ export function bind_paused(media, get, set = get) {
 			} else {
 				media.play().catch(() => {
 					set((paused = true));
+
+					if (DEV) {
+						w.media_play_failed();
+					}
 				});
 			}
 		}
