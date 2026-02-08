@@ -108,7 +108,7 @@ export function compileModule(source, options) {
  * The `filename` option is unused and will be removed in Svelte 6.0.
  *
  * @param {string} source
- * @param {{ filename?: string; rootDir?: string; modern?: boolean; loose?: boolean }} [options]
+ * @param {{ filename?: string; modern?: boolean; loose?: boolean }} [options]
  * @returns {AST.Root | LegacyRoot}
  */
 export function parse(source, { modern, loose } = {}) {
