@@ -123,7 +123,7 @@ export function parse(source, { modern, loose } = {}) {
  * The parseCss function parses a CSS stylesheet, returning its abstract syntax tree.
  *
  * @param {string} source The CSS source code
- * @returns {Omit<AST.CSS.StyleSheet, 'attributes' | 'content'>}
+ * @returns {AST.CSS.StyleSheetRules}
  */
 export function parseCss(source) {
 	source = remove_bom(source);

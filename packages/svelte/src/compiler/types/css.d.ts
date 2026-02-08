@@ -6,10 +6,13 @@ export namespace _CSS {
 		end: number;
 	}
 
-	export interface StyleSheet extends BaseNode {
+	export interface StyleSheetRules extends BaseNode {
 		type: 'StyleSheet';
-		attributes: any[]; // TODO
 		children: Array<Atrule | Rule>;
+	}
+
+	export interface StyleSheet extends StyleSheetRules {
+		attributes: any[]; // TODO
 		content: {
 			start: number;
 			end: number;
