@@ -1,5 +1,6 @@
 ---
 title: Frequently asked questions
+use_cases: "troubleshooting, best practices, common questions, learning resources"
 ---
 
 ## I'm new to Svelte. Where should I start?

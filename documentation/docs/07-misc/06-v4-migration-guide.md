@@ -1,5 +1,6 @@
 ---
 title: Svelte 4 migration guide
+use_cases: "upgrading from Svelte 3, migration, breaking changes, version updates"
 ---
 
 This migration guide provides an overview of how to migrate from Svelte version 3 to 4. See the linked PRs for more details about each change. Use the migration script to migrate some of these automatically: `npx svelte-migrate@latest svelte-4`

@@ -1,5 +1,6 @@
 ---
 title: in: and out:
+use_cases: "asymmetric animations, different enter/exit effects, one-way transitions"
 ---
 
 The `in:` and `out:` directives are identical to [`transition:`](transition), except that the resulting transitions are not bidirectional — an `in` transition will continue to 'play' alongside the `out` transition, rather than reversing, if the block is outroed while the transition is in progress. If an out transition is aborted, transitions will restart from scratch.

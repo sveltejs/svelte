@@ -1,5 +1,6 @@
 ---
 title: <svelte:head>
+use_cases: "SEO, meta tags, page titles, OpenGraph, structured data, external scripts"
 ---
 
 ```svelte

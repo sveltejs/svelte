@@ -1,5 +1,6 @@
 ---
 title: <svelte:element>
+use_cases: "dynamic HTML elements, CMS rendering, configurable components, polymorphic components"
 ---
 
 ```svelte

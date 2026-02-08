@@ -1,5 +1,6 @@
 ---
 title: use:
+use_cases: "third-party integrations, DOM libraries, custom directives, legacy code integration"
 ---
 
 > [!NOTE]

@@ -1,5 +1,6 @@
 ---
 title: <svelte:window>
+use_cases: "window events, scroll handling, keyboard shortcuts, resize detection, online/offline"
 ---
 
 ```svelte

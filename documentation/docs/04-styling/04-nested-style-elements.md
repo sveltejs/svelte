@@ -1,5 +1,6 @@
 ---
 title: Nested <style> elements
+use_cases: "dynamic runtime styles, conditional CSS, user-generated styles"
 ---
 
 There can only be one top-level `<style>` tag per component.

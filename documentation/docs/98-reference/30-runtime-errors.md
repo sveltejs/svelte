@@ -1,5 +1,6 @@
 ---
 title: 'Runtime errors'
+use_cases: "error reference, debugging runtime issues, troubleshooting"
 ---
 
 ## Client errors

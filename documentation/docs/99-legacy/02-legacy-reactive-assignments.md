@@ -1,5 +1,6 @@
 ---
 title: Reactive $: statements
+use_cases: "legacy: reactive statements, derived values, side effects"
 ---
 
 In runes mode, reactions to state updates are handled with the [`$derived`]($derived) and [`$effect`]($effect) runes.

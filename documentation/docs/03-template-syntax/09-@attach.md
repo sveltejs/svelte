@@ -1,5 +1,6 @@
 ---
 title: {@attach ...}
+use_cases: "DOM manipulation, third-party libraries, tooltips, popovers, advanced interactions"
 ---
 
 Attachments are functions that run in an [effect]($effect) when an element is mounted to the DOM or when [state]($state) read inside the function updates.

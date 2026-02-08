@@ -1,5 +1,6 @@
 ---
 title: Global styles
+use_cases: "app-wide styles, CSS resets, typography, third-party CSS integration"
 ---
 
 ## :global(...)

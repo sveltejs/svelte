@@ -1,5 +1,6 @@
 ---
 title: TypeScript
+use_cases: "type safety, IDE support, component APIs, prop validation, large applications"
 ---
 
 <!-- - [basically what we have today](https://svelte.dev/docs/typescript)

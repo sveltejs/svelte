@@ -1,5 +1,6 @@
 ---
 title: $bindable
+use_cases: "two-way binding, form components, controlled inputs, synchronized state, custom input components"
 ---
 
 Ordinarily, props go one way, from parent to child. This makes it easy to understand how data flows around your app.

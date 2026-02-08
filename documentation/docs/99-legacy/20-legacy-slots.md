@@ -1,5 +1,6 @@
 ---
 title: <slot>
+use_cases: "legacy: content projection, component composition, slot props"
 ---
 
 In Svelte 5, content can be passed to components in the form of [snippets](snippet) and rendered using [render tags](@render).

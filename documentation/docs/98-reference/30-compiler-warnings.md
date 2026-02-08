@@ -1,5 +1,6 @@
 ---
 title: 'Compiler warnings'
+use_cases: "warning reference, best practices, code quality"
 ---
 
 Svelte warns you at compile time if it catches potential mistakes, such as writing inaccessible markup.
