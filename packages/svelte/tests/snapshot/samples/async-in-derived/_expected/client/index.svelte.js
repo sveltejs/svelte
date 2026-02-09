@@ -42,10 +42,8 @@ export default function Async_in_derived($$anchor, $$props) {
 			]);
 		};
 
-		var d = $.derived(() => true);
-
 		$.if(node, ($$render) => {
-			if ($.get(d)) $$render(consequent, 0);
+			if (true) $$render(consequent, 0);
 		});
 	}
 

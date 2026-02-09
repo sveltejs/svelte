@@ -10,6 +10,7 @@ import {
 } from '../hydration.js';
 import { block } from '../../reactivity/effects.js';
 import { BranchManager } from './branches.js';
+import { HYDRATION_START, HYDRATION_START_ELSE } from '../../../../constants.js';
 
 /**
  * @param {TemplateNode} node
@@ -33,15 +34,16 @@ export function if_block(node, fn, elseif = false) {
 		if (hydrating) {
 			const data = read_hydration_instruction(node);
 
-			// Parse the hydration comment to determine which branch was server-rendered:
-			//   "[" = branch 0, "[1" = branch 1, "[2" = branch 2, ..., "[!" = else (false)
-			/** @type {number | false} */
+			/**
+			 * @type {number | false}
+			 * "[" = branch 0, "[1" = branch 1, "[2" = branch 2, ..., "[!" = else (false)
+			 */
 			var hydrated_key;
 
-			if (data.length === 1) {
-				hydrated_key = 0; // "["
-			} else if (data[1] === '!') {
-				hydrated_key = false; // "[!"
+			if (data === HYDRATION_START) {
+				hydrated_key = 0;
+			} else if (data === HYDRATION_START_ELSE) {
+				hydrated_key = false;
 			} else {
 				hydrated_key = parseInt(data.substring(1)); // "[1", "[2", etc.
 			}

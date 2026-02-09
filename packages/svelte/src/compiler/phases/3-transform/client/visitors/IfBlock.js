@@ -44,7 +44,13 @@ export function IfBlock(node, context) {
 
 			// Wrap complex expressions (anything beyond a simple identifier) in $.derived() for memoization.
 			// TODO check expression content more thoroughly to avoid wrapping for stuff like `foo > 1` or `foo.length`
-			if (branch.test.type !== 'Identifier') {
+			if (
+				branch.test.type !== 'Identifier' &&
+				branch.test.type !== 'Literal' &&
+				(branch.test.type !== 'MemberExpression' ||
+					// foo.bar is fine but foo[bar] is not
+					branch.metadata.expression.dependencies.size > 1)
+			) {
 				const derived_id = b.id(context.state.scope.generate('d'));
 				statements.push(b.var(derived_id, b.call('$.derived', b.arrow([], expression))));
 				test = b.call('$.get', derived_id);
