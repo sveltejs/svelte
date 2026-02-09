@@ -38,7 +38,8 @@ import { TEMPLATE_FRAGMENT } from '../../../../../constants.js';
  * @param {ComponentContext} context
  */
 export function RegularElement(node, context) {
-	const name = context.state.metadata.namespace === 'html' ? node.name.toLowerCase() : node.name;
+	const is_html = context.state.metadata.namespace === 'html' && node.name !== 'svg';
+	const name = is_html ? node.name.toLowerCase() : node.name;
 	context.state.template.push_element(name, node.start);
 
 	if (name === 'noscript') {
@@ -260,7 +261,6 @@ export function RegularElement(node, context) {
 				let { value } = build_attribute_value(attribute.value, context);
 				context.state.init.push(b.stmt(b.call('$.autofocus', node_id, value)));
 			} else if (name === 'class') {
-				const is_html = context.state.metadata.namespace === 'html' && name !== 'svg';
 				build_set_class(node, node_id, attribute, class_directives, context, is_html);
 			} else if (name === 'style') {
 				build_set_style(node_id, attribute, style_directives, context);
