@@ -1,5 +1,6 @@
 ---
 title: $inspect
+tags: rune-inspect
 ---
 
 > [!NOTE] `$inspect` only works during development. In a production build it becomes a noop.

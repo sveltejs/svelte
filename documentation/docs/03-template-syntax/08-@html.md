@@ -1,5 +1,6 @@
 ---
 title: {@html ...}
+tags: template-html
 ---
 
 To inject raw HTML into your component, use the `{@html ...}` tag:
