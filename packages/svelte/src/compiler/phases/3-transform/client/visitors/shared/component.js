@@ -333,7 +333,7 @@ export function build_component(node, component_name, loc, context) {
 			// can be used as props without creating conflicts
 			context.visit(child, {
 				...context.state,
-				init: snippet_declarations
+				snippets: snippet_declarations
 			});
 
 			push_prop(b.prop('init', child.expression, child.expression));
@@ -461,7 +461,7 @@ export function build_component(node, component_name, loc, context) {
 		memoizer.check_blockers(node.metadata.expression);
 	}
 
-	const statements = [...snippet_declarations, ...memoizer.deriveds(context.state.analysis.runes)];
+	let statements = [...snippet_declarations, ...memoizer.deriveds(context.state.analysis.runes)];
 
 	if (is_component_dynamic) {
 		const prev = fn;
@@ -515,15 +515,21 @@ export function build_component(node, component_name, loc, context) {
 	const blockers = memoizer.blockers();
 
 	if (async_values || blockers) {
-		return b.stmt(
-			b.call(
-				'$.async',
-				anchor,
-				blockers,
-				async_values,
-				b.arrow([b.id('$$anchor'), ...memoizer.async_ids()], b.block(statements))
+		statements = [
+			b.stmt(
+				b.call(
+					'$.async',
+					anchor,
+					blockers,
+					async_values,
+					b.arrow([b.id('$$anchor'), ...memoizer.async_ids()], b.block(statements))
+				)
 			)
-		);
+		];
+
+		if (context.state.is_standalone) {
+			statements.push(b.stmt(b.call('$.next')));
+		}
 	}
 
 	return statements.length > 1 ? b.block(statements) : statements[0];

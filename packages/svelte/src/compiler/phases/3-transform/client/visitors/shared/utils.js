@@ -134,7 +134,7 @@ export function build_template_chunk(
 
 			const evaluated = state.scope.evaluate(value);
 
-			has_await ||= node.metadata.expression.has_await;
+			has_await ||= node.metadata.expression.has_await || node.metadata.expression.has_blockers();
 			has_state ||= has_await || (node.metadata.expression.has_state && !evaluated.is_known);
 
 			if (values.length === 1) {

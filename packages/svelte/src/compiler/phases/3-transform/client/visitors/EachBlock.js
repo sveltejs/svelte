@@ -101,15 +101,11 @@ export function EachBlock(node, context) {
 	}
 
 	// If the array is a store expression, we need to invalidate it when the array is changed.
-	// This doesn't catch all cases, but all the ones that Svelte 4 catches, too.
 	let store_to_invalidate = '';
-	if (node.expression.type === 'Identifier' || node.expression.type === 'MemberExpression') {
-		const id = object(node.expression);
-		if (id) {
-			const binding = context.state.scope.get(id.name);
-			if (binding?.kind === 'store_sub') {
-				store_to_invalidate = id.name;
-			}
+	for (const binding of node.metadata.expression.dependencies) {
+		if (binding.kind === 'store_sub') {
+			store_to_invalidate = binding.node.name;
+			break;
 		}
 	}
 
@@ -312,10 +308,10 @@ export function EachBlock(node, context) {
 		declarations.push(b.let(node.index, index));
 	}
 
-	const is_async = node.metadata.expression.is_async();
+	const has_await = node.metadata.expression.has_await;
 
-	const get_collection = b.thunk(collection, node.metadata.expression.has_await);
-	const thunk = is_async ? b.thunk(b.call('$.get', b.id('$$collection'))) : get_collection;
+	const get_collection = b.thunk(collection, has_await);
+	const thunk = has_await ? b.thunk(b.call('$.get', b.id('$$collection'))) : get_collection;
 
 	const render_args = [b.id('$$anchor'), item];
 	if (uses_index || collection_id) render_args.push(index);
@@ -338,19 +334,18 @@ export function EachBlock(node, context) {
 
 	const statements = [add_svelte_meta(b.call('$.each', ...args), node, 'each')];
 
-	if (dev && node.metadata.keyed) {
-		statements.unshift(b.stmt(b.call('$.validate_each_keys', thunk, key_function)));
-	}
-
-	if (is_async) {
+	if (node.metadata.expression.is_async()) {
 		context.state.init.push(
 			b.stmt(
 				b.call(
 					'$.async',
 					context.state.node,
 					node.metadata.expression.blockers(),
-					b.array([get_collection]),
-					b.arrow([context.state.node, b.id('$$collection')], b.block(statements))
+					has_await ? b.array([get_collection]) : b.void0,
+					b.arrow(
+						has_await ? [context.state.node, b.id('$$collection')] : [context.state.node],
+						b.block(statements)
+					)
 				)
 			)
 		);

@@ -6,6 +6,7 @@ import { regex_not_newline_characters } from '../../patterns.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { is_text_attribute } from '../../../utils/ast.js';
+import { locator } from '../../../state.js';
 
 const regex_closing_script_tag = /<\/script\s*>/;
 const regex_starts_with_closing_script_tag = /^<\/script\s*>/;
@@ -39,8 +40,14 @@ export function read_script(parser, start, attributes) {
 		parser.acorn_error(err);
 	}
 
-	// TODO is this necessary?
 	ast.start = script_start;
+
+	if (ast.loc) {
+		// Acorn always uses `0` as the start of a `Program`, but for sourcemap purposes
+		// we need it to be the start of the `<script>` contents
+		({ line: ast.loc.start.line, column: ast.loc.start.column } = locator(start));
+		({ line: ast.loc.end.line, column: ast.loc.end.column } = locator(parser.index));
+	}
 
 	/** @type {'default' | 'module'} */
 	let context = 'default';

@@ -34,6 +34,20 @@ export class Parser {
 	/** */
 	index = 0;
 
+	/**
+	 * Creates a minimal parser instance for CSS-only parsing.
+	 * Skips Svelte component parsing setup.
+	 * @param {string} source
+	 * @returns {Parser}
+	 */
+	static forCss(source) {
+		const parser = Object.create(Parser.prototype);
+		parser.template = source;
+		parser.index = 0;
+		parser.loose = false;
+		return parser;
+	}
+
 	/** Whether we're parsing in TypeScript mode */
 	ts = false;
 

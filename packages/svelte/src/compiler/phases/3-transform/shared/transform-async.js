@@ -49,22 +49,25 @@ export function transform_body(instance_body, runner, transform) {
 	if (instance_body.async.length > 0) {
 		const thunks = instance_body.async.map((s) => {
 			if (s.node.type === 'VariableDeclarator') {
-				const visited = /** @type {ESTree.VariableDeclaration} */ (
+				const visited = /** @type {ESTree.VariableDeclaration | ESTree.EmptyStatement} */ (
 					transform(b.var(s.node.id, s.node.init))
 				);
 
-				const statements = visited.declarations.map((node) => {
-					if (
-						node.id.type === 'Identifier' &&
-						(node.id.name.startsWith('$$d') || node.id.name.startsWith('$$array'))
-					) {
-						// this is an intermediate declaration created in VariableDeclaration.js;
-						// subsequent statements depend on it
-						return b.var(node.id, node.init);
-					}
+				const statements =
+					visited.type === 'VariableDeclaration'
+						? visited.declarations.map((node) => {
+								if (
+									node.id.type === 'Identifier' &&
+									(node.id.name.startsWith('$$d') || node.id.name.startsWith('$$array'))
+								) {
+									// this is an intermediate declaration created in VariableDeclaration.js;
+									// subsequent statements depend on it
+									return b.var(node.id, node.init);
+								}
 
-					return b.stmt(b.assignment('=', node.id, node.init ?? b.void0));
-				});
+								return b.stmt(b.assignment('=', node.id, node.init ?? b.void0));
+							})
+						: [];
 
 				if (statements.length === 1) {
 					const statement = /** @type {ESTree.ExpressionStatement} */ (statements[0]);
@@ -86,7 +89,14 @@ export function transform_body(instance_body, runner, transform) {
 			}
 
 			if (s.node.type === 'ExpressionStatement') {
-				const expression = /** @type {ESTree.Expression} */ (transform(s.node.expression));
+				// the expression may be a $inspect call, which will be transformed into an empty statement
+				const expression = /** @type {ESTree.Expression | ESTree.EmptyStatement} */ (
+					transform(s.node.expression)
+				);
+
+				if (expression.type === 'EmptyStatement') {
+					return null;
+				}
 
 				return expression.type === 'AwaitExpression'
 					? b.thunk(expression, true)

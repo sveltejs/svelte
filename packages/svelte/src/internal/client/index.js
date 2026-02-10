@@ -42,6 +42,7 @@ export {
 export { set_class } from './dom/elements/class.js';
 export { apply, event, delegate, replay_events } from './dom/elements/events.js';
 export { autofocus, remove_textarea_child } from './dom/elements/misc.js';
+export { customizable_select, selectedcontent } from './dom/elements/customizable-select.js';
 export { set_style } from './dom/elements/style.js';
 export { animation, transition } from './dom/elements/transitions.js';
 export { bind_active_element } from './dom/elements/bindings/document.js';
@@ -98,12 +99,12 @@ export {
 	with_script
 } from './dom/template.js';
 export {
-	async_body,
 	for_await_track_reactivity_loss,
 	run,
 	save,
 	track_reactivity_loss,
-	run_after_blockers
+	run_after_blockers,
+	wait
 } from './reactivity/async.js';
 export { eager, flushSync as flush } from './reactivity/batch.js';
 export {
@@ -157,7 +158,7 @@ export {
 	deep_read_state,
 	active_effect
 } from './runtime.js';
-export { validate_binding, validate_each_keys } from './validate.js';
+export { validate_binding } from './validate.js';
 export { raf } from './timing.js';
 export { proxy } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';

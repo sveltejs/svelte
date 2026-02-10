@@ -1,5 +1,5 @@
 /** @import { Component } from 'svelte' */
-/** @import { HydratableContext, RenderOutput, SSRContext, SyncRenderOutput } from './types.js' */
+/** @import { Csp, HydratableContext, RenderOutput, SSRContext, SyncRenderOutput, Sha256Source } from './types.js' */
 /** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
 import { abort } from './abort-signal.js';
@@ -9,7 +9,9 @@ import * as w from './warnings.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
 import { attributes } from './index.js';
 import { get_render_context, with_render_context, init_render_context } from './render-context.js';
-import { DEV } from 'esm-env';
+import { sha256 } from './crypto.js';
+import * as devalue from 'devalue';
+import { noop } from '../shared/utils.js';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
@@ -161,7 +163,21 @@ export class Renderer {
 			promises.push(promise);
 		}
 
+		// prevent unhandled rejections, and attach the promise to the renderer instance
+		// so that rejections correctly cause rendering to fail
+		promise.catch(noop);
+		this.promise = promise;
+
 		return promises;
+	}
+
+	/**
+	 * @param {(renderer: Renderer) => MaybePromise<void>} fn
+	 */
+	child_block(fn) {
+		this.#out.push(BLOCK_OPEN);
+		this.child(fn);
+		this.#out.push(BLOCK_CLOSE);
 	}
 
 	/**
@@ -219,9 +235,10 @@ export class Renderer {
 	 * @param {Record<string, boolean> | undefined} [classes]
 	 * @param {Record<string, string> | undefined} [styles]
 	 * @param {number | undefined} [flags]
+	 * @param {boolean | undefined} [is_rich]
 	 * @returns {void}
 	 */
-	select(attrs, fn, css_hash, classes, styles, flags) {
+	select(attrs, fn, css_hash, classes, styles, flags, is_rich) {
 		const { value, ...select_attrs } = attrs;
 
 		this.push(`<select${attributes(select_attrs, css_hash, classes, styles, flags)}>`);
@@ -229,7 +246,7 @@ export class Renderer {
 			renderer.local.select_value = value;
 			fn(renderer);
 		});
-		this.push('</select>');
+		this.push(`${is_rich ? '<!>' : ''}</select>`);
 	}
 
 	/**
@@ -239,8 +256,9 @@ export class Renderer {
 	 * @param {Record<string, boolean> | undefined} [classes]
 	 * @param {Record<string, string> | undefined} [styles]
 	 * @param {number | undefined} [flags]
+	 * @param {boolean | undefined} [is_rich]
 	 */
-	option(attrs, body, css_hash, classes, styles, flags) {
+	option(attrs, body, css_hash, classes, styles, flags, is_rich) {
 		this.#out.push(`<option${attributes(attrs, css_hash, classes, styles, flags)}`);
 
 		/**
@@ -257,7 +275,7 @@ export class Renderer {
 				renderer.#out.push(' selected');
 			}
 
-			renderer.#out.push(`>${body}</option>`);
+			renderer.#out.push(`>${body}${is_rich ? '<!>' : ''}</option>`);
 
 			// super edge case, but may as well handle it
 			if (head) {
@@ -376,13 +394,13 @@ export class Renderer {
 	 * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
 	 * @template {Record<string, any>} Props
 	 * @param {Component<Props>} component
-	 * @param {{ props?: NoInfer<Props>; context?: Map<any, any>; idPrefix?: string }} [options]
+	 * @param {{ props?: Props; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} [options]
 	 * @returns {RenderOutput}
 	 */
 	static render(component, options = {}) {
 		/** @type {AccumulatedContent | undefined} */
 		let sync;
-		/** @type {Promise<AccumulatedContent> | undefined} */
+		/** @type {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }> | undefined} */
 		let async;
 
 		const result = /** @type {RenderOutput} */ ({});
@@ -404,6 +422,11 @@ export class Renderer {
 					return (sync ??= Renderer.#render(component, options)).body;
 				}
 			},
+			hashes: {
+				value: {
+					script: ''
+				}
+			},
 			then: {
 				value:
 					/**
@@ -420,7 +443,8 @@ export class Renderer {
 							const user_result = onfulfilled({
 								head: result.head,
 								body: result.body,
-								html: result.body
+								html: result.body,
+								hashes: { script: [] }
 							});
 							return Promise.resolve(user_result);
 						}
@@ -514,8 +538,8 @@ export class Renderer {
 	 *
 	 * @template {Record<string, any>} Props
 	 * @param {Component<Props>} component
-	 * @param {{ props?: NoInfer<Props>; context?: Map<any, any>; idPrefix?: string }} options
-	 * @returns {Promise<AccumulatedContent>}
+	 * @param {{ props?: Props; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} options
+	 * @returns {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }>}
 	 */
 	static async #render_async(component, options) {
 		const previous_context = ssr_context;
@@ -585,35 +609,31 @@ export class Renderer {
 			await comparison;
 		}
 
-		return await Renderer.#hydratable_block(ctx);
+		return await this.#hydratable_block(ctx);
 	}
 
 	/**
 	 * @template {Record<string, any>} Props
 	 * @param {'sync' | 'async'} mode
 	 * @param {import('svelte').Component<Props>} component
-	 * @param {{ props?: NoInfer<Props>; context?: Map<any, any>; idPrefix?: string }} options
+	 * @param {{ props?: Props; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} options
 	 * @returns {Renderer}
 	 */
 	static #open_render(mode, component, options) {
 		const renderer = new Renderer(
-			new SSRState(mode, options.idPrefix ? options.idPrefix + '-' : '')
+			new SSRState(mode, options.idPrefix ? options.idPrefix + '-' : '', options.csp)
 		);
 
 		renderer.push(BLOCK_OPEN);
 
-		if (options.context) {
-			push();
-			/** @type {SSRContext} */ (ssr_context).c = options.context;
-			/** @type {SSRContext} */ (ssr_context).r = renderer;
-		}
+		push();
+		if (options.context) /** @type {SSRContext} */ (ssr_context).c = options.context;
+		/** @type {SSRContext} */ (ssr_context).r = renderer;
 
 		// @ts-expect-error
 		component(renderer, options.props ?? {});
 
-		if (options.context) {
-			pop();
-		}
+		pop();
 
 		renderer.push(BLOCK_CLOSE);
 
@@ -623,6 +643,7 @@ export class Renderer {
 	/**
 	 * @param {AccumulatedContent} content
 	 * @param {Renderer} renderer
+	 * @returns {AccumulatedContent & { hashes: { script: Sha256Source[] } }}
 	 */
 	static #close_render(content, renderer) {
 		for (const cleanup of renderer.#collect_on_destroy()) {
@@ -638,14 +659,17 @@ export class Renderer {
 
 		return {
 			head,
-			body
+			body,
+			hashes: {
+				script: renderer.global.csp.script_hashes
+			}
 		};
 	}
 
 	/**
 	 * @param {HydratableContext} ctx
 	 */
-	static async #hydratable_block(ctx) {
+	async #hydratable_block(ctx) {
 		if (ctx.lookup.size === 0) {
 			return null;
 		}
@@ -659,7 +683,7 @@ export class Renderer {
 				for (const p of v.promises) await p;
 			}
 
-			entries.push(`[${JSON.stringify(k)},${v.serialized}]`);
+			entries.push(`[${devalue.uneval(k)},${v.serialized}]`);
 		}
 
 		let prelude = `const h = (window.__svelte ??= {}).h ??= new Map();`;
@@ -669,9 +693,7 @@ export class Renderer {
 				${prelude}`;
 		}
 
-		// TODO csp -- have discussed but not implemented
-		return `
-		<script>
+		const body = `
 			{
 				${prelude}
 
@@ -681,11 +703,27 @@ export class Renderer {
 					h.set(k, v);
 				}
 			}
-		</script>`;
+		`;
+
+		let csp_attr = '';
+		if (this.global.csp.nonce) {
+			csp_attr = ` nonce="${this.global.csp.nonce}"`;
+		} else if (this.global.csp.hash) {
+			// note to future selves: this doesn't need to be optimized with a Map<body, hash>
+			// because the it's impossible for identical data to occur multiple times in a single render
+			// (this would require the same hydratable key:value pair to be serialized multiple times)
+			const hash = await sha256(body);
+			this.global.csp.script_hashes.push(`sha256-${hash}`);
+		}
+
+		return `\n\t\t<script${csp_attr}>${body}</script>`;
 	}
 }
 
 export class SSRState {
+	/** @readonly @type {Csp & { script_hashes: Sha256Source[] }} */
+	csp;
+
 	/** @readonly @type {'sync' | 'async'} */
 	mode;
 
@@ -700,10 +738,12 @@ export class SSRState {
 
 	/**
 	 * @param {'sync' | 'async'} mode
-	 * @param {string} [id_prefix]
+	 * @param {string} id_prefix
+	 * @param {Csp} csp
 	 */
-	constructor(mode, id_prefix = '') {
+	constructor(mode, id_prefix = '', csp = { hash: false }) {
 		this.mode = mode;
+		this.csp = { ...csp, script_hashes: [] };
 
 		let uid = 1;
 		this.uid = () => `${id_prefix}s${uid++}`;

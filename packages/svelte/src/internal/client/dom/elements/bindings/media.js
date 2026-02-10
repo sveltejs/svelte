@@ -175,8 +175,9 @@ export function bind_paused(media, get, set = get) {
 			if (paused) {
 				media.pause();
 			} else {
-				media.play().catch(() => {
+				media.play().catch((error) => {
 					set((paused = true));
+					throw error;
 				});
 			}
 		}

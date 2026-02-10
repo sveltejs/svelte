@@ -1,4 +1,4 @@
-/** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
+/** @import { Blocker, ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
 import {
 	is_dirty,
 	active_effect,
@@ -9,7 +9,6 @@ import {
 	remove_reactions,
 	set_active_reaction,
 	set_is_destroying_effect,
-	set_signal_status,
 	untrack,
 	untracking
 } from '../runtime.js';
@@ -44,6 +43,7 @@ import { component_context, dev_current_component_function, dev_stack } from '..
 import { Batch, current_batch, schedule_effect } from './batch.js';
 import { flatten } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
+import { set_signal_status } from './status.js';
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -328,7 +328,7 @@ export function legacy_pre_effect_reset() {
 
 			// If the effect is CLEAN, then make it MAYBE_DIRTY. This ensures we traverse through
 			// the effects dependencies and correctly ensure each dependency is up-to-date.
-			if ((effect.f & CLEAN) !== 0) {
+			if ((effect.f & CLEAN) !== 0 && effect.deps !== null) {
 				set_signal_status(effect, MAYBE_DIRTY);
 			}
 
@@ -361,7 +361,7 @@ export function render_effect(fn, flags = 0) {
  * @param {(...expressions: any) => void | (() => void)} fn
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
- * @param {Array<Promise<void>>} blockers
+ * @param {Blocker[]} blockers
  */
 export function template_effect(fn, sync = [], async = [], blockers = []) {
 	flatten(blockers, sync, async, (values) => {
@@ -374,7 +374,7 @@ export function template_effect(fn, sync = [], async = [], blockers = []) {
  * @param {(...expressions: any) => void | (() => void)} fn
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
- * @param {Array<Promise<void>>} blockers
+ * @param {Blocker[]} blockers
  */
 export function deferred_template_effect(fn, sync = [], async = [], blockers = []) {
 	var batch = /** @type {Batch} */ (current_batch);

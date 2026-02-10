@@ -87,7 +87,7 @@ export namespace AST {
 		css?: 'injected';
 		customElement?: {
 			tag?: string;
-			shadow?: 'open' | 'none';
+			shadow?: 'open' | 'none' | ObjectExpression | undefined;
 			props?: Record<
 				string,
 				{
@@ -483,6 +483,8 @@ export namespace AST {
 		alternate: Fragment | null;
 		/** @internal */
 		metadata: {
+			/** List of else-if blocks that can be flattened into this if block */
+			flattened?: IfBlock[];
 			expression: ExpressionMetadata;
 		};
 	}

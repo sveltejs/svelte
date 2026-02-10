@@ -235,13 +235,7 @@ export function build_element_attributes(node, context, transform) {
 
 				if (name !== 'class' || literal_value) {
 					context.state.template.push(
-						b.literal(
-							` ${attribute.name}${
-								is_boolean_attribute(name) && literal_value === true
-									? ''
-									: `="${literal_value === true ? '' : String(literal_value)}"`
-							}`
-						)
+						b.literal(` ${attribute.name}="${literal_value === true ? '' : String(literal_value)}"`)
 					);
 				}
 
@@ -544,7 +538,7 @@ function build_attr_style(style_directives, expression, context, transform) {
 				name = name.toLowerCase();
 			}
 
-			const property = b.init(directive.name, expression);
+			const property = b.init(name, expression);
 			if (directive.modifiers.includes('important')) {
 				important_properties.push(property);
 			} else {

@@ -6,7 +6,6 @@ import {
 	untracked_writes,
 	get,
 	set_untracked_writes,
-	set_signal_status,
 	untrack,
 	increment_write_version,
 	update_effect,
@@ -14,9 +13,7 @@ import {
 	is_dirty,
 	untracking,
 	is_destroying_effect,
-	push_reaction_value,
-	set_is_updating_effect,
-	is_updating_effect
+	push_reaction_value
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import {
@@ -34,12 +31,14 @@ import {
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
+import { includes } from '../../shared/utils.js';
 import { tag_proxy } from '../dev/tracing.js';
 import { get_error } from '../../shared/dev.js';
 import { component_context, is_runes } from '../context.js';
 import { Batch, batch_values, eager_block_effects, schedule_effect } from './batch.js';
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
+import { set_signal_status, update_derived_status } from './status.js';
 
 /** @type {Set<any>} */
 export let eager_effects = new Set();
@@ -152,7 +151,7 @@ export function set(source, value, should_proxy = false) {
 		(!untracking || (active_reaction.f & EAGER_EFFECT) !== 0) &&
 		is_runes() &&
 		(active_reaction.f & (DERIVED | BLOCK_EFFECT | ASYNC | EAGER_EFFECT)) !== 0 &&
-		!current_sources?.includes(source)
+		(current_sources === null || !includes.call(current_sources, source))
 	) {
 		e.state_unsafe_mutation();
 	}
@@ -218,12 +217,14 @@ export function internal_set(source, value) {
 		}
 
 		if ((source.f & DERIVED) !== 0) {
+			const derived = /** @type {Derived} */ (source);
+
 			// if we are assigning to a dirty derived we set it to clean/maybe dirty but we also eagerly execute it to track the dependencies
 			if ((source.f & DIRTY) !== 0) {
-				execute_derived(/** @type {Derived} */ (source));
+				execute_derived(derived);
 			}
 
-			set_signal_status(source, (source.f & CONNECTED) !== 0 ? CLEAN : MAYBE_DIRTY);
+			update_derived_status(derived);
 		}
 
 		source.wv = increment_write_version();
@@ -259,25 +260,17 @@ export function internal_set(source, value) {
 
 export function flush_eager_effects() {
 	eager_effects_deferred = false;
-	var prev_is_updating_effect = is_updating_effect;
-	set_is_updating_effect(true);
 
-	const inspects = Array.from(eager_effects);
-
-	try {
-		for (const effect of inspects) {
-			// Mark clean inspect-effects as maybe dirty and then check their dirtiness
-			// instead of just updating the effects - this way we avoid overfiring.
-			if ((effect.f & CLEAN) !== 0) {
-				set_signal_status(effect, MAYBE_DIRTY);
-			}
-
-			if (is_dirty(effect)) {
-				update_effect(effect);
-			}
+	for (const effect of eager_effects) {
+		// Mark clean inspect-effects as maybe dirty and then check their dirtiness
+		// instead of just updating the effects - this way we avoid overfiring.
+		if ((effect.f & CLEAN) !== 0) {
+			set_signal_status(effect, MAYBE_DIRTY);
 		}
-	} finally {
-		set_is_updating_effect(prev_is_updating_effect);
+
+		if (is_dirty(effect)) {
+			update_effect(effect);
+		}
 	}
 
 	eager_effects.clear();
@@ -309,6 +302,7 @@ export function update_pre(source, d = 1) {
 	var value = get(source);
 
 	// @ts-expect-error
+	// eslint-disable-next-line no-useless-assignment -- `++`/`--` used for return value, not side effect on `value`
 	return set(source, d === 1 ? ++value : --value);
 }
 

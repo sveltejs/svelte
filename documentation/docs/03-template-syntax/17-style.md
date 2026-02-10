@@ -1,5 +1,6 @@
 ---
 title: style:
+tags: template-style
 ---
 
 The `style:` directive provides a shorthand for setting multiple styles on an element.
