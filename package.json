@@ -27,22 +27,30 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
-    "@sveltejs/eslint-config": "^8.3.3",
+    "@sveltejs/eslint-config": "^8.3.5",
     "@svitejs/changesets-changelog-github-compact": "^1.1.0",
     "@types/node": "^20.11.5",
     "@types/picomatch": "^4.0.2",
     "@vitest/coverage-v8": "^2.1.9",
-    "eslint": "^9.9.1",
-    "eslint-plugin-lube": "^0.4.3",
-    "eslint-plugin-svelte": "^3.11.0",
+    "@eslint/js": "^10.0.0",
+    "eslint": "^10.0.0",
+    "eslint-plugin-lube": "^0.5.1",
+    "eslint-plugin-svelte": "^3.15.0",
     "jsdom": "25.0.1",
     "playwright": "^1.58.0",
     "prettier": "^3.2.4",
     "prettier-plugin-svelte": "^3.4.0",
     "svelte": "workspace:^",
     "typescript": "^5.5.4",
-    "typescript-eslint": "^8.48.1",
+    "typescript-eslint": "^8.55.0",
     "v8-natives": "^1.2.5",
     "vitest": "^2.1.9"
+  },
+  "pnpm": {
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "eslint": "10"
+      }
+    }
   }
 }
