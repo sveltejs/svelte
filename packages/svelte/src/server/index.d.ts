@@ -12,22 +12,22 @@ export function render<
 	...args: {} extends Props
 		? [
 				component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
-			options?: {
-				props?: Omit<Props, '$$slots' | '$$events'>;
-				context?: Map<any, any>;
-				idPrefix?: string;
-				csp?: Csp;
-				onerror?: (error: unknown) => unknown | Promise<unknown>;
-			}
-		]
-	: [
-			component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
-			options: {
-				props: Omit<Props, '$$slots' | '$$events'>;
-				context?: Map<any, any>;
-				idPrefix?: string;
-				csp?: Csp;
-				onerror?: (error: unknown) => unknown | Promise<unknown>;
-			}
+				options?: {
+					props?: Omit<Props, '$$slots' | '$$events'>;
+					context?: Map<any, any>;
+					idPrefix?: string;
+					csp?: Csp;
+					onerror?: (error: unknown) => unknown | Promise<unknown>;
+				}
+			]
+		: [
+				component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
+				options: {
+					props: Omit<Props, '$$slots' | '$$events'>;
+					context?: Map<any, any>;
+					idPrefix?: string;
+					csp?: Csp;
+					onerror?: (error: unknown) => unknown | Promise<unknown>;
+				}
 			]
 ): RenderOutput;

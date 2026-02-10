@@ -555,7 +555,7 @@ declare module 'svelte' {
 		context?: Map<any, any>;
 		intro?: boolean;
 		recover?: boolean;
-		onerror: (error: unknown) => unknown;
+		onerror?: (error: unknown) => unknown;
 	}): Exports;
 	/**
 	 * Unmounts a component that was previously mounted using `mount` or `hydrate`.
@@ -2562,23 +2562,23 @@ declare module 'svelte/server' {
 		...args: {} extends Props
 			? [
 					component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
-				options?: {
-					props?: Omit<Props, '$$slots' | '$$events'>;
-					context?: Map<any, any>;
-					idPrefix?: string;
-					csp?: Csp;
-					onerror?: (error: unknown) => unknown | Promise<unknown>;
-				}
-			]
-		: [
-				component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
-				options: {
-					props: Omit<Props, '$$slots' | '$$events'>;
-					context?: Map<any, any>;
-					idPrefix?: string;
-					csp?: Csp;
-					onerror?: (error: unknown) => unknown | Promise<unknown>;
-				}
+					options?: {
+						props?: Omit<Props, '$$slots' | '$$events'>;
+						context?: Map<any, any>;
+						idPrefix?: string;
+						csp?: Csp;
+						onerror?: (error: unknown) => unknown | Promise<unknown>;
+					}
+				]
+			: [
+					component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
+					options: {
+						props: Omit<Props, '$$slots' | '$$events'>;
+						context?: Map<any, any>;
+						idPrefix?: string;
+						csp?: Csp;
+						onerror?: (error: unknown) => unknown | Promise<unknown>;
+					}
 				]
 	): RenderOutput;
 	type Csp = { nonce?: string; hash?: boolean };
