@@ -40,7 +40,7 @@ import { TEMPLATE_FRAGMENT } from '../../../../../constants.js';
 export function RegularElement(node, context) {
 	const is_html = context.state.metadata.namespace === 'html' && node.name !== 'svg';
 	const name = is_html ? node.name.toLowerCase() : node.name;
-	context.state.template.push_element(name, node.start);
+	context.state.template.push_element(name, node.start, is_html);
 
 	if (name === 'noscript') {
 		context.state.template.pop_element();
