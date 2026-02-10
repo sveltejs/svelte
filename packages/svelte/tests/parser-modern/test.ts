@@ -53,8 +53,6 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 
 		fs.writeFileSync(`${cwd}/_actual.svelte`, printed.code);
 
-		// TODO we shouldn't delete comments if they exist on `actual` —
-		// instead we should check that they are correctly reprinted
 		if (!actual.comments) {
 			delete reparsed.comments;
 		}
