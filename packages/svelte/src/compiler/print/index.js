@@ -18,15 +18,17 @@ const LINE_BREAK_THRESHOLD = 50;
  * @param {import('./types.js').Options | undefined} options
  */
 export function print(ast, options = undefined) {
+	const comments = (ast.type === 'Root' && ast.comments) || [];
+
 	return esrap.print(
 		ast,
 		/** @type {Visitors<AST.SvelteNode>} */ ({
 			...ts({
-				comments: ast.type === 'Root' ? ast.comments : [],
+				comments,
 				getLeadingComments: options?.getLeadingComments,
 				getTrailingComments: options?.getTrailingComments
 			}),
-			...svelte_visitors,
+			...svelte_visitors(comments),
 			...css_visitors
 		})
 	);
@@ -284,8 +286,11 @@ const css_visitors = {
 	}
 };
 
-/** @type {Visitors<AST.SvelteNode>} */
-const svelte_visitors = {
+/**
+ * @param {AST.JSComment[]} comments
+ * @returns {Visitors<AST.SvelteNode>}
+ */
+const svelte_visitors = (comments) => ({
 	Root(node, context) {
 		if (node.options) {
 			context.write('<svelte:options');
@@ -435,6 +440,12 @@ const svelte_visitors = {
 	},
 
 	Attribute(node, context) {
+		// find comments that precede this attribute
+		let i = comments.length;
+		while (i--) {
+			if (comments[i].start < node.start) break;
+		}
+
 		context.write(node.name);
 
 		if (node.value === true) return;
@@ -851,4 +862,4 @@ const svelte_visitors = {
 			context.write('}');
 		}
 	}
-};
+});

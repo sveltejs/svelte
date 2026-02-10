@@ -114,5 +114,61 @@
 			}
 		]
 	},
-	"options": null
+	"options": null,
+	"comments": [
+		{
+			"type": "Line",
+			"start": 20,
+			"end": 45,
+			"value": " this is a line comment",
+			"loc": {
+				"start": {
+					"line": 3,
+					"column": 1,
+					"character": 20
+				},
+				"end": {
+					"line": 3,
+					"column": 26,
+					"character": 45
+				}
+			}
+		},
+		{
+			"type": "Block",
+			"start": 61,
+			"end": 123,
+			"value": " this is a\n\t\tm\n\t\tu\n\t\tl\n\t\tt\n\t\ti\n\t\tl\n\t\ti\n\t\tn\n\t\te\n\t\tcomment\n\t",
+			"loc": {
+				"start": {
+					"line": 5,
+					"column": 1,
+					"character": 61
+				},
+				"end": {
+					"line": 16,
+					"column": 3,
+					"character": 123
+				}
+			}
+		},
+		{
+			"type": "Line",
+			"start": 125,
+			"end": 156,
+			"value": " oh look another line comment",
+			"loc": {
+				"start": {
+					"line": 17,
+					"column": 1,
+					"character": 125
+				},
+				"end": {
+					"line": 17,
+					"column": 32,
+					"character": 156
+				}
+			}
+		}
+	]
 }

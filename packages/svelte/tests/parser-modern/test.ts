@@ -25,8 +25,6 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 		)
 	);
 
-	delete actual.comments;
-
 	// run `UPDATE_SNAPSHOTS=true pnpm test parser` to update parser tests
 	if (process.env.UPDATE_SNAPSHOTS) {
 		fs.writeFileSync(`${cwd}/output.json`, JSON.stringify(actual, null, '\t') + '\n');
@@ -34,6 +32,11 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 		fs.writeFileSync(`${cwd}/_actual.json`, JSON.stringify(actual, null, '\t'));
 
 		const expected = try_load_json(`${cwd}/output.json`);
+
+		if (!expected.comments) {
+			delete actual.comments;
+		}
+
 		assert.deepEqual(actual, expected);
 	}
 
@@ -50,6 +53,9 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 
 		fs.writeFileSync(`${cwd}/_actual.svelte`, printed.code);
 
+		// TODO we shouldn't delete comments if they exist on `actual` —
+		// instead we should check that they are correctly reprinted
+		delete actual.comments;
 		delete reparsed.comments;
 
 		assert.deepEqual(clean(actual), clean(reparsed));
