@@ -501,12 +501,11 @@ function read_static_attribute(parser) {
 function read_attribute(parser) {
 	const start = parser.index;
 
-	/** @type {string | null} */
-	// eslint-disable-next-line no-useless-assignment -- it is, in fact, eslint that is useless
-	let comment_open = null;
+	/** @type {AST.JSComment | null} */
+	let comment = null;
 
-	while ((comment_open = parser.read(/\/[/*]/))) {
-		parser.read_until(comment_open === '//' ? /\n/ : /\*\//, true);
+	while ((comment = read_comment(parser))) {
+		parser.root.comments.push(comment);
 		parser.allow_whitespace();
 	}
 
@@ -702,6 +701,50 @@ function read_attribute(parser) {
 	}
 
 	return create_attribute(tag.name, tag.loc, start, end, value);
+}
+
+/**
+ * @param {Parser} parser
+ * @returns {AST.JSComment | null}
+ */
+function read_comment(parser) {
+	const start = parser.index;
+
+	if (parser.eat('//')) {
+		const value = parser.read_until(/\n/);
+		const end = parser.index;
+
+		return {
+			type: 'Line',
+			start,
+			end,
+			value,
+			loc: {
+				start: locator(start),
+				end: locator(end)
+			}
+		};
+	}
+
+	if (parser.eat('/*')) {
+		const value = parser.read_until(/\*\//);
+
+		parser.eat('*/');
+		const end = parser.index;
+
+		return {
+			type: 'Block',
+			start,
+			end,
+			value,
+			loc: {
+				start: locator(start),
+				end: locator(end)
+			}
+		};
+	}
+
+	return null;
 }
 
 /**
