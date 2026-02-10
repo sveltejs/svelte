@@ -1,7 +1,5 @@
 import { render_effect, effect, teardown } from '../../../reactivity/effects.js';
-import { DEV } from 'esm-env';
 import { listen } from './shared.js';
-import * as w from '../../../warnings.js';
 
 /** @param {TimeRanges} ranges */
 function time_ranges_to_array(ranges) {
@@ -177,12 +175,9 @@ export function bind_paused(media, get, set = get) {
 			if (paused) {
 				media.pause();
 			} else {
-				media.play().catch(() => {
+				media.play().catch((error) => {
 					set((paused = true));
-
-					if (DEV) {
-						w.media_play_failed();
-					}
+					throw error;
 				});
 			}
 		}

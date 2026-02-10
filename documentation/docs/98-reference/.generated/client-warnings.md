@@ -257,14 +257,6 @@ Detected a migrated `$:` reactive block in `%filename%` that both accesses and u
 Tried to unmount a component that was not mounted
 ```
 
-### media_play_failed
-
-```
-Failed to play media. This could be because the browser blocked autoplay.
-```
-
-Browsers often block autoplaying media with sound. If `bind:paused` is used to play the media, and the browser blocks it, Svelte will set the value back to `true` and emit this warning.
-
 ### ownership_invalid_binding
 
 ```
