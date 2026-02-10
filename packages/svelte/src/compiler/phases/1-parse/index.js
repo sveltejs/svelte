@@ -263,7 +263,7 @@ export class Parser {
 	}
 
 	/** @param {RegExp} pattern */
-	read_until(pattern) {
+	read_until(pattern, inclusive = false) {
 		if (this.index >= this.template.length) {
 			if (this.loose) return '';
 			e.unexpected_eof(this.template.length);
@@ -273,7 +273,7 @@ export class Parser {
 		const match = pattern.exec(this.template.slice(start));
 
 		if (match) {
-			this.index = start + match.index;
+			this.index = start + match.index + (inclusive ? match[0].length : 0);
 			return this.template.slice(start, this.index);
 		}
 

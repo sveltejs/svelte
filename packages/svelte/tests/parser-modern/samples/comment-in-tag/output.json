@@ -1,0 +1,118 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 180,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "RegularElement",
+				"start": 0,
+				"end": 180,
+				"name": "div",
+				"name_loc": {
+					"start": {
+						"line": 1,
+						"column": 1,
+						"character": 1
+					},
+					"end": {
+						"line": 1,
+						"column": 4,
+						"character": 4
+					}
+				},
+				"attributes": [
+					{
+						"type": "Attribute",
+						"start": 6,
+						"end": 18,
+						"name": "data-one",
+						"name_loc": {
+							"start": {
+								"line": 2,
+								"column": 1,
+								"character": 6
+							},
+							"end": {
+								"line": 2,
+								"column": 9,
+								"character": 14
+							}
+						},
+						"value": [
+							{
+								"start": 16,
+								"end": 17,
+								"type": "Text",
+								"raw": "1",
+								"data": "1"
+							}
+						]
+					},
+					{
+						"type": "Attribute",
+						"start": 20,
+						"end": 59,
+						"name": "data-two",
+						"name_loc": {
+							"start": {
+								"line": 4,
+								"column": 1,
+								"character": 47
+							},
+							"end": {
+								"line": 4,
+								"column": 9,
+								"character": 55
+							}
+						},
+						"value": [
+							{
+								"start": 57,
+								"end": 58,
+								"type": "Text",
+								"raw": "2",
+								"data": "2"
+							}
+						]
+					},
+					{
+						"type": "Attribute",
+						"start": 61,
+						"end": 172,
+						"name": "data-three",
+						"name_loc": {
+							"start": {
+								"line": 18,
+								"column": 1,
+								"character": 158
+							},
+							"end": {
+								"line": 18,
+								"column": 11,
+								"character": 168
+							}
+						},
+						"value": [
+							{
+								"start": 170,
+								"end": 171,
+								"type": "Text",
+								"raw": "3",
+								"data": "3"
+							}
+						]
+					}
+				],
+				"fragment": {
+					"type": "Fragment",
+					"nodes": []
+				}
+			}
+		]
+	},
+	"options": null
+}

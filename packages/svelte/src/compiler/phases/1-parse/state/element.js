@@ -501,6 +501,14 @@ function read_static_attribute(parser) {
 function read_attribute(parser) {
 	const start = parser.index;
 
+	/** @type {string | null} */
+	let comment_open = null;
+
+	while ((comment_open = parser.read(/\/[/*]/))) {
+		parser.read_until(comment_open === '//' ? /\n/ : /\*\//, true);
+		parser.allow_whitespace();
+	}
+
 	if (parser.eat('{')) {
 		parser.allow_whitespace();
 
