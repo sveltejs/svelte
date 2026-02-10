@@ -302,6 +302,7 @@ export function update_pre(source, d = 1) {
 	var value = get(source);
 
 	// @ts-expect-error
+	// eslint-disable-next-line no-useless-assignment -- `++`/`--` used for return value, not side effect on `value`
 	return set(source, d === 1 ? ++value : --value);
 }
 

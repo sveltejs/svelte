@@ -126,7 +126,7 @@ export function proxy(value) {
 			}
 			var s = sources.get(prop);
 			if (s === undefined) {
-				s = with_parent(() => {
+				with_parent(() => {
 					var s = source(descriptor.value, stack);
 					sources.set(prop, s);
 					if (DEV && typeof prop === 'string') {
