@@ -500,6 +500,7 @@ function read_static_attribute(parser) {
  */
 function read_attribute(parser) {
 	/** @type {AST.JSComment | null} */
+	// eslint-disable-next-line no-useless-assignment -- it is, in fact, eslint that is useless
 	let comment = null;
 
 	while ((comment = read_comment(parser))) {
