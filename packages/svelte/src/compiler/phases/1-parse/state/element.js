@@ -502,6 +502,7 @@ function read_attribute(parser) {
 	const start = parser.index;
 
 	/** @type {string | null} */
+	// eslint-disable-next-line no-useless-assignment -- it is, in fact, eslint that is useless
 	let comment_open = null;
 
 	while ((comment_open = parser.read(/\/[/*]/))) {
