@@ -337,6 +337,11 @@ declare module 'svelte' {
 		 * @default true
 		 */
 		intro?: boolean;
+		/**
+		 * A function that transforms errors caught by error boundaries before they are passed to the `failed` snippet.
+		 * This is used by SvelteKit to apply `handleError`. Defaults to the identity function on the client, and to throwing on the server.
+		 */
+		onerror?: (error: unknown) => unknown | Promise<unknown>;
 	} & ({} extends Props
 		? {
 				/**
@@ -542,6 +547,7 @@ declare module 'svelte' {
 		context?: Map<any, any>;
 		intro?: boolean;
 		recover?: boolean;
+		onerror: (error: unknown) => unknown;
 	} : {
 		target: Document | Element | ShadowRoot;
 		props: Props;
@@ -549,6 +555,7 @@ declare module 'svelte' {
 		context?: Map<any, any>;
 		intro?: boolean;
 		recover?: boolean;
+		onerror: (error: unknown) => unknown;
 	}): Exports;
 	/**
 	 * Unmounts a component that was previously mounted using `mount` or `hydrate`.
@@ -2555,21 +2562,23 @@ declare module 'svelte/server' {
 		...args: {} extends Props
 			? [
 					component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
-					options?: {
-						props?: Omit<Props, '$$slots' | '$$events'>;
-						context?: Map<any, any>;
-						idPrefix?: string;
-						csp?: Csp;
-					}
-				]
-			: [
-					component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
-					options: {
-						props: Omit<Props, '$$slots' | '$$events'>;
-						context?: Map<any, any>;
-						idPrefix?: string;
-						csp?: Csp;
-					}
+				options?: {
+					props?: Omit<Props, '$$slots' | '$$events'>;
+					context?: Map<any, any>;
+					idPrefix?: string;
+					csp?: Csp;
+					onerror?: (error: unknown) => unknown | Promise<unknown>;
+				}
+			]
+		: [
+				component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
+				options: {
+					props: Omit<Props, '$$slots' | '$$events'>;
+					context?: Map<any, any>;
+					idPrefix?: string;
+					csp?: Csp;
+					onerror?: (error: unknown) => unknown | Promise<unknown>;
+				}
 				]
 	): RenderOutput;
 	type Csp = { nonce?: string; hash?: boolean };

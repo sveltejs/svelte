@@ -81,6 +81,7 @@ export function mount(component, options) {
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		recover?: boolean;
+ *		onerror: (error: unknown) => unknown;
  * 	} : {
  * 		target: Document | Element | ShadowRoot;
  * 		props: Props;
@@ -88,6 +89,7 @@ export function mount(component, options) {
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		recover?: boolean;
+ *		onerror: (error: unknown) => unknown;
  * 	}} options
  * @returns {Exports}
  */
@@ -158,7 +160,7 @@ const document_listeners = new Map();
  * @param {MountOptions} options
  * @returns {Exports}
  */
-function _mount(Component, { target, anchor, props = {}, events, context, intro = true }) {
+function _mount(Component, { target, anchor, props = {}, events, context, intro = true, onerror }) {
 	init_operations();
 
 	/** @type {Set<string>} */
@@ -240,7 +242,8 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 				}
 
 				pop();
-			}
+			},
+			onerror
 		);
 
 		return () => {

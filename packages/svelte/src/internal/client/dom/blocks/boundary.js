@@ -8,7 +8,7 @@ import {
 	EFFECT_TRANSPARENT,
 	MAYBE_DIRTY
 } from '#client/constants';
-import { HYDRATION_START_ELSE } from '../../../../constants.js';
+import { HYDRATION_START_ELSE, HYDRATION_START_FAILED } from '../../../../constants.js';
 import { component_context, set_component_context } from '../../context.js';
 import { handle_error, invoke_error_boundary } from '../../error-handling.js';
 import {
@@ -59,10 +59,11 @@ var flags = EFFECT_TRANSPARENT | EFFECT_PRESERVED | BOUNDARY_EFFECT;
  * @param {TemplateNode} node
  * @param {BoundaryProps} props
  * @param {((anchor: Node) => void)} children
+ * @param {((error: unknown) => unknown) | undefined} [onerror_transform]
  * @returns {void}
  */
-export function boundary(node, props, children) {
-	new Boundary(node, props, children);
+export function boundary(node, props, children, onerror_transform) {
+	new Boundary(node, props, children, onerror_transform);
 }
 
 export class Boundary {
@@ -70,6 +71,13 @@ export class Boundary {
 	parent;
 
 	is_pending = false;
+
+	/**
+	 * API-level onerror transform function. Transforms errors before they reach the `failed` snippet.
+	 * Inherited from parent boundary, or defaults to identity.
+	 * @type {(error: unknown) => unknown}
+	 */
+	onerror_transform;
 
 	/** @type {TemplateNode} */
 	#anchor;
@@ -138,13 +146,18 @@ export class Boundary {
 	 * @param {TemplateNode} node
 	 * @param {BoundaryProps} props
 	 * @param {((anchor: Node) => void)} children
+	 * @param {((error: unknown) => unknown) | undefined} [onerror_transform]
 	 */
-	constructor(node, props, children) {
+	constructor(node, props, children, onerror_transform) {
 		this.#anchor = node;
 		this.#props = props;
 		this.#children = children;
 
 		this.parent = /** @type {Effect} */ (active_effect).b;
+
+		// Inherit onerror_transform from parent boundary, or use the provided one, or default to identity
+		this.onerror_transform =
+			onerror_transform ?? (this.parent ? this.parent.onerror_transform : (e) => e);
 
 		this.is_pending = !!this.#props.pending;
 
@@ -155,11 +168,20 @@ export class Boundary {
 				const comment = this.#hydrate_open;
 				hydrate_next();
 
-				const server_rendered_pending =
-					/** @type {Comment} */ (comment).nodeType === COMMENT_NODE &&
-					/** @type {Comment} */ (comment).data === HYDRATION_START_ELSE;
+				const comment_data =
+					/** @type {Comment} */ (comment).nodeType === COMMENT_NODE
+						? /** @type {Comment} */ (comment).data
+						: '';
 
-				if (server_rendered_pending) {
+				const server_rendered_pending = comment_data === HYDRATION_START_ELSE;
+				const server_rendered_failed = comment_data.startsWith(HYDRATION_START_FAILED);
+
+				if (server_rendered_failed) {
+					// Server rendered the failed snippet - hydrate it.
+					// The serialized error is embedded in the comment: <!--[?<json>-->
+					const serialized_error = JSON.parse(comment_data.slice(HYDRATION_START_FAILED.length));
+					this.#hydrate_failed_content(serialized_error);
+				} else if (server_rendered_pending) {
 					this.#hydrate_pending_content();
 				} else {
 					this.#hydrate_resolved_content();
@@ -200,6 +222,22 @@ export class Boundary {
 		} catch (error) {
 			this.error(error);
 		}
+	}
+
+	/**
+	 * @param {unknown} error The deserialized error from the server's hydration comment
+	 */
+	#hydrate_failed_content(error) {
+		const failed = this.#props.failed;
+		if (!failed) return;
+
+		this.#failed_effect = branch(() => {
+			failed(
+				this.#anchor,
+				() => error,
+				() => () => {}
+			);
+		});
 	}
 
 	#hydrate_pending_content() {
@@ -450,10 +488,11 @@ export class Boundary {
 			}
 		};
 
-		queue_micro_task(() => {
+		/** @param {unknown} transformed_error */
+		const handle_error_result = (transformed_error) => {
 			try {
 				calling_on_error = true;
-				onerror?.(error, reset);
+				onerror?.(transformed_error, reset);
 				calling_on_error = false;
 			} catch (error) {
 				invoke_error_boundary(error, this.#effect && this.#effect.parent);
@@ -468,7 +507,7 @@ export class Boundary {
 						return branch(() => {
 							failed(
 								this.#anchor,
-								() => error,
+								() => transformed_error,
 								() => reset
 							);
 						});
@@ -479,6 +518,35 @@ export class Boundary {
 						this.#is_creating_fallback = false;
 					}
 				});
+			}
+		};
+
+		queue_micro_task(() => {
+			// Run the error through the API-level onerror transform (e.g. SvelteKit's handleError)
+			/** @type {unknown} */
+			var result;
+			try {
+				result = this.onerror_transform(error);
+			} catch (e) {
+				invoke_error_boundary(e, this.#effect && this.#effect.parent);
+				return;
+			}
+
+			if (
+				result !== null &&
+				typeof result === 'object' &&
+				typeof (/** @type {any} */ (result).then) === 'function'
+			) {
+				// onerror returned a Promise — wait for it
+				/** @type {any} */ (result).then(
+					/** @param {unknown} transformed_error */
+					(transformed_error) => handle_error_result(transformed_error),
+					/** @param {unknown} e */
+					(e) => invoke_error_boundary(e, this.#effect && this.#effect.parent)
+				);
+			} else {
+				// Synchronous result — handle immediately
+				handle_error_result(result);
 			}
 		});
 	}

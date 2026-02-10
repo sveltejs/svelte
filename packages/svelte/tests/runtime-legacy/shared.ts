@@ -101,6 +101,7 @@ export interface RuntimeTest<Props extends Record<string, any> = Record<string, 
 	expect_unhandled_rejections?: boolean;
 	withoutNormalizeHtml?: boolean | 'only-strip-comments';
 	recover?: boolean;
+	onerror?: (error: unknown) => unknown;
 }
 
 declare global {
@@ -363,7 +364,8 @@ async function run_test_variant(
 			const SsrSvelteComponent = (await import(`${cwd}/_output/server/main.svelte.js`)).default;
 			const render_result = render(SsrSvelteComponent, {
 				props: config.server_props ?? config.props ?? {},
-				idPrefix: config.id_prefix
+				idPrefix: config.id_prefix,
+				onerror: config.onerror
 			});
 			const rendered =
 				variant === 'async-ssr' || (variant === 'hydrate' && compileOptions.experimental?.async)
@@ -462,7 +464,8 @@ async function run_test_variant(
 						target,
 						props,
 						intro: config.intro,
-						recover: config.recover ?? false
+						recover: config.recover ?? false,
+						onerror: config.onerror
 					});
 				}
 			} else {

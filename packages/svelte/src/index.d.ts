@@ -338,6 +338,11 @@ export type MountOptions<Props extends Record<string, any> = Record<string, any>
 	 * @default true
 	 */
 	intro?: boolean;
+	/**
+	 * A function that transforms errors caught by error boundaries before they are passed to the `failed` snippet.
+	 * This is used by SvelteKit to apply `handleError`. Defaults to the identity function on the client, and to throwing on the server.
+	 */
+	onerror?: (error: unknown) => unknown | Promise<unknown>;
 } & ({} extends Props
 	? {
 			/**
