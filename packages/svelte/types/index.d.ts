@@ -2560,7 +2560,7 @@ declare module 'svelte/server' {
 			? [
 					component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
 					options?: {
-						props?: NoInfer<Props>;
+						props?: Props;
 						context?: Map<any, any>;
 						idPrefix?: string;
 						csp?: Csp;
@@ -2569,7 +2569,7 @@ declare module 'svelte/server' {
 			: [
 					component: Comp extends SvelteComponent<any> ? ComponentType<Comp> : Comp,
 					options: {
-						props: NoInfer<Props>;
+						props: Props;
 						context?: Map<any, any>;
 						idPrefix?: string;
 						csp?: Csp;
