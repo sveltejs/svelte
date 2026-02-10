@@ -499,8 +499,6 @@ function read_static_attribute(parser) {
  * @returns {AST.Attribute | AST.SpreadAttribute | AST.Directive | AST.AttachTag | null}
  */
 function read_attribute(parser) {
-	const start = parser.index;
-
 	/** @type {AST.JSComment | null} */
 	let comment = null;
 
@@ -508,6 +506,8 @@ function read_attribute(parser) {
 		parser.root.comments.push(comment);
 		parser.allow_whitespace();
 	}
+
+	const start = parser.index;
 
 	if (parser.eat('{')) {
 		parser.allow_whitespace();

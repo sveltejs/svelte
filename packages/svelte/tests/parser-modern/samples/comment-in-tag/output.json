@@ -2,7 +2,7 @@
 	"css": null,
 	"js": [],
 	"start": 0,
-	"end": 180,
+	"end": 261,
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
@@ -10,7 +10,7 @@
 			{
 				"type": "RegularElement",
 				"start": 0,
-				"end": 180,
+				"end": 199,
 				"name": "div",
 				"name_loc": {
 					"start": {
@@ -54,7 +54,7 @@
 					},
 					{
 						"type": "Attribute",
-						"start": 20,
+						"start": 47,
 						"end": 59,
 						"name": "data-two",
 						"name_loc": {
@@ -81,28 +81,86 @@
 					},
 					{
 						"type": "Attribute",
-						"start": 61,
-						"end": 172,
+						"start": 177,
+						"end": 191,
 						"name": "data-three",
 						"name_loc": {
 							"start": {
-								"line": 18,
+								"line": 19,
 								"column": 1,
-								"character": 158
+								"character": 177
 							},
 							"end": {
-								"line": 18,
+								"line": 19,
 								"column": 11,
-								"character": 168
+								"character": 187
 							}
 						},
 						"value": [
 							{
-								"start": 170,
-								"end": 171,
+								"start": 189,
+								"end": 190,
 								"type": "Text",
 								"raw": "3",
 								"data": "3"
+							}
+						]
+					}
+				],
+				"fragment": {
+					"type": "Fragment",
+					"nodes": []
+				}
+			},
+			{
+				"type": "Text",
+				"start": 199,
+				"end": 201,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "RegularElement",
+				"start": 201,
+				"end": 261,
+				"name": "span",
+				"name_loc": {
+					"start": {
+						"line": 22,
+						"column": 1,
+						"character": 202
+					},
+					"end": {
+						"line": 22,
+						"column": 5,
+						"character": 206
+					}
+				},
+				"attributes": [
+					{
+						"type": "Attribute",
+						"start": 241,
+						"end": 253,
+						"name": "data-one",
+						"name_loc": {
+							"start": {
+								"line": 22,
+								"column": 40,
+								"character": 241
+							},
+							"end": {
+								"line": 22,
+								"column": 48,
+								"character": 249
+							}
+						},
+						"value": [
+							{
+								"start": 251,
+								"end": 252,
+								"type": "Text",
+								"raw": "1",
+								"data": "1"
 							}
 						]
 					}
@@ -167,6 +225,60 @@
 					"line": 17,
 					"column": 32,
 					"character": 156
+				}
+			}
+		},
+		{
+			"type": "Line",
+			"start": 158,
+			"end": 175,
+			"value": " (two, in fact)",
+			"loc": {
+				"start": {
+					"line": 18,
+					"column": 1,
+					"character": 158
+				},
+				"end": {
+					"line": 18,
+					"column": 18,
+					"character": 175
+				}
+			}
+		},
+		{
+			"type": "Block",
+			"start": 207,
+			"end": 219,
+			"value": " inline ",
+			"loc": {
+				"start": {
+					"line": 22,
+					"column": 6,
+					"character": 207
+				},
+				"end": {
+					"line": 22,
+					"column": 18,
+					"character": 219
+				}
+			}
+		},
+		{
+			"type": "Block",
+			"start": 220,
+			"end": 240,
+			"value": " another inline ",
+			"loc": {
+				"start": {
+					"line": 22,
+					"column": 19,
+					"character": 220
+				},
+				"end": {
+					"line": 22,
+					"column": 39,
+					"character": 240
 				}
 			}
 		}

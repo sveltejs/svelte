@@ -55,8 +55,9 @@ const { test, run } = suite<ParserTest>(async (config, cwd) => {
 
 		// TODO we shouldn't delete comments if they exist on `actual` —
 		// instead we should check that they are correctly reprinted
-		delete actual.comments;
-		delete reparsed.comments;
+		if (!actual.comments) {
+			delete reparsed.comments;
+		}
 
 		assert.deepEqual(clean(actual), clean(reparsed));
 	}

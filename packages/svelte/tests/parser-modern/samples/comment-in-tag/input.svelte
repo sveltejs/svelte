@@ -15,5 +15,8 @@
 		comment
 	*/
 	// oh look another line comment
+	// (two, in fact)
 	data-three="3"
 ></div>
+
+<span /* inline */ /* another inline */ data-one="1"></span>
