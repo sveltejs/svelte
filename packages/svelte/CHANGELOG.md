@@ -1,5 +1,13 @@
 # svelte
 
+## 5.50.1
+
+### Patch Changes
+
+- fix: render boolean attribute values as empty strings for XHTML compliance ([#17648](https://github.com/sveltejs/svelte/pull/17648))
+
+- fix: prevent async render tag hydration mismatches ([#17652](https://github.com/sveltejs/svelte/pull/17652))
+
 ## 5.50.0
 
 ### Minor Changes
