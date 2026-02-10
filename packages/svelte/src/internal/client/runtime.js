@@ -618,6 +618,10 @@ export function get(signal) {
 	if (is_derived) {
 		var derived = /** @type {Derived} */ (signal);
 
+		if ((derived.f & REACTION_IS_UPDATING) !== 0) {
+			return derived.v === UNINITIALIZED ? undefined : derived.v;
+		}
+
 		if (is_destroying_effect) {
 			var value = derived.v;
 
