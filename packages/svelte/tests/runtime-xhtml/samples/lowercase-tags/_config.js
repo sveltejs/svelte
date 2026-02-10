@@ -4,6 +4,6 @@ export default test({
 	test({ assert, target }) {
 		const [input] = target.querySelectorAll('input');
 
-		assert.equal(typeof input.disabled, 'boolean');
+		assert.equal(input.disabled, true);
 	}
 });

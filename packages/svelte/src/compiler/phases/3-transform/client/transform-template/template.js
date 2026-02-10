@@ -100,7 +100,7 @@ function stringify(item) {
 	for (const key in item.attributes) {
 		const value = item.attributes[key];
 
-		str += ` ${key}`;
+		str += ` ${key.toLowerCase()}`;
 		if (value !== undefined) str += `="${escape_html(value, true)}"`;
 	}
 
