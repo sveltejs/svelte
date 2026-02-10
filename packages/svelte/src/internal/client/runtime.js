@@ -167,7 +167,10 @@ export function is_dirty(reaction) {
 		for (var i = 0; i < length; i++) {
 			var dependency = dependencies[i];
 
-			if (is_dirty(/** @type {Derived} */ (dependency))) {
+			if (
+				(dependency.f & REACTION_IS_UPDATING) === 0 &&
+				is_dirty(/** @type {Derived} */ (dependency))
+			) {
 				update_derived(/** @type {Derived} */ (dependency));
 			}
 
