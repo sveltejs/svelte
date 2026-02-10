@@ -27,7 +27,7 @@ export default function Async_const($$anchor) {
 		};
 
 		$.if(node, ($$render) => {
-			if (true) $$render(consequent, 0);
+			if (true) $$render(consequent);
 		});
 	}
 

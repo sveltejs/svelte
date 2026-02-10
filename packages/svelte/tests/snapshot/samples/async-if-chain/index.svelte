@@ -1,4 +1,8 @@
 <script>
+  function complex1() {
+    return 1;
+  }
+
   let foo = $state(true);
   let blocking = $derived(await foo);
 </script>
@@ -34,12 +38,12 @@
   else
 {/if}
 
-<!-- simple chain with expressions that cause a $.derived (ideally for the first we know it's unnecessary) - should be one $.if() -->
+<!-- simple chain with some expressions that cause a $.derived - should be one $.if() -->
 {#if simple1}
   foo
 {:else if simple2 > 10}
   bar
-{:else if complex1 * complex2 > 100}
+{:else if complex1() * complex2 > 100}
   baz
 {:else}
   else

@@ -22,7 +22,7 @@ export default function Async_if_alternate_hoisting($$anchor) {
 		};
 
 		$.if(node, ($$render) => {
-			if ($.get($$condition)) $$render(consequent, 0); else $$render(alternate, false);
+			if ($.get($$condition)) $$render(consequent); else $$render(alternate, false);
 		});
 	});
 

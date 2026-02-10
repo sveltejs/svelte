@@ -107,7 +107,7 @@ export default function Select_with_rich_content($$anchor) {
 		};
 
 		$.if(node, ($$render) => {
-			if (show) $$render(consequent, 0);
+			if (show) $$render(consequent);
 		});
 	}
 
@@ -264,7 +264,7 @@ export default function Select_with_rich_content($$anchor) {
 		};
 
 		$.if(node_3, ($$render) => {
-			if (show) $$render(consequent_1, 0);
+			if (show) $$render(consequent_1);
 		});
 	}
 
@@ -401,7 +401,7 @@ export default function Select_with_rich_content($$anchor) {
 			};
 
 			$.if(node_14, ($$render) => {
-				if (show) $$render(consequent_2, 0);
+				if (show) $$render(consequent_2);
 			});
 		}
 

@@ -42,15 +42,7 @@ export function IfBlock(node, context) {
 		} else {
 			const expression = build_expression(context, branch.test, branch.metadata.expression);
 
-			// Wrap complex expressions (anything beyond a simple identifier) in $.derived() for memoization.
-			// TODO check expression content more thoroughly to avoid wrapping for stuff like `foo > 1` or `foo.length`
-			if (
-				branch.test.type !== 'Identifier' &&
-				branch.test.type !== 'Literal' &&
-				(branch.test.type !== 'MemberExpression' ||
-					// foo.bar is fine but foo[bar] is not
-					branch.metadata.expression.dependencies.size > 1)
-			) {
+			if (branch.metadata.expression.has_call) {
 				const derived_id = b.id(context.state.scope.generate('d'));
 				statements.push(b.var(derived_id, b.call('$.derived', b.arrow([], expression))));
 				test = b.call('$.get', derived_id);
@@ -59,7 +51,7 @@ export function IfBlock(node, context) {
 			}
 		}
 
-		const render_call = b.stmt(b.call('$$render', consequent_id, b.literal(index)));
+		const render_call = b.stmt(b.call('$$render', consequent_id, index > 0 && b.literal(index)));
 		const new_if = b.if(test, render_call);
 
 		if (last_if) {

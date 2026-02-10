@@ -5,6 +5,10 @@ import * as $ from 'svelte/internal/client';
 var root = $.from_html(`<!> <!> <!> <!> <!>`, 1);
 
 export default function Async_if_chain($$anchor) {
+	function complex1() {
+		return 1;
+	}
+
 	let foo = true;
 	var blocking;
 	var $$promises = $.run([async () => blocking = await $.async_derived(() => foo)]);
@@ -31,7 +35,7 @@ export default function Async_if_chain($$anchor) {
 		};
 
 		$.if(node, ($$render) => {
-			if (foo) $$render(consequent, 0); else if (bar) $$render(consequent_1, 1); else $$render(alternate, false);
+			if (foo) $$render(consequent); else if (bar) $$render(consequent_1, 1); else $$render(alternate, false);
 		});
 	});
 
@@ -70,7 +74,7 @@ export default function Async_if_chain($$anchor) {
 				$.if(
 					node_2,
 					($$render) => {
-						if ($.get($$condition)) $$render(consequent_4, 0); else $$render(alternate_1, false);
+						if ($.get($$condition)) $$render(consequent_4); else $$render(alternate_1, false);
 					},
 					true
 				);
@@ -80,7 +84,7 @@ export default function Async_if_chain($$anchor) {
 		};
 
 		$.if(node_1, ($$render) => {
-			if ($.get($$condition)) $$render(consequent_2, 0); else if (bar) $$render(consequent_3, 1); else $$render(alternate_2, false);
+			if ($.get($$condition)) $$render(consequent_2); else if (bar) $$render(consequent_3, 1); else $$render(alternate_2, false);
 		});
 	});
 
@@ -119,7 +123,7 @@ export default function Async_if_chain($$anchor) {
 				$.if(
 					node_4,
 					($$render) => {
-						if ($.get($$condition)) $$render(consequent_7, 0); else $$render(alternate_3, false);
+						if ($.get($$condition)) $$render(consequent_7); else $$render(alternate_3, false);
 					},
 					true
 				);
@@ -129,7 +133,7 @@ export default function Async_if_chain($$anchor) {
 		};
 
 		$.if(node_3, ($$render) => {
-			if ($.get($$condition)) $$render(consequent_5, 0); else if (bar) $$render(consequent_6, 1); else $$render(alternate_4, false);
+			if ($.get($$condition)) $$render(consequent_5); else if (bar) $$render(consequent_6, 1); else $$render(alternate_4, false);
 		});
 	});
 
@@ -148,15 +152,13 @@ export default function Async_if_chain($$anchor) {
 			$.append($$anchor, text_12);
 		};
 
-		var d = $.derived(() => simple2 > 10);
-
 		var consequent_10 = ($$anchor) => {
 			var text_13 = $.text('baz');
 
 			$.append($$anchor, text_13);
 		};
 
-		var d_1 = $.derived(() => complex1 * complex2 > 100);
+		var d = $.derived(() => complex1() * complex2 > 100);
 
 		var alternate_5 = ($$anchor) => {
 			var text_14 = $.text('else');
@@ -165,7 +167,7 @@ export default function Async_if_chain($$anchor) {
 		};
 
 		$.if(node_5, ($$render) => {
-			if (simple1) $$render(consequent_8, 0); else if ($.get(d)) $$render(consequent_9, 1); else if ($.get(d_1)) $$render(consequent_10, 2); else $$render(alternate_5, false);
+			if (simple1) $$render(consequent_8); else if (simple2 > 10) $$render(consequent_9, 1); else if ($.get(d)) $$render(consequent_10, 2); else $$render(alternate_5, false);
 		});
 	}
 
@@ -178,15 +180,11 @@ export default function Async_if_chain($$anchor) {
 			$.append($$anchor, text_15);
 		};
 
-		var d_2 = $.derived(() => $.get(blocking) > 10);
-
 		var consequent_12 = ($$anchor) => {
 			var text_16 = $.text('bar');
 
 			$.append($$anchor, text_16);
 		};
-
-		var d_3 = $.derived(() => $.get(blocking) > 5);
 
 		var alternate_6 = ($$anchor) => {
 			var text_17 = $.text('else');
@@ -195,7 +193,7 @@ export default function Async_if_chain($$anchor) {
 		};
 
 		$.if(node_6, ($$render) => {
-			if ($.get(d_2)) $$render(consequent_11, 0); else if ($.get(d_3)) $$render(consequent_12, 1); else $$render(alternate_6, false);
+			if ($.get(blocking) > 10) $$render(consequent_11); else if ($.get(blocking) > 5) $$render(consequent_12, 1); else $$render(alternate_6, false);
 		});
 	});
 

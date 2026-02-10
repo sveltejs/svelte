@@ -2,6 +2,10 @@ import 'svelte/internal/flags/async';
 import * as $ from 'svelte/internal/server';
 
 export default function Async_if_chain($$renderer) {
+	function complex1() {
+		return 1;
+	}
+
 	let foo = true;
 	var blocking;
 	var $$promises = $$renderer.run([async () => blocking = await foo]);
@@ -79,7 +83,7 @@ export default function Async_if_chain($$renderer) {
 	} else if (simple2 > 10) {
 		$$renderer.push('<!--[1-->');
 		$$renderer.push(`bar`);
-	} else if (complex1 * complex2 > 100) {
+	} else if (complex1() * complex2 > 100) {
 		$$renderer.push('<!--[2-->');
 		$$renderer.push(`baz`);
 	} else {
