@@ -101,7 +101,6 @@ export function VariableDeclaration(node, context) {
 					);
 				} else {
 					const init = /** @type {CallExpression} */ (declarator.init);
-					let expression = /** @type {Expression} */ (context.visit(value));
 
 					let rhs = value;
 
@@ -109,7 +108,7 @@ export function VariableDeclaration(node, context) {
 						const id = b.id(context.state.scope.generate('$$d'));
 
 						/** @type {Expression} */
-						let call = b.call('$.derived', rune === '$derived' ? b.thunk(expression) : expression);
+						let call = b.call('$.derived', rune === '$derived' ? b.thunk(value) : value);
 
 						rhs = b.call(id);
 
