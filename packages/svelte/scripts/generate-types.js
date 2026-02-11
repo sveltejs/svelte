@@ -259,11 +259,10 @@ await bundle_module(
 	const output = `${types_dir}/legacy.d.ts`;
 	const rel_prefix = './';
 	const ambient_ref = `/// <reference path="${rel_prefix}ambient.d.ts" />\n`;
-	const shared_ref = `export * from '${rel_prefix}shared';\n`;
 	const shared_import = `import type { ${[...shared_exports].sort().join(', ')} } from '${rel_prefix}shared';\n`;
 	const existing = fs.readFileSync(output, 'utf-8');
 	const with_shared = shared_import + existing;
-	fs.writeFileSync(output, ambient_ref + shared_ref + with_shared);
+	fs.writeFileSync(output, ambient_ref + with_shared);
 }
 
 const entrypoints = [
@@ -312,11 +311,10 @@ for (const item of entrypoints) {
 		{ strip_shared: item.strip !== false, shared_exports }
 	);
 	const ambient_ref = `/// <reference path="${rel_prefix}ambient.d.ts" />\n`;
-	const shared_ref = `export * from '${rel_prefix}shared';\n`;
 	const shared_import = `import type { ${[...shared_exports].sort().join(', ')} } from '${rel_prefix}shared';\n`;
 	const existing = fs.readFileSync(output, 'utf-8');
 	const with_shared = item.strip !== false ? shared_import + existing : existing;
-	fs.writeFileSync(output, ambient_ref + shared_ref + with_shared);
+	fs.writeFileSync(output, ambient_ref + with_shared);
 }
 
 // Root types entry

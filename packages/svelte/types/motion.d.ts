@@ -1,5 +1,4 @@
 /// <reference path="./ambient.d.ts" />
-export * from './shared';
 import type { Brand, Branded, Component, ComponentConstructorOptions, ComponentEvents, ComponentInternals, ComponentProps, ComponentType, DispatchOptions, EventDispatcher, Fork, Getters, MountOptions, NotFunction, Properties, Snippet, SnippetReturn, SvelteComponent, SvelteComponentTyped, afterUpdate, beforeUpdate, brand, createContext, createEventDispatcher, createRawSnippet, flushSync, fork, getAbortSignal, getAllContexts, getContext, hasContext, hydratable, hydrate, mount, onDestroy, onMount, setContext, settled, tick, unmount, untrack } from './shared';
 // TODO we do declaration merging here in order to not have a breaking change (renaming the Spring interface)
 // this means both the Spring class and the Spring interface are merged into one with some things only

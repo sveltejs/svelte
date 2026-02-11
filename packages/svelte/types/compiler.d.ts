@@ -1,5 +1,4 @@
 /// <reference path="./ambient.d.ts" />
-export * from './shared';
 import type { SourceMap } from 'magic-string';
 import type { ArrayExpression, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, Expression, Identifier, MemberExpression, Node, ObjectExpression, Pattern, Program, ChainExpression, SimpleCallExpression, SequenceExpression, SourceLocation } from 'estree';
 import type { Location } from 'locate-character';
