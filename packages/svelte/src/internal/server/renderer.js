@@ -273,13 +273,7 @@ export class Renderer {
 
 			if (!failed_snippet) throw error;
 
-			/** @type {unknown} */
-			let result;
-			try {
-				result = this.global.onerror(error);
-			} catch {
-				throw error;
-			}
+			const result = this.global.onerror(error);
 
 			if (result instanceof Promise) {
 				if (this.global.mode === 'sync') {
@@ -288,16 +282,11 @@ export class Renderer {
 
 				child.#out.length = 0;
 				child.#boundary = null;
-				child.promise = /** @type {Promise<unknown>} */ (result).then(
-					(transformed) => {
-						child.#out.push(`<!--${HYDRATION_START_FAILED}${JSON.stringify(transformed)}-->`);
-						failed_snippet(child, transformed, noop);
-						child.#out.push(BLOCK_CLOSE);
-					},
-					() => {
-						throw error;
-					}
-				);
+				child.promise = /** @type {Promise<unknown>} */ (result).then((transformed) => {
+					child.#out.push(`<!--${HYDRATION_START_FAILED}${JSON.stringify(transformed)}-->`);
+					failed_snippet(child, transformed, noop);
+					child.#out.push(BLOCK_CLOSE);
+				});
 				child.promise.catch(noop);
 			} else {
 				child.#out.length = 0;
@@ -697,12 +686,7 @@ export class Renderer {
 					} catch (error) {
 						const { failed, onerror } = item.#boundary;
 
-						let transformed;
-						try {
-							transformed = await onerror(error);
-						} catch {
-							throw error;
-						}
+						let transformed = await onerror(error);
 
 						// Render the failed snippet instead of the partial children content
 						const failed_renderer = new Renderer(item.global, item);
