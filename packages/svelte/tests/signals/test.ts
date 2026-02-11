@@ -21,7 +21,7 @@ import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/inter
 
 /**
  * @param runes runes mode
- * @param fn A function that returns a function because we first need to setup all the signals
+ * @param fn A function that returns a function because we first need to set up all the signals
  * 			 and then execute the test in order to simulate a real component
  */
 function run_test(runes: boolean, fn: (runes: boolean) => () => void) {
@@ -1388,6 +1388,58 @@ describe('signals', () => {
 			assert.deepEqual(log, [false, true, false]);
 
 			destroy();
+		};
+	});
+
+	test('derived whose original parent effect has been destroyed keeps updating', () => {
+		return () => {
+			let count: Source<number>;
+			let double: Derived<number>;
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					count = state(0);
+					double = derived(() => $.get(count) * 2);
+				});
+			});
+
+			flushSync();
+			assert.equal($.get(double!), 0);
+
+			destroy();
+			flushSync();
+
+			set(count!, 1);
+			flushSync();
+			assert.equal($.get(double!), 2);
+
+			set(count!, 2);
+			flushSync();
+			assert.equal($.get(double!), 4);
+		};
+	});
+
+	test('derived when connected should add new dependency to its reaction even when read outside effect', () => {
+		let count_a = state(0);
+		let count_b = state(0);
+		let which = state(true);
+		let double = derived(() => ($.get(which) ? $.get(count_a) * 2 : $.get(count_b) * 2));
+
+		render_effect(() => {
+			$.get(double);
+		});
+
+		return () => {
+			flushSync();
+			assert.equal($.get(double!), 0);
+
+			set(which, false);
+			$.get(double); // read before render effect has a chance to rerun
+			flushSync();
+			assert.equal($.get(double!), 0);
+
+			set(count_b, 1);
+			flushSync();
+			assert.equal($.get(double!), 2);
 		};
 	});
 

@@ -6,7 +6,6 @@ var root = $.from_tree(
 	[
 		['h1', null, 'hello'],
 		' ',
-
 		[
 			'div',
 			{ class: 'potato' },

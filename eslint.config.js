@@ -33,7 +33,7 @@ const no_compiler_imports = {
 	}
 };
 
-/** @type {import('eslint').Linter.FlatConfig[]} */
+/** @type {import('eslint').Linter.Config[]} */
 export default [
 	...svelte_config,
 	{
@@ -94,6 +94,7 @@ export default [
 			'packages/svelte/src/internal/client/errors.js',
 			'packages/svelte/src/internal/client/warnings.js',
 			'packages/svelte/src/internal/shared/warnings.js',
+			'packages/svelte/src/internal/server/warnings.js',
 			'packages/svelte/compiler/index.js',
 			// stuff we don't want to lint
 			'benchmarking/**',
@@ -101,6 +102,7 @@ export default [
 			'playgrounds/sandbox/**',
 			// exclude top level config files
 			'*.config.js',
+			'vitest-xhtml-environment.ts',
 			// documentation can contain invalid examples
 			'documentation',
 			'tmp/**'

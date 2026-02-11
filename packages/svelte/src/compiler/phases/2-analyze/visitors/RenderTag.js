@@ -5,7 +5,7 @@ import * as e from '../../../errors.js';
 import { validate_opening_tag } from './shared/utils.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 import { is_resolved_snippet } from './shared/snippets.js';
-import { create_expression_metadata } from '../../nodes.js';
+import { ExpressionMetadata } from '../../nodes.js';
 
 /**
  * @param {AST.RenderTag} node
@@ -57,7 +57,7 @@ export function RenderTag(node, context) {
 	context.visit(callee, { ...context.state, expression: node.metadata.expression });
 
 	for (const arg of expression.arguments) {
-		const metadata = create_expression_metadata();
+		const metadata = new ExpressionMetadata();
 		node.metadata.arguments.push(metadata);
 
 		context.visit(arg, {

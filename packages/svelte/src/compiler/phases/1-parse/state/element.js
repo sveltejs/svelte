@@ -1,4 +1,5 @@
-/** @import { Expression } from 'estree' */
+/** @import { Expression, Identifier, SourceLocation } from 'estree' */
+/** @import { Location } from 'locate-character' */
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
 import { is_void } from '../../../../utils.js';
@@ -9,11 +10,12 @@ import { decode_character_references } from '../utils/html.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
 import { create_fragment } from '../utils/create.js';
-import { create_attribute, create_expression_metadata, is_element_node } from '../../nodes.js';
+import { create_attribute, ExpressionMetadata, is_element_node } from '../../nodes.js';
 import { get_attribute_expression, is_expression_attribute } from '../../../utils/ast.js';
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
 import { list } from '../../../utils/string.js';
-import { regex_whitespace } from '../../patterns.js';
+import { locator } from '../../../state.js';
+import * as b from '#compiler/builders';
 
 const regex_invalid_unquoted_attribute_value = /^(\/>|[\s"'=<>`])/;
 const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
@@ -68,10 +70,9 @@ export default function element(parser) {
 		return;
 	}
 
-	const is_closing_tag = parser.eat('/');
-	const name = parser.read_until(regex_whitespace_or_slash_or_closing_tag);
+	if (parser.eat('/')) {
+		const name = parser.read_until(regex_whitespace_or_slash_or_closing_tag);
 
-	if (is_closing_tag) {
 		parser.allow_whitespace();
 		parser.eat('>', true);
 
@@ -126,39 +127,41 @@ export default function element(parser) {
 		return;
 	}
 
-	if (name.startsWith('svelte:') && !meta_tags.has(name)) {
-		const bounds = { start: start + 1, end: start + 1 + name.length };
+	const tag = read_tag(parser, regex_whitespace_or_slash_or_closing_tag);
+
+	if (tag.name.startsWith('svelte:') && !meta_tags.has(tag.name)) {
+		const bounds = { start: start + 1, end: start + 1 + tag.name.length };
 		e.svelte_meta_invalid_tag(bounds, list(Array.from(meta_tags.keys())));
 	}
 
-	if (!regex_valid_element_name.test(name) && !regex_valid_component_name.test(name)) {
+	if (!regex_valid_element_name.test(tag.name) && !regex_valid_component_name.test(tag.name)) {
 		// <div. -> in the middle of typing -> allow in loose mode
-		if (!parser.loose || !name.endsWith('.')) {
-			const bounds = { start: start + 1, end: start + 1 + name.length };
+		if (!parser.loose || !tag.name.endsWith('.')) {
+			const bounds = { start: start + 1, end: start + 1 + tag.name.length };
 			e.tag_invalid_name(bounds);
 		}
 	}
 
-	if (root_only_meta_tags.has(name)) {
-		if (name in parser.meta_tags) {
-			e.svelte_meta_duplicate(start, name);
+	if (root_only_meta_tags.has(tag.name)) {
+		if (tag.name in parser.meta_tags) {
+			e.svelte_meta_duplicate(start, tag.name);
 		}
 
 		if (parent.type !== 'Root') {
-			e.svelte_meta_invalid_placement(start, name);
+			e.svelte_meta_invalid_placement(start, tag.name);
 		}
 
-		parser.meta_tags[name] = true;
+		parser.meta_tags[tag.name] = true;
 	}
 
-	const type = meta_tags.has(name)
-		? meta_tags.get(name)
-		: regex_valid_component_name.test(name) || (parser.loose && name.endsWith('.'))
+	const type = meta_tags.has(tag.name)
+		? meta_tags.get(tag.name)
+		: regex_valid_component_name.test(tag.name) || (parser.loose && tag.name.endsWith('.'))
 			? 'Component'
-			: name === 'title' && parent_is_head(parser.stack)
+			: tag.name === 'title' && parent_is_head(parser.stack)
 				? 'TitleElement'
 				: // TODO Svelte 6/7: once slots are removed in favor of snippets, always keep slot as a regular element
-					name === 'slot' && !parent_is_shadowroot_template(parser.stack)
+					tag.name === 'slot' && !parent_is_shadowroot_template(parser.stack)
 					? 'SlotElement'
 					: 'RegularElement';
 
@@ -169,7 +172,8 @@ export default function element(parser) {
 					type,
 					start,
 					end: -1,
-					name,
+					name: tag.name,
+					name_loc: tag.loc,
 					attributes: [],
 					fragment: create_fragment(true),
 					metadata: {
@@ -177,14 +181,16 @@ export default function element(parser) {
 						mathml: false,
 						scoped: false,
 						has_spread: false,
-						path: []
+						path: [],
+						synthetic_value_node: null
 					}
 				}
 			: /** @type {AST.ElementLike} */ ({
 					type,
 					start,
 					end: -1,
-					name,
+					name: tag.name,
+					name_loc: tag.loc,
 					attributes: [],
 					fragment: create_fragment(true),
 					metadata: {
@@ -194,14 +200,14 @@ export default function element(parser) {
 
 	parser.allow_whitespace();
 
-	if (parent.type === 'RegularElement' && closing_tag_omitted(parent.name, name)) {
+	if (parent.type === 'RegularElement' && closing_tag_omitted(parent.name, tag.name)) {
 		const end = parent.fragment.nodes[0]?.start ?? start;
-		w.element_implicitly_closed({ start: parent.start, end }, `<${name}>`, `</${parent.name}>`);
+		w.element_implicitly_closed({ start: parent.start, end }, `<${tag.name}>`, `</${parent.name}>`);
 		parent.end = start;
 		parser.pop();
 		parser.last_auto_closed_tag = {
 			tag: parent.name,
-			reason: name,
+			reason: tag.name,
 			depth: parser.stack.length
 		};
 	}
@@ -211,7 +217,7 @@ export default function element(parser) {
 
 	const current = parser.current();
 	const is_top_level_script_or_style =
-		(name === 'script' || name === 'style') && current.type === 'Root';
+		(tag.name === 'script' || tag.name === 'style') && current.type === 'Root';
 
 	const read = is_top_level_script_or_style ? read_static_attribute : read_attribute;
 
@@ -242,6 +248,10 @@ export default function element(parser) {
 		parser.allow_whitespace();
 	}
 
+	if (element.type === 'Component') {
+		element.metadata.expression = new ExpressionMetadata();
+	}
+
 	if (element.type === 'SvelteComponent') {
 		const index = element.attributes.findIndex(
 			/** @param {any} attr */
@@ -257,6 +267,7 @@ export default function element(parser) {
 		}
 
 		element.expression = get_attribute_expression(definition);
+		element.metadata.expression = new ExpressionMetadata();
 	}
 
 	if (element.type === 'SvelteElement') {
@@ -296,7 +307,7 @@ export default function element(parser) {
 			element.tag = get_attribute_expression(definition);
 		}
 
-		element.metadata.expression = create_expression_metadata();
+		element.metadata.expression = new ExpressionMetadata();
 	}
 
 	if (is_top_level_script_or_style) {
@@ -319,7 +330,7 @@ export default function element(parser) {
 			}
 		}
 
-		if (name === 'script') {
+		if (tag.name === 'script') {
 			const content = read_script(parser, start, element.attributes);
 			if (prev_comment) {
 				// We take advantage of the fact that the root will never have leadingComments set,
@@ -347,7 +358,7 @@ export default function element(parser) {
 
 	parser.append(element);
 
-	const self_closing = parser.eat('/') || is_void(name);
+	const self_closing = parser.eat('/') || is_void(tag.name);
 	const closed = parser.eat('>', true, false);
 
 	// Loose parsing mode
@@ -377,7 +388,7 @@ export default function element(parser) {
 	if (self_closing || !closed) {
 		// don't push self-closing elements onto the stack
 		element.end = parser.index;
-	} else if (name === 'textarea') {
+	} else if (tag.name === 'textarea') {
 		// special case
 		element.fragment.nodes = read_sequence(
 			parser,
@@ -386,10 +397,10 @@ export default function element(parser) {
 		);
 		parser.read(regex_closing_textarea_tag);
 		element.end = parser.index;
-	} else if (name === 'script' || name === 'style') {
+	} else if (tag.name === 'script' || tag.name === 'style') {
 		// special case
 		const start = parser.index;
-		const data = parser.read_until(new RegExp(`</${name}>`));
+		const data = parser.read_until(new RegExp(`</${tag.name}>`));
 		const end = parser.index;
 
 		/** @type {AST.Text} */
@@ -402,7 +413,7 @@ export default function element(parser) {
 		};
 
 		element.fragment.nodes.push(node);
-		parser.eat(`</${name}>`, true);
+		parser.eat(`</${tag.name}>`, true);
 		element.end = parser.index;
 	} else {
 		parser.stack.push(element);
@@ -445,8 +456,8 @@ function parent_is_shadowroot_template(stack) {
 function read_static_attribute(parser) {
 	const start = parser.index;
 
-	const name = parser.read_until(regex_token_ending_character);
-	if (!name) return null;
+	const tag = read_tag(parser, regex_token_ending_character);
+	if (!tag.name) return null;
 
 	/** @type {true | Array<AST.Text | AST.ExpressionTag>} */
 	let value = true;
@@ -480,7 +491,7 @@ function read_static_attribute(parser) {
 		e.expected_token(parser.index, '=');
 	}
 
-	return create_attribute(name, start, parser.index, value);
+	return create_attribute(tag.name, tag.loc, start, parser.index, value);
 }
 
 /**
@@ -507,7 +518,7 @@ function read_attribute(parser) {
 				end: parser.index,
 				expression,
 				metadata: {
-					expression: create_expression_metadata()
+					expression: new ExpressionMetadata()
 				}
 			};
 
@@ -527,16 +538,15 @@ function read_attribute(parser) {
 				end: parser.index,
 				expression,
 				metadata: {
-					expression: create_expression_metadata()
+					expression: new ExpressionMetadata()
 				}
 			};
 
 			return spread;
 		} else {
-			const value_start = parser.index;
-			let name = parser.read_identifier();
+			const id = parser.read_identifier();
 
-			if (name === null) {
+			if (id.name === '') {
 				if (
 					parser.loose &&
 					(parser.match('#') || parser.match('/') || parser.match('@') || parser.match(':'))
@@ -546,7 +556,6 @@ function read_attribute(parser) {
 					return null;
 				} else if (parser.loose && parser.match('}')) {
 					// Likely in the middle of typing, just created the shorthand
-					name = '';
 				} else {
 					e.attribute_empty_shorthand(start);
 				}
@@ -558,32 +567,28 @@ function read_attribute(parser) {
 			/** @type {AST.ExpressionTag} */
 			const expression = {
 				type: 'ExpressionTag',
-				start: value_start,
-				end: value_start + name.length,
-				expression: {
-					start: value_start,
-					end: value_start + name.length,
-					type: 'Identifier',
-					name
-				},
+				start: id.start,
+				end: id.end,
+				expression: id,
 				metadata: {
-					expression: create_expression_metadata()
+					expression: new ExpressionMetadata()
 				}
 			};
 
-			return create_attribute(name, start, parser.index, expression);
+			return create_attribute(id.name, id.loc, start, parser.index, expression);
 		}
 	}
 
-	const name = parser.read_until(regex_token_ending_character);
-	if (!name) return null;
+	const tag = read_tag(parser, regex_token_ending_character);
+
+	if (!tag.name) return null;
 
 	let end = parser.index;
 
 	parser.allow_whitespace();
 
-	const colon_index = name.indexOf(':');
-	const type = colon_index !== -1 && get_directive_type(name.slice(0, colon_index));
+	const colon_index = tag.name.indexOf(':');
+	const type = colon_index !== -1 && get_directive_type(tag.name.slice(0, colon_index));
 
 	/** @type {true | AST.ExpressionTag | Array<AST.Text | AST.ExpressionTag>} */
 	let value = true;
@@ -612,10 +617,10 @@ function read_attribute(parser) {
 	}
 
 	if (type) {
-		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
+		const [directive_name, ...modifiers] = tag.name.slice(colon_index + 1).split('|');
 
 		if (directive_name === '') {
-			e.directive_missing_name({ start, end: start + colon_index + 1 }, name);
+			e.directive_missing_name({ start, end: start + colon_index + 1 }, tag.name);
 		}
 
 		if (type === 'StyleDirective') {
@@ -624,10 +629,11 @@ function read_attribute(parser) {
 				end,
 				type,
 				name: directive_name,
+				name_loc: tag.loc,
 				modifiers: /** @type {Array<'important'>} */ (modifiers),
 				value,
 				metadata: {
-					expression: create_expression_metadata()
+					expression: new ExpressionMetadata()
 				}
 			};
 		}
@@ -649,23 +655,23 @@ function read_attribute(parser) {
 			}
 		}
 
-		/** @type {AST.Directive} */
-		const directive = {
+		const directive = /** @type {AST.Directive} */ ({
 			start,
 			end,
 			type,
 			name: directive_name,
+			name_loc: tag.loc,
 			expression,
 			metadata: {
-				expression: create_expression_metadata()
+				expression: new ExpressionMetadata()
 			}
-		};
+		});
 
 		// @ts-expect-error we do this separately from the declaration to avoid upsetting typescript
 		directive.modifiers = modifiers;
 
 		if (directive.type === 'TransitionDirective') {
-			const direction = name.slice(0, colon_index);
+			const direction = tag.name.slice(0, colon_index);
 			directive.intro = direction === 'in' || direction === 'transition';
 			directive.outro = direction === 'out' || direction === 'transition';
 		}
@@ -686,7 +692,7 @@ function read_attribute(parser) {
 		return directive;
 	}
 
-	return create_attribute(name, start, end, value);
+	return create_attribute(tag.name, tag.loc, start, end, value);
 }
 
 /**
@@ -823,7 +829,7 @@ function read_sequence(parser, done, location) {
 				end: parser.index,
 				expression,
 				metadata: {
-					expression: create_expression_metadata()
+					expression: new ExpressionMetadata()
 				}
 			};
 
@@ -846,4 +852,26 @@ function read_sequence(parser, done, location) {
 	} else {
 		e.unexpected_eof(parser.template.length);
 	}
+}
+
+/**
+ * @param {Parser} parser
+ * @param {RegExp} regex
+ * @returns {Identifier & { start: number, end: number, loc: SourceLocation }}
+ */
+function read_tag(parser, regex) {
+	const start = parser.index;
+	const name = parser.read_until(regex);
+	const end = parser.index;
+
+	return {
+		type: 'Identifier',
+		name,
+		start,
+		end,
+		loc: {
+			start: locator(start),
+			end: locator(end)
+		}
+	};
 }

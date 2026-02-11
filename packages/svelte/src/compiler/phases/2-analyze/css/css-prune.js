@@ -770,7 +770,39 @@ function get_ancestor_elements(node, adjacent_only, seen = new Set()) {
 		}
 
 		if (parent.type === 'RegularElement' || parent.type === 'SvelteElement') {
+			// Special handling for <option> inside <select>: elements inside <option> should
+			// also be considered descendants of <selectedcontent>, which clones the selected option's content
+			if (parent.type === 'RegularElement' && parent.name === 'option') {
+				const is_direct_child = ancestors.length === 0;
+
+				const select_element = path.findLast(
+					(element, j) => element.type === 'RegularElement' && element.name === 'select' && j < i
+				);
+
+				if (select_element && (!adjacent_only || is_direct_child)) {
+					/** @type {Compiler.AST.RegularElement | null} */
+					let selectedcontent_element = null;
+					walk(select_element, null, {
+						RegularElement(child, context) {
+							if (child.name === 'selectedcontent') {
+								selectedcontent_element = child;
+								context.stop();
+								return;
+							}
+							context.next();
+						}
+					});
+
+					if (adjacent_only && is_direct_child && selectedcontent_element) {
+						return [selectedcontent_element, parent];
+					} else if (selectedcontent_element) {
+						ancestors.push(selectedcontent_element);
+					}
+				}
+			}
+
 			ancestors.push(parent);
+
 			if (adjacent_only) {
 				break;
 			}
@@ -816,6 +848,34 @@ function get_descendant_elements(node, adjacent_only, seen = new Set()) {
 	}
 
 	walk_children(node.type === 'RenderTag' ? node : node.fragment);
+
+	// Special handling for <selectedcontent>: it clones the content of the selected <option>,
+	// so descendants of <option> elements in the same <select> should also be considered descendants
+	if (node.type === 'RegularElement' && node.name === 'selectedcontent') {
+		const path = node.metadata.path;
+		const select_element = path.findLast(
+			(/** @type {Compiler.AST.SvelteNode} */ element) =>
+				element.type === 'RegularElement' && element.name === 'select'
+		);
+
+		if (select_element) {
+			walk(
+				select_element,
+				{ inside_option: false },
+				{
+					_(child, context) {
+						if (child.type === 'RegularElement' && child.name === 'option') {
+							context.next({ inside_option: true });
+						} else if (context.state.inside_option) {
+							walk_children(child);
+						} else {
+							context.next();
+						}
+					}
+				}
+			);
+		}
+	}
 
 	return descendants;
 }

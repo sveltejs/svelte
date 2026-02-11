@@ -8,9 +8,9 @@ import { decode } from '@jridgewell/sourcemap-codec';
 type SourceMapEntry =
 	| string
 	| {
-			/** If not the first occurence, but the nth should be found */
+			/** If not the first occurrence, but the nth should be found */
 			idxOriginal?: number;
-			/** If not the first occurence, but the nth should be found */
+			/** If not the first occurrence, but the nth should be found */
 			idxGenerated?: number;
 			/** The original string to find */
 			str: string;
@@ -95,6 +95,20 @@ const { test, run } = suite<SourcemapTest>(async (config, cwd) => {
 		}
 
 		const decoded = decode(map.mappings);
+
+		/*
+		Decoded sourcemap mappings contain absolute line/column numbers.
+		Negative values are invalid and can cause errors in downstream processing
+		*/
+		for (let l = 0; l < decoded.length; l++) {
+			for (let m of decoded[l]) {
+				if (m.some((i) => i < 0)) {
+					throw new Error(
+						`Invalid mapping with negative value ${JSON.stringify(m)} at line ${l} of the decoded mappings of ${info} sourcemap\n${JSON.stringify(map)}`
+					);
+				}
+			}
+		}
 
 		try {
 			for (let entry of entries) {

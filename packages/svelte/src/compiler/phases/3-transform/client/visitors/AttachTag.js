@@ -9,6 +9,18 @@ import { build_expression } from './shared/utils.js';
  */
 export function AttachTag(node, context) {
 	const expression = build_expression(context, node.expression, node.metadata.expression);
-	context.state.init.push(b.stmt(b.call('$.attach', context.state.node, b.thunk(expression))));
+	let statement = b.stmt(b.call('$.attach', context.state.node, b.thunk(expression)));
+
+	if (node.metadata.expression.is_async()) {
+		statement = b.stmt(
+			b.call(
+				'$.run_after_blockers',
+				node.metadata.expression.blockers(),
+				b.thunk(b.block([statement]))
+			)
+		);
+	}
+
+	context.state.init.push(statement);
 	context.next();
 }

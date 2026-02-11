@@ -1,5 +1,6 @@
 ---
 title: Global styles
+tags: styles-global
 ---
 
 ## :global(...)

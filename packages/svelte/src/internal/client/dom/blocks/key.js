@@ -1,12 +1,10 @@
-/** @import { Effect, TemplateNode } from '#client' */
-/** @import { Batch } from '../../reactivity/batch.js'; */
-import { UNINITIALIZED } from '../../../../constants.js';
-import { block, branch, pause_effect } from '../../reactivity/effects.js';
-import { not_equal, safe_not_equal } from '../../reactivity/equality.js';
+/** @import { TemplateNode } from '#client' */
 import { is_runes } from '../../context.js';
-import { hydrate_next, hydrate_node, hydrating } from '../hydration.js';
-import { create_text, should_defer_append } from '../operations.js';
-import { current_batch } from '../../reactivity/batch.js';
+import { block } from '../../reactivity/effects.js';
+import { hydrate_next, hydrating } from '../hydration.js';
+import { BranchManager } from './branches.js';
+
+const NAN = Symbol('NaN');
 
 /**
  * @template V
@@ -20,60 +18,23 @@ export function key(node, get_key, render_fn) {
 		hydrate_next();
 	}
 
-	var anchor = node;
+	var branches = new BranchManager(node);
 
-	/** @type {V | typeof UNINITIALIZED} */
-	var key = UNINITIALIZED;
-
-	/** @type {Effect} */
-	var effect;
-
-	/** @type {Effect} */
-	var pending_effect;
-
-	/** @type {DocumentFragment | null} */
-	var offscreen_fragment = null;
-
-	var changed = is_runes() ? not_equal : safe_not_equal;
-
-	function commit() {
-		if (effect) {
-			pause_effect(effect);
-		}
-
-		if (offscreen_fragment !== null) {
-			// remove the anchor
-			/** @type {Text} */ (offscreen_fragment.lastChild).remove();
-
-			anchor.before(offscreen_fragment);
-			offscreen_fragment = null;
-		}
-
-		effect = pending_effect;
-	}
+	var legacy = !is_runes();
 
 	block(() => {
-		if (changed(key, (key = get_key()))) {
-			var target = anchor;
+		var key = get_key();
 
-			var defer = should_defer_append();
-
-			if (defer) {
-				offscreen_fragment = document.createDocumentFragment();
-				offscreen_fragment.append((target = create_text()));
-			}
-
-			pending_effect = branch(() => render_fn(target));
-
-			if (defer) {
-				/** @type {Batch} */ (current_batch).add_callback(commit);
-			} else {
-				commit();
-			}
+		// NaN !== NaN, hence we do this workaround to not trigger remounts unnecessarily
+		if (key !== key) {
+			key = /** @type {any} */ (NAN);
 		}
-	});
 
-	if (hydrating) {
-		anchor = hydrate_node;
-	}
+		// key blocks in Svelte <5 had stupid semantics
+		if (legacy && key !== null && typeof key === 'object') {
+			key = /** @type {V} */ ({});
+		}
+
+		branches.ensure(key, render_fn);
+	});
 }

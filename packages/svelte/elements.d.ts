@@ -851,23 +851,6 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	readonly 'bind:offsetWidth'?: number | undefined | null;
 	readonly 'bind:offsetHeight'?: number | undefined | null;
 
-	// SvelteKit
-	'data-sveltekit-keepfocus'?: true | '' | 'off' | undefined | null;
-	'data-sveltekit-noscroll'?: true | '' | 'off' | undefined | null;
-	'data-sveltekit-preload-code'?:
-		| true
-		| ''
-		| 'eager'
-		| 'viewport'
-		| 'hover'
-		| 'tap'
-		| 'off'
-		| undefined
-		| null;
-	'data-sveltekit-preload-data'?: true | '' | 'hover' | 'tap' | 'off' | undefined | null;
-	'data-sveltekit-reload'?: true | '' | 'off' | undefined | null;
-	'data-sveltekit-replacestate'?: true | '' | 'off' | undefined | null;
-
 	// allow any data- attribute
 	[key: `data-${string}`]: any;
 
@@ -1239,6 +1222,7 @@ export interface HTMLMediaAttributes<T extends HTMLMediaElement> extends HTMLAtt
 	playsinline?: boolean | undefined | null;
 	preload?: 'auto' | 'none' | 'metadata' | '' | undefined | null;
 	src?: string | undefined | null;
+	srcobject?: MediaStream | MediaSource | File | Blob;
 	/**
 	 * a value between 0 and 1
 	 */
@@ -1421,7 +1405,7 @@ export interface HTMLTextareaAttributes extends HTMLAttributes<HTMLTextAreaEleme
 	// needs both casing variants because language tools does lowercase names of non-shorthand attributes
 	defaultValue?: string | string[] | number | undefined | null;
 	defaultvalue?: string | string[] | number | undefined | null;
-	wrap?: 'hard' | 'soft' | undefined | null;
+	wrap?: 'hard' | 'soft' | 'off' | undefined | null;
 
 	'on:change'?: ChangeEventHandler<HTMLTextAreaElement> | undefined | null;
 	onchange?: ChangeEventHandler<HTMLTextAreaElement> | undefined | null;
@@ -1658,6 +1642,7 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	'font-variant'?: number | string | undefined | null;
 	'font-weight'?: number | string | undefined | null;
 	format?: number | string | undefined | null;
+	fr?: number | string | undefined | null;
 	from?: number | string | undefined | null;
 	fx?: number | string | undefined | null;
 	fy?: number | string | undefined | null;
@@ -2060,7 +2045,7 @@ export interface SvelteHTMLElements {
 			| undefined
 			| {
 					tag?: string;
-					shadow?: 'open' | 'none' | undefined;
+					shadow?: 'open' | 'none' | ShadowRootInit | undefined;
 					props?:
 						| Record<
 								string,

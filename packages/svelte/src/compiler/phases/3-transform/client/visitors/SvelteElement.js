@@ -93,7 +93,8 @@ export function SvelteElement(node, context) {
 		);
 	}
 
-	const { has_await } = node.metadata.expression;
+	const has_await = node.metadata.expression.has_await;
+	const has_blockers = node.metadata.expression.has_blockers();
 
 	const expression = /** @type {Expression} */ (context.visit(node.tag));
 	const get_tag = b.thunk(has_await ? b.call('$.get', b.id('$$tag')) : expression);
@@ -117,10 +118,10 @@ export function SvelteElement(node, context) {
 	);
 
 	if (dev) {
+		statements.push(b.stmt(b.call('$.validate_dynamic_element_tag', get_tag)));
 		if (node.fragment.nodes.length > 0) {
 			statements.push(b.stmt(b.call('$.validate_void_dynamic_element', get_tag)));
 		}
-		statements.push(b.stmt(b.call('$.validate_dynamic_element_tag', get_tag)));
 	}
 
 	const location = dev && locator(node.start);
@@ -139,14 +140,18 @@ export function SvelteElement(node, context) {
 		)
 	);
 
-	if (has_await) {
+	if (has_await || has_blockers) {
 		context.state.init.push(
 			b.stmt(
 				b.call(
 					'$.async',
 					context.state.node,
-					b.array([b.thunk(expression, true)]),
-					b.arrow([context.state.node, b.id('$$tag')], b.block(statements))
+					node.metadata.expression.blockers(),
+					has_await ? b.array([b.thunk(expression, true)]) : b.void0,
+					b.arrow(
+						has_await ? [context.state.node, b.id('$$tag')] : [context.state.node],
+						b.block(statements)
+					)
 				)
 			)
 		);

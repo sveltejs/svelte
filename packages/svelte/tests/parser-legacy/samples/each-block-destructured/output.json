@@ -190,7 +190,7 @@
 				},
 				"end": {
 					"line": 3,
-					"column": 0
+					"column": 9
 				}
 			},
 			"body": [
@@ -259,7 +259,8 @@
 						"kind": "let"
 					},
 					"specifiers": [],
-					"source": null
+					"source": null,
+					"attributes": []
 				}
 			],
 			"sourceType": "module"

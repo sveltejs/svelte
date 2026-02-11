@@ -1,5 +1,6 @@
 ---
 title: {@attach ...}
+tags: attachments
 ---
 
 Attachments are functions that run in an [effect]($effect) when an element is mounted to the DOM or when [state]($state) read inside the function updates.
@@ -81,6 +82,14 @@ Attachments can also be created inline ([demo](/playground/untitled#H4sIAAAAAAAA
 
 > [!NOTE]
 > The nested effect runs whenever `color` changes, while the outer effect (where `canvas.getContext(...)` is called) only runs once, since it doesn't read any reactive state.
+
+## Conditional attachments
+
+Falsy values like `false` or `undefined` are treated as no attachment, enabling conditional usage:
+
+```svelte
+<div {@attach enabled && myAttachment}>...</div>
+```
 
 ## Passing attachments to components
 

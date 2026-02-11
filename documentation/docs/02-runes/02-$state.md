@@ -1,5 +1,6 @@
 ---
 title: $state
+tags: rune-state
 ---
 
 The `$state` rune allows you to create _reactive state_, which means that your UI _reacts_ when it changes.
@@ -165,6 +166,21 @@ To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snaps
 ```
 
 This is handy when you want to pass some state to an external library or API that doesn't expect a proxy, such as `structuredClone`.
+
+## `$state.eager`
+
+When state changes, it may not be reflected in the UI immediately if it is used by an `await` expression, because [updates are synchronized](await-expressions#Synchronized-updates).
+
+In some cases, you may want to update the UI as soon as the state changes. For example, you might want to update a navigation bar when the user clicks on a link, so that they get visual feedback while waiting for the new page to load. To do this, use `$state.eager(value)`:
+
+```svelte
+<nav>
+	<a href="/" aria-current={$state.eager(pathname) === '/' ? 'page' : null}>home</a>
+	<a href="/about" aria-current={$state.eager(pathname) === '/about' ? 'page' : null}>about</a>
+</nav>
+```
+
+Use this feature sparingly, and only to provide feedback in response to user action — in general, allowing Svelte to coordinate updates will provide a better user experience.
 
 ## Passing state into functions
 
