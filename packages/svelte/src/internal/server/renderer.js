@@ -18,8 +18,147 @@ import { noop } from '../shared/utils.js';
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
 
 /**
- * @typedef {string | Renderer} RendererItem
+ * @typedef {string | Renderer | Boundary} RendererItem
  */
+
+/**
+ * Wraps a child {@link Renderer} to form an error boundary. Catches errors
+ * from children (both synchronous and async) and renders the `failed` snippet
+ * with the transformed error instead.
+ */
+class Boundary {
+	/** @type {Renderer} */
+	renderer;
+
+	/** @type {Renderer} */
+	#parent;
+
+	/** @type {(renderer: Renderer, error: unknown, reset: () => void) => void} */
+	#failed;
+
+	/** @type {(error: unknown) => unknown} */
+	#onerror;
+
+	/**
+	 * @param {Renderer} parent
+	 * @param {(renderer: Renderer, error: unknown, reset: () => void) => void} failed
+	 * @param {(error: unknown) => unknown} onerror
+	 */
+	constructor(parent, failed, onerror) {
+		this.#parent = parent;
+		this.renderer = new Renderer(parent.global, parent);
+		this.#failed = failed;
+		this.#onerror = onerror;
+	}
+
+	/**
+	 * Run `children_fn` inside the boundary, catching synchronous errors.
+	 * Async errors (from nested child renderers) are caught during collection
+	 * @param {(renderer: Renderer) => MaybePromise<void>} children_fn
+	 */
+	run(children_fn) {
+		const parent_context = ssr_context;
+
+		set_ssr_context({
+			...ssr_context,
+			p: parent_context,
+			c: null,
+			r: this.renderer
+		});
+
+		try {
+			const result = children_fn(this.renderer);
+
+			set_ssr_context(parent_context);
+
+			if (result instanceof Promise) {
+				if (this.renderer.global.mode === 'sync') {
+					e.await_invalid();
+				}
+				result.catch(noop);
+				this.renderer.promise = result;
+			}
+		} catch (error) {
+			set_ssr_context(parent_context);
+			this.#handle_sync_error(error);
+		}
+	}
+
+	/**
+	 * Handle a synchronous error thrown by `children_fn`. Runs the error
+	 * through `onerror` and replaces the child renderer with one containing
+	 * the failed snippet.
+	 * @param {unknown} error
+	 */
+	#handle_sync_error(error) {
+		/** @type {unknown} */
+		const result = this.#onerror(error);
+
+		// Replace the renderer with one that contains the failed snippet
+		const failed_renderer = new Renderer(this.renderer.global, this.#parent);
+
+		if (result instanceof Promise) {
+			if (this.renderer.global.mode === 'sync') {
+				e.await_invalid();
+			}
+
+			failed_renderer.promise = /** @type {Promise<unknown>} */ (result).then((transformed) =>
+				this.#render_failed(failed_renderer, transformed)
+			);
+			failed_renderer.promise.catch(noop);
+		} else {
+			this.#render_failed(failed_renderer, result);
+		}
+
+		this.renderer = failed_renderer;
+	}
+
+	/**
+	 * Collect the boundary's content asynchronously, catching errors from
+	 * nested async children and rendering the failed snippet on error.
+	 * @param {AccumulatedContent} content
+	 */
+	async collect_async(content) {
+		/** @type {AccumulatedContent} */
+		const boundary_content = { head: '', body: '' };
+
+		try {
+			await this.renderer.collect_content_async(boundary_content);
+			// We merge afterwards to ensure failed renderers don't corrupt the content with partial output
+			content.head += boundary_content.head;
+			content.body += boundary_content.body;
+		} catch (error) {
+			const transformed = await this.#onerror(error);
+
+			const failed_renderer = new Renderer(this.renderer.global, this.#parent);
+			failed_renderer.type = this.renderer.type;
+
+			this.#render_failed(failed_renderer, transformed);
+			await failed_renderer.collect_content_async(content);
+		}
+	}
+
+	/**
+	 * Render the failed snippet into a renderer, serializing the transformed
+	 * error into the hydration comment so the client can read it.
+	 * @param {Renderer} renderer
+	 * @param {unknown} error
+	 */
+	#render_failed(renderer, error) {
+		renderer.push(`<!--${HYDRATION_START_FAILED}${JSON.stringify(error)}-->`);
+		this.#failed(renderer, error, noop);
+		renderer.push(BLOCK_CLOSE);
+	}
+
+	/**
+	 * @deprecated needed for legacy component bindings
+	 */
+	copy() {
+		const b = new Boundary(this.#parent, this.#failed, this.#onerror);
+		b.renderer = this.renderer.copy();
+		return b;
+	}
+}
 
 /**
  * Renderers are basically a tree of `string | Renderer`s, where each `Renderer` in the tree represents
@@ -48,13 +187,6 @@ export class Renderer {
 	 * @type {boolean}
 	 */
 	#is_component_body = false;
-
-	/**
-	 * If set, this renderer is an error boundary. When async collection
-	 * of the children fails, the failed snippet is rendered instead.
-	 * @type {{ failed: (renderer: Renderer, error: unknown, reset: () => void) => void; onerror: (error: unknown) => unknown } | null}
-	 */
-	#boundary = null;
 
 	/**
 	 * The type of string content that this renderer is accumulating.
@@ -223,79 +355,15 @@ export class Renderer {
 	}
 
 	/**
-	 * Render children inside an error boundary. If the children throw and the API-level
-	 * `onerror` transform handles the error (doesn't re-throw), the `failed` snippet is
-	 * rendered instead. Otherwise the error propagates.
+	 * Render children inside an error boundary.
 	 *
-	 * @param {{ failed?: (renderer: Renderer, error: unknown, reset: () => void) => void }} props
+	 * @param {{ failed: (renderer: Renderer, error: unknown, reset: () => void) => void }} props
 	 * @param {(renderer: Renderer) => MaybePromise<void>} children_fn
 	 */
 	boundary(props, children_fn) {
-		// Create a child renderer for the boundary content.
-		// Mark it as a boundary so that #collect_content_async can catch
-		// errors from nested async children and render the failed snippet.
-		const child = new Renderer(this.global, this);
-		this.#out.push(child);
-
-		if (props.failed) {
-			child.#boundary = {
-				failed: props.failed,
-				onerror: this.global.onerror
-			};
-		}
-
-		const parent_context = ssr_context;
-
-		set_ssr_context({
-			...ssr_context,
-			p: parent_context,
-			c: null,
-			r: child
-		});
-
-		try {
-			const result = children_fn(child);
-
-			set_ssr_context(parent_context);
-
-			if (result instanceof Promise) {
-				if (child.global.mode === 'sync') {
-					e.await_invalid();
-				}
-				result.catch(noop);
-				child.promise = result;
-			}
-		} catch (error) {
-			// synchronous errors are handled here, async errors will be handled in #collect_content_async
-			set_ssr_context(parent_context);
-
-			const failed_snippet = props.failed;
-
-			if (!failed_snippet) throw error;
-
-			const result = this.global.onerror(error);
-
-			if (result instanceof Promise) {
-				if (this.global.mode === 'sync') {
-					e.await_invalid();
-				}
-
-				child.#out.length = 0;
-				child.#boundary = null;
-				child.promise = /** @type {Promise<unknown>} */ (result).then((transformed) => {
-					child.#out.push(`<!--${HYDRATION_START_FAILED}${JSON.stringify(transformed)}-->`);
-					failed_snippet(child, transformed, noop);
-					child.#out.push(BLOCK_CLOSE);
-				});
-				child.promise.catch(noop);
-			} else {
-				child.#out.length = 0;
-				child.#boundary = null;
-				child.#out.push(`<!--${HYDRATION_START_FAILED}${JSON.stringify(result)}-->`);
-				failed_snippet(child, result, noop);
-				child.#out.push(BLOCK_CLOSE);
-			}
-		}
+		const b = new Boundary(this, props.failed, this.global.onerror);
+		this.#out.push(b);
+		b.run(children_fn);
 	}
 
 	/**
@@ -373,7 +441,7 @@ export class Renderer {
 				body(r);
 
 				if (this.global.mode === 'async') {
-					return r.#collect_content_async().then((content) => {
+					return r.collect_content_async().then((content) => {
 						close(renderer, content.body.replaceAll('<!---->', ''), content);
 					});
 				} else {
@@ -402,7 +470,7 @@ export class Renderer {
 			fn(r);
 
 			if (renderer.global.mode === 'async') {
-				return r.#collect_content_async().then((content) => {
+				return r.collect_content_async().then((content) => {
 					close(content.head);
 				});
 			} else {
@@ -442,7 +510,7 @@ export class Renderer {
 	 */
 	copy() {
 		const copy = new Renderer(this.global, this.#parent);
-		copy.#out = this.#out.map((item) => (item instanceof Renderer ? item.copy() : item));
+		copy.#out = this.#out.map((item) => (typeof item !== 'string' ? item.copy() : item));
 		copy.promise = this.promise;
 		return copy;
 	}
@@ -462,6 +530,8 @@ export class Renderer {
 		this.#out = other.#out.map((item) => {
 			if (item instanceof Renderer) {
 				item.subsume(item);
+			} else if (item instanceof Boundary) {
+				item.renderer.subsume(item.renderer);
 			}
 			return item;
 		});
@@ -571,8 +641,10 @@ export class Renderer {
 	 */
 	*#traverse_components() {
 		for (const child of this.#out) {
-			if (typeof child !== 'string') {
+			if (child instanceof Renderer) {
 				yield* child.#traverse_components();
+			} else if (child instanceof Boundary) {
+				yield* child.renderer.#traverse_components();
 			}
 		}
 		if (this.#is_component_body) {
@@ -592,6 +664,8 @@ export class Renderer {
 		for (const child of this.#out) {
 			if (child instanceof Renderer && !child.#is_component_body) {
 				yield* child.#collect_ondestroy();
+			} else if (child instanceof Boundary) {
+				yield* child.renderer.#collect_ondestroy();
 			}
 		}
 	}
@@ -630,7 +704,7 @@ export class Renderer {
 
 		try {
 			const renderer = Renderer.#open_render('async', component, options);
-			const content = await renderer.#collect_content_async();
+			const content = await renderer.collect_content_async();
 			const hydratables = await renderer.#collect_hydratables();
 			if (hydratables !== null) {
 				content.head = hydratables + content.head;
@@ -653,6 +727,8 @@ export class Renderer {
 				content[this.type] += item;
 			} else if (item instanceof Renderer) {
 				item.#collect_content(content);
+			} else if (item instanceof Boundary) {
+				item.renderer.#collect_content(content);
 			}
 		}
 
@@ -661,46 +737,20 @@ export class Renderer {
 
 	/**
 	 * Collect all of the code from the `out` array and return it as a string.
-	 * @param {AccumulatedContent} content
+	 * @param {AccumulatedContent} [content]
 	 * @returns {Promise<AccumulatedContent>}
 	 */
-	async #collect_content_async(content = { head: '', body: '' }) {
+	async collect_content_async(content = { head: '', body: '' }) {
 		await this.promise;
 
 		// no danger to sequentially awaiting stuff in here; all of the work is already kicked off
 		for (const item of this.#out) {
 			if (typeof item === 'string') {
 				content[this.type] += item;
+			} else if (item instanceof Boundary) {
+				await item.collect_async(content);
 			} else if (item instanceof Renderer) {
-				if (item.#boundary) {
-					// This renderer is an error boundary - collect into a separate
-					// accumulator so we can discard partial content on error
-					/** @type {AccumulatedContent} */
-					const boundary_content = { head: '', body: '' };
-
-					try {
-						await item.#collect_content_async(boundary_content);
-						// Success - merge into the main content
-						content.head += boundary_content.head;
-						content.body += boundary_content.body;
-					} catch (error) {
-						const { failed, onerror } = item.#boundary;
-
-						let transformed = await onerror(error);
-
-						// Render the failed snippet instead of the partial children content
-						const failed_renderer = new Renderer(item.global, item);
-						failed_renderer.type = item.type;
-						failed_renderer.#out.push(
-							`<!--${HYDRATION_START_FAILED}${JSON.stringify(transformed)}-->`
-						);
-						failed(failed_renderer, transformed, noop);
-						failed_renderer.#out.push(BLOCK_CLOSE);
-						await failed_renderer.#collect_content_async(content);
-					}
-				} else {
-					await item.#collect_content_async(content);
-				}
+				await item.collect_content_async(content);
 			}
 		}
 
