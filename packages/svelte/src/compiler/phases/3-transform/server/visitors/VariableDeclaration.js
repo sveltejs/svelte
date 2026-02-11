@@ -84,22 +84,24 @@ export function VariableDeclaration(node, context) {
 			const args = /** @type {CallExpression} */ (init).arguments;
 			const value = args.length > 0 ? /** @type {Expression} */ (context.visit(args[0])) : b.void0;
 
-			if (rune === '$derived.by') {
+			if (rune === '$derived' || rune === '$derived.by') {
+				const is_async =
+					rune === '$derived' &&
+					context.state.analysis.async_deriveds.has(
+						/** @type {CallExpression} */ (declarator.init)
+					);
+
+				let init = b.call('$.derived', rune === '$derived' ? b.thunk(value, is_async) : value);
+
 				declarations.push(
-					b.declarator(/** @type {Pattern} */ (context.visit(declarator.id)), b.call(value))
+					b.declarator(/** @type {Pattern} */ (context.visit(declarator.id)), init)
 				);
+
 				continue;
 			}
 
 			if (declarator.id.type === 'Identifier') {
 				declarations.push(b.declarator(declarator.id, value));
-				continue;
-			}
-
-			if (rune === '$derived') {
-				declarations.push(
-					b.declarator(/** @type {Pattern} */ (context.visit(declarator.id)), value)
-				);
 				continue;
 			}
 

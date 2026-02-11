@@ -270,6 +270,10 @@ export function build_getter(node, state) {
 		);
 	}
 
+	if (binding.kind === 'derived') {
+		return (binding.declaration_kind === 'var' ? b.maybe_call : b.call)(binding.node);
+	}
+
 	return node;
 }
 
