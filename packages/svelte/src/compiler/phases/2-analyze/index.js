@@ -690,7 +690,7 @@ export function analyze_component(root, source, options) {
 		}
 	}
 
-	calculate_blockers(instance, scopes, analysis);
+	calculate_blockers(instance, analysis);
 
 	if (analysis.runes) {
 		const props_refs = module.scope.references.get('$$props');
@@ -940,11 +940,10 @@ export function analyze_component(root, source, options) {
  * top level statements. This includes indirect blockers such as functions referencing async top level statements.
  *
  * @param {Js} instance
- * @param {Map<AST.SvelteNode, Scope>} scopes
  * @param {ComponentAnalysis} analysis
  * @returns {void}
  */
-function calculate_blockers(instance, scopes, analysis) {
+function calculate_blockers(instance, analysis) {
 	/**
 	 * @param {ESTree.Node} expression
 	 * @param {Scope} scope
@@ -959,6 +958,14 @@ function calculate_blockers(instance, scopes, analysis) {
 			expression,
 			{ scope },
 			{
+				_(node, context) {
+					const scope = instance.scopes.get(node);
+					if (scope) {
+						context.next({ scope });
+					} else {
+						context.next();
+					}
+				},
 				ImportDeclaration(node) {},
 				Identifier(node, context) {
 					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
@@ -979,14 +986,11 @@ function calculate_blockers(instance, scopes, analysis) {
 
 	/**
 	 * @param {ESTree.Node} node
-	 * @param {Set<ESTree.Node>} seen
 	 * @param {Set<Binding>} reads
 	 * @param {Set<Binding>} writes
+	 * @param {Scope} scope
 	 */
-	const trace_references = (node, reads, writes, seen = new Set()) => {
-		if (seen.has(node)) return;
-		seen.add(node);
-
+	const trace_references = (node, reads, writes, scope) => {
 		/**
 		 * @param {ESTree.Pattern} node
 		 * @param {Scope} scope
@@ -1005,10 +1009,10 @@ function calculate_blockers(instance, scopes, analysis) {
 
 		walk(
 			node,
-			{ scope: instance.scope },
+			{ scope },
 			{
 				_(node, context) {
-					const scope = scopes.get(node);
+					const scope = instance.scopes.get(node);
 					if (scope) {
 						context.next({ scope });
 					} else {
@@ -1040,10 +1044,6 @@ function calculate_blockers(instance, scopes, analysis) {
 						writes.add(b);
 					}
 				},
-				// don't look inside functions until they are called
-				ArrowFunctionExpression(_, context) {},
-				FunctionDeclaration(_, context) {},
-				FunctionExpression(_, context) {},
 				Identifier(node, context) {
 					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
 					if (is_reference(node, parent)) {
@@ -1052,7 +1052,19 @@ function calculate_blockers(instance, scopes, analysis) {
 							reads.add(binding);
 						}
 					}
-				}
+				},
+				ReturnStatement(node, context) {
+					// We have to assume that anything returned from a function, even if it's a function itself,
+					// might be called immediately, so we have to touch all references within it. Example:
+					// function foo() { return () => blocker; } foo(); // blocker is touched
+					if (node.argument) {
+						touch(node.argument, context.state.scope, reads);
+					}
+				},
+				// don't look inside functions until they are called
+				ArrowFunctionExpression(_, context) {},
+				FunctionDeclaration(_, context) {},
+				FunctionExpression(_, context) {}
 			}
 		);
 	};
@@ -1132,7 +1144,7 @@ function calculate_blockers(instance, scopes, analysis) {
 					/** @type {Set<Binding>} */
 					const writes = new Set();
 
-					trace_references(declarator, reads, writes);
+					trace_references(declarator, reads, writes, instance.scope);
 
 					const blocker = /** @type {NonNullable<Binding['blocker']>} */ (
 						b.member(promises, b.literal(analysis.instance_body.async.length), true)
@@ -1160,7 +1172,7 @@ function calculate_blockers(instance, scopes, analysis) {
 			/** @type {Set<Binding>} */
 			const writes = new Set();
 
-			trace_references(node, reads, writes);
+			trace_references(node, reads, writes, instance.scope);
 
 			const blocker = /** @type {NonNullable<Binding['blocker']>} */ (
 				b.member(promises, b.literal(analysis.instance_body.async.length), true)
@@ -1184,12 +1196,17 @@ function calculate_blockers(instance, scopes, analysis) {
 	for (const fn of functions) {
 		/** @type {Set<Binding>} */
 		const reads_writes = new Set();
-		const body =
+		const init =
 			fn.type === 'VariableDeclarator'
-				? /** @type {ESTree.FunctionExpression | ESTree.ArrowFunctionExpression} */ (fn.init).body
-				: fn.body;
+				? /** @type {ESTree.FunctionExpression | ESTree.ArrowFunctionExpression} */ (fn.init)
+				: fn;
 
-		trace_references(body, reads_writes, reads_writes);
+		trace_references(
+			init.body,
+			reads_writes,
+			reads_writes,
+			/** @type {Scope} */ (instance.scopes.get(init))
+		);
 
 		const max = [...reads_writes].reduce((max, binding) => {
 			if (binding.blocker) {
