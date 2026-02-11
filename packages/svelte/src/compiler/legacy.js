@@ -101,7 +101,8 @@ export function convert(source, ast) {
 					},
 					instance,
 					module,
-					css: ast.css ? visit(ast.css) : undefined
+					css: ast.css ? visit(ast.css) : undefined,
+					comments: ast.comments
 				};
 			},
 			AnimateDirective(node) {
