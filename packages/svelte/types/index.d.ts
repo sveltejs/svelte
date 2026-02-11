@@ -20,6 +20,7 @@ declare module 'svelte' {
 		sync?: boolean;
 		idPrefix?: string;
 		$$inline?: boolean;
+		transformError?: (error: unknown) => unknown;
 	}
 
 	/**

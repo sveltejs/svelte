@@ -21,6 +21,7 @@ export interface ComponentConstructorOptions<
 	sync?: boolean;
 	idPrefix?: string;
 	$$inline?: boolean;
+	transformError?: (error: unknown) => unknown;
 }
 
 /**
