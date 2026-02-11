@@ -91,11 +91,51 @@ export function VariableDeclaration(node, context) {
 						/** @type {CallExpression} */ (declarator.init)
 					);
 
-				let init = b.call('$.derived', rune === '$derived' ? b.thunk(value, is_async) : value);
+				if (declarator.id.type === 'Identifier') {
+					let init = b.call('$.derived', rune === '$derived' ? b.thunk(value, is_async) : value);
 
-				declarations.push(
-					b.declarator(/** @type {Pattern} */ (context.visit(declarator.id)), init)
-				);
+					declarations.push(
+						b.declarator(/** @type {Pattern} */ (context.visit(declarator.id)), init)
+					);
+				} else {
+					const init = /** @type {CallExpression} */ (declarator.init);
+					let expression = /** @type {Expression} */ (context.visit(value));
+
+					let rhs = value;
+
+					if (rune !== '$derived' || init.arguments[0].type !== 'Identifier') {
+						const id = b.id(context.state.scope.generate('$$d'));
+
+						/** @type {Expression} */
+						let call = b.call('$.derived', rune === '$derived' ? b.thunk(expression) : expression);
+
+						rhs = b.call(id);
+
+						if (is_async) {
+							call = b.await(call);
+						}
+
+						declarations.push(b.declarator(id, call));
+					}
+
+					const { inserts, paths } = extract_paths(declarator.id, rhs);
+
+					for (const { id, value } of inserts) {
+						id.name = context.state.scope.generate('$$array');
+						// context.state.transform[id.name] = { read: get_value };
+
+						const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
+						let call = b.call('$.derived', expression);
+
+						declarations.push(b.declarator(id, call));
+					}
+
+					for (const path of paths) {
+						const expression = /** @type {Expression} */ (context.visit(path.expression));
+						const call = b.call('$.derived', b.thunk(expression));
+						declarations.push(b.declarator(path.node, call));
+					}
+				}
 
 				continue;
 			}
