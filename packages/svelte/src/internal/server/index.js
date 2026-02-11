@@ -457,7 +457,7 @@ export { push_element, pop_element, validate_snippet_args } from './dev.js';
 
 export { snapshot } from '../shared/clone.js';
 
-export { fallback, to_array } from '../shared/utils.js';
+export { fallback, to_array, exclude_from_object } from '../shared/utils.js';
 
 export {
 	invalid_default_snippet,
