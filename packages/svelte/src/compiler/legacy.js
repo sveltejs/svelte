@@ -102,7 +102,7 @@ export function convert(source, ast) {
 					instance,
 					module,
 					css: ast.css ? visit(ast.css) : undefined,
-					comments: ast.comments
+					comments: ast.comments?.length > 0 ? ast.comments : undefined
 				};
 			},
 			AnimateDirective(node) {
