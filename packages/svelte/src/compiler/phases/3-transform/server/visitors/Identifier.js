@@ -14,7 +14,7 @@ export function Identifier(node, context) {
 			return b.id('$$sanitized_props');
 		}
 
-		if (node.name.startsWith('$$array')) {
+		if (node.name.startsWith('$$derived_array')) {
 			// terrible hack, but easier than adding new stuff to `context.state` for now
 			return b.call(node);
 		}

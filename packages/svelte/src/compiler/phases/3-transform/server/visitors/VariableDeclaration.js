@@ -115,7 +115,7 @@ export function VariableDeclaration(node, context) {
 					const { inserts, paths } = extract_paths(declarator.id, rhs);
 
 					for (const { id, value } of inserts) {
-						id.name = context.state.scope.generate('$$array');
+						id.name = context.state.scope.generate('$$derived_array');
 
 						const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
 						let call = b.call('$.derived', expression);
