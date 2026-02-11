@@ -8,7 +8,7 @@ export default function Async_if_chain($$renderer) {
 
 	let foo = true;
 	var blocking;
-	var $$promises = $$renderer.run([async () => blocking = $.derived(() => foo)]);
+	var $$promises = $$renderer.run([async () => blocking = await $.async_derived(() => foo)]);
 
 	$$renderer.async_block([$$promises[0]], ($$renderer) => {
 		if (foo) {
