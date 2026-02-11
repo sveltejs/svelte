@@ -5,7 +5,7 @@ import { init_array_prototype_warnings } from '../dev/equality.js';
 import { get_descriptor, is_extensible } from '../../shared/utils.js';
 import { active_effect } from '../runtime.js';
 import { async_mode_flag } from '../../flags/index.js';
-import { TEXT_NODE, EFFECT_RAN } from '#client/constants';
+import { TEXT_NODE, REACTION_RAN } from '#client/constants';
 import { eager_block_effects } from '../reactivity/batch.js';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
@@ -227,7 +227,7 @@ export function should_defer_append() {
 	if (eager_block_effects !== null) return false;
 
 	var flags = /** @type {Effect} */ (active_effect).f;
-	return (flags & EFFECT_RAN) !== 0;
+	return (flags & REACTION_RAN) !== 0;
 }
 
 /**

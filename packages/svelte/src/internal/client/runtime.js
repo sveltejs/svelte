@@ -22,7 +22,8 @@ import {
 	STALE_REACTION,
 	ERROR_VALUE,
 	WAS_MARKED,
-	MANAGED_EFFECT
+	MANAGED_EFFECT,
+	REACTION_RAN
 } from './constants.js';
 import { old_values } from './reactivity/sources.js';
 import {
@@ -255,6 +256,7 @@ export function update_reaction(reaction) {
 		reaction.f |= REACTION_IS_UPDATING;
 		var fn = /** @type {Function} */ (reaction.fn);
 		var result = fn();
+		reaction.f |= REACTION_RAN;
 		var deps = reaction.deps;
 
 		// Don't remove reactions during fork;
@@ -647,7 +649,7 @@ export function get(signal) {
 			active_reaction !== null &&
 			(is_updating_effect || (active_reaction.f & CONNECTED) !== 0);
 
-		var is_new = derived.deps === null;
+		var is_new = (derived.f & REACTION_RAN) === 0;
 
 		if (is_dirty(derived)) {
 			if (should_connect) {
