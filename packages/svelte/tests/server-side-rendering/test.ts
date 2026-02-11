@@ -24,7 +24,7 @@ interface SSRTest extends BaseTest {
 	error?: string;
 	csp?: { nonce: string } | { hash: true };
 	script_hashes?: string[];
-	handleError?: (error: unknown) => unknown;
+	transformError?: (error: unknown) => unknown;
 }
 
 // TODO remove this shim when we can
@@ -86,7 +86,7 @@ const { test, run } = suite_with_variants<SSRTest, 'sync' | 'async', CompileOpti
 				props: config.props || {},
 				idPrefix: config.id_prefix,
 				csp: config.csp,
-				handleError: config.handleError
+				transformError: config.transformError
 			});
 			rendered = is_async ? await render_result : render_result;
 			// we need to access these inside the try-catch otherwise errors in the script tag are not caught

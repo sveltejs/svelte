@@ -73,7 +73,7 @@ export class Boundary {
 	is_pending = false;
 
 	/**
-	 * API-level handleError transform function. Transforms errors before they reach the `failed` snippet.
+	 * API-level transformError transform function. Transforms errors before they reach the `failed` snippet.
 	 * Inherited from parent boundary, or defaults to identity.
 	 * @type {(error: unknown) => unknown}
 	 */
@@ -522,7 +522,7 @@ export class Boundary {
 		};
 
 		queue_micro_task(() => {
-			// Run the error through the API-level handleError transform (e.g. SvelteKit's handleError)
+			// Run the error through the API-level transformError transform (e.g. SvelteKit's handleError)
 			/** @type {unknown} */
 			var result;
 			try {
@@ -537,7 +537,7 @@ export class Boundary {
 				typeof result === 'object' &&
 				typeof (/** @type {any} */ (result).then) === 'function'
 			) {
-				// handleError returned a Promise — wait for it
+				// transformError returned a Promise — wait for it
 				/** @type {any} */ (result).then(
 					/** @param {unknown} transformed_error */
 					(transformed_error) => handle_error_result(transformed_error),

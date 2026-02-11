@@ -52,7 +52,7 @@ export class Renderer {
 	/**
 	 * If set, this renderer is an error boundary. When async collection
 	 * of the children fails, the failed snippet is rendered instead.
-	 * @type {{ failed: (renderer: Renderer, error: unknown, reset: () => void) => void; handleError: (error: unknown) => unknown } | null}
+	 * @type {{ failed: (renderer: Renderer, error: unknown, reset: () => void) => void; transformError: (error: unknown) => unknown } | null}
 	 */
 	#boundary = null;
 
@@ -224,7 +224,7 @@ export class Renderer {
 
 	/**
 	 * Render children inside an error boundary. If the children throw and the API-level
-	 * `handleError` transform handles the error (doesn't re-throw), the `failed` snippet is
+	 * `transformError` transform handles the error (doesn't re-throw), the `failed` snippet is
 	 * rendered instead. Otherwise the error propagates.
 	 *
 	 * @param {{ failed?: (renderer: Renderer, error: unknown, reset: () => void) => void }} props
@@ -240,7 +240,7 @@ export class Renderer {
 		if (props.failed) {
 			child.#boundary = {
 				failed: props.failed,
-				handleError: this.global.handleError
+				transformError: this.global.transformError
 			};
 		}
 
@@ -273,7 +273,7 @@ export class Renderer {
 
 			if (!failed_snippet) throw error;
 
-			const result = this.global.handleError(error);
+			const result = this.global.transformError(error);
 
 			if (result instanceof Promise) {
 				if (this.global.mode === 'sync') {
@@ -684,9 +684,9 @@ export class Renderer {
 						content.head += boundary_content.head;
 						content.body += boundary_content.body;
 					} catch (error) {
-						const { failed, handleError } = item.#boundary;
+						const { failed, transformError } = item.#boundary;
 
-						let transformed = await handleError(error);
+						let transformed = await transformError(error);
 
 						// Render the failed snippet instead of the partial children content
 						const failed_renderer = new Renderer(item.global, item);
@@ -728,7 +728,7 @@ export class Renderer {
 	 * @template {Record<string, any>} Props
 	 * @param {'sync' | 'async'} mode
 	 * @param {import('svelte').Component<Props>} component
-	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp; handleError?: (error: unknown) => unknown }} options
+	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp; transformError?: (error: unknown) => unknown }} options
 	 * @returns {Renderer}
 	 */
 	static #open_render(mode, component, options) {
@@ -737,7 +737,7 @@ export class Renderer {
 				mode,
 				options.idPrefix ? options.idPrefix + '-' : '',
 				options.csp,
-				options.handleError
+				options.transformError
 			)
 		);
 
@@ -851,11 +851,11 @@ export class SSRState {
 	css = new Set();
 
 	/**
-	 * `handleError` transform passed to `render`. Called when an error boundary catches an error.
+	 * `transformError` passed to `render`. Called when an error boundary catches an error.
 	 * Throws by default if unset in `render`.
 	 * @type {(error: unknown) => unknown}
 	 */
-	handleError;
+	transformError;
 
 	/** @type {{ path: number[], value: string }} */
 	#title = { path: [], value: '' };
@@ -864,14 +864,14 @@ export class SSRState {
 	 * @param {'sync' | 'async'} mode
 	 * @param {string} id_prefix
 	 * @param {Csp} csp
-	 * @param {((error: unknown) => unknown) | undefined} [handleError]
+	 * @param {((error: unknown) => unknown) | undefined} [transformError]
 	 */
-	constructor(mode, id_prefix = '', csp = { hash: false }, handleError) {
+	constructor(mode, id_prefix = '', csp = { hash: false }, transformError) {
 		this.mode = mode;
 		this.csp = { ...csp, script_hashes: [] };
 
-		this.handleError =
-			handleError ??
+		this.transformError =
+			transformError ??
 			((error) => {
 				throw error;
 			});

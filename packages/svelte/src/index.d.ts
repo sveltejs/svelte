@@ -342,7 +342,7 @@ export type MountOptions<Props extends Record<string, any> = Record<string, any>
 	 * A function that transforms errors caught by error boundaries before they are passed to the `failed` snippet.
 	 * Defaults to the identity function.
 	 */
-	handleError?: (error: unknown) => unknown | Promise<unknown>;
+	transformError?: (error: unknown) => unknown | Promise<unknown>;
 } & ({} extends Props
 	? {
 			/**
