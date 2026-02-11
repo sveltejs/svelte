@@ -709,7 +709,8 @@ function flush_queued_effects(effects) {
 					unlink_effect(effect);
 				} else {
 					// keep the effect in the graph, but free up some memory
-					effect.fn = null;
+					// TODO do this, but not for effects-inside-deriveds as we may need to unfreeze them
+					// effect.fn = null;
 				}
 			}
 

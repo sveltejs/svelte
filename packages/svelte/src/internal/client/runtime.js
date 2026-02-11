@@ -28,7 +28,9 @@ import { old_values } from './reactivity/sources.js';
 import {
 	destroy_derived_effects,
 	execute_derived,
+	freeze_derived_effects,
 	recent_async_deriveds,
+	unfreeze_derived_effects,
 	update_derived
 } from './reactivity/deriveds.js';
 import { async_mode_flag, tracing_mode_flag } from '../flags/index.js';
@@ -396,8 +398,10 @@ function remove_reaction(signal, dependency) {
 
 		update_derived_status(derived);
 
+		// freeze any effects inside this derived
+		freeze_derived_effects(derived);
+
 		// Disconnect any reactions owned by this reaction
-		destroy_derived_effects(derived);
 		remove_reactions(derived, 0);
 	}
 }
@@ -677,6 +681,8 @@ export function get(signal) {
  * @param {Derived} derived
  */
 function reconnect(derived) {
+	unfreeze_derived_effects(derived);
+
 	if (derived.deps === null) return;
 
 	derived.f |= CONNECTED;
