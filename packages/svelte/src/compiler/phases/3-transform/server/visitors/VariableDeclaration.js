@@ -108,7 +108,6 @@ export function VariableDeclaration(node, context) {
 						const id = b.id(context.state.scope.generate('$$d'));
 
 						rhs = b.call(id);
-
 						declarations.push(b.declarator(id, init));
 					}
 
@@ -118,7 +117,7 @@ export function VariableDeclaration(node, context) {
 						id.name = context.state.scope.generate('$$derived_array');
 
 						const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
-						let call = b.call('$.derived', expression);
+						const call = b.call('$.derived', expression);
 
 						declarations.push(b.declarator(id, call));
 					}
@@ -126,6 +125,7 @@ export function VariableDeclaration(node, context) {
 					for (const path of paths) {
 						const expression = /** @type {Expression} */ (context.visit(path.expression));
 						const call = b.call('$.derived', b.thunk(expression));
+
 						declarations.push(b.declarator(path.node, call));
 					}
 				}
