@@ -17,7 +17,7 @@ export function render<
 					context?: Map<any, any>;
 					idPrefix?: string;
 					csp?: Csp;
-					onerror?: (error: unknown) => unknown | Promise<unknown>;
+					handleError?: (error: unknown) => unknown | Promise<unknown>;
 				}
 			]
 		: [
@@ -27,7 +27,7 @@ export function render<
 					context?: Map<any, any>;
 					idPrefix?: string;
 					csp?: Csp;
-					onerror?: (error: unknown) => unknown | Promise<unknown>;
+					handleError?: (error: unknown) => unknown | Promise<unknown>;
 				}
 			]
 ): RenderOutput;

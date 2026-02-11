@@ -4,7 +4,7 @@ import { test } from '../../test';
 export default test({
 	mode: ['hydrate', 'async-server', 'client'],
 	ssrHtml: '<p>caught: error</p>',
-	onerror: (error) => {
+	handleError: (error) => {
 		if (error !== 'catch me') throw 'wrong error object';
 		return 'error';
 	},

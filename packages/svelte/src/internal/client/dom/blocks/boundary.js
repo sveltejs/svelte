@@ -59,11 +59,11 @@ var flags = EFFECT_TRANSPARENT | EFFECT_PRESERVED | BOUNDARY_EFFECT;
  * @param {TemplateNode} node
  * @param {BoundaryProps} props
  * @param {((anchor: Node) => void)} children
- * @param {((error: unknown) => unknown) | undefined} [onerror_transform]
+ * @param {((error: unknown) => unknown) | undefined} [transform_error]
  * @returns {void}
  */
-export function boundary(node, props, children, onerror_transform) {
-	new Boundary(node, props, children, onerror_transform);
+export function boundary(node, props, children, transform_error) {
+	new Boundary(node, props, children, transform_error);
 }
 
 export class Boundary {
@@ -73,11 +73,11 @@ export class Boundary {
 	is_pending = false;
 
 	/**
-	 * API-level onerror transform function. Transforms errors before they reach the `failed` snippet.
+	 * API-level handleError transform function. Transforms errors before they reach the `failed` snippet.
 	 * Inherited from parent boundary, or defaults to identity.
 	 * @type {(error: unknown) => unknown}
 	 */
-	onerror_transform;
+	transform_error;
 
 	/** @type {TemplateNode} */
 	#anchor;
@@ -146,18 +146,18 @@ export class Boundary {
 	 * @param {TemplateNode} node
 	 * @param {BoundaryProps} props
 	 * @param {((anchor: Node) => void)} children
-	 * @param {((error: unknown) => unknown) | undefined} [onerror_transform]
+	 * @param {((error: unknown) => unknown) | undefined} [transform_error]
 	 */
-	constructor(node, props, children, onerror_transform) {
+	constructor(node, props, children, transform_error) {
 		this.#anchor = node;
 		this.#props = props;
 		this.#children = children;
 
 		this.parent = /** @type {Effect} */ (active_effect).b;
 
-		// Inherit onerror_transform from parent boundary, or use the provided one, or default to identity
-		this.onerror_transform =
-			onerror_transform ?? (this.parent ? this.parent.onerror_transform : (e) => e);
+		// Inherit transform_error from parent boundary, or use the provided one, or default to identity
+		this.transform_error =
+			transform_error ?? (this.parent ? this.parent.transform_error : (e) => e);
 
 		this.is_pending = !!this.#props.pending;
 
@@ -522,11 +522,11 @@ export class Boundary {
 		};
 
 		queue_micro_task(() => {
-			// Run the error through the API-level onerror transform (e.g. SvelteKit's handleError)
+			// Run the error through the API-level handleError transform (e.g. SvelteKit's handleError)
 			/** @type {unknown} */
 			var result;
 			try {
-				result = this.onerror_transform(error);
+				result = this.transform_error(error);
 			} catch (e) {
 				invoke_error_boundary(e, this.#effect && this.#effect.parent);
 				return;
@@ -537,7 +537,7 @@ export class Boundary {
 				typeof result === 'object' &&
 				typeof (/** @type {any} */ (result).then) === 'function'
 			) {
-				// onerror returned a Promise — wait for it
+				// handleError returned a Promise — wait for it
 				/** @type {any} */ (result).then(
 					/** @param {unknown} transformed_error */
 					(transformed_error) => handle_error_result(transformed_error),

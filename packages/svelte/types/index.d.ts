@@ -339,9 +339,9 @@ declare module 'svelte' {
 		intro?: boolean;
 		/**
 		 * A function that transforms errors caught by error boundaries before they are passed to the `failed` snippet.
-		 * This is used by SvelteKit to apply `handleError`. Defaults to the identity function on the client, and to throwing on the server.
+		 * Defaults to the identity function.
 		 */
-		onerror?: (error: unknown) => unknown | Promise<unknown>;
+		handleError?: (error: unknown) => unknown | Promise<unknown>;
 	} & ({} extends Props
 		? {
 				/**
@@ -547,7 +547,7 @@ declare module 'svelte' {
 		context?: Map<any, any>;
 		intro?: boolean;
 		recover?: boolean;
-		onerror: (error: unknown) => unknown;
+		handleError?: (error: unknown) => unknown;
 	} : {
 		target: Document | Element | ShadowRoot;
 		props: Props;
@@ -555,7 +555,7 @@ declare module 'svelte' {
 		context?: Map<any, any>;
 		intro?: boolean;
 		recover?: boolean;
-		onerror?: (error: unknown) => unknown;
+		handleError?: (error: unknown) => unknown;
 	}): Exports;
 	/**
 	 * Unmounts a component that was previously mounted using `mount` or `hydrate`.
@@ -2567,7 +2567,7 @@ declare module 'svelte/server' {
 						context?: Map<any, any>;
 						idPrefix?: string;
 						csp?: Csp;
-						onerror?: (error: unknown) => unknown | Promise<unknown>;
+						handleError?: (error: unknown) => unknown | Promise<unknown>;
 					}
 				]
 			: [
@@ -2577,7 +2577,7 @@ declare module 'svelte/server' {
 						context?: Map<any, any>;
 						idPrefix?: string;
 						csp?: Csp;
-						onerror?: (error: unknown) => unknown | Promise<unknown>;
+						handleError?: (error: unknown) => unknown | Promise<unknown>;
 					}
 				]
 	): RenderOutput;
