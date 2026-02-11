@@ -156,8 +156,7 @@ export class Boundary {
 		this.parent = /** @type {Effect} */ (active_effect).b;
 
 		// Inherit transform_error from parent boundary, or use the provided one, or default to identity
-		this.transform_error =
-			transform_error ?? (this.parent ? this.parent.transform_error : (e) => e);
+		this.transform_error = transform_error ?? this.parent?.transform_error ?? ((e) => e);
 
 		this.is_pending = !!this.#props.pending;
 
@@ -539,8 +538,7 @@ export class Boundary {
 			) {
 				// transformError returned a Promise — wait for it
 				/** @type {any} */ (result).then(
-					/** @param {unknown} transformed_error */
-					(transformed_error) => handle_error_result(transformed_error),
+					handle_error_result,
 					/** @param {unknown} e */
 					(e) => invoke_error_boundary(e, this.#effect && this.#effect.parent)
 				);
