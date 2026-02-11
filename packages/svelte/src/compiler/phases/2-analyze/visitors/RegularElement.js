@@ -17,6 +17,7 @@ import { check_element } from './shared/a11y/index.js';
 import { validate_element } from './shared/element.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 import { object } from '../../../utils/ast.js';
+import { runes } from '../../../state.js';
 
 /**
  * @param {AST.RegularElement} node
@@ -67,7 +68,7 @@ export function RegularElement(node, context) {
 
 	// Special case: `<select bind:value={foo}><option>{bar}</option>`
 	// means we need to invalidate `bar` whenever `foo` is mutated
-	if (node.name === 'select') {
+	if (node.name === 'select' && !runes) {
 		for (const attribute of node.attributes) {
 			if (
 				attribute.type === 'BindDirective' &&
