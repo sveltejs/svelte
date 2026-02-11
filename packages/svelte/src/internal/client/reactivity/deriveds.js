@@ -41,7 +41,7 @@ import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch } from './batch.js';
 import { unset_context } from './async.js';
-import { deferred, includes } from '../../shared/utils.js';
+import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
 
 /** @type {Effect | null} */
@@ -408,10 +408,19 @@ export function freeze_derived_effects(derived) {
 	if (derived.effects === null) return;
 
 	for (const e of derived.effects) {
-		e.teardown?.();
-		e.teardown = null;
-		remove_reactions(e, 0);
-		destroy_effect_children(e);
+		// if the effect has a teardown function, call it
+		if (e.teardown) {
+			e.teardown?.();
+
+			// make it a noop so it doesn't get called again if the derived
+			// is unfrozen. we don't set it to `null`, because the existence
+			// of a teardown function is what determines whether the
+			// effect runs again during unfreezing
+			e.teardown = noop;
+
+			remove_reactions(e, 0);
+			destroy_effect_children(e);
+		}
 	}
 }
 
@@ -422,6 +431,10 @@ export function unfreeze_derived_effects(derived) {
 	if (derived.effects === null) return;
 
 	for (const e of derived.effects) {
-		update_effect(e);
+		// if the effect was previously frozen — indicated by the presence
+		// of a teardown function — unfreeze it
+		if (e.teardown) {
+			update_effect(e);
+		}
 	}
 }
