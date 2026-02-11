@@ -889,7 +889,7 @@ declare module 'svelte/compiler' {
 	 *
 	 * @param source The CSS source code
 	 * */
-	export function parseCss(source: string): AST.CSS.StyleSheetRules;
+	export function parseCss(source: string): AST.CSS.StyleSheetFile;
 	/**
 	 * @deprecated Replace this with `import { walk } from 'estree-walker'`
 	 * */
@@ -1673,12 +1673,16 @@ declare module 'svelte/compiler' {
 			end: number;
 		}
 
-		export interface StyleSheetRules extends BaseNode {
-			type: 'StyleSheet';
+		export interface StyleSheetBase extends BaseNode {
 			children: Array<Atrule | Rule>;
 		}
 
-		export interface StyleSheet extends StyleSheetRules {
+		export interface StyleSheetFile extends StyleSheetBase {
+			type: 'StyleSheetFile';
+		}
+
+		export interface StyleSheet extends StyleSheetBase {
+			type: 'StyleSheet';
 			attributes: any[]; // TODO
 			content: {
 				start: number;
