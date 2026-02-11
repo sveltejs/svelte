@@ -983,7 +983,7 @@ function calculate_blockers(instance, scopes, analysis) {
 	 * @param {Set<Binding>} reads
 	 * @param {Set<Binding>} writes
 	 */
-	const trace_references = (node, reads, writes, seen = new Set(), deep = false) => {
+	const trace_references = (node, reads, writes, seen = new Set()) => {
 		if (seen.has(node)) return;
 		seen.add(node);
 
@@ -1003,60 +1003,58 @@ function calculate_blockers(instance, scopes, analysis) {
 			}
 		}
 
-		/** @type {Record<string, import('zimmerframe').Visitor<any, any, any>>} */
-		const visitors = {
-			_(node, context) {
-				const scope = scopes.get(node);
-				if (scope) {
-					context.next({ scope });
-				} else {
-					context.next();
-				}
-			},
-			AssignmentExpression(node, context) {
-				update(node.left, context.state.scope);
-			},
-			UpdateExpression(node, context) {
-				update(
-					/** @type {ESTree.Identifier | ESTree.MemberExpression} */ (node.argument),
-					context.state.scope
-				);
-			},
-			CallExpression(node, context) {
-				// for now, assume everything touched by the callee ends up mutating the object
-				// TODO optimise this better
+		walk(
+			node,
+			{ scope: instance.scope },
+			{
+				_(node, context) {
+					const scope = scopes.get(node);
+					if (scope) {
+						context.next({ scope });
+					} else {
+						context.next();
+					}
+				},
+				AssignmentExpression(node, context) {
+					update(node.left, context.state.scope);
+				},
+				UpdateExpression(node, context) {
+					update(
+						/** @type {ESTree.Identifier | ESTree.MemberExpression} */ (node.argument),
+						context.state.scope
+					);
+				},
+				CallExpression(node, context) {
+					// for now, assume everything touched by the callee ends up mutating the object
+					// TODO optimise this better
 
-				// special case — no need to peek inside effects as they only run once async work has completed
-				const rune = get_rune(node, context.state.scope);
-				if (rune === '$effect') return;
+					// special case — no need to peek inside effects as they only run once async work has completed
+					const rune = get_rune(node, context.state.scope);
+					if (rune === '$effect') return;
 
-				/** @type {Set<Binding>} */
-				const touched = new Set();
-				touch(node, context.state.scope, touched);
+					/** @type {Set<Binding>} */
+					const touched = new Set();
+					touch(node, context.state.scope, touched);
 
-				for (const b of touched) {
-					writes.add(b);
-				}
-			},
-			Identifier(node, context) {
-				const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
-				if (is_reference(node, parent)) {
-					const binding = context.state.scope.get(node.name);
-					if (binding) {
-						reads.add(binding);
+					for (const b of touched) {
+						writes.add(b);
+					}
+				},
+				// don't look inside functions until they are called
+				ArrowFunctionExpression(_, context) {},
+				FunctionDeclaration(_, context) {},
+				FunctionExpression(_, context) {},
+				Identifier(node, context) {
+					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
+					if (is_reference(node, parent)) {
+						const binding = context.state.scope.get(node.name);
+						if (binding) {
+							reads.add(binding);
+						}
 					}
 				}
 			}
-		};
-
-		if (!deep) {
-			// don't look inside functions until they are called
-			visitors.ArrowFunctionExpression = (_, context) => {};
-			visitors.FunctionDeclaration = (_, context) => {};
-			visitors.FunctionExpression = (_, context) => {};
-		}
-
-		walk(node, { scope: instance.scope }, visitors);
+		);
 	};
 
 	let awaited = false;
@@ -1191,7 +1189,7 @@ function calculate_blockers(instance, scopes, analysis) {
 				? /** @type {ESTree.FunctionExpression | ESTree.ArrowFunctionExpression} */ (fn.init).body
 				: fn.body;
 
-		trace_references(body, reads_writes, reads_writes, undefined, true);
+		trace_references(body, reads_writes, reads_writes);
 
 		const max = [...reads_writes].reduce((max, binding) => {
 			if (binding.blocker) {
