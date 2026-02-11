@@ -91,32 +91,25 @@ export function VariableDeclaration(node, context) {
 						/** @type {CallExpression} */ (declarator.init)
 					);
 
-				if (declarator.id.type === 'Identifier') {
-					let init = is_async
-						? b.await(b.call('$.async_derived', b.thunk(value, true)))
-						: b.call('$.derived', rune === '$derived' ? b.thunk(value) : value);
+				let init = is_async
+					? b.await(b.call('$.async_derived', b.thunk(value, true)))
+					: b.call('$.derived', rune === '$derived' ? b.thunk(value) : value);
 
+				if (declarator.id.type === 'Identifier') {
 					declarations.push(
 						b.declarator(/** @type {Pattern} */ (context.visit(declarator.id)), init)
 					);
 				} else {
-					const init = /** @type {CallExpression} */ (declarator.init);
+					const call = /** @type {CallExpression} */ (declarator.init);
 
 					let rhs = value;
 
-					if (rune !== '$derived' || init.arguments[0].type !== 'Identifier') {
+					if (rune !== '$derived' || call.arguments[0].type !== 'Identifier') {
 						const id = b.id(context.state.scope.generate('$$d'));
-
-						/** @type {Expression} */
-						let call = b.call('$.derived', rune === '$derived' ? b.thunk(value) : value);
 
 						rhs = b.call(id);
 
-						if (is_async) {
-							call = b.await(call);
-						}
-
-						declarations.push(b.declarator(id, call));
+						declarations.push(b.declarator(id, init));
 					}
 
 					const { inserts, paths } = extract_paths(declarator.id, rhs);
