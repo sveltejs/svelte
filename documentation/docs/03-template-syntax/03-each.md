@@ -1,5 +1,6 @@
 ---
 title: {#each ...}
+tags: template-each
 ---
 
 ```svelte

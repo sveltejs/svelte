@@ -1,5 +1,6 @@
 ---
 title: {@attach ...}
+tags: attachments
 ---
 
 Attachments are functions that run in an [effect]($effect) when an element is mounted to the DOM or when [state]($state) read inside the function updates.
