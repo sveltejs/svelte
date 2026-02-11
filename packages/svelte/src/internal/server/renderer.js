@@ -52,7 +52,11 @@ export class Renderer {
 	/**
 	 * If set, this renderer is an error boundary. When async collection
 	 * of the children fails, the failed snippet is rendered instead.
-	 * @type {{ failed: (renderer: Renderer, error: unknown, reset: () => void) => void; transformError: (error: unknown) => unknown } | null}
+	 * @type {{
+	 * 	failed: (renderer: Renderer, error: unknown, reset: () => void) => void;
+	 * 	transformError: (error: unknown) => unknown;
+	 * 	context: SSRContext | null;
+	 * } | null}
 	 */
 	#boundary = null;
 
@@ -237,14 +241,15 @@ export class Renderer {
 		const child = new Renderer(this.global, this);
 		this.#out.push(child);
 
+		const parent_context = ssr_context;
+
 		if (props.failed) {
 			child.#boundary = {
 				failed: props.failed,
-				transformError: this.global.transformError
+				transformError: this.global.transformError,
+				context: parent_context
 			};
 		}
-
-		const parent_context = ssr_context;
 
 		set_ssr_context({
 			...ssr_context,
@@ -275,13 +280,14 @@ export class Renderer {
 
 			const result = this.global.transformError(error);
 
+			child.#out.length = 0;
+			child.#boundary = null;
+
 			if (result instanceof Promise) {
 				if (this.global.mode === 'sync') {
 					e.await_invalid();
 				}
 
-				child.#out.length = 0;
-				child.#boundary = null;
 				child.promise = /** @type {Promise<unknown>} */ (result).then((transformed) => {
 					child.#out.push(`<!--${HYDRATION_START_FAILED}${JSON.stringify(transformed)}-->`);
 					failed_snippet(child, transformed, noop);
@@ -289,8 +295,6 @@ export class Renderer {
 				});
 				child.promise.catch(noop);
 			} else {
-				child.#out.length = 0;
-				child.#boundary = null;
 				child.#out.push(`<!--${HYDRATION_START_FAILED}${JSON.stringify(result)}-->`);
 				failed_snippet(child, result, noop);
 				child.#out.push(BLOCK_CLOSE);
@@ -684,8 +688,9 @@ export class Renderer {
 						content.head += boundary_content.head;
 						content.body += boundary_content.body;
 					} catch (error) {
-						const { failed, transformError } = item.#boundary;
+						const { context, failed, transformError } = item.#boundary;
 
+						set_ssr_context(context);
 						let transformed = await transformError(error);
 
 						// Render the failed snippet instead of the partial children content
