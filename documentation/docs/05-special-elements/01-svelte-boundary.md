@@ -103,6 +103,34 @@ If an `onerror` function is provided, it will be called with the same two `error
 
 If an error occurs inside the `onerror` function (or if you rethrow the error), it will be handled by a parent boundary if such exists.
 
-## Sanitizing errors / running on the server
+## Using `handleError`
 
-By default error boundaries only run on the client and will pass the original error object to the `failed` snippet. Since 5.51 they will also run on the server if you pass an `onerror` handler to the [`render` function](imperative-component-api#render). This handler takes the error and should return a sanitized and serializable version of the error. This sanitized version is passed to the `failed` snippet which is then rendered on the server. SvelteKit uses this to wire up `onerror` with the [`handleError` hook](/docs/kit/hooks#Shared-hooks-handleError).
+By default, error boundaries have no effect on the server — if an error occurs during rendering, the render as a whole will fail.
+
+Since 5.51 you can control this behaviour for boundaries with a `failed` snippet, by calling [`render(...)`](imperative-component-api#render) with a `handleError` function. This function must return a JSON-stringifiable object which will be used to render the `failed` snippet. This object will be serialized and used to hydrate the snippet in the browser:
+
+```js
+import { render } from 'svelte/server';
+import App from './App.svelte';
+
+const { head, body } = await render(App, {
+	handleError: (error) => {
+		// log the original error, with the stack trace...
+		console.error(error);
+
+		// ...and return a sanitized user-friendly error
+		// to display in the `failed` snippet
+		return {
+			message: 'An error occurred!'
+		};
+	};
+});
+```
+
+If `handleError` throws (or rethrows) an error, `render(...)` as a whole will fail with that error.
+
+> [NOTE!] Errors that occur during server-side rendering can contain sensitive information in the `message` and `stack`. It's recommended to redact these rather than sending them unaltered to the browser.
+
+If the boundary has an `onerror` handler, it will be called upon hydration with the deserialized error object.
+
+The [`mount`](imperative-component-api#mount) and [`hydrate`](imperative-component-api#hydrate) functions also accept a `handleError` option, which defaults to the identity function. As with `render`, this function transforms a render-time error before it is passed to a `failed` snippet or `onerror` handler.
