@@ -92,7 +92,9 @@ export function VariableDeclaration(node, context) {
 					);
 
 				if (declarator.id.type === 'Identifier') {
-					let init = b.call('$.derived', rune === '$derived' ? b.thunk(value, is_async) : value);
+					let init = is_async
+						? b.await(b.call('$.async_derived', b.thunk(value, true)))
+						: b.call('$.derived', rune === '$derived' ? b.thunk(value) : value);
 
 					declarations.push(
 						b.declarator(/** @type {Pattern} */ (context.visit(declarator.id)), init)
@@ -122,7 +124,6 @@ export function VariableDeclaration(node, context) {
 
 					for (const { id, value } of inserts) {
 						id.name = context.state.scope.generate('$$array');
-						// context.state.transform[id.name] = { read: get_value };
 
 						const expression = /** @type {Expression} */ (context.visit(b.thunk(value)));
 						let call = b.call('$.derived', expression);

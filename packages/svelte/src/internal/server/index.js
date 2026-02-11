@@ -488,3 +488,13 @@ export function derived(fn) {
 		return updated_value;
 	};
 }
+
+/**
+ * @template T
+ * @param {()=>T} fn
+ */
+export function async_derived(fn) {
+	return Promise.resolve(fn()).then((value) => {
+		return () => value;
+	});
+}
