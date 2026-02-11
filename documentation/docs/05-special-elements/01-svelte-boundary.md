@@ -107,7 +107,11 @@ If an error occurs inside the `onerror` function (or if you rethrow the error), 
 
 By default, error boundaries have no effect on the server — if an error occurs during rendering, the render as a whole will fail.
 
-Since 5.51 you can control this behaviour for boundaries with a `failed` snippet, by calling [`render(...)`](imperative-component-api#render) with a `transformError` function. This function must return a JSON-stringifiable object which will be used to render the `failed` snippet. This object will be serialized and used to hydrate the snippet in the browser:
+Since 5.51 you can control this behaviour for boundaries with a `failed` snippet, by calling [`render(...)`](imperative-component-api#render) with a `transformError` function.
+
+> [!NOTE] If you're using Svelte via a framework such as SvelteKit, you most likely don't have direct access to the `render(...)` call — the framework must configure `transformError` on your behalf. SvelteKit will add support for this in the near future, via the [`handleError`](../kit/hooks#Shared-hooks-handleError) hook.
+
+The `transformError` function must return a JSON-stringifiable object which will be used to render the `failed` snippet. This object will be serialized and used to hydrate the snippet in the browser:
 
 ```js
 import { render } from 'svelte/server';
@@ -129,7 +133,7 @@ const { head, body } = await render(App, {
 
 If `transformError` throws (or rethrows) an error, `render(...)` as a whole will fail with that error.
 
-> [NOTE!] Errors that occur during server-side rendering can contain sensitive information in the `message` and `stack`. It's recommended to redact these rather than sending them unaltered to the browser.
+> [!NOTE] Errors that occur during server-side rendering can contain sensitive information in the `message` and `stack`. It's recommended to redact these rather than sending them unaltered to the browser.
 
 If the boundary has an `onerror` handler, it will be called upon hydration with the deserialized error object.
 
