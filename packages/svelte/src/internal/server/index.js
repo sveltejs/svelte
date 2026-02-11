@@ -18,6 +18,7 @@ import { validate_store } from '../shared/validate.js';
 import { is_boolean_attribute, is_raw_text_element, is_void } from '../../utils.js';
 import { Renderer } from './renderer.js';
 import * as e from './errors.js';
+import { ssr_context } from './context.js';
 
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
@@ -474,16 +475,18 @@ export { escape_html as escape };
  * @returns {(new_value?: T) => (T | void)}
  */
 export function derived(fn) {
-	const get_value = once(fn);
-	/**
-	 * @type {T | undefined}
-	 */
+	// deriveds created during render are memoized,
+	// deriveds created outside (e.g. SvelteKit `page` stuff) are not
+	const get_value = ssr_context === null ? fn : once(fn);
+
+	/** @type {T | undefined} */
 	let updated_value;
 
 	return function (new_value) {
 		if (arguments.length === 0) {
 			return updated_value ?? get_value();
 		}
+
 		updated_value = new_value;
 		return updated_value;
 	};
