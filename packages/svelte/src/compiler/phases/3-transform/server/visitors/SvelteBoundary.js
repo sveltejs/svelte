@@ -38,43 +38,6 @@ export function SvelteBoundary(node, context) {
 		)
 	);
 
-	// When there's no `failed` snippet, skip the boundary wrapper entirely
-	// (saves bytes / more performant at runtime)
-	if (!failed_snippet) {
-		if (pending_attribute || pending_snippet) {
-			if (pending_attribute && is_pending_attr_nullish && !pending_snippet) {
-				const { callee, pending_block } = build_pending_attribute_block(pending_attribute, context);
-				const block = /** @type {BlockStatement} */ (context.visit(node.fragment));
-				context.state.template.push(
-					b.if(callee, pending_block, b.block(build_template([block_open, block, block_close])))
-				);
-			} else {
-				const pending_block = pending_attribute
-					? build_pending_attribute_block(pending_attribute, context).pending_block
-					: build_pending_snippet_block(/** @type {AST.SnippetBlock} */ (pending_snippet), context);
-				context.state.template.push(pending_block);
-			}
-		} else {
-			const block = /** @type {BlockStatement} */ (context.visit(node.fragment));
-			context.state.template.push(block_open, block, block_close);
-		}
-		return;
-	}
-
-	// Has a `failed` snippet: wrap in $$renderer.boundary()
-
-	const props = b.object([]);
-
-	const failed_fn = b.function_declaration(
-		failed_snippet.expression,
-		[b.id('$$renderer'), ...failed_snippet.parameters],
-		/** @type {BlockStatement} */ (context.visit(failed_snippet.body))
-	);
-	// @ts-expect-error
-	failed_fn.___snippet = true;
-	context.state.template.push(failed_fn);
-	props.properties.push(b.init('failed', failed_snippet.expression));
-
 	const children_nodes = node.fragment.nodes.filter(
 		(child) =>
 			!(child.type === 'SnippetBlock' && ['failed', 'pending'].includes(child.expression.name))
@@ -110,6 +73,26 @@ export function SvelteBoundary(node, context) {
 	} else {
 		children_body = b.block(build_template([block_open, children_block, block_close]));
 	}
+
+	// When there's no `failed` snippet, skip the boundary wrapper entirely
+	// (saves bytes / more performant at runtime)
+	if (!failed_snippet) {
+		context.state.template.push(...children_body.body);
+		return;
+	}
+
+	// Has a `failed` snippet: wrap in $$renderer.boundary()
+	const props = b.object([]);
+
+	const failed_fn = b.function_declaration(
+		failed_snippet.expression,
+		[b.id('$$renderer'), ...failed_snippet.parameters],
+		/** @type {BlockStatement} */ (context.visit(failed_snippet.body))
+	);
+	// @ts-expect-error
+	failed_fn.___snippet = true;
+	context.state.template.push(failed_fn);
+	props.properties.push(b.init('failed', failed_snippet.expression));
 
 	context.state.template.push(
 		b.stmt(b.call('$$renderer.boundary', props, b.arrow([b.id('$$renderer')], children_body)))
