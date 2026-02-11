@@ -21,7 +21,7 @@ export default test({
 		`
 		);
 
-		const select = target.querySelector('select');
+		const [select] = target.querySelectorAll('select');
 		const options = target.querySelectorAll('option');
 
 		assert.equal(select.value, '');
