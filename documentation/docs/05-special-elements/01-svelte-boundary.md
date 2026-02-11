@@ -114,6 +114,7 @@ Since 5.51 you can control this behaviour for boundaries with a `failed` snippet
 The `transformError` function must return a JSON-stringifiable object which will be used to render the `failed` snippet. This object will be serialized and used to hydrate the snippet in the browser:
 
 ```js
+// @errors: 1005
 import { render } from 'svelte/server';
 import App from './App.svelte';
 
