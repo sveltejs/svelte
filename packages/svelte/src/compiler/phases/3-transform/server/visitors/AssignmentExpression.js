@@ -102,11 +102,15 @@ function build_assignment(operator, left, right, context) {
 
 	const binding = context.state.scope.get(object.name);
 
-	if (binding?.kind === 'derived') {
-		// TODO pretty sure it's more complicated than this — need to
-		// handle different operators and mutations.
-		// (but also: when would writing to a derived during SSR ever be ok?)
-		return b.call(binding.node, right);
+	// TODO 6.0 this won't work perfectly: once a derived is written to, it will
+	// no longer recompute. It might be better to disallow writing to deriveds
+	// on the server, to prevent this bug occurring
+	if (binding?.kind === 'derived' && object === left) {
+		let value = /** @type {Expression} */ (
+			context.visit(build_assignment_value(operator, left, right))
+		);
+
+		return b.call(binding.node, value);
 	}
 
 	return null;
