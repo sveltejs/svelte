@@ -68,35 +68,48 @@ function build_assignment(operator, left, right, context) {
 		object = object.object;
 	}
 
-	if (object.type !== 'Identifier' || !is_store_name(object.name)) {
+	if (object.type !== 'Identifier') {
 		return null;
 	}
 
-	const name = object.name.slice(1);
+	if (is_store_name(object.name)) {
+		const name = object.name.slice(1);
 
-	if (!context.state.scope.get(name)) {
-		return null;
-	}
+		if (!context.state.scope.get(name)) {
+			return null;
+		}
 
-	if (object === left) {
-		let value = /** @type {Expression} */ (
-			context.visit(build_assignment_value(operator, left, right))
+		if (object === left) {
+			let value = /** @type {Expression} */ (
+				context.visit(build_assignment_value(operator, left, right))
+			);
+
+			return b.call('$.store_set', b.id(name), value);
+		}
+
+		return b.call(
+			'$.store_mutate',
+			b.assignment('??=', b.id('$$store_subs'), b.object([])),
+			b.literal(object.name),
+			b.id(name),
+			b.assignment(
+				operator,
+				/** @type {Pattern} */ (context.visit(left)),
+				/** @type {Expression} */ (context.visit(right))
+			)
 		);
-
-		return b.call('$.store_set', b.id(name), value);
 	}
 
-	return b.call(
-		'$.store_mutate',
-		b.assignment('??=', b.id('$$store_subs'), b.object([])),
-		b.literal(object.name),
-		b.id(name),
-		b.assignment(
-			operator,
-			/** @type {Pattern} */ (context.visit(left)),
-			/** @type {Expression} */ (context.visit(right))
-		)
-	);
+	const binding = context.state.scope.get(object.name);
+
+	if (binding?.kind === 'derived') {
+		// TODO pretty sure it's more complicated than this — need to
+		// handle different operators and mutations.
+		// (but also: when would writing to a derived during SSR ever be ok?)
+		return b.call(binding.node, right);
+	}
+
+	return null;
 }
 
 /**
