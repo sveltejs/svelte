@@ -7,6 +7,7 @@ import { active_effect } from '../runtime.js';
 import { async_mode_flag } from '../../flags/index.js';
 import { TEXT_NODE, EFFECT_RAN } from '#client/constants';
 import { eager_block_effects } from '../reactivity/batch.js';
+import { NAMESPACE_HTML } from '../../../constants.js';
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
 /** @type {Window} */
@@ -231,18 +232,17 @@ export function should_defer_append() {
 }
 
 /**
- *
- * @param {string} tag
+ * @template {keyof HTMLElementTagNameMap | string} T
+ * @param {T} tag
  * @param {string} [namespace]
  * @param {string} [is]
- * @returns
+ * @returns {T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : Element}
  */
 export function create_element(tag, namespace, is) {
 	let options = is ? { is } : undefined;
-	if (namespace) {
-		return document.createElementNS(namespace, tag, options);
-	}
-	return document.createElement(tag, options);
+	return /** @type {T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : Element} */ (
+		document.createElementNS(namespace ?? NAMESPACE_HTML, tag, options)
+	);
 }
 
 export function create_fragment() {
