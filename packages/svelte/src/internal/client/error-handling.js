@@ -25,27 +25,19 @@ export function handle_error(error) {
 		adjustments.set(error, get_adjustments(error, effect));
 	}
 
-	if ((effect.f & REACTION_RAN) === 0) {
-		// if the error occurred while creating this subtree, we let it
-		// bubble up until it hits a boundary that can handle it
-		// user effects run during effect flushing, not subtree creation
-		if ((effect.f & BOUNDARY_EFFECT) === 0 && (effect.f & EFFECT) === 0) {
-			if (DEV && !effect.parent && error instanceof Error) {
-				apply_adjustments(error);
-			}
-
-			throw error;
+	// if the error occurred while creating this subtree, we let it
+	// bubble up until it hits a boundary that can handle it, unless
+	// it's an $effect in which case it doesn't run immediately
+	if ((effect.f & REACTION_RAN) === 0 && (effect.f & EFFECT) === 0) {
+		if (DEV && !effect.parent && error instanceof Error) {
+			apply_adjustments(error);
 		}
 
-		if ((effect.f & BOUNDARY_EFFECT) !== 0) {
-			/** @type {Boundary} */ (effect.b).error(error);
-		} else {
-			invoke_error_boundary(error, effect);
-		}
-	} else {
-		// otherwise we bubble up the effect tree ourselves
-		invoke_error_boundary(error, effect);
+		throw error;
 	}
+
+	// otherwise we bubble up the effect tree ourselves
+	invoke_error_boundary(error, effect);
 }
 
 /**
@@ -55,6 +47,11 @@ export function handle_error(error) {
 export function invoke_error_boundary(error, effect) {
 	while (effect !== null) {
 		if ((effect.f & BOUNDARY_EFFECT) !== 0) {
+			if ((effect.f & REACTION_RAN) === 0) {
+				// we are still creating the boundary effect
+				throw error;
+			}
+
 			try {
 				/** @type {Boundary} */ (effect.b).error(error);
 				return;
