@@ -4,20 +4,20 @@ on:
   issue_comment:
     types: [created]
 
+permissions: {}
+
 jobs:
   trigger:
     runs-on: ubuntu-latest
     if: github.repository == 'sveltejs/svelte' && github.event.issue.pull_request && startsWith(github.event.comment.body, '/ecosystem-ci run')
     permissions:
-      issues: write # to add / delete reactions
+      issues: write # to add / delete reactions, post comments
       pull-requests: write # to read PR data, and to add labels
       actions: read # to check workflow status
       contents: read # to clone the repo
     steps:
-      - name: monitor action permissions
-        uses: GitHubSecurityLab/actions-permissions/monitor@v1
-      - name: check user authorization # user needs triage permission
-        uses: actions/github-script@v7
+      - name: Check User Permissions
+        uses: actions/github-script@v8
         id: check-permissions
         with:
           script: |
@@ -56,7 +56,7 @@ jobs:
             }
 
       - name: Get PR Data
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         id: get-pr-data
         with:
           script: |
@@ -66,6 +66,37 @@ jobs:
               repo: context.repo.repo,
               pull_number: context.issue.number
             })
+
+            const commentCreatedAt = new Date(context.payload.comment.created_at)
+            const commitPushedAt = new Date(pr.head.repo.pushed_at)
+
+            console.log(`Comment created at: ${commentCreatedAt.toISOString()}`)
+            console.log(`PR last pushed at: ${commitPushedAt.toISOString()}`)
+
+            // Check if any commits were pushed after the comment was created
+            if (commitPushedAt > commentCreatedAt) {
+              const errorMsg = [
+                '⚠️ Security warning: PR was updated after the trigger command was posted.',
+                '',
+                `Comment posted at: ${commentCreatedAt.toISOString()}`,
+                `PR last pushed at: ${commitPushedAt.toISOString()}`,
+                '',
+                'This could indicate an attempt to inject code after approval.',
+                'Please review the latest changes and re-run /ecosystem-ci run if they are acceptable.'
+              ].join('\n')
+
+              core.setFailed(errorMsg)
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: errorMsg
+              })
+
+              throw new Error('PR was pushed to after comment was created')
+            }
+
             return {
               num: context.issue.number,
               branchName: pr.head.ref,
@@ -84,15 +115,16 @@ jobs:
             svelte-ecosystem-ci
 
       - name: Trigger Downstream Workflow
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         id: trigger
         env:
           COMMENT: ${{ github.event.comment.body }}
+          PR_DATA: ${{ steps.get-pr-data.outputs.result }}
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
             const comment = process.env.COMMENT.trim()
-            const prData = ${{ steps.get-pr-data.outputs.result }}
+            const prData = JSON.parse(process.env.PR_DATA)
 
             const suite = comment.split('\n')[0].replace(/^\/ecosystem-ci run/, '').trim()
 

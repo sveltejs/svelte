@@ -88,6 +88,18 @@ export function event_handler_invalid(handler, suggestion) {
 }
 
 /**
+ * Expected to find a hydratable with key `%key%` during hydration, but did not.
+ * @param {string} key
+ */
+export function hydratable_missing_but_expected(key) {
+	if (DEV) {
+		console.warn(`%c[svelte] hydratable_missing_but_expected\n%cExpected to find a hydratable with key \`${key}\` during hydration, but did not.\nhttps://svelte.dev/e/hydratable_missing_but_expected`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/hydratable_missing_but_expected`);
+	}
+}
+
+/**
  * The `%attribute%` attribute on `%html%` changed its value between server and client renders. The client value, `%value%`, will be ignored in favour of the server value
  * @param {string} attribute
  * @param {string} html
@@ -221,6 +233,17 @@ export function state_proxy_equality_mismatch(operator) {
 		console.warn(`%c[svelte] state_proxy_equality_mismatch\n%cReactive \`$state(...)\` proxies and the values they proxy have different identities. Because of this, comparisons with \`${operator}\` will produce unexpected results\nhttps://svelte.dev/e/state_proxy_equality_mismatch`, bold, normal);
 	} else {
 		console.warn(`https://svelte.dev/e/state_proxy_equality_mismatch`);
+	}
+}
+
+/**
+ * Tried to unmount a state proxy, rather than a component
+ */
+export function state_proxy_unmount() {
+	if (DEV) {
+		console.warn(`%c[svelte] state_proxy_unmount\n%cTried to unmount a state proxy, rather than a component\nhttps://svelte.dev/e/state_proxy_unmount`, bold, normal);
+	} else {
+		console.warn(`https://svelte.dev/e/state_proxy_unmount`);
 	}
 }
 

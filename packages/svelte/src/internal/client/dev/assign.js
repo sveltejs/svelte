@@ -1,3 +1,4 @@
+import { STATE_SYMBOL } from '#client/constants';
 import { sanitize_location } from '../../../utils.js';
 import { untrack } from '../runtime.js';
 import * as w from '../warnings.js';
@@ -10,7 +11,7 @@ import * as w from '../warnings.js';
  * @param {string} location
  */
 function compare(a, b, property, location) {
-	if (a !== b) {
+	if (a !== b && typeof b === 'object' && STATE_SYMBOL in b) {
 		w.assignment_value_stale(property, /** @type {string} */ (sanitize_location(location)));
 	}
 

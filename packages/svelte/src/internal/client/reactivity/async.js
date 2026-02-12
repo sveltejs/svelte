@@ -1,9 +1,14 @@
-/** @import { Effect, Value } from '#client' */
-
-import { DESTROYED } from '#client/constants';
+/** @import { Blocker, Effect, Value } from '#client' */
+import { DESTROYED, STALE_REACTION } from '#client/constants';
 import { DEV } from 'esm-env';
-import { component_context, is_runes, set_component_context } from '../context.js';
-import { get_pending_boundary } from '../dom/blocks/boundary.js';
+import {
+	component_context,
+	dev_stack,
+	is_runes,
+	set_component_context,
+	set_dev_stack
+} from '../context.js';
+import { get_boundary } from '../dom/blocks/boundary.js';
 import { invoke_error_boundary } from '../error-handling.js';
 import {
 	active_effect,
@@ -11,7 +16,7 @@ import {
 	set_active_effect,
 	set_active_reaction
 } from '../runtime.js';
-import { current_batch, suspend } from './batch.js';
+import { Batch, current_batch } from './batch.js';
 import {
 	async_derived,
 	current_async_effect,
@@ -22,15 +27,18 @@ import {
 import { aborted } from './effects.js';
 
 /**
- *
+ * @param {Blocker[]} blockers
  * @param {Array<() => any>} sync
  * @param {Array<() => Promise<any>>} async
  * @param {(values: Value[]) => any} fn
  */
-export function flatten(sync, async, fn) {
+export function flatten(blockers, sync, async, fn) {
 	const d = is_runes() ? derived : derived_safe_equal;
 
-	if (async.length === 0) {
+	// Filter out already-settled blockers - no need to wait for them
+	var pending = blockers.filter((b) => !b.settled);
+
+	if (async.length === 0 && pending.length === 0) {
 		fn(sync.map(d));
 		return;
 	}
@@ -39,29 +47,56 @@ export function flatten(sync, async, fn) {
 	var parent = /** @type {Effect} */ (active_effect);
 
 	var restore = capture();
-	var boundary = get_pending_boundary();
+	var blocker_promise =
+		pending.length === 1
+			? pending[0].promise
+			: pending.length > 1
+				? Promise.all(pending.map((b) => b.promise))
+				: null;
 
-	Promise.all(async.map((expression) => async_derived(expression)))
-		.then((result) => {
-			batch?.activate();
+	/** @param {Value[]} values */
+	function finish(values) {
+		restore();
 
-			restore();
-
-			try {
-				fn([...sync.map(d), ...result]);
-			} catch (error) {
-				// ignore errors in blocks that have already been destroyed
-				if ((parent.f & DESTROYED) === 0) {
-					invoke_error_boundary(error, parent);
-				}
+		try {
+			fn(values);
+		} catch (error) {
+			if ((parent.f & DESTROYED) === 0) {
+				invoke_error_boundary(error, parent);
 			}
+		}
 
-			batch?.deactivate();
-			unset_context();
-		})
-		.catch((error) => {
-			boundary.error(error);
-		});
+		batch?.deactivate();
+		unset_context();
+	}
+
+	// Fast path: blockers but no async expressions
+	if (async.length === 0) {
+		/** @type {Promise<any>} */ (blocker_promise).then(() => finish(sync.map(d)));
+		return;
+	}
+
+	// Full path: has async expressions
+	function run() {
+		restore();
+		Promise.all(async.map((expression) => async_derived(expression)))
+			.then((result) => finish([...sync.map(d), ...result]))
+			.catch((error) => invoke_error_boundary(error, parent));
+	}
+
+	if (blocker_promise) {
+		blocker_promise.then(run);
+	} else {
+		run();
+	}
+}
+
+/**
+ * @param {Blocker[]} blockers
+ * @param {(values: Value[]) => any} fn
+ */
+export function run_after_blockers(blockers, fn) {
+	flatten(blockers, [], [], fn);
 }
 
 /**
@@ -69,20 +104,25 @@ export function flatten(sync, async, fn) {
  * some asynchronous work has happened (so that e.g. `await a + b`
  * causes `b` to be registered as a dependency).
  */
-function capture() {
+export function capture() {
 	var previous_effect = active_effect;
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
 	var previous_batch = current_batch;
 
-	return function restore() {
+	if (DEV) {
+		var previous_dev_stack = dev_stack;
+	}
+
+	return function restore(activate_batch = true) {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
-		previous_batch?.activate();
+		if (activate_batch) previous_batch?.activate();
 
 		if (DEV) {
 			set_from_async_derived(null);
+			set_dev_stack(previous_dev_stack);
 		}
 	};
 }
@@ -171,23 +211,92 @@ export function unset_context() {
 	set_active_effect(null);
 	set_active_reaction(null);
 	set_component_context(null);
-	if (DEV) set_from_async_derived(null);
+
+	if (DEV) {
+		set_from_async_derived(null);
+		set_dev_stack(null);
+	}
 }
 
 /**
- * @param {() => Promise<void>} fn
+ * @param {Array<() => void | Promise<void>>} thunks
  */
-export async function async_body(fn) {
-	var unsuspend = suspend();
+export function run(thunks) {
+	const restore = capture();
+
+	var boundary = get_boundary();
+	var batch = /** @type {Batch} */ (current_batch);
+	var blocking = boundary.is_rendered();
+
+	boundary.update_pending_count(1);
+	batch.increment(blocking);
+
 	var active = /** @type {Effect} */ (active_effect);
 
-	try {
-		await fn();
-	} catch (error) {
+	/** @type {null | { error: any }} */
+	var errored = null;
+
+	/** @param {any} error */
+	const handle_error = (error) => {
+		errored = { error }; // wrap in object in case a promise rejects with a falsy value
+
 		if (!aborted(active)) {
 			invoke_error_boundary(error, active);
 		}
-	} finally {
-		unsuspend();
+	};
+
+	var promise = Promise.resolve(thunks[0]()).catch(handle_error);
+
+	/** @type {Blocker} */
+	var blocker = { promise, settled: false };
+	var blockers = [blocker];
+
+	promise.finally(() => {
+		blocker.settled = true;
+	});
+
+	for (const fn of thunks.slice(1)) {
+		promise = promise
+			.then(() => {
+				if (errored) {
+					throw errored.error;
+				}
+
+				if (aborted(active)) {
+					throw STALE_REACTION;
+				}
+
+				restore();
+				return fn();
+			})
+			.catch(handle_error);
+
+		const blocker = { promise, settled: false };
+		blockers.push(blocker);
+
+		promise.finally(() => {
+			blocker.settled = true;
+
+			unset_context();
+			current_batch?.deactivate();
+		});
 	}
+
+	promise
+		// wait one more tick, so that template effects are
+		// guaranteed to run before `$effect(...)`
+		.then(() => Promise.resolve())
+		.finally(() => {
+			boundary.update_pending_count(-1);
+			batch.decrement(blocking);
+		});
+
+	return blockers;
+}
+
+/**
+ * @param {Blocker[]} blockers
+ */
+export function wait(blockers) {
+	return Promise.all(blockers.map((b) => b.promise));
 }

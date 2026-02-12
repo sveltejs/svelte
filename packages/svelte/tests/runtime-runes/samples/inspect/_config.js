@@ -1,3 +1,4 @@
+import { normalise_inspect_logs } from '../../../helpers.js';
 import { test } from '../../test';
 
 export default test({
@@ -11,6 +12,6 @@ export default test({
 		b2.click();
 		await Promise.resolve();
 
-		assert.deepEqual(logs, ['init', 0, 'update', 1]);
+		assert.deepEqual(normalise_inspect_logs(logs), [0, 1, 'at HTMLButtonElement.<anonymous>']);
 	}
 });

@@ -1,13 +1,13 @@
 /** @import { Expression, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
-import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../../../constants.js';
 import * as b from '#compiler/builders';
+import { TEMPLATE_FRAGMENT, TEMPLATE_USE_IMPORT_NODE } from '../../../../../constants.js';
 import { clean_nodes, infer_namespace } from '../../utils.js';
 import { transform_template } from '../transform-template/index.js';
+import { Template } from '../transform-template/template.js';
 import { process_children } from './shared/fragment.js';
 import { build_render_statement, Memoizer } from './shared/utils.js';
-import { Template } from '../transform-template/template.js';
 
 /**
  * @param {AST.Fragment} node
@@ -47,9 +47,11 @@ export function Fragment(node, context) {
 	const is_single_element = trimmed.length === 1 && trimmed[0].type === 'RegularElement';
 	const is_single_child_not_needing_template =
 		trimmed.length === 1 &&
-		(trimmed[0].type === 'SvelteFragment' || trimmed[0].type === 'TitleElement');
-	const has_await = context.state.init !== null && (node.metadata.has_await || false);
-
+		(trimmed[0].type === 'SvelteFragment' ||
+			trimmed[0].type === 'TitleElement' ||
+			(trimmed[0].type === 'IfBlock' &&
+				trimmed[0].elseif &&
+				/** @type {AST.IfBlock} */ (parent).metadata.flattened?.includes(trimmed[0])));
 	const template_name = context.state.scope.root.unique('root'); // TODO infer name from parent
 
 	/** @type {Statement[]} */
@@ -62,7 +64,9 @@ export function Fragment(node, context) {
 	const state = {
 		...context.state,
 		init: [],
+		snippets: [],
 		consts: [],
+		let_directives: [],
 		update: [],
 		after_update: [],
 		memoizer: new Memoizer(),
@@ -71,7 +75,8 @@ export function Fragment(node, context) {
 		metadata: {
 			namespace,
 			bound_contenteditable: context.state.metadata.bound_contenteditable
-		}
+		},
+		async_consts: undefined
 	};
 
 	for (const node of hoisted) {
@@ -81,7 +86,7 @@ export function Fragment(node, context) {
 	if (is_single_element) {
 		const element = /** @type {AST.RegularElement} */ (trimmed[0]);
 
-		const id = b.id(context.state.scope.generate(element.name));
+		const id = b.id(context.state.scope.generate(element.name), element.name_loc);
 
 		context.visit(element, {
 			...state,
@@ -119,41 +124,42 @@ export function Fragment(node, context) {
 
 			state.init.unshift(b.var(id, b.call('$.text')));
 			close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
+		} else if (is_standalone) {
+			// no need to create a template, we can just use the existing block's anchor
+			process_children(trimmed, () => b.id('$$anchor'), false, {
+				...context,
+				state: { ...state, is_standalone }
+			});
 		} else {
-			if (is_standalone) {
-				// no need to create a template, we can just use the existing block's anchor
-				process_children(trimmed, () => b.id('$$anchor'), false, { ...context, state });
-			} else {
-				/** @type {(is_text: boolean) => Expression} */
-				const expression = (is_text) => b.call('$.first_child', id, is_text && b.true);
+			/** @type {(is_text: boolean) => Expression} */
+			const expression = (is_text) => b.call('$.first_child', id, is_text && b.true);
 
-				process_children(trimmed, expression, false, { ...context, state });
+			process_children(trimmed, expression, false, { ...context, state });
 
-				let flags = TEMPLATE_FRAGMENT;
+			let flags = TEMPLATE_FRAGMENT;
 
-				if (state.template.needs_import_node) {
-					flags |= TEMPLATE_USE_IMPORT_NODE;
-				}
-
-				if (state.template.nodes.length === 1 && state.template.nodes[0].type === 'comment') {
-					// special case — we can use `$.comment` instead of creating a unique template
-					state.init.unshift(b.var(id, b.call('$.comment')));
-				} else {
-					const template = transform_template(state, namespace, flags);
-					state.hoisted.push(b.var(template_name, template));
-
-					state.init.unshift(b.var(id, b.call(template_name)));
-				}
-
-				close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
+			if (state.template.needs_import_node) {
+				flags |= TEMPLATE_USE_IMPORT_NODE;
 			}
+
+			if (state.template.nodes.length === 1 && state.template.nodes[0].type === 'comment') {
+				// special case — we can use `$.comment` instead of creating a unique template
+				state.init.unshift(b.var(id, b.call('$.comment')));
+			} else {
+				const template = transform_template(state, namespace, flags);
+				state.hoisted.push(b.var(template_name, template));
+
+				state.init.unshift(b.var(id, b.call(template_name)));
+			}
+
+			close = b.stmt(b.call('$.append', b.id('$$anchor'), id));
 		}
 	}
 
-	body.push(...state.consts);
+	body.push(...state.snippets, ...state.let_directives, ...state.consts);
 
-	if (has_await) {
-		body.push(b.if(b.call('$.aborted'), b.return()));
+	if (state.async_consts && state.async_consts.thunks.length > 0) {
+		body.push(b.var(state.async_consts.id, b.call('$.run', b.array(state.async_consts.thunks))));
 	}
 
 	if (is_text_first) {
@@ -176,9 +182,5 @@ export function Fragment(node, context) {
 		body.push(close);
 	}
 
-	if (has_await) {
-		return b.block([b.stmt(b.call('$.async_body', b.arrow([], b.block(body), true)))]);
-	} else {
-		return b.block(body);
-	}
+	return b.block(body);
 }

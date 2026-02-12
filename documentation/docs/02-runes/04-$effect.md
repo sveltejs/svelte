@@ -1,5 +1,6 @@
 ---
 title: $effect
+tags: rune-effect
 ---
 
 Effects are functions that run when state updates, and can be used for things like calling third-party libraries, drawing on `<canvas>` elements, or making network requests. They only run in the browser, not during server-side rendering.

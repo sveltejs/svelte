@@ -140,6 +140,25 @@ The easiest way to log a value as it changes over time is to use the [`$inspect`
 %handler% should be a function. Did you mean to %suggestion%?
 ```
 
+### hydratable_missing_but_expected
+
+```
+Expected to find a hydratable with key `%key%` during hydration, but did not.
+```
+
+This can happen if you render a hydratable on the client that was not rendered on the server, and means that it was forced to fall back to running its function blockingly during hydration. This is bad for performance, as it blocks hydration until the asynchronous work completes.
+
+```svelte
+<script>
+  import { hydratable } from 'svelte';
+
+	if (BROWSER) {
+		// bad! nothing can become interactive until this asynchronous work is done
+		await hydratable('foo', get_slow_random_number);
+	}
+</script>
+```
+
 ### hydration_attribute_changed
 
 ```
@@ -218,7 +237,7 @@ Hydration failed because the initial UI does not match what was rendered on the 
 
 This warning is thrown when Svelte encounters an error while hydrating the HTML from the server. During hydration, Svelte walks the DOM, expecting a certain structure. If that structure is different (for example because the HTML was repaired by the DOM because of invalid HTML), then Svelte will run into issues, resulting in this warning.
 
-During development, this error is often preceeded by a `console.error` detailing the offending HTML, which needs fixing.
+During development, this error is often preceded by a `console.error` detailing the offending HTML, which needs fixing.
 
 ### invalid_raw_snippet_render
 
@@ -311,6 +330,27 @@ Reactive `$state(...)` proxies and the values they proxy have different identiti
 ```
 
 To resolve this, ensure you're comparing values where both values were created with `$state(...)`, or neither were. Note that `$state.raw(...)` will _not_ create a state proxy.
+
+### state_proxy_unmount
+
+```
+Tried to unmount a state proxy, rather than a component
+```
+
+`unmount` was called with a state proxy:
+
+```js
+import { mount, unmount } from 'svelte';
+import Component from './Component.svelte';
+let target = document.body;
+// ---cut---
+let component = $state(mount(Component, { target }));
+
+// later...
+unmount(component);
+```
+
+Avoid using `$state` here. If `component` _does_ need to be reactive for some reason, use `$state.raw` instead.
 
 ### svelte_boundary_reset_noop
 

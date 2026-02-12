@@ -48,7 +48,11 @@ export function SvelteBoundary(node, context) {
 		if (child.type === 'ConstTag') {
 			has_const = true;
 			if (!context.state.options.experimental.async) {
-				context.visit(child, { ...context.state, consts: const_tags });
+				context.visit(child, {
+					...context.state,
+					consts: const_tags,
+					scope: context.state.scopes.get(node.fragment) ?? context.state.scope
+				});
 			}
 		}
 	}
@@ -73,7 +77,7 @@ export function SvelteBoundary(node, context) {
 				/** @type {Statement[]} */
 				const statements = [];
 
-				context.visit(child, { ...context.state, init: statements });
+				context.visit(child, { ...context.state, snippets: statements });
 
 				const snippet = /** @type {VariableDeclaration} */ (statements[0]);
 
@@ -101,7 +105,13 @@ export function SvelteBoundary(node, context) {
 		nodes.push(child);
 	}
 
-	const block = /** @type {BlockStatement} */ (context.visit({ ...node.fragment, nodes }));
+	const block = /** @type {BlockStatement} */ (
+		context.visit(
+			{ ...node.fragment, nodes },
+			// Since we're creating a new fragment the reference in scopes can't match, so we gotta attach the right scope manually
+			{ ...context.state, scope: context.state.scopes.get(node.fragment) ?? context.state.scope }
+		)
+	);
 
 	if (!context.state.options.experimental.async) {
 		block.body.unshift(...const_tags);

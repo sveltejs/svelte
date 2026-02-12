@@ -1,9 +1,9 @@
-/** @import { CallExpression, Expression } from 'estree' */
+/** @import { CallExpression, Expression, MemberExpression } from 'estree' */
 /** @import { Context } from '../types.js' */
-import { is_ignored } from '../../../../state.js';
+import { dev, is_ignored } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { get_rune } from '../../../scope.js';
-import { transform_inspect_rune } from '../../utils.js';
+import { get_inspect_args } from '../../utils.js';
 
 /**
  * @param {CallExpression} node
@@ -12,7 +12,14 @@ import { transform_inspect_rune } from '../../utils.js';
 export function CallExpression(node, context) {
 	const rune = get_rune(node, context.state.scope);
 
-	if (rune === '$host') {
+	if (
+		rune === '$host' ||
+		rune === '$effect' ||
+		rune === '$effect.pre' ||
+		rune === '$inspect.trace'
+	) {
+		// we will only encounter `$effect` etc if they are top-level statements in the <script>
+		// following an `await`, otherwise they are removed by the ExpressionStatement visitor
 		return b.void0;
 	}
 
@@ -38,6 +45,10 @@ export function CallExpression(node, context) {
 		return b.call('$.derived', rune === '$derived' ? b.thunk(fn) : fn);
 	}
 
+	if (rune === '$state.eager') {
+		return node.arguments[0];
+	}
+
 	if (rune === '$state.snapshot') {
 		return b.call(
 			'$.snapshot',
@@ -47,7 +58,13 @@ export function CallExpression(node, context) {
 	}
 
 	if (rune === '$inspect' || rune === '$inspect().with') {
-		return transform_inspect_rune(node, context);
+		if (!dev) return b.empty;
+
+		const { args, inspector } = get_inspect_args(rune, node, context.visit);
+
+		return rune === '$inspect'
+			? b.call(inspector, b.literal('$inspect('), ...args, b.literal(')'))
+			: b.call(inspector, b.literal('init'), ...args);
 	}
 
 	context.next();

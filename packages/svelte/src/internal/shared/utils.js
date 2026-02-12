@@ -2,6 +2,7 @@
 // to de-opt (this occurs often when using popular extensions).
 export var is_array = Array.isArray;
 export var index_of = Array.prototype.indexOf;
+export var includes = Array.prototype.includes;
 export var array_from = Array.from;
 export var object_keys = Object.keys;
 export var define_property = Object.defineProperty;
@@ -48,7 +49,7 @@ export function run_all(arr) {
 
 /**
  * TODO replace with Promise.withResolvers once supported widely enough
- * @template T
+ * @template [T=void]
  */
 export function deferred() {
 	/** @type {(value: T) => void} */

@@ -1,5 +1,4 @@
 /** @import { Expression } from 'estree' */
-/** @import { Location } from 'locate-character' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../types.js' */
 /** @import { Scope } from '../../../scope.js' */
@@ -7,14 +6,16 @@ import { is_void } from '../../../../../utils.js';
 import { dev, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { clean_nodes, determine_namespace_for_children } from '../../utils.js';
-import { build_element_attributes, build_spread_object } from './shared/element.js';
-import { process_children, build_template, build_attribute_value } from './shared/utils.js';
+import { build_element_attributes, prepare_element_spread_object } from './shared/element.js';
+import { process_children, build_template, PromiseOptimiser } from './shared/utils.js';
+import { is_customizable_select_element } from '../../../nodes.js';
 
 /**
  * @param {AST.RegularElement} node
  * @param {ComponentContext} context
  */
 export function RegularElement(node, context) {
+	const name = context.state.namespace === 'html' ? node.name.toLowerCase() : node.name;
 	const namespace = determine_namespace_for_children(node, context.state.namespace);
 
 	/** @type {ComponentServerTransformState} */
@@ -22,19 +23,45 @@ export function RegularElement(node, context) {
 		...context.state,
 		namespace,
 		preserve_whitespace:
-			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea'
+			context.state.preserve_whitespace || node.name === 'pre' || node.name === 'textarea',
+		init: [],
+		template: []
 	};
 
-	const node_is_void = is_void(node.name);
+	const node_is_void = is_void(name);
 
-	context.state.template.push(b.literal(`<${node.name}`));
-	const body = build_element_attributes(node, { ...context, state });
-	context.state.template.push(b.literal(node_is_void ? '/>' : '>')); // add `/>` for XHTML compliance
+	const optimiser = new PromiseOptimiser();
 
-	if ((node.name === 'script' || node.name === 'style') && node.fragment.nodes.length === 1) {
-		context.state.template.push(
+	// If this element needs special handling (like <select value> / <option>),
+	// avoid calling build_element_attributes here to prevent evaluating/awaiting
+	// attribute expressions twice. We'll handle attributes in the special branch.
+	const is_select_special =
+		name === 'select' &&
+		node.attributes.some(
+			(attribute) =>
+				((attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
+					attribute.name === 'value') ||
+				attribute.type === 'SpreadAttribute'
+		);
+	const is_option_special = name === 'option';
+	const is_special = is_select_special || is_option_special;
+
+	let body = /** @type {Expression | null} */ (null);
+	if (!is_special) {
+		// only open the tag in the non-special path
+		state.template.push(b.literal(`<${name}`));
+		body = build_element_attributes(node, { ...context, state }, optimiser.transform);
+		state.template.push(b.literal(node_is_void ? '/>' : '>')); // add `/>` for XHTML compliance
+	}
+
+	if ((name === 'script' || name === 'style') && node.fragment.nodes.length === 1) {
+		state.template.push(
 			b.literal(/** @type {AST.Text} */ (node.fragment.nodes[0]).data),
-			b.literal(`</${node.name}>`)
+			b.literal(`</${name}>`)
+		);
+
+		context.state.template.push(
+			...optimiser.render([...state.init, ...build_template(state.template)])
 		);
 
 		return;
@@ -58,13 +85,13 @@ export function RegularElement(node, context) {
 	}
 
 	if (dev) {
-		const location = /** @type {Location} */ (locator(node.start));
+		const location = locator(node.start);
 		state.template.push(
 			b.stmt(
 				b.call(
 					'$.push_element',
-					b.id('$$payload'),
-					b.literal(node.name),
+					b.id('$$renderer'),
+					b.literal(name),
 					b.literal(location.line),
 					b.literal(location.column)
 				)
@@ -72,84 +99,76 @@ export function RegularElement(node, context) {
 		);
 	}
 
-	let select_with_value = false;
-
-	if (node.name === 'select') {
-		const value = node.attributes.find(
-			(attribute) =>
-				(attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
-				attribute.name === 'value'
-		);
-		if (node.attributes.some((attribute) => attribute.type === 'SpreadAttribute')) {
-			select_with_value = true;
-			state.template.push(
-				b.stmt(
-					b.assignment(
-						'=',
-						b.id('$$payload.select_value'),
-						b.member(
-							build_spread_object(
-								node,
-								node.attributes.filter(
-									(attribute) =>
-										attribute.type === 'Attribute' ||
-										attribute.type === 'BindDirective' ||
-										attribute.type === 'SpreadAttribute'
-								),
-								context
-							),
-							'value',
-							false,
-							true
-						)
-					)
-				)
-			);
-		} else if (value) {
-			select_with_value = true;
-			const left = b.id('$$payload.select_value');
-			if (value.type === 'Attribute') {
-				state.template.push(
-					b.stmt(b.assignment('=', left, build_attribute_value(value.value, context)))
-				);
-			} else if (value.type === 'BindDirective') {
-				state.template.push(
-					b.stmt(
-						b.assignment(
-							'=',
-							left,
-							value.expression.type === 'SequenceExpression'
-								? /** @type {Expression} */ (context.visit(b.call(value.expression.expressions[0])))
-								: /** @type {Expression} */ (context.visit(value.expression))
-						)
-					)
-				);
-			}
-		}
-	}
-
-	if (
-		node.name === 'option' &&
-		!node.attributes.some(
-			(attribute) =>
-				attribute.type === 'SpreadAttribute' ||
-				((attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
-					attribute.name === 'value')
-		)
-	) {
+	if (is_select_special) {
 		const inner_state = { ...state, template: [], init: [] };
 		process_children(trimmed, { ...context, state: inner_state });
 
-		state.template.push(
-			b.stmt(
-				b.call(
-					'$.valueless_option',
-					b.id('$$payload'),
-					b.thunk(b.block([...inner_state.init, ...build_template(inner_state.template)]))
-				)
-			)
+		const fn = b.arrow(
+			[b.id('$$renderer')],
+			b.block([...state.init, ...build_template(inner_state.template)])
 		);
-	} else if (body !== null) {
+
+		const [attributes, ...rest] = prepare_element_spread_object(node, context, optimiser.transform);
+
+		if (is_customizable_select_element(node)) {
+			rest.push(b.true);
+		}
+
+		const statement = b.stmt(b.call('$$renderer.select', attributes, fn, ...rest));
+
+		context.state.template.push(...optimiser.render([...state.init, statement]));
+
+		return;
+	}
+
+	if (is_option_special) {
+		let body;
+
+		if (node.metadata.synthetic_value_node) {
+			body = optimiser.transform(
+				node.metadata.synthetic_value_node.expression,
+				node.metadata.synthetic_value_node.metadata.expression
+			);
+		} else {
+			const inner_state = { ...state, template: [], init: [] };
+			process_children(trimmed, { ...context, state: inner_state });
+
+			/** @type {import('estree').Statement[]} */
+			const body_statements = [...state.init, ...build_template(inner_state.template)];
+
+			if (dev) {
+				const location = locator(node.start);
+				body_statements.unshift(
+					b.stmt(
+						b.call(
+							'$.push_element',
+							b.id('$$renderer'),
+							b.literal(name),
+							b.literal(location.line),
+							b.literal(location.column)
+						)
+					)
+				);
+				body_statements.push(b.stmt(b.call('$.pop_element')));
+			}
+
+			body = b.arrow([b.id('$$renderer')], b.block(body_statements));
+		}
+
+		const [attributes, ...rest] = prepare_element_spread_object(node, context, optimiser.transform);
+
+		if (is_customizable_select_element(node)) {
+			rest.push(b.true);
+		}
+
+		const statement = b.stmt(b.call('$$renderer.option', attributes, body, ...rest));
+
+		context.state.template.push(...optimiser.render([...state.init, statement]));
+
+		return;
+	}
+
+	if (body !== null) {
 		// if this is a `<textarea>` value or a contenteditable binding, we only add
 		// the body if the attribute/binding is falsy
 		const inner_state = { ...state, template: [], init: [] };
@@ -171,18 +190,27 @@ export function RegularElement(node, context) {
 			)
 		);
 	} else {
+		// For optgroup or select with rich content, add hydration marker at the start
 		process_children(trimmed, { ...context, state });
-	}
-
-	if (select_with_value) {
-		state.template.push(b.stmt(b.assignment('=', b.id('$$payload.select_value'), b.void0)));
+		if ((name === 'optgroup' || name === 'select') && is_customizable_select_element(node)) {
+			state.template.push(b.literal('<!>'));
+		}
 	}
 
 	if (!node_is_void) {
-		state.template.push(b.literal(`</${node.name}>`));
+		state.template.push(b.literal(`</${name}>`));
 	}
 
 	if (dev) {
 		state.template.push(b.stmt(b.call('$.pop_element')));
+	}
+
+	if (optimiser.is_async()) {
+		context.state.template.push(
+			...optimiser.render([...state.init, ...build_template(state.template)])
+		);
+	} else {
+		context.state.init.push(...state.init);
+		context.state.template.push(...state.template);
 	}
 }

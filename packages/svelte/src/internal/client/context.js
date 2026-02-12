@@ -5,7 +5,7 @@ import { active_effect, active_reaction } from './runtime.js';
 import { create_user_effect } from './reactivity/effects.js';
 import { async_mode_flag, legacy_mode_flag } from '../flags/index.js';
 import { FILENAME } from '../../constants.js';
-import { BRANCH_EFFECT, EFFECT_RAN } from './constants.js';
+import { BRANCH_EFFECT, REACTION_RAN } from './constants.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;
@@ -70,8 +70,34 @@ export function set_dev_current_component_function(fn) {
 }
 
 /**
+ * Returns a `[get, set]` pair of functions for working with context in a type-safe way.
+ *
+ * `get` will throw an error if no parent component called `set`.
+ *
+ * @template T
+ * @returns {[() => T, (context: T) => T]}
+ * @since 5.40.0
+ */
+export function createContext() {
+	const key = {};
+
+	return [
+		() => {
+			if (!hasContext(key)) {
+				e.missing_context();
+			}
+
+			return getContext(key);
+		},
+		(context) => setContext(key, context)
+	];
+}
+
+/**
  * Retrieves the context that belongs to the closest parent component with the specified `key`.
  * Must be called during component initialisation.
+ *
+ * [`createContext`](https://svelte.dev/docs/svelte/svelte#createContext) is a type-safe alternative.
  *
  * @template T
  * @param {any} key
@@ -90,6 +116,8 @@ export function getContext(key) {
  *
  * Like lifecycle functions, this must be called during component initialisation.
  *
+ * [`createContext`](https://svelte.dev/docs/svelte/svelte#createContext) is a type-safe alternative.
+ *
  * @template T
  * @param {any} key
  * @param {T} context
@@ -100,7 +128,11 @@ export function setContext(key, context) {
 
 	if (async_mode_flag) {
 		var flags = /** @type {Effect} */ (active_effect).f;
-		var valid = !active_reaction && (flags & BRANCH_EFFECT) !== 0 && (flags & EFFECT_RAN) === 0;
+		var valid =
+			!active_reaction &&
+			(flags & BRANCH_EFFECT) !== 0 &&
+			// pop() runs synchronously, so this indicates we're setting context after an await
+			!(/** @type {ComponentContext} */ (component_context).i);
 
 		if (!valid) {
 			e.set_context_after_init();
@@ -145,6 +177,7 @@ export function getAllContexts() {
 export function push(props, runes = false, fn) {
 	component_context = {
 		p: component_context,
+		i: false,
 		c: null,
 		e: null,
 		s: props,
@@ -179,6 +212,8 @@ export function pop(component) {
 	if (component !== undefined) {
 		context.x = component;
 	}
+
+	context.i = true;
 
 	component_context = context.p;
 

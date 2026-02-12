@@ -1,18 +1,11 @@
-/** @import { AnimateFn, Animation, AnimationConfig, EachItem, Effect, TransitionFn, TransitionManager } from '#client' */
+/** @import { AnimateFn, Animation, AnimationConfig, EachItem, Effect, EffectNodes, TransitionFn, TransitionManager } from '#client' */
 import { noop, is_function } from '../../../shared/utils.js';
 import { effect } from '../../reactivity/effects.js';
-import {
-	active_effect,
-	active_reaction,
-	set_active_effect,
-	set_active_reaction,
-	untrack
-} from '../../runtime.js';
+import { active_effect, untrack } from '../../runtime.js';
 import { loop } from '../../loop.js';
 import { should_intro } from '../../render.js';
-import { current_each_item } from '../blocks/each.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../constants.js';
-import { BLOCK_EFFECT, EFFECT_RAN, EFFECT_TRANSPARENT } from '#client/constants';
+import { BLOCK_EFFECT, REACTION_RAN, EFFECT_TRANSPARENT } from '#client/constants';
 import { queue_micro_task } from '../task.js';
 import { without_reactive_context } from './bindings/shared.js';
 
@@ -72,6 +65,14 @@ function css_to_keyframe(css) {
 /** @param {number} t */
 const linear = (t) => t;
 
+/** @type {Effect | null} */
+let animation_effect_override = null;
+
+/** @param {Effect | null} v */
+export function set_animation_effect_override(v) {
+	animation_effect_override = v;
+}
+
 /**
  * Called inside keyed `{#each ...}` blocks (as `$.animation(...)`). This creates an animation manager
  * and attaches it to the block, so that moves can be animated following reconciliation.
@@ -81,7 +82,8 @@ const linear = (t) => t;
  * @param {(() => P) | null} get_params
  */
 export function animation(element, get_fn, get_params) {
-	var item = /** @type {EachItem} */ (current_each_item);
+	var effect = animation_effect_override ?? /** @type {Effect} */ (active_effect);
+	var nodes = /** @type {EffectNodes} */ (effect.nodes);
 
 	/** @type {DOMRect} */
 	var from;
@@ -95,7 +97,7 @@ export function animation(element, get_fn, get_params) {
 	/** @type {null | { position: string, width: string, height: string, transform: string }} */
 	var original_styles = null;
 
-	item.a ??= {
+	nodes.a ??= {
 		element,
 		measure() {
 			from = this.element.getBoundingClientRect();
@@ -167,7 +169,7 @@ export function animation(element, get_fn, get_params) {
 	// when an animation manager already exists, if the tag changes. in that case, we need to
 	// swap out the element rather than creating a new manager, in case it happened at the same
 	// moment as a reconciliation
-	item.a.element = element;
+	nodes.a.element = element;
 }
 
 /**
@@ -237,8 +239,6 @@ export function transition(flags, element, get_fn, get_params) {
 				intro?.abort();
 			}
 
-			dispatch_event(element, 'introstart');
-
 			intro = animate(element, get_options(), outro, 1, () => {
 				dispatch_event(element, 'introend');
 
@@ -258,8 +258,6 @@ export function transition(flags, element, get_fn, get_params) {
 
 			element.inert = true;
 
-			dispatch_event(element, 'outrostart');
-
 			outro = animate(element, get_options(), intro, 0, () => {
 				dispatch_event(element, 'outroend');
 				fn?.();
@@ -271,9 +269,9 @@ export function transition(flags, element, get_fn, get_params) {
 		}
 	};
 
-	var e = /** @type {Effect} */ (active_effect);
+	var e = /** @type {Effect & { nodes: EffectNodes }} */ (active_effect);
 
-	(e.transitions ??= []).push(transition);
+	(e.nodes.t ??= []).push(transition);
 
 	// if this is a local transition, we only want to run it if the parent (branch) effect's
 	// parent (block) effect is where the state change happened. we can determine that by
@@ -291,7 +289,7 @@ export function transition(flags, element, get_fn, get_params) {
 				}
 			}
 
-			run = !block || (block.f & EFFECT_RAN) !== 0;
+			run = !block || (block.f & REACTION_RAN) !== 0;
 		}
 
 		if (run) {
@@ -343,7 +341,8 @@ function animate(element, options, counterpart, t2, on_finish) {
 
 	counterpart?.deactivate();
 
-	if (!options?.duration) {
+	if (!options?.duration && !options?.delay) {
+		dispatch_event(element, is_intro ? 'introstart' : 'outrostart');
 		on_finish();
 
 		return {
@@ -382,6 +381,8 @@ function animate(element, options, counterpart, t2, on_finish) {
 	animation.onfinish = () => {
 		// remove dummy animation from the stack to prevent conflict with main animation
 		animation.cancel();
+
+		dispatch_event(element, is_intro ? 'introstart' : 'outrostart');
 
 		// for bidirectional transitions, we start from the current position,
 		// rather than doing a full intro/outro

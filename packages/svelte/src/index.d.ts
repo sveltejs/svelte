@@ -352,4 +352,20 @@ export type MountOptions<Props extends Record<string, any> = Record<string, any>
 			props: Props;
 		});
 
+/**
+ * Represents work that is happening off-screen, such as data being preloaded
+ * in anticipation of the user navigating
+ * @since 5.42
+ */
+export interface Fork {
+	/**
+	 * Commit the fork. The promise will resolve once the state change has been applied
+	 */
+	commit(): Promise<void>;
+	/**
+	 * Discard the fork
+	 */
+	discard(): void;
+}
+
 export * from './index-client.js';

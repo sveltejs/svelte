@@ -1,6 +1,5 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import { regex_is_valid_identifier } from '../../../patterns.js';
 import { build_component } from './shared/component.js';
 
 /**
@@ -8,6 +7,6 @@ import { build_component } from './shared/component.js';
  * @param {ComponentContext} context
  */
 export function Component(node, context) {
-	const component = build_component(node, node.name, context);
+	const component = build_component(node, node.name, node.name_loc, context);
 	context.state.init.push(component);
 }

@@ -11,11 +11,12 @@ export default test({
 	test({ assert, errors }) {
 		const [button] = document.querySelectorAll('button');
 
-		try {
+		assert.throws(() => {
 			flushSync(() => button.click());
-		} catch (e) {
-			assert.equal(errors.length, 1); // for whatever reason we can't get the name which should be UpdatedAtError
-			assert.ok(/** @type {Error} */ (e).message.startsWith('effect_update_depth_exceeded'));
-		}
+		}, /effect_update_depth_exceeded/);
+
+		assert.equal(errors.length, 1);
+
+		assert.doesNotThrow(flushSync);
 	}
 });

@@ -28,7 +28,8 @@ export function Fragment(node, context) {
 		init: [],
 		template: [],
 		namespace,
-		skip_hydration_boundaries: is_standalone
+		is_standalone,
+		async_consts: undefined
 	};
 
 	for (const node of hoisted) {
@@ -41,6 +42,12 @@ export function Fragment(node, context) {
 	}
 
 	process_children(trimmed, { ...context, state });
+
+	if (state.async_consts && state.async_consts.thunks.length > 0) {
+		state.init.push(
+			b.var(state.async_consts.id, b.call('$$renderer.run', b.array(state.async_consts.thunks)))
+		);
+	}
 
 	return b.block([...state.init, ...build_template(state.template)]);
 }
