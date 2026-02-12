@@ -59,8 +59,13 @@ export function Attribute(node, context) {
 				context.state.analysis.uses_event_attributes = true;
 			}
 
+			// Don't use event delegation in custom element builds, as it can cause
+			// conflicts with the outer app's event delegation across shadow DOM boundaries
+			// when different Svelte versions are involved
 			node.metadata.delegated =
-				parent?.type === 'RegularElement' && can_delegate_event(node.name.slice(2));
+				parent?.type === 'RegularElement' &&
+				!context.state.analysis.custom_element &&
+				can_delegate_event(node.name.slice(2));
 		}
 	}
 }
