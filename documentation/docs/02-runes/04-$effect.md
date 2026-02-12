@@ -269,13 +269,15 @@ The `$effect.allowed` rune is an advanced feature that indicates whether or not 
 	function onclick() {
 		console.log('after component setup', $effect.allowed()); // false
 
-		$effect.root(() => {
+		const destroy = $effect.root(() => {
 			console.log('in root effect', $effect.allowed()); // true
 
 			return () => {
 				console.log('in effect teardown', $effect.allowed()); // false
 			};
 		});
+
+		destroy();
 	}
 </script>
 

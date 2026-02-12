@@ -3447,21 +3447,23 @@ declare namespace $effect {
 	 *
 	 *   function onclick() {
 	 *     console.log('after component setup', $effect.allowed()); // false
-	 *   }
-	 *   function ondblclick() {
-	 *     $effect.root(() => {
+	 *
+	 *     const destroy = $effect.root(() => {
 	 *       console.log('in root effect', $effect.allowed()); // true
+	 *
 	 *       return () => {
 	 *         console.log('in effect teardown', $effect.allowed()); // false
-	 *       }
-	 *     })();
+	 *       };
+	 *     });
+	 *
+	 *     destroy();
 	 *   }
 	 * </script>
+	 *
 	 * <button {onclick}>Click me!</button>
-	 * <button {ondblclick}>Click me twice!</button>
 	 * ```
 	 *
-	 * https://svelte.dev/docs/svelte/$effect#$effect.allowed
+	 * @see {@link https://svelte.dev/docs/svelte/$effect#$effect.allowed Documentation}
 	 */
 	export function allowed(): boolean;
 	/**
