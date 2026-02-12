@@ -45,49 +45,20 @@ import { flatten } from './async.js';
 import { without_reactive_context } from '../dom/elements/bindings/shared.js';
 import { set_signal_status } from './status.js';
 
-const VALID_EFFECT_PARENT = 0;
-const EFFECT_ORPHAN = 1;
-const UNOWNED_DERIVED_PARENT = 2;
-const EFFECT_TEARDOWN = 3;
-
-/**
- * If an effect can be created in the current context, `VALID_EFFECT_PARENT` is returned.
- * If not, a value indicating why is returned.
- * @returns {number}
- */
-function valid_effect_creation_context() {
-	if (active_effect === null && active_reaction === null) {
-		return EFFECT_ORPHAN;
-	}
-
-	if (active_effect === null) {
-		return UNOWNED_DERIVED_PARENT;
-	}
-
-	if (is_destroying_effect) {
-		return EFFECT_TEARDOWN;
-	}
-
-	return VALID_EFFECT_PARENT;
-}
-
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
  */
 export function validate_effect(rune) {
-	const valid_effect_parent = valid_effect_creation_context();
-	switch (valid_effect_parent) {
-		case VALID_EFFECT_PARENT:
-			return;
-		case EFFECT_ORPHAN:
+	if (active_effect === null) {
+		if (active_reaction === null) {
 			e.effect_orphan(rune);
-			break;
-		case UNOWNED_DERIVED_PARENT:
-			e.effect_in_unowned_derived();
-			break;
-		case EFFECT_TEARDOWN:
-			e.effect_in_teardown(rune);
-			break;
+		}
+
+		e.effect_in_unowned_derived();
+	}
+
+	if (is_destroying_effect) {
+		e.effect_in_teardown(rune);
 	}
 }
 
@@ -213,7 +184,7 @@ export function effect_tracking() {
  * @returns {boolean}
  */
 export function effect_allowed() {
-	return valid_effect_creation_context() === VALID_EFFECT_PARENT;
+	return active_effect !== null && !is_destroying_effect;
 }
 
 /**
