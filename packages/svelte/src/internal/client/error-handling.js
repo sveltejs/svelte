@@ -3,7 +3,7 @@
 import { DEV } from 'esm-env';
 import { FILENAME } from '../../constants.js';
 import { is_firefox } from './dom/operations.js';
-import { ERROR_VALUE, BOUNDARY_EFFECT, EFFECT_RAN } from './constants.js';
+import { ERROR_VALUE, BOUNDARY_EFFECT, REACTION_RAN } from './constants.js';
 import { define_property, get_descriptor } from '../shared/utils.js';
 import { active_effect, active_reaction } from './runtime.js';
 
@@ -25,7 +25,7 @@ export function handle_error(error) {
 		adjustments.set(error, get_adjustments(error, effect));
 	}
 
-	if ((effect.f & EFFECT_RAN) === 0) {
+	if ((effect.f & REACTION_RAN) === 0) {
 		// if the error occurred while creating this subtree, we let it
 		// bubble up until it hits a boundary that can handle it
 		if ((effect.f & BOUNDARY_EFFECT) === 0) {

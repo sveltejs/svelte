@@ -22,7 +22,7 @@ import {
 	TEMPLATE_USE_MATHML,
 	TEMPLATE_USE_SVG
 } from '../../../constants.js';
-import { COMMENT_NODE, DOCUMENT_FRAGMENT_NODE, EFFECT_RAN, TEXT_NODE } from '#client/constants';
+import { COMMENT_NODE, DOCUMENT_FRAGMENT_NODE, REACTION_RAN, TEXT_NODE } from '#client/constants';
 
 /**
  * @param {TemplateNode} start
@@ -353,7 +353,7 @@ export function append(anchor, dom) {
 		// When hydrating and outer component and an inner component is async, i.e. blocked on a promise,
 		// then by the time the inner resolves we have already advanced to the end of the hydrated nodes
 		// of the parent component. Check for defined for that reason to avoid rewinding the parent's end marker.
-		if ((effect.f & EFFECT_RAN) === 0 || effect.nodes.end === null) {
+		if ((effect.f & REACTION_RAN) === 0 || effect.nodes.end === null) {
 			effect.nodes.end = hydrate_node;
 		}
 
