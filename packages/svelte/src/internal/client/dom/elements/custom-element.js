@@ -105,7 +105,7 @@ if (typeof HTMLElement === 'function') {
 					 */
 					return (anchor) => {
 						const slot = create_element('slot');
-						if (name !== 'default') /** @type {HTMLSlotElement} */ (slot).name = name;
+						if (name !== 'default') slot.name = name;
 
 						append(anchor, slot);
 					};

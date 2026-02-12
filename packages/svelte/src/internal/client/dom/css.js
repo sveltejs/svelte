@@ -19,7 +19,7 @@ export function append_styles(anchor, css) {
 		// Always querying the DOM is roughly the same perf as additionally checking for presence in a map first assuming
 		// that you'll get cache hits half of the time, so we just always query the dom for simplicity and code savings.
 		if (!target.querySelector('#' + css.hash)) {
-			const style = /** @type {HTMLStyleElement} */ (create_element('style'));
+			const style = create_element('style');
 			style.id = css.hash;
 			style.textContent = css.code;
 

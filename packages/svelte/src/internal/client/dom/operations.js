@@ -232,16 +232,6 @@ export function should_defer_append() {
 }
 
 /**
- *
- * @param {string} tag
- * @param {string} [namespace]
- * @param {string} [is]
- * @returns
- */
-export function create_element(tag, namespace, is) {
-	let options = is ? { is } : undefined;
-	return document.createElementNS(namespace ?? NAMESPACE_HTML, tag, options);
-/**
  * @template {keyof HTMLElementTagNameMap | string} T
  * @param {T} tag
  * @param {string} [namespace]
