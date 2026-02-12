@@ -662,6 +662,7 @@ export function get(signal) {
 		}
 
 		if (should_connect && !is_new) {
+			unfreeze_derived_effects(derived);
 			reconnect(derived);
 		}
 	}
@@ -683,16 +684,15 @@ export function get(signal) {
  * @param {Derived} derived
  */
 function reconnect(derived) {
-	unfreeze_derived_effects(derived);
+	derived.f |= CONNECTED;
 
 	if (derived.deps === null) return;
-
-	derived.f |= CONNECTED;
 
 	for (const dep of derived.deps) {
 		(dep.reactions ??= []).push(derived);
 
 		if ((dep.f & DERIVED) !== 0 && (dep.f & CONNECTED) === 0) {
+			unfreeze_derived_effects(/** @type {Derived} */ (dep));
 			reconnect(/** @type {Derived} */ (dep));
 		}
 	}

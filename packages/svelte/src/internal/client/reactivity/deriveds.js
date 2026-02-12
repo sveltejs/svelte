@@ -408,15 +408,17 @@ export function freeze_derived_effects(derived) {
 	if (derived.effects === null) return;
 
 	for (const e of derived.effects) {
-		// if the effect has a teardown function, call it
-		if (e.teardown) {
+		// if the effect has a teardown function or abort signal, call it
+		if (e.teardown || e.ac) {
 			e.teardown?.();
+			e.ac?.abort(STALE_REACTION);
 
 			// make it a noop so it doesn't get called again if the derived
 			// is unfrozen. we don't set it to `null`, because the existence
 			// of a teardown function is what determines whether the
 			// effect runs again during unfreezing
 			e.teardown = noop;
+			e.ac = null;
 
 			remove_reactions(e, 0);
 			destroy_effect_children(e);

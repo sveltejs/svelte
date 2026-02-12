@@ -1,4 +1,6 @@
 <script>
+	import { getAbortSignal } from 'svelte';
+
 	const callbacks = new Map();
 
 	// similar semantics to setInterval, but simpler to test
@@ -27,6 +29,10 @@
 				const id = add(() => {
 					this.elapsed += 1;
 				});
+
+				getAbortSignal().onabort = () => {
+					console.log('aborted');
+				};
 
 				return () => remove(id);
 			});
