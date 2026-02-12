@@ -241,6 +241,18 @@ export function should_defer_append() {
 export function create_element(tag, namespace, is) {
 	let options = is ? { is } : undefined;
 	return document.createElementNS(namespace ?? NAMESPACE_HTML, tag, options);
+/**
+ * @template {keyof HTMLElementTagNameMap | string} T
+ * @param {T} tag
+ * @param {string} [namespace]
+ * @param {string} [is]
+ * @returns {T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : Element}
+ */
+export function create_element(tag, namespace, is) {
+	let options = is ? { is } : undefined;
+	return /** @type {T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : Element} */ (
+		document.createElementNS(namespace ?? NAMESPACE_HTML, tag, options)
+	);
 }
 
 export function create_fragment() {
