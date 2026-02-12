@@ -22,7 +22,16 @@ import {
 	TEMPLATE_USE_MATHML,
 	TEMPLATE_USE_SVG
 } from '../../../constants.js';
-import { COMMENT_NODE, DOCUMENT_FRAGMENT_NODE, REACTION_RAN, TEXT_NODE } from '#client/constants';
+import {
+	COMMENT_NODE,
+	DOCUMENT_FRAGMENT_NODE,
+	IS_XHTML,
+	REACTION_RAN,
+	TEXT_NODE
+} from '#client/constants';
+
+const TEMPLATE_TAG = IS_XHTML ? 'template' : 'TEMPLATE';
+const SCRIPT_TAG = IS_XHTML ? 'script' : 'SCRIPT';
 
 /**
  * @param {TemplateNode} start
@@ -186,12 +195,12 @@ function fragment_from_tree(structure, ns) {
 
 		if (children.length > 0) {
 			var target =
-				element.tagName === 'TEMPLATE'
+				element.nodeName === TEMPLATE_TAG
 					? /** @type {HTMLTemplateElement} */ (element).content
 					: element;
 
 			target.append(
-				fragment_from_tree(children, element.tagName === 'foreignObject' ? undefined : namespace)
+				fragment_from_tree(children, element.nodeName === 'foreignObject' ? undefined : namespace)
 			);
 		}
 
@@ -268,7 +277,7 @@ function run_scripts(node) {
 
 	const is_fragment = node.nodeType === DOCUMENT_FRAGMENT_NODE;
 	const scripts =
-		/** @type {HTMLElement} */ (node).tagName === 'SCRIPT'
+		/** @type {HTMLElement} */ (node).nodeName === SCRIPT_TAG
 			? [/** @type {HTMLScriptElement} */ (node)]
 			: node.querySelectorAll('script');
 

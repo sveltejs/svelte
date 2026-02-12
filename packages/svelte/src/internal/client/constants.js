@@ -67,6 +67,7 @@ export const STALE_REACTION = new (class StaleReactionError extends Error {
 	message = 'The reaction that called `getAbortSignal()` was re-run or destroyed';
 })();
 
+export const IS_XHTML = /* @__PURE__ */ globalThis.document?.contentType.includes('xml') ?? false;
 export const ELEMENT_NODE = 1;
 export const TEXT_NODE = 3;
 export const COMMENT_NODE = 8;

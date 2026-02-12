@@ -272,7 +272,7 @@ export class Renderer {
 			}
 
 			if (value === this.local.select_value) {
-				renderer.#out.push(' selected');
+				renderer.#out.push(' selected=""');
 			}
 
 			renderer.#out.push(`>${body}${is_rich ? '<!>' : ''}</option>`);
