@@ -1,5 +1,5 @@
 import { hydrating, reset, set_hydrate_node, set_hydrating } from '../hydration.js';
-import { create_comment } from '../operations.js';
+import { create_comment, create_element } from '../operations.js';
 import { attach } from './attachments.js';
 
 /** @type {boolean | null} */
@@ -13,7 +13,7 @@ let supported = null;
  */
 function is_supported() {
 	if (supported === null) {
-		var select = document.createElement('select');
+		var select = create_element('select');
 		select.innerHTML = '<option><span>t</span></option>';
 		supported = /** @type {Element} */ (select.firstChild)?.firstChild?.nodeType === 1;
 	}

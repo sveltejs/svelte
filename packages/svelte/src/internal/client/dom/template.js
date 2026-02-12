@@ -275,7 +275,7 @@ function run_scripts(node) {
 	const effect = /** @type {Effect & { nodes: EffectNodes }} */ (active_effect);
 
 	for (const script of scripts) {
-		const clone = document.createElement('script');
+		const clone = create_element('script');
 		for (var attribute of script.attributes) {
 			clone.setAttribute(attribute.name, attribute.value);
 		}
