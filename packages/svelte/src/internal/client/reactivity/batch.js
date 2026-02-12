@@ -701,16 +701,15 @@ function flush_queued_effects(effects) {
 			// don't know if we need to keep them until they are executed. Doing the check
 			// here (rather than in `update_effect`) allows us to skip the work for
 			// immediate effects.
-			if (effect.deps === null && effect.first === null && effect.nodes === null) {
-				// if there's no teardown or abort controller we completely unlink
-				// the effect from the graph
-				if (effect.teardown === null && effect.ac === null) {
-					// remove this effect from the graph
-					unlink_effect(effect);
-				} else {
-					// keep the effect in the graph, but free up some memory
-					effect.fn = null;
-				}
+			if (
+				effect.deps === null &&
+				effect.first === null &&
+				effect.nodes === null &&
+				effect.teardown === null &&
+				effect.ac === null
+			) {
+				// remove this effect from the graph
+				unlink_effect(effect);
 			}
 
 			// If update_effect() has a flushSync() in it, we may have flushed another flush_queued_effects(),

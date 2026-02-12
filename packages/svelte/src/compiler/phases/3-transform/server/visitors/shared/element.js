@@ -235,7 +235,7 @@ export function build_element_attributes(node, context, transform) {
 
 				if (name !== 'class' || literal_value) {
 					context.state.template.push(
-						b.literal(` ${attribute.name}="${literal_value === true ? '' : String(literal_value)}"`)
+						b.literal(` ${name}="${literal_value === true ? '' : String(literal_value)}"`)
 					);
 				}
 

@@ -4,7 +4,7 @@ import { parseCss } from 'svelte/compiler';
 describe('parseCss', () => {
 	it('parses a simple rule', () => {
 		const ast = parseCss('div { color: red; }');
-		assert.equal(ast.type, 'StyleSheet');
+		assert.equal(ast.type, 'StyleSheetFile');
 		assert.equal(ast.children.length, 1);
 		assert.equal(ast.children[0].type, 'Rule');
 	});
@@ -57,7 +57,7 @@ describe('parseCss', () => {
 
 	it('parses empty stylesheet', () => {
 		const ast = parseCss('');
-		assert.equal(ast.type, 'StyleSheet');
+		assert.equal(ast.type, 'StyleSheetFile');
 		assert.equal(ast.children.length, 0);
 		assert.equal(ast.start, 0);
 		assert.equal(ast.end, 0);
@@ -138,7 +138,7 @@ describe('parseCss', () => {
 
 	it('parses escaped characters', () => {
 		const ast = parseCss("div { background: url('./example.png?\\''); }");
-		assert.equal(ast.type, 'StyleSheet');
+		assert.equal(ast.type, 'StyleSheetFile');
 		assert.equal(ast.children.length, 1);
 		const rule = ast.children[0];
 		assert.equal(rule.type, 'Rule');

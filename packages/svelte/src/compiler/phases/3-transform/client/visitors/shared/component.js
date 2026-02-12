@@ -488,10 +488,10 @@ export function build_component(node, component_name, loc, context) {
 	if (Object.keys(custom_css_props).length > 0) {
 		if (context.state.metadata.namespace === 'svg') {
 			// this boils down to <g><!></g>
-			context.state.template.push_element('g', node.start);
+			context.state.template.push_element('g', node.start, false);
 		} else {
 			// this boils down to <svelte-css-wrapper style='display: contents'><!></svelte-css-wrapper>
-			context.state.template.push_element('svelte-css-wrapper', node.start);
+			context.state.template.push_element('svelte-css-wrapper', node.start, false);
 			context.state.template.set_prop('style', 'display: contents');
 		}
 
