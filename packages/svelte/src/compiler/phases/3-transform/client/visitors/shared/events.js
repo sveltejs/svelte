@@ -37,7 +37,7 @@ export function visit_event_attribute(node, context) {
 			handler,
 			capture,
 			is_passive_event(event_name) ? true : undefined,
-			true
+			node.metadata.delegated
 		)
 	);
 
@@ -61,11 +61,22 @@ export function visit_event_attribute(node, context) {
  * @param {boolean | undefined} delegated
  */
 export function build_event(event_name, node, handler, capture, passive, delegated) {
+	let fn = handler;
+
+	if (dev && handler.type === 'ArrowFunctionExpression') {
+		// TODO do we need to generate a deconflicted name?
+		fn = b.function(
+			b.id(event_name),
+			handler.params,
+			handler.body.type === 'BlockStatement' ? handler.body : b.block([b.return(handler.body)])
+		);
+	}
+
 	return b.call(
 		delegated ? '$.delegated' : '$.event',
 		b.literal(event_name),
 		node,
-		handler,
+		fn,
 		capture && b.true,
 		passive === undefined ? undefined : b.literal(passive)
 	);

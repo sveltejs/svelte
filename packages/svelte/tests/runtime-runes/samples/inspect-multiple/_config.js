@@ -17,10 +17,10 @@ export default test({
 			0,
 			1,
 			0,
-			'at HTMLButtonElement.<anonymous>',
+			'at HTMLButtonElement.click',
 			1,
 			1,
-			'at HTMLButtonElement.<anonymous>'
+			'at HTMLButtonElement.click'
 		]);
 	}
 });

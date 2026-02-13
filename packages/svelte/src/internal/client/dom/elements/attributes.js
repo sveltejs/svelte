@@ -404,6 +404,7 @@ function set_attributes(
 
 			if (is_delegated) {
 				delegated(event_name, element, value);
+				delegate([event_name]);
 			} else if (value != null) {
 				/**
 				 * @this {any}
