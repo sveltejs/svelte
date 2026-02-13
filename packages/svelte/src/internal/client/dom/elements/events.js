@@ -11,6 +11,9 @@ import {
 	set_active_reaction
 } from '../../runtime.js';
 import { without_reactive_context } from './bindings/shared.js';
+import { can_delegate_event } from '../../../../utils.js';
+
+const event_symbol = Symbol('events');
 
 /** @type {Set<string>} */
 export const all_registered_events = new Set();
@@ -109,6 +112,12 @@ export function on(element, type, handler, options = {}) {
  * @returns {void}
  */
 export function event(event_name, dom, handler, capture, passive) {
+	if (can_delegate_event(event_name)) {
+		// @ts-expect-error
+		(dom[event_symbol] ??= {})[event_name] = handler;
+		return;
+	}
+
 	var options = { capture, passive };
 	var target_handler = create_event(event_name, dom, handler, options);
 
@@ -249,7 +258,7 @@ export function handle_event_propagation(event) {
 
 			try {
 				// @ts-expect-error
-				var delegated = current_target['__' + event_name];
+				var delegated = current_target[event_symbol]?.[event_name];
 
 				if (
 					delegated != null &&

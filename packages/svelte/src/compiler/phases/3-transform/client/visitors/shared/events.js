@@ -27,38 +27,26 @@ export function visit_event_attribute(node, context) {
 	let handler = build_event_handler(tag.expression, tag.metadata.expression, context);
 
 	if (node.metadata.delegated) {
-		if (!context.state.events.has(event_name)) {
-			context.state.events.add(event_name);
-		}
+		context.state.events.add(event_name);
+	}
 
-		context.state.init.push(
-			b.stmt(
-				b.assignment(
-					'=',
-					b.member(context.state.node, b.id('__' + event_name, node.name_loc)),
-					handler
-				)
-			)
-		);
+	const statement = b.stmt(
+		build_event(
+			event_name,
+			context.state.node,
+			handler,
+			capture,
+			is_passive_event(event_name) ? true : undefined
+		)
+	);
+
+	const type = /** @type {AST.SvelteNode} */ (context.path.at(-1)).type;
+
+	if (type === 'SvelteDocument' || type === 'SvelteWindow' || type === 'SvelteBody') {
+		// These nodes are above the component tree, and its events should run parent first
+		context.state.init.push(statement);
 	} else {
-		const statement = b.stmt(
-			build_event(
-				event_name,
-				context.state.node,
-				handler,
-				capture,
-				is_passive_event(event_name) ? true : undefined
-			)
-		);
-
-		const type = /** @type {AST.SvelteNode} */ (context.path.at(-1)).type;
-
-		if (type === 'SvelteDocument' || type === 'SvelteWindow' || type === 'SvelteBody') {
-			// These nodes are above the component tree, and its events should run parent first
-			context.state.init.push(statement);
-		} else {
-			context.state.after_update.push(statement);
-		}
+		context.state.after_update.push(statement);
 	}
 }
 
