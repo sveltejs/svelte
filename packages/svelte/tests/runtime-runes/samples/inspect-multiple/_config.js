@@ -20,7 +20,7 @@ export default test({
 			'at HTMLButtonElement.click',
 			1,
 			1,
-			'at HTMLButtonElement.click'
+			'at HTMLButtonElement.click_1'
 		]);
 	}
 });
