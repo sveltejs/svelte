@@ -17,11 +17,11 @@ function create_trusted_html(html) {
 
 /**
  * @param {string} html
- * @param {boolean} untrusted
+ * @param {boolean} trusted
  */
-export function create_fragment_from_html(html, untrusted = false) {
+export function create_fragment_from_html(html, trusted = false) {
 	var elem = document.createElement('template');
 	html = html.replaceAll('<!>', '<!---->'); // XHTML compliance
-	elem.innerHTML = untrusted ? html : create_trusted_html(html);
+	elem.innerHTML = trusted ? create_trusted_html(html) : html;
 	return elem.content;
 }
