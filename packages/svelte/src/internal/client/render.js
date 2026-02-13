@@ -152,6 +152,9 @@ export function hydrate(component, options) {
 /** @type {Map<string, number>} */
 const document_listeners = new Map();
 
+/** @type {Map<EventTarget, Map<string, number>>} */
+const target_listeners = new Map();
+
 /**
  * @template {Record<string, any>} Exports
  * @param {ComponentType<SvelteComponent<any>> | Component<any>} Component
@@ -177,7 +180,21 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 			// Add the event listener to both the container and the document.
 			// The container listener ensures we catch events from within in case
 			// the outer content stops propagation of the event.
-			target.addEventListener(event_name, handle_event_propagation, { passive });
+			var target_map = target_listeners.get(target);
+
+			if (target_map === undefined) {
+				target_map = new Map();
+				target_listeners.set(target, target_map);
+			}
+
+			var target_count = target_map.get(event_name);
+
+			if (target_count === undefined) {
+				target.addEventListener(event_name, handle_event_propagation, { passive });
+				target_map.set(event_name, 1);
+			} else {
+				target_map.set(event_name, target_count + 1);
+			}
 
 			var n = document_listeners.get(event_name);
 
@@ -245,15 +262,27 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 
 		return () => {
 			for (var event_name of registered_events) {
-				target.removeEventListener(event_name, handle_event_propagation);
+				var target_map = /** @type {Map<string, number>} */ (target_listeners.get(target));
+				var target_count = /** @type {number} */ (target_map.get(event_name));
 
-				var n = /** @type {number} */ (document_listeners.get(event_name));
+				if (--target_count == 0) {
+					target.removeEventListener(event_name, handle_event_propagation);
+					target_map.delete(event_name);
 
-				if (--n === 0) {
+					if (target_map.size === 0) {
+						target_listeners.delete(target);
+					}
+				} else {
+					target_map.set(event_name, target_count - 1);
+				}
+
+				var document_count = /** @type {number} */ (document_listeners.get(event_name));
+
+				if (--document_count === 0) {
 					document.removeEventListener(event_name, handle_event_propagation);
 					document_listeners.delete(event_name);
 				} else {
-					document_listeners.set(event_name, n);
+					document_listeners.set(event_name, document_count);
 				}
 			}
 
