@@ -28,7 +28,7 @@ export default function Await_block_scope($$anchor) {
 		$.set_text(text_1, ` ${counter.count ?? ''}`);
 	});
 
-	$.event('click', button, increment);
+	$.delegated('click', button, increment);
 	$.append($$anchor, fragment);
 }
 

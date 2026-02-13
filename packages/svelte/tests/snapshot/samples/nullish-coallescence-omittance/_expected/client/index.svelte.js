@@ -24,7 +24,7 @@ export default function Nullish_coallescence_omittance($$anchor) {
 
 	h1_1.textContent = 'Hello, world';
 	$.template_effect(() => $.set_text(text, `Count is ${$.get(count) ?? ''}`));
-	$.event('click', button, () => $.update(count));
+	$.delegated('click', button, () => $.update(count));
 	$.append($$anchor, fragment);
 }
 

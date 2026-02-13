@@ -27,7 +27,7 @@ export default function State_proxy_literal($$anchor) {
 
 	$.bind_value(input, () => $.get(str), ($$value) => $.set(str, $$value));
 	$.bind_value(input_1, () => $.get(tpl), ($$value) => $.set(tpl, $$value));
-	$.event('click', button, reset);
+	$.delegated('click', button, reset);
 	$.append($$anchor, fragment);
 }
 
