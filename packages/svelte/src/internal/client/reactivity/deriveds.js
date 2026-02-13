@@ -19,12 +19,20 @@ import {
 	increment_write_version,
 	set_active_effect,
 	push_reaction_value,
-	is_destroying_effect
+	is_destroying_effect,
+	update_effect,
+	remove_reactions
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import { async_effect, destroy_effect, effect_tracking, teardown } from './effects.js';
+import {
+	async_effect,
+	destroy_effect,
+	destroy_effect_children,
+	effect_tracking,
+	teardown
+} from './effects.js';
 import { eager_effects, internal_set, set_eager_effects, source } from './sources.js';
 import { get_error } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -33,7 +41,7 @@ import { component_context } from '../context.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { batch_values, current_batch } from './batch.js';
 import { unset_context } from './async.js';
-import { deferred, includes } from '../../shared/utils.js';
+import { deferred, includes, noop } from '../../shared/utils.js';
 import { set_signal_status, update_derived_status } from './status.js';
 
 /** @type {Effect | null} */
@@ -360,5 +368,45 @@ export function update_derived(derived) {
 		}
 	} else {
 		update_derived_status(derived);
+	}
+}
+
+/**
+ * @param {Derived} derived
+ */
+export function freeze_derived_effects(derived) {
+	if (derived.effects === null) return;
+
+	for (const e of derived.effects) {
+		// if the effect has a teardown function or abort signal, call it
+		if (e.teardown || e.ac) {
+			e.teardown?.();
+			e.ac?.abort(STALE_REACTION);
+
+			// make it a noop so it doesn't get called again if the derived
+			// is unfrozen. we don't set it to `null`, because the existence
+			// of a teardown function is what determines whether the
+			// effect runs again during unfreezing
+			e.teardown = noop;
+			e.ac = null;
+
+			remove_reactions(e, 0);
+			destroy_effect_children(e);
+		}
+	}
+}
+
+/**
+ * @param {Derived} derived
+ */
+export function unfreeze_derived_effects(derived) {
+	if (derived.effects === null) return;
+
+	for (const e of derived.effects) {
+		// if the effect was previously frozen — indicated by the presence
+		// of a teardown function — unfreeze it
+		if (e.teardown) {
+			update_effect(e);
+		}
 	}
 }

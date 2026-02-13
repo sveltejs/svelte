@@ -118,6 +118,19 @@ export class ExpressionMetadata {
 		return this.#get_blockers().size > 0;
 	}
 
+	/**
+	 * @param {ExpressionMetadata} other
+	 */
+	has_more_blockers_than(other) {
+		for (const blocker of this.#get_blockers()) {
+			if (!other.#get_blockers().has(blocker)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	is_async() {
 		return this.has_await || this.#get_blockers().size > 0;
 	}
