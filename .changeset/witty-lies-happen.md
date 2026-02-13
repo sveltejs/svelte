@@ -2,4 +2,4 @@
 'svelte': minor
 ---
 
-Add TrustedTypes support
+feat: Use `TrustedTypes` for HTML handling where supported
